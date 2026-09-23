@@ -82,6 +82,36 @@ namespace DynamicIslands
 			}
 		}
 
+		[ConsoleCommand(name: "CIDump", docs: "Dev: logs renderers/shaders/bounds of loaded scenes whose name contains <text>, e.g. CIDump demoisland1")]
+		public static void DumpScene(string[] args)
+		{
+			string filter = args != null && args.Length > 0 ? args[0] : "";
+			for (int s = 0; s < UnityEngine.SceneManagement.SceneManager.sceneCount; s++)
+			{
+				var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(s);
+				if (filter.Length > 0 && scene.name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				foreach (GameObject root in scene.GetRootGameObjects())
+				{
+					Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+					Log("Scene '" + scene.name + "' root '" + root.name + "' active=" + root.activeInHierarchy + " pos=" + root.transform.position +
+						" scale=" + root.transform.lossyScale + " renderers=" + renderers.Length + " terrains=" + root.GetComponentsInChildren<Terrain>(true).Length +
+						" colliders=" + root.GetComponentsInChildren<Collider>(true).Length);
+					if (renderers.Length == 0) continue;
+					Bounds b = renderers[0].bounds;
+					foreach (Renderer r in renderers) b.Encapsulate(r.bounds);
+					Log("  bounds centre " + b.center + " size " + b.size + ", enabled renderers " + renderers.Count(r => r.enabled && r.gameObject.activeInHierarchy));
+					foreach (var g in renderers.SelectMany(r => r.sharedMaterials).Where(m => m != null).GroupBy(m => m.shader == null ? "(no shader)" : m.shader.name))
+					{
+						Shader sh = g.First().shader;
+						Log("  shader '" + g.Key + "' supported=" + (sh != null && sh.isSupported) + " materials=" + g.Count() +
+							" found-by-name=" + (Shader.Find(g.Key) != null));
+					}
+					int nullMats = renderers.Sum(r => r.sharedMaterials.Count(m => m == null));
+					if (nullMats > 0) Log("  " + nullMats + " missing (null) materials");
+				}
+			}
+		}
+
 		/// <summary>World position of the terrain's highest heightmap sample.</summary>
 		static Vector3 HighestPoint(Terrain terrain)
 		{

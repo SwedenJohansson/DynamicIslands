@@ -752,8 +752,19 @@ namespace DynamicIslands
 			try
 			{
 				Vector3 spawnpos = FindObjectOfType<Raft>().gameObject.transform.position + spawnOffset;
-				Debug.Log(spawnpos);
 				CustomLandmark.transform.position = spawnpos;
+				// Island scenes aren't always built around their root (demoisland1's meshes sit ~330 m from it),
+				// so move the root until the centre of the visible geometry is at the spawn point
+				Renderer[] renderers = CustomLandmark.GetComponentsInChildren<Renderer>();
+				if (renderers.Length > 0)
+				{
+					Bounds b = renderers[0].bounds;
+					foreach (Renderer r in renderers) b.Encapsulate(r.bounds);
+					Vector3 offset = b.center - CustomLandmark.transform.position;
+					offset.y = 0;
+					CustomLandmark.transform.position = spawnpos - offset;
+				}
+				Debug.Log("[CUSTOM ISLANDS] Landmark root at " + CustomLandmark.transform.position + ", geometry centred on " + spawnpos);
 			}
 			catch (NullReferenceException e)
 			{
