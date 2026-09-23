@@ -37,13 +37,15 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILook", docs: "Dev: renders spawned custom islands from a temporary camera to Mods\\DynamicIslands\\view_<island>.png")]
-		public static void RenderIslandViews()
+		public static void RenderIslandViews(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(RenderViews());
+			DynamicIslands.instance.StartCoroutine(RenderViews(args != null && args.Contains("low")));
 		}
 
-		static IEnumerator RenderViews()
+		/// <param name="low">film from below the hilltop (to see flying islands' undersides); files get a number per island</param>
+		static IEnumerator RenderViews(bool low = false)
 		{
+			int n = 0;
 			yield return new WaitForEndOfFrame();
 			Camera main = Camera.main;
 			if (main != null)
@@ -60,8 +62,8 @@ namespace DynamicIslands
 				Camera cam = camGO.AddComponent<Camera>();
 				if (main != null) cam.CopyFrom(main);
 				cam.farClipPlane = 3000f;
-				cam.transform.position = centre + new Vector3(0, 40f, -180f);
-				cam.transform.LookAt(centre);
+				cam.transform.position = low ? new Vector3(centre.x, 4f, centre.z - 330f) : centre + new Vector3(0, 40f, -180f);
+				cam.transform.LookAt(low ? new Vector3(centre.x, centre.y * 0.55f, centre.z) : centre);
 				var rt = new RenderTexture(1280, 720, 24);
 				cam.targetTexture = rt;
 				cam.Render();
@@ -72,7 +74,7 @@ namespace DynamicIslands
 				tex.Apply();
 				RenderTexture.active = null;
 
-				string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "view_" + root.name.Substring("CustomIsland_".Length) + ".png"));
+				string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "view_" + root.name.Substring("CustomIsland_".Length) + "_" + (++n) + ".png"));
 				File.WriteAllBytes(file, tex.EncodeToPNG());
 				Log("Rendered view to " + file);
 
@@ -404,6 +406,74 @@ namespace DynamicIslands
 		{
 			return UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_"))
 				.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+		}
+
+		[ConsoleCommand(name: "CIFlyTest", docs: "Dev, in game (host): spawns an island flying at 60 m and one under water and checks them. CIFlyTest [island] [keep] (keep = leave them spawned)")]
+		public static void FlyTest(string[] args)
+		{
+			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : (IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault());
+			bool keep = args != null && args.Contains("keep");
+			if (name == null) { Fail("no saved island to test with"); return; }
+			DynamicIslands.instance.StartCoroutine(FlyTestRoutine(name, keep));
+		}
+
+		static IEnumerator FlyTestRoutine(string name, bool keep)
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue) { Fail("not in a world"); yield break; }
+			bool ok = true;
+			const float Flying = 60f, Sunken = -45f;
+			int obstruction = 1 << IslandSpawner.TerrainLayer;
+
+			// Flying island 250 m ahead
+			Vector3 pos = raftPos.Value + Vector3.forward * 250f; pos.y = Flying;
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+			IslandWorldState.Entry fly = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (fly == null || fly.Root == null) { Fail("flying island did not spawn"); yield break; }
+			yield return new WaitForSeconds(0.5f);
+			Terrain terrain = fly.Root.GetComponentInChildren<Terrain>();
+			TerrainData data = terrain.terrainData;
+			bool[,] holes = data.GetHoles(0, 0, data.holesResolution, data.holesResolution);
+			int holeCount = holes.Cast<bool>().Count(solid => !solid);
+			MeshFilter underside = fly.Root.GetComponentsInChildren<MeshFilter>().FirstOrDefault(m => m.name == "Underside");
+			Bounds ub = underside != null ? underside.GetComponent<Renderer>().bounds : new Bounds();
+			Check(ref ok, holeCount > 0 && underside != null && underside.sharedMesh.vertexCount > 0 && ub.min.y >= 7.5f,
+				"flying island: " + holeCount + "/" + holes.Length + " terrain cells cut away, underside " + (underside != null ? underside.sharedMesh.vertexCount + " vertices, lowest point " + ub.min.y.ToString("F1") + " m above the sea" : "missing"));
+
+			Vector3 top = HighestPoint(terrain);
+			RaycastHit hit;
+			bool fromAbove = Physics.Raycast(new Vector3(top.x, 400f, top.z), Vector3.down, out hit, 500f, obstruction) && hit.collider.GetComponent<Terrain>() == terrain;
+			float topY = fromAbove ? hit.point.y : 0f;
+			bool fromBelow = Physics.Raycast(new Vector3(top.x, 1f, top.z), Vector3.up, out hit, 400f, obstruction) && hit.collider.name == "Underside";
+			float bottomY = fromBelow ? hit.point.y : 0f;
+			// A corner of the terrain block is open sea in the editor: it must be a hole now
+			Vector3 corner = terrain.transform.position + new Vector3(3f, 0, 3f);
+			bool cornerOpen = !Physics.Raycast(new Vector3(corner.x, 400f, corner.z), Vector3.down, out hit, 500f, obstruction) || hit.collider.transform.root != fly.Root.transform;
+			Check(ref ok, fromAbove && fromBelow && cornerOpen && topY > Flying,
+				string.Format("from above you land on the top ({0:F0} m), from below you hit the underside ({1:F0} m), the old seabed corner is open: {2}", topY, bottomY, cornerOpen));
+			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
+			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
+
+			yield return StandRoutine(); // puts the player on the nearest island's peak and logs PASS/FAIL
+
+			// Under water, 250 m to the side
+			pos = raftPos.Value + Vector3.right * 300f; pos.y = Sunken;
+			before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+			IslandWorldState.Entry sunk = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (sunk == null || sunk.Root == null) { Fail("underwater island did not spawn"); yield break; }
+			Terrain t2 = sunk.Root.GetComponentInChildren<Terrain>();
+			Vector3 top2 = HighestPoint(t2);
+			bool noHoles = t2.terrainData.GetHoles(0, 0, t2.terrainData.holesResolution, t2.terrainData.holesResolution).Cast<bool>().All(solid => solid);
+			Check(ref ok, top2.y < 0f && noHoles && sunk.Root.GetComponentsInChildren<MeshFilter>().All(m => m.name != "Underside"),
+				"underwater island: highest point " + top2.y.ToString("F1") + " m (below the surface), no holes, no underside");
+
+			// Saved with the world like any other island (the position's y is the elevation)
+			Check(ref ok, Mathf.Abs(fly.Position.y - Flying) < 0.01f && Mathf.Abs(sunk.Position.y - Sunken) < 0.01f, "the world's island list keeps both heights");
+
+			if (!keep) IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true);
+			if (ok) Log("PASS: flying and underwater islands test" + (keep ? " (islands kept)" : "")); else Fail("flying and underwater islands test");
 		}
 
 		[ConsoleCommand(name: "CIStand", docs: "Dev, in game: puts the local player on the highest point of the nearest custom island and logs whether they stay standing")]

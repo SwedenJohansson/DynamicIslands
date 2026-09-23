@@ -35,12 +35,15 @@ namespace DynamicIslands.Editor
 	///       int32  alphamap resolution (R), int32 layer count (L)
 	///       byte[L*R*R] layer weights, layer-major then row-major [z, x], 0..255
 	///       bool   has paint mask; if true: byte[R*R] (255 = painted by hand, protected from auto texturing)
+	///   version 3 adds, after the paint:
+	///     float    elevation: metres above sea level the island floats at in game (negative = under water).
+	///              Files with elevation 0 are still written as version 2 so older versions of the mod can read them.
 	/// </summary>
 	public class IslandFile
 	{
 		public const string Extension = ".island";
 		const uint Magic = 0x4C534943; // "CISL" little-endian
-		const int FormatVersion = 2;
+		const int FormatVersion = 3;
 
 		/// <summary>Editor Y coordinate that is treated as sea level when spawned in game.</summary>
 		public const float DefaultWaterLevel = 20f;
@@ -58,6 +61,9 @@ namespace DynamicIslands.Editor
 		public byte[] Alphamaps;   // [layer][z][x]
 		public byte[] PaintMask;   // [z][x], may be null
 
+		/// <summary>Metres above sea level the island floats at in game (negative = under water, 0 = a normal island).</summary>
+		public float Elevation;
+
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
 
 		public void Save(string path)
@@ -68,7 +74,8 @@ namespace DynamicIslands.Editor
 			{
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
-				header.Write(FormatVersion);
+				// Elevation 0 needs nothing from format 3, so such files stay readable by older versions of the mod
+				header.Write(Elevation != 0f ? FormatVersion : 2);
 				header.Flush();
 
 				using (var deflate = new DeflaterOutputStream(file) { IsStreamOwner = false })
@@ -100,6 +107,7 @@ namespace DynamicIslands.Editor
 						w.Write(PaintMask != null);
 						if (PaintMask != null) w.Write(PaintMask);
 					}
+					if (Elevation != 0f) w.Write(Elevation);
 					w.Flush();
 					deflate.Finish();
 				}
@@ -158,6 +166,7 @@ namespace DynamicIslands.Editor
 						island.Alphamaps = ReadExactly(r, layers * ares * ares);
 						if (r.ReadBoolean()) island.PaintMask = ReadExactly(r, ares * ares);
 					}
+					if (version >= 3) island.Elevation = r.ReadSingle();
 					return island;
 				}
 			}

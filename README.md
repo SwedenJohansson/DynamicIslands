@@ -16,6 +16,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
   - You can also spawn one yourself with `SpawnIsland`.
   - Islands are saved with the world. You can walk on them, the raft runs aground on them, and palms, mango trees, rocks and berry bushes can be harvested.
+  - **Flying and underwater islands:** give an island a height in the Islands window, or with `SetElevation`, or when spawning. A flying island loses its seabed and gets a rocky underside, and the raft sails underneath it. An underwater island sits below the surface for divers.
   - Chopped trees and picked-up items stay that way, even after the island unloads or the world is reloaded. They grow back after 3 in-game days (set with `regrowDays` in `spawnpool.txt`).
 - **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync.
 
@@ -37,7 +38,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 
 | Control | What it does |
 |---|---|
-| ISLANDS button, Menu > Save/Load, Ctrl+O | Islands window: a name field and the list of saved islands. Click to pick, double-click to load, Enter to save. |
+| ISLANDS button, Menu > Save/Load, Ctrl+O | Islands window: a name field, a height field (metres above sea in game: 0 = normal, 60 = flying, −25 = under water) and the list of saved islands. Click to pick, double-click to load, Enter to save. |
 | Ctrl+S | Save the current island |
 | Ctrl+Z / Ctrl+Y | Undo / redo sculpting, painting, placing, moving, rotating, scaling and deleting |
 | Terrain tab | Raise / Lower / Flatten / Smooth, texture paint, Auto, brush size and strength. A ring shows the brush. |
@@ -55,7 +56,8 @@ The blue plane is sea level. Anything below it is under water in game.
 | `SaveIsland <name>` / `LoadIsland <name>` | Editor | Saves or loads an island |
 | `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
-| `SpawnIsland <name> [distance]` | Game, host | Spawns an island ahead of the raft (default 250 m) |
+| `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one |
+| `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
 | `ListSpawned` | Game | Lists the world's custom islands, with distance and state |
 | `SpawnPool` | Game | Shows which islands appear on their own, and how often |
@@ -83,8 +85,8 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 | File | What it holds |
 |---|---|
 | `DynamicIslands.cs` | Mod entry: main menu button, editor setup, save/load, spawn commands, network message hook |
-| `IslandFile.cs` | `.island` format 2: compressed binary with heights, texture paint and paint mask, plus objects |
-| `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids |
+| `IslandFile.cs` | `.island` format 2 (format 3 when the island has a height): compressed binary with heights, texture paint, paint mask, objects and elevation |
+| `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids. For flying islands it also cuts terrain holes and adds the underside mesh |
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts |
 | `CustomIslandSpawner.cs` | Automatic islands while sailing, and loading/unloading islands by distance |
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
@@ -98,6 +100,7 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 
 - Multiplayer has only been tested on one PC (message serialization and a looped-back file transfer). It hasn't been tested in a real two-player session yet.
 - Support for Unity-built `.assets` islands from version 2 was removed. Rebuild those islands in the editor.
+- Reaching a flying island is up to the player: build stairs or pillars up from the raft. The editor shows islands at sea level; the height only applies in game.
 
 ## License
 

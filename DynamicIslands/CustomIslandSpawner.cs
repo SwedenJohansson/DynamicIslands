@@ -151,7 +151,7 @@ namespace DynamicIslands.Editor
 				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
 				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax), radius + Clearance);
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
-				candidate.y = 0; // sea level
+				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
 				string why = Rejects(candidate, radius, raftPos);
 				if (why != null) { reasons.Add(why); continue; }
@@ -214,10 +214,25 @@ namespace DynamicIslands.Editor
 		{
 			float r;
 			if (radiusCache.TryGetValue(name, out r)) return r;
-			try { r = IslandSpawner.LandRadius(IslandFile.Load(IslandSpawner.PathFor(name))); }
+			try
+			{
+				IslandFile file = IslandFile.Load(IslandSpawner.PathFor(name));
+				r = IslandSpawner.LandRadius(file);
+				elevationCache[name] = file.Elevation;
+			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + ex.Message); r = -1; }
 			radiusCache[name] = r;
 			return r;
+		}
+
+		static readonly Dictionary<string, float> elevationCache = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>The island's saved elevation above sea level (flying / underwater), cached with its radius.</summary>
+		static float Elevation(string name)
+		{
+			float e;
+			LandRadius(name);
+			return elevationCache.TryGetValue(name, out e) ? e : 0f;
 		}
 
 		#endregion
@@ -294,6 +309,7 @@ regrowDays = 3
 				if (!force && t == poolFileTime) return;
 				poolFileTime = t;
 				radiusCache.Clear(); // islands may have been re-saved too
+				elevationCache.Clear();
 
 				poolLines.Clear();
 				foreach (string raw in File.ReadAllLines(PoolPath))

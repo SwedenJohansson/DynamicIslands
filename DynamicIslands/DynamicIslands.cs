@@ -27,6 +27,8 @@ namespace DynamicIslands
 
 		/// <summary>Name used by the editor's Save/Load menu entries; set by LoadIsland/SaveIsland commands.</summary>
 		public static string currentIslandName = "myisland";
+		/// <summary>Metres above sea level the island being edited floats at in game (negative = under water); saved with it.</summary>
+		public static float currentElevation;
 		public static LoadSceneManager loadSceneManagerinstance;
 
 		public AssetBundle mainbundle;
@@ -413,6 +415,7 @@ namespace DynamicIslands
 			try
 			{
 				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
+				island.Elevation = currentElevation;
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
@@ -464,6 +467,7 @@ namespace DynamicIslands
 				int missing = IslandSpawner.SpawnObjects(island, holder.transform, true);
 
 				currentIslandName = name;
+				currentElevation = island.Elevation;
 				// Undo steps refer to the terrain/objects that were just replaced
 				CommandUndoRedo.UndoRedoManager.Clear();
 				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
@@ -515,17 +519,20 @@ namespace DynamicIslands
 		/// <summary>Distance in front of the raft where SpawnIsland places the island's land. Raft's camera only renders to 400 m.</summary>
 		const float SpawnDistance = 250f;
 
-		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name> [distance in m, default 250]")]
+		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name> [distance in m, default 250] [height above sea in m, default the island's own elevation]")]
 		public static void SpawnIslandCommand(string[] args)
 		{
-			if (args == null || args.Length == 0) { Notify("Usage: SpawnIsland <name> [distance]   (ListIslands shows saved islands)", true); return; }
-			float distance = SpawnDistance;
+			if (args == null || args.Length == 0) { Notify("Usage: SpawnIsland <name> [distance] [height]   (ListIslands shows saved islands)", true); return; }
+			// Trailing numbers: distance, then height (island names may contain spaces)
+			var numbers = new List<float>();
 			float parsed;
-			if (args.Length > 1 && float.TryParse(args[args.Length - 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+			while (args.Length > 1 && numbers.Count < 2 && float.TryParse(args[args.Length - 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
 			{
-				distance = Mathf.Clamp(parsed, 20f, 390f);
+				numbers.Insert(0, parsed);
 				args = args.Take(args.Length - 1).ToArray();
 			}
+			float distance = numbers.Count > 0 ? Mathf.Clamp(numbers[0], 20f, 390f) : SpawnDistance;
+			float? height = numbers.Count > 1 ? Mathf.Clamp(numbers[1], IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : (float?)null;
 			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a game to spawn an island", true); return; }
 			if (!Raft_Network.IsHost) { Notify("Only the host can spawn islands", true); return; }
 
@@ -533,9 +540,11 @@ namespace DynamicIslands
 			Vector3 origin = raft != null ? raft.transform.position : Vector3.zero;
 			Vector3 dir = Raft.direction.sqrMagnitude > 0.01f ? Raft.direction.normalized : Vector3.forward;
 			Vector3 position = origin + new Vector3(dir.x, 0, dir.z).normalized * distance;
-			position.y = 0; // sea level
+			string name = string.Join(" ", args);
+			// The island's y is its elevation above sea level (0 = a normal island)
+			position.y = height ?? IslandSpawner.ElevationOf(name);
 
-			instance.StartCoroutine(instance.SpawnIslandFile(string.Join(" ", args), position, true));
+			instance.StartCoroutine(instance.SpawnIslandFile(name, position, true));
 		}
 
 		/// <param name="broadcast">host spawning a new island: tell clients and remember it in the world's island list</param>
@@ -717,6 +726,16 @@ namespace DynamicIslands
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.PaintLayer;
 			Debug.Log("[CUSTOM ISLANDS] Painting " + TerrainPainter.LayerNames[layer]);
 		}
+		[ConsoleCommand(name: "SetElevation", docs: "Editor: metres above sea level this island floats at in game (e.g. 60 = a flying island, -25 = under water, 0 = normal). Saved with the island.")]
+		public static void SetElevationCommand(string[] args)
+		{
+			float v;
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
+			{ Notify("Elevation is " + currentElevation + " m. Usage: SetElevation <metres>  (60 = flying, -25 = under water, 0 = normal)"); return; }
+			currentElevation = Mathf.Clamp(v, IslandSpawner.MinElevation, IslandSpawner.MaxElevation);
+			Notify("Island elevation: " + IslandSpawner.DescribeElevation(currentElevation) + " (saved with the island)");
+		}
+
 		[ConsoleCommand(name: "GenerateIsland", docs: "Editor: generates a random island (replaces the current one; Ctrl+Z undoes). Usage: GenerateIsland [seed] [size in m] [height in m] [roughness 0-1] [peaks] [objects 0-1]")]
 		public static void GenerateIslandCommand(string[] args)
 		{

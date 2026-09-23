@@ -46,6 +46,160 @@ namespace DynamicIslands.Editor
 			Object.Destroy(root);
 		}
 
+		#region Elevation (flying and underwater islands)
+
+		public const float MinElevation = -100f, MaxElevation = 250f;
+		/// <summary>Islands raised more than this above the sea are built as flying islands (holes + rocky underside).</summary>
+		public const float FlyingThreshold = 3f;
+		/// <summary>Clearance kept between a flying island's underside and the sea, so a raft can pass beneath.</summary>
+		const float UndersideClearance = 8f;
+
+		public static string DescribeElevation(float e)
+		{
+			if (e > FlyingThreshold) return "flying " + e.ToString("F0") + " m above the sea";
+			if (e < -0.5f) return "under water, top of the land " + (-e).ToString("F0") + " m deeper than normal";
+			return "normal (at sea level)";
+		}
+
+		/// <summary>The elevation saved in an island file (0 if it can't be read).</summary>
+		public static float ElevationOf(string islandName)
+		{
+			try { return IslandFile.Load(PathFor(islandName)).Elevation; }
+			catch { return 0f; }
+		}
+
+		/// <summary>
+		/// Flying island: cuts holes in the terrain wherever it lies below the editor's sea level (so no flat square of
+		/// seabed floats in the sky) and hangs a rocky underside below the remaining land, from the coastline down to a
+		/// point, with a collider so a low island still stops a raft.
+		/// </summary>
+		static void MakeFlying(TerrainData data, Transform terrainTransform, float waterLevel, float elevation)
+		{
+			int res = data.heightmapResolution, cells = res - 1;
+			float[,] h = data.GetHeights(0, 0, res, res);
+			float spacing = data.size.x / cells, height = data.size.y;
+			float water = waterLevel / height;
+
+			// Land samples, and each land sample's distance (in samples) to the nearest non-land sample
+			var land = new bool[res, res];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) land[z, x] = h[z, x] > water;
+			int[,] dist = DistanceToEdge(land, res);
+
+			// Holes: keep only cells whose four corners are land
+			var solid = new bool[cells, cells];
+			int kept = 0;
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					solid[z, x] = land[z, x] && land[z, x + 1] && land[z + 1, x] && land[z + 1, x + 1];
+					if (solid[z, x]) kept++;
+				}
+			if (kept == 0) return;
+			data.SetHoles(0, 0, solid);
+
+			// Underside: same grid as the kept cells; the rim follows the surface, the inside hangs down like a cone
+			// that is deepest under the middle of the land (never reaching down to the sea)
+			float maxDepth = Mathf.Max(2f, elevation - UndersideClearance);
+			int dMax = 1;
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (dist[z, x] > dMax) dMax = dist[z, x];
+			float coneDepth = Mathf.Min(maxDepth, dMax * spacing * 0.9f);
+			var index = new int[res, res];
+			var verts = new List<Vector3>();
+			var uvs = new List<Vector2>();
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+				{
+					index[z, x] = -1;
+					if (!land[z, x]) continue;
+					float surface = h[z, x] * height;
+					int d = dist[z, x] - 1; // 0 on the coastline
+					float noise = Mathf.PerlinNoise(x * 0.07f, z * 0.07f);
+					// Relative to sea level (terrain y = waterLevel); rounded near the rim, ragged with noise
+					float depth = Mathf.Min(coneDepth * Mathf.Pow(d / (float)dMax, 0.75f) * (0.8f + 0.4f * noise), maxDepth);
+					float y = d == 0 ? surface : Mathf.Min(surface, waterLevel) - depth;
+					index[z, x] = verts.Count;
+					verts.Add(new Vector3(x * spacing, y, z * spacing));
+					uvs.Add(new Vector2((x * spacing + y) / 12f, (z * spacing + y) / 12f));
+				}
+			var tris = new List<int>();
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					if (!solid[z, x]) continue;
+					int a = index[z, x], b = index[z, x + 1], c = index[z + 1, x], e = index[z + 1, x + 1];
+					// Wound to face downwards
+					tris.Add(a); tris.Add(b); tris.Add(c);
+					tris.Add(b); tris.Add(e); tris.Add(c);
+				}
+
+			var mesh = new Mesh { name = "CI_FlyingUnderside" };
+			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+			mesh.SetVertices(verts);
+			mesh.SetUVs(0, uvs);
+			mesh.SetTriangles(tris, 0);
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
+
+			var go = new GameObject("Underside");
+			go.layer = TerrainLayer;
+			go.transform.SetParent(terrainTransform, false);
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterial = UndersideMaterial();
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+		}
+
+		/// <summary>Chamfer distance (in samples) from each true cell to the nearest false cell.</summary>
+		static int[,] DistanceToEdge(bool[,] inside, int res)
+		{
+			const int Far = 1 << 20;
+			var d = new int[res, res];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) d[z, x] = inside[z, x] ? Far : 0;
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+				{
+					if (d[z, x] == 0) continue;
+					int v = d[z, x];
+					if (x > 0) v = Mathf.Min(v, d[z, x - 1] + 1); else v = 1;
+					if (z > 0) v = Mathf.Min(v, d[z - 1, x] + 1); else v = 1;
+					d[z, x] = v;
+				}
+			for (int z = res - 1; z >= 0; z--)
+				for (int x = res - 1; x >= 0; x--)
+				{
+					if (d[z, x] == 0) continue;
+					int v = d[z, x];
+					if (x < res - 1) v = Mathf.Min(v, d[z, x + 1] + 1); else v = 1;
+					if (z < res - 1) v = Mathf.Min(v, d[z + 1, x] + 1); else v = 1;
+					d[z, x] = v;
+				}
+			return d;
+		}
+
+		static Material undersideMaterial;
+
+		/// <summary>Rock-textured material for the underside (the terrain's rock layer when Raft's textures are in use).</summary>
+		static Material UndersideMaterial()
+		{
+			if (undersideMaterial != null) return undersideMaterial;
+			Shader shader = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
+			undersideMaterial = new Material(shader) { name = "CI_FlyingUnderside" };
+			TerrainLayer rock = TerrainPainter.Layers[TerrainPainter.Rock];
+			if (rock != null && rock.diffuseTexture != null)
+			{
+				undersideMaterial.mainTexture = rock.diffuseTexture;
+				if (rock.normalMapTexture != null && undersideMaterial.HasProperty("_BumpMap"))
+				{
+					undersideMaterial.SetTexture("_BumpMap", rock.normalMapTexture);
+					undersideMaterial.EnableKeyword("_NORMALMAP");
+				}
+			}
+			else undersideMaterial.color = new Color(0.45f, 0.42f, 0.38f);
+			if (undersideMaterial.HasProperty("_Glossiness")) undersideMaterial.SetFloat("_Glossiness", 0.05f);
+			return undersideMaterial;
+		}
+
+		#endregion
+
 		public static string PathFor(string islandName)
 		{
 			return Path.Combine(DynamicIslands.assetpath, islandName + IslandFile.Extension);
@@ -72,11 +226,13 @@ namespace DynamicIslands.Editor
 		/// Instantiates the island's objects under parent. Positions in the file are relative to the terrain origin,
 		/// so parent should sit at the terrain origin. Returns the number of objects that could not be found.
 		/// </summary>
-		public static int SpawnObjects(IslandFile island, Transform parent, bool editable)
+		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
 			int missing = 0;
 			foreach (IslandObject o in island.Objects)
 			{
+				// A flying island has no sea around it: corals and the like would hang in the air
+				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) continue;
 				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
 				if (go == null)
 				{
@@ -212,12 +368,17 @@ namespace DynamicIslands.Editor
 				TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
 			}
 
+			bool flying = worldPosition.y > FlyingThreshold;
+			if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
+
 			var objects = new GameObject("Objects");
 			objects.transform.SetParent(root.transform, false);
-			int missing = SpawnObjects(island, objects.transform, false);
+			int missing = SpawnObjects(island, objects.transform, false, flying);
+			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
 
 			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
-				(island.Objects.Count - missing) + "/" + island.Objects.Count + " objects");
+				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
+				(wanted < island.Objects.Count ? " (" + (island.Objects.Count - wanted) + " under-water objects left out)" : ""));
 			return root;
 		}
 	}

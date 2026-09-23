@@ -19,6 +19,7 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		InputField nameField;
+		InputField elevationField;
 		RectTransform listContent;
 		Text status;
 		Font font;
@@ -56,6 +57,7 @@ namespace DynamicIslands.Editor
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.nameField.text = DynamicIslands.currentIslandName;
+			instance.elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
 			instance.pendingOverwrite = null;
 			instance.SetStatus("Type a name or pick an island. Double-click an island to load it.", false);
 			instance.Refresh();
@@ -78,7 +80,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			EditorInput.IsTyping = nameField != null && nameField.isFocused;
+			EditorInput.IsTyping = (nameField != null && nameField.isFocused) || (elevationField != null && elevationField.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 			else if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && nameField.text.Trim().Length > 0) OnSave();
 		}
@@ -98,13 +100,14 @@ namespace DynamicIslands.Editor
 			panel.GetComponent<Image>().color = PanelColor;
 
 			MakeText(panel.transform, "Title", "ISLANDS", 24, TextLight, new Vector2(0, 170), new Vector2(400, 36), TextAnchor.MiddleCenter, FontStyle.Bold);
-			MakeText(panel.transform, "NameLabel", "Island name", 14, TextLight, new Vector2(0, 138), new Vector2(400, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
+			MakeText(panel.transform, "NameLabel", "Island name", 14, TextLight, new Vector2(-60, 138), new Vector2(280, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
+			MakeText(panel.transform, "ElevationLabel", "Height (m)", 14, TextLight, new Vector2(145, 138), new Vector2(110, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
 
 			// Name field
 			GameObject field = DefaultControls.CreateInputField(new DefaultControls.Resources());
 			field.name = "NameField";
 			field.transform.SetParent(panel.transform, false);
-			Place(field.GetComponent<RectTransform>(), new Vector2(0, 112), new Vector2(400, 32));
+			Place(field.GetComponent<RectTransform>(), new Vector2(-60, 112), new Vector2(280, 32));
 			field.GetComponent<Image>().color = EntryColor;
 			nameField = field.GetComponent<InputField>();
 			nameField.characterLimit = 64;
@@ -112,6 +115,26 @@ namespace DynamicIslands.Editor
 			nameField.placeholder.GetComponent<Text>().text = "e.g. myisland";
 			nameField.placeholder.GetComponent<Text>().color = new Color(0.4f, 0.35f, 0.3f, 0.8f);
 			nameField.onValueChanged.AddListener(v => { pendingOverwrite = null; Highlight(); });
+
+			// Elevation: 0 = normal island, above 0 = flying, below 0 = under water (saved with the island)
+			GameObject elevation = DefaultControls.CreateInputField(new DefaultControls.Resources());
+			elevation.name = "ElevationField";
+			elevation.transform.SetParent(panel.transform, false);
+			Place(elevation.GetComponent<RectTransform>(), new Vector2(145, 112), new Vector2(110, 32));
+			elevation.GetComponent<Image>().color = EntryColor;
+			elevationField = elevation.GetComponent<InputField>();
+			elevationField.contentType = InputField.ContentType.DecimalNumber;
+			elevationField.characterLimit = 6;
+			foreach (Text t in elevation.GetComponentsInChildren<Text>(true)) { t.font = font; t.fontSize = 16; t.color = TextDark; t.verticalOverflow = VerticalWrapMode.Overflow; }
+			elevationField.placeholder.GetComponent<Text>().text = "0";
+			elevationField.onEndEdit.AddListener(v =>
+			{
+				float e;
+				DynamicIslands.currentElevation = float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out e)
+					? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
+				elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
+				SetStatus("In game this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + ". Save to keep it.", false);
+			});
 
 			MakeText(panel.transform, "ListLabel", "Saved islands", 14, TextLight, new Vector2(0, 82), new Vector2(400, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
 
@@ -187,6 +210,9 @@ namespace DynamicIslands.Editor
 
 		void OnSave()
 		{
+			float e;
+			if (float.TryParse(elevationField.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out e))
+				DynamicIslands.currentElevation = Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation);
 			string n = nameField.text.Trim();
 			if (n.Length == 0) { SetStatus("Type a name first.", true); return; }
 			if (n.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) { SetStatus("A name can't contain \\ / : * ? \" < > |", true); return; }
