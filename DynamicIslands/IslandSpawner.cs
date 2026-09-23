@@ -61,15 +61,34 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Builds the island in the current (game) scene with its sea level at worldPosition.y.
-		/// The terrain is centred on worldPosition horizontally. The catalog must already be built.
+		/// Centre (terrain-local x/z) of the parts of the island above the water level, so the land
+		/// rather than the middle of the whole terrain square is what ends up where we spawn.
+		/// Falls back to the terrain centre when nothing is above water.
+		/// </summary>
+		public static Vector2 LandCentre(IslandFile island)
+		{
+			int res = island.HeightmapResolution;
+			float water = island.WaterLevel / island.TerrainSize.y;
+			double sx = 0, sz = 0; long n = 0;
+			for (int y = 0; y < res; y++)
+				for (int x = 0; x < res; x++)
+					if (island.Heights[y, x] > water) { sx += x; sz += y; n++; }
+			if (n == 0) return new Vector2(island.TerrainSize.x / 2f, island.TerrainSize.z / 2f);
+			float step = 1f / (res - 1);
+			return new Vector2((float)(sx / n) * step * island.TerrainSize.x, (float)(sz / n) * step * island.TerrainSize.z);
+		}
+
+		/// <summary>
+		/// Builds the island in the current (game) scene with its sea level at worldPosition.y and the
+		/// centre of its land at worldPosition horizontally. The catalog must already be built.
 		/// </summary>
 		public static GameObject SpawnInWorld(IslandFile island, Vector3 worldPosition)
 		{
 			var root = new GameObject("CustomIsland_" + island.Name);
-			// Terrain origin is its corner; shift so the island's centre lands on worldPosition,
+			// Terrain origin is its corner; shift so the land centre lands on worldPosition,
 			// and down so the editor's water level lines up with the sea
-			root.transform.position = worldPosition - new Vector3(island.TerrainSize.x / 2f, island.WaterLevel, island.TerrainSize.z / 2f);
+			Vector2 land = LandCentre(island);
+			root.transform.position = worldPosition - new Vector3(land.x, island.WaterLevel, land.y);
 
 			TerrainData data = CreateTerrainData(island.TerrainSize, island.HeightmapResolution);
 			data.SetHeights(0, 0, island.Heights);
