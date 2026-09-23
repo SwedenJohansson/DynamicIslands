@@ -55,7 +55,12 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     SpawnIsland <name>            in game (host): spawn a saved island 400 m ahead of the raft
     SpawnCustomLandmark <name>    in game (host): spawn a legacy .assets island bundle
     RefreshLandmarkBundles        reload .assets bundles
-    SetToRaise/Lower/Flatten/Sample/SampleAverage, ChangeWidth/ChangeHeight <int>, ChangeStrength <0.1-1>
+    SetToRaise/Lower/Flatten/Smooth, ChangeWidth <brush diameter in m>, ChangeStrength <m per second>
+    CITest / CITestWorld / CILook  dev self-tests (results in the console with a [CITEST] prefix)
+
+  Editor: Terrain tab (layers icon) = Raise/Lower/Flatten/Smooth + brush size/strength sliders;
+    Objects tab (tree icon) = object list + Move/Rotate/Scale/Delete. Right-drag rotates the camera,
+    WASD moves, mouse wheel changes height. Terrain textures (sand/grass/rock/seabed) paint automatically.
 
   Placeable objects: built automatically from Raft's Vasagatan scene the first time the editor opens.
     The list is written to Mods\DynamicIslands\placeables_generated.txt. To curate it, copy it to
