@@ -56,6 +56,10 @@ namespace DynamicIslands.Editor
 			{
 				Reciever_Dot d = Object.Instantiate(r.dotPrefab, r.dotParent);
 				d.transform.localScale = r.dotPrefab.transform.localScale;
+				// The dot looks these up in its own Awake, which hasn't run if the receiver's UI is inactive
+				if (d.rect == null) d.rect = (RectTransform)d.transform;
+				if (d.dotNumberText == null) d.dotNumberText = d.GetComponentInChildren<Text>(true);
+				if (d.dotImage == null) d.dotImage = d.GetComponentInChildren<Image>(true);
 				foreach (Graphic g in d.GetComponentsInChildren<Graphic>(true)) if (!(g is Text)) g.color = DotColor;
 				list.Add(d);
 			}

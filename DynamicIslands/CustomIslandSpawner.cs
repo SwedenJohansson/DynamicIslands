@@ -162,8 +162,8 @@ namespace DynamicIslands.Editor
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;
 				name = GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed;
-				// Land can reach about 1.6 x the radius setting; used for placing until the real file exists
-				radiusCache[name] = generate.Radius * 1.6f;
+				// Land reaches about 1.4 x the radius setting (1.37 measured); used for placing until the real file exists
+				radiusCache[name] = generate.Radius * 1.4f;
 				elevationCache[name] = elevation;
 			}
 			float radius = LandRadius(name);
@@ -176,7 +176,8 @@ namespace DynamicIslands.Editor
 				// Off-centre so it's reachable but not always dead ahead; later attempts spread wider
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
-				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax), radius + Clearance);
+				// Later attempts also look a little further out
+				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance);
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
@@ -242,9 +243,13 @@ namespace DynamicIslands.Editor
 			{
 				foreach (ChunkPoint cp in cm.GetAllChunkPointsList())
 				{
+					// The rule's overlap radius is the footprint Raft keeps free around its island; floating rafts are
+					// small drifting wrecks, so they only need a little room (Raft packs its points densely: about a
+					// dozen within 1 km, so being stricter leaves hardly any open sea)
+					bool raftWreck = cp.rule != null && cp.rule.name.IndexOf("FloatingRaft", StringComparison.OrdinalIgnoreCase) >= 0;
 					float overlap = cp.rule != null ? cp.rule.collisionOverlapRadius : 150f;
 					float d = Flat(candidate - cp.worldPosition).magnitude;
-					if (d < overlap + radius + Clearance) return "Raft's " + (cp.rule != null ? cp.rule.name : "island") + " " + d.ToString("F0") + " m away";
+					if (d < (raftWreck ? 20f : overlap) + radius) return "Raft's " + (cp.rule != null ? cp.rule.name : "island") + " " + d.ToString("F0") + " m away";
 				}
 				if (cm.DoesLineIntersectWithChunkPoints(raftPos, candidate)) return "one of Raft's islands is in the way";
 			}

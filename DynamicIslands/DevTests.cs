@@ -215,6 +215,23 @@ namespace DynamicIslands
 			else Fail("undo/redo or islands window");
 		}
 
+		[ConsoleCommand(name: "CIChunkInfo", docs: "Dev, in game: Raft's island spawn points near the raft - rule, overlap radius, distance")]
+		public static void ChunkInfo()
+		{
+			Vector3? pos = CustomIslandSpawner.RaftPosition;
+			ChunkManager cm = ComponentManager<ChunkManager>.Value;
+			if (!pos.HasValue || cm == null) { Fail("not in a world"); return; }
+			var points = cm.GetAllChunkPointsList();
+			Log(points.Count + " chunk points in total");
+			foreach (var g in points.Where(p => p.rule != null).GroupBy(p => p.rule.name))
+			{
+				var near = g.Select(p => Flat(p.worldPosition - pos.Value).magnitude).OrderBy(d => d).ToList();
+				Log(string.Format("  {0}: overlap radius {1:F0} m, view distance {2:F0} m, {3} points, {4} within 1 km, nearest {5}",
+					g.Key, g.First().rule.collisionOverlapRadius, g.First().rule.viewDistance, near.Count, near.Count(d => d < 1000f),
+					string.Join(", ", near.Take(4).Select(d => d.ToString("F0") + " m").ToArray())));
+			}
+		}
+
 		[ConsoleCommand(name: "CISpawnGenerated", docs: "Dev, in game (host): the automatic spawner generates a brand-new island ahead of the raft now; checks its file, style and objects. CISpawnGenerated [keep]")]
 		public static void SpawnGenerated(string[] args)
 		{
@@ -309,9 +326,11 @@ namespace DynamicIslands
 		{
 			bool ok = true;
 			// 1. Search
-			ObjectListSearch search = UnityEngine.Object.FindObjectOfType<ObjectListSearch>();
-			UnityEngine.UI.InputField field = search != null ? search.GetComponent<UnityEngine.UI.InputField>() : null;
-			Transform content = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content");
+			// (the Objects tab may be hidden, so look it up by path rather than with FindObjectOfType)
+			Transform toolList = GameObject.Find("ToolList").transform;
+			Transform searchTransform = toolList.Find("ObjectTool/ObjectSearch");
+			UnityEngine.UI.InputField field = searchTransform != null ? searchTransform.GetComponent<UnityEngine.UI.InputField>() : null;
+			Transform content = toolList.Find("ObjectTool/Scroll View/Viewport/Content");
 			if (field == null) { Fail("no search field"); yield break; }
 			System.Func<int> visibleObjects = () => content.Cast<Transform>().Count(t => t.gameObject.activeSelf && !t.name.StartsWith("Header_") && t.name != "Button");
 			int all = visibleObjects();
@@ -340,10 +359,11 @@ namespace DynamicIslands
 			foreach (Transform t in objs) gizmo.AddTarget(t, false);
 			PlacementOptions.AlignToSlope = false;
 			int n = PlacementOptions.DropSelectionToGround();
-			bool grounded = objs.All(t => Mathf.Abs(t.position.y - (terrain.SampleHeight(t.position) + terrain.transform.position.y)) < 0.2f && Vector3.Angle(t.up, Vector3.up) < 1f);
+			// (without Slope an object keeps its own rotation; some of Raft's rocks come tilted)
+			float off = objs.Max(t => Mathf.Abs(t.position.y - (terrain.SampleHeight(t.position) + terrain.transform.position.y)));
 			CommandUndoRedo.UndoRedoManager.Undo();
 			bool undone = objs.All(t => t.position.y > 150f);
-			Check(ref ok, n == 3 && grounded && undone, "Ground put " + n + " objects on the terrain, upright; Ctrl+Z lifted them back");
+			Check(ref ok, n == 3 && off < 0.2f && undone, "Ground put " + n + " objects on the terrain (largest height difference " + off.ToString("F2") + " m); Ctrl+Z lifted them back: " + undone);
 
 			// 3. With Slope on they lean with the ground
 			PlacementOptions.AlignToSlope = true;

@@ -107,9 +107,9 @@ namespace DynamicIslands.Editor
 			},
 			new ZoneObjects // Volcanic
 			{
-				Shore = new Regex(@"^(CaravanIsland_SmallRock_\d+|TP_SmallRock0\d)$"),
+				// (no Temperance rocks anywhere: they have snow on them)
+				Shore = new Regex(@"^(CaravanIsland_SmallRock_\d+|Pickup_Landmark_Rock \d+)$"),
 				Inland = new Regex(@"^(DesertFern_\d+|SmallBush_\d+|BigSharpRock_\d+|Pickup_Landmark_(Iron|Copper) \d+)$"),
-				// (no Temperance rocks: they have snow on them)
 				Rocks = new Regex(@"^(BigSharpRock_\d+|CaravanIsland_SmallRock_\d+|Pickup_Landmark_(Iron|Copper|Rock) \d+)$"),
 				Beach = new Regex(@"^(CaravanIsland_SmallRock_\d+)$"),
 				Underwater = new Regex(@"^(TableCoral_\d+|SeaVine3)$"),
@@ -410,7 +410,7 @@ namespace DynamicIslands.Editor
 			return new IslandGenSettings
 			{
 				Seed = rnd.Next(1, 999999),
-				Radius = 70f + (float)rnd.NextDouble() * 130f,
+				Radius = 60f + (float)rnd.NextDouble() * 110f, // fits between Raft's own islands more often
 				Height = 15f + (float)rnd.NextDouble() * 55f,
 				Roughness = 0.3f + (float)rnd.NextDouble() * 0.6f,
 				Peaks = 1 + rnd.Next(3),
