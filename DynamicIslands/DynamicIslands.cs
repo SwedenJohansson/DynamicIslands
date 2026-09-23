@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using RaftGame.Private;
+using HarmonyLib;
 using Steamworks;
 using System;
 using System.Collections;
@@ -19,8 +18,6 @@ using RaftModLoader;
 using DynamicIslands.Editor;
 using System.Reflection;
 using RuntimeGizmos;
-using Newtonsoft.Json;
-using System.Globalization;
 
 namespace DynamicIslands
 {
@@ -49,12 +46,17 @@ namespace DynamicIslands
 	public class IslandMessage : Message
 	{
 		public string[] Islandtoload;
+		// Set for .island files (new editor format); empty for legacy .assets landmark bundles
+		public float[] Position;
 	}
 
 	public class DynamicIslands : Mod
 	{
 		public static List<landmarkBundle> landmarkBundles = new List<landmarkBundle>();
-		static string assetpath = @"Mods\DynamicIslands\";
+		public static readonly string assetpath = @"Mods\DynamicIslands\";
+
+		/// <summary>Name used by the editor's Save/Load menu entries; set by LoadIsland/SaveIsland commands.</summary>
+		public static string currentIslandName = "myisland";
 		public static LoadSceneManager loadSceneManagerinstance;
 
 		public AssetBundle mainbundle;
@@ -73,7 +75,7 @@ namespace DynamicIslands
 
 		#region IslandObjectDefinition
 
-		List<GameObject> VasagatanDefinitions = new List<GameObject>();
+		// Placeable objects now live in PlaceableCatalog (built from Raft's Vasagatan scene)
 
 
 
@@ -116,6 +118,9 @@ namespace DynamicIslands
 
 			//Adding the Editor button to the main menu
 			HookUI();
+
+			//Legacy .assets islands for SpawnCustomLandmark
+			RefreshLandmarkBundles(new string[0]);
 
 			DynamicIslandsLoad.Close();
 			DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands has been loaded!", 5);
@@ -185,10 +190,13 @@ namespace DynamicIslands
 					Message message = netMessage.message;
 					// Do your stuff with the message now that you know 
 					// its yours and its the wanted type.
-					Debug.Log("Host asked to instantiate a new island");
 					IslandMessage msg = message as IslandMessage;
-					Debug.Log("Loading island from Host: " + msg.Islandtoload[0]);
-					ForceSpawnNewLandmark(msg.Islandtoload);
+					if (msg == null || msg.Islandtoload == null || msg.Islandtoload.Length == 0) return;
+					Debug.Log("[CUSTOM ISLANDS] Host asked to spawn island: " + msg.Islandtoload[0]);
+					if (msg.Position != null && msg.Position.Length == 3)
+						StartCoroutine(SpawnIslandFile(msg.Islandtoload[0], new Vector3(msg.Position[0], msg.Position[1], msg.Position[2]), false));
+					else
+						ForceSpawnNewLandmark(msg.Islandtoload);
 				}
 			}
 		}
@@ -198,6 +206,64 @@ namespace DynamicIslands
 			//The mod will not be able to be unloaded, therefore this will be unused
 			Debug.Log("Mod Custom Islands has been unloaded!");
 		}
+
+		#region Legacy landmark bundles (.assets, restored from v1.1.1)
+
+		public static async Task readBundles()
+		{
+			List<landmarkBundle> bundles = new List<landmarkBundle>();
+
+			foreach (string asset in Directory.EnumerateFiles(assetpath, "*.assets"))
+			{
+				try
+				{
+					landmarkBundle bundle = new landmarkBundle();
+					bundle.path = asset;
+					bundle.name = Path.GetFileNameWithoutExtension(asset);
+					AssetBundleCreateRequest request = AssetBundle.LoadFromMemoryAsync(File.ReadAllBytes(asset));
+					await request;
+					bundle.bundle = request.assetBundle;
+					if (bundle.bundle == null)
+					{
+						Debug.LogWarning("[CUSTOM ISLANDS] Could not load island bundle " + asset + " (built with an incompatible Unity version?)");
+						continue;
+					}
+					bundles.Add(bundle);
+					Debug.Log("[CUSTOM ISLANDS] Loaded island bundle " + asset);
+				}
+				catch (Exception e)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] Could not load island bundle " + asset + ": " + e);
+				}
+			}
+
+			landmarkBundles = bundles;
+		}
+
+		[ConsoleCommand(name: "RefreshLandmarkBundles", docs: "Reloads the .assets island bundles from Mods\\DynamicIslands")]
+		public static async void RefreshLandmarkBundles(string[] args)
+		{
+			HNotification notification = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading custom island bundles...");
+			try
+			{
+				foreach (landmarkBundle bundle in landmarkBundles)
+				{
+					if (bundle.bundle != null) bundle.bundle.Unload(true);
+				}
+				landmarkBundles.Clear();
+				await readBundles();
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] RefreshLandmarkBundles failed: " + e);
+			}
+			finally
+			{
+				notification.Close();
+			}
+		}
+
+		#endregion
 
 
 
@@ -288,12 +354,10 @@ namespace DynamicIslands
 						SceneManager.LoadScene("MainMenuScene", LoadSceneMode.Single);
 						break;
 					case 1:
-						//Save the island
-						SaveIsland();
+						SaveIsland(currentIslandName);
 						break;
 					case 2:
-						//Load the island
-						LoadIsland("test.json");
+						LoadIsland(currentIslandName);
 						break;
 				}
 			});
@@ -317,54 +381,49 @@ namespace DynamicIslands
 					Debug.Log("added event to " + tabbSelector.transform.GetChild(temp).name);
 				}
 			}
-			catch (Exception e) { }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not set up editor tabs: " + e); }
 
-			SceneManager.LoadScene("44#Landmark_Vasagatan", LoadSceneMode.Additive);
-			await Task.Delay(1000);
-			Scene sceneVasagatan = SceneManager.GetSceneByName("44#Landmark_Vasagatan");
+			// The gizmo must exist before any palette button can be clicked
+			EditorGizmoHandler = Camera.main.gameObject.AddComponent<TransformGizmo>();
 
-			GameObject vasagatanBoat = sceneVasagatan.GetRootGameObjects()[0].transform.Find("Boat related").gameObject;
-			if (vasagatanBoat == null) Debug.Log("Boat is null");
+			CreateWaterLevelPlane();
 
-			string[] vasagatanFile = File.ReadAllLines("vasagatanboat.goodv1.txt");
+			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
+			await PlaceableCatalog.EnsureBuilt();
+			catalogNote.Close();
 
-			foreach (Transform el in vasagatanBoat.GetComponentsInChildren<Transform>())
+			try
 			{
-				if (vasagatanFile.Contains(el.name))
+				//Add gameobjects to the gameobject list in the editor
+				GameObject ContentGO = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content").gameObject;
+				GameObject ButtonTemplate = ContentGO.transform.Find("Button").gameObject;
+
+				foreach (string objectName in PlaceableCatalog.Names)
 				{
-					//Debug.Log("Found instance of Gameobject with name: "+el.name);
-					instance.VasagatanDefinitions.Add(el.gameObject);
+					string nameCopy = objectName;
+					GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
+					newButton.GetComponentInChildren<Text>().text = nameCopy;
+					newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
 				}
+				ButtonTemplate.SetActive(false);
 			}
-
-			//SceneManager.UnloadScene(sceneVasagatan); 
-
-			//Add gameobjects to the gameobject list in the editor
-			GameObject ContentGO = GameObject.Find("ToolList").transform.Find("ObjectTool").transform.Find("Scroll View").transform.Find("Viewport").transform.Find("Content").gameObject;
-			GameObject ButtonTemplate = ContentGO.transform.Find("Button").gameObject;
-
-			for(int i = 0; i<instance.VasagatanDefinitions.Count; i++)
+			catch (Exception e)
 			{
-				var tmp = i;
-				GameObject CurrentGO = instance.VasagatanDefinitions[tmp];
-				GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
-				newButton.GetComponentInChildren<Text>().text = CurrentGO.name;
-				newButton.GetComponent<Button>().onClick.AddListener(() => { Debug.Log("Go placing: " + CurrentGO.name); EditorGizmoHandler.placingObject = true; PlaceObject(CurrentGO); });
-				
+				Debug.LogError("[CUSTOM ISLANDS] Could not fill the object list: " + e);
 			}
-
-			HideSceneGameObjects(sceneVasagatan);
 
 			//Load shaders
-			UnityEngine.Object[] shaders = instance.helperbundle.LoadAllAssets(typeof(Shader));
-			foreach(UnityEngine.Object sh in shaders)
+			try
 			{
-				Debug.Log("File: " + sh.name);
-				_shaders.Add((Shader)sh);
+				UnityEngine.Object[] shaders = instance.helperbundle.LoadAllAssets(typeof(Shader));
+				foreach (UnityEngine.Object sh in shaders)
+				{
+					_shaders.Add((Shader)sh);
+				}
 			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not load editor shaders: " + e); }
 
-
-			EditorGizmoHandler = Camera.main.gameObject.AddComponent<TransformGizmo>();
+			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 
 
 
@@ -374,164 +433,132 @@ namespace DynamicIslands
 
 		}
 
-		public static void SaveIsland()
+		#region Save / load (.island files in Mods\DynamicIslands)
+
+		static bool IsValidIslandName(string name)
 		{
-			//Get a list of all items and store their x, y and z + their name
-			List<IslandData> islandData = new List<IslandData>();
-
-			List<EditorGameObject> PlacedObjects = GameObject.Find("PlacedObjects").GetComponentsInChildren<EditorGameObject>().ToList();
-
-			Debug.Log(PlacedObjects + "" + PlacedObjects.Count);
-			foreach(EditorGameObject EGO in PlacedObjects)
-			{
-				IslandData item = new IslandData();
-
-				item.Name = EGO.GameObjectName;
-				Debug.Log(EGO.transform.localPosition.x);
-				item.TransformData = UtilityMethods.IslandTransformDataConverter(EGO.transform);
-				Debug.Log(item.Name);
-				Debug.Log(item.TransformData._position.Length);
-				Debug.Log(item.TransformData._position[0].ToString());
-				Debug.Log(item);
-				islandData.Add(item);
-			}
-
-			IslandDataList islandDataList = new IslandDataList();
-
-			islandDataList.list = islandData;
-
-			// Get a reference to the active terrain
-			Terrain terrain = terraineditor.terrain;
-
-			// Get the terrain data
-			TerrainData terrainData = terrain.terrainData;
-
-			// Get the heightmap data
-			float[,] heightmap = terrainData.GetHeights(0, 0, terrainData.heightmapResolution, terrainData.heightmapResolution);
-
-			// Convert the heightmap data to a string
-			string heightmapString = "";
-
-			for (int y = 0; y < terrainData.heightmapResolution; y++)
-			{
-				for (int x = 0; x < terrainData.heightmapResolution; x++)
-				{
-					heightmapString += heightmap[y, x].ToString() + " ";
-				}
-				heightmapString += "\n";
-			}
-			islandDataList.TerrainBinaryString = heightmapString;
-
-			string JsonOutput = JsonConvert.SerializeObject(islandDataList);
-
-			Debug.Log(JsonOutput);
-
-			File.WriteAllText("test.json", JsonOutput);
-
-
+			return !string.IsNullOrEmpty(name) && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
 		}
 
-
-		public static void LoadAndCacheDefinitions()
+		static void Notify(string text, bool error = false)
 		{
-			Scene sceneVasagatan = SceneManager.GetSceneByName("44#Landmark_Vasagatan");
-
-			GameObject vasagatanBoat = sceneVasagatan.GetRootGameObjects()[0].transform.Find("Boat related").gameObject;
-			if (vasagatanBoat == null) Debug.Log("Boat is null");
-
-			string[] vasagatanFile = File.ReadAllLines("vasagatanboat.goodv1.txt");
-
-			foreach (Transform el in vasagatanBoat.GetComponentsInChildren<Transform>())
-			{
-				if (vasagatanFile.Contains(el.name))
-				{
-					//Debug.Log("Found instance of Gameobject with name: "+el.name);
-					instance.VasagatanDefinitions.Add(el.gameObject);
-				}
-			}
-		}
-		
-		public static void LoadIsland(string path)
-		{
-			string datafile = File.ReadAllText(path);
-			List<IslandData> islandData = new List<IslandData>();
-
-
-
-			IslandDataList islandDataList = JsonConvert.DeserializeObject<IslandDataList>(datafile);
-			islandData = islandDataList.list;
-
-			Debug.Log(islandData.Count);
-
-			foreach (Transform child in GameObject.Find("PlacedObjects").transform)
-			{
-				Destroy(child.gameObject);
-			}
-
-
-			foreach (IslandData data in islandData)
-			{
-				string searchGoName = data.Name;
-				GameObject gotoplace = instance.VasagatanDefinitions.Find(go => go.name == searchGoName);
-
-				if(gotoplace == null)
-				{
-					Debug.LogError("COULDN'T PLACE GAMEOBJECT WITH NAME: " +  searchGoName);
-					return;
-				}
-
-				//Place the object into the scene
-				//Placing object at the current position
-				GameObject GoInst = Instantiate(gotoplace, new Vector3(data.TransformData._position[0], data.TransformData._position[1], data.TransformData._position[2]), Quaternion.Euler(data.TransformData._rotation[0], data.TransformData._rotation[1], data.TransformData._rotation[2]));
-				GoInst.transform.localScale = new Vector3(data.TransformData._scale[0], data.TransformData._scale[1], data.TransformData._scale[2]);
-				try { GoInst.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception e) { }
-
-				GoInst.gameObject.AddComponent<Editor.EditorGameObject>();
-				GoInst.gameObject.GetComponent<Editor.EditorGameObject>().GameObjectName = searchGoName;
-
-
-				GoInst.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
-
-
-
-			}
-
-			string[] rows = islandDataList.TerrainBinaryString.Split(new char['\n'], StringSplitOptions.RemoveEmptyEntries);
-			int resolution = rows.Length;
-			float[,] heightmap = new float[resolution, resolution];
-			var culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
-			culture.NumberFormat.NumberDecimalSeparator = ",";
-
-			for (int y = 0; y < resolution; y++)
-			{
-				string[] values = rows[y].Split(new char[' '], StringSplitOptions.RemoveEmptyEntries);
-				for (int x = 0; x < resolution; x++)
-				{
-					heightmap[y, x] = float.Parse(values[x], culture);
-				}
-			}
-			terraineditor.terrain.terrainData.SetHeights(0, 0, heightmap);
-		}
-
-		public static void HideSceneGameObjects(Scene scene)
-		{
-			foreach (GameObject sceneObject in scene.GetRootGameObjects())
-			{
-				sceneObject.SetActive(false);
-			}
-		}
-
-		public static void PlaceObject(GameObject GO)
-		{
-			//if any are present
+			if (error) Debug.LogWarning("[CUSTOM ISLANDS] " + text); else Debug.Log("[CUSTOM ISLANDS] " + text);
 			try
 			{
-				Destroy(FindObjectOfType<ObjectPlacer>().gameObject);
+				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, text, 4, error ? HNotify.ErrorSprite : HNotify.CheckSprite);
 			}
-			catch (Exception e) { }
-			GameObject NewObjectToPlace = Instantiate(GO);
-			NewObjectToPlace.AddComponent<ObjectPlacer>();
-			NewObjectToPlace.GetComponent<ObjectPlacer>().GameObjectName=GO.name;
+			catch { }
+		}
+
+		static bool InEditor()
+		{
+			return terraineditor.terrain != null && GameObject.Find("PlacedObjects") != null;
+		}
+
+		[ConsoleCommand(name: "SaveIsland", docs: "Editor: saves the island. Usage: SaveIsland <name>  (no name = current island)")]
+		public static void SaveIslandCommand(string[] args)
+		{
+			SaveIsland(args != null && args.Length > 0 ? string.Join(" ", args) : currentIslandName);
+		}
+
+		[ConsoleCommand(name: "LoadIsland", docs: "Editor: loads a saved island. Usage: LoadIsland <name>")]
+		public static void LoadIslandCommand(string[] args)
+		{
+			LoadIsland(args != null && args.Length > 0 ? string.Join(" ", args) : currentIslandName);
+		}
+
+		[ConsoleCommand(name: "ListIslands", docs: "Lists saved islands (.island) and island bundles (.assets)")]
+		public static void ListIslandsCommand()
+		{
+			Debug.Log("[CUSTOM ISLANDS] Saved islands: " + string.Join(", ", IslandSpawner.ListSavedIslands().ToArray()));
+			Debug.Log("[CUSTOM ISLANDS] Island bundles (SpawnCustomLandmark): " + string.Join(", ", landmarkBundles.Select(b => b.name).ToArray()));
+		}
+
+		public static void SaveIsland(string name)
+		{
+			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return; }
+			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return; }
+			try
+			{
+				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform);
+				island.Save(IslandSpawner.PathFor(name));
+				currentIslandName = name;
+				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Saving failed: " + e);
+				Notify("Saving '" + name + "' failed - see console (F10)", true);
+			}
+		}
+
+		public static void LoadIsland(string name)
+		{
+			if (!InEditor()) { Notify("LoadIsland only works inside the editor", true); return; }
+			string path = IslandSpawner.PathFor(name);
+			if (!File.Exists(path)) { Notify("No saved island named '" + name + "'", true); return; }
+			if (!PlaceableCatalog.IsBuilt) { Notify("Objects are still loading, try again in a moment", true); return; }
+			try
+			{
+				IslandFile island = IslandFile.Load(path);
+
+				Terrain terrain = terraineditor.terrain;
+				if (terrain.terrainData.heightmapResolution != island.HeightmapResolution || terrain.terrainData.size != island.TerrainSize)
+				{
+					terrain.terrainData.heightmapResolution = island.HeightmapResolution;
+					terrain.terrainData.size = island.TerrainSize;
+				}
+				terrain.terrainData.SetHeights(0, 0, island.Heights);
+
+				Transform placed = GameObject.Find("PlacedObjects").transform;
+				foreach (Transform child in placed) Destroy(child.gameObject);
+				// PlacedObjects may not sit at the terrain origin; place relative to the terrain
+				var holder = new GameObject("LoadedObjects");
+				holder.transform.SetParent(placed, false);
+				holder.transform.position = terrain.transform.position;
+				int missing = IslandSpawner.SpawnObjects(island, holder.transform, true);
+
+				currentIslandName = name;
+				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Loading failed: " + e);
+				Notify("Loading '" + name + "' failed - see console (F10)", true);
+			}
+		}
+
+		/// <summary>Semi-transparent plane showing where the sea will be when the island is spawned in game.</summary>
+		static void CreateWaterLevelPlane()
+		{
+			try
+			{
+				GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+				plane.name = "WaterLevel";
+				Destroy(plane.GetComponent<Collider>()); // must not block terrain raycasts
+				Vector3 size = terraineditor.terrain != null ? terraineditor.terrain.terrainData.size : new Vector3(1000, 600, 1000);
+				plane.transform.position = new Vector3(size.x / 2f, IslandFile.DefaultWaterLevel, size.z / 2f);
+				plane.transform.localScale = new Vector3(size.x / 10f, 1, size.z / 10f); // Unity plane is 10x10
+				Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
+				if (shader != null)
+				{
+					plane.GetComponent<Renderer>().material = new Material(shader) { color = new Color(0.1f, 0.45f, 0.8f, 0.35f) };
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not create water level plane: " + e); }
+		}
+
+		#endregion
+
+		public static void PlaceObject(string objectName)
+		{
+			//Only one object can be in "placing" mode at a time
+			ObjectPlacer existing = FindObjectOfType<ObjectPlacer>();
+			if (existing != null) Destroy(existing.gameObject);
+
+			GameObject NewObjectToPlace = PlaceableCatalog.Spawn(objectName, null);
+			if (NewObjectToPlace == null) { Debug.LogWarning("[CUSTOM ISLANDS] Unknown object " + objectName); return; }
+			NewObjectToPlace.AddComponent<ObjectPlacer>().GameObjectName = objectName;
 		}
 
 		[ConsoleCommand(name: "SpawnPrefabTest", docs: "Refreshes the Bundle cache")]
@@ -780,18 +807,13 @@ namespace DynamicIslands
 						//shed.gameObject.transform.GetChild(1).transform.localPosition = new Vector3(0, 1, 0);
 					}
 					catch { };
-					shed.SetSnowmobilePrefab(prefabClass.GetSnowmobilePrefab());
+					shed.snowmobilePrefab = prefabClass.snowmobilePrefab;
 					if (Raft_Network.IsHost)
 					{
 						shed.SpawnSnowmobileNetwork();
 					}
 				}
 			}
-
-			List<string> content = new List<string>();
-			Resources.FindObjectsOfTypeAll<GameObject>().ToList().ForEach(x => content.Add(x.name));
-			Debug.Log(content.ToArray().Length);
-			System.IO.File.WriteAllLines("allresources.txt", content.ToArray());
 
 			//RAPI.GetLocalPlayer().transform.position = CustomLandmark.GetComponentInChildren<Transform>().position;
 			//We just need the first. Keep for later if we want to load multiple
@@ -803,32 +825,66 @@ namespace DynamicIslands
 		}
 
 
-		public IEnumerator WaitforSceneLoading(Scene scene, string customIsland)
+		#region Spawning editor islands (.island) in a world
+
+		/// <summary>Distance in front of the raft where SpawnIsland places the island's centre.</summary>
+		const float SpawnDistance = 400f;
+
+		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name>")]
+		public static void SpawnIslandCommand(string[] args)
 		{
-			while (!scene.isLoaded)
-			{
-				yield return new WaitForSeconds(.01f);
-			}
+			if (args == null || args.Length == 0) { Notify("Usage: SpawnIsland <name>   (ListIslands shows saved islands)", true); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a game to spawn an island", true); return; }
+			if (!Raft_Network.IsHost) { Notify("Only the host can spawn islands", true); return; }
 
-			//scene.name = Path.GetFileNameWithoutExtension(customIsland);
-			if(VasagatanDefinitions.Count == 0)
-			{
-				Debug.Log("No definition for Vasagatan, creating them");
-				LoadAndCacheDefinitions();
-			}
+			Raft raft = FindObjectOfType<Raft>();
+			Vector3 origin = raft != null ? raft.transform.position : Vector3.zero;
+			Vector3 dir = Raft.direction.sqrMagnitude > 0.01f ? Raft.direction.normalized : Vector3.forward;
+			Vector3 position = origin + new Vector3(dir.x, 0, dir.z).normalized * SpawnDistance;
+			position.y = 0; // sea level
 
-
-			GameObject PlacedObjectsHolder = new GameObject();
-			PlacedObjectsHolder.name = "PlacedObjects";
-
-			Instantiate(PlacedObjectsHolder, scene.GetRootGameObjects()[0].gameObject.transform);
-
-			LoadIsland(customIsland);
-			
-			//PlaceObjects on island
-
-			yield return 0;
+			instance.StartCoroutine(instance.SpawnIslandFile(string.Join(" ", args), position, true));
 		}
+
+		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast)
+		{
+			string path = IslandSpawner.PathFor(name);
+			if (!File.Exists(path)) { Notify("No saved island named '" + name + "' in " + assetpath, true); yield break; }
+
+			IslandFile island;
+			try { island = IslandFile.Load(path); }
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Could not read " + path + ": " + e);
+				Notify("Could not read island '" + name + "' - see console (F10)", true);
+				yield break;
+			}
+
+			yield return PlaceableCatalog.EnsureBuilt();
+
+			try
+			{
+				GameObject root = IslandSpawner.SpawnInWorld(island, position);
+				root.AddComponent<ReApplyShaders>();
+				Notify("Spawned island '" + name + "'");
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e);
+				Notify("Spawning '" + name + "' failed - see console (F10)", true);
+				yield break;
+			}
+
+			if (broadcast && Raft_Network.IsHost)
+			{
+				IslandMessage msg = new IslandMessage();
+				msg.Islandtoload = new[] { name };
+				msg.Position = new[] { position.x, position.y, position.z };
+				RAPI.SendNetworkMessage(msg, 6969, EP2PSend.k_EP2PSendReliable);
+			}
+		}
+
+		#endregion
 
 
 		#region OnlineIslandDatabaseHandling
@@ -965,53 +1021,22 @@ namespace DynamicIslands
 	}
 
 	//HARMONY PATCHES
-	//Scene Loader
-	[HarmonyPatch(typeof(SceneLoader), nameof(SceneLoader.LoadScenes))]
-	class AdditionalSceneLoadingPatch{
-
-		static void Postfix(ref SceneLoader __instance)
-		{
-			Debug.Log("SCENE LOADER POSTFIX");
-
-			Debug.Log("Loading scene");
-
-			string[] scenePath = DynamicIslands.instance.mainbundle.GetAllScenePaths();
-
-			string[] customIslands = Directory.GetFiles(@"Mods\DynamicIslands\");
-
-			foreach (string island in customIslands)
-			{
-				var scene = new Scene();
-				foreach (string sceneName in scenePath)
-				{
-					if (Utils.SceneNameFromPath(sceneName) == "CustomIsland")
-					{
-						Debug.Log("loading scene " + sceneName);
-						SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
-						scene = SceneManager.GetSceneByName(Utils.SceneNameFromPath(sceneName));
-						break;
-					}
-				}
-				IEnumerator coroutine = DynamicIslands.instance.WaitforSceneLoading(scene, island);
-				DynamicIslands.instance.StartCoroutine(coroutine);
-			}
-			
-		}
-
-	}
+	// (The old SceneLoader.LoadScenes postfix that auto-loaded every file in Mods\DynamicIslands as a JSON island
+	//  was removed: islands are spawned with the SpawnIsland command until they join Raft's spawn pool.)
 
 	#region MiscStuff
 
-	[HarmonyPatch(typeof(Snowmobile), nameof(RaftGame.Private.PrivateAccessor_Snowmobile.Start))]
+	// RML publicizes Assembly-CSharp, so private members are accessed directly
+	[HarmonyPatch(typeof(Snowmobile), "Start")]
 	class snowmoobilenosound
 	{
 		static void Postfix(ref Snowmobile __instance)
 		{
-			if (__instance.GetEmitter_engine() == null)
+			if (__instance.emitter_engine == null)
 			{
 				Debug.Log("EMMITER ENGINE IS NULL");
 			}
-			if (__instance.GetEmitter_impact() == null)
+			if (__instance.emitter_impact == null)
 			{
 				Debug.Log("EMMITER impact IS NULL");
 			}
