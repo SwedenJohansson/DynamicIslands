@@ -21,14 +21,6 @@ using RuntimeGizmos;
 
 namespace DynamicIslands
 {
-	[System.Serializable]
-	public class IslandMessage : Message
-	{
-		public string[] Islandtoload;
-		// Spawn position chosen by the host (x, y, z)
-		public float[] Position;
-	}
-
 	public class DynamicIslands : Mod
 	{
 		public static readonly string assetpath = @"Mods\DynamicIslands\";
@@ -171,24 +163,14 @@ namespace DynamicIslands
 		{
 			try { CustomIslandSpawner.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
+			try { IslandNetwork.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island network: " + e); }
+		}
 
-			if (!Raft_Network.IsHost)
-			{
-				// Choose a unique ID for the channel id to not interfer with other mods.
-				NetworkMessage netMessage = RAPI.ListenForNetworkMessagesOnChannel(6969);
-				if (netMessage != null)
-				{
-					CSteamID id = netMessage.steamid;
-					Message message = netMessage.message;
-					// Do your stuff with the message now that you know 
-					// its yours and its the wanted type.
-					IslandMessage msg = message as IslandMessage;
-					if (msg == null || msg.Islandtoload == null || msg.Islandtoload.Length == 0) return;
-					Debug.Log("[CUSTOM ISLANDS] Host asked to spawn island: " + msg.Islandtoload[0]);
-					if (msg.Position != null && msg.Position.Length == 3)
-						StartCoroutine(SpawnIslandFile(msg.Islandtoload[0], new Vector3(msg.Position[0], msg.Position[1], msg.Position[2]), false));
-				}
-			}
+		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
+		public override bool OnNetworkMessage(object message, Network_UserId from, string modslug)
+		{
+			return IslandNetwork.OnMessage(message, from) || base.OnNetworkMessage(message, from, modslug);
 		}
 
 		public void OnModUnload()
@@ -597,15 +579,6 @@ namespace DynamicIslands
 				Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e);
 				if (entry != null) entry.Failed = true;
 				Notify("Spawning '" + name + "' failed - see console (F10)", true);
-				yield break;
-			}
-
-			if (broadcast && Raft_Network.IsHost)
-			{
-				IslandMessage msg = new IslandMessage();
-				msg.Islandtoload = new[] { name };
-				msg.Position = new[] { position.x, position.y, position.z };
-				RAPI.SendNetworkMessage(msg, 6969, EP2PSend.k_EP2PSendReliable);
 			}
 		}
 
@@ -625,9 +598,10 @@ namespace DynamicIslands
 			if (IslandWorldState.Islands.Count == 0) { Debug.Log("[CUSTOM ISLANDS] No custom islands spawned in this world"); return; }
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			foreach (var e in IslandWorldState.Islands)
-				Debug.Log("[CUSTOM ISLANDS] " + e.Name + " at " + e.Position +
+				Debug.Log("[CUSTOM ISLANDS] " + e.HostName + " at " + e.Position +
 					(raftPos.HasValue ? ", " + Vector3.Distance(new Vector3(e.Position.x, 0, e.Position.z), new Vector3(raftPos.Value.x, 0, raftPos.Value.z)).ToString("F0") + " m from the raft" : "") +
-					(e.Failed ? " (island file missing or broken)" : e.Loading ? " (loading)" : e.Root == null ? " (unloaded: far away)" : ""));
+					(e.Name != e.HostName ? " [file " + e.Name + "]" : "") +
+					(e.Failed ? " (island file missing or broken)" : e.WaitingForFile ? " (waiting for the file from the host)" : e.Loading ? " (loading)" : e.Root == null ? " (unloaded: far away)" : ""));
 		}
 
 		[ConsoleCommand(name: "SpawnPool", docs: "Shows which islands appear on their own while sailing, and how often (edit Mods\\DynamicIslands\\spawnpool.txt to change)")]

@@ -9,7 +9,7 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// Makes saved islands appear on their own while the raft sails (host only), and streams the world's custom
-	/// islands in and out by distance so long worlds don't keep every island in memory.
+	/// islands in and out by distance so long worlds don't keep every island in memory (host and clients).
 	/// Settings and the island pool live in Mods\DynamicIslands\spawnpool.txt; whether it is on is stored per world.
 	/// </summary>
 	public static class CustomIslandSpawner
@@ -80,12 +80,14 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + TickInterval;
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { lastRaftPosition = null; return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { lastRaftPosition = null; return; }
 			Vector3? pos = RaftPosition;
 			if (!pos.HasValue) return;
 
-			LoadPool(false);
+			// Every machine streams its own copy of the island list; only the host adds islands
 			StreamIslands(pos.Value);
+			if (!Raft_Network.IsHost) { lastRaftPosition = null; return; }
+			LoadPool(false);
 
 			float sailed = lastRaftPosition.HasValue ? Flat(pos.Value - lastRaftPosition.Value).magnitude : 0f;
 			lastRaftPosition = pos.Value;
@@ -114,7 +116,7 @@ namespace DynamicIslands.Editor
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
 				}
-				else if (e.Root == null && !e.Loading && !e.Failed && d <Mathf.Max(UnloadDistance - ReloadHysteresis, SpawnDistanceMax + 50f))
+				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < Mathf.Max(UnloadDistance - ReloadHysteresis, SpawnDistanceMax + 50f))
 				{
 					e.Loading = true;
 					DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));

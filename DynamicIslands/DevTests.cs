@@ -557,6 +557,71 @@ namespace DynamicIslands
 			s.stat_oxygen.Value = s.stat_oxygen.Max;
 		}
 
+		/// <summary>Sends a message through RML's own serializer (as the network would) and reads it back.</summary>
+		static IslandNetMessage RoundTrip(IslandNetMessage m, out int bytes)
+		{
+			var writer = new Unity.Netcode.FastBufferWriter(1024, Unity.Collections.Allocator.Temp, 1 << 20);
+			try
+			{
+				new RMessage("citest", m).SerializeFast(writer);
+				bytes = writer.Length;
+				var reader = new Unity.Netcode.FastBufferReader(writer, Unity.Collections.Allocator.Temp);
+				try
+				{
+					reader.Seek(2); // RML's message marker, read by its network patch before DeserializeFast
+					var back = new RMessage();
+					back.DeserializeFast(reader);
+					return back.realMsg as IslandNetMessage;
+				}
+				finally { reader.Dispose(); }
+			}
+			finally { writer.Dispose(); }
+		}
+
+		[ConsoleCommand(name: "CINetTest", docs: "Dev, in game (host): island messages survive RML's serializer, and an island file transfer (looped back locally) arrives intact")]
+		public static void NetTest()
+		{
+			bool ok = true;
+			try
+			{
+				// 1. The island list, as a client that joins would get it
+				IslandNetMessage list = IslandNetwork.IslandsMessage(IslandWorldState.Islands, true);
+				int size;
+				IslandNetMessage back = RoundTrip(list, out size);
+				bool same = back != null && back.Kind == list.Kind && back.FullList && back.Ids.SequenceEqual(list.Ids) && back.Names.SequenceEqual(list.Names) &&
+					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets);
+				Log((same ? "PASS" : "FAIL") + ": island list with " + list.Ids.Length + " island(s) survives RML's serializer (" + size + " bytes)" +
+					(back == null ? " - came back as null" : ""));
+				ok &= same;
+
+				// 2. File transfer: host sends chunks, the client puts them back together under a hash-suffixed name
+				string name = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
+				if (name == null) { Fail("no saved island to transfer"); return; }
+				string hash = IslandNetwork.HashOf(name);
+				var sent = new System.Collections.Generic.List<IslandNetMessage>();
+				IslandNetwork.Loopback = sent.Add;
+				try { IslandNetwork.SendFile(name, hash, default(Network_UserId)); }
+				finally { IslandNetwork.Loopback = null; }
+				string target = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
+				if (File.Exists(target)) File.Delete(target);
+				IslandNetwork.ExpectFile(hash);
+				int maxChunk = 0;
+				foreach (IslandNetMessage chunk in sent)
+				{
+					IslandNetMessage c = RoundTrip(chunk, out size);
+					maxChunk = Math.Max(maxChunk, size);
+					IslandNetwork.ReceiveChunk(c);
+				}
+				bool arrived = File.Exists(target) && File.ReadAllBytes(target).SequenceEqual(File.ReadAllBytes(IslandSpawner.PathFor(name)));
+				Log((arrived ? "PASS" : "FAIL") + ": island file '" + name + "' (" + new FileInfo(IslandSpawner.PathFor(name)).Length + " bytes) sent in " + sent.Count +
+					" chunk(s) of up to " + maxChunk + " bytes and saved intact as " + Path.GetFileName(target));
+				ok &= arrived;
+				if (File.Exists(target)) File.Delete(target);
+			}
+			catch (Exception e) { Fail("exception: " + e); ok = false; }
+			if (ok) Log("PASS: network self test"); else Fail("network self test");
+		}
+
 		[ConsoleCommand(name: "CISpawnNow", docs: "Dev, in game (host): places an island from the spawn pool ahead of the raft now, with the automatic spawner's checks")]
 		public static void SpawnNow()
 		{

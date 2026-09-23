@@ -12,14 +12,22 @@ namespace DynamicIslands.Editor
 	/// Which custom islands exist in the current world, so they come back when the world is loaded again.
 	/// Stored next to the island files as Mods\DynamicIslands\worlds\&lt;world guid&gt;.txt (one "name|x|y|z" per line,
 	/// plus "@auto=on|off" for automatic spawning), written whenever Raft saves the world and read when a world
-	/// finishes loading. Host only: clients get the islands from the host.
+	/// finishes loading. The host's list is the real one; clients hold a copy sent by the host (IslandNetwork).
 	/// An entry's GameObjects exist only while the raft is near it: CustomIslandSpawner unloads and reloads them.
 	/// </summary>
 	public static class IslandWorldState
 	{
 		public class Entry
 		{
+			/// <summary>Given by the host for this session; clients use the host's ids.</summary>
+			public int Id;
+			/// <summary>Island file (without extension) this machine spawns from.</summary>
 			public string Name;
+			/// <summary>Client: the island's name on the host, and its file's content hash.</summary>
+			public string HostName;
+			public string Hash;
+			/// <summary>Client: the island file is still coming from the host.</summary>
+			public bool WaitingForFile;
 			public Vector3 Position;
 			/// <summary>The spawned island, or null while it is unloaded (far away) or still loading.</summary>
 			public GameObject Root;
@@ -36,26 +44,45 @@ namespace DynamicIslands.Editor
 		static string WorldKey { get { return SaveAndLoad.WorldGuid.ToString(); } }
 		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), WorldKey + ".txt"); } }
 
+		/// <summary>Host: adds a new island to the world's list and tells clients about it.</summary>
 		public static Entry Add(string name, Vector3 position, GameObject root)
 		{
 			EnsureCurrentWorld();
-			var entry = new Entry { Name = name, Position = position, Root = root };
+			var entry = new Entry { Id = IslandNetwork.NewId(), Name = name, HostName = name, Position = position, Root = root };
+			islands.Add(entry);
+			IslandNetwork.BroadcastAdded(entry);
+			return entry;
+		}
+
+		/// <summary>Client: an island the host told us about.</summary>
+		public static Entry AddRemote(int id, string hostName, string hash, Vector3 position)
+		{
+			var entry = new Entry { Id = id, Name = hostName, HostName = hostName, Hash = hash, Position = position };
 			islands.Add(entry);
 			return entry;
 		}
 
 		public static bool Contains(Entry entry) { return islands.Contains(entry); }
 
-		/// <summary>Removes (and destroys) islands with this name, or all islands when name is null. Returns how many.</summary>
+		/// <summary>Host: removes (and destroys) islands with this name, or all islands when name is null, and tells clients. Returns how many.</summary>
 		public static int Remove(string name)
 		{
 			EnsureCurrentWorld();
-			List<Entry> gone = islands.Where(e => name == null || e.Name.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+			int[] ids = islands.Where(e => name == null || e.HostName.Equals(name, StringComparison.OrdinalIgnoreCase)).Select(e => e.Id).ToArray();
+			return RemoveIds(ids, true);
+		}
+
+		/// <summary>Removes (and destroys) the islands with these ids; the host also tells clients when broadcast is set.</summary>
+		public static int RemoveIds(IList<int> ids, bool broadcast)
+		{
+			if (ids == null) return 0;
+			List<Entry> gone = islands.Where(e => ids.Contains(e.Id)).ToList();
 			foreach (Entry e in gone)
 			{
-				if (e.Root != null) UnityEngine.Object.Destroy(e.Root);
+				if (e.Root != null) { IslandSpawner.SpawnedRoots.Remove(e.Root); UnityEngine.Object.Destroy(e.Root); }
 				islands.Remove(e);
 			}
+			if (broadcast) IslandNetwork.BroadcastRemoved(gone.Select(e => e.Id));
 			return gone.Count;
 		}
 
@@ -93,7 +120,7 @@ namespace DynamicIslands.Editor
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				foreach (Entry e in islands)
-					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}", e.Name, e.Position.x, e.Position.y, e.Position.z));
+					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}", e.HostName,e.Position.x, e.Position.y, e.Position.z));
 				File.WriteAllLines(FilePath, lines.ToArray());
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
@@ -106,6 +133,7 @@ namespace DynamicIslands.Editor
 			loadedFor = WorldKey;
 			CustomIslandSpawner.Enabled = true;
 			CustomIslandSpawner.OnWorldLoaded();
+			IslandNetwork.OnWorldLoaded();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) return;
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
@@ -119,7 +147,7 @@ namespace DynamicIslands.Editor
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
 					continue;
 				}
-				islands.Add(new Entry { Name = p[0], Position = new Vector3(x, y, z) });
+				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = p[0], HostName = p[0], Position = new Vector3(x, y, z) });
 			}
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
