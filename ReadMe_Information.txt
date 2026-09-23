@@ -40,17 +40,29 @@ HOW RML BUILDS
   zip of this DynamicIslands\ folder. So "building" = zipping. Visual Studio is
   only needed to get error checking while editing.
 
-HOW TO USE (short version - full steps in ..\_ProjectDocs\PROJECT_OVERVIEW.md)
-  - Quick test: copy/link the DynamicIslands\ folder (or a built .rmod) into
-    <Raft>\mods\, start Raft via RMLLauncher, load the mod in the Mod Manager.
-  - build.bat must run from a folder literally named "DynamicIslands"
-    (it uses its own folder name) - from this "-master" zip it produces an empty .rmod.
-  - Console (F10): LoadEditor, SpawnCustomLandmark <name>, SetToRaise/Lower/Flatten,
-    ChangeWidth/ChangeHeight/ChangeStrength, EnableEditing/DisableEditing.
+HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git log)
+  compile.ps1          Compile-check with Visual Studio's MSBuild (catches errors before starting Raft).
+  pack.ps1 [-Install]  Zip DynamicIslands\ into DynamicIslands.rmod; -Install copies it to <Raft>\mods.
+  build.bat            Now just calls pack.ps1.
+  The .csproj finds Raft/RML via the RaftDir / RMLDir properties (defaults match this PC).
+  Raft must have been started once with RML, which creates the publicized assemblies the project uses.
 
-KNOWN PROBLEMS (details in the overview doc)
-  - Needs vasagatanboat.goodv1.txt (list of placeable objects) - file is missing.
-  - SpawnCustomLandmark always says "Invalid Landmark" (bundle-loading code dropped;
-    recoverable from ..\DynamicIslands.rmod v1.1.1).
-  - Terrain heightmap never loads back (string split bug) and saves are locale-dependent.
-  - The .csproj references point to the original author's PC paths.
+  Console (F10):
+    LoadEditor                    open the editor (same as the EDITOR menu button)
+    SaveIsland <name>             editor: save to Mods\DynamicIslands\<name>.island
+    LoadIsland <name>             editor: load a saved island
+    ListIslands                   list saved islands and .assets bundles
+    SpawnIsland <name>            in game (host): spawn a saved island 400 m ahead of the raft
+    SpawnCustomLandmark <name>    in game (host): spawn a legacy .assets island bundle
+    RefreshLandmarkBundles        reload .assets bundles
+    SetToRaise/Lower/Flatten/Sample/SampleAverage, ChangeWidth/ChangeHeight <int>, ChangeStrength <0.1-1>
+
+  Placeable objects: built automatically from Raft's Vasagatan scene the first time the editor opens.
+    The list is written to Mods\DynamicIslands\placeables_generated.txt. To curate it, copy it to
+    placeables.txt and delete lines. The blue plane in the editor is sea level for in-game spawning.
+
+KNOWN LIMITATIONS
+  - Spawned islands don't persist in savegames, and they aren't part of Raft's natural spawn pool yet.
+  - Multiplayer: clients only see an island if they have the same .island file; Raft's networking
+    changed (Unity Netcode) and this path is untested.
+  - The UI bundles were built with Unity 2019.3.5f1; Raft runs 2021.3.45.
