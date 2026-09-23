@@ -202,12 +202,21 @@ namespace RuntimeGizmos
 				SetLines();
 			}
 
-			if (Input.GetKey(DeleteSelected))
+			if (Input.GetKeyDown(DeleteSelected))
 			{
-				for(int i = 0; i < targetRoots.Count; i++)
-				{
-					Destroy(targetRoots.ElementAt(i).Key.gameObject);
-				}
+				DeleteSelection();
+			}
+		}
+
+		/// <summary>Destroys the selected objects. The selection is cleared first so no destroyed transforms stay selected.</summary>
+		public void DeleteSelection()
+		{
+			List<Transform> selected = new List<Transform>(targetRootsOrdered);
+			ClearTargets(false);
+			UndoRedoManager.Clear(); // undo commands would reference the destroyed objects
+			foreach (Transform t in selected)
+			{
+				if (t != null) Destroy(t.gameObject);
 			}
 		}
 

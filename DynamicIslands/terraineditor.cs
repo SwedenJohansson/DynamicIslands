@@ -1,35 +1,22 @@
-﻿using DynamicIslands.Editor;
-using RaftModLoader;
+using DynamicIslands.Editor;
 using System;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands
 {
+	/// <summary>
+	/// Editor terrain: creates the 1000 x 600 x 1000 terrain and sculpts it with a round, soft-edged brush
+	/// while the Terrain tab is selected. Textures are repainted automatically when a stroke ends.
+	/// </summary>
 	public class terraineditor : MonoBehaviour
 	{
-		// Reference to the terrain in the scene
 		public static Terrain terrain;
 		public static TerrainData terrainData;
 
-		// The brush size and strength
-		public float brushSize = 1.0f;
-		public float brushStrength = 0.01f;
-
-		public float moveSpeed = 5.0f;
-
-		// The size of the terrain in terrain units
 		public Vector3 terrainSize = new Vector3(1000, 600, 1000);
-
-		// The heightmap resolution of the terrain
 		public int heightmapResolution = 513;
-
-		// The detail resolution of the terrain
-		public int detailResolution = 1024;
-
-		// The base texture resolution of the terrain
-		public int baseTextureResolution = 1024;
 
 		public Text CamPos;
 
@@ -40,313 +27,177 @@ namespace DynamicIslands
 			Flatten,
 			Sample,
 			SampleAverage,
+			Smooth,
 		}
 
-		public static TerrainModificationAction modificationAction;
+		public static TerrainModificationAction modificationAction = TerrainModificationAction.Raise;
 
-		public static bool allowEditing = false;
+		/// <summary>Brush radius in metres.</summary>
+		public static float brushRadius = 15f;
+		/// <summary>How fast Raise/Lower change the ground at the brush centre, in metres per second.
+		/// For Flatten/Smooth it scales how quickly the ground converges.</summary>
+		public static float strength = 4f;
 
-		private Camera mainCam;
-		private Terrain _targetTerrain;
+		public const float MinRadius = 2f, MaxRadius = 80f;
+		public const float MinStrength = 0.5f, MaxStrength = 20f;
 
-		public static int brushWidth = 2;
-		public static int brushHeight = 2;
+		public static bool allowEditing = true;
 
-		public float _sampledHeight;
-
-		public static float strength = .1f;
-
-		private const string modName = "TerrainEdit";
-
-		private Projector _projector;
-		private GameObject currentProjector;
-
-		public static AssetBundle canvasBundle;
-
-		public static GameObject customCanvas = null;
+		float flattenTarget; // normalised height sampled when a Flatten stroke starts
+		bool stroking;
+		Vector3 dirtyMin, dirtyMax; // world-space area touched by the current stroke, repainted on release
 
 		void Start()
 		{
 			CamPos = GameObject.Find("CamPos").GetComponent<Text>();
-			// Create a new TerrainData object
-			terrainData = new TerrainData();
 
+			terrainData = new TerrainData();
 			// Resolution first: changing it afterwards rescales the size
 			terrainData.heightmapResolution = heightmapResolution;
 			terrainData.size = terrainSize;
 
-			// Set the detail resolution
-			terrainData.SetDetailResolution(detailResolution, 8);
-
-			// Set the base texture resolution
-			terrainData.baseMapResolution = baseTextureResolution;
-
-			// Create a new Terrain game object
 			terrain = Terrain.CreateTerrainGameObject(terrainData).GetComponent<Terrain>();
-
-			// Set the position of the terrain
 			terrain.transform.position = Vector3.zero;
+			terrain.gameObject.layer = IslandSpawner.TerrainLayer;
+			// CreateTerrainGameObject already adds a TerrainCollider bound to the same data
 
-			terrain.gameObject.layer = (LayerMask)16;
-			TerrainCollider terrainCollider;
-			try
-			{
-				// Add a TerrainCollider component to the terrain game object
-				terrainCollider = terrain.gameObject.AddComponent<TerrainCollider>();
-				terrainCollider = terrain.gameObject.GetComponent<TerrainCollider>();
-
-
-			}
-			catch { terrainCollider = terrain.gameObject.GetComponent<TerrainCollider>(); }
-
-			ProceduralTerrainGenerator generator = new ProceduralTerrainGenerator();
-			//generator.TerrainGenerator(terrain);
-
-			terrainCollider.terrainData = terrain.terrainData;
-
-
-
-
-
-
+			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
 		}
-
 
 		void Update()
 		{
 			try
 			{
-				//UI
-				var cam = Camera.main.transform.position;
-				CamPos.text = "X" + cam.x + " Y" + cam.y + " Z" + cam.z;
+				Vector3 cam = Camera.main.transform.position;
+				CamPos.text = "X" + cam.x.ToString("F0") + " Y" + cam.y.ToString("F0") + " Z" + cam.z.ToString("F0");
 
 				ModifyTerrain();
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] Terrain editor: " + e.Message);
+			}
+		}
 
+		bool CanSculpt()
+		{
+			if (!allowEditing || terrain == null) return false;
+			if (TabSelector.instance != null && TabSelector.instance.SelectedTab != TAB.TerrainEdit) return false;
+			if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return false;
+			if (FindObjectOfType<ObjectPlacer>() != null) return false;
+			if (DynamicIslands.EditorGizmoHandler != null && DynamicIslands.EditorGizmoHandler.isTransforming) return false;
+			return true;
+		}
+
+		void ModifyTerrain()
+		{
+			if (stroking && !Input.GetMouseButton(0)) EndStroke();
+			if (!Input.GetMouseButton(0) || !CanSculpt()) return;
+
+			RaycastHit hit;
+			if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 5000f) || hit.collider.GetComponent<Terrain>() != terrain)
 				return;
 
-				if (FindObjectOfType<TabSelector>().SelectedTab == TAB.TerrainEdit)
-				{
-					// If the left or right mouse button is being held down
-					if (Input.GetMouseButton(0) || Input.GetMouseButton(1))
-					{
-
-						// Get the size of the screen in pixels
-						Vector2 screenSize = new Vector2(Screen.width, Screen.height);
-						// Get the mouse position in screen coordinates
-						Vector2 mousePos = Input.mousePosition;
-
-						// Subtract the half-width and half-height of the screen from the mouse position
-						Vector2 modifiedMousePos = mousePos - (screenSize / 2);
-
-						// Convert the modified mouse position to world coordinates
-						Vector3 worldPos = Camera.main.ScreenToWorldPoint(modifiedMousePos);
-
-						//Debug.Log("Mouse position" + mousePos.ToString() + modifiedMousePos.ToString());
-
-
-
-						// Get the position of the camera
-						Vector3 cameraPos = Camera.main.transform.position;
-					
-
-					}
-				}
-			}
-			catch (Exception e) { }
-		}
-
-		private void ModifyTerrain()
-		{
-			//if (!allowEditing) { return; }
-
-			//if (RAPI.IsCurrentSceneMainMenu())
-			//{
-				//return;
-			//}
-
-			// Don't sculpt while clicking UI, placing an object, or dragging the transform gizmo
-			bool overUI = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
-			bool placing = FindObjectOfType<ObjectPlacer>() != null;
-			bool gizmoBusy = DynamicIslands.EditorGizmoHandler != null && DynamicIslands.EditorGizmoHandler.isTransforming;
-
-			if (Input.GetMouseButton(0) && !overUI && !placing && !gizmoBusy)
+			if (!stroking)
 			{
-				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out var hit))
-				{
-					if (hit.transform.TryGetComponent(out Terrain terrain)) _targetTerrain = terrain;
-
-					switch (modificationAction)
-					{
-						case TerrainModificationAction.Raise:
-
-							RaiseTerrain(hit.point, strength, brushWidth, brushHeight);
-
-							break;
-
-						case TerrainModificationAction.Lower:
-
-							LowerTerrain(hit.point, strength, brushWidth, brushHeight);
-
-							break;
-
-						case TerrainModificationAction.Flatten:
-
-							FlattenTerrain(hit.point, _sampledHeight, brushWidth, brushHeight);
-
-							break;
-
-						case TerrainModificationAction.Sample:
-
-							_sampledHeight = SampleHeight(hit.point);
-
-							break;
-
-						case TerrainModificationAction.SampleAverage:
-
-							_sampledHeight = SampleAverageHeight(hit.point, brushWidth, brushHeight);
-
-							break;
-					}
-				}
+				stroking = true;
+				dirtyMin = hit.point; dirtyMax = hit.point;
+				flattenTarget = SampleNormalizedHeight(hit.point);
 			}
-		}
 
-		private TerrainData GetTerrainData() => _targetTerrain.terrainData;
-
-		private int GetHeightmapResolution() => GetTerrainData().heightmapResolution;
-
-		private Vector3 GetTerrainSize() => GetTerrainData().size;
-
-		public Vector3 WorldToTerrainPosition(Vector3 worldPosition)
-		{
-			var terrainPosition = worldPosition - _targetTerrain.GetPosition();
-
-			var terrainSize = GetTerrainSize();
-
-			var heightmapResolution = GetHeightmapResolution();
-
-			terrainPosition = new Vector3(terrainPosition.x / terrainSize.x, terrainPosition.y / terrainSize.y, terrainPosition.z / terrainSize.z);
-
-			return new Vector3(terrainPosition.x * heightmapResolution, 0, terrainPosition.z * heightmapResolution);
-		}
-
-		public Vector2Int GetBrushPosition(Vector3 worldPosition, int brushWidth, int brushHeight)
-		{
-			var terrainPosition = WorldToTerrainPosition(worldPosition);
-
-			var heightmapResolution = GetHeightmapResolution();
-
-			return new Vector2Int((int)Mathf.Clamp(terrainPosition.x - brushWidth / 2.0f, 0.0f, heightmapResolution), (int)Mathf.Clamp(terrainPosition.z - brushHeight / 2.0f, 0.0f, heightmapResolution));
-		}
-
-		public Vector2Int GetSafeBrushSize(int brushX, int brushY, int brushWidth, int brushHeight)
-		{
-			var heightmapResolution = GetHeightmapResolution();
-
-			while (heightmapResolution - (brushX + brushWidth) < 0) brushWidth--;
-
-			while (heightmapResolution - (brushY + brushHeight) < 0) brushHeight--;
-
-			return new Vector2Int(brushWidth, brushHeight);
-		}
-
-		public void RaiseTerrain(Vector3 worldPosition, float strength, int brushWidth, int brushHeight)
-		{
-			var brushPosition = GetBrushPosition(worldPosition, brushWidth, brushHeight);
-
-			var brushSize = GetSafeBrushSize(brushPosition.x, brushPosition.y, brushWidth, brushHeight);
-
-			var terrainData = GetTerrainData();
-
-			var heights = terrainData.GetHeights(brushPosition.x, brushPosition.y, brushSize.x, brushSize.y);
-
-			for (var y = 0; y < brushSize.y; y++)
+			switch (modificationAction)
 			{
-				for (var x = 0; x < brushSize.x; x++)
-				{
-					heights[y, x] += strength * Time.deltaTime;
-				}
+				case TerrainModificationAction.Raise: ApplyBrush(hit.point, +1f); break;
+				case TerrainModificationAction.Lower: ApplyBrush(hit.point, -1f); break;
+				case TerrainModificationAction.Flatten: ApplyFlatten(hit.point); break;
+				case TerrainModificationAction.Smooth: ApplySmooth(hit.point); break;
+				case TerrainModificationAction.Sample:
+				case TerrainModificationAction.SampleAverage:
+					flattenTarget = SampleNormalizedHeight(hit.point);
+					modificationAction = TerrainModificationAction.Flatten;
+					break;
 			}
 
-			terrainData.SetHeights(brushPosition.x, brushPosition.y, heights);
+			Vector3 r = new Vector3(brushRadius, 0, brushRadius);
+			dirtyMin = Vector3.Min(dirtyMin, hit.point - r);
+			dirtyMax = Vector3.Max(dirtyMax, hit.point + r);
 		}
 
-		public void LowerTerrain(Vector3 worldPosition, float strength, int brushWidth, int brushHeight)
+		void EndStroke()
 		{
-			var brushPosition = GetBrushPosition(worldPosition, brushWidth, brushHeight);
+			stroking = false;
+			TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, dirtyMin, dirtyMax);
+		}
 
-			var brushSize = GetSafeBrushSize(brushPosition.x, brushPosition.y, brushWidth, brushHeight);
+		float SampleNormalizedHeight(Vector3 world)
+		{
+			return (terrain.SampleHeight(world)) / terrainData.size.y;
+		}
 
-			var terrainData = GetTerrainData();
+		/// <summary>Heightmap block under the brush plus per-sample weights (1 at the centre, smoothly 0 at the rim).</summary>
+		bool GetBrushArea(Vector3 world, out int x0, out int z0, out float[,] weights)
+		{
+			int res = terrainData.heightmapResolution;
+			float spacing = terrainData.size.x / (res - 1);
+			Vector3 local = world - terrain.transform.position;
+			float cx = local.x / spacing, cz = local.z / spacing, rs = Mathf.Max(1f, brushRadius / spacing);
 
-			var heights = terrainData.GetHeights(brushPosition.x, brushPosition.y, brushSize.x, brushSize.y);
+			x0 = Mathf.Clamp(Mathf.FloorToInt(cx - rs), 0, res - 1);
+			z0 = Mathf.Clamp(Mathf.FloorToInt(cz - rs), 0, res - 1);
+			int x1 = Mathf.Clamp(Mathf.CeilToInt(cx + rs), 0, res - 1);
+			int z1 = Mathf.Clamp(Mathf.CeilToInt(cz + rs), 0, res - 1);
+			weights = new float[z1 - z0 + 1, x1 - x0 + 1];
+			if (x1 <= x0 || z1 <= z0) return false;
 
-			for (var y = 0; y < brushSize.y; y++)
-			{
-				for (var x = 0; x < brushSize.x; x++)
+			for (int z = 0; z <= z1 - z0; z++)
+				for (int x = 0; x <= x1 - x0; x++)
 				{
-					heights[y, x] -= strength * Time.deltaTime;
+					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs;
+					float d2 = dx * dx + dz * dz;
+					if (d2 < 1f) { float f = 1f - d2; weights[z, x] = f * f; } // smooth falloff
 				}
-			}
-
-			terrainData.SetHeights(brushPosition.x, brushPosition.y, heights);
+			return true;
 		}
 
-		public void FlattenTerrain(Vector3 worldPosition, float height, int brushWidth, int brushHeight)
+		void ApplyBrush(Vector3 world, float direction)
 		{
-			var brushPosition = GetBrushPosition(worldPosition, brushWidth, brushHeight);
+			int x0, z0; float[,] w;
+			if (!GetBrushArea(world, out x0, out z0, out w)) return;
+			float[,] h = terrainData.GetHeights(x0, z0, w.GetLength(1), w.GetLength(0));
+			float delta = direction * strength * Time.deltaTime / terrainData.size.y;
+			for (int z = 0; z < w.GetLength(0); z++)
+				for (int x = 0; x < w.GetLength(1); x++)
+					h[z, x] = Mathf.Clamp01(h[z, x] + delta * w[z, x]);
+			terrainData.SetHeights(x0, z0, h);
+		}
 
-			var brushSize = GetSafeBrushSize(brushPosition.x, brushPosition.y, brushWidth, brushHeight);
+		void ApplyFlatten(Vector3 world)
+		{
+			int x0, z0; float[,] w;
+			if (!GetBrushArea(world, out x0, out z0, out w)) return;
+			float[,] h = terrainData.GetHeights(x0, z0, w.GetLength(1), w.GetLength(0));
+			float rate = Mathf.Clamp01(strength * 0.5f * Time.deltaTime);
+			for (int z = 0; z < w.GetLength(0); z++)
+				for (int x = 0; x < w.GetLength(1); x++)
+					h[z, x] = Mathf.Lerp(h[z, x], flattenTarget, rate * w[z, x]);
+			terrainData.SetHeights(x0, z0, h);
+		}
 
-			var terrainData = GetTerrainData();
-
-			var heights = terrainData.GetHeights(brushPosition.x, brushPosition.y, brushSize.x, brushSize.y);
-
-			for (var y = 0; y < brushSize.y; y++)
-			{
-				for (var x = 0; x < brushSize.x; x++)
+		void ApplySmooth(Vector3 world)
+		{
+			int x0, z0; float[,] w;
+			if (!GetBrushArea(world, out x0, out z0, out w)) return;
+			int rows = w.GetLength(0), cols = w.GetLength(1);
+			float[,] h = terrainData.GetHeights(x0, z0, cols, rows);
+			float[,] result = (float[,])h.Clone();
+			float rate = Mathf.Clamp01(strength * 0.5f * Time.deltaTime);
+			for (int z = 1; z < rows - 1; z++)
+				for (int x = 1; x < cols - 1; x++)
 				{
-					heights[y, x] = height;
+					float avg = (h[z - 1, x] + h[z + 1, x] + h[z, x - 1] + h[z, x + 1] + h[z, x]) / 5f;
+					result[z, x] = Mathf.Lerp(h[z, x], avg, rate * w[z, x] * 4f);
 				}
-			}
-
-			terrainData.SetHeights(brushPosition.x, brushPosition.y, heights);
-		}
-
-		public float SampleHeight(Vector3 worldPosition)
-		{
-			var terrainPosition = WorldToTerrainPosition(worldPosition);
-
-			return GetTerrainData().GetInterpolatedHeight((int)terrainPosition.x, (int)terrainPosition.z);
-		}
-
-		public float SampleAverageHeight(Vector3 worldPosition, int brushWidth, int brushHeight)
-		{
-			var brushPosition = GetBrushPosition(worldPosition, brushWidth, brushHeight);
-
-			var brushSize = GetSafeBrushSize(brushPosition.x, brushPosition.y, brushWidth, brushHeight);
-
-			var heights2D = GetTerrainData().GetHeights(brushPosition.x, brushPosition.y, brushSize.x, brushSize.y);
-
-			var heights = new float[heights2D.Length];
-
-			var i = 0;
-
-			for (int y = 0; y <= heights2D.GetUpperBound(0); y++)
-			{
-				for (int x = 0; x <= heights2D.GetUpperBound(1); x++)
-				{
-					heights[i++] = heights2D[y, x];
-				}
-			}
-
-			return heights.Average();
+			terrainData.SetHeights(x0, z0, result);
 		}
 	}
 }
-
-
-
-
-
-
