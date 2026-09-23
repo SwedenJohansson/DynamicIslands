@@ -28,7 +28,15 @@ namespace DynamicIslands
 			Sample,
 			SampleAverage,
 			Smooth,
+			PaintLayer, // paint terraineditor.paintLayer by hand
+			AutoPaint,  // brush back to automatic texturing
 		}
+
+		/// <summary>Texture layer used by PaintLayer (TerrainPainter.Seabed/Sand/Grass/Rock).</summary>
+		public static int paintLayer = TerrainPainter.Sand;
+
+		/// <summary>Alphamap-sized mask, 1 where the texture was painted by hand (auto texturing leaves those pixels alone).</summary>
+		public static float[,] paintMask;
 
 		public static TerrainModificationAction modificationAction = TerrainModificationAction.Raise;
 
@@ -61,7 +69,9 @@ namespace DynamicIslands
 			terrain.gameObject.layer = IslandSpawner.TerrainLayer;
 			// CreateTerrainGameObject already adds a TerrainCollider bound to the same data
 
+			paintMask = null;
 			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			paintMask = new float[terrainData.alphamapResolution, terrainData.alphamapResolution];
 		}
 
 		void Update()
@@ -111,6 +121,8 @@ namespace DynamicIslands
 				case TerrainModificationAction.Lower: ApplyBrush(hit.point, -1f); break;
 				case TerrainModificationAction.Flatten: ApplyFlatten(hit.point); break;
 				case TerrainModificationAction.Smooth: ApplySmooth(hit.point); break;
+				case TerrainModificationAction.PaintLayer: ApplyPaint(hit.point, false); break;
+				case TerrainModificationAction.AutoPaint: ApplyPaint(hit.point, true); break;
 				case TerrainModificationAction.Sample:
 				case TerrainModificationAction.SampleAverage:
 					flattenTarget = SampleNormalizedHeight(hit.point);
@@ -126,7 +138,50 @@ namespace DynamicIslands
 		void EndStroke()
 		{
 			stroking = false;
-			TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, dirtyMin, dirtyMax);
+			// Sculpting changes heights/slopes, so refresh the automatic texturing (hand-painted pixels are kept)
+			if (modificationAction != TerrainModificationAction.PaintLayer && modificationAction != TerrainModificationAction.AutoPaint)
+				TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, dirtyMin, dirtyMax, paintMask);
+		}
+
+		/// <summary>
+		/// Texture brush in alphamap space. Hand painting blends towards the chosen layer and marks the pixels
+		/// in the paint mask; AutoPaint blends back to the automatic weights and clears the mask.
+		/// </summary>
+		void ApplyPaint(Vector3 world, bool auto)
+		{
+			int res = terrainData.alphamapResolution;
+			if (paintMask == null || paintMask.GetLength(0) != res) paintMask = new float[res, res];
+			float pixel = terrainData.size.x / res;
+			Vector3 local = world - terrain.transform.position;
+			float cx = local.x / pixel - 0.5f, cz = local.z / pixel - 0.5f, rs = Mathf.Max(1f, brushRadius / pixel);
+
+			int x0 = Mathf.Clamp(Mathf.FloorToInt(cx - rs), 0, res - 1), z0 = Mathf.Clamp(Mathf.FloorToInt(cz - rs), 0, res - 1);
+			int x1 = Mathf.Clamp(Mathf.CeilToInt(cx + rs), 0, res - 1), z1 = Mathf.Clamp(Mathf.CeilToInt(cz + rs), 0, res - 1);
+			if (x1 < x0 || z1 < z0) return;
+			int cols = x1 - x0 + 1, rows = z1 - z0 + 1;
+
+			float[,,] maps = terrainData.GetAlphamaps(x0, z0, cols, rows);
+			int layers = maps.GetLength(2);
+			float rate = Mathf.Clamp01(strength * 0.25f * Time.deltaTime);
+			var target = new float[layers];
+
+			for (int z = 0; z < rows; z++)
+				for (int x = 0; x < cols; x++)
+				{
+					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs, d2 = dx * dx + dz * dz;
+					if (d2 >= 1f) continue;
+					float w = (1f - d2) * (1f - d2);
+
+					if (auto) TerrainPainter.AutoWeights(terrain, IslandFile.DefaultWaterLevel, x0 + x, z0 + z, target);
+					else for (int l = 0; l < layers; l++) target[l] = l == paintLayer ? 1f : 0f;
+
+					float t = Mathf.Clamp01(rate * w * 4f);
+					for (int l = 0; l < layers; l++) maps[z, x, l] = Mathf.Lerp(maps[z, x, l], target[l], t);
+
+					if (auto) { if (w > 0.3f) paintMask[z0 + z, x0 + x] = 0f; }
+					else if (w > 0.05f) paintMask[z0 + z, x0 + x] = 1f;
+				}
+			terrainData.SetAlphamaps(x0, z0, maps);
 		}
 
 		float SampleNormalizedHeight(Vector3 world)

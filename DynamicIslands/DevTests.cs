@@ -19,6 +19,7 @@ namespace DynamicIslands
 	{
 		public const string TestIsland = "citest";
 		const int ObjectsToPlace = 3;
+		const int PaintOffset = 20, PaintSize = 12; // hand-painted test patch, in alphamap pixels from the centre
 
 		static void Log(string msg) { Debug.Log("[CITEST] " + msg); }
 		static void Fail(string msg) { Debug.LogError("[CITEST] FAIL: " + msg); }
@@ -162,8 +163,23 @@ namespace DynamicIslands
 					if (d < 1f) heights[y, x] = Mathf.Max(heights[y, x], peak * Mathf.SmoothStep(1f, 0f, d));
 				}
 			data.SetHeights(0, 0, heights);
+			terraineditor.paintMask = null;
 			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			int ares = data.alphamapResolution;
+			terraineditor.paintMask = new float[ares, ares];
 			yield return null;
+
+			// 1b. Hand-paint a Rock patch on the grassy hilltop, then check automatic re-texturing leaves it alone
+			int bx = ares / 2 + PaintOffset, bz = ares / 2 + PaintOffset;
+			var rockBlock = new float[PaintSize, PaintSize, TerrainPainter.LayerCount];
+			for (int z = 0; z < PaintSize; z++)
+				for (int x = 0; x < PaintSize; x++) { rockBlock[z, x, TerrainPainter.Rock] = 1f; terraineditor.paintMask[bz + z, bx + x] = 1f; }
+			data.SetAlphamaps(bx, bz, rockBlock);
+			TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, terrain.transform.position, terrain.transform.position + data.size, terraineditor.paintMask);
+			float rockAfterAuto = data.GetAlphamaps(bx + PaintSize / 2, bz + PaintSize / 2, 1, 1)[0, 0, TerrainPainter.Rock];
+			float grassBeside = data.GetAlphamaps(bx - 6, bz - 6, 1, 1)[0, 0, TerrainPainter.Grass];
+			bool maskRespected = rockAfterAuto > 0.98f;
+			Log("Paint: rock patch after auto re-texturing = " + rockAfterAuto.ToString("F2") + " (" + (maskRespected ? "kept" : "OVERWRITTEN") + "), grass next to it = " + grassBeside.ToString("F2"));
 
 			// 2. Place objects on top of the hill
 			Transform placed = GameObject.Find("PlacedObjects").transform;
@@ -204,8 +220,11 @@ namespace DynamicIslands
 			if (!File.Exists(path)) { Fail("save did not create " + path); yield break; }
 			Log("Saved " + Path.GetFullPath(path) + " (" + new FileInfo(path).Length + " bytes)");
 
-			// 4. Wipe: flatten terrain and remove objects
+			// 4. Wipe: flatten terrain, reset texturing to automatic, remove objects
 			data.SetHeights(0, 0, new float[res, res]);
+			terraineditor.paintMask = null;
+			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			terraineditor.paintMask = new float[ares, ares];
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
 			Log("Wiped terrain and objects (" + placed.GetComponentsInChildren<EditorGameObject>().Length + " objects left)");
@@ -237,7 +256,12 @@ namespace DynamicIslands
 			bool objectsOk = countOk && maxPosDiff < 0.01f;
 			Log("Objects: " + actual.Objects.Count + "/" + expected.Objects.Count + " restored, max position error " + maxPosDiff.ToString("F4") + " m (" + (objectsOk ? "ok" : "WRONG") + ")");
 
-			if (heightsOk && objectsOk) Log("PASS: editor save/load round trip");
+			float rockLoaded = data.GetAlphamaps(bx + PaintSize / 2, bz + PaintSize / 2, 1, 1)[0, 0, TerrainPainter.Rock];
+			bool maskLoaded = terraineditor.paintMask != null && terraineditor.paintMask[bz + 1, bx + 1] > 0.5f && terraineditor.paintMask[bz - 6, bx - 6] < 0.5f;
+			bool paintOk = maskRespected && rockLoaded > 0.98f && maskLoaded;
+			Log("Paint after load: rock = " + rockLoaded.ToString("F2") + ", paint mask restored = " + maskLoaded + " (" + (paintOk ? "ok" : "WRONG") + ")");
+
+			if (heightsOk && objectsOk && paintOk) Log("PASS: editor save/load round trip");
 			else Fail("editor save/load round trip");
 		}
 
@@ -269,7 +293,17 @@ namespace DynamicIslands
 			Log("Terrain layer " + terrain.gameObject.layer + ", hill top at world Y " + hillTop.ToString("F1") + " (expected about 15 above sea level)");
 			Log("Objects spawned: " + objects);
 
-			bool ok = terrain != null && objects > 0 && hillTop > 5f && hillTop < 30f;
+			// The hand-painted rock patch must be at the same place on the (cropped) spawned terrain
+			IslandFile file = IslandFile.Load(IslandSpawner.PathFor(TestIsland));
+			float u = (file.AlphamapResolution / 2 + PaintOffset + PaintSize / 2 + 0.5f) / file.AlphamapResolution;
+			Vector3 patchWorld = root.transform.position + new Vector3(u * file.TerrainSize.x, 0, u * file.TerrainSize.z);
+			TerrainData td = terrain.terrainData;
+			Vector3 local = patchWorld - terrain.transform.position;
+			int px = Mathf.FloorToInt(local.x / td.size.x * td.alphamapResolution), pz = Mathf.FloorToInt(local.z / td.size.z * td.alphamapResolution);
+			float rock = (px >= 0 && pz >= 0 && px < td.alphamapResolution && pz < td.alphamapResolution) ? td.GetAlphamaps(px, pz, 1, 1)[0, 0, TerrainPainter.Rock] : -1f;
+			Log("Spawned terrain alphamap " + td.alphamapResolution + " px; rock at the hand-painted spot = " + rock.ToString("F2"));
+
+			bool ok = terrain != null && objects > 0 && hillTop > 5f && hillTop < 30f && rock > 0.9f;
 			if (ok) Log("PASS: island spawned in world");
 			else Fail("island spawned but looks wrong (objects=" + objects + ", hillTop=" + hillTop + ")");
 		}

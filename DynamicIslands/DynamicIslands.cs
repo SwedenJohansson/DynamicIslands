@@ -497,7 +497,7 @@ namespace DynamicIslands
 			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return; }
 			try
 			{
-				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform);
+				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
@@ -526,7 +526,17 @@ namespace DynamicIslands
 					terrain.terrainData.size = island.TerrainSize;
 				}
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
-				TerrainPainter.Setup(terrain, island.WaterLevel);
+				if (island.HasPaint)
+				{
+					TerrainPainter.ApplySaved(terrain, island.GetAlphamapBlock(0, 0, island.AlphamapResolution));
+					terraineditor.paintMask = island.GetPaintMask() ?? new float[island.AlphamapResolution, island.AlphamapResolution];
+				}
+				else
+				{
+					// Format 1 files have no paint: texture automatically
+					terraineditor.paintMask = new float[terrain.terrainData.alphamapResolution, terrain.terrainData.alphamapResolution];
+					TerrainPainter.Setup(terrain, island.WaterLevel);
+				}
 
 				Transform placed = GameObject.Find("PlacedObjects").transform;
 				foreach (Transform child in placed) Destroy(child.gameObject);
@@ -987,6 +997,20 @@ namespace DynamicIslands
 		public static void TerrainSmooth()
 		{
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Smooth;
+		}
+		[ConsoleCommand(name: "PaintTexture", docs: "Terrain brush paints a texture by hand: PaintTexture sand|grass|rock|seabed")]
+		public static void PaintTexture(string[] args)
+		{
+			int layer = args != null && args.Length > 0 ? Array.FindIndex(TerrainPainter.LayerNames, n => n.Equals(args[0], StringComparison.OrdinalIgnoreCase)) : -1;
+			if (layer < 0) { Debug.LogWarning("Usage: PaintTexture " + string.Join("|", TerrainPainter.LayerNames).ToLower()); return; }
+			terraineditor.paintLayer = layer;
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.PaintLayer;
+			Debug.Log("[CUSTOM ISLANDS] Painting " + TerrainPainter.LayerNames[layer]);
+		}
+		[ConsoleCommand(name: "SetToAutoPaint", docs: "Terrain brush returns painted areas to automatic texturing")]
+		public static void TerrainAutoPaint()
+		{
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.AutoPaint;
 		}
 		[ConsoleCommand(name: "ChangeHeight", docs: "Terrain brush diameter in metres (same as ChangeWidth; the brush is round)")]
 		public static void TerrainHeight(string[] args)

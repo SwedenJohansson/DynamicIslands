@@ -38,6 +38,10 @@ namespace DynamicIslands.Editor
 			Transform brushTools = terrainTab != null ? terrainTab.Find("Brush Tools") : null;
 			Transform objectTools = objectTab != null ? objectTab.Find("Object Tools") : null;
 
+			// The camera position readout sits where the extra texture buttons go; move it below them
+			Transform camPos = canvas.Find("CamPos");
+			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -150f);
+
 			// Tabs
 			Hook(terrainTab, () => tabs.UpdateTabSelection((int)TAB.TerrainEdit));
 			Hook(objectTab, () => tabs.UpdateTabSelection((int)TAB.ObjectPlace));
@@ -49,15 +53,21 @@ namespace DynamicIslands.Editor
 				if (tab == TAB.TerrainEdit && DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(false);
 			};
 
-			// Terrain brush modes
+			// Terrain brush modes, then texture paint buttons (cloned from the last bundle button, stacked below it)
 			if (brushTools != null)
 			{
+				CreatePaintButtons(brushTools, "Button (5)");
 				brushLabels = new[]
 				{
 					SetupButton(brushTools, "RaiseButton", "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise)),
 					SetupButton(brushTools, "LowerButton", "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower)),
 					SetupButton(brushTools, "FlattenButton", "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten)),
 					SetupButton(brushTools, "Button (5)", "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth)),
+					SetupButton(brushTools, "PaintSand", "Sand", () => SetPaint(TerrainPainter.Sand)),
+					SetupButton(brushTools, "PaintGrass", "Grass", () => SetPaint(TerrainPainter.Grass)),
+					SetupButton(brushTools, "PaintRock", "Rock", () => SetPaint(TerrainPainter.Rock)),
+					SetupButton(brushTools, "PaintSeabed", "Seabed", () => SetPaint(TerrainPainter.Seabed)),
+					SetupButton(brushTools, "PaintAuto", "Auto", () => SetBrush(terraineditor.TerrainModificationAction.AutoPaint)),
 				};
 				SetBrush(terraineditor.modificationAction);
 			}
@@ -90,12 +100,49 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		static readonly string[] PaintButtons = { "PaintSand", "PaintGrass", "PaintRock", "PaintSeabed", "PaintAuto" };
+
+		/// <summary>The bundle only has four brush buttons; clone the last one for the texture tools.</summary>
+		static void CreatePaintButtons(Transform brushTools, string templateName)
+		{
+			Transform template = brushTools.Find(templateName);
+			Transform above = brushTools.Find("FlattenButton");
+			if (template == null || brushTools.Find(PaintButtons[0]) != null) return;
+			RectTransform t = template.GetComponent<RectTransform>();
+			float step = above != null ? above.GetComponent<RectTransform>().anchoredPosition.y - t.anchoredPosition.y : 35f;
+			for (int i = 0; i < PaintButtons.Length; i++)
+			{
+				GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, brushTools);
+				clone.name = PaintButtons[i];
+				// A small gap separates the texture tools from the sculpt tools
+				clone.GetComponent<RectTransform>().anchoredPosition = t.anchoredPosition - new Vector2(0, step * (i + 1) + step * 0.35f);
+			}
+		}
+
+		static void SetPaint(int layer)
+		{
+			terraineditor.paintLayer = layer;
+			SetBrush(terraineditor.TerrainModificationAction.PaintLayer);
+		}
+
 		static void SetBrush(terraineditor.TerrainModificationAction action)
 		{
 			terraineditor.modificationAction = action;
-			Highlight(brushLabels, action == terraineditor.TerrainModificationAction.Raise ? 0 :
-				action == terraineditor.TerrainModificationAction.Lower ? 1 :
-				action == terraineditor.TerrainModificationAction.Flatten ? 2 : 3);
+			int active;
+			switch (action)
+			{
+				case terraineditor.TerrainModificationAction.Raise: active = 0; break;
+				case terraineditor.TerrainModificationAction.Lower: active = 1; break;
+				case terraineditor.TerrainModificationAction.Flatten: active = 2; break;
+				case terraineditor.TerrainModificationAction.Smooth: active = 3; break;
+				case terraineditor.TerrainModificationAction.AutoPaint: active = 8; break;
+				case terraineditor.TerrainModificationAction.PaintLayer:
+					active = terraineditor.paintLayer == TerrainPainter.Sand ? 4 : terraineditor.paintLayer == TerrainPainter.Grass ? 5 :
+						terraineditor.paintLayer == TerrainPainter.Rock ? 6 : 7;
+					break;
+				default: active = -1; break;
+			}
+			Highlight(brushLabels, active);
 		}
 
 		static void SetGizmo(TransformType type)

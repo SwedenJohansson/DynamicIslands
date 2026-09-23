@@ -140,7 +140,19 @@ namespace DynamicIslands.Editor
 			terrainGO.transform.SetParent(root.transform, false);
 			// Object positions in the file are relative to the full terrain's corner, which the root still represents
 			terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
-			TerrainPainter.Setup(terrainGO.GetComponent<Terrain>(), worldPosition.y);
+			Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
+			// Saved paint covers the full terrain; take the block matching the heightmap crop
+			// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
+			int cells = island.HeightmapResolution - 1;
+			if (island.HasPaint && island.AlphamapResolution % cells == 0)
+			{
+				int scale = island.AlphamapResolution / cells;
+				TerrainPainter.ApplySaved(spawnedTerrain, island.GetAlphamapBlock(cropX * scale, cropZ * scale, (cropSize - 1) * scale));
+			}
+			else
+			{
+				TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
+			}
 
 			var objects = new GameObject("Objects");
 			objects.transform.SetParent(root.transform, false);
