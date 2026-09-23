@@ -570,8 +570,12 @@ namespace DynamicIslands
 			{
 				GameObject root = IslandSpawner.SpawnInWorld(island, position);
 				root.AddComponent<ReApplyShaders>();
-				if (entry != null) entry.Root = root;
-				else if (Raft_Network.IsHost && broadcast) IslandWorldState.Add(name, position, root);
+				if (entry == null && Raft_Network.IsHost && broadcast) entry = IslandWorldState.Add(name, position, root);
+				if (entry != null)
+				{
+					entry.Root = root;
+					IslandSpawner.RegisterNetworkIds(root, entry.Id);
+				}
 				if (!quiet) Notify("Spawned island '" + name + "'");
 			}
 			catch (Exception e)

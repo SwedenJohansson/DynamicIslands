@@ -617,6 +617,19 @@ namespace DynamicIslands
 					" chunk(s) of up to " + maxChunk + " bytes and saved intact as " + Path.GetFileName(target));
 				ok &= arrived;
 				if (File.Exists(target)) File.Delete(target);
+
+				// 3. Trees and pickups on loaded islands can be found the way Raft finds what a remote player harvested / picked up
+				int found = 0, total = 0;
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(i => i.Root != null))
+					foreach (PickupItem_Networked pn in e.Root.GetComponentsInChildren<PickupItem_Networked>(true))
+					{
+						total++;
+						if (NetworkIDManager.GetNetworkIDFromObjectIndex<PickupItem_Networked>(pn.ObjectIndex) == pn) found++;
+					}
+				bool ids = total > 0 && found == total;
+				Log((ids ? "PASS" : total == 0 ? "SKIP" : "FAIL") + ": " + found + "/" + total + " harvestables and pickups on loaded custom islands are in Raft's network registry" +
+					(total == 0 ? " (no loaded island with any; SpawnIsland demo2 first)" : ""));
+				ok &= ids || total == 0;
 			}
 			catch (Exception e) { Fail("exception: " + e); ok = false; }
 			if (ok) Log("PASS: network self test"); else Fail("network self test");

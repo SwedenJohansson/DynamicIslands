@@ -111,8 +111,7 @@ namespace DynamicIslands.Editor
 				float d = Flat(e.Position - raftPos).magnitude;
 				if (e.Root != null && d > UnloadDistance)
 				{
-					IslandSpawner.SpawnedRoots.Remove(e.Root);
-					UnityEngine.Object.Destroy(e.Root);
+					IslandSpawner.Despawn(e.Root);
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
 				}

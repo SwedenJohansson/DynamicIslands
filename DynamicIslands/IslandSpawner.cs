@@ -14,6 +14,36 @@ namespace DynamicIslands.Editor
 		/// <summary>Every island spawned in the current world (host and clients), so world shifts can move them.</summary>
 		public static readonly List<GameObject> SpawnedRoots = new List<GameObject>();
 
+		/// <summary>
+		/// Raft finds a tree or pickup that a remote player harvests or picks up by its ObjectIndex in NetworkIDManager
+		/// (Message_AxeHit, Message_PickupObjectManager_RemoveItem). Every machine spawns the same island objects in
+		/// the same order, so indexes built from the island's id (shared by host and clients) plus the object's place
+		/// in the hierarchy match everywhere. The high base keeps them clear of Raft's own counter-based indexes.
+		/// </summary>
+		public static void RegisterNetworkIds(GameObject root, int islandId)
+		{
+			uint baseIndex = 0xC0000000u | ((uint)(islandId & 0x3FFF) << 16);
+			uint n = 0;
+			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
+			{
+				pn.ObjectIndex = baseIndex + (++n);
+				NetworkIDManager.AddNetworkID(pn, typeof(PickupItem_Networked));
+			}
+		}
+
+		/// <summary>Removes a spawned island from the world (and its objects from Raft's network registry).</summary>
+		public static void Despawn(GameObject root)
+		{
+			if (root == null) return;
+			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
+			{
+				try { NetworkIDManager.RemoveNetworkID(pn, typeof(PickupItem_Networked)); }
+				catch (System.Exception) { } // never registered
+			}
+			SpawnedRoots.Remove(root);
+			Object.Destroy(root);
+		}
+
 		public static string PathFor(string islandName)
 		{
 			return Path.Combine(DynamicIslands.assetpath, islandName + IslandFile.Extension);

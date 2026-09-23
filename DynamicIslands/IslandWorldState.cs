@@ -79,7 +79,7 @@ namespace DynamicIslands.Editor
 			List<Entry> gone = islands.Where(e => ids.Contains(e.Id)).ToList();
 			foreach (Entry e in gone)
 			{
-				if (e.Root != null) { IslandSpawner.SpawnedRoots.Remove(e.Root); UnityEngine.Object.Destroy(e.Root); }
+				IslandSpawner.Despawn(e.Root);
 				islands.Remove(e);
 			}
 			if (broadcast) IslandNetwork.BroadcastRemoved(gone.Select(e => e.Id));
