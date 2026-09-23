@@ -15,6 +15,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
     - sunken barrels, containers and buoys, and scrap on the ocean floor to dive for; generated islands scatter some around their underwater slopes
     - harvestable palms, pines, birches, mango trees, rocks, berry bushes, pineapples, and copper, iron, clay and sand
     - props from Vasagatan
+    - **Raft's own building blocks** (88: foundations, floors, walls, doors, windows, pillars, stairs, ladders, fences, roofs), to build huts on islands or **your own abandoned rafts**. Over water they float at the sea surface. An island of only objects (no land) spawns as just those objects, and players can walk on them.
   - Move, rotate, scale and delete objects.
   - **Placing objects:**
     - a search box filters the object list
@@ -22,6 +23,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
     - **Random** gives each placed object a random turn and size
     - **Slope** leans objects with the ground
     - **Ground** drops the selected objects onto the terrain
+    - **Grid** snaps to Raft's 1.5 m building grid, and Q/E then turn in 90° steps
   - Undo and redo everything, and save or load islands.
   - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
 - **In your worlds**

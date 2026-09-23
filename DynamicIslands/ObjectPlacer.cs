@@ -43,7 +43,7 @@ namespace DynamicIslands.Editor
 			ownColliders = GetComponentsInChildren<Collider>(true);
 			baseRotation = transform.rotation;
 			baseScale = transform.localScale;
-			if (PlacementOptions.RandomTurnAndSize)
+			if (PlacementOptions.RandomTurnAndSize && !PlacementOptions.SnapToGrid)
 			{
 				yaw = UnityEngine.Random.Range(0f, 360f);
 				scale = UnityEngine.Random.Range(0.8f, 1.25f);
@@ -62,8 +62,9 @@ namespace DynamicIslands.Editor
 
 			if (!EditorInput.IsTyping)
 			{
-				if (Input.GetKeyDown(KeyCode.Q)) yaw -= 15f;
-				if (Input.GetKeyDown(KeyCode.E)) yaw += 15f;
+				float turn = PlacementOptions.SnapToGrid ? 90f : 15f;
+				if (Input.GetKeyDown(KeyCode.Q)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw - turn) / turn) * turn : yaw - turn;
+				if (Input.GetKeyDown(KeyCode.E)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw + turn) / turn) * turn : yaw + turn;
 				if (Input.GetKeyDown(KeyCode.LeftBracket)) scale = Mathf.Max(0.1f, scale / 1.1f);
 				if (Input.GetKeyDown(KeyCode.RightBracket)) scale = Mathf.Min(10f, scale * 1.1f);
 			}
@@ -90,7 +91,7 @@ namespace DynamicIslands.Editor
 			foreach (RaycastHit hit in Physics.RaycastAll(ray, Mathf.Infinity, layerMask).OrderBy(h => h.distance))
 			{
 				if (hit.collider == null || ownColliders.Contains(hit.collider) || hit.collider.transform.IsChildOf(transform)) continue;
-				transform.position = hit.point;
+				transform.position = PlacementOptions.FloatIfBlock(GameObjectName, PlacementOptions.Snap(hit.point));
 				groundNormal = hit.normal;
 				return;
 			}
@@ -98,7 +99,8 @@ namespace DynamicIslands.Editor
 
 		void Apply()
 		{
-			transform.rotation = PlacementOptions.Upright(yaw, baseRotation, groundNormal);
+			// Grid building stands straight: blocks don't lean with the slope
+			transform.rotation = PlacementOptions.SnapToGrid ? Quaternion.Euler(0f, yaw, 0f) * baseRotation : PlacementOptions.Upright(yaw, baseRotation, groundNormal);
 			transform.localScale = baseScale * scale;
 		}
 

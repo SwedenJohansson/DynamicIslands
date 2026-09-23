@@ -104,6 +104,8 @@ namespace DynamicIslands.Editor
 					DynamicIslands.Notify(n > 0 ? "Put " + n + " object(s) on the ground" : "Select objects first (Ground puts them on the terrain)", n == 0);
 				});
 				if (ground != null) ground.color = NormalText;
+				// Grid: Raft's 1.5 m building grid and 90° turns, for building huts and rafts from Raft blocks
+				gridLabel = SetupButton(objectTools, ObjectOptionButtons[3], "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); });
 				RefreshOptions();
 
 				objectLabels = new[]
@@ -131,14 +133,15 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static readonly string[] ObjectOptionButtons = { "OptionRandom", "OptionSlope", "OptionGround" };
-		static Text randomLabel, slopeLabel;
+		static readonly string[] ObjectOptionButtons = { "OptionRandom", "OptionSlope", "OptionGround", "OptionGrid" };
+		static Text randomLabel, slopeLabel, gridLabel;
 
 		/// <summary>Random / Slope light up while they're on.</summary>
 		static void RefreshOptions()
 		{
 			if (randomLabel != null) randomLabel.color = PlacementOptions.RandomTurnAndSize ? ActiveText : NormalText;
 			if (slopeLabel != null) slopeLabel.color = PlacementOptions.AlignToSlope ? ActiveText : NormalText;
+			if (gridLabel != null) gridLabel.color = PlacementOptions.SnapToGrid ? ActiveText : NormalText;
 		}
 
 		/// <summary>Clones a bundle button once per name, stacked below it after a small gap (the bundle has no spare buttons).</summary>

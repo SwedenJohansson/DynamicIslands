@@ -266,7 +266,13 @@ namespace DynamicIslands.Editor
 			for (int y = 0; y < res; y++)
 				for (int x = 0; x < res; x++)
 					if (island.Heights[y, x] > water) { sx += x; sz += y; n++; }
-			if (n == 0) return new Vector2(island.TerrainSize.x / 2f, island.TerrainSize.z / 2f);
+			if (n == 0)
+			{
+				// No land (e.g. an abandoned raft built from Raft blocks on the water): centre on the objects
+				if (island.Objects.Count > 0)
+					return new Vector2(island.Objects.Average(o => o.Position.x), island.Objects.Average(o => o.Position.z));
+				return new Vector2(island.TerrainSize.x / 2f, island.TerrainSize.z / 2f);
+			}
 			float step = 1f / (res - 1);
 			return new Vector2((float)(sx / n) * step * island.TerrainSize.x, (float)(sz / n) * step * island.TerrainSize.z);
 		}
@@ -290,7 +296,18 @@ namespace DynamicIslands.Editor
 						float sq = dx * dx + dz * dz;
 						if (sq > maxSq) maxSq = sq;
 					}
+			if (maxSq == 0f && island.Objects.Count > 0) // no land: how far the objects reach
+				foreach (IslandObject o in island.Objects)
+					maxSq = Mathf.Max(maxSq, (o.Position.x - centre.x) * (o.Position.x - centre.x) + (o.Position.z - centre.y) * (o.Position.z - centre.y));
 			return Mathf.Sqrt(maxSq);
+		}
+
+		/// <summary>True if anything of the terrain was raised above the flat seabed (islands of only objects have no land).</summary>
+		public static bool HasLand(IslandFile island)
+		{
+			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			foreach (float h in island.Heights) if (h > threshold) return true;
+			return false;
 		}
 
 		/// <summary>Anything raised more than this above the flat seabed (height 0) counts as part of the island.</summary>
@@ -339,40 +356,43 @@ namespace DynamicIslands.Editor
 			Vector2 land = LandCentre(island);
 			root.transform.position = worldPosition - new Vector3(land.x, island.WaterLevel, land.y);
 
-			// Only bring the part of the heightmap that has been shaped, not the whole flat 1000 x 1000 m seabed
-			int cropX, cropZ, cropSize;
-			GetCropArea(island, out cropX, out cropZ, out cropSize);
-			float spacing = island.TerrainSize.x / (island.HeightmapResolution - 1);
-			var cropped = new float[cropSize, cropSize];
-			for (int z = 0; z < cropSize; z++)
-				for (int x = 0; x < cropSize; x++)
-					cropped[z, x] = island.Heights[cropZ + z, cropX + x];
-
-			TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize);
-			data.SetHeights(0, 0, cropped);
-			GameObject terrainGO = Terrain.CreateTerrainGameObject(data);
-			terrainGO.name = "Terrain";
-			terrainGO.layer = TerrainLayer;
-			terrainGO.transform.SetParent(root.transform, false);
-			// Object positions in the file are relative to the full terrain's corner, which the root still represents
-			terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
-			Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
-			TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style));
-			// Saved paint covers the full terrain; take the block matching the heightmap crop
-			// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
-			int cells = island.HeightmapResolution - 1;
-			if (island.HasPaint && island.AlphamapResolution % cells == 0)
-			{
-				int scale = island.AlphamapResolution / cells;
-				TerrainPainter.ApplySaved(spawnedTerrain, island.GetAlphamapBlock(cropX * scale, cropZ * scale, (cropSize - 1) * scale));
-			}
-			else
-			{
-				TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
-			}
-
 			bool flying = worldPosition.y > FlyingThreshold;
-			if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
+			if (HasLand(island)) // an island of only objects (e.g. an abandoned raft of Raft blocks) gets no terrain
+			{
+				// Only bring the part of the heightmap that has been shaped, not the whole flat 1000 x 1000 m seabed
+				int cropX, cropZ, cropSize;
+				GetCropArea(island, out cropX, out cropZ, out cropSize);
+				float spacing = island.TerrainSize.x / (island.HeightmapResolution - 1);
+				var cropped = new float[cropSize, cropSize];
+				for (int z = 0; z < cropSize; z++)
+					for (int x = 0; x < cropSize; x++)
+						cropped[z, x] = island.Heights[cropZ + z, cropX + x];
+
+				TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize);
+				data.SetHeights(0, 0, cropped);
+				GameObject terrainGO = Terrain.CreateTerrainGameObject(data);
+				terrainGO.name = "Terrain";
+				terrainGO.layer = TerrainLayer;
+				terrainGO.transform.SetParent(root.transform, false);
+				// Object positions in the file are relative to the full terrain's corner, which the root still represents
+				terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
+				Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
+				TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style));
+				// Saved paint covers the full terrain; take the block matching the heightmap crop
+				// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
+				int cells = island.HeightmapResolution - 1;
+				if (island.HasPaint && island.AlphamapResolution % cells == 0)
+				{
+					int scale = island.AlphamapResolution / cells;
+					TerrainPainter.ApplySaved(spawnedTerrain, island.GetAlphamapBlock(cropX * scale, cropZ * scale, (cropSize - 1) * scale));
+				}
+				else
+				{
+					TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
+				}
+
+				if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
+			}
 
 			var objects = new GameObject("Objects");
 			objects.transform.SetParent(root.transform, false);

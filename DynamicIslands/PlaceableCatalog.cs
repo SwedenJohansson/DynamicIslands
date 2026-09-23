@@ -28,11 +28,12 @@ namespace DynamicIslands.Editor
 		public const string DesertCategory = "Desert";
 		public const string ForestCategory = "Forest";
 		public const string UnderwaterCategory = "Underwater";
+		public const string RaftBlocksCategory = "Raft blocks";
 		public const string PropsCategory = "Props";
 		public const string HarvestableCategory = "Harvestable";
 
 		/// <summary>Order of the categories in the editor's object list.</summary>
-		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory, PropsCategory };
+		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory, RaftBlocksCategory, PropsCategory };
 
 		class Source
 		{
@@ -293,6 +294,8 @@ namespace DynamicIslands.Editor
 				}
 			}
 
+			AddRaftBlocks(whitelist);
+
 			if (whitelist == null)
 			{
 				try
@@ -327,6 +330,46 @@ namespace DynamicIslands.Editor
 			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
+		}
+
+		/// <summary>
+		/// Raft's own building blocks (foundations, floors, walls, pillars, stairs, roofs...) as decoration, so islands
+		/// can have huts and players can build their own abandoned rafts (Discord ideas). Taken from the block
+		/// prefabs of Raft's buildable items; their scripts are removed (Raft's block logic expects to be on the
+		/// player's raft), the models and colliders stay so they can be walked on.
+		/// </summary>
+		static void AddRaftBlocks(HashSet<string> whitelist)
+		{
+			int before = prototypes.Count;
+			try
+			{
+				foreach (Item_Base item in ItemManager.GetAllItems())
+				{
+					if (item == null || item.UniqueName == null || !item.UniqueName.StartsWith("Block_")) continue;
+					if (prototypes.ContainsKey(item.UniqueName) || (whitelist != null && !whitelist.Contains(item.UniqueName))) continue;
+					Block[] blocks;
+					try { blocks = item.settings_buildable != null ? item.settings_buildable.GetBlockPrefabs() : null; } catch { continue; }
+					Block prefab = blocks != null ? blocks.FirstOrDefault(b => b != null) : null;
+					if (prefab == null || prefab.GetComponentInChildren<Renderer>(true) == null) continue;
+
+					GameObject clone = UnityEngine.Object.Instantiate(prefab.gameObject, container.transform);
+					clone.name = item.UniqueName;
+					clone.transform.localPosition = Vector3.zero;
+					clone.transform.localRotation = Quaternion.identity;
+					// Scripts out; some depend on others, so remove until nothing more can go
+					for (int pass = 0; pass < 3; pass++)
+						foreach (MonoBehaviour mb in clone.GetComponentsInChildren<MonoBehaviour>(true))
+							try { UnityEngine.Object.DestroyImmediate(mb); } catch { }
+					// Raft's "Block" layer is only walkable as part of the player's raft; as island scenery they go on the
+					// terrain's layer, so players walk on them, the editor can stack them, and a raft stops against them
+					foreach (Transform t in clone.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = IslandSpawner.TerrainLayer;
+					KeepVisibleFarAway(clone);
+					prototypes.Add(item.UniqueName, clone);
+					categories[item.UniqueName] = RaftBlocksCategory;
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not add Raft's building blocks: " + e.Message); }
+			Debug.Log("[CUSTOM ISLANDS] Raft building blocks: " + (prototypes.Count - before) + " objects");
 		}
 
 		/// <summary>
@@ -432,7 +475,7 @@ namespace DynamicIslands.Editor
 			@"Book_4|Book_Tall_2|Tools_Wrench|Pillow(_2|Decor_\d)?)( Variant)?$|^RT_ExitSignCeiling|^VG_SignStairsCeiling$",
 			RegexOptions.IgnoreCase);
 
-		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_|TP_Moontown_|TP_|CaravanIsland_|Balboa_)|\s*Variant.*$|_Low(?=\d|_|$)|_LodGroup$");
+		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_|TP_Moontown_|TP_|CaravanIsland_|Balboa_|Block_)|\s*Variant.*$|_Low(?=\d|_|$)|_LodGroup$");
 		static readonly Regex wordBreak = new Regex(@"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Za-z])");
 
 		static readonly Regex harvestableLabel = new Regex(@"^Pickup_Landmark_(Tree_(\w+) (\d+)|(\w+)Tree|(.+))$");

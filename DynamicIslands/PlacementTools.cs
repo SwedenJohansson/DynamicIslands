@@ -14,6 +14,27 @@ namespace DynamicIslands.Editor
 		public static bool RandomTurnAndSize;
 		/// <summary>Placed and grounded objects lean with the slope of the ground instead of standing straight up.</summary>
 		public static bool AlignToSlope;
+		/// <summary>Positions snap to Raft's 1.5 m building grid and Q/E turn in 90° steps (for Raft blocks).</summary>
+		public static bool SnapToGrid;
+		public const float GridSize = 1.5f;
+		/// <summary>A Raft foundation's top sits this far above the water when floating, like on the player's raft.</summary>
+		public const float FloatDepth = 0.35f;
+
+		/// <summary>Grid-snapped position (x/z only) when "Grid" is on.</summary>
+		public static Vector3 Snap(Vector3 p)
+		{
+			if (!SnapToGrid) return p;
+			return new Vector3(Mathf.Round(p.x / GridSize) * GridSize, p.y, Mathf.Round(p.z / GridSize) * GridSize);
+		}
+
+		/// <summary>Raft's building blocks float: over water they sit at the sea surface instead of on the seabed.</summary>
+		public static Vector3 FloatIfBlock(string objectName, Vector3 p)
+		{
+			if (PlaceableCatalog.CategoryOf(objectName) != PlaceableCatalog.RaftBlocksCategory) return p;
+			float sea = (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + IslandFile.DefaultWaterLevel;
+			if (p.y < sea - FloatDepth) p.y = sea - FloatDepth;
+			return p;
+		}
 
 		/// <summary>The editor terrain's surface below a point (ignores objects). False if there is no terrain there.</summary>
 		public static bool GroundAt(Vector3 position, out Vector3 point, out Vector3 normal)

@@ -315,6 +315,43 @@ namespace DynamicIslands
 			UnityEngine.Object.Destroy(go);
 		}
 
+		[ConsoleCommand(name: "CIRaftDemo", docs: "Dev, editor: builds a small abandoned raft from Raft's blocks on the water (an undoable placement) and points the camera at it")]
+		public static void RaftDemo()
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first"); return; }
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Terrain terrain = terraineditor.terrain;
+			// Open water near a corner of the build area, on the 1.5 m grid
+			Vector3 origin = terrain.transform.position + new Vector3(240f, 0f, 240f);
+			float g = PlacementOptions.GridSize, sea = terrain.transform.position.y + IslandFile.DefaultWaterLevel;
+			var spawned = new System.Collections.Generic.List<GameObject>();
+			System.Func<string, Vector3, float, GameObject> put = (name, pos, yaw) =>
+			{
+				GameObject go = PlaceableCatalog.Spawn(name, placed);
+				if (go == null) { Log("missing " + name); return null; }
+				go.transform.position = pos;
+				go.transform.rotation = Quaternion.Euler(0, yaw, 0) * go.transform.rotation;
+				go.AddComponent<EditorGameObject>().GameObjectName = name;
+				spawned.Add(go);
+				return go;
+			};
+			for (int x = 0; x < 4; x++)
+				for (int z = 0; z < 3; z++)
+					put("Block_Foundation", PlacementOptions.FloatIfBlock("Block_Foundation", origin + new Vector3(x * g, 0, z * g)), 0);
+			float deck = sea - PlacementOptions.FloatDepth + 0.35f; // roughly the foundation top
+			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, -g / 2), 0);
+			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, -g / 2), 0);
+			put("Block_Wall_Thatch", origin + new Vector3(0, deck, -g / 2), 0);
+			put("Block_Roof_Straight_Thatch", origin + new Vector3(0, deck + 2.4f, 0), 0);
+			put("Block_Ladder", origin + new Vector3(g * 3, deck, g), 90);
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
+			Transform cam = Camera.main.transform;
+			cam.position = origin + new Vector3(-8f, sea + 8f, -12f);
+			cam.LookAt(origin + new Vector3(g * 1.5f, sea, g));
+			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea - PlacementOptions.FloatDepth)) < 0.01f);
+			Log((floating && spawned.Count == 17 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+		}
+
 		[ConsoleCommand(name: "CIPlaceTest", docs: "Dev, editor: object list search, Ground (with and without Slope) and its undo")]
 		public static void PlaceTest()
 		{
@@ -401,6 +438,9 @@ namespace DynamicIslands
 				lines.Add(string.Format("{0} [{1}]: size {2:F1} x {3:F1} x {4:F1} m, centre offset {5}, {6} renderers ({7} enabled){8}",
 					name, PlaceableCatalog.CategoryOf(name), b.size.x, b.size.y, b.size.z, (b.center - c).ToString("F1"), rs.Length, rs.Count(r => r.enabled),
 					lod != null ? ", LODGroup " + lod.lodCount + " levels, enabled=" + lod.enabled : ""));
+				foreach (Collider col in go.GetComponentsInChildren<Collider>(true))
+					lines.Add(string.Format("    collider {0} {1}: enabled={2} activeInHierarchy={3} trigger={4} layer={5}",
+						col.name, col.GetType().Name, col.enabled, col.gameObject.activeInHierarchy, col.isTrigger, LayerMask.LayerToName(col.gameObject.layer)));
 				UnityEngine.Object.Destroy(go);
 			}
 			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "objinfo.txt"));
@@ -731,9 +771,24 @@ namespace DynamicIslands
 			GameObject island = NearestIsland(player.transform.position);
 			if (island == null) { Fail("no custom island spawned"); yield break; }
 			Terrain terrain = island.GetComponentInChildren<Terrain>();
-			Vector3 top = HighestPoint(terrain);
-			Vector3 target = top + Vector3.up * 1.5f + new Vector3(3f, 0, 3f); // a little off the peak
-			target.y = terrain.SampleHeight(target) + terrain.transform.position.y + 1.5f;
+			Vector3 target;
+			if (terrain != null)
+			{
+				Vector3 top = HighestPoint(terrain);
+				target = top + Vector3.up * 1.5f + new Vector3(3f, 0, 3f); // a little off the peak
+				target.y = terrain.SampleHeight(target) + terrain.transform.position.y + 1.5f;
+			}
+			else
+			{
+				// No land (an island of objects, e.g. a raft of Raft blocks): stand on top of them, in the middle
+				Collider[] cols = island.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).ToArray();
+				if (cols.Length == 0) { Fail("the island has no land and no colliders"); yield break; }
+				Bounds b = cols[0].bounds;
+				foreach (Collider c in cols) b.Encapsulate(c.bounds);
+				target = new Vector3(b.center.x, b.max.y + 3f, b.center.z);
+				RaycastHit hit;
+				if (Physics.Raycast(target, Vector3.down, out hit, 20f) && hit.collider.transform.IsChildOf(island.transform)) target.y = hit.point.y + 1.5f;
+			}
 
 			CharacterController cc = player.PersonController.controller;
 			cc.enabled = false;
