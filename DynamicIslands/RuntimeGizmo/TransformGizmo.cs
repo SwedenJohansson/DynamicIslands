@@ -22,15 +22,16 @@ namespace RuntimeGizmos
 		public ScaleType scaleType = ScaleType.FromPoint;
 
 		//These are the same as the unity editor hotkeys
-		public KeyCode SetMoveType = KeyCode.W;
-		public KeyCode SetRotateType = KeyCode.E;
-		public KeyCode SetScaleType = KeyCode.R;
+		// Number keys: W/E/R/S/Z clashed with the editor camera (WASD) and undo (Ctrl+Z)
+		public KeyCode SetMoveType = KeyCode.Alpha1;
+		public KeyCode SetRotateType = KeyCode.Alpha2;
+		public KeyCode SetScaleType = KeyCode.Alpha3;
 		//public KeyCode SetRectToolType = KeyCode.T;
-		public KeyCode SetAllTransformType = KeyCode.Y;
+		public KeyCode SetAllTransformType = KeyCode.Alpha4;
 		public KeyCode SetSpaceToggle = KeyCode.X;
-		public KeyCode SetPivotModeToggle = KeyCode.Z;
+		public KeyCode SetPivotModeToggle = KeyCode.P;
 		public KeyCode SetCenterTypeToggle = KeyCode.C;
-		public KeyCode SetScaleTypeToggle = KeyCode.S;
+		public KeyCode SetScaleTypeToggle = KeyCode.None;
 		public KeyCode translationSnapping = KeyCode.LeftControl;
 		public KeyCode AddSelection = KeyCode.LeftShift;
 		public KeyCode RemoveSelection = KeyCode.LeftControl;
@@ -81,7 +82,7 @@ namespace RuntimeGizmos
 		//Might be poor on performance if lots of objects are selected...
 		public bool forceUpdatePivotPointOnChange = true;
 
-		public int maxUndoStored = 100;
+		public int maxUndoStored = 50;
 
 		public bool manuallyHandleGizmo;
 
@@ -162,11 +163,11 @@ namespace RuntimeGizmos
 
 		void Update()
 		{
+			// Undo/redo is handled editor-wide (Ctrl+Z / Ctrl+Y) by EditorInput
+			if (maxUndoStored != UndoRedoManager.maxUndoStored) UndoRedoManager.maxUndoStored = maxUndoStored;
 			if (TabSelector.instance.SelectedTab == TAB.ObjectPlace)
 			{
-				HandleUndoRedo();
-
-				SetSpaceAndType();
+				if (!EditorInput.IsTyping) SetSpaceAndType();
 
 				if (manuallyHandleGizmo)
 				{
@@ -202,22 +203,22 @@ namespace RuntimeGizmos
 				SetLines();
 			}
 
-			if (Input.GetKeyDown(DeleteSelected))
+			if (Input.GetKeyDown(DeleteSelected) && !EditorInput.IsTyping)
 			{
 				DeleteSelection();
 			}
 		}
 
-		/// <summary>Destroys the selected objects. The selection is cleared first so no destroyed transforms stay selected.</summary>
+		/// <summary>
+		/// Deletes the selected objects as an undoable step: they are hidden, not destroyed (hidden objects are not saved).
+		/// The selection is cleared first so nothing hidden stays selected.
+		/// </summary>
 		public void DeleteSelection()
 		{
-			List<Transform> selected = new List<Transform>(targetRootsOrdered);
+			List<GameObject> selected = new List<GameObject>();
+			foreach (Transform t in targetRootsOrdered) if (t != null) selected.Add(t.gameObject);
 			ClearTargets(false);
-			UndoRedoManager.Clear(); // undo commands would reference the destroyed objects
-			foreach (Transform t in selected)
-			{
-				if (t != null) Destroy(t.gameObject);
-			}
+			if (selected.Count > 0) UndoRedoManager.Execute(new ObjectVisibilityCommand(selected, false));
 		}
 
 		void OnPostRender()

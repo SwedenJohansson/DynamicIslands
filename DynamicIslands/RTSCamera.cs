@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DynamicIslands
 {
@@ -36,6 +36,9 @@ namespace DynamicIslands
 
 		void Update()
 		{
+			// Don't fly around while typing an island name (WASD)
+			if (global::DynamicIslands.Editor.EditorInput.IsTyping) return;
+
 			// Get the horizontal and vertical input axis
 			float horizontalInput = Input.GetAxis("Horizontal");
 			float verticalInput = Input.GetAxis("Vertical");

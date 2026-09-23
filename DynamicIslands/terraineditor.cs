@@ -54,6 +54,8 @@ namespace DynamicIslands
 		float flattenTarget; // normalised height sampled when a Flatten stroke starts
 		bool stroking;
 		Vector3 dirtyMin, dirtyMax; // world-space area touched by the current stroke, repainted on release
+		float dt; // time step of the current brush application
+		float[,] strokeHeights; float[,,] strokeAlpha; float[,] strokeMask; // undo snapshot taken when the stroke starts
 
 		void Start()
 		{
@@ -81,6 +83,8 @@ namespace DynamicIslands
 				Vector3 cam = Camera.main.transform.position;
 				CamPos.text = "X" + cam.x.ToString("F0") + " Y" + cam.y.ToString("F0") + " Z" + cam.z.ToString("F0");
 
+				EditorInput.HandleShortcuts();
+				EditorUI.Tick();
 				ModifyTerrain();
 			}
 			catch (Exception e)
@@ -92,6 +96,7 @@ namespace DynamicIslands
 		bool CanSculpt()
 		{
 			if (!allowEditing || terrain == null) return false;
+			if (IslandFilesWindow.IsOpen) return false;
 			if (TabSelector.instance != null && TabSelector.instance.SelectedTab != TAB.TerrainEdit) return false;
 			if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return false;
 			if (FindObjectOfType<ObjectPlacer>() != null) return false;
@@ -99,40 +104,63 @@ namespace DynamicIslands
 			return true;
 		}
 
+		bool TerrainUnderMouse(out Vector3 point)
+		{
+			RaycastHit hit;
+			point = Vector3.zero;
+			if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 5000f) || hit.collider.GetComponent<Terrain>() != terrain)
+				return false;
+			point = hit.point;
+			return true;
+		}
+
 		void ModifyTerrain()
 		{
 			if (stroking && !Input.GetMouseButton(0)) EndStroke();
-			if (!Input.GetMouseButton(0) || !CanSculpt()) return;
 
-			RaycastHit hit;
-			if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 5000f) || hit.collider.GetComponent<Terrain>() != terrain)
-				return;
+			Vector3 point = Vector3.zero;
+			bool canSculpt = CanSculpt();
+			bool overTerrain = canSculpt && TerrainUnderMouse(out point);
+			BrushCursor.Update(terrain, overTerrain, overTerrain ? point : Vector3.zero);
 
-			if (!stroking)
-			{
-				stroking = true;
-				dirtyMin = hit.point; dirtyMax = hit.point;
-				flattenTarget = SampleNormalizedHeight(hit.point);
-			}
+			if (!Input.GetMouseButton(0) || !overTerrain) return;
+			if (!stroking) BeginStroke(point);
+			ApplyAt(point, Time.deltaTime);
+		}
 
+		void BeginStroke(Vector3 point)
+		{
+			stroking = true;
+			dirtyMin = point; dirtyMax = point;
+			flattenTarget = SampleNormalizedHeight(point);
+			// Full snapshot for undo; only the part the stroke touches is kept when it ends
+			int hres = terrainData.heightmapResolution, ares = terrainData.alphamapResolution;
+			strokeHeights = terrainData.GetHeights(0, 0, hres, hres);
+			strokeAlpha = terrainData.GetAlphamaps(0, 0, ares, ares);
+			strokeMask = paintMask != null ? (float[,])paintMask.Clone() : null;
+		}
+
+		void ApplyAt(Vector3 point, float deltaTime)
+		{
+			dt = deltaTime;
 			switch (modificationAction)
 			{
-				case TerrainModificationAction.Raise: ApplyBrush(hit.point, +1f); break;
-				case TerrainModificationAction.Lower: ApplyBrush(hit.point, -1f); break;
-				case TerrainModificationAction.Flatten: ApplyFlatten(hit.point); break;
-				case TerrainModificationAction.Smooth: ApplySmooth(hit.point); break;
-				case TerrainModificationAction.PaintLayer: ApplyPaint(hit.point, false); break;
-				case TerrainModificationAction.AutoPaint: ApplyPaint(hit.point, true); break;
+				case TerrainModificationAction.Raise: ApplyBrush(point, +1f); break;
+				case TerrainModificationAction.Lower: ApplyBrush(point, -1f); break;
+				case TerrainModificationAction.Flatten: ApplyFlatten(point); break;
+				case TerrainModificationAction.Smooth: ApplySmooth(point); break;
+				case TerrainModificationAction.PaintLayer: ApplyPaint(point, false); break;
+				case TerrainModificationAction.AutoPaint: ApplyPaint(point, true); break;
 				case TerrainModificationAction.Sample:
 				case TerrainModificationAction.SampleAverage:
-					flattenTarget = SampleNormalizedHeight(hit.point);
+					flattenTarget = SampleNormalizedHeight(point);
 					modificationAction = TerrainModificationAction.Flatten;
 					break;
 			}
 
 			Vector3 r = new Vector3(brushRadius, 0, brushRadius);
-			dirtyMin = Vector3.Min(dirtyMin, hit.point - r);
-			dirtyMax = Vector3.Max(dirtyMax, hit.point + r);
+			dirtyMin = Vector3.Min(dirtyMin, point - r);
+			dirtyMax = Vector3.Max(dirtyMax, point + r);
 		}
 
 		void EndStroke()
@@ -141,6 +169,36 @@ namespace DynamicIslands
 			// Sculpting changes heights/slopes, so refresh the automatic texturing (hand-painted pixels are kept)
 			if (modificationAction != TerrainModificationAction.PaintLayer && modificationAction != TerrainModificationAction.AutoPaint)
 				TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, dirtyMin, dirtyMax, paintMask);
+			RecordUndo();
+		}
+
+		/// <summary>Stores the area touched by the stroke (before/after) as one undo step.</summary>
+		void RecordUndo()
+		{
+			if (strokeHeights == null) return;
+			int hres = terrainData.heightmapResolution;
+			float spacing = terrainData.size.x / (hres - 1);
+			Vector3 o = terrain.transform.position;
+			int hx0 = Mathf.Clamp(Mathf.FloorToInt((dirtyMin.x - o.x) / spacing) - 1, 0, hres - 1), hz0 = Mathf.Clamp(Mathf.FloorToInt((dirtyMin.z - o.z) / spacing) - 1, 0, hres - 1);
+			int hx1 = Mathf.Clamp(Mathf.CeilToInt((dirtyMax.x - o.x) / spacing) + 1, 0, hres - 1), hz1 = Mathf.Clamp(Mathf.CeilToInt((dirtyMax.z - o.z) / spacing) + 1, 0, hres - 1);
+			var heightRect = new RectInt(hx0, hz0, hx1 - hx0 + 1, hz1 - hz0 + 1);
+
+			RectInt alphaRect;
+			if (!TerrainPainter.WorldToAlphamapRect(terrain, dirtyMin - Vector3.one * 2f, dirtyMax + Vector3.one * 2f, out alphaRect)) { strokeHeights = null; return; }
+
+			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(terrainData,
+				heightRect, TerrainStrokeCommand.Crop(strokeHeights, heightRect),
+				alphaRect, TerrainStrokeCommand.Crop(strokeAlpha, alphaRect),
+				strokeMask != null ? TerrainStrokeCommand.Crop(strokeMask, alphaRect) : null, paintMask));
+			strokeHeights = null; strokeAlpha = null; strokeMask = null;
+		}
+
+		/// <summary>Runs a complete brush stroke at a point without the mouse (used by the automated tests).</summary>
+		public void SimulateStroke(Vector3 point, int frames, float deltaTime)
+		{
+			BeginStroke(point);
+			for (int i = 0; i < frames; i++) ApplyAt(point, deltaTime);
+			EndStroke();
 		}
 
 		/// <summary>
@@ -162,7 +220,7 @@ namespace DynamicIslands
 
 			float[,,] maps = terrainData.GetAlphamaps(x0, z0, cols, rows);
 			int layers = maps.GetLength(2);
-			float rate = Mathf.Clamp01(strength * 0.25f * Time.deltaTime);
+			float rate = Mathf.Clamp01(strength * 0.25f * dt);
 			var target = new float[layers];
 
 			for (int z = 0; z < rows; z++)
@@ -219,7 +277,7 @@ namespace DynamicIslands
 			int x0, z0; float[,] w;
 			if (!GetBrushArea(world, out x0, out z0, out w)) return;
 			float[,] h = terrainData.GetHeights(x0, z0, w.GetLength(1), w.GetLength(0));
-			float delta = direction * strength * Time.deltaTime / terrainData.size.y;
+			float delta = direction * strength * dt / terrainData.size.y;
 			for (int z = 0; z < w.GetLength(0); z++)
 				for (int x = 0; x < w.GetLength(1); x++)
 					h[z, x] = Mathf.Clamp01(h[z, x] + delta * w[z, x]);
@@ -231,7 +289,7 @@ namespace DynamicIslands
 			int x0, z0; float[,] w;
 			if (!GetBrushArea(world, out x0, out z0, out w)) return;
 			float[,] h = terrainData.GetHeights(x0, z0, w.GetLength(1), w.GetLength(0));
-			float rate = Mathf.Clamp01(strength * 0.5f * Time.deltaTime);
+			float rate = Mathf.Clamp01(strength * 0.5f * dt);
 			for (int z = 0; z < w.GetLength(0); z++)
 				for (int x = 0; x < w.GetLength(1); x++)
 					h[z, x] = Mathf.Lerp(h[z, x], flattenTarget, rate * w[z, x]);
@@ -245,7 +303,7 @@ namespace DynamicIslands
 			int rows = w.GetLength(0), cols = w.GetLength(1);
 			float[,] h = terrainData.GetHeights(x0, z0, cols, rows);
 			float[,] result = (float[,])h.Clone();
-			float rate = Mathf.Clamp01(strength * 0.5f * Time.deltaTime);
+			float rate = Mathf.Clamp01(strength * 0.5f * dt);
 			for (int z = 1; z < rows - 1; z++)
 				for (int x = 1; x < cols - 1; x++)
 				{

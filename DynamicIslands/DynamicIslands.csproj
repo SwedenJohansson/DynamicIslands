@@ -47,8 +47,10 @@
     <Compile Include="DevTests.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
+    <Compile Include="EditorTools.cs" />
     <Compile Include="EditorUI.cs" />
     <Compile Include="IslandFile.cs" />
+    <Compile Include="IslandFilesWindow.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />

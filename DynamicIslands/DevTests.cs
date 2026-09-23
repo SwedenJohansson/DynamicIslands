@@ -113,6 +113,106 @@ namespace DynamicIslands
 			}
 		}
 
+		[ConsoleCommand(name: "CIUndo", docs: "Dev: tests undo/redo for sculpt, paint, placing and deleting, and the islands window (run in the editor)")]
+		public static void RunUndoTest()
+		{
+			DynamicIslands.instance.StartCoroutine(UndoTest());
+		}
+
+		static float MaxDiff(float[,] a, float[,] b)
+		{
+			float m = 0;
+			for (int z = 0; z < a.GetLength(0); z++) for (int x = 0; x < a.GetLength(1); x++) m = Mathf.Max(m, Mathf.Abs(a[z, x] - b[z, x]));
+			return m;
+		}
+
+		static IEnumerator UndoTest()
+		{
+			Log("Undo test started");
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (CITest does that)"); yield break; }
+			var editor = Camera.main.GetComponent<terraineditor>();
+			Terrain terrain = terraineditor.terrain;
+			TerrainData data = terrain.terrainData;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			var savedAction = terraineditor.modificationAction;
+			bool ok = true;
+
+			// 1. Sculpt: raise a flat spot away from the test hill, undo, redo
+			Vector3 spot = terrain.transform.position + new Vector3(data.size.x * 0.8f, 0, data.size.z * 0.8f);
+			spot.y = terrain.SampleHeight(spot) + terrain.transform.position.y;
+			int res = data.heightmapResolution;
+			float[,] h0 = data.GetHeights(0, 0, res, res);
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
+			editor.SimulateStroke(spot, 30, 0.033f);
+			float[,] h1 = data.GetHeights(0, 0, res, res);
+			float raised = MaxDiff(h0, h1) * data.size.y;
+			CommandUndoRedo.UndoRedoManager.Undo();
+			float afterUndo = MaxDiff(h0, data.GetHeights(0, 0, res, res));
+			CommandUndoRedo.UndoRedoManager.Redo();
+			float afterRedo = MaxDiff(h1, data.GetHeights(0, 0, res, res));
+			bool sculptOk = raised > 1f && afterUndo < 1e-6f && afterRedo < 1e-6f;
+			Log("Sculpt: raised " + raised.ToString("F1") + " m; undo error " + afterUndo + ", redo error " + afterRedo + " (" + (sculptOk ? "ok" : "WRONG") + ")");
+			ok &= sculptOk;
+			CommandUndoRedo.UndoRedoManager.Undo(); // leave the terrain as it was
+			yield return null;
+
+			// 2. Paint: rock stroke, undo restores texture and paint mask
+			int ares = data.alphamapResolution;
+			Vector3 local = spot - terrain.transform.position;
+			int px = Mathf.FloorToInt(local.x / data.size.x * ares), pz = Mathf.FloorToInt(local.z / data.size.z * ares);
+			float rockBefore = data.GetAlphamaps(px, pz, 1, 1)[0, 0, TerrainPainter.Rock];
+			terraineditor.paintLayer = TerrainPainter.Rock;
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.PaintLayer;
+			editor.SimulateStroke(spot, 60, 0.033f);
+			float rockPainted = data.GetAlphamaps(px, pz, 1, 1)[0, 0, TerrainPainter.Rock];
+			float maskPainted = terraineditor.paintMask[pz, px];
+			CommandUndoRedo.UndoRedoManager.Undo();
+			float rockUndone = data.GetAlphamaps(px, pz, 1, 1)[0, 0, TerrainPainter.Rock];
+			float maskUndone = terraineditor.paintMask[pz, px];
+			bool paintOk = rockPainted > 0.9f && maskPainted > 0.5f && Mathf.Abs(rockUndone - rockBefore) < 0.01f && maskUndone < 0.5f;
+			Log("Paint: rock " + rockBefore.ToString("F2") + " -> " + rockPainted.ToString("F2") + " -> undo " + rockUndone.ToString("F2") + ", mask " + maskPainted + " -> " + maskUndone + " (" + (paintOk ? "ok" : "WRONG") + ")");
+			ok &= paintOk;
+			yield return null;
+
+			// 3. Place + delete objects
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			string objectName = PlaceableCatalog.Names.First();
+			GameObject obj = PlaceableCatalog.Spawn(objectName, placed);
+			obj.transform.position = spot;
+			obj.AddComponent<EditorGameObject>().GameObjectName = objectName;
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { obj }, true)); // what ObjectPlacer does
+			CommandUndoRedo.UndoRedoManager.Undo();
+			bool hiddenByUndo = !obj.activeSelf;
+			CommandUndoRedo.UndoRedoManager.Redo();
+			bool shownByRedo = obj.activeSelf;
+
+			DynamicIslands.EditorGizmoHandler.AddTarget(obj.transform, false);
+			DynamicIslands.EditorGizmoHandler.DeleteSelection();
+			bool deleted = !obj.activeSelf;
+			int savedWhileDeleted = IslandFile.Capture("undo-test", terrain, placed).Objects.Count(o => o.Name == objectName && (o.Position - (spot - terrain.transform.position)).sqrMagnitude < 0.01f);
+			CommandUndoRedo.UndoRedoManager.Undo();
+			bool restored = obj.activeSelf;
+			bool objectsOk = hiddenByUndo && shownByRedo && deleted && restored && savedWhileDeleted == 0;
+			Log("Objects: place-undo hides " + hiddenByUndo + ", redo shows " + shownByRedo + ", delete hides " + deleted + " (saved while deleted: " + savedWhileDeleted + "), undo restores " + restored + " (" + (objectsOk ? "ok" : "WRONG") + ")");
+			ok &= objectsOk;
+			UnityEngine.Object.Destroy(obj);
+			yield return null;
+
+			// 4. Islands window
+			IslandFilesWindow.Open();
+			bool opened = IslandFilesWindow.IsOpen;
+			yield return new WaitForSeconds(0.5f);
+			IslandFilesWindow.Close();
+			bool windowOk = opened && !IslandFilesWindow.IsOpen;
+			Log("Islands window opens and closes: " + windowOk);
+			ok &= windowOk;
+
+			terraineditor.modificationAction = savedAction;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			if (ok) Log("PASS: undo/redo and islands window");
+			else Fail("undo/redo or islands window");
+		}
+
 		/// <summary>World position of the terrain's highest heightmap sample.</summary>
 		static Vector3 HighestPoint(Terrain terrain)
 		{

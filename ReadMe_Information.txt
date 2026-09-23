@@ -54,13 +54,20 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     SpawnIsland <name>            in game (host): spawn a saved island 400 m ahead of the raft
     SetToRaise/Lower/Flatten/Smooth, ChangeWidth <brush diameter in m>, ChangeStrength <m per second>
     PaintTexture <sand|grass|rock|seabed>, SetToAutoPaint   texture brush (same as the paint buttons)
-    CITest / CITestWorld / CILook  dev self-tests (results in the console with a [CITEST] prefix)
+    CITest / CITestWorld / CIUndo / CILook  dev self-tests (results in the console with a [CITEST] prefix)
 
-  Editor: Terrain tab (layers icon) = Raise/Lower/Flatten/Smooth, texture paint Sand/Grass/Rock/Seabed,
-    Auto (brush back to automatic texturing) + brush size/strength sliders;
-    Objects tab (tree icon) = object list + Move/Rotate/Scale/Delete. Right-drag rotates the camera,
-    WASD moves, mouse wheel changes height. Textures paint automatically from height/slope unless painted
-    by hand; hand paint is saved in the .island file (format 2) and used when the island spawns in a world.
+  Editor controls:
+    ISLANDS button (top left), Menu > Save/Load island..., Ctrl+O   open the Islands window (name field,
+        list of saved islands: click = pick, double-click = load; Enter = save; warns before overwriting)
+    Ctrl+S          save the current island (asks for a name the first time)
+    Ctrl+Z / Ctrl+Y undo / redo - sculpting, painting, placing, moving/rotating/scaling and deleting objects
+    Terrain tab (layers icon): Raise / Lower / Flatten / Smooth, texture paint Sand / Grass / Rock / Seabed,
+        Auto (brush back to automatic texturing), brush size/strength sliders. A ring shows the brush.
+    Objects tab (tree icon): object list + Move / Rotate / Scale / Delete; keys 1 / 2 / 3 / 4 (4 = all),
+        Delete key deletes the selection, P toggles pivot/center, X toggles global/local.
+    Camera: WASD / arrows move, Shift = faster, right-drag rotates, mouse wheel changes height.
+    Textures paint automatically from height/slope unless painted by hand; hand paint is saved in the
+    .island file (format 2) and used when the island spawns in a world.
 
   Placeable objects: built automatically from Raft's Vasagatan scene the first time the editor opens.
     The list is written to Mods\DynamicIslands\placeables_generated.txt. To curate it, copy it to

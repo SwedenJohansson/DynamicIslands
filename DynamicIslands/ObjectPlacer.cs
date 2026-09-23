@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -46,6 +46,8 @@ namespace DynamicIslands.Editor
 				DynamicIslands.EditorGizmoHandler.placingObject = false;
 
 				this.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
+				// Placing is undoable (Ctrl+Z hides the object again)
+				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { this.gameObject }, true));
 
 				Destroy(this);
 			}

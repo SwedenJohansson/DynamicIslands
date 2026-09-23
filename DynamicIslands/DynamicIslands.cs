@@ -241,10 +241,6 @@ namespace DynamicIslands
 				GameObject EditorNavbar = Canvas.gameObject.transform.Find("EditorNavbar").gameObject;
 				GameObject Toolbar = Canvas.gameObject.transform.Find("Toolbar").gameObject;
 
-				EditorNavbar.transform.Find("Button").GetComponent<Button>().onClick.AddListener(() =>
-				{
-					Debug.Log("Loading Main Menu");
-				});
 			}
 			catch { }
 			await Task.Delay(1000);
@@ -276,8 +272,8 @@ namespace DynamicIslands
 			menuDropdown.options = new List<Dropdown.OptionData> {
 				new Dropdown.OptionData("Menu"),
 				new Dropdown.OptionData("Main menu"),
-				new Dropdown.OptionData("Save island"),
-				new Dropdown.OptionData("Load island"),
+				new Dropdown.OptionData("Save island..."),
+				new Dropdown.OptionData("Load island..."),
 			};
 			menuDropdown.SetValueWithoutNotify(0);
 			menuDropdown.onValueChanged.AddListener((int index) =>
@@ -289,10 +285,8 @@ namespace DynamicIslands
 						SceneManager.LoadScene("MainMenuScene", LoadSceneMode.Single);
 						break;
 					case 2:
-						SaveIsland(currentIslandName);
-						break;
 					case 3:
-						LoadIsland(currentIslandName);
+						IslandFilesWindow.Open();
 						break;
 				}
 			});
@@ -333,6 +327,7 @@ namespace DynamicIslands
 			await PlaceableCatalog.EnsureBuilt();
 			catalogNote.Close();
 
+			GameObject listButtonTemplate = null;
 			try
 			{
 				//Add gameobjects to the gameobject list in the editor
@@ -347,11 +342,16 @@ namespace DynamicIslands
 					newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
 				}
 				ButtonTemplate.SetActive(false);
+				listButtonTemplate = ButtonTemplate;
 			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Could not fill the object list: " + e);
 			}
+
+			// Save / Load window (uses the object list's button style when available)
+			try { IslandFilesWindow.Create(GameObject.Find("Toolbar").transform.parent, listButtonTemplate); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 
@@ -403,30 +403,32 @@ namespace DynamicIslands
 			Debug.Log("[CUSTOM ISLANDS] Saved islands: " + string.Join(", ", IslandSpawner.ListSavedIslands().ToArray()));
 		}
 
-		public static void SaveIsland(string name)
+		public static bool SaveIsland(string name)
 		{
-			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return; }
-			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return; }
+			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return false; }
+			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return false; }
 			try
 			{
 				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
+				return true;
 			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Saving failed: " + e);
 				Notify("Saving '" + name + "' failed - see console (F10)", true);
+				return false;
 			}
 		}
 
-		public static void LoadIsland(string name)
+		public static bool LoadIsland(string name)
 		{
-			if (!InEditor()) { Notify("LoadIsland only works inside the editor", true); return; }
+			if (!InEditor()) { Notify("LoadIsland only works inside the editor", true); return false; }
 			string path = IslandSpawner.PathFor(name);
-			if (!File.Exists(path)) { Notify("No saved island named '" + name + "'", true); return; }
-			if (!PlaceableCatalog.IsBuilt) { Notify("Objects are still loading, try again in a moment", true); return; }
+			if (!File.Exists(path)) { Notify("No saved island named '" + name + "'", true); return false; }
+			if (!PlaceableCatalog.IsBuilt) { Notify("Objects are still loading, try again in a moment", true); return false; }
 			try
 			{
 				IslandFile island = IslandFile.Load(path);
@@ -459,12 +461,16 @@ namespace DynamicIslands
 				int missing = IslandSpawner.SpawnObjects(island, holder.transform, true);
 
 				currentIslandName = name;
+				// Undo steps refer to the terrain/objects that were just replaced
+				CommandUndoRedo.UndoRedoManager.Clear();
 				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
+				return true;
 			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Loading failed: " + e);
 				Notify("Loading '" + name + "' failed - see console (F10)", true);
+				return false;
 			}
 		}
 

@@ -42,6 +42,15 @@ namespace DynamicIslands.Editor
 			Transform camPos = canvas.Find("CamPos");
 			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -150f);
 
+			// The navbar button (labelled "Return" in the bundle) opens the Save / Load window
+			Transform islandsButton = canvas.Find("EditorNavbar/Menu - Button");
+			if (islandsButton != null)
+			{
+				Text label = islandsButton.GetComponentInChildren<Text>(true);
+				if (label != null) label.text = "Islands";
+				Hook(islandsButton, IslandFilesWindow.Open);
+			}
+
 			// Tabs
 			Hook(terrainTab, () => tabs.UpdateTabSelection((int)TAB.TerrainEdit));
 			Hook(objectTab, () => tabs.UpdateTabSelection((int)TAB.ObjectPlace));
@@ -145,10 +154,20 @@ namespace DynamicIslands.Editor
 			Highlight(brushLabels, active);
 		}
 
+		static TransformType shownGizmoType = TransformType.Move;
+
+		/// <summary>Keeps the Move/Rotate/Scale highlight in sync when the type is changed with the 1/2/3/4 keys.</summary>
+		public static void Tick()
+		{
+			TransformGizmo g = DynamicIslands.EditorGizmoHandler;
+			if (g != null && g.transformType != shownGizmoType) SetGizmo(g.transformType);
+		}
+
 		static void SetGizmo(TransformType type)
 		{
+			shownGizmoType = type;
 			if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.transformType = type;
-			Highlight(objectLabels, type == TransformType.Move ? 0 : type == TransformType.Rotate ? 1 : 2);
+			Highlight(objectLabels, type == TransformType.Move ? 0 : type == TransformType.Rotate ? 1 : type == TransformType.Scale ? 2 : -1);
 		}
 
 		static void Highlight(Text[] labels, int active)
