@@ -213,6 +213,130 @@ namespace DynamicIslands
 			else Fail("undo/redo or islands window");
 		}
 
+		[ConsoleCommand(name: "CIDemo", docs: "Dev: scatters sample nature objects over the editor terrain (as undoable placements) and frames the camera")]
+		public static void Demo()
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first"); return; }
+			Terrain terrain = terraineditor.terrain;
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Vector3 c = terrain.transform.position + new Vector3(terrain.terrainData.size.x / 2f, 0, terrain.terrainData.size.z / 2f);
+			string[] kinds = { "Palm Tree 1", "Palm Tree 2", "Palm Tree 3", "Palm Tree 4", "BigPalm1", "BigPalm3", "Mango Tree", "BigBoulder1_Low", "BigBoulder3_Low",
+				"SmallBoulder2", "Bush", "Bush2", "Monstera_1", "Banana_Bush_1", "Banana_Bush_2", "Log", "BigRock_Low1_Sand", "TableCoral_1", "LeafCoral_1", "CauliCoral" };
+			var rnd = new System.Random(7);
+			var spawned = new System.Collections.Generic.List<GameObject>();
+			for (int i = 0; i < 60; i++)
+			{
+				string kind = kinds[i % kinds.Length];
+				if (PlaceableCatalog.Get(kind) == null) continue;
+				bool coral = kind.Contains("Coral");
+				float r = coral ? 75f + (float)rnd.NextDouble() * 25f : (float)rnd.NextDouble() * 55f;
+				float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
+				Vector3 p = c + new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r);
+				p.y = terrain.SampleHeight(p) + terrain.transform.position.y;
+				GameObject go = PlaceableCatalog.Spawn(kind, placed);
+				go.transform.position = p;
+				go.transform.rotation = Quaternion.Euler(0, (float)rnd.NextDouble() * 360f, 0);
+				go.AddComponent<EditorGameObject>().GameObjectName = kind;
+				spawned.Add(go);
+			}
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
+			Transform cam = Camera.main.transform;
+			cam.position = c + new Vector3(-60f, IslandFile.DefaultWaterLevel + 30f, -95f);
+			cam.LookAt(c + new Vector3(0, IslandFile.DefaultWaterLevel + 5f, 0));
+			Log("Placed " + spawned.Count + " sample objects (Ctrl+Z removes them)");
+		}
+
+		[ConsoleCommand(name: "CIScenes", docs: "Dev: lists all scenes in Raft's build")]
+		public static void ListScenes()
+		{
+			var lines = new System.Collections.Generic.List<string>();
+			for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++)
+				lines.Add(i + ": " + UnityEngine.SceneManagement.SceneUtility.GetScenePathByBuildIndex(i));
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "scan_scenes.txt"));
+			File.WriteAllLines(file, lines.ToArray());
+			Log(lines.Count + " scenes, written to " + file);
+		}
+
+		[ConsoleCommand(name: "CIScan", docs: "Dev: loads a Raft scene additively and writes its renderable objects and terrain setup to Mods\\DynamicIslands\\scan_<scene>.txt")]
+		public static void ScanScene(string[] args)
+		{
+			if (args == null || args.Length == 0) { Log("Usage: CIScan <scene name>"); return; }
+			DynamicIslands.instance.StartCoroutine(Scan(string.Join(" ", args)));
+		}
+
+		static IEnumerator Scan(string sceneName)
+		{
+			var scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
+			bool loadedByUs = !scene.isLoaded;
+			if (loadedByUs)
+			{
+				AsyncOperation op = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+				if (op == null) { Fail("cannot load scene " + sceneName); yield break; }
+				while (!op.isDone) yield return null;
+				scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
+			}
+
+			var lines = new System.Collections.Generic.List<string>();
+			var counts = new System.Collections.Generic.Dictionary<string, int>();
+			var examplePath = new System.Collections.Generic.Dictionary<string, string>();
+			foreach (GameObject root in scene.GetRootGameObjects())
+			{
+				foreach (Terrain t in root.GetComponentsInChildren<Terrain>(true))
+				{
+					TerrainData td = t.terrainData;
+					lines.Add("TERRAIN " + Path_(t.transform) + " size=" + td.size + " hres=" + td.heightmapResolution + " ares=" + td.alphamapResolution +
+						" material=" + (t.materialTemplate != null ? t.materialTemplate.name + " / " + t.materialTemplate.shader.name : "(none)"));
+					if (td.terrainLayers != null)
+						foreach (TerrainLayer l in td.terrainLayers)
+							if (l != null) lines.Add("  LAYER " + l.name + " diffuse=" + (l.diffuseTexture != null ? l.diffuseTexture.name + " " + l.diffuseTexture.width + "x" + l.diffuseTexture.height + " readable=" + l.diffuseTexture.isReadable : "none") +
+								" normal=" + (l.normalMapTexture != null ? l.normalMapTexture.name : "none") + " tile=" + l.tileSize);
+					if (t.materialTemplate != null)
+						foreach (string p in t.materialTemplate.GetTexturePropertyNames())
+						{
+							Texture tex = t.materialTemplate.GetTexture(p);
+							if (tex != null) lines.Add("  MATTEX " + p + " = " + tex.name + " (" + tex.GetType().Name + " " + tex.width + "x" + tex.height + ")");
+						}
+					lines.Add("  TREES prototypes=" + td.treePrototypes.Length + " instances=" + td.treeInstanceCount + " details=" + td.detailPrototypes.Length);
+					foreach (TreePrototype tp in td.treePrototypes) if (tp.prefab != null) lines.Add("  TREEPROTO " + tp.prefab.name);
+				}
+
+				// Top-most renderable nodes, as the placeable catalog would pick them
+				var stack = new System.Collections.Generic.Stack<Transform>();
+				stack.Push(root.transform);
+				while (stack.Count > 0)
+				{
+					Transform t = stack.Pop();
+					if (t != root.transform && (t.GetComponent<Renderer>() != null || t.GetComponent<LODGroup>() != null))
+					{
+						string n = PlaceableCatalog.CleanName(t.name);
+						int c; counts.TryGetValue(n, out c); counts[n] = c + 1;
+						if (!examplePath.ContainsKey(n)) examplePath[n] = Path_(t);
+						continue;
+					}
+					foreach (Transform child in t) stack.Push(child);
+				}
+			}
+			lines.Add("OBJECTS (name, count, example path):");
+			foreach (var kv in counts.OrderByDescending(k => k.Value)) lines.Add("  " + kv.Value + "x " + kv.Key + "    " + examplePath[kv.Key]);
+
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "scan_" + sceneName.Replace("#", "_") + ".txt"));
+			File.WriteAllLines(file, lines.ToArray());
+			Log("Scanned " + sceneName + ": " + counts.Count + " distinct objects, written to " + file);
+
+			if (loadedByUs)
+			{
+				AsyncOperation unload = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+				if (unload != null) while (!unload.isDone) yield return null;
+			}
+		}
+
+		static string Path_(Transform t)
+		{
+			string p = t.name;
+			while (t.parent != null) { t = t.parent; p = t.name + "/" + p; }
+			return p;
+		}
+
 		/// <summary>World position of the terrain's highest heightmap sample.</summary>
 		static Vector3 HighestPoint(Terrain terrain)
 		{

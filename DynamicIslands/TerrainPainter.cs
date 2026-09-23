@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using UnityEngine;
 
 namespace DynamicIslands.Editor
@@ -16,11 +18,68 @@ namespace DynamicIslands.Editor
 		const int AlphamapResolution = 512;
 
 		static TerrainLayer[] layers;
+		static TerrainLayer[] raftLayers;
+		static Material terrainMaterial;
+
+		/// <summary>True once Raft's own ground textures were borrowed from one of its islands (see PlaceableCatalog).</summary>
+		public static bool HasRaftTextures { get { return raftLayers != null && raftLayers[0] != null && raftLayers[0].diffuseTexture != null; } }
+
+		/// <summary>
+		/// Builds our four layers from the texture layers of a Raft island terrain (Grass, Clean_Sand, Rock_Stylized,
+		/// Dirt for the seabed). Returns false if any of them is missing; the procedural textures are used then.
+		/// </summary>
+		public static bool UseRaftTextures(TerrainLayer[] source)
+		{
+			if (source == null) return false;
+			Func<string, TerrainLayer> find = key => source.FirstOrDefault(l => l != null && l.diffuseTexture != null && l.diffuseTexture.name.IndexOf(key, StringComparison.OrdinalIgnoreCase) >= 0);
+			TerrainLayer dirt = find("Dirt"), sand = find("Sand"), grass = find("Grass"), rock = find("Rock");
+			if (dirt == null || sand == null || grass == null || rock == null) return false;
+			raftLayers = new[] { Copy("CI_Seabed", dirt, 8f), Copy("CI_Sand", sand, 8f), Copy("CI_Grass", grass, 8f), Copy("CI_Rock", rock, 10f) };
+			Debug.Log("[CUSTOM ISLANDS] Using Raft's terrain textures: " + string.Join(", ", raftLayers.Select(l => l.diffuseTexture.name).ToArray()));
+			return true;
+		}
+
+		static TerrainLayer Copy(string name, TerrainLayer from, float tile)
+		{
+			return new TerrainLayer
+			{
+				name = name,
+				diffuseTexture = from.diffuseTexture,
+				normalMapTexture = from.normalMapTexture,
+				normalScale = 1f,
+				tileSize = new Vector2(tile, tile),
+				smoothness = 0f,
+				metallic = 0f,
+			};
+		}
+
+		/// <summary>Swaps the layers of an already painted terrain (e.g. when Raft's textures arrive after the editor opened).</summary>
+		public static void RefreshLayers(Terrain terrain)
+		{
+			if (terrain == null) return;
+			TerrainData data = terrain.terrainData;
+			if (data.terrainLayers != null && data.terrainLayers.Length == LayerCount) data.terrainLayers = Layers;
+			ApplyMaterial(terrain);
+		}
+
+		/// <summary>Raft's textures come with normal maps; use the standard terrain shader when Raft includes it.</summary>
+		static void ApplyMaterial(Terrain terrain)
+		{
+			if (!HasRaftTextures) return;
+			if (terrainMaterial == null)
+			{
+				Shader s = Shader.Find("Nature/Terrain/Standard");
+				if (s == null) return;
+				terrainMaterial = new Material(s) { name = "CI_Terrain" };
+			}
+			terrain.materialTemplate = terrainMaterial;
+		}
 
 		public static TerrainLayer[] Layers
 		{
 			get
 			{
+				if (HasRaftTextures) return raftLayers;
 				if (layers == null || layers[0] == null)
 				{
 					layers = new[]
@@ -40,6 +99,7 @@ namespace DynamicIslands.Editor
 		{
 			TerrainData data = terrain.terrainData;
 			EnsureLayers(data, AlphamapResolution);
+			ApplyMaterial(terrain);
 			Paint(terrain, waterLevelWorldY, new RectInt(0, 0, data.alphamapWidth, data.alphamapHeight), mask);
 		}
 
@@ -48,13 +108,14 @@ namespace DynamicIslands.Editor
 		{
 			TerrainData data = terrain.terrainData;
 			EnsureLayers(data, maps.GetLength(0));
+			ApplyMaterial(terrain);
 			data.SetAlphamaps(0, 0, maps);
 		}
 
 		static void EnsureLayers(TerrainData data, int resolution)
 		{
 			if (data.alphamapResolution != resolution) data.alphamapResolution = resolution;
-			if (data.terrainLayers == null || data.terrainLayers.Length != LayerCount) data.terrainLayers = Layers;
+			if (data.terrainLayers == null || data.terrainLayers.Length != LayerCount || data.terrainLayers[0] != Layers[0]) data.terrainLayers = Layers;
 		}
 
 		/// <summary>Repaints the alphamap pixels covering the given world-space rectangle (x/z min and max).</summary>

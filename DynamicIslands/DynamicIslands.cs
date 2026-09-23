@@ -326,6 +326,8 @@ namespace DynamicIslands
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
 			await PlaceableCatalog.EnsureBuilt();
 			catalogNote.Close();
+			// Raft's own ground textures are borrowed while the catalog loads its islands
+			TerrainPainter.RefreshLayers(terraineditor.terrain);
 
 			GameObject listButtonTemplate = null;
 			try
@@ -334,12 +336,20 @@ namespace DynamicIslands
 				GameObject ContentGO = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content").gameObject;
 				GameObject ButtonTemplate = ContentGO.transform.Find("Button").gameObject;
 
-				foreach (string objectName in PlaceableCatalog.NamesByDisplayName)
+				foreach (var category in PlaceableCatalog.ByCategory())
 				{
-					string nameCopy = objectName;
-					GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
-					newButton.GetComponentInChildren<Text>().text = PlaceableCatalog.DisplayName(nameCopy);
-					newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
+					// Section header: a disabled copy of the button
+					GameObject header = Instantiate(ButtonTemplate, ContentGO.transform);
+					header.name = "Header_" + category.Key;
+					header.GetComponentInChildren<Text>().text = "- " + category.Key.ToUpper() + " -";
+					header.GetComponent<Button>().interactable = false;
+					foreach (string objectName in category.Value)
+					{
+						string nameCopy = objectName;
+						GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
+						newButton.GetComponentInChildren<Text>().text = PlaceableCatalog.DisplayName(nameCopy);
+						newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
+					}
 				}
 				ButtonTemplate.SetActive(false);
 				listButtonTemplate = ButtonTemplate;

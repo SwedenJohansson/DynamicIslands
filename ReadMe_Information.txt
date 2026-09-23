@@ -54,7 +54,7 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     SpawnIsland <name>            in game (host): spawn a saved island 400 m ahead of the raft
     SetToRaise/Lower/Flatten/Smooth, ChangeWidth <brush diameter in m>, ChangeStrength <m per second>
     PaintTexture <sand|grass|rock|seabed>, SetToAutoPaint   texture brush (same as the paint buttons)
-    CITest / CITestWorld / CIUndo / CILook  dev self-tests (results in the console with a [CITEST] prefix)
+    CITest / CITestWorld / CIUndo / CILook / CIDemo / CIScenes / CIScan <scene> / CIDump  dev tools/self-tests (results in the console with a [CITEST] prefix)
 
   Editor controls:
     ISLANDS button (top left), Menu > Save/Load island..., Ctrl+O   open the Islands window (name field,
@@ -69,9 +69,12 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     Textures paint automatically from height/slope unless painted by hand; hand paint is saved in the
     .island file (format 2) and used when the island spawns in a world.
 
-  Placeable objects: built automatically from Raft's Vasagatan scene the first time the editor opens.
-    The list is written to Mods\DynamicIslands\placeables_generated.txt. To curate it, copy it to
-    placeables.txt and delete lines. The blue plane in the editor is sea level for in-game spawning.
+  Placeable objects: built when the editor first opens, from Raft's own islands - NATURE from two ordinary
+    islands (palms, palm/mango trees, bushes, bamboo, boulders, corals, reef-hut pieces, fences) and PROPS
+    from Vasagatan (furniture, crates, signs...). Harvestable pickups and quest items are left out.
+    The list is written to Mods\DynamicIslands\placeables_generated.txt; copy it to placeables.txt and delete
+    lines to curate. Terrain textures are borrowed from the same islands (Raft's grass, sand, rock, dirt).
+    The blue plane in the editor is sea level for in-game spawning.
 
 KNOWN LIMITATIONS
   - Spawned islands don't persist in savegames, and they aren't part of Raft's natural spawn pool yet.
