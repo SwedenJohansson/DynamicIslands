@@ -52,9 +52,7 @@ namespace DynamicIslands
 			{
 				Terrain terrain = root.GetComponentInChildren<Terrain>();
 				if (terrain == null) continue;
-				Vector3 size = terrain.terrainData.size;
-				Vector3 centre = root.transform.position + new Vector3(size.x / 2f, 0, size.z / 2f);
-				centre.y = terrain.SampleHeight(centre) + root.transform.position.y;
+				Vector3 centre = HighestPoint(terrain);
 				Log(root.name + ": terrain enabled=" + terrain.enabled + ", material=" + (terrain.materialTemplate != null ? terrain.materialTemplate.shader.name : "(default)") + ", hill top y=" + centre.y.ToString("F1"));
 
 				var camGO = new GameObject("CITest_ViewCamera");
@@ -82,6 +80,19 @@ namespace DynamicIslands
 				UnityEngine.Object.Destroy(rt);
 				UnityEngine.Object.Destroy(tex);
 			}
+		}
+
+		/// <summary>World position of the terrain's highest heightmap sample.</summary>
+		static Vector3 HighestPoint(Terrain terrain)
+		{
+			TerrainData d = terrain.terrainData;
+			int res = d.heightmapResolution;
+			float[,] h = d.GetHeights(0, 0, res, res);
+			int bx = 0, bz = 0;
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+					if (h[z, x] > h[bz, bx]) { bx = x; bz = z; }
+			return terrain.transform.position + new Vector3(bx / (float)(res - 1) * d.size.x, h[bz, bx] * d.size.y, bz / (float)(res - 1) * d.size.z);
 		}
 
 		static IEnumerator EditorTest()
@@ -121,6 +132,7 @@ namespace DynamicIslands
 					if (d < 1f) heights[y, x] = Mathf.Max(heights[y, x], peak * Mathf.SmoothStep(1f, 0f, d));
 				}
 			data.SetHeights(0, 0, heights);
+			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
 			yield return null;
 
 			// 2. Place objects on top of the hill
@@ -219,10 +231,11 @@ namespace DynamicIslands
 			Terrain terrain = root.GetComponentInChildren<Terrain>();
 			int objects = root.transform.Find("Objects") != null ? root.transform.Find("Objects").childCount : 0;
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			Vector3 centre = root.transform.position + new Vector3(terrain.terrainData.size.x / 2f, 0, terrain.terrainData.size.z / 2f);
-			float hillTop = terrain.SampleHeight(centre) + root.transform.position.y;
+			Vector3 top = HighestPoint(terrain);
+			float hillTop = top.y;
 
-			Log("Island root at " + root.transform.position + ", centre " + centre + ", raft at " + (raft != null ? raft.transform.position.ToString() : "?"));
+			Log("Island root at " + root.transform.position + ", terrain " + terrain.terrainData.size + " (" + terrain.terrainData.heightmapResolution + " samples) at " + terrain.transform.position +
+				", highest point " + top + ", raft at " + (raft != null ? raft.transform.position.ToString() : "?"));
 			Log("Terrain layer " + terrain.gameObject.layer + ", hill top at world Y " + hillTop.ToString("F1") + " (expected about 15 above sea level)");
 			Log("Objects spawned: " + objects);
 

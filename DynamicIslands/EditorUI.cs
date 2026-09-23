@@ -1,0 +1,154 @@
+using System;
+using RuntimeGizmos;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DynamicIslands.Editor
+{
+	/// <summary>
+	/// Wires the editor UI from the Unity bundle (TerrainEdit_Canvas prefab) to the mod code.
+	/// The bundle only contains layout; every button is found by its path in the hierarchy:
+	///   Toolbar/TabSelector/Terrain Tool/Paint - Button              -> Terrain tab
+	///   Toolbar/TabSelector/Terrain Tool/Paint - Button/Brush Tools   -> Raise / Lower / Flatten / Smooth
+	///   Toolbar/TabSelector/Object Tool/Object - Button               -> Objects tab
+	///   Toolbar/TabSelector/Object Tool/Object - Button/Object Tools  -> Move / Rotate / Scale / Delete
+	///   Toolbar/ToolList/TerrainTool/BrushSizeSlider, BrushStrengthSlider
+	/// </summary>
+	public static class EditorUI
+	{
+		static readonly Color ActiveText = new Color(1f, 0.85f, 0.2f);
+		static readonly Color NormalText = new Color(0.2f, 0.2f, 0.2f);
+
+		static Text[] brushLabels;
+		static readonly System.Collections.Generic.List<Action> sliderRefreshers = new System.Collections.Generic.List<Action>();
+		static Text[] objectLabels;
+
+		/// <summary>Updates the sliders after the brush was changed elsewhere (console commands).</summary>
+		public static void RefreshSliders()
+		{
+			foreach (Action refresh in sliderRefreshers) refresh();
+		}
+
+		public static void Setup(Transform canvas, TabSelector tabs)
+		{
+			sliderRefreshers.Clear();
+			Transform toolbar = canvas.Find("Toolbar");
+			Transform terrainTab = toolbar.Find("TabSelector/Terrain Tool/Paint - Button");
+			Transform objectTab = toolbar.Find("TabSelector/Object Tool/Object - Button");
+			Transform brushTools = terrainTab != null ? terrainTab.Find("Brush Tools") : null;
+			Transform objectTools = objectTab != null ? objectTab.Find("Object Tools") : null;
+
+			// Tabs
+			Hook(terrainTab, () => tabs.UpdateTabSelection((int)TAB.TerrainEdit));
+			Hook(objectTab, () => tabs.UpdateTabSelection((int)TAB.ObjectPlace));
+			tabs.TabChanged += tab =>
+			{
+				if (brushTools != null) brushTools.gameObject.SetActive(tab == TAB.TerrainEdit);
+				if (objectTools != null) objectTools.gameObject.SetActive(tab == TAB.ObjectPlace);
+				// Leaving the object tab drops the selection so the gizmo doesn't block sculpting
+				if (tab == TAB.TerrainEdit && DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+			};
+
+			// Terrain brush modes
+			if (brushTools != null)
+			{
+				brushLabels = new[]
+				{
+					SetupButton(brushTools, "RaiseButton", "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise)),
+					SetupButton(brushTools, "LowerButton", "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower)),
+					SetupButton(brushTools, "FlattenButton", "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten)),
+					SetupButton(brushTools, "Button (5)", "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth)),
+				};
+				SetBrush(terraineditor.modificationAction);
+			}
+
+			// Object gizmo modes
+			if (objectTools != null)
+			{
+				objectLabels = new[]
+				{
+					SetupButton(objectTools, "Button (2)", "Move", () => SetGizmo(TransformType.Move)),
+					SetupButton(objectTools, "Button (3)", "Rotate", () => SetGizmo(TransformType.Rotate)),
+					SetupButton(objectTools, "Button (4)", "Scale", () => SetGizmo(TransformType.Scale)),
+					SetupButton(objectTools, "Button (5)", "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }),
+				};
+				SetGizmo(TransformType.Move);
+			}
+
+			// Brush sliders (0..1 in the bundle; mapped to metres and metres/second)
+			Transform terrainPanel = toolbar.Find("ToolList/TerrainTool");
+			if (terrainPanel != null)
+			{
+				SetupSlider(terrainPanel, "BrushSizeSlider", "BrushSizeLabel", terraineditor.MinRadius, terraineditor.MaxRadius,
+					() => terraineditor.brushRadius, v => terraineditor.brushRadius = v, v => "Brush Size: " + (v * 2f).ToString("F0") + " m");
+				SetupSlider(terrainPanel, "BrushStrengthSlider", "BrushStrengthLabel", terraineditor.MinStrength, terraineditor.MaxStrength,
+					() => terraineditor.strength, v => terraineditor.strength = v, v => "Brush Strength: " + v.ToString("F1") + " m/s");
+
+				// Texture painting is automatic for now; hide the placeholder button
+				Transform paint = terrainPanel.Find("PaintTool");
+				if (paint != null) paint.gameObject.SetActive(false);
+			}
+		}
+
+		static void SetBrush(terraineditor.TerrainModificationAction action)
+		{
+			terraineditor.modificationAction = action;
+			Highlight(brushLabels, action == terraineditor.TerrainModificationAction.Raise ? 0 :
+				action == terraineditor.TerrainModificationAction.Lower ? 1 :
+				action == terraineditor.TerrainModificationAction.Flatten ? 2 : 3);
+		}
+
+		static void SetGizmo(TransformType type)
+		{
+			if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.transformType = type;
+			Highlight(objectLabels, type == TransformType.Move ? 0 : type == TransformType.Rotate ? 1 : 2);
+		}
+
+		static void Highlight(Text[] labels, int active)
+		{
+			if (labels == null) return;
+			for (int i = 0; i < labels.Length; i++)
+				if (labels[i] != null) labels[i].color = i == active ? ActiveText : NormalText;
+		}
+
+		static void Hook(Transform t, Action onClick)
+		{
+			if (t == null) { Debug.LogWarning("[CUSTOM ISLANDS] Editor UI: button not found"); return; }
+			Button b = t.GetComponent<Button>();
+			if (b == null) { Debug.LogWarning("[CUSTOM ISLANDS] Editor UI: " + t.name + " has no Button"); return; }
+			b.onClick.AddListener(() => onClick());
+		}
+
+		static Text SetupButton(Transform parent, string child, string label, Action onClick)
+		{
+			Transform t = parent.Find(child);
+			if (t == null) { Debug.LogWarning("[CUSTOM ISLANDS] Editor UI: " + parent.name + "/" + child + " not found"); return null; }
+			t.gameObject.SetActive(true); // some buttons are disabled in the prefab
+			Hook(t, onClick);
+			Text text = t.GetComponentInChildren<Text>(true);
+			if (text != null) text.text = label;
+			return text;
+		}
+
+		static void SetupSlider(Transform panel, string sliderName, string labelName, float min, float max,
+			Func<float> get, Action<float> set, Func<float, string> format)
+		{
+			Transform st = panel.Find(sliderName);
+			Slider slider = st != null ? st.GetComponent<Slider>() : null;
+			if (slider == null) { Debug.LogWarning("[CUSTOM ISLANDS] Editor UI: slider " + sliderName + " not found"); return; }
+			Transform lt = panel.Find(labelName);
+			Text label = lt != null ? lt.GetComponent<Text>() : null;
+
+			slider.minValue = min;
+			slider.maxValue = max;
+			slider.SetValueWithoutNotify(get());
+			if (label != null) label.text = format(get());
+			sliderRefreshers.Add(() => { if (slider == null) return; slider.SetValueWithoutNotify(get()); if (label != null) label.text = format(get()); });
+			slider.onValueChanged.AddListener(v =>
+			{
+				set(v);
+				if (label != null) label.text = format(v);
+			});
+		}
+	}
+}

@@ -115,10 +115,12 @@ namespace DynamicIslands.Editor
 				container.SetActive(false);
 				UnityEngine.Object.DontDestroyOnLoad(container);
 
+				int skipped = 0;
 				foreach (Transform t in picked)
 				{
 					string name = CleanName(t.name);
 					if (prototypes.ContainsKey(name)) continue;
+					if (whitelist == null && excluded.IsMatch(name)) { skipped++; continue; }
 					// Parent is inactive, so the clone's Awake/OnEnable don't run here
 					GameObject clone = UnityEngine.Object.Instantiate(t.gameObject, container.transform);
 					clone.name = name;
@@ -141,7 +143,8 @@ namespace DynamicIslands.Editor
 					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + GeneratedListPath + ": " + e.Message); }
 				}
 
-				Debug.Log("[CUSTOM ISLANDS] Object catalog ready: " + prototypes.Count + " objects (" + (whitelist != null ? "from placeables.txt" : "auto-generated") + ")");
+				Debug.Log("[CUSTOM ISLANDS] Object catalog ready: " + prototypes.Count + " objects (" +
+					(whitelist != null ? "from placeables.txt" : "auto-generated, " + skipped + " fragments/story items left out") + ")");
 			}
 
 			if (loadedByUs)
@@ -200,6 +203,27 @@ namespace DynamicIslands.Editor
 			}
 			return null;
 		}
+
+		/// <summary>
+		/// Objects the automatic list leaves out: model fragments ("BoatHull_low.003"), primitives, probes/effects,
+		/// and story items/pickups whose scripts belong to Vasagatan's quest. A placeables.txt whitelist overrides this.
+		/// </summary>
+		static readonly Regex excluded = new Regex(
+			@"\.\d+$|^(Plane|Cube|TextMeshPro|Particle.*|VG_EnvironmentProbeMesh.*|BoatHull.*|Window.*|Pennant_.*|Bolcutter.*|Boltcutter.*|" +
+			@"Carlift_.*|QuestItemPickup_.*|Pickup_.*|NotePickup.*|.*Pickup|Bomb|DoorHandle.*|LockerDoor|Lock_Hatch|Padlock.*|Crowbar|Tools_Hammer)$|^\s*$",
+			RegexOptions.IgnoreCase);
+
+		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_)|\s*Variant.*$");
+
+		/// <summary>Friendly label for the object list: "VG_DecorationPrefabBase_Sofa Variant" -> "Sofa". Saves keep the real name.</summary>
+		public static string DisplayName(string name)
+		{
+			string s = displayPrefix.Replace(name, "").Replace('_', ' ').Trim();
+			return s.Length > 0 ? s : name;
+		}
+
+		/// <summary>Catalog names ordered by their display label.</summary>
+		public static IEnumerable<string> NamesByDisplayName { get { return prototypes.Keys.OrderBy(DisplayName); } }
 
 		static readonly Regex duplicateSuffix = new Regex(@"\s*\(\d+\)$");
 

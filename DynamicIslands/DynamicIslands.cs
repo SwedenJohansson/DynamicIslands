@@ -388,25 +388,11 @@ namespace DynamicIslands
 			{
 
 				TabSelector tabbSelector = GameObject.Find("TabSelector").AddComponent<TabSelector>();
-				tabbSelector.SelectedTab = TAB.ObjectPlace;
+				tabbSelector.SelectedTab = TAB.TerrainEdit; // building an island starts with shaping land
 				tabbSelector.ToolList = GameObject.Find("ToolList");
-				// Only direct children with a Button are tabs; the i-th tab button shows the i-th ToolList panel
-				List<Button> tabButtons = new List<Button>();
-				foreach (Transform child in tabbSelector.transform)
-				{
-					Button b = child.GetComponent<Button>();
-					if (b != null) tabButtons.Add(b);
-				}
-				int tabCount = Mathf.Min(tabButtons.Count, tabbSelector.ToolList.transform.childCount);
-				for (int i = 0; i < tabCount; i++)
-				{
-					int temp = i;
-					tabButtons[i].onClick.AddListener(() => tabbSelector.UpdateTabSelection(temp));
-				}
-				Debug.Log("[CUSTOM ISLANDS] Editor tabs: " + string.Join(", ", tabButtons.Take(tabCount).Select(b => b.name).ToArray()) +
-					" -> panels: " + string.Join(", ", tabbSelector.ToolList.transform.Cast<Transform>().Select(t => t.name).ToArray()));
+				EditorUI.Setup(GameObject.Find("Toolbar").transform.parent, tabbSelector);
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not set up editor tabs: " + e); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not set up editor UI: " + e); }
 
 			//Load shaders (the transform gizmo needs them in Awake, so this must happen first)
 			try
@@ -440,11 +426,11 @@ namespace DynamicIslands
 				GameObject ContentGO = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content").gameObject;
 				GameObject ButtonTemplate = ContentGO.transform.Find("Button").gameObject;
 
-				foreach (string objectName in PlaceableCatalog.Names)
+				foreach (string objectName in PlaceableCatalog.NamesByDisplayName)
 				{
 					string nameCopy = objectName;
 					GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
-					newButton.GetComponentInChildren<Text>().text = nameCopy;
+					newButton.GetComponentInChildren<Text>().text = PlaceableCatalog.DisplayName(nameCopy);
 					newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
 				}
 				ButtonTemplate.SetActive(false);
@@ -540,6 +526,7 @@ namespace DynamicIslands
 					terrain.terrainData.size = island.TerrainSize;
 				}
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
+				TerrainPainter.Setup(terrain, island.WaterLevel);
 
 				Transform placed = GameObject.Find("PlacedObjects").transform;
 				foreach (Transform child in placed) Destroy(child.gameObject);
@@ -985,39 +972,33 @@ namespace DynamicIslands
 		{
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.SampleAverage;
 		}
-		[ConsoleCommand(name: "ChangeHeight", docs: "Change height of the Terrain Editing Brush")]
+		[ConsoleCommand(name: "SetToSmooth", docs: "Change Terrain Edit to smooth the terrain")]
+		public static void TerrainSmooth()
+		{
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Smooth;
+		}
+		[ConsoleCommand(name: "ChangeHeight", docs: "Terrain brush diameter in metres (same as ChangeWidth; the brush is round)")]
 		public static void TerrainHeight(string[] args)
 		{
-			int value = int.Parse(args[0]);
-
-			terraineditor.brushHeight = value;
-
+			TerrainWidth(args);
 		}
-		[ConsoleCommand(name: "ChangeWidth", docs: "Change width of the Terrain Editing Brush")]
+		[ConsoleCommand(name: "ChangeWidth", docs: "Terrain brush diameter in metres, e.g. ChangeWidth 30")]
 		public static void TerrainWidth(string[] args)
 		{
-			int value = int.Parse(args[0]);
-
-			terraineditor.brushWidth = value;
-
+			float value;
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value)) { Debug.LogWarning("Usage: ChangeWidth <metres>"); return; }
+			terraineditor.brushRadius = Mathf.Clamp(value / 2f, terraineditor.MinRadius, terraineditor.MaxRadius);
+			EditorUI.RefreshSliders();
+			Debug.Log("[CUSTOM ISLANDS] Brush diameter: " + (terraineditor.brushRadius * 2f) + " m");
 		}
-		[ConsoleCommand(name: "ChangeStrength", docs: "Change strength of the Terrain Editing Brush")]
+		[ConsoleCommand(name: "ChangeStrength", docs: "Terrain brush speed in metres per second, e.g. ChangeStrength 4")]
 		public static void TerrainStrength(string[] args)
 		{
-			float value = float.Parse(args[0]);
-
-			if (value > 1)
-			{
-				terraineditor.strength = 1f;
-			}
-
-			if (value < 0.1f)
-			{
-				terraineditor.strength = 0.1f;
-			}
-
-			terraineditor.strength = value;
-
+			float value;
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value)) { Debug.LogWarning("Usage: ChangeStrength <metres per second>"); return; }
+			terraineditor.strength = Mathf.Clamp(value, terraineditor.MinStrength, terraineditor.MaxStrength);
+			EditorUI.RefreshSliders();
+			Debug.Log("[CUSTOM ISLANDS] Brush strength: " + terraineditor.strength + " m/s");
 		}
 
 		[ConsoleCommand(name: "EnableEditing", docs: "Enable the use of Terrain Edit")]

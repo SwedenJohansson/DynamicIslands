@@ -78,6 +78,39 @@ namespace DynamicIslands.Editor
 			return new Vector2((float)(sx / n) * step * island.TerrainSize.x, (float)(sz / n) * step * island.TerrainSize.z);
 		}
 
+		/// <summary>Anything raised more than this above the flat seabed (height 0) counts as part of the island.</summary>
+		const float ShapedThresholdMetres = 1f;
+		/// <summary>Extra heightmap samples kept around the shaped area so slopes don't end in a cliff.</summary>
+		const int CropMarginSamples = 16;
+
+		/// <summary>
+		/// Square block of the heightmap (size 2^n + 1, as Unity terrains require) covering everything that was
+		/// raised above the seabed plus a margin. Falls back to the whole heightmap if nothing was shaped.
+		/// </summary>
+		public static void GetCropArea(IslandFile island, out int x0, out int z0, out int size)
+		{
+			int res = island.HeightmapResolution;
+			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			int minX = res, minZ = res, maxX = -1, maxZ = -1;
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+					if (island.Heights[z, x] > threshold)
+					{
+						if (x < minX) minX = x; if (x > maxX) maxX = x;
+						if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+					}
+			if (maxX < 0) { x0 = 0; z0 = 0; size = res; return; }
+
+			int needed = Mathf.Max(maxX - minX, maxZ - minZ) + 1 + 2 * CropMarginSamples;
+			size = 33;
+			while (size < needed && size < res) size = (size - 1) * 2 + 1;
+			size = Mathf.Min(size, res);
+
+			// Centre the block on the shaped area, then keep it inside the heightmap
+			x0 = Mathf.Clamp((minX + maxX) / 2 - size / 2, 0, res - size);
+			z0 = Mathf.Clamp((minZ + maxZ) / 2 - size / 2, 0, res - size);
+		}
+
 		/// <summary>
 		/// Builds the island in the current (game) scene with its sea level at worldPosition.y and the
 		/// centre of its land at worldPosition horizontally. The catalog must already be built.
@@ -90,12 +123,24 @@ namespace DynamicIslands.Editor
 			Vector2 land = LandCentre(island);
 			root.transform.position = worldPosition - new Vector3(land.x, island.WaterLevel, land.y);
 
-			TerrainData data = CreateTerrainData(island.TerrainSize, island.HeightmapResolution);
-			data.SetHeights(0, 0, island.Heights);
+			// Only bring the part of the heightmap that has been shaped, not the whole flat 1000 x 1000 m seabed
+			int cropX, cropZ, cropSize;
+			GetCropArea(island, out cropX, out cropZ, out cropSize);
+			float spacing = island.TerrainSize.x / (island.HeightmapResolution - 1);
+			var cropped = new float[cropSize, cropSize];
+			for (int z = 0; z < cropSize; z++)
+				for (int x = 0; x < cropSize; x++)
+					cropped[z, x] = island.Heights[cropZ + z, cropX + x];
+
+			TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize);
+			data.SetHeights(0, 0, cropped);
 			GameObject terrainGO = Terrain.CreateTerrainGameObject(data);
 			terrainGO.name = "Terrain";
 			terrainGO.layer = TerrainLayer;
 			terrainGO.transform.SetParent(root.transform, false);
+			// Object positions in the file are relative to the full terrain's corner, which the root still represents
+			terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
+			TerrainPainter.Setup(terrainGO.GetComponent<Terrain>(), worldPosition.y);
 
 			var objects = new GameObject("Objects");
 			objects.transform.SetParent(root.transform, false);
