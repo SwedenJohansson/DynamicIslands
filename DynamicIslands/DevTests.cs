@@ -496,7 +496,76 @@ namespace DynamicIslands
 			DynamicIslands.instance.StartCoroutine(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
 		}
 
-		[ConsoleCommand(name: "CIRealIsland", docs: "Dev, in game (host): spawns one of Raft's own small islands <distance> m east of the raft (for comparisons)")]
+		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading")]
+		public static void Sail(string[] args)
+		{
+			float seconds = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 120f;
+			float speed = args != null && args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 15f;
+			RunInBackground();
+			DynamicIslands.instance.StartCoroutine(SailRoutine(seconds, speed));
+		}
+
+		[ConsoleCommand(name: "CIBackground", docs: "Dev: keeps the game running while its window is not in front (for automated tests)")]
+		public static void RunInBackground()
+		{
+			Application.runInBackground = true;
+			Log("The game keeps running in the background now");
+		}
+
+		static IEnumerator SailRoutine(float seconds, float speed)
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null || raft.body == null) { Fail("no raft"); yield break; }
+			Rigidbody body = raft.body;
+			Vector3 dir = Flat(body.velocity).sqrMagnitude > 0.04f ? Flat(body.velocity).normalized : (Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward);
+			int startCount = IslandWorldState.Islands.Count;
+			Log("Sailing " + dir + " at " + speed + " m/s for " + seconds + " s; custom islands in the world: " + startCount + ", auto " + (CustomIslandSpawner.Enabled ? "on" : "off"));
+			float t = 0, sailed = 0, nextLog = 10f;
+			Vector3 last = body.position;
+			Network_Player player = RAPI.GetLocalPlayer();
+			// Start on the raft (dying pauses a single-player game, which would stall the test)
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
+			while (t < seconds)
+			{
+				yield return new WaitForFixedUpdate();
+				t += Time.fixedDeltaTime;
+				KeepAlive(player);
+				// Raft's own physics caps the raft's speed, so move the body directly (the player on it moves along)
+				body.MovePosition(body.position + dir * speed * Time.fixedDeltaTime);
+				Vector3 d = Flat(body.position - last);
+				if (d.magnitude < 100f) sailed += d.magnitude; // world shifts jump the position
+				last = body.position;
+				if (t >= nextLog)
+				{
+					nextLog += 10f;
+					int loaded = IslandWorldState.Islands.Count(e => e.Root != null);
+					Log(string.Format("t={0:F0}s sailed {1:F0} m; custom islands {2} ({3} loaded)", t, sailed, IslandWorldState.Islands.Count, loaded));
+				}
+			}
+			body.velocity = Vector3.zero;
+			Log("Done: sailed " + sailed.ToString("F0") + " m, custom islands " + startCount + " -> " + IslandWorldState.Islands.Count + ", loaded now " + IslandWorldState.Islands.Count(e => e.Root != null));
+		}
+
+		/// <summary>Long test runs in a Normal world would otherwise starve the test player.</summary>
+		static void KeepAlive(Network_Player player)
+		{
+			if (player == null || player.Stats == null) return;
+			PlayerStats s = player.Stats;
+			s.stat_hunger.Normal.Value = s.stat_hunger.Normal.Max;
+			s.stat_thirst.Normal.Value = s.stat_thirst.Normal.Max;
+			s.stat_health.Value = s.stat_health.Max;
+			s.stat_oxygen.Value = s.stat_oxygen.Max;
+		}
+
+		[ConsoleCommand(name: "CISpawnNow", docs: "Dev, in game (host): places an island from the spawn pool ahead of the raft now, with the automatic spawner's checks")]
+		public static void SpawnNow()
+		{
+			Vector3? pos = CustomIslandSpawner.RaftPosition;
+			if (!pos.HasValue) { Fail("no raft"); return; }
+			Log(CustomIslandSpawner.TrySpawn(pos.Value, true));
+		}
+
+		[ConsoleCommand(name: "CIRealIsland",docs: "Dev, in game (host): spawns one of Raft's own small islands <distance> m east of the raft (for comparisons)")]
 		public static void RealIsland(string[] args)
 		{
 			float d = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 200f;

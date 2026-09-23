@@ -169,7 +169,8 @@ namespace DynamicIslands
 
 		private void Update()
 		{
-			
+			try { CustomIslandSpawner.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
 
 			if (!Raft_Network.IsHost)
 			{
@@ -550,33 +551,51 @@ namespace DynamicIslands
 		}
 
 		/// <param name="broadcast">host spawning a new island: tell clients and remember it in the world's island list</param>
-		/// <param name="restoring">host re-creating an island from the world's island list on load</param>
-		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast, bool restoring = false)
+		/// <param name="entry">host (re)loading an island that is already in the world's island list (automatic
+		/// spawns and streaming): its Root is set once spawned, and nothing is shown to the player</param>
+		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast, IslandWorldState.Entry entry = null)
 		{
+			bool quiet = entry != null;
 			string path = IslandSpawner.PathFor(name);
-			if (!File.Exists(path)) { Notify("No saved island named '" + name + "' in " + assetpath, true); yield break; }
-
-			IslandFile island;
-			try { island = IslandFile.Load(path); }
+			IslandFile island = null;
+			try
+			{
+				if (File.Exists(path)) island = IslandFile.Load(path);
+				else Notify("No saved island named '" + name + "' in " + assetpath, true);
+			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Could not read " + path + ": " + e);
 				Notify("Could not read island '" + name + "' - see console (F10)", true);
+			}
+			if (island == null)
+			{
+				if (entry != null) { entry.Loading = false; entry.Failed = true; }
 				yield break;
 			}
 
 			yield return PlaceableCatalog.EnsureBuilt();
 
+			if (entry != null)
+			{
+				entry.Loading = false;
+				// Removed while loading, or the world changed
+				if (!IslandWorldState.Contains(entry)) yield break;
+				position = entry.Position; // follows world shifts that happened meanwhile
+			}
+
 			try
 			{
 				GameObject root = IslandSpawner.SpawnInWorld(island, position);
 				root.AddComponent<ReApplyShaders>();
-				if (Raft_Network.IsHost && (broadcast || restoring)) IslandWorldState.Add(name, position, root);
-				Notify((restoring ? "Restored" : "Spawned") + " island '" + name + "'");
+				if (entry != null) entry.Root = root;
+				else if (Raft_Network.IsHost && broadcast) IslandWorldState.Add(name, position, root);
+				if (!quiet) Notify("Spawned island '" + name + "'");
 			}
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e);
+				if (entry != null) entry.Failed = true;
 				Notify("Spawning '" + name + "' failed - see console (F10)", true);
 				yield break;
 			}
@@ -604,7 +623,31 @@ namespace DynamicIslands
 		public static void ListSpawnedCommand()
 		{
 			if (IslandWorldState.Islands.Count == 0) { Debug.Log("[CUSTOM ISLANDS] No custom islands spawned in this world"); return; }
-			foreach (var e in IslandWorldState.Islands) Debug.Log("[CUSTOM ISLANDS] " + e.Name + " at " + e.Position + (e.Root == null ? " (missing)" : ""));
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			foreach (var e in IslandWorldState.Islands)
+				Debug.Log("[CUSTOM ISLANDS] " + e.Name + " at " + e.Position +
+					(raftPos.HasValue ? ", " + Vector3.Distance(new Vector3(e.Position.x, 0, e.Position.z), new Vector3(raftPos.Value.x, 0, raftPos.Value.z)).ToString("F0") + " m from the raft" : "") +
+					(e.Failed ? " (island file missing or broken)" : e.Loading ? " (loading)" : e.Root == null ? " (unloaded: far away)" : ""));
+		}
+
+		[ConsoleCommand(name: "SpawnPool", docs: "Shows which islands appear on their own while sailing, and how often (edit Mods\\DynamicIslands\\spawnpool.txt to change)")]
+		public static void SpawnPoolCommand()
+		{
+			foreach (string line in CustomIslandSpawner.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+		}
+
+		[ConsoleCommand(name: "CustomIslandsAuto", docs: "Host: custom islands appear on their own while sailing in this world. Usage: CustomIslandsAuto on|off")]
+		public static void CustomIslandsAutoCommand(string[] args)
+		{
+			if (args == null || args.Length == 0 || !(args[0].Equals("on", StringComparison.OrdinalIgnoreCase) || args[0].Equals("off", StringComparison.OrdinalIgnoreCase)))
+			{
+				Notify("Automatic islands are " + (CustomIslandSpawner.Enabled ? "on" : "off") + " in this world. Usage: CustomIslandsAuto on|off");
+				return;
+			}
+			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a game (the setting is per world)", true); return; }
+			if (!Raft_Network.IsHost) { Notify("Only the host can change this", true); return; }
+			CustomIslandSpawner.Enabled = args[0].Equals("on", StringComparison.OrdinalIgnoreCase);
+			Notify("Automatic islands " + (CustomIslandSpawner.Enabled ? "on" : "off") + " in this world (kept when the world is saved)");
 		}
 
 		#endregion

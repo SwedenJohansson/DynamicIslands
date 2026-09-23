@@ -81,6 +81,28 @@ namespace DynamicIslands.Editor
 			return new Vector2((float)(sx / n) * step * island.TerrainSize.x, (float)(sz / n) * step * island.TerrainSize.z);
 		}
 
+		/// <summary>
+		/// How far (m) the shaped part of the island reaches from its land centre (see LandCentre), i.e. the radius
+		/// of the circle around the spawn position that the island covers. 0 if nothing was shaped.
+		/// </summary>
+		public static float LandRadius(IslandFile island)
+		{
+			int res = island.HeightmapResolution;
+			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			float step = 1f / (res - 1);
+			Vector2 centre = LandCentre(island);
+			float maxSq = 0f;
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+					if (island.Heights[z, x] > threshold)
+					{
+						float dx = x * step * island.TerrainSize.x - centre.x, dz = z * step * island.TerrainSize.z - centre.y;
+						float sq = dx * dx + dz * dz;
+						if (sq > maxSq) maxSq = sq;
+					}
+			return Mathf.Sqrt(maxSq);
+		}
+
 		/// <summary>Anything raised more than this above the flat seabed (height 0) counts as part of the island.</summary>
 		const float ShapedThresholdMetres = 1f;
 		/// <summary>Extra heightmap samples kept around the shaped area so slopes don't end in a cliff.</summary>
