@@ -225,7 +225,8 @@ namespace DynamicIslands.Editor
 		public static List<KeyValuePair<string, float>> Pool()
 		{
 			var result = new List<KeyValuePair<string, float>>();
-			var saved = IslandSpawner.ListSavedIslands().ToList();
+			// Copies downloaded from a multiplayer host (<name>_<hash>) only join the pool when listed by name
+			var saved = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n)).ToList();
 			var listed = new HashSet<string>(poolLines.Where(p => p.Key != "*").Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
 			foreach (var p in poolLines)
 			{
@@ -234,7 +235,7 @@ namespace DynamicIslands.Editor
 					foreach (string s in saved)
 						if (!listed.Contains(s) && !result.Any(x => x.Key.Equals(s, StringComparison.OrdinalIgnoreCase))) result.Add(new KeyValuePair<string, float>(s, p.Value));
 				}
-				else if (saved.Contains(p.Key, StringComparer.OrdinalIgnoreCase))
+				else if (IslandSpawner.ListSavedIslands().Contains(p.Key, StringComparer.OrdinalIgnoreCase))
 					result.Add(p);
 			}
 			return result.Where(p => p.Value > 0f).ToList();

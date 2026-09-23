@@ -1,8 +1,10 @@
 # Packs the DynamicIslands\ folder into DynamicIslands.rmod (an .rmod is a plain zip; RML compiles the .cs files in game).
 # Replaces build.bat, which only works when the repo folder is literally named "DynamicIslands".
-# Usage: powershell -ExecutionPolicy Bypass -File pack.ps1 [-Install] [-RaftDir <path>]
+# Usage: powershell -ExecutionPolicy Bypass -File pack.ps1 [-Install] [-Release] [-RaftDir <path>]
+#   -Release leaves out DevTests.cs (the CI* dev/test console commands)
 param(
     [switch]$Install,
+    [switch]$Release,
     [string]$RaftDir = "D:\Games\SteamLibrary\steamapps\common\Raft"
 )
 $ErrorActionPreference = "Stop"
@@ -13,6 +15,7 @@ $out = Join-Path $PSScriptRoot "DynamicIslands.rmod"
 
 $excludeDirs  = @("bin", "obj", ".vs", "Properties")
 $excludeFiles = @("*.csproj", "*.csproj.user", "*.rmod", "*.meta", "*.old", "*.veryold", "*,veryold", "*.pdb")
+if ($Release) { $excludeFiles += "DevTests.cs" }
 
 $files = Get-ChildItem $src -Recurse -File | Where-Object {
     $rel = $_.FullName.Substring($src.Length + 1)
@@ -32,7 +35,7 @@ try {
 } finally { $zip.Dispose() }
 
 $version = (Get-Content (Join-Path $src "modinfo.json") -Raw | ConvertFrom-Json).version
-Write-Host ("Packed {0} files into {1} ({2:N0} KB), version {3}" -f $files.Count, $out, ((Get-Item $out).Length / 1KB), $version) -ForegroundColor Green
+Write-Host ("Packed {0} files into {1} ({2:N0} KB), version {3}{4}" -f $files.Count, $out, ((Get-Item $out).Length / 1KB), $version, $(if ($Release) { ", release (no dev commands)" } else { "" })) -ForegroundColor Green
 
 if ($Install) {
     $mods = Join-Path $RaftDir "mods"

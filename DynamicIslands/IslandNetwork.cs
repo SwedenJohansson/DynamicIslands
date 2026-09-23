@@ -231,6 +231,13 @@ namespace DynamicIslands.Editor
 
 		internal static string DownloadName(string name, string hash) { return name + "_" + hash; }
 
+		/// <summary>True for island names of the form &lt;name&gt;_&lt;12 hex digits&gt; (files downloaded from a host).</summary>
+		public static bool IsDownloadName(string name)
+		{
+			int i = name.LastIndexOf('_');
+			return i > 0 && name.Length - i - 1 == 12 && name.Substring(i + 1).All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
+		}
+
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
 			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
