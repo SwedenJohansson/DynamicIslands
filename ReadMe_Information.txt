@@ -51,7 +51,9 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     SaveIsland <name>             editor: save to Mods\DynamicIslands\<name>.island
     LoadIsland <name>             editor: load a saved island
     ListIslands                   list saved islands
-    SpawnIsland <name>            in game (host): spawn a saved island 400 m ahead of the raft
+    SpawnIsland <name> [distance] in game (host): spawn a saved island ahead of the raft (default 250 m)
+    RemoveIsland <name>|all       in game (host): remove spawned islands
+    ListSpawned                   islands spawned in this world (they are saved with the world)
     SetToRaise/Lower/Flatten/Smooth, ChangeWidth <brush diameter in m>, ChangeStrength <m per second>
     PaintTexture <sand|grass|rock|seabed>, SetToAutoPaint   texture brush (same as the paint buttons)
     CITest / CITestWorld / CIUndo / CILook / CIDemo / CIScenes / CIScan <scene> / CIDump  dev tools/self-tests (results in the console with a [CITEST] prefix)
@@ -76,8 +78,14 @@ HOW TO USE (updated 2026-09-23; this folder is now a local git repo - see git lo
     lines to curate. Terrain textures are borrowed from the same islands (Raft's grass, sand, rock, dirt).
     The blue plane in the editor is sea level for in-game spawning.
 
+IN A WORLD
+  - Spawned islands are saved with the world (Mods\DynamicIslands\worlds\<world id>.txt) and come back on load.
+  - They follow Raft's world shifts, the raft runs aground on them (Normal/Easy/Hard - in Creative the raft is
+    always anchored), players can walk on them, and HARVESTABLE objects (palms, mango tree, rocks, berry bush)
+    can be chopped/picked like on Raft's own islands.
+
 KNOWN LIMITATIONS
-  - Spawned islands don't persist in savegames, and they aren't part of Raft's natural spawn pool yet.
+  - Harvested trees/picked items are not remembered: they are back after the world is reloaded.
   - Multiplayer: clients only see an island if they have the same .island file; Raft's networking
-    changed (Unity Netcode) and this path is untested.
-  - Islands made with the old Unity export tool (.assets bundles) are no longer supported (decided 2026-09-23).
+    changed (Unity Netcode) and this path is untested, including harvesting on clients.
+  - Islands don't appear on their own yet (not part of Raft's spawn pool) - use SpawnIsland.

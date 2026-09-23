@@ -25,6 +25,7 @@ namespace DynamicIslands.Editor
 	{
 		public const string NatureCategory = "Nature";
 		public const string PropsCategory = "Props";
+		public const string HarvestableCategory = "Harvestable";
 
 		class Source
 		{
@@ -49,6 +50,21 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, GameObject> prototypes = new Dictionary<string, GameObject>();
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
+		/// <summary>Experimental: harvestable Raft objects kept with their gameplay scripts (not in the editor list yet).</summary>
+		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>(); // same objects as in prototypes
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|MangoTree|Rock \d+|BerryBush)$");
+
+		public static GameObject SpawnHarvestable(string name, Transform parent)
+		{
+			GameObject proto;
+			if (!harvestables.TryGetValue(name, out proto)) return null;
+			GameObject go = UnityEngine.Object.Instantiate(proto, parent);
+			go.name = name;
+			go.SetActive(true);
+			return go;
+		}
+
+		public static IEnumerable<string> HarvestableNames { get { return harvestables.Keys; } }
 		static GameObject container;
 		static bool building;
 
@@ -64,7 +80,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Category names in list order, each with its objects sorted by display label.</summary>
 		public static IEnumerable<KeyValuePair<string, List<string>>> ByCategory()
 		{
-			foreach (string cat in new[] { NatureCategory, PropsCategory })
+			foreach (string cat in new[] { NatureCategory, HarvestableCategory, PropsCategory })
 			{
 				List<string> names = prototypes.Keys.Where(n => CategoryOf(n) == cat).OrderBy(DisplayName).ToList();
 				if (names.Count > 0) yield return new KeyValuePair<string, List<string>>(cat, names);
@@ -77,12 +93,26 @@ namespace DynamicIslands.Editor
 			return prototypes.TryGetValue(name, out go) ? go : null;
 		}
 
-		/// <summary>Creates an active copy of a catalog object. Returns null if the name is unknown.</summary>
-		public static GameObject Spawn(string name, Transform parent)
+		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
+
+		/// <summary>
+		/// Creates an active copy of a catalog object. Returns null if the name is unknown.
+		/// Harvestable objects keep their gameplay scripts only when <paramref name="withGameplay"/> is set (islands in a
+		/// world); the editor gets a visual copy, because those scripts expect a running game world.
+		/// </summary>
+		public static GameObject Spawn(string name, Transform parent, bool withGameplay = false)
 		{
 			GameObject proto = Get(name);
 			if (proto == null) return null;
-			GameObject go = UnityEngine.Object.Instantiate(proto, parent);
+			GameObject go;
+			if (harvestables.ContainsKey(name) && !withGameplay)
+			{
+				// Instantiate under the inactive container so no script wakes up, strip the scripts, then move it out
+				go = UnityEngine.Object.Instantiate(proto, container.transform);
+				foreach (MonoBehaviour mb in go.GetComponentsInChildren<MonoBehaviour>(true)) UnityEngine.Object.DestroyImmediate(mb);
+				go.transform.SetParent(parent, false);
+			}
+			else go = UnityEngine.Object.Instantiate(proto, parent);
 			go.name = name;
 			go.SetActive(true);
 			return go;
@@ -148,15 +178,29 @@ namespace DynamicIslands.Editor
 						string name = pick.Key;
 						if (prototypes.ContainsKey(name)) continue;
 						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name) || IsTreeModel(pick.Value));
+							: (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, source.Category);
 					}
 				}
 
+				if (source.Category == NatureCategory)
+					foreach (Transform t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true)))
+					{
+						string hn = CleanName(t.name);
+						if (!HarvestableObjects.IsMatch(hn) || harvestables.ContainsKey(hn)) continue;
+						if (whitelist != null && !whitelist.Contains(hn)) continue;
+						GameObject clone = UnityEngine.Object.Instantiate(t.gameObject, container.transform);
+						clone.name = hn;
+						clone.transform.localPosition = Vector3.zero;
+						harvestables.Add(hn, clone);
+						prototypes[hn] = clone;
+						categories[hn] = HarvestableCategory;
+					}
+
 				if (source.Category == NatureCategory && !TerrainPainter.HasRaftTextures)
 					foreach (Terrain t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Terrain>(true)))
-						if (TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers)) break;
+						if (TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>())) break;
 
 				Debug.Log("[CUSTOM ISLANDS] " + source.Scene + ": " + (prototypes.Count - before) + " objects");
 
@@ -277,9 +321,13 @@ namespace DynamicIslands.Editor
 		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_)|\s*Variant.*$|_Low(?=\d|_|$)");
 		static readonly Regex wordBreak = new Regex(@"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Za-z])");
 
+		static readonly Regex harvestableLabel = new Regex(@"^Pickup_Landmark_(Tree_(\w+) (\d+)|(\w+)Tree|(.+))$");
+
 		/// <summary>Friendly label for the object list: "VG_DecorationPrefabBase_Sofa Variant" -> "Sofa", "BigBoulder1_Low" -> "Big Boulder 1". Saves keep the real name.</summary>
 		public static string DisplayName(string name)
 		{
+			Match hm = harvestableLabel.Match(name);
+			if (hm.Success) name = hm.Groups[2].Success ? hm.Groups[2].Value + " Tree " + hm.Groups[3].Value : hm.Groups[4].Success ? hm.Groups[4].Value + " Tree" : hm.Groups[5].Value;
 			string s = displayPrefix.Replace(name, "").Replace('_', ' ').Trim();
 			s = wordBreak.Replace(s, " ");
 			s = Regex.Replace(s, @"\s+", " ").Trim();

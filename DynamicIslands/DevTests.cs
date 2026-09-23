@@ -220,7 +220,7 @@ namespace DynamicIslands
 			Terrain terrain = terraineditor.terrain;
 			Transform placed = GameObject.Find("PlacedObjects").transform;
 			Vector3 c = terrain.transform.position + new Vector3(terrain.terrainData.size.x / 2f, 0, terrain.terrainData.size.z / 2f);
-			string[] kinds = { "Palm Tree 1", "Palm Tree 2", "Palm Tree 3", "Palm Tree 4", "BigPalm1", "BigPalm3", "Mango Tree", "BigBoulder1_Low", "BigBoulder3_Low",
+			string[] kinds = { "Pickup_Landmark_Tree_Palm 1", "Pickup_Landmark_Tree_Palm 2", "Pickup_Landmark_Tree_Palm 3", "Pickup_Landmark_Tree_Palm 4", "BigPalm1", "BigPalm3", "Pickup_Landmark_MangoTree", "Pickup_Landmark_Rock 1", "Pickup_Landmark_BerryBush", "BigBoulder1_Low", "BigBoulder3_Low",
 				"SmallBoulder2", "Bush", "Bush2", "Monstera_1", "Banana_Bush_1", "Banana_Bush_2", "Log", "BigRock_Low1_Sand", "TableCoral_1", "LeafCoral_1", "CauliCoral" };
 			var rnd = new System.Random(7);
 			var spawned = new System.Collections.Generic.List<GameObject>();
@@ -244,6 +244,347 @@ namespace DynamicIslands
 			cam.position = c + new Vector3(-60f, IslandFile.DefaultWaterLevel + 30f, -95f);
 			cam.LookAt(c + new Vector3(0, IslandFile.DefaultWaterLevel + 5f, 0));
 			Log("Placed " + spawned.Count + " sample objects (Ctrl+Z removes them)");
+		}
+
+		static string LayerList(int mask)
+		{
+			var names = new System.Collections.Generic.List<string>();
+			for (int i = 0; i < 32; i++) if ((mask & (1 << i)) != 0) names.Add(i + ":" + LayerMask.LayerToName(i));
+			return string.Join(", ", names.ToArray());
+		}
+
+		static void Describe(System.Collections.Generic.List<string> lines, Transform t, int depth, int maxDepth)
+		{
+			string pad = new string(' ', 2 + depth * 2);
+			var comps = t.GetComponents<Component>().Where(c => c != null && !(c is Transform)).Select(c =>
+			{
+				string s = c.GetType().Name;
+				Collider col = c as Collider;
+				if (col != null) s += (col.isTrigger ? "(trigger)" : "") + (col.enabled ? "" : "(disabled)");
+				return s;
+			}).ToArray();
+			lines.Add(pad + t.name + "  [layer " + t.gameObject.layer + ":" + LayerMask.LayerToName(t.gameObject.layer) + ", tag " + t.tag + (t.gameObject.activeSelf ? "" : ", INACTIVE") + "]  " + string.Join(", ", comps));
+			if (depth < maxDepth) foreach (Transform c in t) Describe(lines, c, depth + 1, maxDepth);
+		}
+
+		[ConsoleCommand(name: "CIInspect", docs: "Dev: CIInspect <scene> <name>[,<name>...] - layers, tags and components of objects in a Raft scene, plus Raft's layer masks")]
+		public static void Inspect(string[] args)
+		{
+			if (args == null || args.Length < 2) { Log("Usage: CIInspect <scene> <name>[,<name>...]"); return; }
+			DynamicIslands.instance.StartCoroutine(InspectRoutine(args[0], string.Join(" ", args.Skip(1).ToArray()).Split(',')));
+		}
+
+		static IEnumerator InspectRoutine(string sceneName, string[] names)
+		{
+			var lines = new System.Collections.Generic.List<string>();
+			lines.Add("LAYERS:");
+			for (int i = 0; i < 32; i++) { string n = LayerMask.LayerToName(i); if (!string.IsNullOrEmpty(n)) lines.Add("  " + i + " " + n); }
+			lines.Add("LAYERMASKS (static, as currently set):");
+			foreach (var fi in typeof(LayerMasks).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static))
+				if (fi.FieldType == typeof(LayerMask)) lines.Add("  " + fi.Name + " = " + LayerList(((LayerMask)fi.GetValue(null)).value));
+
+			var scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
+			bool loadedByUs = !scene.isLoaded;
+			if (loadedByUs)
+			{
+				AsyncOperation op = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+				if (op == null) { Fail("cannot load scene " + sceneName); yield break; }
+				while (!op.isDone) yield return null;
+				scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
+			}
+			lines.Add("RAFT colliders:");
+			Raft raftForInspect = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftForInspect != null)
+				foreach (var g in raftForInspect.body.GetComponentsInChildren<Collider>(true).GroupBy(c => LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name + (c.isTrigger ? " trigger" : "")))
+					lines.Add("  " + g.Count() + "x " + g.Key + " e.g. " + g.First().name);
+			lines.Add("Layer collisions with Obstruction(16) / RaftCollision(9):");
+			for (int i = 0; i < 32; i++) if (!string.IsNullOrEmpty(LayerMask.LayerToName(i))) lines.Add("  " + i + " " + LayerMask.LayerToName(i) + ": " + !Physics.GetIgnoreLayerCollision(i, 16) + " / " + !Physics.GetIgnoreLayerCollision(i, 9));
+			foreach (GameObject root in scene.GetRootGameObjects())
+			{
+				lines.Add("OBJECTS ON LAYER 9 (RaftCollision) in " + root.name + ":");
+				foreach (Transform t in root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.layer == 9).Take(40))
+					lines.Add("  " + Path_(t) + "  " + string.Join(", ", t.GetComponents<Component>().Where(c => !(c is Transform)).Select(c => c.GetType().Name + (c is MeshCollider ? "(" + (((MeshCollider)c).sharedMesh != null ? ((MeshCollider)c).sharedMesh.name + " " + ((MeshCollider)c).sharedMesh.vertexCount + "v" : "no mesh") + ")" : "")).ToArray()));
+				lines.Add("ROOT:"); Describe(lines, root.transform, 0, 1);
+				foreach (Terrain t in root.GetComponentsInChildren<Terrain>(true)) { lines.Add("TERRAIN:"); Describe(lines, t.transform, 0, 1); }
+				foreach (string wanted in names)
+				{
+					string w = wanted.Trim();
+					Transform found = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => PlaceableCatalog.CleanName(t.name) == w);
+					if (found != null) { lines.Add("OBJECT " + w + " (" + Path_(found) + "):"); Describe(lines, found, 0, 3); }
+					else lines.Add("OBJECT " + w + ": not found");
+				}
+			}
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "inspect_" + sceneName.Replace("#", "_") + ".txt"));
+			File.WriteAllLines(file, lines.ToArray());
+			Log("Inspected " + sceneName + ", written to " + file);
+			if (loadedByUs)
+			{
+				AsyncOperation unload = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+				if (unload != null) while (!unload.isDone) yield return null;
+			}
+		}
+
+		static GameObject NearestIsland(Vector3 from)
+		{
+			return UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_"))
+				.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+		}
+
+		[ConsoleCommand(name: "CIStand", docs: "Dev, in game: puts the local player on the highest point of the nearest custom island and logs whether they stay standing")]
+		public static void Stand()
+		{
+			DynamicIslands.instance.StartCoroutine(StandRoutine());
+		}
+
+		static IEnumerator StandRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("no local player (not in a world?)"); yield break; }
+			GameObject island = NearestIsland(player.transform.position);
+			if (island == null) { Fail("no custom island spawned"); yield break; }
+			Terrain terrain = island.GetComponentInChildren<Terrain>();
+			Vector3 top = HighestPoint(terrain);
+			Vector3 target = top + Vector3.up * 1.5f + new Vector3(3f, 0, 3f); // a little off the peak
+			target.y = terrain.SampleHeight(target) + terrain.transform.position.y + 1.5f;
+
+			CharacterController cc = player.PersonController.controller;
+			cc.enabled = false;
+			player.transform.position = target;
+			cc.enabled = true;
+			Log("Teleported player to " + target + " on " + island.name);
+			int exceptions = 0; string firstException = null;
+			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception) { exceptions++; if (firstException == null) firstException = msg + " " + trace.Split('\n').FirstOrDefault(); } };
+			Application.logMessageReceived += counter;
+
+			for (int i = 0; i < 12; i++)
+			{
+				yield return new WaitForSeconds(0.5f);
+				PersonController pc = player.PersonController;
+				Collider ground = pc.groundRaycastHit.collider;
+				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4})", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
+					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-"));
+			}
+			Application.logMessageReceived -= counter;
+			float drop = target.y - player.transform.position.y;
+			Log("Exceptions while standing: " + exceptions + (firstException != null ? " (first: " + firstException + ")" : ""));
+			bool ok = drop < 3f && player.PersonController.IsGrounded && exceptions == 0;
+			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
+			else Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
+		}
+
+		[ConsoleCommand(name: "CIRaftWatch", docs: "Dev, in game: logs the raft's position and speed every 2 s for <seconds> (default 60)")]
+		public static void RaftWatch(string[] args)
+		{
+			float seconds = 60f; float s;
+			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
+			DynamicIslands.instance.StartCoroutine(RaftWatchRoutine(seconds));
+		}
+
+		static IEnumerator RaftWatchRoutine(float seconds)
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null) { Fail("no raft"); yield break; }
+			Transform body = raft.body != null ? raft.body.transform : raft.transform; // the raft moves through its rigidbody
+			Vector3 last = body.position;
+			for (float t = 0; t < seconds; t += 2f)
+			{
+				yield return new WaitForSeconds(2f);
+				Vector3 p = body.position;
+				RaycastHit hit;
+				string below = Physics.Raycast(p + Vector3.up * 5f, Vector3.down, out hit, 40f, 1 << IslandSpawner.TerrainLayer) ? hit.collider.name + " at depth " + (p.y - hit.point.y).ToString("F1") : "open water";
+				GameObject island = NearestIsland(p);
+				string dist = island != null ? (island.GetComponentInChildren<Terrain>() != null ? " | distance to island peak " + Vector3.Distance(new Vector3(p.x, 0, p.z), Flat(HighestPoint(island.GetComponentInChildren<Terrain>()))).ToString("F0") + " m" : "") : "";
+				Log(string.Format("raft t={0:F0}s pos={1} speed={2:F2} m/s below: {3}{4}", t + 2f, p, (p - last).magnitude / 2f, below, dist));
+				last = p;
+			}
+		}
+
+		static Vector3 Flat(Vector3 v) { return new Vector3(v.x, 0, v.z); }
+
+		[ConsoleCommand(name: "CIWorldWatch", docs: "Dev, in game: logs how floating items, landmarks and chunk points move over 10 s (does the world move, or the raft?)")]
+		public static void WorldWatch()
+		{
+			DynamicIslands.instance.StartCoroutine(WorldWatchRoutine());
+		}
+
+		static IEnumerator WorldWatchRoutine()
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			var watched = new System.Collections.Generic.List<Transform>();
+			watched.AddRange(UnityEngine.Object.FindObjectsOfType<Landmark>().Select(l => l.transform).Take(3));
+			watched.AddRange(UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Where(p => p.GetComponentInParent<Landmark>() == null).Select(p => p.transform).Take(5));
+			ChunkManager cm = UnityEngine.Object.FindObjectOfType<ChunkManager>();
+			var points = cm != null ? cm.GetAllChunkPointsList() : null;
+			Log("Watching " + watched.Count + " objects; chunk points: " + (points != null ? points.Count.ToString() : "?"));
+			var start = watched.ToDictionary(t => t, t => t.position);
+			Vector3 raftStart = raft.body.transform.position;
+			Vector3 pointStart = points != null && points.Count > 0 ? points[0].worldPosition : Vector3.zero;
+			yield return new WaitForSeconds(10f);
+			Log("raft moved " + (raft.body.transform.position - raftStart));
+			foreach (Transform t in watched) if (t != null) Log("  " + t.name + " moved " + (t.position - start[t]) + " now at " + t.position);
+			if (points != null && points.Count > 0) Log("  first chunk point (" + points[0].rule.name + ") moved " + (points[0].worldPosition - pointStart) + " now at " + points[0].worldPosition);
+		}
+
+		[ConsoleCommand(name: "CIRaftInfo", docs: "Dev, in game: logs the raft's movement state (anchors, speeds, rigidbody, direction)")]
+		public static void RaftInfo()
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null) { Fail("no raft"); return; }
+			Rigidbody rb = raft.body;
+			Log("Raft: pos=" + raft.transform.position + " anchors=" + raft._anchorCount + " speed=" + raft.speed + " currentMovementSpeed=" + raft.currentMovementSpeed +
+				" maxSpeed=" + raft.maxSpeed + " waterDriftSpeed=" + raft.waterDriftSpeed + " moveDirection=" + raft.moveDirection + " Raft.direction=" + Raft.direction);
+			if (rb != null) Log("Raft rigidbody: kinematic=" + rb.isKinematic + " velocity=" + rb.velocity + " mass=" + rb.mass + " constraints=" + rb.constraints + " layer=" + LayerMask.LayerToName(raft.gameObject.layer));
+			foreach (Collider c in raft.GetComponentsInChildren<Collider>().Where(c => c.gameObject.layer == 9 || c.GetType() != typeof(BoxCollider)).Take(8))
+				Log("  collider " + c.name + " " + c.GetType().Name + " layer " + LayerMask.LayerToName(c.gameObject.layer) + (c.isTrigger ? " trigger" : ""));
+			var raftCols = UnityEngine.Object.FindObjectsOfType<Collider>().Where(c => c.gameObject.layer == 9).ToArray();
+			Log("Colliders on layer RaftCollision in the scene: " + raftCols.Length + ", attached to the raft body: " + raftCols.Count(c => c.attachedRigidbody == rb) +
+				(raftCols.Length > 0 ? " (e.g. " + Path_(raftCols[0].transform) + " " + raftCols[0].GetType().Name + (raftCols[0].enabled ? "" : " disabled") + ", rigidbody " + (raftCols[0].attachedRigidbody != null ? raftCols[0].attachedRigidbody.name : "none") + ")" : ""));
+			Log("Blocks on the raft: " + UnityEngine.Object.FindObjectsOfType<Block>().Length + ", body children: " + (rb != null ? rb.transform.childCount : -1) + ", body path " + (rb != null ? Path_(rb.transform) : "-"));
+			Log("Physics: RaftCollision(9) vs Obstruction(16) collide = " + !Physics.GetIgnoreLayerCollision(9, 16) + ", Default(0) vs Obstruction = " + !Physics.GetIgnoreLayerCollision(0, 16));
+		}
+
+		[ConsoleCommand(name: "CIShiftTest", docs: "Dev, in game (host): performs a world shift through Raft's WorldShiftManager and checks custom islands move with the world")]
+		public static void ShiftTest()
+		{
+			DynamicIslands.instance.StartCoroutine(ShiftTestRoutine());
+		}
+
+		static IEnumerator ShiftTestRoutine()
+		{
+			WorldShiftManager wsm = UnityEngine.Object.FindObjectOfType<WorldShiftManager>();
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			GameObject island = NearestIsland(raft.body.transform.position);
+			ChunkManager cm = UnityEngine.Object.FindObjectOfType<ChunkManager>();
+			if (wsm == null || island == null || cm == null) { Fail("need WorldShiftManager, a raft, a chunk manager and a spawned custom island"); yield break; }
+			ChunkPoint point = cm.GetAllChunkPointsList().FirstOrDefault();
+			Vector3 islandToRaft = island.transform.position - raft.body.transform.position;
+			Vector3 islandToPoint = island.transform.position - point.worldPosition;
+			Vector3 shift = new Vector3(100f, 0, -50f);
+			wsm.ResetToCenter(shift);
+			yield return new WaitForSeconds(0.5f);
+			Vector3 e1 = (island.transform.position - raft.body.transform.position) - islandToRaft;
+			Vector3 e2 = (island.transform.position - point.worldPosition) - islandToPoint;
+			var entry = IslandWorldState.Islands.FirstOrDefault(i => i.Root == island);
+			bool savedFollows = entry == null || (entry.Position - (island.transform.position + (entry.Position - island.transform.position))).sqrMagnitude < 1f;
+			Log("After a world shift of " + shift + ": island vs raft drift " + e1 + ", island vs chunk point drift " + e2);
+			bool ok = e1.magnitude < 2f && e2.magnitude < 0.01f; // the raft moves a little by itself during the wait
+			if (ok) Log("PASS: custom island follows world shifts");
+			else Fail("custom island does not follow world shifts");
+		}
+
+		[ConsoleCommand(name: "CIPushRaft", docs: "Dev, in game: pushes the raft's rigidbody towards the nearest custom island (like drifting) for up to <seconds> and logs where it stops")]
+		public static void PushRaft(string[] args)
+		{
+			float seconds = 60f; float s;
+			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
+			DynamicIslands.instance.StartCoroutine(PushRaftRoutine(seconds));
+		}
+
+		static IEnumerator PushRaftRoutine(float seconds)
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			GameObject island = NearestIsland(raft.body.position);
+			if (island == null) { Fail("no custom island"); yield break; }
+			yield return PushTowards(HighestPoint(island.GetComponentInChildren<Terrain>()), seconds, island.name);
+		}
+
+		[ConsoleCommand(name: "CIPushTo", docs: "Dev, in game: pushes the raft towards world point <x> <z> for up to <seconds> and logs where it stops")]
+		public static void PushTo(string[] args)
+		{
+			float x = float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture), z = float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture);
+			float seconds = args.Length > 2 ? float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : 60f;
+			DynamicIslands.instance.StartCoroutine(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
+		}
+
+		[ConsoleCommand(name: "CIRealIsland", docs: "Dev, in game (host): spawns one of Raft's own small islands <distance> m east of the raft (for comparisons)")]
+		public static void RealIsland(string[] args)
+		{
+			float d = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 200f;
+			ComponentManager<ChunkManager>.Value.AddChunkPointCheat(ChunkPointType.Landmark_Small, new Vector3(d, 0, 0));
+			DynamicIslands.instance.StartCoroutine(ReportLandmarks());
+		}
+
+		static IEnumerator ReportLandmarks()
+		{
+			yield return new WaitForSeconds(8f);
+			foreach (Landmark l in UnityEngine.Object.FindObjectsOfType<Landmark>())
+			{
+				Terrain t = l.GetComponentInChildren<Terrain>();
+				Log("Real landmark " + l.name + " at " + l.transform.position + (t != null ? ", highest point " + HighestPoint(t) : ""));
+			}
+		}
+
+		static IEnumerator PushTowards(Vector3 target, float seconds, string label)
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Rigidbody body = raft.body;
+			Vector3 peak = target;
+			Vector3 dir = Flat(peak - body.position).normalized;
+			Log("Pushing raft towards " + label + " at 4 m/s; layers RaftCollision/BakedBlocks vs Obstruction collide: " + !Physics.GetIgnoreLayerCollision(9, 16) + "/" + !Physics.GetIgnoreLayerCollision(18, 16));
+			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0;
+			while (t < seconds)
+			{
+				yield return new WaitForFixedUpdate();
+				t += Time.fixedDeltaTime;
+				Vector3 before = body.position;
+				body.velocity = dir * 4f + Vector3.up * body.velocity.y;
+				if (Mathf.Repeat(t, 2f) < Time.fixedDeltaTime)
+				{
+					float moved = Flat(body.position - lastLogged).magnitude;
+					RaycastHit hit;
+					string below = Physics.Raycast(body.position + Vector3.up * 5f, Vector3.down, out hit, 40f, 1 << IslandSpawner.TerrainLayer) ? "ground " + (body.position.y - hit.point.y).ToString("F1") + " m below" : "open water";
+					Log(string.Format("t={0:F0}s raft {1} moved {2:F1} m in 2 s, {3}, {4:F0} m from peak", t, body.position, moved, below, Flat(peak - body.position).magnitude));
+					stuckTime = moved < 0.5f ? stuckTime + 2f : 0f;
+					lastLogged = body.position;
+					if (stuckTime >= 6f) { Log("PASS: the raft is stopped by the island (" + Flat(peak - body.position).magnitude.ToString("F0") + " m from the peak)"); body.velocity = Vector3.zero; yield break; }
+				}
+			}
+			body.velocity = Vector3.zero;
+			Fail("raft was not stopped within " + seconds + " s");
+		}
+
+		[ConsoleCommand(name: "CIHarvestProbe", docs: "Dev, in game: places a harvestable Raft palm next to the player (outside any landmark) and tries to harvest it")]
+		public static void HarvestProbe()
+		{
+			DynamicIslands.instance.StartCoroutine(HarvestProbeRoutine());
+		}
+
+		static IEnumerator HarvestProbeRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			Log("Harvestable prototypes: " + string.Join(", ", PlaceableCatalog.HarvestableNames.ToArray()));
+			Network_Player player = RAPI.GetLocalPlayer();
+			string name = PlaceableCatalog.HarvestableNames.FirstOrDefault(n => n.Contains("Palm"));
+			if (player == null || name == null) { Fail("need a player and a harvestable palm"); yield break; }
+			int exceptions = 0; string first = null;
+			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception || type == LogType.Error) { exceptions++; if (first == null) first = msg + " | " + trace.Split('\n').FirstOrDefault(); } };
+			Application.logMessageReceived += counter;
+			GameObject islandForHarvest = NearestIsland(player.transform.position);
+			HarvestableTree onIsland = islandForHarvest != null ? islandForHarvest.GetComponentsInChildren<HarvestableTree>().FirstOrDefault() : null;
+			GameObject tree;
+			if (onIsland != null) { tree = onIsland.transform.root == onIsland.transform ? onIsland.gameObject : onIsland.gameObject; Log("Using harvestable " + onIsland.name + " placed on " + islandForHarvest.name + " (" + islandForHarvest.GetComponentsInChildren<HarvestableTree>().Length + " harvestable trees, " + islandForHarvest.GetComponentsInChildren<PickupItem>().Length + " pickups on the island)"); }
+			else { tree = PlaceableCatalog.SpawnHarvestable(name, null); tree.transform.position = player.transform.position + player.transform.forward * 3f; }
+			yield return new WaitForSeconds(1f);
+			Log("Spawned " + name + " with exceptions so far: " + exceptions + (first != null ? " (" + first + ")" : ""));
+			HarvestableTree ht = tree.GetComponentInChildren<HarvestableTree>();
+			PickupItem_Networked net = tree.GetComponentInChildren<PickupItem_Networked>();
+			Log("HarvestableTree=" + (ht != null) + " PickupItem_Networked=" + (net != null) + " canBePickedUp=" + (net != null ? net.CanBePickedUp().ToString() : "-") + " index=" + (net != null ? net.uniqueSpawnableIndex.ToString() : "-"));
+			int before = player.Inventory.allSlots.Where(sl => sl != null && sl.itemInstance != null && sl.itemInstance.baseItem != null).Sum(sl => sl.itemInstance.Amount);
+			try { if (ht != null) ht.Harvest(player.Inventory); }
+			catch (Exception e) { Log("Harvest threw: " + e.GetType().Name + ": " + e.Message); }
+			yield return new WaitForSeconds(2f);
+			int after = player.Inventory.allSlots.Where(sl => sl != null && sl.itemInstance != null && sl.itemInstance.baseItem != null).Sum(sl => sl.itemInstance.Amount);
+			Application.logMessageReceived -= counter;
+			Log("Inventory items " + before + " -> " + after + ", tree active=" + (tree != null && tree.activeInHierarchy) + ", errors/exceptions: " + exceptions + (first != null ? " (first: " + first + ")" : ""));
+		}
+
+		[ConsoleCommand(name: "CISave", docs: "Dev, in game (host): saves the world now")]
+		public static void SaveNow()
+		{
+			SaveAndLoad sl = UnityEngine.Object.FindObjectOfType<SaveAndLoad>();
+			if (sl == null) { Fail("SaveAndLoad not found"); return; }
+			sl.SaveGame(false);
+			Log("World save requested (" + SaveAndLoad.CurrentGameFileName + ", " + SaveAndLoad.WorldGuid + ")");
 		}
 
 		[ConsoleCommand(name: "CIScenes", docs: "Dev: lists all scenes in Raft's build")]

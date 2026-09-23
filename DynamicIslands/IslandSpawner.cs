@@ -11,6 +11,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Raft's layer for walkable static geometry; the original landmark code used it for island terrain.</summary>
 		public const int TerrainLayer = 16;
 
+		/// <summary>Every island spawned in the current world (host and clients), so world shifts can move them.</summary>
+		public static readonly List<GameObject> SpawnedRoots = new List<GameObject>();
+
 		public static string PathFor(string islandName)
 		{
 			return Path.Combine(DynamicIslands.assetpath, islandName + IslandFile.Extension);
@@ -42,7 +45,7 @@ namespace DynamicIslands.Editor
 			int missing = 0;
 			foreach (IslandObject o in island.Objects)
 			{
-				GameObject go = PlaceableCatalog.Spawn(o.Name, parent);
+				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
 				if (go == null)
 				{
 					missing++;
@@ -118,6 +121,7 @@ namespace DynamicIslands.Editor
 		public static GameObject SpawnInWorld(IslandFile island, Vector3 worldPosition)
 		{
 			var root = new GameObject("CustomIsland_" + island.Name);
+			SpawnedRoots.Add(root);
 			// Terrain origin is its corner; shift so the land centre lands on worldPosition,
 			// and down so the editor's water level lines up with the sea
 			Vector2 land = LandCentre(island);

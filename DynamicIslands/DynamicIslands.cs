@@ -97,6 +97,10 @@ namespace DynamicIslands
 			//Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
 			HookUI();
 			SceneManager.sceneLoaded += OnSceneLoaded;
+			// Custom islands saved with a world come back when it loads
+			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
+			// ...and follow Raft's floating-origin world shifts
+			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
 
 
 			DynamicIslandsLoad.Close();
@@ -522,23 +526,32 @@ namespace DynamicIslands
 		/// <summary>Distance in front of the raft where SpawnIsland places the island's land. Raft's camera only renders to 400 m.</summary>
 		const float SpawnDistance = 250f;
 
-		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name>")]
+		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name> [distance in m, default 250]")]
 		public static void SpawnIslandCommand(string[] args)
 		{
-			if (args == null || args.Length == 0) { Notify("Usage: SpawnIsland <name>   (ListIslands shows saved islands)", true); return; }
+			if (args == null || args.Length == 0) { Notify("Usage: SpawnIsland <name> [distance]   (ListIslands shows saved islands)", true); return; }
+			float distance = SpawnDistance;
+			float parsed;
+			if (args.Length > 1 && float.TryParse(args[args.Length - 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+			{
+				distance = Mathf.Clamp(parsed, 20f, 390f);
+				args = args.Take(args.Length - 1).ToArray();
+			}
 			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a game to spawn an island", true); return; }
 			if (!Raft_Network.IsHost) { Notify("Only the host can spawn islands", true); return; }
 
 			Raft raft = FindObjectOfType<Raft>();
 			Vector3 origin = raft != null ? raft.transform.position : Vector3.zero;
 			Vector3 dir = Raft.direction.sqrMagnitude > 0.01f ? Raft.direction.normalized : Vector3.forward;
-			Vector3 position = origin + new Vector3(dir.x, 0, dir.z).normalized * SpawnDistance;
+			Vector3 position = origin + new Vector3(dir.x, 0, dir.z).normalized * distance;
 			position.y = 0; // sea level
 
 			instance.StartCoroutine(instance.SpawnIslandFile(string.Join(" ", args), position, true));
 		}
 
-		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast)
+		/// <param name="broadcast">host spawning a new island: tell clients and remember it in the world's island list</param>
+		/// <param name="restoring">host re-creating an island from the world's island list on load</param>
+		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast, bool restoring = false)
 		{
 			string path = IslandSpawner.PathFor(name);
 			if (!File.Exists(path)) { Notify("No saved island named '" + name + "' in " + assetpath, true); yield break; }
@@ -558,7 +571,8 @@ namespace DynamicIslands
 			{
 				GameObject root = IslandSpawner.SpawnInWorld(island, position);
 				root.AddComponent<ReApplyShaders>();
-				Notify("Spawned island '" + name + "'");
+				if (Raft_Network.IsHost && (broadcast || restoring)) IslandWorldState.Add(name, position, root);
+				Notify((restoring ? "Restored" : "Spawned") + " island '" + name + "'");
 			}
 			catch (Exception e)
 			{
@@ -574,6 +588,23 @@ namespace DynamicIslands
 				msg.Position = new[] { position.x, position.y, position.z };
 				RAPI.SendNetworkMessage(msg, 6969, EP2PSend.k_EP2PSendReliable);
 			}
+		}
+
+		[ConsoleCommand(name: "RemoveIsland", docs: "Host, in game: removes spawned custom islands. Usage: RemoveIsland <name>   or   RemoveIsland all")]
+		public static void RemoveIslandCommand(string[] args)
+		{
+			if (args == null || args.Length == 0) { Notify("Usage: RemoveIsland <name> | all   (ListSpawned shows them)", true); return; }
+			if (!Raft_Network.IsHost) { Notify("Only the host can remove islands", true); return; }
+			string name = string.Join(" ", args);
+			int n = IslandWorldState.Remove(name.Equals("all", StringComparison.OrdinalIgnoreCase) ? null : name);
+			Notify(n > 0 ? "Removed " + n + " island(s). They stay gone after the next save." : "No spawned island called '" + name + "'", n == 0);
+		}
+
+		[ConsoleCommand(name: "ListSpawned", docs: "Lists the custom islands spawned in this world (saved with the world)")]
+		public static void ListSpawnedCommand()
+		{
+			if (IslandWorldState.Islands.Count == 0) { Debug.Log("[CUSTOM ISLANDS] No custom islands spawned in this world"); return; }
+			foreach (var e in IslandWorldState.Islands) Debug.Log("[CUSTOM ISLANDS] " + e.Name + " at " + e.Position + (e.Root == null ? " (missing)" : ""));
 		}
 
 		#endregion

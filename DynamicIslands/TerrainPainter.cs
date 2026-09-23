@@ -19,6 +19,7 @@ namespace DynamicIslands.Editor
 
 		static TerrainLayer[] layers;
 		static TerrainLayer[] raftLayers;
+		static SO_TerrainTypeGroup terrainTypes;
 		static Material terrainMaterial;
 
 		/// <summary>True once Raft's own ground textures were borrowed from one of its islands (see PlaceableCatalog).</summary>
@@ -28,13 +29,25 @@ namespace DynamicIslands.Editor
 		/// Builds our four layers from the texture layers of a Raft island terrain (Grass, Clean_Sand, Rock_Stylized,
 		/// Dirt for the seabed). Returns false if any of them is missing; the procedural textures are used then.
 		/// </summary>
-		public static bool UseRaftTextures(TerrainLayer[] source)
+		public static bool UseRaftTextures(TerrainLayer[] source, TerrainIdentifier identifier = null)
 		{
 			if (source == null) return false;
-			Func<string, TerrainLayer> find = key => source.FirstOrDefault(l => l != null && l.diffuseTexture != null && l.diffuseTexture.name.IndexOf(key, StringComparison.OrdinalIgnoreCase) >= 0);
-			TerrainLayer dirt = find("Dirt"), sand = find("Sand"), grass = find("Grass"), rock = find("Rock");
-			if (dirt == null || sand == null || grass == null || rock == null) return false;
-			raftLayers = new[] { Copy("CI_Seabed", dirt, 8f), Copy("CI_Sand", sand, 8f), Copy("CI_Grass", grass, 8f), Copy("CI_Rock", rock, 10f) };
+			Func<string, int> find = key => Array.FindIndex(source, l => l != null && l.diffuseTexture != null && l.diffuseTexture.name.IndexOf(key, StringComparison.OrdinalIgnoreCase) >= 0);
+			int dirt = find("Dirt"), sand = find("Sand"), grass = find("Grass"), rock = find("Rock");
+			if (dirt < 0 || sand < 0 || grass < 0 || rock < 0) return false;
+			raftLayers = new[] { Copy("CI_Seabed", source[dirt], 8f), Copy("CI_Sand", source[sand], 8f), Copy("CI_Grass", source[grass], 8f), Copy("CI_Rock", source[rock], 10f) };
+			// Walk sounds / friction for the same textures, in our layer order
+			if (identifier != null && identifier.terrainTypeGroup != null)
+			{
+				terrainTypes = ScriptableObject.CreateInstance<SO_TerrainTypeGroup>();
+				terrainTypes.name = "CI_TerrainTypes";
+				terrainTypes.groupName = "Custom Islands";
+				terrainTypes.terrainTypes = new System.Collections.Generic.List<SO_TerrainType>
+				{
+					identifier.terrainTypeGroup.GetTerrainType(dirt), identifier.terrainTypeGroup.GetTerrainType(sand),
+					identifier.terrainTypeGroup.GetTerrainType(grass), identifier.terrainTypeGroup.GetTerrainType(rock),
+				};
+			}
 			Debug.Log("[CUSTOM ISLANDS] Using Raft's terrain textures: " + string.Join(", ", raftLayers.Select(l => l.diffuseTexture.name).ToArray()));
 			return true;
 		}
@@ -62,9 +75,28 @@ namespace DynamicIslands.Editor
 			ApplyMaterial(terrain);
 		}
 
+		/// <summary>
+		/// Raft's player looks up a TerrainIdentifier on any terrain it walks on (footstep sounds, friction) and throws
+		/// every frame without one. Uses Raft's own terrain types when borrowed, otherwise neutral defaults.
+		/// </summary>
+		public static void EnsureIdentifier(Terrain terrain)
+		{
+			if (terrainTypes == null)
+			{
+				terrainTypes = ScriptableObject.CreateInstance<SO_TerrainTypeGroup>();
+				terrainTypes.name = "CI_TerrainTypes_Default";
+				terrainTypes.groupName = "Custom Islands";
+				terrainTypes.terrainTypes = new System.Collections.Generic.List<SO_TerrainType>();
+				for (int i = 0; i < LayerCount; i++) terrainTypes.terrainTypes.Add(ScriptableObject.CreateInstance<SO_TerrainType>());
+			}
+			TerrainIdentifier id = terrain.GetComponent<TerrainIdentifier>() ?? terrain.gameObject.AddComponent<TerrainIdentifier>();
+			id.terrainTypeGroup = terrainTypes;
+		}
+
 		/// <summary>Raft's textures come with normal maps; use the standard terrain shader when Raft includes it.</summary>
 		static void ApplyMaterial(Terrain terrain)
 		{
+			EnsureIdentifier(terrain);
 			if (!HasRaftTextures) return;
 			if (terrainMaterial == null)
 			{
