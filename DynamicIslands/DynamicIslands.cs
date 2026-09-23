@@ -94,6 +94,9 @@ namespace DynamicIslands
 			//ChunkPointType newValue = MyIslands.Landmark_TestIsland.AddValue("Landmark_NewValue");
 
 			instance = this;
+			// The await helpers normally self-initialise at game startup, which never happens for a mod
+			Redcode.Awaiting.Engine.ContextHelper.SaveContext();
+			Redcode.Awaiting.Engine.RoutineHelper.CreateInstance();
 			loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>();
 			var harmony = new Harmony("com.franzfischer.customislands");
 			harmony.PatchAll();
@@ -116,8 +119,9 @@ namespace DynamicIslands
 			mainbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("editorsceneci.assets"));
 			helperbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("maincustomislandsbundle.assets"));
 
-			//Adding the Editor button to the main menu
+			//Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
 			HookUI();
+			SceneManager.sceneLoaded += OnSceneLoaded;
 
 			//Legacy .assets islands for SpawnCustomLandmark
 			RefreshLandmarkBundles(new string[0]);
@@ -127,9 +131,18 @@ namespace DynamicIslands
 			Debug.Log("[CUSTOM ISLANDS] Mod Custom Islands has been loaded successfully!");
 		}
 
+		private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+		{
+			if (mode == LoadSceneMode.Single && GameObject.Find("MainMenuCanvas") != null)
+				HookUI();
+		}
+
 		private void HookUI()
 		{
 			GameObject MainMenuParent = GameObject.Find("MainMenuCanvas");
+			if (MainMenuParent == null) return;
+			Transform existing = MainMenuParent.transform.Find("MenuButtons/EDITOR");
+			if (existing != null) return;
 
 			GameObject MenuButtonsParent = MainMenuParent.transform.Find("MenuButtons").gameObject;
 
@@ -145,6 +158,7 @@ namespace DynamicIslands
 				//Hooking onto the main menu to add new buttons
 				//Modpacks browser online
 				GameObject ModpacksButton = Instantiate(MenuButtonsParent.transform.Find("New Game").gameObject, MenuButtonsParent.transform);
+				ModpacksButton.name = "EDITOR";
 				ModpacksButton.transform.SetSiblingIndex(3);
 				Debug.Log("namebutton: " + ModpacksButton.name);
 				ModpacksButton.GetComponentInChildren<Text>().text = "EDITOR";
@@ -344,19 +358,27 @@ namespace DynamicIslands
 
 
 			//Name should be changed when further working with the hierarchy
-			GameObject DropdownMenuSelector = GameObject.Find("DropdownMenu");
-			DropdownMenuSelector.GetComponent<Dropdown>().onValueChanged.AddListener((int index) =>
+			// A Dropdown only fires when the value changes, so entry 0 is a neutral "Menu" we reset to after every action
+			Dropdown menuDropdown = GameObject.Find("DropdownMenu").GetComponent<Dropdown>();
+			menuDropdown.options = new List<Dropdown.OptionData> {
+				new Dropdown.OptionData("Menu"),
+				new Dropdown.OptionData("Main menu"),
+				new Dropdown.OptionData("Save island"),
+				new Dropdown.OptionData("Load island"),
+			};
+			menuDropdown.SetValueWithoutNotify(0);
+			menuDropdown.onValueChanged.AddListener((int index) =>
 			{
+				menuDropdown.SetValueWithoutNotify(0);
 				switch (index)
 				{
-					case 0:
-						//Going back to the main menu
+					case 1:
 						SceneManager.LoadScene("MainMenuScene", LoadSceneMode.Single);
 						break;
-					case 1:
+					case 2:
 						SaveIsland(currentIslandName);
 						break;
-					case 2:
+					case 3:
 						LoadIsland(currentIslandName);
 						break;
 				}
@@ -368,25 +390,45 @@ namespace DynamicIslands
 				TabSelector tabbSelector = GameObject.Find("TabSelector").AddComponent<TabSelector>();
 				tabbSelector.SelectedTab = TAB.ObjectPlace;
 				tabbSelector.ToolList = GameObject.Find("ToolList");
-				for (int i = 0; i < tabbSelector.ToolList.transform.childCount; i++)
+				// Only direct children with a Button are tabs; the i-th tab button shows the i-th ToolList panel
+				List<Button> tabButtons = new List<Button>();
+				foreach (Transform child in tabbSelector.transform)
+				{
+					Button b = child.GetComponent<Button>();
+					if (b != null) tabButtons.Add(b);
+				}
+				int tabCount = Mathf.Min(tabButtons.Count, tabbSelector.ToolList.transform.childCount);
+				for (int i = 0; i < tabCount; i++)
 				{
 					int temp = i;
-
-					tabbSelector.transform.GetChild(temp).gameObject.GetComponent<Button>().onClick.AddListener(() =>
-					{
-						tabbSelector.UpdateTabSelection(temp);
-
-
-					});
-					Debug.Log("added event to " + tabbSelector.transform.GetChild(temp).name);
+					tabButtons[i].onClick.AddListener(() => tabbSelector.UpdateTabSelection(temp));
 				}
+				Debug.Log("[CUSTOM ISLANDS] Editor tabs: " + string.Join(", ", tabButtons.Take(tabCount).Select(b => b.name).ToArray()) +
+					" -> panels: " + string.Join(", ", tabbSelector.ToolList.transform.Cast<Transform>().Select(t => t.name).ToArray()));
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not set up editor tabs: " + e); }
+
+			//Load shaders (the transform gizmo needs them in Awake, so this must happen first)
+			try
+			{
+				_shaders.Clear();
+				foreach (UnityEngine.Object sh in instance.helperbundle.LoadAllAssets(typeof(Shader)))
+				{
+					_shaders.Add((Shader)sh);
+				}
+				Debug.Log("[CUSTOM ISLANDS] Editor shaders: " + string.Join(", ", _shaders.Select(s => s.name).ToArray()));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not load editor shaders: " + e); }
 
 			// The gizmo must exist before any palette button can be clicked
 			EditorGizmoHandler = Camera.main.gameObject.AddComponent<TransformGizmo>();
 
 			CreateWaterLevelPlane();
+
+			// Start above the middle of the (1000 x 1000) build area, looking down at it, rather than at the corner under water
+			Vector3 buildCentre = new Vector3(500f, IslandFile.DefaultWaterLevel, 500f);
+			Camera.main.transform.position = buildCentre + new Vector3(0f, 60f, -120f);
+			Camera.main.transform.rotation = Quaternion.Euler(28f, 0f, 0f);
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
 			await PlaceableCatalog.EnsureBuilt();
@@ -411,17 +453,6 @@ namespace DynamicIslands
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Could not fill the object list: " + e);
 			}
-
-			//Load shaders
-			try
-			{
-				UnityEngine.Object[] shaders = instance.helperbundle.LoadAllAssets(typeof(Shader));
-				foreach (UnityEngine.Object sh in shaders)
-				{
-					_shaders.Add((Shader)sh);
-				}
-			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not load editor shaders: " + e); }
 
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 
@@ -450,7 +481,7 @@ namespace DynamicIslands
 			catch { }
 		}
 
-		static bool InEditor()
+		public static bool InEditor()
 		{
 			return terraineditor.terrain != null && GameObject.Find("PlacedObjects") != null;
 		}
@@ -741,7 +772,9 @@ namespace DynamicIslands
 			{
 				Debug.LogWarning(e);
 			}
-			CustomLandmark.GetComponentInChildren<Terrain>().gameObject.layer = (LayerMask)16;
+			// Islands built from meshes (like demoisland1) have no Terrain component
+			foreach (Terrain t in CustomLandmark.GetComponentsInChildren<Terrain>(true))
+				t.gameObject.layer = IslandSpawner.TerrainLayer;
 			//Debug.Log("Layer is on " + CustomLandmark.GetComponentInChildren<Terrain>().gameObject.layer.ToString());
 			Debug.Log("Landmark spawned successfully");
 
@@ -827,8 +860,8 @@ namespace DynamicIslands
 
 		#region Spawning editor islands (.island) in a world
 
-		/// <summary>Distance in front of the raft where SpawnIsland places the island's centre.</summary>
-		const float SpawnDistance = 400f;
+		/// <summary>Distance in front of the raft where SpawnIsland places the island's land. Raft's camera only renders to 400 m.</summary>
+		const float SpawnDistance = 250f;
 
 		[ConsoleCommand(name: "SpawnIsland", docs: "Host, in game: spawns a saved editor island in front of the raft. Usage: SpawnIsland <name>")]
 		public static void SpawnIslandCommand(string[] args)
