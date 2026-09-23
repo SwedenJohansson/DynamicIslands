@@ -21,38 +21,16 @@ using RuntimeGizmos;
 
 namespace DynamicIslands
 {
-	public class landmarkBundle
-	{
-		public string name;
-		public string path;
-		public AssetBundle bundle;
-	}
-
-	public static class MyIslands
-	{
-		public const ChunkPointType Landmark_TestIsland = (ChunkPointType)100;
-	}
-
-
-	public static class ChunkPointTypeExtensions
-	{
-		public static ChunkPointType AddValue(this ChunkPointType type, string value)
-		{
-			return (ChunkPointType)Enum.Parse(typeof(ChunkPointType), value, true);
-		}
-	}
-
 	[System.Serializable]
 	public class IslandMessage : Message
 	{
 		public string[] Islandtoload;
-		// Set for .island files (new editor format); empty for legacy .assets landmark bundles
+		// Spawn position chosen by the host (x, y, z)
 		public float[] Position;
 	}
 
 	public class DynamicIslands : Mod
 	{
-		public static List<landmarkBundle> landmarkBundles = new List<landmarkBundle>();
 		public static readonly string assetpath = @"Mods\DynamicIslands\";
 
 		/// <summary>Name used by the editor's Save/Load menu entries; set by LoadIsland/SaveIsland commands.</summary>
@@ -63,11 +41,9 @@ namespace DynamicIslands
 		public AssetBundle helperbundle;
 
 
-		public static List<GameObject> GlobalPrefabList = new List<GameObject>();
 
 		public static List<Shader> _shaders = new List<Shader>();
 		public static TransformGizmo EditorGizmoHandler;
-		//ChunkPointType lol = MyIslands.TheBestIslandOfAllTime;
 
 		public static DynamicIslands instance;
 
@@ -91,7 +67,6 @@ namespace DynamicIslands
 			//Pushing notification for mod loading
 			HNotification DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading Custom Islands...");
 
-			//ChunkPointType newValue = MyIslands.Landmark_TestIsland.AddValue("Landmark_NewValue");
 
 			instance = this;
 			// The await helpers normally self-initialise at game startup, which never happens for a mod
@@ -123,8 +98,6 @@ namespace DynamicIslands
 			HookUI();
 			SceneManager.sceneLoaded += OnSceneLoaded;
 
-			//Legacy .assets islands for SpawnCustomLandmark
-			RefreshLandmarkBundles(new string[0]);
 
 			DynamicIslandsLoad.Close();
 			DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands has been loaded!", 5);
@@ -209,8 +182,6 @@ namespace DynamicIslands
 					Debug.Log("[CUSTOM ISLANDS] Host asked to spawn island: " + msg.Islandtoload[0]);
 					if (msg.Position != null && msg.Position.Length == 3)
 						StartCoroutine(SpawnIslandFile(msg.Islandtoload[0], new Vector3(msg.Position[0], msg.Position[1], msg.Position[2]), false));
-					else
-						ForceSpawnNewLandmark(msg.Islandtoload);
 				}
 			}
 		}
@@ -220,64 +191,6 @@ namespace DynamicIslands
 			//The mod will not be able to be unloaded, therefore this will be unused
 			Debug.Log("Mod Custom Islands has been unloaded!");
 		}
-
-		#region Legacy landmark bundles (.assets, restored from v1.1.1)
-
-		public static async Task readBundles()
-		{
-			List<landmarkBundle> bundles = new List<landmarkBundle>();
-
-			foreach (string asset in Directory.EnumerateFiles(assetpath, "*.assets"))
-			{
-				try
-				{
-					landmarkBundle bundle = new landmarkBundle();
-					bundle.path = asset;
-					bundle.name = Path.GetFileNameWithoutExtension(asset);
-					AssetBundleCreateRequest request = AssetBundle.LoadFromMemoryAsync(File.ReadAllBytes(asset));
-					await request;
-					bundle.bundle = request.assetBundle;
-					if (bundle.bundle == null)
-					{
-						Debug.LogWarning("[CUSTOM ISLANDS] Could not load island bundle " + asset + " (built with an incompatible Unity version?)");
-						continue;
-					}
-					bundles.Add(bundle);
-					Debug.Log("[CUSTOM ISLANDS] Loaded island bundle " + asset);
-				}
-				catch (Exception e)
-				{
-					Debug.LogWarning("[CUSTOM ISLANDS] Could not load island bundle " + asset + ": " + e);
-				}
-			}
-
-			landmarkBundles = bundles;
-		}
-
-		[ConsoleCommand(name: "RefreshLandmarkBundles", docs: "Reloads the .assets island bundles from Mods\\DynamicIslands")]
-		public static async void RefreshLandmarkBundles(string[] args)
-		{
-			HNotification notification = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading custom island bundles...");
-			try
-			{
-				foreach (landmarkBundle bundle in landmarkBundles)
-				{
-					if (bundle.bundle != null) bundle.bundle.Unload(true);
-				}
-				landmarkBundles.Clear();
-				await readBundles();
-			}
-			catch (Exception e)
-			{
-				Debug.LogError("[CUSTOM ISLANDS] RefreshLandmarkBundles failed: " + e);
-			}
-			finally
-			{
-				notification.Close();
-			}
-		}
-
-		#endregion
 
 
 
@@ -307,7 +220,7 @@ namespace DynamicIslands
 			}
 
 			Debug.Log(scenePath[0]);
-			Debug.Log("Loading landmark from scene " + scenePath[0]);
+
 
 
 
@@ -484,11 +397,10 @@ namespace DynamicIslands
 			LoadIsland(args != null && args.Length > 0 ? string.Join(" ", args) : currentIslandName);
 		}
 
-		[ConsoleCommand(name: "ListIslands", docs: "Lists saved islands (.island) and island bundles (.assets)")]
+		[ConsoleCommand(name: "ListIslands", docs: "Lists saved islands (.island files in Mods\\DynamicIslands)")]
 		public static void ListIslandsCommand()
 		{
 			Debug.Log("[CUSTOM ISLANDS] Saved islands: " + string.Join(", ", IslandSpawner.ListSavedIslands().ToArray()));
-			Debug.Log("[CUSTOM ISLANDS] Island bundles (SpawnCustomLandmark): " + string.Join(", ", landmarkBundles.Select(b => b.name).ToArray()));
 		}
 
 		public static void SaveIsland(string name)
@@ -588,283 +500,6 @@ namespace DynamicIslands
 			if (NewObjectToPlace == null) { Debug.LogWarning("[CUSTOM ISLANDS] Unknown object " + objectName); return; }
 			NewObjectToPlace.AddComponent<ObjectPlacer>().GameObjectName = objectName;
 		}
-
-		[ConsoleCommand(name: "SpawnPrefabTest", docs: "Refreshes the Bundle cache")]
-		public static async void SpawnPrefabTest(string[] args)
-		{
-
-
-			Instantiate(GlobalPrefabList[System.Convert.ToInt32(args[0])]);
-
-
-
-
-		}
-
-		/*ItemManager.GetAllItems().ForEach(i =>
-		{
-			try
-			{
-				//GameObject go = i.settings_buildable.GetBlockPrefab(0).gameObject;
-				Debug.Log("got gameobject" + i.GetUniqueName() + i.GetUniqueIndex());
-				GlobalPrefabList.Add(i);
-			}
-			catch { }
-		}
-		);*/
-
-
-
-		[ConsoleCommand(name: "SpawnCustomLandmark", docs: "Spawns a custom landmark")]
-		public static void SpawnNewLandmark(string[] args)
-		{
-			if (Raft_Network.IsHost && LoadSceneManager.IsGameSceneLoaded)
-			{
-				IEnumerator coroutine = instance.customlandmarkienum(args);
-				instance.StartCoroutine(coroutine);
-			}
-			else
-			{
-				Debug.LogWarning("You're not the host or you're not ingame");
-			}
-		}
-
-		public static void ForceSpawnNewLandmark(string[] args)
-		{
-			if (LoadSceneManager.IsGameSceneLoaded)
-			{
-				IEnumerator coroutine = instance.customlandmarkienum(args);
-				instance.StartCoroutine(coroutine);
-			}
-			else
-			{
-				Debug.LogWarning("You're not ingame");
-			}
-		}
-
-		//csrun
-		[ConsoleCommand(name: "spawnlandmarkcheat", docs: "Toggle the itemspawner menu.")]
-		public void SpawnLandmark(string[] args)
-		{
-			string landmark = args[0];
-			ChunkPointType cpt = ChunkPointType.None;
-
-			switch (landmark)
-			{
-				case "balboa":
-					cpt = ChunkPointType.Landmark_Balboa;
-					break;
-				default:
-					cpt = ChunkPointType.None;
-					break;
-			}
-
-			if (!Raft_Network.IsHost)
-			{
-				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "You are not the host!", 3, HNotify.ErrorSprite);
-				return;
-			}
-			SO_ChunkSpawnRuleAsset sO_ChunkSpawnRuleAsset = new SO_ChunkSpawnRuleAsset();
-
-
-			SO_ChunkSpawnRuleAsset ruleFromPointType = ComponentManager<ChunkManager>.Value.GetRuleFromPointType(cpt);
-			if (ruleFromPointType)
-			{
-				int value = 200;
-				switch (cpt)
-				{
-					case ChunkPointType.Landmark_Balboa:
-						value = 400;
-						break;
-				}
-
-				ComponentManager<ChunkManager>.Value.AddChunkPointCheat(cpt, Raft.direction * value);
-				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Landmark successfully spawned!", 3, HNotify.CheckSprite);
-			}
-			else
-			{
-				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "This island is in the game but isn't fully implemented currently!", 3, HNotify.ErrorSprite);
-			}
-		}
-
-
-
-		public IEnumerator customlandmarkienum(string[] args)
-		{
-			Debug.Log("Loading custom landmark");
-
-			landmarkBundle bundletoload = new landmarkBundle();
-
-			if (args[0].IsNullOrEmpty())
-			{
-				Debug.LogWarning("Invalid Landmark! Check if you spelled the name correctly!");
-				yield break;
-			}
-
-			foreach (landmarkBundle bundle1 in landmarkBundles)
-			{
-				if (bundle1.name == args[0])
-				{
-					bundletoload.name = bundle1.name;
-					bundletoload.path = bundle1.path;
-					bundletoload.bundle = bundle1.bundle;
-					break;
-				}
-			}
-
-
-			if (bundletoload.path == null)
-			{
-				Debug.LogWarning("Invalid Landmark! Check if you spelled the name correctly or if the file really exists!");
-				yield break;
-			}
-			//Debug.Log("got data preparing scene load");
-			//AssetBundle bundle = AssetBundle.LoadFromMemory(File.ReadAllBytes(bundletoload.path));
-			AssetBundle bundle = bundletoload.bundle;
-
-			if (bundle == null)
-			{
-				Debug.LogWarning("Invalid AssetBundle! The file might be broken!");
-				yield break;
-			}
-
-			Debug.Log("Loading scene");
-
-			string[] scenePath = bundle.GetAllScenePaths();
-			Debug.Log("Loading landmark from scene " + scenePath[0]);
-			SceneManager.LoadScene(scenePath[0], LoadSceneMode.Additive);
-
-			var scene = SceneManager.GetSceneByName(Utils.SceneNameFromPath(scenePath[0]));
-
-			//Debug.Log("check if scene is loaded");
-
-			while (!scene.isLoaded)
-			{
-				//Debug.Log("scene not loaded, waiting");
-				yield return new WaitForSeconds(.1f);
-			}
-			//Debug.Log("scene loaded");
-
-			GameObject[] rootgoisland = SceneManager.GetSceneByName(Utils.SceneNameFromPath(scenePath[0])).GetRootGameObjects();
-
-
-			//bundle.Unload(true);
-
-			Vector3 spawnOffset = Raft.direction * 200;
-			Debug.Log("spawn offset" + spawnOffset);
-			foreach (GameObject go in rootgoisland)
-			{
-				//Debug.Log("go" + go.name);
-			}
-			//Debug.Log(bundletoload.name + "CustomLandmark");
-			GameObject CustomLandmark = rootgoisland[0];
-			//Debug.Log("found landmark" + CustomLandmark.name);
-			try
-			{
-				Vector3 spawnpos = FindObjectOfType<Raft>().gameObject.transform.position + spawnOffset;
-				CustomLandmark.transform.position = spawnpos;
-				// Island scenes aren't always built around their root (demoisland1's meshes sit ~330 m from it),
-				// so move the root until the centre of the visible geometry is at the spawn point
-				Renderer[] renderers = CustomLandmark.GetComponentsInChildren<Renderer>();
-				if (renderers.Length > 0)
-				{
-					Bounds b = renderers[0].bounds;
-					foreach (Renderer r in renderers) b.Encapsulate(r.bounds);
-					Vector3 offset = b.center - CustomLandmark.transform.position;
-					offset.y = 0;
-					CustomLandmark.transform.position = spawnpos - offset;
-				}
-				Debug.Log("[CUSTOM ISLANDS] Landmark root at " + CustomLandmark.transform.position + ", geometry centred on " + spawnpos);
-			}
-			catch (NullReferenceException e)
-			{
-				Debug.LogWarning(e);
-			}
-			// Islands built from meshes (like demoisland1) have no Terrain component
-			foreach (Terrain t in CustomLandmark.GetComponentsInChildren<Terrain>(true))
-				t.gameObject.layer = IslandSpawner.TerrainLayer;
-			//Debug.Log("Layer is on " + CustomLandmark.GetComponentInChildren<Terrain>().gameObject.layer.ToString());
-			Debug.Log("Landmark spawned successfully");
-
-			if (Raft_Network.IsHost)
-			{
-				Debug.Log("Sending to spawn request to other players");
-
-				// This will send your network message to all players.
-				IslandMessage islandMessage = new IslandMessage();
-				islandMessage.Islandtoload = args;
-
-				RAPI.SendNetworkMessage(islandMessage, 6969, EP2PSend.k_EP2PSendReliable);
-			}
-
-			//REAPPLY SHADERS
-			CustomLandmark.AddComponent<ReApplyShaders>();
-			//Debug.Log(CustomLandmark.GetComponentInChildren<Terrain>().gameObject.name + "thats my name XD");
-
-
-
-			//spawn snowmobiles if there are any
-			if (CustomLandmark.GetComponentsInChildren<SnowmobileShed>().Length > 0)
-			{
-
-				SnowmobileShed prefabClass = new SnowmobileShed();
-
-				if (GameManager.GameMode == GameMode.Creative)
-				{
-					Debug.Log("We're in creative. Load temperance");
-
-					SceneManager.LoadScene("55#Landmark_Temperance#", LoadSceneMode.Additive);
-
-					var sceneTemperance = SceneManager.GetSceneByName("55#Landmark_Temperance#");
-					if (!sceneTemperance.isLoaded)
-					{
-						Debug.Log("scene not loaded, waiting");
-						yield return new WaitForSeconds(.1f);
-					}
-					prefabClass = sceneTemperance.GetRootGameObjects()[0].GetComponentsInChildren<SnowmobileShed>()[0];
-
-					Destroy(sceneTemperance.GetRootGameObjects()[0]);
-				}
-				else
-				{
-
-					var sceneTemperance = SceneManager.GetSceneByName("55#Landmark_Temperance#");
-					if (!sceneTemperance.isLoaded)
-					{
-						Debug.Log("scene not loaded, waiting");
-						yield return new WaitForSeconds(.1f);
-					}
-					prefabClass = sceneTemperance.GetRootGameObjects()[0].GetComponentsInChildren<SnowmobileShed>()[0];
-				}
-
-
-				foreach (SnowmobileShed shed in CustomLandmark.GetComponentsInChildren<SnowmobileShed>())
-				{
-					Debug.Log(shed.gameObject.name);
-					try
-					{
-						Debug.Log("tempfix");
-						//shed.gameObject.transform.GetChild(1).transform.position = new Vector3(0, 1, 0);
-						//shed.gameObject.transform.GetChild(1).transform.localPosition = new Vector3(0, 1, 0);
-					}
-					catch { };
-					shed.snowmobilePrefab = prefabClass.snowmobilePrefab;
-					if (Raft_Network.IsHost)
-					{
-						shed.SpawnSnowmobileNetwork();
-					}
-				}
-			}
-
-			//RAPI.GetLocalPlayer().transform.position = CustomLandmark.GetComponentInChildren<Transform>().position;
-			//We just need the first. Keep for later if we want to load multiple
-			/*foreach (string scene in scenePath)
-			{
-				Debug.Log("scene" + scene);
-				SceneManager.LoadScene(scene, LoadSceneMode.Additive);
-			}*/
-		}
-
 
 		#region Spawning editor islands (.island) in a world
 
@@ -1075,46 +710,6 @@ namespace DynamicIslands
 
 	#region MiscStuff
 
-	// RML publicizes Assembly-CSharp, so private members are accessed directly
-	[HarmonyPatch(typeof(Snowmobile), "Start")]
-	class snowmoobilenosound
-	{
-		static void Postfix(ref Snowmobile __instance)
-		{
-			if (__instance.emitter_engine == null)
-			{
-				Debug.Log("EMMITER ENGINE IS NULL");
-			}
-			if (__instance.emitter_impact == null)
-			{
-				Debug.Log("EMMITER impact IS NULL");
-			}
-		}
-	}
-
-	//SNOWMOBILES ANYWHERE!
-
-	/*[HarmonyPatch(typeof(Snowmobile), "Update")]
-	static class Patch_Snowmobile_Update
-	{
-		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-		{
-			var code = instructions.ToList();
-			code.Insert(code.FindLastIndex(code.FindIndex(x => x.opcode == OpCodes.Call && (x.operand as MethodInfo).Name == "Raycast"), x => x.opcode == OpCodes.Ldsfld && (x.operand as FieldInfo).Name == "MASK_Obstruction") + 1, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_Snowmobile_Update), nameof(EditMask))));
-			return code;
-		}
-		public static LayerMask EditMask(LayerMask original) => original | (LayerMask)1;
-		/*static void Postfix(Snowmobile __instance, Transform ___groundCheckPoint, Rigidbody ___body)
-		{
-			var flag = Physics.Raycast(___groundCheckPoint.position, Vector3.down, out var hit, 100, (LayerMask)16) && hit.collider.transform.IsChildOf(SingletonGeneric<GameManager>.Singleton.lockedPivot);
-			if (___body.transform.ParentedToRaft() != flag)
-				___body.transform.SetParent(flag ? SingletonGeneric<GameManager>.Singleton.lockedPivot : null, true);
-		}*/
-	//}
-
-
-
-
 	public static class Utils
 	{
 		public static string SceneNameFromPath(string path)
@@ -1175,44 +770,6 @@ namespace DynamicIslands
 			}
 		}
 	}
-
-
-	public class UnityAssetBundleRequestAwaiter : INotifyCompletion
-	{
-		private AssetBundleCreateRequest asyncOp;
-		private Action continuation;
-
-		public UnityAssetBundleRequestAwaiter(AssetBundleCreateRequest asyncOp)
-		{
-			this.asyncOp = asyncOp;
-			asyncOp.completed += OnRequestCompleted;
-		}
-
-		public bool IsCompleted { get { return asyncOp.isDone; } }
-
-		public void GetResult() { }
-
-		public void OnCompleted(Action continuation)
-		{
-			this.continuation = continuation;
-		}
-
-		private void OnRequestCompleted(AsyncOperation obj)
-		{
-			continuation();
-		}
-	}
-
-
-	public static class ExtensionMethods
-	{
-
-		public static UnityAssetBundleRequestAwaiter GetAwaiter(this AssetBundleCreateRequest asyncOp)
-		{
-			return new UnityAssetBundleRequestAwaiter(asyncOp);
-		}
-	}
-
 
 
 	#endregion
