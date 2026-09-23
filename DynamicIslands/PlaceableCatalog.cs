@@ -27,11 +27,12 @@ namespace DynamicIslands.Editor
 		public const string SnowCategory = "Snow";
 		public const string DesertCategory = "Desert";
 		public const string ForestCategory = "Forest";
+		public const string UnderwaterCategory = "Underwater";
 		public const string PropsCategory = "Props";
 		public const string HarvestableCategory = "Harvestable";
 
 		/// <summary>Order of the categories in the editor's object list.</summary>
-		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, HarvestableCategory, PropsCategory };
+		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory, PropsCategory };
 
 		class Source
 		{
@@ -39,7 +40,13 @@ namespace DynamicIslands.Editor
 			public Regex Include; // null = everything not excluded
 			/// <summary>Also take this island's harvestable objects (trees, rocks, ores...), with their gameplay scripts.</summary>
 			public bool Harvest;
+			/// <summary>Optional second group from the same island, in another category (e.g. its underwater props).</summary>
+			public Regex Include2;
+			public string Category2;
 		}
+
+		/// <summary>Sunken props around Raft's islands: barrels, containers, buoys, sea vines (roadmap 1.6 "enhancing the ocean floor").</summary>
+		static readonly Regex UnderwaterObjects = new Regex(@"^(Reef_Barrel\d+|Reef_Container|Reef_Buoy|SeaVine3_klump)$");
 
 		static readonly Regex SnowObjects = new Regex(
 			@"^(TP_PineTreeSnowy|TP_BigRock0\d|TP_SmallRock0\d|TP_SnowDrift0\d|TP_Icicles0\d|TP_StalagmiteCluster0\d_Snow|TP_IceShore_Small\d|" +
@@ -61,8 +68,8 @@ namespace DynamicIslands.Editor
 			new Source { Scene = "34#Landmark_Small#1", Category = NatureCategory, Include = NatureObjects, Harvest = true },
 			// Island styles (roadmap 1.6): snowy Temperance, desert Caravan Island, forest Balboa (objects and ground textures)
 			new Source { Scene = "57#Landmark_TemperanceSmall#1", Category = SnowCategory, Include = SnowObjects, Harvest = true },
-			new Source { Scene = "51#Landmark_CaravanSmall#1", Category = DesertCategory, Include = DesertObjects, Harvest = true },
-			new Source { Scene = "46#Landmark_BalboaSmall#1", Category = ForestCategory, Include = ForestObjects, Harvest = true },
+			new Source { Scene = "51#Landmark_CaravanSmall#1", Category = DesertCategory, Include = DesertObjects, Harvest = true, Include2 = UnderwaterObjects, Category2 = UnderwaterCategory },
+			new Source { Scene = "46#Landmark_BalboaSmall#1", Category = ForestCategory, Include = ForestObjects, Harvest = true, Include2 = UnderwaterObjects, Category2 = UnderwaterCategory },
 			new Source { Scene = "44#Landmark_Vasagatan", Root = "Boat related", Category = PropsCategory },
 		};
 
@@ -73,7 +80,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Experimental: harvestable Raft objects kept with their gameplay scripts (not in the editor list yet).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>(); // same objects as in prototypes
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|Scrap \d+_OceanBottom)$");
 
 		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
 
@@ -248,10 +255,11 @@ namespace DynamicIslands.Editor
 					{
 						string name = pick.Key;
 						if (prototypes.ContainsKey(name)) continue;
+						bool second = source.Include2 != null && source.Include2.IsMatch(name);
 						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+							: second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
 						if (!wanted) { skipped++; continue; }
-						Add(name, pick.Value, source.Category);
+						Add(name, pick.Value, second ? source.Category2 : source.Category);
 						// Clutter stays spawnable (islands saved with it still work) but is left out of the editor's list
 						if (whitelist == null && clutter.IsMatch(name)) hidden.Add(name);
 					}

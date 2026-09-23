@@ -68,7 +68,8 @@ namespace DynamicIslands.Editor
 			public Regex Shore, Inland, Rocks, Beach, Underwater;
 		}
 
-		static readonly Regex Corals = new Regex(@"^(Coral\d+|LeafCoral_\d+|TableCoral_\d+|CauliCoral|CylinderCoral_\d+|SpineCoral_\d+|SeaVine3|seavine_tongue)$");
+		// Corals, plus now and then a sunken barrel or container, and scrap to dive for (roadmap 1.6 "enhancing the ocean floor")
+		static readonly Regex Corals = new Regex(@"^(Coral\d+|LeafCoral_\d+|TableCoral_\d+|CauliCoral|CylinderCoral_\d+|SpineCoral_\d+|SeaVine3|seavine_tongue|Reef_Barrel\d+|Reef_Container|Pickup_Landmark_Scrap \d+_OceanBottom)$");
 
 		// Indexed like TerrainPainter.Styles. (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
 		static readonly ZoneObjects[] StyleObjects =
@@ -112,7 +113,7 @@ namespace DynamicIslands.Editor
 				Inland = new Regex(@"^(DesertFern_\d+|SmallBush_\d+|BigSharpRock_\d+|Pickup_Landmark_(Iron|Copper) \d+)$"),
 				Rocks = new Regex(@"^(BigSharpRock_\d+|CaravanIsland_SmallRock_\d+|Pickup_Landmark_(Iron|Copper|Rock) \d+)$"),
 				Beach = new Regex(@"^(CaravanIsland_SmallRock_\d+)$"),
-				Underwater = new Regex(@"^(TableCoral_\d+|SeaVine3)$"),
+				Underwater = new Regex(@"^(TableCoral_\d+|SeaVine3|Reef_Barrel\d+|Pickup_Landmark_Scrap \d+_OceanBottom)$"),
 			},
 		};
 

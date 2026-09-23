@@ -12,6 +12,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Island styles:** Tropical, Snowy (Temperance), Desert (Caravan Island), Forest (Balboa) and Volcanic. Each style has its own ground textures, and the paint buttons are named after them.
   - Place about 390 objects taken from Raft's islands:
     - palms, snowy pines, birches, cacti, bushes, boulders, snowdrifts, icicles, corals
+    - sunken barrels, containers and buoys, and scrap on the ocean floor to dive for; generated islands scatter some around their underwater slopes
     - harvestable palms, pines, birches, mango trees, rocks, berry bushes, pineapples, and copper, iron, clay and sand
     - props from Vasagatan
   - Move, rotate, scale and delete objects.
