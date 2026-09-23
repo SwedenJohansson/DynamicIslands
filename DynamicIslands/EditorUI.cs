@@ -40,7 +40,7 @@ namespace DynamicIslands.Editor
 
 			// The camera position readout sits where the extra texture and Generate buttons go; move it below them
 			Transform camPos = canvas.Find("CamPos");
-			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -200f);
+			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -240f);
 
 			// The navbar button (labelled "Return" in the bundle) opens the Save / Load window
 			Transform islandsButton = canvas.Find("EditorNavbar/Menu - Button");
@@ -81,11 +81,31 @@ namespace DynamicIslands.Editor
 				SetBrush(terraineditor.modificationAction);
 				Text generate = SetupButton(brushTools, GenerateButton, "Generate", GeneratorWindow.Open);
 				if (generate != null) generate.color = NormalText;
+				// Island style: each click moves to the next one (Tropical, Snowy, Desert, Forest, Volcanic)
+				styleLabel = SetupButton(brushTools, StyleButton, "", () =>
+				{
+					DynamicIslands.SetEditorStyle((DynamicIslands.currentStyle + 1) % TerrainPainter.Styles.Length);
+					ShowStyleNote();
+				});
+				if (styleLabel != null) styleLabel.color = NormalText;
+				RefreshStyle();
 			}
 
 			// Object gizmo modes
 			if (objectTools != null)
 			{
+				// Placement options below the gizmo buttons
+				CloneBelow(objectTools, "Button (5)", "Button (4)", ObjectOptionButtons);
+				randomLabel = SetupButton(objectTools, ObjectOptionButtons[0], "Random", () => { PlacementOptions.RandomTurnAndSize = !PlacementOptions.RandomTurnAndSize; RefreshOptions(); });
+				slopeLabel = SetupButton(objectTools, ObjectOptionButtons[1], "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); });
+				Text ground = SetupButton(objectTools, ObjectOptionButtons[2], "Ground", () =>
+				{
+					int n = PlacementOptions.DropSelectionToGround();
+					DynamicIslands.Notify(n > 0 ? "Put " + n + " object(s) on the ground" : "Select objects first (Ground puts them on the terrain)", n == 0);
+				});
+				if (ground != null) ground.color = NormalText;
+				RefreshOptions();
+
 				objectLabels = new[]
 				{
 					SetupButton(objectTools, "Button (2)", "Move", () => SetGizmo(TransformType.Move)),
@@ -111,8 +131,55 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		static readonly string[] ObjectOptionButtons = { "OptionRandom", "OptionSlope", "OptionGround" };
+		static Text randomLabel, slopeLabel;
+
+		/// <summary>Random / Slope light up while they're on.</summary>
+		static void RefreshOptions()
+		{
+			if (randomLabel != null) randomLabel.color = PlacementOptions.RandomTurnAndSize ? ActiveText : NormalText;
+			if (slopeLabel != null) slopeLabel.color = PlacementOptions.AlignToSlope ? ActiveText : NormalText;
+		}
+
+		/// <summary>Clones a bundle button once per name, stacked below it after a small gap (the bundle has no spare buttons).</summary>
+		static void CloneBelow(Transform parent, string templateName, string aboveName, string[] names)
+		{
+			Transform template = parent.Find(templateName);
+			Transform above = parent.Find(aboveName);
+			if (template == null || parent.Find(names[0]) != null) return;
+			RectTransform t = template.GetComponent<RectTransform>();
+			float step = above != null ? above.GetComponent<RectTransform>().anchoredPosition.y - t.anchoredPosition.y : 35f;
+			for (int i = 0; i < names.Length; i++)
+			{
+				GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, parent);
+				clone.name = names[i];
+				clone.GetComponent<RectTransform>().anchoredPosition = t.anchoredPosition - new Vector2(0, step * (i + 1) + step * 0.35f);
+			}
+		}
+
 		static readonly string[] PaintButtons = { "PaintSand", "PaintGrass", "PaintRock", "PaintSeabed", "PaintAuto" };
+		/// <summary>Terrain slot painted by each of the first four paint buttons.</summary>
+		static readonly int[] PaintSlots = { TerrainPainter.Sand, TerrainPainter.Grass, TerrainPainter.Rock, TerrainPainter.Seabed };
 		const string GenerateButton = "GenerateIsland";
+		const string StyleButton = "IslandStyle";
+		static Text styleLabel;
+
+		/// <summary>Shows the current style on the Style button and names the paint buttons after its textures.</summary>
+		public static void RefreshStyle()
+		{
+			int style = DynamicIslands.currentStyle;
+			if (styleLabel != null) styleLabel.text = TerrainPainter.StyleName(style);
+			if (brushLabels != null)
+				for (int i = 0; i < PaintSlots.Length && 4 + i < brushLabels.Length; i++)
+					if (brushLabels[4 + i] != null) brushLabels[4 + i].text = TerrainPainter.SlotLabel(style, PaintSlots[i]);
+		}
+
+		static void ShowStyleNote()
+		{
+			int style = DynamicIslands.currentStyle;
+			string text = "Island style: " + TerrainPainter.StyleName(style) + (TerrainPainter.HasStyle(style) ? "" : " (textures not loaded; showing tropical)");
+			DynamicIslands.Notify(text);
+		}
 
 		/// <summary>The bundle only has four brush buttons; clone the last one for the texture tools and the Generate button.</summary>
 		static void CreatePaintButtons(Transform brushTools, string templateName)
@@ -127,7 +194,9 @@ namespace DynamicIslands.Editor
 				GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, brushTools);
 				clone.name = PaintButtons[i];
 				// A small gap separates the texture tools from the sculpt tools
-				clone.GetComponent<RectTransform>().anchoredPosition = t.anchoredPosition - new Vector2(0, step * (i + 1) + step * 0.35f);
+				RectTransform cr = clone.GetComponent<RectTransform>();
+				cr.anchoredPosition = t.anchoredPosition - new Vector2(0, step * (i + 1) + step * 0.35f);
+				cr.sizeDelta = new Vector2(cr.sizeDelta.x * 1.3f, cr.sizeDelta.y); // room for style names like "Red rock"
 			}
 			// Generate sits below the texture tools, after another gap
 			GameObject gen = UnityEngine.Object.Instantiate(template.gameObject, brushTools);
@@ -135,6 +204,10 @@ namespace DynamicIslands.Editor
 			RectTransform gr = gen.GetComponent<RectTransform>();
 			gr.anchoredPosition = t.anchoredPosition - new Vector2(0, step * (PaintButtons.Length + 1) + step * 0.7f);
 			gr.sizeDelta = new Vector2(gr.sizeDelta.x * 1.3f, gr.sizeDelta.y); // "Generate" is the longest label
+			// ...and the island style right below it
+			GameObject style = UnityEngine.Object.Instantiate(gen, brushTools);
+			style.name = StyleButton;
+			style.GetComponent<RectTransform>().anchoredPosition = gr.anchoredPosition - new Vector2(0, step);
 		}
 
 		static void SetPaint(int layer)

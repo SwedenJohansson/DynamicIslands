@@ -24,14 +24,31 @@ namespace DynamicIslands.Editor
 	public static class PlaceableCatalog
 	{
 		public const string NatureCategory = "Nature";
+		public const string SnowCategory = "Snow";
+		public const string DesertCategory = "Desert";
+		public const string ForestCategory = "Forest";
 		public const string PropsCategory = "Props";
 		public const string HarvestableCategory = "Harvestable";
+
+		/// <summary>Order of the categories in the editor's object list.</summary>
+		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, HarvestableCategory, PropsCategory };
 
 		class Source
 		{
 			public string Scene, Root, Category;
 			public Regex Include; // null = everything not excluded
+			/// <summary>Also take this island's harvestable objects (trees, rocks, ores...), with their gameplay scripts.</summary>
+			public bool Harvest;
 		}
+
+		static readonly Regex SnowObjects = new Regex(
+			@"^(TP_PineTreeSnowy|TP_BigRock0\d|TP_SmallRock0\d|TP_SnowDrift0\d|TP_Icicles0\d|TP_StalagmiteCluster0\d_Snow|TP_IceShore_Small\d|" +
+			@"TP_Moontown_Barrel0\d|TP_Moontown_TarpCrate0\d|TP_Moontown_SealedCrate0\d)$");
+		static readonly Regex DesertObjects = new Regex(
+			@"^(Cactus\w+|DesertFern_\d+|SmallBush_\d+|SmallBushyTree_\d+|BigBush_\d+|BigSharpRock_\d+|CaravanIsland_SmallRock_\d+|" +
+			@"CaravanIsland_(Yellow|Green|Brown)Grass)$");
+		static readonly Regex ForestObjects = new Regex(
+			@"^(Balboa_(Big)?Bush_\d+ Variant|BirchTree_\w+|PineTree_\w+|TreeLog_\d+|Tree_Stump|SmallRock_\d+|BigRock_\d+)$");
 
 		static readonly Regex NatureObjects = new Regex(
 			@"^(Bush2?|Monstera_\d+|Banana_Bush_\d+|Bamboo_\d+|BigPalm\d+|Log|BigBoulder\d+_Low|SmallBoulder\d+|BigRock_Low\d+_Sand|" +
@@ -40,8 +57,12 @@ namespace DynamicIslands.Editor
 
 		static readonly Source[] Sources =
 		{
-			new Source { Scene = "28#Landmark_Big#OG", Category = NatureCategory, Include = NatureObjects },
-			new Source { Scene = "34#Landmark_Small#1", Category = NatureCategory, Include = NatureObjects },
+			new Source { Scene = "28#Landmark_Big#OG", Category = NatureCategory, Include = NatureObjects, Harvest = true },
+			new Source { Scene = "34#Landmark_Small#1", Category = NatureCategory, Include = NatureObjects, Harvest = true },
+			// Island styles (roadmap 1.6): snowy Temperance, desert Caravan Island, forest Balboa (objects and ground textures)
+			new Source { Scene = "57#Landmark_TemperanceSmall#1", Category = SnowCategory, Include = SnowObjects, Harvest = true },
+			new Source { Scene = "51#Landmark_CaravanSmall#1", Category = DesertCategory, Include = DesertObjects, Harvest = true },
+			new Source { Scene = "46#Landmark_BalboaSmall#1", Category = ForestCategory, Include = ForestObjects, Harvest = true },
 			new Source { Scene = "44#Landmark_Vasagatan", Root = "Boat related", Category = PropsCategory },
 		};
 
@@ -52,7 +73,42 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Experimental: harvestable Raft objects kept with their gameplay scripts (not in the editor list yet).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>(); // same objects as in prototypes
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|MangoTree|Rock \d+|BerryBush)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark)$");
+
+		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
+
+		/// <summary>
+		/// Largest dimension (m) of a catalog object at scale 1, from its meshes' bounds (works on the inactive
+		/// prototypes, whose renderer bounds are empty). 0 if it has no meshes.
+		/// </summary>
+		public static float ApproxSize(string name)
+		{
+			float size;
+			if (sizes.TryGetValue(name, out size)) return size;
+			GameObject proto = Get(name);
+			size = 0f;
+			if (proto != null)
+			{
+				Matrix4x4 toRoot = proto.transform.worldToLocalMatrix;
+				bool any = false;
+				Bounds b = new Bounds();
+				foreach (MeshFilter mf in proto.GetComponentsInChildren<MeshFilter>(true))
+				{
+					if (mf.sharedMesh == null) continue;
+					Matrix4x4 m = toRoot * mf.transform.localToWorldMatrix;
+					Bounds mb = mf.sharedMesh.bounds;
+					for (int i = 0; i < 8; i++)
+					{
+						Vector3 corner = mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+						Vector3 p = m.MultiplyPoint3x4(corner);
+						if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
+					}
+				}
+				if (any) size = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+			}
+			sizes[name] = size;
+			return size;
+		}
 
 		public static GameObject SpawnHarvestable(string name, Transform parent)
 		{
@@ -83,7 +139,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Category names in list order, each with its objects (as offered in the editor) sorted by display label.</summary>
 		public static IEnumerable<KeyValuePair<string, List<string>>> ByCategory()
 		{
-			foreach (string cat in new[] { NatureCategory, HarvestableCategory, PropsCategory })
+			foreach (string cat in CategoryOrder)
 			{
 				List<string> names = prototypes.Keys.Where(n => CategoryOf(n) == cat && !hidden.Contains(n)).OrderBy(DisplayName).ToList();
 				if (names.Count > 0) yield return new KeyValuePair<string, List<string>>(cat, names);
@@ -201,7 +257,7 @@ namespace DynamicIslands.Editor
 					}
 				}
 
-				if (source.Category == NatureCategory)
+				if (source.Harvest)
 					foreach (Transform t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true)))
 					{
 						string hn = CleanName(t.name);
@@ -215,9 +271,9 @@ namespace DynamicIslands.Editor
 						categories[hn] = HarvestableCategory;
 					}
 
-				if (source.Category == NatureCategory && !TerrainPainter.HasRaftTextures)
-					foreach (Terrain t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Terrain>(true)))
-						if (TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>())) break;
+				// Ground textures (and footstep sounds) for the island styles
+				foreach (Terrain t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Terrain>(true)))
+					if (t.terrainData != null) TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>());
 
 				Debug.Log("[CUSTOM ISLANDS] " + source.Scene + ": " + (prototypes.Count - before) + " objects");
 
@@ -260,8 +316,28 @@ namespace DynamicIslands.Editor
 			clone.transform.localPosition = Vector3.zero;
 			clone.transform.localRotation = source.rotation;
 			clone.transform.localScale = source.lossyScale;
+			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
+		}
+
+		/// <summary>
+		/// Some of Raft's objects (e.g. Balboa's trees) have LOD groups that cull them once they are a small part of the
+		/// screen, tuned for walking around their own island; in the editor's overview and when sailing up to an island
+		/// they would be missing. Keep the last level visible down to a much smaller size.
+		/// </summary>
+		static void KeepVisibleFarAway(GameObject clone)
+		{
+			foreach (LODGroup group in clone.GetComponentsInChildren<LODGroup>(true))
+			{
+				LOD[] lods = group.GetLODs();
+				if (lods.Length == 0 || lods[lods.Length - 1].screenRelativeTransitionHeight <= 0.01f) continue;
+				lods[lods.Length - 1].screenRelativeTransitionHeight = 0.005f;
+				for (int i = lods.Length - 2; i >= 0; i--) // keep the heights strictly decreasing
+					if (lods[i].screenRelativeTransitionHeight <= lods[i + 1].screenRelativeTransitionHeight)
+						lods[i].screenRelativeTransitionHeight = lods[i + 1].screenRelativeTransitionHeight + 0.001f;
+				group.SetLODs(lods);
+			}
 		}
 
 		static IEnumerable<Transform> Roots(Scene scene, Source source)
@@ -348,7 +424,7 @@ namespace DynamicIslands.Editor
 			@"Book_4|Book_Tall_2|Tools_Wrench|Pillow(_2|Decor_\d)?)( Variant)?$|^RT_ExitSignCeiling|^VG_SignStairsCeiling$",
 			RegexOptions.IgnoreCase);
 
-		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_)|\s*Variant.*$|_Low(?=\d|_|$)");
+		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_|TP_Moontown_|TP_|CaravanIsland_|Balboa_)|\s*Variant.*$|_Low(?=\d|_|$)|_LodGroup$");
 		static readonly Regex wordBreak = new Regex(@"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Za-z])");
 
 		static readonly Regex harvestableLabel = new Regex(@"^Pickup_Landmark_(Tree_(\w+) (\d+)|(\w+)Tree|(.+))$");

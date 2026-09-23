@@ -29,6 +29,16 @@ namespace DynamicIslands
 		public static string currentIslandName = "myisland";
 		/// <summary>Metres above sea level the island being edited floats at in game (negative = under water); saved with it.</summary>
 		public static float currentElevation;
+		/// <summary>Style of the island being edited (TerrainPainter.Styles); saved with it.</summary>
+		public static int currentStyle = TerrainPainter.Tropical;
+
+		/// <summary>Sets the style of the island being edited: re-skins the editor terrain and relabels the paint buttons.</summary>
+		public static void SetEditorStyle(int style)
+		{
+			currentStyle = Mathf.Clamp(style, 0, TerrainPainter.Styles.Length - 1);
+			if (terraineditor.terrain != null) TerrainPainter.SetStyle(terraineditor.terrain, currentStyle);
+			EditorUI.RefreshStyle();
+		}
 		public static LoadSceneManager loadSceneManagerinstance;
 
 		public AssetBundle mainbundle;
@@ -319,8 +329,10 @@ namespace DynamicIslands
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
 			await PlaceableCatalog.EnsureBuilt();
 			catalogNote.Close();
-			// Raft's own ground textures are borrowed while the catalog loads its islands
-			TerrainPainter.RefreshLayers(terraineditor.terrain);
+			// Raft's own ground textures are borrowed while the catalog loads its islands; a new island starts tropical,
+			// at sea level
+			currentElevation = 0f;
+			SetEditorStyle(TerrainPainter.Tropical);
 
 			GameObject listButtonTemplate = null;
 			try
@@ -346,6 +358,10 @@ namespace DynamicIslands
 				}
 				ButtonTemplate.SetActive(false);
 				listButtonTemplate = ButtonTemplate;
+
+				// Search field above the list
+				Text anyLabel = ButtonTemplate.GetComponentInChildren<Text>(true);
+				ObjectListSearch.Create((RectTransform)GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View"), ContentGO.transform, anyLabel != null ? anyLabel.font : null);
 			}
 			catch (Exception e)
 			{
@@ -375,7 +391,7 @@ namespace DynamicIslands
 			return !string.IsNullOrEmpty(name) && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
 		}
 
-		static void Notify(string text, bool error = false)
+		internal static void Notify(string text, bool error = false)
 		{
 			if (error) Debug.LogWarning("[CUSTOM ISLANDS] " + text); else Debug.Log("[CUSTOM ISLANDS] " + text);
 			try
@@ -416,6 +432,7 @@ namespace DynamicIslands
 			{
 				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
 				island.Elevation = currentElevation;
+				island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
@@ -446,6 +463,7 @@ namespace DynamicIslands
 					terrain.terrainData.size = island.TerrainSize;
 				}
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
+				SetEditorStyle(TerrainPainter.StyleIndex(island.Style)); // before painting, so the right textures go on
 				if (island.HasPaint)
 				{
 					TerrainPainter.ApplySaved(terrain, island.GetAlphamapBlock(0, 0, island.AlphamapResolution));
@@ -736,7 +754,19 @@ namespace DynamicIslands
 			Notify("Island elevation: " + IslandSpawner.DescribeElevation(currentElevation) + " (saved with the island)");
 		}
 
-		[ConsoleCommand(name: "GenerateIsland", docs: "Editor: generates a random island (replaces the current one; Ctrl+Z undoes). Usage: GenerateIsland [seed] [size in m] [height in m] [roughness 0-1] [peaks] [objects 0-1]")]
+		[ConsoleCommand(name: "SetStyle", docs: "Editor: island style - Tropical, Snowy, Desert, Forest or Volcanic (ground textures; saved with the island)")]
+		public static void SetStyleCommand(string[] args)
+		{
+			string names = string.Join(", ", TerrainPainter.Styles.Select(s => s.Name).ToArray());
+			if (args == null || args.Length == 0) { Notify("Style is " + TerrainPainter.StyleName(currentStyle) + ". Usage: SetStyle " + names); return; }
+			int i = Array.FindIndex(TerrainPainter.Styles, s => s.Name.Equals(args[0], StringComparison.OrdinalIgnoreCase));
+			if (i < 0) { Notify("Unknown style '" + args[0] + "'. Styles: " + names, true); return; }
+			if (!InEditor()) { Notify("SetStyle only works inside the editor", true); return; }
+			SetEditorStyle(i);
+			Notify("Island style: " + TerrainPainter.StyleName(i) + (TerrainPainter.HasStyle(i) ? "" : " (its textures aren't loaded; showing tropical)"));
+		}
+
+		[ConsoleCommand(name: "GenerateIsland", docs: "Editor: generates a random island (replaces the current one; Ctrl+Z undoes). Usage: GenerateIsland [seed] [size in m] [height in m] [roughness 0-1] [peaks] [objects 0-1] [Tropical|Snowy|Desert|Forest|Volcanic]")]
 		public static void GenerateIslandCommand(string[] args)
 		{
 			if (!InEditor()) { Notify("GenerateIsland only works inside the editor", true); return; }
@@ -752,6 +782,7 @@ namespace DynamicIslands
 				if (args.Length > 4 && int.TryParse(args[4], System.Globalization.NumberStyles.Integer, ci, out i)) s.Peaks = i;
 				if (args.Length > 5 && float.TryParse(args[5], System.Globalization.NumberStyles.Float, ci, out f)) s.ObjectDensity = f;
 			}
+			s.Style = args != null && args.Length > 6 ? TerrainPainter.StyleIndex(args[6]) : currentStyle;
 			int n = IslandGenerator.GenerateInEditor(s);
 			IslandGenerator.FrameCamera(s);
 			Notify("Generated island " + s.Seed + " (" + n + " objects). Ctrl+Z undoes it.");

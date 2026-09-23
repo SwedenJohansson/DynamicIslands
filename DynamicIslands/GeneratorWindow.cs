@@ -102,14 +102,28 @@ namespace DynamicIslands.Editor
 			density = MakeSlider(p, "Objects", -60, 0f, 1f, false, v => "Trees, rocks and corals: " + (v <= 0.01f ? "none" : v < 0.35f ? "few" : v < 0.7f ? "some" : "many"));
 
 			status = MakeText(p, "Status", "", 13, TextLight, new Vector2(0, -115), new Vector2(400, 36), TextAnchor.MiddleCenter, FontStyle.Italic);
-			MakeButton(p, "Generate", new Vector2(-70, -175), new Vector2(130, 36), OnGenerate);
-			MakeButton(p, "Close", new Vector2(70, -175), new Vector2(130, 36), Close);
+			// Style: each click moves to the next one
+			styleText = MakeButton(p, "Style", new Vector2(-140, -175), new Vector2(130, 36), () =>
+			{
+				style = (style + 1) % TerrainPainter.Styles.Length;
+				ShowStyle();
+				SetStatus(TerrainPainter.StyleName(style) + " island" + (TerrainPainter.HasStyle(style) ? "" : " (its textures aren't loaded; it will look tropical)") + ". Click the style to change it.");
+			});
+			MakeButton(p, "Generate", new Vector2(0, -175), new Vector2(130, 36), OnGenerate);
+			MakeButton(p, "Close", new Vector2(140, -175), new Vector2(130, 36), Close);
 		}
+
+		int style;
+		Text styleText;
+
+		void ShowStyle() { if (styleText != null) styleText.text = TerrainPainter.StyleName(style); }
 
 		void Show(IslandGenSettings s)
 		{
 			seedField.text = s.Seed.ToString(CultureInfo.InvariantCulture);
 			radius.value = s.Radius; height.value = s.Height; roughness.value = s.Roughness; peaks.value = s.Peaks; density.value = s.ObjectDensity;
+			style = DynamicIslands.currentStyle; // start from the island's current style
+			ShowStyle();
 		}
 
 		void OnGenerate()
@@ -119,7 +133,7 @@ namespace DynamicIslands.Editor
 			var s = new IslandGenSettings
 			{
 				Seed = seed, Radius = radius.value, Height = height.value, Roughness = roughness.value,
-				Peaks = Mathf.RoundToInt(peaks.value), ObjectDensity = density.value
+				Peaks = Mathf.RoundToInt(peaks.value), ObjectDensity = density.value, Style = style
 			};
 			try
 			{
@@ -152,7 +166,7 @@ namespace DynamicIslands.Editor
 			return slider;
 		}
 
-		void MakeButton(Transform parent, string label, Vector2 pos, Vector2 size, Action onClick)
+		Text MakeButton(Transform parent, string label, Vector2 pos, Vector2 size, Action onClick)
 		{
 			GameObject b;
 			if (buttonTemplate != null)
@@ -171,6 +185,7 @@ namespace DynamicIslands.Editor
 			Text t = b.GetComponentInChildren<Text>(true);
 			if (t != null) { t.text = label; if (buttonTemplate == null) { t.font = font; t.fontSize = 16; } }
 			b.GetComponent<Button>().onClick.AddListener(() => onClick());
+			return t;
 		}
 
 		Text MakeText(Transform parent, string name, string text, int size, Color color, Vector2 pos, Vector2 box, TextAnchor anchor, FontStyle style)

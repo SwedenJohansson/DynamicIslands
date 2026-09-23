@@ -1,9 +1,16 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DynamicIslands.Editor
 {
+	/// <summary>
+	/// The object being placed: it follows the mouse over the terrain (and other objects) until a left click puts it
+	/// down. Q / E turn it, [ / ] make it smaller / bigger, Ctrl + mouse fine-tunes the position, Esc cancels.
+	/// Holding Shift while clicking keeps placing copies. "Random" and "Slope" (PlacementOptions) randomise the
+	/// turn and size, and lean objects with the ground.
+	/// </summary>
 	public class ObjectPlacer : MonoBehaviour
 	{
 		public string GameObjectName;
@@ -13,6 +20,15 @@ namespace DynamicIslands.Editor
 		LayerMask layerMask;
 
 		Vector3 lastMouseCoordinate = Vector3.zero;
+		Quaternion baseRotation;
+		Vector3 baseScale;
+		float yaw;
+		float scale = 1f;
+		Vector3 groundNormal = Vector3.up;
+		Collider[] ownColliders;
+
+		/// <summary>Turn and size to start with (a copy placed with Shift keeps the previous one's).</summary>
+		public float? StartYaw, StartScale;
 
 		public void Start()
 		{
@@ -21,87 +37,102 @@ namespace DynamicIslands.Editor
 			{
 				this.gameObject.GetComponent<Collider>().enabled = false;
 			}
-			catch (Exception e) { }
+			catch (Exception) { }
 
 			layerMask = (1 << LayerMask.NameToLayer("Default")) | (1 << LayerMask.NameToLayer("Obstruction"));
-
-
-		}
-
-		void FixedUpdate()
-		{
-			Vector3 mouseDelta = Input.mousePosition - lastMouseCoordinate;
-			if (Input.GetKey(KeyCode.Escape))
+			ownColliders = GetComponentsInChildren<Collider>(true);
+			baseRotation = transform.rotation;
+			baseScale = transform.localScale;
+			if (PlacementOptions.RandomTurnAndSize)
 			{
-				Destroy(this.gameObject);
-			}
-			if (Input.GetMouseButton(0) && !MouseOverUI())
-			{
-				//Placing object at the current position
-				try { this.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception e) { }
-
-				this.gameObject.AddComponent<Editor.EditorGameObject>();
-				this.gameObject.GetComponent<Editor.EditorGameObject>().GameObjectName = GameObjectName;
-
-				DynamicIslands.EditorGizmoHandler.placingObject = false;
-
-				this.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
-				// Placing is undoable (Ctrl+Z hides the object again)
-				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { this.gameObject }, true));
-
-				Destroy(this);
-			}
-
-
-			if (!Input.GetKey(KeyCode.LeftControl))
-			{
-
-				RaycastHit hit;
-				Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-				if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
-				{
-					if (hit.collider != null)
-					{
-						if (hit.collider.gameObject != this.gameObject)
-						{
-							Collider[] cols = this.gameObject.GetComponentsInChildren<Collider>();
-							foreach (Collider col in cols)
-							{
-								if (hit.collider == col)
-								{
-									lastMouseCoordinate = Input.mousePosition;
-									return;
-								}
-							}
-
-							/*if (hit.collider != this.gameObject.GetComponentInChildren<Collider>())
-							{*/
-							//Debug.Log(hit.point);
-							this.gameObject.transform.position = hit.point;
-							//}
-						}
-					}
-				}
+				yaw = UnityEngine.Random.Range(0f, 360f);
+				scale = UnityEngine.Random.Range(0.8f, 1.25f);
 			}
 			else
 			{
-				//fine tune object placement
-				mouseDelta.Normalize();
-				mouseDelta = mouseDelta / 10;
-				Debug.Log(mouseDelta);
+				yaw = StartYaw ?? 0f;
+				scale = StartScale ?? 1f;
+			}
+			Apply();
+		}
 
-				this.gameObject.transform.position += Clamp(mouseDelta, -1f, 1f);
+		void Update()
+		{
+			if (Input.GetKeyDown(KeyCode.Escape)) { Destroy(this.gameObject); return; }
+
+			if (!EditorInput.IsTyping)
+			{
+				if (Input.GetKeyDown(KeyCode.Q)) yaw -= 15f;
+				if (Input.GetKeyDown(KeyCode.E)) yaw += 15f;
+				if (Input.GetKeyDown(KeyCode.LeftBracket)) scale = Mathf.Max(0.1f, scale / 1.1f);
+				if (Input.GetKeyDown(KeyCode.RightBracket)) scale = Mathf.Min(10f, scale * 1.1f);
 			}
 
+			Vector3 mouseDelta = Input.mousePosition - lastMouseCoordinate;
+			if (!EditorInput.Ctrl) FollowMouse();
+			else
+			{
+				// Fine-tune the position with the mouse
+				mouseDelta.Normalize();
+				mouseDelta = mouseDelta / 10;
+				this.gameObject.transform.position += Clamp(mouseDelta, -1f, 1f);
+			}
 			lastMouseCoordinate = Input.mousePosition;
+			Apply();
 
+			if (Input.GetMouseButtonDown(0) && !MouseOverUI()) Place();
+		}
 
+		/// <summary>Moves the object to the first thing under the mouse that isn't the object itself.</summary>
+		void FollowMouse()
+		{
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+			foreach (RaycastHit hit in Physics.RaycastAll(ray, Mathf.Infinity, layerMask).OrderBy(h => h.distance))
+			{
+				if (hit.collider == null || ownColliders.Contains(hit.collider) || hit.collider.transform.IsChildOf(transform)) continue;
+				transform.position = hit.point;
+				groundNormal = hit.normal;
+				return;
+			}
+		}
 
+		void Apply()
+		{
+			transform.rotation = PlacementOptions.Upright(yaw, baseRotation, groundNormal);
+			transform.localScale = baseScale * scale;
+		}
+
+		void Place()
+		{
+			try { this.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception) { }
+
+			this.gameObject.AddComponent<Editor.EditorGameObject>().GameObjectName = GameObjectName;
+			DynamicIslands.EditorGizmoHandler.placingObject = false;
+
+			this.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
+			// Placing is undoable (Ctrl+Z hides the object again)
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { this.gameObject }, true));
+
+			// Shift: keep placing the same object
+			if (EditorInput.Shift)
+			{
+				GameObject next = PlaceableCatalog.Spawn(GameObjectName, null);
+				if (next != null)
+				{
+					next.transform.position = transform.position;
+					ObjectPlacer placer = next.AddComponent<ObjectPlacer>();
+					placer.GameObjectName = GameObjectName;
+					placer.StartYaw = yaw;
+					placer.StartScale = scale;
+					DynamicIslands.EditorGizmoHandler.placingObject = true;
+				}
+			}
+			Destroy(this);
 		}
 
 		private bool MouseOverUI()
 		{
-			return EventSystem.current.IsPointerOverGameObject();
+			return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 		}
 
 		public Vector3 Clamp(Vector3 value, float min, float max)
@@ -111,7 +142,5 @@ namespace DynamicIslands.Editor
 			value.z = Mathf.Clamp(value.z, min, max);
 			return value;
 		}
-
-
 	}
 }

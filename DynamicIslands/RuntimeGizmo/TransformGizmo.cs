@@ -121,6 +121,8 @@ namespace RuntimeGizmos
 
 		//We use a HashSet and a List for targetRoots so that we get fast lookup with the hashset while also keeping track of the order with the list.
 		List<Transform> targetRootsOrdered = new List<Transform>();
+		/// <summary>The selected objects (Custom Islands: used by the editor's "Ground" button).</summary>
+		public IList<Transform> SelectedRoots { get { return targetRootsOrdered; } }
 		Dictionary<Transform, TargetInfo> targetRoots = new Dictionary<Transform, TargetInfo>();
 		HashSet<Renderer> highlightedRenderers = new HashSet<Renderer>();
 		HashSet<Transform> children = new HashSet<Transform>();

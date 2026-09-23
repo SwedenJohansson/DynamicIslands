@@ -20,6 +20,8 @@ namespace DynamicIslands.Editor
 		public int Peaks = 2;
 		/// <summary>0 = no objects, 1 = dense vegetation.</summary>
 		public float ObjectDensity = 0.5f;
+		/// <summary>Island style (TerrainPainter.Styles): ground textures and which objects are scattered. Volcanic islands get a cone with a crater.</summary>
+		public int Style = TerrainPainter.Tropical;
 
 		// The land can reach about 1.9 x Radius with a ragged coast; 250 keeps it inside the 1000 m build area
 		public const float MinRadius = 40f, MaxRadius = 250f, MinHeight = 5f, MaxHeight = 120f;
@@ -32,7 +34,17 @@ namespace DynamicIslands.Editor
 			Roughness = Mathf.Clamp01(Roughness);
 			Peaks = Mathf.Clamp(Peaks, 1, MaxPeaks);
 			ObjectDensity = Mathf.Clamp01(ObjectDensity);
+			Style = Mathf.Clamp(Style, 0, TerrainPainter.Styles.Length - 1);
 		}
+	}
+
+	/// <summary>Undo step for changing the island style (part of generating an island).</summary>
+	public class StyleCommand : ICommand
+	{
+		readonly int before, after;
+		public StyleCommand(int before, int after) { this.before = before; this.after = after; }
+		public void Execute() { DynamicIslands.SetEditorStyle(after); }
+		public void UnExecute() { DynamicIslands.SetEditorStyle(before); }
 	}
 
 	/// <summary>
@@ -41,6 +53,7 @@ namespace DynamicIslands.Editor
 	/// (which stays exactly flat further out, so spawning crops the terrain to the island). Textures are painted
 	/// automatically, and objects can be scattered by zone: palms along the shore, bushes and fruit trees inland,
 	/// rocks on steep or high ground, corals under water. Generating replaces the island and is one undo step.
+	/// Each island style (TerrainPainter.Styles) scatters its own objects; volcanic islands get a cone with a crater.
 	/// </summary>
 	public static class IslandGenerator
 	{
@@ -49,13 +62,59 @@ namespace DynamicIslands.Editor
 		/// <summary>Beach shelf height above sea level (m) that the land profile rises to before the hills start.</summary>
 		const float ShelfHeight = 2.5f;
 
-		// Object groups by zone (names from PlaceableCatalog; missing ones are skipped)
-		static readonly Regex ShoreObjects = new Regex(@"^(Pickup_Landmark_Tree_Palm \d+|BigPalm\d+)$");
-		static readonly Regex InlandObjects = new Regex(@"^(Pickup_Landmark_MangoTree|Pickup_Landmark_BerryBush|Bush2?|Monstera_\d+|Banana_Bush_\d+|Bamboo_\d+|BigPalm\d+|Pickup_Landmark_Tree_Palm \d+)$");
-		// (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
-		static readonly Regex RockObjects = new Regex(@"^(Pickup_Landmark_Rock \d+|BigBoulder\d+_Low|SmallBoulder\d+)$");
-		static readonly Regex BeachObjects = new Regex(@"^(Log|Pickup_Landmark_Rock \d+|SmallBoulder\d+)$");
-		static readonly Regex UnderwaterObjects = new Regex(@"^(Coral\d+|LeafCoral_\d+|TableCoral_\d+|CauliCoral|CylinderCoral_\d+|SpineCoral_\d+|SeaVine3|seavine_tongue)$");
+		/// <summary>Which catalog objects a style scatters in each zone (names from PlaceableCatalog; missing ones are skipped).</summary>
+		class ZoneObjects
+		{
+			public Regex Shore, Inland, Rocks, Beach, Underwater;
+		}
+
+		static readonly Regex Corals = new Regex(@"^(Coral\d+|LeafCoral_\d+|TableCoral_\d+|CauliCoral|CylinderCoral_\d+|SpineCoral_\d+|SeaVine3|seavine_tongue)$");
+
+		// Indexed like TerrainPainter.Styles. (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
+		static readonly ZoneObjects[] StyleObjects =
+		{
+			new ZoneObjects // Tropical
+			{
+				Shore = new Regex(@"^(Pickup_Landmark_Tree_Palm \d+|BigPalm\d+)$"),
+				Inland = new Regex(@"^(Pickup_Landmark_MangoTree|Pickup_Landmark_BerryBush|Bush2?|Monstera_\d+|Banana_Bush_\d+|Bamboo_\d+|BigPalm\d+|Pickup_Landmark_Tree_Palm \d+)$"),
+				Rocks = new Regex(@"^(Pickup_Landmark_Rock \d+|BigBoulder\d+_Low|SmallBoulder\d+)$"),
+				Beach = new Regex(@"^(Log|Pickup_Landmark_Rock \d+|SmallBoulder\d+)$"),
+				Underwater = Corals,
+			},
+			new ZoneObjects // Snowy
+			{
+				Shore = new Regex(@"^(TP_SnowDrift0\d|TP_SmallRock0\d|TP_IceShore_Small\d)$"),
+				Inland = new Regex(@"^(TP_PineTreeSnowy|TP_SnowDrift0\d|TP_PineTreeSnowy)$"),
+				Rocks = new Regex(@"^(TP_BigRock0[2-4]|TP_SmallRock0\d|TP_StalagmiteCluster0\d_Snow|Pickup_Landmark_(Rock|Iron) \d+)$"),
+				Beach = new Regex(@"^(TP_SmallRock0\d|TP_SnowDrift0\d|TP_Moontown_Barrel0\d)$"),
+				Underwater = new Regex(@"^(TP_SmallRock0\d|SeaVine3)$"),
+			},
+			new ZoneObjects // Desert
+			{
+				Shore = new Regex(@"^(DesertFern_\d+|SmallBush_\d+|Cactus\w+)$"),
+				Inland = new Regex(@"^(Cactus\w+|SmallBushyTree_\d+|BigBush_\d+|DesertFern_\d+|Pickup_Landmark_PineappleLandmark|CaravanIsland_(Yellow|Brown)Grass)$"),
+				Rocks = new Regex(@"^(BigSharpRock_\d+|CaravanIsland_SmallRock_\d+|Pickup_Landmark_(Rock|Copper) \d+)$"),
+				Beach = new Regex(@"^(CaravanIsland_SmallRock_\d+|Pickup_Landmark_Sand_Caravan)$"),
+				Underwater = Corals,
+			},
+			new ZoneObjects // Forest
+			{
+				Shore = new Regex(@"^(Balboa_Bush_\d+ Variant|SmallRock_\d+|BirchTree_Small\d)$"),
+				Inland = new Regex(@"^(BirchTree_\w+|PineTree_\w+|Pickup_Landmark_Tree_(Pine|Birch)|Balboa_(Big)?Bush_\d+ Variant|TreeLog_\d+|Tree_Stump)$"),
+				Rocks = new Regex(@"^(BigRock_\d+|SmallRock_\d+|Pickup_Landmark_(Rock|Iron|Copper|Clay) \d+)$"),
+				Beach = new Regex(@"^(Pickup_Landmark_Sand|SmallRock_\d+|TreeLog_\d+)$"),
+				Underwater = Corals,
+			},
+			new ZoneObjects // Volcanic
+			{
+				Shore = new Regex(@"^(CaravanIsland_SmallRock_\d+|TP_SmallRock0\d)$"),
+				Inland = new Regex(@"^(DesertFern_\d+|SmallBush_\d+|BigSharpRock_\d+|Pickup_Landmark_(Iron|Copper) \d+)$"),
+				// (no Temperance rocks: they have snow on them)
+				Rocks = new Regex(@"^(BigSharpRock_\d+|CaravanIsland_SmallRock_\d+|Pickup_Landmark_(Iron|Copper|Rock) \d+)$"),
+				Beach = new Regex(@"^(CaravanIsland_SmallRock_\d+)$"),
+				Underwater = new Regex(@"^(TableCoral_\d+|SeaVine3)$"),
+			},
+		};
 
 		/// <summary>Generates into the editor terrain (and scatters objects) as one undoable step. Returns how many objects were placed.</summary>
 		public static int GenerateInEditor(IslandGenSettings s)
@@ -71,6 +130,8 @@ namespace DynamicIslands.Editor
 			float[,,] alphaBefore = data.GetAlphamaps(0, 0, ares, ares);
 			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
 
+			int styleBefore = DynamicIslands.currentStyle;
+			DynamicIslands.SetEditorStyle(s.Style); // before painting, so the style's textures go on
 			data.SetHeights(0, 0, Heights(s, data.size, hres));
 			// A new island starts with automatic texturing everywhere
 			if (terraineditor.paintMask == null || terraineditor.paintMask.GetLength(0) != ares) terraineditor.paintMask = new float[ares, ares];
@@ -78,6 +139,7 @@ namespace DynamicIslands.Editor
 			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel, terraineditor.paintMask);
 
 			var group = new CommandGroup();
+			group.Add(new StyleCommand(styleBefore, s.Style)); // first in, so undo restores the old style last
 			group.Add(new TerrainStrokeCommand(data, new RectInt(0, 0, hres, hres), heightsBefore, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
 
 			// The old objects go (hidden, so undo brings them back), the new ones come
@@ -93,8 +155,8 @@ namespace DynamicIslands.Editor
 			if (scattered.Count > 0) group.Add(new ObjectVisibilityCommand(scattered, true));
 
 			UndoRedoManager.Insert(group);
-			Debug.Log(string.Format("[CUSTOM ISLANDS] Generated island: seed {0}, radius {1:F0} m, height {2:F0} m, roughness {3:F2}, {4} peak(s), {5} objects",
-				s.Seed, s.Radius, s.Height, s.Roughness, s.Peaks, scattered.Count));
+			Debug.Log(string.Format("[CUSTOM ISLANDS] Generated island: seed {0}, radius {1:F0} m, height {2:F0} m, roughness {3:F2}, {4} peak(s), {5} style, {6} objects",
+				s.Seed, s.Radius, s.Height, s.Roughness, s.Peaks, TerrainPainter.StyleName(s.Style), scattered.Count));
 			return scattered.Count;
 		}
 
@@ -130,6 +192,7 @@ namespace DynamicIslands.Editor
 			}
 
 			float sea = IslandFile.DefaultWaterLevel;
+			bool volcanic = s.Style == TerrainPainter.Volcanic;
 			float step = size.x / (res - 1);
 			Vector2 centre = new Vector2(size.x / 2f, size.z / 2f);
 			var heights = new float[res, res];
@@ -158,11 +221,21 @@ namespace DynamicIslands.Editor
 					if (inland > 0f)
 					{
 						float mountain = 0f;
-						foreach (Vector4 pk in peaks)
+						for (int i = 0; i < peaks.Count; i++)
 						{
+							Vector4 pk = peaks[i];
 							float dx = p.x - pk.x, dz = p.y - pk.y;
 							float q = (dx * dx + dz * dz) / (pk.z * pk.z);
-							mountain = Mathf.Max(mountain, pk.w * Mathf.Exp(-q * 1.6f));
+							float v;
+							if (volcanic)
+							{
+								// A straight-sided cone, and a crater in the main one
+								float r = Mathf.Sqrt(q);
+								v = pk.w * Mathf.Pow(Mathf.Max(0f, 1f - r * 0.85f), 1.4f);
+								if (i == 0 && r < 0.2f) v -= pk.w * 0.45f * (1f - r / 0.2f);
+							}
+							else v = pk.w * Mathf.Exp(-q * 1.6f);
+							mountain = Mathf.Max(mountain, v);
 						}
 						float hills = Fbm(p * hillScale + hillOffset, 4); // -1..1
 						float bump = mountain * (1f + 0.35f * s.Roughness * hills) + 0.18f * s.Roughness * (hills * 0.5f + 0.5f);
@@ -202,11 +275,12 @@ namespace DynamicIslands.Editor
 			var result = new List<GameObject>();
 			if (!PlaceableCatalog.IsBuilt) { Debug.LogWarning("[CUSTOM ISLANDS] Objects are still loading; generated the terrain without objects"); return result; }
 			string[] names = PlaceableCatalog.Names.ToArray();
-			string[] shore = names.Where(n => ShoreObjects.IsMatch(n)).ToArray();
-			string[] inland = names.Where(n => InlandObjects.IsMatch(n)).ToArray();
-			string[] rocks = names.Where(n => RockObjects.IsMatch(n)).ToArray();
-			string[] beach = names.Where(n => BeachObjects.IsMatch(n)).ToArray();
-			string[] underwater = names.Where(n => UnderwaterObjects.IsMatch(n)).ToArray();
+			ZoneObjects zones = StyleObjects[s.Style];
+			string[] shore = names.Where(n => zones.Shore.IsMatch(n)).ToArray();
+			string[] inland = names.Where(n => zones.Inland.IsMatch(n)).ToArray();
+			string[] rocks = names.Where(n => zones.Rocks.IsMatch(n)).ToArray();
+			string[] beach = names.Where(n => zones.Beach.IsMatch(n)).ToArray();
+			string[] underwater = names.Where(n => zones.Underwater.IsMatch(n)).ToArray();
 
 			var rnd = new System.Random(s.Seed * 7919 + 13);
 			TerrainData data = terrain.terrainData;
@@ -228,13 +302,13 @@ namespace DynamicIslands.Editor
 				float slope = data.GetSteepness(nx, nz);
 				float above = h - sea;
 
-				string[] pool; float spacing;
+				string[] pool; float spacing, maxSize; // maxSize: bigger objects are scaled down (some of Raft's rocks are cliff-sized)
 				if (above < -8f || h < 0.5f) continue;                                       // deep water / open seabed
-				else if (above < -1.5f) { pool = underwater; spacing = 5f; }                  // shallow water: corals
-				else if (above < 0.8f) { if (rnd.NextDouble() < 0.7) continue; pool = beach; spacing = 6f; } // wet sand
-				else if (slope > 32f || above > s.Height * 0.8f) { pool = rocks; spacing = 7f; } // steep or high ground
-				else if (above < 7f) { pool = rnd.NextDouble() < 0.75 ? shore : beach; spacing = 7f; } // along the shore
-				else { pool = rnd.NextDouble() < 0.8 ? inland : rocks; spacing = 6f; }
+				else if (above < -1.5f) { pool = underwater; spacing = 5f; maxSize = 6f; }                  // shallow water: corals
+				else if (above < 0.8f) { if (rnd.NextDouble() < 0.7) continue; pool = beach; spacing = 6f; maxSize = 5f; } // wet sand
+				else if (slope > 32f || above > s.Height * 0.8f) { pool = rocks; spacing = 7f; maxSize = 10f; } // steep or high ground
+				else if (above < 7f) { pool = rnd.NextDouble() < 0.75 ? shore : beach; spacing = 7f; maxSize = 18f; } // along the shore
+				else { pool = rnd.NextDouble() < 0.8 ? inland : rocks; spacing = 6f; maxSize = 22f; }
 				if (pool.Length == 0) continue;
 				if (positions.Any(q => (q - p).sqrMagnitude < spacing * spacing)) continue;
 
@@ -245,6 +319,8 @@ namespace DynamicIslands.Editor
 				go.transform.position = p;
 				go.transform.rotation = Quaternion.Euler(0, (float)rnd.NextDouble() * 360f, 0);
 				float scale = 0.85f + 0.3f * (float)rnd.NextDouble();
+				float size = PlaceableCatalog.ApproxSize(kind);
+				if (size * scale > maxSize) scale = Mathf.Max(0.15f, maxSize / size);
 				go.transform.localScale = go.transform.localScale * scale;
 				go.AddComponent<EditorGameObject>().GameObjectName = kind;
 				positions.Add(p);

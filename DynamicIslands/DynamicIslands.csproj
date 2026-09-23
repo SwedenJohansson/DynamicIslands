@@ -58,6 +58,7 @@
     <Compile Include="IslandObjectState.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
+    <Compile Include="PlacementTools.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="RTSCamera.cs" />

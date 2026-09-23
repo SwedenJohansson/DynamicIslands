@@ -215,6 +215,145 @@ namespace DynamicIslands
 			else Fail("undo/redo or islands window");
 		}
 
+		[ConsoleCommand(name: "CIPlaceTest", docs: "Dev, editor: object list search, Ground (with and without Slope) and its undo")]
+		public static void PlaceTest()
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
+			DynamicIslands.instance.StartCoroutine(PlaceTestRoutine());
+		}
+
+		static IEnumerator PlaceTestRoutine()
+		{
+			bool ok = true;
+			// 1. Search
+			ObjectListSearch search = UnityEngine.Object.FindObjectOfType<ObjectListSearch>();
+			UnityEngine.UI.InputField field = search != null ? search.GetComponent<UnityEngine.UI.InputField>() : null;
+			Transform content = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content");
+			if (field == null) { Fail("no search field"); yield break; }
+			System.Func<int> visibleObjects = () => content.Cast<Transform>().Count(t => t.gameObject.activeSelf && !t.name.StartsWith("Header_") && t.name != "Button");
+			int all = visibleObjects();
+			field.text = "cactus";
+			yield return null;
+			int cacti = visibleObjects();
+			bool onlyCacti = content.Cast<Transform>().Where(t => t.gameObject.activeSelf && !t.name.StartsWith("Header_")).All(t => t.GetComponentInChildren<UnityEngine.UI.Text>().text.ToLower().Contains("cactus"));
+			field.text = "";
+			yield return null;
+			Check(ref ok, cacti > 0 && cacti < all && onlyCacti && visibleObjects() == all, "search: 'cactus' shows " + cacti + " of " + all + " objects, clearing shows all again");
+
+			// 2. Ground: objects lifted into the air land on the terrain, as one undo step
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 3, ObjectDensity = 0f });
+			Terrain terrain = terraineditor.terrain;
+			Vector3 c = terrain.transform.position + new Vector3(500f, 0, 500f);
+			var objs = new System.Collections.Generic.List<Transform>();
+			for (int i = 0; i < 3; i++)
+			{
+				GameObject go = PlaceableCatalog.Spawn("SmallBoulder2", GameObject.Find("PlacedObjects").transform) ?? PlaceableCatalog.Spawn(PlaceableCatalog.Names.First(), GameObject.Find("PlacedObjects").transform);
+				go.AddComponent<EditorGameObject>().GameObjectName = go.name;
+				go.transform.position = c + new Vector3(30f + i * 20f, 200f, 40f);
+				objs.Add(go.transform);
+			}
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			gizmo.ClearTargets(false);
+			foreach (Transform t in objs) gizmo.AddTarget(t, false);
+			PlacementOptions.AlignToSlope = false;
+			int n = PlacementOptions.DropSelectionToGround();
+			bool grounded = objs.All(t => Mathf.Abs(t.position.y - (terrain.SampleHeight(t.position) + terrain.transform.position.y)) < 0.2f && Vector3.Angle(t.up, Vector3.up) < 1f);
+			CommandUndoRedo.UndoRedoManager.Undo();
+			bool undone = objs.All(t => t.position.y > 150f);
+			Check(ref ok, n == 3 && grounded && undone, "Ground put " + n + " objects on the terrain, upright; Ctrl+Z lifted them back");
+
+			// 3. With Slope on they lean with the ground
+			PlacementOptions.AlignToSlope = true;
+			PlacementOptions.DropSelectionToGround();
+			float worst = objs.Max(t =>
+			{
+				Vector3 point, normal;
+				PlacementOptions.GroundAt(t.position, out point, out normal);
+				return Vector3.Angle(t.up, normal);
+			});
+			PlacementOptions.AlignToSlope = false;
+			Check(ref ok, worst < 2f, "with Slope on, objects lean with the ground (largest difference " + worst.ToString("F1") + " degrees)");
+			gizmo.ClearTargets(false);
+			foreach (Transform t in objs) UnityEngine.Object.Destroy(t.gameObject);
+			if (ok) Log("PASS: placement tools test"); else Fail("placement tools test");
+		}
+
+		[ConsoleCommand(name: "CIObjInfo", docs: "Dev, editor: spawns catalog objects whose name contains <text> (or 'all') at the build-area centre and logs their rendered size; they are removed again")]
+		public static void ObjInfo(string[] args)
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first"); return; }
+			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : "all";
+			var lines = new System.Collections.Generic.List<string>();
+			Vector3 c = terraineditor.terrain.transform.position + new Vector3(500f, 0, 500f);
+			c.y = terraineditor.terrain.SampleHeight(c);
+			foreach (string name in PlaceableCatalog.Names.Where(n => filter == "all" || n.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0))
+			{
+				GameObject go = PlaceableCatalog.Spawn(name, null);
+				if (go == null) continue;
+				go.transform.position = c;
+				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+				Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(c, Vector3.zero);
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				LODGroup lod = go.GetComponentInChildren<LODGroup>();
+				lines.Add(string.Format("{0} [{1}]: size {2:F1} x {3:F1} x {4:F1} m, centre offset {5}, {6} renderers ({7} enabled){8}",
+					name, PlaceableCatalog.CategoryOf(name), b.size.x, b.size.y, b.size.z, (b.center - c).ToString("F1"), rs.Length, rs.Count(r => r.enabled),
+					lod != null ? ", LODGroup " + lod.lodCount + " levels, enabled=" + lod.enabled : ""));
+				UnityEngine.Object.Destroy(go);
+			}
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "objinfo.txt"));
+			File.WriteAllLines(file, lines.ToArray());
+			Log(lines.Count + " objects measured, written to " + file);
+		}
+
+		[ConsoleCommand(name: "CIStyleTest", docs: "Dev, editor: island styles - textures found, new object categories, and for every style: generate, save, load (files cistyle_<style>.island are deleted again)")]
+		public static void StyleTest()
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
+			DynamicIslands.instance.StartCoroutine(StyleTestRoutine());
+		}
+
+		static IEnumerator StyleTestRoutine()
+		{
+			bool ok = true;
+			var styles = TerrainPainter.Styles;
+			Check(ref ok, Enumerable.Range(0, styles.Length).All(TerrainPainter.HasStyle),
+				"Raft's textures found for the styles: " + string.Join(", ", Enumerable.Range(0, styles.Length).Select(i => styles[i].Name + (TerrainPainter.HasStyle(i) ? "" : " (missing)")).ToArray()));
+			var cats = PlaceableCatalog.ByCategory().ToDictionary(c => c.Key, c => c.Value.Count);
+			int ores = PlaceableCatalog.HarvestableNames.Count(n => System.Text.RegularExpressions.Regex.IsMatch(n, "Copper|Iron|Clay|Sand"));
+			Check(ref ok, cats.ContainsKey(PlaceableCatalog.SnowCategory) && cats.ContainsKey(PlaceableCatalog.DesertCategory) && cats.ContainsKey(PlaceableCatalog.ForestCategory) && ores > 0,
+				"object list: " + string.Join(", ", cats.Select(c => c.Value + " " + c.Key.ToLower()).ToArray()) + "; " + ores + " ore/clay/sand harvestables");
+
+			Terrain terrain = terraineditor.terrain;
+			int startStyle = DynamicIslands.currentStyle;
+			for (int style = 0; style < styles.Length; style++)
+			{
+				var s = new IslandGenSettings { Seed = 11 + style, Radius = 90f, Height = 45f, Roughness = 0.5f, Peaks = 2, ObjectDensity = 0.5f, Style = style };
+				int n = IslandGenerator.GenerateInEditor(s);
+				string[] tex = terrain.terrainData.terrainLayers.Select(l => l != null && l.diffuseTexture != null ? l.diffuseTexture.name : "?").ToArray();
+				bool texOk = Enumerable.Range(0, TerrainPainter.LayerCount).All(i => tex[i].StartsWith(styles[style].Textures[i]));
+				string name = "cistyle_" + styles[style].Name.ToLower();
+				DynamicIslands.SaveIsland(name);
+				string saved = IslandFile.Load(IslandSpawner.PathFor(name)).Style;
+				DynamicIslands.SetEditorStyle(TerrainPainter.Tropical);
+				DynamicIslands.LoadIsland(name);
+				yield return null;
+				bool loaded = DynamicIslands.currentStyle == style && TerrainPainter.StyleOf(terrain) == style;
+				Check(ref ok, texOk && n > 5 && (style == TerrainPainter.Tropical ? saved == "" : saved == styles[style].Name) && loaded,
+					styles[style].Name + ": textures " + string.Join("/", tex) + ", " + n + " objects, saved as '" + saved + "', loads back as " + TerrainPainter.StyleName(DynamicIslands.currentStyle));
+				File.Delete(IslandSpawner.PathFor(name));
+			}
+
+			// Generating is one undo step, including the style change
+			DynamicIslands.SetEditorStyle(TerrainPainter.Forest);
+			CommandUndoRedo.UndoRedoManager.Clear();
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 5, Style = TerrainPainter.Snowy, ObjectDensity = 0.2f });
+			CommandUndoRedo.UndoRedoManager.Undo();
+			bool undone = DynamicIslands.currentStyle == TerrainPainter.Forest;
+			CommandUndoRedo.UndoRedoManager.Redo();
+			Check(ref ok, undone && DynamicIslands.currentStyle == TerrainPainter.Snowy, "Ctrl+Z after generating also brings back the previous style");
+			if (ok) Log("PASS: island styles test"); else Fail("island styles test");
+		}
+
 		[ConsoleCommand(name: "CIGenTest", docs: "Dev, editor: generates an island and checks it (same seed = same island, land above sea, fits the build area, objects, undo/redo, save/load as cigen.island)")]
 		public static void GenTest()
 		{

@@ -9,9 +9,20 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 - **Island editor** (EDITOR button in the main menu)
   - Sculpt the terrain with a round brush: Raise, Lower, Flatten and Smooth.
   - Paint it with Raft's own ground textures (Sand, Grass, Rock, Seabed), or let it texture automatically by height and slope.
-  - Place about 300 objects taken from Raft's islands: palms, trees, bushes, boulders, corals, harvestable palms, rocks and berry bushes, and props from Vasagatan. Move, rotate, scale and delete them.
+  - **Island styles:** Tropical, Snowy (Temperance), Desert (Caravan Island), Forest (Balboa) and Volcanic. Each style has its own ground textures, and the paint buttons are named after them.
+  - Place about 390 objects taken from Raft's islands:
+    - palms, snowy pines, birches, cacti, bushes, boulders, snowdrifts, icicles, corals
+    - harvestable palms, pines, birches, mango trees, rocks, berry bushes, pineapples, and copper, iron, clay and sand
+    - props from Vasagatan
+  - Move, rotate, scale and delete objects.
+  - **Placing objects:**
+    - a search box filters the object list
+    - Q/E turns the object, [ and ] resize it, and Shift+click keeps placing copies
+    - **Random** gives each placed object a random turn and size
+    - **Slope** leans objects with the ground
+    - **Ground** drops the selected objects onto the terrain
   - Undo and redo everything, and save or load islands.
-  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, and how many trees, rocks and corals to scatter. The same seed always gives the same island.
+  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
 - **In your worlds**
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
   - You can also spawn one yourself with `SpawnIsland`.
@@ -43,6 +54,8 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | Ctrl+Z / Ctrl+Y | Undo / redo sculpting, painting, placing, moving, rotating, scaling and deleting |
 | Terrain tab | Raise / Lower / Flatten / Smooth, texture paint, Auto, brush size and strength. A ring shows the brush. |
 | Terrain tab > Generate, Menu > Generate island... | Opens the island generator. Generating replaces the current island; Ctrl+Z brings the old one back. |
+| Terrain tab > style button (below Generate) | Switches the island's style: Tropical, Snowy, Desert, Forest, Volcanic. Saved with the island. |
+| Objects tab | Search box above the list. While placing: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. The **Random** and **Slope** toggles, and **Ground** for the selection. |
 | Objects tab | Object list, plus Move / Rotate / Scale / Delete (keys 1–4). Delete deletes the selection, P toggles pivot/center, X toggles global/local. |
 | Camera | WASD or arrows to move, Shift for faster, right-drag to rotate, mouse wheel to change height |
 
@@ -54,10 +67,11 @@ The blue plane is sea level. Anything below it is under water in game.
 |---|---|---|
 | `LoadEditor` | Main menu | Opens the editor |
 | `SaveIsland <name>` / `LoadIsland <name>` | Editor | Saves or loads an island |
-| `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1]` | Editor | Generates a random island (a random seed if none is given) |
+| `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1] [style]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
 | `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one |
 | `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
+| `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | Editor | The island's style (ground textures; saved with it) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
 | `ListSpawned` | Game | Lists the world's custom islands, with distance and state |
 | `SpawnPool` | Game | Shows which islands appear on their own, and how often |
@@ -85,7 +99,9 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 | File | What it holds |
 |---|---|
 | `DynamicIslands.cs` | Mod entry: main menu button, editor setup, save/load, spawn commands, network message hook |
-| `IslandFile.cs` | `.island` format 2 (format 3 when the island has a height): compressed binary with heights, texture paint, paint mask, objects and elevation |
+| `IslandFile.cs` | `.island` format 2 (format 3 when the island has a height or a style): compressed binary with heights, texture paint, paint mask, objects, elevation and style |
+| `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
+| `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, the object list search |
 | `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids. For flying islands it also cuts terrain holes and adds the underside mesh |
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts |
 | `CustomIslandSpawner.cs` | Automatic islands while sailing, and loading/unloading islands by distance |

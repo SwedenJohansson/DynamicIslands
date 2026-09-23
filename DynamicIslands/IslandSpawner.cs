@@ -144,7 +144,7 @@ namespace DynamicIslands.Editor
 			go.layer = TerrainLayer;
 			go.transform.SetParent(terrainTransform, false);
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
-			go.AddComponent<MeshRenderer>().sharedMaterial = UndersideMaterial();
+			go.AddComponent<MeshRenderer>().sharedMaterial = UndersideMaterial(TerrainPainter.StyleOf(terrainTransform.GetComponent<Terrain>()));
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
 		}
 
@@ -175,15 +175,17 @@ namespace DynamicIslands.Editor
 			return d;
 		}
 
-		static Material undersideMaterial;
+		static readonly Dictionary<int, Material> undersideMaterials = new Dictionary<int, Material>();
 
-		/// <summary>Rock-textured material for the underside (the terrain's rock layer when Raft's textures are in use).</summary>
-		static Material UndersideMaterial()
+		/// <summary>Rock-textured material for the underside (the style's steep-ground layer when Raft's textures are in use).</summary>
+		static Material UndersideMaterial(int style)
 		{
-			if (undersideMaterial != null) return undersideMaterial;
+			Material undersideMaterial;
+			if (undersideMaterials.TryGetValue(style, out undersideMaterial) && undersideMaterial != null) return undersideMaterial;
 			Shader shader = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
-			undersideMaterial = new Material(shader) { name = "CI_FlyingUnderside" };
-			TerrainLayer rock = TerrainPainter.Layers[TerrainPainter.Rock];
+			undersideMaterial = new Material(shader) { name = "CI_FlyingUnderside_" + TerrainPainter.StyleName(style) };
+			undersideMaterials[style] = undersideMaterial;
+			TerrainLayer rock = TerrainPainter.LayersFor(style)[TerrainPainter.Rock];
 			if (rock != null && rock.diffuseTexture != null)
 			{
 				undersideMaterial.mainTexture = rock.diffuseTexture;
@@ -355,6 +357,7 @@ namespace DynamicIslands.Editor
 			// Object positions in the file are relative to the full terrain's corner, which the root still represents
 			terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
 			Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
+			TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style));
 			// Saved paint covers the full terrain; take the block matching the heightmap crop
 			// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
 			int cells = island.HeightmapResolution - 1;

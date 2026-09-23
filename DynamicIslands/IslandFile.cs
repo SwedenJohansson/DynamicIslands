@@ -37,7 +37,9 @@ namespace DynamicIslands.Editor
 	///       bool   has paint mask; if true: byte[R*R] (255 = painted by hand, protected from auto texturing)
 	///   version 3 adds, after the paint:
 	///     float    elevation: metres above sea level the island floats at in game (negative = under water).
-	///              Files with elevation 0 are still written as version 2 so older versions of the mod can read them.
+	///     string   style ("" = tropical; "Snowy", "Desert", "Forest", "Volcanic")
+	///              Normal tropical islands (elevation 0, no style) are still written as version 2 so older versions
+	///              of the mod can read them.
 	/// </summary>
 	public class IslandFile
 	{
@@ -64,6 +66,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Metres above sea level the island floats at in game (negative = under water, 0 = a normal island).</summary>
 		public float Elevation;
 
+		/// <summary>Island style (TerrainPainter.Styles: "Snowy", "Desert"...); empty = tropical.</summary>
+		public string Style = "";
+
+		bool NeedsFormat3 { get { return Elevation != 0f || (!string.IsNullOrEmpty(Style) && TerrainPainter.StyleIndex(Style) != TerrainPainter.Tropical); } }
+
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
 
 		public void Save(string path)
@@ -74,8 +81,8 @@ namespace DynamicIslands.Editor
 			{
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
-				// Elevation 0 needs nothing from format 3, so such files stay readable by older versions of the mod
-				header.Write(Elevation != 0f ? FormatVersion : 2);
+				// A normal tropical island needs nothing from format 3, so such files stay readable by older versions of the mod
+				header.Write(NeedsFormat3 ? FormatVersion : 2);
 				header.Flush();
 
 				using (var deflate = new DeflaterOutputStream(file) { IsStreamOwner = false })
@@ -107,7 +114,7 @@ namespace DynamicIslands.Editor
 						w.Write(PaintMask != null);
 						if (PaintMask != null) w.Write(PaintMask);
 					}
-					if (Elevation != 0f) w.Write(Elevation);
+					if (NeedsFormat3) { w.Write(Elevation); w.Write(Style ?? ""); }
 					w.Flush();
 					deflate.Finish();
 				}
@@ -166,7 +173,12 @@ namespace DynamicIslands.Editor
 						island.Alphamaps = ReadExactly(r, layers * ares * ares);
 						if (r.ReadBoolean()) island.PaintMask = ReadExactly(r, ares * ares);
 					}
-					if (version >= 3) island.Elevation = r.ReadSingle();
+					if (version >= 3)
+					{
+						island.Elevation = r.ReadSingle();
+						// The first format 3 files (flying islands, before styles) end after the elevation
+						try { island.Style = r.ReadString(); } catch (EndOfStreamException) { }
+					}
 					return island;
 				}
 			}
