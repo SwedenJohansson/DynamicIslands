@@ -15,7 +15,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
   - You can also spawn one yourself with `SpawnIsland`.
   - Islands are saved with the world. You can walk on them, the raft runs aground on them, and palms, mango trees, rocks and berry bushes can be harvested.
-- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have. Harvesting and picking up items stay in sync.
+  - Chopped trees and picked-up items stay that way, even after the island unloads or the world is reloaded. They grow back after 3 in-game days (set with `regrowDays` in `spawnpool.txt`).
+- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync.
 
 ## Installing
 
@@ -26,9 +27,9 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | File | What it is |
 |---|---|
 | `*.island` | Saved islands. Share them by copying the file. |
-| `spawnpool.txt` | Which islands appear on their own while sailing, and how often. It's created on first use and explains itself. |
-| `worlds\<world id>.txt` | The custom islands in each world. |
-| `placeables_generated.txt` | All objects the editor offers. Copy it to `placeables.txt` and delete lines to shorten the list. |
+| `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
+| `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects. |
+| `placeables_generated.txt` | All objects the editor offers. Small indoor clutter is listed at the end, commented out. Copy the file to `placeables.txt` and edit it to choose your own list. |
 | `<name>_<hash>.island` | Islands downloaded from a multiplayer host. |
 
 ## The editor
@@ -83,6 +84,7 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 | `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids |
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts |
 | `CustomIslandSpawner.cs` | Automatic islands while sailing, and loading/unloading islands by distance |
+| `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients |
 | `PlaceableCatalog.cs` | The object catalog, built from Raft's island scenes |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `RTSCamera.cs` | The editor |

@@ -589,7 +589,7 @@ namespace DynamicIslands
 				int size;
 				IslandNetMessage back = RoundTrip(list, out size);
 				bool same = back != null && back.Kind == list.Kind && back.FullList && back.Ids.SequenceEqual(list.Ids) && back.Names.SequenceEqual(list.Names) &&
-					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets);
+					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets) && back.States.SequenceEqual(list.States);
 				Log((same ? "PASS" : "FAIL") + ": island list with " + list.Ids.Length + " island(s) survives RML's serializer (" + size + " bytes)" +
 					(back == null ? " - came back as null" : ""));
 				ok &= same;
@@ -633,6 +633,62 @@ namespace DynamicIslands
 			}
 			catch (Exception e) { Fail("exception: " + e); ok = false; }
 			if (ok) Log("PASS: network self test"); else Fail("network self test");
+		}
+
+		[ConsoleCommand(name: "CIStateTest", docs: "Dev, in game (host): chops a tree and picks up an item on the nearest loaded custom island, reloads the island and checks they stay used; also checks regrowing")]
+		public static void StateTest()
+		{
+			DynamicIslands.instance.StartCoroutine(StateTestRoutine());
+		}
+
+		static IEnumerator StateTestRoutine()
+		{
+			Vector3 raftPos = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			IslandWorldState.Entry e = IslandWorldState.Islands.Where(i => i.Root != null && i.Root.GetComponentsInChildren<HarvestableTree>().Any())
+				.OrderBy(i => Vector3.Distance(i.Position, raftPos)).FirstOrDefault();
+			if (e == null) { Fail("no loaded custom island with trees (SpawnIsland demo2 first)"); yield break; }
+
+			HarvestableTree tree = e.Root.GetComponentsInChildren<HarvestableTree>().First(t => !t.Depleted);
+			int treeOrd = (int)(tree.GetComponent<PickupItem_Networked>().ObjectIndex & 0xFFFF);
+			tree.Harvest(null); // one chop, no items
+			int yieldLeft = tree.GetComponent<PickupItem>().yieldHandler.Yield.Count;
+			PickupItem_Networked pickup = e.Root.GetComponentsInChildren<PickupItem_Networked>()
+				.First(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeSelf);
+			int pickupOrd = (int)(pickup.ObjectIndex & 0xFFFF);
+			bool removed = PickupObjectManager.RemovePickupItem(pickup);
+			Log("On '" + e.HostName + "': chopped tree #" + treeOrd + " once (" + yieldLeft + " harvests left), picked up " + pickup.name + " #" + pickupOrd +
+				" (removed=" + removed + ", still exists=" + (pickup != null) + ", active=" + (pickup != null && pickup.gameObject.activeSelf) + ")");
+
+			// Unload and load again, the way the streamer does
+			IslandObjectState.Capture(e);
+			Log("Recorded state: " + IslandObjectState.Encode(e.State));
+			IslandSpawner.Despawn(e.Root);
+			e.Root = null;
+			yield return null;
+			e.Loading = true;
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			if (e.Root == null) { Fail("island did not load again"); yield break; }
+
+			PickupItem_Networked tree2 = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).First(p => (p.ObjectIndex & 0xFFFF) == treeOrd);
+			PickupItem_Networked pickup2 = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).First(p => (p.ObjectIndex & 0xFFFF) == pickupOrd);
+			int yieldAfter = tree2.GetComponent<PickupItem>().yieldHandler.Yield.Count;
+			bool ok = yieldAfter == yieldLeft && !pickup2.gameObject.activeSelf;
+			Log((ok ? "PASS" : "FAIL") + ": after reloading, the tree has " + yieldAfter + " harvests left (expected " + yieldLeft + ") and the pickup is " +
+				(pickup2.gameObject.activeSelf ? "back (wrong)" : "still gone"));
+
+			// Regrowing: on a copy of the state, pretend it all happened long ago (the real state stays for save/load checks)
+			var old = IslandObjectState.Decode(IslandObjectState.Encode(e.State));
+			foreach (ObjectState s in old.Values) s.Day -= 100;
+			int stale = IslandObjectState.DropRegrown(old, 3);
+			var fresh = IslandObjectState.Decode(IslandObjectState.Encode(e.State));
+			int kept = fresh.Count - IslandObjectState.DropRegrown(fresh, 3);
+			bool regrown = stale == e.State.Count && old.Count == 0 && kept == e.State.Count;
+			Log((regrown ? "PASS" : "FAIL") + ": state older than 3 days is dropped, so the island regrows on its next load; today's stays (" + stale + " dropped, " + kept + " kept)");
+
+			var round = IslandObjectState.Decode("5,0,-1,12;7,1,2,13");
+			bool codec = round.Count == 2 && !round[5].Active && round[5].Yield == -1 && round[7].Yield == 2 && round[7].Day == 13 && IslandObjectState.Encode(round) == "5,0,-1,12;7,1,2,13";
+			Log((codec ? "PASS" : "FAIL") + ": state text round trip");
+			if (ok && regrown && codec) Log("PASS: island object state test"); else Fail("island object state test");
 		}
 
 		[ConsoleCommand(name: "CISpawnNow", docs: "Dev, in game (host): places an island from the spawn pool ahead of the raft now, with the automatic spawner's checks")]

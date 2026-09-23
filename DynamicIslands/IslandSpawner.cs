@@ -27,6 +27,8 @@ namespace DynamicIslands.Editor
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
 			{
 				pn.ObjectIndex = baseIndex + (++n);
+				// Picked up = disabled rather than destroyed, so the island's objects keep their order and state can be recorded
+				pn.spawnType = ObjectSpawnType.GameObject;
 				NetworkIDManager.AddNetworkID(pn, typeof(PickupItem_Networked));
 			}
 		}

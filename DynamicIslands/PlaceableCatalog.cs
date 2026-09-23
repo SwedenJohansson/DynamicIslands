@@ -77,12 +77,15 @@ namespace DynamicIslands.Editor
 			return categories.TryGetValue(name, out c) ? c : PropsCategory;
 		}
 
-		/// <summary>Category names in list order, each with its objects sorted by display label.</summary>
+		/// <summary>Objects that can be spawned but aren't offered in the editor's list (see clutter).</summary>
+		static readonly HashSet<string> hidden = new HashSet<string>();
+
+		/// <summary>Category names in list order, each with its objects (as offered in the editor) sorted by display label.</summary>
 		public static IEnumerable<KeyValuePair<string, List<string>>> ByCategory()
 		{
 			foreach (string cat in new[] { NatureCategory, HarvestableCategory, PropsCategory })
 			{
-				List<string> names = prototypes.Keys.Where(n => CategoryOf(n) == cat).OrderBy(DisplayName).ToList();
+				List<string> names = prototypes.Keys.Where(n => CategoryOf(n) == cat && !hidden.Contains(n)).OrderBy(DisplayName).ToList();
 				if (names.Count > 0) yield return new KeyValuePair<string, List<string>>(cat, names);
 			}
 		}
@@ -160,14 +163,26 @@ namespace DynamicIslands.Editor
 			foreach (Source source in Sources)
 			{
 				Scene scene = SceneManager.GetSceneByName(source.Scene);
-				// If the player is actually near this island the scene is already loaded; borrow it and leave it alone
-				bool loadedByUs = !scene.isLoaded;
+				// If the player is actually near this island the scene is already loaded; borrow it and leave it alone.
+				// Raft's scene loader may be busy with it (loaded but still empty), so then load our own copy.
+				bool loadedByUs = !scene.isLoaded || scene.rootCount == 0;
 				if (loadedByUs)
 				{
+					// Remember the copies that exist already, so we find (and later unload) exactly the one we load,
+					// never Raft's own copy of the island
+					var existing = new HashSet<int>();
+					for (int i = 0; i < SceneManager.sceneCount; i++)
+						if (SceneManager.GetSceneAt(i).name == source.Scene) existing.Add(SceneManager.GetSceneAt(i).handle);
 					AsyncOperation op = SceneManager.LoadSceneAsync(source.Scene, LoadSceneMode.Additive);
 					if (op == null) { Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + source.Scene); continue; }
 					while (!op.isDone) yield return null;
-					scene = SceneManager.GetSceneByName(source.Scene);
+					scene = default(Scene);
+					for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+					{
+						Scene s = SceneManager.GetSceneAt(i);
+						if (s.name == source.Scene && !existing.Contains(s.handle)) { scene = s; break; }
+					}
+					if (!scene.IsValid()) { Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + source.Scene + " but could not find it"); continue; }
 				}
 
 				int before = prototypes.Count;
@@ -181,6 +196,8 @@ namespace DynamicIslands.Editor
 							: (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, source.Category);
+						// Clutter stays spawnable (islands saved with it still work) but is left out of the editor's list
+						if (whitelist == null && clutter.IsMatch(name)) hidden.Add(name);
 					}
 				}
 
@@ -220,8 +237,11 @@ namespace DynamicIslands.Editor
 					var lines = new List<string> {
 						"# Objects found automatically in Raft's island scenes.",
 						"# To curate: copy this file to placeables.txt, delete lines you don't want, restart the editor.",
+						"# Small indoor clutter is left out of the editor's list; it is listed at the end, commented out.",
 					};
 					foreach (var cat in ByCategory()) { lines.Add("# --- " + cat.Key); lines.AddRange(cat.Value); }
+					lines.Add("# --- Left out (remove the # to use one in placeables.txt)");
+					lines.AddRange(hidden.OrderBy(n => n).Select(n => "#" + n));
 					File.WriteAllLines(GeneratedListPath, lines.ToArray());
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + GeneratedListPath + ": " + e.Message); }
@@ -316,6 +336,16 @@ namespace DynamicIslands.Editor
 		static readonly Regex excluded = new Regex(
 			@"\.\d+$|^(Plane|Cube|TextMeshPro|Particle.*|VG_EnvironmentProbeMesh.*|BoatHull.*|Window.*|Pennant_.*|Bolcutter.*|Boltcutter.*|" +
 			@"Carlift_.*|QuestItemPickup_.*|Pickup_.*|NotePickup.*|.*Pickup|Bomb|DoorHandle.*|LockerDoor|Lock_Hatch|Padlock.*|Crowbar|Tools_Hammer|LOD\d+)$|^\s*$",
+			RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// Vasagatan's small indoor clutter, which is lost on an island (pool balls, cutlery, bathroom bottles, pillows,
+		/// ceiling cables and lamps...). Left out of the default list; a placeables.txt can still bring any of it back.
+		/// </summary>
+		static readonly Regex clutter = new Regex(
+			@"^(VG_DecorationPrefabBase_)?(Pooltable_(Ball\d+|Cue|Triangle)|Spoon|Spatula|Knife|FryingPan|CuttingBoard|SoapBottle|SoapDispender|" +
+			@"ShampooBottle|ToiletPaperHolder\d|ToiletPaperRoll|PaperrollHolder|Paper|Cables_\w+|CeilingLamp_Fancy2?|Kitchenfan|Flask_\d|" +
+			@"Book_4|Book_Tall_2|Tools_Wrench|Pillow(_2|Decor_\d)?)( Variant)?$|^RT_ExitSignCeiling|^VG_SignStairsCeiling$",
 			RegexOptions.IgnoreCase);
 
 		static readonly Regex displayPrefix = new Regex(@"^(VG_DecorationPrefabBase_|VG_|RT_)|\s*Variant.*$|_Low(?=\d|_|$)");

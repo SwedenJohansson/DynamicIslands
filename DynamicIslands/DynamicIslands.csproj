@@ -53,6 +53,7 @@
     <Compile Include="IslandFile.cs" />
     <Compile Include="IslandFilesWindow.cs" />
     <Compile Include="IslandNetwork.cs" />
+    <Compile Include="IslandObjectState.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlaceableCatalog.cs" />

@@ -30,6 +30,8 @@ namespace DynamicIslands.Editor
 		public static float SpawnDistanceMin = 250f;
 		public static float SpawnDistanceMax = 350f;
 		public static float UnloadDistance = 800f;
+		/// <summary>Harvested trees and picked-up items on custom islands grow back after this many in-game days (0 = never).</summary>
+		public static int RegrowDays = 3;
 		static readonly List<KeyValuePair<string, float>> poolLines = new List<KeyValuePair<string, float>>();
 		static DateTime poolFileTime;
 
@@ -111,6 +113,7 @@ namespace DynamicIslands.Editor
 				float d = Flat(e.Position - raftPos).magnitude;
 				if (e.Root != null && d > UnloadDistance)
 				{
+					IslandObjectState.Capture(e);
 					IslandSpawner.Despawn(e.Root);
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
@@ -268,6 +271,8 @@ spawnDistanceMin = 250
 spawnDistanceMax = 350
 # Islands further than this from the raft are unloaded (and come back when the raft returns)
 unloadDistance = 800
+# Harvested trees and picked-up items grow back after this many in-game days (0 = never). Checked when an island loads.
+regrowDays = 3
 
 # Islands taking part, one per line: <island name> <weight>
 # A higher weight makes an island more likely. Weight 0 leaves it out.
@@ -307,6 +312,7 @@ unloadDistance = 800
 							case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); break;
 							case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); break;
 							case "unloaddistance": UnloadDistance = Mathf.Max(300f, v); break;
+							case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); break;
 							default: BadLine(line); break;
 						}
 						continue;
@@ -334,8 +340,8 @@ unloadDistance = 800
 			var lines = new List<string>
 			{
 				"Automatic islands in this world: " + (Enabled ? "on" : "off") + " (CustomIslandsAuto on|off)",
-				string.Format(CultureInfo.InvariantCulture, "Chance per km sailed: {0:P0} (about one island every {1:F1} km), min spacing {2:F0} m, appear {3:F0}-{4:F0} m ahead, unload beyond {5:F0} m",
-					ChancePerKm, ChancePerKm > 0 ? 1f / ChancePerKm : float.PositiveInfinity, MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance),
+				string.Format(CultureInfo.InvariantCulture, "Chance per km sailed: {0:P0} (about one island every {1:F1} km), min spacing {2:F0} m, appear {3:F0}-{4:F0} m ahead, unload beyond {5:F0} m, regrow after {6} day(s)",
+					ChancePerKm, ChancePerKm > 0 ? 1f / ChancePerKm : float.PositiveInfinity, MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance, RegrowDays > 0 ? RegrowDays.ToString() : "never"),
 				"Sailed since the last automatic island: " + sailedSinceSpawn.ToString("F0") + " m",
 				"Pool (" + PoolPath + "): " + (pool.Count == 0 ? "empty" : "")
 			};

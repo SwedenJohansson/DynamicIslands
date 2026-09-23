@@ -575,6 +575,7 @@ namespace DynamicIslands
 				{
 					entry.Root = root;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
+					IslandObjectState.Apply(entry, CustomIslandSpawner.RegrowDays);
 				}
 				if (!quiet) Notify("Spawned island '" + name + "'");
 			}

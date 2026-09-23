@@ -10,7 +10,7 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// Which custom islands exist in the current world, so they come back when the world is loaded again.
-	/// Stored next to the island files as Mods\DynamicIslands\worlds\&lt;world guid&gt;.txt (one "name|x|y|z" per line,
+	/// Stored next to the island files as Mods\DynamicIslands\worlds\&lt;world guid&gt;.txt (one "name|x|y|z|object state" per line,
 	/// plus "@auto=on|off" for automatic spawning), written whenever Raft saves the world and read when a world
 	/// finishes loading. The host's list is the real one; clients hold a copy sent by the host (IslandNetwork).
 	/// An entry's GameObjects exist only while the raft is near it: CustomIslandSpawner unloads and reloads them.
@@ -34,6 +34,8 @@ namespace DynamicIslands.Editor
 			public bool Loading;
 			/// <summary>The island file is missing or broken: don't keep trying to load it.</summary>
 			public bool Failed;
+			/// <summary>Harvested trees and picked-up items, by object ordinal (IslandObjectState).</summary>
+			public Dictionary<int, ObjectState> State = new Dictionary<int, ObjectState>();
 		}
 
 		static readonly List<Entry> islands = new List<Entry>();
@@ -116,11 +118,14 @@ namespace DynamicIslands.Editor
 				if (islands.Count == 0 && CustomIslandSpawner.Enabled) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
 				var lines = new List<string>
 				{
-					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z",
+					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)",
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				foreach (Entry e in islands)
-					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}", e.HostName,e.Position.x, e.Position.y, e.Position.z));
+				{
+					IslandObjectState.Capture(e);
+					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State)));
+				}
 				File.WriteAllLines(FilePath, lines.ToArray());
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
@@ -141,13 +146,14 @@ namespace DynamicIslands.Editor
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				string[] p = line.Split('|');
 				float x, y, z;
-				if (p.Length != 4 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+				if ((p.Length != 4 && p.Length != 5) || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
 					continue;
 				}
-				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = p[0], HostName = p[0], Position = new Vector3(x, y, z) });
+				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = p[0], HostName = p[0], Position = new Vector3(x, y, z),
+					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null) });
 			}
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));

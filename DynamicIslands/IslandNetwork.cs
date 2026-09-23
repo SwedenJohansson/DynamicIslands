@@ -24,6 +24,8 @@ namespace DynamicIslands.Editor
 		public string[] Names;
 		public string[] Hashes;
 		public float[] Offsets;
+		/// <summary>Harvested trees / picked-up items per island (IslandObjectState.Encode), for players who join later.</summary>
+		public string[] States;
 		public bool FullList;
 
 		// FileRequest / FileChunk: island file with this name and content hash, chunk Index of Count (base64)
@@ -115,6 +117,7 @@ namespace DynamicIslands.Editor
 		{
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			var list = entries.Where(e => !e.Failed).ToList();
+			foreach (var e in list) IslandObjectState.Capture(e);
 			var msg = new IslandNetMessage
 			{
 				Kind = IslandNetMessage.Islands,
@@ -122,6 +125,7 @@ namespace DynamicIslands.Editor
 				Ids = list.Select(e => e.Id).ToArray(),
 				Names = list.Select(e => e.Name).ToArray(),
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
+				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
 				Offsets = new float[list.Count * 3]
 			};
 			for (int i = 0; i < list.Count; i++)
@@ -199,6 +203,7 @@ namespace DynamicIslands.Editor
 				if (IslandWorldState.Islands.Any(e => e.Id == msg.Ids[i])) continue;
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
 					raft + new Vector3(msg.Offsets[i * 3], msg.Offsets[i * 3 + 1], msg.Offsets[i * 3 + 2]));
+				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
 				ResolveFile(entry);
 				added++;
 			}
