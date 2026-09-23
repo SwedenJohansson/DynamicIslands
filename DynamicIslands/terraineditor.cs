@@ -71,11 +71,9 @@ namespace DynamicIslands
 			// Create a new TerrainData object
 			terrainData = new TerrainData();
 
-			// Set the size of the terrain
-			terrainData.size = terrainSize;
-
-			// Set the heightmap resolution
+			// Resolution first: changing it afterwards rescales the size
 			terrainData.heightmapResolution = heightmapResolution;
+			terrainData.size = terrainSize;
 
 			// Set the detail resolution
 			terrainData.SetDetailResolution(detailResolution, 8);
@@ -166,13 +164,16 @@ namespace DynamicIslands
 				//return;
 			//}
 
-			if (Input.GetMouseButton(0))
+			// Don't sculpt while clicking UI, placing an object, or dragging the transform gizmo
+			bool overUI = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+			bool placing = FindObjectOfType<ObjectPlacer>() != null;
+			bool gizmoBusy = DynamicIslands.EditorGizmoHandler != null && DynamicIslands.EditorGizmoHandler.isTransforming;
+
+			if (Input.GetMouseButton(0) && !overUI && !placing && !gizmoBusy)
 			{
 				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out var hit))
 				{
 					if (hit.transform.TryGetComponent(out Terrain terrain)) _targetTerrain = terrain;
-
-					print(modificationAction);
 
 					switch (modificationAction)
 					{
