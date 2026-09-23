@@ -56,6 +56,7 @@
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />
+    <Compile Include="IslandRadar.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlacementTools.cs" />

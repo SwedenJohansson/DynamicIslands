@@ -25,6 +25,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
 - **In your worlds**
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
+  - Now and then a **brand-new random island** is generated instead: random size, style, and sometimes flying. It's saved as `gen-<style>-<seed>.island`, so it stays in that world. Set with `generated`, `generatedStyles` and `generatedFlyingChance` in `spawnpool.txt`.
+  - **Custom islands show on Raft's Receiver** as green dots with their distance, so you can navigate to them. Turn this off with `showOnReceiver = 0`.
   - You can also spawn one yourself with `SpawnIsland`.
   - Islands are saved with the world. You can walk on them, the raft runs aground on them, and palms, mango trees, rocks and berry bushes can be harvested.
   - **Flying and underwater islands:** give an island a height in the Islands window, or with `SetElevation`, or when spawning. A flying island loses its seabed and gets a rocky underside, and the raft sails underneath it. An underwater island sits below the surface for divers.
@@ -104,7 +106,8 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, the object list search |
 | `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids. For flying islands it also cuts terrain holes and adds the underside mesh |
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts |
-| `CustomIslandSpawner.cs` | Automatic islands while sailing, and loading/unloading islands by distance |
+| `CustomIslandSpawner.cs` | Automatic islands while sailing (saved ones and newly generated ones), and loading/unloading islands by distance |
+| `IslandRadar.cs` | Custom islands as dots on Raft's Receiver (Harmony postfix on `Reciever.HandleUI`) |
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients |
 | `PlaceableCatalog.cs` | The object catalog, built from Raft's island scenes |

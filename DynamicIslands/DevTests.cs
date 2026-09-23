@@ -215,6 +215,89 @@ namespace DynamicIslands
 			else Fail("undo/redo or islands window");
 		}
 
+		[ConsoleCommand(name: "CISpawnGenerated", docs: "Dev, in game (host): the automatic spawner generates a brand-new island ahead of the raft now; checks its file, style and objects. CISpawnGenerated [keep]")]
+		public static void SpawnGenerated(string[] args)
+		{
+			DynamicIslands.instance.StartCoroutine(SpawnGeneratedRoutine(args != null && args.Contains("keep")));
+		}
+
+		static IEnumerator SpawnGeneratedRoutine(bool keep)
+		{
+			Vector3? pos = CustomIslandSpawner.RaftPosition;
+			if (!pos.HasValue) { Fail("not in a world"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			CustomIslandSpawner.ForceNextPick = CustomIslandSpawner.GeneratedEntry;
+			string result = CustomIslandSpawner.TrySpawn(pos.Value, true);
+			Log(result);
+			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (e == null) { Fail("no island was added (" + result + ")"); yield break; }
+			float t = 0f;
+			while (e.Root == null && !e.Failed && t < 60f) { yield return new WaitForSeconds(0.5f); t += 0.5f; }
+			bool fileOk = File.Exists(IslandSpawner.PathFor(e.Name));
+			IslandFile file = fileOk ? IslandFile.Load(IslandSpawner.PathFor(e.Name)) : null;
+			Terrain terrain = e.Root != null ? e.Root.GetComponentInChildren<Terrain>() : null;
+			string style = terrain != null ? TerrainPainter.StyleName(TerrainPainter.StyleOf(terrain)) : "?";
+			bool ok = fileOk && e.Root != null && e.Name.StartsWith(CustomIslandSpawner.GeneratedPrefix) && file.Objects.Count > 0 &&
+				style.Equals(string.IsNullOrEmpty(file.Style) ? "Tropical" : file.Style) && e.Name.Contains(style.ToLowerInvariant());
+			Log((ok ? "PASS" : "FAIL") + ": generated '" + e.Name + "' (" + (file != null ? file.Objects.Count + " objects, style " + style + (file.Elevation > 0 ? ", flying " + file.Elevation.ToString("F0") + " m" : "") : "no file") +
+				") and spawned it " + (e.Root != null ? "at " + e.Position : "- it did not spawn") + " after " + t.ToString("F1") + " s");
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				if (fileOk) File.Delete(IslandSpawner.PathFor(e.Name));
+			}
+		}
+
+		[ConsoleCommand(name: "CIRadarTest", docs: "Dev, in game (host): places a Receiver next to the raft with its radar on and checks there is a dot per custom island, pointing the right way")]
+		public static void RadarTest()
+		{
+			DynamicIslands.instance.StartCoroutine(RadarTestRoutine());
+		}
+
+		static IEnumerator RadarTestRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue) { Fail("not in a world"); yield break; }
+			if (IslandWorldState.Islands.Count == 0)
+			{
+				string name = IslandSpawner.ListSavedIslands().FirstOrDefault();
+				if (name == null) { Fail("no saved island to spawn"); yield break; }
+				Vector3 at = raftPos.Value + new Vector3(0, 0, 300f);
+				yield return DynamicIslands.instance.SpawnIslandFile(name, at, true);
+			}
+			// A receiver: Raft's own block prefab, from whichever buildable item carries a Reciever
+			Reciever prefab = null;
+			foreach (Item_Base item in ItemManager.GetAllItems())
+			{
+				try
+				{
+					if (item == null || item.settings_buildable == null || !item.settings_buildable.Placeable) continue;
+					Block[] blocks = item.settings_buildable.GetBlockPrefabs();
+					prefab = blocks != null ? blocks.Where(b => b != null).Select(b => b.GetComponentInChildren<Reciever>(true)).FirstOrDefault(rc => rc != null) : null;
+					if (prefab != null) { Log("Receiver block: " + item.UniqueName); break; }
+				}
+				catch { }
+			}
+			if (prefab == null) { Fail("could not find Raft's receiver block"); yield break; }
+			GameObject go = UnityEngine.Object.Instantiate(prefab.transform.root.gameObject, raftPos.Value + Vector3.up * 3f, Quaternion.identity);
+			Reciever r = go.GetComponentInChildren<Reciever>(true);
+			yield return null;
+			if (r.radarSection != null) r.radarSection.SetActive(true);
+			IslandRadar.Draw(r);
+			var list = IslandRadar.DotsOf(r).Where(d => d != null && d.gameObject.activeSelf).ToList();
+			bool ok = list.Count == IslandWorldState.Islands.Count;
+			// The first island: its dot must point towards it (receiver faces world forward)
+			if (ok && list.Count > 0)
+			{
+				Vector3 toIsland = IslandWorldState.Islands[0].Position - r.transform.position;
+				Vector2 dotDir = ((RectTransform)list[0].transform).anchoredPosition;
+				float angle = Vector2.Angle(new Vector2(toIsland.x, toIsland.z), -dotDir); // Raft's dot maths mirrors the vector
+				Log("Island 0 is at " + new Vector2(toIsland.x, toIsland.z) + ", its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
+			}
+			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for " + IslandWorldState.Islands.Count + " island(s)");
+			UnityEngine.Object.Destroy(go);
+		}
+
 		[ConsoleCommand(name: "CIPlaceTest", docs: "Dev, editor: object list search, Ground (with and without Slope) and its undo")]
 		public static void PlaceTest()
 		{

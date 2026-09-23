@@ -46,13 +46,13 @@ namespace DynamicIslands.Editor
 		static string WorldKey { get { return SaveAndLoad.WorldGuid.ToString(); } }
 		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), WorldKey + ".txt"); } }
 
-		/// <summary>Host: adds a new island to the world's list and tells clients about it.</summary>
-		public static Entry Add(string name, Vector3 position, GameObject root)
+		/// <summary>Host: adds a new island to the world's list and tells clients about it (unless broadcast is off: the caller does it later).</summary>
+		public static Entry Add(string name, Vector3 position, GameObject root, bool broadcast = true)
 		{
 			EnsureCurrentWorld();
 			var entry = new Entry { Id = IslandNetwork.NewId(), Name = name, HostName = name, Position = position, Root = root };
 			islands.Add(entry);
-			IslandNetwork.BroadcastAdded(entry);
+			if (broadcast) IslandNetwork.BroadcastAdded(entry);
 			return entry;
 		}
 

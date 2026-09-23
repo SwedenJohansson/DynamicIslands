@@ -269,11 +269,22 @@ namespace DynamicIslands.Editor
 
 		#region Objects
 
-		/// <summary>Places objects by zone as editor objects (saved with the island). Deterministic for a seed.</summary>
-		static List<GameObject> Scatter(IslandGenSettings s, Terrain terrain, Transform placed)
+		/// <summary>One object the scatter wants to place (position relative to the terrain's corner, y = ground height).</summary>
+		struct Placement
 		{
-			var result = new List<GameObject>();
-			if (!PlaceableCatalog.IsBuilt) { Debug.LogWarning("[CUSTOM ISLANDS] Objects are still loading; generated the terrain without objects"); return result; }
+			public string Name;
+			public Vector3 Position;
+			public float Yaw, Scale;
+		}
+
+		/// <summary>
+		/// Where objects go, by zone. heightAt / slopeAt take terrain-local x, z (metres) and return the ground height
+		/// (metres above the terrain's base) and the slope in degrees. Deterministic for a seed.
+		/// </summary>
+		static List<Placement> PlanObjects(IslandGenSettings s, Vector3 size, Func<float, float, float> heightAt, Func<float, float, float> slopeAt)
+		{
+			var result = new List<Placement>();
+			if (!PlaceableCatalog.IsBuilt || s.ObjectDensity <= 0f) return result;
 			string[] names = PlaceableCatalog.Names.ToArray();
 			ZoneObjects zones = StyleObjects[s.Style];
 			string[] shore = names.Where(n => zones.Shore.IsMatch(n)).ToArray();
@@ -283,9 +294,7 @@ namespace DynamicIslands.Editor
 			string[] underwater = names.Where(n => zones.Underwater.IsMatch(n)).ToArray();
 
 			var rnd = new System.Random(s.Seed * 7919 + 13);
-			TerrainData data = terrain.terrainData;
-			Vector3 origin = terrain.transform.position;
-			Vector3 centre = origin + new Vector3(data.size.x / 2f, 0, data.size.z / 2f);
+			Vector3 centre = new Vector3(size.x / 2f, 0, size.z / 2f);
 			float sea = IslandFile.DefaultWaterLevel;
 
 			// About one object per 300 m² of island at full density, capped so the editor stays quick
@@ -296,10 +305,9 @@ namespace DynamicIslands.Editor
 				float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
 				float d = Mathf.Sqrt((float)rnd.NextDouble()) * s.Radius * 1.35f;
 				Vector3 p = centre + new Vector3(Mathf.Cos(a) * d, 0, Mathf.Sin(a) * d);
-				float h = terrain.SampleHeight(p);
-				float nx = (p.x - origin.x) / data.size.x, nz = (p.z - origin.z) / data.size.z;
-				if (nx < 0 || nx > 1 || nz < 0 || nz > 1) continue;
-				float slope = data.GetSteepness(nx, nz);
+				if (p.x < 0 || p.x > size.x || p.z < 0 || p.z > size.z) continue;
+				float h = heightAt(p.x, p.z);
+				float slope = slopeAt(p.x, p.z);
 				float above = h - sea;
 
 				string[] pool; float spacing, maxSize; // maxSize: bigger objects are scaled down (some of Raft's rocks are cliff-sized)
@@ -313,20 +321,102 @@ namespace DynamicIslands.Editor
 				if (positions.Any(q => (q - p).sqrMagnitude < spacing * spacing)) continue;
 
 				string kind = pool[rnd.Next(pool.Length)];
-				GameObject go = PlaceableCatalog.Spawn(kind, placed);
-				if (go == null) continue;
-				p.y = origin.y + h;
-				go.transform.position = p;
-				go.transform.rotation = Quaternion.Euler(0, (float)rnd.NextDouble() * 360f, 0);
+				float yaw = (float)rnd.NextDouble() * 360f;
 				float scale = 0.85f + 0.3f * (float)rnd.NextDouble();
-				float size = PlaceableCatalog.ApproxSize(kind);
-				if (size * scale > maxSize) scale = Mathf.Max(0.15f, maxSize / size);
-				go.transform.localScale = go.transform.localScale * scale;
-				go.AddComponent<EditorGameObject>().GameObjectName = kind;
+				float objectSize = PlaceableCatalog.ApproxSize(kind);
+				if (objectSize * scale > maxSize) scale = Mathf.Max(0.15f, maxSize / objectSize);
+				p.y = h;
 				positions.Add(p);
+				result.Add(new Placement { Name = kind, Position = p, Yaw = yaw, Scale = scale });
+			}
+			return result;
+		}
+
+		/// <summary>Places objects by zone as editor objects (saved with the island).</summary>
+		static List<GameObject> Scatter(IslandGenSettings s, Terrain terrain, Transform placed)
+		{
+			var result = new List<GameObject>();
+			if (!PlaceableCatalog.IsBuilt) { Debug.LogWarning("[CUSTOM ISLANDS] Objects are still loading; generated the terrain without objects"); return result; }
+			TerrainData data = terrain.terrainData;
+			Vector3 origin = terrain.transform.position;
+			foreach (Placement pl in PlanObjects(s, data.size,
+				(x, z) => terrain.SampleHeight(origin + new Vector3(x, 0, z)),
+				(x, z) => data.GetSteepness(x / data.size.x, z / data.size.z)))
+			{
+				GameObject go = PlaceableCatalog.Spawn(pl.Name, placed);
+				if (go == null) continue;
+				go.transform.position = origin + pl.Position;
+				go.transform.rotation = Quaternion.Euler(0, pl.Yaw, 0);
+				go.transform.localScale = go.transform.localScale * pl.Scale;
+				go.AddComponent<EditorGameObject>().GameObjectName = pl.Name;
 				result.Add(go);
 			}
 			return result;
+		}
+
+		#endregion
+
+		#region Islands generated while sailing
+
+		/// <summary>The editor's build area, which generated island files use too.</summary>
+		static readonly Vector3 BuildArea = new Vector3(1000f, 600f, 1000f);
+		const int BuildResolution = 513;
+
+		/// <summary>
+		/// A complete island file from settings, without the editor: heights, objects (the object catalog must be
+		/// built) and style; textures are painted automatically when it spawns.
+		/// </summary>
+		public static IslandFile CreateFile(IslandGenSettings s, string name)
+		{
+			s.Clamp();
+			float[,] heights = Heights(s, BuildArea, BuildResolution);
+			float step = BuildArea.x / (BuildResolution - 1);
+			Func<float, float, float> heightAt = (x, z) => SampleHeights(heights, BuildResolution, step, x, z) * BuildArea.y;
+			Func<float, float, float> slopeAt = (x, z) =>
+			{
+				float dx = (heightAt(x + step, z) - heightAt(x - step, z)) / (2f * step);
+				float dz = (heightAt(x, z + step) - heightAt(x, z - step)) / (2f * step);
+				return Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
+			};
+			var file = new IslandFile
+			{
+				Name = name,
+				TerrainSize = BuildArea,
+				HeightmapResolution = BuildResolution,
+				Heights = heights,
+				Style = s.Style == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(s.Style),
+			};
+			foreach (Placement pl in PlanObjects(s, BuildArea, heightAt, slopeAt))
+			{
+				GameObject proto = PlaceableCatalog.Get(pl.Name);
+				Vector3 baseScale = proto != null ? proto.transform.localScale : Vector3.one;
+				file.Objects.Add(new IslandObject { Name = pl.Name, Position = pl.Position, EulerRotation = new Vector3(0, pl.Yaw, 0), Scale = baseScale * pl.Scale });
+			}
+			return file;
+		}
+
+		/// <summary>Bilinear height (0..1) at terrain-local x, z.</summary>
+		static float SampleHeights(float[,] h, int res, float step, float x, float z)
+		{
+			float fx = Mathf.Clamp(x / step, 0, res - 1.001f), fz = Mathf.Clamp(z / step, 0, res - 1.001f);
+			int x0 = (int)fx, z0 = (int)fz;
+			float tx = fx - x0, tz = fz - z0;
+			return Mathf.Lerp(Mathf.Lerp(h[z0, x0], h[z0, x0 + 1], tx), Mathf.Lerp(h[z0 + 1, x0], h[z0 + 1, x0 + 1], tx), tz);
+		}
+
+		/// <summary>Random settings for an island generated while sailing, in one of the allowed styles.</summary>
+		public static IslandGenSettings RandomSettings(System.Random rnd, int[] styles)
+		{
+			return new IslandGenSettings
+			{
+				Seed = rnd.Next(1, 999999),
+				Radius = 70f + (float)rnd.NextDouble() * 130f,
+				Height = 15f + (float)rnd.NextDouble() * 55f,
+				Roughness = 0.3f + (float)rnd.NextDouble() * 0.6f,
+				Peaks = 1 + rnd.Next(3),
+				ObjectDensity = 0.4f + (float)rnd.NextDouble() * 0.4f,
+				Style = styles != null && styles.Length > 0 ? styles[rnd.Next(styles.Length)] : TerrainPainter.Tropical,
+			};
 		}
 
 		#endregion
