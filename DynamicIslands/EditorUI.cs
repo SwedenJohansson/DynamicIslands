@@ -38,9 +38,9 @@ namespace DynamicIslands.Editor
 			Transform brushTools = terrainTab != null ? terrainTab.Find("Brush Tools") : null;
 			Transform objectTools = objectTab != null ? objectTab.Find("Object Tools") : null;
 
-			// The camera position readout sits where the extra texture buttons go; move it below them
+			// The camera position readout sits where the extra texture and Generate buttons go; move it below them
 			Transform camPos = canvas.Find("CamPos");
-			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -150f);
+			if (camPos != null) camPos.GetComponent<RectTransform>().anchoredPosition += new Vector2(0, -200f);
 
 			// The navbar button (labelled "Return" in the bundle) opens the Save / Load window
 			Transform islandsButton = canvas.Find("EditorNavbar/Menu - Button");
@@ -79,6 +79,8 @@ namespace DynamicIslands.Editor
 					SetupButton(brushTools, "PaintAuto", "Auto", () => SetBrush(terraineditor.TerrainModificationAction.AutoPaint)),
 				};
 				SetBrush(terraineditor.modificationAction);
+				Text generate = SetupButton(brushTools, GenerateButton, "Generate", GeneratorWindow.Open);
+				if (generate != null) generate.color = NormalText;
 			}
 
 			// Object gizmo modes
@@ -110,8 +112,9 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly string[] PaintButtons = { "PaintSand", "PaintGrass", "PaintRock", "PaintSeabed", "PaintAuto" };
+		const string GenerateButton = "GenerateIsland";
 
-		/// <summary>The bundle only has four brush buttons; clone the last one for the texture tools.</summary>
+		/// <summary>The bundle only has four brush buttons; clone the last one for the texture tools and the Generate button.</summary>
 		static void CreatePaintButtons(Transform brushTools, string templateName)
 		{
 			Transform template = brushTools.Find(templateName);
@@ -126,6 +129,12 @@ namespace DynamicIslands.Editor
 				// A small gap separates the texture tools from the sculpt tools
 				clone.GetComponent<RectTransform>().anchoredPosition = t.anchoredPosition - new Vector2(0, step * (i + 1) + step * 0.35f);
 			}
+			// Generate sits below the texture tools, after another gap
+			GameObject gen = UnityEngine.Object.Instantiate(template.gameObject, brushTools);
+			gen.name = GenerateButton;
+			RectTransform gr = gen.GetComponent<RectTransform>();
+			gr.anchoredPosition = t.anchoredPosition - new Vector2(0, step * (PaintButtons.Length + 1) + step * 0.7f);
+			gr.sizeDelta = new Vector2(gr.sizeDelta.x * 1.3f, gr.sizeDelta.y); // "Generate" is the longest label
 		}
 
 		static void SetPaint(int layer)

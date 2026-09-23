@@ -51,14 +51,15 @@
     <Compile Include="EditorTools.cs" />
     <Compile Include="EditorUI.cs" />
     <Compile Include="IslandFile.cs" />
+    <Compile Include="GeneratorWindow.cs" />
     <Compile Include="IslandFilesWindow.cs" />
+    <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
-    <Compile Include="ProceduralTerrainGenerator.cs" />
     <Compile Include="RTSCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />

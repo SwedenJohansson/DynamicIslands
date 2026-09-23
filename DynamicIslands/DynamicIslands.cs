@@ -261,6 +261,7 @@ namespace DynamicIslands
 				new Dropdown.OptionData("Main menu"),
 				new Dropdown.OptionData("Save island..."),
 				new Dropdown.OptionData("Load island..."),
+				new Dropdown.OptionData("Generate island..."),
 			};
 			menuDropdown.SetValueWithoutNotify(0);
 			menuDropdown.onValueChanged.AddListener((int index) =>
@@ -274,6 +275,9 @@ namespace DynamicIslands
 					case 2:
 					case 3:
 						IslandFilesWindow.Open();
+						break;
+					case 4:
+						GeneratorWindow.Open();
 						break;
 				}
 			});
@@ -349,6 +353,8 @@ namespace DynamicIslands
 			// Save / Load window (uses the object list's button style when available)
 			try { IslandFilesWindow.Create(GameObject.Find("Toolbar").transform.parent, listButtonTemplate); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
+			try { GeneratorWindow.Create(GameObject.Find("Toolbar").transform.parent, listButtonTemplate); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
 
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 
@@ -711,6 +717,27 @@ namespace DynamicIslands
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.PaintLayer;
 			Debug.Log("[CUSTOM ISLANDS] Painting " + TerrainPainter.LayerNames[layer]);
 		}
+		[ConsoleCommand(name: "GenerateIsland", docs: "Editor: generates a random island (replaces the current one; Ctrl+Z undoes). Usage: GenerateIsland [seed] [size in m] [height in m] [roughness 0-1] [peaks] [objects 0-1]")]
+		public static void GenerateIslandCommand(string[] args)
+		{
+			if (!InEditor()) { Notify("GenerateIsland only works inside the editor", true); return; }
+			var s = new IslandGenSettings { Seed = UnityEngine.Random.Range(1, 999999) };
+			var ci = System.Globalization.CultureInfo.InvariantCulture;
+			float f; int i;
+			if (args != null)
+			{
+				if (args.Length > 0 && int.TryParse(args[0], System.Globalization.NumberStyles.Integer, ci, out i)) s.Seed = i;
+				if (args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, ci, out f)) s.Radius = f / 2f;
+				if (args.Length > 2 && float.TryParse(args[2], System.Globalization.NumberStyles.Float, ci, out f)) s.Height = f;
+				if (args.Length > 3 && float.TryParse(args[3], System.Globalization.NumberStyles.Float, ci, out f)) s.Roughness = f;
+				if (args.Length > 4 && int.TryParse(args[4], System.Globalization.NumberStyles.Integer, ci, out i)) s.Peaks = i;
+				if (args.Length > 5 && float.TryParse(args[5], System.Globalization.NumberStyles.Float, ci, out f)) s.ObjectDensity = f;
+			}
+			int n = IslandGenerator.GenerateInEditor(s);
+			IslandGenerator.FrameCamera(s);
+			Notify("Generated island " + s.Seed + " (" + n + " objects). Ctrl+Z undoes it.");
+		}
+
 		[ConsoleCommand(name: "SetToAutoPaint", docs: "Terrain brush returns painted areas to automatic texturing")]
 		public static void TerrainAutoPaint()
 		{

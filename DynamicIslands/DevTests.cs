@@ -213,6 +213,82 @@ namespace DynamicIslands
 			else Fail("undo/redo or islands window");
 		}
 
+		[ConsoleCommand(name: "CIGenTest", docs: "Dev, editor: generates an island and checks it (same seed = same island, land above sea, fits the build area, objects, undo/redo, save/load as cigen.island)")]
+		public static void GenTest()
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
+			bool ok = true;
+			try
+			{
+				TerrainData data = terraineditor.terrain.terrainData;
+				int res = data.heightmapResolution;
+				var s = new IslandGenSettings { Seed = 4242, Radius = 120f, Height = 40f, Roughness = 0.5f, Peaks = 2, ObjectDensity = 0.5f };
+
+				// 1. Deterministic, and seeds differ
+				float[,] a = IslandGenerator.Heights(s, data.size, res), b = IslandGenerator.Heights(s, data.size, res);
+				float[,] c = IslandGenerator.Heights(new IslandGenSettings { Seed = 777, Radius = 120f, Height = 40f, Roughness = 0.5f, Peaks = 2 }, data.size, res);
+				bool same = a.Cast<float>().SequenceEqual(b.Cast<float>()), differs = !a.Cast<float>().SequenceEqual(c.Cast<float>());
+				Check(ref ok, same && differs, "same seed gives the same island, another seed a different one");
+
+				// 2. Shape: land above sea, peak near the requested height, flat seabed at the edges
+				float sea = IslandFile.DefaultWaterLevel / data.size.y;
+				float peak = a.Cast<float>().Max() * data.size.y - IslandFile.DefaultWaterLevel;
+				int land = a.Cast<float>().Count(h => h > sea);
+				float landArea = land * (data.size.x / (res - 1)) * (data.size.x / (res - 1));
+				bool edgesFlat = Enumerable.Range(0, res).All(i => a[0, i] == 0f && a[res - 1, i] == 0f && a[i, 0] == 0f && a[i, res - 1] == 0f);
+				Check(ref ok, peak > s.Height * 0.6f && peak < s.Height * 1.5f && landArea > 10000f && edgesFlat,
+					string.Format("peak {0:F0} m above sea (asked {1:F0}), land area {2:F0} m², seabed flat at the edges: {3}", peak, s.Height, landArea, edgesFlat));
+
+				// 3. Into the editor, as one undo step
+				Transform placed = GameObject.Find("PlacedObjects").transform;
+				float[,] before = data.GetHeights(0, 0, res, res);
+				int n = IslandGenerator.GenerateInEditor(s);
+				float[,] after = data.GetHeights(0, 0, res, res);
+				bool applied = after.Cast<float>().Zip(a.Cast<float>(), (x, y) => Mathf.Abs(x - y)).Max() < 0.0001f;
+				int visible = placed.GetComponentsInChildren<EditorGameObject>(false).Length;
+				Check(ref ok, applied && n > 10 && visible == n, "generated into the editor with " + n + " objects (" + visible + " visible)");
+
+				CommandUndoRedo.UndoRedoManager.Undo();
+				bool undone = data.GetHeights(0, 0, res, res).Cast<float>().Zip(before.Cast<float>(), (x, y) => Mathf.Abs(x - y)).Max() < 0.0001f;
+				int visibleAfterUndo = placed.GetComponentsInChildren<EditorGameObject>(false).Length;
+				CommandUndoRedo.UndoRedoManager.Redo();
+				bool redone = data.GetHeights(0, 0, res, res).Cast<float>().Zip(a.Cast<float>(), (x, y) => Mathf.Abs(x - y)).Max() < 0.0001f
+					&& placed.GetComponentsInChildren<EditorGameObject>(false).Length == n;
+				Check(ref ok, undone && visibleAfterUndo != n && redone, "Ctrl+Z restores the previous island (" + visibleAfterUndo + " objects), Ctrl+Y the generated one");
+
+				// 4. Save, load, and check it would spawn cropped to the island (not the whole 1000 m square)
+				DynamicIslands.SaveIsland("cigen");
+				IslandFile file = IslandFile.Load(IslandSpawner.PathFor("cigen"));
+				int cx, cz, size;
+				IslandSpawner.GetCropArea(file, out cx, out cz, out size);
+				float radius = IslandSpawner.LandRadius(file);
+				Check(ref ok, file.Objects.Count == n && size < res,
+					"saved as cigen.island with " + file.Objects.Count + " objects; spawns as a " + (size - 1) * data.size.x / (res - 1) + " m terrain block, land radius " + radius.ToString("F0") + " m");
+				DynamicIslands.LoadIsland("cigen");
+				DynamicIslands.instance.StartCoroutine(GenTestLoaded(ok, a, n, s));
+			}
+			catch (Exception e) { Fail("exception: " + e); Fail("island generator test"); }
+		}
+
+		/// <summary>Checks the loaded island a frame later, once the replaced objects are really destroyed.</summary>
+		static IEnumerator GenTestLoaded(bool ok, float[,] expected, int n, IslandGenSettings s)
+		{
+			yield return null;
+			TerrainData data = terraineditor.terrain.terrainData;
+			int res = data.heightmapResolution;
+			float diff = data.GetHeights(0, 0, res, res).Cast<float>().Zip(expected.Cast<float>(), (x, y) => Mathf.Abs(x - y)).Max() * data.size.y;
+			int objects = GameObject.Find("PlacedObjects").GetComponentsInChildren<EditorGameObject>(false).Length;
+			Check(ref ok, diff < 0.05f && objects == n, "loading cigen gives the same heights (largest difference " + diff.ToString("F3") + " m) and objects (" + objects + ")");
+			IslandGenerator.FrameCamera(s);
+			if (ok) Log("PASS: island generator test"); else Fail("island generator test");
+		}
+
+		static void Check(ref bool ok, bool condition, string what)
+		{
+			Log((condition ? "PASS: " : "FAIL: ") + what);
+			ok &= condition;
+		}
+
 		[ConsoleCommand(name: "CIDemo", docs: "Dev: scatters sample nature objects over the editor terrain (as undoable placements) and frames the camera")]
 		public static void Demo()
 		{

@@ -96,7 +96,7 @@ namespace DynamicIslands
 		bool CanSculpt()
 		{
 			if (!allowEditing || terrain == null) return false;
-			if (IslandFilesWindow.IsOpen) return false;
+			if (IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen) return false;
 			if (TabSelector.instance != null && TabSelector.instance.SelectedTab != TAB.TerrainEdit) return false;
 			if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return false;
 			if (FindObjectOfType<ObjectPlacer>() != null) return false;

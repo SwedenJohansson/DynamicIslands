@@ -11,6 +11,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - Paint it with Raft's own ground textures (Sand, Grass, Rock, Seabed), or let it texture automatically by height and slope.
   - Place about 300 objects taken from Raft's islands: palms, trees, bushes, boulders, corals, harvestable palms, rocks and berry bushes, and props from Vasagatan. Move, rotate, scale and delete them.
   - Undo and redo everything, and save or load islands.
+  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, and how many trees, rocks and corals to scatter. The same seed always gives the same island.
 - **In your worlds**
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
   - You can also spawn one yourself with `SpawnIsland`.
@@ -40,6 +41,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | Ctrl+S | Save the current island |
 | Ctrl+Z / Ctrl+Y | Undo / redo sculpting, painting, placing, moving, rotating, scaling and deleting |
 | Terrain tab | Raise / Lower / Flatten / Smooth, texture paint, Auto, brush size and strength. A ring shows the brush. |
+| Terrain tab > Generate, Menu > Generate island... | Opens the island generator. Generating replaces the current island; Ctrl+Z brings the old one back. |
 | Objects tab | Object list, plus Move / Rotate / Scale / Delete (keys 1–4). Delete deletes the selection, P toggles pivot/center, X toggles global/local. |
 | Camera | WASD or arrows to move, Shift for faster, right-drag to rotate, mouse wheel to change height |
 
@@ -51,6 +53,7 @@ The blue plane is sea level. Anything below it is under water in game.
 |---|---|---|
 | `LoadEditor` | Main menu | Opens the editor |
 | `SaveIsland <name>` / `LoadIsland <name>` | Editor | Saves or loads an island |
+| `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
 | `SpawnIsland <name> [distance]` | Game, host | Spawns an island ahead of the raft (default 250 m) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
@@ -87,6 +90,7 @@ The editor UI is a separate Unity 2021.3.45 project, [Custom-Islands-UI](https:/
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients |
 | `PlaceableCatalog.cs` | The object catalog, built from Raft's island scenes |
+| `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise, object scatter by zone, and the Generate window |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `RTSCamera.cs` | The editor |
 | `RuntimeGizmo\`, `AwaitExtensions\` | Third-party move/rotate/scale gizmo and await helpers |
 

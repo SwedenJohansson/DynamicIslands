@@ -52,6 +52,7 @@ namespace DynamicIslands.Editor
 		public static void Open()
 		{
 			if (instance == null) return;
+			GeneratorWindow.Close();
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.nameField.text = DynamicIslands.currentIslandName;
