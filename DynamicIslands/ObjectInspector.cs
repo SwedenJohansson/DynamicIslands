@@ -93,8 +93,10 @@ namespace DynamicIslands.Editor
 				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
 				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
 				else { ZoneGroup(target); LootGroup(target, true); }
+				BehaviourGroup(target);
 				return;
 			}
+			if (ContentCatalog.IsHelper(target.GameObjectName)) { BehaviourGroup(target); return; }
 			if (kind != null) CreatureGroup(target, kind);
 			else
 			{
@@ -103,7 +105,18 @@ namespace DynamicIslands.Editor
 				if (loot) LootGroup(target, false);
 				if (!note || !loot) AddFeatureGroup(target, note, loot);
 			}
+			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
+		}
+
+		/// <summary>What the object does in a world (name, movement, use, collision, events), and the button for the behaviour window.</summary>
+		static void BehaviourGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Behaviour & events");
+			Text t = UIKit.Label(g, BehaviourWindow.Summary(target.Props, target.GameObjectName), 12, UIKit.TextMuted);
+			t.lineSpacing = 1.05f;
+			Button b = UIKit.Button(g, "Behaviour & events...", () => BehaviourWindow.Open(target), "A name, movement (spin, bob, a door or lift), hidden at first, players can use it, collision, and what happens when...", -1, 26f, 13);
+			if (BehaviourProps.Any(target.Props)) UIKit.SetActive(b, true);
 		}
 
 		#region Creature editor

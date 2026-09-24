@@ -233,27 +233,42 @@ namespace DynamicIslands.Editor
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
 			int missing = 0, creature = 0, loot = 0, zone = 0;
-			foreach (IslandObject o in island.Objects)
+			for (int index = 0; index < island.Objects.Count; index++)
 			{
+				IslandObject o = island.Objects[index];
 				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
 				// They are numbered in file order, which is the same on every machine.
 				if (!editable && ContentCatalog.IsCreature(o.Name))
 				{
-					CreatureSpawnPoint.Create(parent, o, creature++);
+					CreatureSpawnPoint point = CreatureSpawnPoint.Create(parent, o, creature++);
+					if (point != null) Behaviours.Attach(point.gameObject, o.Name, o.Props, index);
 					continue;
 				}
 				// Zones are invisible in a world
 				if (!editable && ContentCatalog.IsZone(o.Name))
 				{
-					if (o.Name == ContentCatalog.TriggerZone) TriggerZone.Create(parent, o, zone++);
+					GameObject zgo;
+					if (o.Name == ContentCatalog.TriggerZone) zgo = TriggerZone.Create(parent, o, zone++).gameObject;
 					else
 					{
-						var zgo = new GameObject(o.Name);
+						zgo = new GameObject(o.Name);
 						zgo.transform.SetParent(parent, false);
 						zgo.transform.position = parent.position + o.Position;
 						if (o.Name == ContentCatalog.AtmosphereZoneName) zgo.AddComponent<AtmosphereZone>().Configure(o.Props ?? new Dictionary<string, string>());
 						else if (o.Name == ContentCatalog.SoundZoneName) zgo.AddComponent<SoundZone>().Configure(o.Props ?? new Dictionary<string, string>());
 					}
+					Behaviours.Attach(zgo, o.Name, o.Props, index);
+					continue;
+				}
+				// Invisible walls and ramps: only their collision in a world
+				if (!editable && ContentCatalog.IsHelper(o.Name))
+				{
+					GameObject hgo = ContentCatalog.SpawnHelperSolid(o.Name, parent);
+					if (hgo == null) continue;
+					hgo.transform.position = parent.position + o.Position;
+					hgo.transform.rotation = Quaternion.Euler(o.EulerRotation);
+					hgo.transform.localScale = o.Scale;
+					Behaviours.Attach(hgo, o.Name, o.Props, index);
 					continue;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
@@ -282,6 +297,8 @@ namespace DynamicIslands.Editor
 					}
 					// Numbered in file order like the creatures (the same on every machine)
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
+					// Names, movement, "players can use it", collision, events (Behaviours)
+					Behaviours.Attach(go, o.Name, o.Props, index);
 				}
 			}
 			return missing;

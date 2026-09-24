@@ -146,6 +146,8 @@ namespace DynamicIslands.Editor
 			// A note inside: show it
 			CustomNote note = GetComponent<CustomNote>();
 			QuestTracker.Event(ContentState.EntryOf(transform), "open", note != null ? note.Title : "");
+			IslandObjectRef r = GetComponentInParent<IslandObjectRef>();
+			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "open", true);
 			if (note != null) NoteReader.Open(note);
 			return given;
 		}

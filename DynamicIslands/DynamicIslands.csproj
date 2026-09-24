@@ -59,6 +59,7 @@
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsDirector.cs" />
+    <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -77,6 +78,8 @@
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
+    <Compile Include="Behaviours.cs" />
+    <Compile Include="BehaviourWindow.cs" />
     <Compile Include="MapTypes.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />

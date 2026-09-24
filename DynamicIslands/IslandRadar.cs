@@ -87,7 +87,7 @@ namespace DynamicIslands.Editor
 				d.SetLengthToPoint(dist);
 				// Islands brought by a rule (WorldDirector) carry a name, e.g. "Old camp 820m"
 				string label = islands[i].Label ?? "";
-				if (label.Length > 18) label = label.Substring(0, 17) + "…";
+				if (label.Length > 18) label = label.Substring(0, 17) + "\u2026";
 				d.SetText((label.Length > 0 ? label + " " : "") + dist.ToString("F0") + "m");
 				r.isCurrentlyShowingRadarDot = true;
 			}

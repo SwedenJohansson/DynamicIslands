@@ -23,6 +23,11 @@ namespace DynamicIslands.Editor
 		public const int QuestStep = 7;
 		/// <summary>Host -> everyone: a rule brought a new island (WorldDirector). Name = title, Data = message, Offsets = where, relative to the raft.</summary>
 		public const int Announce = 8;
+		/// <summary>Host -> everyone: an object was shown/hidden or opened/closed (Behaviours). Ids[0] = island, Index = object, Count = bits (1 there, 2 open).</summary>
+		public const int ObjectSet = 9;
+		/// <summary>An object event (Behaviours): client -> host (do the shared actions), or host -> clients with FullList set
+		/// (do the personal ones if near). Ids[0] = island, Index = object (0xFFFF = the island), Name = event.</summary>
+		public const int EventFired = 10;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
@@ -175,6 +180,21 @@ namespace DynamicIslands.Editor
 			SendToClients(new IslandNetMessage { Kind = IslandNetMessage.Announce, Ids = new[] { e.Id }, Name = title, Data = message, Offsets = new[] { o.x, o.y, o.z } });
 		}
 
+		/// <summary>Host: an object's shared state changed.</summary>
+		public static void SendObjectSet(int islandId, int index, int bits)
+		{
+			if (!Raft_Network.IsHost) return;
+			SendToClients(new IslandNetMessage { Kind = IslandNetMessage.ObjectSet, Ids = new[] { islandId }, Index = index, Count = bits });
+		}
+
+		/// <summary>An object event: a client tells the host; the host tells clients (fromHost: they do the personal part).</summary>
+		public static void SendEvent(int islandId, int index, string ev, bool fromHost)
+		{
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = fromHost };
+			if (Raft_Network.IsHost) { if (fromHost) SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
 			int[] list = ids.ToArray();
@@ -220,6 +240,12 @@ namespace DynamicIslands.Editor
 							QuestTracker.Apply(msg.Ids[0], msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg);
 						}
+						break;
+					case IslandNetMessage.ObjectSet:
+						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
+						break;
+					case IslandNetMessage.EventFired:
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 3)

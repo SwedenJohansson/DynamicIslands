@@ -152,6 +152,7 @@ namespace DynamicIslands.Editor
 		/// <summary>An ambush: the creature waits until a player sets off its trigger zone (a zone that isn't on the island doesn't hold it back).</summary>
 		static bool WaitsForZone(IslandWorldState.Entry entry, GameObject root, CreatureSpawnPoint p)
 		{
+			if (!p.gameObject.activeSelf) return true; // hidden until an action shows it (Behaviours)
 			string id = ObjectProps.Get(p.Props, ObjectProps.CreatureZone);
 			if (id.Length == 0) return false;
 			TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == id);
@@ -426,6 +427,8 @@ namespace DynamicIslands.Editor
 						int killed = p.RecordedAlive - alive - caught;
 						if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
 						if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
+						// All of them defeated: the spot's "defeat" actions
+						if (alive == 0 && killed > 0) { IslandObjectRef r = p.GetComponent<IslandObjectRef>(); if (r != null) Behaviours.FireFromHost(e, r.Index, "defeat"); }
 						Record(e, p, alive);
 					}
 				}

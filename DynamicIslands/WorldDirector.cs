@@ -25,7 +25,7 @@ namespace DynamicIslands.Editor
 	{
 		public const string Self = "self";
 		public static readonly string[] WhatKinds = { "island", "type", "pool", "oneof" };
-		public static readonly string[] WhenKinds = { "start", "km", "day", "quest", "step", "zone", "visit", "rule" };
+		public static readonly string[] WhenKinds = { "start", "km", "day", "quest", "step", "zone", "visit", "rule", "signal" };
 		public static readonly string[] WhereKinds = { "ahead", "near" };
 		public static readonly string[] Directions = { "any", "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
 
@@ -66,7 +66,7 @@ namespace DynamicIslands.Editor
 			{
 				case "start": when = "start"; break;
 				case "km": case "day": when = When + ":" + Part(WhenArg); break;
-				case "step": case "zone": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Part(WhenArg); break;
+				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Part(WhenArg); break;
 				default: when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : (When == "rule" ? "" : Self)); break;
 			}
 			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : "ahead:" + Num(Distance);
@@ -145,6 +145,7 @@ namespace DynamicIslands.Editor
 				case "zone": return "When zone '" + WhenArg + "' of " + RefName(WhenRef) + " fires";
 				case "visit": return "When players first reach " + RefName(WhenRef);
 				case "rule": return "After rule '" + WhenRef + "'";
+				case "signal": return "When the signal '" + WhenArg + "' is sent on " + RefName(WhenRef);
 			}
 			return When;
 		}
@@ -570,6 +571,7 @@ namespace DynamicIslands.Editor
 					int ordinal = IslandCache.ZoneOrdinal(e.Name, r.WhenArg);
 					return ordinal >= 0 && ContentState.IsUsed(e, TriggerZone.KeyBase + ordinal);
 				case "visit": return e.State.ContainsKey(VisitKey);
+				case "signal": return e.State.ContainsKey(Behaviours.SignalKey(r.WhenArg));
 			}
 			return false;
 		}

@@ -22,10 +22,11 @@ namespace DynamicIslands
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) yield break;
-			bool down = player.Stats != null && player.Stats.stat_health.Value <= 0f;
+			Player p = player.GetComponentInChildren<Player>(true);
+			// (incapacitated, "waiting for rescue", is IsDead with some health left)
+			bool down = (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
 			if (down)
 			{
-				Player p = player.GetComponentInChildren<Player>(true);
 				if (p != null) { Log("The test player was down: respawning them (inventory kept)"); p.RespawnWithoutBed(false); }
 				yield return new WaitForSeconds(3f);
 			}

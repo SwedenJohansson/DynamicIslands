@@ -65,7 +65,7 @@ namespace DynamicIslands.Editor
 			return 0;
 		}
 
-		static bool LocalBounds(GameObject go, out Bounds b)
+		internal static bool LocalBounds(GameObject go, out Bounds b)
 		{
 			b = new Bounds();
 			bool any = false;
@@ -213,6 +213,8 @@ namespace DynamicIslands.Editor
 			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
 			Debug.Log("[CUSTOM ISLANDS] Reading note '" + titleText.text + "'");
 			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
+			IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
+			if (r != null) Behaviours.Fire(ContentState.EntryOf(n.transform), r.Index, "read", true);
 		}
 
 		void Hide()

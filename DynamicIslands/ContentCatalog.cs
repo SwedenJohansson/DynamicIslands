@@ -167,6 +167,45 @@ namespace DynamicIslands.Editor
 			return root;
 		}
 
+		/// <summary>Invisible walls and ramps: collision only in a world (block a path, make a cliff climbable); see-through in the editor.</summary>
+		public const string HelperWall = "Helper_Wall", HelperRamp = "Helper_Ramp";
+		static readonly Color HelperColor = new Color(0.35f, 0.85f, 1f, 0.28f);
+
+		public static bool IsHelper(string name) { return name == HelperWall || name == HelperRamp; }
+
+		/// <summary>The see-through slab of an invisible wall (4 x 3 m, 30 cm thick) or ramp (4 m wide, 8 m long, 20 degrees up towards its front).</summary>
+		static GameObject BuildHelperMarker(string name, string label)
+		{
+			var root = new GameObject(name);
+			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
+			bool ramp = name == HelperRamp;
+			Vector3 size = ramp ? new Vector3(4f, 0.3f, 8f) : new Vector3(4f, 3f, 0.3f);
+			Quaternion rot = ramp ? Quaternion.Euler(-20f, 0f, 0f) : Quaternion.identity;
+			Vector3 pos = ramp ? new Vector3(0f, 4f * Mathf.Sin(20f * Mathf.Deg2Rad), 0f) : new Vector3(0f, 1.5f, 0f);
+			GameObject slab = Part(PrimitiveType.Cube, "Solid", root.transform, pos, rot, size, MarkerMaterial(HelperColor));
+			slab.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			AddLabel(root.transform, label, ramp ? 3.4f : 3.4f);
+			return root;
+		}
+
+		/// <summary>In a world: only the slab's collision, on the ground's layer, no renderer.</summary>
+		public static GameObject SpawnHelperSolid(string name, Transform parent)
+		{
+			GameObject proto = PlaceableCatalog.Get(name);
+			Transform slab = proto != null ? proto.transform.Find("Solid") : null;
+			if (slab == null) return null;
+			var go = new GameObject(name);
+			go.transform.SetParent(parent, false);
+			var solid = new GameObject("CI_Solid");
+			solid.layer = IslandSpawner.TerrainLayer;
+			solid.transform.SetParent(go.transform, false);
+			solid.transform.localPosition = slab.localPosition;
+			solid.transform.localRotation = slab.localRotation;
+			solid.transform.localScale = slab.localScale;
+			solid.AddComponent<BoxCollider>();
+			return go;
+		}
+
 		/// <summary>Ready-made loot for the loot editor: name, then candidate items (only those Raft has are used).</summary>
 		public static readonly KeyValuePair<string, string[]>[] LootPresets =
 		{
@@ -230,6 +269,8 @@ namespace DynamicIslands.Editor
 			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";
 			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers) around it in a world. Fly the camera in to see it";
 			if (name == SoundZoneName) return "plays one of Raft's sounds while players are in it, or once when they walk in. Select it to choose the sound";
+			if (name == HelperWall) return "invisible in a world, but solid: blocks a path or keeps players in. Scale and turn it to fit";
+			if (name == HelperRamp) return "invisible in a world, but players can walk up it: makes a cliff or a sea stack climbable. Scale and turn it to fit";
 			return null;
 		}
 
@@ -256,6 +297,8 @@ namespace DynamicIslands.Editor
 			}
 			foreach (var z in Zones)
 				PlaceableCatalog.AddCustom(z.Key, BuildZoneMarker(z.Key, z.Value), ZoneCategory, z.Value);
+			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
+			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");
@@ -473,7 +516,8 @@ namespace DynamicIslands.Editor
 			bool note = ObjectProps.IsNote(name, props), loot = ObjectProps.IsLoot(name, props);
 			TextMesh tag = Label(go);
 			ShowSignText(go, note ? ObjectProps.Get(props, ObjectProps.NoteTitle) : "");
-			if (!note && !loot) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
+			bool behaves = BehaviourProps.Any(props);
+			if (!note && !loot && !behaves) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
 			if (tag == null)
 			{
 				Bounds b;
@@ -487,6 +531,11 @@ namespace DynamicIslands.Editor
 			{
 				int stacks = ObjectProps.Loot(props).Count;
 				lines.Add("<color=#8fdc8f>\u25a3</color> " + (stacks == 0 ? "empty" : stacks == 1 ? "1 item" : stacks + " items"));
+			}
+			if (behaves)
+			{
+				string bn = ObjectProps.Get(props, BehaviourProps.Name);
+				lines.Add("<color=#7fd8ff>\u25c6</color> " + (bn.Length > 0 ? bn : "behaviour") + (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 ? " (use)" : "") + (BehaviourProps.StartsHidden(props) ? " (hidden)" : ""));
 			}
 			tag.text = string.Join("\n", lines.ToArray());
 		}

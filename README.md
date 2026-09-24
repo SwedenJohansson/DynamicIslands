@@ -44,6 +44,16 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Quests** (Island tab, **Edit quest...**): a title, an introduction, up to 10 steps in order (**go to** a trigger zone, **read** a note, **open** a chest, **defeat** or **catch** a number of animals), a reward and a closing message. Steps point at things on the island by name, and the editor lists the names it knows.
   - **Object groups:** select objects and click **Save as group...**. The group appears under "My groups" at the top of the object list, to place on any island as one piece. Once put down, it becomes its separate objects again, with their settings. Groups are files in `Mods\DynamicIslands\groups`.
   - **Terrain stamps** (Terrain tab): click to put down a Hill, Peak, Crater, Mesa, Lagoon or Ridge, as big as the brush; Q/E turn it. **Save stamp...** keeps the land under the brush as a stamp of your own (`Mods\DynamicIslands\stamps`).
+  - **Behaviour & events** (select any object, "Behaviour & events..."), no code needed:
+    - **a name** that actions refer to (objects with the same name act together)
+    - **movement:** spin, bob up and down, or move and turn between two poses, either **back and forth** for ever or as a door, gate, bridge or lift that **opens and closes** (with a Preview in the editor)
+    - **hidden at first** until an action shows it (a hidden creature spot is an ambush)
+    - **players can use it:** Raft's "press E" hint with your own text ("Pull the lever")
+    - **collision:** Raft's own, walk through, one box, or solid
+    - **when … then:** a player uses it, walks into a zone, reads a note (first time), opens a chest, or all the animals of a creature spot are defeated → **show / hide / show-or-hide** objects, **open / close / open-or-close** doors, **say** a message, **give** items, **play** one of Raft's sounds, **teleport** the player to an object, **send a signal** (world plans and island rules can wait for it)
+    - **Island events** (Island tab): when players first come to the island, and when its quest is done
+    - A door that is used without actions of its own opens and closes itself.
+  - **Invisible walls and ramps** ("Zones & triggers"): solid in a world but not seen. Block a path, keep players in an arena, or make a cliff or sea stack climbable. Scale and turn them to fit.
   - **Island rules** (Island tab): how many in-game days until chopped trees, picked items, killed or caught animals, looted chests and fired zones come back on this island (empty = the world's setting, 0 = never).
   - Undo and redo everything, and save or load islands.
   - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, **layout** (round, atoll, archipelago, sea stacks, plateau, marsh), and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
@@ -64,6 +74,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Trigger zones** fire for whoever walks in; an ambush creature appears the moment its zone fires.
   - **Quests:** near an island with a quest, a panel shows its steps (done ones ticked). The introduction shows when you arrive, and each step done shows what's next. The quest is shared by everyone in the world and saved with it. When it's done, every player near the island gets the reward.
   - **Arriving** near an island that has a name or description shows it as a banner at the top of the screen, once per island per session.
+  - **Behaviours:** doors, gates and lifts move for every player; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
 - **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host.
@@ -75,7 +86,7 @@ A **world plan** says which custom islands a world gets, **when** and **where**.
 | Part | Choices |
 |---|---|
 | **What** | a saved island · a new island of a **map type** (generated, e.g. a treasure island) · one from the spawn pool · one of a list of islands |
-| **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · after another rule |
+| **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · an object sends a signal (Behaviour & events) · after another rule |
 | **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) |
 | **Tell** | a message every player sees (with how far and which way the island is), and a name for its dot on the Receiver |
 
@@ -142,13 +153,13 @@ The screen has a **top bar**, a **tool panel** on the left, the **object browser
 | Objects tab | **Transform** group | Move / Turn / Scale / All (keys 1–4) |
 | Objects tab | **Selection** group | What's selected; **Ground**, **Duplicate** (Ctrl+D), **Deselect**, **Delete** (Delete key) |
 | Objects tab | **Placing** group | **Random**, **Slope** and **Grid** toggles |
-| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). **Loot** group: the items with their amounts (× takes one out), **Add items...** (the item picker), **Empty**, the Basics / Metal / Food / Treasure sets, fills up again after N days or never. **Trigger zone** group: name, size, message, fires once or every time, and what it gives. A creature's **Appears** button chooses "at once" or "when a zone fires". **Atmosphere zone** group: size, fog colour and strength, light tint and strength, particles. **Sound zone** group: **Choose sound...** (Raft's sounds, with listening), ► / ■, volume, "While inside" or "Once on entering", size. Plain objects offer **Readable...** and **A chest...**. Every change can be undone. |
+| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). **Loot** group: the items with their amounts (× takes one out), **Add items...** (the item picker), **Empty**, the Basics / Metal / Food / Treasure sets, fills up again after N days or never. **Trigger zone** group: name, size, message, fires once or every time, and what it gives. A creature's **Appears** button chooses "at once" or "when a zone fires". **Atmosphere zone** group: size, fog colour and strength, light tint and strength, particles. **Sound zone** group: **Choose sound...** (Raft's sounds, with listening), ► / ■, volume, "While inside" or "Once on entering", size. Plain objects offer **Readable...** and **A chest...**. **Behaviour & events** group (every object): what it does, and **Behaviour & events...** (name, movement with Preview, hidden at first, players can use it, collision, "when … then" actions). Every change can be undone. |
 | Objects tab | Object browser | Search box, then the categories. Click a category to open or close it. Click an object, then click the ground: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. |
 | Island tab | **Island** group | Style (◄ ►), height in the world with At sea / Flying / Sunken presets |
 | Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
 | Terrain tab | **Stamps** group | Hill, Peak, Crater, Mesa, Lagoon, Ridge and your saved stamps (click the ground; Size = how big, Q/E turn); **Save stamp...** |
 | Objects tab | **Save as group...** (Selection) | The selected objects become a group under "My groups" (`DeleteGroup <name>` removes one) |
-| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards |
+| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards; **Island events...**: what happens when players first arrive and when the quest is done |
 | Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never) |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
@@ -217,10 +228,11 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `CustomIslandSpawner.cs` | Automatic islands while sailing (saved ones and newly generated ones), and loading/unloading islands by distance |
 | `IslandRadar.cs` | Custom islands as dots on Raft's Receiver (Harmony postfix on `Reciever.HandleUI`) |
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
-| `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients |
+| `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients, quests, used objects, announcements, object state and events |
 | `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed |
 | `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in six layouts (round, atoll, archipelago, sea stacks, plateau, marsh), object scatter by zone, and the Generate window |
 | `MapTypes.cs` | Map types: settings ranges, flying/sunken, and their content (`MapKit`: chests, notes, zones, creatures, atmosphere, quests) |
+| `Behaviours.cs`, `BehaviourWindow.cs` | Behaviours and events: names, movement, "players can use it", collision, "when … then" actions, their shared state and network messages; the Behaviour & events window |
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
 | `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan choice in Raft's New Game box |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `RTSCamera.cs` | The editor |
@@ -232,6 +244,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 - Support for Unity-built `.assets` islands from version 2 was removed. Rebuild those islands in the editor.
 - Reaching a flying island is up to the player: build stairs or pillars up from the raft. The editor shows islands at sea level; the height only applies in game.
 - Creatures: catching with the net launcher, the host's creatures reaching a second player, players who join later, and the colour on other players' screens are built on Raft's own mechanisms, but they haven't been tested by hand or with two players yet. Raft has no pets, so "catchable" means Raft's domestic animals. The screecher's stone look can't be tinted.
+- Behaviours: hiding a creature spot after its animals have appeared doesn't remove them. Movers animate on every machine by themselves, so "back and forth" objects aren't in step between players. Actions have no delays or conditions yet (a lever can't check a key).
 - World plans and island rules are checked by the host only. They were tested with one player and looped-back network messages; the announcement and the Receiver names on a second player's screen haven't been seen by a person yet.
 - The Receiver shows every custom island as a dot, however far; a plan with many islands fills the radar. Map type content is placed by the generator: a chest can end up in an awkward spot now and then (the Generate window's map types let you check and fix one before sharing it).
 - An island has one quest. Quest steps find things by name (zone name, note title, creature kind), so renaming a note breaks a step that points at it.

@@ -74,6 +74,8 @@ namespace DynamicIslands.Editor
 			if (Items.Count > 0) Give(Items);
 			if (!fired) ContentState.MarkUsed(transform, StateKey); // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
+			IslandObjectRef r = GetComponent<IslandObjectRef>();
+			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "enter", true);
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
 		}
 

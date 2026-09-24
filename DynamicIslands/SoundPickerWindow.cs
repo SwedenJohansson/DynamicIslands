@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -16,6 +17,8 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		EditorGameObject target;
+		/// <summary>Instead of a zone: who gets the chosen sound (the behaviour window's "play a sound").</summary>
+		Action<string> onPick;
 		InputField search;
 		RectTransform list;
 		Text countText;
@@ -37,9 +40,23 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null || target == null) return;
 			instance.target = target;
+			instance.onPick = null;
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.search.text = "amb/";
+			instance.Rebuild();
+			instance.search.ActivateInputField();
+		}
+
+		/// <summary>Opens the list to choose a sound for something other than a zone.</summary>
+		public static void OpenFor(Action<string> pick)
+		{
+			if (instance == null) return;
+			instance.target = null;
+			instance.onPick = pick;
+			instance.gameObject.SetActive(true);
+			instance.transform.SetAsLastSibling();
+			instance.search.text = "";
 			instance.Rebuild();
 			instance.search.ActivateInputField();
 		}
@@ -107,7 +124,7 @@ namespace DynamicIslands.Editor
 				Text t = UIKit.Label(row, (SoundLibrary.IsLooping(p) ? "[loop] " : "") + p.Replace("event:/", ""), 12, UIKit.TextColor);
 				t.horizontalOverflow = HorizontalWrapMode.Overflow;
 				UIKit.Button(row, "\u25BA", () => SoundLibrary.Preview(p), "Listen", 30, 24f, 11);
-				Button use = UIKit.Button(row, "Use", () => { if (target != null) Use(target, p); Close(); }, "Use this sound for the zone", 52, 24f, 11);
+				Button use = UIKit.Button(row, "Use", () => { Action<string> pick = onPick; if (pick != null) pick(p); else if (target != null) Use(target, p); Close(); }, "Use this sound for the zone", 52, 24f, 11);
 				UIKit.SetActive(use, target != null && ObjectProps.Get(target.Props, ObjectProps.SoundEvent) == p);
 			}
 			if (hits.Count > MaxRows) UIKit.Label(list, (hits.Count - MaxRows) + " more: type more of the name.", 12, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic);

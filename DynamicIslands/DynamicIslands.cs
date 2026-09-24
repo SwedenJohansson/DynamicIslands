@@ -111,6 +111,8 @@ namespace DynamicIslands
 			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
 			// ...and follow Raft's floating-origin world shifts
 			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
+			// An island's quest done: its "on.quest" actions
+			QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
 
 
 			// Dev builds: the test commands can also be run from a file (release builds leave DevTests out)
@@ -197,6 +199,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Quests: " + e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
+			try { Behaviours.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Behaviours: " + e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 		}
@@ -271,7 +275,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
@@ -571,6 +575,7 @@ namespace DynamicIslands
 					entry.Root = root;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
+					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);
 				}

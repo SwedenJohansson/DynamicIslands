@@ -64,8 +64,8 @@ namespace DynamicIslands.Editor
 			if (planButton == null) return;
 			WorldPlan p = WorldPlan.Load(Selected);
 			if (p == null) { WorldDirector.PendingPlan = WorldPlan.RandomName; p = WorldPlan.Load(WorldPlan.RandomName); }
-			UIKit.LabelOf(planButton).text = p.Name + "   ►";
-			detailText.text = (p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)") + (p.BuiltIn ? "" : " · random islands " + (p.Random ? "too" : "off"));
+			UIKit.LabelOf(planButton).text = p.Name + "   \u25BA";
+			detailText.text = (p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)") + (p.BuiltIn ? "" : " \u00B7 random islands " + (p.Random ? "too" : "off"));
 		}
 	}
 

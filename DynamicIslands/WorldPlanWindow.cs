@@ -80,7 +80,7 @@ namespace DynamicIslands.Editor
 			settingsRow.gameObject.SetActive(!islandMode);
 			descriptionField.gameObject.SetActive(!islandMode);
 			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island)" : "";
-			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  ▼";
+			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  \u25BC";
 			descriptionField.text = p.Description;
 			ShowRandom();
 			ShowRules();
@@ -157,7 +157,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> WhenLabels = new Dictionary<string, string>
 		{
 			{ "start", "the world starts" }, { "km", "after sailing (km)" }, { "day", "on day" }, { "quest", "quest done at" }, { "step", "quest step done at" },
-			{ "zone", "zone fires at" }, { "visit", "players reach" }, { "rule", "after rule" },
+			{ "zone", "zone fires at" }, { "visit", "players reach" }, { "rule", "after rule" }, { "signal", "signal sent at" },
 		};
 		static readonly Dictionary<string, string> WhatLabels = new Dictionary<string, string>
 		{
@@ -185,11 +185,11 @@ namespace DynamicIslands.Editor
 			InputField id = SmallField(a, "id", r.Id, 80, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Trim());
 			UIKit.Size(UIKit.Label(a, "When", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 38);
 			Cycle(a, WhenLabels[r.When], 130, "Click to change what the rule waits for", () => { r.When = Next(IntroRule.WhenKinds, r.When); ShowRules(); });
-			bool needsRef = r.When == "quest" || r.When == "step" || r.When == "zone" || r.When == "visit" || r.When == "rule";
-			bool needsArg = r.When == "km" || r.When == "day" || r.When == "step" || r.When == "zone";
+			bool needsRef = r.When == "quest" || r.When == "step" || r.When == "zone" || r.When == "visit" || r.When == "rule" || r.When == "signal";
+			bool needsArg = r.When == "km" || r.When == "day" || r.When == "step" || r.When == "zone" || r.When == "signal";
 			if (needsRef) SmallField(a, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 110,
 				r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim());
-			if (needsArg) SmallField(a, r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" ? 100 : 50,
+			if (needsArg) SmallField(a, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" ? 100 : 50,
 				r.When == "zone" ? "The trigger zone's name on that island" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim());
 			UIKit.Size(UIKit.Label(a, "bring", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 36);
 			Cycle(a, WhatLabels[r.What], 120, "Click to change: a saved island, a new island of a map type, one from the spawn pool, or one of a list", () =>
@@ -201,8 +201,8 @@ namespace DynamicIslands.Editor
 			if (r.What != "pool")
 			{
 				InputField what = SmallField(a, r.What == "oneof" ? "island, island, ..." : r.What == "type" ? "map type" : "island name", r.WhatArg, -1,
-					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (… to choose)", v => r.WhatArg = v.Trim());
-				UIKit.Button(a, "…", () =>
+					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (\u2026 to choose)", v => r.WhatArg = v.Trim());
+				UIKit.Button(a, "\u2026", () =>
 				{
 					Keep();
 					Action<string> set = v => { r.WhatArg = r.What == "oneof" && r.WhatArg.Trim().Length > 0 ? r.WhatArg.Trim() + ", " + v : v; ShowRules(); };
@@ -236,9 +236,9 @@ namespace DynamicIslands.Editor
 			}
 			SmallField(b, "Message to every player (optional)", r.Message, -1, "Shown when the island appears, with how far and which way it is", v => r.Message = v.Trim()).characterLimit = 160;
 			SmallField(b, "Receiver name", r.Label, 110, "The island's name on Raft's Receiver (optional)", v => r.Label = v.Trim()).characterLimit = 18;
-			UIKit.Button(b, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Earlier", 26, 26f, 11);
-			UIKit.Button(b, "▼", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Later", 26, 26f, 11);
-			Button del = UIKit.Button(b, "×", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 26, 26f, 12);
+			UIKit.Button(b, "\u25B2", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Earlier", 26, 26f, 11);
+			UIKit.Button(b, "\u25BC", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Later", 26, 26f, 11);
+			Button del = UIKit.Button(b, "\u00D7", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 26, 26f, 12);
 			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
 
 			Text describe = UIKit.Label(card, r.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Describe");
@@ -425,7 +425,7 @@ namespace DynamicIslands.Editor
 		void Check()
 		{
 			string p = Problems();
-			problemsText.text = p.Length == 0 ? "<color=#8fdc8f>√ Every rule can work.</color>" : "<color=#ffb4aa>" + p + "</color>";
+			problemsText.text = p.Length == 0 ? "<color=#8fdc8f>\u221A Every rule can work.</color>" : "<color=#ffb4aa>" + p + "</color>";
 			DrawMap();
 		}
 
