@@ -99,10 +99,10 @@ namespace DynamicIslands.Editor
 		/// <summary>The last quest message shown (tests look at it).</summary>
 		public static string LastMessage { get; private set; }
 
+		/// <summary>The island's quest (also while it's unloaded here: a client may be at it while the host is far away).</summary>
 		public static IslandQuest QuestOf(IslandWorldState.Entry e)
 		{
-			IslandSettings s = e != null && e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
-			return s != null ? IslandQuest.From(s.Props) : new IslandQuest();
+			return e != null ? IslandQuest.From(IslandCache.PropsOf(e)) : new IslandQuest();
 		}
 
 		public static int StepOf(IslandWorldState.Entry e)

@@ -22,7 +22,7 @@ namespace DynamicIslands.Editor
 		/// <summary>An island that was unloaded is loaded again this much closer than the unload distance, so it doesn't flicker.</summary>
 		const float ReloadHysteresis = 200f;
 		/// <summary>Space kept between an island's land and the raft, or Raft's own islands, when placing it.</summary>
-		const float Clearance = 60f;
+		public const float Clearance = 60f;
 
 		// Settings (spawnpool.txt)
 		public static float ChancePerKm = 0.25f;
@@ -45,6 +45,8 @@ namespace DynamicIslands.Editor
 		public const string GeneratedEntry = "<generated>";
 		/// <summary>Files of islands generated while sailing are named gen-&lt;style&gt;-&lt;seed&gt;.</summary>
 		public const string GeneratedPrefix = "gen-";
+		/// <summary>Pool entries "type:&lt;map type&gt;" stand for a new island of that map type (MapTypes).</summary>
+		public const string TypePrefix = "type:";
 		static readonly List<KeyValuePair<string, float>> poolLines = new List<KeyValuePair<string, float>>();
 		static DateTime poolFileTime;
 
@@ -109,6 +111,7 @@ namespace DynamicIslands.Editor
 			// A teleport or a very long frame is not sailing
 			if (sailed <= 0.01f || sailed > 200f) return;
 			sailedSinceSpawn += sailed;
+			WorldDirector.Sailed += sailed;
 			if (!Enabled || ChancePerKm <= 0f) return;
 
 			// Chance of at least one island over this stretch, for a given chance per km
@@ -156,7 +159,18 @@ namespace DynamicIslands.Editor
 			// A brand-new island: random settings now, the island itself is generated once a spot is found
 			IslandGenSettings generate = null;
 			float elevation = 0f;
-			if (name == GeneratedEntry)
+			MapType mapType = null;
+			if (name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				// A new island of a map type (type:<name> in the pool)
+				mapType = MapTypes.Get(name.Substring(TypePrefix.Length));
+				if (mapType == null) return Skip("there is no map type '" + name.Substring(TypePrefix.Length) + "'");
+				generate = MapTypes.Roll(mapType, new System.Random(), out elevation);
+				name = MapTypes.FileName(mapType, generate);
+				radiusCache[name] = MapTypes.EstimatedRadius(generate);
+				elevationCache[name] = elevation;
+			}
+			else if (name == GeneratedEntry)
 			{
 				var rnd = new System.Random();
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
@@ -191,26 +205,30 @@ namespace DynamicIslands.Editor
 				// island only once its file exists, so they can fetch it)
 				IslandWorldState.Entry entry = IslandWorldState.Add(name, candidate, null, generate == null);
 				entry.Loading = true;
-				if (generate != null) DynamicIslands.instance.StartCoroutine(GenerateAndSpawn(generate, elevation, name, entry));
+				if (generate != null)
+				{
+					IslandGenSettings s = generate; float el = elevation; string n = name;
+					MapType t = mapType;
+					DynamicIslands.instance.StartCoroutine(GenerateAndSpawn(() => { if (t != null) return MapTypes.Create(t, s, el, n); IslandFile f = IslandGenerator.CreateFile(s, n); f.Elevation = el; return f; }, name, entry));
+				}
 				else DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(name, candidate, true, entry));
 				return "Spawning '" + name + "' " + distance.ToString("F0") + " m ahead";
 			}
 			return Skip("no free spot ahead of the raft for '" + name + "' (" + string.Join("; ", reasons.Distinct().Take(3).ToArray()) + ")");
 		}
 
-		/// <summary>Generates a new island file (roadmap 1.5), saves it next to the others, tells clients, and spawns it.</summary>
-		static System.Collections.IEnumerator GenerateAndSpawn(IslandGenSettings s, float elevation, string name, IslandWorldState.Entry entry)
+		/// <summary>Generates a new island file (roadmap 1.5; map types), saves it next to the others, tells clients, and spawns it.</summary>
+		internal static System.Collections.IEnumerator GenerateAndSpawn(Func<IslandFile> create, string name, IslandWorldState.Entry entry)
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			try
 			{
-				IslandFile file = IslandGenerator.CreateFile(s, name);
-				file.Elevation = elevation;
+				IslandFile file = create();
 				file.Save(IslandSpawner.PathFor(name));
 				radiusCache[name] = IslandSpawner.LandRadius(file);
-				elevationCache[name] = elevation;
-				Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + TerrainPainter.StyleName(s.Style) + ", radius " + s.Radius.ToString("F0") + " m, height " +
-					s.Height.ToString("F0") + " m, " + file.Objects.Count + " objects" + (elevation > 0f ? ", flying " + elevation.ToString("F0") + " m up" : ""));
+				elevationCache[name] = file.Elevation;
+				Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + (string.IsNullOrEmpty(file.Style) ? "Tropical" : file.Style) + ", land radius " + radiusCache[name].ToString("F0") + " m, " +
+					file.Objects.Count + " objects" + (file.Elevation > 0f ? ", flying " + file.Elevation.ToString("F0") + " m up" : file.Elevation < 0f ? ", " + (-file.Elevation).ToString("F0") + " m under water" : ""));
 			}
 			catch (Exception e)
 			{
@@ -253,14 +271,18 @@ namespace DynamicIslands.Editor
 			return why != null && why.StartsWith("Raft's") ? why : null;
 		}
 
-		/// <summary>Why an island of this land radius can't go at candidate, or null if it can.</summary>
-		static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true)
+		/// <summary>
+		/// Why an island of this land radius can't go at candidate, or null if it can. minSpacing: centre-to-centre
+		/// distance kept from other custom islands (-1 = the minSpacing setting; 0 = just clear of their land).
+		/// </summary>
+		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f)
 		{
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance) return "too close to the raft";
+			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				float d = Flat(candidate - e.Position).magnitude;
-				if (d < Mathf.Max(MinSpacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
+				if (d < Mathf.Max(spacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
 			}
 			ChunkManager cm = ComponentManager<ChunkManager>.Value;
 			if (cm != null)
@@ -280,7 +302,7 @@ namespace DynamicIslands.Editor
 			return null;
 		}
 
-		static Vector3 SailDirection()
+		internal static Vector3 SailDirection()
 		{
 			Raft r = CurrentRaft;
 			if (r != null && r.body != null)
@@ -310,8 +332,15 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, float> elevationCache = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>Placing an island whose file doesn't exist yet (being generated): its size until then.</summary>
+		internal static void CacheSize(string name, float radius, float elevation)
+		{
+			radiusCache[name] = radius;
+			elevationCache[name] = elevation;
+		}
+
 		/// <summary>The island's saved elevation above sea level (flying / underwater), cached with its radius.</summary>
-		static float Elevation(string name)
+		internal static float Elevation(string name)
 		{
 			float e;
 			LandRadius(name);
@@ -339,6 +368,8 @@ namespace DynamicIslands.Editor
 				}
 				else if (IslandSpawner.ListSavedIslands().Contains(p.Key, StringComparer.OrdinalIgnoreCase))
 					result.Add(p);
+				else if (p.Key.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase) && MapTypes.Get(p.Key.Substring(TypePrefix.Length)) != null)
+					result.Add(p);
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
 			return result.Where(p => p.Value > 0f).ToList();
@@ -347,7 +378,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
 		internal static string ForceNextPick;
 
-		static string PickFromPool()
+		internal static string PickFromPool()
 		{
 			if (ForceNextPick != null) { string forced = ForceNextPick; ForceNextPick = null; return forced; }
 			var pool = Pool();
@@ -379,6 +410,8 @@ unloadDistance = 800
 regrowDays = 3
 # Show custom islands as green dots on Raft's Receiver (1 = yes, 0 = no)
 showOnReceiver = 1
+# The world plan new worlds get when none is chosen in the New Game box (plans are in Mods\DynamicIslands\plans)
+defaultPlan = Random islands
 
 # Brand-new random islands join the pool with this weight (0 = never). Each is saved as gen-<style>-<seed>.island.
 generated = 1
@@ -390,6 +423,13 @@ generatedFlyingChance = 0.1
 # A higher weight makes an island more likely. Weight 0 leaves it out.
 # ""*"" stands for every saved island not listed by name.
 * 1
+
+# Map types join with type:<name> <weight>: a new island of that kind each time (sandbar, atoll, archipelago,
+# stacks, boss, volcano, swamp, spire, treasure, camp, sunken, sky, wreck, or tropical, snowy, desert, forest, volcanic)
+type:sandbar 0.4
+type:wreck 0.4
+type:atoll 0.3
+type:sunken 0.2
 ";
 
 		/// <summary>Reads spawnpool.txt (creating it with defaults if missing) when it changed, or always when force is set.</summary>
@@ -426,6 +466,7 @@ generatedFlyingChance = 0.1
 							if (GeneratedStyles.Length == 0) { BadLine(line); GeneratedStyles = new[] { TerrainPainter.Tropical }; }
 							continue;
 						}
+						if (key == "defaultplan") { WorldDirector.DefaultPlan = value.Length > 0 ? value : WorldPlan.RandomName; continue; }
 						float v;
 						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) { BadLine(line); continue; }
 						switch (line.Substring(0, eq).Trim().ToLowerInvariant())

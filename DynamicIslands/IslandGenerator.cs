@@ -22,6 +22,8 @@ namespace DynamicIslands.Editor
 		public float ObjectDensity = 0.5f;
 		/// <summary>Island style (TerrainPainter.Styles): ground textures and which objects are scattered. Volcanic islands get a cone with a crater.</summary>
 		public int Style = TerrainPainter.Tropical;
+		/// <summary>The land's layout (IslandShapes): one round island, a ring around a lagoon, several islets...</summary>
+		public int Shape = IslandShapes.Round;
 
 		// The land can reach about 1.9 x Radius with a ragged coast; 250 keeps it inside the 1000 m build area
 		public const float MinRadius = 40f, MaxRadius = 250f, MinHeight = 5f, MaxHeight = 120f;
@@ -29,13 +31,30 @@ namespace DynamicIslands.Editor
 
 		public void Clamp()
 		{
-			Radius = Mathf.Clamp(Radius, MinRadius, MaxRadius);
-			Height = Mathf.Clamp(Height, MinHeight, MaxHeight);
+			// (map types may go smaller than the editor's sliders: a sandbar, a low atoll)
+			Radius = Mathf.Clamp(Radius, 12f, MaxRadius);
+			Height = Mathf.Clamp(Height, 2f, MaxHeight);
+			Shape = Mathf.Clamp(Shape, 0, IslandShapes.Names.Length - 1);
 			Roughness = Mathf.Clamp01(Roughness);
 			Peaks = Mathf.Clamp(Peaks, 1, MaxPeaks);
 			ObjectDensity = Mathf.Clamp01(ObjectDensity);
 			Style = Mathf.Clamp(Style, 0, TerrainPainter.Styles.Length - 1);
 		}
+	}
+
+	/// <summary>Layouts of generated land.</summary>
+	public static class IslandShapes
+	{
+		/// <summary>Round: one island with peaks. Atoll: a ring of low land around a shallow lagoon. Archipelago: several
+		/// islets on a shallow shelf. Stacks: steep rock pillars rising from shallow water. Plateau: a flat-topped mesa
+		/// with cliffs and one ramp up. Marsh: low, bumpy land with pools of water.</summary>
+		public const int Round = 0, Atoll = 1, Archipelago = 2, Stacks = 3, Plateau = 4, Marsh = 5;
+		public static readonly string[] Names = { "Round", "Atoll", "Archipelago", "Sea stacks", "Plateau", "Marsh" };
+		public static readonly string[] Hints =
+		{
+			"One island with hills and peaks", "A ring of low land around a shallow lagoon", "Several islets on a shallow shelf",
+			"Steep rock pillars rising from shallow water", "A flat-topped mesa with cliffs and one ramp up", "Low, bumpy land with pools of water",
+		};
 	}
 
 	/// <summary>Undo step for changing the island style (part of generating an island).</summary>
@@ -70,6 +89,9 @@ namespace DynamicIslands.Editor
 
 		// Corals, plus now and then a sunken barrel or container, and scrap to dive for (roadmap 1.6 "enhancing the ocean floor")
 		static readonly Regex Corals = new Regex(@"^(Coral\d+|LeafCoral_\d+|TableCoral_\d+|CauliCoral|CylinderCoral_\d+|SpineCoral_\d+|SeaVine3|seavine_tongue|Reef_Barrel\d+|Reef_Container|Pickup_Landmark_Scrap \d+_OceanBottom)$");
+
+		/// <summary>Corals and reef things of the object list (map types dress sunken islands with them).</summary>
+		internal static string[] CoralNames() { return PlaceableCatalog.CoreNames.Where(n => Corals.IsMatch(n) && !n.StartsWith("Pickup_")).ToArray(); }
 
 		// Indexed like TerrainPainter.Styles. (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
 		static readonly ZoneObjects[] StyleObjects =
@@ -177,6 +199,13 @@ namespace DynamicIslands.Editor
 		/// <summary>Normalised heightmap (0..1 of the terrain height) for a terrain of this size and resolution.</summary>
 		public static float[,] Heights(IslandGenSettings s, Vector3 size, int res)
 		{
+			switch (s.Shape)
+			{
+				case IslandShapes.Atoll: return Grid(size, res, Atoll(s));
+				case IslandShapes.Archipelago: return Grid(size, res, Archipelago(s));
+				case IslandShapes.Stacks: return Grid(size, res, Stacks(s));
+				case IslandShapes.Plateau: return Grid(size, res, Plateau(s));
+			}
 			var rnd = new System.Random(s.Seed);
 			// Noise offsets make each seed a different part of the noise field
 			Vector2 coastOffset = RandomOffset(rnd), hillOffset = RandomOffset(rnd), warpOffset = RandomOffset(rnd);
@@ -193,7 +222,7 @@ namespace DynamicIslands.Editor
 			}
 
 			float sea = IslandFile.DefaultWaterLevel;
-			bool volcanic = s.Style == TerrainPainter.Volcanic;
+			bool volcanic = s.Style == TerrainPainter.Volcanic, marsh = s.Shape == IslandShapes.Marsh;
 			float step = size.x / (res - 1);
 			Vector2 centre = new Vector2(size.x / 2f, size.z / 2f);
 			var heights = new float[res, res];
@@ -241,11 +270,165 @@ namespace DynamicIslands.Editor
 						float hills = Fbm(p * hillScale + hillOffset, 4); // -1..1
 						float bump = mountain * (1f + 0.35f * s.Roughness * hills) + 0.18f * s.Roughness * (hills * 0.5f + 0.5f);
 						elevation += inland * Mathf.Max(0f, bump) * (s.Height - ShelfHeight);
+						// A marsh has pools of shallow water in its low land
+						if (marsh) elevation = Mathf.Max(sea - 1.5f, elevation - inland * Mathf.Max(0f, Fbm(p / 22f + warpOffset * 1.7f, 3) - 0.05f) * 14f);
 					}
 					heights[z, x] = Mathf.Clamp01(elevation / size.y);
 				}
 			return heights;
 		}
+
+		#region Shapes (IslandShapes)
+
+		const float Sea = IslandFile.DefaultWaterLevel;
+
+		/// <summary>A heightmap from a function giving metres above the terrain's base for a point relative to the middle.</summary>
+		static float[,] Grid(Vector3 size, int res, Func<Vector2, float> elevationAt)
+		{
+			float step = size.x / (res - 1);
+			Vector2 centre = new Vector2(size.x / 2f, size.z / 2f);
+			var heights = new float[res, res];
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+					heights[z, x] = Mathf.Clamp01(elevationAt(new Vector2(x * step, z * step) - centre) / size.y);
+			return heights;
+		}
+
+		/// <summary>Smooth 0..1 as x goes from a to b (either way round).</summary>
+		static float SS(float a, float b, float x) { return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b, x)); }
+
+		/// <summary>A ring of low land (dunes up to the height setting) around a shallow lagoon, with a channel or two into it.</summary>
+		static Func<Vector2, float> Atoll(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed);
+			Vector2 coastOff = RandomOffset(rnd), hillOff = RandomOffset(rnd), floorOff = RandomOffset(rnd);
+			float ring = s.Radius * 0.75f, width = s.Radius * (0.16f + 0.1f * s.Roughness);
+			float coastScale = 1f / Mathf.Max(20f, s.Radius * 0.5f);
+			return p =>
+			{
+				float dist = p.magnitude;
+				float coast = Fbm(p * coastScale + coastOff, 3);
+				float d = Mathf.Abs(dist - ring) / Mathf.Max(4f, width * (1f + 0.6f * coast));
+				float top = (1f - SS(0.55f, 1.25f, d)) * SS(-0.5f, -0.3f, coast);
+				float dunes = top * Mathf.Max(0f, Fbm(p / 30f + hillOff, 3) * 0.5f + 0.5f) * Mathf.Max(0f, s.Height - ShelfHeight);
+				float floor = dist < ring ? Sea - 2f - 2.5f * (Fbm(p / 40f + floorOff, 2) * 0.5f + 0.5f) : Mathf.Lerp(0f, Sea - 2f, 1f - SS(1f, 3.2f, d));
+				return Mathf.Lerp(floor, Sea + ShelfHeight, top) + dunes;
+			};
+		}
+
+		/// <summary>Archipelago islets: x, z (relative to the middle), radius, height. The first is the biggest, near the middle.</summary>
+		public static List<Vector4> Islets(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed * 101 + 3);
+			int n = 3 + rnd.Next(4);
+			var list = new List<Vector4>();
+			for (int i = 0; i < n * 12 && list.Count < n; i++)
+			{
+				float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
+				float d = list.Count == 0 ? (float)rnd.NextDouble() * s.Radius * 0.2f : s.Radius * (0.4f + 0.45f * (float)rnd.NextDouble());
+				float r = s.Radius * (list.Count == 0 ? 0.28f : 0.14f + 0.12f * (float)rnd.NextDouble());
+				var c = new Vector2(Mathf.Cos(a) * d, Mathf.Sin(a) * d);
+				if (list.Any(o => (new Vector2(o.x, o.y) - c).magnitude < (o.z + r) * 1.2f)) continue; // water between them
+				float h = Mathf.Max(ShelfHeight + 2f, s.Height * (list.Count == 0 ? 1f : 0.35f + 0.5f * (float)rnd.NextDouble()));
+				list.Add(new Vector4(c.x, c.y, r, h));
+			}
+			return list;
+		}
+
+		/// <summary>Several islets (Islets) on a shallow shelf that joins them under water.</summary>
+		static Func<Vector2, float> Archipelago(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed);
+			Vector2 coastOff = RandomOffset(rnd), hillOff = RandomOffset(rnd);
+			List<Vector4> islets = Islets(s);
+			return p =>
+			{
+				float shelf = 1f - SS(0.95f, 1.4f, p.magnitude / s.Radius);
+				float floor = Mathf.Lerp(0f, Sea - 2.5f, shelf), best = floor;
+				float coast = Fbm(p / Mathf.Max(15f, s.Radius * 0.25f) + coastOff, 3);
+				foreach (Vector4 o in islets)
+				{
+					float q = (p - new Vector2(o.x, o.y)).magnitude / (o.z * (1f + 0.35f * s.Roughness * coast));
+					float land = 1f - SS(0.7f, 1.25f, q);
+					if (land <= 0f) continue;
+					float hill = Mathf.Exp(-q * q * 2.2f) * (1f + 0.3f * s.Roughness * Fbm(p / 25f + hillOff, 3));
+					best = Mathf.Max(best, Mathf.Lerp(floor, Sea + ShelfHeight, land) + land * Mathf.Max(0f, hill) * (o.w - ShelfHeight));
+				}
+				return best;
+			};
+		}
+
+		/// <summary>Sea stacks: x, z (relative to the middle), radius, height above the sea. The first is the tallest.</summary>
+		public static List<Vector4> StackSpots(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed * 97 + 5);
+			int n = 3 + rnd.Next(5);
+			var list = new List<Vector4>();
+			for (int i = 0; i < n * 12 && list.Count < n; i++)
+			{
+				float a = (float)rnd.NextDouble() * Mathf.PI * 2f;
+				float d = list.Count == 0 ? (float)rnd.NextDouble() * s.Radius * 0.25f : s.Radius * (0.2f + 0.55f * (float)rnd.NextDouble());
+				float r = Mathf.Clamp(s.Radius * (0.09f + 0.09f * (float)rnd.NextDouble()), 6f, 26f);
+				var c = new Vector2(Mathf.Cos(a) * d, Mathf.Sin(a) * d);
+				if (list.Any(o => (new Vector2(o.x, o.y) - c).magnitude < (o.z + r) * 1.4f)) continue;
+				list.Add(new Vector4(c.x, c.y, r, s.Height * (list.Count == 0 ? 1f : 0.45f + 0.5f * (float)rnd.NextDouble())));
+			}
+			return list;
+		}
+
+		/// <summary>Steep rock pillars with flat tops (StackSpots), a rocky beach at their feet, on a shallow shelf.</summary>
+		static Func<Vector2, float> Stacks(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed);
+			Vector2 edgeOff = RandomOffset(rnd), capOff = RandomOffset(rnd);
+			List<Vector4> stacks = StackSpots(s);
+			return p =>
+			{
+				float plate = 1f - SS(0.8f, 1.25f, p.magnitude / s.Radius);
+				float floor = Mathf.Lerp(0f, Sea - 2.5f, plate), e = floor;
+				float edge = Fbm(p / 12f + edgeOff, 3);
+				foreach (Vector4 o in stacks)
+				{
+					float q = (p - new Vector2(o.x, o.y)).magnitude / (o.z * (1f + 0.25f * s.Roughness * edge));
+					if (q > 2f) continue;
+					float side = 1f - SS(0.8f, 1f, q);
+					float cap = o.w * (1f + 0.04f * Fbm(p / 6f + capOff, 2));
+					e = Mathf.Max(e, Mathf.Lerp(floor, Sea + cap, side));
+					e = Mathf.Max(e, Mathf.Lerp(floor, Sea + 0.8f, 1f - SS(1f, 1.9f, q))); // the rocky beach at its foot
+				}
+				return e;
+			};
+		}
+
+		/// <summary>The plateau's ramp: the direction (radians, from +x towards +z) it goes up from the shore.</summary>
+		public static float RampAngle(IslandGenSettings s) { return (float)new System.Random(s.Seed * 53 + 1).NextDouble() * Mathf.PI * 2f; }
+
+		/// <summary>A flat-topped mesa (the height setting) with cliffs, a beach around it, and one ramp up from the shore.</summary>
+		static Func<Vector2, float> Plateau(IslandGenSettings s)
+		{
+			var rnd = new System.Random(s.Seed);
+			Vector2 coastOff = RandomOffset(rnd), topOff = RandomOffset(rnd);
+			float ramp = RampAngle(s);
+			Vector2 rampDir = new Vector2(Mathf.Cos(ramp), Mathf.Sin(ramp));
+			float coastScale = 1f / Mathf.Max(20f, s.Radius * 0.6f);
+			return p =>
+			{
+				float coast = Fbm(p * coastScale + coastOff, 4);
+				float rr = p.magnitude / (s.Radius * (1f + 0.3f * s.Roughness * coast));
+				float land = 1f - SS(0.75f, 1.3f, rr);
+				if (land <= 0f) return 0f;
+				float baseLevel = Mathf.Lerp(0f, Sea + ShelfHeight, land);
+				float rise = s.Height - ShelfHeight;
+				float cliff = 1f - SS(0.5f, 0.62f, rr);
+				float e = baseLevel + cliff * (rise + 0.4f * Fbm(p / 10f + topOff, 2));
+				float along = Vector2.Dot(p, rampDir), across = Mathf.Abs(p.x * rampDir.y - p.y * rampDir.x);
+				if (along > 0f)
+					e = Mathf.Max(e, baseLevel + rise * SS(1.05f, 0.45f, rr) * (1f - SS(5f, 9f, across)));
+				return e;
+			};
+		}
+
+		#endregion
 
 		static Vector2 RandomOffset(System.Random rnd)
 		{
@@ -360,8 +543,8 @@ namespace DynamicIslands.Editor
 		#region Islands generated while sailing
 
 		/// <summary>The editor's build area, which generated island files use too.</summary>
-		static readonly Vector3 BuildArea = new Vector3(1000f, 600f, 1000f);
-		const int BuildResolution = 513;
+		internal static readonly Vector3 BuildArea = new Vector3(1000f, 600f, 1000f);
+		internal const int BuildResolution = 513;
 
 		/// <summary>
 		/// A complete island file from settings, without the editor: heights, objects (the object catalog must be
@@ -397,7 +580,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Bilinear height (0..1) at terrain-local x, z.</summary>
-		static float SampleHeights(float[,] h, int res, float step, float x, float z)
+		internal static float SampleHeights(float[,] h, int res, float step, float x, float z)
 		{
 			float fx = Mathf.Clamp(x / step, 0, res - 1.001f), fz = Mathf.Clamp(z / step, 0, res - 1.001f);
 			int x0 = (int)fx, z0 = (int)fz;

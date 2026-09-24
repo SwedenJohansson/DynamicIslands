@@ -85,7 +85,10 @@ namespace DynamicIslands.Editor
 				d.SetTargetedByReciever(true);
 				d.SetLocalPosition(dir * (r.radarUIWidth * 0.5f * Mathf.Clamp01(dist / r.radarLength)));
 				d.SetLengthToPoint(dist);
-				d.SetText(dist.ToString("F0") + "m");
+				// Islands brought by a rule (WorldDirector) carry a name, e.g. "Old camp 820m"
+				string label = islands[i].Label ?? "";
+				if (label.Length > 18) label = label.Substring(0, 17) + "…";
+				d.SetText((label.Length > 0 ? label + " " : "") + dist.ToString("F0") + "m");
 				r.isCurrentlyShowingRadarDot = true;
 			}
 		}

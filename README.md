@@ -46,10 +46,13 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Terrain stamps** (Terrain tab): click to put down a Hill, Peak, Crater, Mesa, Lagoon or Ridge, as big as the brush; Q/E turn it. **Save stamp...** keeps the land under the brush as a stamp of your own (`Mods\DynamicIslands\stamps`).
   - **Island rules** (Island tab): how many in-game days until chopped trees, picked items, killed or caught animals, looted chests and fired zones come back on this island (empty = the world's setting, 0 = never).
   - Undo and redo everything, and save or load islands.
-  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
+  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, **layout** (round, atoll, archipelago, sea stacks, plateau, marsh), and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
+  - **Map types** (Generate window, "Or a map type"): whole islands with content, made from a seed and opened to edit: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island and wreck (see "Map types" below).
+  - **When the quest is done, bring a new island** (quest editor): a saved island or a new island of a map type, how far and which way from this island, a message for every player and a name on the Receiver. **Islands it brings...** (Island tab) edits all the island's rules: also "when step 2 is done", "when zone X fires", "when players first get here".
+  - **World plans** (top bar): plans for new worlds, made of rules (see "World plans" below). A plan editor with rule cards, **Check** (finds rules that can't work) and a sketch of where islands go, plus ready-made templates.
 - **In your worlds**
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
-  - Now and then a **brand-new random island** is generated instead: random size, style, and sometimes flying. It's saved as `gen-<style>-<seed>.island`, so it stays in that world. Set with `generated`, `generatedStyles` and `generatedFlyingChance` in `spawnpool.txt`.
+  - Now and then a **brand-new random island** is generated instead: random size, style, and sometimes flying. It's saved as `gen-<style>-<seed>.island`, so it stays in that world. Set with `generated`, `generatedStyles` and `generatedFlyingChance` in `spawnpool.txt`. Lines like `type:wreck 0.4` mix in **map types** (sandbars, wrecks, atolls, sunken islands... see below).
   - **Custom islands show on Raft's Receiver** as green dots with their distance, so you can navigate to them. Turn this off with `showOnReceiver = 0`.
   - You can also spawn one yourself with `SpawnIsland`.
   - Islands are saved with the world. You can walk on them, the raft runs aground on them, and palms, mango trees, rocks and berry bushes can be harvested.
@@ -61,7 +64,50 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Trigger zones** fire for whoever walks in; an ambush creature appears the moment its zone fires.
   - **Quests:** near an island with a quest, a panel shows its steps (done ones ticked). The introduction shows when you arrive, and each step done shows what's next. The quest is shared by everyone in the world and saved with it. When it's done, every player near the island gets the reward.
   - **Arriving** near an island that has a name or description shows it as a banner at the top of the screen, once per island per session.
-- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync.
+  - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
+  - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
+- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host.
+
+## World plans
+
+A **world plan** says which custom islands a world gets, **when** and **where**. It's a list of rules; each rule brings one island:
+
+| Part | Choices |
+|---|---|
+| **What** | a saved island · a new island of a **map type** (generated, e.g. a treasure island) · one from the spawn pool · one of a list of islands |
+| **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · after another rule |
+| **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) |
+| **Tell** | a message every player sees (with how far and which way the island is), and a name for its dot on the Receiver |
+
+Rules refer to islands by the id of the rule that brought them (e.g. "when the quest of `camp` is done, bring a treasure island 900 m north-east of `camp`"), or by island name. A plan can also keep the random islands of `spawnpool.txt` going.
+
+- **Choosing a plan:** Raft's New Game box has a "Custom Islands plan" button: click it to go through the plans. `WorldPlan` shows the current world's plan and its rules (done or not); `WorldPlan <name>` gives the world another plan. `defaultPlan` in `spawnpool.txt` is the plan new worlds get when nobody chooses.
+- **Built-in plans:** "Random islands" (islands by chance while sailing, as before) and "No custom islands".
+- **Sample plans** (written once to `Mods\DynamicIslands\plans`): **Island hopping** (an old camp, then each island you reach shows the way to the next), **Adventure** (a story: each quest leads to the next island, with a wreck and a sunken island on the way) and **Growing sea** (random islands plus a special one every few km and days). They only use map types, so they work without any islands of your own.
+- **Making plans:** top bar **World plans**: New / Copy / Delete, a description, "random islands while sailing" on or off, and the rules as cards. **Templates...** adds ready-made sets (story chain, sky chain, quest reward island...). **Check** lists what can't work, and a small map sketches where islands would go. Plans are text files, so they can also be edited by hand (the file explains the format).
+- **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
+- **Each rule fires once per world.** What has fired, the km sailed and which islands players have reached are saved with the world. The host places new islands clear of the raft, the other custom islands and Raft's own islands, and **Raft won't put its own islands on top of custom ones later**.
+
+## Map types
+
+Islands the generator makes by itself, with content. Plans use them (`type:<name>`), the quest editor can bring them, `spawnpool.txt` can mix them in (`type:<name> <weight>`), and the Generate window makes one to edit.
+
+| Type | What |
+|---|---|
+| `sandbar` | A tiny island with a few palms and a small chest: a rest stop |
+| `atoll` | A ring of low land around a shallow lagoon, turtles and a sunken barrel |
+| `archipelago` | Several islets on a shallow shelf; quest: a castaway's note and three caches |
+| `stacks` | Steep rock pillars; quest: a chest on top of the tallest (build your way up), a screecher |
+| `boss` | A plateau with cliffs and a ramp; walking into the arena wakes a boss bear (quest, big reward) |
+| `volcano` | A tall volcano with embers, red light and dark smoke near the crater |
+| `swamp` | Low land with pools, green mist and fireflies; quest: rats guard a stash |
+| `spire` | A snowy island with one very tall peak, falling snow, a polar bear and a cache on top |
+| `treasure` | A map in a bottle on the beach leads to the X and a treasure chest (quest) |
+| `camp` | An abandoned camp: fire, hammock, flag, notice board and supplies (quest); a good first island of a story |
+| `sunken` | An island under water: corals, sunken barrels, puffer fish and a turtle |
+| `sky` | A small island floating 45–90 m up, with a cache |
+| `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
+| `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
 
 ## Installing
 
@@ -73,7 +119,8 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 |---|---|
 | `*.island` | Saved islands. Share them by copying the file. |
 | `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
-| `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects. |
+| `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
+| `plans\*.plan` | World plans (text). `plans\samples.txt` lists the samples the mod has written once. |
 | `placeables_generated.txt` | The core objects the editor offers. Small indoor clutter is listed at the end, commented out. Copy the file to `placeables.txt` and edit it to choose your own list. |
 | `catalog_index.txt` | Only after a Raft update: which of Raft's island scenes each of the other objects comes from, made by the editor (the mod ships one for the current Raft). Delete it to scan again. |
 | `<name>_<hash>.island` | Islands downloaded from a multiplayer host. |
@@ -87,7 +134,8 @@ The screen has a **top bar**, a **tool panel** on the left, the **object browser
 | Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Delete asks first). Save saves straight away once the island has a name. |
 | Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
 | Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
-| Top bar | **Generate** | The island generator: seed, style, size, height, roughness, peaks and objects. Generating replaces the current island; Ctrl+Z brings the old one back. |
+| Top bar | **Generate** | The island generator: seed, style, layout, size, height, roughness, peaks and objects. Generating replaces the current island; Ctrl+Z brings the old one back. **Or a map type**: ◄ ► and **Make** (click twice) makes an island of that type from the seed, saves it as `gen-<type>-<seed>` and opens it. |
+| Top bar | **World plans** | The world plan editor: pick a plan, New / Copy / Delete, Templates..., random islands on/off, description, the rule cards (when · bring what · where · message · Receiver name), Check, the map, Save |
 | Terrain tab | **Sculpt** group | Raise / Lower / Flatten / Smooth. A ring shows the brush. |
 | Terrain tab | **Paint ground** group | The style's four textures (named after it, with a colour swatch) and **Auto** |
 | Terrain tab | **Brush** group | Size and strength |
@@ -100,7 +148,7 @@ The screen has a **top bar**, a **tool panel** on the left, the **object browser
 | Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
 | Terrain tab | **Stamps** group | Hill, Peak, Crater, Mesa, Lagoon, Ridge and your saved stamps (click the ground; Size = how big, Q/E turn); **Save stamp...** |
 | Objects tab | **Save as group...** (Selection) | The selected objects become a group under "My groups" (`DeleteGroup <name>` removes one) |
-| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages) |
+| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards |
 | Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never) |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
@@ -124,6 +172,7 @@ The blue plane is sea level. Anything below it is under water in game.
 | `ListSpawned` | Game | Lists the world's custom islands, with distance and state |
 | `SpawnPool` | Game | Shows which islands appear on their own, and how often |
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
+| `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
 Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.
@@ -170,7 +219,10 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients |
 | `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed |
-| `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise, object scatter by zone, and the Generate window |
+| `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in six layouts (round, atoll, archipelago, sea stacks, plateau, marsh), object scatter by zone, and the Generate window |
+| `MapTypes.cs` | Map types: settings ranges, flying/sunken, and their content (`MapKit`: chests, notes, zones, creatures, atmosphere, quests) |
+| `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
+| `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan choice in Raft's New Game box |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `RTSCamera.cs` | The editor |
 | `RuntimeGizmo\`, `AwaitExtensions\` | Third-party move/rotate/scale gizmo and await helpers |
 
@@ -180,6 +232,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 - Support for Unity-built `.assets` islands from version 2 was removed. Rebuild those islands in the editor.
 - Reaching a flying island is up to the player: build stairs or pillars up from the raft. The editor shows islands at sea level; the height only applies in game.
 - Creatures: catching with the net launcher, the host's creatures reaching a second player, players who join later, and the colour on other players' screens are built on Raft's own mechanisms, but they haven't been tested by hand or with two players yet. Raft has no pets, so "catchable" means Raft's domestic animals. The screecher's stone look can't be tinted.
+- World plans and island rules are checked by the host only. They were tested with one player and looped-back network messages; the announcement and the Receiver names on a second player's screen haven't been seen by a person yet.
+- The Receiver shows every custom island as a dot, however far; a plan with many islands fills the radar. Map type content is placed by the generator: a chest can end up in an awkward spot now and then (the Generate window's map types let you check and fix one before sharing it).
 - An island has one quest. Quest steps find things by name (zone name, note title, creature kind), so renaming a note breaks a step that points at it.
 - Atmosphere zones change Unity's fog and ambient light plus a faint screen tint; how strong the fog looks depends on Raft's own sky at that moment.
 - An island file with creatures, notes, a tint or island info is format 4: older versions of the mod can't open it. Islands without these are still saved in the older formats.

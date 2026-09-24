@@ -147,6 +147,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform app = ToolbarGroup(bar, "App");
 			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 84);
+			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
 			UIKit.Button(app, "Main menu", () => UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single),
 				"Back to Raft's main menu (save first!)", 92);
 		}
@@ -413,6 +414,7 @@ namespace DynamicIslands.Editor
 			RectTransform quest = UIKit.Group(s, "Quest");
 			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);
 			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
+			UIKit.Button(quest, "Islands it brings...", WorldPlanWindow.OpenIsland, "Rules of this island: when its quest (or a step, or a zone) is done, a new island appears near it - in any world", -1, 26f, 13);
 			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
 			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
 			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
@@ -433,7 +435,9 @@ namespace DynamicIslands.Editor
 			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
 			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
-			if (questText != null) questText.text = q.Exists ? "<color=#e8ecf2>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>";
+			int brings = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps).Count;
+			if (questText != null) questText.text = (q.Exists ? "<color=#e8ecf2>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +
+				(brings > 0 ? "\nBrings " + brings + " island(s) into a world" : "");
 		}
 
 		#endregion

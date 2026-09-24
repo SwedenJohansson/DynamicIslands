@@ -36,6 +36,10 @@ namespace DynamicIslands.Editor
 			public bool Failed;
 			/// <summary>Harvested trees and picked-up items, by object ordinal (IslandObjectState).</summary>
 			public Dictionary<int, ObjectState> State = new Dictionary<int, ObjectState>();
+			/// <summary>Id of the rule that brought the island (WorldDirector; other rules refer to it), or "".</summary>
+			public string Rule = "";
+			/// <summary>Its name on the Receiver ("" = just the distance).</summary>
+			public string Label = "";
 		}
 
 		static readonly List<Entry> islands = new List<Entry>();
@@ -115,16 +119,18 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
 				var lines = new List<string>
 				{
-					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)",
+					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label",
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
+				lines.AddRange(WorldDirector.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
-					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State)));
+					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
+						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/")));
 				}
 				File.WriteAllLines(FilePath, lines.ToArray());
 			}
@@ -139,24 +145,28 @@ namespace DynamicIslands.Editor
 			CustomIslandSpawner.Enabled = true;
 			CustomIslandSpawner.OnWorldLoaded();
 			IslandNetwork.OnWorldLoaded();
-			if (!Raft_Network.IsHost || !File.Exists(FilePath)) return;
+			WorldDirector.Reset();
+			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
+				int eq = line.IndexOf('=');
+				if (line.StartsWith("@") && eq > 1 && WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;
-				if ((p.Length != 4 && p.Length != 5) || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+				if (p.Length < 4 || p.Length > 7 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
 					continue;
 				}
 				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = p[0], HostName = p[0], Position = new Vector3(x, y, z),
-					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null) });
+					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" });
 			}
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
+			WorldDirector.OnWorldLoaded();
 		}
 	}
 

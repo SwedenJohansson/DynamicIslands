@@ -104,6 +104,8 @@ namespace DynamicIslands
 			//Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
 			HookUI();
 			SceneManager.sceneLoaded += OnSceneLoaded;
+			// Sample world plans, the first time (Mods\DynamicIslands\plans)
+			WorldPlanWindow.EnsureSamples();
 			// Custom islands saved with a world come back when it loads
 			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
 			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
@@ -195,6 +197,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Quests: " + e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
+			try { WorldDirector.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -267,7 +271,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
@@ -606,6 +610,20 @@ namespace DynamicIslands
 		public static void SpawnPoolCommand()
 		{
 			foreach (string line in CustomIslandSpawner.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+		}
+
+		[ConsoleCommand(name: "WorldPlan", docs: "The world plan: which islands this world gets, when and where. WorldPlan = show it and its rules; WorldPlan <name> = give this world another plan (host)")]
+		public static void WorldPlanCommand(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args).Trim() : "";
+			if (name.Length > 0)
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a world (the plan is per world); for a new world, choose it in the New Game box", true); return; }
+				if (!Raft_Network.IsHost) { Notify("Only the host can change the world plan", true); return; }
+				if (!WorldDirector.SetPlan(name, true)) { Notify("No world plan '" + name + "'. Plans: " + string.Join(", ", WorldPlan.All().ToArray()), true); return; }
+				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
+			}
+			foreach (string line in WorldDirector.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
 		[ConsoleCommand(name: "CustomIslandsAuto", docs: "Host: custom islands appear on their own while sailing in this world. Usage: CustomIslandsAuto on|off")]

@@ -58,6 +58,7 @@
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsContent.cs" />
+    <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -75,6 +76,11 @@
     <Compile Include="Quest.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
+    <Compile Include="WorldDirector.cs" />
+    <Compile Include="MapTypes.cs" />
+    <Compile Include="ChoiceWindow.cs" />
+    <Compile Include="WorldPlanWindow.cs" />
+    <Compile Include="NewWorldOptions.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />

@@ -17,9 +17,12 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		InputField seedField;
-		Text status, styleText;
+		Text status, styleText, shapeText;
 		UIKit.SliderRow radius, height, roughness, peaks, density;
-		int style;
+		int style, shape;
+		int mapType = 6;
+		Text mapTypeText;
+		float confirmUntil;
 
 		public static void Create(Transform canvas, GameObject unusedTemplate)
 		{
@@ -81,6 +84,13 @@ namespace DynamicIslands.Editor
 			styleText = UIKit.LabelOf(sb);
 			UIKit.Size(sb.gameObject, -1, -1, 1);
 			UIKit.Button(styleRow, ">", () => StepStyle(1), "Next style", 32);
+			RectTransform shapeRow = UIKit.Row(what, 30f, 4f, "ShapeRow");
+			UIKit.Size(UIKit.Label(shapeRow, "Layout", 14, UIKit.TextMuted).gameObject, 60);
+			UIKit.Button(shapeRow, "<", () => StepShape(-1), "Previous layout", 32);
+			Button shb = UIKit.Button(shapeRow, "", () => StepShape(1), "One round island, an atoll, an archipelago, sea stacks, a plateau or a marsh");
+			shapeText = UIKit.LabelOf(shb);
+			UIKit.Size(shb.gameObject, -1, -1, 1);
+			UIKit.Button(shapeRow, ">", () => StepShape(1), "Next layout", 32);
 
 			// Shape
 			RectTransform shape = UIKit.Group(panel, "Shape");
@@ -92,6 +102,16 @@ namespace DynamicIslands.Editor
 			// Objects
 			RectTransform objects = UIKit.Group(panel, "Objects");
 			density = UIKit.Slider(objects, "Trees, rocks and corals", 0f, 1f, 0.5f, v => v <= 0.01f ? "none" : v < 0.35f ? "few" : v < 0.7f ? "some" : "many", null, "How much nature the generator scatters");
+
+			// A whole map type: layout, style and content (chests, notes, a quest...), made as a new island file to edit
+			RectTransform types = UIKit.Group(panel, "Or a map type (with content)");
+			RectTransform typeRow = UIKit.Row(types, 30f, 4f, "Type");
+			UIKit.Button(typeRow, "<", () => StepType(-1), "Previous map type", 32);
+			Button tb = UIKit.Button(typeRow, "", () => StepType(1), "Map types: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island, wreck...");
+			mapTypeText = UIKit.LabelOf(tb);
+			UIKit.Size(tb.gameObject, -1, -1, 1);
+			UIKit.Button(typeRow, ">", () => StepType(1), "Next map type", 32);
+			UIKit.Button(typeRow, "Make", OnMakeType, "Make an island of this type from the seed, save it as gen-<type>-<seed> and open it (the current island is closed)", 70);
 
 			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			UIKit.Size(status.gameObject, -1, 34);
@@ -110,6 +130,56 @@ namespace DynamicIslands.Editor
 			SetStatus(TerrainPainter.StyleName(style) + " island" + (TerrainPainter.HasStyle(style) ? "" : " (its textures aren't loaded; it will look tropical)") + ".");
 		}
 
+		void StepShape(int step)
+		{
+			int n = IslandShapes.Names.Length;
+			shape = ((shape + step) % n + n) % n;
+			ShowShape();
+			SetStatus(IslandShapes.Hints[shape] + ".");
+		}
+
+		void ShowShape() { if (shapeText != null) shapeText.text = IslandShapes.Names[shape]; }
+
+		void StepType(int step)
+		{
+			int n = MapTypes.All.Count;
+			mapType = ((mapType + step) % n + n) % n;
+			ShowType();
+			SetStatus(MapTypes.All[mapType].Description + ".");
+		}
+
+		void ShowType() { if (mapTypeText != null) mapTypeText.text = MapTypes.All[mapType].Label; }
+
+		void OnMakeType()
+		{
+			if (Time.unscaledTime > confirmUntil)
+			{
+				confirmUntil = Time.unscaledTime + 6f;
+				SetStatus("This opens a new island: save the current one first. Click Make again to go ahead.");
+				return;
+			}
+			confirmUntil = 0f;
+			int seed;
+			if (!int.TryParse(seedField.text, NumberStyles.Integer, CultureInfo.InvariantCulture, out seed)) seed = UnityEngine.Random.Range(1, 999999);
+			string name = MakeType(MapTypes.All[mapType], seed);
+			if (name == null) { SetStatus("Making the island failed - see the console (F10)."); return; }
+			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + MapTypes.All[mapType].Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and save it."); }
+		}
+
+		/// <summary>Makes an island of a map type from a seed and saves it; returns its name (null if it failed).</summary>
+		public static string MakeType(MapType type, int seed)
+		{
+			try
+			{
+				float elevation;
+				IslandGenSettings s = MapTypes.Roll(type, new System.Random(seed), out elevation);
+				string name = MapTypes.FileName(type, s);
+				MapTypes.Create(type, s, elevation, name).Save(IslandSpawner.PathFor(name));
+				return name;
+			}
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Making a '" + type.Name + "' island failed: " + e); return null; }
+		}
+
 		void ShowStyle() { if (styleText != null) styleText.text = TerrainPainter.StyleName(style); }
 
 		void Show(IslandGenSettings s)
@@ -118,6 +188,9 @@ namespace DynamicIslands.Editor
 			radius.Slider.value = s.Radius; height.Slider.value = s.Height; roughness.Slider.value = s.Roughness; peaks.Slider.value = s.Peaks; density.Slider.value = s.ObjectDensity;
 			style = DynamicIslands.currentStyle; // start from the island's current style
 			ShowStyle();
+			shape = s.Shape;
+			ShowShape();
+			ShowType();
 		}
 
 		void OnGenerate()
@@ -127,7 +200,7 @@ namespace DynamicIslands.Editor
 			var s = new IslandGenSettings
 			{
 				Seed = seed, Radius = radius.Slider.value, Height = height.Slider.value, Roughness = roughness.Slider.value,
-				Peaks = Mathf.RoundToInt(peaks.Slider.value), ObjectDensity = density.Slider.value, Style = style
+				Peaks = Mathf.RoundToInt(peaks.Slider.value), ObjectDensity = density.Slider.value, Style = style, Shape = shape
 			};
 			try
 			{

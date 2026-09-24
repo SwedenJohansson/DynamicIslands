@@ -21,6 +21,8 @@ namespace DynamicIslands.Editor
 		public const int ObjectUsed = 6;
 		/// <summary>An island's quest moved on: Ids[0] = island, Index = step, Count = progress in it. Client -> host -> everyone.</summary>
 		public const int QuestStep = 7;
+		/// <summary>Host -> everyone: a rule brought a new island (WorldDirector). Name = title, Data = message, Offsets = where, relative to the raft.</summary>
+		public const int Announce = 8;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
@@ -31,6 +33,8 @@ namespace DynamicIslands.Editor
 		public float[] Offsets;
 		/// <summary>Harvested trees / picked-up items per island (IslandObjectState.Encode), for players who join later.</summary>
 		public string[] States;
+		/// <summary>Names shown on the Receiver (Entry.Label).</summary>
+		public string[] Labels;
 		public bool FullList;
 
 		// FileRequest / FileChunk: island file with this name and content hash, chunk Index of Count (base64)
@@ -131,6 +135,7 @@ namespace DynamicIslands.Editor
 				Names = list.Select(e => e.Name).ToArray(),
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
 				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
+				Labels = list.Select(e => e.Label ?? "").ToArray(),
 				Offsets = new float[list.Count * 3]
 			};
 			for (int i = 0; i < list.Count; i++)
@@ -160,6 +165,14 @@ namespace DynamicIslands.Editor
 			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = progress };
 			if (Raft_Network.IsHost) SendToClients(msg);
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
+		/// <summary>Host: tells everyone a rule brought this island (the banner with its direction).</summary>
+		public static void SendAnnounce(IslandWorldState.Entry e, string title, string message)
+		{
+			if (!Raft_Network.IsHost) return;
+			Vector3 o = e.Position - (CustomIslandSpawner.RaftPosition ?? Vector3.zero);
+			SendToClients(new IslandNetMessage { Kind = IslandNetMessage.Announce, Ids = new[] { e.Id }, Name = title, Data = message, Offsets = new[] { o.x, o.y, o.z } });
 		}
 
 		public static void BroadcastRemoved(IEnumerable<int> ids)
@@ -208,6 +221,10 @@ namespace DynamicIslands.Editor
 							if (Raft_Network.IsHost) SendToClients(msg);
 						}
 						break;
+					case IslandNetMessage.Announce:
+						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 3)
+							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", (CustomIslandSpawner.RaftPosition ?? Vector3.zero) + new Vector3(msg.Offsets[0], msg.Offsets[1], msg.Offsets[2]));
+						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
@@ -238,6 +255,7 @@ namespace DynamicIslands.Editor
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
 					raft + new Vector3(msg.Offsets[i * 3], msg.Offsets[i * 3 + 1], msg.Offsets[i * 3 + 2]));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
+				if (msg.Labels != null && i < msg.Labels.Length) entry.Label = msg.Labels[i] ?? "";
 				ResolveFile(entry);
 				added++;
 			}
