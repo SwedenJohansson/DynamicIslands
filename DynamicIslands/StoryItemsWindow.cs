@@ -160,6 +160,8 @@ namespace DynamicIslands.Editor
 			RectTransform row = UIKit.Row(g, 30f, 8f, "Sets");
 			UIKit.Button(row, "Locked door and its key", () => Place(StorySets.LockedDoor), "A door that only opens for the crew with the key, and the key in a chest nearby (with a note)", -1, 30f, 13);
 			UIKit.Button(row, "A trail of notes", () => Place(StorySets.NoteTrail), "Three notes that lead to a hidden chest with a story item; they go into the journal", -1, 30f, 13);
+			UIKit.Button(row, "A treasure map", () => Place(StorySets.TreasureMap), "A message in a bottle gives a treasure map; walking to the spot with it digs up a buried chest", -1, 30f, 13);
+			UIKit.Button(row, "A locked chest", () => Place(StorySets.LockedChest), "A chest that only opens with a small key, and driftwood nearby that hides the key", -1, 30f, 13);
 		}
 
 		void Place(Func<List<StoryItemDef>, Vector3, List<GameObject>> set)
@@ -290,6 +292,47 @@ namespace DynamicIslands.Editor
 			Put(list, "Loot_ChestSmall", at + new Vector3(12f, 0f, 6f), 200f, P(ObjectProps.LootItems, StoryItems.Ref(key.Id) + "*1", ObjectProps.NoteTitle, "Chest"));
 			Put(list, "Note_Paper", at + new Vector3(10.5f, 0f, 5f), 30f, P(ObjectProps.NoteTitle, "Note", ObjectProps.NoteText, "I locked the door and hid the key in the chest. Nobody gets in without it."));
 			if (list.Count < 3) { foreach (GameObject go in list) UnityEngine.Object.Destroy(go); return new List<GameObject>(); }
+			defs.Add(key);
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(list, true));
+			return list;
+		}
+
+		/// <summary>
+		/// A message in a bottle that gives the treasure map; 25 m away a hidden chest and a zone around it: a player
+		/// with the map who walks in digs the chest up (the zone checks for the map and fires every time until then).
+		/// </summary>
+		public static List<GameObject> TreasureMap(List<StoryItemDef> defs, Vector3 at)
+		{
+			var list = new List<GameObject>();
+			var map = new StoryItemDef { Name = "Treasure map", Icon = StoryItems.QuestIcon + "Vasagatan_FourDigitCode", Description = "A torn map with an X on it. The X is on this island." };
+			map.Id = StoryItems.NewId(defs, map.Name);
+			string chest = FreeName("buried-treasure");
+			Vector3 spot = at + new Vector3(20f, 0f, -15f);
+			Put(list, "Note_Bottle", at, 0f, P(ObjectProps.NoteTitle, "A message in a bottle", ObjectProps.NoteText, "Rolled up inside the bottle is a map. Someone marked a spot on this island with an X.",
+				BehaviourProps.EventKey("read"), "give||" + StoryItems.Ref(map.Id) + "*1"));
+			Put(list, "Loot_ChestSmall", spot, 160f, P(BehaviourProps.Name, chest, BehaviourProps.Hidden, "1", ObjectProps.LootItems, "Scrap*6;Nail*12;Plank*8", ObjectProps.NoteTitle, "Chest"));
+			Put(list, ContentCatalog.TriggerZone, spot, 0f, P(ObjectProps.ZoneId, "x-marks-the-spot", ObjectProps.ZoneRadius, "5", ObjectProps.ZoneRepeat, "1",
+				BehaviourProps.CheckKey("enter"), "has|" + StoryItems.Ref(map.Id) + "|1\n!state|" + chest + "|shown",
+				BehaviourProps.EventKey("enter"), "show|" + chest + "|\nmessage||The map leads here: something is buried under the sand!"));
+			if (list.Count < 3) { foreach (GameObject go in list) UnityEngine.Object.Destroy(go); return new List<GameObject>(); }
+			defs.Add(map);
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(list, true));
+			return list;
+		}
+
+		/// <summary>A chest that opens only with a small key (used up), and driftwood 10 m away that hides the key (while the crew hasn't got it).</summary>
+		public static List<GameObject> LockedChest(List<StoryItemDef> defs, Vector3 at)
+		{
+			var list = new List<GameObject>();
+			var key = new StoryItemDef { Name = "Small key", Icon = StoryItems.QuestIcon + "Vasagatan_BlueKey", Description = "A small key, the kind that opens a chest." };
+			key.Id = StoryItems.NewId(defs, key.Name);
+			Put(list, "Loot_Chest", at, 180f, P(ObjectProps.LootItems, "Scrap*5;Plank*10;Rope*4", ObjectProps.NoteTitle, "Chest",
+				BehaviourProps.CheckKey("open"), "take|" + StoryItems.Ref(key.Id) + "|1", BehaviourProps.ElseKey("open"), "message||The chest is locked."));
+			Put(list, "Log", at + new Vector3(10f, 0f, 4f), 70f, P(BehaviourProps.Use, "Search the driftwood",
+				BehaviourProps.CheckKey("use"), "!has|" + StoryItems.Ref(key.Id) + "|1",
+				BehaviourProps.EventKey("use"), "give||" + StoryItems.Ref(key.Id) + "*1\nmessage||Something glints between the branches: a small key!",
+				BehaviourProps.ElseKey("use"), "message||Nothing else here."));
+			if (list.Count < 2) { foreach (GameObject go in list) UnityEngine.Object.Destroy(go); return new List<GameObject>(); }
 			defs.Add(key);
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(list, true));
 			return list;

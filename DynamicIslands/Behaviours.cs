@@ -27,7 +27,9 @@ namespace DynamicIslands.Editor
 	///   if.&lt;event&gt;                     checks that must all pass before the actions run, one per line "kind|target|argument":
 	///                                   has (the player has items; "story:&lt;id&gt;" = a story item of the crew), take (has
 	///                                   them, and they are used up), state (objects with the name are open / closed / shown
-	///                                   / hidden), signal (was sent on this island), quest (the island's quest reached a step)
+	///                                   / hidden), signal (was sent on this island), quest (the island's quest reached a step).
+	///                                   "!kind|..." = NOT so; a line "any" = one passing check is enough. A chest checks
+	///                                   "if.open" before it gives its loot (a locked chest)
 	///   else.&lt;event&gt;                   actions when a check fails (usually a message: "It's locked.")
 	/// Verbs: show, hide, toggle (whether objects are there), open, close, switch (movers), message, give (items, story
 	/// items too), sound (one of Raft's sounds), teleport (the player to an object), signal (world plan and island rules can
@@ -87,7 +89,7 @@ namespace DynamicIslands.Editor
 			else if (!ContentCatalog.IsZone(objectName))
 			{
 				if (ObjectProps.IsNote(objectName, p)) list.Add(new KeyValuePair<string, string>("read", "it is read (the first time)"));
-				if (ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("open", "it is opened"));
+				if (ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("open", "it is opened (with checks: its loot stays locked until they pass)"));
 				if (!ObjectProps.IsNote(objectName, p) && !ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("use", "a player uses it (" + ObjectProps.Get(p, Use, "needs \"Players can use it\"") + ")"));
 			}
 			return list;
@@ -167,19 +169,29 @@ namespace DynamicIslands.Editor
 	public class ObjCheck
 	{
 		public string Kind = "take", Target = "", Arg = "";
+		/// <summary>The check passes when what it looks for is NOT so ("!has|story:key|1": the player hasn't got the key).</summary>
+		public bool Not;
+		/// <summary>A line "any" among the checks: one passing check is enough (otherwise all must pass).</summary>
+		public const string AnyLine = "any";
 
 		public static ObjCheck Parse(string line)
 		{
 			string[] p = (line ?? "").Split('|');
-			if (p.Length < 2 || !BehaviourProps.CheckKinds.Contains(p[0].Trim())) return null;
-			return new ObjCheck { Kind = p[0].Trim(), Target = p[1].Trim(), Arg = p.Length > 2 ? p[2].Trim() : "" };
+			string kind = p[0].Trim();
+			bool not = kind.StartsWith("!");
+			kind = kind.TrimStart('!').Trim();
+			if (p.Length < 2 || !BehaviourProps.CheckKinds.Contains(kind)) return null;
+			return new ObjCheck { Kind = kind, Not = not, Target = p[1].Trim(), Arg = p.Length > 2 ? p[2].Trim() : "" };
 		}
 
 		public static List<ObjCheck> ParseLines(string text) { return (text ?? "").Split('\n').Select(Parse).Where(c => c != null).ToList(); }
 
-		public static string ToLines(IEnumerable<ObjCheck> checks)
+		/// <summary>Whether the checks are "any of" (one passing is enough).</summary>
+		public static bool IsAny(string text) { return (text ?? "").Split('\n').Any(l => l.Trim().Equals(AnyLine, StringComparison.OrdinalIgnoreCase)); }
+
+		public static string ToLines(IEnumerable<ObjCheck> checks, bool any = false)
 		{
-			return string.Join("\n", checks.Select(c => c.Kind + "|" + (c.Target ?? "").Replace("|", "/").Trim() + "|" + (c.Arg ?? "").Replace("|", "/").Trim()).ToArray());
+			return (any ? AnyLine + "\n" : "") + string.Join("\n", checks.Select(c => (c.Not ? "!" : "") + c.Kind + "|" + (c.Target ?? "").Replace("|", "/").Trim() + "|" + (c.Arg ?? "").Replace("|", "/").Trim()).ToArray());
 		}
 
 		/// <summary>How many items it wants (at least 1).</summary>
@@ -194,12 +206,14 @@ namespace DynamicIslands.Editor
 
 		public bool IsItem { get { return Kind == "has" || Kind == "take"; } }
 
-		public string Describe()
+		public string Describe() { return (Not ? "NOT: " : "") + What(); }
+
+		string What()
 		{
 			switch (Kind)
 			{
 				case "has": return "the player has " + ItemText();
-				case "take": return "the player has " + ItemText() + " (used up)";
+				case "take": return "the player has " + ItemText() + (Not ? "" : " (used up)");
 				case "state": return "'" + Target + "' is " + (BehaviourProps.States.Contains(Arg) ? Arg : "open");
 				case "signal": return "the signal '" + Target + "' was sent";
 				case "quest": return Target == "done" || Target.Length == 0 ? "the island's quest is done" : "quest step " + Target + " is done";
@@ -496,26 +510,50 @@ namespace DynamicIslands.Editor
 		/// <summary>The last check that failed here, described (tests).</summary>
 		public static string LastFailedCheck { get; private set; }
 
+		/// <summary>Whether the event's checks are "any of" (one passing is enough).</summary>
+		public static bool AnyOf(IslandWorldState.Entry e, int index, string ev)
+		{
+			return ObjCheck.IsAny(ObjectProps.Get(PropsOf(e, index), BehaviourProps.CheckKey(ev)));
+		}
+
 		/// <summary>
-		/// Whether every check passes for this machine's player. Only when they all do, "take" checks use their items
-		/// up (Raft's items from this player's inventory, story items from the crew's).
+		/// Whether the checks pass for this machine's player: all of them, or with any, at least one. Only then "take"
+		/// checks use their items up (Raft's items from this player's inventory, story items from the crew's): all of
+		/// them, or with any, only the one that passed first.
 		/// </summary>
-		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks)
+		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks, bool any = false)
 		{
 			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
+			var passed = new List<ObjCheck>();
 			foreach (ObjCheck c in checks)
 			{
 				bool ok;
-				try { ok = Holds(e, index, c, inv); }
+				try { ok = Holds(e, index, c, inv) != c.Not; }
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Check '" + c.Kind + "': " + ex.Message); ok = false; }
-				if (!ok) { LastFailedCheck = c.Describe(); return false; }
+				if (ok) { passed.Add(c); if (any) break; }
+				else if (!any) { LastFailedCheck = c.Describe(); return false; }
 			}
-			foreach (ObjCheck c in checks.Where(x => x.Kind == "take"))
+			if (passed.Count == 0) { LastFailedCheck = "none of: " + string.Join(" / ", checks.Select(c => c.Describe()).ToArray()); return false; }
+			foreach (ObjCheck c in passed.Where(x => x.Kind == "take" && !x.Not))
 			{
 				if (StoryItems.IsStory(c.Target)) StoryBook.Take(StoryItems.IdOf(c.Target), c.Count);
 				else if (inv != null) inv.RemoveItem(c.Target, c.Count);
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// Checks an event before it happens (a chest checks before it gives its loot): true when there are no checks or
+		/// they pass; otherwise the "otherwise" actions run and it is false. The event is then fired with skipChecks.
+		/// </summary>
+		public static bool Allows(IslandWorldState.Entry e, int index, string ev)
+		{
+			if (e == null) return true;
+			if (index < 0) index = IslandIndex;
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			if (checks.Count == 0 || Passes(e, index, checks, AnyOf(e, index, ev))) return true;
+			Otherwise(e, index, ev, true);
+			return false;
 		}
 
 		static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, PlayerInventory inv)
@@ -552,7 +590,7 @@ namespace DynamicIslands.Editor
 		/// did it (gets the personal actions). The checks are made here first; when one fails, the "otherwise" actions
 		/// run instead. Shared actions run on the host (a client asks it). A wait puts the actions after it off.
 		/// </summary>
-		public static void Fire(IslandWorldState.Entry e, int index, string ev, bool localPlayer)
+		public static void Fire(IslandWorldState.Entry e, int index, string ev, bool localPlayer, bool skipChecks = false)
 		{
 			if (e == null) return;
 			if (index < 0) index = IslandIndex;
@@ -563,7 +601,7 @@ namespace DynamicIslands.Editor
 			bool once = ev == "read" || ev == "arrive";
 			int key = DoneBase + index;
 			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, ev == "arrive"); return; }
-			if (checks.Count > 0 && !Passes(e, index, checks))
+			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);
 				return;
@@ -605,7 +643,7 @@ namespace DynamicIslands.Editor
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			if (actions.Count == 0 && checks.Count == 0) return;
-			if (checks.Count > 0 && !Passes(e, index, checks)) ev += "!";
+			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
 			if (Near(e)) Schedule(e, index, actions, false, false);
 			Schedule(e, index, actions, true, false);
@@ -621,7 +659,7 @@ namespace DynamicIslands.Editor
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			if (actions.Count == 0 && checks.Count == 0) return;
-			if (checks.Count > 0 && !Passes(e, index, checks)) actions = ActionsOf(e, index, ev + "!");
+			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) actions = ActionsOf(e, index, ev + "!");
 			if (Near(e)) Schedule(e, index, actions, false, false);
 			if (Raft_Network.IsHost) Schedule(e, index, actions, true, false);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }

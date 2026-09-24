@@ -503,7 +503,7 @@ namespace DynamicIslands
 			Check(ref ok, sent != null && sent.Kind == IslandNetMessage.ObjectUsed && sent.Ids[0] == entry.Id && sent.Index == crates[0].StateKey, "the other players are told (" + (sent != null ? "message " + sent.Kind + ", key " + sent.Index : "nothing sent") + ")");
 			// A client receiving that message marks it too
 			entry.State.Remove(crates[0].StateKey);
-			ContentState.ApplyUsed(entry.Id, crates[0].StateKey, 3);
+			ContentState.ApplyUsed(entry.Id, crates[0].StateKey, WorldManager.DayCounter); // (today: an older day could already be past the regrow time)
 			Check(ref ok, crates[0].Looted, "a looted message from another player empties it here");
 
 			// The barrel with a note: opens and shows the note

@@ -139,6 +139,9 @@ namespace DynamicIslands.Editor
 			if (Looted) return new List<string>();
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || player.Inventory == null) return new List<string>();
+			// A locked chest: its "open" checks first (a key...); when they fail it says so and keeps its loot
+			IslandObjectRef r = GetComponentInParent<IslandObjectRef>();
+			if (r != null && !Behaviours.Allows(ContentState.EntryOf(transform), r.Index, "open")) return new List<string>();
 			// Marked first, so a second press in the same moment can't give it twice
 			ContentState.MarkUsed(transform, StateKey);
 			List<string> given = TriggerZone.Give(Items); // a full inventory: the rest lands in front of the player
@@ -146,8 +149,7 @@ namespace DynamicIslands.Editor
 			// A note inside: show it
 			CustomNote note = GetComponent<CustomNote>();
 			QuestTracker.Event(ContentState.EntryOf(transform), "open", note != null ? note.Title : "");
-			IslandObjectRef r = GetComponentInParent<IslandObjectRef>();
-			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "open", true);
+			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "open", true, true); // (checked above)
 			if (note != null) NoteReader.Open(note);
 			return given;
 		}

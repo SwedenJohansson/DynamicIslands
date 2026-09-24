@@ -34,6 +34,12 @@ namespace DynamicIslands
 			Check(ref ok, acts.Count == 5 && Mathf.Approximately(acts[1].Seconds, 2.5f) && Mathf.Approximately(acts[3].Seconds, 4f) && acts[4].Shared && !acts[1].Shared, "waits (\"wait||2.5\" and \"wait|4\") and journal pages are read");
 			Check(ref ok, BehaviourProps.EventKey("use!") == "else.use" && BehaviourProps.CheckKey("use") == "if.use" && BehaviourProps.Any(P("if.use", "has|x|1")), "the keys of checks and of what happens otherwise");
 			Check(ref ok, StoryItems.IsStory("story:key") && StoryItems.IdOf("story: key ") == "key" && !StoryItems.IsStory("Plank"), "story item names");
+			string notAny = "any\n!has|story:key|1\nsignal|horn|";
+			List<ObjCheck> na = ObjCheck.ParseLines(notAny);
+			Check(ref ok, na.Count == 2 && na[0].Not && !na[1].Not && ObjCheck.IsAny(notAny) && !ObjCheck.IsAny("has|x|1") && ObjCheck.ToLines(na, true) == notAny && na[0].Describe().StartsWith("NOT"),
+				"\"not\" checks (!has) and \"any of\" (a line any) are read and written back");
+			var steps = IslandQuest.From(P(IslandQuest.KeySteps, "collect|story:map-piece|3|\npages||2|\npages|all|1|"));
+			Check(ref ok, steps.Steps.Count == 3 && steps.Steps[0].Count == 3 && IslandQuest.Counted("pages") && steps.Steps[2].Describe().Contains("any island"), "quest steps collect and pages are read (" + string.Join(" / ", steps.Steps.Select(s => s.Describe()).ToArray()) + ")");
 
 			// The story items window
 			EditorUI.SetTab(TAB.Island);
@@ -72,17 +78,24 @@ namespace DynamicIslands
 			Check(ref ok, trail.All(go => !go.activeSelf) && set.All(go => go.activeSelf), "undo takes the trail away (the door set stays)");
 			CommandUndoRedo.UndoRedoManager.Redo();
 			Check(ref ok, trail.All(go => go.activeSelf), "redo brings it back");
+			List<GameObject> map = StorySets.TreasureMap(StoryItemsWindow.Editing, StorySets.ViewCentre() + new Vector3(0f, 0f, 40f));
+			EditorGameObject zone = map.Select(go => go.GetComponent<EditorGameObject>()).FirstOrDefault(x => x.GameObjectName == ContentCatalog.TriggerZone);
+			Check(ref ok, map.Count == 3 && zone != null && ObjectProps.Get(zone.Props, BehaviourProps.CheckKey("enter")).Contains("!state|"), "the treasure map set: a bottle, a buried chest and a zone that needs the map (and a not-yet-dug chest)");
+			List<GameObject> locked = StorySets.LockedChest(StoryItemsWindow.Editing, StorySets.ViewCentre() + new Vector3(40f, 0f, 40f));
+			EditorGameObject lockedChest = locked.Count > 0 ? locked[0].GetComponent<EditorGameObject>() : null;
+			Check(ref ok, locked.Count == 2 && lockedChest != null && ObjectProps.Get(lockedChest.Props, BehaviourProps.CheckKey("open")).StartsWith("take|story:small-key") &&
+				ObjectProps.Get(locked[1].GetComponent<EditorGameObject>().Props, BehaviourProps.CheckKey("use")).StartsWith("!has|"), "the locked chest set: the chest needs the key, the driftwood gives it while the crew hasn't got it");
 			StoryItemsWindow.SaveNow();
 			yield return null;
 			List<StoryItemDef> defs = StoryItems.Of(DynamicIslands.currentIslandProps);
-			Check(ref ok, !StoryItemsWindow.IsOpen && defs.Count == 3 && defs.Any(d => d.Id == keyId && d.Icon.StartsWith(StoryItems.QuestIcon)), "saved: 3 story items on the island (" + string.Join(", ", defs.Select(d => d.Id).ToArray()) + ")");
+			Check(ref ok, !StoryItemsWindow.IsOpen && defs.Count == 5 && defs.Any(d => d.Id == keyId && d.Icon.StartsWith(StoryItems.QuestIcon)), "saved: 5 story items on the island (" + string.Join(", ", defs.Select(d => d.Id).ToArray()) + ")");
 			Check(ref ok, ContentCatalog.ItemLabel("story:" + keyId) == "Rusty key" && ContentCatalog.ItemSprite("story:" + keyId) != null, "story items have their name and picture wherever items show");
 
 			// The item picker lists them first
 			ItemPickerWindow.OpenFor(() => "", v => { });
 			yield return new WaitForSecondsRealtime(0.4f);
 			Transform storyGrid = EditorUI.Canvas.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "StoryGrid");
-			Check(ref ok, storyGrid != null && storyGrid.childCount == 3, "the item picker shows the island's 3 story items first (" + (storyGrid != null ? storyGrid.childCount : -1) + ")");
+			Check(ref ok, storyGrid != null && storyGrid.childCount == 5, "the item picker shows the island's 5 story items first (" + (storyGrid != null ? storyGrid.childCount : -1) + ")");
 			Screenshot(new[] { "story_picker" });
 			yield return new WaitForSecondsRealtime(0.6f);
 			ItemPickerWindow.Close();
@@ -105,7 +118,7 @@ namespace DynamicIslands
 			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("cistory"));
 			IslandObject fd = f.Objects.FirstOrDefault(o => ObjectProps.Get(o.Props, BehaviourProps.CheckKey("use")).Length > 0);
 			Check(ref ok, fd != null && ObjectProps.Get(fd.Props, BehaviourProps.EventKey("use")) == "switch||\nwait||3\nswitch||" && ObjectProps.Get(fd.Props, BehaviourProps.ElseKey("use")).Length > 0 &&
-				StoryItems.Of(f.Props).Count == 3, "saved and read back: checks, otherwise, waits and story items");
+				StoryItems.Of(f.Props).Count == 5, "saved and read back: checks, otherwise, waits and story items");
 			File.Delete(IslandSpawner.PathFor("cistory"));
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
@@ -157,6 +170,18 @@ namespace DynamicIslands
 			int loopIdx = f.Objects.Count;
 			f.Objects.Add(new IslandObject { Name = "Log", Position = ground(c.x - 6f, c.y) + Vector3.up, Props = P(BehaviourProps.Move, "0,2,0", BehaviourProps.MoveTime, "3", BehaviourProps.MoveMode, "loop",
 				BehaviourProps.Spin, "40", BehaviourProps.Bob, "0.3", BehaviourProps.Collision, "none") });
+			int lockedIdx = f.Objects.Count;
+			f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = ground(c.x - 8f, c.y - 6f), Props = P(ObjectProps.LootItems, "Rope*2",
+				BehaviourProps.CheckKey("open"), "take|story:small-key|1", BehaviourProps.ElseKey("open"), "message||The chest is locked.") });
+			int driftIdx = f.Objects.Count;
+			f.Objects.Add(new IslandObject { Name = "Log", Position = ground(c.x - 8f, c.y + 6f), Props = P(BehaviourProps.Use, "Search the driftwood",
+				BehaviourProps.CheckKey("use"), "!has|story:small-key|1", BehaviourProps.EventKey("use"), "give||story:small-key*1\nmessage||A small key!", BehaviourProps.ElseKey("use"), "message||Nothing else here.") });
+			int bellIdx = f.Objects.Count;
+			f.Objects.Add(new IslandObject { Name = "Log", Position = ground(c.x + 8f, c.y - 6f), Props = P(BehaviourProps.Use, "Ring the bell",
+				BehaviourProps.CheckKey("use"), "any\nhas|story:gem|5\nsignal|bell-ok|", BehaviourProps.EventKey("use"), "message||The bell rings.", BehaviourProps.ElseKey("use"), "message||The bell is stuck.") });
+			f.Props[StoryItems.Key] += "\nsmall-key|Small key||A small key.\ngem|Gem||A green gem.";
+			f.Props[IslandQuest.KeyTitle] = "Gems and pages";
+			f.Props[IslandQuest.KeySteps] = "collect|story:gem|2|\npages||1|";
 			f.Save(IslandSpawner.PathFor("cistoryworld"));
 			var created = new List<string> { "cistoryworld" };
 
@@ -218,6 +243,34 @@ namespace DynamicIslands
 			// A client's story change reaches the host
 			StoryBook.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Story, Name = "give", Data = "brass-key|2|Brass%20key||" });
 			Check(ref ok, StoryBook.Count("brass-key") == 2, "a client's story change (2 keys) is applied by the host");
+
+			// A locked chest, and a "not" check on the driftwood that hides its key
+			LootCrate locked = obj(lockedIdx) != null ? obj(lockedIdx).GetComponentInChildren<LootCrate>(true) : null;
+			List<string> got = locked != null ? locked.Open() : new List<string>();
+			NoteReader.Close();
+			Check(ref ok, locked != null && got.Count == 0 && !locked.Looted && Behaviours.LastMessage == "The chest is locked.", "the locked chest keeps its loot without the key and says so");
+			Behaviours.Fire(e, driftIdx, "use", true);
+			Check(ref ok, StoryBook.Count("small-key") == 1 && Behaviours.LastMessage == "A small key!", "the driftwood gives the key (the crew hasn't got one)");
+			Behaviours.Fire(e, driftIdx, "use", true);
+			Check(ref ok, StoryBook.Count("small-key") == 1 && Behaviours.LastMessage == "Nothing else here.", "a \"not\" check: while the crew holds the key the driftwood gives nothing");
+			got = locked != null ? locked.Open() : new List<string>();
+			NoteReader.Close();
+			Check(ref ok, got.Count > 0 && locked.Looted && StoryBook.Count("small-key") == 0, "with the key the chest opens, gives its loot and uses the key up (" + string.Join(", ", got.ToArray()) + ")");
+
+			// "Any of": one passing check is enough
+			Behaviours.Fire(e, bellIdx, "use", true);
+			Check(ref ok, Behaviours.LastMessage == "The bell is stuck.", "any of: when none passes, the otherwise message (" + Behaviours.LastFailedCheck + ")");
+			e.State[Behaviours.SignalKey("bell-ok")] = new ObjectState { Active = true };
+			Behaviours.Fire(e, bellIdx, "use", true);
+			Check(ref ok, Behaviours.LastMessage == "The bell rings.", "any of: one passing check (the signal) is enough");
+
+			// Counted quest steps: collect story items, find pages
+			Check(ref ok, QuestTracker.StepOf(e) == 0, "the quest waits for 2 gems");
+			StoryBook.Give("gem", 2);
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, QuestTracker.StepOf(e) >= 1, "collecting 2 gems (story items) does the collect step");
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, QuestTracker.StepOf(e) >= 2, "a journal page from this island (the vault) does the pages step: the quest is done");
 
 			// Reading a note puts it in the journal; the journal window
 			CustomNote note = obj(noteIdx) != null ? obj(noteIdx).GetComponentInChildren<CustomNote>(true) : null;

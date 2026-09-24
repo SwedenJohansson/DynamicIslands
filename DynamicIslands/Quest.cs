@@ -15,11 +15,16 @@ namespace DynamicIslands.Editor
 	///   reach  - a trigger zone (its name)             read  - a note (its title)
 	///   open   - a chest (its note title; empty = any)  kill  - creatures of a kind ("Warthog"), a number of them
 	///   catch  - a catchable animal of a kind ("Llama")
+	///   collect - the crew holds a number of a story item ("story:map-piece", 5 of them)
+	///   pages  - the crew's journal has a number of pages found on this island (target "all": on any island)
 	/// </summary>
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch" };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages" };
+
+		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
+		public static bool Counted(string type) { return type == "collect" || type == "pages"; }
 
 		public class Step
 		{
@@ -37,6 +42,8 @@ namespace DynamicIslands.Editor
 					case "open": return Target.Length > 0 ? "Open \"" + Target + "\"" : "Open a chest";
 					case "kill": return "Defeat " + (Count > 1 ? Count + " " : "a ") + (Target.Length > 0 ? Target.ToLowerInvariant() + (Count > 1 ? "s" : "") : "creature" + (Count > 1 ? "s" : ""));
 					case "catch": return "Catch " + (Count > 1 ? Count + " " : "a ") + (Target.Length > 0 ? Target.ToLowerInvariant() + (Count > 1 ? "s" : "") : "animal" + (Count > 1 ? "s" : ""));
+					case "collect": return "Find " + (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? StoryItems.Label(Target) : "a story item");
+					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 				}
 				return Type;
 			}
@@ -194,6 +201,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); if (panel != null) panel.gameObject.SetActive(false); return; }
+			if (Raft_Network.IsHost) CheckCounted();
 			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && QuestOf(e).Exists && Near(e));
 			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			IslandQuest q = QuestOf(at);
@@ -209,12 +217,33 @@ namespace DynamicIslands.Editor
 				if (i < step) lines.Add("<color=#8fdc8f>\u221A</color> <color=#b89e70>" + d + "</color>");
 				else if (i == step)
 				{
-					int progress = ProgressOf(at);
+					int progress = IslandQuest.Counted(q.Steps[i].Type) ? Mathf.Min(Found(at, q.Steps[i]), q.Steps[i].Count) : ProgressOf(at);
 					lines.Add("<color=#ffc766>\u25BA</color> " + d + (q.Steps[i].Count > 1 ? " (" + progress + "/" + q.Steps[i].Count + ")" : ""));
 				}
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
 			stepsText.text = string.Join("\n", lines.ToArray());
+		}
+
+		/// <summary>How far a counted step is: story items the crew holds, or journal pages found on the island.</summary>
+		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
+		{
+			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.Count(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
+			if (s.Type == "pages")
+				return StoryBook.Pages.Count(p => s.Target == "all" || p.Key.StartsWith("note:" + e.HostName + ":") || p.Key.StartsWith("act:" + e.HostName + ":"));
+			return 0;
+		}
+
+		/// <summary>Host: counted steps (story items, pages) move on when the crew has enough; everyone is told.</summary>
+		static void CheckCounted()
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
+			{
+				IslandQuest q = QuestOf(e);
+				int step = StepOf(e);
+				if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
+				if (Found(e, q.Steps[step]) >= q.Steps[step].Count) Set(e, step + 1, 0, true);
+			}
 		}
 
 		static void Build()

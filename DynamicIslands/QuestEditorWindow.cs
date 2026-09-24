@@ -212,13 +212,14 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
 		{
 			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest)" },
 			{ "kill", "creature (e.g. Warthog; empty = any)" }, { "catch", "animal (e.g. Llama; empty = any)" },
+			{ "collect", "story item (\u2026 to choose)" }, { "pages", "empty = this island, all = any island" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -241,12 +242,13 @@ namespace DynamicIslands.Editor
 				{
 					s.Type = IslandQuest.Types[(Array.IndexOf(IslandQuest.Types, s.Type) + 1) % IslandQuest.Types.Length];
 					ShowSteps();
-				}, "Click to change what the player must do: go to, read, open, defeat, catch", 70, 28f, 12);
+				}, "Click to change what the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 70, 28f, 12);
 				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly (see the names below)");
 				UIKit.Size(target.gameObject, 220, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());
 				fields.Add(target);
-				if (s.Type == "kill" || s.Type == "catch")
+				if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; ShowSteps(); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
+				if (s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type))
 				{
 					InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
 					UIKit.Size(count.gameObject, 44, 28);

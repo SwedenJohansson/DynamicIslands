@@ -27,6 +27,7 @@ namespace DynamicIslands.Editor
 		readonly Dictionary<string, List<ObjAction>> actions = new Dictionary<string, List<ObjAction>>();
 		readonly Dictionary<string, List<ObjCheck>> checks = new Dictionary<string, List<ObjCheck>>();
 		readonly Dictionary<string, List<ObjAction>> elses = new Dictionary<string, List<ObjAction>>();
+		readonly Dictionary<string, bool> anyOf = new Dictionary<string, bool>();
 		Text titleText, summaryText;
 		RectTransform body;
 		readonly List<InputField> fields = new List<InputField>();
@@ -85,11 +86,13 @@ namespace DynamicIslands.Editor
 			actions.Clear();
 			checks.Clear();
 			elses.Clear();
+			anyOf.Clear();
 			foreach (string ev in Events()) actions[ev] = ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.EventKey(ev)));
 			foreach (string ev in Events())
 			{
 				checks[ev] = ObjCheck.ParseLines(ObjectProps.Get(props, BehaviourProps.CheckKey(ev)));
 				elses[ev] = ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.ElseKey(ev)));
+				anyOf[ev] = ObjCheck.IsAny(ObjectProps.Get(props, BehaviourProps.CheckKey(ev)));
 			}
 		}
 
@@ -292,8 +295,12 @@ namespace DynamicIslands.Editor
 			RectTransform box = UIKit.Rect("Checks", g);
 			UIKit.Background(box.gameObject, new Color(0.23f, 0.13f, 0.06f, 0.35f), 6);
 			UIKit.Vertical(box.gameObject, 4f, new RectOffset(8, 8, 5, 6));
-			Text t = UIKit.Label(box, "ONLY IF (all of these)", 12, UIKit.Tan, TextAnchor.MiddleLeft, FontStyle.Normal, "Title");
-			UIKit.Size(t.gameObject, -1, 18);
+			RectTransform head = UIKit.Row(box, 24f, 6f, "Title");
+			UIKit.Size(UIKit.Label(head, "ONLY IF", 12, UIKit.Tan, TextAnchor.MiddleLeft, FontStyle.Normal, "Title").gameObject, 60);
+			Button mode = UIKit.Button(head, anyOf[ev] ? "any of these" : "all of these", () => { Keep(); anyOf[ev] = !anyOf[ev]; Rebuild(); },
+				"All: every check must pass. Any: one passing check is enough (only its items are used up). Click to change", 120, 24f, 12);
+			UIKit.SetActive(mode, anyOf[ev]);
+			UIKit.Label(head, "", 12);
 			List<ObjCheck> list = checks[ev];
 			for (int i = 0; i < list.Count; i++) CheckRow(box, list, i);
 			RectTransform other = UIKit.Row(box, 28f, 6f, "Otherwise");
@@ -313,6 +320,8 @@ namespace DynamicIslands.Editor
 		{
 			ObjCheck c = list[index];
 			RectTransform row = UIKit.Row(g, 28f, 4f, "Check");
+			Button not = UIKit.Button(row, c.Not ? "not" : "is", () => { Keep(); c.Not = !c.Not; Rebuild(); }, "\"not\" turns the check round: it passes when this is NOT so (the player hasn't got the key yet...)", 44, 28f, 12);
+			UIKit.SetActive(not, c.Not);
 			UIKit.Button(row, CheckLabels[c.Kind], () =>
 			{
 				Keep();
@@ -441,7 +450,7 @@ namespace DynamicIslands.Editor
 			{
 				List<ObjCheck> list = kv.Value.Where(c => c.Target.Length > 0 || c.Kind == "quest").ToList();
 				if (list.Count == 0) { p.Remove(BehaviourProps.CheckKey(kv.Key)); p.Remove(BehaviourProps.ElseKey(kv.Key)); continue; }
-				p[BehaviourProps.CheckKey(kv.Key)] = ObjCheck.ToLines(list);
+				p[BehaviourProps.CheckKey(kv.Key)] = ObjCheck.ToLines(list, anyOf[kv.Key]);
 				List<ObjAction> otherwise = elses[kv.Key].Where(a => !(ObjAction.HasArg(a.Verb) && a.Arg.Length == 0)).ToList();
 				if (otherwise.Count == 0) p.Remove(BehaviourProps.ElseKey(kv.Key));
 				else p[BehaviourProps.ElseKey(kv.Key)] = ObjAction.ToLines(otherwise);
