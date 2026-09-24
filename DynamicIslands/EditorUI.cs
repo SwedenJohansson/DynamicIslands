@@ -218,6 +218,13 @@ namespace DynamicIslands.Editor
 			strengthSlider = UIKit.Slider(brush, "Strength", terraineditor.MinStrength, terraineditor.MaxStrength, terraineditor.strength, StrengthText,
 				v => terraineditor.strength = v, "How fast the brush works (console: ChangeStrength)");
 
+			RectTransform stamps = UIKit.Group(s, "Stamps");
+			stampButtonsRoot = UIKit.Rect("StampButtons", stamps);
+			UIKit.Vertical(stampButtonsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
+			UIKit.Button(stamps, "Save stamp...", SaveStamp, "Keep the land under the brush (as big as the brush) as a stamp of your own", -1, 24f, 12);
+			TerrainStamps.Load();
+			RefreshStamps();
+
 			Tips(s, "Left mouse: use the brush\nRight mouse: look around \u00B7 WASD: fly \u00B7 Shift: faster \u00B7 Wheel: up/down\nThe blue plane is the sea level");
 			return s;
 		}
@@ -253,6 +260,8 @@ namespace DynamicIslands.Editor
 			UIKit.Button(s2, "Deselect", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(); }, "Clear the selection");
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
 			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			RectTransform s3 = UIKit.Row(sel, 26f);
+			UIKit.Button(s3, "Save as group...", SaveGroup, "Keep the selected objects (a hut with its furniture, a camp...) as a group in \"My groups\", to place again on any island", -1, 26f, 13);
 
 			// The selected object's settings (creature editor, note, colour) appear here, in place of Placing and the tips
 			ObjectInspector.Build(s);
@@ -313,9 +322,74 @@ namespace DynamicIslands.Editor
 			return t;
 		}
 
+		static RectTransform stampButtonsRoot;
+		static readonly List<Button> stampButtons = new List<Button>();
+
+		/// <summary>One button per stamp (built-in and saved), three to a row.</summary>
+		public static void RefreshStamps()
+		{
+			if (stampButtonsRoot == null) return;
+			foreach (Transform child in stampButtonsRoot) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
+			stampButtons.Clear();
+			RectTransform row = null;
+			for (int i = 0; i < TerrainStamps.All.Count; i++)
+			{
+				if (i % 3 == 0) row = UIKit.Row(stampButtonsRoot, 24f, 4f);
+				int index = i;
+				TerrainStamps.Stamp st = TerrainStamps.All[i];
+				stampButtons.Add(UIKit.Button(row, st.Name, () => SetStamp(index),
+					(st.BuiltIn ? "Stamp a " + st.Name.ToLowerInvariant() : "Your stamp '" + st.Name + "'") + ": click the ground; the Size slider sets how big, Q/E turn it", -1, 24f, 12));
+			}
+			HighlightStamps();
+		}
+
+		static void SetStamp(int index)
+		{
+			TerrainStamps.Selected = index;
+			SetBrush(terraineditor.TerrainModificationAction.Stamp);
+		}
+
+		static void HighlightStamps()
+		{
+			bool on = terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp;
+			for (int i = 0; i < stampButtons.Count; i++) UIKit.SetActive(stampButtons[i], on && i == TerrainStamps.Selected);
+		}
+
+		static void SaveStamp()
+		{
+			if (!terraineditor.LastPoint.HasValue) { DynamicIslands.Notify("Point the brush at the land to keep first, then click Save stamp", true); return; }
+			Vector3 at = terraineditor.LastPoint.Value;
+			float radius = terraineditor.brushRadius;
+			TextPromptWindow.Open("Save stamp", "The land in the brush circle (" + (radius * 2f).ToString("F0") + " m across, at the last place the brush was) becomes a stamp to put down anywhere.", "my stamp", name =>
+			{
+				TerrainStamps.Save(TerrainStamps.Capture(terraineditor.terrain, at, radius, name));
+				TerrainStamps.Load();
+				RefreshStamps();
+				SetStamp(TerrainStamps.All.FindIndex(s => s.Name == name && !s.BuiltIn));
+				DynamicIslands.Notify("Saved stamp '" + name + "': click the ground to put it down");
+			});
+		}
+
+		/// <summary>Selection's "Save as group...": asks a name, saves the selected objects as a group and adds it to "My groups".</summary>
+		static void SaveGroup()
+		{
+			TransformGizmo g = DynamicIslands.EditorGizmoHandler;
+			List<EditorGameObject> sel = g == null ? new List<EditorGameObject>() : g.SelectedRoots.Where(t => t != null).Select(t => t.GetComponent<EditorGameObject>()).Where(e => e != null).ToList();
+			if (sel.Count == 0) { DynamicIslands.Notify("Select the objects for the group first (Shift+click adds to the selection)", true); return; }
+			TextPromptWindow.Open("Save as group", sel.Count + " object(s) become a group in \"My groups\" on the object list, to place again on any island. Their settings (creatures, notes, loot, colours) come along.",
+				"my group", name =>
+				{
+					bool exists = GroupLibrary.Saved().Contains(name, StringComparer.OrdinalIgnoreCase);
+					int n = GroupLibrary.Save(name, sel);
+					DynamicIslands.instance.StartCoroutine(GroupLibrary.Register(name));
+					DynamicIslands.Notify((exists ? "Replaced" : "Saved") + " group '" + name + "' (" + n + " objects): find it under \"My groups\"");
+				});
+		}
+
 		static RectTransform placingGroup;
 		static GameObject objectTips;
 		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField;
+		static Text questText;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
 		static void BuildInfoTools(Transform s)
@@ -336,6 +410,9 @@ namespace DynamicIslands.Editor
 			infoRegrowField.characterLimit = 3;
 			UIKit.Size(UIKit.Label(regrow, "days", 13, UIKit.TextMuted).gameObject, 34);
 			infoRegrowField.onEndEdit.AddListener(v => { int d; SetInfo(IslandProps.RegrowDays, int.TryParse(v, out d) ? Mathf.Clamp(d, 0, 999).ToString() : ""); RefreshInfo(); });
+			RectTransform quest = UIKit.Group(s, "Quest");
+			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);
+			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
 			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
 			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
 			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
@@ -355,6 +432,8 @@ namespace DynamicIslands.Editor
 			infoAuthorField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Author);
 			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
 			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
+			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
+			if (questText != null) questText.text = q.Exists ? "<color=#e8ecf2>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>";
 		}
 
 		#endregion
@@ -483,6 +562,7 @@ namespace DynamicIslands.Editor
 				default: active = -1; break;
 			}
 			Highlight(brushButtons, active);
+			HighlightStamps();
 		}
 
 		static TransformType shownGizmoType = TransformType.Move;
@@ -556,6 +636,8 @@ namespace DynamicIslands.Editor
 				case TAB.TerrainEdit:
 					string tool = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? "Painting " + TerrainPainter.SlotLabel(DynamicIslands.currentStyle, terraineditor.paintLayer)
 						: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? "Auto texturing" : terraineditor.modificationAction.ToString();
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp && TerrainStamps.Current != null)
+						return "Stamp " + TerrainStamps.Current.Name + ": click the ground \u00B7 Size = how big (" + (terraineditor.brushRadius * 2f).ToString("F0") + " m) \u00B7 Q/E turn it (" + TerrainStamps.Rotation.ToString("F0") + "\u00B0) \u00B7 Ctrl+Z undoes";
 					return tool + ": hold the left mouse button on the ground \u00B7 Ctrl+Z undoes a stroke";
 				case TAB.ObjectPlace: return "Pick an object from the list on the right, then click where it goes \u00B7 1-4 change the gizmo \u00B7 Delete removes the selection";
 				default: return "Island settings are saved with the island (Ctrl+S)";

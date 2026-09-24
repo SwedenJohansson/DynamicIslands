@@ -191,6 +191,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island network: " + e); }
 			try { CreatureSpawner.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Creatures: " + e); }
+			try { QuestTracker.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Quests: " + e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
 		}
@@ -265,7 +267,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
@@ -273,6 +275,8 @@ namespace DynamicIslands
 			catalogNote.Close();
 			// Creature models seen in a world since the catalog was built replace their markers
 			try { ContentCatalog.UpgradeMarkers(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creature models: " + e.Message); }
+			// The builder's saved object groups ("My groups")
+			instance.StartCoroutine(GroupLibrary.RegisterAll());
 			currentIslandProps = new Dictionary<string, string>();
 			// Raft's own ground textures are borrowed while the catalog loads its islands; a new island starts tropical,
 			// at sea level
@@ -338,6 +342,15 @@ namespace DynamicIslands
 		public static void LoadIslandCommand(string[] args)
 		{
 			LoadIsland(args != null && args.Length > 0 ? string.Join(" ", args) : currentIslandName);
+		}
+
+		[ConsoleCommand(name: "DeleteGroup", docs: "Editor: deletes a saved object group (Mods\\DynamicIslands\\groups). Usage: DeleteGroup <name>")]
+		public static void DeleteGroupCommand(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args) : "";
+			if (name.Length == 0) { Notify("Usage: DeleteGroup <name>   Groups: " + string.Join(", ", GroupLibrary.Saved().ToArray()), true); return; }
+			bool deleted = GroupLibrary.Delete(name);
+			Notify(deleted ? "Deleted group '" + name + "'" : "No group called '" + name + "'", !deleted);
 		}
 
 		[ConsoleCommand(name: "ListIslands", docs: "Lists saved islands (.island files in Mods\\DynamicIslands)")]

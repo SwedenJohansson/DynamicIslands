@@ -29,6 +29,23 @@ namespace DynamicIslands.Editor
 		public const string ZoneId = "zone.id", ZoneRadius = "zone.radius", ZoneMessage = "zone.message", ZoneRepeat = "zone.repeat", CreatureZone = "creature.zone";
 		public const float MinZoneRadius = 1f, MaxZoneRadius = 50f;
 
+		/// <summary>Atmosphere zones: fog colour and thickness, light tint and strength, particles (AtmosphereZone.ParticleKinds).</summary>
+		public const string AtmoFog = "atmo.fog", AtmoFogAmount = "atmo.fogAmount", AtmoLight = "atmo.light", AtmoLightAmount = "atmo.lightAmount", AtmoParticles = "atmo.particles";
+		/// <summary>Sound zones: Raft's FMOD event path, volume 0..1, "enter" = once on entering (default: a loop while inside).</summary>
+		public const string SoundEvent = "sound.event", SoundVolume = "sound.volume", SoundMode = "sound.mode";
+
+		public static bool HasColor(IDictionary<string, string> p, string key)
+		{
+			Color c;
+			return ColorUtility.TryParseHtmlString(Get(p, key, ""), out c);
+		}
+
+		public static Color ColorOf(IDictionary<string, string> p, string key)
+		{
+			Color c;
+			return ColorUtility.TryParseHtmlString(Get(p, key, ""), out c) ? c : Color.white;
+		}
+
 		public static float Radius(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, ZoneRadius, 6f), MinZoneRadius, MaxZoneRadius); }
 		public static bool Repeats(IDictionary<string, string> p) { return GetBool(p, ZoneRepeat, false); }
 

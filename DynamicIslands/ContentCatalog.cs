@@ -118,10 +118,20 @@ namespace DynamicIslands.Editor
 		public const string TriggerZone = ZonePrefix + "Trigger";
 
 		/// <summary>Zones of the list: our name, label, marker colour, hint.</summary>
+		public const string AtmosphereZoneName = ZonePrefix + "Atmosphere";
+		public const string SoundZoneName = ZonePrefix + "Sound";
+
 		static readonly KeyValuePair<string, string>[] Zones =
 		{
 			new KeyValuePair<string, string>(TriggerZone, "Trigger zone"),
+			new KeyValuePair<string, string>(AtmosphereZoneName, "Atmosphere zone"),
+			new KeyValuePair<string, string>(SoundZoneName, "Sound zone"),
 		};
+
+		static Color ZoneColorOf(string name)
+		{
+			return name == AtmosphereZoneName ? new Color(0.75f, 0.55f, 1f) : name == SoundZoneName ? new Color(0.4f, 0.8f, 1f) : ZoneColor;
+		}
 
 		public static bool IsZone(string name) { return name != null && name.StartsWith(ZonePrefix) && Zones.Any(z => z.Key == name); }
 
@@ -141,16 +151,17 @@ namespace DynamicIslands.Editor
 		/// <summary>A zone in the editor: a pole with a flag to click, and a see-through sphere showing its radius.</summary>
 		static GameObject BuildZoneMarker(string name, string label)
 		{
+			Color zc = ZoneColorOf(name);
 			var root = new GameObject(name);
 			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
 			Transform marker = new GameObject("Marker").transform;
 			marker.SetParent(root.transform, false);
 			Part(PrimitiveType.Cylinder, "Pole", marker, new Vector3(0, 1f, 0), Quaternion.identity, new Vector3(0.08f, 1f, 0.08f), MarkerMaterial(new Color(0.35f, 0.3f, 0.25f)));
-			Part(PrimitiveType.Cube, "Flag", marker, new Vector3(0.3f, 1.75f, 0), Quaternion.identity, new Vector3(0.6f, 0.4f, 0.03f), MarkerMaterial(ZoneColor));
+			Part(PrimitiveType.Cube, "Flag", marker, new Vector3(0.3f, 1.75f, 0), Quaternion.identity, new Vector3(0.6f, 0.4f, 0.03f), MarkerMaterial(zc));
 			// A faint sphere, and a clearer ring where it meets the ground (a child: it scales with the sphere)
-			GameObject sphere = Part(PrimitiveType.Sphere, MarkerOnly, root.transform, Vector3.zero, Quaternion.identity, Vector3.one * 12f, MarkerMaterial(new Color(ZoneColor.r, ZoneColor.g, ZoneColor.b, 0.06f)));
+			GameObject sphere = Part(PrimitiveType.Sphere, MarkerOnly, root.transform, Vector3.zero, Quaternion.identity, Vector3.one * 12f, MarkerMaterial(new Color(zc.r, zc.g, zc.b, 0.06f)));
 			sphere.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-			GameObject ring = Part(PrimitiveType.Cylinder, MarkerOnly, sphere.transform, new Vector3(0, 0.002f, 0), Quaternion.identity, new Vector3(1f, 0.0008f, 1f), MarkerMaterial(new Color(ZoneColor.r, ZoneColor.g, ZoneColor.b, 0.3f)));
+			GameObject ring = Part(PrimitiveType.Cylinder, MarkerOnly, sphere.transform, new Vector3(0, 0.002f, 0), Quaternion.identity, new Vector3(1f, 0.0008f, 1f), MarkerMaterial(new Color(zc.r, zc.g, zc.b, 0.3f)));
 			ring.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 			AddLabel(root.transform, label, 2.4f);
 			return root;
@@ -217,6 +228,8 @@ namespace DynamicIslands.Editor
 			if (IsNoteObject(name)) return "players read it in a world with the interact key (E). Select it to write the text";
 			if (IsLootObject(name)) return "players open it in a world with the interact key (E) and get what's inside. Select it to choose the items";
 			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";
+			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers) around it in a world. Fly the camera in to see it";
+			if (name == SoundZoneName) return "plays one of Raft's sounds while players are in it, or once when they walk in. Select it to choose the sound";
 			return null;
 		}
 
@@ -411,6 +424,24 @@ namespace DynamicIslands.Editor
 				foreach (Transform child in go.transform)
 					if (child.name == MarkerOnly && child.GetComponent<TextMesh>() == null) child.localScale = Vector3.one * radius * 2f;
 				TextMesh zl = Label(go);
+				if (name == AtmosphereZoneName)
+				{
+					UIKit.Ensure<AtmosphereZone>(go).Configure(props); // the editor shows the effect too
+					var parts = new List<string>();
+					if (ObjectProps.HasColor(props, ObjectProps.AtmoFog)) parts.Add("fog");
+					if (ObjectProps.HasColor(props, ObjectProps.AtmoLight)) parts.Add("light");
+					string pk = ObjectProps.Get(props, ObjectProps.AtmoParticles, "none");
+					if (pk != "none") parts.Add(pk);
+					if (zl != null) zl.text = "Atmosphere\n<size=36>" + radius.ToString("0.#") + " m" + (parts.Count > 0 ? " \u00B7 " + string.Join(", ", parts.ToArray()) : " \u00B7 nothing set") + "</size>";
+					return;
+				}
+				if (name == SoundZoneName)
+				{
+					string ev = ObjectProps.Get(props, ObjectProps.SoundEvent);
+					if (zl != null) zl.text = "Sound\n<size=36>" + (ev.Length > 0 ? ev.Substring(ev.LastIndexOf('/') + 1) : "no sound yet") + " \u00B7 " +
+						(ObjectProps.Get(props, ObjectProps.SoundMode) == "enter" ? "once" : "loop") + " \u00B7 " + radius.ToString("0.#") + " m</size>";
+					return;
+				}
 				if (zl != null)
 				{
 					int items = ObjectProps.Loot(props).Count;
@@ -441,6 +472,7 @@ namespace DynamicIslands.Editor
 			}
 			bool note = ObjectProps.IsNote(name, props), loot = ObjectProps.IsLoot(name, props);
 			TextMesh tag = Label(go);
+			ShowSignText(go, note ? ObjectProps.Get(props, ObjectProps.NoteTitle) : "");
 			if (!note && !loot) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
 			if (tag == null)
 			{
@@ -457,6 +489,63 @@ namespace DynamicIslands.Editor
 				lines.Add("<color=#8fdc8f>\u25a3</color> " + (stacks == 0 ? "empty" : stacks == 1 ? "1 item" : stacks + " items"));
 			}
 			tag.text = string.Join("\n", lines.ToArray());
+		}
+
+		public const string SignTextName = "CI_SignText";
+
+		/// <summary>
+		/// The sign editor: Raft's signs keep the spot for their text (a child called "TextmeshPro", whose script is
+		/// stripped with the others), so a readable sign shows its note's title there, in the editor and in a world.
+		/// Returns false for objects without such a spot.
+		/// </summary>
+		public static bool ShowSignText(GameObject go, string title)
+		{
+			Transform spot = go.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "TextmeshPro");
+			if (spot == null) return false;
+			MeshRenderer stale = spot.GetComponent<MeshRenderer>();
+			if (stale != null) stale.enabled = false; // the old text mesh, no longer driven by its script
+			Transform existing = spot.Find(SignTextName);
+			if (string.IsNullOrEmpty(title)) { if (existing != null) UnityEngine.Object.Destroy(existing.gameObject); return true; }
+			TextMesh tm = existing != null ? existing.GetComponent<TextMesh>() : null;
+			if (tm == null)
+			{
+				var go2 = new GameObject(SignTextName);
+				go2.transform.SetParent(spot, false);
+				go2.transform.localPosition = new Vector3(0, 0, -0.005f);
+				tm = go2.AddComponent<TextMesh>();
+				tm.font = UIKit.Font;
+				tm.fontSize = 64;
+				tm.characterSize = 0.01f;
+				tm.anchor = TextAnchor.MiddleCenter;
+				tm.alignment = TextAlignment.Center;
+				tm.color = new Color(0.16f, 0.1f, 0.05f);
+				MeshRenderer mr = go2.GetComponent<MeshRenderer>();
+				mr.sharedMaterial = UIKit.Font.material;
+				mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			}
+			tm.text = Wrap(title, 14);
+			// As big as fits the board (about 0.62 x 0.36 m), never bigger than the chosen size
+			tm.transform.localScale = Vector3.one;
+			Bounds b = tm.GetComponent<MeshRenderer>().bounds;
+			Vector3 s = tm.transform.lossyScale;
+			float w = b.size.x / Mathf.Max(0.0001f, s.x), h = b.size.y / Mathf.Max(0.0001f, s.y);
+			float fit = Mathf.Min(1f, 0.62f / Mathf.Max(0.001f, w), 0.36f / Mathf.Max(0.001f, h));
+			tm.transform.localScale = Vector3.one * fit;
+			return true;
+		}
+
+		/// <summary>Breaks text into lines of at most about <paramref name="width"/> characters, at spaces.</summary>
+		static string Wrap(string text, int width)
+		{
+			var lines = new List<string>();
+			string line = "";
+			foreach (string word in text.Split(' '))
+			{
+				if (line.Length > 0 && line.Length + 1 + word.Length > width) { lines.Add(line); line = word; }
+				else line = line.Length > 0 ? line + " " + word : word;
+			}
+			if (line.Length > 0) lines.Add(line);
+			return string.Join("\n", lines.Take(4).ToArray());
 		}
 
 		static TextMesh Label(GameObject go)

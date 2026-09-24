@@ -789,6 +789,8 @@ namespace DynamicIslands
 			CharacterController cc = player.PersonController.controller;
 			cc.enabled = false;
 			player.transform.position = target;
+			// A player who was swimming stays in Raft's swimming mode after a teleport (held at the sea surface): walk
+			player.PersonController.SwitchControllerType(ControllerType.Ground);
 			cc.enabled = true;
 			Log("Teleported player to " + target + " on " + island.name);
 			int exceptions = 0; string firstException = null;

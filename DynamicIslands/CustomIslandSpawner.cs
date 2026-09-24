@@ -241,7 +241,7 @@ namespace DynamicIslands.Editor
 					float a = i * 15f * Mathf.Deg2Rad;
 					Vector3 c = raftPos + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * d;
 					c.y = 0f;
-					if (Rejects(c, radius, raftPos) == null) return c;
+					if (Rejects(c, radius, raftPos, false) == null) return c; // (the way there may cross an island: tests teleport)
 				}
 			return null;
 		}
@@ -254,7 +254,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Why an island of this land radius can't go at candidate, or null if it can.</summary>
-		static string Rejects(Vector3 candidate, float radius, Vector3 raftPos)
+		static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true)
 		{
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance) return "too close to the raft";
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
@@ -275,7 +275,7 @@ namespace DynamicIslands.Editor
 					float d = Flat(candidate - cp.worldPosition).magnitude;
 					if (d < (raftWreck ? 20f : overlap) + radius) return "Raft's " + (cp.rule != null ? cp.rule.name : "island") + " " + d.ToString("F0") + " m away";
 				}
-				if (cm.DoesLineIntersectWithChunkPoints(raftPos, candidate)) return "one of Raft's islands is in the way";
+				if (checkPath && cm.DoesLineIntersectWithChunkPoints(raftPos, candidate)) return "one of Raft's islands is in the way";
 			}
 			return null;
 		}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -108,12 +109,21 @@ namespace DynamicIslands.Editor
 		{
 			try { this.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception) { }
 
-			Editor.EditorGameObject.Attach(this.gameObject, GameObjectName);
 			DynamicIslands.EditorGizmoHandler.placingObject = false;
-
-			this.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
-			// Placing is undoable (Ctrl+Z hides the object again)
-			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { this.gameObject }, true));
+			Transform placedRoot = GameObject.Find("PlacedObjects").transform;
+			if (Editor.GroupLibrary.IsGroup(GameObjectName))
+			{
+				// A group becomes its separate objects again (one undo step)
+				List<GameObject> created = Editor.GroupLibrary.Expand(this.gameObject, placedRoot);
+				if (created.Count > 0) CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(created, true));
+			}
+			else
+			{
+				Editor.EditorGameObject.Attach(this.gameObject, GameObjectName);
+				this.gameObject.transform.parent = placedRoot;
+				// Placing is undoable (Ctrl+Z hides the object again)
+				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { this.gameObject }, true));
+			}
 
 			// Shift: keep placing the same object
 			if (EditorInput.Shift)

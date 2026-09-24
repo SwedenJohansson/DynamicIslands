@@ -28,7 +28,12 @@ namespace DynamicIslands
 			Smooth,
 			PaintLayer, // paint terraineditor.paintLayer by hand
 			AutoPaint,  // brush back to automatic texturing
+			Stamp,      // one click puts down TerrainStamps.Current, as big as the brush
 		}
+
+		/// <summary>Where the brush last was over the terrain (Save stamp captures around it).</summary>
+		public static Vector3? LastPoint;
+		bool stamped; // a stamp goes down once per click
 
 		/// <summary>Texture layer used by PaintLayer (TerrainPainter.Seabed/Sand/Grass/Rock).</summary>
 		public static int paintLayer = TerrainPainter.Sand;
@@ -89,7 +94,7 @@ namespace DynamicIslands
 		bool CanSculpt()
 		{
 			if (!allowEditing || terrain == null) return false;
-			if (IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen) return false;
+			if (IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen || TextPromptWindow.IsOpen || NoteEditorWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || QuestEditorWindow.IsOpen) return false;
 			if (TabSelector.instance != null && TabSelector.instance.SelectedTab != TAB.TerrainEdit) return false;
 			if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return false;
 			if (FindObjectOfType<ObjectPlacer>() != null) return false;
@@ -115,6 +120,12 @@ namespace DynamicIslands
 			bool canSculpt = CanSculpt();
 			bool overTerrain = canSculpt && TerrainUnderMouse(out point);
 			BrushCursor.Update(terrain, overTerrain, overTerrain ? point : Vector3.zero);
+			if (overTerrain) LastPoint = point;
+			if (modificationAction == TerrainModificationAction.Stamp && canSculpt && !EditorInput.IsTyping)
+			{
+				if (Input.GetKeyDown(KeyCode.Q)) TerrainStamps.Rotation -= 15f;
+				if (Input.GetKeyDown(KeyCode.E)) TerrainStamps.Rotation += 15f;
+			}
 
 			if (!Input.GetMouseButton(0) || !overTerrain) return;
 			if (!stroking) BeginStroke(point);
@@ -124,6 +135,7 @@ namespace DynamicIslands
 		void BeginStroke(Vector3 point)
 		{
 			stroking = true;
+			stamped = false;
 			dirtyMin = point; dirtyMax = point;
 			flattenTarget = SampleNormalizedHeight(point);
 			// Full snapshot for undo; only the part the stroke touches is kept when it ends
@@ -144,6 +156,10 @@ namespace DynamicIslands
 				case TerrainModificationAction.Smooth: ApplySmooth(point); break;
 				case TerrainModificationAction.PaintLayer: ApplyPaint(point, false); break;
 				case TerrainModificationAction.AutoPaint: ApplyPaint(point, true); break;
+				case TerrainModificationAction.Stamp:
+					if (!stamped && TerrainStamps.Current != null) TerrainStamps.Apply(terrain, TerrainStamps.Current, point, brushRadius, TerrainStamps.Rotation);
+					stamped = true;
+					break;
 				case TerrainModificationAction.Sample:
 				case TerrainModificationAction.SampleAverage:
 					flattenTarget = SampleNormalizedHeight(point);

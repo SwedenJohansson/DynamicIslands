@@ -145,6 +145,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Opened a " + Label + ": " + string.Join(", ", given.ToArray()));
 			// A note inside: show it
 			CustomNote note = GetComponent<CustomNote>();
+			QuestTracker.Event(ContentState.EntryOf(transform), "open", note != null ? note.Title : "");
 			if (note != null) NoteReader.Open(note);
 			return given;
 		}

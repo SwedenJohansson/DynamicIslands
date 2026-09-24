@@ -8,6 +8,7 @@ using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 namespace DynamicIslands
 {
@@ -76,6 +77,8 @@ namespace DynamicIslands
 			PropsCommand.Change(boar, ObjectProps.With(boar.Props, ObjectProps.TintColor, "#FF2020"));
 			NoteEditorWindow.Apply(sign, "Welcome", "Line one\nLine two \u00E5\u00E4\u00F6");
 			NoteEditorWindow.Apply(plain, "Hidden treasure", "Look under the palm.");
+			TextMesh signText = sign.GetComponentsInChildren<TextMesh>(true).FirstOrDefault(t => t.name == ContentCatalog.SignTextName);
+			Check(ref ok, signText != null && signText.text == "Welcome", "the sign board shows the note's title (" + (signText != null ? signText.text : "none") + ")");
 			Check(ref ok, ObjectProps.Count(boar.Props) == 3 && ObjectProps.Health(boar.Props) == 2f && ObjectProps.HasTint(boar.Props), "creature settings: " + string.Join(", ", boar.Props.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
 			CommandUndoRedo.UndoRedoManager.Undo(); // the plain object's note
 			CommandUndoRedo.UndoRedoManager.Undo(); // the sign's text
@@ -675,6 +678,429 @@ namespace DynamicIslands
 
 		#endregion
 
+		#region Object groups and terrain stamps
+
+		[ConsoleCommand(name: "CIGroupTest", docs: "Dev, editor: object groups - save a selection (with settings) as a group, it appears in My groups, placing it gives the separate objects (one undo step)")]
+		public static void GroupTest()
+		{
+			DynamicIslands.instance.StartCoroutine(GroupTestRoutine());
+		}
+
+		static IEnumerator GroupTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			EditorGameObject chest = PlaceForTest("Loot_Chest", c0, placed);
+			EditorGameObject boar = PlaceForTest("Creature_Boar", c0 + new Vector3(3, 0, 0), placed);
+			EditorGameObject sign = PlaceForTest("Note_Sign", c0 + new Vector3(0, 0, 3), placed);
+			PropsCommand.Change(boar, ObjectProps.With(boar.Props, ObjectProps.CreatureCount, "2"));
+			int saved = GroupLibrary.Save("cigroup", new[] { chest, boar, sign });
+			yield return GroupLibrary.Register("cigroup");
+			var cats = PlaceableCatalog.Browse();
+			var mine = cats.FirstOrDefault(c => c.Key == GroupLibrary.Category);
+			Check(ref ok, saved == 3 && mine.Value != null && mine.Value.Any(e => e.Name == GroupLibrary.Prefix + "cigroup"), "the group is saved and listed under " + GroupLibrary.Category);
+			Check(ref ok, cats.Count > 0 && cats[0].Key == GroupLibrary.Category, "My groups comes first in the object list");
+
+			// Place it somewhere else, turned, through the object placer (as a click does)
+			GameObject preview = PlaceableCatalog.Spawn(GroupLibrary.Prefix + "cigroup", null);
+			preview.transform.position = c0 + new Vector3(40, 0, 0);
+			preview.transform.rotation = Quaternion.Euler(0, 90, 0);
+			ObjectPlacer placer = preview.AddComponent<ObjectPlacer>();
+			placer.GameObjectName = GroupLibrary.Prefix + "cigroup";
+			DynamicIslands.EditorGizmoHandler.placingObject = true;
+			yield return null; // (Start)
+			preview.transform.position = c0 + new Vector3(40, 0, 0);
+			typeof(ObjectPlacer).GetMethod("Place", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(placer, null);
+			yield return null;
+			List<EditorGameObject> all = placed.GetComponentsInChildren<EditorGameObject>().ToList();
+			List<EditorGameObject> copies = all.Where(e => e.transform.position.x > c0.x + 20f).ToList();
+			EditorGameObject boarCopy = copies.FirstOrDefault(e => e.GameObjectName == "Creature_Boar");
+			Check(ref ok, copies.Count == 3 && copies.All(e => !GroupLibrary.IsGroup(e.GameObjectName)), "placing the group gives its 3 separate objects (" + string.Join(", ", copies.Select(e => e.GameObjectName).ToArray()) + ")");
+			Check(ref ok, boarCopy != null && ObjectProps.Count(boarCopy.Props) == 2 && ObjectProps.Loot(copies.First(e => e.GameObjectName == "Loot_Chest").Props).Count > 0, "their settings come along");
+			// The group's pivot is the middle of its objects at the lowest one's height
+			Vector3 pivot = new Vector3((chest.transform.position.x + boar.transform.position.x + sign.transform.position.x) / 3f, Mathf.Min(chest.transform.position.y, Mathf.Min(boar.transform.position.y, sign.transform.position.y)),
+				(chest.transform.position.z + boar.transform.position.z + sign.transform.position.z) / 3f);
+			Vector3 expected = c0 + new Vector3(40, 0, 0) + Quaternion.Euler(0, 90, 0) * (boar.transform.position - pivot);
+			Check(ref ok, boarCopy != null && (boarCopy.transform.position - expected).magnitude < 0.2f, "the group is turned as placed (the warthog is at " + (boarCopy != null ? boarCopy.transform.position.ToString("F1") : "-") + ", expected " + expected.ToString("F1") + ")");
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return null;
+			Check(ref ok, copies.All(e => e == null || !e.gameObject.activeSelf), "one undo takes the whole group away");
+			Screenshot(new[] { "groups" });
+
+			GroupLibrary.Delete("cigroup");
+			Check(ref ok, PlaceableCatalog.Get(GroupLibrary.Prefix + "cigroup") == null && !GroupLibrary.Saved().Contains("cigroup"), "DeleteGroup removes it");
+			if (ok) Log("PASS: object groups"); else Fail("object groups");
+		}
+
+		[ConsoleCommand(name: "CIStampTest", docs: "Dev, editor: terrain stamps - built-in shapes (hill, crater), one per click, undo, saving your own and stamping it")]
+		public static void StampTest()
+		{
+			DynamicIslands.instance.StartCoroutine(StampTestRoutine());
+		}
+
+		static IEnumerator StampTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.TerrainEdit);
+			Terrain terrain = terraineditor.terrain;
+			terraineditor editor = UnityEngine.Object.FindObjectOfType<terraineditor>();
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Vector3 p = terrain.transform.position + new Vector3(300f, 0, 300f);
+			float before = terrain.SampleHeight(p);
+			float radius = terraineditor.brushRadius;
+			terraineditor.brushRadius = 20f;
+			TerrainStamps.Load();
+			Check(ref ok, TerrainStamps.All.Count >= 6 && TerrainStamps.All.Take(6).All(s => s.BuiltIn), "6 built-in stamps: " + string.Join(", ", TerrainStamps.All.Select(s => s.Name).ToArray()));
+			TerrainStamps.Selected = TerrainStamps.All.FindIndex(s => s.Name == "Hill");
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Stamp;
+			editor.SimulateStroke(p, 10, 0.02f); // held for 10 frames: still one stamp
+			float hill = terrain.SampleHeight(p) - before;
+			Check(ref ok, Mathf.Abs(hill - 0.3f * 20f) < 1f, "a hill as big as the brush: +" + hill.ToString("F1") + " m at its middle (expected 6)");
+			CommandUndoRedo.UndoRedoManager.Undo();
+			Check(ref ok, Mathf.Abs(terrain.SampleHeight(p) - before) < 0.05f, "undo takes it away");
+
+			TerrainStamps.Selected = TerrainStamps.All.FindIndex(s => s.Name == "Crater");
+			Vector3 q = p + new Vector3(80, 0, 0);
+			editor.SimulateStroke(p + new Vector3(80, 0, 0), 1, 0.02f);
+			float mid = terrain.SampleHeight(q), rim = terrain.SampleHeight(q + new Vector3(12.4f, 0, 0));
+			Check(ref ok, rim > mid + 3f, "a crater: rim " + rim.ToString("F1") + " m, middle " + mid.ToString("F1") + " m");
+
+			// Save the crater as a stamp of our own and put it down elsewhere
+			TerrainStamps.Save(TerrainStamps.Capture(terrain, q, 20f, "cistamp"));
+			TerrainStamps.Load();
+			EditorUI.RefreshStamps();
+			int mineIndex = TerrainStamps.All.FindIndex(s => s.Name == "cistamp" && !s.BuiltIn);
+			Check(ref ok, mineIndex >= 6, "a saved stamp is listed");
+			TerrainStamps.Selected = mineIndex;
+			Vector3 r2 = p + new Vector3(0, 0, 80);
+			float b2 = terrain.SampleHeight(r2), br = terrain.SampleHeight(r2 + new Vector3(12.4f, 0, 0));
+			editor.SimulateStroke(r2, 1, 0.02f);
+			float dm = terrain.SampleHeight(r2) - b2, dr = terrain.SampleHeight(r2 + new Vector3(12.4f, 0, 0)) - br;
+			Check(ref ok, dr > dm + 3f, "the saved crater stamps the same shape (rim +" + dr.ToString("F1") + " m, middle " + dm.ToString("F1") + " m)");
+			Screenshot(new[] { "stamps" });
+			CommandUndoRedo.UndoRedoManager.Undo();
+			CommandUndoRedo.UndoRedoManager.Undo();
+
+			File.Delete(Path.Combine(TerrainStamps.Folder, "cistamp.stamp"));
+			TerrainStamps.Load();
+			EditorUI.RefreshStamps();
+			terraineditor.brushRadius = radius;
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
+			if (ok) Log("PASS: terrain stamps"); else Fail("terrain stamps");
+		}
+
+		#endregion
+
+		#region Atmosphere and sound zones
+
+		[ConsoleCommand(name: "CIAmbienceTest", docs: "Dev, editor: atmosphere zones (fog, light, particles, seen from inside and outside) and sound zones (Raft's sounds, choosing one, listening)")]
+		public static void AmbienceTest()
+		{
+			DynamicIslands.instance.StartCoroutine(AmbienceTestRoutine());
+		}
+
+		static IEnumerator AmbienceTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			EditorGameObject atmo = PlaceForTest(ContentCatalog.AtmosphereZoneName, c0, placed);
+			EditorGameObject sound = PlaceForTest(ContentCatalog.SoundZoneName, c0 + new Vector3(40, 0, 0), placed);
+			if (atmo == null || sound == null) { Fail("could not place the zones"); yield break; }
+			Dictionary<string, string> p = ObjectProps.With(atmo.Props, ObjectProps.ZoneRadius, "25");
+			p = ObjectProps.With(p, ObjectProps.AtmoFog, "#B34D33");
+			p = ObjectProps.With(p, ObjectProps.AtmoLight, "#FF8866");
+			p = ObjectProps.With(p, ObjectProps.AtmoParticles, "fireflies");
+			PropsCommand.Change(atmo, p);
+			yield return new WaitForSeconds(1f);
+			AtmosphereZone az = atmo.GetComponent<AtmosphereZone>();
+			ParticleSystem ps = atmo.GetComponentInChildren<ParticleSystem>();
+			Check(ref ok, az != null && az.FogAmount > 0f && ps != null && ps.isPlaying && ps.particleCount > 0, "the atmosphere zone shows in the editor: fog, light, " + (ps != null ? ps.particleCount + " fireflies" : "no particles"));
+
+			Camera cam = Camera.main;
+			cam.transform.position = c0 + new Vector3(0, 3, -6);
+			cam.transform.rotation = Quaternion.Euler(10, 0, 0);
+			yield return null; yield return null;
+			float w;
+			AtmosphereZone inside = AtmosphereZone.Strongest(cam.transform.position, out w);
+			Check(ref ok, inside == az && w > 0.99f, "from inside the zone it acts fully (" + w.ToString("F2") + ")");
+			Screenshot(new[] { "atmosphere_inside" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			cam.transform.position = c0 + new Vector3(0, 30, -60);
+			yield return null;
+			AtmosphereZone.Strongest(cam.transform.position, out w);
+			Check(ref ok, w < 0.001f, "from outside it doesn't (" + w.ToString("F2") + ")");
+			Screenshot(new[] { "atmosphere_outside" });
+			yield return new WaitForSecondsRealtime(0.5f);
+
+			// Sounds
+			List<string> events = SoundLibrary.Events;
+			Log("Raft's sounds: " + events.Count + " events, e.g. " + string.Join(", ", events.Where(e => e.ToLowerInvariant().Contains("ambien")).Take(6).ToArray()));
+			string loop = events.FirstOrDefault(e => e.ToLowerInvariant().Contains("ambien") && SoundLibrary.IsLooping(e)) ?? events.FirstOrDefault(SoundLibrary.IsLooping);
+			Check(ref ok, events.Count > 50 && loop != null, "Raft's sounds can be listed (" + events.Count + "), with loops like " + loop);
+			if (loop != null)
+			{
+				SoundPickerWindow.Use(sound, loop);
+				Check(ref ok, ObjectProps.Get(sound.Props, ObjectProps.SoundEvent) == loop && ObjectProps.Get(sound.Props, ObjectProps.SoundMode) == "", "choosing a loop makes it play while inside");
+				SoundLibrary.Preview(loop);
+				yield return new WaitForSecondsRealtime(1f);
+				SoundLibrary.StopPreview();
+			}
+			TransformGizmoSelect(sound.transform);
+			yield return null; yield return null;
+			Screenshot(new[] { "sound_inspector" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			SoundPickerWindow.Open(sound);
+			yield return null;
+			Screenshot(new[] { "sound_picker" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			SoundPickerWindow.Close();
+			TransformGizmoSelect(atmo.transform);
+			yield return null; yield return null;
+			Screenshot(new[] { "atmosphere_inspector" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+
+			bool saved = DynamicIslands.SaveIsland("ciambience");
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			DynamicIslands.LoadIsland("ciambience");
+			yield return new WaitForSecondsRealtime(1f);
+			EditorGameObject a2 = placed.GetComponentsInChildren<EditorGameObject>().FirstOrDefault(e => e.GameObjectName == ContentCatalog.AtmosphereZoneName);
+			EditorGameObject s2 = placed.GetComponentsInChildren<EditorGameObject>().FirstOrDefault(e => e.GameObjectName == ContentCatalog.SoundZoneName);
+			Check(ref ok, saved && a2 != null && s2 != null && ObjectProps.Get(a2.Props, ObjectProps.AtmoParticles) == "fireflies" && ObjectProps.Get(s2.Props, ObjectProps.SoundEvent) == (loop ?? ""), "both zones save and load");
+			File.Delete(IslandSpawner.PathFor("ciambience"));
+			if (ok) Log("PASS: atmosphere and sound zones in the editor"); else Fail("atmosphere and sound zones in the editor");
+		}
+
+		[ConsoleCommand(name: "CIAmbienceWorld", docs: "Dev, in game (host): an island with an atmosphere zone and a sound zone; standing in them")]
+		public static void AmbienceWorld()
+		{
+			DynamicIslands.instance.StartCoroutine(AmbienceWorldRoutine());
+		}
+
+		static IEnumerator AmbienceWorldRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string loop = SoundLibrary.Events.FirstOrDefault(e => e.ToLowerInvariant().Contains("ambien") && SoundLibrary.IsLooping(e)) ?? SoundLibrary.Events.FirstOrDefault(SoundLibrary.IsLooping);
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			f.Name = "ciambience";
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
+			f.Objects.Add(new IslandObject { Name = ContentCatalog.AtmosphereZoneName, Position = ground(c.x, c.y), Props = new Dictionary<string, string> {
+				{ ObjectProps.ZoneRadius, "50" }, { ObjectProps.AtmoFog, "#8899AA" }, { ObjectProps.AtmoParticles, "mist" } } });
+			f.Objects.Add(new IslandObject { Name = ContentCatalog.SoundZoneName, Position = ground(c.x, c.y), Props = new Dictionary<string, string> {
+				{ ObjectProps.ZoneRadius, "50" }, { ObjectProps.SoundEvent, loop ?? "" } } });
+			f.Objects.Add(new IslandObject { Name = "Note_Sign", Position = ground(c.x + 3f, c.y + 3f), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Misty Hollow" } } });
+			f.Save(IslandSpawner.PathFor("ciambience"));
+
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciambience"), 390f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("ciambience", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
+			SoundZone sz = entry.Root.GetComponentInChildren<SoundZone>();
+			AtmosphereZone az = entry.Root.GetComponentInChildren<AtmosphereZone>();
+			TextMesh signText = entry.Root.GetComponentsInChildren<TextMesh>(true).FirstOrDefault(t => t.name == ContentCatalog.SignTextName);
+			Check(ref ok, sz != null && az != null, "both zones are on the island");
+			Check(ref ok, signText != null && signText.text.Contains("Misty"), "the sign shows its title: " + (signText != null ? signText.text.Replace("\n", " ") : "none"));
+			Check(ref ok, sz != null && !sz.Playing, "the sound is off while the player is away");
+			yield return StandRoutine(entry.Root);
+			yield return new WaitForSeconds(1f);
+			float w;
+			AtmosphereZone.Strongest(Camera.main.transform.position, out w);
+			Check(ref ok, sz != null && sz.Playing, "standing in the sound zone plays " + loop);
+			Check(ref ok, w > 0.5f, "the atmosphere acts around the player (" + w.ToString("F2") + ")");
+			Screenshot(new[] { "atmosphere_world" });
+			yield return new WaitForSeconds(1f);
+
+			IslandWorldState.RemoveIds(new[] { entry.Id }, true);
+			File.Delete(IslandSpawner.PathFor("ciambience"));
+			if (ok) Log("PASS: atmosphere and sound zones in a world"); else Fail("atmosphere and sound zones in a world");
+		}
+
+		#endregion
+
+		#region Quests
+
+		static IslandQuest TestQuest()
+		{
+			var q = new IslandQuest { Title = "The lost camp", Intro = "Someone camped here. Find out who.", Done = "You found the camp's secrets!", Reward = ContentCatalog.PresetLoot(new[] { "Plank*5", "Rope*2" }) };
+			q.Steps.Add(new IslandQuest.Step { Type = "reach", Target = "camp" });
+			q.Steps.Add(new IslandQuest.Step { Type = "read", Target = "Diary" });
+			q.Steps.Add(new IslandQuest.Step { Type = "open", Target = "Supplies" });
+			q.Steps.Add(new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 2, Text = "Chase off the warthogs" });
+			return q;
+		}
+
+		[ConsoleCommand(name: "CIQuestTest", docs: "Dev, editor: the quest editor - a quest with four steps, the window, save and load")]
+		public static void QuestTest()
+		{
+			DynamicIslands.instance.StartCoroutine(QuestTestRoutine());
+		}
+
+		static IEnumerator QuestTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			DynamicIslands.currentIslandProps.Clear();
+			yield return null;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			EditorGameObject zone = PlaceForTest(ContentCatalog.TriggerZone, c0, placed);
+			PropsCommand.Change(zone, ObjectProps.With(zone.Props, ObjectProps.ZoneId, "camp"));
+			EditorGameObject diary = PlaceForTest("Note_Book", c0 + new Vector3(3, 0, 0), placed);
+			NoteEditorWindow.Apply(diary, "Diary", "Day 1: ...");
+			PlaceForTest("Creature_Boar", c0 + new Vector3(8, 0, 0), placed);
+			QuestEditorWindow.Apply(TestQuest());
+			IslandQuest back = IslandQuest.From(DynamicIslands.currentIslandProps);
+			Check(ref ok, back.Steps.Count == 4 && back.Steps[3].Count == 2 && back.Steps[3].Describe() == "Chase off the warthogs" && back.Steps[1].Describe() == "Read \"Diary\"",
+				"a quest with 4 steps is kept in the island's settings: " + string.Join(" / ", back.Steps.Select(s => s.Describe()).ToArray()));
+			EditorUI.SetTab(TAB.Island);
+			yield return null;
+			Screenshot(new[] { "quest_tab" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			QuestEditorWindow.Open();
+			yield return null;
+			Check(ref ok, QuestEditorWindow.IsOpen, "the quest editor opens");
+			Screenshot(new[] { "quest_editor" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			QuestEditorWindow.Close();
+			bool saved = DynamicIslands.SaveIsland("ciquest");
+			DynamicIslands.currentIslandProps.Clear();
+			DynamicIslands.LoadIsland("ciquest");
+			yield return new WaitForSecondsRealtime(1f);
+			IslandQuest loaded = IslandQuest.From(DynamicIslands.currentIslandProps);
+			Check(ref ok, saved && loaded.Steps.Count == 4 && loaded.Title == "The lost camp" && loaded.Reward == TestQuest().Reward, "the quest saves and loads with the island");
+			File.Delete(IslandSpawner.PathFor("ciquest"));
+			DynamicIslands.currentIslandProps.Clear();
+			if (ok) Log("PASS: quest editor"); else Fail("quest editor");
+		}
+
+		[ConsoleCommand(name: "CIQuestWorld", docs: "Dev, in game (host): plays a quest - go to a zone, read a note, open a chest, defeat two warthogs - and gets the reward")]
+		public static void QuestWorld()
+		{
+			DynamicIslands.instance.StartCoroutine(QuestWorldRoutine());
+		}
+
+		static IEnumerator QuestWorldRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			f.Name = "ciquest";
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
+			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
+			f.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = ground(c.x, c.y), Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "camp" }, { ObjectProps.ZoneRadius, "5" } } });
+			f.Objects.Add(new IslandObject { Name = "Note_Book", Position = ground(c.x + 3f, c.y), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Diary" }, { ObjectProps.NoteText, "Day 1" } } });
+			f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = ground(c.x - 3f, c.y), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Supplies" }, { ObjectProps.LootItems, "Nail*1" } } });
+			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 8f, c.y + 6f), Props = new Dictionary<string, string> { { ObjectProps.CreatureCount, "2" }, { ObjectProps.CreatureDamage, "0" } } });
+			TestQuest().To(f.Props);
+			f.Props[IslandProps.Title] = "Quest Isle";
+			f.Save(IslandSpawner.PathFor("ciquest"));
+
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciquest"), 390f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("ciquest", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the quest island did not spawn"); yield break; }
+			yield return StandRoutine(entry.Root); // near the island: the quest shows
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.QuestOf(entry).Steps.Count == 4 && QuestTracker.StepOf(entry) == 0, "the island has its quest, at step 1");
+			Check(ref ok, GameObject.Find("CustomIslands_Quest") != null && GameObject.Find("CustomIslands_Quest").GetComponentInChildren<Text>() != null, "the quest panel shows near the island");
+			Screenshot(new[] { "quest_panel" });
+
+			IslandNetMessage sent = null;
+			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.QuestStep) sent = m; };
+			try
+			{
+				entry.Root.GetComponentInChildren<TriggerZone>().Enter();
+				Check(ref ok, QuestTracker.StepOf(entry) == 1 && sent != null && sent.Index == 1, "walking into 'camp' does step 1 (and tells the others)");
+				// The wrong note doesn't count, the right one does
+				QuestTracker.Event(entry, "read", "Something else");
+				Check(ref ok, QuestTracker.StepOf(entry) == 1, "reading another note doesn't count");
+				CustomNote diary = entry.Root.GetComponentsInChildren<CustomNote>().First(n => n.Title == "Diary");
+				NoteReader.Open(diary);
+				NoteReader.Close();
+				Check(ref ok, QuestTracker.StepOf(entry) == 2, "reading the diary does step 2");
+				entry.Root.GetComponentInChildren<LootCrate>().Open();
+				NoteReader.Close();
+				Check(ref ok, QuestTracker.StepOf(entry) == 3, "opening the supplies does step 3");
+			}
+			finally { IslandNetwork.Loopback = null; }
+
+			float t0 = Time.realtimeSinceStartup;
+			CreatureSpawnPoint boars = entry.Root.GetComponentInChildren<CreatureSpawnPoint>();
+			while ((boars == null || boars.Spawned.Count < 2) && Time.realtimeSinceStartup - t0 < 30f) { yield return new WaitForSeconds(0.5f); boars = entry.Root.GetComponentInChildren<CreatureSpawnPoint>(); }
+			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
+			int planks = inv.GetItemCount("Plank");
+			foreach (AI_NetworkBehaviour ai in boars.Spawned.ToList())
+			{
+				ai.networkEntity.Damage(100000f, ai.transform.position, Vector3.up, EntityType.Player, true);
+				yield return new WaitForSeconds(1.5f);
+				if (QuestTracker.StepOf(entry) == 3) Log("  defeated one: " + QuestTracker.QuestOf(entry).Steps[3].Describe());
+			}
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.StepOf(entry) == 4, "defeating both warthogs finishes the quest (step " + QuestTracker.StepOf(entry) + ")");
+			Check(ref ok, QuestTracker.LastMessage != null && QuestTracker.LastMessage.StartsWith("Quest complete: The lost camp"), "\"" + QuestTracker.LastMessage + "\"");
+			Check(ref ok, inv.GetItemCount("Plank") - planks == 5, "the reward arrives (planks +" + (inv.GetItemCount("Plank") - planks) + ")");
+			Screenshot(new[] { "quest_done" });
+			yield return new WaitForSeconds(1f);
+
+			// Saved with the world's state; a message from another player sets it too
+			ObjectState s;
+			Check(ref ok, entry.State.TryGetValue(QuestTracker.StepKey, out s) && s.Yield == 4, "the quest's progress is kept with the island (" + IslandObjectState.Encode(new Dictionary<int, ObjectState> { { QuestTracker.StepKey, entry.State[QuestTracker.StepKey] } }) + ")");
+
+			IslandWorldState.RemoveIds(new[] { entry.Id }, true);
+			File.Delete(IslandSpawner.PathFor("ciquest"));
+			if (ok) Log("PASS: quests in a world"); else Fail("quests in a world");
+		}
+
+		#endregion
+
+		[ConsoleCommand(name: "CIHierarchy", docs: "Dev: logs a catalog object's parts (names, components, local positions, sizes): CIHierarchy <object name>")]
+		public static void Hierarchy(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args) : "";
+			GameObject proto = PlaceableCatalog.Get(name);
+			if (proto == null) { Fail("no catalog object '" + name + "'"); return; }
+			foreach (Transform t in proto.GetComponentsInChildren<Transform>(true))
+			{
+				int depth = 0;
+				for (Transform p = t; p != proto.transform; p = p.parent) depth++;
+				MeshFilter mf = t.GetComponent<MeshFilter>();
+				Log(new string(' ', depth * 2) + t.name + " pos " + t.localPosition.ToString("F2") + " rot " + t.localEulerAngles.ToString("F0") + " scale " + t.localScale.ToString("F2") +
+					" [" + string.Join(", ", t.GetComponents<Component>().Where(c => c != null && !(c is Transform)).Select(c => c.GetType().Name).ToArray()) + "]" +
+					(mf != null && mf.sharedMesh != null ? " mesh " + mf.sharedMesh.name + " " + mf.sharedMesh.bounds.size.ToString("F2") : ""));
+			}
+		}
+
 		[ConsoleCommand(name: "CINoteLook", docs: "Dev, in game: stands the player in front of the nearest readable note and checks Raft's own interaction ray finds it")]
 		public static void NoteLook()
 		{
@@ -696,6 +1122,7 @@ namespace DynamicIslands
 			CharacterController cc = player.PersonController.controller;
 			cc.enabled = false;
 			player.transform.position = stand;
+			player.PersonController.SwitchControllerType(ControllerType.Ground);
 			cc.enabled = true;
 			yield return new WaitForSeconds(1f);
 			Camera cam = Helper.MainCamera;

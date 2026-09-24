@@ -405,6 +405,7 @@ namespace DynamicIslands.Editor
 				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
 				{
 					if (p.RecordedAlive < 0) continue; // not spawned yet
+					int caught = 0;
 					for (int i = p.Spawned.Count - 1; i >= 0; i--)
 					{
 						AI_NetworkBehaviour ai = p.Spawned[i];
@@ -414,11 +415,19 @@ namespace DynamicIslands.Editor
 						{
 							p.Spawned.RemoveAt(i);
 							ours.Remove(ai);
+							caught++;
 							Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
 						}
 					}
 					int alive = p.Spawned.Count(ai => ai != null && ai.networkEntity != null && !ai.networkEntity.IsDead);
-					if (alive != p.RecordedAlive) Record(e, p, alive);
+					if (alive != p.RecordedAlive)
+					{
+						// For quests: the ones that are gone and weren't caught were killed
+						int killed = p.RecordedAlive - alive - caught;
+						if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
+						if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
+						Record(e, p, alive);
+					}
 				}
 			}
 		}

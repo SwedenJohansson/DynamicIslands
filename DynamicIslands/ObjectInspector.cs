@@ -89,9 +89,11 @@ namespace DynamicIslands.Editor
 			ContentCatalog.CreatureKind kind = ContentCatalog.CreatureOf(target.GameObjectName);
 			if (ContentCatalog.IsZone(target.GameObjectName))
 			{
-				ZoneGroup(target);
-				LootGroup(target, true);
-				return; // (nothing to colour: zones are invisible in a world)
+				// (nothing to colour: zones are invisible in a world)
+				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
+				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
+				else { ZoneGroup(target); LootGroup(target, true); }
+				return;
 			}
 			if (kind != null) CreatureGroup(target, kind);
 			else
@@ -261,6 +263,84 @@ namespace DynamicIslands.Editor
 			GameObject placed = GameObject.Find("PlacedObjects");
 			int linked = placed == null || id.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == id);
 			UIKit.Label(g, linked > 0 ? linked + " creature spot(s) wait for this zone (an ambush)." : "<i>Creatures can wait for it: select one and set \"Appears\".</i>", 12, UIKit.TextMuted);
+		}
+
+		static readonly Color[] FogColors =
+		{
+			new Color(0.92f, 0.94f, 0.96f), new Color(0.55f, 0.58f, 0.62f), new Color(0.45f, 0.6f, 0.8f), new Color(0.45f, 0.6f, 0.35f),
+			new Color(1f, 0.6f, 0.35f), new Color(0.6f, 0.4f, 0.75f), new Color(0.7f, 0.2f, 0.15f),
+		};
+		static readonly Color[] LightColors =
+		{
+			new Color(1f, 0.85f, 0.6f), new Color(0.6f, 0.75f, 1f), new Color(0.6f, 1f, 0.6f), new Color(0.8f, 0.55f, 1f),
+			new Color(1f, 0.45f, 0.35f), new Color(0.35f, 0.35f, 0.45f),
+		};
+
+		static void RadiusSlider(Transform g, EditorGameObject target)
+		{
+			UIKit.Slider(g, "Size (radius)", ObjectProps.MinZoneRadius, ObjectProps.MaxZoneRadius, ObjectProps.Radius(target.Props), v => v.ToString("0") + " m",
+				v => Set(target, ObjectProps.ZoneRadius, ObjectProps.Format(Mathf.Round(v)), "6", false), "How far it reaches (the sphere)", true);
+		}
+
+		/// <summary>A row of colour swatches (with None) setting a colour key; strength slider below when a colour is set.</summary>
+		static void ColourChoice(Transform g, EditorGameObject target, string title, string key, string amountKey, float defaultAmount, Color[] colours, string hint)
+		{
+			UIKit.Size(UIKit.Label(g, title, 13, UIKit.TextMuted).gameObject, -1, 16);
+			RectTransform row = UIKit.Row(g, 22f, 3f, title);
+			bool has = ObjectProps.HasColor(target.Props, key);
+			Button none = UIKit.Button(row, "None", () => { Set(target, key, null); Refresh(); }, "No " + title.ToLowerInvariant(), 42, 22f, 11);
+			UIKit.SetActive(none, !has);
+			foreach (Color c in colours)
+			{
+				Color col = c;
+				UIKit.ColorButton(row, c, () => { Set(target, key, ObjectProps.ColorText(col)); Refresh(); }, hint, 22f);
+			}
+			if (has)
+				UIKit.Slider(g, "Strength", 0.05f, 1f, Mathf.Clamp01(ObjectProps.GetFloat(target.Props, amountKey, defaultAmount)), v => (v * 100f).ToString("F0") + " %",
+					v => Set(target, amountKey, ObjectProps.Format(Mathf.Round(v * 100f) / 100f), null, false), "How strong it is in the middle of the zone");
+		}
+
+		static void AtmosphereGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Atmosphere zone");
+			UIKit.Label(g, "Fly the camera into the sphere to see it.", 12, UIKit.TextMuted);
+			RadiusSlider(g, target);
+			ColourChoice(g, target, "Fog", ObjectProps.AtmoFog, ObjectProps.AtmoFogAmount, 0.6f, FogColors, "Fog of this colour, thicker towards the middle");
+			ColourChoice(g, target, "Light", ObjectProps.AtmoLight, ObjectProps.AtmoLightAmount, 0.5f, LightColors, "Tints the light (warm, cold, eerie...)");
+			UIKit.Size(UIKit.Label(g, "Particles", 13, UIKit.TextMuted).gameObject, -1, 16);
+			RectTransform row = UIKit.Row(g, 24f, 3f, "Particles");
+			string current = ObjectProps.Get(target.Props, ObjectProps.AtmoParticles, "none");
+			foreach (string kind in AtmosphereZone.ParticleKinds)
+			{
+				string k = kind;
+				Button b = UIKit.Button(row, char.ToUpper(k[0]) + k.Substring(1), () => { Set(target, ObjectProps.AtmoParticles, k == "none" ? null : k); Refresh(); }, "Particles: " + k, -1, 24f, 10);
+				UIKit.SetActive(b, k == current);
+			}
+		}
+
+		static void SoundGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Sound zone");
+			string ev = ObjectProps.Get(target.Props, ObjectProps.SoundEvent);
+			Text name = UIKit.Label(g, ev.Length > 0 ? ev : "<i>No sound chosen yet</i>", 12, ev.Length > 0 ? UIKit.TextColor : UIKit.TextMuted);
+			name.horizontalOverflow = HorizontalWrapMode.Wrap;
+			RectTransform row = UIKit.Row(g, 26f, 4f, "Choose");
+			Button choose = UIKit.Button(row, "Choose sound...", () => SoundPickerWindow.Open(target), "Pick one of Raft's sounds (birds, wind, waves, music...)", -1, 26f, 12);
+			UIKit.SetActive(choose, ev.Length == 0);
+			if (ev.Length > 0)
+			{
+				UIKit.Button(row, "\u25BA", () => SoundLibrary.Preview(ev), "Listen", 32, 26f, 12);
+				UIKit.Button(row, "\u25A0", SoundLibrary.StopPreview, "Stop", 32, 26f, 12);
+			}
+			UIKit.Slider(g, "Volume", 0.05f, 1f, Mathf.Clamp01(ObjectProps.GetFloat(target.Props, ObjectProps.SoundVolume, 0.8f)), v => (v * 100f).ToString("F0") + " %",
+				v => Set(target, ObjectProps.SoundVolume, ObjectProps.Format(Mathf.Round(v * 100f) / 100f), "0.8", false), "How loud (in the middle of the zone)");
+			RectTransform mode = UIKit.Row(g, 24f, 4f, "Mode");
+			bool once = ObjectProps.Get(target.Props, ObjectProps.SoundMode) == "enter";
+			Button loop = UIKit.Button(mode, "While inside", () => { Set(target, ObjectProps.SoundMode, null); Refresh(); }, "Plays (loops) while a player is in the zone, louder towards the middle", -1, 24f, 11);
+			Button enter = UIKit.Button(mode, "Once on entering", () => { Set(target, ObjectProps.SoundMode, "enter"); Refresh(); }, "Plays once each time a player walks in", -1, 24f, 11);
+			UIKit.SetActive(loop, !once);
+			UIKit.SetActive(enter, once);
+			RadiusSlider(g, target);
 		}
 
 		/// <summary>Renames a zone; the creatures that waited for the old name follow (one undo step each).</summary>

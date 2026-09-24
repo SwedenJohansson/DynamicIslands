@@ -212,6 +212,7 @@ namespace DynamicIslands.Editor
 			cursorWasFree = Cursor.visible;
 			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
 			Debug.Log("[CUSTOM ISLANDS] Reading note '" + titleText.text + "'");
+			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
 		}
 
 		void Hide()

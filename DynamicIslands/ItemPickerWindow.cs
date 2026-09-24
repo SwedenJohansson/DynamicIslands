@@ -16,6 +16,9 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		EditorGameObject target;
+		// What the window fills: a chest's loot, or anything else in the same "Item*n;..." form (a quest's reward)
+		Func<string> getLoot;
+		Action<string> setLoot;
 		InputField search;
 		RectTransform grid;
 		Text countText, lootText;
@@ -38,6 +41,8 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null || target == null) return;
 			instance.target = target;
+			instance.getLoot = () => ObjectProps.Get(target.Props, ObjectProps.LootItems);
+			instance.setLoot = null;
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.FillTiles();
@@ -54,6 +59,32 @@ namespace DynamicIslands.Editor
 			instance.target = null;
 			EditorInput.IsTyping = false;
 			ObjectInspector.Refresh();
+		}
+
+		/// <summary>Fills a list of items that isn't an object's loot (a quest's reward): get and set use the "Item*n;..." form.</summary>
+		public static void OpenFor(Func<string> get, Action<string> set)
+		{
+			if (instance == null) return;
+			instance.target = null;
+			instance.getLoot = get;
+			instance.setLoot = set;
+			instance.gameObject.SetActive(true);
+			instance.transform.SetAsLastSibling();
+			instance.FillTiles();
+			instance.search.text = "";
+			instance.Filter();
+			instance.ShowLoot();
+			instance.search.ActivateInputField();
+		}
+
+		/// <summary>One more of an item in an "Item*n;..." list.</summary>
+		public static string Add(string lootText, string uniqueName, int amount = 1)
+		{
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, lootText } });
+			int i = loot.FindIndex(l => l.Key == uniqueName);
+			if (i >= 0) loot[i] = new KeyValuePair<string, int>(uniqueName, Mathf.Min(ObjectProps.MaxLootAmount, loot[i].Value + amount));
+			else if (loot.Count < ObjectProps.MaxLootStacks) loot.Add(new KeyValuePair<string, int>(uniqueName, amount));
+			return ObjectProps.LootText(loot);
 		}
 
 		/// <summary>Adds an item to a chest's loot (one more if it's there already) as an undo step.</summary>
@@ -136,7 +167,12 @@ namespace DynamicIslands.Editor
 				t.resizeTextForBestFit = true; t.resizeTextMinSize = 8; t.resizeTextMaxSize = 10;
 				UIKit.Border(r, UIKit.ButtonBorder, 6, 1f);
 				UIKit.Hint(r.gameObject, label + " (" + name + ")");
-				b.onClick.AddListener(() => { if (target != null) { AddItem(target, name); ShowLoot(); } });
+				b.onClick.AddListener(() =>
+				{
+					if (target != null) AddItem(target, name);
+					else if (setLoot != null) setLoot(Add(getLoot != null ? getLoot() : "", name));
+					ShowLoot();
+				});
 				tiles.Add(new KeyValuePair<string, GameObject>((label + " " + name).ToLowerInvariant(), r.gameObject));
 			}
 		}
@@ -156,9 +192,9 @@ namespace DynamicIslands.Editor
 
 		void ShowLoot()
 		{
-			if (target == null) return;
-			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(target.Props);
-			lootText.text = loot.Count == 0 ? "<i>The chest is empty.</i>" : "In the chest: " + string.Join(", ", loot.Select(l => ContentCatalog.ItemLabel(l.Key) + " \u00D7" + l.Value).ToArray());
+			if (getLoot == null) return;
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, getLoot() } });
+			lootText.text = loot.Count == 0 ? "<i>Nothing yet.</i>" : "Chosen: " + string.Join(", ", loot.Select(l => ContentCatalog.ItemLabel(l.Key) + " \u00D7" + l.Value).ToArray());
 		}
 	}
 }

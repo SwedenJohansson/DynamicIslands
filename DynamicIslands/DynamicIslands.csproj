@@ -44,6 +44,8 @@
     <Compile Include="AwaitExtensions\WaitForBackgroundThread.cs" />
     <Compile Include="AwaitExtensions\WaitForUpdate.cs" />
     <Compile Include="CameraMovementScript.cs" />
+    <Compile Include="AmbienceZones.cs" />
+    <Compile Include="SoundPickerWindow.cs" />
     <Compile Include="ContentCatalog.cs" />
     <Compile Include="CreatureSpawner.cs" />
     <Compile Include="CustomNote.cs" />
@@ -70,6 +72,8 @@
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlacementTools.cs" />
+    <Compile Include="Quest.cs" />
+    <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
@@ -98,6 +102,9 @@
     <Compile Include="RuntimeGizmo\UndoRedo\UndoRedo.cs" />
     <Compile Include="RuntimeGizmo\UndoRedo\UndoRedoManager.cs" />
     <Compile Include="terraineditor.cs" />
+    <Compile Include="TerrainStamps.cs" />
+    <Compile Include="TextPromptWindow.cs" />
+    <Compile Include="GroupLibrary.cs" />
     <Compile Include="TerrainPainter.cs" />
     <Compile Include="UnityScripts\TabSelector.cs" />
   </ItemGroup>

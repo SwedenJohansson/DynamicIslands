@@ -40,7 +40,7 @@ namespace DynamicIslands.Editor
 		public const string HarvestableCategory = "Harvestable";
 
 		/// <summary>Order of the core categories in the editor's object list.</summary>
-		static readonly string[] CategoryOrder = new[] { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory }
+		static readonly string[] CategoryOrder = new[] { GroupLibrary.Category, NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory }
 			.Concat(ContentCatalog.Categories).Concat(new[] { RaftBlocksCategory, BuildablesCategory, PropsCategory }).ToArray();
 
 		/// <summary>Categories of the on-demand island scenes, by scene name, in list order (the first match wins).</summary>
@@ -431,6 +431,20 @@ namespace DynamicIslands.Editor
 			labels[name] = label;
 			sizes.Remove(name);
 		}
+
+		/// <summary>Takes a custom object out of the catalog (a deleted group).</summary>
+		internal static void RemoveCustom(string name)
+		{
+			GameObject proto;
+			if (prototypes.TryGetValue(name, out proto) && proto != null && proto.transform.parent == container.transform) UnityEngine.Object.Destroy(proto);
+			prototypes.Remove(name);
+			categories.Remove(name);
+			labels.Remove(name);
+			RaiseChanged();
+		}
+
+		/// <summary>Tells the object browser the list changed (a group was saved).</summary>
+		internal static void NotifyChanged() { RaiseChanged(); }
 
 		static void AddHarvestable(string name, Transform t)
 		{

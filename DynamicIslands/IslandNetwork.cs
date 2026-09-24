@@ -19,6 +19,8 @@ namespace DynamicIslands.Editor
 		/// <summary>A player used something of an island that stays used (a looted chest, a trigger that fires once):
 		/// Ids[0] = island, Index = state key, Count = in-game day. Clients send it to the host, the host to everyone.</summary>
 		public const int ObjectUsed = 6;
+		/// <summary>An island's quest moved on: Ids[0] = island, Index = step, Count = progress in it. Client -> host -> everyone.</summary>
+		public const int QuestStep = 7;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
@@ -153,6 +155,13 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		public static void SendQuest(int islandId, int step, int progress)
+		{
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = progress };
+			if (Raft_Network.IsHost) SendToClients(msg);
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
 			int[] list = ids.ToArray();
@@ -191,6 +200,13 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.FileChunk:
 						if (!Raft_Network.IsHost) ReceiveChunk(msg);
+						break;
+					case IslandNetMessage.QuestStep:
+						if (msg.Ids != null && msg.Ids.Length > 0)
+						{
+							QuestTracker.Apply(msg.Ids[0], msg.Index, msg.Count);
+							if (Raft_Network.IsHost) SendToClients(msg);
+						}
 						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)

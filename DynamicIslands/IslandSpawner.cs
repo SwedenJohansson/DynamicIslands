@@ -245,7 +245,15 @@ namespace DynamicIslands.Editor
 				// Zones are invisible in a world
 				if (!editable && ContentCatalog.IsZone(o.Name))
 				{
-					TriggerZone.Create(parent, o, zone++);
+					if (o.Name == ContentCatalog.TriggerZone) TriggerZone.Create(parent, o, zone++);
+					else
+					{
+						var zgo = new GameObject(o.Name);
+						zgo.transform.SetParent(parent, false);
+						zgo.transform.position = parent.position + o.Position;
+						if (o.Name == ContentCatalog.AtmosphereZoneName) zgo.AddComponent<AtmosphereZone>().Configure(o.Props ?? new Dictionary<string, string>());
+						else if (o.Name == ContentCatalog.SoundZoneName) zgo.AddComponent<SoundZone>().Configure(o.Props ?? new Dictionary<string, string>());
+					}
 					continue;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
@@ -267,7 +275,11 @@ namespace DynamicIslands.Editor
 				else
 				{
 					ObjectProps.ApplyTint(go, o.Props);
-					if (ObjectProps.IsNote(o.Name, o.Props)) CustomNote.Attach(go, o.Props);
+					if (ObjectProps.IsNote(o.Name, o.Props))
+					{
+						CustomNote.Attach(go, o.Props);
+						ContentCatalog.ShowSignText(go, ObjectProps.Get(o.Props, ObjectProps.NoteTitle)); // a sign shows its title
+					}
 					// Numbered in file order like the creatures (the same on every machine)
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
 				}

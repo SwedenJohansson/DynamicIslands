@@ -63,6 +63,8 @@ namespace DynamicIslands.Editor
 		/// <summary>The local player walked in (tests call it directly).</summary>
 		public void Enter()
 		{
+			// A quest step "go to this zone" counts every time (even when the zone itself has fired already)
+			QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
 			bool fired = HasFired;
 			if (fired && !Repeats) return;
 			if (Repeats && Time.time < cooldownUntil) return;
