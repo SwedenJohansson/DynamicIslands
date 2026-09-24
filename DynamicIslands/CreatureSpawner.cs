@@ -18,8 +18,9 @@ namespace DynamicIslands.Editor
 		public int Ordinal;
 		/// <summary>Host: the animals spawned here that are still wild (not caught), dead ones included until removed.</summary>
 		public readonly List<AI_NetworkBehaviour> Spawned = new List<AI_NetworkBehaviour>();
-		/// <summary>Host: how many are alive and wild, as last recorded in the island's state.</summary>
+		/// <summary>Host: how many are alive and wild, as last recorded in the island's state; -1 = not spawned, -2 = being spawned.</summary>
 		public int RecordedAlive = -1;
+		public const int Spawning = -2;
 
 		public static CreatureSpawnPoint Create(Transform parent, IslandObject o, int ordinal)
 		{
@@ -102,15 +103,17 @@ namespace DynamicIslands.Editor
 			ContentCatalog.CacheModels(host.AINetworkBehaviourPrefabs);
 
 			// Spawn points not handled yet (this runs again when a zone fires), except those still waiting for their zone
-			List<CreatureSpawnPoint> points = root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && p.RecordedAlive < 0 && !WaitsForZone(entry, root, p)).ToList();
+			List<CreatureSpawnPoint> points = root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && p.RecordedAlive == -1 && !WaitsForZone(entry, root, p)).ToList();
 			var wanted = new Dictionary<CreatureSpawnPoint, int>();
 			foreach (CreatureSpawnPoint p in points)
 			{
 				int n = HowManyNow(entry, p);
 				if (n > 0) wanted[p] = n;
-				p.RecordedAlive = n;
+				// (counted only once they exist: building the NavMesh first takes a while, and the watcher must not take
+				// the animals it doesn't see yet for defeated ones)
+				p.RecordedAlive = n > 0 ? CreatureSpawnPoint.Spawning : 0;
 			}
-			if (wanted.Count == 0) yield break;
+			if (wanted.Count == 0) { if (points.Count > 0) Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': " + points.Count + " creature spot(s) to fill, none has animals left"); yield break; }
 
 			// Land animals need a NavMesh for each kind of agent Raft gives them
 			var agentTypes = new HashSet<int>();
@@ -144,8 +147,13 @@ namespace DynamicIslands.Editor
 
 			int spawned = 0;
 			foreach (var w in wanted)
+			{
+				int here = 0;
 				for (int i = 0; i < w.Value; i++)
-					if (Spawn(host, w.Key, i, w.Value) != null) spawned++;
+					if (Spawn(host, w.Key, i, w.Value) != null) here++;
+				w.Key.RecordedAlive = here;
+				spawned += here;
+			}
 			Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': " + spawned + " creature(s) spawned at " + wanted.Count + " spawn point(s)");
 		}
 
@@ -406,6 +414,14 @@ namespace DynamicIslands.Editor
 				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
 				{
 					if (p.RecordedAlive < 0) continue; // not spawned yet
+					// A "hide" action on the spot: its animals go too (not counted as defeated), and come back when it is shown
+					if (!p.gameObject.activeInHierarchy)
+					{
+						int gone = RemoveAnimals(p);
+						p.RecordedAlive = -1;
+						if (gone > 0) Debug.Log("[CUSTOM ISLANDS] The spot of " + gone + " " + p.Kind.Label + "(s) on '" + e.HostName + "' was hidden: they are gone until it is shown");
+						continue;
+					}
 					int caught = 0;
 					for (int i = p.Spawned.Count - 1; i >= 0; i--)
 					{
@@ -420,11 +436,13 @@ namespace DynamicIslands.Editor
 							Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
 						}
 					}
-					int alive = p.Spawned.Count(ai => ai != null && ai.networkEntity != null && !ai.networkEntity.IsDead);
+					// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
+					int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
 					if (alive != p.RecordedAlive)
 					{
 						// For quests: the ones that are gone and weren't caught were killed
 						int killed = p.RecordedAlive - alive - caught;
+						if (killed > 0) Debug.Log("[CUSTOM ISLANDS] " + killed + " " + p.Kind.Label + "(s) of '" + e.HostName + "' defeated (" + alive + " left; animals " + string.Join(", ", p.Spawned.Select(a => a == null ? "gone" : a.networkEntity == null ? "no entity" : a.networkEntity.IsDead ? "dead" : "alive").ToArray()) + ")");
 						if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
 						if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
 						// All of them defeated: the spot's "defeat" actions
@@ -447,19 +465,24 @@ namespace DynamicIslands.Editor
 		{
 			if (root == null || !Raft_Network.IsHost) return;
 			int removed = 0;
-			foreach (CreatureSpawnPoint p in root.GetComponentsInChildren<CreatureSpawnPoint>(true))
-			{
-				foreach (AI_NetworkBehaviour ai in p.Spawned)
-				{
-					if (ai == null || ai.connectedSpawner == null) continue;
-					ours.Remove(ai);
-					foreach (AI_Movement m in ai.GetComponentsInChildren<AI_Movement>(true)) speed.Remove(m);
-					try { NetworkIDManager.SendIDBehaviourDead(ai.ObjectIndex, typeof(AI_NetworkBehaviour), true); removed++; }
-					catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Removing a " + p.Kind.Label + ": " + ex.Message); UnityEngine.Object.Destroy(ai.gameObject); }
-				}
-				p.Spawned.Clear();
-			}
+			foreach (CreatureSpawnPoint p in root.GetComponentsInChildren<CreatureSpawnPoint>(true)) removed += RemoveAnimals(p);
 			if (removed > 0) Debug.Log("[CUSTOM ISLANDS] Removed " + removed + " creature(s) with their island");
+		}
+
+		/// <summary>Host: takes a spot's wild animals away (for every player). Caught ones belong to the players and stay.</summary>
+		static int RemoveAnimals(CreatureSpawnPoint p)
+		{
+			int removed = 0;
+			foreach (AI_NetworkBehaviour ai in p.Spawned)
+			{
+				if (ai == null || ai.connectedSpawner == null) continue;
+				ours.Remove(ai);
+				foreach (AI_Movement m in ai.GetComponentsInChildren<AI_Movement>(true)) speed.Remove(m);
+				try { NetworkIDManager.SendIDBehaviourDead(ai.ObjectIndex, typeof(AI_NetworkBehaviour), true); removed++; }
+				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Removing a " + p.Kind.Label + ": " + ex.Message); UnityEngine.Object.Destroy(ai.gameObject); }
+			}
+			p.Spawned.Clear();
+			return removed;
 		}
 
 		static readonly HashSet<AI_NetworkBehaviour> clientTinted = new HashSet<AI_NetworkBehaviour>();

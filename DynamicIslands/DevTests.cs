@@ -1547,10 +1547,24 @@ namespace DynamicIslands
 		/// </summary>
 		public static void Init()
 		{
+			Log("Command file: " + CommandFile + (Sandboxed ? " (second player: running in Sandboxie)" : ""));
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
 		}
 
-		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, "dev_commands.txt"); } }
+		[System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+		static extern IntPtr GetModuleHandle(string moduleName);
+
+		/// <summary>This Raft runs in a Sandboxie box (the second player of a two-player test on one PC).</summary>
+		public static bool Sandboxed
+		{
+			get { try { return GetModuleHandle("SbieDll.dll") != IntPtr.Zero; } catch { return false; } }
+		}
+
+		/// <summary>
+		/// dev_commands.txt for the normal Raft, dev_commands_2.txt for a second Raft in Sandboxie (its box must open
+		/// that one file to the real folder: OpenFilePath, see TEST_PROTOCOL.md §5), so tests can drive each player.
+		/// </summary>
+		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, Sandboxed ? "dev_commands_2.txt" : "dev_commands.txt"); } }
 
 		static IEnumerator PollCommandFile()
 		{

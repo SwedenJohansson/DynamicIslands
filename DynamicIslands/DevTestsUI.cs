@@ -85,6 +85,70 @@ namespace DynamicIslands
 			Log("Clock: water " + (w != null ? w.WaterTime.ToString("0.00") : "none") + ", Time.time " + Time.time.ToString("0.00") + ", shared " + SharedClock.Now.ToString("0.00") + (SharedClock.Synced ? "" : " (not synced)") + ", day " + WorldManager.DayCounter);
 		}
 
+		[ConsoleCommand(name: "CIJoinHost", docs: "Dev, main menu (second player): joins a Steam friend's game through Raft's Join World box: CIJoinHost [part of the game's or friend's name] (default: the first game listed)")]
+		public static void JoinHost(string[] args)
+		{
+			DynamicIslands.instance.StartCoroutine(JoinHostRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+		}
+
+		static System.Collections.IEnumerator JoinHostRoutine(string name)
+		{
+			JoinGameBox box = Resources.FindObjectsOfTypeAll<JoinGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("no Join World box (go to the main menu first)"); yield break; }
+			box.gameObject.SetActive(true);
+			box.Open();
+			// Raft asks Steam for the friends' games: wait until the list stops growing
+			float timeout = Time.realtimeSinceStartup + 30f;
+			int count = -1;
+			while (Time.realtimeSinceStartup < timeout)
+			{
+				yield return new WaitForSecondsRealtime(2f);
+				int now = box.joinGameSelections != null ? box.joinGameSelections.Count : 0;
+				if (now > 0 && now == count) break;
+				count = now;
+			}
+			List<JoinGame_Selection> games = box.joinGameSelections ?? new List<JoinGame_Selection>();
+			Func<JoinGame_Selection, string> label = s => s.text_GameName != null ? s.text_GameName.text : s.steamID.ToString();
+			Log("Games of friends: " + (games.Count == 0 ? "none (is the host a Steam friend of this account, and hosting with 'Friends can join'?)" : string.Join(", ", games.Select(label).ToArray())));
+			JoinGame_Selection pick = name == null ? games.FirstOrDefault() : games.FirstOrDefault(s => label(s).IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (pick == null) { Fail("no game to join" + (name != null ? " called '" + name + "'" : "")); yield break; }
+			Log("Joining: " + label(pick));
+			box.Button_SelectGame(pick);
+			yield return null;
+			box.Button_Join();
+		}
+
+		[ConsoleCommand(name: "CICreatureSpots", docs: "Dev, in game (host): every creature spot of the loaded custom islands - shown, recorded alive, animals, saved state")]
+		public static void CreatureSpots()
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null))
+				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
+				{
+					ObjectState s;
+					bool saved = e.State.TryGetValue(p.StateKey, out s);
+					Log("Spot " + e.HostName + "/" + p.name + ": active " + p.gameObject.activeSelf + ", recorded " + p.RecordedAlive + ", animals " + p.Spawned.Count(a => a != null) +
+						", state " + (saved ? "alive " + s.Yield + " day " + s.Day : "none"));
+				}
+		}
+
+		[ConsoleCommand(name: "CIClearInventory", docs: "Dev, in a test world (its name starts with 'CI '): empties the local player's inventory, which fills up over many test runs (items then drop instead)")]
+		public static void ClearInventory()
+		{
+			string world = SaveAndLoad.CurrentGameFileName ?? "";
+			if (!world.StartsWith("CI ")) { Fail("only in a test world (named 'CI ...'), not in '" + world + "'"); return; }
+			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
+			if (inv == null) { Fail("no player"); return; }
+			int kinds = 0;
+			foreach (Item_Base item in ItemManager.GetAllItems())
+			{
+				if (item == null || string.IsNullOrEmpty(item.UniqueName)) continue;
+				int n = inv.GetItemCount(item.UniqueName);
+				if (n <= 0) continue;
+				try { inv.RemoveItem(item.UniqueName, n); kinds++; } catch { }
+			}
+			Log("Inventory emptied in '" + world + "' (" + kinds + " kinds of items)");
+		}
+
 		static string PathOf(Transform t, Transform top)
 		{
 			string p = t.name;

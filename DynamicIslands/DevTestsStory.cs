@@ -130,7 +130,7 @@ namespace DynamicIslands
 
 		#region World
 
-		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step")]
+		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps")]
 		public static void StoryWorld()
 		{
 			DynamicIslands.instance.StartCoroutine(StoryWorldRoutine());

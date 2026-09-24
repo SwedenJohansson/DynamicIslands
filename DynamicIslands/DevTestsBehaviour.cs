@@ -112,7 +112,7 @@ namespace DynamicIslands
 
 		#region World
 
-		[ConsoleCommand(name: "CIBehaviourWorld", docs: "Dev, in game (host): a lever opens a door, a zone wakes a hidden warthog and sends a signal a rule waits for, a chest teleports, island arrival message, invisible wall and ramp, spinning, saved state")]
+		[ConsoleCommand(name: "CIBehaviourWorld", docs: "Dev, in game (host): a lever opens a door, a zone wakes a hidden warthog and sends a signal a rule waits for, a chest teleports, hiding and showing the ambush spot, island arrival message, invisible wall and ramp, spinning, saved state")]
 		public static void BehaviourWorld()
 		{
 			DynamicIslands.instance.StartCoroutine(BehaviourWorldRoutine());
@@ -147,6 +147,8 @@ namespace DynamicIslands
 			f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = ground(c.x - 4f, c.y - 3f), Props = P(ObjectProps.LootItems, "Nail*1", ObjectProps.NoteTitle, "Box", BehaviourProps.EventKey("open"), "teleport|lever|") });
 			int wallIdx = f.Objects.Count;
 			f.Objects.Add(new IslandObject { Name = ContentCatalog.HelperWall, Position = ground(c.x - 10f, c.y), Scale = new Vector3(2f, 1f, 1f) });
+			int hiderIdx = f.Objects.Count;
+			f.Objects.Add(new IslandObject { Name = "Log", Position = ground(c.x - 3f, c.y - 6f), Props = P(BehaviourProps.Use, "Wave the flag", BehaviourProps.EventKey("use"), "toggle|ambush|") });
 			int rampIdx = f.Objects.Count;
 			f.Objects.Add(new IslandObject { Name = ContentCatalog.HelperRamp, Position = ground(c.x, c.y - 12f) });
 			f.Props[BehaviourProps.EventKey("arrive")] = "message||Welcome to the behaviour test";
@@ -223,6 +225,17 @@ namespace DynamicIslands
 			CreatureSpawnPoint boar = obj(ambushIdx).GetComponent<CreatureSpawnPoint>();
 			while ((boar == null || boar.Spawned.Count == 0) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
 			Check(ref ok, boar != null && boar.Spawned.Count == 1, "the hidden warthog appeared");
+			// Hiding the spot again takes the warthog away (not defeated); showing it brings it back
+			AI_NetworkBehaviour first = boar != null && boar.Spawned.Count > 0 ? boar.Spawned[0] : null;
+			Behaviours.Fire(e, hiderIdx, "use", true);
+			yield return new WaitForSeconds(2.5f);
+			Check(ref ok, boar != null && boar.Spawned.Count == 0 && (first == null || !first.gameObject.activeInHierarchy) && !obj(ambushIdx).gameObject.activeSelf,
+				"hiding the ambush spot takes its warthog away (not counted as defeated)");
+			Behaviours.Fire(e, hiderIdx, "use", true);
+			t0 = Time.realtimeSinceStartup;
+			while ((boar == null || boar.Spawned.Count == 0) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+			if (boar == null || boar.Spawned.Count != 1) CreatureSpots();
+			Check(ref ok, boar != null && boar.Spawned.Count == 1 && obj(ambushIdx).gameObject.activeSelf, "showing it again brings the warthog back");
 
 			// The chest teleports the player to the lever
 			yield return EnsureAlive();
