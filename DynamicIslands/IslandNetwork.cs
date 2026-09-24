@@ -28,6 +28,9 @@ namespace DynamicIslands.Editor
 		/// <summary>An object event (Behaviours): client -> host (do the shared actions), or host -> clients with FullList set
 		/// (do the personal ones if near). Ids[0] = island, Index = object (0xFFFF = the island), Name = event.</summary>
 		public const int EventFired = 10;
+		/// <summary>The crew's story items and journal (StoryBook): client -> host a change (Name = give / take / page, Data =
+		/// its fields), host -> everyone the whole state (Name = all, Data = its lines).</summary>
+		public const int Story = 11;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
@@ -126,6 +129,14 @@ namespace DynamicIslands.Editor
 			SendToPlayer(msg, network.HostID);
 		}
 
+		/// <summary>A story change: a client asks the host; the host sends the whole state to everyone.</summary>
+		public static void SendStory(IslandNetMessage msg)
+		{
+			msg.Kind = IslandNetMessage.Story;
+			if (Raft_Network.IsHost) SendToClients(msg);
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		/// <summary>Host: tell clients about islands (new ones, or the whole list for a client that asked).</summary>
 		internal static IslandNetMessage IslandsMessage(IEnumerable<IslandWorldState.Entry> entries, bool fullList)
 		{
@@ -220,6 +231,7 @@ namespace DynamicIslands.Editor
 						{
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
+							SendToPlayer(StoryBook.StateMessage(), from);
 						}
 						break;
 					case IslandNetMessage.FileRequest:
@@ -246,6 +258,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.EventFired:
 						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList);
+						break;
+					case IslandNetMessage.Story:
+						StoryBook.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 3)

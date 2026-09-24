@@ -215,6 +215,9 @@ namespace DynamicIslands.Editor
 			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
 			IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
 			if (r != null) Behaviours.Fire(ContentState.EntryOf(n.transform), r.Index, "read", true);
+			// Every note read goes into the crew's journal (once)
+			IslandWorldState.Entry e = ContentState.EntryOf(n.transform);
+			if (e != null && r != null && n.Text.Trim().Length > 0) StoryBook.AddPage("note:" + e.HostName + ":" + r.Index, titleText.text, n.Text, Behaviours.IslandTitle(e));
 		}
 
 		void Hide()

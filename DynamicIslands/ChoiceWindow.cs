@@ -95,7 +95,7 @@ namespace DynamicIslands.Editor
 				Button b = UIKit.Button(list, "", () => { Action<string> pick = onPick; Close(); if (pick != null) pick(choice.Value); }, choice.Detail.Length > 0 ? choice.Detail : null, -1, 34f, 13);
 				Text t = UIKit.LabelOf(b);
 				t.alignment = TextAnchor.MiddleLeft;
-				t.text = choice.Label + (choice.Detail.Length > 0 ? "   <color=#9aa7b4><size=11>" + choice.Detail + "</size></color>" : "");
+				t.text = choice.Label + (choice.Detail.Length > 0 ? "   <color=#b89e70><size=11>" + choice.Detail + "</size></color>" : "");
 				rows.Add(new KeyValuePair<string, GameObject>((choice.Label + " " + choice.Value + " " + choice.Detail).ToLowerInvariant(), b.gameObject));
 			}
 			if (choices.Count == 0) UIKit.Label(list, "<i>Nothing to choose from yet.</i>", 13, UIKit.TextMuted);

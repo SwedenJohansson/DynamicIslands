@@ -228,12 +228,14 @@ namespace DynamicIslands.Editor
 
 		public static bool ItemExists(string uniqueName)
 		{
+			if (StoryItems.IsStory(uniqueName)) return StoryItems.Find(uniqueName) != null;
 			try { return ItemManager.GetItemByName(uniqueName) != null; } catch { return false; }
 		}
 
 		/// <summary>An item's name as players see it ("Plank"), or its unique name.</summary>
 		public static string ItemLabel(string uniqueName)
 		{
+			if (StoryItems.IsStory(uniqueName)) return StoryItems.Label(uniqueName);
 			try
 			{
 				Item_Base item = ItemManager.GetItemByName(uniqueName);
@@ -245,6 +247,7 @@ namespace DynamicIslands.Editor
 
 		public static Sprite ItemSprite(string uniqueName)
 		{
+			if (StoryItems.IsStory(uniqueName)) { StoryItemDef d = StoryItems.Find(uniqueName); return d != null ? StoryItems.IconSprite(d.Icon) : null; }
 			try
 			{
 				Item_Base item = ItemManager.GetItemByName(uniqueName);

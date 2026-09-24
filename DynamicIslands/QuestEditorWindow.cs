@@ -206,7 +206,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "Remove quest", () => { quest.Steps.Clear(); SetQuestBringRule(DynamicIslands.currentIslandProps, null); Apply(quest); DynamicIslands.Notify("The island has no quest now"); Close(); }, "Delete the quest from the island", 130, 34);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the quest (save the island to keep it for good)", 110, 34);
-			UIKit.SetActive(save, true);
+			UIKit.Primary(save);
 			UIKit.Button(buttons, "Cancel", Close, "Close without changing the quest", 110, 34);
 		}
 
@@ -262,7 +262,7 @@ namespace DynamicIslands.Editor
 				UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); ShowSteps(); } }, "Earlier", 26, 28f, 11);
 				UIKit.Button(row, "\u25BC", () => { if (index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); ShowSteps(); } }, "Later", 26, 28f, 11);
 				Button del = UIKit.Button(row, "\u00D7", () => { Keep(); quest.Steps.RemoveAt(index); ShowSteps(); }, "Remove this step", 26, 28f, 12);
-				UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+				UIKit.DangerButton(del);
 			}
 		}
 

@@ -79,7 +79,7 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
 		}
 
-		/// <summary>Puts items in the local player's inventory; what doesn't fit is dropped in front of them.</summary>
+		/// <summary>Puts items in the local player's inventory; what doesn't fit is dropped in front of them. Story items go to the crew's journal.</summary>
 		public static List<string> Give(IEnumerable<KeyValuePair<string, int>> items)
 		{
 			var given = new List<string>();
@@ -88,6 +88,7 @@ namespace DynamicIslands.Editor
 			if (inv == null) return given;
 			foreach (KeyValuePair<string, int> l in items)
 			{
+				if (StoryItems.IsStory(l.Key)) { StoryBook.Give(l.Key, l.Value); given.Add(StoryItems.Label(l.Key) + (l.Value > 1 ? " \u00D7" + l.Value : "")); continue; }
 				Item_Base item = ItemManager.GetItemByName(l.Key);
 				if (item == null) { Debug.LogWarning("[CUSTOM ISLANDS] Raft has no item '" + l.Key + "'"); continue; }
 				try

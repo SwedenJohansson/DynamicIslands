@@ -206,13 +206,13 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < q.Steps.Count; i++)
 			{
 				string d = q.Steps[i].Describe();
-				if (i < step) lines.Add("<color=#8fdc8f>\u221A</color> <color=#9aa7b4>" + d + "</color>");
+				if (i < step) lines.Add("<color=#8fdc8f>\u221A</color> <color=#b89e70>" + d + "</color>");
 				else if (i == step)
 				{
 					int progress = ProgressOf(at);
 					lines.Add("<color=#ffc766>\u25BA</color> " + d + (q.Steps[i].Count > 1 ? " (" + progress + "/" + q.Steps[i].Count + ")" : ""));
 				}
-				else lines.Add("<color=#6b7580>\u2022 ?</color>");
+				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
 			stepsText.text = string.Join("\n", lines.ToArray());
 		}
@@ -223,7 +223,7 @@ namespace DynamicIslands.Editor
 			UnityEngine.Object.DontDestroyOnLoad(canvas.gameObject);
 			panel = UIKit.Rect("Quest", canvas.transform);
 			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, -160), new Vector2(300, 0));
-			UIKit.Background(panel.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.6f), 8);
+			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(12, 12, 8, 10), true);
 			titleText = UIKit.Label(panel, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			stepsText = UIKit.Label(panel, "", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Steps");

@@ -412,7 +412,7 @@ namespace DynamicIslands.Editor
 				});
 				amountFields.Add(amount);
 				Button remove = UIKit.Button(row, "\u00D7", () => SetLootAmount(target, index, 0), "Take it out of the chest", 24, 24, 13);
-				UIKit.LabelOf(remove).color = new Color(1f, 0.6f, 0.55f);
+				UIKit.DangerButton(remove);
 			}
 			RectTransform add = UIKit.Row(g, 26f, 4f, "Add");
 			Button more = UIKit.Button(add, "Add items...", () => ItemPickerWindow.Open(target), "Choose from all of Raft's items, with pictures", -1, 26f, 12);

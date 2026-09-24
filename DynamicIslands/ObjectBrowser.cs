@@ -176,9 +176,9 @@ namespace DynamicIslands.Editor
 			Text t = UIKit.LabelOf(b);
 			t.alignment = TextAnchor.MiddleLeft;
 			t.fontStyle = FontStyle.Bold;
-			Text n = UIKit.Label(b.transform, count + (unloaded ? "  <color=#9aa7b4>not loaded</color>" : ""), 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Count");
+			Text n = UIKit.Label(b.transform, count + (unloaded ? "  <color=#a08660>not loaded</color>" : ""), 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Count");
 			UIKit.Stretch(n.rectTransform, 8, 10, 0, 0);
-			ColorBlock cb = b.colors; cb.normalColor = UIKit.GroupBg; b.colors = cb;
+			UIKit.Flat(b);
 		}
 
 		void Toggle(string category)
@@ -211,9 +211,7 @@ namespace DynamicIslands.Editor
 			Image bg = UIKit.Background(r.gameObject, Color.white, 6);
 			var b = r.gameObject.AddComponent<Button>();
 			b.targetGraphic = bg;
-			ColorBlock cb = b.colors;
-			cb.normalColor = UIKit.ButtonBg; cb.highlightedColor = UIKit.ButtonHover; cb.pressedColor = UIKit.ButtonPressed; cb.selectedColor = UIKit.ButtonBg;
-			b.colors = cb;
+			UIKit.Slot(b);
 			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
 			var tile = r.gameObject.AddComponent<ObjectTile>();
 			tile.Name = e.Name;
@@ -223,15 +221,15 @@ namespace DynamicIslands.Editor
 			pic.offsetMin = new Vector2(5, -(TileWidth - 10)); pic.offsetMax = new Vector2(-5, -5);
 			var raw = pic.gameObject.AddComponent<RawImage>();
 			raw.raycastTarget = false;
-			raw.color = new Color(0.16f, 0.19f, 0.23f, 1f);
+			raw.color = new Color(0.45f, 0.36f, 0.24f, 1f);
 			if (e.Loaded) ObjectThumbnails.Request(e.Name, raw);
 			else
 			{
-				Text wait = UIKit.Label(pic, "click to load", 10, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic, "NotLoaded");
+				Text wait = UIKit.Label(pic, "click to load", 10, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "NotLoaded");
 				UIKit.Stretch(wait.rectTransform);
 			}
 
-			Text label = UIKit.Label(r, e.Label, 11, UIKit.TextColor, TextAnchor.UpperCenter, FontStyle.Normal, "Label");
+			Text label = UIKit.Label(r, e.Label, 11, UIKit.SlotText, TextAnchor.UpperCenter, FontStyle.Normal, "Label");
 			label.rectTransform.anchorMin = new Vector2(0, 0); label.rectTransform.anchorMax = new Vector2(1, 0); label.rectTransform.pivot = new Vector2(0.5f, 0);
 			label.rectTransform.offsetMin = new Vector2(3, 2); label.rectTransform.offsetMax = new Vector2(-3, TileHeight - TileWidth + 4);
 			label.verticalOverflow = VerticalWrapMode.Truncate;

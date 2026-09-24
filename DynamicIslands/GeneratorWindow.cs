@@ -118,7 +118,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			Button gen = UIKit.Button(buttons, "Generate", OnGenerate, "Replace the current island with a generated one (Enter; Ctrl+Z undoes)", -1, 34, 15);
-			UIKit.SetActive(gen, true);
+			UIKit.Primary(gen);
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 34, 15);
 		}
 

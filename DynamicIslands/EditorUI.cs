@@ -108,10 +108,10 @@ namespace DynamicIslands.Editor
 			RectTransform bar = UIKit.Rect("TopBar", root);
 			bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
 			bar.sizeDelta = new Vector2(0, TopBarHeight); bar.anchoredPosition = Vector2.zero;
-			UIKit.Background(bar.gameObject, UIKit.PanelBg, 0);
+			UIKit.Surface(bar, 0, false);
 			var line = UIKit.Rect("Line", bar);
 			line.anchorMin = new Vector2(0, 0); line.anchorMax = new Vector2(1, 0); line.sizeDelta = new Vector2(0, 2); line.pivot = new Vector2(0.5f, 0);
-			line.gameObject.AddComponent<Image>().color = new Color(UIKit.Accent.r, UIKit.Accent.g, UIKit.Accent.b, 0.6f);
+			line.gameObject.AddComponent<Image>().color = UIKit.PanelRim;
 			HorizontalLayoutGroup h = UIKit.Horizontal(bar.gameObject, 10f, new RectOffset(12, 12, 8, 8));
 			h.childForceExpandWidth = false;
 
@@ -168,7 +168,7 @@ namespace DynamicIslands.Editor
 			RectTransform bar = UIKit.Rect("StatusBar", root);
 			bar.anchorMin = new Vector2(0, 0); bar.anchorMax = new Vector2(1, 0); bar.pivot = new Vector2(0.5f, 0);
 			bar.sizeDelta = new Vector2(0, StatusBarHeight); bar.anchoredPosition = Vector2.zero;
-			UIKit.Background(bar.gameObject, UIKit.PanelBg, 0);
+			UIKit.Background(bar.gameObject, UIKit.PanelRim, 0);
 			HorizontalLayoutGroup h = UIKit.Horizontal(bar.gameObject, 12f, new RectOffset(12, 12, 2, 2));
 			h.childForceExpandWidth = false;
 			hintText = UIKit.Label(bar, "", 14, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Hint");
@@ -260,7 +260,7 @@ namespace DynamicIslands.Editor
 			}, "Copy the selected objects next to them (Ctrl+D)");
 			UIKit.Button(s2, "Deselect", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(); }, "Clear the selection");
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
-			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.DangerButton(del);
 			RectTransform s3 = UIKit.Row(sel, 26f);
 			UIKit.Button(s3, "Save as group...", SaveGroup, "Keep the selected objects (a hut with its furniture, a camp...) as a group in \"My groups\", to place again on any island", -1, 26f, 13);
 
@@ -416,6 +416,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
 			UIKit.Button(quest, "Islands it brings...", WorldPlanWindow.OpenIsland, "Rules of this island: when its quest (or a step, or a zone) is done, a new island appears near it - in any world", -1, 26f, 13);
 			UIKit.Button(quest, "Island events...", BehaviourWindow.OpenIsland, "What happens when players first come to the island, and when its quest is done (show or open things, messages, items, sounds, signals)", -1, 26f, 13);
+			UIKit.Button(quest, "Story items...", StoryItemsWindow.Open, "Keys, map pieces, logs...: items of the story the crew keeps in the journal; chests and actions give them, events can ask for them. Also ready story sets (a locked door with its key, a trail of notes)", -1, 26f, 13);
 			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
 			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
 			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
@@ -437,7 +438,7 @@ namespace DynamicIslands.Editor
 			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
 			int brings = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps).Count;
-			if (questText != null) questText.text = (q.Exists ? "<color=#e8ecf2>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +
+			if (questText != null) questText.text = (q.Exists ? "<color=#eddeba>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +
 				(brings > 0 ? "\nBrings " + brings + " island(s) into a world" : "");
 		}
 
@@ -498,7 +499,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Island name, elevation and statistics after loading, saving or a new island.</summary>
 		public static void RefreshIsland()
 		{
-			if (islandNameText != null) islandNameText.text = DynamicIslands.currentIslandName + (File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName)) ? "" : "  <size=11><color=#9aa7b4>(not saved yet)</color></size>");
+			if (islandNameText != null) islandNameText.text = DynamicIslands.currentIslandName + (File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName)) ? "" : "  <size=11><color=#b89e70>(not saved yet)</color></size>");
 			if (elevationField != null && !elevationField.isFocused) elevationField.text = DynamicIslands.currentElevation.ToString(CultureInfo.InvariantCulture);
 			RefreshInfo();
 			RefreshStats();

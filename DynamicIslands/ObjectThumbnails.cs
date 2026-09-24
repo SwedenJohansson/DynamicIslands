@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A layer Raft doesn't use for anything we see; the camera renders only this layer.</summary>
 		const int Layer = 31;
 		static readonly Vector3 Stage = new Vector3(-30000f, -30000f, -30000f);
-		static readonly Color Backdrop = new Color(0.16f, 0.19f, 0.23f, 1f);
+		static readonly Color Backdrop = new Color(0.47f, 0.37f, 0.25f, 1f); // Raft's slot brown
 
 		static ObjectThumbnails instance;
 		static readonly Dictionary<string, RenderTexture> done = new Dictionary<string, RenderTexture>();

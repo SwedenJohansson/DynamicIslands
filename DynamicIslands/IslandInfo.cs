@@ -133,7 +133,7 @@ namespace DynamicIslands.Editor
 			Object.DontDestroyOnLoad(canvas.gameObject);
 			RectTransform panel = UIKit.Rect("Banner", canvas.transform);
 			UIKit.Anchor(panel, new Vector2(0.5f, 1f), new Vector2(0, -60), new Vector2(620, 0));
-			UIKit.Background(panel.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.72f), 10);
+			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(24, 24, 14, 16), true);
 			titleText = UIKit.Label(panel, "", 30, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
 			authorText = UIKit.Label(panel, "", 14, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic, "Author");

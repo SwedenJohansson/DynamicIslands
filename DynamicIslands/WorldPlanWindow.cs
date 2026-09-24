@@ -118,7 +118,7 @@ namespace DynamicIslands.Editor
 			newButton = UIKit.Button(planRow, "New...", () => AskName("New plan", "A new, empty plan", "", n => Show(NewPlan(n))), "Start a new plan", 90, 30f, 12);
 			copyButton = UIKit.Button(planRow, "Copy...", () => AskName("Copy plan", "A copy of '" + plan.Name + "'", plan.Name + " copy", n => { Keep(); var c = WorldPlan.Parse(n, plan.ToText()); c.Save(); Show(c); }), "Save a copy under another name", 90, 30f, 12);
 			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Delete this plan (worlds that use it keep their islands; their rules stop)", 90, 30f, 12);
-			UIKit.LabelOf(deleteButton).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.DangerButton(deleteButton);
 			UIKit.Size(UIKit.Label(planRow, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			UIKit.Button(planRow, "Templates...", PickTemplate, "Add a ready-made set of rules (story chain, treasure hunt...) to this plan", 120, 30f, 12);
 
@@ -150,7 +150,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the changes", 110, 34);
-			UIKit.SetActive(save, true);
+			UIKit.Primary(save);
 			UIKit.Button(buttons, "Close", Close, "Close without saving", 110, 34);
 		}
 
@@ -239,7 +239,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(b, "\u25B2", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Earlier", 26, 26f, 11);
 			UIKit.Button(b, "\u25BC", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Later", 26, 26f, 11);
 			Button del = UIKit.Button(b, "\u00D7", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 26, 26f, 12);
-			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.DangerButton(del);
 
 			Text describe = UIKit.Label(card, r.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Describe");
 			UIKit.Size(describe.gameObject, -1, 16);

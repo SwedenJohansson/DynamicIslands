@@ -9,6 +9,7 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// Every item of Raft with its picture, to fill a chest: a search box and a grid; click an item to add it (again
 	/// to add more). Opened from the inspector's Loot group. The chosen items show in the inspector at once.
+	/// The island's story items ("story:&lt;id&gt;") come first. PickOne chooses a single item (a story item's picture).
 	/// </summary>
 	public class ItemPickerWindow : MonoBehaviour
 	{
@@ -19,6 +20,11 @@ namespace DynamicIslands.Editor
 		// What the window fills: a chest's loot, or anything else in the same "Item*n;..." form (a quest's reward)
 		Func<string> getLoot;
 		Action<string> setLoot;
+		// Choosing one item (a story item's picture): called with it, and the window closes
+		Action<string> pickOne;
+		Text titleText;
+		RectTransform storyGrid;
+		bool withStory;
 		InputField search;
 		RectTransform grid;
 		Text countText, lootText;
@@ -43,13 +49,7 @@ namespace DynamicIslands.Editor
 			instance.target = target;
 			instance.getLoot = () => ObjectProps.Get(target.Props, ObjectProps.LootItems);
 			instance.setLoot = null;
-			instance.gameObject.SetActive(true);
-			instance.transform.SetAsLastSibling();
-			instance.FillTiles();
-			instance.search.text = "";
-			instance.Filter();
-			instance.ShowLoot();
-			instance.search.ActivateInputField();
+			instance.Show("ITEMS FOR THE CHEST", null);
 		}
 
 		public static void Close()
@@ -57,6 +57,7 @@ namespace DynamicIslands.Editor
 			if (instance == null) return;
 			instance.gameObject.SetActive(false);
 			instance.target = null;
+			instance.pickOne = null;
 			EditorInput.IsTyping = false;
 			ObjectInspector.Refresh();
 		}
@@ -68,13 +69,51 @@ namespace DynamicIslands.Editor
 			instance.target = null;
 			instance.getLoot = get;
 			instance.setLoot = set;
-			instance.gameObject.SetActive(true);
-			instance.transform.SetAsLastSibling();
-			instance.FillTiles();
-			instance.search.text = "";
-			instance.Filter();
-			instance.ShowLoot();
-			instance.search.ActivateInputField();
+			instance.Show("ITEMS", null);
+		}
+
+		/// <summary>Chooses one of Raft's items (its unique name goes to picked; the window closes).</summary>
+		public static void PickOne(Action<string> picked, bool storyItems = false)
+		{
+			if (instance == null) return;
+			instance.target = null;
+			instance.getLoot = null;
+			instance.setLoot = null;
+			instance.Show("CHOOSE AN ITEM", picked, storyItems);
+		}
+
+		void Show(string title, Action<string> picked, bool storyItems = true)
+		{
+			pickOne = picked;
+			withStory = storyItems;
+			titleText.text = title;
+			gameObject.SetActive(true);
+			transform.SetAsLastSibling();
+			FillTiles();
+			FillStoryTiles();
+			search.text = "";
+			Filter();
+			lootText.text = "";
+			ShowLoot();
+			search.ActivateInputField();
+		}
+
+		/// <summary>The island's story items as tiles (not when choosing a picture).</summary>
+		void FillStoryTiles()
+		{
+			foreach (Transform c in storyGrid) Destroy(c.gameObject);
+			tiles.RemoveAll(t => t.Value == null || t.Value.transform.parent == storyGrid);
+			if (!withStory) return;
+			foreach (StoryItemDef d in StoryItems.Of(DynamicIslands.currentIslandProps))
+				Tile(storyGrid, StoryItems.Ref(d.Id), d.ShownName + " (story)", StoryItems.IconSprite(d.Icon), "Story item '" + d.ShownName + "': the crew keeps it in the journal");
+		}
+
+		void Pick(string name)
+		{
+			if (pickOne != null) { Action<string> p = pickOne; Close(); p(name); return; }
+			if (target != null) AddItem(target, name);
+			else if (setLoot != null) setLoot(Add(getLoot != null ? getLoot() : "", name));
+			ShowLoot();
 		}
 
 		/// <summary>One more of an item in an "Item*n;..." list.</summary>
@@ -112,7 +151,7 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760, 0));
 
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
-			UIKit.Label(head, "ITEMS FOR THE CHEST", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			titleText = UIKit.Label(head, "ITEMS FOR THE CHEST", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			countText = UIKit.Label(head, "", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 
 			search = UIKit.Field(panel, "Search Raft's items (plank, scrap, potato...)", "", 30f, "Type part of an item's name");
@@ -123,6 +162,13 @@ namespace DynamicIslands.Editor
 			ScrollRect scroll;
 			RectTransform content = UIKit.ScrollList(listBox, out scroll, 4f);
 			UIKit.Stretch((RectTransform)scroll.transform);
+			// The island's story items first (they change with the island: filled on every opening)
+			storyGrid = UIKit.Rect("StoryGrid", content);
+			var sg = storyGrid.gameObject.AddComponent<GridLayoutGroup>();
+			sg.cellSize = new Vector2(80f, 92f);
+			sg.spacing = new Vector2(5f, 5f);
+			sg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+			sg.constraintCount = 8;
 			grid = UIKit.Rect("Grid", content);
 			var g = grid.gameObject.AddComponent<GridLayoutGroup>();
 			g.cellSize = new Vector2(80f, 92f);
@@ -136,7 +182,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Label(buttons, "Click an item to add it, again to add more \u00B7 amounts can be changed in the inspector", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			Button done = UIKit.Button(buttons, "Done", Close, "Back to the editor (Ctrl+Z undoes what was added)", 110, 34);
-			UIKit.SetActive(done, true);
+			UIKit.Primary(done);
 		}
 
 		/// <summary>The tiles are made the first time the window opens (Raft's items are loaded by then).</summary>
@@ -150,31 +196,31 @@ namespace DynamicIslands.Editor
 			foreach (Item_Base item in items.OrderBy(i => ContentCatalog.ItemLabel(i.UniqueName), StringComparer.OrdinalIgnoreCase))
 			{
 				string name = item.UniqueName, label = ContentCatalog.ItemLabel(name);
-				RectTransform r = UIKit.Rect("Item_" + name, grid);
-				Image bg = UIKit.Background(r.gameObject, Color.white, 6);
-				var b = r.gameObject.AddComponent<Button>();
-				b.targetGraphic = bg;
-				ColorBlock cb = b.colors;
-				cb.normalColor = UIKit.ButtonBg; cb.highlightedColor = UIKit.ButtonHover; cb.pressedColor = UIKit.ButtonPressed; cb.selectedColor = UIKit.ButtonBg;
-				b.colors = cb;
-				var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
-				RectTransform pic = UIKit.Rect("Icon", r);
-				UIKit.Anchor(pic, new Vector2(0.5f, 1f), new Vector2(0, -6), new Vector2(52, 52));
-				Image icon = pic.gameObject.AddComponent<Image>();
-				icon.sprite = item.settings_Inventory.Sprite; icon.preserveAspect = true; icon.raycastTarget = false;
-				Text t = UIKit.Label(r, label, 10, UIKit.TextColor, TextAnchor.LowerCenter, FontStyle.Normal, "Label");
-				UIKit.Stretch(t.rectTransform, 3, 3, 60, 3);
-				t.resizeTextForBestFit = true; t.resizeTextMinSize = 8; t.resizeTextMaxSize = 10;
-				UIKit.Border(r, UIKit.ButtonBorder, 6, 1f);
-				UIKit.Hint(r.gameObject, label + " (" + name + ")");
-				b.onClick.AddListener(() =>
-				{
-					if (target != null) AddItem(target, name);
-					else if (setLoot != null) setLoot(Add(getLoot != null ? getLoot() : "", name));
-					ShowLoot();
-				});
-				tiles.Add(new KeyValuePair<string, GameObject>((label + " " + name).ToLowerInvariant(), r.gameObject));
+				Tile(grid, name, label, item.settings_Inventory.Sprite, label + " (" + name + ")");
 			}
+		}
+
+		/// <summary>An item as a tile like Raft's inventory slots: picture, name; a click adds (or picks) it.</summary>
+		void Tile(Transform parent, string name, string label, Sprite sprite, string hint)
+		{
+			RectTransform r = UIKit.Rect("Item_" + name, parent);
+			Image bg = UIKit.Background(r.gameObject, Color.white, 6);
+			var b = r.gameObject.AddComponent<Button>();
+			b.targetGraphic = bg;
+			UIKit.Slot(b);
+			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+			RectTransform pic = UIKit.Rect("Icon", r);
+			UIKit.Anchor(pic, new Vector2(0.5f, 1f), new Vector2(0, -6), new Vector2(52, 52));
+			Image icon = pic.gameObject.AddComponent<Image>();
+			icon.sprite = sprite; icon.preserveAspect = true; icon.raycastTarget = false;
+			if (sprite == null) icon.color = new Color(0.3f, 0.2f, 0.1f, 0.3f);
+			Text t = UIKit.Label(r, label, 10, UIKit.SlotText, TextAnchor.LowerCenter, FontStyle.Normal, "Label");
+			UIKit.Stretch(t.rectTransform, 3, 3, 60, 3);
+			t.resizeTextForBestFit = true; t.resizeTextMinSize = 8; t.resizeTextMaxSize = 10;
+			UIKit.Border(r, UIKit.ButtonBorder, 6, 1f);
+			UIKit.Hint(r.gameObject, hint);
+			b.onClick.AddListener(() => Pick(name));
+			tiles.Add(new KeyValuePair<string, GameObject>((label + " " + name).ToLowerInvariant(), r.gameObject));
 		}
 
 		void Filter()

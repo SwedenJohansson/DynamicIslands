@@ -1669,8 +1669,10 @@ namespace DynamicIslands
 				?? box.loadGameSelections.FirstOrDefault(s => worldName(s).IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
 			if (pick == null) { Fail("no saved world called '" + name + "'; there are: " + string.Join(", ", box.loadGameSelections.Select(worldName).ToArray())); yield break; }
 			Log("Loading world: " + worldName(pick));
-			box.Button_Select(pick);
+			// (Button_Select only scrolls the list for gamepads; Button_SelectLoad picks the world to load)
+			box.Button_SelectLoad(pick);
 			yield return null;
+			if (box.selectedGame != pick || SaveAndLoad.WorldToLoad != pick.rgdGame) { Fail("could not pick the world '" + worldName(pick) + "': nothing loaded"); yield break; }
 			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
 			box.Button_LoadGame();
 		}

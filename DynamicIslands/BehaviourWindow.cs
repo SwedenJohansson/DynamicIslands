@@ -12,7 +12,8 @@ namespace DynamicIslands.Editor
 	/// "Behaviour &amp; events" for the selected object (inspector), or "Island events" (Island tab): a name, movement
 	/// (spin, bob, a door or lift with Preview), whether it is there at first, whether players can use it, collision,
 	/// and for each event of the object "when ... then" actions (show/hide, open/close, message, give, sound, teleport,
-	/// signal). Save writes it into the object's settings as one undo step (Behaviours has the runtime).
+	/// signal, journal page, wait), "only if" checks (items, story items, an object's state, a signal, the quest) and what
+	/// happens otherwise (a message). Save writes it into the object's settings as one undo step (Behaviours has the runtime).
 	/// </summary>
 	public class BehaviourWindow : MonoBehaviour
 	{
@@ -24,6 +25,8 @@ namespace DynamicIslands.Editor
 		bool islandMode;
 		Dictionary<string, string> props = new Dictionary<string, string>();
 		readonly Dictionary<string, List<ObjAction>> actions = new Dictionary<string, List<ObjAction>>();
+		readonly Dictionary<string, List<ObjCheck>> checks = new Dictionary<string, List<ObjCheck>>();
+		readonly Dictionary<string, List<ObjAction>> elses = new Dictionary<string, List<ObjAction>>();
 		Text titleText, summaryText;
 		RectTransform body;
 		readonly List<InputField> fields = new List<InputField>();
@@ -33,6 +36,7 @@ namespace DynamicIslands.Editor
 		{
 			{ "show", "show" }, { "hide", "hide" }, { "toggle", "show/hide" }, { "open", "open" }, { "close", "close" }, { "switch", "open/close" },
 			{ "message", "say" }, { "give", "give items" }, { "sound", "play sound" }, { "teleport", "teleport to" }, { "signal", "send signal" },
+			{ "journal", "journal page" }, { "wait", "wait" },
 		};
 
 		public static void Create(Transform canvas)
@@ -79,7 +83,14 @@ namespace DynamicIslands.Editor
 		{
 			props = new Dictionary<string, string>(p);
 			actions.Clear();
+			checks.Clear();
+			elses.Clear();
 			foreach (string ev in Events()) actions[ev] = ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.EventKey(ev)));
+			foreach (string ev in Events())
+			{
+				checks[ev] = ObjCheck.ParseLines(ObjectProps.Get(props, BehaviourProps.CheckKey(ev)));
+				elses[ev] = ObjAction.ParseLines(ObjectProps.Get(props, BehaviourProps.ElseKey(ev)));
+			}
 		}
 
 		void Show()
@@ -131,7 +142,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the changes (one undo step)", 110, 34);
-			UIKit.SetActive(save, true);
+			UIKit.Primary(save);
 			UIKit.Button(buttons, "Cancel", Close, "Close without changing anything (Esc)", 110, 34);
 		}
 
@@ -262,7 +273,74 @@ namespace DynamicIslands.Editor
 			List<ObjAction> list = actions[ev];
 			for (int i = 0; i < list.Count; i++) ActionRow(g, ev, list, i);
 			if (list.Count == 0) UIKit.Label(g, ev == "use" && BehaviourProps.Switches(props) ? "<i>Nothing set: using it opens and closes it.</i>" : "<i>Nothing happens yet.</i>", 12, UIKit.TextMuted);
-			UIKit.Button(g, "+ Add an action", () => { Keep(); list.Add(new ObjAction { Verb = list.Count == 0 && ev != "use" ? "message" : "show" }); Rebuild(); }, "Another thing that happens", 150, 26f, 12);
+			RectTransform add = UIKit.Row(g, 26f, 6f, "Add");
+			UIKit.Button(add, "+ Add an action", () => { Keep(); list.Add(new ObjAction { Verb = list.Count == 0 && ev != "use" ? "message" : "show" }); Rebuild(); }, "Another thing that happens", 150, 26f, 12);
+			UIKit.Button(add, "+ Wait", () => { Keep(); list.Add(new ObjAction { Verb = "wait", Arg = "5" }); Rebuild(); }, "The actions after it happen that many seconds later (a gate that closes again, an ambush after a moment)", 90, 26f, 12);
+			UIKit.Button(add, "+ Only if...", () => { Keep(); checks[ev].Add(new ObjCheck { Kind = "take" }); Rebuild(); }, "A check before the actions: the player has (or gives up) an item or story item, an object is open or closed, a signal was sent, the quest is far enough", 110, 26f, 12);
+			UIKit.Label(add, "", 12);
+			if (checks[ev].Count > 0) ChecksPart(g, ev);
+		}
+
+		static readonly Dictionary<string, string> CheckLabels = new Dictionary<string, string>
+		{
+			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" },
+		};
+
+		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>
+		void ChecksPart(Transform g, string ev)
+		{
+			RectTransform box = UIKit.Rect("Checks", g);
+			UIKit.Background(box.gameObject, new Color(0.23f, 0.13f, 0.06f, 0.35f), 6);
+			UIKit.Vertical(box.gameObject, 4f, new RectOffset(8, 8, 5, 6));
+			Text t = UIKit.Label(box, "ONLY IF (all of these)", 12, UIKit.Tan, TextAnchor.MiddleLeft, FontStyle.Normal, "Title");
+			UIKit.Size(t.gameObject, -1, 18);
+			List<ObjCheck> list = checks[ev];
+			for (int i = 0; i < list.Count; i++) CheckRow(box, list, i);
+			RectTransform other = UIKit.Row(box, 28f, 6f, "Otherwise");
+			UIKit.Size(UIKit.Label(other, "Otherwise say", 12, UIKit.TextMuted).gameObject, 96);
+			List<ObjAction> el = elses[ev];
+			ObjAction msg = el.FirstOrDefault(a => a.Verb == "message");
+			Field(other, "It's locked. Maybe there's a key somewhere...", msg != null ? msg.Arg : "", -1, "What the player reads when a check fails (empty = nothing happens)", v =>
+			{
+				ObjAction m = el.FirstOrDefault(a => a.Verb == "message");
+				if (v.Trim().Length == 0) { if (m != null) el.Remove(m); }
+				else if (m != null) m.Arg = v.Trim();
+				else el.Insert(0, new ObjAction { Verb = "message", Arg = v.Trim() });
+			});
+		}
+
+		void CheckRow(Transform g, List<ObjCheck> list, int index)
+		{
+			ObjCheck c = list[index];
+			RectTransform row = UIKit.Row(g, 28f, 4f, "Check");
+			UIKit.Button(row, CheckLabels[c.Kind], () =>
+			{
+				Keep();
+				c.Kind = BehaviourProps.CheckKinds[(Array.IndexOf(BehaviourProps.CheckKinds, c.Kind) + 1) % BehaviourProps.CheckKinds.Length];
+				if (c.Kind == "state" && !BehaviourProps.States.Contains(c.Arg)) c.Arg = "closed";
+				else if (!c.IsItem && c.Kind != "state") c.Arg = "";
+				Rebuild();
+			}, "Click to change the check: has an item, uses up an item, an object is open/closed/shown/hidden, a signal was sent, the quest reached a step", 120, 28f, 12);
+			if (c.IsItem)
+			{
+				Field(row, "item (\u2026 to choose; story:<id> for a story item)", c.Target, -1, "Raft's unique item name, or story:<id> for one of the island's story items", v => c.Target = v.Trim());
+				UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { c.Target = v; Rebuild(); }, true); }, "Choose an item or story item", 28, 28f, 12);
+				UIKit.Size(UIKit.Label(row, "\u00D7", 12, UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 14);
+				InputField n = Field(row, "1", c.Arg, 40, "How many", v => c.Arg = v.Trim());
+				n.contentType = InputField.ContentType.IntegerNumber;
+			}
+			else if (c.Kind == "state")
+			{
+				Field(row, "object name", c.Target, 150, "Objects with this name (all of them must be so)", v => c.Target = v.Trim());
+				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices().Skip(1), v => { c.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
+				UIKit.Button(row, BehaviourProps.States.Contains(c.Arg) ? c.Arg : "open", () => { Keep(); c.Arg = BehaviourProps.States[(Array.IndexOf(BehaviourProps.States, c.Arg) + 1) % BehaviourProps.States.Length]; Rebuild(); }, "open, closed, shown or hidden (click to change)", 80, 28f, 12);
+			}
+			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
+			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
+			Text d = UIKit.Label(row, c.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Size(d.gameObject, 250);
+			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this check", 26, 28f, 12);
+			UIKit.DangerButton(del);
 		}
 
 		void ActionRow(Transform g, string ev, List<ObjAction> list, int index)
@@ -274,18 +352,26 @@ namespace DynamicIslands.Editor
 			{
 				Keep();
 				a.Verb = BehaviourProps.Verbs[(Array.IndexOf(BehaviourProps.Verbs, a.Verb) + 1) % BehaviourProps.Verbs.Length];
+				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, "Click to change what happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal", 110, 28f, 12);
+			}, "Click to change what happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal, journal page, wait", 110, 28f, 12);
 			if (ObjAction.HasTarget(a.Verb))
 			{
 				Field(row, "name (empty = itself)", a.Target, 170, "The name of the objects it acts on", v => a.Target = v.Trim());
 				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices(), v => { a.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
 			}
-			if (ObjAction.HasArg(a.Verb))
+			if (a.Verb == "journal") Field(row, "page title", a.Target, 170, "The page's title in the crew's journal", v => a.Target = v.Trim());
+			if (a.Verb == "wait")
 			{
-				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : "signal name (world plans wait for it)";
-				InputField arg = Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : "", v => a.Arg = v.Trim());
-				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items", 28, 28f, 12);
+				InputField s = Field(row, "5", a.Arg, 60, "Seconds until the actions after it happen", v => a.Arg = v.Trim());
+				s.contentType = InputField.ContentType.DecimalNumber;
+				UIKit.Label(row, "seconds, then the actions below", 12, UIKit.TextMuted);
+			}
+			else if (ObjAction.HasArg(a.Verb))
+			{
+				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : "signal name (world plans wait for it)";
+				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
+				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items or the island's story items", 28, 28f, 12);
 				if (a.Verb == "sound") UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { a.Arg = v; Rebuild(); }); }, "Choose one of Raft's sounds (you can listen first)", 28, 28f, 12);
 			}
 			else UIKit.Label(row, "", 12);
@@ -293,7 +379,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(d.gameObject, 250);
 			UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); list.Reverse(index - 1, 2); Rebuild(); } }, "Earlier", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this action", 26, 28f, 12);
-			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.DangerButton(del);
 		}
 
 		IEnumerator RebuildWhenClosed()
@@ -351,6 +437,15 @@ namespace DynamicIslands.Editor
 				if (list.Count == 0) p.Remove(BehaviourProps.EventKey(kv.Key));
 				else p[BehaviourProps.EventKey(kv.Key)] = ObjAction.ToLines(list);
 			}
+			foreach (var kv in checks)
+			{
+				List<ObjCheck> list = kv.Value.Where(c => c.Target.Length > 0 || c.Kind == "quest").ToList();
+				if (list.Count == 0) { p.Remove(BehaviourProps.CheckKey(kv.Key)); p.Remove(BehaviourProps.ElseKey(kv.Key)); continue; }
+				p[BehaviourProps.CheckKey(kv.Key)] = ObjCheck.ToLines(list);
+				List<ObjAction> otherwise = elses[kv.Key].Where(a => !(ObjAction.HasArg(a.Verb) && a.Arg.Length == 0)).ToList();
+				if (otherwise.Count == 0) p.Remove(BehaviourProps.ElseKey(kv.Key));
+				else p[BehaviourProps.ElseKey(kv.Key)] = ObjAction.ToLines(otherwise);
+			}
 			return p;
 		}
 
@@ -374,6 +469,8 @@ namespace DynamicIslands.Editor
 			if (col.Length > 0) parts.Add(col == "none" ? "walk-through" : col == "box" ? "box collision" : "solid");
 			int n = p.Keys.Where(k => k.StartsWith(BehaviourProps.EventPrefix)).Sum(k => ObjAction.ParseLines(p[k]).Count);
 			if (n > 0) parts.Add(n + " action(s)");
+			int c = p.Keys.Where(k => k.StartsWith(BehaviourProps.CheckPrefix)).Sum(k => ObjCheck.ParseLines(p[k]).Count);
+			if (c > 0) parts.Add(c + " check(s)");
 			return parts.Count == 0 ? "Nothing set: it just stands there." : string.Join(" \u00B7 ", parts.ToArray());
 		}
 
@@ -383,8 +480,9 @@ namespace DynamicIslands.Editor
 			Dictionary<string, string> result = Result();
 			if (islandMode)
 			{
-				foreach (string k in DynamicIslands.currentIslandProps.Keys.Where(k => k.StartsWith(BehaviourProps.EventPrefix)).ToList()) DynamicIslands.currentIslandProps.Remove(k);
-				foreach (var kv in result.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix))) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
+				Func<string, bool> eventKey = k => k.StartsWith(BehaviourProps.EventPrefix) || k.StartsWith(BehaviourProps.CheckPrefix) || k.StartsWith(BehaviourProps.ElsePrefix);
+				foreach (string k in DynamicIslands.currentIslandProps.Keys.Where(eventKey).ToList()) DynamicIslands.currentIslandProps.Remove(k);
+				foreach (var kv in result.Where(kv => eventKey(kv.Key))) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 				EditorUI.RefreshIsland();
 				DynamicIslands.Notify("Island events kept (save the island, Ctrl+S)");
 			}

@@ -83,7 +83,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 32f, 8f, "Buttons");
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button ok = UIKit.Button(buttons, "OK", Ok, "Save (Enter)", 100, 32);
-			UIKit.SetActive(ok, true);
+			UIKit.Primary(ok);
 			UIKit.Button(buttons, "Cancel", Close, "Don't save (Esc)", 100, 32);
 		}
 	}

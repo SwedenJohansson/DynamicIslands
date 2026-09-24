@@ -39,7 +39,7 @@ namespace DynamicIslands.Editor
 				row.pivot = new Vector2(1f, 0f);
 				row.anchoredPosition = new Vector2(-16f, 84f);
 				row.sizeDelta = new Vector2(292f, 120f);
-				UIKit.Background(row.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.55f), 8);
+				UIKit.Background(row.gameObject, UIKit.GroupBg, 6);
 				UIKit.Vertical(row.gameObject, 5f, new RectOffset(10, 10, 8, 8));
 				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 				UIKit.Size(title.gameObject, -1, 18);

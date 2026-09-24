@@ -128,7 +128,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Label(buttons, "Ctrl+Enter saves \u00B7 Esc cancels", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the note (Ctrl+Z undoes)", 110, 34);
-			UIKit.SetActive(save, true);
+			UIKit.Primary(save);
 			UIKit.Button(buttons, "Cancel", Close, "Close without changing the note", 110, 34);
 		}
 	}

@@ -119,13 +119,14 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label",
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				lines.AddRange(WorldDirector.WriteLines());
+				lines.AddRange(StoryBook.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -146,13 +147,15 @@ namespace DynamicIslands.Editor
 			CustomIslandSpawner.OnWorldLoaded();
 			IslandNetwork.OnWorldLoaded();
 			WorldDirector.Reset();
+			StoryBook.Reset();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				int eq = line.IndexOf('=');
-				if (line.StartsWith("@") && eq > 1 && WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1))) continue;
+				if (line.StartsWith("@") && eq > 1 && (StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;
 				if (p.Length < 4 || p.Length > 7 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||

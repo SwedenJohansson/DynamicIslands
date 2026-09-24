@@ -24,9 +24,15 @@ namespace DynamicIslands.Editor
 	///                                   zone fires), read (a note is read the first time), open (a chest is opened),
 	///                                   defeat (all the animals of a creature spot are defeated). The island has
 	///                                   on.arrive (players first come to it) and on.quest (its quest is done).
-	/// Verbs: show, hide, toggle (whether objects are there), open, close, switch (movers), message, give (items),
-	/// sound (one of Raft's sounds), teleport (the player to an object), signal (world plan and island rules can wait
-	/// for it: "signal:&lt;island&gt;:&lt;name&gt;").
+	///   if.&lt;event&gt;                     checks that must all pass before the actions run, one per line "kind|target|argument":
+	///                                   has (the player has items; "story:&lt;id&gt;" = a story item of the crew), take (has
+	///                                   them, and they are used up), state (objects with the name are open / closed / shown
+	///                                   / hidden), signal (was sent on this island), quest (the island's quest reached a step)
+	///   else.&lt;event&gt;                   actions when a check fails (usually a message: "It's locked.")
+	/// Verbs: show, hide, toggle (whether objects are there), open, close, switch (movers), message, give (items, story
+	/// items too), sound (one of Raft's sounds), teleport (the player to an object), signal (world plan and island rules can
+	/// wait for it: "signal:&lt;island&gt;:&lt;name&gt;"), journal (a page in the crew's journal), wait (the actions after it
+	/// run that many seconds later).
 	/// </summary>
 	public static class BehaviourProps
 	{
@@ -35,11 +41,17 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat" };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal" };
+		public const string CheckPrefix = "if.", ElsePrefix = "else.";
+		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest" };
+		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
 		public static readonly string[] CollisionModes = { "", "none", "box", "solid" };
 
-		public static string EventKey(string ev) { return EventPrefix + ev; }
+		/// <summary>The setting with an event's actions; "use!" = the actions when its checks fail.</summary>
+		public static string EventKey(string ev) { return ev.EndsWith("!") ? ElsePrefix + ev.TrimEnd('!') : EventPrefix + ev; }
+		public static string CheckKey(string ev) { return CheckPrefix + ev.TrimEnd('!'); }
+		public static string ElseKey(string ev) { return ElsePrefix + ev.TrimEnd('!'); }
 
 		public static Vector3 Offset(IDictionary<string, string> p)
 		{
@@ -62,7 +74,7 @@ namespace DynamicIslands.Editor
 		/// <summary>True when the object has anything this file handles (so it gets a behaviour in a world).</summary>
 		public static bool Any(IDictionary<string, string> p)
 		{
-			return p != null && p.Keys.Any(k => k.StartsWith("beh.") || k.StartsWith("col.") || k.StartsWith(EventPrefix) || k == Name);
+			return p != null && p.Keys.Any(k => k.StartsWith("beh.") || k.StartsWith("col.") || k.StartsWith(EventPrefix) || k.StartsWith(CheckPrefix) || k.StartsWith(ElsePrefix) || k == Name);
 		}
 
 		/// <summary>What the events a kind of object can have are: (event, what the builder reads).</summary>
@@ -91,7 +103,9 @@ namespace DynamicIslands.Editor
 		{
 			string[] p = (line ?? "").Split('|');
 			if (p.Length < 1 || !BehaviourProps.Verbs.Contains(p[0].Trim())) return null;
-			return new ObjAction { Verb = p[0].Trim(), Target = p.Length > 1 ? p[1].Trim() : "", Arg = p.Length > 2 ? string.Join("|", p.Skip(2).ToArray()).Trim() : "" };
+			var a = new ObjAction { Verb = p[0].Trim(), Target = p.Length > 1 ? p[1].Trim() : "", Arg = p.Length > 2 ? string.Join("|", p.Skip(2).ToArray()).Trim() : "" };
+			if (a.Verb == "wait" && a.Arg.Length == 0) { a.Arg = a.Target; a.Target = ""; } // "wait|5" as well as "wait||5"
+			return a;
 		}
 
 		public static List<ObjAction> ParseLines(string text) { return (text ?? "").Split('\n').Select(Parse).Where(a => a != null).ToList(); }
@@ -107,7 +121,17 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Needs a target object (by name).</summary>
 		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport"; }
-		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal"; }
+		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait"; }
+
+		/// <summary>A wait's seconds (0..3600).</summary>
+		public float Seconds
+		{
+			get
+			{
+				float s;
+				return Verb == "wait" && float.TryParse(Arg, NumberStyles.Float, CultureInfo.InvariantCulture, out s) ? Mathf.Clamp(s, 0f, 3600f) : 0f;
+			}
+		}
 
 		public string Describe()
 		{
@@ -125,9 +149,65 @@ namespace DynamicIslands.Editor
 				case "sound": return "play " + (Arg.Length > 0 ? Arg.Substring(Arg.LastIndexOf('/') + 1) : "a sound");
 				case "teleport": return "move the player to " + t;
 				case "signal": return "send the signal '" + Arg + "' (world plans can wait for it)";
+				case "journal": return "write \"" + (Target.Length > 0 ? Target : "a page") + "\" in the journal";
+				case "wait": return "wait " + Seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s, then...";
 			}
 			return Verb;
 		}
+	}
+
+	/// <summary>
+	/// One check before an event's actions run: a kind and what it looks at.
+	///   has|&lt;item&gt;|&lt;count&gt;     the player has items (Raft's unique item name, or story:&lt;id&gt; for a story item of the crew)
+	///   take|&lt;item&gt;|&lt;count&gt;    the same, and they are used up when every check passes
+	///   state|&lt;name&gt;|open        objects with that name are open / closed / shown / hidden
+	///   signal|&lt;name&gt;            the signal was sent on this island
+	///   quest|&lt;steps&gt;            the island's quest has that many steps done ("done" = all of them)
+	/// </summary>
+	public class ObjCheck
+	{
+		public string Kind = "take", Target = "", Arg = "";
+
+		public static ObjCheck Parse(string line)
+		{
+			string[] p = (line ?? "").Split('|');
+			if (p.Length < 2 || !BehaviourProps.CheckKinds.Contains(p[0].Trim())) return null;
+			return new ObjCheck { Kind = p[0].Trim(), Target = p[1].Trim(), Arg = p.Length > 2 ? p[2].Trim() : "" };
+		}
+
+		public static List<ObjCheck> ParseLines(string text) { return (text ?? "").Split('\n').Select(Parse).Where(c => c != null).ToList(); }
+
+		public static string ToLines(IEnumerable<ObjCheck> checks)
+		{
+			return string.Join("\n", checks.Select(c => c.Kind + "|" + (c.Target ?? "").Replace("|", "/").Trim() + "|" + (c.Arg ?? "").Replace("|", "/").Trim()).ToArray());
+		}
+
+		/// <summary>How many items it wants (at least 1).</summary>
+		public int Count
+		{
+			get
+			{
+				int n;
+				return int.TryParse(Arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out n) && n > 0 ? n : 1;
+			}
+		}
+
+		public bool IsItem { get { return Kind == "has" || Kind == "take"; } }
+
+		public string Describe()
+		{
+			switch (Kind)
+			{
+				case "has": return "the player has " + ItemText();
+				case "take": return "the player has " + ItemText() + " (used up)";
+				case "state": return "'" + Target + "' is " + (BehaviourProps.States.Contains(Arg) ? Arg : "open");
+				case "signal": return "the signal '" + Target + "' was sent";
+				case "quest": return Target == "done" || Target.Length == 0 ? "the island's quest is done" : "quest step " + Target + " is done";
+			}
+			return Kind;
+		}
+
+		string ItemText() { return (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? ContentCatalog.ItemLabel(Target) : "(no item)"); }
 	}
 
 	/// <summary>An island object with settings, in a world: its place in the island file (the same on every machine) and settings.</summary>
@@ -142,7 +222,8 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// An object's movement in a world: spin, bob, and a mover (door, gate, lift) between its placed pose and the pose
 	/// moved by an offset and turned. A switch mover goes where its shared state says; a loop mover goes back and
-	/// forth by itself. Every machine animates its own copy.
+	/// forth by itself. Every machine animates its own copy, on the clock the players share (<see cref="SharedClock"/>),
+	/// so loops, spins and bobbing are in step for everyone.
 	/// </summary>
 	public class IslandBehaviour : MonoBehaviour
 	{
@@ -156,7 +237,7 @@ namespace DynamicIslands.Editor
 		Quaternion startRot;
 		float phase;
 
-		public void Configure(IDictionary<string, string> p)
+		public void Configure(IDictionary<string, string> p, int index)
 		{
 			SpinSpeed = ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f);
 			BobHeight = ObjectProps.GetFloat(p, BehaviourProps.Bob, 0f);
@@ -167,7 +248,8 @@ namespace DynamicIslands.Editor
 			Loop = ObjectProps.Get(p, BehaviourProps.MoveMode) == "loop";
 			startPos = transform.localPosition;
 			startRot = transform.localRotation;
-			phase = UnityEngine.Random.value * 10f;
+			// Objects start at different points of their cycles, the same on every machine (from their place in the island file)
+			phase = Mathf.Repeat(index * 0.618034f, 1f) * 10f;
 		}
 
 		/// <summary>Jumps to the open or closed pose (an island loading with its saved state).</summary>
@@ -178,7 +260,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (!Animates) return;
-			float t = Time.time + phase;
+			float t = SharedClock.Now + phase;
 			if (Loop) Current = Mathf.PingPong(t / MoveTime, 1f);
 			else if (Current != Target) Current = Mathf.MoveTowards(Current, Target, Time.deltaTime / MoveTime);
 			Pose();
@@ -186,14 +268,48 @@ namespace DynamicIslands.Editor
 
 		void Pose()
 		{
+			float now = SharedClock.Now + phase;
 			float s = Mathf.SmoothStep(0f, 1f, Current);
 			Transform parent = transform.parent;
 			// The offset is in world directions (as the builder sees them); the island root isn't turned, so local = world
 			Vector3 pos = startPos + Offset * s;
-			if (BobHeight != 0f) pos += Vector3.up * BobHeight * Mathf.Sin((Time.time + phase) * Mathf.PI * 2f / BobTime);
-			Quaternion rot = Quaternion.Euler(0f, TurnDegrees * s + SpinSpeed * (Time.time + phase), 0f) * startRot;
+			if (BobHeight != 0f) pos += Vector3.up * BobHeight * Mathf.Sin(now * Mathf.PI * 2f / BobTime);
+			Quaternion rot = Quaternion.Euler(0f, TurnDegrees * s + Mathf.Repeat(SpinSpeed * now, 360f), 0f) * startRot;
 			transform.localPosition = pos;
 			transform.localRotation = rot;
+		}
+	}
+
+	/// <summary>
+	/// A clock that runs the same on every machine of a game: Raft's water time, which the host sends to everyone
+	/// (Network_Water, in its regular world update), followed smoothly from this machine's own time so it never
+	/// jumps from frame to frame. Without water (the editor, the main menu) it is the local time.
+	/// </summary>
+	public static class SharedClock
+	{
+		static float offset;
+		static bool synced;
+		static int frame = -1;
+
+		/// <summary>Seconds on the shared clock.</summary>
+		public static float Now { get { Follow(); return Time.time + offset; } }
+
+		/// <summary>Whether the clock follows the host's (false: only this machine's time).</summary>
+		public static bool Synced { get { Follow(); return synced; } }
+
+		static void Follow()
+		{
+			if (frame == Time.frameCount) return;
+			frame = Time.frameCount;
+			Network_Water water = ComponentManager<Network_Water>.Value;
+			if (water == null) { synced = false; offset = 0f; return; }
+			float target;
+			try { target = water.WaterTime - Time.time; }
+			catch { return; }
+			// A new game or a big correction: jump there; small differences (network delay) are eased out
+			if (!synced || Mathf.Abs(target - offset) > 2f) offset = target;
+			else offset = Mathf.Lerp(offset, target, Mathf.Min(1f, Time.deltaTime * 0.5f));
+			synced = true;
 		}
 	}
 
@@ -266,7 +382,7 @@ namespace DynamicIslands.Editor
 			r.Props = new Dictionary<string, string>(props);
 			if (!BehaviourProps.Any(props)) return;
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
-				go.AddComponent<IslandBehaviour>().Configure(props);
+				go.AddComponent<IslandBehaviour>().Configure(props, index);
 			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName))
 			{
 				UseInteract u = CustomNote.InteractHolder(go).AddComponent<UseInteract>();
@@ -372,31 +488,114 @@ namespace DynamicIslands.Editor
 			return list;
 		}
 
+		public static List<ObjCheck> ChecksOf(IslandWorldState.Entry e, int index, string ev)
+		{
+			return ObjCheck.ParseLines(ObjectProps.Get(PropsOf(e, index), BehaviourProps.CheckKey(ev)));
+		}
+
+		/// <summary>The last check that failed here, described (tests).</summary>
+		public static string LastFailedCheck { get; private set; }
+
+		/// <summary>
+		/// Whether every check passes for this machine's player. Only when they all do, "take" checks use their items
+		/// up (Raft's items from this player's inventory, story items from the crew's).
+		/// </summary>
+		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks)
+		{
+			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
+			foreach (ObjCheck c in checks)
+			{
+				bool ok;
+				try { ok = Holds(e, index, c, inv); }
+				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Check '" + c.Kind + "': " + ex.Message); ok = false; }
+				if (!ok) { LastFailedCheck = c.Describe(); return false; }
+			}
+			foreach (ObjCheck c in checks.Where(x => x.Kind == "take"))
+			{
+				if (StoryItems.IsStory(c.Target)) StoryBook.Take(StoryItems.IdOf(c.Target), c.Count);
+				else if (inv != null) inv.RemoveItem(c.Target, c.Count);
+			}
+			return true;
+		}
+
+		static bool Holds(IslandWorldState.Entry e, int index, ObjCheck c, PlayerInventory inv)
+		{
+			switch (c.Kind)
+			{
+				case "has":
+				case "take":
+					if (StoryItems.IsStory(c.Target)) return StoryBook.Count(StoryItems.IdOf(c.Target)) >= c.Count;
+					return inv != null && c.Target.Length > 0 && inv.GetItemCount(c.Target) >= c.Count;
+				case "state":
+					List<IslandObjectRef> refs = Targets(e, index, c.Target);
+					if (refs.Count == 0) return false;
+					foreach (IslandObjectRef r in refs)
+					{
+						bool visible, open;
+						StateOf(e, r, out visible, out open);
+						bool holds = c.Arg == "closed" ? !open : c.Arg == "shown" ? visible : c.Arg == "hidden" ? !visible : open;
+						if (!holds) return false;
+					}
+					return true;
+				case "signal":
+					return e.State.ContainsKey(SignalKey(c.Target));
+				case "quest":
+					int steps;
+					int need = int.TryParse(c.Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out steps) ? steps : QuestTracker.QuestOf(e).Steps.Count;
+					return QuestTracker.StepOf(e) >= Mathf.Max(1, need);
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// Something happened to an island object (index; -1 = the island itself). localPlayer: this machine's player
-		/// did it (gets the personal actions). Shared actions run on the host (a client asks it).
+		/// did it (gets the personal actions). The checks are made here first; when one fails, the "otherwise" actions
+		/// run instead. Shared actions run on the host (a client asks it). A wait puts the actions after it off.
 		/// </summary>
 		public static void Fire(IslandWorldState.Entry e, int index, string ev, bool localPlayer)
 		{
 			if (e == null) return;
 			if (index < 0) index = IslandIndex;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
-			if (actions.Count == 0) return;
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			if (actions.Count == 0 && checks.Count == 0) return;
 			// Reading a note counts once per world
-			if (ev == "read" || ev == "arrive")
+			bool once = ev == "read" || ev == "arrive";
+			int key = DoneBase + index;
+			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, ev == "arrive"); return; }
+			if (checks.Count > 0 && !Passes(e, index, checks))
 			{
-				int key = DoneBase + index;
-				if (e.State.ContainsKey(key)) { if (localPlayer) RunPersonal(e, index, actions, ev == "arrive"); return; }
+				Otherwise(e, index, ev, localPlayer);
+				return;
+			}
+			if (once)
+			{
 				e.State[key] = new ObjectState { Active = false, Day = Today };
 				IslandNetwork.SendUsed(e.Id, key, Today);
 			}
-			if (localPlayer) RunPersonal(e, index, actions, false);
+			Run(e, index, ev, actions, localPlayer);
+			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
+		}
+
+		/// <summary>A check failed: the event's "otherwise" actions (usually a message for the player who tried).</summary>
+		static void Otherwise(IslandWorldState.Entry e, int index, string ev, bool localPlayer)
+		{
+			string otherwise = ev.TrimEnd('!') + "!";
+			Debug.Log("[CUSTOM ISLANDS] '" + ev + "' on '" + e.HostName + "': not yet (" + LastFailedCheck + ")");
+			Run(e, index, otherwise, ActionsOf(e, index, otherwise), localPlayer);
+			if (Fired != null) try { Fired(e.Id, index, otherwise); } catch { }
+		}
+
+		/// <summary>The personal part here (for this machine's player), the shared part on the host.</summary>
+		static void Run(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions, bool localPlayer)
+		{
+			if (actions.Count == 0) return;
+			if (localPlayer) Schedule(e, index, actions, false, false);
 			if (actions.Any(a => a.Shared))
 			{
-				if (Raft_Network.IsHost) RunShared(e, index, actions);
+				if (Raft_Network.IsHost) Schedule(e, index, actions, true, false);
 				else IslandNetwork.SendEvent(e.Id, index, ev, false);
 			}
-			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
 
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
@@ -404,9 +603,12 @@ namespace DynamicIslands.Editor
 		{
 			if (e == null || !Raft_Network.IsHost) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
-			if (actions.Count == 0) return;
-			if (Near(e)) RunPersonal(e, index, actions, false);
-			RunShared(e, index, actions);
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			if (actions.Count == 0 && checks.Count == 0) return;
+			if (checks.Count > 0 && !Passes(e, index, checks)) ev += "!";
+			actions = ActionsOf(e, index, ev);
+			if (Near(e)) Schedule(e, index, actions, false, false);
+			Schedule(e, index, actions, true, false);
 			IslandNetwork.SendEvent(e.Id, index, ev, true);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
@@ -417,9 +619,11 @@ namespace DynamicIslands.Editor
 			if (e == null) return;
 			if (index < 0) index = IslandIndex;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
-			if (actions.Count == 0) return;
-			if (Near(e)) RunPersonal(e, index, actions, false);
-			if (Raft_Network.IsHost) RunShared(e, index, actions);
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			if (actions.Count == 0 && checks.Count == 0) return;
+			if (checks.Count > 0 && !Passes(e, index, checks)) actions = ActionsOf(e, index, ev + "!");
+			if (Near(e)) Schedule(e, index, actions, false, false);
+			if (Raft_Network.IsHost) Schedule(e, index, actions, true, false);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
 
@@ -429,8 +633,43 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
-			if (Raft_Network.IsHost && !fromHost) RunShared(e, index, actions);
-			else if (fromHost && Near(e)) RunPersonal(e, index, actions, false);
+			// (the client made the checks already)
+			if (Raft_Network.IsHost && !fromHost) Schedule(e, index, actions, true, false);
+			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false);
+		}
+
+		/// <summary>
+		/// Runs one part of the actions (shared or personal), the ones after a wait that many seconds later. Waiting
+		/// actions need the island to stay loaded: when it unloads (the raft sails away), what's left does nothing.
+		/// </summary>
+		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly)
+		{
+			float delay = 0f;
+			var part = new List<ObjAction>();
+			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
+			{
+				if (a.Verb != "wait") { part.Add(a); continue; }
+				if (part.Count > 0)
+				{
+					List<ObjAction> now = part;
+					if (delay <= 0f) RunPart(e, index, now, shared, messagesOnly);
+					else DynamicIslands.instance.StartCoroutine(Later(delay, () => { if (IslandWorldState.Contains(e) && LoadSceneManager.IsGameSceneLoaded) RunPart(e, index, now, shared, messagesOnly); }));
+				}
+				part = new List<ObjAction>();
+				delay += a.Seconds;
+			}
+		}
+
+		static System.Collections.IEnumerator Later(float seconds, Action then)
+		{
+			yield return new WaitForSeconds(seconds);
+			try { then(); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Waiting actions: " + ex.Message); }
+		}
+
+		static void RunPart(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly)
+		{
+			if (shared) RunShared(e, index, actions); else RunPersonal(e, index, actions, messagesOnly);
 		}
 
 		static void RunShared(IslandWorldState.Entry e, int index, List<ObjAction> actions)
@@ -440,8 +679,15 @@ namespace DynamicIslands.Editor
 			{
 				if (a.Verb == "signal")
 				{
-					e.State[SignalKey(a.Arg)] = new ObjectState { Active = true, Day = Today };
+					int key = SignalKey(a.Arg);
+					e.State[key] = new ObjectState { Active = true, Day = Today };
+					IslandNetwork.SendUsed(e.Id, key, Today); // (clients check signals too)
 					Debug.Log("[CUSTOM ISLANDS] Signal '" + a.Arg + "' on '" + e.HostName + "'");
+					continue;
+				}
+				if (a.Verb == "journal")
+				{
+					StoryBook.AddPage("act:" + e.HostName + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));
 					continue;
 				}
 				foreach (IslandObjectRef r in Targets(e, index, a.Target))
@@ -463,6 +709,13 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (creaturesShown) CreatureSpawner.OnIslandReady(e); // hidden animals appear: an ambush
+		}
+
+		/// <summary>The island's name as players see it (its title, or the file name).</summary>
+		public static string IslandTitle(IslandWorldState.Entry e)
+		{
+			string t = ObjectProps.Get(IslandCache.PropsOf(e), IslandProps.Title);
+			return t.Length > 0 ? t : e.Label.Length > 0 ? e.Label : e.HostName;
 		}
 
 		static void RunPersonal(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool messagesOnly)

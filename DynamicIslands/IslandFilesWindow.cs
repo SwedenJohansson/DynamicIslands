@@ -126,10 +126,10 @@ namespace DynamicIslands.Editor
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			Button save = UIKit.Button(buttons, "Save", OnSave, "Save the island under this name (Enter)", -1, 34, 15);
-			UIKit.SetActive(save, true);
+			UIKit.Primary(save);
 			UIKit.Button(buttons, "Open", OnLoad, "Open the picked island (unsaved changes are lost)", -1, 34, 15);
 			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island's file (asks first)", -1, 34, 15);
-			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.DangerButton(del);
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 34, 15);
 		}
 
