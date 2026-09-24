@@ -19,10 +19,13 @@ namespace DynamicIslands.Editor
 		/// (Message_AxeHit, Message_PickupObjectManager_RemoveItem). Every machine spawns the same island objects in
 		/// the same order, so indexes built from the island's id (shared by host and clients) plus the object's place
 		/// in the hierarchy match everywhere. The high base keeps them clear of Raft's own counter-based indexes.
+		/// The top bit stays clear: Message_AxeHit carries the tree's index as an int, and Raft ignores a negative one
+		/// (seen in a two-player test with 0xC0000000: a client's axe did nothing on custom islands' trees, and the
+		/// host's chops never reached clients).
 		/// </summary>
 		public static void RegisterNetworkIds(GameObject root, int islandId)
 		{
-			uint baseIndex = 0xC0000000u | ((uint)(islandId & 0x3FFF) << 16);
+			uint baseIndex = 0x40000000u | ((uint)(islandId & 0x3FFF) << 16);
 			uint n = 0;
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
 			{

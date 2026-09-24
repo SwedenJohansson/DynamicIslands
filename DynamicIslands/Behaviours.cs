@@ -718,7 +718,8 @@ namespace DynamicIslands.Editor
 				if (a.Verb == "signal")
 				{
 					int key = SignalKey(a.Arg);
-					e.State[key] = new ObjectState { Active = true, Day = Today };
+					// (Active false, as clients get it through the "used" message: only its presence counts)
+					e.State[key] = new ObjectState { Active = false, Day = Today };
 					IslandNetwork.SendUsed(e.Id, key, Today); // (clients check signals too)
 					Debug.Log("[CUSTOM ISLANDS] Signal '" + a.Arg + "' on '" + e.HostName + "'");
 					continue;

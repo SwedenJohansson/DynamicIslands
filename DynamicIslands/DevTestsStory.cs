@@ -142,7 +142,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			StoryBook.Reset();
+			ResetStoryEverywhere();
 
 			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
 			f.Name = "cistoryworld";
@@ -305,7 +305,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.5f);
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(x => x.Id).ToList(), true);
 			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
-			StoryBook.Reset();
+			ResetStoryEverywhere();
 			if (ok) Log("PASS: story items, checks and waits in a world"); else Fail("story items, checks and waits in a world");
 		}
 

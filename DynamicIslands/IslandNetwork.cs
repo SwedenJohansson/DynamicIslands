@@ -78,6 +78,24 @@ namespace DynamicIslands.Editor
 
 		static bool InMultiplayerGame { get { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null; } }
 
+		// Client: the host's world has arrived (Raft_Network.OnWorldReceivedLate), so the raft is where the host's
+		// is. Island offsets are relative to the raft: before this they would land around the scene's origin. Seen in
+		// a two-player test: an island spawned while the client was still joining ended up 1 km away.
+		static bool worldReceived, wasInGame;
+
+		/// <summary>Client: Raft has received the host's world. Starts the island sync afresh (a message that came
+		/// in while joining, or the list from an earlier game, is dropped: the host's full list replaces it).</summary>
+		public static void OnWorldReceived()
+		{
+			if (Raft_Network.IsHost) return;
+			worldReceived = true;
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
+			synced = false;
+			syncTries = 0;
+			nextSyncTry = 0;
+			Log("The host's world arrived: asking for its islands");
+		}
+
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [net] " + msg); }
 
 		/// <summary>Host: a unique id for a new entry in the island list.</summary>
@@ -95,7 +113,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Called every frame. Clients keep asking the host for the island list until it arrives.</summary>
 		public static void Tick()
 		{
-			if (synced || Raft_Network.IsHost || !InMultiplayerGame || Time.unscaledTime < nextSyncTry) return;
+			// Left the game: the next one sends its world again. (Only on leaving: Raft raises OnWorldReceivedLate
+			// before it counts the game scene as loaded.)
+			if (LoadSceneManager.IsGameSceneLoaded) wasInGame = true;
+			else if (wasInGame) { wasInGame = false; worldReceived = false; }
+			if (synced || Raft_Network.IsHost || !worldReceived || !InMultiplayerGame || Time.unscaledTime < nextSyncTry) return;
 			if (syncTries >= SyncMaxTries) { synced = true; Debug.LogWarning("[CUSTOM ISLANDS] [net] The host never sent its island list (does the host have Custom Islands?)"); return; }
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + SyncRetrySeconds;
@@ -263,7 +285,7 @@ namespace DynamicIslands.Editor
 						StoryBook.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
-						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 3)
+						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
 							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", (CustomIslandSpawner.RaftPosition ?? Vector3.zero) + new Vector3(msg.Offsets[0], msg.Offsets[1], msg.Offsets[2]));
 						break;
 					case IslandNetMessage.ObjectUsed:
@@ -281,6 +303,8 @@ namespace DynamicIslands.Editor
 
 		static void ReceiveIslands(IslandNetMessage msg)
 		{
+			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
+			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
 			synced = true;
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			int n = msg.Ids != null ? msg.Ids.Length : 0;

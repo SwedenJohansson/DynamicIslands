@@ -1144,7 +1144,9 @@ namespace DynamicIslands
 			int stale = IslandObjectState.DropRegrown(old, 3);
 			var fresh = IslandObjectState.Decode(IslandObjectState.Encode(e.State));
 			int kept = fresh.Count - IslandObjectState.DropRegrown(fresh, 3);
-			bool regrown = stale == e.State.Count && old.Count == 0 && kept == e.State.Count;
+			// (only trees and pickups regrow: doors, chests, zones, quests and signals of the island keep their state)
+			int harvests = e.State.Keys.Count(k => k < CreatureSpawner.StateKeyBase);
+			bool regrown = stale == harvests && old.Count == e.State.Count - harvests && kept == e.State.Count;
 			Log((regrown ? "PASS" : "FAIL") + ": state older than 3 days is dropped, so the island regrows on its next load; today's stays (" + stale + " dropped, " + kept + " kept)");
 
 			var round = IslandObjectState.Decode("5,0,-1,12;7,1,2,13");
@@ -1548,6 +1550,9 @@ namespace DynamicIslands
 		public static void Init()
 		{
 			Log("Command file: " + CommandFile + (Sandboxed ? " (second player: running in Sandboxie)" : ""));
+			// A Raft that isn't in front pauses, and then never reads the command file (not even a CIBackground):
+			// dev builds always keep running, so a Raft started behind other windows can still be driven.
+			Application.runInBackground = true;
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
 		}
 

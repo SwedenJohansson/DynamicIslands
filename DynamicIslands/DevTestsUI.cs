@@ -6,6 +6,7 @@ using System.Text;
 using DynamicIslands.Editor;
 using HMLLibrary;
 using RaftModLoader;
+using Steamworks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -85,8 +86,72 @@ namespace DynamicIslands
 			Log("Clock: water " + (w != null ? w.WaterTime.ToString("0.00") : "none") + ", Time.time " + Time.time.ToString("0.00") + ", shared " + SharedClock.Now.ToString("0.00") + (SharedClock.Synced ? "" : " (not synced)") + ", day " + WorldManager.DayCounter);
 		}
 
-		[ConsoleCommand(name: "CIJoinHost", docs: "Dev, main menu (second player): joins a Steam friend's game through Raft's Join World box: CIJoinHost [part of the game's or friend's name] (default: the first game listed)")]
+		[ConsoleCommand(name: "CIJoinHost", docs: "Dev, main menu (second player): joins a Steam friend's Raft game, as Steam's \"Join Game\" does: CIJoinHost [part of the friend's name, or their SteamID64] (default: the first friend hosting)")]
 		public static void JoinHost(string[] args)
+		{
+			DynamicIslands.instance.StartCoroutine(JoinFriendRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+		}
+
+		/// <summary>
+		/// Raft's own Join World list is empty in this version (JoinGameBox.RefreshGames does nothing): friends join
+		/// through Steam, which hands Raft the host's rich presence "connect" string (Raft_Network.
+		/// GameRichPressenceJoinRequested). This reads that string from the friends playing Raft and does the same.
+		/// </summary>
+		static System.Collections.IEnumerator JoinFriendRoutine(string name)
+		{
+			Raft_Network net = ComponentManager<Raft_Network>.Value;
+			if (net == null) { Fail("no Raft_Network (go to the main menu first)"); yield break; }
+			ulong direct;
+			if (name != null && ulong.TryParse(name, out direct))
+			{
+				Log("Joining: SteamID " + direct);
+				net.ParseConnectString(direct.ToString());
+				yield break;
+			}
+			AppId_t raft = SteamUtils.GetAppID();
+			var hosts = new List<KeyValuePair<string, string>>();
+			float timeout = Time.realtimeSinceStartup + 20f;
+			while (Time.realtimeSinceStartup < timeout)
+			{
+				hosts.Clear();
+				int n = SteamFriends.GetFriendCount(EFriendFlags.k_EFriendFlagImmediate);
+				var playing = new List<string>();
+				for (int i = 0; i < n; i++)
+				{
+					CSteamID id = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
+					FriendGameInfo_t game;
+					if (!SteamFriends.GetFriendGamePlayed(id, out game) || game.m_gameID.AppID() != raft) continue;
+					SteamFriends.RequestFriendRichPresence(id);
+					string who = SteamFriends.GetFriendPersonaName(id);
+					string connect = SteamFriends.GetFriendRichPresence(id, Raft_Network.PresenceKeyConnect);
+					playing.Add(who + (string.IsNullOrEmpty(connect) ? " (not hosting)" : ""));
+					if (!string.IsNullOrEmpty(connect)) hosts.Add(new KeyValuePair<string, string>(who, connect));
+				}
+				if (hosts.Count > 0 || Time.realtimeSinceStartup + 2f >= timeout)
+				{
+					Log("Steam friends: " + n + ", playing Raft: " + (playing.Count == 0 ? "none" : string.Join(", ", playing.ToArray())));
+					if (hosts.Count == 0)
+						for (int i = 0; i < n; i++)
+						{
+							CSteamID id = SteamFriends.GetFriendByIndex(i, EFriendFlags.k_EFriendFlagImmediate);
+							FriendGameInfo_t game;
+							bool inGame = SteamFriends.GetFriendGamePlayed(id, out game);
+							Log("  friend " + id + " '" + SteamFriends.GetFriendPersonaName(id) + "': " + SteamFriends.GetFriendPersonaState(id) +
+								(inGame ? ", playing app " + game.m_gameID.AppID() : ", not in a game (as this account sees it)") + " (Raft is app " + raft + ")");
+						}
+					break;
+				}
+				yield return new WaitForSecondsRealtime(2f);
+			}
+			var pick = hosts.FirstOrDefault(h => name == null || h.Key.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (pick.Value == null) { Fail("no friend hosting Raft" + (name != null ? " called '" + name + "'" : "") + " (are the accounts Steam friends, and is the host in a world?)"); yield break; }
+			string[] parts = pick.Value.Split(new[] { Raft_Network.CONNECT_DELIMITER }, StringSplitOptions.None);
+			Log("Joining: " + pick.Key);
+			net.ParseConnectString(parts.Length > 1 ? parts[1].TrimStart() : pick.Value.Trim());
+		}
+
+		[ConsoleCommand(name: "CIJoinHostMenu", docs: "Dev, main menu: joins through Raft's own Join World box (empty in this Raft version: kept to show that)")]
+		public static void JoinHostMenu(string[] args)
 		{
 			DynamicIslands.instance.StartCoroutine(JoinHostRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
@@ -135,7 +200,8 @@ namespace DynamicIslands
 		public static void ClearInventory()
 		{
 			string world = SaveAndLoad.CurrentGameFileName ?? "";
-			if (!world.StartsWith("CI ")) { Fail("only in a test world (named 'CI ...'), not in '" + world + "'"); return; }
+			// (a client doesn't know the host's world name: the second player of the two-player test, in Sandboxie, may)
+			if (!world.StartsWith("CI ") && !(Sandboxed && !Raft_Network.IsHost)) { Fail("only in a test world (named 'CI ...'), not in '" + world + "'"); return; }
 			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
 			if (inv == null) { Fail("no player"); return; }
 			int kinds = 0;

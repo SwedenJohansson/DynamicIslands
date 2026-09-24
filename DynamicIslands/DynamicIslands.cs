@@ -110,6 +110,8 @@ namespace DynamicIslands
 			// Custom islands saved with a world come back when it loads
 			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
 			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
+			// A client asks for the host's islands once the host's world is here (the raft is where the host's is)
+			Raft_Network.OnWorldReceivedLate += IslandNetwork.OnWorldReceived;
 			// ...and follow Raft's floating-origin world shifts
 			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
 			// An island's quest done: its "on.quest" actions
