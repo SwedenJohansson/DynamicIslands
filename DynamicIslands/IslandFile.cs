@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using UnityEngine;
 
@@ -15,6 +16,11 @@ namespace DynamicIslands.Editor
 		public Vector3 Position;
 		public Vector3 EulerRotation;
 		public Vector3 Scale = Vector3.one;
+		/// <summary>
+		/// Extra data of this object (format 4), or null: what makes it a creature spawn point or a readable note, its
+		/// tint... Keys and values are plain strings, see ObjectProps.
+		/// </summary>
+		public Dictionary<string, string> Props;
 	}
 
 	/// <summary>
@@ -40,12 +46,16 @@ namespace DynamicIslands.Editor
 	///     string   style ("" = tropical; "Snowy", "Desert", "Forest", "Volcanic")
 	///              Normal tropical islands (elevation 0, no style) are still written as version 2 so older versions
 	///              of the mod can read them.
+	///   version 4 adds, after the style (only written when the island or one of its objects has properties):
+	///     int32    island property count, then per property: string key, string value (IslandProps: author, description...)
+	///     int32    count of objects with properties, then per object: int32 index in the object list above,
+	///              int32 property count, then per property: string key, string value (creatures, notes, tints: ObjectProps)
 	/// </summary>
 	public class IslandFile
 	{
 		public const string Extension = ".island";
 		const uint Magic = 0x4C534943; // "CISL" little-endian
-		const int FormatVersion = 3;
+		const int FormatVersion = 4;
 
 		/// <summary>Editor Y coordinate that is treated as sea level when spawned in game.</summary>
 		public const float DefaultWaterLevel = 20f;
@@ -69,6 +79,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Island style (TerrainPainter.Styles: "Snowy", "Desert"...); empty = tropical.</summary>
 		public string Style = "";
 
+		/// <summary>Island-wide settings (format 4), see IslandProps for the keys.</summary>
+		public Dictionary<string, string> Props = new Dictionary<string, string>();
+
+		bool NeedsFormat4 { get { return Props.Count > 0 || Objects.Any(o => o.Props != null && o.Props.Count > 0); } }
+
 		bool NeedsFormat3 { get { return Elevation != 0f || (!string.IsNullOrEmpty(Style) && TerrainPainter.StyleIndex(Style) != TerrainPainter.Tropical); } }
 
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
@@ -81,8 +96,9 @@ namespace DynamicIslands.Editor
 			{
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
-				// A normal tropical island needs nothing from format 3, so such files stay readable by older versions of the mod
-				header.Write(NeedsFormat3 ? FormatVersion : 2);
+				// Each file uses the oldest format that holds what it needs, so simple islands stay readable by older versions of the mod
+				bool v4 = NeedsFormat4, v3 = v4 || NeedsFormat3;
+				header.Write(v4 ? 4 : v3 ? 3 : 2);
 				header.Flush();
 
 				using (var deflate = new DeflaterOutputStream(file) { IsStreamOwner = false })
@@ -114,7 +130,14 @@ namespace DynamicIslands.Editor
 						w.Write(PaintMask != null);
 						if (PaintMask != null) w.Write(PaintMask);
 					}
-					if (NeedsFormat3) { w.Write(Elevation); w.Write(Style ?? ""); }
+					if (v3) { w.Write(Elevation); w.Write(Style ?? ""); }
+					if (v4)
+					{
+						WriteProps(w, Props);
+						List<int> withProps = Enumerable.Range(0, Objects.Count).Where(i => Objects[i].Props != null && Objects[i].Props.Count > 0).ToList();
+						w.Write(withProps.Count);
+						foreach (int i in withProps) { w.Write(i); WriteProps(w, Objects[i].Props); }
+					}
 					w.Flush();
 					deflate.Finish();
 				}
@@ -179,6 +202,18 @@ namespace DynamicIslands.Editor
 						// The first format 3 files (flying islands, before styles) end after the elevation
 						try { island.Style = r.ReadString(); } catch (EndOfStreamException) { }
 					}
+					if (version >= 4)
+					{
+						island.Props = ReadProps(r);
+						int withProps = r.ReadInt32();
+						if (withProps < 0 || withProps > island.Objects.Count) throw new InvalidDataException("Invalid object property count " + withProps);
+						for (int n = 0; n < withProps; n++)
+						{
+							int i = r.ReadInt32();
+							Dictionary<string, string> props = ReadProps(r);
+							if (i >= 0 && i < island.Objects.Count) island.Objects[i].Props = props;
+						}
+					}
 					return island;
 				}
 			}
@@ -219,6 +254,7 @@ namespace DynamicIslands.Editor
 				island.Objects.Add(new IslandObject
 				{
 					Name = ego.GameObjectName,
+					Props = ego.Props != null && ego.Props.Count > 0 ? new Dictionary<string, string>(ego.Props) : null,
 					// Store relative to the terrain so the island can be spawned anywhere
 					Position = t.position - terrain.transform.position,
 					EulerRotation = t.rotation.eulerAngles,
@@ -264,6 +300,21 @@ namespace DynamicIslands.Editor
 			byte[] b = r.ReadBytes(count);
 			if (b.Length != count) throw new InvalidDataException("Island file is truncated");
 			return b;
+		}
+
+		static void WriteProps(BinaryWriter w, Dictionary<string, string> props)
+		{
+			w.Write(props.Count);
+			foreach (var kv in props.OrderBy(k => k.Key, StringComparer.Ordinal)) { w.Write(kv.Key ?? ""); w.Write(kv.Value ?? ""); }
+		}
+
+		static Dictionary<string, string> ReadProps(BinaryReader r)
+		{
+			int n = r.ReadInt32();
+			if (n < 0 || n > 10000) throw new InvalidDataException("Invalid property count " + n);
+			var props = new Dictionary<string, string>();
+			for (int i = 0; i < n; i++) { string k = r.ReadString(); props[k] = r.ReadString(); }
+			return props;
 		}
 
 		static void WriteVector(BinaryWriter w, Vector3 v)

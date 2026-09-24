@@ -40,6 +40,14 @@ namespace DynamicIslands.Editor
 			instance.queue.Add(new KeyValuePair<string, RawImage>(name, target));
 		}
 
+		/// <summary>Drops a picture so it is rendered again (the object changed, e.g. a creature marker became its real model).</summary>
+		public static void Forget(string name)
+		{
+			RenderTexture rt;
+			if (done.TryGetValue(name, out rt) && rt != null) { rt.Release(); Destroy(rt); }
+			done.Remove(name);
+		}
+
 		public static bool Has(string name)
 		{
 			RenderTexture rt;
@@ -148,6 +156,7 @@ namespace DynamicIslands.Editor
 				bool any = false;
 				foreach (Renderer r in renderers)
 				{
+					if (r.name == ContentCatalog.MarkerOnly) { r.enabled = false; continue; } // name tags and ground rings
 					if (!r.enabled || r is ParticleSystemRenderer) continue;
 					if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
 				}

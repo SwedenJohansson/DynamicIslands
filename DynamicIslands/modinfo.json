@@ -1,7 +1,7 @@
 {
   "name": "Custom Islands",
   "author": "FranzFischer78 + MegaMatrixs",
-  "description": "Build your own islands in an in-game editor and find them while sailing! Sculpt terrain or generate an island from a seed, pick a style (tropical, snowy, desert, forest, volcanic) and place trees, rocks, corals, props and Raft's own building blocks - even build your own abandoned rafts. Islands appear on their own as you sail (or spawn one with SpawnIsland), can fly or lie under water, show up on your Receiver, and have trees to chop, ores and scrap to collect. Works in multiplayer: players who join get the host's islands automatically.",
+  "description": "Build your own islands in an in-game editor and find them while sailing! Sculpt terrain or generate an island from a seed, pick a style (tropical, snowy, desert, forest, volcanic) and place trees, rocks, corals, props and Raft's own building blocks - even build your own abandoned rafts. Put Raft's animals on your islands (catchable chickens, goats and llamas, or warthogs, bears and more with your own health, damage, speed, size and colour), leave notes for players to read, and give your island a name that greets players when they arrive. Islands appear on their own as you sail (or spawn one with SpawnIsland), can fly or lie under water, show up on your Receiver, and have trees to chop, ores and scrap to collect. Works in multiplayer: players who join get the host's islands automatically.",
   "version": "3.0",
   "license": "GNU AGPLv3",
   "icon": "icon.png",

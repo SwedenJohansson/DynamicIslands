@@ -254,13 +254,17 @@ namespace DynamicIslands.Editor
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
 			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
 
+			// The selected object's settings (creature editor, note, colour) appear here, in place of Placing and the tips
+			ObjectInspector.Build(s);
+
 			RectTransform place = UIKit.Group(s, "Placing");
+			placingGroup = place;
 			RectTransform o1 = UIKit.Row(place);
 			randomButton = UIKit.Button(o1, "Random", () => { PlacementOptions.RandomTurnAndSize = !PlacementOptions.RandomTurnAndSize; RefreshOptions(); }, "On: every placed object gets a random turn and size (natural-looking groups)");
 			slopeButton = UIKit.Button(o1, "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); }, "On: objects lean with the ground instead of standing straight up");
 			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: Raft's 1.5 m building grid and 90\u00B0 turns, for huts and rafts of Raft blocks");
 
-			Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection");
+			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nSelect one object to edit its settings here").gameObject;
 			return s;
 		}
 
@@ -293,6 +297,8 @@ namespace DynamicIslands.Editor
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
 			UIKit.Button(gen, "Open the generator...", GeneratorWindow.Open, "Opens the island generator");
 
+			BuildInfoTools(s);
+
 			RectTransform info = UIKit.Group(s, "About this island");
 			statsText = UIKit.Label(info, "", 13, UIKit.TextColor);
 
@@ -300,10 +306,45 @@ namespace DynamicIslands.Editor
 			return s;
 		}
 
-		static void Tips(Transform parent, string text)
+		static Text Tips(Transform parent, string text)
 		{
 			Text t = UIKit.Label(parent, text, 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Tips");
 			t.lineSpacing = 1.1f;
+			return t;
+		}
+
+		static RectTransform placingGroup;
+		static GameObject objectTips;
+		static InputField infoTitleField, infoAuthorField, infoTextField;
+
+		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
+		static void BuildInfoTools(Transform s)
+		{
+			RectTransform g = UIKit.Group(s, "Shown to players");
+			infoTitleField = UIKit.Field(g, "Island name (e.g. Skull Rock)", "", 28f, "Shown as a banner when players arrive at the island in a world");
+			infoTitleField.characterLimit = 48;
+			infoAuthorField = UIKit.Field(g, "Made by (your name)", "", 28f, "Shown under the island's name");
+			infoAuthorField.characterLimit = 40;
+			infoTextField = UIKit.TextArea(g, "A short welcome or description...", 64f, "Shown with the banner (a line or two)");
+			infoTextField.characterLimit = 240;
+			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
+			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
+			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
+		}
+
+		static void SetInfo(string key, string value)
+		{
+			value = (value ?? "").Trim();
+			if (value.Length == 0) DynamicIslands.currentIslandProps.Remove(key);
+			else DynamicIslands.currentIslandProps[key] = value;
+		}
+
+		static void RefreshInfo()
+		{
+			if (infoTitleField == null) return;
+			infoTitleField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title);
+			infoAuthorField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Author);
+			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
 		}
 
 		#endregion
@@ -365,6 +406,7 @@ namespace DynamicIslands.Editor
 		{
 			if (islandNameText != null) islandNameText.text = DynamicIslands.currentIslandName + (File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName)) ? "" : "  <size=11><color=#9aa7b4>(not saved yet)</color></size>");
 			if (elevationField != null && !elevationField.isFocused) elevationField.text = DynamicIslands.currentElevation.ToString(CultureInfo.InvariantCulture);
+			RefreshInfo();
 			RefreshStats();
 		}
 
@@ -437,6 +479,7 @@ namespace DynamicIslands.Editor
 		static terraineditor.TerrainModificationAction shownAction;
 		static int shownPaintLayer = -1;
 		static int lastSelectionCount = -1;
+		static Transform lastSelectionFirst;
 		static bool elevationTyping;
 		static float nextStats;
 
@@ -452,9 +495,14 @@ namespace DynamicIslands.Editor
 			}
 
 			// Typing a height must not fly the camera (WASD) or trigger shortcuts
+			ObjectInspector.Tick();
+			bool inspecting = ObjectInspector.Visible;
+			if (placingGroup != null && placingGroup.gameObject.activeSelf == inspecting) placingGroup.gameObject.SetActive(!inspecting);
+			if (objectTips != null && objectTips.activeSelf == inspecting) objectTips.SetActive(!inspecting);
+
 			if (elevationField != null)
 			{
-				bool typing = elevationField.isFocused;
+				bool typing = elevationField.isFocused || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused));
 				if (typing) EditorInput.IsTyping = true;
 				else if (elevationTyping) EditorInput.IsTyping = false;
 				elevationTyping = typing;
@@ -469,10 +517,11 @@ namespace DynamicIslands.Editor
 			}
 
 			int selected = g != null ? g.SelectedRoots.Count(t => t != null) : 0;
-			if (selected != lastSelectionCount && selectionText != null)
+			Transform first = selected > 0 ? g.SelectedRoots.First(t => t != null) : null;
+			if ((selected != lastSelectionCount || first != lastSelectionFirst) && selectionText != null)
 			{
 				lastSelectionCount = selected;
-				Transform first = selected > 0 ? g.SelectedRoots.First(t => t != null) : null;
+				lastSelectionFirst = first; // (one object selected after another: the name must change too)
 				EditorGameObject info = first != null ? first.GetComponent<EditorGameObject>() : null;
 				selectionText.text = selected == 0 ? "Nothing selected" : selected == 1 && info != null ? PlaceableCatalog.DisplayName(info.GameObjectName) : selected + " objects selected";
 				selectionText.color = selected == 0 ? UIKit.TextMuted : UIKit.Accent;

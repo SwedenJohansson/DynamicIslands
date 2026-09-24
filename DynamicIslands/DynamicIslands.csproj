@@ -44,8 +44,16 @@
     <Compile Include="AwaitExtensions\WaitForBackgroundThread.cs" />
     <Compile Include="AwaitExtensions\WaitForUpdate.cs" />
     <Compile Include="CameraMovementScript.cs" />
+    <Compile Include="ContentCatalog.cs" />
+    <Compile Include="CreatureSpawner.cs" />
+    <Compile Include="CustomNote.cs" />
+    <Compile Include="IslandInfo.cs" />
+    <Compile Include="NoteEditorWindow.cs" />
+    <Compile Include="ObjectInspector.cs" />
+    <Compile Include="ObjectProps.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
+    <Compile Include="DevTestsContent.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />

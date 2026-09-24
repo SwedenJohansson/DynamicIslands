@@ -31,6 +31,8 @@ namespace DynamicIslands
 		public static float currentElevation;
 		/// <summary>Style of the island being edited (TerrainPainter.Styles); saved with it.</summary>
 		public static int currentStyle = TerrainPainter.Tropical;
+		/// <summary>Island-wide settings of the island being edited (IslandProps: name shown to players, author, description); saved with it.</summary>
+		public static Dictionary<string, string> currentIslandProps = new Dictionary<string, string>();
 
 		/// <summary>Sets the style of the island being edited: re-skins the editor terrain and relabels the paint buttons.</summary>
 		public static void SetEditorStyle(int style)
@@ -79,6 +81,7 @@ namespace DynamicIslands
 			loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>();
 			var harmony = new Harmony("com.franzfischer.customislands");
 			harmony.PatchAll();
+			CreatureSpawner.Patch(harmony);
 
 			//INIT FOLDER
 			if (!Directory.Exists(assetpath))
@@ -103,6 +106,7 @@ namespace DynamicIslands
 			SceneManager.sceneLoaded += OnSceneLoaded;
 			// Custom islands saved with a world come back when it loads
 			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
+			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
 			// ...and follow Raft's floating-origin world shifts
 			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
 
@@ -185,6 +189,10 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
 			try { IslandNetwork.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island network: " + e); }
+			try { CreatureSpawner.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Creatures: " + e); }
+			try { IslandInfo.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -257,10 +265,15 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
 			await PlaceableCatalog.EnsureBuilt();
 			catalogNote.Close();
+			// Creature models seen in a world since the catalog was built replace their markers
+			try { ContentCatalog.UpgradeMarkers(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creature models: " + e.Message); }
+			currentIslandProps = new Dictionary<string, string>();
 			// Raft's own ground textures are borrowed while the catalog loads its islands; a new island starts tropical,
 			// at sea level
 			currentElevation = 0f;
@@ -284,6 +297,7 @@ namespace DynamicIslands
 			foreach (Transform child in GameObject.Find("PlacedObjects").transform) Destroy(child.gameObject);
 			currentIslandName = "myisland";
 			currentElevation = 0f;
+			currentIslandProps = new Dictionary<string, string>();
 			SetEditorStyle(TerrainPainter.Tropical);
 			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
 			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
@@ -341,6 +355,7 @@ namespace DynamicIslands
 				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
 				island.Elevation = currentElevation;
 				island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
+				island.Props = new Dictionary<string, string>(currentIslandProps);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				EditorUI.RefreshIsland();
@@ -404,6 +419,7 @@ namespace DynamicIslands
 
 				currentIslandName = name;
 				currentElevation = island.Elevation;
+				currentIslandProps = new Dictionary<string, string>(island.Props);
 				// Undo steps refer to the terrain/objects that were just replaced
 				CommandUndoRedo.UndoRedoManager.Clear();
 				EditorUI.RefreshIsland();
@@ -486,6 +502,9 @@ namespace DynamicIslands
 			string name = string.Join(" ", args);
 			// The island's y is its elevation above sea level (0 = a normal island)
 			position.y = height ?? IslandSpawner.ElevationOf(name);
+			// On top of one of Raft's own islands, players can fall through the ground: say so (the automatic spawner avoids it)
+			string overlap = CustomIslandSpawner.OverlapsRaftIsland(position, CustomIslandSpawner.LandRadius(name));
+			if (overlap != null) Notify("Careful: " + overlap + " - the islands overlap; try another distance or direction", true);
 
 			instance.StartCoroutine(instance.SpawnIslandFile(name, position, true));
 		}
@@ -535,6 +554,7 @@ namespace DynamicIslands
 					entry.Root = root;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
 					IslandObjectState.Apply(entry, CustomIslandSpawner.RegrowDays);
+					CreatureSpawner.OnIslandReady(entry);
 				}
 				if (!quiet) Notify("Spawned island '" + name + "'");
 			}

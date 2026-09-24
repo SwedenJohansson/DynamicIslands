@@ -37,6 +37,8 @@ namespace DynamicIslands.Editor
 		public static void Despawn(GameObject root)
 		{
 			if (root == null) return;
+			try { CreatureSpawner.OnIslandDespawned(root); }
+			catch (System.Exception e) { Debug.LogError("[CUSTOM ISLANDS] Removing the island's creatures: " + e); }
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
 			{
 				try { NetworkIDManager.RemoveNetworkID(pn, typeof(PickupItem_Networked)); }
@@ -230,9 +232,16 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
-			int missing = 0;
+			int missing = 0, creature = 0;
 			foreach (IslandObject o in island.Objects)
 			{
+				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
+				// They are numbered in file order, which is the same on every machine.
+				if (!editable && ContentCatalog.IsCreature(o.Name))
+				{
+					CreatureSpawnPoint.Create(parent, o, creature++);
+					continue;
+				}
 				// A flying island has no sea around it: corals and the like would hang in the air
 				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) continue;
 				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
@@ -248,7 +257,12 @@ namespace DynamicIslands.Editor
 				foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
 
 				if (editable)
-					go.AddComponent<EditorGameObject>().GameObjectName = o.Name;
+					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>());
+				else
+				{
+					ObjectProps.ApplyTint(go, o.Props);
+					if (ObjectProps.IsNote(o.Name, o.Props)) CustomNote.Attach(go, o.Props);
+				}
 			}
 			return missing;
 		}
@@ -351,6 +365,7 @@ namespace DynamicIslands.Editor
 		{
 			var root = new GameObject("CustomIsland_" + island.Name);
 			SpawnedRoots.Add(root);
+			IslandInfo.Tag(root, island);
 			// Terrain origin is its corner; shift so the land centre lands on worldPosition,
 			// and down so the editor's water level lines up with the sea
 			Vector2 land = LandCentre(island);

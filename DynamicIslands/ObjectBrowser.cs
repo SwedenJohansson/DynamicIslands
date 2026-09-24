@@ -240,7 +240,8 @@ namespace DynamicIslands.Editor
 			Image frame = UIKit.Border(r, e.Name == highlighted ? UIKit.Accent : UIKit.ButtonBorder, 6, 1.5f);
 			tileFrames[e.Name] = frame;
 			string where = e.Scene != null ? " (from " + PlaceableCatalog.SceneLabel(e.Scene) + ")" : "";
-			UIKit.Hint(r.gameObject, e.Label + where + (e.Loaded ? "" : " - not loaded yet: click to load it") + (PlaceableCatalog.IsHarvestable(e.Name) || e.Category == PlaceableCatalog.HarvestableCategory ? " - harvestable in a world" : ""));
+			string extra = ContentCatalog.Hint(e.Name);
+			UIKit.Hint(r.gameObject, e.Label + where + (e.Loaded ? "" : " - not loaded yet: click to load it") + (extra != null ? " - " + extra : "") + (PlaceableCatalog.IsHarvestable(e.Name) || e.Category == PlaceableCatalog.HarvestableCategory ? " - harvestable in a world" : ""));
 
 			string name = e.Name;
 			b.onClick.AddListener(() => Pick(name));

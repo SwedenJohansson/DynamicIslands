@@ -27,6 +27,15 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
     - **Slope** leans objects with the ground
     - **Ground** drops the selected objects onto the terrain
     - **Grid** snaps to Raft's 1.5 m building grid, and Q/E then turn in 90° steps
+  - **Creatures:** place Raft's own animals on your island (20 kinds), from the object browser:
+    - **Animals: catchable:** chicken, goat and llama. Players catch them with Raft's net launcher and keep them on the raft, as on Raft's own islands.
+    - **Animals: hostile:** warthog, pig, bear, mama bear, polar bear, hyena, rats, roach, bee swarm and screecher.
+    - **Sea creatures:** puffer fish, angler fish, turtle, stingray, dolphin and whale.
+    - The editor shows each one as a coloured marker with its name, or as Raft's real model once you've been in a world since starting Raft.
+  - **Creature editor** (select a creature): how many live at that spot (1–8, a herd), difficulty presets (Easy / Normal / Hard / Boss), **health, damage, speed and size**, and whether killed or caught animals come back.
+  - **Colour:** tint any object, creatures included, with swatches, a strength slider, or your own red/green/blue mix.
+  - **Notes:** "Notes & signs" has a paper, a bundle of papers, an open book, a sign, a notice board and a message in a bottle, and **any object can be made readable**. The **note editor** has a title, the text (several lines) and a preview of how players will see it.
+  - **Island info:** give the island a name, an author and a short description (Island tab). Players see them as a banner when they arrive.
   - Undo and redo everything, and save or load islands.
   - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
 - **In your worlds**
@@ -37,6 +46,9 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - Islands are saved with the world. You can walk on them, the raft runs aground on them, and palms, mango trees, rocks and berry bushes can be harvested.
   - **Flying and underwater islands:** give an island a height in the Islands window, or with `SetElevation`, or when spawning. A flying island loses its seabed and gets a rocky underside, and the raft sails underneath it. An underwater island sits below the surface for divers.
   - Chopped trees and picked-up items stay that way, even after the island unloads or the world is reloaded. They grow back after 3 in-game days (set with `regrowDays` in `spawnpool.txt`).
+  - **Creatures come alive:** the host spawns Raft's real animals at the island's creature spots with the builder's stats and colour. They roam around their spot, and Raft's own networking brings them to the other players. Killed and caught animals are remembered like harvested trees, and come back after `regrowDays` unless the builder turned that off. Caught animals become normal raft animals.
+  - **Notes:** look at a readable object and press the interact key (E) to read it. Close it with E, Tab, Esc or the button.
+  - **Arriving** near an island that has a name or description shows it as a banner at the top of the screen, once per island per session.
 - **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync.
 
 ## Installing
@@ -70,8 +82,10 @@ The screen has a **top bar**, a **tool panel** on the left, the **object browser
 | Objects tab | **Transform** group | Move / Turn / Scale / All (keys 1–4) |
 | Objects tab | **Selection** group | What's selected; **Ground**, **Duplicate** (Ctrl+D), **Deselect**, **Delete** (Delete key) |
 | Objects tab | **Placing** group | **Random**, **Slope** and **Grid** toggles |
+| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). Every change can be undone. |
 | Objects tab | Object browser | Search box, then the categories. Click a category to open or close it. Click an object, then click the ground: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. |
 | Island tab | **Island** group | Style (◄ ►), height in the world with At sea / Flying / Sunken presets |
+| Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
 | Camera | | WASD or arrows to move, Shift for faster, right-drag to rotate, mouse wheel to change height (not over a panel) |
@@ -86,7 +100,7 @@ The blue plane is sea level. Anything below it is under water in game.
 | `SaveIsland <name>` / `LoadIsland <name>` | Editor | Saves or loads an island |
 | `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1] [style]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
-| `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one |
+| `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one. Warns if it would overlap one of Raft's own islands (players can fall through the ground there). |
 | `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | Editor | The island's style (ground textures; saved with it) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
@@ -95,7 +109,7 @@ The blue plane is sea level. Anything below it is under water in game.
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
-Development builds also include `CI*` test commands (`DevTests.cs`); release builds leave them out.
+Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.
 
 ## Building
 
@@ -116,7 +130,13 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | File | What it holds |
 |---|---|
 | `DynamicIslands.cs` | Mod entry: main menu button, editor setup, save/load, spawn commands, network message hook |
-| `IslandFile.cs` | `.island` format 2 (format 3 when the island has a height or a style): compressed binary with heights, texture paint, paint mask, objects, elevation and style |
+| `IslandFile.cs` | `.island` format 2 (format 3 when the island has a height or a style, format 4 when it or its objects have settings): compressed binary with heights, texture paint, paint mask, objects, elevation, style, island settings and per-object settings |
+| `ObjectProps.cs` | Per-object settings (creature stats, note text, tint): keys, limits, tinting, and the undo step for changing them |
+| `ContentCatalog.cs` | Creatures and notes in the object catalog: the creature list, markers and name tags, Raft's creature models for the editor |
+| `ObjectInspector.cs`, `NoteEditorWindow.cs` | The Objects tab's inspector (creature editor, note, colour) and the note editor window |
+| `CreatureSpawner.cs` | Live creatures in a world: runtime NavMesh, spawning through Raft's `Network_Host_Entities`, stats, tint, killed/caught state, removal with the island, and Harmony patches for speed and players who join |
+| `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
+| `IslandInfo.cs` | Island name, author and description, and the banner shown when players arrive |
 | `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, Duplicate, picking objects with the mouse |
 | `UIKit.cs` | The editor's look: theme, rounded and outlined sprites made at runtime, panels, bordered groups, buttons, sliders, fields |
@@ -137,6 +157,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 - Multiplayer has only been tested on one PC (message serialization and a looped-back file transfer). It hasn't been tested in a real two-player session yet.
 - Support for Unity-built `.assets` islands from version 2 was removed. Rebuild those islands in the editor.
 - Reaching a flying island is up to the player: build stairs or pillars up from the raft. The editor shows islands at sea level; the height only applies in game.
+- Creatures: catching with the net launcher, the host's creatures reaching a second player, players who join later, and the colour on other players' screens are built on Raft's own mechanisms, but they haven't been tested by hand or with two players yet. Raft has no pets, so "catchable" means Raft's domestic animals. The screecher's stone look can't be tinted.
+- An island file with creatures, notes, a tint or island info is format 4: older versions of the mod can't open it. Islands without these are still saved in the older formats.
 - Objects from Raft's other islands and Raft's buildable items are decoration: their scripts are removed, so a chest doesn't store anything and a character doesn't move. Only the harvestable trees, rocks, ores and plants keep their gameplay.
 - An island that uses objects from one of Raft's story islands (e.g. Utopia) makes the mod load that island's scene for a moment when the island spawns in a world, to copy the objects. The scene is switched off as it arrives; this can take a second.
 

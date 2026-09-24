@@ -229,6 +229,30 @@ namespace DynamicIslands.Editor
 			return "Skipped: " + why;
 		}
 
+		/// <summary>
+		/// A place around the raft where an island of this land radius fits clear of the raft, the other custom islands
+		/// and Raft's own islands (nearest first, up to maxDistance), or null. Used by tests and to warn SpawnIsland.
+		/// </summary>
+		public static Vector3? FindClearSpot(Vector3 raftPos, float radius, float maxDistance)
+		{
+			for (float d = radius + Clearance + 10f; d <= Mathf.Max(maxDistance, radius + Clearance + 10f); d += 25f)
+				for (int i = 0; i < 24; i++)
+				{
+					float a = i * 15f * Mathf.Deg2Rad;
+					Vector3 c = raftPos + new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * d;
+					c.y = 0f;
+					if (Rejects(c, radius, raftPos) == null) return c;
+				}
+			return null;
+		}
+
+		/// <summary>Why an island of this land radius shouldn't go at candidate because one of Raft's islands is there, or null.</summary>
+		public static string OverlapsRaftIsland(Vector3 candidate, float radius)
+		{
+			string why = Rejects(candidate, radius, candidate + Vector3.one * 100000f);
+			return why != null && why.StartsWith("Raft's") ? why : null;
+		}
+
 		/// <summary>Why an island of this land radius can't go at candidate, or null if it can.</summary>
 		static string Rejects(Vector3 candidate, float radius, Vector3 raftPos)
 		{

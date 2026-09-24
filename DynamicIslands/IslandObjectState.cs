@@ -82,12 +82,12 @@ namespace DynamicIslands.Editor
 			if (applied > 0) Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': " + applied + " harvested/picked-up object(s) restored");
 		}
 
-		/// <summary>Forgets objects used at least regrowDays in-game days ago (0 = never), so they come back. Returns how many.</summary>
+		/// <summary>Forgets objects used at least regrowDays in-game days ago (0 = never), so they come back. Creatures (CreatureSpawner) decide for themselves. Returns how many.</summary>
 		public static int DropRegrown(Dictionary<int, ObjectState> state, int regrowDays)
 		{
 			if (regrowDays <= 0) return 0;
 			int today = Today;
-			List<int> old = state.Where(s => today - s.Value.Day >= regrowDays).Select(s => s.Key).ToList();
+			List<int> old = state.Where(s => s.Key < CreatureSpawner.StateKeyBase && today - s.Value.Day >= regrowDays).Select(s => s.Key).ToList();
 			foreach (int ord in old) state.Remove(ord);
 			return old.Count;
 		}

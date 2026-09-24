@@ -40,7 +40,8 @@ namespace DynamicIslands.Editor
 		public const string HarvestableCategory = "Harvestable";
 
 		/// <summary>Order of the core categories in the editor's object list.</summary>
-		static readonly string[] CategoryOrder = { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory, RaftBlocksCategory, BuildablesCategory, PropsCategory };
+		static readonly string[] CategoryOrder = new[] { NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory }
+			.Concat(ContentCatalog.Categories).Concat(new[] { RaftBlocksCategory, BuildablesCategory, PropsCategory }).ToArray();
 
 		/// <summary>Categories of the on-demand island scenes, by scene name, in list order (the first match wins).</summary>
 		static readonly KeyValuePair<Regex, string>[] SceneCategories =
@@ -391,6 +392,9 @@ namespace DynamicIslands.Editor
 
 			ReadIndex();
 
+			try { ContentCatalog.Register(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not add creatures and notes: " + e); }
+
 			Debug.Log("[CUSTOM ISLANDS] Object catalog ready: " + prototypes.Count + " objects (" + string.Join(", ", ByCategory().Select(c => c.Value.Count + " " + c.Key.ToLower()).ToArray()) +
 				(whitelist != null ? ", from placeables.txt" : ", " + skipped + " fragments/story items/pickups left out") + ")" +
 				(TerrainPainter.HasRaftTextures ? ", using Raft's terrain textures" : "") +
@@ -413,6 +417,21 @@ namespace DynamicIslands.Editor
 			categories[name] = category;
 		}
 
+		/// <summary>The inactive container the catalog's prototypes live in.</summary>
+		internal static GameObject Container { get { return container; } }
+
+		/// <summary>
+		/// Adds (or replaces) an object made by the mod itself: a creature marker, or a readable note that shows one of
+		/// Raft's objects under its own name. Not a core object (the generator never places it).
+		/// </summary>
+		internal static void AddCustom(string name, GameObject prototype, string category, string label)
+		{
+			prototypes[name] = prototype;
+			categories[name] = category;
+			labels[name] = label;
+			sizes.Remove(name);
+		}
+
 		static void AddHarvestable(string name, Transform t)
 		{
 			GameObject clone = UnityEngine.Object.Instantiate(t.gameObject, container.transform);
@@ -423,7 +442,7 @@ namespace DynamicIslands.Editor
 			categories[name] = HarvestableCategory;
 		}
 
-		static void StripScripts(GameObject go)
+		internal static void StripScripts(GameObject go)
 		{
 			// Some scripts need others ([RequireComponent]), and Unity refuses (with a warning) to remove a needed one
 			// first: on each object, remove the scripts nothing else needs, round by round

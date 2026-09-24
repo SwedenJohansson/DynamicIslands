@@ -15,7 +15,7 @@ namespace DynamicIslands
 	///   CITest       - main menu or editor: opens the editor, sculpts, places objects, saves, wipes, loads, verifies.
 	///   CITestWorld  - in a world (host): spawns the island saved by CITest in front of the raft and verifies it.
 	/// </summary>
-	public static class DevTests
+	public static partial class DevTests
 	{
 		public const string TestIsland = "citest";
 		const int ObjectsToPlace = 3;
@@ -760,11 +760,11 @@ namespace DynamicIslands
 			DynamicIslands.instance.StartCoroutine(StandRoutine());
 		}
 
-		static IEnumerator StandRoutine()
+		static IEnumerator StandRoutine(GameObject on = null)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) { Fail("no local player (not in a world?)"); yield break; }
-			GameObject island = NearestIsland(player.transform.position);
+			GameObject island = on != null ? on : NearestIsland(player.transform.position);
 			if (island == null) { Fail("no custom island spawned"); yield break; }
 			Terrain terrain = island.GetComponentInChildren<Terrain>();
 			Vector3 target;

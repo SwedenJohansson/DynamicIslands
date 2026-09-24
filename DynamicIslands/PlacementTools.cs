@@ -136,7 +136,7 @@ namespace DynamicIslands.Editor
 				copy.transform.rotation = t.rotation;
 				copy.transform.localScale = t.lossyScale;
 				foreach (Collider c in copy.GetComponentsInChildren<Collider>()) c.enabled = true;
-				copy.AddComponent<EditorGameObject>().GameObjectName = info.GameObjectName;
+				EditorGameObject.Attach(copy, info.GameObjectName, info.Props); // a copy keeps the settings (creature stats, note text, tint)
 				copies.Add(copy);
 			}
 			if (copies.Count == 0) return 0;

@@ -343,6 +343,39 @@ namespace DynamicIslands.Editor
 			return f;
 		}
 
+		/// <summary>A text field for several lines (Enter = new line), text from the top left, wrapped.</summary>
+		public static InputField TextArea(Transform parent, string placeholder, float height, string hint = null)
+		{
+			InputField f = Field(parent, placeholder, "", height, hint);
+			f.lineType = InputField.LineType.MultiLineNewline;
+			foreach (Text t in new[] { f.textComponent, (Text)f.placeholder })
+			{
+				t.alignment = TextAnchor.UpperLeft;
+				t.horizontalOverflow = HorizontalWrapMode.Wrap;
+				t.verticalOverflow = VerticalWrapMode.Truncate;
+				Stretch(t.rectTransform, 10, 10, 8, 8);
+			}
+			return f;
+		}
+
+		/// <summary>A small square button filled with a colour (colour pickers).</summary>
+		public static Button ColorButton(Transform parent, Color color, Action onClick, string hint = null, float size = 24f)
+		{
+			RectTransform r = Rect("Color", parent);
+			Image img = Background(r.gameObject, color, 4);
+			var b = r.gameObject.AddComponent<Button>();
+			b.targetGraphic = img;
+			ColorBlock cb = b.colors;
+			cb.normalColor = Color.white; cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f); cb.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f); cb.selectedColor = Color.white;
+			b.colors = cb;
+			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+			Border(r, ButtonBorder, 4, 1f);
+			Size(r.gameObject, size, size);
+			if (onClick != null) b.onClick.AddListener(() => onClick());
+			if (hint != null) Hint(r.gameObject, hint);
+			return b;
+		}
+
 		/// <summary>A thin horizontal line between sections.</summary>
 		public static void Separator(Transform parent)
 		{

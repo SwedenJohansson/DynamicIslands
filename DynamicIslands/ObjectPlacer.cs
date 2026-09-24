@@ -108,7 +108,7 @@ namespace DynamicIslands.Editor
 		{
 			try { this.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception) { }
 
-			this.gameObject.AddComponent<Editor.EditorGameObject>().GameObjectName = GameObjectName;
+			Editor.EditorGameObject.Attach(this.gameObject, GameObjectName);
 			DynamicIslands.EditorGizmoHandler.placingObject = false;
 
 			this.gameObject.transform.parent = GameObject.Find("PlacedObjects").transform;
