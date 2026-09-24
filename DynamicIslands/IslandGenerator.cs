@@ -286,7 +286,7 @@ namespace DynamicIslands.Editor
 		{
 			var result = new List<Placement>();
 			if (!PlaceableCatalog.IsBuilt || s.ObjectDensity <= 0f) return result;
-			string[] names = PlaceableCatalog.Names.ToArray();
+			string[] names = PlaceableCatalog.CoreNames.ToArray(); // the same set every time, so a seed always gives the same island
 			ZoneObjects zones = StyleObjects[s.Style];
 			string[] shore = names.Where(n => zones.Shore.IsMatch(n)).ToArray();
 			string[] inland = names.Where(n => zones.Inland.IsMatch(n)).ToArray();

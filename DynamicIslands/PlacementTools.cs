@@ -86,86 +86,65 @@ namespace DynamicIslands.Editor
 			}
 			return n;
 		}
-	}
 
-	/// <summary>
-	/// A search field above the editor's object list: typing shows only objects whose label (or category) contains
-	/// the text. Created in code on top of the list from the UI bundle.
-	/// </summary>
-	public class ObjectListSearch : MonoBehaviour
-	{
-		InputField field;
-		Transform content;
-
-		/// <summary>Adds the search field at the top of the list's scroll view (which is shortened to make room).</summary>
-		public static void Create(RectTransform scrollView, Transform content, Font font)
+		/// <summary>
+		/// The placed object (its EditorGameObject root) under a ray, or null for the terrain, the sea or nothing.
+		/// Objects are found by their colliders, else (decorations without colliders, colliders on other layers) by their meshes' bounds.
+		/// </summary>
+		public static Transform PickObject(Ray ray, LayerMask mask)
 		{
-			const float Height = 30f;
-			GameObject go = DefaultControls.CreateInputField(new DefaultControls.Resources());
-			go.name = "ObjectSearch";
-			go.transform.SetParent(scrollView.parent, false);
-			RectTransform r = go.GetComponent<RectTransform>();
-			// Same horizontal placement as the list, directly above its (new) top edge
-			r.anchorMin = new Vector2(scrollView.anchorMin.x, scrollView.anchorMax.y);
-			r.anchorMax = scrollView.anchorMax;
-			r.pivot = new Vector2(0.5f, 1f);
-			r.offsetMin = new Vector2(scrollView.offsetMin.x, scrollView.offsetMax.y - Height);
-			r.offsetMax = scrollView.offsetMax;
-			scrollView.offsetMax -= new Vector2(0, Height + 4f);
-			go.transform.SetSiblingIndex(scrollView.GetSiblingIndex() + 1);
-
-			go.GetComponent<Image>().color = new Color(0.93f, 0.87f, 0.72f);
-			InputField f = go.GetComponent<InputField>();
-			foreach (Text t in go.GetComponentsInChildren<Text>(true))
+			float terrainDistance = float.MaxValue;
+			foreach (RaycastHit hit in Physics.RaycastAll(ray, 5000f, mask).OrderBy(h => h.distance))
 			{
-				if (font != null) t.font = font;
-				t.fontSize = 14; t.color = new Color(0.15f, 0.1f, 0.05f); t.verticalOverflow = VerticalWrapMode.Overflow;
+				if (hit.collider.GetComponent<Terrain>() != null) { terrainDistance = hit.distance; break; }
+				EditorGameObject owner = hit.collider.GetComponentInParent<EditorGameObject>();
+				if (owner != null && owner.gameObject.activeInHierarchy) return owner.transform;
 			}
-			f.placeholder.GetComponent<Text>().text = "Search objects...";
-			f.placeholder.GetComponent<Text>().color = new Color(0.4f, 0.35f, 0.3f, 0.8f);
-
-			ObjectListSearch search = go.AddComponent<ObjectListSearch>();
-			search.field = f;
-			search.content = content;
-			f.onValueChanged.AddListener(search.Filter);
-		}
-
-		void Update()
-		{
-			bool typing = field != null && field.isFocused;
-			if (typing) EditorInput.IsTyping = true;
-			else if (wasTyping) EditorInput.IsTyping = false;
-			wasTyping = typing;
-			if (typing && Input.GetKeyDown(KeyCode.Escape)) { field.text = ""; field.DeactivateInputField(); }
-		}
-
-		bool wasTyping;
-
-		void Filter(string query)
-		{
-			query = (query ?? "").Trim().ToLowerInvariant();
-			GameObject header = null;
-			string headerName = "";
-			bool headerHasVisible = false;
-			var headers = new List<KeyValuePair<GameObject, bool>>();
-			foreach (Transform child in content)
+			GameObject placedRoot = GameObject.Find("PlacedObjects");
+			if (placedRoot == null) return null;
+			Transform best = null;
+			float bestDistance = terrainDistance;
+			foreach (EditorGameObject o in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
 			{
-				if (child.name.StartsWith("Header_"))
+				foreach (Renderer r in o.GetComponentsInChildren<Renderer>())
 				{
-					if (header != null) headers.Add(new KeyValuePair<GameObject, bool>(header, headerHasVisible));
-					header = child.gameObject;
-					headerName = child.name.Substring("Header_".Length).ToLowerInvariant();
-					headerHasVisible = false;
-					continue;
+					float d;
+					if (r.enabled && r.bounds.IntersectRay(ray, out d) && d < bestDistance) { bestDistance = d; best = o.transform; }
 				}
-				if (child.name == "Button") continue; // the hidden template
-				Text label = child.GetComponentInChildren<Text>(true);
-				bool visible = query.Length == 0 || headerName.Contains(query) || (label != null && label.text.ToLowerInvariant().Contains(query));
-				child.gameObject.SetActive(visible);
-				headerHasVisible |= visible;
 			}
-			if (header != null) headers.Add(new KeyValuePair<GameObject, bool>(header, headerHasVisible));
-			foreach (var h in headers) h.Key.SetActive(h.Value);
+			return best;
+		}
+
+		/// <summary>
+		/// Copies the selected objects (next to the originals: one grid step with Grid on, else 2 m) as one undo step,
+		/// and selects the copies so they can be moved straight away.
+		/// </summary>
+		public static int DuplicateSelection()
+		{
+			TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
+			GameObject placedRoot = GameObject.Find("PlacedObjects");
+			if (gizmo == null || placedRoot == null) return 0;
+			Vector3 offset = SnapToGrid ? new Vector3(GridSize, 0, 0) : new Vector3(2f, 0, 0);
+			var copies = new List<GameObject>();
+			foreach (Transform t in gizmo.SelectedRoots.Where(t => t != null).ToList())
+			{
+				EditorGameObject info = t.GetComponent<EditorGameObject>();
+				if (info == null) continue;
+				GameObject copy = PlaceableCatalog.Spawn(info.GameObjectName, placedRoot.transform);
+				if (copy == null) continue;
+				copy.transform.position = t.position + offset;
+				copy.transform.rotation = t.rotation;
+				copy.transform.localScale = t.lossyScale;
+				foreach (Collider c in copy.GetComponentsInChildren<Collider>()) c.enabled = true;
+				copy.AddComponent<EditorGameObject>().GameObjectName = info.GameObjectName;
+				copies.Add(copy);
+			}
+			if (copies.Count == 0) return 0;
+			UndoRedoManager.Insert(new ObjectVisibilityCommand(copies, true));
+			gizmo.ClearTargets(false);
+			foreach (GameObject c in copies) gizmo.AddTarget(c.transform, false);
+			return copies.Count;
 		}
 	}
+
 }

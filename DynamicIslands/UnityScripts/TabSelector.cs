@@ -3,40 +3,42 @@ using UnityEngine;
 
 namespace DynamicIslands.Editor
 {
+	/// <summary>
+	/// Which editor tab is open (Terrain, Objects or Island). The tools check it: sculpting only happens on the
+	/// Terrain tab, the transform gizmo only works on the Objects tab. The editor UI (EditorUI) shows the panels.
+	/// </summary>
+	public class TabSelector : MonoBehaviour
+	{
+		public TAB SelectedTab = TAB.TerrainEdit;
 
-    public class TabSelector : MonoBehaviour
-    {
-        public TAB SelectedTab = TAB.ObjectPlace;
-        public GameObject ToolList;
+		/// <summary>Raised after the tab changes.</summary>
+		public event Action<TAB> TabChanged;
 
-        /// <summary>Raised after the visible tool panel changes.</summary>
-        public event Action<TAB> TabChanged;
+		public static TabSelector instance;
 
-        public static TabSelector instance;
+		void Awake()
+		{
+			instance = this;
+		}
 
-        void Start()
-        {
-            instance = this;
-            for (int i = 0; i < ToolList.transform.childCount; i++)
-                ToolList.transform.GetChild(i).gameObject.SetActive(i == (int)SelectedTab);
-            if (TabChanged != null) TabChanged(SelectedTab);
-        }
+		void Start()
+		{
+			if (TabChanged != null) TabChanged(SelectedTab);
+		}
 
-        public void UpdateTabSelection(int selectedTab)
-        {
-            if (selectedTab < 0 || selectedTab >= ToolList.transform.childCount) return;
-            ToolList.transform.GetChild((int)SelectedTab).gameObject.SetActive(false);
-            ToolList.transform.GetChild(selectedTab).gameObject.SetActive(true);
+		public void UpdateTabSelection(int selectedTab)
+		{
+			if (!Enum.IsDefined(typeof(TAB), selectedTab)) return;
+			SelectedTab = (TAB)selectedTab;
+			if (TabChanged != null) TabChanged(SelectedTab);
+		}
+	}
 
-            SelectedTab = (TAB)selectedTab;
-            if (TabChanged != null) TabChanged(SelectedTab);
-        }
-    }
-
-    public enum TAB
-    {
-        TerrainEdit = 0,
-        ObjectPlace = 1
-    }
+	public enum TAB
+	{
+		TerrainEdit = 0,
+		ObjectPlace = 1,
+		Island = 2
+	}
 
 }

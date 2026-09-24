@@ -18,8 +18,6 @@ namespace DynamicIslands
 		public Vector3 terrainSize = new Vector3(1000, 600, 1000);
 		public int heightmapResolution = 513;
 
-		public Text CamPos;
-
 		public enum TerrainModificationAction
 		{
 			Raise,
@@ -59,8 +57,6 @@ namespace DynamicIslands
 
 		void Start()
 		{
-			CamPos = GameObject.Find("CamPos").GetComponent<Text>();
-
 			terrainData = new TerrainData();
 			// Resolution first: changing it afterwards rescales the size
 			terrainData.heightmapResolution = heightmapResolution;
@@ -80,9 +76,6 @@ namespace DynamicIslands
 		{
 			try
 			{
-				Vector3 cam = Camera.main.transform.position;
-				CamPos.text = "X" + cam.x.ToString("F0") + " Y" + cam.y.ToString("F0") + " Z" + cam.z.ToString("F0");
-
 				EditorInput.HandleShortcuts();
 				EditorUI.Tick();
 				ModifyTerrain();

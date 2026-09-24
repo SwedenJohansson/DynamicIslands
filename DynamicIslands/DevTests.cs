@@ -363,21 +363,17 @@ namespace DynamicIslands
 		{
 			bool ok = true;
 			// 1. Search
-			// (the Objects tab may be hidden, so look it up by path rather than with FindObjectOfType)
-			Transform toolList = GameObject.Find("ToolList").transform;
-			Transform searchTransform = toolList.Find("ObjectTool/ObjectSearch");
-			UnityEngine.UI.InputField field = searchTransform != null ? searchTransform.GetComponent<UnityEngine.UI.InputField>() : null;
-			Transform content = toolList.Find("ObjectTool/Scroll View/Viewport/Content");
-			if (field == null) { Fail("no search field"); yield break; }
-			System.Func<int> visibleObjects = () => content.Cast<Transform>().Count(t => t.gameObject.activeSelf && !t.name.StartsWith("Header_") && t.name != "Button");
-			int all = visibleObjects();
-			field.text = "cactus";
+			EditorUI.SetTab(TAB.ObjectPlace);
 			yield return null;
-			int cacti = visibleObjects();
-			bool onlyCacti = content.Cast<Transform>().Where(t => t.gameObject.activeSelf && !t.name.StartsWith("Header_")).All(t => t.GetComponentInChildren<UnityEngine.UI.Text>().text.ToLower().Contains("cactus"));
-			field.text = "";
-			yield return null;
-			Check(ref ok, cacti > 0 && cacti < all && onlyCacti && visibleObjects() == all, "search: 'cactus' shows " + cacti + " of " + all + " objects, clearing shows all again");
+			ObjectBrowser browser = ObjectBrowser.Instance;
+			if (browser == null) { Fail("no object browser"); yield break; }
+			browser.Search = "";
+			int all = browser.VisibleObjects().Count;
+			browser.Search = "cactus";
+			System.Collections.Generic.List<string> found = browser.VisibleObjects();
+			bool onlyCacti = found.All(f => (PlaceableCatalog.DisplayName(f) + f).ToLower().Contains("cactus"));
+			browser.Search = "";
+			Check(ref ok, found.Count > 0 && found.Count != all && onlyCacti && browser.VisibleObjects().Count == all, "search: 'cactus' shows " + found.Count + " objects (" + all + " in the open categories), clearing shows the list again");
 
 			// 2. Ground: objects lifted into the air land on the terrain, as one undo step
 			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 3, ObjectDensity = 0f });
@@ -813,6 +809,27 @@ namespace DynamicIslands
 			bool ok = drop < 3f && player.PersonController.IsGrounded && exceptions == 0;
 			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
 			else Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
+		}
+
+		[ConsoleCommand(name: "CIProbe", docs: "Dev, in game: what is below the local player and on each custom island's terrain (colliders, layers) - for walking problems")]
+		public static void Probe()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("no local player"); return; }
+			Vector3 p = player.transform.position;
+			Log("Player at " + p + ", grounded=" + player.PersonController.IsGrounded + ", in water " + player.PersonController.transform.position.y.ToString("F1") + ", camera " + (Camera.main != null ? Camera.main.transform.position.ToString() : "?"));
+			foreach (RaycastHit h in Physics.RaycastAll(p + Vector3.up * 50f, Vector3.down, 200f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+				Log(string.Format("  below: {0} ({1}) at y {2:F1}, layer {3}, enabled {4}", h.collider.name, h.collider.GetType().Name, h.point.y, LayerMask.LayerToName(h.collider.gameObject.layer), h.collider.enabled));
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null) { Log(e.Name + ": not loaded"); continue; }
+				foreach (Terrain t in e.Root.GetComponentsInChildren<Terrain>(true))
+				{
+					TerrainCollider tc = t.GetComponent<TerrainCollider>();
+					Log(string.Format("{0}: terrain {1} at {2}, active {3}, layer {4}, collider {5} enabled {6} data {7}", e.Name, t.name, t.transform.position, t.gameObject.activeInHierarchy,
+						LayerMask.LayerToName(t.gameObject.layer), tc != null, tc != null && tc.enabled, tc != null && tc.terrainData != null ? tc.terrainData.size.ToString() : "none"));
+				}
+			}
 		}
 
 		[ConsoleCommand(name: "CIRaftWatch", docs: "Dev, in game: logs the raft's position and speed every 2 s for <seconds> (default 60)")]
@@ -1518,5 +1535,302 @@ namespace DynamicIslands
 			if (ok) Log("PASS: island spawned in world");
 			else Fail("island spawned but looks wrong (objects=" + objects + ", hillTop=" + hillTop + ")");
 		}
+
+		#region UI, catalog, screenshots and the command file (dev)
+
+		/// <summary>
+		/// Dev builds only: every second, runs the console commands in Mods\DynamicIslands\dev_commands.txt (one per
+		/// line; the file is deleted when read), so tests can be driven without typing into Raft's console, even while
+		/// Raft is in the background. Called by the mod at startup through reflection (release builds have no DevTests).
+		/// </summary>
+		public static void Init()
+		{
+			DynamicIslands.instance.StartCoroutine(PollCommandFile());
+		}
+
+		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, "dev_commands.txt"); } }
+
+		static IEnumerator PollCommandFile()
+		{
+			while (true)
+			{
+				yield return new WaitForSecondsRealtime(1f);
+				string[] lines = null;
+				try
+				{
+					if (File.Exists(CommandFile))
+					{
+						lines = File.ReadAllLines(CommandFile);
+						File.Delete(CommandFile);
+					}
+				}
+				catch (Exception e) { Debug.LogWarning("[CITEST] command file: " + e.Message); }
+				if (lines == null) continue;
+				Application.runInBackground = true; // commands arrive while Raft is in the background
+				foreach (string raw in lines)
+				{
+					string line = raw.Trim();
+					if (line.Length == 0 || line.StartsWith("#")) continue;
+					Log("> " + line);
+					try { RunCommand(line); }
+					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
+				}
+			}
+		}
+
+		/// <summary>Runs one of this mod's console commands by name (they are static methods with a ConsoleCommand attribute).</summary>
+		static void RunCommand(string line)
+		{
+			string[] parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+			foreach (Type type in typeof(DevTests).Assembly.GetTypes())
+				foreach (System.Reflection.MethodInfo m in type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static))
+					foreach (System.Reflection.CustomAttributeData a in m.GetCustomAttributesData())
+					{
+						if (a.AttributeType.Name != "ConsoleCommand") continue;
+						string name = a.ConstructorArguments.Count > 0 ? a.ConstructorArguments[0].Value as string : null;
+						if (name == null) foreach (var na in a.NamedArguments) if (na.MemberName == "name") name = na.TypedValue.Value as string;
+						if (!string.Equals(name, parts[0], StringComparison.OrdinalIgnoreCase)) continue;
+						object[] args = m.GetParameters().Length == 0 ? new object[0] : new object[] { parts.Skip(1).ToArray() };
+						m.Invoke(null, args);
+						return;
+					}
+			Fail("no console command called " + parts[0]);
+		}
+
+		[ConsoleCommand(name: "CIShot", docs: "Dev: saves a screenshot of the game (with the editor's panels) to Mods\\DynamicIslands\\shot_<name>.png")]
+		public static void Screenshot(string[] args)
+		{
+			string name = args != null && args.Length > 0 ? args[0] : DateTime.Now.ToString("HHmmss");
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png"));
+			ScreenCapture.CaptureScreenshot(file);
+			Log("Screenshot: " + file + " (" + Screen.width + "x" + Screen.height + ")");
+		}
+
+		[ConsoleCommand(name: "CIQuit", docs: "Dev: closes Raft cleanly (for automated test runs)")]
+		public static void Quit()
+		{
+			Log("Quitting Raft");
+			Application.Quit();
+		}
+
+		[ConsoleCommand(name: "CIEditor", docs: "Dev: opens the editor (from the main menu) and waits until it is ready")]
+		public static void OpenEditor()
+		{
+			DynamicIslands.instance.StartCoroutine(WaitForEditor(true));
+		}
+
+		static IEnumerator WaitForEditor(bool report)
+		{
+			if (!DynamicIslands.InEditor()) DynamicIslands.LoadEditor(new string[0]);
+			float timeout = Time.realtimeSinceStartup + 120f;
+			while (!(DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && DynamicIslands.EditorGizmoHandler != null && EditorUI.Canvas != null))
+			{
+				if (Time.realtimeSinceStartup > timeout) { Fail("editor not ready after 120 s"); yield break; }
+				yield return new WaitForSecondsRealtime(0.5f);
+			}
+			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
+		}
+
+		[ConsoleCommand(name: "CITab", docs: "Dev, editor: switches the editor tab: CITab terrain|objects|island")]
+		public static void SwitchTab(string[] args)
+		{
+			string t = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			EditorUI.SetTab(t.StartsWith("o") ? TAB.ObjectPlace : t.StartsWith("i") ? TAB.Island : TAB.TerrainEdit);
+		}
+
+		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] (default: the newest)")]
+		public static void LoadWorld(string[] args)
+		{
+			DynamicIslands.instance.StartCoroutine(LoadWorldRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+		}
+
+		static IEnumerator LoadWorldRoutine(string name)
+		{
+			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
+			box.gameObject.SetActive(true);
+			box.Open();
+			// Raft fills the list asynchronously: wait until it stops growing
+			float timeout = Time.realtimeSinceStartup + 20f;
+			int count = -1;
+			while (Time.realtimeSinceStartup < timeout)
+			{
+				yield return new WaitForSecondsRealtime(1f);
+				int now = box.loadGameSelections != null ? box.loadGameSelections.Count : 0;
+				if (now > 0 && now == count) break;
+				count = now;
+			}
+			if (box.loadGameSelections == null || box.loadGameSelections.Count == 0) { Fail("no saved worlds listed"); yield break; }
+			System.Func<LoadGame_Selection, string> worldName = s => s.text_GameName != null && !string.IsNullOrEmpty(s.text_GameName.text) ? s.text_GameName.text : s.directoryInfo != null ? s.directoryInfo.Name : "?";
+			LoadGame_Selection pick = name == null ? box.loadGameSelections[0]
+				: box.loadGameSelections.FirstOrDefault(s => worldName(s).Equals(name, StringComparison.OrdinalIgnoreCase))
+				?? box.loadGameSelections.FirstOrDefault(s => worldName(s).IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (pick == null) { Fail("no saved world called '" + name + "'; there are: " + string.Join(", ", box.loadGameSelections.Select(worldName).ToArray())); yield break; }
+			Log("Loading world: " + worldName(pick));
+			box.Button_Select(pick);
+			yield return null;
+			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
+			box.Button_LoadGame();
+		}
+
+		[ConsoleCommand(name: "CIClick", docs: "Dev, editor: presses an editor button by its label, e.g. CIClick Main menu / CIClick New / CIClick Duplicate")]
+		public static void Click(string[] args)
+		{
+			string label = args != null ? string.Join(" ", args) : "";
+			if (EditorUI.Canvas == null) { Fail("the editor is not open"); return; }
+			UnityEngine.UI.Button b = EditorUI.Canvas.GetComponentsInChildren<UnityEngine.UI.Button>(false)
+				.FirstOrDefault(x => x.name.Equals("Button_" + label, StringComparison.OrdinalIgnoreCase));
+			if (b == null) { Fail("no visible button '" + label + "'"); return; }
+			Log("Click " + label);
+			b.onClick.Invoke();
+		}
+
+		[ConsoleCommand(name: "CINewWorld", docs: "Dev, main menu: creates and starts a new world through Raft's own New Game box (default game mode). CINewWorld <name>")]
+		public static void NewWorld(string[] args)
+		{
+			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "CI Test";
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
+			box.gameObject.SetActive(true);
+			box.Open();
+			box.inputfield_GameName.text = name;
+			box.GameNameEndEdit(name);
+			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); return; }
+			Log("Creating world '" + name + "'");
+			box.Button_CreateNewGame();
+		}
+
+		[ConsoleCommand(name: "CIUITest", docs: "Dev, editor: the editor screen - panels per tab, buttons in their groups, windows, object browser; screenshots ui_<tab>.png")]
+		public static void UITest()
+		{
+			DynamicIslands.instance.StartCoroutine(UITestRoutine());
+		}
+
+		static IEnumerator UITestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Canvas canvas = EditorUI.Canvas;
+			Check(ref ok, canvas != null && canvas.isActiveAndEnabled, "the editor canvas exists");
+			GameObject oldToolbar = GameObject.Find("Toolbar");
+			Check(ref ok, oldToolbar == null, "the bundle's old toolbar is hidden");
+			string[] groups = { "TopBar/Group_File", "TopBar/Group_Edit", "TopBar/Group_Tabs", "TopBar/Group_App", "ToolPanel/TerrainTools/Group_Sculpt", "ToolPanel/TerrainTools/Group_Paint ground",
+				"ToolPanel/TerrainTools/Group_Brush", "ToolPanel/ObjectTools/Group_Transform", "ToolPanel/ObjectTools/Group_Selection", "ToolPanel/ObjectTools/Group_Placing",
+				"ToolPanel/IslandTools/Group_Island", "ToolPanel/IslandTools/Group_Generate", "StatusBar" };
+			foreach (string g in groups)
+			{
+				Transform t = canvas.transform.Find(g);
+				bool bordered = g == "StatusBar" || (t != null && t.Find("Border") != null);
+				Check(ref ok, t != null && bordered, g + (t != null ? " (" + t.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length + " buttons" + (bordered ? ", bordered" : ", NO border") + ")" : " missing"));
+			}
+
+			// Each tab shows its own panel (and the object browser only on the Objects tab); screenshots of each
+			string[] names = { "terrain", "objects", "island" };
+			Transform tools = canvas.transform.Find("ToolPanel");
+			Transform browser = canvas.transform.Find("ObjectBrowser");
+			for (int i = 0; i < 3; i++)
+			{
+				EditorUI.SetTab((TAB)i);
+				yield return null;
+				bool right = tools.Find("TerrainTools").gameObject.activeSelf == (i == 0) && tools.Find("ObjectTools").gameObject.activeSelf == (i == 1) &&
+					tools.Find("IslandTools").gameObject.activeSelf == (i == 2) && browser.gameObject.activeSelf == (i == 1);
+				Check(ref ok, right, "tab " + names[i] + " shows its panel" + (i == 1 ? " and the object browser" : ""));
+				yield return new WaitForSecondsRealtime(i == 1 ? 3f : 0.5f); // thumbnails render a few per frame
+				Screenshot(new[] { "ui_" + names[i] });
+				yield return new WaitForSecondsRealtime(0.5f);
+			}
+
+			// Panels fit on the screen
+			EditorUI.SetTab(TAB.ObjectPlace);
+			yield return null;
+			Vector3[] c = new Vector3[4];
+			((RectTransform)tools).GetWorldCorners(c);
+			Check(ref ok, c[0].y >= 0 && c[2].x <= Screen.width, "the tool panel fits on the screen (bottom at " + c[0].y.ToString("F0") + " px)");
+			((RectTransform)browser).GetWorldCorners(c);
+			Check(ref ok, c[0].x > 0 && c[2].x <= Screen.width + 1 && c[0].y >= 0, "the object browser fits on the screen");
+
+			// Windows open and close
+			IslandFilesWindow.Open(); yield return null;
+			Screenshot(new[] { "ui_islands" }); yield return new WaitForSecondsRealtime(0.5f);
+			bool files = IslandFilesWindow.IsOpen; IslandFilesWindow.Close();
+			GeneratorWindow.Open(); yield return null;
+			Screenshot(new[] { "ui_generator" }); yield return new WaitForSecondsRealtime(0.5f);
+			bool gen = GeneratorWindow.IsOpen; GeneratorWindow.Close();
+			Check(ref ok, files && gen && !IslandFilesWindow.IsOpen && !GeneratorWindow.IsOpen, "the islands and generator windows open and close");
+
+			// Brush buttons set the tool
+			Transform sculpt = canvas.transform.Find("ToolPanel/TerrainTools/Group_Sculpt");
+			sculpt.GetComponentsInChildren<UnityEngine.UI.Button>(true).First(b => b.name == "Button_Flatten").onClick.Invoke();
+			Check(ref ok, terraineditor.modificationAction == terraineditor.TerrainModificationAction.Flatten, "the Flatten button picks the flatten brush");
+			sculpt.GetComponentsInChildren<UnityEngine.UI.Button>(true).First(b => b.name == "Button_Raise").onClick.Invoke();
+
+			EditorUI.SetTab(TAB.TerrainEdit);
+			if (ok) Log("PASS: editor UI"); else Fail("editor UI");
+		}
+
+		[ConsoleCommand(name: "CICatalogTest", docs: "Dev, editor: all of Raft's objects - index of every island scene, buildables, loading a category on demand, placing, saving and loading an island with such objects (cicatalog.island). CICatalogTest [category]")]
+		public static void CatalogTest(string[] args)
+		{
+			DynamicIslands.instance.StartCoroutine(CatalogTestRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+		}
+
+		static IEnumerator CatalogTestRoutine(string category)
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			float t0 = Time.realtimeSinceStartup;
+			yield return PlaceableCatalog.EnsureIndex();
+			Log("Index " + (PlaceableCatalog.IndexIsCurrent ? "current" : "NOT current") + " after " + (Time.realtimeSinceStartup - t0).ToString("F0") + " s");
+			var browse = PlaceableCatalog.Browse();
+			foreach (var cat in browse)
+				Log(string.Format("  {0}: {1} objects, {2} loaded", cat.Key, cat.Value.Count, cat.Value.Count(e => e.Loaded)));
+			Check(ref ok, PlaceableCatalog.IndexIsCurrent && browse.Sum(cb => cb.Value.Count(e => !e.Loaded)) > 100, "the index lists objects of Raft's other islands");
+			int buildables = PlaceableCatalog.CoreNames.Count(n => PlaceableCatalog.CategoryOf(n) == PlaceableCatalog.BuildablesCategory);
+			Check(ref ok, buildables > 20, buildables + " of Raft's buildable items (storage, furniture, decorations...) can be placed");
+
+			// Open one on-demand category (default: the smallest that isn't loaded yet)
+			var target = category != null ? browse.FirstOrDefault(cb => cb.Key.Equals(category, StringComparison.OrdinalIgnoreCase))
+				: browse.Where(cb => cb.Value.Any(e => !e.Loaded)).OrderBy(cb => cb.Value.Count).FirstOrDefault();
+			if (target.Key == null) { Fail("no category to load"); yield break; }
+			t0 = Time.realtimeSinceStartup;
+			yield return PlaceableCatalog.EnsureCategory(target.Key);
+			int loaded = target.Value.Count(e => PlaceableCatalog.IsLoaded(e.Name));
+			Check(ref ok, loaded == target.Value.Count, "category " + target.Key + ": " + loaded + " of " + target.Value.Count + " objects loaded in " + (Time.realtimeSinceStartup - t0).ToString("F1") + " s");
+
+			// Place three of them on the island, save, wipe, load
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			Terrain terrain = terraineditor.terrain;
+			var names = target.Value.Where(e => PlaceableCatalog.IsLoaded(e.Name)).Take(3).Select(e => e.Name).ToList();
+			for (int i = 0; i < names.Count; i++)
+			{
+				GameObject go = PlaceableCatalog.Spawn(names[i], placed);
+				go.transform.position = terrain.transform.position + new Vector3(480f + i * 15f, IslandFile.DefaultWaterLevel + 2f, 500f);
+				go.AddComponent<EditorGameObject>().GameObjectName = names[i];
+			}
+			bool saved = DynamicIslands.SaveIsland("cicatalog");
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			DynamicIslands.LoadIsland("cicatalog");
+			yield return new WaitForSecondsRealtime(1f);
+			var back = placed.GetComponentsInChildren<EditorGameObject>().Select(e => e.GameObjectName).ToList();
+			Check(ref ok, saved && names.Count > 0 && names.All(back.Contains), "an island with " + string.Join(", ", names.Select(PlaceableCatalog.DisplayName).ToArray()) + " saves and loads (" + back.Count + " objects back)");
+
+			// Pictures for the browser
+			if (names.Count > 0)
+			{
+				var raw = new GameObject("CITestThumb", typeof(RectTransform), typeof(UnityEngine.UI.RawImage));
+				raw.transform.SetParent(EditorUI.Canvas.transform, false);
+				ObjectThumbnails.Request(names[0], raw.GetComponent<UnityEngine.UI.RawImage>());
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, ObjectThumbnails.Has(names[0]), "a picture of " + PlaceableCatalog.DisplayName(names[0]) + " was rendered");
+				UnityEngine.Object.Destroy(raw);
+			}
+
+			if (ok) Log("PASS: object catalog"); else Fail("object catalog");
+		}
+
+		#endregion
 	}
 }

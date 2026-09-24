@@ -93,7 +93,9 @@ namespace DynamicIslands
 			}*/
 
 			// Zoom in or out with the scroll wheel
-			float scrollInput = -Input.GetAxis("Mouse ScrollWheel");
+			// (not while the wheel scrolls a list in the editor's panels)
+			bool overUI = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+			float scrollInput = overUI ? 0f : -Input.GetAxis("Mouse ScrollWheel");
 
 			// Calculate the new camera height based on the scroll input
 			float newHeight = transform.position.y + scrollInput * zoomSpeed;

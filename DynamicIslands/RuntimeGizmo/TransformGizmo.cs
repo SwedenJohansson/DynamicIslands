@@ -673,16 +673,15 @@ namespace RuntimeGizmos
 				bool isAdding = Input.GetKey(AddSelection);
 				bool isRemoving = Input.GetKey(RemoveSelection);
 
-				RaycastHit hitInfo; 
-				if(Physics.Raycast(myCamera.ScreenPointToRay(Input.mousePosition), out hitInfo, Mathf.Infinity, selectionMask))
+				// Clicks on the editor's panels are not clicks into the world
+				if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
+				// Only placed island objects can be selected, always as a whole (never the terrain or a part of a model)
+				Transform target = global::DynamicIslands.Editor.PlacementOptions.PickObject(myCamera.ScreenPointToRay(Input.mousePosition), selectionMask);
+				if(target != null)
 				{
-					Transform target = hitInfo.transform;
-
-					
-
 					if(isAdding)
 					{
-						if (target.GetComponent<Terrain>() != null) { return; }
 						AddTarget(target);
 					}
 					else if(isRemoving)
@@ -691,7 +690,6 @@ namespace RuntimeGizmos
 					}
 					else if(!isAdding && !isRemoving)
 					{
-						if (target.GetComponent<Terrain>() != null) { ClearTargets(); }
 						ClearAndAddTarget(target);
 					}
 				}else{

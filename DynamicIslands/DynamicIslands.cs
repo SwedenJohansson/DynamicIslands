@@ -107,6 +107,14 @@ namespace DynamicIslands
 			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
 
 
+			// Dev builds: the test commands can also be run from a file (release builds leave DevTests out)
+			try
+			{
+				MethodInfo devInit = typeof(DynamicIslands).Assembly.GetType("DynamicIslands.DevTests")?.GetMethod("Init", BindingFlags.Public | BindingFlags.Static);
+				if (devInit != null) devInit.Invoke(null, null);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dev tests: " + e.Message); }
+
 			DynamicIslandsLoad.Close();
 			DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands has been loaded!", 5);
 			Debug.Log("[CUSTOM ISLANDS] Mod Custom Islands has been loaded successfully!");
@@ -196,113 +204,31 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "LoadEditor", docs: "Loads into the Editor via Command")]
 		public static async void LoadEditor(string[] args)
 		{
-			if (instance.mainbundle == null)
-			{
-				Debug.Log("Mainbundle is null");
-
-			}
+			if (instance.mainbundle == null) { Debug.LogError("[CUSTOM ISLANDS] The editor bundle is not loaded"); return; }
 			string[] scenePath = instance.mainbundle.GetAllScenePaths();
-			if (scenePath.Length == 0)
-			{
-				Debug.Log("scenepath is null");
+			string editorScene = scenePath.FirstOrDefault(p => Utils.SceneNameFromPath(p) == "Editor");
+			if (editorScene == null) { Debug.LogError("[CUSTOM ISLANDS] The editor bundle has no Editor scene"); return; }
+			SceneManager.LoadScene(editorScene, LoadSceneMode.Single);
+			Scene scene = SceneManager.GetSceneByName(Utils.SceneNameFromPath(editorScene));
+			while (!scene.isLoaded) await new WaitForSeconds(.1f);
+			await new WaitForSeconds(0.5f);
 
-			}
-
-			var scene = new Scene();
-			foreach (string sceneName in scenePath)
-			{
-				if(Utils.SceneNameFromPath(sceneName) == "Editor")
-				{
-					SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
-					scene  = SceneManager.GetSceneByName(Utils.SceneNameFromPath(sceneName));
-				}
-			}
-
-			Debug.Log(scenePath[0]);
-
-
-
-
-			try
-			{
-				//Debug.Log("check if scene is loaded");
-
-				while (!scene.isLoaded)
-				{
-					//Debug.Log("scene not loaded, waiting");
-					await new WaitForSeconds(.1f);
-				}
-				Debug.Log("scene loaded");
-				await new WaitForSeconds(1f);
-
-				GameObject[] rootgoeditor = SceneManager.GetSceneByName(Utils.SceneNameFromPath(scenePath[0])).GetRootGameObjects();
-				GameObject Canvas = rootgoeditor[0].gameObject.transform.Find("Canvas").gameObject;
-				GameObject EditorNavbar = Canvas.gameObject.transform.Find("EditorNavbar").gameObject;
-				GameObject Toolbar = Canvas.gameObject.transform.Find("Toolbar").gameObject;
-
-			}
-			catch { }
-			await Task.Delay(1000);
-			//need to get all gameobjects
-			//process these and add them as buttons
-			/*	Debug.Log("processing gameobjects");
-
-
-				foreach (GameObject go in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[])
-				{
-					GlobalPrefabList.Add(go);
-					Debug.Log(go.name);
-				}*/
-
-			Debug.Log("Adding cam move");
 			RAPI.ToggleCursor(true);
-			// Get a reference to the main camera
-			
 			Camera mainCamera = Camera.main;
-			terraineditor terrainEditor = mainCamera.gameObject.AddComponent<terraineditor>();
-			RTSCamera cam = mainCamera.gameObject.AddComponent<RTSCamera>();
-			// Check if the main camera has a TerrainEditor component
-			Debug.Log("Added Cam");
+			mainCamera.gameObject.AddComponent<terraineditor>();
+			mainCamera.gameObject.AddComponent<RTSCamera>();
 
-
-			//Name should be changed when further working with the hierarchy
-			// A Dropdown only fires when the value changes, so entry 0 is a neutral "Menu" we reset to after every action
-			Dropdown menuDropdown = GameObject.Find("DropdownMenu").GetComponent<Dropdown>();
-			menuDropdown.options = new List<Dropdown.OptionData> {
-				new Dropdown.OptionData("Menu"),
-				new Dropdown.OptionData("Main menu"),
-				new Dropdown.OptionData("Save island..."),
-				new Dropdown.OptionData("Load island..."),
-				new Dropdown.OptionData("Generate island..."),
-			};
-			menuDropdown.SetValueWithoutNotify(0);
-			menuDropdown.onValueChanged.AddListener((int index) =>
-			{
-				menuDropdown.SetValueWithoutNotify(0);
-				switch (index)
-				{
-					case 1:
-						SceneManager.LoadScene("MainMenuScene", LoadSceneMode.Single);
-						break;
-					case 2:
-					case 3:
-						IslandFilesWindow.Open();
-						break;
-					case 4:
-						GeneratorWindow.Open();
-						break;
-				}
-			});
-
+			// The editor's screen is built in code (EditorUI); the bundle's old canvas (toolbar, dropdown) is switched off
 			try
 			{
-
-				TabSelector tabbSelector = GameObject.Find("TabSelector").AddComponent<TabSelector>();
-				tabbSelector.SelectedTab = TAB.TerrainEdit; // building an island starts with shaping land
-				tabbSelector.ToolList = GameObject.Find("ToolList");
-				EditorUI.Setup(GameObject.Find("Toolbar").transform.parent, tabbSelector);
+				// (every canvas of the bundle scene: toolbar, navbar, the old object list)
+				foreach (Canvas old in FindObjectsOfType<Canvas>().Where(c => c.isRootCanvas && c.gameObject.scene.name == "Editor").ToList())
+					old.gameObject.SetActive(false);
+				var tabSelector = new GameObject("CustomIslandsTabs").AddComponent<TabSelector>();
+				tabSelector.SelectedTab = TAB.TerrainEdit; // building an island starts with shaping land
+				EditorUI.Setup(null, tabSelector);
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not set up editor UI: " + e); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not set up the editor UI: " + e); }
 
 			//Load shaders (the transform gizmo needs them in Awake, so this must happen first)
 			try
@@ -316,7 +242,7 @@ namespace DynamicIslands
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not load editor shaders: " + e); }
 
-			// The gizmo must exist before any palette button can be clicked
+			// The gizmo must exist before any object can be picked
 			EditorGizmoHandler = Camera.main.gameObject.AddComponent<TransformGizmo>();
 
 			CreateWaterLevelPlane();
@@ -326,6 +252,12 @@ namespace DynamicIslands
 			Camera.main.transform.position = buildCentre + new Vector3(0f, 60f, -120f);
 			Camera.main.transform.rotation = Quaternion.Euler(28f, 0f, 0f);
 
+			// Islands window and generator (built on the editor's canvas, in the same style)
+			try { IslandFilesWindow.Create(EditorUI.Canvas.transform, null); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
+			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
+
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
 			await PlaceableCatalog.EnsureBuilt();
 			catalogNote.Close();
@@ -333,55 +265,31 @@ namespace DynamicIslands
 			// at sea level
 			currentElevation = 0f;
 			SetEditorStyle(TerrainPainter.Tropical);
-
-			GameObject listButtonTemplate = null;
-			try
-			{
-				//Add gameobjects to the gameobject list in the editor
-				GameObject ContentGO = GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View/Viewport/Content").gameObject;
-				GameObject ButtonTemplate = ContentGO.transform.Find("Button").gameObject;
-
-				foreach (var category in PlaceableCatalog.ByCategory())
-				{
-					// Section header: a disabled copy of the button
-					GameObject header = Instantiate(ButtonTemplate, ContentGO.transform);
-					header.name = "Header_" + category.Key;
-					header.GetComponentInChildren<Text>().text = "- " + category.Key.ToUpper() + " -";
-					header.GetComponent<Button>().interactable = false;
-					foreach (string objectName in category.Value)
-					{
-						string nameCopy = objectName;
-						GameObject newButton = Instantiate(ButtonTemplate, ContentGO.transform);
-						newButton.GetComponentInChildren<Text>().text = PlaceableCatalog.DisplayName(nameCopy);
-						newButton.GetComponent<Button>().onClick.AddListener(() => { EditorGizmoHandler.placingObject = true; PlaceObject(nameCopy); });
-					}
-				}
-				ButtonTemplate.SetActive(false);
-				listButtonTemplate = ButtonTemplate;
-
-				// Search field above the list
-				Text anyLabel = ButtonTemplate.GetComponentInChildren<Text>(true);
-				ObjectListSearch.Create((RectTransform)GameObject.Find("ToolList").transform.Find("ObjectTool/Scroll View"), ContentGO.transform, anyLabel != null ? anyLabel.font : null);
-			}
-			catch (Exception e)
-			{
-				Debug.LogError("[CUSTOM ISLANDS] Could not fill the object list: " + e);
-			}
-
-			// Save / Load window (uses the object list's button style when available)
-			try { IslandFilesWindow.Create(GameObject.Find("Toolbar").transform.parent, listButtonTemplate); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
-			try { GeneratorWindow.Create(GameObject.Find("Toolbar").transform.parent, listButtonTemplate); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
+			EditorUI.RefreshIsland();
 
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 
+			// Once per Raft version: find every object of Raft's other islands (runs in the background)
+			if (!PlaceableCatalog.IndexIsCurrent) instance.StartCoroutine(PlaceableCatalog.EnsureIndex());
+		}
 
-
-
-			//Test load go to list
-			//SceneManager.LoadSceneAsync()
-
+		/// <summary>Editor: starts an empty island (flat seabed, no objects, tropical, at sea level).</summary>
+		public static void NewIsland()
+		{
+			if (!InEditor()) return;
+			Terrain terrain = terraineditor.terrain;
+			TerrainData data = terrain.terrainData;
+			if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);
+			data.SetHeights(0, 0, new float[data.heightmapResolution, data.heightmapResolution]);
+			foreach (Transform child in GameObject.Find("PlacedObjects").transform) Destroy(child.gameObject);
+			currentIslandName = "myisland";
+			currentElevation = 0f;
+			SetEditorStyle(TerrainPainter.Tropical);
+			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
+			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			CommandUndoRedo.UndoRedoManager.Clear();
+			EditorUI.RefreshIsland();
+			Notify("New island: shape the land on the Terrain tab, then place objects");
 		}
 
 		#region Save / load (.island files in Mods\DynamicIslands)
@@ -435,6 +343,7 @@ namespace DynamicIslands
 				island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
+				EditorUI.RefreshIsland();
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
 				return true;
 			}
@@ -455,6 +364,15 @@ namespace DynamicIslands
 			try
 			{
 				IslandFile island = IslandFile.Load(path);
+
+				// Objects from Raft's other islands load first (their island scenes), then the island loads
+				List<string> scenes = PlaceableCatalog.ScenesNeededFor(island.Objects.Select(o => o.Name));
+				if (scenes.Count > 0)
+				{
+					Notify("Loading objects from " + string.Join(", ", scenes.Select(PlaceableCatalog.SceneLabel).ToArray()) + " for '" + name + "'...");
+					instance.StartCoroutine(LoadAfter(PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList()), name));
+					return true;
+				}
 
 				Terrain terrain = terraineditor.terrain;
 				if (terrain.terrainData.heightmapResolution != island.HeightmapResolution || terrain.terrainData.size != island.TerrainSize)
@@ -488,6 +406,7 @@ namespace DynamicIslands
 				currentElevation = island.Elevation;
 				// Undo steps refer to the terrain/objects that were just replaced
 				CommandUndoRedo.UndoRedoManager.Clear();
+				EditorUI.RefreshIsland();
 				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
 				return true;
 			}
@@ -497,6 +416,12 @@ namespace DynamicIslands
 				Notify("Loading '" + name + "' failed - see console (F10)", true);
 				return false;
 			}
+		}
+
+		static IEnumerator LoadAfter(IEnumerator loading, string name)
+		{
+			yield return loading;
+			if (InEditor()) LoadIsland(name);
 		}
 
 		/// <summary>Semi-transparent plane showing where the sea will be when the island is spawned in game.</summary>
@@ -589,7 +514,8 @@ namespace DynamicIslands
 				yield break;
 			}
 
-			yield return PlaceableCatalog.EnsureBuilt();
+			// The core objects, plus any from Raft's other islands this island uses
+			yield return PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList());
 
 			if (entry != null)
 			{
@@ -751,6 +677,7 @@ namespace DynamicIslands
 			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
 			{ Notify("Elevation is " + currentElevation + " m. Usage: SetElevation <metres>  (60 = flying, -25 = under water, 0 = normal)"); return; }
 			currentElevation = Mathf.Clamp(v, IslandSpawner.MinElevation, IslandSpawner.MaxElevation);
+			EditorUI.RefreshIsland();
 			Notify("Island elevation: " + IslandSpawner.DescribeElevation(currentElevation) + " (saved with the island)");
 		}
 

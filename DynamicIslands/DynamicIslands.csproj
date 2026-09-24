@@ -62,6 +62,9 @@
     <Compile Include="PlacementTools.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
+    <Compile Include="ObjectBrowser.cs" />
+    <Compile Include="ObjectThumbnails.cs" />
+    <Compile Include="UIKit.cs" />
     <Compile Include="RTSCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />

@@ -7,10 +7,9 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// The editor's Save / Load window: a name field, a list of saved islands (click = pick, double-click = load)
-	/// and Save / Load / Close buttons. Built at runtime (the UI bundle has no such screen); the main buttons are
-	/// clones of the object list's button so they match the editor's style.
-	/// Open with the navbar "Islands" button, the Menu dropdown, or Ctrl+O; Ctrl+S saves the current island.
+	/// The editor's Save / Load window: a name field, the island's height in the world, a list of saved islands
+	/// (click = pick, double-click = load) and Save / Load / Delete / Close buttons. Built in code with UIKit.
+	/// Open with the top bar's Open / Save as buttons or Ctrl+O; Ctrl+S saves the current island.
 	/// </summary>
 	public class IslandFilesWindow : MonoBehaviour
 	{
@@ -22,30 +21,19 @@ namespace DynamicIslands.Editor
 		InputField elevationField;
 		RectTransform listContent;
 		Text status;
-		Font font;
-		GameObject buttonTemplate;
-		string pendingOverwrite;
+		string pendingOverwrite, pendingDelete;
 		string lastClicked;
 		float lastClickTime;
 
-		static readonly Color PanelColor = new Color(0.16f, 0.11f, 0.07f, 0.96f);
-		static readonly Color EntryColor = new Color(0.93f, 0.87f, 0.72f);
-		static readonly Color EntrySelectedColor = new Color(1f, 0.8f, 0.35f);
-		static readonly Color TextDark = new Color(0.15f, 0.1f, 0.05f);
-		static readonly Color TextLight = new Color(0.98f, 0.93f, 0.8f);
-
 		/// <summary>Builds the (hidden) window on the editor canvas. Call once when the editor opens.</summary>
-		public static void Create(Transform canvas, GameObject buttonTemplate)
+		public static void Create(Transform canvas, GameObject unusedTemplate)
 		{
 			var blocker = new GameObject("IslandFilesWindow", typeof(RectTransform), typeof(Image));
+			blocker.layer = 5;
 			blocker.transform.SetParent(canvas, false);
-			Stretch(blocker.GetComponent<RectTransform>());
-			blocker.GetComponent<Image>().color = new Color(0, 0, 0, 0.45f); // dims the editor and swallows clicks (modal)
+			UIKit.Stretch((RectTransform)blocker.transform);
+			blocker.GetComponent<Image>().color = new Color(0, 0, 0, 0.65f); // dims the editor and swallows clicks (modal)
 			instance = blocker.AddComponent<IslandFilesWindow>();
-			instance.buttonTemplate = buttonTemplate;
-			Text anyText = canvas.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.font != null && t.name == "CamPos")
-				?? canvas.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.font != null);
-			instance.font = anyText != null ? anyText.font : Resources.GetBuiltinResource<Font>("Arial.ttf");
 			instance.Build();
 			blocker.SetActive(false);
 		}
@@ -58,8 +46,8 @@ namespace DynamicIslands.Editor
 			instance.transform.SetAsLastSibling();
 			instance.nameField.text = DynamicIslands.currentIslandName;
 			instance.elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
-			instance.pendingOverwrite = null;
-			instance.SetStatus("Type a name or pick an island. Double-click an island to load it.", false);
+			instance.pendingOverwrite = instance.pendingDelete = null;
+			instance.SetStatus("Type a name and press Save, or pick an island. Double-click an island to open it.", false);
 			instance.Refresh();
 			instance.nameField.ActivateInputField();
 		}
@@ -92,100 +80,79 @@ namespace DynamicIslands.Editor
 
 		void Build()
 		{
-			var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-			panel.transform.SetParent(transform, false);
-			RectTransform pr = panel.GetComponent<RectTransform>();
-			pr.anchorMin = pr.anchorMax = pr.pivot = new Vector2(0.5f, 0.5f);
-			pr.sizeDelta = new Vector2(440, 400);
-			panel.GetComponent<Image>().color = PanelColor;
+			RectTransform panel = UIKit.Panel(transform, "Panel", new RectOffset(16, 16, 14, 16), 10f);
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(500, 0));
 
-			MakeText(panel.transform, "Title", "ISLANDS", 24, TextLight, new Vector2(0, 170), new Vector2(400, 36), TextAnchor.MiddleCenter, FontStyle.Bold);
-			MakeText(panel.transform, "NameLabel", "Island name", 14, TextLight, new Vector2(-60, 138), new Vector2(280, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
-			MakeText(panel.transform, "ElevationLabel", "Height (m)", 14, TextLight, new Vector2(145, 138), new Vector2(110, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
+			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
+			UIKit.Label(head, "ISLANDS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Label(head, "Mods\\DynamicIslands", 11, UIKit.TextMuted, TextAnchor.MiddleRight);
 
-			// Name field
-			GameObject field = DefaultControls.CreateInputField(new DefaultControls.Resources());
-			field.name = "NameField";
-			field.transform.SetParent(panel.transform, false);
-			Place(field.GetComponent<RectTransform>(), new Vector2(-60, 112), new Vector2(280, 32));
-			field.GetComponent<Image>().color = EntryColor;
-			nameField = field.GetComponent<InputField>();
+			// Name and height, side by side
+			RectTransform island = UIKit.Group(panel, "Island");
+			RectTransform labels = UIKit.Row(island, 16f, 8f, "Labels");
+			UIKit.Label(labels, "Name", 13, UIKit.TextMuted);
+			Text hl = UIKit.Label(labels, "Height in the world (m)", 13, UIKit.TextMuted);
+			UIKit.Size(hl.gameObject, 150);
+			RectTransform fields = UIKit.Row(island, 32f, 8f, "Fields");
+			nameField = UIKit.Field(fields, "e.g. myisland", "", 32f);
 			nameField.characterLimit = 64;
-			foreach (Text t in field.GetComponentsInChildren<Text>(true)) { t.font = font; t.fontSize = 16; t.color = TextDark; }
-			nameField.placeholder.GetComponent<Text>().text = "e.g. myisland";
-			nameField.placeholder.GetComponent<Text>().color = new Color(0.4f, 0.35f, 0.3f, 0.8f);
-			nameField.onValueChanged.AddListener(v => { pendingOverwrite = null; Highlight(); });
-
+			nameField.onValueChanged.AddListener(v => { pendingOverwrite = null; pendingDelete = null; Highlight(); });
 			// Elevation: 0 = normal island, above 0 = flying, below 0 = under water (saved with the island)
-			GameObject elevation = DefaultControls.CreateInputField(new DefaultControls.Resources());
-			elevation.name = "ElevationField";
-			elevation.transform.SetParent(panel.transform, false);
-			Place(elevation.GetComponent<RectTransform>(), new Vector2(145, 112), new Vector2(110, 32));
-			elevation.GetComponent<Image>().color = EntryColor;
-			elevationField = elevation.GetComponent<InputField>();
+			elevationField = UIKit.Field(fields, "0", "0", 32f, "60 = a flying island, -30 = under water, 0 = a normal island");
+			UIKit.Size(elevationField.gameObject, 150);
 			elevationField.contentType = InputField.ContentType.DecimalNumber;
 			elevationField.characterLimit = 6;
-			foreach (Text t in elevation.GetComponentsInChildren<Text>(true)) { t.font = font; t.fontSize = 16; t.color = TextDark; t.verticalOverflow = VerticalWrapMode.Overflow; }
-			elevationField.placeholder.GetComponent<Text>().text = "0";
 			elevationField.onEndEdit.AddListener(v =>
 			{
 				float e;
 				DynamicIslands.currentElevation = float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out e)
 					? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
 				elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
-				SetStatus("In game this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + ". Save to keep it.", false);
+				EditorUI.RefreshIsland();
+				SetStatus("In a world this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + ". Save to keep it.", false);
 			});
 
-			MakeText(panel.transform, "ListLabel", "Saved islands", 14, TextLight, new Vector2(0, 82), new Vector2(400, 20), TextAnchor.MiddleLeft, FontStyle.Normal);
+			// Saved islands
+			RectTransform saved = UIKit.Group(panel, "Saved islands");
+			RectTransform listBox = UIKit.Rect("ListBox", saved);
+			UIKit.Size(listBox.gameObject, -1, 230);
+			UIKit.Background(listBox.gameObject, UIKit.FieldBg, 6);
+			ScrollRect sr;
+			listContent = UIKit.ScrollList(listBox, out sr, 3f);
+			UIKit.Stretch((RectTransform)sr.transform, 4, 4, 4, 4);
 
-			// List of saved islands
-			GameObject scroll = DefaultControls.CreateScrollView(new DefaultControls.Resources());
-			scroll.name = "IslandList";
-			scroll.transform.SetParent(panel.transform, false);
-			Place(scroll.GetComponent<RectTransform>(), new Vector2(0, -20), new Vector2(400, 180));
-			scroll.GetComponent<Image>().color = new Color(0, 0, 0, 0.35f);
-			ScrollRect sr = scroll.GetComponent<ScrollRect>();
-			sr.horizontal = false;
-			if (sr.horizontalScrollbar != null) { Destroy(sr.horizontalScrollbar.gameObject); sr.horizontalScrollbar = null; }
-			sr.scrollSensitivity = 25f;
-			listContent = sr.content;
-			var layout = listContent.gameObject.AddComponent<VerticalLayoutGroup>();
-			layout.spacing = 3; layout.padding = new RectOffset(4, 4, 4, 4);
-			layout.childControlWidth = true; layout.childControlHeight = true;
-			layout.childForceExpandWidth = true; layout.childForceExpandHeight = false;
-			listContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
+			UIKit.Size(status.gameObject, -1, 34);
 
-			status = MakeText(panel.transform, "Status", "", 13, TextLight, new Vector2(0, -130), new Vector2(400, 36), TextAnchor.MiddleCenter, FontStyle.Italic);
-
-			MakeButton(panel.transform, "Save", new Vector2(-135, -172), OnSave);
-			MakeButton(panel.transform, "Load", new Vector2(0, -172), OnLoad);
-			MakeButton(panel.transform, "Close", new Vector2(135, -172), Close);
+			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
+			Button save = UIKit.Button(buttons, "Save", OnSave, "Save the island under this name (Enter)", -1, 34, 15);
+			UIKit.SetActive(save, true);
+			UIKit.Button(buttons, "Open", OnLoad, "Open the picked island (unsaved changes are lost)", -1, 34, 15);
+			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island's file (asks first)", -1, 34, 15);
+			UIKit.LabelOf(del).color = new Color(1f, 0.6f, 0.55f);
+			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 34, 15);
 		}
 
 		void Refresh()
 		{
-			foreach (Transform child in listContent) Destroy(child.gameObject);
+			foreach (Transform child in listContent) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			string[] names = IslandSpawner.ListSavedIslands().ToArray();
 			if (names.Length == 0)
 			{
-				MakeText(listContent, "Empty", "No saved islands yet.", 14, TextLight, Vector2.zero, new Vector2(380, 28), TextAnchor.MiddleCenter, FontStyle.Italic)
-					.gameObject.AddComponent<LayoutElement>().preferredHeight = 28;
+				UIKit.Size(UIKit.Label(listContent, "No saved islands yet.", 14, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic, "Empty").gameObject, -1, 30);
 				return;
 			}
 			foreach (string n in names)
 			{
 				string islandName = n;
 				var info = new FileInfo(IslandSpawner.PathFor(n));
-				GameObject entry = DefaultControls.CreateButton(new DefaultControls.Resources());
+				Button entry = UIKit.Button(listContent, n, () => OnEntryClicked(islandName), null, -1, 30, 14);
 				entry.name = "Island_" + n;
-				entry.transform.SetParent(listContent, false);
-				entry.AddComponent<LayoutElement>().preferredHeight = 28;
-				Text label = entry.GetComponentInChildren<Text>();
-				label.font = font; label.fontSize = 15; label.color = TextDark; label.alignment = TextAnchor.MiddleLeft;
+				Text label = UIKit.LabelOf(entry);
+				label.alignment = TextAnchor.MiddleLeft;
 				label.rectTransform.offsetMin = new Vector2(10, 0);
-				label.text = n + "   <size=11>" + info.LastWriteTime.ToString("yyyy-MM-dd HH:mm") + ", " + Math.Max(1, info.Length / 1024) + " KB</size>";
-				label.supportRichText = true;
-				entry.GetComponent<Button>().onClick.AddListener(() => OnEntryClicked(islandName));
+				Text meta = UIKit.Label(entry.transform, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm") + "   " + Math.Max(1, info.Length / 1024) + " KB", 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Meta");
+				UIKit.Stretch(meta.rectTransform, 10, 10, 0, 0);
 			}
 			Highlight();
 		}
@@ -193,11 +160,8 @@ namespace DynamicIslands.Editor
 		void Highlight()
 		{
 			string current = nameField != null ? nameField.text.Trim() : "";
-			foreach (Transform child in listContent)
-			{
-				Image img = child.GetComponent<Image>();
-				if (img != null) img.color = child.name == "Island_" + current ? EntrySelectedColor : EntryColor;
-			}
+			foreach (Button b in listContent.GetComponentsInChildren<Button>(true))
+				UIKit.SetActive(b, b.name == "Island_" + current);
 		}
 
 		void OnEntryClicked(string islandName)
@@ -230,63 +194,38 @@ namespace DynamicIslands.Editor
 		void OnLoad()
 		{
 			string n = nameField.text.Trim();
-			if (n.Length == 0) { SetStatus("Pick an island to load.", true); return; }
+			if (n.Length == 0) { SetStatus("Pick an island to open.", true); return; }
 			if (!File.Exists(IslandSpawner.PathFor(n))) { SetStatus("There is no saved island called '" + n + "'.", true); return; }
 			if (DynamicIslands.LoadIsland(n)) Close();
-			else SetStatus("Loading failed - see the console (F10).", true);
+			else SetStatus("Opening failed - see the console (F10).", true);
+		}
+
+		void OnDelete()
+		{
+			string n = nameField.text.Trim();
+			string path = IslandSpawner.PathFor(n);
+			if (n.Length == 0 || !File.Exists(path)) { SetStatus("Pick an island to delete.", true); return; }
+			if (pendingDelete != n)
+			{
+				pendingDelete = n;
+				SetStatus("Delete '" + n + "' for good? Press Delete again. (It stays in worlds that already have it only until they reload.)", true);
+				return;
+			}
+			try
+			{
+				File.Delete(path);
+				pendingDelete = null;
+				DynamicIslands.Notify("Deleted island '" + n + "'");
+				SetStatus("Deleted '" + n + "'.", false);
+				Refresh();
+			}
+			catch (Exception ex) { SetStatus("Could not delete: " + ex.Message, true); }
 		}
 
 		void SetStatus(string message, bool warning)
 		{
 			status.text = message;
-			status.color = warning ? new Color(1f, 0.7f, 0.4f) : TextLight;
-		}
-
-		void MakeButton(Transform parent, string label, Vector2 pos, Action onClick)
-		{
-			GameObject b;
-			if (buttonTemplate != null)
-			{
-				b = Instantiate(buttonTemplate, parent);
-				b.SetActive(true);
-				Button button = b.GetComponent<Button>();
-				button.onClick = new Button.ButtonClickedEvent();
-			}
-			else
-			{
-				b = DefaultControls.CreateButton(new DefaultControls.Resources());
-				b.transform.SetParent(parent, false);
-			}
-			b.name = label + "Button";
-			Place(b.GetComponent<RectTransform>(), pos, new Vector2(120, 36));
-			Text t = b.GetComponentInChildren<Text>(true);
-			if (t != null) { t.text = label; if (buttonTemplate == null) { t.font = font; t.fontSize = 16; } }
-			b.GetComponent<Button>().onClick.AddListener(() => onClick());
-		}
-
-		Text MakeText(Transform parent, string name, string text, int size, Color color, Vector2 pos, Vector2 box, TextAnchor anchor, FontStyle style)
-		{
-			var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-			go.transform.SetParent(parent, false);
-			Place(go.GetComponent<RectTransform>(), pos, box);
-			Text t = go.GetComponent<Text>();
-			t.font = font; t.fontSize = size; t.color = color; t.alignment = anchor; t.fontStyle = style; t.text = text;
-			t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
-			t.raycastTarget = false;
-			return t;
-		}
-
-		static void Place(RectTransform r, Vector2 pos, Vector2 size)
-		{
-			r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f);
-			r.anchoredPosition = pos;
-			r.sizeDelta = size;
-		}
-
-		static void Stretch(RectTransform r)
-		{
-			r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one;
-			r.offsetMin = r.offsetMax = Vector2.zero;
+			status.color = warning ? new Color(1f, 0.72f, 0.45f) : UIKit.TextColor;
 		}
 	}
 }
