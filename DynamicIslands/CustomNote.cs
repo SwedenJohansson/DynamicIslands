@@ -20,7 +20,24 @@ namespace DynamicIslands.Editor
 		/// <summary>Makes a spawned island object readable (its collider for Raft's interaction is added as a child).</summary>
 		public static CustomNote Attach(GameObject go, IDictionary<string, string> props)
 		{
-			var holder = new GameObject("CI_NoteInteract");
+			GameObject holder = InteractHolder(go);
+			CustomNote note = holder.AddComponent<CustomNote>();
+			note.Title = ObjectProps.Get(props, ObjectProps.NoteTitle, "");
+			note.Text = ObjectProps.Get(props, ObjectProps.NoteText, "");
+			return note;
+		}
+
+		public const string HolderName = "CI_Interact";
+
+		/// <summary>
+		/// The child that Raft's "what am I looking at" ray finds for an island object: a collider covering its model
+		/// on Raft's interactable layer, with a RaycastInteractable. Notes and chests on the same object share it.
+		/// </summary>
+		public static GameObject InteractHolder(GameObject go)
+		{
+			Transform existing = go.transform.Find(HolderName);
+			if (existing != null) return existing.gameObject;
+			var holder = new GameObject(HolderName);
 			holder.transform.SetParent(go.transform, false);
 			holder.layer = InteractLayer();
 			var box = holder.AddComponent<BoxCollider>();
@@ -34,11 +51,8 @@ namespace DynamicIslands.Editor
 			}
 			else box.size = Vector3.one * 0.5f;
 			box.isTrigger = Physics.queriesHitTriggers; // a trigger doesn't get in the player's way, if Raft's rays see triggers
-			CustomNote note = holder.AddComponent<CustomNote>();
-			note.Title = ObjectProps.Get(props, ObjectProps.NoteTitle, "");
-			note.Text = ObjectProps.Get(props, ObjectProps.NoteText, "");
 			holder.AddComponent<RaycastInteractable>();
-			return note;
+			return holder;
 		}
 
 		/// <summary>The first layer Raft's "what am I looking at" ray looks for interactable things on.</summary>
@@ -70,9 +84,14 @@ namespace DynamicIslands.Editor
 			return any;
 		}
 
-		static DisplayTextManager Hints { get { try { return ComponentManager<DisplayTextManager>.Value; } catch { return null; } } }
+		internal static DisplayTextManager Hints { get { try { return ComponentManager<DisplayTextManager>.Value; } catch { return null; } } }
 
-		static KeyCode InteractKey
+		internal static bool InteractPressed()
+		{
+			try { return MyInput.GetButtonDown("Interact"); } catch { return Input.GetKeyDown(KeyCode.E); }
+		}
+
+		internal static KeyCode InteractKey
 		{
 			get
 			{
@@ -84,11 +103,12 @@ namespace DynamicIslands.Editor
 		void IRaycastable.OnIsRayed()
 		{
 			if (NoteReader.IsOpen) return;
+			// A chest with a note: the chest shows the hint and opens first (then shows the note itself)
+			LootCrate crate = GetComponent<LootCrate>();
+			if (crate != null && !crate.Looted && crate.Items.Count > 0) return;
 			DisplayTextManager hints = Hints;
-			if (hints != null) hints.ShowText("Read " + (Title.Length > 0 ? "\"" + Title + "\"" : "the note"), InteractKey, 0, 0, true);
-			bool pressed;
-			try { pressed = MyInput.GetButtonDown("Interact"); } catch { pressed = Input.GetKeyDown(KeyCode.E); }
-			if (pressed)
+			if (hints != null && crate == null) hints.ShowText("Read " + (Title.Length > 0 ? "\"" + Title + "\"" : "the note"), InteractKey, 0, 0, true);
+			if (InteractPressed())
 			{
 				if (hints != null) hints.HideDisplayTexts();
 				NoteReader.Open(this);

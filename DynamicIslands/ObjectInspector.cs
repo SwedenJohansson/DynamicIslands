@@ -26,6 +26,16 @@ namespace DynamicIslands.Editor
 
 		public static EditorGameObject Target { get { return shown; } }
 
+		/// <summary>Days until things come back on the island being edited: its rule (Island tab) or the world's setting.</summary>
+		static int EditorRegrowDays
+		{
+			get
+			{
+				int d;
+				return int.TryParse(ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays), out d) ? Mathf.Max(0, d) : CustomIslandSpawner.RegrowDays;
+			}
+		}
+
 		public static readonly Color[] Swatches =
 		{
 			new Color(1f, 0.35f, 0.3f), new Color(1f, 0.62f, 0.25f), new Color(1f, 0.9f, 0.35f), new Color(0.45f, 0.9f, 0.4f),
@@ -58,9 +68,9 @@ namespace DynamicIslands.Editor
 			bool gone = !ReferenceEquals(shown, null) && shown == null;
 			if (sel != shown || dirty || gone) Rebuild(sel);
 
-			bool nowTyping = titleField != null && titleField.isFocused;
+			bool nowTyping = (titleField != null && titleField.isFocused) || amountFields.Any(f => f != null && f.isFocused);
 			if (nowTyping) EditorInput.IsTyping = true;
-			else if (typing && !NoteEditorWindow.IsOpen) EditorInput.IsTyping = false;
+			else if (typing && !NoteEditorWindow.IsOpen && !ItemPickerWindow.IsOpen) EditorInput.IsTyping = false;
 			typing = nowTyping;
 		}
 
@@ -70,14 +80,27 @@ namespace DynamicIslands.Editor
 			if (target == null) target = null; // a destroyed object becomes a real null
 			shown = target;
 			titleField = null;
+			amountFields.Clear();
 			foreach (Transform child in root) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			root.gameObject.SetActive(target != null);
 			if (target == null) return;
 			if (target.Props == null) target.Props = new Dictionary<string, string>();
 
 			ContentCatalog.CreatureKind kind = ContentCatalog.CreatureOf(target.GameObjectName);
+			if (ContentCatalog.IsZone(target.GameObjectName))
+			{
+				ZoneGroup(target);
+				LootGroup(target, true);
+				return; // (nothing to colour: zones are invisible in a world)
+			}
 			if (kind != null) CreatureGroup(target, kind);
-			else NoteGroup(target);
+			else
+			{
+				bool note = ObjectProps.IsNote(target.GameObjectName, target.Props), loot = ObjectProps.IsLoot(target.GameObjectName, target.Props);
+				if (note) NoteGroup(target);
+				if (loot) LootGroup(target, false);
+				if (!note || !loot) AddFeatureGroup(target, note, loot);
+			}
 			ColourGroup(target, kind != null);
 		}
 
@@ -117,11 +140,25 @@ namespace DynamicIslands.Editor
 			RectTransform rrow = UIKit.Row(g, 26f, 4f, "Respawn");
 			UIKit.Label(rrow, "Comes back after", 13, UIKit.TextMuted);
 			bool respawns = ObjectProps.Respawns(p);
-			Button on = UIKit.Button(rrow, (CustomIslandSpawner.RegrowDays > 0 ? CustomIslandSpawner.RegrowDays + " days" : "never (world setting)"), () => { Set(target, ObjectProps.CreatureRespawn, null); Refresh(); },
+			Button on = UIKit.Button(rrow, (EditorRegrowDays > 0 ? EditorRegrowDays + " days" : "never (island rule)"), () => { Set(target, ObjectProps.CreatureRespawn, null); Refresh(); },
 				"Killed or caught animals come back after the world's regrow time (spawnpool.txt: regrowDays), like trees", 110, 26f, 12);
 			Button off = UIKit.Button(rrow, "Never", () => { Set(target, ObjectProps.CreatureRespawn, "0"); Refresh(); }, "Once killed or caught, gone for good in that world", 64, 26f, 12);
 			UIKit.SetActive(on, respawns);
 			UIKit.SetActive(off, !respawns);
+
+			// Ambush: wait for a trigger zone (the button steps through "at once" and the island's zones)
+			string waits = ObjectProps.Get(p, ObjectProps.CreatureZone);
+			List<string> choices = new[] { "" }.Concat(ContentCatalog.ZoneIdsInEditor()).ToList();
+			if (waits.Length > 0 && !choices.Contains(waits)) choices.Add(waits);
+			RectTransform wrow = UIKit.Row(g, 26f, 4f, "Wake");
+			UIKit.Size(UIKit.Label(wrow, "Appears", 13, UIKit.TextMuted).gameObject, 64);
+			Button wake = UIKit.Button(wrow, waits.Length == 0 ? "at once" : "when '" + waits + "' fires", () =>
+			{
+				string next = choices[(choices.IndexOf(waits) + 1) % choices.Count];
+				Set(target, ObjectProps.CreatureZone, next.Length > 0 ? next : null);
+				Refresh();
+			}, choices.Count > 1 ? "Click to choose: at once, or when a player walks into one of the island's trigger zones (an ambush)" : "Place a trigger zone (Zones & triggers) to make this an ambush", -1, 26f, 12);
+			UIKit.SetActive(wake, waits.Length > 0);
 		}
 
 		static void Multiplier(Transform g, EditorGameObject target, string label, string key, float min, float max, float value, string hint)
@@ -144,18 +181,7 @@ namespace DynamicIslands.Editor
 		static void NoteGroup(EditorGameObject target)
 		{
 			Dictionary<string, string> p = target.Props;
-			bool note = ObjectProps.IsNote(target.GameObjectName, p);
-			RectTransform g = UIKit.Group(root, note ? "Note" : PlaceableCatalog.DisplayName(target.GameObjectName));
-			if (!note)
-			{
-				UIKit.Label(g, "Make this object readable: players look at it and press the interact key (E) to read your text.", 12, UIKit.TextMuted);
-				UIKit.Button(g, "Add a note to it...", () =>
-				{
-					NoteEditorWindow.Apply(target, "Note", "");
-					NoteEditorWindow.Open(target);
-				}, "Write a note on this object (a sign, a book, a crate...)");
-				return;
-			}
+			RectTransform g = UIKit.Group(root, "Note");
 			titleField = UIKit.Field(g, "Title", ObjectProps.Get(p, ObjectProps.NoteTitle, ""), 30f, "The note's title (Enter keeps it)");
 			titleField.characterLimit = NoteEditorWindow.MaxTitle;
 			titleField.onEndEdit.AddListener(v => Set(target, ObjectProps.NoteTitle, v.Trim(), null));
@@ -177,6 +203,166 @@ namespace DynamicIslands.Editor
 		}
 
 		static string Escape(string s) { return s.Replace("<", "\u2039").Replace(">", "\u203A"); }
+
+		/// <summary>What players can do with this object in a world, for the features it doesn't have yet.</summary>
+		static void AddFeatureGroup(EditorGameObject target, bool note, bool loot)
+		{
+			RectTransform g = UIKit.Group(root, note || loot ? "Also make it..." : PlaceableCatalog.DisplayName(target.GameObjectName));
+			if (!note && !loot) UIKit.Label(g, "Players use it in a world with the interact key (E):", 12, UIKit.TextMuted);
+			RectTransform row = UIKit.Row(g, UIKit.RowHeight, 4f);
+			if (!note)
+				UIKit.Button(row, "Readable...", () =>
+				{
+					NoteEditorWindow.Apply(target, "Note", "");
+					NoteEditorWindow.Open(target);
+				}, "Write a note on this object (a sign, a book, a crate...)");
+			if (!loot)
+				UIKit.Button(row, "A chest...", () =>
+				{
+					PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.LootItems, ""));
+					Refresh();
+					ItemPickerWindow.Open(target);
+				}, "Put items in this object: players open it and take them");
+		}
+
+		#endregion
+
+		#region Trigger zones
+
+		static void ZoneGroup(EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			RectTransform g = UIKit.Group(root, "Trigger zone");
+			RectTransform idRow = UIKit.Row(g, 28f, 4f, "Id");
+			UIKit.Size(UIKit.Label(idRow, "Name", 13, UIKit.TextMuted).gameObject, 44);
+			string id = ObjectProps.Get(p, ObjectProps.ZoneId);
+			InputField idField = UIKit.Field(idRow, "zone name", id, 28f, "Creatures (and quests) link to the zone by this name");
+			idField.characterLimit = 24;
+			idField.onEndEdit.AddListener(v => RenameZone(target, id, v.Trim()));
+			amountFields.Add(idField);
+
+			UIKit.Slider(g, "Size (radius)", ObjectProps.MinZoneRadius, ObjectProps.MaxZoneRadius, ObjectProps.Radius(p), v => v.ToString("0") + " m",
+				v => Set(target, ObjectProps.ZoneRadius, ObjectProps.Format(Mathf.Round(v)), "6", false), "How close players must come (the yellow sphere)", true);
+
+			InputField msg = UIKit.TextArea(g, "Message shown to the player who walks in (optional)", 46f, "A line or two, shown at the top of the screen");
+			msg.text = ObjectProps.Get(p, ObjectProps.ZoneMessage);
+			msg.characterLimit = 200;
+			msg.onEndEdit.AddListener(v => Set(target, ObjectProps.ZoneMessage, v.Trim().Length > 0 ? v.Trim() : null));
+			amountFields.Add(msg);
+
+			RectTransform fires = UIKit.Row(g, 26f, 4f, "Fires");
+			UIKit.Size(UIKit.Label(fires, "Fires", 13, UIKit.TextMuted).gameObject, 44);
+			bool repeats = ObjectProps.Repeats(p);
+			Button once = UIKit.Button(fires, "Once", () => { Set(target, ObjectProps.ZoneRepeat, null); Refresh(); }, "Once per world, for the first player (again after the island's regrow time)", -1, 26f, 12);
+			Button every = UIKit.Button(fires, "Every time", () => { Set(target, ObjectProps.ZoneRepeat, "1"); Refresh(); }, "Each time a player walks in (at most every half minute)", -1, 26f, 12);
+			UIKit.SetActive(once, !repeats);
+			UIKit.SetActive(every, repeats);
+
+			GameObject placed = GameObject.Find("PlacedObjects");
+			int linked = placed == null || id.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == id);
+			UIKit.Label(g, linked > 0 ? linked + " creature spot(s) wait for this zone (an ambush)." : "<i>Creatures can wait for it: select one and set \"Appears\".</i>", 12, UIKit.TextMuted);
+		}
+
+		/// <summary>Renames a zone; the creatures that waited for the old name follow (one undo step each).</summary>
+		static void RenameZone(EditorGameObject target, string oldId, string newId)
+		{
+			if (newId.Length == 0 || newId == oldId) { Refresh(); return; }
+			Set(target, ObjectProps.ZoneId, newId);
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (placed != null && oldId.Length > 0)
+				foreach (EditorGameObject e in placed.GetComponentsInChildren<EditorGameObject>().Where(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == oldId).ToList())
+					PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.CreatureZone, newId));
+			Refresh();
+		}
+
+		#endregion
+
+		#region Loot
+
+		/// <param name="zone">a trigger zone's items (given on entering): no refill or "not a chest" rows</param>
+		static void LootGroup(EditorGameObject target, bool zone)
+		{
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(target.Props);
+			RectTransform g = UIKit.Group(root, (zone ? "Gives on entering" : "Loot") + (loot.Count > 0 ? " (" + loot.Count + ")" : ""));
+			Transform rows = g;
+			if (loot.Count > 5)
+			{
+				// Many kinds of items: a short scrolling list, so the panel stays on the screen
+				RectTransform box = UIKit.Rect("Items", g);
+				UIKit.Size(box.gameObject, -1, 5 * 30f);
+				ScrollRect scroll;
+				rows = UIKit.ScrollList(box, out scroll, 4f);
+				UIKit.Stretch((RectTransform)scroll.transform);
+			}
+			if (loot.Count == 0) UIKit.Label(g, zone ? "<i>Nothing: add items to give players who walk in.</i>" : "<i>Empty: add items, or pick a ready-made set.</i>", 12, UIKit.TextMuted);
+			for (int i = 0; i < loot.Count; i++)
+			{
+				int index = i;
+				string item = loot[i].Key;
+				RectTransform row = UIKit.Row(rows, 26f, 3f, "Item");
+				RectTransform pic = UIKit.Rect("Icon", row);
+				UIKit.Size(pic.gameObject, 24, 24);
+				Image icon = pic.gameObject.AddComponent<Image>();
+				icon.sprite = ContentCatalog.ItemSprite(item); icon.preserveAspect = true; icon.raycastTarget = false;
+				if (icon.sprite == null) icon.color = new Color(1, 1, 1, 0.1f);
+				Text label = UIKit.Label(row, ContentCatalog.ItemLabel(item), 12, ContentCatalog.ItemExists(item) ? UIKit.TextColor : UIKit.Danger);
+				label.horizontalOverflow = HorizontalWrapMode.Overflow;
+				InputField amount = UIKit.Field(row, "1", loot[i].Value.ToString(), 24f, "How many");
+				UIKit.Size(amount.gameObject, 46, 24);
+				amount.contentType = InputField.ContentType.IntegerNumber;
+				amount.characterLimit = 3;
+				amount.onEndEdit.AddListener(v =>
+				{
+					int n;
+					if (!int.TryParse(v, out n)) n = 1;
+					SetLootAmount(target, index, Mathf.Clamp(n, 0, ObjectProps.MaxLootAmount));
+				});
+				amountFields.Add(amount);
+				Button remove = UIKit.Button(row, "\u00D7", () => SetLootAmount(target, index, 0), "Take it out of the chest", 24, 24, 13);
+				UIKit.LabelOf(remove).color = new Color(1f, 0.6f, 0.55f);
+			}
+			RectTransform add = UIKit.Row(g, 26f, 4f, "Add");
+			Button more = UIKit.Button(add, "Add items...", () => ItemPickerWindow.Open(target), "Choose from all of Raft's items, with pictures", -1, 26f, 12);
+			UIKit.SetActive(more, true);
+			UIKit.Button(add, "Empty", () => { PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.LootItems, "")); Refresh(); }, "Take everything out", 60, 26f, 12);
+			RectTransform presets = UIKit.Row(g, 24f, 3f, "Presets");
+			foreach (var preset in ContentCatalog.LootPresets)
+			{
+				string[] items = preset.Value;
+				UIKit.Button(presets, preset.Key, () =>
+				{
+					PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.LootItems, ContentCatalog.PresetLoot(items)));
+					Refresh();
+				}, "Fill it with a ready-made set: " + string.Join(", ", items.Select(x => x.Split('*')[0]).ToArray()), -1, 24f, 11);
+			}
+			if (zone) return;
+			RectTransform refill = UIKit.Row(g, 24f, 4f, "Refill");
+			UIKit.Label(refill, "Fills up again", 12, UIKit.TextMuted);
+			bool refills = ObjectProps.LootRefills(target.Props);
+			Button on = UIKit.Button(refill, EditorRegrowDays > 0 ? "after " + EditorRegrowDays + " days" : "never (rule)", () => { Set(target, ObjectProps.LootRefill, null); Refresh(); },
+				"Once looted, it fills up again after the world's regrow time (spawnpool.txt: regrowDays)", 96, 24f, 11);
+			Button off = UIKit.Button(refill, "Never", () => { Set(target, ObjectProps.LootRefill, "0"); Refresh(); }, "Once looted, it stays empty in that world", 56, 24f, 11);
+			UIKit.SetActive(on, refills);
+			UIKit.SetActive(off, !refills);
+			if (!ContentCatalog.IsLootObject(target.GameObjectName))
+				UIKit.Button(g, "Not a chest", () =>
+				{
+					PropsCommand.Change(target, ObjectProps.With(ObjectProps.With(target.Props, ObjectProps.LootItems, null), ObjectProps.LootRefill, null));
+					Refresh();
+				}, "This object no longer holds loot", -1, 24f, 11);
+		}
+
+		static readonly List<InputField> amountFields = new List<InputField>();
+
+		static void SetLootAmount(EditorGameObject target, int index, int amount)
+		{
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(target.Props);
+			if (index < 0 || index >= loot.Count) return;
+			if (amount <= 0) loot.RemoveAt(index);
+			else loot[index] = new KeyValuePair<string, int>(loot[index].Key, amount);
+			PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.LootItems, ObjectProps.LootText(loot)));
+			Refresh();
+		}
 
 		#endregion
 

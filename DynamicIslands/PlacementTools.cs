@@ -109,7 +109,7 @@ namespace DynamicIslands.Editor
 				foreach (Renderer r in o.GetComponentsInChildren<Renderer>())
 				{
 					float d;
-					if (r.enabled && r.bounds.IntersectRay(ray, out d) && d < bestDistance) { bestDistance = d; best = o.transform; }
+					if (r.enabled && r.name != ContentCatalog.MarkerOnly && r.bounds.IntersectRay(ray, out d) && d < bestDistance) { bestDistance = d; best = o.transform; }
 				}
 			}
 			return best;

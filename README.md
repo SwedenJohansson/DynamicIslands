@@ -35,7 +35,10 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Creature editor** (select a creature): how many live at that spot (1–8, a herd), difficulty presets (Easy / Normal / Hard / Boss), **health, damage, speed and size**, and whether killed or caught animals come back.
   - **Colour:** tint any object, creatures included, with swatches, a strength slider, or your own red/green/blue mix.
   - **Notes:** "Notes & signs" has a paper, a bundle of papers, an open book, a sign, a notice board and a message in a bottle, and **any object can be made readable**. The **note editor** has a title, the text (several lines) and a preview of how players will see it.
+  - **Loot (chest editor):** "Loot & chests" has chests, a sealed crate, a wooden box, barrels and a sunken barrel, and any object can hold loot. Choose the items from all of Raft's items with pictures and a search, set the amounts, or pick a ready-made set (Basics, Metal, Food, Treasure). A chest fills up again after the regrow time, or never.
+  - **Trigger zones:** an invisible area (a sphere in the editor). When a player walks in, it shows your message, gives items, and wakes up the creatures that wait for it (an **ambush**). It fires once per world (again after the regrow time) or every time.
   - **Island info:** give the island a name, an author and a short description (Island tab). Players see them as a banner when they arrive.
+  - **Island rules** (Island tab): how many in-game days until chopped trees, picked items, killed or caught animals, looted chests and fired zones come back on this island (empty = the world's setting, 0 = never).
   - Undo and redo everything, and save or load islands.
   - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
 - **In your worlds**
@@ -48,6 +51,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - Chopped trees and picked-up items stay that way, even after the island unloads or the world is reloaded. They grow back after 3 in-game days (set with `regrowDays` in `spawnpool.txt`).
   - **Creatures come alive:** the host spawns Raft's real animals at the island's creature spots with the builder's stats and colour. They roam around their spot, and Raft's own networking brings them to the other players. Killed and caught animals are remembered like harvested trees, and come back after `regrowDays` unless the builder turned that off. Caught animals become normal raft animals.
   - **Notes:** look at a readable object and press the interact key (E) to read it. Close it with E, Tab, Esc or the button.
+  - **Chests:** look at one and press E: the items go into your inventory (what doesn't fit drops in front of you), and the chest is empty for everyone, also after reloading, until it fills up again. A chest with a note shows the note too.
+  - **Trigger zones** fire for whoever walks in; an ambush creature appears the moment its zone fires.
   - **Arriving** near an island that has a name or description shows it as a banner at the top of the screen, once per island per session.
 - **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync.
 
@@ -82,10 +87,11 @@ The screen has a **top bar**, a **tool panel** on the left, the **object browser
 | Objects tab | **Transform** group | Move / Turn / Scale / All (keys 1–4) |
 | Objects tab | **Selection** group | What's selected; **Ground**, **Duplicate** (Ctrl+D), **Deselect**, **Delete** (Delete key) |
 | Objects tab | **Placing** group | **Random**, **Slope** and **Grid** toggles |
-| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). Every change can be undone. |
+| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). **Loot** group: the items with their amounts (× takes one out), **Add items...** (the item picker), **Empty**, the Basics / Metal / Food / Treasure sets, fills up again after N days or never. **Trigger zone** group: name, size, message, fires once or every time, and what it gives. A creature's **Appears** button chooses "at once" or "when a zone fires". Plain objects offer **Readable...** and **A chest...**. Every change can be undone. |
 | Objects tab | Object browser | Search box, then the categories. Click a category to open or close it. Click an object, then click the ground: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. |
 | Island tab | **Island** group | Style (◄ ►), height in the world with At sea / Flying / Sunken presets |
 | Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
+| Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never) |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
 | Camera | | WASD or arrows to move, Shift for faster, right-drag to rotate, mouse wheel to change height (not over a panel) |
@@ -136,7 +142,9 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `ObjectInspector.cs`, `NoteEditorWindow.cs` | The Objects tab's inspector (creature editor, note, colour) and the note editor window |
 | `CreatureSpawner.cs` | Live creatures in a world: runtime NavMesh, spawning through Raft's `Network_Host_Entities`, stats, tint, killed/caught state, removal with the island, and Harmony patches for speed and players who join |
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
-| `IslandInfo.cs` | Island name, author and description, and the banner shown when players arrive |
+| `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
+| `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |
+| `TriggerZone.cs` | Trigger zones in a world: message, items, waking up ambush creatures |
 | `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, Duplicate, picking objects with the mouse |
 | `UIKit.cs` | The editor's look: theme, rounded and outlined sprites made at runtime, panels, bordered groups, buttons, sliders, fields |

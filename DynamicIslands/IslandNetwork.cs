@@ -16,6 +16,9 @@ namespace DynamicIslands.Editor
 	public class IslandNetMessage
 	{
 		public const int Islands = 1, Remove = 2, SyncRequest = 3, FileRequest = 4, FileChunk = 5;
+		/// <summary>A player used something of an island that stays used (a looted chest, a trigger that fires once):
+		/// Ids[0] = island, Index = state key, Count = in-game day. Clients send it to the host, the host to everyone.</summary>
+		public const int ObjectUsed = 6;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
@@ -142,6 +145,14 @@ namespace DynamicIslands.Editor
 			SendToClients(IslandsMessage(new[] { entry }, false));
 		}
 
+		/// <summary>Tells the others that something of an island was used (host: to all clients; client: to the host, who passes it on).</summary>
+		public static void SendUsed(int islandId, int key, int day)
+		{
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { islandId }, Index = key, Count = day };
+			if (Raft_Network.IsHost) SendToClients(msg);
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
 			int[] list = ids.ToArray();
@@ -180,6 +191,13 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.FileChunk:
 						if (!Raft_Network.IsHost) ReceiveChunk(msg);
+						break;
+					case IslandNetMessage.ObjectUsed:
+						if (msg.Ids != null && msg.Ids.Length > 0)
+						{
+							ContentState.ApplyUsed(msg.Ids[0], msg.Index, msg.Count);
+							if (Raft_Network.IsHost) SendToClients(msg); // everyone else learns it from the host
+						}
 						break;
 				}
 			}

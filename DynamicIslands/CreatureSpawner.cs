@@ -101,7 +101,8 @@ namespace DynamicIslands.Editor
 			if (host == null) { Debug.LogWarning("[CUSTOM ISLANDS] Raft's creature manager is missing: no creatures on '" + entry.HostName + "'"); yield break; }
 			ContentCatalog.CacheModels(host.AINetworkBehaviourPrefabs);
 
-			List<CreatureSpawnPoint> points = root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null).ToList();
+			// Spawn points not handled yet (this runs again when a zone fires), except those still waiting for their zone
+			List<CreatureSpawnPoint> points = root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && p.RecordedAlive < 0 && !WaitsForZone(entry, root, p)).ToList();
 			var wanted = new Dictionary<CreatureSpawnPoint, int>();
 			foreach (CreatureSpawnPoint p in points)
 			{
@@ -119,6 +120,8 @@ namespace DynamicIslands.Editor
 				NavMeshAgent agent = prefab != null ? prefab.GetComponentInChildren<NavMeshAgent>(true) : null;
 				if (agent != null) agentTypes.Add(agent.agentTypeID);
 			}
+			// (built already for animals spawned earlier)
+			agentTypes.RemoveWhere(t => root.GetComponents<NavMeshSurface>().Any(s => s.agentTypeID == t));
 			if (agentTypes.Count > 0)
 			{
 				float started = Time.realtimeSinceStartup;
@@ -146,13 +149,22 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': " + spawned + " creature(s) spawned at " + wanted.Count + " spawn point(s)");
 		}
 
+		/// <summary>An ambush: the creature waits until a player sets off its trigger zone (a zone that isn't on the island doesn't hold it back).</summary>
+		static bool WaitsForZone(IslandWorldState.Entry entry, GameObject root, CreatureSpawnPoint p)
+		{
+			string id = ObjectProps.Get(p.Props, ObjectProps.CreatureZone);
+			if (id.Length == 0) return false;
+			TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == id);
+			return zone != null && !ContentState.IsUsed(entry, zone.StateKey);
+		}
+
 		/// <summary>How many animals a spawn point should have now: all of them, or what is left of them unless they have grown back.</summary>
 		static int HowManyNow(IslandWorldState.Entry entry, CreatureSpawnPoint p)
 		{
 			int count = ObjectProps.Count(p.Props);
 			ObjectState s;
 			if (!entry.State.TryGetValue(p.StateKey, out s)) return count;
-			int days = CustomIslandSpawner.RegrowDays;
+			int days = IslandRules.RegrowDays(entry);
 			if (ObjectProps.Respawns(p.Props) && days > 0 && Today - s.Day >= days)
 			{
 				entry.State.Remove(p.StateKey);

@@ -21,6 +21,16 @@ namespace DynamicIslands.Editor
 			CreatureSpeed = "creature.speed", CreatureSize = "creature.size", CreatureRespawn = "creature.respawn";
 		public const string NoteTitle = "note.title", NoteText = "note.text";
 		public const string TintColor = "tint.color", TintAmount = "tint.amount";
+		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
+		public const string LootItems = "loot.items", LootRefill = "loot.refill";
+		public const int MaxLootStacks = 12, MaxLootAmount = 999;
+		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
+		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>
+		public const string ZoneId = "zone.id", ZoneRadius = "zone.radius", ZoneMessage = "zone.message", ZoneRepeat = "zone.repeat", CreatureZone = "creature.zone";
+		public const float MinZoneRadius = 1f, MaxZoneRadius = 50f;
+
+		public static float Radius(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, ZoneRadius, 6f), MinZoneRadius, MaxZoneRadius); }
+		public static bool Repeats(IDictionary<string, string> p) { return GetBool(p, ZoneRepeat, false); }
 
 		public const int MaxCount = 8;
 		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MinSize = 0.5f, MaxSize = 2.5f;
@@ -34,6 +44,8 @@ namespace DynamicIslands.Editor
 				props[NoteTitle] = ContentCatalog.DefaultNoteTitle(name);
 				props[NoteText] = "";
 			}
+			if (ContentCatalog.IsLootObject(name)) props[LootItems] = ContentCatalog.DefaultLoot();
+			if (ContentCatalog.IsZone(name)) props[ZoneId] = ContentCatalog.NewZoneId();
 			return props;
 		}
 
@@ -98,6 +110,38 @@ namespace DynamicIslands.Editor
 			new KeyValuePair<string, float[]>("Hard", new[] { 2f, 1.5f, 1.2f }),
 			new KeyValuePair<string, float[]>("Boss", new[] { 4f, 2.5f, 1.3f }),
 		};
+
+		#endregion
+
+		#region Loot
+
+		public static bool IsLoot(string name, IDictionary<string, string> props)
+		{
+			// (a trigger zone's items are given on entering, not kept in a container)
+			return !ContentCatalog.IsZone(name) && (ContentCatalog.IsLootObject(name) || (props != null && props.ContainsKey(LootItems)));
+		}
+
+		/// <summary>The loot as (item name, amount) pairs, in order; bad entries are skipped.</summary>
+		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props)
+		{
+			var list = new List<KeyValuePair<string, int>>();
+			foreach (string part in Get(props, LootItems).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				int star = part.LastIndexOf('*');
+				string item = (star > 0 ? part.Substring(0, star) : part).Trim();
+				int amount = 1;
+				if (star > 0 && !int.TryParse(part.Substring(star + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out amount)) continue;
+				if (item.Length > 0 && amount > 0) list.Add(new KeyValuePair<string, int>(item, Mathf.Min(amount, MaxLootAmount)));
+			}
+			return list;
+		}
+
+		public static string LootText(IEnumerable<KeyValuePair<string, int>> loot)
+		{
+			return string.Join(";", loot.Where(l => l.Value > 0).Select(l => l.Key + "*" + l.Value.ToString(CultureInfo.InvariantCulture)).ToArray());
+		}
+
+		public static bool LootRefills(IDictionary<string, string> p) { return GetBool(p, LootRefill, true); }
 
 		#endregion
 

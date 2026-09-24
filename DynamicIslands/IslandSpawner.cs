@@ -232,7 +232,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
-			int missing = 0, creature = 0;
+			int missing = 0, creature = 0, loot = 0, zone = 0;
 			foreach (IslandObject o in island.Objects)
 			{
 				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
@@ -240,6 +240,12 @@ namespace DynamicIslands.Editor
 				if (!editable && ContentCatalog.IsCreature(o.Name))
 				{
 					CreatureSpawnPoint.Create(parent, o, creature++);
+					continue;
+				}
+				// Zones are invisible in a world
+				if (!editable && ContentCatalog.IsZone(o.Name))
+				{
+					TriggerZone.Create(parent, o, zone++);
 					continue;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
@@ -262,6 +268,8 @@ namespace DynamicIslands.Editor
 				{
 					ObjectProps.ApplyTint(go, o.Props);
 					if (ObjectProps.IsNote(o.Name, o.Props)) CustomNote.Attach(go, o.Props);
+					// Numbered in file order like the creatures (the same on every machine)
+					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
 				}
 			}
 			return missing;

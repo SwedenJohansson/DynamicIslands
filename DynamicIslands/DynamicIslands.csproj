@@ -48,6 +48,8 @@
     <Compile Include="CreatureSpawner.cs" />
     <Compile Include="CustomNote.cs" />
     <Compile Include="IslandInfo.cs" />
+    <Compile Include="ItemPickerWindow.cs" />
+    <Compile Include="LootCrate.cs" />
     <Compile Include="NoteEditorWindow.cs" />
     <Compile Include="ObjectInspector.cs" />
     <Compile Include="ObjectProps.cs" />
@@ -68,6 +70,7 @@
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlacementTools.cs" />
+    <Compile Include="TriggerZone.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />

@@ -315,7 +315,7 @@ namespace DynamicIslands.Editor
 
 		static RectTransform placingGroup;
 		static GameObject objectTips;
-		static InputField infoTitleField, infoAuthorField, infoTextField;
+		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
 		static void BuildInfoTools(Transform s)
@@ -327,6 +327,15 @@ namespace DynamicIslands.Editor
 			infoAuthorField.characterLimit = 40;
 			infoTextField = UIKit.TextArea(g, "A short welcome or description...", 64f, "Shown with the banner (a line or two)");
 			infoTextField.characterLimit = 240;
+			RectTransform rules = UIKit.Group(s, "Rules");
+			RectTransform regrow = UIKit.Row(rules, 28f, 4f);
+			UIKit.Label(regrow, "Things come back after", 13, UIKit.TextMuted);
+			infoRegrowField = UIKit.Field(regrow, "world", "", 28f, "In-game days until chopped trees, picked items, killed or caught animals and looted chests come back on this island. Empty = the world's setting (spawnpool.txt), 0 = never");
+			UIKit.Size(infoRegrowField.gameObject, 58, 28);
+			infoRegrowField.contentType = InputField.ContentType.IntegerNumber;
+			infoRegrowField.characterLimit = 3;
+			UIKit.Size(UIKit.Label(regrow, "days", 13, UIKit.TextMuted).gameObject, 34);
+			infoRegrowField.onEndEdit.AddListener(v => { int d; SetInfo(IslandProps.RegrowDays, int.TryParse(v, out d) ? Mathf.Clamp(d, 0, 999).ToString() : ""); RefreshInfo(); });
 			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
 			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
 			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
@@ -345,6 +354,7 @@ namespace DynamicIslands.Editor
 			infoTitleField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title);
 			infoAuthorField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Author);
 			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
+			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
 		}
 
 		#endregion
@@ -502,7 +512,7 @@ namespace DynamicIslands.Editor
 
 			if (elevationField != null)
 			{
-				bool typing = elevationField.isFocused || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused));
+				bool typing = elevationField.isFocused || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused || infoRegrowField.isFocused));
 				if (typing) EditorInput.IsTyping = true;
 				else if (elevationTyping) EditorInput.IsTyping = false;
 				elevationTyping = typing;

@@ -16,6 +16,21 @@ namespace DynamicIslands
 	{
 		const string PropsIsland = "ciprops", CreatureIsland = "cicreature";
 
+		/// <summary>Long test runs starve the test player (and warthogs bite): fill them up, and respawn them if they're down.</summary>
+		static IEnumerator EnsureAlive()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) yield break;
+			bool down = player.Stats != null && player.Stats.stat_health.Value <= 0f;
+			if (down)
+			{
+				Player p = player.GetComponentInChildren<Player>(true);
+				if (p != null) { Log("The test player was down: respawning them (inventory kept)"); p.RespawnWithoutBed(false); }
+				yield return new WaitForSeconds(3f);
+			}
+			KeepAlive(player);
+		}
+
 		#region Editor: settings, inspector, file format 4
 
 		[ConsoleCommand(name: "CIPropsTest", docs: "Dev, editor: creatures, notes and tints - placing, the inspector, undo/redo, duplicate, save and load (format 4)")]
@@ -228,6 +243,7 @@ namespace DynamicIslands
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
 			string error;
 			if (!MakeCreatureIsland(out error)) { Fail(error); yield break; }
 			IslandInfo.ForgetShown();
@@ -338,6 +354,326 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: creatures and notes in a world" + (keep ? " (island kept)" : "")); else Fail("creatures and notes in a world");
 		}
+
+		#region Loot
+
+		[ConsoleCommand(name: "CIItems", docs: "Dev: writes every item of Raft (unique name | shown name | has a picture) to Mods\\DynamicIslands\\items.txt, and checks the loot presets")]
+		public static void ListItems()
+		{
+			var lines = ItemManager.GetAllItems().Where(i => i != null).OrderBy(i => i.UniqueName)
+				.Select(i => i.UniqueName + " | " + ContentCatalog.ItemLabel(i.UniqueName) + " | " + (i.settings_Inventory != null && i.settings_Inventory.Sprite != null)).ToArray();
+			File.WriteAllLines(Path.Combine(DynamicIslands.assetpath, "items.txt"), lines);
+			Log(lines.Length + " items written to items.txt");
+			foreach (var p in ContentCatalog.LootPresets)
+			{
+				string[] missing = p.Value.Select(x => x.Split('*')[0]).Where(n => !ContentCatalog.ItemExists(n)).ToArray();
+				Log("Loot preset " + p.Key + ": " + ContentCatalog.PresetLoot(p.Value) + (missing.Length > 0 ? "   (not in Raft: " + string.Join(", ", missing) + ")" : ""));
+			}
+		}
+
+		[ConsoleCommand(name: "CILootTest", docs: "Dev, editor: chests - the Loot & chests category, default loot, the item picker, amounts, undo, making any object a chest, save and load")]
+		public static void LootTest()
+		{
+			DynamicIslands.instance.StartCoroutine(LootTestRoutine());
+		}
+
+		static IEnumerator LootTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			var cats = PlaceableCatalog.Browse().ToDictionary(c => c.Key, c => c.Value.Count);
+			Check(ref ok, cats.ContainsKey(ContentCatalog.LootCategory) && cats[ContentCatalog.LootCategory] >= 5, "the object list has " + ContentCatalog.LootCategory + " (" + (cats.ContainsKey(ContentCatalog.LootCategory) ? cats[ContentCatalog.LootCategory] : 0) + ")");
+
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			EditorGameObject chest = PlaceForTest("Loot_Chest", c0, placed);
+			string plainName = PlaceableCatalog.CoreNames.FirstOrDefault(n => n.StartsWith("TP_Moontown_TarpCrate"));
+			EditorGameObject crate = PlaceForTest(plainName ?? PlaceableCatalog.CoreNames.First(), c0 + new Vector3(4, 0, 0), placed);
+			if (chest == null || crate == null) { Fail("could not place a chest"); yield break; }
+			List<KeyValuePair<string, int>> start = ObjectProps.Loot(chest.Props);
+			Check(ref ok, start.Count >= 3 && start.All(l => ContentCatalog.ItemExists(l.Key)), "a new chest starts with Raft items: " + ObjectProps.Get(chest.Props, ObjectProps.LootItems));
+
+			List<string> items = ItemManager.GetAllItems().Where(i => i != null && i.settings_Inventory != null && i.settings_Inventory.Sprite != null).Select(i => i.UniqueName).Take(40).ToList();
+			ItemPickerWindow.AddItem(chest, items[20]);
+			ItemPickerWindow.AddItem(chest, items[20]);
+			List<KeyValuePair<string, int>> after = ObjectProps.Loot(chest.Props);
+			Check(ref ok, after.Count == start.Count + 1 && after.Last().Key == items[20] && after.Last().Value == 2, "adding an item twice makes 2 of it (" + ContentCatalog.ItemLabel(items[20]) + ")");
+			CommandUndoRedo.UndoRedoManager.Undo(); // both clicks are one step
+			Check(ref ok, ObjectProps.Loot(chest.Props).Count == start.Count, "undo takes the added item out again");
+			CommandUndoRedo.UndoRedoManager.Redo();
+
+			// Any object can be a chest (with a note too)
+			PropsCommand.Change(crate, ObjectProps.With(crate.Props, ObjectProps.LootItems, ContentCatalog.PresetLoot(ContentCatalog.LootPresets[1].Value)));
+			NoteEditorWindow.Apply(crate, "Supplies", "Take what you need.");
+			PropsCommand.Change(crate, ObjectProps.With(crate.Props, ObjectProps.LootRefill, "0"));
+			Check(ref ok, ObjectProps.IsLoot(crate.GameObjectName, crate.Props) && ObjectProps.IsNote(crate.GameObjectName, crate.Props) && !ObjectProps.LootRefills(crate.Props), "a plain crate holds loot and a note, and never refills");
+			TextMesh tag = crate.GetComponentsInChildren<TextMesh>().FirstOrDefault();
+			Check(ref ok, tag != null && tag.text.Contains("Supplies") && tag.text.Contains("items"), "its name tag shows the note and the loot: " + (tag != null ? tag.text.Replace("\n", " / ") : "none"));
+
+			// Inspector and the item picker
+			TransformGizmoSelect(chest.transform);
+			yield return null; yield return null;
+			Check(ref ok, ObjectInspector.Visible && ObjectInspector.Target == chest, "selecting the chest opens its loot");
+			Screenshot(new[] { "loot_inspector" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			ItemPickerWindow.Open(chest);
+			yield return null;
+			Check(ref ok, ItemPickerWindow.IsOpen, "the item picker opens");
+			Screenshot(new[] { "loot_picker" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			ItemPickerWindow.Close();
+			TransformGizmoSelect(crate.transform);
+			yield return null; yield return null;
+			Screenshot(new[] { "loot_crate" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+
+			string chestLoot = ObjectProps.Get(chest.Props, ObjectProps.LootItems), crateLoot = ObjectProps.Get(crate.Props, ObjectProps.LootItems);
+			bool saved = DynamicIslands.SaveIsland("ciloot");
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			DynamicIslands.LoadIsland("ciloot");
+			yield return new WaitForSecondsRealtime(1f);
+			List<EditorGameObject> back = placed.GetComponentsInChildren<EditorGameObject>().ToList();
+			EditorGameObject c2 = back.FirstOrDefault(e => e.GameObjectName == "Loot_Chest"), k2 = back.FirstOrDefault(e => e.GameObjectName == crate.GameObjectName);
+			Check(ref ok, saved && c2 != null && k2 != null && ObjectProps.Get(c2.Props, ObjectProps.LootItems) == chestLoot && ObjectProps.Get(k2.Props, ObjectProps.LootItems) == crateLoot && !ObjectProps.LootRefills(k2.Props),
+				"the loot saves and loads back");
+			File.Delete(IslandSpawner.PathFor("ciloot"));
+			if (ok) Log("PASS: loot in the editor"); else Fail("loot in the editor");
+		}
+
+		[ConsoleCommand(name: "CILootWorld", docs: "Dev, in game (host): an island with two chests - opening gives the items, it stays empty (also after reloading), other players are told, refilling")]
+		public static void LootWorld()
+		{
+			DynamicIslands.instance.StartCoroutine(LootWorldRoutine());
+		}
+
+		static IEnumerator LootWorldRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample");
+			if (source == null) { Fail("no generated_sample island"); yield break; }
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			f.Name = "ciloot";
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
+			string loot = ContentCatalog.PresetLoot(ContentCatalog.LootPresets[0].Value);
+			f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = ground(c.x, c.y), Props = new Dictionary<string, string> { { ObjectProps.LootItems, loot } } });
+			f.Objects.Add(new IslandObject { Name = "Loot_Barrel", Position = ground(c.x + 3f, c.y), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "Plank*3" }, { ObjectProps.LootRefill, "0" }, { ObjectProps.NoteTitle, "Barrel note" } } });
+			f.Save(IslandSpawner.PathFor("ciloot"));
+
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciloot"), 390f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("ciloot", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the loot island did not spawn"); yield break; }
+			List<LootCrate> crates = entry.Root.GetComponentsInChildren<LootCrate>().OrderBy(x => x.Ordinal).ToList();
+			Check(ref ok, crates.Count == 2 && crates[0].GetComponent<RaycastInteractable>() != null && crates[1].GetComponent<CustomNote>() != null, crates.Count + " chests, interactable; the barrel also has a note");
+			if (crates.Count < 2) yield break;
+
+			// Open the chest: the items arrive in the inventory
+			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
+			List<KeyValuePair<string, int>> want = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, loot } });
+			Dictionary<string, int> had = want.ToDictionary(w => w.Key, w => inv.GetItemCount(w.Key));
+			IslandNetMessage sent = null;
+			IslandNetwork.Loopback = m => sent = m;
+			List<string> given;
+			try { given = crates[0].Open(); }
+			finally { IslandNetwork.Loopback = null; }
+			yield return null;
+			// Anything that didn't fit was dropped, so count what arrived in the inventory
+			int arrived = want.Count(w => inv.GetItemCount(w.Key) - had[w.Key] == w.Value);
+			Check(ref ok, given.Count == want.Count && arrived > 0, "opening gives " + string.Join(", ", given.ToArray()) + " (" + arrived + " of " + want.Count + " kinds in the inventory, the rest dropped)");
+			Check(ref ok, crates[0].Looted && crates[0].Open().Count == 0, "then it's empty (a second open gives nothing)");
+			Check(ref ok, sent != null && sent.Kind == IslandNetMessage.ObjectUsed && sent.Ids[0] == entry.Id && sent.Index == crates[0].StateKey, "the other players are told (" + (sent != null ? "message " + sent.Kind + ", key " + sent.Index : "nothing sent") + ")");
+			// A client receiving that message marks it too
+			entry.State.Remove(crates[0].StateKey);
+			ContentState.ApplyUsed(entry.Id, crates[0].StateKey, 3);
+			Check(ref ok, crates[0].Looted, "a looted message from another player empties it here");
+
+			// The barrel with a note: opens and shows the note
+			crates[1].Open();
+			yield return null;
+			Check(ref ok, NoteReader.IsOpen && NoteReader.ShownTitle == "Barrel note", "a chest with a note shows the note when opened");
+			NoteReader.Close();
+
+			// Reload: still empty; after the regrow time the chest refills, the barrel (never) doesn't
+			IslandObjectState.Capture(entry);
+			IslandSpawner.Despawn(entry.Root);
+			entry.Root = null;
+			float t0 = Time.realtimeSinceStartup;
+			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			crates = entry.Root != null ? entry.Root.GetComponentsInChildren<LootCrate>().OrderBy(x => x.Ordinal).ToList() : new List<LootCrate>();
+			Check(ref ok, crates.Count == 2 && crates[0].Looted && crates[1].Looted, "after reloading the island both are still empty");
+			int days = CustomIslandSpawner.RegrowDays;
+			foreach (int key in new[] { ContentState.LootKeyBase, ContentState.LootKeyBase + 1 }) entry.State[key] = new ObjectState { Active = false, Day = -1000 };
+			ContentState.OnIslandReady(entry);
+			Check(ref ok, crates.Count == 2 && !crates[0].Looted && crates[1].Looted, "after " + days + " days the chest is full again; the barrel (never) stays empty");
+
+			IslandWorldState.RemoveIds(new[] { entry.Id }, true);
+			File.Delete(IslandSpawner.PathFor("ciloot"));
+			if (ok) Log("PASS: loot in a world"); else Fail("loot in a world");
+		}
+
+		#endregion
+
+		#region Trigger zones and island rules
+
+		[ConsoleCommand(name: "CIZoneTest", docs: "Dev, editor: trigger zones - placing, the zone editor, linking a creature (ambush), renaming, the island rule, save and load")]
+		public static void ZoneTest()
+		{
+			DynamicIslands.instance.StartCoroutine(ZoneTestRoutine());
+		}
+
+		static IEnumerator ZoneTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			EditorGameObject zone = PlaceForTest(ContentCatalog.TriggerZone, c0, placed);
+			EditorGameObject boar = PlaceForTest("Creature_Boar", c0 + new Vector3(6, 0, 0), placed);
+			if (zone == null || boar == null) { Fail("could not place a zone and a warthog"); yield break; }
+			string id = ObjectProps.Get(zone.Props, ObjectProps.ZoneId);
+			Check(ref ok, id.StartsWith("zone-") && ContentCatalog.ZoneIdsInEditor().Contains(id), "a new zone gets a name (" + id + ")");
+			PropsCommand.Change(zone, ObjectProps.With(ObjectProps.With(zone.Props, ObjectProps.ZoneRadius, "10"), ObjectProps.ZoneMessage, "You hear grunting..."));
+			PropsCommand.Change(boar, ObjectProps.With(boar.Props, ObjectProps.CreatureZone, id));
+			Transform sphere = zone.transform.Cast<Transform>().FirstOrDefault(t => t.name == ContentCatalog.MarkerOnly && t.GetComponent<TextMesh>() == null);
+			Check(ref ok, sphere != null && Mathf.Approximately(sphere.localScale.x, 20f), "the sphere shows the 10 m radius");
+			TextMesh bl = boar.GetComponentsInChildren<TextMesh>().FirstOrDefault();
+			Check(ref ok, bl != null && bl.text.Contains("waits for " + id), "the warthog's tag says it waits: " + (bl != null ? bl.text.Replace("\n", " / ") : "none"));
+
+			// Clicking in the zone's sphere still selects what is inside it
+			Camera cam = Camera.main;
+			cam.transform.position = c0 + new Vector3(6, 4, -8);
+			cam.transform.LookAt(boar.transform.position + Vector3.up * 0.5f);
+			Transform picked = PlacementOptions.PickObject(cam.ScreenPointToRay(cam.WorldToScreenPoint(boar.transform.position + Vector3.up * 0.5f)), ~0);
+			Check(ref ok, picked == boar.transform, "clicking the warthog inside the zone selects the warthog (got " + (picked != null ? picked.name : "nothing") + ")");
+
+			TransformGizmoSelect(zone.transform);
+			yield return null; yield return null;
+			Check(ref ok, ObjectInspector.Visible && ObjectInspector.Target == zone, "selecting the zone opens the zone editor");
+			Screenshot(new[] { "zone_inspector" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			TransformGizmoSelect(boar.transform);
+			yield return null; yield return null;
+			Screenshot(new[] { "zone_creature" });
+			yield return new WaitForSecondsRealtime(0.5f);
+			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+
+			// Island rule
+			DynamicIslands.currentIslandProps[IslandProps.RegrowDays] = "5";
+			bool saved = DynamicIslands.SaveIsland("cizone");
+			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
+			DynamicIslands.currentIslandProps.Clear();
+			yield return null;
+			DynamicIslands.LoadIsland("cizone");
+			yield return new WaitForSecondsRealtime(1f);
+			EditorGameObject z2 = placed.GetComponentsInChildren<EditorGameObject>().FirstOrDefault(e => e.GameObjectName == ContentCatalog.TriggerZone);
+			EditorGameObject b2 = placed.GetComponentsInChildren<EditorGameObject>().FirstOrDefault(e => e.GameObjectName == "Creature_Boar");
+			Check(ref ok, saved && z2 != null && b2 != null && ObjectProps.Get(z2.Props, ObjectProps.ZoneMessage) == "You hear grunting..." && ObjectProps.Get(b2.Props, ObjectProps.CreatureZone) == id
+				&& ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays) == "5", "the zone, the link and the island rule load back");
+			File.Delete(IslandSpawner.PathFor("cizone"));
+			if (ok) Log("PASS: trigger zones in the editor"); else Fail("trigger zones in the editor");
+		}
+
+		[ConsoleCommand(name: "CIZoneWorld", docs: "Dev, in game (host): a trigger zone with a message, items and an ambush warthog; the island rule for regrowing")]
+		public static void ZoneWorld()
+		{
+			DynamicIslands.instance.StartCoroutine(ZoneWorldRoutine());
+		}
+
+		static IEnumerator ZoneWorldRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			f.Name = "cizone";
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
+			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
+			f.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = ground(c.x, c.y), Props = new Dictionary<string, string> {
+				{ ObjectProps.ZoneId, "ambush" }, { ObjectProps.ZoneRadius, "8" }, { ObjectProps.ZoneMessage, "Something moves in the bushes!" }, { ObjectProps.LootItems, ContentCatalog.PresetLoot(new[] { "Plank*2", "Rope*1" }) } } });
+			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 5f, c.y), Props = new Dictionary<string, string> { { ObjectProps.CreatureZone, "ambush" } } });
+			f.Objects.Add(new IslandObject { Name = "Creature_Chicken", Position = ground(c.x - 5f, c.y) });
+			f.Props[IslandProps.RegrowDays] = "7";
+			f.Save(IslandSpawner.PathFor("cizone"));
+
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("cizone"), 390f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("cizone", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the zone island did not spawn"); yield break; }
+			Check(ref ok, IslandRules.RegrowDays(entry) == 7, "the island's own rule: things come back after " + IslandRules.RegrowDays(entry) + " days");
+			TriggerZone zone = entry.Root.GetComponentInChildren<TriggerZone>();
+			Check(ref ok, zone != null && zone.Id == "ambush" && zone.GetComponentsInChildren<Renderer>().Length == 0, "the zone exists and is invisible");
+
+			float t0 = Time.realtimeSinceStartup;
+			while (CreatureSpawner.LiveCount < 1 && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+			yield return new WaitForSeconds(2f);
+			CreatureSpawnPoint boars = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().First(p => p.Kind.Type == AI_NetworkBehaviourType.Boar);
+			CreatureSpawnPoint chicken = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().First(p => p.Kind.Type == AI_NetworkBehaviourType.Chicken);
+			Check(ref ok, chicken.Spawned.Count == 1 && boars.Spawned.Count == 0, "the chicken is there, the ambush warthog waits (" + boars.Spawned.Count + ")");
+
+			// Walk in (the zone checks the local player; the test sets it off directly)
+			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
+			var items = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, ContentCatalog.PresetLoot(new[] { "Plank*2", "Rope*1" }) } });
+			Dictionary<string, int> had = items.ToDictionary(i => i.Key, i => inv.GetItemCount(i.Key));
+			zone.Enter();
+			yield return null;
+			Check(ref ok, IslandInfo.LastMessage == "Something moves in the bushes!", "walking in shows the message");
+			Check(ref ok, items.Count > 0 && items.All(i => inv.GetItemCount(i.Key) - had[i.Key] == i.Value), "and gives " + string.Join(", ", items.Select(i => i.Key + "*" + i.Value).ToArray()));
+			Screenshot(new[] { "zone_message" });
+			t0 = Time.realtimeSinceStartup;
+			while (boars.Spawned.Count == 0 && Time.realtimeSinceStartup - t0 < 20f) yield return new WaitForSeconds(0.5f);
+			Check(ref ok, boars.Spawned.Count == 1 && zone.HasFired, "the ambush warthog appears (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
+			IslandInfo.ForgetShown();
+			zone.Enter();
+			Check(ref ok, IslandInfo.LastMessage == null, "a once-zone doesn't fire again");
+
+			// Reload: the zone has fired, so the warthog is there at once
+			IslandObjectState.Capture(entry);
+			IslandSpawner.Despawn(entry.Root);
+			entry.Root = null;
+			t0 = Time.realtimeSinceStartup;
+			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			t0 = Time.realtimeSinceStartup;
+			CreatureSpawnPoint b2 = null;
+			while (Time.realtimeSinceStartup - t0 < 30f)
+			{
+				b2 = entry.Root != null ? entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.Boar) : null;
+				if (b2 != null && b2.Spawned.Count > 0) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			Check(ref ok, b2 != null && b2.Spawned.Count == 1, "after reloading, the ambush warthog is already there");
+
+			IslandWorldState.RemoveIds(new[] { entry.Id }, true);
+			File.Delete(IslandSpawner.PathFor("cizone"));
+			if (ok) Log("PASS: trigger zones in a world"); else Fail("trigger zones in a world");
+		}
+
+		#endregion
 
 		[ConsoleCommand(name: "CINoteLook", docs: "Dev, in game: stands the player in front of the nearest readable note and checks Raft's own interaction ray finds it")]
 		public static void NoteLook()

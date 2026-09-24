@@ -25,7 +25,7 @@ namespace DynamicIslands.Editor
 		public const string HostileCategory = "Animals: hostile";
 		public const string SeaCategory = "Sea creatures";
 		public const string NotesCategory = "Notes & signs";
-		public static readonly string[] Categories = { CatchableCategory, HostileCategory, SeaCategory, NotesCategory };
+		public static readonly string[] Categories = { CatchableCategory, HostileCategory, SeaCategory, NotesCategory, "Loot & chests", "Zones & triggers" };
 
 		/// <summary>Name of marker parts (ground ring, labels) that only help in the editor and are never tinted.</summary>
 		public const string MarkerOnly = "CI_NoTint";
@@ -94,7 +94,114 @@ namespace DynamicIslands.Editor
 			new[] { NotePrefix + "Bottle", "Placeable_Utopia_Bottle", "Message in a bottle", "Message in a bottle" },
 		};
 
+		public const string LootCategory = "Loot & chests";
+		const string LootPrefix = "Loot_";
+
+		/// <summary>Containers of the list: our name, Raft's object it shows, label.</summary>
+		static readonly string[][] LootObjects =
+		{
+			new[] { LootPrefix + "Chest", "Placeable_Storage_Medium", "Chest" },
+			new[] { LootPrefix + "ChestSmall", "Placeable_Storage_Small", "Small chest" },
+			new[] { LootPrefix + "ChestLarge", "Placeable_Storage_Large", "Large chest" },
+			new[] { LootPrefix + "Crate", "TP_Moontown_SealedCrate01", "Sealed crate" },
+			new[] { LootPrefix + "Box", "VG_DecorationPrefabBase_WoodenBoxes_ShortSquare Variant", "Wooden box" },
+			new[] { LootPrefix + "Barrel", "TP_Moontown_Barrel01", "Barrel" },
+			new[] { LootPrefix + "SunkenBarrel", "Reef_Barrel1", "Sunken barrel" },
+		};
+
 		public static bool IsNoteObject(string name) { return name != null && name.StartsWith(NotePrefix) && NoteObjects.Any(n => n[0] == name); }
+
+		public static bool IsLootObject(string name) { return name != null && name.StartsWith(LootPrefix) && LootObjects.Any(n => n[0] == name); }
+
+		public const string ZoneCategory = "Zones & triggers";
+		const string ZonePrefix = "Zone_";
+		public const string TriggerZone = ZonePrefix + "Trigger";
+
+		/// <summary>Zones of the list: our name, label, marker colour, hint.</summary>
+		static readonly KeyValuePair<string, string>[] Zones =
+		{
+			new KeyValuePair<string, string>(TriggerZone, "Trigger zone"),
+		};
+
+		public static bool IsZone(string name) { return name != null && name.StartsWith(ZonePrefix) && Zones.Any(z => z.Key == name); }
+
+		public static string NewZoneId() { return "zone-" + UnityEngine.Random.Range(100, 1000); }
+
+		/// <summary>Editor: the ids of the trigger zones placed on the island (creatures and quests link to them).</summary>
+		public static List<string> ZoneIdsInEditor()
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (placed == null) return new List<string>();
+			return placed.GetComponentsInChildren<EditorGameObject>().Where(e => e.GameObjectName == TriggerZone)
+				.Select(e => ObjectProps.Get(e.Props, ObjectProps.ZoneId)).Where(id => id.Length > 0).Distinct().OrderBy(id => id).ToList();
+		}
+
+		static readonly Color ZoneColor = new Color(1f, 0.85f, 0.3f);
+
+		/// <summary>A zone in the editor: a pole with a flag to click, and a see-through sphere showing its radius.</summary>
+		static GameObject BuildZoneMarker(string name, string label)
+		{
+			var root = new GameObject(name);
+			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
+			Transform marker = new GameObject("Marker").transform;
+			marker.SetParent(root.transform, false);
+			Part(PrimitiveType.Cylinder, "Pole", marker, new Vector3(0, 1f, 0), Quaternion.identity, new Vector3(0.08f, 1f, 0.08f), MarkerMaterial(new Color(0.35f, 0.3f, 0.25f)));
+			Part(PrimitiveType.Cube, "Flag", marker, new Vector3(0.3f, 1.75f, 0), Quaternion.identity, new Vector3(0.6f, 0.4f, 0.03f), MarkerMaterial(ZoneColor));
+			// A faint sphere, and a clearer ring where it meets the ground (a child: it scales with the sphere)
+			GameObject sphere = Part(PrimitiveType.Sphere, MarkerOnly, root.transform, Vector3.zero, Quaternion.identity, Vector3.one * 12f, MarkerMaterial(new Color(ZoneColor.r, ZoneColor.g, ZoneColor.b, 0.06f)));
+			sphere.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			GameObject ring = Part(PrimitiveType.Cylinder, MarkerOnly, sphere.transform, new Vector3(0, 0.002f, 0), Quaternion.identity, new Vector3(1f, 0.0008f, 1f), MarkerMaterial(new Color(ZoneColor.r, ZoneColor.g, ZoneColor.b, 0.3f)));
+			ring.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			AddLabel(root.transform, label, 2.4f);
+			return root;
+		}
+
+		/// <summary>Ready-made loot for the loot editor: name, then candidate items (only those Raft has are used).</summary>
+		public static readonly KeyValuePair<string, string[]>[] LootPresets =
+		{
+			new KeyValuePair<string, string[]>("Basics", new[] { "Plank*12", "Plastic*10", "Thatch*8", "Rope*4", "Nail*10", "Stone*6" }),
+			new KeyValuePair<string, string[]>("Metal", new[] { "Scrap*6", "MetalIngot*4", "CopperIngot*3", "Bolt*6", "Hinge*4", "MetalOre*4" }),
+			new KeyValuePair<string, string[]>("Food", new[] { "Watermelon*2", "Pineapple*2", "Coconut*3", "Mango*3", "Raw_Potato*4", "Egg*4", "Banana*3" }),
+			new KeyValuePair<string, string[]>("Treasure", new[] { "TitaniumIngot*3", "ExplosiveGoo*2", "CircuitBoard*2", "Battery*1", "HealingSalve_Good*2", "Jar_Honey*1" }),
+		};
+
+		/// <summary>The loot of a preset: its candidates that exist in this version of Raft.</summary>
+		public static string PresetLoot(string[] candidates)
+		{
+			var found = new List<KeyValuePair<string, int>>();
+			foreach (var l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, string.Join(";", candidates) } }))
+				if (ItemExists(l.Key)) found.Add(l);
+			return ObjectProps.LootText(found);
+		}
+
+		public static string DefaultLoot() { return PresetLoot(LootPresets[0].Value); }
+
+		public static bool ItemExists(string uniqueName)
+		{
+			try { return ItemManager.GetItemByName(uniqueName) != null; } catch { return false; }
+		}
+
+		/// <summary>An item's name as players see it ("Plank"), or its unique name.</summary>
+		public static string ItemLabel(string uniqueName)
+		{
+			try
+			{
+				Item_Base item = ItemManager.GetItemByName(uniqueName);
+				string d = item != null && item.settings_Inventory != null ? item.settings_Inventory.DisplayName : null;
+				return !string.IsNullOrEmpty(d) && !d.StartsWith("#") ? d.Trim() : uniqueName.Replace('_', ' ');
+			}
+			catch { return uniqueName; }
+		}
+
+		public static Sprite ItemSprite(string uniqueName)
+		{
+			try
+			{
+				Item_Base item = ItemManager.GetItemByName(uniqueName);
+				return item != null && item.settings_Inventory != null ? item.settings_Inventory.Sprite : null;
+			}
+			catch { return null; }
+		}
 
 		public static string DefaultNoteTitle(string name)
 		{
@@ -108,6 +215,8 @@ namespace DynamicIslands.Editor
 			CreatureKind k = CreatureOf(name);
 			if (k != null) return "a live " + k.Label.ToLowerInvariant() + " appears here in a world: " + k.Hint + ". Select it to change its stats and colour";
 			if (IsNoteObject(name)) return "players read it in a world with the interact key (E). Select it to write the text";
+			if (IsLootObject(name)) return "players open it in a world with the interact key (E) and get what's inside. Select it to choose the items";
+			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";
 			return null;
 		}
 
@@ -124,9 +233,19 @@ namespace DynamicIslands.Editor
 				PlaceableCatalog.AddCustom(n[0], source, NotesCategory, n[2]);
 				notes++;
 			}
+			int loot = 0;
+			foreach (string[] n in LootObjects)
+			{
+				GameObject source = PlaceableCatalog.Get(n[1]);
+				if (source == null) { Debug.LogWarning("[CUSTOM ISLANDS] Loot object '" + n[1] + "' not found in Raft's objects; '" + n[2] + "' is left out"); continue; }
+				PlaceableCatalog.AddCustom(n[0], source, LootCategory, n[2]);
+				loot++;
+			}
+			foreach (var z in Zones)
+				PlaceableCatalog.AddCustom(z.Key, BuildZoneMarker(z.Key, z.Value), ZoneCategory, z.Value);
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
-			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects");
+			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");
 		}
 
 		static GameObject BuildPrototype(CreatureKind k)
@@ -286,6 +405,21 @@ namespace DynamicIslands.Editor
 		{
 			EditorGameObject ego = go.GetComponent<EditorGameObject>();
 			string name = ego != null ? ego.GameObjectName : PlaceableCatalog.CleanName(go.name);
+			if (IsZone(name))
+			{
+				float radius = ObjectProps.Radius(props);
+				foreach (Transform child in go.transform)
+					if (child.name == MarkerOnly && child.GetComponent<TextMesh>() == null) child.localScale = Vector3.one * radius * 2f;
+				TextMesh zl = Label(go);
+				if (zl != null)
+				{
+					int items = ObjectProps.Loot(props).Count;
+					string msg = ObjectProps.Get(props, ObjectProps.ZoneMessage);
+					zl.text = "Trigger: " + ObjectProps.Get(props, ObjectProps.ZoneId) + (ObjectProps.Repeats(props) ? " (every time)" : " (once)") +
+						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") + "</size>";
+				}
+				return;
+			}
 			CreatureKind k = CreatureOf(name);
 			if (k != null)
 			{
@@ -298,14 +432,16 @@ namespace DynamicIslands.Editor
 				{
 					int count = ObjectProps.Count(props);
 					string summary = Summary(props);
+					string zone = ObjectProps.Get(props, ObjectProps.CreatureZone);
+					if (zone.Length > 0) summary += (summary.Length > 0 ? ", " : "") + "waits for " + zone;
 					label.text = k.Label + (count > 1 ? " \u00D7" + count : "") + (summary.Length > 0 ? "\n<size=36>" + summary + "</size>" : "");
 					label.transform.localPosition = new Vector3(0, Mathf.Max(k.Height, 0.4f) * size + 0.5f, 0);
 				}
 				return;
 			}
-			bool note = ObjectProps.IsNote(name, props);
+			bool note = ObjectProps.IsNote(name, props), loot = ObjectProps.IsLoot(name, props);
 			TextMesh tag = Label(go);
-			if (!note) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
+			if (!note && !loot) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
 			if (tag == null)
 			{
 				Bounds b;
@@ -313,7 +449,14 @@ namespace DynamicIslands.Editor
 				tag = AddLabel(go.transform, "", top / Mathf.Max(0.01f, go.transform.lossyScale.y) + 0.3f);
 			}
 			string title = ObjectProps.Get(props, ObjectProps.NoteTitle, "");
-			tag.text = "<color=#ffc766>\u2709</color> " + (title.Length > 0 ? title : "(no title)");
+			var lines = new List<string>();
+			if (note) lines.Add("<color=#ffc766>\u2709</color> " + (title.Length > 0 ? title : "(no title)"));
+			if (loot)
+			{
+				int stacks = ObjectProps.Loot(props).Count;
+				lines.Add("<color=#8fdc8f>\u25a3</color> " + (stacks == 0 ? "empty" : stacks == 1 ? "1 item" : stacks + " items"));
+			}
+			tag.text = string.Join("\n", lines.ToArray());
 		}
 
 		static TextMesh Label(GameObject go)

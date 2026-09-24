@@ -265,7 +265,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
@@ -553,7 +553,8 @@ namespace DynamicIslands
 				{
 					entry.Root = root;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
-					IslandObjectState.Apply(entry, CustomIslandSpawner.RegrowDays);
+					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
+					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);
 				}
 				if (!quiet) Notify("Spawned island '" + name + "'");

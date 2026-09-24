@@ -8,6 +8,27 @@ namespace DynamicIslands.Editor
 	public static class IslandProps
 	{
 		public const string Title = "info.title", Author = "info.author", Description = "info.description";
+		/// <summary>Rules: in-game days until harvested things, killed animals and looted chests come back on this island ("" = the world's regrowDays, 0 = never).</summary>
+		public const string RegrowDays = "rules.regrow";
+	}
+
+	/// <summary>A spawned island's own settings (IslandFile.Props), for the parts of the mod that act on it in a world.</summary>
+	public class IslandSettings : MonoBehaviour
+	{
+		public Dictionary<string, string> Props = new Dictionary<string, string>();
+	}
+
+	/// <summary>The island rules editor's result: per-island overrides of the world's settings.</summary>
+	public static class IslandRules
+	{
+		/// <summary>Days until things come back on this island: its own rule, or the world's regrowDays.</summary>
+		public static int RegrowDays(IslandWorldState.Entry e)
+		{
+			IslandSettings s = e != null && e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
+			int days;
+			if (s != null && int.TryParse(ObjectProps.Get(s.Props, IslandProps.RegrowDays), out days)) return Mathf.Max(0, days);
+			return CustomIslandSpawner.RegrowDays;
+		}
 	}
 
 	/// <summary>What a spawned island tells players about itself, and where its land is.</summary>
@@ -37,10 +58,11 @@ namespace DynamicIslands.Editor
 		public static string LastShown { get; private set; }
 
 		/// <summary>Forgets which islands were announced, so their banners show again (tests).</summary>
-		public static void ForgetShown() { shown.Clear(); LastShown = null; }
+		public static void ForgetShown() { shown.Clear(); LastShown = null; LastMessage = null; }
 
 		public static void Tag(GameObject root, IslandFile island)
 		{
+			root.AddComponent<IslandSettings>().Props = new Dictionary<string, string>(island.Props);
 			string title = ObjectProps.Get(island.Props, IslandProps.Title), desc = ObjectProps.Get(island.Props, IslandProps.Description);
 			if (title.Length == 0 && desc.Length == 0) return;
 			IslandInfoTag tag = root.AddComponent<IslandInfoTag>();
@@ -79,9 +101,20 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>A trigger zone's message, in the same banner (without a title).</summary>
+		public static void ShowMessage(string text)
+		{
+			Show("", "", text);
+			LastMessage = text;
+		}
+
+		/// <summary>The last zone message shown (the automated tests look at it).</summary>
+		public static string LastMessage { get; private set; }
+
 		public static void Show(string title, string author, string description)
 		{
 			if (banner == null) Build();
+			titleText.gameObject.SetActive(title.Length > 0 || description.Length == 0);
 			titleText.text = title.Length > 0 ? title : "Unknown island";
 			authorText.text = author.Length > 0 ? "by " + author : "";
 			authorText.gameObject.SetActive(author.Length > 0);
