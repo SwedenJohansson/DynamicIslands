@@ -10,6 +10,10 @@ namespace CommandUndoRedo
 		DropoutStack<ICommand> undoCommands = new DropoutStack<ICommand>();
 		DropoutStack<ICommand> redoCommands = new DropoutStack<ICommand>();
 
+		/// <summary>Undo / redo steps stored (the keyboard test checks Ctrl+Z and Ctrl+Y).</summary>
+		public int UndoCount { get { return undoCommands.Count; } }
+		public int RedoCount { get { return redoCommands.Count; } }
+
 		public UndoRedo() {}
 		public UndoRedo(int maxUndoStored)
 		{

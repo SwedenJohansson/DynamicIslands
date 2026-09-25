@@ -25,6 +25,9 @@ namespace DynamicIslands.Editor
 		Vector3 baseScale;
 		float yaw;
 		float scale = 1f;
+		/// <summary>The turn and size Q/E and [ ] give the object being placed (tests).</summary>
+		public float Yaw { get { return yaw; } }
+		public float ScaleFactor { get { return scale; } }
 		Vector3 groundNormal = Vector3.up;
 		Collider[] ownColliders;
 

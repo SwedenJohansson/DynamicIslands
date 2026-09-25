@@ -210,6 +210,7 @@ namespace DynamicIslands.Editor
 			RectTransform r = UIKit.Rect("Tile_" + e.Name, grid);
 			Image bg = UIKit.Background(r.gameObject, Color.white, 6);
 			var b = r.gameObject.AddComponent<Button>();
+			UIKit.AllButtons.Add(b);
 			b.targetGraphic = bg;
 			UIKit.Slot(b);
 			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
@@ -260,7 +261,7 @@ namespace DynamicIslands.Editor
 			else DynamicIslands.Notify("Could not load " + PlaceableCatalog.DisplayName(name) + " - see the console (F10)", true);
 		}
 
-		static void StartPlacing(string name)
+		internal static void StartPlacing(string name)
 		{
 			if (!DynamicIslands.InEditor() || DynamicIslands.EditorGizmoHandler == null) return;
 			EditorUI.SetTab(TAB.ObjectPlace);

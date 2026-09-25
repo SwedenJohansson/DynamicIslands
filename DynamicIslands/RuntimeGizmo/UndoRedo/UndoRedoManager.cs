@@ -8,6 +8,9 @@ namespace CommandUndoRedo
 
 		public static int maxUndoStored {get {return undoRedo.maxUndoStored;} set {undoRedo.maxUndoStored = value;}}
 
+		public static int UndoCount { get { return undoRedo.UndoCount; } }
+		public static int RedoCount { get { return undoRedo.RedoCount; } }
+
 		public static void Clear()
 		{
 			undoRedo.Clear();

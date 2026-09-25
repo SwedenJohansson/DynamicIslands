@@ -344,7 +344,7 @@ namespace DynamicIslands.Editor
 			HighlightStamps();
 		}
 
-		static void SetStamp(int index)
+		internal static void SetStamp(int index)
 		{
 			TerrainStamps.Selected = index;
 			SetBrush(terraineditor.TerrainModificationAction.Stamp);
@@ -445,6 +445,8 @@ namespace DynamicIslands.Editor
 		#endregion
 
 		#region State
+
+		public static TAB CurrentTab { get { return tabs != null ? tabs.SelectedTab : TAB.TerrainEdit; } }
 
 		public static void SetTab(TAB tab)
 		{
