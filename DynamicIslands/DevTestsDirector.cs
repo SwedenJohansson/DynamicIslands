@@ -312,7 +312,7 @@ namespace DynamicIslands
 			WorldPlan.Parse(TestPlan, "random = off\n" +
 				"rule = start | island:ciplan1 | start | ahead:300 | Welcome to the test plan | Start\n" +
 				"rule = second | type:snowy | quest:start | near:start:700:east | Go east | Snow\n" +
-				"rule = third | type:desert | km:5 | ahead:400 | Hot | Desert\n" +
+				"rule = third | type:desert | km:5 | ahead:1000 | Hot | Desert\n" +
 				"rule = fourth | oneof:no such island, ciplan1 | visit:second | near:second:600:south | | Again\n").Save();
 			Check(ref ok, WorldDirector.SetPlan(TestPlan, true) && !CustomIslandSpawner.Enabled, "the world gets the plan (random islands off, as the plan says)");
 

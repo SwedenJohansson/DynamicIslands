@@ -41,7 +41,7 @@ namespace DynamicIslands
 			{
 				// (harvested trees and picked-up items reach the entry when the island unloads or the world saves: now)
 				if (e.Root != null) IslandObjectState.Capture(e);
-				Log("MP island " + e.Id + " " + e.HostName + " hash " + e.Hash + " at " + e.Position.ToString("F0") +
+				Log("MP island " + e.Id + " " + e.HostName + " hash " + e.Hash + " at " + e.Position.ToString("F0") + (e.Label.Length > 0 ? " label '" + e.Label + "'" : "") +
 					(e.WaitingForFile ? " (waiting for the file)" : e.Failed ? " (failed)" : e.Root == null ? " (unloaded)" : " (loaded)"));
 				string state = string.Join(" ", e.State.OrderBy(kv => kv.Key)
 					.Select(kv => kv.Key.ToString("X") + "=" + (kv.Value.Active ? "on" : "off") + "/" + kv.Value.Yield));
@@ -52,13 +52,14 @@ namespace DynamicIslands
 				{
 					// (Raft's own creatures: the host spawns them, Raft's network shows them to everyone)
 					Vector3 at = e.Position;
-					var near = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && Vector3.Distance(new Vector3(a.transform.position.x, 0f, a.transform.position.z), new Vector3(at.x, 0f, at.z)) < 300f).ToList();
-					Log("MP creatures near " + e.Id + ": " + near.Count + (near.Count > 0 ? " (" + string.Join(", ", near.Select(a => a.name.Replace("(Clone)", "")).ToArray()) + ")" : ""));
+					// (live ones: a body lingers longer on the host than on other players)
+					var near = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && (a.networkEntity == null || !a.networkEntity.IsDead) && Vector3.Distance(new Vector3(a.transform.position.x, 0f, a.transform.position.z), new Vector3(at.x, 0f, at.z)) < 300f).ToList();
+					Log("MP creatures near " + e.Id + ": " + near.Count + (near.Count > 0 ? " (" + string.Join(", ", near.Select(a => a.name.Replace("(Clone)", "")).OrderBy(n => n).ToArray()) + ")" : ""));
 				}
 			}
 			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
 			// (per player, not shared: e.g. the planks a lever gave the player who pulled it)
-			if (inv != null) Log("MP this player: Plank x" + inv.GetItemCount("Plank") + ", Stone x" + inv.GetItemCount("Stone") + ", Rope x" + inv.GetItemCount("Rope"));
+			if (inv != null) Log("MP this player: " + string.Join(", ", new[] { "Plank", "Stone", "Rope", "Nail", "Scrap" }.Select(i => i + " x" + inv.GetItemCount(i)).ToArray()));
 			Log("MP story items: " + string.Join(", ", StoryBook.Items.Select(h => h.Def.Id + " x" + h.Count).ToArray()));
 			Log("MP story pages: " + string.Join(", ", StoryBook.Pages.Select(p => p.Key).ToArray()));
 			Log("MP state done");
@@ -143,11 +144,11 @@ namespace DynamicIslands
 			return e;
 		}
 
-		static void PutPlayerNear(Transform t)
+		static void PutPlayerNear(Transform t, float offset = 1.5f)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || t == null) return;
-			Vector3 target = t.position + new Vector3(1.5f, 0f, 1.5f);
+			Vector3 target = t.position + new Vector3(offset, 0f, offset);
 			RaycastHit hit;
 			if (Physics.Raycast(target + Vector3.up * 30f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
 			CharacterController cc = player.PersonController.controller;
@@ -181,8 +182,8 @@ namespace DynamicIslands
 			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(o =>
 				string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.ZoneId), what, StringComparison.OrdinalIgnoreCase));
 			if (r == null) { Fail("no object or zone '" + what + "' on '" + e.HostName + "'"); return; }
-			PutPlayerNear(r.transform);
-			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
+			PutPlayerNear(r.transform, 0.3f); // (near the middle: a zone measures the distance in 3D, a slope adds to it)
+			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
 		}
 
 		[ConsoleCommand(name: "CIOpenChest", docs: "Dev, in game (either player): opens a chest as a player would: CIOpenChest <island> [n-th chest, from 1; default the first not yet opened]")]
@@ -190,9 +191,14 @@ namespace DynamicIslands
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
-			LootCrate[] chests = e.Root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null ? r.Index : 0; }).ToArray();
+			// (hidden chests - buried treasure - can't be reached until an action shows them)
+			LootCrate[] chests = e.Root.GetComponentsInChildren<LootCrate>(false).OrderBy(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null ? r.Index : 0; }).ToArray();
 			int n;
-			LootCrate chest = args.Length > 1 && int.TryParse(args[1], out n) ? chests.ElementAtOrDefault(n - 1) : chests.FirstOrDefault(c => !c.Looted);
+			string title = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
+			Func<LootCrate, string> titleOf = c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null ? ObjectProps.Get(r.Props, ObjectProps.NoteTitle) : ""; };
+			LootCrate chest = title.Length == 0 ? chests.FirstOrDefault(c => !c.Looted)
+				: int.TryParse(title, out n) ? chests.ElementAtOrDefault(n - 1)
+				: chests.FirstOrDefault(c => titleOf(c).Equals(title, StringComparison.OrdinalIgnoreCase));
 			if (chest == null) { Fail("no such chest on '" + e.HostName + "' (" + chests.Length + " chests)"); return; }
 			PutPlayerNear(chest.transform);
 			List<string> got = chest.Open();
@@ -257,9 +263,9 @@ namespace DynamicIslands
 		}
 
 		/// <summary>After an action: what the player was told, and the island's shared state here, half a second later.</summary>
-		static System.Collections.IEnumerator AfterAction(string what)
+		static System.Collections.IEnumerator AfterAction(string what, float wait = 0.5f)
 		{
-			yield return new WaitForSeconds(0.5f);
+			yield return new WaitForSeconds(wait);
 			Log(what + ": message '" + Behaviours.LastMessage + "', story items " + string.Join(", ", StoryBook.Items.Select(h => h.Def.Id + " x" + h.Count).ToArray()));
 		}
 	}

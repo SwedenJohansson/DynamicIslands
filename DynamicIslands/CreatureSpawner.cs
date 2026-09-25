@@ -493,24 +493,28 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		static void TintRemote()
 		{
-			List<CreatureSpawnPoint> tinted = IslandSpawner.SpawnedRoots.Where(r => r != null)
-				.SelectMany(r => r.GetComponentsInChildren<CreatureSpawnPoint>(true)).Where(p => p.Kind != null && ObjectProps.HasTint(p.Props)).ToList();
-			if (tinted.Count == 0) return;
+			List<CreatureSpawnPoint> spots = IslandSpawner.SpawnedRoots.Where(r => r != null)
+				.SelectMany(r => r.GetComponentsInChildren<CreatureSpawnPoint>(true)).Where(p => p.Kind != null).ToList();
+			if (!spots.Any(p => ObjectProps.HasTint(p.Props))) return;
 			AI_NetworkBehaviour[] all = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>();
 			foreach (AI_NetworkBehaviour ai in all)
 			{
 				if (ai == null || clientTinted.Contains(ai) || ai.connectedSpawner != null) continue;
+				// The animal's own spot: the nearest of its kind whose size it has (Raft sends the size; hostile
+				// animals roam far from their spot while chasing players, so the nearest tinted spot alone could
+				// colour an untinted animal of a spot next to it). Only that spot's tint counts.
+				float size = ai.transform.localScale.x;
 				CreatureSpawnPoint best = null;
-				float bestDist = 40f;
-				foreach (CreatureSpawnPoint p in tinted)
+				float bestDist = 150f;
+				foreach (CreatureSpawnPoint p in spots)
 				{
-					if (p.Kind.Type != ai.behaviourType) continue;
+					if (p.Kind.Type != ai.behaviourType || Mathf.Abs(ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f) - size) > 0.05f) continue;
 					float d = Vector3.Distance(p.transform.position, ai.transform.position);
 					if (d < bestDist) { bestDist = d; best = p; }
 				}
 				if (best == null) continue;
-				ObjectProps.ApplyTint(ai.gameObject, best.Props);
 				clientTinted.Add(ai);
+				if (ObjectProps.HasTint(best.Props)) ObjectProps.ApplyTint(ai.gameObject, best.Props);
 			}
 			clientTinted.RemoveWhere(a => a == null);
 		}

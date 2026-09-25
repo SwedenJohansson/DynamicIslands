@@ -109,13 +109,17 @@ namespace DynamicIslands.Editor
 			IslandSpawner.SpawnedRoots.RemoveAll(r => r == null);
 			foreach (Entry e in islands) e.Position -= shift;
 			CustomIslandSpawner.OnWorldShift(shift);
+			if (islands.Count > 0) Debug.Log("[CUSTOM ISLANDS] World shift by " + shift.ToString("F0") + ": " + islands.Count + " island(s) moved with it");
 		}
 
 		/// <summary>Writes the list for the current world (called after Raft saves the world).</summary>
 		public static void Save()
 		{
 			if (!Raft_Network.IsHost || SaveAndLoad.WorldGuid == Guid.Empty) return;
-			EnsureCurrentWorld();
+			// Not set up for this world yet (Raft saves a brand-new world at once, before the mod notices it): what is in
+			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
+			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
+			if (loadedFor != WorldKey) return;
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));

@@ -65,6 +65,7 @@
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsStory.cs" />
     <Compile Include="DevTestsMultiplayer.cs" />
+    <Compile Include="DevTestsMultiplayerFull.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />

@@ -68,14 +68,20 @@ namespace DynamicIslands.Editor
 			bool fired = HasFired;
 			if (fired && !Repeats) return;
 			if (Repeats && Time.time < cooldownUntil) return;
+			// Its "only if" checks first: when they fail the player is told why and the zone stays ready - not marked
+			// as fired, no cooldown. (Before, a failed check still used the zone up: a treasure map's X crossed
+			// without the map did nothing when the player came back with it within half a minute, and a zone that
+			// fires once was spent for good. Found in the two-player test.)
+			IslandObjectRef r = GetComponent<IslandObjectRef>();
+			IslandWorldState.Entry entry = ContentState.EntryOf(transform);
+			if (r != null && !Behaviours.Allows(entry, r.Index, "enter")) return;
 			cooldownUntil = Time.time + RepeatCooldown;
 
 			if (Message.Length > 0) IslandInfo.ShowMessage(Message);
 			if (Items.Count > 0) Give(Items);
 			if (!fired) ContentState.MarkUsed(transform, StateKey); // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
-			IslandObjectRef r = GetComponent<IslandObjectRef>();
-			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "enter", true);
+			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
 		}
 

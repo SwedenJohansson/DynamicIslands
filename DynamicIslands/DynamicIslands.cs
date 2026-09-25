@@ -110,10 +110,9 @@ namespace DynamicIslands
 			// Custom islands saved with a world come back when it loads
 			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
 			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
-			// A client asks for the host's islands once the host's world is here (the raft is where the host's is)
-			Raft_Network.OnWorldReceivedLate += IslandNetwork.OnWorldReceived;
-			// ...and follow Raft's floating-origin world shifts
-			WorldShiftManager.OnWorldShift += IslandWorldState.OnWorldShift;
+			// Raft's world shifts and "world received" (for clients): hooked every frame by HookRaftEvents, since
+			// Raft empties these events when a game is left
+			HookRaftEvents();
 			// An island's quest done: its "on.quest" actions
 			QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
 
@@ -190,8 +189,29 @@ namespace DynamicIslands
 			LoadEditor(str);
 		}
 
+		static readonly Action<Vector3> onWorldShift = IslandWorldState.OnWorldShift;
+		static readonly Action onWorldReceived = IslandNetwork.OnWorldReceived;
+
+		/// <summary>
+		/// Keeps the mod on two of Raft's static events. Raft sets them to null when a game is left
+		/// (WorldShiftManager and Raft_Network, SceneEventInterface.OnSceneEvent), which silently dropped the mod's
+		/// handlers: after going back to the main menu once, custom islands stopped following world shifts, and a
+		/// player joining again got no islands from the host. Found in the two-player test.
+		/// </summary>
+		static void HookRaftEvents()
+		{
+			// (the custom islands follow Raft's floating-origin world shifts)
+			if (WorldShiftManager.OnWorldShift == null || Array.IndexOf(WorldShiftManager.OnWorldShift.GetInvocationList(), onWorldShift) < 0)
+				WorldShiftManager.OnWorldShift += onWorldShift;
+			// (a client asks for the host's islands once the host's world is here: the raft is where the host's is)
+			if (Raft_Network.OnWorldReceivedLate == null || Array.IndexOf(Raft_Network.OnWorldReceivedLate.GetInvocationList(), onWorldReceived) < 0)
+				Raft_Network.OnWorldReceivedLate += onWorldReceived;
+		}
+
 		private void Update()
 		{
+			try { HookRaftEvents(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Raft events: " + e); }
 			try { CustomIslandSpawner.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
 			try { IslandNetwork.Tick(); }
