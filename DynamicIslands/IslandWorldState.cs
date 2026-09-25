@@ -109,6 +109,7 @@ namespace DynamicIslands.Editor
 			IslandSpawner.SpawnedRoots.RemoveAll(r => r == null);
 			foreach (Entry e in islands) e.Position -= shift;
 			CustomIslandSpawner.OnWorldShift(shift);
+			PlayerHold.OnWorldShift(shift);
 			if (islands.Count > 0) Debug.Log("[CUSTOM ISLANDS] World shift by " + shift.ToString("F0") + ": " + islands.Count + " island(s) moved with it");
 		}
 

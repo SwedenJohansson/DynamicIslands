@@ -353,7 +353,9 @@ namespace DynamicIslands.Editor
 					GameObject copy = UnityEngine.Object.Instantiate(prefab.gameObject, modelContainer.transform);
 					copy.name = prefab.behaviourType.ToString();
 					PlaceableCatalog.StripScripts(copy);
-					// Only the look: no physics, no navigation, no sounds of its own
+					// Only the look: no physics, no navigation, no sounds of its own (ragdoll joints first: Unity won't
+					// remove a Rigidbody a CharacterJoint depends on - 188 errors on every world load before)
+					foreach (Joint j in copy.GetComponentsInChildren<Joint>(true)) UnityEngine.Object.DestroyImmediate(j);
 					foreach (Component c in copy.GetComponentsInChildren<Component>(true).Where(c => c is Collider || c is Rigidbody || c is UnityEngine.AI.NavMeshAgent || c is CharacterController || c is AudioSource).ToList())
 						UnityEngine.Object.DestroyImmediate(c);
 					copy.transform.localPosition = Vector3.zero;

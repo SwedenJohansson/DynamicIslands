@@ -507,9 +507,16 @@ namespace DynamicIslands
 			Check(ref ok, crates[0].Looted, "a looted message from another player empties it here");
 
 			// The barrel with a note: opens and shows the note
+			// (at the barrel, as a player is: the reader closes when the player is more than 8 m away - after a long frame,
+			// with a second player joined and a NavMesh being built, it had closed before the check)
+			Network_Player me = RAPI.GetLocalPlayer();
+			Vector3 wasAt = me != null ? me.transform.position : Vector3.zero;
+			PutPlayerNear(crates[1].transform);
 			crates[1].Open();
 			yield return null;
-			Check(ref ok, NoteReader.IsOpen && NoteReader.ShownTitle == "Barrel note", "a chest with a note shows the note when opened");
+			Check(ref ok, NoteReader.IsOpen && NoteReader.ShownTitle == "Barrel note", "a chest with a note shows the note when opened (" + (NoteReader.IsOpen ? "'" + NoteReader.ShownTitle + "'" : "reader closed") + ")");
+			// (and back: the next test's island comes up in the same place, and its zones would go off under the player)
+			if (me != null) { CharacterController cc = me.PersonController.controller; cc.enabled = false; me.transform.position = wasAt; cc.enabled = true; }
 			NoteReader.Close();
 
 			// Reload: still empty; after the regrow time the chest refills, the barrel (never) doesn't
@@ -1134,9 +1141,16 @@ namespace DynamicIslands
 			else Fail("Raft's interaction ray found " + (found != null ? found.name : "nothing") + " instead of the note (camera at " + cam.transform.position + ", note at " + target + ")");
 		}
 
-		[ConsoleCommand(name: "CIMainMenu", docs: "Dev, in game: leaves the world (saving) for the main menu, as Raft's pause menu does")]
+		[ConsoleCommand(name: "CIMainMenu", docs: "Dev, in game or the editor: leaves the world (saving) for the main menu, as Raft's pause menu does (in the editor: as its Main menu button does)")]
 		public static void MainMenu()
 		{
+			// (the editor isn't a game: leave it as its Main menu button does)
+			if (DynamicIslands.InEditor())
+			{
+				Log("Leaving the editor");
+				UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+				return;
+			}
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
 		}

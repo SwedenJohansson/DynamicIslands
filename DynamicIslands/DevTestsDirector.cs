@@ -175,7 +175,7 @@ namespace DynamicIslands
 				Vector3 d = e.Position - src.Position;
 				float angle = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
 				Check(ref ok, e.HostName == "ciqnext" && e.Label == "Next" && e.Rule == QuestEditorWindow.BringRuleId, "'ciqnext' with its Receiver label 'Next'");
-				Check(ref ok, FlatDistance(e.Position, src.Position) >= 590f && FlatDistance(e.Position, src.Position) < 1500f && Mathf.Abs(Mathf.DeltaAngle(angle, 0f)) < 50f,
+				Check(ref ok, FlatDistance(e.Position, src.Position) >= 590f && FlatDistance(e.Position, src.Position) < 1500f && Mathf.Abs(Mathf.DeltaAngle(angle, 0f)) <= 81f, // (up to 80 degrees off when the spot is taken - WorldDirector.Candidates)
 					FlatDistance(e.Position, src.Position).ToString("F0") + " m from the first island, " + angle.ToString("F0") + " degrees (north = 0)");
 				Check(ref ok, CustomIslandSpawner.OverlapsRaftIsland(e.Position, CustomIslandSpawner.LandRadius(e.Name)) == null, "clear of Raft's islands");
 				Check(ref ok, sent.Any(m => m.Kind == IslandNetMessage.Islands && m.Ids.Contains(e.Id) && m.Labels != null && m.Labels.Contains("Next")), "clients are told (with the label)");
@@ -336,7 +336,9 @@ namespace DynamicIslands
 				IslandWorldState.Entry second = WorldDirector.Refs("second", null).FirstOrDefault();
 				if (second != null) created.Add(second.HostName);
 				float angle = second != null ? Mathf.Atan2(second.Position.x - start.Position.x, second.Position.z - start.Position.z) * Mathf.Rad2Deg : 0f;
-				Check(ref ok, second != null && second.HostName.StartsWith("gen-snowy-") && Mathf.Abs(Mathf.DeltaAngle(angle, 90f)) < 45f && second.Label == "Snow",
+				// (a direction is a preference: when Raft's islands or others take the spot, the director turns up to 80 degrees
+				// away - WorldDirector.Candidates; with player 2's world around it did, 170 degrees, on 2026-09-25)
+				Check(ref ok, second != null && second.HostName.StartsWith("gen-snowy-") && Mathf.Abs(Mathf.DeltaAngle(angle, 90f)) <= 81f && second.Label == "Snow",
 					"the quest brings a snowy island east of the start (" + angle.ToString("F0") + " degrees)");
 				Check(ref ok, WorldDirector.Refs("third", null).Count == 0, "'third' waits for 5 km");
 

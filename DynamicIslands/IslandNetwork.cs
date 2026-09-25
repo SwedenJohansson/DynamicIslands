@@ -33,8 +33,10 @@ namespace DynamicIslands.Editor
 		public const int Story = 11;
 		public int Kind;
 
-		// Islands: one entry per island. Offsets are x,y,z per island relative to the host's raft, so a world shift
-		// crossing the message on the wire doesn't matter. FullList: the client drops islands not in the list.
+		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
+		// crossing the message on the wire doesn't matter, and y the island's own height (world shifts are flat; a
+		// joining player's raft is still settling - it was 11 m low, and every island arrived 11 m up: the persistence
+		// test). FullList: the client drops islands not in the list.
 		public int[] Ids;
 		public string[] Names;
 		public string[] Hashes;
@@ -82,6 +84,9 @@ namespace DynamicIslands.Editor
 		// is. Island offsets are relative to the raft: before this they would land around the scene's origin. Seen in
 		// a two-player test: an island spawned while the client was still joining ended up 1 km away.
 		static bool worldReceived, wasInGame;
+
+		/// <summary>Whether this machine knows the world's islands: the host always, a client once the host's list came.</summary>
+		public static bool HasList { get { return Raft_Network.IsHost || synced; } }
 
 		/// <summary>Client: Raft has received the host's world. Starts the island sync afresh (a message that came
 		/// in while joining, or the list from an earlier game, is dropped: the host's full list replaces it).</summary>
@@ -179,7 +184,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < list.Count; i++)
 			{
 				Vector3 o = list[i].Position - raft;
-				msg.Offsets[i * 3] = o.x; msg.Offsets[i * 3 + 1] = o.y; msg.Offsets[i * 3 + 2] = o.z;
+				msg.Offsets[i * 3] = o.x; msg.Offsets[i * 3 + 1] = list[i].Position.y; msg.Offsets[i * 3 + 2] = o.z;
 			}
 			return msg;
 		}
@@ -210,7 +215,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!Raft_Network.IsHost) return;
 			Vector3 o = e.Position - (CustomIslandSpawner.RaftPosition ?? Vector3.zero);
-			SendToClients(new IslandNetMessage { Kind = IslandNetMessage.Announce, Ids = new[] { e.Id }, Name = title, Data = message, Offsets = new[] { o.x, o.y, o.z } });
+			SendToClients(new IslandNetMessage { Kind = IslandNetMessage.Announce, Ids = new[] { e.Id }, Name = title, Data = message, Offsets = new[] { o.x, e.Position.y, o.z } });
 		}
 
 		/// <summary>Host: an object's shared state changed.</summary>
@@ -286,7 +291,7 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
-							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", (CustomIslandSpawner.RaftPosition ?? Vector3.zero) + new Vector3(msg.Offsets[0], msg.Offsets[1], msg.Offsets[2]));
+							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition ?? Vector3.zero, msg.Offsets, 0));
 						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)
@@ -299,6 +304,12 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] [net] Handling message " + msg.Kind + " failed: " + e); }
 			return true;
+		}
+
+		/// <summary>Where the host's island number i is here: beside this machine's raft as it is beside the host's, at its own height.</summary>
+		static Vector3 FromHost(Vector3 raft, float[] offsets, int i)
+		{
+			return new Vector3(raft.x + offsets[i * 3], offsets[i * 3 + 1], raft.z + offsets[i * 3 + 2]);
 		}
 
 		static void ReceiveIslands(IslandNetMessage msg)
@@ -318,7 +329,7 @@ namespace DynamicIslands.Editor
 			{
 				if (IslandWorldState.Islands.Any(e => e.Id == msg.Ids[i])) continue;
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
-					raft + new Vector3(msg.Offsets[i * 3], msg.Offsets[i * 3 + 1], msg.Offsets[i * 3 + 2]));
+					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
 				if (msg.Labels != null && i < msg.Labels.Length) entry.Label = msg.Labels[i] ?? "";
 				ResolveFile(entry);

@@ -260,10 +260,20 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(2f);
 			if (animal == null) { Fail("the animal is gone after netting"); yield break; }
 			PutPlayerNear(animal.transform);
+			// (a client's carry goes through the host and starts in Raft's delayed StartCarryDelayed: a stop sent a fixed 2 s
+			// later could overtake it, and player 2 went on carrying the chicken - every later teleport of that session
+			// snapped back. Wait for each step to arrive)
 			if (animal.carryScript != null && animal.carryScript.OnStartCarry != null) animal.carryScript.OnStartCarry(player);
-			yield return new WaitForSeconds(2f);
-			if (animal != null && animal.carryScript != null && animal.carryScript.OnStopCarry != null) animal.carryScript.OnStopCarry(player, false);
+			float t0 = Time.realtimeSinceStartup;
+			while (animal != null && animal.carryScript != null && !animal.carryScript.IsBeingCarried && Time.realtimeSinceStartup - t0 < 10f) yield return new WaitForSeconds(0.25f);
+			bool carried = animal != null && animal.carryScript != null && animal.carryScript.IsBeingCarried;
 			yield return new WaitForSeconds(1f);
+			if (animal != null && animal.carryScript != null && animal.carryScript.OnStopCarry != null) animal.carryScript.OnStopCarry(player, false);
+			t0 = Time.realtimeSinceStartup;
+			while (animal != null && animal.carryScript != null && animal.carryScript.IsBeingCarried && Time.realtimeSinceStartup - t0 < 10f) yield return new WaitForSeconds(0.25f);
+			yield return new WaitForSeconds(1f);
+			if (!carried) { Fail("the " + (animal != null ? animal.behaviourType.ToString() : "animal") + " was never carried"); yield break; }
+			if (animal != null && animal.carryScript != null && animal.carryScript.IsBeingCarried) { Fail("the " + animal.behaviourType + " is still carried after putting it down"); yield break; }
 			Log("Caught a " + (animal != null ? animal.behaviourType.ToString() : "?") + ": state " + (animal != null ? animal.DomesticState.ToString() : "gone") + ", spawner " + (animal != null && animal.connectedSpawner != null ? "still the island's" : "none (it's the players')"));
 		}
 

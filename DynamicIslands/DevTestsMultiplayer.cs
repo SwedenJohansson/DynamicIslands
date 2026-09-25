@@ -159,6 +159,27 @@ namespace DynamicIslands
 			KeepAlive(player);
 		}
 
+		[ConsoleCommand(name: "CIOnRaft", docs: "Dev, in game (either player): puts the local player on the raft, as Raft does after loading far from it")]
+		public static void OnRaftCommand()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("no local player"); return; }
+			// (Raft's SetToWalkableBlockPosition didn't move a client - its placed-block list has no walkable blocks there:
+			// down onto the deck from above the raft's middle)
+			Vector3? middle = CustomIslandSpawner.RaftPosition;
+			if (!middle.HasValue) { Fail("no raft"); return; }
+			Vector3 target = middle.Value + Vector3.up * 1.5f;
+			RaycastHit hit;
+			if (Physics.Raycast(middle.Value + Vector3.up * 20f, Vector3.down, out hit, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore)) target.y = hit.point.y + 1.2f;
+			CharacterController cc = player.PersonController.controller;
+			cc.enabled = false;
+			player.transform.position = target;
+			player.PersonController.SwitchControllerType(ControllerType.Ground);
+			cc.enabled = true;
+			KeepAlive(player);
+			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing"));
+		}
+
 		[ConsoleCommand(name: "CIUse", docs: "Dev, in game (either player): uses an object as a player pressing E would: CIUse <island> <object name or index>")]
 		public static void UseCommand(string[] args)
 		{

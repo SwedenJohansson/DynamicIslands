@@ -84,6 +84,7 @@ namespace DynamicIslands.Editor
 			raft = null;
 			lastRaftPosition = null;
 			sailedSinceSpawn = 0f;
+			nextTick = 0f; // (stream the islands in at once: a player may be standing on one - PlayerHold)
 			LoadPool(true);
 		}
 
@@ -124,9 +125,14 @@ namespace DynamicIslands.Editor
 		/// <summary>Unloads far-away islands (keeping their entry) and loads them again when the raft comes back.</summary>
 		static void StreamIslands(Vector3 raftPos)
 		{
+			// (by the raft, and by this player: an island someone stands on stays, however far the raft drifts, and loads
+			// for a player who comes back to a world standing on it - PlayerHold)
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? playerPos = player != null ? player.transform.position : (Vector3?)null;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
 				float d = Flat(e.Position - raftPos).magnitude;
+				if (playerPos.HasValue) d = Mathf.Min(d, Flat(e.Position - playerPos.Value).magnitude);
 				if (e.Root != null && d > UnloadDistance)
 				{
 					IslandObjectState.Capture(e);

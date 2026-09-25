@@ -81,6 +81,7 @@
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlacementTools.cs" />
+    <Compile Include="PlayerHold.cs" />
     <Compile Include="Quest.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />

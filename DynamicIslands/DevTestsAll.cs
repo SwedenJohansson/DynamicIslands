@@ -30,7 +30,7 @@ namespace DynamicIslands
 		{
 			public int Pressed, Windows;
 			public readonly HashSet<Button> Done = new HashSet<Button>();
-			public readonly HashSet<string> Keys = new HashSet<string>();
+			public readonly HashSet<string> Keys = new HashSet<string>(), Walked = new HashSet<string>();
 			public readonly List<string> Errors = new List<string>(), Unclosed = new List<string>(), Sampled = new List<string>();
 			public readonly Dictionary<string, int> PerScreen = new Dictionary<string, int>();
 			public string Current = "";
@@ -78,8 +78,6 @@ namespace DynamicIslands
 
 				// A test island with one object of each kind that has its own inspector
 				DynamicIslands.currentIslandName = "cibuttons";
-				Transform placed = GameObject.Find("PlacedObjects").transform;
-				Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 2f, 500f);
 				var kinds = new List<KeyValuePair<string, string>>
 				{
 					new KeyValuePair<string, string>("plain object", "Log"),
@@ -92,47 +90,64 @@ namespace DynamicIslands
 					new KeyValuePair<string, string>("invisible wall", ContentCatalog.HelperWall),
 					new KeyValuePair<string, string>("raft block", "Block_Foundation"),
 				};
-				var objs = new List<KeyValuePair<string, EditorGameObject>>();
-				int i = 0;
-				foreach (var k in kinds)
+				// (Open, New and Generate replace the island and its objects: each screen's setup places its object again when it's gone)
+				var objs = new EditorGameObject[kinds.Count];
+				Func<int, EditorGameObject> objectOf = n =>
 				{
-					EditorGameObject eo = PlaceForTest(k.Value, c0 + new Vector3(i++ * 6f, 0f, 0f), placed);
-					if (eo == null) Log("  (no " + k.Value + " in the catalog)");
-					else objs.Add(new KeyValuePair<string, EditorGameObject>(k.Key, eo));
-				}
+					if (objs[n] == null)
+					{
+						GameObject root = GameObject.Find("PlacedObjects");
+						if (root != null) objs[n] = PlaceForTest(kinds[n].Value, terraineditor.terrain.transform.position + new Vector3(500f + n * 6f, IslandFile.DefaultWaterLevel + 2f, 500f), root.transform);
+					}
+					return objs[n];
+				};
+				int missingKinds = 0;
+				for (int n = 0; n < kinds.Count; n++)
+					if (objectOf(n) == null) { missingKinds++; Log("  (no " + kinds[n].Value + " in the catalog)"); }
 				yield return null;
 
 				// The screens: each tab, and the Objects tab with each kind of selection
 				yield return ButtonScreen(run, "Terrain tab", () => { DynamicIslands.EditorGizmoHandler.ClearTargets(false); EditorUI.SetTab(TAB.TerrainEdit); });
 				yield return ButtonScreen(run, "Island tab", () => { DynamicIslands.EditorGizmoHandler.ClearTargets(false); EditorUI.SetTab(TAB.Island); });
 				yield return ButtonScreen(run, "Objects tab, nothing selected", () => { EditorUI.SetTab(TAB.ObjectPlace); DynamicIslands.EditorGizmoHandler.ClearTargets(false); });
-				foreach (var o in objs)
+				for (int n = 0; n < kinds.Count; n++)
 				{
-					EditorGameObject target = o.Value;
-					if (target == null) continue;
-					yield return ButtonScreen(run, "Objects tab, a " + o.Key + " selected", () => { EditorUI.SetTab(TAB.ObjectPlace); TransformGizmoSelect(target.transform); });
-				}
-				if (objs.Count >= 2 && objs[0].Value != null && objs[1].Value != null)
-					yield return ButtonScreen(run, "Objects tab, two objects selected", () =>
+					int k = n;
+					if (objectOf(k) == null) continue;
+					yield return ButtonScreen(run, "Objects tab, a " + kinds[k].Key + " selected", () =>
 					{
 						EditorUI.SetTab(TAB.ObjectPlace);
-						DynamicIslands.EditorGizmoHandler.ClearTargets(false);
-						DynamicIslands.EditorGizmoHandler.AddTarget(objs[0].Value.transform, false);
-						DynamicIslands.EditorGizmoHandler.AddTarget(objs[1].Value.transform, false);
+						EditorGameObject target = objectOf(k);
+						if (target == null) throw new Exception("no " + kinds[k].Value + " to select");
+						TransformGizmoSelect(target.transform);
 					});
+				}
+				yield return ButtonScreen(run, "Objects tab, two objects selected", () =>
+				{
+					EditorUI.SetTab(TAB.ObjectPlace);
+					EditorGameObject a = objectOf(0), b = objectOf(1);
+					if (a == null || b == null) throw new Exception("no two objects to select");
+					DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+					DynamicIslands.EditorGizmoHandler.AddTarget(a.transform, false);
+					DynamicIslands.EditorGizmoHandler.AddTarget(b.transform, false);
+				});
+				if (missingKinds > 0) run.Errors.Add(missingKinds + " kind(s) of object not in the catalog: their screens were not tested");
 			}
 			finally { Application.logMessageReceived -= watch; }
 
 			// Coverage: every button the mod made that still exists (and isn't a sampled list entry or skipped)
 			UIKit.AllButtons.RemoveAll(b => b == null);
-			List<Button> missed = UIKit.AllButtons.Where(b => !run.Done.Contains(b) && !ButtonSkip.Contains(LabelOfButton(b)) && !InSampledList(b) && !IsWorldOnly(b)).ToList();
+			var listCache = new Dictionary<Transform, Dictionary<Transform, int>>();
+			// (a window that rebuilds its rows makes new buttons in the same place: those count as pressed)
+			List<Button> missed = UIKit.AllButtons.Where(b => !run.Done.Contains(b) && !run.Keys.Contains(KeyOf(b)) && !ButtonSkip.Contains(LabelOfButton(b)) && !InSampledList(b, listCache) && !IsWorldOnly(b)).ToList();
 			foreach (var s in run.PerScreen) Log("  " + s.Key + ": " + s.Value + " button(s)");
 			Log("Pressed " + run.Pressed + " buttons (" + run.Keys.Count + " different), " + run.Windows + " window(s) opened; lists sampled: " + run.Sampled.Distinct().Count());
 			foreach (string e in run.Errors.Distinct().Take(30)) Log("  ERROR " + e);
 			foreach (string u in run.Unclosed.Distinct()) Log("  NOT CLOSED " + u);
 			foreach (var g in missed.GroupBy(b => OwnerOf(b) + " > " + LabelOfButton(b)).Take(40)) Log("  NEVER PRESSED " + g.Key + (g.Count() > 1 ? " (x" + g.Count() + ")" : ""));
 			bool ok = run.Errors.Count == 0 && run.Unclosed.Count == 0;
-			Check(ref ok, run.Keys.Count >= 150, "at least 150 different buttons pressed (" + run.Keys.Count + ")");
+			// (300 on 2026-09-25, with all 13 screens)
+			Check(ref ok, run.Keys.Count >= 280, "at least 280 different buttons pressed (" + run.Keys.Count + ")");
 			Log("Buttons never pressed: " + missed.Count + " (of " + UIKit.AllButtons.Count + " the mod made)");
 			if (ok) Log("PASS: every button"); else Fail("every button (" + run.Errors.Count + " errors, " + run.Unclosed.Count + " windows not closed)");
 		}
@@ -151,6 +166,15 @@ namespace DynamicIslands
 				if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
 				yield return Press(run, b, screen, 0);
 				CloseAllWindows();
+				// Buttons this press showed (a tool's own options, e.g. the stamps): pressed now, before the setup hides them again
+				List<Button> revealed = SampleList(run, MainButtons().Where(x => !list.Contains(x) && !run.Done.Contains(x)).ToList());
+				foreach (Button r in revealed)
+				{
+					if (r == null || !r.gameObject.activeInHierarchy || !r.interactable || run.Done.Contains(r)) continue;
+					if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
+					yield return Press(run, r, screen + " > " + LabelOfButton(b), 0);
+					CloseAllWindows();
+				}
 				// (the screen may have changed: selection lost, tab switched - set it up again)
 				try { setup(); } catch { }
 				yield return null;
@@ -162,7 +186,8 @@ namespace DynamicIslands
 		{
 			string label = LabelOfButton(b);
 			if (ButtonSkip.Contains(label)) yield break;
-			string key = OwnerOf(b) + " > " + PathOf(b.transform, b.transform.root) + " '" + label + "'";
+			string owner = OwnerOf(b);
+			string key = KeyOf(b);
 			List<MonoBehaviour> before = OpenWindows();
 			run.Current = context + " > " + label;
 			try { b.onClick.Invoke(); }
@@ -175,6 +200,8 @@ namespace DynamicIslands
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
 			{
 				run.Windows++;
+				// (the top bar is the same on every screen: its windows are walked once, not grown on each screen - e.g. templates added to a plan)
+				if (owner == "TopBar" &&!run.Walked.Add(key + " " + w.GetType().Name)) continue;
 				yield return TestWindow(run, w, b, run.Current, depth + 1);
 			}
 			// Whatever this press opened is closed again
@@ -220,15 +247,51 @@ namespace DynamicIslands
 		static List<Button> SampleList(ButtonRun run, List<Button> list)
 		{
 			var result = new List<Button>();
-			foreach (var g in list.GroupBy(b => b.transform.parent))
+			var cache = new Dictionary<Transform, Dictionary<Transform, int>>();
+			foreach (Button b in list)
 			{
-				if (g.Count() > ListThreshold) { result.AddRange(g.Take(ListSample)); run.Sampled.Add(PathOf(g.Key, g.Key.root)); }
-				else result.AddRange(g);
+				Transform owner; int index;
+				if (!ListItemOf(b, cache, out owner, out index)) { result.Add(b); continue; }
+				run.Sampled.Add(PathOf(owner, owner.root));
+				if (index < ListSample) result.Add(b);
 			}
 			return result;
 		}
 
-		static bool InSampledList(Button b) { return b.transform.parent != null && b.transform.parent.GetComponentsInChildren<Button>(true).Count(x => x.transform.parent == b.transform.parent) > ListThreshold; }
+		/// <summary>A long list: a button among more than ListThreshold sibling buttons (tiles), or a row among more than
+		/// ListThreshold rows alike (same name, a button label they share - the ▲ ▼ × of rule cards, not a form's rows).</summary>
+		static bool ListItemOf(Button b, Dictionary<Transform, Dictionary<Transform, int>> cache, out Transform owner, out int index)
+		{
+			Transform item = b.transform;
+			for (int up = 0; up < 3 && item.parent != null; up++, item = item.parent)
+			{
+				owner = item.parent;
+				Dictionary<Transform, int> items;
+				if (!cache.TryGetValue(owner, out items)) cache[owner] = items = ListItems(owner);
+				if (items.TryGetValue(item, out index)) return true;
+			}
+			owner = null; index = -1;
+			return false;
+		}
+
+		/// <summary>The children of a transform that are entries of a long list, with their place in it (each child looked at once).</summary>
+		static Dictionary<Transform, int> ListItems(Transform owner)
+		{
+			var result = new Dictionary<Transform, int>();
+			var tiles = owner.Cast<Transform>().Where(c => c.GetComponent<Button>() != null).ToList();
+			if (tiles.Count > ListThreshold) for (int i = 0; i < tiles.Count; i++) result[tiles[i]] = i;
+			foreach (var group in owner.Cast<Transform>().Where(c => c.GetComponent<Button>() == null).GroupBy(c => c.name))
+			{
+				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).Select(LabelOfButton)))).Where(r => r.Value.Count > 0).ToList();
+				if (rows.Count <= ListThreshold) continue;
+				var shared = new HashSet<string>(rows.SelectMany(r => r.Value).GroupBy(l => l).Where(g => g.Count() > ListThreshold).Select(g => g.Key));
+				int n = 0;
+				foreach (var r in rows) if (r.Value.Overlaps(shared)) result[r.Key] = n++;
+			}
+			return result;
+		}
+
+		static bool InSampledList(Button b, Dictionary<Transform, Dictionary<Transform, int>> cache) { Transform owner; int index; return ListItemOf(b, cache, out owner, out index); }
 
 		/// <summary>The journal and the note reader belong to the world (CIWorldButtons).</summary>
 		static bool IsWorldOnly(Button b) { MonoBehaviour w = WindowOf(b); return w is JournalWindow || w is NoteReader; }
@@ -256,6 +319,9 @@ namespace DynamicIslands
 				if (t.name == "ToolPanel" || t.name == "ObjectBrowser" || t.name == "TopBar" || t.name == "StatusBar") return t.name;
 			return b.transform.root.name;
 		}
+
+		/// <summary>A button by where it is and what it says (a rebuilt panel's new button has the same key).</summary>
+		static string KeyOf(Button b) { return OwnerOf(b) + " > " + PathOf(b.transform, b.transform.root) + " '" + LabelOfButton(b) + "'"; }
 
 		static string LabelOfButton(Button b)
 		{
@@ -331,13 +397,19 @@ namespace DynamicIslands
 			if (!DynamicIslands.InEditor()) { Fail("not in the editor"); return; }
 			var g = DynamicIslands.EditorGizmoHandler;
 			ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
-			Transform placed = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;
 			Log("Editor state: tab " + EditorUI.CurrentTab + ", brush " + terraineditor.modificationAction + ", gizmo " + (g != null ? g.transformType.ToString() : "?") +
 				", random " + PlacementOptions.RandomTurnAndSize + ", slope " + PlacementOptions.AlignToSlope + ", grid " + PlacementOptions.SnapToGrid +
-				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", objects " + (placed != null ? placed.childCount : 0) +
+				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", objects " + PlacedEditorObjects().Count +
 				", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", windows [" + string.Join(",", OpenWindows().Select(w => w.GetType().Name).ToArray()) + "]" +
 				", stamp turn " + TerrainStamps.Rotation.ToString("F0") + ", placer " + (placer != null ? placer.name + " yaw " + placer.Yaw.ToString("F0") + " scale " + placer.ScaleFactor.ToString("F2") : "none") +
 				", island '" + DynamicIslands.currentIslandName + "'");
+		}
+
+		/// <summary>The placed objects that are shown (deleting hides them until undone; hidden ones aren't saved).</summary>
+		static List<EditorGameObject> PlacedEditorObjects()
+		{
+			GameObject root = GameObject.Find("PlacedObjects");
+			return root != null ? root.GetComponentsInChildren<EditorGameObject>(false).ToList() : new List<EditorGameObject>();
 		}
 
 		[ConsoleCommand(name: "CIStartPlacing", docs: "Dev, editor (Objects tab): starts placing an object as clicking its tile does: CIStartPlacing <object name>")]
@@ -362,11 +434,13 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CISelect", docs: "Dev, editor (Objects tab): selects the first placed object (or the one named) as a click does")]
 		public static void SelectCommand(string[] args)
 		{
-			Transform placed = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;
-			if (placed == null || placed.childCount == 0) { Fail("nothing placed to select"); return; }
+			// (a loaded island's objects sit in PlacedObjects/LoadedObjects: the placed objects, not the holders)
+			List<EditorGameObject> objects = PlacedEditorObjects();
+			if (objects.Count == 0) { Fail("nothing placed to select"); return; }
 			string name = args != null && args.Length > 0 ? args[0] : null;
-			Transform t = placed.Cast<Transform>().FirstOrDefault(c => name == null || c.name.StartsWith(name));
-			if (t == null) { Fail("no placed '" + name + "'"); return; }
+			EditorGameObject eo = objects.FirstOrDefault(c => name == null || c.GameObjectName.StartsWith(name) || c.name.StartsWith(name));
+			if (eo == null) { Fail("no placed '" + name + "'"); return; }
+			Transform t = eo.transform;
 			EditorUI.SetTab(TAB.ObjectPlace);
 			TransformGizmoSelect(t);
 			Log("Selected " + t.name);
@@ -432,9 +506,25 @@ namespace DynamicIslands
 			if (a.HasPaint)
 			{
 				if (!b.HasPaint || a.Alphamaps.Length != b.Alphamaps.Length) return "ground paint lost or resized";
-				int maxP = 0;
-				for (int i = 0; i < a.Alphamaps.Length; i++) maxP = Math.Max(maxP, Math.Abs(a.Alphamaps[i] - b.Alphamaps[i]));
+				// (loading normalises each pixel's layers to sum to 1: an older file whose weights didn't is compared normalised,
+				// and the new copy's weights must sum to 255, give or take the rounding of each layer)
+				int res = a.AlphamapResolution, layers = a.AlphamapLayers, maxP = 0, notNormal = 0, badSaved = 0;
+				for (int p = 0; p < res * res; p++)
+				{
+					int sumA = 0, sumB = 0;
+					for (int l = 0; l < layers; l++) { sumA += a.Alphamaps[l * res * res + p]; sumB += b.Alphamaps[l * res * res + p]; }
+					if (Math.Abs(sumA - 255) > layers) notNormal++;
+					if (Math.Abs(sumB - 255) > layers) badSaved++;
+					for (int l = 0; l < layers; l++)
+					{
+						int va = a.Alphamaps[l * res * res + p];
+						int expect = sumA > 0 ? Mathf.RoundToInt(va * 255f / sumA) : (l == 0 ? 255 : 0);
+						maxP = Math.Max(maxP, Math.Abs(expect - b.Alphamaps[l * res * res + p]));
+					}
+				}
+				if (badSaved > 0) return "saved ground paint not normalised at " + badSaved + " pixel(s)";
 				if (maxP > 2) return "ground paint differs (up to " + maxP + "/255)";
+				if (notNormal > 0) Log("  (" + notNormal + " pixel(s) of the file's paint didn't sum to 255: normalised on loading, as expected)");
 			}
 			if (Mathf.Abs(a.Elevation - b.Elevation) > 0.01f) return "height in the world " + a.Elevation + " -> " + b.Elevation;
 			if ((a.Style ?? "") != (b.Style ?? "")) return "style '" + a.Style + "' -> '" + b.Style + "'";
