@@ -216,7 +216,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
 			try { IslandNetwork.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island network: " + e); }
-			try { PlayerHold.Tick(); }
+			try { PlayerHold.Tick(); PlayerPlaces.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Player hold: " + e); }
 			try { CreatureSpawner.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Creatures: " + e); }

@@ -210,7 +210,7 @@ namespace DynamicIslands.Editor
 			RectTransform r = UIKit.Rect("Tile_" + e.Name, grid);
 			Image bg = UIKit.Background(r.gameObject, Color.white, 6);
 			var b = r.gameObject.AddComponent<Button>();
-			UIKit.AllButtons.Add(b);
+			UIKit.Register(b);
 			b.targetGraphic = bg;
 			UIKit.Slot(b);
 			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;

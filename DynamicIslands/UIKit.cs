@@ -374,7 +374,7 @@ namespace DynamicIslands.Editor
 			RectTransform r = Rect("Button_" + label, parent);
 			Image img = Background(r.gameObject, Color.white, 6);
 			var b = r.gameObject.AddComponent<Button>();
-			AllButtons.Add(b);
+			Register(b);
 			b.targetGraphic = img;
 			// Keyboard focus would keep the "selected" look and steal Space/Enter; the editor is mouse-driven
 			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
@@ -396,6 +396,17 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Every button the mod made (destroyed ones become null): the button test checks each one was pressed.</summary>
 		public static readonly List<Button> AllButtons = new List<Button>();
+		static int pruneAt = 256;
+
+		/// <summary>Adds a button to AllButtons, dropping destroyed ones now and then (windows rebuild their rows and the
+		/// object browser its tiles: the list otherwise grew with every rebuild for as long as Raft ran).</summary>
+		public static void Register(Button b)
+		{
+			AllButtons.Add(b);
+			if (AllButtons.Count < pruneAt) return;
+			AllButtons.RemoveAll(x => x == null);
+			pruneAt = Math.Max(256, AllButtons.Count * 2);
+		}
 
 		public static Text LabelOf(Button b) { Transform t = b.transform.Find("Text"); return t != null ? t.GetComponent<Text>() : null; }
 
@@ -585,7 +596,7 @@ namespace DynamicIslands.Editor
 			RectTransform r = Rect("Color", parent);
 			Image img = Background(r.gameObject, color, 4);
 			var b = r.gameObject.AddComponent<Button>();
-			AllButtons.Add(b);
+			Register(b);
 			b.targetGraphic = img;
 			ColorBlock cb = b.colors;
 			cb.normalColor = Color.white; cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f); cb.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f); cb.selectedColor = Color.white;

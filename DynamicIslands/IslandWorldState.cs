@@ -110,6 +110,7 @@ namespace DynamicIslands.Editor
 			foreach (Entry e in islands) e.Position -= shift;
 			CustomIslandSpawner.OnWorldShift(shift);
 			PlayerHold.OnWorldShift(shift);
+			PlayerPlaces.OnWorldShift(shift);
 			if (islands.Count > 0) Debug.Log("[CUSTOM ISLANDS] World shift by " + shift.ToString("F0") + ": " + islands.Count + " island(s) moved with it");
 		}
 
@@ -132,6 +133,7 @@ namespace DynamicIslands.Editor
 				};
 				lines.AddRange(WorldDirector.WriteLines());
 				lines.AddRange(StoryBook.WriteLines());
+				lines.AddRange(PlayerPlaces.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -153,6 +155,7 @@ namespace DynamicIslands.Editor
 			IslandNetwork.OnWorldLoaded();
 			WorldDirector.Reset();
 			StoryBook.Reset();
+			PlayerPlaces.Reset();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
@@ -160,6 +163,7 @@ namespace DynamicIslands.Editor
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				int eq = line.IndexOf('=');
 				if (line.StartsWith("@") && eq > 1 && (StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;

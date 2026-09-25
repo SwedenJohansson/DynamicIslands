@@ -159,6 +159,16 @@ namespace DynamicIslands
 			KeepAlive(player);
 		}
 
+		[ConsoleCommand(name: "CIMisplace", docs: "Dev, anywhere (either player): the next time Raft puts this player back (loading, joining), they are moved <dx> <dz> m off, as Raft once did: CIMisplace <dx> <dz>")]
+		public static void MisplaceCommand(string[] args)
+		{
+			float dx = 0f, dz = 0f;
+			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dx);
+			if (args != null && args.Length > 1) float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dz);
+			PlayerHold.TestOffset = new Vector3(dx, 0f, dz);
+			Log("Misplace set: the next place Raft gives is moved " + PlayerHold.TestOffset.ToString("F0"));
+		}
+
 		[ConsoleCommand(name: "CIOnRaft", docs: "Dev, in game (either player): puts the local player on the raft, as Raft does after loading far from it")]
 		public static void OnRaftCommand()
 		{

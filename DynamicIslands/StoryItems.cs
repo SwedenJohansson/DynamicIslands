@@ -478,7 +478,7 @@ namespace DynamicIslands.Editor
 			RectTransform r = UIKit.Rect("Item_" + h.Def.Id, itemGrid);
 			Image bg = UIKit.Background(r.gameObject, Color.white, 6);
 			var b = r.gameObject.AddComponent<Button>();
-			UIKit.AllButtons.Add(b);
+			UIKit.Register(b);
 			b.targetGraphic = bg;
 			UIKit.Slot(b);
 			RectTransform pic = UIKit.Rect("Icon", r);

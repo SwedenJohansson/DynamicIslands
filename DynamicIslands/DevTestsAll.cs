@@ -216,10 +216,15 @@ namespace DynamicIslands
 		{
 			Type type = w.GetType();
 			var done = new HashSet<string>();
+			string openerKey = opener != null ? KeyOf(opener) : null;
 			for (int guard = 0; guard < 120; guard++)
 			{
 				if (w == null || !w.gameObject.activeInHierarchy)
 				{
+					// (a press can rebuild the panel the opener is on - "Use" gives the zone its sound and the inspector
+					// is made again: the new button in the same place opens it again)
+					if ((opener == null || !opener.gameObject.activeInHierarchy) && openerKey != null)
+						opener = UIKit.AllButtons.FirstOrDefault(x => x != null && x.gameObject.activeInHierarchy && x.interactable && KeyOf(x) == openerKey);
 					if (opener == null || !opener.gameObject.activeInHierarchy) break;
 					try { opener.onClick.Invoke(); } catch { break; }
 					yield return null; yield return null;
