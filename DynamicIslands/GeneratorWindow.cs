@@ -152,7 +152,7 @@ namespace DynamicIslands.Editor
 			reachText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Help(reachRow, "Whether a player arriving on a raft can get onto the island, worked out from the ground these settings make and Raft's own player: " +
 				"the steepest slope they walk up (" + IslandReach.WalkSlope.ToString("F0") + "°), how high a jump lifts them (" + IslandReach.JumpUp.ToString("0.0") + " m), the highest ledge they get onto by jumping out of the water (" +
-				IslandReach.SwimLedge.ToString("0.0") + " m) or from the edge of a raft pushed against the coast (" + (IslandReach.RaftDeck + IslandReach.JumpUp).ToString("0.0") + " m). " +
+				IslandReach.SwimLedge.ToString("0.0") + " m), and the highest they get onto hopping on up the steep rock, from the water or a raft pushed against the coast (" + IslandReach.ClimbLedge.ToString("0.0") + " m; measured with Raft's own player). " +
 				"Beaches and low coasts are easy; cliffs with a low ledge need a jump; higher cliffs need building (stairs, a ladder, foundations). Stretches of cliff, Plateau and Sea stacks make islands harder to get onto; Beach and Cliffs change it most.");
 			RectTransform seedRow = UIKit.Row(seedGroup, 30f, 6f, "Seed");
 			seedField = UIKit.Field(seedRow, "any number", "", 30f, "The same seed and settings always give the same island");

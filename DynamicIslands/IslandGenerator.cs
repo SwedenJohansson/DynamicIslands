@@ -1032,12 +1032,18 @@ namespace DynamicIslands.Editor
 			float scale = s.Radius / Mathf.Max(1f, island.Radius);
 			float warpScale = 1f / Mathf.Max(12f, s.Radius * 0.45f);
 			float wobble = s.SourceWobble * 0.2f * island.Radius, bumps = s.SourceRoughen * 0.15f * Mathf.Max(8f, island.Top);
+			// (beyond the measured grid there is no data: instead of its edge going on for ever - an endless shelf around
+			// islands measured only to shallow water - the ground falls to the sea floor, over a slope as wide as Raft's
+			// small islands' (40 m) to its big islands' (150 m))
+			float fall = Mathf.Lerp(40f, 150f, Mathf.InverseLerp(10f, 120f, island.Radius));
 			return p =>
 			{
 				Vector2 q = p / scale;
 				if (s.Mirror) q.x = -q.x;
 				if (wobble > 0f) q += new Vector2(Fbm(p * warpScale + warpOff, 3), Fbm(p * warpScale + warpOff + new Vector2(31.7f, 11.3f), 3)) * wobble;
 				float h = field.At(q.x, q.y);
+				float outside = Mathf.Max(Mathf.Abs(q.x) - field.HalfX, Mathf.Abs(q.y) - field.HalfZ);
+				if (outside > 0f && h < 0f) h = Mathf.Lerp(h, -Sea, SS(0f, fall, outside));
 				// (Raft's deep water, down to 160 m, is the terrain's seabed here, 20 m down)
 				float e = Sea + h;
 				if (bumps > 0f && h > 0f) e += bumps * Fbm(p / 16f + roughOff, 4) * SS(0f, 4f, h);
@@ -1163,6 +1169,8 @@ namespace DynamicIslands.Editor
 				int x = rnd.Next(g.Res), z = rnd.Next(g.Res);
 				float e = g.M[z, x];
 				float r = Mathf.Lerp(6f, 22f, s.Lakes) * (0.7f + 0.6f * (float)rnd.NextDouble()) * size;
+				// (on a small or narrow island big lakes don't fit inland: after half the tries, smaller ones, down to a third)
+				if (attempt >= 200) r *= 1f - 0.67f * (attempt - 200) / 200f;
 				if (e < Sea + 1.5f || e > maxH) continue;
 				Vector2 c = g.Pos(x, z);
 				if (lakes.Any(l => (new Vector2(l.x, l.y) - c).magnitude < l.z + r + 8f)) continue;

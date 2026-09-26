@@ -1250,6 +1250,9 @@ namespace DynamicIslands
 		{
 			SaveAndLoad sl = UnityEngine.Object.FindObjectOfType<SaveAndLoad>();
 			if (sl == null) { Fail("SaveAndLoad not found"); return; }
+			// (at the main menu Raft's save made an empty save folder - and an empty "world" - before it threw; the Load box
+			// then picked the empty folder as the newest save and kept Load disabled)
+			if (!LoadSceneManager.IsGameSceneLoaded || RAPI.GetLocalPlayer() == null) { Fail("not in a world: nothing saved"); return; }
 			sl.SaveGame(false);
 			Log("World save requested (" + SaveAndLoad.CurrentGameFileName + ", " + SaveAndLoad.WorldGuid + ")");
 		}
@@ -1692,6 +1695,8 @@ namespace DynamicIslands
 			box.Button_SelectLoad(pick);
 			yield return null;
 			if (box.selectedGame != pick || SaveAndLoad.WorldToLoad != pick.rgdGame) { Fail("could not pick the world '" + worldName(pick) + "': nothing loaded"); yield break; }
+			// (the Load button may come on a moment after the pick - right after leaving the editor it was still off)
+			for (float until = Time.realtimeSinceStartup + 10f; box.loadButton != null && !box.loadButton.interactable && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.5f);
 			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
 			box.Button_LoadGame();
 		}

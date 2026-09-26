@@ -40,10 +40,16 @@ namespace DynamicIslands.Editor
 		public static float StepUp = 0.3f;
 		/// <summary>How high a jump from the ground lifts the feet (m): Raft's jumpSpeed 7 and gravity 20 give 1.23 m.</summary>
 		public static float JumpUp = 1.25f;
-		/// <summary>The highest ledge (m above the sea) a swimmer gets onto by jumping out of the water: they float with the feet
-		/// about 1.5 m down, and the jump (1.25 x the jump speed) lifts them to about 0.35 m above the sea, a step more.</summary>
-		public static float SwimLedge = 0.5f;
-		/// <summary>The raft's deck (m above the sea) a player jumps from when the raft is pushed against the coast.</summary>
+		/// <summary>The highest ledge (m above the sea) a swimmer gets onto with one jump out of the water. They float with the feet
+		/// about 1.5 m down and the jump (1.25 x the jump speed) lifts them to about 0.35 m above the sea, but a coast as steep
+		/// as the island's ground can be (its 1.95 m grid) catches them on the way up: measured with Raft's own controller
+		/// (CIReachWorld), one jump usually gets onto 0.4-1.2 m ledges (sometimes a few, with the bobbing), 1.6 m takes two or three.</summary>
+		public static float SwimLedge = 1.2f;
+		/// <summary>The highest ledge a player gets onto at all without building: jumping out of the water (or from a raft pushed
+		/// against the coast) and hopping on up the steep rock face, where Raft counts them as standing. Measured (CIReachWorld):
+		/// 2.4 m in 2-4 jumps; 2.7 m and more never, from the water or from a raft's deck.</summary>
+		public static float ClimbLedge = 2.4f;
+		/// <summary>The raft's deck (m above the sea; the top of its foundations, measured 0.2-0.46 m as it bobs).</summary>
 		public static float RaftDeck = 0.3f;
 		/// <summary>Water a player wades in with their head above it (m).</summary>
 		const float Wade = 1.5f;
@@ -107,7 +113,7 @@ namespace DynamicIslands.Editor
 					if (!stand[i] || !atWater) continue;
 					lowest = Mathf.Min(lowest, h[i]);
 					if (h[i] <= SwimLedge) swimJump.Add(i);
-					if (h[i] <= RaftDeck + JumpUp) raftJump.Add(i);
+					if (h[i] <= ClimbLedge) raftJump.Add(i);
 				}
 			r.Beaches = coast > 0 ? beachCoast / (float)coast : 0f;
 			r.LowestLedge = lowest < float.MaxValue ? lowest : -1f;
@@ -234,12 +240,12 @@ namespace DynamicIslands.Editor
 						(r.Any >= 0.97f ? top : r.TopAtAll ? top + " The rest needs building." : " The rest, and the top, need building (stairs, ladders).");
 					break;
 				case Tricky:
-					r.Text = "Possible but tricky: no beach to walk out of the water. A player has to jump out of the sea or up from the shallows onto a ledge" +
+					r.Text = "Possible but tricky: no beach to walk out of the water. A player has to jump out of the sea or up from the shallows onto a low ledge" +
 						(r.LowestLedge >= 0f ? " (the lowest is " + M(r.LowestLedge) + " above the water)" : "") + "." + (r.WithJumps < 0.5f ? " Most of the island still needs building." : "");
 					break;
 				case VeryTricky:
-					r.Text = "Possible but unlikely: the only way up is jumping from the raft's edge onto a ledge " + M(Mathf.Max(0f, r.LowestLedge)) +
-						" above the water (push the raft right against it). That would be extremely tricky.";
+					r.Text = "Possible but unlikely: the only way up is a ledge " + M(Mathf.Max(0f, r.LowestLedge)) +
+						" above the water - jumping out of the sea (or off a raft pushed right against it) and hopping on up the steep rock. That would be extremely tricky.";
 					break;
 				default:
 					r.Text = "Not from the raft without building: cliffs all around" + (r.LowestLedge >= 0f ? " (the lowest ledge is " + M(r.LowestLedge) + " above the water)" : "") +

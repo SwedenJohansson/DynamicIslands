@@ -277,14 +277,16 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Picks up an item of the island through the local player's Pickup script (Raft sends a client's pickup to the host).</summary>
-		[ConsoleCommand(name: "CIPick", docs: "Dev, in game (either player): picks up an item (rock, plant...) of the island as a player would: CIPick <island>")]
+		[ConsoleCommand(name: "CIPick", docs: "Dev, in game (either player): picks up an item (rock, plant...) of the island as a player would: CIPick <island> [part of its name, e.g. GiantClam]")]
 		public static void PickCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
+			string part = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
 			PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>()
-				.FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeInHierarchy && p.GetComponent<PickupItem>() != null);
-			if (pn == null) { Fail("nothing to pick up on '" + e.HostName + "'"); return; }
+				.FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeInHierarchy && p.GetComponent<PickupItem>() != null &&
+					(part.Length == 0 || p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0)));
+			if (pn == null) { Fail("nothing to pick up on '" + e.HostName + "'" + (part.Length > 0 ? " called '" + part + "'" : "")); return; }
 			Pickup pickup = RAPI.GetLocalPlayer().GetComponentInChildren<Pickup>(true);
 			if (pickup == null) { Fail("the player has no Pickup script"); return; }
 			PutPlayerNear(pn.transform);
@@ -297,7 +299,11 @@ namespace DynamicIslands
 		static System.Collections.IEnumerator AfterAction(string what, float wait = 0.5f)
 		{
 			yield return new WaitForSeconds(wait);
-			Log(what + ": message '" + Behaviours.LastMessage + "', story items " + string.Join(", ", StoryBook.Items.Select(h => h.Def.Id + " x" + h.Count).ToArray()));
+			// (a player who is down lies where they fell: teleports don't take - say so)
+			Network_Player me = RAPI.GetLocalPlayer();
+			Player body = me != null ? me.GetComponentInChildren<Player>(true) : null;
+			bool down = me != null && ((me.Stats != null && me.Stats.stat_health.Value <= 0f) || (body != null && body.IsDead));
+			Log(what + ": message '" + Behaviours.LastMessage + "', story items " + string.Join(", ", StoryBook.Items.Select(h => h.Def.Id + " x" + h.Count).ToArray()) + (down ? " (THE PLAYER IS DOWN)" : ""));
 		}
 	}
 }

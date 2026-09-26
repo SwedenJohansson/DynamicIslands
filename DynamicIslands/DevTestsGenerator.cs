@@ -512,8 +512,8 @@ namespace DynamicIslands
 			Check(ref ok, levels["a small low island"].Level == IslandReach.Easy, "a small low island: easy (" + levels["a small low island"].Text + ")");
 
 			// Ledges: a flat island with a sheer edge into water 3 m deep, a little higher each time: a jump out of the
-			// water, a jump from the raft's deck, then only building
-			var ledges = new[] { IslandReach.SwimLedge * 0.8f, (IslandReach.SwimLedge + IslandReach.RaftDeck + IslandReach.JumpUp) / 2f, IslandReach.RaftDeck + IslandReach.JumpUp + 1f };
+			// water, hopping up the rock (CIReachWorld measured both with Raft's player), then only building
+			var ledges = new[] { IslandReach.SwimLedge * 0.8f, (IslandReach.SwimLedge + IslandReach.ClimbLedge) / 2f, IslandReach.ClimbLedge + 1f };
 			var want = new[] { IslandReach.Tricky, IslandReach.VeryTricky, IslandReach.No };
 			for (int i = 0; i < ledges.Length; i++)
 			{

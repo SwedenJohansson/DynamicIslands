@@ -176,13 +176,15 @@ Raft's big islands carry about 45 objects per 1000 m² of land (OG: 11 trees, 12
 
 Measured with `CIGenBench` (editor) and `CIGenWorld` (a world, one PC; frame times include vsync at 60 Hz):
 
-| Objects | Generate | Editor frame | File | Save / load | Median free walk (walks blocked within 5 m) |
+| Objects (land and under water) | Generate | Editor frame | File | Save / load | Median free walk (walks blocked within 5 m) |
 |---|---|---|---|---|---|
-| 494 | 0.8 s | 17 ms | 75 KB | 0.2 s / 0.2 s | 20 m (8 %) |
-| 1 407 | 0.8 s | 17 ms | 99 KB | 0.2 s / 0.3 s | 17 m (26 %) |
-| 3 043 | 0.9 s | 17 ms | 141 KB | 0.2 s / 0.4 s | 7 m (40 %) |
-| 5 782 (a jungle, 220 m island) | 1.3 s | 17-26 ms | 210 KB | 0.3 s / 0.8 s | **3 m (66 %): barely walkable** |
-| 11 996 (a Balboa-sized jungle) | 1.7 s | 44 ms | 499 KB | 0.4 s / 1.1 s | 8.5 m (33 %) |
+| 1 771 | 1.3 s | 17 ms | 514 KB | 0.3 s / 0.3 s | 20 m (5 %) |
+| 3 609 | 1.4 s | 17 ms | 560 KB | 0.3 s / 0.4 s | 20 m (19 %) |
+| 6 551 | 1.5 s | 17 ms | 633 KB | 0.4 s / 0.6 s | 7.5 m (36 %) |
+| 10 417 (a jungle, 220 m island) | 1.9 s | 19 ms | 729 KB | 0.4 s / 0.9 s | **4.5 m (53 %): barely walkable** |
+| 11 501 (a Balboa-sized jungle, thinned to the cap) | 1.9 s | 21 ms | 896 KB | 0.4 s / 0.9 s | 18.5 m (16 %) |
+
+(Measured again 2026-09-26, with the deep sea floor and the life under water: the same settings now also place Raft's reefs, rocks and pickups around the island, and the files keep ground 160 m deep.)
 
 In a world, a 5 681-object jungle spawned in 0.6 s and its creatures' NavMesh built in 1.4 s; frame time went from 17 ms to 27 ms with the whole island in view 330 m away and 19 ms standing in it (9 000 objects: 23 ms / 18 ms). A second player received both islands complete in 7-12 s. One island gets at most 12 000 objects (denser settings are thinned, and the window says so).
 ## Installing

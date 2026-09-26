@@ -178,7 +178,7 @@ namespace DynamicIslands
 		/// <summary>The animals near an island's creature spots of a kind (every machine: Raft shows the host's animals to everyone).</summary>
 		/// (Hostile animals chase players far from their spot: anything of the spots' kinds on or near the island counts;
 		/// "Warthog 1.4" also asks for that size, to tell two spots of one kind apart.)
-		static List<AI_NetworkBehaviour> AnimalsOf(IslandWorldState.Entry e, string kind)
+		static List<AI_NetworkBehaviour> AnimalsOf(IslandWorldState.Entry e, string kind, float margin = 60f)
 		{
 			string[] k = (kind ?? "").Split(' ');
 			float size = 0f;
@@ -186,7 +186,7 @@ namespace DynamicIslands
 			if (!bySize) size = 0f;
 			string label = bySize ? string.Join(" ", k.Take(k.Length - 1).ToArray()) : kind ?? "";
 			List<CreatureSpawnPoint> spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && (label.Length == 0 || p.Kind.Label.Equals(label, StringComparison.OrdinalIgnoreCase))).ToList();
-			float reach = CustomIslandSpawner.LandRadius(e.Name) + 60f;
+			float reach = CustomIslandSpawner.LandRadius(e.Name) + margin;
 			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && spots.Any(p => p.Kind.Type == a.behaviourType) &&
 					FlatDistance(a.transform.position, e.Position) < reach && (!bySize || Mathf.Abs(a.transform.localScale.x - size) < 0.05f))
 				.OrderBy(a => a.transform.position.x).ToList();
@@ -230,15 +230,27 @@ namespace DynamicIslands
 
 		static IEnumerator HitRoutine(IslandWorldState.Entry e, string kind)
 		{
-			// (an ambush's animals come up a moment after the zone goes off - their NavMesh is built first: wait for them)
+			// (an ambush's animals come up a moment after the zone goes off - their NavMesh is built first: wait for them; 15 s
+			// was once not enough, and the ambush warthog left alive knocked the players off their places)
 			List<AI_NetworkBehaviour> animals = null;
-			for (float until = Time.realtimeSinceStartup + 15f; Time.realtimeSinceStartup < until; )
+			for (float until = Time.realtimeSinceStartup + 45f; Time.realtimeSinceStartup < until; )
 			{
-				animals = AnimalsOf(e, kind).Where(a => a.networkEntity != null && !a.networkEntity.IsDead).ToList();
+				animals = AnimalsOf(e, kind, 150f).Where(a => a.networkEntity != null && !a.networkEntity.IsDead).ToList(); // (hostile animals chase players well off their island)
 				if (animals.Count > 0) break;
 				yield return new WaitForSeconds(0.5f);
 			}
-			if (animals == null || animals.Count == 0) { Fail("no live " + kind + " at '" + e.HostName + "'"); yield break; }
+			if (animals == null || animals.Count == 0)
+			{
+				// (what there is instead: every animal of the island's creature kinds anywhere, its size, state and distance)
+				var kinds = new HashSet<AI_NetworkBehaviourType>(e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null).Select(p => p.Kind.Type));
+				foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && kinds.Contains(a.behaviourType)))
+					Log("  there is a " + a.behaviourType + " of size " + a.transform.localScale.x.ToString("F2") + ", " + (a.networkEntity == null ? "no entity" : a.networkEntity.IsDead ? "dead" : "alive") +
+						", " + FlatDistance(a.transform.position, e.Position).ToString("F0") + " m from the island's middle (reach " + (CustomIslandSpawner.LandRadius(e.Name) + 150f).ToString("F0") + " m), at y " + a.transform.position.y.ToString("F1"));
+				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
+					Log("  spot " + (p.Kind != null ? p.Kind.Label : "?") + ": " + (p.gameObject.activeInHierarchy ? "shown" : "hidden") + ", spawned " + p.Spawned.Count);
+				Fail("no live " + kind + " at '" + e.HostName + "'");
+				yield break;
+			}
 			Network_Host host = ComponentManager<Network_Host>.Value;
 			if (host == null) { Fail("no Network_Host"); yield break; }
 			PutPlayerNear(animals[0].transform);
