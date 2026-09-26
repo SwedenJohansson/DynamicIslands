@@ -81,9 +81,11 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **The journal** (J): the crew's story items with their pictures, and every custom note read (plus "journal" pages), on paper. Story items are held by the whole crew, like Raft's own quest items, saved with the world and sent to players who join.
   - **Behaviours:** doors, gates and lifts move for every player; things that move back and forth, spin or bob follow a clock all players share (Raft's water time), so everyone sees them in the same place; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
+  - **Monster difficulty** (Raft's **New Game** box, a slider under the game modes): **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
+  - **Build cost** (the New Game box, a second slider): everything in the build menu costs 0-100% more materials, always rounded up. It's the same for every player, including those who join later.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
 - **World randomizer** (New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
-- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host.
+- **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The world rules (monster difficulty, build cost) are the host's for every player, also those who join later.
 
 ## World plans
 
@@ -104,6 +106,45 @@ Rules refer to islands by the id of the rule that brought them (e.g. "when the q
 - **Making plans:** top bar **World plans**: New / Copy / Delete, a description, "random islands while sailing" on or off, and the rules as cards. **Templates...** adds ready-made sets (story chain, sky chain, quest reward island...). **Check** lists what can't work, and a small map sketches where islands would go. Plans are text files, so they can also be edited by hand (the file explains the format).
 - **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
 - **Each rule fires once per world.** What has fired, the km sailed and which islands players have reached are saved with the world. The host places new islands clear of the raft, the other custom islands and Raft's own islands, and **Raft won't put its own islands on top of custom ones later**.
+
+## World rules: monster difficulty and build cost
+
+Two sliders in Raft's **New Game** box, right under Raft's game modes, set rules for the new world: the **Monster difficulty** and the **Build cost**. The text under each slider says what the chosen setting does, and each has a **?** with the details. The box grows a little to make room. Your last choices are kept for the next new world (`Mods\DynamicIslands\world_rules.txt`).
+
+**Every player in a world has the same rules as the host.** They're saved with the world (`@monsters=`, `@buildcost=` in its file) and sent to every player who joins, and again to everyone when the host changes one. Leaving and joining again, loading the world again and restarting Raft change nothing, and every new world gets its own rules from the box.
+
+### Monster difficulty
+
+How tough a world's monsters are.
+
+| Level | Monsters' health | Damage they deal to players | |
+|---|---|---|---|
+| **Timid** | ×0.75 (25% less) | ×0.75 | A gentler trip across the sea |
+| **Normal** | ×1 | ×1 | As Raft made them (the default) |
+| **Fierce** | ×1.25 (25% more) | ×1.25 | |
+| **Savage** | ×1.5 (50% more) | ×1.5 | Keep your spear close |
+| **Nightmare** | ×2 (twice) | ×2 | For seasoned survivors |
+
+These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they don't get mixed up with Raft's own Easy / Normal / Hard game modes. `Monsters easy`, `moderate`, `hard` and `impossible` still work.
+
+- **Monsters** are the animals that fight players, on Raft's own islands and on custom ones: Bruce and the other sharks, warthogs, bears, mama bears, polar bears, screechers, puffer fish, rats, hyenas, bee swarms, angler fish, the butler bots and the bosses. Llamas, goats, chickens, pigs, seagulls and the sea life that only swims by don't change.
+- **It stacks** with Raft's game mode and with what an island's builder gave an animal. For example, a warthog its builder gave ×2 health has ×3 Raft's health on Savage.
+- **How it works:** every hit in Raft passes through one place (`Network_Host.DamageEntity`) on the machine where it happens. A monster's hit on a player is multiplied by the level's number, and every hit on a monster is divided by it, which works the same as giving it that much more health. Hits of 9999 or more (Raft's "kill it" values) are left alone.
+- **Left as Raft has them:** puffer fish damage (their explosion, their cloud and the poison it leaves; only their health changes), and everything about Bruce and your raft: his bites on it, how often he comes for it and how soon a killed shark comes back. Also how fast monsters move, how far they see and how often land monsters attack: Raft's own difficulty doesn't change these either, and faster animals would trip up Raft's animations and paths.
+- **Peaceful and Creative:** monsters can't hurt players there, so only their health changes, and the box says so.
+- **For every player:** a guest's spear does the same to a shark as the host's, and a monster bites a guest as hard as the host.
+- **Changing it later:** `Monsters` shows the world's level. The host can change it with `Monsters timid|normal|fierce|savage|nightmare`. At the main menu, `Monsters <level>` sets the choice for the next new world.
+
+### Build cost
+
+How many more materials everything in the **build menu** costs: the hammer's foundations, floors, walls, roofs, stairs, pillars and the rest. The slider goes from **0%** (Raft's own cost, the default) to **100%** (twice as much) in steps of 5.
+
+- **Always rounded up:** at 50% one plank becomes two, two become three, three become five.
+- **Removing a block** with the hammer gives back half of what it cost, as Raft does. At 50% a block that cost 3 planks gives 2 back.
+- **Repairing and reinforcing** blocks cost more too, since they use the same cost list. What you make in the crafting menu (Tab) costs the same as in Raft.
+- **For every player:** each player pays from their own inventory on their own machine, so every player who joins gets the host's percent.
+- **Never on top:** the mod sets the numbers from Raft's own each time, and puts Raft's own back as soon as you leave a world. Leaving and joining again, loading again or changing the percent several times never makes building dearer than the percent says, and the main menu, the editor and the next world start from Raft's numbers.
+- **Changing it later:** `BuildCost` shows the world's percent. The host can change it with `BuildCost <0-100>`. At the main menu, `BuildCost <0-100>` sets the choice for the next new world.
 
 ## Map types
 
@@ -280,6 +321,8 @@ The blue plane is sea level. Anything below it is under water in game.
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
 | `ListSpawned` | Game | Lists the world's custom islands, with distance and state |
 | `SpawnPool` | Game | Shows which islands appear on their own, and how often |
+| `Monsters` / `Monsters <timid/normal/fierce/savage/nightmare>` | Game (changing: host); main menu | Shows the world's monster difficulty, or changes it. At the main menu it sets the choice for the next new world |
+| `BuildCost` / `BuildCost <0-100>` | Game (changing: host); main menu | Shows how many % more the build menu costs in this world, or changes it. At the main menu it sets the choice for the next new world |
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses) |
@@ -311,6 +354,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `ContentCatalog.cs` | Creatures and notes in the object catalog: the creature list, markers and name tags, Raft's creature models for the editor |
 | `ObjectInspector.cs`, `NoteEditorWindow.cs` | The Objects tab's inspector (creature editor, note, colour) and the note editor window |
 | `CreatureSpawner.cs` | Live creatures in a world: runtime NavMesh, spawning through Raft's `Network_Host_Entities`, stats, tint, killed/caught state, removal with the island, and Harmony patches for speed and players who join |
+| `MonsterDifficulty.cs` | The monster difficulty: the five levels, the Harmony prefix on Raft's `Network_Host.DamageEntity` that changes hits on and by monsters, the patch that leaves puffer fish damage alone, the `Monsters` command |
+| `WorldRules.cs` | The world rules: saved with the world, sent to every player who joins (one network message with both), the last choices (`world_rules.txt`); the build cost (Raft's build menu items, their cost amounts set from Raft's own numbers while a world is open and put back outside, the `BuildCost` command); the two sliders in Raft's New Game box (which grows the box to make room) |
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |

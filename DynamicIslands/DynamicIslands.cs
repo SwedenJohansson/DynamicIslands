@@ -262,6 +262,7 @@ namespace DynamicIslands
 		public void OnModUnload()
 		{
 			//The mod will not be able to be unloaded, therefore this will be unused
+			try { Editor.BuildCost.RestoreAll(); } catch { } // (Raft's own build costs back, should it ever be)
 			Debug.Log("Mod Custom Islands has been unloaded!");
 		}
 

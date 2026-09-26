@@ -16,6 +16,8 @@ namespace DynamicIslands.Editor
 	public class IslandNetMessage
 	{
 		public const int Islands = 1, Remove = 2, SyncRequest = 3, FileRequest = 4, FileChunk = 5;
+		/// <summary>Host -> everyone (and each player who joins): the world's rules (WorldRules). Index = monster level, Count = build cost %.</summary>
+		public const int WorldRules = 15;
 		/// <summary>A player used something of an island that stays used (a looted chest, a trigger that fires once):
 		/// Ids[0] = island, Index = state key, Count = in-game day. Clients send it to the host, the host to everyone.</summary>
 		public const int ObjectUsed = 6;
@@ -99,6 +101,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Raft_Network.IsHost) return;
 			worldReceived = true;
+			WorldRules.OnWorldReceived();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
@@ -170,6 +173,12 @@ namespace DynamicIslands.Editor
 			msg.Kind = IslandNetMessage.Story;
 			if (Raft_Network.IsHost) SendToClients(msg);
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
+		/// <summary>Host: the world's rules, to everyone.</summary>
+		public static void SendWorldRules(IslandNetMessage msg)
+		{
+			if (Raft_Network.IsHost) SendToClients(msg);
 		}
 
 		/// <summary>Host: tell clients about islands (new ones, or the whole list for a client that asked).</summary>
@@ -265,6 +274,7 @@ namespace DynamicIslands.Editor
 						if (Raft_Network.IsHost)
 						{
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
+							SendToPlayer(WorldRules.Message(), from);
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
 							SendToPlayer(StoryBook.StateMessage(), from);
 							SendToPlayer(WorldRandomizer.Message(), from);
@@ -272,6 +282,9 @@ namespace DynamicIslands.Editor
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
 						}
+						break;
+					case IslandNetMessage.WorldRules:
+						WorldRules.OnMessage(msg);
 						break;
 					case IslandNetMessage.PlayerPlace:
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0 && msg.Offsets != null && msg.Offsets.Length >= 3)
