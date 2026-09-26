@@ -112,12 +112,14 @@ namespace DynamicIslands.Editor
 			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.2f, 0.35f, 0.5f)))
 			{
 				List<Theme> themes = RandomizerIslands.ThemesFor(TerrainPainter.Tropical);
-				Vector3? spot = themes.Count > 0 ? ground.Find(rnd, (h, slope) => h > 2.5f && h < 25f && slope < 10f, k.Taken, 14f, 200) : null;
+				Vector3? spot = themes.Count > 0 ? ground.Find(rnd, (h, slope) => h > 2.5f && h < 25f && slope < 10f, k.Taken, 7f, 600) : null;
 				if (spot.HasValue)
 				{
 					Theme t = themes[rnd.Next(themes.Count)];
 					if (RandomizerIslands.DressWorld(k, ground, t, spot.Value, 8f, rnd)) parts.Add("an outpost (" + t.Label.ToLowerInvariant() + ")");
+					else Debug.Log("[CUSTOM ISLANDS] [randomizer] no outpost: the " + t.Label.ToLowerInvariant() + " didn't fit at the level spot");
 				}
+				else if (themes.Count > 0) Debug.Log("[CUSTOM ISLANDS] [randomizer] no outpost: no level spot clear of Raft's things");
 			}
 
 			what = string.Join(", ", parts.ToArray());

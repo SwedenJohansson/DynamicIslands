@@ -714,30 +714,34 @@ namespace DynamicIslands
 			Network_Player player = RAPI.GetLocalPlayer();
 			// Pictures: from above, of each scene
 			Vector3 mid = root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
-			yield return PutPlayer(player, mid + new Vector3(0f, 120f, -140f), false);
-			Look(player, 0f, 35f);
-			yield return new WaitForSeconds(2.5f);
-			Shot("large_overview");
-			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.Name) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.Name))).Take(3))
-				yield return ShotOf(player, r.transform, "large_scene_" + r.Name.Replace(" ", "_"), 9f);
+			yield return CameraShot(mid + new Vector3(0f, 110f, -150f), mid, "large_overview", true);
+			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.ObjectName) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.ObjectName))).Take(3))
+				yield return ShotOf(player, r.transform, "large_scene_" + r.ObjectName.Replace(" ", "_"), 9f);
 			// The cave: the mouth, then inside; the guard wakes and stands in the passage
 			if (caves.Count > 0)
 			{
 				TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
 				Transform first = caves[0];
-				yield return ShotOf(player, first, "large_cave_mouth", 8f);
+				// (the hoard: the box nearest the den piece; the way in: from the zone at the mouth towards it)
+				LootCrate hoardBox = root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - first.position).sqrMagnitude).FirstOrDefault();
+				Log("  the den " + first.name + " at " + (first.position - root.transform.position) + ", its zone at " + (zone != null ? (zone.transform.position - root.transform.position).ToString() : "none") +
+					", the nearest box at " + (hoardBox != null ? (hoardBox.transform.position - root.transform.position).ToString() : "none") + " (from the island's root)");
 				if (zone != null)
 				{
-					yield return PutPlayer(player, zone.transform.position + Vector3.up * 1.0f, false);
-					yield return new WaitForSeconds(4f);
-					Shot("large_cave_inside");
+					// The mouth from in front of it, then inside looking towards the hoard
+					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : first.position, "large_cave");
+					string denAt; float denOff = DenOffset(first, zone.transform.position, out denAt);
+					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					var leftIn = DenLeftovers(first);
+					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
 					CreatureSpawnPoint guard = spots.FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
 					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
 					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
 					float off = ai != null ? Mathf.Abs(ai.transform.position.y - zone.transform.position.y) : 99f;
 					Check(ref ok, guard == null || (ai != null && off < 2.5f), guard == null ? "no guard in this cave" : ai == null ? "the cave's guard didn't come" : "the cave's " + guard.Kind.Label + " woke inside it (" + off.ToString("F1") + " m from the floor)");
-					LootCrate chest = root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - zone.transform.position).sqrMagnitude).FirstOrDefault();
-					Check(ref ok, chest != null && (chest.transform.position - zone.transform.position).magnitude < 20f, "a hoard at the end of the cave");
+					// (the hoard lies deeper in than the zone, inside the den: its deepest den is 42 m long)
+					float toHoard = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, zone.transform.position) : 99f, fromDen = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, first.position) : 99f;
+					Check(ref ok, hoardBox != null && toHoard > 3f && toHoard < 36f && fromDen < 24f, "a hoard at the end of the cave (" + toHoard.ToString("F1") + " m in from the zone, " + fromDen.ToString("F1") + " m from the den's pivot)");
 				}
 				else Check(ref ok, false, "the cave has no zone");
 			}
@@ -746,6 +750,50 @@ namespace DynamicIslands
 			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
 			if (!keep) IslandWorldState.RemoveIds(new[] { e.Id }, true);
 			if (ok) Log("PASS: a large island"); else Fail("a large island");
+		}
+
+		/// <summary>Raft's pickups, blueprints and animal models left inside a den copy (none should be).</summary>
+		static List<string> DenLeftovers(Transform den)
+		{
+			return den.GetComponentsInChildren<Transform>(true).Where(t => t != den && (t.name.StartsWith("Pickup_") || t.GetComponent<SkinnedMeshRenderer>() != null || t.GetComponent<PickupItem>() != null || t.GetComponent<LandmarkItem>() != null))
+				.Select(t => t.name).Distinct().ToList();
+		}
+
+		/// <summary>
+		/// How far a den sits off where it should (m, + = too high): the lowest point of its rock against its floor (the
+		/// zone at its mouth stands on the floor), compared with raft_props.txt's bottom and floor.
+		/// </summary>
+		static float DenOffset(Transform den, Vector3 zoneAt, out string detail)
+		{
+			PropInfo p = RaftProps.Get(den.name);
+			Renderer[] rs = den.GetComponentsInChildren<Renderer>(true);
+			if (p == null || rs.Length == 0) { detail = "not measured"; return 0f; }
+			Bounds b = rs[0].bounds;
+			foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+			float want = zoneAt.y + (p.Bottom - p.Floor);
+			detail = "its rock's lowest point " + (b.min.y - zoneAt.y).ToString("F1") + " m from its floor (" + (p.Bottom - p.Floor).ToString("F1") + " m wanted), pivot " + (den.position.y - zoneAt.y).ToString("F1") + " m above the floor (" + (-p.Floor).ToString("F1") + " wanted)";
+			return b.min.y - want;
+		}
+
+		/// <summary>Pictures of a den: from in front of its mouth looking in, and from inside (by the zone) looking towards the hoard.</summary>
+		static IEnumerator DenShots(Network_Player player, Vector3 zoneAt, Vector3 hoardAt, string prefix)
+		{
+			Vector3 inward = Vector3.ProjectOnPlane(hoardAt - zoneAt, Vector3.up).normalized;
+			if (inward == Vector3.zero) inward = Vector3.forward;
+			float yaw = Mathf.Atan2(inward.x, inward.z) * Mathf.Rad2Deg;
+			Vector3 front = zoneAt - inward * 12f;
+			RaycastHit hit;
+			if (Physics.Raycast(front + Vector3.up * 40f, Vector3.down, out hit, 80f, ~0, QueryTriggerInteraction.Ignore)) front.y = Mathf.Max(hit.point.y, zoneAt.y - 1f);
+			yield return PutPlayer(player, front + Vector3.up * 1.8f, false);
+			Look(player, yaw, 5f);
+			yield return new WaitForSeconds(2f);
+			Shot(prefix + "_mouth");
+			yield return new WaitForSeconds(0.6f);
+			yield return PutPlayer(player, zoneAt + Vector3.up * 1.0f, false);
+			Look(player, yaw, 5f);
+			yield return new WaitForSeconds(4f);
+			Shot(prefix + "_inside");
+			yield return new WaitForSeconds(0.6f);
 		}
 
 		static void Shot(string name)
@@ -757,16 +805,64 @@ namespace DynamicIslands
 		/// <summary>A picture of t from about distance metres away on the ground, looking at it.</summary>
 		static IEnumerator ShotOf(Network_Player player, Transform t, string name, float distance)
 		{
-			Vector3 at = t.position + new Vector3(distance * 0.7f, 0f, distance * 0.7f);
-			RaycastHit hit;
-			if (Physics.Raycast(at + Vector3.up * 80f, Vector3.down, out hit, 160f, ~0, QueryTriggerInteraction.Ignore)) at.y = hit.point.y + 1.8f;
-			at.y = Mathf.Max(at.y, t.position.y + 2f);
-			yield return PutPlayer(player, at, at.y < 0.5f);
-			Vector3 d = t.position - at;
-			Look(player, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, Mathf.Clamp(-Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg, -30f, 45f));
-			yield return new WaitForSeconds(2f);
-			Shot(name);
-			yield return new WaitForSeconds(0.6f);
+			// (a free camera, not the player: it stays where it is put, and it looks from a side it can see the thing from)
+			Bounds b = new Bounds(t.position, Vector3.one);
+			foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
+			Vector3 target = b.center;
+			float d = Mathf.Max(distance, b.extents.magnitude * 1.6f);
+			Vector3 from = target + new Vector3(0.6f, 0.45f, 0.6f).normalized * d;
+			for (int i = 0; i < 16; i++)
+			{
+				Vector3 dir = Quaternion.Euler(0f, i * 22.5f, 0f) * new Vector3(0f, 0.4f, 1f).normalized;
+				Vector3 c = target + dir * d;
+				RaycastHit hit;
+				// (clear line of sight to the thing, and not under the ground)
+				if (Physics.Linecast(c, target, out hit, ~0, QueryTriggerInteraction.Ignore) && !hit.transform.IsChildOf(t) && hit.distance < d - b.extents.magnitude * 0.5f) continue;
+				if (Physics.Raycast(c + Vector3.up * 60f, Vector3.down, out hit, 60f, ~0, QueryTriggerInteraction.Ignore) && hit.point.y > c.y - 0.5f) continue;
+				from = c; break;
+			}
+			yield return CameraShot(from, target, name);
+		}
+
+		/// <summary>A picture through Raft's own camera (its sea and sky), moved for one frame from one point at another: no HUD, no falling.</summary>
+		static IEnumerator CameraShot(Vector3 from, Vector3 at, string name, bool ownCamera = false)
+		{
+			yield return new WaitForEndOfFrame();
+			// (ownCamera: a camera of its own, without Raft's fog - far views; it draws no sea)
+			GameObject own = ownCamera ? new GameObject("CITEST_ShotCamera") : null;
+			Camera cam = own != null ? own.AddComponent<Camera>() : Camera.main;
+			if (own != null && Camera.main != null) { cam.CopyFrom(Camera.main); own.transform.position = Camera.main.transform.position; }
+			if (cam == null) { Log("  (no picture " + name + ": no camera)"); yield break; }
+			Transform ct = cam.transform;
+			Vector3 pos = ct.position; Quaternion rot = ct.rotation;
+			float fov = cam.fieldOfView, far = cam.farClipPlane;
+			RenderTexture before = cam.targetTexture;
+			RenderTexture rt = new RenderTexture(1920, 1080, 24);
+			Texture2D tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+			try
+			{
+				ct.position = from;
+				ct.rotation = Quaternion.LookRotation(at - from);
+				cam.fieldOfView = 60f;
+				cam.farClipPlane = Mathf.Max(far, 2500f);
+				cam.targetTexture = rt;
+				cam.Render();
+				RenderTexture.active = rt;
+				tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+				tex.Apply();
+				RenderTexture.active = null;
+				System.IO.File.WriteAllBytes(System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png")), tex.EncodeToPNG());
+				Log("Screenshot shot_" + name + ".png");
+			}
+			catch (Exception e) { Log("  (no picture " + name + ": " + e.Message + ")"); }
+			finally
+			{
+				cam.targetTexture = before;
+				ct.position = pos; ct.rotation = rot;
+				cam.fieldOfView = fov; cam.farClipPlane = far;
+				if (own != null) UnityEngine.Object.Destroy(own);
+				rt.Release(); UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(tex);
+			}
 		}
 
 		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
@@ -797,17 +893,34 @@ namespace DynamicIslands
 			for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
 			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
 			List<Transform> caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
-			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.Name) != null && !RaftProps.Get(r.Name).Name.Contains("Boulder"));
+			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.ObjectName) != null && !RaftProps.Get(r.ObjectName).Name.Contains("Boulder"));
+			Log("  the extras hold: " + string.Join(", ", e.Root.GetComponentsInChildren<IslandObjectRef>(true).GroupBy(r => r.ObjectName + (r.Props != null && r.Props.ContainsKey("set.piece") ? " (set piece)" : "")).Select(g => g.Key + " x" + g.Count()).ToArray()));
 			Check(ref ok, caves.Count >= 1 || !RandomizerIslands.CanBuildCaves, "'" + big.name + "': " + (caves.Count > 0 ? "a den (" + caves[0].name + ")" : "no den") + (RandomizerIslands.CanBuildCaves ? "" : " (no measured cave pieces)") + ", " + outpost + " outpost props");
 			if (caves.Count > 0)
 			{
 				yield return ShotOf(player, caves[0], "grotto_mound", 12f);
 				TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+				LootCrate hoardBox = e.Root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - caves[0].position).sqrMagnitude).FirstOrDefault();
 				if (zone != null)
 				{
-					yield return PutPlayer(player, zone.transform.position + Vector3.up * 1.0f, false);
-					yield return new WaitForSeconds(4f);
-					Shot("grotto_inside");
+					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : caves[0].position, "grotto");
+					string denAt; float denOff = DenOffset(caves[0], zone.transform.position, out denAt);
+					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					var leftIn = DenLeftovers(caves[0]);
+					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
+					if (Mathf.Abs(denOff) >= 1.5f)
+					{
+						Log("  the den " + caves[0].name + ": scale " + caves[0].lossyScale + ", rotation " + caves[0].rotation.eulerAngles + ", parent " + (caves[0].parent != null ? caves[0].parent.name : "none"));
+						foreach (Renderer rr in caves[0].GetComponentsInChildren<Renderer>(true).OrderByDescending(x => x.bounds.size.sqrMagnitude).Take(8))
+							Log("    " + rr.name + " (" + rr.GetType().Name + (rr.enabled && rr.gameObject.activeInHierarchy ? "" : ", off") + "): " + (rr.bounds.min.y - zone.transform.position.y).ToString("F1") + " to " + (rr.bounds.max.y - zone.transform.position.y).ToString("F1") + " m from the floor, size " + rr.bounds.size);
+					}
+					// (what Raft's island has under the zone: every collider a ray down meets, below the den's own)
+					foreach (RaycastHit h in Physics.RaycastAll(zone.transform.position + Vector3.up * 30f, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+						if (!h.collider.transform.IsChildOf(e.Root.transform))
+							Log("  under the zone: " + h.collider.name + " (" + h.collider.GetType().Name + ", layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ") at " + (h.point.y - zone.transform.position.y).ToString("F1") + " m from the floor" +
+								(h.collider.GetComponentInParent<LandmarkItem>() != null ? ", a LandmarkItem" : "") + (h.collider.transform.IsChildOf(big.transform) ? ", Raft's island" : ", not Raft's island"));
+					float toHoard = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, zone.transform.position) : 99f, fromDen = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, caves[0].position) : 99f;
+					Check(ref ok, hoardBox != null && toHoard > 3f && toHoard < 36f && fromDen < 24f, "a hoard at the end of the den (" + toHoard.ToString("F1") + " m in from the zone, " + fromDen.ToString("F1") + " m from the den's pivot)");
 					CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
 					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
 					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
@@ -815,7 +928,7 @@ namespace DynamicIslands
 					Check(ref ok, ai != null && off < 2.5f, guard == null ? "no guard" : ai == null ? "the guard didn't come" : "the " + guard.Kind.Label + " woke inside the cave (" + off.ToString("F1") + " m from the floor)");
 				}
 			}
-			Transform scene = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.Props != null && r.Props.ContainsKey("set.piece") && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(r.Name))).Select(r => r.transform).FirstOrDefault();
+			Transform scene = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.Props != null && r.Props.ContainsKey("set.piece") && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(r.ObjectName))).Select(r => r.transform).FirstOrDefault();
 			if (scene != null) yield return ShotOf(player, scene, "grotto_outpost", 9f);
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);

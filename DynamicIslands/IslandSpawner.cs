@@ -285,7 +285,9 @@ namespace DynamicIslands.Editor
 				}
 				go.transform.position = parent.position + o.Position;
 				go.transform.rotation = Quaternion.Euler(o.EulerRotation);
-				go.transform.localScale = o.Scale;
+				// (the randomizer's set pieces stand at the size of Raft's own - some of Raft's are scaled in their scene, like
+				// Balboa's caves: one made before its piece was loaded was saved at scale 1; the copy has Raft's scale)
+				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
 				foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
 
 				if (editable)

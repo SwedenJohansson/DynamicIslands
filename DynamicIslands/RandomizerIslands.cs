@@ -203,8 +203,10 @@ namespace DynamicIslands.Editor
 			{
 				Vector3 hit, n;
 				if (!g.Hit(at.x, at.z, out hit, out n) || hit.y < 0.8f || Vector3.Angle(n, Vector3.up) > 25f) return null;
-				// (clear of Raft's trees, rocks and pickups, and of what was put here already)
-				if (k.Taken.Any(x => new Vector2(x.x - at.x, x.z - at.z).sqrMagnitude < 1.5f * 1.5f)) return null;
+				// (clear of Raft's trees, rocks and pickups, and of what was put here already: by the prop's own footprint)
+				PropInfo pi = RaftProps.Get(name);
+				float clear = pi != null ? Mathf.Max(1.5f, Mathf.Max(pi.Size.x, pi.Size.z) * 0.4f + 0.5f) : 1.5f;
+				if (k.Taken.Any(x => new Vector2(x.x - at.x, x.z - at.z).sqrMagnitude < clear * clear)) return null;
 				float low = LowestUnder(ground, name, new Vector2(at.x, at.z), yaw);
 				if (float.IsNaN(low) || low < 0.6f) return null;
 				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
@@ -432,40 +434,53 @@ namespace DynamicIslands.Editor
 			if (name == null) return null;
 			PropInfo p = Den(name);
 			float reach = Mathf.Max(p.Size.x, p.Size.z) * 0.5f;
-			for (int attempt = 0; attempt < 80; attempt++)
+			int noSpot = 0, bumpy = 0, raftThings = 0, overSea = 0, mouth = 0;
+			for (int attempt = 0; attempt < 160; attempt++)
 			{
-				Vector3? spot = g.Find(r, (h, slope) => h > 2f && h < 30f && slope < 12f, null, 0f, 3);
-				if (!spot.HasValue) continue;
-				// Out towards the coast (away from the island's middle), turned a little
-				Vector2 c = new Vector2(spot.Value.x, spot.Value.z), outward = (c - new Vector2(g.Centre.x, g.Centre.z)).normalized;
-				if (outward.sqrMagnitude < 0.5f) continue;
-				outward = (Vector2)(Quaternion.Euler(0f, 0f, (float)r.NextDouble() * 50f - 25f) * outward);
-				Cave cave = PlaceDen(name, c, outward, spot.Value.y);
-				// Inside the den: the ground at or under its floor (Raft's rocks or slopes there would poke in), nothing of Raft's in it
-				bool ok = true;
-				for (float t = 1f; t <= cave.Depth && ok; t += 2f)
-					foreach (float s in new[] { -cave.Width * 0.35f, 0f, cave.Width * 0.35f })
+				Vector3? spot = g.Find(r, (h, slope) => h > 2f && h < 30f && slope < 14f, null, 0f, 40);
+				if (!spot.HasValue) { noSpot++; continue; }
+				Vector2 c = new Vector2(spot.Value.x, spot.Value.z), away = (c - new Vector2(g.Centre.x, g.Centre.z)).normalized;
+				if (away.sqrMagnitude < 0.5f) continue;
+				// Out towards the coast (away from the island's middle) best, else turned up to 90° either way
+				foreach (float turn in new[] { (float)r.NextDouble() * 30f - 15f, 45f, -45f, 90f, -90f })
+				{
+					Vector2 outward = (Vector2)(Quaternion.Euler(0f, 0f, turn) * away);
+					Cave cave = PlaceDen(name, c, outward, spot.Value.y);
+					// Inside the den: Raft's ground can't be changed, so the floor goes on its highest point there (ground a
+					// little under the floor is hidden by it); too bumpy if it drops more than 3.5 m, nothing of Raft's in it
+					float top = float.MinValue, low = float.MaxValue;
+					bool ok = true;
+					for (float t = 1f; t <= cave.Depth && ok; t += 2f)
+						foreach (float s in new[] { -cave.Width * 0.35f, 0f, cave.Width * 0.35f })
+						{
+							Vector3 q = cave.At(t, s), hit, n;
+							if (!g.Hit(q.x, q.z, out hit, out n)) { ok = false; break; }
+							top = Mathf.Max(top, hit.y); low = Mathf.Min(low, hit.y);
+							if (blockers.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 6.25f)) { ok = false; raftThings++; break; }
+						}
+					if (!ok) continue;
+					if (top - low > 3.5f) { bumpy++; continue; }
+					if (top - 0.3f > cave.Floor + 0.01f || top - 0.3f < cave.Floor - 0.01f) cave = PlaceDen(name, c, outward, top - 0.3f);
+					// Around it: land under the whole outcrop (not hanging over the sea)
+					for (int i = 0; i < 12 && ok; i++)
 					{
-						Vector3 q = cave.At(t, s), hit, n;
-						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y > cave.Floor + 1.2f || hit.y < cave.Floor - 3f) { ok = false; break; }
-						if (blockers.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 9f)) { ok = false; break; }
+						float b = i * Mathf.PI / 6f;
+						Vector3 q = new Vector3(c.x + Mathf.Cos(b) * reach, 0f, c.y + Mathf.Sin(b) * reach), hit, n;
+						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y < 0.5f || hit.y < cave.Floor - 5f) ok = false;
 					}
-				// Around it: land under the whole outcrop (not hanging over the sea); out of the mouth: walkable
-				for (int i = 0; i < 12 && ok; i++)
-				{
-					float b = i * Mathf.PI / 6f;
-					Vector3 q = new Vector3(c.x + Mathf.Cos(b) * reach, 0f, c.y + Mathf.Sin(b) * reach), hit, n;
-					if (!g.Hit(q.x, q.z, out hit, out n) || hit.y < 0.5f || hit.y < cave.Floor - 5f) ok = false;
+					if (!ok) { overSea++; continue; }
+					// Out of the mouth: walkable ground that meets the floor
+					for (float t = 1f; t <= 8f && ok; t += 2f)
+					{
+						Vector3 q = cave.At(-t), hit, n;
+						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y > cave.Floor + 1.2f || hit.y < cave.Floor - 1.5f - t * 0.25f || Vector3.Angle(n, Vector3.up) > 32f) ok = false;
+					}
+					if (!ok) { mouth++; continue; }
+					FurnishCave(k, cave, guard, lootPreset, "Den hoard");
+					return "a den (" + name + ", " + cave.Depth.ToString("F0", CultureInfo.InvariantCulture) + " m deep" + (guard != null ? ", a " + guard.ToLowerInvariant() : "") + ")";
 				}
-				for (float t = 1f; t <= 8f && ok; t += 2f)
-				{
-					Vector3 q = cave.At(-t), hit, n;
-					if (!g.Hit(q.x, q.z, out hit, out n) || Mathf.Abs(hit.y - cave.Floor) > 1.5f || Vector3.Angle(n, Vector3.up) > 30f) ok = false;
-				}
-				if (!ok) continue;
-				FurnishCave(k, cave, guard, lootPreset, "Den hoard");
-				return "a den (" + name + ", " + cave.Depth.ToString("F0", CultureInfo.InvariantCulture) + " m deep" + (guard != null ? ", a " + guard.ToLowerInvariant() : "") + ")";
 			}
+			Debug.Log("[CUSTOM ISLANDS] [randomizer] no den fits: " + noSpot + " no level spot, " + bumpy + " too bumpy, " + raftThings + " Raft's things in the way, " + overSea + " over the sea, " + mouth + " no way out of the mouth");
 			return null;
 		}
 
