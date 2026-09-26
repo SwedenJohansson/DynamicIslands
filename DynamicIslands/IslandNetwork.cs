@@ -34,6 +34,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> a player who just joined: where they stood on a custom island (PlayerPlaces). Ids[0] = island,
 		/// Offsets = x,y,z from its middle.</summary>
 		public const int PlayerPlace = 12;
+		/// <summary>Host -> everyone: the world randomizer's settings and seed (WorldRandomizer). Data = RandomizerSettings.Encode().</summary>
+		public const int Randomizer = 13;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -144,6 +146,9 @@ namespace DynamicIslands.Editor
 			try { DynamicIslands.instance.SendNetworkMessage(msg, Target.Other, EP2PSend.k_EP2PSendReliable); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending failed: " + e.Message); }
 		}
+
+		/// <summary>Host: a message for every other player.</summary>
+		public static void SendToEveryone(IslandNetMessage msg) { SendToClients(msg); }
 
 		static void SendToPlayer(IslandNetMessage msg, Network_UserId player)
 		{
@@ -262,6 +267,7 @@ namespace DynamicIslands.Editor
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
 							SendToPlayer(StoryBook.StateMessage(), from);
+							SendToPlayer(WorldRandomizer.Message(), from);
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
@@ -301,6 +307,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Story:
 						StoryBook.OnMessage(msg);
+						break;
+					case IslandNetMessage.Randomizer:
+						WorldRandomizer.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)

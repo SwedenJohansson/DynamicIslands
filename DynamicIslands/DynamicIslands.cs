@@ -249,6 +249,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
+			try { WorldRandomizer.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World randomizer: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -678,6 +680,32 @@ namespace DynamicIslands
 				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
 			}
 			foreach (string line in WorldDirector.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+		}
+
+		[ConsoleCommand(name: "Randomizer", docs: "The world randomizer (chosen in the New Game box): Randomizer = what it does in this world; Randomizer off|light|normal|wild, Randomizer -part / +part (colours, animals, alphas, loot, finds, oddities, bosses) = change it for this world (host)")]
+		public static void RandomizerCommand(string[] args)
+		{
+			if (args != null && args.Length > 0)
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a world (the randomizer is per world); for a new world, choose it in the New Game box", true); return; }
+				if (!Raft_Network.IsHost) { Notify("Only the host can change the randomizer", true); return; }
+				RandomizerSettings s = WorldRandomizer.Current.Copy();
+				foreach (string a in args)
+				{
+					string w = a.Trim().ToLowerInvariant();
+					int level = Array.FindIndex(RandomizerSettings.LevelNames, n => n.Equals(w, StringComparison.OrdinalIgnoreCase));
+					string part = w.TrimStart('+', '-');
+					if (level >= 0) s.Level = level;
+					else if ((w.StartsWith("+") || w.StartsWith("-")) && RandomizerSettings.Features.Contains(part))
+					{
+						if (w.StartsWith("-")) s.Disabled.Add(part); else s.Disabled.Remove(part);
+					}
+					else { Notify("Randomizer: unknown '" + a + "'. Use off|light|normal|wild and -part / +part (" + string.Join(", ", RandomizerSettings.Features) + ")", true); return; }
+				}
+				WorldRandomizer.Set(s);
+				Notify("World randomizer in this world: " + WorldRandomizer.Current.Describe() + " (islands already looked at keep what they got)");
+			}
+			foreach (string line in WorldRandomizer.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
 		[ConsoleCommand(name: "CustomIslandsAuto", docs: "Host: custom islands appear on their own while sailing in this world. Usage: CustomIslandsAuto on|off")]

@@ -50,7 +50,8 @@ namespace DynamicIslands.Editor
 			}
 
 			bool show = CustomIslandSpawner.ShowOnReceiver && r.radarSection != null && r.radarSection.activeSelf;
-			IList<IslandWorldState.Entry> islands = IslandWorldState.Islands;
+			// (not the randomizer's extras on Raft's own islands: Raft shows those islands itself)
+			List<IslandWorldState.Entry> islands = IslandWorldState.Islands.Where(e => !WorldRandomizer.IsExtras(e)).ToList();
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)
 			{

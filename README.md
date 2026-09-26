@@ -82,6 +82,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Behaviours:** doors, gates and lifts move for every player; things that move back and forth, spin or bob follow a clock all players share (Raft's water time), so everyone sees them in the same place; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
+- **World randomizer** (New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
 - **Multiplayer:** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host.
 
 ## World plans
@@ -124,6 +125,28 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 | `sky` | A small island floating 45–90 m up, with a cache |
 | `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
 | `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
+| `oddity` | A small island with something odd on it: one of the eight below, picked at random |
+| `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
+| `lair` | A boss lair: a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One: 6× health, 2.5× damage, twice the size) and two guards wake when you reach the top; a hoard and a trophy chest with the beast's head (quest; much harder than `boss`) |
+
+## World randomizer
+
+Makes a **normal Raft world** play out differently every time: with or without custom islands, and without touching Raft's story. Choose it in Raft's **New Game box** under "World randomizer": **Off**, **Light**, **Normal** or **Wild** (how much is different), and which parts take part (click a part to switch it off). The last choice is remembered for the next world. Each world gets its own seed; everything follows from it.
+
+| Part | What changes |
+|---|---|
+| **Colours** | Animals and sharks now and then have another colour: charcoal, ash, umber, rust, sand, moss, frost, night; birds crimson, slate or gold; sharks (Bruce too) midnight, tiger, rust, reef, olive, and rarely gold. Light: about 1 in 7, Normal 1 in 3, Wild every other one |
+| **Animals** | Raft's islands that have animals get more of them near where Raft has them; islands without animals sometimes get a few (warthogs, chickens, goats, llamas; on Wild a bear); now and then puffer fish guard the reef |
+| **Alphas** | Rare alpha animals (warthogs, pigs, bears, polar bears, hyenas, screechers): bigger, darker, 3× health, 1.6× damage. A huge dark **Big Bruce** now and then (2.5× health). A banner warns nearby players. Killed, they drop a trophy head (Head_Boar, Head_Bear, Head_Shark...), meat and leather, and sometimes titanium |
+| **Loot** | Some of the crates and giant clams on Raft's islands lie somewhere else (on land stays on land, under water at a similar depth); islands sometimes get extra crates, barrels and chests, and sunken barrels on the reef |
+| **Finds** | Now and then an island hides a **treasure hunt** (a map in a bottle on the beach, a chest buried at the island's highest point), an **abandoned camp** (big islands) or a **castaway's stash** by a tree, with a note and a quest |
+| **Oddities** | While sailing, small **oddity islands** appear (the map types above: a van, a caravan, a crashed plane...) |
+| **Bosses** | Now and then (after the first few km) a **boss lair** appears |
+
+- **Raft's story is safe:** only Raft's plain islands (the big and small tropical ones and the small islands around the story places) are changed; the story islands, the stranded boat, the pilot's island and floating rafts are left alone, and so are bosses, people and bees.
+- **Multiplayer:** colours, alphas and moved crates are worked out on every machine from the world's seed and Raft's own network ids, so every player sees the same without extra messages. What is added to Raft's islands is a land-less custom island laid over Raft's island (its "extras", `rnd-<seed>-<id>.island`): it is saved, sent to other players, and its chests, animals and quests work like any custom island's. Raft saves picked-up crates by the place it put them; for moved crates the mod finds them by that place again, so a used crate stays used after loading and for players who join.
+- **Changing it later:** `Randomizer` shows what it does in the current world; the host can change it: `Randomizer off|light|normal|wild`, `Randomizer -alphas` / `+alphas` (any part). Islands that were already looked at keep what they got.
+- Raft switches the ground of its far islands off (about 1 km away), so an island is randomized when the raft comes within about a kilometre.
 
 ## The island generator
 
@@ -259,6 +282,7 @@ The blue plane is sea level. Anything below it is under water in game.
 | `SpawnPool` | Game | Shows which islands appear on their own, and how often |
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
+| `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses) |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
 Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.
@@ -313,7 +337,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `Behaviours.cs`, `BehaviourWindow.cs` | Behaviours and events: names, movement, "players can use it", collision, "when … then" actions, "only if" checks, waits, the shared clock for movers, their shared state and network messages; the Behaviour & events window |
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
-| `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan choice in Raft's New Game box |
+| `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan and randomizer choices in Raft's New Game box |
+| `WorldRandomizer.cs`, `RandomizerContent.cs` | The world randomizer: settings (saved with the world, sent to players), animal colours and alphas, moving Raft's crates and clams (and finding them again for Raft's saves), the extras laid over Raft's islands, oddity islands and boss lairs while sailing; `RandomizerContent`: what the extras, oddities and lairs contain |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `EditorCamera.cs` | The editor (`EditorCamera.cs`: the Unity-style camera that replaced the 2021 RTS camera) |
 | `RuntimeGizmo\`, `AwaitExtensions\` | Third-party move/rotate/scale gizmo and await helpers |
 
@@ -333,6 +358,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 - Atmosphere zones change Unity's fog and ambient light plus a faint screen tint; how strong the fog looks depends on Raft's own sky at that moment.
 - An island file with creatures, notes, a tint or island info is format 4: older versions of the mod can't open it. Islands without these are still saved in the older formats.
 - Objects from Raft's other islands and Raft's buildable items are decoration: their scripts are removed, so a chest doesn't store anything and a character doesn't move. Only the harvestable trees, rocks, ores and plants keep their gameplay.
+- World randomizer: colours only multiply an animal's own texture, so they are darker or tinted, never lighter (no white sharks). Alphas' extra spoils come from alphas of Raft's own islands; the extra animals on Raft's islands are never alphas. An oddity island or boss lair that is due waits until there is room ahead of the raft (Raft's sea is crowded near its islands). Tested with two players on one PC (same colours, crate spots and extras on both, a moved crate picked up by the second player, leaving and joining again, saving and loading), not yet by people playing a whole world.
 - An island that uses objects from one of Raft's story islands (e.g. Utopia) makes the mod load that island's scene for a moment when the island spawns in a world, to copy the objects. The scene is switched off as it arrives; this can take a second.
 
 ## License

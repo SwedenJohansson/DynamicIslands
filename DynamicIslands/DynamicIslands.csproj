@@ -71,6 +71,7 @@
     <Compile Include="DevTestsGenerator.cs" />
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />
+    <Compile Include="DevTestsRandomizer.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -90,6 +91,8 @@
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
+    <Compile Include="WorldRandomizer.cs" />
+    <Compile Include="RandomizerContent.cs" />
     <Compile Include="Behaviours.cs" />
     <Compile Include="BehaviourWindow.cs" />
     <Compile Include="MapTypes.cs" />

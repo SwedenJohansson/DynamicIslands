@@ -322,6 +322,11 @@ namespace DynamicIslands.Editor
 					if (island.Heights[y, x] > water) { sx += x; sz += y; n++; }
 			if (n == 0)
 			{
+				// The randomizer's extras on one of Raft's islands: centred on Raft's island, wherever the objects are
+				string[] c = ObjectProps.Get(island.Props, IslandProps.Centre).Split(',');
+				float cx, cz;
+				if (c.Length == 2 && float.TryParse(c[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out cx) &&
+					float.TryParse(c[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out cz)) return new Vector2(cx, cz);
 				// No land (e.g. an abandoned raft built from Raft blocks on the water): centre on the objects
 				if (island.Objects.Count > 0)
 					return new Vector2(island.Objects.Average(o => o.Position.x), island.Objects.Average(o => o.Position.z));

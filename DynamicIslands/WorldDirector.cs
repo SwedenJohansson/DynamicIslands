@@ -431,6 +431,7 @@ namespace DynamicIslands.Editor
 				if (WorldPlan.Load(chosen) == null) { Debug.LogWarning("[CUSTOM ISLANDS] No world plan '" + chosen + "'; using " + WorldPlan.RandomName); chosen = WorldPlan.RandomName; }
 				SetPlan(chosen, true);
 				Log("New world '" + SaveAndLoad.CurrentGameFileName + "': plan '" + PlanName + "'");
+				WorldRandomizer.OnNewWorld();
 				return;
 			}
 			Plan = WorldPlan.Load(PlanName);

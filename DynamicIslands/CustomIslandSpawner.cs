@@ -113,6 +113,7 @@ namespace DynamicIslands.Editor
 			if (sailed <= 0.01f || sailed > 200f) return;
 			sailedSinceSpawn += sailed;
 			WorldDirector.Sailed += sailed;
+			WorldRandomizer.OnSailed(sailed, pos.Value); // (its own islands, also in worlds without random custom islands)
 			if (!Enabled || ChancePerKm <= 0f) return;
 
 			// Chance of at least one island over this stretch, for a given chance per km
@@ -133,6 +134,8 @@ namespace DynamicIslands.Editor
 			{
 				float d = Flat(e.Position - raftPos).magnitude;
 				if (playerPos.HasValue) d = Mathf.Min(d, Flat(e.Position - playerPos.Value).magnitude);
+				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
+				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
 				if (e.Root != null && d > UnloadDistance)
 				{
 					IslandObjectState.Capture(e);
@@ -156,10 +159,11 @@ namespace DynamicIslands.Editor
 		/// Tries to place an island from the pool ahead of the raft. Returns a message saying what happened.
 		/// force: ignore "raft is inside one of Raft's islands" (dev/testing).
 		/// </summary>
-		public static string TrySpawn(Vector3 raftPos, bool force)
+		public static string TrySpawn(Vector3 raftPos, bool force, string pick = null)
 		{
 			if (!force && ChunkManager.RaftIsInsideChunkPoint) return Skip("the raft is at one of Raft's islands");
-			string name = PickFromPool();
+			// (pick: this pool entry instead of one from the pool - the world randomizer's islands)
+			string name = pick ?? PickFromPool();
 			if (name == null) return Skip("the spawn pool is empty");
 
 			// A brand-new island: random settings now, the island itself is generated once a spot is found
@@ -287,6 +291,7 @@ namespace DynamicIslands.Editor
 			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
+				if (WorldRandomizer.IsExtras(e)) continue; // (on one of Raft's islands: its chunk point below keeps the room)
 				float d = Flat(candidate - e.Position).magnitude;
 				if (d < Mathf.Max(spacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
 			}

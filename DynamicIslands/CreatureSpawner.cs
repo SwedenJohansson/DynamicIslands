@@ -68,6 +68,24 @@ namespace DynamicIslands.Editor
 
 		public static bool IsOurs(AI_NetworkBehaviour ai) { return ai != null && ours.Contains(ai); }
 
+		/// <summary>
+		/// Whether an animal belongs to a custom island (it has the builder's looks): the host knows its own; a client goes
+		/// by a loaded spawn point of its kind near it (Raft's own islands' animals come tied to their island's spawner).
+		/// </summary>
+		public static bool IsOnCustomIsland(AI_NetworkBehaviour ai)
+		{
+			if (ai == null) return false;
+			if (Raft_Network.IsHost) return IsOurs(ai);
+			if (ai.connectedSpawner != null) return false;
+			foreach (GameObject r in IslandSpawner.SpawnedRoots)
+			{
+				if (r == null) continue;
+				foreach (CreatureSpawnPoint p in r.GetComponentsInChildren<CreatureSpawnPoint>(true))
+					if (p.Kind != null && p.Kind.Type == ai.behaviourType && (p.transform.position - ai.transform.position).sqrMagnitude < 150f * 150f) return true;
+			}
+			return false;
+		}
+
 		public static int LiveCount { get { return ours.Count(a => a != null); } }
 
 		static Network_Host_Entities HostEntities { get { try { return ComponentManager<Network_Host_Entities>.Value; } catch { return null; } } }
@@ -125,10 +143,16 @@ namespace DynamicIslands.Editor
 			}
 			// (built already for animals spawned earlier)
 			agentTypes.RemoveWhere(t => root.GetComponents<NavMeshSurface>().Any(s => s.agentTypeID == t));
+			// The randomizer's extras on one of Raft's islands: their animals walk on Raft's island. Its own NavMesh is used
+			// where it has one for them (Raft's big islands), otherwise one is built from Raft's island's ground.
+			Landmark under = WorldRandomizer.IsExtras(entry) ? WorldRandomizer.IslandAt(entry.Position) : null;
+			if (under != null)
+				agentTypes.RemoveWhere(t => wanted.Keys.Where(p => { AI_NetworkBehaviour pf = Prefab(host, p.Kind.Type); NavMeshAgent a = pf != null ? pf.GetComponentInChildren<NavMeshAgent>(true) : null; return a != null && a.agentTypeID == t; })
+					.All(p => { NavMeshHit h; return NavMesh.SamplePosition(p.transform.position, out h, 4f, new NavMeshQueryFilter { agentTypeID = t, areaMask = NavMesh.AllAreas }); }));
 			if (agentTypes.Count > 0)
 			{
 				float started = Time.realtimeSinceStartup;
-				yield return BuildNavMesh(root, agentTypes);
+				yield return BuildNavMesh(root, agentTypes, under);
 				if (root == null) yield break;
 				List<CreatureSpawnPoint> walkers = wanted.Keys.Where(p => { AI_NetworkBehaviour pf = Prefab(host, p.Kind.Type); return pf != null && pf.GetComponentInChildren<NavMeshAgent>(true) != null; }).ToList();
 				NavMeshHit probe;
@@ -138,7 +162,7 @@ namespace DynamicIslands.Editor
 					foreach (NavMeshSurface s in root.GetComponents<NavMeshSurface>()) UnityEngine.Object.Destroy(s);
 					yield return null;
 					if (root == null) yield break;
-					yield return BuildNavMesh(root, agentTypes);
+					yield return BuildNavMesh(root, agentTypes, under);
 					if (root == null) yield break;
 				}
 				Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': NavMesh for " + agentTypes.Count + " kind(s) of animal built in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s");
@@ -329,28 +353,61 @@ namespace DynamicIslands.Editor
 		/// Raft's object meshes can't be read at runtime, so those colliders count as their bounding boxes. The data
 		/// is registered through a NavMeshSurface on the island, which moves it along with Raft's world shifts.
 		/// </summary>
-		static IEnumerator BuildNavMesh(GameObject root, IEnumerable<int> agentTypes)
+		/// <summary>Raft's object meshes can't be read at runtime: those colliders count as their bounding boxes.</summary>
+		static void UnreadableAsBoxes(List<NavMeshBuildSource> sources)
+		{
+			for (int i = 0; i < sources.Count; i++)
+			{
+				NavMeshBuildSource s = sources[i];
+				Mesh mesh = s.shape == NavMeshBuildSourceShape.Mesh ? s.sourceObject as Mesh : null;
+				if (mesh == null || mesh.isReadable) continue;
+				s.shape = NavMeshBuildSourceShape.Box;
+				s.size = mesh.bounds.size;
+				s.transform = s.transform * Matrix4x4.Translate(mesh.bounds.center);
+				s.sourceObject = null;
+				sources[i] = s;
+			}
+		}
+
+		static IEnumerator BuildNavMesh(GameObject root, IEnumerable<int> agentTypes, Landmark ground = null)
 		{
 			// The island was made this frame: let physics catch up with where its colliders were moved to
 			yield return new WaitForFixedUpdate();
 			if (root == null) yield break;
 			var sources = new List<NavMeshBuildSource>();
 			Bounds local = new Bounds();
-			try
+			if (ground != null)
+			{
+				// Raft's island under the randomizer's extras: its ground and everything on it, over its land
+				try
+				{
+					Physics.SyncTransforms();
+					NavMeshBuilder.CollectSources(ground.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), sources);
+					var onTop = new List<NavMeshBuildSource>();
+					NavMeshBuilder.CollectSources(root.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), onTop);
+					sources.AddRange(onTop);
+					UnreadableAsBoxes(sources);
+					var land = new LandGround(ground);
+					bool any = false;
+					for (float x = -land.Radius; x <= land.Radius; x += 6f)
+						for (float z = -land.Radius; z <= land.Radius; z += 6f)
+						{
+							Vector3 p, n;
+							if (!land.Hit(land.Centre.x + x, land.Centre.z + z, out p, out n) || p.y < -4f) continue;
+							if (!any) { local = new Bounds(p, Vector3.zero); any = true; } else local.Encapsulate(p);
+						}
+					if (!any) { Debug.LogWarning("[CUSTOM ISLANDS] No land on '" + ground.name + "' for its animals' NavMesh"); yield break; }
+					local.Expand(new Vector3(16f, 12f, 16f));
+					local.center -= root.transform.position;
+					Debug.Log("[CUSTOM ISLANDS] NavMesh sources on Raft's island '" + ground.name + "': " + sources.Count + ", land " + local.size.ToString("F0"));
+				}
+				catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Collecting the ground of Raft's island for a NavMesh failed: " + e); yield break; }
+			}
+			else try
 			{
 				Physics.SyncTransforms();
 				NavMeshBuilder.CollectSources(root.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), sources);
-				for (int i = 0; i < sources.Count; i++)
-				{
-					NavMeshBuildSource s = sources[i];
-					Mesh mesh = s.shape == NavMeshBuildSourceShape.Mesh ? s.sourceObject as Mesh : null;
-					if (mesh == null || mesh.isReadable) continue;
-					s.shape = NavMeshBuildSourceShape.Box;
-					s.size = mesh.bounds.size;
-					s.transform = s.transform * Matrix4x4.Translate(mesh.bounds.center);
-					s.sourceObject = null;
-					sources[i] = s;
-				}
+				UnreadableAsBoxes(sources);
 				// Everything with a collider, relative to the island (whose root is never turned)
 				bool any = false;
 				foreach (Collider c in root.GetComponentsInChildren<Collider>())

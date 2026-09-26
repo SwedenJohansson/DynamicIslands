@@ -192,20 +192,28 @@ namespace DynamicIslands.Editor
 			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
 			{
 				if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer || r.GetComponent<TextMesh>() != null || r.name == ContentCatalog.MarkerOnly) continue;
-				Material[] mats = r.sharedMaterials;
-				for (int i = 0; i < mats.Length; i++)
-				{
-					Material m = mats[i];
-					if (m == null) continue;
-					string prop = ColorProperties.FirstOrDefault(m.HasProperty);
-					if (prop == null) continue;
-					var block = new MaterialPropertyBlock();
-					if (mats.Length == 1) r.GetPropertyBlock(block); else r.GetPropertyBlock(block, i);
-					Color baseColor = m.GetColor(prop);
-					block.SetColor(prop, new Color(baseColor.r * factor.r, baseColor.g * factor.g, baseColor.b * factor.b, baseColor.a));
-					if (mats.Length == 1) r.SetPropertyBlock(block); else r.SetPropertyBlock(block, i);
-					tinted++;
-				}
+				tinted += TintRenderer(r, factor);
+			}
+			return tinted;
+		}
+
+		/// <summary>Multiplies one renderer's material colours by factor (property blocks, as ApplyTint). Returns how many materials.</summary>
+		public static int TintRenderer(Renderer r, Color factor)
+		{
+			int tinted = 0;
+			Material[] mats = r.sharedMaterials;
+			for (int i = 0; i < mats.Length; i++)
+			{
+				Material m = mats[i];
+				if (m == null) continue;
+				string prop = ColorProperties.FirstOrDefault(m.HasProperty);
+				if (prop == null) continue;
+				var block = new MaterialPropertyBlock();
+				if (mats.Length == 1) r.GetPropertyBlock(block); else r.GetPropertyBlock(block, i);
+				Color baseColor = m.GetColor(prop);
+				block.SetColor(prop, new Color(baseColor.r * factor.r, baseColor.g * factor.g, baseColor.b * factor.b, baseColor.a));
+				if (mats.Length == 1) r.SetPropertyBlock(block); else r.SetPropertyBlock(block, i);
+				tinted++;
 			}
 			return tinted;
 		}

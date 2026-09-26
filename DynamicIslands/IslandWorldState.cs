@@ -111,6 +111,7 @@ namespace DynamicIslands.Editor
 			CustomIslandSpawner.OnWorldShift(shift);
 			PlayerHold.OnWorldShift(shift);
 			PlayerPlaces.OnWorldShift(shift);
+			WorldRandomizer.OnWorldShift(shift);
 			if (islands.Count > 0) Debug.Log("[CUSTOM ISLANDS] World shift by " + shift.ToString("F0") + ": " + islands.Count + " island(s) moved with it");
 		}
 
@@ -125,13 +126,14 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label",
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				lines.AddRange(WorldDirector.WriteLines());
+					lines.AddRange(WorldRandomizer.WriteLines());
 				lines.AddRange(StoryBook.WriteLines());
 				lines.AddRange(PlayerPlaces.WriteLines());
 				foreach (Entry e in islands)
@@ -156,6 +158,7 @@ namespace DynamicIslands.Editor
 			WorldDirector.Reset();
 			StoryBook.Reset();
 			PlayerPlaces.Reset();
+			WorldRandomizer.Reset();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
@@ -164,6 +167,7 @@ namespace DynamicIslands.Editor
 				int eq = line.IndexOf('=');
 				if (line.StartsWith("@") && eq > 1 && (StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;

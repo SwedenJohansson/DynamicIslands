@@ -8,6 +8,8 @@ namespace DynamicIslands.Editor
 	public static class IslandProps
 	{
 		public const string Title = "info.title", Author = "info.author", Description = "info.description";
+		/// <summary>An island without land: the terrain-local "x,z" that goes where it is spawned (the randomizer's extras: the middle of Raft's island).</summary>
+		public const string Centre = "land.centre";
 		/// <summary>Rules: in-game days until harvested things, killed animals and looted chests come back on this island ("" = the world's regrowDays, 0 = never).</summary>
 		public const string RegrowDays = "rules.regrow";
 	}
