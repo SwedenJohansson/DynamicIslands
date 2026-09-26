@@ -29,6 +29,8 @@ namespace DynamicIslands.Editor
 	public static class EditorUI
 	{
 		public static Canvas Canvas { get; private set; }
+		/// <summary>The left panel's frame (its content, "ToolPanel", scrolls inside it).</summary>
+		public static RectTransform ToolFrame { get; private set; }
 		static TabSelector tabs;
 
 		static Button[] tabButtons;
@@ -80,8 +82,10 @@ namespace DynamicIslands.Editor
 			BuildTopBar(root);
 			BuildStatusBar(root);
 
-			RectTransform tools = UIKit.Panel(root, "ToolPanel", new RectOffset(10, 10, 10, 10), 10f);
-			UIKit.Anchor(tools, new Vector2(0, 1), new Vector2(Margin, -(TopBarHeight + Margin)), new Vector2(ToolPanelWidth, 0));
+			// (as tall as the tab's tools, up to the status bar; a long inspector scrolls instead of running off the screen)
+			RectTransform tools = UIKit.ScrollPanel(root, "ToolPanel", new RectOffset(10, 2, 10, 10), 10f, StatusBarHeight + Margin);
+			ToolFrame = (RectTransform)tools.parent.parent;
+			UIKit.Anchor(ToolFrame, new Vector2(0, 1), new Vector2(Margin, -(TopBarHeight + Margin)), new Vector2(ToolPanelWidth, 200));
 			terrainTools = BuildTerrainTools(tools);
 			objectTools = BuildObjectTools(tools);
 			islandTools = BuildIslandTools(tools);
@@ -629,7 +633,7 @@ namespace DynamicIslands.Editor
 			if (cameraText != null && Camera.main != null)
 			{
 				Vector3 c = Camera.main.transform.position;
-				cameraText.text = "Camera  X " + c.x.ToString("F0") + "   Y " + (c.y - IslandFile.DefaultWaterLevel).ToString("F0") + " above sea   Z " + c.z.ToString("F0");
+				cameraText.text = "Camera  X " + c.x.ToString("F0") + "   Y " + (c.y - DynamicIslands.EditorWaterLevel).ToString("F0") + " above sea   Z " + c.z.ToString("F0");
 			}
 			if (Time.unscaledTime > nextStats && tabs != null && tabs.SelectedTab == TAB.Island) { nextStats = Time.unscaledTime + 1f; RefreshStats(); }
 		}

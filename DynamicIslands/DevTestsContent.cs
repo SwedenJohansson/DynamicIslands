@@ -63,7 +63,7 @@ namespace DynamicIslands
 			var cats = PlaceableCatalog.Browse().ToDictionary(c => c.Key, c => c.Value.Count);
 			Check(ref ok, ContentCatalog.Categories.All(cats.ContainsKey), "the object list has the categories " + string.Join(", ", ContentCatalog.Categories.Select(c => c + " (" + (cats.ContainsKey(c) ? cats[c] : 0) + ")").ToArray()));
 
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject boar = PlaceForTest("Creature_Boar", c0, placed);
 			EditorGameObject sign = PlaceForTest("Note_Sign", c0 + new Vector3(4, 0, 0), placed);
 			string plainName = PlaceableCatalog.CoreNames.FirstOrDefault(n => PlaceableCatalog.CategoryOf(n) == PlaceableCatalog.NatureCategory && ContentCatalog.CreatureOf(n) == null);
@@ -393,7 +393,7 @@ namespace DynamicIslands
 			var cats = PlaceableCatalog.Browse().ToDictionary(c => c.Key, c => c.Value.Count);
 			Check(ref ok, cats.ContainsKey(ContentCatalog.LootCategory) && cats[ContentCatalog.LootCategory] >= 5, "the object list has " + ContentCatalog.LootCategory + " (" + (cats.ContainsKey(ContentCatalog.LootCategory) ? cats[ContentCatalog.LootCategory] : 0) + ")");
 
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject chest = PlaceForTest("Loot_Chest", c0, placed);
 			string plainName = PlaceableCatalog.CoreNames.FirstOrDefault(n => n.StartsWith("TP_Moontown_TarpCrate"));
 			EditorGameObject crate = PlaceForTest(plainName ?? PlaceableCatalog.CoreNames.First(), c0 + new Vector3(4, 0, 0), placed);
@@ -556,7 +556,7 @@ namespace DynamicIslands
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
 			CommandUndoRedo.UndoRedoManager.Clear();
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject zone = PlaceForTest(ContentCatalog.TriggerZone, c0, placed);
 			EditorGameObject boar = PlaceForTest("Creature_Boar", c0 + new Vector3(6, 0, 0), placed);
 			if (zone == null || boar == null) { Fail("could not place a zone and a warthog"); yield break; }
@@ -703,7 +703,7 @@ namespace DynamicIslands
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
 			CommandUndoRedo.UndoRedoManager.Clear();
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject chest = PlaceForTest("Loot_Chest", c0, placed);
 			EditorGameObject boar = PlaceForTest("Creature_Boar", c0 + new Vector3(3, 0, 0), placed);
 			EditorGameObject sign = PlaceForTest("Note_Sign", c0 + new Vector3(0, 0, 3), placed);
@@ -822,7 +822,7 @@ namespace DynamicIslands
 			Transform placed = GameObject.Find("PlacedObjects").transform;
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject atmo = PlaceForTest(ContentCatalog.AtmosphereZoneName, c0, placed);
 			EditorGameObject sound = PlaceForTest(ContentCatalog.SoundZoneName, c0 + new Vector3(40, 0, 0), placed);
 			if (atmo == null || sound == null) { Fail("could not place the zones"); yield break; }
@@ -973,7 +973,7 @@ namespace DynamicIslands
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			DynamicIslands.currentIslandProps.Clear();
 			yield return null;
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel + 1f, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
 			EditorGameObject zone = PlaceForTest(ContentCatalog.TriggerZone, c0, placed);
 			PropsCommand.Change(zone, ObjectProps.With(zone.Props, ObjectProps.ZoneId, "camp"));
 			EditorGameObject diary = PlaceForTest("Note_Book", c0 + new Vector3(3, 0, 0), placed);
@@ -1167,7 +1167,7 @@ namespace DynamicIslands
 			int models = ContentCatalog.Creatures.Count(k => PlaceableCatalog.Get(k.Name) != null && PlaceableCatalog.Get(k.Name).transform.Find("Model") != null);
 			EditorUI.SetTab(TAB.ObjectPlace);
 			Transform placed = GameObject.Find("PlacedObjects").transform;
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
 			string[] show = { "Creature_Boar", "Creature_Llama", "Creature_Bear", "Creature_Chicken", "Creature_Hyena" };
 			for (int i = 0; i < show.Length; i++)
 			{

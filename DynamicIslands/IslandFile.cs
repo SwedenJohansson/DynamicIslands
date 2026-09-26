@@ -59,6 +59,11 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Editor Y coordinate that is treated as sea level when spawned in game.</summary>
 		public const float DefaultWaterLevel = 20f;
+		/// <summary>
+		/// Water level of islands generated on a deep sea floor like Raft's own: its islands rise from a floor about
+		/// 150-165 m down (measured by CIMeasureUnderwater), so the terrain's base is that far below the sea.
+		/// </summary>
+		public const float DeepWaterLevel = 160f;
 
 		public string Name = "";
 		public float WaterLevel = DefaultWaterLevel;
@@ -222,7 +227,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Captures terrain + every EditorGameObject under placedObjectsRoot.</summary>
 		public static IslandFile Capture(string name, Terrain terrain, Transform placedObjectsRoot, float[,] paintMask = null)
 		{
-			var island = new IslandFile { Name = name };
+			// (the sea level of the island being edited: shallow seabed or Raft's deep sea floor)
+			var island = new IslandFile { Name = name, WaterLevel = DynamicIslands.EditorWaterLevel };
 			TerrainData data = terrain.terrainData;
 			island.TerrainSize = data.size;
 			island.HeightmapResolution = data.heightmapResolution;

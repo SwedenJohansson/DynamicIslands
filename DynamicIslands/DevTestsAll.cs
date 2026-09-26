@@ -97,7 +97,7 @@ namespace DynamicIslands
 					if (objs[n] == null)
 					{
 						GameObject root = GameObject.Find("PlacedObjects");
-						if (root != null) objs[n] = PlaceForTest(kinds[n].Value, terraineditor.terrain.transform.position + new Vector3(500f + n * 6f, IslandFile.DefaultWaterLevel + 2f, 500f), root.transform);
+						if (root != null) objs[n] = PlaceForTest(kinds[n].Value, terraineditor.terrain.transform.position + new Vector3(500f + n * 6f, DynamicIslands.EditorWaterLevel + 2f, 500f), root.transform);
 					}
 					return objs[n];
 				};
@@ -131,6 +131,7 @@ namespace DynamicIslands
 					DynamicIslands.EditorGizmoHandler.AddTarget(a.transform, false);
 					DynamicIslands.EditorGizmoHandler.AddTarget(b.transform, false);
 				});
+				yield return GeneratorScreens(run);
 				if (missingKinds > 0) run.Errors.Add(missingKinds + " kind(s) of object not in the catalog: their screens were not tested");
 			}
 			finally { Application.logMessageReceived -= watch; }
@@ -217,7 +218,7 @@ namespace DynamicIslands
 			Type type = w.GetType();
 			var done = new HashSet<string>();
 			string openerKey = opener != null ? KeyOf(opener) : null;
-			for (int guard = 0; guard < 120; guard++)
+			for (int guard = 0; guard < 400; guard++)
 			{
 				if (w == null || !w.gameObject.activeInHierarchy)
 				{
@@ -232,7 +233,8 @@ namespace DynamicIslands
 					if (w == null) break;
 				}
 				MonoBehaviour win = w;
-				Button next = SampleList(run, win.GetComponentsInChildren<Button>(false).Where(x => x.interactable && WindowOf(x) == win).ToList())
+				// (a window's tab buttons would hide the rest of the tab being walked: each tab is a screen of its own, see GeneratorScreens)
+				Button next = SampleList(run, win.GetComponentsInChildren<Button>(false).Where(x => x.interactable && WindowOf(x) == win && !IsTabButton(x)).ToList())
 					.FirstOrDefault(x => !done.Contains(PathOf(x.transform, win.transform) + "|" + LabelOfButton(x)) && !ButtonSkip.Contains(LabelOfButton(x)));
 				if (next == null) break;
 				done.Add(PathOf(next.transform, win.transform) + "|" + LabelOfButton(next));

@@ -73,7 +73,7 @@ namespace DynamicIslands
 			// CreateTerrainGameObject already adds a TerrainCollider bound to the same data
 
 			paintMask = null;
-			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			TerrainPainter.Setup(terrain, DynamicIslands.EditorWaterLevel);
 			paintMask = new float[terrainData.alphamapResolution, terrainData.alphamapResolution];
 		}
 
@@ -177,7 +177,7 @@ namespace DynamicIslands
 			stroking = false;
 			// Sculpting changes heights/slopes, so refresh the automatic texturing (hand-painted pixels are kept)
 			if (modificationAction != TerrainModificationAction.PaintLayer && modificationAction != TerrainModificationAction.AutoPaint)
-				TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, dirtyMin, dirtyMax, paintMask);
+				TerrainPainter.PaintWorldArea(terrain, DynamicIslands.EditorWaterLevel, dirtyMin, dirtyMax, paintMask);
 			RecordUndo();
 		}
 
@@ -239,7 +239,7 @@ namespace DynamicIslands
 					if (d2 >= 1f) continue;
 					float w = (1f - d2) * (1f - d2);
 
-					if (auto) TerrainPainter.AutoWeights(terrain, IslandFile.DefaultWaterLevel, x0 + x, z0 + z, target);
+					if (auto) TerrainPainter.AutoWeights(terrain, DynamicIslands.EditorWaterLevel, x0 + x, z0 + z, target);
 					else for (int l = 0; l < layers; l++) target[l] = l == paintLayer ? 1f : 0f;
 
 					float t = Mathf.Clamp01(rate * w * 4f);

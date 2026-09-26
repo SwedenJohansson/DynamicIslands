@@ -182,8 +182,8 @@ namespace DynamicIslands.Editor
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;
 				name = GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed;
-				// Land reaches about 1.4 x the radius setting (1.37 measured); used for placing until the real file exists
-				radiusCache[name] = generate.Radius * 1.4f;
+				// (used for placing until the real file exists)
+				radiusCache[name] = MapTypes.EstimatedRadius(generate);
 				elevationCache[name] = elevation;
 			}
 			float radius = LandRadius(name);

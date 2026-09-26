@@ -31,7 +31,7 @@ namespace DynamicIslands.Editor
 		public static Vector3 FloatIfBlock(string objectName, Vector3 p)
 		{
 			if (PlaceableCatalog.CategoryOf(objectName) != PlaceableCatalog.RaftBlocksCategory) return p;
-			float sea = (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + IslandFile.DefaultWaterLevel;
+			float sea = (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + DynamicIslands.EditorWaterLevel;
 			if (p.y < sea - FloatDepth) p.y = sea - FloatDepth;
 			return p;
 		}

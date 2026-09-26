@@ -109,7 +109,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Harvestable Raft objects kept with their gameplay scripts (the same objects as in prototypes).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>();
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|Scrap \d+_OceanBottom)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
@@ -614,6 +614,28 @@ namespace DynamicIslands.Editor
 		{
 			return scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true));
 		}
+
+		/// <summary>
+		/// Loads one of Raft's island scenes switched off (none of its scripts run), lets use() read it while it is
+		/// loaded, then unloads it again (the dev command that measures Raft's islands).
+		/// </summary>
+		internal static IEnumerator VisitScene(string sceneName, Func<Scene, IEnumerator> use)
+		{
+			var opened = new OpenedScene();
+			yield return OpenScene(sceneName, opened, true);
+			if (!opened.Scene.IsValid()) yield break;
+			yield return Guarded(use(opened.Scene), "Reading " + sceneName);
+			yield return CloseScene(opened);
+		}
+
+		/// <summary>All of Raft's island scenes, in build order.</summary>
+		internal static List<string> LandmarkSceneNames() { return LandmarkScenes(); }
+
+		/// <summary>The placeable objects of a scene as the object list sees them (top-most things that render a mesh; no pickups).</summary>
+		internal static IEnumerable<KeyValuePair<string, Transform>> PlaceablesOf(Scene scene) { return PickAll(scene); }
+
+		/// <summary>Raft's harvestable things: trees, rocks, ores, clay, sand, scrap, fruit bushes ("Pickup_Landmark_...").</summary>
+		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
 
 		#endregion
 

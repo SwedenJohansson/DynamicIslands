@@ -323,7 +323,7 @@ namespace DynamicIslands
 			Terrain terrain = terraineditor.terrain;
 			// Open water near a corner of the build area, on the 1.5 m grid
 			Vector3 origin = terrain.transform.position + new Vector3(240f, 0f, 240f);
-			float g = PlacementOptions.GridSize, sea = terrain.transform.position.y + IslandFile.DefaultWaterLevel;
+			float g = PlacementOptions.GridSize, sea = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
 			var spawned = new System.Collections.Generic.List<GameObject>();
 			System.Func<string, Vector3, float, GameObject> put = (name, pos, yaw) =>
 			{
@@ -511,8 +511,8 @@ namespace DynamicIslands
 				Check(ref ok, same && differs, "same seed gives the same island, another seed a different one");
 
 				// 2. Shape: land above sea, peak near the requested height, flat seabed at the edges
-				float sea = IslandFile.DefaultWaterLevel / data.size.y;
-				float peak = a.Cast<float>().Max() * data.size.y - IslandFile.DefaultWaterLevel;
+				float sea = s.WaterLevel / data.size.y;
+				float peak = a.Cast<float>().Max() * data.size.y - s.WaterLevel;
 				int land = a.Cast<float>().Count(h => h > sea);
 				float landArea = land * (data.size.x / (res - 1)) * (data.size.x / (res - 1));
 				bool edgesFlat = Enumerable.Range(0, res).All(i => a[0, i] == 0f && a[res - 1, i] == 0f && a[i, 0] == 0f && a[i, res - 1] == 0f);
@@ -542,7 +542,7 @@ namespace DynamicIslands
 				int cx, cz, size;
 				IslandSpawner.GetCropArea(file, out cx, out cz, out size);
 				float radius = IslandSpawner.LandRadius(file);
-				Check(ref ok, file.Objects.Count == n && size < res,
+				Check(ref ok, file.Objects.Count == n && size <= res,
 					"saved as cigen.island with " + file.Objects.Count + " objects; spawns as a " + (size - 1) * data.size.x / (res - 1) + " m terrain block, land radius " + radius.ToString("F0") + " m");
 				DynamicIslands.LoadIsland("cigen");
 				DynamicIslands.instance.StartCoroutine(GenTestLoaded(ok, a, n, s));
@@ -597,8 +597,8 @@ namespace DynamicIslands
 			}
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
 			Transform cam = Camera.main.transform;
-			cam.position = c + new Vector3(-60f, IslandFile.DefaultWaterLevel + 30f, -95f);
-			cam.LookAt(c + new Vector3(0, IslandFile.DefaultWaterLevel + 5f, 0));
+			cam.position = c + new Vector3(-60f, DynamicIslands.EditorWaterLevel + 30f, -95f);
+			cam.LookAt(c + new Vector3(0, DynamicIslands.EditorWaterLevel + 5f, 0));
 			Log("Placed " + spawned.Count + " sample objects (Ctrl+Z removes them)");
 		}
 
@@ -1386,7 +1386,7 @@ namespace DynamicIslands
 			// 1. Sculpt a round hill in the middle that rises 15 m above the water level
 			int res = data.heightmapResolution;
 			float[,] heights = data.GetHeights(0, 0, res, res);
-			float peak = (IslandFile.DefaultWaterLevel + 15f) / data.size.y;
+			float peak = (DynamicIslands.EditorWaterLevel + 15f) / data.size.y;
 			int cx = res / 2, cy = res / 2, radius = res / 8;
 			for (int y = 0; y < res; y++)
 				for (int x = 0; x < res; x++)
@@ -1396,7 +1396,7 @@ namespace DynamicIslands
 				}
 			data.SetHeights(0, 0, heights);
 			terraineditor.paintMask = null;
-			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			TerrainPainter.Setup(terrain, DynamicIslands.EditorWaterLevel);
 			int ares = data.alphamapResolution;
 			terraineditor.paintMask = new float[ares, ares];
 			yield return null;
@@ -1407,7 +1407,7 @@ namespace DynamicIslands
 			for (int z = 0; z < PaintSize; z++)
 				for (int x = 0; x < PaintSize; x++) { rockBlock[z, x, TerrainPainter.Rock] = 1f; terraineditor.paintMask[bz + z, bx + x] = 1f; }
 			data.SetAlphamaps(bx, bz, rockBlock);
-			TerrainPainter.PaintWorldArea(terrain, IslandFile.DefaultWaterLevel, terrain.transform.position, terrain.transform.position + data.size, terraineditor.paintMask);
+			TerrainPainter.PaintWorldArea(terrain, DynamicIslands.EditorWaterLevel, terrain.transform.position, terrain.transform.position + data.size, terraineditor.paintMask);
 			float rockAfterAuto = data.GetAlphamaps(bx + PaintSize / 2, bz + PaintSize / 2, 1, 1)[0, 0, TerrainPainter.Rock];
 			float grassBeside = data.GetAlphamaps(bx - 6, bz - 6, 1, 1)[0, 0, TerrainPainter.Grass];
 			bool maskRespected = rockAfterAuto > 0.98f;
@@ -1436,8 +1436,8 @@ namespace DynamicIslands
 			try
 			{
 				Transform cam = Camera.main.transform;
-				cam.position = centre + new Vector3(0, IslandFile.DefaultWaterLevel + 40f, -70f);
-				cam.LookAt(centre + new Vector3(0, IslandFile.DefaultWaterLevel, 0));
+				cam.position = centre + new Vector3(0, DynamicIslands.EditorWaterLevel + 40f, -70f);
+				cam.LookAt(centre + new Vector3(0, DynamicIslands.EditorWaterLevel, 0));
 			}
 			catch (Exception e) { Log("Could not move camera: " + e.Message); }
 			yield return new WaitForSeconds(1f);
@@ -1455,7 +1455,7 @@ namespace DynamicIslands
 			// 4. Wipe: flatten terrain, reset texturing to automatic, remove objects
 			data.SetHeights(0, 0, new float[res, res]);
 			terraineditor.paintMask = null;
-			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			TerrainPainter.Setup(terrain, DynamicIslands.EditorWaterLevel);
 			terraineditor.paintMask = new float[ares, ares];
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
@@ -1737,9 +1737,9 @@ namespace DynamicIslands
 			Check(ref ok, canvas != null && canvas.isActiveAndEnabled, "the editor canvas exists");
 			GameObject oldToolbar = GameObject.Find("Toolbar");
 			Check(ref ok, oldToolbar == null, "the bundle's old toolbar is hidden");
-			string[] groups = { "TopBar/Group_File", "TopBar/Group_Edit", "TopBar/Group_Tabs", "TopBar/Group_App", "ToolPanel/TerrainTools/Group_Sculpt", "ToolPanel/TerrainTools/Group_Paint ground",
-				"ToolPanel/TerrainTools/Group_Brush", "ToolPanel/ObjectTools/Group_Transform", "ToolPanel/ObjectTools/Group_Selection", "ToolPanel/ObjectTools/Group_Placing",
-				"ToolPanel/IslandTools/Group_Island", "ToolPanel/IslandTools/Group_Generate", "StatusBar" };
+			string[] groups = { "TopBar/Group_File", "TopBar/Group_Edit", "TopBar/Group_Tabs", "TopBar/Group_App", "ToolPanelFrame/Viewport/ToolPanel/TerrainTools/Group_Sculpt", "ToolPanelFrame/Viewport/ToolPanel/TerrainTools/Group_Paint ground",
+				"ToolPanelFrame/Viewport/ToolPanel/TerrainTools/Group_Brush", "ToolPanelFrame/Viewport/ToolPanel/ObjectTools/Group_Transform", "ToolPanelFrame/Viewport/ToolPanel/ObjectTools/Group_Selection", "ToolPanelFrame/Viewport/ToolPanel/ObjectTools/Group_Placing",
+				"ToolPanelFrame/Viewport/ToolPanel/IslandTools/Group_Island", "ToolPanelFrame/Viewport/ToolPanel/IslandTools/Group_Generate", "StatusBar" };
 			foreach (string g in groups)
 			{
 				Transform t = canvas.transform.Find(g);
@@ -1749,7 +1749,7 @@ namespace DynamicIslands
 
 			// Each tab shows its own panel (and the object browser only on the Objects tab); screenshots of each
 			string[] names = { "terrain", "objects", "island" };
-			Transform tools = canvas.transform.Find("ToolPanel");
+			Transform tools = canvas.transform.Find("ToolPanelFrame/Viewport/ToolPanel");
 			Transform browser = canvas.transform.Find("ObjectBrowser");
 			for (int i = 0; i < 3; i++)
 			{
@@ -1767,7 +1767,7 @@ namespace DynamicIslands
 			EditorUI.SetTab(TAB.ObjectPlace);
 			yield return null;
 			Vector3[] c = new Vector3[4];
-			((RectTransform)tools).GetWorldCorners(c);
+			EditorUI.ToolFrame.GetWorldCorners(c);
 			Check(ref ok, c[0].y >= 0 && c[2].x <= Screen.width, "the tool panel fits on the screen (bottom at " + c[0].y.ToString("F0") + " px)");
 			((RectTransform)browser).GetWorldCorners(c);
 			Check(ref ok, c[0].x > 0 && c[2].x <= Screen.width + 1 && c[0].y >= 0, "the object browser fits on the screen");
@@ -1782,7 +1782,7 @@ namespace DynamicIslands
 			Check(ref ok, files && gen && !IslandFilesWindow.IsOpen && !GeneratorWindow.IsOpen, "the islands and generator windows open and close");
 
 			// Brush buttons set the tool
-			Transform sculpt = canvas.transform.Find("ToolPanel/TerrainTools/Group_Sculpt");
+			Transform sculpt = canvas.transform.Find("ToolPanelFrame/Viewport/ToolPanel/TerrainTools/Group_Sculpt");
 			sculpt.GetComponentsInChildren<UnityEngine.UI.Button>(true).First(b => b.name == "Button_Flatten").onClick.Invoke();
 			Check(ref ok, terraineditor.modificationAction == terraineditor.TerrainModificationAction.Flatten, "the Flatten button picks the flatten brush");
 			sculpt.GetComponentsInChildren<UnityEngine.UI.Button>(true).First(b => b.name == "Button_Raise").onClick.Invoke();
@@ -1829,7 +1829,7 @@ namespace DynamicIslands
 			for (int i = 0; i < names.Count; i++)
 			{
 				GameObject go = PlaceableCatalog.Spawn(names[i], placed);
-				go.transform.position = terrain.transform.position + new Vector3(480f + i * 15f, IslandFile.DefaultWaterLevel + 2f, 500f);
+				go.transform.position = terrain.transform.position + new Vector3(480f + i * 15f, DynamicIslands.EditorWaterLevel + 2f, 500f);
 				go.AddComponent<EditorGameObject>().GameObjectName = names[i];
 			}
 			bool saved = DynamicIslands.SaveIsland("cicatalog");

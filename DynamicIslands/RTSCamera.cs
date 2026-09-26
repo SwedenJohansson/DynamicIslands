@@ -27,6 +27,9 @@ namespace DynamicIslands
 		public Transform cameraRotationParent;
 		public Transform camTarget;
 
+		/// <summary>World height of the sea of the island being edited.</summary>
+		static float SeaY() { return (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + DynamicIslands.EditorWaterLevel; }
+
 		void Start()
 		{
 			cameraRotationParent = GameObject.Find("CamParent").transform;
@@ -49,8 +52,9 @@ namespace DynamicIslands
 			// Calculate the direction in which the camera should move
 			Vector3 moveDirection = new Vector3(horizontalInput, 0, verticalInput);
 
-			// Calculate the speed at which the camera should move based on its height
-			float speed = moveSpeed * transform.position.y / maxHeight;
+			// Calculate the speed at which the camera should move based on its height (above or below the sea of the island being edited)
+			float sea = SeaY();
+			float speed = moveSpeed * Mathf.Clamp(Mathf.Abs(transform.position.y - sea), 6f, 300f) / 130f;
 
 			// Move faster while holding the shift key
 			if (Input.GetKey(KeyCode.LeftShift))
@@ -100,8 +104,9 @@ namespace DynamicIslands
 			// Calculate the new camera height based on the scroll input
 			float newHeight = transform.position.y + scrollInput * zoomSpeed;
 
-			// Clamp the camera height to the minimum and maximum values
-			newHeight = Mathf.Clamp(newHeight, minHeight, maxHeight);
+			// Keep the camera between just above the terrain's base (under water, on a deep sea floor) and high above the sea
+			float floor = terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f;
+			newHeight = Mathf.Clamp(newHeight, floor + minHeight, sea + maxHeight + 250f);
 
 			// Set the camera's position to the new height
 			transform.position = new Vector3(transform.position.x, newHeight, transform.position.z);

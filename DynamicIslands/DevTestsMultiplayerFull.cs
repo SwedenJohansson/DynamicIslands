@@ -225,10 +225,22 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
 			string kind = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
-			List<AI_NetworkBehaviour> animals = AnimalsOf(e, kind).Where(a => a.networkEntity != null && !a.networkEntity.IsDead).ToList();
-			if (animals.Count == 0) { Fail("no live " + kind + " at '" + e.HostName + "'"); return; }
+			DynamicIslands.instance.StartCoroutine(HitRoutine(e, kind));
+		}
+
+		static IEnumerator HitRoutine(IslandWorldState.Entry e, string kind)
+		{
+			// (an ambush's animals come up a moment after the zone goes off - their NavMesh is built first: wait for them)
+			List<AI_NetworkBehaviour> animals = null;
+			for (float until = Time.realtimeSinceStartup + 15f; Time.realtimeSinceStartup < until; )
+			{
+				animals = AnimalsOf(e, kind).Where(a => a.networkEntity != null && !a.networkEntity.IsDead).ToList();
+				if (animals.Count > 0) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			if (animals == null || animals.Count == 0) { Fail("no live " + kind + " at '" + e.HostName + "'"); yield break; }
 			Network_Host host = ComponentManager<Network_Host>.Value;
-			if (host == null) { Fail("no Network_Host"); return; }
+			if (host == null) { Fail("no Network_Host"); yield break; }
 			PutPlayerNear(animals[0].transform);
 			foreach (AI_NetworkBehaviour a in animals)
 				host.DamageEntity(a.networkEntity, a.transform, 9999f, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);

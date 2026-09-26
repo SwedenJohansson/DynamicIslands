@@ -514,13 +514,19 @@ namespace DynamicIslands.Editor
 			public Text Value;
 		}
 
-		/// <summary>"Label ........ value" on one line, the slider below it.</summary>
-		public static SliderRow Slider(Transform parent, string label, float min, float max, float value, Func<float, string> format, Action<float> onChange, string hint = null, bool whole = false)
+		/// <summary>"Label (?) ........ value" on one line, the slider below it. help: the text of the "?" mark after the label (none if null).</summary>
+		public static SliderRow Slider(Transform parent, string label, float min, float max, float value, Func<float, string> format, Action<float> onChange, string hint = null, bool whole = false, string help = null)
 		{
 			RectTransform box = Rect("Slider_" + label, parent);
 			Vertical(box.gameObject, 2f, new RectOffset(0, 0, 0, 0));
 			RectTransform top = Row(box, 18, 4, "Top");
-			Label(top, label, 14, TextColor);
+			Text l = Label(top, label, 14, TextColor);
+			if (help != null)
+			{
+				// The mark right after the label's text, the value at the far right
+				Ensure<LayoutElement>(l.gameObject).flexibleWidth = 0;
+				Help(top, help, 16f);
+			}
 			Text v = Label(top, "", 14, Accent, TextAnchor.MiddleRight, FontStyle.Bold, "Value");
 
 			RectTransform sr = Rect("Slider", box);
@@ -603,7 +609,8 @@ namespace DynamicIslands.Editor
 			b.colors = cb;
 			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
 			Border(r, ButtonBorder, 4, 1f);
-			Size(r.gameObject, size, size);
+			// A row of swatches may shrink them a little rather than grow wider than its panel
+			Size(r.gameObject, size, size).minWidth = Mathf.Min(size, 12f);
 			if (onClick != null) b.onClick.AddListener(() => onClick());
 			if (hint != null) Hint(r.gameObject, hint);
 			return b;
@@ -654,6 +661,207 @@ namespace DynamicIslands.Editor
 			scroll.verticalScrollbar = sb;
 			scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
 			return content;
+		}
+
+		/// <summary>
+		/// A panel as tall as its content, but never taller than the screen below it: then it scrolls. Raft's surface is
+		/// the frame (named name + "Frame"; anchor and size its width like any rect, top-left pivot); its content area
+		/// (named name, vertical layout) is returned. bottomMargin: space kept free under the panel (the status bar).
+		/// Whatever is too wide for the panel is cut off at its edge instead of spilling over it.
+		/// </summary>
+		public static RectTransform ScrollPanel(Transform parent, string name, RectOffset padding, float spacing, float bottomMargin)
+		{
+			RectTransform frame = Rect(name + "Frame", parent);
+			Surface(frame);
+			var scroll = frame.gameObject.AddComponent<ScrollRect>();
+			scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 30f; scroll.inertia = false;
+
+			// (room for the scrollbar is always kept at the right, so rows don't change width when it shows)
+			RectTransform viewport = Rect("Viewport", frame);
+			Stretch(viewport, 0, 8, 0, 0);
+			viewport.gameObject.AddComponent<RectMask2D>();
+			RectTransform content = Rect(name, viewport);
+			content.anchorMin = new Vector2(0, 1); content.anchorMax = new Vector2(1, 1); content.pivot = new Vector2(0.5f, 1);
+			content.offsetMin = content.offsetMax = Vector2.zero;
+			Vertical(content.gameObject, spacing, padding, true);
+
+			RectTransform bar = Rect("Scrollbar", frame);
+			bar.anchorMin = new Vector2(1, 0); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(1, 0.5f);
+			bar.sizeDelta = new Vector2(5, -16); bar.anchoredPosition = new Vector2(-3, 0);
+			Background(bar.gameObject, new Color(0.23f, 0.13f, 0.06f, 0.6f), 3);
+			var sb = bar.gameObject.AddComponent<Scrollbar>();
+			sb.direction = Scrollbar.Direction.BottomToTop;
+			RectTransform slide = Rect("Sliding Area", bar);
+			Stretch(slide);
+			RectTransform handle = Rect("Handle", slide);
+			Stretch(handle);
+			sb.handleRect = handle;
+			sb.targetGraphic = Background(handle.gameObject, Tan, 3);
+			var nav = sb.navigation; nav.mode = Navigation.Mode.None; sb.navigation = nav;
+
+			scroll.viewport = viewport; scroll.content = content;
+			scroll.verticalScrollbar = sb;
+			scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+			var fit = frame.gameObject.AddComponent<FitToContent>();
+			fit.Content = content; fit.BottomMargin = bottomMargin;
+			return content;
+		}
+
+		/// <summary>Keeps a ScrollPanel's frame as tall as its content, up to the space left below its top on the canvas.</summary>
+		public class FitToContent : MonoBehaviour
+		{
+			public RectTransform Content;
+			public float BottomMargin;
+
+			void LateUpdate()
+			{
+				var self = (RectTransform)transform;
+				var parent = self.parent as RectTransform;
+				if (Content == null || parent == null) return;
+				// (anchored at the top: its top is this far below the parent's top)
+				float top = -self.anchoredPosition.y + (1f - self.anchorMax.y) * parent.rect.height;
+				float available = Mathf.Max(60f, parent.rect.height - top - BottomMargin);
+				float h = Mathf.Min(Content.rect.height, available);
+				if (Mathf.Abs(self.sizeDelta.y - h) > 0.5f) self.sizeDelta = new Vector2(self.sizeDelta.x, h);
+			}
+		}
+
+		/// <summary>A picture (a texture drawn as is, e.g. a preview map or a thumbnail) of a fixed size, or filling a row's width when width &lt; 0.</summary>
+		public static RawImage Picture(Transform parent, Texture texture, float width, float height, string name = "Picture")
+		{
+			RectTransform r = Rect(name, parent);
+			var img = r.gameObject.AddComponent<RawImage>();
+			img.texture = texture;
+			img.raycastTarget = false;
+			Size(r.gameObject, width, height);
+			return img;
+		}
+
+		/// <summary>A row of tab buttons; the chosen one shows light (SetActive). onSelect gets the tab's index.</summary>
+		public static Button[] Tabs(Transform parent, string[] labels, string[] hints, Action<int> onSelect, float height = 32f, int fontSize = FontSize)
+		{
+			RectTransform row = Row(parent, height, 4f, "Tabs");
+			var buttons = new Button[labels.Length];
+			for (int i = 0; i < labels.Length; i++)
+			{
+				int index = i;
+				buttons[i] = Button(row, labels[i], () => onSelect(index), hints != null && i < hints.Length ? hints[i] : null, -1, height, fontSize);
+			}
+			return buttons;
+		}
+
+		#endregion
+
+		#region Help marks ("?" with a popup)
+
+		static RectTransform helpPopup;
+		static Text helpText;
+		static HelpMark helpShownBy;
+
+		/// <summary>
+		/// A small round "?" (put it after a setting's label): hovering it shows a popup next to it with a few sentences
+		/// about the setting - what it does, its range, tips. Clicking it (touch screens) shows the popup too, until the
+		/// mouse moves off it, another click, or a few seconds pass.
+		/// </summary>
+		public static Button Help(Transform parent, string text, float size = 18f)
+		{
+			RectTransform r = Rect("Help", parent);
+			Image img = Background(r.gameObject, new Color(Tan.r, Tan.g, Tan.b, 0.9f), Mathf.RoundToInt(size / 2f));
+			var b = r.gameObject.AddComponent<Button>();
+			Register(b);
+			b.targetGraphic = img;
+			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+			ColorBlock cb = b.colors;
+			cb.normalColor = Color.white; cb.highlightedColor = new Color(1.2f, 1.15f, 1f, 1f); cb.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f); cb.selectedColor = Color.white;
+			b.colors = cb;
+			Text t = Label(r, "?", Mathf.RoundToInt(size * 0.75f), AccentText, TextAnchor.MiddleCenter, FontStyle.Bold, "Text");
+			Stretch(t.rectTransform);
+			Size(r.gameObject, size, size);
+			var mark = r.gameObject.AddComponent<HelpMark>();
+			mark.Text = text;
+			b.onClick.AddListener(() => mark.Toggle());
+			return b;
+		}
+
+		/// <summary>The help text shown now (null when no popup is open): the tests check that popups close.</summary>
+		public static string ShownHelp { get { return helpPopup != null && helpPopup.gameObject.activeSelf ? helpText.text : null; } }
+
+		public class HelpMark : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+		{
+			public string Text;
+			float pinnedUntil;
+
+			public void OnPointerEnter(PointerEventData e) { ShowHelp(this); if (HintChanged != null) HintChanged("Help: move the mouse off the ? to close it"); }
+			public void OnPointerExit(PointerEventData e) { pinnedUntil = 0f; HideHelp(this); if (HintChanged != null) HintChanged(null); }
+
+			/// <summary>A click (or tap) shows the popup for a while, or closes it when it is open.</summary>
+			public void Toggle()
+			{
+				if (helpShownBy == this && pinnedUntil > Time.unscaledTime) { pinnedUntil = 0f; HideHelp(this); return; }
+				pinnedUntil = Time.unscaledTime + 8f;
+				ShowHelp(this);
+			}
+
+			void Update()
+			{
+				if (helpShownBy != this || pinnedUntil <= 0f) return;
+				// A pinned popup closes after a while, or with the next click anywhere else
+				if (Time.unscaledTime > pinnedUntil || (Input.GetMouseButtonDown(0) && !RectTransformUtility.RectangleContainsScreenPoint((RectTransform)transform, Input.mousePosition, null)))
+				{
+					pinnedUntil = 0f;
+					HideHelp(this);
+				}
+			}
+
+			void OnDisable() { pinnedUntil = 0f; HideHelp(this); }
+		}
+
+		static void ShowHelp(HelpMark mark)
+		{
+			if (helpPopup == null) BuildHelpPopup();
+			helpShownBy = mark;
+			helpText.text = mark.Text;
+			helpPopup.gameObject.SetActive(true);
+			helpPopup.SetAsLastSibling();
+			LayoutRebuilder.ForceRebuildLayoutImmediate(helpPopup);
+			// Next to the mark (right and below), kept on the screen
+			var canvas = (RectTransform)helpPopup.parent;
+			Vector3[] c = new Vector3[4];
+			((RectTransform)mark.transform).GetWorldCorners(c);
+			Vector2 local;
+			Camera cam = null;
+			Canvas markCanvas = mark.GetComponentInParent<Canvas>();
+			if (markCanvas != null && markCanvas.renderMode != RenderMode.ScreenSpaceOverlay) cam = markCanvas.worldCamera;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, RectTransformUtility.WorldToScreenPoint(cam, c[3]), null, out local);
+			Vector2 size = helpPopup.rect.size;
+			Rect area = canvas.rect;
+			float x = Mathf.Clamp(local.x + 6f, area.xMin + 4f, area.xMax - size.x - 4f);
+			float y = local.y - 4f;
+			if (y - size.y < area.yMin + 4f) y = local.y + ((RectTransform)mark.transform).rect.height + size.y + 8f; // above it, when there's no room below
+			y = Mathf.Clamp(y, area.yMin + size.y + 4f, area.yMax - 4f);
+			helpPopup.anchoredPosition = new Vector2(x - area.xMin, y - area.yMax);
+		}
+
+		static void HideHelp(HelpMark mark)
+		{
+			if (helpShownBy != mark) return;
+			helpShownBy = null;
+			if (helpPopup != null) helpPopup.gameObject.SetActive(false);
+		}
+
+		/// <summary>The one popup all "?" marks share, on its own canvas above every window (it never catches the mouse).</summary>
+		static void BuildHelpPopup()
+		{
+			Canvas canvas = CreateCanvas("CustomIslandsHelp", 900);
+			canvas.GetComponent<GraphicRaycaster>().enabled = false;
+			helpPopup = Panel(canvas.transform, "HelpPopup", new RectOffset(12, 12, 9, 11), 4f);
+			helpPopup.anchorMin = helpPopup.anchorMax = new Vector2(0, 1);
+			helpPopup.pivot = new Vector2(0, 1);
+			helpPopup.sizeDelta = new Vector2(330, 0);
+			helpText = Label(helpPopup, "", 14, TextColor);
+			helpText.lineSpacing = 1.05f;
+			foreach (Graphic g in helpPopup.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+			helpPopup.gameObject.SetActive(false);
 		}
 
 		#endregion

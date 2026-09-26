@@ -348,16 +348,29 @@ namespace DynamicIslands.Editor
 			float height = terrain.transform.position.y + data.GetInterpolatedHeight(nx, nz) - waterLevelWorldY; // metres above water
 			float slope = data.GetSteepness(nx, nz); // degrees
 
-			float seabed = 1f - Mathf.InverseLerp(-2.5f, -0.5f, height);
 			float grass = Mathf.InverseLerp(2.5f, 5f, height);
-			float sand = Mathf.Max(0f, 1f - seabed - grass);
+			float sand = 1f - grass;
 			float rock = Mathf.InverseLerp(28f, 42f, slope);
 
 			float keep = 1f - rock;
-			result[Seabed] = seabed * keep;
+			result[Seabed] = 0f;
 			result[Sand] = sand * keep;
 			result[Grass] = grass * keep;
 			result[Rock] = rock;
+			if (height >= -0.5f) return;
+
+			// Under water, as on Raft's islands (CIMeasureUnderwater): sand on the shelf, rock taking over with depth
+			// (a tenth on the shallow shelf, a third at 10-20 m, over half below 20 m) and on the steepest slopes, in patches; a little dirt
+			float depth = -height;
+			float wx = terrain.transform.position.x + nx * data.size.x, wz = terrain.transform.position.z + nz * data.size.z;
+			float patches = Mathf.PerlinNoise(wx / 23f + 311.7f, wz / 23f + 97.3f) - 0.5f;
+			float under = Mathf.Clamp01(Mathf.Max(Mathf.InverseLerp(46f, 64f, slope) * 0.7f, Mathf.Clamp01((depth - 2f) / 60f) * 0.8f) + 0.06f + patches * 0.5f * Mathf.InverseLerp(2f, 12f, depth));
+			float dirt = 0.07f * Mathf.InverseLerp(3f, 10f, depth) * (1f - under);
+			float t = Mathf.InverseLerp(0.5f, 2.5f, depth); // (blends in below the waterline)
+			result[Seabed] = dirt * t;
+			result[Sand] = Mathf.Lerp(result[Sand] + result[Grass], 1f - under - dirt, t);
+			result[Grass] = result[Grass] * (1f - t);
+			result[Rock] = Mathf.Lerp(rock, under, t);
 		}
 
 		static TerrainLayer MakeLayer(string name, Color light, Color dark, float tileSize)

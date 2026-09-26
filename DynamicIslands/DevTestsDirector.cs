@@ -471,7 +471,7 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(1.5f);
 				IslandGenSettings s = MapTypes.Roll(MapTypes.Get(show), new System.Random(4242), out float _);
 				Terrain terrain = terraineditor.terrain;
-				Vector3 c = terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel, 500f);
+				Vector3 c = terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
 				Transform cam = Camera.main.transform;
 				cam.position = c + new Vector3(0, s.Radius * 1.3f + s.Height, -s.Radius * 1.5f);
 				cam.LookAt(c + Vector3.up * (s.Height * 0.2f));

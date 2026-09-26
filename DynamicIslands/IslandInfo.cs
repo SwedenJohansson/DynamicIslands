@@ -16,6 +16,8 @@ namespace DynamicIslands.Editor
 	public class IslandSettings : MonoBehaviour
 	{
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
+		/// <summary>Height of the sea above the island's terrain base (IslandFile.WaterLevel): 20 m on a shallow seabed, 160 m on a deep sea floor.</summary>
+		public float WaterLevel = IslandFile.DefaultWaterLevel;
 	}
 
 	/// <summary>The island rules editor's result: per-island overrides of the world's settings.</summary>
@@ -62,7 +64,9 @@ namespace DynamicIslands.Editor
 
 		public static void Tag(GameObject root, IslandFile island)
 		{
-			root.AddComponent<IslandSettings>().Props = new Dictionary<string, string>(island.Props);
+			IslandSettings settings = root.AddComponent<IslandSettings>();
+			settings.Props = new Dictionary<string, string>(island.Props);
+			settings.WaterLevel = island.WaterLevel;
 			string title = ObjectProps.Get(island.Props, IslandProps.Title), desc = ObjectProps.Get(island.Props, IslandProps.Description);
 			if (title.Length == 0 && desc.Length == 0) return;
 			IslandInfoTag tag = root.AddComponent<IslandInfoTag>();

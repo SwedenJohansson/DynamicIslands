@@ -50,7 +50,7 @@ namespace DynamicIslands
 			foreach (Transform child in placed) UnityEngine.Object.Destroy(child.gameObject);
 			yield return null;
 			CommandUndoRedo.UndoRedoManager.Clear();
-			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, IslandFile.DefaultWaterLevel, 500f);
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
 			EditorGameObject lever = PlaceForTest("Log", c0, placed);
 			EditorGameObject wall = PlaceForTest(ContentCatalog.HelperWall, c0 + new Vector3(6f, 0, 0), placed);
 			EditorGameObject ramp = PlaceForTest(ContentCatalog.HelperRamp, c0 + new Vector3(-8f, 0, 0), placed);

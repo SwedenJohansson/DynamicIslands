@@ -60,8 +60,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
   - **Invisible walls and ramps** ("Zones & triggers"): solid in a world but not seen. Block a path, keep players in an arena, or make a cliff or sea stack climbable. Scale and turn them to fit.
   - **Island rules** (Island tab): how many in-game days until chopped trees, picked items, killed or caught animals, looted chests and fired zones come back on this island (empty = the world's setting, 0 = never).
   - Undo and redo everything, and save or load islands.
-  - **Generate** a random island to start from. You choose the seed, size, height, roughness, number of peaks, style, **layout** (round, atoll, archipelago, sea stacks, plateau, marsh), and how many trees, rocks and corals to scatter. The same seed always gives the same island. Volcanic islands get a cone with a crater.
-  - **Map types** (Generate window, "Or a map type"): whole islands with content, made from a seed and opened to edit: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island and wreck (see "Map types" below).
+  - **Generate** an island to start from (see "The island generator" below): three tabs. **Normal**: seed, style, **layout** (round, atoll, archipelago, sea stacks, plateau, marsh, crescent, twin peaks), size and highest point with **Small island / Large island / Balboa** buttons measured from Raft's own islands, peaks and their shape, hills, coast, bays, beach, cliffs, stretch, valleys, lakes, terraces, erosion, **under water like Raft's own islands** (a deep sea floor 160 m down with a shelf and a drop-off, and corals, sea vines, rocks, stones, clay, scrap, ores, giant clams and sunken barrels placed from measurements of Raft's islands), a slider for each kind of object (trees, bushes, rocks, beach things, harvestables) up to a jungle you can barely walk through, **animals** (hostile, friendly, sea; which kinds, how tough) and **loot boxes** with tiers 1-5; your own saved presets. **Randomize existing**: pick one of Raft's 33 islands from its picture, then "something new like it" or "a variation of it" (its own ground, reshaped). **Ready-made**: the map types as cards. A live preview map shows the island as you move the sliders, and a line above the seed says **whether players can get onto it from their raft** (easy, by jumping onto a ledge, only by building); every setting has a "?" to hover for help. The same seed and settings always give the same island.
+  - **Map types** (Generate window, **Ready-made** tab): whole islands with content, made from a seed and opened to edit: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island and wreck (see "Map types" below).
   - **When the quest is done, bring a new island** (quest editor): a saved island or a new island of a map type, how far and which way from this island, a message for every player and a name on the Receiver. **Islands it brings...** (Island tab) edits all the island's rules: also "when step 2 is done", "when zone X fires", "when players first get here".
   - **World plans** (top bar): plans for new worlds, made of rules (see "World plans" below). A plan editor with rule cards, **Check** (finds rules that can't work) and a sketch of where islands go, plus ready-made templates.
 - **In your worlds**
@@ -125,6 +125,66 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 | `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
 | `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
 
+## The island generator
+
+**Generate** (top bar, or the Island tab) opens the generator. The preview map on the right follows every change; the seed below it picks which island of all possible ones you get (the same seed with the same settings always gives exactly the same island). Every setting has a **?** to hover for help.
+
+**Normal** tab (every setting; **My presets** keeps them under a name, without the seed, in `generator_presets\`):
+
+| Group | Settings |
+|---|---|
+| Island | Style (ground textures, plants, animals: tropical, snowy, desert, forest, volcanic), layout (round, atoll, archipelago, sea stacks, plateau, marsh, crescent, twin peaks) |
+| Size and height | Size (the land's width) and highest point (the top is exactly this high), each with **Small island / Large island / Balboa** buttons measured from Raft's islands; peaks; peak shape (full, rounded hills ... spires over flat lowland); hills (smooth ... rugged, ridged) |
+| Coast and outline | Coast (smooth ... ragged, with points and islets), bays (coves ... deep inlets), beach width, cliffs (share of the coast that drops straight into deeper water), stretch (up to 3 times as long as wide, same area) and its direction |
+| Land features | River valleys from the top to the sea, lakes (below sea level, so the sea fills them), terraces, erosion (raindrops wear gullies) |
+| Under water | Sea floor: **deep, like Raft** (the island rises from a floor 160 m down: a shelf about 10 m deep, then a drop-off with spurs and gullies) or shallow (a flat seabed 20 m down, as before); width of the shallow water; drop-off (a long, gentle slope ... a sheer wall); seabed: sand, rocky, or a reef ring just under the surface |
+| Nature | Trees, bushes and plants, rocks, beach things, harvestables (stone, clay, sand, berries or pineapples), groups (spread evenly ... groves and clearings, reefs), and quick buttons None / Sparse / Like Raft / Dense / Jungle |
+| Life under water | Corals and plants (corals, sea vines with seaweed, kelp), rocks (boulders, rock formations on the drop-off), things to collect (stones, clay, sand, scrap, metal and copper ore, giant clams, silver algae), sunken barrels; quick buttons None / Sparse / **Like Raft** / Rich / Teeming. Placed like around Raft's own islands of the style (see "Under water, like Raft's islands"). |
+| Animals | Hostile creature spots (the style's own animals, or the kinds you click), toughness (Easy / Normal / Hard / Boss), friendly animals to catch, sea creatures |
+| Loot | Loot boxes, lowest and highest tier, in the open or hidden next to trees, bushes and rocks (about one in five lies sunken). Tier 1 planks, plastic, thatch, rope (a barrel or box) · 2 nails, stone, scrap, some food (a small chest) · 3 metal and copper ore, bolts, hinges (a crate) · 4 metal and copper ingots, circuit boards (a chest) · 5 titanium, explosive goo, batteries, good healing salves (a large chest). Only items your Raft has are used; every box can be changed afterwards. |
+
+**Randomize existing**: Raft's islands with a picture each. **Something new like it** fills the settings in from the island's measurements (land size, highest point, peaks, slopes, coast, stretch, shallow water, style, how dense its trees, bushes, rocks and harvestables are) and makes a new shape; the Normal tab shows them to change. **A variation of it** starts from the island's own ground, measured from Raft: size, height, stretch and direction, mirror, roughen, coast wobble, peak shape, valleys, lakes, terraces, erosion and seabed change it.
+
+**Ready-made (with content)**: the map types (see "Map types" above) as cards with a picture; **Make** creates one.
+
+**Can players reach it?** Above the seed, a coloured line says whether a player arriving on a raft can get onto the island these settings make, worked out from the ground the generator makes (at the editor's resolution) with Raft's own player: walkable slopes up to 45°, steps of 0.3 m, a jump lifts the feet 1.23 m (jump speed 7, gravity 20), a swimmer floats with the feet about 1.5 m down and a jump out of the water gets them about 0.35 m above the sea (measured with `CIPlayerJump`). **Easy** (beaches, walk to the top), **Reachable** (landing spots; how much of the land is walkable, with jumps, or needs building), **Possible but tricky** (only by jumping out of the sea or up from the shallows onto a ledge), **Possible but unlikely** (only by jumping from the raft's edge onto a ledge, extremely tricky), **Not from the raft without building** (cliffs all around; stairs, a ladder or foundations up the cliff). Flying ready-made islands need building up; sunken ones diving.
+
+### Under water, like Raft's islands
+
+`CIMeasureUnderwater` measured what lies under water around each of Raft's islands (`raft_underwater.txt`, shipped with the mod): every object by name with its depth, distance from the coast, slope under it, size and how deep it sits in the ground, the ground's depth profile and its textures by depth.
+
+- **The sea floor.** Raft's islands rise from a floor about 150-165 m down: a shelf that deepens to about 10 m some 20-30 m out, then a drop-off (a long slope around the big islands, a near wall around the small ones). Generated islands do the same on the **deep sea floor** (the island's file has its sea 160 m above the terrain's base; older and hand-made islands keep the shallow 20 m seabed, and **New** starts one). In a world the ground is kept down to 110 m, where it is dark.
+- **The life under water**, per depth band (0-2, 2-5, 5-10, 10-20, 20-40, 40-80, 80+ m), each kind as dense as around Raft's islands of the style: tropical (Raft's small and big islands) about 80 corals and plants per 1000 m² down to 40 m, mostly 4-25 m deep, reefs with sand between them, sea vines with seaweed to pick, tall kelp further down; stones, clay, sand and scrap on the shelf, metal and copper ore on the steep slopes, giant clams and silver algae now and then; boulders near the shore (only there do rocks break the surface) and big rock formations sunk into the drop-off. Forest (Balboa): sunken barrels, containers and buoys, ores and scrap, no corals. Desert (Caravan): sea vines and a few corals. Snowy (Temperance): bare rock (the finds are borrowed from the tropical islands). Volcanic: like the desert.
+- **The ground's textures** follow Raft's: sand on the shelf, rock taking over below 10 m (a quarter at 10-20 m, over half at 20-40 m, most below 40 m) and on the steepest slopes, in patches.
+
+### Raft's islands, measured
+
+`CIMeasureIslands` loads each of Raft's island scenes (switched off, so none of its scripts run), copies it without scripts into a scene with its own physics, and measures the ground on a 2 m grid (raycasts), counts objects by kind, and renders its picture. Land = ground above the sea; radius = of a round island as big.
+
+| Islands | Land (length x width) | Land radius | Highest point | Shallow water to (from the middle) |
+|---|---|---|---|---|
+| Small islands 1-10 (pooled) | 24-58 m x 14-48 m | 9-25 m, average **16 m** | 5-24 m, average **12 m** | 24-49 m |
+| Big islands (OG, Cresent, Twin peak, Big) | 212-241 m x 140-212 m | 77-110 m, average **89 m** | 38-123 m, median **49 m** (Twin peak 123 m) | 99-127 m |
+| Balboa Island | 481 x 454 m | **226 m** | **151 m** | 239 m |
+| Balboa small 1-3 | 155-197 m x 109-148 m | 61-83 m | 23-41 m | 91-100 m |
+| Caravan Island / small 1-3 | 173 x 145 m / 88-107 m x 59-70 m | 64 m / 38-41 m | 41 m / 16-36 m | 95 m / 40-81 m |
+| Temperance / small 1-3 | 1074 x 926 m / 317-461 m x 188-417 m | 457 m / 118-203 m | 101 m / 30-46 m | 459 m / 118-204 m |
+
+Raft's big islands carry about 45 objects per 1000 m² of land (OG: 11 trees, 12 bushes, 11 rocks, 10 harvestables), which the Nature sliders reach at about a third ("Like Raft"). Temperance is bigger than the 1000 m build area: its variations are scaled down to fit; Balboa fits.
+
+### What dense islands cost
+
+Measured with `CIGenBench` (editor) and `CIGenWorld` (a world, one PC; frame times include vsync at 60 Hz):
+
+| Objects | Generate | Editor frame | File | Save / load | Median free walk (walks blocked within 5 m) |
+|---|---|---|---|---|---|
+| 494 | 0.8 s | 17 ms | 75 KB | 0.2 s / 0.2 s | 20 m (8 %) |
+| 1 407 | 0.8 s | 17 ms | 99 KB | 0.2 s / 0.3 s | 17 m (26 %) |
+| 3 043 | 0.9 s | 17 ms | 141 KB | 0.2 s / 0.4 s | 7 m (40 %) |
+| 5 782 (a jungle, 220 m island) | 1.3 s | 17-26 ms | 210 KB | 0.3 s / 0.8 s | **3 m (66 %): barely walkable** |
+| 11 996 (a Balboa-sized jungle) | 1.7 s | 44 ms | 499 KB | 0.4 s / 1.1 s | 8.5 m (33 %) |
+
+In a world, a 5 681-object jungle spawned in 0.6 s and its creatures' NavMesh built in 1.4 s; frame time went from 17 ms to 27 ms with the whole island in view 330 m away and 19 ms standing in it (9 000 objects: 23 ms / 18 ms). A second player received both islands complete in 7-12 s. One island gets at most 12 000 objects (denser settings are thinned, and the window says so).
 ## Installing
 
 Install RML, then put `DynamicIslands.rmod` in Raft's `mods` folder, or get the mod from raftmodding.com. Every player in a multiplayer game needs the mod.
@@ -143,14 +203,14 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 
 ## The editor
 
-The screen has a **top bar**, a **tool panel** on the left, the **object browser** on the right (Objects tab) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
+The screen has a **top bar**, a **tool panel** on the left (it scrolls when a tall inspector doesn't fit the screen), the **object browser** on the right (Objects tab) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
 
 | Where | Control | What it does |
 |---|---|---|
 | Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Delete asks first). Save saves straight away once the island has a name. |
 | Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
 | Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
-| Top bar | **Generate** | The island generator: seed, style, layout, size, height, roughness, peaks and objects. Generating replaces the current island; Ctrl+Z brings the old one back. **Or a map type**: ◄ ► and **Make** (click twice) makes an island of that type from the seed, saves it as `gen-<type>-<seed>` and opens it. |
+| Top bar | **Generate** | The island generator (see "The island generator"): tabs **Normal**, **Randomize existing** and **Ready-made (with content)**, a preview map, the seed, **Generate** (Enter) and **Close** (Esc). Generating replaces the current island; Ctrl+Z brings the old one back. On Ready-made, **Make** (click twice) makes an island of the chosen type from the seed, saves it as `gen-<type>-<seed>` and opens it. Every setting has a **?**: hover it (or click it) for a few sentences of help. |
 | Top bar | **World plans** | The world plan editor: pick a plan, New / Copy / Delete, Templates..., random islands on/off, description, the rule cards (when · bring what · where · message · Receiver name), Check, the map, Save |
 | Terrain tab | **Sculpt** group | Raise / Lower / Flatten / Smooth. A ring shows the brush. |
 | Terrain tab | **Paint ground** group | The style's four textures (named after it, with a colour swatch) and **Auto** |
@@ -226,7 +286,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |
 | `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, Duplicate, picking objects with the mouse |
-| `UIKit.cs` | The editor's look: Raft's menu sprites and fonts (found in memory at the main menu; rounded sprites made at runtime stand in without them), panels, groups, the button looks (plain, choice, primary, delete, slot), sliders, fields |
+| `UIKit.cs` | The editor's look: Raft's menu sprites and fonts (found in memory at the main menu; rounded sprites made at runtime stand in without them), panels, groups, the button looks (plain, choice, primary, delete, slot), sliders, fields, tabs, pictures, the "?" help marks and their popup, and the scrolling panel the tool panel uses |
 | `EditorUI.cs`, `ObjectBrowser.cs`, `ObjectThumbnails.cs` | The editor screen (top bar, tool panels, status bar), the object browser, and the object pictures |
 | `IslandSpawner.cs` | Builds an island in a world: cropped terrain, textures, objects, network ids. For flying islands it also cuts terrain holes and adds the underside mesh |
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts |
@@ -236,7 +296,9 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients, quests, used objects, announcements, object state and events |
 | `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed |
-| `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in six layouts (round, atoll, archipelago, sea stacks, plateau, marsh), object scatter by zone, and the Generate window |
+| `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in eight layouts or from a Raft island's measured ground, then peak shape, valleys, exact height, terraces, erosion, lakes and seabed; object scatter by zone and kind on a spatial grid; creature spots and tiered loot boxes; the preview map; the Generate window with its three tabs and saved presets |
+| `RaftIslands.cs`, `RaftUnderwater.cs` | Raft's islands as measured (`raft_islands.txt`, `island_thumbs`, `island_heights`; `raft_underwater.txt`): the size and height presets, Randomize existing, and the life under water |
+| `IslandReach.cs` | Whether a player on a raft can get onto a generated island (the line above the seed) |
 | `MapTypes.cs` | Map types: settings ranges, flying/sunken, and their content (`MapKit`: chests, notes, zones, creatures, atmosphere, quests) |
 | `Behaviours.cs`, `BehaviourWindow.cs` | Behaviours and events: names, movement, "players can use it", collision, "when … then" actions, "only if" checks, waits, the shared clock for movers, their shared state and network messages; the Behaviour & events window |
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |
@@ -255,6 +317,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 - Behaviours: actions waiting after a "wait" need the island to stay loaded: when the raft sails away (about 800 m) and it unloads, they are dropped. Item checks look at the inventory of the player who did it; for events no single player does (defeated animals, a finished quest) they look at the host's player.
 - Story items live in the journal, not in Raft's inventory (Raft's own quest items are a fixed list, and new Raft items would break saves without the mod). Their ids are shared by all islands of a world: two islands that use the same id mean the same item.
 - World plans and island rules are checked by the host only. A second player gets the announcement (with the direction from where they are) and the Receiver dots; this was checked in the two-player test's logs, not yet by a person looking at the screen.
+- The generator: one island gets at most 12 000 objects (a Balboa-sized jungle is thinned to that). Lakes go below sea level, because Raft has one sea level. "Randomize existing" knows Raft's islands as measured with this Raft version (`raft_islands.txt`); built places (Tangaroa, Utopia, Varuna Point, the radio tower) count their buildings as ground, so their variations are rocky towers. Temperance is bigger than the build area and is scaled down. The life under water is placed from the catalog's core objects only (a few kinds seen on Raft's islands, such as Varuna Point's corals, load on demand and are left out).
 - The Receiver shows every custom island as a dot, however far; a plan with many islands fills the radar. Map type content is placed by the generator: a chest can end up in an awkward spot now and then (the Generate window's map types let you check and fix one before sharing it).
 - An island has one quest. Quest steps find things by name (zone name, note title, creature kind), so renaming a note breaks a step that points at it.
 - Atmosphere zones change Unity's fog and ambient light plus a faint screen tint; how strong the fog looks depends on Raft's own sky at that moment.

@@ -465,13 +465,14 @@ namespace DynamicIslands.Editor
 		{
 			Dictionary<string, string> p = target.Props;
 			RectTransform g = UIKit.Group(root, "Colour");
-			RectTransform row = UIKit.Row(g, 24f, 4f, "Swatches");
-			Button none = UIKit.Button(row, "None", () => SetTint(target, null), "Its own colours", 46, 24f, 11);
+			// (None and nine swatches just fit the panel's width: 40 + 9 x 20 + 9 x 3)
+			RectTransform row = UIKit.Row(g, 22f, 3f, "Swatches");
+			Button none = UIKit.Button(row, "None", () => SetTint(target, null), "Its own colours", 40, 22f, 11);
 			UIKit.SetActive(none, !ObjectProps.HasTint(p));
 			foreach (Color c in Swatches)
 			{
 				Color col = c;
-				UIKit.ColorButton(row, c, () => SetTint(target, col), "Tint it this colour" + (creature ? " (every animal of this spot)" : ""), 22f);
+				UIKit.ColorButton(row, c, () => SetTint(target, col), "Tint it this colour" + (creature ? " (every animal of this spot)" : ""), 20f);
 			}
 			if (!ObjectProps.HasTint(p) && !showRgb)
 			{

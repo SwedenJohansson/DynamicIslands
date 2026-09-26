@@ -338,7 +338,8 @@ namespace DynamicIslands.Editor
 		public static float LandRadius(IslandFile island)
 		{
 			int res = island.HeightmapResolution;
-			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			// (ground less than 20 m under the sea: on a deep sea floor the island's foot reaches much further, down in the dark)
+			float threshold = Mathf.Max(ShapedThresholdMetres, island.WaterLevel - IslandFile.DefaultWaterLevel) / island.TerrainSize.y;
 			float step = 1f / (res - 1);
 			Vector2 centre = LandCentre(island);
 			float maxSq = 0f;
@@ -359,13 +360,18 @@ namespace DynamicIslands.Editor
 		/// <summary>True if anything of the terrain was raised above the flat seabed (islands of only objects have no land).</summary>
 		public static bool HasLand(IslandFile island)
 		{
-			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			float threshold = ShapedMetres(island) / island.TerrainSize.y;
 			foreach (float h in island.Heights) if (h > threshold) return true;
 			return false;
 		}
 
 		/// <summary>Anything raised more than this above the flat seabed (height 0) counts as part of the island.</summary>
 		const float ShapedThresholdMetres = 1f;
+		/// <summary>How deep the sea floor of an island on a deep sea floor is kept in a world (m): below it, in the dark, it ends.</summary>
+		const float DeepestKept = 110f;
+
+		/// <summary>Ground higher than this (m above the terrain's base) is part of the island: anything raised off a shallow seabed; on a deep sea floor, ground less than DeepestKept under the sea.</summary>
+		static float ShapedMetres(IslandFile island) { return Mathf.Max(ShapedThresholdMetres, island.WaterLevel - DeepestKept); }
 		/// <summary>Extra heightmap samples kept around the shaped area so slopes don't end in a cliff.</summary>
 		const int CropMarginSamples = 16;
 
@@ -376,7 +382,7 @@ namespace DynamicIslands.Editor
 		public static void GetCropArea(IslandFile island, out int x0, out int z0, out int size)
 		{
 			int res = island.HeightmapResolution;
-			float threshold = ShapedThresholdMetres / island.TerrainSize.y;
+			float threshold = ShapedMetres(island) / island.TerrainSize.y;
 			int minX = res, minZ = res, maxX = -1, maxZ = -1;
 			for (int z = 0; z < res; z++)
 				for (int x = 0; x < res; x++)

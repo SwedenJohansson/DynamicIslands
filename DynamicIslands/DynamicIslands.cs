@@ -34,6 +34,25 @@ namespace DynamicIslands
 		/// <summary>Island-wide settings of the island being edited (IslandProps: name shown to players, author, description); saved with it.</summary>
 		public static Dictionary<string, string> currentIslandProps = new Dictionary<string, string>();
 
+		/// <summary>
+		/// Editor Y of the sea for the island being edited: IslandFile.DefaultWaterLevel (20 m above the terrain's base)
+		/// for islands on a shallow seabed, IslandFile.DeepWaterLevel for islands generated on Raft's deep sea floor.
+		/// Saved with it.
+		/// </summary>
+		public static float EditorWaterLevel = IslandFile.DefaultWaterLevel;
+		static GameObject waterPlane;
+
+		/// <summary>Sets the sea level of the island being edited and moves the editor's blue sea plane to it.</summary>
+		public static void SetEditorWaterLevel(float level)
+		{
+			EditorWaterLevel = Mathf.Clamp(level, 1f, IslandGenerator.BuildArea.y - 10f);
+			if (waterPlane != null)
+			{
+				Vector3 p = waterPlane.transform.position;
+				waterPlane.transform.position = new Vector3(p.x, (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + EditorWaterLevel, p.z);
+			}
+		}
+
 		/// <summary>Sets the style of the island being edited: re-skins the editor terrain and relabels the paint buttons.</summary>
 		public static void SetEditorStyle(int style)
 		{
@@ -293,7 +312,7 @@ namespace DynamicIslands
 			CreateWaterLevelPlane();
 
 			// Start above the middle of the (1000 x 1000) build area, looking down at it, rather than at the corner under water
-			Vector3 buildCentre = new Vector3(500f, IslandFile.DefaultWaterLevel, 500f);
+			Vector3 buildCentre = new Vector3(500f, EditorWaterLevel, 500f);
 			Camera.main.transform.position = buildCentre + new Vector3(0f, 60f, -120f);
 			Camera.main.transform.rotation = Quaternion.Euler(28f, 0f, 0f);
 
@@ -339,7 +358,8 @@ namespace DynamicIslands
 			currentIslandProps = new Dictionary<string, string>();
 			SetEditorStyle(TerrainPainter.Tropical);
 			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
-			TerrainPainter.Setup(terrain, IslandFile.DefaultWaterLevel);
+			SetEditorWaterLevel(IslandFile.DefaultWaterLevel);
+			TerrainPainter.Setup(terrain, EditorWaterLevel);
 			CommandUndoRedo.UndoRedoManager.Clear();
 			EditorUI.RefreshIsland();
 			Notify("New island: shape the land on the Terrain tab, then place objects");
@@ -444,6 +464,7 @@ namespace DynamicIslands
 					terrain.terrainData.size = island.TerrainSize;
 				}
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
+				SetEditorWaterLevel(island.WaterLevel);
 				SetEditorStyle(TerrainPainter.StyleIndex(island.Style)); // before painting, so the right textures go on
 				if (island.HasPaint)
 				{
@@ -497,7 +518,8 @@ namespace DynamicIslands
 				plane.name = "WaterLevel";
 				Destroy(plane.GetComponent<Collider>()); // must not block terrain raycasts
 				Vector3 size = terraineditor.terrain != null ? terraineditor.terrain.terrainData.size : new Vector3(1000, 600, 1000);
-				plane.transform.position = new Vector3(size.x / 2f, IslandFile.DefaultWaterLevel, size.z / 2f);
+				plane.transform.position = new Vector3(size.x / 2f, EditorWaterLevel, size.z / 2f);
+				waterPlane = plane;
 				plane.transform.localScale = new Vector3(size.x / 10f, 1, size.z / 10f); // Unity plane is 10x10
 				Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
 				if (shader != null)

@@ -39,7 +39,8 @@ namespace DynamicIslands.Editor
 		public readonly System.Random Rnd;
 		readonly float step;
 		readonly List<Vector2> placed = new List<Vector2>();
-		public const float Sea = IslandFile.DefaultWaterLevel;
+		/// <summary>Terrain height of the sea (the file's water level: 20 m on a shallow seabed, 160 m on a deep sea floor).</summary>
+		public float Sea { get { return File.WaterLevel; } }
 
 		public MapKit(IslandFile file, int seed)
 		{
@@ -218,7 +219,7 @@ namespace DynamicIslands.Editor
 			Styled("volcanic", "Volcanic island", "A cone with a crater", TerrainPainter.Volcanic),
 
 			new MapType { Name = "sandbar", Label = "Sandbar", Description = "A tiny island with a few palms and a small chest: a rest stop between islands",
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 14f, 26f, 3f, 4f, 0.25f, 0.9f, 1),
+				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 12f, 23f, 3f, 4f, 0.25f, 0.9f, 1),
 				Content = (k, s) => k.Chest("Loot_ChestSmall", k.Highest(k.Mid, s.Radius), "Driftwood cache", MapKit.Loot("Basics")) },
 
 			new MapType { Name = "atoll", Label = "Atoll", Title = "Atoll", Description = "A ring of low land around a shallow lagoon, with turtles and a sunken barrel",
@@ -239,19 +240,19 @@ namespace DynamicIslands.Editor
 				Content = Stacks },
 
 			new MapType { Name = "boss", Label = "Boss island", Title = "The plateau", Description = "A flat-topped mesa with a ramp; walking into the arena wakes a huge beast (quest, big reward)",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy), IslandShapes.Plateau, 90f, 130f, 12f, 20f, 0.45f, 0.35f),
+				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy), IslandShapes.Plateau, 78f, 113f, 12f, 20f, 0.45f, 0.35f),
 				Content = Boss },
 
 			new MapType { Name = "volcano", Label = "Volcano", Title = "Volcano", Description = "A tall volcano; embers, red light and dark smoke near the crater",
-				Settings = rnd => Gen(rnd, TerrainPainter.Volcanic, IslandShapes.Round, 110f, 170f, 60f, 100f, 0.65f, 0.5f, 2),
+				Settings = rnd => Gen(rnd, TerrainPainter.Volcanic, IslandShapes.Round, 95f, 148f, 60f, 100f, 0.65f, 0.5f, 2),
 				Content = (k, s) => k.Atmosphere(k.Highest(k.Mid, s.Radius * 0.45f), 50f, "#3A1E14", 0.45f, "#FF7043", 0.5f, "embers") },
 
 			new MapType { Name = "swamp", Label = "Swamp", Title = "Swamp", Description = "Low land with pools, green mist and fireflies; rats guard a stash (quest)",
-				Settings = rnd => Gen(rnd, TerrainPainter.Forest, IslandShapes.Marsh, 100f, 160f, 5f, 9f, 0.9f, 0.9f),
+				Settings = rnd => Gen(rnd, TerrainPainter.Forest, IslandShapes.Marsh, 87f, 139f, 5f, 9f, 0.9f, 0.9f),
 				Content = Swamp },
 
 			new MapType { Name = "spire", Label = "Frozen spire", Title = "Frozen spire", Description = "A snowy island with one very tall peak, falling snow and a polar bear",
-				Settings = rnd => { var s = Gen(rnd, TerrainPainter.Snowy, IslandShapes.Round, 90f, 120f, 95f, 120f, 0.5f, 0.5f, 1); s.Peaks = 1; return s; },
+				Settings = rnd => { var s = Gen(rnd, TerrainPainter.Snowy, IslandShapes.Round, 78f, 104f, 95f, 120f, 0.5f, 0.5f, 1); s.Peaks = 1; return s; },
 				Content = (k, s) =>
 				{
 					k.Atmosphere(k.Mid, 50f, "#DDE6F0", 0.35f, "#CFE0FF", 0.25f, "snow");
@@ -261,19 +262,19 @@ namespace DynamicIslands.Editor
 				} },
 
 			new MapType { Name = "treasure", Label = "Treasure island", Title = "Treasure island", Description = "A map in a bottle on the beach leads to a buried treasure (quest)",
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 90f, 140f, 20f, 40f, 0.5f, 0.55f),
+				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 78f, 122f, 20f, 40f, 0.5f, 0.55f),
 				Content = Treasure },
 
 			new MapType { Name = "camp", Label = "Old camp", Title = "Old camp", Description = "An abandoned camp with a notice board and supplies (quest); good as the start of a story",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 90f, 130f, 15f, 30f, 0.45f, 0.5f),
+				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 78f, 113f, 15f, 30f, 0.45f, 0.5f),
 				Content = Camp },
 
 			new MapType { Name = "sunken", Label = "Sunken island", Title = "Sunken island", Description = "An island under water: corals, sunken barrels and puffer fish, for divers", SunkenDepth = 12f,
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 60f, 100f, 9f, 13f, 0.6f, 0f),
+				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 52f, 87f, 9f, 13f, 0.6f, 0f),
 				Content = Sunken },
 
 			new MapType { Name = "sky", Label = "Sky island", Title = "Sky island", Description = "A small island floating high in the air, with a cache", FlyingChance = 1f, FlyingMin = 45f, FlyingMax = 90f,
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 45f, 80f, 12f, 25f, 0.5f, 0.6f, 2),
+				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 39f, 70f, 12f, 25f, 0.5f, 0.6f, 2),
 				Content = (k, s) => k.Chest("Loot_ChestSmall", k.Highest(k.Mid, s.Radius * 0.6f), "Sky cache", MapKit.Loot("Metal")) },
 
 			new MapType { Name = "wreck", Label = "Wreck", Title = "Wreck", Description = "No land: an abandoned raft of Raft's blocks with barrels to loot",
@@ -400,7 +401,7 @@ namespace DynamicIslands.Editor
 			};
 			var k = new MapKit(f, s.Seed);
 			var rnd = new System.Random(s.Seed);
-			float g = PlacementOptions.GridSize, sea = MapKit.Sea;
+			float g = PlacementOptions.GridSize, sea = k.Sea;
 			Vector3 o = new Vector3(k.Mid.x, 0f, k.Mid.y);
 			float floatY = sea - PlacementOptions.FloatDepth, deck = floatY + 0.35f;
 			int w = 3 + rnd.Next(3), d = 2 + rnd.Next(3);
@@ -460,6 +461,6 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>About how far the land of these settings reaches (for placing it before the file exists).</summary>
-		public static float EstimatedRadius(IslandGenSettings s) { return Mathf.Max(20f, s.Radius * 1.4f); }
+		public static float EstimatedRadius(IslandGenSettings s) { return Mathf.Max(20f, IslandGenerator.Reach(s)); }
 	}
 }

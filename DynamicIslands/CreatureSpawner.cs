@@ -361,6 +361,29 @@ namespace DynamicIslands.Editor
 					if (!any) { local = b; any = true; } else local.Encapsulate(b);
 				}
 				local.Expand(4f);
+				// Animals walk on the land and in the shallows only: an island on a deep sea floor has a terrain reaching
+				// 160 m down and hundreds of metres out, which would make the NavMesh many times slower to build
+				IslandSettings island = root.GetComponent<IslandSettings>();
+				Terrain terrain = root.GetComponentInChildren<Terrain>();
+				if (island != null && terrain != null && terrain.terrainData != null)
+				{
+					float lowest = island.WaterLevel - 6f; // (root-local height)
+					TerrainData td = terrain.terrainData;
+					int res = td.heightmapResolution;
+					float[,] h = td.GetHeights(0, 0, res, res);
+					Vector3 origin = terrain.transform.position - root.transform.position;
+					float cell = td.size.x / (res - 1);
+					int minX = res, maxX = -1, minZ = res, maxZ = -1;
+					for (int z = 0; z < res; z++)
+						for (int x = 0; x < res; x++)
+							if (origin.y + h[z, x] * td.size.y > lowest) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (z < minZ) minZ = z; if (z > maxZ) maxZ = z; }
+					if (maxX >= 0)
+					{
+						Vector3 min = new Vector3(Mathf.Max(local.min.x, origin.x + minX * cell - 8f), Mathf.Max(local.min.y, lowest), Mathf.Max(local.min.z, origin.z + minZ * cell - 8f));
+						Vector3 max = new Vector3(Mathf.Min(local.max.x, origin.x + maxX * cell + 8f), local.max.y, Mathf.Min(local.max.z, origin.z + maxZ * cell + 8f));
+						if (max.x > min.x && max.y > min.y && max.z > min.z) local.SetMinMax(min, max);
+					}
+				}
 				Debug.Log("[CUSTOM ISLANDS] NavMesh sources: " + sources.Count + " (" + sources.Count(s => s.shape == NavMeshBuildSourceShape.Terrain) + " terrain), area " + local.min.ToString("F0") + " to " + local.max.ToString("F0") + " around the island's corner");
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Collecting the island's ground for its NavMesh failed: " + e); yield break; }
