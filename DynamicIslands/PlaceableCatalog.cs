@@ -109,7 +109,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Harvestable Raft objects kept with their gameplay scripts (the same objects as in prototypes).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>();
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>

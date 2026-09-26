@@ -76,6 +76,9 @@ namespace DynamicIslands.Editor
 			AI_NetworkBehaviourType.Chicken, AI_NetworkBehaviourType.Goat, AI_NetworkBehaviourType.Llama,
 		};
 
+		/// <summary>Tests: every island counts as a big one and gets its cave and outpost.</summary>
+		internal static bool ForceBigFinds;
+
 		static bool Dry(float h, float slope) { return h > 1.2f && h < 40f && slope < 26f; }
 
 		/// <summary>
@@ -97,6 +100,23 @@ namespace DynamicIslands.Editor
 			if (s.Has(RandomizerSettings.Animals)) Animals(k, ground, l, s, rnd, parts);
 			if (s.Has(RandomizerSettings.Loot)) Loot(k, ground, s, rnd, parts);
 			if (s.Has(RandomizerSettings.Finds) && rnd.NextDouble() < s.Pick(0.1f, 0.2f, 0.3f) * (big ? 1.6f : 1f)) Find(k, ground, l, s, rnd, parts, big);
+			// Raft's big islands: now and then a cave under a mound of rocks, and an outpost with things from the quest islands
+			if (ForceBigFinds) big = true;
+			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.25f, 0.45f, 0.7f)))
+			{
+				string cave = RandomizerIslands.Grotto(k, ground, rnd, TerrainPainter.Tropical, new[] { "Boar", "Boar", "Bear", "Rat" }[rnd.Next(4)], rnd.NextDouble() < 0.3 ? "Treasure" : "Metal");
+				if (cave != null) parts.Add(cave);
+			}
+			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.2f, 0.35f, 0.5f)))
+			{
+				List<Theme> themes = RandomizerIslands.ThemesFor(TerrainPainter.Tropical);
+				Vector3? spot = themes.Count > 0 ? ground.Find(rnd, (h, slope) => h > 2.5f && h < 25f && slope < 10f, k.Taken, 14f, 200) : null;
+				if (spot.HasValue)
+				{
+					Theme t = themes[rnd.Next(themes.Count)];
+					if (RandomizerIslands.DressWorld(k, ground, t, spot.Value, 8f, rnd)) parts.Add("an outpost (" + t.Label.ToLowerInvariant() + ")");
+				}
+			}
 
 			what = string.Join(", ", parts.ToArray());
 			return k.File.Objects.Count > 0 ? k.File : null;
@@ -402,6 +422,10 @@ namespace DynamicIslands.Editor
 					Hut(k, c, yaw);
 					break;
 			}
+			// A touch of the quest island the set piece comes from
+			string theme;
+			Theme th = RandomizerIslands.OddityTheme.TryGetValue(kind, out theme) ? RandomizerIslands.ThemeOf(theme) : null;
+			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4));
 		}
 
 		/// <summary>A small hut of Raft's blocks on the land, open on one side, with a hammock and the castaway's chest.</summary>

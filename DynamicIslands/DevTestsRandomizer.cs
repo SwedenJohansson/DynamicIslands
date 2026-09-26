@@ -575,6 +575,384 @@ namespace DynamicIslands
 			Log("PASS: probed colliders");
 		}
 
+		#region Like Raft's islands, large islands, caves
+
+		static readonly System.Text.RegularExpressions.Regex Cuttable = new System.Text.RegularExpressions.Regex(@"^Pickup_Landmark_(Tree_\w+|MangoTree|Palmtree \d+)$");
+
+		/// <summary>Raft's plain tropical islands from raft_land.txt: land (m²), land objects, trees to cut, harvestables on land.</summary>
+		static List<float[]> RaftIslandNumbers()
+		{
+			var land = new Dictionary<string, float>();
+			var counts = new Dictionary<string, float[]>();
+			var seen = new HashSet<string>();
+			byte[] bytes = RaftIslands.ModFile(RaftLand.FileName);
+			if (bytes == null) return new List<float[]>();
+			foreach (string raw in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
+			{
+				string[] f = raw.TrimEnd('\r').Split('\t');
+				if (f.Length < 5 || !System.Text.RegularExpressions.Regex.IsMatch(f[1], @"^(Big|Big island .+|Small island \d+)$")) continue;
+				if (f[0] == "land") land[f[1]] = f[4].Split(' ').Where(x => x.Contains(':')).Sum(x => float.Parse(x.Split(':')[1], System.Globalization.CultureInfo.InvariantCulture));
+				else if (f[0] == "lobj" && seen.Add(f[1] + "|" + f[2]))
+				{
+					float[] c;
+					if (!counts.TryGetValue(f[1], out c)) counts[f[1]] = c = new float[3];
+					float n = float.Parse(f[4], System.Globalization.CultureInfo.InvariantCulture);
+					c[0] += n;
+					if (Cuttable.IsMatch(f[2])) c[1] += n;
+					if (f[2].StartsWith("Pickup_Landmark_")) c[2] += n;
+				}
+			}
+			return land.Where(kv => counts.ContainsKey(kv.Key)).Select(kv => new[] { kv.Value, counts[kv.Key][0], counts[kv.Key][1], counts[kv.Key][2] }).ToList();
+		}
+
+		/// <summary>A generated island file's land (m²), land objects (nature, not content), trees to cut, harvestables on land, flowers.</summary>
+		static float[] IslandNumbers(IslandFile f)
+		{
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1), sea = f.WaterLevel;
+			int cells = 0;
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (f.Heights[z, x] * f.TerrainSize.y > sea + 0.1f) cells++;
+			var nature = f.Objects.Where(o => o.Position.y > sea + 0.2f && (o.Props == null || o.Props.Count == 0)).ToList();
+			return new float[] { cells * step * step, nature.Count, nature.Count(o => Cuttable.IsMatch(o.Name)), nature.Count(o => o.Name.StartsWith("Pickup_Landmark_")), nature.Count(o => o.Name.Contains("Flower")) };
+		}
+
+		[ConsoleCommand(name: "CIIslandsLikeRaft", docs: "Dev, anywhere: the randomizer's islands fit in Raft's world: land objects per 1000 m² and trees to cut compared with Raft's own small and big islands (raft_land.txt); large islands have puffer fish, warthogs, animals to catch, scenes and a cave")]
+		public static void IslandsLikeRaftCommand() { DynamicIslands.instance.StartCoroutine(IslandsLikeRaftRoutine()); }
+
+		static IEnumerator IslandsLikeRaftRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			List<float[]> raft = RaftIslandNumbers();
+			List<float[]> small = raft.Where(x => x[0] < 5000f).ToList(), big = raft.Where(x => x[0] >= 5000f).ToList();
+			Func<List<float[]>, int, float, float> per = (list, i, scale) => list.Count == 0 ? 0f : list.Average(x => x[i] / x[0] * scale);
+			Log("Raft's small islands: " + small.Count + ", " + (small.Count > 0 ? small.Min(x => x[0]).ToString("F0", inv) + "-" + small.Max(x => x[0]).ToString("F0", inv) : "?") + " m² of land, " +
+				(small.Count > 0 ? small.Min(x => x[1] / x[0] * 1000f).ToString("F0", inv) + "-" + small.Max(x => x[1] / x[0] * 1000f).ToString("F0", inv) : "?") + " land objects per 1000 m², " +
+				(small.Count > 0 ? small.Min(x => x[2]).ToString("F0", inv) + "-" + small.Max(x => x[2]).ToString("F0", inv) : "?") + " trees to cut");
+			Log("Raft's big islands: " + big.Count + ", " + (big.Count > 0 ? big.Min(x => x[1] / x[0] * 1000f).ToString("F0", inv) + "-" + big.Max(x => x[1] / x[0] * 1000f).ToString("F0", inv) : "?") + " land objects per 1000 m², " +
+				(big.Count > 0 ? big.Min(x => x[2] / x[0] * 1000f).ToString("F2", inv) + "-" + big.Max(x => x[2] / x[0] * 1000f).ToString("F2", inv) : "?") + " trees to cut per 1000 m²");
+			if (small.Count == 0 || big.Count == 0) { Fail("raft_land.txt has no plain islands"); yield break; }
+			float smallMin = small.Min(x => x[1] / x[0] * 1000f), smallMax = small.Max(x => x[1] / x[0] * 1000f);
+			float bigMin = big.Min(x => x[1] / x[0] * 1000f), bigMax = big.Max(x => x[1] / x[0] * 1000f);
+			float cutMin = big.Min(x => x[2] / x[0] * 1000f), cutMax = big.Max(x => x[2] / x[0] * 1000f);
+
+			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair", "large", "large", "large", "large" }).ToList();
+			int flowers = 0, tropical = 0;
+			for (int i = 0; i < types.Count; i++)
+			{
+				MapType type = MapTypes.Get(types[i]);
+				float el;
+				IslandGenSettings s = MapTypes.Roll(type, new System.Random(4200 + i), out el);
+				IslandFile f = null;
+				try { f = MapTypes.Create(type, s, el, "likeraft"); }
+				catch (Exception e) { Fail(types[i] + ": " + e); ok = false; continue; }
+				float[] n = IslandNumbers(f);
+				float dens = n[1] / n[0] * 1000f, cut = n[2];
+				bool isBig = n[0] >= 5000f;
+				// Small islands: objects as dense as on Raft's small islands (loosely), a few trees to cut; big: as Raft's big ones
+				bool good = isBig ? dens >= bigMin * 0.6f && dens <= bigMax * 1.6f && cut / n[0] * 1000f >= cutMin * 0.5f && cut / n[0] * 1000f <= cutMax * 2f
+					: dens >= smallMin * 0.4f && dens <= smallMax * 1.5f && (s.Style != TerrainPainter.Tropical || (cut >= 1 && cut <= 14));
+				if (s.Style == TerrainPainter.Tropical) { tropical++; if (n[4] > 0) flowers++; }
+				string extra = "";
+				if (types[i] == "large")
+				{
+					int puffer = f.Objects.Count(o => o.Name == "Creature_PufferFish"), boars = f.Objects.Count(o => o.Name == "Creature_Boar" || o.Name.StartsWith("Creature_") && o.Position.y > f.WaterLevel && ContentCatalog.CreatureOf(o.Name) != null && ContentCatalog.CreatureOf(o.Name).Category == ContentCatalog.HostileCategory);
+					int tame = f.Objects.Count(o => ContentCatalog.CreatureOf(o.Name) != null && ContentCatalog.CreatureOf(o.Name).Category == ContentCatalog.CatchableCategory);
+					int scene = f.Objects.Count(o => o.Props != null && o.Props.ContainsKey("set.piece") && !o.Props.ContainsKey("cave"));
+					int cave = f.Objects.Count(o => o.Props != null && o.Props.ContainsKey("cave"));
+					int loot = f.Objects.Count(o => ContentCatalog.IsLootObject(o.Name));
+					extra = "; '" + ObjectProps.Get(f.Props, IslandProps.Title) + "' " + TerrainPainter.StyleName(s.Style) + ", " + puffer + " puffer fish, " + boars + " hostile spots, " + tame + " to catch, " + scene + " scene props, " + cave + " cave pieces, " + loot + " loot";
+					good &= puffer >= 3 && boars >= 2 && tame >= 2 && loot >= 4 && scene >= 3 && (cave >= 1 || !RandomizerIslands.CanBuildCaves);
+				}
+				Check(ref ok, good, types[i] + ": " + n[0].ToString("F0", inv) + " m² of land, " + n[1].ToString("F0", inv) + " land objects (" + dens.ToString("F0", inv) + " per 1000 m²), " + cut.ToString("F0", inv) + " trees to cut, " +
+					n[3].ToString("F0", inv) + " harvestables, " + n[4].ToString("F0", inv) + " flowers" + extra);
+				yield return null;
+			}
+			Check(ref ok, flowers > 0 || !PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow"), "Raft's flowers grow on " + flowers + " of " + tropical + " tropical islands" + (PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow") ? "" : " (this Raft's catalog has none)"));
+			if (ok) Log("PASS: islands like Raft's"); else Fail("islands like Raft's");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerLarge", docs: "Dev, world (host): a large island near the raft - loads, its animals (warthogs, animals to catch, puffer fish), scenes, and its cave: players walk in, the guard wakes inside it; pictures shot_large_*. CIRandomizerLarge [keep]")]
+		public static void RandomizerLargeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
+
+		static IEnumerator RandomizerLargeRoutine(bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			SetHour(11f);
+			IslandWorldState.Entry e = SpawnTypeNear("large", raft);
+			if (e == null) { Fail("no free spot for a large island near the raft (sail on)"); yield break; }
+			for (float t = 0; t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("the large island didn't load"); yield break; }
+			GameObject root = e.Root;
+			var tag = root.GetComponent<IslandInfoTag>();
+			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
+			int scene = refs.Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave"));
+			List<Transform> caves = root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+			Check(ref ok, tag != null && scene >= 3, "'" + (tag != null ? tag.Title : "?") + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
+			// Its animals (not the cave's guard: it waits)
+			List<CreatureSpawnPoint> spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
+			for (float t = 0; t < 120f && spots.Any(p => p.RecordedAlive == CreatureSpawnPoint.Spawning || (p.RecordedAlive == -1 && ObjectProps.Get(p.Props, ObjectProps.CreatureZone).Length == 0)); t += 1f) yield return new WaitForSeconds(1f);
+			Check(ref ok, spots.Count(p => p.RecordedAlive > 0) >= 5, spots.Count + " creature spots, alive: " + string.Join(", ", spots.GroupBy(p => p.Kind.Label).Select(g => g.Key + " " + g.Sum(p => Math.Max(0, p.RecordedAlive))).ToArray()));
+			Network_Player player = RAPI.GetLocalPlayer();
+			// Pictures: from above, of each scene
+			Vector3 mid = root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			yield return PutPlayer(player, mid + new Vector3(0f, 120f, -140f), false);
+			Look(player, 0f, 35f);
+			yield return new WaitForSeconds(2.5f);
+			Shot("large_overview");
+			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.Name) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.Name))).Take(3))
+				yield return ShotOf(player, r.transform, "large_scene_" + r.Name.Replace(" ", "_"), 9f);
+			// The cave: the mouth, then inside; the guard wakes and stands in the passage
+			if (caves.Count > 0)
+			{
+				TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+				Transform first = caves[0];
+				yield return ShotOf(player, first, "large_cave_mouth", 8f);
+				if (zone != null)
+				{
+					yield return PutPlayer(player, zone.transform.position + Vector3.up * 1.0f, false);
+					yield return new WaitForSeconds(4f);
+					Shot("large_cave_inside");
+					CreatureSpawnPoint guard = spots.FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
+					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
+					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
+					float off = ai != null ? Mathf.Abs(ai.transform.position.y - zone.transform.position.y) : 99f;
+					Check(ref ok, guard == null || (ai != null && off < 2.5f), guard == null ? "no guard in this cave" : ai == null ? "the cave's guard didn't come" : "the cave's " + guard.Kind.Label + " woke inside it (" + off.ToString("F1") + " m from the floor)");
+					LootCrate chest = root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - zone.transform.position).sqrMagnitude).FirstOrDefault();
+					Check(ref ok, chest != null && (chest.transform.position - zone.transform.position).magnitude < 20f, "a hoard at the end of the cave");
+				}
+				else Check(ref ok, false, "the cave has no zone");
+			}
+			else Log("  (no cave: " + (RandomizerIslands.CanBuildCaves ? "no spot fit" : "no measured dens") + ")");
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (!keep) IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			if (ok) Log("PASS: a large island"); else Fail("a large island");
+		}
+
+		static void Shot(string name)
+		{
+			ScreenCapture.CaptureScreenshot(System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png")));
+			Log("Screenshot shot_" + name + ".png");
+		}
+
+		/// <summary>A picture of t from about distance metres away on the ground, looking at it.</summary>
+		static IEnumerator ShotOf(Network_Player player, Transform t, string name, float distance)
+		{
+			Vector3 at = t.position + new Vector3(distance * 0.7f, 0f, distance * 0.7f);
+			RaycastHit hit;
+			if (Physics.Raycast(at + Vector3.up * 80f, Vector3.down, out hit, 160f, ~0, QueryTriggerInteraction.Ignore)) at.y = hit.point.y + 1.8f;
+			at.y = Mathf.Max(at.y, t.position.y + 2f);
+			yield return PutPlayer(player, at, at.y < 0.5f);
+			Vector3 d = t.position - at;
+			Look(player, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, Mathf.Clamp(-Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg, -30f, 45f));
+			yield return new WaitForSeconds(2f);
+			Shot(name);
+			yield return new WaitForSeconds(0.6f);
+		}
+
+		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
+		public static void GrottoCommand() { DynamicIslands.instance.StartCoroutine(GrottoRoutine()); }
+
+		static IEnumerator GrottoRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			Landmark big = WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big").OrderBy(l => (l.transform.position - raft).sqrMagnitude).FirstOrDefault();
+			if (big == null) { Fail("none of Raft's big islands is spawned near the raft (sail on)"); yield break; }
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			if (!WorldRandomizer.Current.On) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 77 });
+			// Go there first: Raft switches the ground of far islands off
+			yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
+			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
+			SetHour(11f);
+			RandomizerContent.ForceBigFinds = true;
+			int n = IslandWorldState.Islands.Count;
+			try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(big, 1234)); }
+			finally { }
+			yield return new WaitForSeconds(3f);
+			RandomizerContent.ForceBigFinds = false;
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
+			for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			List<Transform> caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.Name) != null && !RaftProps.Get(r.Name).Name.Contains("Boulder"));
+			Check(ref ok, caves.Count >= 1 || !RandomizerIslands.CanBuildCaves, "'" + big.name + "': " + (caves.Count > 0 ? "a den (" + caves[0].name + ")" : "no den") + (RandomizerIslands.CanBuildCaves ? "" : " (no measured cave pieces)") + ", " + outpost + " outpost props");
+			if (caves.Count > 0)
+			{
+				yield return ShotOf(player, caves[0], "grotto_mound", 12f);
+				TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+				if (zone != null)
+				{
+					yield return PutPlayer(player, zone.transform.position + Vector3.up * 1.0f, false);
+					yield return new WaitForSeconds(4f);
+					Shot("grotto_inside");
+					CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
+					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
+					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
+					float off = ai != null ? Mathf.Abs(ai.transform.position.y - zone.transform.position.y) : 99f;
+					Check(ref ok, ai != null && off < 2.5f, guard == null ? "no guard" : ai == null ? "the guard didn't come" : "the " + guard.Kind.Label + " woke inside the cave (" + off.ToString("F1") + " m from the floor)");
+				}
+			}
+			Transform scene = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.Props != null && r.Props.ContainsKey("set.piece") && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(r.Name))).Select(r => r.transform).FirstOrDefault();
+			if (scene != null) yield return ShotOf(player, scene, "grotto_outpost", 9f);
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n).Select(x => x.Id).ToList(), true);
+			IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			WorldRandomizer.Set(before);
+			if (ok) Log("PASS: a cave on Raft's island"); else Fail("a cave on Raft's island");
+		}
+
+		#endregion
+
+		/// <summary>Raft's objects the randomizer builds with: set pieces and props of the quest islands, and cave pieces.</summary>
+		internal static readonly string[] MeasuredProps =
+		{
+			// Set pieces (oddity islands)
+			"Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Green_02", "Caravan_Yellow_01", "CaravanBarebones1", "Airplane", "BoatStranded",
+			"Balboa_Shack", "Balboa_DecorationPrefabBase_SimpleTent", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Body2", "CaravanRocketDebris_Top1", "CaravanRocketDebris_Exhaust",
+			"CaravanRocketDebris_Leg1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister", "TangaroaFounderStatue", "RaftMonument", "Well", "Tire_02", "Tire_03", "Pallet", "RT_PlasticBoat",
+			"WingBroken", "BackWingBroken", "PropellerBlade", "BoatLandmark_Flag",
+			// Scrapyard (Varuna Point)
+			"VP_Excavator", "VP_Forklift", "VP_Dumpster01", "VP_Dumpster02", "VP_ConcretePipe01", "VP_ConcretePipe02", "VP_BrickStack01", "VP_BrickStack02", "VP_BrickStack03",
+			"VP_MetalCrate01", "VP_MetalCrate02", "VP_MetalCrate03", "VP_ExplosiveBarrel_Pile", "VP_FoldingLadder_Tall", "VP_Cable_Roll01",
+			// Market (Utopia)
+			"UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03", "UT_MarketCrateSmall01", "UT_MarketCrateSmall02", "UT_MarketStackBox01", "UT_ClothOverhangBig04", "UT_ClothOverhangBig05",
+			"UT_DreamCatcher01", "UT_DreamCatcher02", "UT_DanglyDecoration01", "UT_LightBottle01", "UT_CoveredCrate01", "UT_CoveredCrate02", "UT_DIY_Decoration01", "UT_Generator01",
+			"Tangaroa_OutdoorFurnitureSilver_Bench", "Tangaroa_OutdoorFurnitureSilver_Table", "Tangaroa_OutdoorFurnitureSilver_Chair", "Tire_01",
+			// Caravan outpost (Caravan Town)
+			"Banner_01", "BenchTable_01", "PlasticChair_01", "Cableroll_01", "Cableroll_02", "Crate_Big_01", "Crate_Big_02", "Crate_Small_02", "Scaffolding_2x2m", "Scaffolding_6x4m",
+			"LandmarkLadder_6m", "FishingNets_02", "MetalSheet_2", "MetalSheet_3", "PulauKafilahFlag", "RopeFence_Short", "Sign_01", "Sign_02", "Bench_01", "AcaciaTree_Big1", "DeadTree1", "DeadTree2",
+			"CaravanIsland_BigRoundRock_1", "Candle_01", "MetalTable_01",
+			// Bear country (Balboa)
+			"Balboa_DecorationPrefabBase_Fence_Mid", "Balboa_DecorationPrefabBase_Fence_EndL", "Balboa_DecorationPrefabBase_Fence_EndR", "Balboa_DecorationPrefabBase_Fence_EndBroken",
+			"Balboa_DecorationPrefabBase_Fence_Sign", "Balboa_DecorationPrefabBase_Lantern", "Balboa_DecorationPrefabBase_OldCouch", "Balboa_DecorationPrefabBase_Old Stove",
+			"Balboa_DecorationPrefabBase_Wooden Spikes", "Balboa_DecorationPrefabBase_ToxicBarrel", "Balboa_DecorationPrefabBase_Generator", "Balboa_DecorationPrefabBase_Trashcan",
+			"Balboa_DecorationPrefabBase_Table", "Balboa_DecorationPrefabBase_Chair", "BearSign1", "BearSign2 Variant", "Firewood_1", "Antenna_dish", "Balboa_DirectionSign",
+			// Frozen camp (Temperance)
+			"TP_Igloo_Small", "TP_Igloo_Small_1", "TP_Igloo_Medium_1", "TP_Igloo_Large_1", "TP_IcePillar01", "TP_IcePillar02", "TP_FoldingTable_Large", "TP_FoldingStool", "TP_Moontown_Barrel02",
+			"TP_Moontown_SealedCrate02_Clean", "TP_Moontown_TarpCrate02_Clean", "SnowmobileShedMesh",
+			// Hotel garden (Tangaroa)
+			"LargePlant1", "LargePlant2", "MediumPlant1", "MediumPlant2", "SmallPlant1", "Flowerpot_01", "Flowerpot_02", "Flowerpot_03", "RestaSunshadeGround", "RestaFence", "Table_Common_01", "Dinnerchair_01",
+			// Radio outpost (the radio tower)
+			"RT_WindMill", "RT_SatteliteDisc", "RT_Floodlight_WithoutLightSource", "RT_Fence", "RT_SharkCage", "RT_PowerBox", "RT_Signs", "RT_Spotlight",
+			// Floating rafts
+			"campfire_1", "Scarecrow", "Bird_Nest", "Bed_Simple", "buoy",
+			// Caves
+			"TP_UnderwaterCaveTunnel_Straight", "TP_UnderwaterCaveTunnel_StraightLong", "TP_UnderwaterCaveTunnel_Corner", "TP_UnderwaterCaveTunnel_CornerLong", "TP_UnderwaterCaveTunnel_CrossT",
+			"BalboaCave_Entrance", "BalboaCave_DeadEnd", "BalboaCave_Bear", "BalboaCave_Vines", "TP_CaveTunnel_SurfaceStaircase", "Ravine_Cave", "CaveVine1", "CaveVine2", "CaveVine3", "UndergroundToSurface_Tunnel",
+			// Rocks for mounds over free-standing caves, and lights
+			"BigBoulder1_Low", "BigBoulder2_Low", "BigBoulder3_Low", "BigBoulder4_Low", "SmallBoulder1", "SmallBoulder2", "SmallBoulder3", "SmallBoulder4", "BigRock_1", "BigRock_2", "BigRock_Low1_Sand",
+			"TP_BigRock02", "TP_BigRock03", "TP_BigRock04", "BigSharpRock_1", "BigSharpRock_2", "CaravanIsland_BigRoundRock_1",
+			"Placeable_Lantern_FireBasket", "Placeable_Lantern_Basic", "Placeable_Lantern_Metal", "Placeable_Lantern_Fireplace", "Placeable_StringLight_Horizontal", "Placeable_Utopia_LightBottleYellow",
+		};
+
+		[ConsoleCommand(name: "CIMeasureProps", docs: "Dev, main menu or editor: measures Raft's objects the randomizer builds with (size, bottom; the inside of cave pieces) into raft_props.txt in Mods\\DynamicIslands. CIMeasureProps [names, comma separated]")]
+		public static void MeasurePropsCommand(string[] args)
+		{
+			string[] names = args != null && args.Length > 0 ? string.Join(" ", args).Split(',').Select(s => s.Trim()).ToArray() : MeasuredProps;
+			DynamicIslands.instance.StartCoroutine(MeasureProps(names));
+		}
+
+		static IEnumerator MeasureProps(string[] names)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			yield return PlaceableCatalog.EnsureLoaded(names);
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			var lines = new List<string>
+			{
+				"# Raft's objects the randomizer builds with (CIMeasureProps, raft=" + Application.version + ")",
+				"# prop\t<name>\t<scene>\t<size x,y,z>\t<centre x,y,z>\t<bottom below the pivot>\t<solid colliders>   (at the scale the object spawns with)",
+				"# cave\t<name>\t<axis of the passage 0=x 2=z>\t<floor above the pivot>\t<headroom>\t<width>\t<open at +axis>\t<open at -axis>\t<a point in the passage, from the pivot>\t<room from it towards +axis>\t<and towards -axis> (99 = open)",
+			};
+			var lab = new GameObject("CI_PropLab");
+			lab.transform.position = new Vector3(0f, 3000f, 0f);
+			int measured = 0, missing = 0;
+			foreach (string n in names)
+			{
+				GameObject proto = PlaceableCatalog.Get(n);
+				Bounds b;
+				if (proto == null || !PlaceableCatalog.LocalBounds(n, out b)) { Log("prop " + n + ": not in this Raft"); missing++; continue; }
+				Vector3 s = proto.transform.localScale;
+				var size = Vector3.Scale(b.size, new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z)));
+				var centre = Vector3.Scale(b.center, s);
+				float bottom = b.min.y * s.y;
+				int colliders = proto.GetComponentsInChildren<Collider>(true).Count(c => !c.isTrigger);
+				lines.Add(string.Join("\t", new[] { "prop", n, PlaceableCatalog.SceneOf(n) ?? "", RaftProps.Text(size), RaftProps.Text(centre), bottom.ToString("0.###", inv), colliders.ToString(inv) }));
+				measured++;
+				if (!System.Text.RegularExpressions.Regex.IsMatch(n, "Cave|Tunnel|Ravine")) continue;
+
+				// Cave pieces: where the passage is. Rays across it along x and along z at a few heights: a passage lets them
+				// in (far, or all the way through); the floor is the highest thing a ray from inside finds below the middle.
+				GameObject go = PlaceableCatalog.Spawn(n, lab.transform, false);
+				if (go == null) continue;
+				go.transform.localPosition = Vector3.zero;
+				go.transform.localRotation = Quaternion.identity;
+				yield return new WaitForFixedUpdate();
+				Physics.SyncTransforms();
+				Bounds w = new Bounds(go.transform.position, Vector3.zero);
+				bool any = false;
+				foreach (Collider c in go.GetComponentsInChildren<Collider>()) { if (c.isTrigger) continue; if (!any) { w = c.bounds; any = true; } else w.Encapsulate(c.bounds); }
+				if (!any) { Log("cave " + n + ": no colliders"); UnityEngine.Object.Destroy(go); continue; }
+				// (Raft's cave meshes face inwards: rays must see back faces to find them from outside or inside)
+				bool backfaces = Physics.queriesHitBackfaces;
+				Physics.queriesHitBackfaces = true;
+				try
+				{
+					Func<Vector3, Vector3, float, float> depth = (from, dir, max) =>
+					{
+						float best = max;
+						foreach (RaycastHit h in Physics.RaycastAll(from, dir, max, ~0, QueryTriggerInteraction.Ignore))
+							if (h.collider.transform.IsChildOf(go.transform) && h.distance < best) best = h.distance;
+						return best;
+					};
+					// A point inside the passage: a floor below and a roof above it, walls close on two sides, far or open on the others
+					int bestAxis = -1; float bestAlong = 0f, bestWidth = 0f, bestHead = 0f, bestFloor = 0f, toPlus = 0f, toMinus = 0f; bool plus = false, minus = false;
+					Vector3 bestAt = w.center;
+					float reach = Mathf.Max(w.size.x, w.size.z) + 2f;
+					foreach (Vector2 o in new[] { Vector2.zero, new Vector2(0.25f, 0f), new Vector2(-0.25f, 0f), new Vector2(0f, 0.25f), new Vector2(0f, -0.25f) })
+						for (int k = 1; k <= 24; k++)
+						{
+							Vector3 q = new Vector3(w.center.x + o.x * w.size.x, w.min.y + w.size.y * k / 25f, w.center.z + o.y * w.size.z);
+							float dd = depth(q, Vector3.down, w.size.y + 1f), du = depth(q, Vector3.up, w.size.y + 1f);
+							if (dd > w.size.y || du > w.size.y || dd + du < 1.8f || dd > 3f) continue; // (standing height over its floor)
+							float px = depth(q, Vector3.right, reach), nx = depth(q, Vector3.left, reach), pz = depth(q, Vector3.forward, reach), nz = depth(q, Vector3.back, reach);
+							bool alongX = px + nx > pz + nz;
+							float along = alongX ? px + nx : pz + nz, across = alongX ? pz + nz : px + nx;
+							if (across < 1.5f || across > 20f) continue;
+							if (along <= bestAlong + 0.01f) continue;
+							bestAlong = along; bestAxis = alongX ? 0 : 2; bestWidth = across; bestHead = dd + du; bestFloor = q.y - dd - go.transform.position.y; bestAt = q;
+							toPlus = Mathf.Min(alongX ? px : pz, 99f); toMinus = Mathf.Min(alongX ? nx : nz, 99f);
+							// Open where a ray leaves the piece without meeting anything
+							plus = alongX ? px >= reach - 0.01f || q.x + px > w.max.x + 0.4f : pz >= reach - 0.01f || q.z + pz > w.max.z + 0.4f;
+							minus = alongX ? nx >= reach - 0.01f || q.x - nx < w.min.x - 0.4f : nz >= reach - 0.01f || q.z - nz < w.min.z - 0.4f;
+						}
+					if (bestAxis < 0) { Log("cave " + n + ": no passage found; size " + RaftProps.Text(size)); UnityEngine.Object.Destroy(go); continue; }
+					lines.Add(string.Join("\t", new[] { "cave", n, bestAxis.ToString(inv), bestFloor.ToString("0.##", inv), bestHead.ToString("0.##", inv), bestWidth.ToString("0.##", inv), plus ? "1" : "0", minus ? "1" : "0",
+						RaftProps.Text(bestAt - go.transform.position), toPlus.ToString("0.##", inv), toMinus.ToString("0.##", inv) }));
+					Log("cave " + n + ": passage along " + (bestAxis == 0 ? "x" : "z") + " (" + bestAlong.ToString("0.0", inv) + " m seen), floor " + bestFloor.ToString("0.0", inv) + " m above the pivot, headroom " + bestHead.ToString("0.0", inv) +
+						" m, width " + bestWidth.ToString("0.0", inv) + " m, open at " + (plus ? "+" : "") + (minus ? "-" : "") + (plus || minus ? "" : "neither") + "; size " + RaftProps.Text(size) + ", centre " + RaftProps.Text(centre) +
+						", probe at " + RaftProps.Text(bestAt - go.transform.position));
+				}
+				finally { Physics.queriesHitBackfaces = backfaces; }
+				UnityEngine.Object.Destroy(go);
+			}
+			UnityEngine.Object.Destroy(lab);
+			string path = System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
+			System.IO.File.WriteAllLines(path, lines.ToArray());
+			RaftProps.Reload();
+			Log("Measured " + measured + " props (" + missing + " not in this Raft): " + System.IO.Path.GetFullPath(path));
+			if (measured > 0) Log("PASS: measured props"); else Fail("measured no props");
+		}
+
 		[ConsoleCommand(name: "CIProbeSetPieces", docs: "Dev: size and footprint of Raft objects used as set pieces on oddity islands, and item names for rewards. CIProbeSetPieces [names, comma separated]")]
 		public static void ProbeSetPiecesCommand(string[] args)
 		{

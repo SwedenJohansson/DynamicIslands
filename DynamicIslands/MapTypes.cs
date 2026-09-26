@@ -285,14 +285,19 @@ namespace DynamicIslands.Editor
 			new MapType { Name = "oddity", Label = "Oddity island", Description = "A small island with something odd on it: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris or a hut",
 				Settings = OdditySettings, Content = (k, s) => RandomizerContent.Oddity(k, s, null) },
 			Oddity(0), Oddity(1), Oddity(2), Oddity(3), Oddity(4), Oddity(5), Oddity(6), Oddity(7),
+			new MapType { Name = "large", Label = "Large island", Description = "A large island made like Raft's big ones (as big, trees and plants as dense, warthogs, animals to catch, puffer fish, loot boxes), with scenes from the quest islands and a cave with a guard and a hoard",
+				Settings = RandomizerIslands.LargeSettings, Content = RandomizerIslands.Large },
 			new MapType { Name = "lair", Label = "Boss lair", Title = "Lair", Description = "A plateau where a huge, very tough beast and its guards keep a big hoard and a trophy (quest; much harder than a boss island)",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy, TerrainPainter.Tropical, TerrainPainter.Desert), IslandShapes.Plateau, 85f, 120f, 14f, 22f, 0.45f, 0.35f),
+				Settings = rnd => { IslandGenSettings s = Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy, TerrainPainter.Tropical, TerrainPainter.Desert), IslandShapes.Plateau, 85f, 120f, 14f, 22f, 0.45f, 0.35f); RandomizerIslands.LikeRaft(s); return s; },
 				Content = RandomizerContent.Lair },
 		};
 
 		static IslandGenSettings OdditySettings(System.Random rnd)
 		{
-			return Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Forest), IslandShapes.Round, 26f, 38f, 3f, 6f, 0.3f, 0.5f, 1);
+			// (land objects as dense as on Raft's own small islands)
+			IslandGenSettings s = Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Forest), IslandShapes.Round, 26f, 38f, 3f, 6f, 0.3f, 0.5f, 1);
+			RandomizerIslands.LikeRaft(s);
+			return s;
 		}
 
 		static MapType Oddity(int i)
