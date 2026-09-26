@@ -139,14 +139,16 @@ namespace DynamicIslands.Editor
 				foreach (Vector3 pp in players) d = Mathf.Min(d, Flat(e.Position - pp).magnitude);
 				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
 				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
-				if (e.Root != null && d > UnloadDistance)
+				// (the host's distance on every machine: WorldRules)
+				float unload = WorldRules.UnloadDistance;
+				if (e.Root != null && d > unload)
 				{
 					IslandObjectState.Capture(e);
 					IslandSpawner.Despawn(e.Root);
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
 				}
-				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < Mathf.Max(UnloadDistance - ReloadHysteresis, SpawnDistanceMax + 50f))
+				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < Mathf.Max(unload - ReloadHysteresis, SpawnDistanceMax + 50f))
 				{
 					e.Loading = true;
 					DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));
@@ -483,19 +485,7 @@ type:sunken 0.2
 						if (key == "defaultplan") { WorldDirector.DefaultPlan = value.Length > 0 ? value : WorldPlan.RandomName; continue; }
 						float v;
 						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) { BadLine(line); continue; }
-						switch (line.Substring(0, eq).Trim().ToLowerInvariant())
-						{
-							case "chanceperkm": ChancePerKm = Mathf.Clamp01(v); break;
-							case "minspacing": MinSpacing = Mathf.Max(0f, v); break;
-							case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); break;
-							case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); break;
-							case "unloaddistance": UnloadDistance = Mathf.Max(300f, v); break;
-							case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); break;
-							case "showonreceiver": ShowOnReceiver = v != 0f; break;
-							case "generated": GeneratedWeight = Mathf.Max(0f, v); break;
-							case "generatedflyingchance": GeneratedFlyingChance = Mathf.Clamp01(v); break;
-							default: BadLine(line); break;
-						}
+						if (!SetValue(key, v)) BadLine(line);
 						continue;
 					}
 					// "<name> <weight>" (names may contain spaces), or just "<name>" for weight 1
@@ -506,10 +496,34 @@ type:sunken 0.2
 					else
 						poolLines.Add(new KeyValuePair<string, float>(line, 1f));
 				}
+				foreach (var kv in TestOverrides) SetValue(kv.Key, kv.Value);
 				if (SpawnDistanceMax < SpawnDistanceMin) SpawnDistanceMax = SpawnDistanceMin;
+				WorldRules.OnPoolChanged(); // (host: the settings every player shares go out again if they changed)
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + PoolPath + ": " + ex.Message); }
 		}
+
+		/// <summary>A number setting of spawnpool.txt by its (lower-case) key; false if there is none.</summary>
+		internal static bool SetValue(string key, float v)
+		{
+			switch (key)
+			{
+				case "chanceperkm": ChancePerKm = Mathf.Clamp01(v); return true;
+				case "minspacing": MinSpacing = Mathf.Max(0f, v); return true;
+				case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); return true;
+				case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); return true;
+				case "unloaddistance": UnloadDistance = Mathf.Max(300f, v); return true;
+				case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); return true;
+				case "showonreceiver": ShowOnReceiver = v != 0f; return true;
+				case "generated": GeneratedWeight = Mathf.Max(0f, v); return true;
+				case "generatedflyingchance": GeneratedFlyingChance = Mathf.Clamp01(v); return true;
+				default: return false;
+			}
+		}
+
+		/// <summary>Dev tests (CISpawnPoolSet): numbers that replace this machine's spawnpool.txt ones, kept when the file is read
+		/// again (each world load) - to give a player who joins other settings than the host's.</summary>
+		internal static readonly Dictionary<string, float> TestOverrides = new Dictionary<string, float>();
 
 		static void BadLine(string line) { Debug.LogWarning("[CUSTOM ISLANDS] Ignoring unknown line in " + PoolFileName + ": " + line); }
 
@@ -532,6 +546,8 @@ type:sunken 0.2
 				lines.Add("Generated islands: " + string.Join(", ", GeneratedStyles.Select(TerrainPainter.StyleName).ToArray()) + ", " +
 					GeneratedFlyingChance.ToString("P0", CultureInfo.InvariantCulture) + " of them flying");
 			lines.Add("Custom islands on the Receiver: " + (ShowOnReceiver ? "shown" : "hidden"));
+			// (a player in someone else's game: only the host places islands, and these come from the host's file)
+			if (WorldRules.HostSettingsFromHost) lines.Add("In this game (the host's settings): " + WorldRules.HostSettingsDescribe());
 			return string.Join("\n", lines.ToArray());
 		}
 

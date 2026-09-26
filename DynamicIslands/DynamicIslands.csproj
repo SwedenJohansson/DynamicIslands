@@ -109,6 +109,7 @@
     <Compile Include="MonsterDifficulty.cs" />
     <Compile Include="WorldRules.cs" />
     <Compile Include="DevTestsDifficulty.cs" />
+    <Compile Include="DevTestsHostSettings.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />

@@ -87,8 +87,11 @@ namespace DynamicIslands.Editor
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
-		/// <summary>Host -> clients: the world's rules.</summary>
-		internal static IslandNetMessage Message() { return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current }; }
+		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data).</summary>
+		internal static IslandNetMessage Message()
+		{
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData() };
+		}
 
 		internal static void Broadcast()
 		{
@@ -100,6 +103,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			MonsterDifficulty.FromHost(msg.Index);
 			BuildCost.FromHost(msg.Count);
+			HostSettingsFrom(msg.Data);
 		}
 
 		/// <summary>Client: a host's world arrived; Raft's own rules until that host's come.</summary>
@@ -107,7 +111,76 @@ namespace DynamicIslands.Editor
 		{
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
+			hostKnown = false;
 		}
+
+		#region The host's settings (spawnpool.txt)
+
+		// Settings of the host's spawnpool.txt that change what every player sees, so a player who joins uses the host's,
+		// not their own file's: whether custom islands show on the Receiver, how far away an island unloads, and (only
+		// shown: the host alone decides what grows back, IslandObjectState) the regrow days. The rest of the file only
+		// matters on the host, whose spawner alone places islands.
+		static bool hostKnown, hostReceiver = true;
+		static float hostUnload = 800f;
+		static int hostRegrow = 3;
+
+		static bool UseHost { get { return hostKnown && !Raft_Network.IsHost && LoadSceneManager.IsGameSceneLoaded; } }
+
+		/// <summary>Whether custom islands show on the Receiver in this world: the host's setting.</summary>
+		public static bool ShowOnReceiver { get { return UseHost ? hostReceiver : CustomIslandSpawner.ShowOnReceiver; } }
+
+		/// <summary>How far away a custom island unloads in this world: the host's setting.</summary>
+		public static float UnloadDistance { get { return UseHost ? hostUnload : CustomIslandSpawner.UnloadDistance; } }
+
+		/// <summary>The world's days until things come back (the host's; islands may have their own rule, IslandRules).</summary>
+		public static int RegrowDays { get { return UseHost ? hostRegrow : CustomIslandSpawner.RegrowDays; } }
+
+		/// <summary>Whether this machine uses a host's settings (a client in a game whose host sent them).</summary>
+		public static bool HostSettingsFromHost { get { return UseHost; } }
+
+		static string HostSettingsData()
+		{
+			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
+				";regrow=" + CustomIslandSpawner.RegrowDays;
+		}
+
+		static void HostSettingsFrom(string data)
+		{
+			if (string.IsNullOrEmpty(data)) return; // (a host with an older version: this player's own)
+			foreach (string part in data.Split(';'))
+			{
+				int eq = part.IndexOf('=');
+				if (eq < 1) continue;
+				string key = part.Substring(0, eq), value = part.Substring(eq + 1);
+				float v;
+				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) continue;
+				if (key == "receiver") hostReceiver = v != 0f;
+				else if (key == "unload") hostUnload = Mathf.Max(300f, v);
+				else if (key == "regrow") hostRegrow = Mathf.Max(0, Mathf.RoundToInt(v));
+			}
+			hostKnown = true;
+			Debug.Log("[CUSTOM ISLANDS] [world rules] The host's settings: " + HostSettingsDescribe());
+		}
+
+		public static string HostSettingsDescribe()
+		{
+			return "custom islands on the Receiver " + (ShowOnReceiver ? "shown" : "hidden") + ", unloaded beyond " + UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
+				" m, things come back after " + RegrowDays + " day(s)" + (UseHost ? " (the host's)" : "");
+		}
+
+		static string lastPoolData;
+
+		/// <summary>Host: spawnpool.txt was read: if a shared setting changed while a game is open, every player gets it.</summary>
+		internal static void OnPoolChanged()
+		{
+			string data = HostSettingsData();
+			if (data == lastPoolData) return;
+			bool first = lastPoolData == null;
+			lastPoolData = data;
+			if (!first && Raft_Network.IsHost && LoadSceneManager.IsGameSceneLoaded) Broadcast();
+		}
+
+		#endregion
 	}
 
 	/// <summary>

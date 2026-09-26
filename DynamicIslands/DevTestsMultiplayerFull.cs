@@ -213,7 +213,7 @@ namespace DynamicIslands
 				}
 				Network_Entity ne = a.networkEntity;
 				Log("Creature " + a.behaviourType + ": " + (ne == null ? "no entity" : ne.IsDead ? "dead" : "alive") + ", health " + (ne != null && ne.stat_health != null ? ne.stat_health.Value.ToString("F0") + "/" + ne.stat_health.Max.ToString("F0") : "?") +
-					", size " + a.transform.localScale.x.ToString("F2") + ", tint " + tint);
+					", size " + a.transform.localScale.x.ToString("F2") + ", tint " + tint + ", id " + a.ObjectIndex);
 			}
 			Log("Creatures near '" + e.HostName + "': " + all.Count(a => a.networkEntity == null || !a.networkEntity.IsDead) + " alive (" + (Raft_Network.IsHost ? "host" : "client") + ")");
 		}

@@ -735,6 +735,24 @@ namespace DynamicIslands
 				yield return null;
 			}
 
+			// Only the build menu: every other recipe (the crafting menu, the research table's) keeps Raft's numbers at +100 %
+			var buildEntries = new HashSet<CostMultiple>(BuildCost.Entries(BuildCost.Items));
+			var others = new List<KeyValuePair<CostMultiple, int>>();
+			string otherName = null;
+			foreach (Item_Base it in ItemManager.GetAllItems())
+			{
+				CostMultiple[] cost = it != null && it.settings_recipe != null ? it.settings_recipe.NewCost : null;
+				if (cost == null) continue;
+				foreach (CostMultiple c in cost)
+					if (c != null && !buildEntries.Contains(c)) { others.Add(new KeyValuePair<CostMultiple, int>(c, c.amount)); if (otherName == null) otherName = it.UniqueName; }
+			}
+			BuildCost.Set(100);
+			List<string> changed = others.Where(kv => kv.Key.amount != kv.Value).Select(kv => (kv.Key.items != null && kv.Key.items.Length > 0 && kv.Key.items[0] != null ? kv.Key.items[0].UniqueName : "?") +
+				" " + kv.Value + "->" + kv.Key.amount).ToList();
+			Check(ref ok, others.Count >= 50 && changed.Count == 0, "the crafting menu stays Raft's at +100%: " + others.Count + " amounts of other recipes (e.g. " + otherName + ") unchanged" +
+				(changed.Count > 0 ? " - CHANGED " + string.Join(", ", changed.Take(6).ToArray()) : ""));
+			BuildCost.Set(0);
+
 			// A real block at 0 % and at 50 %: Raft's BlockCreator takes the materials, Raft's refund gives half back
 			Item_Base item = TestBlockItem();
 			Check(ref ok, item != null, "a block to place: " + (item != null ? item.UniqueName : "none"));

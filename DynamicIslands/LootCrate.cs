@@ -56,7 +56,8 @@ namespace DynamicIslands.Editor
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null) return;
-			if (day < 0) e.State.Remove(key);
+			if (day < 0 && key < CreatureSpawner.StateKeyBase) IslandObjectState.OnRegrownFromHost(e, key); // a tree or pickup (the host decides)
+			else if (day < 0) e.State.Remove(key);
 			else e.State[key] = new ObjectState { Active = false, Yield = 0, Day = day };
 			AfterChange(e, key, day);
 		}

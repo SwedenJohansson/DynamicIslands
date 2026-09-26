@@ -36,6 +36,9 @@ namespace DynamicIslands.Editor
 			public bool Failed;
 			/// <summary>Harvested trees and picked-up items, by object ordinal (IslandObjectState).</summary>
 			public Dictionary<int, ObjectState> State = new Dictionary<int, ObjectState>();
+			/// <summary>Client: trees and pickups the host said have grown back while the island was loaded here; they show
+			/// when it loads here again (IslandObjectState), and meanwhile its unloading doesn't record them as used.</summary>
+			public readonly HashSet<int> Regrown = new HashSet<int>();
 			/// <summary>Id of the rule that brought the island (WorldDirector; other rules refer to it), or "".</summary>
 			public string Rule = "";
 			/// <summary>Its name on the Receiver ("" = just the distance).</summary>

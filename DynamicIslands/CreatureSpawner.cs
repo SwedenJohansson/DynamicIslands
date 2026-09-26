@@ -99,6 +99,8 @@ namespace DynamicIslands.Editor
 			speed.Clear();
 			HealthBefore.Clear();
 			clientTinted.Clear();
+			clientHealth.Clear();
+			// (not sentHealth: a player who joins gets the host's animals before this runs - its entries go by age)
 			Network_Host_Entities h = HostEntities;
 			if (h != null) ContentCatalog.CacheModels(h.AINetworkBehaviourPrefabs);
 		}
@@ -642,35 +644,97 @@ namespace DynamicIslands.Editor
 		static readonly HashSet<AI_NetworkBehaviour> clientTinted = new HashSet<AI_NetworkBehaviour>();
 
 		/// <summary>
-		/// Clients get the animals from Raft's networking without their colour: each tinted spawn point of a loaded
-		/// island colours the nearest untinted animal of its kind near it (animals stay near their spawn point).
+		/// Clients get the animals from Raft's networking without their colour or their builder's health: each tinted or
+		/// tougher spawn point of a loaded island dresses the nearest animal of its kind near it (animals stay near their
+		/// spawn point) - its colour, and its health as the host has it (MatchHealth).
 		/// </summary>
 		static void TintRemote()
 		{
 			List<CreatureSpawnPoint> spots = IslandSpawner.SpawnedRoots.Where(r => r != null)
 				.SelectMany(r => r.GetComponentsInChildren<CreatureSpawnPoint>(true)).Where(p => p.Kind != null).ToList();
-			if (!spots.Any(p => ObjectProps.HasTint(p.Props))) return;
+			if (!spots.Any(p => ObjectProps.HasTint(p.Props) || !Mathf.Approximately(ObjectProps.Health(p.Props), 1f))) return;
 			AI_NetworkBehaviour[] all = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>();
+			Network_Host_Entities host = HostEntities;
 			foreach (AI_NetworkBehaviour ai in all)
 			{
 				if (ai == null || clientTinted.Contains(ai) || ai.connectedSpawner != null) continue;
 				// The animal's own spot: the nearest of its kind whose size it has (Raft sends the size; hostile
 				// animals roam far from their spot while chasing players, so the nearest tinted spot alone could
-				// colour an untinted animal of a spot next to it). Only that spot's tint counts.
+				// colour an untinted animal of a spot next to it). Only that spot's tint counts. Raft rolls some kinds'
+				// size (bears 0.7-0.8, llamas 0.8-1.2, rats, roaches...): the spot's size times that range.
 				float size = ai.transform.localScale.x;
+				float lo = 1f, hi = 1f;
+				AI_NetworkBehaviour prefab = host != null ? Prefab(host, ai.behaviourType) : null;
+				try { if (prefab != null && prefab.localScaleInterval.maxValue > 0f) { lo = Mathf.Min(prefab.localScaleInterval.minValue, prefab.localScaleInterval.maxValue); hi = Mathf.Max(prefab.localScaleInterval.minValue, prefab.localScaleInterval.maxValue); } } catch { }
 				CreatureSpawnPoint best = null;
 				float bestDist = 150f;
 				foreach (CreatureSpawnPoint p in spots)
 				{
-					if (p.Kind.Type != ai.behaviourType || Mathf.Abs(ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f) - size) > 0.05f) continue;
+					float s = ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f);
+					if (p.Kind.Type != ai.behaviourType || size < s * lo - 0.05f || size > s * hi + 0.05f) continue;
 					float d = Vector3.Distance(p.transform.position, ai.transform.position);
 					if (d < bestDist) { bestDist = d; best = p; }
 				}
 				if (best == null) continue;
 				clientTinted.Add(ai);
 				if (ObjectProps.HasTint(best.Props)) ObjectProps.ApplyTint(ai.gameObject, best.Props);
+				float hp = ObjectProps.Health(best.Props);
+				if (!Mathf.Approximately(hp, 1f)) MatchHealth(ai, hp);
 			}
 			clientTinted.RemoveWhere(a => a == null);
+			foreach (AI_NetworkBehaviour gone in clientHealth.Keys.Where(a => a == null).ToList()) clientHealth.Remove(gone);
+		}
+
+		// Client: the multiplier each animal's copy got (MatchHealth), and the health the host sent with each animal it
+		// created (Message_CreateAINetworkBehaviour.entityHealth, by the animal's object index) with when it came
+		static readonly Dictionary<AI_NetworkBehaviour, float> clientHealth = new Dictionary<AI_NetworkBehaviour, float>();
+		static readonly Dictionary<uint, KeyValuePair<float, float>> sentHealth = new Dictionary<uint, KeyValuePair<float, float>>();
+		/// <summary>How long a health the host sent is trusted (an island's spots may load a while after its animals came).</summary>
+		const float SentHealthSeconds = 600f;
+
+		/// <summary>Client: the multiplier this animal's health got here to match the host's (1 = none).</summary>
+		public static float ClientHealthOf(AI_NetworkBehaviour ai) { float m; return ai != null && clientHealth.TryGetValue(ai, out m) ? m : 1f; }
+
+		/// <summary>
+		/// Client: gives an animal's copy the maximum health the host gave it (a built creature's toughness, a randomizer
+		/// alpha). Raft creates other players' copies with its own maximum, sets the health the host sent cut down to that,
+		/// and then takes each hit's damage off it (Message_NetworkEntity_Damage) - so without this a tough animal dies on
+		/// their screen while it still fights on the host's. What Raft cut off is added back, which stays right when hits
+		/// have landed since (both machines take the same damage off).
+		/// </summary>
+		public static void MatchHealth(AI_NetworkBehaviour ai, float multiplier)
+		{
+			if (Raft_Network.IsHost || ai == null || clientHealth.ContainsKey(ai) || Mathf.Approximately(multiplier, 1f)) return;
+			Network_Entity entity = ai.networkEntity;
+			if (entity == null || entity.stat_health == null || entity.IsDead) return;
+			Stat_Health h = entity.stat_health;
+			float plain = h.Max;
+			if (plain <= 0f) return;
+			float value = h.Value;
+			KeyValuePair<float, float> sent;
+			bool known = sentHealth.TryGetValue(ai.ObjectIndex, out sent) && Time.realtimeSinceStartup - sent.Value < SentHealthSeconds;
+			float target = known ? value + Mathf.Max(0f, sent.Key - plain) : value * multiplier;
+			HealthBefore[ai] = plain;
+			h.SetMaxValue(plain * multiplier);
+			h.Value = Mathf.Clamp(target, 0f, plain * multiplier);
+			clientHealth[ai] = multiplier;
+			Debug.Log("[CUSTOM ISLANDS] " + ai.behaviourType + " #" + ai.ObjectIndex + ": the host's health here, " + value.ToString("F0") + "/" + plain.ToString("F0") + " -> " +
+				h.Value.ToString("F0") + "/" + h.Max.ToString("F0") + (known ? " (the host sent " + sent.Key.ToString("F0") + ")" : " (the host's number not known: kept the share)"));
+		}
+
+		/// <summary>Client (Harmony postfix on Network_Host_Entities.Deserialize): remembers the health the host sent with an animal.</summary>
+		static void CreateOnClientPostfix(Message_NetworkBehaviour msg)
+		{
+			try
+			{
+				if (Raft_Network.IsHost) return;
+				var m = msg as Message_CreateAINetworkBehaviour;
+				if (m == null) return;
+				if (sentHealth.Count > 4096)
+					foreach (uint old in sentHealth.Where(kv => Time.realtimeSinceStartup - kv.Value.Value >= SentHealthSeconds).Select(kv => kv.Key).ToList()) sentHealth.Remove(old);
+				sentHealth[m.behaviourObjectIndex] = new KeyValuePair<float, float>(m.entityHealth, Time.realtimeSinceStartup);
+			}
+			catch { }
 		}
 
 		#endregion
@@ -684,6 +748,7 @@ namespace DynamicIslands.Editor
 			Try(harmony, typeof(AI_Movement), "LerpMovementSpeedTowards", "TargetPrefix", "GuardPostfix");
 			Try(harmony, typeof(AI_Movement), "HandleLerpData", "GuardPrefix", "GuardPostfix");
 			Try(harmony, typeof(AI_NetworkBehaviour_Animal), "Serialize_CreateFromIDManager", null, "CreateForJoinersPostfix");
+			Try(harmony, typeof(Network_Host_Entities), "Deserialize", null, "CreateOnClientPostfix");
 		}
 
 		static void Try(Harmony harmony, Type type, string method, string prefix, string postfix)

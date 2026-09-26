@@ -50,6 +50,8 @@ namespace DynamicIslands.Editor
 			{
 				int ord = Ordinal(pn);
 				if (ord == 0) continue; // not registered
+				// (a client: the host said it has grown back; it still looks used here until the island loads again)
+				if (e.Regrown.Contains(ord)) { e.State.Remove(ord); continue; }
 				YieldHandler yh = YieldOf(pn);
 				int full = FullYield(yh);
 				int left = yh != null && yh.Yield != null ? yh.Yield.Count : 0;
@@ -62,11 +64,19 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>Puts a freshly spawned island's objects into the remembered state, without effects or network messages.</summary>
+		/// <summary>
+		/// Puts a freshly spawned island's objects into the remembered state, without effects. Only the host decides what has
+		/// grown back (its regrow days, when the island loads on the host) and tells every player; a player who joined never
+		/// decides it alone - their own regrow days, or the island loading on their machine and not the host's, would show them
+		/// a tree the host still has cut down.
+		/// </summary>
 		public static void Apply(IslandWorldState.Entry e, int regrowDays)
 		{
-			if (e.Root == null || e.State.Count == 0) return;
-			DropRegrown(e.State, regrowDays);
+			if (e.Root == null) return;
+			e.Regrown.Clear(); // (a client: what the host said has grown back shows now)
+			if (e.State.Count == 0) return;
+			if (Raft_Network.IsHost)
+				foreach (int ord in DropRegrownKeys(e.State, regrowDays)) IslandNetwork.SendUsed(e.Id, ord, -1);
 			int applied = 0;
 			foreach (PickupItem_Networked pn in e.Root.GetComponentsInChildren<PickupItem_Networked>(true))
 			{
@@ -83,13 +93,23 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets objects used at least regrowDays in-game days ago (0 = never), so they come back. Creatures (CreatureSpawner) decide for themselves. Returns how many.</summary>
-		public static int DropRegrown(Dictionary<int, ObjectState> state, int regrowDays)
+		public static int DropRegrown(Dictionary<int, ObjectState> state, int regrowDays) { return DropRegrownKeys(state, regrowDays).Count; }
+
+		/// <summary>DropRegrown, returning which objects came back.</summary>
+		public static List<int> DropRegrownKeys(Dictionary<int, ObjectState> state, int regrowDays)
 		{
-			if (regrowDays <= 0) return 0;
+			if (regrowDays <= 0) return new List<int>();
 			int today = Today;
 			List<int> old = state.Where(s => s.Key < CreatureSpawner.StateKeyBase && today - s.Value.Day >= regrowDays).Select(s => s.Key).ToList();
 			foreach (int ord in old) state.Remove(ord);
-			return old.Count;
+			return old;
+		}
+
+		/// <summary>Client: the host says a tree or pickup has grown back (IslandNetwork, ObjectUsed with a day below 0).</summary>
+		internal static void OnRegrownFromHost(IslandWorldState.Entry e, int ord)
+		{
+			e.State.Remove(ord);
+			if (e.Root != null && !Raft_Network.IsHost) e.Regrown.Add(ord);
 		}
 
 		/// <summary>"ordinal,active,yield,day;..." for the world file and network messages.</summary>

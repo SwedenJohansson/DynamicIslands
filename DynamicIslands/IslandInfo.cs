@@ -31,7 +31,7 @@ namespace DynamicIslands.Editor
 			IslandSettings s = e != null && e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
 			int days;
 			if (s != null && int.TryParse(ObjectProps.Get(s.Props, IslandProps.RegrowDays), out days)) return Mathf.Max(0, days);
-			return CustomIslandSpawner.RegrowDays;
+			return WorldRules.RegrowDays; // (the host's)
 		}
 	}
 

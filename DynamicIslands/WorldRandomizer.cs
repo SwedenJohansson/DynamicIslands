@@ -721,6 +721,8 @@ namespace DynamicIslands.Editor
 				CreatureSpawner.ApplyStats(ai, props);
 				alphas[ai] = label;
 			}
+			// (another player's copy: the host's health, or the alpha would die here long before it does on the host)
+			else CreatureSpawner.MatchHealth(ai, ai.behaviourType == AI_NetworkBehaviourType.Shark ? 2.5f : 3f);
 			Log((ai.behaviourType == AI_NetworkBehaviourType.Shark ? "Big Bruce" : "An alpha " + label.ToLowerInvariant()) + " #" + ai.ObjectIndex + " (" + tinted + " material(s))");
 			// Tell the player when it is close
 			Network_Player p = RAPI.GetLocalPlayer();
