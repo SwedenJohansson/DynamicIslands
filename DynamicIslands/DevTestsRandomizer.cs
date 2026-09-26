@@ -669,6 +669,14 @@ namespace DynamicIslands
 					n[3].ToString("F0", inv) + " harvestables, " + n[4].ToString("F0", inv) + " flowers" + extra);
 				yield return null;
 			}
+			// Every prop the scenes use is measured, stands on the ground (nothing that hangs from its pivot), and each theme has a centrepiece
+			var themeProps = RandomizerIslands.Themes.SelectMany(t => t.Anchors.Concat(t.Medium).Concat(t.Small)).Distinct().ToList();
+			var unmeasured = themeProps.Where(n => !RaftProps.Has(n)).ToList();
+			var hanging = themeProps.Where(n => RaftProps.Has(n) && !RaftProps.Standable(n)).ToList();
+			var bare = RandomizerIslands.Themes.Where(t => !t.Anchors.Any(RaftProps.Standable)).Select(t => t.Name).ToList();
+			Check(ref ok, unmeasured.Count == 0 && hanging.Count == 0 && bare.Count == 0, themeProps.Count + " scene props in " + RandomizerIslands.Themes.Length + " themes; not measured: " + (unmeasured.Count == 0 ? "none" : string.Join(", ", unmeasured.ToArray())) +
+				"; hanging: " + (hanging.Count == 0 ? "none" : string.Join(", ", hanging.ToArray())) + "; themes without a centrepiece: " + (bare.Count == 0 ? "none" : string.Join(", ", bare.ToArray())));
+			Check(ref ok, RandomizerIslands.CanBuildCaves, "caves: " + string.Join(", ", RandomizerIslands.Dens.Where(n => RaftProps.Get(n) != null && RaftProps.Get(n).IsCave).ToArray()) + " measured as dens");
 			Check(ref ok, flowers > 0 || !PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow"), "Raft's flowers grow on " + flowers + " of " + tropical + " tropical islands" + (PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow") ? "" : " (this Raft's catalog has none)"));
 			if (ok) Log("PASS: islands like Raft's"); else Fail("islands like Raft's");
 		}
@@ -756,9 +764,9 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
-		public static void GrottoCommand() { DynamicIslands.instance.StartCoroutine(GrottoRoutine()); }
+		public static void GrottoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
 
-		static IEnumerator GrottoRoutine()
+		static IEnumerator GrottoRoutine(bool keep)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
 			yield return EnsureAlive();
@@ -805,10 +813,32 @@ namespace DynamicIslands
 			if (scene != null) yield return ShotOf(player, scene, "grotto_outpost", 9f);
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
-			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n).Select(x => x.Id).ToList(), true);
-			IslandWorldState.RemoveIds(new[] { e.Id }, true);
-			WorldRandomizer.Set(before);
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n).Select(x => x.Id).ToList(), true);
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				WorldRandomizer.Set(before);
+			}
 			if (ok) Log("PASS: a cave on Raft's island"); else Fail("a cave on Raft's island");
+		}
+
+		[ConsoleCommand(name: "CICaveState", docs: "Dev, world (either player): a cave of an island as this machine has it: its guard (awake? animals of its kind in the den) and its hoard (opened?): CICaveState <island>")]
+		public static void CaveStateCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			Transform den = e.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave);
+			if (den == null) { Fail("no cave on '" + e.HostName + "'"); return; }
+			PropInfo p = RaftProps.Get(den.name);
+			float reach = Mathf.Max(p.Size.x, p.Size.z) * 0.5f;
+			Vector3 middle = den.position + den.rotation * p.Centre;
+			CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(s => ObjectProps.Get(s.Props, ObjectProps.CreatureZone) == "cave");
+			int inside = guard == null ? 0 : UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Count(a => a.behaviourType == guard.Kind.Type && new Vector2(a.transform.position.x - middle.x, a.transform.position.z - middle.z).magnitude < reach);
+			TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+			LootCrate hoard = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle).EndsWith("hoard"); });
+			Log("CAVE '" + e.HostName + "' " + den.name + ": zone " + (zone == null ? "none" : ContentState.IsUsed(e, zone.StateKey) ? "fired" : "waiting") + ", guard " + (guard == null ? "none" : guard.Kind.Label + " " + inside + " in the den") +
+				(Raft_Network.IsHost && guard != null ? " (recorded alive " + guard.RecordedAlive + ")" : "") + ", hoard " + (hoard == null ? "none" : hoard.Looted ? "opened" : "closed"));
+			Log("PASS: cave state");
 		}
 
 		#endregion

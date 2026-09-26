@@ -40,14 +40,14 @@ namespace DynamicIslands.Editor
 				Loot = "Metal", Container = "Loot_Crate", NoteKind = "Note_Papers", NoteTitle = "Site log",
 				Notes = new[] { "Work stopped when the water came. The machines stayed.", "Whoever finds the key to the digger: it doesn't matter any more. Take the scrap.", "Shift report: flooded. Next shift: cancelled." } },
 			new Theme { Name = "market", Label = "Old market", Styles = new[] { Tropical, Desert },
-				Anchors = new[] { "UT_ClothOverhangBig04", "UT_ClothOverhangBig05" },
-				Medium = new[] { "UT_MarketStackBox01", "Tangaroa_OutdoorFurnitureSilver_Table", "UT_CoveredCrate01", "UT_CoveredCrate02", "UT_Generator01" },
-				Small = new[] { "UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03", "UT_MarketCrateSmall01", "UT_MarketCrateSmall02", "Tangaroa_OutdoorFurnitureSilver_Chair", "UT_LightBottle01", "UT_DreamCatcher01", "UT_DreamCatcher02" },
+				Anchors = new[] { "RestaSunshadeGround", "Tangaroa_OutdoorFurnitureSilver_Table" },
+				Medium = new[] { "UT_MarketStackBox01", "Tangaroa_OutdoorFurnitureSilver_Bench", "UT_CoveredCrate01", "UT_CoveredCrate02", "UT_Generator01" },
+				Small = new[] { "UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03", "UT_MarketCrateSmall01", "UT_MarketCrateSmall02", "Tangaroa_OutdoorFurnitureSilver_Chair" },
 				Loot = "Food", Container = "Loot_Box", NoteKind = "Note_Sign", NoteTitle = "Market sign",
 				Notes = new[] { "Fresh fruit! Fair prices! (Closed until further notice.)", "Trade here: fish for rope, rope for planks.", "The market moves with the tide. Back next season." } },
 			new Theme { Name = "caravan", Label = "Caravan outpost", Styles = new[] { Tropical, Desert, Volcanic },
 				Anchors = new[] { "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Yellow_01", "Scaffolding_6x4m" },
-				Medium = new[] { "BenchTable_01", "Banner_01", "PulauKafilahFlag", "Crate_Big_01", "Crate_Big_02", "FishingNets_02", "MetalSheet_2", "MetalSheet_3", "Bench_01" },
+				Medium = new[] { "BenchTable_01", "Crate_Big_01", "Crate_Big_02", "FishingNets_02", "MetalSheet_2", "MetalSheet_3", "Bench_01" },
 				Small = new[] { "PlasticChair_01", "Cableroll_01", "Cableroll_02", "Crate_Small_02", "Tire_02", "Candle_01", "RopeFence_Short", "MetalTable_01" },
 				Loot = "Basics", Container = "Loot_Barrel", NoteKind = "Note_Board", NoteTitle = "Outpost notice",
 				Notes = new[] { "Caravan three went on to the east. Water in the barrel, use it well.", "Outpost rules: share the catch, mend the nets, don't feed the gulls.", "We'll be back when the storms settle." } },
@@ -59,8 +59,8 @@ namespace DynamicIslands.Editor
 				Loot = "Food", Container = "Loot_Chest", NoteKind = "Note_Sign", NoteTitle = "Warning", Creature = "Bear",
 				Notes = new[] { "BEWARE OF THE BEAR. Seriously.", "Do not leave food out. It will find it. It always finds it.", "Camp moved inland. The bear did not." } },
 			new Theme { Name = "frozen", Label = "Frozen camp", Styles = new[] { Snowy },
-				Anchors = new[] { "TP_Igloo_Large_1", "TP_Igloo_Medium_1", "SnowmobileShedMesh" },
-				Medium = new[] { "TP_Igloo_Small", "TP_Igloo_Small_1", "TP_FoldingTable_Large", "TP_IcePillar01", "TP_IcePillar02" },
+				Anchors = new[] { "TP_Igloo_Small", "SnowmobileShedMesh" },
+				Medium = new[] { "TP_FoldingTable_Large", "TP_IcePillar01", "TP_IcePillar02" },
 				Small = new[] { "TP_FoldingStool", "TP_Moontown_Barrel02", "TP_Moontown_SealedCrate02_Clean", "TP_Moontown_TarpCrate02_Clean" },
 				Loot = "Treasure", Container = "Loot_Crate", NoteKind = "Note_Paper", NoteTitle = "Expedition note",
 				Notes = new[] { "Day 9 of the survey. Minus twenty. The igloos hold.", "Supplies in the crate. Keep it closed, the foxes are clever.", "We are going back. Tell Olof we tried." } },
@@ -73,7 +73,7 @@ namespace DynamicIslands.Editor
 			new Theme { Name = "radio", Label = "Radio outpost", Styles = new[] { Tropical, Snowy, Forest, Volcanic, Desert },
 				Anchors = new[] { "RT_WindMill", "RT_SatteliteDisc" },
 				Medium = new[] { "RT_SharkCage", "RT_PowerBox", "RT_Fence" },
-				Small = new[] { "RT_Signs", "RT_Spotlight", "RT_Floodlight_WithoutLightSource" },
+				Small = new[] { "RT_Floodlight_WithoutLightSource", "RT_PlasticBoat", "Tire_02" },
 				Loot = "Metal", Container = "Loot_Box", NoteKind = "Note_Papers", NoteTitle = "Radio log",
 				Notes = new[] { "...repeat, is anyone receiving? Over.", "Signal strongest from the north-east. Follow it.", "Battery low. Leaving the spare circuit boards in the box." } },
 			new Theme { Name = "raftcamp", Label = "Castaways' camp", Styles = new[] { Tropical, Forest, Desert },
@@ -89,18 +89,39 @@ namespace DynamicIslands.Editor
 		/// <summary>The themes that suit a style and whose props this Raft has (all of them when nothing was measured).</summary>
 		public static List<Theme> ThemesFor(int style)
 		{
-			return Themes.Where(t => t.Styles.Contains(style) && t.Anchors.Any(RaftProps.Has)).ToList();
+			return Themes.Where(t => t.Styles.Contains(style) && t.Anchors.Any(RaftProps.Standable)).ToList();
 		}
 
 		static T One<T>(System.Random r, IList<T> list) { return list[r.Next(list.Count)]; }
 		static float Yaw(System.Random r) { return (float)r.NextDouble() * 360f; }
 		static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
 
+		/// <summary>
+		/// The lowest ground under a prop's footprint (its middle and near its corners, turned by yaw) with its pivot at p:
+		/// standing it there, a big prop on uneven ground sinks in on the high side instead of floating on the low side.
+		/// ground(x, z) gives the height, or NaN where there is none.
+		/// </summary>
+		internal static float LowestUnder(Func<float, float, float> ground, string name, Vector2 p, float yaw)
+		{
+			PropInfo info = RaftProps.Get(name);
+			float low = ground(p.x, p.y);
+			if (info == null) return low;
+			Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
+			foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+			{
+				Vector3 w = rot * new Vector3(info.Centre.x + c.x * info.Size.x * 0.45f, 0f, info.Centre.z + c.y * info.Size.z * 0.45f);
+				float g = ground(p.x + w.x, p.y + w.z);
+				if (float.IsNaN(g)) return float.NaN;
+				low = Mathf.Min(low, g);
+			}
+			return low;
+		}
+
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
 		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f)
 		{
-			IslandObject o = k.Add(name, k.At(p, RaftProps.Lift(name) - sink), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
-			return o;
+			float ground = LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
+			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 		}
 
 		#region Themed scenes
@@ -112,13 +133,16 @@ namespace DynamicIslands.Editor
 		public static bool Dress(MapKit k, Theme t, Vector2 c, float radius, bool withNote = true)
 		{
 			System.Random r = k.Rnd;
-			string[] anchors = t.Anchors.Where(RaftProps.Has).ToArray(), medium = t.Medium.Where(RaftProps.Has).ToArray(), small = t.Small.Where(RaftProps.Has).ToArray();
+			string[] anchors = t.Anchors.Where(RaftProps.Standable).ToArray(), medium = t.Medium.Where(RaftProps.Standable).ToArray(), small = t.Small.Where(RaftProps.Standable).ToArray();
 			if (anchors.Length == 0) return false;
-			k.Clear(c, radius + 1f);
 			float yaw = Yaw(r);
 			string anchor = One(r, anchors);
-			Prop(k, anchor, c, yaw);
 			float anchorSize = Mathf.Max(2f, RaftProps.Get(anchor).Size.x * 0.5f, RaftProps.Get(anchor).Size.z * 0.5f);
+			// (a big centrepiece - an igloo, a shed - gets its own room plus the scene's around it)
+			radius = Mathf.Max(radius, anchorSize + 5f);
+			k.Clear(c, radius + 1f);
+			RemoveContentNear(k, c, radius + 1f);
+			Prop(k, anchor, c, yaw);
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
@@ -150,7 +174,7 @@ namespace DynamicIslands.Editor
 		public static int Sprinkle(MapKit k, Theme t, Vector2 c, float inner, float outer, int count)
 		{
 			System.Random r = k.Rnd;
-			string[] props = t.Medium.Concat(t.Small).Where(RaftProps.Has).ToArray();
+			string[] props = t.Medium.Concat(t.Small).Where(RaftProps.Standable).ToArray();
 			int placed = 0;
 			for (int i = 0; i < count * 4 && placed < count && props.Length > 0; i++)
 			{
@@ -172,13 +196,18 @@ namespace DynamicIslands.Editor
 		/// <summary>The same on one of Raft's islands (the randomizer's extras): props stood on Raft's ground found by rays.</summary>
 		public static bool DressWorld(WorldKit k, LandGround g, Theme t, Vector3 c, float radius, System.Random r)
 		{
-			string[] anchors = t.Anchors.Where(RaftProps.Has).ToArray(), medium = t.Medium.Where(RaftProps.Has).ToArray(), small = t.Small.Where(RaftProps.Has).ToArray();
+			string[] anchors = t.Anchors.Where(RaftProps.Standable).ToArray(), medium = t.Medium.Where(RaftProps.Standable).ToArray(), small = t.Small.Where(RaftProps.Standable).ToArray();
 			if (anchors.Length == 0) return false;
+			Func<float, float, float> ground = (x, z) => { Vector3 gh, gn; return g.Hit(x, z, out gh, out gn) ? gh.y : float.NaN; };
 			Func<Vector3, float, float, string, IslandObject> put = (at, yaw, sink, name) =>
 			{
 				Vector3 hit, n;
 				if (!g.Hit(at.x, at.z, out hit, out n) || hit.y < 0.8f || Vector3.Angle(n, Vector3.up) > 25f) return null;
-				return k.Add(name, hit + Vector3.up * (RaftProps.Lift(name) - sink), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
+				// (clear of Raft's trees, rocks and pickups, and of what was put here already)
+				if (k.Taken.Any(x => new Vector2(x.x - at.x, x.z - at.z).sqrMagnitude < 1.5f * 1.5f)) return null;
+				float low = LowestUnder(ground, name, new Vector2(at.x, at.z), yaw);
+				if (float.IsNaN(low) || low < 0.6f) return null;
+				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
 			};
 			float y0 = Yaw(r);
 			string anchor = One(r, anchors);
@@ -320,6 +349,8 @@ namespace DynamicIslands.Editor
 				float floor = k.Ground(c);
 				if (floor - k.Sea < 2f || floor - k.Sea > 25f) continue;
 				Vector2 outward = (c - k.Mid).normalized;
+				// (clear of the scenes already on the island)
+				if (k.File.Objects.Any(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < reach + 8f)) continue;
 				// All of the outcrop over land, not much lower than the floor (it reaches 6-11 m under it); open ground in front
 				bool ok = true;
 				for (int i = 0; i < 16 && ok; i++)
@@ -332,7 +363,8 @@ namespace DynamicIslands.Editor
 				for (float t = reach; t <= reach + 10f && ok; t += 2f) { float g = k.Ground(c + outward * t); if (g - k.Sea < 0.4f || Mathf.Abs(g - floor) > 3f) ok = false; }
 				if (!ok) continue;
 				Cave cave = PlaceDen(name, c, outward, floor);
-				Level(k, new Vector2(cave.Pivot.x, cave.Pivot.z) + Vector2.zero, c, reach, floor, outward);
+				RemoveContentNear(k, c, reach + 4f);
+				Level(k, c, reach, floor, outward);
 				k.Clear(c, reach + 3f);
 				for (float t = reach; t <= reach + 10f; t += 2f) k.Clear(c + outward * t, 4f);
 				FurnishCave(k, cave, guard, lootPreset, title);
@@ -342,27 +374,43 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The ground under a den levelled to its floor out to its reach, blended into the land beyond; a level path out of the mouth.</summary>
-		static void Level(MapKit k, Vector2 pivot, Vector2 c, float reach, float floor, Vector2 outward)
+		static void Level(MapKit k, Vector2 c, float reach, float floor, Vector2 outward)
 		{
 			IslandFile f = k.File;
 			int res = f.HeightmapResolution;
-			float step = f.TerrainSize.x / (res - 1), blend = 10f;
-			int x0 = Mathf.Max(0, Mathf.FloorToInt((c.x - reach - blend - 12f) / step)), x1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.x + reach + blend + 12f) / step));
-			int z0 = Mathf.Max(0, Mathf.FloorToInt((c.y - reach - blend - 12f) / step)), z1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.y + reach + blend + 12f) / step));
+			float step = f.TerrainSize.x / (res - 1), blend = 10f, reachAll = reach + blend + 18f;
+			// What stands around keeps its height above the ground as the ground changes (trees in the blend don't float)
+			var around = f.Objects.Where(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < reachAll).Select(o => new KeyValuePair<IslandObject, float>(o, k.Ground(new Vector2(o.Position.x, o.Position.z)))).ToList();
+			int x0 = Mathf.Max(0, Mathf.FloorToInt((c.x - reachAll) / step)), x1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.x + reachAll) / step));
+			int z0 = Mathf.Max(0, Mathf.FloorToInt((c.y - reachAll) / step)), z1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.y + reachAll) / step));
 			Vector2 side = new Vector2(-outward.y, outward.x);
 			for (int z = z0; z <= z1; z++)
 				for (int x = x0; x <= x1; x++)
 				{
 					Vector2 q = new Vector2(x * step, z * step);
 					float h = f.Heights[z, x] * f.TerrainSize.y, d = (q - c).magnitude;
-					// (a path out of the mouth: level for 12 m past the outcrop, 8 m wide)
+					// Under the outcrop: level; around it: blended into the land
+					float w = d <= reach ? 1f : d < reach + blend ? 1f - (d - reach) / blend : 0f;
+					// A path out of the mouth: level 5 m wide for 12 m past the outcrop, blended at its sides and end
 					float along = Vector2.Dot(q - c, outward), across = Mathf.Abs(Vector2.Dot(q - c, side));
-					bool path = along > 0f && along < reach + 12f && across < 4f;
-					float w = d <= reach || path ? 1f : d < reach + blend ? 1f - (d - reach) / blend : 0f;
+					if (along > 0f)
+					{
+						float wSide = across < 2.5f ? 1f : across < 6f ? 1f - (across - 2.5f) / 3.5f : 0f;
+						float wEnd = along < reach + 12f ? 1f : along < reach + 18f ? 1f - (along - reach - 12f) / 6f : 0f;
+						w = Mathf.Max(w, wSide * wEnd);
+					}
 					if (w <= 0f) continue;
 					w = w * w * (3f - 2f * w);
 					f.Heights[z, x] = Mathf.Clamp01(Mathf.Lerp(h, floor - 0.15f, w) / f.TerrainSize.y);
 				}
+			foreach (var kv in around)
+				kv.Key.Position.y += k.Ground(new Vector2(kv.Key.Position.x, kv.Key.Position.z)) - kv.Value;
+		}
+
+		/// <summary>Takes the generator's animal spots and loot boxes off a spot that content is going on (a den, a scene).</summary>
+		static void RemoveContentNear(MapKit k, Vector2 c, float radius)
+		{
+			k.File.Objects.RemoveAll(o => (o.Name.StartsWith("Creature_") || ContentCatalog.IsLootObject(o.Name)) && new Vector2(o.Position.x - c.x, o.Position.z - c.y).sqrMagnitude < radius * radius);
 		}
 
 		/// <summary>
@@ -370,7 +418,7 @@ namespace DynamicIslands.Editor
 		/// trees and rocks and its floor meets the ground, with walkable ground out of the mouth. Returns a short
 		/// description, or null if nothing fits.
 		/// </summary>
-		public static string Grotto(WorldKit k, LandGround g, System.Random r, int style, string guard, string lootPreset)
+		public static string Grotto(WorldKit k, LandGround g, System.Random r, string guard, string lootPreset, IList<Vector3> blockers)
 		{
 			string name = DenFor(r);
 			if (name == null) return null;
@@ -392,7 +440,7 @@ namespace DynamicIslands.Editor
 					{
 						Vector3 q = cave.At(t, s), hit, n;
 						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y > cave.Floor + 1.2f || hit.y < cave.Floor - 3f) { ok = false; break; }
-						if (k.Taken.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 9f)) { ok = false; break; }
+						if (blockers.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 9f)) { ok = false; break; }
 					}
 				// Around it: land under the whole outcrop (not hanging over the sea); out of the mouth: walkable
 				for (int i = 0; i < 12 && ok; i++)

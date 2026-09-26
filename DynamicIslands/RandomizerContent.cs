@@ -104,7 +104,9 @@ namespace DynamicIslands.Editor
 			if (ForceBigFinds) big = true;
 			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.25f, 0.45f, 0.7f)))
 			{
-				string cave = RandomizerIslands.Grotto(k, ground, rnd, TerrainPainter.Tropical, new[] { "Boar", "Boar", "Bear", "Rat" }[rnd.Next(4)], rnd.NextDouble() < 0.3 ? "Treasure" : "Metal");
+				// (what would poke into the den: Raft's trees, bushes, crates, clams and boulders - not its flowers and small stones - and what was put here already)
+				var blockers = (l.landmarkItems ?? new LandmarkItem[0]).Where(i => i != null && System.Text.RegularExpressions.Regex.IsMatch(i.name, "Palm|Tree|Bush|Crate|Clam|Boulder|Bamboo")).Select(i => i.transform.position).Concat(k.Taken.Skip(raftCount)).ToList();
+				string cave = RandomizerIslands.Grotto(k, ground, rnd, new[] { "Boar", "Boar", "Bear", "Rat" }[rnd.Next(4)], rnd.NextDouble() < 0.3 ? "Treasure" : "Metal", blockers);
 				if (cave != null) parts.Add(cave);
 			}
 			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.2f, 0.35f, 0.5f)))
@@ -337,10 +339,13 @@ namespace DynamicIslands.Editor
 		static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
 		{
 			if (clear > 0f) k.Clear(p, clear);
+			// Its bottom as measured (raft_props.txt; the table above where it wasn't), on the lowest ground under it
 			float bottom;
-			Bottom.TryGetValue(name, out bottom);
+			PropInfo info = RaftProps.Get(name);
+			if (info != null) bottom = info.Bottom; else Bottom.TryGetValue(name, out bottom);
+			float ground = RandomizerIslands.LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
 			// (a setting of its own, so content placed next to it doesn't clear it away like scattered nature)
-			IslandObject o = k.Add(name, k.At(p, -bottom - sink), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+			IslandObject o = k.Add(name, new Vector3(p.x, ground - bottom - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 			o.EulerRotation = new Vector3(tiltX, yaw, tiltZ);
 			return o;
 		}

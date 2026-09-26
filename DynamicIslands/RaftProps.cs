@@ -47,6 +47,16 @@ namespace DynamicIslands.Editor
 
 		public static bool Has(string name) { return Get(name) != null; }
 
+		/// <summary>
+		/// A measured prop that stands on the ground: not one that hangs from its pivot (awnings, banners, dream catchers,
+		/// hanging signs and lamps: most of it well below the pivot), which would float with nothing holding it.
+		/// </summary>
+		public static bool Standable(string name)
+		{
+			PropInfo p = Get(name);
+			return p != null && !(p.Centre.y < -0.25f && p.Bottom < -0.5f && p.Bottom < -0.6f * p.Size.y);
+		}
+
 		/// <summary>What to lift a prop by so it stands on the ground (0 if it wasn't measured).</summary>
 		public static float Lift(string name) { PropInfo p = Get(name); return p != null ? -p.Bottom : 0f; }
 
