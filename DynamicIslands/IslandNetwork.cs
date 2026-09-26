@@ -102,6 +102,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			worldReceived = true;
 			WorldRules.OnWorldReceived();
+			CustomIslandSpawner.HostRegrowDays = -1; // (until the host's list says)
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
@@ -117,6 +118,7 @@ namespace DynamicIslands.Editor
 		public static void OnWorldLoaded()
 		{
 			synced = Raft_Network.IsHost;
+			CustomIslandSpawner.HostRegrowDays = -1;
 			syncTries = 0;
 			nextSyncTry = 0;
 			incoming.Clear();
@@ -196,6 +198,7 @@ namespace DynamicIslands.Editor
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
 				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
 				Labels = list.Select(e => e.Label ?? "").ToArray(),
+				Index = CustomIslandSpawner.RegrowDays + 1,
 				Offsets = new float[list.Count * 3]
 			};
 			for (int i = 0; i < list.Count; i++)
@@ -351,6 +354,14 @@ namespace DynamicIslands.Editor
 		{
 			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
+			// The host's regrow days ride along (Index = days + 1): every player's machine regrows by the host's number,
+			// never by its own spawnpool.txt. A message with only that (the host changed its file) changes nothing else.
+			if (msg.Index > 0 && CustomIslandSpawner.HostRegrowDays != msg.Index - 1)
+			{
+				CustomIslandSpawner.HostRegrowDays = msg.Index - 1;
+				Log("The host's islands regrow after " + CustomIslandSpawner.HostRegrowDays + " day(s)");
+			}
+			if (!msg.FullList && (msg.Ids == null || msg.Ids.Length == 0)) return;
 			synced = true;
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			int n = msg.Ids != null ? msg.Ids.Length : 0;

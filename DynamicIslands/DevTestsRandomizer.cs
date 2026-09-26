@@ -822,6 +822,95 @@ namespace DynamicIslands
 			if (ok) Log("PASS: a cave on Raft's island"); else Fail("a cave on Raft's island");
 		}
 
+		[ConsoleCommand(name: "CIRegrowInfo", docs: "Dev, world (either player): the regrow days this machine's own spawnpool.txt says, the host's (a client's copy), and the ones it uses - every player must use the host's (IM3/IM38)")]
+		public static void RegrowInfoCommand()
+		{
+			CustomIslandSpawner.LoadPool(false);
+			Log("REGROW own " + CustomIslandSpawner.RegrowDays + " host " + (Raft_Network.IsHost ? CustomIslandSpawner.RegrowDays : CustomIslandSpawner.HostRegrowDays) + " used " + IslandRules.RegrowDays(null) + " (" + (Raft_Network.IsHost ? "host" : "client") + ")");
+			Log("PASS: regrow info");
+		}
+
+		[ConsoleCommand(name: "CIModeParity", docs: "Dev, anywhere: the mod spawns creatures in each of Raft's game modes exactly as Raft's own islands do (LandmarkEntitySpawner.ShouldEntityBeSpawnedInGamemode, every mode x every animal kind)")]
+		public static void ModeParityCommand()
+		{
+			bool ok = true;
+			var modes = new List<SO_GameModeValue>();
+			try
+			{
+				var arr = typeof(GameModeValueManager).GetField("gameModeValues", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as SO_GameModeValue[];
+				if (arr != null) modes.AddRange(arr.Where(m => m != null));
+				foreach (string f in new[] { "creative", "peaceful", "normal", "hard" })
+				{
+					var m = typeof(GameModeValueManager).GetField(f, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as SO_GameModeValue;
+					if (m != null && !modes.Contains(m)) modes.Add(m);
+				}
+			}
+			catch (Exception e) { Fail("Raft's game modes: " + e.Message); return; }
+			if (modes.Count == 0) { Fail("Raft's game modes aren't set up yet (main menu once?)"); return; }
+			var go = new GameObject("CI_ModeParity");
+			go.SetActive(false);
+			var spawner = go.AddComponent<LandmarkEntitySpawner>();
+			var raft = typeof(LandmarkEntitySpawner).GetMethod("ShouldEntityBeSpawnedInGamemode", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+			int compared = 0, differ = 0;
+			try
+			{
+				foreach (SO_GameModeValue m in modes)
+				{
+					var off = new List<string>();
+					foreach (AI_NetworkBehaviourType t in Enum.GetValues(typeof(AI_NetworkBehaviourType)))
+					{
+						bool theirs = (bool)raft.Invoke(spawner, new object[] { m, t }), ours = CreatureSpawner.SpawnsInMode(t, m);
+						compared++;
+						if (theirs != ours) { differ++; Log("  " + m.gameMode + " " + t + ": Raft " + theirs + ", the mod " + ours); }
+						if (!theirs) off.Add(t.ToString());
+					}
+					Log("  " + m.gameMode + ": Raft leaves out " + (off.Count == 0 ? "nothing" : string.Join(", ", off.ToArray())));
+				}
+			}
+			finally { UnityEngine.Object.Destroy(go); }
+			Check(ref ok, differ == 0 && compared > 0, compared + " mode x kind pairs compared with Raft's own rule, " + differ + " differ");
+			if (ok) Log("PASS: creatures per game mode as Raft"); else Fail("creatures per game mode as Raft");
+		}
+
+		[ConsoleCommand(name: "CIStorySafe", docs: "Dev, main menu or editor: opens each of Raft's island scenes and checks the randomizer changes only its plain islands (big and small), never a story island, the stranded boat, the pilot's island or a floating raft")]
+		public static void StorySafeCommand() { DynamicIslands.instance.StartCoroutine(StorySafeRoutine()); }
+
+		static IEnumerator StorySafeRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			int plain = 0, story = 0;
+			var wrong = new List<string>();
+			foreach (string scene in PlaceableCatalog.LandmarkSceneNames())
+			{
+				string sceneName = scene;
+				yield return PlaceableCatalog.VisitScene(sceneName, s => StorySafeScene(s, sceneName, wrong, n => { if (n) plain++; else story++; }));
+				yield return null;
+			}
+			Check(ref ok, plain > 0 && story > 0 && wrong.Count == 0, plain + " plain island(s) randomized, " + story + " left alone; wrong: " + (wrong.Count == 0 ? "none" : string.Join("; ", wrong.ToArray())));
+			if (ok) Log("PASS: Raft's story islands left alone"); else Fail("Raft's story islands left alone");
+		}
+
+		static IEnumerator StorySafeScene(UnityEngine.SceneManagement.Scene s, string sceneName, List<string> wrong, Action<bool> count)
+		{
+			foreach (GameObject root in s.GetRootGameObjects())
+				foreach (Landmark l in root.GetComponentsInChildren<Landmark>(true))
+				{
+					// (a scene's island is named like the scene: "32#Landmark_Big#..." - that is what the randomizer reads)
+					string saved = l.name;
+					l.name = sceneName;
+					bool natural = WorldRandomizer.IsNatural(l);
+					l.name = saved;
+					bool shouldBe = System.Text.RegularExpressions.Regex.IsMatch(sceneName, "#Landmark_(Big|Small)#") ||
+						(System.Text.RegularExpressions.Regex.IsMatch(sceneName, "Small") && !System.Text.RegularExpressions.Regex.IsMatch(sceneName, "Radar|Vasagatan|Tangaroa|Varuna|Utopia|Pilot|Boat|#Landmark_Raft#"));
+					Log("  " + sceneName + ": " + (natural ? "randomized" : "left alone"));
+					count(natural);
+					if (natural && !shouldBe) wrong.Add(sceneName + " would be randomized");
+					if (!natural && System.Text.RegularExpressions.Regex.IsMatch(sceneName, "#Landmark_(Big|Small)#")) wrong.Add(sceneName + " (a plain island) would be left alone");
+				}
+			yield break;
+		}
+
 		[ConsoleCommand(name: "CICaveState", docs: "Dev, world (either player): a cave of an island as this machine has it: its guard (awake? animals of its kind in the den) and its hoard (opened?): CICaveState <island>")]
 		public static void CaveStateCommand(string[] args)
 		{

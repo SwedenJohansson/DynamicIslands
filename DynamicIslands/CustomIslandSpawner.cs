@@ -32,6 +32,8 @@ namespace DynamicIslands.Editor
 		public static float UnloadDistance = 800f;
 		/// <summary>Harvested trees and picked-up items on custom islands grow back after this many in-game days (0 = never).</summary>
 		public static int RegrowDays = 3;
+		/// <summary>Client: the host's RegrowDays (sent with its island list; -1 until it came). A client never uses its own file's.</summary>
+		public static int HostRegrowDays = -1;
 		/// <summary>Custom islands appear as green dots on Raft's Receiver (IslandRadar).</summary>
 		public static bool ShowOnReceiver = true;
 		/// <summary>Weight of brand-new, randomly generated islands in the pool (0 = never).</summary>
@@ -460,6 +462,7 @@ type:sunken 0.2
 				elevationCache.Clear();
 
 				poolLines.Clear();
+				int regrowBefore = RegrowDays;
 				foreach (string raw in File.ReadAllLines(PoolPath))
 				{
 					string line = raw.Trim();
@@ -504,6 +507,8 @@ type:sunken 0.2
 						poolLines.Add(new KeyValuePair<string, float>(line, 1f));
 				}
 				if (SpawnDistanceMax < SpawnDistanceMin) SpawnDistanceMax = SpawnDistanceMin;
+				// (the host's number is every player's: tell them when it changes)
+				if (RegrowDays != regrowBefore && Raft_Network.IsHost && LoadSceneManager.IsGameSceneLoaded) IslandNetwork.SendToEveryone(IslandNetwork.IslandsMessage(new IslandWorldState.Entry[0], false));
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + PoolPath + ": " + ex.Message); }
 		}
