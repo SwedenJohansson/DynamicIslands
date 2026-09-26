@@ -191,24 +191,17 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static bool SpawnsInThisMode(AI_NetworkBehaviourType type)
 		{
-			try
-			{
-				return SpawnsInMode(type, GameModeValueManager.GetCurrentGameModeValue());
-			}
+			try { return SpawnsInMode(type, GameModeValueManager.GetCurrentGameModeValue()); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading the game mode: " + e.Message); }
 			return true;
 		}
 
-		/// <summary>The same for a given game mode (tests compare it with Raft's own rule for every mode).</summary>
+		/// <summary>The same for a given game mode (CIModeParity compares it with Raft's own rule for every mode).</summary>
 		public static bool SpawnsInMode(AI_NetworkBehaviourType type, SO_GameModeValue mode)
 		{
-			try
-			{
-				if (mode == null) return true;
-				if (type == AI_NetworkBehaviourType.StoneBird) return mode.stonebirdVariables == null || mode.stonebirdVariables.shouldSpawn;
-				if (type == AI_NetworkBehaviourType.PufferFish) return mode.pufferfishVariables == null || mode.pufferfishVariables.shouldSpawn;
-			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading the game mode: " + e.Message); }
+			if (mode == null) return true;
+			if (type == AI_NetworkBehaviourType.StoneBird) return mode.stonebirdVariables == null || mode.stonebirdVariables.shouldSpawn;
+			if (type == AI_NetworkBehaviourType.PufferFish) return mode.pufferfishVariables == null || mode.pufferfishVariables.shouldSpawn;
 			return true;
 		}
 
@@ -316,15 +309,6 @@ namespace DynamicIslands.Editor
 			if (!Mathf.Approximately(dmg, 1f)) ScaleDamage(ai.gameObject, dmg);
 			if (!Mathf.Approximately(spd, 1f))
 				foreach (AI_Movement m in ai.GetComponentsInChildren<AI_Movement>(true)) speed[m] = spd;
-		}
-
-		/// <summary>
-		/// Client: the same maximum health as the host gave the animal (the host decides every hit; this keeps its health on
-		/// this machine - Bruce's wound shader, anything that shows it - in step with the host's).
-		/// </summary>
-		public static void ApplyHealthHere(AI_NetworkBehaviour ai, float multiplier)
-		{
-			if (ai != null && !Mathf.Approximately(multiplier, 1f)) DynamicIslands.instance.StartCoroutine(ApplyHealth(ai, multiplier));
 		}
 
 		/// <summary>Raft's own maximum health of animals whose health was changed (the automated tests compare with it).</summary>
@@ -665,34 +649,26 @@ namespace DynamicIslands.Editor
 		{
 			List<CreatureSpawnPoint> spots = IslandSpawner.SpawnedRoots.Where(r => r != null)
 				.SelectMany(r => r.GetComponentsInChildren<CreatureSpawnPoint>(true)).Where(p => p.Kind != null).ToList();
-			if (!spots.Any(p => ObjectProps.HasTint(p.Props) || !Mathf.Approximately(ObjectProps.Health(p.Props), 1f))) return;
-			Network_Host_Entities host = HostEntities;
+			if (!spots.Any(p => ObjectProps.HasTint(p.Props))) return;
 			AI_NetworkBehaviour[] all = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>();
 			foreach (AI_NetworkBehaviour ai in all)
 			{
 				if (ai == null || clientTinted.Contains(ai) || ai.connectedSpawner != null) continue;
 				// The animal's own spot: the nearest of its kind whose size it has (Raft sends the size; hostile
 				// animals roam far from their spot while chasing players, so the nearest tinted spot alone could
-				// colour an untinted animal of a spot next to it). Only that spot's settings count. The size is the
-				// spot's times Raft's own random size of the kind (bears 0.7-0.8, llamas 0.8-1.2, rats 0.7-1...).
+				// colour an untinted animal of a spot next to it). Only that spot's tint counts.
 				float size = ai.transform.localScale.x;
-				float min = 1f, max = 1f;
-				AI_NetworkBehaviour prefab = host != null ? Prefab(host, ai.behaviourType) : null;
-				if (prefab != null) try { min = prefab.localScaleInterval.minValue; max = prefab.localScaleInterval.maxValue; } catch { }
 				CreatureSpawnPoint best = null;
 				float bestDist = 150f;
 				foreach (CreatureSpawnPoint p in spots)
 				{
-					float s = ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f);
-					if (p.Kind.Type != ai.behaviourType || size < s * Mathf.Min(min, max) - 0.03f || size > s * Mathf.Max(min, max) + 0.03f) continue;
+					if (p.Kind.Type != ai.behaviourType || Mathf.Abs(ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f) - size) > 0.05f) continue;
 					float d = Vector3.Distance(p.transform.position, ai.transform.position);
 					if (d < bestDist) { bestDist = d; best = p; }
 				}
 				if (best == null) continue;
 				clientTinted.Add(ai);
 				if (ObjectProps.HasTint(best.Props)) ObjectProps.ApplyTint(ai.gameObject, best.Props);
-				// (the health the builder gave it, as the host has it)
-				ApplyHealthHere(ai, ObjectProps.Health(best.Props));
 			}
 			clientTinted.RemoveWhere(a => a == null);
 		}

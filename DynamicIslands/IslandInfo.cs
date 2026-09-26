@@ -31,8 +31,7 @@ namespace DynamicIslands.Editor
 			IslandSettings s = e != null && e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
 			int days;
 			if (s != null && int.TryParse(ObjectProps.Get(s.Props, IslandProps.RegrowDays), out days)) return Mathf.Max(0, days);
-			// (the world's number is the host's: a client takes the one the host sent, not its own spawnpool.txt)
-			return !Raft_Network.IsHost && CustomIslandSpawner.HostRegrowDays >= 0 ? CustomIslandSpawner.HostRegrowDays : CustomIslandSpawner.RegrowDays;
+			return CustomIslandSpawner.RegrowDays;
 		}
 	}
 

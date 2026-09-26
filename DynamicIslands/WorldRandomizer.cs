@@ -704,8 +704,6 @@ namespace DynamicIslands.Editor
 				CreatureSpawner.ApplyStats(ai, props);
 				alphas[ai] = label;
 			}
-			// (every other player: the same maximum health, so it shows the same - Bruce's wound shader; the host decides the hits)
-			else CreatureSpawner.ApplyHealthHere(ai, ai.behaviourType == AI_NetworkBehaviourType.Shark ? 2.5f : 3f);
 			Log((ai.behaviourType == AI_NetworkBehaviourType.Shark ? "Big Bruce" : "An alpha " + label.ToLowerInvariant()) + " #" + ai.ObjectIndex + " (" + tinted + " material(s))");
 			// Tell the player when it is close
 			Network_Player p = RAPI.GetLocalPlayer();

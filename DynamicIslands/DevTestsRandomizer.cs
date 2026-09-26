@@ -822,14 +822,6 @@ namespace DynamicIslands
 			if (ok) Log("PASS: a cave on Raft's island"); else Fail("a cave on Raft's island");
 		}
 
-		[ConsoleCommand(name: "CIRegrowInfo", docs: "Dev, world (either player): the regrow days this machine's own spawnpool.txt says, the host's (a client's copy), and the ones it uses - every player must use the host's (IM3/IM38)")]
-		public static void RegrowInfoCommand()
-		{
-			CustomIslandSpawner.LoadPool(false);
-			Log("REGROW own " + CustomIslandSpawner.RegrowDays + " host " + (Raft_Network.IsHost ? CustomIslandSpawner.RegrowDays : CustomIslandSpawner.HostRegrowDays) + " used " + IslandRules.RegrowDays(null) + " (" + (Raft_Network.IsHost ? "host" : "client") + ")");
-			Log("PASS: regrow info");
-		}
-
 		[ConsoleCommand(name: "CIModeParity", docs: "Dev, anywhere: the mod spawns creatures in each of Raft's game modes exactly as Raft's own islands do (LandmarkEntitySpawner.ShouldEntityBeSpawnedInGamemode, every mode x every animal kind)")]
 		public static void ModeParityCommand()
 		{
