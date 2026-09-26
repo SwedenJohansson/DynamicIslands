@@ -127,7 +127,7 @@ namespace DynamicIslands
 				if (Input.GetKeyDown(KeyCode.E)) TerrainStamps.Rotation += 15f;
 			}
 
-			if (!Input.GetMouseButton(0) || !overTerrain) return;
+			if (!Input.GetMouseButton(0) || !overTerrain || (!stroking && EditorCamera.UsingMouse)) return; // (Alt+drag orbits the camera)
 			if (!stroking) BeginStroke(point);
 			ApplyAt(point, Time.deltaTime);
 		}

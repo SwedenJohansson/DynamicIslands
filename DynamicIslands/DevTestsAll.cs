@@ -409,7 +409,8 @@ namespace DynamicIslands
 				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", objects " + PlacedEditorObjects().Count +
 				", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", windows [" + string.Join(",", OpenWindows().Select(w => w.GetType().Name).ToArray()) + "]" +
 				", stamp turn " + TerrainStamps.Rotation.ToString("F0") + ", placer " + (placer != null ? placer.name + " yaw " + placer.Yaw.ToString("F0") + " scale " + placer.ScaleFactor.ToString("F2") : "none") +
-				", island '" + DynamicIslands.currentIslandName + "'");
+				", island '" + DynamicIslands.currentIslandName + "'" +
+				(Camera.main != null ? string.Format(System.Globalization.CultureInfo.InvariantCulture, ", camera {0:F1} {1:F1} {2:F1} yaw {3:F1} pitch {4:F1}", Camera.main.transform.position.x, Camera.main.transform.position.y, Camera.main.transform.position.z, Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.x) : ""));
 		}
 
 		/// <summary>The placed objects that are shown (deleting hides them until undone; hidden ones aren't saved).</summary>

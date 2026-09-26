@@ -390,7 +390,7 @@ namespace RuntimeGizmos
 		{
 			if(mainTargetRoot != null)
 			{
-				if(nearAxis != Axis.None && Input.GetMouseButtonDown(0))
+				if(nearAxis != Axis.None && Input.GetMouseButtonDown(0) && !EditorCamera.UsingMouse)
 				{
 					StartCoroutine(TransformSelected(translatingType));
 				}
@@ -668,7 +668,7 @@ namespace RuntimeGizmos
 	
 		void GetTarget()
 		{
-			if(nearAxis == Axis.None && Input.GetMouseButtonDown(0))
+			if(nearAxis == Axis.None && Input.GetMouseButtonDown(0) && !EditorCamera.UsingMouse)
 			{
 				bool isAdding = Input.GetKey(AddSelection);
 				bool isRemoving = Input.GetKey(RemoveSelection);

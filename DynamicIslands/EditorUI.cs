@@ -43,6 +43,12 @@ namespace DynamicIslands.Editor
 		static InputField elevationField;
 		static RectTransform terrainTools, objectTools, islandTools, browserPanel;
 		static string hoverHint;
+		/// <summary>A short message in the status bar (Flash), shown until this time.</summary>
+		static string flash;
+		static float flashUntil;
+
+		/// <summary>Shows a short message in the status bar for a moment (the camera's speed, framing).</summary>
+		public static void Flash(string text, float seconds = 2f) { flash = text; flashUntil = Time.unscaledTime + seconds; }
 		static bool hintHooked;
 
 		/// <summary>Terrain slot painted by each of the four paint buttons.</summary>
@@ -230,7 +236,7 @@ namespace DynamicIslands.Editor
 			TerrainStamps.Load();
 			RefreshStamps();
 
-			Tips(s, "Left mouse: use the brush\nRight mouse: look around \u00B7 WASD: fly \u00B7 Shift: faster \u00B7 Wheel: up/down\nThe blue plane is the sea level");
+			Tips(s, "Left mouse: use the brush \u00B7 blue plane: the sea\nRight-drag: look (+WASD fly, Q/E, wheel: speed)\nMiddle-drag: pan \u00B7 Alt+drag: orbit \u00B7 WASD: move\nWheel: zoom to the cursor \u00B7 F: frame \u00B7 Shift: faster");
 			return s;
 		}
 
@@ -629,7 +635,7 @@ namespace DynamicIslands.Editor
 				selectionText.color = selected == 0 ? UIKit.TextMuted : UIKit.Accent;
 			}
 
-			if (hintText != null) hintText.text = hoverHint ?? ToolHint();
+			if (hintText != null) hintText.text = Time.unscaledTime < flashUntil ? flash : hoverHint ?? ToolHint();
 			if (cameraText != null && Camera.main != null)
 			{
 				Vector3 c = Camera.main.transform.position;

@@ -62,6 +62,7 @@
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DevTestsBehaviour.cs" />
+    <Compile Include="DevTestsCamera.cs" />
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsStory.cs" />
     <Compile Include="DevTestsMultiplayer.cs" />
@@ -101,7 +102,7 @@
     <Compile Include="ObjectBrowser.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
-    <Compile Include="RTSCamera.cs" />
+    <Compile Include="EditorCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtTransform.cs" />

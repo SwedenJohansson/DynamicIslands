@@ -85,7 +85,7 @@ namespace DynamicIslands.Editor
 			lastMouseCoordinate = Input.mousePosition;
 			Apply();
 
-			if (Input.GetMouseButtonDown(0) && !MouseOverUI()) Place();
+			if (Input.GetMouseButtonDown(0) && !MouseOverUI() && !EditorCamera.UsingMouse) Place();
 		}
 
 		/// <summary>Moves the object to the first thing under the mouse that isn't the object itself.</summary>

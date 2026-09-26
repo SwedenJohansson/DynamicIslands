@@ -228,7 +228,7 @@ The screen has a **top bar**, a **tool panel** on the left (it scrolls when a ta
 | Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never) |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
-| Camera | | WASD or arrows to move, Shift for faster, right-drag to rotate, mouse wheel to change height (not over a panel) |
+| Camera | | Like Unity's scene view: **right-drag** to look around (while held: **WASD** flies where you look, **Q/E** down and up, the **wheel** sets the flying speed); **WASD** or arrows alone move over the island at the same height; **middle-drag** pans (the ground follows the cursor); **Alt+left-drag** orbits around the selected objects, or the ground in the middle of the view; the **wheel** zooms towards whatever is under the cursor (never through it; not over a panel); **F** frames the selection, or the whole island when nothing is selected; **Shift** is three times faster. Moves are smoothed and faster high up; the camera stays above the ground but can dive under the sea. |
 
 The blue plane is sea level. Anything below it is under water in game.
 
@@ -304,7 +304,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
 | `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan choice in Raft's New Game box |
-| `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `RTSCamera.cs` | The editor |
+| `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `EditorCamera.cs` | The editor (`EditorCamera.cs`: the Unity-style camera that replaced the 2021 RTS camera) |
 | `RuntimeGizmo\`, `AwaitExtensions\` | Third-party move/rotate/scale gizmo and await helpers |
 
 ## Known limitations

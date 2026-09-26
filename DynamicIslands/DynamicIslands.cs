@@ -280,7 +280,7 @@ namespace DynamicIslands
 			RAPI.ToggleCursor(true);
 			Camera mainCamera = Camera.main;
 			mainCamera.gameObject.AddComponent<terraineditor>();
-			mainCamera.gameObject.AddComponent<RTSCamera>();
+			mainCamera.gameObject.AddComponent<EditorCamera>(); // (Unity-style: right-drag look, WASD, middle-drag pan, Alt+drag orbit, wheel zooms to the cursor, F frames)
 
 			// The editor's screen is built in code (EditorUI); the bundle's old canvas (toolbar, dropdown) is switched off
 			try
