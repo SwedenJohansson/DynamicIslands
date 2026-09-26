@@ -70,6 +70,7 @@
     <Compile Include="DevTestsAll.cs" />
     <Compile Include="DevTestsGenerator.cs" />
     <Compile Include="DevTestsMore.cs" />
+    <Compile Include="DevTestsLand.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="MapTypes.cs" />
     <Compile Include="RaftIslands.cs" />
     <Compile Include="RaftUnderwater.cs" />
+    <Compile Include="RaftLand.cs" />
     <Compile Include="IslandReach.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />

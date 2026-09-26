@@ -264,7 +264,7 @@ namespace DynamicIslands.Editor
 			UIKit.Help(quick, "Quick settings for all the land's object sliders at once (not the life under water): None, Sparse, Like Raft (about as dense as Raft's big islands), Dense, and Jungle (the maximum: trees about 3 m apart with bushes between, barely walkable). Fine-tune each kind below.");
 			Func<float, string> amount = v => v <= 0.01f ? "none" : v < 0.25f ? "sparse" : v < 0.45f ? "like Raft" : v < 0.75f ? "dense" : v < 0.97f ? "very dense" : "jungle";
 			Slider(nature, "Trees", 0f, 1f, () => s.Amount(s.Trees), v => s.Trees = v, amount, "Palms, pines, birches, cacti... by style",
-				"Trees of the style: palms along the shore and fruit trees inland (tropical), snowy pines, cacti and bushy trees (desert), birches and pines (forest). At the top they stand about 3 m apart: a jungle. Harvestable palms and trees give Raft's wood and fruit.");
+				"Trees of the style, where Raft's own islands have them (measured): bamboo by the beach, palms from a few metres inland, mango trees further in (tropical); snowy pines; bushy trees and cacti (desert); birches and pines (forest) - on grass, not on the bare beach or rocky cliffs. At the top they stand about 3 m apart: a jungle. Harvestable palms and trees give Raft's wood and fruit.");
 			Slider(nature, "Bushes and plants", 0f, 1f, () => s.Amount(s.Bushes), v => s.Bushes = v, amount, "Undergrowth between the trees",
 				"Bushes, ferns, grass and other undergrowth (snow drifts on snowy islands). They fill the gaps between the trees; dense undergrowth makes an island feel wild.");
 			Slider(nature, "Rocks", 0f, 1f, () => s.Amount(s.Rocks), v => s.Rocks = v, amount, "Boulders on steep and high ground",

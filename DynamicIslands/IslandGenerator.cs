@@ -1364,6 +1364,109 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// Where a kind of land object grows on Raft's islands of a style (RaftLand, measured by CIMeasureLand): the kinds
+		/// the catalog has, each one's density per habitat bin, and the category's together. Null where Raft's islands of
+		/// the style have too few of them (the zone rules decide there).
+		/// </summary>
+		class Habitat
+		{
+			public LandThing[] Kinds;
+			/// <summary>Per kind, per bin: objects per 1000 m² (small bins shrunk towards none, so a few objects in a scrap of land don't count for much).</summary>
+			public float[][] KindWeight;
+			/// <summary>Per bin: the category's objects per 1000 m²; and its average over Raft's land.</summary>
+			public float[] Weight;
+			public float Typical;
+			/// <summary>The category's usual steepest ground (the median of its kinds' 90th percentiles of slope).</summary>
+			public float Slope90;
+			/// <summary>Grows on grass (most of its kinds, WithinHabit): the cliffs over 40° - rock-painted here - don't count as its land.</summary>
+			public bool OnGrass;
+		}
+
+		/// <summary>Area (m²) a habitat bin is shrunk by: a bin needs about this much of Raft's land before its density counts in full.</summary>
+		const float HabitatPrior = 400f;
+		/// <summary>The fewest measured objects of a category for its habitat to decide.</summary>
+		const int HabitatMinCount = 25;
+
+		static readonly Dictionary<string, Habitat> habitats = new Dictionary<string, Habitat>();
+
+		static Habitat HabitatOf(int style, string cat)
+		{
+			if (cat == CatBeach) return null; // (driftwood and pebbles on the beach: Raft's few logs lie inland; the beach keeps the zone rule)
+			if (!PlaceableCatalog.IsBuilt) return null; // (not cached: the catalog's names aren't known yet)
+			string key = style + "/" + cat;
+			Habitat h;
+			if (habitats.TryGetValue(key, out h)) return h;
+			LandStyle land = RaftLand.For(style);
+			var core = new HashSet<string>(PlaceableCatalog.CoreNames);
+			LandThing[] kinds = land.Of(cat).Where(t => core.Contains(t.Name)).ToArray();
+			h = null;
+			if (kinds.Sum(t => t.Count) >= HabitatMinCount)
+			{
+				h = new Habitat { Kinds = kinds, KindWeight = new float[kinds.Length][], Weight = new float[RaftLand.BinCount] };
+				float totalArea = land.Area.Sum(), totalCount = 0f;
+				for (int k = 0; k < kinds.Length; k++)
+				{
+					h.KindWeight[k] = new float[RaftLand.BinCount];
+					for (int b = 0; b < RaftLand.BinCount; b++)
+					{
+						float count = kinds[k].Density[b] * land.Area[b] / 1000f;
+						h.KindWeight[k][b] = count * 1000f / (land.Area[b] + HabitatPrior);
+						h.Weight[b] += h.KindWeight[k][b];
+						totalCount += count;
+					}
+				}
+				h.Typical = totalArea > 0f ? totalCount * 1000f / totalArea : 0f;
+				// (the median of its kinds' limits: bamboo alone - most of the tropical "trees" - would set it for the palms)
+				List<float> limits = kinds.Select(t => t.Slope[2]).OrderBy(v => v).ToList();
+				h.Slope90 = limits[limits.Count / 2];
+				h.OnGrass = kinds.Sum(t => t.OnGrass * t.Count) / Mathf.Max(1, kinds.Sum(t => t.Count)) >= 0.85f;
+				if (h.Typical <= 0f) h = null;
+			}
+			habitats[key] = h;
+			return h;
+		}
+
+		/// <summary>Tests: the habitat bin of every cell of these heights (-1: not land), as the planner sees them.</summary>
+		internal static int[] HabitatBins(IslandGenSettings s, float[,] metres, float step)
+		{
+			UseSea(s);
+			Ground g = Survey(metres, step);
+			var bins = new int[g.Res * g.Res];
+			for (int i = 0; i < bins.Length; i++) bins[i] = -1;
+			for (int b = 0; b < RaftLand.BinCount; b++) foreach (int c in g.BinCells[b]) bins[c] = b;
+			return bins;
+		}
+
+		/// <summary>Metres inland from the coast at a point (the nearest cell).</summary>
+		static float InlandAt(Ground g, float x, float z)
+		{
+			int ix = Mathf.Clamp(Mathf.RoundToInt(x / g.Step), 0, g.Res - 1), iz = Mathf.Clamp(Mathf.RoundToInt(z / g.Step), 0, g.Res - 1);
+			return g.Inland[iz * g.Res + ix];
+		}
+
+		/// <summary>
+		/// Within where a kind usually stands on Raft's islands: no steeper than its 90th percentile - and than its
+		/// category's usual one, so a kind measured a few times on a cliff doesn't take the whole kind there - plus 5°;
+		/// off the beach as far as it keeps off it (its 10th percentiles of distance inland and height, three quarters of
+		/// them, but never asking more than 9 m inland or 4.5 m up: an island's size isn't Raft's).
+		/// </summary>
+		static bool WithinHabit(LandThing t, float categorySlope, float slope, float height, float inland)
+		{
+			if (slope > Mathf.Min(t.Slope[2], categorySlope) + 5f) return false;
+			// (and on the ground texture it grows on: Raft's palms and bushes stand on grass nearly always - the automatic
+			// paint (TerrainPainter.AutoWeights) makes rock from 28° and sand below 2.5-5 m, where they'd look planted on stone)
+			float rock = Mathf.InverseLerp(28f, 42f, slope), grass = Mathf.InverseLerp(2.5f, 5f, height) * (1f - rock);
+			if (t.OnGrass >= 0.85f && grass < 0.5f) return false;
+			if (t.OnRock < 0.15f && rock > 0.5f) return false;
+			if (t.Inland[0] > 2f && inland < Mathf.Min(t.Inland[0], 12f) * 0.75f) return false;
+			if (t.Height[0] > 1f && height < Mathf.Min(t.Height[0], 6f) * 0.75f) return false;
+			return true;
+		}
+
+		/// <summary>How suitable a bin is for a category, against its average on Raft's land (0 = never there, 1 = as usual, capped at 2).</summary>
+		static float Suitability(Habitat h, int bin) { return Mathf.Min(2f, h.Weight[bin] / h.Typical); }
+
 		static float MaxSize(string cat, int zone)
 		{
 			switch (cat)
@@ -1465,6 +1568,11 @@ namespace DynamicIslands.Editor
 			public float Step, Top;
 			public readonly List<int>[] Zones = new List<int>[ZoneCount];
 			public float ZoneArea(int z) { return Zones[z].Count * Step * Step; }
+			/// <summary>The land's cells by habitat (RaftLand.BinOf: how far inland, how steep, how high), as measured on Raft's islands.</summary>
+			public readonly List<int>[] BinCells = new List<int>[RaftLand.BinCount];
+			public float BinArea(int b) { return BinCells[b].Count * Step * Step; }
+			/// <summary>Metres inland from the nearest water, per cell (z * Res + x; 0 under water).</summary>
+			public float[] Inland;
 
 			public float At(float x, float z)
 			{
@@ -1496,17 +1604,47 @@ namespace DynamicIslands.Editor
 			int res = metres.GetLength(0);
 			var g = new Ground { M = metres, Res = res, Step = step };
 			for (int i = 0; i < ZoneCount; i++) g.Zones[i] = new List<int>();
+			for (int i = 0; i < RaftLand.BinCount; i++) g.BinCells[i] = new List<int>();
 			float top = 0f;
 			foreach (float v in metres) top = Mathf.Max(top, v - Sea);
 			g.Top = top;
+			// How far inland each land cell is (m from the nearest water: two chamfer passes)
+			var inland = new float[res * res];
+			g.Inland = inland;
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) inland[z * res + x] = metres[z, x] > Sea ? 1e9f : 0f;
+			for (int pass = 0; pass < 2; pass++)
+			{
+				for (int z = 1; z < res; z++)
+					for (int x = 1; x < res - 1; x++)
+					{
+						int i = z * res + x;
+						float v = inland[i];
+						if (v == 0f) continue;
+						v = Mathf.Min(v, Mathf.Min(inland[i - 1] + step, inland[i - res] + step));
+						v = Mathf.Min(v, Mathf.Min(inland[i - res - 1], inland[i - res + 1]) + step * 1.414f);
+						inland[i] = v;
+					}
+				for (int z = res - 2; z >= 0; z--)
+					for (int x = res - 2; x >= 1; x--)
+					{
+						int i = z * res + x;
+						float v = inland[i];
+						if (v == 0f) continue;
+						v = Mathf.Min(v, Mathf.Min(inland[i + 1] + step, inland[i + res] + step));
+						v = Mathf.Min(v, Mathf.Min(inland[i + res + 1], inland[i + res - 1]) + step * 1.414f);
+						inland[i] = v;
+					}
+			}
 			for (int z = 1; z < res - 1; z++)
 				for (int x = 1; x < res - 1; x++)
 				{
 					float e = metres[z, x];
 					if (e < Sea - 12f) continue;
 					float dx = (metres[z, x + 1] - metres[z, x - 1]) / (2f * g.Step), dz = (metres[z + 1, x] - metres[z - 1, x]) / (2f * g.Step);
-					int zone = g.ZoneOf(e - Sea, Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg);
+					float slope = Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
+					int zone = g.ZoneOf(e - Sea, slope);
 					if (zone >= 0) g.Zones[zone].Add(z * res + x);
+					if (e > Sea) g.BinCells[RaftLand.BinOf(inland[z * res + x], slope, e - Sea)].Add(z * res + x);
 				}
 			return g;
 		}
@@ -1564,9 +1702,22 @@ namespace DynamicIslands.Editor
 			var targets = new Dictionary<string, int>();
 			foreach (string cat in LandCategories)
 			{
-				float[] w = ZoneWeights(cat);
 				float area = 0f;
-				for (int z = 0; z < ZoneCount; z++) area += w[z] * ground.ZoneArea(z);
+				Habitat hab = HabitatOf(s.Style, cat);
+				if (hab != null)
+					// (as much land as suits the kind the way Raft's islands have it: none on the bare beach, cliffs or where Raft never grows it)
+					for (int b = 0; b < RaftLand.BinCount; b++)
+					{
+						int bi, bs, bh;
+						RaftLand.Unbin(b, out bi, out bs, out bh);
+						if (hab.OnGrass && bs == RaftLand.Bins1 - 1) continue;
+						area += Suitability(hab, b) * ground.BinArea(b);
+					}
+				else
+				{
+					float[] w = ZoneWeights(cat);
+					for (int z = 0; z < ZoneCount; z++) area += w[z] * ground.ZoneArea(z);
+				}
 				float v = AmountOf(s, cat);
 				targets[cat] = Mathf.RoundToInt(MaxDensity(cat) * v * v * area / 1000f);
 			}
@@ -1581,6 +1732,8 @@ namespace DynamicIslands.Editor
 			string[] trees = pick(pools.Trees), shoreTrees = pick(pools.ShoreTrees), bushes = pick(pools.Bushes), rocks = pick(pools.Rocks), beach = pick(pools.Beach);
 			string[] landHarvest = pick(pools.LandHarvest), seaHarvest = pick(pools.SeaHarvest), water = pick(pools.Water);
 			if (shoreTrees.Length == 0) shoreTrees = trees;
+			string[] beachHarvest = landHarvest.Where(n => Regex.IsMatch(n, @"(Rock|Clay|Sand|Scrap)")).ToArray();
+			if (beachHarvest.Length == 0) beachHarvest = landHarvest;
 
 			// (targets: how many of each land kind, already scaled down past MaxObjects)
 			for (int ci = 0; ci < LandCategories.Length; ci++)
@@ -1590,41 +1743,79 @@ namespace DynamicIslands.Editor
 				if (target <= 0) continue;
 				var rnd = new System.Random(s.Seed * 7919 + 13 + ci * 1013);
 				Vector2 clusterOff = RandomOffset(rnd);
-				float[] w = ZoneWeights(cat);
-				float[] cum = new float[ZoneCount];
+				// Where: in the habitat bins Raft's islands of the style have this kind of thing in, as often as there (or,
+				// without a measurement, the zones)
+				Habitat hab = HabitatOf(s.Style, cat);
+				int slots = hab != null ? RaftLand.BinCount : ZoneCount;
+				float[] w = hab != null ? hab.Weight : ZoneWeights(cat);
+				Func<int, List<int>> cellsOf = i => hab != null ? ground.BinCells[i] : ground.Zones[i];
+				float[] cum = new float[slots];
 				float total = 0f;
-				for (int z = 0; z < ZoneCount; z++) { total += w[z] * ground.Zones[z].Count; cum[z] = total; }
+				for (int i = 0; i < slots; i++)
+				{
+					// (grass-bound kinds: not on the cliffs, WithinHabit wouldn't take a spot there)
+					if (hab != null && hab.OnGrass && i / RaftLand.Bins1 % RaftLand.Bins1 == RaftLand.Bins1 - 1) { cum[i] = total; continue; }
+					total += w[i] * cellsOf(i).Count;
+					cum[i] = total;
+				}
 				if (total <= 0f) continue;
+				float[] kindCum = hab != null ? new float[hab.Kinds.Length] : null;
 				int placed = 0;
 				for (int attempt = 0; attempt < target * 5 + 50 && placed < target; attempt++)
 				{
 					float r = (float)rnd.NextDouble() * total;
-					int zone = 0;
-					while (zone < ZoneCount - 1 && r >= cum[zone]) zone++;
-					List<int> cells = ground.Zones[zone];
+					int slot = 0;
+					while (slot < slots - 1 && r >= cum[slot]) slot++;
+					List<int> cells = cellsOf(slot);
 					if (cells.Count == 0) continue;
 					int cell = cells[rnd.Next(cells.Count)];
 					float x = (cell % ground.Res + (float)rnd.NextDouble() - 0.5f) * ground.Step, z0 = (cell / ground.Res + (float)rnd.NextDouble() - 0.5f) * ground.Step;
 					float h = ground.At(x, z0), above = h - Sea;
+					int zone = ground.ZoneOf(above, ground.Slope(x, z0));
 					// (the jitter may have moved it into the water, or out of it)
-					if (zone == ZWater ? above > -1f : above < 0.3f && zone != ZWet) continue;
+					if (hab != null ? above < 0.1f : (slot == ZWater ? above > -1f : above < 0.3f && slot != ZWet)) continue;
 					if (s.Clusters > 0f)
 					{
 						float n = Fbm(new Vector2(x, z0) / 28f + clusterOff, 3);
 						if ((float)rnd.NextDouble() > Mathf.Lerp(1f, SS(-0.1f, 0.35f, n), s.Clusters)) continue;
 					}
-					string[] pool;
-					switch (cat)
+					// Which: as Raft mixes the kinds in that habitat (palms inland, bamboo by the beach...), or from the style's pool
+					string kind;
+					LandThing measured = null;
+					if (hab != null)
 					{
-						case CatTrees: pool = zone == ZBeach ? shoreTrees : trees; break;
-						case CatBushes: pool = bushes; break;
-						case CatRocks: pool = rocks; break;
-						case CatBeach: pool = beach; break;
-						case CatHarvest: pool = zone == ZWater ? seaHarvest : landHarvest; break;
-						default: pool = water; break;
+						// (only kinds this spot is within the usual place of - WithinHabit - so the odd palm on a cliff or bush at
+						// the waterline of Raft's islands isn't copied; rocks go wherever Raft has them)
+						float slopeHere = ground.Slope(x, z0), inlandHere = InlandAt(ground, x, z0);
+						float kt = 0f;
+						for (int k = 0; k < hab.Kinds.Length; k++)
+						{
+							if (cat == CatRocks || WithinHabit(hab.Kinds[k], hab.Slope90, slopeHere, above, inlandHere)) kt += hab.KindWeight[k][slot];
+							kindCum[k] = kt;
+						}
+						if (kt <= 0f) continue;
+						float kr = (float)rnd.NextDouble() * kt;
+						int pickK = 0;
+						while (pickK < hab.Kinds.Length - 1 && kr >= kindCum[pickK]) pickK++;
+						measured = hab.Kinds[pickK];
+						kind = measured.Name;
 					}
-					if (pool.Length == 0) continue;
-					string kind = pool[rnd.Next(pool.Length)];
+					else
+					{
+						string[] pool;
+						switch (cat)
+						{
+							case CatTrees: pool = zone == ZBeach ? shoreTrees : trees; break;
+							case CatBushes: pool = bushes; break;
+							case CatRocks: pool = rocks; break;
+							case CatBeach: pool = beach; break;
+							// (on the beach only what lies on beaches - stones, clay, sand - not berry bushes or pineapples)
+							case CatHarvest: pool = slot == ZWater ? seaHarvest : zone <= ZBeach ? beachHarvest : landHarvest; break;
+							default: pool = water; break;
+						}
+						if (pool.Length == 0) continue;
+						kind = pool[rnd.Next(pool.Length)];
+					}
 					float yaw = (float)rnd.NextDouble() * 360f;
 					float scale = 0.85f + 0.3f * (float)rnd.NextDouble();
 					float objectSize = SpawnSize(kind); // (as spawned: the prototype carries Raft's own scale)
@@ -1635,7 +1826,10 @@ namespace DynamicIslands.Editor
 					spots.Add(x, z0, foot);
 					GameObject proto = PlaceableCatalog.Get(kind);
 					Vector3 baseScale = proto != null ? proto.transform.localScale : Vector3.one;
-					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, h, z0), EulerRotation = new Vector3(0, yaw, 0), Scale = baseScale * scale });
+					// (sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
+					float y = h;
+					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
+					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = new Vector3(0, yaw, 0), Scale = baseScale * scale });
 					cats.Add(cat);
 					placed++;
 				}
