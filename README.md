@@ -169,6 +169,7 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 | `oddity` | A small island with something odd on it: one of the eight below, picked at random |
 | `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
 | `lair` | A boss lair: a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One: 6× health, 2.5× damage, twice the size) and two guards wake when you reach the top; a hoard and a trophy chest with the beast's head (quest; much harder than `boss`) |
+| `large` | A large island made like Raft's big ones (80-110 m, 35-60 m high, trees and plants as dense as theirs): three warthog spots, four spots of animals to catch for the raft, puffer fish around it, a screecher, hidden loot boxes, a made-up name; one or two scenes from the quest islands, and a den (one of Balboa's cave outcrops) with a guard and a hoard |
 
 ## World randomizer
 
@@ -180,9 +181,23 @@ Makes a **normal Raft world** play out differently every time: with or without c
 | **Animals** | Raft's islands that have animals get more of them near where Raft has them; islands without animals sometimes get a few (warthogs, chickens, goats, llamas; on Wild a bear); now and then puffer fish guard the reef |
 | **Alphas** | Rare alpha animals (warthogs, pigs, bears, polar bears, hyenas, screechers): bigger, darker, 3× health, 1.6× damage. A huge dark **Big Bruce** now and then (2.5× health). A banner warns nearby players. Killed, they drop a trophy head (Head_Boar, Head_Bear, Head_Shark...), meat and leather, and sometimes titanium |
 | **Loot** | Some of the crates and giant clams on Raft's islands lie somewhere else (on land stays on land, under water at a similar depth); islands sometimes get extra crates, barrels and chests, and sunken barrels on the reef |
-| **Finds** | Now and then an island hides a **treasure hunt** (a map in a bottle on the beach, a chest buried at the island's highest point), an **abandoned camp** (big islands) or a **castaway's stash** by a tree, with a note and a quest |
+| **Finds** | Now and then an island hides a **treasure hunt** (a map in a bottle on the beach, a chest buried at the island's highest point), an **abandoned camp** (big islands) or a **castaway's stash** by a tree, with a note and a quest. Raft's big islands now and then get a **den** (one of Balboa's cave outcrops, on a level spot clear of Raft's trees and rocks, its mouth towards the coast: a guard wakes when you walk in, a hoard at the back) and an **outpost** (a scene from a quest island) |
 | **Oddities** | While sailing, small **oddity islands** appear (the map types above: a van, a caravan, a crashed plane...) |
 | **Bosses** | Now and then (after the first few km) a **boss lair** appears |
+| **Large** | Now and then (after the first few km) a **large island** like Raft's big ones appears (the `large` map type above) |
+
+**Made to fit in Raft's world.** The randomizer's islands are made like Raft's own: the oddities, lairs and large islands
+have trees, bushes, rocks and harvestables as dense as Raft's islands of that size (its small islands have only 3-7 trees to
+cut, its big ones about one per 1000 m²), in the places Raft puts them, with Raft's pickable flowers, pineapples,
+watermelons and mango and banana trees on tropical ones. What makes them new comes from Raft's own quest islands, as
+**scenes**: a scrapyard (Varuna Point's excavator, forklift, dumpsters and concrete pipes), an old market (Utopia's baskets
+and crates under Tangaroa's sunshade), a caravan outpost (Caravan Town), bear country (Balboa's fences, bear signs and
+couch, a bear nearby), a frozen camp (Temperance's igloos, on snowy islands), a hotel garden (Tangaroa's plants), a radio
+outpost (the radio tower's windmill and dish) and a castaways' camp (the floating rafts'), each with a chest and a note;
+and **dens**: Balboa's bear cave and dead end, whole rock outcrops with a den about 30 m deep, placed on levelled ground
+(generated islands) or a clear level spot (Raft's islands). Every prop's size and footprint is measured
+(`raft_props.txt`, `CIMeasureProps`): props stand on the lowest ground under them, and nothing that hangs from its top
+(awnings, banners, dream catchers) is used.
 
 - **Raft's story is safe:** only Raft's plain islands (the big and small tropical ones and the small islands around the story places) are changed; the story islands, the stranded boat, the pilot's island and floating rafts are left alone, and so are bosses, people and bees.
 - **Multiplayer:** colours, alphas and moved crates are worked out on every machine from the world's seed and Raft's own network ids, so every player sees the same without extra messages. What is added to Raft's islands is a land-less custom island laid over Raft's island (its "extras", `rnd-<seed>-<id>.island`): it is saved, sent to other players, and its chests, animals and quests work like any custom island's. Raft saves picked-up crates by the place it put them; for moved crates the mod finds them by that place again, so a used crate stays used after loading and for players who join.
@@ -383,7 +398,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
 | `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan and randomizer choices in Raft's New Game box |
-| `WorldRandomizer.cs`, `RandomizerContent.cs` | The world randomizer: settings (saved with the world, sent to players), animal colours and alphas, moving Raft's crates and clams (and finding them again for Raft's saves), the extras laid over Raft's islands, oddity islands and boss lairs while sailing; `RandomizerContent`: what the extras, oddities and lairs contain |
+| `WorldRandomizer.cs`, `RandomizerContent.cs` | The world randomizer: settings (saved with the world, sent to players), animal colours and alphas, moving Raft's crates and clams (and finding them again for Raft's saves), the extras laid over Raft's islands, oddity islands, boss lairs and large islands while sailing; `RandomizerContent`: what the extras, oddities and lairs contain |
+| `RandomizerIslands.cs`, `RaftProps.cs` | The randomizer's islands: the quest-island themes and their scenes, dens (placing them, levelling the ground, what is inside), the large islands; the measured props and cave pieces (`raft_props.txt`) |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `EditorCamera.cs` | The editor (`EditorCamera.cs`: the Unity-style camera that replaced the 2021 RTS camera) |
 | `RuntimeGizmo\`, `AwaitExtensions\` | Third-party move/rotate/scale gizmo and await helpers |
 
