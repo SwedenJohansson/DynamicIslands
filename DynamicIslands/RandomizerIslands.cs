@@ -348,10 +348,9 @@ namespace DynamicIslands.Editor
 				Vector2 c = k.Mid + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d;
 				float floor = k.Ground(c);
 				if (floor - k.Sea < 2f || floor - k.Sea > 25f) continue;
-				Vector2 outward = (c - k.Mid).normalized;
 				// (clear of the scenes already on the island)
 				if (k.File.Objects.Any(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < reach + 8f)) continue;
-				// All of the outcrop over land, not much lower than the floor (it reaches 6-11 m under it); open ground in front
+				// All of the outcrop over land, not much lower than the floor (it reaches 6-11 m under it)
 				bool ok = true;
 				for (int i = 0; i < 16 && ok; i++)
 				{
@@ -360,8 +359,17 @@ namespace DynamicIslands.Editor
 					float g = k.Ground(q);
 					if (g - k.Sea < 0.5f || g < floor - 4f) ok = false;
 				}
-				for (float t = reach; t <= reach + 10f && ok; t += 2f) { float g = k.Ground(c + outward * t); if (g - k.Sea < 0.4f || Mathf.Abs(g - floor) > 3f) ok = false; }
 				if (!ok) continue;
+				// Open ground in front of the mouth: facing the sea best, else turned up to 80° either way
+				Vector2 away = (c - k.Mid).normalized, outward = Vector2.zero;
+				foreach (float turn in new[] { 0f, 40f, -40f, 80f, -80f })
+				{
+					Vector2 dir = Quaternion.Euler(0f, 0f, turn) * away;
+					bool open = true;
+					for (float t = reach; t <= reach + 10f && open; t += 2f) { float g = k.Ground(c + dir * t); if (g - k.Sea < 0.4f || Mathf.Abs(g - floor) > 3f) open = false; }
+					if (open) { outward = dir; break; }
+				}
+				if (outward == Vector2.zero) continue;
 				Cave cave = PlaceDen(name, c, outward, floor);
 				RemoveContentNear(k, c, reach + 4f);
 				Level(k, c, reach, floor, outward);
@@ -476,7 +484,7 @@ namespace DynamicIslands.Editor
 		{
 			double roll = rnd.NextDouble();
 			int style = roll < 0.55 ? Tropical : roll < 0.7 ? Forest : roll < 0.8 ? Desert : roll < 0.9 ? Snowy : Volcanic;
-			int[] shapes = { IslandShapes.Round, IslandShapes.Round, IslandShapes.Crescent, IslandShapes.TwinPeaks };
+			int[] shapes = { IslandShapes.Round, IslandShapes.Round, IslandShapes.TwinPeaks, IslandShapes.TwinPeaks };
 			var s = new IslandGenSettings
 			{
 				Seed = rnd.Next(1, 999999), Style = style, Shape = shapes[rnd.Next(shapes.Length)],
@@ -500,6 +508,66 @@ namespace DynamicIslands.Editor
 			s.BeachThings = 0.3f;
 		}
 
+		static readonly System.Text.RegularExpressions.Regex CutTree = new System.Text.RegularExpressions.Regex(@"^Pickup_Landmark_(Tree_(Palm \d+|Pine|Birch|Mango|Banana)|MangoTree|Palmtree \d+)$");
+
+		/// <summary>
+		/// Trees to cut as on Raft's own islands: its small tropical islands have 2-6 palms to cut, its big ones about one
+		/// per 1000 m² (palms, mango trees; pines and birches on Balboa). The generator leaves few on low islands (Raft's
+		/// palms to cut grow 4 m and more above the sea there) and mostly bamboo: some of the island's own bamboo and big
+		/// palms (forest: pines and birches) become trees to cut, where they stand - nothing new is put anywhere.
+		/// </summary>
+		public static void TreesToCut(MapKit k, IslandGenSettings s, bool small)
+		{
+			// (Raft's snowy islands have none to cut; volcanic is the mod's own style)
+			if (s.Style != Tropical && s.Style != Forest && s.Style != Desert) return;
+			IslandFile f = k.File;
+			System.Random r = new System.Random(s.Seed * 31 + 7);
+			// (the desert: Raft's small Caravan islands have 2-5 mango trees, its big one ten acacias - not in the catalog - on its land)
+			string[] kinds = (s.Style == Tropical ? new[] { "Pickup_Landmark_Tree_Palm 1", "Pickup_Landmark_Tree_Palm 2", "Pickup_Landmark_Tree_Palm 3", "Pickup_Landmark_Tree_Palm 4" }
+				: s.Style == Forest ? new[] { "Pickup_Landmark_Tree_Pine", "Pickup_Landmark_Tree_Birch" } : new[] { "Pickup_Landmark_Tree_Mango" }).Where(PlaceableCatalog.IsLoaded).ToArray();
+			if (kinds.Length == 0) return;
+			var land = f.Objects.Where(o => o.Position.y > f.WaterLevel + 0.2f && (o.Props == null || o.Props.Count == 0)).ToList();
+			int have = land.Count(o => CutTree.IsMatch(o.Name));
+			int want = small ? 2 + r.Next(s.Style == Desert ? 4 : 5) : Mathf.RoundToInt(LandArea(f) * (s.Style == Desert ? 0.5f : 0.7f + 0.4f * (float)r.NextDouble()) / 1000f);
+			if (have >= want) return;
+			// (look-alikes first: big palms / Balboa's pines and birches / the desert's bushy trees; then bamboo, bushes, ferns)
+			string alike = s.Style == Tropical ? @"^BigPalm\d+$" : s.Style == Forest ? @"^(PineTree|BirchTree)_\w+$" : @"^SmallBushyTree_\d+$";
+			string rest = s.Style == Tropical ? @"^Bamboo_\d+$" : s.Style == Forest ? @"^(Balboa_(Big)?Bush_\d+ Variant)$" : @"^DesertFern_\d+$";
+			var first = land.Where(o => System.Text.RegularExpressions.Regex.IsMatch(o.Name, alike)).ToList();
+			var then = land.Where(o => System.Text.RegularExpressions.Regex.IsMatch(o.Name, rest)).ToList();
+			Shuffle(first, r); Shuffle(then, r);
+			foreach (IslandObject o in first.Concat(then))
+			{
+				if (have >= want) break;
+				// (spread out: not next to another tree to cut)
+				if (f.Objects.Any(x => CutTree.IsMatch(x.Name) && (x.Position - o.Position).sqrMagnitude < 36f)) continue;
+				o.Name = kinds[r.Next(kinds.Length)];
+				o.EulerRotation = new Vector3(0f, o.EulerRotation.y, 0f);
+				o.Scale = Vector3.one;
+				have++;
+			}
+		}
+
+		static void Shuffle<T>(List<T> list, System.Random r)
+		{
+			for (int i = list.Count - 1; i > 0; i--) { int j = r.Next(i + 1); T t = list[i]; list[i] = list[j]; list[j] = t; }
+		}
+
+		/// <summary>An island file's land above the sea, m².</summary>
+		public static float LandArea(IslandFile f)
+		{
+			int res = f.HeightmapResolution, cells = 0;
+			float step = f.TerrainSize.x / (res - 1);
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (f.Heights[z, x] * f.TerrainSize.y > f.WaterLevel + 0.1f) cells++;
+			return cells * step * step;
+		}
+
+		/// <summary>The land object sliders of Raft's own small islands, which are much denser than its big ones (0.33 without raft_islands.txt).</summary>
+		public static void LikeRaftSmall(IslandGenSettings s)
+		{
+			if (!RaftIslands.DensitiesLikeRaft(s, true)) LikeRaft(s);
+		}
+
 		/// <summary>
 		/// A large island's content, like Raft's big islands and more: puffer fish around it, a screecher, one or two themed
 		/// scenes from the quest islands, and a cave with a guard and a hoard.
@@ -519,6 +587,9 @@ namespace DynamicIslands.Editor
 				Vector2 high = k.Highest(k.Mid, s.Radius * 0.6f);
 				k.Creature("StoneBird", high, 1, "Normal", 1f, null, true, 2f);
 			}
+			// A cave with a guard and a hoard first (it needs the most room: an outcrop over land, open ground at its mouth)
+			string guard = s.Style == Snowy ? "PolarBear" : s.Style == Forest ? "Bear" : s.Style == Desert ? "Hyena" : r.NextDouble() < 0.5 ? "Boar" : "Rat";
+			EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
 			// Themed scenes on open, flat ground
 			List<Theme> themes = ThemesFor(s.Style);
 			int scenes = themes.Count == 0 ? 0 : 1 + r.Next(2);
@@ -529,12 +600,12 @@ namespace DynamicIslands.Editor
 				themes.Remove(t);
 				Vector2? spot = k.Find(k.Mid, s.Radius * 0.75f, (above, slope) => above > 2.5f && above < 25f && slope < 10f, 30f);
 				if (!spot.HasValue || used.Any(u => (u - spot.Value).magnitude < 35f)) continue;
+				// (not over the den, its guard or the ground in front of its mouth)
+				Vector2 sp = spot.Value;
+				if (k.File.Objects.Any(o => o.Props != null && o.Props.ContainsKey("cave") && new Vector2(o.Position.x - sp.x, o.Position.z - sp.y).magnitude < 38f)) continue;
 				if (Dress(k, t, spot.Value, 9f)) used.Add(spot.Value);
 				if (themes.Count == 0) break;
 			}
-			// A cave with a guard and a hoard
-			string guard = s.Style == Snowy ? "PolarBear" : s.Style == Forest ? "Bear" : s.Style == Desert ? "Hyena" : r.NextDouble() < 0.5 ? "Boar" : "Rat";
-			EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
 		}
 
 		#endregion

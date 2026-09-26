@@ -577,7 +577,7 @@ namespace DynamicIslands
 
 		#region Like Raft's islands, large islands, caves
 
-		static readonly System.Text.RegularExpressions.Regex Cuttable = new System.Text.RegularExpressions.Regex(@"^Pickup_Landmark_(Tree_\w+|MangoTree|Palmtree \d+)$");
+		static readonly System.Text.RegularExpressions.Regex Cuttable = new System.Text.RegularExpressions.Regex(@"^Pickup_Landmark_(Tree_\w+( \d+)?|MangoTree|Palmtree \d+)$");
 
 		/// <summary>Raft's plain tropical islands from raft_land.txt: land (m²), land objects, trees to cut, harvestables on land.</summary>
 		static List<float[]> RaftIslandNumbers()
@@ -637,7 +637,7 @@ namespace DynamicIslands
 			float bigMin = big.Min(x => x[1] / x[0] * 1000f), bigMax = big.Max(x => x[1] / x[0] * 1000f);
 			float cutMin = big.Min(x => x[2] / x[0] * 1000f), cutMax = big.Max(x => x[2] / x[0] * 1000f);
 
-			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair", "large", "large", "large", "large" }).ToList();
+			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair" }).Concat(Enumerable.Repeat("large", 8)).ToList();
 			int flowers = 0, tropical = 0;
 			for (int i = 0; i < types.Count; i++)
 			{
@@ -651,7 +651,9 @@ namespace DynamicIslands
 				float dens = n[1] / n[0] * 1000f, cut = n[2];
 				bool isBig = n[0] >= 5000f;
 				// Small islands: objects as dense as on Raft's small islands (loosely), a few trees to cut; big: as Raft's big ones
-				bool good = isBig ? dens >= bigMin * 0.6f && dens <= bigMax * 1.6f && cut / n[0] * 1000f >= cutMin * 0.5f && cut / n[0] * 1000f <= cutMax * 2f
+				// (trees to cut: Raft's snowy islands have none, volcanic is the mod's own style)
+				bool noCut = s.Style == TerrainPainter.Snowy || s.Style == TerrainPainter.Volcanic;
+				bool good = isBig ? dens >= bigMin * 0.6f && dens <= bigMax * 1.6f && (noCut || cut / n[0] * 1000f >= cutMin * 0.5f && cut / n[0] * 1000f <= cutMax * 2f)
 					: dens >= smallMin * 0.4f && dens <= smallMax * 1.5f && (s.Style != TerrainPainter.Tropical || (cut >= 1 && cut <= 14));
 				if (s.Style == TerrainPainter.Tropical) { tropical++; if (n[4] > 0) flowers++; }
 				string extra = "";
@@ -663,10 +665,14 @@ namespace DynamicIslands
 					int cave = f.Objects.Count(o => o.Props != null && o.Props.ContainsKey("cave"));
 					int loot = f.Objects.Count(o => ContentCatalog.IsLootObject(o.Name));
 					extra = "; '" + ObjectProps.Get(f.Props, IslandProps.Title) + "' " + TerrainPainter.StyleName(s.Style) + ", " + puffer + " puffer fish, " + boars + " hostile spots, " + tame + " to catch, " + scene + " scene props, " + cave + " cave pieces, " + loot + " loot";
-					good &= puffer >= 3 && boars >= 2 && tame >= 2 && loot >= 4 && scene >= 3 && (cave >= 1 || !RandomizerIslands.CanBuildCaves);
+					// (as much land as Raft's big islands have, roughly: theirs 17 000 - 33 000 m²)
+					good &= n[0] >= 14000f && puffer >= 3 && boars >= 2 && tame >= 2 && loot >= 4 && scene >= 3 && (cave >= 1 || !RandomizerIslands.CanBuildCaves);
 				}
 				Check(ref ok, good, types[i] + ": " + n[0].ToString("F0", inv) + " m² of land, " + n[1].ToString("F0", inv) + " land objects (" + dens.ToString("F0", inv) + " per 1000 m²), " + cut.ToString("F0", inv) + " trees to cut, " +
 					n[3].ToString("F0", inv) + " harvestables, " + n[4].ToString("F0", inv) + " flowers" + extra);
+				if (!good)
+					Log("  its land objects: " + string.Join(", ", f.Objects.Where(o => o.Position.y > f.WaterLevel + 0.2f && (o.Props == null || o.Props.Count == 0)).GroupBy(o => o.Name)
+						.OrderByDescending(g => g.Count()).Take(14).Select(g => g.Key + " " + g.Count()).ToArray()) + "; radius " + s.Radius.ToString("F0", inv) + ", shape " + s.Shape);
 				yield return null;
 			}
 			// Every prop the scenes use is measured, stands on the ground (nothing that hangs from its pivot), and each theme has a centrepiece

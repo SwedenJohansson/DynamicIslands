@@ -74,7 +74,7 @@ namespace DynamicIslands.Editor
 					string line = raw.TrimEnd('\r');
 					if (line.Length == 0 || line.StartsWith("#")) continue;
 					string[] f = line.Split('\t');
-					if (f[0] == "prop" && f.Length >= 8)
+					if (f[0] == "prop" && f.Length >= 7)
 						props[f[1]] = new PropInfo { Name = f[1], Scene = f[2], Size = V(f[3]), Centre = V(f[4]), Bottom = F(f[5]), Colliders = int.Parse(f[6], CultureInfo.InvariantCulture) };
 					else if (f[0] == "cave" && f.Length >= 8)
 					{
@@ -86,6 +86,7 @@ namespace DynamicIslands.Editor
 						if (f.Length >= 11) { p.Inside = V(f[8]); p.ToPlus = F(f[9]); p.ToMinus = F(f[10]); }
 					}
 				}
+				if (props.Count == 0) Debug.LogWarning("[CUSTOM ISLANDS] " + FileName + " has no props: props stand on their pivots");
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + FileName + ": " + e.Message); }
 		}
