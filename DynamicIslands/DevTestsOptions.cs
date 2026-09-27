@@ -281,7 +281,18 @@ namespace DynamicIslands
 					Check(ref ok, rats.All(r => Mathf.Abs(r.transform.position.y - deck) < 4f), "the rats on its deck (heights " + string.Join(", ", rats.Select(r => (r.transform.position.y - deck).ToString("F1")).ToArray()) + " m from the sea)");
 					Check(ref ok, e.Root.GetComponentsInChildren<LootCrate>(true).Any(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Ghost raft hoard"; }), "its hoard is there");
 					Check(ref ok, e.Root.GetComponentsInChildren<CustomNote>(true).Any(n => n.Title == "Captain's log"), "its captain's log is there");
-					yield return StandRoutine(e.Root);
+					// (a raft has no land: the player is put on its deck, beside the hoard, and must stay standing on it)
+					LootCrate hoard = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Ghost raft hoard"; });
+					Network_Player player = RAPI.GetLocalPlayer();
+					if (hoard != null && player != null)
+					{
+						Vector3 at = hoard.transform.position + new Vector3(1.4f, 1.2f, 0f);
+						yield return PutPlayer(player, at, false);
+						yield return new WaitForSeconds(3f);
+						float drop = at.y - player.transform.position.y;
+						Check(ref ok, drop < 2f && player.PersonController.IsGrounded, "the player stands on its deck (dropped " + drop.ToString("F1") + " m, grounded " + player.PersonController.IsGrounded + ")");
+						OnRaftCommand();
+					}
 					if (!keep) IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
 				}
 			}
@@ -337,17 +348,27 @@ namespace DynamicIslands
 				yield return null;
 				ChunkPointType[] order = StoryOrder.Order;
 				Check(ref ok, StoryOrder.Active && order[7] == ChunkPointType.Landmark_Utopia && !order.SequenceEqual(StoryOrder.Chain), "the option on: the order " + StoryOrder.Describe(order));
+				// The story played along the order: the Receiver's note first, then on each island the note Raft put there
+				// (the one that unlocks Raft's next island after it): each must unlock the order's next - all of them, in turn
 				var got = new List<string>();
 				bool chain = true;
-				for (int i = 0; i < StoryOrder.Chain.Length; i++)
+				var reached = new List<ChunkPointType>();
+				ChunkPointType at = ChunkPointType.None;
+				for (int step = 0; step < StoryOrder.Chain.Length; step++)
 				{
+					// (Raft's note found here: the Receiver's unlocks Chain[0]; on island Chain[k] lies the one for Chain[k+1])
+					int k = at == ChunkPointType.None ? -1 : Array.IndexOf(StoryOrder.Chain, at);
+					if (k + 1 >= StoryOrder.Chain.Length) { chain = false; got.Add(StoryOrder.Name(at) + " has no note (Utopia is the end)"); break; }
+					ChunkPointType noteFor = StoryOrder.Chain[k + 1];
 					NoteBook.unlockedChunkPointType.RemoveAll(t => StoryOrder.Chain.Contains(t));
-					NoteBook.UnlockFrequency(StoryOrder.Chain[i]);
+					NoteBook.UnlockFrequency(noteFor);
 					List<ChunkPointType> now = NoteBook.unlockedChunkPointType.Where(t => StoryOrder.Chain.Contains(t)).ToList();
-					got.Add(StoryOrder.Name(StoryOrder.Chain[i]) + "'s note > " + string.Join(",", now.Select(StoryOrder.Name).ToArray()));
-					if (now.Count != 1 || now[0] != order[i]) chain = false;
+					got.Add((at == ChunkPointType.None ? "the Receiver" : StoryOrder.Name(at)) + " > " + string.Join(",", now.Select(StoryOrder.Name).ToArray()));
+					if (now.Count != 1 || now[0] != order[step]) { chain = false; break; }
+					at = now[0];
+					reached.Add(at);
 				}
-				Check(ref ok, chain, "each note of Raft's chain unlocks the order's island in its place: " + string.Join("; ", got.ToArray()));
+				Check(ref ok, chain && reached.SequenceEqual(order), "the story played along the order reaches every island in turn: " + string.Join("; ", got.ToArray()));
 				Dictionary<int, ChunkPointType> notes = StoryOrder.FrequencyNotes();
 				Log("  Raft's frequency notes: " + string.Join(", ", notes.Select(kv => kv.Key + ">" + StoryOrder.Name(kv.Value)).ToArray()));
 				Check(ref ok, notes.Count >= 7, notes.Count + " notes that unlock a story island found in the notebook");
@@ -360,7 +381,7 @@ namespace DynamicIslands
 					StoryOrder.Rebuild();
 					var withOrder = NoteBook.unlockedChunkPointType.Where(t => StoryOrder.Chain.Contains(t)).OrderBy(t => t).ToList();
 					var wantOrder = found.Select(kv => StoryOrder.Map(kv.Value)).OrderBy(t => t).ToList();
-					Check(ref ok, withOrder.SequenceEqual(wantOrder), "the list rebuilt from the notes found: " + string.Join(", ", withOrder.Select(StoryOrder.Name).ToArray()) + " (the order's first two)");
+					Check(ref ok, withOrder.SequenceEqual(wantOrder), "the list rebuilt from the notes found: " + string.Join(", ", withOrder.Select(StoryOrder.Name).ToArray()) + " (what those two notes unlock in this order)");
 					WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.StoryOrder)));
 					var raftOwn = NoteBook.unlockedChunkPointType.Where(t => StoryOrder.Chain.Contains(t)).OrderBy(t => t).ToList();
 					Check(ref ok, raftOwn.SequenceEqual(found.Select(kv => kv.Value).OrderBy(t => t)), "the option off: Raft's own islands for the same notes (" + string.Join(", ", raftOwn.Select(StoryOrder.Name).ToArray()) + ")");
@@ -384,7 +405,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story order in a world"); else Fail("story order in a world");
 		}
 
-		[ConsoleCommand(name: "CIStoryUnlock", docs: "Dev, in game (host): unlocks Raft's frequency notes for every player, as finding them would (NoteBook.UnlockSpecificNoteNetworked): CIStoryUnlock <how many of the chain, from the Receiver's> - only in a test world named 'CI ...'")]
+		[ConsoleCommand(name: "CIStoryUnlock", docs: "Dev, in game (host): unlocks the frequency notes a player finds along this world's story order (the Receiver's, then the one on each island reached) for every player, as finding them would (NoteBook.UnlockSpecificNoteNetworked): CIStoryUnlock <how many> - only in a test world named 'CI ...'")]
 		public static void StoryUnlockCommand(string[] args)
 		{
 			if (!Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("story unlock: host, in a test world 'CI ...'"); return; }
@@ -392,9 +413,20 @@ namespace DynamicIslands
 			if (args == null || args.Length == 0 || !int.TryParse(args[0], out n)) n = 1;
 			NoteBook book = UnityEngine.Object.FindObjectOfType<NoteBook>();
 			if (book == null) { Fail("story unlock: no notebook"); return; }
-			var notes = StoryOrder.FrequencyNotes().OrderBy(kv => Array.IndexOf(StoryOrder.Chain, kv.Value)).Take(n).ToList();
+			// (the notes a player finds along this world's order: the Receiver's, then the one lying on each island reached)
+			Dictionary<ChunkPointType, int> noteFor = StoryOrder.FrequencyNotes().ToDictionary(kv => kv.Value, kv => kv.Key);
+			var notes = new List<KeyValuePair<int, ChunkPointType>>();
+			ChunkPointType at = ChunkPointType.None;
+			for (int i = 0; i < n; i++)
+			{
+				int k = at == ChunkPointType.None ? -1 : Array.IndexOf(StoryOrder.Chain, at);
+				if (k + 1 >= StoryOrder.Chain.Length || !noteFor.ContainsKey(StoryOrder.Chain[k + 1])) break;
+				ChunkPointType raftType = StoryOrder.Chain[k + 1];
+				notes.Add(new KeyValuePair<int, ChunkPointType>(noteFor[raftType], raftType));
+				at = StoryOrder.Map(raftType);
+			}
 			foreach (var kv in notes) book.UnlockSpecificNoteNetworked(kv.Key, false);
-			Log("Unlocked the notes " + string.Join(", ", notes.Select(kv => kv.Key + " (" + StoryOrder.Name(kv.Value) + ")").ToArray()));
+			Log("Unlocked the notes " + string.Join(", ", notes.Select(kv => kv.Key + " (Raft's " + StoryOrder.Name(kv.Value) + ", here " + StoryOrder.Name(StoryOrder.Map(kv.Value)) + ")").ToArray()));
 			Log("PASS: story unlock");
 		}
 
@@ -466,6 +498,7 @@ namespace DynamicIslands
 			bool ok = true;
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			var made = new List<Block>();
+			string storagesBefore = PrivateStorage.Encode();
 			try
 			{
 				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.PrivateStorage });
@@ -503,6 +536,7 @@ namespace DynamicIslands
 			finally
 			{
 				foreach (Block b in made) if (b != null) UnityEngine.Object.Destroy(b.gameObject);
+				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
 			}
 			if (ok) Log("PASS: private storage"); else Fail("private storage");
@@ -592,6 +626,9 @@ namespace DynamicIslands
 			Application.LogCallback watch = (text, trace, type) => { if (type == LogType.Exception || (type == LogType.Error && text.Contains("CUSTOM ISLANDS"))) errors.Add(text.Length > 160 ? text.Substring(0, 160) : text); };
 			Application.logMessageReceived += watch;
 			var bad = new List<string>();
+			// (a storage noted for another player, one for nobody: the refusal only with the option)
+			string storagesBefore = PrivateStorage.Encode();
+			PrivateStorage.Decode(storagesBefore + ";999999:12345");
 			try
 			{
 				for (int mask = 0; mask < 16; mask++)
@@ -607,7 +644,8 @@ namespace DynamicIslands
 					if (m.Kind != IslandNetMessage.WorldOptions || m.Data != WorldOptions.Encode(on, WorldOptions.Seed)) why.Add("message");
 					if (StoryOrder.Active != on.Contains(WorldOptions.StoryOrder) || (StoryOrder.Order.SequenceEqual(StoryOrder.Chain) == on.Contains(WorldOptions.StoryOrder))) why.Add("story order");
 					if (ScrambledBlueprints.Movable.Count > 1 && ScrambledBlueprints.Active != on.Contains(WorldOptions.Blueprints)) why.Add("blueprints");
-					if (PrivateStorage.MayOpen(999999u, 1UL) == false) why.Add("storage without a builder refused");
+					if (!PrivateStorage.MayOpen(999998u, 1UL)) why.Add("a storage without a builder refused");
+					if (PrivateStorage.MayOpen(999999u, 1UL) == on.Contains(WorldOptions.PrivateStorage)) why.Add("another's storage " + (on.Contains(WorldOptions.PrivateStorage) ? "opens" : "refused"));
 					if (!sig.Contains("options " + WorldOptions.Encode(on, WorldOptions.Seed))) why.Add("CIServerSig");
 					if (why.Count > 0) bad.Add(WorldOptions.Describe(on) + ": " + string.Join(", ", why.ToArray()));
 				}
@@ -615,6 +653,7 @@ namespace DynamicIslands
 			finally
 			{
 				Application.logMessageReceived -= watch;
+				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
 			}
 			Check(ref ok, bad.Count == 0, "16 combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));

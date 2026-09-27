@@ -175,7 +175,9 @@ namespace DynamicIslands.Editor
 		static void Notify()
 		{
 			// (the story order and the blueprints follow at once, on every machine)
-			if (LoadSceneManager.IsGameSceneLoaded) { global::DynamicIslands.Editor.StoryOrder.Rebuild(); ScrambledBlueprints.Rebuild(); }
+			// (also while a world is still loading: Raft restores the notebook before the mod reads the world file's options)
+			global::DynamicIslands.Editor.StoryOrder.Rebuild();
+			ScrambledBlueprints.Rebuild();
 			if (Changed == null) return;
 			try { Changed(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] " + e); }
 		}

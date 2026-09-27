@@ -114,7 +114,7 @@ namespace DynamicIslands.Editor
 		#region Raft's pickups
 
 		// Each pickup looked at: what it had (Raft's) - to give it back when the option goes off
-		class Original { public ItemInstance Instance; public List<Cost> Yield; public int Seed; }
+		class Original { public ItemInstance Instance; public int Seed; }
 		static readonly Dictionary<PickupItem, Original> originals = new Dictionary<PickupItem, Original>();
 		static readonly Dictionary<Landmark, int> looked = new Dictionary<Landmark, int>();
 		static float nextTick;
@@ -167,7 +167,7 @@ namespace DynamicIslands.Editor
 				else
 				{
 					if (!HasMovable(p)) continue;
-					o = new Original { Instance = p.itemInstance, Yield = YieldOf(p) != null ? YieldOf(p).ToList() : null };
+					o = new Original { Instance = p.itemInstance };
 					originals[p] = o;
 				}
 				o.Seed = want;
@@ -200,11 +200,26 @@ namespace DynamicIslands.Editor
 			return y != null && y.Any(c => c != null && movable(c.item));
 		}
 
+		/// <summary>
+		/// A pickup changed for another seed (or the option went off) goes back to Raft's own: what is left in it now, each
+		/// entry through the pairs of the seed it was changed with, back to what Raft put there - never its whole first list
+		/// again (entries already taken would come back).
+		/// </summary>
 		static void Restore(PickupItem p, Original o)
 		{
-			p.itemInstance = o.Instance;
+			if (o.Seed == 0) return;
+			Dictionary<string, string> back = PairsFor(o.Seed, Movable).ToDictionary(kv => kv.Value, kv => kv.Key, StringComparer.OrdinalIgnoreCase);
+			if (p.itemInstance != null && p.itemInstance.baseItem != null && o.Instance != null) p.itemInstance = o.Instance;
 			List<Cost> y = YieldOf(p);
-			if (y != null && o.Yield != null) { y.Clear(); y.AddRange(o.Yield); }
+			if (y == null) return;
+			for (int i = 0; i < y.Count; i++)
+			{
+				Cost c = y[i];
+				string to;
+				if (c == null || c.item == null || !back.TryGetValue(c.item.UniqueName, out to)) continue;
+				Item_Base item = ItemManager.GetItemByName(to);
+				if (item != null) y[i] = new Cost { item = item, amount = c.amount };
+			}
 		}
 
 		static List<Cost> YieldOf(PickupItem p)

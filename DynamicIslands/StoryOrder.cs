@@ -33,7 +33,9 @@ namespace DynamicIslands.Editor
 		static bool mapped;
 
 		/// <summary>A world is loading: nothing of the last world's order.</summary>
-		internal static void Reset() { mapped = false; }
+		// (kept from world to world: a world loaded after one with the order - whose options were still there while Raft
+		// restored the new world's notebook - is put back to Raft's own by the first Rebuild; one that never had it isn't touched)
+		internal static void Reset() { }
 		static ChunkPointType[] order;
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [story order] " + msg); }
@@ -61,11 +63,20 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>The island that comes where Raft's would (the n-th of the chain becomes the n-th of the order).</summary>
+		/// <summary>
+		/// The island a note unlocks in this world. Raft's note that unlocks Chain[i] lies on Chain[i-1] (the first, Chain[0],
+		/// is the Receiver's own): found on the island that is n-th in this world's order, it unlocks the order's (n+1)-th -
+		/// and the Receiver's unlocks the order's first. (Mapping Chain[i] straight to Order[i] would send a player from the
+		/// order's first island to Raft's next after it, skipping the others.) One to one, and Utopia stays last.
+		/// </summary>
 		public static ChunkPointType Map(ChunkPointType t)
 		{
 			int i = Array.IndexOf(Chain, t);
-			return i < 0 ? t : Order[i];
+			if (i < 0) return t;
+			ChunkPointType[] o = Order;
+			if (i == 0) return o[0];
+			int foundOn = Array.IndexOf(o, Chain[i - 1]);
+			return foundOn >= 0 && foundOn + 1 < o.Length ? o[foundOn + 1] : t;
 		}
 
 		public static string Describe(ChunkPointType[] o) { return string.Join(" > ", o.Select(Name).ToArray()); }

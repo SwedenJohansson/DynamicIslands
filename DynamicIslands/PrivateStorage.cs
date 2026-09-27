@@ -39,6 +39,9 @@ namespace DynamicIslands.Editor
 
 		public static string NameOf(ulong id)
 		{
+			// (Raft shows no name tag over the local player: their Steam name)
+			Network_Player local = RAPI.GetLocalPlayer();
+			if (local != null && local.steamID.Id == id) { try { names[id] = Steamworks.SteamFriends.GetPersonaName(); return names[id]; } catch { } }
 			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
 				if (p != null && p.steamID.Id == id && p.playerNameTextMesh != null && !string.IsNullOrEmpty(p.playerNameTextMesh.text)) { names[id] = p.playerNameTextMesh.text; return names[id]; }
 			string n;
