@@ -509,7 +509,8 @@ namespace DynamicIslands
 		{
 			uint idx;
 			if (!uint.TryParse(arg ?? "", out idx)) return null;
-			return StorageManager.allStorages != null ? StorageManager.allStorages.FirstOrDefault(s => s != null && s.ObjectIndex == idx) : null;
+			// (from the scene: Raft empties its own list, StorageManager.allStorages, on some scene events)
+			return UnityEngine.Object.FindObjectsOfType<Storage_Small>().FirstOrDefault(s => s != null && s.ObjectIndex == idx);
 		}
 
 		static Network_Player OtherPlayer()
