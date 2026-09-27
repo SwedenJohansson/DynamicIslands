@@ -93,6 +93,7 @@ is the full reference.
   - **Levels:** in a world with the level up system on, hitting a monster floats the EXP it gave over it (**+5 EXP**). A level bar sits just under Raft's health, thirst and hunger bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the level bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 10. Other players see your level as a small **Lv 5** under your name.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
 - **World randomizer** (New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
+- **World settings** (New Game box, World settings...): scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder) - the same for every player.
 - **Multiplayer (up to eight players, Raft's maximum):** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The world rules (monster difficulty, build cost) are the host's for every player, also those who join later.
   - **One player gets a chest:** when several players open one chest (or walk into a zone that fires once) at the same moment, the host gives it to the first to ask; the others are told someone else got there first.
   - **Once is once for the crew:** a note read or an island reached runs its shared actions once, however many players do it together; a finished quest's checks are made once, by the host; story items from a quest's reward or a "give" action go to the crew once (Raft's items still go to every player near).
@@ -220,6 +221,34 @@ story comes along. Every prop's size and footprint is measured
 - **Multiplayer:** colours, alphas and moved crates are worked out on every machine from the world's seed and Raft's own network ids, so every player sees the same without extra messages. What is added to Raft's islands is a land-less custom island laid over Raft's island (its "extras", `rnd-<seed>-<id>.island`): it is saved, sent to other players, and its chests, animals and quests work like any custom island's. Raft saves picked-up crates by the place it put them; for moved crates the mod finds them by that place again, so a used crate stays used after loading and for players who join.
 - **Changing it later:** `Randomizer` shows what it does in the current world; the host can change it: `Randomizer off|light|normal|wild`, `Randomizer -alphas` / `+alphas` (any part). Islands that were already looked at keep what they got.
 - Raft switches the ground of its far islands off (about 1 km away), so an island is randomized when the raft comes within about a kilometre.
+
+## World settings: more ways to play Raft again
+
+Raft's **New Game** box has a **World settings...** button (under the Custom Islands plan). It opens a window with the
+world's extra options, each switched on and off with its own button and explained under it. The window also sums up the
+box's other choices of the mod (the plan, the randomizer, the monsters, the build cost). The last choice is remembered
+for the next world. Every player in the world gets the host's options, also players who join later or again.
+
+- **Scrambled blueprints:** the blueprints lying on Raft's story islands are found on other story islands than usual.
+  Each one is paired with another from the world's seed, never with itself. What the story needs is never moved - the
+  Receiver and antenna, the steering wheel, the engine and its fuel, the machete, the zipline and the headlight - so the
+  story can always be finished. Only what a pickup gives changes: its name says what you'll get.
+- **Story islands in a new order:** Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance
+  come in a shuffled order (from the world's seed; Utopia, the ending, stays last). Raft unlocks each frequency with a note
+  - the Receiver's first, then the one found on each island for the next - and with this option each note unlocks the
+  island in the new order's place. The frequency numbers written on the notes follow. Each story island carries what it
+  needs (its keys and parts), so any order can be finished.
+- **Ghost rafts:** abandoned rafts of Raft's blocks lie on the sea and come up ahead while sailing (not in the first
+  1.5 km, then about one per 3 km). Small ones (a few foundations, a barrel, a message in a bottle), medium ones (a hut, a
+  barrel and a box, a captain's log, sometimes a rat or two) and now and then a large one: a wide raft with huts and a
+  lookout, a hoard chest and barrels, guarded by rats on its deck and screechers circling above.
+- **Private storages:** a storage opens only for the player who built it; looking at someone else's shows whose it is.
+  Storages built while the option was off open for everyone.
+- The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
+  option: blueprints, storyorder, ghostrafts, privatestorage).
+- Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
+  (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
+  machine notes who built a storage as Raft places it there.
 
 ## The level up system
 
