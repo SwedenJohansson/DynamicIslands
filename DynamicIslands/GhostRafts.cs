@@ -116,9 +116,10 @@ namespace DynamicIslands.Editor
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
 				{
-					// a few foundations are gone at the edges (never the middle, where the huts and the loot stand)
+					// a few foundations are gone at the edges of the bigger ones (never under the loot, at most one in eight)
 					bool edge = x == 0 || z == 0 || x == w - 1 || z == d - 1;
-					if (edge && rnd.NextDouble() < 0.18) { missing.Add(x * 100 + z); continue; }
+					bool underLoot = (x == 1 && z == 1) || (x == w - 2 && z == d - 2) || (x == 2 && z == d - 2) || (x == w - 3 && z == 1) || (x == w - 2 && z == 0) || (x == w - 1 && z == d / 2);
+					if (size != Small && edge && !underLoot && missing.Count < w * d / 8 && rnd.NextDouble() < 0.18) { missing.Add(x * 100 + z); continue; }
 					k.Add("Block_Foundation", o + new Vector3(x * g, floatY, z * g), 0f, null, 0f);
 				}
 			Func<int, int, bool> has = (x, z) => x >= 0 && z >= 0 && x < w && z < d && !missing.Contains(x * 100 + z);

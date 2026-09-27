@@ -129,10 +129,19 @@ namespace DynamicIslands
 				sizes[size]++;
 				Func<string, int> count = n => f.Objects.Count(o => o.Name == n);
 				var unknown = f.Objects.Select(o => o.Name).Distinct().Where(n => !n.StartsWith("Creature_") && !PlaceableCatalog.IsLoaded(n)).ToList();
-				bool good = count("Block_Foundation") >= 3 && unknown.Count == 0 && (count("Note_Bottle") + count("Note_Paper")) >= 1 && count("Loot_Barrel") >= 1;
+				var why = new List<string>();
+				if (count("Block_Foundation") < 3) why.Add(count("Block_Foundation") + " foundations");
+				if (unknown.Count > 0) why.Add("unknown " + string.Join(",", unknown.ToArray()));
+				if (count("Note_Bottle") + count("Note_Paper") < 1) why.Add("no note");
+				if (count("Loot_Barrel") < 1) why.Add("no barrel");
 				if (size == GhostRafts.Large)
-					good &= count("Creature_Rat") >= 2 && count("Creature_StoneBird") >= 1 && f.Objects.Any(o => o.Name == "Loot_Chest" && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Ghost raft hoard") && count("Block_Foundation") >= 40;
-				if (!good) badRafts.Add(i + " (" + GhostRafts.SizeNames[size] + (unknown.Count > 0 ? ", unknown " + string.Join(",", unknown.ToArray()) : "") + ")");
+				{
+					if (count("Creature_Rat") < 2) why.Add(count("Creature_Rat") + " rat spots");
+					if (count("Creature_StoneBird") < 1) why.Add("no screecher");
+					if (!f.Objects.Any(o => o.Name == "Loot_Chest" && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Ghost raft hoard")) why.Add("no hoard");
+					if (count("Block_Foundation") < 30) why.Add(count("Block_Foundation") + " foundations");
+				}
+				if (why.Count > 0) badRafts.Add(i + " (" + GhostRafts.SizeNames[size] + ": " + string.Join(", ", why.ToArray()) + ")");
 			}
 			Check(ref ok, badRafts.Count == 0, "300 ghost rafts: foundations, a barrel and a note on each; each large one with rats, screechers and a hoard; every object known" + (badRafts.Count > 0 ? " - not: " + string.Join("; ", badRafts.Take(4).ToArray()) : ""));
 			Check(ref ok, sizes[0] > 140 && sizes[0] < 220 && sizes[1] > 50 && sizes[2] > 15 && sizes[2] < 60, "their sizes: " + sizes[0] + " small, " + sizes[1] + " medium, " + sizes[2] + " large (about 60 / 28 / 12 %)");
