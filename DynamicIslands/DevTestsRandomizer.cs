@@ -706,6 +706,7 @@ namespace DynamicIslands
 			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
 			int scene = refs.Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave"));
 			List<Transform> caves = root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+			Log("Large island: '" + e.Name + "'");
 			Check(ref ok, tag != null && scene >= 3, "'" + (tag != null ? tag.Title : "?") + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
 			// Its animals (not the cave's guard: it waits)
 			List<CreatureSpawnPoint> spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
@@ -892,6 +893,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
 			for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
 			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			Log("Den extras: '" + e.Name + "'");
 			List<Transform> caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.ObjectName) != null && !RaftProps.Get(r.ObjectName).Name.Contains("Boulder"));
 			Log("  the extras hold: " + string.Join(", ", e.Root.GetComponentsInChildren<IslandObjectRef>(true).GroupBy(r => r.ObjectName + (r.Props != null && r.Props.ContainsKey("set.piece") ? " (set piece)" : "")).Select(g => g.Key + " x" + g.Count()).ToArray()));
@@ -1022,6 +1024,26 @@ namespace DynamicIslands
 			yield break;
 		}
 
+
+		[ConsoleCommand(name: "CIVisitIsland", docs: "Dev, in game (either player): goes to an island of the list, loaded or not (far away: it loads when the player comes), and stands on it: CIVisitIsland <island>")]
+		public static void GoToIslandCommand(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args) : "";
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => string.Equals(i.HostName, name, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
+			if (e == null) { Fail("no island called '" + name + "' in the list"); return; }
+			DynamicIslands.instance.StartCoroutine(GoToIslandRoutine(e));
+		}
+
+		static IEnumerator GoToIslandRoutine(IslandWorldState.Entry e)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("no player"); yield break; }
+			if (e.Root == null) yield return PutPlayer(player, e.Position + Vector3.up * 3f, true);
+			for (float t = 0; e.Root == null && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("'" + e.HostName + "' didn't load"); yield break; }
+			yield return StandRoutine(e.Root);
+			Log("Went to island '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")");
+		}
 		[ConsoleCommand(name: "CICaveState", docs: "Dev, world (either player): a cave of an island as this machine has it: its guard (awake? animals of its kind in the den) and its hoard (opened?): CICaveState <island>")]
 		public static void CaveStateCommand(string[] args)
 		{
@@ -1033,7 +1055,7 @@ namespace DynamicIslands
 			float reach = Mathf.Max(p.Size.x, p.Size.z) * 0.5f;
 			Vector3 middle = den.position + den.rotation * p.Centre;
 			CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(s => ObjectProps.Get(s.Props, ObjectProps.CreatureZone) == "cave");
-			int inside = guard == null ? 0 : UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Count(a => a.behaviourType == guard.Kind.Type && new Vector2(a.transform.position.x - middle.x, a.transform.position.z - middle.z).magnitude < reach);
+			int inside = guard == null ? 0 : UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Count(a => a.behaviourType == guard.Kind.Type && a.networkEntity != null && !a.networkEntity.IsDead && new Vector2(a.transform.position.x - middle.x, a.transform.position.z - middle.z).magnitude < reach);
 			TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
 			LootCrate hoard = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle).EndsWith("hoard"); });
 			Log("CAVE '" + e.HostName + "' " + den.name + ": zone " + (zone == null ? "none" : ContentState.IsUsed(e, zone.StateKey) ? "fired" : "waiting") + ", guard " + (guard == null ? "none" : guard.Kind.Label + " " + inside + " in the den") +
