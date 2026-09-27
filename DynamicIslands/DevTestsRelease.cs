@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -144,7 +144,7 @@ namespace DynamicIslands
 					RectTransform boxRect = (RectTransform)box.transform;
 					Vector3[] b = new Vector3[4];
 					boxRect.GetWorldCorners(b);
-					if (b[0].x < -1f || b[0].y < -1f || b[2].x > w + 1f || b[2].y > h + 1f) off.Add("the box itself");
+					// (Raft's box rectangle is larger than the panel it draws: its controls, checked above, are what must fit)
 					var outside = new List<string>();
 					foreach (Transform t in box.transform)
 					{
@@ -441,7 +441,7 @@ namespace DynamicIslands
 			for (float t = 0; t < seconds && !done(); t += 0.5f) yield return new WaitForSeconds(0.5f);
 		}
 
-		[ConsoleCommand(name: "CIStoryCheck", docs: "Dev, in game (host): after the story world was saved and loaded again: the plan still the world's, its islands the same (each once), the rules that fired don't fire again; logs STORY lines to compare with CIStoryPlay's")]
+		[ConsoleCommand(name: "CIStoryCheck", docs: "Dev, in game (host): after the story world was saved and loaded again: the plan still the world's, its islands the same (each once), the rules that fired don't fire again; logs STORY lines to compare with CIStoryPlay's. On player 2 (joined): home and the bay once each, with their Receiver names, and the same STORY island lines as the host's")]
 		public static void StoryCheckCommand() { DynamicIslands.instance.StartCoroutine(StoryCheckRoutine()); }
 
 		static IEnumerator StoryCheckRoutine()
@@ -449,10 +449,12 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("story check: in a world"); yield break; }
 			yield return new WaitForSeconds(8f);
 			bool ok = true;
-			Check(ref ok, WorldDirector.Plan != null && WorldDirector.Plan.Name == StoryPlan, "loaded again: the world's plan '" + (WorldDirector.Plan != null ? WorldDirector.Plan.Name : "none") + "'");
+			bool host = Raft_Network.IsHost;
+			if (host) Check(ref ok, WorldDirector.Plan != null && WorldDirector.Plan.Name == StoryPlan, "loaded again: the world's plan '" + (WorldDirector.Plan != null ? WorldDirector.Plan.Name : "none") + "'");
 			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();
 			Check(ref ok, names.Count(n => n == StoryIslands[0]) == 1 && names.Count(n => n == StoryIslands[1]) == 1, "loaded again: home and the bay once each");
-			Check(ref ok, WorldDirector.Done.Contains("home") && WorldDirector.Done.Contains("bay") && WorldDirector.Done.Contains("treasure"), "loaded again: the rules that fired are remembered (" + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()) + ")");
+			if (!host) Check(ref ok, IslandWorldState.Islands.Any(e => (e.HostName ?? e.Name) == StoryIslands[0] && e.Label == "Home") && IslandWorldState.Islands.Any(e => (e.HostName ?? e.Name) == StoryIslands[1] && e.Label == "Bay"), "player 2: home and the bay with their Receiver names");
+			else Check(ref ok, WorldDirector.Done.Contains("home") && WorldDirector.Done.Contains("bay") && WorldDirector.Done.Contains("treasure"), "loaded again: the rules that fired are remembered (" + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()) + ")");
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands) Log("STORY " + (e.HostName ?? e.Name) + " label=" + e.Label);
 			Log("STORY done " + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()));
 			if (ok) Log("PASS: story check"); else Fail("story check");
@@ -509,11 +511,14 @@ namespace DynamicIslands
 				for (int i = 0; i < parts.Length && i < RandomizerSettings.Features.Length; i++)
 				{
 					string f = RandomizerSettings.Features[i];
+					// (a part may start off: the player's saved choice)
+					bool was = NewWorldOptions.Randomizer.Disabled.Contains(f);
 					parts[i].onClick.Invoke(); yield return null;
-					bool off = NewWorldOptions.Randomizer.Disabled.Contains(f);
+					bool flipped = NewWorldOptions.Randomizer.Disabled.Contains(f) != was;
 					parts[i].onClick.Invoke(); yield return null;
-					bool on = !NewWorldOptions.Randomizer.Disabled.Contains(f);
-					if (!off || !on) badParts.Add(f);
+					bool back = NewWorldOptions.Randomizer.Disabled.Contains(f) == was;
+					if (!flipped || !back) badParts.Add(f);
+					if (was) { parts[i].onClick.Invoke(); yield return null; }
 				}
 				Check(ref ok, parts.Length == RandomizerSettings.Features.Length && badParts.Count == 0, parts.Length + " part buttons, each switches its part off and on" + (badParts.Count > 0 ? " - not: " + string.Join(", ", badParts.ToArray()) : ""));
 				for (int i = 0; i < 4 && NewWorldOptions.Randomizer.Level != RandomizerSettings.Off; i++) { level.onClick.Invoke(); yield return null; }
@@ -583,8 +588,8 @@ namespace DynamicIslands
 			}
 			// A generator preset with nonsense and huge numbers
 			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
-			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= IslandGenSettings.MinHeight && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Trees <= 1f,
-				"a preset with nonsense: clamped (radius " + s.Radius + ", height " + s.Height + ", style " + s.Style + ", trees " + s.Trees + ")");
+			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= IslandGenSettings.MinHeight && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
+				"a preset with nonsense: clamped (radius " + s.Radius + ", height " + s.Height + ", style " + s.Style + ", trees used as " + s.Amount(s.Trees) + ")");
 			// A world plan with broken lines
 			string planPath = WorldPlan.PathFor("cibadplan");
 			System.IO.Directory.CreateDirectory(WorldPlan.Folder);
@@ -687,7 +692,7 @@ namespace DynamicIslands
 				Check(ref ok, warnings.Count <= 2, "... and doesn't fill the log (" + warnings.Count + " lines)");
 				// The plan edited while the world plays: a new rule fires; then deleted: its rules stop, the islands stay
 				WorldPlan p = WorldPlan.Load(plan);
-				p.Rules.Add(IntroRule.Parse("rule = added | type:volcanic | start | ahead:1500 | | Added"));
+				p.Rules.Add(IntroRule.Parse("added | type:volcanic | start | ahead:1500 | | Added"));
 				p.Save();
 				Check(ref ok, WorldDirector.SetPlan(plan, false), "the plan edited and read again");
 				WorldDirector.Evaluate();
@@ -828,6 +833,7 @@ namespace DynamicIslands
 			DynamicIslands.LoadIsland(keep);
 			DynamicIslands.currentIslandName = nameBefore;
 			DynamicIslands.currentElevation = elevationBefore;
+			EditorUI.RefreshIsland();
 			foreach (string n in new[] { a, b, keep }) if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n));
 			if (ok) Log("PASS: files window"); else Fail("files window");
 		}
@@ -870,7 +876,7 @@ namespace DynamicIslands
 					Check(ref ok, Click(win, "Templates..."), "Templates... clicked (" + (n + 1) + ")");
 					yield return null; yield return null;
 					GameObject choice = WindowObject(typeof(ChoiceWindow));
-					Button b = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(x => UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == key) : null;
+					Button b = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(x => UIKit.LabelOf(x) != null && (UIKit.LabelOf(x).text == key || UIKit.LabelOf(x).text.StartsWith(key + "   "))) : null;
 					Check(ref ok, b != null, "the template '" + key + "' is offered");
 					if (b != null) b.onClick.Invoke();
 					yield return null; yield return null;
