@@ -78,6 +78,7 @@
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
     <Compile Include="EditorUI.cs" />
+    <Compile Include="EditorLoadingBox.cs" />
     <Compile Include="IslandFile.cs" />
     <Compile Include="GeneratorWindow.cs" />
     <Compile Include="IslandFilesWindow.cs" />

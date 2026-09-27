@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -252,6 +253,58 @@ namespace DynamicIslands
 				UnityEngine.Object.Destroy(tex);
 			}
 			catch (Exception e) { Debug.LogWarning("[CITEST] sprite " + s.name + ": " + e.Message); }
+		}
+
+		[ConsoleCommand(name: "CIEditorOpenCheck", docs: "Dev, main menu: opens the editor and watches every frame until it is ready - the loading box covers the screen from the click, the bundle's old screen of 2023 is never drawn, the box goes when the editor is ready (shot_editor_loading.png)")]
+		public static void EditorOpenCheck()
+		{
+			DynamicIslands.instance.StartCoroutine(EditorOpenCheckRoutine());
+		}
+
+		static IEnumerator EditorOpenCheckRoutine()
+		{
+			if (LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { Fail("run at the main menu"); yield break; }
+			bool ok = true;
+			int frames = 0, covered = 0, uncovered = 0, oldDrawn = 0;
+			string firstOld = null;
+			bool shot = false;
+			// (the bundle's own canvases: those the editor scene brings, taken the first frame it is there - before the
+			// editor's own screen is built in it)
+			List<Canvas> old = null;
+			float start = Time.realtimeSinceStartup;
+			DynamicIslands.LoadEditor(new string[0]);
+			Check(ref ok, EditorLoadingBox.Showing, "the loading box is up the moment EDITOR is clicked");
+			// (until the editor is ready: every frame either the box covers the screen or the editor is ready; the bundle's
+			// own canvases are never drawn)
+			while (Time.realtimeSinceStartup - start < 120f)
+			{
+				yield return null;
+				frames++;
+				bool ready = DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && EditorUI.Canvas != null && !EditorLoadingBox.Showing;
+				if (EditorLoadingBox.Showing) covered++;
+				else if (!ready) uncovered++;
+				UnityEngine.SceneManagement.Scene editor = UnityEngine.SceneManagement.SceneManager.GetSceneByName("Editor");
+				if (old == null && editor.IsValid() && editor.isLoaded)
+					old = editor.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Canvas>(true)).Where(c => EditorUI.Canvas == null || !c.transform.IsChildOf(EditorUI.Canvas.transform)).ToList();
+				if (old != null)
+					foreach (Canvas c in old)
+						if (c != null && c.enabled && c.gameObject.activeInHierarchy)
+						{ oldDrawn++; if (firstOld == null) firstOld = c.name + " (frame " + frames + ")"; }
+				// (once the editor scene is there behind it: the box over the scene that used to show the old screen)
+				if (!shot && EditorLoadingBox.Showing && old != null && Time.realtimeSinceStartup - start > 0.3f)
+				{
+					ScreenCapture.CaptureScreenshot(Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "shot_editor_loading.png")));
+					shot = true;
+				}
+				if (ready) break;
+			}
+			bool done = DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && !EditorLoadingBox.Showing;
+			Check(ref ok, done, "the editor is ready and the box has gone after " + (Time.realtimeSinceStartup - start).ToString("F1") + " s");
+			Check(ref ok, covered > 0 && uncovered == 0, "the screen was covered by the loading box for " + covered + " of " + frames + " frames, uncovered and not ready for " + uncovered);
+			Check(ref ok, old != null && old.Count > 0 && oldDrawn == 0, "the bundle's old screen (" + (old != null ? old.Count : 0) + " canvases) was never drawn" +
+				(oldDrawn > 0 ? " - DRAWN in " + oldDrawn + " frame(s), first: " + firstOld : ""));
+			Check(ref ok, shot, "a picture of the loading box over the editor scene (shot_editor_loading.png)");
+			if (ok) Log("PASS: editor open check"); else Fail("editor open check");
 		}
 	}
 }

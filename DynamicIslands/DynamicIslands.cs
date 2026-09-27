@@ -277,9 +277,41 @@ namespace DynamicIslands
 			string[] scenePath = instance.mainbundle.GetAllScenePaths();
 			string editorScene = scenePath.FirstOrDefault(p => Utils.SceneNameFromPath(p) == "Editor");
 			if (editorScene == null) { Debug.LogError("[CUSTOM ISLANDS] The editor bundle has no Editor scene"); return; }
+			// A loading box covers the screen until the editor is ready (EditorLoadingBox)
+			EditorLoadingBox.Show("Opening the editor");
+			try
+			{
+				await OpenEditor(editorScene);
+			}
+			finally { EditorLoadingBox.Hide(); }
+		}
+
+		/// <summary>The bundle scene's own canvases (its old screen of 2023): not drawn from the moment the scene is there,
+		/// and switched off (switchOff) once the editor's own screen is built.</summary>
+		static void HideOldCanvases(Scene scene, bool switchOff)
+		{
+			if (!scene.IsValid()) return;
+			foreach (GameObject g in scene.GetRootGameObjects())
+				foreach (Canvas c in g.GetComponentsInChildren<Canvas>(true))
+				{
+					c.enabled = false;
+					if (switchOff && c.isRootCanvas) c.gameObject.SetActive(false);
+				}
+		}
+
+		static async System.Threading.Tasks.Task OpenEditor(string editorScene)
+		{
+			string sceneName = Utils.SceneNameFromPath(editorScene);
+			// (before the scene's first frame: its old screen never shows)
+			UnityEngine.Events.UnityAction<Scene, LoadSceneMode> quiet = null;
+			quiet = (s, m) => { if (s.name != sceneName) return; SceneManager.sceneLoaded -= quiet; HideOldCanvases(s, false); };
+			SceneManager.sceneLoaded += quiet;
 			SceneManager.LoadScene(editorScene, LoadSceneMode.Single);
-			Scene scene = SceneManager.GetSceneByName(Utils.SceneNameFromPath(editorScene));
+			Scene scene = SceneManager.GetSceneByName(sceneName);
 			while (!scene.isLoaded) await new WaitForSeconds(.1f);
+			SceneManager.sceneLoaded -= quiet;
+			HideOldCanvases(scene, false);
+			EditorLoadingBox.Status("Setting up the editor");
 			await new WaitForSeconds(0.5f);
 
 			RAPI.ToggleCursor(true);
@@ -291,8 +323,7 @@ namespace DynamicIslands
 			try
 			{
 				// (every canvas of the bundle scene: toolbar, navbar, the old object list)
-				foreach (Canvas old in FindObjectsOfType<Canvas>().Where(c => c.isRootCanvas && c.gameObject.scene.name == "Editor").ToList())
-					old.gameObject.SetActive(false);
+				HideOldCanvases(scene, true);
 				var tabSelector = new GameObject("CustomIslandsTabs").AddComponent<TabSelector>();
 				tabSelector.SelectedTab = TAB.TerrainEdit; // building an island starts with shaping land
 				EditorUI.Setup(null, tabSelector);
@@ -329,9 +360,10 @@ namespace DynamicIslands
 			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
-			HNotification catalogNote = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading placeable objects...");
+			// (the loading box shows how far Raft's islands have been read for their objects)
+			EditorLoadingBox.Status("Loading Raft's objects");
 			await PlaceableCatalog.EnsureBuilt();
-			catalogNote.Close();
+			EditorLoadingBox.Status("Almost ready");
 			// Creature models seen in a world since the catalog was built replace their markers
 			try { ContentCatalog.UpgradeMarkers(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creature models: " + e.Message); }
 			// The builder's saved object groups ("My groups")

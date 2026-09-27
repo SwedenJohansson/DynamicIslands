@@ -181,6 +181,8 @@ namespace DynamicIslands.Editor
 		static bool building;
 
 		public static bool IsBuilt { get { return !building && container != null && prototypes.Count > 0; } }
+		/// <summary>While the core objects load (EnsureBuilt): how many of Raft's island scenes are read, of how many (the editor's loading box).</summary>
+		public static int BuildDone, BuildTotal;
 		/// <summary>All loaded objects (core plus on-demand ones loaded so far).</summary>
 		public static IEnumerable<string> Names { get { return prototypes.Keys.OrderBy(n => n); } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
@@ -326,11 +328,14 @@ namespace DynamicIslands.Editor
 			container.SetActive(false);
 			UnityEngine.Object.DontDestroyOnLoad(container);
 			int skipped = 0;
+			BuildDone = 0;
+			BuildTotal = Sources.Length;
 
 			foreach (Source source in Sources)
 			{
 				var opened = new OpenedScene();
 				yield return OpenScene(source.Scene, opened);
+				BuildDone++;
 				if (!opened.Scene.IsValid()) continue;
 				Scene scene = opened.Scene;
 
