@@ -712,6 +712,204 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: plan rules"); else Fail("plan rules");
 		}
+
+		#region The island files window and the click-twice buttons
+
+		static T Private<T>(object o, string field) where T : class
+		{
+			FieldInfo f = o.GetType().GetField(field, BindingFlags.NonPublic | BindingFlags.Instance);
+			return f != null ? f.GetValue(o) as T : null;
+		}
+
+		[ConsoleCommand(name: "CIFilesWindow", docs: "Dev, editor: the Islands window (Open / Save as) clicked as a player does: Save with no name and with a name holding : * ? is refused with a message; a new name saves and closes; the name of another saved island asks first and overwrites on the second Save; the height field clamps 9999 to 250, reads nonsense as 0; Open with a missing name says so; clicking an island fills its name, a double-click opens it; Delete asks first, typing in between cancels the question, the second Delete removes the file and its row; Close. Then the other click-twice buttons: the top bar's New (once: nothing happens; twice: an empty island) and a generator preset's ×. The island open before is opened again after")]
+		public static void FilesWindowCommand() { DynamicIslands.instance.StartCoroutine(FilesWindowRoutine()); }
+
+		static IEnumerator FilesWindowRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			string nameBefore = DynamicIslands.currentIslandName;
+			float elevationBefore = DynamicIslands.currentElevation;
+			string keep = "cifiles-keep";
+			DynamicIslands.SaveIsland(keep);
+			const string a = "cifiles-a", b = "cifiles-b";
+			DynamicIslands.SaveIsland(a);
+			DynamicIslands.SaveIsland(keep);
+			if (System.IO.File.Exists(IslandSpawner.PathFor(b))) System.IO.File.Delete(IslandSpawner.PathFor(b));
+			Type t = typeof(IslandFilesWindow);
+			try
+			{
+				IslandFilesWindow.Open();
+				yield return null;
+				GameObject w = WindowObject(t);
+				if (w == null) { Fail("files window: it didn't open"); yield break; }
+				IslandFilesWindow win = w.GetComponent<IslandFilesWindow>();
+				InputField name = Private<InputField>(win, "nameField"), height = Private<InputField>(win, "elevationField");
+				Text status = Private<Text>(win, "status");
+				Check(ref ok, name.text == keep, "opens with the current island's name (" + name.text + ")");
+				name.text = "   "; Click(w, "Save"); yield return null;
+				Check(ref ok, IslandFilesWindow.IsOpen && status.text.Contains("Type a name"), "Save with no name: refused (" + status.text + ")");
+				name.text = "bad:name*?"; Click(w, "Save"); yield return null;
+				Check(ref ok, IslandFilesWindow.IsOpen && status.text.Contains("can't contain") && !IslandSpawner.ListSavedIslands().Any(n => n.StartsWith("bad")), "Save with : * ?: refused (" + status.text + ")");
+				name.text = b; Click(w, "Save"); yield return null;
+				Check(ref ok, !IslandFilesWindow.IsOpen && System.IO.File.Exists(IslandSpawner.PathFor(b)) && DynamicIslands.currentIslandName == b, "a new name: saved as '" + b + "', the window closes");
+				IslandFilesWindow.Open(); yield return null;
+				DateTime written = System.IO.File.GetLastWriteTimeUtc(IslandSpawner.PathFor(a));
+				yield return new WaitForSecondsRealtime(1.1f);
+				name.text = a; Click(w, "Save"); yield return null;
+				Check(ref ok, IslandFilesWindow.IsOpen && status.text.Contains("already exists") && System.IO.File.GetLastWriteTimeUtc(IslandSpawner.PathFor(a)) == written, "another island's name: asks first, the file untouched (" + status.text + ")");
+				Click(w, "Save"); yield return null;
+				Check(ref ok, !IslandFilesWindow.IsOpen && System.IO.File.GetLastWriteTimeUtc(IslandSpawner.PathFor(a)) > written, "Save again: overwritten, closed");
+				IslandFilesWindow.Open(); yield return null;
+				var heights = new List<string>();
+				foreach (var c in new[] { new KeyValuePair<string, float>("9999", IslandSpawner.MaxElevation), new KeyValuePair<string, float>("-9999", IslandSpawner.MinElevation), new KeyValuePair<string, float>("abc", 0f), new KeyValuePair<string, float>("-30", -30f), new KeyValuePair<string, float>("0", 0f) })
+				{
+					height.text = c.Key; height.onEndEdit.Invoke(c.Key); yield return null;
+					heights.Add(c.Key + " > " + height.text);
+					if (DynamicIslands.currentElevation != c.Value || height.text != c.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)) Check(ref ok, false, "the height field: '" + c.Key + "' gave " + DynamicIslands.currentElevation + " (wanted " + c.Value + ")");
+				}
+				Check(ref ok, true, "the height field: " + string.Join(", ", heights.ToArray()));
+				name.text = "cifiles-missing"; Click(w, "Open"); yield return null;
+				Check(ref ok, IslandFilesWindow.IsOpen && status.text.Contains("no saved island"), "Open with a missing name: says so (" + status.text + ")");
+				Button row = w.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == "Island_" + b);
+				Check(ref ok, row != null, "'" + b + "' is in the list");
+				if (row != null)
+				{
+					row.onClick.Invoke(); yield return null;
+					Check(ref ok, name.text == b && IslandFilesWindow.IsOpen, "clicking an island fills its name");
+					DynamicIslands.currentIslandName = keep;
+					row.onClick.Invoke(); row.onClick.Invoke(); yield return null;
+					Check(ref ok, !IslandFilesWindow.IsOpen && DynamicIslands.currentIslandName == b, "a double-click opens it (" + DynamicIslands.currentIslandName + ")");
+				}
+				IslandFilesWindow.Open(); yield return null;
+				name.text = b; Click(w, "Delete"); yield return null;
+				Check(ref ok, System.IO.File.Exists(IslandSpawner.PathFor(b)) && status.text.Contains("Delete again"), "Delete: asks first, the file stays (" + status.text + ")");
+				name.text = b + "x"; name.text = b; Click(w, "Delete"); yield return null;
+				Check(ref ok, System.IO.File.Exists(IslandSpawner.PathFor(b)) && status.text.Contains("Delete again"), "typing in between: asks again");
+				Click(w, "Delete"); yield return null; yield return null;
+				Check(ref ok, !System.IO.File.Exists(IslandSpawner.PathFor(b)) && !w.GetComponentsInChildren<Button>(false).Any(x => x.name == "Island_" + b), "Delete again: the file and its row are gone");
+				Click(w, "Close"); yield return null;
+				Check(ref ok, !IslandFilesWindow.IsOpen, "Close closes it");
+			}
+			finally { IslandFilesWindow.Close(); }
+			// The top bar's New: once nothing, twice an empty island
+			DynamicIslands.LoadIsland(keep);
+			yield return null;
+			MethodInfo confirmNew = typeof(EditorUI).GetMethod("ConfirmNew", BindingFlags.NonPublic | BindingFlags.Static);
+			int objects = GameObject.Find("PlacedObjects").transform.childCount;
+			confirmNew.Invoke(null, null); yield return null;
+			Check(ref ok, DynamicIslands.currentIslandName == keep && GameObject.Find("PlacedObjects").transform.childCount == objects, "New once: nothing happens yet (" + objects + " objects)");
+			confirmNew.Invoke(null, null); yield return null; yield return null;
+			Check(ref ok, DynamicIslands.currentIslandName == "myisland" && GameObject.Find("PlacedObjects").transform.childCount == 0, "New twice: an empty island");
+			// A generator preset's ×
+			System.IO.Directory.CreateDirectory(GeneratorWindow.PresetFolder);
+			string preset = System.IO.Path.Combine(GeneratorWindow.PresetFolder, "cipreset-del.txt");
+			System.IO.File.WriteAllText(preset, new IslandGenSettings().ToText());
+			GeneratorWindow.Open(); yield return null;
+			GeneratorWindow gw = GeneratorWindow.Instance;
+			typeof(GeneratorWindow).GetMethod("RefreshPresets", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(gw, null);
+			yield return null;
+			Button x2 = null;
+			foreach (Transform r in gw.GetComponentsInChildren<Transform>(true).Where(r => r.name == "PresetRow"))
+			{
+				Button[] bs = r.GetComponentsInChildren<Button>(true);
+				for (int i = 0; i + 1 < bs.Length; i++) if (UIKit.LabelOf(bs[i]) != null && UIKit.LabelOf(bs[i]).text == "cipreset-del") x2 = bs[i + 1];
+			}
+			Check(ref ok, x2 != null, "the preset has its × button");
+			if (x2 != null)
+			{
+				x2.onClick.Invoke(); yield return null;
+				Check(ref ok, System.IO.File.Exists(preset), "preset × once: asks, kept");
+				x2.onClick.Invoke(); yield return null;
+				Check(ref ok, !System.IO.File.Exists(preset), "preset × twice: deleted");
+			}
+			GeneratorWindow.Close();
+			if (System.IO.File.Exists(preset)) System.IO.File.Delete(preset);
+			DynamicIslands.LoadIsland(keep);
+			DynamicIslands.currentIslandName = nameBefore;
+			DynamicIslands.currentElevation = elevationBefore;
+			foreach (string n in new[] { a, b, keep }) if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n));
+			if (ok) Log("PASS: files window"); else Fail("files window");
+		}
+
+		#endregion
+
+		[ConsoleCommand(name: "CIPlanWindowEdits", docs: "Dev, editor: the World Plans window's rule buttons and Close: ▼ moves a rule down, ▲ on the first and ▼ on the last do nothing; the first template added twice gets new ids for the second copy and its references follow them (never pointing at the first copy); Close throws unsaved changes away (the file and a reopened plan as before); Save keeps a new order")]
+		public static void PlanWindowEditsCommand() { DynamicIslands.instance.StartCoroutine(PlanWindowEditsRoutine()); }
+
+		static IEnumerator PlanWindowEditsRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			const string name = "ci plan edits";
+			string text = "description = Edits\nrandom = off\nrule = a | type:tropical | start | ahead:300 | |\nrule = b | type:desert | rule:a | ahead:600 | |\nrule = c | type:snowy | rule:b | ahead:900 | |\n";
+			WorldPlan.Parse(name, text).Save();
+			string onDisk = System.IO.File.ReadAllText(WorldPlan.PathFor(name));
+			Func<WorldPlan> plan = () => { GameObject w = WindowObject(typeof(WorldPlanWindow)); return w != null ? Private<WorldPlan>(w.GetComponent<WorldPlanWindow>(), "plan") : null; };
+			Func<string> order = () => plan() != null ? string.Join(",", plan().Rules.Select(r => r.Id).ToArray()) : "";
+			Func<List<GameObject>> cards = () => { GameObject w = WindowObject(typeof(WorldPlanWindow)); return w == null ? new List<GameObject>() : w.GetComponentsInChildren<RectTransform>(false).Where(r => r.name == "Rule").Select(r => r.gameObject).ToList(); };
+			try
+			{
+				WorldPlanWindow.Open(name);
+				yield return null; yield return null;
+				GameObject win = WindowObject(typeof(WorldPlanWindow));
+				if (win == null || plan() == null) { Fail("plan window edits: it didn't open"); yield break; }
+				Check(ref ok, order() == "a,b,c" && cards().Count == 3, "opens with 3 rule cards (" + order() + ")");
+				Click(cards()[0], "▲"); yield return null; yield return null;
+				Check(ref ok, order() == "a,b,c", "▲ on the first rule: nothing (" + order() + ")");
+				Click(cards()[2], "▼"); yield return null; yield return null;
+				Check(ref ok, order() == "a,b,c", "▼ on the last rule: nothing (" + order() + ")");
+				Click(cards()[0], "▼"); yield return null; yield return null;
+				Check(ref ok, order() == "b,a,c", "▼ on the first rule moves it down (" + order() + ")");
+				// The first template twice
+				string key = WorldPlanTemplates.All[0].Key;
+				WorldPlan t = WorldPlanTemplates.Get(key);
+				var tIds = new HashSet<string>(t.Rules.Select(r => r.Id), StringComparer.OrdinalIgnoreCase);
+				for (int n = 0; n < 2; n++)
+				{
+					Check(ref ok, Click(win, "Templates..."), "Templates... clicked (" + (n + 1) + ")");
+					yield return null; yield return null;
+					GameObject choice = WindowObject(typeof(ChoiceWindow));
+					Button b = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(x => UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == key) : null;
+					Check(ref ok, b != null, "the template '" + key + "' is offered");
+					if (b != null) b.onClick.Invoke();
+					yield return null; yield return null;
+				}
+				List<IntroRule> rules = plan().Rules;
+				var ids = rules.Select(r => r.Id).ToList();
+				Check(ref ok, rules.Count == 3 + 2 * t.Rules.Count && ids.Distinct(StringComparer.OrdinalIgnoreCase).Count() == ids.Count, "the template twice: " + rules.Count + " rules, every id different (" + string.Join(",", ids.ToArray()) + ")");
+				var second = rules.Skip(3 + t.Rules.Count).ToList();
+				var wrong = new List<string>();
+				for (int i = 0; i < second.Count && i < t.Rules.Count; i++)
+				{
+					IntroRule o = t.Rules[i], c = second[i];
+					if (tIds.Contains(o.WhenRef) && (c.WhenRef.Equals(o.WhenRef, StringComparison.OrdinalIgnoreCase) || !ids.Contains(c.WhenRef))) wrong.Add(c.Id + " when " + c.WhenRef);
+					if (tIds.Contains(o.WhereRef) && (c.WhereRef.Equals(o.WhereRef, StringComparison.OrdinalIgnoreCase) || !ids.Contains(c.WhereRef))) wrong.Add(c.Id + " where " + c.WhereRef);
+				}
+				Check(ref ok, wrong.Count == 0, "the second copy's references follow its new ids" + (wrong.Count > 0 ? " - not: " + string.Join(", ", wrong.ToArray()) : ""));
+				// Close throws it all away
+				Private<InputField>(win.GetComponent<WorldPlanWindow>(), "descriptionField").text = "changed, not saved";
+				Check(ref ok, Click(win, "Close"), "Close clicked");
+				yield return null;
+				Check(ref ok, !WorldPlanWindow.IsOpen && System.IO.File.ReadAllText(WorldPlan.PathFor(name)) == onDisk, "Close: the file as before");
+				WorldPlanWindow.Open(name);
+				yield return null; yield return null;
+				win = WindowObject(typeof(WorldPlanWindow));
+				Check(ref ok, order() == "a,b,c" && plan().Description == "Edits", "opened again: the saved plan (" + order() + ", '" + plan().Description + "')");
+				Click(cards()[1], "▼"); yield return null; yield return null;
+				Check(ref ok, Click(win, "Save"), "Save clicked");
+				yield return null;
+				WorldPlan saved = WorldPlan.Load(name);
+				Check(ref ok, saved != null && string.Join(",", saved.Rules.Select(r => r.Id).ToArray()) == "a,c,b", "Save keeps the new order (" + (saved != null ? string.Join(",", saved.Rules.Select(r => r.Id).ToArray()) : "null") + ")");
+			}
+			finally
+			{
+				WorldPlanWindow.Close();
+				ChoiceWindow.Close();
+				if (System.IO.File.Exists(WorldPlan.PathFor(name))) System.IO.File.Delete(WorldPlan.PathFor(name));
+			}
+			if (ok) Log("PASS: plan window edits"); else Fail("plan window edits");
+		}
 		#region Raft's own settings
 
 		/// <summary>A type of Raft's by its full name, from whichever of the game's assemblies has it.</summary>
