@@ -524,6 +524,110 @@ namespace DynamicIslands
 			box.gameObject.SetActive(false);
 			if (ok) Log("PASS: New Game box clicks"); else Fail("New Game box clicks");
 		}
+
+		#region Broken and odd files
+
+		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. Every real file is put back after")]
+		public static void BadFilesCommand() { DynamicIslands.instance.StartCoroutine(BadFilesRoutine()); }
+
+		static IEnumerator BadFilesRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			string dir = DynamicIslands.assetpath;
+			string pool = System.IO.Path.Combine(dir, "spawnpool.txt"), rnd = System.IO.Path.Combine(dir, WorldRandomizer.DefaultsFileName), rules = System.IO.Path.Combine(dir, WorldRules.DefaultFileName);
+			var backup = new Dictionary<string, string>();
+			foreach (string p in new[] { pool, rnd, rules }) backup[p] = System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p) : null;
+			var errors = new List<string>();
+			var warnings = new List<string>();
+			Application.LogCallback watch = (text, trace, type) =>
+			{
+				if (type == LogType.Error || type == LogType.Exception) errors.Add(text.Length > 160 ? text.Substring(0, 160) : text);
+				else if (type == LogType.Warning && text.Contains("CUSTOM ISLANDS")) warnings.Add(text);
+			};
+			Application.logMessageReceived += watch;
+			string defaultPlanBefore = WorldDirector.DefaultPlan;
+			try
+			{
+				// spawnpool.txt, hand-edited badly
+				float chanceBefore = CustomIslandSpawner.ChancePerKm;
+				System.IO.File.WriteAllText(pool, "# a player's spawnpool\nchancePerKm = lots\nspawnDistanceMin = -50\nspawnDistanceMax = 10\nunloadDistance = 5\nregrowDays = -3\nminSpacing = -1\ngeneratedStyles = Martian, Lunar\ndefaultPlan = No such plan\nwingspan = 12\n   \nCastaway's hut 2\nÅäö island\n= 5\ncitest two thousand\n");
+				warnings.Clear(); errors.Clear();
+				CustomIslandSpawner.LoadPool(true);
+				Check(ref ok, errors.Count == 0, "spawnpool.txt with nonsense: read without errors" + (errors.Count > 0 ? " - " + errors[0] : ""));
+				Check(ref ok, CustomIslandSpawner.ChancePerKm == chanceBefore && CustomIslandSpawner.SpawnDistanceMin >= 20f && CustomIslandSpawner.SpawnDistanceMax >= CustomIslandSpawner.SpawnDistanceMin &&
+					CustomIslandSpawner.UnloadDistance >= 300f && CustomIslandSpawner.RegrowDays >= 0 && CustomIslandSpawner.GeneratedStyles.Length > 0,
+					"spawnpool.txt with nonsense: safe values (chance " + CustomIslandSpawner.ChancePerKm + ", spawn " + CustomIslandSpawner.SpawnDistanceMin + "-" + CustomIslandSpawner.SpawnDistanceMax + " m, unload " + CustomIslandSpawner.UnloadDistance + " m, regrow " + CustomIslandSpawner.RegrowDays + " days, styles " + CustomIslandSpawner.GeneratedStyles.Length + ")");
+				Check(ref ok, warnings.Count(w => w.Contains("Ignoring unknown line")) >= 3, warnings.Count(w => w.Contains("Ignoring unknown line")) + " lines warned about (words for numbers, unknown keys and styles)");
+				Check(ref ok, WorldPlan.Load(WorldDirector.DefaultPlan) == null && !WorldDirector.SetPlan(WorldDirector.DefaultPlan, false), "a default plan that doesn't exist: not used (the New Game box falls back to Random islands)");
+				// randomizer.txt and world_rules.txt
+				foreach (string junk in new[] { "level=extreme;seed=abc;off=colours,nonsense,;;", "\u0000ÿ binary \u0001", "", "level=" })
+				{
+					System.IO.File.WriteAllText(rnd, junk);
+					errors.Clear();
+					RandomizerSettings d = WorldRandomizer.Defaults;
+					Check(ref ok, errors.Count == 0 && d != null && d.Level >= 0 && d.Level < RandomizerSettings.LevelNames.Length, "randomizer.txt '" + junk.Replace("\u0000", "\\0") + "': " + (d != null ? d.Describe() : "null"));
+				}
+				System.IO.File.WriteAllText(rules, "monsters=impossible\nbuildcost=-500\nbuildcost=abc\n=\nmonsters\n");
+				errors.Clear();
+				int m = MonsterDifficulty.Default, bc = BuildCost.Default;
+				Check(ref ok, errors.Count == 0 && m == MonsterDifficulty.Normal && bc >= 0 && bc <= 100, "world_rules.txt with nonsense: Normal monsters, build cost " + bc + " %");
+				System.IO.File.WriteAllText(rules, "buildcost=500\n");
+				Check(ref ok, BuildCost.Default <= 100, "world_rules.txt with 500 %: clamped to " + BuildCost.Default + " %");
+			}
+			finally
+			{
+				foreach (var kv in backup) { if (kv.Value != null) System.IO.File.WriteAllText(kv.Key, kv.Value); else if (System.IO.File.Exists(kv.Key)) System.IO.File.Delete(kv.Key); }
+				CustomIslandSpawner.LoadPool(true);
+				WorldDirector.DefaultPlan = defaultPlanBefore;
+			}
+			// A generator preset with nonsense and huge numbers
+			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
+			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= IslandGenSettings.MinHeight && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Trees <= 1f,
+				"a preset with nonsense: clamped (radius " + s.Radius + ", height " + s.Height + ", style " + s.Style + ", trees " + s.Trees + ")");
+			// A world plan with broken lines
+			string planPath = WorldPlan.PathFor("cibadplan");
+			System.IO.Directory.CreateDirectory(WorldPlan.Folder);
+			System.IO.File.WriteAllText(planPath, "description=A broken plan\nrandom=perhaps\nrule=\nrule=|||||\nrule=home|start||island|cistory-home|ahead|300\nthis is not a rule\n\u0000\n");
+			errors.Clear();
+			WorldPlan bad = null;
+			try { bad = WorldPlan.Load("cibadplan"); } catch (Exception e) { errors.Add(e.Message); }
+			Check(ref ok, errors.Count == 0 && bad != null && WorldPlan.All().Contains("cibadplan"), "a plan with broken lines: read (" + (bad != null ? bad.Rules.Count + " rule(s) kept" : "null") + "), listed");
+			System.IO.File.Delete(planPath);
+			// Island files: empty, random bytes, cut in half, from a newer version - each refused with a message, never a crash
+			string good = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
+			byte[] whole = good != null ? System.IO.File.ReadAllBytes(IslandSpawner.PathFor(good)) : new byte[0];
+			var rng = new System.Random(5);
+			byte[] noise = new byte[4096]; rng.NextBytes(noise);
+			byte[] newer = (byte[])whole.Clone();
+			if (newer.Length > 8) { newer[4] = 99; newer[5] = 0; newer[6] = 0; newer[7] = 0; }
+			var cases = new Dictionary<string, byte[]> { { "empty", new byte[0] }, { "random bytes", noise }, { "cut in half", whole.Take(whole.Length / 2).ToArray() }, { "a newer format", newer } };
+			foreach (var c in cases)
+			{
+				string path = IslandSpawner.PathFor("cibadisland");
+				System.IO.File.WriteAllBytes(path, c.Value);
+				string result;
+				errors.Clear();
+				try { IslandFile f = IslandFile.Load(path); result = f == null ? "refused" : "read (" + f.Objects.Count + " objects)"; }
+				catch (Exception e) { result = "refused: " + e.GetType().Name + " " + e.Message; }
+				bool listed = IslandSpawner.ListSavedIslands().Contains("cibadisland");
+				// (in the editor: Open says it failed and keeps the island being edited)
+				if (DynamicIslands.InEditor())
+				{
+					string editing = DynamicIslands.currentIslandName;
+					bool opened = true;
+					try { opened = DynamicIslands.LoadIsland("cibadisland"); } catch (Exception e) { result += "; the editor threw " + e.Message; }
+					if (opened || DynamicIslands.currentIslandName != editing) result = "read: the editor opened it";
+					yield return null;
+				}
+				System.IO.File.Delete(path);
+				Check(ref ok, !result.StartsWith("read"), "an island file " + c.Key + ": " + (result.Length > 120 ? result.Substring(0, 120) : result) + (listed ? " (listed)" : ""));
+			}
+			Application.logMessageReceived -= watch;
+			if (ok) Log("PASS: broken files"); else Fail("broken files");
+		}
+
+		#endregion
 		#region Raft's own settings
 
 		/// <summary>A type of Raft's by its full name, from whichever of the game's assemblies has it.</summary>
