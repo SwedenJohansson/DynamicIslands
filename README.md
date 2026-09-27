@@ -4,6 +4,12 @@ A [Raft](https://raft-game.com/) mod for the [Raft Mod Loader](https://www.raftm
 
 By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raft 1.1 (Unity 2021.3) with SwedenJohansson.
 
+**New here? Start with the [illustrated guide](docs/GUIDE.md)**: installing, starting a world, what you meet while
+sailing, the world randomizer, and building your own islands in the editor, step by step with 50 pictures. This README
+is the full reference.
+
+[![A custom island seen from the sea](docs/images/world-island-from-sea.jpg)](docs/GUIDE.md)
+
 ## Features
 
 - **Island editor** (EDITOR button in the main menu)
