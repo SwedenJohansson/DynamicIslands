@@ -628,6 +628,90 @@ namespace DynamicIslands
 		}
 
 		#endregion
+
+		[ConsoleCommand(name: "CIPlanRules", docs: "Dev, in game (host): the plan rules no other test plays in a world - 'on day' (today: brought; day 999: waits), 'quest step done' (the start island's first step), 'after rule' (a chain), 'from the spawn pool'; a rule whose saved island is missing waits, says why once, and breaks nothing; a plan edited while the world plays (a new rule fires); a plan deleted (its rules stop, the islands stay, nothing breaks). The world's plan, its islands and km are put back after")]
+		public static void PlanRulesCommand() { DynamicIslands.instance.StartCoroutine(PlanRulesRoutine()); }
+
+		static IEnumerator PlanRulesRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("plan rules: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled;
+			float sailedBefore = WorldDirector.Sailed;
+			var doneBefore = WorldDirector.Done.ToList();
+			int before = IslandWorldState.Islands.Count;
+			int today = 0;
+			try { today = WorldManager.DayCounter; } catch { }
+			const string plan = "ci plan rules";
+			RuleIsland("ciplanr", "Rules Isle").Save(IslandSpawner.PathFor("ciplanr"));
+			if (System.IO.File.Exists(IslandSpawner.PathFor("cigoneisland"))) System.IO.File.Delete(IslandSpawner.PathFor("cigoneisland"));
+			WorldPlan.Parse(plan, "random = off\n" +
+				"rule = start | island:ciplanr | start | ahead:300 | | Start\n" +
+				"rule = today | type:tropical | day:" + today + " | ahead:900 | | Today\n" +
+				"rule = later | type:desert | day:999 | ahead:900 | | Later\n" +
+				"rule = stepped | type:snowy | step:start:1 | near:start:700:north | | Step\n" +
+				"rule = chained | type:forest | rule:stepped | near:stepped:700:east | | Chain\n" +
+				"rule = pooled | pool | rule:chained | ahead:1200 | | Pool\n" +
+				"rule = gone | island:cigoneisland | start | ahead:600 | | Gone\n").Save();
+			var warnings = new List<string>();
+			Application.LogCallback watch = (text, trace, type) => { if (text.Contains("cigoneisland")) warnings.Add(text); };
+			Application.logMessageReceived += watch;
+			try
+			{
+				Check(ref ok, WorldDirector.SetPlan(plan, true), "the world gets the plan");
+				WorldDirector.Sailed = 0f;
+				WorldDirector.Done.Clear();
+				WorldDirector.Evaluate();
+				IslandWorldState.Entry start = WorldDirector.Refs("start", null).FirstOrDefault();
+				Check(ref ok, start != null, "'start' brings ciplanr");
+				Check(ref ok, WorldDirector.Refs("today", null).Count == 1, "'on day " + today + "' (today) brings its island");
+				Check(ref ok, WorldDirector.Refs("later", null).Count == 0 && !WorldDirector.Done.Contains("later"), "'on day 999' waits");
+				Check(ref ok, WorldDirector.Refs("stepped", null).Count == 0, "'quest step done' waits for the step");
+				for (float t = 0; start != null && start.Root == null && t < 40f; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				if (start != null && start.Root != null)
+				{
+					start.Root.GetComponentInChildren<TriggerZone>().Enter();
+					WorldDirector.Evaluate();
+					Check(ref ok, WorldDirector.Refs("stepped", null).Count == 1, "the start island's first quest step brings 'stepped' (" + QuestTracker.StepOf(start) + " step(s) done)");
+					WorldDirector.Evaluate();
+					Check(ref ok, WorldDirector.Refs("chained", null).Count == 1, "'after rule stepped' brings 'chained' after it");
+					WorldDirector.Evaluate();
+					string pool = CustomIslandSpawner.PickFromPool();
+					Check(ref ok, WorldDirector.Done.Contains("pooled") == (pool != null), "'from the spawn pool' after 'chained': " + (pool != null ? "brought " + string.Join(", ", WorldDirector.Refs("pooled", null).Select(e => e.HostName).ToArray()) : "the pool is empty - it waits"));
+				}
+				// A saved island that isn't there: the rule waits, says why once, nothing breaks
+				for (int i = 0; i < 5; i++) WorldDirector.Evaluate();
+				Check(ref ok, !WorldDirector.Done.Contains("gone") && WorldDirector.Refs("gone", null).Count == 0, "a rule whose island is missing waits (" + warnings.Count + " log line(s) about it over 6 checks)");
+				Check(ref ok, warnings.Count <= 2, "... and doesn't fill the log (" + warnings.Count + " lines)");
+				// The plan edited while the world plays: a new rule fires; then deleted: its rules stop, the islands stay
+				WorldPlan p = WorldPlan.Load(plan);
+				p.Rules.Add(IntroRule.Parse("rule = added | type:volcanic | start | ahead:1500 | | Added"));
+				p.Save();
+				Check(ref ok, WorldDirector.SetPlan(plan, false), "the plan edited and read again");
+				WorldDirector.Evaluate();
+				Check(ref ok, WorldDirector.Refs("added", null).Count == 1, "the edited plan's new rule fires");
+				int islands = IslandWorldState.Islands.Count;
+				System.IO.File.Delete(WorldPlan.PathFor(plan));
+				bool reread = true;
+				try { reread = WorldDirector.SetPlan(plan, false); } catch (Exception e) { Check(ref ok, false, "a deleted plan threw: " + e.Message); }
+				for (int i = 0; i < 3; i++) WorldDirector.Evaluate();
+				Check(ref ok, !reread && IslandWorldState.Islands.Count == islands, "the plan deleted: it can't be read, the islands it brought stay (" + islands + "), nothing else comes");
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
+				if (System.IO.File.Exists(WorldPlan.PathFor(plan))) System.IO.File.Delete(WorldPlan.PathFor(plan));
+				WorldDirector.Done.Clear();
+				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
+				WorldDirector.Sailed = sailedBefore;
+				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
+			}
+			if (ok) Log("PASS: plan rules"); else Fail("plan rules");
+		}
 		#region Raft's own settings
 
 		/// <summary>A type of Raft's by its full name, from whichever of the game's assemblies has it.</summary>
