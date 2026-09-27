@@ -311,7 +311,7 @@ namespace DynamicIslands
 			while (!scene.isLoaded) await new WaitForSeconds(.1f);
 			SceneManager.sceneLoaded -= quiet;
 			HideOldCanvases(scene, false);
-			EditorLoadingBox.Status("Setting up the editor");
+			EditorLoadingBox.Status("Setting up the editor", 0.2f);
 			await new WaitForSeconds(0.5f);
 
 			RAPI.ToggleCursor(true);
@@ -361,9 +361,9 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			// (the loading box shows how far Raft's islands have been read for their objects)
-			EditorLoadingBox.Status("Loading Raft's objects");
+			EditorLoadingBox.Status("Loading Raft's objects", 0.25f);
 			await PlaceableCatalog.EnsureBuilt();
-			EditorLoadingBox.Status("Almost ready");
+			EditorLoadingBox.Status("Almost ready", 1f);
 			// Creature models seen in a world since the catalog was built replace their markers
 			try { ContentCatalog.UpgradeMarkers(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creature models: " + e.Message); }
 			// The builder's saved object groups ("My groups")

@@ -318,8 +318,12 @@ small gold **Lv 5** under your name.
 
 ## 7. Building your own island: the editor
 
-Click **EDITOR** in the main menu. The editor opens on the sea with an empty build area. The first time it takes
-about 10 seconds to load the objects.
+Click **EDITOR** in the main menu. A loading box shows what it is doing ("Opening the editor", then "Loading Raft's
+objects from its islands" with a bar) until the editor is ready: a few seconds the first time after starting Raft,
+less after that. The editor opens on the sea with an empty build area.
+
+![The loading box](images/editor-loading.jpg)
+*The box that covers the screen while the editor opens.*
 
 ### 7.1 The screen
 
@@ -774,8 +778,9 @@ files are sent to players who join; they appear as `<name>_<hash>.island` in the
 
 **Where are my islands?** In `<Raft>\Mods\DynamicIslands\` as `<name>.island`. Copy the file to share it.
 
-**The game seems frozen while the editor loads.** The first start of the editor loads about 700 objects (about ten
-seconds). After a Raft update it also scans Raft's islands once (about half a minute).
+**The editor takes a moment to open.** The first time after starting Raft it loads about 700 objects from Raft's
+islands; the loading box shows how far it is. After a Raft update it also scans Raft's other islands once, in the
+background (about half a minute; the object browser's status line says so).
 
 **Something went wrong.** Press F10: the mod's messages start with `[CUSTOM ISLANDS]`. Raft's log is
 `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`.

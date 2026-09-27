@@ -17,6 +17,8 @@ namespace DynamicIslands.Editor
 		static RectTransform fill;
 		static string message = "";
 		static float shownAt;
+		// How far the bar is, and how far the current stage takes it (it moves there smoothly)
+		static float shownFill, stageFill;
 
 		public static bool Showing { get { return root != null; } }
 
@@ -25,6 +27,7 @@ namespace DynamicIslands.Editor
 		{
 			message = text ?? "";
 			shownAt = Time.realtimeSinceStartup;
+			shownFill = 0f; stageFill = 0.1f;
 			if (root != null) return;
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_EditorLoading", 32000);
 			root = canvas.gameObject;
@@ -55,8 +58,12 @@ namespace DynamicIslands.Editor
 			root.AddComponent<Ticker>();
 		}
 
-		/// <summary>What it is doing now (a line under the title).</summary>
-		public static void Status(string text) { message = text ?? ""; }
+		/// <summary>What it is doing now (a line under the title), and how far along the bar that stage goes (0-1).</summary>
+		public static void Status(string text, float upTo)
+		{
+			message = text ?? "";
+			stageFill = Mathf.Max(stageFill, Mathf.Clamp01(upTo));
+		}
 
 		public static void Hide()
 		{
@@ -82,9 +89,10 @@ namespace DynamicIslands.Editor
 						: message.TrimEnd('.') + dots;
 				if (fill != null)
 				{
-					// (a slow crawl while the scene opens, then the islands read so far)
-					float f = loading ? 0.15f + 0.8f * done / total : PlaceableCatalog.IsBuilt ? 0.97f : Mathf.Min(0.15f, shown * 0.05f);
-					fill.anchorMax = new Vector2(Mathf.Clamp01(f), 1f);
+					// (the stage's share; while Raft's islands are read, their part of it - from 25 % to 95 %)
+					float target = loading ? Mathf.Max(stageFill, 0.25f + 0.7f * done / total) : stageFill;
+					shownFill = Mathf.MoveTowards(shownFill, target, Time.unscaledDeltaTime * 1.5f);
+					fill.anchorMax = new Vector2(Mathf.Clamp01(shownFill), 1f);
 				}
 			}
 		}
