@@ -167,6 +167,363 @@ namespace DynamicIslands
 
 		#endregion
 
+
+		#region A story plan made from the player's own islands, played in a new world
+
+		const string StoryPlan = "CI Story";
+		static readonly string[] StoryIslands = { "cistory-home", "cistory-bay" };
+
+		/// <summary>A button of a window by its label (UIKit names them Button_&lt;label&gt;), clicked as a player would.</summary>
+		static bool Click(GameObject root, string label)
+		{
+			Button b = root.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == "Button_" + label || (UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == label));
+			if (b == null || !b.interactable) return false;
+			b.onClick.Invoke();
+			return true;
+		}
+
+		/// <summary>Types into a window's field found by its placeholder text, as a player would (the field applies it when left).</summary>
+		static bool TypeInto(GameObject root, string placeholder, string text, int nth = 0)
+		{
+			InputField f = root.GetComponentsInChildren<InputField>(false).Where(x => x.placeholder is Text && ((Text)x.placeholder).text == placeholder).Skip(nth).FirstOrDefault();
+			if (f == null) return false;
+			f.text = text;
+			f.onEndEdit.Invoke(text);
+			return true;
+		}
+
+		/// <summary>Clicks a cycling button (its label changes each click) until it says one of the wanted labels.</summary>
+		static IEnumerator CycleTo(Func<GameObject> card, string[] all, string want)
+		{
+			for (int i = 0; i < all.Length + 1; i++)
+			{
+				GameObject c = card();
+				if (c == null) yield break;
+				Button b = c.GetComponentsInChildren<Button>(false).FirstOrDefault(x => UIKit.LabelOf(x) != null && all.Contains(UIKit.LabelOf(x).text));
+				if (b == null || UIKit.LabelOf(b).text == want) yield break;
+				b.onClick.Invoke();
+				yield return null; yield return null;
+			}
+		}
+
+		[ConsoleCommand(name: "CIStoryPlanMake", docs: "Dev, editor: a player's story plan made in the World Plans window from their own islands: two islands saved (a home island with a gate zone and a quest, a bay with a chest and a quest); a new plan 'CI Story' through New... and its name prompt; four rules added with + Add a rule and filled in through each card's fields and cycling buttons (start: home ahead; home's gate zone fires: the bay north of home; the bay's quest done: a treasure island east of the bay; after 2 km: an oddity ahead); a description; Check finds no problem; Save; closed, opened again: the same plan. Then Copy..., Delete, Templates..., the rule arrows and remove, the random islands switch on a scratch plan")]
+		public static void StoryPlanMakeCommand() { DynamicIslands.instance.StartCoroutine(StoryPlanMakeRoutine()); }
+
+		static IEnumerator StoryPlanMakeRoutine()
+		{
+			yield return WaitForEditor(false);
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			// Two islands of the player's own, as the generator and Save as make them
+			for (int i = 0; i < StoryIslands.Length; i++)
+			{
+				var s = new IslandGenSettings { Seed = 3100 + i, Style = TerrainPainter.Tropical, Shape = IslandShapes.Round, Radius = 55f, Height = 14f, ObjectDensity = 0.6f };
+				IslandFile f = IslandGenerator.CreateFile(s, StoryIslands[i]);
+				var k = new MapKit(f, 7 + i);
+				Vector2? spot = k.Find(k.Mid, 25f, MapKit.Dry, 6f);
+				Vector2 at = spot ?? k.Mid;
+				f.Props[IslandProps.Title] = i == 0 ? "Home Island" : "The Bay";
+				if (i == 0)
+				{
+					k.Zone(at, "gate", 5f, "The gate opens: something appears to the north");
+					k.Quest("Find the gate", "Look for the gate on this island.", "The gate is found!", "Plank*3", "reach|gate|1|Walk to the gate");
+				}
+				else
+				{
+					k.Chest("Loot_Chest", at, "Bay chest", "Rope*2");
+					k.Quest("The bay's chest", "A chest lies in the bay.", "You found the bay's chest", "Nail*4", "open|Bay chest|1|Open the bay's chest");
+				}
+				f.Save(IslandSpawner.PathFor(StoryIslands[i]));
+			}
+			Check(ref ok, StoryIslands.All(n => System.IO.File.Exists(IslandSpawner.PathFor(n))), "two islands saved: " + string.Join(", ", StoryIslands));
+			if (System.IO.File.Exists(WorldPlan.PathFor(StoryPlan))) System.IO.File.Delete(WorldPlan.PathFor(StoryPlan));
+			if (System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy"))) System.IO.File.Delete(WorldPlan.PathFor(StoryPlan + " copy"));
+
+			// The World Plans window, as the player uses it
+			WorldPlanWindow.Open();
+			yield return null; yield return null;
+			GameObject win = WindowObject(typeof(WorldPlanWindow));
+			Check(ref ok, win != null, "World Plans opens");
+			if (win == null) { Fail("story plan made"); yield break; }
+			Check(ref ok, Click(win, "New..."), "New... clicked");
+			yield return null; yield return null;
+			GameObject prompt = WindowObject(typeof(TextPromptWindow));
+			Check(ref ok, prompt != null && TypeInto(prompt, "Name", StoryPlan) && Click(prompt, "OK"), "the name prompt: '" + StoryPlan + "', OK");
+			yield return null; yield return null;
+			Func<List<GameObject>> cards = () => win.GetComponentsInChildren<RectTransform>(false).Where(r => r.name == "Rule").Select(r => r.gameObject).ToList();
+			string[] whenLabels = { "the world starts", "after sailing (km)", "on day", "quest done at", "quest step done at", "zone fires at", "players reach", "after rule", "signal sent at" };
+			string[] whatLabels = { "saved island", "new map type", "from spawn pool", "one of these" };
+			string[] whereLabels = { "ahead of the raft", "near an island" };
+			string[] dirs = IntroRule.Directions.Select(d => d == "any" ? "any way" : d).ToArray();
+			// (rule: id, when, when's island, when's arg, what, which, where, metres, direction, near which, message, Receiver name)
+			var rules = new[]
+			{
+				new[] { "home", "the world starts", "", "", "saved island", StoryIslands[0], "ahead of the raft", "300", "", "", "A story begins", "Home" },
+				new[] { "bay", "zone fires at", "home", "gate", "saved island", StoryIslands[1], "near an island", "600", "north", "home", "Something to the north", "Bay" },
+				new[] { "treasure", "quest done at", "bay", "", "new map type", "treasure", "near an island", "600", "east", "bay", "", "Treasure" },
+				new[] { "far", "after sailing (km)", "", "2", "new map type", "oddity", "ahead of the raft", "400", "", "", "", "" },
+			};
+			for (int i = 0; i < rules.Length; i++)
+			{
+				string[] r = rules[i];
+				Check(ref ok, Click(win, "+ Add a rule"), "rule " + (i + 1) + ": + Add a rule");
+				yield return null; yield return null;
+				int idx = i;
+				Func<GameObject> card = () => { var c = cards(); return idx < c.Count ? c[idx] : null; };
+				yield return CycleTo(card, whenLabels, r[1]);
+				yield return CycleTo(card, whatLabels, r[4]);
+				yield return CycleTo(card, whereLabels, r[6]);
+				if (r[8].Length > 0) yield return CycleTo(card, dirs, r[8]);
+				GameObject cd = card();
+				if (cd == null) { Check(ref ok, false, "rule " + (i + 1) + ": no card"); continue; }
+				bool typed = TypeInto(cd, "id", r[0]);
+				if (r[2].Length > 0) typed &= TypeInto(cd, "rule id / island", r[2]);
+				if (r[3].Length > 0) typed &= TypeInto(cd, r[1] == "zone fires at" ? "zone name" : "km", r[3]);
+				typed &= TypeInto(cd, r[4] == "new map type" ? "map type" : "island name", r[5]);
+				typed &= TypeInto(cd, "300", r[7]);
+				if (r[9].Length > 0) typed &= TypeInto(cd, "where it happened", r[9]);
+				if (r[10].Length > 0) typed &= TypeInto(cd, "Message to every player (optional)", r[10]);
+				if (r[11].Length > 0) typed &= TypeInto(cd, "Receiver name", r[11]);
+				Check(ref ok, typed, "rule " + (i + 1) + " '" + r[0] + "': filled in through its card");
+			}
+			Check(ref ok, TypeInto(win, "Description, shown when choosing the plan (e.g. A story across five islands)", "A test story across four islands"), "the description typed");
+			Check(ref ok, Click(win, "Check"), "Check clicked");
+			yield return null;
+			// (what Check found: the window's problems text)
+			FieldInfo pt = typeof(WorldPlanWindow).GetField("problemsText", BindingFlags.Instance | BindingFlags.NonPublic);
+			Text ptext = pt != null ? pt.GetValue(win.GetComponent<WorldPlanWindow>()) as Text : null;
+			string problems = ptext != null ? ptext.text : "";
+			Log("  Check says: " + problems.Replace("\n", " / "));
+			Check(ref ok, Click(win, "Save"), "Save clicked");
+			yield return null;
+			WorldPlan saved = WorldPlan.Load(StoryPlan);
+			Check(ref ok, saved != null && saved.Rules.Count == 4, "the plan saved with " + (saved != null ? saved.Rules.Count : 0) + " rules (4)" + (problems.Length > 0 ? "; Check says: " + problems.Replace("\n", " / ") : ""));
+			if (saved != null)
+			{
+				for (int i = 0; i < rules.Length && i < saved.Rules.Count; i++)
+				{
+					IntroRule s = saved.Rules[i];
+					string[] r = rules[i];
+					string want = r[0] + "|" + r[5] + "|" + r[7];
+					string got = s.Id + "|" + s.WhatArg + "|" + s.Distance.ToString("0");
+					Check(ref ok, want == got && (r[8].Length == 0 || s.Direction == r[8]) && (r[3].Length == 0 || s.WhenArg == r[3]) && (r[2].Length == 0 || s.WhenRef == r[2]), "rule " + (i + 1) + " as typed: " + s.Describe());
+				}
+				Check(ref ok, saved.Description == "A test story across four islands", "the description saved");
+			}
+			Check(ref ok, Click(win, "Close"), "Close clicked");
+			yield return null;
+			WorldPlanWindow.Open(StoryPlan);
+			yield return null; yield return null;
+			Check(ref ok, cards().Count == 4, "opened again: its 4 rules (" + cards().Count + ")");
+
+			// Copy..., then the copy: the random switch, a template, the arrows and remove, Delete
+			Check(ref ok, Click(win, "Copy..."), "Copy... clicked");
+			yield return null; yield return null;
+			prompt = WindowObject(typeof(TextPromptWindow));
+			if (prompt != null) Click(prompt, "OK"); // (the name it suggests: "CI Story copy")
+			yield return null; yield return null;
+			Check(ref ok, System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")), "the copy saved as '" + StoryPlan + " copy'");
+			int before = cards().Count;
+			Button random = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("Random islands while sailing"));
+			string r0 = random != null ? UIKit.LabelOf(random).text : "";
+			if (random != null) random.onClick.Invoke();
+			yield return null;
+			Check(ref ok, random != null && UIKit.LabelOf(random).text != r0, "the random islands switch: '" + r0 + "' -> '" + (random != null ? UIKit.LabelOf(random).text : "") + "'");
+			Check(ref ok, Click(win, "Templates..."), "Templates... clicked");
+			yield return null; yield return null;
+			GameObject choice = WindowObject(typeof(ChoiceWindow));
+			Button firstTemplate = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name.StartsWith("Button_") && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.Length > 0 && b.name != "Button_Close" && b.name != "Button_Cancel") : null;
+			if (firstTemplate != null) firstTemplate.onClick.Invoke();
+			yield return null; yield return null;
+			int withTemplate = cards().Count;
+			Check(ref ok, withTemplate > before, "a template adds its rules: " + before + " -> " + withTemplate);
+			GameObject last = cards().LastOrDefault();
+			string lastId = last != null ? last.GetComponentsInChildren<InputField>(false).Select(f => f.text).FirstOrDefault() : "";
+			if (last != null) Click(last, "▲");
+			yield return null; yield return null;
+			var afterUp = cards();
+			string movedId = afterUp.Count >= 2 ? afterUp[afterUp.Count - 2].GetComponentsInChildren<InputField>(false).Select(f => f.text).FirstOrDefault() : "";
+			Check(ref ok, movedId == lastId, "the up arrow moves the last rule up one ('" + lastId + "')");
+			GameObject first = cards().FirstOrDefault();
+			if (first != null) Click(first, "×");
+			yield return null; yield return null;
+			Check(ref ok, cards().Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + cards().Count);
+			Check(ref ok, Click(win, "Delete"), "Delete clicked");
+			yield return null; yield return null;
+			Check(ref ok, !System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")) && System.IO.File.Exists(WorldPlan.PathFor(StoryPlan)), "the copy deleted, the story plan kept");
+			WorldPlanWindow.Close();
+			if (ok) Log("PASS: story plan made"); else Fail("story plan made");
+		}
+
+		[ConsoleCommand(name: "CIStoryPlay", docs: "Dev, in game (host, a new world made with the plan 'CI Story': CIPlanBox \"CI Story\" then CINewWorld): the plan played through. The home island comes ahead of the raft with its Receiver name and message, loaded exactly as saved (the same ground and every object of its file); its gate zone brings the bay 600 m north of it; the bay's quest (open its chest) brings a treasure island east of the bay; 2 km sailed bring an oddity. Each once, never twice. Logs STORY lines for CIStoryCheck")]
+		public static void StoryPlayCommand() { DynamicIslands.instance.StartCoroutine(StoryPlayRoutine()); }
+
+		/// <summary>An island in the world against its file: the same ground heights and every object of the file there.</summary>
+		static string LoadedAsSaved(IslandWorldState.Entry e)
+		{
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
+			if (f == null || e.Root == null) return "no file or not loaded";
+			int spawned = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Length;
+			Transform objs = e.Root.transform.Find("Objects");
+			int children = objs != null ? objs.childCount : spawned;
+			Terrain t = e.Root.GetComponentInChildren<Terrain>();
+			float fileTop = 0f, worldTop = 0f;
+			foreach (float h in f.Heights) fileTop = Mathf.Max(fileTop, h * f.TerrainSize.y);
+			if (t != null) foreach (float h in t.terrainData.GetHeights(0, 0, t.terrainData.heightmapResolution, t.terrainData.heightmapResolution)) worldTop = Mathf.Max(worldTop, h * t.terrainData.size.y);
+			bool same = children == f.Objects.Count && (t == null || Mathf.Abs(fileTop - worldTop) < 0.05f);
+			return (same ? "" : "DIFFERENT: ") + "objects " + children + " of the file's " + f.Objects.Count + ", highest ground " + worldTop.ToString("F2") + " m (file " + fileTop.ToString("F2") + ")";
+		}
+
+		static IEnumerator StoryPlayRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story played: host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Check(ref ok, WorldDirector.Plan != null && WorldDirector.Plan.Name == StoryPlan, "the world's plan: '" + (WorldDirector.Plan != null ? WorldDirector.Plan.Name : "none") + "'");
+			Func<string, IslandWorldState.Entry> byName = n => IslandWorldState.Islands.FirstOrDefault(e => e.HostName == n || e.Name == n);
+			Func<string, IEnumerator> waitLoaded = n => WaitFor(() => byName(n) != null && byName(n).Root != null, 90f);
+			// 1. The home island, at the start
+			yield return waitLoaded(StoryIslands[0]);
+			IslandWorldState.Entry home = byName(StoryIslands[0]);
+			Check(ref ok, home != null && home.Root != null, "the world starts with '" + StoryIslands[0] + "'" + (home != null ? " (Receiver: '" + home.Label + "')" : ""));
+			if (home == null || home.Root == null) { Fail("story played"); yield break; }
+			Check(ref ok, home.Label == "Home", "its Receiver name 'Home' (" + home.Label + ")");
+			string h1 = LoadedAsSaved(home);
+			Check(ref ok, !h1.StartsWith("DIFFERENT"), "home loaded as saved: " + h1);
+			// 2. Its gate zone brings the bay north of it
+			TriggerZone gate = home.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "gate");
+			Check(ref ok, gate != null, "home's gate zone");
+			if (gate != null) { yield return PutPlayer(RAPI.GetLocalPlayer(), gate.transform.position + Vector3.up * 1.5f, false); yield return new WaitForSeconds(2f); }
+			yield return waitLoaded(StoryIslands[1]);
+			IslandWorldState.Entry bay = byName(StoryIslands[1]);
+			if (bay != null)
+			{
+				Vector3 d = bay.Position - home.Position;
+				float bearing = (Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f) % 360f;
+				Check(ref ok, bearing < 30f || bearing > 330f, "the gate brought the bay north of home: " + new Vector2(d.x, d.z).magnitude.ToString("F0") + " m at " + bearing.ToString("F0") + "°");
+				if (bay.Root != null) Check(ref ok, !LoadedAsSaved(bay).StartsWith("DIFFERENT"), "the bay loaded as saved: " + LoadedAsSaved(bay));
+				Check(ref ok, QuestTracker.StepOf(home) >= QuestTracker.QuestOf(home).Steps.Count, "home's quest done by reaching the gate");
+			}
+			else Check(ref ok, false, "the gate zone brought no bay");
+			// 3. The bay's quest: open its chest; a treasure island east of the bay
+			if (bay != null && bay.Root != null)
+			{
+				LootCrate chest = bay.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault();
+				if (chest != null) { PutPlayerNear(chest.transform); chest.Open(); NoteReader.Close(); }
+				IslandWorldState.Entry treasure = null;
+				for (float t = 0; t < 90f && treasure == null; t += 1f) { treasure = IslandWorldState.Islands.FirstOrDefault(e => e.Label == "Treasure"); if (treasure == null) yield return new WaitForSeconds(1f); }
+				if (treasure != null)
+				{
+					Vector3 d = treasure.Position - bay.Position;
+					float bearing = (Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f) % 360f;
+					Check(ref ok, bearing > 60f && bearing < 120f, "the bay's quest brought the treasure island east of it: " + bearing.ToString("F0") + "° ('" + treasure.Name + "')");
+				}
+				else Check(ref ok, false, "the bay's quest brought no treasure island");
+			}
+			// 4. 2 km sailed: an oddity ahead
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(RAPI.GetLocalPlayer(), raftObj.transform.position + Vector3.up * 2f, false);
+			int before = IslandWorldState.Islands.Count;
+			yield return SailRoutine(100f, 25f);
+			yield return new WaitForSeconds(5f);
+			bool far = IslandWorldState.Islands.Count > before && IslandWorldState.Islands.Skip(before).Any(e => (e.Name ?? "").StartsWith("gen-"));
+			Check(ref ok, far, "2.5 km sailed: the 'far' rule brought an island (" + string.Join(", ", IslandWorldState.Islands.Skip(before).Select(e => e.Name).ToArray()) + ")");
+			// Each rule once
+			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();
+			Check(ref ok, names.Count(n => n == StoryIslands[0]) == 1 && names.Count(n => n == StoryIslands[1]) == 1 && IslandWorldState.Islands.Count(e => e.Label == "Treasure") == 1, "each island of the plan once");
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands) Log("STORY " + (e.HostName ?? e.Name) + " label=" + e.Label);
+			Log("STORY done " + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()));
+			if (ok) Log("PASS: story played"); else Fail("story played");
+		}
+
+		static IEnumerator WaitFor(Func<bool> done, float seconds)
+		{
+			for (float t = 0; t < seconds && !done(); t += 0.5f) yield return new WaitForSeconds(0.5f);
+		}
+
+		[ConsoleCommand(name: "CIStoryCheck", docs: "Dev, in game (host): after the story world was saved and loaded again: the plan still the world's, its islands the same (each once), the rules that fired don't fire again; logs STORY lines to compare with CIStoryPlay's")]
+		public static void StoryCheckCommand() { DynamicIslands.instance.StartCoroutine(StoryCheckRoutine()); }
+
+		static IEnumerator StoryCheckRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("story check: in a world"); yield break; }
+			yield return new WaitForSeconds(8f);
+			bool ok = true;
+			Check(ref ok, WorldDirector.Plan != null && WorldDirector.Plan.Name == StoryPlan, "loaded again: the world's plan '" + (WorldDirector.Plan != null ? WorldDirector.Plan.Name : "none") + "'");
+			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();
+			Check(ref ok, names.Count(n => n == StoryIslands[0]) == 1 && names.Count(n => n == StoryIslands[1]) == 1, "loaded again: home and the bay once each");
+			Check(ref ok, WorldDirector.Done.Contains("home") && WorldDirector.Done.Contains("bay") && WorldDirector.Done.Contains("treasure"), "loaded again: the rules that fired are remembered (" + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()) + ")");
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands) Log("STORY " + (e.HostName ?? e.Name) + " label=" + e.Label);
+			Log("STORY done " + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()));
+			if (ok) Log("PASS: story check"); else Fail("story check");
+		}
+
+		#endregion
+
+		[ConsoleCommand(name: "CIBoxClicks", docs: "Dev, main menu: Raft's New Game box clicked as a player does: the plan button goes round every plan (built-in and the player's own) and back to the first, each shows its name and description; the randomizer level button goes Off, Light, Normal, Wild and round; each part button switches its part off and on (greyed when Off). Leaves the plan <plan> (default CI Story) chosen and the randomizer Off: CIBoxClicks [plan]")]
+		public static void BoxClicksCommand(string[] args) { DynamicIslands.instance.StartCoroutine(BoxClicksRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : StoryPlan)); }
+
+		static IEnumerator BoxClicksRoutine(string wantPlan)
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("New Game box clicks: no New Game box (main menu?)"); yield break; }
+			bool ok = true;
+			box.gameObject.SetActive(true);
+			box.Open();
+			yield return new WaitForSecondsRealtime(1f);
+			Transform planRow = box.transform.Find("CustomIslands_Plan"), randRow = box.transform.Find("CustomIslands_Randomizer");
+			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault() : null;
+			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
+			if (plan == null) { Fail("New Game box clicks: no plan button"); yield break; }
+			// The plan button: round every plan
+			List<string> plans = WorldPlan.All();
+			string first = UIKit.LabelOf(plan).text;
+			var seen = new List<string>();
+			var wrongDetail = new List<string>();
+			for (int i = 0; i < plans.Count; i++)
+			{
+				plan.onClick.Invoke();
+				yield return null;
+				string label = UIKit.LabelOf(plan).text.Replace("►", "").Trim();
+				seen.Add(label);
+				WorldPlan p = WorldPlan.Load(label);
+				if (p == null || detail == null || !detail.text.StartsWith(p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)")) wrongDetail.Add(label);
+			}
+			Check(ref ok, seen.Distinct().Count() == plans.Count && UIKit.LabelOf(plan).text == first, "the plan button goes round all " + plans.Count + " plans and back (" + string.Join(", ", seen.ToArray()) + ")");
+			Check(ref ok, wrongDetail.Count == 0, "each plan shows its description" + (wrongDetail.Count > 0 ? " - not: " + string.Join(", ", wrongDetail.ToArray()) : ""));
+			Check(ref ok, plans.Contains(wantPlan), "the player's plan '" + wantPlan + "' is among them");
+			for (int i = 0; i < plans.Count && NewWorldOptions.Selected != wantPlan; i++) { plan.onClick.Invoke(); yield return null; }
+			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "clicked to '" + wantPlan + "': chosen (" + NewWorldOptions.Selected + ")");
+			// The randomizer: level round, then each part
+			Button[] rb = randRow != null ? randRow.GetComponentsInChildren<Button>(true) : new Button[0];
+			Button level = rb.FirstOrDefault();
+			if (level == null) { Check(ref ok, false, "no randomizer buttons"); }
+			else
+			{
+				var levels = new List<string>();
+				for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++) { level.onClick.Invoke(); yield return null; levels.Add(NewWorldOptions.Randomizer.LevelName); }
+				Check(ref ok, levels.Distinct().Count() == RandomizerSettings.LevelNames.Length, "the level button goes round: " + string.Join(" > ", levels.ToArray()));
+				for (int i = 0; i < 4 && NewWorldOptions.Randomizer.Level != RandomizerSettings.Wild; i++) { level.onClick.Invoke(); yield return null; }
+				var parts = rb.Skip(1).ToArray();
+				var badParts = new List<string>();
+				for (int i = 0; i < parts.Length && i < RandomizerSettings.Features.Length; i++)
+				{
+					string f = RandomizerSettings.Features[i];
+					parts[i].onClick.Invoke(); yield return null;
+					bool off = NewWorldOptions.Randomizer.Disabled.Contains(f);
+					parts[i].onClick.Invoke(); yield return null;
+					bool on = !NewWorldOptions.Randomizer.Disabled.Contains(f);
+					if (!off || !on) badParts.Add(f);
+				}
+				Check(ref ok, parts.Length == RandomizerSettings.Features.Length && badParts.Count == 0, parts.Length + " part buttons, each switches its part off and on" + (badParts.Count > 0 ? " - not: " + string.Join(", ", badParts.ToArray()) : ""));
+				for (int i = 0; i < 4 && NewWorldOptions.Randomizer.Level != RandomizerSettings.Off; i++) { level.onClick.Invoke(); yield return null; }
+				Check(ref ok, parts.All(b => !b.interactable), "Off: the part buttons greyed out");
+			}
+			Screenshot(new[] { "newgame_clicked" });
+			yield return new WaitForSecondsRealtime(0.8f);
+			box.gameObject.SetActive(false);
+			if (ok) Log("PASS: New Game box clicks"); else Fail("New Game box clicks");
+		}
 		#region Raft's own settings
 
 		/// <summary>A type of Raft's by its full name, from whichever of the game's assemblies has it.</summary>
