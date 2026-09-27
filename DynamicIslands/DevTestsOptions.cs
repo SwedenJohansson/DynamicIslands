@@ -647,9 +647,22 @@ namespace DynamicIslands
 				if (point == null) yield break;
 				Landmark l = null;
 				Func<Landmark> find = () => WorldManager.AllLandmarks.FirstOrDefault(x => x != null && x.isSpawned && x.name.IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0);
-				Vector3 target = point.worldPosition;
-				yield return SailTo(() => target + (CustomIslandSpawner.RaftPosition.Value - target).normalized * 250f, 60f);
-				yield return WaitFor(() => (l = find()) != null, 120f);
+				// (Raft shifts the world back to its middle as the raft moves: the island's point follows those shifts - whether
+				// Raft moves its point too or not)
+				Vector3 p0 = point.worldPosition, shifted = Vector3.zero;
+				Action<Vector3> onShift = s => shifted += s;
+				WorldShiftManager.OnWorldShift += onShift;
+				Func<Vector3> target = () => point.worldPosition != p0 ? point.worldPosition : p0 + shifted;
+				try
+				{
+					for (int leg = 0; leg < 6 && (l = find()) == null; leg++)
+					{
+						yield return SailTo(() => target() + (CustomIslandSpawner.RaftPosition.Value - target()).normalized * 200f, 60f);
+						yield return WaitFor(() => (l = find()) != null, 20f);
+					}
+				}
+				finally { WorldShiftManager.OnWorldShift -= onShift; }
+				yield return WaitFor(() => (l = find()) != null, 60f);
 				Check(ref ok, l != null, island + " spawned");
 				if (l == null) yield break;
 				yield return new WaitForSeconds(4f);
