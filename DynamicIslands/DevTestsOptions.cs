@@ -295,9 +295,16 @@ namespace DynamicIslands
 							if (Physics.Raycast(top + Vector3.up * 6f, Vector3.down, out hit, 7f, ~0, QueryTriggerInteraction.Ignore) && hit.collider == d) { at = top + Vector3.up * 1.2f; break; }
 						}
 						yield return PutPlayer(player, at, false);
-						yield return new WaitForSeconds(3f);
-						float drop = at.y - player.transform.position.y;
-						Check(ref ok, drop < 2f && player.PersonController.IsGrounded, "the player stands on its deck (dropped " + drop.ToString("F1") + " m, grounded " + player.PersonController.IsGrounded + ")");
+						// (the guards may knock a player off soon after: standing on the deck at some moment in the first two seconds)
+						bool stood = false; string seen = "";
+						for (int i = 0; i < 8 && !stood; i++)
+						{
+							yield return new WaitForSeconds(0.25f);
+							Collider under = player.PersonController.groundRaycastHit.collider;
+							stood = player.PersonController.IsGrounded && under != null && under.name == "CustomIslands_Deck";
+							seen = (player.PersonController.IsGrounded ? "grounded" : "in the air") + " on " + (under != null ? under.name : "nothing") + ", " + (at.y - player.transform.position.y).ToString("F1") + " m below where put";
+						}
+						Check(ref ok, stood, "the player stands on its deck (" + seen + ")");
 						OnRaftCommand();
 					}
 					if (!keep) IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
@@ -505,6 +512,9 @@ namespace DynamicIslands
 
 		#region Private storages
 
+		// (how high above a foundation a storage stands, as Raft places one on it)
+		static float StorageHeight = 0.6f;
+
 		static Storage_Small StorageByIndex(string arg)
 		{
 			uint idx;
@@ -519,17 +529,29 @@ namespace DynamicIslands
 			return UnityEngine.Object.FindObjectsOfType<Network_Player>().FirstOrDefault(p => p != null && p != local);
 		}
 
-		[ConsoleCommand(name: "CIPlaceStorage", docs: "Dev, in game (host): places a small storage on the raft as a player builds one (through that player's BlockCreator, sent to every player): CIPlaceStorage [host|other] - logs STORAGE <index> by <player id>")]
+
+		[ConsoleCommand(name: "CIStorages", docs: "Dev, in game: every storage in the scene - its index, its builder (world option Private storages) and its height on the raft: STORED lines")]
+		public static void StoragesCommand()
+		{
+			foreach (Storage_Small s in UnityEngine.Object.FindObjectsOfType<Storage_Small>())
+				Log("STORED " + s.ObjectIndex + " builder " + PrivateStorage.BuilderOf(s.ObjectIndex) + " local y " + s.transform.localPosition.y.ToString("F2"));
+			Log("PASS: storages listed");
+		}
+		[ConsoleCommand(name: "CIPlaceStorage", docs: "Dev, in game (host): places a small storage on the raft as a player builds one (through that player's BlockCreator, sent to every player): CIPlaceStorage [host|other] [height above the foundation] - logs STORAGE <index> by <player id>")]
 		public static void PlaceStorageCommand(string[] args)
 		{
 			if (!Raft_Network.IsHost) { Fail("place storage: host only"); return; }
 			Network_Player who = args != null && args.Length > 0 && args[0] == "other" ? OtherPlayer() : RAPI.GetLocalPlayer();
+			float up = StorageHeight;
+			if (args != null && args.Length > 1) float.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out up);
 			if (who == null) { Fail("place storage: no such player"); return; }
 			Item_Base item = ItemManager.GetItemByName("Placeable_Storage_Small");
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			Block floor = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => x.name.Contains("Foundation")).OrderBy(x => x.transform.localPosition.sqrMagnitude).Skip(StorageManager.allStorages != null ? StorageManager.allStorages.Count : 0).FirstOrDefault() : null;
+			List<Block> floors = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => x.name.Contains("Foundation")).OrderBy(x => x.transform.localPosition.sqrMagnitude).ToList() : new List<Block>();
+			// (the next foundation for each storage, round again on a small raft)
+			Block floor = floors.Count > 0 ? floors[UnityEngine.Object.FindObjectsOfType<Storage_Small>().Length % floors.Count] : null;
 			if (item == null || floor == null) { Fail("place storage: no storage item or no foundation"); return; }
-			Block b = who.BlockCreator.CreateBlockCheat(item, floor.transform.localPosition + new Vector3(0f, 0.6f, 0f), Vector3.zero, DPS.Default, 0);
+			Block b = who.BlockCreator.CreateBlockCheat(item, floor.transform.localPosition + new Vector3(0f, up, 0f), Vector3.zero, DPS.Default, 0);
 			if (b == null) { Fail("place storage: Raft didn't place it"); return; }
 			Log("STORAGE " + b.ObjectIndex + " by " + who.steamID.Id + " (builder noted: " + PrivateStorage.BuilderOf(b.ObjectIndex) + ")");
 			Log("PASS: storage placed");
