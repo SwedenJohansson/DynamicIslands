@@ -233,6 +233,22 @@ namespace DynamicIslands.Editor
 		/// Instantiates the island's objects under parent. Positions in the file are relative to the terrain origin,
 		/// so parent should sit at the terrain origin. Returns the number of objects that could not be found.
 		/// </summary>
+		/// <summary>
+		/// A foundation of Raft's in a world: the deck a player walks on. On the player's raft Raft adds one for each foundation
+		/// (its raft collider, 0.22 m above the block); a copy on a custom island has only the block's own collider, which
+		/// players fall through - so a ghost raft or a wreck had no floor. This is the same deck, solid like the island's land.
+		/// </summary>
+		static void AddDeck(GameObject foundation)
+		{
+			var deck = new GameObject("CustomIslands_Deck");
+			deck.layer = TerrainLayer;
+			deck.transform.SetParent(foundation.transform, false);
+			BoxCollider box = deck.AddComponent<BoxCollider>();
+			Vector3 s = foundation.transform.lossyScale;
+			box.size = new Vector3(PlacementOptions.GridSize / Mathf.Max(0.01f, Mathf.Abs(s.x)), 0.3f / Mathf.Max(0.01f, Mathf.Abs(s.y)), PlacementOptions.GridSize / Mathf.Max(0.01f, Mathf.Abs(s.z)));
+			box.center = new Vector3(0f, (PlacementOptions.FoundationTop - 0.15f) / Mathf.Max(0.01f, Mathf.Abs(s.y)), 0f);
+		}
+
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
 			int missing = 0, creature = 0, loot = 0, zone = 0;
@@ -289,6 +305,7 @@ namespace DynamicIslands.Editor
 				// Balboa's caves: one made before its piece was loaded was saved at scale 1; the copy has Raft's scale)
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
 				foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
+				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
 
 				if (editable)
 					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>());

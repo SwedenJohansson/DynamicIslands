@@ -330,6 +330,43 @@ namespace DynamicIslands
 
 		#endregion
 
+		[ConsoleCommand(name: "CIDeckProbe", docs: "Dev, in game: what a player would stand on across a custom island without land (a raft of blocks): rays down on a grid around its middle - what they hit and how high above the sea: CIDeckProbe <island>")]
+		public static void DeckProbeCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			float sea = 0f;
+			var seen = new List<string>();
+			for (float dx = -9f; dx <= 9f; dx += 3f)
+				for (float dz = -9f; dz <= 9f; dz += 3f)
+				{
+					Vector3 from = new Vector3(e.Position.x + dx, 30f, e.Position.z + dz);
+					RaycastHit hit;
+					if (Physics.Raycast(from, Vector3.down, out hit, 60f, ~0, QueryTriggerInteraction.Ignore))
+						seen.Add(dx.ToString("F0") + "," + dz.ToString("F0") + ": " + hit.collider.name + " (layer " + LayerMask.LayerToName(hit.collider.gameObject.layer) + ") at " + (hit.point.y - sea).ToString("F2") + " m");
+					else seen.Add(dx.ToString("F0") + "," + dz.ToString("F0") + ": nothing");
+				}
+			foreach (string s in seen) Log("DECK " + s);
+			Log("PASS: deck probe");
+		}
+
+		[ConsoleCommand(name: "CIRaftDeckProbe", docs: "Dev, in game: Raft's own raft - for a few foundations: the block's height, the top of what a player stands on above it (Raft's raft collider), and the block's own colliders (their bounds) - to give the mod's rafts of blocks the same floor")]
+		public static void RaftDeckProbeCommand()
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null) { Fail("raft deck probe: no raft"); return; }
+			foreach (Block b in raft.GetComponentsInChildren<Block>().Where(x => x.name.Contains("Foundation") || x.name.Contains("Floor")).Take(6))
+			{
+				Vector3 p = b.transform.position;
+				RaycastHit hit;
+				string top = Physics.Raycast(p + Vector3.up * 5f + new Vector3(0.3f, 0f, 0.3f), Vector3.down, out hit, 10f, ~0, QueryTriggerInteraction.Ignore)
+					? hit.collider.name + " (" + LayerMask.LayerToName(hit.collider.gameObject.layer) + ") top " + (hit.point.y - p.y).ToString("F3") + " m above the block" : "nothing";
+				string own = string.Join("; ", b.GetComponentsInChildren<Collider>(true).Select(c => c.name + "/" + LayerMask.LayerToName(c.gameObject.layer) + (c.isTrigger ? "/trigger" : "") + " y " + (c.bounds.min.y - p.y).ToString("F2") + ".." + (c.bounds.max.y - p.y).ToString("F2") + " size " + c.bounds.size.x.ToString("F2") + "x" + c.bounds.size.z.ToString("F2") + (c.enabled ? "" : " off")).ToArray());
+				Log("RAFTDECK " + b.name + " at y " + p.y.ToString("F2") + " (sea 0): stands on " + top + " | its colliders: " + own);
+			}
+			Log("PASS: raft deck probe");
+		}
+
 		#region Story order
 
 		[ConsoleCommand(name: "CIStoryOrderWorld", docs: "Dev, world (host): the story order in a world - with the option on, Raft unlocking the first frequency (the Receiver's note) unlocks the order's first island, the next note its second, and so on; the notebook's list rebuilt from the notes found when the option changes (off: Raft's islands again, on: the order's); the frequency numbers on notes follow. What the world had unlocked is put back after")]
@@ -387,8 +424,8 @@ namespace DynamicIslands
 					Check(ref ok, raftOwn.SequenceEqual(found.Select(kv => kv.Value).OrderBy(t => t)), "the option off: Raft's own islands for the same notes (" + string.Join(", ", raftOwn.Select(StoryOrder.Name).ToArray()) + ")");
 					WorldOptions.Set(on);
 					string text = StoryOrder.FrequencyText(StoryOrder.Chain[1]);
-					RecieverFrequency own = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.FirstOrDefault(x => x != null && x.chunkPointType == order[1]) : null;
-					Check(ref ok, text != null && own != null && text == own.ToString(), "the number written for Raft's second island is the order's second island's frequency (" + text + ")");
+					RecieverFrequency own = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.FirstOrDefault(x => x != null && x.chunkPointType == StoryOrder.Map(StoryOrder.Chain[1])) : null;
+					Check(ref ok, text != null && own != null && text == own.ToString(), "the number on Radio Tower's note (Raft's way to Vasagatan) is the frequency of the island after Radio Tower in this order, " + StoryOrder.Name(StoryOrder.Map(StoryOrder.Chain[1])) + " (" + text + ")");
 				}
 				finally
 				{

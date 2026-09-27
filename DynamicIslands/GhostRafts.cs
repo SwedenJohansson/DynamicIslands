@@ -105,7 +105,8 @@ namespace DynamicIslands.Editor
 			var rnd = new System.Random(s.Seed);
 			int size = SizeOf(s.Seed);
 			float g = PlacementOptions.GridSize, sea = k.Sea;
-			float floatY = sea - PlacementOptions.FloatDepth, deck = floatY + 0.35f;
+			// (afloat like the player's raft: a deck a player stands on, 0.35 m above the sea)
+			float floatY = sea + PlacementOptions.FoundationFloat, deck = floatY + PlacementOptions.FoundationTop;
 			int w = size == Large ? 8 + rnd.Next(3) : size == Medium ? 5 + rnd.Next(2) : 3 + rnd.Next(2);
 			int d = size == Large ? 6 + rnd.Next(3) : size == Medium ? 4 + rnd.Next(2) : 2 + rnd.Next(2);
 			// the raft's middle in the build area

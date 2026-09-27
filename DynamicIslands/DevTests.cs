@@ -339,7 +339,7 @@ namespace DynamicIslands
 			for (int x = 0; x < 4; x++)
 				for (int z = 0; z < 3; z++)
 					put("Block_Foundation", PlacementOptions.FloatIfBlock("Block_Foundation", origin + new Vector3(x * g, 0, z * g)), 0);
-			float deck = sea - PlacementOptions.FloatDepth + 0.35f; // roughly the foundation top
+			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationTop; // the deck of the foundations, as on the player's raft
 			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, -g / 2), 0);
 			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, -g / 2), 0);
 			put("Block_Wall_Thatch", origin + new Vector3(0, deck, -g / 2), 0);
@@ -349,7 +349,7 @@ namespace DynamicIslands
 			Transform cam = Camera.main.transform;
 			cam.position = origin + new Vector3(-8f, sea + 8f, -12f);
 			cam.LookAt(origin + new Vector3(g * 1.5f, sea, g));
-			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea - PlacementOptions.FloatDepth)) < 0.01f);
+			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea + PlacementOptions.FoundationFloat)) < 0.01f);
 			Log((floating && spawned.Count == 17 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
 		}
 
