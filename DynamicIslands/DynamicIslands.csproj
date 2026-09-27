@@ -73,6 +73,7 @@
     <Compile Include="DevTestsLand.cs" />
     <Compile Include="DevTestsRandomizer.cs" />
     <Compile Include="DevTestsRelease.cs" />
+    <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />

@@ -43,10 +43,11 @@ namespace DynamicIslands.Editor
 			if (read && !force) return;
 			read = true;
 			OnIslands.Clear();
-			string path = Path.Combine(DynamicIslands.assetpath, FileName);
-			if (!File.Exists(path)) { Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] " + FileName + " is missing: blueprints aren't scrambled"); return; }
-			foreach (string line in File.ReadAllLines(path))
+			byte[] bytes = RaftIslands.ModFile(FileName); // (Mods\DynamicIslands first, then the one shipped with the mod)
+			if (bytes == null || bytes.Length == 0) { Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] " + FileName + " is missing: blueprints aren't scrambled"); return; }
+			foreach (string raw in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
 			{
+				string line = raw.TrimEnd('\r');
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				string[] p = line.Split('|');
 				if (p.Length < 2) continue;

@@ -49,6 +49,13 @@ namespace DynamicIslands
 			lines.Add("story " + Fnv(story != null ? story.Data : "").ToString("X8"));
 			// The level up system: on or off for the world, and each player here with their level and Health points as
 			// this machine knows them (the host from the records, a player from the host's list)
+			// The world's options (WorldSettingsWindow): what is on, the seed, and what follows from it on this machine - the
+			// story order, the blueprints' pairs, the story islands unlocked, and the private storages' builders
+			lines.Add("options " + WorldOptions.Encode(WorldOptions.Current, WorldOptions.Seed));
+			lines.Add("storyorder " + StoryOrder.Describe(StoryOrder.Order));
+			lines.Add("blueprints " + (ScrambledBlueprints.Active ? string.Join(",", ScrambledBlueprints.Movable.Select(b => b.Replace("Blueprint_", "") + ">" + ScrambledBlueprints.Map(b).Replace("Blueprint_", "")).ToArray()) : "Raft's own"));
+			try { lines.Add("unlocked " + string.Join(",", (NoteBook.unlockedChunkPointType ?? new List<ChunkPointType>()).Where(t => Array.IndexOf(StoryOrder.Chain, t) >= 0).Select(StoryOrder.Name).OrderBy(x => x).ToArray())); } catch { }
+			lines.Add("storages " + PrivateStorage.Encode());
 			lines.Add("levels " + (PlayerLevels.On ? "on" : "off"));
 			if (PlayerLevels.On)
 			{

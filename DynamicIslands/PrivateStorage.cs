@@ -69,7 +69,7 @@ namespace DynamicIslands.Editor
 
 		internal static bool HasState { get { return builders.Count > 0; } }
 
-		internal static string Encode()
+		public static string Encode()
 		{
 			return string.Join(";", builders.Select(kv => kv.Key.ToString(CultureInfo.InvariantCulture) + ":" + kv.Value.ToString(CultureInfo.InvariantCulture)).ToArray());
 		}
