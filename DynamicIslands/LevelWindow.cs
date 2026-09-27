@@ -28,10 +28,9 @@ namespace DynamicIslands.Editor
 		float bannerShownAt = -100f, bannerSeconds = AnnounceSeconds;
 
 		// The level bar under Raft's stat bars (in Raft's own HUD, so it hides with it)
-		RectTransform hud, hudFill;
+		RectTransform hud;
 		Text hudLevel, hudXp;
 		Button hudStats;
-		Image hudTrack;
 		CanvasHelper hudOf;
 		float nextPlace, pulseAt = -100f;
 
@@ -142,8 +141,10 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Builds the level bar in Raft's HUD, next to its stat bars (CanvasHelper.StatSliderParent: health, thirst and
-		/// hunger): as wide as they are, just below them (above them if that would leave the screen).
+		/// Puts the level bar into Raft's HUD with its stat bars (CanvasHelper.StatSliderParent: thirst, hunger, health):
+		/// a copy of Raft's own hunger bar (its badge, frame, groove and shadow), with a star for its icon, a gold fill
+		/// and the level and EXP written in it, one row above Raft's top bar. If Raft's bars ever look different
+		/// inside, a plain bar of the mod's own is used instead.
 		/// </summary>
 		void PlaceHud()
 		{
@@ -153,15 +154,212 @@ namespace DynamicIslands.Editor
 			if (helper == null || helper.StatSliderParent == null) return;
 			RectTransform parent = helper.StatSliderParent.transform as RectTransform;
 			if (parent == null) return;
+			// Raft's bars, top first
+			var sliders = new[] { helper.healthSlider, helper.thirstSlider, helper.hungerSlider }.Where(s => s != null)
+				.Select(s => (RectTransform)s.transform).Where(r => r.parent == parent).OrderByDescending(r => r.localPosition.y).ToList();
+			if (sliders.Count == 0) return;
 			if (hud == null || hudOf != helper)
 			{
 				if (hud != null) Destroy(hud.gameObject);
 				hudOf = helper;
-				BuildHud(parent);
+				hudLevel = hudXp = null;
+				if (!BuildFromRaft(helper.hungerSlider ?? helper.thirstSlider, parent)) BuildOwn(parent);
+				RefreshBar();
 			}
-			// Where Raft's bars are, in the parent's space
-			var sliders = new[] { helper.healthSlider, helper.thirstSlider, helper.hungerSlider }.Where(s => s != null).Select(s => (RectTransform)s.transform).ToList();
-			if (sliders.Count == 0) return;
+			if (fromRaft)
+			{
+				// One row above the top bar: as far above it as the bar under it is below it
+				RectTransform top = sliders[0];
+				Vector3 step = sliders.Count > 1 ? top.localPosition - sliders[1].localPosition : new Vector3(0f, top.rect.height * 1.25f, 0f);
+				hud.localPosition = top.localPosition + step;
+				hud.SetAsLastSibling();
+				BarPlace = "above Raft's " + sliders.Count + " stat bars, Raft's own bar (" + BarStyle + ")";
+				return;
+			}
+			PlaceOwn(parent, sliders);
+		}
+
+		/// <summary>How the bar is made: "a copy of Raft's HungerBar" or "the mod's own" (tests).</summary>
+		public static string BarStyle { get; private set; }
+		/// <summary>The bar's icon (tests: the star).</summary>
+		public static Sprite BarIcon { get { return instance != null && instance.hudIcon != null ? instance.hudIcon.sprite : null; } }
+
+		bool fromRaft;
+		Slider hudSlider;
+		Image hudGlow, hudIcon, hudTrack;
+		static readonly Color XpFill = new Color(0.87f, 0.68f, 0.24f, 1f); // warm gold, beside Raft's tan and red
+		static readonly Color BarInk = new Color(1f, 0.95f, 0.84f, 1f), BarTextEdge = new Color(0.23f, 0.13f, 0.07f, 0.9f);
+
+		/// <summary>A copy of one of Raft's stat bars made into the level bar; false if its parts aren't what they were.</summary>
+		bool BuildFromRaft(UISlider_Stat source, RectTransform parent)
+		{
+			if (source == null) return false;
+			GameObject holder = null;
+			GameObject clone = null;
+			try
+			{
+				// (copied under a switched-off holder, so none of Raft's scripts on it wake up)
+				holder = new GameObject("CustomIslands_LevelBarHolder");
+				holder.SetActive(false);
+				clone = Instantiate(source.gameObject, holder.transform, false);
+				clone.name = "CustomIslands_LevelBar";
+				// The value slider: the one Raft's UISlider_Stat moves (sliderTransform), found by its path in the copy
+				string valuePath = source.sliderTransform != null ? PathFrom(source.transform, source.sliderTransform) : null;
+				Transform valueT = valuePath != null ? clone.transform.Find(valuePath) : null;
+				Slider value = valueT != null ? valueT.GetComponentInParent<Slider>() ?? valueT.GetComponentInChildren<Slider>(true) : null;
+				Transform icon = clone.transform.Find("StatIconBG/Image");
+				if (value == null || icon == null || icon.GetComponent<Image>() == null) { Destroy(holder); return false; }
+				foreach (UISlider_Stat s in clone.GetComponentsInChildren<UISlider_Stat>(true)) DestroyImmediate(s);
+				foreach (Animator a in clone.GetComponentsInChildren<Animator>(true)) DestroyImmediate(a);
+				// Only the bar's own parts stay: not the target slider (the preview of what food gives), bonus bars, dividers
+				// (listed first: a slider can hold another one, gone with it)
+				foreach (GameObject extra in clone.GetComponentsInChildren<Slider>(true).Where(s => s != value && s.transform.parent == clone.transform).Select(s => s.gameObject).ToList())
+					if (extra != null) DestroyImmediate(extra);
+				foreach (Transform t in clone.GetComponentsInChildren<Transform>(true).Where(t => t != null && (t.name.Contains("Bonus") || t.name.StartsWith("Divider"))).ToList())
+					if (t != null) DestroyImmediate(t.gameObject);
+				value.interactable = false;
+				value.transition = Selectable.Transition.None;
+				value.minValue = 0f; value.maxValue = 1f; value.wholeNumbers = false;
+				Image fill = value.fillRect != null ? value.fillRect.GetComponent<Image>() : null;
+				if (fill != null) fill.color = XpFill;
+				hudSlider = value;
+				hudIcon = icon.GetComponent<Image>();
+				hudIcon.sprite = StarIcon();
+				hudIcon.preserveAspect = true;
+				Transform glow = clone.transform.Find("BlinkImage");
+				hudGlow = glow != null ? glow.GetComponent<Image>() : null;
+				if (hudGlow != null) hudGlow.color = new Color(1f, 0.85f, 0.4f, 0f);
+
+				// The level and EXP, written in the bar (over its groove, the fill's area)
+				RectTransform area = (RectTransform)(value.fillRect != null && value.fillRect.parent != null ? value.fillRect.parent : value.transform);
+				hudLevel = BarLabel(area, "Level", TextAnchor.MiddleLeft, 0.8f);
+				hudXp = BarLabel(area, "Xp", TextAnchor.MiddleRight, 0.68f);
+				// While Raft's inventory is open (the mouse is free): a button for the stats page, right of the bar
+				RectTransform barRect = (RectTransform)clone.transform;
+				hudStats = UIKit.Button(barRect, "Stats", LevelWindow.OpenFromGame, "Your level and stat points (" + PlayerLevels.Key + ")", 64, 22f, 12);
+				RectTransform sb = (RectTransform)hudStats.transform;
+				UIKit.Ensure<LayoutElement>(sb.gameObject).ignoreLayout = true;
+				float h = area.rect.height > 1f ? area.rect.height : barRect.rect.height * 0.5f;
+				sb.anchorMin = sb.anchorMax = new Vector2(1f, 0.5f); sb.pivot = new Vector2(0f, 0.5f);
+				sb.sizeDelta = new Vector2(h * 3.4f, h * 1.25f);
+				sb.anchoredPosition = new Vector2(h * 0.4f, 0f);
+				Text st = UIKit.LabelOf(hudStats);
+				if (st != null) { st.resizeTextMaxSize = Mathf.Max(8, Mathf.RoundToInt(h * 0.8f)); st.fontSize = st.resizeTextMaxSize; }
+				hudStats.gameObject.SetActive(false);
+				foreach (Graphic g in clone.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = g.transform.IsChildOf(hudStats.transform);
+
+				// Into Raft's HUD, beside its bars (a layout group there must leave it alone)
+				clone.transform.SetParent(parent, false);
+				UIKit.Ensure<LayoutElement>(clone).ignoreLayout = true;
+				Destroy(holder);
+				hud = barRect;
+				fromRaft = true;
+				BarStyle = "a copy of Raft's " + source.name;
+				return true;
+			}
+			catch (System.Exception e)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] Levels: Raft's stat bar could not be copied; using the mod's own bar: " + e);
+				if (clone != null) Destroy(clone);
+				if (holder != null) Destroy(holder);
+				hudSlider = null; hudIcon = null; hudGlow = null; hudStats = null;
+				return false;
+			}
+		}
+
+		/// <summary>Text in the level bar: Raft's lettering, light with a dark edge, readable on the fill and on the empty groove.</summary>
+		Text BarLabel(RectTransform area, string name, TextAnchor anchor, float size)
+		{
+			Text t = UIKit.Label(area, "", 12, BarInk, anchor, FontStyle.Normal, name);
+			t.font = UIKit.TitleFont;
+			t.horizontalOverflow = HorizontalWrapMode.Overflow;
+			t.verticalOverflow = VerticalWrapMode.Overflow;
+			UIKit.Ensure<LayoutElement>(t.gameObject).ignoreLayout = true;
+			Span(t.rectTransform, 0f, 1f, 0f, 1f);
+			float pad = Mathf.Max(2f, area.rect.height * 0.35f);
+			t.rectTransform.offsetMin = new Vector2(pad, 0f); t.rectTransform.offsetMax = new Vector2(-pad, 0f);
+			t.fontSize = Mathf.Max(8, Mathf.RoundToInt(Mathf.Max(10f, area.rect.height) * size));
+			foreach (Shadow s in t.GetComponents<Shadow>()) DestroyImmediate(s);
+			Outline o = t.gameObject.AddComponent<Outline>();
+			o.effectColor = BarTextEdge;
+			o.effectDistance = new Vector2(1.2f, -1.2f);
+			t.raycastTarget = false;
+			return t;
+		}
+
+		static string PathFrom(Transform root, Transform t)
+		{
+			var names = new List<string>();
+			for (Transform x = t; x != null && x != root; x = x.parent) names.Insert(0, x.name);
+			return string.Join("/", names.ToArray());
+		}
+
+		static Sprite starIcon;
+
+		/// <summary>
+		/// The level bar's icon, drawn like Raft's stat icons (StatIcon_Health / _Hunger / _Thirst: 71 x 68, a dark
+		/// reddish-brown silhouette, lighter at the top, a little highlight): a five-pointed star with rounded points.
+		/// </summary>
+		public static Sprite StarIcon()
+		{
+			if (starIcon != null) return starIcon;
+			const int W = 71, H = 68;
+			var tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+			tex.wrapMode = TextureWrapMode.Clamp;
+			tex.filterMode = FilterMode.Bilinear;
+			tex.name = "CustomIslands_StatIcon_Level";
+			// The star: outer points at radius R, inner corners at 0.48 R, points rounded by `round`
+			Vector2 c = new Vector2(W / 2f, H / 2f - 3f);
+			const float R = 34.5f, round = 3.5f;
+			var pts = new Vector2[10];
+			for (int i = 0; i < 10; i++)
+			{
+				float a = Mathf.PI / 2f + i * Mathf.PI / 5f;
+				float r = (i % 2 == 0 ? R : R * 0.48f) - round;
+				pts[i] = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
+			}
+			Color top = new Color(0.36f, 0.16f, 0.07f), bottom = new Color(0.26f, 0.13f, 0.05f);
+			// (Raft's drop has little highlights cut out of it: two on the star's upper left)
+			Vector2 spot1 = c + new Vector2(-7.5f, 9.5f), spot2 = c + new Vector2(-10f, 3f);
+			var px = new Color[W * H];
+			for (int y = 0; y < H; y++)
+				for (int x = 0; x < W; x++)
+				{
+					Vector2 p = new Vector2(x + 0.5f, y + 0.5f);
+					float d = PolygonDistance(p, pts) - round;
+					float alpha = Mathf.Clamp01(0.5f - d);
+					float hole = Mathf.Max(Mathf.Clamp01(3.1f - Vector2.Distance(p, spot1) + 0.5f), Mathf.Clamp01(1.7f - Vector2.Distance(p, spot2) + 0.5f));
+					alpha *= 1f - hole * 0.85f;
+					Color col = Color.Lerp(bottom, top, (float)y / (H - 1));
+					col.a = alpha;
+					px[y * W + x] = col;
+				}
+			tex.SetPixels(px);
+			tex.Apply(false, true);
+			starIcon = Sprite.Create(tex, new Rect(0, 0, W, H), new Vector2(0.5f, 0.5f), 100f);
+			starIcon.name = "CustomIslands_StatIcon_Level";
+			return starIcon;
+		}
+
+		/// <summary>Signed distance from a point to a closed polygon (negative inside).</summary>
+		static float PolygonDistance(Vector2 p, Vector2[] poly)
+		{
+			float best = float.MaxValue;
+			bool inside = false;
+			for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
+			{
+				Vector2 a = poly[j], b = poly[i], ab = b - a;
+				float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+				best = Mathf.Min(best, (p - (a + ab * t)).sqrMagnitude);
+				if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+			}
+			float dist = Mathf.Sqrt(best);
+			return inside ? -dist : dist;
+		}
+
+		/// <summary>The mod's own plain bar, if Raft's can't be copied: placed under (or above) Raft's bars.</summary>
+		void PlaceOwn(RectTransform parent, List<RectTransform> sliders)
+		{
 			float xMin = float.MaxValue, xMax = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue, rowH = 0f;
 			var corners = new Vector3[4];
 			foreach (RectTransform r in sliders)
@@ -172,30 +370,28 @@ namespace DynamicIslands.Editor
 				yMin = Mathf.Min(yMin, a.y, b.y); yMax = Mathf.Max(yMax, a.y, b.y);
 				rowH = Mathf.Max(rowH, Mathf.Abs(b.y - a.y));
 			}
-			// (as tall as one of Raft's bars, a little less; the text follows)
 			float h = Mathf.Max(8f, rowH * 0.8f), gap = Mathf.Max(2f, rowH * 0.25f);
-			SizeHud(h);
+			SizeOwn(h);
 			hud.anchorMin = hud.anchorMax = parent.pivot;
 			hud.pivot = new Vector2(0f, 1f);
 			hud.sizeDelta = new Vector2(xMax - xMin, h);
-			// (local space is around the parent's pivot: the anchor sits there)
 			hud.anchoredPosition = new Vector2(xMin, yMin - gap);
-			// Below the bars, unless that is off the screen: then above them
 			hud.GetWorldCorners(corners);
 			Canvas c = parent.GetComponentInParent<Canvas>();
 			Camera cam = c != null && c.renderMode != RenderMode.ScreenSpaceOverlay ? c.worldCamera : null;
-			float bottom = RectTransformUtility.WorldToScreenPoint(cam, corners[0]).y;
-			bool above = bottom < 2f;
+			bool above = RectTransformUtility.WorldToScreenPoint(cam, corners[0]).y < 2f;
 			if (above) { hud.pivot = new Vector2(0f, 0f); hud.anchoredPosition = new Vector2(xMin, yMax + gap); }
 			hud.SetAsLastSibling();
-			BarPlace = (above ? "above" : "below") + " Raft's " + sliders.Count + " stat bars, " + (xMax - xMin).ToString("F0") + " wide";
+			BarPlace = (above ? "above" : "below") + " Raft's " + sliders.Count + " stat bars, the mod's own bar, " + (xMax - xMin).ToString("F0") + " wide";
 		}
 
-		void BuildHud(RectTransform parent)
+		RectTransform ownFill;
+
+		void BuildOwn(RectTransform parent)
 		{
+			fromRaft = false;
+			BarStyle = "the mod's own";
 			hud = UIKit.Rect("CustomIslands_LevelBar", parent);
-			// (placed by hand next to Raft's bars: a layout group on their parent must leave it alone; its parts are placed
-			// by anchors in fractions of it, so they follow Raft's HUD scale)
 			UIKit.Ensure<LayoutElement>(hud.gameObject).ignoreLayout = true;
 			hudLevel = UIKit.Label(hud, "LV 1", 14, Gold, TextAnchor.MiddleLeft, FontStyle.Bold, "Level");
 			hudLevel.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -203,20 +399,18 @@ namespace DynamicIslands.Editor
 			RectTransform track = UIKit.Rect("Track", hud);
 			Span(track, 0.2f, 0.72f, 0.3f, 0.7f);
 			hudTrack = UIKit.Background(track.gameObject, new Color(0.1f, 0.06f, 0.02f, 0.75f), 4);
-			hudFill = UIKit.Rect("Fill", track);
-			hudFill.anchorMin = Vector2.zero; hudFill.anchorMax = new Vector2(0f, 1f);
-			hudFill.offsetMin = Vector2.zero; hudFill.offsetMax = Vector2.zero;
-			UIKit.Background(hudFill.gameObject, Gold, 4);
+			ownFill = UIKit.Rect("Fill", track);
+			ownFill.anchorMin = Vector2.zero; ownFill.anchorMax = new Vector2(0f, 1f);
+			ownFill.offsetMin = Vector2.zero; ownFill.offsetMax = Vector2.zero;
+			UIKit.Background(ownFill.gameObject, Gold, 4);
 			hudXp = UIKit.Label(hud, "", 11, new Color(1f, 0.95f, 0.85f, 0.9f), TextAnchor.MiddleRight, FontStyle.Normal, "Xp");
 			hudXp.horizontalOverflow = HorizontalWrapMode.Overflow;
 			Span(hudXp.rectTransform, 0.74f, 1f, 0f, 1f);
-			// While Raft's inventory is open (the mouse is free): a button for the stats page, right of the bar
 			hudStats = UIKit.Button(hud, "Stats", LevelWindow.OpenFromGame, "Your level and stat points (" + PlayerLevels.Key + ")", 64, 22f, 12);
 			RectTransform sb = (RectTransform)hudStats.transform;
 			sb.anchorMin = new Vector2(1f, 0f); sb.anchorMax = new Vector2(1f, 1f); sb.pivot = new Vector2(0f, 0.5f);
 			hudStats.gameObject.SetActive(false);
 			foreach (Graphic g in hud.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = g.transform.IsChildOf(hudStats.transform);
-			RefreshBar();
 		}
 
 		static void Span(RectTransform r, float x0, float x1, float y0, float y1)
@@ -225,8 +419,7 @@ namespace DynamicIslands.Editor
 			r.offsetMin = Vector2.zero; r.offsetMax = Vector2.zero;
 		}
 
-		/// <summary>Text and button sizes that follow the bar's height (Raft's HUD scale).</summary>
-		void SizeHud(float h)
+		void SizeOwn(float h)
 		{
 			hudLevel.fontSize = Mathf.Max(8, Mathf.RoundToInt(h * 0.62f));
 			hudXp.fontSize = Mathf.Max(7, Mathf.RoundToInt(h * 0.5f));
@@ -239,13 +432,15 @@ namespace DynamicIslands.Editor
 
 		void RefreshBar()
 		{
-			if (hud == null) return;
+			if (hud == null || hudLevel == null) return;
 			LevelRecord r = PlayerLevels.Mine;
 			if (r == null) return;
 			int level = r.Level, start = LevelRules.TotalFor(level), need = LevelRules.XpFor(level);
-			hudLevel.text = "LV " + level + (r.Unspent > 0 ? "<color=#ffffff>+</color>" : "");
+			float part = Mathf.Clamp01((r.Xp - start) / (float)need);
+			hudLevel.text = "LV " + level + (r.Unspent > 0 ? " +" : "");
 			hudXp.text = (r.Xp - start) + " / " + need;
-			hudFill.anchorMax = new Vector2(Mathf.Clamp01((r.Xp - start) / (float)need), 1f);
+			if (hudSlider != null) hudSlider.normalizedValue = part;
+			if (ownFill != null) ownFill.anchorMax = new Vector2(part, 1f);
 		}
 
 		void Place(Floater f)
@@ -284,9 +479,11 @@ namespace DynamicIslands.Editor
 			if (hud == null) return;
 			if (!hud.gameObject.activeSelf) { hud.gameObject.SetActive(true); RefreshBar(); }
 			float p = Mathf.Clamp01(1f - (Time.unscaledTime - pulseAt) / PulseSeconds);
-			hudTrack.color = Color.Lerp(new Color(0.1f, 0.06f, 0.02f, 0.75f), new Color(0.55f, 0.42f, 0.12f, 0.9f), p);
+			// (Raft's own glow behind the bar, as Raft blinks a stat bar; the mod's own bar lights its groove)
+			if (hudGlow != null) hudGlow.color = new Color(1f, 0.85f, 0.4f, 0.9f * p);
+			if (hudTrack != null) hudTrack.color = Color.Lerp(new Color(0.1f, 0.06f, 0.02f, 0.75f), new Color(0.55f, 0.42f, 0.12f, 0.9f), p);
 			bool menu = CanvasHelper.ActiveMenu == MenuType.Inventory;
-			if (hudStats.gameObject.activeSelf != menu) hudStats.gameObject.SetActive(menu);
+			if (hudStats != null && hudStats.gameObject.activeSelf != menu) hudStats.gameObject.SetActive(menu);
 		}
 	}
 

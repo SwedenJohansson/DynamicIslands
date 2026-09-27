@@ -251,7 +251,7 @@ An island made with **Level up system: On** (Island tab, Rules; or the generator
   | Oxygen | Breath runs out 1% slower, so you last longer under water |
 
 - **On the screen:**
-  - **The level bar** sits just under Raft's own health, thirst and hunger bars (above them if that would be off the screen), as wide as they are: the level (a white **+** when points are waiting), a thin gold bar and the EXP to the next level. It is part of Raft's HUD, so it hides with it.
+  - **The EXP bar** is styled exactly like Raft's own stat bars and sits one row above them (thirst, hunger, health): it is a copy of Raft's hunger bar with a **star icon** (drawn like Raft's stat icons) on its badge, a gold fill, the level on the left (a **+** when points are waiting) and the EXP to the next level on the right. It glows (Raft's own blink glow) when EXP comes in. It is part of Raft's HUD, so it hides with it. (Should a Raft update change its bars, a plain bar of the mod's own is used instead.)
   - **The stats page** opens with **K**, with the **Stats** button that shows next to the level bar while Raft's inventory (Tab) is open, or by clicking the level up box. Esc or K closes it.
   - **The level up box** ("LEVEL 3! +2 stat points") stays for about 12 seconds. Click it while the mouse is free (in a menu) to open the stats page.
   - **Other players' levels:** a small gold **Lv 5** under the name Raft shows over each other player, nothing more. The host sends every player's level to everyone when it changes and when someone joins.

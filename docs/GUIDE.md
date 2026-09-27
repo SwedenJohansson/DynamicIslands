@@ -262,14 +262,16 @@ An island's own Hard or Boss animals are worth more than Raft's plain ones.
 ### Levelling up and spending points
 
 A box shows when you reach a new level. **Click it** (in a menu, where the mouse is free) or press **K** to spend
-your points. The level and its EXP bar sit just above Raft's own thirst, hunger and health bars. A white **+** after
-the level means points are waiting. While Raft's inventory (**Tab**) is open, a **Stats** button sits next to the bar.
+your points. The **EXP bar** is one more of Raft's own stat bars, above thirst, hunger and health: a gold star on
+its badge, a gold fill, the level on the left and the EXP to the next level on the right. It glows for a moment when you
+earn EXP. A **+** after the level means points are waiting. While Raft's inventory (**Tab**) is open, a **Stats**
+button sits next to the bar.
 
 ![The level up box](images/levels-levelup.jpg)
 *Level 2: two stat points to spend. The EXP bar is at the bottom left.*
 
 ![The level bar and the Stats button](images/levels-bar.jpg)
-*The level bar above Raft's bars, and the Stats button while the inventory is open.*
+*The EXP bar with its star, styled like Raft's thirst, hunger and health bars, and the Stats button while the inventory is open.*
 
 Every level gives **2 stat points**. Each point makes a stat **1% better**, and a stat takes at most 10 points (+10%):
 

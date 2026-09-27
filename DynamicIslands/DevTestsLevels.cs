@@ -294,6 +294,8 @@ namespace DynamicIslands
 			// The level bar next to Raft's health, thirst and hunger bars
 			Check(ref ok, LevelHud.BarShown && LevelHud.BarText != null && LevelHud.BarText.StartsWith("LV 2") && LevelHud.BarPlace != null && LevelHud.BarPlace.Contains("Raft's 3 stat bars"),
 				"the level bar sits by Raft's stat bars: \"" + LevelHud.BarText + "\", " + LevelHud.BarPlace);
+			Check(ref ok, LevelHud.BarStyle != null && LevelHud.BarStyle.StartsWith("a copy of Raft's") && LevelHud.BarIcon != null && LevelHud.BarIcon.name == "CustomIslands_StatIcon_Level",
+				"it is styled as Raft's own bars (" + LevelHud.BarStyle + "), with the level's star icon (" + (LevelHud.BarIcon != null ? LevelHud.BarIcon.name : "none") + ")");
 			// The level up box opens the stats page when clicked (the mouse is free in a menu)
 			Button box = LevelHud.BannerButton;
 			Check(ref ok, box != null && box.interactable, "the level up box can be clicked");
