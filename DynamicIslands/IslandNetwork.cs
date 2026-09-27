@@ -44,6 +44,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The level up system (PlayerLevels): host -> everyone "on"; host -> a joining player "state" (Data = their
 		/// record); a player -> host "mine" (Data = their record now).</summary>
 		public const int Levels = 14;
+		/// <summary>Host -> everyone (and each player who joins): the world's options (WorldOptions). Data = "on=a,b;seed=n",
+		/// Name = the private storages' builders (PrivateStorage).</summary>
+		public const int WorldOptions = 17;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -111,6 +114,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			worldReceived = true;
 			WorldRules.OnWorldReceived();
+			WorldOptions.OnWorldReceived();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
@@ -301,6 +305,7 @@ namespace DynamicIslands.Editor
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
 							SendToPlayer(StoryBook.StateMessage(), from);
 							SendToPlayer(WorldRandomizer.Message(), from);
+							SendToPlayer(WorldOptions.Message(), from);
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
@@ -348,6 +353,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
+						break;
+					case IslandNetMessage.WorldOptions:
+						WorldOptions.OnMessage(msg);
 						break;
 					case IslandNetMessage.Levels:
 						PlayerLevels.OnMessage(msg, from);

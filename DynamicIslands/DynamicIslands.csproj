@@ -93,6 +93,12 @@
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
     <Compile Include="WorldRandomizer.cs" />
+    <Compile Include="WorldOptions.cs" />
+    <Compile Include="GhostRafts.cs" />
+    <Compile Include="PrivateStorage.cs" />
+    <Compile Include="StoryOrder.cs" />
+    <Compile Include="ScrambledBlueprints.cs" />
+    <Compile Include="WorldSettingsWindow.cs" />
     <Compile Include="RandomizerContent.cs" />
     <Compile Include="RaftProps.cs" />
     <Compile Include="RandomizerIslands.cs" />

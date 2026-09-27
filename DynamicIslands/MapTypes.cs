@@ -281,6 +281,9 @@ namespace DynamicIslands.Editor
 				Settings = rnd => new IslandGenSettings { Seed = rnd.Next(1, 999999), Radius = 16f, Height = 2f },
 				Build = Wreck },
 
+			new MapType { Name = GhostRafts.TypeName, Label = "Ghost raft", Title = "Ghost raft", Description = "No land: an abandoned raft of Raft's blocks with loot and a note - small, medium, or large and guarded by rats and screechers (the world option Ghost rafts brings them while sailing)",
+				Settings = GhostRafts.Settings, Build = GhostRafts.Build },
+
 			// The world randomizer's islands (RandomizerContent): oddities and boss lairs
 			new MapType { Name = "oddity", Label = "Oddity island", Description = "A small island with something odd on it: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris or a hut",
 				Settings = OdditySettings, Content = (k, s) => { RandomizerContent.Oddity(k, s, null); RandomizerIslands.TreesToCut(k, s, true); } },

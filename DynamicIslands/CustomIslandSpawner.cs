@@ -114,6 +114,7 @@ namespace DynamicIslands.Editor
 			sailedSinceSpawn += sailed;
 			WorldDirector.Sailed += sailed;
 			WorldRandomizer.OnSailed(sailed, pos.Value); // (its own islands, also in worlds without random custom islands)
+			GhostRafts.OnSailed(sailed, pos.Value); // (the world option Ghost rafts)
 			if (!Enabled || ChancePerKm <= 0f) return;
 
 			// Chance of at least one island over this stretch, for a given chance per km
