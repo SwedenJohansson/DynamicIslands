@@ -1772,9 +1772,20 @@ namespace DynamicIslands
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
 			box.gameObject.SetActive(true);
 			box.Open();
+			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
+		}
+
+		/// <summary>
+		/// A moment after the box opens (as a player's click comes): straight after leaving a world Raft's game mode tabs
+		/// aren't set up in the same frame, and Create threw inside Raft (no world, IsInNewGame never set).
+		/// </summary>
+		static IEnumerator NewWorldCreate(NewGameBox box, string name)
+		{
+			yield return new WaitForSecondsRealtime(1f);
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); return; }
+			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); yield break; }
 			Log("Creating world '" + name + "'");
 			box.Button_CreateNewGame();
 		}

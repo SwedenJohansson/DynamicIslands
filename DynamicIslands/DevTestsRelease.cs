@@ -573,10 +573,10 @@ namespace DynamicIslands
 					RandomizerSettings d = WorldRandomizer.Defaults;
 					Check(ref ok, errors.Count == 0 && d != null && d.Level >= 0 && d.Level < RandomizerSettings.LevelNames.Length, "randomizer.txt '" + junk.Replace("\u0000", "\\0") + "': " + (d != null ? d.Describe() : "null"));
 				}
-				System.IO.File.WriteAllText(rules, "monsters=impossible\nbuildcost=-500\nbuildcost=abc\n=\nmonsters\n");
+				System.IO.File.WriteAllText(rules, "monsters=brutal\nbuildcost=-500\nbuildcost=abc\n=\nmonsters\n");
 				errors.Clear();
 				int m = MonsterDifficulty.Default, bc = BuildCost.Default;
-				Check(ref ok, errors.Count == 0 && m == MonsterDifficulty.Normal && bc >= 0 && bc <= 100, "world_rules.txt with nonsense: Normal monsters, build cost " + bc + " %");
+				Check(ref ok, errors.Count == 0 && m == MonsterDifficulty.Normal && bc >= 0 && bc <= 100, "world_rules.txt with nonsense: monsters " + MonsterDifficulty.Name(m) + ", build cost " + bc + " %" + (errors.Count > 0 ? " - error: " + errors[0] : ""));
 				System.IO.File.WriteAllText(rules, "buildcost=500\n");
 				Check(ref ok, BuildCost.Default <= 100, "world_rules.txt with 500 %: clamped to " + BuildCost.Default + " %");
 			}
@@ -588,7 +588,7 @@ namespace DynamicIslands
 			}
 			// A generator preset with nonsense and huge numbers
 			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
-			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= IslandGenSettings.MinHeight && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
+			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= 2f && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
 				"a preset with nonsense: clamped (radius " + s.Radius + ", height " + s.Height + ", style " + s.Style + ", trees used as " + s.Amount(s.Trees) + ")");
 			// A world plan with broken lines
 			string planPath = WorldPlan.PathFor("cibadplan");

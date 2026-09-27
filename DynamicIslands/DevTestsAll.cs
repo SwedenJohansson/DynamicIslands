@@ -486,8 +486,12 @@ namespace DynamicIslands
 				catch (Exception e) { failed.Add(name + ": can't read (" + e.Message + ")"); continue; }
 				if (a == null) { failed.Add(name + ": can't read"); continue; }
 				bool loaded = false;
+				// (an island with pieces of Raft's own islands loads their scenes first and only then itself: wait for it)
+				DynamicIslands.currentIslandName = "";
 				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { failed.Add(name + ": loading failed: " + e.Message); continue; }
 				if (!loaded) { failed.Add(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { failed.Add(name + ": still not loaded after 2 minutes"); continue; }
 				yield return null; yield return null;
 				DynamicIslands.SaveIsland(RoundTripName);
 				yield return null;
@@ -547,7 +551,9 @@ namespace DynamicIslands
 				if (m == null) return "object " + o.Name + " missing";
 				if ((m.Position - o.Position).magnitude > 0.02f) return "object " + o.Name + " moved by " + (m.Position - o.Position).magnitude.ToString("F3") + " m";
 				if (Quaternion.Angle(Quaternion.Euler(m.EulerRotation), Quaternion.Euler(o.EulerRotation)) > 0.5f) return "object " + o.Name + " turned";
-				if ((m.Scale - o.Scale).magnitude > 0.01f) return "object " + o.Name + " resized " + o.Scale + " -> " + m.Scale;
+				// (a scene piece saved at scale one is placed at its prototype's own size - Balboa's cave x3 - and the editor then saves that size: the same)
+				bool protoSize = o.Scale == Vector3.one && o.Props != null && o.Props.ContainsKey("set.piece");
+				if (!protoSize && (m.Scale - o.Scale).magnitude > 0.01f) return "object " + o.Name + " resized " + o.Scale + " -> " + m.Scale;
 				string od = CompareProps(o.Props, m.Props);
 				if (od != null) return "object " + o.Name + " settings: " + od;
 				left.Remove(m);
