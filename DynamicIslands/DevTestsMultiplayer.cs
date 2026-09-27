@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DynamicIslands.Editor;
@@ -217,6 +218,20 @@ namespace DynamicIslands
 			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
 		}
 
+
+		[ConsoleCommand(name: "CIChests", docs: "Dev, in game (either player): an island's chests as this machine has them, in CIOpenChest's order: CHEST <n> '<title>' opened|closed")]
+		public static void ChestsCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			LootCrate[] chests = e.Root.GetComponentsInChildren<LootCrate>(false).OrderBy(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null ? r.Index : 0; }).ToArray();
+			for (int i = 0; i < chests.Length; i++)
+			{
+				IslandObjectRef r = chests[i].GetComponentInParent<IslandObjectRef>();
+				Log("CHEST " + (i + 1) + " '" + (r != null ? ObjectProps.Get(r.Props, ObjectProps.NoteTitle) : "") + "' " + (chests[i].Looted ? "opened" : "closed"));
+			}
+			Log("PASS: chests");
+		}
 		[ConsoleCommand(name: "CIOpenChest", docs: "Dev, in game (either player): opens a chest as a player would: CIOpenChest <island> [n-th chest, from 1; default the first not yet opened]")]
 		public static void OpenChestCommand(string[] args)
 		{
@@ -232,10 +247,58 @@ namespace DynamicIslands
 				: chests.FirstOrDefault(c => titleOf(c).Equals(title, StringComparison.OrdinalIgnoreCase));
 			if (chest == null) { Fail("no such chest on '" + e.HostName + "' (" + chests.Length + " chests)"); return; }
 			PutPlayerNear(chest.transform);
+			DynamicIslands.instance.StartCoroutine(OpenChestRoutine(e, chest));
+		}
+
+		static IEnumerator OpenChestRoutine(IslandWorldState.Entry e, LootCrate chest)
+		{
+			chest.LastGiven = new List<string>();
 			List<string> got = chest.Open();
+			// (a client opens when the host says yes: Claims)
+			for (float t = 0; got.Count == 0 && !chest.Looted && t < 5f; t += 0.1f) { yield return new WaitForSeconds(0.1f); got = chest.LastGiven; }
+			if (got.Count == 0) got = chest.LastGiven;
 			NoteReader.Close();
-			Log("Opened chest: got " + (got.Count > 0 ? string.Join(", ", got.ToArray()) : "nothing") + (chest.Looted ? "" : " (still closed)"));
-			DynamicIslands.instance.StartCoroutine(AfterAction("Opened a chest on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
+			Log("Opened chest: got " + (got.Count > 0 ? string.Join(", ", got.ToArray()) : "nothing") + (chest.Looted ? "" : " (still closed)") + (Claims.LastAnswer != null ? " (claim " + Claims.LastAnswer + ")" : ""));
+			yield return AfterAction("Opened a chest on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")");
+		}
+
+		[ConsoleCommand(name: "CIManyPlayers", docs: "Dev, anywhere: what the host decides for many players at once (up to Raft's 8), without them: a chest or a fire-once zone goes to the first of seven players asking (Claims) and is held for them, then used; an event that happens once (arrive, read) runs its shared part once however many ask; story items given by an action are the crew's (the host's, once)")]
+		public static void ManyPlayersCommand() { DynamicIslands.instance.StartCoroutine(ManyPlayersRoutine()); }
+
+		static IEnumerator ManyPlayersRoutine()
+		{
+			bool ok = true;
+			// (an island of the test's own: nothing of a real world is touched)
+			var e = new IslandWorldState.Entry { Id = 990001, Name = "cimanyplayers", HostName = "cimanyplayers" };
+			int chest = ContentState.LootKeyBase + 3, zone = TriggerZone.KeyBase + 1;
+			ulong[] players = { 76561190000000001UL, 76561190000000002UL, 76561190000000003UL, 76561190000000004UL, 76561190000000005UL, 76561190000000006UL, 76561190000000007UL };
+			// Seven players ask for one chest in the same moment: the first gets it
+			int grants = players.Count(p => Claims.HostGrant(e, chest, p));
+			Check(ref ok, grants == 1, "7 players ask for one chest at once: " + grants + " granted (1 wanted)");
+			Check(ref ok, Claims.HostGrant(e, chest, players[0]), "the player who has it asks again (a second press): still theirs");
+			Check(ref ok, players.Skip(1).All(p => !Claims.HostGrant(e, chest, p)), "the others are still told no while it is held");
+			// Another chest and a zone are separate
+			Check(ref ok, Claims.HostGrant(e, chest + 1, players[4]) && Claims.HostGrant(e, zone, players[6]), "another chest and a zone go to other players at the same time");
+			// Used: nobody gets it again, not even the one who had it
+			e.State[chest] = new ObjectState { Active = false, Day = 1 };
+			Check(ref ok, players.All(p => !Claims.HostGrant(e, chest, p)), "once it is used: no one gets it");
+			// A hold that is never used (the player's checks failed: no key) ends, and someone else may try
+			Check(ref ok, !Claims.HostGrant(e, zone, players[2]), "the zone held for another player: no");
+			yield return new WaitForSecondsRealtime(6.5f);
+			Check(ref ok, Claims.HostGrant(e, zone, players[2]), "the hold ends after a few seconds when the zone was never set off: the next player gets it");
+
+			// Once-events: seven players arriving together - the shared part runs once; other events every time
+			int arrive = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, Behaviours.IslandIndex, "arrive"));
+			int read = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 12, "read"));
+			int readOther = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 13, "read"));
+			int use = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 12, "use"));
+			Check(ref ok, arrive == 1 && read == 1 && readOther == 1 && use == 7, "shared parts: arrive " + arrive + ", a note read " + read + ", another note " + readOther + " (1 each), use " + use + " (7: every time)");
+
+			// Story items from an action: the host's part (once for the crew); Raft's items go to each player
+			var story = new ObjAction { Verb = "give", Arg = StoryItems.Ref("cikey") + "*1;Plank*3" };
+			var plain = new ObjAction { Verb = "give", Arg = "Plank*3" };
+			Check(ref ok, Behaviours.GivesStory(story) && !Behaviours.GivesStory(plain), "a give with a story item is done by the host, once; one of Raft's items only is each player's");
+			if (ok) Log("PASS: many players"); else Fail("many players");
 		}
 
 		[ConsoleCommand(name: "CIReadNote", docs: "Dev, in game (either player): reads a note as a player would: CIReadNote <island> [part of its title]")]

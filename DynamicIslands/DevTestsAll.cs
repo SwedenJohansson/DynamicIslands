@@ -587,9 +587,9 @@ namespace DynamicIslands
 				if (e.Root != null) IslandObjectState.Capture(e);
 				string id = "island " + e.HostName + "@" + rel(e.Position);
 				add(id + " label", e.Label);
-				// (a client leaves out the host's own bookkeeping - creature spots 1xxxx, the director's 5xxxx: it gets
+				// (a client leaves out the host's own bookkeeping - creature spots 1xxxx, the director's 5xxxx, once-events' 8xxxx: it gets
 				// them only when joining, so they would show up as changes after joining again)
-				add(id + " state", string.Join(" ", e.State.Where(kv => Raft_Network.IsHost || !((kv.Key >= 0x10000 && kv.Key < 0x20000) || (kv.Key >= 0x50000 && kv.Key < 0x60000))).OrderBy(kv => kv.Key).Select(kv => kv.Key.ToString("X") + "=" + (kv.Value.Active ? 1 : 0) + "/" + kv.Value.Yield).ToArray()));
+				add(id + " state", string.Join(" ", e.State.Where(kv => Raft_Network.IsHost || !((kv.Key >= 0x10000 && kv.Key < 0x20000) || (kv.Key >= 0x50000 && kv.Key < 0x60000) || (kv.Key >= Behaviours.SharedOnceBase && kv.Key < Behaviours.SharedOnceBase + 0x10000))).OrderBy(kv => kv.Key).Select(kv => kv.Key.ToString("X") + "=" + (kv.Value.Active ? 1 : 0) + "/" + kv.Value.Yield).ToArray()));
 				IslandQuest q = QuestTracker.QuestOf(e);
 				if (q.Steps.Count > 0) add(id + " quest", QuestTracker.StepOf(e) + "/" + q.Steps.Count);
 			}

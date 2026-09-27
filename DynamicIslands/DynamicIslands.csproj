@@ -93,7 +93,10 @@
     <Compile Include="WorldDirector.cs" />
     <Compile Include="WorldRandomizer.cs" />
     <Compile Include="RandomizerContent.cs" />
+    <Compile Include="RaftProps.cs" />
+    <Compile Include="RandomizerIslands.cs" />
     <Compile Include="Behaviours.cs" />
+    <Compile Include="Claims.cs" />
     <Compile Include="BehaviourWindow.cs" />
     <Compile Include="MapTypes.cs" />
     <Compile Include="RaftIslands.cs" />

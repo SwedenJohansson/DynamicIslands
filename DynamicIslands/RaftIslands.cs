@@ -285,6 +285,22 @@ namespace DynamicIslands.Editor
 			return s;
 		}
 
+		/// <summary>
+		/// The land object sliders at the average density of Raft's own plain islands: its "Small island n"s, or its big ones.
+		/// False (nothing changed) when raft_islands.txt has none.
+		/// </summary>
+		public static bool DensitiesLikeRaft(IslandGenSettings s, bool small)
+		{
+			var list = All.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big").ToList();
+			if (list.Count == 0) return false;
+			s.Trees = IslandGenerator.AmountFor(IslandGenerator.CatTrees, list.Average(i => i.Density(Trees)));
+			s.Bushes = IslandGenerator.AmountFor(IslandGenerator.CatBushes, list.Average(i => i.Density(Bushes)));
+			s.Rocks = IslandGenerator.AmountFor(IslandGenerator.CatRocks, list.Average(i => i.Density(Rocks)));
+			s.Harvest = IslandGenerator.AmountFor(IslandGenerator.CatHarvest, list.Average(i => i.Density(Harvest)));
+			s.BeachThings = 0.3f;
+			return true;
+		}
+
 		/// <summary>The object sliders set to the island's own densities (and a few creatures and boxes if it has spawners and loot).</summary>
 		static void ObjectsLike(RaftIsland i, IslandGenSettings s)
 		{

@@ -38,6 +38,9 @@ namespace DynamicIslands.Editor
 		public const int PlayerPlace = 12;
 		/// <summary>Host -> everyone: the world randomizer's settings and seed (WorldRandomizer). Data = RandomizerSettings.Encode().</summary>
 		public const int Randomizer = 13;
+		/// <summary>A thing only one player can have (Claims): client -> host "may I?" (Ids[0] = island, Index = state key),
+		/// host -> that client the answer (Count 1 = granted, 0 = no, someone else has it).</summary>
+		public const int Claim = 16;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -86,6 +89,9 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, KeyValuePair<DateTime, string>> hashCache = new Dictionary<string, KeyValuePair<DateTime, string>>(StringComparer.OrdinalIgnoreCase);
 
 		static bool InMultiplayerGame { get { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null; } }
+
+		/// <summary>In a world with the network: messages go out (or to the tests' loopback).</summary>
+		public static bool InGame { get { return InMultiplayerGame || Loopback != null; } }
 
 		// Client: the host's world has arrived (Raft_Network.OnWorldReceivedLate), so the raft is where the host's
 		// is. Island offsets are relative to the raft: before this they would land around the scene's origin. Seen in
@@ -250,6 +256,12 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+
+		/// <summary>Client: asks the host for a thing only one player can have (Claims).</summary>
+		public static void SendClaim(int islandId, int key)
+		{
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId }, Index = key });
+		}
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
 			int[] list = ids.ToArray();
@@ -327,6 +339,9 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
 							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition ?? Vector3.zero, msg.Offsets, 0));
+						break;
+					case IslandNetMessage.Claim:
+						Claims.OnMessage(msg, from.Id, answer => SendToPlayer(answer, from));
 						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)

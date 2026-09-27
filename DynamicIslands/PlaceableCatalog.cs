@@ -109,7 +109,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Harvestable Raft objects kept with their gameplay scripts (the same objects as in prototypes).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>();
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
@@ -411,7 +411,7 @@ namespace DynamicIslands.Editor
 			clone.transform.localRotation = source.rotation;
 			clone.transform.localScale = source.lossyScale;
 			// Island decoration from story places carries quest, AI and trigger scripts that expect their own island
-			if (stripScripts) StripScripts(clone);
+			if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
 			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
@@ -454,6 +454,21 @@ namespace DynamicIslands.Editor
 			harvestables.Add(name, clone);
 			prototypes[name] = clone;
 			categories[name] = HarvestableCategory;
+		}
+
+		/// <summary>
+		/// Takes Raft's pickups and creatures out of a piece of decoration (Balboa's bear cave holds the Machete blueprint,
+		/// Mama Bear's channeling pickup and a bear): with their scripts stripped they would be a blueprint no one can take
+		/// and a bear that never moves, in every copy.
+		/// </summary>
+		static void RemoveRaftThingsInside(GameObject go)
+		{
+			foreach (Transform t in go.GetComponentsInChildren<Transform>(true))
+			{
+				if (t == null || t == go.transform) continue;
+				if (t.GetComponent<PickupItem>() != null || t.GetComponent<LandmarkItem>() != null || t.GetComponent<AI_NetworkBehaviour>() != null || t.GetComponent<Network_Entity>() != null)
+					UnityEngine.Object.DestroyImmediate(t.gameObject);
+			}
 		}
 
 		internal static void StripScripts(GameObject go)

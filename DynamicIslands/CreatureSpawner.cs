@@ -126,6 +126,8 @@ namespace DynamicIslands.Editor
 			foreach (CreatureSpawnPoint p in points)
 			{
 				int n = HowManyNow(entry, p);
+				// (as Raft's own islands: in a game mode without screechers or puffer fish there are none here either)
+				if (n > 0 && !SpawnsInThisMode(p.Kind.Type)) { Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': no " + p.Kind.Label + " in this game mode (as on Raft's islands)"); n = 0; }
 				if (n > 0) wanted[p] = n;
 				// (counted only once they exist: building the NavMesh first takes a while, and the watcher must not take
 				// the animals it doesn't see yet for defeated ones)
@@ -146,7 +148,8 @@ namespace DynamicIslands.Editor
 			// The randomizer's extras on one of Raft's islands: their animals walk on Raft's island. Its own NavMesh is used
 			// where it has one for them (Raft's big islands), otherwise one is built from Raft's island's ground.
 			Landmark under = WorldRandomizer.IsExtras(entry) ? WorldRandomizer.IslandAt(entry.Position) : null;
-			if (under != null)
+			// (not with a cave in them: Raft's NavMesh doesn't know its walls)
+			if (under != null && !root.GetComponentsInChildren<Transform>(true).Any(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave))
 				agentTypes.RemoveWhere(t => wanted.Keys.Where(p => { AI_NetworkBehaviour pf = Prefab(host, p.Kind.Type); NavMeshAgent a = pf != null ? pf.GetComponentInChildren<NavMeshAgent>(true) : null; return a != null && a.agentTypeID == t; })
 					.All(p => { NavMeshHit h; return NavMesh.SamplePosition(p.transform.position, out h, 4f, new NavMeshQueryFilter { agentTypeID = t, areaMask = NavMesh.AllAreas }); }));
 			if (agentTypes.Count > 0)
@@ -179,6 +182,27 @@ namespace DynamicIslands.Editor
 				spawned += here;
 			}
 			Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': " + spawned + " creature(s) spawned at " + wanted.Count + " spawn point(s)");
+		}
+
+		/// <summary>
+		/// Whether Raft spawns this kind in the current game mode: its landmark spawners leave screechers and puffer fish out
+		/// when the mode says so (LandmarkEntitySpawner.ShouldEntityBeSpawnedInGamemode); every other kind always spawns
+		/// (the mode changes how it behaves). The host's mode counts: only the host spawns.
+		/// </summary>
+		public static bool SpawnsInThisMode(AI_NetworkBehaviourType type)
+		{
+			try { return SpawnsInMode(type, GameModeValueManager.GetCurrentGameModeValue()); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading the game mode: " + e.Message); }
+			return true;
+		}
+
+		/// <summary>The same for a given game mode (CIModeParity compares it with Raft's own rule for every mode).</summary>
+		public static bool SpawnsInMode(AI_NetworkBehaviourType type, SO_GameModeValue mode)
+		{
+			if (mode == null) return true;
+			if (type == AI_NetworkBehaviourType.StoneBird) return mode.stonebirdVariables == null || mode.stonebirdVariables.shouldSpawn;
+			if (type == AI_NetworkBehaviourType.PufferFish) return mode.pufferfishVariables == null || mode.pufferfishVariables.shouldSpawn;
+			return true;
 		}
 
 		/// <summary>An ambush: the creature waits until a player sets off its trigger zone (a zone that isn't on the island doesn't hold it back).</summary>
@@ -369,6 +393,54 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// Raft's cave pieces (RaftProps) as passages animals can walk in: their colliders would count as solid boxes
+		/// (unreadable meshes) and put the animals on the roof, so each piece gives a floor along its passage and walls
+		/// beside it instead.
+		/// </summary>
+		static void CaveFloors(List<NavMeshBuildSource> sources)
+		{
+			var caves = new HashSet<Transform>();
+			for (int i = sources.Count - 1; i >= 0; i--)
+			{
+				Component c = sources[i].component;
+				Transform cave = c != null ? CaveRoot(c.transform) : null;
+				if (cave == null) continue;
+				caves.Add(cave);
+				sources.RemoveAt(i);
+			}
+			foreach (Transform t in caves)
+			{
+				PropInfo p = RaftProps.Get(t.name);
+				bool alongX = p.Axis == 0;
+				// The passage runs through the measured point inside it, from the closed end (or the outcrop's edge) to the other
+				float centre = alongX ? p.Centre.x : p.Centre.z, half = (alongX ? p.Size.x : p.Size.z) / 2f, inside = alongX ? p.Inside.x : p.Inside.z;
+				float lo = Mathf.Max(centre - half, inside - Mathf.Min(p.ToMinus, 2f * half)), hi = Mathf.Min(centre + half, inside + Mathf.Min(p.ToPlus, 2f * half));
+				float len = Mathf.Max(1f, hi - lo), mid = (lo + hi) / 2f;
+				Vector3 local = alongX ? new Vector3(mid, p.Floor - 0.15f, p.Inside.z) : new Vector3(p.Inside.x, p.Floor - 0.15f, mid);
+				Quaternion rot = t.rotation;
+				Vector3 axis = rot * (alongX ? Vector3.right : Vector3.forward), across = rot * (alongX ? Vector3.forward : Vector3.right);
+				Vector3 floor = t.position + rot * local;
+				Func<Vector3, Vector3, NavMeshBuildSource> box = (size, at) => new NavMeshBuildSource { shape = NavMeshBuildSourceShape.Box, size = size, transform = Matrix4x4.TRS(at, rot, Vector3.one) };
+				sources.Add(box(alongX ? new Vector3(len, 0.3f, p.Width) : new Vector3(p.Width, 0.3f, len), floor));
+				foreach (int s in new[] { -1, 1 })
+					sources.Add(box(alongX ? new Vector3(len, p.Headroom, 0.6f) : new Vector3(0.6f, p.Headroom, len), floor + across * s * (p.Width / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
+				// The back wall of a den
+				if (p.ToMinus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, p.Headroom, p.Width) : new Vector3(p.Width, p.Headroom, 0.6f), floor - axis * (len / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
+				if (p.ToPlus < 90f) sources.Add(box(alongX ? new Vector3(0.6f, p.Headroom, p.Width) : new Vector3(p.Width, p.Headroom, 0.6f), floor + axis * (len / 2f + 0.3f) + Vector3.up * (p.Headroom / 2f)));
+			}
+		}
+
+		static Transform CaveRoot(Transform t)
+		{
+			for (; t != null; t = t.parent)
+			{
+				PropInfo p = RaftProps.Get(t.name);
+				if (p != null) return p.IsCave ? t : null;
+			}
+			return null;
+		}
+
 		static IEnumerator BuildNavMesh(GameObject root, IEnumerable<int> agentTypes, Landmark ground = null)
 		{
 			// The island was made this frame: let physics catch up with where its colliders were moved to
@@ -387,6 +459,7 @@ namespace DynamicIslands.Editor
 					NavMeshBuilder.CollectSources(root.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), onTop);
 					sources.AddRange(onTop);
 					UnreadableAsBoxes(sources);
+					CaveFloors(sources);
 					var land = new LandGround(ground);
 					bool any = false;
 					for (float x = -land.Radius; x <= land.Radius; x += 6f)
@@ -408,6 +481,7 @@ namespace DynamicIslands.Editor
 				Physics.SyncTransforms();
 				NavMeshBuilder.CollectSources(root.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, new List<NavMeshBuildMarkup>(), sources);
 				UnreadableAsBoxes(sources);
+					CaveFloors(sources);
 				// Everything with a collider, relative to the island (whose root is never turned)
 				bool any = false;
 				foreach (Collider c in root.GetComponentsInChildren<Collider>())

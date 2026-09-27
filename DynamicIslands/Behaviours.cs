@@ -367,6 +367,8 @@ namespace DynamicIslands.Editor
 	public static class Behaviours
 	{
 		public const int StateBase = 0x60000, DoneBase = 0x70000, SignalBase = 0x7F000, IslandIndex = 0xFFFF;
+		/// <summary>Host only: the shared part of an event that happens once (a note read, arriving) has run - once, however many players set it off together.</summary>
+		public const int SharedOnceBase = 0x80000;
 		const float NearDistance = 120f;
 
 		/// <summary>Raised on every machine when an event's actions run here (tests listen): island id, object index (-1 = the island), event.</summary>
@@ -629,11 +631,30 @@ namespace DynamicIslands.Editor
 		{
 			if (actions.Count == 0) return;
 			if (localPlayer) Schedule(e, index, actions, false, false);
-			if (actions.Any(a => a.Shared))
+			if (HasSharedPart(actions))
 			{
-				if (Raft_Network.IsHost) Schedule(e, index, actions, true, false);
+				if (Raft_Network.IsHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false); }
 				else IslandNetwork.SendEvent(e.Id, index, ev, false);
 			}
+		}
+
+		/// <summary>Whether the host has something to do: shared actions, or story items given (the crew's, given once by the host).</summary>
+		static bool HasSharedPart(List<ObjAction> actions) { return actions.Any(a => a.Shared || GivesStory(a)); }
+
+		internal static bool GivesStory(ObjAction a) { return a.Verb == "give" && ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Any(l => StoryItems.IsStory(l.Key)); }
+
+		/// <summary>
+		/// Host: whether the shared part of this event runs now. An event that happens once (a note read, arriving at the
+		/// island) is set off on every machine whose player does it - several players arriving on the raft together each
+		/// ask - and its shared part must run once: a "toggle" asked for by an even number of players would end where it began.
+		/// </summary>
+		internal static bool SharedOnce(IslandWorldState.Entry e, int index, string ev)
+		{
+			if (ev != "read" && ev != "arrive") return true;
+			int key = SharedOnceBase + index;
+			if (e.State.ContainsKey(key)) return false;
+			e.State[key] = new ObjectState { Active = false, Day = Today };
+			return true;
 		}
 
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
@@ -651,20 +672,6 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
 
-		/// <summary>An event that happens on every machine by itself (a quest done): personal part here if near, shared part on the host.</summary>
-		public static void FireEverywhere(IslandWorldState.Entry e, int index, string ev)
-		{
-			if (e == null) return;
-			if (index < 0) index = IslandIndex;
-			List<ObjAction> actions = ActionsOf(e, index, ev);
-			List<ObjCheck> checks = ChecksOf(e, index, ev);
-			if (actions.Count == 0 && checks.Count == 0) return;
-			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) actions = ActionsOf(e, index, ev + "!");
-			if (Near(e)) Schedule(e, index, actions, false, false);
-			if (Raft_Network.IsHost) Schedule(e, index, actions, true, false);
-			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
-		}
-
 		/// <summary>From the network: a client's event (host: do the shared part), or the host's (client: the personal part if near).</summary>
 		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost)
 		{
@@ -672,7 +679,7 @@ namespace DynamicIslands.Editor
 			if (e == null) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			// (the client made the checks already)
-			if (Raft_Network.IsHost && !fromHost) Schedule(e, index, actions, true, false);
+			if (Raft_Network.IsHost && !fromHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false); }
 			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false);
 		}
 
@@ -713,6 +720,10 @@ namespace DynamicIslands.Editor
 		static void RunShared(IslandWorldState.Entry e, int index, List<ObjAction> actions)
 		{
 			bool creaturesShown = false;
+			// Story items belong to the crew: given once, here on the host (each player near would give them again)
+			foreach (ObjAction a in actions.Where(GivesStory))
+				foreach (KeyValuePair<string, int> l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)))
+					StoryBook.Give(l.Key, l.Value);
 			foreach (ObjAction a in actions.Where(x => x.Shared))
 			{
 				if (a.Verb == "signal")
@@ -771,7 +782,8 @@ namespace DynamicIslands.Editor
 							break;
 						case "give":
 							if (messagesOnly) break;
-							TriggerZone.Give(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }));
+							// (story items: the host gives them to the crew, once - RunShared)
+							TriggerZone.Give(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => !StoryItems.IsStory(l.Key)));
 							break;
 						case "sound":
 							IslandObjectRef src = RefsOf(e).FirstOrDefault(r => r.Index == index);
@@ -846,7 +858,9 @@ namespace DynamicIslands.Editor
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null) return;
-			if (step >= QuestTracker.QuestOf(e).Steps.Count) FireEverywhere(e, -1, "quest");
+			// (the host alone: its checks decide "quest" or "quest!" once and take once, and the others get the personal
+			// part when near - each machine deciding for itself took a check's items once per player)
+			if (step >= QuestTracker.QuestOf(e).Steps.Count && Raft_Network.IsHost) FireFromHost(e, -1, "quest");
 		}
 
 		#endregion

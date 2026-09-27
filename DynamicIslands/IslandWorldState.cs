@@ -160,6 +160,7 @@ namespace DynamicIslands.Editor
 			WorldDirector.Reset();
 			StoryBook.Reset();
 			PlayerPlaces.Reset();
+			Claims.Reset();
 			WorldRandomizer.Reset();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))

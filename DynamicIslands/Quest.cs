@@ -166,8 +166,14 @@ namespace DynamicIslands.Editor
 		static void Completed(IslandWorldState.Entry e, IslandQuest q)
 		{
 			Show("Quest complete: " + q.ShownTitle, q.Done);
-			if (!Near(e) || q.Reward.Length == 0) return;
-			List<string> given = TriggerZone.Give(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } }));
+			if (q.Reward.Length == 0) return;
+			List<KeyValuePair<string, int>> reward = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } });
+			// Story items are the crew's: the host gives them once (every player near giving them gave one per player);
+			// Raft's items go to each player near the island
+			if (Raft_Network.IsHost)
+				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value);
+			if (!Near(e)) return;
+			List<string> given = TriggerZone.Give(reward.Where(l => !StoryItems.IsStory(l.Key)));
 			Debug.Log("[CUSTOM ISLANDS] Quest reward: " + string.Join(", ", given.ToArray()));
 		}
 

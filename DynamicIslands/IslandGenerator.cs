@@ -288,11 +288,11 @@ namespace DynamicIslands.Editor
 			new StylePools // Tropical
 			{
 				ShoreTrees = new Regex(@"^(Pickup_Landmark_Tree_Palm \d+|BigPalm\d+)$"),
-				Trees = new Regex(@"^(Pickup_Landmark_Tree_Palm \d+|BigPalm\d+|Pickup_Landmark_MangoTree|Bamboo_\d+)$"),
-				Bushes = new Regex(@"^(Bush2?|Monstera_\d+|Banana_Bush_\d+|Bamboo_\d+)$"),
+				Trees = new Regex(@"^(Pickup_Landmark_Tree_Palm \d+|BigPalm\d+|Pickup_Landmark_MangoTree|Pickup_Landmark_Tree_Mango|Pickup_Landmark_Tree_Banana|Bamboo_\d+)$"),
+				Bushes = new Regex(@"^(Bush2?|Monstera_\d+|Banana_Bush_\d+|Bamboo_\d+|Pickup_Landmark_Flower_(Black|Blue|Red|White|Yellow))$"),
 				Rocks = new Regex(@"^(BigBoulder\d+_Low|SmallBoulder\d+)$"),
 				Beach = new Regex(@"^(Log|SmallBoulder\d+)$"),
-				LandHarvest = new Regex(@"^Pickup_Landmark_(Rock \d+|BerryBush|Clay \d+|Sand)$"),
+				LandHarvest = new Regex(@"^Pickup_Landmark_(Rock \d+|BerryBush|Clay \d+|Sand|PineappleLandmark|WatermelonLandmark)$"),
 				SeaHarvest = SeaOres, Water = Corals,
 			},
 			new StylePools // Snowy

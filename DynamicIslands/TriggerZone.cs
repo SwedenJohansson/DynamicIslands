@@ -60,14 +60,18 @@ namespace DynamicIslands.Editor
 			inside = now;
 		}
 
-		/// <summary>The local player walked in (tests call it directly).</summary>
-		public void Enter()
+		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes.</summary>
+		public void Enter() { Enter(false); }
+
+		void Enter(bool granted)
 		{
 			// A quest step "go to this zone" counts every time (even when the zone itself has fired already)
-			QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
+			if (!granted) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
 			bool fired = HasFired;
 			if (fired && !Repeats) return;
 			if (Repeats && Time.time < cooldownUntil) return;
+			// A zone that fires once fires for one player: a client asks the host first (Claims)
+			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (yes && this != null) Enter(true); })) return;
 			// Its "only if" checks first: when they fail the player is told why and the zone stays ready - not marked
 			// as fired, no cooldown. (Before, a failed check still used the zone up: a treasure map's X crossed
 			// without the map did nothing when the player came back with it within half a minute, and a zone that

@@ -15,9 +15,9 @@ namespace DynamicIslands.Editor
 		public const int Off = 0, Light = 1, Normal = 2, Wild = 3;
 		public static readonly string[] LevelNames = { "Off", "Light", "Normal", "Wild" };
 
-		public const string Colours = "colours", Animals = "animals", Alphas = "alphas", Loot = "loot", Finds = "finds", Oddities = "oddities", Bosses = "bosses";
-		public static readonly string[] Features = { Colours, Animals, Alphas, Loot, Finds, Oddities, Bosses };
-		public static readonly string[] FeatureLabels = { "Colours", "Animals", "Alphas", "Loot", "Finds", "Oddities", "Bosses" };
+		public const string Colours = "colours", Animals = "animals", Alphas = "alphas", Loot = "loot", Finds = "finds", Oddities = "oddities", Bosses = "bosses", Large = "large";
+		public static readonly string[] Features = { Colours, Animals, Alphas, Loot, Finds, Oddities, Bosses, Large };
+		public static readonly string[] FeatureLabels = { "Colours", "Animals", "Alphas", "Loot", "Finds", "Oddities", "Bosses", "Large" };
 		public static readonly string[] FeatureHints =
 		{
 			"Animals and sharks (Bruce too) now and then have another colour: charcoal, ash, rust, moss, gold...",
@@ -27,6 +27,7 @@ namespace DynamicIslands.Editor
 			"Now and then an island hides a treasure hunt (a map in a bottle), an abandoned camp or a castaway's stash",
 			"Small islands with something odd on them appear while sailing: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris, a hut",
 			"Now and then a boss lair appears: a plateau with a huge, very tough beast and its guards, and a big hoard",
+			"Now and then a large island like Raft's big ones appears (warthogs, animals to catch, puffer fish), with scenes from the quest islands and a cave with a guard and a hoard",
 		};
 
 		public int Level;
@@ -172,7 +173,8 @@ namespace DynamicIslands.Editor
 			alphas.Clear();
 			VariantOfIndex.Clear();
 			sailedOddity = sailedBoss = 0f;
-			oddityDue = bossDue = false;
+			oddityDue = bossDue = largeDue = false;
+			sailedLarge = 0f;
 			groundOf.Clear();
 			ColouredCount = AlphaCount = MovedCount = ExtrasCount = 0;
 		}
@@ -194,7 +196,8 @@ namespace DynamicIslands.Editor
 					return true;
 				case "rndsailed":
 					string[] v = value.Split(',');
-					if (v.Length == 2) { float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedOddity); float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedBoss); }
+					if (v.Length >= 2) { float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedOddity); float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedBoss); }
+					if (v.Length >= 3) float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedLarge);
 					return true;
 			}
 			return false;
@@ -204,7 +207,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!Current.On && seen.Count == 0) yield break;
 			yield return "@randomizer=" + Current.Encode();
-			yield return "@rndsailed=" + sailedOddity.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedBoss.ToString("F0", CultureInfo.InvariantCulture);
+			yield return "@rndsailed=" + sailedOddity.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedBoss.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedLarge.ToString("F0", CultureInfo.InvariantCulture);
 			if (seen.Count > 0)
 				yield return "@rndseen=" + string.Join(";", seen.Select(p => p.x.ToString("F1", CultureInfo.InvariantCulture) + "," + p.z.ToString("F1", CultureInfo.InvariantCulture)).ToArray());
 		}
@@ -229,6 +232,10 @@ namespace DynamicIslands.Editor
 			Current = s.Copy();
 			if (Current.Seed == 0) Current.Seed = seed;
 			if (!Current.Has(RandomizerSettings.Loot)) RestoreLoot();
+			// (an island that was due waits no more when its part is switched off: it would come the moment it's on again)
+			if (!Current.Has(RandomizerSettings.Oddities)) oddityDue = false;
+			if (!Current.Has(RandomizerSettings.Bosses)) bossDue = false;
+			if (!Current.Has(RandomizerSettings.Large)) largeDue = false;
 			handled.Clear();
 			waiting.Clear();
 			animalsSeen.Clear();
@@ -239,6 +246,16 @@ namespace DynamicIslands.Editor
 		internal static void Rehandle() { handled.Clear(); waiting.Clear(); }
 
 		internal static int SeenCount { get { return seen.Count; } }
+
+		/// <summary>Tests: this island of Raft's gets its extras again, now (another roll: salt).</summary>
+		internal static IEnumerator ForceExtras(Landmark l, int salt)
+		{
+			Vector3 at = new Vector3(l.transform.position.x, 0f, l.transform.position.z);
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(e => IsExtras(e) && Flat(e.Position - at).sqrMagnitude < 100f).Select(e => e.Id).ToList(), true);
+			seen.RemoveAll(p => (p - at).sqrMagnitude < 100f);
+			seen.Add(at);
+			yield return MakeExtras(l, SpawnKey(l) ^ (uint)salt, at);
+		}
 
 		/// <summary>Whether any of this island's crates or clams were looked at by the randomizer (and may have been moved).</summary>
 		internal static bool MovedAny(Landmark l)
@@ -296,6 +313,10 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			Current = RandomizerSettings.Decode(msg.Data);
 			if (!Current.Has(RandomizerSettings.Loot)) RestoreLoot();
+			// (an island that was due waits no more when its part is switched off: it would come the moment it's on again)
+			if (!Current.Has(RandomizerSettings.Oddities)) oddityDue = false;
+			if (!Current.Has(RandomizerSettings.Bosses)) bossDue = false;
+			if (!Current.Has(RandomizerSettings.Large)) largeDue = false;
 			handled.Clear();
 			waiting.Clear();
 			animalsSeen.Clear();
@@ -333,7 +354,16 @@ namespace DynamicIslands.Editor
 				if (!bossDue && sailedBoss > 4000f && Roll(metres, Current.Pick(0.025f, 0.05f, 0.08f))) { bossDue = true; sinceBossTry = RetryMetres; }
 				if (bossDue && Bring("lair", ref sinceBossTry, metres, raftPos)) { bossDue = false; sailedBoss = 4000f - 2500f; }
 			}
+			if (Current.Has(RandomizerSettings.Large))
+			{
+				sailedLarge += metres;
+				if (!largeDue && sailedLarge > 3000f && Roll(metres, Current.Pick(0.05f, 0.1f, 0.15f))) { largeDue = true; sinceLargeTry = RetryMetres; }
+				if (largeDue && Bring("large", ref sinceLargeTry, metres, raftPos)) { largeDue = false; sailedLarge = 3000f - 2000f; }
+			}
 		}
+
+		static float sailedLarge, sinceLargeTry;
+		static bool largeDue;
 
 		/// <summary>Once one is due, tried every so many metres sailed until there is room ahead (Raft's sea is crowded).</summary>
 		const float RetryMetres = 200f;
@@ -347,7 +377,7 @@ namespace DynamicIslands.Editor
 			if (sinceTry < RetryMetres) return false;
 			sinceTry = 0f;
 			string r = CustomIslandSpawner.TrySpawn(raftPos, false, CustomIslandSpawner.TypePrefix + type);
-			Log((type == "lair" ? "Boss lair: " : "Oddity island: ") + r);
+			Log((type == "lair" ? "Boss lair: " : type == "large" ? "Large island: " : "Oddity island: ") + r);
 			return r.StartsWith("Spawning");
 		}
 
@@ -367,7 +397,16 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Whether Raft's island the extras belong to is there now (its extras are laid over it only then).</summary>
-		public static bool HasIslandUnder(IslandWorldState.Entry e) { Landmark l = IslandAt(e.Position); return l != null && GroundOn(l); }
+		public static bool HasIslandUnder(IslandWorldState.Entry e)
+		{
+			Landmark l = IslandAt(e.Position);
+			if (l == null || !GroundOn(l)) return false;
+			// (laid exactly over Raft's island: they were made around its middle. A player who joined places the host's
+			// islands beside its own raft, which lags the host's while it moves - after a fast sail the extras came several
+			// metres off and never found their island there)
+			if (e.Root == null) e.Position = new Vector3(l.transform.position.x, e.Position.y, l.transform.position.z);
+			return true;
+		}
 
 		/// <summary>The spawned natural island of Raft's whose middle is here, or null.</summary>
 		public static Landmark IslandAt(Vector3 position)
@@ -376,7 +415,7 @@ namespace DynamicIslands.Editor
 			{
 				if (l == null || !l.isSpawned) continue;
 				Vector3 d = l.transform.position - position;
-				if (d.x * d.x + d.z * d.z < 25f) return l;
+				if (d.x * d.x + d.z * d.z < 15f * 15f) return l; // (Raft's islands are hundreds of metres apart)
 			}
 			return null;
 		}

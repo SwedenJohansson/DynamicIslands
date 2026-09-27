@@ -139,12 +139,19 @@ namespace DynamicIslands.Editor
 			if (Looted) return new List<string>();
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || player.Inventory == null) return new List<string>();
+			// One player gets the loot: a client asks the host first and opens when it says yes (Claims)
+			if (!Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (this == null) return; if (yes) Open(); else Beaten(); }))
+			{
+				if (Raft_Network.IsHost) Beaten();
+				return new List<string>();
+			}
 			// A locked chest: its "open" checks first (a key...); when they fail it says so and keeps its loot
 			IslandObjectRef r = GetComponentInParent<IslandObjectRef>();
 			if (r != null && !Behaviours.Allows(ContentState.EntryOf(transform), r.Index, "open")) return new List<string>();
 			// Marked first, so a second press in the same moment can't give it twice
 			ContentState.MarkUsed(transform, StateKey);
 			List<string> given = TriggerZone.Give(Items); // a full inventory: the rest lands in front of the player
+			LastGiven = given;
 			Debug.Log("[CUSTOM ISLANDS] Opened a " + Label + ": " + string.Join(", ", given.ToArray()));
 			// A note inside: show it
 			CustomNote note = GetComponent<CustomNote>();
@@ -152,6 +159,15 @@ namespace DynamicIslands.Editor
 			if (r != null) Behaviours.Fire(ContentState.EntryOf(transform), r.Index, "open", true, true); // (checked above)
 			if (note != null) NoteReader.Open(note);
 			return given;
+		}
+
+		/// <summary>What the last opening here gave this player (tests: a client's opening waits for the host's yes).</summary>
+		public List<string> LastGiven = new List<string>();
+
+		void Beaten()
+		{
+			Debug.Log("[CUSTOM ISLANDS] The " + Label + " went to another player");
+			IslandInfo.ShowMessage("Someone else got to the " + Label + " first");
 		}
 	}
 }

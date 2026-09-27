@@ -449,6 +449,398 @@ namespace DynamicIslands
 			Log("PASS: randomizer clean");
 		}
 
+
+		[ConsoleCommand(name: "CIRandomizerOff", docs: "Dev, world (host): with the randomizer Off, Raft's islands are Raft's (catalogue IR16): handled again and sailed 6 km, nothing is coloured, made an alpha, moved or added, every crate and clam lies where Raft put it, no oddity, lair or large island is due. Run CIRandomizerClean first")]
+		public static void RandomizerOffCommand() { DynamicIslands.instance.StartCoroutine(RandomizerOffRoutine()); }
+
+		static IEnumerator RandomizerOffRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			bool ok = true;
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			WorldRandomizer.Set(new RandomizerSettings());
+			WorldRandomizer.ForgetSeen();
+			WorldRandomizer.Rehandle();
+			int coloured = WorldRandomizer.ColouredCount, alphas = WorldRandomizer.AlphaCount, moved = WorldRandomizer.MovedCount, extras = WorldRandomizer.ExtrasCount;
+			int entries = IslandWorldState.Islands.Count(WorldRandomizer.IsExtras), all = IslandWorldState.Islands.Count;
+			// (the randomizer looks at Raft's islands and new animals every few seconds; sailing brings its islands)
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			for (int i = 0; i < 12; i++) { WorldRandomizer.OnSailed(500f, raft); yield return new WaitForSeconds(1f); }
+			Check(ref ok, !WorldRandomizer.Current.On, "the randomizer is Off: " + WorldRandomizer.Describe());
+			Check(ref ok, WorldRandomizer.ColouredCount == coloured && WorldRandomizer.AlphaCount == alphas, "no animal coloured or made an alpha (" + (WorldRandomizer.ColouredCount - coloured) + ", " + (WorldRandomizer.AlphaCount - alphas) + ")");
+			Check(ref ok, WorldRandomizer.MovedCount == moved && WorldRandomizer.ExtrasCount == extras && IslandWorldState.Islands.Count(WorldRandomizer.IsExtras) == entries, "nothing moved or added to Raft's islands (" + (WorldRandomizer.MovedCount - moved) + " moved, " + (WorldRandomizer.ExtrasCount - extras) + " extras)");
+			int items = 0, away = 0;
+			foreach (Landmark l in WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && l.landmarkItems != null))
+				foreach (LandmarkItem it in l.landmarkItems.Where(x => x != null))
+				{
+					Vector3? o = WorldRandomizer.OriginalOf(l, it);
+					if (!o.HasValue) continue;
+					items++;
+					if ((it.transform.position - o.Value).magnitude > 0.05f) away++;
+				}
+			Check(ref ok, away == 0, "every crate and clam the randomizer ever looked at lies where Raft put it (" + items + " looked at, " + away + " elsewhere)");
+			Check(ref ok, !WorldRandomizer.OddityDue && IslandWorldState.Islands.Count == all, "6 km sailed: no oddity, lair or large island due or brought (" + (IslandWorldState.Islands.Count - all) + " new islands)");
+			WorldRandomizer.Set(before);
+			if (ok) Log("PASS: randomizer off is Raft"); else Fail("randomizer off is Raft");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerStream", docs: "Dev, world (host): Raft's island and its extras stream out and in (catalogue IR6, IR7): the nearest of Raft's plain islands gets its extras, one of their chests is opened; the raft sails 1.5 km away (Raft's island and the extras go) and back: the chest is still opened, every moved crate and clam lies where it lay before, the island has the same extras")]
+		public static void RandomizerStreamCommand() { DynamicIslands.instance.StartCoroutine(RandomizerStreamRoutine()); }
+
+		static IEnumerator RandomizerStreamRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = 4242 });
+			Func<Landmark> nearest = () => WorldManager.AllLandmarks.Where(x => x != null && x.isSpawned && WorldRandomizer.IsNatural(x) && WorldRandomizer.GroundOn(x)).OrderBy(x => (x.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
+			Landmark l = nearest();
+			// (none near: sail on until one of Raft's plain islands is, about 750 m at a time)
+			for (int i = 0; i < 8 && l == null; i++) { yield return SailRoutine(30f, 25f); l = nearest(); }
+			if (l == null) { Fail("randomizer streaming: none of Raft's plain islands near the raft with its ground on after 6 km"); WorldRandomizer.Set(before); yield break; }
+			uint key = WorldRandomizer.SpawnKey(l);
+			string kind = WorldRandomizer.KindOf(l);
+			// Its extras (with a chest: loot forced on) and its crates handled
+			WorldRandomizer.Rehandle();
+			RandomizerContent.ForceBigFinds = true; RandomizerContent.ForceFind = "stash"; // (a stash fits on any island: a chest to open)
+			yield return WorldRandomizer.ForceExtras(l, 99);
+			RandomizerContent.ForceBigFinds = false; RandomizerContent.ForceFind = null;
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x) && WorldRandomizer.IslandAt(x.Position) == l);
+			for (float t = 0; e != null && e.Root == null && !e.Failed && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
+			for (float t = 0; t < 10f && !WorldRandomizer.MovedAny(l); t += 1f) yield return new WaitForSeconds(1f);
+			if (e == null || e.Root == null) { Fail("randomizer streaming: '" + l.name + "': its extras didn't load"); WorldRandomizer.Set(before); yield break; }
+			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => !c.Looted);
+			if (chest != null) { PutPlayerNear(chest.transform); chest.Open(); NoteReader.Close(); }
+			var crates = new Dictionary<uint, Vector3>();
+			foreach (LandmarkItem it in l.landmarkItems.Where(x => x != null && WorldRandomizer.OriginalOf(l, x).HasValue))
+			{
+				PickupItem_Networked pn = it.GetComponent<PickupItem_Networked>();
+				if (pn != null) crates[pn.ObjectIndex] = l.transform.InverseTransformPoint(it.transform.position);
+			}
+			string extrasName = e.Name;
+			Log("  '" + l.name + "' (" + kind + "): extras '" + extrasName + "', " + (chest != null ? "a chest opened" : "no chest") + ", " + crates.Count + " crates and clams looked at");
+			// Away and back: Raft switches the island's ground off about 1 km away and may take it back into its pool
+			Network_Player player = RAPI.GetLocalPlayer();
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			// (where the raft is beside the island: it sails back to exactly there - Raft moves its world as the raft goes, the extras' place follows it)
+			Vector3 besides = raftObj != null ? Flat(raftObj.transform.position - e.Position) : Vector3.zero;
+			yield return SailRoutine(100f, 25f);
+			Log("  2.5 km away: the extras " + (e.Root == null ? "unloaded" : "still there") + ", Raft's island " + (l == null || !l.isSpawned ? "taken back" : WorldRandomizer.GroundOn(l) ? "ground on" : "ground off"));
+			yield return SailTo(() => e.Position + besides, 25f);
+			Landmark back = null;
+			for (float t = 0; t < 60f; t += 1f)
+			{
+				// (Raft's island where it was - found by its place: Raft's pool may give it another network id)
+				back = WorldRandomizer.IslandAt(e.Position);
+				if (back != null && (!back.isSpawned || !WorldRandomizer.GroundOn(back))) back = null;
+				if (back != null && e.Root != null) break;
+				yield return new WaitForSeconds(1f);
+			}
+			if (back == null)
+			{
+				// (where Raft's islands are now against where the extras think theirs is: a world shift both must follow)
+				Landmark near = WorldManager.AllLandmarks.Where(x => x != null && x.isSpawned).OrderBy(x => new Vector2(x.transform.position.x - e.Position.x, x.transform.position.z - e.Position.z).sqrMagnitude).FirstOrDefault();
+				Log("  the extras at " + e.Position + (e.Root != null ? " (their root at " + e.Root.transform.position + ")" : "") + "; the nearest of Raft's islands: " + (near != null ? near.name + " at " + near.transform.position + ", " + new Vector2(near.transform.position.x - e.Position.x, near.transform.position.z - e.Position.z).magnitude.ToString("F1") + " m off, ground " + (WorldRandomizer.GroundOn(near) ? "on" : "off") : "none"));
+			}
+			// Raft doesn't bring back an island it has sailed far past (its sea ahead is made new): then the extras must stay
+			// away too - never floating alone in the sea. When it does bring it back, its extras come back as they were.
+			if (back == null)
+				Check(ref ok, e.Root == null, "back again: Raft didn't bring its island back (as Raft does with islands sailed far past) - its extras stay away too, nothing floating alone (" + (e.Root == null ? "not loaded" : "LOADED") + ")");
+			else
+				Check(ref ok, e.Root != null, "back again: Raft's island is back (" + back.name + ") and so are its extras");
+			if (back != null) Log("  back at '" + back.name + "': its key " + WorldRandomizer.SpawnKey(back) + " (before " + key + ")");
+			if (back != null && e.Root != null)
+			{
+				for (float t = 0; t < 10f && !WorldRandomizer.MovedAny(back); t += 1f) yield return new WaitForSeconds(1f);
+				LootCrate again = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => chest != null && c.Ordinal == chest.Ordinal);
+				Check(ref ok, chest == null || (again != null && again.Looted), "the chest opened before is still opened");
+				int same = 0, moved = 0, missing = 0;
+				foreach (KeyValuePair<uint, Vector3> c in crates)
+				{
+					LandmarkItem it = back.landmarkItems.FirstOrDefault(x => x != null && x.GetComponent<PickupItem_Networked>() != null && x.GetComponent<PickupItem_Networked>().ObjectIndex == c.Key);
+					if (it == null) { missing++; continue; }
+					if ((back.transform.InverseTransformPoint(it.transform.position) - c.Value).magnitude < 0.1f) same++; else moved++;
+				}
+				Check(ref ok, moved == 0, "every crate and clam lies where it lay before: " + same + " the same, " + moved + " elsewhere, " + missing + " picked up or not spawned");
+				Check(ref ok, IslandWorldState.Islands.Count(x => WorldRandomizer.IsExtras(x) && (x.Position - e.Position).magnitude < 10f) == 1, "the island has its one extras again, not a second");
+			}
+			IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			WorldRandomizer.Set(before);
+			if (ok) Log("PASS: randomizer streaming"); else Fail("randomizer streaming");
+		}
+
+		[ConsoleCommand(name: "CIColourHit", docs: "Dev, world (host, the randomizer on): a coloured animal near the raft hit by a player (Raft's DamageEntity, 1 health): Raft's damage flash plays and its colour is still there 2 s later (catalogue IR13)")]
+		public static void ColourHitCommand() { DynamicIslands.instance.StartCoroutine(ColourHitRoutine()); }
+
+		static string LookOf(AI_NetworkBehaviour a)
+		{
+			var parts = new List<string>();
+			foreach (Renderer r in WorldRandomizer.BodyOf(a))
+			{
+				var block = new MaterialPropertyBlock();
+				r.GetPropertyBlock(block);
+				foreach (string p in new[] { "_Color", "_BaseColor", "_Tint" }) { Color c = block.GetColor(p); if (c != default(Color)) parts.Add(p + "=" + ColorUtility.ToHtmlStringRGB(c)); }
+				foreach (string p in new[] { "_Diffuse", "_MainTex" }) { Texture t = block.GetTexture(p); if (t != null) parts.Add(p + "=" + t.name); }
+				Material m = r.sharedMaterial;
+				if (m != null && m.HasProperty("_Color")) parts.Add("material=" + ColorUtility.ToHtmlStringRGB(m.color));
+			}
+			return string.Join(" ", parts.ToArray());
+		}
+
+		static IEnumerator ColourHitRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			AI_NetworkBehaviour a = null;
+			for (float t = 0; t < 30f && a == null; t += 1f)
+			{
+				a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(x => x != null && x.networkEntity != null && !x.networkEntity.IsDead && x.behaviourType != AI_NetworkBehaviourType.Shark &&
+					WorldRandomizer.VariantOfIndex.ContainsKey(x.ObjectIndex) && WorldRandomizer.VariantOfIndex[x.ObjectIndex] != null).OrderBy(x => (x.transform.position - raft).sqrMagnitude).FirstOrDefault();
+				if (a == null) yield return new WaitForSeconds(1f);
+			}
+			if (a == null) { Fail("no coloured animal (the randomizer on, Wild, near Raft's islands)"); yield break; }
+			string look = LookOf(a), variant = WorldRandomizer.VariantOfIndex[a.ObjectIndex];
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			float hp = a.networkEntity.stat_health.Value;
+			host.DamageEntity(a.networkEntity, a.transform, 1f, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+			yield return new WaitForSeconds(0.1f);
+			string during = LookOf(a);
+			yield return new WaitForSeconds(2f);
+			string after = a != null ? LookOf(a) : "(gone)";
+			bool ok = true;
+			Check(ref ok, a != null && a.networkEntity.stat_health.Value < hp, "the " + a.behaviourType + " (" + variant + ") was hit: health " + hp.ToString("F0") + " -> " + a.networkEntity.stat_health.Value.ToString("F0"));
+			Check(ref ok, after == look, "its colour 2 s after the hit is its colour before (" + look + ")" + (after == look ? "" : " - now " + after) + (during != look ? "; during the flash: " + during : ""));
+			if (ok) Log("PASS: colour after a hit"); else Fail("colour after a hit");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerTypes", docs: "Dev, world (host): every oddity kind, the boss lair and a large island loaded in a world in turn (catalogue IR12): each loads, its set pieces from other scenes load on demand, nothing is missing from the catalog, no error; pictures shot_type_*")]
+		public static void RandomizerTypesCommand() { DynamicIslands.instance.StartCoroutine(RandomizerTypesRoutine()); }
+
+		static IEnumerator RandomizerTypesRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			var problems = new List<string>();
+			Application.LogCallback watch = (text, trace, type) =>
+			{
+				if (text.Contains("is not in the object catalog") || (type == LogType.Exception || type == LogType.Error) && text.Contains("CUSTOM ISLANDS")) problems.Add(text.Length > 160 ? text.Substring(0, 160) : text);
+			};
+			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair", "large" }).ToList();
+			foreach (string t in types)
+			{
+				Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+				if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+				Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+				problems.Clear();
+				Application.logMessageReceived += watch;
+				IslandWorldState.Entry e = SpawnTypeNear(t, raft);
+				for (float s = 0; e != null && e.Root == null && !e.Failed && s < 120f; s += 1f) yield return new WaitForSeconds(1f);
+				yield return new WaitForSeconds(2f);
+				Application.logMessageReceived -= watch;
+				if (e == null) { Check(ref ok, false, t + ": no free sea near the raft"); continue; }
+				var refs = e.Root != null ? e.Root.GetComponentsInChildren<IslandObjectRef>(true).ToList() : new List<IslandObjectRef>();
+				var pieces = refs.Where(r => r.Props != null && r.Props.ContainsKey("set.piece")).ToList();
+				IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
+				Check(ref ok, e.Root != null && (pieces.Count > 0 || t == "lair") && problems.Count == 0, t + ": " + (e.Root != null ? "'" + (tag != null ? tag.Title : e.Name) + "' loaded, " + pieces.Count + " set pieces" : "didn't load") + ", problems " + problems.Count +
+					(problems.Count > 0 ? ": " + string.Join(" | ", problems.Take(3).ToArray()) : ""));
+				// (its main set piece: the largest)
+				IslandObjectRef main = pieces.Where(r => RaftProps.Get(r.ObjectName) != null).OrderByDescending(r => RaftProps.Get(r.ObjectName).Size.sqrMagnitude).FirstOrDefault();
+				if (main != null) yield return ShotOf(player, main.transform, "type_" + t, 10f);
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSeconds(2f);
+			}
+			if (ok) Log("PASS: every randomizer island type in a world"); else Fail("every randomizer island type in a world");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerSail", docs: "Dev, world (host): sailing brings the randomizer's islands by itself (catalogue IR3): Wild, 40 km sailed in steps of 250 m (OnSailed, with its retry every 200 m) - an oddity, a boss lair and a large island come, none on top of Raft's islands")]
+		public static void RandomizerSailCommand() { DynamicIslands.instance.StartCoroutine(RandomizerSailRoutine()); }
+
+		static IEnumerator RandomizerSailRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			bool ok = true;
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = 777 });
+			var known = new HashSet<int>(IslandWorldState.Islands.Select(e => e.Id));
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			var brought = new List<IslandWorldState.Entry>();
+			for (int i = 0; i < 160; i++)
+			{
+				WorldRandomizer.OnSailed(250f, raft);
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => !known.Contains(e.Id)).ToList())
+				{
+					known.Add(e.Id);
+					if (!WorldRandomizer.IsExtras(e)) brought.Add(e);
+				}
+				// (each is placed ahead of the raft: take it away again, so the sea ahead is free for the next)
+				foreach (IslandWorldState.Entry e in brought.Where(x => x.Root != null).ToList()) IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSeconds(0.25f);
+			}
+			Func<string, int> count = kind => brought.Count(e => (e.Name ?? "").StartsWith("gen-" + kind + "-") || kind == "oddity" && RandomizerContent.Oddities.Any(o => (e.Name ?? "").StartsWith("gen-" + o[0] + "-")));
+			Log("  brought: " + string.Join(", ", brought.Select(e => e.Name).ToArray()));
+			Check(ref ok, count("oddity") > 0 && count("lair") > 0 && count("large") > 0, "40 km on Wild: " + count("oddity") + " oddities, " + count("lair") + " lairs, " + count("large") + " large islands");
+			// (none on top of Raft's islands: CustomIslandSpawner keeps clear of Raft's island spawn points)
+			var near = new List<string>();
+			foreach (IslandWorldState.Entry e in brought)
+				foreach (Landmark l in WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned))
+				{
+					float d = new Vector2(l.transform.position.x - e.Position.x, l.transform.position.z - e.Position.z).magnitude;
+					if (d < CustomIslandSpawner.LandRadius(e.Name) + 40f) near.Add(e.Name + " " + d.ToString("F0") + " m from " + l.name);
+				}
+			Check(ref ok, near.Count == 0, "none on top of Raft's islands" + (near.Count > 0 ? ": " + string.Join(", ", near.ToArray()) : ""));
+			IslandWorldState.RemoveIds(brought.Select(e => e.Id).ToList(), true);
+			WorldRandomizer.Set(before);
+			if (ok) Log("PASS: randomizer islands while sailing"); else Fail("randomizer islands while sailing");
+		}
+
+		[ConsoleCommand(name: "CIForceAlpha", docs: "Dev, world (host): makes the nearest live warthog (or <kind>) of Raft's own an alpha the way a world does - a seed whose roll makes it one (every player works it out from the seed): CIForceAlpha [kind]. Logs ALPHA <index>")]
+		public static void ForceAlphaCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ForceAlphaRoutine(args != null && args.Length > 0 ? args[0] : "Boar")); }
+
+		static IEnumerator ForceAlphaRoutine(string kind)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			AI_NetworkBehaviourType type;
+			try { type = (AI_NetworkBehaviourType)Enum.Parse(typeof(AI_NetworkBehaviourType), kind, true); } catch { Fail("no animal kind '" + kind + "'"); yield break; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			// (one of Raft's own animals: those of custom islands keep their builder's looks and are never alphas)
+			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(x => x != null && x.behaviourType == type && x.ObjectIndex != 0 && x.networkEntity != null && !x.networkEntity.IsDead && !CreatureSpawner.IsOnCustomIsland(x))
+				.OrderBy(x => (x.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
+			if (a == null) { Fail("no live " + type + " in the world (CIRandomizerLarge keep brings warthogs)"); yield break; }
+			var s = new RandomizerSettings { Level = RandomizerSettings.Wild };
+			int seed = 0;
+			for (int tryseed = 1; tryseed < 200000 && seed == 0; tryseed++)
+			{
+				s.Seed = tryseed;
+				WorldRandomizer.Current = s;
+				WorldRandomizer.Variant v = WorldRandomizer.VariantOf(type, a.ObjectIndex);
+				if (v != null && v.Alpha) seed = tryseed;
+			}
+			if (seed == 0) { Fail("no seed makes #" + a.ObjectIndex + " an alpha"); yield break; }
+			WorldRandomizer.Set(s); // (sent to every player: they work out the same alpha)
+			for (float t = 0; t < 10f && !(WorldRandomizer.VariantOfIndex.ContainsKey(a.ObjectIndex) && WorldRandomizer.VariantOfIndex[a.ObjectIndex] == "alpha"); t += 0.5f) yield return new WaitForSeconds(0.5f);
+			Log("ALPHA " + a.ObjectIndex + " " + type + " (seed " + seed + "), health " + a.networkEntity.stat_health.Value.ToString("F0") + "/" + a.networkEntity.stat_health.Max.ToString("F0") + ", size " + a.transform.localScale.x.ToString("F2"));
+			Log("PASS: alpha forced");
+		}
+
+		[ConsoleCommand(name: "CIKillAlpha", docs: "Dev, world (either player): this player defeats the animal with network index <index> as a weapon would (Raft's DamageEntity; a client's goes to the host): CIKillAlpha <index>")]
+		public static void KillAlphaCommand(string[] args)
+		{
+			uint idx;
+			if (args == null || args.Length == 0 || !uint.TryParse(args[0], out idx)) { Fail("CIKillAlpha <index>"); return; }
+			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.ObjectIndex == idx);
+			if (a == null || a.networkEntity == null) { Fail("no animal #" + idx + " here"); return; }
+			PutPlayerNear(a.transform, 3f);
+			ComponentManager<Network_Host>.Value.DamageEntity(a.networkEntity, a.transform, 99999f, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+			Log("Killed #" + idx + " (" + (Raft_Network.IsHost ? "host" : "client: sent to the host") + ")");
+			Log("PASS: kill");
+		}
+
+		[ConsoleCommand(name: "CIAlphaSpoils", docs: "Dev, world (either player): the dropped items lying around the animal with network index <index> (dead or alive) on this machine: CIAlphaSpoils <index>")]
+		public static void AlphaSpoilsCommand(string[] args)
+		{
+			uint idx;
+			if (args == null || args.Length == 0 || !uint.TryParse(args[0], out idx)) { Fail("CIAlphaSpoils <index>"); return; }
+			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.ObjectIndex == idx);
+			if (a == null) { Fail("no animal #" + idx + " here"); return; }
+			// (the spoils: an alpha's kinds of items, dropped where it died - the body may slide or be carried off after)
+			var spoil = new System.Text.RegularExpressions.Regex(@"^(Head_\w+|Raw_GenericMeat|Raw_Shark|Leather|Feather|Wool|TitaniumIngot)$");
+			var near = UnityEngine.Object.FindObjectsOfType<PickupItem>().Where(p => p != null && p.isDropped && p.itemInstance != null && p.itemInstance.baseItem != null && spoil.IsMatch(p.itemInstance.baseItem.UniqueName) && (p.transform.position - a.transform.position).magnitude < 30f).ToList();
+			var names = near.Select(p => p.itemInstance != null && p.itemInstance.baseItem != null ? p.itemInstance.baseItem.UniqueName + "*" + p.itemInstance.Amount : p.name).OrderBy(n => n).ToList();
+			Log("SPOILS #" + idx + " " + (a.networkEntity != null && a.networkEntity.IsDead ? "dead" : "alive") + ": " + near.Count + " dropped item(s): " + string.Join(", ", names.ToArray()));
+			Log("PASS: spoils");
+		}
+
+		[ConsoleCommand(name: "CIModeWorld", docs: "Dev, world (host): the randomizer's animals follow Raft's game mode in a world (catalogue IR15): a large island loaded in Creative has no puffer fish or screechers (Raft's own islands in Creative have none), its warthogs and animals to catch are there; in Peaceful the puffer fish are there too (as on Raft's islands). The world's mode is put back after")]
+		public static void ModeWorldCommand() { DynamicIslands.instance.StartCoroutine(ModeWorldRoutine()); }
+
+		static IEnumerator ModeWorldRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			GameMode before = GameManager.GameMode;
+			Network_Player player = RAPI.GetLocalPlayer();
+			foreach (GameMode mode in new[] { GameMode.Creative, GameMode.Peaceful })
+			{
+				GameModeValueManager.SelectCurrentGameMode(mode);
+				Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+				if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+				IslandWorldState.Entry e = SpawnTypeNear("large", CustomIslandSpawner.RaftPosition ?? Vector3.zero);
+				for (float t = 0; e != null && e.Root == null && !e.Failed && t < 120f; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null || e.Root == null) { Check(ref ok, false, mode + ": the large island didn't load"); GameModeValueManager.SelectCurrentGameMode(before); yield break; }
+				yield return new WaitForSeconds(15f);
+				float reach = CustomIslandSpawner.LandRadius(e.Name) + 60f;
+				var alive = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && a.networkEntity != null && !a.networkEntity.IsDead &&
+					new Vector2(a.transform.position.x - e.Position.x, a.transform.position.z - e.Position.z).magnitude < reach).GroupBy(a => a.behaviourType).ToDictionary(g => g.Key, g => g.Count());
+				Func<AI_NetworkBehaviourType, int> n = t => alive.ContainsKey(t) ? alive[t] : 0;
+				var spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null).GroupBy(p => p.Kind.Type).ToDictionary(g => g.Key, g => g.Count());
+				string seen = string.Join(", ", alive.Select(kv => kv.Key + " " + kv.Value).ToArray());
+				int others = alive.Where(kv => kv.Key != AI_NetworkBehaviourType.PufferFish && kv.Key != AI_NetworkBehaviourType.StoneBird).Sum(kv => kv.Value);
+				if (mode == GameMode.Creative)
+					Check(ref ok, n(AI_NetworkBehaviourType.PufferFish) == 0 && n(AI_NetworkBehaviourType.StoneBird) == 0 && others > 0, "Creative: no puffer fish, no screechers (as Raft), the rest there: " + seen);
+				else
+					Check(ref ok, (n(AI_NetworkBehaviourType.PufferFish) > 0 || !spots.ContainsKey(AI_NetworkBehaviourType.PufferFish)) && others > 0, "Peaceful: puffer fish and the rest there (as Raft): " + seen);
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSeconds(3f);
+			}
+			GameModeValueManager.SelectCurrentGameMode(before);
+			if (ok) Log("PASS: creatures follow the game mode"); else Fail("creatures follow the game mode");
+		}
+
+		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; logs Treasure extras: '<name>'")]
+		public static void TreasureHuntCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TreasureHuntRoutine(args != null && args.Any(a => a == "keep"))); }
+
+		static IEnumerator TreasureHuntRoutine(bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			if (!WorldRandomizer.Current.Has(RandomizerSettings.Finds)) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 99 });
+			Landmark l = WorldManager.AllLandmarks.Where(lm => lm != null && lm.isSpawned && WorldRandomizer.IsNatural(lm)).OrderBy(lm => (lm.transform.position - raft).sqrMagnitude).FirstOrDefault();
+			if (l == null) { Fail("none of Raft's plain islands near the raft (sail on)"); WorldRandomizer.Set(before); yield break; }
+			yield return PutPlayer(player, l.transform.position + Vector3.up * 60f, false);
+			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(l); t += 1f) yield return new WaitForSeconds(1f);
+			RandomizerContent.ForceFind = "treasure";
+			try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(l, 4711)); } finally { }
+			yield return new WaitForSeconds(3f);
+			RandomizerContent.ForceFind = null;
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(WorldRandomizer.IsExtras);
+			for (float t = 0; e != null && e.Root == null && !e.Failed && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
+			if (e == null || e.Root == null) { Fail("'" + l.name + "': the extras didn't load"); WorldRandomizer.Set(before); yield break; }
+			Log("Treasure extras: '" + e.Name + "'");
+			IslandQuest q = QuestTracker.QuestOf(e);
+			CustomNote map = e.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(n => n.GetComponent<LootCrate>() == null && (n.Title ?? "") == "Treasure map");
+			TriggerZone x = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x");
+			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Buried treasure"; });
+			Check(ref ok, q.Exists && q.Steps.Count == 3 && map != null && x != null && chest != null, "'" + l.name + "' has a treasure hunt: quest '" + q.ShownTitle + "' (" + q.Steps.Count + " steps), the map in a bottle " + (map != null) + ", the X " + (x != null) + ", the buried chest " + (chest != null));
+			if (map == null || x == null || chest == null) { WorldRandomizer.Set(before); yield break; }
+			// Played as a player would: the map, the X, the chest
+			PutPlayerNear(map.transform);
+			NoteReader.Open(map); NoteReader.Close();
+			yield return new WaitForSeconds(1f);
+			int s1 = QuestTracker.StepOf(e);
+			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
+			yield return new WaitForSeconds(2f);
+			int s2 = QuestTracker.StepOf(e);
+			PutPlayerNear(chest.transform);
+			List<string> got = chest.Open(); NoteReader.Close();
+			yield return new WaitForSeconds(1f);
+			int s3 = QuestTracker.StepOf(e);
+			Check(ref ok, s1 == 1 && s2 == 2 && s3 == 3, "the quest moves on: the map read " + s1 + ", the X reached " + s2 + ", the chest opened " + s3 + " (1, 2, 3 = done)");
+			Check(ref ok, got.Count > 0 && x.HasFired && chest.Looted, "the treasure: " + string.Join(", ", got.ToArray()));
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (!keep) { IslandWorldState.RemoveIds(new[] { e.Id }, true); WorldRandomizer.Set(before); }
+			if (ok) Log("PASS: treasure hunt"); else Fail("treasure hunt");
+		}
 		[ConsoleCommand(name: "CIRandomizerPending", docs: "Dev, main menu: the randomizer settings the next new world gets (as if chosen in the New Game box): CIRandomizerPending <off|light|normal|wild> [-part ...]")]
 		public static void RandomizerPendingCommand(string[] args)
 		{
@@ -573,6 +965,746 @@ namespace DynamicIslands
 				}
 			}
 			Log("PASS: probed colliders");
+		}
+
+		#region Like Raft's islands, large islands, caves
+
+		static readonly System.Text.RegularExpressions.Regex Cuttable = new System.Text.RegularExpressions.Regex(@"^Pickup_Landmark_(Tree_\w+( \d+)?|MangoTree|Palmtree \d+)$");
+
+		/// <summary>Raft's plain tropical islands from raft_land.txt: land (m²), land objects, trees to cut, harvestables on land.</summary>
+		static List<float[]> RaftIslandNumbers()
+		{
+			var land = new Dictionary<string, float>();
+			var counts = new Dictionary<string, float[]>();
+			var seen = new HashSet<string>();
+			byte[] bytes = RaftIslands.ModFile(RaftLand.FileName);
+			if (bytes == null) return new List<float[]>();
+			foreach (string raw in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
+			{
+				string[] f = raw.TrimEnd('\r').Split('\t');
+				if (f.Length < 5 || !System.Text.RegularExpressions.Regex.IsMatch(f[1], @"^(Big|Big island .+|Small island \d+)$")) continue;
+				if (f[0] == "land") land[f[1]] = f[4].Split(' ').Where(x => x.Contains(':')).Sum(x => float.Parse(x.Split(':')[1], System.Globalization.CultureInfo.InvariantCulture));
+				else if (f[0] == "lobj" && seen.Add(f[1] + "|" + f[2]))
+				{
+					float[] c;
+					if (!counts.TryGetValue(f[1], out c)) counts[f[1]] = c = new float[3];
+					float n = float.Parse(f[4], System.Globalization.CultureInfo.InvariantCulture);
+					c[0] += n;
+					if (Cuttable.IsMatch(f[2])) c[1] += n;
+					if (f[2].StartsWith("Pickup_Landmark_")) c[2] += n;
+				}
+			}
+			return land.Where(kv => counts.ContainsKey(kv.Key)).Select(kv => new[] { kv.Value, counts[kv.Key][0], counts[kv.Key][1], counts[kv.Key][2] }).ToList();
+		}
+
+		/// <summary>A generated island file's land (m²), land objects (nature, not content), trees to cut, harvestables on land, flowers.</summary>
+		static float[] IslandNumbers(IslandFile f)
+		{
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1), sea = f.WaterLevel;
+			int cells = 0;
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (f.Heights[z, x] * f.TerrainSize.y > sea + 0.1f) cells++;
+			var nature = f.Objects.Where(o => o.Position.y > sea + 0.2f && (o.Props == null || o.Props.Count == 0)).ToList();
+			return new float[] { cells * step * step, nature.Count, nature.Count(o => Cuttable.IsMatch(o.Name)), nature.Count(o => o.Name.StartsWith("Pickup_Landmark_")), nature.Count(o => o.Name.Contains("Flower")) };
+		}
+
+		[ConsoleCommand(name: "CIIslandsLikeRaft", docs: "Dev, anywhere: the randomizer's islands fit in Raft's world: land objects per 1000 m² and trees to cut compared with Raft's own small and big islands (raft_land.txt); large islands have puffer fish, warthogs, animals to catch, scenes and a cave")]
+		public static void IslandsLikeRaftCommand() { DynamicIslands.instance.StartCoroutine(IslandsLikeRaftRoutine()); }
+
+		static IEnumerator IslandsLikeRaftRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			List<float[]> raft = RaftIslandNumbers();
+			List<float[]> small = raft.Where(x => x[0] < 5000f).ToList(), big = raft.Where(x => x[0] >= 5000f).ToList();
+			Func<List<float[]>, int, float, float> per = (list, i, scale) => list.Count == 0 ? 0f : list.Average(x => x[i] / x[0] * scale);
+			Log("Raft's small islands: " + small.Count + ", " + (small.Count > 0 ? small.Min(x => x[0]).ToString("F0", inv) + "-" + small.Max(x => x[0]).ToString("F0", inv) : "?") + " m² of land, " +
+				(small.Count > 0 ? small.Min(x => x[1] / x[0] * 1000f).ToString("F0", inv) + "-" + small.Max(x => x[1] / x[0] * 1000f).ToString("F0", inv) : "?") + " land objects per 1000 m², " +
+				(small.Count > 0 ? small.Min(x => x[2]).ToString("F0", inv) + "-" + small.Max(x => x[2]).ToString("F0", inv) : "?") + " trees to cut");
+			Log("Raft's big islands: " + big.Count + ", " + (big.Count > 0 ? big.Min(x => x[1] / x[0] * 1000f).ToString("F0", inv) + "-" + big.Max(x => x[1] / x[0] * 1000f).ToString("F0", inv) : "?") + " land objects per 1000 m², " +
+				(big.Count > 0 ? big.Min(x => x[2] / x[0] * 1000f).ToString("F2", inv) + "-" + big.Max(x => x[2] / x[0] * 1000f).ToString("F2", inv) : "?") + " trees to cut per 1000 m²");
+			if (small.Count == 0 || big.Count == 0) { Fail("raft_land.txt has no plain islands"); yield break; }
+			float smallMin = small.Min(x => x[1] / x[0] * 1000f), smallMax = small.Max(x => x[1] / x[0] * 1000f);
+			float bigMin = big.Min(x => x[1] / x[0] * 1000f), bigMax = big.Max(x => x[1] / x[0] * 1000f);
+			float cutMin = big.Min(x => x[2] / x[0] * 1000f), cutMax = big.Max(x => x[2] / x[0] * 1000f);
+
+			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair" }).Concat(Enumerable.Repeat("large", 8)).ToList();
+			int flowers = 0, tropical = 0;
+			for (int i = 0; i < types.Count; i++)
+			{
+				MapType type = MapTypes.Get(types[i]);
+				float el;
+				IslandGenSettings s = MapTypes.Roll(type, new System.Random(4200 + i), out el);
+				IslandFile f = null;
+				try { f = MapTypes.Create(type, s, el, "likeraft"); }
+				catch (Exception e) { Fail(types[i] + ": " + e); ok = false; continue; }
+				float[] n = IslandNumbers(f);
+				float dens = n[1] / n[0] * 1000f, cut = n[2];
+				bool isBig = n[0] >= 5000f;
+				// Small islands: objects as dense as on Raft's small islands (loosely), a few trees to cut; big: as Raft's big ones
+				// (trees to cut: Raft's snowy islands have none, volcanic is the mod's own style)
+				bool noCut = s.Style == TerrainPainter.Snowy || s.Style == TerrainPainter.Volcanic;
+				bool good = isBig ? dens >= bigMin * 0.6f && dens <= bigMax * 1.6f && (noCut || cut / n[0] * 1000f >= cutMin * 0.5f && cut / n[0] * 1000f <= cutMax * 2f)
+					: dens >= smallMin * 0.4f && dens <= smallMax * 1.5f && (s.Style != TerrainPainter.Tropical || (cut >= 1 && cut <= 14));
+				if (s.Style == TerrainPainter.Tropical) { tropical++; if (n[4] > 0) flowers++; }
+				string extra = "";
+				if (types[i] == "large")
+				{
+					int puffer = f.Objects.Count(o => o.Name == "Creature_PufferFish"), boars = f.Objects.Count(o => o.Name == "Creature_Boar" || o.Name.StartsWith("Creature_") && o.Position.y > f.WaterLevel && ContentCatalog.CreatureOf(o.Name) != null && ContentCatalog.CreatureOf(o.Name).Category == ContentCatalog.HostileCategory);
+					int tame = f.Objects.Count(o => ContentCatalog.CreatureOf(o.Name) != null && ContentCatalog.CreatureOf(o.Name).Category == ContentCatalog.CatchableCategory);
+					int scene = f.Objects.Count(o => o.Props != null && o.Props.ContainsKey("set.piece") && !o.Props.ContainsKey("cave"));
+					int cave = f.Objects.Count(o => o.Props != null && o.Props.ContainsKey("cave"));
+					int loot = f.Objects.Count(o => ContentCatalog.IsLootObject(o.Name));
+					extra = "; '" + ObjectProps.Get(f.Props, IslandProps.Title) + "' " + TerrainPainter.StyleName(s.Style) + ", " + puffer + " puffer fish, " + boars + " hostile spots, " + tame + " to catch, " + scene + " scene props, " + cave + " cave pieces, " + loot + " loot";
+					// (as much land as Raft's big islands have, roughly: theirs 17 000 - 33 000 m²)
+					good &= n[0] >= 14000f && puffer >= 3 && boars >= 2 && tame >= 2 && loot >= 4 && scene >= 3 && (cave >= 1 || !RandomizerIslands.CanBuildCaves);
+				}
+				Check(ref ok, good, types[i] + ": " + n[0].ToString("F0", inv) + " m² of land, " + n[1].ToString("F0", inv) + " land objects (" + dens.ToString("F0", inv) + " per 1000 m²), " + cut.ToString("F0", inv) + " trees to cut, " +
+					n[3].ToString("F0", inv) + " harvestables, " + n[4].ToString("F0", inv) + " flowers" + extra);
+				if (!good)
+					Log("  its land objects: " + string.Join(", ", f.Objects.Where(o => o.Position.y > f.WaterLevel + 0.2f && (o.Props == null || o.Props.Count == 0)).GroupBy(o => o.Name)
+						.OrderByDescending(g => g.Count()).Take(14).Select(g => g.Key + " " + g.Count()).ToArray()) + "; radius " + s.Radius.ToString("F0", inv) + ", shape " + s.Shape);
+				yield return null;
+			}
+			// Every prop the scenes use is measured, stands on the ground (nothing that hangs from its pivot), and each theme has a centrepiece
+			var themeProps = RandomizerIslands.Themes.SelectMany(t => t.Anchors.Concat(t.Medium).Concat(t.Small)).Distinct().ToList();
+			var unmeasured = themeProps.Where(n => !RaftProps.Has(n)).ToList();
+			var hanging = themeProps.Where(n => RaftProps.Has(n) && !RaftProps.Standable(n)).ToList();
+			var bare = RandomizerIslands.Themes.Where(t => !t.Anchors.Any(RaftProps.Standable)).Select(t => t.Name).ToList();
+			Check(ref ok, unmeasured.Count == 0 && hanging.Count == 0 && bare.Count == 0, themeProps.Count + " scene props in " + RandomizerIslands.Themes.Length + " themes; not measured: " + (unmeasured.Count == 0 ? "none" : string.Join(", ", unmeasured.ToArray())) +
+				"; hanging: " + (hanging.Count == 0 ? "none" : string.Join(", ", hanging.ToArray())) + "; themes without a centrepiece: " + (bare.Count == 0 ? "none" : string.Join(", ", bare.ToArray())));
+			Check(ref ok, RandomizerIslands.CanBuildCaves, "caves: " + string.Join(", ", RandomizerIslands.Dens.Where(n => RaftProps.Get(n) != null && RaftProps.Get(n).IsCave).ToArray()) + " measured as dens");
+			Check(ref ok, flowers > 0 || !PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow"), "Raft's flowers grow on " + flowers + " of " + tropical + " tropical islands" + (PlaceableCatalog.IsLoaded("Pickup_Landmark_Flower_Yellow") ? "" : " (this Raft's catalog has none)"));
+			if (ok) Log("PASS: islands like Raft's"); else Fail("islands like Raft's");
+		}
+
+
+		[ConsoleCommand(name: "CIIslandsSound", docs: "Dev, anywhere: the randomizer's islands are sound: nothing of the land floats or is buried (also where a den levelled the ground), no scene prop, set piece or den stands over the sea, scene props don't stand inside each other, a den's floor is on its levelled ground (8 oddities, the lair, 6 large islands)")]
+		public static void IslandsSoundCommand() { DynamicIslands.instance.StartCoroutine(IslandsSoundRoutine()); }
+
+		static IEnumerator IslandsSoundRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			// (rocks and flotsam sink as Raft sinks them: up to 60% of their size - IslandGenerator, from raft_land.txt)
+			var rock = new System.Text.RegularExpressions.Regex("Boulder|Rock|Stalagmite|Pillar|^FL_|Log|Plank|Driftwood", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+			var types = RandomizerContent.Oddities.Select(o => o[0]).Concat(new[] { "lair" }).Concat(Enumerable.Repeat("large", 6)).ToList();
+			for (int i = 0; i < types.Count; i++)
+			{
+				MapType type = MapTypes.Get(types[i]);
+				float el;
+				IslandGenSettings s = MapTypes.Roll(type, new System.Random(5100 + i), out el);
+				IslandFile f = null;
+				try { f = MapTypes.Create(type, s, el, "sound"); }
+				catch (Exception e) { Fail(types[i] + ": " + e); ok = false; continue; }
+				var k = new MapKit(f, 0);
+				Func<IslandObject, float> above = o => o.Position.y - k.Ground(new Vector2(o.Position.x, o.Position.z));
+				// Nature on the land (objects without settings): on the ground, big rocks sunk up to a third of their size
+				var nature = f.Objects.Where(o => (o.Props == null || o.Props.Count == 0) && k.Ground(new Vector2(o.Position.x, o.Position.z)) > k.Sea + 0.2f).ToList();
+				var floating = nature.Where(o => above(o) > 0.5f && !System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Block_(Roof|Wall|Pillar|Stair)|Placeable_)")).ToList(); // (a hut's walls and roof stand on it)
+				var buried = nature.Where(o => above(o) < (rock.IsMatch(o.Name) ? -6f : -1.2f)).ToList();
+				// Set pieces and dens: over land, not the sea
+				var pieces = f.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece")).ToList();
+				var overSea = pieces.Where(o => k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea + 0.3f).ToList();
+				// Scene props inside each other: the inner part of their footprints (a third of the smaller side) apart
+				var props = pieces.Where(o => !o.Props.ContainsKey("cave") && RaftProps.Get(o.Name) != null).ToList();
+				var inside = new List<string>();
+				for (int a = 0; a < props.Count; a++)
+					for (int b = a + 1; b < props.Count; b++)
+					{
+						PropInfo pa = RaftProps.Get(props[a].Name), pb = RaftProps.Get(props[b].Name);
+						float ra = Mathf.Min(pa.Size.x, pa.Size.z) / 3f, rb = Mathf.Min(pb.Size.x, pb.Size.z) / 3f;
+						if (new Vector2(props[a].Position.x - props[b].Position.x, props[a].Position.z - props[b].Position.z).magnitude < ra + rb) inside.Add(props[a].Name + "/" + props[b].Name);
+					}
+				// A den's floor on the ground levelled for it (a point in its passage)
+				string den = "";
+				foreach (IslandObject c in pieces.Where(o => o.Props.ContainsKey("cave")))
+				{
+					PropInfo p = RaftProps.Get(c.Name);
+					if (p == null || !p.IsCave) continue;
+					Vector3 inner = c.Position + Quaternion.Euler(c.EulerRotation) * Vector3.Scale(p.Inside, Vector3.one);
+					float floor = c.Position.y + p.Floor, ground = k.Ground(new Vector2(inner.x, inner.z));
+					den = ", den floor " + (ground - floor).ToString("+0.0;-0.0", inv) + " m from the ground in it";
+					if (Mathf.Abs(ground - floor) > 0.6f) { ok = false; den += " (TOO FAR)"; }
+				}
+				bool good = floating.Count == 0 && buried.Count == 0 && overSea.Count == 0 && inside.Count == 0;
+				Check(ref ok, good, types[i] + " '" + ObjectProps.Get(f.Props, IslandProps.Title) + "': " + nature.Count + " land objects, floating " + floating.Count + ", buried " + buried.Count + "; " + pieces.Count + " set pieces, over the sea " + overSea.Count + ", inside each other " + inside.Count + den);
+				if (!good)
+					Log("  " + string.Join("; ", floating.Take(4).Select(o => "floats " + o.Name + " " + above(o).ToString("F1", inv)).Concat(buried.Take(4).Select(o => "buried " + o.Name + " " + above(o).ToString("F1", inv)))
+						.Concat(overSea.Take(4).Select(o => "over the sea " + o.Name)).Concat(inside.Take(6).Select(x => "inside " + x)).ToArray()));
+				yield return null;
+			}
+			if (ok) Log("PASS: islands are sound"); else Fail("islands are sound");
+		}
+		[ConsoleCommand(name: "CIRandomizerLarge", docs: "Dev, world (host): a large island near the raft - loads, its animals (warthogs, animals to catch, puffer fish), scenes, and its cave: players walk in, the guard wakes inside it; pictures shot_large_*. CIRandomizerLarge [keep]")]
+		public static void RandomizerLargeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
+
+		static IEnumerator RandomizerLargeRoutine(bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			SetHour(11f);
+			IslandWorldState.Entry e = SpawnTypeNear("large", raft);
+			if (e == null) { Fail("no free spot for a large island near the raft (sail on)"); yield break; }
+			for (float t = 0; t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("the large island didn't load"); yield break; }
+			GameObject root = e.Root;
+			var tag = root.GetComponent<IslandInfoTag>();
+			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
+			int scene = refs.Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave"));
+			List<Transform> caves = root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+			Log("Large island: '" + e.Name + "'");
+			Check(ref ok, tag != null && scene >= 3, "'" + (tag != null ? tag.Title : "?") + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
+			// Its animals (not the cave's guard: it waits)
+			List<CreatureSpawnPoint> spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
+			for (float t = 0; t < 120f && spots.Any(p => p.RecordedAlive == CreatureSpawnPoint.Spawning || (p.RecordedAlive == -1 && ObjectProps.Get(p.Props, ObjectProps.CreatureZone).Length == 0)); t += 1f) yield return new WaitForSeconds(1f);
+			Check(ref ok, spots.Count(p => p.RecordedAlive > 0) >= 5, spots.Count + " creature spots, alive: " + string.Join(", ", spots.GroupBy(p => p.Kind.Label).Select(g => g.Key + " " + g.Sum(p => Math.Max(0, p.RecordedAlive))).ToArray()));
+			Network_Player player = RAPI.GetLocalPlayer();
+			// Pictures: from above, of each scene
+			Vector3 mid = root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			yield return CameraShot(mid + new Vector3(0f, 110f, -150f), mid, "large_overview", true);
+			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.ObjectName) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.ObjectName))).Take(3))
+				yield return ShotOf(player, r.transform, "large_scene_" + r.ObjectName.Replace(" ", "_"), 9f);
+			// The cave: the mouth, then inside; the guard wakes and stands in the passage
+			if (caves.Count > 0)
+			{
+				TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+				Transform first = caves[0];
+				// (the hoard: the box nearest the den piece; the way in: from the zone at the mouth towards it)
+				LootCrate hoardBox = root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - first.position).sqrMagnitude).FirstOrDefault();
+				Log("  the den " + first.name + " at " + (first.position - root.transform.position) + ", its zone at " + (zone != null ? (zone.transform.position - root.transform.position).ToString() : "none") +
+					", the nearest box at " + (hoardBox != null ? (hoardBox.transform.position - root.transform.position).ToString() : "none") + " (from the island's root)");
+				if (zone != null)
+				{
+					// The mouth from in front of it, then inside looking towards the hoard
+					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : first.position, "large_cave");
+					string denAt; float denOff = DenOffset(first, zone.transform.position, out denAt);
+					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					var leftIn = DenLeftovers(first);
+					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
+					CreatureSpawnPoint guard = spots.FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
+					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
+					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
+					float off = ai != null ? Mathf.Abs(ai.transform.position.y - zone.transform.position.y) : 99f;
+					Check(ref ok, guard == null || (ai != null && off < 2.5f), guard == null ? "no guard in this cave" : ai == null ? "the cave's guard didn't come" : "the cave's " + guard.Kind.Label + " woke inside it (" + off.ToString("F1") + " m from the floor)");
+					// The guard can't leave through the walls or the back (catalogue IR8): a path from inside the den to the
+					// ground behind it goes round through the mouth (much longer than straight), or there is none
+					if (ai != null && hoardBox != null)
+					{
+						Vector3 inward = Vector3.ProjectOnPlane(hoardBox.transform.position - zone.transform.position, Vector3.up).normalized;
+						NavMeshHit from, to;
+						Vector3 behind = hoardBox.transform.position + inward * 14f;
+						if (NavMesh.SamplePosition(ai.transform.position, out from, 3f, NavMesh.AllAreas) && NavMesh.SamplePosition(behind, out to, 8f, NavMesh.AllAreas))
+						{
+							var path = new NavMeshPath();
+							NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, path);
+							float len = 0f;
+							for (int c = 1; c < path.corners.Length; c++) len += Vector3.Distance(path.corners[c - 1], path.corners[c]);
+							float straight = Vector3.Distance(from.position, to.position);
+							Check(ref ok, path.status != NavMeshPathStatus.PathComplete || len > straight * 1.4f, "the guard can't walk out through the den's back: " + (path.status == NavMeshPathStatus.PathComplete ? "the way behind it is " + len.ToString("F0") + " m, straight " + straight.ToString("F0") + " m (round through the mouth)" : "no way behind it (" + path.status + ")"));
+						}
+						else Log("  (no NavMesh behind the den to walk to: the back is in the hill)");
+					}
+					// (the hoard lies deeper in than the zone, inside the den: its deepest den is 42 m long)
+					float toHoard = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, zone.transform.position) : 99f, fromDen = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, first.position) : 99f;
+					Check(ref ok, hoardBox != null && toHoard > 3f && toHoard < 36f && fromDen < 24f, "a hoard at the end of the cave (" + toHoard.ToString("F1") + " m in from the zone, " + fromDen.ToString("F1") + " m from the den's pivot)");
+				}
+				else Check(ref ok, false, "the cave has no zone");
+			}
+			else Log("  (no cave: " + (RandomizerIslands.CanBuildCaves ? "no spot fit" : "no measured dens") + ")");
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (!keep) IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			if (ok) Log("PASS: a large island"); else Fail("a large island");
+		}
+
+		/// <summary>Raft's pickups, blueprints and animal models left inside a den copy (none should be).</summary>
+		static List<string> DenLeftovers(Transform den)
+		{
+			return den.GetComponentsInChildren<Transform>(true).Where(t => t != den && (t.name.StartsWith("Pickup_") || t.GetComponent<SkinnedMeshRenderer>() != null || t.GetComponent<PickupItem>() != null || t.GetComponent<LandmarkItem>() != null))
+				.Select(t => t.name).Distinct().ToList();
+		}
+
+		/// <summary>
+		/// How far a den sits off where it should (m, + = too high): the lowest point of its rock against its floor (the
+		/// zone at its mouth stands on the floor), compared with raft_props.txt's bottom and floor.
+		/// </summary>
+		static float DenOffset(Transform den, Vector3 zoneAt, out string detail)
+		{
+			PropInfo p = RaftProps.Get(den.name);
+			Renderer[] rs = den.GetComponentsInChildren<Renderer>(true);
+			if (p == null || rs.Length == 0) { detail = "not measured"; return 0f; }
+			Bounds b = rs[0].bounds;
+			foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+			float want = zoneAt.y + (p.Bottom - p.Floor);
+			detail = "its rock's lowest point " + (b.min.y - zoneAt.y).ToString("F1") + " m from its floor (" + (p.Bottom - p.Floor).ToString("F1") + " m wanted), pivot " + (den.position.y - zoneAt.y).ToString("F1") + " m above the floor (" + (-p.Floor).ToString("F1") + " wanted)";
+			return b.min.y - want;
+		}
+
+		/// <summary>Pictures of a den: from in front of its mouth looking in, and from inside (by the zone) looking towards the hoard.</summary>
+		static IEnumerator DenShots(Network_Player player, Vector3 zoneAt, Vector3 hoardAt, string prefix)
+		{
+			Vector3 inward = Vector3.ProjectOnPlane(hoardAt - zoneAt, Vector3.up).normalized;
+			if (inward == Vector3.zero) inward = Vector3.forward;
+			float yaw = Mathf.Atan2(inward.x, inward.z) * Mathf.Rad2Deg;
+			Vector3 front = zoneAt - inward * 12f;
+			RaycastHit hit;
+			if (Physics.Raycast(front + Vector3.up * 40f, Vector3.down, out hit, 80f, ~0, QueryTriggerInteraction.Ignore)) front.y = Mathf.Max(hit.point.y, zoneAt.y - 1f);
+			yield return PutPlayer(player, front + Vector3.up * 1.8f, false);
+			Look(player, yaw, 5f);
+			yield return new WaitForSeconds(2f);
+			Shot(prefix + "_mouth");
+			yield return new WaitForSeconds(0.6f);
+			yield return PutPlayer(player, zoneAt + Vector3.up * 1.0f, false);
+			Look(player, yaw, 5f);
+			yield return new WaitForSeconds(4f);
+			Shot(prefix + "_inside");
+			yield return new WaitForSeconds(0.6f);
+		}
+
+		static void Shot(string name)
+		{
+			ScreenCapture.CaptureScreenshot(System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png")));
+			Log("Screenshot shot_" + name + ".png");
+		}
+
+		/// <summary>A picture of t from about distance metres away on the ground, looking at it.</summary>
+		static IEnumerator ShotOf(Network_Player player, Transform t, string name, float distance)
+		{
+			// (a free camera, not the player: it stays where it is put, and it looks from a side it can see the thing from)
+			Bounds b = new Bounds(t.position, Vector3.one);
+			foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
+			Vector3 target = b.center;
+			float d = Mathf.Max(distance, b.extents.magnitude * 1.6f);
+			Vector3 from = target + new Vector3(0.6f, 0.45f, 0.6f).normalized * d;
+			for (int i = 0; i < 16; i++)
+			{
+				Vector3 dir = Quaternion.Euler(0f, i * 22.5f, 0f) * new Vector3(0f, 0.4f, 1f).normalized;
+				Vector3 c = target + dir * d;
+				RaycastHit hit;
+				// (clear line of sight to the thing, and not under the ground)
+				if (Physics.Linecast(c, target, out hit, ~0, QueryTriggerInteraction.Ignore) && !hit.transform.IsChildOf(t) && hit.distance < d - b.extents.magnitude * 0.5f) continue;
+				if (Physics.Raycast(c + Vector3.up * 60f, Vector3.down, out hit, 60f, ~0, QueryTriggerInteraction.Ignore) && hit.point.y > c.y - 0.5f) continue;
+				from = c; break;
+			}
+			yield return CameraShot(from, target, name);
+		}
+
+		/// <summary>A picture through Raft's own camera (its sea and sky), moved for one frame from one point at another: no HUD, no falling.</summary>
+		static bool effectsLogged;
+
+		static IEnumerator CameraShot(Vector3 from, Vector3 at, string name, bool ownCamera = false)
+		{
+			yield return new WaitForEndOfFrame();
+			// (ownCamera: a camera of its own, without Raft's fog - far views; it draws no sea)
+			GameObject own = ownCamera ? new GameObject("CITEST_ShotCamera") : null;
+			Camera cam = own != null ? own.AddComponent<Camera>() : Camera.main;
+			if (own != null && Camera.main != null) { cam.CopyFrom(Camera.main); own.transform.position = Camera.main.transform.position; }
+			if (cam == null) { Log("  (no picture " + name + ": no camera)"); yield break; }
+			Transform ct = cam.transform;
+			Vector3 pos = ct.position; Quaternion rot = ct.rotation;
+			float fov = cam.fieldOfView, far = cam.farClipPlane;
+			RenderTexture before = cam.targetTexture;
+			RenderTexture rt = new RenderTexture(1920, 1080, 24);
+			Texture2D tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+			try
+			{
+				ct.position = from;
+				ct.rotation = Quaternion.LookRotation(at - from);
+				cam.fieldOfView = 60f;
+				cam.farClipPlane = Mathf.Max(far, 2500f);
+				cam.targetTexture = rt;
+				// (the player's underwater and wobble effects on Raft's camera would bend the picture: off for this one frame)
+				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave")).ToList();
+				if (!effectsLogged) { effectsLogged = true; Log("  (the camera's effects: " + string.Join(", ", cam.GetComponents<Behaviour>().Where(b => b != null && !(b is Camera)).Select(b => b.GetType().Name + (b.enabled ? "" : " off")).ToArray()) + "; off for pictures: " + effects.Count + ")"); }
+				foreach (Behaviour b in effects) b.enabled = false;
+				try { cam.Render(); } finally { foreach (Behaviour b in effects) b.enabled = true; }
+				RenderTexture.active = rt;
+				tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+				tex.Apply();
+				RenderTexture.active = null;
+				System.IO.File.WriteAllBytes(System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png")), tex.EncodeToPNG());
+				Log("Screenshot shot_" + name + ".png");
+			}
+			catch (Exception e) { Log("  (no picture " + name + ": " + e.Message + ")"); }
+			finally
+			{
+				cam.targetTexture = before;
+				ct.position = pos; ct.rotation = rot;
+				cam.fieldOfView = fov; cam.farClipPlane = far;
+				if (own != null) UnityEngine.Object.Destroy(own);
+				rt.Release(); UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(tex);
+			}
+		}
+
+		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
+		public static void GrottoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
+
+		static IEnumerator GrottoRoutine(bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			Func<Landmark> nearestBig = () => WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big").OrderBy(l => (l.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
+			Landmark big = nearestBig();
+			// (none near: sail on until one of Raft's big islands is, about 1 km at a time)
+			for (int i = 0; i < 10 && big == null; i++) { yield return SailRoutine(40f, 25f); big = nearestBig(); }
+			if (big == null) { Fail("a cave on Raft's island: none of Raft's big islands near the raft after 10 km"); yield break; }
+			RandomizerSettings before = WorldRandomizer.Current.Copy();
+			if (!WorldRandomizer.Current.On) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 77 });
+			// Go there first: Raft switches the ground of far islands off
+			yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
+			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
+			SetHour(11f);
+			RandomizerContent.ForceBigFinds = true;
+			int n = IslandWorldState.Islands.Count;
+			// (the den's spot is a roll: on a crowded or bumpy island of Raft's one roll may find none - a few rolls, as a
+			// world's islands would each have)
+			IslandWorldState.Entry e = null;
+			List<Transform> caves = new List<Transform>();
+			foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
+			{
+				RandomizerContent.ForceBigFinds = true;
+				try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(big, salt)); }
+				finally { }
+				yield return new WaitForSeconds(3f);
+				RandomizerContent.ForceBigFinds = false;
+				e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
+				for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null || e.Root == null) continue;
+				caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
+				Log("  (no den with roll " + salt + ": another)");
+			}
+			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			Log("Den extras: '" + e.Name + "'");
+			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
+			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
+			float farOut = farthest != null ? new Vector2(farthest.bounds.center.x - e.Position.x, farthest.bounds.center.z - e.Position.z).magnitude : 0f;
+			Check(ref ok, farOut < 250f, "everything of the extras within 250 m of Raft's island's middle (the farthest: " + (farthest != null ? farthest.transform.parent != null ? farthest.transform.parent.name : farthest.name : "none") + ", " + farOut.ToString("F0") + " m)");
+			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.ObjectName) != null && !RaftProps.Get(r.ObjectName).Name.Contains("Boulder"));
+			Log("  the extras hold: " + string.Join(", ", e.Root.GetComponentsInChildren<IslandObjectRef>(true).GroupBy(r => r.ObjectName + (r.Props != null && r.Props.ContainsKey("set.piece") ? " (set piece)" : "")).Select(g => g.Key + " x" + g.Count()).ToArray()));
+			Check(ref ok, caves.Count >= 1 || !RandomizerIslands.CanBuildCaves, "'" + big.name + "': " + (caves.Count > 0 ? "a den (" + caves[0].name + ")" : "no den") + (RandomizerIslands.CanBuildCaves ? "" : " (no measured cave pieces)") + ", " + outpost + " outpost props");
+			if (caves.Count > 0)
+			{
+				yield return ShotOf(player, caves[0], "grotto_mound", 12f);
+				TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+				LootCrate hoardBox = e.Root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => (c.transform.position - caves[0].position).sqrMagnitude).FirstOrDefault();
+				if (zone != null)
+				{
+					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : caves[0].position, "grotto");
+					string denAt; float denOff = DenOffset(caves[0], zone.transform.position, out denAt);
+					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					var leftIn = DenLeftovers(caves[0]);
+					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
+					if (Mathf.Abs(denOff) >= 1.5f)
+					{
+						Log("  the den " + caves[0].name + ": scale " + caves[0].lossyScale + ", rotation " + caves[0].rotation.eulerAngles + ", parent " + (caves[0].parent != null ? caves[0].parent.name : "none"));
+						foreach (Renderer rr in caves[0].GetComponentsInChildren<Renderer>(true).OrderByDescending(x => x.bounds.size.sqrMagnitude).Take(8))
+							Log("    " + rr.name + " (" + rr.GetType().Name + (rr.enabled && rr.gameObject.activeInHierarchy ? "" : ", off") + "): " + (rr.bounds.min.y - zone.transform.position.y).ToString("F1") + " to " + (rr.bounds.max.y - zone.transform.position.y).ToString("F1") + " m from the floor, size " + rr.bounds.size);
+					}
+					// (what Raft's island has under the zone: every collider a ray down meets, below the den's own)
+					foreach (RaycastHit h in Physics.RaycastAll(zone.transform.position + Vector3.up * 30f, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+						if (!h.collider.transform.IsChildOf(e.Root.transform))
+							Log("  under the zone: " + h.collider.name + " (" + h.collider.GetType().Name + ", layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ") at " + (h.point.y - zone.transform.position.y).ToString("F1") + " m from the floor" +
+								(h.collider.GetComponentInParent<LandmarkItem>() != null ? ", a LandmarkItem" : "") + (h.collider.transform.IsChildOf(big.transform) ? ", Raft's island" : ", not Raft's island"));
+					float toHoard = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, zone.transform.position) : 99f, fromDen = hoardBox != null ? Vector3.Distance(hoardBox.transform.position, caves[0].position) : 99f;
+					Check(ref ok, hoardBox != null && toHoard > 3f && toHoard < 36f && fromDen < 24f, "a hoard at the end of the den (" + toHoard.ToString("F1") + " m in from the zone, " + fromDen.ToString("F1") + " m from the den's pivot)");
+					CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
+					for (float t = 0; guard != null && t < 60f && guard.RecordedAlive <= 0; t += 1f) yield return new WaitForSeconds(1f);
+					AI_NetworkBehaviour ai = guard != null ? guard.Spawned.FirstOrDefault(a => a != null) : null;
+					float off = ai != null ? Mathf.Abs(ai.transform.position.y - zone.transform.position.y) : 99f;
+					Check(ref ok, ai != null && off < 2.5f, guard == null ? "no guard" : ai == null ? "the guard didn't come" : "the " + guard.Kind.Label + " woke inside the cave (" + off.ToString("F1") + " m from the floor)");
+				}
+			}
+			Transform scene = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(r => r.Props != null && r.Props.ContainsKey("set.piece") && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(r.ObjectName))).Select(r => r.transform).FirstOrDefault();
+			if (scene != null) yield return ShotOf(player, scene, "grotto_outpost", 9f);
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n).Select(x => x.Id).ToList(), true);
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				WorldRandomizer.Set(before);
+			}
+			if (ok) Log("PASS: a cave on Raft's island"); else Fail("a cave on Raft's island");
+		}
+
+		[ConsoleCommand(name: "CIModeParity", docs: "Dev, anywhere: the mod spawns creatures in each of Raft's game modes exactly as Raft's own islands do (LandmarkEntitySpawner.ShouldEntityBeSpawnedInGamemode, every mode x every animal kind)")]
+		public static void ModeParityCommand()
+		{
+			bool ok = true;
+			var modes = new List<SO_GameModeValue>();
+			try
+			{
+				var arr = typeof(GameModeValueManager).GetField("gameModeValues", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as SO_GameModeValue[];
+				if (arr != null) modes.AddRange(arr.Where(m => m != null));
+				foreach (string f in new[] { "creative", "peaceful", "normal", "hard" })
+				{
+					var m = typeof(GameModeValueManager).GetField(f, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).GetValue(null) as SO_GameModeValue;
+					if (m != null && !modes.Contains(m)) modes.Add(m);
+				}
+			}
+			catch (Exception e) { Fail("Raft's game modes: " + e.Message); return; }
+			if (modes.Count == 0) { Fail("Raft's game modes aren't set up yet (main menu once?)"); return; }
+			var go = new GameObject("CI_ModeParity");
+			go.SetActive(false);
+			var spawner = go.AddComponent<LandmarkEntitySpawner>();
+			var raft = typeof(LandmarkEntitySpawner).GetMethod("ShouldEntityBeSpawnedInGamemode", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+			int compared = 0, differ = 0;
+			try
+			{
+				foreach (SO_GameModeValue m in modes)
+				{
+					var off = new List<string>();
+					foreach (AI_NetworkBehaviourType t in Enum.GetValues(typeof(AI_NetworkBehaviourType)))
+					{
+						bool theirs = (bool)raft.Invoke(spawner, new object[] { m, t }), ours = CreatureSpawner.SpawnsInMode(t, m);
+						compared++;
+						if (theirs != ours) { differ++; Log("  " + m.gameMode + " " + t + ": Raft " + theirs + ", the mod " + ours); }
+						if (!theirs) off.Add(t.ToString());
+					}
+					Log("  " + m.gameMode + ": Raft leaves out " + (off.Count == 0 ? "nothing" : string.Join(", ", off.ToArray())));
+				}
+			}
+			finally { UnityEngine.Object.Destroy(go); }
+			Check(ref ok, differ == 0 && compared > 0, compared + " mode x kind pairs compared with Raft's own rule, " + differ + " differ");
+			if (ok) Log("PASS: creatures per game mode as Raft"); else Fail("creatures per game mode as Raft");
+		}
+
+		[ConsoleCommand(name: "CIStorySafe", docs: "Dev, main menu or editor: opens each of Raft's island scenes and checks the randomizer changes only its plain islands (big and small), never a story island, the stranded boat, the pilot's island or a floating raft")]
+		public static void StorySafeCommand() { DynamicIslands.instance.StartCoroutine(StorySafeRoutine()); }
+
+		static IEnumerator StorySafeRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			int plain = 0, story = 0;
+			var wrong = new List<string>();
+			foreach (string scene in PlaceableCatalog.LandmarkSceneNames())
+			{
+				string sceneName = scene;
+				yield return PlaceableCatalog.VisitScene(sceneName, s => StorySafeScene(s, sceneName, wrong, n => { if (n) plain++; else story++; }));
+				yield return null;
+			}
+			Check(ref ok, plain > 0 && story > 0 && wrong.Count == 0, plain + " plain island(s) randomized, " + story + " left alone; wrong: " + (wrong.Count == 0 ? "none" : string.Join("; ", wrong.ToArray())));
+			if (ok) Log("PASS: Raft's story islands left alone"); else Fail("Raft's story islands left alone");
+		}
+
+		static IEnumerator StorySafeScene(UnityEngine.SceneManagement.Scene s, string sceneName, List<string> wrong, Action<bool> count)
+		{
+			foreach (GameObject root in s.GetRootGameObjects())
+				foreach (Landmark l in root.GetComponentsInChildren<Landmark>(true))
+				{
+					// (a scene's island is named like the scene: "32#Landmark_Big#..." - that is what the randomizer reads)
+					string saved = l.name;
+					l.name = sceneName;
+					bool natural = WorldRandomizer.IsNatural(l);
+					l.name = saved;
+					bool shouldBe = System.Text.RegularExpressions.Regex.IsMatch(sceneName, "#Landmark_(Big|Small)#") ||
+						(System.Text.RegularExpressions.Regex.IsMatch(sceneName, "Small") && !System.Text.RegularExpressions.Regex.IsMatch(sceneName, "Radar|Vasagatan|Tangaroa|Varuna|Utopia|Pilot|Boat|#Landmark_Raft#"));
+					Log("  " + sceneName + ": " + (natural ? "randomized" : "left alone"));
+					count(natural);
+					if (natural && !shouldBe) wrong.Add(sceneName + " would be randomized");
+					if (!natural && System.Text.RegularExpressions.Regex.IsMatch(sceneName, "#Landmark_(Big|Small)#")) wrong.Add(sceneName + " (a plain island) would be left alone");
+				}
+			yield break;
+		}
+
+
+		[ConsoleCommand(name: "CIVisitIsland", docs: "Dev, in game (either player): goes to an island of the list, loaded or not (far away: it loads when the player comes), and stands on it: CIVisitIsland <island>")]
+		public static void GoToIslandCommand(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args) : "";
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => string.Equals(i.HostName, name, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
+			if (e == null) { Fail("no island called '" + name + "' in the list"); return; }
+			DynamicIslands.instance.StartCoroutine(GoToIslandRoutine(e));
+		}
+
+		static IEnumerator GoToIslandRoutine(IslandWorldState.Entry e)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("no player"); yield break; }
+			if (e.Root == null) yield return PutPlayer(player, e.Position + Vector3.up * 3f, true);
+			for (float t = 0; e.Root == null && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("'" + e.HostName + "' didn't load"); yield break; }
+			if (WorldRandomizer.IsExtras(e))
+			{
+				// (extras have no land of their own: stand on Raft's island under their middle)
+				Collider far = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
+				if (far != null) Log("  (its farthest collider: " + far.name + " " + new Vector2(far.bounds.center.x - e.Position.x, far.bounds.center.z - e.Position.z).magnitude.ToString("F0") + " m from its middle, size " + far.bounds.size + ")");
+				RaycastHit hit;
+				Vector3 at = e.Position + Vector3.up * 200f;
+				if (Physics.Raycast(at, Vector3.down, out hit, 400f, ~0, QueryTriggerInteraction.Ignore)) yield return PutPlayer(player, hit.point + Vector3.up * 1.5f, false);
+			}
+			else yield return StandRoutine(e.Root);
+			Log("Went to island '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")");
+		}
+		[ConsoleCommand(name: "CICaveState", docs: "Dev, world (either player): a cave of an island as this machine has it: its guard (awake? animals of its kind in the den) and its hoard (opened?): CICaveState <island>")]
+		public static void CaveStateCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			Transform den = e.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave);
+			if (den == null) { Fail("no cave on '" + e.HostName + "'"); return; }
+			PropInfo p = RaftProps.Get(den.name);
+			float reach = Mathf.Max(p.Size.x, p.Size.z) * 0.5f;
+			Vector3 middle = den.position + den.rotation * p.Centre;
+			CreatureSpawnPoint guard = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(s => ObjectProps.Get(s.Props, ObjectProps.CreatureZone) == "cave");
+			int inside = guard == null ? 0 : UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Count(a => a.behaviourType == guard.Kind.Type && a.networkEntity != null && !a.networkEntity.IsDead && new Vector2(a.transform.position.x - middle.x, a.transform.position.z - middle.z).magnitude < reach);
+			TriggerZone zone = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "cave");
+			LootCrate hoard = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle).EndsWith("hoard"); });
+			Log("CAVE '" + e.HostName + "' " + den.name + ": zone " + (zone == null ? "none" : ContentState.IsUsed(e, zone.StateKey) ? "fired" : "waiting") + ", guard " + (guard == null ? "none" : guard.Kind.Label + " " + inside + " in the den") +
+				(Raft_Network.IsHost && guard != null ? " (recorded alive " + guard.RecordedAlive + ")" : "") + ", hoard " + (hoard == null ? "none" : hoard.Looted ? "opened" : "closed"));
+			Log("PASS: cave state");
+		}
+
+		#endregion
+
+		/// <summary>Raft's objects the randomizer builds with: set pieces and props of the quest islands, and cave pieces.</summary>
+		internal static readonly string[] MeasuredProps =
+		{
+			// Set pieces (oddity islands)
+			"Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Green_02", "Caravan_Yellow_01", "CaravanBarebones1", "Airplane", "BoatStranded",
+			"Balboa_Shack", "Balboa_DecorationPrefabBase_SimpleTent", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Body2", "CaravanRocketDebris_Top1", "CaravanRocketDebris_Exhaust",
+			"CaravanRocketDebris_Leg1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister", "TangaroaFounderStatue", "RaftMonument", "Well", "Tire_02", "Tire_03", "Pallet", "RT_PlasticBoat",
+			"WingBroken", "BackWingBroken", "PropellerBlade", "BoatLandmark_Flag",
+			// Scrapyard (Varuna Point)
+			"VP_Excavator", "VP_Forklift", "VP_Dumpster01", "VP_Dumpster02", "VP_ConcretePipe01", "VP_ConcretePipe02", "VP_BrickStack01", "VP_BrickStack02", "VP_BrickStack03",
+			"VP_MetalCrate01", "VP_MetalCrate02", "VP_MetalCrate03", "VP_ExplosiveBarrel_Pile", "VP_FoldingLadder_Tall", "VP_Cable_Roll01",
+			// Market (Utopia)
+			"UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03", "UT_MarketCrateSmall01", "UT_MarketCrateSmall02", "UT_MarketStackBox01", "UT_ClothOverhangBig04", "UT_ClothOverhangBig05",
+			"UT_DreamCatcher01", "UT_DreamCatcher02", "UT_DanglyDecoration01", "UT_LightBottle01", "UT_CoveredCrate01", "UT_CoveredCrate02", "UT_DIY_Decoration01", "UT_Generator01",
+			"Tangaroa_OutdoorFurnitureSilver_Bench", "Tangaroa_OutdoorFurnitureSilver_Table", "Tangaroa_OutdoorFurnitureSilver_Chair", "Tire_01",
+			// Caravan outpost (Caravan Town)
+			"Banner_01", "BenchTable_01", "PlasticChair_01", "Cableroll_01", "Cableroll_02", "Crate_Big_01", "Crate_Big_02", "Crate_Small_02", "Scaffolding_2x2m", "Scaffolding_6x4m",
+			"LandmarkLadder_6m", "FishingNets_02", "MetalSheet_2", "MetalSheet_3", "PulauKafilahFlag", "RopeFence_Short", "Sign_01", "Sign_02", "Bench_01", "AcaciaTree_Big1", "DeadTree1", "DeadTree2",
+			"CaravanIsland_BigRoundRock_1", "Candle_01", "MetalTable_01",
+			// Bear country (Balboa)
+			"Balboa_DecorationPrefabBase_Fence_Mid", "Balboa_DecorationPrefabBase_Fence_EndL", "Balboa_DecorationPrefabBase_Fence_EndR", "Balboa_DecorationPrefabBase_Fence_EndBroken",
+			"Balboa_DecorationPrefabBase_Fence_Sign", "Balboa_DecorationPrefabBase_Lantern", "Balboa_DecorationPrefabBase_OldCouch", "Balboa_DecorationPrefabBase_Old Stove",
+			"Balboa_DecorationPrefabBase_Wooden Spikes", "Balboa_DecorationPrefabBase_ToxicBarrel", "Balboa_DecorationPrefabBase_Generator", "Balboa_DecorationPrefabBase_Trashcan",
+			"Balboa_DecorationPrefabBase_Table", "Balboa_DecorationPrefabBase_Chair", "BearSign1", "BearSign2 Variant", "Firewood_1", "Antenna_dish", "Balboa_DirectionSign",
+			// Frozen camp (Temperance)
+			"TP_Igloo_Small", "TP_Igloo_Small_1", "TP_Igloo_Medium_1", "TP_Igloo_Large_1", "TP_IcePillar01", "TP_IcePillar02", "TP_FoldingTable_Large", "TP_FoldingStool", "TP_Moontown_Barrel02",
+			"TP_Moontown_SealedCrate02_Clean", "TP_Moontown_TarpCrate02_Clean", "SnowmobileShedMesh",
+			// Hotel garden (Tangaroa)
+			"LargePlant1", "LargePlant2", "MediumPlant1", "MediumPlant2", "SmallPlant1", "Flowerpot_01", "Flowerpot_02", "Flowerpot_03", "RestaSunshadeGround", "RestaFence", "Table_Common_01", "Dinnerchair_01",
+			// Radio outpost (the radio tower)
+			"RT_WindMill", "RT_SatteliteDisc", "RT_Floodlight_WithoutLightSource", "RT_Fence", "RT_SharkCage", "RT_PowerBox", "RT_Signs", "RT_Spotlight",
+			// Floating rafts
+			"campfire_1", "Scarecrow", "Bird_Nest", "Bed_Simple", "buoy",
+			// Caves
+			"TP_UnderwaterCaveTunnel_Straight", "TP_UnderwaterCaveTunnel_StraightLong", "TP_UnderwaterCaveTunnel_Corner", "TP_UnderwaterCaveTunnel_CornerLong", "TP_UnderwaterCaveTunnel_CrossT",
+			"BalboaCave_Entrance", "BalboaCave_DeadEnd", "BalboaCave_Bear", "BalboaCave_Vines", "TP_CaveTunnel_SurfaceStaircase", "Ravine_Cave", "CaveVine1", "CaveVine2", "CaveVine3", "UndergroundToSurface_Tunnel",
+			// Rocks for mounds over free-standing caves, and lights
+			"BigBoulder1_Low", "BigBoulder2_Low", "BigBoulder3_Low", "BigBoulder4_Low", "SmallBoulder1", "SmallBoulder2", "SmallBoulder3", "SmallBoulder4", "BigRock_1", "BigRock_2", "BigRock_Low1_Sand",
+			"TP_BigRock02", "TP_BigRock03", "TP_BigRock04", "BigSharpRock_1", "BigSharpRock_2", "CaravanIsland_BigRoundRock_1",
+			"Placeable_Lantern_FireBasket", "Placeable_Lantern_Basic", "Placeable_Lantern_Metal", "Placeable_Lantern_Fireplace", "Placeable_StringLight_Horizontal", "Placeable_Utopia_LightBottleYellow",
+		};
+
+		[ConsoleCommand(name: "CIMeasureProps", docs: "Dev, main menu or editor: measures Raft's objects the randomizer builds with (size, bottom; the inside of cave pieces) into raft_props.txt in Mods\\DynamicIslands. CIMeasureProps [names, comma separated]")]
+		public static void MeasurePropsCommand(string[] args)
+		{
+			string[] names = args != null && args.Length > 0 ? string.Join(" ", args).Split(',').Select(s => s.Trim()).ToArray() : MeasuredProps;
+			DynamicIslands.instance.StartCoroutine(MeasureProps(names));
+		}
+
+		static IEnumerator MeasureProps(string[] names)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			yield return PlaceableCatalog.EnsureLoaded(names);
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			var lines = new List<string>
+			{
+				"# Raft's objects the randomizer builds with (CIMeasureProps, raft=" + Application.version + ")",
+				"# prop\t<name>\t<scene>\t<size x,y,z>\t<centre x,y,z>\t<bottom below the pivot>\t<solid colliders>   (at the scale the object spawns with)",
+				"# cave\t<name>\t<axis of the passage 0=x 2=z>\t<floor above the pivot>\t<headroom>\t<width>\t<open at +axis>\t<open at -axis>\t<a point in the passage, from the pivot>\t<room from it towards +axis>\t<and towards -axis> (99 = open)",
+			};
+			var lab = new GameObject("CI_PropLab");
+			lab.transform.position = new Vector3(0f, 3000f, 0f);
+			int measured = 0, missing = 0;
+			foreach (string n in names)
+			{
+				GameObject proto = PlaceableCatalog.Get(n);
+				Bounds b;
+				if (proto == null || !PlaceableCatalog.LocalBounds(n, out b)) { Log("prop " + n + ": not in this Raft"); missing++; continue; }
+				Vector3 s = proto.transform.localScale;
+				var size = Vector3.Scale(b.size, new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z)));
+				var centre = Vector3.Scale(b.center, s);
+				float bottom = b.min.y * s.y;
+				int colliders = proto.GetComponentsInChildren<Collider>(true).Count(c => !c.isTrigger);
+				lines.Add(string.Join("\t", new[] { "prop", n, PlaceableCatalog.SceneOf(n) ?? "", RaftProps.Text(size), RaftProps.Text(centre), bottom.ToString("0.###", inv), colliders.ToString(inv) }));
+				measured++;
+				if (!System.Text.RegularExpressions.Regex.IsMatch(n, "Cave|Tunnel|Ravine")) continue;
+
+				// Cave pieces: where the passage is. Rays across it along x and along z at a few heights: a passage lets them
+				// in (far, or all the way through); the floor is the highest thing a ray from inside finds below the middle.
+				GameObject go = PlaceableCatalog.Spawn(n, lab.transform, false);
+				if (go == null) continue;
+				go.transform.localPosition = Vector3.zero;
+				go.transform.localRotation = Quaternion.identity;
+				yield return new WaitForFixedUpdate();
+				Physics.SyncTransforms();
+				Bounds w = new Bounds(go.transform.position, Vector3.zero);
+				bool any = false;
+				foreach (Collider c in go.GetComponentsInChildren<Collider>()) { if (c.isTrigger) continue; if (!any) { w = c.bounds; any = true; } else w.Encapsulate(c.bounds); }
+				if (!any) { Log("cave " + n + ": no colliders"); UnityEngine.Object.Destroy(go); continue; }
+				// (Raft's cave meshes face inwards: rays must see back faces to find them from outside or inside)
+				bool backfaces = Physics.queriesHitBackfaces;
+				Physics.queriesHitBackfaces = true;
+				try
+				{
+					Func<Vector3, Vector3, float, float> depth = (from, dir, max) =>
+					{
+						float best = max;
+						foreach (RaycastHit h in Physics.RaycastAll(from, dir, max, ~0, QueryTriggerInteraction.Ignore))
+							if (h.collider.transform.IsChildOf(go.transform) && h.distance < best) best = h.distance;
+						return best;
+					};
+					// A point inside the passage: a floor below and a roof above it, walls close on two sides, far or open on the others
+					int bestAxis = -1; float bestAlong = 0f, bestWidth = 0f, bestHead = 0f, bestFloor = 0f, toPlus = 0f, toMinus = 0f; bool plus = false, minus = false;
+					Vector3 bestAt = w.center;
+					float reach = Mathf.Max(w.size.x, w.size.z) + 2f;
+					foreach (Vector2 o in new[] { Vector2.zero, new Vector2(0.25f, 0f), new Vector2(-0.25f, 0f), new Vector2(0f, 0.25f), new Vector2(0f, -0.25f) })
+						for (int k = 1; k <= 24; k++)
+						{
+							Vector3 q = new Vector3(w.center.x + o.x * w.size.x, w.min.y + w.size.y * k / 25f, w.center.z + o.y * w.size.z);
+							float dd = depth(q, Vector3.down, w.size.y + 1f), du = depth(q, Vector3.up, w.size.y + 1f);
+							if (dd > w.size.y || du > w.size.y || dd + du < 1.8f || dd > 3f) continue; // (standing height over its floor)
+							float px = depth(q, Vector3.right, reach), nx = depth(q, Vector3.left, reach), pz = depth(q, Vector3.forward, reach), nz = depth(q, Vector3.back, reach);
+							bool alongX = px + nx > pz + nz;
+							float along = alongX ? px + nx : pz + nz, across = alongX ? pz + nz : px + nx;
+							if (across < 1.5f || across > 20f) continue;
+							if (along <= bestAlong + 0.01f) continue;
+							bestAlong = along; bestAxis = alongX ? 0 : 2; bestWidth = across; bestHead = dd + du; bestFloor = q.y - dd - go.transform.position.y; bestAt = q;
+							toPlus = Mathf.Min(alongX ? px : pz, 99f); toMinus = Mathf.Min(alongX ? nx : nz, 99f);
+							// Open where a ray leaves the piece without meeting anything
+							plus = alongX ? px >= reach - 0.01f || q.x + px > w.max.x + 0.4f : pz >= reach - 0.01f || q.z + pz > w.max.z + 0.4f;
+							minus = alongX ? nx >= reach - 0.01f || q.x - nx < w.min.x - 0.4f : nz >= reach - 0.01f || q.z - nz < w.min.z - 0.4f;
+						}
+					if (bestAxis < 0) { Log("cave " + n + ": no passage found; size " + RaftProps.Text(size)); UnityEngine.Object.Destroy(go); continue; }
+					lines.Add(string.Join("\t", new[] { "cave", n, bestAxis.ToString(inv), bestFloor.ToString("0.##", inv), bestHead.ToString("0.##", inv), bestWidth.ToString("0.##", inv), plus ? "1" : "0", minus ? "1" : "0",
+						RaftProps.Text(bestAt - go.transform.position), toPlus.ToString("0.##", inv), toMinus.ToString("0.##", inv) }));
+					Log("cave " + n + ": passage along " + (bestAxis == 0 ? "x" : "z") + " (" + bestAlong.ToString("0.0", inv) + " m seen), floor " + bestFloor.ToString("0.0", inv) + " m above the pivot, headroom " + bestHead.ToString("0.0", inv) +
+						" m, width " + bestWidth.ToString("0.0", inv) + " m, open at " + (plus ? "+" : "") + (minus ? "-" : "") + (plus || minus ? "" : "neither") + "; size " + RaftProps.Text(size) + ", centre " + RaftProps.Text(centre) +
+						", probe at " + RaftProps.Text(bestAt - go.transform.position));
+				}
+				finally { Physics.queriesHitBackfaces = backfaces; }
+				UnityEngine.Object.Destroy(go);
+			}
+			UnityEngine.Object.Destroy(lab);
+			string path = System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
+			System.IO.File.WriteAllLines(path, lines.ToArray());
+			RaftProps.Reload();
+			Log("Measured " + measured + " props (" + missing + " not in this Raft): " + System.IO.Path.GetFullPath(path));
+			if (measured > 0) Log("PASS: measured props"); else Fail("measured no props");
 		}
 
 		[ConsoleCommand(name: "CIProbeSetPieces", docs: "Dev: size and footprint of Raft objects used as set pieces on oddity islands, and item names for rewards. CIProbeSetPieces [names, comma separated]")]

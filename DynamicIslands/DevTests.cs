@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DynamicIslands.Editor;
@@ -974,6 +975,26 @@ namespace DynamicIslands
 			Log("The game keeps running in the background now");
 		}
 
+
+		/// <summary>Sails the raft straight to a point that follows Raft's world shifts (a Func: asked again every step), at most 200 s.</summary>
+		static IEnumerator SailTo(Func<Vector3> target, float speed)
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null || raft.body == null) { Fail("no raft"); yield break; }
+			Rigidbody body = raft.body;
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
+			for (float t = 0; t < 200f; t += Time.fixedDeltaTime)
+			{
+				yield return new WaitForFixedUpdate();
+				KeepAlive(player);
+				Vector3 to = Flat(target() - body.position);
+				if (to.magnitude < 3f) break;
+				body.MovePosition(body.position + to.normalized * Mathf.Min(speed * Time.fixedDeltaTime, to.magnitude));
+			}
+			body.velocity = Vector3.zero;
+			Log("Sailed back: the raft " + Flat(target() - body.position).magnitude.ToString("F0") + " m from where it was");
+		}
 		static IEnumerator SailRoutine(float seconds, float speed)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
@@ -1092,6 +1113,36 @@ namespace DynamicIslands
 				Log((ids ? "PASS" : total == 0 ? "SKIP" : "FAIL") + ": " + found + "/" + total + " harvestables and pickups on loaded custom islands are in Raft's network registry" +
 					(total == 0 ? " (no loaded island with any; SpawnIsland demo2 first)" : ""));
 				ok &= ids || total == 0;
+
+				// 4. Every other kind of message, with the fields it uses (catalogue IX6): the world's rules, story and
+				// randomizer as the host builds them, and the rest as they are sent
+				var kinds = new List<IslandNetMessage>
+				{
+					new IslandNetMessage { Kind = IslandNetMessage.Remove, Ids = new[] { 3, 4 } },
+					new IslandNetMessage { Kind = IslandNetMessage.SyncRequest },
+					new IslandNetMessage { Kind = IslandNetMessage.FileRequest, Name = "cimpfull", Hash = "0123abcd" },
+					new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { 7 }, Index = 0x20003, Count = 12 },
+					new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { 7 }, Index = 2, Count = 1 },
+					new IslandNetMessage { Kind = IslandNetMessage.Announce, Ids = new[] { 7 }, Name = "Sandbar", Data = "A sandbar rose", Offsets = new[] { 1.5f, 0f, -300.25f } },
+					new IslandNetMessage { Kind = IslandNetMessage.ObjectSet, Ids = new[] { 7 }, Index = 14, Count = 3 },
+					new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { 7 }, Index = Behaviours.IslandIndex, Name = "quest!", FullList = true },
+					new IslandNetMessage { Kind = IslandNetMessage.PlayerPlace, Ids = new[] { 7 }, Offsets = new[] { 3f, 12.5f, -4f } },
+					new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { 7 }, Index = TriggerZone.KeyBase + 2, Count = 1 },
+					StoryBook.StateMessage(), WorldRandomizer.Message(), WorldRules.Message(),
+				};
+				var broken = new List<string>();
+				foreach (IslandNetMessage m in kinds)
+				{
+					IslandNetMessage r = RoundTrip(m, out size);
+					Func<int[], int[], bool> ints = (a, b) => (a == null) == (b == null) && (a == null || a.SequenceEqual(b));
+					Func<float[], float[], bool> floats = (a, b) => (a == null) == (b == null) && (a == null || a.SequenceEqual(b));
+					if (r == null || r.Kind != m.Kind || !ints(r.Ids, m.Ids) || r.Index != m.Index || r.Count != m.Count || r.FullList != m.FullList ||
+						r.Name != m.Name || r.Hash != m.Hash || r.Data != m.Data || !floats(r.Offsets, m.Offsets))
+						broken.Add(m.Kind.ToString());
+				}
+				Log((broken.Count == 0 ? "PASS" : "FAIL") + ": " + kinds.Count + " kinds of message survive RML's serializer with their fields (kinds " + string.Join(", ", kinds.Select(k => k.Kind.ToString()).Distinct().ToArray()) + ")" +
+					(broken.Count > 0 ? "; broken: " + string.Join(", ", broken.ToArray()) : ""));
+				ok &= broken.Count == 0;
 			}
 			catch (Exception e) { Fail("exception: " + e); ok = false; }
 			if (ok) Log("PASS: network self test"); else Fail("network self test");

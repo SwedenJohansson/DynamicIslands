@@ -126,14 +126,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Unloads far-away islands (keeping their entry) and loads them again when the raft comes back.</summary>
 		static void StreamIslands(Vector3 raftPos)
 		{
-			// (by the raft, and by this player: an island someone stands on stays, however far the raft drifts, and loads
-			// for a player who comes back to a world standing on it - PlayerHold)
-			Network_Player player = RAPI.GetLocalPlayer();
-			Vector3? playerPos = player != null ? player.transform.position : (Vector3?)null;
+			// (by the raft, and by the players: an island someone stands on stays, however far the raft drifts, and loads
+			// for a player who comes back to a world standing on it - PlayerHold. The host keeps an island loaded while
+			// any player is at it: its creatures, ambushes, shared actions and where each player stood live on the host's
+			// copy - a crew that splits up, three players at an island far behind the raft, still has all of it)
+			var players = new List<Vector3>();
+			if (Raft_Network.IsHost) players.AddRange(UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null).Select(p => p.transform.position));
+			else { Network_Player player = RAPI.GetLocalPlayer(); if (player != null) players.Add(player.transform.position); }
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
 				float d = Flat(e.Position - raftPos).magnitude;
-				if (playerPos.HasValue) d = Mathf.Min(d, Flat(e.Position - playerPos.Value).magnitude);
+				foreach (Vector3 pp in players) d = Mathf.Min(d, Flat(e.Position - pp).magnitude);
 				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
 				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
 				if (e.Root != null && d > UnloadDistance)

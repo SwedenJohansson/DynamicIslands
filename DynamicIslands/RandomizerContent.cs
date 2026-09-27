@@ -76,6 +76,11 @@ namespace DynamicIslands.Editor
 			AI_NetworkBehaviourType.Chicken, AI_NetworkBehaviourType.Goat, AI_NetworkBehaviourType.Llama,
 		};
 
+		/// <summary>Tests: every island counts as a big one and gets its cave and outpost.</summary>
+		internal static bool ForceBigFinds;
+		/// <summary>Tests: the find every island gets ("treasure", "camp" or "stash"; null: by chance).</summary>
+		internal static string ForceFind;
+
 		static bool Dry(float h, float slope) { return h > 1.2f && h < 40f && slope < 26f; }
 
 		/// <summary>
@@ -96,7 +101,28 @@ namespace DynamicIslands.Editor
 
 			if (s.Has(RandomizerSettings.Animals)) Animals(k, ground, l, s, rnd, parts);
 			if (s.Has(RandomizerSettings.Loot)) Loot(k, ground, s, rnd, parts);
-			if (s.Has(RandomizerSettings.Finds) && rnd.NextDouble() < s.Pick(0.1f, 0.2f, 0.3f) * (big ? 1.6f : 1f)) Find(k, ground, l, s, rnd, parts, big);
+			if (s.Has(RandomizerSettings.Finds) && (ForceFind != null || rnd.NextDouble() < s.Pick(0.1f, 0.2f, 0.3f) * (big ? 1.6f : 1f))) Find(k, ground, l, s, rnd, parts, big);
+			// Raft's big islands: now and then a cave under a mound of rocks, and an outpost with things from the quest islands
+			if (ForceBigFinds) big = true;
+			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.25f, 0.45f, 0.7f)))
+			{
+				// (what would poke into the den: Raft's trees, bushes, crates, clams and boulders - not its flowers and small stones - and what was put here already)
+				var blockers = (l.landmarkItems ?? new LandmarkItem[0]).Where(i => i != null && System.Text.RegularExpressions.Regex.IsMatch(i.name, "Palm|Tree|Bush|Crate|Clam|Boulder|Bamboo")).Select(i => i.transform.position).Concat(k.Taken.Skip(raftCount)).ToList();
+				string cave = RandomizerIslands.Grotto(k, ground, rnd, new[] { "Boar", "Boar", "Bear", "Rat" }[rnd.Next(4)], rnd.NextDouble() < 0.3 ? "Treasure" : "Metal", blockers);
+				if (cave != null) parts.Add(cave);
+			}
+			if (s.Has(RandomizerSettings.Finds) && big && (ForceBigFinds || rnd.NextDouble() < s.Pick(0.2f, 0.35f, 0.5f)))
+			{
+				List<Theme> themes = RandomizerIslands.ThemesFor(TerrainPainter.Tropical);
+				Vector3? spot = themes.Count > 0 ? ground.Find(rnd, (h, slope) => h > 2.5f && h < 25f && slope < 10f, k.Taken, 7f, 600) : null;
+				if (spot.HasValue)
+				{
+					Theme t = themes[rnd.Next(themes.Count)];
+					if (RandomizerIslands.DressWorld(k, ground, t, spot.Value, 8f, rnd)) parts.Add("an outpost (" + t.Label.ToLowerInvariant() + ")");
+					else Debug.Log("[CUSTOM ISLANDS] [randomizer] no outpost: the " + t.Label.ToLowerInvariant() + " didn't fit at the level spot");
+				}
+				else if (themes.Count > 0) Debug.Log("[CUSTOM ISLANDS] [randomizer] no outpost: no level spot clear of Raft's things");
+			}
 
 			what = string.Join(", ", parts.ToArray());
 			return k.File.Objects.Count > 0 ? k.File : null;
@@ -221,7 +247,7 @@ namespace DynamicIslands.Editor
 
 		static void Find(WorldKit k, LandGround g, Landmark l, RandomizerSettings s, System.Random rnd, List<string> parts, bool big)
 		{
-			double r = rnd.NextDouble();
+			double r = ForceFind == "treasure" ? 0.0 : ForceFind == "camp" ? 0.5 : ForceFind == "stash" ? 0.9 : rnd.NextDouble();
 			if (r < 0.4 && TreasureHunt(k, g, s, rnd)) { parts.Add("a treasure hunt"); return; }
 			if (r < 0.7 && big && Camp(k, g, s, rnd)) { parts.Add("an abandoned camp"); return; }
 			if (Stash(k, g, l, s, rnd)) parts.Add("a castaway's stash");
@@ -317,10 +343,13 @@ namespace DynamicIslands.Editor
 		static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
 		{
 			if (clear > 0f) k.Clear(p, clear);
+			// Its bottom as measured (raft_props.txt; the table above where it wasn't), on the lowest ground under it
 			float bottom;
-			Bottom.TryGetValue(name, out bottom);
+			PropInfo info = RaftProps.Get(name);
+			if (info != null) bottom = info.Bottom; else Bottom.TryGetValue(name, out bottom);
+			float ground = RandomizerIslands.LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
 			// (a setting of its own, so content placed next to it doesn't clear it away like scattered nature)
-			IslandObject o = k.Add(name, k.At(p, -bottom - sink), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+			IslandObject o = k.Add(name, new Vector3(p.x, ground - bottom - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 			o.EulerRotation = new Vector3(tiltX, yaw, tiltZ);
 			return o;
 		}
@@ -402,6 +431,10 @@ namespace DynamicIslands.Editor
 					Hut(k, c, yaw);
 					break;
 			}
+			// A touch of the quest island the set piece comes from
+			string theme;
+			Theme th = RandomizerIslands.OddityTheme.TryGetValue(kind, out theme) ? RandomizerIslands.ThemeOf(theme) : null;
+			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4));
 		}
 
 		/// <summary>A small hut of Raft's blocks on the land, open on one side, with a hammock and the castaway's chest.</summary>
@@ -415,6 +448,19 @@ namespace DynamicIslands.Editor
 			for (int x = -1; x <= w; x++) for (int z = -1; z <= d; z++) top = Mathf.Max(top, k.Ground(c + new Vector2(x * g, z * g)));
 			Vector3 o = new Vector3(c.x, top, c.y);
 			float deck = top + PlacementOptions.FloatDepth;
+			// (and the ground built up under it to that height, blended over 3 m: on a slope its low side hung 0.7 m in the air)
+			IslandFile f = k.File;
+			float step = f.TerrainSize.x / (f.HeightmapResolution - 1);
+			Vector2 lo = c - new Vector2(g, g), hi = c + new Vector2(w * g, d * g);
+			for (int zi = Mathf.Max(0, Mathf.FloorToInt((lo.y - 4f) / step)); zi <= Mathf.Min(f.HeightmapResolution - 1, Mathf.CeilToInt((hi.y + 4f) / step)); zi++)
+				for (int xi = Mathf.Max(0, Mathf.FloorToInt((lo.x - 4f) / step)); xi <= Mathf.Min(f.HeightmapResolution - 1, Mathf.CeilToInt((hi.x + 4f) / step)); xi++)
+				{
+					float px = xi * step, pz = zi * step;
+					float out_ = Mathf.Max(Mathf.Max(lo.x - px, px - hi.x), Mathf.Max(lo.y - pz, pz - hi.y));
+					float wgt = out_ <= 0f ? 1f : out_ < 3f ? 1f - out_ / 3f : 0f;
+					float h = f.Heights[zi, xi] * f.TerrainSize.y;
+					if (wgt > 0f && h < top) f.Heights[zi, xi] = Mathf.Lerp(h, top - 0.05f, wgt) / f.TerrainSize.y;
+				}
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
 				{
