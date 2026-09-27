@@ -215,9 +215,26 @@ namespace DynamicIslands
 				string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.ZoneId), what, StringComparison.OrdinalIgnoreCase));
 			if (r == null) { Fail("no object or zone '" + what + "' on '" + e.HostName + "'"); return; }
 			PutPlayerNear(r.transform, 0.3f); // (near the middle: a zone measures the distance in 3D, a slope adds to it)
+			DynamicIslands.instance.StartCoroutine(StayThere(r.transform));
 			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
 		}
 
+
+		/// <summary>
+		/// After a test teleport: Raft sometimes moves the player on at once (a fall, its own spawn-point fix), before a zone
+		/// there looks (4 times a second) - put them back, and say so.
+		/// </summary>
+		static IEnumerator StayThere(Transform target)
+		{
+			yield return new WaitForSeconds(0.6f);
+			Network_Player p = RAPI.GetLocalPlayer();
+			TriggerZone z = target != null ? UnityEngine.Object.FindObjectsOfType<TriggerZone>().OrderBy(x => (x.transform.position - target.position).sqrMagnitude).FirstOrDefault() : null;
+			if (p == null || z == null || (z.transform.position - target.position).magnitude > 1f) yield break;
+			float d = (p.transform.position - z.transform.position).magnitude;
+			if (d <= z.Radius) yield break;
+			Log("  (the player was moved " + d.ToString("F1") + " m away from zone '" + z.Id + "' at once: put there again)");
+			PutPlayerNear(target, 0.3f);
+		}
 
 		[ConsoleCommand(name: "CIChests", docs: "Dev, in game (either player): an island's chests as this machine has them, in CIOpenChest's order: CHEST <n> '<title>' opened|closed")]
 		public static void ChestsCommand(string[] args)

@@ -150,7 +150,9 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			Check(ref ok, WorldDirector.RulesOf(src).Count == 2, "the island carries its 2 rules");
 			WorldDirector.Evaluate();
-			Check(ref ok, IslandWorldState.Islands.Count == before + 1, "nothing is brought before the quest or the zone");
+			// (the randomizer's extras on one of Raft's islands near by are not this island's doing)
+			var early = IslandWorldState.Islands.Skip(before).Where(x => x != src && !WorldRandomizer.IsExtras(x)).Select(x => x.Name).ToList();
+			Check(ref ok, early.Count == 0, "nothing is brought before the quest or the zone" + (early.Count > 0 ? " - came: " + string.Join(", ", early.ToArray()) : ""));
 
 			var sent = new List<IslandNetMessage>();
 			var brought = new List<KeyValuePair<IslandWorldState.Entry, IntroRule>>();

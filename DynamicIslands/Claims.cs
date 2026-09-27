@@ -50,8 +50,9 @@ namespace DynamicIslands.Editor
 			if (!IslandNetwork.InGame) return true;
 			long k = K(e.Id, key);
 			if (granted.Remove(k)) return true;
-			if (waiting.ContainsKey(k)) return false; // (asked already: the answer is on its way)
+			if (waiting.ContainsKey(k)) { Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + key.ToString("X") + " on island " + e.Id + ": asked already, waiting for the host"); return false; } // (the answer is on its way)
 			waiting[k] = then;
+			Debug.Log("[CUSTOM ISLANDS] [net] Asking the host for " + key.ToString("X") + " on island " + e.Id);
 			IslandNetwork.SendClaim(e.Id, key);
 			DynamicIslands.instance.StartCoroutine(NoAnswer(k));
 			return false;
@@ -98,6 +99,7 @@ namespace DynamicIslands.Editor
 			if (!waiting.TryGetValue(k, out then)) return;
 			waiting.Remove(k);
 			bool yes = msg.Count == 1;
+			Debug.Log("[CUSTOM ISLANDS] [net] The host " + (yes ? "granted" : "refused") + " " + msg.Index.ToString("X") + " on island " + msg.Ids[0]);
 			LastAnswer = yes ? "granted" : "refused";
 			if (yes) granted.Add(k);
 			try { then(yes); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Claim: " + ex.Message); }

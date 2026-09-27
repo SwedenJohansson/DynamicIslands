@@ -773,6 +773,19 @@ namespace DynamicIslands
 			{
 				Vector3 top = HighestPoint(terrain);
 				target = top + Vector3.up * 1.5f + new Vector3(3f, 0, 3f); // a little off the peak
+				// (a generated peak can be a needle or a cliff edge: the highest gentle spot near it, where a player can stand)
+				TerrainData td = terrain.terrainData;
+				float best = float.MinValue;
+				for (float dx = -24f; dx <= 24f; dx += 3f)
+					for (float dz = -24f; dz <= 24f; dz += 3f)
+					{
+						Vector3 p = top + new Vector3(dx, 0f, dz);
+						Vector3 local = p - terrain.transform.position;
+						float u = local.x / td.size.x, v = local.z / td.size.z;
+						if (u < 0f || u > 1f || v < 0f || v > 1f || td.GetSteepness(u, v) > 25f) continue;
+						float y = terrain.SampleHeight(p);
+						if (y > best) { best = y; target = p; }
+					}
 				target.y = terrain.SampleHeight(target) + terrain.transform.position.y + 1.5f;
 			}
 			else
@@ -1772,9 +1785,20 @@ namespace DynamicIslands
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
 			box.gameObject.SetActive(true);
 			box.Open();
+			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
+		}
+
+		/// <summary>
+		/// A moment after the box opens (as a player's click comes): straight after leaving a world Raft's game mode tabs
+		/// aren't set up in the same frame, and Create threw inside Raft (no world, IsInNewGame never set).
+		/// </summary>
+		static IEnumerator NewWorldCreate(NewGameBox box, string name)
+		{
+			yield return new WaitForSecondsRealtime(1f);
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); return; }
+			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); yield break; }
 			Log("Creating world '" + name + "'");
 			box.Button_CreateNewGame();
 		}

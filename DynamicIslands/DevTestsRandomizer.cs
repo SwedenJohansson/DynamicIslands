@@ -601,6 +601,20 @@ namespace DynamicIslands
 					WorldRandomizer.VariantOfIndex.ContainsKey(x.ObjectIndex) && WorldRandomizer.VariantOfIndex[x.ObjectIndex] != null).OrderBy(x => (x.transform.position - raft).sqrMagnitude).FirstOrDefault();
 				if (a == null) yield return new WaitForSeconds(1f);
 			}
+			// (which animals are near depends on where the raft is: a coloured shark will do, else Wild for a moment until a
+			// new animal comes with a look)
+			RandomizerSettings was = null;
+			Func<bool, AI_NetworkBehaviour> find = sharks => UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(x => x != null && x.networkEntity != null && !x.networkEntity.IsDead &&
+				(sharks || x.behaviourType != AI_NetworkBehaviourType.Shark) && WorldRandomizer.VariantOfIndex.ContainsKey(x.ObjectIndex) && WorldRandomizer.VariantOfIndex[x.ObjectIndex] != null)
+				.OrderBy(x => (x.transform.position - raft).sqrMagnitude).FirstOrDefault();
+			if (a == null) a = find(true);
+			if (a == null)
+			{
+				was = WorldRandomizer.Current.Copy();
+				WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = was.Seed != 0 ? was.Seed : 777 });
+				for (float t = 0; t < 120f && a == null; t += 2f) { yield return SailRoutine(2f, 15f); a = find(true); }
+			}
+			if (was != null && a == null) WorldRandomizer.Set(was);
 			if (a == null) { Fail("no coloured animal (the randomizer on, Wild, near Raft's islands)"); yield break; }
 			string look = LookOf(a), variant = WorldRandomizer.VariantOfIndex[a.ObjectIndex];
 			Network_Host host = ComponentManager<Network_Host>.Value;
@@ -613,6 +627,7 @@ namespace DynamicIslands
 			bool ok = true;
 			Check(ref ok, a != null && a.networkEntity.stat_health.Value < hp, "the " + a.behaviourType + " (" + variant + ") was hit: health " + hp.ToString("F0") + " -> " + a.networkEntity.stat_health.Value.ToString("F0"));
 			Check(ref ok, after == look, "its colour 2 s after the hit is its colour before (" + look + ")" + (after == look ? "" : " - now " + after) + (during != look ? "; during the flash: " + during : ""));
+			if (was != null) WorldRandomizer.Set(was);
 			if (ok) Log("PASS: colour after a hit"); else Fail("colour after a hit");
 		}
 
@@ -664,6 +679,10 @@ namespace DynamicIslands
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
 			bool ok = true;
+			// (sailing is simulated where the raft is: at one of Raft's islands nothing may come - the mod waits for open sea -
+			// so sail off it first, as a player would)
+			for (int i = 0; i < 6 && ChunkManager.RaftIsInsideChunkPoint; i++) yield return SailRoutine(20f, 20f);
+			Check(ref ok, !ChunkManager.RaftIsInsideChunkPoint, "the raft on open sea, away from Raft's islands");
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
 			WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = 777 });
 			var known = new HashSet<int>(IslandWorldState.Islands.Select(e => e.Id));
@@ -804,22 +823,45 @@ namespace DynamicIslands
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
 			if (!WorldRandomizer.Current.Has(RandomizerSettings.Finds)) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 99 });
-			Landmark l = WorldManager.AllLandmarks.Where(lm => lm != null && lm.isSpawned && WorldRandomizer.IsNatural(lm)).OrderBy(lm => (lm.transform.position - raft).sqrMagnitude).FirstOrDefault();
-			if (l == null) { Fail("none of Raft's plain islands near the raft (sail on)"); WorldRandomizer.Set(before); yield break; }
-			yield return PutPlayer(player, l.transform.position + Vector3.up * 60f, false);
-			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(l); t += 1f) yield return new WaitForSeconds(1f);
-			RandomizerContent.ForceFind = "treasure";
-			try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(l, 4711)); } finally { }
-			yield return new WaitForSeconds(3f);
-			RandomizerContent.ForceFind = null;
-			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(WorldRandomizer.IsExtras);
-			for (float t = 0; e != null && e.Root == null && !e.Failed && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
-			if (e == null || e.Root == null) { Fail("'" + l.name + "': the extras didn't load"); WorldRandomizer.Set(before); yield break; }
-			Log("Treasure extras: '" + e.Name + "'");
-			IslandQuest q = QuestTracker.QuestOf(e);
-			CustomNote map = e.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(n => n.GetComponent<LootCrate>() == null && (n.Title ?? "") == "Treasure map");
-			TriggerZone x = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x");
-			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Buried treasure"; });
+			// (a treasure hunt needs a spot 3 m up for its X and a beach for the bottle: a low, flat island gets a stash
+			// instead, as it should - then the next nearest island is tried)
+			List<Landmark> near = WorldManager.AllLandmarks.Where(lm => lm != null && lm.isSpawned && WorldRandomizer.IsNatural(lm)).OrderBy(lm => (lm.transform.position - raft).sqrMagnitude).Take(4).ToList();
+			if (near.Count == 0) { Fail("none of Raft's plain islands near the raft (sail on)"); WorldRandomizer.Set(before); yield break; }
+			Landmark l = null;
+			IslandWorldState.Entry e = null;
+			IslandQuest q = null;
+			CustomNote map = null;
+			TriggerZone x = null;
+			LootCrate chest = null;
+			var tried = new List<string>();
+			foreach (Landmark candidate in near)
+			{
+				l = candidate;
+				yield return PutPlayer(player, l.transform.position + Vector3.up * 60f, false);
+				for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(l); t += 1f) yield return new WaitForSeconds(1f);
+				// (the player's arrival lets the randomizer give the island its own extras first: let that finish, the forced
+				// ones then replace them - found by their name, never the arrival's)
+				yield return new WaitForSeconds(6f);
+				var extrasBefore = new HashSet<int>(IslandWorldState.Islands.Select(i => i.Id));
+				string forcedName = WorldRandomizer.ExtrasPrefix + WorldRandomizer.Current.Seed + "-" + (WorldRandomizer.SpawnKey(l) ^ 4711u);
+				Func<IslandWorldState.Entry> mine = () => IslandWorldState.Islands.LastOrDefault(i => WorldRandomizer.IsExtras(i) && !extrasBefore.Contains(i.Id) && i.Name == forcedName);
+				RandomizerContent.ForceFind = "treasure";
+				DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(l, 4711));
+				for (float t = 0; t < 30f && mine() == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				RandomizerContent.ForceFind = null;
+				e = mine();
+				for (float t = 0; e != null && e.Root == null && !e.Failed && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null || e.Root == null) { tried.Add(l.name + ": the extras didn't load"); continue; }
+				Log("Treasure extras: '" + e.Name + "'");
+				q = QuestTracker.QuestOf(e);
+				map = e.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(n => n.GetComponent<LootCrate>() == null && (n.Title ?? "") == "Treasure map");
+				x = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x");
+				chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Buried treasure"; });
+				if (map != null && x != null && chest != null) break;
+				tried.Add(l.name + ": no room for a treasure hunt (a stash instead)");
+			}
+			if (tried.Count > 0) Log("  (islands tried first: " + string.Join("; ", tried.ToArray()) + ")");
+			if (e == null || e.Root == null) { Fail("the extras didn't load: " + string.Join("; ", tried.ToArray())); WorldRandomizer.Set(before); yield break; }
 			Check(ref ok, q.Exists && q.Steps.Count == 3 && map != null && x != null && chest != null, "'" + l.name + "' has a treasure hunt: quest '" + q.ShownTitle + "' (" + q.Steps.Count + " steps), the map in a bottle " + (map != null) + ", the X " + (x != null) + ", the buried chest " + (chest != null));
 			if (map == null || x == null || chest == null) { WorldRandomizer.Set(before); yield break; }
 			// Played as a player would: the map, the X, the chest

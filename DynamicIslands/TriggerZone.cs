@@ -69,6 +69,7 @@ namespace DynamicIslands.Editor
 			if (!granted) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
 			bool fired = HasFired;
 			if (fired && !Repeats) return;
+			if (!Repeats && !granted) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
 			if (Repeats && Time.time < cooldownUntil) return;
 			// A zone that fires once fires for one player: a client asks the host first (Claims)
 			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (yes && this != null) Enter(true); })) return;
