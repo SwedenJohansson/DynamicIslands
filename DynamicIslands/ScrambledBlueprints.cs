@@ -128,7 +128,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextTick) return;
-			nextTick = Time.unscaledTime + 0.5f;
+			nextTick = Time.unscaledTime + 1.5f; // (islands are looked at again only when they appear or grow)
 			if (!LoadSceneManager.IsGameSceneLoaded || (!Active && originals.Count == 0)) return;
 			try
 			{

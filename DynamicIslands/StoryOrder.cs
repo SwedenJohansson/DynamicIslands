@@ -29,6 +29,11 @@ namespace DynamicIslands.Editor
 		};
 
 		static int orderSeed = int.MinValue;
+		/// <summary>Whether the unlocked list holds this world's order now (it is put back to Raft's when the option goes off).</summary>
+		static bool mapped;
+
+		/// <summary>A world is loading: nothing of the last world's order.</summary>
+		internal static void Reset() { mapped = false; }
 		static ChunkPointType[] order;
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [story order] " + msg); }
@@ -106,8 +111,11 @@ namespace DynamicIslands.Editor
 			{
 				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType;
 				if (unlocked == null || NoteBook.unlockedNoteBookIndexes == null) return;
+				// (a world that never had the order is left exactly as Raft made it; one that had it goes back to Raft's islands)
+				if (!Active && !mapped) return;
 				Dictionary<int, ChunkPointType> notes = FrequencyNotes();
 				if (notes.Count == 0) return; // (no notebook yet: its own load unlocks them through the patch)
+				mapped = Active;
 				unlocked.RemoveAll(t => Array.IndexOf(Chain, t) >= 0);
 				foreach (int idx in NoteBook.unlockedNoteBookIndexes)
 				{

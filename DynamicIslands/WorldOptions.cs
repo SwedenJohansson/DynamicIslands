@@ -88,6 +88,7 @@ namespace DynamicIslands.Editor
 		{
 			Current.Clear();
 			Seed = 0;
+			global::DynamicIslands.Editor.StoryOrder.Reset();
 			if (!Raft_Network.IsHost) { Notify(); return; }
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
