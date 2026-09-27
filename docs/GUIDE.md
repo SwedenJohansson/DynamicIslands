@@ -42,8 +42,8 @@ joins (see [section 11](#11-playing-together)).
 
 ## 2. Starting a new world
 
-Click **NEW WORLD** in Raft's main menu. The mod adds three things to Raft's own box: two sliders under Raft's game
-modes, the **World randomizer** and the **Custom Islands plan**. Each has a **?**: hover it for the details.
+Click **NEW WORLD** in Raft's main menu. The mod adds four things to Raft's own box: two sliders under Raft's game
+modes, the **World randomizer**, the **Custom Islands plan** and **World settings**. Each has a **?** or an explanation: hover it for the details.
 
 ![The New Game box with the mod's parts](images/newgame-box.jpg)
 *Raft's New Game box with the mod: monster difficulty (here Savage, ×1.5), build cost (+50 %), the world randomizer
@@ -55,12 +55,32 @@ modes, the **World randomizer** and the **Custom Islands plan**. Each has a **?*
 | **Build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded up |
 | **World randomizer** | A normal Raft world made different: Off, Light, Normal or Wild, and which parts take part (click a part to switch it off; see [section 4](#4-the-world-randomizer)) |
 | **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 10](#10-world-plans-which-islands-a-world-gets)) |
+| **World settings...** | More options for this world: scrambled blueprints, story islands in a new order, ghost rafts, private storages (see below) |
 
 Your choices are remembered for the next new world. They belong to the world: saved with it, the same for every
 player, and every new world gets its own.
 
 ![The main menu](images/main-menu.jpg)
 *The whole main menu. The EDITOR button opens the island editor (section 7).*
+
+### World settings: more ways to play Raft again
+
+Under the Custom Islands plan, **WORLD SETTINGS...** opens a window with the world's extra options, for players who
+know Raft by heart. Click an option to switch it **ON** or off; **Done** keeps your choice (remembered for the next
+world), **All off** switches every one off.
+
+![The World settings window](images/newgame-worldsettings.jpg)
+*The World settings window, every option on.*
+
+| Option | What it does |
+|---|---|
+| **Scrambled blueprints** | The blueprints lying on Raft's story islands are found on other story islands than usual - the pickup's name tells you which one you'll get. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved, so the story can always be finished. |
+| **Story islands in a new order** | Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance come in a shuffled order: the Receiver's first frequency leads to the new order's first island, and the note you find there to the next. The frequency numbers written on the notes follow; the notes' text still speaks of Raft's own order. Utopia, the ending, stays last. |
+| **Ghost rafts** | Abandoned rafts lie on the sea and come up ahead while you sail (not in the first 1.5 km, then about one every 3 km): small ones with a barrel and a message in a bottle, medium ones with a hut and a captain's log (sometimes rats), and now and then a large one with huts, a lookout and a hoard chest - guarded by rats on the deck and screechers circling above. You can walk on their decks. |
+| **Private storages** | A storage opens only for the player who built it: looking at someone else's shows whose it is. Storages built while the option was off open for everyone. |
+
+Every player in the world gets the host's options, also when joining later. The host can change them in a world:
+`WorldOptions` (F10) shows them, `WorldOptions +ghostrafts -privatestorage` switches them.
 
 ## 3. Sailing: custom islands in your world
 

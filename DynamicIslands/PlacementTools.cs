@@ -17,8 +17,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Positions snap to Raft's 1.5 m building grid and Q/E turn in 90° steps (for Raft blocks).</summary>
 		public static bool SnapToGrid;
 		public const float GridSize = 1.5f;
-		/// <summary>A Raft foundation's top sits this far above the water when floating, like on the player's raft.</summary>
+		/// <summary>How far down a floating object may go (m below the sea).</summary>
 		public const float FloatDepth = 0.35f;
+		/// <summary>A floating foundation's own height above the sea, and the deck a player walks on above it - measured on the
+		/// player's raft (CIRaftDeckProbe: the block at 0.13 m, Raft's raft collider 0.22 m higher).</summary>
+		public const float FoundationFloat = 0.13f, FoundationTop = 0.22f;
 
 		/// <summary>Grid-snapped position (x/z only) when "Grid" is on.</summary>
 		public static Vector3 Snap(Vector3 p)
@@ -32,7 +35,7 @@ namespace DynamicIslands.Editor
 		{
 			if (PlaceableCatalog.CategoryOf(objectName) != PlaceableCatalog.RaftBlocksCategory) return p;
 			float sea = (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + DynamicIslands.EditorWaterLevel;
-			if (p.y < sea - FloatDepth) p.y = sea - FloatDepth;
+			if (p.y < sea + FoundationFloat) p.y = sea + FoundationFloat;
 			return p;
 		}
 

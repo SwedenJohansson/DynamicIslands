@@ -129,7 +129,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label",
@@ -141,6 +141,7 @@ namespace DynamicIslands.Editor
 				lines.AddRange(PlayerPlaces.WriteLines());
 				lines.AddRange(WorldRules.WriteLines());
 				lines.AddRange(PlayerLevels.WriteLines());
+				lines.AddRange(WorldOptions.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -167,6 +168,7 @@ namespace DynamicIslands.Editor
 			Claims.Reset();
 			WorldRandomizer.Reset();
 			PlayerLevels.Reset();
+			WorldOptions.Reset();
 			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in File.ReadAllLines(FilePath))
 			{
@@ -177,6 +179,7 @@ namespace DynamicIslands.Editor
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+					WorldOptions.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;

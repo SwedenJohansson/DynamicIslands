@@ -249,7 +249,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
-			try { WorldRandomizer.Tick(); }
+			try { WorldRandomizer.Tick(); ScrambledBlueprints.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World randomizer: " + e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Levels: " + e); }
