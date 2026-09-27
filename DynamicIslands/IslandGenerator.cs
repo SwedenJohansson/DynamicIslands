@@ -80,6 +80,8 @@ namespace DynamicIslands.Editor
 		public int LootMin = 1, LootMax = 3;
 		/// <summary>Loot boxes tucked in next to trees, bushes and rocks instead of out in the open.</summary>
 		public bool LootHidden;
+		/// <summary>The island turns the level up system on in a world (IslandProps.Levels, PlayerLevels).</summary>
+		public bool Levels;
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -464,6 +466,8 @@ namespace DynamicIslands.Editor
 			if (made.Count > 0) group.Add(new ObjectVisibilityCommand(made, true));
 
 			UndoRedoManager.Insert(group);
+			// (the island's rule; left as it is when off, so an island set to On on the Island tab keeps it)
+			if (s.Levels) DynamicIslands.currentIslandProps[IslandProps.Levels] = "on";
 			MeasureLand(metres, data.size.x / (hres - 1), report);
 			report.Seconds = Time.realtimeSinceStartup - t0;
 			LastReport = report;
@@ -2234,6 +2238,7 @@ namespace DynamicIslands.Editor
 				Style = s.Style == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(s.Style),
 			};
 			file.Objects = PlanAll(s, metres, BuildArea);
+			if (s.Levels) file.Props[IslandProps.Levels] = "on";
 			return file;
 		}
 

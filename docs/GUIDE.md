@@ -15,14 +15,15 @@ file and command); this guide shows you around.
 3. [Sailing: custom islands in your world](#3-sailing-custom-islands-in-your-world)
 4. [The world randomizer](#4-the-world-randomizer)
 5. [World rules: monster difficulty and build cost](#5-world-rules-monster-difficulty-and-build-cost)
-6. [Building your own island: the editor](#6-building-your-own-island-the-editor)
-7. [Making islands come alive](#7-making-islands-come-alive)
-8. [Stories: quests, behaviours, story items](#8-stories-quests-behaviours-story-items)
-9. [World plans: which islands a world gets](#9-world-plans-which-islands-a-world-gets)
-10. [Playing together](#10-playing-together)
-11. [Settings files](#11-settings-files)
-12. [Console commands](#12-console-commands)
-13. [Questions and problems](#13-questions-and-problems)
+6. [The level up system](#6-the-level-up-system)
+7. [Building your own island: the editor](#7-building-your-own-island-the-editor)
+8. [Making islands come alive](#8-making-islands-come-alive)
+9. [Stories: quests, behaviours, story items](#9-stories-quests-behaviours-story-items)
+10. [World plans: which islands a world gets](#10-world-plans-which-islands-a-world-gets)
+11. [Playing together](#11-playing-together)
+12. [Settings files](#12-settings-files)
+13. [Console commands](#13-console-commands)
+14. [Questions and problems](#14-questions-and-problems)
 
 ---
 
@@ -34,10 +35,10 @@ file and command); this guide shows you around.
 3. Start Raft with RML's **Play** button. The first start takes a little longer: RML compiles the mod.
 
 The mod keeps its files in `<Raft>\Mods\DynamicIslands\`: your islands (`*.island`), the settings files
-(`spawnpool.txt` and others, see [section 11](#11-settings-files)) and the world plans (`plans\`).
+(`spawnpool.txt` and others, see [section 12](#12-settings-files)) and the world plans (`plans\`).
 
 **Playing together?** Every player needs the mod. The host's islands, files and settings are sent to everyone who
-joins (see [section 10](#10-playing-together)).
+joins (see [section 11](#11-playing-together)).
 
 ## 2. Starting a new world
 
@@ -53,13 +54,13 @@ modes, the **World randomizer** and the **Custom Islands plan**. Each has a **?*
 | **Monster difficulty** | How tough monsters are in this world: Timid, Normal, Fierce, Savage or Nightmare (see [section 5](#5-world-rules-monster-difficulty-and-build-cost)) |
 | **Build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded up |
 | **World randomizer** | A normal Raft world made different: Off, Light, Normal or Wild, and which parts take part (click a part to switch it off; see [section 4](#4-the-world-randomizer)) |
-| **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 9](#9-world-plans-which-islands-a-world-gets)) |
+| **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 10](#10-world-plans-which-islands-a-world-gets)) |
 
 Your choices are remembered for the next new world. They belong to the world: saved with it, the same for every
 player, and every new world gets its own.
 
 ![The main menu](images/main-menu.jpg)
-*The whole main menu. The EDITOR button opens the island editor (section 6).*
+*The whole main menu. The EDITOR button opens the island editor (section 7).*
 
 ## 3. Sailing: custom islands in your world
 
@@ -71,7 +72,7 @@ every 4 km). It can be:
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
   flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world,
-- a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [6.6](#66-ready-made-islands-map-types)).
+- a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [7.6](#76-ready-made-islands-map-types)).
 
 Islands keep clear of Raft's own islands and of each other, and Raft won't put its islands on top of them later.
 Islands far behind the raft are unloaded (after 800 m) and come back when you return.
@@ -112,7 +113,7 @@ lie under the surface for divers.
 
 ### Notes, chests, zones and creatures
 
-The builder of an island can give it much more than land (see [section 7](#7-making-islands-come-alive)). In a world:
+The builder of an island can give it much more than land (see [section 8](#8-making-islands-come-alive)). In a world:
 
 - **Notes:** look at a readable object (a sign, a paper, a bottle...) and press the interact key (**E**) to read it.
   Close it with E, Tab, Esc or the button.
@@ -220,12 +221,85 @@ as in Raft.
 
 ---
 
-## 6. Building your own island: the editor
+## 6. The level up system
+
+Levels come to a world with an island made with **Level up system: On**. You switch it on in the editor's
+**Island** tab (Rules), or with the generator's **Level up** choice. Once such an island has appeared in a world, levels
+are on there for good, for every player. A world without one plays as Raft always does.
+
+![The Level up system switch in the editor](images/levels-island-tab.jpg)
+*The switch in the Island tab's Rules.*
+
+### Earning EXP
+
+Hit a monster and the EXP it gave you floats up over it. Each hit gives the share of the monster's EXP that it took off
+its health, so killing it gives all of it. If you fight it together with a friend, each of you gets your own share.
+Chickens, goats, llamas, turtles, stingrays, dolphins, whales and people give nothing.
+
+![+2 EXP floating over a warthog](images/levels-hit.jpg)
+*A hit on a warthog: +2 EXP.*
+
+Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **20 EXP**:
+
+| Monster | EXP | Monster | EXP |
+|---|---|---|---|
+| Bruce (shark) | 20 | Bear | 13 |
+| Warthog | 13 | Polar bear | 15 |
+| Screecher | 12 | Hyena | 7 |
+| Puffer fish | 9 | Rat | 7 |
+| Mama bear (Balboa) | 67 | Hyena boss | 40 |
+
+An island's own Hard or Boss animals are worth more than Raft's plain ones.
+
+| From level | EXP to the next | About |
+|---|---|---|
+| 1 → 2 | 100 | 5 sharks |
+| 2 → 3 | 200 | 10 sharks |
+| 3 → 4 | 400 | 20 sharks |
+| 4 → 5 | 600 | 30 sharks |
+| then | 200 more each level | 10 more sharks each level |
+
+### Levelling up and spending points
+
+A box shows when you reach a new level. **Click it** (in a menu, where the mouse is free) or press **K** to spend
+your points. The level and its EXP bar sit just above Raft's own thirst, hunger and health bars. A white **+** after
+the level means points are waiting. While Raft's inventory (**Tab**) is open, a **Stats** button sits next to the bar.
+
+![The level up box](images/levels-levelup.jpg)
+*Level 2: two stat points to spend. The EXP bar is at the bottom left.*
+
+![The level bar and the Stats button](images/levels-bar.jpg)
+*The level bar above Raft's bars, and the Stats button while the inventory is open.*
+
+Every level gives **2 stat points**. Each point makes a stat **1% better**, and a stat takes at most 10 points (+10%):
+
+| Stat | A point makes it |
+|---|---|
+| Walk speed, Run speed, Swim speed | 1% faster |
+| Jump height | Jump 1% higher |
+| Damage | 1% more damage to monsters, with every weapon |
+| Health | 1% more maximum health |
+| Hunger, Thirst | Drain 1% slower |
+| Oxygen | Breath lasts 1% longer under water |
+
+![The stats page](images/levels-page.jpg)
+*The stats page (K): the level, the EXP, the monsters you defeated, and the nine stats. **+** puts a point in, **−**
+takes it back while the page is open.*
+
+All 90 points are there at level 46. After that the levels go on, without points.
+
+**Playing together:** each player has their own level, and the host keeps it with the world. A player who joins again
+gets theirs back. The host works out everyone's EXP, so a monster is worth the same to everybody. Other players see a
+small gold **Lv 5** under your name.
+
+---
+
+## 7. Building your own island: the editor
 
 Click **EDITOR** in the main menu. The editor opens on the sea with an empty build area. The first time it takes
 about 10 seconds to load the objects.
 
-### 6.1 The screen
+### 7.1 The screen
 
 ![The editor: Terrain tab](images/editor-terrain.jpg)
 *The editor on the Terrain tab.*
@@ -250,7 +324,7 @@ about 10 seconds to load the objects.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y**; save with **Ctrl+S**, open with **Ctrl+O**.
 
-### 6.2 Shaping the land (Terrain tab)
+### 7.2 Shaping the land (Terrain tab)
 
 - **Sculpt:** **Raise**, **Lower**, **Flatten**, **Smooth**. Hold the left mouse button on the ground; the white ring
   shows the brush.
@@ -267,7 +341,7 @@ ground takes the style's textures, the paint buttons get its names, and the gene
 *The same kind of island in four styles, as the generator makes them: tropical palms, snowy pines, desert red rock,
 forest birches.*
 
-### 6.3 Placing objects (Objects tab)
+### 7.3 Placing objects (Objects tab)
 
 ![The editor: Objects tab](images/editor-objects.jpg)
 *The Objects tab: the tools on the left, the object browser on the right (713 of 1,947 objects loaded).*
@@ -291,9 +365,9 @@ finds objects in every category.
 *A herd of two warthogs (the pink marker) and a sign. "My groups" in the browser holds two saved groups.*
 
 Selecting a single object shows its **inspector** in the tool panel: creature settings, a note, loot, a zone, a colour,
-behaviours (see [section 7](#7-making-islands-come-alive)).
+behaviours (see [section 8](#8-making-islands-come-alive)).
 
-### 6.4 The Island tab
+### 7.4 The Island tab
 
 ![The editor: Island tab](images/editor-island.jpg)
 *The Island tab: style, height in the world, the generator, the name players see, the island's rules and its quest.*
@@ -303,9 +377,10 @@ behaviours (see [section 7](#7-making-islands-come-alive)).
 - **Shown to players:** the island's **name**, your name and a short welcome. Players see them as a banner.
 - **Rules:** how many in-game days until chopped trees, picked items, killed animals, looted chests and fired zones
   come back on this island (empty = the world's setting, 0 = never).
-- **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 8](#8-stories-quests-behaviours-story-items).
+  **Level up system** Off / On: see [section 6](#6-the-level-up-system).
+- **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 9](#9-stories-quests-behaviours-story-items).
 
-### 6.5 The island generator
+### 7.5 The island generator
 
 **Generate** (top bar) makes a whole island for you to start from. The **preview** map on the right follows every
 change; the line under it says how big the island is and how many objects it will get. The **seed** picks one island
@@ -367,7 +442,7 @@ The editor's view under water shows what a deep sea floor looks like:
 ![Under water in the editor](images/editor-underwater.jpg)
 *A generated island on the deep sea floor: the shelf and drop-off from above, the slope, the reef, the drop-off.*
 
-### 6.6 Ready-made islands (map types)
+### 7.6 Ready-made islands (map types)
 
 The generator's **Ready-made (with content)** tab makes whole islands with a story: chests, notes, creatures, zones
 and a quest, from a seed. Click a card, then **Make** (click twice): the island is saved as `gen-<type>-<seed>` and
@@ -393,7 +468,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Sunken island, sky island, wreck | Under water; floating 45-90 m up with a cache; an abandoned raft of Raft's blocks |
 | Oddities, boss lair, large island | The world randomizer's islands ([section 4](#4-the-world-randomizer)) |
 
-### 6.7 Saving and sharing
+### 7.7 Saving and sharing
 
 **Save** (Ctrl+S) saves straight away once the island has a name; **Save as** and **Open** show the **Islands**
 window: a name, the height in the world, and your saved islands (click = pick, double-click = open, Delete asks
@@ -405,7 +480,7 @@ first).
 Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). **Share an island by copying its file** to a
 friend's folder. In multiplayer the host's island files are sent to players who don't have them.
 
-### 6.8 Your first island, step by step
+### 7.8 Your first island, step by step
 
 1. Main menu → **EDITOR**.
 2. **Generate** → Normal tab: Style **Tropical**, click **Small island**, Nature **Like Raft** → **Generate**.
@@ -419,11 +494,11 @@ friend's folder. In multiplayer the host's island files are sent to players who 
 
 ---
 
-## 7. Making islands come alive
+## 8. Making islands come alive
 
 Select an object to see its **inspector** in the tool panel. Everything here can be undone.
 
-### 7.1 Creatures
+### 8.1 Creatures
 
 Open **Animals: hostile**, **Animals: catchable** or **Sea creatures** in the browser and place an animal: warthog,
 pig, bear, polar bear, hyena, rats, roach, bee swarm, screecher; chicken, goat, llama; puffer fish, angler fish,
@@ -444,7 +519,7 @@ starting Raft:
 ![Creatures with Raft's models](images/editor-creature-models.jpg)
 *Creature spots with Raft's own models: a warthog, a llama, a bear, a chicken.*
 
-### 7.2 Notes and signs
+### 8.2 Notes and signs
 
 "Notes & signs" has a paper, a bundle of papers, an open book, a sign, a notice board and a message in a bottle, and
 **any object can be made readable** (**Add a note to it...**). A sign shows its note's title on its board.
@@ -455,7 +530,7 @@ starting Raft:
 ![The note editor](images/editor-note-editor.jpg)
 *The note editor: the title, the text (Enter starts a new line), and a preview of the paper players will see.*
 
-### 7.3 Chests and loot
+### 8.3 Chests and loot
 
 "Loot & chests" has chests, a crate, a wooden box and barrels, and **any object can hold loot** (**A chest...**).
 
@@ -466,7 +541,7 @@ quickly; it fills up again after 3 days, or never.*
 ![The item picker](images/editor-loot-picker.jpg)
 *Add items...: every item of Raft with its picture and a search. Click an item to add one, again to add more.*
 
-### 7.4 Trigger zones and ambushes
+### 8.4 Trigger zones and ambushes
 
 A **trigger zone** ("Zones & triggers") is an invisible sphere. When a player walks in it shows your **message**,
 **gives items**, and wakes the creatures that wait for it. It fires **once** per world (again after the regrow days)
@@ -483,7 +558,7 @@ walks into the zone.*
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
 
-### 7.5 Atmosphere and sound
+### 8.5 Atmosphere and sound
 
 An **atmosphere zone** changes the fog colour, the light and adds particles (fireflies, mist, snow, embers) around a
 spot; a **sound zone** plays one of Raft's 500+ sounds while a player is inside, or once on entering.
@@ -499,9 +574,9 @@ spot; a **sound zone** plays one of Raft's 500+ sounds while a player is inside,
 
 ---
 
-## 8. Stories: quests, behaviours, story items
+## 9. Stories: quests, behaviours, story items
 
-### 8.1 Quests
+### 9.1 Quests
 
 **Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 10 steps in order, a
 reward and a closing message.
@@ -515,7 +590,7 @@ Steps: **go to** a trigger zone, **read** a note, **open** a chest, **defeat** o
 **collect** a number of a story item, **find** journal pages. Steps point at things on the island by name; the
 editor lists the names it knows.
 
-### 8.2 Behaviour and events
+### 9.2 Behaviour and events
 
 Select any object → **Behaviour + events...**. No code needed:
 
@@ -544,7 +619,7 @@ key somewhere..."*
 ![Island events](images/editor-island-events.jpg)
 *Island events: what happens when players first come to the island, and when its quest is done.*
 
-### 8.3 Story items and story sets
+### 9.3 Story items and story sets
 
 **Island tab → Story items...**: keys, map pieces, logs... with a name, a description and a picture (Raft's quest
 item pictures or any Raft item). Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
@@ -557,7 +632,7 @@ only for someone who has it), or **a locked chest** whose key is hidden in drift
 ![Story items and story sets](images/editor-story-items.jpg)
 *The Story items window: the island's story items ("Old key") and the four story sets.*
 
-### 8.4 Islands that bring islands
+### 9.4 Islands that bring islands
 
 **Island tab → Islands it brings...** gives the island its own rules: "when my quest is done", "when step 2 is done",
 "when zone X fires" or "when players first get here" → bring a saved island or a new island of a map type, how far
@@ -567,7 +642,7 @@ and which way, with a message and a name on the Receiver. A chain of shared isla
 *An island rule: when this island's quest is done, bring a new island of a random type 600 m north, with the
 message "Well done" and the name "Reward" on the Receiver. The map on the right sketches where islands go.*
 
-## 9. World plans: which islands a world gets
+## 10. World plans: which islands a world gets
 
 A **world plan** is a list of rules; each rule brings one island: **what** (a saved island, a new island of a map
 type, one from the spawn pool), **when** (the world starts, after N km, on day N, a quest done, a zone fired, players
@@ -592,7 +667,7 @@ a wreck after 2 km and a sunken island after 5 km. The map on the right sketches
 `WorldPlan` shows the plan and which rules have fired; the host can give the world another plan with
 `WorldPlan <name>`.
 
-## 10. Playing together
+## 11. Playing together
 
 Up to eight players (Raft's maximum). **Every player needs the mod.**
 
@@ -608,8 +683,10 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).
+- **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
+  host works out everyone's EXP, and each player sees the others' levels under their names.
 
-## 11. Settings files
+## 12. Settings files
 
 In `<Raft>\Mods\DynamicIslands\`. Text files: open them with Notepad. They explain themselves, and changes are picked
 up while the game runs.
@@ -635,7 +712,7 @@ Other files: `*.island` (your islands), `plans\*.plan` (world plans), `world_rul
 New Game choices), `worlds\<world>.txt` (each world's custom islands and their state), `groups\` and `stamps\` (your
 groups and stamps), `<name>_<hash>.island` (islands downloaded from a host).
 
-## 12. Console commands
+## 13. Console commands
 
 Press **F10** for RML's console.
 
@@ -654,11 +731,14 @@ Press **F10** for RML's console.
 
 The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in the [README](../README.md#console-commands-f10).
 
-## 13. Questions and problems
+## 14. Questions and problems
 
 **No islands appear while I sail.** Run `SpawnPool`: are automatic islands on, and is the pool empty? The plan may be
 "No custom islands" (`WorldPlan`). Islands appear only where there is room: near Raft's own islands they wait until
 the sea is clear. `SpawnIsland <name>` places one right away.
+
+**K does nothing, and there is no level bar.** The level up system is off in this world. It comes on once an island made
+with **Level up system: On** has appeared in the world (see [section 6](#6-the-level-up-system)).
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 

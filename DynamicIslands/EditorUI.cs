@@ -401,6 +401,7 @@ namespace DynamicIslands.Editor
 		static GameObject objectTips;
 		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField;
 		static Text questText;
+		static Button infoLevelsOff, infoLevelsOn;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
 		static void BuildInfoTools(Transform s)
@@ -421,6 +422,13 @@ namespace DynamicIslands.Editor
 			infoRegrowField.characterLimit = 3;
 			UIKit.Size(UIKit.Label(regrow, "days", 13, UIKit.TextMuted).gameObject, 34);
 			infoRegrowField.onEndEdit.AddListener(v => { int d; SetInfo(IslandProps.RegrowDays, int.TryParse(v, out d) ? Mathf.Clamp(d, 0, 999).ToString() : ""); RefreshInfo(); });
+			RectTransform levels = UIKit.Row(rules, 26f, 4f, "LevelUp");
+			UIKit.Label(levels, "Level up system", 13, UIKit.TextMuted);
+			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
+			infoLevelsOn = UIKit.Button(levels, "On", () => { SetInfo(IslandProps.Levels, "on"); RefreshInfo(); }, "Players level up: hitting monsters gives EXP, every level gives stat points (K in a world)", 50, 26f, 12);
+			UIKit.Help(levels, "The level up system: once this island is in a world, players there earn EXP by hitting monsters (anywhere in that world: the island's animals, Bruce, Raft's own), shown over the monster (+5). " +
+				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level. Every level gives " + LevelRules.PointsPerLevel + " stat points to spend on the stats page (" + PlayerLevels.Key + "): walk, run and swim speed, jump height, damage, health, hunger and oxygen, +1% a point, at most " + LevelRules.MaxPoints + " points each. " +
+				"The levels are kept with the world, for every player.");
 			RectTransform quest = UIKit.Group(s, "Quest");
 			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);
 			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
@@ -446,6 +454,8 @@ namespace DynamicIslands.Editor
 			infoAuthorField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Author);
 			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
 			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
+			bool levelsOn = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
+			if (infoLevelsOn != null) { UIKit.SetActive(infoLevelsOn, levelsOn); UIKit.SetActive(infoLevelsOff, !levelsOn); }
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
 			int brings = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps).Count;
 			if (questText != null) questText.text = (q.Exists ? "<color=#eddeba>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +

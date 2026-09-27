@@ -318,6 +318,7 @@ namespace DynamicIslands.Editor
 			}
 			Choice(animals, "Toughness", ObjectProps.Presets.Select(p => p.Key).ToArray(), () => Array.FindIndex(ObjectProps.Presets, p => p.Key == s.Difficulty), v => s.Difficulty = ObjectProps.Presets[v].Key,
 				"How tough the hostile animals are: Easy (half health and damage), Normal (Raft's own), Hard (twice the health, 1.5 x damage) or Boss (four times the health). Each spot can still be changed by hand afterwards.");
+			LevelsChoice(animals);
 			Slider(animals, "Friendly animals", 0, IslandGenSettings.MaxCreatureSpots, () => s.Friendly, v => s.Friendly = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
 				"Chickens, goats, llamas to catch", "Animals players can catch with Raft's net launcher and keep on the raft: chickens, goats and llamas, by style. They live on flat ground.", true);
 			Slider(animals, "Sea creatures", 0, IslandGenSettings.MaxCreatureSpots, () => s.SeaLife, v => s.SeaLife = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
@@ -332,6 +333,15 @@ namespace DynamicIslands.Editor
 				"The richest boxes", "The best tier a box can have (see Lowest tier for what each tier holds). Set both the same for boxes of one tier only.", true);
 			Choice(loot, "Placed", new[] { "In the open", "Hidden" }, () => s.LootHidden ? 1 : 0, v => s.LootHidden = v == 1,
 				"In the open: boxes stand on clear ground where players see them. Hidden: tucked in next to trees, bushes and rocks, so players have to search.");
+		}
+
+		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>
+		void LevelsChoice(Transform parent)
+		{
+			Choice(parent, "Level up", new[] { "Off", "On (EXP from monsters)" }, () => s.Levels ? 1 : 0, v => s.Levels = v == 1,
+				"The level up system: once the island is in a world, players there earn EXP by hitting monsters (the number floats over the monster) and level up. " +
+				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level; every level gives " + LevelRules.PointsPerLevel + " stat points for walk, run and swim speed, jump height, damage, health, hunger and oxygen " +
+				"(+1% a point, at most " + LevelRules.MaxPoints + " each; the stats page is " + PlayerLevels.Key + " in a world). Also on the Island tab (Rules).");
 		}
 
 		/// <summary>Deep sea floor like Raft's, or the older flat seabed 20 m down.</summary>
@@ -485,6 +495,7 @@ namespace DynamicIslands.Editor
 			RectTransform about = UIKit.Group(root, "Ready-made islands");
 			UIKit.Label(about, "A ready-made island is a whole island with a story: its layout and style, and content placed by the generator - chests with loot, notes, creatures, trigger zones, atmosphere and a quest. " +
 				"Make saves it as a new island file (gen-<type>-<seed>) and opens it here to change as you like. World plans and the islands that appear while sailing can bring these types too.", 12, UIKit.TextMuted);
+			LevelsChoice(about);
 			RectTransform row = null;
 			for (int i = 0; i < MapTypes.All.Count; i++)
 			{
@@ -824,20 +835,22 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			confirmUntil = 0f;
-			string name = MakeType(type, s.Seed);
+			string name = MakeType(type, s.Seed, s.Levels);
 			if (name == null) { SetStatus("Making the island failed - see the console (F10)."); return; }
 			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + type.Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and save it."); }
 		}
 
 		/// <summary>Makes an island of a map type from a seed and saves it; returns its name (null if it failed).</summary>
-		public static string MakeType(MapType type, int seed)
+		public static string MakeType(MapType type, int seed, bool levels = false)
 		{
 			try
 			{
 				float elevation;
 				IslandGenSettings ms = MapTypes.Roll(type, new System.Random(seed), out elevation);
 				string name = MapTypes.FileName(type, ms);
-				MapTypes.Create(type, ms, elevation, name).Save(IslandSpawner.PathFor(name));
+				IslandFile file = MapTypes.Create(type, ms, elevation, name);
+				if (levels) file.Props[IslandProps.Levels] = "on";
+				file.Save(IslandSpawner.PathFor(name));
 				return name;
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Making a '" + type.Name + "' island failed: " + e); return null; }
@@ -854,6 +867,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Sets the window's settings as if the controls were used (tests).</summary>
 		public static void Use(IslandGenSettings settings) { if (instance != null) { instance.s = settings.Copy(); instance.ShowAll(); } }
+
+		/// <summary>The window's settings now (tests).</summary>
+		public static IslandGenSettings Current { get { return instance != null ? instance.s.Copy() : null; } }
 
 		/// <summary>Picks a Raft island on the Randomize existing tab, like clicking its tile (tests).</summary>
 		public static void Pick(RaftIsland island, bool asVariation) { if (instance == null) return; instance.variation = asVariation; instance.Choose(island); }

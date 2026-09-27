@@ -104,6 +104,9 @@
     <Compile Include="RaftUnderwater.cs" />
     <Compile Include="RaftLand.cs" />
     <Compile Include="IslandReach.cs" />
+    <Compile Include="LevelSystem.cs" />
+    <Compile Include="LevelWindow.cs" />
+    <Compile Include="DevTestsLevels.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />
     <Compile Include="NewWorldOptions.cs" />

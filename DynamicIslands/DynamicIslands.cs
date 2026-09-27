@@ -251,6 +251,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
 			try { WorldRandomizer.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World randomizer: " + e); }
+			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Levels: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>

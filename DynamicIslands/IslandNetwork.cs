@@ -41,6 +41,9 @@ namespace DynamicIslands.Editor
 		/// <summary>A thing only one player can have (Claims): client -> host "may I?" (Ids[0] = island, Index = state key),
 		/// host -> that client the answer (Count 1 = granted, 0 = no, someone else has it).</summary>
 		public const int Claim = 16;
+		/// <summary>The level up system (PlayerLevels): host -> everyone "on"; host -> a joining player "state" (Data = their
+		/// record); a player -> host "mine" (Data = their record now).</summary>
+		public const int Levels = 14;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -187,6 +190,14 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) SendToClients(msg);
 		}
 
+		/// <summary>The level up system: the host to one player (to set) or everyone; a player to the host.</summary>
+		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.Levels;
+			if (Raft_Network.IsHost) { if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		/// <summary>Host: tell clients about islands (new ones, or the whole list for a client that asked).</summary>
 		internal static IslandNetMessage IslandsMessage(IEnumerable<IslandWorldState.Entry> entries, bool fullList)
 		{
@@ -293,6 +304,8 @@ namespace DynamicIslands.Editor
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
+							IslandNetMessage levels = PlayerLevels.StateFor(from.Id);
+							if (levels != null) SendLevels(levels, from);
 						}
 						break;
 					case IslandNetMessage.WorldRules:
@@ -335,6 +348,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
+						break;
+					case IslandNetMessage.Levels:
+						PlayerLevels.OnMessage(msg, from);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)

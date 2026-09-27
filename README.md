@@ -65,6 +65,7 @@ is the full reference.
   - **Story sets** (in the Story items window): ready pieces of a story placed around the view in one undo step: **a locked door and its key** (in a chest with a note), **a trail of notes** that leads to a hidden chest with a story item, **a treasure map** (a message in a bottle gives the map; walking to the X with it digs up a buried chest), or **a locked chest** with driftwood nearby that hides its key.
   - **Invisible walls and ramps** ("Zones & triggers"): solid in a world but not seen. Block a path, keep players in an arena, or make a cliff or sea stack climbable. Scale and turn them to fit.
   - **Island rules** (Island tab): how many in-game days until chopped trees, picked items, killed or caught animals, looted chests and fired zones come back on this island (empty = the world's setting, 0 = never).
+  - **Level up system** (Island tab, Rules: Off / On; also a **Level up** choice in the generator): an island with it turns levels on in the world it comes to. Players then earn EXP from monsters and spend stat points (see "The level up system" below).
   - Undo and redo everything, and save or load islands.
   - **Generate** an island to start from (see "The island generator" below): three tabs. **Normal**: seed, style, **layout** (round, atoll, archipelago, sea stacks, plateau, marsh, crescent, twin peaks), size and highest point with **Small island / Large island / Balboa** buttons measured from Raft's own islands, peaks and their shape, hills, coast, bays, beach, cliffs, stretch, valleys, lakes, terraces, erosion, **under water like Raft's own islands** (a deep sea floor 160 m down with a shelf and a drop-off, and corals, sea vines, rocks, stones, clay, scrap, ores, giant clams and sunken barrels placed from measurements of Raft's islands), a slider for each kind of object (trees, bushes, rocks, beach things, harvestables) up to a jungle you can barely walk through, **animals** (hostile, friendly, sea; which kinds, how tough) and **loot boxes** with tiers 1-5; your own saved presets. **Randomize existing**: pick one of Raft's 33 islands from its picture, then "something new like it" or "a variation of it" (its own ground, reshaped). **Ready-made**: the map types as cards. A live preview map shows the island as you move the sliders, and a line above the seed says **whether players can get onto it from their raft** (easy, by jumping onto a ledge, only by building); every setting has a "?" to hover for help. The same seed and settings always give the same island.
   - **Map types** (Generate window, **Ready-made** tab): whole islands with content, made from a seed and opened to edit: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island and wreck (see "Map types" below).
@@ -89,6 +90,7 @@ is the full reference.
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
   - **Monster difficulty** (Raft's **New Game** box, a slider under the game modes): **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
   - **Build cost** (the New Game box, a second slider): everything in the build menu costs 0-100% more materials, always rounded up. It's the same for every player, including those who join later.
+  - **Levels:** in a world with the level up system on, hitting a monster floats the EXP it gave over it (**+5 EXP**). A level bar sits just under Raft's health, thirst and hunger bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the level bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 10. Other players see your level as a small **Lv 5** under your name.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
 - **World randomizer** (New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
 - **Multiplayer (up to eight players, Raft's maximum):** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The world rules (monster difficulty, build cost) are the host's for every player, also those who join later.
@@ -219,6 +221,44 @@ story comes along. Every prop's size and footprint is measured
 - **Changing it later:** `Randomizer` shows what it does in the current world; the host can change it: `Randomizer off|light|normal|wild`, `Randomizer -alphas` / `+alphas` (any part). Islands that were already looked at keep what they got.
 - Raft switches the ground of its far islands off (about 1 km away), so an island is randomized when the raft comes within about a kilometre.
 
+## The level up system
+
+An island made with **Level up system: On** (Island tab, Rules; or the generator's **Level up** choice, on all three tabs) turns levels on in any world it comes to. A banner says so, and from then on it stays on in that world. It is off in every world without such an island.
+
+- **EXP:** every hit a player makes on a monster gives EXP, anywhere in that world: the island's animals, Bruce and Raft's own animals. The number floats up over the monster for a moment (**+5 EXP**), and the level bar lights up. A hit gives the monster's EXP times the share of its health it took, so a kill gives exactly the monster's EXP. If two players fight it together, each gets their share. Animals that aren't monsters give nothing: chickens, goats, llamas, turtles, stingrays, dolphins, whales and people. The stats page counts the monsters each player has defeated (the killing hit counts).
+- **What a monster is worth:** half from how tough it is, half from how hard it hits, both compared with Bruce (Raft's shark), who is worth **20 EXP**: `EXP = 20 × (0.5 × health / Bruce's health + 0.5 × damage / Bruce's damage)`, at least 1. Health and damage are the animal's own, so the editor's Easy / Hard / Boss settings count too (a Boss warthog is worth more). `CILevelTable` lists every monster's numbers.
+- **Levels:**
+
+  | From level | To level | EXP needed | About (kills of Bruce) | EXP in all |
+  |---|---|---|---|---|
+  | 1 | 2 | 100 | 5 | 100 |
+  | 2 | 3 | 200 | 10 | 300 |
+  | 3 | 4 | 400 | 20 | 700 |
+  | 4 | 5 | 600 | 30 | 1300 |
+  | 5 | 6 | 800 | 40 | 2100 |
+  | *n* | *n*+1 | 200 × (*n* − 1) | 10 × (*n* − 1) | |
+
+- **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with ten pips each. **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**, and a stat takes at most **10 points** (+10%). All 90 points are there at level 46. **The levels go on after that**, without points: the level up box says every stat is full.
+
+  | Stat | What a point does |
+  |---|---|
+  | Walk speed / Run speed / Swim speed | 1% faster on land, sprinting, swimming and diving |
+  | Jump height | Jumps 1% higher (on land and out of the water) |
+  | Damage | 1% more damage to monsters with every weapon (melee, spears, arrows, thrown stones) |
+  | Health | 1% more maximum health |
+  | Hunger | Hunger drains 1% slower, so you go longer without eating |
+  | Thirst | Thirst drains 1% slower, so you go longer without drinking |
+  | Oxygen | Breath runs out 1% slower, so you last longer under water |
+
+- **On the screen:**
+  - **The level bar** sits just under Raft's own health, thirst and hunger bars (above them if that would be off the screen), as wide as they are: the level (a white **+** when points are waiting), a thin gold bar and the EXP to the next level. It is part of Raft's HUD, so it hides with it.
+  - **The stats page** opens with **K**, with the **Stats** button that shows next to the level bar while Raft's inventory (Tab) is open, or by clicking the level up box. Esc or K closes it.
+  - **The level up box** ("LEVEL 3! +2 stat points") stays for about 12 seconds. Click it while the mouse is free (in a menu) to open the stats page.
+  - **Other players' levels:** a small gold **Lv 5** under the name Raft shows over each other player, nothing more. The host sends every player's level to everyone when it changes and when someone joins.
+- **Saved with the world** for every player (`@levels=on` and `@level=<steam id>|<exp>|<points>|<monsters defeated>` in the world's island file). A player who joins, or joins again, gets their own level back from the host, also after both Rafts restart. Players earn EXP and spend points on their own machine, and their record goes to the host.
+- **Multiplayer: the same for everyone.** Whether the system is on belongs to the world, and every player gets it when they join or join again. **The host works out every player's EXP:** it has every monster as it was built (the editor's toughness, the randomizer's alphas), so a monster is worth the same to everyone. A player's hit reaches the host as Raft's own damage message, and the EXP goes back to that player. A player's Health points count on every machine, so the host's copy of that player, which monsters bite, has the same maximum health. Each player earns and spends on their own stats page; their record goes to the host, which saves it and sends it back when they join again.
+- **How it works in Raft:** the speeds and the jump are raised only while Raft moves the player (`PersonController.GroundControll` / `WaterControll`), so Raft's flippers and other changes stay as they are. Damage and EXP come from `Network_Host.DamageEntity`, which runs on the attacking player's own machine for every weapon. Health is the player's maximum health. The level bar is a child of Raft's `CanvasHelper.StatSliderParent`, and the level under a name a small `TextMesh` under `Network_Player.playerNameTextMesh`. Hunger and thirst go through `Stat_Consumable.LostPerSecond`, and oxygen through `Stat_Oxygen.Update`.
+
 ## The island generator
 
 **Generate** (top bar, or the Island tab) opens the generator. The preview map on the right follows every change; the seed below it picks which island of all possible ones you get (the same seed with the same settings always gives exactly the same island). Every setting has a **?** to hover for help.
@@ -329,7 +369,7 @@ The screen has a **top bar**, a **tool panel** on the left (it scrolls when a ta
 | Terrain tab | **Stamps** group | Hill, Peak, Crater, Mesa, Lagoon, Ridge and your saved stamps (click the ground; Size = how big, Q/E turn); **Save stamp...** |
 | Objects tab | **Save as group...** (Selection) | The selected objects become a group under "My groups" (`DeleteGroup <name>` removes one) |
 | Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards; **Island events...**: what happens when players first arrive and when the quest is done; **Story items...**: the island's story items and the story sets |
-| Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never) |
+| Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never); **Level up system** Off / On (see "The level up system") |
 | Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
 | Keys | Ctrl+S / Ctrl+O | Save / open |
 | Camera | | Like Unity's scene view: **right-drag** to look around (while held: **WASD** flies where you look, **Q/E** down and up, the **wheel** sets the flying speed); **WASD** or arrows alone move over the island at the same height; **middle-drag** pans (the ground follows the cursor); **Alt+left-drag** orbits around the selected objects, or the ground in the middle of the view; the **wheel** zooms towards whatever is under the cursor (never through it; not over a panel); **F** frames the selection, or the whole island when nothing is selected; **Shift** is three times faster. Moves are smoothed and faster high up; the camera stays above the ground but can dive under the sea. |
@@ -409,6 +449,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in eight layouts or from a Raft island's measured ground, then peak shape, valleys, exact height, terraces, erosion, lakes and seabed; object scatter by zone and kind on a spatial grid; creature spots and tiered loot boxes; the preview map; the Generate window with its three tabs and saved presets |
 | `RaftIslands.cs`, `RaftUnderwater.cs`, `RaftLand.cs` | Raft's islands as measured (`raft_islands.txt`, `island_thumbs`, `island_heights`; `raft_underwater.txt`; `raft_land.txt`): the size and height presets, Randomize existing, the life under water, and where things grow on the land |
 | `IslandReach.cs` | Whether a player on a raft can get onto a generated island (the line above the seed) |
+| `LevelSystem.cs`, `LevelWindow.cs` | The level up system: the numbers (`LevelRules`), each player's EXP and points saved with the world and sent over the network (`PlayerLevels`), the stats on Raft's player (`StatApply` and its Harmony patches), the floating EXP, the level bar by Raft's stat bars and the level up box (`LevelHud`), the "Lv n" under other players' names (`LevelTags`) and the stats page (K, `LevelWindow`) |
 | `MapTypes.cs` | Map types: settings ranges, flying/sunken, and their content (`MapKit`: chests, notes, zones, creatures, atmosphere, quests) |
 | `Behaviours.cs`, `BehaviourWindow.cs` | Behaviours and events: names, movement, "players can use it", collision, "when … then" actions, "only if" checks, waits, the shared clock for movers, their shared state and network messages; the Behaviour & events window |
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |

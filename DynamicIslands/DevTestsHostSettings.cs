@@ -47,6 +47,15 @@ namespace DynamicIslands
 			lines.Add("islands " + islands.Count + (islands.Count > 0 ? " " : "") + string.Join(" ", islands.Select(e => e.Id + ":" + e.HostName + (string.IsNullOrEmpty(e.Label) ? "" : "'" + e.Label + "'")).ToArray()));
 			IslandNetMessage story = StoryBook.StateMessage();
 			lines.Add("story " + Fnv(story != null ? story.Data : "").ToString("X8"));
+			// The level up system: on or off for the world, and each player here with their level and Health points as
+			// this machine knows them (the host from the records, a player from the host's list)
+			lines.Add("levels " + (PlayerLevels.On ? "on" : "off"));
+			if (PlayerLevels.On)
+			{
+				LevelRecord own = PlayerLevels.Mine; // (the host's own record exists once asked for)
+				var players = UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null).Select(p => p.steamID.Id).Distinct().OrderBy(id => id).ToList();
+				lines.Add("levelplayers " + string.Join(" ", players.Select(id => id + "=" + PlayerLevels.LevelOf(id) + ":" + PlayerLevels.HealthPointsOf(id)).ToArray()));
+			}
 			return lines;
 		}
 

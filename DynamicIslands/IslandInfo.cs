@@ -12,6 +12,8 @@ namespace DynamicIslands.Editor
 		public const string Centre = "land.centre";
 		/// <summary>Rules: in-game days until harvested things, killed animals and looted chests come back on this island ("" = the world's regrowDays, 0 = never).</summary>
 		public const string RegrowDays = "rules.regrow";
+		/// <summary>Rules: "on" = the level up system (PlayerLevels): once this island is in a world, players there earn EXP from monsters and level up.</summary>
+		public const string Levels = "rules.levels";
 	}
 
 	/// <summary>A spawned island's own settings (IslandFile.Props), for the parts of the mod that act on it in a world.</summary>
@@ -69,6 +71,7 @@ namespace DynamicIslands.Editor
 			IslandSettings settings = root.AddComponent<IslandSettings>();
 			settings.Props = new Dictionary<string, string>(island.Props);
 			settings.WaterLevel = island.WaterLevel;
+			PlayerLevels.OnIslandSpawned(island.Props);
 			string title = ObjectProps.Get(island.Props, IslandProps.Title), desc = ObjectProps.Get(island.Props, IslandProps.Description);
 			if (title.Length == 0 && desc.Length == 0) return;
 			IslandInfoTag tag = root.AddComponent<IslandInfoTag>();
