@@ -97,6 +97,14 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(0.6f);
 					foreach (var win in windows)
 					{
+						// (the window can be resized from outside meanwhile - maximised by Windows or a click: set the size again)
+						if (Screen.width != w || Screen.height != h)
+						{
+							Log("  (the screen became " + Screen.width + "x" + Screen.height + ": " + sz + " set again)");
+							Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
+							yield return new WaitForSecondsRealtime(1.2f);
+							w = Screen.width; h = Screen.height;
+						}
 						try { win.Value.Key(); } catch (Exception e) { Check(ref ok, false, sz + " " + win.Key + ": opening it threw " + e.Message); continue; }
 						yield return null; yield return null; yield return null;
 						GameObject go = WindowObject(win.Value.Value);

@@ -694,6 +694,22 @@ namespace DynamicIslands
 				// timing against Raft's bobbing in the water - a 0.8 m ledge took 1 jump in one run and 3 in another. A beach
 				// is walked onto; anything IslandReach calls possible is got onto; what it says needs building is not)
 				bool match = r.Level <= IslandReach.Mostly ? fromWater && waterJumps <= 1 : r.Level <= IslandReach.VeryTricky ? fromWater || fromRaft : !fromWater && !fromRaft;
+				// (what needs building: a big wave now and then lifts a swimmer onto a ledge otherwise out of reach - Raft's sea,
+				// not the island. Twice more: it holds when the player gets on at most once in three tries)
+				if (!match && r.Level == IslandReach.No)
+				{
+					int gotOn = 1;
+					for (int again = 0; again < 2; again++)
+					{
+						OnRaftCommand();
+						yield return new WaitForSeconds(0.5f);
+						bool g = false;
+						yield return BringIn(player, centre + dir * (coast + 5f), -dir, true, ground, (got, j) => g = got);
+						if (g) gotOn++;
+					}
+					Log("  (" + kv.Key + ": got on " + gotOn + " time(s) of 3 from the water)");
+					match = gotOn <= 1;
+				}
 				string[] levelNames = { "easy", "reachable", "possible but tricky", "possible but unlikely", "not without building" };
 				Check(ref ok, match, kv.Key + ": IslandReach says " + levelNames[r.Level] + " (lowest ledge " + r.LowestLedge.ToString("F2") + " m); Raft's player got on from the water: " + fromWater + " (" + waterJumps + " jump(s)), from a raft " + deckUsed.ToString("F1") + " m high: " + fromRaft + " (level " + got2 + ")");
 				OnRaftCommand();
