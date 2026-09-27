@@ -286,7 +286,14 @@ namespace DynamicIslands
 					Network_Player player = RAPI.GetLocalPlayer();
 					if (hoard != null && player != null)
 					{
-						Vector3 at = hoard.transform.position + new Vector3(1.4f, 1.2f, 0f);
+						// (a clear tile of the deck: nothing above it but the sky - not inside a hut or on the loot)
+						Vector3 at = hoard.transform.position + new Vector3(0f, 1.2f, 0f);
+						foreach (BoxCollider d in e.Root.GetComponentsInChildren<BoxCollider>(true).Where(x => x.name == "CustomIslands_Deck"))
+						{
+							Vector3 top = new Vector3(d.bounds.center.x, d.bounds.max.y, d.bounds.center.z);
+							RaycastHit hit;
+							if (Physics.Raycast(top + Vector3.up * 6f, Vector3.down, out hit, 7f, ~0, QueryTriggerInteraction.Ignore) && hit.collider == d) { at = top + Vector3.up * 1.2f; break; }
+						}
 						yield return PutPlayer(player, at, false);
 						yield return new WaitForSeconds(3f);
 						float drop = at.y - player.transform.position.y;
@@ -365,6 +372,33 @@ namespace DynamicIslands
 				Log("RAFTDECK " + b.name + " at y " + p.y.ToString("F2") + " (sea 0): stands on " + top + " | its colliders: " + own);
 			}
 			Log("PASS: raft deck probe");
+		}
+
+		[ConsoleCommand(name: "CIStandAt", docs: "Dev, in game: puts the local player at an island's middle plus x, z, this high above the sea, and logs every half second where they are, whether grounded and on what: CIStandAt <island> <x> <z> [height, default 1.5]")]
+		public static void StandAtCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			float x = 0f, z = 0f, h = 1.5f;
+			if (args.Length > 1) float.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x);
+			if (args.Length > 2) float.TryParse(args[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z);
+			if (args.Length > 3) float.TryParse(args[3], NumberStyles.Float, CultureInfo.InvariantCulture, out h);
+			DynamicIslands.instance.StartCoroutine(StandAtRoutine(new Vector3(e.Position.x + x, h, e.Position.z + z)));
+		}
+
+		static IEnumerator StandAtRoutine(Vector3 at)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			yield return PutPlayer(player, at, false);
+			for (int i = 0; i < 8; i++)
+			{
+				yield return new WaitForSeconds(0.5f);
+				PersonController pc = player.PersonController;
+				Collider ground = pc.groundRaycastHit.collider;
+				Log(string.Format("STAND t={0:F1}s y={1:F2} grounded={2} mode={3} on {4} (layer {5})", (i + 1) * 0.5f, player.transform.position.y, pc.IsGrounded, pc.controllerType,
+					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-"));
+			}
+			Log("PASS: stand at");
 		}
 
 		#region Story order
