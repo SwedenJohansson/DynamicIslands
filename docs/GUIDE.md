@@ -69,7 +69,7 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)) |
+| **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
 Then click Raft's **Create** as usual. Your choices are remembered for the next new world. They belong to the world:
@@ -423,6 +423,37 @@ unused** deletes the ones no saved world on this PC uses.
 *The Import window: packs in the import folder, what the picked one holds, and what's installed.*
 
 Import is offered in the island editor (the Islands and World plan windows), never inside a running world.
+
+**The island library: download plans and islands others made.** **ISLAND LIBRARY** in Raft's main menu (also **Get
+more...** in the New Game box and **Library...** in the Islands window) opens the library: a public collection on
+GitHub ([SwedenJohansson/CustomIslands-Library](https://github.com/SwedenJohansson/CustomIslands-Library)) where every
+entry is looked at before it goes in.
+- **World plans** and **Islands** tabs, a **search** (titles, authors, summaries, tags), featured entries first. Each
+  row has the entry's icon, title, author and summary, and says **INSTALLED** or **UPDATE** when that applies.
+- The picked entry shows its pictures (**<** **>**), description, author, version, date, size, how many islands, players
+  and length, and one button:
+  - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
+    islands never turn up at random, an island only if you tick **Also turn up while sailing**);
+  - **Update** - the library has a newer version than the one you have: installs it (worlds you've already started
+    keep the version they started with);
+  - **Installed** - you have the newest version. **Remove** (click twice) takes it away again, keeping what a saved
+    world uses.
+  - An entry made with a newer version of the mod says **Download anyway**, with the warning.
+
+![The island library](images/library-window.jpg)
+*The island library: the islands tab with three installed and Palm Cove picked; its picture, description and Download.*
+
+- Every downloaded file is checked against the library's list (its size and a fingerprint); if one doesn't match,
+  nothing is installed. A plan downloaded from the New Game box's **Get more...** is chosen there right away.
+- The mod goes online only while this window is open, and sends nothing but the downloads - no account, no Steam id.
+  Without internet it says "Can't reach the island library"; packs someone sent you still install with **Import...**.
+  `Mods\DynamicIslands\library.txt` can switch it off (`online = off`).
+
+**Sharing yours in the library:** export it, then **Share...** in the Share window opens the library's
+[Submit an island or plan](https://github.com/SwedenJohansson/CustomIslands-Library/issues/new?template=submit.yml)
+form (a free GitHub account is needed) and the folder with your pack: drag the `.zip` in, tick the box (you made it and
+share it under CC BY 4.0: others may use it and must credit you), send. To update it later, export it again (it keeps
+its entry) and send that the same way.
 
 ### 4.8 Your first island, step by step
 
@@ -1029,6 +1060,8 @@ Other files:
 | `exports\` | Packs you exported (`<name>.zip`), and `exports.json` (what you filled in, so the next export is the next version) |
 | `import\` | Put packs you got here to install them (Import...) |
 | `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
+| `library.txt` | The island library: `online = on/off`, and its `address` (where its list is) |
+| `library\cache\` | The library's pictures, kept so they needn't be downloaded again |
 | `plans\*.plan` | World plans |
 | `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, islands left out; the randomizer), the start for the next new world |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |

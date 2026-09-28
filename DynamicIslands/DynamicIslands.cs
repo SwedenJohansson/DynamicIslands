@@ -190,6 +190,17 @@ namespace DynamicIslands
 					LaunchEditor();
 				});
 
+				// The island library: plans and islands others made, to download (LibraryWindow)
+				GameObject library = Instantiate(MenuButtonsParent.transform.Find("New Game").gameObject, MenuButtonsParent.transform);
+				library.name = "LIBRARY";
+				library.transform.SetSiblingIndex(4);
+				Text libraryText = library.GetComponentInChildren<Text>();
+				libraryText.text = "ISLAND LIBRARY";
+				libraryText.resizeTextForBestFit = true;
+				libraryText.resizeTextMaxSize = libraryText.fontSize;
+				libraryText.resizeTextMinSize = Mathf.Max(10, libraryText.fontSize / 2);
+				library.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
+				library.GetComponent<Button>().onClick.AddListener(() => LibraryWindow.Open());
 
 			}
 			catch (Exception e)
