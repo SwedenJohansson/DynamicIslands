@@ -121,6 +121,34 @@ namespace DynamicIslands
 			Check(ref ok, file, "the guide opens as the PDF from the mod: " + HelpLinks.LastOpened + (File.Exists(path) ? " (" + new FileInfo(path).Length / 1024 + " KB)" : " (no file)"));
 		}
 
+		/// <summary>The alpha box is never shown over another window: Raft's New Game and Load World boxes and the mod's info box each hide it, closing them brings it back.</summary>
+		static IEnumerator NoticeCoverRoutine(Action<bool, string> check)
+		{
+			yield return new WaitForSecondsRealtime(1.2f);
+			check(!ExperimentalNotice.Hidden && ExperimentalNotice.OtherWindow() == null, "on the plain main menu the box shows (nothing else open: " + (ExperimentalNotice.OtherWindow() ?? "none") + ")");
+			foreach (Type t in new[] { typeof(NewGameBox), typeof(LoadGameBox) })
+			{
+				MenuBox box = Resources.FindObjectsOfTypeAll(t).OfType<MenuBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+				if (box == null) { check(false, t.Name + " not found on the main menu"); continue; }
+				box.Open();
+				yield return new WaitForSecondsRealtime(1.5f);
+				check(box.IsOpen && ExperimentalNotice.Hidden, t.Name + " open: the alpha box is hidden (" + (ExperimentalNotice.OtherWindow() ?? "nothing seen") + ")");
+				Screenshot(new[] { "notice_under_" + t.Name });
+				yield return new WaitForSecondsRealtime(0.6f);
+				box.Close();
+				yield return new WaitForSecondsRealtime(1.5f);
+				check(!box.IsOpen && !ExperimentalNotice.Hidden, t.Name + " closed: the box is back");
+			}
+			InfoWindow.OpenReport();
+			yield return null;
+			yield return null;
+			check(ExperimentalNotice.Hidden, "Report a problem's box open: the alpha box is hidden");
+			InfoWindow.Close();
+			yield return null;
+			yield return null;
+			check(!ExperimentalNotice.Hidden, "... and back when it closes");
+		}
+
 		/// <summary>The alpha box's help: Discord, Guide, Report a problem (its box and buttons), and moving the box.</summary>
 		static IEnumerator NoticeHelpRoutine(Action<bool, string> check)
 		{

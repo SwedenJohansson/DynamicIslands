@@ -95,7 +95,8 @@ Pick what you want to do; each line leads to the part of the guide you need.
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
 > RELEASE** box on its right half, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
 > server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 13](#13-reporting-a-problem)).
-> Drag the box anywhere you like; it stays where you put it. **Got it** folds it into a slim bar with the same buttons (its
+> Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
+> open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the
 > whole box again.
 

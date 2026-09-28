@@ -794,6 +794,7 @@ namespace DynamicIslands
 			Check(ref ok, !ExperimentalNotice.Folded && !ExperimentalNotice.SeenThisVersion && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Got it", "Show opens it again (and a new start shows it whole)");
 			// Its help: Discord, the guide, Report a problem, and moving it
 			yield return NoticeHelpRoutine((c, w) => Check(ref ok, c, w));
+			yield return NoticeCoverRoutine((c, w) => Check(ref ok, c, w));
 			if (foldedBefore) ExperimentalNotice.Flip();
 			if (ok) Log("PASS: experimental notice"); else Fail("experimental notice");
 		}

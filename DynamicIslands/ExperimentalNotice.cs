@@ -37,6 +37,8 @@ namespace DynamicIslands.Editor
 
 		public static RectTransform Panel { get { return panel; } }
 		public static bool Folded { get { return body != null && !body.gameObject.activeSelf; } }
+		/// <summary>Out of the way: another window of the main menu is open (the box is never shown over one).</summary>
+		public static bool Hidden { get { return panel != null && !panel.gameObject.activeSelf; } }
 		public static Button Toggle { get { return toggle; } }
 		public static Button DiscordButton { get { return discordButton; } }
 		public static Button GuideButton { get { return guideButton; } }
@@ -147,6 +149,8 @@ namespace DynamicIslands.Editor
 			UIKit.Primary(toggle);
 			SetFolded(SeenThisVersion);
 			PlaceSaved();
+			// (on the menu's canvas, not the box: it keeps looking while the box is hidden)
+			if (canvas.GetComponent<Watcher>() == null) canvas.gameObject.AddComponent<Watcher>();
 			Debug.Log("[CUSTOM ISLANDS] Alpha notice shown" + (Folded ? " (folded: seen for " + Version + ")" : ""));
 		}
 
@@ -166,6 +170,46 @@ namespace DynamicIslands.Editor
 			LayoutRebuilder.ForceRebuildLayoutImmediate(panel);
 			KeepOnScreen();
 		}
+
+		#region Out of the way of other windows
+
+		/// <summary>
+		/// Another window of the main menu is open: one of Raft's (every MenuBox - New Game, Load World, Settings, Join,
+		/// Credits, Delete, Exit...) or the mod's (World settings, the island list, the island library, export and import,
+		/// an info box, a list or a prompt, the editor's loading box). What it is, or null.
+		/// </summary>
+		public static string OtherWindow()
+		{
+			foreach (MenuBox b in boxes) if (b != null && b.IsOpen) return b.GetType().Name;
+			if (WorldSettingsWindow.IsOpen) return "World settings";
+			if (IslandPickerWindow.IsOpen) return "Choose islands";
+			if (LibraryWindow.IsOpen) return "Island library";
+			if (LibraryExportWindow.IsOpen) return "Export";
+			if (LibraryImportWindow.IsOpen) return "Import";
+			if (InfoWindow.IsOpen) return "Info box";
+			if (ChoiceWindow.IsOpen) return "List";
+			if (TextPromptWindow.IsOpen) return "Prompt";
+			if (EditorLoadingBox.Showing) return "Editor loading";
+			return null;
+		}
+
+		static MenuBox[] boxes = new MenuBox[0];
+		static float nextLook;
+
+		/// <summary>Every frame on the main menu: the box hides while another window is open, and comes back after.</summary>
+		class Watcher : MonoBehaviour
+		{
+			void Update()
+			{
+				if (panel == null) return;
+				// (Raft's boxes found again now and then: closed ones are inactive, so inactive ones count)
+				if (Time.unscaledTime >= nextLook) { boxes = Resources.FindObjectsOfTypeAll<MenuBox>().Where(b => b != null && b.gameObject.scene.IsValid()).ToArray(); nextLook = Time.unscaledTime + 1f; }
+				bool show = OtherWindow() == null;
+				if (panel.gameObject.activeSelf != show) panel.gameObject.SetActive(show);
+			}
+		}
+
+		#endregion
 
 		#region Moving it
 
