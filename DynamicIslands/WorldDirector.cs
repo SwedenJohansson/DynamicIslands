@@ -591,6 +591,8 @@ namespace DynamicIslands.Editor
 					// stay fired; new ones come; the world keeps a copy of the new plan from its next save)
 					Plan = edited;
 					PlanWasEdited = true;
+					// (its story chain too: what is unlocked and done stays, the islands keep their frequencies)
+					StoryChain.FromPlan(edited);
 					if (PlanOwner == 0) PlanOwner = LocalSteamId;
 					Log("The plan '" + PlanName + "' was changed since the world was saved: the changed plan plays");
 					DynamicIslands.Notify("You changed the plan '" + PlanName + "' since this world was last saved: the changed plan plays from now on.");
@@ -631,7 +633,7 @@ namespace DynamicIslands.Editor
 		{
 			WorldPlan file = WorldPlan.Load(PlanName);
 			if (file == null || stored == null) return null;
-			if (IntroRule.ToLines(file.Rules) == IntroRule.ToLines(stored.Rules) && file.Random == stored.Random) return null;
+			if (IntroRule.ToLines(file.Rules) == IntroRule.ToLines(stored.Rules) && file.Random == stored.Random && !StoryChain.DiffersFrom(file)) return null;
 			string source = LibrarySource.OfPlan(PlanName) ?? "";
 			// (a library or imported plan: only while this PC has the version the world was made with - an update of the
 			// entry doesn't change worlds already started, just as their islands keep their version)

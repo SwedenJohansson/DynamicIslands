@@ -126,6 +126,17 @@ namespace DynamicIslands.Editor
 			Changed();
 		}
 
+		/// <summary>
+		/// A plan's story isn't the world's (the plan's Raft story on/off or left-out islands changed - its rules are compared
+		/// on their own): the world file keeps the chain it was made with, not those plan settings.
+		/// </summary>
+		public static bool DiffersFrom(WorldPlan plan)
+		{
+			// (a world without a chain yet takes the plan's anyway when it loads: not a change)
+			if (plan == null || !HasSnapshot) return false;
+			return plan.ChangesStory != active || !BuildSteps(plan.RaftStory, plan.LeaveOut, plan.Rules.Where(r => r.Special)).SequenceEqual(Steps, StringComparer.OrdinalIgnoreCase);
+		}
+
 		/// <summary>Host: 4 digits for each Receiver island (from the world's id and the rule's, never one of Raft's or another's).</summary>
 		static void AssignFrequencies()
 		{

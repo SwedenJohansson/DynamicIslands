@@ -282,6 +282,66 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story chain adventure"); else Fail("story chain adventure");
 		}
 
+		[ConsoleCommand(name: "CIStoryChainEdited", docs: "Dev, world (host, a new test world 'CI ...' without custom islands): the player edits the world's plan in World Plans and the world is read again as when loading it: leaving one more story island out (no rule changed) counts as an edit and the chain follows it, what was unlocked stays; a story island added to the plan comes into the chain after its place, the Receiver island keeps its frequency. The plan file is deleted after")]
+		public static void StoryChainEditedCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditedRoutine()); }
+
+		static IEnumerator StoryChainEditedRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") || IslandWorldState.Islands.Count > 0)
+			{ Fail("story chain edited: host, in a new test world 'CI ...' without custom islands"); yield break; }
+			bool ok = true;
+			const string name = "CI story edit";
+			string path = WorldPlan.PathFor(name);
+			string planBefore = WorldDirector.PlanName;
+			float sailedBefore = WorldDirector.Sailed;
+			try
+			{
+				File.WriteAllText(path, "storyleaveout = Balboa\nrule = detour | type:sandbar | start | receiver:400 | | Detour | after:Vasagatan | visit\n");
+				WorldDirector.SetPlan(name, false);
+				WorldDirector.PlanOwner = 0;
+				StoryChain.FromPlan(WorldDirector.Plan);
+				NoteBook.UnlockFrequency(ChunkPointType.Landmark_RadioTower);
+				string digits = StoryChain.FrequencyOf("detour");
+				WorldDirector.Sailed = Mathf.Max(WorldDirector.Sailed, 10f); // (read again as a saved world, not a new one)
+				IslandWorldState.Save();
+				Check(ref ok, Steps(StoryChain.Steps) == RaftSteps("RadioTower", "Vasagatan", "rule:detour", "CaravanTown", "Tangaroa", "VarunaPoint", "Temperance", "Utopia") && StoryChain.Unlocked.Contains("raft:RadioTower"),
+					"the world's chain from the plan, the Radio Tower unlocked: " + Steps(StoryChain.Steps));
+
+				// Only a story setting changed (no rule): still an edit
+				File.WriteAllText(path, "storyleaveout = Balboa, Tangaroa\nrule = detour | type:sandbar | start | receiver:400 | | Detour | after:Vasagatan | visit\n");
+				IslandWorldState.OnWorldLoaded();
+				yield return null;
+				Check(ref ok, WorldDirector.PlanWasEdited && !StoryChain.Steps.Contains("raft:Tangaroa") && StoryChain.Unlocked.Contains("raft:RadioTower") && ChainTypes().Contains(ChunkPointType.Landmark_RadioTower),
+					"Tangaroa left out in the plan: the world's chain follows, the Radio Tower still unlocked (" + Steps(StoryChain.Steps) + ")");
+
+				// A story island added
+				IslandWorldState.Save();
+				File.WriteAllText(path, "storyleaveout = Balboa, Tangaroa\nrule = detour | type:sandbar | start | receiver:400 | | Detour | after:Vasagatan | visit\n" +
+					"rule = extra | type:sandbar | start | receiver:500 | | Extra | after:detour | visit\n");
+				IslandWorldState.OnWorldLoaded();
+				yield return null;
+				Check(ref ok, WorldDirector.PlanWasEdited && Steps(StoryChain.Steps) == RaftSteps("RadioTower", "Vasagatan", "rule:detour", "rule:extra", "CaravanTown", "VarunaPoint", "Temperance", "Utopia"),
+					"an island added after the detour: " + Steps(StoryChain.Steps));
+				Check(ref ok, StoryChain.FrequencyOf("detour") == digits && StoryChain.FrequencyOf("extra") != null && StoryChain.FrequencyOf("extra") != digits,
+					"the detour keeps its frequency " + digits + ", the new island gets its own " + StoryChain.FrequencyOf("extra"));
+
+				// Not edited: read again, the same
+				IslandWorldState.Save();
+				IslandWorldState.OnWorldLoaded();
+				yield return null;
+				Check(ref ok, !WorldDirector.PlanWasEdited && Steps(StoryChain.Steps).Contains("rule:extra"), "read again unchanged: not an edit, the same chain");
+			}
+			finally
+			{
+				if (File.Exists(path)) File.Delete(path);
+				WorldDirector.SetPlan(planBefore, false);
+				StoryChain.FromPlan(WorldDirector.Plan);
+				WorldDirector.Sailed = sailedBefore;
+				IslandWorldState.Save();
+			}
+			if (ok) Log("PASS: story chain edited"); else Fail("story chain edited");
+		}
+
 		[ConsoleCommand(name: "CIStoryChainEditor", docs: "Dev, editor: the World plans window's story controls clicked as a builder does, on a test plan 'CI story plan' (deleted after): Raft's story off and on, Balboa left out and back, a rule put in Balboa's place from the list, the Receiver chosen for it; Check shows the chain and the tips (the Radio Tower first, Utopia last, Balboa's blueprints); saved and read back")]
 		public static void StoryChainEditorCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditorRoutine()); }
 

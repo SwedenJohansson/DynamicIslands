@@ -681,7 +681,10 @@ gives tips. They are only recommendations; you can do what you want:
 - **Balboa replaced**: an island in Balboa's place.
 
 In a world, `StoryChain` (F10) shows the chain and where it stands. The chain belongs to the world: it is saved with
-it, the same for every player, and it comes along when another player hosts the world.
+it, the same for every player, and it comes along when another player hosts the world. If you edit your plan's story
+later (its islands, Raft's story on or off, the islands left out), the changed chain plays the next time the world
+loads, like any change to your plan ([section 7](#7-world-plans-which-islands-a-world-gets)): what is unlocked and
+done stays, and your Receiver islands keep their frequencies.
 
 ## 7. World plans: which islands a world gets
 
