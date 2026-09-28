@@ -10,8 +10,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 > [Reporting a problem](#reporting-a-problem).
 
 **New here? Start with the [illustrated guide](docs/GUIDE.md)** (also as a [PDF](docs/Custom-Islands-Guide.pdf) to download or print): installing, starting a world, what you meet while
-sailing, building your own islands in the editor and giving them quests and stories, playing together, and at the end
-the optional world systems (world rules, randomizer, extra options, the level up system), step by step with 57 pictures.
+sailing, building your own islands in the editor and giving them quests and stories, world plans that make your own adventure (with a step-by-step first plan), playing together, and at the end
+the optional world systems (world rules, randomizer, extra options, the level up system), step by step with 62 pictures. It starts with a quick start table and the words it uses.
 This README is the full reference, in the same order: island creation first, the optional systems after.
 
 [![A custom island seen from the sea](docs/images/world-island-from-sea.jpg)](docs/GUIDE.md)
@@ -275,20 +275,22 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 
 ## World plans
 
+**Making your first plan:** the guide walks through it click by click, with a four-island example, every part of a rule card, every choice, and what Check's messages mean: [World plans, step by step](docs/GUIDE.md#72-your-first-world-plan-step-by-step).
+
 A **world plan** says which custom islands a world gets, **when** and **where**. It's a list of rules; each rule brings one island:
 
 | Part | Choices |
 |---|---|
 | **What** | a saved island · a new island of a **map type** (generated, e.g. a treasure island) · one from the spawn pool · one of a list of islands |
 | **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · an object sends a signal (Behaviour & events) · after another rule |
-| **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) |
+| **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) · on its own Receiver frequency · by chance while sailing |
 | **Tell** | a message every player sees (with how far and which way the island is), and a name for its dot on the Receiver |
 
 Rules refer to islands by the id of the rule that brought them (e.g. "when the quest of `camp` is done, bring a treasure island 900 m north-east of `camp`"), or by island name. A plan can also keep the random islands of `spawnpool.txt` going.
 
 - **Choosing a plan:** Raft's New Game box has a "Custom Islands plan" button: click it to go through the plans. `WorldPlan` shows the current world's plan and its rules (done or not); `WorldPlan <name>` gives the world another plan. `defaultPlan` in `spawnpool.txt` is the plan new worlds get when nobody chooses.
 - **Built-in plans:** "Random islands" (islands by chance while sailing, as before) and "No custom islands".
-- **Sample plans** (written once to `Mods\DynamicIslands\plans`): **Island hopping** (an old camp, then each island you reach shows the way to the next), **Adventure** (a story: each quest leads to the next island, with a wreck and a sunken island on the way) and **Growing sea** (random islands plus a special one every few km and days). They only use map types, so they work without any islands of your own.
+- **Sample plans** (written once to `Mods\DynamicIslands\plans`): **Island hopping** (an old camp, then each island you reach shows the way to the next), **Adventure** (a story: each quest leads to the next island, with a wreck and a sunken island on the way) **Growing sea** (random islands plus a special one every few km and days) and **Receiver adventure** (Raft's story off; each island found with the Receiver). They only use map types, so they work without any islands of your own.
 - **Making plans:** top bar **World plans**: New / Copy / Delete, a description, "random islands while sailing" on or off, and the rules as cards. **Templates...** adds ready-made sets (story chain, sky chain, quest reward island...). **Check** lists what can't work, and a small map sketches where islands would go. Plans are text files, so they can also be edited by hand (the file explains the format).
 - **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
 - **A world keeps its own copy of its plan** (`@planrule=` lines in its world file, plus `@planfrom=` when it came from a pack or the library, and `@planowner=`, the Steam id of the player who made the world). When that player edits their plan, the world plays the changed plan at its next load on their PC (rules that fired stay fired); on another host's PC, after a library or pack update, or with the file deleted, the world's copy plays (`WorldPlan <name>` switches a running world on purpose), and the plan goes along when another player hosts the world. Worlds saved by older versions get their copy the next time they're saved where the plan file is. A plan can only bring islands that are on the host's PC: a missing one is named on the host's screen, with where to get it.
