@@ -101,6 +101,7 @@
     <Compile Include="StoryOrder.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />
+    <Compile Include="ExperimentalNotice.cs" />
     <Compile Include="RandomizerContent.cs" />
     <Compile Include="RaftProps.cs" />
     <Compile Include="RandomizerIslands.cs" />

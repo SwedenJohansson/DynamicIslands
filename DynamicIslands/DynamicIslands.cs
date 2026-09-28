@@ -196,6 +196,8 @@ namespace DynamicIslands
 			{
 				Debug.Log("Error adding button to main menu raft ui: " + e);
 			}
+			// The first release: a box telling new players it is experimental
+			ExperimentalNotice.Show(MainMenuParent.transform);
 
 
 

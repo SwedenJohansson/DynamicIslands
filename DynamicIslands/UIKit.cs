@@ -127,7 +127,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Gives a text Raft's title font (with fallbacks for symbols), in capitals as Raft writes them.</summary>
-		static void UseTitleFont(Text t)
+		internal static void UseTitleFont(Text t)
 		{
 			Font title = TitleFont;
 			if (title == null || title == Font) return;

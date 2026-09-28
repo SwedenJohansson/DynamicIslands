@@ -719,6 +719,74 @@ namespace DynamicIslands
 
 		#endregion
 
+
+		#region The experimental release box
+
+		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the EXPERIMENTAL RELEASE box - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its state before is put back; pictures shot_notice_*")]
+		public static void ExperimentalNoticeCommand() { DynamicIslands.instance.StartCoroutine(ExperimentalNoticeRoutine()); }
+
+		static Rect ScreenRect(RectTransform r)
+		{
+			var c = new Vector3[4];
+			r.GetWorldCorners(c);
+			return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+		}
+
+		static IEnumerator ExperimentalNoticeRoutine()
+		{
+			GameObject canvas = GameObject.Find("MainMenuCanvas");
+			RectTransform panel = ExperimentalNotice.Panel;
+			if (canvas == null || panel == null) { Fail("experimental notice: no main menu or no box"); yield break; }
+			bool ok = true;
+			bool foldedBefore = ExperimentalNotice.Folded;
+			if (foldedBefore) { ExperimentalNotice.Flip(); yield return null; }
+			string text = string.Join(" | ", panel.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray());
+			Check(ref ok, text.Contains(ExperimentalNotice.Header) && ExperimentalNotice.Points.All(p => text.Contains(p)) && text.Contains("(version " + ExperimentalNotice.Version + ")") && ExperimentalNotice.Version != "?",
+				"the box says " + ExperimentalNotice.Header + ", the version (" + ExperimentalNotice.Version + ") and its three points");
+			Canvas.ForceUpdateCanvases();
+			Text head = panel.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Title");
+			Check(ref ok, head != null && head.cachedTextGenerator.lineCount == 1, "its header on one line (" + (head != null ? head.cachedTextGenerator.lineCount + " line(s), size " + head.cachedTextGenerator.fontSizeUsedForBestFit : "no header") + ")");
+			int w0 = Screen.width, h0 = Screen.height;
+			FullScreenMode mode0 = Screen.fullScreenMode;
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			RectTransform buttons = canvas.transform.Find("MenuButtons") as RectTransform;
+			try
+			{
+				foreach (Vector2Int size in ScreenSizes)
+				{
+					Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
+					yield return new WaitForSecondsRealtime(1.2f);
+					int w = Screen.width, h = Screen.height;
+					if (box != null) { box.gameObject.SetActive(true); box.Open(); }
+					yield return new WaitForSecondsRealtime(0.8f);
+					Canvas.ForceUpdateCanvases();
+					Rect n = ScreenRect(panel);
+					var why = new List<string>();
+					if (n.xMin < -1f || n.yMin < -1f || n.xMax > w + 1f || n.yMax > h + 1f) why.Add("off the screen (" + n + ")");
+					if (buttons != null && buttons.GetComponentsInChildren<Button>(false).Any(b => ScreenRect((RectTransform)b.transform).Overlaps(n))) why.Add("over Raft's menu buttons");
+					// (the New Game box's drawn panel: its controls - its own rectangle is bigger than what it draws)
+					if (box != null && box.GetComponentsInChildren<Selectable>(false).Any(s => ScreenRect((RectTransform)s.transform).Overlaps(n))) why.Add("over the New Game box");
+					Check(ref ok, why.Count == 0, w + "x" + h + ": the box " + (why.Count == 0 ? "on the screen, clear of the menu and the New Game box" : string.Join(", ", why.ToArray())));
+					if (size.x == 1024 || size.x == 1920) { Screenshot(new[] { "notice_" + w + "x" + h }); yield return new WaitForSecondsRealtime(0.6f); }
+					if (box != null) box.gameObject.SetActive(false);
+				}
+			}
+			finally { Screen.SetResolution(w0, h0, mode0); if (box != null) box.gameObject.SetActive(false); }
+			yield return new WaitForSecondsRealtime(1f);
+			// Got it / Show
+			float tall = ScreenRect(panel).height;
+			ExperimentalNotice.Toggle.onClick.Invoke(); yield return null; Canvas.ForceUpdateCanvases();
+			Check(ref ok, ExperimentalNotice.Folded && ExperimentalNotice.SeenThisVersion && ScreenRect(panel).height < tall * 0.6f && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Show",
+				"Got it folds it into a bar (" + tall.ToString("F0") + " > " + ScreenRect(panel).height.ToString("F0") + " px) and remembers it for " + ExperimentalNotice.Version);
+			Screenshot(new[] { "notice_folded" });
+			yield return new WaitForSecondsRealtime(0.6f);
+			ExperimentalNotice.Toggle.onClick.Invoke(); yield return null;
+			Check(ref ok, !ExperimentalNotice.Folded && !ExperimentalNotice.SeenThisVersion && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Got it", "Show opens it again (and a new start shows it whole)");
+			if (foldedBefore) ExperimentalNotice.Flip();
+			if (ok) Log("PASS: experimental notice"); else Fail("experimental notice");
+		}
+
+		#endregion
 		#region Every combination
 
 		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): all 16 combinations of the world options switched on in turn: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
