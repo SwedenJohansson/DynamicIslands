@@ -9,8 +9,9 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 > The main menu shows this in a box (**Got it** folds it until the next version).
 
 **New here? Start with the [illustrated guide](docs/GUIDE.md)** (also as a [PDF](docs/Custom-Islands-Guide.pdf) to download or print): installing, starting a world, what you meet while
-sailing, the world randomizer, and building your own islands in the editor, step by step with 50 pictures. This README
-is the full reference.
+sailing, building your own islands in the editor and giving them quests and stories, playing together, and at the end
+the optional world systems (world rules, randomizer, extra options, the level up system), step by step with 57 pictures.
+This README is the full reference, in the same order: island creation first, the optional systems after.
 
 [![A custom island seen from the sea](docs/images/world-island-from-sea.jpg)](docs/GUIDE.md)
 
@@ -92,216 +93,76 @@ is the full reference.
   - **The journal** (J): the crew's story items with their pictures, and every custom note read (plus "journal" pages), on paper. Story items are held by the whole crew, like Raft's own quest items, saved with the world and sent to players who join.
   - **Behaviours:** doors, gates and lifts move for every player; things that move back and forth, spin or bob follow a clock all players share (Raft's water time), so everyone sees them in the same place; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
-  - **Monster difficulty** (Raft's **New Game** box, a slider under the game modes): **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
-  - **Build cost** (World settings, a second slider): everything in the build menu costs 0-100% more materials, always rounded up. It's the same for every player, including those who join later.
-  - **Levels:** in a world with the level up system on, hitting a monster floats the EXP it gave over it (**+5 EXP**). A level bar sits just under Raft's health, thirst and hunger bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the level bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 10. Other players see your level as a small **Lv 5** under your name.
+  - **Rafts of blocks you can walk on:** Raft's building blocks on custom islands (wrecks, ghost rafts, a raft built in the editor) float like the player's raft, with the deck a player walks on (see [World settings](#world-settings-more-ways-to-play-raft-again)).
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
-- **World randomizer** (World settings in the New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
-- **World settings** (New Game box, WORLD SETTINGS...): one window with the world rules, the world randomizer and the extra options - scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder) - the same for every player; and which of your islands turn up while sailing in that world (a list with tick boxes).
-- **Multiplayer (up to eight players, Raft's maximum):** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The world rules (monster difficulty, build cost) are the host's for every player, also those who join later.
-- **Another player can host the world next time.** Raft keeps a world on the host's PC; copy its folder (`...\LocalLow\Redbeet Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the next host's PC. The mod's state of the world goes along: the host writes it into that folder too (`CustomIslands.txt`), and every player keeps a copy of it (`worlds\<world id>.txt`, sent by the host each time Raft saves). When the world loads, the newest copy is read. Islands a player only has from joining are played from their downloaded copies (`<name>_<hash>.island`) under their own names, so quests, rules and journal pages that name them keep working. Everyone keeps their level, EXP and points.
+- **Multiplayer (up to eight players, Raft's maximum):** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The World settings (world rules, randomizer, extra options, islands while sailing) are the host's for every player, also those who join later.
+  - **Another player can host the world next time.** Raft keeps a world on the host's PC; copy its folder (`...\LocalLow\Redbeet Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the next host's PC. The mod's state of the world goes along: the host writes it into that folder too (`CustomIslands.txt`), and every player keeps a copy of it (`worlds\<world id>.txt`, sent by the host each time Raft saves). When the world loads, the newest copy is read. Islands a player only has from joining are played from their downloaded copies (`<name>_<hash>.island`) under their own names, so quests, rules and journal pages that name them keep working. Everyone keeps their level, EXP and points, and the world keeps its World settings.
   - **One player gets a chest:** when several players open one chest (or walk into a zone that fires once) at the same moment, the host gives it to the first to ask; the others are told someone else got there first.
   - **Once is once for the crew:** a note read or an island reached runs its shared actions once, however many players do it together; a finished quest's checks are made once, by the host; story items from a quest's reward or a "give" action go to the crew once (Raft's items still go to every player near).
   - **A crew that splits up:** the host keeps an island loaded while any player is at it, so its animals, ambushes and doors keep working for players there while the host and the raft are far away.
   - **Everything the host decides is the same for every player, however they came in** (live, joining later, leaving and joining again, restarts), and never taken from a player's own files: the host's `spawnpool.txt` settings that change what players see (`regrowDays`, `showOnReceiver`, `unloadDistance`) go to every player with the world rules; **what grows back is the host's decision** (a player who has the island loaded sees it the next time it loads there); tough built creatures and the randomizer's alphas have the host's health on every player's screen, also for a player who joins mid-fight; only the host can change the host's settings (`Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `CustomIslandsAuto`, `SpawnIsland`, `RemoveIsland` are refused for other players); a player's own last New Game choices only apply to worlds they make themselves.
+- **Optional world systems**, separate from island building and off in a plain world (see the sections from [World settings](#world-settings-more-ways-to-play-raft-again) on):
+  - **World settings window** (New Game box, **WORLD SETTINGS...**): Raft's New Game box stays as Raft made it; one window holds everything below that is chosen per world, with **Raft's own** to put it all back.
+  - **Monster difficulty:** **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
+  - **Build cost:** everything in the build menu costs 0-100% more materials, always rounded up.
+  - **World randomizer:** a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands, large islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
+  - **Extra options:** scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder).
+  - **Islands while sailing:** which of your islands (and which map types and generated islands) turn up by chance in that world, from a list with tick boxes.
+  - **The level up system** (switched on by an island made with it, not in the window): hitting a monster floats the EXP it gave over it (**+5 EXP**). An EXP bar styled like Raft's own sits above its thirst, hunger and health bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 10. Other players see your level as a small **Lv 5** under your name (see [The level up system](#the-level-up-system)).
+- **EXPERIMENTAL ALPHA RELEASE box** on Raft's main menu (top right): the mod's version and what an alpha means (things change, some systems may be unstable, progress isn't guaranteed to be saved). **Got it** folds it into a bar (its **Show** opens it again) until the next version of the mod (`notice.txt`).
 
-## World plans
+## Installing
 
-A **world plan** says which custom islands a world gets, **when** and **where**. It's a list of rules; each rule brings one island:
+Install RML, then put `DynamicIslands.rmod` in Raft's `mods` folder, or get the mod from raftmodding.com. Every player in a multiplayer game needs the mod.
 
-| Part | Choices |
+Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
+
+| File | What it is |
 |---|---|
-| **What** | a saved island · a new island of a **map type** (generated, e.g. a treasure island) · one from the spawn pool · one of a list of islands |
-| **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · an object sends a signal (Behaviour & events) · after another rule |
-| **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) |
-| **Tell** | a message every player sees (with how far and which way the island is), and a name for its dot on the Receiver |
+| `*.island` | Saved islands. Share them by copying the file. |
+| `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
+| `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
+| `plans\*.plan` | World plans (text). `plans\samples.txt` lists the samples the mod has written once. |
+| `placeables_generated.txt` | The core objects the editor offers. Small indoor clutter is listed at the end, commented out. Copy the file to `placeables.txt` and edit it to choose your own list. |
+| `catalog_index.txt` | Only after a Raft update: which of Raft's island scenes each of the other objects comes from, made by the editor (the mod ships one for the current Raft). Delete it to scan again. |
+| `<name>_<hash>.island` | Islands downloaded from a multiplayer host (also what a player hosts the world from later). |
+| `worlds\<world id>.txt` of a world you joined | The host's copy of that world, kept so you can host it later (with its Raft folder copied to your PC). Raft's world folder has one too: `CustomIslands.txt`. |
+| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monster difficulty, build cost, extra options, islands left out; the randomizer), the start for the next new world |
+| `groups\`, `stamps\`, `generator_presets\` | Your saved object groups, terrain stamps and generator presets |
+| `notice.txt` | The version of the mod whose alpha box you folded with **Got it** |
 
-Rules refer to islands by the id of the rule that brought them (e.g. "when the quest of `camp` is done, bring a treasure island 900 m north-east of `camp`"), or by island name. A plan can also keep the random islands of `spawnpool.txt` going.
+## The editor
 
-- **Choosing a plan:** Raft's New Game box has a "Custom Islands plan" button: click it to go through the plans. `WorldPlan` shows the current world's plan and its rules (done or not); `WorldPlan <name>` gives the world another plan. `defaultPlan` in `spawnpool.txt` is the plan new worlds get when nobody chooses.
-- **Built-in plans:** "Random islands" (islands by chance while sailing, as before) and "No custom islands".
-- **Sample plans** (written once to `Mods\DynamicIslands\plans`): **Island hopping** (an old camp, then each island you reach shows the way to the next), **Adventure** (a story: each quest leads to the next island, with a wreck and a sunken island on the way) and **Growing sea** (random islands plus a special one every few km and days). They only use map types, so they work without any islands of your own.
-- **Making plans:** top bar **World plans**: New / Copy / Delete, a description, "random islands while sailing" on or off, and the rules as cards. **Templates...** adds ready-made sets (story chain, sky chain, quest reward island...). **Check** lists what can't work, and a small map sketches where islands would go. Plans are text files, so they can also be edited by hand (the file explains the format).
-- **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
-- **Each rule fires once per world.** What has fired, the km sailed and which islands players have reached are saved with the world. The host places new islands clear of the raft, the other custom islands and Raft's own islands, and **Raft won't put its own islands on top of custom ones later**.
+**EDITOR** in the main menu (or `LoadEditor`) opens it. A loading box covers the screen until it is ready ("Opening the editor", then "Loading Raft's objects from its islands" with a bar): a few seconds the first time after starting Raft, less after that.
 
-## World rules: monster difficulty and build cost
+The screen has a **top bar**, a **tool panel** on the left (it scrolls when a tall inspector doesn't fit the screen), the **object browser** on the right (Objects tab) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
 
-Two sliders in the **World settings** window (Raft's **New Game** box, **WORLD SETTINGS...**) set rules for the new world: the **Monster difficulty** and the **Build cost**. The text under each slider says what the chosen setting does, and each has a **?** with the details. Your last choices are kept for the next new world (`Mods\DynamicIslands\world_rules.txt`).
+| Where | Control | What it does |
+|---|---|---|
+| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Delete asks first). Save saves straight away once the island has a name. |
+| Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
+| Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
+| Top bar | **Generate** | The island generator (see "The island generator"): tabs **Normal**, **Randomize existing** and **Ready-made (with content)**, a preview map, the seed, **Generate** (Enter) and **Close** (Esc). Generating replaces the current island; Ctrl+Z brings the old one back. On Ready-made, **Make** (click twice) makes an island of the chosen type from the seed, saves it as `gen-<type>-<seed>` and opens it. Every setting has a **?**: hover it (or click it) for a few sentences of help. |
+| Top bar | **World plans** | The world plan editor: pick a plan, New / Copy / Delete, Templates..., random islands on/off, description, the rule cards (when · bring what · where · message · Receiver name), Check, the map, Save |
+| Terrain tab | **Sculpt** group | Raise / Lower / Flatten / Smooth. A ring shows the brush. |
+| Terrain tab | **Paint ground** group | The style's four textures (named after it, with a colour swatch) and **Auto** |
+| Terrain tab | **Brush** group | Size and strength |
+| Objects tab | **Transform** group | Move / Turn / Scale / All (keys 1–4) |
+| Objects tab | **Selection** group | What's selected; **Ground**, **Duplicate** (Ctrl+D), **Deselect**, **Delete** (Delete key) |
+| Objects tab | **Placing** group | **Random**, **Slope** and **Grid** toggles |
+| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). **Loot** group: the items with their amounts (× takes one out), **Add items...** (the item picker), **Empty**, the Basics / Metal / Food / Treasure sets, fills up again after N days or never. **Trigger zone** group: name, size, message, fires once or every time, and what it gives. A creature's **Appears** button chooses "at once" or "when a zone fires". **Atmosphere zone** group: size, fog colour and strength, light tint and strength, particles. **Sound zone** group: **Choose sound...** (Raft's sounds, with listening), ► / ■, volume, "While inside" or "Once on entering", size. Plain objects offer **Readable...** and **A chest...**. **Behaviour & events** group (every object): what it does, and **Behaviour & events...** (name, movement with Preview, hidden at first, players can use it, collision, "when … then" actions, "only if" checks, waits). Every change can be undone. |
+| Objects tab | Object browser | Search box, then the categories. Click a category to open or close it. Click an object, then click the ground: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. |
+| Island tab | **Island** group | Style (◄ ►), height in the world with At sea / Flying / Sunken presets |
+| Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
+| Terrain tab | **Stamps** group | Hill, Peak, Crater, Mesa, Lagoon, Ridge and your saved stamps (click the ground; Size = how big, Q/E turn); **Save stamp...** |
+| Objects tab | **Save as group...** (Selection) | The selected objects become a group under "My groups" (`DeleteGroup <name>` removes one) |
+| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards; **Island events...**: what happens when players first arrive and when the quest is done; **Story items...**: the island's story items and the story sets |
+| Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never); **Level up system** Off / On (see "The level up system") |
+| Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
+| Keys | Ctrl+S / Ctrl+O | Save / open |
+| Camera | | Like Unity's scene view: **right-drag** to look around (while held: **WASD** flies where you look, **Q/E** down and up, the **wheel** sets the flying speed); **WASD** or arrows alone move over the island at the same height; **middle-drag** pans (the ground follows the cursor); **Alt+left-drag** orbits around the selected objects, or the ground in the middle of the view; the **wheel** zooms towards whatever is under the cursor (never through it; not over a panel); **F** frames the selection, or the whole island when nothing is selected; **Shift** is three times faster. Moves are smoothed and faster high up; the camera stays above the ground but can dive under the sea. |
 
-**Every player in a world has the same rules as the host.** They're saved with the world (`@monsters=`, `@buildcost=` in its file) and sent to every player who joins, and again to everyone when the host changes one. Leaving and joining again, loading the world again and restarting Raft change nothing, and every new world gets its own rules from the box.
-
-### Monster difficulty
-
-How tough a world's monsters are.
-
-| Level | Monsters' health | Damage they deal to players | |
-|---|---|---|---|
-| **Timid** | ×0.75 (25% less) | ×0.75 | A gentler trip across the sea |
-| **Normal** | ×1 | ×1 | As Raft made them (the default) |
-| **Fierce** | ×1.25 (25% more) | ×1.25 | |
-| **Savage** | ×1.5 (50% more) | ×1.5 | Keep your spear close |
-| **Nightmare** | ×2 (twice) | ×2 | For seasoned survivors |
-
-These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they don't get mixed up with Raft's own Easy / Normal / Hard game modes. `Monsters easy`, `moderate`, `hard` and `impossible` still work.
-
-- **Monsters** are the animals that fight players, on Raft's own islands and on custom ones: Bruce and the other sharks, warthogs, bears, mama bears, polar bears, screechers, puffer fish, rats, hyenas, bee swarms, angler fish, the butler bots and the bosses. Llamas, goats, chickens, pigs, seagulls and the sea life that only swims by don't change.
-- **It stacks** with Raft's game mode and with what an island's builder gave an animal. For example, a warthog its builder gave ×2 health has ×3 Raft's health on Savage.
-- **How it works:** every hit in Raft passes through one place (`Network_Host.DamageEntity`) on the machine where it happens. A monster's hit on a player is multiplied by the level's number, and every hit on a monster is divided by it, which works the same as giving it that much more health. Hits of 9999 or more (Raft's "kill it" values) are left alone.
-- **Left as Raft has them:** puffer fish damage (their explosion, their cloud and the poison it leaves; only their health changes), and everything about Bruce and your raft: his bites on it, how often he comes for it and how soon a killed shark comes back. Also how fast monsters move, how far they see and how often land monsters attack: Raft's own difficulty doesn't change these either, and faster animals would trip up Raft's animations and paths.
-- **Peaceful and Creative:** monsters can't hurt players there, so only their health changes, and the box says so.
-- **For every player:** a guest's spear does the same to a shark as the host's, and a monster bites a guest as hard as the host.
-- **Changing it later:** `Monsters` shows the world's level. The host can change it with `Monsters timid|normal|fierce|savage|nightmare`. At the main menu, `Monsters <level>` sets the choice for the next new world.
-
-### Build cost
-
-How many more materials everything in the **build menu** costs: the hammer's foundations, floors, walls, roofs, stairs, pillars and the rest. The slider goes from **0%** (Raft's own cost, the default) to **100%** (twice as much) in steps of 5.
-
-- **Always rounded up:** at 50% one plank becomes two, two become three, three become five.
-- **Removing a block** with the hammer gives back half of what it cost, as Raft does. At 50% a block that cost 3 planks gives 2 back.
-- **Repairing and reinforcing** blocks cost more too, since they use the same cost list. What you make in the crafting menu (Tab) costs the same as in Raft.
-- **For every player:** each player pays from their own inventory on their own machine, so every player who joins gets the host's percent.
-- **Never on top:** the mod sets the numbers from Raft's own each time, and puts Raft's own back as soon as you leave a world. Leaving and joining again, loading again or changing the percent several times never makes building dearer than the percent says, and the main menu, the editor and the next world start from Raft's numbers.
-- **Changing it later:** `BuildCost` shows the world's percent. The host can change it with `BuildCost <0-100>`. At the main menu, `BuildCost <0-100>` sets the choice for the next new world.
-
-## Map types
-
-Islands the generator makes by itself, with content. Plans use them (`type:<name>`), the quest editor can bring them, `spawnpool.txt` can mix them in (`type:<name> <weight>`), and the Generate window makes one to edit.
-
-| Type | What |
-|---|---|
-| `sandbar` | A tiny island with a few palms and a small chest: a rest stop |
-| `atoll` | A ring of low land around a shallow lagoon, turtles and a sunken barrel |
-| `archipelago` | Several islets on a shallow shelf; quest: a castaway's note and three caches |
-| `stacks` | Steep rock pillars; quest: a chest on top of the tallest (build your way up), a screecher |
-| `boss` | A plateau with cliffs and a ramp; walking into the arena wakes a boss bear (quest, big reward) |
-| `volcano` | A tall volcano with embers, red light and dark smoke near the crater |
-| `swamp` | Low land with pools, green mist and fireflies; quest: rats guard a stash |
-| `spire` | A snowy island with one very tall peak, falling snow, a polar bear and a cache on top |
-| `treasure` | A map in a bottle on the beach leads to the X and a treasure chest (quest) |
-| `camp` | An abandoned camp: fire, hammock, flag, notice board and supplies (quest); a good first island of a story |
-| `sunken` | An island under water: corals, sunken barrels, puffer fish and a turtle |
-| `sky` | A small island floating 45–90 m up, with a cache |
-| `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
-| `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
-| `oddity` | A small island with something odd on it: one of the eight below, picked at random |
-| `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
-| `lair` | A boss lair: a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One: 6× health, 2.5× damage, twice the size) and two guards wake when you reach the top; a hoard and a trophy chest with the beast's head (quest; much harder than `boss`) |
-| `large` | A large island made like Raft's big ones (80-110 m, 35-60 m high, trees and plants as dense as theirs): three warthog spots, four spots of animals to catch for the raft, puffer fish around it, a screecher, hidden loot boxes, a made-up name; one or two scenes from the quest islands, and a den (one of Balboa's cave outcrops) with a guard and a hoard |
-
-## World randomizer
-
-Makes a **normal Raft world** play out differently every time: with or without custom islands, and without touching Raft's story. Choose it in the **World settings** window of Raft's **New Game box** under "World randomizer": **Off**, **Light**, **Normal** or **Wild** (how much is different), and which parts take part (click a part to switch it off). The last choice is remembered for the next world. Each world gets its own seed; everything follows from it.
-
-| Part | What changes |
-|---|---|
-| **Colours** | Animals and sharks now and then have another colour: charcoal, ash, umber, rust, sand, moss, frost, night; birds crimson, slate or gold; sharks (Bruce too) midnight, tiger, rust, reef, olive, and rarely gold. Light: about 1 in 7, Normal 1 in 3, Wild every other one |
-| **Animals** | Raft's islands that have animals get more of them near where Raft has them; islands without animals sometimes get a few (warthogs, chickens, goats, llamas; on Wild a bear); now and then puffer fish guard the reef |
-| **Alphas** | Rare alpha animals (warthogs, pigs, bears, polar bears, hyenas, screechers): bigger, darker, 3× health, 1.6× damage. A huge dark **Big Bruce** now and then (2.5× health). A banner warns nearby players. Killed, they drop a trophy head (Head_Boar, Head_Bear, Head_Shark...), meat and leather, and sometimes titanium |
-| **Loot** | Some of the crates and giant clams on Raft's islands lie somewhere else (on land stays on land, under water at a similar depth); islands sometimes get extra crates, barrels and chests, and sunken barrels on the reef |
-| **Finds** | Now and then an island hides a **treasure hunt** (a map in a bottle on the beach, a chest buried at the island's highest point), an **abandoned camp** (big islands) or a **castaway's stash** by a tree, with a note and a quest. Raft's big islands now and then get a **den** (one of Balboa's cave outcrops, on a level spot clear of Raft's trees and rocks, its mouth towards the coast: a guard wakes when you walk in, a hoard at the back) and an **outpost** (a scene from a quest island) |
-| **Oddities** | While sailing, small **oddity islands** appear (the map types above: a van, a caravan, a crashed plane...) |
-| **Bosses** | Now and then (after the first few km) a **boss lair** appears |
-| **Large** | Now and then (after the first few km) a **large island** like Raft's big ones appears (the `large` map type above) |
-
-**Made to fit in Raft's world.** The randomizer's islands are made like Raft's own: the oddities, lairs and large islands
-have trees, bushes, rocks and harvestables as dense as Raft's islands of that size (an oddity as dense as Raft's small
-islands, a large one as its big ones), and trees to cut as Raft has them (2-6 palms on a small tropical island, about one per
-1000 m² on a big one; pines and birches on forest ones, mango trees on desert ones - some of the island's own bamboo and big
-palms become them, where they stand), in the places Raft puts them, with Raft's pickable flowers, pineapples,
-watermelons and mango and banana trees on tropical ones. What makes them new comes from Raft's own quest islands, as
-**scenes**: a scrapyard (Varuna Point's excavator, forklift, dumpsters and concrete pipes), an old market (Utopia's baskets
-and crates under Tangaroa's sunshade), a caravan outpost (Caravan Town), bear country (Balboa's fences, bear signs and
-couch, a bear nearby), a frozen camp (Temperance's igloos, on snowy islands), a hotel garden (Tangaroa's plants), a radio
-outpost (the radio tower's windmill and dish) and a castaways' camp (the floating rafts'), each with a chest and a note;
-and **dens**: Balboa's bear cave and dead end, whole rock outcrops with a den about 30 m deep at Raft's own size (the bear
-cave is scaled x3 in Raft's scene), placed on levelled ground (generated islands) or a spot clear of Raft's things with the
-den's floor on its highest ground and the mouth turned to open ground (Raft's islands). Raft's pickups and animals inside a
-copied piece (Balboa's cave holds the Machete blueprint, Mama Bear's pickup and a bear) are left out: nothing of Raft's
-story comes along. Every prop's size and footprint is measured
-(`raft_props.txt`, `CIMeasureProps`): props stand on the lowest ground under them, and nothing that hangs from its top
-(awnings, banners, dream catchers) is used.
-
-- **Raft's story is safe:** only Raft's plain islands (the big and small tropical ones and the small islands around the story places) are changed; the story islands, the stranded boat, the pilot's island and floating rafts are left alone, and so are bosses, people and bees.
-- **Multiplayer:** colours, alphas and moved crates are worked out on every machine from the world's seed and Raft's own network ids, so every player sees the same without extra messages. What is added to Raft's islands is a land-less custom island laid over Raft's island (its "extras", `rnd-<seed>-<id>.island`): it is saved, sent to other players, and its chests, animals and quests work like any custom island's. Raft saves picked-up crates by the place it put them; for moved crates the mod finds them by that place again, so a used crate stays used after loading and for players who join.
-- **Changing it later:** `Randomizer` shows what it does in the current world; the host can change it: `Randomizer off|light|normal|wild`, `Randomizer -alphas` / `+alphas` (any part). Islands that were already looked at keep what they got.
-- Raft switches the ground of its far islands off (about 1 km away), so an island is randomized when the raft comes within about a kilometre.
-
-## World settings: more ways to play Raft again
-
-Raft's **New Game** box stays as Raft made it, with the mod's **Custom Islands plan** and a **WORLD SETTINGS...** button
-at its bottom right (the button says how many settings differ from plain Raft). The button opens one window with
-everything else, grouped: the **world rules** (monster difficulty, build cost), the **world randomizer** (its level and
-parts) and the **extra options** below, each switched on and off with its own button and explained under it.
-**Raft's own** puts all of them back to plain Raft. The last choice is remembered for the next world. Every player in
-the world gets the host's settings, also players who join later or again.
-
-**Islands while sailing** (the fourth group): **CHOOSE ISLANDS...** lists everything that can turn up by chance while
-sailing - every saved or downloaded island, brand-new generated islands and the map types of `spawnpool.txt` - each with
-a tick box. Untick what the world shouldn't have; a search field and **Tick shown** / **Untick shown** make that quick
-with many islands. Only what is left out is kept (the world file's `@islandsoff=` line), so islands made later join
-older worlds too; the host can change it in a world with `WorldIslands`. It counts with plans that use random islands
-(Random islands, or a plan with random islands on).
-
-- **Scrambled blueprints:** the blueprints lying on Raft's story islands are found on other story islands than usual.
-  Each one is paired with another from the world's seed, never with itself. What the story needs is never moved - the
-  Receiver and antenna, the steering wheel, the engine and its fuel, the machete, the zipline and the headlight - so the
-  story can always be finished. Only what a pickup gives changes: its name says what you'll get.
-- **Story islands in a new order:** Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance
-  come in a shuffled order (from the world's seed; Utopia, the ending, stays last). Raft unlocks each frequency with a note
-  - the Receiver's first, then the one found on each island for the next - and with this option each note unlocks the
-  island in the new order's place. The frequency numbers written on the notes follow. Each story island carries what it
-  needs (its keys and parts), so any order can be finished.
-- **Ghost rafts:** abandoned rafts of Raft's blocks lie on the sea and come up ahead while sailing (not in the first
-  1.5 km, then about one per 3 km). Small ones (a few foundations, a barrel, a message in a bottle), medium ones (a hut, a
-  barrel and a box, a captain's log, sometimes a rat or two) and now and then a large one: a wide raft with huts and a
-  lookout, a hoard chest and barrels, guarded by rats on its deck and screechers circling above.
-- **Private storages:** a storage opens only for the player who built it; looking at someone else's shows whose it is.
-  Storages built while the option was off open for everyone.
-- The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage).
-- Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
-  (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
-  machine notes who built a storage as Raft places it there.
-- Raft's building blocks on custom islands (ghost rafts, wrecks, a raft built in the editor) float like the player's raft - a foundation 0.13 m above the sea, measured - and each foundation has a deck a player walks on, 0.22 m above it, as Raft gives its own raft (Raft adds that deck only to the player's raft: before, players fell through a raft of blocks and it sat under the waterline).
-
-## The level up system
-
-An island made with **Level up system: On** (Island tab, Rules; or the generator's **Level up** choice, on all three tabs) turns levels on in any world it comes to. A banner says so, and from then on it stays on in that world. It is off in every world without such an island.
-
-- **EXP:** every hit a player makes on a monster gives EXP, anywhere in that world: the island's animals, Bruce and Raft's own animals. The number floats up over the monster for a moment (**+5 EXP**), and the level bar lights up. A hit gives the monster's EXP times the share of its health it took, so a kill gives exactly the monster's EXP. If two players fight it together, each gets their share. Animals that aren't monsters give nothing: chickens, goats, llamas, turtles, stingrays, dolphins, whales and people. The stats page counts the monsters each player has defeated (the killing hit counts).
-- **What a monster is worth:** half from how tough it is, half from how hard it hits, both compared with Bruce (Raft's shark), who is worth **20 EXP**: `EXP = 20 × (0.5 × health / Bruce's health + 0.5 × damage / Bruce's damage)`, at least 1. Health and damage are the animal's own, so the editor's Easy / Hard / Boss settings count too (a Boss warthog is worth more). `CILevelTable` lists every monster's numbers.
-- **Levels:**
-
-  | From level | To level | EXP needed | About (kills of Bruce) | EXP in all |
-  |---|---|---|---|---|
-  | 1 | 2 | 100 | 5 | 100 |
-  | 2 | 3 | 200 | 10 | 300 |
-  | 3 | 4 | 400 | 20 | 700 |
-  | 4 | 5 | 600 | 30 | 1300 |
-  | 5 | 6 | 800 | 40 | 2100 |
-  | *n* | *n*+1 | 200 × (*n* − 1) | 10 × (*n* − 1) | |
-
-- **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with ten pips each. **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**, and a stat takes at most **10 points** (+10%). All 90 points are there at level 46. **The levels go on after that**, without points: the level up box says every stat is full.
-
-  | Stat | What a point does |
-  |---|---|
-  | Walk speed / Run speed / Swim speed | 1% faster on land, sprinting, swimming and diving |
-  | Jump height | Jumps 1% higher (on land and out of the water) |
-  | Damage | 1% more damage to monsters with every weapon (melee, spears, arrows, thrown stones) |
-  | Health | 1% more maximum health |
-  | Hunger | Hunger drains 1% slower, so you go longer without eating |
-  | Thirst | Thirst drains 1% slower, so you go longer without drinking |
-  | Oxygen | Breath runs out 1% slower, so you last longer under water |
-
-- **On the screen:**
-  - **The EXP bar** is styled exactly like Raft's own stat bars and sits one row above them (thirst, hunger, health): it is a copy of Raft's hunger bar with a **star icon** (drawn like Raft's stat icons) on its badge, a gold fill, the level on the left (a **+** when points are waiting) and the EXP to the next level on the right. It glows (Raft's own blink glow) when EXP comes in. It is part of Raft's HUD, so it hides with it. (Should a Raft update change its bars, a plain bar of the mod's own is used instead.)
-  - **The stats page** opens with **K**, with the **Stats** button that shows next to the level bar while Raft's inventory (Tab) is open, or by clicking the level up box. Esc or K closes it.
-  - **The level up box** ("LEVEL 3! +2 stat points") stays for about 12 seconds. Click it while the mouse is free (in a menu) to open the stats page.
-  - **Other players' levels:** a small gold **Lv 5** under the name Raft shows over each other player, nothing more. The host sends every player's level to everyone when it changes and when someone joins.
-- **Saved with the world** for every player (`@levels=on` and `@level=<steam id>|<exp>|<points>|<monsters defeated>` in the world's island file). A player who joins, or joins again, gets their own level back from the host, also after both Rafts restart. Players earn EXP and spend points on their own machine, and their record goes to the host.
-- **Multiplayer: the same for everyone.** Whether the system is on belongs to the world, and every player gets it when they join or join again. **The host works out every player's EXP:** it has every monster as it was built (the editor's toughness, the randomizer's alphas), so a monster is worth the same to everyone. A player's hit reaches the host as Raft's own damage message, and the EXP goes back to that player. A player's Health points count on every machine, so the host's copy of that player, which monsters bite, has the same maximum health. Each player earns and spends on their own stats page; their record goes to the host, which saves it and sends it back when they join again.
-- **How it works in Raft:** the speeds and the jump are raised only while Raft moves the player (`PersonController.GroundControll` / `WaterControll`), so Raft's flippers and other changes stay as they are. Damage and EXP come from `Network_Host.DamageEntity`, which runs on the attacking player's own machine for every weapon. Health is the player's maximum health. The level bar is a child of Raft's `CanvasHelper.StatSliderParent`, and the level under a name a small `TextMesh` under `Network_Player.playerNameTextMesh`. Hunger and thirst go through `Stat_Consumable.LostPerSecond`, and oxygen through `Stat_Oxygen.Update`.
+The blue plane is sea level. Anything below it is under water in game.
 
 ## The island generator
 
@@ -373,53 +234,207 @@ Measured with `CIGenBench` (editor) and `CIGenWorld` (a world, one PC; frame tim
 (Measured again 2026-09-26, with the deep sea floor and the life under water: the same settings now also place Raft's reefs, rocks and pickups around the island, and the files keep ground 160 m deep.)
 
 In a world, a 5 681-object jungle spawned in 0.6 s and its creatures' NavMesh built in 1.4 s; frame time went from 17 ms to 27 ms with the whole island in view 330 m away and 19 ms standing in it (9 000 objects: 23 ms / 18 ms). A second player received both islands complete in 7-12 s. One island gets at most 12 000 objects (denser settings are thinned, and the window says so).
-## Installing
 
-Install RML, then put `DynamicIslands.rmod` in Raft's `mods` folder, or get the mod from raftmodding.com. Every player in a multiplayer game needs the mod.
+## Map types
 
-Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
+Islands the generator makes by itself, with content. Plans use them (`type:<name>`), the quest editor can bring them, `spawnpool.txt` can mix them in (`type:<name> <weight>`), and the Generate window makes one to edit.
 
-| File | What it is |
+| Type | What |
 |---|---|
-| `*.island` | Saved islands. Share them by copying the file. |
-| `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
-| `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
-| `plans\*.plan` | World plans (text). `plans\samples.txt` lists the samples the mod has written once. |
-| `placeables_generated.txt` | The core objects the editor offers. Small indoor clutter is listed at the end, commented out. Copy the file to `placeables.txt` and edit it to choose your own list. |
-| `catalog_index.txt` | Only after a Raft update: which of Raft's island scenes each of the other objects comes from, made by the editor (the mod ships one for the current Raft). Delete it to scan again. |
-| `<name>_<hash>.island` | Islands downloaded from a multiplayer host (also what a player hosts the world from later). |
-| `worlds\<world id>.txt` of a world you joined | The host's copy of that world, kept so you can host it later (with its Raft folder copied to your PC). Raft's world folder has one too: `CustomIslands.txt`. |
+| `sandbar` | A tiny island with a few palms and a small chest: a rest stop |
+| `atoll` | A ring of low land around a shallow lagoon, turtles and a sunken barrel |
+| `archipelago` | Several islets on a shallow shelf; quest: a castaway's note and three caches |
+| `stacks` | Steep rock pillars; quest: a chest on top of the tallest (build your way up), a screecher |
+| `boss` | A plateau with cliffs and a ramp; walking into the arena wakes a boss bear (quest, big reward) |
+| `volcano` | A tall volcano with embers, red light and dark smoke near the crater |
+| `swamp` | Low land with pools, green mist and fireflies; quest: rats guard a stash |
+| `spire` | A snowy island with one very tall peak, falling snow, a polar bear and a cache on top |
+| `treasure` | A map in a bottle on the beach leads to the X and a treasure chest (quest) |
+| `camp` | An abandoned camp: fire, hammock, flag, notice board and supplies (quest); a good first island of a story |
+| `sunken` | An island under water: corals, sunken barrels, puffer fish and a turtle |
+| `sky` | A small island floating 45–90 m up, with a cache |
+| `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
+| `ghostraft` | No land: an abandoned raft of Raft's blocks with loot and a note - small, medium, or large with huts and a lookout, guarded by rats and screechers (the extra option Ghost rafts brings them while sailing) |
+| `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
+| `oddity` | A small island with something odd on it: one of the eight below, picked at random |
+| `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
+| `lair` | A boss lair: a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One: 6× health, 2.5× damage, twice the size) and two guards wake when you reach the top; a hoard and a trophy chest with the beast's head (quest; much harder than `boss`) |
+| `large` | A large island made like Raft's big ones (80-110 m, 35-60 m high, trees and plants as dense as theirs): three warthog spots, four spots of animals to catch for the raft, puffer fish around it, a screecher, hidden loot boxes, a made-up name; one or two scenes from the quest islands, and a den (one of Balboa's cave outcrops) with a guard and a hoard |
 
-## The editor
+## World plans
 
-The screen has a **top bar**, a **tool panel** on the left (it scrolls when a tall inspector doesn't fit the screen), the **object browser** on the right (Objects tab) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
+A **world plan** says which custom islands a world gets, **when** and **where**. It's a list of rules; each rule brings one island:
 
-| Where | Control | What it does |
-|---|---|---|
-| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Delete asks first). Save saves straight away once the island has a name. |
-| Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
-| Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
-| Top bar | **Generate** | The island generator (see "The island generator"): tabs **Normal**, **Randomize existing** and **Ready-made (with content)**, a preview map, the seed, **Generate** (Enter) and **Close** (Esc). Generating replaces the current island; Ctrl+Z brings the old one back. On Ready-made, **Make** (click twice) makes an island of the chosen type from the seed, saves it as `gen-<type>-<seed>` and opens it. Every setting has a **?**: hover it (or click it) for a few sentences of help. |
-| Top bar | **World plans** | The world plan editor: pick a plan, New / Copy / Delete, Templates..., random islands on/off, description, the rule cards (when · bring what · where · message · Receiver name), Check, the map, Save |
-| Terrain tab | **Sculpt** group | Raise / Lower / Flatten / Smooth. A ring shows the brush. |
-| Terrain tab | **Paint ground** group | The style's four textures (named after it, with a colour swatch) and **Auto** |
-| Terrain tab | **Brush** group | Size and strength |
-| Objects tab | **Transform** group | Move / Turn / Scale / All (keys 1–4) |
-| Objects tab | **Selection** group | What's selected; **Ground**, **Duplicate** (Ctrl+D), **Deselect**, **Delete** (Delete key) |
-| Objects tab | **Placing** group | **Random**, **Slope** and **Grid** toggles |
-| Objects tab | **Inspector** (one object selected; replaces Placing and the tips) | **Creature** group: animals here, presets, health / damage / speed / size, comes back after N days or never. **Note** group: title, a preview of the text, **Edit note...** (the note editor), **Remove**; for other objects, **Add a note to it...**. **Colour** group: None, swatches, strength, **Custom colour...** (red/green/blue). **Loot** group: the items with their amounts (× takes one out), **Add items...** (the item picker), **Empty**, the Basics / Metal / Food / Treasure sets, fills up again after N days or never. **Trigger zone** group: name, size, message, fires once or every time, and what it gives. A creature's **Appears** button chooses "at once" or "when a zone fires". **Atmosphere zone** group: size, fog colour and strength, light tint and strength, particles. **Sound zone** group: **Choose sound...** (Raft's sounds, with listening), ► / ■, volume, "While inside" or "Once on entering", size. Plain objects offer **Readable...** and **A chest...**. **Behaviour & events** group (every object): what it does, and **Behaviour & events...** (name, movement with Preview, hidden at first, players can use it, collision, "when … then" actions, "only if" checks, waits). Every change can be undone. |
-| Objects tab | Object browser | Search box, then the categories. Click a category to open or close it. Click an object, then click the ground: Q/E turn, [ and ] resize, Shift+click keeps placing, Esc cancels. |
-| Island tab | **Island** group | Style (◄ ►), height in the world with At sea / Flying / Sunken presets |
-| Island tab | **Shown to players** group | The island's name, author and description, shown as a banner when players arrive in a world |
-| Terrain tab | **Stamps** group | Hill, Peak, Crater, Mesa, Lagoon, Ridge and your saved stamps (click the ground; Size = how big, Q/E turn); **Save stamp...** |
-| Objects tab | **Save as group...** (Selection) | The selected objects become a group under "My groups" (`DeleteGroup <name>` removes one) |
-| Island tab | **Quest** group | What the island's quest is; **Edit quest...** opens the quest editor (steps, reward, messages, and "when the quest is done, bring a new island"); **Islands it brings...** edits all the island's rules in the plan editor's cards; **Island events...**: what happens when players first arrive and when the quest is done; **Story items...**: the island's story items and the story sets |
-| Island tab | **Rules** group | Days until things come back on this island (empty = the world's `regrowDays`, 0 = never); **Level up system** Off / On (see "The level up system") |
-| Island tab | **Generate**, **About this island** | Opens the generator; object count, height and how many objects the list has |
-| Keys | Ctrl+S / Ctrl+O | Save / open |
-| Camera | | Like Unity's scene view: **right-drag** to look around (while held: **WASD** flies where you look, **Q/E** down and up, the **wheel** sets the flying speed); **WASD** or arrows alone move over the island at the same height; **middle-drag** pans (the ground follows the cursor); **Alt+left-drag** orbits around the selected objects, or the ground in the middle of the view; the **wheel** zooms towards whatever is under the cursor (never through it; not over a panel); **F** frames the selection, or the whole island when nothing is selected; **Shift** is three times faster. Moves are smoothed and faster high up; the camera stays above the ground but can dive under the sea. |
+| Part | Choices |
+|---|---|
+| **What** | a saved island · a new island of a **map type** (generated, e.g. a treasure island) · one from the spawn pool · one of a list of islands |
+| **When** | the world starts · after sailing N km · on day N · the quest of an island is done · N steps of its quest are done · a trigger zone of an island fires · players first reach an island · an object sends a signal (Behaviour & events) · after another rule |
+| **Where** | N m ahead of the raft · N m from an island, in a direction (north, north-east... or any) |
+| **Tell** | a message every player sees (with how far and which way the island is), and a name for its dot on the Receiver |
 
-The blue plane is sea level. Anything below it is under water in game.
+Rules refer to islands by the id of the rule that brought them (e.g. "when the quest of `camp` is done, bring a treasure island 900 m north-east of `camp`"), or by island name. A plan can also keep the random islands of `spawnpool.txt` going.
+
+- **Choosing a plan:** Raft's New Game box has a "Custom Islands plan" button: click it to go through the plans. `WorldPlan` shows the current world's plan and its rules (done or not); `WorldPlan <name>` gives the world another plan. `defaultPlan` in `spawnpool.txt` is the plan new worlds get when nobody chooses.
+- **Built-in plans:** "Random islands" (islands by chance while sailing, as before) and "No custom islands".
+- **Sample plans** (written once to `Mods\DynamicIslands\plans`): **Island hopping** (an old camp, then each island you reach shows the way to the next), **Adventure** (a story: each quest leads to the next island, with a wreck and a sunken island on the way) and **Growing sea** (random islands plus a special one every few km and days). They only use map types, so they work without any islands of your own.
+- **Making plans:** top bar **World plans**: New / Copy / Delete, a description, "random islands while sailing" on or off, and the rules as cards. **Templates...** adds ready-made sets (story chain, sky chain, quest reward island...). **Check** lists what can't work, and a small map sketches where islands would go. Plans are text files, so they can also be edited by hand (the file explains the format).
+- **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
+- **Each rule fires once per world.** What has fired, the km sailed and which islands players have reached are saved with the world. The host places new islands clear of the raft, the other custom islands and Raft's own islands, and **Raft won't put its own islands on top of custom ones later**.
+
+## World settings: more ways to play Raft again
+
+*This and the next sections (world rules, the world randomizer, the level up system) describe the optional systems: separate from island building, chosen per world, and off in a world where they are left alone.*
+
+Raft's **New Game** box stays as Raft made it, with the mod's **Custom Islands plan** and a **WORLD SETTINGS...** button
+at its bottom right (the button says how many settings differ from plain Raft). The button opens one window with
+everything else, grouped: the **world rules** (monster difficulty, build cost), the **world randomizer** (its level and
+parts) and the **extra options** below, each switched on and off with its own button and explained under it.
+**Raft's own** puts all of them back to plain Raft. The last choice is remembered for the next world. Every player in
+the world gets the host's settings, also players who join later or again.
+
+**Islands while sailing** (the fourth group): **CHOOSE ISLANDS...** lists everything that can turn up by chance while
+sailing - every saved or downloaded island, brand-new generated islands and the map types of `spawnpool.txt` - each with
+a tick box. Untick what the world shouldn't have; a search field and **Tick shown** / **Untick shown** make that quick
+with many islands. Only what is left out is kept (the world file's `@islandsoff=` line), so islands made later join
+older worlds too; the host can change it in a world with `WorldIslands`. It counts with plans that use random islands
+(Random islands, or a plan with random islands on).
+
+- **Scrambled blueprints:** the blueprints lying on Raft's story islands are found on other story islands than usual.
+  Each one is paired with another from the world's seed, never with itself. What the story needs is never moved - the
+  Receiver and antenna, the steering wheel, the engine and its fuel, the machete, the zipline and the headlight - so the
+  story can always be finished. Only what a pickup gives changes: its name says what you'll get.
+- **Story islands in a new order:** Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance
+  come in a shuffled order (from the world's seed; Utopia, the ending, stays last). Raft unlocks each frequency with a note
+  - the Receiver's first, then the one found on each island for the next - and with this option each note unlocks the
+  island in the new order's place. The frequency numbers written on the notes follow. Each story island carries what it
+  needs (its keys and parts), so any order can be finished.
+- **Ghost rafts:** abandoned rafts of Raft's blocks lie on the sea and come up ahead while sailing (not in the first
+  1.5 km, then about one per 3 km). Small ones (a few foundations, a barrel, a message in a bottle), medium ones (a hut, a
+  barrel and a box, a captain's log, sometimes a rat or two) and now and then a large one: a wide raft with huts and a
+  lookout, a hoard chest and barrels, guarded by rats on its deck and screechers circling above.
+- **Private storages:** a storage opens only for the player who built it; looking at someone else's shows whose it is.
+  Storages built while the option was off open for everyone.
+- The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
+  option: blueprints, storyorder, ghostrafts, privatestorage).
+- Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
+  (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
+  machine notes who built a storage as Raft places it there.
+- Raft's building blocks on custom islands (ghost rafts, wrecks, a raft built in the editor) float like the player's raft - a foundation 0.13 m above the sea, measured - and each foundation has a deck a player walks on, 0.22 m above it, as Raft gives its own raft (Raft adds that deck only to the player's raft: before, players fell through a raft of blocks and it sat under the waterline).
+
+## World rules: monster difficulty and build cost
+
+Two sliders in the **World settings** window (Raft's **New Game** box, **WORLD SETTINGS...**) set rules for the new world: the **Monster difficulty** and the **Build cost**. The text under each slider says what the chosen setting does, and each has a **?** with the details. Your last choices are kept for the next new world (`Mods\DynamicIslands\world_rules.txt`).
+
+**Every player in a world has the same rules as the host.** They're saved with the world (`@monsters=`, `@buildcost=` in its file) and sent to every player who joins, and again to everyone when the host changes one. Leaving and joining again, loading the world again and restarting Raft change nothing, and every new world gets its own rules from the box.
+
+### Monster difficulty
+
+How tough a world's monsters are.
+
+| Level | Monsters' health | Damage they deal to players | |
+|---|---|---|---|
+| **Timid** | ×0.75 (25% less) | ×0.75 | A gentler trip across the sea |
+| **Normal** | ×1 | ×1 | As Raft made them (the default) |
+| **Fierce** | ×1.25 (25% more) | ×1.25 | |
+| **Savage** | ×1.5 (50% more) | ×1.5 | Keep your spear close |
+| **Nightmare** | ×2 (twice) | ×2 | For seasoned survivors |
+
+These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they don't get mixed up with Raft's own Easy / Normal / Hard game modes. `Monsters easy`, `moderate`, `hard` and `impossible` still work.
+
+- **Monsters** are the animals that fight players, on Raft's own islands and on custom ones: Bruce and the other sharks, warthogs, bears, mama bears, polar bears, screechers, puffer fish, rats, hyenas, bee swarms, angler fish, the butler bots and the bosses. Llamas, goats, chickens, pigs, seagulls and the sea life that only swims by don't change.
+- **It stacks** with Raft's game mode and with what an island's builder gave an animal. For example, a warthog its builder gave ×2 health has ×3 Raft's health on Savage.
+- **How it works:** every hit in Raft passes through one place (`Network_Host.DamageEntity`) on the machine where it happens. A monster's hit on a player is multiplied by the level's number, and every hit on a monster is divided by it, which works the same as giving it that much more health. Hits of 9999 or more (Raft's "kill it" values) are left alone.
+- **Left as Raft has them:** puffer fish damage (their explosion, their cloud and the poison it leaves; only their health changes), and everything about Bruce and your raft: his bites on it, how often he comes for it and how soon a killed shark comes back. Also how fast monsters move, how far they see and how often land monsters attack: Raft's own difficulty doesn't change these either, and faster animals would trip up Raft's animations and paths.
+- **Peaceful and Creative:** monsters can't hurt players there, so only their health changes, and the box says so.
+- **For every player:** a guest's spear does the same to a shark as the host's, and a monster bites a guest as hard as the host.
+- **Changing it later:** `Monsters` shows the world's level. The host can change it with `Monsters timid|normal|fierce|savage|nightmare`. At the main menu, `Monsters <level>` sets the choice for the next new world.
+
+### Build cost
+
+How many more materials everything in the **build menu** costs: the hammer's foundations, floors, walls, roofs, stairs, pillars and the rest. The slider goes from **0%** (Raft's own cost, the default) to **100%** (twice as much) in steps of 5.
+
+- **Always rounded up:** at 50% one plank becomes two, two become three, three become five.
+- **Removing a block** with the hammer gives back half of what it cost, as Raft does. At 50% a block that cost 3 planks gives 2 back.
+- **Repairing and reinforcing** blocks cost more too, since they use the same cost list. What you make in the crafting menu (Tab) costs the same as in Raft.
+- **For every player:** each player pays from their own inventory on their own machine, so every player who joins gets the host's percent.
+- **Never on top:** the mod sets the numbers from Raft's own each time, and puts Raft's own back as soon as you leave a world. Leaving and joining again, loading again or changing the percent several times never makes building dearer than the percent says, and the main menu, the editor and the next world start from Raft's numbers.
+- **Changing it later:** `BuildCost` shows the world's percent. The host can change it with `BuildCost <0-100>`. At the main menu, `BuildCost <0-100>` sets the choice for the next new world.
+
+## World randomizer
+
+Makes a **normal Raft world** play out differently every time: with or without custom islands, and without touching Raft's story. Choose it in the **World settings** window of Raft's **New Game box** under "World randomizer": **Off**, **Light**, **Normal** or **Wild** (how much is different), and which parts take part (click a part to switch it off). The last choice is remembered for the next world. Each world gets its own seed; everything follows from it.
+
+| Part | What changes |
+|---|---|
+| **Colours** | Animals and sharks now and then have another colour: charcoal, ash, umber, rust, sand, moss, frost, night; birds crimson, slate or gold; sharks (Bruce too) midnight, tiger, rust, reef, olive, and rarely gold. Light: about 1 in 7, Normal 1 in 3, Wild every other one |
+| **Animals** | Raft's islands that have animals get more of them near where Raft has them; islands without animals sometimes get a few (warthogs, chickens, goats, llamas; on Wild a bear); now and then puffer fish guard the reef |
+| **Alphas** | Rare alpha animals (warthogs, pigs, bears, polar bears, hyenas, screechers): bigger, darker, 3× health, 1.6× damage. A huge dark **Big Bruce** now and then (2.5× health). A banner warns nearby players. Killed, they drop a trophy head (Head_Boar, Head_Bear, Head_Shark...), meat and leather, and sometimes titanium |
+| **Loot** | Some of the crates and giant clams on Raft's islands lie somewhere else (on land stays on land, under water at a similar depth); islands sometimes get extra crates, barrels and chests, and sunken barrels on the reef |
+| **Finds** | Now and then an island hides a **treasure hunt** (a map in a bottle on the beach, a chest buried at the island's highest point), an **abandoned camp** (big islands) or a **castaway's stash** by a tree, with a note and a quest. Raft's big islands now and then get a **den** (one of Balboa's cave outcrops, on a level spot clear of Raft's trees and rocks, its mouth towards the coast: a guard wakes when you walk in, a hoard at the back) and an **outpost** (a scene from a quest island) |
+| **Oddities** | While sailing, small **oddity islands** appear (the map types above: a van, a caravan, a crashed plane...) |
+| **Bosses** | Now and then (after the first few km) a **boss lair** appears |
+| **Large** | Now and then (after the first few km) a **large island** like Raft's big ones appears (the `large` map type above) |
+
+**Made to fit in Raft's world.** The randomizer's islands are made like Raft's own: the oddities, lairs and large islands
+have trees, bushes, rocks and harvestables as dense as Raft's islands of that size (an oddity as dense as Raft's small
+islands, a large one as its big ones), and trees to cut as Raft has them (2-6 palms on a small tropical island, about one per
+1000 m² on a big one; pines and birches on forest ones, mango trees on desert ones - some of the island's own bamboo and big
+palms become them, where they stand), in the places Raft puts them, with Raft's pickable flowers, pineapples,
+watermelons and mango and banana trees on tropical ones. What makes them new comes from Raft's own quest islands, as
+**scenes**: a scrapyard (Varuna Point's excavator, forklift, dumpsters and concrete pipes), an old market (Utopia's baskets
+and crates under Tangaroa's sunshade), a caravan outpost (Caravan Town), bear country (Balboa's fences, bear signs and
+couch, a bear nearby), a frozen camp (Temperance's igloos, on snowy islands), a hotel garden (Tangaroa's plants), a radio
+outpost (the radio tower's windmill and dish) and a castaways' camp (the floating rafts'), each with a chest and a note;
+and **dens**: Balboa's bear cave and dead end, whole rock outcrops with a den about 30 m deep at Raft's own size (the bear
+cave is scaled x3 in Raft's scene), placed on levelled ground (generated islands) or a spot clear of Raft's things with the
+den's floor on its highest ground and the mouth turned to open ground (Raft's islands). Raft's pickups and animals inside a
+copied piece (Balboa's cave holds the Machete blueprint, Mama Bear's pickup and a bear) are left out: nothing of Raft's
+story comes along. Every prop's size and footprint is measured
+(`raft_props.txt`, `CIMeasureProps`): props stand on the lowest ground under them, and nothing that hangs from its top
+(awnings, banners, dream catchers) is used.
+
+- **Raft's story is safe:** only Raft's plain islands (the big and small tropical ones and the small islands around the story places) are changed; the story islands, the stranded boat, the pilot's island and floating rafts are left alone, and so are bosses, people and bees.
+- **Multiplayer:** colours, alphas and moved crates are worked out on every machine from the world's seed and Raft's own network ids, so every player sees the same without extra messages. What is added to Raft's islands is a land-less custom island laid over Raft's island (its "extras", `rnd-<seed>-<id>.island`): it is saved, sent to other players, and its chests, animals and quests work like any custom island's. Raft saves picked-up crates by the place it put them; for moved crates the mod finds them by that place again, so a used crate stays used after loading and for players who join.
+- **Changing it later:** `Randomizer` shows what it does in the current world; the host can change it: `Randomizer off|light|normal|wild`, `Randomizer -alphas` / `+alphas` (any part). Islands that were already looked at keep what they got.
+- Raft switches the ground of its far islands off (about 1 km away), so an island is randomized when the raft comes within about a kilometre.
+
+## The level up system
+
+An island made with **Level up system: On** (Island tab, Rules; or the generator's **Level up** choice, on all three tabs) turns levels on in any world it comes to. A banner says so, and from then on it stays on in that world. It is off in every world without such an island.
+
+- **EXP:** every hit a player makes on a monster gives EXP, anywhere in that world: the island's animals, Bruce and Raft's own animals. The number floats up over the monster for a moment (**+5 EXP**), and the level bar lights up. A hit gives the monster's EXP times the share of its health it took, so a kill gives exactly the monster's EXP. If two players fight it together, each gets their share. Animals that aren't monsters give nothing: chickens, goats, llamas, turtles, stingrays, dolphins, whales and people. The stats page counts the monsters each player has defeated (the killing hit counts).
+- **What a monster is worth:** half from how tough it is, half from how hard it hits, both compared with Bruce (Raft's shark), who is worth **20 EXP**: `EXP = 20 × (0.5 × health / Bruce's health + 0.5 × damage / Bruce's damage)`, at least 1. Health and damage are the animal's own, so the editor's Easy / Hard / Boss settings count too (a Boss warthog is worth more). `CILevelTable` lists every monster's numbers.
+- **Levels:**
+
+  | From level | To level | EXP needed | About (kills of Bruce) | EXP in all |
+  |---|---|---|---|---|
+  | 1 | 2 | 100 | 5 | 100 |
+  | 2 | 3 | 200 | 10 | 300 |
+  | 3 | 4 | 400 | 20 | 700 |
+  | 4 | 5 | 600 | 30 | 1300 |
+  | 5 | 6 | 800 | 40 | 2100 |
+  | *n* | *n*+1 | 200 × (*n* − 1) | 10 × (*n* − 1) | |
+
+- **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with ten pips each. **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**, and a stat takes at most **10 points** (+10%). All 90 points are there at level 46. **The levels go on after that**, without points: the level up box says every stat is full.
+
+  | Stat | What a point does |
+  |---|---|
+  | Walk speed / Run speed / Swim speed | 1% faster on land, sprinting, swimming and diving |
+  | Jump height | Jumps 1% higher (on land and out of the water) |
+  | Damage | 1% more damage to monsters with every weapon (melee, spears, arrows, thrown stones) |
+  | Health | 1% more maximum health |
+  | Hunger | Hunger drains 1% slower, so you go longer without eating |
+  | Thirst | Thirst drains 1% slower, so you go longer without drinking |
+  | Oxygen | Breath runs out 1% slower, so you last longer under water |
+
+- **On the screen:**
+  - **The EXP bar** is styled exactly like Raft's own stat bars and sits one row above them (thirst, hunger, health): it is a copy of Raft's hunger bar with a **star icon** (drawn like Raft's stat icons) on its badge, a gold fill, the level on the left (a **+** when points are waiting) and the EXP to the next level on the right. It glows (Raft's own blink glow) when EXP comes in. It is part of Raft's HUD, so it hides with it. (Should a Raft update change its bars, a plain bar of the mod's own is used instead.)
+  - **The stats page** opens with **K**, with the **Stats** button that shows next to the level bar while Raft's inventory (Tab) is open, or by clicking the level up box. Esc or K closes it.
+  - **The level up box** ("LEVEL 3! +2 stat points") stays for about 12 seconds. Click it while the mouse is free (in a menu) to open the stats page.
+  - **Other players' levels:** a small gold **Lv 5** under the name Raft shows over each other player, nothing more. The host sends every player's level to everyone when it changes and when someone joins.
+- **Saved with the world** for every player (`@levels=on` and `@level=<steam id>|<exp>|<points>|<monsters defeated>` in the world's island file). A player who joins, or joins again, gets their own level back from the host, also after both Rafts restart. Players earn EXP and spend points on their own machine, and their record goes to the host.
+- **Multiplayer: the same for everyone.** Whether the system is on belongs to the world, and every player gets it when they join or join again. **The host works out every player's EXP:** it has every monster as it was built (the editor's toughness, the randomizer's alphas), so a monster is worth the same to everyone. A player's hit reaches the host as Raft's own damage message, and the EXP goes back to that player. A player's Health points count on every machine, so the host's copy of that player, which monsters bite, has the same maximum health. Each player earns and spends on their own stats page; their record goes to the host, which saves it and sends it back when they join again.
+- **How it works in Raft:** the speeds and the jump are raised only while Raft moves the player (`PersonController.GroundControll` / `WaterControll`), so Raft's flippers and other changes stay as they are. Damage and EXP come from `Network_Host.DamageEntity`, which runs on the attacking player's own machine for every weapon. Health is the player's maximum health. The level bar is a child of Raft's `CanvasHelper.StatSliderParent`, and the level under a name a small `TextMesh` under `Network_Player.playerNameTextMesh`. Hunger and thirst go through `Stat_Consumable.LostPerSecond`, and oxygen through `Stat_Oxygen.Update`.
 
 ## Console commands (F10)
 
@@ -446,6 +461,20 @@ The blue plane is sea level. Anything below it is under water in game.
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
 Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.
+
+## Documentation
+
+The mod's documentation is kept up to date with the mod: **every change that adds or changes something a player or an
+island builder sees updates it in the same commit.**
+
+| File | For | Kept up to date |
+|---|---|---|
+| `docs/GUIDE.md` | Players and island builders: the illustrated guide, in the order they meet things (installing, sailing, the editor, stories, playing together; the optional world systems at the end) | Every new or changed feature gets its place in the matching section, in the same detail as the rest (what it does, where to find it, what players see, multiplayer, the console command), with a new picture where one helps (`docs/images`) |
+| `docs/Custom-Islands-Guide.pdf` | The guide to download or print | Made again from `GUIDE.md` after every change to it (Node and Microsoft Edge: `guidepdf.ps1` in the project's tools) |
+| `README.md` | The full reference: every feature, file, setting and command | The Features list, the section of the feature, the file table (Installing) and the console commands |
+
+The guide and this README follow the same order: island creation, quests and stories first; the optional world systems
+(world rules, the world randomizer, the extra options, the islands while sailing, the level up system) after them.
 
 ## Building
 
