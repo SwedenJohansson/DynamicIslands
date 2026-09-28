@@ -25,7 +25,8 @@ namespace DynamicIslands.Editor
 		static Canvas canvas;
 		static InfoWindow instance;
 		static Text titleText, bodyText, statusText;
-		static RectTransform buttonRow;
+		static RectTransform buttonRow, panel;
+		const float PanelWidth = 760f, PanelPadding = 36f, ButtonSpacing = 8f;
 		static ScrollRect scroll;
 		static readonly List<Button> buttons = new List<Button>();
 
@@ -36,6 +37,22 @@ namespace DynamicIslands.Editor
 		public static RectTransform Root { get { return canvas != null ? (RectTransform)canvas.transform : null; } }
 		/// <summary>Tests: the buttons shown now.</summary>
 		public static Button ButtonNamed(string label) { return buttons.FirstOrDefault(b => b != null && UIKit.LabelOf(b).text == label); }
+		/// <summary>Tests: the buttons that stick out of the box (their labels; empty when all fit).</summary>
+		public static List<string> ButtonsOutside()
+		{
+			var outside = new List<string>();
+			if (panel == null) return outside;
+			var corners = new Vector3[4];
+			panel.GetWorldCorners(corners);
+			float left = corners[0].x, right = corners[2].x;
+			foreach (Button b in buttons.Where(b => b != null))
+			{
+				var bc = new Vector3[4];
+				((RectTransform)b.transform).GetWorldCorners(bc);
+				if (bc[0].x < left - 0.5f || bc[2].x > right + 0.5f) outside.Add(UIKit.LabelOf(b).text);
+			}
+			return outside;
+		}
 		public static List<string> ButtonLabels { get { return buttons.Where(b => b != null).Select(b => UIKit.LabelOf(b).text).ToList(); } }
 
 		static void Build()
@@ -47,8 +64,8 @@ namespace DynamicIslands.Editor
 			RectTransform dim = UIKit.Rect("Dim", root);
 			UIKit.Stretch(dim);
 			dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
-			RectTransform panel = UIKit.Panel(root, "Panel", new RectOffset(18, 18, 14, 16), 10f);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 0f));
+			panel = UIKit.Panel(root, "Panel", new RectOffset(18, 18, 14, 16), 10f);
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(PanelWidth, 0f));
 			titleText = UIKit.Label(panel, "", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.Size(titleText.gameObject, -1, 32);
 
@@ -76,14 +93,24 @@ namespace DynamicIslands.Editor
 			foreach (Transform child in buttonRow) Destroy(child.gameObject);
 			buttons.Clear();
 			UIKit.Size(UIKit.Label(buttonRow, "", 12).gameObject, -1, -1, 1); // (the buttons on the right)
+			float row = 0f;
 			foreach (Choice c in choices)
 			{
 				Choice choice = c;
 				Button b = UIKit.Button(buttonRow, c.Label, () => choice.Click(), c.Hint, -1, 34f, 13);
-				UIKit.Size(b.gameObject, Mathf.Max(96f, 26f + 9f * c.Label.Length), 34f);
+				// (as wide as its label in Raft's font - a guess per letter was too narrow for some words)
+				Text label = UIKit.LabelOf(b);
+				float w = Mathf.Max(96f, Mathf.Max(26f + 9f * c.Label.Length, (label != null ? label.preferredWidth : 0f) + 34f));
+				UIKit.Size(b.gameObject, w, 34f);
+				row += w + ButtonSpacing;
 				if (c.Primary) UIKit.Primary(b);
 				buttons.Add(b);
 			}
+			// (the box grows so every button fits inside it, up to the screen's width)
+			float screen = ((RectTransform)canvas.transform).rect.width;
+			float width = Mathf.Max(PanelWidth, row + PanelPadding);
+			if (screen > 0f) width = Mathf.Min(width, screen - 40f);
+			panel.sizeDelta = new Vector2(width, panel.sizeDelta.y);
 			canvas.gameObject.SetActive(true);
 			LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)canvas.transform);
 			scroll.verticalNormalizedPosition = 1f;

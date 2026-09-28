@@ -140,6 +140,7 @@ namespace DynamicIslands
 					"Report a problem opens its box: what to include, the logs, the versions");
 				var want = new[] { "Copy report form", "Open log folder", "Report on GitHub", "Post on Discord", "Close" };
 				check(want.All(w => InfoWindow.ButtonLabels.Contains(w)), "its buttons: " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()));
+				check(InfoWindow.ButtonsOutside().Count == 0, "every button inside the box" + (InfoWindow.ButtonsOutside().Count > 0 ? " - sticking out: " + string.Join(", ", InfoWindow.ButtonsOutside().ToArray()) : ""));
 				Screenshot(new[] { "notice_report" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				InfoWindow.ButtonNamed("Report on GitHub").onClick.Invoke();
