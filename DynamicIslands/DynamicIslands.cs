@@ -714,6 +714,9 @@ namespace DynamicIslands
 				if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a world (the plan is per world); for a new world, choose it in the New Game box", true); return; }
 				if (!Raft_Network.IsHost) { Notify("Only the host can change the world plan", true); return; }
 				if (!WorldDirector.SetPlan(name, true)) { Notify("No world plan '" + name + "'. Plans: " + string.Join(", ", WorldPlan.All().ToArray()), true); return; }
+				// (its story chain replaces the world's; what is done or unlocked stays)
+				StoryChain.FromPlan(WorldDirector.Plan);
+				IslandWorldState.Save();
 				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
 			}
 			foreach (string line in WorldDirector.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);

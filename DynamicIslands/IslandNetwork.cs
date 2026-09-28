@@ -50,6 +50,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (after each save) and each player who joins: the world file (WorldCopy), so any player can
 		/// host the world later. Name = world id, Hash = the copy's stamp, Index/Count = part, Data = text.</summary>
 		public const int WorldCopy = 18;
+		/// <summary>Host -> everyone (and each player who joins): the story chain (StoryChain) - Data = "on;steps|frequencies|unlocked|fired",
+		/// Name = a banner to show ("title\ntext"), if any.</summary>
+		public const int StoryChain = 19;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -118,6 +121,7 @@ namespace DynamicIslands.Editor
 			worldReceived = true;
 			WorldRules.OnWorldReceived();
 			WorldOptions.OnWorldReceived();
+			global::DynamicIslands.Editor.StoryChain.OnWorldReceived();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
@@ -318,6 +322,7 @@ namespace DynamicIslands.Editor
 							SendToPlayer(StoryBook.StateMessage(), from);
 							SendToPlayer(WorldRandomizer.Message(), from);
 							SendToPlayer(WorldOptions.Message(), from);
+							SendToPlayer(global::DynamicIslands.Editor.StoryChain.Message(), from);
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
@@ -376,6 +381,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldCopy:
 						global::DynamicIslands.Editor.WorldCopy.OnMessage(msg);
+						break;
+					case IslandNetMessage.StoryChain:
+						global::DynamicIslands.Editor.StoryChain.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)

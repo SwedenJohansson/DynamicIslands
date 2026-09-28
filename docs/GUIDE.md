@@ -586,19 +586,74 @@ and which way, with a message and a name on the Receiver. A chain of shared isla
 *An island rule: when this island's quest is done, bring a new island of a random type 600 m north, with the
 message "Well done" and the name "Reward" on the Receiver. The map on the right sketches where islands go.*
 
+### 6.5 Your islands in Raft's story (the Receiver)
+
+Raft's own story is a chain. A note on each story island gives the **frequency** of the next one, and players find it
+by tuning the **Receiver** to it: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance
+and, last, Utopia, the ending. A world plan ([section 7](#7-world-plans-which-islands-a-world-gets)) can change that
+chain, in the editor's **World plans** window:
+
+- **Raft's story islands: on/off.** On (the default) keeps Raft's story. **Off** leaves all of Raft's story islands
+  out: the plan's own islands are the whole adventure. Raft's ordinary islands still turn up as in any world.
+- **Leave out one story island:** click its name in the row next to the switch (it goes dark). The note before it then
+  leads to the one after it. For example, without Balboa, Vasagatan's note gives Caravan Town's frequency.
+- **Put your island into the story:** on a rule's card, **In Raft's story:** chooses its place:
+  - **First**: before everything, unlocked from the start of the world;
+  - **After** one of Raft's story islands, or after another of your islands in the story;
+  - **In place of** a story island: that island is left out and yours takes its place. Its note leads to your island,
+    and your island leads on to the one after.
+- **Done when:** when your island counts as done, so the next step is unlocked:
+  - by default, when its quest is done, or when players reach it if it has no quest;
+  - or when players reach it, when N steps of its quest are done, when one of its zones fires, or when it sends a
+    signal.
+- **Where** it appears, for any rule:
+  - **on the Receiver**: it gets its own 4-digit frequency, made for each world. When it is unlocked, every player sees
+    a banner "Tune the Receiver to #4821", the journal gets a page, and the number on the note before it shows it.
+    **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands;
+  - **by chance while sailing**: it comes up ahead some time after it is unlocked;
+  - **ahead of the raft** or **near an island**, as soon as it is unlocked.
+![Raft's story in the World plans window](images/editor-story-chain.jpg)
+*The template "Balboa replaced": a new forest island in Balboa's place, on its own Receiver frequency, done when
+players reach it. The story row shows "Balboa (yours)"; Check lists the chain and what Balboa held.*
+
+- A rule's own **when** still counts. A story island "after Vasagatan" with "after sailing 3 km" is unlocked by
+  Vasagatan's note, but comes only once the raft has also sailed 3 km.
+
+When one of your islands unlocks one of Raft's story islands, no note of Raft's told the players, so a banner does:
+"The Receiver picks up a new frequency: #1234".
+
+**Check** shows the chain the plan makes (for example "Radio Tower > Vasagatan > 'forest' > Caravan Town > ..."), and
+gives tips. They are only recommendations; you can do what you want:
+- Raft's story starts at the Radio Tower;
+- Utopia is Raft's ending, so without it last the story has no ending;
+- a left-out island may hold blueprints the story needs. Without Balboa there is no machete, fuel tank, fuel pipes or
+  biofuel extractor, so put them in a chest or a quest reward of your own.
+
+**Templates...** has three to start from:
+- **Receiver adventure**: Raft's story off, four islands each found with the Receiver, each quest giving the next
+  frequency;
+- **Detour in Raft's story**: one of your islands after Vasagatan;
+- **Balboa replaced**: an island in Balboa's place.
+
+In a world, `StoryChain` (F10) shows the chain and where it stands. The chain belongs to the world: it is saved with
+it, the same for every player, and it comes along when another player hosts the world.
+
 ## 7. World plans: which islands a world gets
 
 A **world plan** is a list of rules; each rule brings one island: **what** (a saved island, a new island of a map
 type, one from the spawn pool), **when** (the world starts, after N km, on day N, a quest done, a zone fired, players
-reach an island, a signal, after another rule), **where** (ahead of the raft, or near an island in a direction) and
-what players are **told**.
+reach an island, a signal, after another rule), **where** (ahead of the raft, near an island in a direction, on its
+own Receiver frequency, or by chance while sailing) and what players are **told**. A plan can also change Raft's own
+story: leave story islands out, turn Raft's story off, or put its islands into the Receiver chain
+([section 6.5](#65-your-islands-in-rafts-story-the-receiver)).
 
 Choose a plan in the New Game box (**Custom Islands plan**). The mod comes with:
 
 - **Random islands**: islands by chance while sailing (the default), **No custom islands**,
 - **Island hopping**: an old camp, then each island you reach shows the way to the next,
 - **Adventure**: a story where each quest leads to the next island, with a wreck and a sunken island on the way,
-- **Growing sea**: random islands plus a special one every few km and days.
+- **Growing sea**: random islands plus a special one every few km and days,
+- **Receiver adventure**: a new adventure instead of Raft's story, each island found with the Receiver.
 
 Make your own with **World plans** in the editor's top bar:
 
@@ -607,7 +662,8 @@ Make your own with **World plans** in the editor's top bar:
 a wreck after 2 km and a sunken island after 5 km. The map on the right sketches where they go.*
 
 **New**, **Copy**, **Delete**, **Templates...** (ready-made sets of rules), **random islands while sailing** on or off,
-**Check** (lists rules that can't work), **Export...** / **Import...** (share a plan with every island it needs, see
+**Raft's story islands** on or off and each story island in or out (section 6.5), **Check** (lists rules that can't
+work, and shows the story chain with its tips), **Export...** / **Import...** (share a plan with every island it needs, see
 [4.7](#47-saving-and-sharing)), **Save**. Plans are text files in `Mods\DynamicIslands\plans`. In a world, `WorldPlan`
 shows the plan and which rules have fired; the host can give the world another plan with `WorldPlan <name>`.
 
@@ -992,6 +1048,7 @@ Press **F10** for RML's console.
 | `SpawnPool` | World | Which islands appear on their own, and how often |
 | `CustomIslandsAuto on` / `off` | World, host | Automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host) |
+| `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host) |
@@ -1015,6 +1072,11 @@ only for the player who built it. The host can switch it off with `WorldOptions 
 
 **The Receiver led me to the wrong story island / the blueprint isn't where the wiki says.** The world has **Story
 islands in a new order** or **Scrambled blueprints** on ([9.4](#94-extra-options)); `WorldOptions` shows which.
+
+**A note's frequency leads nowhere, or a story island never comes.** The world's plan may leave that island out of
+Raft's story, or put one of its own islands in its place ([6.5](#65-your-islands-in-rafts-story-the-receiver)).
+`StoryChain` (F10) shows the chain and the plan islands' frequencies; a plan island on the Receiver comes only after
+the island before it is done.
 
 **One of my islands never turns up.** It may be unticked for this world ([9.5](#95-islands-while-sailing)): run
 `WorldIslands`, and `WorldIslands +<island>` lets it take part again. Its weight in `spawnpool.txt` may also be 0.
@@ -1077,8 +1139,8 @@ happened, and make it happen again on their own PC. Please include:
      left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
      other mods you have;
    - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
-     world, press **F10** and run `WorldOptions`, `Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `WorldIslands`
-     and `SpawnPool`, then copy what they print (it is also in `Player.log`);
+     world, press **F10** and run `WorldOptions`, `Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `WorldIslands`,
+     `StoryChain` and `SpawnPool`, then copy what they print (it is also in `Player.log`);
    - your settings files from `<Raft>\Mods\DynamicIslands\`: `spawnpool.txt`, and `world_rules.txt` and
      `randomizer.txt` if the problem is with a new world;
    - **single player or together;** if together: were you the host or did you join, and how many players were there.
