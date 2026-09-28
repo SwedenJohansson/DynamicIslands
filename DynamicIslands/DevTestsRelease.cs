@@ -730,7 +730,7 @@ namespace DynamicIslands
 				bool reread = true;
 				try { reread = WorldDirector.SetPlan(plan, false); } catch (Exception e) { Check(ref ok, false, "a deleted plan threw: " + e.Message); }
 				for (int i = 0; i < 3; i++) WorldDirector.Evaluate();
-				Check(ref ok, !reread && IslandWorldState.Islands.Count == islands, "the plan deleted: it can't be read, the islands it brought stay (" + islands + "), nothing else comes");
+				Check(ref ok, !reread && IslandWorldState.Islands.Count == islands, "the plan file deleted: it can't be read again, the world goes on with its own copy (nothing new is due), the islands it brought stay (" + islands + ")");
 			}
 			finally
 			{

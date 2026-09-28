@@ -1739,7 +1739,8 @@ namespace DynamicIslands
 			box.gameObject.SetActive(true);
 			box.Open();
 			// Raft fills the list asynchronously: wait until it stops growing
-			float timeout = Time.realtimeSinceStartup + 20f;
+			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
+			float timeout = Time.realtimeSinceStartup + 90f;
 			int count = -1;
 			while (Time.realtimeSinceStartup < timeout)
 			{

@@ -121,6 +121,11 @@ namespace DynamicIslands.Editor
 			listContent = UIKit.ScrollList(listBox, out sr, 3f);
 			UIKit.Stretch((RectTransform)sr.transform, 4, 4, 4, 4);
 
+			// Sharing: the picked island as a pack (with the islands it brings), and packs others made
+			RectTransform share = UIKit.Row(panel, 30f, 8f, "Share");
+			UIKit.Button(share, "Export...", OnExport, "Share the picked island: a pack (.zip) with the islands its rules bring, to send or to put in the island library", -1, 30, 13);
+			UIKit.Button(share, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install islands and plans from a pack (.zip) someone made, or remove what you installed", -1, 30, 13);
+
 			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			UIKit.Size(status.gameObject, -1, 34);
 
@@ -189,6 +194,14 @@ namespace DynamicIslands.Editor
 			}
 			if (DynamicIslands.SaveIsland(n)) Close();
 			else SetStatus("Saving failed - see the console (F10).", true);
+		}
+
+		void OnExport()
+		{
+			string n = nameField.text.Trim();
+			if (n.Length == 0 || !File.Exists(IslandSpawner.PathFor(n))) { SetStatus("Pick a saved island to share (save the one you're editing first).", true); return; }
+			Close();
+			LibraryExportWindow.OpenIsland(n);
 		}
 
 		void OnLoad()
