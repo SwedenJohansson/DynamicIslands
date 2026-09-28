@@ -138,6 +138,7 @@ namespace DynamicIslands.Editor
 					WorldCopy.StampLine(),
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
+				if (WorldCopy.RaftSaveLine() != null) lines.Add(WorldCopy.RaftSaveLine());
 				lines.AddRange(WorldDirector.WriteLines());
 					lines.AddRange(WorldRandomizer.WriteLines());
 				lines.AddRange(StoryBook.WriteLines());
@@ -217,6 +218,25 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(SaveAndLoad), "SaveWorld")]
 	static class SaveWorldPatch
 	{
-		static void Postfix() { IslandWorldState.Save(); }
+		static void Postfix()
+		{
+			WorldCopy.InRaftSave = true;
+			try { IslandWorldState.Save(); }
+			finally { WorldCopy.InRaftSave = false; }
+		}
+	}
+
+	/// <summary>Raft's stamp of the save it is writing (the world file names the save it belongs to - WorldCopy).</summary>
+	[HarmonyPatch(typeof(SaveAndLoad), "CreateRGDGame")]
+	static class CreateRGDGamePatch
+	{
+		static void Postfix(RGD_Game __result) { if (__result != null) WorldCopy.SavingStamp = __result.lastPlayedDateTicks; }
+	}
+
+	/// <summary>Raft's stamp of the save it is loading (an older one, if the player picked one in the Load Game box).</summary>
+	[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
+	static class RestoreRGDGamePatch
+	{
+		static void Prefix(RGD_Game game) { WorldCopy.LoadingStamp = game != null ? game.lastPlayedDateTicks : 0L; }
 	}
 }

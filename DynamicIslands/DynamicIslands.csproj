@@ -78,9 +78,11 @@
     <Compile Include="DevTestsStoryChain.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
+    <Compile Include="DevTestsReleaseFixes.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
+    <Compile Include="EditorAutosave.cs" />
     <Compile Include="EditorUI.cs" />
     <Compile Include="EditorLoadingBox.cs" />
     <Compile Include="IslandFile.cs" />

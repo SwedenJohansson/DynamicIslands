@@ -266,6 +266,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World randomizer: " + e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Levels: " + e); }
+			try { EditorAutosave.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Autosave: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -389,6 +391,8 @@ namespace DynamicIslands
 			EditorUI.RefreshIsland();
 
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
+			// (work Raft closed on before it was saved: offered back)
+			EditorAutosave.OnEditorReady();
 
 			// Once per Raft version: find every object of Raft's other islands (runs in the background)
 			if (!PlaceableCatalog.IndexIsCurrent) instance.StartCoroutine(PlaceableCatalog.EnsureIndex());
@@ -411,6 +415,7 @@ namespace DynamicIslands
 			SetEditorWaterLevel(IslandFile.DefaultWaterLevel);
 			TerrainPainter.Setup(terrain, EditorWaterLevel);
 			CommandUndoRedo.UndoRedoManager.Clear();
+			EditorAutosave.Opened(currentIslandName, false);
 			EditorUI.RefreshIsland();
 			Notify("New island: shape the land on the Terrain tab, then place objects");
 		}
@@ -464,20 +469,30 @@ namespace DynamicIslands
 			Debug.Log("[CUSTOM ISLANDS] Saved islands: " + string.Join(", ", IslandSpawner.ListSavedIslands().ToArray()));
 		}
 
+		/// <summary>The island in the editor as a file (not written yet).</summary>
+		internal static IslandFile CaptureIsland(string name)
+		{
+			IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
+			island.Elevation = currentElevation;
+			island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
+			island.Props = new Dictionary<string, string>(currentIslandProps);
+			return island;
+		}
+
 		public static bool SaveIsland(string name)
 		{
 			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return false; }
 			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return false; }
 			try
 			{
-				IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
-				island.Elevation = currentElevation;
-				island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
-				island.Props = new Dictionary<string, string>(currentIslandProps);
+				IslandFile island = CaptureIsland(name);
+				bool overwrote = File.Exists(IslandSpawner.PathFor(name));
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				EditorUI.RefreshIsland();
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
+				EditorAutosave.Saved(name);
+				if (overwrote) TellWorldsUsing(name);
 				return true;
 			}
 			catch (Exception e)
@@ -488,10 +503,31 @@ namespace DynamicIslands
 			}
 		}
 
-		public static bool LoadIsland(string name)
+		/// <summary>Islands whose saved worlds the player was told about in this Raft session (once each, not at every save).</summary>
+		static readonly HashSet<string> toldWorldsUsing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>How often it was said (tests).</summary>
+		internal static int WorldsNoticeCount;
+
+		/// <summary>
+		/// Saving over an island that saved worlds have: those worlds get this version the next time they load (so a fixed
+		/// quest works there), and a base built on its ground may no longer fit if the ground was changed - said once.
+		/// </summary>
+		static void TellWorldsUsing(string name)
+		{
+			if (toldWorldsUsing.Contains(name)) return;
+			List<string> worlds = LibraryPack.WorldsUsing(name);
+			if (worlds.Count == 0) return;
+			toldWorldsUsing.Add(name);
+			WorldsNoticeCount++;
+			string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
+			Notify("Saved worlds with '" + name + "' (" + list + ") get this version when they load next. If you moved its ground, anything built on it there may no longer fit.");
+		}
+
+		/// <summary>Opens a saved island in the editor (from: another file to read it from, e.g. its autosave; it keeps the name).</summary>
+		public static bool LoadIsland(string name, string from = null)
 		{
 			if (!InEditor()) { Notify("LoadIsland only works inside the editor", true); return false; }
-			string path = IslandSpawner.PathFor(name);
+			string path = from ?? IslandSpawner.PathFor(name);
 			if (!File.Exists(path)) { Notify("No saved island named '" + name + "'", true); return false; }
 			if (!PlaceableCatalog.IsBuilt) { Notify("Objects are still loading, try again in a moment", true); return false; }
 			try
@@ -503,7 +539,7 @@ namespace DynamicIslands
 				if (scenes.Count > 0)
 				{
 					Notify("Loading objects from " + string.Join(", ", scenes.Select(PlaceableCatalog.SceneLabel).ToArray()) + " for '" + name + "'...");
-					instance.StartCoroutine(LoadAfter(PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList()), name));
+					instance.StartCoroutine(LoadAfter(PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList()), name, from));
 					return true;
 				}
 
@@ -541,6 +577,7 @@ namespace DynamicIslands
 				currentIslandProps = new Dictionary<string, string>(island.Props);
 				// Undo steps refer to the terrain/objects that were just replaced
 				CommandUndoRedo.UndoRedoManager.Clear();
+				EditorAutosave.Opened(name, from != null);
 				EditorUI.RefreshIsland();
 				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
 				return true;
@@ -553,10 +590,10 @@ namespace DynamicIslands
 			}
 		}
 
-		static IEnumerator LoadAfter(IEnumerator loading, string name)
+		static IEnumerator LoadAfter(IEnumerator loading, string name, string from)
 		{
 			yield return loading;
-			if (InEditor()) LoadIsland(name);
+			if (InEditor()) LoadIsland(name, from);
 		}
 
 		/// <summary>Semi-transparent plane showing where the sea will be when the island is spawned in game.</summary>

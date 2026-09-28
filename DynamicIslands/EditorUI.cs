@@ -158,8 +158,8 @@ namespace DynamicIslands.Editor
 			RectTransform app = ToolbarGroup(bar, "App");
 			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 84);
 			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
-			UIKit.Button(app, "Main menu", () => UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single),
-				"Back to Raft's main menu (save first!)", 92);
+			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
+				"Back to Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
 		}
 
 		/// <summary>A bordered strip of buttons in the top bar.</summary>

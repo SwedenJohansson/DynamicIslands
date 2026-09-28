@@ -447,6 +447,16 @@ namespace DynamicIslands.Editor
 		public static string PlanFrom = "";
 		/// <summary>True when the plan was read from the world's own copy (not from the plans folder).</summary>
 		public static bool PlanFromWorld { get; private set; }
+		/// <summary>
+		/// Steam id of the player who made the world ("@planowner=", 0 = not known). Their own plan's file is theirs to
+		/// change: on their PC an edited plan plays in the world. Another player hosting the world later may have a
+		/// different plan with the same name, so there the world's own copy plays.
+		/// </summary>
+		public static ulong PlanOwner;
+		/// <summary>True when the last load found the plan file changed since the world was saved (and plays the file).</summary>
+		public static bool PlanWasEdited { get; private set; }
+
+		static ulong LocalSteamId { get { try { return Steamworks.SteamUser.GetSteamID().m_SteamID; } catch { return 0UL; } } }
 		/// <summary>The plan as the world file keeps it ("@planrandom=", "@plandesc=", "@planrule=" lines), while it is read.</summary>
 		static WorldPlan stored;
 		/// <summary>Ids of the plan's rules that have fired in this world.</summary>
@@ -479,6 +489,8 @@ namespace DynamicIslands.Editor
 			Plan = null;
 			PlanFrom = "";
 			PlanFromWorld = false;
+			PlanWasEdited = false;
+			PlanOwner = 0;
 			stored = null;
 			missingNoted.Clear();
 			Done.Clear();
@@ -497,6 +509,7 @@ namespace DynamicIslands.Editor
 				case "done": foreach (string id in value.Split(',')) if (id.Trim().Length > 0) Done.Add(id.Trim()); return true;
 				// The world's own copy of its plan (written since worlds keep one)
 				case "planfrom": PlanFrom = value.Trim(); return true;
+				case "planowner": ulong o; if (ulong.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out o)) PlanOwner = o; return true;
 				case "planrandom": Stored().Random = value.Trim().Equals("on", StringComparison.OrdinalIgnoreCase); return true;
 				case "plandesc": Stored().Description = value.Trim(); return true;
 				case "planrule":
@@ -522,6 +535,7 @@ namespace DynamicIslands.Editor
 				foreach (IntroRule r in Plan.Rules) yield return "@planrule=" + r.ToLine();
 			}
 			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
+			if (PlanOwner != 0) yield return "@planowner=" + PlanOwner.ToString(CultureInfo.InvariantCulture);
 			yield return "@sailed=" + Sailed.ToString("F0", CultureInfo.InvariantCulture);
 			if (Done.Count > 0) yield return "@done=" + string.Join(",", Done.ToArray());
 		}
@@ -569,10 +583,25 @@ namespace DynamicIslands.Editor
 			}
 			if (stored != null && !WorldPlan.IsBuiltIn(PlanName))
 			{
-				// The world's own copy: the plan file (here or anywhere) doesn't matter any more
 				stored.Name = PlanName;
-				Plan = stored;
-				PlanFromWorld = true;
+				WorldPlan edited = PlanFileToPlay();
+				if (edited != null)
+				{
+					// The player changed their plan since the world was saved: the changed plan plays (rules that fired
+					// stay fired; new ones come; the world keeps a copy of the new plan from its next save)
+					Plan = edited;
+					PlanWasEdited = true;
+					if (PlanOwner == 0) PlanOwner = LocalSteamId;
+					Log("The plan '" + PlanName + "' was changed since the world was saved: the changed plan plays");
+					DynamicIslands.Notify("You changed the plan '" + PlanName + "' since this world was last saved: the changed plan plays from now on.");
+				}
+				else
+				{
+					// The world's own copy: the plan as the world was made with it (another host's plan of the same
+					// name, a library update, or the file gone doesn't change it)
+					Plan = stored;
+					PlanFromWorld = true;
+				}
 			}
 			else
 			{
@@ -591,6 +620,24 @@ namespace DynamicIslands.Editor
 			if (Plan != null && Plan.Rules.Count > 0)
 				Log("Plan '" + PlanName + "'" + (PlanFromWorld ? " (the world's own copy)" : " (from its file; the world keeps a copy from the next save)") + ": " +
 					Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
+		}
+
+		/// <summary>
+		/// Loading a saved world: the plan file on this PC when the player changed it since the world was saved and it is
+		/// the same plan - the player's own on the PC of the player who made the world, or the same version of a library or
+		/// imported entry (edited in World Plans) - else null (the world's own copy plays).
+		/// </summary>
+		static WorldPlan PlanFileToPlay()
+		{
+			WorldPlan file = WorldPlan.Load(PlanName);
+			if (file == null || stored == null) return null;
+			if (IntroRule.ToLines(file.Rules) == IntroRule.ToLines(stored.Rules) && file.Random == stored.Random) return null;
+			string source = LibrarySource.OfPlan(PlanName) ?? "";
+			// (a library or imported plan: only while this PC has the version the world was made with - an update of the
+			// entry doesn't change worlds already started, just as their islands keep their version)
+			if (PlanFrom.Length > 0 || source.Length > 0) return source.Equals(PlanFrom, StringComparison.OrdinalIgnoreCase) ? file : null;
+			ulong me = LocalSteamId;
+			return PlanOwner == 0 || PlanOwner == me ? file : null;
 		}
 
 		/// <summary>The islands the host was told are missing (tests).</summary>
@@ -620,6 +667,7 @@ namespace DynamicIslands.Editor
 			PlanName = plan.Name;
 			PlanFromWorld = false;
 			PlanFrom = LibrarySource.OfPlan(plan.Name) ?? "";
+			PlanOwner = LocalSteamId; // (the host who picks the plan: their plan file is the one an edit happens in)
 			if (applyRandom) CustomIslandSpawner.Enabled = plan.Random;
 			retryAt.Clear();
 			return true;

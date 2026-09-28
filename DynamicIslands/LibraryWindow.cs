@@ -26,7 +26,7 @@ namespace DynamicIslands.Editor
 		static RawImage picture;
 		static int tab, pictureIndex;
 		static LibraryEntry selected;
-		static bool appearWhileSailing, busy, fromNewGame, pendingRemove;
+		static bool appearWhileSailing, busy, fromNewGame, pendingRemove, pendingUpdate;
 		static readonly Dictionary<string, Button> rows = new Dictionary<string, Button>();
 
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
@@ -123,7 +123,7 @@ namespace DynamicIslands.Editor
 		{
 			if (LoadSceneManager.IsGameSceneLoaded) { DynamicIslands.Notify("The island library opens from the main menu or the island editor, not inside a world.", true); return; }
 			if (canvas == null) Build();
-			tab = onTab; fromNewGame = newGame; selected = null; pictureIndex = 0; pendingRemove = false;
+			tab = onTab; fromNewGame = newGame; selected = null; pictureIndex = 0; pendingRemove = false; pendingUpdate = false;
 			canvas.gameObject.SetActive(true);
 			if (search != null) search.text = "";
 			progress.text = "";
@@ -174,7 +174,7 @@ namespace DynamicIslands.Editor
 		static void AddRow(LibraryEntry e)
 		{
 			LibraryEntry entry = e;
-			Button b = UIKit.Button(list, "", () => { selected = entry; pictureIndex = 0; pendingRemove = false; ShowDetail(); }, null, -1, 64f, 13);
+			Button b = UIKit.Button(list, "", () => { selected = entry; pictureIndex = 0; pendingRemove = false; pendingUpdate = false; ShowDetail(); }, null, -1, 64f, 13);
 			b.name = RowPrefix + e.Info.id;
 			UIKit.Flat(b);
 			UIKit.LabelOf(b).text = "";
@@ -201,7 +201,7 @@ namespace DynamicIslands.Editor
 			LibraryEntry e = LibraryClient.Entries != null ? LibraryClient.Entries.FirstOrDefault(x => x.Info.id == id) : null;
 			if (e == null) return false;
 			tab = e.Info.IsPlan ? 0 : 1;
-			selected = e; pictureIndex = 0; pendingRemove = false;
+			selected = e; pictureIndex = 0; pendingRemove = false; pendingUpdate = false;
 			ShowList();
 			return true;
 		}
@@ -222,9 +222,9 @@ namespace DynamicIslands.Editor
 			LibraryClient.State st = LibraryClient.StateOf(selected);
 			bool newer = LibraryPack.CompareVersions(i.minModVersion, LibraryPack.ModVersion) > 0;
 			warning.text = newer ? "Made with Custom Islands " + i.minModVersion + " - you have " + LibraryPack.ModVersion + ". Some things may be missing, and a quest that needs them may not be finishable." : "";
-			UIKit.LabelOf(mainButton).text = busy ? "..." : st == LibraryClient.State.Installed ? "Installed" : st == LibraryClient.State.Update ? "Update" : newer ? "Download anyway" : "Download";
+			UIKit.LabelOf(mainButton).text = busy ? "..." : st == LibraryClient.State.Installed ? "Installed" : st == LibraryClient.State.Update ? (pendingUpdate ? "Sure? Update" : "Update") : newer ? "Download anyway" : "Download";
 			mainButton.interactable = !busy && st != LibraryClient.State.Installed;
-			if (st == LibraryClient.State.Installed) UIKit.Flat(mainButton); else UIKit.Primary(mainButton);
+			if (st == LibraryClient.State.Installed) UIKit.Flat(mainButton); else if (pendingUpdate) UIKit.DangerButton(mainButton); else UIKit.Primary(mainButton);
 			removeButton.gameObject.SetActive(st != LibraryClient.State.NotInstalled);
 			UIKit.LabelOf(removeButton).text = pendingRemove ? "Sure? Remove" : "Remove";
 			if (pendingRemove) UIKit.DangerButton(removeButton); else UIKit.Flat(removeButton);
@@ -252,11 +252,25 @@ namespace DynamicIslands.Editor
 		{
 			if (selected == null || busy) return;
 			LibraryEntry e = selected;
+			bool update = LibraryClient.StateOf(e) == LibraryClient.State.Update;
+			// (an update replaces the entry's files - also ones the player changed since: the first click says which, and
+			// how to keep them - Save as under another name in the editor or World Plans)
+			List<string> changed = update ? LibraryPack.ChangedFiles(e.Info.id) : new List<string>();
+			if (changed.Count > 0 && !pendingUpdate)
+			{
+				pendingUpdate = true;
+				pendingRemove = false;
+				progress.color = UIKit.Danger;
+				progress.text = "You changed " + string.Join(", ", changed.Select(n => "'" + n + "'").ToArray()) + " since you downloaded it. Update replaces your changes. " +
+					"To keep them, open it in the editor and use Save as with a new name first. Click Update again to go ahead.";
+				ShowDetail();
+				return;
+			}
+			pendingUpdate = false;
 			busy = true;
 			pendingRemove = false;
 			ShowDetail();
-			bool update = LibraryClient.StateOf(e) == LibraryClient.State.Update;
-			DynamicIslands.instance.StartCoroutine(LibraryClient.Download(e, appearWhileSailing, false, text => progress.text = text, (report, error) =>
+			DynamicIslands.instance.StartCoroutine(LibraryClient.Download(e, appearWhileSailing, true, text => progress.text = text, (report, error) =>
 			{
 				busy = false;
 				if (error != null) { progress.text = error; progress.color = UIKit.Danger; }
@@ -276,7 +290,7 @@ namespace DynamicIslands.Editor
 		public static void OnRemove()
 		{
 			if (selected == null || busy) return;
-			if (!pendingRemove) { pendingRemove = true; ShowDetail(); return; }
+			if (!pendingRemove) { pendingRemove = true; pendingUpdate = false; ShowDetail(); return; }
 			pendingRemove = false;
 			LibraryPack.Report r = LibraryPack.Remove(selected.Info.id);
 			progress.color = UIKit.TextColor;

@@ -1726,13 +1726,17 @@ namespace DynamicIslands
 			EditorUI.SetTab(t.StartsWith("o") ? TAB.ObjectPlace : t.StartsWith("i") ? TAB.Island : TAB.TerrainEdit);
 		}
 
-		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] (default: the newest)")]
+		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
 		public static void LoadWorld(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(LoadWorldRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			int backup = 0;
+			var words = (args ?? new string[0]).ToList();
+			string last = words.LastOrDefault();
+			if (last != null && last.StartsWith("backup:") && int.TryParse(last.Substring(7), out backup)) words.RemoveAt(words.Count - 1);
+			DynamicIslands.instance.StartCoroutine(LoadWorldRoutine(words.Count > 0 ? string.Join(" ", words.ToArray()) : null, backup));
 		}
 
-		static IEnumerator LoadWorldRoutine(string name)
+		static IEnumerator LoadWorldRoutine(string name, int backup = 0)
 		{
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
@@ -1755,6 +1759,19 @@ namespace DynamicIslands
 				: box.loadGameSelections.FirstOrDefault(s => worldName(s).Equals(name, StringComparison.OrdinalIgnoreCase))
 				?? box.loadGameSelections.FirstOrDefault(s => worldName(s).IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
 			if (pick == null) { Fail("no saved world called '" + name + "'; there are: " + string.Join(", ", box.loadGameSelections.Select(worldName).ToArray())); yield break; }
+			if (backup > 0)
+			{
+				// (an older save of the world, as Raft's Load Game box offers them: World\<name>\<date>, newest first)
+				var older = (pick.directoryInfo != null ? pick.directoryInfo.GetDirectories() : new DirectoryInfo[0])
+					.Where(d => !d.Name.EndsWith("-Latest") && d.GetFiles("*.rgd").Length > 0)
+					.Select(d => { DateTime t; return new KeyValuePair<DirectoryInfo, DateTime>(d, SaveAndLoad.ConvertBackupFolderNameToDateTime(d.Name, out t) ? t : DateTime.MinValue); })
+					.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
+				if (older.Count < backup) { Fail("the world '" + worldName(pick) + "' has " + older.Count + " older save(s), not " + backup); yield break; }
+				RGD_Game game = SaveAndLoad.Load<RGD_Game>(older[backup - 1].GetFiles("*.rgd")[0].FullName);
+				if (game == null) { Fail("could not read the older save " + older[backup - 1].Name); yield break; }
+				pick.rgdGame = game;
+				Log("Loading an older save: " + older[backup - 1].Name);
+			}
 			Log("Loading world: " + worldName(pick));
 			// (Button_Select only scrolls the list for gamepads; Button_SelectLoad picks the world to load)
 			box.Button_SelectLoad(pick);

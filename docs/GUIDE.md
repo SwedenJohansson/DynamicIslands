@@ -375,6 +375,18 @@ first).
 Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). In multiplayer the host's island files are sent
 to players who don't have them, so nobody needs to share files just to play together ([section 8](#8-playing-together)).
 
+**Autosave.** While the island has changes you haven't saved, the editor keeps a copy every 3 minutes, and when you
+leave to the main menu or quit Raft (`Mods\DynamicIslands\autosave\<name>.island` - not an island of yours, it never
+turns up anywhere). If Raft closes before you saved (a crash, the power going), the next time the editor opens it
+offers the unsaved work: **Open** it (then **Save** to keep it), **Throw them away**, or **Not now** (asked again next
+time). Saving the island removes its autosave. Changes the editor can undo count (the land, objects, their settings);
+save before you close Raft all the same.
+
+**Saving an island your saved worlds have.** A saved world plays your island as its file is: the next time such a world
+loads, it has your new version (a fixed quest works there). The first time you save over such an island, the editor
+says which worlds have it. If you moved its ground, anything built on it in those worlds may no longer fit - to keep a
+world as it is, save your changes under a new name (**Save as**) instead.
+
 **Sharing an island or a plan: Export.** In the Islands window, pick an island and click **Export...**; in the World
 plan window (a plan open) click **Export...**. The **Share** window says what goes along:
 - an island takes the islands its rules bring with it ("Palm Cove + 1 island it brings: Treasure Cove"), and theirs, so
@@ -435,7 +447,9 @@ entry is looked at before it goes in.
   - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
     islands never turn up at random, an island only if you tick **Also turn up while sailing**);
   - **Update** - the library has a newer version than the one you have: installs it (worlds you've already started
-    keep the version they started with);
+    keep the version they started with). It replaces the entry's files, also ones you changed in the editor or World
+    plans since: then the first click names them and **Sure? Update** goes ahead. To keep your changes, open the
+    island (or plan) and **Save as** a new name first;
   - **Installed** - you have the newest version. **Remove** (click twice) takes it away again, keeping what a saved
     world uses.
   - An entry made with a newer version of the mod says **Download anyway**, with the warning.
@@ -698,10 +712,12 @@ work, and shows the story chain with its tips), **Export...** / **Import...** (s
 [4.7](#47-saving-and-sharing)), **Save**. Plans are text files in `Mods\DynamicIslands\plans`. In a world, `WorldPlan`
 shows the plan and which rules have fired; the host can give the world another plan with `WorldPlan <name>`.
 
-**A world keeps its own copy of its plan.** When a world starts, the plan's rules are saved with the world. From then
-on the plan file is only a template for new worlds:
-- editing, updating or deleting the plan file never changes a world that is already being played (to give a running
-  world the plan as it is now, use `WorldPlan <name>` in it);
+**A world keeps its own copy of its plan.** When a world starts, the plan's rules are saved with the world:
+- **you edit your plan** (in World plans, on the PC of the player who made the world): the next time the world loads,
+  the changed plan plays - rules that already happened stay done, new ones come - and you're told so;
+- deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
+  different plan of the same name never changes the world: it plays its own copy (to give a running world another
+  plan on purpose, use `WorldPlan <name>` in it);
 - the world's plan goes along when someone else hosts the world later ([section 8](#8-playing-together)), even if they
   never had the plan;
 - worlds saved before this version get their copy the next time they're saved on a PC that has the plan file.
@@ -752,7 +768,9 @@ them host the world later.
 | **B hosts A's saved world later**, A joins | B uses the world's own copy (it comes in Raft's world folder, and B kept one while playing): the islands that appeared (from what B was sent), what was used, quests, journal, levels, World settings, and the **plan** | Copy the world folder to B (below). If the plan still has islands to bring that never appeared, B doesn't have them: B sees which ones. A exports the plan (4.7) and B imports it, or B gets it from the island library |
 | **A world made from a pack or library plan** hosted by someone who never installed it | As above; the message names the pack or library entry | Install that pack or entry |
 | **A world saved before worlds kept their plan** (older versions), hosted by someone without the plan file | The plan's remaining rules can't run: the host is told when the world loads | The first host saves the world once with this version (the plan is then in the world), or gives the plan file |
-| **The plan is edited, updated or deleted** while worlds use it | Worlds already started keep their own copy | Nothing (`WorldPlan <name>` in a world to switch it on purpose) |
+| **The world's maker edits the plan** while worlds use it | The next time such a world loads on their PC, it plays the changed plan (they're told) | Nothing |
+| **The plan is updated (library or pack) or deleted**, or another player hosts with a different plan of the same name | Worlds already started keep their own copy | Nothing (`WorldPlan <name>` in a world to switch it on purpose) |
+| **An older save of the world is loaded** (Raft's Load Game box keeps the last 8 saves) | The custom islands, what was chopped, looted and fired, quests, journal and settings go back to that save as well | Nothing |
 | **An installed island is updated** while a world uses it | That world keeps the version it started with; new worlds get the new one | Nothing |
 | **You remove a pack** that a saved world uses | What the world uses is kept (you're told which world) | Nothing |
 | **A pack's island has the name of one of yours** | Installed as `Name (Pack title)`; yours is untouched | Nothing |
@@ -1057,6 +1075,7 @@ Other files:
 |---|---|
 | `*.island` | Your islands (and the ones you installed from packs) |
 | `<name>_<hash>.island` | Islands downloaded from a host, or a version a saved world keeps after an update |
+| `autosave\` | Unsaved editor work (4.7): offered when the editor opens, removed when the island is saved |
 | `exports\` | Packs you exported (`<name>.zip`), and `exports.json` (what you filled in, so the next export is the next version) |
 | `import\` | Put packs you got here to install them (Import...) |
 | `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
@@ -1115,6 +1134,13 @@ the island before it is done.
 `WorldIslands`, and `WorldIslands +<island>` lets it take part again. Its weight in `spawnpool.txt` may also be 0.
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
+
+**I loaded an older save of my world, and a chest I emptied is full again.** That's on purpose: Raft's Load Game box
+keeps the last 8 saves of a world, and the mod's islands, chests, quests and journal go back with the save you pick, so
+the world fits together (the items you took went back with Raft's save too).
+
+**Raft closed while I was building an island.** Open the editor again: it offers the unsaved work it kept
+([4.7](#47-saving-and-sharing)). Open it and **Save**.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.
 

@@ -135,6 +135,28 @@ namespace DynamicIslands
 				yield return WaitNotBusy(30f);
 				Check(ref ok, LibraryPack.Installed().Any(e => e.id == "ci-lib-pack" && e.version == 2) && UIKit.LabelOf(LibraryWindow.MainButton).text == "Installed", "Update installs version 2: " + LibraryWindow.Progress);
 
+				// An island the player changed since, then version 3: the first click says so (and how to keep it), the
+				// second replaces it with the library's
+				MakeLibIsland(LibB, 7, LibC);
+				pp.Info.version = 3; pp.Info.summary = "version 3";
+				planEntry = TestEntry(LibraryPack.KindPlan, pp.Info, filesOf(pp));
+				WriteTestIndex(planEntry, soloEntry);
+				yield return LoadList(true);
+				LibraryWindow.Select("ci-lib-pack");
+				yield return null;
+				Check(ref ok, LibraryPack.ChangedFiles("ci-lib-pack").SequenceEqual(new[] { LibB }), "the changed island is found: " + string.Join(", ", LibraryPack.ChangedFiles("ci-lib-pack").ToArray()));
+				string changedSha = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB)));
+				LibraryWindow.MainButton.onClick.Invoke();
+				yield return null;
+				Check(ref ok, UIKit.LabelOf(LibraryWindow.MainButton).text == "Sure? Update" && LibraryWindow.Progress.Contains("'" + LibB + "'") && LibraryWindow.Progress.Contains("Save as") &&
+					LibraryPack.Installed().Any(e => e.id == "ci-lib-pack" && e.version == 2) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == changedSha,
+					"Update on a changed island asks first, names it and says how to keep it (nothing changed yet): " + LibraryWindow.Progress);
+				LibraryWindow.MainButton.onClick.Invoke();
+				yield return WaitNotBusy(30f);
+				Check(ref ok, LibraryPack.Installed().Any(e => e.id == "ci-lib-pack" && e.version == 3) && LibraryPack.ChangedFiles("ci-lib-pack").Count == 0 &&
+					LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == LibraryPack.Sha256(pp.Files[LibB + IslandFile.Extension]),
+					"the second click updates to version 3 and replaces the changed island with the library's: " + LibraryWindow.Progress);
+
 				// A damaged file: refused, nothing installed
 				var files = LibraryJson.Objects(soloEntry, "files");
 				Dictionary<string, object> islandFile = files.First(f => LibraryJson.Str(f, "name").EndsWith(".island"));

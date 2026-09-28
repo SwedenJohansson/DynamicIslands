@@ -19,6 +19,11 @@ namespace DynamicIslands.Editor
 	/// When a world loads, the newest of the copies (by the "@savedat" stamp in it) is read. Island files come along with
 	/// joining already (a player keeps them as &lt;name&gt;_&lt;hash&gt;.island); the list says each island's hash, so a new host
 	/// finds its copy and the island keeps its name (rules, quests, journal pages refer to it).
+	///
+	/// Older saves: Raft keeps the last 8 saves of a world (World\&lt;name&gt;\&lt;date&gt;, the newest "-Latest"), and its
+	/// Load Game box can load any of them. So that the mod's state goes back with Raft's (a chest looted after that save
+	/// is full again, a quest is where it was), the copy is also written into the save's own folder with Raft's stamp of
+	/// that save ("@raftsave=", RGD_Game.lastPlayedDateTicks); loading a save reads the copy with the same stamp.
 	/// </summary>
 	public static class WorldCopy
 	{
@@ -28,18 +33,39 @@ namespace DynamicIslands.Editor
 		/// <summary>The copy's stamp line: "@savedat=&lt;UTC ticks&gt;".</summary>
 		public static string StampLine() { return "@savedat=" + DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture); }
 
-		public static bool ReadLine(string key, string value) { return key.Equals("savedat", StringComparison.OrdinalIgnoreCase); }
+		/// <summary>Raft's stamp of the save being written (CreateRGDGame) and of the save being loaded (RestoreRGDGame); 0 = none.</summary>
+		public static long SavingStamp, LoadingStamp;
+		/// <summary>True while the world file is written because Raft saves the world (not for a setting changed in between).</summary>
+		public static bool InRaftSave;
 
-		static long StampOf(string[] lines)
+		/// <summary>The line naming Raft's save this state belongs to (null outside Raft's own save).</summary>
+		public static string RaftSaveLine() { return InRaftSave && SavingStamp != 0 ? "@raftsave=" + SavingStamp.ToString(CultureInfo.InvariantCulture) : null; }
+
+		public static bool ReadLine(string key, string value) { return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase); }
+
+		static long StampOf(string[] lines) { return LongLine(lines, "@savedat="); }
+		static long RaftSaveOf(string[] lines) { return LongLine(lines, "@raftsave="); }
+
+		static long LongLine(string[] lines, string prefix)
 		{
 			foreach (string l in lines)
-				if (l.StartsWith("@savedat=", StringComparison.OrdinalIgnoreCase))
+				if (l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 				{
 					long t;
-					if (long.TryParse(l.Substring(9).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out t)) return t;
+					if (long.TryParse(l.Substring(prefix.Length).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out t)) return t;
 				}
 			return 0L;
 		}
+
+		/// <summary>The folder of Raft's newest save of the world being played (World\&lt;name&gt;\&lt;date&gt;-Latest), or null.</summary>
+		static string LatestSaveFolder(string worldFolder)
+		{
+			try { return Directory.GetDirectories(worldFolder).FirstOrDefault(d => d.EndsWith("-Latest", StringComparison.OrdinalIgnoreCase)); }
+			catch { return null; }
+		}
+
+		/// <summary>The last load read an older save's copy (tests): "" or the save folder's name.</summary>
+		public static string LastOlderSave { get; private set; }
 
 		/// <summary>Raft's folder of the world being played (World\&lt;name&gt;), or null.</summary>
 		public static string RaftWorldFolder
@@ -69,6 +95,36 @@ namespace DynamicIslands.Editor
 			string folder = RaftWorldFolder;
 			string copy = folder != null ? Path.Combine(folder, FileName) : null;
 			try { if (copy != null && File.Exists(copy)) travelled = File.ReadAllLines(copy); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + copy + ": " + e.Message); }
+			LastOlderSave = "";
+			long loading = LoadingStamp;
+			LoadingStamp = 0; // (used once: a new world made afterwards has no save of its own yet)
+			// (Raft is loading one particular save: the state written with that save, if there is one - an older save the
+			// player picked in Raft's Load Game box then gets the mod's state of that moment, not the newest)
+			if (loading != 0)
+			{
+				if (mine != null && RaftSaveOf(mine) == loading) { LastSource = "mod folder"; return mine; }
+				if (travelled != null && RaftSaveOf(travelled) == loading) { LastSource = "Raft's world folder"; return travelled; }
+				if (folder != null)
+					try
+					{
+						foreach (string dir in Directory.GetDirectories(folder))
+						{
+							string f = Path.Combine(dir, FileName);
+							if (!File.Exists(f)) continue;
+							string[] lines = File.ReadAllLines(f);
+							if (RaftSaveOf(lines) != loading) continue;
+							LastSource = "Raft's save " + Path.GetFileName(dir);
+							// (the newest save's copy is read too when a setting was changed after it and the game then
+							// left without saving: Raft's world is as it was at that save, so the mod's is as well)
+							if (dir.EndsWith("-Latest", StringComparison.OrdinalIgnoreCase)) { Debug.Log("[CUSTOM ISLANDS] The world's state as Raft last saved it: " + f); return lines; }
+							LastOlderSave = Path.GetFileName(dir);
+							Debug.Log("[CUSTOM ISLANDS] An older save of the world: its custom islands, used objects, quests and the rest go back to that save too (" + f + ")");
+							DynamicIslands.Notify("An older save of this world: its custom islands, chests, quests and story are as they were then too.");
+							return lines;
+						}
+					}
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the world's saves: " + e.Message); }
+			}
 			if (mine == null && travelled == null) { LastSource = "none"; return null; }
 			if (travelled != null && (mine == null || StampOf(travelled) > StampOf(mine)))
 			{
@@ -87,6 +143,7 @@ namespace DynamicIslands.Editor
 			if (folder != null)
 				try { File.WriteAllLines(Path.Combine(folder, FileName), lines); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the world's copy into Raft's world folder: " + e.Message); }
+			WriteIntoSave(folder, lines);
 			last = lines;
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
@@ -99,8 +156,20 @@ namespace DynamicIslands.Editor
 			if (folder != null)
 				try { string f = Path.Combine(folder, FileName); if (File.Exists(f)) File.Delete(f); } catch { }
 			last = new[] { "# (nothing of Custom Islands in this world)", StampLine() };
+			// (the save still gets its note: loading it later means "nothing of the mod", not an older save's state)
+			if (RaftSaveLine() != null) WriteIntoSave(folder, last.Concat(new[] { RaftSaveLine() }).ToArray());
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
+		}
+
+		/// <summary>The copy in the folder of the save Raft just wrote (it moves with it when Raft makes it a backup).</summary>
+		static void WriteIntoSave(string worldFolder, string[] lines)
+		{
+			if (worldFolder == null || RaftSaveLine() == null) return;
+			string save = LatestSaveFolder(worldFolder);
+			if (save == null) return;
+			try { File.WriteAllLines(Path.Combine(save, FileName), lines); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the world's copy into Raft's save folder: " + e.Message); }
 		}
 
 		static string[] last;

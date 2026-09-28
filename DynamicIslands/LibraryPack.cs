@@ -498,6 +498,20 @@ namespace DynamicIslands.Editor
 			return Installed().FirstOrDefault(e => e.files.Any(f => !f.shared && (f.name + (f.kind == KindPlan ? WorldPlan.Extension : IslandFile.Extension)).Equals(fileName, StringComparison.OrdinalIgnoreCase)));
 		}
 
+		/// <summary>An installed entry's islands and plan the player has changed since (saved over in the editor or World Plans).</summary>
+		public static List<string> ChangedFiles(string id)
+		{
+			var result = new List<string>();
+			LibraryInstalled e = Installed().FirstOrDefault(x => x.id.Equals(id, StringComparison.OrdinalIgnoreCase));
+			if (e == null) return result;
+			foreach (LibraryInstalledFile f in e.files.Where(f => !f.shared))
+			{
+				string path = f.kind == KindPlan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
+				try { if (File.Exists(path) && ShaOfFile(path) != f.sha256) result.Add(f.name); } catch { }
+			}
+			return result;
+		}
+
 		#endregion
 
 		#region Worlds using an island
