@@ -113,12 +113,137 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan help"); else Fail("plan help");
 		}
 
+		[ConsoleCommand(name: "CIMenuLibrary", docs: "Dev, main menu: the ISLAND LIBRARY button shows its words (all of them drawn, on the screen) and opens the library; the library's Submit yours... shows how to submit (export, post on the Discord, approved first) with its buttons (Discord, exports folder, the guide's section); pictures shot_menu_library, shot_library_submit")]
+		public static void MenuLibraryCommand() { DynamicIslands.instance.StartCoroutine(MenuLibraryRoutine()); }
+
+		static IEnumerator MenuLibraryRoutine()
+		{
+			bool ok = true;
+			GameObject button = GameObject.Find("MainMenuCanvas/MenuButtons/LIBRARY");
+			Text text = button != null ? button.GetComponentInChildren<Text>() : null;
+			if (text == null) { Fail("menu library: no ISLAND LIBRARY button on the main menu"); yield break; }
+			Canvas.ForceUpdateCanvases();
+			int drawn = text.cachedTextGenerator.characterCountVisible;
+			Check(ref ok, text.text == "ISLAND LIBRARY" && drawn >= "ISLAND LIBRARY".Length - 1, "the button shows ISLAND LIBRARY (" + drawn + " letters drawn, size " + text.fontSize + ")");
+			Text editor = GameObject.Find("MainMenuCanvas/MenuButtons/EDITOR") != null ? GameObject.Find("MainMenuCanvas/MenuButtons/EDITOR").GetComponentInChildren<Text>() : null;
+			int size = text.cachedTextGenerator.fontSizeUsedForBestFit, editorSize = editor != null ? editor.cachedTextGenerator.fontSizeUsedForBestFit : 0;
+			Check(ref ok, editorSize > 0 && size <= editorSize && size >= editorSize / 2, "its words fit the button, no larger than EDITOR's (" + size + " / " + editorSize + ")");
+			var corners = new Vector3[4];
+			text.rectTransform.GetWorldCorners(corners);
+			float right = corners[0].x + text.preferredWidth * text.canvas.scaleFactor;
+			Check(ref ok, corners[0].x >= 0f && right <= Screen.width * 0.5f, "its words are on the screen, on the left (" + corners[0].x.ToString("F0") + " to " + right.ToString("F0") + " px)");
+			Screenshot(new[] { "menu_library" });
+			yield return new WaitForSecondsRealtime(0.6f);
+			HelpLinks.TestMode = true;
+			try
+			{
+				button.GetComponent<Button>().onClick.Invoke();
+				yield return new WaitForSecondsRealtime(1f);
+				Check(ref ok, LibraryWindow.IsOpen, "the button opens the library");
+				Button submit = LibraryWindow.Root != null ? LibraryWindow.Root.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Button_Submit") : null;
+				Check(ref ok, submit != null, "the library has Submit yours...");
+				if (submit != null)
+				{
+					submit.onClick.Invoke();
+					yield return new WaitForSecondsRealtime(0.4f);
+					Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "SUBMIT YOUR ISLAND OR PLAN" && InfoWindow.Body.Contains("Export") && InfoWindow.Body.Contains("Discord") && InfoWindow.Body.Contains("approved"),
+						"it explains: export, post on the Discord, approved first");
+					Screenshot(new[] { "library_submit" });
+					yield return new WaitForSecondsRealtime(0.6f);
+					InfoWindow.ButtonNamed("Open the Discord").onClick.Invoke();
+					Check(ref ok, HelpLinks.LastOpened == HelpLinks.Discord, "Open the Discord: " + HelpLinks.LastOpened);
+					InfoWindow.ButtonNamed("Open exports folder").onClick.Invoke();
+					Check(ref ok, HelpLinks.LastOpened == LibraryPack.ExportFolder && Directory.Exists(LibraryPack.ExportFolder), "Open exports folder: " + HelpLinks.LastOpened);
+					InfoWindow.ButtonNamed("Guide: sharing").onClick.Invoke();
+					Check(ref ok, HelpLinks.LastOpened == HelpLinks.GuideOnline + "#47-saving-and-sharing", "Guide: sharing opens section 4.7");
+					InfoWindow.ButtonNamed("Close").onClick.Invoke();
+					yield return null;
+					Check(ref ok, !InfoWindow.IsOpen && LibraryWindow.IsOpen, "Close goes back to the library");
+				}
+			}
+			finally { HelpLinks.TestMode = false; InfoWindow.Close(); LibraryWindow.Close(); }
+			if (ok) Log("PASS: menu library"); else Fail("menu library");
+		}
+
+		[ConsoleCommand(name: "CIEditorUpDown", docs: "Dev, editor: the camera goes straight up and down (Space / C) without turning or sliding sideways, whichever way it looks; the keys are written in the camera help and the Terrain tab's tips")]
+		public static void EditorUpDownCommand() { DynamicIslands.instance.StartCoroutine(EditorUpDownRoutine()); }
+
+		static IEnumerator EditorUpDownRoutine()
+		{
+			EditorCamera cam = EditorCamera.Instance;
+			if (!DynamicIslands.InEditor() || cam == null) { Fail("editor up/down: open the editor first"); yield break; }
+			bool ok = true;
+			foreach (float dir in new[] { 1f, -1f })
+			{
+				Vector3 start = cam.transform.position;
+				Quaternion look = cam.transform.rotation;
+				float until = Time.unscaledTime + 1f;
+				while (Time.unscaledTime < until)
+				{
+					cam.Move(new Vector3(0f, dir, 0f), false, false, Mathf.Min(Time.unscaledDeltaTime, 0.1f));
+					yield return null;
+				}
+				yield return new WaitForSecondsRealtime(0.3f);
+				Vector3 moved = cam.transform.position - start;
+				Check(ref ok, moved.y * dir > 2f && new Vector2(moved.x, moved.z).magnitude < 0.05f * Mathf.Abs(moved.y) + 0.05f && Quaternion.Angle(look, cam.transform.rotation) < 0.5f,
+					(dir > 0 ? "Space" : "C") + ": straight " + (dir > 0 ? "up" : "down") + " " + moved.y.ToString("F1") + " m (sideways " + new Vector2(moved.x, moved.z).magnitude.ToString("F2") + " m)");
+			}
+			Text tips = EditorUI.Canvas.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Tips" && t.text.StartsWith("Left mouse: use the brush"));
+			Check(ref ok, EditorCamera.Help.Contains("Space / C") && tips != null && tips.text.Contains("Space / C: straight up / down"), "the keys are written in the help and the Terrain tab's tips");
+			Screenshot(new[] { "editor_updown" });
+			yield return new WaitForSecondsRealtime(0.6f);
+			if (ok) Log("PASS: editor up down"); else Fail("editor up down");
+		}
+
 		/// <summary>The guide's PDF came out of the .rmod and was opened as a file.</summary>
 		static void CheckGuideOpened(ref bool ok)
 		{
 			string path = Path.Combine(DynamicIslands.assetpath, HelpLinks.PdfName);
 			bool file = HelpLinks.LastOpened != null && HelpLinks.LastOpened.StartsWith("file:") && File.Exists(path) && new FileInfo(path).Length > 1000000;
 			Check(ref ok, file, "the guide opens as the PDF from the mod: " + HelpLinks.LastOpened + (File.Exists(path) ? " (" + new FileInfo(path).Length / 1024 + " KB)" : " (no file)"));
+		}
+
+		[ConsoleCommand(name: "CINoticeShot", docs: "Dev, main menu: the guide's picture of the main menu with the alpha box open (shot_main_menu.png); a folded box is opened for the picture and folded again after, the player's choice (notice.txt) untouched")]
+		public static void NoticeShotCommand() { DynamicIslands.instance.StartCoroutine(NoticeShotRoutine()); }
+
+		static IEnumerator NoticeShotRoutine()
+		{
+			bool folded = ExperimentalNotice.Folded;
+			var fold = HarmonyLib.Traverse.Create(typeof(ExperimentalNotice)).Method("SetFolded", new[] { typeof(bool) });
+			if (folded) fold.GetValue(false);
+			yield return new WaitForSecondsRealtime(0.5f);
+			Screenshot(new[] { "main_menu" });
+			yield return new WaitForSecondsRealtime(1.5f);
+			if (folded) fold.GetValue(true);
+			Log("PASS: notice shot");
+		}
+
+		/// <summary>The alpha box is never shown over another window: Raft's New Game and Load World boxes and the mod's info box each hide it, closing them brings it back.</summary>
+		static IEnumerator NoticeCoverRoutine(Action<bool, string> check)
+		{
+			yield return new WaitForSecondsRealtime(1.2f);
+			check(!ExperimentalNotice.Hidden && ExperimentalNotice.OtherWindow() == null, "on the plain main menu the box shows (nothing else open: " + (ExperimentalNotice.OtherWindow() ?? "none") + ")");
+			foreach (Type t in new[] { typeof(NewGameBox), typeof(LoadGameBox) })
+			{
+				MenuBox box = Resources.FindObjectsOfTypeAll(t).OfType<MenuBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+				if (box == null) { check(false, t.Name + " not found on the main menu"); continue; }
+				box.Open();
+				yield return new WaitForSecondsRealtime(1.5f);
+				check(box.IsOpen && ExperimentalNotice.Hidden, t.Name + " open: the alpha box is hidden (" + (ExperimentalNotice.OtherWindow() ?? "nothing seen") + ")");
+				Screenshot(new[] { "notice_under_" + t.Name });
+				yield return new WaitForSecondsRealtime(0.6f);
+				box.Close();
+				yield return new WaitForSecondsRealtime(1.5f);
+				check(!box.IsOpen && !ExperimentalNotice.Hidden, t.Name + " closed: the box is back");
+			}
+			InfoWindow.OpenReport();
+			yield return null;
+			yield return null;
+			check(ExperimentalNotice.Hidden, "Report a problem's box open: the alpha box is hidden");
+			InfoWindow.Close();
+			yield return null;
+			yield return null;
+			check(!ExperimentalNotice.Hidden, "... and back when it closes");
 		}
 
 		/// <summary>The alpha box's help: Discord, Guide, Report a problem (its box and buttons), and moving the box.</summary>
@@ -140,6 +265,7 @@ namespace DynamicIslands
 					"Report a problem opens its box: what to include, the logs, the versions");
 				var want = new[] { "Copy report form", "Open log folder", "Report on GitHub", "Post on Discord", "Close" };
 				check(want.All(w => InfoWindow.ButtonLabels.Contains(w)), "its buttons: " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()));
+				check(InfoWindow.ButtonsOutside().Count == 0, "every button inside the box" + (InfoWindow.ButtonsOutside().Count > 0 ? " - sticking out: " + string.Join(", ", InfoWindow.ButtonsOutside().ToArray()) : ""));
 				Screenshot(new[] { "notice_report" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				InfoWindow.ButtonNamed("Report on GitHub").onClick.Invoke();
@@ -166,7 +292,7 @@ namespace DynamicIslands
 				Rect r = ScreenRect(panel);
 				check((panel.anchoredPosition - start).magnitude > 100f && r.xMin >= -1f && r.yMin >= -1f && r.xMax <= Screen.width + 1f && r.yMax <= Screen.height + 1f, "dragging moves it (" + start + " > " + panel.anchoredPosition + ")");
 				string notice = File.ReadAllText(Path.Combine(DynamicIslands.assetpath, "notice.txt"));
-				check(notice.Contains("pos="), "the place is remembered (notice.txt)");
+				check(notice.Contains("place="), "the place is remembered (notice.txt)");
 				Screenshot(new[] { "notice_moved" });
 				yield return new WaitForSecondsRealtime(0.6f);
 				ExperimentalNotice.MoveBy(new Vector2(5000f, 5000f));

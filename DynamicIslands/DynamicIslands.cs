@@ -196,9 +196,11 @@ namespace DynamicIslands
 				library.transform.SetSiblingIndex(4);
 				Text libraryText = library.GetComponentInChildren<Text>();
 				libraryText.text = "ISLAND LIBRARY";
+				// (Raft's menu words are best fit from a very large size down to what fits the button; the old smallest size (half)
+				// was still too big for these longer words, and Unity then draws none. They may shrink as far as they need)
 				libraryText.resizeTextForBestFit = true;
 				libraryText.resizeTextMaxSize = libraryText.fontSize;
-				libraryText.resizeTextMinSize = Mathf.Max(10, libraryText.fontSize / 2);
+				libraryText.resizeTextMinSize = 10;
 				library.GetComponent<Button>().onClick = new Button.ButtonClickedEvent();
 				library.GetComponent<Button>().onClick.AddListener(() => LibraryWindow.Open());
 
