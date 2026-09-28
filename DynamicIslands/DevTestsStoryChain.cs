@@ -219,6 +219,69 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story chain in a world"); else Fail("story chain in a world");
 		}
 
+		[ConsoleCommand(name: "CIStoryChainAdventure", docs: "Dev, world (host): a new adventure instead of Raft's story - Raft's story off, an island first in the chain that comes by chance while sailing, one after it that comes ahead, and a Receiver island outside the story: the Receiver's note unlocks none of Raft's islands; the first is unlocked from the start but comes only after some sailing; players reaching it bring the second; the island outside the story has its frequency from the start. What the world had is put back after")]
+		public static void StoryChainAdventureCommand() { DynamicIslands.instance.StartCoroutine(StoryChainAdventureRoutine()); }
+
+		static IEnumerator StoryChainAdventureRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story chain adventure: host, in a world"); yield break; }
+			bool ok = true;
+			List<string> linesBefore = StoryChain.WriteLines().ToList();
+			var unlockedBefore = NoteBook.unlockedChunkPointType.ToList();
+			var indexesBefore = NoteBook.unlockedNoteBookIndexes.ToList();
+			RecieverFrequency[] freqBefore = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.ToArray() : null;
+			float sailedBefore = WorldDirector.Sailed;
+			Network_Player me = RAPI.GetLocalPlayer();
+			Vector3 home = me != null ? me.transform.position : Vector3.zero;
+			try
+			{
+				Dictionary<int, ChunkPointType> notes = StoryOrder.FrequencyNotes();
+				NoteBook.unlockedNoteBookIndexes.RemoveAll(i => notes.ContainsKey(i));
+				NoteBook.unlockedChunkPointType.RemoveAll(t => Chain.Contains(t) || (int)t >= StoryChain.ModTypeBase);
+				StoryChain.Reset();
+				WorldPlan plan = WorldPlan.Parse("CI adventure", "story = off\n" +
+					"rule = first | type:sandbar | start | sailing:300 | Something lies ahead... | Sail | first | visit\n" +
+					"rule = second | type:sandbar | start | ahead:350 | | Next | after:first | visit\n" +
+					"rule = free | type:sandbar | km:0 | receiver:400 | | Free\n");
+				StoryChain.FromPlan(plan);
+				Check(ref ok, StoryChain.Active && Steps(StoryChain.Steps) == "rule:first,rule:second" && StoryChain.Rules.Count == 3, "the chain without Raft's story: " + Steps(StoryChain.Steps) + " (and one island outside it)");
+				NoteBook.UnlockFrequency(ChunkPointType.Landmark_RadioTower);
+				StoryChain.Tick();
+				Check(ref ok, !ChainTypes().Any(t => Chain.Contains(t)), "the Receiver's note unlocks none of Raft's islands: " + Names(ChainTypes()));
+				Check(ref ok, StoryOrder.FrequencyText(ChunkPointType.Landmark_RadioTower) == "#----", "... and shows no number (the first island comes by sailing): " + StoryOrder.FrequencyText(ChunkPointType.Landmark_RadioTower));
+				int freeType = StoryChain.TypeOfRule("free");
+				Check(ref ok, freeType >= StoryChain.ModTypeBase && ChainTypes().Contains((ChunkPointType)freeType) && StoryChain.Fired.Contains("free"), "the Receiver island outside the story has its frequency " + StoryChain.FrequencyOf("free") + " from the start");
+				Check(ref ok, StoryChain.Unlocked.Contains("rule:first") && StoryChain.Fired.Contains("first") && !StoryChain.Brought.Contains("first") && !StoryChain.Unlocked.Contains("rule:second"),
+					"the first island is unlocked from the start, not here yet; the second waits");
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, !IslandWorldState.Islands.Any(e => e.Rule == "first"), "without sailing, it doesn't come");
+				WorldDirector.Sailed = sailedBefore + 2000f;
+				StoryChain.Tick();
+				yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "first" && e.Root != null), 60f);
+				IslandWorldState.Entry first = IslandWorldState.Islands.FirstOrDefault(e => e.Rule == "first");
+				Check(ref ok, first != null && first.Root != null && StoryChain.Brought.Contains("first"), "after 2 km of sailing it came up ahead" + (first != null ? " (" + first.HostName + ")" : ""));
+				if (first != null && me != null) yield return PutPlayer(me, first.Position + new Vector3(0f, 15f, 0f), false);
+				yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "second" && e.Root != null), 60f);
+				Check(ref ok, StoryChain.Done.Contains("rule:first") && StoryChain.Unlocked.Contains("rule:second") && IslandWorldState.Islands.Any(e => e.Rule == "second"),
+					"players reached the first: the second is unlocked and came ahead");
+				Check(ref ok, !ChainTypes().Any(t => Chain.Contains(t)), "still none of Raft's islands: " + Names(ChainTypes()));
+			}
+			finally
+			{
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(e => e.Rule == "first" || e.Rule == "second" || e.Rule == "free").Select(e => e.Id).ToList(), true);
+				if (me != null) me.transform.position = home;
+				WorldDirector.Sailed = sailedBefore;
+				StoryChain.Reset();
+				foreach (string l in linesBefore) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				NoteBook.unlockedNoteBookIndexes.Clear(); NoteBook.unlockedNoteBookIndexes.AddRange(indexesBefore);
+				NoteBook.unlockedChunkPointType.Clear(); NoteBook.unlockedChunkPointType.AddRange(unlockedBefore);
+				if (freqBefore != null) RecieverFrequency.AllFrequencies = freqBefore;
+				StoryChain.OnWorldRead();
+				IslandWorldState.Save();
+			}
+			if (ok) Log("PASS: story chain adventure"); else Fail("story chain adventure");
+		}
+
 		[ConsoleCommand(name: "CIStoryChainEditor", docs: "Dev, editor: the World plans window's story controls clicked as a builder does, on a test plan 'CI story plan' (deleted after): Raft's story off and on, Balboa left out and back, a rule put in Balboa's place from the list, the Receiver chosen for it; Check shows the chain and the tips (the Radio Tower first, Utopia last, Balboa's blueprints); saved and read back")]
 		public static void StoryChainEditorCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditorRoutine()); }
 
