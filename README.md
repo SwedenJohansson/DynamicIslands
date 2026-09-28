@@ -8,7 +8,7 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 > systems might be unstable, and we do not guarantee that progress is always saved: back up the worlds you care about.
 > The main menu shows this in a box (**Got it** folds it until the next version).
 
-**New here? Start with the [illustrated guide](docs/GUIDE.md)**: installing, starting a world, what you meet while
+**New here? Start with the [illustrated guide](docs/GUIDE.md)** (also as a [PDF](docs/Custom-Islands-Guide.pdf) to download or print): installing, starting a world, what you meet while
 sailing, the world randomizer, and building your own islands in the editor, step by step with 50 pictures. This README
 is the full reference.
 
@@ -432,6 +432,7 @@ The blue plane is sea level. Anything below it is under water in game.
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses) |
+| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host) | Shows the world's World settings, or changes them for every player (options: blueprints, storyorder, ghostrafts, privatestorage) |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
 Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.

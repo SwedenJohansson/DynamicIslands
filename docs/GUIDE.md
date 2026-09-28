@@ -761,6 +761,7 @@ Press **F10** for RML's console.
 | `CustomIslandsAuto on` / `off` | World, host | Automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host) |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
+| `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world) |
 | `LoadEditor` | Main menu | Opens the editor |
