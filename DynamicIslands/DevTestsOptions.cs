@@ -749,6 +749,8 @@ namespace DynamicIslands
 			if (canvas == null || panel == null) { Fail("experimental notice: no main menu or no box"); yield break; }
 			bool ok = true;
 			bool foldedBefore = ExperimentalNotice.Folded;
+			string placeBefore = ExperimentalNotice.SavedPlace; // (the checks are made where the box starts)
+			ExperimentalNotice.ResetPlace();
 			if (foldedBefore) { ExperimentalNotice.Flip(); yield return null; }
 			string text = string.Join(" | ", panel.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray());
 			Check(ref ok, text.Contains(ExperimentalNotice.Header) && ExperimentalNotice.Points.All(p => text.Contains(p)) && text.Contains("(version " + ExperimentalNotice.Version + ")") && ExperimentalNotice.Version != "?",
@@ -794,6 +796,8 @@ namespace DynamicIslands
 			Check(ref ok, !ExperimentalNotice.Folded && !ExperimentalNotice.SeenThisVersion && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Got it", "Show opens it again (and a new start shows it whole)");
 			// Its help: Discord, the guide, Report a problem, and moving it
 			yield return NoticeHelpRoutine((c, w) => Check(ref ok, c, w));
+			ExperimentalNotice.SavedPlace = placeBefore; // (where the player had dragged it)
+			ExperimentalNotice.ApplySavedPlace();
 			if (foldedBefore) ExperimentalNotice.Flip();
 			if (ok) Log("PASS: experimental notice"); else Fail("experimental notice");
 		}

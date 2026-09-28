@@ -31,7 +31,7 @@ namespace DynamicIslands.Editor
 		static bool Alt { get { return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt); } }
 
 		/// <summary>The camera's controls, for the help.</summary>
-		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Middle-drag: pan · Alt+drag: orbit · Wheel: zoom to the cursor · F: frame · Shift: faster";
+		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Wheel: zoom to the cursor · F: frame · Shift: faster";
 
 		float yaw, pitch;
 		Vector3 position, velocity;
@@ -113,12 +113,14 @@ namespace DynamicIslands.Editor
 			if (panning && !Input.GetMouseButton(2)) panning = false;
 			if (panning) Pan(mouse);
 
-			// Keys: WASD / arrows; Q/E down and up while looking
+			// Keys: WASD / arrows; Space / C straight up and down (also Q/E while looking)
 			Vector3 keys = Vector3.zero;
 			if (!typing && !EditorInput.Ctrl && !orbiting)
 			{
 				keys = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
-				if (looking) keys.y = (Input.GetKey(KeyCode.E) ? 1f : 0f) - (Input.GetKey(KeyCode.Q) ? 1f : 0f);
+				keys.y = (Input.GetKey(KeyCode.Space) ? 1f : 0f) - (Input.GetKey(KeyCode.C) ? 1f : 0f);
+				if (looking) keys.y += (Input.GetKey(KeyCode.E) ? 1f : 0f) - (Input.GetKey(KeyCode.Q) ? 1f : 0f);
+				keys.y = Mathf.Clamp(keys.y, -1f, 1f);
 			}
 			Move(keys, looking, EditorInput.Shift, dt);
 
@@ -215,7 +217,7 @@ namespace DynamicIslands.Editor
 		public void Move(Vector3 keys, bool fly, bool fast, float dt)
 		{
 			Vector3 want = fly ? Quaternion.Euler(pitch, yaw, 0f) * new Vector3(keys.x, 0f, keys.z) + Vector3.up * keys.y
-				: Quaternion.Euler(0f, yaw, 0f) * new Vector3(keys.x, 0f, keys.z);
+				: Quaternion.Euler(0f, yaw, 0f) * new Vector3(keys.x, 0f, keys.z) + Vector3.up * keys.y; // (up and down: straight, whichever way it looks)
 			if (want.sqrMagnitude > 1f) want.Normalize();
 			want *= Speed() * (fast ? 3f : 1f);
 			if (want.sqrMagnitude > 0f) flying = false;

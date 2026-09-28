@@ -389,6 +389,8 @@ namespace DynamicIslands.Editor
 			Border(r, ButtonBorder, 6, 1f);
 			Size(r.gameObject, width, height);
 			SetLook(b, Look.Plain);
+			// (a click leaves no keyboard focus behind: Space - the editor camera's "up" - would press the button again)
+			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
 			if (onClick != null) b.onClick.AddListener(() => onClick());
 			if (hint != null) Hint(r.gameObject, hint);
 			return b;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -58,6 +59,9 @@ namespace DynamicIslands.Editor
 			UIKit.Size(t.gameObject, 260);
 			status = UIKit.Label(head, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
+			Button submit = UIKit.Button(head, "Submit yours...", OpenSubmit, "How to get your own island or plan into the library", 150, 32f, 13);
+			submit.name = "Button_Submit";
+			UIKit.Primary(submit);
 			UIKit.Button(head, "Refresh", () => Load(true), "Read the library's list again", 110, 32f, 13);
 			UIKit.Button(head, "Close", Close, "Close the library", 110, 32f, 13);
 
@@ -135,6 +139,35 @@ namespace DynamicIslands.Editor
 		{
 			if (canvas != null) canvas.gameObject.SetActive(false);
 			if (fromNewGame) NewWorldOptions.Refresh();
+		}
+
+		/// <summary>"Submit yours...": how an island or plan gets into the library - export it, post it on the Discord, it is approved first.</summary>
+		public static void OpenSubmit()
+		{
+			InfoWindow.Open("Submit your island or plan",
+				"Made an island or a world plan others would enjoy? Share it, and it can be in this library for every player.\n\n" +
+				"1.  <b>Export it.</b> In the island editor, open the Islands window (Open) or World plans, pick your island or plan and click <b>Export...</b>. " +
+				"Fill in the title, a summary and a description, and take a picture. The pack (.zip) goes to <i>Mods\\DynamicIslands\\exports</i>; it holds every island it needs.\n" +
+				"2.  <b>Post the pack on the Custom Islands Discord</b>, with a few words about it: what players find, how long it takes, how many players.\n" +
+				"3.  <b>It is approved first.</b> Every entry is looked at (that it loads, works and is fine for everyone) before it goes into the library. " +
+				"That can take a while; once it is in, it shows up here for every player.\n\n" +
+				"To update it later, export it again (the pack becomes its next version) and post that the same way.\n\n" +
+				"By submitting, you say you made it and share it under CC BY 4.0: others may use it and must credit you.",
+				new InfoWindow.Choice("Open the Discord", () => HelpLinks.Open(HelpLinks.Discord), "The Custom Islands Discord server: post your pack there", true),
+				new InfoWindow.Choice("Open exports folder", OpenExports, "The folder with your exported packs (.zip)"),
+				new InfoWindow.Choice("Guide: sharing", () => HelpLinks.OpenGuideSection("47-saving-and-sharing"), "Section 4.7 of the guide, online: Export, packs and the library"),
+				new InfoWindow.Choice("Close", InfoWindow.Close, "Back to the library (Esc)"));
+		}
+
+		static void OpenExports()
+		{
+			string folder = LibraryPack.ExportFolder;
+			try { Directory.CreateDirectory(folder); } catch { }
+			HelpLinks.LastOpened = folder;
+			if (HelpLinks.TestMode) { InfoWindow.SetStatus("(test) " + folder); return; }
+			try { System.Diagnostics.Process.Start("explorer.exe", "\"" + Path.GetFullPath(folder) + "\""); }
+			catch (Exception e) { InfoWindow.SetStatus("Could not open " + folder + ": " + e.Message); return; }
+			InfoWindow.SetStatus("Your packs are in " + Path.GetFullPath(folder));
 		}
 
 		static void Load(bool force)
