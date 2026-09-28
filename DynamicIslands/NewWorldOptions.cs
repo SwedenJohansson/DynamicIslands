@@ -18,7 +18,7 @@ namespace DynamicIslands.Editor
 	static class NewWorldOptions
 	{
 		static RectTransform row, randRow;
-		static Button planButton, levelButton;
+		static Button planButton, levelButton, moreButton;
 		static Text detailText, randText;
 		static readonly List<Button> partButtons = new List<Button>();
 
@@ -47,8 +47,11 @@ namespace DynamicIslands.Editor
 				row.sizeDelta = new Vector2(292f, 120f);
 				UIKit.Background(row.gameObject, UIKit.GroupBg, 6);
 				UIKit.Vertical(row.gameObject, 5f, new RectOffset(10, 10, 8, 8));
-				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+				RectTransform head = UIKit.Row(row, 20f, 4f, "Head");
+				Text title = UIKit.Label(head, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 				UIKit.Size(title.gameObject, -1, 18);
+				moreButton = UIKit.Button(head, "Get more...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 96, 20f, 11);
+				moreButton.name = "Button_GetMorePlans";
 				planButton = UIKit.Button(row, "", Cycle, null, -1, 32f, 15);
 				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				UIKit.Size(detailText.gameObject, -1, 42);

@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	public static class LibraryExportWindow
 	{
 		public const string WindowName = "LibraryExportWindow";
-		public const string SubmitUrl = "https://github.com/SwedenJohansson/CustomIslands-Library/issues/new";
+		public const string SubmitUrl = "https://github.com/SwedenJohansson/CustomIslands-Library/issues/new?template=submit.yml";
 
 		static RectTransform window;
 		static Text title, includes, basedOn, status;

@@ -180,6 +180,14 @@ namespace DynamicIslands
 					if (size.x == 1024 || pOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_islandpicker" }); yield return new WaitForSecondsRealtime(0.6f); }
 					IslandPickerWindow.Close();
 					WorldSettingsWindow.Close();
+					// (and the island library window)
+					LibraryWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					var lOff = LibraryWindow.Root != null ? OffScreen(LibraryWindow.Root.gameObject, w, h) : new List<string> { "no window" };
+					Check(ref ok, lOff.Count == 0, w + "x" + h + " island library window: " + (lOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", lOff.Take(5).ToArray())));
+					if (size.x == 1024 || lOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_library" }); yield return new WaitForSecondsRealtime(0.6f); }
+					LibraryWindow.Close();
 					box.gameObject.SetActive(false);
 					yield return null;
 				}

@@ -288,7 +288,10 @@ namespace DynamicIslands.Editor
 		/// Exports an island (with every island its rules bring) or a plan (with every island it needs) as a .zip in
 		/// Mods\DynamicIslands\exports. icon / picture: JPG bytes (null = none). Returns the zip's path, or null and why not.
 		/// </summary>
-		public static string Export(LibraryInfo info, string islandName, WorldPlan plan, byte[] icon, byte[] picture, out string error)
+		public static string Export(LibraryInfo info, string islandName, WorldPlan plan, byte[] icon, byte[] picture, out string error) { return ExportWith(info, islandName, plan, icon, picture != null ? new[] { picture } : new byte[0][], out error); }
+
+		/// <summary>The same with up to 4 pictures (picture1.jpg ...).</summary>
+		public static string ExportWith(LibraryInfo info, string islandName, WorldPlan plan, byte[] icon, IList<byte[]> pictures, out string error)
 		{
 			error = null;
 			try
@@ -325,9 +328,10 @@ namespace DynamicIslands.Editor
 				}
 				else info.plan = "";
 				info.icon = icon != null ? "icon.jpg" : "";
-				info.pictures = picture != null ? new[] { "picture1.jpg" } : new string[0];
+				pictures = (pictures ?? new byte[0][]).Where(p => p != null).Take(4).ToList();
+				info.pictures = Enumerable.Range(1, pictures.Count).Select(i => "picture" + i + ".jpg").ToArray();
 				if (icon != null) files.Add(new KeyValuePair<string, byte[]>("icon.jpg", icon));
-				if (picture != null) files.Add(new KeyValuePair<string, byte[]>("picture1.jpg", picture));
+				for (int i = 0; i < pictures.Count; i++) files.Add(new KeyValuePair<string, byte[]>("picture" + (i + 1) + ".jpg", pictures[i]));
 				files.Insert(0, new KeyValuePair<string, byte[]>("info.json", Encoding.UTF8.GetBytes(info.ToJson())));
 				if (files.Sum(f => (long)f.Value.Length) > MaxTotalBytes) { error = "It is over " + (MaxTotalBytes / 1024 / 1024) + " MB - too big to share."; return null; }
 
@@ -415,28 +419,56 @@ namespace DynamicIslands.Editor
 				try { info = LibraryInfo.FromJson(Encoding.UTF8.GetString(infoBytes).TrimStart('﻿')); }
 				catch (Exception e) { error = "Its info.json can't be read (" + e.Message + ")."; return null; }
 				info.id = IdFrom(info.id.Length > 0 ? info.id : (folder ?? "").Length > 0 ? folder : info.title);
-				if (info.title.Trim().Length == 0) info.title = info.id;
-				if (info.kind != KindIsland && info.kind != KindPlan) { error = "Its info.json says kind '" + info.kind + "' (island or plan)."; return null; }
 				pack.Info = info;
-				foreach (string n in pack.Files.Keys.Where(f => f.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
-				{
-					int format = IslandFormat(pack.Files[n]);
-					if (format < 0) { error = "'" + n + "' isn't an island file."; return null; }
-					if (format > IslandFile.FormatVersion) { error = "'" + n + "' was saved by a newer Custom Islands than this one - update the mod to use it."; return null; }
-				}
-				if (!pack.IslandNames.Any()) { error = "It holds no island."; return null; }
-				if (info.IsPlan)
-				{
-					byte[] planBytes;
-					if (info.plan.Length == 0 || !pack.Files.TryGetValue(info.plan, out planBytes)) { error = "Its plan '" + info.plan + "' isn't in it."; return null; }
-					WorldPlan plan = WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(planBytes));
-					var names = new HashSet<string>(pack.IslandNames, StringComparer.OrdinalIgnoreCase);
-					string absent = plan.Rules.SelectMany(IslandsOf).FirstOrDefault(n => !names.Contains(n));
-					if (absent != null) { error = "Its plan brings the island '" + absent + "', which isn't in it."; return null; }
-				}
-				return pack;
+				return Validate(pack, out error) ? pack : null;
 			}
 			catch (Exception e) { error = "It can't be read as a pack (" + e.Message + ")."; return null; }
+		}
+
+		/// <summary>
+		/// A pack from files downloaded from the island library (their SHA-256 checked already), checked the same way as a
+		/// .zip: plain names, known kinds of files, the size limits, island files this version reads, the plan's islands.
+		/// </summary>
+		public static LibraryPackContents FromFiles(LibraryInfo info, Dictionary<string, byte[]> files, out string error)
+		{
+			error = null;
+			var pack = new LibraryPackContents { Info = info, Path = "library:" + info.id };
+			if (files.Count > MaxFiles) { error = "It holds more than " + MaxFiles + " files."; return null; }
+			if (files.Values.Sum(b => (long)b.Length) > MaxTotalBytes) { error = "It is more than " + (MaxTotalBytes / 1024 / 1024) + " MB."; return null; }
+			foreach (var f in files)
+			{
+				if (!IsSafeFileName(f.Key)) { error = "It holds a file with a name that isn't allowed ('" + f.Key + "')."; return null; }
+				if (!AllowedExtensions.Any(x => f.Key.EndsWith(x, StringComparison.OrdinalIgnoreCase))) { error = "It holds a kind of file that doesn't belong in an island pack ('" + f.Key + "')."; return null; }
+				pack.Files[f.Key] = f.Value;
+			}
+			info.id = IdFrom(info.id.Length > 0 ? info.id : info.title);
+			return Validate(pack, out error) ? pack : null;
+		}
+
+		/// <summary>The checks every pack gets, however it came: its info, island files this version reads, a plan's islands.</summary>
+		static bool Validate(LibraryPackContents pack, out string error)
+		{
+			error = null;
+			LibraryInfo info = pack.Info;
+			if (info.title.Trim().Length == 0) info.title = info.id;
+			if (info.kind != KindIsland && info.kind != KindPlan) { error = "Its info.json says kind '" + info.kind + "' (island or plan)."; return false; }
+			foreach (string n in pack.Files.Keys.Where(f => f.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				int format = IslandFormat(pack.Files[n]);
+				if (format < 0) { error = "'" + n + "' isn't an island file."; return false; }
+				if (format > IslandFile.FormatVersion) { error = "'" + n + "' was saved by a newer Custom Islands than this one - update the mod to use it."; return false; }
+			}
+			if (!pack.IslandNames.Any()) { error = "It holds no island."; return false; }
+			if (info.IsPlan)
+			{
+				byte[] planBytes;
+				if (info.plan.Length == 0 || !pack.Files.TryGetValue(info.plan, out planBytes)) { error = "Its plan '" + info.plan + "' isn't in it."; return false; }
+				WorldPlan plan = WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(planBytes));
+				var names = new HashSet<string>(pack.IslandNames, StringComparer.OrdinalIgnoreCase);
+				string absent = plan.Rules.SelectMany(IslandsOf).FirstOrDefault(n => !names.Contains(n));
+				if (absent != null) { error = "Its plan brings the island '" + absent + "', which isn't in it."; return false; }
+			}
+			return true;
 		}
 
 		#endregion
