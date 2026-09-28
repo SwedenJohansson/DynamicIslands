@@ -42,7 +42,7 @@ namespace DynamicIslands
 			{
 				// (harvested trees and picked-up items reach the entry when the island unloads or the world saves: now)
 				if (e.Root != null) IslandObjectState.Capture(e);
-				Log("MP island " + e.Id + " " + e.HostName + " hash " + e.Hash + " at " + e.Position.ToString("F0") + (e.Label.Length > 0 ? " label '" + e.Label + "'" : "") +
+				Log("MP island " + e.Id + " " + e.HostName + " hash " + (e.Hash ?? IslandNetwork.HashOf(e.Name)) + " at " + e.Position.ToString("F0") + (e.Label.Length > 0 ? " label '" + e.Label + "'" : "") +
 					(e.WaitingForFile ? " (waiting for the file)" : e.Failed ? " (failed)" : e.Root == null ? " (unloaded)" : " (loaded)"));
 				string state = string.Join(" ", e.State.OrderBy(kv => kv.Key)
 					.Select(kv => kv.Key.ToString("X") + "=" + (kv.Value.Active ? "on" : "off") + "/" + kv.Value.Yield));

@@ -709,6 +709,11 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).
+- **Someone else hosts next time:** Raft keeps the world on the host's PC. Copy its folder (`%USERPROFILE%\AppData\LocalLow\Redbeet
+  Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the new host's PC, into their own `User_<Steam id>\World`. The custom
+  islands, what was used, quests, the journal, everyone's levels and the world's rules come along: the folder carries the mod's
+  copy (`CustomIslands.txt`), and every player who joined keeps one too. Islands you only have from joining are used from their
+  downloaded copies.
 - **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
   host works out everyone's EXP, and each player sees the others' levels under their names.
 

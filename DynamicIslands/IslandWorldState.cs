@@ -52,6 +52,8 @@ namespace DynamicIslands.Editor
 
 		static string WorldKey { get { return SaveAndLoad.WorldGuid.ToString(); } }
 		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), WorldKey + ".txt"); } }
+		/// <summary>The world file of the world being played (WorldCopy).</summary>
+		public static string WorldFilePath { get { return FilePath; } }
 
 		/// <summary>Host: adds a new island to the world's list and tells clients about it (unless broadcast is off: the caller does it later).</summary>
 		public static Entry Add(string name, Vector3 position, GameObject root, bool broadcast = true)
@@ -129,10 +131,11 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
 				var lines = new List<string>
 				{
-					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label",
+					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label|island file hash",
+					WorldCopy.StampLine(),
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				lines.AddRange(WorldDirector.WriteLines());
@@ -145,10 +148,12 @@ namespace DynamicIslands.Editor
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
-					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
-						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/")));
+					// (the island file's hash: another player hosting the world later finds their copy of it - WorldCopy)
+					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
+						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
 				}
 				File.WriteAllLines(FilePath, lines.ToArray());
+				WorldCopy.AfterSave(lines.ToArray());
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
 		}
@@ -169,13 +174,15 @@ namespace DynamicIslands.Editor
 			WorldRandomizer.Reset();
 			PlayerLevels.Reset();
 			WorldOptions.Reset();
-			if (!Raft_Network.IsHost || !File.Exists(FilePath)) { WorldDirector.OnWorldLoaded(); return; }
-			foreach (string line in File.ReadAllLines(FilePath))
+			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
+			string[] fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null;
+			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
+			foreach (string line in fileLines)
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
 				int eq = line.IndexOf('=');
-				if (line.StartsWith("@") && eq > 1 && (WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+				if (line.StartsWith("@") && eq > 1 && (WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
@@ -183,13 +190,14 @@ namespace DynamicIslands.Editor
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;
-				if (p.Length < 4 || p.Length > 7 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+				if (p.Length < 4 || p.Length > 8 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
 					continue;
 				}
-				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = p[0], HostName = p[0], Position = new Vector3(x, y, z),
+				string hash = p.Length > 7 ? p[7].Trim() : "";
+				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
 					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" });
 			}
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +

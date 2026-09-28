@@ -47,6 +47,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (and each player who joins): the world's options (WorldOptions). Data = "on=a,b;seed=n",
 		/// Name = the private storages' builders (PrivateStorage).</summary>
 		public const int WorldOptions = 17;
+		/// <summary>Host -> everyone (after each save) and each player who joins: the world file (WorldCopy), so any player can
+		/// host the world later. Name = world id, Hash = the copy's stamp, Index/Count = part, Data = text.</summary>
+		public const int WorldCopy = 18;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -195,6 +198,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The level up system: the host to one player (to set) or everyone; a player to the host.</summary>
+		/// <summary>The world file's copy: the host to one player (who joined) or everyone.</summary>
+		public static void SendWorldCopy(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.WorldCopy;
+			if (!Raft_Network.IsHost) return;
+			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+		}
+
 		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
 		{
 			msg.Kind = IslandNetMessage.Levels;
@@ -213,7 +224,8 @@ namespace DynamicIslands.Editor
 				Kind = IslandNetMessage.Islands,
 				FullList = fullList,
 				Ids = list.Select(e => e.Id).ToArray(),
-				Names = list.Select(e => e.Name).ToArray(),
+				// (the island's own name: a host playing it from a downloaded copy - name_hash - still calls it by it)
+				Names = list.Select(e => e.HostName ?? e.Name).ToArray(),
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
 				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
 				Labels = list.Select(e => e.Label ?? "").ToArray(),
@@ -311,6 +323,8 @@ namespace DynamicIslands.Editor
 							if (place != null) SendToPlayer(place, from);
 							IslandNetMessage levels = PlayerLevels.StateFor(from.Id);
 							if (levels != null) SendLevels(levels, from);
+							// (their own copy of the world, to host it later)
+							global::DynamicIslands.Editor.WorldCopy.Send(from);
 						}
 						break;
 					case IslandNetMessage.WorldRules:
@@ -359,6 +373,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Levels:
 						PlayerLevels.OnMessage(msg, from);
+						break;
+					case IslandNetMessage.WorldCopy:
+						global::DynamicIslands.Editor.WorldCopy.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
@@ -470,6 +487,8 @@ namespace DynamicIslands.Editor
 
 		internal static void SendFile(string name, string hash, Network_UserId to)
 		{
+			// (a host playing an island from a copy it downloaded as a player - name_hash - sends that copy)
+			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) name = DownloadName(name, hash);
 			string path = IslandSpawner.PathFor(name);
 			if (!File.Exists(path) || HashOf(name) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
 			byte[] bytes = File.ReadAllBytes(path);
