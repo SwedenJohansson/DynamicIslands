@@ -1,0 +1,109 @@
+using System;
+using System.IO;
+using UnityEngine;
+
+namespace DynamicIslands.Editor
+{
+	/// <summary>
+	/// Where players get help: the guide (the PDF that comes in the .rmod, or the guide online), the mod's Discord, its
+	/// GitHub issues and Raft's log folder - for the main menu's alpha box, the Report a problem box and the Help buttons
+	/// of the editor's windows.
+	/// </summary>
+	public static class HelpLinks
+	{
+		public const string Discord = "https://discord.gg/U7DfKY9tN";
+		public const string Repo = "https://github.com/SwedenJohansson/DynamicIslands";
+		public const string Issues = Repo + "/issues";
+		public const string GuideOnline = Repo + "/blob/master/docs/GUIDE.md";
+		public const string GuidePdfOnline = Repo + "/blob/master/docs/Custom-Islands-Guide.pdf";
+		/// <summary>The guide as a PDF: in the .rmod (pack.ps1 puts it there), written to Mods\DynamicIslands\ to open it.</summary>
+		public const string PdfName = "Custom-Islands-Guide.pdf";
+
+		/// <summary>Tests: what would have been opened (a web address, a file or a folder), without opening it.</summary>
+		public static bool TestMode;
+		public static string LastOpened;
+
+		/// <summary>A web address or a file in the player's browser or PDF reader.</summary>
+		public static void Open(string url)
+		{
+			LastOpened = url;
+			Debug.Log("[CUSTOM ISLANDS] Opening " + url + (TestMode ? " (test: not opened)" : ""));
+			if (TestMode) return;
+			try { Application.OpenURL(url); }
+			catch (Exception e) { DynamicIslands.Notify("Could not open " + url + ": " + e.Message, true); }
+		}
+
+		/// <summary>A section of the guide online (anchor as in GUIDE.md's contents, e.g. 72-your-first-world-plan-step-by-step).</summary>
+		public static void OpenGuideSection(string anchor)
+		{
+			Open(GuideOnline + (string.IsNullOrEmpty(anchor) ? "" : "#" + anchor));
+		}
+
+		/// <summary>The guide's PDF of this version of the mod (from the .rmod), or the one online when the .rmod has none.</summary>
+		public static void OpenGuide()
+		{
+			string path = GuidePdfPath();
+			Open(path != null ? new Uri(Path.GetFullPath(path)).AbsoluteUri : GuidePdfOnline);
+		}
+
+		/// <summary>The PDF written out of the .rmod to Mods\DynamicIslands\ (again when it differs), or null.</summary>
+		public static string GuidePdfPath()
+		{
+			try
+			{
+				var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+				byte[] pdf;
+				if (files == null || !files.TryGetValue(PdfName, out pdf) || pdf == null || pdf.Length == 0) return null;
+				string path = Path.Combine(DynamicIslands.assetpath, PdfName);
+				if (!File.Exists(path) || new FileInfo(path).Length != pdf.Length)
+				{
+					Directory.CreateDirectory(DynamicIslands.assetpath);
+					File.WriteAllBytes(path, pdf);
+				}
+				return path;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the guide's PDF: " + e.Message); return null; }
+		}
+
+		/// <summary>Raft's log folder (Player.log, Player-prev.log): %USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft.</summary>
+		public static string LogFolder { get { return Application.persistentDataPath.Replace('/', '\\'); } }
+
+		public static void OpenLogFolder()
+		{
+			string folder = LogFolder;
+			LastOpened = folder;
+			Debug.Log("[CUSTOM ISLANDS] Opening " + folder + (TestMode ? " (test: not opened)" : ""));
+			if (TestMode) return;
+			try { System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\""); }
+			catch (Exception e) { DynamicIslands.Notify("Could not open " + folder + ": " + e.Message, true); }
+		}
+
+		/// <summary>The versions a report needs: the mod's and Raft's.</summary>
+		public static string Versions { get { return "Custom Islands " + ExperimentalNotice.Version + ", Raft " + Application.version; } }
+
+		/// <summary>The form to fill in (the guide's section 13), with the versions filled in.</summary>
+		public static string ReportTemplate
+		{
+			get
+			{
+				return "What happened:\n" +
+					"Steps to make it happen:\n  1.\n  2.\n  3.\n" +
+					"What I expected:\n" +
+					"How often: every time / now and then / once\n" +
+					"Versions: " + Versions + ", mod loader:          other mods:\n" +
+					"Single player or together: (host / joined, how many players)\n" +
+					"World plan and World settings: (what WorldPlan, WorldOptions, Monsters, BuildCost, Randomizer, WorldIslands print in the F10 console)\n" +
+					"Islands and world plans used: (names, files or download links)\n" +
+					"Attached: Player.log, Player-prev.log, screenshots, ...\n";
+			}
+		}
+
+		/// <summary>A new GitHub issue with the form in it (GitHub asks the player to sign in first).</summary>
+		public static string NewIssueUrl { get { return Issues + "/new?body=" + Uri.EscapeDataString(ReportTemplate); } }
+
+		public static void CopyReportTemplate()
+		{
+			GUIUtility.systemCopyBuffer = ReportTemplate;
+		}
+	}
+}

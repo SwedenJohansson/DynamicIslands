@@ -732,7 +732,7 @@ namespace DynamicIslands
 
 		#region The experimental release box
 
-		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the alpha notice (EXPERIMENTAL ALPHA RELEASE) - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its state before is put back; pictures shot_notice_*")]
+		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the alpha notice (EXPERIMENTAL ALPHA RELEASE) - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its help buttons (Discord, Guide (PDF), Report a problem and its box), dragging it (kept on the screen, remembered, reset); its state before is put back; pictures shot_notice_*")]
 		public static void ExperimentalNoticeCommand() { DynamicIslands.instance.StartCoroutine(ExperimentalNoticeRoutine()); }
 
 		static Rect ScreenRect(RectTransform r)
@@ -792,6 +792,8 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.6f);
 			ExperimentalNotice.Toggle.onClick.Invoke(); yield return null;
 			Check(ref ok, !ExperimentalNotice.Folded && !ExperimentalNotice.SeenThisVersion && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Got it", "Show opens it again (and a new start shows it whole)");
+			// Its help: Discord, the guide, Report a problem, and moving it
+			yield return NoticeHelpRoutine((c, w) => Check(ref ok, c, w));
 			if (foldedBefore) ExperimentalNotice.Flip();
 			if (ok) Log("PASS: experimental notice"); else Fail("experimental notice");
 		}

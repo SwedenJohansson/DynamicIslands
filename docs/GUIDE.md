@@ -29,7 +29,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Make my own adventure across several islands** | **EDITOR** → **WORLD PLANS** → **New...** → one rule per island → **Save**; choose it in NEW WORLD | [7.2](#72-your-first-world-plan-step-by-step) |
 | **Play with friends** | Everyone installs the mod; the host creates the world; friends join through Steam | [8](#8-playing-together) |
 | **Change how a world plays** (tougher monsters, levels, a randomized world) | **NEW WORLD** → **WORLD SETTINGS...** | [9](#9-world-settings-rules-and-extra-systems) |
-| **Report a bug** | Write what happened, add the log and the settings | [13](#13-reporting-a-problem) |
+| **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [13](#13-reporting-a-problem) |
 
 ### Words used in this guide
 
@@ -93,8 +93,11 @@ Pick what you want to do; each line leads to the part of the guide you need.
 > **Experimental Alpha Release:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
-> RELEASE** box at the top right, with the mod's version. **Got it** folds it into a slim bar (its **Show** opens it
-> again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the whole box again.
+> RELEASE** box on its right half, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
+> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 13](#13-reporting-a-problem)).
+> Drag the box anywhere you like; it stays where you put it. **Got it** folds it into a slim bar with the same buttons (its
+> **Show** opens it again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the
+> whole box again.
 
 1. Install the **Raft Mod Loader** (RML) from [raftmodding.com](https://www.raftmodding.com/) and start Raft through it.
 2. Put `DynamicIslands.rmod` into Raft's `mods` folder (for example
@@ -130,7 +133,7 @@ Raft plays as it always does. The World settings are optional extras for players
 together near the end of this guide.
 
 ![The main menu](images/main-menu.jpg)
-*The whole main menu. The EDITOR button opens the island editor ([section 4](#4-building-your-own-island-the-editor)).*
+*The whole main menu, with the New Game box open. The EDITOR button opens the island editor ([section 4](#4-building-your-own-island-the-editor)); the EXPERIMENTAL ALPHA RELEASE box (top right, drag it anywhere) has the Discord, Guide and Report a problem buttons.*
 
 ## 3. Sailing: custom islands in your world
 
@@ -788,6 +791,17 @@ right, and + Add a rule, Check and Save at the bottom.*
 **1. Open the World plans window.** In Raft's main menu click **EDITOR** and wait for the loading box to finish. In the
 editor's top bar, click **WORLD PLANS** (top right).
 
+**Help while you work:** every part of the window has a small **?** next to it. Hover it (or click it) and a note
+explains that part: what each choice of **When**, **bring** and **Where** means, what Check looks for, and so on. The green
+**Help** button at the top right shows the steps below in short, with buttons that open this guide (the PDF, or this
+section online).
+
+![A ? explains a part](images/plan-help-popup.jpg)
+*Hovering the ? after **When**: every choice it has, in a few words.*
+
+![The Help box](images/plan-help.jpg)
+*Help: how to make a plan, in eight steps, and the guide's buttons.*
+
 **2. Start a new plan.** Click **New...**, type a name (`Castaway trail`) and press **Enter** (or **OK**). The window
 now shows your empty plan: "No rules yet". The name is also the plan's file name, so it can't be the name of a plan you
 already have.
@@ -881,6 +895,8 @@ reward island**. Then change what you like. An id that's already in your plan ge
 
 ![A rule card with its parts numbered](images/plan-rule-card.png)
 *A rule card from the Adventure plan: when the quest of 'islets' is done, bring a new boss island 1000 m from 'islets'.*
+
+In the game, the parts also have a **?** after them: hover it for the same explanation as in this table.
 
 | # | Part | What it does |
 |---|---|---|
@@ -1499,6 +1515,16 @@ happened, and make it happen again on their own PC. Please include:
    `<Raft>\Mods\DynamicIslands\<name>.island`, world plans `<Raft>\Mods\DynamicIslands\plans\<name>.plan`. If the
    problem is in one world, add that world's island list, `<Raft>\Mods\DynamicIslands\worlds\<world>.txt`, and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
+
+**The quick way: Report a problem.** The alpha box on the main menu ([section 1](#1-installing)) has a **Report a
+problem** button. It opens a box with the list above in short, and buttons that do the work for you:
+- **Copy report form** puts the form below, with your versions filled in, on the clipboard (paste it with Ctrl+V);
+- **Open log folder** opens the folder with `Player.log` and `Player-prev.log`;
+- **Report on GitHub** opens a new issue on the mod's GitHub page with the form already in it;
+- **Post on Discord** opens the Custom Islands Discord server.
+
+![The Report a problem box](images/report-box.jpg)
+*Report a problem: what to include, and the buttons for the form, the logs, GitHub and Discord.*
 
 **Where to send it** (either is fine):
 

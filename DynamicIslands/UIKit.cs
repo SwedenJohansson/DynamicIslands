@@ -833,7 +833,8 @@ namespace DynamicIslands.Editor
 			Canvas markCanvas = mark.GetComponentInParent<Canvas>();
 			if (markCanvas != null && markCanvas.renderMode != RenderMode.ScreenSpaceOverlay) cam = markCanvas.worldCamera;
 			RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, RectTransformUtility.WorldToScreenPoint(cam, c[3]), null, out local);
-			Vector2 size = helpPopup.rect.size;
+			// (its height for this text: the rect can still hold the last text's until the canvas updates)
+			Vector2 size = new Vector2(helpPopup.rect.width, Mathf.Max(helpPopup.rect.height, LayoutUtility.GetPreferredHeight(helpPopup)));
 			Rect area = canvas.rect;
 			float x = Mathf.Clamp(local.x + 6f, area.xMin + 4f, area.xMax - size.x - 4f);
 			float y = local.y - 4f;

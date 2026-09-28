@@ -32,6 +32,10 @@ try {
         $entry = $f.FullName.Substring($src.Length + 1).Replace('\', '/')
         [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $f.FullName, $entry, [System.IO.Compression.CompressionLevel]::Optimal)
     }
+    # The guide as a PDF, for the Guide buttons in the game (HelpLinks.OpenGuide writes it out of the .rmod to open it)
+    $pdf = Join-Path $PSScriptRoot "docs\Custom-Islands-Guide.pdf"
+    if (Test-Path $pdf) { [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $pdf, "Custom-Islands-Guide.pdf", [System.IO.Compression.CompressionLevel]::Optimal) }
+    else { Write-Warning "docs\Custom-Islands-Guide.pdf is missing: the Guide buttons will open the guide online" }
 } finally { $zip.Dispose() }
 
 $version = (Get-Content (Join-Path $src "modinfo.json") -Raw | ConvertFrom-Json).version

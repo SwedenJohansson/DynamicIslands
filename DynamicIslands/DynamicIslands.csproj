@@ -131,9 +131,12 @@
     <Compile Include="LevelWindow.cs" />
     <Compile Include="WorldCopy.cs" />
     <Compile Include="DevTestsHostSwap.cs" />
+    <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />
+    <Compile Include="HelpLinks.cs" />
+    <Compile Include="InfoWindow.cs" />
     <Compile Include="NewWorldOptions.cs" />
     <Compile Include="MonsterDifficulty.cs" />
     <Compile Include="WorldRules.cs" />

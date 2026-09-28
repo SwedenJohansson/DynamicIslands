@@ -1,0 +1,133 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DynamicIslands.Editor
+{
+	/// <summary>
+	/// A message box with a title, a text (it scrolls when it is long) and a row of buttons, above every window of the
+	/// mod, in the main menu, the editor or a world: "Report a problem" (the main menu's alpha box) and the Help of the
+	/// editor's windows. Esc or Close closes it.
+	/// </summary>
+	public class InfoWindow : MonoBehaviour
+	{
+		public class Choice
+		{
+			public string Label, Hint;
+			public Action Click;
+			public bool Primary;
+			public Choice(string label, Action click, string hint = null, bool primary = false) { Label = label; Click = click; Hint = hint; Primary = primary; }
+		}
+
+		public const string CanvasName = "CustomIslands_InfoWindow";
+		static Canvas canvas;
+		static InfoWindow instance;
+		static Text titleText, bodyText, statusText;
+		static RectTransform buttonRow;
+		static ScrollRect scroll;
+		static readonly List<Button> buttons = new List<Button>();
+
+		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
+		public static string Title { get { return titleText != null ? titleText.text : ""; } }
+		public static string Body { get { return bodyText != null ? bodyText.text : ""; } }
+		public static string Status { get { return statusText != null ? statusText.text : ""; } }
+		public static RectTransform Root { get { return canvas != null ? (RectTransform)canvas.transform : null; } }
+		/// <summary>Tests: the buttons shown now.</summary>
+		public static Button ButtonNamed(string label) { return buttons.FirstOrDefault(b => b != null && UIKit.LabelOf(b).text == label); }
+		public static List<string> ButtonLabels { get { return buttons.Where(b => b != null).Select(b => UIKit.LabelOf(b).text).ToList(); } }
+
+		static void Build()
+		{
+			canvas = UIKit.CreateCanvas(CanvasName, 890); // (above the island library (880), under the ? popups (900))
+			DontDestroyOnLoad(canvas.gameObject);
+			instance = canvas.gameObject.AddComponent<InfoWindow>();
+			RectTransform root = (RectTransform)canvas.transform;
+			RectTransform dim = UIKit.Rect("Dim", root);
+			UIKit.Stretch(dim);
+			dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
+			RectTransform panel = UIKit.Panel(root, "Panel", new RectOffset(18, 18, 14, 16), 10f);
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 0f));
+			titleText = UIKit.Label(panel, "", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			UIKit.Size(titleText.gameObject, -1, 32);
+
+			RectTransform box = UIKit.Rect("TextBox", panel);
+			UIKit.Size(box.gameObject, -1, 400);
+			UIKit.Background(box.gameObject, new Color(0.231f, 0.129f, 0.059f, 0.3f), 6);
+			RectTransform content = UIKit.ScrollList(box, out scroll, 4f);
+			UIKit.Stretch((RectTransform)scroll.transform, 10, 4, 8, 8);
+			bodyText = UIKit.Label(content, "", 15, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Body");
+			bodyText.lineSpacing = 1.1f;
+
+			statusText = UIKit.Label(panel, "", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Italic, "Status");
+			UIKit.Size(statusText.gameObject, -1, 18);
+			buttonRow = UIKit.Row(panel, 34f, 8f, "Buttons");
+			canvas.gameObject.SetActive(false);
+		}
+
+		/// <summary>Shows the box (again with new content when it is open). The last choice is usually Close.</summary>
+		public static void Open(string title, string text, params Choice[] choices)
+		{
+			if (canvas == null) Build();
+			titleText.text = title.ToUpperInvariant();
+			bodyText.text = text;
+			statusText.text = "";
+			foreach (Transform child in buttonRow) Destroy(child.gameObject);
+			buttons.Clear();
+			UIKit.Size(UIKit.Label(buttonRow, "", 12).gameObject, -1, -1, 1); // (the buttons on the right)
+			foreach (Choice c in choices)
+			{
+				Choice choice = c;
+				Button b = UIKit.Button(buttonRow, c.Label, () => choice.Click(), c.Hint, -1, 34f, 13);
+				UIKit.Size(b.gameObject, Mathf.Max(96f, 26f + 9f * c.Label.Length), 34f);
+				if (c.Primary) UIKit.Primary(b);
+				buttons.Add(b);
+			}
+			canvas.gameObject.SetActive(true);
+			LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)canvas.transform);
+			scroll.verticalNormalizedPosition = 1f;
+			Debug.Log("[CUSTOM ISLANDS] Info box: " + title);
+		}
+
+		public static void Close()
+		{
+			if (canvas != null) canvas.gameObject.SetActive(false);
+		}
+
+		/// <summary>A line over the buttons: what a button just did.</summary>
+		public static void SetStatus(string text)
+		{
+			if (statusText != null) statusText.text = text;
+		}
+
+		void Update()
+		{
+			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+		}
+
+		#region The boxes
+
+		/// <summary>The main menu's "Report a problem": what a good report holds, and where to send it.</summary>
+		public static void OpenReport()
+		{
+			Open("Report a problem",
+				"Thank you for helping! A good report lets someone who wasn't there see what happened, and make it happen again. Please include:\n\n" +
+				"•  <b>What happened, in detail:</b> what you did, step by step, up to the problem - which island, which window or button. Does it happen every time, now and then, or once?\n" +
+				"•  <b>What you expected</b> to happen if it had worked.\n" +
+				"•  <b>Screenshots</b> or a short video if it can be seen (F12 in Steam, or Win+Shift+S).\n" +
+				"•  <b>The logs</b>, before you start Raft again (a new start replaces them): <i>Player.log</i> and <i>Player-prev.log</i> from Raft's log folder (<b>Open log folder</b>).\n" +
+				"•  <b>Your settings:</b> the versions (" + HelpLinks.Versions + "), the world's plan and World settings, single player or together (host or joined, how many players).\n" +
+				"•  <b>The islands and world plans involved:</b> their names, and the files or where to download them.\n\n" +
+				"<b>Copy report form</b> puts a form with your versions on the clipboard: paste it (Ctrl+V) into a GitHub issue or a Discord post and fill it in. " +
+				"On GitHub (a free account is needed) you can attach the log files; on Discord you can also ask questions.",
+				new Choice("Copy report form", () => { HelpLinks.CopyReportTemplate(); SetStatus("Copied: paste it (Ctrl+V) into the GitHub issue or the Discord post"); }, "Put a form to fill in, with your versions, on the clipboard"),
+				new Choice("Open log folder", () => { HelpLinks.OpenLogFolder(); SetStatus("Attach Player.log (and Player-prev.log) from " + HelpLinks.LogFolder); }, "Raft's log folder, with Player.log and Player-prev.log"),
+				new Choice("Report on GitHub", () => HelpLinks.Open(HelpLinks.NewIssueUrl), "A new issue on the mod's GitHub page, with the form in it", true),
+				new Choice("Post on Discord", () => HelpLinks.Open(HelpLinks.Discord), "The Custom Islands Discord server", true),
+				new Choice("Close", Close, "Close this box (Esc)"));
+		}
+
+		#endregion
+	}
+}
