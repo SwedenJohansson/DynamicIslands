@@ -24,6 +24,7 @@ followed by the files, the console commands, help, and how to report a problem (
 6. [Stories: quests, behaviours, story items](#6-stories-quests-behaviours-story-items)
 7. [World plans: which islands a world gets](#7-world-plans-which-islands-a-world-gets)
 8. [Playing together](#8-playing-together)
+   - [Who needs what: every case](#who-needs-what-every-case)
 9. [World settings: rules and extra systems](#9-world-settings-rules-and-extra-systems)
    - [9.1 The World settings window](#91-the-world-settings-window)
    - [9.2 World rules: monster difficulty and build cost](#92-world-rules-monster-difficulty-and-build-cost)
@@ -371,8 +372,57 @@ first).
 ![The Islands window](images/editor-islands-window.jpg)
 *The Islands window: the name and height, and the saved islands with their date and size.*
 
-Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). **Share an island by copying its file** to a
-friend's folder. In multiplayer the host's island files are sent to players who don't have them.
+Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). In multiplayer the host's island files are sent
+to players who don't have them, so nobody needs to share files just to play together ([section 8](#8-playing-together)).
+
+**Sharing an island or a plan: Export.** In the Islands window, pick an island and click **Export...**; in the World
+plan window (a plan open) click **Export...**. The **Share** window says what goes along:
+- an island takes the islands its rules bring with it ("Palm Cove + 1 island it brings: Treasure Cove"), and theirs, so
+  its quest chain still works for whoever gets it;
+- a plan takes every island it needs. Rules of the kind "a new island of a map type" need no file (every player's mod
+  makes those), and islands from the spawn pool come from each player's own islands;
+- if one of those islands isn't saved, the export stops and names it.
+
+Fill in the **title**, **author** (your Steam name to start with), a one-line **summary**, a **description** (what
+players find, how long it takes, what you had in mind, e.g. "best with Fierce monsters" - a pack never sets difficulty
+or other World settings; the player's own choices always apply), **tags**, **players** and **length**, and whether
+**others may change it and share their version** (they must credit you either way). The **picture** is what the
+editor's camera shows: close the window, move the view, open it again, or click **Take picture**; its middle becomes the
+icon. **Export** writes a pack, `Mods\DynamicIslands\exports\<name>.zip`; **Open folder** shows it; **Share...** opens the
+island library's page to send it in. Export the same island or plan again later and the pack is the next version of
+the same entry (so whoever has it can update it).
+
+![The Share window](images/library-share.jpg)
+*The Share window: what goes along, the entry's info on the left, the picture of the editor's view on the right.*
+
+**Getting islands from a pack: Import.** Put a pack (`.zip`) you got into `Mods\DynamicIslands\import` (**Open import
+folder**), click **Import...** in the Islands window or the World plan window, and pick it: the window says what it
+holds, who made it and its version. **Install** puts it in place:
+- **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
+  as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
+  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)`.
+- An **island** from a pack only turns up by chance while sailing if you tick **Also let it turn up while sailing** -
+  then also in worlds you've already started with random islands (you can untick it for a new world in World
+  settings, [9.5](#95-islands-while-sailing)). A **plan's** islands never turn up at random: they come when the plan
+  brings them.
+- A pack made with a **newer version** of the mod says so: "Install anyway" may leave out things this version doesn't
+  know, and a quest that needs them may not be finishable. An island file of a newer *format* can't be read at all and
+  is refused ("update the mod").
+- A broken or harmful pack (too big, too many files, a file that would land outside the mod's folder, a program, not an
+  island file) is refused with the reason, and nothing is written.
+- Installing a newer version of something you installed **updates** it. Worlds you've already started keep the
+  version they started with (the old file stays for them). If you changed one of its islands in the editor, yours is
+  kept unless you tick **Replace files I changed**.
+
+**Installed from packs** lists everything you installed, with **Remove** (click twice). Remove deletes what the entry
+installed but keeps anything a saved world still uses (it says which world), and never touches your own islands and
+plans. Under it, the copies of islands you got from multiplayer hosts (`<name>_<code>`, there can be many): **Remove
+unused** deletes the ones no saved world on this PC uses.
+
+![The Import window](images/library-import.jpg)
+*The Import window: packs in the import folder, what the picked one holds, and what's installed.*
+
+Import is offered in the island editor (the Islands and World plan windows), never inside a running world.
 
 ### 4.8 Your first island, step by step
 
@@ -609,9 +659,24 @@ a wreck after 2 km and a sunken island after 5 km. The map on the right sketches
 
 **New**, **Copy**, **Delete**, **Templates...** (ready-made sets of rules), **random islands while sailing** on or off,
 **Raft's story islands** on or off and each story island in or out (section 6.5), **Check** (lists rules that can't
-work, and shows the story chain with its tips), **Save**. Plans are text files in `Mods\DynamicIslands\plans`. In a world,
-`WorldPlan` shows the plan and which rules have fired; the host can give the world another plan with
-`WorldPlan <name>`.
+work, and shows the story chain with its tips), **Export...** / **Import...** (share a plan with every island it needs, see
+[4.7](#47-saving-and-sharing)), **Save**. Plans are text files in `Mods\DynamicIslands\plans`. In a world, `WorldPlan`
+shows the plan and which rules have fired; the host can give the world another plan with `WorldPlan <name>`.
+
+**A world keeps its own copy of its plan.** When a world starts, the plan's rules are saved with the world. From then
+on the plan file is only a template for new worlds:
+- editing, updating or deleting the plan file never changes a world that is already being played (to give a running
+  world the plan as it is now, use `WorldPlan <name>` in it);
+- the world's plan goes along when someone else hosts the world later ([section 8](#8-playing-together)), even if they
+  never had the plan;
+- worlds saved before this version get their copy the next time they're saved on a PC that has the plan file.
+
+A plan can only bring islands that are on the host's PC. If one is missing, the host sees which island and where it
+came from (the pack or library entry, or "ask the player who made this world"), and the rule waits until the island is
+there.
+
+The plan decides which islands come, when and where - nothing else. Monster difficulty, build cost, the level up
+system, the randomizer and the extra options are chosen in World settings for each world, whatever plan it has.
 
 ## 8. Playing together
 
@@ -632,11 +697,38 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).
 - **Someone else hosts next time:** Raft keeps the world on the host's PC. Copy its folder (`%USERPROFILE%\AppData\LocalLow\Redbeet
   Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the new host's PC, into their own `User_<Steam id>\World`. The custom
-  islands, what was used, quests, the journal, everyone's levels and the world's rules come along: the folder carries the mod's
-  copy (`CustomIslands.txt`), and every player who joined keeps one too. Islands you only have from joining are used from their
-  downloaded copies.
+  islands, what was used, quests, the journal, everyone's levels, the world's rules and its plan come along: the folder carries
+  the mod's copy (`CustomIslands.txt`), and every player who joined keeps one too. Islands you only have from joining are used
+  from their downloaded copies. Islands the plan hasn't brought yet are the one thing the new host may not have - see the
+  table below.
 - **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
   host works out everyone's EXP, and each player sees the others' levels under their names.
+
+### Who needs what: every case
+
+Only **the host's** islands, plan and settings count in a game. Players who join need **the mod, nothing else**: no
+islands, no plans, no packs. What they're sent is kept on their PC (islands as `<name>_<code>`), which is what lets
+them host the world later.
+
+| Case | What happens | What anyone has to do |
+|---|---|---|
+| **A hosts, B joins** (any number of players, joining and leaving any time) | B gets every island that has appeared, with what was chopped, looted and fired, the quests, the journal, levels and settings - also after leaving and joining again, or a crash | Nothing |
+| **A adds islands while B plays** (a plan's rule, a random island, a spawned one) | B gets each new island as it appears | Nothing |
+| **B hosts A's saved world later**, A joins | B uses the world's own copy (it comes in Raft's world folder, and B kept one while playing): the islands that appeared (from what B was sent), what was used, quests, journal, levels, World settings, and the **plan** | Copy the world folder to B (below). If the plan still has islands to bring that never appeared, B doesn't have them: B sees which ones. A exports the plan (4.7) and B imports it, or B gets it from the island library |
+| **A world made from a pack or library plan** hosted by someone who never installed it | As above; the message names the pack or library entry | Install that pack or entry |
+| **A world saved before worlds kept their plan** (older versions), hosted by someone without the plan file | The plan's remaining rules can't run: the host is told when the world loads | The first host saves the world once with this version (the plan is then in the world), or gives the plan file |
+| **The plan is edited, updated or deleted** while worlds use it | Worlds already started keep their own copy | Nothing (`WorldPlan <name>` in a world to switch it on purpose) |
+| **An installed island is updated** while a world uses it | That world keeps the version it started with; new worlds get the new one | Nothing |
+| **You remove a pack** that a saved world uses | What the world uses is kept (you're told which world) | Nothing |
+| **A pack's island has the name of one of yours** | Installed as `Name (Pack title)`; yours is untouched | Nothing |
+| **A pack was made with a newer mod version** | A warning; "Install anyway" may leave out what this version doesn't know | Update the mod if something's missing |
+| **An island downloaded or imported later**, in a world with random islands | Only turns up if you allowed it (import) - also in worlds already started; a plan's islands never do | Untick it for a new world in World settings (9.5) |
+| **Different players have different islands with the same name** | The host's is used; others get the host's as a copy and keep their own | Nothing |
+
+**Moving a world to another host:** Raft keeps the world on the host's PC in `%USERPROFILE%\AppData\LocalLow\Redbeet
+Interactive\Raft\User\User_<Steam id>\World\<world name>`. Copy that folder into the new host's own `User_<Steam
+id>\World`. It carries the mod's copy of the world (`CustomIslands.txt`), so the custom islands, the plan, what was used,
+quests, the journal, levels and settings all come along.
 
 ---
 
@@ -928,8 +1020,11 @@ Other files:
 
 | File | What it holds |
 |---|---|
-| `*.island` | Your islands (copy one to share it) |
-| `<name>_<hash>.island` | Islands downloaded from a host |
+| `*.island` | Your islands (and the ones you installed from packs) |
+| `<name>_<hash>.island` | Islands downloaded from a host, or a version a saved world keeps after an update |
+| `exports\` | Packs you exported (`<name>.zip`), and `exports.json` (what you filled in, so the next export is the next version) |
+| `import\` | Put packs you got here to install them (Import...) |
+| `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
 | `plans\*.plan` | World plans |
 | `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, islands left out; the randomizer), the start for the next new world |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |
@@ -992,7 +1087,20 @@ reach line tells a builder beforehand.
 **A friend can't see my island.** Every player needs the mod, and the host's islands are the ones that count. Island
 files are sent to players who join; they appear as `<name>_<hash>.island` in their folder.
 
-**Where are my islands?** In `<Raft>\Mods\DynamicIslands\` as `<name>.island`. Copy the file to share it.
+**Where are my islands?** In `<Raft>\Mods\DynamicIslands\` as `<name>.island`. To give one to a friend, **Export...** it
+([4.7](#47-saving-and-sharing)): the pack has the islands it brings too.
+
+**The story stopped: the next island never came.** The host is told on the screen when a plan (or an island's rule)
+needs an island that isn't on the host's PC - usually after someone else started hosting the world. Install the pack
+or library entry the message names, or ask the player who made the world to export the plan. For a world saved before
+worlds kept their own plan, the plan file itself must be on the host's PC (see the table in
+[section 8](#who-needs-what-every-case)).
+
+**An installed island has an odd name like "Harbor (First Voyage)".** You had a different island called "Harbor", so
+the pack's was installed under that name instead of replacing yours.
+
+**A pack won't install.** The Import window says why: it may be made for a newer version of the mod, broken, or not an
+island pack at all.
 
 **The editor takes a moment to open.** The first time after starting Raft it loads about 700 objects from Raft's
 islands; the loading box shows how far it is. After a Raft update it also scans Raft's other islands once, in the
@@ -1037,12 +1145,16 @@ happened, and make it happen again on their own PC. Please include:
    problem is in one world, add that world's island list, `<Raft>\Mods\DynamicIslands\worlds\<world>.txt`, and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
 
-**Where to send it:** open an issue on the mod's GitHub page,
-[github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
-(**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after loading"),
-write the report, and attach the files (zip them if there are many).
+**Where to send it** (either is fine):
 
-A template to copy into the issue:
+- **GitHub:** open an issue on the mod's GitHub page,
+  [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
+  (**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after
+  loading"), write the report, and attach the files (zip them if there are many).
+- **Discord:** post it on the mod's Discord server, [discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN), with the
+  same details and the files attached.
+
+A template to copy into the issue or the post:
 
 ```
 What happened:

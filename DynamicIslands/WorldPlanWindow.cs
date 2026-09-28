@@ -23,7 +23,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Editing the island's own rules instead of a plan.</summary>
 		bool islandMode;
 		Text titleText, problemsText, planNameText;
-		Button randomButton, planButton, newButton, copyButton, deleteButton, storyButton;
+		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton;
 		readonly Dictionary<string, Button> storyIslandButtons = new Dictionary<string, Button>();
 		InputField descriptionField;
 		RectTransform planRow, settingsRow, storyRow, rulesList, map;
@@ -81,6 +81,7 @@ namespace DynamicIslands.Editor
 			settingsRow.gameObject.SetActive(!islandMode);
 			storyRow.gameObject.SetActive(!islandMode);
 			descriptionField.gameObject.SetActive(!islandMode);
+			if (exportButton != null) { exportButton.gameObject.SetActive(!islandMode); importButton.gameObject.SetActive(!islandMode); }
 			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island)" : "";
 			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  \u25BC";
 			descriptionField.text = p.Description;
@@ -191,6 +192,8 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Button(buttons, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, 34f, 13);
 			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
+			exportButton = UIKit.Button(buttons, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, 34f, 13);
+			importButton = UIKit.Button(buttons, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, 34f, 13);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the changes", 110, 34);
 			UIKit.Primary(save);
@@ -409,6 +412,18 @@ namespace DynamicIslands.Editor
 				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check lists problems" : ""), problems.Length > 0);
 			}
 			Check();
+		}
+
+		/// <summary>Export: the plan saved first (what's shared is what's saved), then the Share window.</summary>
+		void ExportPlan()
+		{
+			if (islandMode) return;
+			Keep();
+			try { plan.Save(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+			string name = plan.Name;
+			Close();
+			LibraryExportWindow.OpenPlan(name);
 		}
 
 		void PickPlan()

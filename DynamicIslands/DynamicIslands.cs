@@ -359,7 +359,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); LibraryExportWindow.Create(EditorUI.Canvas.transform); LibraryImportWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			// (the loading box shows how far Raft's islands have been read for their objects)
@@ -765,42 +765,8 @@ namespace DynamicIslands
 		#endregion
 
 
-		#region OnlineIslandDatabaseHandling
-		//Logic to up or download custom islands from the custom islands server.
-
-		[ConsoleCommand(name: "UploadFileTest", docs: "Upload Custom Island to the Server (left here for further development, is currently unused)")]
-		public static void uploadIsland(string[] args)
-		{
-			instance.StartCoroutine(instance.UploadIsland("user", "password", "arandomisland"));
-		}
-
-		IEnumerator UploadIsland(string username, string password, string islandname)
-		{
-
-
-			WWWForm form = new WWWForm();
-			form.AddBinaryData("islandfile", File.ReadAllBytes(@"Mods\demoisland1.assets"), "demoisland1.assets", "binary/octet-stream");
-			form.AddField("username", username);
-			form.AddField("password", System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password)));
-			form.AddField("islandname", islandname);
-
-			var uwr = new UnityWebRequest();
-			uwr = UnityWebRequest.Post("http://localhost/CustomIslandsWebapp/upload.php", form);
-
-			//uwr.uploadHandler = new UploadHandlerFile(@"Mods\hello.txt");
-			yield return uwr.SendWebRequest();
-			if (uwr.isNetworkError || uwr.isHttpError)
-				Debug.LogError(uwr.error);
-			else
-			{
-				// file data successfully sent
-				Debug.Log("file uploaded" + uwr.downloadHandler.text + " with code " + uwr.responseCode);
-			}
-
-		}
-
-
-		#endregion
+		// (The 2023 "UploadFileTest" stub that posted an island with a user name and password to a local test server is
+		// gone: islands are shared as packs - LibraryPack - and the island library only ever downloads.)
 
 
 		#region Commands

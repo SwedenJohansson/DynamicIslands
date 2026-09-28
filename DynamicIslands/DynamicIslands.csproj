@@ -76,6 +76,7 @@
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -99,6 +100,9 @@
     <Compile Include="WorldRandomizer.cs" />
     <Compile Include="WorldOptions.cs" />
     <Compile Include="WorldIslands.cs" />
+    <Compile Include="LibraryPack.cs" />
+    <Compile Include="LibraryJson.cs" />
+    <Compile Include="LibraryWindows.cs" />
     <Compile Include="IslandPickerWindow.cs" />
     <Compile Include="GhostRafts.cs" />
     <Compile Include="PrivateStorage.cs" />

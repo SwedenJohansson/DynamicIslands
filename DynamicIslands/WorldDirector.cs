@@ -394,6 +394,9 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + e.Message); return null; }
 		}
 
+		/// <summary>Forgets what was read (files were installed or removed).</summary>
+		public static void Forget() { cache.Clear(); }
+
 		/// <summary>The island's own settings (empty if the file is missing).</summary>
 		public static Dictionary<string, string> Props(string name)
 		{
@@ -437,6 +440,15 @@ namespace DynamicIslands.Editor
 		/// <summary>The current world's plan.</summary>
 		public static string PlanName = WorldPlan.RandomName;
 		public static WorldPlan Plan = WorldPlan.Load(WorldPlan.RandomName);
+		/// <summary>
+		/// Where the world's plan came from: "library:&lt;id&gt;@&lt;version&gt;", "import:&lt;id&gt;@&lt;version&gt;", or "" (the
+		/// player's own plan). Saved with the world ("@planfrom="), so a host missing one of its islands can be told where to get it.
+		/// </summary>
+		public static string PlanFrom = "";
+		/// <summary>True when the plan was read from the world's own copy (not from the plans folder).</summary>
+		public static bool PlanFromWorld { get; private set; }
+		/// <summary>The plan as the world file keeps it ("@planrandom=", "@plandesc=", "@planrule=" lines), while it is read.</summary>
+		static WorldPlan stored;
 		/// <summary>Ids of the plan's rules that have fired in this world.</summary>
 		public static readonly HashSet<string> Done = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>Metres the raft has sailed in this world (for "km" rules).</summary>
@@ -465,6 +477,10 @@ namespace DynamicIslands.Editor
 		{
 			PlanName = WorldPlan.RandomName;
 			Plan = null;
+			PlanFrom = "";
+			PlanFromWorld = false;
+			stored = null;
+			missingNoted.Clear();
 			Done.Clear();
 			Sailed = 0f;
 			retryAt.Clear();
@@ -479,13 +495,33 @@ namespace DynamicIslands.Editor
 				case "plan": PlanName = value.Trim(); return true;
 				case "sailed": float s; if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out s)) Sailed = s; return true;
 				case "done": foreach (string id in value.Split(',')) if (id.Trim().Length > 0) Done.Add(id.Trim()); return true;
+				// The world's own copy of its plan (written since worlds keep one)
+				case "planfrom": PlanFrom = value.Trim(); return true;
+				case "planrandom": Stored().Random = value.Trim().Equals("on", StringComparison.OrdinalIgnoreCase); return true;
+				case "plandesc": Stored().Description = value.Trim(); return true;
+				case "planrule":
+					IntroRule r = IntroRule.Parse(value);
+					if (r != null) Stored().Rules.Add(r);
+					else Debug.LogWarning("[CUSTOM ISLANDS] The world's copy of its plan: ignoring a bad rule: " + value);
+					return true;
 			}
 			return false;
 		}
 
+		static WorldPlan Stored() { if (stored == null) stored = new WorldPlan { Random = false }; return stored; }
+
 		internal static IEnumerable<string> WriteLines()
 		{
 			yield return "@plan=" + PlanName;
+			// (the plan itself goes with the world: whoever hosts it later, and whatever happens to the plan's file, the
+			// world goes on with the plan it was made with)
+			if (Plan != null && !Plan.BuiltIn)
+			{
+				yield return "@planrandom=" + (Plan.Random ? "on" : "off");
+				if ((Plan.Description ?? "").Length > 0) yield return "@plandesc=" + Plan.Description.Replace("\r", " ").Replace("\n", " ");
+				foreach (IntroRule r in Plan.Rules) yield return "@planrule=" + r.ToLine();
+			}
+			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
 			yield return "@sailed=" + Sailed.ToString("F0", CultureInfo.InvariantCulture);
 			if (Done.Count > 0) yield return "@done=" + string.Join(",", Done.ToArray());
 		}
@@ -531,10 +567,48 @@ namespace DynamicIslands.Editor
 				WorldRandomizer.OnNewWorld();
 				return;
 			}
-			Plan = WorldPlan.Load(PlanName);
-			if (Plan == null) Debug.LogWarning("[CUSTOM ISLANDS] This world's plan '" + PlanName + "' is missing (Mods\\DynamicIslands\\plans); its rules are paused");
-			else if (!StoryChain.HasSnapshot && Plan.HasStory) StoryChain.FromPlan(Plan);
-			if (Plan != null && Plan.Rules.Count > 0) Log("Plan '" + PlanName + "': " + Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
+			if (stored != null && !WorldPlan.IsBuiltIn(PlanName))
+			{
+				// The world's own copy: the plan file (here or anywhere) doesn't matter any more
+				stored.Name = PlanName;
+				Plan = stored;
+				PlanFromWorld = true;
+			}
+			else
+			{
+				// A world saved before worlds kept their plan: the plan file, copied into the world with the next save
+				Plan = WorldPlan.Load(PlanName);
+				if (Plan == null)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] This world's plan '" + PlanName + "' is missing (Mods\\DynamicIslands\\plans); its rules are paused");
+					DynamicIslands.Notify("This world's plan '" + PlanName + "' isn't on this PC, and the world was saved before worlds kept their own copy of it. " +
+						"Its story can't go on here until the plan is in Mods\\DynamicIslands\\plans (the player who made the world has it).", true);
+				}
+			}
+			stored = null;
+			// (a world from before the story chain, whose plan changes Raft's story: the chain from the plan now)
+			if (Plan != null && !StoryChain.HasSnapshot && Plan.HasStory) StoryChain.FromPlan(Plan);
+			if (Plan != null && Plan.Rules.Count > 0)
+				Log("Plan '" + PlanName + "'" + (PlanFromWorld ? " (the world's own copy)" : " (from its file; the world keeps a copy from the next save)") + ": " +
+					Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
+		}
+
+		/// <summary>The islands the host was told are missing (tests).</summary>
+		public static IEnumerable<string> MissingIslands { get { return missingNoted; } }
+
+		/// <summary>Islands a rule couldn't bring because their file isn't on this PC (told once per island).</summary>
+		static readonly HashSet<string> missingNoted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>Host: a rule's island is missing on this PC - say so on the screen once, and where to get it.</summary>
+		static void NoteMissing(IntroRule r, IslandWorldState.Entry owner)
+		{
+			string name = r.What == "island" ? r.WhatArg.Trim() : r.WhatArg;
+			if (!missingNoted.Add(name)) return;
+			string from = owner == null ? PlanFrom : "";
+			string where = from.StartsWith("library:") ? "It comes with the library entry '" + LibrarySource.Describe(from) + "' - download it in the island library."
+				: from.StartsWith("import:") ? "It came with '" + LibrarySource.Describe(from) + "' - import that again."
+				: "Ask the player who made this world for it (they can export the plan or island), then import it.";
+			DynamicIslands.Notify("The world's story needs the island '" + name + "', which isn't on this PC, so it can't appear yet. " + where, true);
 		}
 
 		/// <summary>Host: gives this world a plan (applyRandom: random islands on or off as the plan says).</summary>
@@ -544,6 +618,8 @@ namespace DynamicIslands.Editor
 			if (plan == null) return false;
 			Plan = plan;
 			PlanName = plan.Name;
+			PlanFromWorld = false;
+			PlanFrom = LibrarySource.OfPlan(plan.Name) ?? "";
 			if (applyRandom) CustomIslandSpawner.Enabled = plan.Random;
 			retryAt.Clear();
 			return true;
@@ -617,6 +693,7 @@ namespace DynamicIslands.Editor
 			if (why == null) { markDone(); retryAt.Remove(key); return; }
 			retryAt[key] = Time.unscaledTime + RetrySeconds;
 			if (warned.Add(key + why)) Log("Rule '" + r.Id + "' (" + r.Describe() + ") waits: " + why);
+			if (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix)) NoteMissing(r, owner);
 		}
 
 		/// <summary>The islands a ref points at: "self" = the rule's own island, else islands brought by that rule, else by island name.</summary>
@@ -698,6 +775,8 @@ namespace DynamicIslands.Editor
 
 		#region Bringing an island
 
+		const string NoIslandPrefix = "there is no saved island ", NoneOfPrefix = "none of the islands ";
+
 		/// <summary>Brings the rule's island; null when it's on its way, else why not (yet).</summary>
 		internal static string Bring(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry at)
 		{
@@ -709,11 +788,11 @@ namespace DynamicIslands.Editor
 			{
 				case "island":
 					name = r.WhatArg.Trim();
-					if (!File.Exists(IslandSpawner.PathFor(name))) return "there is no saved island '" + name + "'";
+					if (!File.Exists(IslandSpawner.PathFor(name))) return NoIslandPrefix + "'" + name + "'";
 					break;
 				case "oneof":
 					var names = r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0 && File.Exists(IslandSpawner.PathFor(n))).ToList();
-					if (names.Count == 0) return "none of the islands '" + r.WhatArg + "' exist";
+					if (names.Count == 0) return NoneOfPrefix + "'" + r.WhatArg + "' exist";
 					// Islands not in the world yet first
 					var fresh = names.Where(n => !IslandWorldState.Islands.Any(e => e.HostName.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
 					if (fresh.Count > 0) names = fresh;

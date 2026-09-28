@@ -55,7 +55,9 @@ namespace DynamicIslands.Editor
 	{
 		public const string Extension = ".island";
 		const uint Magic = 0x4C534943; // "CISL" little-endian
-		const int FormatVersion = 4;
+		public const int FormatVersion = 4;
+		/// <summary>At most this many objects in one island: more is a broken or harmful file (the densest generated islands have about 11,000).</summary>
+		public const int MaxObjects = 100000;
 
 		/// <summary>Editor Y coordinate that is treated as sea level when spawned in game.</summary>
 		public const float DefaultWaterLevel = 20f;
@@ -180,6 +182,7 @@ namespace DynamicIslands.Editor
 							island.Heights[y, x] = r.ReadUInt16() / (float)ushort.MaxValue;
 
 					int count = r.ReadInt32();
+					if (count < 0 || count > MaxObjects) throw new InvalidDataException("Invalid object count " + count + " (at most " + MaxObjects + ")");
 					for (int i = 0; i < count; i++)
 					{
 						island.Objects.Add(new IslandObject
