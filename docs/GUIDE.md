@@ -134,7 +134,7 @@ Raft plays as it always does. The World settings are optional extras for players
 together near the end of this guide.
 
 ![The main menu](images/main-menu.jpg)
-*The whole main menu, with the New Game box open. The EDITOR button opens the island editor ([section 4](#4-building-your-own-island-the-editor)); the EXPERIMENTAL ALPHA RELEASE box (top right, drag it anywhere) has the Discord, Guide and Report a problem buttons.*
+*The whole main menu. The EDITOR button opens the island editor ([section 4](#4-building-your-own-island-the-editor)), ISLAND LIBRARY the island library; the EXPERIMENTAL ALPHA RELEASE box (drag it anywhere), here folded with Got it, keeps its Discord, Guide and Report a problem buttons (Show opens it again). It steps aside while New World or any other window is open.*
 
 ## 3. Sailing: custom islands in your world
 

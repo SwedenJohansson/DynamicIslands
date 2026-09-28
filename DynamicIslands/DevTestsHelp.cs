@@ -203,6 +203,21 @@ namespace DynamicIslands
 			Check(ref ok, file, "the guide opens as the PDF from the mod: " + HelpLinks.LastOpened + (File.Exists(path) ? " (" + new FileInfo(path).Length / 1024 + " KB)" : " (no file)"));
 		}
 
+		[ConsoleCommand(name: "CINoticeShot", docs: "Dev, main menu: the guide's picture of the main menu with the alpha box open (shot_main_menu.png); a folded box is opened for the picture and folded again after, the player's choice (notice.txt) untouched")]
+		public static void NoticeShotCommand() { DynamicIslands.instance.StartCoroutine(NoticeShotRoutine()); }
+
+		static IEnumerator NoticeShotRoutine()
+		{
+			bool folded = ExperimentalNotice.Folded;
+			var fold = HarmonyLib.Traverse.Create(typeof(ExperimentalNotice)).Method("SetFolded", new[] { typeof(bool) });
+			if (folded) fold.GetValue(false);
+			yield return new WaitForSecondsRealtime(0.5f);
+			Screenshot(new[] { "main_menu" });
+			yield return new WaitForSecondsRealtime(1.5f);
+			if (folded) fold.GetValue(true);
+			Log("PASS: notice shot");
+		}
+
 		/// <summary>The alpha box is never shown over another window: Raft's New Game and Load World boxes and the mod's info box each hide it, closing them brings it back.</summary>
 		static IEnumerator NoticeCoverRoutine(Action<bool, string> check)
 		{
