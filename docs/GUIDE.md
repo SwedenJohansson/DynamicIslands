@@ -93,7 +93,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 > **Experimental Alpha Release:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
-> RELEASE** box on its right half, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
+> RELEASE** box right of the middle, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
 > server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 13](#13-reporting-a-problem)).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
@@ -263,6 +263,7 @@ less after that. The editor opens on the sea with an empty build area.
 |---|---|
 | **Right-drag** | look around; while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
+| **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |
 | **Alt + left-drag** | orbit around the selection, or the middle of the view |
 | **Wheel** | zoom towards what is under the cursor |
@@ -516,7 +517,19 @@ entry is looked at before it goes in.
   Without internet it says "Can't reach the island library"; packs someone sent you still install with **Import...**.
   `Mods\DynamicIslands\library.txt` can switch it off (`online = off`).
 
-**Sharing yours in the library:** export it, then **Share...** in the Share window opens the library's
+**Sharing yours in the library:** click **Submit yours...** at the top of the island library. It explains the three steps:
+1. **Export** your island or plan in the editor (above), with a title, summary, description and picture;
+2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/U7DfKY9tN) with a few words about it;
+3. it is **approved first**: every entry is looked at before it goes into the library, so it can take a while. Once it
+   is in, every player sees it in the library.
+
+Its buttons open the Discord, your exports folder and this section of the guide. By submitting, you say you made it and
+share it under CC BY 4.0 (others may use it and must credit you).
+
+![Submit yours](images/library-submit.jpg)
+*Submit yours... in the island library: export, post it on the Discord, approved first.*
+
+**Or with GitHub:** after an export, **Share...** in the Share window opens the library's
 [Submit an island or plan](https://github.com/SwedenJohansson/CustomIslands-Library/issues/new?template=submit.yml)
 form (a free GitHub account is needed) and the folder with your pack: drag the `.zip` in, tick the box (you made it and
 share it under CC BY 4.0: others may use it and must credit you), send. To update it later, export it again (it keeps
