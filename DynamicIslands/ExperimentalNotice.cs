@@ -37,11 +37,12 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
+				// (the mod's own modinfo.json, shipped in the .rmod)
 				try
 				{
-					object info = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo : null;
-					string v = info != null ? Traverse.Create(info).Field("version").GetValue<string>() : null;
-					return string.IsNullOrEmpty(v) ? "?" : v;
+					byte[] b = RaftIslands.ModFile("modinfo.json");
+					System.Text.RegularExpressions.Match m = b != null ? System.Text.RegularExpressions.Regex.Match(System.Text.Encoding.UTF8.GetString(b), "\"version\"\\s*:\\s*\"([^\"]+)\"") : null;
+					return m != null && m.Success ? m.Groups[1].Value : "?";
 				}
 				catch { return "?"; }
 			}
@@ -87,17 +88,20 @@ namespace DynamicIslands.Editor
 			panel.anchoredPosition = new Vector2(-24f, -70f);
 			panel.sizeDelta = new Vector2(380f, 0f);
 
-			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
-			Text title = UIKit.Label(head, Header, 20, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			// (the header alone on its line, as large as fits: Raft's title font is wide)
+			Text title = UIKit.Label(panel, Header, 24, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
-			Text version = UIKit.Label(head, "Custom Islands " + Version, 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic, "Version");
-			UIKit.Size(version.gameObject, 130);
+			title.horizontalOverflow = HorizontalWrapMode.Wrap;
+			title.resizeTextForBestFit = true;
+			title.resizeTextMinSize = 12;
+			title.resizeTextMaxSize = title.fontSize;
+			UIKit.Size(title.gameObject, -1, 30);
 
 			body = UIKit.Rect("Body", panel);
 			UIKit.Vertical(body.gameObject, 4f, new RectOffset(0, 0, 0, 0));
-			Text intro = UIKit.Label(body, "This is the first release of Custom Islands. Please keep in mind:", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
+			Text intro = UIKit.Label(body, "This is the first release of Custom Islands (version " + Version + "). Please keep in mind:", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
 			intro.horizontalOverflow = HorizontalWrapMode.Wrap;
-			UIKit.Size(intro.gameObject, -1, 20);
+			UIKit.Size(intro.gameObject, -1, 36); // (two lines)
 			for (int i = 0; i < Points.Length; i++)
 			{
 				Text t = UIKit.Label(body, "•  " + Points[i], 14, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Point" + i);
