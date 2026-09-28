@@ -29,7 +29,7 @@ file and command); this guide shows you around.
 
 ## 1. Installing
 
-> **Uncharted waters - alpha:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
+> **Experimental Alpha Release:** this is the mod's first release, an early alpha. Things are likely to change, some systems might be
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in a box at the top right; **Got it**
 > folds it into a bar until the next version of the mod.

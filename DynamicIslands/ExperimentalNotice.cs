@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// The main menu's "UNCHARTED WATERS - ALPHA" box: this is the mod's first release, so new players are told that things are
+	/// The main menu's "EXPERIMENTAL ALPHA RELEASE" box: this is the mod's first release, so new players are told that things are
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It sits at the top right
 	/// of Raft's main menu, clear of the menu buttons and the New Game box. "Got it" folds it into a slim bar (click the bar
 	/// to open it again); that is remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new
@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	public static class ExperimentalNotice
 	{
 		public const string PanelName = "CustomIslands_ExperimentalNotice";
-		public const string Header = "UNCHARTED WATERS - ALPHA";
+		public const string Header = "EXPERIMENTAL ALPHA RELEASE";
 		public static readonly string[] Points =
 		{
 			"Things are likely to change.",

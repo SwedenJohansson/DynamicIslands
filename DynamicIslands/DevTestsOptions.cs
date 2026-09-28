@@ -732,7 +732,7 @@ namespace DynamicIslands
 
 		#region The experimental release box
 
-		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the alpha notice (UNCHARTED WATERS - ALPHA) - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its state before is put back; pictures shot_notice_*")]
+		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the alpha notice (EXPERIMENTAL ALPHA RELEASE) - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its state before is put back; pictures shot_notice_*")]
 		public static void ExperimentalNoticeCommand() { DynamicIslands.instance.StartCoroutine(ExperimentalNoticeRoutine()); }
 
 		static Rect ScreenRect(RectTransform r)
