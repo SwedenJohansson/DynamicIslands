@@ -612,6 +612,10 @@ chain, in the editor's **World plans** window:
     **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands;
   - **by chance while sailing**: it comes up ahead some time after it is unlocked;
   - **ahead of the raft** or **near an island**, as soon as it is unlocked.
+![Raft's story in the World plans window](images/editor-story-chain.jpg)
+*The template "Balboa replaced": a new forest island in Balboa's place, on its own Receiver frequency, done when
+players reach it. The story row shows "Balboa (yours)"; Check lists the chain and what Balboa held.*
+
 - A rule's own **when** still counts. A story island "after Vasagatan" with "after sailing 3 km" is unlocked by
   Vasagatan's note, but comes only once the raft has also sailed 3 km.
 

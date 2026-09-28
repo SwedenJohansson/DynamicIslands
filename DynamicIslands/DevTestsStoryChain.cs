@@ -256,7 +256,7 @@ namespace DynamicIslands
 				string shown = WorldPlanWindow.LastCheck ?? "";
 				Check(ref ok, shown.Contains("Vasagatan > 'mine' > Caravan Town") && shown.Contains("Machete"), "Check shows the chain with the island in Balboa's place and what Balboa had: " + shown.Replace("\n", " | "));
 				Button place = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && b.name == "StoryPlace");
-				Check(ref ok, place != null && UIKit.LabelOf(place).text.StartsWith("in place of Balboa"), "the rule card's story button says so: " + (place != null ? UIKit.LabelOf(place).text : "none"));
+				Check(ref ok, place != null && UIKit.LabelOf(place).text.StartsWith("in place of Balboa") && UIKit.LabelOf(balboa).text == "Balboa (yours)", "the rule card's story button and the story row say so: " + (place != null ? UIKit.LabelOf(place).text : "none") + " / " + UIKit.LabelOf(balboa).text);
 				Button save = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Save");
 				if (save != null) save.onClick.Invoke();
 				yield return null;
@@ -271,6 +271,36 @@ namespace DynamicIslands
 				if (File.Exists(path)) File.Delete(path);
 			}
 			if (ok) Log("PASS: story chain editor"); else Fail("story chain editor");
+		}
+
+		[ConsoleCommand(name: "CIStoryChainShot", docs: "Dev, editor: the World plans window on a plan (a template written as 'CI story shot', deleted after), Check clicked, a screenshot shot_story_chain.png for the guide: CIStoryChainShot <template name>")]
+		public static void StoryChainShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryChainShotRoutine(args != null ? string.Join(" ", args) : "Balboa replaced")); }
+
+		static IEnumerator StoryChainShotRoutine(string template)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("story chain shot: in the editor"); yield break; }
+			const string name = "CI story shot";
+			WorldPlan t = WorldPlanTemplates.Get(template);
+			if (t == null) { Fail("story chain shot: no template '" + template + "'"); yield break; }
+			t.Name = name;
+			t.Save();
+			try
+			{
+				WorldPlanWindow.Open(name);
+				yield return null;
+				Button check = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Check");
+				if (check != null) check.onClick.Invoke();
+				yield return new WaitForSeconds(0.5f);
+				Screenshot(new[] { "story_chain" });
+				yield return new WaitForSeconds(1.5f);
+			}
+			finally
+			{
+				WorldPlanWindow.Close();
+				string path = WorldPlan.PathFor(name);
+				if (File.Exists(path)) File.Delete(path);
+			}
+			Log("PASS: story chain shot");
 		}
 
 		[ConsoleCommand(name: "CIStoryChainPlan", docs: "Dev, world (host): gives this world a story chain from a template (WorldPlanTemplates) as WorldPlan <name> would, for the two-player test: CIStoryChainPlan <template name> - only in a test world named 'CI ...'")]

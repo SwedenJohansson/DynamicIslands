@@ -98,11 +98,13 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(storyButton, plan.RaftStory);
 			foreach (var kv in storyIslandButtons)
 			{
-				bool on = plan.RaftStory && !plan.LeaveOut.Contains(kv.Key);
+				// (one of the plan's islands in its place: out, and says so)
+				bool replaced = plan.Rules.Any(r => r.StoryPlace.Equals("instead:" + kv.Key, StringComparison.OrdinalIgnoreCase));
+				bool on = plan.RaftStory && !plan.LeaveOut.Contains(kv.Key) && !replaced;
 				UIKit.SetActive(kv.Value, on);
 				kv.Value.interactable = plan.RaftStory;
 				Text l = UIKit.LabelOf(kv.Value);
-				l.text = StoryOrder.Name(StoryOrder.Parse(kv.Key));
+				l.text = StoryOrder.Name(StoryOrder.Parse(kv.Key)) + (replaced ? " (yours)" : "");
 				l.color = on ? UIKit.TextColor : UIKit.TextMuted;
 			}
 		}
@@ -225,6 +227,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < plan.Rules.Count; i++) RuleCard(i);
 			if (plan.Rules.Count == 0) UIKit.Label(rulesList, "<i>No rules yet. \"+ Add a rule\", or Templates... for a ready-made set.</i>", 13, UIKit.TextMuted);
 			DrawMap();
+			ShowRandom(); // (the story row follows the rules: an island of the plan in a story island's place)
 		}
 
 		void RuleCard(int index)
