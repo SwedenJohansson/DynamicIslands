@@ -93,11 +93,11 @@ is the full reference.
   - **Behaviours:** doors, gates and lifts move for every player; things that move back and forth, spin or bob follow a clock all players share (Raft's water time), so everyone sees them in the same place; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
   - **World plans** decide which islands a world gets (see below): chosen in Raft's **New Game** box ("Custom Islands plan"), or with `WorldPlan <name>` in a world. "Random islands" (the default) is the old behaviour.
   - **Monster difficulty** (Raft's **New Game** box, a slider under the game modes): **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
-  - **Build cost** (the New Game box, a second slider): everything in the build menu costs 0-100% more materials, always rounded up. It's the same for every player, including those who join later.
+  - **Build cost** (World settings, a second slider): everything in the build menu costs 0-100% more materials, always rounded up. It's the same for every player, including those who join later.
   - **Levels:** in a world with the level up system on, hitting a monster floats the EXP it gave over it (**+5 EXP**). A level bar sits just under Raft's health, thirst and hunger bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the level bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 10. Other players see your level as a small **Lv 5** under your name.
   - **New islands from rules:** when a rule brings an island (a quest done, a zone, a visit, km sailed...), every player sees a banner with the message and how far and which way it is, and the island's green dot on the Receiver carries its name.
-- **World randomizer** (New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
-- **World settings** (New Game box, World settings...): scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder) - the same for every player.
+- **World randomizer** (World settings in the New Game box): a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
+- **World settings** (New Game box, WORLD SETTINGS...): one window with the world rules, the world randomizer and the extra options - scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder) - the same for every player.
 - **Multiplayer (up to eight players, Raft's maximum):** the host's islands are sent to players who join, together with any island files they don't have and what has been harvested there. Harvesting and picking up items stay in sync. Only the host checks world plan and island rules; quests and zones done by other players count, because they reach the host. The world rules (monster difficulty, build cost) are the host's for every player, also those who join later.
 - **Another player can host the world next time.** Raft keeps a world on the host's PC; copy its folder (`...\LocalLow\Redbeet Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the next host's PC. The mod's state of the world goes along: the host writes it into that folder too (`CustomIslands.txt`), and every player keeps a copy of it (`worlds\<world id>.txt`, sent by the host each time Raft saves). When the world loads, the newest copy is read. Islands a player only has from joining are played from their downloaded copies (`<name>_<hash>.island`) under their own names, so quests, rules and journal pages that name them keep working. Everyone keeps their level, EXP and points.
   - **One player gets a chest:** when several players open one chest (or walk into a zone that fires once) at the same moment, the host gives it to the first to ask; the others are told someone else got there first.
@@ -127,7 +127,7 @@ Rules refer to islands by the id of the rule that brought them (e.g. "when the q
 
 ## World rules: monster difficulty and build cost
 
-Two sliders in Raft's **New Game** box, right under Raft's game modes, set rules for the new world: the **Monster difficulty** and the **Build cost**. The text under each slider says what the chosen setting does, and each has a **?** with the details. The box grows a little to make room. Your last choices are kept for the next new world (`Mods\DynamicIslands\world_rules.txt`).
+Two sliders in the **World settings** window (Raft's **New Game** box, **WORLD SETTINGS...**) set rules for the new world: the **Monster difficulty** and the **Build cost**. The text under each slider says what the chosen setting does, and each has a **?** with the details. Your last choices are kept for the next new world (`Mods\DynamicIslands\world_rules.txt`).
 
 **Every player in a world has the same rules as the host.** They're saved with the world (`@monsters=`, `@buildcost=` in its file) and sent to every player who joins, and again to everyone when the host changes one. Leaving and joining again, loading the world again and restarting Raft change nothing, and every new world gets its own rules from the box.
 
@@ -191,7 +191,7 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 
 ## World randomizer
 
-Makes a **normal Raft world** play out differently every time: with or without custom islands, and without touching Raft's story. Choose it in Raft's **New Game box** under "World randomizer": **Off**, **Light**, **Normal** or **Wild** (how much is different), and which parts take part (click a part to switch it off). The last choice is remembered for the next world. Each world gets its own seed; everything follows from it.
+Makes a **normal Raft world** play out differently every time: with or without custom islands, and without touching Raft's story. Choose it in the **World settings** window of Raft's **New Game box** under "World randomizer": **Off**, **Light**, **Normal** or **Wild** (how much is different), and which parts take part (click a part to switch it off). The last choice is remembered for the next world. Each world gets its own seed; everything follows from it.
 
 | Part | What changes |
 |---|---|
@@ -229,10 +229,12 @@ story comes along. Every prop's size and footprint is measured
 
 ## World settings: more ways to play Raft again
 
-Raft's **New Game** box has a **World settings...** button (under the Custom Islands plan). It opens a window with the
-world's extra options, each switched on and off with its own button and explained under it. The window also sums up the
-box's other choices of the mod (the plan, the randomizer, the monsters, the build cost). The last choice is remembered
-for the next world. Every player in the world gets the host's options, also players who join later or again.
+Raft's **New Game** box stays as Raft made it, with the mod's **Custom Islands plan** and a **WORLD SETTINGS...** button
+at its bottom right (the button says how many settings differ from plain Raft). The button opens one window with
+everything else, grouped: the **world rules** (monster difficulty, build cost), the **world randomizer** (its level and
+parts) and the **extra options** below, each switched on and off with its own button and explained under it.
+**Raft's own** puts all of them back to plain Raft. The last choice is remembered for the next world. Every player in
+the world gets the host's settings, also players who join later or again.
 
 - **Scrambled blueprints:** the blueprints lying on Raft's story islands are found on other story islands than usual.
   Each one is paired with another from the world's seed, never with itself. What the story needs is never moved - the

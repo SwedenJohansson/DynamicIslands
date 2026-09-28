@@ -181,6 +181,11 @@ namespace DynamicIslands
 			open.onClick.Invoke();
 			yield return null;
 			Check(ref ok, WorldSettingsWindow.IsOpen, "the button opens the window");
+			// (its three groups: the world rules, the randomizer, the extra options)
+			var names = WorldSettingsWindow.Window.GetComponentsInChildren<RectTransform>(false).Select(r => r.name).ToList();
+			Check(ref ok, names.Contains(NewWorldRulesBox.PanelName) && names.Contains("CustomIslands_Randomizer") && WorldOptions.All.All(o => names.Contains("Option_" + o)), "the window has the world rules, the world randomizer and the " + WorldOptions.All.Length + " extra options");
+			int levelBefore = NewWorldRulesBox.MonsterLevel, percentBefore = NewWorldRulesBox.BuildPercent;
+			RandomizerSettings randBefore = NewWorldOptions.Randomizer.Copy();
 			Screenshot(new[] { "worldsettings" });
 			yield return new WaitForSecondsRealtime(0.6f);
 			var wrong = new List<string>();
@@ -198,10 +203,15 @@ namespace DynamicIslands
 			}
 			Check(ref ok, wrong.Count == 0, "each option's button switches it on and off, its label says which" + (wrong.Count > 0 ? " - not: " + string.Join(", ", wrong.ToArray()) : ""));
 			foreach (string o in WorldOptions.All) if (!WorldSettingsWindow.Chosen.Contains(o)) { WorldSettingsWindow.Toggle(o).onClick.Invoke(); yield return null; }
-			Check(ref ok, WorldSettingsWindow.Chosen.Count == WorldOptions.All.Length && UIKit.LabelOf(open).text.Contains(WorldOptions.All.Length + " on"), "all on: the box's button says '" + UIKit.LabelOf(open).text + "'");
-			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "All off"), "All off clicked");
+			Check(ref ok, WorldSettingsWindow.Chosen.Count == WorldOptions.All.Length && UIKit.LabelOf(open).text.Contains(WorldSettingsWindow.Changed + " changed"), "all on: the box's button says '" + UIKit.LabelOf(open).text + "'");
+			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "Raft's own"), "Raft's own clicked");
 			yield return null;
-			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && UIKit.LabelOf(open).text.Contains("none"), "All off: none ('" + UIKit.LabelOf(open).text + "')");
+			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && !NewWorldOptions.Randomizer.On && NewWorldRulesBox.MonsterLevel == MonsterDifficulty.Normal && NewWorldRulesBox.BuildPercent == 0 && UIKit.LabelOf(open).text.Contains("Raft's own"),
+				"Raft's own: no options, no randomizer, Normal monsters, Raft's build cost ('" + UIKit.LabelOf(open).text + "')");
+			// (the rules and the randomizer as they were: only the options are this test's choice)
+			NewWorldRulesBox.MonsterLevel = levelBefore; NewWorldRulesBox.BuildPercent = percentBefore;
+			NewWorldOptions.Randomizer.Level = randBefore.Level; NewWorldOptions.Randomizer.Disabled.Clear(); foreach (string d in randBefore.Disabled) NewWorldOptions.Randomizer.Disabled.Add(d);
+			NewWorldOptions.Refresh();
 			foreach (string o in want) { WorldSettingsWindow.Toggle(o).onClick.Invoke(); yield return null; }
 			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "Done"), "Done clicked");
 			yield return null;

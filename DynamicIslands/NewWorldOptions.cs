@@ -54,38 +54,45 @@ namespace DynamicIslands.Editor
 				UIKit.Size(detailText.gameObject, -1, 42);
 				detailText.verticalOverflow = VerticalWrapMode.Truncate;
 			}
-			if (randRow == null)
-			{
-				// Above the plan
-				randRow = UIKit.Rect("CustomIslands_Randomizer", box.transform);
-				randRow.anchorMin = randRow.anchorMax = new Vector2(1f, 0f);
-				randRow.pivot = new Vector2(1f, 0f);
-				randRow.anchoredPosition = new Vector2(-16f, 84f + 120f + 8f);
-				randRow.sizeDelta = new Vector2(292f, 150f);
-				UIKit.Background(randRow.gameObject, UIKit.GroupBg, 6);
-				UIKit.Vertical(randRow.gameObject, 4f, new RectOffset(10, 10, 8, 8));
-				Text title = UIKit.Label(randRow, "WORLD RANDOMIZER", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
-				UIKit.Size(title.gameObject, -1, 18);
-				UIKit.Hint(title.gameObject, "Makes a normal Raft world different every time: animal colours, alphas, more animals, moved and extra loot, finds, oddity islands and boss lairs. Raft's story is never changed.");
-				levelButton = UIKit.Button(randRow, "", CycleLevel, "How much is randomized: off, light, normal or wild", -1, 28f, 14);
-				partButtons.Clear();
-				for (int r = 0; r < 2; r++)
-				{
-					RectTransform line = UIKit.Row(randRow, 24f, 4f, "Parts" + r);
-					for (int i = r * 4; i < Math.Min(RandomizerSettings.Features.Length, r * 4 + 4); i++)
-					{
-						int index = i;
-						Button b = UIKit.Button(line, RandomizerSettings.FeatureLabels[i], () => TogglePart(index), RandomizerSettings.FeatureHints[i], 64f, 24f, 11);
-						partButtons.Add(b);
-					}
-				}
-				randText = UIKit.Label(randRow, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
-				UIKit.Size(randText.gameObject, -1, 28);
-				randText.verticalOverflow = VerticalWrapMode.Truncate;
-				MoveNameFeedback(box);
-			}
 			Show();
 		}
+
+		/// <summary>
+		/// "World randomizer", in the World settings window (WorldSettingsWindow): how much is randomized (off, light,
+		/// normal, wild) and which parts, with a line on what that means. (It sat in the New Game box before; the box keeps
+		/// only the plan now, like Raft's own.)
+		/// </summary>
+		internal static RectTransform BuildRandomizer(Transform parent)
+		{
+			randRow = UIKit.Group(parent, "World randomizer", "CustomIslands_Randomizer");
+			UIKit.Hint(randRow.gameObject, "Makes a normal Raft world different every time: animal colours, alphas, more animals, moved and extra loot, finds, oddity islands and boss lairs. Raft's story is never changed.");
+			levelButton = UIKit.Button(randRow, "", CycleLevel, "How much is randomized: off, light, normal or wild", -1, 28f, 14);
+			partButtons.Clear();
+			for (int r = 0; r < 2; r++)
+			{
+				RectTransform line = UIKit.Row(randRow, 24f, 4f, "Parts" + r);
+				for (int i = r * 4; i < Math.Min(RandomizerSettings.Features.Length, r * 4 + 4); i++)
+				{
+					int index = i;
+					Button b = UIKit.Button(line, RandomizerSettings.FeatureLabels[i], () => TogglePart(index), RandomizerSettings.FeatureHints[i], -1, 24f, 11);
+					partButtons.Add(b);
+				}
+			}
+			randText = UIKit.Label(randRow, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+			UIKit.Size(randText.gameObject, -1, 28);
+			randText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			randText.verticalOverflow = VerticalWrapMode.Truncate;
+			Show();
+			return randRow;
+		}
+
+		/// <summary>The randomizer's controls (tests click them as a player would): the level button and the parts.</summary>
+		public static Button LevelButton { get { return levelButton; } }
+		public static IList<Button> PartButtons { get { return partButtons; } }
+		/// <summary>Anything the mod shows in the box changed a setting (the World settings window's summary follows).</summary>
+		internal static event Action Shown;
+		/// <summary>The box and the window show the current choice again.</summary>
+		internal static void Refresh() { Show(); }
 
 		/// <summary>
 		/// Raft shows "name can't be empty" and the like right of the name field, where the randomizer now is: it goes on
@@ -159,6 +166,7 @@ namespace DynamicIslands.Editor
 					s.Level == RandomizerSettings.Normal ? "A good share of the world is different: colours, animals, loot and odd islands." :
 					"Lots of surprises: many colours, alphas, loot and odd islands.";
 			}
+			if (Shown != null) try { Shown(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] " + e.Message); }
 		}
 	}
 

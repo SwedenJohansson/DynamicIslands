@@ -959,7 +959,8 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			bool ok = true;
 			RectTransform boxRect = (RectTransform)box.transform;
-			foreach (string n in new[] { "CustomIslands_Plan", "CustomIslands_Randomizer" })
+			// (the box keeps Raft's own things, the plan and the World settings button; the rest is in the window)
+			foreach (string n in new[] { "CustomIslands_Plan", WorldSettingsWindow.ButtonName })
 			{
 				RectTransform r = box.transform.Find(n) as RectTransform;
 				Vector3[] c = new Vector3[4], b = new Vector3[4];
@@ -967,12 +968,20 @@ namespace DynamicIslands
 				bool inside = r != null && c[0].x >= b[0].x - 1f && c[0].y >= b[0].y - 1f && c[2].x <= b[2].x + 1f && c[2].y <= b[2].y + 1f;
 				Check(ref ok, r != null && r.gameObject.activeInHierarchy && inside, n + (r == null ? " missing" : inside ? " inside the box" : " sticks out of the box"));
 			}
-			int buttons = box.transform.Find("CustomIslands_Randomizer") != null ? box.transform.Find("CustomIslands_Randomizer").GetComponentsInChildren<UnityEngine.UI.Button>(true).Length : 0;
-			Check(ref ok, buttons == 1 + RandomizerSettings.Features.Length, buttons + " randomizer buttons (level + " + RandomizerSettings.Features.Length + " parts)");
+			Check(ref ok, box.transform.Find("CustomIslands_Randomizer") == null && box.transform.Find(NewWorldRulesBox.PanelName) == null, "the box is Raft's own: no randomizer and no world rules in it");
+			int buttons = (NewWorldOptions.LevelButton != null ? 1 : 0) + NewWorldOptions.PartButtons.Count;
+			bool inWindow = NewWorldOptions.LevelButton != null && WorldSettingsWindow.Window != null && NewWorldOptions.LevelButton.transform.IsChildOf(WorldSettingsWindow.Window);
+			Check(ref ok, buttons == 1 + RandomizerSettings.Features.Length && inWindow, buttons + " randomizer buttons (level + " + RandomizerSettings.Features.Length + " parts), in the World settings window");
 			string file = System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_newgame.png"));
 			ScreenCapture.CaptureScreenshot(file);
 			Log("Screenshot " + file);
 			yield return new WaitForSeconds(1f);
+			// (and the World settings window)
+			WorldSettingsWindow.Open();
+			yield return new WaitForSeconds(0.5f);
+			Screenshot(new[] { "newgame_settings" });
+			yield return new WaitForSeconds(1f);
+			WorldSettingsWindow.Close();
 			box.gameObject.SetActive(false);
 			WorldRandomizer.Pending = pending;
 			if (ok) Log("PASS: New Game box"); else Fail("New Game box");

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -254,9 +254,13 @@ namespace DynamicIslands
 			box.Open();
 			GameModeValueManager.SelectCurrentGameMode(GameMode.Normal);
 			yield return new WaitForSecondsRealtime(0.5f);
+			// (in the World settings window, opened from the box's button as a player does)
 			var rt = (RectTransform)box.transform;
-			var panel = rt.Find(NewWorldRulesBox.PanelName) as RectTransform;
-			Check(ref ok, panel != null && panel.gameObject.activeInHierarchy, "the box has the world rules");
+			Check(ref ok, rt.Find(NewWorldRulesBox.PanelName) == null, "the New Game box is Raft's own: no world rules in it");
+			if (WorldSettingsWindow.OpenButton != null) WorldSettingsWindow.OpenButton.onClick.Invoke();
+			yield return null; yield return null;
+			var panel = WorldSettingsWindow.Window != null ? WorldSettingsWindow.Window.GetComponentsInChildren<RectTransform>(true).FirstOrDefault(r => r.name == NewWorldRulesBox.PanelName) : null;
+			Check(ref ok, panel != null && panel.gameObject.activeInHierarchy, "the World settings window has the world rules");
 			if (panel == null) { Fail("world rules in the New Game box"); yield break; }
 
 			// The monster difficulty: five steps named under it, each level as a player drags the slider to it
@@ -312,27 +316,35 @@ namespace DynamicIslands
 			}
 			Check(ref ok, marks.Count == 2 && MonsterDifficulty.Names.All(n => shown[0].Contains(n)) && shown[1].Contains("rounded up") && shown[1].Contains("join"), "two ?: every monster level, and the build cost (rounded up, players who join get it)");
 
-			// The layout: in the grown box, under Raft's tabs, nothing drawn on top of it, the box on the screen
+			// The layout: in the World settings window, inside its frame, nothing else of it drawn on top; Raft's box its own
 			Canvas.ForceUpdateCanvases();
 			var background = rt.Find("BrownBackground") as RectTransform;
-			Rect pr = NewWorldRulesBox.LocalRect(rt, panel), bg = background != null ? NewWorldRulesBox.LocalRect(rt, background) : new Rect();
-			Check(ref ok, background != null && bg.xMin <= pr.xMin + 0.5f && bg.xMax >= pr.xMax - 0.5f && bg.yMin <= pr.yMin + 0.5f && bg.yMax >= pr.yMax - 0.5f,
-				"the panel is inside the box (" + pr.size.ToString("F0") + " in " + bg.size.ToString("F0") + ")");
-			Transform tabs = rt.Find("TabsDivider");
-			Check(ref ok, tabs != null && NewWorldRulesBox.LocalRect(rt, (RectTransform)tabs).yMin >= pr.yMax, "it is under Raft's game mode tabs");
+			RectTransform frame = WorldSettingsWindow.Window.Find("Panel") as RectTransform;
+			Rect pr = NewWorldRulesBox.LocalRect(frame, panel), fr = frame.rect;
+			Check(ref ok, fr.xMin <= pr.xMin + 0.5f && fr.xMax >= pr.xMax - 0.5f && fr.yMin <= pr.yMin + 0.5f && fr.yMax >= pr.yMax - 0.5f,
+				"the panel is inside the window (" + pr.size.ToString("F0") + " in " + fr.size.ToString("F0") + ")");
 			var overlaps = new List<string>();
-			var outside = new List<string>();
-			foreach (Graphic g in rt.GetComponentsInChildren<Graphic>(false))
+			foreach (Graphic g in frame.GetComponentsInChildren<Graphic>(false))
 			{
-				if (!g.enabled || g.color.a < 0.05f || g.transform.IsChildOf(panel) || (background != null && g.transform.IsChildOf(background))) continue;
+				// (its own parts, and what it sits in - the window's frame and column)
+				if (!g.enabled || g.color.a < 0.05f || g.transform.IsChildOf(panel) || panel.IsChildOf(g.transform)) continue;
+				LayoutElement deco = g.GetComponent<LayoutElement>();
+				if (deco != null && deco.ignoreLayout) continue; // (decoration layers: the frame's grunge and border, a group's background)
 				if (g is Text && ((Text)g).text.Trim().Length == 0) continue;
-				Rect r = NewWorldRulesBox.LocalRect(rt, g.rectTransform);
-				// (text boxes are often taller than their lines: a text counts from its first line)
+				Rect r = NewWorldRulesBox.LocalRect(frame, g.rectTransform);
 				if (g is Text) { float h = Mathf.Min(r.height, ((Text)g).preferredHeight); if (((Text)g).alignment.ToString().StartsWith("Upper")) r.yMin = r.yMax - h; else if (((Text)g).alignment.ToString().StartsWith("Lower")) r.yMax = r.yMin + h; }
 				if (r.xMin < pr.xMax - 1f && r.xMax > pr.xMin + 1f && r.yMin < pr.yMax - 1f && r.yMax > pr.yMin + 1f) overlaps.Add(g.name + " (" + g.transform.parent.name + ")");
-				if (background != null && (r.yMin < bg.yMin - 1f || r.xMin < bg.xMin - 1f || r.xMax > bg.xMax + 1f) && g.transform.parent != rt && !g.name.StartsWith("Gamepad")) outside.Add(g.name);
 			}
 			Check(ref ok, overlaps.Count == 0, "nothing else is drawn on it" + (overlaps.Count > 0 ? ": " + string.Join(", ", overlaps.Distinct().ToArray()) : ""));
+			// (Raft's box: everything in it on its background - the plan and the World settings button too)
+			var outside = new List<string>();
+			Rect bg = background != null ? NewWorldRulesBox.LocalRect(rt, background) : new Rect();
+			foreach (Graphic g in rt.GetComponentsInChildren<Graphic>(false))
+			{
+				if (!g.enabled || g.color.a < 0.05f || (background != null && g.transform.IsChildOf(background))) continue;
+				Rect r = NewWorldRulesBox.LocalRect(rt, g.rectTransform);
+				if (background != null && (r.yMin < bg.yMin - 1f || r.xMin < bg.xMin - 1f || r.xMax > bg.xMax + 1f) && g.transform.parent != rt && !g.name.StartsWith("Gamepad")) outside.Add(g.name);
+			}
 			Check(ref ok, outside.Count == 0, "everything in the box is on its background" + (outside.Count > 0 ? ": " + string.Join(", ", outside.Distinct().ToArray()) : ""));
 			// (and the panel's own texts fit their lines: none cut off)
 			List<string> cut = panel.GetComponentsInChildren<Text>().Where(t => t.text.Length > 0 && t.verticalOverflow == VerticalWrapMode.Truncate && t.preferredHeight > t.rectTransform.rect.height + 1f)
@@ -363,6 +375,7 @@ namespace DynamicIslands
 				NewWorldRulesBox.BuildPercent = percentBefore;
 				box.Button_Close();
 			}
+			WorldSettingsWindow.Close();
 			if (ok) Log("PASS: world rules in the New Game box"); else Fail("world rules in the New Game box");
 		}
 

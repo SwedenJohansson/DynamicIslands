@@ -466,7 +466,7 @@ namespace DynamicIslands.Editor
 	static class NewWorldRulesBox
 	{
 		public const string PanelName = "CustomIslands_WorldRules";
-		public const float PanelHeight = 169f, Grow = 178f;
+		public const float PanelHeight = 186f;
 
 		static int? monsterChoice, buildChoice;
 		static UIKit.SliderRow monsterSlider, buildSlider;
@@ -503,7 +503,8 @@ namespace DynamicIslands.Editor
 		static void Ensure(NewGameBox box)
 		{
 			var rt = (RectTransform)box.transform;
-			if (rt.Find(PanelName) == null) Build(rt);
+			// (the sliders are in the World settings window now; the box only follows the game mode for their texts)
+			if (rt.GetComponent<NewWorldRulesWatch>() == null) rt.gameObject.AddComponent<NewWorldRulesWatch>();
 			Refresh();
 		}
 
@@ -553,47 +554,15 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
-		static void Build(RectTransform box)
+		/// <summary>
+		/// "World rules" in the World settings window (WorldSettingsWindow): the monster difficulty and the build cost sliders,
+		/// each with its text. (They sat in the New Game box under Raft's game modes before, which made it taller; the box
+		/// is Raft's own size again.)
+		/// </summary>
+		internal static RectTransform BuildInto(Transform parent)
 		{
-			Canvas.ForceUpdateCanvases();
-			RectTransform background = box.Find("BrownBackground") as RectTransform;
-			float cut, left, right;
-			if (!FindLine(box, background, out cut, out left, out right)) { Debug.LogWarning("[CUSTOM ISLANDS] The New Game box looks different: no room made for the world rules"); return; }
-
-			// Where every part is now. What is above the line stays (the title, the tabs, their text); everything below it
-			// moves down (decided by its middle: the name and password column's box may start a little above the line)
-			var parts = Children(box).ToDictionary(c => c, c => new KeyValuePair<Vector3, float>(Corner(c, 0), c.rect.height));
-			var lower = new HashSet<RectTransform>(parts.Keys.Where(c => c != background && LocalRect(box, c).center.y <= cut));
-			// (the background's layers - its shadow, the mask and the grunge texture in it - in hierarchy order, parents first)
-			var backParts = background.GetComponentsInChildren<RectTransform>(true).Where(c => c != background && c.rect.height > background.rect.height * 0.5f)
-				.Select(c => new KeyValuePair<RectTransform, KeyValuePair<Vector3, float>>(c, new KeyValuePair<Vector3, float>(Corner(c, 1), c.rect.height))).ToList();
-			Vector3 backTop = Corner(background, 1);
-			float backHeight = background.rect.height;
-			Vector3 down = box.TransformVector(new Vector3(0f, -Grow, 0f));
-
-			// The box itself grows downwards (its top stays): what others put at its bottom, now or later, is below the panel too
-			box.offsetMin -= new Vector2(0f, Grow);
-			// Each part back where it was, or Grow further down, whatever its anchors did with the box's new size
-			foreach (KeyValuePair<RectTransform, KeyValuePair<Vector3, float>> p in parts)
-			{
-				if (p.Key == background) continue;
-				float missing = p.Value.Value - p.Key.rect.height;
-				if (Mathf.Abs(missing) > 0.5f) p.Key.sizeDelta += new Vector2(0f, missing);
-				p.Key.position += p.Value.Key + (lower.Contains(p.Key) ? down : Vector3.zero) - Corner(p.Key, 0);
-			}
-			// The background: its top where it was, Grow taller (and its parts that don't stretch with it)
-			SetHeight(background, backTop, backHeight + Grow);
-			foreach (KeyValuePair<RectTransform, KeyValuePair<Vector3, float>> p in backParts) SetHeight(p.Key, p.Value.Key, p.Value.Value + Grow);
-			box.gameObject.AddComponent<NewWorldRulesWatch>();
-
-			// (the line again: the box's own coordinates changed with its size)
-			FindLine(box, background, out cut, out left, out right);
-			RectTransform panel = UIKit.Rect(PanelName, box);
-			panel.anchorMin = panel.anchorMax = new Vector2(0.5f, 0.5f);
-			panel.pivot = new Vector2(0.5f, 1f);
-			Rect boxRect = box.rect;
-			panel.anchoredPosition = new Vector2((left + right) / 2f - boxRect.center.x, cut - 3f - boxRect.center.y);
-			panel.sizeDelta = new Vector2(right - left - 16f, PanelHeight);
+			RectTransform panel = UIKit.Rect(PanelName, parent);
+			UIKit.Size(panel.gameObject, -1, PanelHeight);
 			UIKit.Background(panel.gameObject, UIKit.GroupBg, 6);
 			UIKit.Vertical(panel.gameObject, 2f, new RectOffset(12, 12, 6, 6));
 
@@ -629,18 +598,10 @@ namespace DynamicIslands.Editor
 				v => { buildChoice = BuildCost.Clamp(Mathf.RoundToInt(v) * BuildCost.Step); Refresh(); },
 				"How many more materials everything in the build menu costs in the new world", true, BuildCost.HelpText);
 			Heading(buildSlider);
-			buildDetail = Detail(panel, "BuildDetail", 28);
+			buildDetail = Detail(panel, "BuildDetail", 44); // (three lines in the window's column)
 
-			// The box half as much higher on the screen, so it grows at both ends; higher still if it would reach below the screen
-			box.anchoredPosition += new Vector2(0f, Grow / 2f);
-			Canvas canvas = box.GetComponentInParent<Canvas>();
-			var screen = canvas != null ? canvas.rootCanvas.transform as RectTransform : null;
-			if (screen != null)
-			{
-				float below = screen.rect.yMin + 12f - LocalRect(screen, background).yMin;
-				if (below > 0f) box.anchoredPosition += new Vector2(0f, below);
-			}
-			Debug.Log("[CUSTOM ISLANDS] New Game box: world rules (monster difficulty, build cost) added under the game modes (box " + Grow + " taller)");
+			Refresh();
+			return panel;
 		}
 
 		static void Heading(UIKit.SliderRow row)
@@ -684,6 +645,7 @@ namespace DynamicIslands.Editor
 				buildSlider.Value.text = BuildFormat(p);
 				buildDetail.text = BuildCost.DescriptionFor(p) + (p > 0 && GameManager.GameMode == GameMode.Creative ? " (Creative builds for free anyway.)" : "");
 			}
+			WorldSettingsWindow.Show(); // (its summary and the box's button follow)
 		}
 	}
 

@@ -164,6 +164,14 @@ namespace DynamicIslands
 					Check(ref ok, off.Count == 0 && outside.Count == 0, w + "x" + h + " New Game box: " + (off.Count == 0 && outside.Count == 0 ? "every control on the screen, the mod's panels inside the box" :
 						(off.Count > 0 ? "off the screen: " + string.Join(", ", off.Take(5).ToArray()) : "") + (outside.Count > 0 ? " sticking out of the box: " + string.Join(", ", outside.ToArray()) : "")));
 					if (size.x == 1024 || size.x == 1280 || size.x == 3440 || off.Count > 0 || outside.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_newgame" }); yield return new WaitForSecondsRealtime(0.6f); }
+					// The World settings window at this size: every control of it on the screen
+					WorldSettingsWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					var wOff = WorldSettingsWindow.Window != null ? OffScreen(WorldSettingsWindow.Window.gameObject, w, h) : new List<string> { "no window" };
+					Check(ref ok, wOff.Count == 0, w + "x" + h + " World settings window: " + (wOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", wOff.Take(5).ToArray())));
+					if (size.x == 1024 || size.x == 1920 || wOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_worldsettings" }); yield return new WaitForSecondsRealtime(0.6f); }
+					WorldSettingsWindow.Close();
 					box.gameObject.SetActive(false);
 					yield return null;
 				}
@@ -481,7 +489,7 @@ namespace DynamicIslands
 			box.gameObject.SetActive(true);
 			box.Open();
 			yield return new WaitForSecondsRealtime(1f);
-			Transform planRow = box.transform.Find("CustomIslands_Plan"), randRow = box.transform.Find("CustomIslands_Randomizer");
+			Transform planRow = box.transform.Find("CustomIslands_Plan");
 			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault() : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
 			if (plan == null) { Fail("New Game box clicks: no plan button"); yield break; }
@@ -505,7 +513,10 @@ namespace DynamicIslands
 			for (int i = 0; i < plans.Count && NewWorldOptions.Selected != wantPlan; i++) { plan.onClick.Invoke(); yield return null; }
 			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "clicked to '" + wantPlan + "': chosen (" + NewWorldOptions.Selected + ")");
 			// The randomizer: level round, then each part
-			Button[] rb = randRow != null ? randRow.GetComponentsInChildren<Button>(true) : new Button[0];
+			// (the randomizer is in the World settings window now: opened from the box's button, as a player does)
+			if (WorldSettingsWindow.OpenButton != null) WorldSettingsWindow.OpenButton.onClick.Invoke();
+			yield return null;
+			Button[] rb = NewWorldOptions.LevelButton != null ? new[] { NewWorldOptions.LevelButton }.Concat(NewWorldOptions.PartButtons).ToArray() : new Button[0];
 			Button level = rb.FirstOrDefault();
 			if (level == null) { Check(ref ok, false, "no randomizer buttons"); }
 			else
@@ -534,6 +545,7 @@ namespace DynamicIslands
 			}
 			Screenshot(new[] { "newgame_clicked" });
 			yield return new WaitForSecondsRealtime(0.8f);
+			WorldSettingsWindow.Close();
 			box.gameObject.SetActive(false);
 			if (ok) Log("PASS: New Game box clicks"); else Fail("New Game box clicks");
 		}
