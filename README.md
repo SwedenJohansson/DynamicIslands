@@ -466,8 +466,9 @@ Development builds also include `CI*` test commands (`DevTests*.cs`); release bu
 ## Reporting a problem
 
 Open an issue at [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
-with a short title that says what went wrong. The guide's [Reporting a problem](docs/GUIDE.md#13-reporting-a-problem) has
-the details and a template to copy. In short:
+with a short title that says what went wrong, or post it on the mod's Discord server,
+[discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN). The guide's [Reporting a problem](docs/GUIDE.md#13-reporting-a-problem)
+has the details and a template to copy. In short:
 
 - **What happened, in detail:** what you did, step by step, up to the problem; every time, now and then, or once.
 - **What you expected** to happen if it had worked.

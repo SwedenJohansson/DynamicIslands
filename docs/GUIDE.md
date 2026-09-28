@@ -979,12 +979,16 @@ happened, and make it happen again on their own PC. Please include:
    problem is in one world, add that world's island list, `<Raft>\Mods\DynamicIslands\worlds\<world>.txt`, and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
 
-**Where to send it:** open an issue on the mod's GitHub page,
-[github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
-(**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after loading"),
-write the report, and attach the files (zip them if there are many).
+**Where to send it** (either is fine):
 
-A template to copy into the issue:
+- **GitHub:** open an issue on the mod's GitHub page,
+  [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
+  (**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after
+  loading"), write the report, and attach the files (zip them if there are many).
+- **Discord:** post it on the mod's Discord server, [discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN), with the
+  same details and the files attached.
+
+A template to copy into the issue or the post:
 
 ```
 What happened:
