@@ -75,6 +75,7 @@
     <Compile Include="DevTestsRelease.cs" />
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
+    <Compile Include="DevTestsStoryChain.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="GhostRafts.cs" />
     <Compile Include="PrivateStorage.cs" />
     <Compile Include="StoryOrder.cs" />
+    <Compile Include="StoryChain.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />
     <Compile Include="ExperimentalNotice.cs" />

@@ -76,6 +76,7 @@ This README is the full reference, in the same order: island creation first, the
   - **Map types** (Generate window, **Ready-made** tab): whole islands with content, made from a seed and opened to edit: sandbar, atoll, archipelago, sea stacks, boss island, volcano, swamp, frozen spire, treasure island, old camp, sunken island, sky island and wreck (see "Map types" below).
   - **When the quest is done, bring a new island** (quest editor): a saved island or a new island of a map type, how far and which way from this island, a message for every player and a name on the Receiver. **Islands it brings...** (Island tab) edits all the island's rules: also "when step 2 is done", "when zone X fires", "when players first get here".
   - **World plans** (top bar): plans for new worlds, made of rules (see "World plans" below). A plan editor with rule cards, **Check** (finds rules that can't work) and a sketch of where islands go, plus ready-made templates.
+  - **Your islands in Raft's story** (World plans): Raft's story islands on or off, each one left out or replaced, and a plan's islands put into the Receiver chain (first, after an island, in place of one) with their own frequency on Raft's Receiver that any player can dial, or coming by chance while sailing; each is "done" when its quest is (or a step, a zone, a signal, players reaching it), which unlocks the next (see "Raft's story and the Receiver" below).
 - **In your worlds**
   - Islands appear on their own ahead of the raft while you sail. They're kept away from Raft's own islands, and far-away islands are unloaded to save memory.
   - Now and then a **brand-new random island** is generated instead: random size, style, and sometimes flying. It's saved as `gen-<style>-<seed>.island`, so it stays in that world. Set with `generated`, `generatedStyles` and `generatedFlyingChance` in `spawnpool.txt`. Lines like `type:wreck 0.4` mix in **map types** (sandbars, wrecks, atolls, sunken islands... see below).
@@ -281,6 +282,25 @@ Rules refer to islands by the id of the rule that brought them (e.g. "when the q
 - **Islands bring islands:** an island can carry its own rules ("when my quest is done, bring island X 600 m north of me"). These work in any world, with or without a plan, so a chain of shared island files is a story on its own.
 - **Each rule fires once per world.** What has fired, the km sailed and which islands players have reached are saved with the world. The host places new islands clear of the raft, the other custom islands and Raft's own islands, and **Raft won't put its own islands on top of custom ones later**.
 
+### Raft's story and the Receiver
+
+Raft's story is a chain: a note on each story island unlocks the next one's frequency (`NoteBook.UnlockFrequency`), and the host's Receiver, tuned to an unlocked frequency, brings that island (`Reciever.Update` asks `ChunkManager.AddChunkPointForcibly`). A plan can change the chain:
+
+| Plan setting | What it does |
+|---|---|
+| `story = off` | None of Raft's story islands come: the plan's own islands are the whole adventure (Raft's ordinary islands still do) |
+| `storyleaveout = Balboa, Tangaroa` | Those story islands are left out: the note before one leads to the one after |
+| rule part 7: `first`, `after:<story island or rule id>`, `instead:<story island>` | The rule's island has that place in the chain; `instead` leaves the story island out and takes its place |
+| rule part 8: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>` (empty: its quest, or reaching it) | When the island counts as done: the next step of the chain is unlocked then |
+| where `receiver:<m>` | The island gets its own frequency on Raft's Receiver (4 digits, made for each world, never one of Raft's); unlocked, every player gets a banner and a journal page with it, and the number on the note before it shows it. Any player dials it (Raft sends the dials to the host); the host's Receiver then asks Raft for an island of the mod's own type (100 and up) and the mod brings the plan's island that far ahead |
+| where `sailing:<m>` | The island comes up ahead by chance, 0.3 to 1.8 km of sailing after it is unlocked |
+
+- A story rule's own **when** still counts on top: unlocked by the chain, it comes once its own moment has also come. Rules on the Receiver or by chance that aren't in the story are unlocked from the start.
+- When a plan island unlocks one of Raft's story islands, no note told the players: a banner gives its frequency.
+- **Check** in the plan editor shows the chain and recommends (never forces) the Radio Tower first and Utopia last, and lists the blueprints the story needs that a left-out island had (Balboa: the machete, fuel tank, fuel pipes and biofuel extractor; Vasagatan: the steering wheel and motor wheel; Caravan Town: the engine controls).
+- **Saved with the world** when it is created (or given another plan with `WorldPlan <name>`): the chain, its rules, the frequencies and what is unlocked and done are the world file's `@story...` lines, so the world keeps its story if the plan file changes, and it moves with the world to another host. Every player gets it on joining and on every change (network kind 19); each machine sets its notebook's unlocked islands and Raft's frequency list from it. Raft's own save keeps only the notes found, and Raft restores its frequencies itself; the mod's are put back after (`InitializeAllFrequencies`, `RestoreFrequencies`).
+- Templates: **Receiver adventure** (also a sample plan: Raft's story off, four map-type islands each found with the Receiver), **Detour in Raft's story**, **Balboa replaced**. `StoryChain` shows the world's chain. A plan that changes the story takes over from the World settings option "Story islands in a new order" in its worlds.
+
 ## World settings: more ways to play Raft again
 
 *This and the next sections (world rules, the world randomizer, the level up system) describe the optional systems: separate from island building, chosen per world, and off in a world where they are left alone.*
@@ -457,6 +477,7 @@ An island made with **Level up system: On** (Island tab, Rules; or the generator
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses) |
 | `WorldOptions` / `WorldOptions +option -option` | Game (changing: host) | Shows the world's World settings, or changes them for every player (options: blueprints, storyorder, ghostrafts, privatestorage) |
+| `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | Game (changing: host) | Which islands of the spawn pool turn up by chance while sailing in this world; leave one out, let it take part again (also `type:<map type>`, `<generated>`), or all |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
@@ -532,6 +553,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
 | `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan and randomizer choices in Raft's New Game box |
 | `WorldIslands.cs`, `IslandPickerWindow.cs` | The islands a world gets while sailing (the world file's `@islandsoff=`, the `WorldIslands` command) and the list with tick boxes in World settings |
+| `StoryChain.cs` | A plan's own islands in Raft's Receiver chain: the chain (Raft's story on/off, islands left out or replaced, plan islands in their places), Raft's note unlocks led through it (a prefix on `NoteBook.UnlockFrequency`), the mod's own frequencies in `RecieverFrequency.AllFrequencies` (island types 100+, brought when the host's Receiver asks for them: `ChunkManager.AddChunkPointForcibly`), islands by chance while sailing, "done when", the world file's `@story...` lines and network kind 19 |
 | `WorldRandomizer.cs`, `RandomizerContent.cs` | The world randomizer: settings (saved with the world, sent to players), animal colours and alphas, moving Raft's crates and clams (and finding them again for Raft's saves), the extras laid over Raft's islands, oddity islands, boss lairs and large islands while sailing; `RandomizerContent`: what the extras, oddities and lairs contain |
 | `RandomizerIslands.cs`, `RaftProps.cs` | The randomizer's islands: the quest-island themes and their scenes, dens (placing them, levelling the ground, what is inside), the large islands; the measured props and cave pieces (`raft_props.txt`) |
 | `terraineditor.cs`, `TerrainPainter.cs`, `EditorTools.cs`, `EditorUI.cs`, `IslandFilesWindow.cs`, `ObjectPlacer.cs`, `EditorCamera.cs` | The editor (`EditorCamera.cs`: the Unity-style camera that replaced the 2021 RTS camera) |

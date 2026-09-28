@@ -40,7 +40,8 @@ namespace DynamicIslands.Editor
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [story order] " + msg); }
 
-		public static bool Active { get { return WorldOptions.On(WorldOptions.StoryOrder) && WorldOptions.Seed != 0; } }
+		// (a world plan's story chain wins over the shuffle)
+		public static bool Active { get { return WorldOptions.On(WorldOptions.StoryOrder) && WorldOptions.Seed != 0 && !StoryChain.Active; } }
 
 		/// <summary>The order a seed gives: Raft's first seven shuffled (never Raft's own order), Utopia last.</summary>
 		public static ChunkPointType[] OrderFor(int seed)
@@ -80,6 +81,24 @@ namespace DynamicIslands.Editor
 		}
 
 		public static string Describe(ChunkPointType[] o) { return string.Join(" > ", o.Select(Name).ToArray()); }
+
+		/// <summary>The short name plans use: RadioTower, Vasagatan, Balboa, CaravanTown, Tangaroa, VarunaPoint, Temperance, Utopia.</summary>
+		public static string Key(ChunkPointType t) { return Name(t).Replace(" ", ""); }
+
+		/// <summary>A story island by any of its names ("Caravan Town", "caravanisland", "Landmark_Balboa"...), else None.</summary>
+		public static ChunkPointType Parse(string s)
+		{
+			string k = (s ?? "").Replace(" ", "").Replace("_", "").Replace("Landmark", "").Trim().ToLowerInvariant();
+			if (k.Length == 0) return ChunkPointType.None;
+			if (k == "caravan" || k == "caravanisland") return ChunkPointType.Landmark_CaravanIsland;
+			if (k == "varuna") return ChunkPointType.Landmark_VarunaPoint;
+			if (k == "radio") return ChunkPointType.Landmark_RadioTower;
+			foreach (ChunkPointType t in Chain) if (Key(t).ToLowerInvariant() == k || t.ToString().Replace("Landmark_", "").ToLowerInvariant() == k) return t;
+			return ChunkPointType.None;
+		}
+
+		/// <summary>A story island's name for a key ("CaravanTown" -> "Caravan Town"), or the key itself in quotes (a rule id).</summary>
+		public static string NameOfKey(string key) { ChunkPointType t = Parse(key); return t != ChunkPointType.None ? Name(t) : "'" + key + "'"; }
 
 		public static string Name(ChunkPointType t)
 		{
@@ -123,6 +142,9 @@ namespace DynamicIslands.Editor
 				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType;
 				if (unlocked == null || NoteBook.unlockedNoteBookIndexes == null) return;
 				// (a world that never had the order is left exactly as Raft made it; one that had it goes back to Raft's islands)
+				// (a plan's story chain decides alone; a plan's Receiver islands are added either way)
+				if (StoryChain.Active || StoryChain.Frequencies.Count > 0) StoryChain.Rebuild();
+				if (StoryChain.Active) return;
 				if (!Active && !mapped) return;
 				Dictionary<int, ChunkPointType> notes = FrequencyNotes();
 				if (notes.Count == 0) return; // (no notebook yet: its own load unlocks them through the patch)
@@ -156,6 +178,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The number shown for this island: its place in the chain's frequency now belongs to the order's island.</summary>
 		public static string FrequencyText(ChunkPointType original)
 		{
+			if (StoryChain.Active) return StoryChain.FrequencyTextForNote(original);
 			ChunkPointType t = Map(original);
 			RecieverFrequency f = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.FirstOrDefault(x => x != null && x.chunkPointType == t) : null;
 			return f != null ? f.ToString() : null;
@@ -169,7 +192,7 @@ namespace DynamicIslands.Editor
 			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(text);
 		}
 
-		static void RelabelAll() { foreach (var l in labels.ToList()) if (l.Key != null) Relabel(l.Key, l.Value); }
+		internal static void RelabelAll() { foreach (var l in labels.ToList()) if (l.Key != null) Relabel(l.Key, l.Value); }
 
 		#endregion
 	}

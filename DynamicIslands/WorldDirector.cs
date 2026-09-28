@@ -17,16 +17,23 @@ namespace DynamicIslands.Editor
 	///   id | what | when | where | message | receiver label
 	///   what:  island:&lt;name&gt;   type:&lt;map type&gt;   pool   oneof:&lt;name&gt;, &lt;name&gt;...
 	///   when:  start   km:&lt;n&gt;   day:&lt;n&gt;   quest:&lt;ref&gt;   step:&lt;ref&gt;:&lt;n&gt;   zone:&lt;ref&gt;:&lt;zone&gt;   visit:&lt;ref&gt;   rule:&lt;id&gt;
-	///   where: ahead:&lt;m&gt;   near:&lt;ref&gt;:&lt;m&gt;:&lt;direction&gt;
+	///   where: ahead:&lt;m&gt;   near:&lt;ref&gt;:&lt;m&gt;:&lt;direction&gt;   receiver:&lt;m&gt;   sailing:&lt;m&gt;
 	/// A ref names an island in the world: "self" (the island the rule belongs to), the id of the rule that brought
 	/// it, or its island name.
+	/// Plan rules may have two more parts (StoryChain): | story place | done when
+	///   receiver: the island gets its own frequency on Raft's Receiver and comes when a player tunes to it;
+	///   sailing: it comes up ahead by chance while sailing;
+	///   story place: first, after:&lt;Raft story island or rule id&gt;, instead:&lt;Raft story island&gt; (its place in Raft's
+	///   Receiver chain); done when: quest, visit, step:&lt;n&gt;, zone:&lt;zone&gt;, signal:&lt;signal&gt; (empty = its quest if it has
+	///   one, else when players reach it) - then the next island of the chain is unlocked.
 	/// </summary>
 	public class IntroRule
 	{
 		public const string Self = "self";
 		public static readonly string[] WhatKinds = { "island", "type", "pool", "oneof" };
 		public static readonly string[] WhenKinds = { "start", "km", "day", "quest", "step", "zone", "visit", "rule", "signal" };
-		public static readonly string[] WhereKinds = { "ahead", "near" };
+		public static readonly string[] WhereKinds = { "ahead", "near", "receiver", "sailing" };
+		public static readonly string[] DoneKinds = { "", "quest", "visit", "step", "zone", "signal" };
 		public static readonly string[] Directions = { "any", "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
 
 		public string Id = "";
@@ -36,6 +43,14 @@ namespace DynamicIslands.Editor
 		public float Distance = 300f;
 		public string Direction = "any";
 		public string Message = "", Label = "";
+		/// <summary>Its place in Raft's Receiver chain (StoryChain): "", "first", "after:&lt;island or rule id&gt;", "instead:&lt;Raft story island&gt;".</summary>
+		public string StoryPlace = "";
+		/// <summary>When it counts as done in the chain: "" (its quest, or reaching it), quest, visit, step:n, zone:name, signal:name.</summary>
+		public string StoryDone = "";
+
+		/// <summary>Handled by StoryChain rather than brought straight away: in the story chain, on the Receiver, or by chance while sailing.</summary>
+		public bool Special { get { return StoryPlace.Length > 0 || Where == "receiver" || Where == "sailing"; } }
+		public bool InStory { get { return StoryPlace.Length > 0; } }
 
 		public IntroRule Clone() { return (IntroRule)MemberwiseClone(); }
 
@@ -69,8 +84,10 @@ namespace DynamicIslands.Editor
 				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Part(WhenArg); break;
 				default: when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : (When == "rule" ? "" : Self)); break;
 			}
-			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : "ahead:" + Num(Distance);
-			return string.Join(" | ", new[] { Part(Id), what, when, where, Text(Message), Text(Label) });
+			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : Where + ":" + Num(Distance);
+			var parts = new List<string> { Part(Id), what, when, where, Text(Message), Text(Label) };
+			if (StoryPlace.Length > 0 || StoryDone.Length > 0) { parts.Add(Text(StoryPlace)); parts.Add(Text(StoryDone)); }
+			return string.Join(" | ", parts.ToArray());
 		}
 
 		/// <summary>A rule from its line, or null if the line isn't one.</summary>
@@ -78,7 +95,8 @@ namespace DynamicIslands.Editor
 		{
 			string[] p = (line ?? "").Split('|').Select(x => x.Trim()).ToArray();
 			if (p.Length < 4) return null;
-			var r = new IntroRule { Id = p[0], Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "" };
+			var r = new IntroRule { Id = p[0], Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "",
+				StoryPlace = p.Length > 6 ? NormalPlace(p[6]) : "", StoryDone = p.Length > 7 ? NormalDone(p[7]) : "" };
 
 			string[] what = p[1].Split(new[] { ':' }, 2);
 			r.What = what[0].Trim().ToLowerInvariant();
@@ -99,7 +117,7 @@ namespace DynamicIslands.Editor
 			r.Where = where[0].ToLowerInvariant();
 			if (!WhereKinds.Contains(r.Where)) return null;
 			float d;
-			if (r.Where == "ahead") r.Distance = where.Length > 1 && float.TryParse(where[1], NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : 300f;
+			if (r.Where != "near") r.Distance = where.Length > 1 && float.TryParse(where[1], NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : r.Where == "receiver" ? 600f : 300f;
 			else
 			{
 				r.WhereRef = where.Length > 1 ? where[1] : Self;
@@ -108,6 +126,29 @@ namespace DynamicIslands.Editor
 			}
 			r.Distance = Mathf.Clamp(r.Distance, 50f, 5000f);
 			return r;
+		}
+
+		/// <summary>"first", "after:X" or "instead:X" (a Raft island by any of its names: "Caravan Town", "caravanisland"...), else "".</summary>
+		public static string NormalPlace(string s)
+		{
+			s = (s ?? "").Trim();
+			if (s.Equals("first", StringComparison.OrdinalIgnoreCase)) return "first";
+			int c = s.IndexOf(':');
+			if (c <= 0) return "";
+			string kind = s.Substring(0, c).Trim().ToLowerInvariant(), what = s.Substring(c + 1).Trim();
+			if ((kind != "after" && kind != "instead") || what.Length == 0) return "";
+			ChunkPointType t = StoryOrder.Parse(what);
+			if (t != ChunkPointType.None) what = StoryOrder.Key(t);
+			else if (kind == "instead") return "";
+			return kind + ":" + what;
+		}
+
+		public static string NormalDone(string s)
+		{
+			s = (s ?? "").Trim();
+			string kind = s.Split(':')[0].Trim().ToLowerInvariant();
+			if (!DoneKinds.Contains(kind) || kind.Length == 0) return "";
+			return kind == "quest" || kind == "visit" ? kind : kind + ":" + (s.Contains(":") ? s.Substring(s.IndexOf(':') + 1).Trim() : "");
 		}
 
 		public static List<IntroRule> ParseLines(string text)
@@ -153,11 +194,39 @@ namespace DynamicIslands.Editor
 		public string DescribeWhere()
 		{
 			if (Where == "ahead") return Num(Distance) + " m ahead of the raft";
+			if (Where == "receiver") return "on its own Receiver frequency (it comes " + Num(Distance) + " m ahead when a player tunes to it)";
+			if (Where == "sailing") return "by chance while sailing (ahead of the raft)";
 			float a = DirectionAngle(Direction);
 			return Num(Distance) + " m " + (float.IsNaN(a) ? "from " : DirectionName(a) + " of ") + RefName(WhereRef);
 		}
 
-		public string Describe() { return DescribeWhen() + ": bring " + DescribeWhat() + ", " + DescribeWhere(); }
+		public string DescribeStory()
+		{
+			if (StoryPlace.Length == 0) return "";
+			string place = StoryPlace == "first" ? "first in the story" : StoryPlace.StartsWith("instead:") ? "in place of " + StoryOrder.NameOfKey(StoryPlace.Substring(8)) :
+				"after " + StoryOrder.NameOfKey(StoryPlace.Substring(6));
+			return place + "; done when " + DescribeDone();
+		}
+
+		public string DescribeDone()
+		{
+			string k = StoryDone.Split(':')[0], arg = StoryDone.Contains(":") ? StoryDone.Substring(StoryDone.IndexOf(':') + 1) : "";
+			switch (k)
+			{
+				case "quest": return "its quest is done";
+				case "visit": return "players reach it";
+				case "step": return arg + " step(s) of its quest are done";
+				case "zone": return "its zone '" + arg + "' fires";
+				case "signal": return "its signal '" + arg + "' is sent";
+			}
+			return "its quest is done (or players reach it, if it has none)";
+		}
+
+		public string Describe()
+		{
+			string story = DescribeStory();
+			return (InStory ? "Story: " + story + ". " + (When == "start" ? "Once unlocked" : DescribeWhen() + ", once unlocked") : DescribeWhen()) + ": bring " + DescribeWhat() + ", " + DescribeWhere();
+		}
 	}
 
 	/// <summary>
@@ -173,6 +242,15 @@ namespace DynamicIslands.Editor
 		/// <summary>Random islands from the spawn pool appear while sailing (today's behaviour), as well as the rules.</summary>
 		public bool Random = true;
 		public List<IntroRule> Rules = new List<IntroRule>();
+		/// <summary>Raft's story islands come (Radio Tower ... Utopia, on the Receiver), as in any Raft world. Off: only the plan's own.</summary>
+		public bool RaftStory = true;
+		/// <summary>Raft's story islands left out of this plan's story (StoryOrder.Key names: "Balboa"...).</summary>
+		public HashSet<string> LeaveOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>The plan changes Raft's story chain (StoryChain takes it over in its worlds).</summary>
+		public bool ChangesStory { get { return !RaftStory || LeaveOut.Count > 0 || Rules.Any(r => r.InStory); } }
+		/// <summary>The plan has rules StoryChain handles (the story chain, Receiver frequencies, islands by chance).</summary>
+		public bool HasStory { get { return ChangesStory || Rules.Any(r => r.Special); } }
 
 		public bool BuiltIn { get { return IsBuiltIn(Name); } }
 		public static bool IsBuiltIn(string name) { return name.Equals(RandomName, StringComparison.OrdinalIgnoreCase) || name.Equals(NoneName, StringComparison.OrdinalIgnoreCase); }
@@ -219,6 +297,14 @@ namespace DynamicIslands.Editor
 				{
 					case "description": plan.Description = value; break;
 					case "random": plan.Random = value.Equals("on", StringComparison.OrdinalIgnoreCase) || value == "1" || value.Equals("yes", StringComparison.OrdinalIgnoreCase); break;
+					case "story": plan.RaftStory = !(value.Equals("off", StringComparison.OrdinalIgnoreCase) || value == "0" || value.Equals("no", StringComparison.OrdinalIgnoreCase)); break;
+					case "storyleaveout":
+						foreach (string s in value.Split(','))
+						{
+							ChunkPointType t = StoryOrder.Parse(s);
+							if (t != ChunkPointType.None) plan.LeaveOut.Add(StoryOrder.Key(t));
+						}
+						break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
 						if (r != null) plan.Rules.Add(r);
@@ -247,13 +333,23 @@ namespace DynamicIslands.Editor
 #   when:  start   km:<km sailed>   day:<day>   quest:<ref>   step:<ref>:<steps done>
 #          zone:<ref>:<zone name>   visit:<ref>   rule:<rule id>
 #   where: ahead:<metres>   near:<ref>:<metres>:<direction>   (any, north, north-east, east, ... or degrees)
+#          receiver:<metres>   (its own frequency on Raft's Receiver: it comes when a player tunes to it)
+#          sailing:<metres>    (it comes up ahead by chance while sailing)
 #   <ref> is an island in the world: the id of the rule that brought it, or its island name.
 #   The message is shown to every player when the island appears; the label is its name on the Receiver.
+#   Two more parts put the island into Raft's story (the Receiver chain):
+#   rule = ... | label | first / after:<story island or rule id> / instead:<story island> | done when
+#          done when: quest, visit, step:<n>, zone:<zone>, signal:<signal> (empty: its quest, or reaching it)
+# story = on|off         (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
+#                         Varuna Point, Temperance, Utopia. off = only the plan's own islands: a new adventure)
+# storyleaveout = Balboa, Tangaroa   (story islands left out: the note before them leads to the one after)
 ";
 
 		public string ToText()
 		{
-			var lines = new List<string> { Help, "description = " + (Description ?? "").Replace("\n", " "), "random = " + (Random ? "on" : "off"), "" };
+			var lines = new List<string> { Help, "description = " + (Description ?? "").Replace("\n", " "), "random = " + (Random ? "on" : "off"), "story = " + (RaftStory ? "on" : "off") };
+			if (LeaveOut.Count > 0) lines.Add("storyleaveout = " + string.Join(", ", StoryOrder.Chain.Select(StoryOrder.Key).Where(k => LeaveOut.Contains(k)).ToArray()));
+			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
 			return string.Join("\r\n", lines.ToArray()) + "\r\n";
 		}
@@ -430,13 +526,15 @@ namespace DynamicIslands.Editor
 				PendingPlan = null;
 				if (WorldPlan.Load(chosen) == null) { Debug.LogWarning("[CUSTOM ISLANDS] No world plan '" + chosen + "'; using " + WorldPlan.RandomName); chosen = WorldPlan.RandomName; }
 				SetPlan(chosen, true);
+				StoryChain.FromPlan(Plan);
 				Log("New world '" + SaveAndLoad.CurrentGameFileName + "': plan '" + PlanName + "'");
 				WorldRandomizer.OnNewWorld();
 				return;
 			}
 			Plan = WorldPlan.Load(PlanName);
 			if (Plan == null) Debug.LogWarning("[CUSTOM ISLANDS] This world's plan '" + PlanName + "' is missing (Mods\\DynamicIslands\\plans); its rules are paused");
-			else if (Plan.Rules.Count > 0) Log("Plan '" + PlanName + "': " + Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
+			else if (!StoryChain.HasSnapshot && Plan.HasStory) StoryChain.FromPlan(Plan);
+			if (Plan != null && Plan.Rules.Count > 0) Log("Plan '" + PlanName + "': " + Plan.Rules.Count(r => !Done.Contains(r.Id)) + " of " + Plan.Rules.Count + " rule(s) still to come");
 		}
 
 		/// <summary>Host: gives this world a plan (applyRandom: random islands on or off as the plan says).</summary>
@@ -466,6 +564,7 @@ namespace DynamicIslands.Editor
 			if (!CustomIslandSpawner.RaftPosition.HasValue) return;
 			UpdateVisits();
 			Evaluate();
+			StoryChain.Tick();
 		}
 
 		/// <summary>Checks every rule that hasn't fired yet (host; tests call it directly).</summary>
@@ -474,7 +573,7 @@ namespace DynamicIslands.Editor
 			if (Plan != null)
 				foreach (IntroRule r in Plan.Rules)
 				{
-					if (Done.Contains(r.Id)) continue;
+					if (Done.Contains(r.Id) || r.Special) continue; // (the story chain, the Receiver and islands by chance: StoryChain)
 					IntroRule rule = r;
 					TryRule(rule, null, "plan/" + rule.Id, () => Done.Add(rule.Id));
 				}
@@ -600,7 +699,7 @@ namespace DynamicIslands.Editor
 		#region Bringing an island
 
 		/// <summary>Brings the rule's island; null when it's on its way, else why not (yet).</summary>
-		static string Bring(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry at)
+		internal static string Bring(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry at)
 		{
 			if (!CustomIslandSpawner.RaftPosition.HasValue) return "no raft";
 			var rnd = new System.Random(Guid.NewGuid().GetHashCode());
@@ -791,6 +890,7 @@ namespace DynamicIslands.Editor
 				for (int i = 0; i < rules.Count; i++)
 					lines.Add("  [" + (e.State.ContainsKey(RuleKeyBase + i) ? "done" : "    ") + "] " + e.HostName + "/" + rules[i].Id + ": " + rules[i].Describe());
 			}
+			if (StoryChain.Active || StoryChain.Rules.Count > 0) lines.Add(StoryChain.Describe());
 			lines.Add("Plans: " + string.Join(", ", WorldPlan.All().ToArray()) + "  (WorldPlan <name> changes this world's plan)");
 			return string.Join("\n", lines.ToArray());
 		}
