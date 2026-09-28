@@ -155,7 +155,7 @@ namespace DynamicIslands.Editor
 					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
 						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
 				}
-				File.WriteAllLines(FilePath, lines.ToArray());
+				SafeFile.WriteAllLines(FilePath, lines.ToArray());
 				WorldCopy.AfterSave(lines.ToArray());
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }

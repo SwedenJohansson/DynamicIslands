@@ -357,7 +357,7 @@ namespace DynamicIslands.Editor
 		public void Save()
 		{
 			Directory.CreateDirectory(Folder);
-			File.WriteAllText(PathFor(Name), ToText());
+			SafeFile.WriteAllText(PathFor(Name), ToText());
 		}
 	}
 

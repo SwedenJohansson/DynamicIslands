@@ -506,7 +506,8 @@ namespace DynamicIslands
 			box.Open();
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
-			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault() : null;
+			// (the plan's own button, not the head's "Get more..." - the island library)
+			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => UIKit.LabelOf(x) == null || !UIKit.LabelOf(x).text.StartsWith("Get more")) : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
 			if (plan == null) { Fail("New Game box clicks: no plan button"); yield break; }
 			// The plan button: round every plan

@@ -154,7 +154,28 @@ namespace DynamicIslands.Editor
 			if (syncTries >= SyncMaxTries) { synced = true; Debug.LogWarning("[CUSTOM ISLANDS] [net] The host never sent its island list (does the host have Custom Islands?)"); return; }
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + SyncRetrySeconds;
-			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest });
+			// (with this player's version of the mod: the host says when they differ, and answers with its own)
+			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
+		}
+
+		const string VersionTag = "version:";
+
+		/// <summary>The last version difference seen (tests), or "".</summary>
+		public static string VersionNotice { get; private set; }
+
+		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each.</summary>
+		static void CompareVersions(string tag, string who)
+		{
+			if (string.IsNullOrEmpty(tag) || !tag.StartsWith(VersionTag)) return;
+			string theirs = tag.Substring(VersionTag.Length), mine = LibraryPack.ModVersion;
+			if (theirs == mine) return;
+			string text = Raft_Network.IsHost
+				? who + " joined with Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version."
+				: "The host has Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version.";
+			if (VersionNotice == text) return;
+			VersionNotice = text;
+			Debug.LogWarning("[CUSTOM ISLANDS] [net] " + text);
+			global::DynamicIslands.DynamicIslands.Notify(text, true);
 		}
 
 		#region Sending
@@ -314,8 +335,12 @@ namespace DynamicIslands.Editor
 				switch (msg.Kind)
 				{
 					case IslandNetMessage.SyncRequest:
+						// (a player: the host's answer with its version)
+						if (!Raft_Network.IsHost) { CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
+							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
+							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							SendToPlayer(WorldRules.Message(), from);
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
@@ -463,11 +488,17 @@ namespace DynamicIslands.Editor
 
 		internal static string DownloadName(string name, string hash) { return name + "_" + hash; }
 
-		/// <summary>True for island names of the form &lt;name&gt;_&lt;12 hex digits&gt; (files downloaded from a host).</summary>
+		/// <summary>
+		/// True for island files downloaded from a host (or kept for a saved world): &lt;name&gt;_&lt;12 hex digits&gt;, where the
+		/// digits are the file's own content hash. (A player's island named like "camp_202609281530" - a date and time are
+		/// 12 digits too - is theirs: it takes part while sailing and is never cleaned up as a copy.)
+		/// </summary>
 		public static bool IsDownloadName(string name)
 		{
 			int i = name.LastIndexOf('_');
-			return i > 0 && name.Length - i - 1 == 12 && name.Substring(i + 1).All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
+			if (i <= 0 || name.Length - i - 1 != 12 || !name.Substring(i + 1).All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+			string h = HashOf(name);
+			return h == null || h == name.Substring(i + 1);
 		}
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
@@ -483,7 +514,7 @@ namespace DynamicIslands.Editor
 			if (Hash(bytes) != msg.Hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Island file '" + msg.Name + "' arrived damaged, asking again"); requested.Remove(msg.Hash); RetryWaiting(msg.Hash); return; }
 			string name = DownloadName(msg.Name, msg.Hash);
 			Directory.CreateDirectory(DynamicIslands.assetpath);
-			File.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
+			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash)) e.WaitingForFile = false;
 		}

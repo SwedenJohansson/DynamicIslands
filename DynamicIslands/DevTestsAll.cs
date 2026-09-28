@@ -350,7 +350,35 @@ namespace DynamicIslands
 			return w == null || !w.gameObject.activeInHierarchy;
 		}
 
-		static void CloseAllWindows() { foreach (MonoBehaviour w in OpenWindows()) CloseWindow(w); }
+		static void CloseAllWindows()
+		{
+			foreach (MonoBehaviour w in OpenWindows()) CloseWindow(w);
+			// (the windows made by static classes - the library, export/import, info boxes, World settings, the island
+			// picker - aren't MonoBehaviours: a library window left open by the button test covered the editor, and every
+			// mouse test after it failed)
+			foreach (Type t in StaticWindows)
+				try
+				{
+					var open = t.GetProperty("IsOpen", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+					var close = t.GetMethod("Close", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, Type.EmptyTypes, null);
+					if (open != null && close != null && (bool)open.GetValue(null, null)) close.Invoke(null, null);
+				}
+				catch (Exception e) { Debug.LogWarning("[CITEST] closing " + t.Name + ": " + (e.InnerException ?? e).Message); }
+		}
+
+		static readonly Type[] StaticWindows = { typeof(LibraryWindow), typeof(LibraryExportWindow), typeof(LibraryImportWindow), typeof(IslandPickerWindow), typeof(WorldSettingsWindow) };
+
+		/// <summary>The static windows open now (names).</summary>
+		static IEnumerable<string> OpenStaticWindows()
+		{
+			foreach (Type t in StaticWindows)
+			{
+				var open = t.GetProperty("IsOpen", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+				bool isOpen = false;
+				try { isOpen = open != null && (bool)open.GetValue(null, null); } catch { }
+				if (isOpen) yield return t.Name;
+			}
+		}
 
 		/// <summary>The in-world windows: the journal (J) and the note reader, every button.</summary>
 		[ConsoleCommand(name: "CIWorldButtons", docs: "Dev, in game: presses every button of the journal and the note reader")]
@@ -407,7 +435,7 @@ namespace DynamicIslands
 			Log("Editor state: tab " + EditorUI.CurrentTab + ", brush " + terraineditor.modificationAction + ", gizmo " + (g != null ? g.transformType.ToString() : "?") +
 				", random " + PlacementOptions.RandomTurnAndSize + ", slope " + PlacementOptions.AlignToSlope + ", grid " + PlacementOptions.SnapToGrid +
 				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", objects " + PlacedEditorObjects().Count +
-				", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", windows [" + string.Join(",", OpenWindows().Select(w => w.GetType().Name).ToArray()) + "]" +
+				", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", windows [" + string.Join(",", OpenWindows().Select(w => w.GetType().Name).Concat(OpenStaticWindows()).Distinct().ToArray()) + "]" +
 				", stamp turn " + TerrainStamps.Rotation.ToString("F0") + ", placer " + (placer != null ? placer.name + " yaw " + placer.Yaw.ToString("F0") + " scale " + placer.ScaleFactor.ToString("F2") : "none") +
 				", island '" + DynamicIslands.currentIslandName + "'" +
 				(Camera.main != null ? string.Format(System.Globalization.CultureInfo.InvariantCulture, ", camera {0:F1} {1:F1} {2:F1} yaw {3:F1} pitch {4:F1}", Camera.main.transform.position.x, Camera.main.transform.position.y, Camera.main.transform.position.z, Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.x) : ""));

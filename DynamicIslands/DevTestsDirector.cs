@@ -575,7 +575,8 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.5f);
 			Transform row = box.transform.Find("CustomIslands_Plan");
 			Check(ref ok, row != null && row.gameObject.activeInHierarchy, "the box has the plan choice");
-			Button b = row != null ? row.GetComponentInChildren<Button>() : null;
+			// (the plan's own button - the row's head also has "Get more...", which opens the island library)
+			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => UIKit.LabelOf(x) == null || !UIKit.LabelOf(x).text.StartsWith("Get more")) : null;
 			string first = NewWorldOptions.Selected;
 			if (b != null) b.onClick.Invoke();
 			string second = NewWorldOptions.Selected;

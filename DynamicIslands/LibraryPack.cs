@@ -142,7 +142,9 @@ namespace DynamicIslands.Editor
 		#region Small helpers
 
 		/// <summary>The mod's version (modinfo.json).</summary>
-		public static string ModVersion { get { return ExperimentalNotice.Version; } }
+		public static string ModVersion { get { return TestVersion ?? ExperimentalNotice.Version; } }
+		/// <summary>Dev tests (CIFakeVersion): this PC pretends to have another version of the mod.</summary>
+		public static string TestVersion;
 
 		/// <summary>Compares versions as numbers ("3.10" is newer than "3.9"); an empty or odd one counts as 0.</summary>
 		public static int CompareVersions(string a, string b)
@@ -172,6 +174,7 @@ namespace DynamicIslands.Editor
 			}
 			string id = sb.ToString().Trim('-');
 			if (id.Length > 48) id = id.Substring(0, 48).Trim('-');
+			if (FileNames.IsReserved(id)) id += "-entry"; // (a title "Con" or "Aux" would be a zip Windows can't write)
 			return id.Length > 0 ? id : "entry";
 		}
 
@@ -180,8 +183,8 @@ namespace DynamicIslands.Editor
 		{
 			if (string.IsNullOrEmpty(name) || name.Length > 120 || name != name.Trim() || name.StartsWith(".") || name.Contains("..")) return false;
 			if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.IndexOfAny(new[] { '#', '%', '?', '/', '\\', ':' }) >= 0) return false;
-			string stem = Path.GetFileNameWithoutExtension(name).ToUpperInvariant();
-			return !new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "LPT1", "LPT2", "LPT3" }.Contains(stem);
+			// (Windows' device names, also with an extension - FileNames)
+			return !FileNames.IsReserved(name);
 		}
 
 		public static string Sha256(byte[] bytes)
@@ -489,7 +492,7 @@ namespace DynamicIslands.Editor
 		public static void SaveInstalled(List<LibraryInstalled> entries)
 		{
 			Directory.CreateDirectory(LibraryFolder);
-			File.WriteAllText(InstalledPath, LibraryJson.Write(new Dictionary<string, object> { { "entries", entries.Select(e => (object)e.ToDict()).ToList() } }));
+			SafeFile.WriteAllText(InstalledPath, LibraryJson.Write(new Dictionary<string, object> { { "entries", entries.Select(e => (object)e.ToDict()).ToList() } }));
 		}
 
 		/// <summary>The entry that wrote this file (an island "Name.island" or a plan "Name.plan"), if one did.</summary>
@@ -623,7 +626,7 @@ namespace DynamicIslands.Editor
 						// (a saved world plays the version it started with: its old file stays as the copy that world's hash finds)
 						KeepForWorlds(t, report);
 					}
-					File.WriteAllBytes(path, bytes);
+					SafeFile.WriteAllBytes(path, bytes);
 					entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = sha, kind = KindIsland });
 					report.Add(t.Equals(n, StringComparison.OrdinalIgnoreCase) ? "Installed '" + t + "'" : "Installed '" + n + "' as '" + t + "' (you have a different island called '" + n + "')");
 				}
@@ -651,7 +654,7 @@ namespace DynamicIslands.Editor
 				else report.Add("Updated the plan '" + name + "' (worlds already started keep their own copy of it)");
 				plan.Name = name;
 				Directory.CreateDirectory(WorldPlan.Folder);
-				File.WriteAllText(WorldPlan.PathFor(name), text);
+				SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
 				entry.plan = name;
 				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan });
 				report.PlanName = name;

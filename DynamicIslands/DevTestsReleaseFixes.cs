@@ -89,6 +89,105 @@ namespace DynamicIslands
 			if (ok) Log("PASS: autosave"); else Fail("autosave");
 		}
 
+		[ConsoleCommand(name: "CINames", docs: "Dev, editor: names players type (TEST_CATALOGUE UP2) - Windows' device names (CON, nul.x, COM9), a trailing dot or space, 61 characters, \\ / : are refused with a reason and write nothing; Swedish letters, Chinese, an emoji and 60 characters save, open and delete; a pack id from the title 'Con' is not a device name. Cleans up")]
+		public static void NamesCommand()
+		{
+			bool ok = true;
+			if (!DynamicIslands.InEditor()) { Fail("names: open the editor first"); return; }
+			string before = DynamicIslands.currentIslandName;
+			foreach (string bad in new[] { "CON", "con", "Nul", "nul.x", "COM9", "lpt1", "aux.island", "island.", "island ", " island", new string('a', FileNames.MaxLength + 1), "a/b", "a:b", "" })
+			{
+				bool saved;
+				try { saved = DynamicIslands.SaveIsland(bad); }
+				catch (Exception e) { saved = true; Log("NAMES threw for '" + bad + "': " + e.Message); }
+				string problem = FileNames.Problem(bad);
+				Check(ref ok, !saved && problem != null && !TextPromptWindow.ValidName(bad), "refused: '" + bad + "' (" + problem + ")");
+			}
+			Check(ref ok, !File.Exists(Path.Combine(DynamicIslands.assetpath, "island..island")) && !File.Exists(Path.Combine(DynamicIslands.assetpath, "island .island")), "nothing written for the refused names");
+			foreach (string good in new[] { "Åsa's ö-land", "小島", "cove \U0001F3DD", new string('b', FileNames.MaxLength), "con island", "a.b" })
+			{
+				bool saved = false, opened = false;
+				try { saved = DynamicIslands.SaveIsland(good); opened = saved && File.Exists(IslandSpawner.PathFor(good)) && IslandFile.Load(IslandSpawner.PathFor(good)) != null; }
+				catch (Exception e) { Log("NAMES threw for '" + good + "': " + e.Message); }
+				Check(ref ok, saved && opened && IslandSpawner.ListSavedIslands().Contains(good), "saved, listed and read back: '" + good + "'");
+				try { if (File.Exists(IslandSpawner.PathFor(good))) File.Delete(IslandSpawner.PathFor(good)); } catch { }
+			}
+			Check(ref ok, !FileNames.IsReserved(LibraryPack.IdFrom("Con")) && !FileNames.IsReserved(LibraryPack.IdFrom("NUL")) && LibraryPack.IdFrom("Palm Cove") == "palm-cove", "pack ids: 'Con' -> " + LibraryPack.IdFrom("Con") + ", 'Palm Cove' -> " + LibraryPack.IdFrom("Palm Cove"));
+			Check(ref ok, !LibraryPack.IsSafeFileName("com5.island") && !LibraryPack.IsSafeFileName("nul.plan") && LibraryPack.IsSafeFileName("Palm Cove.island"), "pack file names: device names refused");
+			// An island of the player's named like a host's copy (12 digits: a date and time), and a real copy
+			const string own = "camp_202609281530";
+			string copy = null;
+			try
+			{
+				Check(ref ok, DynamicIslands.SaveIsland(own), "saved '" + own + "'");
+				string hash = IslandNetwork.HashOf(own);
+				copy = IslandNetwork.DownloadName(own, hash);
+				File.Copy(IslandSpawner.PathFor(own), IslandSpawner.PathFor(copy), true);
+				Check(ref ok, !IslandNetwork.IsDownloadName(own) && IslandNetwork.IsDownloadName(copy), "'" + own + "' is the player's own, '" + copy + "' a host's copy");
+				Check(ref ok, ChoiceWindow.Islands().Select(c => c.Value).Contains(own) && !ChoiceWindow.Islands().Select(c => c.Value).Contains(copy), "the own one is listed among the player's islands, the copy isn't");
+				int removed = LibraryPack.RemoveUnusedHostCopies();
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(own)) && !File.Exists(IslandSpawner.PathFor(copy)), "Remove unused removes the copy (" + removed + "), never the player's own");
+			}
+			finally
+			{
+				foreach (string n in new[] { own, copy }) try { if (n != null && File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n)); } catch { }
+			}
+			DynamicIslands.currentIslandName = before;
+			if (ok) Log("PASS: names"); else Fail("names");
+		}
+
+		[ConsoleCommand(name: "CISafeWrite", docs: "Dev, anywhere: a file written with SafeFile is whole or as it was - a write that fails half way (here: its .tmp can't be written) leaves the old file untouched; a good write replaces it and leaves no .tmp (TEST_CATALOGUE UP5)")]
+		public static void SafeWriteCommand()
+		{
+			bool ok = true;
+			string path = Path.Combine(DynamicIslands.assetpath, "cisafewrite.txt"), tmp = path + ".tmp";
+			try
+			{
+				File.WriteAllText(path, "the old content");
+				Directory.CreateDirectory(tmp); // (a folder where the .tmp would go: the write fails, as on a full disk)
+				bool threw = false;
+				try { SafeFile.WriteAllText(path, "new"); } catch { threw = true; }
+				Check(ref ok, threw && File.ReadAllText(path) == "the old content", "a failed write leaves the old file whole");
+				Directory.Delete(tmp);
+				SafeFile.WriteAllLines(path, new[] { "line 1", "line 2" });
+				Check(ref ok, File.ReadAllLines(path).SequenceEqual(new[] { "line 1", "line 2" }) && !File.Exists(tmp), "a good write replaces it, no .tmp left");
+			}
+			finally
+			{
+				try { if (Directory.Exists(tmp)) Directory.Delete(tmp); if (File.Exists(tmp)) File.Delete(tmp); if (File.Exists(path)) File.Delete(path); } catch { }
+			}
+			if (ok) Log("PASS: safe write"); else Fail("safe write");
+		}
+
+		[ConsoleCommand(name: "CIFakeVersion", docs: "Dev, anywhere: this PC pretends to have another version of the mod (CIFakeVersion 2.9), or its own again (CIFakeVersion off)")]
+		public static void FakeVersionCommand(string[] args)
+		{
+			string v = args != null && args.Length > 0 ? args[0] : "off";
+			LibraryPack.TestVersion = v == "off" ? null : v;
+			Log("Fake version: " + LibraryPack.ModVersion);
+		}
+
+		[ConsoleCommand(name: "CIVersionCheck", docs: "Dev, in a world with two players: CIVersionCheck same = no version difference was reported; CIVersionCheck differ <version> = the difference with that version was reported here")]
+		public static void VersionCheckCommand(string[] args)
+		{
+			bool ok = true;
+			string mode = args != null && args.Length > 0 ? args[0] : "same";
+			string notice = IslandNetwork.VersionNotice ?? "";
+			if (mode == "same") Check(ref ok, notice.Length == 0, "no version difference reported (" + notice + ")");
+			else Check(ref ok, args.Length > 1 && notice.Contains("Custom Islands " + args[1]), "the version difference was reported: " + notice);
+			if (ok) Log("PASS: version check"); else Fail("version check");
+		}
+
+		[ConsoleCommand(name: "CIMemory", docs: "Dev, anywhere: logs the memory in use (MEMORY <managed MB> <Unity allocated MB> <textures> <meshes> <game objects>) after a full collection")]
+		public static void MemoryCommand()
+		{
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			long managed = GC.GetTotalMemory(true) / (1024 * 1024);
+			long unity = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / (1024 * 1024);
+			Log("MEMORY " + managed + " " + unity + " " + Resources.FindObjectsOfTypeAll<Texture>().Length + " " + Resources.FindObjectsOfTypeAll<Mesh>().Length + " " + Resources.FindObjectsOfTypeAll<GameObject>().Length);
+		}
+
 		[ConsoleCommand(name: "CIPlanEdit", docs: "Dev, anywhere: changes the test plan 'CI Copy Plan' (CIPlanCopyPrep make) as a player would in World Plans: CIPlanEdit add = a 4th rule; CIPlanEdit more = a 5th")]
 		public static void PlanEditCommand(string[] args)
 		{
@@ -148,6 +247,8 @@ namespace DynamicIslands
 				var older = saves.Where(d => d != latest && File.Exists(Path.Combine(d, WorldCopy.FileName))).Select(d => File.ReadAllLines(Path.Combine(d, WorldCopy.FileName))).ToList();
 				Check(ref ok, older.Any(o => o.Any(l => l.StartsWith("@raftsave=")) && !o.Any(l => l.StartsWith("@islandsoff=") && l.Contains(mark))), "an older save's folder has its own copy, without '" + mark + "' (" + older.Count + " older copies)");
 			}
+			else if (mode == "absent")
+				Check(ref ok, WorldIslands.TakesPart(mark) && WorldIslands.Off.Count == 0, "nothing of another world's islands left out here: '" + mark + "' takes part (" + WorldIslands.Describe() + ")");
 			else if (mode == "older")
 				Check(ref ok, WorldIslands.TakesPart(mark) && WorldCopy.LastOlderSave.Length > 0, "an older save loaded: its state (" + WorldCopy.LastSource + "), '" + mark + "' takes part again");
 			else

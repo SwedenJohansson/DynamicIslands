@@ -426,7 +426,7 @@ namespace DynamicIslands
 
 		static bool IsValidIslandName(string name)
 		{
-			return !string.IsNullOrEmpty(name) && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+			return FileNames.Valid(name);
 		}
 
 		internal static void Notify(string text, bool error = false)
@@ -484,7 +484,7 @@ namespace DynamicIslands
 		public static bool SaveIsland(string name)
 		{
 			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return false; }
-			if (!IsValidIslandName(name)) { Notify("Invalid island name: '" + name + "'", true); return false; }
+			if (!IsValidIslandName(name)) { Notify("Can't save '" + name + "': " + FileNames.Problem(name), true); return false; }
 			try
 			{
 				IslandFile island = CaptureIsland(name);

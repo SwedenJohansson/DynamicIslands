@@ -141,7 +141,7 @@ namespace DynamicIslands.Editor
 		{
 			string folder = RaftWorldFolder;
 			if (folder != null)
-				try { File.WriteAllLines(Path.Combine(folder, FileName), lines); }
+				try { SafeFile.WriteAllLines(Path.Combine(folder, FileName), lines); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the world's copy into Raft's world folder: " + e.Message); }
 			WriteIntoSave(folder, lines);
 			last = lines;
@@ -168,7 +168,7 @@ namespace DynamicIslands.Editor
 			if (worldFolder == null || RaftSaveLine() == null) return;
 			string save = LatestSaveFolder(worldFolder);
 			if (save == null) return;
-			try { File.WriteAllLines(Path.Combine(save, FileName), lines); }
+			try { SafeFile.WriteAllLines(Path.Combine(save, FileName), lines); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the world's copy into Raft's save folder: " + e.Message); }
 		}
 
@@ -222,7 +222,7 @@ namespace DynamicIslands.Editor
 				// (never over a newer copy: a late message from an older save)
 				if (File.Exists(path) && StampOf(File.ReadAllLines(path)) > StampOf(lines)) return;
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
-				File.WriteAllLines(path, lines);
+				SafeFile.WriteAllLines(path, lines);
 				LastKept = guid + " " + lines.Length + " lines";
 				Debug.Log("[CUSTOM ISLANDS] Kept the host's copy of this world (" + lines.Length + " lines) to host it later: " + path);
 			}

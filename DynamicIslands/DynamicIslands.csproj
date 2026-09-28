@@ -84,6 +84,7 @@
     <Compile Include="EditorTools.cs" />
     <Compile Include="EditorAutosave.cs" />
     <Compile Include="EditorUI.cs" />
+    <Compile Include="FileNames.cs" />
     <Compile Include="EditorLoadingBox.cs" />
     <Compile Include="IslandFile.cs" />
     <Compile Include="GeneratorWindow.cs" />

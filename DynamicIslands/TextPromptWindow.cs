@@ -50,13 +50,13 @@ namespace DynamicIslands.Editor
 
 		public static bool ValidName(string name)
 		{
-			return !string.IsNullOrEmpty(name) && name.Trim().Length > 0 && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
+			return FileNames.Valid(name);
 		}
 
 		void Ok()
 		{
 			string name = field.text.Trim();
-			if (!ValidName(name)) { messageText.text = "<color=#e05a4d>Type a name (without \\ / : * ? \" < > |)</color>"; return; }
+			if (!ValidName(name)) { messageText.text = "<color=#e05a4d>" + FileNames.Problem(name) + "</color>"; return; }
 			Action<string> ok = onOk;
 			Close();
 			if (ok != null) ok(name);
