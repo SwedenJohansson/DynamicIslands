@@ -9,7 +9,7 @@ The guide follows the heart of the mod first: **meeting custom islands** while y
 own** in the editor (4-5), and giving them **stories**: quests, doors and keys, story items, and islands that bring
 other islands (6-7). Section 8 is about playing together. The **optional systems** that change a whole world - world
 rules, the world randomizer, the extra options, the island list and the level up system - are gathered in section 9,
-followed by the files, the console commands and help.
+followed by the files, the console commands, help, and how to report a problem (section 13).
 
 ![A generated island seen from the sea](images/world-island-from-sea.jpg)
 *A custom island met while sailing: made by the mod's island generator, with Raft's own palms, rocks and reef.*
@@ -34,6 +34,7 @@ followed by the files, the console commands and help.
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
 12. [Questions and problems](#12-questions-and-problems)
+13. [Reporting a problem](#13-reporting-a-problem)
 
 ---
 
@@ -998,9 +999,65 @@ islands; the loading box shows how far it is. After a Raft update it also scans 
 background (about half a minute; the object browser's status line says so).
 
 **Something went wrong.** Press F10: the mod's messages start with `[CUSTOM ISLANDS]`. Raft's log is
-`%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`.
+`%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`. To tell us about it, see
+[section 13](#13-reporting-a-problem).
 
 More: the [README](../README.md) (every feature, file and command, and the known limitations).
+
+## 13. Reporting a problem
+
+This is an alpha, and your reports are how it gets better. A good report lets someone who wasn't there see what
+happened, and make it happen again on their own PC. Please include:
+
+1. **What happened, in detail.** What you did, step by step, from starting Raft or loading the world up to the problem:
+   which island, which window or button, what you pressed or where you walked. Does it happen every time, now and then,
+   or only once? Did it start after something (a new version of the mod, joining a friend, loading an older world)?
+2. **What you expected** to happen if it had worked.
+3. **Screenshots**, or a short video, if the problem can be seen: Steam's screenshot key (**F12**) or Windows'
+   **Win+Shift+S**. If the console (**F10**) shows red messages, a screenshot of it helps too.
+4. **The logs**, taken right after the problem and **before you restart Raft** (a new start replaces the log):
+   - `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`: Raft's log, with the mod's messages
+     (`[CUSTOM ISLANDS]`). Paste the folder part of the path into the address bar of Windows Explorer to open it.
+   - `Player-prev.log` in the same folder, if Raft crashed or you have started it again since: the previous start's log.
+   - If Raft doesn't start with the mod at all: the mod loader's own log, `%APPDATA%\RaftModLoader\logs\hloader.log`.
+   - **Playing together:** the logs of every player, the host's first, and who was the host.
+   - The logs may show your Windows user name (in file paths) and your Steam name and id.
+5. **The settings you used:**
+   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.0), Raft (bottom
+     left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
+     other mods you have;
+   - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
+     world, press **F10** and run `WorldOptions`, `Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `WorldIslands`
+     and `SpawnPool`, then copy what they print (it is also in `Player.log`);
+   - your settings files from `<Raft>\Mods\DynamicIslands\`: `spawnpool.txt`, and `world_rules.txt` and
+     `randomizer.txt` if the problem is with a new world;
+   - **single player or together;** if together: were you the host or did you join, and how many players were there.
+6. **The islands and world plans involved:** their names, and the files or where to download them. Islands are
+   `<Raft>\Mods\DynamicIslands\<name>.island`, world plans `<Raft>\Mods\DynamicIslands\plans\<name>.plan`. If the
+   problem is in one world, add that world's island list, `<Raft>\Mods\DynamicIslands\worlds\<world>.txt`, and if you
+   can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
+
+**Where to send it:** open an issue on the mod's GitHub page,
+[github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
+(**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after loading"),
+write the report, and attach the files (zip them if there are many).
+
+A template to copy into the issue:
+
+```
+What happened:
+Steps to make it happen:
+  1.
+  2.
+  3.
+What I expected:
+How often: every time / now and then / once
+Versions: Custom Islands 3.0, Raft 1.1.01, mod loader v2.8.10, other mods:
+Single player or together: (host / joined, how many players)
+World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, WorldIslands, SpawnPool print)
+Islands and world plans used: (names, files or download links)
+Attached: Player.log, Player-prev.log, screenshots, ...
+```
 
 ---
 

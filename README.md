@@ -6,7 +6,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 
 > **EXPERIMENTAL ALPHA RELEASE** - this is the first release of Custom Islands (version 3.0), an early alpha. Things are likely to change, some
 > systems might be unstable, and we do not guarantee that progress is always saved: back up the worlds you care about.
-> The main menu shows this in a box (**Got it** folds it until the next version).
+> The main menu shows this in a box (**Got it** folds it until the next version). Found a problem? See
+> [Reporting a problem](#reporting-a-problem).
 
 **New here? Start with the [illustrated guide](docs/GUIDE.md)** (also as a [PDF](docs/Custom-Islands-Guide.pdf) to download or print): installing, starting a world, what you meet while
 sailing, building your own islands in the editor and giving them quests and stories, playing together, and at the end
@@ -482,6 +483,25 @@ An island made with **Level up system: On** (Island tab, Rules; or the generator
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
 
 Development builds also include `CI*` test commands (`DevTests*.cs`); release builds leave them out.
+
+## Reporting a problem
+
+Open an issue at [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
+with a short title that says what went wrong. The guide's [Reporting a problem](docs/GUIDE.md#13-reporting-a-problem) has
+the details and a template to copy. In short:
+
+- **What happened, in detail:** what you did, step by step, up to the problem; every time, now and then, or once.
+- **What you expected** to happen if it had worked.
+- **Screenshots** or a short video, if it can be seen (Steam's F12, or Win+Shift+S).
+- **The logs**, before restarting Raft: `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log` (and
+  `Player-prev.log` after a crash or a restart); if Raft won't start with the mod, `%APPDATA%\RaftModLoader\logs\hloader.log`.
+  Playing together: every player's logs, the host's first.
+- **The settings:** the versions of Custom Islands, Raft and the mod loader (all on the main menu) and your other mods;
+  Raft's game mode, the plan and the World settings (in the world: `WorldOptions`, `Monsters`, `BuildCost`,
+  `Randomizer`, `WorldPlan`, `WorldIslands`, `SpawnPool`); `spawnpool.txt`; single player or together, host or joined.
+- **The islands and world plans involved:** their names and the files (`Mods\DynamicIslands\<name>.island`,
+  `plans\<name>.plan`) or where to download them; for a problem in one world, `worlds\<world>.txt` and if you can the
+  world's folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
 
 ## Documentation
 
