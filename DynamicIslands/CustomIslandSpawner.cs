@@ -368,8 +368,11 @@ namespace DynamicIslands.Editor
 
 		#region Pool (spawnpool.txt)
 
-		/// <summary>The islands taking part and their weights, with "*" expanded to every saved island not listed.</summary>
-		public static List<KeyValuePair<string, float>> Pool()
+		/// <summary>
+		/// The islands taking part and their weights, with "*" expanded to every saved island not listed. forWorld: leave out
+		/// what this world left out (WorldIslands - chosen in the New Game box); without it, the whole pool (the list shown there).
+		/// </summary>
+		public static List<KeyValuePair<string, float>> Pool(bool forWorld = true)
 		{
 			var result = new List<KeyValuePair<string, float>>();
 			// Copies downloaded from a multiplayer host (<name>_<hash>) and islands generated while sailing (gen-...,
@@ -389,7 +392,7 @@ namespace DynamicIslands.Editor
 					result.Add(p);
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
-			return result.Where(p => p.Value > 0f).ToList();
+			return result.Where(p => p.Value > 0f && (!forWorld || WorldIslands.TakesPart(p.Key))).ToList();
 		}
 
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
@@ -539,6 +542,7 @@ type:sunken 0.2
 				string.Format(CultureInfo.InvariantCulture, "Chance per km sailed: {0:P0} (about one island every {1:F1} km), min spacing {2:F0} m, appear {3:F0}-{4:F0} m ahead, unload beyond {5:F0} m, regrow after {6} day(s)",
 					ChancePerKm, ChancePerKm > 0 ? 1f / ChancePerKm : float.PositiveInfinity, MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance, RegrowDays > 0 ? RegrowDays.ToString() : "never"),
 				"Sailed since the last automatic island: " + sailedSinceSpawn.ToString("F0") + " m",
+				"This world's choice (New Game box, WorldIslands): " + WorldIslands.Describe(),
 				"Pool (" + PoolPath + "): " + (pool.Count == 0 ? "empty" : "")
 			};
 			foreach (var p in pool)

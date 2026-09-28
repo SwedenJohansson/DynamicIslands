@@ -171,6 +171,14 @@ namespace DynamicIslands
 					var wOff = WorldSettingsWindow.Window != null ? OffScreen(WorldSettingsWindow.Window.gameObject, w, h) : new List<string> { "no window" };
 					Check(ref ok, wOff.Count == 0, w + "x" + h + " World settings window: " + (wOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", wOff.Take(5).ToArray())));
 					if (size.x == 1024 || size.x == 1920 || wOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_worldsettings" }); yield return new WaitForSecondsRealtime(0.6f); }
+					// (and the list of islands it opens)
+					IslandPickerWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					var pOff = IslandPickerWindow.Window != null ? OffScreen(IslandPickerWindow.Window.gameObject, w, h) : new List<string> { "no window" };
+					Check(ref ok, pOff.Count == 0, w + "x" + h + " island list (Choose islands): " + (pOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", pOff.Take(5).ToArray())));
+					if (size.x == 1024 || pOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_islandpicker" }); yield return new WaitForSecondsRealtime(0.6f); }
+					IslandPickerWindow.Close();
 					WorldSettingsWindow.Close();
 					box.gameObject.SetActive(false);
 					yield return null;

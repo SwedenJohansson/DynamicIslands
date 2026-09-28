@@ -57,7 +57,7 @@ plain Raft.
 | Part | What it does |
 |---|---|
 | **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 10](#10-world-plans-which-islands-a-world-gets)) |
-| **World settings...** | Opens the World settings window: the world's rules, the world randomizer and the extra options (below) |
+| **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options and the islands that turn up while sailing (below) |
 
 Your choices are remembered for the next new world. They belong to the world: saved with it, the same for every
 player, and every new world gets its own.
@@ -67,7 +67,7 @@ player, and every new world gets its own.
 
 ### The World settings window
 
-Everything else the mod lets you choose for a new world is in one window, in three groups. Each part has a **?** or
+Everything else the mod lets you choose for a new world is in one window, in four groups. Each part has a **?** or
 an explanation. **Raft's own** puts every setting back to plain Raft; **Done** closes the window.
 
 ![The World settings window](images/newgame-worldsettings.jpg)
@@ -79,6 +79,20 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Done** c
 | **World rules: build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded up |
 | **World randomizer** | A normal Raft world made different: Off, Light, Normal or Wild, and which parts take part (click a part to switch it off; see [section 4](#4-the-world-randomizer)) |
 | **Extra options** | More ways to play Raft again, for players who know it by heart: each switched **ON** or off with its own button (below) |
+| **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
+
+**Choosing the islands.** With the plan **Random islands** (or a plan with random islands on), islands turn up by chance
+while you sail: every island you have saved or downloaded, plus brand-new generated ones and the map types listed in
+`spawnpool.txt`. **CHOOSE ISLANDS...** lists them all, each with a tick box. Untick the ones this world shouldn't have:
+- the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
+  shown, for example all your test islands at once;
+- the button in World settings says how many take part (`all 42`, or `30 of 42`);
+- islands you make or download later join older worlds too, unless you untick them when you make a new world;
+- the host can change it in a world with the console command `WorldIslands -<island>` / `+<island>` (`WorldIslands`
+  alone shows the list).
+
+The choice belongs to the world (saved with it, so it stays when another player hosts the world later), and the next
+new world starts from it.
 
 | Extra option | What it does |
 |---|---|
@@ -765,6 +779,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host) |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
+| `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world) |
 | `LoadEditor` | Main menu | Opens the editor |

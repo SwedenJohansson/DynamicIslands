@@ -14,7 +14,8 @@ namespace DynamicIslands.Editor
 	///   - World rules: the monster difficulty and the build cost (NewWorldRulesBox);
 	///   - World randomizer: how much, and which parts (NewWorldOptions.BuildRandomizer);
 	///   - Extra options: scrambled blueprints, story islands in a new order, ghost rafts, private storages (WorldOptions),
-	///     each switched with its own button and explained under it.
+	///     each switched with its own button and explained under it;
+	///   - Islands while sailing: which islands of the spawn pool the world gets (IslandPickerWindow, WorldIslands).
 	/// "Raft's own" puts every one of them back to plain Raft; "Done" closes it. The choices are kept for the world being
 	/// made and remembered for the next one when Create is pressed.
 	/// </summary>
@@ -99,6 +100,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(rulesTitle.gameObject, -1, 18);
 			NewWorldRulesBox.BuildInto(left);
 			NewWorldOptions.BuildRandomizer(left);
+			IslandPickerWindow.BuildEntry(left, screen);
 			// Right: the extra options
 			RectTransform right = UIKit.Rect("Right", columns);
 			UIKit.Vertical(right.gameObject, 6f, new RectOffset(0, 0, 0, 0));
@@ -173,6 +175,7 @@ namespace DynamicIslands.Editor
 				UIKit.LabelOf(kv.Value).text = WorldOptions.Label(kv.Key) + ":  " + (active ? "ON" : "off");
 				UIKit.SetActive(kv.Value, active);
 			}
+			IslandPickerWindow.ShowEntry();
 			int changed = Changed;
 			if (openButton != null) UIKit.LabelOf(openButton).text = "WORLD SETTINGS...   " + (changed == 0 ? "Raft's own" : changed + " changed");
 			if (summary != null)
@@ -190,7 +193,9 @@ namespace DynamicIslands.Editor
 		{
 			HashSet<string> on = WorldSettingsWindow.Chosen;
 			WorldOptions.SaveDefaults(on);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on));
+			WorldIslands.SaveDefaults(WorldIslands.Chosen);
+			Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
+				(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
 		}
 	}
 }

@@ -131,7 +131,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
+				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState && !WorldIslands.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label|island file hash",
@@ -145,6 +145,7 @@ namespace DynamicIslands.Editor
 				lines.AddRange(WorldRules.WriteLines());
 				lines.AddRange(PlayerLevels.WriteLines());
 				lines.AddRange(WorldOptions.WriteLines());
+				lines.AddRange(WorldIslands.WriteLines());
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
@@ -174,6 +175,7 @@ namespace DynamicIslands.Editor
 			WorldRandomizer.Reset();
 			PlayerLevels.Reset();
 			WorldOptions.Reset();
+			WorldIslands.Reset();
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
 			string[] fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null;
 			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
@@ -187,6 +189,7 @@ namespace DynamicIslands.Editor
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldOptions.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
+					WorldIslands.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
 				string[] p = line.Split('|');
 				float x, y, z;
