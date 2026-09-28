@@ -1027,8 +1027,8 @@ happened, and make it happen again on their own PC. Please include:
      left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
      other mods you have;
    - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
-     world, press **F10** and run `WorldOptions`, `Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `WorldIslands`
-     and `SpawnPool`, then copy what they print (it is also in `Player.log`);
+     world, press **F10** and run `WorldOptions`, `Monsters`, `BuildCost`, `Randomizer`, `WorldPlan`, `WorldIslands`,
+     `StoryChain` and `SpawnPool`, then copy what they print (it is also in `Player.log`);
    - your settings files from `<Raft>\Mods\DynamicIslands\`: `spawnpool.txt`, and `world_rules.txt` and
      `randomizer.txt` if the problem is with a new world;
    - **single player or together;** if together: were you the host or did you join, and how many players were there.
