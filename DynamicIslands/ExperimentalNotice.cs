@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// The main menu's "EXPERIMENTAL RELEASE" box: this is the mod's first release, so new players are told that things are
+	/// The main menu's "UNCHARTED WATERS - ALPHA" box: this is the mod's first release, so new players are told that things are
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It sits at the top right
 	/// of Raft's main menu, clear of the menu buttons and the New Game box. "Got it" folds it into a slim bar (click the bar
 	/// to open it again); that is remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new
@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	public static class ExperimentalNotice
 	{
 		public const string PanelName = "CustomIslands_ExperimentalNotice";
-		public const string Header = "EXPERIMENTAL RELEASE";
+		public const string Header = "UNCHARTED WATERS - ALPHA";
 		public static readonly string[] Points =
 		{
 			"Things are likely to change.",
@@ -99,7 +99,7 @@ namespace DynamicIslands.Editor
 
 			body = UIKit.Rect("Body", panel);
 			UIKit.Vertical(body.gameObject, 4f, new RectOffset(0, 0, 0, 0));
-			Text intro = UIKit.Label(body, "This is the first release of Custom Islands (version " + Version + "). Please keep in mind:", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
+			Text intro = UIKit.Label(body, "This is the first release of Custom Islands (version " + Version + "), an early alpha. Please keep in mind:", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
 			intro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(intro.gameObject, -1, 36); // (two lines)
 			for (int i = 0; i < Points.Length; i++)
@@ -117,7 +117,7 @@ namespace DynamicIslands.Editor
 			toggle = UIKit.Button(buttons, "", Flip, null, 120, 28f, 13);
 			toggle.name = "Toggle";
 			SetFolded(SeenThisVersion);
-			Debug.Log("[CUSTOM ISLANDS] Experimental release box shown" + (Folded ? " (folded: seen for " + Version + ")" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Alpha notice shown" + (Folded ? " (folded: seen for " + Version + ")" : ""));
 		}
 
 		/// <summary>"Got it" folds the box and remembers it for this version; the folded bar's "Show" opens it again.</summary>

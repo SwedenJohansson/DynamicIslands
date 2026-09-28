@@ -4,7 +4,7 @@ A [Raft](https://raft-game.com/) mod for the [Raft Mod Loader](https://www.raftm
 
 By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raft 1.1 (Unity 2021.3) with SwedenJohansson.
 
-> **EXPERIMENTAL RELEASE** - this is the first release of Custom Islands (version 3.0). Things are likely to change, some
+> **UNCHARTED WATERS - ALPHA** - this is the first release of Custom Islands (version 3.0), an early alpha. Things are likely to change, some
 > systems might be unstable, and we do not guarantee that progress is always saved: back up the worlds you care about.
 > The main menu shows this in a box (**Got it** folds it until the next version).
 
