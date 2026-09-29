@@ -162,7 +162,7 @@ namespace DynamicIslands
 			JoinGameBox box = Resources.FindObjectsOfTypeAll<JoinGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Join World box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
-			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			// Raft asks Steam for the friends' games: wait until the list stops growing
 			float timeout = Time.realtimeSinceStartup + 30f;
 			int count = -1;

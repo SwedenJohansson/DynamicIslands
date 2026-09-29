@@ -145,7 +145,7 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(1.2f);
 					int w = Screen.width, h = Screen.height;
 					box.gameObject.SetActive(true);
-					if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+					try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 					yield return new WaitForSecondsRealtime(1f);
 					var off = OffScreen(box.gameObject, w, h);
 					// (the box's own rectangle, and each of the mod's panels inside it)
@@ -503,7 +503,7 @@ namespace DynamicIslands
 			if (box == null) { Fail("New Game box clicks: no New Game box (main menu?)"); yield break; }
 			bool ok = true;
 			box.gameObject.SetActive(true);
-			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
 			// (the plan's own button, not the head's "Get more..." - the island library)
@@ -968,9 +968,9 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRaftSettings", docs: "Dev, world (host, a custom island loaded near the raft): Raft's own settings as a player sets them (the settings screen's dropdowns, toggles and sliders, so Raft applies them): every graphics quality, water, texture, shadow, reflection and FPS option, ambient occlusion and anti-aliasing, FOV at its ends; then every language of Raft's. After each: no error of the mod, the island still there with its ground drawn, the mod's item names, journal and quest panel still work. Everything put back after; pictures shot_settings_*")]
-		public static void RaftSettingsCommand() { DynamicIslands.instance.StartCoroutine(RaftSettingsRoutine()); }
+		public static void RaftSettingsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RaftSettingsRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
-		static IEnumerator RaftSettingsRoutine()
+		static IEnumerator RaftSettingsRoutine(string only = null)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("Raft's settings: run in a world"); yield break; }
 			yield return EnsureAlive();
@@ -1005,6 +1005,7 @@ namespace DynamicIslands
 					var dropdowns = new[] { "qualitySettingsDropdown", "waterQualityDropdown", "textureQualityDropdown", "shadowTypeDropdown", "shadowCascadeDropdown", "shadowResolutionDropdown", "reflectionsDropdown", "fpsCapDropdown" };
 					foreach (string name in dropdowns)
 					{
+						if (only != null && name != only) continue; // (CIRaftSettings <dropdown>: that one only)
 						FieldInfo f = bt.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 						Dropdown d = f != null ? f.GetValue(box) as Dropdown : null;
 						if (d == null) { Log("  (no " + name + " in this Raft)"); continue; }
@@ -1023,7 +1024,7 @@ namespace DynamicIslands
 						yield return new WaitForSecondsRealtime(0.5f);
 						Check(ref ok, bad.Count == 0, "graphics " + name.Replace("Dropdown", "") + ": " + d.options.Count + " options" + (bad.Count == 0 ? ", the island fine with each" : " - " + string.Join("; ", bad.Take(3).ToArray())));
 					}
-					foreach (string name in new[] { "aoToggle", "aaToggle", "vsyncToggle" })
+					if (only == null) foreach (string name in new[] { "aoToggle", "aaToggle", "vsyncToggle" })
 					{
 						FieldInfo f = bt.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 						Toggle tg = f != null ? f.GetValue(box) as Toggle : null;
@@ -1037,7 +1038,7 @@ namespace DynamicIslands
 					}
 					FieldInfo ff = bt.GetField("FOVSlider", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 					Slider fov = ff != null ? ff.GetValue(box) as Slider : null;
-					if (fov != null)
+					if (fov != null && only == null)
 					{
 						float was = fov.value;
 						foreach (float v in new[] { fov.minValue, fov.maxValue })
@@ -1052,7 +1053,7 @@ namespace DynamicIslands
 
 				// Languages: every one of Raft's; the mod's texts that come from Raft (item names) and its own windows
 				Type lm = RaftType("I2.Loc.LocalizationManager");
-				if (lm == null) Log("  (no I2 localization in this Raft: languages not checked)");
+				if (lm == null || only != null) Log("  (languages not checked" + (only != null ? ": " + only + " only)" : ": no I2 localization in this Raft)"));
 				else
 				{
 					PropertyInfo current = lm.GetProperty("CurrentLanguage", BindingFlags.Public | BindingFlags.Static);

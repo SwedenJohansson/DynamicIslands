@@ -159,6 +159,42 @@ namespace DynamicIslands
 			if (ok) Log("PASS: safe write"); else Fail("safe write");
 		}
 
+		[ConsoleCommand(name: "CICulture", docs: "Dev, anywhere: Raft runs as on a Windows set to another language (TEST_CATALOGUE UP3): CICulture tr-TR / th-TH / de-DE / sv-SE, or CICulture off. Then run the unit suites; CICulture check writes and reads back an island, a plan, the world rules and a library info under it")]
+		public static void CultureCommand(string[] args)
+		{
+			string c = args != null && args.Length > 0 ? args[0] : "off";
+			if (c == "check") { CultureCheck(); return; }
+			var ci = c == "off" ? originalCulture ?? System.Globalization.CultureInfo.InvariantCulture : new System.Globalization.CultureInfo(c);
+			if (originalCulture == null) originalCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+			System.Threading.Thread.CurrentThread.CurrentCulture = ci;
+			System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
+			Log("Culture: " + ci.Name + " (1.5 is written '" + 1.5f.ToString() + "', 'I'.ToLower() is '" + "I".ToLower() + "', the year " + DateTime.Now.ToString("yyyy") + ")");
+		}
+
+		static System.Globalization.CultureInfo originalCulture;
+
+		static void CultureCheck()
+		{
+			bool ok = true;
+			string culture = System.Threading.Thread.CurrentThread.CurrentCulture.Name;
+			// A plan with numbers in it, written and read back
+			var plan = new WorldPlan { Name = "ci culture plan", Description = "Ölçü 1.5 km", Random = false };
+			plan.Rules.Add(new IntroRule { Id = "İsland", What = "type", WhatArg = "sandbar", When = "km", WhenArg = "1.5", Where = "ahead", Distance = 350.5f });
+			plan.Save();
+			WorldPlan back = WorldPlan.Load("ci culture plan");
+			Check(ref ok, back != null && back.Rules.Count == 1 && back.Rules[0].WhenArg == "1.5" && Mathf.Abs(back.Rules[0].Distance - 350.5f) < 0.01f && back.Description == "Ölçü 1.5 km",
+				"a plan with 1.5 km and 350.5 m reads back the same (" + (back != null && back.Rules.Count > 0 ? back.Rules[0].WhenArg + " km, " + back.Rules[0].Distance + " m" : "not read") + ")");
+			try { File.Delete(WorldPlan.PathFor("ci culture plan")); } catch { }
+			// Library info (numbers, dates) and version comparison
+			var info = new LibraryInfo { id = LibraryPack.IdFrom("İstanbul Island"), title = "İstanbul Island", author = "CI", version = 3, summary = "s", minModVersion = "2.10" };
+			LibraryInfo info2 = LibraryInfo.FromJson(info.ToJson());
+			Check(ref ok, info2 != null && info2.version == 3 && info2.id == info.id && info.id.Length > 0, "a library info reads back (id '" + info.id + "')");
+			Check(ref ok, LibraryPack.CompareVersions("2.10", "2.9") > 0 && LibraryPack.CompareVersions("3.0", "3.0") == 0, "versions compared as numbers");
+			// A file name check with a dotted I (Turkish lower/upper case)
+			Check(ref ok, FileNames.IsReserved("con") && FileNames.IsReserved("COM1.island") && !FileNames.IsReserved("İsland"), "device names found in any culture");
+			if (ok) Log("PASS: culture " + culture); else Fail("culture " + culture);
+		}
+
 		[ConsoleCommand(name: "CIFakeVersion", docs: "Dev, anywhere: this PC pretends to have another version of the mod (CIFakeVersion 2.9), or its own again (CIFakeVersion off)")]
 		public static void FakeVersionCommand(string[] args)
 		{
@@ -186,9 +222,25 @@ namespace DynamicIslands
 			var tops = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation"))
 				.Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).ToList();
 			Network_Player p = RAPI.GetLocalPlayer();
-			Rigidbody body = raftObj.GetComponent<Rigidbody>();
+			Rigidbody body = raftObj.body;
 			Log("RAFT " + (tops.Count > 0 ? tops.Max().ToString("F2") : "?") + " " + raftObj.transform.position.y.ToString("F2") + " " + (p != null ? p.transform.position.y.ToString("F2") : "?") + " " +
 				(p != null && p.PersonController != null ? p.PersonController.controller.isGrounded.ToString() : "?") + " velocity " + (body != null ? body.velocity.ToString("F2") : "?") + " kinematic " + (body != null && body.isKinematic));
+		}
+
+		[ConsoleCommand(name: "CIRaftCalm", docs: "Dev, world: the raft back on the sea at rest (no speed, no spin, upright at sea level) - after a test dragged it at test speed")]
+		public static void RaftCalmCommand()
+		{
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj == null || raftObj.body == null) { Fail("raft calm: no raft"); return; }
+			Rigidbody body = raftObj.body;
+			body.velocity = Vector3.zero;
+			body.angularVelocity = Vector3.zero;
+			Vector3 at = body.position;
+			body.position = new Vector3(at.x, 0f, at.z);
+			body.rotation = Quaternion.Euler(0f, body.rotation.eulerAngles.y, 0f);
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p != null) p.transform.position = body.position + Vector3.up * 3f;
+			Log("Raft calm: was at y " + at.y.ToString("F2") + ", now on the sea at rest");
 		}
 
 		[ConsoleCommand(name: "CIMemory", docs: "Dev, anywhere: logs the memory in use (MEMORY <managed MB> <Unity allocated MB> <textures> <meshes> <game objects>) after a full collection")]

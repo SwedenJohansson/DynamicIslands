@@ -1005,7 +1005,7 @@ namespace DynamicIslands
 				if (to.magnitude < 3f) break;
 				body.MovePosition(body.position + to.normalized * Mathf.Min(speed * Time.fixedDeltaTime, to.magnitude));
 			}
-			body.velocity = Vector3.zero;
+			body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; // (a raft dragged at test speed through the sea keeps no spin either)
 			Log("Sailed back: the raft " + Flat(target() - body.position).magnitude.ToString("F0") + " m from where it was");
 		}
 		static IEnumerator SailRoutine(float seconds, float speed)
@@ -1038,7 +1038,7 @@ namespace DynamicIslands
 					Log(string.Format("t={0:F0}s sailed {1:F0} m; custom islands {2} ({3} loaded)", t, sailed, IslandWorldState.Islands.Count, loaded));
 				}
 			}
-			body.velocity = Vector3.zero;
+			body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; // (a raft dragged at test speed through the sea keeps no spin either)
 			Log("Done: sailed " + sailed.ToString("F0") + " m, custom islands " + startCount + " -> " + IslandWorldState.Islands.Count + ", loaded now " + IslandWorldState.Islands.Count(e => e.Root != null));
 		}
 
@@ -1270,7 +1270,7 @@ namespace DynamicIslands
 					if (stuckTime >= 6f) { Log("PASS: the raft is stopped by the island (" + Flat(peak - body.position).magnitude.ToString("F0") + " m from the peak)"); body.velocity = Vector3.zero; yield break; }
 				}
 			}
-			body.velocity = Vector3.zero;
+			body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; // (a raft dragged at test speed through the sea keeps no spin either)
 			Fail("raft was not stopped within " + seconds + " s");
 		}
 
@@ -1748,7 +1748,7 @@ namespace DynamicIslands
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
-			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			// Raft fills the list asynchronously: wait until it stops growing
 			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
 			float timeout = Time.realtimeSinceStartup + 90f;
@@ -1809,7 +1809,7 @@ namespace DynamicIslands
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
 			box.gameObject.SetActive(true);
-			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
 		}
 

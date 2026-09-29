@@ -955,7 +955,7 @@ namespace DynamicIslands
 			shown.Disabled.Add(RandomizerSettings.Alphas);
 			WorldRandomizer.Pending = shown;
 			box.gameObject.SetActive(true);
-			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			yield return new WaitForSeconds(1f);
 			bool ok = true;
 			RectTransform boxRect = (RectTransform)box.transform;

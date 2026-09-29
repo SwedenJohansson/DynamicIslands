@@ -227,7 +227,7 @@ namespace DynamicIslands
 			{
 				MenuBox box = Resources.FindObjectsOfTypeAll(t).OfType<MenuBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 				if (box == null) { check(false, t.Name + " not found on the main menu"); continue; }
-				if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
+				try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 				yield return new WaitForSecondsRealtime(1.5f);
 				check(box.IsOpen && ExperimentalNotice.Hidden, t.Name + " open: the alpha box is hidden (" + (ExperimentalNotice.OtherWindow() ?? "nothing seen") + ")");
 				Screenshot(new[] { "notice_under_" + t.Name });
