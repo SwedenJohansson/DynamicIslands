@@ -259,10 +259,21 @@ namespace DynamicIslands.Editor
 			Cycle(a, WhenLabels[r.When], 130, "Click to change what the rule waits for", () => { r.When = Next(IntroRule.WhenKinds, r.When); ShowRules(); });
 			bool needsRef = r.When == "quest" || r.When == "step" || r.When == "zone" || r.When == "visit" || r.When == "rule" || r.When == "signal";
 			bool needsArg = r.When == "km" || r.When == "day" || r.When == "step" || r.When == "zone" || r.When == "signal";
-			if (needsRef) SmallField(a, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 110,
-				r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim());
-			if (needsArg) SmallField(a, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" ? 100 : 50,
-				r.When == "zone" ? "The trigger zone's name on that island" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim());
+			if (needsRef)
+			{
+				SmallField(a, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 110,
+					r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim());
+				Pick(a, "Pick_WhenRef", r.When == "rule" ? "Choose the rule to wait for" : "Choose the island: a rule of this plan, or one of your saved islands", () => WhenRefChoices(r),
+					r.When == "rule" ? "Rule to wait for" : "Island to wait for", v => r.WhenRef = v, () => r.When == "rule" ? "There are no other rules yet: + Add a rule first." : "No rules or saved islands yet.");
+			}
+			if (needsArg)
+			{
+				SmallField(a, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" || r.When == "signal" ? 100 : 50,
+					r.When == "zone" ? "The trigger zone's name on that island" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim());
+				if (r.When == "zone" || r.When == "signal" || r.When == "step")
+					Pick(a, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
+						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
+			}
 			HelpMark(a, islandMode ? HelpWhenIsland : HelpWhen);
 			UIKit.Size(UIKit.Label(a, "bring", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 36);
 			Cycle(a, WhatLabels[r.What], 120, "Click to change: a saved island, a new island of a map type, one from the spawn pool, or one of a list", () =>
@@ -309,6 +320,7 @@ namespace DynamicIslands.Editor
 				UIKit.Size(UIKit.Label(b, "of", 12, UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 18);
 				SmallField(b, islandMode ? "self" : "where it happened", r.WhereRef == IntroRule.Self && !islandMode ? "" : r.WhereRef, 110,
 					"Which island: the id of the rule that brought it, or an island name. Empty = the island where the rule's event happened" + (islandMode ? "; self = this island" : ""), v => r.WhereRef = v.Trim());
+				Pick(b, "Pick_WhereRef", "Choose the island to put it near", () => WhereRefChoices(r), "Put it near", v => r.WhereRef = v, () => "No rules or saved islands yet.");
 			}
 			HelpMark(b, islandMode ? HelpWhereIsland : HelpWhere);
 			SmallField(b, "Message to every player (optional)", r.Message, -1, "Shown when the island appears, with how far and which way it is", v => r.Message = v.Trim()).characterLimit = 160;
@@ -346,7 +358,12 @@ namespace DynamicIslands.Editor
 				ShowRules();
 			});
 			if (kind == "step" || kind == "zone" || kind == "signal")
+			{
 				SmallField(c, kind == "step" ? "steps" : kind + " name", arg, kind == "step" ? 50 : 120, kind == "step" ? "How many steps of its quest" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
+				string own = r.What == "island" ? r.WhatArg : null;
+				Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
+					Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
+			}
 			UIKit.Label(c, r.Where == "receiver" ? "(then players tune the Receiver to its frequency)" : "", 12, UIKit.TextMuted);
 		}
 
@@ -398,6 +415,125 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
+		#region Lists for the fields (combo boxes: type, or pick what exists with ▼)
+
+		/// <summary>A ▼ after a field: the list of what exists (the rules of the plan, saved islands, an island's zones,
+		/// signals or quest steps); picking one fills the field. Typing still works.</summary>
+		void Pick(Transform row, string name, string hint, Func<List<ChoiceWindow.Choice>> choices, string title, Action<string> set, Func<string> empty)
+		{
+			Button b = UIKit.Button(row, "▾", () =>
+			{
+				Keep();
+				ChoiceWindow.Open(title, choices(), v => { set(v); ShowRules(); }, empty());
+			}, hint, 24, 26f, 12);
+			b.name = name;
+		}
+
+		/// <summary>The plan's rules (except one) that bring an island, with what they bring.</summary>
+		List<ChoiceWindow.Choice> RuleChoices(IntroRule except)
+		{
+			var list = new List<ChoiceWindow.Choice>();
+			for (int i = 0; i < plan.Rules.Count; i++)
+			{
+				IntroRule o = plan.Rules[i];
+				if (o == except || o.Id.Length == 0) continue;
+				list.Add(new ChoiceWindow.Choice(o.Id, o.Id, "rule " + (i + 1) + ": " + o.DescribeWhat() + QuestNote(IslandOf(o.Id))));
+			}
+			return list;
+		}
+
+		/// <summary>Your saved islands, with whether they have a quest (quest rules need one).</summary>
+		static List<ChoiceWindow.Choice> IslandChoices()
+		{
+			return ChoiceWindow.Islands().Select(c => new ChoiceWindow.Choice(c.Value, c.Label, "saved island" + (c.Detail.Length > 0 ? " \"" + c.Detail + "\"" : "") + QuestNote(c.Value))).ToList();
+		}
+
+		static string QuestNote(string island)
+		{
+			if (string.IsNullOrEmpty(island)) return "";
+			IslandQuest q = IslandCache.QuestOf(island);
+			return q.Exists ? " - quest, " + q.Steps.Count + " step" + (q.Steps.Count == 1 ? "" : "s") : " - no quest";
+		}
+
+		List<ChoiceWindow.Choice> WhenRefChoices(IntroRule r)
+		{
+			var list = new List<ChoiceWindow.Choice>();
+			if (islandMode && r.When != "rule") list.Add(new ChoiceWindow.Choice(IntroRule.Self, "self", "this island" + QuestNote(DynamicIslands.currentIslandName)));
+			list.AddRange(RuleChoices(r));
+			if (r.When != "rule") list.AddRange(IslandChoices());
+			return list;
+		}
+
+		List<ChoiceWindow.Choice> WhereRefChoices(IntroRule r)
+		{
+			var list = new List<ChoiceWindow.Choice>();
+			if (islandMode) list.Add(new ChoiceWindow.Choice(IntroRule.Self, "self", "this island"));
+			else list.Add(new ChoiceWindow.Choice("", "where it happened", "the island where the rule's event happened (only when \"When\" names an island)"));
+			list.AddRange(RuleChoices(r));
+			list.AddRange(IslandChoices());
+			return list;
+		}
+
+		/// <summary>The saved island a rule id or island name stands for (null: a new map-type island, or unknown).</summary>
+		string IslandOf(string reference)
+		{
+			if (string.IsNullOrEmpty(reference)) return null;
+			if (reference.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) return islandMode ? DynamicIslands.currentIslandName : null;
+			IntroRule by = plan.Rules.FirstOrDefault(x => x.Id.Equals(reference, StringComparison.OrdinalIgnoreCase));
+			if (by != null) return by.What == "island" && by.WhatArg.Length > 0 ? by.WhatArg : null;
+			return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n.Equals(reference, StringComparison.OrdinalIgnoreCase));
+		}
+
+		static string ThingsOf(string kind) { return kind == "zone" ? "trigger zones" : kind == "signal" ? "signals" : "quest steps"; }
+		static string Capital(string s) { return s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1); }
+		static string RefLabel(string reference) { return string.IsNullOrEmpty(reference) ? "the island" : "'" + reference + "'"; }
+
+		/// <summary>An island's zones, signals or quest steps (for steps: "how many are done", with each step's text).</summary>
+		static List<ChoiceWindow.Choice> ThingChoices(string island, string kind)
+		{
+			var list = new List<ChoiceWindow.Choice>();
+			if (string.IsNullOrEmpty(island)) return list;
+			if (kind == "zone") list.AddRange(IslandCache.ZonesOf(island).Select(z => new ChoiceWindow.Choice(z, z, "trigger zone on " + island)));
+			else if (kind == "signal") list.AddRange(IslandCache.SignalsOf(island).Select(s => new ChoiceWindow.Choice(s, s, "sent on " + island)));
+			else
+			{
+				List<IslandQuest.Step> steps = IslandCache.QuestOf(island).Steps;
+				for (int i = 0; i < steps.Count; i++)
+					list.Add(new ChoiceWindow.Choice((i + 1).ToString(), (i + 1) + " step" + (i == 0 ? "" : "s") + " done", "the last: " + steps[i].Describe()));
+			}
+			return list;
+		}
+
+		/// <summary>Why the list is empty.</summary>
+		string NoThings(string reference, string island, string kind)
+		{
+			if (string.IsNullOrEmpty(island))
+				return string.IsNullOrEmpty(reference) ? "Choose the island first (▾ before this field)." :
+					RefLabel(reference) + " is a new island made in the world (a map type) or not a saved island, so its " + ThingsOf(kind) + " aren't known here: type the name.";
+			if (islandMode && reference == IntroRule.Self) return "'" + island + "' has no " + ThingsOf(kind) + " in its saved file. Save the island (Ctrl+S) after adding them.";
+			return "'" + island + "' has no " + ThingsOf(kind) + (kind == "step" ? " (no quest)" : "") + ".";
+		}
+
+		/// <summary>Tests: what the ▼ of a rule's field lists (field: whenref, whenarg, whereref, donearg).</summary>
+		public static List<ChoiceWindow.Choice> FieldChoices(int rule, string field)
+		{
+			if (instance == null || instance.plan == null || rule < 0 || rule >= instance.plan.Rules.Count) return new List<ChoiceWindow.Choice>();
+			IntroRule r = instance.plan.Rules[rule];
+			switch (field)
+			{
+				case "whenref": return instance.WhenRefChoices(r);
+				case "whenarg": return ThingChoices(instance.IslandOf(r.WhenRef), r.When);
+				case "whereref": return instance.WhereRefChoices(r);
+				case "donearg": return ThingChoices(r.What == "island" ? r.WhatArg : null, r.StoryDone.Split(':')[0]);
+			}
+			return new List<ChoiceWindow.Choice>();
+		}
+
+		/// <summary>Tests: the plan as the window has it now.</summary>
+		public static WorldPlan Current { get { return instance != null ? instance.plan : null; } }
+
+		#endregion
+
 		#region Help
 
 		/// <summary>A "?" at the end of a row: hovering it explains that part.</summary>
@@ -429,7 +565,7 @@ namespace DynamicIslands.Editor
 			"• quest done at: an island's quest is finished (the island must have a quest)\n• quest step done at: that many steps of it\n" +
 			"• zone fires at: a player walks into a trigger zone (its name) on an island\n• players reach: a player first comes to an island\n" +
 			"• after rule: right after another rule's island came\n• signal sent at: an object's \"send a signal\" action on an island\n\n" +
-			"Name an island with the id of the rule that brought it, or with the island's name.";
+			"Name an island with the id of the rule that brought it, or with the island's name. The ▾ after a field lists them: the plan's rules, your saved islands (with their quests), and an island's zones, signals or quest steps.";
 		const string HelpWhenIsland = "WHEN the island comes. Click to change: when this island's quest is done, when some of its quest steps are done, when one of its zones fires, " +
 			"when players first reach it, when it sends a signal... \"self\" means this island.";
 		const string HelpWhat = "WHAT island comes. Click to change:\n" +
@@ -440,12 +576,12 @@ namespace DynamicIslands.Editor
 			"• ahead of the raft: that many metres ahead\n" +
 			"• near an island: that far from it (centre to centre), in a direction (any way = wherever there's room), \"of\" which island - empty means the island where the rule's event happened\n" +
 			"• on the Receiver: it gets its own frequency, and comes when a player tunes Raft's Receiver to it\n" +
-			"• by chance, sailing: it comes up ahead some time later";
+			"• by chance, sailing: it comes up ahead some time later\n\nThe ▾ after \"of\" lists the plan's rules and your saved islands.";
 		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - any way means wherever there's room.";
 		const string HelpTell = "Message: shown to every player when the island appears, with how far and which way it is (e.g. \"Smoke rises from a small island ahead.\").\n\n" +
 			"Receiver name: the island's name on its dot on Raft's Receiver. Both are optional.";
 		const string HelpStoryPlace = "Optional: puts this island into Raft's story chain (found with the Receiver): first, after a story island (or one of your story islands), or in place of one.\n\n" +
-			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"not in it\" for an ordinary rule.";
+			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"not in it\" for an ordinary rule. The ▾ after \"done when\" lists the zones, signals or quest steps of the island it brings.";
 
 		/// <summary>The Help button: how to approach the window, step by step, and the guide.</summary>
 		void ShowHelp()

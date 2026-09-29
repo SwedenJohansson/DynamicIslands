@@ -903,7 +903,8 @@ already waits for the rule before it: **When** `quest done at` `camp`, **Where**
   from [4.8](#48-your-first-island-step-by-step)). No island of your own yet? Leave it on `new map type` and choose
   **Tropical island**.
 - **Where**: `near an island`, `800` m. Click **any way** until it says `north-east`. The field after **of** can stay
-  empty: then it means "the island where it happened", the camp. (You can also type `camp` there.)
+  empty: then it means "the island where it happened", the camp. (You can also type `camp` there, or pick it with the
+  **▾** after the field.)
 - **Message**: `The camp's notes speak of a cove to the north-east.` **Receiver name**: `Cove`.
 
 The camp's map type has a quest (the notice board). A rule "when the quest is done at" an island that has no quest
@@ -911,7 +912,8 @@ never fires - use **players reach** for those (next step).
 
 **7. The third island: a treasure island when players reach the cove.** **+ Add a rule**, then:
 - **id**: `treasure`.
-- **When**: click until it says `players reach`, and type `cove` in the field after it.
+- **When**: click until it says `players reach`, then click the **▾** after the field and pick `cove` (or type it).
+  The list has the plan's other rules and your saved islands, and says which have a quest.
 - **bring**: `new map type` → **…** → **Treasure island**.
 - **Where**: `near an island`, `900` m, `any way`, of `cove`.
 - **Message**: `From the cliffs you spot another island.` **Receiver name**: `Treasure`.
@@ -965,18 +967,28 @@ reward island**. Then change what you like. An id that's already in your plan ge
 
 In the game, the parts also have a **?** after them: hover it for the same explanation as in this table.
 
+**The ▾ lists.** A field that names something has a **▾** after it (this picture was taken before they came): the island a rule waits
+for, the zone, signal or quest step on that island, the island to put it near, and a story rule's "done when" zone, signal
+or step. It lists what exists, so there is nothing to misspell: the plan's rules (with what they bring), your saved
+islands (with "quest, 4 steps" or "no quest"), and the zones, signals and quest steps saved in that island's file.
+Picking one fills the field; typing still works. A new map-type island is only made in the world, so its zones and
+signals can't be listed: its list is empty and says so - type the name.
+
+![The ▾ list of a rule](images/plan-picks.jpg)
+*The ▾ after "zone fires at" lists the zones of the island the rule waits for.*
+
 | # | Part | What it does |
 |---|---|---|
 | 1 | **id** | The rule's name (`camp`, `beast`). Other rules point at the island it brought with this name. Each id once per plan; no `\|` or `:` |
 | 2 | **When** | What the rule waits for. Click to go through the choices ([7.4](#74-everything-a-rule-can-do)) |
-| 3 | **Which island / number** | Appears when **When** needs it: the island (a rule's id, or an island's name), the km, the day, the steps, the zone or signal name |
+| 3 | **Which island / number** | Appears when **When** needs it: the island (a rule's id, or an island's name), the km, the day, the steps, the zone or signal name. Type it, or pick it from the **▾** list after the field: the plan's rules and your saved islands (with whether they have a quest), and then that island's zones, signals or quest steps |
 | 4 | **bring** | What kind of island: a saved island, a new map type island, one from the spawn pool, one of a list |
 | 5 | **Which one** | The island's name or the map type. For "one of these", names with commas: `Skull Rock, Palm Cove` |
 | 6 | **…** | Choose from a list instead of typing: your saved islands, or every map type |
 | 7 | **Where** | Ahead of the raft, near an island, on the Receiver, or by chance while sailing |
 | 8 | **metres** | How far: from the raft, or centre to centre from the other island (50-5000 m). The mod keeps islands clear of each other, so a small number is made larger if it has to |
 | 9 | **direction** | Only for "near an island": `any way` (wherever there's room), or north, north-east, east... |
-| 10 | **of** | Only for "near an island": which island. Empty = the island where the rule's event happened |
+| 10 | **of** | Only for "near an island": which island. Empty = the island where the rule's event happened. The **▾** after it lists "where it happened", the rules and your islands |
 | 11 | **Message** | Shown to every player when the island appears, with how far and which way it is (optional) |
 | 12 | **Receiver name** | The island's name on its dot on Raft's Receiver (optional, up to 18 letters) |
 | 13 | **▲ ▼ ×** | Move the rule earlier or later in the list, or remove it (the order only matters for reading) |
@@ -1051,7 +1063,7 @@ They are recommendations only.
 Check can't know everything. Test your plan: create a world with it and play it through (F10 → `WorldPlan` shows which
 rules have fired). Common reasons a rule never fires:
 - "quest done at" an island that has no quest - use "players reach";
-- a zone or signal name that isn't exactly the name on the island (open the island in the editor to see it);
+- a zone or signal name that isn't exactly the name on the island (pick it from the **▾** list instead of typing);
 - a big number: "after sailing 20 km" or "on day 30" can take a long time to come in play (test with small numbers first).
 
 ### 7.6 Playing, changing and sharing a plan

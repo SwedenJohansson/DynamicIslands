@@ -372,6 +372,8 @@ namespace DynamicIslands.Editor
 			public DateTime Time;
 			public Dictionary<string, string> Props;
 			public List<string> Zones;
+			/// <summary>Signals its objects and island events send ("send a signal" actions).</summary>
+			public List<string> Signals;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -388,6 +390,10 @@ namespace DynamicIslands.Editor
 				if (cache.TryGetValue(name, out info) && info.Time == t) return info;
 				IslandFile f = IslandFile.Load(path);
 				info = new Info { Time = t, Props = f.Props, Zones = f.Objects.Where(o => o.Name == ContentCatalog.TriggerZone).Select(o => ObjectProps.Get(o.Props, ObjectProps.ZoneId)).ToList() };
+				info.Signals = f.Objects.Select(o => o.Props).Concat(new[] { f.Props }).Where(p => p != null)
+					.SelectMany(p => p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
+					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "signal" && a.Arg.Trim().Length > 0)
+					.Select(a => a.Arg.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 				cache[name] = info;
 				return info;
 			}
@@ -411,6 +417,15 @@ namespace DynamicIslands.Editor
 			IslandSettings s = e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
 			return s != null ? s.Props : Props(e.Name);
 		}
+
+		/// <summary>The names of the island's trigger zones (empty if the file is missing): the plan editor's lists.</summary>
+		public static List<string> ZonesOf(string name) { Info i = Get(name); return i != null ? i.Zones.Where(z => !string.IsNullOrEmpty(z)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() : new List<string>(); }
+
+		/// <summary>The signals the island's objects and events send (empty if none or the file is missing).</summary>
+		public static List<string> SignalsOf(string name) { Info i = Get(name); return i != null ? i.Signals : new List<string>(); }
+
+		/// <summary>The island's quest (none if the file is missing).</summary>
+		public static IslandQuest QuestOf(string name) { return IslandQuest.From(Props(name)); }
 
 		/// <summary>Place of the trigger zone with this name among the island's zones, or -1.</summary>
 		public static int ZoneOrdinal(string name, string zoneId)

@@ -26,6 +26,24 @@ namespace DynamicIslands.Editor
 		RectTransform list;
 		Action<string> onPick;
 		readonly List<KeyValuePair<string, GameObject>> rows = new List<KeyValuePair<string, GameObject>>();
+		List<Choice> shown = new List<Choice>();
+		string emptyText;
+
+		/// <summary>Tests: the title and the values listed now.</summary>
+		public static string Title { get { return instance != null ? instance.titleText.text : ""; } }
+		public static List<string> Values { get { return instance != null && IsOpen ? instance.shown.Select(c => c.Value).ToList() : new List<string>(); } }
+		public static string EmptyText { get { return instance != null && IsOpen && instance.shown.Count == 0 ? instance.emptyText : null; } }
+		public static List<Choice> Shown { get { return instance != null && IsOpen ? instance.shown.ToList() : new List<Choice>(); } }
+
+		/// <summary>Tests: picks a value as a click on its row does (false if it isn't listed).</summary>
+		public static bool PickValue(string value)
+		{
+			if (!IsOpen || !instance.shown.Any(c => c.Value == value)) return false;
+			Action<string> pick = instance.onPick;
+			Close();
+			if (pick != null) pick(value);
+			return true;
+		}
 
 		public static void Create(Transform canvas)
 		{
@@ -39,9 +57,11 @@ namespace DynamicIslands.Editor
 			blocker.SetActive(false);
 		}
 
-		public static void Open(string title, IEnumerable<Choice> choices, Action<string> pick)
+		/// <summary>A list to choose from; empty (optional) says why there is nothing in it.</summary>
+		public static void Open(string title, IEnumerable<Choice> choices, Action<string> pick, string empty = null)
 		{
 			if (instance == null) return;
+			instance.emptyText = empty;
 			instance.titleText.text = title.ToUpperInvariant();
 			instance.onPick = pick;
 			instance.Fill(choices.ToList());
@@ -89,6 +109,7 @@ namespace DynamicIslands.Editor
 		{
 			foreach (Transform child in list) Destroy(child.gameObject);
 			rows.Clear();
+			shown = choices;
 			foreach (Choice c in choices)
 			{
 				Choice choice = c;
@@ -98,7 +119,11 @@ namespace DynamicIslands.Editor
 				t.text = choice.Label + (choice.Detail.Length > 0 ? "   <color=#b89e70><size=11>" + choice.Detail + "</size></color>" : "");
 				rows.Add(new KeyValuePair<string, GameObject>((choice.Label + " " + choice.Value + " " + choice.Detail).ToLowerInvariant(), b.gameObject));
 			}
-			if (choices.Count == 0) UIKit.Label(list, "<i>Nothing to choose from yet.</i>", 13, UIKit.TextMuted);
+			if (choices.Count == 0)
+			{
+				Text none = UIKit.Label(list, "<i>" + (string.IsNullOrEmpty(emptyText) ? "Nothing to choose from yet." : emptyText) + "</i>", 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Empty");
+				none.horizontalOverflow = HorizontalWrapMode.Wrap;
+			}
 			Filter();
 		}
 
