@@ -411,12 +411,27 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Editor: starts an empty island (flat seabed, no objects, tropical, at sea level).</summary>
+		/// <summary>
+		/// The editor's own build area (1000 x 600 x 1000 m, 513 heights) again: an island opened before - a small one, or at
+		/// a lower resolution - left its own size, and New or Generate then worked in that. True when it was changed.
+		/// </summary>
+		public static bool ResetBuildArea()
+		{
+			terraineditor editor = FindObjectOfType<terraineditor>();
+			TerrainData data = terraineditor.terrain != null ? terraineditor.terrain.terrainData : null;
+			if (editor == null || data == null || (data.heightmapResolution == editor.heightmapResolution && data.size == editor.terrainSize)) return false;
+			data.heightmapResolution = editor.heightmapResolution; // (resolution first: changing it afterwards rescales the size)
+			data.size = editor.terrainSize;
+			return true;
+		}
+
 		public static void NewIsland()
 		{
 			if (!InEditor()) return;
 			Terrain terrain = terraineditor.terrain;
 			TerrainData data = terrain.terrainData;
 			if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);
+			ResetBuildArea();
 			data.SetHeights(0, 0, new float[data.heightmapResolution, data.heightmapResolution]);
 			foreach (Transform child in GameObject.Find("PlacedObjects").transform) Destroy(child.gameObject);
 			currentIslandName = "myisland";

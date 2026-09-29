@@ -76,6 +76,7 @@
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsSafety.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
     <Compile Include="DevTestsReleaseFixes.cs" />

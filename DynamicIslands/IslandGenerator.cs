@@ -414,6 +414,8 @@ namespace DynamicIslands.Editor
 			s.Clamp();
 			Last = s.Copy();
 			Terrain terrain = terraineditor.terrain;
+			// (the full build area: after opening a small island the new one was squeezed into its size)
+			if (DynamicIslands.ResetBuildArea()) terraineditor.paintMask = null;
 			TerrainData data = terrain.terrainData;
 			int hres = data.heightmapResolution, ares = data.alphamapResolution;
 
