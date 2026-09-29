@@ -18,17 +18,18 @@ namespace DynamicIslands.Editor
 
 		class Preset
 		{
-			public float Height, Turn, Intensity, Shadow, Fog;
+			public float Height, Turn, Intensity, Shadow, Fog; // (Fog: metres where the haze starts)
 			public Color Sun, Sky, Equator, Ground, Haze;
 		}
 
+		// (tuned from pictures of a generated island: the haze only far out, night still light enough to work in)
 		static readonly Preset[] presets =
 		{
-			new Preset { Height = 18f, Turn = 80f, Intensity = 0.95f, Shadow = 0.75f, Sun = new Color(1f, 0.82f, 0.62f), Sky = new Color(0.62f, 0.66f, 0.74f), Equator = new Color(0.62f, 0.56f, 0.5f), Ground = new Color(0.3f, 0.27f, 0.24f), Haze = new Color(0.86f, 0.8f, 0.72f), Fog = 0.0009f },
-			new Preset { Height = 58f, Turn = 150f, Intensity = 1.15f, Shadow = 0.8f, Sun = new Color(1f, 0.97f, 0.9f), Sky = new Color(0.62f, 0.74f, 0.9f), Equator = new Color(0.6f, 0.64f, 0.66f), Ground = new Color(0.34f, 0.32f, 0.28f), Haze = new Color(0.74f, 0.84f, 0.92f), Fog = 0.0006f },
-			new Preset { Height = 12f, Turn = 250f, Intensity = 0.85f, Shadow = 0.7f, Sun = new Color(1f, 0.62f, 0.38f), Sky = new Color(0.55f, 0.5f, 0.62f), Equator = new Color(0.66f, 0.46f, 0.38f), Ground = new Color(0.26f, 0.2f, 0.18f), Haze = new Color(0.9f, 0.62f, 0.48f), Fog = 0.0011f },
-			new Preset { Height = 40f, Turn = 200f, Intensity = 0.28f, Shadow = 0.5f, Sun = new Color(0.62f, 0.72f, 1f), Sky = new Color(0.12f, 0.16f, 0.28f), Equator = new Color(0.1f, 0.12f, 0.2f), Ground = new Color(0.05f, 0.05f, 0.08f), Haze = new Color(0.08f, 0.1f, 0.18f), Fog = 0.0012f },
-			new Preset { Height = 75f, Turn = 150f, Intensity = 0.6f, Shadow = 0.3f, Sun = new Color(0.9f, 0.92f, 0.95f), Sky = new Color(0.7f, 0.72f, 0.76f), Equator = new Color(0.64f, 0.65f, 0.67f), Ground = new Color(0.36f, 0.36f, 0.36f), Haze = new Color(0.72f, 0.74f, 0.78f), Fog = 0.0016f },
+			new Preset { Height = 20f, Turn = 80f, Intensity = 0.95f, Shadow = 0.7f, Sun = new Color(1f, 0.86f, 0.7f), Sky = new Color(0.56f, 0.62f, 0.72f), Equator = new Color(0.55f, 0.52f, 0.48f), Ground = new Color(0.28f, 0.26f, 0.24f), Haze = new Color(0.8f, 0.78f, 0.74f), Fog = 900f },
+			new Preset { Height = 55f, Turn = 150f, Intensity = 1.0f, Shadow = 0.75f, Sun = new Color(1f, 0.97f, 0.92f), Sky = new Color(0.46f, 0.56f, 0.7f), Equator = new Color(0.46f, 0.5f, 0.52f), Ground = new Color(0.26f, 0.25f, 0.22f), Haze = new Color(0.68f, 0.78f, 0.88f), Fog = 1400f },
+			new Preset { Height = 14f, Turn = 250f, Intensity = 0.95f, Shadow = 0.65f, Sun = new Color(1f, 0.76f, 0.56f), Sky = new Color(0.52f, 0.52f, 0.62f), Equator = new Color(0.6f, 0.5f, 0.45f), Ground = new Color(0.25f, 0.21f, 0.2f), Haze = new Color(0.84f, 0.68f, 0.58f), Fog = 900f },
+			new Preset { Height = 45f, Turn = 200f, Intensity = 0.55f, Shadow = 0.45f, Sun = new Color(0.7f, 0.78f, 1f), Sky = new Color(0.34f, 0.4f, 0.58f), Equator = new Color(0.28f, 0.32f, 0.44f), Ground = new Color(0.1f, 0.1f, 0.14f), Haze = new Color(0.12f, 0.15f, 0.25f), Fog = 700f },
+			new Preset { Height = 75f, Turn = 150f, Intensity = 0.62f, Shadow = 0.3f, Sun = new Color(0.92f, 0.93f, 0.95f), Sky = new Color(0.62f, 0.64f, 0.68f), Equator = new Color(0.56f, 0.57f, 0.6f), Ground = new Color(0.32f, 0.32f, 0.32f), Haze = new Color(0.7f, 0.72f, 0.76f), Fog = 600f },
 		};
 
 		/// <summary>The time of day shown now (an index into Names).</summary>
@@ -74,9 +75,10 @@ namespace DynamicIslands.Editor
 			RenderSettings.ambientEquatorColor = p.Equator;
 			RenderSettings.ambientGroundColor = p.Ground;
 			RenderSettings.fog = true;
-			RenderSettings.fogMode = FogMode.ExponentialSquared;
+			RenderSettings.fogMode = FogMode.Linear;
 			RenderSettings.fogColor = p.Haze;
-			RenderSettings.fogDensity = p.Fog;
+			RenderSettings.fogStartDistance = p.Fog;
+			RenderSettings.fogEndDistance = p.Fog * 4f;
 			Camera cam = Camera.main;
 			if (cam != null && cam.clearFlags != CameraClearFlags.Skybox) cam.backgroundColor = p.Haze;
 			if (keep)
