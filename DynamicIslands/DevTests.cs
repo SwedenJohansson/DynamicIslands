@@ -1114,6 +1114,33 @@ namespace DynamicIslands
 				ok &= arrived;
 				if (File.Exists(target)) File.Delete(target);
 
+				// 2b. The host plays the island from a copy (name_hash: kept for a saved world, or downloaded as a player before a
+				// host swap) while its own file is another version: the player must get it as name_hash - it was sent as
+				// name_hash and saved as name_hash_hash, and the island never loaded
+				const string copyTest = "citest-netcopy";
+				string copyName = IslandNetwork.DownloadName(copyTest, hash);
+				try
+				{
+					File.WriteAllBytes(IslandSpawner.PathFor(copyTest), File.ReadAllBytes(IslandSpawner.PathFor(name)).Concat(new byte[] { 1, 2, 3 }).ToArray()); // (another version)
+					File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(copyName), true);
+					var sent2 = new System.Collections.Generic.List<IslandNetMessage>();
+					IslandNetwork.Loopback = sent2.Add;
+					try { IslandNetwork.SendFile(copyTest, hash, default(Network_UserId)); }
+					finally { IslandNetwork.Loopback = null; }
+					File.Delete(IslandSpawner.PathFor(copyName)); // (the player's side: nothing yet)
+					IslandNetwork.ExpectFile(hash);
+					foreach (IslandNetMessage chunk in sent2) IslandNetwork.ReceiveChunk(RoundTrip(chunk, out size));
+					bool right = sent2.Count > 0 && File.Exists(IslandSpawner.PathFor(copyName)) && File.ReadAllBytes(IslandSpawner.PathFor(copyName)).SequenceEqual(File.ReadAllBytes(IslandSpawner.PathFor(name)))
+						&& !File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(copyName, hash)));
+					Log((right ? "PASS" : "FAIL") + ": the host playing a kept copy sends it as '" + copyTest + "' and the player saves it as " + copyName + " (" + sent2.Count + " chunk(s))");
+					ok &= right;
+				}
+				finally
+				{
+					foreach (string n in new[] { copyTest, copyName, IslandNetwork.DownloadName(copyName, hash) })
+						if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+				}
+
 				// 3. Trees and pickups on loaded islands can be found the way Raft finds what a remote player harvested / picked up
 				int found = 0, total = 0;
 				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(i => i.Root != null))

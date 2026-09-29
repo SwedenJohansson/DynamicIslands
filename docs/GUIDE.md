@@ -432,10 +432,15 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 
 ### 4.7 Saving and sharing
 
-**Save** (Ctrl+S) saves straight away once the island has a name; **Save as** and **Open** show the **Islands**
-window: a name, the height in the world, and your saved islands (click = pick, double-click = open, Delete asks
-first and says which saved worlds and plans use the island). A deleted island isn't erased: it is moved to
-`ModsDynamicIslandsdeleted` - move the file back into `ModsDynamicIslands` to get it back.
+**Save** (Ctrl+S) saves straight away once the island has its own name (a new island asks for one first: until then it
+is only "myisland"); **Save as** and **Open** show the **Islands** window: a name, the height in the world, and your
+saved islands (click = pick, double-click = open, Delete asks first and says which saved worlds, plans and other
+islands' rules use the island). A deleted island isn't erased: it is moved to `Mods\DynamicIslands\deleted` -
+move the file back into `Mods\DynamicIslands` to get it back. Copies kept for saved worlds (`<name>_<hash>`) aren't
+in the list: the island library's **Remove unused** tidies them.
+
+**Nothing unsaved is lost:** opening another island, **New**, or a map type's **Make** while the island has unsaved
+changes keeps them as its autosave first (the editor says so, and offers them back the next time it opens).
 
 ![The Islands window](images/editor-islands-window.jpg)
 *The Islands window: the name and height, and the saved islands with their date and size.*
@@ -589,6 +594,10 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
+
+The test world is made with your last World settings choices (monsters, randomizer, extra options...); change them
+there with **Esc → Custom Islands** if you want to try the island another way. It never counts as a saved world that
+uses your islands (no kept copies or warnings for it).
 
 Change something, **Test** again. The test world is a world like any other in Raft's Load Game list: you can load it
 yourself too, and delete it from there when you no longer want it. (Trying an island in one of your own worlds is still
@@ -1468,6 +1477,11 @@ Other files:
 | `groups\`, `stamps\` | Your saved object groups and terrain stamps |
 | `generator_presets\` | Your generator presets (**Save these settings...**) |
 | `notice.txt` | That you folded the alpha box, for this version of the mod |
+| `editor_light.txt` | The editor's time of day (the Light button) |
+| `deleted\` | Islands you deleted in the editor (move one back to get it back) |
+| `catalog_index.txt`, `placeables*.txt` | Where the editor finds Raft's objects (made again after a Raft update) |
+| `Custom-Islands-Guide.pdf` | This guide, written out of the mod when the alpha box's **Guide (PDF)** opens it |
+| `raft_*.txt`, `island_thumbs\`, `island_heights\` | Measurements of Raft's islands the generator uses (they come with the mod; a copy here is read first) |
 
 ## 11. Console commands
 

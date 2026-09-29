@@ -236,5 +236,39 @@ namespace DynamicIslands
 			Check(ref ok, gizmo != null && gizmo.SetCenterTypeToggle == KeyCode.None && gizmo.SetSpaceToggle == KeyCode.X && gizmo.SetPivotModeToggle == KeyCode.P, "the gizmo's keys: C left to the camera, X and P kept");
 			if (ok) Log("PASS: editor limits"); else Fail("editor limits");
 		}
+
+		[ConsoleCommand(name: "CILooseEndsUnit", docs: "Dev, anywhere: the rules of the loose-ends fixes on test files - the editor's test world isn't a world using an island, a world's kept plan counts, saved worlds naming a version no longer on the PC are pointed at the kept copy (others left alone), plan rules name islands (island:, oneof:), the story chain message carries done and brought, an unnamed island")]
+		public static void LooseEndsUnit()
+		{
+			bool ok = true;
+			string folder = System.IO.Path.Combine(DynamicIslands.assetpath, "worlds");
+			System.IO.Directory.CreateDirectory(folder);
+			string fTest = System.IO.Path.Combine(folder, "citest-le-test.txt"), fWorld = System.IO.Path.Combine(folder, "citest-le-world.txt");
+			const string isl = "citest-le", planned = "citest-le-planned", gone = "aaaaaaaaaaaa", kept = "bbbbbbbbbbbb";
+			try
+			{
+				var rule = new IntroRule { Id = "le1", What = "oneof", WhatArg = "x, " + planned, When = "start", Where = "ahead", Distance = 300f };
+				System.IO.File.WriteAllLines(fTest, new[] { "# Custom islands in world '" + IslandTest.WorldName + "': ...", isl + "|0|0|0||||" + gone });
+				System.IO.File.WriteAllLines(fWorld, new[] { "# Custom islands in world 'CI LooseEnds': ...", "@planrule=" + rule.ToLine(), isl + "|0|0|0||||" + gone, "other|0|0|0||||" + gone });
+				List<string> using1 = LibraryPack.WorldsUsing(isl);
+				Check(ref ok, using1.Contains("CI LooseEnds") && !using1.Contains(IslandTest.WorldName), "the editor's test world isn't a world using the island: " + string.Join(", ", using1.ToArray()));
+				Check(ref ok, LibraryPack.WorldsUsing(planned).Contains("CI LooseEnds"), "a world whose kept plan brings an island (oneof) uses it");
+				Check(ref ok, LibraryPack.RuleNames(rule, planned) && !LibraryPack.RuleNames(rule, "citest-nope") && LibraryPack.RuleNames(new IntroRule { What = "island", WhatArg = isl }, isl), "plan rules name islands: island: and oneof:");
+				int n = LibraryPack.RepointWorlds(isl, kept);
+				string[] after = System.IO.File.ReadAllLines(fWorld);
+				Check(ref ok, n >= 1 && after.Any(l => l.StartsWith(isl + "|") && l.EndsWith("|" + kept)) && after.Any(l => l.StartsWith("other|") && l.EndsWith("|" + gone)),
+					"a world naming a version no longer on this PC is pointed at the kept copy; another island's line is left alone (" + n + " file(s))");
+				Check(ref ok, LibraryPack.RepointWorlds(isl, kept) == 0, "... and pointing again changes nothing");
+				string data = StoryChain.Message().Data ?? "";
+				Check(ref ok, data.Length == 0 || data.Split('|').Length == 6, "the story chain message has done and brought (" + (data.Length == 0 ? "no chain here" : data.Split('|').Length + " parts") + ")");
+				Check(ref ok, DynamicIslands.UnnamedIsland == "myisland", "a new island is '" + DynamicIslands.UnnamedIsland + "' until it has its own name (Ctrl+S and Test ask for one)");
+			}
+			catch (Exception e) { Check(ref ok, false, "no errors: " + e.Message); }
+			finally
+			{
+				foreach (string f in new[] { fTest, fWorld }) if (System.IO.File.Exists(f)) System.IO.File.Delete(f);
+			}
+			if (ok) Log("PASS: loose ends unit"); else Fail("loose ends unit");
+		}
 	}
 }
