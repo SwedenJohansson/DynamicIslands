@@ -869,7 +869,7 @@ namespace DynamicIslands.Editor
 			if (type != null)
 			{
 				gen = MapTypes.Roll(type, rnd, out elevation);
-				name = MapTypes.FileName(type, gen);
+				name = MapTypes.FreeFileName(type, gen);
 				radius = MapTypes.EstimatedRadius(gen);
 			}
 			else

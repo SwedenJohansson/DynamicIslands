@@ -45,6 +45,14 @@ namespace DynamicIslands.Editor
 		public const string GeneratedEntry = "<generated>";
 		/// <summary>Files of islands generated while sailing are named gen-&lt;style&gt;-&lt;seed&gt;.</summary>
 		public const string GeneratedPrefix = "gen-";
+
+		/// <summary>This name, or with -2, -3... when an island file (or a world's island still being made) has it already.</summary>
+		public static string FreeName(string name)
+		{
+			string n = name;
+			for (int i = 2; File.Exists(IslandSpawner.PathFor(n)) || IslandWorldState.Islands.Any(e => e.Name.Equals(n, StringComparison.OrdinalIgnoreCase)); i++) n = name + "-" + i;
+			return n;
+		}
 		/// <summary>Pool entries "type:&lt;map type&gt;" stand for a new island of that map type (MapTypes).</summary>
 		public const string TypePrefix = "type:";
 		static readonly List<KeyValuePair<string, float>> poolLines = new List<KeyValuePair<string, float>>();
@@ -182,7 +190,7 @@ namespace DynamicIslands.Editor
 				mapType = MapTypes.Get(name.Substring(TypePrefix.Length));
 				if (mapType == null) return Skip("there is no map type '" + name.Substring(TypePrefix.Length) + "'");
 				generate = MapTypes.Roll(mapType, new System.Random(), out elevation);
-				name = MapTypes.FileName(mapType, generate);
+				name = MapTypes.FreeFileName(mapType, generate);
 				radiusCache[name] = MapTypes.EstimatedRadius(generate);
 				elevationCache[name] = elevation;
 			}
@@ -191,7 +199,7 @@ namespace DynamicIslands.Editor
 				var rnd = new System.Random();
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;
-				name = GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed;
+				name = FreeName(GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed);
 				// (used for placing until the real file exists)
 				radiusCache[name] = MapTypes.EstimatedRadius(generate);
 				elevationCache[name] = elevation;

@@ -487,6 +487,13 @@ namespace DynamicIslands.Editor
 			return CustomIslandSpawner.GeneratedPrefix + kind + "-" + s.Seed;
 		}
 
+		/// <summary>
+		/// The file name for a new generated island that is free: gen-&lt;type&gt;-&lt;seed&gt;, or with -2, -3... when an island of that
+		/// name exists already (seeds repeat: a new one must never overwrite an island another world uses, or one the player
+		/// made with Make and changed).
+		/// </summary>
+		public static string FreeFileName(MapType type, IslandGenSettings s) { return CustomIslandSpawner.FreeName(FileName(type, s)); }
+
 		/// <summary>About how far the land of these settings reaches (for placing it before the file exists).</summary>
 		public static float EstimatedRadius(IslandGenSettings s) { return Mathf.Max(20f, IslandGenerator.Reach(s)); }
 	}

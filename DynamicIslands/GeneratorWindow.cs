@@ -847,7 +847,7 @@ namespace DynamicIslands.Editor
 			{
 				float elevation;
 				IslandGenSettings ms = MapTypes.Roll(type, new System.Random(seed), out elevation);
-				string name = MapTypes.FileName(type, ms);
+				string name = MapTypes.FreeFileName(type, ms);
 				IslandFile file = MapTypes.Create(type, ms, elevation, name);
 				if (levels) file.Props[IslandProps.Levels] = "on";
 				file.Save(IslandSpawner.PathFor(name));

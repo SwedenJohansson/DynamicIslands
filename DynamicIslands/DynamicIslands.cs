@@ -295,6 +295,12 @@ namespace DynamicIslands
 		public static async void LoadEditor(string[] args)
 		{
 			if (instance.mainbundle == null) { Debug.LogError("[CUSTOM ISLANDS] The editor bundle is not loaded"); return; }
+			// (from inside a world this would skip Raft's own leaving: no save, and the other players left hanging)
+			if (LoadSceneManager.IsGameSceneLoaded)
+			{
+				Notify("Leave the world first (Esc > Main menu, which saves it), then click EDITOR in the main menu", true);
+				return;
+			}
 			string[] scenePath = instance.mainbundle.GetAllScenePaths();
 			string editorScene = scenePath.FirstOrDefault(p => Utils.SceneNameFromPath(p) == "Editor");
 			if (editorScene == null) { Debug.LogError("[CUSTOM ISLANDS] The editor bundle has no Editor scene"); return; }
