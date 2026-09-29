@@ -471,6 +471,8 @@ namespace DynamicIslands.Editor
 		public const float PanelHeight = 186f;
 
 		static int? monsterChoice, buildChoice;
+		/// <summary>The box shows the remembered choices again (a saved world was loaded after the box was changed).</summary>
+		internal static void Forget() { monsterChoice = buildChoice = null; }
 		static UIKit.SliderRow monsterSlider, buildSlider;
 		static Text monsterDetail, buildDetail;
 		static readonly List<Text> ticks = new List<Text>();

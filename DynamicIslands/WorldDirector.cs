@@ -848,6 +848,19 @@ namespace DynamicIslands.Editor
 
 		const string NoIslandPrefix = "there is no saved island ", NoneOfPrefix = "none of the islands ";
 
+		/// <summary>
+		/// The file a rule plays for an island named so: its own, else the newest copy of it this PC has (name_hash: a player
+		/// who hosts a world after another did - host swap - may have only the copy they downloaded when they joined; the
+		/// rule found nothing and the story stopped). Null when there is neither.
+		/// </summary>
+		internal static string FileFor(string name)
+		{
+			if (File.Exists(IslandSpawner.PathFor(name))) return name;
+			string prefix = name + "_";
+			return IslandSpawner.ListSavedIslands().Where(n => n.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && n.Length == prefix.Length + 12 && IslandNetwork.IsDownloadName(n))
+				.OrderByDescending(n => File.GetLastWriteTimeUtc(IslandSpawner.PathFor(n))).FirstOrDefault();
+		}
+
 		/// <summary>Brings the rule's island; null when it's on its way, else why not (yet).</summary>
 		internal static string Bring(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry at)
 		{
@@ -859,10 +872,10 @@ namespace DynamicIslands.Editor
 			{
 				case "island":
 					name = r.WhatArg.Trim();
-					if (!File.Exists(IslandSpawner.PathFor(name))) return NoIslandPrefix + "'" + name + "'";
+					if (FileFor(name) == null) return NoIslandPrefix + "'" + name + "'";
 					break;
 				case "oneof":
-					var names = r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0 && File.Exists(IslandSpawner.PathFor(n))).ToList();
+					var names = r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0 && FileFor(n) != null).ToList();
 					if (names.Count == 0) return NoneOfPrefix + "'" + r.WhatArg + "' exist";
 					// Islands not in the world yet first
 					var fresh = names.Where(n => !IslandWorldState.Islands.Any(e => e.HostName.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
@@ -887,6 +900,9 @@ namespace DynamicIslands.Editor
 
 			IslandGenSettings gen = null;
 			float elevation, radius;
+			// (the file played: the island's own, or a copy of it - the world keeps the island's own name, so rules, quests
+			// and the journal still find it, and the copy's hash, so a player who joins gets that version)
+			string file = type == null ? FileFor(name) ?? name : name;
 			if (type != null)
 			{
 				gen = MapTypes.Roll(type, rnd, out elevation);
@@ -895,9 +911,9 @@ namespace DynamicIslands.Editor
 			}
 			else
 			{
-				radius = CustomIslandSpawner.LandRadius(name);
+				radius = CustomIslandSpawner.LandRadius(file);
 				if (radius < 0f) return "island '" + name + "' can't be read";
-				elevation = CustomIslandSpawner.Elevation(name);
+				elevation = CustomIslandSpawner.Elevation(file);
 			}
 
 			string why;
@@ -905,8 +921,9 @@ namespace DynamicIslands.Editor
 			if (!spot.HasValue) return why;
 
 			IslandWorldState.Entry entry = IslandWorldState.Add(name, spot.Value, null, false);
+			if (file != name) { entry.Name = file; entry.Hash = IslandNetwork.HashOf(file); Log("'" + name + "' isn't on this PC: played from its copy " + file); }
 			entry.Rule = r.Id;
-			entry.Label = LabelFor(r, name, type);
+			entry.Label = LabelFor(r, file, type);
 			entry.Loading = true;
 			if (gen != null)
 			{
@@ -917,7 +934,7 @@ namespace DynamicIslands.Editor
 			else
 			{
 				IslandNetwork.BroadcastAdded(entry);
-				DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true, entry));
+				DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(file, spot.Value, true, entry));
 			}
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			Log("Rule '" + r.Id + "'" + (owner != null ? " of '" + owner.HostName + "'" : "") + ": bringing '" + name + "' " +
@@ -1025,6 +1042,21 @@ namespace DynamicIslands.Editor
 		#endregion
 
 		#region Commands
+
+		/// <summary>A player who joined: the host's plan and where its rules stand, from the host's copy of the world file.</summary>
+		public static string DescribeForPlayer(bool withRules = true)
+		{
+			string plan = WorldCopy.HostValue("plan");
+			if (plan == null) return "World plan: the host's (it comes with the host's next save of the world)";
+			var done = new HashSet<string>((WorldCopy.HostValue("done") ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
+			List<IntroRule> rules = WorldCopy.HostLines.Where(l => l.StartsWith("@planrule=")).Select(l => IntroRule.Parse(l.Substring(10))).Where(r => r != null).ToList();
+			string auto = WorldCopy.HostValue("auto");
+			var lines = new List<string> { "World plan (the host's): " + plan + "; random islands while sailing " + (auto != null && auto.Equals("off", StringComparison.OrdinalIgnoreCase) ? "off" : "on") +
+				(rules.Count > 0 ? "; " + rules.Count(r => done.Contains(r.Id)) + " of " + rules.Count + " island(s) of the plan brought" : "") };
+			if (withRules) foreach (IntroRule r in rules) lines.Add("  [" + (done.Contains(r.Id) ? "done" : "    ") + "] " + r.Id + ": " + r.Describe());
+			if (withRules && (StoryChain.Active || StoryChain.Rules.Count > 0)) lines.Add(StoryChain.Describe());
+			return string.Join("\n", lines.ToArray());
+		}
 
 		/// <summary>What the current world's plan is and where its rules stand.</summary>
 		public static string Describe()

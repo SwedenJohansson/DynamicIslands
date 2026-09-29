@@ -120,6 +120,7 @@
     <Compile Include="IslandSettingsUndo.cs" />
     <Compile Include="WorldWindow.cs" />
     <Compile Include="IslandTest.cs" />
+    <Compile Include="Housekeeping.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />

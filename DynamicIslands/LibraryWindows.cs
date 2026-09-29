@@ -233,7 +233,7 @@ namespace DynamicIslands.Editor
 	/// "Import" (the editor's Islands window and the World plan window): the packs in Mods\DynamicIslands\import - pick one,
 	/// see what it holds (and whether it was made with a newer version of the mod), Install. Under it everything installed
 	/// from packs, each with Remove (which keeps what a saved world still uses), and the copies of islands downloaded from
-	/// multiplayer hosts with "Remove unused". Import is never offered inside a running world.
+	/// multiplayer hosts, unused generated islands and the files of deleted worlds with "Tidy up" (Housekeeping). Import is never offered inside a running world.
 	/// </summary>
 	public static class LibraryImportWindow
 	{
@@ -291,7 +291,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch((RectTransform)s2.transform, 4, 4, 4, 4);
 			RectTransform hostRow = UIKit.Row(inst, 28f, 6f, "HostCopies");
 			hostCopies = UIKit.Label(hostRow, "", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "HostCopiesText");
-			UIKit.Button(hostRow, "Remove unused", RemoveUnusedHostCopies, "Delete the copies of islands downloaded from multiplayer hosts that no saved world on this PC uses", 150, 28f, 12);
+			tidyButton = UIKit.Button(hostRow, "Tidy up", TidyUp, "Click twice: delete island copies from hosts no saved world uses, move generated islands (gen-...) nothing uses to the deleted folder, and move the files of worlds you deleted (Raft's own world is gone) to worlds\\removed", 150, 28f, 12);
 
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -408,10 +408,22 @@ namespace DynamicIslands.Editor
 				Button remove = UIKit.Button(row, pendingRemove == id ? "Sure? Remove" : "Remove", () => AskRemove(id), "Remove what this entry installed (what a saved world still uses stays)", 120, 26f, 12);
 				if (pendingRemove == id) UIKit.DangerButton(remove);
 			}
-			List<KeyValuePair<string, List<string>>> copies = LibraryPack.HostCopies();
-			int unused = copies.Count(c => c.Value.Count == 0);
-			hostCopies.text = copies.Count == 0 ? "No island copies downloaded from multiplayer hosts." :
-				copies.Count + " island copies downloaded from multiplayer hosts, " + (copies.Count - unused) + " used by your saved worlds, " + unused + " not used.";
+			Housekeeping.Scan scan = Housekeeping.Look();
+			hostCopies.text = scan.Describe();
+			tidyPending = false;
+			if (tidyButton != null) { UIKit.LabelOf(tidyButton).text = "Tidy up"; tidyButton.interactable = scan.Total > 0; }
+		}
+
+		static Button tidyButton;
+		static bool tidyPending;
+
+		/// <summary>Tidy up asks first: the first click turns it into "Sure? Tidy up" (public for tests).</summary>
+		public static void TidyUp()
+		{
+			if (!tidyPending) { tidyPending = true; UIKit.LabelOf(tidyButton).text = "Sure? Tidy up"; UIKit.DangerButton(tidyButton); return; }
+			tidyPending = false;
+			SetStatus(Housekeeping.TidyUp() + " (Generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
+			ShowInstalled();
 		}
 
 		/// <summary>Remove asks first: the first click turns the button into "Sure? Remove", the second removes (public for tests).</summary>
@@ -421,13 +433,6 @@ namespace DynamicIslands.Editor
 			pendingRemove = null;
 			SetStatus(LibraryPack.Remove(id).ToString(), false);
 			ShowPack();
-			ShowInstalled();
-		}
-
-		static void RemoveUnusedHostCopies()
-		{
-			int n = LibraryPack.RemoveUnusedHostCopies();
-			SetStatus(n == 0 ? "No unused copies to remove." : "Removed " + n + " island copies no saved world uses.", false);
 			ShowInstalled();
 		}
 

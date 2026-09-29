@@ -220,9 +220,9 @@ namespace DynamicIslands.Editor
 					UIKit.SetActive(b, on);
 				}
 			}
-			else islandsText.text = "Which islands turn up by chance is the host's list.";
+			else islandsText.text = WorldIslands.DescribeForPlayer();
 
-			planText.text = host ? PlanSummary() : (StoryChain.Active ? StorySummary() : "The world's plan is the host's.");
+			planText.text = host ? PlanSummary() : WorldDirector.DescribeForPlayer(false) + (StoryChain.Active ? "\n" + StorySummary() : "");
 		}
 
 		/// <summary>The plan and its rules, and the story chain if the plan changed Raft's story (host).</summary>

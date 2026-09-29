@@ -639,8 +639,9 @@ namespace DynamicIslands.Editor
 							report.Add("Kept your changed '" + t + "' (the new version's is not installed)");
 							continue;
 						}
-						// (a saved world plays the version it started with: its old file stays as the copy that world's hash finds)
-						KeepForWorlds(t, report);
+						// (saved worlds: the same rule as an editor save - an update that keeps the objects' order reaches them, one
+						// that would shift what was used there keeps them on the version they started with)
+						KeepForWorlds(t, bytes, report);
 					}
 					SafeFile.WriteAllBytes(path, bytes);
 					// (the island open in the editor was replaced under it: the next Ctrl+S put the old one back without a word)
@@ -750,11 +751,20 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Before an island file is replaced: saved worlds that use it keep playing this version (as its hash copy).</summary>
-		static void KeepForWorlds(string island, Report report)
+		static void KeepForWorlds(string island, byte[] next, Report report)
 		{
 			List<string> worlds = WorldsUsing(island);
 			string hash = IslandNetwork.HashOf(island);
 			if (worlds.Count == 0 || hash == null) return;
+			// (before 2026-09-29 the old version was always kept: worlds never got a fixed quest or ground from an update)
+			bool shifts = true;
+			try { shifts = DynamicIslands.ShiftsState(IslandFile.Load(IslandSpawner.PathFor(island)), IslandFile.FromBytes(next, island)); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing the versions of '" + island + "': " + e.Message + " - keeping the old one for saved worlds"); }
+			if (!shifts)
+			{
+				report.Add(string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + " get" + (worlds.Count == 1 ? "s" : "") + " the new '" + island + "' too (its objects keep their order, so what was used there stays right)");
+				return;
+			}
 			string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, hash));
 			if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(island), copy);
 			RepointWorlds(island, hash);
@@ -869,31 +879,9 @@ namespace DynamicIslands.Editor
 			report.Add("Removed " + (plan ? "the plan '" : "'") + f.name + "'");
 		}
 
-		/// <summary>The copies of islands downloaded from multiplayer hosts (&lt;name&gt;_&lt;hash&gt;), with the saved worlds that use each.</summary>
-		public static List<KeyValuePair<string, List<string>>> HostCopies()
-		{
-			var result = new List<KeyValuePair<string, List<string>>>();
-			foreach (string n in IslandSpawner.ListSavedIslands().Where(IslandNetwork.IsDownloadName))
-			{
-				int i = n.LastIndexOf('_');
-				string original = n.Substring(0, i), hash = n.Substring(i + 1);
-				var worlds = new List<string>();
-				try
-				{
-					if (Directory.Exists(WorldsFolder))
-						foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
-						{
-							string[] lines = File.ReadAllLines(file);
-							if (!lines.Any(l => { string[] p = l.Split('|'); return !l.StartsWith("@") && p.Length > 7 && p[0].Trim().Equals(original, StringComparison.OrdinalIgnoreCase) && p[7].Trim() == hash; })) continue;
-							string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-							worlds.Add(head != null ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file));
-						}
-				}
-				catch { }
-				result.Add(new KeyValuePair<string, List<string>>(n, worlds));
-			}
-			return result;
-		}
+		/// <summary>The copies of islands downloaded from multiplayer hosts (&lt;name&gt;_&lt;hash&gt;), with the saved worlds that use each
+		/// (every copy of their state: the older saves in Raft's world folders too - Housekeeping).</summary>
+		public static List<KeyValuePair<string, List<string>>> HostCopies() { return Housekeeping.Look().Copies; }
 
 		/// <summary>Deletes the downloaded host copies no saved world uses. Returns how many.</summary>
 		public static int RemoveUnusedHostCopies()

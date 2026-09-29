@@ -897,7 +897,7 @@ namespace DynamicIslands
 				IslandWorldState.Save();
 				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
 			}
-			foreach (string line in WorldDirector.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+			foreach (string line in (Raft_Network.IsHost ? WorldDirector.Describe() : WorldDirector.DescribeForPlayer()).Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
 		[ConsoleCommand(name: "Randomizer", docs: "The world randomizer (chosen in the New Game box): Randomizer = what it does in this world; Randomizer off|light|normal|wild, Randomizer -part / +part (colours, animals, alphas, loot, finds, oddities, bosses) = change it for this world (host)")]

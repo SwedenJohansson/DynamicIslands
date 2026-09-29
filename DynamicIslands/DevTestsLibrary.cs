@@ -186,7 +186,8 @@ namespace DynamicIslands
 				string planName = r.PlanName;
 				Check(ref ok, planName == LibPlan + " (CI Tester)" && WorldPlan.Load(LibPlan).Description == "the player's own", "the pack's plan is installed as '" + planName + "'; the player's own plan is untouched");
 
-				// An update while a saved world uses cilib-a: that world keeps its version
+				// An update while a saved world uses cilib-a: the ground changed (the objects keep their order) - that world gets
+				// it too, as with an editor save; then an update that removes an object - that world keeps its version
 				string hashA = IslandNetwork.HashOf(LibA);
 				string fake = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), "cilib-fake-world.txt");
 				Directory.CreateDirectory(Path.GetDirectoryName(fake));
@@ -206,10 +207,29 @@ namespace DynamicIslands
 				LibraryPackContents p2 = LibraryPack.Read(pack2, out error);
 				r = LibraryPack.Install(p2, false, false, LibraryPack.SourceImport);
 				Log("  " + r.ToString().Replace("\n", " / "));
-				Check(ref ok, File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA))) && IslandNetwork.HashOf(LibA) != hashA,
-					"updated: cilib-a is the new version, and the world that uses it keeps the one it started with (" + IslandNetwork.DownloadName(LibA, hashA) + ")");
-				Check(ref ok, WorldCopy.LocalFileFor(LibA, hashA) == IslandNetwork.DownloadName(LibA, hashA), "that world's island line finds its version: " + WorldCopy.LocalFileFor(LibA, hashA));
+				Check(ref ok, !File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA))) && IslandNetwork.HashOf(LibA) != hashA && r.ToString().Contains("get the new"),
+					"updated, only the ground changed: the world that uses cilib-a gets the new version too (no copy kept, the report says so)");
 				File.Delete(pack2);
+
+				// Version 3: an object removed - the saved world keeps the version it started with (version 2)
+				string hashA2 = IslandNetwork.HashOf(LibA);
+				File.WriteAllLines(fake, new[] { "# Custom islands in world 'CI Lib World': name|...", "@plan=" + planName, LibA + "|0|0|0||start||" + hashA2 });
+				string pack3 = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-pack3.zip");
+				IslandFile a3 = IslandFile.Load(IslandSpawner.PathFor(LibA));
+				int objects3 = a3.Objects.Count;
+				if (objects3 > 0) a3.Objects.RemoveAt(0);
+				a3.Save(tmpA);
+				WriteTestZip(pack3, new[] { Entry("ci-lib-pack/info.json", new LibraryInfo { id = "ci-lib-pack", kind = "plan", title = "CI Lib Pack", author = "CI Tester", version = 3, plan = LibPlan + ".plan" }.ToJson()),
+					Entry("ci-lib-pack/" + LibA + ".island", File.ReadAllBytes(tmpA)), Entry("ci-lib-pack/" + LibB + ".island", pack.Files[LibB + ".island"]), Entry("ci-lib-pack/" + LibC + ".island", pack.Files[LibC + ".island"]),
+					Entry("ci-lib-pack/" + LibPlan + ".plan", pack.Files[LibPlan + ".plan"]) });
+				File.Delete(tmpA);
+				LibraryPackContents p3 = LibraryPack.Read(pack3, out error);
+				r = LibraryPack.Install(p3, false, false, LibraryPack.SourceImport);
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, objects3 > 0 && File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA2))) && IslandNetwork.HashOf(LibA) != hashA2,
+					"updated, an object removed: cilib-a is the new version, and the world that uses it keeps the one it started with (" + IslandNetwork.DownloadName(LibA, hashA2) + ")");
+				Check(ref ok, WorldCopy.LocalFileFor(LibA, hashA2) == IslandNetwork.DownloadName(LibA, hashA2), "that world's island line finds its version: " + WorldCopy.LocalFileFor(LibA, hashA2));
+				File.Delete(pack3);
 
 				// No remixes: an island from an entry that says so can't be exported by someone else
 				List<LibraryInstalled> all = LibraryPack.Installed();

@@ -156,7 +156,17 @@ namespace DynamicIslands.Editor
 		public static IslandFile Load(string path)
 		{
 			SafeFile.Recover(path); // (a save that Raft stopped half way)
-			using (var file = File.OpenRead(path))
+			using (var file = File.OpenRead(path)) return Read(file, path);
+		}
+
+		/// <summary>An island file's bytes (a library update compares it with the one here before writing it).</summary>
+		public static IslandFile FromBytes(byte[] bytes, string label)
+		{
+			using (var m = new MemoryStream(bytes)) return Read(m, label);
+		}
+
+		static IslandFile Read(Stream file, string path)
+		{
 			{
 				var header = new BinaryReader(file);
 				if (header.ReadUInt32() != Magic)

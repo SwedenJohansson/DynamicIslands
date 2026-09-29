@@ -131,6 +131,14 @@ namespace DynamicIslands.Editor
 
 		internal static bool HasState { get { return Off.Count > 0; } }
 
+		/// <summary>A player who joined: the islands the host left out of this world (from the host's copy of the world file).</summary>
+		public static string DescribeForPlayer()
+		{
+			if (WorldCopy.HostLines == null) return "Which islands turn up by chance is the host's list (it comes with the host's next save of the world).";
+			HashSet<string> off = Parse(WorldCopy.HostValue(DefaultKey));
+			return "Islands while sailing are the host's: " + (off.Count == 0 ? "every island of the host's pool takes part." : off.Count + " left out: " + string.Join(", ", off.OrderBy(o => o, StringComparer.OrdinalIgnoreCase).Select(Label).ToArray()) + ".");
+		}
+
 		#endregion
 
 		public static string Describe()
@@ -150,7 +158,22 @@ namespace DynamicIslands.Editor
 		public static void WorldIslandsCommand(string[] args)
 		{
 			string arg = args != null ? string.Join(" ", args).Trim() : "";
-			if (arg.Length > 0 && LoadSceneManager.IsGameSceneLoaded)
+			if (arg.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)
+			{
+				// (the main menu: the next new world, remembered and shown in the World settings window - the words were ignored)
+				if (arg.Equals("all", StringComparison.OrdinalIgnoreCase)) Chosen.Clear();
+				else if (arg[0] == '-' || arg[0] == '+')
+				{
+					string name = arg.Substring(1).Trim();
+					string entry = Candidates().Concat(Chosen).FirstOrDefault(c => c.Equals(name, StringComparison.OrdinalIgnoreCase));
+					if (entry == null) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' isn't in the spawn pool (see SpawnPool)"); return; }
+					if (arg[0] == '-') Chosen.Add(entry); else Chosen.Remove(entry);
+				}
+				else { Debug.Log("[CUSTOM ISLANDS] WorldIslands -<island> or +<island>, or WorldIslands all"); return; }
+				SaveDefaults(Chosen);
+				try { WorldSettingsWindow.Show(); } catch { }
+			}
+			else if (arg.Length > 0 && LoadSceneManager.IsGameSceneLoaded)
 			{
 				if (!Raft_Network.IsHost) { Debug.Log("[CUSTOM ISLANDS] Only the host chooses the world's islands"); return; }
 				if (arg.Equals("all", StringComparison.OrdinalIgnoreCase)) { Off.Clear(); Log("Every island of the pool takes part again"); IslandWorldState.Save(); }
@@ -162,6 +185,13 @@ namespace DynamicIslands.Editor
 					Set(entry, arg[0] == '+');
 				}
 				else { Debug.Log("[CUSTOM ISLANDS] WorldIslands -<island> or +<island>, or WorldIslands all"); return; }
+			}
+			if (LoadSceneManager.IsGameSceneLoaded && !Raft_Network.IsHost)
+			{
+				// (a player: the host's list, from the host's copy of the world file - this PC's own list is empty in a
+				// world it joined, so it said every island takes part)
+				Debug.Log("[CUSTOM ISLANDS] " + DescribeForPlayer());
+				return;
 			}
 			List<string> all = Candidates();
 			bool inWorld = LoadSceneManager.IsGameSceneLoaded;

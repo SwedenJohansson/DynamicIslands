@@ -143,6 +143,9 @@ namespace DynamicIslands.Editor
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
 				if (WorldCopy.RaftSaveLine() != null) lines.Add(WorldCopy.RaftSaveLine());
+				// (which PC hosted it: Tidy up moves a world's file only when this PC hosted it and its Raft world is gone -
+				// a player's copy of a world they joined names the host)
+				if (Housekeeping.SavedByLine() != null) lines.Add(Housekeeping.SavedByLine());
 				lines.AddRange(WorldDirector.WriteLines());
 					lines.AddRange(WorldRandomizer.WriteLines());
 				lines.AddRange(StoryBook.WriteLines());
@@ -170,6 +173,7 @@ namespace DynamicIslands.Editor
 		{
 			islands.Clear();
 			loadedFor = WorldKey;
+			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
 			CustomIslandSpawner.OnWorldLoaded();
 			IslandNetwork.OnWorldLoaded();

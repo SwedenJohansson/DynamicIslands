@@ -84,10 +84,16 @@ namespace DynamicIslands.Editor
 		#region The world file
 
 		/// <summary>Before a world's island list is read (host) or when joining one (client: the host's come).</summary>
+		/// <summary>An option was on at some point in this world: its seed stays in the world file even with every option off
+		/// (the file was deleted then, and an option switched on again got another seed - another story order, other
+		/// blueprint pairs). A world that never had one writes no file for it.</summary>
+		static bool used;
+
 		internal static void Reset()
 		{
 			Current.Clear();
 			Seed = 0;
+			used = false;
 			global::DynamicIslands.Editor.StoryOrder.Reset();
 			if (!Raft_Network.IsHost) { Notify(); return; }
 			bool isNew = false;
@@ -96,11 +102,15 @@ namespace DynamicIslands.Editor
 			{
 				foreach (string o in Pending ?? Defaults) Current.Add(o);
 				Seed = new System.Random().Next(1, int.MaxValue);
+				used = Current.Count > 0;
 				Log("New world: " + Describe());
 				// (the level up system, when it was chosen in World settings)
 				global::DynamicIslands.Editor.PlayerLevels.OnNewWorld();
 			}
 			Pending = null;
+			// (a saved world loaded: every unsaved New Game choice goes back to the remembered one, as the options' and the
+			// islands' did - the level up system, the randomizer and the rules box kept theirs)
+			if (!isNew) { PlayerLevels.Pending = null; WorldRandomizer.Pending = null; NewWorldRulesBox.Forget(); }
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
@@ -112,7 +122,8 @@ namespace DynamicIslands.Editor
 		{
 			switch (key)
 			{
-				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); Notify(); return true;
+				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); if (Current.Count > 0) used = true; Notify(); return true;
+				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
 			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value);
@@ -123,11 +134,12 @@ namespace DynamicIslands.Editor
 			if (Current.Count == 0 && Seed == 0) yield break;
 			yield return "@options=" + string.Join(",", All.Where(On).ToArray());
 			yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
+			if (used) yield return "@optionsused=1";
 			foreach (string l in global::DynamicIslands.Editor.PrivateStorage.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.GhostRafts.WriteLines()) yield return l;
 		}
 
-		internal static bool HasState { get { return Current.Count > 0 || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
+		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
 
 		#endregion
 
@@ -192,6 +204,7 @@ namespace DynamicIslands.Editor
 			Current.Clear();
 			foreach (string o in on) if (All.Contains(o)) Current.Add(o);
 			if (Seed == 0) Seed = new System.Random().Next(1, int.MaxValue);
+			if (Current.Count > 0) used = true;
 			Log("Set: " + Describe());
 			Notify();
 			Broadcast();
@@ -201,7 +214,20 @@ namespace DynamicIslands.Editor
 		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (blueprints, storyorder, ghostrafts, privatestorage) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
-			if (args != null && args.Length > 0 && LoadSceneManager.IsGameSceneLoaded)
+			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)
+			{
+				// (the main menu: the next new world, remembered and shown in the World settings window - the words were ignored)
+				HashSet<string> next = WorldSettingsWindow.Chosen;
+				foreach (string a in args)
+				{
+					string o = a.TrimStart('+', '-').ToLowerInvariant();
+					if (!All.Contains(o)) { Debug.Log("[CUSTOM ISLANDS] Unknown option '" + a + "' (" + string.Join(", ", All) + ")"); continue; }
+					if (a.StartsWith("-")) next.Remove(o); else next.Add(o);
+				}
+				SaveDefaults(next);
+				try { WorldSettingsWindow.Show(); } catch { }
+			}
+			else if (args != null && args.Length > 0 && LoadSceneManager.IsGameSceneLoaded)
 			{
 				if (!Raft_Network.IsHost) { Debug.Log("[CUSTOM ISLANDS] Only the host changes the world's options"); return; }
 				var on = new HashSet<string>(Current);

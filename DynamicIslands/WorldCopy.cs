@@ -41,7 +41,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The line naming Raft's save this state belongs to (null outside Raft's own save).</summary>
 		public static string RaftSaveLine() { return InRaftSave && SavingStamp != 0 ? "@raftsave=" + SavingStamp.ToString(CultureInfo.InvariantCulture) : null; }
 
-		public static bool ReadLine(string key, string value) { return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase); }
+		public static bool ReadLine(string key, string value) { return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase) || key.Equals("savedby", StringComparison.OrdinalIgnoreCase); }
 
 		static long StampOf(string[] lines) { return LongLine(lines, "@savedat="); }
 		static long RaftSaveOf(string[] lines) { return LongLine(lines, "@raftsave="); }
@@ -203,6 +203,21 @@ namespace DynamicIslands.Editor
 		/// <summary>The last copy a player kept (tests): "&lt;world id&gt; &lt;lines&gt; lines".</summary>
 		public static string LastKept { get; private set; }
 
+		/// <summary>A player: the host's world file as it last came (null until it has, and in a new world) - the host's plan,
+		/// its progress and the islands left out, for the player's WorldPlan, WorldIslands and world window (they showed
+		/// the player's own, empty, state).</summary>
+		public static string[] HostLines { get; private set; }
+		internal static void ForgetHostLines() { HostLines = null; }
+
+		/// <summary>A value of the host's copy ("@key=value"), or null.</summary>
+		public static string HostValue(string key)
+		{
+			if (HostLines == null) return null;
+			string prefix = "@" + key + "=";
+			string line = HostLines.FirstOrDefault(l => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+			return line != null ? line.Substring(prefix.Length).Trim() : null;
+		}
+
 		/// <summary>A player: a part of the host's world file; when all have come, it is kept as worlds\&lt;world id&gt;.txt.</summary>
 		public static void OnMessage(IslandNetMessage msg)
 		{
@@ -216,6 +231,7 @@ namespace DynamicIslands.Editor
 			if (parts.Any(p => p == null)) return;
 			incoming.Remove(key);
 			string[] lines = string.Concat(parts).Split('\n');
+			if (HostLines == null || StampOf(lines) >= StampOf(HostLines)) HostLines = lines;
 			string path = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), guid + ".txt");
 			try
 			{
