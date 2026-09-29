@@ -31,7 +31,7 @@ namespace DynamicIslands
 			if (box == null) { Fail("island picker: no New Game box (main menu?)"); yield break; }
 			bool ok = true;
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			yield return new WaitForSecondsRealtime(1f);
 			WorldSettingsWindow.Open();
 			yield return null;

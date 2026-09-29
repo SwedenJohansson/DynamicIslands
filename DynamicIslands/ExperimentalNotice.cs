@@ -48,16 +48,19 @@ namespace DynamicIslands.Editor
 		public static Button ReportButton { get { return reportButton; } }
 
 		/// <summary>The mod's version (modinfo.json), for the box's line and for remembering "Got it".</summary>
+		static string version;
 		public static string Version
 		{
 			get
 			{
-				// (the mod's own modinfo.json, shipped in the .rmod)
+				// (the mod's own modinfo.json, shipped in the .rmod - read once: the library asks for every entry it lists)
+				if (version != null) return version;
 				try
 				{
 					byte[] b = RaftIslands.ModFile("modinfo.json");
 					System.Text.RegularExpressions.Match m = b != null ? System.Text.RegularExpressions.Regex.Match(System.Text.Encoding.UTF8.GetString(b), "\"version\"\\s*:\\s*\"([^\"]+)\"") : null;
-					return m != null && m.Success ? m.Groups[1].Value : "?";
+					if (m != null && m.Success) version = m.Groups[1].Value;
+					return version ?? "?";
 				}
 				catch { return "?"; }
 			}

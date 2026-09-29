@@ -571,7 +571,7 @@ namespace DynamicIslands
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(x => x.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			yield return new WaitForSecondsRealtime(0.5f);
 			Transform row = box.transform.Find("CustomIslands_Plan");
 			Check(ref ok, row != null && row.gameObject.activeInHierarchy, "the box has the plan choice");

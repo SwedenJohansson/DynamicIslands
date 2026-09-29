@@ -173,7 +173,7 @@ namespace DynamicIslands
 			if (box == null) { Fail("World settings box: no New Game box (main menu?)"); yield break; }
 			bool ok = true;
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			yield return new WaitForSecondsRealtime(1f);
 			Button open = WorldSettingsWindow.OpenButton;
 			Check(ref ok, open != null && open.gameObject.activeInHierarchy, "the box has its World settings button ('" + (open != null ? UIKit.LabelOf(open).text : "") + "')");
@@ -769,7 +769,7 @@ namespace DynamicIslands
 					Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
 					yield return new WaitForSecondsRealtime(1.2f);
 					int w = Screen.width, h = Screen.height;
-					if (box != null) { box.gameObject.SetActive(true); box.Open(); }
+					if (box != null) { box.gameObject.SetActive(true); if (!box.IsOpen) box.Open(); }
 					yield return new WaitForSecondsRealtime(0.8f);
 					Canvas.ForceUpdateCanvases();
 					Rect n = ScreenRect(panel);

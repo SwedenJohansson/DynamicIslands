@@ -251,7 +251,7 @@ namespace DynamicIslands
 			// (Raft's Normal tab: the last world's Peaceful or Creative would add their note to the texts)
 			GameMode modeBefore = GameManager.GameMode;
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			GameModeValueManager.SelectCurrentGameMode(GameMode.Normal);
 			yield return new WaitForSecondsRealtime(0.5f);
 			// (in the World settings window, opened from the box's button as a player does)

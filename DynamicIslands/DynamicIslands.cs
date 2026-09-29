@@ -586,8 +586,13 @@ namespace DynamicIslands
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("[CUSTOM ISLANDS] Loading failed: " + e);
-				Notify("Loading '" + name + "' failed - see console (F10)", true);
+				// (the reason on the screen: a player can't do anything with "see the console")
+				string why = e is InvalidDataException ? e.Message.Replace(path, "the file").Replace(IslandSpawner.PathFor(name), "the file")
+					: e is EndOfStreamException || e is ICSharpCode.SharpZipLib.SharpZipBaseException ? "the file is damaged (cut short or not an island)"
+					: e is UnauthorizedAccessException || e is IOException ? "the file can't be read (" + e.Message + ")"
+					: "see the console (F10)";
+				Debug.LogWarning("[CUSTOM ISLANDS] Loading '" + name + "' failed: " + e.Message);
+				Notify("Can't open '" + name + "': " + why, true);
 				return false;
 			}
 		}

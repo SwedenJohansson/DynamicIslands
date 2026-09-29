@@ -1716,6 +1716,13 @@ namespace DynamicIslands
 				if (Time.realtimeSinceStartup > timeout) { Fail("editor not ready after 120 s"); yield break; }
 				yield return new WaitForSecondsRealtime(0.5f);
 			}
+			// (unsaved work from an earlier run is offered in a window over the editor a second later: the tests click
+			// "Not now" - the autosaves stay - or every mouse test after it would hit the window)
+			if (EditorAutosave.Waiting().Count > 0)
+			{
+				for (float until = Time.realtimeSinceStartup + 5f; !ChoiceWindow.IsOpen && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.25f);
+				if (ChoiceWindow.IsOpen) { ChoiceWindow.Close(); Log("The offer of unsaved work closed (tests): " + string.Join(", ", EditorAutosave.Waiting().ToArray())); }
+			}
 			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
 		}
 
@@ -1741,7 +1748,7 @@ namespace DynamicIslands
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			// Raft fills the list asynchronously: wait until it stops growing
 			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
 			float timeout = Time.realtimeSinceStartup + 90f;
@@ -1802,7 +1809,7 @@ namespace DynamicIslands
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
 		}
 

@@ -145,7 +145,7 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(1.2f);
 					int w = Screen.width, h = Screen.height;
 					box.gameObject.SetActive(true);
-					box.Open();
+					if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 					yield return new WaitForSecondsRealtime(1f);
 					var off = OffScreen(box.gameObject, w, h);
 					// (the box's own rectangle, and each of the mod's panels inside it)
@@ -285,7 +285,7 @@ namespace DynamicIslands
 			Func<List<GameObject>> cards = () => win.GetComponentsInChildren<RectTransform>(false).Where(r => r.name == "Rule").Select(r => r.gameObject).ToList();
 			string[] whenLabels = { "the world starts", "after sailing (km)", "on day", "quest done at", "quest step done at", "zone fires at", "players reach", "after rule", "signal sent at" };
 			string[] whatLabels = { "saved island", "new map type", "from spawn pool", "one of these" };
-			string[] whereLabels = { "ahead of the raft", "near an island" };
+			string[] whereLabels = { "ahead of the raft", "near an island", "on the Receiver", "by chance, sailing" }; // (all of them: with only two the cycling stopped on "on the Receiver")
 			string[] dirs = IntroRule.Directions.Select(d => d == "any" ? "any way" : d).ToArray();
 			// (rule: id, when, when's island, when's arg, what, which, where, metres, direction, near which, message, Receiver name)
 			var rules = new[]
@@ -338,7 +338,7 @@ namespace DynamicIslands
 					string[] r = rules[i];
 					string want = r[0] + "|" + r[5] + "|" + r[7];
 					string got = s.Id + "|" + s.WhatArg + "|" + s.Distance.ToString("0");
-					Check(ref ok, want == got && (r[8].Length == 0 || s.Direction == r[8]) && (r[3].Length == 0 || s.WhenArg == r[3]) && (r[2].Length == 0 || s.WhenRef == r[2]), "rule " + (i + 1) + " as typed: " + s.Describe());
+					Check(ref ok, want == got && s.Where == (r[6] == "ahead of the raft" ? "ahead" : "near") && (r[8].Length == 0 || s.Direction == r[8]) && (r[3].Length == 0 || s.WhenArg == r[3]) && (r[2].Length == 0 || s.WhenRef == r[2]), "rule " + (i + 1) + " as typed: " + s.Describe());
 				}
 				Check(ref ok, saved.Description == "A test story across four islands", "the description saved");
 			}
@@ -503,7 +503,7 @@ namespace DynamicIslands
 			if (box == null) { Fail("New Game box clicks: no New Game box (main menu?)"); yield break; }
 			bool ok = true;
 			box.gameObject.SetActive(true);
-			box.Open();
+			if (!box.IsOpen) box.Open(); // (Raft's Open subscribes to input changes each time: twice left a subscription that threw after the scene changed)
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
 			// (the plan's own button, not the head's "Get more..." - the island library)

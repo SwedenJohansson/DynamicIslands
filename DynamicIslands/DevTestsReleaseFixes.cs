@@ -178,6 +178,19 @@ namespace DynamicIslands
 			if (ok) Log("PASS: version check"); else Fail("version check");
 		}
 
+		[ConsoleCommand(name: "CIRaftHeight", docs: "Dev, world: logs RAFT <deck top above the sea> <raft object y> <player y> <player grounded> - the raft must float on the sea (about 0.3 m)")]
+		public static void RaftHeightCommand()
+		{
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj == null) { Fail("raft height: no raft"); return; }
+			var tops = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation"))
+				.Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).ToList();
+			Network_Player p = RAPI.GetLocalPlayer();
+			Rigidbody body = raftObj.GetComponent<Rigidbody>();
+			Log("RAFT " + (tops.Count > 0 ? tops.Max().ToString("F2") : "?") + " " + raftObj.transform.position.y.ToString("F2") + " " + (p != null ? p.transform.position.y.ToString("F2") : "?") + " " +
+				(p != null && p.PersonController != null ? p.PersonController.controller.isGrounded.ToString() : "?") + " velocity " + (body != null ? body.velocity.ToString("F2") : "?") + " kinematic " + (body != null && body.isKinematic));
+		}
+
 		[ConsoleCommand(name: "CIMemory", docs: "Dev, anywhere: logs the memory in use (MEMORY <managed MB> <Unity allocated MB> <textures> <meshes> <game objects>) after a full collection")]
 		public static void MemoryCommand()
 		{
