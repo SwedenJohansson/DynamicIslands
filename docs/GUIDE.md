@@ -437,7 +437,7 @@ is only "myisland"); **Save as** and **Open** show the **Islands** window: a nam
 saved islands (click = pick, double-click = open, Delete asks first and says which saved worlds, plans and other
 islands' rules use the island). A deleted island isn't erased: it is moved to `Mods\DynamicIslands\deleted` -
 move the file back into `Mods\DynamicIslands` to get it back. Copies kept for saved worlds (`<name>_<hash>`) aren't
-in the list: the island library's **Remove unused** tidies them.
+in the list: the island library's **Tidy up** clears the ones nothing uses.
 
 **Nothing unsaved is lost:** opening another island, **New**, or a map type's **Make** while the island has unsaved
 changes keeps them as its autosave first (the editor says so, and offers them back the next time it opens).
@@ -507,14 +507,24 @@ holds, who made it and its version. **Install** puts it in place:
   is refused ("update the mod").
 - A broken or harmful pack (too big, too many files, a file that would land outside the mod's folder, a program, not an
   island file) is refused with the reason, and nothing is written.
-- Installing a newer version of something you installed **updates** it. Worlds you've already started keep the
-  version they started with (the old file stays for them). If you changed one of its islands in the editor, yours is
+- Installing a newer version of something you installed **updates** it. Worlds you've already started get the new
+  version when its objects keep their order (a fixed quest, new ground, objects added), as with your own saves (4.7);
+  when objects were removed or reordered they keep the version they started with (the old file stays for them, and
+  the install says which). If you changed one of its islands in the editor, yours is
   kept unless you tick **Replace files I changed**.
 
 **Installed from packs** lists everything you installed, with **Remove** (click twice). Remove deletes what the entry
 installed but keeps anything a saved world still uses (it says which world), and never touches your own islands and
-plans. Under it, the copies of islands you got from multiplayer hosts (`<name>_<code>`, there can be many): **Remove
-unused** deletes the ones no saved world on this PC uses.
+plans. Under it, **Tidy up** (click twice) says what has piled up and clears it:
+- copies of islands you got from multiplayer hosts (`<name>_<code>`) that no saved world on this PC uses - also none of
+  Raft's older saves of a world (a host sends them again if needed);
+- generated islands (`gen-...`: made while sailing, or with **Make** and never given a name) that no saved world, plan,
+  island rule or library entry uses - moved to `Mods\DynamicIslands\deleted`, so they can be got back;
+- the mod's files of worlds you deleted in Raft (only worlds you hosted: the copies of worlds you joined are kept, so
+  you can host them later) - moved to `Mods\DynamicIslands\worlds\removed`.
+
+An entry whose files you deleted since (in the editor, or by hand) shows as not installed again, so it can be
+downloaded again.
 
 ![The Import window](images/library-import.jpg)
 *The Import window: packs in the import folder, what the picked one holds, and what's installed.*
@@ -532,7 +542,7 @@ entry is looked at before it goes in.
   - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
     islands never turn up at random, an island only if you tick **Also turn up while sailing**);
   - **Update** - the library has a newer version than the one you have: installs it (worlds you've already started
-    keep the version they started with). It replaces the entry's files, also ones you changed in the editor or World
+    get it when its objects keep their order, else keep the version they started with). It replaces the entry's files, also ones you changed in the editor or World
     plans since: then the first click names them and **Sure? Update** goes ahead. To keep your changes, open the
     island (or plan) and **Save as** a new name first;
   - **Installed** - you have the newest version. **Remove** (click twice) takes it away again, keeping what a saved
@@ -1158,7 +1168,7 @@ them host the world later.
 | **The world's maker edits the plan** while worlds use it | The next time such a world loads on their PC, it plays the changed plan (they're told) | Nothing |
 | **The plan is updated (library or pack) or deleted**, or another player hosts with a different plan of the same name | Worlds already started keep their own copy | Nothing (`WorldPlan <name>` in a world to switch it on purpose) |
 | **An older save of the world is loaded** (Raft's Load Game box keeps the last 8 saves) | The custom islands, what was chopped, looted and fired, quests, journal and settings go back to that save as well | Nothing |
-| **An installed island is updated** while a world uses it | That world keeps the version it started with; new worlds get the new one | Nothing |
+| **An installed island is updated** while a world uses it | That world gets the new one when its objects keep their order; else it keeps the version it started with (new worlds get the new one) | Nothing |
 | **You remove a pack** that a saved world uses | What the world uses is kept (you're told which world) | Nothing |
 | **A pack's island has the name of one of yours** | Installed as `Name (Pack title)`; yours is untouched | Nothing |
 | **A pack was made with a newer mod version** | A warning; "Install anyway" may leave out what this version doesn't know | Update the mod if something's missing |
@@ -1597,6 +1607,11 @@ them there for every player ([9.1](#91-the-world-settings-window)).
 **Test in the editor didn't get to the world.** The mod says why on the screen: the island needs a name (Save as
 first), or Raft's Load button is off because Steam is offline. The test world **Custom Islands test** can also be
 loaded by hand from Load Game; if it is broken, delete it there and Test makes a new one.
+
+**"... is in use by another program".** Another program has the file open (a text editor, 7-Zip, a cloud folder
+syncing it). Close it there and save (or delete, remove) again - nothing was changed meanwhile.
+
+**Mods\DynamicIslands is full of old files.** The island library's Installed tab: **Tidy up** (see 4.7).
 
 **The editor takes a moment to open.** The first time after starting Raft it loads about 700 objects from Raft's
 islands; the loading box shows how far it is. After a Raft update it also scans Raft's other islands once, in the

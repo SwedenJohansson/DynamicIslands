@@ -199,6 +199,9 @@ namespace DynamicIslands
 				File.WriteAllBytes(tmpA, pack.Files[LibA + ".island"]);
 				IslandFile a2 = IslandFile.Load(tmpA);
 				a2.Heights[3, 3] = 0.9f;
+				// (two objects added at the end: the order of what was there is kept, so saved worlds get it)
+				a2.Objects.Add(new IslandObject { Name = "Placeable_Rock_Small", Position = new Vector3(10f, 5f, 10f) });
+				a2.Objects.Add(new IslandObject { Name = "Placeable_Rock_Small", Position = new Vector3(12f, 5f, 10f) });
 				a2.Save(tmpA);
 				WriteTestZip(pack2, new[] { Entry("ci-lib-pack/info.json", new LibraryInfo { id = "ci-lib-pack", kind = "plan", title = "CI Lib Pack", author = "CI Tester", version = 2, plan = LibPlan + ".plan" }.ToJson()),
 					Entry("ci-lib-pack/" + LibA + ".island", File.ReadAllBytes(tmpA)), Entry("ci-lib-pack/" + LibB + ".island", pack.Files[LibB + ".island"]), Entry("ci-lib-pack/" + LibC + ".island", pack.Files[LibC + ".island"]),
@@ -207,7 +210,7 @@ namespace DynamicIslands
 				LibraryPackContents p2 = LibraryPack.Read(pack2, out error);
 				r = LibraryPack.Install(p2, false, false, LibraryPack.SourceImport);
 				Log("  " + r.ToString().Replace("\n", " / "));
-				Check(ref ok, !File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA))) && IslandNetwork.HashOf(LibA) != hashA && r.ToString().Contains("get the new"),
+				Check(ref ok, !File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA))) && IslandNetwork.HashOf(LibA) != hashA && r.ToString().Contains("the new '" + LibA + "'"),
 					"updated, only the ground changed: the world that uses cilib-a gets the new version too (no copy kept, the report says so)");
 				File.Delete(pack2);
 

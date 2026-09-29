@@ -110,6 +110,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Looks through everything (a moment with many worlds: done when the Installed tab is shown).</summary>
 		public static Scan Look()
 		{
+			var clock = System.Diagnostics.Stopwatch.StartNew();
+			long tWorlds, tNamed;
 			var scan = new Scan();
 			var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var usedBy = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -121,10 +123,14 @@ namespace DynamicIslands.Editor
 					if (!usedBy.TryGetValue(n, out set)) usedBy[n] = set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 					if (!w.Key.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) set.Add(w.Key);
 				}
-			// (plans, islands' own rules, library entries, the pool and the editor count too - for generated islands)
+			tWorlds = clock.ElapsedMilliseconds;
+			// (plans, islands' own rules, library entries, the pool and the editor count too - for generated islands; only
+			// looked at when there is a generated island no world uses: reading every island's rules takes a while)
 			var named = new HashSet<string>(used, StringComparer.OrdinalIgnoreCase);
-			try { foreach (string p in WorldPlan.All()) { WorldPlan plan = WorldPlan.Load(p); if (plan != null) foreach (IntroRule r in plan.Rules) foreach (string n in RuleIslands(r)) named.Add(n); } } catch { }
 			List<string> islands = IslandSpawner.ListSavedIslands().ToList();
+			bool genToCheck = islands.Any(n => n.StartsWith("gen-", StringComparison.OrdinalIgnoreCase) && !IslandNetwork.IsDownloadName(n) && !used.Contains(n));
+			if (genToCheck) {
+			try { foreach (string p in WorldPlan.All()) { WorldPlan plan = WorldPlan.Load(p); if (plan != null) foreach (IntroRule r in plan.Rules) foreach (string n in RuleIslands(r)) named.Add(n); } } catch { }
 			foreach (string i in islands.Where(n => !IslandNetwork.IsDownloadName(n)))
 				try { foreach (IntroRule r in WorldDirector.RulesFromProps(IslandCache.Props(i))) foreach (string n in RuleIslands(r)) named.Add(n); } catch { }
 			try { foreach (LibraryInstalled e in LibraryPack.Installed()) foreach (LibraryInstalledFile f in e.files) named.Add(f.name); } catch { }
@@ -135,6 +141,8 @@ namespace DynamicIslands.Editor
 			}
 			catch { }
 			if (!string.IsNullOrEmpty(DynamicIslands.currentIslandName)) named.Add(DynamicIslands.currentIslandName);
+			}
+			tNamed = clock.ElapsedMilliseconds;
 
 			foreach (string n in islands)
 			{
@@ -146,6 +154,7 @@ namespace DynamicIslands.Editor
 				else if (n.StartsWith("gen-", StringComparison.OrdinalIgnoreCase) && !named.Contains(n)) scan.UnusedGenerated.Add(n);
 			}
 			scan.DeletedWorlds = DeletedWorldFiles();
+			Debug.Log("[CUSTOM ISLANDS] Tidy up looked through " + islands.Count + " islands and every world's saves in " + clock.ElapsedMilliseconds + " ms (worlds " + tWorlds + ", plans and rules " + (tNamed - tWorlds) + ")");
 			return scan;
 		}
 
@@ -172,9 +181,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Tidies up what Look found: returns what was done, for the player.</summary>
-		public static string TidyUp()
+		public static string TidyUp(Scan scan = null)
 		{
-			Scan scan = Look();
+			if (scan == null) scan = Look();
 			var done = new List<string>();
 			int copies = 0, generated = 0, worlds = 0;
 			foreach (var c in scan.Copies.Where(c => c.Value.Count == 0))

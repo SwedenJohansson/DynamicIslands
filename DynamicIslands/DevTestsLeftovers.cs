@@ -162,8 +162,9 @@ namespace DynamicIslands
 				long pickMs = time("CHOOSE ISLANDS' list", () => candidates = WorldIslands.Candidates());
 				Check(ref ok, pickMs < 2000 && candidates.Count(c => c.StartsWith(BulkPrefix)) == count, "CHOOSE ISLANDS lists them in " + pickMs + " ms");
 				Housekeeping.Scan scan = null;
-				long tidyMs = time("the library's Tidy up look (Installed tab)", () => scan = Housekeeping.Look());
-				Check(ref ok, tidyMs < 2000 && scan != null, "the library's Installed tab looks through them in " + tidyMs + " ms");
+				// (the Installed tab no longer looks through everything when it opens: Tidy up does, on its first click)
+				long tidyMs = time("Tidy up's look (its first click)", () => scan = Housekeeping.Look());
+				Check(ref ok, tidyMs < 10000 && scan != null, "Tidy up looks through them and every world's saves in " + tidyMs + " ms (on its click)");
 				if (DynamicIslands.InEditor())
 				{
 					long winMs = time("the Islands window", () => { IslandFilesWindow.Open(); IslandFilesWindow.Close(); });

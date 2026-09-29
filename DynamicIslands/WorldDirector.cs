@@ -1046,8 +1046,9 @@ namespace DynamicIslands.Editor
 		/// <summary>A player who joined: the host's plan and where its rules stand, from the host's copy of the world file.</summary>
 		public static string DescribeForPlayer(bool withRules = true)
 		{
-			string plan = WorldCopy.HostValue("plan");
-			if (plan == null) return "World plan: the host's (it comes with the host's next save of the world)";
+			if (WorldCopy.HostLines == null) return "World plan: the host's (it comes with the host's next save of the world)";
+			// (no plan line: the host's world has nothing of its own stored - the Random islands plan, nothing done yet)
+			string plan = WorldCopy.HostValue("plan") ?? WorldPlan.RandomName;
 			var done = new HashSet<string>((WorldCopy.HostValue("done") ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
 			List<IntroRule> rules = WorldCopy.HostLines.Where(l => l.StartsWith("@planrule=")).Select(l => IntroRule.Parse(l.Substring(10))).Where(r => r != null).ToList();
 			string auto = WorldCopy.HostValue("auto");

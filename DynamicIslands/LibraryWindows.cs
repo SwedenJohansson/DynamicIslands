@@ -408,21 +408,33 @@ namespace DynamicIslands.Editor
 				Button remove = UIKit.Button(row, pendingRemove == id ? "Sure? Remove" : "Remove", () => AskRemove(id), "Remove what this entry installed (what a saved world still uses stays)", 120, 26f, 12);
 				if (pendingRemove == id) UIKit.DangerButton(remove);
 			}
-			Housekeeping.Scan scan = Housekeeping.Look();
-			hostCopies.text = scan.Describe();
-			tidyPending = false;
-			if (tidyButton != null) { UIKit.LabelOf(tidyButton).text = "Tidy up"; tidyButton.interactable = scan.Total > 0; }
+			// (the look through every world's saves takes a moment with many worlds: only when Tidy up is clicked - done here
+			// each time the tab showed, it made the tab slow)
+			hostCopies.text = "Tidy up: island copies, generated islands and the files of deleted worlds nothing uses any more.";
+			tidyPending = null;
+			if (tidyButton != null) { UIKit.LabelOf(tidyButton).text = "Tidy up"; UIKit.SetActive(tidyButton, false); }
 		}
 
 		static Button tidyButton;
-		static bool tidyPending;
+		static Housekeeping.Scan tidyPending;
 
-		/// <summary>Tidy up asks first: the first click turns it into "Sure? Tidy up" (public for tests).</summary>
+		/// <summary>Tidy up: the first click looks and says what it would clear ("Sure? Tidy up"), the second clears it (public for tests).</summary>
 		public static void TidyUp()
 		{
-			if (!tidyPending) { tidyPending = true; UIKit.LabelOf(tidyButton).text = "Sure? Tidy up"; UIKit.DangerButton(tidyButton); return; }
-			tidyPending = false;
-			SetStatus(Housekeeping.TidyUp() + " (Generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
+			if (tidyPending == null)
+			{
+				Housekeeping.Scan scan = Housekeeping.Look();
+				hostCopies.text = scan.Describe();
+				if (scan.Total == 0) { SetStatus("Nothing to tidy up.", false); return; }
+				tidyPending = scan;
+				UIKit.LabelOf(tidyButton).text = "Sure? Tidy up";
+				UIKit.DangerButton(tidyButton);
+				SetStatus(scan.Describe() + " Click again to clear it.", false);
+				return;
+			}
+			Housekeeping.Scan found = tidyPending;
+			tidyPending = null;
+			SetStatus(Housekeeping.TidyUp(found) + " (Generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
 			ShowInstalled();
 		}
 
