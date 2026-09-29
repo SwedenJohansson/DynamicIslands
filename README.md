@@ -95,6 +95,7 @@ This README is the full reference, in the same order: island creation first, the
   - **Trigger zones** fire for whoever walks in; an ambush creature appears the moment its zone fires.
   - **Quests:** near an island with a quest, a panel shows its steps (done ones ticked). The introduction shows when you arrive, and each step done shows what's next. The quest is shared by everyone in the world and saved with it. When it's done, every player near the island gets the reward's items (its story items go to the crew's journal once).
   - **Arriving** near an island that has a name or description shows it as a banner at the top of the screen, once per island per session.
+  - **Key tabs at the hotbar:** beside Raft's own (inventory, notebook) the journal's (J) and, while the level up system is on, the stats page's (K) - copies of Raft's tab, so they look and hide as Raft's do.
   - **The journal** (J): the crew's story items with their pictures, and every custom note read (plus "journal" pages), on paper. Story items are held by the whole crew, like Raft's own quest items, saved with the world and sent to players who join.
   - **The world's settings in a running world:** **Esc → Custom Islands** in Raft's pause menu opens them (world rules, randomizer, extra options, level up system, islands while sailing, the plan and story); the host changes them for every player, others see them.
   - **Behaviours:** doors, gates and lifts move for every player; things that move back and forth, spin or bob follow a clock all players share (Raft's water time), so everyone sees them in the same place; what is shown, hidden, open or closed is shared by all players, saved with the world and sent to players who join. Messages, items, sounds and teleports go to the player who did it (for defeated animals and finished quests: to everyone near the island).
@@ -619,6 +620,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |
 | `GhostRafts.cs`, `PrivateStorage.cs` | Extra options: ghost rafts while sailing, storages only their builder opens |
 | `Housekeeping.cs` | Tidy up: what nothing uses any more (host copies, generated islands, the files of deleted worlds), looking through every copy of every world's state, Raft's older saves too |
+| `HotkeyHints.cs` | The hotbar's key tabs for the journal (J) and the stats page (K), copied from Raft's notebook tab |
 | `WorldWindow.cs` | Esc → Custom Islands in a running world: the button in Raft's pause menu (a postfix on `PauseMenu.Start`) and the world's settings window (host changes, others read only; Back to the editor while testing) |
 | `IslandTest.cs` | The editor's Test: save, the test world "Custom Islands test" (loaded, or made the first time), the island beside the raft, Back to the editor without saving |
 | `EditorLighting.cs` | The editor's Light button: five times of day (sun, ambient, haze), kept in `editor_light.txt` |

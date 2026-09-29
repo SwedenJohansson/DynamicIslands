@@ -115,6 +115,34 @@ namespace DynamicIslands
 			if (ok) Log("PASS: leftovers unit"); else Fail("leftovers unit");
 		}
 
+		[ConsoleCommand(name: "CIHotkeyTabs", docs: "Dev, world (host, a test world 'CI ...'): the hotbar's key tabs - the journal's (J) beside Raft's notebook tab, the stats page's (K) only while the level up system is on (switched on and back); picture shot_hotkey_tabs.png")]
+		public static void HotkeyTabsCommand() { DynamicIslands.instance.StartCoroutine(HotkeyTabsRoutine()); }
+
+		static IEnumerator HotkeyTabsRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("hotkey tabs: host in a test world 'CI ...'"); yield break; }
+			bool ok = true;
+			bool levels = PlayerLevels.On;
+			yield return new WaitForSeconds(1f);
+			GameObject j = GameObject.Find(HotkeyHints.JournalName), note = GameObject.Find("UI_Hotkey_Element_NoteBook");
+			Func<GameObject, string> text = g => { if (g == null) return null; Component t = g.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI"); return t != null ? HarmonyLib.Traverse.Create(t).Property("text").GetValue<string>() : null; };
+			Check(ref ok, j != null && note != null && j.transform.parent == note.transform.parent, "the journal's tab is beside Raft's notebook tab");
+			Check(ref ok, text(j) == JournalWindow.Key.ToString(), "it says the journal's key: " + text(j));
+			Check(ref ok, j != null && note != null && j.transform.position.x > note.transform.position.x, "... after the notebook's tab (right of it)");
+			PlayerLevels.SetEnabled(true);
+			yield return new WaitForSeconds(1.5f);
+			GameObject k = GameObject.Find(HotkeyHints.StatsName);
+			Check(ref ok, k != null && k.activeInHierarchy && text(k) == PlayerLevels.Key.ToString(), "the level up system on: the stats tab shows its key " + text(k));
+			Screenshot(new[] { "hotkey_tabs" });
+			yield return new WaitForSeconds(0.5f);
+			PlayerLevels.SetEnabled(false);
+			yield return new WaitForSeconds(1.5f);
+			GameObject k2 = GameObject.Find(HotkeyHints.StatsName); // (Find skips inactive objects)
+			Check(ref ok, k2 == null, "off: the stats tab is gone again");
+			if (levels) PlayerLevels.SetEnabled(true);
+			if (ok) Log("PASS: hotkey tabs"); else Fail("hotkey tabs");
+		}
+
 		const string BulkPrefix = "bulk-";
 
 		[ConsoleCommand(name: "CIBulkIslands", docs: "Dev, anywhere (editor for the Islands window) (TEST_CATALOGUE UP10): CIBulkIslands [n] - n small islands (bulk-0001 ..., default 1000) in the folder: listing them, the spawn pool, CHOOSE ISLANDS' list, the library's Tidy up look and (in the editor) the Islands window each take under 2 s, and the search finds one. The islands are removed after (CIBulkIslands keep leaves them; CIBulkIslands clean removes them)")]

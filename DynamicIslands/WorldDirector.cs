@@ -907,6 +907,7 @@ namespace DynamicIslands.Editor
 			{
 				gen = MapTypes.Roll(type, rnd, out elevation);
 				name = MapTypes.FreeFileName(type, gen);
+				file = name; // (a generated island: its own new file - before, file stayed null and the world's entry had no name)
 				radius = MapTypes.EstimatedRadius(gen);
 			}
 			else

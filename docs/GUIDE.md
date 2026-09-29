@@ -232,6 +232,9 @@ finished step.*
 Press **J** to open the journal: the crew's **story items** (keys, maps, logs...) with their pictures, and every note
 you have read, on paper. Story items belong to the whole crew, like Raft's own quest items.
 
+The mod's keys are shown at the hotbar like Raft's own: after Raft's notebook tab (**T**) come the journal's tab (**J**,
+an open book) and, while the level up system is on in the world, the stats page's (**K**, a star).
+
 ![The journal](images/world-journal.jpg)
 *The journal: two story items at the top left, the pages read below, and the page "The keeper's note" open.*
 
