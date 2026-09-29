@@ -460,7 +460,7 @@ type:sunken 0.2
 				if (!File.Exists(PoolPath))
 				{
 					Directory.CreateDirectory(Path.GetDirectoryName(PoolPath));
-					File.WriteAllText(PoolPath, DefaultPool);
+					SafeFile.WriteAllText(PoolPath, DefaultPool);
 				}
 				DateTime t = File.GetLastWriteTimeUtc(PoolPath);
 				if (!force && t == poolFileTime) return;

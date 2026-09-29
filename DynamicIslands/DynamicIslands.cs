@@ -100,14 +100,17 @@ namespace DynamicIslands
 			Redcode.Awaiting.Engine.RoutineHelper.CreateInstance();
 			loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>();
 			var harmony = new Harmony("com.franzfischer.customislands");
-			harmony.PatchAll();
-			CreatureSpawner.Patch(harmony);
+			// (each patch on its own: after a Raft update one that no longer fits is named, the others still work)
+			Editor.PatchHealth.PatchAll(harmony);
+			try { CreatureSpawner.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("CreatureSpawner", e); }
 
 			//INIT FOLDER
 			if (!Directory.Exists(assetpath))
 			{
 				Directory.CreateDirectory(assetpath);
 			}
+			// (saves that Raft stopped half way: brought back)
+			Editor.SafeFile.RecoverAll(assetpath);
 			if (Directory.EnumerateFiles(assetpath).Count() == 0)
 			{
 				Debug.LogWarning("There are no custom Islands installed!");
@@ -211,6 +214,7 @@ namespace DynamicIslands
 			}
 			// The first release: a box telling new players it is experimental
 			ExperimentalNotice.Show(MainMenuParent.transform);
+			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 
 
 

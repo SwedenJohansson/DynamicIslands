@@ -89,11 +89,9 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Folder);
-				string path = PathFor(name), tmp = path + ".tmp";
-				// (written aside first: a crash while writing never leaves a broken autosave behind)
-				DynamicIslands.CaptureIsland(name).Save(tmp);
-				if (File.Exists(path)) File.Delete(path);
-				File.Move(tmp, path);
+				string path = PathFor(name);
+				// (IslandFile.Save writes aside first and replaces in one step: a crash never leaves a broken autosave behind)
+				DynamicIslands.CaptureIsland(name).Save(path);
 				LastWritten = path;
 				Log("'" + name + "' has unsaved changes: kept in " + path + " until it is saved");
 			}

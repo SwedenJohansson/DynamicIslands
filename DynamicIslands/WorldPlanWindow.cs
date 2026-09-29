@@ -773,7 +773,7 @@ namespace DynamicIslands.Editor
 					written.Add(t.Key);
 					changed = true;
 				}
-				if (changed) File.WriteAllLines(list, new[] { "# Sample world plans the mod has written once (delete a line to get that sample back)" }.Concat(written.OrderBy(n => n)).ToArray());
+				if (changed) SafeFile.WriteAllLines(list, new[] { "# Sample world plans the mod has written once (delete a line to get that sample back)" }.Concat(written.OrderBy(n => n)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the sample plans: " + e.Message); }
 		}

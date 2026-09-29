@@ -149,13 +149,13 @@ namespace DynamicIslands.Editor
 					deflate.Finish();
 				}
 			}
-			// Replace atomically so a crash mid-save never destroys the previous file
-			if (File.Exists(path)) File.Delete(path);
-			File.Move(tmp, path);
+			// (in the old file's place in one step: a crash mid-save never destroys the previous file)
+			SafeFile.Commit(tmp, path);
 		}
 
 		public static IslandFile Load(string path)
 		{
+			SafeFile.Recover(path); // (a save that Raft stopped half way)
 			using (var file = File.OpenRead(path))
 			{
 				var header = new BinaryReader(file);

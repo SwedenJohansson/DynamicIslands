@@ -88,7 +88,7 @@ namespace DynamicIslands.Editor
 				var lines = File.Exists(FilePath) ? File.ReadAllLines(FilePath).Where(l => l.Trim().Length > 0 && !l.Trim().StartsWith(key + "=")).ToList() : new System.Collections.Generic.List<string>();
 				if (value != null) lines.Add(key + "=" + value);
 				if (lines.Count == 0) { if (File.Exists(FilePath)) File.Delete(FilePath); }
-				else File.WriteAllText(FilePath, string.Join("\n", lines.ToArray()) + "\n");
+				else SafeFile.WriteAllText(FilePath, string.Join("\n", lines.ToArray()) + "\n");
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + FilePath + ": " + e.Message); }
 		}

@@ -48,8 +48,54 @@ namespace DynamicIslands.Editor
 		{
 			string tmp = path + ".tmp";
 			File.WriteAllBytes(tmp, bytes);
+			Commit(tmp, path);
+		}
+
+		/// <summary>
+		/// A fully written "&lt;file&gt;.tmp" takes the file's place in one step (Windows' ReplaceFile): there is no moment
+		/// with neither file. (Deleting first and then moving left only the .tmp when Raft stopped between the two.) Where
+		/// replacing isn't possible (a file system without it), the old way, which Recover repairs.
+		/// </summary>
+		public static void Commit(string tmp, string path)
+		{
+			if (!File.Exists(path)) { File.Move(tmp, path); return; }
+			try { File.Replace(tmp, path, null); return; }
+			catch (Exception e) { UnityEngine.Debug.Log("[CUSTOM ISLANDS] Replacing " + Path.GetFileName(path) + " in one step didn't work (" + e.GetType().Name + "): deleting, then moving"); }
 			if (File.Exists(path)) File.Delete(path);
 			File.Move(tmp, path);
+		}
+
+		/// <summary>
+		/// A write that stopped half way: the file is gone but its ".tmp" is there - that one was complete (the old file
+		/// is only removed after the new one is fully written), so it becomes the file. A ".tmp" next to its file is an
+		/// unfinished write and is removed. True when the file was brought back.
+		/// </summary>
+		public static bool Recover(string path)
+		{
+			string tmp = path + ".tmp";
+			try
+			{
+				if (!File.Exists(tmp)) return false;
+				if (File.Exists(path)) { File.Delete(tmp); return false; }
+				File.Move(tmp, path);
+				UnityEngine.Debug.LogWarning("[CUSTOM ISLANDS] " + Path.GetFileName(path) + " was being saved when Raft stopped: its new version is back");
+				return true;
+			}
+			catch (Exception e) { UnityEngine.Debug.LogWarning("[CUSTOM ISLANDS] Could not recover " + path + ": " + e.Message); return false; }
+		}
+
+		/// <summary>Every ".tmp" under a folder (and its folders): brought back or removed. Once when the mod starts.</summary>
+		public static int RecoverAll(string folder)
+		{
+			int n = 0;
+			try
+			{
+				if (!Directory.Exists(folder)) return 0;
+				foreach (string tmp in Directory.GetFiles(folder, "*.tmp", SearchOption.AllDirectories))
+					if (Recover(tmp.Substring(0, tmp.Length - 4))) n++;
+			}
+			catch (Exception e) { UnityEngine.Debug.LogWarning("[CUSTOM ISLANDS] Looking for unfinished saves: " + e.Message); }
+			return n;
 		}
 
 		public static void WriteAllText(string path, string text) { WriteAllBytes(path, new System.Text.UTF8Encoding(false).GetBytes(text)); }

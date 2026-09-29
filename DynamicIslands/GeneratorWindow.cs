@@ -762,7 +762,7 @@ namespace DynamicIslands.Editor
 				Directory.CreateDirectory(PresetFolder);
 				IslandGenSettings keep = s.Copy();
 				keep.Source = ""; // (a variation of a Raft island isn't a preset for the Normal tab)
-				File.WriteAllText(Path.Combine(PresetFolder, safe + ".txt"), keep.ToText());
+				SafeFile.WriteAllText(Path.Combine(PresetFolder, safe + ".txt"), keep.ToText());
 				RefreshPresets();
 				SetStatus("Saved the preset '" + safe + "'.");
 			});

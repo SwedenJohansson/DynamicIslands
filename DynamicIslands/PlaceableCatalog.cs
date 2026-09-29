@@ -390,7 +390,7 @@ namespace DynamicIslands.Editor
 					foreach (var cat in ByCategory()) { lines.Add("# --- " + cat.Key); lines.AddRange(cat.Value); }
 					lines.Add("# --- Left out (remove the # to use one in placeables.txt)");
 					lines.AddRange(hidden.OrderBy(n => n).Select(n => "#" + n));
-					File.WriteAllLines(GeneratedListPath, lines.ToArray());
+					SafeFile.WriteAllLines(GeneratedListPath, lines.ToArray());
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + GeneratedListPath + ": " + e.Message); }
 			}
@@ -760,7 +760,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(DynamicIslands.assetpath);
-				File.WriteAllText(IndexPath, sb.ToString());
+				SafeFile.WriteAllText(IndexPath, sb.ToString());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + IndexPath + ": " + e.Message); }
 			indexFileVersion = IndexVersion; indexRaftVersion = Application.version;

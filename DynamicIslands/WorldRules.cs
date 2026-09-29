@@ -55,7 +55,7 @@ namespace DynamicIslands.Editor
 						if (!k.Equals(key, StringComparison.OrdinalIgnoreCase)) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
 					}
 				values.Add(new KeyValuePair<string, string>(key, value));
-				File.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)" }
+				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)" }
 					.Concat(values.Select(kv => kv.Key + "=" + kv.Value)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultPath + ": " + e.Message); }

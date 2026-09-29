@@ -155,7 +155,7 @@ namespace DynamicIslands.Editor
 			{
 				RandomizerSettings d = s.Copy();
 				d.Seed = 0;
-				File.WriteAllText(DefaultsPath, "# World randomizer: the last choice in the New Game box (level=off|light|normal|wild; off=parts switched off)\n" + d.Encode() + "\n");
+				SafeFile.WriteAllText(DefaultsPath, "# World randomizer: the last choice in the New Game box (level=off|light|normal|wild; off=parts switched off)\n" + d.Encode() + "\n");
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultsPath + ": " + e.Message); }
 		}

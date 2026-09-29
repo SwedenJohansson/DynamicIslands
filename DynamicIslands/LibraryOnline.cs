@@ -70,7 +70,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				if (!File.Exists(SettingsPath))
-					File.WriteAllText(SettingsPath, "# The island library (the ISLAND LIBRARY window). The mod goes online only while that window is open,\r\n" +
+					SafeFile.WriteAllText(SettingsPath, "# The island library (the ISLAND LIBRARY window). The mod goes online only while that window is open,\r\n" +
 						"# and sends nothing but the downloads.\r\n# online = on|off\r\nonline = on\r\n# address = where index.json is (a folder address ending in /)\r\naddress = " + DefaultAddress + "\r\n");
 				foreach (string line in File.ReadAllLines(SettingsPath))
 				{

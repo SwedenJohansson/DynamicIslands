@@ -282,7 +282,7 @@ namespace DynamicIslands.Editor
 				items.RemoveAll(x => LibraryJson.Str(x, "key").Equals(kind + ":" + name, StringComparison.OrdinalIgnoreCase));
 				items.Add(new Dictionary<string, object> { { "key", kind + ":" + name }, { "info", LibraryJson.Parse(info.ToJson()) } });
 				Directory.CreateDirectory(ExportFolder);
-				File.WriteAllText(LastExportsPath, LibraryJson.Write(new Dictionary<string, object> { { "items", items } }));
+				SafeFile.WriteAllText(LastExportsPath, LibraryJson.Write(new Dictionary<string, object> { { "items", items } }));
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remember the export: " + ex.Message); }
 		}
@@ -752,7 +752,7 @@ namespace DynamicIslands.Editor
 				string line = island + " " + weight.ToString(CultureInfo.InvariantCulture);
 				int i = lines.FindIndex(l => PoolLineName(l).Equals(island, StringComparison.OrdinalIgnoreCase));
 				if (i >= 0) lines[i] = line; else lines.Add(line);
-				File.WriteAllLines(path, lines.ToArray());
+				SafeFile.WriteAllLines(path, lines.ToArray());
 				CustomIslandSpawner.LoadPool(true);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not change spawnpool.txt: " + e.Message); }
@@ -765,7 +765,7 @@ namespace DynamicIslands.Editor
 				string path = Path.Combine(DynamicIslands.assetpath, CustomIslandSpawner.PoolFileName);
 				if (!File.Exists(path)) return;
 				var lines = File.ReadAllLines(path).ToList();
-				if (lines.RemoveAll(l => PoolLineName(l).Equals(island, StringComparison.OrdinalIgnoreCase)) > 0) { File.WriteAllLines(path, lines.ToArray()); CustomIslandSpawner.LoadPool(true); }
+				if (lines.RemoveAll(l => PoolLineName(l).Equals(island, StringComparison.OrdinalIgnoreCase)) > 0) { SafeFile.WriteAllLines(path, lines.ToArray()); CustomIslandSpawner.LoadPool(true); }
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not change spawnpool.txt: " + e.Message); }
 		}
