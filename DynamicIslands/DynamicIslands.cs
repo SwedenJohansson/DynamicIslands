@@ -591,7 +591,7 @@ namespace DynamicIslands
 				CommandUndoRedo.UndoRedoManager.Clear();
 				EditorAutosave.Opened(name, from != null);
 				EditorUI.RefreshIsland();
-				Notify("Loaded island '" + name + "'" + (missing > 0 ? " (" + missing + " objects missing)" : ""), missing > 0);
+				Notify("Loaded island '" + name + "'" + (missing > 0 ? " - " + missing + " object(s) this Raft version doesn't have are red boxes, kept as they were when you save" : ""), missing > 0);
 				return true;
 			}
 			catch (Exception e)

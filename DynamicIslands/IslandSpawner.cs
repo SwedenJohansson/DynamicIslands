@@ -249,6 +249,8 @@ namespace DynamicIslands.Editor
 			box.center = new Vector3(0f, (PlacementOptions.FoundationTop - 0.15f) / Mathf.Max(0.01f, Mathf.Abs(s.y)), 0f);
 		}
 
+		static readonly HashSet<string> toldMissing = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
 			int missing = 0, creature = 0, loot = 0, zone = 0;
@@ -296,7 +298,12 @@ namespace DynamicIslands.Editor
 				if (go == null)
 				{
 					missing++;
-					Debug.LogWarning("[CUSTOM ISLANDS] Object '" + o.Name + "' is not in the object catalog - skipped");
+					Debug.LogWarning("[CUSTOM ISLANDS] Object '" + o.Name + "' is not in the object catalog - " + (editable ? "a placeholder keeps it" : "left out"));
+					// (in the editor a placeholder keeps it, so saving doesn't drop it from the island for good: after a Raft update
+					// renamed or removed an object, a later version may have it again)
+					if (editable) MissingPlaceholder(o, parent);
+					// (in a world a chest still takes its number: the chests after it keep their saved state)
+					else if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
 					continue;
 				}
 				go.transform.position = parent.position + o.Position;
@@ -324,6 +331,27 @@ namespace DynamicIslands.Editor
 				}
 			}
 			return missing;
+		}
+
+		/// <summary>Name of the placeholders for objects this Raft doesn't have (tests).</summary>
+		public const string MissingTag = "MissingObject";
+
+		/// <summary>
+		/// An object of the island that this Raft version doesn't have: a red box in its place with its name, position, turn,
+		/// size and settings - saved back into the island exactly as it was. It can be moved or deleted like any object.
+		/// </summary>
+		static void MissingPlaceholder(IslandObject o, Transform parent)
+		{
+			GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.name = o.Name + " (" + MissingTag + ")";
+			go.transform.SetParent(parent, false);
+			go.transform.position = parent.position + o.Position;
+			go.transform.rotation = Quaternion.Euler(o.EulerRotation);
+			go.transform.localScale = o.Scale;
+			Renderer r = go.GetComponent<Renderer>();
+			Shader shader = Shader.Find("Standard") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Sprites/Default");
+			if (r != null && shader != null) r.material = new Material(shader) { color = new Color(0.9f, 0.15f, 0.1f, 1f) };
+			EditorGameObject.Attach(go, o.Name, o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>());
 		}
 
 		/// <summary>
@@ -483,6 +511,9 @@ namespace DynamicIslands.Editor
 			objects.transform.SetParent(root.transform, false);
 			int missing = SpawnObjects(island, objects.transform, false, flying);
 			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
+			// (the player is told once per island and Raft start: an object Raft doesn't have any more is left out)
+			if (missing > 0 && toldMissing.Add(island.Name ?? ""))
+				DynamicIslands.Notify("The island '" + island.Name + "' has " + missing + " object(s) this Raft version doesn't have: they are left out", true);
 
 			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
 				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
