@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -222,18 +223,53 @@ namespace DynamicIslands.Editor
 			if (pendingDelete != n)
 			{
 				pendingDelete = n;
-				SetStatus("Delete '" + n + "' for good? Press Delete again. (It stays in worlds that already have it only until they reload.)", true);
+				// (what would miss it: saved worlds that have it, plans that bring it)
+				List<string> worlds = LibraryPack.WorldsUsing(n);
+				List<string> plans = PlansNaming(n);
+				string uses = (worlds.Count > 0 ? " Saved worlds that have it: " + string.Join(", ", worlds.Take(4).ToArray()) + (worlds.Count > 4 ? " and " + (worlds.Count - 4) + " more" : "") + " - it goes missing there." : "") +
+					(plans.Count > 0 ? " Plans that bring it: " + string.Join(", ", plans.Take(4).ToArray()) + "." : "");
+				SetStatus("Delete '" + n + "'? Press Delete again." + uses + " (It is moved to Mods\\DynamicIslands\\" + DeletedFolderName + ", where you can get it back.)", true);
 				return;
 			}
 			try
 			{
-				File.Delete(path);
+				MoveToDeleted(n);
 				pendingDelete = null;
-				DynamicIslands.Notify("Deleted island '" + n + "'");
+				DynamicIslands.Notify("Deleted island '" + n + "' (kept in " + DeletedFolderName + " until you remove it there)");
 				SetStatus("Deleted '" + n + "'.", false);
 				Refresh();
 			}
 			catch (Exception ex) { SetStatus("Could not delete: " + ex.Message, true); }
+		}
+
+		public const string DeletedFolderName = "deleted";
+
+		/// <summary>
+		/// An island deleted in the editor is moved aside, not erased: Mods\DynamicIslands\deleted\&lt;name&gt;.island (an older
+		/// deleted one of the same name gets a date). Put it back by moving the file into Mods\DynamicIslands.
+		/// </summary>
+		public static void MoveToDeleted(string name)
+		{
+			string path = IslandSpawner.PathFor(name);
+			string folder = Path.Combine(DynamicIslands.assetpath, DeletedFolderName);
+			Directory.CreateDirectory(folder);
+			string to = Path.Combine(folder, Path.GetFileName(path));
+			if (File.Exists(to)) File.Move(to, Path.Combine(folder, name + " " + File.GetLastWriteTime(to).ToString("yyyy-MM-dd HHmmss") + IslandFile.Extension));
+			File.Move(path, to);
+		}
+
+		/// <summary>Saved plans with a rule that brings this island by name (island: or oneof:).</summary>
+		public static List<string> PlansNaming(string island)
+		{
+			var result = new List<string>();
+			foreach (string p in WorldPlan.All().Where(x => !WorldPlan.IsBuiltIn(x)))
+			{
+				WorldPlan plan = WorldPlan.Load(p);
+				if (plan != null && plan.Rules.Any(r => (r.What == "island" && r.WhatArg.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) ||
+					(r.What == "oneof" && r.WhatArg.Split(',').Any(x => x.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)))))
+					result.Add(p);
+			}
+			return result;
 		}
 
 		void SetStatus(string message, bool warning)
