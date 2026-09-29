@@ -101,8 +101,11 @@ namespace DynamicIslands.Editor
 			quest.Done = doneField.text;
 			quest.Steps.RemoveAll(s => s.Type == "reach" && s.Target.Trim().Length == 0 && s.Text.Trim().Length == 0); // ("go to" nowhere)
 			KeepBring();
-			SetQuestBringRule(DynamicIslands.currentIslandProps, quest.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
-			Apply(quest);
+			IslandSettingsUndo.Change(() =>
+			{
+				SetQuestBringRule(DynamicIslands.currentIslandProps, quest.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
+				Apply(quest);
+			});
 			DynamicIslands.Notify(quest.Exists ? "Quest \"" + quest.ShownTitle + "\" with " + quest.Steps.Count + " step(s)" + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
 				" saved with the island (Ctrl+S)" : "The island has no quest now");
 			Close();

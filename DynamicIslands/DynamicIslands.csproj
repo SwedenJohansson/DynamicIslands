@@ -116,6 +116,7 @@
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
     <Compile Include="PatchHealth.cs" />
+    <Compile Include="IslandSettingsUndo.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />
     <Compile Include="ExperimentalNotice.cs" />

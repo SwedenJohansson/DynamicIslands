@@ -486,7 +486,10 @@ namespace DynamicIslands.Editor
 			foreach (EditorGameObject e in hidden) UnityEngine.Object.Destroy(e.gameObject);
 			foreach (Transform t in placed.Cast<Transform>().Where(t => t.name == "GeneratedObjects" && t.GetComponentsInChildren<EditorGameObject>(true).All(e => !e.gameObject.activeSelf)).ToList())
 				UnityEngine.Object.Destroy(t.gameObject);
-			Debug.Log("[CUSTOM ISLANDS] Removed " + hidden.Count + " hidden objects of earlier islands (they are kept for undo up to " + MaxHiddenObjects + ")");
+			// (older undo steps pointed at those objects: they would undo only in part - the history goes, and the player is told)
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Debug.Log("[CUSTOM ISLANDS] Removed " + hidden.Count + " hidden objects of earlier islands (they are kept for undo up to " + MaxHiddenObjects + "); the undo history is cleared");
+			DynamicIslands.Notify("Many islands generated: earlier ones are cleared from memory, so Undo can't go back past this one");
 		}
 
 		/// <summary>Points the editor camera at the island from a distance that fits it.</summary>

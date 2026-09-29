@@ -443,8 +443,12 @@ namespace DynamicIslands.Editor
 		static void SetInfo(string key, string value)
 		{
 			value = (value ?? "").Trim();
-			if (value.Length == 0) DynamicIslands.currentIslandProps.Remove(key);
-			else DynamicIslands.currentIslandProps[key] = value;
+			// (an undo step, and an unsaved change for the autosave)
+			IslandSettingsUndo.Change(() =>
+			{
+				if (value.Length == 0) DynamicIslands.currentIslandProps.Remove(key);
+				else DynamicIslands.currentIslandProps[key] = value;
+			});
 		}
 
 		static void RefreshInfo()
@@ -540,7 +544,7 @@ namespace DynamicIslands.Editor
 		static void StepStyle(int step)
 		{
 			int n = TerrainPainter.Styles.Length;
-			DynamicIslands.SetEditorStyle(((DynamicIslands.currentStyle + step) % n + n) % n);
+			IslandSettingsUndo.Change(() => DynamicIslands.SetEditorStyle(((DynamicIslands.currentStyle + step) % n + n) % n));
 			int style = DynamicIslands.currentStyle;
 			DynamicIslands.Notify("Island style: " + TerrainPainter.StyleName(style) + (TerrainPainter.HasStyle(style) ? "" : " (textures not loaded; showing tropical)"));
 		}
@@ -548,8 +552,8 @@ namespace DynamicIslands.Editor
 		static void SetElevation(string text)
 		{
 			float e, before = DynamicIslands.currentElevation;
-			DynamicIslands.currentElevation = float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out e)
-				? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
+			float to = float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out e) ? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
+			IslandSettingsUndo.Change(() => DynamicIslands.currentElevation = to);
 			if (elevationField != null) elevationField.text = DynamicIslands.currentElevation.ToString(CultureInfo.InvariantCulture);
 			RefreshStats();
 			if (DynamicIslands.currentElevation != before) DynamicIslands.Notify("In a world this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + " (saved with the island)");

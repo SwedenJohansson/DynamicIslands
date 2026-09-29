@@ -490,8 +490,11 @@ namespace DynamicIslands.Editor
 			if (islandMode)
 			{
 				Func<string, bool> eventKey = k => k.StartsWith(BehaviourProps.EventPrefix) || k.StartsWith(BehaviourProps.CheckPrefix) || k.StartsWith(BehaviourProps.ElsePrefix);
-				foreach (string k in DynamicIslands.currentIslandProps.Keys.Where(eventKey).ToList()) DynamicIslands.currentIslandProps.Remove(k);
-				foreach (var kv in result.Where(kv => eventKey(kv.Key))) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
+				IslandSettingsUndo.Change(() =>
+				{
+					foreach (string k in DynamicIslands.currentIslandProps.Keys.Where(eventKey).ToList()) DynamicIslands.currentIslandProps.Remove(k);
+					foreach (var kv in result.Where(kv => eventKey(kv.Key))) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
+				});
 				EditorUI.RefreshIsland();
 				DynamicIslands.Notify("Island events kept (save the island, Ctrl+S)");
 			}

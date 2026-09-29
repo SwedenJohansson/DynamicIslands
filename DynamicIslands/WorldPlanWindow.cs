@@ -513,7 +513,7 @@ namespace DynamicIslands.Editor
 			string problems = Problems();
 			if (islandMode)
 			{
-				WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules);
+				IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules));
 				EditorUI.RefreshIsland();
 				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check lists problems" : ""), problems.Length > 0);
 			}

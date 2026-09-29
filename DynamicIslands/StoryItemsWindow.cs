@@ -196,8 +196,11 @@ namespace DynamicIslands.Editor
 		void SaveDefs()
 		{
 			string text = StoryItems.Text(defs);
-			if (text.Length == 0) DynamicIslands.currentIslandProps.Remove(StoryItems.Key);
-			else DynamicIslands.currentIslandProps[StoryItems.Key] = text;
+			IslandSettingsUndo.Change(() =>
+			{
+				if (text.Length == 0) DynamicIslands.currentIslandProps.Remove(StoryItems.Key);
+				else DynamicIslands.currentIslandProps[StoryItems.Key] = text;
+			});
 		}
 
 		void Save()

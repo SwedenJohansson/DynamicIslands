@@ -84,6 +84,12 @@ namespace RuntimeGizmos
 
 		public int maxUndoStored = 50;
 
+		/// <summary>
+		/// Selecting isn't an undo step (Custom Islands): clicks around the island filled the 50 steps and pushed real changes out,
+		/// and counted as unsaved changes. What is selected is not saved with the island either.
+		/// </summary>
+		public static bool RecordSelection = false;
+
 		public bool manuallyHandleGizmo;
 
 		public LayerMask selectionMask = (1 << LayerMask.NameToLayer("Default")) | (1 << LayerMask.NameToLayer("Obstruction"));
@@ -708,7 +714,7 @@ namespace RuntimeGizmos
 				if(targetRoots.ContainsKey(target)) return;
 				if(children.Contains(target)) return;
 
-				if(addCommand) UndoRedoManager.Insert(new AddTargetCommand(this, target, targetRootsOrdered));
+				if(addCommand && RecordSelection) UndoRedoManager.Insert(new AddTargetCommand(this, target, targetRootsOrdered));
 
 				AddTargetRoot(target);
 				AddTargetHighlightedRenderers(target);
@@ -723,7 +729,7 @@ namespace RuntimeGizmos
 			{
 				if(!targetRoots.ContainsKey(target)) return;
 
-				if(addCommand) UndoRedoManager.Insert(new RemoveTargetCommand(this, target));
+				if(addCommand && RecordSelection) UndoRedoManager.Insert(new RemoveTargetCommand(this, target));
 
 				RemoveTargetHighlightedRenderers(target);
 				RemoveTargetRoot(target);
@@ -734,7 +740,7 @@ namespace RuntimeGizmos
 
 		public void ClearTargets(bool addCommand = true)
 		{
-			if(addCommand) UndoRedoManager.Insert(new ClearTargetsCommand(this, targetRootsOrdered));
+			if(addCommand && RecordSelection) UndoRedoManager.Insert(new ClearTargetsCommand(this, targetRootsOrdered));
 
 			ClearAllHighlightedRenderers();
 			targetRoots.Clear();
@@ -744,7 +750,7 @@ namespace RuntimeGizmos
 
 		void ClearAndAddTarget(Transform target)
 		{
-			UndoRedoManager.Insert(new ClearAndAddTargetCommand(this, target, targetRootsOrdered));
+			if (RecordSelection) UndoRedoManager.Insert(new ClearAndAddTargetCommand(this, target, targetRootsOrdered));
 
 			ClearTargets(false);
 			AddTarget(target, false);
