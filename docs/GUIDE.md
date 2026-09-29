@@ -421,7 +421,8 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 
 **Save** (Ctrl+S) saves straight away once the island has a name; **Save as** and **Open** show the **Islands**
 window: a name, the height in the world, and your saved islands (click = pick, double-click = open, Delete asks
-first).
+first and says which saved worlds and plans use the island). A deleted island isn't erased: it is moved to
+`ModsDynamicIslandsdeleted` - move the file back into `ModsDynamicIslands` to get it back.
 
 ![The Islands window](images/editor-islands-window.jpg)
 *The Islands window: the name and height, and the saved islands with their date and size.*
@@ -433,13 +434,25 @@ to players who don't have them, so nobody needs to share files just to play toge
 leave to the main menu or quit Raft (`Mods\DynamicIslands\autosave\<name>.island` - not an island of yours, it never
 turns up anywhere). If Raft closes before you saved (a crash, the power going), the next time the editor opens it
 offers the unsaved work: **Open** it (then **Save** to keep it), **Throw them away**, or **Not now** (asked again next
-time). Saving the island removes its autosave. Changes the editor can undo count (the land, objects, their settings);
-save before you close Raft all the same.
+time). Saving the island removes its autosave. Every change counts - the land, objects, their settings, and the
+island's own settings on the Island tab (name, texts, style, height, rules, quest, events, story items), which Undo and
+Redo also take back and forth; save before you close Raft all the same. Selecting objects isn't a change.
 
-**Saving an island your saved worlds have.** A saved world plays your island as its file is: the next time such a world
-loads, it has your new version (a fixed quest works there). The first time you save over such an island, the editor
-says which worlds have it. If you moved its ground, anything built on it in those worlds may no longer fit - to keep a
-world as it is, save your changes under a new name (**Save as**) instead.
+**Objects this Raft version doesn't have.** After a Raft update an object an island uses may be gone or renamed. In the
+editor it shows as a **red box** in its place (the island says how many when it opens): it keeps its name, place, size
+and settings, and saving writes it back unchanged, so a later version of Raft or the mod can show it again. Delete the
+box if you don't want it. In a world such an object is left out, and the player is told once.
+
+**Saving an island your saved worlds have.** A saved world remembers what was used on the island - trees chopped,
+things picked up, chests looted, zones fired, doors opened - by the order of the island's objects. So:
+- changes that keep that order reach those worlds the next time they load: moving objects, changing their settings,
+  the ground, the island's settings, and **new objects** (they come after the others). The first time you save over
+  such an island, the editor says which worlds have it. If you moved its ground, anything built on it there may no
+  longer fit;
+- changes that would mix it up - **deleting objects**, changing their order, or making an object a chest - don't reach
+  them: those worlds keep playing the version they started with (the editor says so; a copy `<name>_<code>.island` is
+  kept for them), and new worlds get your new version. To give a world the new version anyway, save your changes under a
+  new name (**Save as**) and bring that island into the world.
 
 **Sharing an island or a plan: Export.** In the Islands window, pick an island and click **Export...**; in the World
 plan window (a plan open) click **Export...**. The **Share** window says what goes along:
@@ -1425,6 +1438,7 @@ Press **F10** for RML's console.
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
+| `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world) |
@@ -1477,7 +1491,16 @@ the world fits together (the items you took went back with Raft's save too).
 reach line tells a builder beforehand.
 
 **A friend can't see my island.** Every player needs the mod, and the host's islands are the ones that count. Island
-files are sent to players who join; they appear as `<name>_<hash>.island` in their folder.
+files are sent to players who join; they appear as `<name>_<hash>.island` in their folder. If the host was busy or a
+message got lost, the mod keeps asking (it says "Waiting for the island..."); press F10 and type `Resync` to ask again
+at once.
+
+**"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
+that won't work until the mod is updated; everything else works and your islands and worlds aren't changed. Please
+report it ([section 13](#13-reporting-a-problem)).
+
+**Red boxes on my island in the editor.** Objects this Raft version doesn't have (after a Raft update): they are
+kept as they were and saved back unchanged ([4.7](#47-saving-and-sharing)).
 
 **Where are my islands?** In `<Raft>\Mods\DynamicIslands\` as `<name>.island`. To give one to a friend, **Export...** it
 ([4.7](#47-saving-and-sharing)): the pack has the islands it brings too.
