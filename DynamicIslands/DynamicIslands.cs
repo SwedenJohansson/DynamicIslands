@@ -543,7 +543,8 @@ namespace DynamicIslands
 			catch (Exception e)
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Saving failed: " + e);
-				Notify("Saving '" + name + "' failed - see console (F10)", true);
+				if (SafeFile.InUse(e)) Notify("Can't save '" + name + "': its file is in use by another program - close it there and save again (the saved island is as it was)", true);
+				else Notify("Saving '" + name + "' failed - see console (F10)", true);
 				return false;
 			}
 		}

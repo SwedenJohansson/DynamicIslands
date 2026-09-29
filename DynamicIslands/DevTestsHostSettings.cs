@@ -47,6 +47,8 @@ namespace DynamicIslands
 			lines.Add("islands " + islands.Count + (islands.Count > 0 ? " " : "") + string.Join(" ", islands.Select(e => e.Id + ":" + e.HostName + (string.IsNullOrEmpty(e.Label) ? "" : "'" + e.Label + "'")).ToArray()));
 			IslandNetMessage story = StoryBook.StateMessage();
 			lines.Add("story " + Fnv(story != null ? story.Data : "").ToString("X8"));
+			// (Raft's story chain with the plan's islands in it - kind 19: the steps, frequencies, unlocked, fired, done, brought)
+			lines.Add("storychain " + Fnv(StoryChain.Message().Data ?? "").ToString("X8"));
 			// The level up system: on or off for the world, and each player here with their level and Health points as
 			// this machine knows them (the host from the records, a player from the host's list)
 			// The world's options (WorldSettingsWindow): what is on, the seed, and what follows from it on this machine - the
@@ -87,7 +89,8 @@ namespace DynamicIslands
 			List<string> before = ServerSig();
 			bool autoBefore = CustomIslandSpawner.Enabled;
 			int refused = 0;
-			Application.LogCallback counter = (msg, trace, type) => { if (msg.Contains("Only the host can")) refused++; };
+			// (every host-only command says "Only the host ...": "can", "changes", "switches", "chooses")
+			Application.LogCallback counter = (msg, trace, type) => { if (msg.Contains("Only the host")) refused++; };
 			Application.logMessageReceived += counter;
 			string otherLevel = MonsterDifficulty.Names[MonsterDifficulty.Current == MonsterDifficulty.Nightmare ? MonsterDifficulty.Timid : MonsterDifficulty.Nightmare].ToLowerInvariant();
 			string otherPercent = BuildCost.Current == 100 ? "5" : "100";
@@ -100,13 +103,16 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action>("CustomIslandsAuto " + (autoBefore ? "off" : "on"), () => DynamicIslands.CustomIslandsAutoCommand(new[] { autoBefore ? "off" : "on" })),
 				new KeyValuePair<string, Action>("SpawnIsland cicreature 200", () => DynamicIslands.SpawnIslandCommand(new[] { "cicreature", "200" })),
 				new KeyValuePair<string, Action>("RemoveIsland all", () => DynamicIslands.RemoveIslandCommand(new[] { "all" })),
+				new KeyValuePair<string, Action>("WorldOptions +ghostrafts -privatestorage", () => WorldOptions.WorldOptionsCommand(new[] { "+ghostrafts", "-privatestorage" })),
+				new KeyValuePair<string, Action>("Levels " + (PlayerLevels.On ? "off" : "on"), () => DynamicIslands.LevelsCommand(new[] { PlayerLevels.On ? "off" : "on" })),
+				new KeyValuePair<string, Action>("WorldIslands all", () => WorldIslands.WorldIslandsCommand(new[] { "all" })),
 			};
 			foreach (var t in tries)
 			{
 				int r0 = refused;
 				try { t.Value(); } catch (Exception e) { Check(ref ok, false, t.Key + " threw " + e.GetType().Name + ": " + e.Message); continue; }
 				yield return null;
-				Check(ref ok, refused > r0, t.Key + ": refused (\"Only the host can ...\")");
+				Check(ref ok, refused > r0, t.Key + ": refused (\"Only the host ...\")");
 			}
 			yield return new WaitForSeconds(3f); // (anything a slip let through would have come back from the host by now)
 			Application.logMessageReceived -= counter;

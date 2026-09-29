@@ -121,6 +121,7 @@
     <Compile Include="WorldWindow.cs" />
     <Compile Include="IslandTest.cs" />
     <Compile Include="Housekeeping.cs" />
+    <Compile Include="DevTestsLeftovers.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />

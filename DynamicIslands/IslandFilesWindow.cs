@@ -244,7 +244,7 @@ namespace DynamicIslands.Editor
 				SetStatus("Deleted '" + n + "'.", false);
 				Refresh();
 			}
-			catch (Exception ex) { SetStatus("Could not delete: " + ex.Message, true); }
+			catch (Exception ex) { SetStatus(SafeFile.InUse(ex) ? "'" + n + "' is in use by another program - close it there and delete again (nothing was moved)." : "Could not delete: " + ex.Message, true); }
 		}
 
 		public const string DeletedFolderName = "deleted";

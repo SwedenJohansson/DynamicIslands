@@ -1169,6 +1169,11 @@ namespace DynamicIslands
 					new IslandNetMessage { Kind = IslandNetMessage.PlayerPlace, Ids = new[] { 7 }, Offsets = new[] { 3f, 12.5f, -4f } },
 					new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { 7 }, Index = TriggerZone.KeyBase + 2, Count = 1 },
 					StoryBook.StateMessage(), WorldRandomizer.Message(), WorldRules.Message(),
+					// (the kinds added since: the level up system, the world's options, the world's copy, the story chain)
+					new IslandNetMessage { Kind = IslandNetMessage.Levels, Name = "mine", Data = "250|0,0,0,1,0,1,0,0,0|4" },
+					WorldOptions.Message(),
+					new IslandNetMessage { Kind = IslandNetMessage.WorldCopy, Name = Guid.NewGuid().ToString(), Hash = "0123abcd", Index = 0, Count = 1, Data = "# Custom islands in world 'CI Net'\n@plan=Random islands\n@savedat=1" },
+					StoryChain.Message("A new signal\nTune the Receiver to #1234"),
 				};
 				var broken = new List<string>();
 				foreach (IslandNetMessage m in kinds)

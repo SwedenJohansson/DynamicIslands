@@ -60,9 +60,28 @@ namespace DynamicIslands.Editor
 		{
 			if (!File.Exists(path)) { File.Move(tmp, path); return; }
 			try { File.Replace(tmp, path, null); return; }
-			catch (Exception e) { UnityEngine.Debug.Log("[CUSTOM ISLANDS] Replacing " + Path.GetFileName(path) + " in one step didn't work (" + e.GetType().Name + "): deleting, then moving"); }
+			catch (Exception e)
+			{
+				// (another program holds the file - an editor, 7-Zip, a cloud sync: the old file stays as it was, the new one
+				// is dropped, and the player is told why; it was deleted-then-moved, which failed the same way and left the
+				// .tmp beside it)
+				if (InUse(e)) { try { File.Delete(tmp); } catch { } throw new IOException(Path.GetFileName(path) + " is in use by another program - close it there and try again", e); }
+				UnityEngine.Debug.Log("[CUSTOM ISLANDS] Replacing " + Path.GetFileName(path) + " in one step didn't work (" + e.GetType().Name + "): deleting, then moving");
+			}
 			if (File.Exists(path)) File.Delete(path);
 			File.Move(tmp, path);
+		}
+
+		/// <summary>True for "the file is in use by another program" (a sharing or lock violation), also when wrapped.</summary>
+		public static bool InUse(Exception e)
+		{
+			for (; e != null; e = e.InnerException)
+			{
+				if (!(e is IOException)) continue;
+				int code = e.HResult & 0xFFFF;
+				if (code == 32 || code == 33 || e.Message.Contains("in use by another program")) return true;
+			}
+			return false;
 		}
 
 		/// <summary>

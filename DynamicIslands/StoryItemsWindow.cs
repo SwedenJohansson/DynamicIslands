@@ -243,6 +243,8 @@ namespace DynamicIslands.Editor
 
 		static GameObject Put(List<GameObject> list, string name, Vector3 pos, float yaw, Dictionary<string, string> props)
 		{
+			// (the object limit, as for placing by hand: a set that can't be placed whole is taken away again)
+			if (!ObjectLimit.Allow(1)) return null;
 			Transform root = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;
 			GameObject go = PlaceableCatalog.Spawn(name, root);
 			if (go == null) { Debug.LogWarning("[CUSTOM ISLANDS] Story set: no object " + name); return null; }

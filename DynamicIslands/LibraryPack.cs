@@ -874,7 +874,8 @@ namespace DynamicIslands.Editor
 			{ report.Add("Kept '" + f.name + "': another installed entry uses it too"); return; }
 			List<string> worlds = plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
 			if (worlds.Count > 0) { report.Add("Kept '" + f.name + "': " + (worlds.Count == 1 ? "the world " : "the worlds ") + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + (worlds.Count == 1 ? " uses it" : " use it")); return; }
-			File.Delete(path);
+			try { File.Delete(path); }
+			catch (Exception e) when (SafeFile.InUse(e)) { report.Add("Kept '" + f.name + "': it is in use by another program (close it there and Remove again)"); return; }
 			if (!plan) RemovePoolLine(f.name);
 			report.Add("Removed " + (plan ? "the plan '" : "'") + f.name + "'");
 		}

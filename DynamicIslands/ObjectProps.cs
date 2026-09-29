@@ -269,8 +269,9 @@ namespace DynamicIslands.Editor
 			Dictionary<string, string> before = target.Props ?? new Dictionary<string, string>();
 			if (Same(before, after)) return;
 			float now = Time.unscaledTime;
-			// (only while that step is still what the object shows: not after an undo)
-			if (mergeKey != null && lastTarget == target && lastKey == mergeKey && now - lastTime < 1.5f && lastCommand != null && Same(before, lastCommand.after))
+			// (only while that step is still what the object shows: not after an undo; and not into a step already saved - the
+			// drag went into it and the island still looked saved)
+			if (mergeKey != null && lastTarget == target && lastKey == mergeKey && now - lastTime < 1.5f && lastCommand != null && Same(before, lastCommand.after) && EditorAutosave.Unsaved)
 			{
 				lastCommand.after.Clear();
 				foreach (var kv in after) lastCommand.after[kv.Key] = kv.Value;
