@@ -1006,7 +1006,7 @@ file. Picking one fills the field; typing still works. A new map-type island is 
 signals can't be listed: its list is empty and says so - type the name.
 
 ![The ▾ list of a rule](images/plan-picks.jpg)
-*A ▾ list: the zones of the island the rule waits for (taken before the cards were redrawn; the list is the same).*
+*The ▾ after the zone of "When a trigger zone fires" lists the zones of the island the rule waits for (here the saved island "shrine").*
 
 ### 7.4 Everything a rule can do
 

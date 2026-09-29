@@ -786,6 +786,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The help text shown now (null when no popup is open): the tests check that popups close.</summary>
+		/// <summary>Tests: the popup itself (where it is on the screen).</summary>
+		public static RectTransform HelpPopup { get { return helpPopup; } }
+
 		public static string ShownHelp { get { return helpPopup != null && helpPopup.gameObject.activeSelf ? helpText.text : null; } }
 
 		public class HelpMark : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -825,8 +828,18 @@ namespace DynamicIslands.Editor
 			helpText.text = mark.Text;
 			helpPopup.gameObject.SetActive(true);
 			helpPopup.SetAsLastSibling();
+			PlaceHelp(mark);
+		}
+
+		/// <summary>
+		/// Puts the popup next to its mark (right and below), kept on the screen. Again every frame while it shows
+		/// (HelpPlacer): the first popup of a session is placed before its new canvas has scaled to the screen, and would
+		/// otherwise land far off it; a scrolled list or another screen size moves the mark too.
+		/// </summary>
+		static void PlaceHelp(HelpMark mark)
+		{
+			if (helpPopup == null || mark == null) return;
 			LayoutRebuilder.ForceRebuildLayoutImmediate(helpPopup);
-			// Next to the mark (right and below), kept on the screen
 			var canvas = (RectTransform)helpPopup.parent;
 			Vector3[] c = new Vector3[4];
 			((RectTransform)mark.transform).GetWorldCorners(c);
@@ -845,6 +858,12 @@ namespace DynamicIslands.Editor
 			helpPopup.anchoredPosition = new Vector2(x - area.xMin, y - area.yMax);
 		}
 
+		/// <summary>Keeps the shown popup next to its mark.</summary>
+		class HelpPlacer : MonoBehaviour
+		{
+			void LateUpdate() { if (helpShownBy != null && helpPopup != null && helpPopup.gameObject.activeSelf) PlaceHelp(helpShownBy); }
+		}
+
 		static void HideHelp(HelpMark mark)
 		{
 			if (helpShownBy != mark) return;
@@ -857,6 +876,7 @@ namespace DynamicIslands.Editor
 		{
 			Canvas canvas = CreateCanvas("CustomIslandsHelp", 900);
 			canvas.GetComponent<GraphicRaycaster>().enabled = false;
+			canvas.gameObject.AddComponent<HelpPlacer>();
 			helpPopup = Panel(canvas.transform, "HelpPopup", new RectOffset(12, 12, 9, 11), 4f);
 			helpPopup.anchorMin = helpPopup.anchorMax = new Vector2(0, 1);
 			helpPopup.pivot = new Vector2(0, 1);

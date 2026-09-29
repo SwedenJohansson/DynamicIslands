@@ -55,8 +55,11 @@ namespace DynamicIslands
 				if (when != null)
 				{
 					when.OnPointerEnter(null);
-					yield return null;
-					Check(ref ok, UIKit.ShownHelp == when.Text, "hovering the When ? shows its help");
+					yield return new WaitForSecondsRealtime(0.2f); // (a hover lasts; the popup is placed again each frame)
+					Canvas.ForceUpdateCanvases();
+					Rect pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+					Check(ref ok, UIKit.ShownHelp == when.Text && pop.width > 50f && pop.height > 50f && pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f,
+						"hovering the When ? shows its help, on the screen (" + pop + ")");
 					Screenshot(new[] { "planhelp_when" });
 					yield return new WaitForSecondsRealtime(0.6f);
 					when.OnPointerExit(null);
@@ -264,6 +267,16 @@ namespace DynamicIslands
 				"a ▾ after the fields that name something (none after 'the world starts')");
 			if (zoneButton != null)
 			{
+				// (the card in view, as a player scrolls to it before clicking)
+				ScrollRect rulesScroll = window.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault(s => zoneButton.transform.IsChildOf(s.content));
+				if (rulesScroll != null)
+				{
+					RectTransform zoneCard = (RectTransform)window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAt(2);
+					Canvas.ForceUpdateCanvases();
+					float gap = ScreenRect(rulesScroll.viewport).yMax - ScreenRect(zoneCard).yMax;
+					rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
+					yield return null;
+				}
 				zoneButton.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.4f);
 				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.SequenceEqual(new[] { "altar", "cave" }) && ChoiceWindow.Title.Contains("TRIGGER ZONES"), "clicking it lists the zones: " + ChoiceWindow.Title);
