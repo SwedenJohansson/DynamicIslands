@@ -1457,6 +1457,13 @@ the island before it is done.
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 
+**"The host has Custom Islands 3.x - you have 3.y".** You and the host have different versions of the mod: islands,
+quests and settings may not match between you. Both of you update to the same version (raftmodding.com).
+
+**My island can't be saved under that name.** Windows keeps some names for itself (CON, PRN, AUX, NUL, COM1-9, LPT1-9 -
+also with anything after a dot) and doesn't allow a name ending with a dot or a space, or `\ / : * ? " < > |`. Names can
+be up to 60 characters. The message says what is wrong; choose another name.
+
 **I loaded an older save of my world, and a chest I emptied is full again.** That's on purpose: Raft's Load Game box
 keeps the last 8 saves of a world, and the mod's islands, chests, quests and journal go back with the save you pick, so
 the world fits together (the items you took went back with Raft's save too).

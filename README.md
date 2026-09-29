@@ -574,6 +574,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandWorldState.cs` | The world's island list: saved per world, follows world shifts; Raft's stamp of each save (`@raftsave=`) |
 | `WorldCopy.cs` | The world file's copies: in Raft's world folder and in each save's own folder (an older save loads its own state), and for every player (any player can host later) |
 | `EditorAutosave.cs` | The editor's autosave of unsaved work, and offering it back after a crash |
+| `FileNames.cs` | Names Windows refuses (device names, a trailing dot or space, length) for everything a player names; `SafeFile`: files written aside first, so a crash or a full disk never leaves them half written |
+| `RaftQuirks.cs` | Raft's own objects that threw outside a world (music zones, water cut-outs in the editor) |
 | `CustomIslandSpawner.cs` | Automatic islands while sailing (saved ones and newly generated ones), and loading/unloading islands by distance (from the raft and the player) |
 | `PlayerHold.cs` | A player who comes back to a world standing on a custom island is held there until it has loaded; the host's record of where each player stands on an island (`PlayerPlaces`, saved with the world) corrects a place Raft got wrong |
 | `IslandRadar.cs` | Custom islands as dots on Raft's Receiver (Harmony postfix on `Reciever.HandleUI`) |
