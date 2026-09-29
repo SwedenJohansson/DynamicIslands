@@ -98,32 +98,32 @@ namespace DynamicIslands.Editor
 			LastOlderSave = "";
 			long loading = LoadingStamp;
 			LoadingStamp = 0; // (used once: a new world made afterwards has no save of its own yet)
-			// (Raft is loading one particular save: the state written with that save, if there is one - an older save the
-			// player picked in Raft's Load Game box then gets the mod's state of that moment, not the newest)
+			// (Raft is loading an OLDER save than the world's newest - one the player picked in Raft's Load Game box: the
+			// state written with that save, so the world fits together. The newest save is read as always: the newest
+			// copy, which also has what changed after it - a setting, or the copy another host sent.)
 			if (loading != 0)
 			{
-				if (mine != null && RaftSaveOf(mine) == loading) { LastSource = "mod folder"; return mine; }
-				if (travelled != null && RaftSaveOf(travelled) == loading) { LastSource = "Raft's world folder"; return travelled; }
+				var saves = new List<KeyValuePair<string, string[]>>();
 				if (folder != null)
 					try
 					{
 						foreach (string dir in Directory.GetDirectories(folder))
 						{
 							string f = Path.Combine(dir, FileName);
-							if (!File.Exists(f)) continue;
-							string[] lines = File.ReadAllLines(f);
-							if (RaftSaveOf(lines) != loading) continue;
-							LastSource = "Raft's save " + Path.GetFileName(dir);
-							// (the newest save's copy is read too when a setting was changed after it and the game then
-							// left without saving: Raft's world is as it was at that save, so the mod's is as well)
-							if (dir.EndsWith("-Latest", StringComparison.OrdinalIgnoreCase)) { Debug.Log("[CUSTOM ISLANDS] The world's state as Raft last saved it: " + f); return lines; }
-							LastOlderSave = Path.GetFileName(dir);
-							Debug.Log("[CUSTOM ISLANDS] An older save of the world: its custom islands, used objects, quests and the rest go back to that save too (" + f + ")");
-							DynamicIslands.Notify("An older save of this world: its custom islands, chests, quests and story are as they were then too.");
-							return lines;
+							if (File.Exists(f)) saves.Add(new KeyValuePair<string, string[]>(dir, File.ReadAllLines(f)));
 						}
 					}
 					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the world's saves: " + e.Message); }
+				long newest = new[] { mine, travelled }.Concat(saves.Select(s => s.Value)).Where(l => l != null).Select(RaftSaveOf).DefaultIfEmpty(0L).Max();
+				KeyValuePair<string, string[]> match = saves.FirstOrDefault(s => RaftSaveOf(s.Value) == loading);
+				if (loading < newest && match.Value != null)
+				{
+					LastSource = "Raft's save " + Path.GetFileName(match.Key);
+					LastOlderSave = Path.GetFileName(match.Key);
+					Debug.Log("[CUSTOM ISLANDS] An older save of the world: its custom islands, used objects, quests and the rest go back to that save too (" + match.Key + ")");
+					DynamicIslands.Notify("An older save of this world: its custom islands, chests, quests and story are as they were then too.");
+					return match.Value;
+				}
 			}
 			if (mine == null && travelled == null) { LastSource = "none"; return null; }
 			if (travelled != null && (mine == null || StampOf(travelled) > StampOf(mine)))
