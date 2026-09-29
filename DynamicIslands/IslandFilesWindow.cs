@@ -144,7 +144,9 @@ namespace DynamicIslands.Editor
 		void Refresh()
 		{
 			foreach (Transform child in listContent) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
-			string[] names = IslandSpawner.ListSavedIslands().ToArray();
+			// (not the copies kept for saved worlds or downloaded from hosts - name_hash: deleting one broke the world that plays
+			// it, and opening one to edit makes a second island; the library window's Remove unused cleans them up)
+			string[] names = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n)).ToArray();
 			if (names.Length == 0)
 			{
 				UIKit.Size(UIKit.Label(listContent, "No saved islands yet.", 14, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic, "Empty").gameObject, -1, 30);
@@ -226,9 +228,10 @@ namespace DynamicIslands.Editor
 				pendingDelete = n;
 				// (what would miss it: saved worlds that have it, plans that bring it)
 				List<string> worlds = LibraryPack.WorldsUsing(n);
-				List<string> plans = PlansNaming(n);
+				List<string> plans = PlansNaming(n), islands = IslandsNaming(n);
 				string uses = (worlds.Count > 0 ? " Saved worlds that have it: " + string.Join(", ", worlds.Take(4).ToArray()) + (worlds.Count > 4 ? " and " + (worlds.Count - 4) + " more" : "") + " - it goes missing there." : "") +
-					(plans.Count > 0 ? " Plans that bring it: " + string.Join(", ", plans.Take(4).ToArray()) + "." : "");
+					(plans.Count > 0 ? " Plans that bring it: " + string.Join(", ", plans.Take(4).ToArray()) + "." : "") +
+					(islands.Count > 0 ? " Islands whose rules bring it: " + string.Join(", ", islands.Take(4).ToArray()) + "." : "");
 				SetStatus("Delete '" + n + "'? Press Delete again." + uses + " (It is moved to Mods\\DynamicIslands\\" + DeletedFolderName + ", where you can get it back.)", true);
 				return;
 			}
@@ -266,10 +269,25 @@ namespace DynamicIslands.Editor
 			foreach (string p in WorldPlan.All().Where(x => !WorldPlan.IsBuiltIn(x)))
 			{
 				WorldPlan plan = WorldPlan.Load(p);
-				if (plan != null && plan.Rules.Any(r => (r.What == "island" && r.WhatArg.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) ||
-					(r.What == "oneof" && r.WhatArg.Split(',').Any(x => x.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)))))
-					result.Add(p);
+				if (plan != null && plan.Rules.Any(r => LibraryPack.RuleNames(r, island))) result.Add(p);
 			}
+			return result;
+		}
+
+		/// <summary>Other saved islands whose own rules (a quest done, a zone, a visit...) bring this island by name.</summary>
+		public static List<string> IslandsNaming(string island)
+		{
+			var result = new List<string>();
+			try
+			{
+				foreach (string file in Directory.GetFiles(DynamicIslands.assetpath, "*" + IslandFile.Extension))
+				{
+					string other = Path.GetFileNameWithoutExtension(file);
+					if (other.Equals(island, StringComparison.OrdinalIgnoreCase) || IslandNetwork.IsDownloadName(other)) continue;
+					if (WorldDirector.RulesFromProps(IslandCache.Props(other)).Any(r => LibraryPack.RuleNames(r, island))) result.Add(other);
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for islands that bring '" + island + "': " + e.Message); }
 			return result;
 		}
 

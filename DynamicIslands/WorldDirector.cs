@@ -649,6 +649,12 @@ namespace DynamicIslands.Editor
 		static readonly HashSet<string> missingNoted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>Host: a rule's island is missing on this PC - say so on the screen once, and where to get it.</summary>
+		/// <summary>The rule's island isn't on this PC (a rule waiting for it, the story chain): the host is told once.</summary>
+		internal static void NoteMissingIf(string why, IntroRule r, IslandWorldState.Entry owner)
+		{
+			if (why != null && (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix))) NoteMissing(r, owner);
+		}
+
 		static void NoteMissing(IntroRule r, IslandWorldState.Entry owner)
 		{
 			string name = r.What == "island" ? r.WhatArg.Trim() : r.WhatArg;

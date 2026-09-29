@@ -568,6 +568,7 @@ namespace DynamicIslands
 				if (hash == null) return false;
 				string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
 				if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(name), copy);
+				LibraryPack.RepointWorlds(name, hash);
 				string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
 				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects were removed or their order changed, which would mix up what was " +
 					"picked, looted and opened there. New worlds get this version.");
@@ -857,9 +858,18 @@ namespace DynamicIslands
 			string a = args != null && args.Length > 0 ? args[0].Trim().ToLowerInvariant() : "";
 			if (a.Length > 0)
 			{
-				if (!LoadSceneManager.IsGameSceneLoaded) { PlayerLevels.Chosen = a == "on"; Notify("Level up system for the next new world: " + (PlayerLevels.Chosen ? "on" : "off")); return; }
-				if (!Raft_Network.IsHost) { Notify("Only the host switches the level up system", true); return; }
+				// (the word is checked first: at the main menu any other word switched it off)
 				if (a != "on" && a != "off") { Notify("Levels on or Levels off", true); return; }
+				if (!LoadSceneManager.IsGameSceneLoaded)
+				{
+					// (the next new world, like the World settings window: remembered, and the window shows it)
+					PlayerLevels.Chosen = a == "on";
+					PlayerLevels.SaveDefault(PlayerLevels.Chosen);
+					try { WorldSettingsWindow.Show(); } catch { }
+					Notify("Level up system for the next new world: " + (PlayerLevels.Chosen ? "on" : "off"));
+					return;
+				}
+				if (!Raft_Network.IsHost) { Notify("Only the host switches the level up system", true); return; }
 				PlayerLevels.SetEnabled(a == "on");
 			}
 			Notify("Level up system in this world: " + (PlayerLevels.On ? "on" : PlayerLevels.OffByHost ? "off (switched off; levels kept)" : "off"));

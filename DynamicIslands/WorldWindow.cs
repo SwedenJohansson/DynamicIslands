@@ -193,6 +193,8 @@ namespace DynamicIslands.Editor
 			{
 				Button b = buttons["Part_" + part];
 				UIKit.SetActive(b, r.Level > RandomizerSettings.Off && !r.Disabled.Contains(part));
+				// (with the randomizer off its parts do nothing: they toggled with nothing to see)
+				b.interactable = host && r.Level > RandomizerSettings.Off;
 			}
 			foreach (string o in WorldOptions.All)
 			{
@@ -207,7 +209,7 @@ namespace DynamicIslands.Editor
 			{
 				List<string> all = WorldIslands.Candidates();
 				int part = all.Count(WorldIslands.TakesPart);
-				islandsText.text = (CustomIslandSpawner.Enabled ? "" : "Random islands are off in this world's plan - the list counts when they are on. ") +
+				islandsText.text = (CustomIslandSpawner.Enabled ? "" : "Random islands are off in this world (its plan, or CustomIslandsAuto off) - the list counts when they are on. ") +
 					part + " of " + all.Count + " take part: untick what this world shouldn't meet by chance (islands a plan or quest brings still come).";
 				foreach (string e in all)
 				{

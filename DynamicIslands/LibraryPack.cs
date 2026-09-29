@@ -519,7 +519,15 @@ namespace DynamicIslands.Editor
 
 		#region Worlds using an island
 
-		/// <summary>The saved worlds (their names) whose island list has this island, or whose plan is this plan without a copy of it.</summary>
+		/// <summary>A plan rule that brings this island by name (island: or one of oneof:).</summary>
+		internal static bool RuleNames(IntroRule r, string island)
+		{
+			return (r.What == "island" && r.WhatArg.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) ||
+				(r.What == "oneof" && r.WhatArg.Split(',').Any(x => x.Trim().Equals(island, StringComparison.OrdinalIgnoreCase)));
+		}
+
+		/// <summary>The saved worlds (their names) whose island list has this island, or whose kept plan brings it, or whose
+		/// plan is this plan without a copy of it. The editor's test world isn't counted.</summary>
 		public static List<string> WorldsUsing(string island, string plan = null)
 		{
 			var result = new List<string>();
@@ -529,12 +537,20 @@ namespace DynamicIslands.Editor
 				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
 				{
 					string[] lines = File.ReadAllLines(file);
+					string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
+					string world = head != null && head.IndexOf('\'') >= 0 ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file);
+					// (the editor's test world: counted, every edit-and-test round kept another copy of the island for it, and
+					// the save notices and the Delete warning named it)
+					if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
 					bool uses = island != null && lines.Any(l => !l.StartsWith("@") && !l.StartsWith("#") && l.Split('|')[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase));
+					// (the plan the world keeps may bring it later: its rules are in the world file - a world whose plan
+					// hadn't brought the island yet lost it to a Delete or a library Remove)
+					if (!uses && island != null)
+						uses = lines.Where(l => l.StartsWith("@planrule=")).Select(l => IntroRule.Parse(l.Substring(10))).Any(r => r != null && RuleNames(r, island));
 					if (!uses && plan != null)
 						uses = lines.Any(l => l.Trim().Equals("@plan=" + plan, StringComparison.OrdinalIgnoreCase)) && !lines.Any(l => l.StartsWith("@planrule="));
 					if (!uses) continue;
-					string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-					result.Add(head != null && head.IndexOf('\'') >= 0 ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file));
+					result.Add(world);
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the saved worlds: " + e.Message); }
@@ -738,7 +754,45 @@ namespace DynamicIslands.Editor
 			if (worlds.Count == 0 || hash == null) return;
 			string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, hash));
 			if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(island), copy);
+			RepointWorlds(island, hash);
 			report.Add("Kept the version of '" + island + "' that " + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + " started with");
+		}
+
+		/// <summary>
+		/// The version just kept as a copy (hash) is the one saved worlds play when their file names a version that is no
+		/// longer on this PC: an earlier save that kept the order (no copy was needed then) replaced it, so what was used
+		/// there still fits the kept one. Those worlds are pointed at it - they played the newest file, onto which their
+		/// used objects no longer fit. Returns how many worlds.
+		/// </summary>
+		internal static int RepointWorlds(string island, string hash)
+		{
+			int count = 0;
+			try
+			{
+				if (!Directory.Exists(WorldsFolder)) return 0;
+				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
+				{
+					string[] lines = File.ReadAllLines(file);
+					bool changed = false;
+					for (int i = 0; i < lines.Length; i++)
+					{
+						if (lines[i].StartsWith("@") || lines[i].StartsWith("#")) continue;
+						string[] p = lines[i].Split('|');
+						if (p.Length < 8 || !p[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) continue;
+						string had = p[7].Trim();
+						if (had.Length == 0 || had == hash || IslandNetwork.HashOf(island) == had || File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had)))) continue;
+						p[7] = hash;
+						lines[i] = string.Join("|", p);
+						changed = true;
+					}
+					if (!changed) continue;
+					SafeFile.WriteAllLines(file, lines);
+					count++;
+					Debug.Log("[CUSTOM ISLANDS] " + Path.GetFileName(file) + ": '" + island + "' is played from the kept version " + hash);
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Pointing saved worlds at the kept version of '" + island + "': " + e.Message); }
+			return count;
 		}
 
 		/// <summary>Sets an island's weight in spawnpool.txt (0 = never turns up by chance while sailing).</summary>

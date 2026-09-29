@@ -320,6 +320,8 @@ namespace DynamicIslands.Editor
 			if (why == null) { Brought.Add(r.Id); retryAt.Remove(r.Id); Changed(); return; }
 			retryAt[r.Id] = Time.unscaledTime + RetrySeconds;
 			if (warned.Add(r.Id + why)) Log("Rule '" + r.Id + "' waits: " + why);
+			// (the host is told when the island isn't on this PC: the Receiver gave nothing and the story stopped, silently)
+			WorldDirector.NoteMissingIf(why, r, null);
 		}
 
 		/// <summary>Host: Raft's Receiver, tuned to one of the mod's frequencies, asks for its island.</summary>
@@ -495,10 +497,12 @@ namespace DynamicIslands.Editor
 			if (HasSnapshot) { AssignFrequencies(); Rebuild(); }
 		}
 
-		/// <summary>The state every player needs: "on;steps|freqs|unlocked|fired" (Name: a banner "title\ntext").</summary>
+		/// <summary>The state every player needs: "on;steps|freqs|unlocked|fired|done|brought" (Name: a banner "title\ntext").</summary>
 		internal static IslandNetMessage Message(string banner = null)
 		{
-			string data = (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray()) + "|" + Freqs() + "|" + string.Join(",", Unlocked.ToArray()) + "|" + string.Join(",", Fired.ToArray());
+			string data = (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray()) + "|" + Freqs() + "|" + string.Join(",", Unlocked.ToArray()) + "|" + string.Join(",", Fired.ToArray()) +
+				// (done and brought since 2026-09-29: a player's world window and StoryChain never showed a step done)
+				"|" + string.Join(",", Done.ToArray()) + "|" + string.Join(",", Brought.ToArray());
 			return new IslandNetMessage { Kind = IslandNetMessage.StoryChain, Data = HasState ? data : "", Name = banner };
 		}
 
@@ -523,6 +527,8 @@ namespace DynamicIslands.Editor
 				ReadFreqs(p.Length > 1 ? p[1] : "");
 				ReadSet(Unlocked, p.Length > 2 ? p[2] : "");
 				ReadSet(Fired, p.Length > 3 ? p[3] : "");
+				ReadSet(Done, p.Length > 4 ? p[4] : "");
+				ReadSet(Brought, p.Length > 5 ? p[5] : "");
 			}
 			Rebuild();
 			if (!string.IsNullOrEmpty(msg.Name))
