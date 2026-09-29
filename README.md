@@ -494,7 +494,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses) |
 | `WorldOptions` / `WorldOptions +option -option` | Game (changing: host) | Shows the world's World settings, or changes them for every player (options: blueprints, storyorder, ghostrafts, privatestorage) |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
-| `Levels` / `Levels on|off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
+| `Levels` / `Levels on` / `Levels off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
 | `Resync` | Game, a player who joined | Ask the host for its custom islands again: the list, and any island file that hasn't come (the mod also keeps asking by itself) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | Game (changing: host) | Which islands of the spawn pool turn up by chance while sailing in this world; leave one out, let it take part again (also `type:<map type>`, `<generated>`), or all |
 | `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `ChangeWidth <m>`, `ChangeStrength <m/s>`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | Editor | The terrain brush settings from the Terrain tab |
