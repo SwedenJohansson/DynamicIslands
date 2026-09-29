@@ -76,13 +76,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Writes the autosave now if there are unsaved changes (leaving the editor, quitting Raft, tests).</summary>
-		public static void WriteNow()
+		public static bool WriteNow()
 		{
-			if (current == null || !Unsaved || !DynamicIslands.InEditor()) return;
-			Write();
+			if (current == null || !Unsaved || !DynamicIslands.InEditor()) return false;
+			return Write();
 		}
 
-		static void Write()
+		static bool Write()
 		{
 			lastWrite = Time.unscaledTime;
 			string name = current;
@@ -94,8 +94,9 @@ namespace DynamicIslands.Editor
 				DynamicIslands.CaptureIsland(name).Save(path);
 				LastWritten = path;
 				Log("'" + name + "' has unsaved changes: kept in " + path + " until it is saved");
+				return true;
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Autosaving '" + name + "' failed: " + e.Message); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Autosaving '" + name + "' failed: " + e.Message); return false; }
 		}
 
 		static void OnQuit()

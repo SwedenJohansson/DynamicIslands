@@ -154,6 +154,8 @@ namespace DynamicIslands.Editor
 			Current = Clamp(level);
 			Log("Monsters in this world: " + Describe(Current));
 			WorldRules.Broadcast();
+			// (saved with the world at once, like the other settings: the copy players keep for host swap follows)
+			IslandWorldState.Save();
 		}
 
 		#endregion

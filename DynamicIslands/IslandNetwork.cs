@@ -570,10 +570,13 @@ namespace DynamicIslands.Editor
 
 		internal static void SendFile(string name, string hash, Network_UserId to)
 		{
-			// (a host playing an island from a copy it downloaded as a player - name_hash - sends that copy)
-			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) name = DownloadName(name, hash);
-			string path = IslandSpawner.PathFor(name);
-			if (!File.Exists(path) || HashOf(name) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
+			// (a host playing an island from a copy - name_hash, downloaded as a player or kept for a saved world - sends
+			// that copy, under the island's own name: the player saves it as name_hash, the name its entry waits for; sent
+			// as name_hash it was saved as name_hash_hash and the island never loaded)
+			string file = name;
+			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) file = DownloadName(name, hash);
+			string path = IslandSpawner.PathFor(file);
+			if (!File.Exists(path) || HashOf(file) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
 			byte[] bytes = File.ReadAllBytes(path);
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
 			for (int i = 0; i < count; i++)

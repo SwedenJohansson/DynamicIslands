@@ -371,6 +371,12 @@ namespace DynamicIslands
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not load editor shaders: " + e); }
 
+			// A fresh start every time the editor opens: the last visit's island name (Ctrl+S or Test saved the new island
+			// over that file without asking), its sea level and its undo steps (Ctrl+Z replayed them) stay behind
+			currentIslandName = UnnamedIsland;
+			EditorWaterLevel = IslandFile.DefaultWaterLevel;
+			CommandUndoRedo.UndoRedoManager.Clear();
+
 			// The gizmo must exist before any object can be picked
 			EditorGizmoHandler = Camera.main.gameObject.AddComponent<TransformGizmo>();
 
@@ -413,6 +419,10 @@ namespace DynamicIslands
 			if (!PlaceableCatalog.IndexIsCurrent) instance.StartCoroutine(PlaceableCatalog.EnsureIndex());
 		}
 
+		/// <summary>The name a new island has until it is saved with its own (Ctrl+S and Test ask for a name then).</summary>
+		public const string UnnamedIsland = "myisland";
+		public static bool IsUnnamed { get { return string.IsNullOrEmpty(currentIslandName) || currentIslandName.Equals(UnnamedIsland, StringComparison.OrdinalIgnoreCase); } }
+
 		/// <summary>Editor: starts an empty island (flat seabed, no objects, tropical, at sea level).</summary>
 		/// <summary>
 		/// The editor's own build area (1000 x 600 x 1000 m, 513 heights) again: an island opened before - a small one, or at
@@ -431,13 +441,14 @@ namespace DynamicIslands
 		public static void NewIsland()
 		{
 			if (!InEditor()) return;
+			KeepUnsaved();
 			Terrain terrain = terraineditor.terrain;
 			TerrainData data = terrain.terrainData;
 			if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);
 			ResetBuildArea();
 			data.SetHeights(0, 0, new float[data.heightmapResolution, data.heightmapResolution]);
 			foreach (Transform child in GameObject.Find("PlacedObjects").transform) Destroy(child.gameObject);
-			currentIslandName = "myisland";
+			currentIslandName = UnnamedIsland;
 			currentElevation = 0f;
 			currentIslandProps = new Dictionary<string, string>();
 			SetEditorStyle(TerrainPainter.Tropical);
@@ -595,6 +606,15 @@ namespace DynamicIslands
 			Notify("Saved worlds with '" + name + "' (" + list + ") get this version when they load next. If you moved its ground, anything built on it there may no longer fit.");
 		}
 
+		/// <summary>Another island replaces the one in the editor (New, Open, a map type's Make): its unsaved changes are kept
+		/// as its autosave first (offered the next time the editor opens) - they were thrown away.</summary>
+		static void KeepUnsaved()
+		{
+			if (!EditorAutosave.Unsaved) return;
+			string was = currentIslandName;
+			if (EditorAutosave.WriteNow()) Notify("The unsaved changes to '" + was + "' are kept: the editor offers them back the next time it opens");
+		}
+
 		/// <summary>Opens a saved island in the editor (from: another file to read it from, e.g. its autosave; it keeps the name).</summary>
 		public static bool LoadIsland(string name, string from = null)
 		{
@@ -602,6 +622,7 @@ namespace DynamicIslands
 			string path = from ?? IslandSpawner.PathFor(name);
 			if (!File.Exists(path)) { Notify("No saved island named '" + name + "'", true); return false; }
 			if (!PlaceableCatalog.IsBuilt) { Notify("Objects are still loading, try again in a moment", true); return false; }
+			if (from == null) KeepUnsaved();
 			try
 			{
 				IslandFile island = IslandFile.Load(path);
@@ -906,6 +927,7 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a game (the setting is per world)", true); return; }
 			if (!Raft_Network.IsHost) { Notify("Only the host can change this", true); return; }
 			CustomIslandSpawner.Enabled = args[0].Equals("on", StringComparison.OrdinalIgnoreCase);
+			IslandWorldState.Save();
 			Notify("Automatic islands " + (CustomIslandSpawner.Enabled ? "on" : "off") + " in this world (kept when the world is saved)");
 		}
 

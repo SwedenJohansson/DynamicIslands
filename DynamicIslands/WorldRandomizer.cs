@@ -240,6 +240,8 @@ namespace DynamicIslands.Editor
 			waiting.Clear();
 			animalsSeen.Clear();
 			Broadcast();
+			// (saved with the world at once, like the other settings: the copy players keep for host swap follows)
+			IslandWorldState.Save();
 		}
 
 		/// <summary>Tests: every island of Raft's is handled again (loot moved again from where Raft put it).</summary>

@@ -291,6 +291,8 @@ namespace DynamicIslands.Editor
 			Log("Build cost in this world: " + Describe(Current));
 			Refresh();
 			WorldRules.Broadcast();
+			// (saved with the world at once, like the other settings: the copy players keep for host swap follows)
+			IslandWorldState.Save();
 		}
 
 		internal static void FromHost(int percent)

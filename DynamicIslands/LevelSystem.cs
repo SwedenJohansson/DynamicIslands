@@ -281,8 +281,10 @@ namespace DynamicIslands.Editor
 		/// <summary>An island was spawned in this world: one made with the level up system on turns it on.</summary>
 		public static void OnIslandSpawned(IDictionary<string, string> props)
 		{
-			// (not over the host's choice: switched off in World settings or with the Levels command)
-			if (On || OffByHost || !IsOn(props)) return;
+			// (not over the host's choice: switched off in World settings or with the Levels command. Only the host decides -
+			// its "on" reaches every player: a player who joined doesn't know the host switched it off, and turned it on for
+			// themselves when such an island spawned on their side)
+			if (!Raft_Network.IsHost || On || OffByHost || !IsOn(props)) return;
 			TurnOn(true);
 		}
 
@@ -292,8 +294,7 @@ namespace DynamicIslands.Editor
 			return v == "on" || v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase);
 		}
 
-		/// <summary>Turns the system on in this world (host: tells everyone; a client does it when the host says so,
-		/// or when an island that has it spawns on its side too).</summary>
+		/// <summary>Turns the system on in this world (host: tells everyone; a client does it when the host says so).</summary>
 		public static void TurnOn(bool announce)
 		{
 			if (On) return;

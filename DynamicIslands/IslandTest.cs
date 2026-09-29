@@ -41,9 +41,10 @@ namespace DynamicIslands.Editor
 		{
 			if (!DynamicIslands.InEditor() || Busy) return;
 			string name = DynamicIslands.currentIslandName;
-			if (string.IsNullOrEmpty(name) || name == "myisland" && !System.IO.File.Exists(IslandSpawner.PathFor(name)))
+			if (DynamicIslands.IsUnnamed)
 			{
 				DynamicIslands.Notify("Give the island a name and save it first (Save as), then Test in a world", true);
+				IslandFilesWindow.Open();
 				return;
 			}
 			if (EditorAutosave.Unsaved || !System.IO.File.Exists(IslandSpawner.PathFor(name)))

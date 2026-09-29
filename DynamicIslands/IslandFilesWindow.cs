@@ -63,7 +63,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Ctrl+S: save straight away if the island already has a file, otherwise ask for a name.</summary>
 		public static void QuickSave()
 		{
-			if (File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName))) DynamicIslands.SaveIsland(DynamicIslands.currentIslandName);
+			// (a new island is "myisland" until it has its own name: it saved over a 'myisland' saved before)
+			if (!DynamicIslands.IsUnnamed && File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName))) DynamicIslands.SaveIsland(DynamicIslands.currentIslandName);
 			else Open();
 		}
 
