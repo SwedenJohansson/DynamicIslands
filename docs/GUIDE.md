@@ -60,7 +60,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
      [4.3 Placing objects](#43-placing-objects-objects-tab) · [4.4 The Island tab](#44-the-island-tab)
    - [4.5 The island generator](#45-the-island-generator) · [4.6 Ready-made islands (map types)](#46-ready-made-islands-map-types)
    - [4.7 Saving and sharing: autosave, export, import, the island library](#47-saving-and-sharing)
-   - [4.8 Your first island, step by step](#48-your-first-island-step-by-step)
+   - [4.8 Your first island, step by step](#48-your-first-island-step-by-step) · [4.9 Trying the island in a world (Test)](#49-trying-the-island-in-a-world-test)
 5. [Making islands come alive](#5-making-islands-come-alive): [creatures](#51-creatures), [notes](#52-notes-and-signs),
    [chests](#53-chests-and-loot), [zones and ambushes](#54-trigger-zones-and-ambushes), [atmosphere and sound](#55-atmosphere-and-sound)
 6. [Stories: quests, behaviours, story items](#6-stories-quests-behaviours-story-items)
@@ -252,7 +252,8 @@ less after that. The editor opens on the sea with an empty build area.
 *The editor on the Terrain tab.*
 
 - **Top bar:** New, Open, Save, Save as · Undo, Redo · the three tabs **Terrain**, **Objects**, **Island** (F1, F2, F3)
-  · **Generate** (the island generator), **World plans**, **Main menu**. The island's name is at the top left.
+  · **Generate** (the island generator), **Light** (the time of day, below), **Test** (try the island in a world,
+  [4.9](#49-trying-the-island-in-a-world-test)), **World plans**, **Main menu**. The island's name is at the top left.
 - **Tool panel** (left): the tab's tools in bordered groups. The lit button is the one in use.
 - **Status bar** (bottom): explains the tool, or the button under the mouse. On the right: where the camera is.
 - **The blue plane is the sea.** Everything below it is under water in the game.
@@ -271,6 +272,15 @@ less after that. The editor opens on the sea with an empty build area.
 | **Shift** | three times faster |
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y**; save with **Ctrl+S**, open with **Ctrl+O**.
+
+**Light: the time of day.** The top bar's **Light** button goes through **Morning, Noon, Evening, Night** and
+**Overcast**: the sun's height, colour and shadows, the sky's light on everything and a haze far out change, so you
+can see how the island will look at that time in Raft (a dark cave mouth at night, a beach in the evening sun). It is
+only how the editor shows the island - nothing is saved in the island. Your choice is kept for the next time you open
+the editor (Noon the first time).
+
+![The editor light](images/editor-light.jpg)
+*The same island at Morning, Noon, Evening and Night.*
 
 ### 4.2 Shaping the land (Terrain tab)
 
@@ -560,11 +570,29 @@ its entry) and send that the same way.
 5. Place a **Sign** from "Notes & signs", click **Edit note...**, write a welcome.
 6. **Island** tab: give it a name ("Skull Rock") and your name.
 7. **Save** (Ctrl+S), type a name, Enter.
-8. Main menu → **NEW WORLD** → create a world. Your island takes part in the Random islands plan, or press F10 and type
+8. **Test** in the top bar: the island is tried in a world at once, and **Back to the editor** brings you back
+   ([4.9](#49-trying-the-island-in-a-world-test)).
+9. Main menu → **NEW WORLD** → create a world. Your island takes part in the Random islands plan, or press F10 and type
    `SpawnIsland <name> 250` to have it appear 250 m ahead right away.
 
 **Next:** give the island a quest ([6.1](#61-quests)), then make a world plan that brings it into a world at the right
 moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-step)).
+
+### 4.9 Trying the island in a world (Test)
+
+**Test** in the editor's top bar tries the island you are making in a real world, without leaving it by hand:
+
+1. The island is saved (it needs a name: Save as first for a new one).
+2. The mod goes to the main menu and loads the world **Custom Islands test** - it makes it the first time, as a normal
+   world with the plan **No custom islands**, so nothing else turns up.
+3. Your island is put beside the raft and you stand on it. Islands tried there before are taken away first.
+4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
+5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
+   again with your island, where you left it.
+
+Change something, **Test** again. The test world is a world like any other in Raft's Load Game list: you can load it
+yourself too, and delete it from there when you no longer want it. (Trying an island in one of your own worlds is still
+possible with F10 → `SpawnIsland <name> 250`.)
 
 ---
 
@@ -1158,7 +1186,16 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Done** c
 off (it leaves the island list alone). The line at the bottom of the window sums up what the world will get. Nothing is
 final until you click **Create** in the New Game box.
 
-**In a world** the host can change every group with a console command (F10); every player gets the change at once:
+**In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
+opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
+while sailing, plus the world's plan and story. The **host** changes them there, and every player gets the change at
+once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
+window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
+
+![The world's settings in a running world](images/world-window.jpg)
+*Esc → Custom Islands in a world: the same groups as the World settings window, changed for this world.*
+
+The host can also change every group with a console command (F10):
 
 | Group | Show it | Change it (host) |
 |---|---|---|
@@ -1527,6 +1564,13 @@ the pack's was installed under that name instead of replacing yours.
 
 **A pack won't install.** The Import window says why: it may be made for a newer version of the mod, broken, or not an
 island pack at all.
+
+**How do I change a world's settings after it has started?** In the world: **Esc → Custom Islands**. The host changes
+them there for every player ([9.1](#91-the-world-settings-window)).
+
+**Test in the editor didn't get to the world.** The mod says why on the screen: the island needs a name (Save as
+first), or Raft's Load button is off because Steam is offline. The test world **Custom Islands test** can also be
+loaded by hand from Load Game; if it is broken, delete it there and Test makes a new one.
 
 **The editor takes a moment to open.** The first time after starting Raft it loads about 700 objects from Raft's
 islands; the loading box shows how far it is. After a Raft update it also scans Raft's other islands once, in the
