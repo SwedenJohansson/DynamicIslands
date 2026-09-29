@@ -499,12 +499,14 @@ namespace DynamicIslands
 			{
 				IslandFile island = CaptureIsland(name);
 				bool overwrote = File.Exists(IslandSpawner.PathFor(name));
+				// (saved worlds with this island: a change that would mix up what was used there keeps them on their version)
+				bool kept = overwrote && KeepForWorldsIfShifted(name, island);
 				island.Save(IslandSpawner.PathFor(name));
 				currentIslandName = name;
 				EditorUI.RefreshIsland();
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
 				EditorAutosave.Saved(name);
-				if (overwrote) TellWorldsUsing(name);
+				if (overwrote && !kept) TellWorldsUsing(name);
 				return true;
 			}
 			catch (Exception e)
@@ -513,6 +515,44 @@ namespace DynamicIslands
 				Notify("Saving '" + name + "' failed - see console (F10)", true);
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// A saved world remembers what was used on an island by the objects' order in its file (trees and pickups, chests,
+		/// zones, creatures, doors, journal pages). Moving objects, changing their settings or the ground, or adding objects
+		/// at the end keeps that order: those worlds get the new version. Removing objects, or changing the order or which
+		/// ones are chests, would put what was used there onto other objects - so those worlds keep the version they started
+		/// with (a copy named &lt;island&gt;_&lt;its hash&gt;, which they play by the hash in their file, as for library updates), and
+		/// new worlds get the new one. True when the copy was kept.
+		/// </summary>
+		internal static bool KeepForWorldsIfShifted(string name, IslandFile next)
+		{
+			try
+			{
+				List<string> worlds = LibraryPack.WorldsUsing(name);
+				if (worlds.Count == 0) return false;
+				IslandFile before = IslandFile.Load(IslandSpawner.PathFor(name));
+				if (!ShiftsState(before, next)) return false;
+				string hash = IslandNetwork.HashOf(name);
+				if (hash == null) return false;
+				string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
+				if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(name), copy);
+				string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
+				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects were removed or their order changed, which would mix up what was " +
+					"picked, looted and opened there. New worlds get this version.");
+				Debug.Log("[CUSTOM ISLANDS] Kept '" + name + "' " + hash + " for " + worlds.Count + " saved world(s)");
+				return true;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Keeping the old version of '" + name + "' for saved worlds: " + e.Message); return false; }
+		}
+
+		/// <summary>Whether saved state would land on other objects: the old objects aren't an unchanged beginning of the new ones.</summary>
+		public static bool ShiftsState(IslandFile before, IslandFile after)
+		{
+			Func<IslandObject, string> sig = o => o.Name + (ObjectProps.IsLoot(o.Name, o.Props) ? "|loot" : "");
+			if (after.Objects.Count < before.Objects.Count) return true;
+			for (int i = 0; i < before.Objects.Count; i++) if (sig(before.Objects[i]) != sig(after.Objects[i])) return true;
+			return false;
 		}
 
 		/// <summary>Islands whose saved worlds the player was told about in this Raft session (once each, not at every save).</summary>
