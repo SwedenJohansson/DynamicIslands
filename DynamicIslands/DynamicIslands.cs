@@ -264,6 +264,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
 			try { Behaviours.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Behaviours: " + e); }
+			try { IslandTest.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island test: " + e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 			try { JournalWindow.Tick(); }
@@ -402,6 +404,7 @@ namespace DynamicIslands
 			SetEditorStyle(TerrainPainter.Tropical);
 			EditorUI.RefreshIsland();
 
+			try { EditorLighting.OnEditorOpened(); EditorUI.RefreshLight(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Editor light: " + e.Message); }
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 			// (work Raft closed on before it was saved: offered back)
 			EditorAutosave.OnEditorReady();

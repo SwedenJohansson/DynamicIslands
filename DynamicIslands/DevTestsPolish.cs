@@ -91,6 +91,138 @@ namespace DynamicIslands
 			if (ok) Log("PASS: levels choice"); else Fail("levels choice");
 		}
 
+		[ConsoleCommand(name: "CIWorldWindow", docs: "Dev, world (either player; host: a test world 'CI ...'): the pause menu's CUSTOM ISLANDS button is there; the world window opens - the host clicks Savage, build cost +5 %, the randomizer Light and one part off, an extra option, the level up system and one island of the list, and the world's settings follow (put back after); a player who joined sees the host's settings and can't change them. Picture shot_world_window.png")]
+		public static void WorldWindowCommand() { DynamicIslands.instance.StartCoroutine(WorldWindowRoutine()); }
+
+		static IEnumerator WorldWindowRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("world window: in a world"); yield break; }
+			bool host = Raft_Network.IsHost;
+			if (host && !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("world window: a test world 'CI ...'"); yield break; }
+			bool ok = true;
+			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().Any(b => b != null && b.name == WorldWindow.ButtonName && b.gameObject.scene.IsValid()), "Raft's pause menu has the Custom Islands button");
+			int monsters = MonsterDifficulty.Current, cost = BuildCost.Current;
+			RandomizerSettings rnd = WorldRandomizer.Current.Copy();
+			var options = new HashSet<string>(WorldOptions.Current);
+			bool levels = PlayerLevels.On, levelsOff = PlayerLevels.OffByHost;
+			string island = host ? WorldIslands.Candidates().FirstOrDefault(WorldIslands.TakesPart) : null;
+			WorldWindow.Open();
+			yield return null;
+			try
+			{
+				Check(ref ok, WorldWindow.IsOpen, "the world window opens");
+				Func<string, UnityEngine.UI.Button> b = WorldWindow.ButtonNamed;
+				if (!host)
+				{
+					Check(ref ok, b("Monsters_Savage") != null && !b("Monsters_Savage").interactable && !b("Option_ghostrafts").interactable && !b("Levels").interactable, "a player who joined can't change the host's settings");
+					Check(ref ok, UIKit.LabelOf(b("BuildCost_Value")).text == BuildCost.Describe(BuildCost.Current), "... and sees the host's build cost: " + UIKit.LabelOf(b("BuildCost_Value")).text);
+				}
+				else
+				{
+					b("Monsters_Savage").onClick.Invoke();
+					b("BuildCost_More").onClick.Invoke();
+					b("Randomizer_Light").onClick.Invoke();
+					b("Part_" + RandomizerSettings.Features[0]).onClick.Invoke();
+					b("Option_ghostrafts").onClick.Invoke();
+					b("Levels").onClick.Invoke();
+					if (island != null) b("Island_" + island).onClick.Invoke();
+					yield return null;
+					Check(ref ok, MonsterDifficulty.Current == MonsterDifficulty.Savage, "Savage clicked: monsters are Savage in this world");
+					Check(ref ok, BuildCost.Current == Mathf.Min(BuildCost.Max, cost + BuildCost.Step), "+5 %: the build cost is " + BuildCost.Current + " %");
+					Check(ref ok, WorldRandomizer.Current.Level == 1 && WorldRandomizer.Current.Disabled.Contains(RandomizerSettings.Features[0]), "the randomizer Light, " + RandomizerSettings.FeatureLabels[0] + " off");
+					Check(ref ok, WorldOptions.On(WorldOptions.GhostRafts) != options.Contains(WorldOptions.GhostRafts), "ghost rafts switched");
+					Check(ref ok, PlayerLevels.On != levels, "the level up system switched");
+					Check(ref ok, island == null || !WorldIslands.TakesPart(island), "the island '" + island + "' left out of this world");
+					Check(ref ok, UIKit.LabelOf(b("Option_ghostrafts")).text.EndsWith(WorldOptions.On(WorldOptions.GhostRafts) ? "ON" : "off"), "the window shows it: " + UIKit.LabelOf(b("Option_ghostrafts")).text);
+				}
+				Screenshot(new[] { "world_window" });
+				yield return new WaitForSeconds(1f);
+			}
+			finally
+			{
+				if (host)
+				{
+					MonsterDifficulty.Set(monsters);
+					BuildCost.Set(cost);
+					WorldRandomizer.Set(rnd);
+					WorldOptions.Set(options);
+					if (levels) PlayerLevels.SetEnabled(true); else if (levelsOff) PlayerLevels.SetEnabled(false); else PlayerLevels.TurnOff();
+					if (island != null) WorldIslands.Set(island, true);
+				}
+				WorldWindow.Close();
+			}
+			if (ok) Log("PASS: world window"); else Fail("world window");
+		}
+
+		[ConsoleCommand(name: "CIEditorLight", docs: "Dev, editor: the Light button goes through Morning, Noon, Evening, Night, Overcast - a directional sun in the scene, Raft's sun setting and the sky's light follow; pictures shot_light_<time>.png; the player's choice is put back")]
+		public static void EditorLightCommand() { DynamicIslands.instance.StartCoroutine(EditorLightRoutine()); }
+
+		static IEnumerator EditorLightRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("editor light: in the editor"); yield break; }
+			bool ok = true;
+			int before = EditorLighting.Current;
+			UnityEngine.UI.Button button = EditorUI.Canvas.GetComponentsInChildren<UnityEngine.UI.Button>(false).FirstOrDefault(x => x.name == "Button_Light");
+			Check(ref ok, button != null && UIKit.LabelOf(button).text == "Light: " + EditorLighting.Names[EditorLighting.Current], "the top bar's Light button says the time of day: " + (button != null ? UIKit.LabelOf(button).text : "none"));
+			var ambients = new List<Color>();
+			for (int i = 0; i < EditorLighting.Names.Length; i++)
+			{
+				EditorLighting.Apply(i, false);
+				EditorUI.RefreshLight();
+				yield return new WaitForSeconds(0.4f);
+				Light sun = RenderSettings.sun;
+				ambients.Add(RenderSettings.ambientSkyColor);
+				Check(ref ok, sun != null && sun.type == LightType.Directional && sun.isActiveAndEnabled && sun.shadows != LightShadows.None, EditorLighting.Names[i] + ": a sun with shadows, " + (sun != null ? sun.intensity.ToString("0.00") + " bright, " + sun.transform.eulerAngles.x.ToString("0") + "° up" : "none"));
+				Screenshot(new[] { "light_" + EditorLighting.Names[i].ToLowerInvariant() });
+				yield return new WaitForSeconds(0.8f);
+			}
+			Check(ref ok, ambients.Distinct().Count() == EditorLighting.Names.Length, "each time of day has its own sky light");
+			if (button != null) button.onClick.Invoke();
+			Check(ref ok, EditorLighting.Current == 0, "the button goes on to the next (after the last: Morning)");
+			EditorLighting.Apply(before, true);
+			EditorUI.RefreshLight();
+			if (ok) Log("PASS: editor light"); else Fail("editor light");
+		}
+
+		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after")]
+		public static void IslandTestCommand() { DynamicIslands.instance.StartCoroutine(IslandTestRoutine()); }
+
+		static IEnumerator IslandTestRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("island test: in the editor"); yield break; }
+			bool ok = true;
+			const string name = "citest-tryme";
+			DynamicIslands.NewIsland();
+			yield return null;
+			GeneratorWindow.Open();
+			yield return null;
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 60f, Height = 25f, Style = TerrainPainter.Tropical });
+			GeneratorWindow.Close();
+			yield return null;
+			Check(ref ok, DynamicIslands.SaveIsland(name), "a small test island saved as '" + name + "'");
+			IslandTest.Start();
+			Check(ref ok, IslandTest.Busy && IslandTest.Island == name, "Test in a world: on its way");
+			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
+			yield return new WaitForSeconds(6f);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.Name == name);
+			Network_Player me = RAPI.GetLocalPlayer();
+			float dist = e != null && me != null ? new Vector2(me.transform.position.x - e.Position.x, me.transform.position.z - e.Position.z).magnitude : -1f;
+			Check(ref ok, IslandTest.Testing && (SaveAndLoad.CurrentGameFileName ?? "") == IslandTest.WorldName, "in the test world '" + SaveAndLoad.CurrentGameFileName + "' (" + IslandTest.LastStep + ")");
+			Check(ref ok, e != null && e.Root != null && dist >= 0f && dist < CustomIslandSpawner.LandRadius(name) + 5f, "the island is beside the raft and the player on it (" + dist.ToString("0") + " m from its middle)");
+			WorldWindow.Open();
+			yield return null;
+			UnityEngine.UI.Button back = WorldWindow.ButtonNamed("BackToEditor");
+			Check(ref ok, back != null && back.gameObject.activeInHierarchy && back.interactable, "the world window offers Back to the editor");
+			Screenshot(new[] { "island_test" });
+			yield return new WaitForSeconds(1f);
+			if (back != null) back.onClick.Invoke();
+			for (float t = 0; t < 240f && !(DynamicIslands.InEditor() && !IslandTest.Busy); t += 1f) yield return new WaitForSeconds(1f);
+			yield return new WaitForSeconds(2f);
+			Check(ref ok, DynamicIslands.InEditor() && DynamicIslands.currentIslandName == name, "back in the editor with '" + DynamicIslands.currentIslandName + "' open");
+			try { DynamicIslands.NewIsland(); IslandFilesWindow.MoveToDeleted(name); System.IO.File.Delete(System.IO.Path.Combine(System.IO.Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), name + IslandFile.Extension)); } catch { }
+			if (ok) Log("PASS: island test"); else Fail("island test");
+		}
+
 		[ConsoleCommand(name: "CIEditorLimits", docs: "Dev, editor: the object limit (placing past what an island file holds is refused, a few more are allowed) and the gizmo's keys (C isn't the gizmo's any more - it is the camera's down; the Objects tab lists X, P and Ctrl)")]
 		public static void EditorLimitsCommand()
 		{
