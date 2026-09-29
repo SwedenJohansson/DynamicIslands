@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -104,7 +104,7 @@ namespace DynamicIslands
 				Check(ref ok, !saved && problem != null && !TextPromptWindow.ValidName(bad), "refused: '" + bad + "' (" + problem + ")");
 			}
 			Check(ref ok, !File.Exists(Path.Combine(DynamicIslands.assetpath, "island..island")) && !File.Exists(Path.Combine(DynamicIslands.assetpath, "island .island")), "nothing written for the refused names");
-			foreach (string good in new[] { "Åsa's ö-land", "小島", "cove \U0001F3DD", new string('b', FileNames.MaxLength), "con island", "a.b" })
+			foreach (string good in new[] { "Ã…sa's Ã¶-land", "å°å³¶", "cove \U0001F3DD", new string('b', FileNames.MaxLength), "con island", "a.b" })
 			{
 				bool saved = false, opened = false;
 				try { saved = DynamicIslands.SaveIsland(good); opened = saved && File.Exists(IslandSpawner.PathFor(good)) && IslandFile.Load(IslandSpawner.PathFor(good)) != null; }
@@ -178,20 +178,20 @@ namespace DynamicIslands
 			bool ok = true;
 			string culture = System.Threading.Thread.CurrentThread.CurrentCulture.Name;
 			// A plan with numbers in it, written and read back
-			var plan = new WorldPlan { Name = "ci culture plan", Description = "Ölçü 1.5 km", Random = false };
-			plan.Rules.Add(new IntroRule { Id = "İsland", What = "type", WhatArg = "sandbar", When = "km", WhenArg = "1.5", Where = "ahead", Distance = 350.5f });
+			var plan = new WorldPlan { Name = "ci culture plan", Description = "Ã–lÃ§Ã¼ 1.5 km", Random = false };
+			plan.Rules.Add(new IntroRule { Id = "Ä°sland", What = "type", WhatArg = "sandbar", When = "km", WhenArg = "1.5", Where = "ahead", Distance = 350.5f });
 			plan.Save();
 			WorldPlan back = WorldPlan.Load("ci culture plan");
-			Check(ref ok, back != null && back.Rules.Count == 1 && back.Rules[0].WhenArg == "1.5" && Mathf.Abs(back.Rules[0].Distance - 350.5f) < 0.01f && back.Description == "Ölçü 1.5 km",
+			Check(ref ok, back != null && back.Rules.Count == 1 && back.Rules[0].WhenArg == "1.5" && Mathf.Abs(back.Rules[0].Distance - 350.5f) < 0.01f && back.Description == "Ã–lÃ§Ã¼ 1.5 km",
 				"a plan with 1.5 km and 350.5 m reads back the same (" + (back != null && back.Rules.Count > 0 ? back.Rules[0].WhenArg + " km, " + back.Rules[0].Distance + " m" : "not read") + ")");
 			try { File.Delete(WorldPlan.PathFor("ci culture plan")); } catch { }
 			// Library info (numbers, dates) and version comparison
-			var info = new LibraryInfo { id = LibraryPack.IdFrom("İstanbul Island"), title = "İstanbul Island", author = "CI", version = 3, summary = "s", minModVersion = "2.10" };
+			var info = new LibraryInfo { id = LibraryPack.IdFrom("Ä°stanbul Island"), title = "Ä°stanbul Island", author = "CI", version = 3, summary = "s", minModVersion = "2.10" };
 			LibraryInfo info2 = LibraryInfo.FromJson(info.ToJson());
 			Check(ref ok, info2 != null && info2.version == 3 && info2.id == info.id && info.id.Length > 0, "a library info reads back (id '" + info.id + "')");
 			Check(ref ok, LibraryPack.CompareVersions("2.10", "2.9") > 0 && LibraryPack.CompareVersions("3.0", "3.0") == 0, "versions compared as numbers");
 			// A file name check with a dotted I (Turkish lower/upper case)
-			Check(ref ok, FileNames.IsReserved("con") && FileNames.IsReserved("COM1.island") && !FileNames.IsReserved("İsland"), "device names found in any culture");
+			Check(ref ok, FileNames.IsReserved("con") && FileNames.IsReserved("COM1.island") && !FileNames.IsReserved("Ä°sland"), "device names found in any culture");
 			if (ok) Log("PASS: culture " + culture); else Fail("culture " + culture);
 		}
 
@@ -220,10 +220,20 @@ namespace DynamicIslands
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj == null) { Fail("raft height: no raft"); return; }
 			var tops = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation"))
-				.Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).ToList();
+				.Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger && c.enabled && c.gameObject.activeInHierarchy).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).ToList();
+			// (the highest foundation: which block, where on the raft, which collider reaches up)
+			Block top = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation"))
+				.OrderByDescending(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger && c.enabled && c.gameObject.activeInHierarchy).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).FirstOrDefault();
+			if (top != null)
+			{
+				Collider hc = top.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger).OrderByDescending(c => c.bounds.max.y).FirstOrDefault();
+				Log("RAFTTOP " + top.name + " local " + raftObj.transform.InverseTransformPoint(top.transform.position).ToString("F1") + ", collider " + (hc != null ? hc.name + " (" + hc.GetType().Name + ", on " + hc.gameObject.name + ", bounds " + hc.bounds.min.y.ToString("F1") + ".." + hc.bounds.max.y.ToString("F1") + ", enabled " + hc.enabled + ")" : "none") +
+					"; foundations " + raftObj.GetComponentsInChildren<Block>(true).Count(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation")) + ", blocks " + raftObj.GetComponentsInChildren<Block>(true).Length);
+			}
 			Network_Player p = RAPI.GetLocalPlayer();
 			Rigidbody body = raftObj.body;
-			Log("RAFT " + (tops.Count > 0 ? tops.Max().ToString("F2") : "?") + " " + raftObj.transform.position.y.ToString("F2") + " " + (p != null ? p.transform.position.y.ToString("F2") : "?") + " " +
+			tops = tops.Where(y => y > -1000f).ToList(); // (Raft switches its blocks' own colliders off for one of the whole raft: then the raft's own height)
+			Log("RAFT " + (tops.Count > 0 ? tops.Max() : raftObj.transform.position.y).ToString("F2") + " " + raftObj.transform.position.y.ToString("F2") + " " + (p != null ? p.transform.position.y.ToString("F2") : "?") + " " +
 				(p != null && p.PersonController != null ? p.PersonController.controller.isGrounded.ToString() : "?") + " velocity " + (body != null ? body.velocity.ToString("F2") : "?") + " kinematic " + (body != null && body.isKinematic));
 		}
 

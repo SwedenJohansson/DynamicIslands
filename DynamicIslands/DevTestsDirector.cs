@@ -306,6 +306,10 @@ namespace DynamicIslands
 			float sailedBefore = WorldDirector.Sailed;
 			// (a test world that has sailed 5 km already would bring 'third' at once: count from 0, put back at the end)
 			WorldDirector.Sailed = 0f;
+			// (a run that stopped half way left this test's plan and fired rules in the world: not "before", and not done)
+			string[] ownRules = { "start", "second", "third", "fourth" };
+			if (planBefore.Equals(TestPlan, StringComparison.OrdinalIgnoreCase)) planBefore = WorldPlan.RandomName;
+			foreach (string id in ownRules) WorldDirector.Done.Remove(id);
 			var doneBefore = WorldDirector.Done.ToList();
 			int before = IslandWorldState.Islands.Count;
 			var created = new List<string> { "ciplan1" };

@@ -634,7 +634,7 @@ namespace DynamicIslands
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj != null)
 			{
-				var tops = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation")).Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).Where(y => y > -5f).ToList();
+				var tops = raftObj.GetComponentsInChildren<Block>(true).Where(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName.StartsWith("Block_Foundation")).Select(b => b.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger && c.enabled && c.gameObject.activeInHierarchy).Select(c => c.bounds.max.y).DefaultIfEmpty(float.MinValue).Max()).Where(y => y > -5f).ToList();
 				if (tops.Count > 0) deck = tops.OrderBy(y => y).ElementAt(tops.Count / 2);
 				if (tops.Count > 0) Log("The raft's foundations: " + tops.Count + ", their tops " + tops.Min().ToString("F2") + " .. " + tops.Max().ToString("F2") + " m above the sea (the raft bobs on the waves)");
 			}
