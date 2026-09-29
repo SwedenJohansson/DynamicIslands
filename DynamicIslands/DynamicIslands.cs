@@ -770,6 +770,14 @@ namespace DynamicIslands
 			foreach (string line in CustomIslandSpawner.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
+		[ConsoleCommand(name: "Resync", docs: "A player who joined: ask the host for its custom islands again (the list and any island file that hasn't come)")]
+		public static void ResyncCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || Raft_Network.IsHost) { Notify("Resync is for a player who joined a host's world", true); return; }
+			IslandNetwork.Resync();
+			Notify("Asking the host for its custom islands again");
+		}
+
 		[ConsoleCommand(name: "WorldPlan", docs: "The world plan: which islands this world gets, when and where. WorldPlan = show it and its rules; WorldPlan <name> = give this world another plan (host)")]
 		public static void WorldPlanCommand(string[] args)
 		{

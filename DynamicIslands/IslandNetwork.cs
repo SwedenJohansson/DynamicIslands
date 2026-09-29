@@ -97,6 +97,12 @@ namespace DynamicIslands.Editor
 		// Client: files being received, by hash
 		static readonly Dictionary<string, string[]> incoming = new Dictionary<string, string[]>();
 		static readonly HashSet<string> requested = new HashSet<string>();
+		// Client: when each file was asked for (asked again when it doesn't come), and whether the player was told
+		static readonly Dictionary<string, float> requestedAt = new Dictionary<string, float>();
+		static readonly HashSet<string> toldWaiting = new HashSet<string>();
+		static bool toldNoList;
+		static float nextFileCheck;
+		const float FileRetrySeconds = 30f, SlowSyncSeconds = 30f;
 		// Host: content hash per island name (with the file time it was computed for)
 		static readonly Dictionary<string, KeyValuePair<DateTime, string>> hashCache = new Dictionary<string, KeyValuePair<DateTime, string>>(StringComparer.OrdinalIgnoreCase);
 
@@ -141,6 +147,9 @@ namespace DynamicIslands.Editor
 			nextSyncTry = 0;
 			incoming.Clear();
 			requested.Clear();
+			requestedAt.Clear();
+			toldWaiting.Clear();
+			toldNoList = false;
 		}
 
 		/// <summary>Called every frame. Clients keep asking the host for the island list until it arrives.</summary>
@@ -150,10 +159,18 @@ namespace DynamicIslands.Editor
 			// before it counts the game scene as loaded.)
 			if (LoadSceneManager.IsGameSceneLoaded) wasInGame = true;
 			else if (wasInGame) { wasInGame = false; worldReceived = false; }
+			if (!Raft_Network.IsHost && worldReceived && InMultiplayerGame && Time.unscaledTime >= nextFileCheck) { nextFileCheck = Time.unscaledTime + 5f; RetryLateFiles(); }
 			if (synced || Raft_Network.IsHost || !worldReceived || !InMultiplayerGame || Time.unscaledTime < nextSyncTry) return;
-			if (syncTries >= SyncMaxTries) { synced = true; Debug.LogWarning("[CUSTOM ISLANDS] [net] The host never sent its island list (does the host have Custom Islands?)"); return; }
+			// (after the first minute: still asking, slowly - a host busy loading, or a message lost, was left without islands for
+			// the whole session before)
+			if (syncTries >= SyncMaxTries && !toldNoList)
+			{
+				toldNoList = true;
+				Debug.LogWarning("[CUSTOM ISLANDS] [net] The host hasn't sent its island list yet (does the host have Custom Islands?) - still asking every " + SlowSyncSeconds + " s");
+				DynamicIslands.Notify("The host hasn't sent its custom islands yet (does the host have Custom Islands?). Still asking...", true);
+			}
 			syncTries++;
-			nextSyncTry = Time.unscaledTime + SyncRetrySeconds;
+			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
 		}
@@ -478,6 +495,7 @@ namespace DynamicIslands.Editor
 			entry.WaitingForFile = true;
 			if (requested.Add(hash))
 			{
+				requestedAt[hash] = Time.unscaledTime;
 				Log("Asking the host for island file '" + entry.HostName + "' (" + hash + ")");
 				SendToHost(new IslandNetMessage { Kind = IslandNetMessage.FileRequest, Name = entry.HostName, Hash = hash });
 			}
@@ -517,6 +535,32 @@ namespace DynamicIslands.Editor
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash)) e.WaitingForFile = false;
+		}
+
+		/// <summary>
+		/// Client: an island file asked for that hasn't come in 30 s (the message lost, the host busy, the file missing on the
+		/// host) is asked for again; the player is told once which island is waited for. Before, it waited for good.
+		/// </summary>
+		static void RetryLateFiles()
+		{
+			foreach (var e in IslandWorldState.Islands.Where(x => x.WaitingForFile && !string.IsNullOrEmpty(x.Hash)).ToList())
+			{
+				float at;
+				if (!requestedAt.TryGetValue(e.Hash, out at) || Time.unscaledTime - at < FileRetrySeconds) continue;
+				if (toldWaiting.Add(e.Hash)) DynamicIslands.Notify("Waiting for the island '" + e.HostName + "' from the host - still asking", true);
+				Log("Island file '" + e.HostName + "' (" + e.Hash + ") hasn't come: asking again");
+				requested.Remove(e.Hash);
+				incoming.Remove(e.Hash);
+				RetryWaiting(e.Hash);
+			}
+		}
+
+		/// <summary>Client: asks the host for everything again (the Resync command).</summary>
+		public static void Resync()
+		{
+			synced = false; syncTries = 0; nextSyncTry = 0; toldNoList = false;
+			requested.Clear(); requestedAt.Clear(); incoming.Clear(); toldWaiting.Clear();
+			Log("Resync: asking the host for its islands again");
 		}
 
 		static void RetryWaiting(string hash)
