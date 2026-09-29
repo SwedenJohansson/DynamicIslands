@@ -111,6 +111,8 @@ namespace DynamicIslands.Editor
 			if (!pos.HasValue) return;
 
 			// Every machine streams its own copy of the island list; only the host adds islands
+			// (host: not while the list is still the world played before - a world loading after another; its save checks the same)
+			if (Raft_Network.IsHost && !IslandWorldState.ForThisWorld) return;
 			StreamIslands(pos.Value);
 			if (!Raft_Network.IsHost) { lastRaftPosition = null; return; }
 			LoadPool(false);

@@ -97,6 +97,10 @@ namespace DynamicIslands.Editor
 			return gone.Count;
 		}
 
+		/// <summary>The list is this world's: false while another world loads, until OnWorldLoaded reads the new one (the list
+		/// in memory is still the world played before - streaming it then brought that world's islands into the new one).</summary>
+		public static bool ForThisWorld { get { return loadedFor == WorldKey; } }
+
 		static void EnsureCurrentWorld()
 		{
 			if (loadedFor != WorldKey) { islands.Clear(); loadedFor = WorldKey; }
