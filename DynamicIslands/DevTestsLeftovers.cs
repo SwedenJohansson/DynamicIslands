@@ -143,6 +143,29 @@ namespace DynamicIslands
 			if (ok) Log("PASS: hotkey tabs"); else Fail("hotkey tabs");
 		}
 
+		[ConsoleCommand(name: "CIDropOpen", docs: "Dev: opens the first visible drop-down list named so (e.g. Drop_When), as a click on it would: CIDropOpen <name>")]
+		public static void DropOpenCommand(string[] args)
+		{
+			string name = args != null && args.Length > 0 ? args[0] : "";
+			// (the top-most one: cards further down a list are there too, scrolled out of view)
+			DropdownButton d = UnityEngine.Object.FindObjectsOfType<DropdownButton>().Where(x => x.name == name && x.isActiveAndEnabled).OrderByDescending(x => x.transform.position.y).FirstOrDefault();
+			if (d == null) { Fail("no visible drop-down '" + name + "'"); return; }
+			DropList.Open(d.GetComponent<UnityEngine.UI.Button>(), d);
+			Log("Opened the drop-down " + name + " (" + d.Options.Count + " options)");
+			DynamicIslands.instance.StartCoroutine(DropReport());
+		}
+
+		static IEnumerator DropReport()
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				GameObject list = GameObject.Find("DropdownList");
+				RectTransform r = list != null ? (RectTransform)list.transform : null;
+				Log("  frame " + i + ": open " + DropList.IsOpen + (r != null ? ", list at " + r.anchoredPosition + " size " + r.rect.size + " under " + r.parent.parent.name + ", screen " + RectTransformUtility.WorldToScreenPoint(null, r.position) : ", no list"));
+				yield return null;
+			}
+		}
+
 		const string BulkPrefix = "bulk-";
 
 		[ConsoleCommand(name: "CIBulkIslands", docs: "Dev, anywhere (editor for the Islands window) (TEST_CATALOGUE UP10): CIBulkIslands [n] - n small islands (bulk-0001 ..., default 1000) in the folder: listing them, the spawn pool, CHOOSE ISLANDS' list, the library's Tidy up look and (in the editor) the Islands window each take under 2 s, and the search finds one. The islands are removed after (CIBulkIslands keep leaves them; CIBulkIslands clean removes them)")]

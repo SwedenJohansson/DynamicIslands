@@ -224,21 +224,7 @@ namespace DynamicIslands
 			return true;
 		}
 
-		/// <summary>Clicks a cycling button (its label changes each click) until it says one of the wanted labels.</summary>
-		static IEnumerator CycleTo(Func<GameObject> card, string[] all, string want)
-		{
-			for (int i = 0; i < all.Length + 1; i++)
-			{
-				GameObject c = card();
-				if (c == null) yield break;
-				Button b = c.GetComponentsInChildren<Button>(false).FirstOrDefault(x => UIKit.LabelOf(x) != null && all.Contains(UIKit.LabelOf(x).text));
-				if (b == null || UIKit.LabelOf(b).text == want) yield break;
-				b.onClick.Invoke();
-				yield return null; yield return null;
-			}
-		}
-
-		[ConsoleCommand(name: "CIStoryPlanMake", docs: "Dev, editor: a player's story plan made in the World Plans window from their own islands: two islands saved (a home island with a gate zone and a quest, a bay with a chest and a quest); a new plan 'CI Story' through New... and its name prompt; four rules added with + Add a rule and filled in through each card's fields and cycling buttons (start: home ahead; home's gate zone fires: the bay north of home; the bay's quest done: a treasure island east of the bay; after 2 km: an oddity ahead); a description; Check finds no problem; Save; closed, opened again: the same plan. Then Copy..., Delete, Templates..., the rule arrows and remove, the random islands switch on a scratch plan")]
+		[ConsoleCommand(name: "CIStoryPlanMake", docs: "Dev, editor: a player's story plan made in the World Plans window from their own islands: two islands saved (a home island with a gate zone and a quest, a bay with a chest and a quest); a new plan 'CI Story' through New... and its name prompt; four rules added with + Add a rule and filled in through each card's fields and drop-down lists (start: home ahead; home's gate zone fires: the bay north of home; the bay's quest done: a treasure island east of the bay; after 2 km: an oddity ahead); a description; Check finds no problem; Save; closed, opened again: the same plan. Then Copy..., Delete, Templates..., the rule arrows and remove, the random islands switch on a scratch plan")]
 		public static void StoryPlanMakeCommand() { DynamicIslands.instance.StartCoroutine(StoryPlanMakeRoutine()); }
 
 		static IEnumerator StoryPlanMakeRoutine()
@@ -283,17 +269,14 @@ namespace DynamicIslands
 			Check(ref ok, prompt != null && TypeInto(prompt, "Name", StoryPlan) && Click(prompt, "OK"), "the name prompt: '" + StoryPlan + "', OK");
 			yield return null; yield return null;
 			Func<List<GameObject>> cards = () => win.GetComponentsInChildren<RectTransform>(false).Where(r => r.name == "Rule").Select(r => r.gameObject).ToList();
-			string[] whenLabels = { "the world starts", "after sailing (km)", "on day", "quest done at", "quest step done at", "zone fires at", "players reach", "after rule", "signal sent at" };
-			string[] whatLabels = { "saved island", "new map type", "from spawn pool", "one of these" };
-			string[] whereLabels = { "ahead of the raft", "near an island", "on the Receiver", "by chance, sailing" }; // (all of them: with only two the cycling stopped on "on the Receiver")
-			string[] dirs = IntroRule.Directions.Select(d => d == "any" ? "any way" : d).ToArray();
-			// (rule: id, when, when's island, when's arg, what, which, where, metres, direction, near which, message, Receiver name)
+			// (rule: id, when, when's island, when's arg, what, which, where, metres, direction, near which, message, Receiver name -
+			// when, what, where and direction are picked from each card's drop-down lists, as a player picks them)
 			var rules = new[]
 			{
-				new[] { "home", "the world starts", "", "", "saved island", StoryIslands[0], "ahead of the raft", "300", "", "", "A story begins", "Home" },
-				new[] { "bay", "zone fires at", "home", "gate", "saved island", StoryIslands[1], "near an island", "600", "north", "home", "Something to the north", "Bay" },
-				new[] { "treasure", "quest done at", "bay", "", "new map type", "treasure", "near an island", "600", "east", "bay", "", "Treasure" },
-				new[] { "far", "after sailing (km)", "", "2", "new map type", "oddity", "ahead of the raft", "400", "", "", "", "" },
+				new[] { "home", "start", "", "", "island", StoryIslands[0], "ahead", "300", "", "", "A story begins", "Home" },
+				new[] { "bay", "zone", "home", "gate", "island", StoryIslands[1], "near", "600", "north", "home", "Something to the north", "Bay" },
+				new[] { "treasure", "quest", "bay", "", "type", "treasure", "near", "600", "east", "bay", "", "Treasure" },
+				new[] { "far", "km", "", "2", "type", "oddity", "ahead", "400", "", "", "", "" },
 			};
 			for (int i = 0; i < rules.Length; i++)
 			{
@@ -302,16 +285,18 @@ namespace DynamicIslands
 				yield return null; yield return null;
 				int idx = i;
 				Func<GameObject> card = () => { var c = cards(); return idx < c.Count ? c[idx] : null; };
-				yield return CycleTo(card, whenLabels, r[1]);
-				yield return CycleTo(card, whatLabels, r[4]);
-				yield return CycleTo(card, whereLabels, r[6]);
-				if (r[8].Length > 0) yield return CycleTo(card, dirs, r[8]);
+				bool picked = true;
+				picked &= card() != null && DropList.Pick(card(), "Drop_When", r[1]); yield return null; yield return null;
+				picked &= card() != null && DropList.Pick(card(), "Drop_What", r[4]); yield return null; yield return null;
+				picked &= card() != null && DropList.Pick(card(), "Drop_Where", r[6]); yield return null; yield return null;
+				if (r[8].Length > 0) { picked &= card() != null && DropList.Pick(card(), "Drop_Direction", r[8]); yield return null; yield return null; }
+				Check(ref ok, picked, "rule " + (i + 1) + ": WHEN, BRING, WHERE" + (r[8].Length > 0 ? " and the direction" : "") + " picked from the card's lists");
 				GameObject cd = card();
 				if (cd == null) { Check(ref ok, false, "rule " + (i + 1) + ": no card"); continue; }
 				bool typed = TypeInto(cd, "id", r[0]);
 				if (r[2].Length > 0) typed &= TypeInto(cd, "rule id / island", r[2]);
-				if (r[3].Length > 0) typed &= TypeInto(cd, r[1] == "zone fires at" ? "zone name" : "km", r[3]);
-				typed &= TypeInto(cd, r[4] == "new map type" ? "map type" : "island name", r[5]);
+				if (r[3].Length > 0) typed &= TypeInto(cd, r[1] == "zone" ? "zone name" : "km", r[3]);
+				typed &= TypeInto(cd, r[4] == "type" ? "map type" : "island name", r[5]);
 				typed &= TypeInto(cd, "300", r[7]);
 				if (r[9].Length > 0) typed &= TypeInto(cd, "where it happened", r[9]);
 				if (r[10].Length > 0) typed &= TypeInto(cd, "Message to every player (optional)", r[10]);
@@ -338,7 +323,7 @@ namespace DynamicIslands
 					string[] r = rules[i];
 					string want = r[0] + "|" + r[5] + "|" + r[7];
 					string got = s.Id + "|" + s.WhatArg + "|" + s.Distance.ToString("0");
-					Check(ref ok, want == got && s.Where == (r[6] == "ahead of the raft" ? "ahead" : "near") && (r[8].Length == 0 || s.Direction == r[8]) && (r[3].Length == 0 || s.WhenArg == r[3]) && (r[2].Length == 0 || s.WhenRef == r[2]), "rule " + (i + 1) + " as typed: " + s.Describe());
+					Check(ref ok, want == got && s.Where == r[6] && (r[8].Length == 0 || s.Direction == r[8]) && (r[3].Length == 0 || s.WhenArg == r[3]) && (r[2].Length == 0 || s.WhenRef == r[2]), "rule " + (i + 1) + " as typed: " + s.Describe());
 				}
 				Check(ref ok, saved.Description == "A test story across four islands", "the description saved");
 			}
@@ -377,7 +362,7 @@ namespace DynamicIslands
 			string movedId = afterUp.Count >= 2 ? afterUp[afterUp.Count - 2].GetComponentsInChildren<InputField>(false).Select(f => f.text).FirstOrDefault() : "";
 			Check(ref ok, movedId == lastId, "the up arrow moves the last rule up one ('" + lastId + "')");
 			GameObject first = cards().FirstOrDefault();
-			if (first != null) Click(first, "×");
+			if (first != null) Click(first, "Remove");
 			yield return null; yield return null;
 			Check(ref ok, cards().Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + cards().Count);
 			Check(ref ok, Click(win, "Delete"), "Delete clicked");

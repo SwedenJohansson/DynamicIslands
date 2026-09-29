@@ -26,6 +26,7 @@ namespace DynamicIslands.Editor
 		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton;
 		readonly Dictionary<string, Button> storyIslandButtons = new Dictionary<string, Button>();
 		InputField descriptionField;
+		Text randomNote, rulesIntro;
 		Button helpButton, shareHelp;
 		RectTransform planRow, settingsRow, storyRow, rulesList, map;
 		readonly List<InputField> fields = new List<InputField>();
@@ -65,6 +66,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			DropList.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -94,6 +96,7 @@ namespace DynamicIslands.Editor
 		void ShowRandom()
 		{
 			UIKit.LabelOf(randomButton).text = "Random islands while sailing: " + (plan.Random ? "on" : "off");
+			if (randomNote != null) randomNote.text = plan.Random ? "Islands from your spawn pool also turn up by chance, between the plan's islands." : "Only the islands the rules bring come - best for a story.";
 			UIKit.SetActive(randomButton, plan.Random);
 			UIKit.LabelOf(storyButton).text = "Raft's story islands: " + (plan.RaftStory ? "on" : "off");
 			UIKit.SetActive(storyButton, plan.RaftStory);
@@ -130,7 +133,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen) return;
+			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.IsOpen) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
@@ -165,6 +168,7 @@ namespace DynamicIslands.Editor
 			settingsRow = UIKit.Row(panel, 28f, 6f, "Settings");
 			randomButton = UIKit.Button(settingsRow, "", () => { plan.Random = !plan.Random; ShowRandom(); }, "Also let islands from the spawn pool (spawnpool.txt) appear by chance while sailing, as in the \"Random islands\" plan", 330, 28f, 12);
 			HelpMark(settingsRow, HelpRandom);
+			randomNote = UIKit.Label(settingsRow, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "RandomNote");
 			storyRow = UIKit.Row(panel, 28f, 4f, "Story");
 			storyButton = UIKit.Button(storyRow, "", () => { Keep(); FlipStory(); }, "Raft's own story islands (Radio Tower ... Utopia, found with the Receiver) come in worlds with this plan. Off: only this plan's own islands - a completely new adventure", 210, 28f, 12);
 			storyButton.name = "StoryToggle";
@@ -183,6 +187,11 @@ namespace DynamicIslands.Editor
 			descriptionField.characterLimit = 120;
 			fields.Add(descriptionField);
 			HelpMark(descriptionRow, HelpDescription);
+			// (how to read a card, once, above them)
+			rulesIntro = UIKit.Label(panel, "Each card is one rule and brings one island: <b>WHEN</b> something happens → <b>BRING</b> an island → <b>WHERE</b> it goes → what to <b>TELL</b> the players. " +
+				"Choose from the ▼ lists; the line in italics under each part says what the choice does.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "RulesIntro");
+			rulesIntro.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(rulesIntro.gameObject, -1, 32);
 
 			RectTransform body = UIKit.Row(panel, 440f, 10f, "Body");
 			RectTransform rulesBox = UIKit.Rect("Rules", body);
@@ -216,26 +225,52 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "Close", Close, "Close without saving", 110, 34);
 		}
 
-		static readonly Dictionary<string, string> WhenLabels = new Dictionary<string, string>
+		// The choices of a rule's parts: the words in the drop-down and the line that explains the chosen one
+		static readonly DropList.Option[] WhenOptions =
 		{
-			{ "start", "the world starts" }, { "km", "after sailing (km)" }, { "day", "on day" }, { "quest", "quest done at" }, { "step", "quest step done at" },
-			{ "zone", "zone fires at" }, { "visit", "players reach" }, { "rule", "after rule" }, { "signal", "signal sent at" },
+			new DropList.Option("start", "When the world starts", "At once, as soon as a new world begins"),
+			new DropList.Option("km", "After sailing a distance", "When the raft has sailed this many km in the world"),
+			new DropList.Option("day", "On a day", "On this day of the world (day 1 is the first)"),
+			new DropList.Option("quest", "When a quest is done", "When the quest of an island is finished (the island needs a quest)"),
+			new DropList.Option("step", "When quest steps are done", "When this many steps of an island's quest are done"),
+			new DropList.Option("zone", "When a trigger zone fires", "When a player walks into a trigger zone on an island"),
+			new DropList.Option("visit", "When players reach an island", "When a player first comes to an island"),
+			new DropList.Option("rule", "Right after another rule", "Straight after another rule's island has appeared"),
+			new DropList.Option("signal", "When a signal is sent", "When an object on an island sends a signal (a behaviour's \"send a signal\")"),
 		};
-		static readonly Dictionary<string, string> WhereLabels = new Dictionary<string, string>
+		static readonly DropList.Option[] WhatOptions =
 		{
-			{ "ahead", "ahead of the raft" }, { "near", "near an island" }, { "receiver", "on the Receiver" }, { "sailing", "by chance, sailing" },
+			new DropList.Option("type", "A new island of a map type", "The mod makes a new island of this kind in each world (camp, volcano, wreck...): nothing to share, it always works"),
+			new DropList.Option("island", "One of my saved islands", "An island you built in the editor, exactly as you saved it"),
+			new DropList.Option("oneof", "One island from a list", "One of several saved islands, picked at random (ones not in the world yet first)"),
+			new DropList.Option("pool", "A random island (spawn pool)", "Any island of your spawn pool (spawnpool.txt), as random islands are"),
 		};
-		static readonly Dictionary<string, string> DoneLabels = new Dictionary<string, string>
+		static readonly DropList.Option[] WhereOptions =
 		{
-			{ "", "quest (or reached)" }, { "quest", "its quest is done" }, { "visit", "players reach it" }, { "step", "quest steps done" }, { "zone", "its zone fires" }, { "signal", "its signal is sent" },
+			new DropList.Option("ahead", "Ahead of the raft", "This many metres ahead of the raft, the way it sails"),
+			new DropList.Option("near", "Near an island", "This many metres from an island (centre to centre), in a direction"),
+			new DropList.Option("receiver", "On the Receiver", "It gets its own frequency on Raft's Receiver and comes when a player tunes to it"),
+			new DropList.Option("sailing", "By chance while sailing", "It turns up ahead of the raft some time later, while you sail"),
 		};
-		static readonly Dictionary<string, string> WhatLabels = new Dictionary<string, string>
+		static readonly DropList.Option[] DoneOptions =
 		{
-			{ "island", "saved island" }, { "type", "new map type" }, { "pool", "from spawn pool" }, { "oneof", "one of these" },
+			new DropList.Option("", "Its quest is done (or reached)", "Its quest is finished; an island without a quest counts when players reach it"),
+			new DropList.Option("quest", "Its quest is done", "The island's quest is finished"),
+			new DropList.Option("visit", "Players reach it", "A player comes to the island"),
+			new DropList.Option("step", "Quest steps are done", "This many steps of its quest are done"),
+			new DropList.Option("zone", "Its trigger zone fires", "A player walks into this trigger zone on it"),
+			new DropList.Option("signal", "Its signal is sent", "An object on it sends this signal"),
 		};
+		static DropList.Option[] DirectionOptions
+		{
+			get { return IntroRule.Directions.Select(d => new DropList.Option(d, d == "any" ? "Any way" : Capital(d), d == "any" ? "Wherever there is room" : "To the " + d + " of the island")).ToArray(); }
+		}
+
+		const float SectionLabel = 72f; // (the width of the WHEN / BRING / WHERE... column)
 
 		void ShowRules()
 		{
+			DropList.Close();
 			foreach (Transform child in rulesList) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(rulesList));
 			for (int i = 0; i < plan.Rules.Count; i++) RuleCard(i);
@@ -244,144 +279,244 @@ namespace DynamicIslands.Editor
 			ShowRandom(); // (the story row follows the rules: an island of the plan in a story island's place)
 		}
 
+		/// <summary>
+		/// A rule as a card, top to bottom: its number, name and a sentence saying what it does; then one section per
+		/// question - WHEN it comes, what it BRINGS, WHERE it goes, what to TELL the players, and (world plans) its place in
+		/// Raft's story. Each section: a drop-down with the choices, the fields that choice needs (with their names), and a
+		/// line explaining the choice.
+		/// </summary>
 		void RuleCard(int index)
 		{
 			IntroRule r = plan.Rules[index];
 			RectTransform card = UIKit.Group(rulesList, "", "Rule");
-			UIKit.Size(card.gameObject, -1, islandMode ? 102 : 132);
+			float height = 16f; // (the group's padding)
 
-			// When ... bring ...
-			RectTransform a = UIKit.Row(card, 26f, 4f, "When");
-			UIKit.Size(UIKit.Label(a, (index + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 20);
-			InputField id = SmallField(a, "id", r.Id, 80, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Trim());
-			HelpMark(a, islandMode ? HelpIdIsland : HelpId);
-			UIKit.Size(UIKit.Label(a, "When", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 38);
-			Cycle(a, WhenLabels[r.When], 130, "Click to change what the rule waits for", () => { r.When = Next(IntroRule.WhenKinds, r.When); ShowRules(); });
+			// The rule's number and name, what it does in a sentence, and the arrows
+			RectTransform head = UIKit.Row(card, 28f, 6f, "Head");
+			Text number = UIKit.Label(head, "RULE " + (index + 1), 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Size(number.gameObject, SectionLabel - 6f);
+			UIKit.Size(UIKit.Label(head, "Name", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 40);
+			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Trim());
+			HelpMark(head, islandMode ? HelpIdIsland : HelpId);
+			UIKit.Size(UIKit.Label(head, "", 12).gameObject, -1, -1, 1);
+			UIKit.Button(head, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Move this rule up (the order only matters for reading: each rule waits for its own WHEN)", 28, 26f, 11);
+			UIKit.Button(head, "▼", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Move this rule down", 28, 26f, 11);
+			Button del = UIKit.Button(head, "Remove", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 80, 26f, 11);
+			UIKit.DangerButton(del);
+			height += 28f + 6f;
+			Text describe = UIKit.Label(card, r.Describe(), 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic, "Describe");
+			describe.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(describe.gameObject, -1, 34);
+			height += 34f + 6f;
+
+			// WHEN
+			RectTransform when = Section(card, "WHEN", ref height);
+			Button whenDrop = DropList.Make(when, "Drop_When", WhenOptions.Select(o => new DropList.Option(o.Value, o.Label, WhenHint(o.Value))).ToList(), r.When, v =>
+			{
+				Keep();
+				r.When = v;
+				if ((v == "km" || v == "day") && !float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out float _)) r.WhenArg = v == "km" ? "1" : "2";
+				if (v == "step" && !int.TryParse(r.WhenArg, out int _)) r.WhenArg = "1";
+				if (v == "zone" || v == "signal") r.WhenArg = "";
+				if (islandMode && r.WhenRef.Length == 0 && v != "rule") r.WhenRef = IntroRule.Self;
+				ShowRules();
+			}, 230, "What the rule waits for: choose from the list");
 			bool needsRef = r.When == "quest" || r.When == "step" || r.When == "zone" || r.When == "visit" || r.When == "rule" || r.When == "signal";
 			bool needsArg = r.When == "km" || r.When == "day" || r.When == "step" || r.When == "zone" || r.When == "signal";
+			if (r.When == "day") Tag(when, "day");
 			if (needsRef)
 			{
-				SmallField(a, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 110,
+				Tag(when, r.When == "rule" ? "rule" : "island");
+				SmallField(when, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 130,
 					r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim());
-				Pick(a, "Pick_WhenRef", r.When == "rule" ? "Choose the rule to wait for" : "Choose the island: a rule of this plan, or one of your saved islands", () => WhenRefChoices(r),
+				Pick(when, "Pick_WhenRef", r.When == "rule" ? "Choose the rule to wait for" : "Choose the island: a rule of this plan, or one of your saved islands", () => WhenRefChoices(r),
 					r.When == "rule" ? "Rule to wait for" : "Island to wait for", v => r.WhenRef = v, () => r.When == "rule" ? "There are no other rules yet: + Add a rule first." : "No rules or saved islands yet.");
 			}
 			if (needsArg)
 			{
-				SmallField(a, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" || r.When == "signal" ? 100 : 50,
+				if (r.When == "step" || r.When == "zone" || r.When == "signal") Tag(when, r.When == "step" ? "steps" : r.When);
+				SmallField(when, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" || r.When == "signal" ? 120 : 56,
 					r.When == "zone" ? "The trigger zone's name on that island" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim());
 				if (r.When == "zone" || r.When == "signal" || r.When == "step")
-					Pick(a, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
+					Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
 						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
+				if (r.When == "km") Tag(when, "km sailed", false);
 			}
-			HelpMark(a, islandMode ? HelpWhenIsland : HelpWhen);
-			UIKit.Size(UIKit.Label(a, "bring", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 36);
-			Cycle(a, WhatLabels[r.What], 120, "Click to change: a saved island, a new island of a map type, one from the spawn pool, or one of a list", () =>
+			Fill(when);
+			HelpMark(when, islandMode ? HelpWhenIsland : HelpWhen);
+			Explain(card, WhenHint(r.When), ref height);
+
+			// BRING
+			RectTransform bring = Section(card, "BRING", ref height);
+			DropList.Make(bring, "Drop_What", WhatOptions, r.What, v =>
 			{
-				r.What = Next(IntroRule.WhatKinds, r.What);
-				r.WhatArg = r.What == "type" ? "random" : "";
+				Keep();
+				r.What = v;
+				r.WhatArg = v == "type" ? "random" : "";
 				ShowRules();
-			});
+			}, 230, "Which island comes: choose from the list");
 			if (r.What != "pool")
 			{
-				InputField what = SmallField(a, r.What == "oneof" ? "island, island, ..." : r.What == "type" ? "map type" : "island name", r.WhatArg, -1,
-					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (\u2026 to choose)", v => r.WhatArg = v.Trim());
-				UIKit.Button(a, "\u2026", () =>
+				Tag(bring, r.What == "type" ? "map type" : r.What == "oneof" ? "islands" : "island");
+				SmallField(bring, r.What == "oneof" ? "island, island, ..." : r.What == "type" ? "map type" : "island name", r.WhatArg, -1,
+					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (▾ to choose)", v => r.WhatArg = v.Trim());
+				Button choose = UIKit.Button(bring, "▾", () =>
 				{
 					Keep();
 					Action<string> set = v => { r.WhatArg = r.What == "oneof" && r.WhatArg.Trim().Length > 0 ? r.WhatArg.Trim() + ", " + v : v; ShowRules(); };
 					if (r.What == "type") ChoiceWindow.Open("Map type", ChoiceWindow.Types(), set);
-					else ChoiceWindow.Open("Island", ChoiceWindow.Islands(), set);
-				}, "Choose from a list", 28, 26f, 12);
+					else ChoiceWindow.Open(r.What == "oneof" ? "Add an island to the list" : "Island", ChoiceWindow.Islands(), set);
+				}, r.What == "oneof" ? "Add one of your saved islands to the list" : "Choose from a list", 24, 26f, 12);
+				choose.name = "Pick_What";
 			}
-			else UIKit.Label(a, "(spawnpool.txt)", 12, UIKit.TextMuted);
-			HelpMark(a, HelpWhat);
+			else Fill(bring);
+			HelpMark(bring, HelpWhat);
+			Explain(card, WhatHint(r), ref height);
 
-			// ... where, message, label
-			RectTransform b = UIKit.Row(card, 26f, 4f, "Where");
-			UIKit.Size(UIKit.Label(b, "", 12).gameObject, 20);
-			Cycle(b, WhereLabels[r.Where], 130, islandMode ? "Click to change: ahead of the raft, or near an island (at a distance and direction)" :
-				"Click to change: ahead of the raft, near an island, on its own Receiver frequency (it comes when a player tunes to it), or by chance while sailing", () =>
+			// WHERE
+			RectTransform where = Section(card, "WHERE", ref height);
+			List<DropList.Option> whereOptions = (islandMode ? WhereOptions.Where(o => o.Value == "ahead" || o.Value == "near") : WhereOptions).ToList();
+			DropList.Make(where, "Drop_Where", whereOptions, r.Where, v =>
 			{
-				r.Where = islandMode ? (r.Where == "ahead" ? "near" : "ahead") : Next(IntroRule.WhereKinds, r.Where);
-				if (r.Where == "near") { r.WhereRef = islandMode ? IntroRule.Self : ""; r.Distance = Mathf.Max(r.Distance, 600f); }
-				if (r.Where == "receiver") r.Distance = Mathf.Max(r.Distance, 600f);
+				Keep();
+				r.Where = v;
+				if (v == "near") { r.WhereRef = islandMode ? IntroRule.Self : ""; r.Distance = Mathf.Max(r.Distance, 600f); }
+				if (v == "receiver") r.Distance = Mathf.Max(r.Distance, 600f);
 				ShowRules();
-			});
-			SmallField(b, "300", r.Distance.ToString("0"), 56, "Metres (from the raft, or centre to centre from the island; at least clear of both)", v =>
+			}, 230, "Where the island comes: choose from the list");
+			SmallField(where, "300", r.Distance.ToString("0"), 60, "Metres (from the raft, or centre to centre from the island; at least clear of both)", v =>
 			{
 				float d;
 				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) r.Distance = Mathf.Clamp(d, 50f, 5000f);
 			}).contentType = InputField.ContentType.IntegerNumber;
-			UIKit.Size(UIKit.Label(b, "m", 12, UIKit.TextMuted).gameObject, 14);
+			Tag(where, r.Where == "near" ? "metres" : r.Where == "ahead" ? "metres ahead" : "metres away", false);
 			if (r.Where == "near")
 			{
-				Cycle(b, r.Direction == "any" ? "any way" : r.Direction, 90, "Which way from the island (any = wherever there's room)", () => { r.Direction = Next(IntroRule.Directions, r.Direction); ShowRules(); });
-				UIKit.Size(UIKit.Label(b, "of", 12, UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 18);
-				SmallField(b, islandMode ? "self" : "where it happened", r.WhereRef == IntroRule.Self && !islandMode ? "" : r.WhereRef, 110,
+				DropList.Make(where, "Drop_Direction", DirectionOptions, r.Direction, v => { Keep(); r.Direction = v; ShowRules(); }, 110, "Which way from the island");
+				Tag(where, "of");
+				SmallField(where, islandMode ? "self" : "where it happened", r.WhereRef == IntroRule.Self && !islandMode ? "" : r.WhereRef, 130,
 					"Which island: the id of the rule that brought it, or an island name. Empty = the island where the rule's event happened" + (islandMode ? "; self = this island" : ""), v => r.WhereRef = v.Trim());
-				Pick(b, "Pick_WhereRef", "Choose the island to put it near", () => WhereRefChoices(r), "Put it near", v => r.WhereRef = v, () => "No rules or saved islands yet.");
+				Pick(where, "Pick_WhereRef", "Choose the island to put it near", () => WhereRefChoices(r), "Put it near", v => r.WhereRef = v, () => "No rules or saved islands yet.");
 			}
-			HelpMark(b, islandMode ? HelpWhereIsland : HelpWhere);
-			SmallField(b, "Message to every player (optional)", r.Message, -1, "Shown when the island appears, with how far and which way it is", v => r.Message = v.Trim()).characterLimit = 160;
-			SmallField(b, "Receiver name", r.Label, 110, "The island's name on Raft's Receiver (optional)", v => r.Label = v.Trim()).characterLimit = 18;
-			HelpMark(b, HelpTell);
-			UIKit.Button(b, "\u25B2", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Earlier", 26, 26f, 11);
-			UIKit.Button(b, "\u25BC", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Later", 26, 26f, 11);
-			Button del = UIKit.Button(b, "\u00D7", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 26, 26f, 12);
-			UIKit.DangerButton(del);
+			Fill(where);
+			HelpMark(where, islandMode ? HelpWhereIsland : HelpWhere);
+			Explain(card, WhereHint(r), ref height);
 
-			if (!islandMode) StoryRow(card, r);
+			// TELL
+			RectTransform tell = Section(card, "TELL", ref height);
+			SmallField(tell, "Message to every player (optional)", r.Message, -1, "Shown when the island appears, with how far and which way it is", v => r.Message = v.Trim()).characterLimit = 160;
+			Tag(tell, "on the Receiver");
+			SmallField(tell, "Receiver name", r.Label, 140, "The island's name on Raft's Receiver (optional)", v => r.Label = v.Trim()).characterLimit = 18;
+			HelpMark(tell, HelpTell);
+			Explain(card, "The message pops up for every player when the island appears (with how far and which way); the name is its dot's name on Raft's Receiver. Both optional.", ref height);
 
-			Text describe = UIKit.Label(card, r.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Describe");
-			UIKit.Size(describe.gameObject, -1, 16);
+			if (!islandMode) StoryRow(card, r, ref height);
+			UIKit.Size(card.gameObject, -1, height);
+		}
+
+		/// <summary>A section of a card: its name in the left column, then the controls (a row).</summary>
+		RectTransform Section(RectTransform card, string title, ref float height)
+		{
+			RectTransform row = UIKit.Row(card, 28f, 6f, "Section_" + title);
+			Text t = UIKit.Label(row, title, 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "SectionTitle");
+			UIKit.Size(t.gameObject, SectionLabel);
+			height += 28f + 6f;
+			return row;
+		}
+
+		/// <summary>The line under a section explaining the choice, lined up with the controls.</summary>
+		void Explain(RectTransform card, string text, ref float height)
+		{
+			RectTransform row = UIKit.Row(card, 16f, 6f, "Explain");
+			UIKit.Size(UIKit.Label(row, "", 11).gameObject, SectionLabel);
+			Text t = UIKit.Label(row, text, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Explanation");
+			t.horizontalOverflow = HorizontalWrapMode.Wrap;
+			height += 16f + 6f;
+		}
+
+		/// <summary>A small name before a field ("island", "zone"...), or a unit after it.</summary>
+		static void Tag(Transform row, string text, bool before = true)
+		{
+			Text t = UIKit.Label(row, text, 12, UIKit.TextMuted, before ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft);
+			UIKit.Size(t.gameObject, Mathf.Max(18f, text.Length * 7f + 6f));
+		}
+
+		/// <summary>Empty room at the end of a row, so the controls keep their widths.</summary>
+		static void Fill(Transform row) { UIKit.Size(UIKit.Label(row, "", 12).gameObject, -1, -1, 1); }
+
+		string WhenHint(string when)
+		{
+			string hint = WhenOptions.First(o => o.Value == when).Hint;
+			if (!islandMode) return hint;
+			return hint.Replace("an island", "an island (self = this island)");
+		}
+
+		static string WhatHint(IntroRule r)
+		{
+			string hint = WhatOptions.First(o => o.Value == r.What).Hint;
+			if (r.What == "type")
+			{
+				MapType t = MapTypes.Get(r.WhatArg);
+				if (t != null && !string.IsNullOrEmpty(t.Description)) hint = t.Label + ": " + t.Description;
+			}
+			return hint;
+		}
+
+		string WhereHint(IntroRule r)
+		{
+			switch (r.Where)
+			{
+				case "near": return "This far from " + (r.WhereRef.Length == 0 ? "the island where the WHEN happened" : r.WhereRef == IntroRule.Self ? "this island" : "'" + r.WhereRef + "'") + " (centre to centre), " + (r.Direction == "any" ? "wherever there is room" : "to the " + r.Direction);
+				case "receiver": return "It gets its own frequency on Raft's Receiver and comes when a player tunes to it, about this far away";
+				case "sailing": return "It turns up ahead of the raft some time later (a few hundred metres to 2 km more), about this far ahead";
+			}
+			return "This far ahead of the raft, the way it sails";
 		}
 
 		/// <summary>The rule's place in Raft's story (the Receiver chain) and when it counts as done there.</summary>
-		void StoryRow(RectTransform card, IntroRule r)
+		void StoryRow(RectTransform card, IntroRule r, ref float height)
 		{
-			RectTransform c = UIKit.Row(card, 26f, 4f, "Story");
-			UIKit.Size(UIKit.Label(c, "", 12).gameObject, 20);
-			UIKit.Size(UIKit.Label(c, "In Raft's story:", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 96);
-			Button place = UIKit.Button(c, (r.InStory ? r.DescribeStory().Split(';')[0] : "not in it") + "  ▼", () => { Keep(); PickStoryPlace(r); },
-				"Put this island into Raft's story chain: first, after one of Raft's story islands (or another of your islands in the story), or in place of one. " +
-				"It is unlocked when the step before it is done, and when it is done the next one is unlocked", 260, 26f, 12);
-			place.name = "StoryPlace";
-			HelpMark(c, HelpStoryPlace);
-			if (!r.InStory) { UIKit.Label(c, "(its own rule decides when it comes)", 12, UIKit.TextMuted); return; }
-			UIKit.Size(UIKit.Label(c, "done when", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 66);
-			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
-			Cycle(c, DoneLabels[kind], 140, "Click to change when this island counts as done in the story (then the next island of the story is unlocked)", () =>
+			RectTransform c = Section(card, "STORY", ref height);
+			Button place = DropList.Make(c, "StoryPlace", StoryPlaces(r), r.StoryPlace, v => { Keep(); r.StoryPlace = IntroRule.NormalPlace(v); ShowRules(); }, 260,
+				"Put this island into Raft's story chain: first, after one of Raft's story islands (or another of your islands in the story), or in place of one");
+			if (r.InStory)
 			{
-				string k = Next(IntroRule.DoneKinds, kind);
-				r.StoryDone = k == "step" ? "step:1" : k == "zone" || k == "signal" ? k + ":" : k;
-				ShowRules();
-			});
-			if (kind == "step" || kind == "zone" || kind == "signal")
-			{
-				SmallField(c, kind == "step" ? "steps" : kind + " name", arg, kind == "step" ? 50 : 120, kind == "step" ? "How many steps of its quest" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
-				string own = r.What == "island" ? r.WhatArg : null;
-				Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
-					Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
+				Tag(c, "done when");
+				string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
+				DropList.Make(c, "Drop_Done", DoneOptions, kind, v =>
+				{
+					Keep();
+					r.StoryDone = v == "step" ? "step:1" : v == "zone" || v == "signal" ? v + ":" : v;
+					ShowRules();
+				}, 200, "When this island counts as done in the story (then the next island of the story is unlocked)");
+				if (kind == "step" || kind == "zone" || kind == "signal")
+				{
+					SmallField(c, kind == "step" ? "steps" : kind + " name", arg, kind == "step" ? 50 : 110, kind == "step" ? "How many steps of its quest" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
+					string own = r.What == "island" ? r.WhatArg : null;
+					Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
+						Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
+				}
 			}
-			UIKit.Label(c, r.Where == "receiver" ? "(then players tune the Receiver to its frequency)" : "", 12, UIKit.TextMuted);
+			Fill(c);
+			HelpMark(c, HelpStoryPlace);
+			Explain(card, !r.InStory ? "Not in Raft's story: its own WHEN decides when it comes. Choose a place to make it part of the Receiver's chain of islands."
+				: r.DescribeStory() + (r.Where == "receiver" ? " - then players tune the Receiver to its frequency" : ""), ref height);
 		}
 
-		void PickStoryPlace(IntroRule r)
+		/// <summary>The places an island can have in Raft's story, for the drop-down.</summary>
+		List<DropList.Option> StoryPlaces(IntroRule r)
 		{
-			var choices = new List<ChoiceWindow.Choice> { new ChoiceWindow.Choice("", "Not in the story", "The rule's own 'when' decides when it comes, as any rule"), new ChoiceWindow.Choice("first", "First", "Before everything: unlocked from the start of the world") };
+			var list = new List<DropList.Option> { new DropList.Option("", "Not in Raft's story", "Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "First in the story", "Unlocked from the start of the world, before Raft's first island") };
 			foreach (ChunkPointType t in StoryOrder.Chain)
 			{
-				choices.Add(new ChoiceWindow.Choice("after:" + StoryOrder.Key(t), "After " + StoryOrder.Name(t), "Unlocked when " + StoryOrder.Name(t) + "'s note is found (or when it is done, if it is left out)"));
-				choices.Add(new ChoiceWindow.Choice("instead:" + StoryOrder.Key(t), "In place of " + StoryOrder.Name(t), StoryOrder.Name(t) + " is left out; the note before it leads here, and this island leads on to the one after"));
+				list.Add(new DropList.Option("after:" + StoryOrder.Key(t), "After " + StoryOrder.Name(t), "Unlocked when " + StoryOrder.Name(t) + "'s note is found (or when it is done, if it is left out)"));
+				list.Add(new DropList.Option("instead:" + StoryOrder.Key(t), "In place of " + StoryOrder.Name(t), StoryOrder.Name(t) + " is left out; the note before it leads here, and this island leads on"));
 			}
 			foreach (IntroRule o in plan.Rules.Where(o => o != r && o.InStory))
-				choices.Add(new ChoiceWindow.Choice("after:" + o.Id, "After your island '" + o.Id + "'", "Unlocked when that island is done"));
-			ChoiceWindow.Open("Place in Raft's story", choices, v =>
-			{
-				r.StoryPlace = IntroRule.NormalPlace(v);
-				ShowRules();
-			});
+				list.Add(new DropList.Option("after:" + o.Id, "After your island '" + o.Id + "'", "Unlocked when that island is done"));
+			// (a place the list doesn't have - an island of the plan that was renamed: shown as it is)
+			if (r.StoryPlace.Length > 0 && !list.Any(o => o.Value == r.StoryPlace)) list.Add(new DropList.Option(r.StoryPlace, r.DescribeStory().Split(';')[0], "As the plan file says"));
+			return list;
 		}
 
 		/// <summary>Tests: a rule's story place as a player picks it from the list.</summary>
@@ -401,16 +536,6 @@ namespace DynamicIslands.Editor
 			f.onEndEdit.AddListener(v => set(v));
 			fields.Add(f);
 			return f;
-		}
-
-		void Cycle(Transform row, string label, float width, string hint, Action click)
-		{
-			UIKit.Button(row, label, () => { Keep(); click(); }, hint, width, 26f, 12);
-		}
-
-		static string Next(string[] list, string current)
-		{
-			return list[(Array.IndexOf(list, current) + 1) % list.Length];
 		}
 
 		#endregion
@@ -560,28 +685,28 @@ namespace DynamicIslands.Editor
 		const string HelpId = "The rule's name, e.g. camp. Other rules use it to mean the island this rule brought: \"quest done at camp\", \"near camp\". " +
 			"Each rule needs its own id (no | or :).";
 		const string HelpIdIsland = "The rule's name. Other rules of this island can wait for it (\"after rule\") or put an island near the one it brought.";
-		const string HelpWhen = "WHEN the island comes. Click to change:\n" +
-			"• the world starts\n• after sailing (km) / on day: type the number\n" +
-			"• quest done at: an island's quest is finished (the island must have a quest)\n• quest step done at: that many steps of it\n" +
-			"• zone fires at: a player walks into a trigger zone (its name) on an island\n• players reach: a player first comes to an island\n" +
-			"• after rule: right after another rule's island came\n• signal sent at: an object's \"send a signal\" action on an island\n\n" +
-			"Name an island with the id of the rule that brought it, or with the island's name. The ▾ after a field lists them: the plan's rules, your saved islands (with their quests), and an island's zones, signals or quest steps.";
-		const string HelpWhenIsland = "WHEN the island comes. Click to change: when this island's quest is done, when some of its quest steps are done, when one of its zones fires, " +
+		const string HelpWhen = "WHEN the island comes - choose from the list:\n" +
+			"• When the world starts\n• After sailing a distance / On a day: type the number\n" +
+			"• When a quest is done: an island's quest is finished (the island must have a quest)\n• When quest steps are done: that many steps of it\n" +
+			"• When a trigger zone fires: a player walks into a zone (its name) on an island\n• When players reach an island: a player first comes to it\n" +
+			"• Right after another rule: straight after that rule's island came\n• When a signal is sent: an object's \"send a signal\" action on an island\n\n" +
+			"\"island\": the id of the rule that brought it, or the island's name. The ▾ after a field lists them: the plan's rules, your saved islands (with their quests), and an island's zones, signals or quest steps.";
+		const string HelpWhenIsland = "WHEN the island comes - choose from the list: when this island's quest is done, when some of its quest steps are done, when one of its zones fires, " +
 			"when players first reach it, when it sends a signal... \"self\" means this island.";
-		const string HelpWhat = "WHAT island comes. Click to change:\n" +
-			"• saved island: one of your islands (… lists them)\n" +
-			"• new map type: an island the mod makes new for each world - a camp, volcano, wreck, sky island... (… lists them). No file needed, so it always works when shared\n" +
-			"• from spawn pool: a random one of your islands\n• one of these: island names with commas between them; one is picked";
-		const string HelpWhere = "WHERE it comes. Click to change:\n" +
-			"• ahead of the raft: that many metres ahead\n" +
-			"• near an island: that far from it (centre to centre), in a direction (any way = wherever there's room), \"of\" which island - empty means the island where the rule's event happened\n" +
-			"• on the Receiver: it gets its own frequency, and comes when a player tunes Raft's Receiver to it\n" +
-			"• by chance, sailing: it comes up ahead some time later\n\nThe ▾ after \"of\" lists the plan's rules and your saved islands.";
-		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - any way means wherever there's room.";
+		const string HelpWhat = "WHAT island comes - choose from the list:\n" +
+			"• A new island of a map type: the mod makes it new for each world - a camp, volcano, wreck, sky island... (▾ lists them). No file needed, so it always works when shared\n" +
+			"• One of my saved islands: an island you built (▾ lists them)\n" +
+			"• One island from a list: island names with commas between them; one is picked (▾ adds one)\n• A random island (spawn pool): any island of your spawn pool";
+		const string HelpWhere = "WHERE it comes - choose from the list:\n" +
+			"• Ahead of the raft: that many metres ahead\n" +
+			"• Near an island: that far from it (centre to centre), in a direction (Any way = wherever there's room), \"of\" which island - empty means the island where the WHEN happened\n" +
+			"• On the Receiver: it gets its own frequency, and comes when a player tunes Raft's Receiver to it\n" +
+			"• By chance while sailing: it comes up ahead some time later\n\nThe ▾ after \"of\" lists the plan's rules and your saved islands.";
+		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - Any way means wherever there's room.";
 		const string HelpTell = "Message: shown to every player when the island appears, with how far and which way it is (e.g. \"Smoke rises from a small island ahead.\").\n\n" +
 			"Receiver name: the island's name on its dot on Raft's Receiver. Both are optional.";
 		const string HelpStoryPlace = "Optional: puts this island into Raft's story chain (found with the Receiver): first, after a story island (or one of your story islands), or in place of one.\n\n" +
-			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"not in it\" for an ordinary rule. The ▾ after \"done when\" lists the zones, signals or quest steps of the island it brings.";
+			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"Not in Raft's story\" for an ordinary rule. The ▾ after its field lists the zones, signals or quest steps of the island it brings.";
 
 		/// <summary>The Help button: how to approach the window, step by step, and the guide.</summary>
 		void ShowHelp()
@@ -593,7 +718,7 @@ namespace DynamicIslands.Editor
 					"An island's own rules bring more islands into any world this island turns up in: \"when my quest is done, bring a treasure island 600 m north of me\". " +
 					"A chain of shared islands becomes a story on its own.\n\n" +
 					"1.  <b>+ Add a rule</b>. It starts as \"when this island's quest is done, bring a new random island 600 m from it\".\n" +
-					"2.  Change <b>When</b> (click it), <b>bring</b> (a saved island or a map type; … lists them) and <b>Where</b> (how far, which way). \"self\" means this island.\n" +
+					"2.  Choose <b>WHEN</b>, <b>BRING</b> (a saved island or a map type; ▾ lists them) and <b>WHERE</b> (how far, which way) from their ▼ lists. \"self\" means this island.\n" +
 					"3.  Write a message players see when the island appears, and its name on the Receiver.\n" +
 					"4.  <b>Check</b>, then <b>Save</b>, then save the island (Ctrl+S): the rules are kept in the island file.\n\n" +
 					"Hover any <b>?</b> for help with that part. To decide a whole world's story in one place, use World plans instead (the guide, section 7).",
@@ -608,11 +733,11 @@ namespace DynamicIslands.Editor
 				"1.  <b>New...</b> and give the plan a name - or pick a sample plan (Adventure, Island hopping...) and <b>Copy...</b> it to start from it.\n" +
 				"2.  Write a <b>description</b>: players see it when they choose the plan.\n" +
 				"3.  <b>Random islands while sailing</b>: off for a story (only your islands), on to have islands by chance as well.\n" +
-				"4.  <b>+ Add a rule</b> for the first island. Give it an <b>id</b> (e.g. camp), leave <b>When</b> on \"the world starts\", set <b>bring</b> to \"new map type\" and pick one with … (e.g. Old camp), " +
-				"<b>Where</b> \"ahead of the raft\" 350 m, and write a message.\n" +
-				"5.  <b>+ Add a rule</b> again for the next island. A new rule already says \"when the quest is done at\" the rule before, \"near\" it: that makes a story from island to island. " +
+				"4.  <b>+ Add a rule</b> for the first island. Give it an <b>id</b> (e.g. camp), leave <b>WHEN</b> on \"When the world starts\", <b>BRING</b> \"A new island of a map type\" and pick one with ▾ (e.g. Old camp), " +
+				"<b>WHERE</b> \"Ahead of the raft\" 350 m, and write a message under <b>TELL</b>.\n" +
+				"5.  <b>+ Add a rule</b> again for the next island. A new rule already says \"When a quest is done\" at the rule before, \"Near an island\" - that one: that makes a story from island to island. " +
 				"Pick the island and the direction.\n" +
-				"6.  Read the grey line under each card: it says in plain words what the rule will do.\n" +
+				"6.  Read the sentence at the top of each card: it says in plain words what the rule will do.\n" +
 				"7.  <b>Check</b> (√ Every rule can work, or what to fix), then <b>Save</b>.\n" +
 				"8.  Main menu → <b>NEW WORLD</b> → click <b>Custom Islands plan</b> until it shows your plan → Create. Play it: F10 → <i>WorldPlan</i> shows which rules have fired.\n\n" +
 				"Hover any <b>?</b> in this window for help with that part. The guide walks through a whole plan with pictures (section 7.2), and lists every choice a rule has.",
