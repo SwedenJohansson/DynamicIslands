@@ -302,7 +302,10 @@ finds objects in every category.
 - **Place:** click an object in the browser, then click the ground. **Q/E** turn it, **[** and **]** resize it,
   **Shift+click** keeps placing, **Esc** stops.
 - **Select:** click a placed object; **Shift+click** adds more.
-- **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles.
+- **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
+  world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
+  the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
+  says so past 12 000: big islands take longer to appear in a world).
 - **Selection:** **Ground** drops the selection onto the terrain, **Duplicate** (Ctrl+D), **Deselect**, **Delete**.
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
   snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
@@ -1130,7 +1133,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
 - **Extra options** (9.4): scrambled blueprints, the story islands in a new order, ghost rafts, private storages.
 - **Islands while sailing** (9.5): which of your islands a world may meet.
-- **The level up system** (9.6): EXP and stat points, switched on by an island rather than in the window.
+- **The level up system** (9.6): EXP and stat points - a switch in the window, or an island made with it.
 
 All of them belong to the world: chosen when it is created, saved with it, the same for every player (the host's), and
 they come along when the world moves to another host ([section 8](#8-playing-together)).
@@ -1309,9 +1312,15 @@ Islands that a quest, an island's rule or a world plan brings ([section 6.4](#64
 
 ### 9.6 The level up system
 
-Levels come to a world with an island made with **Level up system: On**. You switch it on in the editor's
-**Island** tab (Rules), or with the generator's **Level up** choice. Once such an island has appeared in a world, levels
-are on there for good, for every player. A world without one plays as Raft always does.
+Levels come to a world in two ways:
+- **World settings** (New Game box): the **Level up system** switch among the extra options - on for the world from the
+  start (the choice is remembered for the next new world);
+- **an island made with Level up system: On** (the editor's **Island** tab, Rules, or the generator's **Level up**
+  choice): once such an island appears in a world, levels come on there, for every player.
+
+The host can switch it in a world with `Levels on` / `Levels off` (F10). **Off keeps everyone's levels** (they come back
+when it is on again), and an island made with levels doesn't switch it back on after the host switched it off. A world
+without it plays as Raft always does.
 
 ![The Level up system switch in the editor](images/levels-island-tab.jpg)
 *The switch in the Island tab's Rules.*
@@ -1438,6 +1447,7 @@ Press **F10** for RML's console.
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
+| `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
@@ -1452,8 +1462,9 @@ The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in
 "No custom islands" (`WorldPlan`). Islands appear only where there is room: near Raft's own islands they wait until
 the sea is clear. `SpawnIsland <name>` places one right away.
 
-**K does nothing, and there is no level bar.** The level up system is off in this world. It comes on once an island made
-with **Level up system: On** has appeared in the world (see [section 9.6](#96-the-level-up-system)).
+**K does nothing, and there is no level bar.** The level up system is off in this world: switch it on in World settings
+for a new world, or with `Levels on` (host, F10) in this one; an island made with **Level up system: On** switches it on
+too (see [section 9.6](#96-the-level-up-system)).
 
 **A friend's storage won't open.** The world has **Private storages** on ([9.4](#94-extra-options)): a storage opens
 only for the player who built it. The host can switch it off with `WorldOptions -privatestorage`.
