@@ -30,7 +30,8 @@ namespace RuntimeGizmos
 		public KeyCode SetAllTransformType = KeyCode.Alpha4;
 		public KeyCode SetSpaceToggle = KeyCode.X;
 		public KeyCode SetPivotModeToggle = KeyCode.P;
-		public KeyCode SetCenterTypeToggle = KeyCode.C;
+		// (C is the editor camera's "down" - Space / C: it toggled the centre mode at the same time. Custom Islands)
+		public KeyCode SetCenterTypeToggle = KeyCode.None;
 		public KeyCode SetScaleTypeToggle = KeyCode.None;
 		public KeyCode translationSnapping = KeyCode.LeftControl;
 		public KeyCode AddSelection = KeyCode.LeftShift;
@@ -364,6 +365,8 @@ namespace RuntimeGizmos
 				else if(pivot == TransformPivot.Center) pivot = TransformPivot.Pivot;
 
 				SetPivotPoint();
+				// (it used to change without a word)
+				global::DynamicIslands.DynamicIslands.Notify("P: turning and scaling around " + (pivot == TransformPivot.Pivot ? "each object's own point" : "the middle of the selection"));
 			}
 
 			if(Input.GetKeyDown(SetCenterTypeToggle))
@@ -378,6 +381,7 @@ namespace RuntimeGizmos
 			{
 				if(space == TransformSpace.Global) space = TransformSpace.Local;
 				else if(space == TransformSpace.Local) space = TransformSpace.Global;
+				global::DynamicIslands.DynamicIslands.Notify("X: the arrows follow " + (space == TransformSpace.Global ? "the world (north, up)" : "the object's own turn"));
 			}
 
 			if(Input.GetKeyDown(SetScaleTypeToggle))

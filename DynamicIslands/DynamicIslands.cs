@@ -513,6 +513,8 @@ namespace DynamicIslands
 			try
 			{
 				IslandFile island = CaptureIsland(name);
+				// (a file with more objects couldn't be opened again)
+				if (island.Objects.Count > IslandFile.MaxObjects) { Notify("Can't save: " + island.Objects.Count + " objects, at most " + IslandFile.MaxObjects + " fit in an island file - delete some first", true); return false; }
 				bool overwrote = File.Exists(IslandSpawner.PathFor(name));
 				// (saved worlds with this island: a change that would mix up what was used there keeps them on their version)
 				bool kept = overwrote && KeepForWorldsIfShifted(name, island);
@@ -823,6 +825,20 @@ namespace DynamicIslands
 		public static void SpawnPoolCommand()
 		{
 			foreach (string line in CustomIslandSpawner.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+		}
+
+		[ConsoleCommand(name: "Levels", docs: "The level up system in this world: Levels = on or off; Levels on / off = switch it for every player (host; off keeps everyone's levels for when it is on again)")]
+		public static void LevelsCommand(string[] args)
+		{
+			string a = args != null && args.Length > 0 ? args[0].Trim().ToLowerInvariant() : "";
+			if (a.Length > 0)
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded) { PlayerLevels.Chosen = a == "on"; Notify("Level up system for the next new world: " + (PlayerLevels.Chosen ? "on" : "off")); return; }
+				if (!Raft_Network.IsHost) { Notify("Only the host switches the level up system", true); return; }
+				if (a != "on" && a != "off") { Notify("Levels on or Levels off", true); return; }
+				PlayerLevels.SetEnabled(a == "on");
+			}
+			Notify("Level up system in this world: " + (PlayerLevels.On ? "on" : PlayerLevels.OffByHost ? "off (switched off; levels kept)" : "off"));
 		}
 
 		[ConsoleCommand(name: "Resync", docs: "A player who joined: ask the host for its custom islands again (the list and any island file that hasn't come)")]

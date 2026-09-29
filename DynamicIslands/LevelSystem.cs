@@ -171,7 +171,50 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		public static bool HasState { get { return On; } }
+		public static bool HasState { get { return On || OffByHost; } }
+
+		/// <summary>
+		/// The host switched the system off in this world (World settings when creating it, or the Levels command): an island
+		/// made with it doesn't switch it on again, and everyone's levels are kept for when it is switched on.
+		/// </summary>
+		public static bool OffByHost { get; private set; }
+
+		/// <summary>Chosen in the New Game box's World settings for the world being created (null = the last choice).</summary>
+		public static bool? Pending;
+		/// <summary>The last choice (world_rules.txt "levels=on").</summary>
+		public static bool Default { get { return (WorldRules.ReadDefault("levels") ?? "").Trim().Equals("on", StringComparison.OrdinalIgnoreCase); } }
+		public static void SaveDefault(bool on) { WorldRules.SaveDefault("levels", on ? "on" : "off"); }
+		/// <summary>What the World settings window shows for the next world.</summary>
+		public static bool Chosen { get { if (!Pending.HasValue) Pending = Default; return Pending.Value; } set { Pending = value; } }
+
+		/// <summary>A brand-new world (host): on when it was chosen in World settings.</summary>
+		public static void OnNewWorld()
+		{
+			bool on = Chosen;
+			Pending = null;
+			if (on) TurnOn(false);
+		}
+
+		/// <summary>
+		/// Host: switches the system on or off in this world for every player (the Levels command). Off keeps everyone's
+		/// levels (saved with the world) and takes their stat bonuses away until it is on again.
+		/// </summary>
+		public static void SetEnabled(bool on)
+		{
+			if (!Raft_Network.IsHost) return;
+			if (on) { OffByHost = false; TurnOn(true); IslandWorldState.Save(); return; }
+			OffByHost = true;
+			if (On)
+			{
+				On = false;
+				mine = null;
+				StatApply.ResetHealth();
+				IslandNetwork.SendLevels(new IslandNetMessage { Name = "off" }, null);
+				Debug.Log("[CUSTOM ISLANDS] The level up system is off in this world (levels kept)");
+				Raise();
+			}
+			IslandWorldState.Save();
+		}
 
 		/// <summary>Raised whenever this player's EXP or points change (the stats page and the HUD follow).</summary>
 		public static event Action Changed;
@@ -190,6 +233,7 @@ namespace DynamicIslands.Editor
 			records.Clear();
 			mine = null;
 			On = false;
+			OffByHost = false;
 			dirty = false;
 			stateSeen = false;
 			Fraction.Clear();
@@ -237,7 +281,8 @@ namespace DynamicIslands.Editor
 		/// <summary>An island was spawned in this world: one made with the level up system on turns it on.</summary>
 		public static void OnIslandSpawned(IDictionary<string, string> props)
 		{
-			if (On || !IsOn(props)) return;
+			// (not over the host's choice: switched off in World settings or with the Levels command)
+			if (On || OffByHost || !IsOn(props)) return;
 			TurnOn(true);
 		}
 
@@ -554,14 +599,20 @@ namespace DynamicIslands.Editor
 		/// <summary>The world file's lines: "@levels=on" and "@level=steamid|xp|points" per player.</summary>
 		public static IEnumerable<string> WriteLines()
 		{
-			if (!On) yield break;
-			yield return "@levels=on";
+			if (!On && !OffByHost) yield break;
+			yield return "@levels=" + (On ? "on" : "off");
 			foreach (var kv in records) yield return "@level=" + kv.Key.ToString(CultureInfo.InvariantCulture) + "|" + kv.Value.Encode();
 		}
 
 		public static bool ReadLine(string key, string value)
 		{
-			if (key.Equals("levels", StringComparison.OrdinalIgnoreCase)) { On = value.Trim().Equals("on", StringComparison.OrdinalIgnoreCase); mine = null; return true; }
+			if (key.Equals("levels", StringComparison.OrdinalIgnoreCase))
+			{
+				On = value.Trim().Equals("on", StringComparison.OrdinalIgnoreCase);
+				OffByHost = value.Trim().Equals("off", StringComparison.OrdinalIgnoreCase);
+				mine = null;
+				return true;
+			}
 			if (!key.Equals("level", StringComparison.OrdinalIgnoreCase)) return false;
 			int bar = value.IndexOf('|');
 			ulong id;
@@ -586,7 +637,7 @@ namespace DynamicIslands.Editor
 				case "on": // host -> everyone
 					if (!Raft_Network.IsHost) TurnOn(true);
 					break;
-				case "off": // host -> everyone (tests)
+				case "off": // host -> everyone: switched off (the host keeps the levels)
 					if (!Raft_Network.IsHost) Reset();
 					break;
 				case "state": // host -> a joining player: their record
@@ -609,6 +660,7 @@ namespace DynamicIslands.Editor
 					break;
 				case "mine": // a player -> host: their record now
 					if (!Raft_Network.IsHost) break;
+					if (!On && OffByHost) break; // (a record sent just before the host switched it off)
 					if (!On) TurnOn(false);
 					LevelRecord old;
 					int levelBefore = records.TryGetValue(from.Id, out old) ? old.Level : 0;

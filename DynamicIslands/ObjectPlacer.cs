@@ -114,6 +114,9 @@ namespace DynamicIslands.Editor
 			try { this.gameObject.GetComponent<Collider>().enabled = true; } catch (Exception) { }
 
 			DynamicIslands.EditorGizmoHandler.placingObject = false;
+			// (an island file holds at most so many objects: past that it couldn't be opened again)
+			int adding = Editor.GroupLibrary.IsGroup(GameObjectName) ? Mathf.Max(1, this.gameObject.GetComponentsInChildren<Editor.GroupMember>(true).Length) : 1;
+			if (!Editor.ObjectLimit.Allow(adding)) { Destroy(this.gameObject); return; }
 			Transform placedRoot = GameObject.Find("PlacedObjects").transform;
 			if (Editor.GroupLibrary.IsGroup(GameObjectName))
 			{

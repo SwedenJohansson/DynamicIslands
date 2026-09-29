@@ -63,5 +63,38 @@ namespace DynamicIslands.Editor
 
 	}
 
+	/// <summary>
+	/// How many objects an island may have. An island file with more than IslandFile.MaxObjects can't be opened again (the
+	/// loader refuses it), so placing past that is refused; past the generator's cap (12 000) the builder is told once that
+	/// such an island is slow to appear in a world.
+	/// </summary>
+	public static class ObjectLimit
+	{
+		public const int Warn = IslandGenerator.MaxObjects;
+		static bool warned;
 
+		/// <summary>The objects of the island being edited (deleted ones - hidden, kept for undo - don't count).</summary>
+		public static int Count()
+		{
+			GameObject root = GameObject.Find("PlacedObjects");
+			return root == null ? 0 : root.GetComponentsInChildren<EditorGameObject>(false).Length;
+		}
+
+		/// <summary>Whether this many more objects may be added; says why not, or warns once past 12 000.</summary>
+		public static bool Allow(int adding)
+		{
+			int n = Count();
+			if (n + adding > IslandFile.MaxObjects)
+			{
+				DynamicIslands.Notify("The island has " + n + " objects: at most " + IslandFile.MaxObjects + " fit in an island file - delete some first", true);
+				return false;
+			}
+			if (!warned && n + adding > Warn)
+			{
+				warned = true;
+				DynamicIslands.Notify("More than " + Warn + " objects: the island takes longer to appear in a world (the generator stops at " + Warn + ")");
+			}
+			return true;
+		}
+	}
 }

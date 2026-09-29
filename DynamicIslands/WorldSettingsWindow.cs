@@ -28,6 +28,8 @@ namespace DynamicIslands.Editor
 		static RectTransform window;
 		static readonly Dictionary<string, Button> toggles = new Dictionary<string, Button>();
 		static Text summary;
+		static Button levelsToggle;
+		public static Button LevelsToggle { get { return levelsToggle; } }
 		static bool hooked;
 
 		/// <summary>The options shown (the last choice until one is made).</summary>
@@ -43,7 +45,7 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
-				return Chosen.Count + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0);
+				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0);
 			}
 		}
 
@@ -119,6 +121,16 @@ namespace DynamicIslands.Editor
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
+			// The level up system (also switched on by an island made with it, unless switched off here or with Levels off)
+			{
+				const string hint = "Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more. Off: only an island made with the level up system switches it on. The host can change it in a world: Levels on / off.";
+				RectTransform group = UIKit.Group(right, null, "Option_levels");
+				levelsToggle = UIKit.Button(group, "", () => { PlayerLevels.Chosen = !PlayerLevels.Chosen; Show(); }, hint, -1, 28f, 14);
+				levelsToggle.name = "Toggle_levels";
+				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				d.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(d.gameObject, -1, 44);
+			}
 
 			summary = UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
 			summary.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -157,6 +169,7 @@ namespace DynamicIslands.Editor
 		public static void RaftsOwn()
 		{
 			Chosen.Clear();
+			PlayerLevels.Chosen = false;
 			NewWorldOptions.Randomizer.Level = RandomizerSettings.Off;
 			NewWorldOptions.Randomizer.Disabled.Clear();
 			NewWorldRulesBox.MonsterLevel = MonsterDifficulty.Normal;
@@ -175,12 +188,17 @@ namespace DynamicIslands.Editor
 				UIKit.LabelOf(kv.Value).text = WorldOptions.Label(kv.Key) + ":  " + (active ? "ON" : "off");
 				UIKit.SetActive(kv.Value, active);
 			}
+			if (levelsToggle != null)
+			{
+				UIKit.LabelOf(levelsToggle).text = "Level up system:  " + (PlayerLevels.Chosen ? "ON" : "off");
+				UIKit.SetActive(levelsToggle, PlayerLevels.Chosen);
+			}
 			IslandPickerWindow.ShowEntry();
 			int changed = Changed;
 			if (openButton != null) UIKit.LabelOf(openButton).text = "WORLD SETTINGS...   " + (changed == 0 ? "Raft's own" : changed + " changed");
 			if (summary != null)
 				summary.text = "Now: monsters " + MonsterDifficulty.Describe(NewWorldRulesBox.MonsterLevel) + ", build cost " + BuildCost.Describe(NewWorldRulesBox.BuildPercent) +
-					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() +
+					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() + ", levels " + (PlayerLevels.Chosen ? "on" : "off") +
 					". The Custom Islands plan ('" + NewWorldOptions.Selected + "') is chosen in the New Game box.";
 		}
 	}
@@ -194,6 +212,7 @@ namespace DynamicIslands.Editor
 			HashSet<string> on = WorldSettingsWindow.Chosen;
 			WorldOptions.SaveDefaults(on);
 			WorldIslands.SaveDefaults(WorldIslands.Chosen);
+			PlayerLevels.SaveDefault(PlayerLevels.Chosen);
 			Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
 				(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
 		}

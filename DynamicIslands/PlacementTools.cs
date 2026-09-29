@@ -128,6 +128,7 @@ namespace DynamicIslands.Editor
 			GameObject placedRoot = GameObject.Find("PlacedObjects");
 			if (gizmo == null || placedRoot == null) return 0;
 			Vector3 offset = SnapToGrid ? new Vector3(GridSize, 0, 0) : new Vector3(2f, 0, 0);
+			if (!ObjectLimit.Allow(gizmo.SelectedRoots.Count(t => t != null))) return 0;
 			var copies = new List<GameObject>();
 			foreach (Transform t in gizmo.SelectedRoots.Where(t => t != null).ToList())
 			{

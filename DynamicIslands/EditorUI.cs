@@ -671,7 +671,7 @@ namespace DynamicIslands.Editor
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp && TerrainStamps.Current != null)
 						return "Stamp " + TerrainStamps.Current.Name + ": click the ground \u00B7 Size = how big (" + (terraineditor.brushRadius * 2f).ToString("F0") + " m) \u00B7 Q/E turn it (" + TerrainStamps.Rotation.ToString("F0") + "\u00B0) \u00B7 Ctrl+Z undoes";
 					return tool + ": hold the left mouse button on the ground \u00B7 Ctrl+Z undoes a stroke";
-				case TAB.ObjectPlace: return "Pick an object from the list on the right, then click where it goes \u00B7 1-4 change the gizmo \u00B7 Delete removes the selection";
+				case TAB.ObjectPlace: return "Pick an object from the list on the right, then click where it goes \u00B7 1-4 change the gizmo \u00B7 X world/own axes \u00B7 P turn around each object/the middle \u00B7 Ctrl while dragging snaps (0.25 m, 15\u00B0) \u00B7 Delete removes the selection";
 				default: return "Island settings are saved with the island (Ctrl+S)";
 			}
 		}

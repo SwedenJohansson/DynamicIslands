@@ -97,6 +97,8 @@ namespace DynamicIslands.Editor
 				foreach (string o in Pending ?? Defaults) Current.Add(o);
 				Seed = new System.Random().Next(1, int.MaxValue);
 				Log("New world: " + Describe());
+				// (the level up system, when it was chosen in World settings)
+				global::DynamicIslands.Editor.PlayerLevels.OnNewWorld();
 			}
 			Pending = null;
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
