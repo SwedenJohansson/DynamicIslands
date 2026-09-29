@@ -14,7 +14,7 @@ namespace DynamicIslands.Editor
 		const int Size = 128;
 		const int PerFrame = 3;
 		/// <summary>A layer Raft doesn't use for anything we see; the camera renders only this layer.</summary>
-		const int Layer = 31;
+		internal const int Layer = 31;
 		static readonly Vector3 Stage = new Vector3(-30000f, -30000f, -30000f);
 		static readonly Color Backdrop = new Color(0.47f, 0.37f, 0.25f, 1f); // Raft's slot brown
 
@@ -175,7 +175,9 @@ namespace DynamicIslands.Editor
 				// Raft's fog would grey out the far side of big objects
 				bool fog = RenderSettings.fog;
 				RenderSettings.fog = false;
+				System.Action ambient = EditorLighting.NeutralAmbient();
 				cam.Render();
+				ambient();
 				RenderSettings.fog = fog;
 				key.enabled = fill.enabled = false;
 				cam.targetTexture = null;

@@ -643,6 +643,9 @@ namespace DynamicIslands.Editor
 						KeepForWorlds(t, report);
 					}
 					SafeFile.WriteAllBytes(path, bytes);
+					// (the island open in the editor was replaced under it: the next Ctrl+S put the old one back without a word)
+					if (DynamicIslands.InEditor() && t.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase))
+						report.Add("'" + t + "' is the island open in the editor: Open it again to see the new version (saving now would put yours back)");
 					entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = sha, kind = KindIsland });
 					report.Add(t.Equals(n, StringComparison.OrdinalIgnoreCase) ? "Installed '" + t + "'" : "Installed '" + n + "' as '" + t + "' (you have a different island called '" + n + "')");
 				}

@@ -56,5 +56,14 @@ namespace DynamicIslands.Editor
 			Snapshot after = Take();
 			if (!before.Same(after)) UndoRedoManager.Insert(new Command(before, after));
 		}
+
+		/// <summary>The same, as a step to add to a bigger one (the generator's): null when nothing changed.</summary>
+		public static ICommand Record(Action change)
+		{
+			Snapshot before = Take();
+			change();
+			Snapshot after = Take();
+			return before.Same(after) ? null : new Command(before, after);
+		}
 	}
 }

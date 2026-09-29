@@ -135,7 +135,8 @@ namespace DynamicIslands.Editor
 				EditorGameObject info = t.GetComponent<EditorGameObject>();
 				if (info == null) continue;
 				GameObject copy = PlaceableCatalog.Spawn(info.GameObjectName, placedRoot.transform);
-				if (copy == null) continue;
+				// (a red box: an object this Raft version doesn't have - nothing to copy; it did nothing and said nothing)
+				if (copy == null) { DynamicIslands.Notify("'" + info.GameObjectName + "' isn't in this Raft version: it can't be duplicated", true); continue; }
 				copy.transform.position = t.position + offset;
 				copy.transform.rotation = t.rotation;
 				copy.transform.localScale = t.lossyScale;

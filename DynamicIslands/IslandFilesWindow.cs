@@ -107,8 +107,9 @@ namespace DynamicIslands.Editor
 			elevationField.onEndEdit.AddListener(v =>
 			{
 				float e;
-				DynamicIslands.currentElevation = float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out e)
-					? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
+				// (an undo step and an unsaved change, like the Island tab's height: it was neither, so Test and the autosave missed it)
+				IslandSettingsUndo.Change(() => DynamicIslands.currentElevation = float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out e)
+					? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f);
 				elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
 				EditorUI.RefreshIsland();
 				SetStatus("In a world this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + ". Save to keep it.", false);

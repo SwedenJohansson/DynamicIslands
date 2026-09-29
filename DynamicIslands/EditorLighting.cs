@@ -32,6 +32,18 @@ namespace DynamicIslands.Editor
 			new Preset { Height = 75f, Turn = 150f, Intensity = 0.62f, Shadow = 0.3f, Sun = new Color(0.92f, 0.93f, 0.95f), Sky = new Color(0.62f, 0.64f, 0.68f), Equator = new Color(0.56f, 0.57f, 0.6f), Ground = new Color(0.32f, 0.32f, 0.32f), Haze = new Color(0.7f, 0.72f, 0.76f), Fog = 600f },
 		};
 
+		/// <summary>The object pictures: rendered in the Noon sky light whatever time of day the island is shown in (they
+		/// came out blue at Night). Returns what to put back.</summary>
+		public static Action NeutralAmbient()
+		{
+			AmbientMode mode = RenderSettings.ambientMode;
+			Color sky = RenderSettings.ambientSkyColor, eq = RenderSettings.ambientEquatorColor, ground = RenderSettings.ambientGroundColor;
+			Preset p = presets[1];
+			RenderSettings.ambientMode = AmbientMode.Trilight;
+			RenderSettings.ambientSkyColor = p.Sky; RenderSettings.ambientEquatorColor = p.Equator; RenderSettings.ambientGroundColor = p.Ground;
+			return () => { RenderSettings.ambientMode = mode; RenderSettings.ambientSkyColor = sky; RenderSettings.ambientEquatorColor = eq; RenderSettings.ambientGroundColor = ground; };
+		}
+
 		/// <summary>The time of day shown now (an index into Names).</summary>
 		public static int Current { get; private set; }
 		static Light sun;
@@ -56,7 +68,9 @@ namespace DynamicIslands.Editor
 			if (sun == null)
 			{
 				// (the editor scene's own sun if it has one; else one of the mod's)
-				sun = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(l => l.type == LightType.Directional && l.gameObject.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+				// (not one of the object pictures' own lights - they are off between pictures and only light their layer)
+				sun = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(l => l.type == LightType.Directional && l.gameObject.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene()
+					&& l.GetComponentInParent<ObjectThumbnails>() == null);
 				if (sun == null)
 				{
 					var go = new GameObject("CustomIslands_EditorSun");
@@ -69,6 +83,7 @@ namespace DynamicIslands.Editor
 			sun.intensity = p.Intensity;
 			sun.shadows = LightShadows.Soft;
 			sun.shadowStrength = p.Shadow;
+			sun.cullingMask = ~(1 << ObjectThumbnails.Layer); // (the object pictures have their own light)
 			RenderSettings.sun = sun;
 			RenderSettings.ambientMode = AmbientMode.Trilight;
 			RenderSettings.ambientSkyColor = p.Sky;

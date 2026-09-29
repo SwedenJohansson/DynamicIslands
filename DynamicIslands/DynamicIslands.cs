@@ -609,7 +609,7 @@ namespace DynamicIslands
 
 		/// <summary>Another island replaces the one in the editor (New, Open, a map type's Make): its unsaved changes are kept
 		/// as its autosave first (offered the next time the editor opens) - they were thrown away.</summary>
-		static void KeepUnsaved()
+		internal static void KeepUnsaved()
 		{
 			if (!EditorAutosave.Unsaved) return;
 			string was = currentIslandName;
@@ -995,7 +995,7 @@ namespace DynamicIslands
 			float v;
 			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
 			{ Notify("Elevation is " + currentElevation + " m. Usage: SetElevation <metres>  (60 = flying, -25 = under water, 0 = normal)"); return; }
-			currentElevation = Mathf.Clamp(v, IslandSpawner.MinElevation, IslandSpawner.MaxElevation);
+			IslandSettingsUndo.Change(() => currentElevation = Mathf.Clamp(v, IslandSpawner.MinElevation, IslandSpawner.MaxElevation)); // (an undo step, like the Island tab's)
 			EditorUI.RefreshIsland();
 			Notify("Island elevation: " + IslandSpawner.DescribeElevation(currentElevation) + " (saved with the island)");
 		}
@@ -1008,7 +1008,7 @@ namespace DynamicIslands
 			int i = Array.FindIndex(TerrainPainter.Styles, s => s.Name.Equals(args[0], StringComparison.OrdinalIgnoreCase));
 			if (i < 0) { Notify("Unknown style '" + args[0] + "'. Styles: " + names, true); return; }
 			if (!InEditor()) { Notify("SetStyle only works inside the editor", true); return; }
-			SetEditorStyle(i);
+			IslandSettingsUndo.Change(() => SetEditorStyle(i)); // (an undo step, like the Island tab's)
 			Notify("Island style: " + TerrainPainter.StyleName(i) + (TerrainPainter.HasStyle(i) ? "" : " (its textures aren't loaded; showing tropical)"));
 		}
 

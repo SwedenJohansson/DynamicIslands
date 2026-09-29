@@ -414,8 +414,17 @@ namespace DynamicIslands.Editor
 			s.Clamp();
 			Last = s.Copy();
 			Terrain terrain = terraineditor.terrain;
-			// (the full build area: after opening a small island the new one was squeezed into its size)
-			if (DynamicIslands.ResetBuildArea()) terraineditor.paintMask = null;
+			// (the full build area: after opening a small island the new one was squeezed into its size. Undo can't give the
+			// smaller ground back - it came back flat, with the old objects floating over it: that island stays in its file,
+			// its unsaved changes go to its autosave, and the undo history starts here)
+			bool resized = DynamicIslands.ResetBuildArea();
+			if (resized)
+			{
+				terraineditor.paintMask = null;
+				DynamicIslands.KeepUnsaved();
+				UndoRedoManager.Clear();
+				DynamicIslands.Notify("The new island uses the editor's full build area: Undo can't bring the smaller island back (it is still in its file)");
+			}
 			TerrainData data = terrain.terrainData;
 			int hres = data.heightmapResolution, ares = data.alphamapResolution;
 
@@ -448,10 +457,16 @@ namespace DynamicIslands.Editor
 			if (placed != null)
 			{
 				if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(false);
-				List<GameObject> old = placed.GetComponentsInChildren<EditorGameObject>(false).Select(e => e.gameObject).ToList();
-				foreach (GameObject go in old) go.SetActive(false);
-				if (old.Count > 0) group.Add(new ObjectVisibilityCommand(old, false));
+				// (earlier islands' hidden objects are cleared first: cleared after, they took this island's old objects too,
+				// and undoing this step brought its land back without them)
 				PurgeHidden(placed);
+				List<GameObject> old = placed.GetComponentsInChildren<EditorGameObject>(false).Select(e => e.gameObject).ToList();
+				if (resized) foreach (GameObject go in old) UnityEngine.Object.Destroy(go);
+				else
+				{
+					foreach (GameObject go in old) go.SetActive(false);
+					if (old.Count > 0) group.Add(new ObjectVisibilityCommand(old, false));
+				}
 
 				if (PlaceableCatalog.IsBuilt)
 				{
@@ -467,9 +482,14 @@ namespace DynamicIslands.Editor
 			}
 			if (made.Count > 0) group.Add(new ObjectVisibilityCommand(made, true));
 
+			// (the island's rule; left as it is when off, so an island set to On on the Island tab keeps it. Part of the
+			// generation's undo step: undoing it left the rule on)
+			if (s.Levels)
+			{
+				ICommand levels = IslandSettingsUndo.Record(() => DynamicIslands.currentIslandProps[IslandProps.Levels] = "on");
+				if (levels != null) group.Add(levels);
+			}
 			UndoRedoManager.Insert(group);
-			// (the island's rule; left as it is when off, so an island set to On on the Island tab keeps it)
-			if (s.Levels) DynamicIslands.currentIslandProps[IslandProps.Levels] = "on";
 			MeasureLand(metres, data.size.x / (hres - 1), report);
 			report.Seconds = Time.realtimeSinceStartup - t0;
 			LastReport = report;
@@ -491,7 +511,7 @@ namespace DynamicIslands.Editor
 			// (older undo steps pointed at those objects: they would undo only in part - the history goes, and the player is told)
 			CommandUndoRedo.UndoRedoManager.Clear();
 			Debug.Log("[CUSTOM ISLANDS] Removed " + hidden.Count + " hidden objects of earlier islands (they are kept for undo up to " + MaxHiddenObjects + "); the undo history is cleared");
-			DynamicIslands.Notify("Many islands generated: earlier ones are cleared from memory, so Undo can't go back past this one");
+			DynamicIslands.Notify("Many islands generated: earlier ones are cleared from memory, so Undo goes back to the last island only");
 		}
 
 		/// <summary>Points the editor camera at the island from a distance that fits it.</summary>

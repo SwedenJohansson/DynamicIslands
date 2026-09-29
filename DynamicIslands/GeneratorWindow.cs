@@ -837,7 +837,7 @@ namespace DynamicIslands.Editor
 			confirmUntil = 0f;
 			string name = MakeType(type, s.Seed, s.Levels);
 			if (name == null) { SetStatus("Making the island failed - see the console (F10)."); return; }
-			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + type.Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and save it."); }
+			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + type.Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and Save as with your own name - gen-... islands are left out of plans and random islands.");  }
 		}
 
 		/// <summary>Makes an island of a map type from a seed and saves it; returns its name (null if it failed).</summary>
