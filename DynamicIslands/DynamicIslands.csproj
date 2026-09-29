@@ -43,7 +43,6 @@
     <Compile Include="AwaitExtensions\Extensions.cs" />
     <Compile Include="AwaitExtensions\WaitForBackgroundThread.cs" />
     <Compile Include="AwaitExtensions\WaitForUpdate.cs" />
-    <Compile Include="CameraMovementScript.cs" />
     <Compile Include="AmbienceZones.cs" />
     <Compile Include="SoundPickerWindow.cs" />
     <Compile Include="StoryItems.cs" />

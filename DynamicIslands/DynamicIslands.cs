@@ -965,16 +965,6 @@ namespace DynamicIslands
 		{
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Flatten;
 		}
-		[ConsoleCommand(name: "SetToSample", docs: "Change Terrain Edit to sample the terrain")]
-		public static void TerrainSample()
-		{
-			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Sample;
-		}
-		[ConsoleCommand(name: "SetToSampleAverage", docs: "Change Terrain Edit to average sample the terrain")]
-		public static void TerrainSampleAverage()
-		{
-			terraineditor.modificationAction = terraineditor.TerrainModificationAction.SampleAverage;
-		}
 		[ConsoleCommand(name: "SetToSmooth", docs: "Change Terrain Edit to smooth the terrain")]
 		public static void TerrainSmooth()
 		{
@@ -1039,11 +1029,6 @@ namespace DynamicIslands
 		{
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.AutoPaint;
 		}
-		[ConsoleCommand(name: "ChangeHeight", docs: "Terrain brush diameter in metres (same as ChangeWidth; the brush is round)")]
-		public static void TerrainHeight(string[] args)
-		{
-			TerrainWidth(args);
-		}
 		[ConsoleCommand(name: "ChangeWidth", docs: "Terrain brush diameter in metres, e.g. ChangeWidth 30")]
 		public static void TerrainWidth(string[] args)
 		{
@@ -1061,35 +1046,6 @@ namespace DynamicIslands
 			terraineditor.strength = Mathf.Clamp(value, terraineditor.MinStrength, terraineditor.MaxStrength);
 			EditorUI.RefreshSliders();
 			Debug.Log("[CUSTOM ISLANDS] Brush strength: " + terraineditor.strength + " m/s");
-		}
-
-		[ConsoleCommand(name: "EnableEditing", docs: "Enable the use of Terrain Edit")]
-		public static void TerrainEnableEdit()
-		{
-			if (RAPI.IsCurrentSceneMainMenu()) { Debug.LogWarning($"x: Cant change value while in Main Menu"); return; }
-
-			terraineditor.allowEditing = true;
-
-			// GameObject canvasObj = canvasBundle.LoadAsset<GameObject>("TerrainEdit_Canvas");
-			//
-			// if (customCanvas == null)
-			// {
-			//     customCanvas = Instantiate(canvasObj);
-			//     print($"{modName}: Couldn't find existing canvas, creating new one..");
-			// }
-
-		}
-
-		[ConsoleCommand(name: "DisableEditing", docs: "Disable the use of Terrain Edit")]
-		public static void TerrainDisableEdit()
-		{
-			if (RAPI.IsCurrentSceneMainMenu()) { Debug.LogWarning($"y: Cant change value while in Main Menu"); return; }
-
-			terraineditor.allowEditing = false;
-
-			// if(customCanvas == null){print("Issue trying to reference Custom Canvas..");}
-			// else { customCanvas.SetActive(false); print($"{modName}:Custom Canvas now disabled!" + customCanvas); }
-
 		}
 
 		#endregion
