@@ -64,8 +64,9 @@ namespace DynamicIslands.Editor
 			giveUpAt = Time.unscaledTime + 120f;
 			Step("Back to the editor with '" + Island + "'");
 			WorldWindow.Close();
-			PauseMenu pause = UnityEngine.Object.FindObjectOfType<PauseMenu>();
-			if (pause != null) pause.Button_Exit_WithoutSave();
+			// (Raft's leave without saving; the pause menu's own button leaves for no scene unless its exit box chose one)
+			Raft_Network net = ComponentManager<Raft_Network>.Value;
+			if (net != null) net.LeaveGame(DisconnectReason.SelfDisconnected, SceneName.Lobby, false, false);
 			else UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
 		}
 
@@ -107,22 +108,27 @@ namespace DynamicIslands.Editor
 			yield return new WaitForSecondsRealtime(1f);
 			LoadGameBox load = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			LoadGame_Selection pick = null;
-			if (load != null)
+			// (the world is on disk or not; when it is, Raft's list shows it after a while - right after the editor it took
+			// over 10 s to start filling, and with many saved worlds it is long)
+			bool saved = false;
+			try { saved = !string.IsNullOrEmpty(SaveAndLoad.WorldPath) && System.IO.Directory.Exists(System.IO.Path.Combine(SaveAndLoad.WorldPath, WorldName)); } catch { }
+			if (saved && load != null)
 			{
 				load.gameObject.SetActive(true);
 				try { load.Close(); } catch { }
 				load.Open();
-				// (Raft fills the list over a while: until it stops growing - long with many saved worlds)
 				int count = -1;
-				for (float until = Time.realtimeSinceStartup + 90f; Time.realtimeSinceStartup < until; )
+				for (float until = Time.realtimeSinceStartup + 90f; Time.realtimeSinceStartup < until && pick == null; )
 				{
 					yield return new WaitForSecondsRealtime(1f);
 					int now = load.loadGameSelections != null ? load.loadGameSelections.Count : 0;
-					if (now == count) break;
+					if (now > 0 && now != count)
+						pick = load.loadGameSelections.FirstOrDefault(s => s.text_GameName != null && s.text_GameName.text.Equals(WorldName, StringComparison.OrdinalIgnoreCase)
+							|| s.directoryInfo != null && s.directoryInfo.Name.Equals(WorldName, StringComparison.OrdinalIgnoreCase));
 					count = now;
 				}
-				if (load.loadGameSelections != null)
-					pick = load.loadGameSelections.FirstOrDefault(s => s.text_GameName != null && s.text_GameName.text.Equals(WorldName, StringComparison.OrdinalIgnoreCase));
+				Step("Raft's Load list: " + count + " world(s), the test world " + (pick != null ? "is there" : "isn't there"));
+				if (pick == null) { Stop("The test world '" + WorldName + "' is saved but Raft's Load list doesn't show it - the island wasn't tried", true); yield break; }
 			}
 			if (pick != null)
 			{
@@ -158,6 +164,9 @@ namespace DynamicIslands.Editor
 		static IEnumerator BringIsland()
 		{
 			yield return new WaitForSeconds(2f);
+			// (islands tried before stay in the test world when Raft saved it meanwhile: only the one being tried now)
+			int old = IslandWorldState.Remove(null);
+			if (old > 0) Step("Took away " + old + " island(s) tried before");
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			float radius = Mathf.Max(20f, CustomIslandSpawner.LandRadius(Island));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, radius, radius + 400f);

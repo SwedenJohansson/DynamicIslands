@@ -184,7 +184,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: editor light"); else Fail("editor light");
 		}
 
-		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after")]
+		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after")]
 		public static void IslandTestCommand() { DynamicIslands.instance.StartCoroutine(IslandTestRoutine()); }
 
 		static IEnumerator IslandTestRoutine()
@@ -209,6 +209,7 @@ namespace DynamicIslands
 			float dist = e != null && me != null ? new Vector2(me.transform.position.x - e.Position.x, me.transform.position.z - e.Position.z).magnitude : -1f;
 			Check(ref ok, IslandTest.Testing && (SaveAndLoad.CurrentGameFileName ?? "") == IslandTest.WorldName, "in the test world '" + SaveAndLoad.CurrentGameFileName + "' (" + IslandTest.LastStep + ")");
 			Check(ref ok, e != null && e.Root != null && dist >= 0f && dist < CustomIslandSpawner.LandRadius(name) + 5f, "the island is beside the raft and the player on it (" + dist.ToString("0") + " m from its middle)");
+			Check(ref ok, IslandWorldState.Islands.Count() == 1, "only the island being tried is in the test world (" + IslandWorldState.Islands.Count() + " island(s); ones tried before are taken away)");
 			WorldWindow.Open();
 			yield return null;
 			UnityEngine.UI.Button back = WorldWindow.ButtonNamed("BackToEditor");
