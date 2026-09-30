@@ -1650,132 +1650,324 @@ The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in
 ## 12. Limits: what to know and what not to do
 
 Custom Islands is an alpha. Most of it just works, but a few things can lose progress, break a quest or confuse the
-players when they are done in a certain way. This chapter lists them, with what to do instead. They are being worked on;
-until then, following these steps keeps your worlds and adventures safe.
+players when they are done in a certain way. This chapter lists them: **why** each one matters and **exactly what to
+do** instead. They are all being fixed; until then, following these steps keeps your worlds and adventures safe.
 
 ### 12.1 Playing together over several days
 
 The world lives on the host's PC. When someone else hosts the next day, the mod works out which copy of the world is
-the newest. Help it:
+the newest, and every player who joined keeps a copy too. These rules make sure the right copy is played.
 
-1. **Host from the newest copy.** The newest world is the Raft world folder of **whoever hosted last**. Before the next
-   session, that player quits to the main menu (leaving saves the world), then copies the whole folder
-   (`%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the next host.
-   **Don't host from your own older copy "because you have it"**: the mod continues that older copy without a warning,
-   and your first save then replaces the newer copy the other players kept. What was done in between is lost.
-2. **Copy the whole folder**, not only a save inside it - the top-level `CustomIslands.txt` and every save folder.
-   **Delete or rename your older copy of the same world first**; never merge two copies into one folder. Don't keep two
-   folders of the same world (a backup you also play): they share one set of custom-island progress.
-3. **Everyone uses the same version of the mod.** Joining with another version only shows a warning, but an older
-   version doesn't know newer parts of a world (the story chain, levels, the plan's copy...) and **drops them for good**
-   when it hosts and saves. Update everyone first.
-4. **Check the PC's clock and date.** The newest copy is recognised by when it was saved. A PC whose clock or date is
-   wrong (or players in far-apart time zones swapping hosts) can make an older copy look newer. Set the clock right
-   before hosting a shared world; with friends in other time zones, let the same person host when you can.
-5. **Agree on the settings in `spawnpool.txt`** (regrow days above all): what grows back follows the **current host's**
-   file. If the group played with things never growing back, the next host must have the same setting, or used chests
-   fill up and used zones fire again.
-6. **The next host should not have an island of their own with the same name as one in the plan.** Islands a plan still
-   has to bring are found by name on the host's PC: an own island "Camp" would be brought instead of the plan's "Camp".
-   Rename yours before hosting. If the host is missing an island, get it from the plan's maker (their pack, or the
-   library entry) before playing on.
-7. **Don't press Tidy up** (island library > Installed) right after handing a world to someone else if you may host it
-   again: it removes copies of islands that only that world uses.
-8. **Levels, player places and private storages belong to Steam accounts.** A player who comes back with another Steam
-   account starts over there.
+#### Host from the folder of whoever hosted last
+
+**Why:** the mod can't tell "an older copy on purpose" from "an older copy by mistake". If you host from your own older
+copy, it simply continues that one - and your first save then replaces the newer copy the other players kept. Everything
+done in the sessions you missed is lost, without a warning.
+
+**What to do:**
+1. The player who hosted last session presses **Esc** and chooses Raft's **Main menu** (this saves the world), then
+   waits for the main menu. Only then is the folder complete.
+2. They open the world's folder: paste `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User` into the address
+   bar of Windows Explorer, open their `User_<Steam id>` folder (the long number), then `World`. Each world is a folder
+   with its name.
+3. They right-click that world's folder > **Send to > Compressed (zipped) folder**, and send the zip to the next host
+   (Discord, a cloud drive, a USB stick).
+4. The next host opens their own `...\User\User_<their Steam id>\World` folder. **If a folder with the same world name
+   is already there, rename it first** (for example `My world - old`) or delete it - never paste over it: merging two
+   copies of one world into one folder mixes their saves.
+5. They unzip the received folder into `World`, start Raft, and load the world from **Load Game** as usual.
+
+**Also:**
+- Copy the **whole** world folder: the `CustomIslands.txt` in it and every dated save folder. A single save folder or
+  only the `.rgd` files are not enough.
+- Don't keep and play two folders of the same world (a "backup" you also play in): they share one set of custom-island
+  progress on your PC and get mixed up.
+- The copy a player keeps from joining is not a backup on its own: it goes with a Raft world folder.
+
+#### Everyone runs the same version of the mod
+
+**Why:** joining with another version only shows a warning ("things may not match"), and then the game goes on. But an
+older version doesn't know the newer parts of a world - the story chain, levels, the plan's own copy, private storages -
+and **drops them**. When the player with the older version hosts and saves, the world loses those parts for good, for
+everyone.
+
+**What to do:**
+1. Each player looks at the **EXPERIMENTAL ALPHA RELEASE** box on Raft's main menu: it says "(version 3.0)" or similar.
+   The versions must be the same.
+2. To update: close Raft, replace `DynamicIslands.rmod` in Raft's `mods` folder with the new one (don't unzip it -
+   see [12.5](#125-names-files-and-your-pc)), start Raft again and check the box.
+3. Update everyone **before** the next session, not in the middle of an adventure.
+
+#### Everyone's PC clock and date are right
+
+**Why:** the newest copy of a world is recognised by the time it was saved. A PC whose clock or date is wrong makes its
+copies look newer or older than they are, and players in far-apart time zones who swap hosts can confuse it too - an
+older copy of the world can win, and the progress in between is gone.
+
+**What to do:**
+1. On every PC: Windows **Settings > Time & language > Date & time**: switch on **Set time automatically** and **Set
+   time zone automatically** (or pick the right time zone), and click **Sync now**.
+2. With friends in other time zones: let one person host a shared world when you can; if you swap hosts, the next host
+   always uses the folder the last host sent (above) - never their own older one.
+
+#### The group agrees on the regrow setting
+
+**Why:** how many in-game days until harvested things, looted chests and used trigger zones come back follows the
+**current host's** `spawnpool.txt` (an island whose builder set its own "Things come back after" keeps that). If one
+host played with "never" and the next host has the default 3 days, chests that were looted long ago fill up again and
+used zones fire again - a key can be found twice, an ambush comes back.
+
+**What to do:**
+1. Close Raft. Open `<Raft>\Mods\DynamicIslands\spawnpool.txt` with Notepad (`<Raft>` is Raft's game folder: in Steam,
+   right-click Raft > **Manage > Browse local files**).
+2. Find the line `regrowDays = 3`. The number is the in-game days; `0` means never.
+3. Every player who will host the world sets the **same** number, and saves the file.
+4. While you're there, the group can also agree on `showOnReceiver` (green dots on the Receiver) and `unloadDistance`
+   - the host's values are the ones every player sees.
+
+#### The next host has no own island named like one in the plan
+
+**Why:** islands a plan still has to bring are looked up **by name** on the host's PC. If the next host has an island
+of their own with the same name ("Camp"), that one is brought instead of the plan's - with other content and quests, and
+nobody is told. If the host has no such island at all, the rule waits and the host is told which island is missing.
+
+**What to do:**
+1. In the world, press **F10** and type `WorldPlan`: it lists the plan's rules and the islands they bring.
+2. In the editor, click **Open** and compare with the host's own saved islands. An island of your own with one of those
+   names: open it, **Save as** a new name (for example `Camp - mine`), then **Delete** the old name (it is moved to the
+   `deleted` folder, not erased).
+3. If the host is missing an island of the plan: get it from the plan's maker - their pack (**Import...**), or the
+   island library entry the message names - before playing on.
+
+#### Other things to know
+
+- **Don't press Tidy up** (island library > Installed) right after handing a world to someone else if you may host it
+  again: it removes copies of islands that only that world uses on your PC.
+- **Levels, the place a player stood and private storages belong to Steam accounts.** A player who comes back with
+  another Steam account starts over there.
 
 ### 12.2 Saving and quitting
 
-1. **Quit to the main menu instead of closing Raft** (Alt+F4, the window's X or Task Manager), especially right after a
-   quest step, a story step or a change in Esc > Custom Islands. The mod writes some progress at once, while Raft saves
-   only now and then: after a crash, the chests can show as opened and the quest as done while the loot and rewards are
-   gone from the inventories (Raft's save is older).
-2. **After changing a setting during play** (Esc > Custom Islands), let Raft save before you quit (going to the main
-   menu does it).
-3. **Raft's Load Game box** (the last 8 saves) takes the custom islands back to each save only for saves made with this
-   version of the mod - not the very first save of a new world, and not saves from before this feature.
-4. **Back up worlds you care about** (copy the world folder) before updating the mod or trying a new plan on them.
+#### Quit to the main menu, not with Alt+F4
+
+**Why:** Raft saves the world now and then (and when you leave to the main menu). The mod writes some of its progress
+**at once** - when a story step is done, a Receiver frequency unlocked, or a setting changed. If Raft is closed without
+saving (Alt+F4, the window's X, Task Manager, a crash) after such a moment, the mod's progress is newer than Raft's save:
+chests show as opened and quests as done, while the loot and rewards are missing from the inventories - and they can't
+be earned again.
+
+**What to do:**
+1. To stop playing: press **Esc** and choose Raft's **Main menu** (it saves), wait for the main menu, then **Exit**.
+2. After a quest step, a story step or a change in **Esc > Custom Islands**, don't close Raft right away: leave to the
+   main menu as above (the host - players who joined can quit any time).
+3. After changing a setting during play, let Raft save before you stop.
+
+#### Other things to know
+
+- **Raft's Load Game box** (the last 8 saves) takes the custom islands back to each save only for saves made with this
+  version of the mod - not the very first save of a new world, and not saves from before this feature.
+- **Back up worlds you care about** (copy the world folder, see [12.1](#121-playing-together-over-several-days))
+  before updating the mod or trying a new plan on them.
 
 ### 12.3 During a session
 
-1. **Joining right after the host has loaded the world:** islands that are still being made at that moment can be
-   missing for the one who joined. If an island is missing (or a notice says "No saved island named ..."), leave and join
-   again. Waiting until the host is on the raft for a few seconds avoids it.
-2. **Big islands over the internet** take a while to arrive, and many at once can make the host's game lag. Let
-   players join one at a time; stay near the raft until the islands have arrived.
-3. **Don't open the same chest, pull the same lever or use the last key together.** When two players do it in the same
-   second, a door can toggle twice (and end closed), both can get the chest (especially while one is still downloading
-   islands), or a quest counts one of the two. Take turns.
-4. **Things the host should not do while friends are playing:**
-   - **switch the level up system off and on again** - the players lose their levels (everyone should leave and join
-     again at once if it happened, before earning more EXP);
-   - **click the randomizer buttons while an alpha or Big Bruce is alive** (even the level that is already chosen) -
-     each click makes them three times tougher and heals them;
-   - **switch "Story islands in a new order"** in a running world - the Receiver's list is rebuilt; better only for a
-     new world;
-   - **change the build cost** - removing blocks gives back materials by the new cost, not by what was paid.
-5. **A second player sees an alpha weaker or dying early** now and then (when it turned alpha while they were
-   connected), and a Raft shark near a custom island can look different on their screen. Nothing is lost: fight on
-   until it is dead on the host's screen.
+#### Take turns at chests, levers and keys
+
+**Why:** each player's game asks the host before it opens a chest, but when two players act in the same second, or the
+host answers late (a player still downloading islands), both can go ahead:
+- a **chest** can give its loot to both, and a trigger zone meant to fire once can fire twice (a double ambush);
+- a **lever or door that opens and closes** can be switched twice - it ends closed again;
+- the crew's **last key** (a story item that is used up) can open two doors;
+- a quest step that **counts** ("open 3 chests", "defeat 4 warthogs") can count only one of two things done at the same
+  moment - with exactly 3 chests that never fill up again, the quest can't be finished.
+
+**What to do:**
+1. Let one player open a chest, pull a lever or use a key at a time; say it on voice ("I'm opening the crate").
+2. When a quest counts chests or animals, don't open or kill two of them in the same second.
+3. Wait until everyone who joined has all the islands (they are on their screens, not only on yours) before looting.
+
+#### Don't switch these in a running world
+
+**Why:** some settings in **Esc > Custom Islands** (and the F10 commands) don't handle being changed while the game
+runs with others:
+- **The level up system off and on again:** the players who joined lose their levels (they start at level 1, and their
+  old level is overwritten once they pass it).
+- **The world randomizer** (any of its buttons, even the level already chosen) while an alpha or Big Bruce is alive:
+  each click makes those animals three times tougher again and heals them fully.
+- **Story islands in a new order:** Raft's Receiver list is rebuilt; the island you were sailing to may be gone from it.
+- **The build cost:** removing blocks gives back materials by the **new** cost, not by what you paid.
+
+**What to do:**
+1. Choose these in **World settings** when you **create** the world, and leave them.
+2. If you must change one: do it when nobody else is connected (and, for the randomizer, with no alpha nearby), then
+   let Raft save (leave to the main menu once).
+3. If the level up system was switched off and on with players on: everyone leaves and joins again **before** earning
+   more EXP - their levels come back.
+
+#### If an island is missing right after joining
+
+**Why:** a player who joins in the first seconds after the host loaded the world, while islands are still being made,
+can miss one of them for the whole session.
+
+**What to do:**
+1. Signs: an island others see isn't there for you, or a notice says "No saved island named ...". (F10 `ListSpawned`
+   shows "(island file missing or broken)".)
+2. Leave (**Esc > Main menu**) and join again. `Resync` doesn't fix this case.
+3. Hosts can avoid it: wait until you are on your raft for a few seconds before friends join.
+
+#### Other things to know
+
+- **Big islands over the internet** take a while to arrive, and many at once can make the host's game lag. Let players
+  join one at a time and stay near the raft until the islands have arrived.
+- A second player can see an **alpha** weaker or dying early now and then (when it turned alpha while they were
+  connected), and a Raft shark near a custom island can look different on their screen. Nothing is lost: fight on until
+  it is dead on the host's screen.
 
 ### 12.4 Making quests and plans that work
 
-These are the traps island builders run into. Check your adventure with a test world ([4.9](#49-trying-the-island-in-a-world-test)) before sharing it.
+These are the traps island builders run into. Always play your adventure once with **Test**
+([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose.
 
-1. **Only the current quest step counts.** Opening a chest, defeating or catching animals **before** their step has
-   come doesn't count - and the chest is empty or the animals are gone when the step comes. Either put such steps
-   first, or keep the chest or creature spot **hidden until shown** ([6.2](#62-behaviour-and-events)) and show it from
-   the step before (for example "when a player reads the diary: show the supplies").
-2. **Animals and chests a step needs come back only** when the island loads again on the host after the regrow days -
-   the crew must be more than about 800 m away for that. Give "defeat N" and "catch N" steps enough animals, and don't
-   set their creature spots or chests to "Never" unless the step comes first.
-3. **Don't put a "wait" before something the adventure needs** (show, open, a signal, a journal page, a story item) on a
-   note, an arrival, a once-zone or a chest. If the host saves and quits, or the crew sails away, during the wait, the
-   rest never happens - and the event counts as done. Put the important part first and the wait after, or keep waits
-   short.
-4. **Chests with story items: set "Fills up again" to Never** (the story sets' own chests fill up again by default -
-   change them). Trigger zones always fire again after the regrow days, and a creature spot's "defeat" fires again when
-   the animals come back: don't use "open or close" / "show or hide" (toggles) or story items there - use "show",
-   "open" and journal pages.
-5. **Rewards in Raft items** go only to players within about 150 m of the island when the last step is done; players
-   who come later get nothing. **Story items** go to the whole crew. Use story items for keys and anything the story
-   needs.
-6. **"Only if" checks of Raft items (has, uses up) don't work on the island's "quest done" event or a creature spot's
-   "defeat"** - they look at the host's inventory, not the player who did it. Use story items there.
-7. **A note's actions run again every time it is read**, except its messages and what the whole crew shares: a note that
-   gives Raft items gives them at every reading. Give items from a chest or the quest reward instead.
-8. **"Collect N story items" and "find journal pages" count what the crew already has**: such a quest can finish the
-   moment its island appears - far away, and nobody gets its reward. Put the collecting on the same island, or give the
-   reward as story items.
-9. **Don't change an island that saved worlds use** in ways a world can't follow: its bring rules (deleting or
-   reordering them), its quest steps, the names of notes, zones and objects a step points at. Save such changes under a
-   new name instead ([4.7](#47-saving-and-sharing)).
-10. **Plans that running worlds use:** add new rules with **new ids**; don't delete a rule and add another (it may get the
-    same id and count as already done), and don't rename a rule's id after it has fired.
-11. **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a
-    big island) waits without telling anyone; the host's log says "waits: no free spot".
-12. **Avoid two copies of the same island in one world** when its quest counts journal pages.
+#### Hide a later step's chest or animals until that step comes
+
+**Why:** only the **current** quest step counts. Opening a chest or defeating animals **before** their step has come
+doesn't count - and when the step comes, the chest is empty and the animals are gone. They come back only after the
+regrow days, when the island loads again with the crew more than about 800 m away - or never, if set so. The quest is
+stuck.
+
+**What to do (a chest):**
+1. Select the chest > **Behaviour + events...** > give it a **Name** (for example `supplies`).
+2. **At first: Hidden until shown**. **Save**.
+3. Select the object of the step before (for example the note "Diary") > **Behaviour + events...** > **When it is read (the first time)** > **+ Add an action** > **show** > type `supplies`. **Save**.
+4. Now the chest only appears once the diary is read - when its step is the current one.
+
+**What to do (animals):** select the creature spot > **Behaviour + events...** > **At first: Hidden (ambush)**, give it a
+name, and **show** it from the step before (or set **Appears** to "when a zone fires" and put the zone where the step
+sends the players).
+
+**Or:** put such steps first in the quest, before the players can reach anything else.
+
+#### Put important actions before a "wait", not after
+
+**Why:** what comes after a **wait** only happens while the island stays loaded and the game runs. If the host saves and
+quits, or the crew sails away, during the wait, the rest never happens - and the note, arrival, once-zone or chest
+already counts as used, so it doesn't run again. A door the story needs stays shut.
+
+**What to do:** in **Behaviour + events...**, order the actions so the important ones come first:
+- **Good:** `show vault` > `say "The ground shakes..."` > `wait 5` > `play sound`.
+- **Bad:** `say "The ground shakes..."` > `wait 30` > `show vault`.
+
+Keep waits short (a few seconds) and use them for effects - messages, sounds - not for what the story needs.
+
+#### Story-item chests never fill up again; no toggles in events that repeat
+
+**Why:** chests fill up again after the regrow days by default - also the chests of the **story sets** (the locked door's
+key, the trail's log). A second key or log appears, and counts and "uses up" checks go wrong. Trigger zones always fire
+again after the regrow days, and a creature spot's **defeat** event fires again when the animals come back: a
+**show/hide** or **open/close** action there flips the bridge or door back.
+
+**What to do:**
+1. Select every chest that holds a story item (also after placing a story set) > in the panel, **Fills up again:
+   Never**.
+2. In events that can happen again (trigger zones, defeat, chests that fill up), use **show**, **open**, **journal
+   page** and **say** - not **show/hide** or **open/close**.
+3. If the island's normal loot should come back, keep it in other chests than the story items.
+
+#### Use story items for keys and what the story needs
+
+**Why:** Raft items (a metal ingot, a plank...) are in one player's inventory: they leave with that player, and on the
+island's "when its quest is done" event (**Island tab > Island events...**) and a creature spot's **defeat** event the **has item / uses up item** checks
+look at the **host's** inventory, not the player who did it. Story items belong to the whole crew, stay with the world
+and work in every event.
+
+**What to do:**
+1. **Island tab > Story items...** > add the key (a name, a picture, a line of text).
+2. Hand it out: put it in a chest (**Add items...** lists the story items too), or a **give items** action, or the
+   quest's reward.
+3. On the door: **Behaviour + events...** > **+ Only if...** > **uses up item** (or **has item**) > pick the story item.
+4. Give Raft-item rewards through the quest's reward or a chest, not through a note: a note's **give items** runs again
+   every time it is read.
+
+#### Don't edit islands or plans that running worlds use
+
+**Why:** a saved world remembers its progress on an island by the order of things: its objects, its quest steps, its
+bring rules. Some edits reach saved worlds and change what those numbers point at: a rule that already brought its
+island brings it again (or a new rule counts as done and never comes), the quest jumps to another step or waits for a
+note that was renamed. In a plan, worlds remember rules by their **id**: a deleted rule's id reused by a new rule counts
+as done.
+
+**What to do:**
+1. **Safe** on an island worlds use: moving things, changing settings, adding objects, painting and shaping the ground.
+2. **Not safe:** deleting or reordering its **Islands it brings...** rules, adding, removing or reordering **quest
+   steps**, renaming a note, zone or object a step points at. For these: **Save as** a new name (`Camp v2`) and use the
+   new island in new worlds and plans.
+3. In a plan that worlds play: **add** new rules with **new ids** (`treasure2`, not `rule3`); don't delete a rule and
+   add another in its place; don't rename a rule's id after it has fired.
+4. When the editor says which saved worlds use the island you are saving, stop and think whether the change is safe.
+
+#### Other things to know
+
+- **Rewards in Raft items** go only to players within about 150 m of the island when the last step is done; players who
+  come later get nothing. Story items go to the whole crew.
+- **"Collect N story items" and "find journal pages"** count what the crew already has: such a quest can finish the
+  moment its island appears - far away, and nobody gets its reward. Put the collecting on the same island, or give the
+  reward as story items.
+- **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a big
+  island) waits without telling anyone; the host's log says "waits: no free spot".
+- **Avoid two copies of the same island in one world** when its quest counts journal pages.
 
 ### 12.5 Names, files and your PC
 
-1. **Island names:** don't start a name with `#` or `@`, and avoid `=`, `,` and `;` in it. Such names break the mod's
-   own lists (an island "#1 Base" disappears from saved worlds; "Rock, big" can't be used in "one of these").
-2. **World names:** avoid an apostrophe (`Bob's raft`) for now - Tidy up can take such a world for a deleted one. If
-   Tidy up lists a world that still exists, don't press it.
-3. **Don't unzip the `.rmod`** into `Mods\DynamicIslands`, and don't leave old copies of the mod's own files there
-   (`modinfo.json`, `raft_*.txt`): files in that folder are used instead of the mod's own, so the mod can report an old
-   version and players can get different results.
-4. **Don't edit the settings files while Raft runs** (`spawnpool.txt`, `world_rules.txt`, `randomizer.txt`,
-   `library.txt`, the files in `worlds\`): your changes can be lost or mixed. Write decimals with a dot (`0.5`, not
-   `0,5`). Leave the first lines of the files in `worlds\` alone.
-5. **Keep Raft out of** Program Files, OneDrive-synced and read-only folders, and allow it through antivirus
-   "controlled folder access": the mod must write its files. When a save can't be written the mod may only say so in
-   the log.
-6. **Don't use the mod loader's Unload / Load** on Custom Islands during a session - restart Raft instead.
-7. **Don't keep the original "Dynamic Islands" mod** in the mods folder next to this one: they use the same folder and
-   patch the same parts of Raft.
-8. **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
-   (every entry is looked at), and report a pack that fails ([chapter 14](#14-reporting-a-problem)).
+#### Install the .rmod file as it is - don't unzip it
+
+**Why:** an `.rmod` is a zip file, and unzipping it into `Mods\DynamicIslands` looks harmless - but the mod reads its
+own files (its version, Raft's object lists, the blueprint list) from that folder **first**. The unzipped copies then
+win over the ones in every future update: the mod reports an old version, and players can get different results.
+
+**What to do:**
+1. Put the file `DynamicIslands.rmod` itself into Raft's `mods` folder (`<Raft>\mods\`), next to the other mods.
+2. If you unzipped it before: delete `modinfo.json`, `raft_*.txt` and any `.cs` files from `<Raft>\Mods\DynamicIslands`
+   (keep your islands, plans and settings files). Restart Raft.
+3. Don't keep the original **Dynamic Islands** mod (Franz's) in the mods folder next to this one: they use the same
+   folder and patch the same parts of Raft.
+
+#### Don't edit the mod's files while Raft runs
+
+**Why:** the mod reads some files again when they change and rewrites others itself (the files in `worlds\` at every
+save). Changes made while Raft runs can be lost or mixed in half-way.
+
+**What to do:**
+1. Close Raft first, then edit `spawnpool.txt`, `world_rules.txt`, `randomizer.txt` or `library.txt` with Notepad.
+2. Write decimals with a dot (`0.5`, not `0,5`), even on a PC set to another language.
+3. Don't edit the files in `worlds\` at all - and leave their first lines alone: Tidy up and host swap read them.
+
+#### Keep Raft out of OneDrive and Program Files
+
+**Why:** the mod writes its files next to Raft (`<Raft>\Mods\DynamicIslands`): islands, plans, the world lists. In
+`C:\Program Files` Windows may not allow that, a synced folder (OneDrive, Dropbox) can lock a file while it syncs, and an
+antivirus with "controlled folder access" can block it. Then a save fails, and for the world's progress the mod may only
+say so in the log.
+
+**What to do:**
+1. Check where Raft is: in Steam, right-click Raft > **Manage > Browse local files**.
+2. If it is under `Program Files` or a synced folder: Steam > **Settings > Storage** > add a drive or folder elsewhere
+   (for example `D:\SteamLibrary`), then Raft > **Properties > Installed Files > Move install folder**.
+3. With Windows Security's **Controlled folder access** on: allow Raft (`Raft.exe`) under **Allow an app through
+   controlled folder access**.
+
+#### Names that break
+
+- **Island names:** don't start a name with `#` or `@`, and avoid `=`, `,` and `;`. Such names break the mod's own
+  lists: an island "#1 Base" disappears from saved worlds, "@home" counts as unused (Delete and Tidy up won't protect
+  it), "Rock, big" can't be used in "one of these".
+- **World names:** avoid an apostrophe (`Bob's raft`) for now - Tidy up can take such a world for a deleted one. If Tidy
+  up lists a world that still exists, don't press it.
+
+#### Other things to know
+
+- **Don't use the mod loader's Unload / Load** (F9) on Custom Islands during a session - restart Raft instead.
+- **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
+  (every entry is looked at), and report a pack that fails ([chapter 14](#14-reporting-a-problem)).
 
 ## 13. Questions and problems
 
