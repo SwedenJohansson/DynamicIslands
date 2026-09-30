@@ -274,6 +274,8 @@ namespace DynamicIslands.Editor
 			UIKit.Slider(g, "Size (radius)", ObjectProps.MinZoneRadius, ObjectProps.MaxZoneRadius, ObjectProps.Radius(p), v => v.ToString("0") + " m",
 				v => Set(target, ObjectProps.ZoneRadius, ObjectProps.Format(Mathf.Round(v)), "6", false), "How close players must come (the yellow sphere)", true);
 
+			// (what the box is, also once it has text)
+			UIKit.Size(UIKit.Label(g, "Message when a player walks in", 12, UIKit.TextMuted).gameObject, -1, 16);
 			InputField msg = UIKit.TextArea(g, "Message shown to the player who walks in (optional)", 46f, "A line or two, shown at the top of the screen");
 			msg.text = ObjectProps.Get(p, ObjectProps.ZoneMessage);
 			msg.characterLimit = 200;
