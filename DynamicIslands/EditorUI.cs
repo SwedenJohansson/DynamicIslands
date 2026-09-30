@@ -164,7 +164,11 @@ namespace DynamicIslands.Editor
 			// (a list of the times of day - it cycled one click at a time)
 			string[] lightHints = { "Low sun from the east", "Sun high up, short shadows", "Low warm sun from the west", "Moonlight: how it looks after dark", "Grey sky, soft light" };
 			lightButton = DropList.Make(app, "Button_Light", Enumerable.Range(0, EditorLighting.Names.Length).Select(i => new DropList.Option(i.ToString(), EditorLighting.Names[i], lightHints[Mathf.Min(i, lightHints.Length - 1)])).ToList(), EditorLighting.Current.ToString(),
-				v => { EditorLighting.Apply(int.Parse(v), true); RefreshLight(); }, 140, "The time of day in the editor: morning, noon, evening, night, overcast - how the island looks then (only in the editor)", 30f, 13);
+				v => { EditorLighting.Apply(int.Parse(v), true); RefreshLight(); }, 118, "The time of day in the editor: morning, noon, evening, night, overcast - how the island looks then (only in the editor)", 30f, 13);
+			// (as wide as the button it was: wider, the top bar pushed Main menu off a 1024 x 768 screen - the words shrink to fit instead)
+			Text lightText = UIKit.LabelOf(lightButton);
+			lightText.resizeTextForBestFit = true; lightText.resizeTextMinSize = 9; lightText.resizeTextMaxSize = 13;
+			UIKit.Stretch(lightText.rectTransform, 5, 22, 1, 1);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
 			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
 			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
