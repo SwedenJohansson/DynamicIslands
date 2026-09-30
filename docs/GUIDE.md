@@ -323,8 +323,8 @@ less after that. The editor opens on the sea with an empty build area.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y**; save with **Ctrl+S**, open with **Ctrl+O**.
 
-**Light: the time of day.** The top bar's **Light** button goes through **Morning, Noon, Evening, Night** and
-**Overcast**: the sun's height, colour and shadows, the sky's light on everything and a haze far out change, so you
+**Light: the time of day.** The top bar's **Light** list has **Morning, Noon, Evening, Night** and
+**Overcast** (click it and pick one): the sun's height, colour and shadows, the sky's light on everything and a haze far out change, so you
 can see how the island will look at that time in Raft (a dark cave mouth at night, a beach in the evening sun). It is
 only how the editor shows the island - nothing is saved in the island. Your choice is kept for the next time you open
 the editor (Noon the first time).
@@ -342,7 +342,7 @@ the editor (Noon the first time).
 - **Stamps:** click the ground to put down a **Hill**, **Peak**, **Crater**, **Mesa**, **Lagoon** or **Ridge**, as big
   as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own.
 
-**Island styles.** On the Island tab, **Style** ◄ ► switches between Tropical, Snowy, Desert, Forest and Volcanic: the
+**Island styles.** On the Island tab, **Style** ◄ ► steps through Tropical, Snowy, Desert, Forest and Volcanic (or click the name for the list): the
 ground takes the style's textures, the paint buttons get its names, and the generator uses its plants and animals.
 
 ![The island styles](images/editor-styles.jpg)
