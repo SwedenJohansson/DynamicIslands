@@ -42,6 +42,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Spawn pool** | The islands that may turn up by chance while you sail (`spawnpool.txt`, [10](#10-settings-files)) |
 | **Quest** | An island's list of steps (go there, read that, open this...) with a reward at the end ([6.1](#61-quests)) |
 | **Story item** | A key, a map, a log... that the crew carries and the journal (J) shows ([6.3](#63-story-items-and-story-sets)) |
+| **Journal** | The crew's book of the custom islands (J): their story items and every note read, shared by everyone in the world. Not Raft's notebook (T) ([3](#the-journal-j)) |
 | **World plan** | A list of rules for a world: which islands it gets, when and where ([7](#7-world-plans-which-islands-a-world-gets)) |
 | **Rule** | One line of a plan: *when* something happens, bring *this island*, *there*, and tell the players *this* |
 | **Raft's story / the Receiver chain** | Raft's own story islands (Radio Tower ... Utopia), found by tuning the Receiver. A plan can change it ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
@@ -229,14 +230,56 @@ finished step.*
 
 ### The journal (J)
 
-Press **J** to open the journal: the crew's **story items** (keys, maps, logs...) with their pictures, and every note
-you have read, on paper. Story items belong to the whole crew, like Raft's own quest items.
-
-The mod's keys are shown at the hotbar like Raft's own: after Raft's notebook tab (**T**) come the journal's tab (**J**,
-an open book) and, while the level up system is on in the world, the stats page's (**K**, a star).
+The **journal** is the crew's book of the custom islands' story: what you found on them and what you carry for them.
+Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (J does nothing while you type in the chat
+or console, while a note is open, or in the editor.) Its key is also shown at the hotbar: after Raft's notebook tab
+(**T**) come the journal's tab (**J**, an open book) and, while the level up system is on in the world, the stats
+page's (**K**, a star).
 
 ![The journal](images/world-journal.jpg)
 *The journal: two story items at the top left, the pages read below, and the page "The keeper's note" open.*
+
+**What's in it**
+
+- **Story items** (top left): keys, map pieces, logs... that the islands' builders made. Each shows its picture and
+  name, with **×2**, **×3**... when the crew has more than one. Click one to see its picture and description on the
+  paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
+  key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
+- **Pages** (bottom left), newest first: every note you read on a custom island - the first time anyone reads it,
+  once, with its title - pages an island writes when something happens (an island event "write a journal page"), and
+  the frequencies a world plan gives out ("Tune the Receiver to #4821"). Point at a page for the island it came from;
+  click it to read it on the paper, signed with the island and the day it was found.
+- The top right counts the story items and the pages. An empty journal says where to look.
+
+**One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
+journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
+saved with the world, and it goes back with an older save ([8](#8-playing-together)).
+
+**The journal and quests.** The journal doesn't list quests: an island's quest is shown in the **quest panel** on the
+right while you are **at that island** ([Quests](#quests)), and it leaves when you sail away. But the journal is what
+some steps count:
+
+- **Find (a number of) a story item** counts that story item in the journal - so an item found before the quest
+  counts too, and one used up no longer does.
+- **Find pages on this island** counts the journal's pages from that island's notes and events; **on any island**
+  counts every page.
+
+So when a quest step waits for items or pages, press J to see what the crew has.
+
+**The journal and Raft's notebook.** Raft's own notebook (**T**) stays as it always was, and the two don't mix:
+
+| | Raft's notebook (T) | The journal (J) |
+|---|---|---|
+| **Pages** | The notes of Raft's story islands (Radio Tower, Vasagatan, Balboa...) | The notes of custom islands, pages their events write, and frequencies a world plan gives out |
+| **Items** | Raft's quest items (Raft's keys, key cards...) | The custom islands' story items |
+| **The Receiver** | The frequencies of Raft's story; when a plan changes Raft's story, the notebook follows it ([6.5](#65-your-islands-in-rafts-story-the-receiver)) | A page with each frequency a plan's rule unlocks for its own island |
+| **Quests** | - (Raft's story goes by its notes and the Receiver) | - (the quest panel shows the quest of the island you're at) |
+| **Without the mod** | Always there | Kept in the mod's file of the world: the world still loads without the mod, and the journal comes back with it |
+
+Why two books? Raft's notebook has a fixed set of pages and quest items, made for Raft's story. New pages or items put
+into it would be lost, or break the world's save when it is opened without the mod. So custom islands write into
+their own book, kept with the mod's state of the world. For the same reason story items aren't in your inventory:
+the crew holds them in the journal, like Raft holds its quest items outside the inventory.
 
 ---
 
@@ -756,6 +799,16 @@ key somewhere..."*
 **Island tab → Story items...**: keys, map pieces, logs... with a name, a description and a picture (Raft's quest
 item pictures or any Raft item). Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
 for them; players find them in the journal (J).
+
+**What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
+
+- Every note with text becomes a page the first time someone reads it, titled with the note's title (give notes
+  clear titles: the page list shows them). A note with no text adds no page.
+- An event's **write a journal page** adds a page with your title and text (once per world) - a clue, a diary entry,
+  what the crew learned.
+- Story items show with their picture, name and description; when a check **uses one up**, it leaves the journal.
+- A quest step **Find a story item** or **Find pages** counts what the journal holds, also what was found before the
+  quest.
 
 **Story sets** place a ready piece of a story in one step: **a locked door and its key** (in a chest with a note),
 **a trail of notes** leading to a hidden chest, **a treasure map** (a bottle gives the map; the X digs up a chest
@@ -1569,6 +1622,13 @@ the island before it is done.
 
 **One of my islands never turns up.** It may be unticked for this world ([9.5](#95-islands-while-sailing)): run
 `WorldIslands`, and `WorldIslands +<island>` lets it take part again. Its weight in `spawnpool.txt` may also be 0.
+
+**A story item isn't in my inventory, or Raft's notebook has no page for a custom island's note.** They are in
+the journal (**J**): custom islands keep their story items and notes there, for the whole crew ([3](#the-journal-j)).
+Raft's notebook (T) only has Raft's own story.
+
+**A note I read isn't in the journal.** Notes with no text add no page, and each note adds one page once per world
+(someone else may have read it first: look for its title).
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 
