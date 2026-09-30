@@ -129,11 +129,15 @@ namespace DynamicIslands.Editor
 			UIKit.Label(head, "QUEST EDITOR", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Label(head, "Players see the quest when they come to the island; steps are done in order", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 
+			// (each field says what it is, also once it's filled in)
 			RectTransform top = UIKit.Row(panel, 30f, 8f, "Top");
+			UIKit.Size(UIKit.Label(top, "Title", 13, UIKit.TextMuted).gameObject, 96);
 			titleField = UIKit.Field(top, "Quest title (e.g. The lost captain)", "", 30f, "Shown at the top of the quest");
 			titleField.characterLimit = 48;
 			fields.Add(titleField);
-			introField = UIKit.Field(panel, "Introduction, shown when players arrive (optional)", "", 30f, "A line or two to start the story");
+			RectTransform introRow = UIKit.Row(panel, 30f, 8f, "Intro");
+			UIKit.Size(UIKit.Label(introRow, "Introduction", 13, UIKit.TextMuted).gameObject, 96);
+			introField = UIKit.Field(introRow, "Shown when players arrive (optional)", "", 30f, "A line or two to start the story");
 			introField.characterLimit = 200;
 			fields.Add(introField);
 
@@ -154,18 +158,23 @@ namespace DynamicIslands.Editor
 				ItemPickerWindow.OpenFor(() => quest.Reward, v => quest.Reward = v);
 			}, "Items every player near the island gets when the quest is done", 140, 26f, 12);
 			UIKit.Button(rewardRow, "None", () => { quest.Reward = ""; ShowReward(); }, "No reward", 60, 26f, 12);
-			doneField = UIKit.Field(reward, "Message when the quest is done (optional)", "", 30f, "Shown with \"Quest complete\"");
+			RectTransform doneRow = UIKit.Row(reward, 30f, 8f, "Done");
+			UIKit.Size(UIKit.Label(doneRow, "When done", 13, UIKit.TextMuted).gameObject, 96);
+			doneField = UIKit.Field(doneRow, "Message when the quest is done (optional)", "", 30f, "Shown with \"Quest complete\"");
 			doneField.characterLimit = 200;
 			fields.Add(doneField);
 
 			// A new island when the quest is done (the island's own rule; works in any world, and for every player)
 			RectTransform next = UIKit.Group(panel, "When the quest is done, bring a new island");
 			RectTransform kindRow = UIKit.Row(next, 26f, 6f, "Kind");
-			bringKindButton = UIKit.Button(kindRow, "", () =>
+			bringKindButton = DropList.Make(kindRow, "Drop_BringKind", new List<DropList.Option>
+			{
+				new DropList.Option("nothing", "Nothing", "The quest brings no island"),
+				new DropList.Option("island", "A saved island:", "One of your saved islands appears near this one"),
+				new DropList.Option("type", "A new island:", "A new island of a map type (a camp, a wreck...) is made for the world"),
+			}, "nothing", kind =>
 			{
 				KeepBring();
-				string kind = bring == null ? "nothing" : bring.What;
-				kind = BringKinds[(Array.IndexOf(BringKinds, kind) + 1) % BringKinds.Length];
 				if (kind == "nothing") bring = null;
 				else
 				{
@@ -174,7 +183,7 @@ namespace DynamicIslands.Editor
 					bring.WhatArg = kind == "type" ? "random" : "";
 				}
 				ShowBring();
-			}, "Click to change: nothing, a saved island, or a new island of a map type (generated)", 150, 26f, 12);
+			}, 150, "What the quest brings when it's done: nothing, a saved island, or a new island of a map type (generated)", 26f, 12);
 			bringWhatButton = UIKit.Button(kindRow, "", PickBring, "Which island (click to choose)", -1, 26f, 12);
 			bringDetails = UIKit.Rect("Details", next);
 			UIKit.Vertical(bringDetails.gameObject, 6f, new RectOffset(0, 0, 0, 0));
@@ -185,14 +194,13 @@ namespace DynamicIslands.Editor
 			bringDistField.characterLimit = 4;
 			fields.Add(bringDistField);
 			UIKit.Size(UIKit.Label(whereRow, "m", 13, UIKit.TextMuted).gameObject, 18);
-			bringDirButton = UIKit.Button(whereRow, "", () =>
+			bringDirButton = DropList.Make(whereRow, "Drop_BringDir", IntroRule.Directions.Select(d => new DropList.Option(d, d == "any" ? "any direction" : d, d == "any" ? "Wherever there's room" : "")).ToList(), "any", d =>
 			{
 				KeepBring();
 				if (bring == null) return;
-				int i = Array.IndexOf(IntroRule.Directions, bring.Direction);
-				bring.Direction = IntroRule.Directions[(i + 1) % IntroRule.Directions.Length];
+				bring.Direction = d;
 				ShowBring();
-			}, "Which way from this island (any = wherever there's room)", 110, 26f, 12);
+			}, 130, "Which way from this island (any = wherever there's room)", 26f, 12);
 			UIKit.Label(whereRow, "of this island (kept clear of Raft's islands)", 12, UIKit.TextMuted);
 			RectTransform tellRow = UIKit.Row(bringDetails, 28f, 6f, "Tell");
 			UIKit.Size(UIKit.Label(tellRow, "Message", 12, UIKit.TextMuted).gameObject, 60);
@@ -218,6 +226,15 @@ namespace DynamicIslands.Editor
 			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" },
 		};
 
+		/// <summary>What each kind of step asks (the step list's lines).</summary>
+		static readonly Dictionary<string, string> TypeHints = new Dictionary<string, string>
+		{
+			{ "reach", "Walk into a trigger zone (by its name)" }, { "read", "Read a note (by its title)" },
+			{ "open", "Open a chest (by its note title; empty = any chest)" }, { "kill", "Defeat a number of animals of a kind (e.g. Warthog)" },
+			{ "catch", "Catch a number of animals with Raft's net launcher (e.g. Llama)" }, { "collect", "Have a number of a story item (the journal counts them)" },
+			{ "pages", "Find a number of journal pages: notes read on this island (or \"all\": anywhere)" },
+		};
+
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
 		{
 			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest; not the abandoned raft crate)" },
@@ -241,15 +258,22 @@ namespace DynamicIslands.Editor
 				IslandQuest.Step s = quest.Steps[i];
 				RectTransform row = UIKit.Row(stepsRoot, 28f, 4f, "Step");
 				UIKit.Size(UIKit.Label(row, (i + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 22);
-				UIKit.Button(row, TypeLabels[s.Type], () =>
+				DropList.Make(row, "Drop_StepType", IslandQuest.Types.Select(t => new DropList.Option(t, TypeLabels[t], TypeHints[t])).ToList(), s.Type, v =>
 				{
-					s.Type = IslandQuest.Types[(Array.IndexOf(IslandQuest.Types, s.Type) + 1) % IslandQuest.Types.Length];
+					s.Type = v;
 					ShowSteps();
-				}, "Click to change what the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 70, 28f, 12);
-				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly (see the names below)");
-				UIKit.Size(target.gameObject, 220, 28);
+				}, 104, "What the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 28f, 12);
+				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
+				UIKit.Size(target.gameObject, 196, 28);
 				target.onEndEdit.AddListener(v => s.Target = v.Trim());
 				fields.Add(target);
+				List<DropList.Option> names = NamesFor(s.Type);
+				if (names.Count > 0)
+				{
+					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
+					Button pick = DropList.Make(row, "Pick_Target", names, s.Target, v => { Keep(); s.Target = v; ShowSteps(); }, 26, "Pick one of the names on this island", 28f, 11);
+					UIKit.LabelOf(pick).text = "";
+				}
 				if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; ShowSteps(); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
 				if (s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type))
 				{
@@ -285,6 +309,7 @@ namespace DynamicIslands.Editor
 		{
 			string kind = bring == null ? "nothing" : bring.What;
 			UIKit.LabelOf(bringKindButton).text = kind == "nothing" ? "Nothing" : kind == "island" ? "A saved island:" : "A new island:";
+			SetDropValue(bringKindButton, kind);
 			bringWhatButton.gameObject.SetActive(bring != null);
 			bringDetails.gameObject.SetActive(bring != null);
 			if (bring == null) return;
@@ -292,6 +317,7 @@ namespace DynamicIslands.Editor
 			UIKit.LabelOf(bringWhatButton).text = bring.WhatArg.Length == 0 ? "<i>Choose an island...</i>" : t != null ? t.Label + " (generated)" : bring.WhatArg;
 			bringDistField.text = bring.Distance.ToString("0");
 			UIKit.LabelOf(bringDirButton).text = bring.Direction == "any" ? "any direction" : bring.Direction;
+			SetDropValue(bringDirButton, bring.Direction);
 			bringMessageField.text = bring.Message;
 			bringLabelField.text = bring.Label;
 		}
@@ -309,6 +335,32 @@ namespace DynamicIslands.Editor
 		{
 			List<KeyValuePair<string, int>> items = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, quest.Reward } });
 			rewardText.text = items.Count == 0 ? "<i>No reward</i>" : "Reward: " + string.Join(", ", items.Select(l => ContentCatalog.ItemLabel(l.Key) + " \u00D7" + l.Value).ToArray());
+		}
+
+		/// <summary>The names on the island a step of this kind can point at (the \u25BE list beside its name).</summary>
+		static List<DropList.Option> NamesFor(string type)
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			List<EditorGameObject> all = placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
+			IEnumerable<string> names;
+			switch (type)
+			{
+				case "reach": names = ContentCatalog.ZoneIdsInEditor(); break;
+				case "read": names = all.Where(e => ObjectProps.IsNote(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
+				case "open": names = all.Where(e => ObjectProps.IsLoot(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
+				case "kill": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null).Select(k => k.Label); break;
+				case "catch": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null && k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label); break;
+				case "pages": return new List<DropList.Option> { new DropList.Option("", "This island", "Pages from this island's notes"), new DropList.Option("all", "all", "Pages from any island") };
+				default: return new List<DropList.Option>();
+			}
+			return names.Where(n => n != null && n.Trim().Length > 0).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new DropList.Option(n, n)).ToList();
+		}
+
+		/// <summary>A drop-down shows this value as the chosen one (after the window filled it from the island).</summary>
+		static void SetDropValue(Button b, string value)
+		{
+			DropdownButton d = b != null ? b.GetComponent<DropdownButton>() : null;
+			if (d != null) d.Value = value;
 		}
 
 		/// <summary>The names on the island that steps can point at.</summary>

@@ -22,7 +22,8 @@ namespace DynamicIslands
 		#region Every button
 
 		/// <summary>Buttons the walk leaves alone: leaving the editor is tested on its own at the end.</summary>
-		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu" };
+		// (both leave the editor for another scene - the walk would lose its screens; Test in a world has its own suite, CIIslandTest)
+		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test" };
 		/// <summary>A list with more buttons than this (object tiles, items, sounds, plan cards) is sampled: its first three.</summary>
 		const int ListSample = 3, ListThreshold = 8;
 

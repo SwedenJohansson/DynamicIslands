@@ -766,8 +766,11 @@ planks and rope, and when the quest is done it brings a saved island "Old camp" 
 name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
-**collect** a number of a story item, **find** journal pages. Steps point at things on the island by name; the
-editor lists the names it knows.
+**collect** a number of a story item, **find** journal pages. Each step's kind is a **▼ list** (each kind says what it
+asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
+for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
+(place the zones, notes, chests and creatures first). **When the quest is done, bring a new island** chooses from a
+list too (nothing, a saved island, a new island of a map type), and so does its direction.
 
 ### 6.2 Behaviour and events
 

@@ -992,7 +992,21 @@ namespace DynamicIslands
 			Check(ref ok, QuestEditorWindow.IsOpen, "the quest editor opens");
 			Screenshot(new[] { "quest_editor" });
 			yield return new WaitForSecondsRealtime(0.5f);
+			// Each step's kind is a list, and a small list beside its name has the island's names that kind can point at
+			Transform qw = EditorUI.Canvas.transform.Find("QuestEditorWindow");
+			List<UnityEngine.UI.Button> kinds = qw != null ? qw.GetComponentsInChildren<UnityEngine.UI.Button>(false).Where(b => b.name == "Drop_StepType").ToList() : new List<UnityEngine.UI.Button>();
+			List<UnityEngine.UI.Button> picks = qw != null ? qw.GetComponentsInChildren<UnityEngine.UI.Button>(false).Where(b => b.name == "Pick_Target").ToList() : new List<UnityEngine.UI.Button>();
+			var kindList = kinds.Count > 0 ? DropList.Shown(kinds[0]) : new List<KeyValuePair<string, string>>();
+			Check(ref ok, kinds.Count == 4 && kindList.Count == IslandQuest.Types.Length && kindList.All(k => k.Value.Length > 0), "each step's kind is a list: " + kinds.Count + " steps, " + kindList.Count + " kinds, each saying what it asks");
+			Func<int, string> listed = i => i < picks.Count ? string.Join(",", DropList.Shown(picks[i]).Select(o => o.Key).ToArray()) : "?";
+			string p0 = listed(0), p1 = listed(1), p2 = listed(2);
+			Check(ref ok, picks.Count == 3 && p0 == "camp" && p1 == "Diary" && p2 == "Warthog", "beside a step's name, the island's names it can point at: zones (" + p0 + "), notes (" + p1 + "), creatures (" + p2 + "); none for the chest step (no chest placed)");
+			bool picked = kinds.Count > 1 && DropList.Click(kinds[1], "catch");
+			yield return null;
+			List<UnityEngine.UI.Button> after = qw.GetComponentsInChildren<UnityEngine.UI.Button>(false).Where(b => b.name == "Drop_StepType").ToList();
+			Check(ref ok, picked && after.Count == 4 && UIKit.LabelOf(after[1]).text == "Catch", "picking 'Catch' in step 2's list makes it a catch step (" + (after.Count > 1 ? UIKit.LabelOf(after[1]).text : "?") + ")");
 			QuestEditorWindow.Close();
+			Check(ref ok, IslandQuest.From(DynamicIslands.currentIslandProps).Steps[1].Type == "read", "closed without Save: the island's quest is as it was");
 			bool saved = DynamicIslands.SaveIsland("ciquest");
 			DynamicIslands.currentIslandProps.Clear();
 			DynamicIslands.LoadIsland("ciquest");
