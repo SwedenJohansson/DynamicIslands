@@ -188,6 +188,8 @@ namespace DynamicIslands
 				RecieverFrequency caravan = RecieverFrequency.AllFrequencies.FirstOrDefault(f => f != null && f.chunkPointType == ChunkPointType.Landmark_CaravanIsland);
 				Check(ref ok, StoryChain.Done.Contains("rule:detour") && ChainTypes().Contains(ChunkPointType.Landmark_CaravanIsland), "players at the sandbar: done, Caravan Town unlocked (" + Names(ChainTypes()) + ")");
 				Check(ref ok, caravan != null && StoryChain.LastBanner != null && StoryChain.LastBanner.Contains(caravan.ToString()), "the banner gives Caravan Town's frequency: " + StoryChain.LastBanner);
+				Check(ref ok, caravan != null && StoryBook.Pages.Any(p => p.Key == "storyfreq:raft:CaravanTown" && p.Text.Contains(caravan.ToString())), "the journal keeps Caravan Town's frequency too (no note of Raft's gives it now)");
+				Check(ref ok, freq != null && StoryBook.Pages.Any(p => p.Key == "storyfreq:detour" && p.Text.Contains(freq)), "and the sandbar's");
 				if (me != null) yield return PutPlayer(me, home, false);
 
 				NoteBook.UnlockFrequency(ChunkPointType.Landmark_Tangaroa); // (Caravan's note)

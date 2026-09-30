@@ -249,7 +249,13 @@ namespace DynamicIslands.Editor
 				try { Bypass = true; NoteBook.UnlockFrequency(t); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] Unlocking " + t + ": " + e.Message); }
 				finally { Bypass = false; }
-				if (announce) Banner("A new signal", "The Receiver picks up a new frequency: " + (FrequencyTextForRaft(t) ?? "?"));
+				if (announce)
+				{
+					string text = "The Receiver picks up a new frequency: " + (FrequencyTextForRaft(t) ?? "?");
+					Banner("A new signal", text);
+					// (no note of Raft's gives this number - the one before now leads to the plan's island: the journal keeps it)
+					try { StoryBook.AddPage("storyfreq:" + step, "A new signal", text, ""); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
+				}
 			}
 			Changed();
 		}
