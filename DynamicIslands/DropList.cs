@@ -23,6 +23,33 @@ namespace DynamicIslands.Editor
 		static GameObject open;
 		public static bool IsOpen { get { return open != null; } }
 
+		/// <summary>Tests: clicks the drop-down open and the option with this value, as a player does. False if the list hasn't it.</summary>
+		public static bool Click(Button drop, string value)
+		{
+			if (drop == null) return false;
+			drop.onClick.Invoke();
+			Button option = open != null ? open.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Option_" + value) : null;
+			if (option == null) { Close(); return false; }
+			option.onClick.Invoke();
+			return true;
+		}
+
+		/// <summary>Tests: the options the drop-down shows when clicked open (value and the line under it), then closed again.</summary>
+		public static List<KeyValuePair<string, string>> Shown(Button drop)
+		{
+			var list = new List<KeyValuePair<string, string>>();
+			if (drop == null) return list;
+			drop.onClick.Invoke();
+			if (open != null)
+				foreach (Button b in open.GetComponentsInChildren<Button>(true).Where(b => b.name.StartsWith("Option_")))
+				{
+					Text hint = b.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Hint");
+					list.Add(new KeyValuePair<string, string>(b.name.Substring(7), hint != null ? hint.text : ""));
+				}
+			Close();
+			return list;
+		}
+
 		/// <summary>A drop-down button: shows the chosen option; set(value) when another is picked.</summary>
 		public static Button Make(Transform parent, string name, IList<Option> options, string current, Action<string> set, float width, string hint, float height = 26f, int fontSize = 12)
 		{

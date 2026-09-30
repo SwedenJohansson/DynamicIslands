@@ -41,6 +41,9 @@ namespace DynamicIslands.Editor
 		static UIKit.SliderRow sizeSlider, strengthSlider;
 		static Text islandNameText, styleText, selectionText, statsText, hintText, cameraText;
 		static InputField elevationField;
+		// (the height presets: the one that matches the island's height is lit)
+		static Button presetSea, presetFlying, presetSunken;
+		static Text infoRegrowText;
 		static RectTransform terrainTools, objectTools, islandTools, browserPanel;
 		static string hoverHint;
 		/// <summary>A short message in the status bar (Flash), shown until this time.</summary>
@@ -317,9 +320,9 @@ namespace DynamicIslands.Editor
 			elevationField.onEndEdit.AddListener(v => SetElevation(v));
 			UIKit.Size(UIKit.Label(heightRow, "m", 14, UIKit.TextMuted).gameObject, 18);
 			RectTransform presets = UIKit.Row(island, 26f, 4f);
-			UIKit.Button(presets, "At sea", () => SetElevation("0"), "A normal island", -1, 26, 12);
-			UIKit.Button(presets, "Flying", () => SetElevation("60"), "Floats 60 m above the sea", -1, 26, 12);
-			UIKit.Button(presets, "Sunken", () => SetElevation("-30"), "Lies 30 m under water", -1, 26, 12);
+			presetSea = UIKit.Button(presets, "At sea", () => SetElevation("0"), "A normal island (height 0)", -1, 26, 12);
+			presetFlying = UIKit.Button(presets, "Flying", () => SetElevation("60"), "Floats above the sea (60 m; type another height above)", -1, 26, 12);
+			presetSunken = UIKit.Button(presets, "Sunken", () => SetElevation("-30"), "Lies under water (-30 m; type another depth above)", -1, 26, 12);
 
 			RectTransform gen = UIKit.Group(s, "Generate");
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
@@ -424,12 +427,15 @@ namespace DynamicIslands.Editor
 			RectTransform rules = UIKit.Group(s, "Rules");
 			RectTransform regrow = UIKit.Row(rules, 28f, 4f);
 			UIKit.Label(regrow, "Things come back after", 13, UIKit.TextMuted);
-			infoRegrowField = UIKit.Field(regrow, "world", "", 28f, "In-game days until chopped trees, picked items, killed or caught animals and looted chests come back on this island. Empty = the world's setting (spawnpool.txt), 0 = never");
+			infoRegrowField = UIKit.Field(regrow, "default", "", 28f, "In-game days until chopped trees, picked items, killed or caught animals and looted chests come back on this island. Empty = the world's setting (spawnpool.txt), 0 = never");
 			UIKit.Size(infoRegrowField.gameObject, 58, 28);
 			infoRegrowField.contentType = InputField.ContentType.IntegerNumber;
 			infoRegrowField.characterLimit = 3;
 			UIKit.Size(UIKit.Label(regrow, "days", 13, UIKit.TextMuted).gameObject, 34);
 			infoRegrowField.onEndEdit.AddListener(v => { int d; SetInfo(IslandProps.RegrowDays, int.TryParse(v, out d) ? Mathf.Clamp(d, 0, 999).ToString() : ""); RefreshInfo(); });
+			// (what the number means, under it: the empty field read "Things come back after world days")
+			infoRegrowText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "RegrowMeaning");
+			infoRegrowText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			RectTransform levels = UIKit.Row(rules, 26f, 4f, "LevelUp");
 			UIKit.Label(levels, "Level up system", 13, UIKit.TextMuted);
 			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
@@ -466,6 +472,13 @@ namespace DynamicIslands.Editor
 			infoAuthorField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Author);
 			infoTextField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Description);
 			infoRegrowField.text = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays);
+			if (infoRegrowText != null)
+			{
+				string r = infoRegrowField.text;
+				infoRegrowText.text = r.Length == 0 ? "Empty: as the world decides (" + CustomIslandSpawner.RegrowDays + " days unless its host changed it). Chopped trees, picked items, animals and looted chests come back." :
+					r == "0" ? "0: never - what players take or kill here stays gone." :
+					"Chopped trees, picked items, animals and looted chests come back after " + r + " in-game day" + (r == "1" ? "" : "s") + ". Empty = the world's setting, 0 = never.";
+			}
 			bool levelsOn = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
 			if (infoLevelsOn != null) { UIKit.SetActive(infoLevelsOn, levelsOn); UIKit.SetActive(infoLevelsOff, !levelsOn); }
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
@@ -535,6 +548,7 @@ namespace DynamicIslands.Editor
 		{
 			if (islandNameText != null) islandNameText.text = DynamicIslands.currentIslandName + (File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName)) ? "" : "  <size=11><color=#b89e70>(not saved yet)</color></size>");
 			if (elevationField != null && !elevationField.isFocused) elevationField.text = DynamicIslands.currentElevation.ToString(CultureInfo.InvariantCulture);
+			RefreshPresets();
 			RefreshInfo();
 			RefreshStats();
 		}
@@ -547,6 +561,16 @@ namespace DynamicIslands.Editor
 			int more = PlaceableCatalog.Browse().Sum(c => c.Value.Count(e => !e.Loaded));
 			statsText.text = "Objects: " + objects + "\nIn a world: " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) +
 				"\nObject list: " + PlaceableCatalog.Names.Count() + " loaded" + (more > 0 ? ", " + more + " more from Raft's islands" : "");
+		}
+
+		/// <summary>The height preset matching the island's height is lit: at sea (0), flying (above), sunken (below).</summary>
+		static void RefreshPresets()
+		{
+			if (presetSea == null) return;
+			float h = DynamicIslands.currentElevation;
+			UIKit.SetActive(presetSea, Mathf.Approximately(h, 0f));
+			UIKit.SetActive(presetFlying, h > 0.01f);
+			UIKit.SetActive(presetSunken, h < -0.01f);
 		}
 
 		static void StepStyle(int step)
@@ -563,6 +587,7 @@ namespace DynamicIslands.Editor
 			float to = float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out e) ? Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation) : 0f;
 			IslandSettingsUndo.Change(() => DynamicIslands.currentElevation = to);
 			if (elevationField != null) elevationField.text = DynamicIslands.currentElevation.ToString(CultureInfo.InvariantCulture);
+			RefreshPresets();
 			RefreshStats();
 			if (DynamicIslands.currentElevation != before) DynamicIslands.Notify("In a world this island will be " + IslandSpawner.DescribeElevation(DynamicIslands.currentElevation) + " (saved with the island)");
 		}

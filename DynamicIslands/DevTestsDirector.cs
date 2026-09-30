@@ -579,14 +579,21 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.5f);
 			Transform row = box.transform.Find("CustomIslands_Plan");
 			Check(ref ok, row != null && row.gameObject.activeInHierarchy, "the box has the plan choice");
-			// (the plan's own button - the row's head also has "Get more...", which opens the island library)
-			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => UIKit.LabelOf(x) == null || !UIKit.LabelOf(x).text.StartsWith("Get more")) : null;
+			// (the plan's drop-down list - the row's head also has "Get more...", which opens the island library)
+			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Drop_Plan") : null;
+			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
-			if (b != null) b.onClick.Invoke();
+			List<KeyValuePair<string, string>> listed = DropList.Shown(b);
+			Check(ref ok, listed.Count == plans.Count && listed.All(o => o.Value.Length > 0), "clicked open, its list has every plan (" + listed.Count + " of " + plans.Count + "), each with what it does");
+			string next = plans[(plans.FindIndex(p => p.Equals(first, StringComparison.OrdinalIgnoreCase)) + 1) % plans.Count];
+			bool picked = DropList.Click(b, next);
 			string second = NewWorldOptions.Selected;
-			Check(ref ok, first != second, "clicking it picks the next plan (" + first + " -> " + second + ")");
+			Check(ref ok, picked && second == next && UIKit.LabelOf(b).text == next, "picking one in the list chooses it (" + first + " -> " + second + ")");
+			// (the picture with the list open)
+			if (b != null) b.onClick.Invoke();
 			Screenshot(new[] { "new_game_plan" });
 			yield return new WaitForSecondsRealtime(0.5f);
+			DropList.Close();
 			WorldDirector.PendingPlan = choose;
 			if (choose == null) box.Button_Close();
 			else Log("Plan for the next new world: " + NewWorldOptions.Selected);

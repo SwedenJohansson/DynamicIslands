@@ -981,6 +981,26 @@ namespace DynamicIslands
 			DynamicIslands.instance.StartCoroutine(SailRoutine(seconds, speed));
 		}
 
+		[ConsoleCommand(name: "CICloseRmlMenu", docs: "Dev: closes RML's own menu (the one F9 opens, open when Raft starts) without a key press - tests with Raft minimised (tools\\quiet.ps1)")]
+		public static void CloseRmlMenuCommand()
+		{
+			try
+			{
+				Type t = HarmonyLib.AccessTools.TypeByName("RaftModLoader.MainMenu");
+				UnityEngine.Object menu = t != null ? UnityEngine.Object.FindObjectOfType(t) : null;
+				if (menu == null) { Log("RML menu: not found (" + (t == null ? "no RaftModLoader.MainMenu" : "no instance") + ")"); return; }
+				System.Reflection.MethodInfo close = new[] { "CloseMenu", "HideMenu", "Close" }.Select(n => HarmonyLib.AccessTools.Method(t, n, new Type[0])).FirstOrDefault(m => m != null);
+				if (close == null)
+				{
+					Log("RML menu: no close method; it has " + string.Join(", ", t.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly).Select(m => m.Name + "(" + m.GetParameters().Length + ")").ToArray()));
+					return;
+				}
+				close.Invoke(close.IsStatic ? null : menu, null);
+				Log("RML menu: closed (" + t.Name + "." + close.Name + ")");
+			}
+			catch (Exception e) { Log("RML menu: " + e.GetType().Name + " " + e.Message); }
+		}
+
 		[ConsoleCommand(name: "CIBackground", docs: "Dev: keeps the game running while its window is not in front (for automated tests)")]
 		public static void RunInBackground()
 		{

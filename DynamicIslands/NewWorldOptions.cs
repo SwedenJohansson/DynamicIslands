@@ -8,11 +8,11 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// "Custom Islands plan" in Raft's New Game box: a button under the box cycles through the world plans (Random
-	/// islands, No custom islands, the saved plans) and shows the chosen plan's description. Pressing Create keeps the
+	/// "Custom Islands plan" in Raft's New Game box: a drop-down list of the world plans (Random islands, No custom
+	/// islands, the saved and downloaded plans), each with its description, and the chosen plan's description under it. Pressing Create keeps the
 	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded.
-	/// Above it, "World randomizer": how much the world is randomized (off, light, normal, wild) and which parts
-	/// (WorldRandomizer.Pending; the last choice is remembered for the next world).
+	/// "World randomizer" (in the World settings window): how much the world is randomized (a drop-down: off, light,
+	/// normal, wild) and which parts (WorldRandomizer.Pending; the last choice is remembered for the next world).
 	/// </summary>
 	[HarmonyPatch(typeof(NewGameBox), "Open")]
 	static class NewWorldOptions
@@ -52,7 +52,8 @@ namespace DynamicIslands.Editor
 				UIKit.Size(title.gameObject, -1, 18);
 				moreButton = UIKit.Button(head, "Get more...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 96, 20f, 11);
 				moreButton.name = "Button_GetMorePlans";
-				planButton = UIKit.Button(row, "", Cycle, null, -1, 32f, 15);
+				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
+					"Which islands the new world gets: pick a plan - each says what it does", 32f, 14);
 				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				UIKit.Size(detailText.gameObject, -1, 42);
 				detailText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -69,7 +70,8 @@ namespace DynamicIslands.Editor
 		{
 			randRow = UIKit.Group(parent, "World randomizer", "CustomIslands_Randomizer");
 			UIKit.Hint(randRow.gameObject, "Makes a normal Raft world different every time: animal colours, alphas, more animals, moved and extra loot, finds, oddity islands and boss lairs. Raft's story is never changed.");
-			levelButton = UIKit.Button(randRow, "", CycleLevel, "How much is randomized: off, light, normal or wild", -1, 28f, 14);
+			levelButton = DropList.Make(randRow, "Drop_RandomizerLevel", LevelOptions(), Randomizer.Level.ToString(), v => { Randomizer.Level = int.Parse(v); Show(); }, -1,
+				"How much is randomized: off, light, normal or wild", 28f, 13);
 			partButtons.Clear();
 			for (int r = 0; r < 2; r++)
 			{
@@ -122,19 +124,28 @@ namespace DynamicIslands.Editor
 			f.SetAsLastSibling();
 		}
 
-		static void Cycle()
+		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
+		static List<DropList.Option> PlanOptions()
 		{
-			List<string> plans = WorldPlan.All();
-			int i = plans.FindIndex(p => p.Equals(Selected, StringComparison.OrdinalIgnoreCase));
-			WorldDirector.PendingPlan = plans[(i + 1) % plans.Count];
-			Show();
+			return WorldPlan.All().Select(n => WorldPlan.Load(n)).Where(p => p != null).Select(p => new DropList.Option(p.Name, p.Name, Describe(p))).ToList();
 		}
 
-		static void CycleLevel()
+		static string Describe(WorldPlan p)
 		{
-			RandomizerSettings s = Randomizer;
-			s.Level = (s.Level + 1) % RandomizerSettings.LevelNames.Length;
-			Show();
+			return (p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)") + (p.BuiltIn ? "" : " · random islands " + (p.Random ? "too" : "off"));
+		}
+
+		static List<DropList.Option> LevelOptions()
+		{
+			return Enumerable.Range(0, RandomizerSettings.LevelNames.Length).Select(i => new DropList.Option(i.ToString(), RandomizerSettings.LevelNames[i], LevelText(i))).ToList();
+		}
+
+		static string LevelText(int level)
+		{
+			return level == RandomizerSettings.Off ? "A normal Raft world. Pick Light, Normal or Wild to make this one different." :
+				level == RandomizerSettings.Light ? "Now and then something is different." :
+				level == RandomizerSettings.Normal ? "A good share of the world is different: colours, animals, loot and odd islands." :
+				"Lots of surprises: many colours, alphas, loot and odd islands.";
 		}
 
 		static void TogglePart(int i)
@@ -151,23 +162,24 @@ namespace DynamicIslands.Editor
 			{
 				WorldPlan p = WorldPlan.Load(Selected);
 				if (p == null) { WorldDirector.PendingPlan = WorldPlan.RandomName; p = WorldPlan.Load(WorldPlan.RandomName); }
-				UIKit.LabelOf(planButton).text = p.Name + "   ►";
-				detailText.text = (p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)") + (p.BuiltIn ? "" : " · random islands " + (p.Random ? "too" : "off"));
+				DropdownButton d = planButton.GetComponent<DropdownButton>();
+				if (d != null) { d.Options = PlanOptions(); d.Value = p.Name; }
+				UIKit.LabelOf(planButton).text = p.Name;
+				detailText.text = Describe(p);
 			}
 			if (levelButton != null)
 			{
 				RandomizerSettings s = Randomizer;
-				UIKit.LabelOf(levelButton).text = s.LevelName + "   ►";
+				DropdownButton d = levelButton.GetComponent<DropdownButton>();
+				if (d != null) d.Value = s.Level.ToString();
+				UIKit.LabelOf(levelButton).text = s.LevelName;
 				for (int i = 0; i < partButtons.Count; i++)
 				{
 					bool on = s.On && !s.Disabled.Contains(RandomizerSettings.Features[i]);
 					UIKit.SetActive(partButtons[i], on);
 					partButtons[i].interactable = s.On;
 				}
-				randText.text = !s.On ? "A normal Raft world. Pick Light, Normal or Wild to make this one different." :
-					s.Level == RandomizerSettings.Light ? "Now and then something is different." :
-					s.Level == RandomizerSettings.Normal ? "A good share of the world is different: colours, animals, loot and odd islands." :
-					"Lots of surprises: many colours, alphas, loot and odd islands.";
+				randText.text = LevelText(s.Level) + (s.On ? " Lit parts are on: click one to leave it out." : "");
 			}
 			if (Shown != null) try { Shown(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] " + e.Message); }
 		}

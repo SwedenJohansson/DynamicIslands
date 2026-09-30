@@ -491,29 +491,32 @@ namespace DynamicIslands
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
-			// (the plan's own button, not the head's "Get more..." - the island library)
-			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => UIKit.LabelOf(x) == null || !UIKit.LabelOf(x).text.StartsWith("Get more")) : null;
+			// (the plan's drop-down list, not the head's "Get more..." - the island library)
+			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Drop_Plan") : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
-			if (plan == null) { Fail("New Game box clicks: no plan button"); yield break; }
-			// The plan button: round every plan
+			if (plan == null) { Fail("New Game box clicks: no plan list"); yield break; }
+			// The plan list: every plan picked in turn from the list clicked open
 			List<string> plans = WorldPlan.All();
-			string first = UIKit.LabelOf(plan).text;
+			string first = NewWorldOptions.Selected;
 			var seen = new List<string>();
 			var wrongDetail = new List<string>();
-			for (int i = 0; i < plans.Count; i++)
+			foreach (string name in plans)
 			{
-				plan.onClick.Invoke();
+				bool picked = DropList.Click(plan, name);
 				yield return null;
-				string label = UIKit.LabelOf(plan).text.Replace("►", "").Trim();
-				seen.Add(label);
+				string label = UIKit.LabelOf(plan).text.Trim();
+				if (picked) seen.Add(label);
 				WorldPlan p = WorldPlan.Load(label);
 				if (p == null || detail == null || !detail.text.StartsWith(p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)")) wrongDetail.Add(label);
 			}
-			Check(ref ok, seen.Distinct().Count() == plans.Count && UIKit.LabelOf(plan).text == first, "the plan button goes round all " + plans.Count + " plans and back (" + string.Join(", ", seen.ToArray()) + ")");
+			DropList.Click(plan, first);
+			yield return null;
+			Check(ref ok, seen.Distinct().Count() == plans.Count && NewWorldOptions.Selected == first, "the plan list has all " + plans.Count + " plans, each picked from it (" + string.Join(", ", seen.ToArray()) + "), and back to '" + first + "'");
 			Check(ref ok, wrongDetail.Count == 0, "each plan shows its description" + (wrongDetail.Count > 0 ? " - not: " + string.Join(", ", wrongDetail.ToArray()) : ""));
 			Check(ref ok, plans.Contains(wantPlan), "the player's plan '" + wantPlan + "' is among them");
-			for (int i = 0; i < plans.Count && NewWorldOptions.Selected != wantPlan; i++) { plan.onClick.Invoke(); yield return null; }
-			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "clicked to '" + wantPlan + "': chosen (" + NewWorldOptions.Selected + ")");
+			DropList.Click(plan, wantPlan);
+			yield return null;
+			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "picked '" + wantPlan + "' from the list: chosen (" + NewWorldOptions.Selected + ")");
 			// The randomizer: level round, then each part
 			// (the randomizer is in the World settings window now: opened from the box's button, as a player does)
 			if (WorldSettingsWindow.OpenButton != null) WorldSettingsWindow.OpenButton.onClick.Invoke();
@@ -524,9 +527,9 @@ namespace DynamicIslands
 			else
 			{
 				var levels = new List<string>();
-				for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++) { level.onClick.Invoke(); yield return null; levels.Add(NewWorldOptions.Randomizer.LevelName); }
-				Check(ref ok, levels.Distinct().Count() == RandomizerSettings.LevelNames.Length, "the level button goes round: " + string.Join(" > ", levels.ToArray()));
-				for (int i = 0; i < 4 && NewWorldOptions.Randomizer.Level != RandomizerSettings.Wild; i++) { level.onClick.Invoke(); yield return null; }
+				for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++) { if (DropList.Click(level, i.ToString())) levels.Add(NewWorldOptions.Randomizer.LevelName + (UIKit.LabelOf(level).text == NewWorldOptions.Randomizer.LevelName ? "" : "(label " + UIKit.LabelOf(level).text + ")")); yield return null; }
+				Check(ref ok, levels.Distinct().Count() == RandomizerSettings.LevelNames.Length && levels.All(l => !l.Contains("(label")), "the level list: each picked from it - " + string.Join(" > ", levels.ToArray()));
+				DropList.Click(level, RandomizerSettings.Wild.ToString()); yield return null;
 				var parts = rb.Skip(1).ToArray();
 				var badParts = new List<string>();
 				for (int i = 0; i < parts.Length && i < RandomizerSettings.Features.Length; i++)
@@ -542,7 +545,7 @@ namespace DynamicIslands
 					if (was) { parts[i].onClick.Invoke(); yield return null; }
 				}
 				Check(ref ok, parts.Length == RandomizerSettings.Features.Length && badParts.Count == 0, parts.Length + " part buttons, each switches its part off and on" + (badParts.Count > 0 ? " - not: " + string.Join(", ", badParts.ToArray()) : ""));
-				for (int i = 0; i < 4 && NewWorldOptions.Randomizer.Level != RandomizerSettings.Off; i++) { level.onClick.Invoke(); yield return null; }
+				DropList.Click(level, RandomizerSettings.Off.ToString()); yield return null;
 				Check(ref ok, parts.All(b => !b.interactable), "Off: the part buttons greyed out");
 			}
 			Screenshot(new[] { "newgame_clicked" });

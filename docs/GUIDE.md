@@ -124,7 +124,7 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) |
+| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
 Then click Raft's **Create** as usual. Your choices are remembered for the next new world. They belong to the world:
@@ -1039,7 +1039,7 @@ use **When players reach an island** for those (next step).
 you click **Close**: Close throws away changes since the last save.
 
 **11. Play it.** Go back to the main menu (**MAIN MENU**, top right) → **NEW WORLD**. At the bottom right, click the
-**Custom Islands plan** button until it says **Castaway trail**, then click Raft's **Create**. In the world:
+**Custom Islands plan** list and choose **Castaway trail**, then click Raft's **Create**. In the world:
 - the old camp is 350 m ahead of the raft right away, with the message on screen and "Old camp" on your Receiver;
 - finish the camp's quest (the quest panel shows its steps) and the cove comes 800 m to the north-east;
 - sail to the cove: when you reach it, the treasure island appears near it;
@@ -1181,7 +1181,7 @@ names are the same every time, its exact places aren't.
 
 ### 7.6 Playing, changing and sharing a plan
 
-- **Choose it** in the New Game box: click **Custom Islands plan** until it shows your plan, then **Create**. The
+- **Choose it** in the New Game box: click the **Custom Islands plan** list and choose your plan, then **Create**. The
   choice is remembered for the next new world. In a running world, the host can give it another plan with F10 →
   `WorldPlan <name>`; `WorldPlan` on its own shows the plan and which rules have fired.
 - **Multiplayer:** only the host needs the plan and its islands. Players who join get every island as it appears
@@ -1312,7 +1312,7 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Done** c
 |---|---|
 | **World rules: monster difficulty** | How tough monsters are in this world: Timid, Normal, Fierce, Savage or Nightmare (see [section 9.2](#92-world-rules-monster-difficulty-and-build-cost)) |
 | **World rules: build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded up |
-| **World randomizer** | A normal Raft world made different: Off, Light, Normal or Wild, and which parts take part (click a part to switch it off; see [section 9.3](#93-the-world-randomizer)) |
+| **World randomizer** | A normal Raft world made different: a ▼ list with Off, Light, Normal or Wild (each says what it means), and which parts take part (lit parts are on: click a part to switch it off; see [section 9.3](#93-the-world-randomizer)) |
 | **Extra options** | More ways to play Raft again, for players who know it by heart: each switched **ON** or off with its own button (below) |
 | **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
 
