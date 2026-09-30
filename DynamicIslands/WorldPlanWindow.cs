@@ -67,6 +67,8 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null) return;
 			DropList.Close();
+			// (its Check report belongs to it: left open, it stayed on the screen after World Plans closed)
+			PlanCheckWindow.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}

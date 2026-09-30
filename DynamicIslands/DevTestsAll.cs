@@ -366,7 +366,7 @@ namespace DynamicIslands
 				catch (Exception e) { Debug.LogWarning("[CITEST] closing " + t.Name + ": " + (e.InnerException ?? e).Message); }
 		}
 
-		static readonly Type[] StaticWindows = { typeof(LibraryWindow), typeof(LibraryExportWindow), typeof(LibraryImportWindow), typeof(IslandPickerWindow), typeof(WorldSettingsWindow) };
+		static readonly Type[] StaticWindows = { typeof(LibraryWindow), typeof(LibraryExportWindow), typeof(LibraryImportWindow), typeof(IslandPickerWindow), typeof(WorldSettingsWindow), typeof(PlanCheckWindow) };
 
 		/// <summary>The static windows open now (names).</summary>
 		static IEnumerable<string> OpenStaticWindows()
