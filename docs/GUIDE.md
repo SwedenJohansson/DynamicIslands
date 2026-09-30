@@ -784,9 +784,10 @@ Select any object → **Behaviour + events...**. No code needed:
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, or all the animals of a
   spot are defeated → show / hide objects, open / close doors, say a message, give items, play a sound, teleport the
-  player, send a signal, write a journal page, or **wait** some seconds first.
+  player, send a signal, write a journal page, or **wait** some seconds first. Each action is chosen from a **▼ list**
+  that says what it does; **…** beside a name lists the names on this island.
 - **Only if ...:** the player **has** an item or story item (or **uses one up**, like a key), an object is open,
-  closed, shown or hidden, a signal was sent, the quest reached a step. Turn a check round with **not**; ask for
+  closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
