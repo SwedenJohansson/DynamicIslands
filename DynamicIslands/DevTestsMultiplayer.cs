@@ -152,11 +152,8 @@ namespace DynamicIslands
 			Vector3 target = t.position + new Vector3(offset, 0f, offset);
 			RaycastHit hit;
 			if (Physics.Raycast(target + Vector3.up * 30f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
-			CharacterController cc = player.PersonController.controller;
-			cc.enabled = false;
-			player.transform.position = target;
-			player.PersonController.SwitchControllerType(ControllerType.Ground);
-			cc.enabled = true;
+			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
+			PlayerMove.To(player, target);
 			KeepAlive(player);
 		}
 
@@ -182,11 +179,8 @@ namespace DynamicIslands
 			Vector3 target = middle.Value + Vector3.up * 1.5f;
 			RaycastHit hit;
 			if (Physics.Raycast(middle.Value + Vector3.up * 20f, Vector3.down, out hit, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore)) target.y = hit.point.y + 1.2f;
-			CharacterController cc = player.PersonController.controller;
-			cc.enabled = false;
-			player.transform.position = target;
-			player.PersonController.SwitchControllerType(ControllerType.Ground);
-			cc.enabled = true;
+			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
+			PlayerMove.To(player, target);
 			KeepAlive(player);
 			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing"));
 		}
