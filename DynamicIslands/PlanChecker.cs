@@ -37,7 +37,7 @@ namespace DynamicIslands.Editor
 				Notes = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Chests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public readonly Dictionary<string, int> Creatures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 			public readonly HashSet<string> CreaturesComeBack = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			public int NoteCount, ChestCount, Objects;
+			public int NoteCount, ChestCount, RaftCrates, Objects;
 			public string AllText = ""; // (every setting's value: to see whether a story item is given anywhere)
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
@@ -58,6 +58,7 @@ namespace DynamicIslands.Editor
 				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(z); }
 				if (ObjectProps.IsNote(o.Name, p)) { x.NoteCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(t); }
 				if (ObjectProps.IsLoot(o.Name, p)) { x.ChestCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Chests.Add(t); }
+				if (o.Name == PlaceableCatalog.RaftCrate) x.RaftCrates++;
 				ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Name);
 				if (k != null)
 				{
@@ -295,7 +296,7 @@ namespace DynamicIslands.Editor
 						break;
 					case "open":
 						if (t.Length > 0 && !f.Chests.Contains(t)) c.Add(i, Level.Problem, head + " needs a chest titled \"" + t + "\", which the island doesn't have" + (f.Chests.Count > 0 ? " (its chests: " + List(f.Chests) + ")" : "") + tail, fix);
-						else if (t.Length == 0 && f.ChestCount == 0) c.Add(i, Level.Problem, head + " needs a chest to open, and the island has none" + tail, fix);
+						else if (t.Length == 0 && f.ChestCount == 0) c.Add(i, Level.Problem, head + " needs a chest to open, and the island has none" + (f.RaftCrates > 0 ? " (its abandoned raft crates don't count: place a chest from Loot & chests)" : "") + tail, fix);
 						break;
 					case "kill":
 					case "catch":

@@ -220,7 +220,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
 		{
-			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest)" },
+			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest; not the abandoned raft crate)" },
 			{ "kill", "creature (e.g. Warthog; empty = any)" }, { "catch", "animal (e.g. Llama; empty = any)" },
 			{ "collect", "story item (\u2026 to choose)" }, { "pages", "empty = this island, all = any island" },
 		};

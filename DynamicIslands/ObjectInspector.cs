@@ -101,9 +101,14 @@ namespace DynamicIslands.Editor
 			else
 			{
 				bool note = ObjectProps.IsNote(target.GameObjectName, target.Props), loot = ObjectProps.IsLoot(target.GameObjectName, target.Props);
-				if (note) NoteGroup(target);
-				if (loot) LootGroup(target, false);
-				if (!note || !loot) AddFeatureGroup(target, note, loot);
+				// (Raft's abandoned raft crate: Raft's own loot - what it can't do, instead of making it readable or a chest)
+				if (target.GameObjectName == PlaceableCatalog.RaftCrate) RaftCrateGroup();
+				else
+				{
+					if (note) NoteGroup(target);
+					if (loot) LootGroup(target, false);
+					if (!note || !loot) AddFeatureGroup(target, note, loot);
+				}
 			}
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
@@ -218,6 +223,16 @@ namespace DynamicIslands.Editor
 		}
 
 		static string Escape(string s) { return s.Replace("<", "\u2039").Replace(">", "\u203A"); }
+
+		/// <summary>The abandoned raft crate: what it gives, and what it can't do.</summary>
+		static void RaftCrateGroup()
+		{
+			RectTransform g = UIKit.Group(root, "Abandoned raft crate");
+			Text t = UIKit.Label(g, "Raft's own crate from the abandoned rafts. Players take it whole with the interact key (E) and get a handful of random items from Raft's loot for those rafts (now and then a cooking recipe or a mystery package).", 12, UIKit.TextMuted);
+			t.lineSpacing = 1.05f;
+			Text w = UIKit.Label(g, "• <b>What's inside can't be chosen</b>: for chosen loot, place a chest (Loot & chests) instead.\n• <b>It doesn't count for a quest's \"Open a chest\" step</b> - a chest does.", 12, UIKit.Accent);
+			w.lineSpacing = 1.05f;
+		}
 
 		/// <summary>What players can do with this object in a world, for the features it doesn't have yet.</summary>
 		static void AddFeatureGroup(EditorGameObject target, bool note, bool loot)

@@ -70,6 +70,8 @@ namespace DynamicIslands.Editor
 			/// <summary>Optional second group from the same island, in another category (e.g. its underwater props).</summary>
 			public Regex Include2;
 			public string Category2;
+			/// <summary>Switch the scene off the moment it arrives (a drifting raft floats with a script that throws without the sea).</summary>
+			public bool Hide;
 		}
 
 		/// <summary>Sunken props around Raft's islands: barrels, containers, buoys, sea vines (roadmap 1.6 "enhancing the ocean floor").</summary>
@@ -99,7 +101,7 @@ namespace DynamicIslands.Editor
 			new Source { Scene = "46#Landmark_BalboaSmall#1", Category = ForestCategory, Include = ForestObjects, Harvest = true, Include2 = UnderwaterObjects, Category2 = UnderwaterCategory },
 			new Source { Scene = "44#Landmark_Vasagatan", Root = "Boat related", Category = PropsCategory },
 			// (a drifting raft: only its crate - the box with random loot players grab on Raft's abandoned rafts - with its gameplay)
-			new Source { Scene = "15#Landmark_Raft#Floating raft", Category = PropsCategory, Include = new Regex("(?!)"), Harvest = true },
+			new Source { Scene = "15#Landmark_Raft#Floating raft", Category = PropsCategory, Include = new Regex("(?!)"), Harvest = true, Hide = true },
 		};
 
 		public static string WhitelistPath { get { return Path.Combine(DynamicIslands.assetpath, "placeables.txt"); } }
@@ -339,7 +341,7 @@ namespace DynamicIslands.Editor
 			foreach (Source source in Sources)
 			{
 				var opened = new OpenedScene();
-				yield return OpenScene(source.Scene, opened);
+				yield return OpenScene(source.Scene, opened, source.Hide);
 				BuildDone++;
 				if (!opened.Scene.IsValid()) continue;
 				Scene scene = opened.Scene;

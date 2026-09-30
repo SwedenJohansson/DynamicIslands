@@ -267,6 +267,7 @@ namespace DynamicIslands.Editor
 		{
 			CreatureKind k = CreatureOf(name);
 			if (k != null) return "a live " + k.Label.ToLowerInvariant() + " appears here in a world: " + k.Hint + ". Select it to change its stats and colour";
+			if (name == PlaceableCatalog.RaftCrate) return "Raft's own crate from the abandoned rafts: players take it whole (E) and get random loot from Raft's table. Its contents can't be chosen (use a chest for chosen loot), and it doesn't count for a quest's \"Open a chest\" step";
 			if (IsNoteObject(name)) return "players read it in a world with the interact key (E). Select it to write the text";
 			if (IsLootObject(name)) return "players open it in a world with the interact key (E) and get what's inside. Select it to choose the items";
 			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";

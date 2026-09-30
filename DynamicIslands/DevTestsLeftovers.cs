@@ -294,6 +294,35 @@ namespace DynamicIslands
 				Check(ref ok, DynamicIslands.SaveIsland(CrateIsland), "a small island with the crate saved as '" + CrateIsland + "'");
 				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(CrateIsland));
 				Check(ref ok, f.Objects.Any(o => o.Name == crate), "the island file has the crate");
+
+				// Its two limits, where builders look: the list's hint, the inspector, Check
+				string hint = ContentCatalog.Hint(crate) ?? "";
+				Check(ref ok, hint.Contains("can't be chosen") && hint.Contains("Open a chest"), "the object list's hint tells both limits");
+				EditorUI.SetTab(TAB.ObjectPlace);
+				DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+				DynamicIslands.EditorGizmoHandler.AddTarget(go.transform, false);
+				ObjectInspector.Refresh();
+				yield return null;
+				yield return new WaitForSecondsRealtime(0.3f);
+				Transform group = EditorUI.Canvas.transform.GetComponentsInChildren<Transform>(true).FirstOrDefault(x => x.name == "Group_Abandoned raft crate");
+				string said = group != null ? string.Join(" ", group.GetComponentsInChildren<UnityEngine.UI.Text>(true).Select(x => x.text).ToArray()) : "";
+				Check(ref ok, group != null && group.gameObject.activeInHierarchy && said.Contains("can't be chosen") && said.Contains("Open a chest"), "the inspector's 'Abandoned raft crate' group tells both limits");
+				Check(ref ok, !EditorUI.Canvas.GetComponentsInChildren<UnityEngine.UI.Button>(false).Any(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("A chest")), "the inspector doesn't offer to make it a chest");
+				Screenshot(new[] { "raft_crate_inspector" });
+				yield return new WaitForSecondsRealtime(0.5f);
+				EditorUI.SetTab(TAB.TerrainEdit);
+				var quest = new IslandQuest { Title = "Test" };
+				quest.Steps.Add(new IslandQuest.Step { Type = "open" });
+				quest.To(f.Props);
+				f.Save(IslandSpawner.PathFor(CrateIsland));
+				var plan = new WorldPlan { Name = "CI crate plan", Random = false };
+				plan.Rules.Add(IntroRule.Parse("start | island:" + CrateIsland + " | start | ahead:300 | A test | Start"));
+				plan.Rules.Add(IntroRule.Parse("after | type:camp | quest:start | near:start:600:any | msg | A"));
+				List<PlanChecker.Finding> found = PlanChecker.Check(plan, false, true);
+				PlanChecker.Finding open = found.FirstOrDefault(x => x.Rule == 1 && x.Level == PlanChecker.Level.Problem && x.Text.Contains("needs a chest to open"));
+				Check(ref ok, open != null && open.Text.Contains("raft crates don't count"), "Check: an \"Open a chest\" step on an island with only the raft crate is a problem, and says the crate doesn't count" + (open != null ? " (" + open.Text + ")" : ""));
+				foreach (string key in f.Props.Keys.Where(k => k.StartsWith("quest.")).ToList()) f.Props.Remove(key);
+				f.Save(IslandSpawner.PathFor(CrateIsland));
 			}
 			DynamicIslands.NewIsland();
 			if (ok) Log("PASS: raft crate editor"); else Fail("raft crate editor");

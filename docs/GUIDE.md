@@ -668,7 +668,9 @@ quickly; it fills up again after 3 days, or never.*
 **The abandoned raft crate.** "Loot & chests" also has Raft's own **Abandoned raft crate**: the box you grab on the
 small abandoned rafts that drift by in Raft. In a world it works as there: a player takes it whole (look at it, **E**) and
 gets a handful of random items from Raft's own loot for those rafts - now and then a cooking recipe or a mystery package.
-Its contents can't be chosen (use a chest for that), and it doesn't count for a quest's "Open a chest" step. Once taken it
+Its contents **can't be chosen** (use a chest for chosen loot), and it **doesn't count for a quest's "Open a chest" step** -
+the editor says so too, in the object list's hint and on the crate's own panel when you select it, and Check tells
+you when a quest needs a chest and the island only has raft crates. Once taken it
 stays gone, and comes back after the island's regrow days like harvested things ([4.4](#44-the-island-tab); 0 = never).
 
 ### 5.4 Trigger zones and ambushes
@@ -716,7 +718,7 @@ reward and a closing message.
 planks and rope, and when the quest is done it brings a saved island "Old camp" 700 m north, with a message and a
 name on the Receiver.*
 
-Steps: **go to** a trigger zone, **read** a note, **open** a chest, **defeat** or **catch** a number of animals,
+Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages. Steps point at things on the island by name; the
 editor lists the names it knows.
 
