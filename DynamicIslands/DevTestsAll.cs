@@ -409,6 +409,10 @@ namespace DynamicIslands
 				if (j != null) { run.Windows++; yield return TestWindow(run, j, null, "Journal", 1); }
 				Check(ref ok, !JournalWindow.IsOpen, "the journal closes");
 				var go = new GameObject("CI_TestNote");
+				// (beside the player: the reader closes itself when the player is more than 8 m from the note - at the world's
+				// origin it was hundreds of metres off, and closed before the check when a frame was slow)
+				Network_Player me = RAPI.GetLocalPlayer();
+				if (me != null) go.transform.position = me.transform.position + Vector3.forward;
 				CustomNote n = go.AddComponent<CustomNote>();
 				n.Title = "Button test"; n.Text = "A note for the button test.";
 				NoteReader.Open(n);
