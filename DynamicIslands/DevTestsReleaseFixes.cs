@@ -237,7 +237,31 @@ namespace DynamicIslands
 				(p != null && p.PersonController != null ? p.PersonController.controller.isGrounded.ToString() : "?") + " velocity " + (body != null ? body.velocity.ToString("F2") : "?") + " kinematic " + (body != null && body.isKinematic));
 		}
 
-		[ConsoleCommand(name: "CIRaftCalm", docs: "Dev, world: the raft back on the sea at rest (no speed, no spin, upright at sea level) - after a test dragged it at test speed")]
+		[ConsoleCommand(name: "CIRaftDiag", docs: "Dev, world: RAFTDIAG - the raft's body (position, speed, spin, gravity, kinematic, constraints), its buoyancy centre, the sea's height (Raft's water object), Raft's world shifts so far, the player - why a raft ends up far above or below the sea")]
+		public static void RaftDiagCommand()
+		{
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj == null || raftObj.body == null) { Fail("raft diag: no raft"); return; }
+			Rigidbody b = raftObj.body;
+			string water = "?";
+			try
+			{
+				Type wt = HarmonyLib.AccessTools.TypeByName("UltimateWater.Water");
+				UnityEngine.Object w = wt != null ? UnityEngine.Object.FindObjectOfType(wt) : null;
+				if (w != null) water = ((Component)w).transform.position.y.ToString("F2");
+			}
+			catch (Exception e) { water = e.GetType().Name; }
+			string buoy = "?";
+			try { Buoyancy by = raftObj.GetComponentInChildren<Buoyancy>(true); if (by != null) buoy = by.CenterPointY.ToString("F2") + (by.enabled ? "" : " (off)"); } catch (Exception e) { buoy = e.GetType().Name; }
+			string shifts = "?";
+			try { WorldShiftManager ws = UnityEngine.Object.FindObjectOfType<WorldShiftManager>(); if (ws != null) shifts = HarmonyLib.Traverse.Create(ws).Field("shiftCounter").GetValue<int>().ToString(); } catch (Exception e) { shifts = e.GetType().Name; }
+			Network_Player p = RAPI.GetLocalPlayer();
+			Log("RAFTDIAG body " + b.position.ToString("F1") + " vel " + b.velocity.ToString("F2") + " spin " + b.angularVelocity.ToString("F2") + " gravity " + b.useGravity + " kinematic " + b.isKinematic + " constraints " + b.constraints +
+				" | raft object y " + raftObj.transform.position.y.ToString("F2") + " | buoyancy centre y " + buoy + " | sea (water object) y " + water + " | world shifts " + shifts +
+				" | player " + (p != null ? p.transform.position.ToString("F1") + " " + (p.PersonController != null ? p.PersonController.controllerType.ToString() : "") : "none") + " | t " + Time.time.ToString("F0"));
+		}
+
+		[ConsoleCommand(name: "CIRaftCalm", docs:"Dev, world: the raft back on the sea at rest (no speed, no spin, upright at sea level) - after a test dragged it at test speed")]
 		public static void RaftCalmCommand()
 		{
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
