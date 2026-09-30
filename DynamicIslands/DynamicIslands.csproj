@@ -123,6 +123,8 @@
     <Compile Include="Housekeeping.cs" />
     <Compile Include="HotkeyHints.cs" />
     <Compile Include="DropList.cs" />
+    <Compile Include="PlanChecker.cs" />
+    <Compile Include="PlanCheckWindow.cs" />
     <Compile Include="DevTestsLeftovers.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="ScrambledBlueprints.cs" />

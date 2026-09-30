@@ -1054,28 +1054,36 @@ signals can't be listed: its list is empty and says so - type the name.
 
 ### 7.5 Check: finding and fixing problems
 
-Click **Check** any time (**Save** checks too). What it can say, and what to do:
+Click **Check** any time. It goes through the plan the way a world will play it, and looks **inside the islands** too:
+each island's quest step by step (is there a zone, a note, a chest or creatures with the name each step needs?), its
+trigger zones and signals, and - for new islands of a map type - a sample island of that type. Then a report opens:
 
-| Check says | What's wrong | Fix |
+![Check's report](images/plan-check.jpg)
+*Check's report: each finding with its level, the rule it is about, why, how to fix it, and **Show rule** to go to its card.*
+
+- **Problem** (red): the rule can't work - it never brings its island. Fix these first.
+- **Warning** (yellow): it may not work as you mean (for example it waits for an island no rule of the plan brings).
+- **Tip** (blue): good to know (no message, very far away, Raft's story...).
+
+After the first Check, every card shows its own problems and warnings in red and yellow under its sentence, and they
+follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
+problem. The report's **Check again** checks after you changed something.
+
+What Check looks for:
+
+| | Problems (it can't work) | Warnings and tips |
 |---|---|---|
-| `√ Every rule can work.` | Nothing | - |
-| `has no id` / `id 'camp' is used twice` | A rule has no name, or two have the same | Give every rule its own id |
-| `no island chosen` / `there's no saved island 'X'` | The island name is empty or misspelt, or the island isn't saved | Pick it with **…**, or save the island in the editor first |
-| `there's no map type 'X'` | A misspelt map type | Pick it with **…** |
-| `none of 'X, Y' are saved islands` | "one of these" has no island that exists | Fix the names (commas between them) |
-| `needs a number` | "after sailing" or "on day" has no number | Type the km or the day |
-| `waits for rule 'X', which isn't in the plan` | "after rule" names an id that isn't there | Type an id from your plan |
-| `is placed near 'X': no rule or island has that name` | **of** names nothing | Type a rule id or an island name |
-| `is placed near 'where it happened', but ... happens at no island: name one` | "near an island" with an empty **of**, but the rule waits for the start, km, day or another rule | Type an island in **of**, or use "ahead of the raft" |
+| **Names** | a rule with no name, two rules with the same name | |
+| **WHEN** | no number for a distance or a day; a quest wait at an island **without a quest**; a quest that **can't be finished** (a step needs a zone, note, chest or creatures the island hasn't, or more pages than it has notes); more steps than the quest has; a **zone** or **signal** the island hasn't (Check lists the ones it has); an island or rule name that doesn't exist; a rule that waits for itself; **rules that wait for each other in a circle** | waits for a saved island **no rule of the plan brings** (a problem when random islands are off); waits for a rule that has a problem; needs more creatures than the island has (and they don't come back); a story item nothing on the island gives; a distance or day so large it's slow to test |
+| **BRING** | no island chosen, an island that isn't saved, a map type that doesn't exist, a list with no saved island, an empty spawn pool | some islands of a list aren't saved; a very big island (over 12 000 objects); the same island brought twice |
+| **WHERE** | near an island nobody has; near "the island where it happened" when the WHEN happens at no island; near its own island | near a saved island no rule brings; near a rule it doesn't wait for (it waits until that island is there); very far away |
+| **TELL** | | no message; found by Receiver but no Receiver name |
+| **STORY** | its "done when" can't happen (as WHEN above) | after an island that isn't in the story; Raft's story order and missing blueprints |
+| **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 
-Yellow lines starting with **Story:** or **Tip:** are about Raft's story ([6.5](#65-your-islands-in-rafts-story-the-receiver)).
-They are recommendations only.
-
-Check can't know everything. Test your plan: create a world with it and play it through (F10 → `WorldPlan` shows which
-rules have fired). Common reasons a rule never fires:
-- "When a quest is done" at an island that has no quest - use "When players reach an island";
-- a zone or signal name that isn't exactly the name on the island (pick it from the **▾** list instead of typing);
-- a big number: "after sailing 20 km" or "on day 30" can take a long time to come in play (test with small numbers first).
+Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
+shows which rules have fired). A map type's island is made new in each world, so Check looks at a sample of it: its
+names are the same every time, its exact places aren't.
 
 ### 7.6 Playing, changing and sharing a plan
 

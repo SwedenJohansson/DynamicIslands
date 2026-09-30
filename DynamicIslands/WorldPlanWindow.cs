@@ -91,6 +91,8 @@ namespace DynamicIslands.Editor
 			ShowRandom();
 			ShowRules();
 			problemsText.text = "";
+			findings = null;
+			ownFacts = null;
 		}
 
 		void ShowRandom()
@@ -133,7 +135,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.IsOpen) return;
+			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.IsOpen || PlanCheckWindow.IsOpen) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
@@ -271,6 +273,12 @@ namespace DynamicIslands.Editor
 		void ShowRules()
 		{
 			DropList.Close();
+			if (findings != null && !inCheck)
+			{
+				inCheck = true;
+				try { findings = PlanChecker.Check(plan, islandMode, false, ownFacts); ShowFindings(); }
+				finally { inCheck = false; }
+			}
 			foreach (Transform child in rulesList) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(rulesList));
 			for (int i = 0; i < plan.Rules.Count; i++) RuleCard(i);
@@ -308,6 +316,7 @@ namespace DynamicIslands.Editor
 			describe.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(describe.gameObject, -1, 34);
 			height += 34f + 6f;
+			CardFindings(card, index, ref height);
 
 			// WHEN
 			RectTransform when = Section(card, "WHEN", ref height);
@@ -677,8 +686,10 @@ namespace DynamicIslands.Editor
 		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Custom Islands plan).";
 		const string HelpMap = "A rough sketch from above of where the rules put their islands: the raft starts in the middle and sails up (north). " +
 			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (yellow).";
-		const string HelpCheck = "Check looks for rules that can't work: an island that isn't saved, a map type or rule id that doesn't exist, a missing number, " +
-			"\"near an island\" with no island to be near. \"√ Every rule can work\" means none. Save checks too.\n\n" +
+		const string HelpCheck = "Check goes through the plan the way a world will play it, and looks inside the islands: can each island's quest be finished " +
+			"(is there a zone, note, chest or creatures for every step)? Do the zones and signals the rules wait for exist? Do rules wait for each other in a circle, " +
+			"or for an island no rule brings? A report opens: problems (the rule can't work), warnings (it may not work as you mean) and tips, each with how to fix it. " +
+			"Afterwards each card shows its own problems as you edit. Save checks too.\n\n" +
 			"Check can't play the quests: create a world with the plan and try it (F10 → WorldPlan shows which rules have fired).";
 		const string HelpShare = "Export...: a pack (.zip) of this plan with every island it needs, to send to friends or to share in the island library (it saves the plan first).\n\n" +
 			"Import...: installs a pack someone made (plans and islands), or removes what you installed.";
@@ -771,20 +782,21 @@ namespace DynamicIslands.Editor
 		void Save()
 		{
 			Keep();
-			string problems = Problems();
+			List<PlanChecker.Finding> found = PlanChecker.Check(plan, islandMode, false, ownFacts);
+			string problems = found.Any(f => f.Level == PlanChecker.Level.Problem) ? "problems" : "";
 			if (islandMode)
 			{
 				IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules));
 				EditorUI.RefreshIsland();
-				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check lists problems" : ""), problems.Length > 0);
+				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
 			else
 			{
 				try { plan.Save(); }
 				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
-				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check lists problems" : ""), problems.Length > 0);
+				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
-			Check();
+			RunCheck(true, problems.Length > 0);
 		}
 
 		/// <summary>Export: the plan saved first (what's shared is what's saved), then the Share window.</summary>
@@ -877,84 +889,87 @@ namespace DynamicIslands.Editor
 
 		#region Check and map
 
-		/// <summary>What can't work in the plan, one line each ("" if nothing).</summary>
-		string Problems()
+		/// <summary>What the last check found (null until Check was clicked; then kept up to date as the plan changes).</summary>
+		List<PlanChecker.Finding> findings;
+		bool inCheck;
+		/// <summary>Island rules: what the island being edited has (read when Check is clicked).</summary>
+		PlanChecker.Facts ownFacts;
+
+		/// <summary>
+		/// Check: goes through the plan the way a world will play it - the rules, and inside the islands they name (their
+		/// quests step by step, their zones and signals; a sample of each map type) - and shows the report: problems,
+		/// warnings, tips, each with why and how to fix it. showReport: open the report (Check always; Save when there are
+		/// problems).
+		/// </summary>
+		void Check() { RunCheck(true, true); }
+
+		void RunCheck(bool deep, bool showReport)
 		{
-			var problems = new List<string>();
-			var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			var saved = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase);
-			for (int i = 0; i < plan.Rules.Count; i++)
+			Keep();
+			if (deep && islandMode)
 			{
-				IntroRule r = plan.Rules[i];
-				string n = (i + 1) + ". ";
-				if (r.Id.Length == 0) problems.Add(n + "has no id");
-				else if (!ids.Add(r.Id)) problems.Add(n + "id '" + r.Id + "' is used twice");
-				if (r.What == "island" && !saved.Contains(r.WhatArg)) problems.Add(n + (r.WhatArg.Length == 0 ? "no island chosen" : "there's no saved island '" + r.WhatArg + "'"));
-				if (r.What == "type" && MapTypes.Get(r.WhatArg) == null) problems.Add(n + "there's no map type '" + r.WhatArg + "'");
-				if (r.What == "oneof" && !r.WhatArg.Split(',').Any(x => saved.Contains(x.Trim()))) problems.Add(n + "none of '" + r.WhatArg + "' are saved islands");
-				if ((r.When == "km" || r.When == "day") && !float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out float _)) problems.Add(n + "needs a number");
-				if (r.When == "rule" && !plan.Rules.Any(x => x.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))) problems.Add(n + "waits for rule '" + r.WhenRef + "', which isn't in the plan");
-				if (r.When == "quest" || r.When == "step" || r.When == "zone" || r.When == "visit") problems.AddRange(RefProblems(n, r.WhenRef, r, saved));
-				if (r.Where == "near" && r.WhereRef.Length > 0 && !r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && RefIsland(r.WhereRef) == null && !saved.Contains(r.WhereRef))
-					problems.Add(n + "is placed near '" + r.WhereRef + "': no rule or island has that name");
-				if (!islandMode && r.Where == "near" && (r.WhereRef.Length == 0 || r.WhereRef == IntroRule.Self) && (r.When == "start" || r.When == "km" || r.When == "day" || r.When == "rule"))
-					problems.Add(n + "is placed near 'where it happened', but " + r.DescribeWhen().ToLowerInvariant() + " happens at no island: name one");
+				try { ownFacts = PlanChecker.FromFile(DynamicIslands.CaptureIsland(DynamicIslands.currentIslandName), DynamicIslands.currentIslandName, false); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Check: reading the island in the editor: " + e.Message); }
 			}
-			foreach (IntroRule r in plan.Rules.Where(x => x.StoryPlace.StartsWith("after:") && StoryOrder.Parse(x.StoryPlace.Substring(6)) == ChunkPointType.None))
-				if (!plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.StoryPlace.Substring(6), StringComparison.OrdinalIgnoreCase)))
-					problems.Add((plan.Rules.IndexOf(r) + 1) + ". comes in the story after '" + r.StoryPlace.Substring(6) + "', which isn't in the story (it goes at the end)");
-			if (islandMode && plan.Rules.Any(x => x.Special)) problems.Add("An island's own rules can't use the story or the Receiver (a world plan can)");
-			return string.Join("\n", problems.ToArray());
+			findings = PlanChecker.Check(plan, islandMode, deep, ownFacts);
+			ShowFindings();
+			inCheck = true; // (the cards show these findings: no quick check again right after)
+			try { ShowRules(); } finally { inCheck = false; }
+			if (showReport) PlanCheckWindow.Open(plan.Name, findings, () => RunCheck(true, true), ShowRule);
 		}
 
-		/// <summary>Recommendations about the plan's story (they never stop it from being saved), one line each.</summary>
-		public string StoryTips()
+		/// <summary>The summary beside the map (and LastCheck for tests).</summary>
+		void ShowFindings()
 		{
-			if (islandMode || !plan.ChangesStory) return "";
-			var tips = new List<string>();
-			List<string> steps = StoryChain.BuildSteps(plan.RaftStory, plan.LeaveOut, plan.Rules);
-			tips.Add("Story: " + (steps.Count == 0 ? "no islands" : string.Join(" > ", steps.Select(s => StoryChain.IsRaft(s) ? StoryOrder.Name(StoryChain.TypeOfStep(s)) : "'" + StoryChain.RuleIdOf(s) + "'").ToArray())));
-			if (steps.Count > 0 && steps[0] != StoryChain.RaftKey(ChunkPointType.Landmark_RadioTower)) tips.Add("Tip: Raft's story starts at the Radio Tower (recommended first)");
-			if (steps.Count > 0 && steps[steps.Count - 1] != StoryChain.RaftKey(ChunkPointType.Landmark_Utopia)) tips.Add("Tip: Utopia is Raft's ending: without it last, the story has no ending");
-			foreach (ChunkPointType t in StoryOrder.Chain.Where(t => !steps.Contains(StoryChain.RaftKey(t))))
+			int problems = findings.Count(f => f.Level == PlanChecker.Level.Problem), warnings = findings.Count(f => f.Level == PlanChecker.Level.Warning), tips = findings.Count(f => f.Level == PlanChecker.Level.Tip);
+			var lines = new List<string>();
+			if (problems == 0 && warnings == 0) lines.Add("<color=#8fdc8f>\u221A Every rule can work.</color>" + (tips > 0 ? " " + tips + " tip" + (tips == 1 ? "" : "s") + "." : ""));
+			else lines.Add("<color=#ffb4aa>" + problems + " problem" + (problems == 1 ? "" : "s") + "</color>, <color=#ffd98a>" + warnings + " warning" + (warnings == 1 ? "" : "s") + "</color>, " + tips + " tip" + (tips == 1 ? "" : "s") + ":");
+			foreach (PlanChecker.Finding f in findings.Where(f => f.Level != PlanChecker.Level.Tip).Take(2))
+				lines.Add("<color=#" + ColorUtility.ToHtmlStringRGB(PlanCheckWindow.ColorOf(f.Level)) + ">\u2022 " + Short(f.Text, 90) + "</color>");
+			lines.Add("<i>Check shows the whole report.</i>");
+			problemsText.text = string.Join("\n", lines.ToArray());
+			LastCheck = problemsText.text + "\n" + string.Join("\n", findings.Select(f => f.Text).ToArray());
+		}
+
+		static string Short(string s, int max) { return s.Length <= max ? s : s.Substring(0, max - 1).TrimEnd() + "\u2026"; }
+
+		/// <summary>The report's "Show rule n": scrolls the list to that rule's card.</summary>
+		void ShowRule(int index)
+		{
+			Canvas.ForceUpdateCanvases();
+			Transform card = rulesList.Cast<Transform>().Where(t => t.name == "Rule").ElementAtOrDefault(index);
+			ScrollRect scroll = rulesList.GetComponentInParent<ScrollRect>();
+			if (card == null || scroll == null) return;
+			float content = rulesList.rect.height, view = scroll.viewport.rect.height;
+			if (content <= view) return;
+			float top = -((RectTransform)card).anchoredPosition.y - ((RectTransform)card).rect.height * (1f - ((RectTransform)card).pivot.y);
+			scroll.verticalNormalizedPosition = Mathf.Clamp01(1f - top / (content - view));
+		}
+
+		/// <summary>A card's findings, under its sentence (after the first Check).</summary>
+		void CardFindings(RectTransform card, int index, ref float height)
+		{
+			if (findings == null) return;
+			List<PlanChecker.Finding> mine = findings.Where(f => f.Rule == index && f.Level != PlanChecker.Level.Tip).ToList();
+			int tips = findings.Count(f => f.Rule == index && f.Level == PlanChecker.Level.Tip);
+			if (mine.Count == 0 && tips == 0) return;
+			foreach (PlanChecker.Finding f in mine.Take(3))
 			{
-				List<string> needed = StoryChain.NeededBlueprintsOn(StoryOrder.Key(t));
-				if (needed.Count > 0) tips.Add("Tip: without " + StoryOrder.Name(t) + " there is no " + string.Join(", ", needed.ToArray()) + " blueprint: put them in a chest or a quest reward");
+				Text t = UIKit.Label(card, (f.Level == PlanChecker.Level.Problem ? "\u2716 " : "\u26A0 ") + Short(f.Text.Replace(RuleLabel(index) + " ", ""), 170), 12, PlanCheckWindow.ColorOf(f.Level), TextAnchor.MiddleLeft, FontStyle.Normal, "Finding");
+				t.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(t.gameObject, -1, 32);
+				height += 32f + 6f;
 			}
-			return string.Join("\n", tips.ToArray());
-		}
-
-		/// <summary>The island a ref names in this plan (the island rule's island), or null.</summary>
-		string RefIsland(string reference)
-		{
-			IntroRule by = plan.Rules.FirstOrDefault(x => x.Id.Equals(reference, StringComparison.OrdinalIgnoreCase));
-			return by == null ? null : by.What == "island" ? by.WhatArg : "";
-		}
-
-		IEnumerable<string> RefProblems(string n, string reference, IntroRule r, HashSet<string> saved)
-		{
-			if (reference.Length == 0 || reference.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase))
+			if (mine.Count > 3 || tips > 0)
 			{
-				if (!islandMode) yield return n + "needs the island it waits for (a rule id or island name)";
-				yield break;
+				Text more = UIKit.Label(card, (mine.Count > 3 ? "+ " + (mine.Count - 3) + " more" : "") + (mine.Count > 3 && tips > 0 ? ", " : "") + (tips > 0 ? tips + " tip" + (tips == 1 ? "" : "s") : "") + " - Check shows them", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "FindingMore");
+				UIKit.Size(more.gameObject, -1, 16);
+				height += 16f + 6f;
 			}
-			string island = RefIsland(reference);
-			if (island == null && !saved.Contains(reference)) { yield return n + "waits for '" + reference + "': no rule or island has that name"; yield break; }
-			if (island == null) island = reference;
-			if (island.Length == 0) yield break; // a generated island: can't look inside
-			Dictionary<string, string> props = IslandCache.Props(island);
-			if ((r.When == "quest" || r.When == "step") && !IslandQuest.From(props).Exists) yield return n + "island '" + island + "' has no quest";
-			if (r.When == "zone" && IslandCache.ZoneOrdinal(island, r.WhenArg) < 0) yield return n + "island '" + island + "' has no zone '" + r.WhenArg + "'";
 		}
 
-		void Check()
-		{
-			string p = Problems();
-			string tips = StoryTips();
-			problemsText.text = (p.Length == 0 ? "<color=#8fdc8f>\u221A Every rule can work.</color>" : "<color=#ffb4aa>" + p + "</color>") + (tips.Length > 0 ? "\n<color=#ffd98a>" + tips + "</color>" : "");
-			LastCheck = problemsText.text;
-			DrawMap();
-		}
+		string RuleLabel(int i) { IntroRule r = plan.Rules[i]; return "Rule " + (i + 1) + (r.Id.Length > 0 ? " '" + r.Id + "'" : ""); }
 
 		/// <summary>A rough top-down sketch: the raft in the middle, islands where their rules would put them.</summary>
 		void DrawMap()

@@ -166,6 +166,104 @@ namespace DynamicIslands
 			}
 		}
 
+		[ConsoleCommand(name: "CICheckReport", docs: "Dev, editor: the World Plans window's Check on a plan full of mistakes - two test islands (one with a zone 'gate', a note 'Diary' and a quest whose steps need a note and creatures it hasn't, one without a quest) and rules that wait for a quest that can't be finished, for an island without a quest, for a zone it hasn't, for each other in a circle, near an island nobody has, with no number, and after a broken rule: each found at its level, with why and how to fix it; the report window opens (shot_plan_check.png) and each card shows its findings. Cleans up")]
+		public static void PlanCheckCommand() { DynamicIslands.instance.StartCoroutine(PlanCheckRoutine()); }
+
+		static IEnumerator PlanCheckRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("plan check: in the editor"); yield break; }
+			bool ok = true;
+			const string questIsland = "cicheck-quest", plainIsland = "cicheck-plain", planName = "CI Check";
+			try
+			{
+				// Two small islands: one with a zone, a note and a quest that can't be finished; one without a quest
+				int res = 17;
+				var h = new float[res, res]; for (int y = 0; y < res; y++) for (int x = 0; x < res; x++) h[y, x] = 0.4f;
+				var q = new IslandFile { TerrainSize = new Vector3(64f, 60f, 64f), HeightmapResolution = res, Heights = h, Name = questIsland };
+				q.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = new Vector3(30, 25, 30), Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "gate" } } });
+				q.Objects.Add(new IslandObject { Name = "Note_Paper", Position = new Vector3(32, 25, 30), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Diary" }, { ObjectProps.NoteText, "Hello" } } });
+				var quest = new IslandQuest { Title = "Test" };
+				quest.Steps.Add(new IslandQuest.Step { Type = "reach", Target = "gate" });
+				quest.Steps.Add(new IslandQuest.Step { Type = "read", Target = "Lost page" });
+				quest.Steps.Add(new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 5 });
+				quest.To(q.Props);
+				q.Save(IslandSpawner.PathFor(questIsland));
+				var p = new IslandFile { TerrainSize = q.TerrainSize, HeightmapResolution = res, Heights = h, Name = plainIsland };
+				p.Save(IslandSpawner.PathFor(plainIsland));
+
+				var plan = new WorldPlan { Name = planName, Random = false };
+				Func<string, string, IntroRule> rule = (id, line) => IntroRule.Parse(id + " | " + line);
+				plan.Rules.Add(rule("start", "island:" + questIsland + " | start | ahead:300 | A test | Start"));
+				plan.Rules.Add(rule("afterquest", "type:camp | quest:start | near:start:600:any | msg | A"));          // 2: the quest can't be finished
+				plan.Rules.Add(rule("plain", "island:" + plainIsland + " | km:1 | ahead:300 | msg | P"));
+				plan.Rules.Add(rule("noquest", "type:camp | quest:plain | near:plain:600:any | msg | N"));               // 4: no quest on 'plain'
+				plan.Rules.Add(rule("cave", "type:camp | zone:start:cave | near:start:600:any | msg | C"));              // 5: no zone 'cave'
+				plan.Rules.Add(rule("circleA", "type:camp | rule:circleB | ahead:300 | msg | A2"));                      // 6-7: a circle
+				plan.Rules.Add(rule("circleB", "type:camp | rule:circleA | ahead:300 | msg | B2"));
+				plan.Rules.Add(rule("lost", "type:camp | start | near:nobody:600:any | msg | L"));                       // 8: near nobody
+				plan.Rules.Add(rule("nonumber", "type:camp | km:abc | ahead:300 | msg | X"));                           // 9: no number
+				plan.Rules.Add(rule("afterbroken", "type:camp | visit:afterquest | near:afterquest:600:any | msg | B")); // 10: after a broken rule
+				Check(ref ok, plan.Rules.All(r => r != null), "the test plan's " + plan.Rules.Count + " rules read");
+
+				List<PlanChecker.Finding> found = PlanChecker.Check(plan, false, true);
+				foreach (PlanChecker.Finding f in found) Log("  " + f.Level + " " + (f.Rule + 1) + ": " + f.Text);
+				Func<int, PlanChecker.Level, string, bool> has = (i, lvl, part) => found.Any(f => f.Rule == i && f.Level == lvl && f.Text.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 && f.Fix.Length > 0);
+				Check(ref ok, !found.Any(f => f.Rule == 0 && f.Level == PlanChecker.Level.Problem), "rule 1 (the start island) has no problem");
+				Check(ref ok, has(1, PlanChecker.Level.Problem, "needs a note titled \"Lost page\""), "rule 2: its island's quest can't be finished - step 2 needs a note 'Lost page' (the island has 'Diary')");
+				Check(ref ok, has(1, PlanChecker.Level.Problem, "warthogs"), "rule 2: ... and step 3 needs warthogs the island hasn't");
+				Check(ref ok, has(3, PlanChecker.Level.Problem, "has no quest"), "rule 4 waits for the quest of an island without one");
+				Check(ref ok, has(4, PlanChecker.Level.Problem, "zone 'cave'"), "rule 5 waits for a zone 'cave' the island hasn't (it has 'gate')");
+				Check(ref ok, found.Any(f => f.Level == PlanChecker.Level.Problem && f.Text.Contains("in a circle")), "rules 6 and 7 wait for each other in a circle");
+				Check(ref ok, has(7, PlanChecker.Level.Problem, "placed near 'nobody'"), "rule 8 is placed near an island nobody has");
+				Check(ref ok, has(8, PlanChecker.Level.Problem, "no number"), "rule 9 waits for a distance with no number");
+				Check(ref ok, has(9, PlanChecker.Level.Warning, "has a problem"), "rule 10 waits for a broken rule: a warning");
+				Check(ref ok, found.Where(f => f.Level == PlanChecker.Level.Problem).All(f => f.Fix.Length > 0), "every problem says how to fix it");
+
+				// The window: Check opens the report, the cards show their findings
+				plan.Save();
+				WorldPlanWindow.Open(planName);
+				yield return null;
+				Transform window = EditorUI.Canvas.transform.Find("WorldPlanWindow");
+				UnityEngine.UI.Button check = window != null ? window.GetComponentsInChildren<UnityEngine.UI.Button>(false).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Check") : null;
+				if (check != null) check.onClick.Invoke();
+				yield return null; yield return null;
+				Check(ref ok, PlanCheckWindow.IsOpen && PlanCheckWindow.Shown != null && PlanCheckWindow.Shown.Count(f => f.Level == PlanChecker.Level.Problem) >= 7, "Check opens the report: " + (PlanCheckWindow.Shown != null ? PlanCheckWindow.Shown.Count + " findings" : "none"));
+				int onCards = window != null ? window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Finding") : 0;
+				Check(ref ok, onCards >= 1, "the cards show their findings (" + onCards + " shown in view)");
+				Screenshot(new[] { "plan_check" });
+				yield return new WaitForSeconds(0.5f);
+				PlanCheckWindow.Close();
+				WorldPlanWindow.Close();
+			}
+			finally
+			{
+				PlanCheckWindow.Close();
+				WorldPlanWindow.Close();
+				foreach (string n in new[] { questIsland, plainIsland }) try { if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n)); } catch { }
+				try { if (System.IO.File.Exists(WorldPlan.PathFor(planName))) System.IO.File.Delete(WorldPlan.PathFor(planName)); } catch { }
+			}
+			if (ok) Log("PASS: plan check"); else Fail("plan check");
+		}
+
+		[ConsoleCommand(name: "CICheckPlans", docs: "Dev, editor: runs the World Plans window's Check on saved plans and logs what it finds (CICheckPlans = the sample plans; CICheckPlans <plan> = one). The samples must have no problems: PASS: sample plans check clean")]
+		public static void CheckPlansCommand(string[] args)
+		{
+			WorldPlanWindow.EnsureSamples();
+			List<string> names = args != null && args.Length > 0 ? new List<string> { string.Join(" ", args) } : WorldPlanTemplates.All.Where(t => t.Value.Sample).Select(t => t.Key).ToList();
+			bool ok = true;
+			foreach (string n in names)
+			{
+				// (the samples as the mod writes them - the copies on this PC may be changed by tests or by hand)
+				WorldPlan p = args != null && args.Length > 0 ? WorldPlan.Load(n) : WorldPlanTemplates.Get(n);
+				if (p == null) { Log("  no plan '" + n + "'"); continue; }
+				List<PlanChecker.Finding> found = PlanChecker.Check(p, false, true);
+				Log("Plan '" + n + "': " + found.Count(f => f.Level == PlanChecker.Level.Problem) + " problems, " + found.Count(f => f.Level == PlanChecker.Level.Warning) + " warnings, " + found.Count(f => f.Level == PlanChecker.Level.Tip) + " tips");
+				foreach (PlanChecker.Finding f in found) Log("  " + f.Level + " " + (f.Rule + 1) + ": " + f.Text);
+				if (found.Any(f => f.Level == PlanChecker.Level.Problem)) ok = false;
+			}
+			if (args == null || args.Length == 0) { if (ok) Log("PASS: sample plans check clean"); else Fail("sample plans check clean"); }
+		}
+
 		const string BulkPrefix = "bulk-";
 
 		[ConsoleCommand(name: "CIBulkIslands", docs: "Dev, anywhere (editor for the Islands window) (TEST_CATALOGUE UP10): CIBulkIslands [n] - n small islands (bulk-0001 ..., default 1000) in the folder: listing them, the spawn pool, CHOOSE ISLANDS' list, the library's Tidy up look and (in the editor) the Islands window each take under 2 s, and the search finds one. The islands are removed after (CIBulkIslands keep leaves them; CIBulkIslands clean removes them)")]
