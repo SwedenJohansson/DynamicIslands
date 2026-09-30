@@ -665,6 +665,12 @@ quickly; it fills up again after 3 days, or never.*
 ![The item picker](images/editor-loot-picker.jpg)
 *Add items...: every item of Raft with its picture and a search. Click an item to add one, again to add more.*
 
+**The abandoned raft crate.** "Loot & chests" also has Raft's own **Abandoned raft crate**: the box you grab on the
+small abandoned rafts that drift by in Raft. In a world it works as there: a player takes it whole (look at it, **E**) and
+gets a handful of random items from Raft's own loot for those rafts - now and then a cooking recipe or a mystery package.
+Its contents can't be chosen (use a chest for that), and it doesn't count for a quest's "Open a chest" step. Once taken it
+stays gone, and comes back after the island's regrow days like harvested things ([4.4](#44-the-island-tab); 0 = never).
+
 ### 5.4 Trigger zones and ambushes
 
 A **trigger zone** ("Zones & triggers") is an invisible sphere. When a player walks in it shows your **message**,

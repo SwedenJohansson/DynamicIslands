@@ -28,6 +28,7 @@ This README is the full reference, in the same order: island creation first, the
     - sunken barrels, containers and buoys, and scrap on the ocean floor to dive for; generated islands scatter some around their underwater slopes
     - harvestable palms, pines, birches, mango trees, rocks, berry bushes, pineapples, and copper, iron, clay and sand
     - props from Vasagatan
+    - **the abandoned rafts' crate** (Loot & chests): Raft's own box from the small drifting rafts - taken whole, it gives Raft's random loot for those rafts (and now and then a cooking recipe or a mystery package); remembered as taken, back after the regrow days
     - **Raft's own building blocks** (88: foundations, floors, walls, doors, windows, pillars, stairs, ladders, fences, roofs), to build huts on islands or **your own abandoned rafts**. Over water they float at the sea surface. An island of only objects (no land) spawns as just those objects, and players can walk on them.
     - **everything else you can build on a raft** (about 230: storage, beds, grills, lights, decorations, plant pots, sails...), as decoration
     - **the objects of every one of Raft's islands and landmarks:** the abandoned rafts, the radio tower, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance and Utopia. These load from Raft's island scenes the first time their category is opened (about a second each). The mod ships a list of which island each object comes from (`catalog_index.txt`); after a Raft update the editor makes a new one in the background (about half a minute).

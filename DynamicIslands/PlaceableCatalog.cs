@@ -98,6 +98,8 @@ namespace DynamicIslands.Editor
 			new Source { Scene = "51#Landmark_CaravanSmall#1", Category = DesertCategory, Include = DesertObjects, Harvest = true, Include2 = UnderwaterObjects, Category2 = UnderwaterCategory },
 			new Source { Scene = "46#Landmark_BalboaSmall#1", Category = ForestCategory, Include = ForestObjects, Harvest = true, Include2 = UnderwaterObjects, Category2 = UnderwaterCategory },
 			new Source { Scene = "44#Landmark_Vasagatan", Root = "Boat related", Category = PropsCategory },
+			// (a drifting raft: only its crate - the box with random loot players grab on Raft's abandoned rafts - with its gameplay)
+			new Source { Scene = "15#Landmark_Raft#Floating raft", Category = PropsCategory, Include = new Regex("(?!)"), Harvest = true },
 		};
 
 		public static string WhitelistPath { get { return Path.Combine(DynamicIslands.assetpath, "placeables.txt"); } }
@@ -109,7 +111,10 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> categories = new Dictionary<string, string>();
 		/// <summary>Harvestable Raft objects kept with their gameplay scripts (the same objects as in prototypes).</summary>
 		static readonly Dictionary<string, GameObject> harvestables = new Dictionary<string, GameObject>();
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
+		/// <summary>The crate on Raft's abandoned (drifting) rafts: grabbed whole, it gives random loot (Raft's own table) - and
+		/// now and then a cooking recipe or a mystery package, as there.</summary>
+		public const string RaftCrate = "Pickup_Landmark_LandmarkCrateRaft";
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft)$");
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
@@ -459,6 +464,8 @@ namespace DynamicIslands.Editor
 			harvestables.Add(name, clone);
 			prototypes[name] = clone;
 			categories[name] = HarvestableCategory;
+			// (the abandoned rafts' crate: with the chests, where builders look for loot)
+			if (name == RaftCrate) { categories[name] = ContentCatalog.LootCategory; labels[name] = "Abandoned raft crate"; }
 		}
 
 		/// <summary>

@@ -264,6 +264,103 @@ namespace DynamicIslands
 			if (args == null || args.Length == 0) { if (ok) Log("PASS: sample plans check clean"); else Fail("sample plans check clean"); }
 		}
 
+		const string CrateIsland = "cicrate";
+
+		[ConsoleCommand(name: "CIRaftCrateEditor", docs: "Dev, editor: the abandoned rafts' crate (Pickup_Landmark_LandmarkCrateRaft) is in the object list under Loot & chests as 'Abandoned raft crate'; placed on a small generated island saved as 'cicrate' (for CIRaftCrateWorld)")]
+		public static void RaftCrateEditorCommand() { DynamicIslands.instance.StartCoroutine(RaftCrateEditorRoutine()); }
+
+		static IEnumerator RaftCrateEditorRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("raft crate editor: in the editor"); yield break; }
+			bool ok = true;
+			yield return PlaceableCatalog.EnsureBuilt();
+			string crate = PlaceableCatalog.RaftCrate;
+			Check(ref ok, PlaceableCatalog.IsHarvestable(crate), "the crate is taken from Raft's drifting raft with its gameplay");
+			Check(ref ok, PlaceableCatalog.CategoryOf(crate) == ContentCatalog.LootCategory, "it is listed under " + ContentCatalog.LootCategory + " (" + PlaceableCatalog.CategoryOf(crate) + ")");
+			DynamicIslands.NewIsland();
+			yield return null;
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 777, Radius = 50f, Height = 20f, Style = TerrainPainter.Tropical });
+			yield return null;
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Terrain t = terraineditor.terrain;
+			Vector3 at = t.transform.position + new Vector3(500f, 0f, 500f);
+			at.y = t.transform.position.y + t.SampleHeight(at) + 0.3f;
+			GameObject go = PlaceableCatalog.Spawn(crate, placed);
+			Check(ref ok, go != null, "the crate can be placed in the editor");
+			if (go != null)
+			{
+				go.transform.position = at;
+				EditorGameObject.Attach(go, crate, null);
+				Check(ref ok, DynamicIslands.SaveIsland(CrateIsland), "a small island with the crate saved as '" + CrateIsland + "'");
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(CrateIsland));
+				Check(ref ok, f.Objects.Any(o => o.Name == crate), "the island file has the crate");
+			}
+			DynamicIslands.NewIsland();
+			if (ok) Log("PASS: raft crate editor"); else Fail("raft crate editor");
+		}
+
+		[ConsoleCommand(name: "CIRaftCrateWorld", docs: "Dev, world (host, a test world 'CI ...'; after CIRaftCrateEditor): the island 'cicrate' comes beside the raft; its crate is Raft's own (a pickup with Raft's random loot); picked up as a player does, it gives items and is gone, and the island remembers it was taken. The island and its file are removed after")]
+		public static void RaftCrateWorldCommand() { DynamicIslands.instance.StartCoroutine(RaftCrateWorldRoutine()); }
+
+		static IEnumerator RaftCrateWorldRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("raft crate world: host in a test world 'CI ...'"); yield break; }
+			if (!System.IO.File.Exists(IslandSpawner.PathFor(CrateIsland))) { Fail("raft crate world: run CIRaftCrateEditor first"); yield break; }
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, CustomIslandSpawner.LandRadius(CrateIsland), 700f) ?? CustomIslandSpawner.FindClearSpot(raft, CustomIslandSpawner.LandRadius(CrateIsland), 1500f);
+			Check(ref ok, spot.HasValue, "a place for the island near the raft");
+			if (!spot.HasValue) { Fail("raft crate world"); yield break; }
+			// (the player there first: islands stay loaded where a player is, however far the raft)
+			{ CharacterController c0 = player.PersonController.controller; c0.enabled = false; player.transform.position = spot.Value + Vector3.up * 30f; player.PersonController.SwitchControllerType(ControllerType.Ground); c0.enabled = true; }
+			yield return new WaitForSeconds(1f);
+			yield return DynamicIslands.instance.SpawnIslandFile(CrateIsland, spot.Value, true);
+			yield return new WaitForSeconds(2f);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.HostName == CrateIsland);
+			GameObject crate = e != null && e.Root != null ? e.Root.GetComponentsInChildren<Transform>(true).Select(x => x.gameObject).FirstOrDefault(g => g.name.StartsWith(PlaceableCatalog.RaftCrate)) : null;
+			PickupItem pickup = crate != null ? crate.GetComponentInChildren<PickupItem>() : null;
+			Check(ref ok, crate != null && pickup != null && crate.GetComponentInChildren<RandomDropper>() != null && crate.GetComponentInChildren<PickupItem_Networked>() != null,
+				"the island's crate is Raft's own: a pickup with Raft's random loot" + (crate == null ? " (no crate on the island)" : ""));
+			if (pickup != null && player != null)
+			{
+				// (the player beside the crate, as one who swam or sailed there)
+				CharacterController cc = player.PersonController.controller;
+				cc.enabled = false;
+				player.transform.position = crate.transform.position + Vector3.up * 1.5f + Vector3.right * 1.2f;
+				player.PersonController.SwitchControllerType(ControllerType.Ground);
+				cc.enabled = true;
+				yield return new WaitForSeconds(1f);
+				Func<int> items = () => player.Inventory.allSlots.Where(sl => sl != null && sl.itemInstance != null && sl.itemInstance.baseItem != null).Sum(sl => sl.itemInstance.Amount);
+				int before = items();
+				int errors = 0; string first = null;
+				Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception || type == LogType.Error) { errors++; if (first == null) first = msg; } };
+				Application.logMessageReceived += counter;
+				Pickup hands = player.GetComponentInChildren<Pickup>();
+				try { if (hands != null) hands.PickupItem(pickup, true, false); }
+				catch (Exception ex) { errors++; first = first ?? ex.Message; }
+				yield return new WaitForSeconds(2f);
+				Application.logMessageReceived -= counter;
+				int after = items();
+				Check(ref ok, hands != null && after > before, "picked up as a player does: items " + before + " -> " + after);
+				Check(ref ok, crate == null || !crate.activeInHierarchy, "the crate is gone");
+				// (what the island keeps is recorded when the world saves or the island unloads: now)
+				Check(ref ok, crate != null, "the crate is hidden, not destroyed (so the island can remember it)");
+				IslandObjectState.Capture(e);
+				Check(ref ok, e.State.Values.Any(s => !s.Active), "the island remembers the crate was taken (" + string.Join(", ", e.State.Select(kv => kv.Key + (kv.Value.Active ? ":active" : ":taken")).ToArray()) + ")");
+				// (unloaded and loaded again: still taken)
+				IslandSpawner.Despawn(e.Root); e.Root = null;
+				yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+				yield return new WaitForSeconds(1f);
+				GameObject again = e.Root != null ? e.Root.GetComponentsInChildren<Transform>(true).Select(x => x.gameObject).FirstOrDefault(g => g.name.StartsWith(PlaceableCatalog.RaftCrate)) : null;
+				Check(ref ok, again != null && !again.activeInHierarchy, "loaded again: the crate is still taken");
+				Check(ref ok, errors == 0, "no errors (" + errors + (first != null ? ": " + first : "") + ")");
+			}
+			IslandWorldState.Remove(CrateIsland);
+			try { System.IO.File.Delete(IslandSpawner.PathFor(CrateIsland)); } catch { }
+			if (ok) Log("PASS: raft crate world"); else Fail("raft crate world");
+		}
+
 		const string BulkPrefix = "bulk-";
 
 		[ConsoleCommand(name: "CIBulkIslands", docs: "Dev, anywhere (editor for the Islands window) (TEST_CATALOGUE UP10): CIBulkIslands [n] - n small islands (bulk-0001 ..., default 1000) in the folder: listing them, the spawn pool, CHOOSE ISLANDS' list, the library's Tidy up look and (in the editor) the Islands window each take under 2 s, and the search finds one. The islands are removed after (CIBulkIslands keep leaves them; CIBulkIslands clean removes them)")]
