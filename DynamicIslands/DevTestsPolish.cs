@@ -154,7 +154,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: world window"); else Fail("world window");
 		}
 
-		[ConsoleCommand(name: "CIEditorLight", docs: "Dev, editor: the Light button goes through Morning, Noon, Evening, Night, Overcast - a directional sun in the scene, Raft's sun setting and the sky's light follow; pictures shot_light_<time>.png; the player's choice is put back")]
+		[ConsoleCommand(name: "CIEditorLight", docs: "Dev, editor: the Light list: Morning, Noon, Evening, Night, Overcast - a directional sun in the scene, Raft's sun setting and the sky's light follow; pictures shot_light_<time>.png; the player's choice is put back")]
 		public static void EditorLightCommand() { DynamicIslands.instance.StartCoroutine(EditorLightRoutine()); }
 
 		static IEnumerator EditorLightRoutine()
@@ -177,8 +177,8 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.8f);
 			}
 			Check(ref ok, ambients.Distinct().Count() == EditorLighting.Names.Length, "each time of day has its own sky light");
-			if (button != null) button.onClick.Invoke();
-			Check(ref ok, EditorLighting.Current == 0, "the button goes on to the next (after the last: Morning)");
+			bool picked = DropList.Click(button, "0");
+			Check(ref ok, picked && EditorLighting.Current == 0 && UIKit.LabelOf(button).text == "Light: Morning", "the button is a list: picking Morning in it (" + (button != null ? UIKit.LabelOf(button).text : "none") + ")");
 			EditorLighting.Apply(before, true);
 			EditorUI.RefreshLight();
 			if (ok) Log("PASS: editor light"); else Fail("editor light");

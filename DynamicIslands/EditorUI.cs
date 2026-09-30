@@ -161,8 +161,10 @@ namespace DynamicIslands.Editor
 
 			RectTransform app = ToolbarGroup(bar, "App");
 			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 84);
-			lightButton = UIKit.Button(app, "Light", () => { EditorLighting.Next(); RefreshLight(); }, "The time of day in the editor: morning, noon, evening, night, overcast - how the island looks then (only in the editor)", 118);
-			lightButton.name = "Button_Light";
+			// (a list of the times of day - it cycled one click at a time)
+			string[] lightHints = { "Low sun from the east", "Sun high up, short shadows", "Low warm sun from the west", "Moonlight: how it looks after dark", "Grey sky, soft light" };
+			lightButton = DropList.Make(app, "Button_Light", Enumerable.Range(0, EditorLighting.Names.Length).Select(i => new DropList.Option(i.ToString(), EditorLighting.Names[i], lightHints[Mathf.Min(i, lightHints.Length - 1)])).ToList(), EditorLighting.Current.ToString(),
+				v => { EditorLighting.Apply(int.Parse(v), true); RefreshLight(); }, 140, "The time of day in the editor: morning, noon, evening, night, overcast - how the island looks then (only in the editor)", 30f, 13);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
 			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
 			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
@@ -172,7 +174,13 @@ namespace DynamicIslands.Editor
 		static Button lightButton;
 
 		/// <summary>The Light button says the time of day shown.</summary>
-		public static void RefreshLight() { if (lightButton != null) UIKit.LabelOf(lightButton).text = "Light: " + EditorLighting.Names[EditorLighting.Current]; }
+		public static void RefreshLight()
+		{
+			if (lightButton == null) return;
+			UIKit.LabelOf(lightButton).text = "Light: " + EditorLighting.Names[EditorLighting.Current];
+			DropdownButton d = lightButton.GetComponent<DropdownButton>();
+			if (d != null) d.Value = EditorLighting.Current.ToString();
+		}
 
 		/// <summary>A bordered strip of buttons in the top bar.</summary>
 		static RectTransform ToolbarGroup(Transform bar, string name)

@@ -353,6 +353,7 @@ namespace DynamicIslands
 
 		static void CloseAllWindows()
 		{
+			DropList.Close(); // (a drop-down list a pressed button opened)
 			foreach (MonoBehaviour w in OpenWindows()) CloseWindow(w);
 			// (the windows made by static classes - the library, export/import, info boxes, World settings, the island
 			// picker - aren't MonoBehaviours: a library window left open by the button test covered the editor, and every
