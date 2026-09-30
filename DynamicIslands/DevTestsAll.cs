@@ -55,6 +55,9 @@ namespace DynamicIslands
 					run.Errors.Add(run.Current + ": " + msg.Split('\n')[0] + (type == LogType.Exception ? " @ " + (trace ?? "").Split('\n').FirstOrDefault() : ""));
 			};
 			Application.logMessageReceived += watch;
+			// (the guide, Discord, report and folder buttons only note what they'd open: no browser, PDF reader or Explorer
+			// window on the screen of someone using the PC while the tests run)
+			HelpLinks.TestMode = true;
 			try
 			{
 				// The main menu's EDITOR button (the mod's own) opens the editor
@@ -135,7 +138,7 @@ namespace DynamicIslands
 				yield return GeneratorScreens(run);
 				if (missingKinds > 0) run.Errors.Add(missingKinds + " kind(s) of object not in the catalog: their screens were not tested");
 			}
-			finally { Application.logMessageReceived -= watch; }
+			finally { Application.logMessageReceived -= watch; HelpLinks.TestMode = false; }
 
 			// Coverage: every button the mod made that still exists (and isn't a sampled list entry or skipped)
 			UIKit.AllButtons.RemoveAll(b => b == null);

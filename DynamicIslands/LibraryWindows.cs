@@ -216,13 +216,13 @@ namespace DynamicIslands.Editor
 		static void OpenFolder()
 		{
 			if (lastZip == null) return;
-			try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + lastZip + "\""); } catch (Exception e) { SetStatus("Could not open the folder: " + e.Message, true); }
+			try { HelpLinks.OpenFolder(lastZip, true); } catch (Exception e) { SetStatus("Could not open the folder: " + e.Message, true); }
 		}
 
 		static void Share()
 		{
 			OpenFolder();
-			Application.OpenURL(SubmitUrl);
+			HelpLinks.Open(SubmitUrl);
 			SetStatus("In the browser: sign in to GitHub, drag the .zip from the folder into the page, and send it. It's looked at before it goes into the library.", false);
 		}
 
@@ -450,7 +450,7 @@ namespace DynamicIslands.Editor
 
 		static void OpenImportFolder()
 		{
-			try { Directory.CreateDirectory(LibraryPack.ImportFolder); System.Diagnostics.Process.Start("explorer.exe", "\"" + LibraryPack.ImportFolder + "\""); }
+			try { Directory.CreateDirectory(LibraryPack.ImportFolder); HelpLinks.OpenFolder(LibraryPack.ImportFolder); }
 			catch (Exception e) { SetStatus("Could not open the folder: " + e.Message, true); }
 		}
 

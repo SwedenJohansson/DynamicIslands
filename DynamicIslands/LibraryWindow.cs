@@ -164,8 +164,8 @@ namespace DynamicIslands.Editor
 			string folder = LibraryPack.ExportFolder;
 			try { Directory.CreateDirectory(folder); } catch { }
 			HelpLinks.LastOpened = folder;
-			if (HelpLinks.TestMode) { InfoWindow.SetStatus("(test) " + folder); return; }
-			try { System.Diagnostics.Process.Start("explorer.exe", "\"" + Path.GetFullPath(folder) + "\""); }
+			if (HelpLinks.TestMode || HelpLinks.Automated) { InfoWindow.SetStatus("(test) " + folder); return; }
+			try { HelpLinks.OpenFolder(Path.GetFullPath(folder)); }
 			catch (Exception e) { InfoWindow.SetStatus("Could not open " + folder + ": " + e.Message); return; }
 			InfoWindow.SetStatus("Your packs are in " + Path.GetFullPath(folder));
 		}

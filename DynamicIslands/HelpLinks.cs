@@ -21,14 +21,18 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: what would have been opened (a web address, a file or a folder), without opening it.</summary>
 		public static bool TestMode;
+		/// <summary>This Raft is driven by the tests' command file (dev builds): nothing opens outside Raft - no browser, PDF
+		/// reader or Explorer window on the screen of someone using the PC while the tests run. Links only note what they'd open.</summary>
+		public static bool Automated;
+		static bool NotOpened { get { return TestMode || Automated; } }
 		public static string LastOpened;
 
 		/// <summary>A web address or a file in the player's browser or PDF reader.</summary>
 		public static void Open(string url)
 		{
 			LastOpened = url;
-			Debug.Log("[CUSTOM ISLANDS] Opening " + url + (TestMode ? " (test: not opened)" : ""));
-			if (TestMode) return;
+			Debug.Log("[CUSTOM ISLANDS] Opening " + url + (NotOpened ? " (test: not opened)" : ""));
+			if (NotOpened) return;
 			try { Application.OpenURL(url); }
 			catch (Exception e) { DynamicIslands.Notify("Could not open " + url + ": " + e.Message, true); }
 		}
@@ -68,12 +72,22 @@ namespace DynamicIslands.Editor
 		/// <summary>Raft's log folder (Player.log, Player-prev.log): %USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft.</summary>
 		public static string LogFolder { get { return Application.persistentDataPath.Replace('/', '\\'); } }
 
+		/// <summary>A folder in Windows' Explorer (select: that file in it); tests only note it.</summary>
+		public static bool OpenFolder(string path, bool select = false)
+		{
+			LastOpened = path;
+			Debug.Log("[CUSTOM ISLANDS] Opening " + path + (NotOpened ? " (test: not opened)" : ""));
+			if (NotOpened) return true;
+			System.Diagnostics.Process.Start("explorer.exe", (select ? "/select," : "") + "\"" + path + "\"");
+			return true;
+		}
+
 		public static void OpenLogFolder()
 		{
 			string folder = LogFolder;
 			LastOpened = folder;
-			Debug.Log("[CUSTOM ISLANDS] Opening " + folder + (TestMode ? " (test: not opened)" : ""));
-			if (TestMode) return;
+			Debug.Log("[CUSTOM ISLANDS] Opening " + folder + (NotOpened ? " (test: not opened)" : ""));
+			if (NotOpened) return;
 			try { System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\""); }
 			catch (Exception e) { DynamicIslands.Notify("Could not open " + folder + ": " + e.Message, true); }
 		}

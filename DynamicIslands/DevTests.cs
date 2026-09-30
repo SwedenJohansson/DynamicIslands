@@ -1721,6 +1721,7 @@ namespace DynamicIslands
 		/// <summary>Runs one of this mod's console commands by name (they are static methods with a ConsoleCommand attribute).</summary>
 		static void RunCommand(string line)
 		{
+			HelpLinks.Automated = true; // (a Raft driven by the command file opens no browser or Explorer windows)
 			string[] parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 			foreach (Type type in typeof(DevTests).Assembly.GetTypes())
 				foreach (System.Reflection.MethodInfo m in type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static))
