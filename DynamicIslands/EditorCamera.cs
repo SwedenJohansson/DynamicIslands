@@ -253,6 +253,9 @@ namespace DynamicIslands.Editor
 			if (!selection) b = IslandBounds();
 			Camera cam = Cam;
 			float fov = (cam != null ? cam.fieldOfView : 60f) * Mathf.Deg2Rad;
+			// (a window narrower than it is tall sees less across than up and down: fit the narrower of the two - with the
+			// vertical one alone, a 1280 x 1440 window cut the island off at the sides)
+			if (cam != null && cam.aspect > 0f && cam.aspect < 1f) fov = 2f * Mathf.Atan(Mathf.Tan(fov * 0.5f) * cam.aspect);
 			float radius = Mathf.Max(1f, b.extents.magnitude);
 			float distance = radius / Mathf.Sin(fov * 0.5f) * (selection ? 1.2f : 0.9f);
 			flyYaw = yaw;
