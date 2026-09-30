@@ -824,7 +824,21 @@ namespace DynamicIslands
 			Log("Exceptions while standing: " + exceptions + (firstException != null ? " (first: " + firstException + ")" : ""));
 			bool ok = drop < 3f && player.PersonController.IsGrounded && exceptions == 0;
 			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
-			else Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
+			else
+			{
+				// (what was under the spot: every terrain of the island and what a ray from high above finds there - the ground
+				// was sometimes missing under a player put on a library island, and was there the next time)
+				foreach (Terrain t in island.GetComponentsInChildren<Terrain>(true))
+				{
+					TerrainCollider tc = t.GetComponent<TerrainCollider>();
+					Log("  terrain '" + t.name + "' under " + (t.transform.parent != null ? t.transform.parent.name : "-") + " at " + t.transform.position.ToString("F1") + " size " + t.terrainData.size.ToString("F0") +
+						" active " + t.gameObject.activeInHierarchy + " collider " + (tc == null ? "none" : "enabled " + tc.enabled + ", same data " + (tc.terrainData == t.terrainData) + ", bounds y " + tc.bounds.min.y.ToString("F1") + ".." + tc.bounds.max.y.ToString("F1")) +
+						", height at the spot " + (t.SampleHeight(target) + t.transform.position.y).ToString("F1"));
+				}
+				foreach (RaycastHit h in Physics.RaycastAll(target + Vector3.up * 60f, Vector3.down, 400f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(6))
+					Log("  a ray down from 60 m above finds " + h.collider.name + " (" + h.collider.GetType().Name + ", layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ") at y " + h.point.y.ToString("F1"));
+				Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
+			}
 		}
 
 		[ConsoleCommand(name: "CIProbe", docs: "Dev, in game: what is below the local player and on each custom island's terrain (colliders, layers) - for walking problems")]
