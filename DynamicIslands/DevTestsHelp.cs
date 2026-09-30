@@ -324,6 +324,32 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan picks"); else Fail("plan picks");
 		}
 
+		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the Adventure plan), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
+		public static void WindowShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
+
+		static IEnumerator WindowShotRoutine(string name)
+		{
+			Action open = null, close = null;
+			if (name != "report" && !DynamicIslands.InEditor()) { Fail("window shot: open the editor first"); yield break; }
+			switch (name)
+			{
+				case "report": open = InfoWindow.OpenReport; close = InfoWindow.Close; break; // (the main menu's Report a problem box)
+				case "worldplans": open = () => { WorldPlanWindow.EnsureSamples(); WorldPlanWindow.Open("Adventure"); }; close = WorldPlanWindow.Close; break;
+				case "behaviours": open = BehaviourWindow.OpenIsland; close = BehaviourWindow.Close; break;
+				case "islandfiles": open = IslandFilesWindow.Open; close = IslandFilesWindow.Close; break;
+				case "quest": open = QuestEditorWindow.Open; close = QuestEditorWindow.Close; break;
+				case "storyitems": open = StoryItemsWindow.Open; close = StoryItemsWindow.Close; break;
+				case "generator": open = () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(0); }; close = GeneratorWindow.Close; break;
+			}
+			if (open == null) { Fail("window shot: no window '" + name + "'"); yield break; }
+			open();
+			yield return new WaitForSecondsRealtime(0.8f);
+			Screenshot(new[] { "window_" + name });
+			yield return new WaitForSecondsRealtime(0.6f);
+			close();
+			Log("PASS: window shot " + name);
+		}
+
 		/// <summary>The guide's PDF came out of the .rmod and was opened as a file.</summary>
 		static void CheckGuideOpened(ref bool ok)
 		{
