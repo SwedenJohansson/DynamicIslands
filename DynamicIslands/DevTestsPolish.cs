@@ -184,10 +184,10 @@ namespace DynamicIslands
 			if (ok) Log("PASS: editor light"); else Fail("editor light");
 		}
 
-		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after")]
-		public static void IslandTestCommand() { DynamicIslands.instance.StartCoroutine(IslandTestRoutine()); }
+		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
+		public static void IslandTestCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
 
-		static IEnumerator IslandTestRoutine()
+		static IEnumerator IslandTestRoutine(bool big)
 		{
 			if (!DynamicIslands.InEditor()) { Fail("island test: in the editor"); yield break; }
 			bool ok = true;
@@ -196,10 +196,10 @@ namespace DynamicIslands
 			yield return null;
 			GeneratorWindow.Open();
 			yield return null;
-			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 60f, Height = 25f, Style = TerrainPainter.Tropical });
+			IslandGenerator.GenerateInEditor(big ? new IslandGenSettings { Seed = 497871, Radius = 226f, Height = 151f, Style = TerrainPainter.Snowy } : new IslandGenSettings { Seed = 4242, Radius = 60f, Height = 25f, Style = TerrainPainter.Tropical });
 			GeneratorWindow.Close();
 			yield return null;
-			Check(ref ok, DynamicIslands.SaveIsland(name), "a small test island saved as '" + name + "'");
+			Check(ref ok, DynamicIslands.SaveIsland(name), (big ? "a big" : "a small") + " test island saved as '" + name + "'");
 			IslandTest.Start();
 			Check(ref ok, IslandTest.Busy && IslandTest.Island == name, "Test in a world: on its way");
 			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);

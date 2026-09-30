@@ -18,6 +18,9 @@ namespace DynamicIslands.Editor
 		enum State { None, ToMenu, Opening, InWorld, Testing, Returning, OpeningEditor }
 		static State state;
 		static float waitUntil, giveUpAt;
+		/// <summary>The main menu Test asked for has loaded. (The editor's own main menu is still there for a moment: with a big
+		/// island the new one took longer, and Raft's New Game box found then was the old one being destroyed - its Create threw.)</summary>
+		static bool menuLoaded;
 
 		/// <summary>The island being tried (null when none).</summary>
 		public static string Island { get; private set; }
@@ -54,7 +57,18 @@ namespace DynamicIslands.Editor
 			giveUpAt = Time.unscaledTime + 240f;
 			Step("Trying '" + name + "' in the world '" + WorldName + "'");
 			DynamicIslands.Notify("Trying '" + name + "' in a world...");
+			menuLoaded = false;
+			UnityEngine.SceneManagement.SceneManager.sceneLoaded -= MenuLoaded;
+			UnityEngine.SceneManagement.SceneManager.sceneLoaded += MenuLoaded;
 			UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+		}
+
+		static void MenuLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+		{
+			if (scene.name != "MainMenuScene") return;
+			UnityEngine.SceneManagement.SceneManager.sceneLoaded -= MenuLoaded;
+			menuLoaded = true;
+			waitUntil = Time.unscaledTime + 2f;
 		}
 
 		/// <summary>The world window's Back to the editor: leaves the test world without saving it.</summary>
@@ -80,7 +94,7 @@ namespace DynamicIslands.Editor
 			switch (state)
 			{
 				case State.ToMenu:
-					if (menu && Time.unscaledTime >= waitUntil) { state = State.Opening; DynamicIslands.instance.StartCoroutine(OpenWorld()); }
+					if (menu && menuLoaded && Time.unscaledTime >= waitUntil) { state = State.Opening; DynamicIslands.instance.StartCoroutine(OpenWorld()); }
 					break;
 				case State.InWorld:
 					if (LoadSceneManager.IsGameSceneLoaded && CustomIslandSpawner.RaftPosition.HasValue && RAPI.GetLocalPlayer() != null && Time.unscaledTime >= waitUntil)
@@ -107,7 +121,7 @@ namespace DynamicIslands.Editor
 		static IEnumerator OpenWorld()
 		{
 			yield return new WaitForSecondsRealtime(1f);
-			LoadGameBox load = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			LoadGameBox load = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded);
 			LoadGame_Selection pick = null;
 			// (the world is on disk or not; when it is, Raft's list shows it after a while - right after the editor it took
 			// over 10 s to start filling, and with many saved worlds it is long)
@@ -138,12 +152,13 @@ namespace DynamicIslands.Editor
 				for (float t = 0; t < 10f && load.loadButton != null && !load.loadButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
 				if (load.loadButton != null && !load.loadButton.interactable) { Stop("Raft's Load button is off (is Steam online?) - the island wasn't tried", true); yield break; }
 				Step("Loading the test world");
-				load.Button_LoadGame();
+				try { load.Button_LoadGame(); }
+				catch (Exception e) { Stop("Raft's Load didn't work (" + e.GetType().Name + ") - the island wasn't tried; try Test again", true); Debug.LogWarning("[CUSTOM ISLANDS] [test] " + e); yield break; }
 			}
 			else
 			{
 				try { if (load != null) load.Close(); } catch { }
-				NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+				NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded);
 				if (box == null) { Stop("Raft's New Game box wasn't found - the island wasn't tried", true); yield break; }
 				box.gameObject.SetActive(true);
 				try { box.Close(); } catch { }
@@ -155,7 +170,8 @@ namespace DynamicIslands.Editor
 				if (box.createGameButton != null && !box.createGameButton.interactable) { Stop("Raft's Create button is off - the island wasn't tried", true); yield break; }
 				WorldDirector.PendingPlan = WorldPlan.NoneName; // (only the island being tried)
 				Step("Making the test world");
-				box.Button_CreateNewGame();
+				try { box.Button_CreateNewGame(); }
+				catch (Exception e) { Stop("Raft's Create didn't work (" + e.GetType().Name + ") - the island wasn't tried; try Test again", true); Debug.LogWarning("[CUSTOM ISLANDS] [test] " + e); yield break; }
 			}
 			state = State.InWorld;
 			waitUntil = Time.unscaledTime + 6f;
