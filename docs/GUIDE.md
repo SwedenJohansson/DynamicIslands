@@ -11,7 +11,7 @@ own** in the editor (4-5), giving them **stories** - quests, doors and keys, sto
 and **world plans** that decide which islands a world gets, when and where (7). Section 8 is about playing together. The
 **optional systems** that change a whole world - world rules, the world randomizer, the extra options, the island list
 and the level up system - are gathered in section 9, followed by the files, the console commands, help, and how to
-report a problem (section 13).
+report a problem (section 14). **Before playing a shared world over several days, or building an adventure, read chapter 12**: the limits of this alpha and what not to do.
 
 ![A generated island seen from the sea](images/world-island-from-sea.jpg)
 *A custom island met while sailing: made by the mod's island generator, with Raft's own palms, rocks and reef.*
@@ -27,9 +27,9 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Build my own island** | **EDITOR** → **Generate** an island → shape it, add objects → **Save** | [4.8](#48-your-first-island-step-by-step) |
 | **Give my island a quest or a secret** | Island tab → **Edit quest...**; an object → **Behaviour + events...** | [5](#5-making-islands-come-alive), [6](#6-stories-quests-behaviours-story-items) |
 | **Make my own adventure across several islands** | **EDITOR** → **WORLD PLANS** → **New...** → one rule per island → **Save**; choose it in NEW WORLD | [7.2](#72-your-first-world-plan-step-by-step) |
-| **Play with friends** | Everyone installs the mod; the host creates the world; friends join through Steam | [8](#8-playing-together) |
+| **Play with friends** | Everyone installs the mod; the host creates the world; friends join through Steam | [8](#8-playing-together), [12.1](#121-playing-together-over-several-days) |
 | **Change how a world plays** (tougher monsters, levels, a randomized world) | **NEW WORLD** → **WORLD SETTINGS...** | [9](#9-world-settings-rules-and-extra-systems) |
-| **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [13](#13-reporting-a-problem) |
+| **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [14](#14-reporting-a-problem) |
 
 ### Words used in this guide
 
@@ -85,8 +85,11 @@ Pick what you want to do; each line leads to the part of the guide you need.
    - [9.6 The level up system](#96-the-level-up-system)
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
-12. [Questions and problems](#12-questions-and-problems)
-13. [Reporting a problem](#13-reporting-a-problem)
+12. [Limits: what to know and what not to do](#12-limits-what-to-know-and-what-not-to-do)
+   - [12.1 Playing together over several days](#121-playing-together-over-several-days) · [12.2 Saving and quitting](#122-saving-and-quitting) · [12.3 During a session](#123-during-a-session)
+   - [12.4 Making quests and plans that work](#124-making-quests-and-plans-that-work) · [12.5 Names, files and your PC](#125-names-files-and-your-pc)
+13. [Questions and problems](#13-questions-and-problems)
+14. [Reporting a problem](#14-reporting-a-problem)
 
 ---
 
@@ -96,7 +99,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
 > RELEASE** box right of the middle, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
-> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 13](#13-reporting-a-problem)).
+> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 14](#14-reporting-a-problem)).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the
@@ -772,6 +775,9 @@ for that kind - its trigger zones, note titles, chest titles or creatures - so y
 (place the zones, notes, chests and creatures first). **When the quest is done, bring a new island** chooses from a
 list too (nothing, a saved island, a new island of a map type), and so does its direction.
 
+**Traps to avoid** when you make a quest (steps done in the wrong order, waits, chests that fill up again, rewards):
+[12.4 Making quests and plans that work](#124-making-quests-and-plans-that-work).
+
 ### 6.2 Behaviour and events
 
 Select any object → **Behaviour + events...**. No code needed:
@@ -941,6 +947,7 @@ You make and change plans in the island editor's **World plans** window, and pic
 Game** box. You don't need to have built any islands yourself: the mod's map types ([4.6](#46-ready-made-islands-map-types))
 are enough for a whole plan.
 
+Before you share a plan or change one that running worlds use, see [12.4](#124-making-quests-and-plans-that-work).
 ### 7.1 The plans that come with the mod
 
 Choose one in the New Game box (**Custom Islands plan**), or open it in World plans to see how it's made:
@@ -1259,6 +1266,9 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   table below.
 - **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
   host works out everyone's EXP, and each player sees the others' levels under their names.
+
+**Before you swap hosts:** read [12.1 Playing together over several days](#121-playing-together-over-several-days) -
+which copy of the world to host from, the same mod version for everyone, the PC clock, and what not to do.
 
 ### Who needs what: every case
 
@@ -1637,7 +1647,137 @@ Press **F10** for RML's console.
 
 The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in the [README](../README.md#console-commands-f10).
 
-## 12. Questions and problems
+## 12. Limits: what to know and what not to do
+
+Custom Islands is an alpha. Most of it just works, but a few things can lose progress, break a quest or confuse the
+players when they are done in a certain way. This chapter lists them, with what to do instead. They are being worked on;
+until then, following these steps keeps your worlds and adventures safe.
+
+### 12.1 Playing together over several days
+
+The world lives on the host's PC. When someone else hosts the next day, the mod works out which copy of the world is
+the newest. Help it:
+
+1. **Host from the newest copy.** The newest world is the Raft world folder of **whoever hosted last**. Before the next
+   session, that player quits to the main menu (leaving saves the world), then copies the whole folder
+   (`%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the next host.
+   **Don't host from your own older copy "because you have it"**: the mod continues that older copy without a warning,
+   and your first save then replaces the newer copy the other players kept. What was done in between is lost.
+2. **Copy the whole folder**, not only a save inside it - the top-level `CustomIslands.txt` and every save folder.
+   **Delete or rename your older copy of the same world first**; never merge two copies into one folder. Don't keep two
+   folders of the same world (a backup you also play): they share one set of custom-island progress.
+3. **Everyone uses the same version of the mod.** Joining with another version only shows a warning, but an older
+   version doesn't know newer parts of a world (the story chain, levels, the plan's copy...) and **drops them for good**
+   when it hosts and saves. Update everyone first.
+4. **Check the PC's clock and date.** The newest copy is recognised by when it was saved. A PC whose clock or date is
+   wrong (or players in far-apart time zones swapping hosts) can make an older copy look newer. Set the clock right
+   before hosting a shared world; with friends in other time zones, let the same person host when you can.
+5. **Agree on the settings in `spawnpool.txt`** (regrow days above all): what grows back follows the **current host's**
+   file. If the group played with things never growing back, the next host must have the same setting, or used chests
+   fill up and used zones fire again.
+6. **The next host should not have an island of their own with the same name as one in the plan.** Islands a plan still
+   has to bring are found by name on the host's PC: an own island "Camp" would be brought instead of the plan's "Camp".
+   Rename yours before hosting. If the host is missing an island, get it from the plan's maker (their pack, or the
+   library entry) before playing on.
+7. **Don't press Tidy up** (island library > Installed) right after handing a world to someone else if you may host it
+   again: it removes copies of islands that only that world uses.
+8. **Levels, player places and private storages belong to Steam accounts.** A player who comes back with another Steam
+   account starts over there.
+
+### 12.2 Saving and quitting
+
+1. **Quit to the main menu instead of closing Raft** (Alt+F4, the window's X or Task Manager), especially right after a
+   quest step, a story step or a change in Esc > Custom Islands. The mod writes some progress at once, while Raft saves
+   only now and then: after a crash, the chests can show as opened and the quest as done while the loot and rewards are
+   gone from the inventories (Raft's save is older).
+2. **After changing a setting during play** (Esc > Custom Islands), let Raft save before you quit (going to the main
+   menu does it).
+3. **Raft's Load Game box** (the last 8 saves) takes the custom islands back to each save only for saves made with this
+   version of the mod - not the very first save of a new world, and not saves from before this feature.
+4. **Back up worlds you care about** (copy the world folder) before updating the mod or trying a new plan on them.
+
+### 12.3 During a session
+
+1. **Joining right after the host has loaded the world:** islands that are still being made at that moment can be
+   missing for the one who joined. If an island is missing (or a notice says "No saved island named ..."), leave and join
+   again. Waiting until the host is on the raft for a few seconds avoids it.
+2. **Big islands over the internet** take a while to arrive, and many at once can make the host's game lag. Let
+   players join one at a time; stay near the raft until the islands have arrived.
+3. **Don't open the same chest, pull the same lever or use the last key together.** When two players do it in the same
+   second, a door can toggle twice (and end closed), both can get the chest (especially while one is still downloading
+   islands), or a quest counts one of the two. Take turns.
+4. **Things the host should not do while friends are playing:**
+   - **switch the level up system off and on again** - the players lose their levels (everyone should leave and join
+     again at once if it happened, before earning more EXP);
+   - **click the randomizer buttons while an alpha or Big Bruce is alive** (even the level that is already chosen) -
+     each click makes them three times tougher and heals them;
+   - **switch "Story islands in a new order"** in a running world - the Receiver's list is rebuilt; better only for a
+     new world;
+   - **change the build cost** - removing blocks gives back materials by the new cost, not by what was paid.
+5. **A second player sees an alpha weaker or dying early** now and then (when it turned alpha while they were
+   connected), and a Raft shark near a custom island can look different on their screen. Nothing is lost: fight on
+   until it is dead on the host's screen.
+
+### 12.4 Making quests and plans that work
+
+These are the traps island builders run into. Check your adventure with a test world ([4.9](#49-trying-the-island-in-a-world-test)) before sharing it.
+
+1. **Only the current quest step counts.** Opening a chest, defeating or catching animals **before** their step has
+   come doesn't count - and the chest is empty or the animals are gone when the step comes. Either put such steps
+   first, or keep the chest or creature spot **hidden until shown** ([6.2](#62-behaviour-and-events)) and show it from
+   the step before (for example "when a player reads the diary: show the supplies").
+2. **Animals and chests a step needs come back only** when the island loads again on the host after the regrow days -
+   the crew must be more than about 800 m away for that. Give "defeat N" and "catch N" steps enough animals, and don't
+   set their creature spots or chests to "Never" unless the step comes first.
+3. **Don't put a "wait" before something the adventure needs** (show, open, a signal, a journal page, a story item) on a
+   note, an arrival, a once-zone or a chest. If the host saves and quits, or the crew sails away, during the wait, the
+   rest never happens - and the event counts as done. Put the important part first and the wait after, or keep waits
+   short.
+4. **Chests with story items: set "Fills up again" to Never** (the story sets' own chests fill up again by default -
+   change them). Trigger zones always fire again after the regrow days, and a creature spot's "defeat" fires again when
+   the animals come back: don't use "open or close" / "show or hide" (toggles) or story items there - use "show",
+   "open" and journal pages.
+5. **Rewards in Raft items** go only to players within about 150 m of the island when the last step is done; players
+   who come later get nothing. **Story items** go to the whole crew. Use story items for keys and anything the story
+   needs.
+6. **"Only if" checks of Raft items (has, uses up) don't work on the island's "quest done" event or a creature spot's
+   "defeat"** - they look at the host's inventory, not the player who did it. Use story items there.
+7. **A note's actions run again every time it is read**, except its messages and what the whole crew shares: a note that
+   gives Raft items gives them at every reading. Give items from a chest or the quest reward instead.
+8. **"Collect N story items" and "find journal pages" count what the crew already has**: such a quest can finish the
+   moment its island appears - far away, and nobody gets its reward. Put the collecting on the same island, or give the
+   reward as story items.
+9. **Don't change an island that saved worlds use** in ways a world can't follow: its bring rules (deleting or
+   reordering them), its quest steps, the names of notes, zones and objects a step points at. Save such changes under a
+   new name instead ([4.7](#47-saving-and-sharing)).
+10. **Plans that running worlds use:** add new rules with **new ids**; don't delete a rule and add another (it may get the
+    same id and count as already done), and don't rename a rule's id after it has fired.
+11. **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a
+    big island) waits without telling anyone; the host's log says "waits: no free spot".
+12. **Avoid two copies of the same island in one world** when its quest counts journal pages.
+
+### 12.5 Names, files and your PC
+
+1. **Island names:** don't start a name with `#` or `@`, and avoid `=`, `,` and `;` in it. Such names break the mod's
+   own lists (an island "#1 Base" disappears from saved worlds; "Rock, big" can't be used in "one of these").
+2. **World names:** avoid an apostrophe (`Bob's raft`) for now - Tidy up can take such a world for a deleted one. If
+   Tidy up lists a world that still exists, don't press it.
+3. **Don't unzip the `.rmod`** into `Mods\DynamicIslands`, and don't leave old copies of the mod's own files there
+   (`modinfo.json`, `raft_*.txt`): files in that folder are used instead of the mod's own, so the mod can report an old
+   version and players can get different results.
+4. **Don't edit the settings files while Raft runs** (`spawnpool.txt`, `world_rules.txt`, `randomizer.txt`,
+   `library.txt`, the files in `worlds\`): your changes can be lost or mixed. Write decimals with a dot (`0.5`, not
+   `0,5`). Leave the first lines of the files in `worlds\` alone.
+5. **Keep Raft out of** Program Files, OneDrive-synced and read-only folders, and allow it through antivirus
+   "controlled folder access": the mod must write its files. When a save can't be written the mod may only say so in
+   the log.
+6. **Don't use the mod loader's Unload / Load** on Custom Islands during a session - restart Raft instead.
+7. **Don't keep the original "Dynamic Islands" mod** in the mods folder next to this one: they use the same folder and
+   patch the same parts of Raft.
+8. **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
+   (every entry is looked at), and report a pack that fails ([chapter 14](#14-reporting-a-problem)).
+
+## 13. Questions and problems
 
 **No islands appear while I sail.** Run `SpawnPool`: are automatic islands on, and is the pool empty? The plan may be
 "No custom islands" (`WorldPlan`). Islands appear only where there is room: near Raft's own islands they wait until
@@ -1696,7 +1836,7 @@ at once.
 
 **"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
 that won't work until the mod is updated; everything else works and your islands and worlds aren't changed. Please
-report it ([section 13](#13-reporting-a-problem)).
+report it ([section 14](#14-reporting-a-problem)).
 
 **Red boxes on my island in the editor.** Objects this Raft version doesn't have (after a Raft update): they are
 kept as they were and saved back unchanged ([4.7](#47-saving-and-sharing)).
@@ -1734,11 +1874,11 @@ background (about half a minute; the object browser's status line says so).
 
 **Something went wrong.** Press F10: the mod's messages start with `[CUSTOM ISLANDS]`. Raft's log is
 `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`. To tell us about it, see
-[section 13](#13-reporting-a-problem).
+[section 14](#14-reporting-a-problem).
 
 More: the [README](../README.md) (every feature, file and command, and the known limitations).
 
-## 13. Reporting a problem
+## 14. Reporting a problem
 
 This is an alpha, and your reports are how it gets better. A good report lets someone who wasn't there see what
 happened, and make it happen again on their own PC. Please include:
