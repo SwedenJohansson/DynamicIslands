@@ -11,7 +11,7 @@ own** in the editor (4-5), giving them **stories** - quests, doors and keys, sto
 and **world plans** that decide which islands a world gets, when and where (7). Section 8 is about playing together. The
 **optional systems** that change a whole world - world rules, the world randomizer, the extra options, the island list
 and the level up system - are gathered in section 9, followed by the files, the console commands, help, and how to
-report a problem (section 14). **Before playing a shared world over several days, or building an adventure, read chapter 12**: the limits of this alpha and what not to do.
+report a problem (section 15). **Before playing a shared world over several days, or building an adventure, read chapter 12**: the known issues of this alpha and how to avoid them (chapter 13 lists what can't be changed).
 
 ![A generated island seen from the sea](images/world-island-from-sea.jpg)
 *A custom island met while sailing: made by the mod's island generator, with Raft's own palms, rocks and reef.*
@@ -29,7 +29,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Make my own adventure across several islands** | **EDITOR** → **WORLD PLANS** → **New...** → one rule per island → **Save**; choose it in NEW WORLD | [7.2](#72-your-first-world-plan-step-by-step) |
 | **Play with friends** | Everyone installs the mod; the host creates the world; friends join through Steam | [8](#8-playing-together), [12.1](#121-playing-together-over-several-days) |
 | **Change how a world plays** (tougher monsters, levels, a randomized world) | **NEW WORLD** → **WORLD SETTINGS...** | [9](#9-world-settings-rules-and-extra-systems) |
-| **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [14](#14-reporting-a-problem) |
+| **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [15](#15-reporting-a-problem) |
 
 ### Words used in this guide
 
@@ -85,11 +85,12 @@ Pick what you want to do; each line leads to the part of the guide you need.
    - [9.6 The level up system](#96-the-level-up-system)
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
-12. [Limits: what to know and what not to do](#12-limits-what-to-know-and-what-not-to-do)
+12. [Known issues: what to avoid until they are fixed](#12-known-issues-what-to-avoid-until-they-are-fixed)
    - [12.1 Playing together over several days](#121-playing-together-over-several-days) · [12.2 Saving and quitting](#122-saving-and-quitting) · [12.3 During a session](#123-during-a-session)
    - [12.4 Making quests and plans that work](#124-making-quests-and-plans-that-work) · [12.5 Names, files and your PC](#125-names-files-and-your-pc)
-13. [Questions and problems](#13-questions-and-problems)
-14. [Reporting a problem](#14-reporting-a-problem)
+13. [Limitations: what can't be changed](#13-limitations-what-cant-be-changed)
+14. [Questions and problems](#14-questions-and-problems)
+15. [Reporting a problem](#15-reporting-a-problem)
 
 ---
 
@@ -99,7 +100,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 > unstable, and progress is not guaranteed to be saved - back up the worlds you care about (Raft keeps them in
 > `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User`). The main menu shows this in the **EXPERIMENTAL ALPHA
 > RELEASE** box right of the middle, with the mod's version and three buttons: **Discord** (the Custom Islands Discord
-> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 14](#14-reporting-a-problem)).
+> server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 15](#15-reporting-a-problem)).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
 > **Show** opens it again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the
@@ -1642,11 +1643,13 @@ Press **F10** for RML's console.
 
 The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in the [README](../README.md#console-commands-f10).
 
-## 12. Limits: what to know and what not to do
+## 12. Known issues: what to avoid until they are fixed
 
 Custom Islands is an alpha. Most of it just works, but a few things can lose progress, break a quest or confuse the
 players when they are done in a certain way. This chapter lists them: **why** each one matters and **exactly what to
-do** instead. They are all being fixed; until then, following these steps keeps your worlds and adventures safe.
+do** instead. **Every one of them is a known issue that is being fixed** - each is on the project's roadmap, and this
+chapter gets shorter as they are fixed. Until then, following these steps keeps your worlds and adventures safe. What
+can't be changed (Raft's own limits) is in [chapter 13](#13-limitations-what-cant-be-changed).
 
 ### 12.1 Playing together over several days
 
@@ -1738,8 +1741,6 @@ nobody is told. If the host has no such island at all, the rule waits and the ho
 
 - **Don't press Tidy up** (island library > Installed) right after handing a world to someone else if you may host it
   again: it removes copies of islands that only that world uses on your PC.
-- **Levels, the place a player stood and private storages belong to Steam accounts.** A player who comes back with
-  another Steam account starts over there.
 
 ### 12.2 Saving and quitting
 
@@ -1962,9 +1963,46 @@ say so in the log.
 
 - **Don't use the mod loader's Unload / Load** (F9) on Custom Islands during a session - restart Raft instead.
 - **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
-  (every entry is looked at), and report a pack that fails ([chapter 14](#14-reporting-a-problem)).
+  (every entry is looked at), and report a pack that fails ([chapter 15](#15-reporting-a-problem)).
 
-## 13. Questions and problems
+## 13. Limitations: what can't be changed
+
+These come from Raft itself, from the game engine (Unity), or from a choice made on purpose. They are not bugs and are not
+planned to change. Everything that can be fixed is in [chapter 12](#12-known-issues-what-to-avoid-until-they-are-fixed)
+instead, and on the project's roadmap.
+
+**Raft and its mod loader**
+- **Every player needs the mod** (and the Raft Mod Loader): Raft can't show custom islands to a player without it.
+- **Up to eight players**, Raft's own maximum.
+- **Raft's own Join World list is empty** in this Raft version: join friends through Steam ("Join Game").
+- **Levels, the place a player stood and private storages belong to a Steam account**: Raft knows players by their
+  Steam id. A player who comes back with another Steam account starts over there.
+- **Raft has no pets**: "catchable" animals are Raft's domestic ones (chicken, goat, llama), caught with the net launcher.
+- **Story items live in the crew's journal, not in Raft's inventory.** Raft's items are a fixed list; a new item would
+  break the save for anyone who opens the world without the mod.
+- **Objects from Raft's other islands and Raft's buildable items are decoration** in custom islands: a chest from
+  Tangaroa doesn't store anything, a character doesn't move. Their game code belongs to Raft's own islands. The mod's own
+  chests, notes, zones and creature spots, and the harvestable trees, rocks, ores and plants, have their gameplay.
+- **The screecher's stone look can't be tinted** (it is not a normal texture).
+- **Atmosphere zones** change Unity's fog and light plus a faint tint: how strong they look depends on Raft's own sky
+  at that moment.
+
+**The land**
+- **One sea level.** Raft has one ocean: lakes and lagoons go down to sea level, and there is no water above it.
+- **No caves or overhangs from the terrain.** An island's ground is one height map (one height at each point): build
+  caves and arches from objects (rocks, Raft's big island pieces) instead.
+- **Flying islands:** reaching one is up to the players (stairs or pillars from the raft) - that's the idea.
+- **At most 12 000 objects per island** from the generator: more makes Raft stutter when the island loads.
+
+**Versions**
+- **An island saved with a newer version of the mod can't be opened by an older one** (the file says so). Update the mod.
+- **Islands built with Unity (`.assets`, version 2)** are no longer read: rebuild them in the editor.
+
+**Sharing**
+- **Text inside islands** (notes, quests) is shown as its builder wrote it: a pack from someone you don't know can hold
+  words you'd rather not see. The island library's entries are looked at before they go in.
+
+## 14. Questions and problems
 
 **No islands appear while I sail.** Run `SpawnPool`: are automatic islands on, and is the pool empty? The plan may be
 "No custom islands" (`WorldPlan`). Islands appear only where there is room: near Raft's own islands they wait until
@@ -2023,7 +2061,7 @@ at once.
 
 **"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
 that won't work until the mod is updated; everything else works and your islands and worlds aren't changed. Please
-report it ([section 14](#14-reporting-a-problem)).
+report it ([section 15](#15-reporting-a-problem)).
 
 **Red boxes on my island in the editor.** Objects this Raft version doesn't have (after a Raft update): they are
 kept as they were and saved back unchanged ([4.7](#47-saving-and-sharing)).
@@ -2061,11 +2099,11 @@ background (about half a minute; the object browser's status line says so).
 
 **Something went wrong.** Press F10: the mod's messages start with `[CUSTOM ISLANDS]`. Raft's log is
 `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`. To tell us about it, see
-[section 14](#14-reporting-a-problem).
+[section 15](#15-reporting-a-problem).
 
-More: the [README](../README.md) (every feature, file and command, and the known limitations).
+More: the [README](../README.md) (every feature, file and command, the known issues being fixed, the limitations and what has been tested).
 
-## 14. Reporting a problem
+## 15. Reporting a problem
 
 This is an alpha, and your reports are how it gets better. A good report lets someone who wasn't there see what
 happened, and make it happen again on their own PC. Please include:
