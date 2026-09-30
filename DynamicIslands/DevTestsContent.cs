@@ -308,6 +308,10 @@ namespace DynamicIslands
 			Check(ref ok, note != null && note.gameObject.layer != 0 && note.GetComponent<RaycastInteractable>() != null, "the sign is readable with Raft's interact key (layer " + (note != null ? LayerMask.LayerToName(note.gameObject.layer) : "-") + ")");
 			if (note != null)
 			{
+				// (beside the sign, as a player reading it: the reader closes itself when the player is more than 8 m away - from
+				// the raft it closed before the check when a frame took longer than its 0.2 s grace)
+				Network_Player reader = RAPI.GetLocalPlayer();
+				if (reader != null) yield return PutPlayer(reader, note.transform.position + Vector3.up * 1.5f + (reader.transform.position - note.transform.position).normalized * 2f, false);
 				NoteReader.Open(note);
 				yield return null;
 				Check(ref ok, NoteReader.ShownTitle == "Warning" && NoteReader.ShownText == "Warthogs live here.\nBring a spear.", "the note opens: \"" + NoteReader.ShownTitle + "\"");
