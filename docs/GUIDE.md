@@ -1966,6 +1966,9 @@ say so in the log.
 
 #### Other things to know
 
+- **Don't delete `gen-...` island files by hand** while a saved world uses them. A generated island is a file like any
+  other: without it the world simply lacks that island, for you and everyone who joins (the log says "Could not read
+  island"). Remove unused ones with **Tidy up** in the island library, which leaves the ones worlds use.
 - **Don't use the mod loader's Unload / Load** (F9) on Custom Islands during a session - restart Raft instead.
 - **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
   (every entry is looked at), and report a pack that fails ([chapter 15](#15-reporting-a-problem)).
