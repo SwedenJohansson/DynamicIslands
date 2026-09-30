@@ -22,6 +22,9 @@ namespace DynamicIslands.Editor
 
 		static GameObject open;
 		public static bool IsOpen { get { return open != null; } }
+		static int closedFrame = -1;
+		/// <summary>A list is open, or Esc closed one this frame: the window under it keeps its own Esc for the next press.</summary>
+		public static bool Busy { get { return open != null || closedFrame == Time.frameCount; } }
 
 		/// <summary>Tests: clicks the drop-down open and the option with this value, as a player does. False if the list hasn't it.</summary>
 		public static bool Click(Button drop, string value)
@@ -156,7 +159,7 @@ namespace DynamicIslands.Editor
 
 		public static void Close()
 		{
-			if (open != null) UnityEngine.Object.Destroy(open);
+			if (open != null) { UnityEngine.Object.Destroy(open); closedFrame = Time.frameCount; }
 			open = null;
 		}
 

@@ -83,6 +83,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			DropList.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -113,7 +114,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen) return;
+			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy) return;
 			if (pickingReward) { pickingReward = false; ShowReward(); }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();

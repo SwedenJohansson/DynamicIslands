@@ -40,6 +40,24 @@ namespace DynamicIslands.Editor
 			{ "journal", "journal page" }, { "wait", "wait" },
 		};
 
+		/// <summary>What each action does (the action list's lines).</summary>
+		static readonly Dictionary<string, string> VerbHints = new Dictionary<string, string>
+		{
+			{ "show", "Objects with a name appear (they were hidden)" }, { "hide", "Objects with a name disappear" }, { "toggle", "Hidden ones appear, shown ones disappear" },
+			{ "open", "A door, gate, bridge or lift opens" }, { "close", "It closes" }, { "switch", "Open if closed, closed if open (a lever)" },
+			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays" },
+			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
+			{ "journal", "A page is written into the crew's journal (J)" }, { "wait", "Waits some seconds before the actions below" },
+		};
+
+		/// <summary>What each check asks (the check list's lines).</summary>
+		static readonly Dictionary<string, string> CheckHints = new Dictionary<string, string>
+		{
+			{ "has", "The player has an item or story item (it stays)" }, { "take", "The player has it, and it is used up (like a key)" },
+			{ "state", "Objects with a name are open, closed, shown or hidden" }, { "signal", "A signal was sent on this island" },
+			{ "quest", "The island's quest reached a step (or is done)" },
+		};
+
 		public static void Create(Transform canvas)
 		{
 			var blocker = new GameObject("BehaviourWindow", typeof(RectTransform), typeof(Image));
@@ -76,6 +94,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			DropList.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -119,7 +138,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen) return;
+			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
@@ -322,14 +341,14 @@ namespace DynamicIslands.Editor
 			RectTransform row = UIKit.Row(g, 28f, 4f, "Check");
 			Button not = UIKit.Button(row, c.Not ? "not" : "is", () => { Keep(); c.Not = !c.Not; Rebuild(); }, "\"not\" turns the check round: it passes when this is NOT so (the player hasn't got the key yet...)", 44, 28f, 12);
 			UIKit.SetActive(not, c.Not);
-			UIKit.Button(row, CheckLabels[c.Kind], () =>
+			DropList.Make(row, "Drop_CheckKind", BehaviourProps.CheckKinds.Select(k => new DropList.Option(k, CheckLabels[k], CheckHints[k])).ToList(), c.Kind, kind =>
 			{
 				Keep();
-				c.Kind = BehaviourProps.CheckKinds[(Array.IndexOf(BehaviourProps.CheckKinds, c.Kind) + 1) % BehaviourProps.CheckKinds.Length];
+				c.Kind = kind;
 				if (c.Kind == "state" && !BehaviourProps.States.Contains(c.Arg)) c.Arg = "closed";
 				else if (!c.IsItem && c.Kind != "state") c.Arg = "";
 				Rebuild();
-			}, "Click to change the check: has an item, uses up an item, an object is open/closed/shown/hidden, a signal was sent, the quest reached a step", 120, 28f, 12);
+			}, 130, "The check: has an item, uses up an item, an object is open/closed/shown/hidden, a signal was sent, the quest reached a step", 28f, 12);
 			if (c.IsItem)
 			{
 				Field(row, "item (\u2026 to choose; story:<id> for a story item)", c.Target, -1, "Raft's unique item name, or story:<id> for one of the island's story items", v => c.Target = v.Trim());
@@ -342,7 +361,7 @@ namespace DynamicIslands.Editor
 			{
 				Field(row, "object name", c.Target, 150, "Objects with this name (all of them must be so)", v => c.Target = v.Trim());
 				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices().Skip(1), v => { c.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
-				UIKit.Button(row, BehaviourProps.States.Contains(c.Arg) ? c.Arg : "open", () => { Keep(); c.Arg = BehaviourProps.States[(Array.IndexOf(BehaviourProps.States, c.Arg) + 1) % BehaviourProps.States.Length]; Rebuild(); }, "open, closed, shown or hidden (click to change)", 80, 28f, 12);
+				DropList.Make(row, "Drop_State", BehaviourProps.States.Select(st => new DropList.Option(st, st)).ToList(), BehaviourProps.States.Contains(c.Arg) ? c.Arg : "open", st => { Keep(); c.Arg = st; Rebuild(); }, 90, "open, closed, shown or hidden", 28f, 12);
 			}
 			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
 			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
@@ -357,13 +376,13 @@ namespace DynamicIslands.Editor
 			ObjAction a = list[index];
 			RectTransform row = UIKit.Row(g, 28f, 4f, "Action");
 			UIKit.Size(UIKit.Label(row, (index + 1) + ".", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 20);
-			UIKit.Button(row, VerbLabels[a.Verb], () =>
+			DropList.Make(row, "Drop_Verb", BehaviourProps.Verbs.Select(v => new DropList.Option(v, VerbLabels[v], VerbHints[v])).ToList(), a.Verb, verb =>
 			{
 				Keep();
-				a.Verb = BehaviourProps.Verbs[(Array.IndexOf(BehaviourProps.Verbs, a.Verb) + 1) % BehaviourProps.Verbs.Length];
+				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, "Click to change what happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal, journal page, wait", 110, 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal, journal page, wait", 28f, 12);
 			if (ObjAction.HasTarget(a.Verb))
 			{
 				Field(row, "name (empty = itself)", a.Target, 170, "The name of the objects it acts on", v => a.Target = v.Trim());
