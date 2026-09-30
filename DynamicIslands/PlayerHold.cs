@@ -145,14 +145,7 @@ namespace DynamicIslands.Editor
 			holding = false;
 		}
 
-		static void Put(Network_Player player, Vector3 at)
-		{
-			CharacterController cc = player.PersonController.controller;
-			cc.enabled = false;
-			player.transform.position = at;
-			if (player.PersonController.controllerType != ControllerType.Ground) player.PersonController.SwitchControllerType(ControllerType.Ground);
-			cc.enabled = true;
-		}
+		static void Put(Network_Player player, Vector3 at) { PlayerMove.To(player, at); }
 
 		static bool Supported(Vector3 p)
 		{

@@ -810,13 +810,7 @@ namespace DynamicIslands.Editor
 
 		public static void Teleport(Vector3 to)
 		{
-			Network_Player player = RAPI.GetLocalPlayer();
-			if (player == null) return;
-			CharacterController cc = player.PersonController != null ? player.PersonController.controller : null;
-			if (cc != null) cc.enabled = false;
-			player.transform.position = to;
-			if (player.PersonController != null) player.PersonController.SwitchControllerType(ControllerType.Ground);
-			if (cc != null) cc.enabled = true;
+			PlayerMove.To(RAPI.GetLocalPlayer(), to);
 		}
 
 		static bool Near(IslandWorldState.Entry e)

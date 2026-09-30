@@ -678,12 +678,7 @@ namespace DynamicIslands
 		/// <summary>Puts the player at a spot, walking (on something) or swimming.</summary>
 		static IEnumerator PutPlayer(Network_Player player, Vector3 at, bool water)
 		{
-			CharacterController cc = player.PersonController.controller;
-			cc.enabled = false;
-			player.transform.position = at;
-			player.PersonController.externalVelocity = Vector3.zero;
-			player.PersonController.SwitchControllerType(water ? ControllerType.Water : ControllerType.Ground);
-			cc.enabled = true;
+			PlayerMove.To(player, at, water ? ControllerType.Water : ControllerType.Ground);
 			yield return null;
 		}
 

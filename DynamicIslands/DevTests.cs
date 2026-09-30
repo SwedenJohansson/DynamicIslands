@@ -800,12 +800,9 @@ namespace DynamicIslands
 				if (Physics.Raycast(target, Vector3.down, out hit, 20f) && hit.collider.transform.IsChildOf(island.transform)) target.y = hit.point.y + 1.5f;
 			}
 
-			CharacterController cc = player.PersonController.controller;
-			cc.enabled = false;
-			player.transform.position = target;
-			// A player who was swimming stays in Raft's swimming mode after a teleport (held at the sea surface): walk
-			player.PersonController.SwitchControllerType(ControllerType.Ground);
-			cc.enabled = true;
+			// (as the mod moves a player: off the raft first - a player still a child of the rocking raft dropped through the island -
+			// and walking: a swimmer stays in Raft's swimming mode after a teleport, held at the sea surface)
+			PlayerMove.To(player, target);
 			Log("Teleported player to " + target + " on " + island.name);
 			int exceptions = 0; string firstException = null;
 			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception) { exceptions++; if (firstException == null) firstException = msg + " " + trace.Split('\n').FirstOrDefault(); } };

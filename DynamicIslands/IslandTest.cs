@@ -199,14 +199,7 @@ namespace DynamicIslands.Editor
 			Vector3 top = e.Position + Vector3.up * 400f;
 			RaycastHit hit;
 			Vector3 stand = Physics.Raycast(top, Vector3.down, out hit, 800f, ~0, QueryTriggerInteraction.Ignore) ? hit.point + Vector3.up * 1.5f : e.Position + Vector3.up * 5f;
-			if (player != null)
-			{
-				CharacterController cc = player.PersonController.controller;
-				cc.enabled = false;
-				player.transform.position = stand;
-				player.PersonController.SwitchControllerType(ControllerType.Ground);
-				cc.enabled = true;
-			}
+			PlayerMove.To(player, stand);
 			Step("Testing '" + Island + "' (" + e.Position + ")");
 			IslandInfo.Show("Testing '" + Island + "'", "", "Esc > Custom Islands > Back to the editor (the test world isn't saved)");
 		}
