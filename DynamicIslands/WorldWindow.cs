@@ -112,6 +112,11 @@ namespace DynamicIslands.Editor
 
 			// Plan and story
 			Heading(right, "PLAN AND STORY");
+			// (the host picks another plan here - it was only the F10 command WorldPlan <name>)
+			RectTransform planRow = UIKit.Row(right, 28f, 6f, "PlanRow");
+			UIKit.Size(UIKit.Label(planRow, "Plan", 13, UIKit.TextMuted).gameObject, 40);
+			Add("WorldPlan", DropList.Make(planRow, "Drop_WorldPlan", NewWorldOptions.PlanOptions(), WorldDirector.PlanName, v => { DynamicIslands.WorldPlanCommand(new[] { v }); Refresh(); }, -1,
+				"Give this world another plan (host): its islands come from now on; what is done or unlocked stays", 28f, 13));
 			planText = UIKit.Label(right, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Plan");
 			planText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			planText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -203,6 +208,10 @@ namespace DynamicIslands.Editor
 				UIKit.SetActive(b, WorldOptions.On(o));
 			}
 			UIKit.LabelOf(buttons["Levels"]).text = "Level up system:  " + (PlayerLevels.On ? "ON" : "off");
+			Button planPick = buttons["WorldPlan"];
+			DropdownButton pd = planPick.GetComponent<DropdownButton>();
+			if (pd != null) { pd.Options = NewWorldOptions.PlanOptions(); pd.Value = WorldDirector.PlanName; }
+			UIKit.LabelOf(planPick).text = WorldDirector.PlanName;
 			UIKit.SetActive(buttons["Levels"], PlayerLevels.On);
 
 			if (host)
@@ -237,7 +246,7 @@ namespace DynamicIslands.Editor
 					string.Join(", ", p.Rules.Where(x => !WorldDirector.Done.Contains(x.Id) && !StoryChain.Brought.Contains(x.Id)).Take(3).Select(x => (x.Label.Length > 0 ? x.Label : x.Id)).ToArray()));
 			}
 			if (StoryChain.Active) lines.Add(StorySummary());
-			lines.Add("<i>Another plan for this world: WorldPlan <name> (F10).</i>");
+			lines.Add("<i>Another plan: pick it in the list above - its islands come from now on, what is done or unlocked stays.</i>");
 			return string.Join("\n", lines.ToArray());
 		}
 

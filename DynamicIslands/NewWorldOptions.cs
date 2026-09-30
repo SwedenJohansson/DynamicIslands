@@ -125,7 +125,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
-		static List<DropList.Option> PlanOptions()
+		internal static List<DropList.Option> PlanOptions()
 		{
 			return WorldPlan.All().Select(n => WorldPlan.Load(n)).Where(p => p != null).Select(p => new DropList.Option(p.Name, p.Name, Describe(p))).ToList();
 		}
