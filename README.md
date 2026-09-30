@@ -654,6 +654,7 @@ Things that can be fixed or improved. Each one is on the project's roadmap (`_Pr
 - The world window (Esc > Custom Islands) doesn't list the islands in the world with their distance yet (T1b).
 - A plan can only bring islands that are on the host's PC: when another player hosts a world later, islands its plan hasn't brought yet have to be installed there - the host is told which (AU6, AU43).
 - Raft-item rewards of a quest go only to the players near the island when it is done (LM8).
+- A generated island (`gen-...`) whose file was deleted by hand is simply missing from the worlds that use it, for every player; it could be made again from its name (R15). Tidy up keeps the ones worlds use.
 - The mod's own text is English only (L1); the journal (J) and stats (K) keys can't be rebound (L2).
 
 ## Limitations (can't be changed)
