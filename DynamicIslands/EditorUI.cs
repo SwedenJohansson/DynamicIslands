@@ -43,6 +43,7 @@ namespace DynamicIslands.Editor
 		static InputField elevationField;
 		// (the height presets: the one that matches the island's height is lit)
 		static Button presetSea, presetFlying, presetSunken;
+		static DropdownButton styleDrop;
 		static Text infoRegrowText;
 		static RectTransform terrainTools, objectTools, islandTools, browserPanel;
 		static string hoverHint;
@@ -307,8 +308,12 @@ namespace DynamicIslands.Editor
 			RectTransform styleRow = UIKit.Row(island, UIKit.RowHeight, 4f);
 			UIKit.Size(UIKit.Label(styleRow, "Style", 14, UIKit.TextMuted).gameObject, 62);
 			UIKit.Button(styleRow, "\u25C4", () => StepStyle(-1), "Previous style", 32);
-			Button style = UIKit.Button(styleRow, "Tropical", () => StepStyle(1), "Island style: the ground textures and the generator's objects (saved with the island)");
+			Button style = DropList.Make(styleRow, "Drop_IslandStyle", Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i))).ToList(), "0",
+				v => { int to = int.Parse(v); IslandSettingsUndo.Change(() => DynamicIslands.SetEditorStyle(to)); DynamicIslands.Notify("Island style: " + TerrainPainter.StyleName(to)); },
+				-1, "Island style: the ground textures and the generator's objects (saved with the island) - click for the list", UIKit.RowHeight, 14);
 			styleText = UIKit.LabelOf(style);
+			styleText.alignment = TextAnchor.MiddleCenter;
+			styleDrop = style.GetComponent<DropdownButton>();
 			UIKit.Size(style.gameObject, -1, -1, 1);
 			UIKit.Button(styleRow, "\u25BA", () => StepStyle(1), "Next style", 32);
 
@@ -528,6 +533,7 @@ namespace DynamicIslands.Editor
 		{
 			int style = DynamicIslands.currentStyle;
 			if (styleText != null) styleText.text = TerrainPainter.StyleName(style);
+			if (styleDrop != null) styleDrop.Value = style.ToString();
 			if (brushButtons != null)
 				for (int i = 0; i < PaintSlots.Length; i++)
 					if (brushButtons[4 + i] != null) UIKit.LabelOf(brushButtons[4 + i]).text = TerrainPainter.SlotLabel(style, PaintSlots[i]);

@@ -79,6 +79,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			DropList.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -86,7 +87,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = seedField != null && seedField.isFocused;
-			if (TextPromptWindow.IsOpen) return; // (its own Enter and Esc)
+			if (TextPromptWindow.IsOpen || DropList.Busy) return; // (its own Enter and Esc; an open list closes on Esc by itself)
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 			else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) OnGenerate();
 			if (previewDue > 0f && Time.unscaledTime >= previewDue) { previewDue = -1f; UpdatePreview(); }
@@ -189,10 +190,12 @@ namespace DynamicIslands.Editor
 			RectTransform island = UIKit.Group(root, "Island");
 			Stepper(island, "Style", "Ground textures and the objects that grow: palms, snowy pines, cacti, birches, or a volcano",
 				"Style sets the ground textures (sand, grass, snow, desert, forest floor, ash) and which objects grow: tropical palms and bushes, snowy pines and drifts, desert cacti and grass, forest birches and pines, or volcanic rock with a crater on the highest peak. Animals and loot follow the style too, unless you choose them.",
-				() => TerrainPainter.StyleName(s.Style) + (TerrainPainter.HasStyle(s.Style) ? "" : " (textures not loaded)"), step => { int n = TerrainPainter.Styles.Length; s.Style = ((s.Style + step) % n + n) % n; });
+				() => TerrainPainter.StyleName(s.Style) + (TerrainPainter.HasStyle(s.Style) ? "" : " (textures not loaded)"), step => { int n = TerrainPainter.Styles.Length; s.Style = ((s.Style + step) % n + n) % n; },
+				Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i), StyleHints[Mathf.Min(i, StyleHints.Length - 1)])).ToList(), () => s.Style, i => s.Style = i);
 			Stepper(island, "Layout", "One island, an atoll, an archipelago, sea stacks, a plateau, a marsh, a crescent or twin peaks",
 				"Layout is the basic shape of the land. Round: one island with peaks. Atoll: a ring of low land around a lagoon. Archipelago: several islets on a shallow shelf. Sea stacks: steep rock pillars. Plateau: a flat-topped mesa with a ramp up. Marsh: low land with pools. Crescent: a curved island around a sheltered bay (like Raft's Cresent). Twin peaks: two tall peaks (like Raft's Twin peak). Every other setting shapes it further.",
-				() => IslandShapes.Names[s.Shape], step => { int n = IslandShapes.Names.Length; s.Shape = ((s.Shape + step) % n + n) % n; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
+				() => IslandShapes.Names[s.Shape], step => { int n = IslandShapes.Names.Length; s.Shape = ((s.Shape + step) % n + n) % n; SetStatus(IslandShapes.Hints[s.Shape] + "."); },
+				Enumerable.Range(0, IslandShapes.Names.Length).Select(i => new DropList.Option(i.ToString(), IslandShapes.Names[i], IslandShapes.Hints[i])).ToList(), () => s.Shape, i => { s.Shape = i; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
 
 			RectTransform size = UIKit.Group(root, "Size and height");
 			Slider(size, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
@@ -562,18 +565,27 @@ namespace DynamicIslands.Editor
 			return Slider(parent, label, min, max, get, set, format, hint, help);
 		}
 
-		/// <summary>"Label (?)  &lt;  value  &gt;" stepping through choices.</summary>
-		void Stepper(Transform parent, string label, string hint, string help, Func<string> text, Action<int> step)
+		/// <summary>What each style grows (the style list's lines).</summary>
+		static readonly string[] StyleHints =
+		{
+			"Sand and grass: palms, bushes, Raft's tropical islands", "Snow: pines and drifts", "Sand and dry grass: cacti and desert plants",
+			"Forest floor: birches and pines", "Ash and rock: a crater on the highest peak",
+		};
+
+		/// <summary>"Label (?)  &lt;  value \u25BC  &gt;": the arrows step through the choices, the middle opens a list of all of them.</summary>
+		void Stepper(Transform parent, string label, string hint, string help, Func<string> text, Action<int> step, List<DropList.Option> options, Func<int> get, Action<int> set)
 		{
 			RectTransform row = UIKit.Row(parent, 30f, 4f, label);
 			UIKit.Size(UIKit.Label(row, label, 14, UIKit.TextMuted).gameObject, 62);
 			UIKit.Help(row, help);
 			UIKit.Button(row, "<", () => { step(-1); ShowAll(); }, "Previous " + label.ToLowerInvariant(), 32);
-			Button b = UIKit.Button(row, "", () => { step(1); ShowAll(); }, hint);
+			Button b = DropList.Make(row, "Drop_" + label, options, get().ToString(), v => { set(int.Parse(v)); ShowAll(); }, -1, hint + " (click for the list)", 30f, 14);
 			Text t = UIKit.LabelOf(b);
+			t.alignment = TextAnchor.MiddleCenter;
 			UIKit.Size(b.gameObject, -1, -1, 1);
 			UIKit.Button(row, ">", () => { step(1); ShowAll(); }, "Next " + label.ToLowerInvariant(), 32);
-			refresh.Add(() => t.text = text());
+			DropdownButton d = b.GetComponent<DropdownButton>();
+			refresh.Add(() => { t.text = text(); if (d != null) d.Value = get().ToString(); });
 		}
 
 		/// <summary>"Label (?)  [a] [b] [c]": one of a few choices.</summary>
