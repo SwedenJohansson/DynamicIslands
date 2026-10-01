@@ -172,7 +172,7 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) HostAnswersClaims = false; // (a new host: known again from its answer)
+			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; } // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
 		}
 
@@ -180,6 +180,13 @@ namespace DynamicIslands.Editor
 		/// a late answer is waited for, never taken as "yes" (both players looted one chest while the host was busy sending
 		/// island files).</summary>
 		public static bool HostAnswersClaims { get; internal set; }
+
+		/// <summary>What this host does that older ones don't, told to players with its version ("counts": a player's quest
+		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total).</summary>
+		const string HostCapabilities = "counts";
+
+		/// <summary>A player: the host adds quest counts up (since 2026-10-01); else the player sends its total, as before.</summary>
+		public static bool HostAddsCounts { get; internal set; }
 
 		const string VersionTag = "version:";
 
@@ -369,11 +376,11 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
 							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
-							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion }, from);
+							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							SendToPlayer(WorldRules.Message(), from);
 							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);

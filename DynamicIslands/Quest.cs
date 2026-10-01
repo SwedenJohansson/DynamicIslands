@@ -142,7 +142,7 @@ namespace DynamicIslands.Editor
 				{
 					if (IslandQuest.Counted(q.Steps[later].Type) || !Matches(q.Steps[later], type, target)) continue;
 					if (Raft_Network.IsHost) Remember(e, later, amount);
-					else IslandNetwork.SendQuestAdd(e.Id, later, amount);
+					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, later, amount); // (an older host would jump to that step)
 					break;
 				}
 				return;
@@ -150,10 +150,11 @@ namespace DynamicIslands.Editor
 			int progress = ProgressOf(e) + amount;
 			// A player's machine moves its own view on at once and sends the host its amount, not its total: two players'
 			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
-			bool client = !Raft_Network.IsHost;
-			if (progress >= s.Count) Set(e, step + 1, 0, !client);
-			else Set(e, step, progress, !client);
-			if (client) IslandNetwork.SendQuestAdd(e.Id, step, amount);
+			// (an older host takes what it gets for the total: it gets the total, as before)
+			bool adds = !Raft_Network.IsHost && IslandNetwork.HostAddsCounts;
+			if (progress >= s.Count) Set(e, step + 1, 0, !adds);
+			else Set(e, step, progress, !adds);
+			if (adds) IslandNetwork.SendQuestAdd(e.Id, step, amount);
 		}
 
 		static bool Matches(IslandQuest.Step s, string type, string target)
