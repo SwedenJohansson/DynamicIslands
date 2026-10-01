@@ -825,7 +825,8 @@ namespace DynamicIslands
 			if (!WorldRandomizer.Current.Has(RandomizerSettings.Finds)) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 99 });
 			// (a treasure hunt needs a spot 3 m up for its X and a beach for the bottle: a low, flat island gets a stash
 			// instead, as it should - then the next nearest island is tried)
-			List<Landmark> near = WorldManager.AllLandmarks.Where(lm => lm != null && lm.isSpawned && WorldRandomizer.IsNatural(lm)).OrderBy(lm => (lm.transform.position - raft).sqrMagnitude).Take(4).ToList();
+			// (up to 8: near the raft there can be four low, flat small islands in a row - seen 2026-10-01)
+			List<Landmark> near = WorldManager.AllLandmarks.Where(lm => lm != null && lm.isSpawned && WorldRandomizer.IsNatural(lm)).OrderBy(lm => (lm.transform.position - raft).sqrMagnitude).Take(8).ToList();
 			if (near.Count == 0) { Fail("none of Raft's plain islands near the raft (sail on)"); WorldRandomizer.Set(before); yield break; }
 			Landmark l = null;
 			IslandWorldState.Entry e = null;
