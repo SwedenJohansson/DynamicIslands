@@ -472,7 +472,10 @@ namespace DynamicIslands
 			Check(ref ok, names.Count(n => n == StoryIslands[0]) == 1 && names.Count(n => n == StoryIslands[1]) == 1, "loaded again: home and the bay once each");
 			if (!host) Check(ref ok, IslandWorldState.Islands.Any(e => (e.HostName ?? e.Name) == StoryIslands[0] && e.Label == "Home") && IslandWorldState.Islands.Any(e => (e.HostName ?? e.Name) == StoryIslands[1] && e.Label == "Bay"), "player 2: home and the bay with their Receiver names");
 			else Check(ref ok, WorldDirector.Done.Contains("home") && WorldDirector.Done.Contains("bay") && WorldDirector.Done.Contains("treasure"), "loaded again: the rules that fired are remembered (" + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()) + ")");
-			foreach (IslandWorldState.Entry e in IslandWorldState.Islands) Log("STORY " + (e.HostName ?? e.Name) + " label=" + e.Label);
+			// (an island whose file the host hasn't got - removed since - isn't sent to joining players: marked, so the comparison
+			// with player 2's lines leaves it out)
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+				Log("STORY " + (e.HostName ?? e.Name) + " label=" + e.Label + (host && IslandNetwork.HashOf(e.Name) == null ? " (not on this PC)" : ""));
 			Log("STORY done " + string.Join(",", WorldDirector.Done.OrderBy(x => x).ToArray()));
 			if (ok) Log("PASS: story check"); else Fail("story check");
 		}
