@@ -134,7 +134,19 @@ namespace DynamicIslands.Editor
 			int step = StepOf(e);
 			if (!q.Exists || step >= q.Steps.Count) return;
 			IslandQuest.Step s = q.Steps[step];
-			if (s.Type != type || (s.Target.Length > 0 && !string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase))) return;
+			if (!Matches(s, type, target))
+			{
+				// Done before its step came (the chest opened, the animals defeated first): remembered for that step and
+				// counted when it comes - it was lost, and the chest stayed empty / the animals dead
+				for (int later = step + 1; later < q.Steps.Count; later++)
+				{
+					if (IslandQuest.Counted(q.Steps[later].Type) || !Matches(q.Steps[later], type, target)) continue;
+					if (Raft_Network.IsHost) Remember(e, later, amount);
+					else IslandNetwork.SendQuestAdd(e.Id, later, amount);
+					break;
+				}
+				return;
+			}
 			int progress = ProgressOf(e) + amount;
 			// A player's machine moves its own view on at once and sends the host its amount, not its total: two players'
 			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
@@ -144,8 +156,37 @@ namespace DynamicIslands.Editor
 			if (client) IslandNetwork.SendQuestAdd(e.Id, step, amount);
 		}
 
+		static bool Matches(IslandQuest.Step s, string type, string target)
+		{
+			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+		}
+
+		/// <summary>Where a later step's early work is kept in the island's state (its count in Yield).</summary>
+		public const int EarlyKeyBase = 0x40100;
+
+		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step.</summary>
+		static void Remember(IslandWorldState.Entry e, int step, int amount)
+		{
+			ObjectState had;
+			int n = (e.State.TryGetValue(EarlyKeyBase + step, out had) ? had.Yield : 0) + amount;
+			e.State[EarlyKeyBase + step] = new ObjectState { Active = true, Yield = n, Day = Today };
+			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " done early (" + n + "), counted when it comes");
+		}
+
+		/// <summary>Host: the quest reached this step - what was done for it early counts now (it may finish it at once).</summary>
+		static void CreditEarly(IslandWorldState.Entry e, IslandQuest q, int step)
+		{
+			ObjectState had;
+			if (!Raft_Network.IsHost || step >= q.Steps.Count || !e.State.TryGetValue(EarlyKeyBase + step, out had) || had.Yield <= 0) return;
+			e.State.Remove(EarlyKeyBase + step);
+			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " gets what was done for it early (" + had.Yield + ")");
+			int progress = ProgressOf(e) + had.Yield;
+			if (progress >= q.Steps[step].Count) Set(e, step + 1, 0, true);
+			else Set(e, step, progress, true);
+		}
+
 		/// <summary>Host: a player's event counted on an island's quest - their amount at that step, added to the host's
-		/// count and sent to everyone. A step the quest has moved past counted already.</summary>
+		/// count and sent to everyone. A step the quest has moved past counted already; a later one keeps it for then.</summary>
 		public static void AddFromPlayer(int islandId, int step, int amount)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
@@ -153,6 +194,7 @@ namespace DynamicIslands.Editor
 			IslandQuest q = QuestOf(e);
 			int now = StepOf(e);
 			if (!q.Exists) return;
+			if (step > now && step < q.Steps.Count) { Remember(e, step, amount); return; }
 			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, now, ProgressOf(e)); return; } // (the player's view put right)
 			int progress = ProgressOf(e) + amount;
 			if (progress >= q.Steps[now].Count) Set(e, now + 1, 0, true);
@@ -173,6 +215,7 @@ namespace DynamicIslands.Editor
 			if (step >= q.Steps.Count) Completed(e, q);
 			else Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
 			if (Advanced != null) try { Advanced(e.Id, step); } catch { }
+			CreditEarly(e, q, step);
 		}
 
 		/// <summary>From the network (another player moved the quest on).</summary>

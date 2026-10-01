@@ -784,7 +784,12 @@ for that kind - its trigger zones, note titles, chest titles or creatures - so y
 (place the zones, notes, chests and creatures first). **When the quest is done, bring a new island** chooses from a
 list too (nothing, a saved island, a new island of a map type), and so does its direction.
 
-**Traps to avoid** when you make a quest (steps done in the wrong order, waits, chests that fill up again, rewards):
+**Steps done in another order count too:** a chest opened or animals defeated before their step has come are
+remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
+the diary) finishes when the diary is read. To keep the story in order anyway, hide a later step's chest or animals until
+the step before shows them (**Behaviour + events...** > **At first: Hidden until shown**, and a **show** action).
+
+**Traps to avoid** when you make a quest (waits, toggles in events that happen again, rewards):
 [12.4 Making quests and plans that work](#124-making-quests-and-plans-that-work).
 
 ### 6.2 Behaviour and events
@@ -1782,49 +1787,28 @@ be earned again.
 
 ### 12.3 During a session
 
-#### Take turns at chests, levers and keys
+#### Take turns with the crew's last key
 
-**Why:** each player's game asks the host before it opens a chest, but when two players act in the same second, or the
-host answers late (a player still downloading islands), both can go ahead:
-- a **chest** can give its loot to both, and a trigger zone meant to fire once can fire twice (a double ambush);
-- a **lever or door that opens and closes** can be switched twice - it ends closed again;
-- the crew's **last key** (a story item that is used up) can open two doors;
-- a quest step that **counts** ("open 3 chests", "defeat 4 warthogs") can count only one of two things done at the same
-  moment - with exactly 3 chests that never fill up again, the quest can't be finished.
+**Why:** the crew's **last key** (a story item that is used up) can open two different doors when two players use it
+at the same moment: each player's game checks the key before the host has heard of the other.
 
-**What to do:**
-1. Let one player open a chest, pull a lever or use a key at a time; say it on voice ("I'm opening the crate").
-2. When a quest counts chests or animals, don't open or kill two of them in the same second.
-3. Wait until everyone who joined has all the islands (they are on their screens, not only on yours) before looting.
+**What to do:** let one player use a key at a time; say it on voice ("I'm opening the vault").
+
+(Fixed since 2026-10-01: a chest gives its loot once and a once-zone fires once even when the host is busy and answers
+late; a lever pulled by several players in the same second moves once; quest steps that count add up everyone's.)
 
 #### Don't switch these in a running world
 
-**Why:** some settings in **Esc > Custom Islands** (and the F10 commands) don't handle being changed while the game
-runs with others:
-- **The level up system off and on again:** the players who joined lose their levels (they start at level 1, and their
-  old level is overwritten once they pass it).
-- **The world randomizer** (any of its buttons, even the level already chosen) while an alpha or Big Bruce is alive:
-  each click makes those animals three times tougher again and heals them fully.
+**Why:** two settings in **Esc > Custom Islands** (and the F10 commands) don't handle being changed while the game runs:
 - **Story islands in a new order:** Raft's Receiver list is rebuilt; the island you were sailing to may be gone from it.
 - **The build cost:** removing blocks gives back materials by the **new** cost, not by what you paid.
 
 **What to do:**
 1. Choose these in **World settings** when you **create** the world, and leave them.
-2. If you must change one: do it when nobody else is connected (and, for the randomizer, with no alpha nearby), then
-   let Raft save (leave to the main menu once).
-3. If the level up system was switched off and on with players on: everyone leaves and joins again **before** earning
-   more EXP - their levels come back.
+2. If you must change one: do it when nobody else is connected, then let Raft save (leave to the main menu once).
 
-#### If an island is missing right after joining
-
-**Why:** a player who joins in the first seconds after the host loaded the world, while islands are still being made,
-can miss one of them for the whole session.
-
-**What to do:**
-1. Signs: an island others see isn't there for you, or a notice says "No saved island named ...". (F10 `ListSpawned`
-   shows "(island file missing or broken)".)
-2. Leave (**Esc > Main menu**) and join again. `Resync` doesn't fix this case.
-3. Hosts can avoid it: wait until you are on your raft for a few seconds before friends join.
+(Fixed since 2026-10-01: switching the level up system off and on keeps everyone's levels, and changing the world
+randomizer no longer makes alphas tougher again or heals them.)
 
 #### Other things to know
 
@@ -1839,24 +1823,6 @@ can miss one of them for the whole session.
 These are the traps island builders run into. Always play your adventure once with **Test**
 ([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose.
 
-#### Hide a later step's chest or animals until that step comes
-
-**Why:** only the **current** quest step counts. Opening a chest or defeating animals **before** their step has come
-doesn't count - and when the step comes, the chest is empty and the animals are gone. They come back only after the
-regrow days, when the island loads again with the crew more than about 800 m away - or never, if set so. The quest is
-stuck.
-
-**What to do (a chest):**
-1. Select the chest > **Behaviour + events...** > give it a **Name** (for example `supplies`).
-2. **At first: Hidden until shown**. **Save**.
-3. Select the object of the step before (for example the note "Diary") > **Behaviour + events...** > **When it is read (the first time)** > **+ Add an action** > **show** > type `supplies`. **Save**.
-4. Now the chest only appears once the diary is read - when its step is the current one.
-
-**What to do (animals):** select the creature spot > **Behaviour + events...** > **At first: Hidden (ambush)**, give it a
-name, and **show** it from the step before (or set **Appears** to "when a zone fires" and put the zone where the step
-sends the players).
-
-**Or:** put such steps first in the quest, before the players can reach anything else.
 
 #### Put important actions before a "wait", not after
 
@@ -1868,21 +1834,22 @@ already counts as used, so it doesn't run again. A door the story needs stays sh
 - **Good:** `show vault` > `say "The ground shakes..."` > `wait 5` > `play sound`.
 - **Bad:** `say "The ground shakes..."` > `wait 30` > `show vault`.
 
-Keep waits short (a few seconds) and use them for effects - messages, sounds - not for what the story needs.
+Keep waits short (a few seconds) and use them for effects - messages, sounds - not for what the story needs. (What
+comes after a wait for the player - a message, items, a teleport - is left out for a player who died or left the island
+meanwhile: a respawned player isn't pulled back.)
 
-#### Story-item chests never fill up again; no toggles in events that repeat
+#### No toggles in events that happen again
 
-**Why:** chests fill up again after the regrow days by default - also the chests of the **story sets** (the locked door's
-key, the trail's log). A second key or log appears, and counts and "uses up" checks go wrong. Trigger zones always fire
-again after the regrow days, and a creature spot's **defeat** event fires again when the animals come back: a
-**show/hide** or **open/close** action there flips the bridge or door back.
+**Why:** a trigger zone set to fire **Once** is ready again after the regrow days, a chest that fills up opens again,
+and a creature spot's **defeat** event fires again when the animals come back: a **show/hide** or **open/close** action
+there flips the bridge or door back.
 
 **What to do:**
-1. Select every chest that holds a story item (also after placing a story set) > in the panel, **Fills up again:
-   Never**.
-2. In events that can happen again (trigger zones, defeat, chests that fill up), use **show**, **open**, **journal
-   page** and **say** - not **show/hide** or **open/close**.
-3. If the island's normal loot should come back, keep it in other chests than the story items.
+1. For a zone the story needs only once (an ambush, a bridge shown): **Fires: Once ever** - it never fires again.
+2. In events that can happen again (zones set to Once or Every time, defeat, chests that fill up), use **show**, **open**,
+   **journal page** and **say** - not **show/hide** or **open/close**.
+
+(Fixed since 2026-10-01: a chest that holds a story item never fills up again - no second key or log.)
 
 #### Use story items for keys and what the story needs
 
@@ -1922,9 +1889,8 @@ brings another island it comes as a new rule.)
 
 - **Rewards in Raft items** go only to players within about 150 m of the island when the last step is done; players who
   come later get nothing. Story items go to the whole crew.
-- **"Collect N story items" and "find journal pages"** count what the crew already has: such a quest can finish the
-  moment its island appears - far away, and nobody gets its reward. Put the collecting on the same island, or give the
-  reward as story items.
+- **"Collect N story items" and "find journal pages"** count what the crew already has, and finish when a player comes
+  to the island (so the reward reaches them).
 - **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a big
   island) waits without telling anyone; the host's log says "waits: no free spot".
 - **Avoid two copies of the same island in one world** when its quest counts journal pages.
@@ -1970,9 +1936,9 @@ say so in the log.
 
 #### Names that break
 
-- **Island names:** don't start a name with `#` or `@`, and avoid `=`, `,` and `;`. Such names break the mod's own
-  lists: an island "#1 Base" disappears from saved worlds, "@home" counts as unused (Delete and Tidy up won't protect
-  it), "Rock, big" can't be used in "one of these".
+- **Island names:** the editor refuses names that start with `#` or `@` or hold `=`, `,` or `;` - the mod's own lists
+  use them. An island saved under such a name by an older version: **Save as** a new name (an island "#1 Base"
+  disappears from saved worlds, "@home" counts as unused, "Rock, big" can't be used in "one of these").
 - **World names:** avoid an apostrophe (`Bob's raft`) for now - Tidy up can take such a world for a deleted one. If Tidy
   up lists a world that still exists, don't press it.
 

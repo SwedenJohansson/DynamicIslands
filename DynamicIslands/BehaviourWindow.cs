@@ -322,6 +322,9 @@ namespace DynamicIslands.Editor
 			UIKit.Label(head, "", 12);
 			List<ObjCheck> list = checks[ev];
 			for (int i = 0; i < list.Count; i++) CheckRow(box, list, i);
+			// (no single player sets these off: Raft items are in one player's inventory, and the host's is looked at)
+			if ((ev == "defeat" || ev == "quest") && list.Any(c => (c.Kind == "has" || c.Kind == "take") && !StoryItems.IsStory(c.Target)))
+				UIKit.Label(box, "<color=#e0a040>No single player sets this off: an item check here looks at the host's inventory. Use story items (the whole crew's) instead.</color>", 11, UIKit.TextColor);
 			RectTransform other = UIKit.Row(box, 28f, 6f, "Otherwise");
 			UIKit.Size(UIKit.Label(other, "Otherwise say", 12, UIKit.TextMuted).gameObject, 96);
 			List<ObjAction> el = elses[ev];

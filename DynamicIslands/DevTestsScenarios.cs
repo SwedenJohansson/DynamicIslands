@@ -1248,6 +1248,52 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario come back"); else Fail("scenario come back");
 		}
 
+		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1)")]
+		public static void ScEarlyCommand() { DynamicIslands.instance.StartCoroutine(ScEarlyRoutine()); }
+
+		static IEnumerator ScEarlyRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario early: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscearly";
+			IslandFile f;
+			try { f = ScIsland(isl, "Early Isle"); } catch (Exception ex) { Fail("scenario early: " + ex.Message); yield break; }
+			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-10, 0), 1), ObjectProps.NoteTitle, "Diary", ObjectProps.NoteText, "The supplies are in the chest. Watch out for the warthogs."));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(10, 0), 2), ObjectProps.NoteTitle, "Supplies", ObjectProps.LootItems, "Plank*2"));
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 14), 3), ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0"));
+			new IslandQuest { Title = "The camp", Steps = {
+				new IslandQuest.Step { Type = "read", Target = "Diary", Count = 1 },
+				new IslandQuest.Step { Type = "open", Target = "Supplies", Count = 1 },
+				new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 2 } } }.To(f.Props);
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario early: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario early: the island didn't come"); yield break; }
+			try
+			{
+				yield return ScWaitAnimals(e, "Warthog", 2, 20f);
+				foreach (AI_NetworkBehaviour a in ScAnimals(e, "Warthog").ToList()) ScKill(a);
+				yield return new WaitForSeconds(2.5f);
+				Check(ref ok, QuestTracker.StepOf(e) == 0, "the warthogs defeated first: the quest still waits for the diary (step " + (QuestTracker.StepOf(e) + 1) + ")");
+				ScOpenChest(e, "Supplies");
+				NoteReader.Close();
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, QuestTracker.StepOf(e) == 0, "... and the supplies opened: it still waits for the diary");
+				ScReadNote(e, "Diary");
+				yield return new WaitForSeconds(1.5f);
+				NoteReader.Close();
+				int steps = QuestTracker.QuestOf(e).Steps.Count;
+				Check(ref ok, QuestTracker.StepOf(e) >= steps, "the diary read: the supplies and the warthogs done before count now - the quest is done (" + QuestTracker.StepOf(e) + " of " + steps + ") - AU1");
+			}
+			finally { ScRemove(made, isl); }
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario early"); else Fail("scenario early");
+		}
+
 		[ConsoleCommand(name: "CIScReread", docs: "Dev, world (host, 'CI ...'): AT22 - a note that gives 10 planks and one that uses up 5 scrap for an ingot, each read three times: 10 planks in all, one ingot for 5 scrap - a re-read shows the note's messages only (AU16)")]
 		public static void ScRereadCommand() { DynamicIslands.instance.StartCoroutine(ScRereadRoutine()); }
 
