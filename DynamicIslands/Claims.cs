@@ -63,11 +63,25 @@ namespace DynamicIslands.Editor
 			yield return new WaitForSeconds(NoAnswerSeconds);
 			Action<bool> then;
 			if (!waiting.TryGetValue(k, out then)) yield break;
+			// A host that answers claims is only late (busy sending island files): its answer is waited for - going ahead
+			// let two players loot one chest and set off a once-zone twice
+			if (IslandNetwork.HostAnswersClaims)
+			{
+				Debug.Log("[CUSTOM ISLANDS] [net] The host hasn't answered a claim yet (busy?): waiting for it");
+				IslandInfo.ShowMessage("Waiting for the host... (it is busy - this happens when its answer comes)");
+				yield return new WaitForSeconds(LateAnswerSeconds);
+				// (no answer at all: the next try asks again)
+				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again"); }
+				yield break;
+			}
 			waiting.Remove(k);
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] The host didn't answer a claim (an older Custom Islands?): going ahead");
 			granted.Add(k);
 			try { then(true); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Claim: " + ex.Message); }
 		}
+
+		/// <summary>How long a late answer of a host that answers claims is waited for.</summary>
+		const float LateAnswerSeconds = 30f;
 
 		/// <summary>Host: may this player have it? Grants the first to ask (not used yet, nobody else holding it) and holds it for them.</summary>
 		public static bool HostGrant(IslandWorldState.Entry e, int key, ulong who)
@@ -94,6 +108,7 @@ namespace DynamicIslands.Editor
 				reply(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = msg.Ids, Index = msg.Index, Count = ok ? 1 : 0 });
 				return;
 			}
+			IslandNetwork.HostAnswersClaims = true;
 			long k = K(msg.Ids[0], msg.Index);
 			Action<bool> then;
 			if (!waiting.TryGetValue(k, out then)) return;

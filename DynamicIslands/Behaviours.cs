@@ -676,10 +676,33 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static bool SharedOnce(IslandWorldState.Entry e, int index, string ev)
 		{
-			if (ev != "read" && ev != "arrive") return true;
+			if (ev != "read" && ev != "arrive") return NotSameMoment(e, index, ev);
 			int key = SharedOnceBase + index;
 			if (e.State.ContainsKey(key)) return false;
 			e.State[key] = new ObjectState { Active = false, Day = Today };
+			return true;
+		}
+
+		/// <summary>When the same object's event last ran its shared part on the host (island/object/event).</summary>
+		static readonly Dictionary<string, float> sharedAt = new Dictionary<string, float>();
+		const float SameMoment = 1f;
+
+		/// <summary>
+		/// Host: several players using one thing within the network's delay - four pulls of one lever in the same second -
+		/// run its shared part once: each machine let its own player through, and a switch toggled four times ended where
+		/// it began. Within a second, the first one counts.
+		/// </summary>
+		static bool NotSameMoment(IslandWorldState.Entry e, int index, string ev)
+		{
+			string k = e.Id + "/" + index + "/" + ev;
+			float t, now = Time.unscaledTime;
+			if (sharedAt.TryGetValue(k, out t) && now - t < SameMoment)
+			{
+				Debug.Log("[CUSTOM ISLANDS] '" + ev + "' on '" + e.HostName + "' again within a second (another player at the same moment): its shared part ran already");
+				return false;
+			}
+			if (sharedAt.Count > 512) foreach (string old in sharedAt.Where(x => now - x.Value >= SameMoment).Select(x => x.Key).ToList()) sharedAt.Remove(old);
+			sharedAt[k] = now;
 			return true;
 		}
 
@@ -874,7 +897,9 @@ namespace DynamicIslands.Editor
 		static void WatchDeath()
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
-			bool dead = p != null && p.Stats != null && (p.Stats.IsDead || (p.Stats.stat_health != null && p.Stats.stat_health.Value <= 0f));
+			// (Raft's own flag is the player script's: its stats entity doesn't say dead)
+			bool dead = p != null && ((p.PlayerScript != null && p.PlayerScript.IsDead) ||
+				(p.Stats != null && (p.Stats.IsDead || (p.Stats.stat_health != null && p.Stats.stat_health.Value <= 0f))));
 			if (dead && !wasDead) deaths++;
 			wasDead = dead;
 		}

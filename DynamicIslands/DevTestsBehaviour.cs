@@ -249,6 +249,7 @@ namespace DynamicIslands
 			Behaviours.OnEventMessage(e.Id, leverIdx, "use", false);
 			ObjectState ds;
 			Check(ref ok, !e.State.TryGetValue(Behaviours.StateBase + doorIdx, out ds), "a client's lever use reaches the host: the door closes (back to how it was placed)");
+			yield return new WaitForSeconds(1.2f); // (one use of a thing per second counts on the host: two players at one lever - AU18)
 			Behaviours.Fire(e, leverIdx, "use", true); // open again for the reload check
 
 			// Unloading and loading the island keeps the door open and the warthog's spot shown

@@ -1815,7 +1815,7 @@ namespace DynamicIslands
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			// Raft fills the list asynchronously: wait until it stops growing
 			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
-			float timeout = Time.realtimeSinceStartup + 90f;
+			float timeout = Time.realtimeSinceStartup + 90f, reopenAt = Time.realtimeSinceStartup + 15f;
 			int count = -1;
 			while (Time.realtimeSinceStartup < timeout)
 			{
@@ -1823,6 +1823,15 @@ namespace DynamicIslands
 				int now = box.loadGameSelections != null ? box.loadGameSelections.Count : 0;
 				if (now > 0 && now == count) break;
 				count = now;
+				// (still empty: the box was opened just as the main menu came back from the editor - Raft fills it when it
+				// opens, so open it again; it stayed empty for the whole 90 s and the runner took it for "no such world")
+				if (now == 0 && Time.realtimeSinceStartup > reopenAt)
+				{
+					Log("  (Raft's Load list is still empty: opening it again)");
+					try { box.Close(); } catch { }
+					box.Open();
+					reopenAt = Time.realtimeSinceStartup + 15f;
+				}
 			}
 			if (box.loadGameSelections == null || box.loadGameSelections.Count == 0) { Fail("no saved worlds listed"); yield break; }
 			System.Func<LoadGame_Selection, string> worldName = s => s.text_GameName != null && !string.IsNullOrEmpty(s.text_GameName.text) ? s.text_GameName.text : s.directoryInfo != null ? s.directoryInfo.Name : "?";

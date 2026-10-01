@@ -172,8 +172,14 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
+			if (syncTries == 1) HostAnswersClaims = false; // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
 		}
+
+		/// <summary>A player: the host answers claims (it sent its version - claims are older than that - or answered one):
+		/// a late answer is waited for, never taken as "yes" (both players looted one chest while the host was busy sending
+		/// island files).</summary>
+		public static bool HostAnswersClaims { get; internal set; }
 
 		const string VersionTag = "version:";
 
@@ -295,6 +301,14 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
+		/// total, as before).</summary>
+		public static void SendQuestAdd(int islandId, int step, int amount)
+		{
+			if (Raft_Network.IsHost) return;
+			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = amount, Name = "add" });
+		}
+
 		public static void SendQuest(int islandId, int step, int progress)
 		{
 			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = progress };
@@ -353,7 +367,7 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
 							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
@@ -399,6 +413,8 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.QuestStep:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
+							// (a player's amount: the host adds it up and tells everyone the total)
+							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], msg.Index, msg.Count); break; }
 							QuestTracker.Apply(msg.Ids[0], msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg);
 						}

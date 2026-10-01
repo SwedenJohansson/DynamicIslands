@@ -258,11 +258,12 @@ namespace DynamicIslands
 				// (d) a comma in a story rule's id, saved and read back
 				StoryChain.Reset();
 				StoryChain.FromPlan(WorldPlan.Parse("CI comma", "story = on\nrule = camp,1 | type:sandbar | start | receiver:400 | | Camp | after:Vasagatan | visit\n"));
-				string stepsBefore = Steps(StoryChain.Steps);
+				// (the steps compared one by one: joined with commas, "rule:camp,1" read back as two steps looked the same)
+				List<string> stepsBefore = StoryChain.Steps.ToList();
 				List<string> lines = StoryChain.WriteLines().ToList();
 				StoryChain.Reset();
 				foreach (string l in lines) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
-				Check(ref ok, Steps(StoryChain.Steps) == stepsBefore, "a story rule 'camp,1' saved and read: the same chain (" + stepsBefore + " -> " + Steps(StoryChain.Steps) + ") - AU54");
+				Check(ref ok, StoryChain.Steps.SequenceEqual(stepsBefore), "a story rule 'camp,1' saved and read: the same chain (" + stepsBefore.Count + " steps: " + string.Join(" > ", stepsBefore.ToArray()) + " -> " + StoryChain.Steps.Count + " steps: " + string.Join(" > ", StoryChain.Steps.ToArray()) + ") - AU54");
 			}
 			finally
 			{
@@ -617,6 +618,8 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0, 10), 20), BehaviourProps.Name, "lever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "switch|gate|"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(10, 10), 21), BehaviourProps.Name, "gate", BehaviourProps.Move, "0,3,0", BehaviourProps.MoveMode, "switch"));
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(-15, 15), 22), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(16, -20), 23), ObjectProps.NoteTitle, "Locked crate", ObjectProps.LootItems, "Plank*1",
+				BehaviourProps.CheckKey("open"), "take|story:ciscmanykey|1", BehaviourProps.ElseKey("open"), "message||The crate is locked."));
 			new IslandQuest { Title = "Crowd", Steps = { new IslandQuest.Step { Type = "open", Target = "", Count = 5 } } }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f);
@@ -626,8 +629,8 @@ namespace DynamicIslands
 			if (e.Root == null) { ScRemove(made, isl); Fail("scenario many players: the island didn't come"); yield break; }
 			try { }
 			finally { }
-			// (a) five players each open a different crate at the same moment: each sends its own count (step 0, 1 done)
-			for (int i = 0; i < 5; i++) QuestTracker.Apply(e.Id, 0, 1);
+			// (a) five players each open a different crate at the same moment: each machine sends the host its amount at step 0 (as players now do)
+			for (int i = 0; i < 5; i++) QuestTracker.AddFromPlayer(e.Id, 0, 1);
 			ObjectState prog;
 			int progress = e.State.TryGetValue(QuestTracker.ProgressKey, out prog) ? prog.Yield : 0;
 			Check(ref ok, QuestTracker.StepOf(e) >= 1 || progress == 5, "five players open five crates at once: the quest counts five (step " + QuestTracker.StepOf(e) + ", progress " + progress + ") - AU8");
@@ -675,11 +678,18 @@ namespace DynamicIslands
 			int right = builders.Sum(b => players.Count(p => PrivateStorage.MayOpen(b.Key, p) == (!optionsOn || p == b.Value)));
 			Check(ref ok, right == builders.Count * players.Length, "seven builders' storages: each opens only for its builder (" + right + " of " + builders.Count * players.Length + " right)");
 			PrivateStorage.Decode(before2);
-			// (e) a claim held after its checks failed (a locked chest without the key) blocks the next player
-			int key = ContentState.LootKeyBase + 0;
-			bool firstGot = Claims.HostGrant(e, key, players[0]);
-			bool secondGot = Claims.HostGrant(e, key, players[1]);
-			Check(ref ok, firstGot && secondGot, "the first player's claim on a chest they couldn't open (no key) doesn't block the next player (" + firstGot + ", " + secondGot + ") - AU41");
+			// (e) a locked chest tried without the key (the host's own player, as anyone's machine does): it isn't claimed, so
+			// the next player who comes with the key isn't told someone else got it first
+			LootCrate lockedChest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(l => l.GetComponent<CustomNote>() != null && l.GetComponent<CustomNote>().Title == "Locked crate");
+			if (lockedChest != null)
+			{
+				StoryBook.Take("ciscmanykey", 99);
+				List<string> got = lockedChest.Open();
+				int key = lockedChest.StateKey;
+				bool nextGot = Claims.HostGrant(e, key, players[1]);
+				Check(ref ok, got.Count == 0 && !lockedChest.Looted && nextGot, "a locked chest tried without the key isn't claimed: the next player with the key gets it (given " + got.Count + ", the next player " + (nextGot ? "granted" : "refused") + ") - AU41");
+			}
+			else Check(ref ok, false, "the locked crate is on the island");
 			ScRemove(made, isl);
 			if (!levelsBefore && PlayerLevels.On) PlayerLevels.TurnOff();
 			if (ok) Log("PASS: scenario many players"); else Fail("scenario many players");

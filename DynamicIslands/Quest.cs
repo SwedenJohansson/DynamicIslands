@@ -136,8 +136,27 @@ namespace DynamicIslands.Editor
 			IslandQuest.Step s = q.Steps[step];
 			if (s.Type != type || (s.Target.Length > 0 && !string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase))) return;
 			int progress = ProgressOf(e) + amount;
-			if (progress >= s.Count) Set(e, step + 1, 0, true);
-			else Set(e, step, progress, true);
+			// A player's machine moves its own view on at once and sends the host its amount, not its total: two players'
+			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
+			bool client = !Raft_Network.IsHost;
+			if (progress >= s.Count) Set(e, step + 1, 0, !client);
+			else Set(e, step, progress, !client);
+			if (client) IslandNetwork.SendQuestAdd(e.Id, step, amount);
+		}
+
+		/// <summary>Host: a player's event counted on an island's quest - their amount at that step, added to the host's
+		/// count and sent to everyone. A step the quest has moved past counted already.</summary>
+		public static void AddFromPlayer(int islandId, int step, int amount)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || amount <= 0) return;
+			IslandQuest q = QuestOf(e);
+			int now = StepOf(e);
+			if (!q.Exists) return;
+			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, now, ProgressOf(e)); return; } // (the player's view put right)
+			int progress = ProgressOf(e) + amount;
+			if (progress >= q.Steps[now].Count) Set(e, now + 1, 0, true);
+			else Set(e, now, progress, true);
 		}
 
 		/// <summary>Records the quest's state here, tells the others (unless it came from them), and shows what changed.</summary>

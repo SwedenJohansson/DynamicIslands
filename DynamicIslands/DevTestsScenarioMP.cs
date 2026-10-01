@@ -106,6 +106,20 @@ namespace DynamicIslands
 			Log("PASS: read story note");
 		}
 
+		[ConsoleCommand(name: "CIScReadNoteFor", docs: "Dev, in game (either player): this player finds Raft's frequency note that names one of its story islands (the note lies on the island before it in Raft's story), through Raft's own network path: CIScReadNoteFor <Tangaroa|Caravan Town|...>")]
+		public static void ScReadNoteForCommand(string[] args)
+		{
+			string name = args != null ? string.Join(" ", args).Trim() : "";
+			ChunkPointType t = StoryOrder.Parse(name);
+			NoteBook book = UnityEngine.Object.FindObjectOfType<NoteBook>();
+			if (book == null || t == ChunkPointType.None) { Fail("read note for: in a world, with one of Raft's story islands ('" + name + "')"); return; }
+			int note = StoryOrder.FrequencyNotes().Where(kv => kv.Value == t).Select(kv => kv.Key).DefaultIfEmpty(-1).First();
+			if (note < 0) { Fail("read note for: no note names " + StoryOrder.Name(t)); return; }
+			book.UnlockSpecificNoteNetworked(note, false);
+			Log("Read the note naming " + StoryOrder.Name(t) + " (note " + note + ", " + (Raft_Network.IsHost ? "host" : "player") + ")");
+			Log("PASS: read note for");
+		}
+
 		[ConsoleCommand(name: "CIScCount", docs: "Dev, in game (either player): how many of an item this player has: CIScCount <unique item name> - logs ITEMS <name> <n>")]
 		public static void ScCountCommand(string[] args)
 		{

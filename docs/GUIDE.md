@@ -551,7 +551,12 @@ folder**), click **Import...** in the Islands window or the World plan window, a
 holds, who made it and its version. **Install** puts it in place:
 - **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
   as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
-  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)`.
+  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)` - and
+  your very own plan (the same file) stays yours: removing the pack later leaves it.
+- A plan may bring only new islands of map types: such a pack holds no island files at all, and that's fine.
+- **Story items with the same id:** a world's crew holds one of each story item id for all its islands. If the pack's
+  islands use an id another installed pack uses too (two packs' `key`), Install says so - in a world with both, the
+  key found for one would open the other's door. Fine if the packs are never played in one world.
 - An **island** from a pack only turns up by chance while sailing if you tick **Also let it turn up while sailing** -
   then also in worlds you've already started with random islands (you can untick it for a new world in World
   settings, [9.5](#95-islands-while-sailing)). A **plan's** islands never turn up at random: they come when the plan
@@ -1179,12 +1184,12 @@ What Check looks for:
 
 | | Problems (it can't work) | Warnings and tips |
 |---|---|---|
-| **Names** | a rule with no name, two rules with the same name | |
-| **WHEN** | no number for a distance or a day; a quest wait at an island **without a quest**; a quest that **can't be finished** (a step needs a zone, note, chest or creatures the island hasn't, or more pages than it has notes); more steps than the quest has; a **zone** or **signal** the island hasn't (Check lists the ones it has); an island or rule name that doesn't exist; a rule that waits for itself; **rules that wait for each other in a circle** | waits for a saved island **no rule of the plan brings** (a problem when random islands are off); waits for a rule that has a problem; needs more creatures than the island has (and they don't come back); a story item nothing on the island gives; a distance or day so large it's slow to test |
+| **Names** | a rule with no name, two rules with the same name | a rule named like a rule on one of the islands the plan brings (what waits for that name may take the other's island) |
+| **WHEN** | no number for a distance or a day; a quest wait at an island **without a quest**; a quest that **can't be finished** (a step needs a zone, note, chest or creatures the island hasn't, or more pages than it gives - a note gives a page only when it has text); more steps than the quest has; a **zone** or **signal** the island hasn't (Check lists the ones it has); an island or rule name that doesn't exist; a rule that waits for itself; **rules that wait for each other in a circle** | waits for a saved island **no rule of the plan brings** (a problem when random islands are off); waits for a rule that has a problem; needs more creatures than the island has (and they don't come back - by default they do, after the regrow days); creatures Raft leaves out of a game mode (screechers and puffer fish: none in Creative); a story item nothing on the island gives; a distance or day so large it's slow to test, or 0 (it comes at once) |
 | **BRING** | no island chosen, an island that isn't saved, a map type that doesn't exist, a list with no saved island, an empty spawn pool | some islands of a list aren't saved; a very big island (over 12 000 objects); the same island brought twice |
 | **WHERE** | near an island nobody has; near "the island where it happened" when the WHEN happens at no island; near its own island | near a saved island no rule brings; near a rule it doesn't wait for (it waits until that island is there); very far away |
 | **TELL** | | no message; found by Receiver but no Receiver name |
-| **STORY** | its "done when" can't happen (as WHEN above) | after an island that isn't in the story; Raft's story order and missing blueprints |
+| **STORY** | its "done when" can't happen (as WHEN above); after Utopia while Utopia ends the story (it never counts as done) | after an island that isn't in the story; Raft's story order and missing blueprints |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`

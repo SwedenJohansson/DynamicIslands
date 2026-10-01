@@ -302,8 +302,9 @@ namespace DynamicIslands
 			int arrive = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, Behaviours.IslandIndex, "arrive"));
 			int read = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 12, "read"));
 			int readOther = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 13, "read"));
+			// (a use - a lever - runs every time, but seven players at it in the same second count once: AU18)
 			int use = Enumerable.Range(0, 7).Count(i => Behaviours.SharedOnce(e, 12, "use"));
-			Check(ref ok, arrive == 1 && read == 1 && readOther == 1 && use == 7, "shared parts: arrive " + arrive + ", a note read " + read + ", another note " + readOther + " (1 each), use " + use + " (7: every time)");
+			Check(ref ok, arrive == 1 && read == 1 && readOther == 1 && use == 1, "shared parts: arrive " + arrive + ", a note read " + read + ", another note " + readOther + " (1 each), use " + use + " (1: seven in the same second count once)");
 
 			// Story items from an action: the host's part (once for the crew); Raft's items go to each player
 			var story = new ObjAction { Verb = "give", Arg = StoryItems.Ref("cikey") + "*1;Plank*3" };

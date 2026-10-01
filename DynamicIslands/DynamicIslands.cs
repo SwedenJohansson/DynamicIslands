@@ -781,6 +781,10 @@ namespace DynamicIslands
 			try
 			{
 				if (File.Exists(path)) island = IslandFile.Load(path);
+				// (one of the world's islands: said which, and that the rest plays - a player hosting a world they got as a
+				// folder, without ever joining it, has none of the islands made on the other PC)
+				else if (entry != null) Notify("This world's island '" + entry.HostName + "' isn't on this PC, so it is left out - the rest of the world plays. " +
+					"It comes once you have it: join a game where a player who has it hosts this world, or import it.", true);
 				else Notify("No saved island named '" + name + "' in " + assetpath, true);
 			}
 			catch (Exception e)
