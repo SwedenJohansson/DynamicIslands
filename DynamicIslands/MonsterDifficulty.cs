@@ -183,31 +183,10 @@ namespace DynamicIslands.Editor
 
 		#region Damage
 
-		/// <summary>The animals that fight players. Tame ones (llamas, goats, chickens, pigs) and the sea life that only swims by aren't monsters.</summary>
-		public static bool IsMonsterType(AI_NetworkBehaviourType t)
-		{
-			switch (t)
-			{
-				case AI_NetworkBehaviourType.StoneBird:
-				case AI_NetworkBehaviourType.StoneBird_Caravan:
-				case AI_NetworkBehaviourType.PufferFish:
-				case AI_NetworkBehaviourType.Boar:
-				case AI_NetworkBehaviourType.Rat:
-				case AI_NetworkBehaviourType.Rat_Tangaroa:
-				case AI_NetworkBehaviourType.Shark:
-				case AI_NetworkBehaviourType.Bear:
-				case AI_NetworkBehaviourType.MamaBear:
-				case AI_NetworkBehaviourType.PolarBear:
-				case AI_NetworkBehaviourType.BugSwarm_Bee:
-				case AI_NetworkBehaviourType.ButlerBot:
-				case AI_NetworkBehaviourType.Boss_Varuna:
-				case AI_NetworkBehaviourType.AnglerFish:
-				case AI_NetworkBehaviourType.Hyena:
-				case AI_NetworkBehaviourType.HyenaBoss:
-					return true;
-			}
-			return false;
-		}
+		/// <summary>The animals that fight players - the same ones that give EXP (LevelRules.IsMonster: one list, the two
+		/// had drifted apart - pigs and roaches gave EXP but weren't scaled, Utopia's harmless butler bots the reverse).
+		/// The ones to catch, the sea life that only swims by and people aren't monsters.</summary>
+		public static bool IsMonsterType(AI_NetworkBehaviourType t) { return LevelRules.IsMonster(t); }
 
 		/// <summary>An animal of one of the monster kinds, or one of Raft's other enemies (its bosses without an animal brain); not seagulls.</summary>
 		public static bool IsMonster(Network_Entity e)

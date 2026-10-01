@@ -184,6 +184,8 @@ namespace DynamicIslands.Editor
 			// (islands tried before stay in the test world when Raft saved it meanwhile: only the one being tried now)
 			int old = IslandWorldState.Remove(null);
 			if (old > 0) Step("Took away " + old + " island(s) tried before");
+			// (and their journal pages and story items: a quest counting pages or items started half done)
+			if (StoryBook.HasState) { StoryBook.Reset(); Step("Cleared the journal of the islands tried before"); }
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			float radius = Mathf.Max(20f, CustomIslandSpawner.LandRadius(Island));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, radius, radius + 400f);

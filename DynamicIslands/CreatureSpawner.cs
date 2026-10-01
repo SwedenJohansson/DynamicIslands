@@ -207,6 +207,26 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>The game modes a kind doesn't come in (Raft's rule, as SpawnsInMode): Check tells builders - a screecher
+		/// step can't be done in a Creative world. Raft's own values once its modes are set up, else what they are today.</summary>
+		public static List<string> ModesWithout(AI_NetworkBehaviourType type)
+		{
+			var off = new List<string>();
+			try
+			{
+				var modes = typeof(GameModeValueManager).GetField("gameModeValues", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null) as SO_GameModeValue[];
+				if (modes != null && modes.Any(m => m != null))
+				{
+					foreach (SO_GameModeValue m in modes.Where(m => m != null))
+						if (!SpawnsInMode(type, m) && !off.Contains(m.gameMode.ToString())) off.Add(m.gameMode.ToString());
+					return off;
+				}
+			}
+			catch (Exception) { } // (not set up yet: the main menu before any world)
+			if (type == AI_NetworkBehaviourType.StoneBird || type == AI_NetworkBehaviourType.PufferFish) off.Add(GameMode.Creative.ToString());
+			return off;
+		}
+
 		/// <summary>An ambush: the creature waits until a player sets off its trigger zone (a zone that isn't on the island doesn't hold it back).</summary>
 		static bool WaitsForZone(IslandWorldState.Entry entry, GameObject root, CreatureSpawnPoint p)
 		{
@@ -578,35 +598,43 @@ namespace DynamicIslands.Editor
 						if (gone > 0) Debug.Log("[CUSTOM ISLANDS] The spot of " + gone + " " + p.Kind.Label + "(s) on '" + e.HostName + "' was hidden: they are gone until it is shown");
 						continue;
 					}
-					int caught = 0;
-					for (int i = p.Spawned.Count - 1; i >= 0; i--)
-					{
-						AI_NetworkBehaviour ai = p.Spawned[i];
-						if (ai == null) { p.Spawned.RemoveAt(i); continue; }
-						// Caught (Raft lets go of it when it is carried): it belongs to the players now
-						if (ai.connectedSpawner == null)
-						{
-							p.Spawned.RemoveAt(i);
-							ours.Remove(ai);
-							caught++;
-							Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
-						}
-					}
-					// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
-					int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
-					if (alive != p.RecordedAlive)
-					{
-						// For quests: the ones that are gone and weren't caught were killed
-						int killed = p.RecordedAlive - alive - caught;
-						if (killed > 0) Debug.Log("[CUSTOM ISLANDS] " + killed + " " + p.Kind.Label + "(s) of '" + e.HostName + "' defeated (" + alive + " left; animals " + string.Join(", ", p.Spawned.Select(a => a == null ? "gone" : a.networkEntity == null ? "no entity" : a.networkEntity.IsDead ? "dead" : "alive").ToArray()) + ")");
-						if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
-						if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
-						// All of them defeated: the spot's "defeat" actions
-						if (alive == 0 && killed > 0) { IslandObjectRef r = p.GetComponent<IslandObjectRef>(); if (r != null) Behaviours.FireFromHost(e, r.Index, "defeat"); }
-						Record(e, p, alive);
-					}
+					Account(e, p);
 				}
 			}
+		}
+
+		/// <summary>Host: counts a spot's animals killed and caught since the last look - for quests, the "defeat" event and
+		/// what comes back when the island loads again. Also right before an island unloads (a kill in its last second was
+		/// lost: the animal came back and the kill didn't count).</summary>
+		static void Account(IslandWorldState.Entry e, CreatureSpawnPoint p)
+		{
+			if (p.RecordedAlive < 0) return;
+			int caught = 0;
+			for (int i = p.Spawned.Count - 1; i >= 0; i--)
+			{
+				AI_NetworkBehaviour ai = p.Spawned[i];
+				if (ai == null) { p.Spawned.RemoveAt(i); continue; }
+				// Caught (Raft lets go of it when it is carried): it belongs to the players now
+				if (ai.connectedSpawner == null)
+				{
+					p.Spawned.RemoveAt(i);
+					ours.Remove(ai);
+					caught++;
+					Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
+				}
+			}
+			// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
+			int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
+			if (alive == p.RecordedAlive) return;
+			// For quests: the ones that are gone and weren't caught were killed
+			int killed = p.RecordedAlive - alive - caught;
+			if (killed > 0) Debug.Log("[CUSTOM ISLANDS] " + killed + " " + p.Kind.Label + "(s) of '" + e.HostName + "' defeated (" + alive + " left; animals " + string.Join(", ", p.Spawned.Select(a => a == null ? "gone" : a.networkEntity == null ? "no entity" : a.networkEntity.IsDead ? "dead" : "alive").ToArray()) + ")");
+			if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
+			if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
+			// None left - killed or caught (the last chicken netted clears the spot as much as the last one killed): the
+			// spot's "defeat" actions
+			if (alive == 0 && (killed > 0 || caught > 0)) { IslandObjectRef r = p.GetComponent<IslandObjectRef>(); if (r != null) Behaviours.FireFromHost(e, r.Index, "defeat"); }
+			Record(e, p, alive);
 		}
 
 		static void Record(IslandWorldState.Entry e, CreatureSpawnPoint p, int alive)
@@ -621,7 +649,13 @@ namespace DynamicIslands.Editor
 		{
 			if (root == null || !Raft_Network.IsHost) return;
 			int removed = 0;
-			foreach (CreatureSpawnPoint p in root.GetComponentsInChildren<CreatureSpawnPoint>(true)) removed += RemoveAnimals(p);
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root == root);
+			foreach (CreatureSpawnPoint p in root.GetComponentsInChildren<CreatureSpawnPoint>(true))
+			{
+				// (the last second's kills and catches counted first: the watch looks only once a second)
+				if (e != null && p.gameObject.activeInHierarchy) try { Account(e, p); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Counting the animals of '" + e.HostName + "': " + ex.Message); }
+				removed += RemoveAnimals(p);
+			}
 			if (removed > 0) Debug.Log("[CUSTOM ISLANDS] Removed " + removed + " creature(s) with their island");
 		}
 

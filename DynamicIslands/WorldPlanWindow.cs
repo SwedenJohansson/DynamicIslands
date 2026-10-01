@@ -306,7 +306,7 @@ namespace DynamicIslands.Editor
 			Text number = UIKit.Label(head, "RULE " + (index + 1), 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Size(number.gameObject, SectionLabel - 6f);
 			UIKit.Size(UIKit.Label(head, "Name", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 40);
-			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Trim());
+			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Replace(",", "").Replace(";", "").Trim());
 			HelpMark(head, islandMode ? HelpIdIsland : HelpId);
 			UIKit.Size(UIKit.Label(head, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(head, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Move this rule up (the order only matters for reading: each rule waits for its own WHEN)", 28, 26f, 11);
@@ -520,7 +520,10 @@ namespace DynamicIslands.Editor
 			var list = new List<DropList.Option> { new DropList.Option("", "Not in Raft's story", "Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "First in the story", "Unlocked from the start of the world, before Raft's first island") };
 			foreach (ChunkPointType t in StoryOrder.Chain)
 			{
-				list.Add(new DropList.Option("after:" + StoryOrder.Key(t), "After " + StoryOrder.Name(t), "Unlocked when " + StoryOrder.Name(t) + "'s note is found (or when it is done, if it is left out)"));
+				// (Raft's Utopia ends the story: it never counts as done, so nothing after it could come - offered only when
+				// Utopia is left out or another island takes its place)
+				if (!StoryChain.EndsStory(plan, t))
+					list.Add(new DropList.Option("after:" + StoryOrder.Key(t), "After " + StoryOrder.Name(t), "Unlocked when " + StoryOrder.Name(t) + "'s note is found (or when it is done, if it is left out)"));
 				list.Add(new DropList.Option("instead:" + StoryOrder.Key(t), "In place of " + StoryOrder.Name(t), StoryOrder.Name(t) + " is left out; the note before it leads here, and this island leads on"));
 			}
 			foreach (IntroRule o in plan.Rules.Where(o => o != r && o.InStory))

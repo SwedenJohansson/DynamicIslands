@@ -257,10 +257,14 @@ namespace DynamicIslands.Editor
 			for (int index = 0; index < island.Objects.Count; index++)
 			{
 				IslandObject o = island.Objects[index];
+				// A flying island has no sea around it: what lies under its own sea level (a lagoon's turtles, an underwater
+				// zone) would hang in the air - left out, but still counted, so the numbers of the others stay the same
+				bool underSea = skipUnderwater && o.Position.y < island.WaterLevel - 0.5f;
 				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
 				// They are numbered in file order, which is the same on every machine.
 				if (!editable && ContentCatalog.IsCreature(o.Name))
 				{
+					if (underSea) { creature++; continue; }
 					CreatureSpawnPoint point = CreatureSpawnPoint.Create(parent, o, creature++);
 					if (point != null) Behaviours.Attach(point.gameObject, o.Name, o.Props, index);
 					continue;
@@ -268,6 +272,7 @@ namespace DynamicIslands.Editor
 				// Zones are invisible in a world
 				if (!editable && ContentCatalog.IsZone(o.Name))
 				{
+					if (underSea) { if (o.Name == ContentCatalog.TriggerZone) zone++; continue; }
 					GameObject zgo;
 					if (o.Name == ContentCatalog.TriggerZone) zgo = TriggerZone.Create(parent, o, zone++).gameObject;
 					else
@@ -284,6 +289,7 @@ namespace DynamicIslands.Editor
 				// Invisible walls and ramps: only their collision in a world
 				if (!editable && ContentCatalog.IsHelper(o.Name))
 				{
+					if (underSea) continue;
 					GameObject hgo = ContentCatalog.SpawnHelperSolid(o.Name, parent);
 					if (hgo == null) continue;
 					hgo.transform.position = parent.position + o.Position;

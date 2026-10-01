@@ -111,8 +111,12 @@ namespace DynamicIslands.Editor
 		/// world back (everything does position -= shift, clients get the same shift). Custom islands must follow,
 		/// on every machine, and the saved positions follow too so they stay in Raft's coordinate frame.
 		/// </summary>
+		/// <summary>Every world shift added up (this session): a spawn without a world entry follows the ones made while it loaded.</summary>
+		public static Vector3 ShiftedBy { get; private set; }
+
 		public static void OnWorldShift(Vector3 shift)
 		{
+			ShiftedBy += shift;
 			foreach (GameObject root in IslandSpawner.SpawnedRoots)
 				if (root != null) root.transform.position -= shift;
 			IslandSpawner.SpawnedRoots.RemoveAll(r => r == null);

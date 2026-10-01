@@ -59,8 +59,8 @@ namespace DynamicIslands
 
 		static IEnumerator StoryWeavePart1()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story weave: host, in a world"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("story weave: only in a test world 'CI ...' (it changes the world's story)"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story weave part1: host, in a world"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("story weave part1: only in a test world 'CI ...' (it changes the world's story)"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			// The two islands: a harbor (reached = done) and an island with a quest (done when the quest is)
@@ -115,7 +115,7 @@ namespace DynamicIslands
 
 		static IEnumerator StoryWeavePart2()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story weave: host, in a world"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("story weave part2: host, in a world"); yield break; }
 			yield return new WaitForSeconds(3f);
 			yield return EnsureAlive();
 			bool ok = true;
@@ -183,8 +183,8 @@ namespace DynamicIslands
 
 		static IEnumerator ScChainCarryPrep()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("chain carry: host, in a world"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("chain carry: only in a test world 'CI ...'"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("scenario chain carry prep: host, in a world"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario chain carry prep: only in a test world 'CI ...'"); yield break; }
 			bool ok = true;
 			const string plan = "CI Chain Carry";
 			WorldPlan.Parse(plan, "random = off\nstory = on\nstoryleaveout = Balboa\nrule = carry | type:sandbar | start | receiver:400 | A test signal. | Carry | after:Vasagatan | visit\n").Save();
@@ -205,7 +205,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScChainCarryCheck()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("chain carry: in a world"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("scenario chain carry check: in a world"); yield break; }
 			yield return new WaitForSeconds(4f);
 			bool ok = true;
 			int modTypes = NoteBook.unlockedChunkPointType.Count(t => (int)t >= StoryChain.ModTypeBase);
@@ -234,8 +234,8 @@ namespace DynamicIslands
 
 		static IEnumerator ScChainEditRoutine()
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("chain edit: host, in a world"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("chain edit: only in a test world 'CI ...'"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("scenario chain edit: host, in a world"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario chain edit: only in a test world 'CI ...'"); yield break; }
 			bool ok = true;
 			List<string> linesBefore = StoryChain.WriteLines().ToList();
 			var unlockedBefore = NoteBook.unlockedChunkPointType.ToList();

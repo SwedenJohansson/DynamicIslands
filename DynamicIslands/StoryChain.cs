@@ -111,6 +111,15 @@ namespace DynamicIslands.Editor
 			return steps;
 		}
 
+		/// <summary>Whether Raft's island t is in the plan's story as Raft's own last island: Utopia, which never counts as
+		/// done (no note comes after it) - an island placed after it never unlocks.</summary>
+		public static bool EndsStory(WorldPlan plan, ChunkPointType t)
+		{
+			if (plan == null || t != ChunkPointType.Landmark_Utopia || !plan.RaftStory) return false;
+			string key = StoryOrder.Key(t);
+			return !plan.LeaveOut.Contains(key) && !plan.Rules.Any(r => r.InStory && r.StoryPlace.Equals("instead:" + key, StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>Host: the world takes its chain and rules from a plan (a new world, or WorldPlan &lt;name&gt;). What is done stays.</summary>
 		public static void FromPlan(WorldPlan plan)
 		{
@@ -123,7 +132,25 @@ namespace DynamicIslands.Editor
 			HasSnapshot = true;
 			AssignFrequencies();
 			if (active || Rules.Count > 0) Log("From plan '" + plan.Name + "': " + Describe().Replace("\n", " | "));
+			NoteMissingIslands();
+			ResumeAfterChange();
 			Changed();
+		}
+
+		/// <summary>
+		/// After the chain changed under a world that is under way (the plan edited mid-game): the step after the last one
+		/// done is unlocked. A step put in after a done one waited for a "done" that had already come, and taking out the
+		/// unlocked step stalled the chain for good.
+		/// </summary>
+		static void ResumeAfterChange()
+		{
+			int last = -1;
+			for (int k = 0; k < Steps.Count; k++) if (Done.Contains(Steps[k])) last = k;
+			if (last < 0 || last + 1 >= Steps.Count) return;
+			string next = Steps[last + 1];
+			if (Unlocked.Contains(next) || Done.Contains(next)) return;
+			Log("The chain changed: the step after " + StepName(Steps[last]) + " unlocks");
+			Unlock(next, true);
 		}
 
 		/// <summary>
@@ -328,6 +355,36 @@ namespace DynamicIslands.Editor
 			if (warned.Add(r.Id + why)) Log("Rule '" + r.Id + "' waits: " + why);
 			// (the host is told when the island isn't on this PC: the Receiver gave nothing and the story stopped, silently)
 			WorldDirector.NoteMissingIf(why, r, null);
+			if (WorldDirector.IsMissing(why)) GoOnWithout(r);
+		}
+
+		/// <summary>
+		/// Host: a story island whose file isn't on this PC (missing, or removed since) when its moment comes: the story goes
+		/// on without it - Raft's own island comes back in its place when it took one's place, else its step counts as
+		/// done and the next one unlocks. It stopped the story for good.
+		/// </summary>
+		static void GoOnWithout(IntroRule r)
+		{
+			if (!active || !r.InStory) return;
+			string key = RuleKey(r.Id);
+			int at = Steps.FindIndex(s => s.Equals(key, StringComparison.OrdinalIgnoreCase));
+			if (at < 0 || Done.Contains(key)) return;
+			string name = r.Label.Length > 0 ? r.Label : r.Id;
+			ChunkPointType raft = r.StoryPlace.StartsWith("instead:", StringComparison.OrdinalIgnoreCase) ? StoryOrder.Parse(r.StoryPlace.Substring(8)) : ChunkPointType.None;
+			if (raft != ChunkPointType.None && !Steps.Contains(RaftKey(raft)))
+			{
+				Steps[at] = RaftKey(raft);
+				Log("The island of '" + r.Id + "' isn't on this PC: Raft's " + StoryOrder.Name(raft) + " comes in its place");
+				Banner("A new signal", "The island '" + name + "' can't come (it isn't on the host's PC): Raft's " + StoryOrder.Name(raft) + " comes in its place.");
+				Unlock(Steps[at], true);
+			}
+			else
+			{
+				Log("The island of '" + r.Id + "' isn't on this PC: the story goes on without it");
+				Banner("The story goes on", "The island '" + name + "' can't come (it isn't on the host's PC): the story goes on without it.");
+				MarkDone(key);
+			}
+			Changed();
 		}
 
 		/// <summary>Host: Raft's Receiver, tuned to one of the mod's frequencies, asks for its island.</summary>
@@ -430,6 +487,25 @@ namespace DynamicIslands.Editor
 
 		#region World file and network (kind 19)
 
+		static bool wasInGame;
+
+		/// <summary>
+		/// Every frame: leaving a world puts its chain away at once. It was only replaced when the next world's island list
+		/// was read - after Raft had restored that world's notebook through the old chain: a plain world loaded after a
+		/// chain world showed the old frequencies, and its own notes didn't unlock.
+		/// </summary>
+		internal static void WatchWorld()
+		{
+			bool inGame = LoadSceneManager.IsGameSceneLoaded;
+			if (wasInGame && !inGame && (HasSnapshot || active || Steps.Count > 0 || Frequencies.Count > 0))
+			{
+				Reset();
+				try { InstallFrequencies(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
+				Log("Left the world: its story chain is put away");
+			}
+			wasInGame = inGame;
+		}
+
 		internal static void Reset()
 		{
 			active = false;
@@ -498,9 +574,18 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>After the world file was read (host): the notebook and the frequencies follow it.</summary>
+		/// <summary>Host: the chain's islands that aren't on this PC are said at once (it was said only when someone tuned to one).</summary>
+		static void NoteMissingIslands()
+		{
+			if (!Raft_Network.IsHost) return;
+			foreach (IntroRule r in Rules.Where(x => !Brought.Contains(x.Id)))
+				try { WorldDirector.NoteIfMissing(r); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
+		}
+
 		internal static void OnWorldRead()
 		{
 			if (HasSnapshot) { AssignFrequencies(); Rebuild(); }
+			NoteMissingIslands();
 		}
 
 		/// <summary>The state every player needs: "on;steps|freqs|unlocked|fired|done|brought" (Name: a banner "title\ntext").</summary>

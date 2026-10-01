@@ -140,6 +140,13 @@ namespace DynamicIslands.Editor
 			if (Looted) return new List<string>();
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || player.Inventory == null) return new List<string>();
+			// A locked chest the player can't open yet says so before it is claimed (claimed, it was held from the others)
+			IslandObjectRef locked = GetComponentInParent<IslandObjectRef>();
+			if (locked != null && !Behaviours.WouldAllow(ContentState.EntryOf(transform), locked.Index, "open"))
+			{
+				Behaviours.Allows(ContentState.EntryOf(transform), locked.Index, "open"); // (its "otherwise": why not)
+				return new List<string>();
+			}
 			// One player gets the loot: a client asks the host first and opens when it says yes (Claims)
 			if (!Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (this == null) return; if (yes) Open(); else Beaten(); }))
 			{

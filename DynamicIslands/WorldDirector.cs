@@ -73,6 +73,10 @@ namespace DynamicIslands.Editor
 		static string Text(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Replace("\r", "").Trim(); }
 		static string Num(float f) { return f.ToString("0.#", CultureInfo.InvariantCulture); }
 
+		/// <summary>A rule's name as rules are saved and the story keeps it: no ":" "," ";" "|" (they separate parts - a rule
+		/// "camp,1" broke the story's list after a save).</summary>
+		public static string CleanId(string s) { return (s ?? "").Replace("|", "-").Replace(":", "-").Replace(",", "-").Replace(";", "-").Replace("\n", " ").Replace("\r", "").Trim(); }
+
 		public string ToLine()
 		{
 			string what = What == "pool" ? "pool" : What + ":" + (What == "oneof" ? Text(WhatArg) : Part(WhatArg));
@@ -81,7 +85,7 @@ namespace DynamicIslands.Editor
 			{
 				case "start": when = "start"; break;
 				case "km": case "day": when = When + ":" + Part(WhenArg); break;
-				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Part(WhenArg); break;
+				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Text(WhenArg); break; // (a zone may be called "cave:1": the reading joins what comes after the island again)
 				default: when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : (When == "rule" ? "" : Self)); break;
 			}
 			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : Where + ":" + Num(Distance);
@@ -95,7 +99,7 @@ namespace DynamicIslands.Editor
 		{
 			string[] p = (line ?? "").Split('|').Select(x => x.Trim()).ToArray();
 			if (p.Length < 4) return null;
-			var r = new IntroRule { Id = p[0], Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "",
+			var r = new IntroRule { Id = CleanId(p[0]), Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "",
 				StoryPlace = p.Length > 6 ? NormalPlace(p[6]) : "", StoryDone = p.Length > 7 ? NormalDone(p[7]) : "" };
 
 			string[] what = p[1].Split(new[] { ':' }, 2);
@@ -111,6 +115,7 @@ namespace DynamicIslands.Editor
 			{
 				r.WhenRef = when.Length > 1 ? when[1] : "";
 				r.WhenArg = when.Length > 2 ? string.Join(":", when.Skip(2).ToArray()) : "";
+				if (r.When == "rule") r.WhenRef = CleanId(r.WhenRef); // (a rule's name, as the rule's own)
 			}
 
 			string[] where = p[3].Split(':').Select(x => x.Trim()).ToArray();
@@ -427,11 +432,13 @@ namespace DynamicIslands.Editor
 		/// <summary>The island's quest (none if the file is missing).</summary>
 		public static IslandQuest QuestOf(string name) { return IslandQuest.From(Props(name)); }
 
-		/// <summary>Place of the trigger zone with this name among the island's zones, or -1.</summary>
-		public static int ZoneOrdinal(string name, string zoneId)
+		/// <summary>Places of the trigger zones with this name among the island's zones (empty if none): two zones may share a name.</summary>
+		public static List<int> ZoneOrdinals(string name, string zoneId)
 		{
 			Info i = Get(name);
-			return i == null ? -1 : i.Zones.FindIndex(z => z.Equals((zoneId ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+			var found = new List<int>();
+			if (i != null) for (int k = 0; k < i.Zones.Count; k++) if ((i.Zones[k] ?? "").Equals((zoneId ?? "").Trim(), StringComparison.OrdinalIgnoreCase)) found.Add(k);
+			return found;
 		}
 	}
 
@@ -604,6 +611,7 @@ namespace DynamicIslands.Editor
 				{
 					// The player changed their plan since the world was saved: the changed plan plays (rules that fired
 					// stay fired; new ones come; the world keeps a copy of the new plan from its next save)
+					ForgetChangedRules(stored, edited);
 					Plan = edited;
 					PlanWasEdited = true;
 					// (its story chain too: what is unlocked and done stays, the islands keep their frequencies)
@@ -670,6 +678,20 @@ namespace DynamicIslands.Editor
 			if (why != null && (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix))) NoteMissing(r, owner);
 		}
 
+		/// <summary>Host: whether the rule's island isn't on this PC (the story chain's, told at once - it was told only when
+		/// someone tuned the Receiver to it), and if so the host is told once.</summary>
+		internal static bool NoteIfMissing(IntroRule r)
+		{
+			if (r == null) return false;
+			bool missing = r.What == "island" ? r.WhatArg.Trim().Length > 0 && FileFor(r.WhatArg.Trim()) == null
+				: r.What == "oneof" && !r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0).Any(n => FileFor(n) != null);
+			if (missing) NoteMissing(r, null);
+			return missing;
+		}
+
+		/// <summary>Whether Bring's answer means the island's file isn't on this PC.</summary>
+		internal static bool IsMissing(string why) { return why != null && (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix)); }
+
 		static void NoteMissing(IntroRule r, IslandWorldState.Entry owner)
 		{
 			string name = r.What == "island" ? r.WhatArg.Trim() : r.WhatArg;
@@ -681,11 +703,30 @@ namespace DynamicIslands.Editor
 			DynamicIslands.Notify("The world's story needs the island '" + name + "', which isn't on this PC, so it can't appear yet. " + where, true);
 		}
 
+		/// <summary>
+		/// A plan coming in place of another (the same plan edited, or another plan): a rule that fired under an id that now
+		/// brings something else is another rule under an old name, and comes. Rule ids are reused - World Plans numbers
+		/// new rules, so a deleted "rule3" and a new "rule3"; another plan has its own "rule1" - and the new one never came.
+		/// The same rule edited (its words, when or where) stays done.
+		/// </summary>
+		static void ForgetChangedRules(WorldPlan before, WorldPlan after)
+		{
+			if (before == null || after == null) return;
+			foreach (IntroRule r in after.Rules.Where(x => Done.Contains(x.Id)).ToList())
+			{
+				IntroRule old = before.Rules.FirstOrDefault(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+				if (old == null || (old.What == r.What && old.WhatArg.Trim().Equals(r.WhatArg.Trim(), StringComparison.OrdinalIgnoreCase))) continue;
+				Done.Remove(r.Id);
+				Log("Rule '" + r.Id + "' now brings " + r.DescribeWhat() + " (it brought " + old.DescribeWhat() + "): another rule under that name - it comes");
+			}
+		}
+
 		/// <summary>Host: gives this world a plan (applyRandom: random islands on or off as the plan says).</summary>
 		public static bool SetPlan(string name, bool applyRandom)
 		{
 			WorldPlan plan = WorldPlan.Load(name);
 			if (plan == null) return false;
+			ForgetChangedRules(Plan, plan);
 			Plan = plan;
 			PlanName = plan.Name;
 			PlanFromWorld = false;
@@ -793,7 +834,8 @@ namespace DynamicIslands.Editor
 				case "km": return Sailed >= Number(r.WhenArg) * 1000f;
 				case "day": return Today >= Number(r.WhenArg);
 				case "rule":
-					if (Done.Contains(r.WhenRef)) return true;
+					// (a Receiver, sailing or story rule is StoryChain's: done once its island came - it never enters Done)
+					if (Done.Contains(r.WhenRef) || StoryChain.Brought.Contains(r.WhenRef)) return true;
 					// An island's rule may wait for another of its own rules
 					if (owner != null)
 					{
@@ -816,8 +858,8 @@ namespace DynamicIslands.Editor
 					return steps > 0 && QuestTracker.StepOf(e) >= steps;
 				case "step": return QuestTracker.StepOf(e) >= Mathf.Max(1, (int)Number(r.WhenArg));
 				case "zone":
-					int ordinal = IslandCache.ZoneOrdinal(e.Name, r.WhenArg);
-					return ordinal >= 0 && ContentState.IsUsed(e, TriggerZone.KeyBase + ordinal);
+					// (any zone of that name: with two zones called 'gate' the quest counted either, the rule only the first)
+					return IslandCache.ZoneOrdinals(e.Name, r.WhenArg).Any(o => ContentState.IsUsed(e, TriggerZone.KeyBase + o));
 				case "visit": return e.State.ContainsKey(VisitKey);
 				case "signal": return e.State.ContainsKey(Behaviours.SignalKey(r.WhenArg));
 			}

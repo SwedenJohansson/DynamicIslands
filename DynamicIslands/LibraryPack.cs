@@ -461,7 +461,8 @@ namespace DynamicIslands.Editor
 				if (format < 0) { error = "'" + n + "' isn't an island file."; return false; }
 				if (format > IslandFile.FormatVersion) { error = "'" + n + "' was saved by a newer Custom Islands than this one - update the mod to use it."; return false; }
 			}
-			if (!pack.IslandNames.Any()) { error = "It holds no island."; return false; }
+			// (a plan may bring only new islands of a map type: no island file in it)
+			if (!pack.IslandNames.Any() && !info.IsPlan) { error = "It holds no island."; return false; }
 			if (info.IsPlan)
 			{
 				byte[] planBytes;
@@ -589,6 +590,9 @@ namespace DynamicIslands.Editor
 			// else "Name (Title)" - and the entry's rules follow the new names (which can change files, so until it settles)
 			var originals = pack.IslandNames.ToList();
 			var target = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			WorldPlan plan = info.IsPlan ? WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(pack.Files[info.plan])) : null;
+			// (a reference to one of the plan's rules is a rule, also when the rule has its island's name: it isn't renamed)
+			var ruleIds = new HashSet<string>(plan != null ? plan.Rules.Select(r => r.Id) : Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
 			foreach (string n in originals)
 			{
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindIsland && f.original.Equals(n, StringComparison.OrdinalIgnoreCase)) : null;
@@ -600,7 +604,7 @@ namespace DynamicIslands.Editor
 				bool changed = false;
 				foreach (string n in originals)
 				{
-					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target);
+					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target, ruleIds);
 					content[n] = bytes;
 					string t = target[n];
 					string path = IslandSpawner.PathFor(t);
@@ -653,14 +657,31 @@ namespace DynamicIslands.Editor
 				report.Islands.Add(t);
 			}
 
-			// The plan
-			if (info.IsPlan)
+			// Story items with the id of another installed entry's: a world's crew holds one of each id for all its islands
+			// (T8 - two packs' "key": the key found for one opens the other's door). Said, so the player knows.
+			try
 			{
-				WorldPlan plan = WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(pack.Files[info.plan]));
-				foreach (IntroRule r in plan.Rules) Rename(r, target);
+				var ours = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				foreach (string t in report.Islands) foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(t))) ours[d.Id] = d.ShownName;
+				if (ours.Count > 0)
+					foreach (LibraryInstalled other in all.Where(e => !e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase)))
+						foreach (LibraryInstalledFile f in other.files.Where(f => f.kind == KindIsland && !report.Islands.Contains(f.name, StringComparer.OrdinalIgnoreCase)))
+							foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.name)).Where(d => ours.ContainsKey(d.Id)).ToList())
+							{
+								report.Add("Note: its story item '" + d.Id + "' (" + ours[d.Id] + ") has the same id as one of '" + other.title + "' ('" + d.ShownName + "' on '" + f.name + "'). In a world with both, the crew holds one '" + d.Id + "' for both: found on either island, it counts on the other.");
+								ours.Remove(d.Id);
+							}
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing story items: " + ex.Message); }
+
+			// The plan
+			if (plan != null)
+			{
+				foreach (IntroRule r in plan.Rules) Rename(r, target, ruleIds);
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindPlan && !f.shared) : null;
 				string name = before != null ? before.name : plan.Name;
 				string text = plan.ToText();
+				bool same = false;
 				if (before == null)
 				{
 					string existing = WorldPlan.PathFor(name);
@@ -669,6 +690,8 @@ namespace DynamicIslands.Editor
 						name = FreePlanName(plan.Name, info.author);
 						report.Add("Installed the plan '" + plan.Name + "' as '" + name + "' (you have a different plan called '" + plan.Name + "')");
 					}
+					// (the player's own plan, the very same: shared - removing the entry deleted the player's plan with it)
+					else if (File.Exists(existing)) { same = true; report.Add("The plan '" + name + "' is already here (the same plan) - shared"); }
 					else report.Add("Installed the plan '" + name + "'");
 				}
 				else report.Add("Updated the plan '" + name + "' (worlds already started keep their own copy of it)");
@@ -676,7 +699,7 @@ namespace DynamicIslands.Editor
 				Directory.CreateDirectory(WorldPlan.Folder);
 				SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
 				entry.plan = name;
-				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan });
+				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
 				report.PlanName = name;
 			}
 
@@ -697,7 +720,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An island file's bytes with its "bring" rules pointing at the entry's new names (unchanged if none moved).</summary>
-		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target)
+		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target, HashSet<string> planRuleIds)
 		{
 			if (!originals.Any(n => !target[n].Equals(n, StringComparison.Ordinal))) return bytes;
 			string tmp = Path.Combine(LibraryFolder, "rewrite.tmp" + IslandFile.Extension);
@@ -710,7 +733,9 @@ namespace DynamicIslands.Editor
 				if (f.Props == null || !f.Props.TryGetValue(WorldDirector.IslandRulesKey, out text)) return bytes;
 				List<IntroRule> rules = IntroRule.ParseLines(text);
 				string before = IntroRule.ToLines(rules);
-				foreach (IntroRule r in rules) Rename(r, target);
+				var ids = new HashSet<string>(planRuleIds, StringComparer.OrdinalIgnoreCase);
+				ids.UnionWith(rules.Select(x => x.Id));
+				foreach (IntroRule r in rules) Rename(r, target, ids);
 				if (IntroRule.ToLines(rules) == before) return bytes;
 				WorldDirector.SetRulesInProps(f.Props, rules);
 				f.Save(tmp);
@@ -719,14 +744,17 @@ namespace DynamicIslands.Editor
 			finally { try { File.Delete(tmp); } catch { } }
 		}
 
-		/// <summary>A rule's island names (what it brings, and the islands it waits for or is placed near) after renames.</summary>
-		static void Rename(IntroRule r, Dictionary<string, string> target)
+		/// <summary>A rule's island names (what it brings, and the islands it waits for or is placed near) after renames.
+		/// ruleIds: rules a reference may name instead (a reference finds a rule first, then an island of that name) - those
+		/// stay: "after rule 'camp'" waited for a rule that didn't exist when the island 'camp' was renamed.</summary>
+		static void Rename(IntroRule r, Dictionary<string, string> target, HashSet<string> ruleIds)
 		{
 			Func<string, string> to = n => { string t; return target.TryGetValue(n.Trim(), out t) ? t : n.Trim(); };
+			Func<string, string> refTo = n => ruleIds.Contains(n.Trim()) ? n.Trim() : to(n);
 			if (r.What == "island") r.WhatArg = to(r.WhatArg);
 			else if (r.What == "oneof") r.WhatArg = string.Join(", ", r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0).Select(to).ToArray());
-			if (r.WhenRef.Length > 0) r.WhenRef = to(r.WhenRef);
-			if (r.WhereRef.Length > 0) r.WhereRef = to(r.WhereRef);
+			if (r.WhenRef.Length > 0 && r.When != "rule") r.WhenRef = refTo(r.WhenRef);
+			if (r.WhereRef.Length > 0) r.WhereRef = refTo(r.WhereRef);
 		}
 
 		static string FreeName(string name, string title, List<string> originals, Dictionary<string, string> target)

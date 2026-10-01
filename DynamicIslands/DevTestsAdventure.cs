@@ -230,7 +230,7 @@ namespace DynamicIslands
 
 		static IEnumerator AdventurePlayRoutine(string part)
 		{
-			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("adventure play: host, in a world"); yield break; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("adventure play " + part + ": host, in a world"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			Network_Player me = RAPI.GetLocalPlayer();

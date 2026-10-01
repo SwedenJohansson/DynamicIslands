@@ -146,12 +146,18 @@ namespace DynamicIslands.Editor
 			else { Network_Player player = RAPI.GetLocalPlayer(); if (player != null) players.Add(player.transform.position); }
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
-				float d = Flat(e.Position - raftPos).magnitude;
-				foreach (Vector3 pp in players) d = Mathf.Min(d, Flat(e.Position - pp).magnitude);
+				// (to the land's edge, not its centre: a player at the edge of a big island dropped into the sea when the
+				// centre was further away than the unload distance)
+				float edge = e.WaitingForFile ? 0f : Mathf.Max(0f, LandRadius(e.Name));
+				float d = Mathf.Max(0f, Flat(e.Position - raftPos).magnitude - edge);
+				foreach (Vector3 pp in players) d = Mathf.Min(d, Mathf.Max(0f, Flat(e.Position - pp).magnitude - edge));
 				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
 				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
 				// (the host's distance on every machine: WorldRules)
 				float unload = WorldRules.UnloadDistance;
+				// Loads again well inside the unload distance, whatever the spawn distance: with a reload distance past the
+				// unload distance an island loaded and unloaded every 2 s
+				float reload = Mathf.Min(Mathf.Max(unload - ReloadHysteresis, SpawnDistanceMax + 50f), unload - 100f);
 				if (e.Root != null && d > unload)
 				{
 					IslandObjectState.Capture(e);
@@ -159,7 +165,7 @@ namespace DynamicIslands.Editor
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
 				}
-				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < Mathf.Max(unload - ReloadHysteresis, SpawnDistanceMax + 50f))
+				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < reload)
 				{
 					e.Loading = true;
 					DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));

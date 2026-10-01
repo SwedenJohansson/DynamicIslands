@@ -523,7 +523,7 @@ namespace DynamicIslands.Editor
 		/// checks use their items up (Raft's items from this player's inventory, story items from the crew's): all of
 		/// them, or with any, only the one that passed first.
 		/// </summary>
-		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks, bool any = false)
+		public static bool Passes(IslandWorldState.Entry e, int index, List<ObjCheck> checks, bool any = false, bool take = true)
 		{
 			PlayerInventory inv = RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().Inventory : null;
 			var passed = new List<ObjCheck>();
@@ -536,12 +536,38 @@ namespace DynamicIslands.Editor
 				else if (!any) { LastFailedCheck = c.Describe(); return false; }
 			}
 			if (passed.Count == 0) { LastFailedCheck = "none of: " + string.Join(" / ", checks.Select(c => c.Describe()).ToArray()); return false; }
+			if (!any)
+			{
+				// Several lines about one item add up: "take 3 planks" and "take 2 planks" need 5 (each line alone passed
+				// with 3 and then 5 were taken); a "has" line still needs at least its own number
+				foreach (IGrouping<string, ObjCheck> g in passed.Where(x => x.IsItem && !x.Not && x.Target.Length > 0).GroupBy(x => x.Target, StringComparer.OrdinalIgnoreCase))
+				{
+					if (g.Count() < 2) continue;
+					int need = Math.Max(g.Where(x => x.Kind == "take").Sum(x => x.Count), g.Max(x => x.Count));
+					int have = StoryItems.IsStory(g.Key) ? StoryBook.Count(StoryItems.IdOf(g.Key)) : inv != null ? inv.GetItemCount(g.Key) : 0;
+					if (have < need) { LastFailedCheck = "the player has " + need + " × " + (StoryItems.IsStory(g.Key) ? StoryItems.Label(g.Key) : ContentCatalog.ItemLabel(g.Key)); return false; }
+				}
+			}
+			if (!take) return true;
 			foreach (ObjCheck c in passed.Where(x => x.Kind == "take" && !x.Not))
 			{
 				if (StoryItems.IsStory(c.Target)) StoryBook.Take(StoryItems.IdOf(c.Target), c.Count);
 				else if (inv != null) inv.RemoveItem(c.Target, c.Count);
 			}
 			return true;
+		}
+
+		/// <summary>Whether the event's checks would pass now - nothing taken, nothing said (a chest looks before it claims
+		/// its loot: a player without the key held a locked chest from the others for a few seconds).</summary>
+		public static bool WouldAllow(IslandWorldState.Entry e, int index, string ev)
+		{
+			if (e == null) return true;
+			if (index < 0) index = IslandIndex;
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			string failedBefore = LastFailedCheck;
+			bool ok = checks.Count == 0 || Passes(e, index, checks, AnyOf(e, index, ev), false);
+			LastFailedCheck = failedBefore;
+			return ok;
 		}
 
 		/// <summary>
@@ -686,10 +712,13 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// Runs one part of the actions (shared or personal), the ones after a wait that many seconds later. Waiting
 		/// actions need the island to stay loaded: when it unloads (the raft sails away), what's left does nothing.
+		/// The personal part after a wait is for the player who was there: not after they died (a respawned player was
+		/// teleported back to the island) or went away from the island.
 		/// </summary>
 		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly)
 		{
 			float delay = 0f;
+			int deathsThen = deaths;
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
 			{
@@ -698,7 +727,16 @@ namespace DynamicIslands.Editor
 				{
 					List<ObjAction> now = part;
 					if (delay <= 0f) RunPart(e, index, now, shared, messagesOnly);
-					else DynamicIslands.instance.StartCoroutine(Later(delay, () => { if (IslandWorldState.Contains(e) && LoadSceneManager.IsGameSceneLoaded) RunPart(e, index, now, shared, messagesOnly); }));
+					else DynamicIslands.instance.StartCoroutine(Later(delay, () =>
+					{
+						if (!IslandWorldState.Contains(e) || !LoadSceneManager.IsGameSceneLoaded) return;
+						if (!shared && (deaths != deathsThen || wasDead || !Near(e)))
+						{
+							Debug.Log("[CUSTOM ISLANDS] What comes after the wait on '" + e.HostName + "' is left out for this player: " + (deaths != deathsThen || wasDead ? "they died meanwhile" : "they left the island"));
+							return;
+						}
+						RunPart(e, index, now, shared, messagesOnly);
+					}));
 				}
 				part = new List<ObjAction>();
 				delay += a.Seconds;
@@ -829,8 +867,21 @@ namespace DynamicIslands.Editor
 		static float nextTick;
 
 		/// <summary>Every frame from the mod: players arriving at islands with "on.arrive" actions (each machine its own player).</summary>
+		/// <summary>This machine's player's deaths (this session): what comes after a wait is for the player who was there.</summary>
+		static int deaths;
+		static bool wasDead;
+
+		static void WatchDeath()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			bool dead = p != null && p.Stats != null && (p.Stats.IsDead || (p.Stats.stat_health != null && p.Stats.stat_health.Value <= 0f));
+			if (dead && !wasDead) deaths++;
+			wasDead = dead;
+		}
+
 		public static void Tick()
 		{
+			try { if (LoadSceneManager.IsGameSceneLoaded) WatchDeath(); } catch { }
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { arrived.Clear(); return; }

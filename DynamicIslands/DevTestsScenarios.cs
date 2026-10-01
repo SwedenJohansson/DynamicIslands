@@ -202,7 +202,11 @@ namespace DynamicIslands
 				// (pushed like a sail: a force up to the speed, never forcing the velocity - setting it every step overrode the
 				// collision with the shore and slid the raft up a gentle beach, which a sail can't do)
 				Vector3 flat = Flat(body.velocity);
-				if (Vector3.Dot(flat, dir) < speed) body.AddForce(dir * 6f, ForceMode.Acceleration);
+				// (steered at what it is pushed into, with the sideways drift of Raft's current taken out: the current carried
+				// the raft 67 m past a small ghost raft 275 m away)
+				Vector3 aim = watch.HasValue && ScFlat(body.position, watch.Value) > 3f ? Flat(watch.Value - body.position).normalized : dir;
+				body.AddForce(-(flat - Vector3.Dot(flat, aim) * aim) * 2f, ForceMode.Acceleration);
+				if (Vector3.Dot(flat, aim) < speed) body.AddForce(aim * 6f, ForceMode.Acceleration);
 				Vector3 d = Flat(body.position - last);
 				if (d.magnitude < 50f) moved += d.magnitude; // (a world shift jumps the position)
 				last = body.position;
@@ -250,17 +254,17 @@ namespace DynamicIslands
 
 		static IEnumerator ScRamRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("ram: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario ram: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscram";
-			try { ScIsland(isl, "Ram Rock").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("ram: no sample island (" + ex.Message + ")"); yield break; }
+			try { ScIsland(isl, "Ram Rock").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("scenario ram: no sample island (" + ex.Message + ")"); yield break; }
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			var r = new List<float>();
 
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("ram: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario ram: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
 			Check(ref ok, e.Root != null, "the island comes " + ScFlat(e.Position, raft.body.position).ToString("F0") + " m from the raft (land reaches " + CustomIslandSpawner.LandRadius(isl).ToString("F0") + " m)");
@@ -315,7 +319,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScFlyUnderRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("fly under: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario fly under: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
@@ -327,7 +331,7 @@ namespace DynamicIslands
 			foreach (float elevation in new[] { 60f, -(peak + 12f), 4f })
 			{
 				string isl = "ciscfly" + (elevation < 0 ? "sunk" : elevation.ToString("F0"));
-				try { ScIsland(isl, "Fly " + elevation, elevation).Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("fly under: " + ex.Message); yield break; }
+				try { ScIsland(isl, "Fly " + elevation, elevation).Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("scenario fly under: " + ex.Message); yield break; }
 				Vector3? spot = ScSpot(isl, 320f, elevation);
 				if (!spot.HasValue) { Check(ref ok, false, "open sea for the island at " + elevation + " m"); ScRemove(made, isl); continue; }
 				yield return ScBring(isl, spot.Value, made);
@@ -378,16 +382,16 @@ namespace DynamicIslands
 
 		static IEnumerator ScShiftRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("shift: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario shift: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			WorldShiftManager wsm = UnityEngine.Object.FindObjectOfType<WorldShiftManager>();
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			if (wsm == null || raft == null) { Fail("shift: no WorldShiftManager or raft"); yield break; }
+			if (wsm == null || raft == null) { Fail("scenario shift: no WorldShiftManager or raft"); yield break; }
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscshift";
 			IslandFile f;
-			try { f = ScIsland(isl, "Shifty Isle"); } catch (Exception ex) { Fail("shift: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Shifty Isle"); } catch (Exception ex) { Fail("scenario shift: " + ex.Message); yield break; }
 			// (an object from another of Raft's scenes: spawning waits for that scene to load - the moment a shift can come)
 			f.Objects.Add(ScObj(PlaceableCatalog.RaftCrate, ScDry(f, new Vector2(0, 0), 1)));
 			f.Save(IslandSpawner.PathFor(isl));
@@ -395,7 +399,7 @@ namespace DynamicIslands
 
 			// (a) with a world entry (a plan rule's island): the shift during the spawn
 			Vector3? spot = ScSpot(isl, 400f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("shift: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario shift: no open sea near the raft"); yield break; }
 			Vector3 offset = spot.Value - raft.body.position; offset.y = 0f;
 			IslandWorldState.Entry entry = IslandWorldState.Add(isl, spot.Value, null, false);
 			entry.Loading = true;
@@ -472,7 +476,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScOverlapRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("overlap: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario overlap: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
@@ -555,7 +559,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScStayOnIslandRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("stay on island: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario stay on island: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
@@ -563,9 +567,9 @@ namespace DynamicIslands
 			float unloadBefore = CustomIslandSpawner.UnloadDistance;
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			Network_Player player = RAPI.GetLocalPlayer();
-			try { ScIsland(isl, "Stay Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("stay: " + ex.Message); yield break; }
+			try { ScIsland(isl, "Stay Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("scenario stay on island: " + ex.Message); yield break; }
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("stay: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario stay on island: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
 			if (e.Root != null)
@@ -637,13 +641,13 @@ namespace DynamicIslands
 
 		static IEnumerator ScStreamLoopRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("stream loop: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario stream loop: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscloop";
 			float unloadBefore = CustomIslandSpawner.UnloadDistance;
-			try { ScIsland(isl, "Loop Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("loop: " + ex.Message); yield break; }
+			try { ScIsland(isl, "Loop Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("scenario stream loop: " + ex.Message); yield break; }
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			OnRaftCommand();
 			// 350 m from the raft, in the first direction without another island near
@@ -655,7 +659,7 @@ namespace DynamicIslands
 				p.y = 0f;
 				if (IslandWorldState.Islands.All(x => ScFlat(x.Position, p) > 900f)) { at = p; found = true; }
 			}
-			if (!found) { ScRemove(made, isl); Fail("stream loop: no room 350 m from the raft"); yield break; }
+			if (!found) { ScRemove(made, isl); Fail("scenario stream loop: no room 350 m from the raft"); yield break; }
 			yield return ScBring(isl, at, made);
 			IslandWorldState.Entry e = made[0];
 			CustomIslandSpawner.UnloadDistance = 300f;
@@ -684,14 +688,14 @@ namespace DynamicIslands
 
 		static IEnumerator ScFullInventoryRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("full inventory: run in a world, as the host"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("full inventory: only in a test world 'CI ...' (it empties the inventory)"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario full inventory: run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario full inventory: only in a test world 'CI ...' (it empties the inventory)"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscfull";
 			IslandFile f;
-			try { f = ScIsland(isl, "Full Pockets"); } catch (Exception ex) { Fail("full: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Full Pockets"); } catch (Exception ex) { Fail("scenario full inventory: " + ex.Message); yield break; }
 			f.Props[StoryItems.Key] = "ciscgem|Sea gem||A gem from the test";
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(0, 0), 1), ObjectProps.NoteTitle, "Full chest", ObjectProps.LootItems, "Plank*5;TitaniumIngot*1;NoSuchItemCI*1;story:ciscgem*1", ObjectProps.LootRefill, "0"));
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(12, 0), 2), ObjectProps.ZoneId, "gift", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Rope*3"));
@@ -701,10 +705,10 @@ namespace DynamicIslands
 			new IslandQuest { Title = "Full pockets", Steps = { new IslandQuest.Step { Type = "reach", Target = "gift", Count = 1 } }, Reward = "Nail*4" + (blueprint ? ";Blueprint_Firework*1" : "") }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("full: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario full inventory: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("full: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario full inventory: the island didn't come"); yield break; }
 
 			Network_Player player = RAPI.GetLocalPlayer();
 			PlayerInventory inv = player.Inventory;
@@ -789,14 +793,14 @@ namespace DynamicIslands
 
 		static IEnumerator ScKeysRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("keys: run in a world, as the host"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("keys: only in a test world 'CI ...' (it empties the inventory)"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario keys: run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario keys: only in a test world 'CI ...' (it empties the inventory)"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "cisckeys";
 			IslandFile f;
-			try { f = ScIsland(isl, "Key Isle"); } catch (Exception ex) { Fail("keys: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Key Isle"); } catch (Exception ex) { Fail("scenario keys: " + ex.Message); yield break; }
 			f.Props[StoryItems.Key] = "cisckey|Test key||Opens one door";
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0, 0), 1), BehaviourProps.Name, "plankdoor", BehaviourProps.Use, "Open",
 				BehaviourProps.CheckPrefix + "use", "take|Plank|3\ntake|Plank|2", BehaviourProps.EventPrefix + "use", "message||plankdoor opens", BehaviourProps.ElsePrefix + "use", "message||plankdoor refuses"));
@@ -808,10 +812,10 @@ namespace DynamicIslands
 				BehaviourProps.CheckPrefix + "use", "take|story:cisckey|1", BehaviourProps.EventPrefix + "use", "message||keydoorb opens", BehaviourProps.ElsePrefix + "use", "message||keydoorb refuses"));
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("keys: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario keys: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("keys: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario keys: the island didn't come"); yield break; }
 			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
 			ClearInventory();
 			inv.AddItem("Plank", 3);
@@ -854,25 +858,25 @@ namespace DynamicIslands
 
 		static IEnumerator ScFlyingSeaRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("flying sea: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario flying sea: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscflysea";
 			IslandFile f;
-			try { f = ScIsland(isl, "Sky Lagoon", 60f); } catch (Exception ex) { Fail("flying sea: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Sky Lagoon", 60f); } catch (Exception ex) { Fail("scenario flying sea: " + ex.Message); yield break; }
 			Vector3? under = ScUnderSea(f, 4f);
-			if (!under.HasValue) { Fail("flying sea: the sample island has no sea floor 4 m under its sea"); yield break; }
+			if (!under.HasValue) { Fail("scenario flying sea: the sample island has no sea floor 4 m under its sea"); yield break; }
 			f.Objects.Add(ScObj("Creature_Turtle", under.Value, ObjectProps.CreatureCount, "2"));
 			f.Objects.Add(ScObj("Creature_PufferFish", under.Value + new Vector3(4f, 0, 0), ObjectProps.CreatureCount, "1"));
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, under.Value + new Vector3(0, 0, 4f), ObjectProps.ZoneId, "seazone", ObjectProps.ZoneRadius, "3"));
 			f.Objects.Add(ScObj("Loot_SunkenBarrel", under.Value + new Vector3(-4f, 0, 0), ObjectProps.NoteTitle, "Sea barrel", ObjectProps.LootItems, "Plank*1"));
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f, 60f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("flying sea: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario flying sea: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("flying sea: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario flying sea: the island didn't come"); yield break; }
 			yield return new WaitForSeconds(6f); // (creatures come after their NavMesh)
 			int seaSpots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Count(p => p.Kind != null && (p.Kind.Type == AI_NetworkBehaviourType.Turtle || p.Kind.Type == AI_NetworkBehaviourType.PufferFish));
 			var animals = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && (a.behaviourType == AI_NetworkBehaviourType.Turtle || a.behaviourType == AI_NetworkBehaviourType.PufferFish) && ScFlat(a.transform.position, e.Position) < 400f).ToList();
@@ -898,13 +902,13 @@ namespace DynamicIslands
 
 		static IEnumerator ScDeathRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("death: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario death: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscdeath";
 			IslandFile f;
-			try { f = ScIsland(isl, "Grave Isle"); } catch (Exception ex) { Fail("death: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Grave Isle"); } catch (Exception ex) { Fail("scenario death: " + ex.Message); yield break; }
 			Vector3 camp = ScDry(f, new Vector2(0, 0), 1), ledge = ScDry(f, new Vector2(25, 25), 2);
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, camp, ObjectProps.ZoneId, "camp", ObjectProps.ZoneRadius, "4"));
 			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-12, 0), 3), ObjectProps.NoteTitle, "Trap note", ObjectProps.NoteText, "Wait for it.",
@@ -913,10 +917,10 @@ namespace DynamicIslands
 			new IslandQuest { Title = "Grave", Steps = { new IslandQuest.Step { Type = "reach", Target = "camp", Count = 1 }, new IslandQuest.Step { Type = "read", Target = "Last words", Count = 1 } } }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("death: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario death: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("death: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario death: the island didn't come"); yield break; }
 			Network_Player player = RAPI.GetLocalPlayer();
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			ScEnterZone(e, "camp");
@@ -974,7 +978,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScModesRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("modes: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario modes: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
@@ -1040,27 +1044,27 @@ namespace DynamicIslands
 
 		static IEnumerator ScCatchRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("catch: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario catch: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "cisccatch";
 			IslandFile f;
-			try { f = ScIsland(isl, "Farm Isle"); } catch (Exception ex) { Fail("catch: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Farm Isle"); } catch (Exception ex) { Fail("scenario catch: " + ex.Message); yield break; }
 			f.Objects.Add(ScObj("Creature_Chicken", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0", BehaviourProps.EventPrefix + "defeat", "message||the chickens are gone"));
 			f.Objects.Add(ScObj("Creature_Goat", ScDry(f, new Vector2(20, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
 			f.Objects.Add(ScObj("Creature_Llama", ScDry(f, new Vector2(-20, 0), 3), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
 			new IslandQuest { Title = "Farm", Steps = { new IslandQuest.Step { Type = "catch", Target = "Chicken", Count = 1 } } }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("catch: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario catch: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("catch: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario catch: the island didn't come"); yield break; }
 			yield return ScWaitAnimals(e, "Chicken", 2, 20f);
 			yield return ScWaitAnimals(e, "Goat", 1, 10f);
 			List<AI_NetworkBehaviour> chickens = ScAnimals(e, "Chicken");
-			if (chickens.Count < 2) { ScRemove(made, isl); Fail("catch: the two chickens didn't come (" + chickens.Count + ")"); yield break; }
+			if (chickens.Count < 2) { ScRemove(made, isl); Fail("scenario catch: the two chickens didn't come (" + chickens.Count + ")"); yield break; }
 			ScKill(chickens[0]);
 			yield return new WaitForSeconds(2f);
 			string messageBefore = Behaviours.LastMessage;
@@ -1138,24 +1142,24 @@ namespace DynamicIslands
 
 		static IEnumerator ScLastKillRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("last kill: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario last kill: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscatlast";
 			IslandFile f;
-			try { f = ScIsland(isl, "Last Boar"); } catch (Exception ex) { Fail("last kill: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Last Boar"); } catch (Exception ex) { Fail("scenario last kill: " + ex.Message); yield break; }
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
 			new IslandQuest { Title = "Last", Steps = { new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 1 } } }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("last kill: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario last kill: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
 			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
 			yield return new WaitForSeconds(1.5f);
 			AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
-			if (boar == null) { ScRemove(made, isl); Fail("last kill: no warthog came"); yield break; }
+			if (boar == null) { ScRemove(made, isl); Fail("scenario last kill: no warthog came"); yield break; }
 			ScKill(boar);
 			yield return new WaitForSeconds(0.3f);
 			IslandObjectState.Capture(e);
@@ -1180,13 +1184,13 @@ namespace DynamicIslands
 
 		static IEnumerator ScSleepRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("sleep: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario sleep: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscsleep", plan = "ci scenario sleep";
 			IslandFile f;
-			try { f = ScIsland(isl, "Sleepy Cove"); } catch (Exception ex) { Fail("sleep: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Sleepy Cove"); } catch (Exception ex) { Fail("scenario sleep: " + ex.Message); yield break; }
 			f.Props[IslandProps.RegrowDays] = "3";
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(0, 0), 1), ObjectProps.NoteTitle, "Sleep chest", ObjectProps.LootItems, "Plank*1"));
 			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(10, 0), 2), ObjectProps.NoteTitle, "Sleep note", ObjectProps.NoteText, "Something comes after a while.",
@@ -1196,15 +1200,17 @@ namespace DynamicIslands
 			string planBefore = WorldDirector.PlanName;
 			var doneBefore = WorldDirector.Done.ToList();
 			int? today = ScDay;
-			if (!today.HasValue) { Fail("sleep: no day counter"); yield break; }
+			if (!today.HasValue) { Fail("scenario sleep: no day counter"); yield break; }
+			// (Raft's BedManager.Slumber is a private static coroutine, started by the bed manager when everyone sleeps)
 			BedManager beds = ComponentManager<BedManager>.Value ?? UnityEngine.Object.FindObjectOfType<BedManager>() ?? Resources.FindObjectsOfTypeAll<BedManager>().FirstOrDefault(b => b.gameObject.scene.IsValid());
-			MethodInfo slumber = typeof(BedManager).GetMethod("Slumber", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			if (beds == null || slumber == null) { Fail("sleep: no BedManager / Slumber"); yield break; }
+			MethodInfo slumber = typeof(BedManager).GetMethod("Slumber", BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			if (slumber == null) { Fail("scenario sleep: Raft's BedManager.Slumber wasn't found"); yield break; }
+			MonoBehaviour runner = beds != null ? (MonoBehaviour)beds : DynamicIslands.instance;
 			Vector3? spot = ScSpot(isl, 320f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("sleep: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario sleep: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("sleep: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario sleep: the island didn't come"); yield break; }
 			WorldPlan.Parse(plan, "random = off\nrule = tomorrow | type:wreck | day:" + (today.Value + 1) + " | ahead:800 | | Tomorrow\n").Save();
 			try
 			{
@@ -1220,8 +1226,8 @@ namespace DynamicIslands
 				{
 					AzureSkyHour(22f);
 					yield return null;
-					IEnumerator s = slumber.Invoke(beds, new object[] { true }) as IEnumerator;
-					if (s != null) yield return beds.StartCoroutine(s);
+					IEnumerator s = slumber.Invoke(slumber.IsStatic ? null : beds, new object[] { true }) as IEnumerator;
+					if (s != null) yield return runner.StartCoroutine(s);
 					yield return new WaitForSeconds(1.5f);
 					if (night == 0)
 					{
@@ -1279,13 +1285,13 @@ namespace DynamicIslands
 
 		static IEnumerator ScDiveRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("dive: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario dive: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscdive";
 			IslandFile f;
-			try { f = ScIsland(isl, "Deep Reef"); } catch (Exception ex) { Fail("dive: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Deep Reef"); } catch (Exception ex) { Fail("scenario dive: " + ex.Message); yield break; }
 			Vector3 top = ScDry(f, new Vector2(0, 0), 1);
 			// (sunk so the barrel lies 12 m under the sea: the ground there stands this high above the island's own sea level)
 			float sink = -((top.y - f.WaterLevel) + 12f);
@@ -1293,10 +1299,10 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj("Loot_SunkenBarrel", top, ObjectProps.NoteTitle, "Reef barrel", ObjectProps.LootItems, "Plank*1", ObjectProps.LootRefill, "0"));
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 320f, sink);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("dive: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario dive: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("dive: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario dive: the island didn't come"); yield break; }
 			LootCrate barrel = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault();
 			Check(ref ok, barrel != null && barrel.transform.position.y < -8f, "the barrel lies under water (y " + (barrel != null ? barrel.transform.position.y.ToString("F1") : "?") + ")");
 			if (barrel != null)

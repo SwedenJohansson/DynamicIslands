@@ -201,8 +201,8 @@ namespace DynamicIslands
 
 		static IEnumerator ScRuleWaitsRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("rule waits: run in a world, as the host"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("rule waits: only in a test world 'CI ...'"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario rule waits: run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario rule waits: only in a test world 'CI ...'"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
@@ -288,8 +288,8 @@ namespace DynamicIslands
 
 		static IEnumerator ScPlanEditRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("plan edit: run in a world, as the host"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("plan edit: only in a test world 'CI ...'"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario plan edit: run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario plan edit: only in a test world 'CI ...'"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
@@ -344,7 +344,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScMissingRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("missing: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario missing: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
@@ -387,8 +387,8 @@ namespace DynamicIslands
 
 		static IEnumerator ScLibUpdateRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("lib update: run in a world, as the host"); yield break; }
-			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("lib update: only in a test world 'CI ...'"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario lib update: run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("scenario lib update: only in a test world 'CI ...'"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
@@ -476,7 +476,7 @@ namespace DynamicIslands
 			bool ok = true;
 			if (part == "prep")
 			{
-				if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("edit used: run in a world, as the host"); yield break; }
+				if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario edit used " + part + ": run in a world, as the host"); yield break; }
 				yield return EnsureAlive();
 				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => x.HostName == EditIsland).Select(x => x.Id).ToList(), true);
 				IslandFile f = ScIsland(EditIsland, "Edit Isle");
@@ -485,7 +485,7 @@ namespace DynamicIslands
 				f.Save(IslandSpawner.PathFor(EditIsland));
 				var made = new List<IslandWorldState.Entry>();
 				Vector3? spot = ScSpot(EditIsland, 400f);
-				if (!spot.HasValue) { Fail("edit used: no open sea"); yield break; }
+				if (!spot.HasValue) { Fail("scenario edit used " + part + ": no open sea"); yield break; }
 				yield return ScBring(EditIsland, spot.Value, made);
 				IslandWorldState.Entry e = made.FirstOrDefault();
 				Check(ref ok, e != null && e.Root != null, "the island is in the world");
@@ -498,7 +498,7 @@ namespace DynamicIslands
 			}
 			else if (part == "safe" || part == "unsafe")
 			{
-				if (!DynamicIslands.InEditor()) { Fail("edit used: " + part + " in the editor"); yield break; }
+				if (!DynamicIslands.InEditor()) { Fail("scenario edit used " + part + ": " + part + " in the editor"); yield break; }
 				Check(ref ok, DynamicIslands.LoadIsland(EditIsland), "the island opened in the editor");
 				yield return new WaitForSeconds(2f);
 				Transform placed = GameObject.Find("PlacedObjects").transform;
@@ -525,10 +525,10 @@ namespace DynamicIslands
 			}
 			else
 			{
-				if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("edit used: check in a world, as the host"); yield break; }
+				if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario edit used " + part + ": check in a world, as the host"); yield break; }
 				yield return new WaitForSeconds(3f);
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == EditIsland);
-				if (e == null) { Fail("edit used: the island isn't in the world any more"); yield break; }
+				if (e == null) { Fail("scenario edit used " + part + ": the island isn't in the world any more"); yield break; }
 				if (e.Root == null) { Raft raft = UnityEngine.Object.FindObjectOfType<Raft>(); if (raft != null) { PlayerMove.To(RAPI.GetLocalPlayer(), e.Position + Vector3.up * 20f); } yield return WaitFor(() => e.Root != null, 30f); }
 				LootCrate box1 = ScChest(e, "Box 1"), box2 = ScChest(e, "Box 2");
 				if (part == "checksafe")
@@ -557,7 +557,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScTestCleanRoutine()
 		{
-			if (!DynamicIslands.InEditor()) { Fail("test clean: in the editor"); yield break; }
+			if (!DynamicIslands.InEditor()) { Fail("scenario test clean: in the editor"); yield break; }
 			bool ok = true;
 			const string name = "cisctestclean";
 			IslandFile f = ScIsland(name, "Clean Test");
@@ -603,7 +603,7 @@ namespace DynamicIslands
 
 		static IEnumerator ScManyPlayersRoutine()
 		{
-			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("many: run in a world, as the host"); yield break; }
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario many players: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
 			var made = new List<IslandWorldState.Entry>();
@@ -611,7 +611,7 @@ namespace DynamicIslands
 			ulong[] players = { 76561190000000011UL, 76561190000000012UL, 76561190000000013UL, 76561190000000014UL, 76561190000000015UL, 76561190000000016UL, 76561190000000017UL };
 			bool levelsBefore = PlayerLevels.On;
 			IslandFile f;
-			try { f = ScIsland(isl, "Crowded Isle"); } catch (Exception ex) { Fail("many: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Crowded Isle"); } catch (Exception ex) { Fail("scenario many players: " + ex.Message); yield break; }
 			f.Props[IslandProps.Levels] = "on";
 			for (int i = 0; i < 5; i++) f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(i * 8 - 16, -10), 10 + i), ObjectProps.NoteTitle, "Crate " + i, ObjectProps.LootItems, "Plank*1"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0, 10), 20), BehaviourProps.Name, "lever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "switch|gate|"));
@@ -620,10 +620,10 @@ namespace DynamicIslands
 			new IslandQuest { Title = "Crowd", Steps = { new IslandQuest.Step { Type = "open", Target = "", Count = 5 } } }.To(f.Props);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f);
-			if (!spot.HasValue) { ScRemove(made, isl); Fail("many: no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario many players: no open sea near the raft"); yield break; }
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
-			if (e.Root == null) { ScRemove(made, isl); Fail("many: the island didn't come"); yield break; }
+			if (e.Root == null) { ScRemove(made, isl); Fail("scenario many players: the island didn't come"); yield break; }
 			try { }
 			finally { }
 			// (a) five players each open a different crate at the same moment: each sends its own count (step 0, 1 done)

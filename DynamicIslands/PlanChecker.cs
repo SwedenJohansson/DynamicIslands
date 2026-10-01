@@ -38,6 +38,10 @@ namespace DynamicIslands.Editor
 			public readonly Dictionary<string, int> Creatures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 			public readonly HashSet<string> CreaturesComeBack = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public int NoteCount, ChestCount, RaftCrates, Objects;
+			/// <summary>Journal pages the island can give: notes with text (an empty note gives none) and "journal" actions.</summary>
+			public int PageCount;
+			/// <summary>The island's own rules: plan rules may point at the islands they bring by their names.</summary>
+			public List<IntroRule> Rules = new List<IntroRule>();
 			public string AllText = ""; // (every setting's value: to see whether a story item is given anywhere)
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
@@ -49,14 +53,22 @@ namespace DynamicIslands.Editor
 
 		public static Facts FromFile(IslandFile f, string name, bool sample)
 		{
-			var x = new Facts { Name = name, Sample = sample, Quest = IslandQuest.From(f.Props), Objects = f.Objects.Count };
+			var x = new Facts { Name = name, Sample = sample, Quest = IslandQuest.From(f.Props), Objects = f.Objects.Count, Rules = WorldDirector.RulesFromProps(f.Props) };
 			var text = new System.Text.StringBuilder();
 			foreach (var kv in f.Props) if (kv.Key != StoryItems.Key) text.Append(kv.Value).Append('\n');
+			// (creatures come back by default, after the island's regrow days - unless the island says never)
+			int regrow;
+			bool islandNever = int.TryParse(ObjectProps.Get(f.Props, IslandProps.RegrowDays), out regrow) && regrow <= 0;
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
 				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(z); }
-				if (ObjectProps.IsNote(o.Name, p)) { x.NoteCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(t); }
+				if (ObjectProps.IsNote(o.Name, p))
+				{
+					x.NoteCount++;
+					string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(t);
+					if (ObjectProps.Get(p, ObjectProps.NoteText).Trim().Length > 0) x.PageCount++;
+				}
 				if (ObjectProps.IsLoot(o.Name, p)) { x.ChestCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Chests.Add(t); }
 				if (o.Name == PlaceableCatalog.RaftCrate) x.RaftCrates++;
 				ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Name);
@@ -64,18 +76,25 @@ namespace DynamicIslands.Editor
 				{
 					int n; if (!int.TryParse(ObjectProps.Get(p, ObjectProps.CreatureCount), out n) || n < 1) n = 1;
 					int had; x.Creatures.TryGetValue(k.Label, out had); x.Creatures[k.Label] = had + n;
-					string back = ObjectProps.Get(p, ObjectProps.CreatureRespawn);
-					if (back.Length > 0 && back != "0") x.CreaturesComeBack.Add(k.Label);
+					if (ObjectProps.Respawns(p) && !islandNever) x.CreaturesComeBack.Add(k.Label);
 				}
 				foreach (var kv in p)
 				{
 					text.Append(kv.Value).Append('\n');
 					if (kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
-						foreach (ObjAction a in ObjAction.ParseLines(kv.Value)) if (a.Verb == "signal" && a.Arg.Trim().Length > 0) x.Signals.Add(a.Arg.Trim());
+						foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
+						{
+							if (a.Verb == "signal" && a.Arg.Trim().Length > 0) x.Signals.Add(a.Arg.Trim());
+							if (a.Verb == "journal") x.PageCount++;
+						}
 				}
 			}
 			foreach (var kv in f.Props.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
-				foreach (ObjAction a in ObjAction.ParseLines(kv.Value)) if (a.Verb == "signal" && a.Arg.Trim().Length > 0) x.Signals.Add(a.Arg.Trim());
+				foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
+				{
+					if (a.Verb == "signal" && a.Arg.Trim().Length > 0) x.Signals.Add(a.Arg.Trim());
+					if (a.Verb == "journal") x.PageCount++;
+				}
 			x.AllText = text.ToString();
 			return x;
 		}
@@ -128,7 +147,32 @@ namespace DynamicIslands.Editor
 			public Facts Own; // (island mode: the island being edited)
 			public List<Finding> Out = new List<Finding>();
 			public HashSet<string> SavedNames;
+			/// <summary>Rules on the islands the plan brings (and on the islands those bring), by name, with their island: a
+			/// world finds the island one of them brought by the rule's name, as it does a plan rule's.</summary>
+			public Dictionary<string, KeyValuePair<IntroRule, Facts>> IslandRules = new Dictionary<string, KeyValuePair<IntroRule, Facts>>(StringComparer.OrdinalIgnoreCase);
 			public void Add(int rule, Level level, string text, string fix = "") { Out.Add(new Finding(rule, level, text, fix)); }
+		}
+
+		/// <summary>The rules of the islands a plan brings, followed through what those rules bring (not the plan's own names).</summary>
+		static void FindIslandRules(Ctx c)
+		{
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var queue = new Queue<Facts>(c.Plan.Rules.SelectMany(r => Brings(c, r)));
+			while (queue.Count > 0)
+			{
+				Facts f = queue.Dequeue();
+				if (f == null || !seen.Add((f.Sample ? "type:" : "") + f.Name)) continue;
+				foreach (IntroRule ir in f.Rules)
+				{
+					int same = ir.Id.Length > 0 ? c.Plan.Rules.FindIndex(x => x.Id.Equals(ir.Id, StringComparison.OrdinalIgnoreCase)) : -1;
+					// (a world finds an island by the name of the rule that brought it, any rule's: the two are mixed up)
+					if (same >= 0 && !f.Sample)
+						c.Add(same, Level.Warning, R(c, same) + " has the same name as a rule of " + f.Describe + " (its own rules): what waits for or is placed near '" + ir.Id + "' may take the island that one brings.", "Give rule " + (same + 1) + " another name.");
+					if (ir.Id.Length == 0 || c.IslandRules.ContainsKey(ir.Id) || same >= 0) continue;
+					c.IslandRules[ir.Id] = new KeyValuePair<IntroRule, Facts>(ir, f);
+					foreach (Facts g in Brings(c, ir)) queue.Enqueue(g);
+				}
+			}
 		}
 
 		static string R(Ctx c, int i) { IntroRule r = c.Plan.Rules[i]; return "Rule " + (i + 1) + (r.Id.Length > 0 ? " '" + r.Id + "'" : ""); }
@@ -137,6 +181,7 @@ namespace DynamicIslands.Editor
 		public static List<Finding> Check(WorldPlan plan, bool islandMode, bool deep, Facts own = null)
 		{
 			var c = new Ctx { Plan = plan, IslandMode = islandMode, Deep = deep, Own = own, SavedNames = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase) };
+			if (!islandMode) FindIslandRules(c);
 			List<IntroRule> rules = plan.Rules;
 			if (rules.Count == 0)
 			{
@@ -189,6 +234,13 @@ namespace DynamicIslands.Editor
 				list.AddRange(Brings(c, c.Plan.Rules[idx]));
 				return list;
 			}
+			KeyValuePair<IntroRule, Facts> own;
+			if (c.IslandRules.TryGetValue(reference, out own))
+			{
+				what = "the rule '" + reference + "' of " + own.Value.Describe + " (" + own.Key.DescribeWhat() + ")";
+				list.AddRange(Brings(c, own.Key));
+				return list;
+			}
 			if (c.SavedNames.Contains(reference)) { what = "the saved island '" + reference + "'"; Facts f = Saved(reference); if (f != null) list.Add(f); return list; }
 			known = false;
 			return list;
@@ -210,8 +262,11 @@ namespace DynamicIslands.Editor
 			float num;
 			if (r.When == "km" || r.When == "day")
 			{
-				if (!float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) || num <= 0f)
+				if (!float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) || num < 0f)
 					c.Add(i, Level.Problem, R(c, i) + " waits " + (r.When == "km" ? "for a distance" : "for a day") + " but has no number (\"" + r.WhenArg + "\").", "Type " + (r.When == "km" ? "the km to sail, e.g. 2" : "the day, e.g. 3") + " in WHEN.");
+				// (the game plays them at once: 0 km sailed and day 0 are reached when the world starts)
+				else if (num <= 0f)
+					c.Add(i, Level.Tip, R(c, i) + " waits for " + (r.When == "km" ? "0 km" : "day 0") + ": that is there when the world starts, so it comes at once - like \"When the world starts\".", "Fine if that is what you want; else type " + (r.When == "km" ? "the km to sail, e.g. 2" : "a later day, e.g. 3") + ".");
 				else if (r.When == "km" && num > 30f || r.When == "day" && num > 20f)
 					c.Add(i, Level.Tip, R(c, i) + " comes only after " + (r.When == "km" ? num + " km of sailing" : "day " + num) + ": that takes a long time in play - and to test.", "Try the plan with a small number first.");
 			}
@@ -235,7 +290,7 @@ namespace DynamicIslands.Editor
 			List<Facts> islands = RefFacts(c, r.WhenRef, out what, out known, out ruleIndex);
 			if (!known && r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) { c.Add(i, Level.Problem, R(c, i) + " waits for \"self\", which only means something in an island's own rules (the island itself): in a world plan it points at nothing, so the rule never comes.", "Name the island instead: a rule of this plan, or one of your saved islands."); return; }
 			if (!known) { c.Add(i, Level.Problem, R(c, i) + " waits for '" + r.WhenRef + "': no rule of this plan and no saved island has that name.", "Pick it from the ▾ list after the island field (it lists the plan's rules and your saved islands)."); return; }
-			if (ruleIndex < 0 && !c.IslandMode && !r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhenRef)))
+			if (ruleIndex < 0 && !c.IslandMode && !r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && !c.IslandRules.ContainsKey(r.WhenRef) && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhenRef)))
 				c.Add(i, c.Plan.Random ? Level.Warning : Level.Problem, R(c, i) + " waits for the saved island '" + r.WhenRef + "', but no rule of this plan brings it. " +
 					(c.Plan.Random ? "It only works if that island turns up by chance while sailing (or another plan or an island's rule brings it)." : "Random islands are off, so it never comes into the world - and this rule never fires."),
 					"Add a rule that brings '" + r.WhenRef + "', and wait for that rule's name instead.");
@@ -304,13 +359,22 @@ namespace DynamicIslands.Editor
 						if (have == 0) c.Add(i, Level.Problem, head + " needs " + (t.Length > 0 ? t.ToLowerInvariant() + "s" : "creatures") + ", and the island has none" + tail, fix);
 						else if (st.Count > have && !(t.Length > 0 ? f.CreaturesComeBack.Contains(t) : f.CreaturesComeBack.Count > 0))
 							c.Add(i, Level.Warning, head + " needs " + st.Count + ", but the island has only " + have + " and they don't come back: players can't reach " + st.Count + " there.", "Place more, or set them to come back after some days, or lower the number in the quest.");
+						else if (st.Count > have)
+							c.Add(i, Level.Tip, head + " needs " + st.Count + ", and the island has " + have + " at a time: players wait for them to come back (after the island's regrow days) to reach " + st.Count + ".", "Fine if that is what you want; else place more or lower the number.");
+						// (Raft leaves some kinds out in some game modes - screechers and puffer fish in Creative: the step can't be done there)
+						ContentCatalog.CreatureKind kind = t.Length > 0 ? ContentCatalog.Creatures.FirstOrDefault(k => k.Label.Equals(t, StringComparison.OrdinalIgnoreCase)) : null;
+						List<string> without = kind != null && have > 0 ? CreatureSpawner.ModesWithout(kind.Type) : new List<string>();
+						if (without.Count > 0)
+							c.Add(i, Level.Tip, head + " needs " + t.ToLowerInvariant() + "s, and in " + string.Join(" and ", without.ToArray()) + " worlds Raft has none (as on its own islands): there the quest can't be finished.", "Fine for worlds in the other game modes; for every mode, use another creature.");
 						break;
 					case "collect":
 						if (t.Length > 0 && !f.AllText.Contains(StoryItems.Ref(StoryItems.IdOf(t))))
 							c.Add(i, Level.Warning, head + " needs the story item " + StoryItems.Label(t) + ", but nothing on the island gives it (no chest, zone or action). It works only if players got it on another island.", "Put it in a chest or a zone's items on this island, or make sure another island gives it first.");
 						break;
 					case "pages":
-						if (st.Target != "all" && f.NoteCount < st.Count) c.Add(i, Level.Problem, head + " needs " + st.Count + " pages read on the island, and it has only " + f.NoteCount + " notes" + tail, fix);
+						// (a page comes from a note with text, or a "journal" action: an empty note gives none)
+						if (st.Target != "all" && f.PageCount < st.Count)
+							c.Add(i, Level.Problem, head + " needs " + st.Count + " pages read on the island, and it gives only " + f.PageCount + (f.NoteCount > f.PageCount ? " (" + (f.NoteCount - f.PageCount) + " of its notes have no text: an empty note gives no page)" : "") + tail, fix);
 						break;
 				}
 			}
@@ -364,9 +428,10 @@ namespace DynamicIslands.Editor
 			}
 			if (r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) return;
 			int idx = c.Plan.Rules.FindIndex(x => x.Id.Equals(r.WhereRef, StringComparison.OrdinalIgnoreCase));
-			if (idx < 0 && !c.SavedNames.Contains(r.WhereRef)) { c.Add(i, Level.Problem, R(c, i) + " is placed near '" + r.WhereRef + "': no rule and no saved island has that name.", "Pick the island from the ▾ list after \"of\"."); return; }
+			bool islandRule = idx < 0 && c.IslandRules.ContainsKey(r.WhereRef);
+			if (idx < 0 && !islandRule && !c.SavedNames.Contains(r.WhereRef)) { c.Add(i, Level.Problem, R(c, i) + " is placed near '" + r.WhereRef + "': no rule and no saved island has that name.", "Pick the island from the ▾ list after \"of\"."); return; }
 			if (idx == i) { c.Add(i, Level.Problem, R(c, i) + " is placed near its own island: it can't be.", "Choose another island after \"of\"."); return; }
-			if (idx < 0 && !c.IslandMode && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhereRef)))
+			if (idx < 0 && !islandRule && !c.IslandMode && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhereRef)))
 				c.Add(i, Level.Warning, R(c, i) + " is placed near the saved island '" + r.WhereRef + "', which no rule of this plan brings: it waits until that island is in the world" + (c.Plan.Random ? " (by chance)" : ", and random islands are off") + ".", "Place it near a rule of this plan instead (its name), or add a rule that brings '" + r.WhereRef + "'.");
 		}
 
@@ -383,8 +448,13 @@ namespace DynamicIslands.Editor
 		{
 			IntroRule r = c.Plan.Rules[i];
 			if (!r.InStory) return;
-			if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None && !c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.StoryPlace.Substring(6), StringComparison.OrdinalIgnoreCase)))
-				c.Add(i, Level.Warning, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', which isn't in the story: it goes at the end.", "Choose its place again in STORY.");
+			bool endsWithUtopia = StoryChain.EndsStory(c.Plan, ChunkPointType.Landmark_Utopia);
+			// (Utopia ends Raft's story: it never counts as done, so an island after it never unlocks)
+			if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.Landmark_Utopia && endsWithUtopia)
+				c.Add(i, Level.Problem, R(c, i) + " comes in the story after Utopia, but Utopia is the end of Raft's story: it never counts as done, so this island never unlocks.", "Place it after Temperance (or in place of Utopia), or leave Utopia out of the story.");
+			else if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None && !c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.StoryPlace.Substring(6), StringComparison.OrdinalIgnoreCase)))
+				c.Add(i, endsWithUtopia ? Level.Problem : Level.Warning, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', which isn't in the story: it goes at the end" +
+					(endsWithUtopia ? ", after Utopia - which never counts as done, so this island never unlocks." : "."), "Choose its place again in STORY.");
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			foreach (Facts f in Brings(c, r))
 			{

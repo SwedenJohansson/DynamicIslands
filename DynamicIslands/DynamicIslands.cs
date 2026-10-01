@@ -266,6 +266,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Behaviours: " + e); }
 			try { IslandTest.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island test: " + e); }
+			try { StoryChain.WatchWorld(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Story chain: " + e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 			try { JournalWindow.Tick(); }
@@ -793,6 +795,7 @@ namespace DynamicIslands
 			}
 
 			// The core objects, plus any from Raft's other islands this island uses
+			Vector3 shiftedBefore = IslandWorldState.ShiftedBy;
 			yield return PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList());
 
 			if (entry != null)
@@ -802,6 +805,8 @@ namespace DynamicIslands
 				if (!IslandWorldState.Contains(entry)) yield break;
 				position = entry.Position; // follows world shifts that happened meanwhile
 			}
+			// (no entry - SpawnIsland, the editor's Test: the world shifts meanwhile too, or it landed hundreds of metres off)
+			else position -= IslandWorldState.ShiftedBy - shiftedBefore;
 
 			try
 			{
