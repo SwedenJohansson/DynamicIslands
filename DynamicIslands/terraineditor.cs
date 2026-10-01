@@ -210,6 +210,15 @@ namespace DynamicIslands
 			EndStroke();
 		}
 
+		/// <summary>A brush stroke dragged from one point to another without the mouse (the recipes: Flatten to the
+		/// height where the drag starts, Sample there and flatten along).</summary>
+		public void SimulateDrag(Vector3 from, Vector3 to, int frames, float deltaTime)
+		{
+			BeginStroke(from);
+			for (int i = 0; i < frames; i++) ApplyAt(Vector3.Lerp(from, to, frames > 1 ? i / (float)(frames - 1) : 1f), deltaTime);
+			EndStroke();
+		}
+
 		/// <summary>
 		/// Texture brush in alphamap space. Hand painting blends towards the chosen layer and marks the pixels
 		/// in the paint mask; AutoPaint blends back to the automatic weights and clears the mask.

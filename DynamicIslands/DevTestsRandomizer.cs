@@ -1668,7 +1668,9 @@ namespace DynamicIslands
 			DynamicIslands.instance.StartCoroutine(MeasureProps(names));
 		}
 
-		static IEnumerator MeasureProps(string[] names)
+		/// <summary>Measures objects into raft_props.txt (the randomizer's list), or into another file (fileName: a path; the
+		/// randomizer's list is then left alone - the recipes' object lists).</summary>
+		static IEnumerator MeasureProps(string[] names, string fileName = null)
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			yield return PlaceableCatalog.EnsureLoaded(names);
@@ -1752,9 +1754,9 @@ namespace DynamicIslands
 				UnityEngine.Object.Destroy(go);
 			}
 			UnityEngine.Object.Destroy(lab);
-			string path = System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
+			string path = fileName ?? System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
 			System.IO.File.WriteAllLines(path, lines.ToArray());
-			RaftProps.Reload();
+			if (fileName == null) RaftProps.Reload();
 			Log("Measured " + measured + " props (" + missing + " not in this Raft): " + System.IO.Path.GetFullPath(path));
 			if (measured > 0) Log("PASS: measured props"); else Fail("measured no props");
 		}

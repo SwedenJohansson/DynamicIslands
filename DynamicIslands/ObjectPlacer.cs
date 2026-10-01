@@ -45,7 +45,8 @@ namespace DynamicIslands.Editor
 
 			layerMask = (1 << LayerMask.NameToLayer("Default")) | (1 << LayerMask.NameToLayer("Obstruction"));
 			ownColliders = GetComponentsInChildren<Collider>(true);
-			baseRotation = transform.rotation;
+			// (an object of Raft's islands that stood almost straight in Raft's scene stands straight - a ladder leant 14°)
+			baseRotation = PlacementOptions.Straight(transform.rotation);
 			baseScale = transform.localScale;
 			if (PlacementOptions.RandomTurnAndSize && !PlacementOptions.SnapToGrid)
 			{

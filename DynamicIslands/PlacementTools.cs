@@ -51,6 +51,30 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Leans up to this much (degrees) are taken off when an object is placed (Straight).</summary>
+		public const float StraightenUpTo = 25f;
+
+		/// <summary>
+		/// An object of Raft's islands spawns turned and leaning as the copy found in Raft's scene stood - a ladder leant on
+		/// a wall 14°. Placed, an object that stands almost straight stands exactly straight: the axis of its own that
+		/// points most nearly up is turned to point straight up, its heading kept (headingToo: also turned to face north,
+		/// its own axes lined up with the world's - the recipes build with them). A bigger lean (a boulder lying on its
+		/// side) is the object's look and is kept.
+		/// </summary>
+		public static Quaternion Straight(Quaternion r, bool headingToo = false)
+		{
+			Vector3[] axes = { Vector3.right, Vector3.up, Vector3.forward, Vector3.left, Vector3.down, Vector3.back };
+			Vector3 upAxis = axes.OrderByDescending(a => Vector3.Dot(r * a, Vector3.up)).First();
+			if (Vector3.Angle(r * upAxis, Vector3.up) > StraightenUpTo) return r;
+			Quaternion s = Quaternion.FromToRotation(r * upAxis, Vector3.up) * r;
+			if (!headingToo) return s;
+			// (the heading: a level axis of the object's own - z, or x when z is its up axis - turned to face north / east)
+			bool zUp = Mathf.Abs(upAxis.z) > 0.5f;
+			Vector3 level = s * (zUp ? Vector3.right : Vector3.forward);
+			float heading = Mathf.Atan2(level.x, level.z) * Mathf.Rad2Deg - (zUp ? 90f : 0f);
+			return Quaternion.Euler(0f, -heading, 0f) * s;
+		}
+
 		/// <summary>Rotation for an object standing on ground with this normal: its turn around the vertical, tilted with the slope if wanted.</summary>
 		public static Quaternion Upright(float yaw, Quaternion baseRotation, Vector3 normal)
 		{

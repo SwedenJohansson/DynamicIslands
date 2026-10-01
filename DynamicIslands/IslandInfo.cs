@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -63,8 +64,11 @@ namespace DynamicIslands.Editor
 		/// <summary>The text of the last banner shown (the automated tests look at it).</summary>
 		public static string LastShown { get; private set; }
 
+		/// <summary>The last banners asked for, oldest first (the automated tests look at them: one may still be waiting).</summary>
+		public static readonly List<string> Recent = new List<string>();
+
 		/// <summary>Forgets which islands were announced, so their banners show again (tests).</summary>
-		public static void ForgetShown() { shown.Clear(); LastShown = null; LastMessage = null; }
+		public static void ForgetShown() { shown.Clear(); waiting.Clear(); LastShown = null; LastMessage = null; }
 
 		public static void Tag(GameObject root, IslandFile island)
 		{
@@ -84,14 +88,24 @@ namespace DynamicIslands.Editor
 			tag.Radius = IslandSpawner.LandRadius(island);
 		}
 
+		/// <summary>Banners waiting their turn: a message that comes while another is still being read (title, author, text).</summary>
+		static readonly Queue<string[]> waiting = new Queue<string[]>();
+		/// <summary>A banner shows at least this long before the next one takes its place.</summary>
+		const float MinSeconds = 3f;
+
 		public static void Tick()
 		{
 			if (banner != null && banner.gameObject.activeSelf)
 			{
 				float t = Time.unscaledTime - shownAt;
-				banner.alpha = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((ShowSeconds - t) / 1.2f);
-				if (t > ShowSeconds) banner.gameObject.SetActive(false);
+				if (waiting.Count > 0 && t >= MinSeconds) { string[] next = waiting.Dequeue(); Display(next[0], next[1], next[2]); }
+				else
+				{
+					banner.alpha = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((ShowSeconds - t) / 1.2f);
+					if (t > ShowSeconds) banner.gameObject.SetActive(false);
+				}
 			}
+			else if (waiting.Count > 0) { string[] next = waiting.Dequeue(); Display(next[0], next[1], next[2]); }
 			if (Time.unscaledTime < nextCheck) return;
 			nextCheck = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { shown.Clear(); return; }
@@ -120,9 +134,33 @@ namespace DynamicIslands.Editor
 		/// <summary>The last zone message shown (the automated tests look at it).</summary>
 		public static string LastMessage { get; private set; }
 
+		/// <summary>
+		/// A banner at the top of the screen. One that comes while another has been up for less than MinSeconds waits its
+		/// turn: two messages at once (a zone's warning and the quest's step, a story item and the beacon) both get read -
+		/// the second one used to replace the first at once (found building the library's Signal Rock).
+		/// </summary>
 		public static void Show(string title, string author, string description)
 		{
 			if (banner == null) Build();
+			LastShown = (title.Length > 0 ? title : "Unknown island") + (author.Length > 0 ? " | by " + author : "") + (description.Length > 0 ? " | " + description : "");
+			Debug.Log("[CUSTOM ISLANDS] Arriving at: " + LastShown);
+			Recent.Add(LastShown);
+			if (Recent.Count > 20) Recent.RemoveAt(0);
+			bool busy = banner.gameObject.activeSelf && Time.unscaledTime - shownAt < MinSeconds;
+			if (busy || waiting.Count > 0)
+			{
+				string[] next = { title, author, description };
+				// (the same banner again while it is up or waiting: once)
+				bool same = descText.text == description && (title.Length == 0 || titleText.text == title);
+				if (!(same && busy) && !waiting.Any(w => w[0] == title && w[1] == author && w[2] == description)) waiting.Enqueue(next);
+				while (waiting.Count > 4) waiting.Dequeue();
+				return;
+			}
+			Display(title, author, description);
+		}
+
+		static void Display(string title, string author, string description)
+		{
 			titleText.gameObject.SetActive(title.Length > 0 || description.Length == 0);
 			titleText.text = title.Length > 0 ? title : "Unknown island";
 			authorText.text = author.Length > 0 ? "by " + author : "";
@@ -132,8 +170,6 @@ namespace DynamicIslands.Editor
 			banner.gameObject.SetActive(true);
 			banner.alpha = 0f;
 			shownAt = Time.unscaledTime;
-			LastShown = titleText.text + (author.Length > 0 ? " | " + authorText.text : "") + (description.Length > 0 ? " | " + description : "");
-			Debug.Log("[CUSTOM ISLANDS] Arriving at: " + LastShown);
 		}
 
 		static void Build()
