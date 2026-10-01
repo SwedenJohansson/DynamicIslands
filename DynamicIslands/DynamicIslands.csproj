@@ -80,6 +80,11 @@
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
     <Compile Include="DevTestsReleaseFixes.cs" />
+    <Compile Include="DevTestsScenarios.cs" />
+    <Compile Include="DevTestsScenarioStory.cs" />
+    <Compile Include="DevTestsScenarioAuthor.cs" />
+    <Compile Include="DevTestsAdventure.cs" />
+    <Compile Include="DevTestsScenarioMP.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />
