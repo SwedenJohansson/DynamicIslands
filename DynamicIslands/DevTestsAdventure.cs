@@ -281,14 +281,16 @@ namespace DynamicIslands
 				// a night slept: day 2 - then the lucky find comes by chance while sailing
 				int? d0 = ScDay;
 				BedManager beds = ComponentManager<BedManager>.Value ?? UnityEngine.Object.FindObjectOfType<BedManager>() ?? Resources.FindObjectsOfTypeAll<BedManager>().FirstOrDefault(b => b.gameObject.scene.IsValid());
-				System.Reflection.MethodInfo slumber = typeof(BedManager).GetMethod("Slumber", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-				if (beds != null && slumber != null && d0.HasValue && d0.Value < 2)
+				// (Raft's BedManager.Slumber is a private static coroutine; a new world starts on day 0: two nights)
+				System.Reflection.MethodInfo slumber = typeof(BedManager).GetMethod("Slumber", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+				MonoBehaviour sleeper = beds != null ? (MonoBehaviour)beds : DynamicIslands.instance;
+				for (int night = 0; night < 4 && slumber != null && ScDay.HasValue && ScDay.Value < 2; night++)
 				{
 					AzureSkyHour(22f);
 					yield return null;
-					IEnumerator s = slumber.Invoke(beds, new object[] { true }) as IEnumerator;
-					if (s != null) yield return beds.StartCoroutine(s);
-					yield return new WaitForSeconds(1f);
+					IEnumerator s = slumber.Invoke(slumber.IsStatic ? null : beds, new object[] { true }) as IEnumerator;
+					if (s != null) yield return sleeper.StartCoroutine(s);
+					yield return new WaitForSeconds(1.5f);
 				}
 				Check(ref ok, ScDay >= 2, "day " + ScDay + " (slept from day " + d0 + ")");
 				for (int i = 0; i < 4; i++) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }

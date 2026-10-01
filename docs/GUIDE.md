@@ -789,7 +789,8 @@ remembered, and count the moment their step comes - the guide's camp quest done 
 the diary) finishes when the diary is read. To keep the story in order anyway, hide a later step's chest or animals until
 the step before shows them (**Behaviour + events...** > **At first: Hidden until shown**, and a **show** action).
 
-**Traps to avoid** when you make a quest (waits, toggles in events that happen again, rewards):
+**Collect and find-pages steps** count what the whole crew holds, and finish while a player is at the island - so the
+reward reaches someone. **Traps to avoid** when you make a quest (toggles in events that happen again, keys, rewards):
 [12.4 Making quests and plans that work](#124-making-quests-and-plans-that-work).
 
 ### 6.2 Behaviour and events
@@ -1824,8 +1825,6 @@ randomizer no longer makes alphas tougher again or heals them.)
 
 These are the traps island builders run into. Always play your adventure once with **Test**
 ([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose.
-
-
 
 #### No toggles in events that happen again
 
