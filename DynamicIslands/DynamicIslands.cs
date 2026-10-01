@@ -268,6 +268,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island test: " + e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
+			try { QuestLine.Tick(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Questline: " + e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }
@@ -901,6 +903,13 @@ namespace DynamicIslands
 				Notify("This world now follows the plan '" + WorldDirector.PlanName + "' (kept when the world is saved)");
 			}
 			foreach (string line in (Raft_Network.IsHost ? WorldDirector.Describe() : WorldDirector.DescribeForPlayer()).Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
+		}
+
+		[ConsoleCommand(name: "QuestLine", docs: "How much of the world's questline is done (the journal's row): the per cent, quests done, and each quest counted - on the islands here and still to come")]
+		public static void QuestLineCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("You need to be in a world (the questline is per world)", true); return; }
+			foreach (string line in QuestLine.Report().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
 		[ConsoleCommand(name: "Randomizer", docs: "The world randomizer (chosen in the New Game box): Randomizer = what it does in this world; Randomizer off|light|normal|wild, Randomizer -part / +part (colours, animals, alphas, loot, finds, oddities, bosses) = change it for this world (host)")]

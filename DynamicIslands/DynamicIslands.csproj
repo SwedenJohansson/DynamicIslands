@@ -101,6 +101,7 @@
     <Compile Include="PlayerHold.cs" />
     <Compile Include="PlayerMove.cs" />
     <Compile Include="Quest.cs" />
+    <Compile Include="QuestLine.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="TriggerZone.cs" />
     <Compile Include="WorldDirector.cs" />
@@ -148,6 +149,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsLevels.cs" />
+    <Compile Include="DevTestsQuestLine.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />
     <Compile Include="HelpLinks.cs" />

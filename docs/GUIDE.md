@@ -255,6 +255,8 @@ page's (**K**, a star).
   the frequencies a world plan gives out ("Tune the Receiver to #4821"). Point at a page for the island it came from;
   click it to read it on the paper, signed with the island and the day it was found.
 - The top right counts the story items and the pages. An empty journal says where to look.
+- **Questline** (under the title): how much of the world's quests is done - a green bar and, for example, "42% of the
+  questline done · 3 of 7 quests". See below.
 
 **One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
 journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
@@ -270,6 +272,24 @@ some steps count:
   counts every page.
 
 So when a quest step waits for items or pages, press J to see what the crew has.
+
+**How far you are: the questline.** The row under the journal's title shows how much of the world's quests the crew
+has done, counted by **steps**: a world with quests of 2, 1 and 3 steps has 6 steps, so one step done is 16% (always
+rounded down: it shows **100%** only when the very last step is done) and "0 of 3 quests" until a whole quest is.
+What it counts:
+
+- every quest of the custom islands already in the world, with the steps done so far;
+- the quests of the islands still to come **by name**: the world plan's rules that haven't brought their island yet,
+  and the islands' own rules - followed through the islands they bring. So a plan's story counts from the start, and
+  the per cent doesn't jump when the next island comes.
+- Islands that come **by chance** while sailing, or from a rule that brings "a new snowy island", "one of ..." or an
+  island from the spawn pool, count **once they are in the world**: until then nobody knows their quest. Then the
+  total grows by their steps.
+
+A world without quests says "No quests in this world yet". The host counts and sends it to everyone, so every player
+sees the same numbers (a player who joins gets them at once); the count is made from what the world already saves
+(quest steps, the plan's rules), so it is the same after loading. The console command `QuestLine` lists each quest
+counted.
 
 **The journal and Raft's notebook.** Raft's own notebook (**T**) stays as it always was, and the two don't mix:
 
@@ -1637,6 +1657,7 @@ Press **F10** for RML's console.
 | `CustomIslandsAuto on` / `off` | World, host | Automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host) |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
+| `QuestLine` | World | How much of the world's questline is done (the journal's row): the per cent, quests done, and each quest counted - here and still to come |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |

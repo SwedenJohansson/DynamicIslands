@@ -336,8 +336,10 @@ namespace DynamicIslands.Editor
 		RectTransform itemGrid, pageList;
 		Text countText, readTitle, readText, emptyItems, emptyPages;
 		Image readIcon;
+		RectTransform questFill;
+		Text questText;
 		string shownKey;
-		bool cursorWasFree, dirty;
+		bool cursorWasFree, dirty, questDirty;
 
 		/// <summary>Every frame from the mod: J opens and closes the journal in a world.</summary>
 		public static void Tick()
@@ -371,10 +373,28 @@ namespace DynamicIslands.Editor
 			StoryBook.Changed += () => { if (instance != null) instance.dirty = true; };
 
 			RectTransform panel = UIKit.Panel(canvas.transform, "Panel", new RectOffset(18, 18, 14, 16), 10f, false);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980, 620));
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980, 656));
 			RectTransform head = UIKit.Row(panel, 34f, 8f, "Head");
 			UIKit.Label(head, "JOURNAL", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			instance.countText = UIKit.Label(head, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight);
+
+			// How much of the world's questline is done (QuestLine: the host's count, the same for every player)
+			RectTransform line = UIKit.Row(panel, 26f, 10f, "Questline");
+			UIKit.Size(UIKit.Label(line, "Questline", 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold).gameObject, 90);
+			RectTransform holder = UIKit.Rect("Track", line);
+			UIKit.Size(holder.gameObject, 360);
+			// (the row stretches its children to its height: the bar is a thinner strip in the middle)
+			RectTransform track = UIKit.Rect("Bar", holder);
+			track.anchorMin = new Vector2(0f, 0.22f); track.anchorMax = new Vector2(1f, 0.78f);
+			track.offsetMin = Vector2.zero; track.offsetMax = Vector2.zero;
+			UIKit.Background(track.gameObject, new Color(0.1f, 0.06f, 0.02f, 0.75f), 4);
+			instance.questFill = UIKit.Rect("Fill", track);
+			instance.questFill.anchorMin = Vector2.zero; instance.questFill.anchorMax = new Vector2(0f, 1f);
+			instance.questFill.offsetMin = Vector2.zero; instance.questFill.offsetMax = Vector2.zero;
+			UIKit.Background(instance.questFill.gameObject, new Color(0.56f, 0.86f, 0.56f, 1f), 4);
+			instance.questText = UIKit.Label(line, "", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "QuestText");
+			UIKit.Size(instance.questText.gameObject, -1, -1, 1f);
+			QuestLine.Changed += () => { if (instance != null) instance.questDirty = true; };
 			UIKit.Separator(panel);
 
 			RectTransform body = UIKit.Row(panel, 490f, 14f, "Body");
@@ -451,12 +471,23 @@ namespace DynamicIslands.Editor
 		{
 			if (Input.GetKeyDown(KeyCode.Escape)) { Hide(); return; }
 			if (dirty) Fill();
+			if (questDirty) FillQuestLine();
+		}
+
+		/// <summary>The questline row: the bar and "42% of the questline done · 3 of 7 quests".</summary>
+		void FillQuestLine()
+		{
+			questDirty = false;
+			QuestLine.Totals t = QuestLine.Shown;
+			questFill.anchorMax = new Vector2(t.Percent / 100f, 1f);
+			questText.text = t.Describe();
 		}
 
 		/// <summary>Fills the lists from the story book.</summary>
 		void Fill()
 		{
 			dirty = false;
+			FillQuestLine();
 			foreach (Transform c in itemGrid) Destroy(c.gameObject);
 			foreach (Transform c in pageList) if (c != emptyPages.transform) Destroy(c.gameObject);
 			List<StoryBook.Held> items = StoryBook.Items.ToList();
@@ -538,5 +569,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>What the journal shows now (tests).</summary>
 		public static string ShownTitle { get { return IsOpen ? instance.readTitle.text : null; } }
+
+		/// <summary>The questline row as shown (tests): its text and how full the bar is (0-1), or null while closed.</summary>
+		public static string ShownQuestLine { get { return IsOpen ? instance.questText.text : null; } }
+		public static float ShownQuestFill { get { return IsOpen ? instance.questFill.anchorMax.x : -1f; } }
 	}
 }

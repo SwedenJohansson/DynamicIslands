@@ -187,6 +187,7 @@ namespace DynamicIslands.Editor
 			WorldOptions.Reset();
 			WorldIslands.Reset();
 			StoryChain.Reset();
+			QuestLine.Reset();
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
 			string[] fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null;
 			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
