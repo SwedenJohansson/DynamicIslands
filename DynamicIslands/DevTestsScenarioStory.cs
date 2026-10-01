@@ -83,7 +83,7 @@ namespace DynamicIslands
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => x.HostName == WeaveHarbor || x.HostName == WeaveBeyond).Select(x => x.Id).ToList(), true);
 			StoryChain.Reset();
 			WorldDirector.Done.Clear();
-			Check(ref ok, WorldDirector.SetPlan(WeavePlan, true), "the world gets the plan '" + WeavePlan + "'");
+			Check(ref ok, ScSetPlan(WeavePlan, true), "the world gets the plan '" + WeavePlan + "'");
 			yield return new WaitForSeconds(1f);
 			Check(ref ok, StoryChain.Active && Steps(StoryChain.Steps) == RaftSteps("RadioTower", "rule:harbor", "CaravanTown", "Tangaroa", "rule:beyond", "VarunaPoint", "Temperance", "Utopia"),
 				"the chain: " + Steps(StoryChain.Steps));
@@ -192,7 +192,7 @@ namespace DynamicIslands
 			NoteBook.unlockedNoteBookIndexes.RemoveAll(i => notes.ContainsKey(i));
 			NoteBook.unlockedChunkPointType.RemoveAll(t => Chain.Contains(t) || (int)t >= StoryChain.ModTypeBase);
 			StoryChain.Reset();
-			Check(ref ok, WorldDirector.SetPlan(plan, true), "the world gets a story chain");
+			Check(ref ok, ScSetPlan(plan, true), "the world gets a story chain");
 			PlayNote(ChunkPointType.Landmark_RadioTower);
 			PlayNote(ChunkPointType.Landmark_Vasagatan);
 			PlayNote(ChunkPointType.Landmark_Balboa); // (Vasagatan's note: the chain's own step after it)

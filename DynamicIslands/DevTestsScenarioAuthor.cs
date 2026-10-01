@@ -215,7 +215,7 @@ namespace DynamicIslands
 				// (a) after a Receiver rule
 				WorldPlan.Parse(plan, "random = off\nrule = radio | type:sandbar | start | receiver:400 | A signal. | Radio\nrule = after | type:wreck | rule:radio | ahead:700 | | After\n").Save();
 				WorldDirector.Done.Clear();
-				WorldDirector.SetPlan(plan, true);
+				ScSetPlan(plan, true);
 				yield return TuneTo("radio");
 				bool radio = IslandWorldState.Islands.Any(x => x.Rule == "radio");
 				for (int i = 0; i < 4; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
@@ -300,14 +300,14 @@ namespace DynamicIslands
 			{
 				WorldPlan.Parse(p1, "random = off\nrule = rule1 | type:wreck | start | ahead:700 | | One\nrule = rule2 | type:sandbar | km:99 | ahead:800 | | Two\nrule = rule3 | type:oddity | start | ahead:1100 | | Three\n").Save();
 				WorldDirector.Done.Clear();
-				Check(ref ok, WorldDirector.SetPlan(p1, true), "the world plays '" + p1 + "'");
+				Check(ref ok, ScSetPlan(p1, true), "the world plays '" + p1 + "'");
 				WorldDirector.Evaluate();
 				Check(ref ok, WorldDirector.Done.Contains("rule1") && WorldDirector.Done.Contains("rule3") && !WorldDirector.Done.Contains("rule2"), "rule1 and rule3 fired, rule2 waits (" + string.Join(",", WorldDirector.Done.ToArray()) + ")");
 				// Edit 1: a rule added
 				WorldPlan p = WorldPlan.Load(p1);
 				p.Rules.Add(IntroRule.Parse("rule4 | type:sky | start | ahead:1400 | | Four"));
 				p.Save();
-				WorldDirector.SetPlan(p1, false);
+				ScSetPlan(p1, false);
 				WorldDirector.Evaluate();
 				Check(ref ok, WorldDirector.Done.Contains("rule4"), "a rule added to the running plan fires");
 				// Edit 2: rule2 (waiting) and rule3 (fired) deleted, a new rule added - World Plans numbers it 'rule3' again
@@ -315,12 +315,12 @@ namespace DynamicIslands
 				p.Rules.RemoveAll(r => r.Id == "rule2" || r.Id == "rule3");
 				p.Rules.Add(IntroRule.Parse("rule3 | type:treasure | start | ahead:1700 | | New three"));
 				p.Save();
-				WorldDirector.SetPlan(p1, false);
+				ScSetPlan(p1, false);
 				WorldDirector.Evaluate();
 				Check(ref ok, IslandWorldState.Islands.Any(x => x.Rule == "rule3" && x.Label == "New three"), "a new rule that got a fired rule's old id ('rule3') fires - AU24");
 				// Switching plans: the new plan's first rule is also called 'rule1'
 				WorldPlan.Parse(p2, "random = off\nrule = rule1 | type:sunken | start | ahead:2000 | | Other one\n").Save();
-				WorldDirector.SetPlan(p2, true);
+				ScSetPlan(p2, true);
 				WorldDirector.Evaluate();
 				Check(ref ok, IslandWorldState.Islands.Any(x => x.Label == "Other one"), "switched to another plan whose first rule is 'rule1' too: it fires - AU71");
 			}
@@ -360,13 +360,13 @@ namespace DynamicIslands
 				IslandCache.Forget();
 				WorldPlan.Parse(plan, "random = off\nrule = vault | island:" + gone + " | start | ahead:600 | | Vault\nrule = other | type:wreck | start | ahead:900 | | Other\n").Save();
 				WorldDirector.Done.Clear();
-				WorldDirector.SetPlan(plan, true);
+				ScSetPlan(plan, true);
 				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, !WorldDirector.Done.Contains("vault") && WorldDirector.Done.Contains("other"), "the rule whose island is missing waits; the rest plays (" + string.Join(",", WorldDirector.Done.ToArray()) + ")");
 				Check(ref ok, WorldDirector.MissingIslands.Any(m => m.Contains(gone)) && told.Count >= 1 && told.Count <= 3, "the host is told which island is missing (" + told.Count + " lines over 6 checks; missing: " + string.Join(", ", WorldDirector.MissingIslands.ToArray()) + ")");
 				RuleIsland(gone, "Vanished Vault").Save(IslandSpawner.PathFor(gone));
 				IslandCache.Forget();
-				for (int i = 0; i < 4 && !WorldDirector.Done.Contains("vault"); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 60 && !WorldDirector.Done.Contains("vault"); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); } // (a rule that failed tries again after 20 s)
 				Check(ref ok, WorldDirector.Done.Contains("vault"), "the file put back: the island comes");
 			}
 			finally
@@ -426,7 +426,7 @@ namespace DynamicIslands
 				LibraryPack.Report r1 = LibraryPack.Install(v1, false, false, LibraryPack.SourceImport);
 				Log("  v1: " + r1.ToString().Replace("\n", " / "));
 				WorldDirector.Done.Clear();
-				WorldDirector.SetPlan(r1.PlanName ?? plan, true);
+				ScSetPlan(r1.PlanName ?? plan, true);
 				WorldDirector.Evaluate();
 				yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.HostName == a && x.Root != null), 30f);
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == a);
@@ -648,12 +648,19 @@ namespace DynamicIslands
 			{
 				int worth = PlayerLevels.MonsterXp(boar);
 				float max = boar.networkEntity.stat_health.Max;
-				var before = players.ToDictionary(p => p, p => { LevelRecord r = PlayerLevels.RecordOf(p); return r != null ? r.Xp : 0; });
-				var kills0 = players.ToDictionary(p => p, p => { LevelRecord r = PlayerLevels.RecordOf(p); return r != null ? r.Kills : 0; });
-				int given = 0;
-				foreach (ulong p in players) { given += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p); ScKill(boar, max / 7f + 0.01f); yield return null; }
-				int sum = players.Sum(p => { LevelRecord r = PlayerLevels.RecordOf(p); return (r != null ? r.Xp : 0) - before[p]; });
-				int kills = players.Sum(p => { LevelRecord r = PlayerLevels.RecordOf(p); return (r != null ? r.Kills : 0) - kills0[p]; });
+				// (the host works out each player's share as their hit arrives and sends it to that player's machine, which
+				// keeps their record: what the host hands out is what is counted here)
+				int sum = 0, kills = 0;
+				foreach (ulong p in players)
+				{
+					sum += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p);
+					if ((PlayerLevels.LastRemote ?? "").StartsWith(p + " ") && PlayerLevels.LastRemote.EndsWith(" kill")) kills++;
+					// (the hit itself, as Raft applies it after the message - through the host's DamageEntity, which a player's hit is)
+					Network_Host host = ComponentManager<Network_Host>.Value;
+					if (host != null && boar != null && boar.networkEntity != null && !boar.networkEntity.IsDead)
+						boar.networkEntity.stat_health.Value = Mathf.Max(0f, boar.networkEntity.stat_health.Value - (max / 7f + 0.01f));
+					yield return null;
+				}
 				Check(ref ok, sum >= worth - players.Length && sum <= worth + players.Length, "seven players hit one warthog: their EXP adds up to its " + worth + " (" + sum + ")");
 				Check(ref ok, kills == 1, "... and only one of them gets the kill (" + kills + ")");
 			}

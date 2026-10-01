@@ -183,14 +183,15 @@ namespace DynamicIslands
 
 		/// <summary>Pushes the raft along dir at speed for up to seconds; stops early when it hasn't moved half a metre in 2 s
 		/// (stuck) or has gone 'until' metres. Returns via the out list: [moved, stuck (1/0), most it rose (m), most it tilted (deg)].</summary>
-		static IEnumerator ScPush(Vector3 dir, float speed, float seconds, float until, List<float> result)
+		static IEnumerator ScPush(Vector3 dir, float speed, float seconds, float until, List<float> result, Vector3? watch = null)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			Rigidbody body = raft != null ? raft.body : null;
 			result.Clear();
-			if (body == null) { result.AddRange(new[] { 0f, 1f, 0f, 0f }); yield break; }
+			if (body == null) { result.AddRange(new[] { 0f, 1f, 0f, 0f, 0f }); yield break; }
 			Network_Player player = RAPI.GetLocalPlayer();
 			float y0 = body.position.y, t = 0f, moved = 0f, rose = 0f, tilt = 0f, window = 0f;
+			float closest = watch.HasValue ? ScFlat(body.position, watch.Value) : 0f;
 			Vector3 last = body.position, windowStart = body.position;
 			bool stuck = false;
 			while (t < seconds)
@@ -206,6 +207,7 @@ namespace DynamicIslands
 				if (d.magnitude < 50f) moved += d.magnitude; // (a world shift jumps the position)
 				last = body.position;
 				rose = Mathf.Max(rose, body.position.y - y0);
+				if (watch.HasValue) closest = Mathf.Min(closest, ScFlat(body.position, watch.Value));
 				tilt = Mathf.Max(tilt, Vector3.Angle(body.transform.up, Vector3.up));
 				window += Time.fixedDeltaTime;
 				if (window >= 2f)
@@ -216,7 +218,7 @@ namespace DynamicIslands
 					{
 						stuck = true;
 						// (what stops it: the nearest things in front of the raft and above it)
-						foreach (RaycastHit h in Physics.SphereCastAll(body.position + Vector3.up * 1f, 3f, dir, 12f, ~0, QueryTriggerInteraction.Ignore).Where(h => h.collider.attachedRigidbody != body).OrderBy(h => h.distance).Take(3))
+						foreach (RaycastHit h in Physics.SphereCastAll(body.position + Vector3.up * 1f, 3f, dir, 12f, ~0, QueryTriggerInteraction.Ignore).Where(h => h.collider.attachedRigidbody != body && !h.collider.transform.IsChildOf(raft.transform) && h.collider.GetComponentInParent<Block>() == null).OrderBy(h => h.distance).Take(3))
 							Log("  stuck at " + body.position.ToString("F0") + ": in front " + h.collider.name + " (" + LayerMask.LayerToName(h.collider.gameObject.layer) + ", " + (h.collider.transform.root != null ? h.collider.transform.root.name : "-") + ") at " + h.distance.ToString("F1") + " m");
 						break;
 					}
@@ -225,10 +227,19 @@ namespace DynamicIslands
 			}
 			body.velocity = Vector3.zero;
 			body.angularVelocity = Vector3.zero;
-			result.AddRange(new[] { moved, stuck ? 1f : 0f, rose, tilt });
+			result.AddRange(new[] { moved, stuck ? 1f : 0f, rose, tilt, closest });
 		}
 
 		static int? ScDay { get { try { return WorldManager.DayCounter; } catch { return null; } } }
+
+		/// <summary>Gives the world another plan as the WorldPlan command (and Esc > Custom Islands) does: the director's
+		/// plan and its story chain (SetPlan alone leaves the chain of the plan before).</summary>
+		static bool ScSetPlan(string name, bool applyRandom)
+		{
+			if (!WorldDirector.SetPlan(name, applyRandom)) return false;
+			StoryChain.FromPlan(WorldDirector.Plan);
+			return true;
+		}
 
 		#endregion
 
@@ -286,8 +297,10 @@ namespace DynamicIslands
 				OnRaftCommand();
 				yield return new WaitForSeconds(1.5f);
 				Vector3 dir = Flat(ghost.Position - raft.body.position).normalized;
-				yield return ScPush(dir, 6f, ScFlat(ghost.Position, raft.body.position) / 4f + 20f, 1000f, r); // (as far away as automatic islands come: 250-400 m)
-				Check(ref ok, r[1] > 0f, "rammed at 6 m/s, a ghost raft stops the raft too (moved " + r[0].ToString("F0") + " m, " + ScFlat(ghost.Position, raft.body.position).ToString("F0") + " m from its middle)");
+				float startDist = ScFlat(ghost.Position, raft.body.position);
+				yield return ScPush(dir, 6f, startDist / 4f + 20f, 1000f, r, ghost.Position); // (as far away as automatic islands come: 250-400 m)
+				bool through = r[0] > startDist; // (went past its middle: through the blocks)
+				Check(ref ok, r[1] > 0f && !through, "rammed at 6 m/s, a ghost raft stops the raft too (moved " + r[0].ToString("F0") + " of " + startDist.ToString("F0") + " m, closest " + r[4].ToString("F0") + " m to its middle" + (through ? ": THROUGH IT" : "") + ")");
 				Check(ref ok, r[2] < 1.2f && r[3] < 15f, "... the raft stays level (rose " + r[2].ToString("F2") + " m, tilted " + r[3].ToString("F1") + ")");
 				yield return ScPush(-dir, 6f, 10f, 1000f, r);
 				Check(ref ok, r[0] > 20f, "... and sails off again (" + r[0].ToString("F0") + " m in 10 s)");
@@ -325,7 +338,7 @@ namespace DynamicIslands
 				Network_Player player = RAPI.GetLocalPlayer();
 				Vector3 dir = Flat(e.Position - raft.body.position).normalized;
 				float through = ScFlat(e.Position, raft.body.position) + CustomIslandSpawner.LandRadius(isl) + 30f;
-				yield return ScPush(dir, 6f, through / 6f + 20f, through, r);
+				yield return ScPush(dir, 6f, through / 2.5f + 30f, through, r); // (pushed like a sail, water drag keeps it near 3.5 m/s)
 				bool passed = r[0] >= through - 1f;
 				bool onRaft = ScOnRaft(player, raft.body);
 				string what = elevation > 10f ? "flying at " + elevation + " m" : elevation < 0 ? "sunken (top under the sea)" : "flying low at " + elevation + " m";
@@ -347,6 +360,190 @@ namespace DynamicIslands
 			}
 			OnRaftCommand();
 			if (ok) Log("PASS: scenario fly under"); else Fail("scenario fly under");
+		}
+
+		#endregion
+
+		#region SC3 - the world shifts while an island comes, is stood on, or is away
+
+		/// <summary>Where an island's land centre is in the world now (its root is the terrain's corner).</summary>
+		static Vector3 ScLandCentre(IslandWorldState.Entry e)
+		{
+			IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
+			return e.Root != null ? e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) : e.Position;
+		}
+
+		[ConsoleCommand(name: "CIScShift", docs: "Dev, world (host, 'CI ...'): SC3 - Raft's world shift (the origin moved) while an island is coming (with a world entry, as a plan rule brings it, and without, as SpawnIsland does - AU58), while the player stands on one, and while one is unloaded: everything ends where it should be")]
+		public static void ScShiftCommand() { DynamicIslands.instance.StartCoroutine(ScShiftRoutine()); }
+
+		static IEnumerator ScShiftRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("shift: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			WorldShiftManager wsm = UnityEngine.Object.FindObjectOfType<WorldShiftManager>();
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (wsm == null || raft == null) { Fail("shift: no WorldShiftManager or raft"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscshift";
+			IslandFile f;
+			try { f = ScIsland(isl, "Shifty Isle"); } catch (Exception ex) { Fail("shift: " + ex.Message); yield break; }
+			// (an object from another of Raft's scenes: spawning waits for that scene to load - the moment a shift can come)
+			f.Objects.Add(ScObj(PlaceableCatalog.RaftCrate, ScDry(f, new Vector2(0, 0), 1)));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3 shift = new Vector3(240f, 0f, -160f);
+
+			// (a) with a world entry (a plan rule's island): the shift during the spawn
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("shift: no open sea near the raft"); yield break; }
+			Vector3 offset = spot.Value - raft.body.position; offset.y = 0f;
+			IslandWorldState.Entry entry = IslandWorldState.Add(isl, spot.Value, null, false);
+			entry.Loading = true;
+			made.Add(entry);
+			Coroutine c = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true, entry));
+			wsm.ResetToCenter(shift);
+			yield return c;
+			yield return WaitFor(() => entry.Root != null || entry.Failed, 20f);
+			Vector3 want = raft.body.position + offset;
+			float off = entry.Root != null ? ScFlat(ScLandCentre(entry), want) : 999f;
+			Check(ref ok, entry.Root != null && off < 3f, "a world shift while a plan rule's island is coming: it lands where it should (" + off.ToString("F1") + " m off)");
+			ScRemove(made);
+
+			// (a2) without a world entry (SpawnIsland, the editor's Test): the shift during the spawn - AU58
+			spot = ScSpot(isl, 400f);
+			if (spot.HasValue)
+			{
+				offset = spot.Value - raft.body.position; offset.y = 0f;
+				int before = IslandWorldState.Islands.Count;
+				c = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true));
+				wsm.ResetToCenter(shift);
+				yield return c;
+				IslandWorldState.Entry e2 = IslandWorldState.Islands.Skip(before).FirstOrDefault(x => x.HostName == isl);
+				want = raft.body.position + offset;
+				off = e2 != null && e2.Root != null ? ScFlat(ScLandCentre(e2), want) : 999f;
+				Check(ref ok, e2 != null && off < 3f, "a world shift while SpawnIsland's island is coming: it lands where it should (" + off.ToString("F1") + " m off) - AU58");
+				if (e2 != null) made.Add(e2);
+				ScRemove(made);
+			}
+
+			// (b) the player standing on an island when the world shifts
+			spot = ScSpot(isl, 400f);
+			if (spot.HasValue)
+			{
+				yield return ScBring(isl, spot.Value, made);
+				IslandWorldState.Entry e = made.LastOrDefault();
+				if (e != null && e.Root != null)
+				{
+					yield return StandRoutine(e.Root);
+					Network_Player p = RAPI.GetLocalPlayer();
+					Vector3 rel = p.transform.position - ScLandCentre(e);
+					wsm.ResetToCenter(shift);
+					for (int i = 0; i < 6; i++) { yield return new WaitForSeconds(0.5f); KeepAlive(p); }
+					Vector3 rel2 = p.transform.position - ScLandCentre(e);
+					Check(ref ok, (rel2 - rel).magnitude < 3f && p.PersonController.IsGrounded, "a world shift with the player standing on an island: they stay where they stood (moved " + (rel2 - rel).magnitude.ToString("F1") + " m relative to it, grounded " + p.PersonController.IsGrounded + ")");
+					// (c) the island unloaded, the world shifts, it loads again
+					offset = e.Position - raft.body.position; offset.y = 0f;
+					OnRaftCommand();
+					IslandObjectState.Capture(e);
+					IslandSpawner.Despawn(e.Root);
+					e.Root = null;
+					yield return null;
+					wsm.ResetToCenter(shift);
+					yield return null;
+					e.Loading = true;
+					yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+					want = raft.body.position + offset;
+					off = e.Root != null ? ScFlat(ScLandCentre(e), want) : 999f;
+					Check(ref ok, e.Root != null && off < 3f, "an island unloaded during a world shift comes back where it was (" + off.ToString("F1") + " m off)");
+				}
+				else Check(ref ok, false, "the island came");
+			}
+			ScRemove(made, isl);
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario shift"); else Fail("scenario shift");
+		}
+
+		#endregion
+
+		#region SC8 - custom islands and Raft's islands side by side
+
+		[ConsoleCommand(name: "CIScOverlap", docs: "Dev, world (host, 'CI ...'): SC8 - 6 km sailed with an island forced every 500 m (as the automatic spawner brings them): no custom island's land overlaps another's or one of Raft's islands (AU68: generated islands are placed by an estimated size)")]
+		public static void ScOverlapCommand() { DynamicIslands.instance.StartCoroutine(ScOverlapRoutine()); }
+
+		static IEnumerator ScOverlapRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("overlap: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Rigidbody body = raft.body;
+			Network_Player player = RAPI.GetLocalPlayer();
+			int before = IslandWorldState.Islands.Count;
+			Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+			float sailed = 0f, next = 500f;
+			Vector3 last = body.position;
+			var overlaps = new List<string>();
+			while (sailed < 6000f)
+			{
+				yield return new WaitForFixedUpdate();
+				KeepAlive(player);
+				body.MovePosition(body.position + dir * 25f * Time.fixedDeltaTime);
+				Vector3 d = Flat(body.position - last);
+				if (d.magnitude < 100f) sailed += d.magnitude;
+				last = body.position;
+				if (sailed >= next)
+				{
+					next += 500f;
+					CustomIslandSpawner.TrySpawn(body.position, true);
+					for (int i = 0; i < 30; i++) yield return null;
+				}
+			}
+			body.velocity = Vector3.zero;
+			yield return new WaitForSeconds(5f);
+			List<IslandWorldState.Entry> mine = IslandWorldState.Islands.Skip(before).ToList();
+			ChunkManager cm = ComponentManager<ChunkManager>.Value;
+			foreach (IslandWorldState.Entry a in mine)
+			{
+				float ra = CustomIslandSpawner.LandRadius(a.Name);
+				if (ra < 0f) continue;
+				foreach (IslandWorldState.Entry b in IslandWorldState.Islands.Where(x => x != a && x.Id < a.Id))
+				{
+					float rb = CustomIslandSpawner.LandRadius(b.Name);
+					if (rb >= 0f && ScFlat(a.Position, b.Position) < ra + rb) overlaps.Add(a.HostName + " and " + b.HostName + " (" + ScFlat(a.Position, b.Position).ToString("F0") + " m apart, land " + ra.ToString("F0") + " + " + rb.ToString("F0") + ")");
+				}
+				if (cm != null)
+					foreach (ChunkPoint cp in cm.GetAllChunkPointsList())
+					{
+						if (cp.rule == null || cp.rule.name.IndexOf("FloatingRaft", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+						float dist = ScFlat(a.Position, cp.worldPosition);
+						if (dist < ra + cp.rule.collisionOverlapRadius * 0.5f) overlaps.Add(a.HostName + " and Raft's " + cp.rule.name + " (" + dist.ToString("F0") + " m apart, land " + ra.ToString("F0") + ")");
+					}
+			}
+			Check(ref ok, mine.Count >= 6, "6 km sailed: " + mine.Count + " islands came");
+			Check(ref ok, overlaps.Count == 0, "no custom island's land overlaps another island" + (overlaps.Count > 0 ? ": " + string.Join("; ", overlaps.Take(5).ToArray()) : "") + " - AU68");
+			IslandWorldState.RemoveIds(mine.Select(x => x.Id).ToList(), true);
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario overlap"); else Fail("scenario overlap");
+		}
+
+		#endregion
+
+		#region SC27 - monsters, difficulty and EXP agree
+
+		[ConsoleCommand(name: "CIScMonsterLists", docs: "Dev, anywhere: SC27 - every animal that gives EXP is scaled by the monster difficulty and the other way round (AU69)")]
+		public static void ScMonsterListsCommand()
+		{
+			bool ok = true;
+			var differ = new List<string>();
+			foreach (AI_NetworkBehaviourType t in Enum.GetValues(typeof(AI_NetworkBehaviourType)))
+			{
+				string n = t.ToString();
+				if (n.StartsWith("NPC_") || n == "None" || n == "TEST") continue;
+				bool exp = LevelRules.IsMonster(t), scaled = MonsterDifficulty.IsMonsterType(t);
+				if (exp != scaled) differ.Add(n + (exp ? " gives EXP but isn't scaled by the difficulty" : " is scaled by the difficulty but gives no EXP"));
+			}
+			Check(ref ok, differ.Count == 0, "the level up system's monsters and the monster difficulty's are the same animals" + (differ.Count > 0 ? ": " + string.Join("; ", differ.ToArray()) : "") + " - AU69");
+			if (ok) Log("PASS: scenario monster lists"); else Fail("scenario monster lists");
 		}
 
 		#endregion
@@ -524,6 +721,8 @@ namespace DynamicIslands
 			bool full = inv.GetItemCount("Plank") == planksBefore;
 			Check(ref ok, full, "every slot of the inventory is full (a plank doesn't fit)");
 			int gemsBefore = StoryBook.Count("ciscgem");
+			// (what lay on the ground before: only items dropped by this test count)
+			var droppedBefore = new HashSet<int>(UnityEngine.Object.FindObjectsOfType<PickupItem>().Where(p => p != null && p.isDropped).Select(p => p.GetInstanceID()));
 			var warnings = new List<string>();
 			Application.LogCallback watch = (text, trace, type) => { if (text.Contains("NoSuchItemCI")) warnings.Add(text); };
 			Application.logMessageReceived += watch;
@@ -542,8 +741,10 @@ namespace DynamicIslands
 			}
 			finally { Application.logMessageReceived -= watch; }
 			// What lies in front of the player: dropped pickups near them
-			Func<string, int> dropped = n => UnityEngine.Object.FindObjectsOfType<PickupItem>().Where(p => p != null && p.isDropped && p.itemInstance != null && p.itemInstance.UniqueName == n &&
-				(p.transform.position - player.transform.position).magnitude < 25f).Sum(p => p.itemInstance.Amount);
+			yield return new WaitForSeconds(1f);
+			Func<string, int> dropped = n => UnityEngine.Object.FindObjectsOfType<PickupItem>().Where(p => p != null && p.isDropped && !droppedBefore.Contains(p.GetInstanceID()) && p.itemInstance != null && p.itemInstance.UniqueName == n).Sum(p => Mathf.Max(1, p.itemInstance.Amount));
+			foreach (PickupItem p in UnityEngine.Object.FindObjectsOfType<PickupItem>().Where(p => p != null && p.isDropped && !droppedBefore.Contains(p.GetInstanceID())).Take(8))
+				Log("  dropped: " + (p.itemInstance != null ? p.itemInstance.UniqueName + " x" + p.itemInstance.Amount : "?") + ", " + (p.transform.position - player.transform.position).magnitude.ToString("F0") + " m from the player, y " + p.transform.position.y.ToString("F1"));
 			int planks = dropped("Plank"), ropes = dropped("Rope"), nails = dropped("Nail"), scrap = dropped("Scrap"), ingots = dropped("TitaniumIngot");
 			Check(ref ok, planks >= 5 && ingots >= 1, "the chest's items lie in front of the player (planks " + planks + "/5, titanium " + ingots + "/1)");
 			Check(ref ok, ropes >= 3, "the zone's items too (ropes " + ropes + "/3)");
@@ -730,7 +931,10 @@ namespace DynamicIslands
 			for (float t = 0; t < 6f && (body == null || !body.IsDead); t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 			Check(ref ok, body != null && body.IsDead, "the player dies on the island");
 			yield return new WaitForSecondsRealtime(2f);
-			if (body != null) body.RespawnWithoutBed(false);
+			// (as the death menu's Respawn button does: Raft puts the player at a bed or on the raft)
+			BedManager beds = ComponentManager<BedManager>.Value ?? UnityEngine.Object.FindObjectOfType<BedManager>() ?? Resources.FindObjectsOfTypeAll<BedManager>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (beds != null) beds.Button_Respawn();
+			else if (body != null) body.RespawnWithoutBed(false);
 			for (float t = 0; t < 10f && body != null && body.IsDead; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 			yield return new WaitForSecondsRealtime(2f);
 			Vector3 respawned = player.transform.position;
@@ -1004,7 +1208,7 @@ namespace DynamicIslands
 			WorldPlan.Parse(plan, "random = off\nrule = tomorrow | type:wreck | day:" + (today.Value + 1) + " | ahead:800 | | Tomorrow\n").Save();
 			try
 			{
-				WorldDirector.SetPlan(plan, true);
+				ScSetPlan(plan, true);
 				WorldDirector.Done.Remove("tomorrow");
 				ScOpenChest(e, "Sleep chest");
 				ScReadNote(e, "Sleep note");

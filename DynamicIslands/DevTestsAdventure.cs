@@ -176,6 +176,19 @@ namespace DynamicIslands
 			if (ok) Log("PASS: adventure build"); else Fail("adventure build");
 		}
 
+		[ConsoleCommand(name: "CIAdventureForget", docs: "Dev, main menu: removes the voyage's islands, plan and their downloaded copies from this PC - a second PC that never had them (in the Sandboxie box a delete hides this PC's own files from the box)")]
+		public static void AdventureForgetCommand()
+		{
+			int n = 0;
+			foreach (string isl in IslandSpawner.ListSavedIslands().Where(x => x.StartsWith("civoy-", StringComparison.OrdinalIgnoreCase)).ToList())
+				try { File.Delete(IslandSpawner.PathFor(isl)); n++; } catch { }
+			foreach (string p in WorldPlan.All().Where(x => x.StartsWith(VoyagePlan, StringComparison.OrdinalIgnoreCase)).ToList())
+				try { File.Delete(WorldPlan.PathFor(p)); n++; } catch { }
+			try { LibraryPack.Remove(VoyagePackId); } catch { }
+			IslandCache.Forget();
+			Log("Forgot the voyage: " + n + " files removed; islands left: " + IslandSpawner.ListSavedIslands().Count(x => x.StartsWith("civoy-")));
+		}
+
 		[ConsoleCommand(name: "CIImportPack", docs: "Dev, anywhere: imports a pack zip as the Import window does: CIImportPack <path or file name in exports\\ or import\\>")]
 		public static void ImportPackCommand(string[] args)
 		{

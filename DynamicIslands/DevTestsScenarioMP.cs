@@ -30,6 +30,9 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(12, 0), 2), BehaviourProps.Name, "bridge", BehaviourProps.Hidden, "1"));
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 0), 3), ObjectProps.ZoneId, "gift", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Rope*3", ObjectProps.ZoneMessage, "A gift"));
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(0, 12), 4), ObjectProps.NoteTitle, "Box", ObjectProps.LootItems, "Plank*2", ObjectProps.LootRefill, "0"));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(12, 12), 5), ObjectProps.NoteTitle, "Box2", ObjectProps.LootItems, "Nail*4", ObjectProps.LootRefill, "0"));
+			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 12), 6), ObjectProps.ZoneId, "gift2", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Scrap*3", ObjectProps.ZoneMessage, "Another gift"));
+			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, -12), 7), ObjectProps.ZoneId, "gift3", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Stone*3", ObjectProps.ZoneMessage, "A third gift"));
 			f.Save(IslandSpawner.PathFor(ScMpIsland));
 			var made = new List<IslandWorldState.Entry>();
 			Vector3? spot = ScSpot(ScMpIsland, 400f);
@@ -38,6 +41,69 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = made.FirstOrDefault();
 			if (e != null && e.Root != null) Log("PASS: mp island '" + ScMpIsland + "' " + ScFlat(e.Position, CustomIslandSpawner.RaftPosition.Value).ToString("F0") + " m from the raft");
 			else Fail("mp island: it didn't come");
+		}
+
+		[ConsoleCommand(name: "CIScLair", docs: "Dev, world (host): spawns and keeps 'cisclair' for the two-player lair scenario (SC25): an arena zone that wakes a Boss warthog (x4 health, never coming back), a hoard chest; the level up system on")]
+		public static void ScLairCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("cisclair", "Boar's Lair", f =>
+		{
+			f.Props[IslandProps.Levels] = "on";
+			Vector3 arena = ScDry(f, new Vector2(0, 0), 1);
+			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, arena, ObjectProps.ZoneId, "arena", ObjectProps.ZoneRadius, "6", ObjectProps.ZoneMessage, "The ground shakes... the boar wakes!"));
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(8, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0", ObjectProps.CreatureZone, "arena",
+				ObjectProps.CreatureHealth, "4", ObjectProps.CreatureDamage, "0.2", ObjectProps.CreatureSize, "1.3"));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(-10, 0), 3), ObjectProps.NoteTitle, "Hoard", ObjectProps.LootItems, "MetalIngot*2", ObjectProps.LootRefill, "0"));
+		})); }
+
+		[ConsoleCommand(name: "CIScSpots", docs: "Dev, world (host): spawns and keeps 'ciscspots' for SC26: a plain warthog spot and a Boss warthog spot (x4 health, red) 20 m apart, the same size")]
+		public static void ScSpotsCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscspots", "Two Spots", f =>
+		{
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(-10, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureDamage, "0.1"));
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(10, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureHealth, "4", ObjectProps.CreatureDamage, "0.1",
+				ObjectProps.TintColor, "#FF2020", ObjectProps.TintAmount, "1"));
+		})); }
+
+		[ConsoleCommand(name: "CIScChickens", docs: "Dev, world (host): spawns and keeps 'ciscchick' for SC28/SC45: one chicken that both players try to net in the same second")]
+		public static void ScChickensCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscchick", "Chicken Run", f =>
+		{
+			f.Objects.Add(ScObj("Creature_Chicken", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
+		})); }
+
+		static IEnumerator ScMpSpawn(string name, string title, Action<IslandFile> fill)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail(name + ": run in a world, as the host"); yield break; }
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => x.HostName == name).Select(x => x.Id).ToList(), true);
+			IslandFile f;
+			try { f = ScIsland(name, title); fill(f); f.Save(IslandSpawner.PathFor(name)); } catch (Exception ex) { Fail(name + ": " + ex.Message); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			Vector3? spot = ScSpot(name, 400f);
+			if (!spot.HasValue) { Fail(name + ": no open sea near the raft"); yield break; }
+			yield return ScBring(name, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e != null && e.Root != null) Log("PASS: mp island '" + name + "' " + ScFlat(e.Position, CustomIslandSpawner.RaftPosition.Value).ToString("F0") + " m from the raft");
+			else Fail(name + ": it didn't come");
+		}
+
+		[ConsoleCommand(name: "CIScReadStoryNote", docs: "Dev, in game (either player, a test world): this player finds the first n frequency notes of the world's story order, through Raft's own network path (a player's note goes to the host): CIScReadStoryNote <n>")]
+		public static void ScReadStoryNoteCommand(string[] args)
+		{
+			int n;
+			if (args == null || args.Length == 0 || !int.TryParse(args[0], out n)) n = 1;
+			NoteBook book = UnityEngine.Object.FindObjectOfType<NoteBook>();
+			if (book == null) { Fail("read story note: no notebook"); return; }
+			Dictionary<ChunkPointType, int> noteFor = StoryOrder.FrequencyNotes().ToDictionary(kv => kv.Value, kv => kv.Key);
+			var notes = new List<int>();
+			ChunkPointType at = ChunkPointType.None;
+			for (int i = 0; i < n; i++)
+			{
+				int k = at == ChunkPointType.None ? -1 : Array.IndexOf(StoryOrder.Chain, at);
+				if (k + 1 >= StoryOrder.Chain.Length || !noteFor.ContainsKey(StoryOrder.Chain[k + 1])) break;
+				ChunkPointType raftType = StoryOrder.Chain[k + 1];
+				notes.Add(noteFor[raftType]);
+				at = StoryOrder.Map(raftType);
+			}
+			foreach (int note in notes) book.UnlockSpecificNoteNetworked(note, false);
+			Log("Read the story notes " + string.Join(", ", notes.Select(x => x.ToString()).ToArray()) + " (" + (Raft_Network.IsHost ? "host" : "player") + ")");
+			Log("PASS: read story note");
 		}
 
 		[ConsoleCommand(name: "CIScCount", docs: "Dev, in game (either player): how many of an item this player has: CIScCount <unique item name> - logs ITEMS <name> <n>")]
@@ -60,6 +126,22 @@ namespace DynamicIslands
 			PlayerMove.To(p, far, ControllerType.Water);
 			KeepAlive(p);
 			Log("Far away: " + ScFlat(p.transform.position, raft.Value).ToString("F0") + " m from the raft");
+		}
+
+		[ConsoleCommand(name: "CIScDay", docs: "Dev, in game (either player): Raft's day counter here, and the day stamped on a chest's state: CIScDay [island] [chest title] - logs DAY <n> [STAMP <n>]")]
+		public static void ScDayCommand(string[] args)
+		{
+			int? d = ScDay;
+			string stamp = "";
+			if (args != null && args.Length > 1)
+			{
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.IndexOf(args[0], StringComparison.OrdinalIgnoreCase) >= 0);
+				LootCrate c = ScChest(e, string.Join(" ", args.Skip(1).ToArray()));
+				ObjectState st;
+				if (c != null && e.State.TryGetValue(c.StateKey, out st)) stamp = " STAMP " + st.Day;
+				else stamp = " STAMP none";
+			}
+			Log("DAY " + (d.HasValue ? d.Value.ToString() : "?") + stamp + " (" + (Raft_Network.IsHost ? "host" : "player") + ")");
 		}
 
 		[ConsoleCommand(name: "CIScLoaded", docs: "Dev, in game (either player): whether this machine has an island loaded: CIScLoaded <island> - logs LOADED <island> yes|no")]
