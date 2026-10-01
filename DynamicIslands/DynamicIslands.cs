@@ -820,6 +820,9 @@ namespace DynamicIslands
 				if (entry != null)
 				{
 					entry.Root = root;
+					// (the host's list says which version the world plays: an island edited in the editor since the world was
+					// saved kept its old hash there until the next save)
+					if (Raft_Network.IsHost) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved

@@ -525,8 +525,10 @@ namespace DynamicIslands
 				else
 				{
 					EditorGameObject box2 = objs.FirstOrDefault(o => o.Props != null && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Box 2");
-					if (box2 != null) UnityEngine.Object.DestroyImmediate(box2.gameObject);
-					Check(ref ok, box2 != null, "the second box deleted");
+					// (looked at before it goes: a destroyed object counts as null after DestroyImmediate)
+					bool found = box2 != null;
+					if (found) UnityEngine.Object.DestroyImmediate(box2.gameObject);
+					Check(ref ok, found, "the second box deleted");
 				}
 				var notes = new List<string>();
 				Application.LogCallback watch = (text, trace, type) => { if (text.IndexOf("world", StringComparison.OrdinalIgnoreCase) >= 0 && text.Contains(EditIsland)) notes.Add(text); };
@@ -546,7 +548,8 @@ namespace DynamicIslands
 				LootCrate box1 = ScChest(e, "Box 1"), box2 = ScChest(e, "Box 2");
 				if (part == "checksafe")
 				{
-					Check(ref ok, e.Hash == IslandNetwork.HashOf(EditIsland) || string.IsNullOrEmpty(e.Hash), "a safe edit (a rock moved) reaches the world: it plays the edited island");
+					// (the island's own file, not a kept copy: the hash in the world's list is only rewritten at its next save)
+					Check(ref ok, e.Name.Equals(EditIsland, StringComparison.OrdinalIgnoreCase), "a safe edit (a rock moved) reaches the world: it plays the edited island (" + e.Name + ")");
 					Check(ref ok, box1 != null && box1.Looted, "the opened box stays opened");
 				}
 				else
