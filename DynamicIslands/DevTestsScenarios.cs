@@ -349,6 +349,10 @@ namespace DynamicIslands
 				if (elevation != 4f)
 				{
 					Check(ref ok, passed, "the raft passes " + (elevation > 0 ? "under" : "over") + " an island " + what + " (" + r[0].ToString("F0") + " of " + through.ToString("F0") + " m)");
+					if (!onRaft && player != null && player.PersonController != null)
+						Log("  (the player: " + player.transform.position.ToString("F1") + ", the raft " + raft.body.position.ToString("F1") + ", on the raft as parent " + player.PersonController.HasRaftAsParent +
+							", grounded " + player.PersonController.IsGrounded + ", standing on " + (player.PersonController.groundRaycastHit.collider != null ? player.PersonController.groundRaycastHit.collider.name : "nothing") +
+							", health " + (player.Stats != null && player.Stats.stat_health != null ? player.Stats.stat_health.Value.ToString("F0") : "?") + ")");
 					Check(ref ok, onRaft, "... the player standing on the raft is still on it");
 				}
 				else
