@@ -1020,11 +1020,27 @@ namespace DynamicIslands
 			catch (Exception e) { Log("RML menu: " + e.GetType().Name + " " + e.Message); }
 		}
 
-		[ConsoleCommand(name: "CIBackground", docs: "Dev: keeps the game running while its window is not in front (for automated tests)")]
+		[ConsoleCommand(name: "CIBackground", docs: "Dev: keeps the game running while its window is not in front, its sound off (for automated tests: the user works on the PC meanwhile)")]
 		public static void RunInBackground()
 		{
 			Application.runInBackground = true;
-			Log("The game keeps running in the background now");
+			Log("The game keeps running in the background now" + (SetMuted(true) ? ", its sound off" : ""));
+		}
+
+		[ConsoleCommand(name: "CIMute", docs: "Dev: the game's own sound off for this session (CIMute off: on again) - Raft's sound engine and Unity's, never Windows' volume")]
+		public static void MuteCommand(string[] args)
+		{
+			bool off = args != null && args.Length > 0 && args[0] == "off";
+			Log(SetMuted(!off) ? "Sound " + (off ? "on" : "off") : "Sound: could not be changed");
+		}
+
+		/// <summary>Tests: Raft's FMOD master bus muted (or not) and Unity's own audio with it; for this session only.</summary>
+		static bool SetMuted(bool muted)
+		{
+			bool ok = false;
+			try { FMODUnity.RuntimeManager.GetBus("bus:/").setMute(muted); ok = true; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Muting: " + e.Message); }
+			AudioListener.volume = muted ? 0f : 1f;
+			return ok;
 		}
 
 
