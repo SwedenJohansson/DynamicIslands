@@ -819,7 +819,15 @@ namespace DynamicIslands
 			Application.logMessageReceived -= counter;
 			float drop = target.y - player.transform.position.y;
 			Log("Exceptions while standing: " + exceptions + (firstException != null ? " (first: " + firstException + ")" : ""));
-			bool ok = drop < 3f && player.PersonController.IsGrounded && exceptions == 0;
+			// (pushed along the island - the creature island's warthogs charge and knocked the player 4 m downhill - is still
+			// standing on it: grounded on the island's own ground at the new spot, not under it and not in the sea)
+			Collider under = player.PersonController.groundRaycastHit.collider;
+			bool onIsland = under != null && under.transform.IsChildOf(island.transform);
+			float surface = float.NegativeInfinity;
+			foreach (Terrain t in island.GetComponentsInChildren<Terrain>(true)) surface = Mathf.Max(surface, t.SampleHeight(player.transform.position) + t.transform.position.y);
+			bool aboveGround = float.IsNegativeInfinity(surface) || player.transform.position.y > surface - 1f;
+			bool ok = player.PersonController.IsGrounded && exceptions == 0 && (drop < 3f || (onIsland && aboveGround));
+			if (ok && drop >= 3f) Log("  (moved off the spot - pushed or slid - but still standing on the island's ground)");
 			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
 			else
 			{
