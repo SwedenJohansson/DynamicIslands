@@ -32,7 +32,7 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 0), 3), ObjectProps.ZoneId, "gift", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Rope*3", ObjectProps.ZoneMessage, "A gift"));
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(0, 12), 4), ObjectProps.NoteTitle, "Box", ObjectProps.LootItems, "Plank*2", ObjectProps.LootRefill, "0"));
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(12, 12), 5), ObjectProps.NoteTitle, "Box2", ObjectProps.LootItems, "Nail*4", ObjectProps.LootRefill, "0"));
-			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(-12, 12), 6), ObjectProps.NoteTitle, "Box3", ObjectProps.LootItems, "Scrap*3", ObjectProps.LootRefill, "0")); // (busyclaim: AU13)
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(12, -12), 7), ObjectProps.NoteTitle, "Box3", ObjectProps.LootItems, "Scrap*3", ObjectProps.LootRefill, "0")); // (busyclaim: AU13 - not in a zone: walking to it set off gift2 once)
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 12), 6), ObjectProps.ZoneId, "gift2", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Scrap*3", ObjectProps.ZoneMessage, "Another gift"));
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, -12), 7), ObjectProps.ZoneId, "gift3", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Stone*3", ObjectProps.ZoneMessage, "A third gift"));
 			f.Save(IslandSpawner.PathFor(ScMpIsland));
