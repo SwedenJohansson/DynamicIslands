@@ -314,6 +314,84 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario ram"); else Fail("scenario ram");
 		}
 
+		[ConsoleCommand(name: "CIScBeached", docs: "Dev, world (host, a test world 'CI ...'): SC89 - an island in the raft's way, and only Raft's own current: the raft drifts onto its beach and stops at the shore - it doesn't climb the beach, the player stays on it - and stays so while pressed on, and when the island loads again with the raft at its shore")]
+		public static void ScBeachedCommand() { DynamicIslands.instance.StartCoroutine(ScBeachedRoutine()); }
+
+		/// <summary>How far the land of a loaded island stands above this point (negative: the point is above its ground, or
+		/// off the island).</summary>
+		static float ScLandAbove(IslandWorldState.Entry e, Vector3 p)
+		{
+			Terrain t = e != null && e.Root != null ? e.Root.GetComponentInChildren<Terrain>() : null;
+			if (t == null || t.terrainData == null) return float.NegativeInfinity;
+			Vector3 local = p - t.transform.position;
+			if (local.x < 0f || local.z < 0f || local.x > t.terrainData.size.x || local.z > t.terrainData.size.z) return float.NegativeInfinity;
+			return t.SampleHeight(p) + t.transform.position.y - p.y;
+		}
+
+		static IEnumerator ScBeachedRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario beached: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscbeach";
+			try { ScIsland(isl, "Beach Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("scenario beached: no sample island (" + ex.Message + ")"); yield break; }
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Rigidbody body = raft.body;
+			OnRaftCommand();
+			yield return new WaitForSeconds(2f);
+			// Where Raft's current takes the raft, and the island's shore 30 m ahead in that direction
+			Vector3 drift = Flat(body.velocity);
+			Vector3 dir = drift.magnitude > 0.2f ? drift.normalized : Vector3.forward;
+			float land = CustomIslandSpawner.LandRadius(isl);
+			Vector3 spot = Vector3.zero; bool found = false;
+			foreach (float side in new[] { 0f, 40f, -40f, 80f, -80f })
+			{
+				Vector3 c = body.position + dir * (land + 30f) + Vector3.Cross(Vector3.up, dir) * side;
+				c.y = 0f;
+				if (CustomIslandSpawner.Rejects(c, land, body.position, false) == null) { spot = c; found = true; break; }
+			}
+			if (!found) { ScRemove(made, isl); Fail("scenario beached: no open sea ahead of the raft (" + drift.magnitude.ToString("F2") + " m/s)"); yield break; }
+			yield return ScBring(isl, spot, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario beached: the island didn't come"); yield break; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			Log("  the raft drifts at " + drift.magnitude.ToString("F2") + " m/s; the island's land reaches " + land.ToString("F0") + " m, its middle " + ScFlat(e.Position, body.position).ToString("F0") + " m away");
+			// Raft's current only (no push): until it hasn't moved half a metre in 3 s, 3 minutes at most
+			float y0 = body.position.y, rose = 0f, tilt = 0f, window = 0f, t = 0f;
+			Vector3 start = body.position, windowStart = body.position;
+			bool stopped = false;
+			while (t < 180f)
+			{
+				yield return new WaitForSeconds(0.25f);
+				t += 0.25f; window += 0.25f;
+				KeepAlive(player);
+				rose = Mathf.Max(rose, body.position.y - y0);
+				tilt = Mathf.Max(tilt, Vector3.Angle(body.transform.up, Vector3.up));
+				if (window >= 3f) { bool still = Flat(body.position - windowStart).magnitude < 0.5f; window = 0f; windowStart = body.position; if (still && t > 6f) { stopped = true; break; } }
+			}
+			Check(ref ok, stopped, "the current takes the raft onto the island's beach and it stops at the shore (" + ScFlat(start, body.position).ToString("F0") + " m in " + t.ToString("F0") + " s)");
+			Check(ref ok, rose < 1.2f && tilt < 15f, "... at the sea and level - not up the beach (rose " + rose.ToString("F2") + " m, tilted " + tilt.ToString("F1") + " degrees)");
+			Check(ref ok, ScLandAbove(e, body.position) < 0.5f, "... and not inside the island's land (" + ScLandAbove(e, body.position).ToString("F1") + " m of land above the raft's middle)");
+			Check(ref ok, ScOnRaft(player, body), "... the player standing on the raft is still on it");
+			// Pressed on by the current for half a minute more
+			for (float s = 0f; s < 30f; s += 0.25f) { yield return new WaitForSeconds(0.25f); KeepAlive(player); rose = Mathf.Max(rose, body.position.y - y0); tilt = Mathf.Max(tilt, Vector3.Angle(body.transform.up, Vector3.up)); }
+			Check(ref ok, rose < 1.2f && tilt < 15f, "pressed on by the current for 30 s, it stays at the sea (rose " + rose.ToString("F2") + " m, tilted " + tilt.ToString("F1") + ")");
+			// The island loads again with the raft at its shore (sailing off and back, a load, a player joining)
+			IslandObjectState.Capture(e);
+			e.Loading = true;
+			IslandSpawner.Despawn(e.Root);
+			e.Root = null;
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			float y1 = body.position.y; rose = 0f; tilt = 0f;
+			for (float s = 0f; s < 8f; s += 0.25f) { yield return new WaitForSeconds(0.25f); KeepAlive(player); rose = Mathf.Max(rose, body.position.y - y0); tilt = Mathf.Max(tilt, Vector3.Angle(body.transform.up, Vector3.up)); }
+			Check(ref ok, e.Root != null && rose < 1.2f && tilt < 15f, "the island loads again with the raft at its shore: the raft stays at the sea (rose " + rose.ToString("F2") + " m, tilted " + tilt.ToString("F1") + ")");
+			Check(ref ok, ScLandAbove(e, body.position) < 0.5f && ScOnRaft(player, body), "... not inside the land, the player still on the raft (" + ScLandAbove(e, body.position).ToString("F1") + " m of land above)");
+			ScRemove(made, isl);
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario beached"); else Fail("scenario beached");
+		}
+
 		[ConsoleCommand(name: "CIScFlyUnder", docs: "Dev, world (host, a test world 'CI ...'): SC2 - the raft pushed under an island flying at 60 m and over a sunken one passes; a low one at 4 m: what happens to the raft and the player on it")]
 		public static void ScFlyUnderCommand() { DynamicIslands.instance.StartCoroutine(ScFlyUnderRoutine()); }
 
