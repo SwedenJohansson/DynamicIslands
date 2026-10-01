@@ -496,6 +496,22 @@ namespace DynamicIslands
 			IslandWorldState.Entry old = IslandWorldState.Islands.FirstOrDefault(e => e.HostName == LevelMPIsland);
 			if (old != null) IslandWorldState.RemoveIds(new[] { old.Id }, true);
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius(LevelMPIsland), 150f);
+			// (a new world starts among Raft's first islands: the raft 600 m on, as the scenario tests move it - K and Tab, and a
+			// newcomer's level, failed with the level up system never on)
+			for (int move = 0; move < 3 && !spot.HasValue; move++)
+			{
+				Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+				if (raft == null || raft.body == null) break;
+				Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+				raft.body.position = raft.body.position + dir * 600f;
+				raft.body.velocity = Vector3.zero;
+				Physics.SyncTransforms();
+				OnRaftCommand();
+				Log("  (no open sea for '" + LevelMPIsland + "' near the raft: the raft moved 600 m on)");
+				yield return new WaitForSeconds(3f);
+				raftPos = CustomIslandSpawner.RaftPosition;
+				if (raftPos.HasValue) spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius(LevelMPIsland), 150f);
+			}
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
 			yield return DynamicIslands.instance.SpawnIslandFile(LevelMPIsland, spot.Value, true);
 			if (PlayerLevels.On) Log("PASS: '" + LevelMPIsland + "' spawned, the level up system is on");
