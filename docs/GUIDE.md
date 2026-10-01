@@ -2018,7 +2018,9 @@ be up to 60 characters. The message says what is wrong; choose another name.
 
 **I loaded an older save of my world, and a chest I emptied is full again.** That's on purpose: Raft's Load Game box
 keeps the last 8 saves of a world, and the mod's islands, chests, quests and journal go back with the save you pick, so
-the world fits together (the items you took went back with Raft's save too).
+the world fits together (the items you took went back with Raft's save too). Leaving that world saves it as it is now,
+so it becomes the newest save; to go back to where you were, load the **first older save** in the Load Game box -
+the save you came from (the mod's islands and quests come back with it too).
 
 **Raft closed while I was building an island.** Open the editor again: it offers the unsaved work it kept
 ([4.7](#47-saving-and-sharing)). Open it and **Save**.
