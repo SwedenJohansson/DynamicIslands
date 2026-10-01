@@ -340,19 +340,41 @@ namespace DynamicIslands
 			Rigidbody body = raft.body;
 			OnRaftCommand();
 			yield return new WaitForSeconds(2f);
-			// Where Raft's current takes the raft, and the island's shore 30 m ahead in that direction
+			// (Raft runs its raft aground with colliders of its own on the RaftCollision layer, added by its RaftCollisionManager:
+			// the raft's other collider, BakedBlocks, doesn't touch islands at all. Rafts in long-used test worlds had none and
+			// drifted through every island - ROADMAP R16)
+			int stoppers = Physics.OverlapSphere(body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore).Length;
+			Check(ref ok, stoppers > 0, "the raft has Raft's own colliders that run it aground (" + stoppers + " on RaftCollision)");
+			// Where Raft's current takes the raft, and the island's shore ahead in that direction (as near as the mod puts an
+			// island: its Clearance from the raft)
 			Vector3 drift = Flat(body.velocity);
 			Vector3 dir = drift.magnitude > 0.2f ? drift.normalized : Vector3.forward;
 			float land = CustomIslandSpawner.LandRadius(isl);
 			Vector3 spot = Vector3.zero; bool found = false;
-			foreach (float side in new[] { 0f, 40f, -40f, 80f, -80f })
+			for (int move = 0; move < 4 && !found; move++)
 			{
-				Vector3 c = body.position + dir * (land + 30f) + Vector3.Cross(Vector3.up, dir) * side;
-				c.y = 0f;
-				if (CustomIslandSpawner.Rejects(c, land, body.position, false) == null) { spot = c; found = true; break; }
+				foreach (float ahead in new[] { 5f, 40f, 90f })
+					foreach (float side in new[] { 0f, land * 0.3f, -land * 0.3f })
+					{
+						if (found) break;
+						Vector3 c = body.position + dir * (land + CustomIslandSpawner.Clearance + ahead) + Vector3.Cross(Vector3.up, dir) * side;
+						c.y = 0f;
+						if (CustomIslandSpawner.Rejects(c, land, body.position, false) == null) { spot = c; found = true; }
+					}
+				if (found) break;
+				// (Raft's own islands ahead: the raft 600 m to the side, out of their way, as ScSpot moves it)
+				body.position = body.position + Vector3.Cross(Vector3.up, dir) * 600f;
+				body.velocity = dir * drift.magnitude;
+				Physics.SyncTransforms();
+				OnRaftCommand();
+				Log("  (no open sea ahead of the raft: it moved 600 m to the side)");
+				yield return new WaitForSeconds(3f);
 			}
-			if (!found) { ScRemove(made, isl); Fail("scenario beached: no open sea ahead of the raft (" + drift.magnitude.ToString("F2") + " m/s)"); yield break; }
+			if (!found) { ScRemove(made, isl); Fail("scenario beached: no open sea ahead of the raft (" + drift.magnitude.ToString("F2") + " m/s; straight ahead: " + CustomIslandSpawner.Rejects(body.position + dir * (land + CustomIslandSpawner.Clearance + 5f), land, body.position, false) + ")"); yield break; }
 			yield return ScBring(isl, spot, made);
+			// (on the raft again: moving the raft to open sea left the player behind)
+			OnRaftCommand();
+			yield return new WaitForSeconds(2f);
 			IslandWorldState.Entry e = made.FirstOrDefault();
 			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario beached: the island didn't come"); yield break; }
 			Network_Player player = RAPI.GetLocalPlayer();
@@ -373,7 +395,7 @@ namespace DynamicIslands
 			Check(ref ok, stopped, "the current takes the raft onto the island's beach and it stops at the shore (" + ScFlat(start, body.position).ToString("F0") + " m in " + t.ToString("F0") + " s)");
 			Check(ref ok, rose < 1.2f && tilt < 15f, "... at the sea and level - not up the beach (rose " + rose.ToString("F2") + " m, tilted " + tilt.ToString("F1") + " degrees)");
 			Check(ref ok, ScLandAbove(e, body.position) < 0.5f, "... and not inside the island's land (" + ScLandAbove(e, body.position).ToString("F1") + " m of land above the raft's middle)");
-			Check(ref ok, ScOnRaft(player, body), "... the player standing on the raft is still on it");
+			Check(ref ok, ScOnRaft(player, body), "... the player standing on the raft is still on it (" + (player != null ? ScFlat(player.transform.position, body.position).ToString("F1") + " m from its middle, " + (player.transform.position.y - body.position.y).ToString("F1") + " m above it" : "no player") + ")");
 			// Pressed on by the current for half a minute more
 			for (float s = 0f; s < 30f; s += 0.25f) { yield return new WaitForSeconds(0.25f); KeepAlive(player); rose = Mathf.Max(rose, body.position.y - y0); tilt = Mathf.Max(tilt, Vector3.Angle(body.transform.up, Vector3.up)); }
 			Check(ref ok, rose < 1.2f && tilt < 15f, "pressed on by the current for 30 s, it stays at the sea (rose " + rose.ToString("F2") + " m, tilted " + tilt.ToString("F1") + ")");
@@ -390,6 +412,68 @@ namespace DynamicIslands
 			ScRemove(made, isl);
 			OnRaftCommand();
 			if (ok) Log("PASS: scenario beached"); else Fail("scenario beached");
+		}
+
+		[ConsoleCommand(name: "CIRaftLayers", docs: "Dev, world: which layers the raft's colliders (RaftCollision, BakedBlocks) and the player collide with, and the layers of the colliders of Raft's own islands near the raft")]
+		public static void RaftLayersCommand()
+		{
+			var named = Enumerable.Range(0, 32).Where(l => !string.IsNullOrEmpty(LayerMask.LayerToName(l))).ToList();
+			foreach (int a in new[] { 9, 18, LayerMask.NameToLayer("Player") }.Where(x => x >= 0))
+				Log("LAYERS " + LayerMask.LayerToName(a) + " (" + a + ") collides with: " + string.Join(", ", named.Where(b => !Physics.GetIgnoreLayerCollision(a, b)).Select(b => LayerMask.LayerToName(b) + "(" + b + ")").ToArray()));
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Vector3 at = raft != null ? raft.body.position : Vector3.zero;
+			var islands = UnityEngine.Object.FindObjectsOfType<Collider>().Where(c => c.enabled && !c.isTrigger && (raft == null || !c.transform.IsChildOf(raft.transform)) && !c.transform.root.name.StartsWith("CustomIsland_") && c.GetComponentInParent<Network_Player>() == null)
+				.GroupBy(c => LayerMask.LayerToName(c.gameObject.layer) + " " + c.GetType().Name).Select(g => g.Key + " x" + g.Count() + " (e.g. " + g.First().name + " under " + g.First().transform.root.name + ")").Take(25);
+			foreach (string s in islands) Log("LAYERS scene collider " + s);
+			// The colliders on RaftCollision anywhere (the raft's own against islands?), and where they are
+			foreach (Collider c in Resources.FindObjectsOfTypeAll<Collider>().Where(c => c.gameObject.scene.IsValid() && c.gameObject.layer == 9).Take(12))
+				Log("LAYERS RaftCollision collider " + c.name + " (" + c.GetType().Name + ") under " + (c.transform.parent != null ? c.transform.parent.name : "-") + " root " + c.transform.root.name + ", enabled " + c.enabled + ", active " + c.gameObject.activeInHierarchy +
+					(raft != null ? ", " + ScFlat(c.bounds.center, at).ToString("F0") + " m from the raft" : ""));
+			if (raft != null)
+			{
+				Component cons = raft.GetComponentInChildren(HarmonyLib.AccessTools.TypeByName("BlockCollisionConsolidator"), true);
+				Log("LAYERS consolidator " + (cons != null ? cons.name + " on " + cons.gameObject.name : "none") + "; raft children colliders (all): " + string.Join(", ", raft.GetComponentsInChildren<Collider>(true).GroupBy(x => LayerMask.LayerToName(x.gameObject.layer) + " " + x.GetType().Name + (x.enabled && x.gameObject.activeInHierarchy ? "" : " off")).Select(g => g.Key + " x" + g.Count()).ToArray()));
+			}
+		}
+
+		[ConsoleCommand(name: "CIRaftColliders", docs: "Dev, world: RAFTCOLLIDERS <n> - how many of Raft's island colliders (RaftCollision, the ones that run the raft aground) are on the raft now")]
+		public static void RaftCollidersCommand()
+		{
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raft == null) { Fail("raft colliders: no raft"); return; }
+			Collider[] near = Physics.OverlapSphere(raft.body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore);
+			Log("RAFTCOLLIDERS " + near.Length + " on RaftCollision within 40 m of the raft (" + string.Join(", ", near.Select(c => c.name + " under " + (c.transform.parent != null ? c.transform.parent.name : "-")).Distinct().Take(3).ToArray()) + ")");
+		}
+
+		[ConsoleCommand(name: "CIDriftProbe", docs: "Dev, world (host, 'CI ...'): logs the raft each second for <seconds> (default 90) as Raft's current takes it towards 'ciscbeach' put ahead of it (CIScBeached's island): where, how fast, how much land above it, what it touches")]
+		public static void DriftProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DriftProbeRoutine(args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 90f)); }
+
+		static IEnumerator DriftProbeRoutine(float seconds)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("drift probe: run in a world, as the host"); yield break; }
+			const string isl = "ciscbeach";
+			var made = new List<IslandWorldState.Entry>();
+			try { ScIsland(isl, "Beach Isle").Save(IslandSpawner.PathFor(isl)); } catch (Exception ex) { Fail("drift probe: " + ex.Message); yield break; }
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Rigidbody body = raft.body;
+			Vector3 dir = Flat(body.velocity).magnitude > 0.2f ? Flat(body.velocity).normalized : Vector3.forward;
+			float land = CustomIslandSpawner.LandRadius(isl);
+			Vector3 c = body.position + dir * (land + CustomIslandSpawner.Clearance + 5f); c.y = 0f;
+			yield return ScBring(isl, c, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("drift probe: the island didn't come"); yield break; }
+			Log("DRIFT layers raft " + LayerMask.LayerToName(9) + "/" + LayerMask.LayerToName(18) + " vs terrain " + LayerMask.LayerToName(IslandSpawner.TerrainLayer) + ": collide " + !Physics.GetIgnoreLayerCollision(9, IslandSpawner.TerrainLayer) + "/" + !Physics.GetIgnoreLayerCollision(18, IslandSpawner.TerrainLayer) +
+				"; raft colliders: " + string.Join(", ", raft.GetComponentsInChildren<Collider>(false).Where(x => x.enabled && !x.isTrigger).GroupBy(x => LayerMask.LayerToName(x.gameObject.layer) + " " + x.GetType().Name).Select(g => g.Key + " x" + g.Count()).ToArray()));
+			for (float t = 0f; t < seconds; t += 1f)
+			{
+				yield return new WaitForSeconds(1f);
+				Vector3 p = body.position;
+				string touching = string.Join(",", Physics.OverlapSphere(p, 4f, ~0, QueryTriggerInteraction.Ignore).Where(x => !x.transform.IsChildOf(raft.transform) && x.GetComponentInParent<Network_Player>() == null).Select(x => x.name + "/" + LayerMask.LayerToName(x.gameObject.layer)).Distinct().Take(4).ToArray());
+				Log("DRIFT t=" + t.ToString("F0") + " to the island's middle " + ScFlat(e.Position, p).ToString("F0") + " m (land " + land.ToString("F0") + "), y " + p.y.ToString("F2") + ", vel " + body.velocity.ToString("F2") + ", land above " + ScLandAbove(e, p).ToString("F1") + ", speed " + raft.speed.ToString("F2") + " current " + raft.currentMovementSpeed.ToString("F2") + (touching.Length > 0 ? ", near " + touching : ""));
+			}
+			ScRemove(made, isl);
+			OnRaftCommand();
+			Log("PASS: drift probe");
 		}
 
 		[ConsoleCommand(name: "CIScFlyUnder", docs: "Dev, world (host, a test world 'CI ...'): SC2 - the raft pushed under an island flying at 60 m and over a sunken one passes; a low one at 4 m: what happens to the raft and the player on it")]
