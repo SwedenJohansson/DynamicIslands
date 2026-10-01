@@ -393,5 +393,71 @@ namespace DynamicIslands
 			LibraryWindow.Close();
 			if (ok) Log("PASS: library online"); else Fail("library online");
 		}
+
+		[ConsoleCommand(name: "CILibraryDriveUnit", docs: "Dev, anywhere: the library in a Google Drive folder (LibraryDrive) without the network: folder links read, a folder's public listing parsed (files, folders, names with & and '), a path found folder by folder in a made-up folder tree (names in any case, a missing one named), download addresses with and without an API key")]
+		public static void LibraryDriveUnitCommand() { DynamicIslands.instance.StartCoroutine(LibraryDriveUnitRoutine()); }
+
+		static IEnumerator LibraryDriveUnitRoutine()
+		{
+			bool ok = true;
+			string id;
+			Check(ref ok, LibraryDrive.IsDrive("https://drive.google.com/drive/folders/1qXHPud7BAUILVrcEDPJn4FnGggrZdswi?usp=sharing", out id) && id == "1qXHPud7BAUILVrcEDPJn4FnGggrZdswi", "a shared folder link gives its id (" + id + ")");
+			Check(ref ok, LibraryDrive.IsDrive("https://drive.google.com/drive/u/0/folders/AbC-123_x", out id) && id == "AbC-123_x" && LibraryDrive.IsDrive("gdrive:AbC", out id) && id == "AbC", "... also a signed-in link and gdrive:<id>");
+			Check(ref ok, !LibraryDrive.IsDrive("https://raw.githubusercontent.com/SwedenJohansson/CustomIslands-Library/main/", out id) && !LibraryDrive.IsDrive("file:///D:/lib/", out id), "a web folder or a local copy isn't Drive");
+			Check(ref ok, LibraryDrive.IsDrive(LibraryClient.DefaultAddress, out id), "the mod's default library is the Drive folder");
+			// A listing as Drive's embedded folder view writes it (one folder, two files)
+			string html = "<div class=\"flip-entries\">" +
+				"<div class=\"flip-entry\" id=\"entry-F1\" tabindex=\"0\" role=\"link\"><div class=\"flip-entry-info\"><a href=\"https://drive.google.com/drive/folders/F1\" target=\"_blank\"><div class=\"flip-entry-visual\"></div><div class=\"flip-entry-title\">islands</div></a></div><div class=\"flip-entry-last-modified\"><div>11:36 PM</div></div></div>" +
+				"<div class=\"flip-entry\" id=\"entry-X9\" tabindex=\"0\" role=\"link\"><div class=\"flip-entry-info\"><a href=\"https://drive.google.com/file/d/X9/view?usp=drive_web\" target=\"_blank\"><div class=\"flip-entry-title\">index.json</div></a></div></div>" +
+				"<div class=\"flip-entry\" id=\"entry-Y7\" tabindex=\"0\" role=\"link\"><div class=\"flip-entry-info\"><a href=\"https://drive.google.com/file/d/Y7/view?usp=drive_web\" target=\"_blank\"><div class=\"flip-entry-title\">Bob&#39;s Rock &amp; Cove.island</div></a></div></div></div>";
+			List<LibraryDrive.Item> items = LibraryDrive.ParseListing(html);
+			Check(ref ok, items.Count == 3 && items[0].Folder && items[0].Id == "F1" && items[0].Name == "islands" && !items[1].Folder && items[1].Id == "X9" && items[1].Name == "index.json",
+				"a folder's public listing: a folder and files, with their ids (" + string.Join(", ", items.Select(i => i.Name + "=" + i.Id + (i.Folder ? "/" : "")).ToArray()) + ")");
+			Check(ref ok, items.Count == 3 && items[2].Name == "Bob's Rock & Cove.island", "... names with & and ' read as written");
+			Check(ref ok, LibraryDrive.ParseListing("<div class=\"flip-entries\"></div>").Count == 0, "an empty folder lists nothing");
+			// A made-up folder tree: root -> index.json, islands/ -> palm-cove/ -> icon.jpg
+			var tree = new Dictionary<string, List<LibraryDrive.Item>>
+			{
+				{ "ROOT", new List<LibraryDrive.Item> { new LibraryDrive.Item { Id = "IDX", Name = "index.json" }, new LibraryDrive.Item { Id = "ISL", Name = "islands", Folder = true } } },
+				{ "ISL", new List<LibraryDrive.Item> { new LibraryDrive.Item { Id = "PC", Name = "Palm-Cove", Folder = true } } },
+				{ "PC", new List<LibraryDrive.Item> { new LibraryDrive.Item { Id = "OLD", Name = "icon.jpg" }, new LibraryDrive.Item { Id = "ICON", Name = "icon.jpg" } } },
+			};
+			LibraryDrive.TestLister = f => tree.ContainsKey(f) ? tree[f] : null;
+			LibraryDrive.Forget();
+			try
+			{
+				string got = null, error = null;
+				yield return LibraryDrive.Find("ROOT", "index.json", null, (i, e) => { got = i; error = e; });
+				Check(ref ok, got == "IDX", "index.json at the folder's top (" + (got ?? error) + ")");
+				yield return LibraryDrive.Find("ROOT", "islands/palm-cove/icon.jpg", null, (i, e) => { got = i; error = e; });
+				Check(ref ok, got == "ICON", "a path folder by folder, names in any case; a file there twice: the last listed (" + (got ?? error) + ")");
+				yield return LibraryDrive.Find("ROOT", "islands/skyreach/icon.jpg", null, (i, e) => { got = i; error = e; });
+				Check(ref ok, got == null && (error ?? "").Contains("islands/skyreach"), "a missing folder is named (" + error + ")");
+			}
+			finally { LibraryDrive.TestLister = null; LibraryDrive.Forget(); }
+			Check(ref ok, LibraryDrive.DownloadUrl("X9", null) == "https://drive.usercontent.google.com/download?id=X9&export=download&confirm=t" &&
+				LibraryDrive.DownloadUrl("X9", "K1") == "https://www.googleapis.com/drive/v3/files/X9?alt=media&key=K1", "download addresses without and with an API key");
+			if (ok) Log("PASS: library drive unit"); else Fail("library drive unit");
+		}
+
+		[ConsoleCommand(name: "CILibraryDriveLive", docs: "Dev, anywhere (online): reads the real library's Google Drive folder (library.txt's address or the default): its listing, and index.json with its entries when it is there - or says the list isn't in the folder yet")]
+		public static void LibraryDriveLiveCommand() { DynamicIslands.instance.StartCoroutine(LibraryDriveLiveRoutine()); }
+
+		static IEnumerator LibraryDriveLiveRoutine()
+		{
+			string root;
+			if (!LibraryDrive.IsDrive(LibraryClient.Address, out root)) { Fail("library drive live: the library address isn't a Google Drive folder (" + LibraryClient.Address + ")"); yield break; }
+			LibraryDrive.Forget();
+			List<LibraryDrive.Item> items = null; string error = null;
+			yield return LibraryDrive.List(root, null, (i, e) => { items = i; error = e; });
+			if (items == null) { Fail("library drive live: the folder can't be read (" + error + ")"); yield break; }
+			Log("DRIVE folder " + root + ": " + items.Count + " item(s): " + string.Join(", ", items.Select(i => i.Name + (i.Folder ? "/" : "")).ToArray()));
+			string loadError = null;
+			LibraryClient.Forget();
+			yield return LibraryClient.LoadIndex(true, e => loadError = e);
+			if (loadError != null) Log("DRIVE list: " + loadError);
+			else Log("DRIVE list: " + LibraryClient.Entries.Count + " entries: " + string.Join(", ", LibraryClient.Entries.Select(e => e.Info.title).ToArray()));
+			Log("PASS: library drive live");
+		}
 	}
 }

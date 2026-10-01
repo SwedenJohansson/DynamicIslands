@@ -115,6 +115,7 @@
     <Compile Include="LibraryPack.cs" />
     <Compile Include="LibraryJson.cs" />
     <Compile Include="LibraryWindows.cs" />
+    <Compile Include="LibraryDrive.cs" />
     <Compile Include="LibraryOnline.cs" />
     <Compile Include="LibraryWindow.cs" />
     <Compile Include="IslandPickerWindow.cs" />
