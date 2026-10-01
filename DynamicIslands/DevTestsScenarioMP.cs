@@ -116,6 +116,14 @@ namespace DynamicIslands
 			Log("Claim answers " + (Claims.TestAnswerDelay > 0f ? Claims.TestAnswerDelay.ToString("0.#", CultureInfo.InvariantCulture) + " s late" : "at once"));
 		}
 
+		[ConsoleCommand(name: "CIGenDelay", docs: "Dev, host: generated islands' files are written that many seconds late, so a player can join while one is being made (AU7, AT1): CIGenDelay <seconds> (0 = at once again)")]
+		public static void GenDelayCommand(string[] args)
+		{
+			float s;
+			CustomIslandSpawner.TestGenerateDelay = args != null && args.Length > 0 && float.TryParse(args[0], NumberStyles.Float, CultureInfo.InvariantCulture, out s) ? Mathf.Max(0f, s) : 0f;
+			Log("Generated islands " + (CustomIslandSpawner.TestGenerateDelay > 0f ? CustomIslandSpawner.TestGenerateDelay.ToString("0.#", CultureInfo.InvariantCulture) + " s late" : "at once"));
+		}
+
 		[ConsoleCommand(name: "CIScReadNoteFor", docs: "Dev, in game (either player): this player finds Raft's frequency note that names one of its story islands (the note lies on the island before it in Raft's story), through Raft's own network path: CIScReadNoteFor <Tangaroa|Caravan Town|...>")]
 		public static void ScReadNoteForCommand(string[] args)
 		{

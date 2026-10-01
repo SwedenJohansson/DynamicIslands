@@ -1248,6 +1248,52 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario come back"); else Fail("scenario come back");
 		}
 
+		[ConsoleCommand(name: "CIScReread", docs: "Dev, world (host, 'CI ...'): AT22 - a note that gives 10 planks and one that uses up 5 scrap for an ingot, each read three times: 10 planks in all, one ingot for 5 scrap - a re-read shows the note's messages only (AU16)")]
+		public static void ScRereadCommand() { DynamicIslands.instance.StartCoroutine(ScRereadRoutine()); }
+
+		static IEnumerator ScRereadRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario reread: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscreread";
+			IslandFile f;
+			try { f = ScIsland(isl, "Reading Rock"); } catch (Exception ex) { Fail("scenario reread: " + ex.Message); yield break; }
+			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-8, 0), 1), ObjectProps.NoteTitle, "Gift note", ObjectProps.NoteText, "Take these.",
+				BehaviourProps.EventPrefix + "read", "give||Plank*10\nmessage||Ten planks!"));
+			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(8, 0), 2), ObjectProps.NoteTitle, "Trade note", ObjectProps.NoteText, "Scrap for metal.",
+				BehaviourProps.CheckPrefix + "read", "take|Scrap|5", BehaviourProps.EventPrefix + "read", "give||MetalIngot*1\nmessage||An ingot for your scrap.",
+				BehaviourProps.ElsePrefix + "read", "message||Bring 5 scrap."));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario reread: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario reread: the island didn't come"); yield break; }
+			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
+			int planks0 = inv.GetItemCount("Plank"), ingots0 = inv.GetItemCount("MetalIngot");
+			inv.AddItem("Scrap", 15);
+			int scrap0 = inv.GetItemCount("Scrap");
+			try
+			{
+				for (int i = 0; i < 3; i++) { ScReadNote(e, "Gift note"); yield return new WaitForSeconds(0.8f); NoteReader.Close(); }
+				for (int i = 0; i < 3; i++) { ScReadNote(e, "Trade note"); yield return new WaitForSeconds(0.8f); NoteReader.Close(); }
+				yield return new WaitForSeconds(0.5f);
+				int planks = inv.GetItemCount("Plank") - planks0, ingots = inv.GetItemCount("MetalIngot") - ingots0, scrapUsed = scrap0 - inv.GetItemCount("Scrap");
+				Check(ref ok, planks == 10, "the note that gives 10 planks, read three times: 10 planks in all (" + planks + ") - AU16");
+				Check(ref ok, ingots == 1 && scrapUsed == 5, "the note that takes 5 scrap for an ingot, read three times: one ingot for 5 scrap (" + ingots + " ingot(s), " + scrapUsed + " scrap used) - AU16");
+			}
+			finally
+			{
+				int left = inv.GetItemCount("Scrap");
+				if (left > 0) inv.RemoveItem("Scrap", Mathf.Min(left, 15));
+				ScRemove(made, isl);
+			}
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario reread"); else Fail("scenario reread");
+		}
+
 		[ConsoleCommand(name: "CIScAlphaClicks", docs: "Dev, world (host, 'CI ...'): AT36 - an alpha's stats are given once: looked at again three times, as every change of the randomizer does (even its level clicked again), its health stays x3 (not x9) and it isn't healed (AU10)")]
 		public static void ScAlphaClicksCommand() { DynamicIslands.instance.StartCoroutine(ScAlphaClicksRoutine()); }
 

@@ -628,7 +628,9 @@ namespace DynamicIslands.Editor
 			// Reading a note counts once per world
 			bool once = ev == "read" || ev == "arrive";
 			int key = DoneBase + index;
-			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, ev == "arrive"); return; }
+			// (read again - by anyone: its messages and sounds only - its items and teleports came again at every read, and
+			// its checks were skipped: "uses up 5 scrap, gives titanium" was free from the second read)
+			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, true); return; }
 			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);

@@ -249,10 +249,14 @@ namespace DynamicIslands.Editor
 			return Skip("no free spot ahead of the raft for '" + name + "' (" + string.Join("; ", reasons.Distinct().Take(3).ToArray()) + ")");
 		}
 
+		/// <summary>Tests (CIGenDelay): a generated island's file is written this many seconds late - a player joins meanwhile (AT1).</summary>
+		public static float TestGenerateDelay;
+
 		/// <summary>Generates a new island file (roadmap 1.5; map types), saves it next to the others, tells clients, and spawns it.</summary>
 		internal static System.Collections.IEnumerator GenerateAndSpawn(Func<IslandFile> create, string name, IslandWorldState.Entry entry)
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
+			if (TestGenerateDelay > 0f) yield return new WaitForSecondsRealtime(TestGenerateDelay);
 			try
 			{
 				IslandFile file = create();

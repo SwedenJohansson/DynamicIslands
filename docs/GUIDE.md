@@ -800,7 +800,9 @@ Select any object → **Behaviour + events...**. No code needed:
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, or all the animals of a
   spot are defeated → show / hide objects, open / close doors, say a message, give items, play a sound, teleport the
   player, send a signal, write a journal page, or **wait** some seconds first. Each action is chosen from a **▼ list**
-  that says what it does; **…** beside a name lists the names on this island.
+  that says what it does; **…** beside a name lists the names on this island. A note's "read" and the island's "first
+  come" happen **once per world**: whoever reads the note again (anyone) gets its messages and sounds, not its items or
+  teleports again.
 - **Only if ...:** the player **has** an item or story item (or **uses one up**, like a key), an object is open,
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message.
@@ -1894,8 +1896,8 @@ and work in every event.
 2. Hand it out: put it in a chest (**Add items...** lists the story items too), or a **give items** action, or the
    quest's reward.
 3. On the door: **Behaviour + events...** > **+ Only if...** > **uses up item** (or **has item**) > pick the story item.
-4. Give Raft-item rewards through the quest's reward or a chest, not through a note: a note's **give items** runs again
-   every time it is read.
+4. A note's actions run once, for its first reader (reading it again shows its messages only): for something every
+   player should get, use the quest's reward or a chest per player.
 
 #### Don't edit islands or plans that running worlds use
 

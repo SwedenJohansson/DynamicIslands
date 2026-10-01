@@ -190,7 +190,7 @@ namespace DynamicIslands.Editor
 				DynamicIslands.currentElevation = Mathf.Clamp(e, IslandSpawner.MinElevation, IslandSpawner.MaxElevation);
 			string n = nameField.text.Trim();
 			if (n.Length == 0) { SetStatus("Type a name first.", true); return; }
-			if (!FileNames.Valid(n)) { SetStatus(FileNames.Problem(n), true); return; }
+			if (FileNames.IslandProblem(n) != null) { SetStatus(FileNames.IslandProblem(n), true); return; }
 			bool exists = File.Exists(IslandSpawner.PathFor(n));
 			if (exists && n != DynamicIslands.currentIslandName && pendingOverwrite != n)
 			{

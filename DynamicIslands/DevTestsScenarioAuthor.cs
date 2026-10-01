@@ -96,6 +96,18 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario pack edges"); else Fail("scenario pack edges");
 		}
 
+		[ConsoleCommand(name: "CIScNames", docs: "Dev, anywhere: AT28 - island names the mod's own lists can't hold are refused when saving (# or @ first, = , ;), ordinary ones and other kinds of names (plans) are not (AU30)")]
+		public static void ScNamesCommand()
+		{
+			bool ok = true;
+			foreach (string bad in new[] { "#1 Base", "@home", "Rock, big", "a=b", "Cove;2" })
+				Check(ref ok, FileNames.IslandProblem(bad) != null, "an island can't be called '" + bad + "' (" + (FileNames.IslandProblem(bad) ?? "allowed") + ") - AU30");
+			foreach (string good in new[] { "Camp 2", "Åkerö", "Palm Cove (Library)", "gen-sandbar-123456", "Bob's raft" })
+				Check(ref ok, FileNames.IslandProblem(good) == null, "an island can be called '" + good + "' (" + (FileNames.IslandProblem(good) ?? "allowed") + ")");
+			Check(ref ok, FileNames.Valid("Voyage, part 2"), "other names (a plan's) may still hold a comma");
+			if (ok) Log("PASS: scenario names"); else Fail("scenario names");
+		}
+
 		[ConsoleCommand(name: "CIScTwoPacks", docs: "Dev, anywhere: SC74 - two packs with an island of the same name and a story item of the same id: the second's island is renamed and its plan follows; the import warns about the shared story item id (T8)")]
 		public static void ScTwoPacksCommand()
 		{

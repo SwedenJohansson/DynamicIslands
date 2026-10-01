@@ -36,6 +36,20 @@ namespace DynamicIslands.Editor
 		}
 
 		public static bool Valid(string name) { return Problem(name) == null; }
+
+		/// <summary>
+		/// An island name's problem: a file name's, and the characters the mod's own lists use - "#" first (a comment line:
+		/// the island vanished from saved worlds and spawnpool.txt), "@" first (a setting line: it counted as unused), "="
+		/// (key=value lines), "," and ";" (lists: "one of these" islands). Null if it is fine.
+		/// </summary>
+		public static string IslandProblem(string name)
+		{
+			string p = Problem(name);
+			if (p != null) return p;
+			if (name.StartsWith("#") || name.StartsWith("@")) return "An island's name can't begin with # or @ (the mod's own lists use them).";
+			if (name.IndexOfAny(new[] { '=', ',', ';' }) >= 0) return "An island's name can't contain = , or ; (the mod's own lists use them).";
+			return null;
+		}
 	}
 
 	/// <summary>

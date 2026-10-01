@@ -265,7 +265,9 @@ namespace DynamicIslands.Editor
 		internal static IslandNetMessage IslandsMessage(IEnumerable<IslandWorldState.Entry> entries, bool fullList)
 		{
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
-			var list = entries.Where(e => !e.Failed).ToList();
+			// (an island still being made - its file not written yet - is left out: a player who joined in that moment got
+			// it without a hash, it failed there, and its announcement later was ignored as known; it comes with that)
+			var list = entries.Where(e => !e.Failed && HashOf(e.Name) != null).ToList();
 			foreach (var e in list) IslandObjectState.Capture(e);
 			var msg = new IslandNetMessage
 			{
@@ -484,7 +486,22 @@ namespace DynamicIslands.Editor
 			int added = 0;
 			for (int i = 0; i < n; i++)
 			{
-				if (IslandWorldState.Islands.Any(e => e.Id == msg.Ids[i])) continue;
+				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
+				if (known != null)
+				{
+					// (known without its file - it came while the host was still making it, or its file failed here: the
+					// host's hash now lets it come after all; Resync didn't help before)
+					string hash = msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "";
+					if ((known.Failed || string.IsNullOrEmpty(known.Hash)) && hash.Length > 0 && known.Root == null && !known.Loading)
+					{
+						known.Hash = hash;
+						known.Failed = false;
+						known.WaitingForFile = false;
+						ResolveFile(known);
+						Log("Island " + known.Id + " '" + known.HostName + "' had no file here: trying again with the host's");
+					}
+					continue;
+				}
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
 					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
