@@ -202,7 +202,24 @@ namespace DynamicIslands.Editor
 		public static void SetEnabled(bool on)
 		{
 			if (!Raft_Network.IsHost) return;
-			if (on) { OffByHost = false; TurnOn(true); IslandWorldState.Save(); return; }
+			if (on)
+			{
+				OffByHost = false;
+				TurnOn(true);
+				// Every player gets their own record back: switched off, a player's machine dropped it, and on again it
+				// started them at level 1 - the host left their "older" record out until it passed the old one, then the
+				// old one was gone
+				foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+				{
+					ulong id;
+					try { id = p != null ? p.steamID.Id : 0UL; } catch { id = 0UL; }
+					if (id == 0UL || id == LocalId) continue;
+					IslandNetMessage state = StateFor(id);
+					if (state != null) IslandNetwork.SendLevels(state, new Network_UserId(id));
+				}
+				IslandWorldState.Save();
+				return;
+			}
 			OffByHost = true;
 			if (On)
 			{

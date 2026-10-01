@@ -1137,6 +1137,155 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario catch check"); else Fail("scenario catch check");
 		}
 
+		[ConsoleCommand(name: "CIScCollectFar", docs: "Dev, world (host, 'CI ...'): AT25 - an island far away whose quest collects story items the crew already holds: it isn't done while nobody is there; a player arriving finishes it and gets its reward (AU22)")]
+		public static void ScCollectFarCommand() { DynamicIslands.instance.StartCoroutine(ScCollectFarRoutine()); }
+
+		static IEnumerator ScCollectFarRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario collect far: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "cisccollect";
+			IslandFile f;
+			try { f = ScIsland(isl, "Map Rock"); } catch (Exception ex) { Fail("scenario collect far: " + ex.Message); yield break; }
+			f.Props[StoryItems.Key] = "ciscpiece|Map piece||A piece of a map";
+			new IslandQuest { Title = "The map", Reward = "Plank*5", Steps = { new IslandQuest.Step { Type = "collect", Target = StoryItems.Ref("ciscpiece"), Count = 3 } } }.To(f.Props);
+			f.Save(IslandSpawner.PathFor(isl));
+			// (far from the raft: more than the island and 150 m from the player standing on it)
+			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft + CustomIslandSpawner.SailDirection() * 650f, Mathf.Max(20f, CustomIslandSpawner.LandRadius(isl)), 300f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario collect far: no open sea 650 m ahead"); yield break; }
+			int held = StoryBook.Count("ciscpiece");
+			if (held < 3) StoryBook.Give("ciscpiece", 3 - held);
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario collect far: the island didn't come"); yield break; }
+			try
+			{
+				Network_Player player = RAPI.GetLocalPlayer();
+				float away = ScFlat(player.transform.position, e.Position);
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, QuestTracker.StepOf(e) == 0, "the crew holds the 3 map pieces, the island " + away.ToString("F0") + " m away: its quest waits for someone to be there (step " + QuestTracker.StepOf(e) + ") - AU22");
+				PlayerInventory inv = player.Inventory;
+				int planks = inv != null ? inv.GetItemCount("Plank") : 0;
+				PlayerMove.To(player, ScLandCentre(e) + Vector3.up * 2f);
+				for (float t = 0; t < 10f && QuestTracker.StepOf(e) == 0; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "a player arrives: the quest is done (step " + QuestTracker.StepOf(e) + ")");
+				Check(ref ok, inv != null && inv.GetItemCount("Plank") - planks == 5, "... and they get its reward (" + (inv != null ? inv.GetItemCount("Plank") - planks : -1) + " of 5 planks)");
+			}
+			finally
+			{
+				StoryBook.Take("ciscpiece", 99);
+				ScRemove(made, isl);
+			}
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario collect far"); else Fail("scenario collect far");
+		}
+
+		[ConsoleCommand(name: "CIScComeBack", docs: "Dev, world (host, 'CI ...'): AT24 - after the regrow days and a reload: a chest with a story item stays empty (no second key), a 'Once ever' zone stays used, a plain 'Once' zone and a plain chest are ready again (AU19)")]
+		public static void ScComeBackCommand() { DynamicIslands.instance.StartCoroutine(ScComeBackRoutine()); }
+
+		static IEnumerator ScComeBackRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario come back: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscback";
+			IslandFile f;
+			try { f = ScIsland(isl, "Back Isle"); } catch (Exception ex) { Fail("scenario come back: " + ex.Message); yield break; }
+			f.Props[IslandProps.RegrowDays] = "2";
+			f.Props[StoryItems.Key] = "ciscbackkey|Iron key||The key of the gate";
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(-10, 0), 1), ObjectProps.NoteTitle, "Key chest", ObjectProps.LootItems, StoryItems.Ref("ciscbackkey") + "*1"));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(10, 0), 2), ObjectProps.NoteTitle, "Plain chest", ObjectProps.LootItems, "Plank*1"));
+			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(0, 12), 3), ObjectProps.ZoneId, "ever", ObjectProps.ZoneRadius, "3", ObjectProps.ZoneRepeat, ObjectProps.ZoneOnceEver));
+			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(0, -12), 4), ObjectProps.ZoneId, "plain", ObjectProps.ZoneRadius, "3"));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario come back: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario come back: the island didn't come"); yield break; }
+			try
+			{
+				StoryBook.Take("ciscbackkey", 99);
+				ScOpenChest(e, "Key chest");
+				ScOpenChest(e, "Plain chest");
+				ScEnterZone(e, "ever");
+				ScEnterZone(e, "plain");
+				yield return new WaitForSeconds(1f);
+				LootCrate keyChest = ScChest(e, "Key chest"), plainChest = ScChest(e, "Plain chest");
+				Func<string, TriggerZone> zone = id => e.Root != null ? e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == id) : null;
+				int keyKey = keyChest != null ? keyChest.StateKey : -1, plainKey = plainChest != null ? plainChest.StateKey : -1;
+				int everKey = zone("ever") != null ? zone("ever").StateKey : -1, plainZoneKey = zone("plain") != null ? zone("plain").StateKey : -1;
+				Check(ref ok, ContentState.IsUsed(e, keyKey) && ContentState.IsUsed(e, plainKey) && ContentState.IsUsed(e, everKey) && ContentState.IsUsed(e, plainZoneKey) && StoryBook.Count("ciscbackkey") == 1,
+					"both chests opened, both zones set off, the crew holds the key (" + StoryBook.Count("ciscbackkey") + ")");
+				// The regrow days pass (the state's day moved back), and the island loads again
+				foreach (int k in new[] { keyKey, plainKey, everKey, plainZoneKey })
+				{
+					ObjectState s;
+					if (e.State.TryGetValue(k, out s)) e.State[k] = new ObjectState { Active = s.Active, Yield = s.Yield, Day = s.Day - 10 };
+				}
+				IslandObjectState.Capture(e);
+				IslandSpawner.Despawn(e.Root);
+				e.Root = null;
+				yield return null;
+				e.Loading = true;
+				yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, ContentState.IsUsed(e, keyKey), "10 days later, loaded again: the chest with the story key stays empty - no second key (AU19)");
+				Check(ref ok, ContentState.IsUsed(e, everKey), "... the 'Once ever' zone stays used (AU19)");
+				Check(ref ok, !ContentState.IsUsed(e, plainKey) && !ContentState.IsUsed(e, plainZoneKey), "... while a plain chest and a plain once-zone are ready again (as loot: the regrow days)");
+			}
+			finally
+			{
+				StoryBook.Take("ciscbackkey", 99);
+				ScRemove(made, isl);
+			}
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario come back"); else Fail("scenario come back");
+		}
+
+		[ConsoleCommand(name: "CIScAlphaClicks", docs: "Dev, world (host, 'CI ...'): AT36 - an alpha's stats are given once: looked at again three times, as every change of the randomizer does (even its level clicked again), its health stays x3 (not x9) and it isn't healed (AU10)")]
+		public static void ScAlphaClicksCommand() { DynamicIslands.instance.StartCoroutine(ScAlphaClicksRoutine()); }
+
+		static IEnumerator ScAlphaClicksRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario alpha clicks: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscalpha";
+			IslandFile f;
+			try { f = ScIsland(isl, "Alpha Rock"); } catch (Exception ex) { Fail("scenario alpha clicks: " + ex.Message); yield break; }
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario alpha clicks: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("scenario alpha clicks: the island didn't come"); yield break; }
+			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
+			AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
+			if (boar == null || boar.networkEntity == null || boar.networkEntity.stat_health == null) { ScRemove(made, isl); Fail("scenario alpha clicks: no warthog came"); yield break; }
+			Stat_Health h = boar.networkEntity.stat_health;
+			float raft = h.Max;
+			// (as the world's roll makes one of Raft's own warthogs an alpha)
+			WorldRandomizer.ApplyAlphaForTest(boar);
+			yield return new WaitForSeconds(0.5f);
+			float alpha = h.Max;
+			Check(ref ok, alpha > raft * 2.5f, "an alpha: x3 health (" + raft.ToString("F0") + " -> " + alpha.ToString("F0") + ")");
+			h.Value = alpha / 2f;
+			for (int i = 0; i < 3; i++) { WorldRandomizer.ApplyAlphaForTest(boar); yield return new WaitForSeconds(0.5f); }
+			Check(ref ok, Mathf.Abs(h.Max - alpha) < 1f, "looked at again three times (the randomizer set again): still x3, not more (" + alpha.ToString("F0") + " -> " + h.Max.ToString("F0") + ") - AU10");
+			Check(ref ok, h.Value <= alpha / 2f + 1f, "... and not healed (" + h.Value.ToString("F0") + " of " + h.Max.ToString("F0") + ")");
+			ScRemove(made, isl);
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario alpha clicks"); else Fail("scenario alpha clicks");
+		}
+
 		[ConsoleCommand(name: "CIScLastKill", docs: "Dev, world (host, 'CI ...'): SC24 - the last warthog killed and the island unloaded within half a second: it stays dead and the kill step counts (AU60)")]
 		public static void ScLastKillCommand() { DynamicIslands.instance.StartCoroutine(ScLastKillRoutine()); }
 

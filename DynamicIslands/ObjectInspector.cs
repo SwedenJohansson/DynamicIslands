@@ -284,10 +284,12 @@ namespace DynamicIslands.Editor
 
 			RectTransform fires = UIKit.Row(g, 26f, 4f, "Fires");
 			UIKit.Size(UIKit.Label(fires, "Fires", 13, UIKit.TextMuted).gameObject, 44);
-			bool repeats = ObjectProps.Repeats(p);
-			Button once = UIKit.Button(fires, "Once", () => { Set(target, ObjectProps.ZoneRepeat, null); Refresh(); }, "Once per world, for the first player (again after the island's regrow time)", -1, 26f, 12);
+			bool repeats = ObjectProps.Repeats(p), onceEver = ObjectProps.Get(p, ObjectProps.ZoneRepeat) == ObjectProps.ZoneOnceEver;
+			Button once = UIKit.Button(fires, "Once", () => { Set(target, ObjectProps.ZoneRepeat, null); Refresh(); }, "Once, for the first player - and ready again after the island's regrow days (like loot)", -1, 26f, 12);
+			Button ever = UIKit.Button(fires, "Once ever", () => { Set(target, ObjectProps.ZoneRepeat, ObjectProps.ZoneOnceEver); Refresh(); }, "Once in the world, never again - for the story: an ambush, a bridge shown", -1, 26f, 12);
 			Button every = UIKit.Button(fires, "Every time", () => { Set(target, ObjectProps.ZoneRepeat, "1"); Refresh(); }, "Each time a player walks in (at most every half minute)", -1, 26f, 12);
-			UIKit.SetActive(once, !repeats);
+			UIKit.SetActive(once, !repeats && !onceEver);
+			UIKit.SetActive(ever, onceEver);
 			UIKit.SetActive(every, repeats);
 
 			GameObject placed = GameObject.Find("PlacedObjects");
@@ -454,6 +456,9 @@ namespace DynamicIslands.Editor
 			Button off = UIKit.Button(refill, "Never", () => { Set(target, ObjectProps.LootRefill, "0"); Refresh(); }, "Once looted, it stays empty in that world", 56, 24f, 11);
 			UIKit.SetActive(on, refills);
 			UIKit.SetActive(off, !refills);
+			// (story items: a second key or log would come - such a chest never fills up again, whatever is chosen)
+			if (refills && ObjectProps.Loot(target.Props).Any(l => StoryItems.IsStory(l.Key)))
+				UIKit.Label(g, "<i>It holds story items: it never fills up again (the story's key or log comes once).</i>", 11, UIKit.TextMuted);
 			if (!ContentCatalog.IsLootObject(target.GameObjectName))
 				UIKit.Button(g, "Not a chest", () =>
 				{

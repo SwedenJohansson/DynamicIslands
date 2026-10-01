@@ -69,7 +69,7 @@ namespace DynamicIslands.Editor
 			int days = IslandRules.RegrowDays(e);
 			if (days <= 0) return;
 			var keys = e.Root.GetComponentsInChildren<LootCrate>(true).Where(c => c.Refills).Select(c => c.StateKey)
-				.Concat(e.Root.GetComponentsInChildren<TriggerZone>(true).Select(z => z.StateKey)).ToList();
+				.Concat(e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver).Select(z => z.StateKey)).ToList();
 			foreach (int key in keys)
 			{
 				ObjectState s;
@@ -99,7 +99,9 @@ namespace DynamicIslands.Editor
 			GameObject holder = CustomNote.InteractHolder(go);
 			LootCrate c = holder.AddComponent<LootCrate>();
 			c.Items = ObjectProps.Loot(props);
-			c.Refills = ObjectProps.LootRefills(props);
+			// (a chest with story items never fills up again: the story's key or log came twice, and counts and "uses up"
+			// checks went wrong)
+			c.Refills = ObjectProps.LootRefills(props) && !c.Items.Any(l => StoryItems.IsStory(l.Key));
 			c.Ordinal = ordinal;
 			c.Label = PlaceableCatalog.DisplayName(name).ToLowerInvariant();
 			return c;

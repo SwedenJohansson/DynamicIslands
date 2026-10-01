@@ -267,8 +267,19 @@ namespace DynamicIslands.Editor
 				IslandQuest q = QuestOf(e);
 				int step = StepOf(e);
 				if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
-				if (Found(e, q.Steps[step]) >= q.Steps[step].Count) Set(e, step + 1, 0, true);
+				// (only while someone is there: a quest whose items the crew already held finished the moment its island
+				// appeared far away, and nobody got its reward)
+				if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, step + 1, 0, true);
 			}
+		}
+
+		/// <summary>Host: whether any player is at the island (its land and the same reach as the rewards).</summary>
+		static bool AnyPlayerNear(IslandWorldState.Entry e)
+		{
+			float r = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) + NearDistance;
+			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+				if (p != null && new Vector2(p.transform.position.x - e.Position.x, p.transform.position.z - e.Position.z).magnitude < r) return true;
+			return false;
 		}
 
 		static void Build()

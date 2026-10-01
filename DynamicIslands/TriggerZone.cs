@@ -21,6 +21,9 @@ namespace DynamicIslands.Editor
 		public string Id = "", Message = "";
 		public float Radius = 6f;
 		public bool Repeats;
+		/// <summary>Fires once ever: never ready again after the regrow days (a story's once-zone fired again: a double
+		/// ambush, a bridge flipped back).</summary>
+		public bool OnceEver;
 		public List<KeyValuePair<string, int>> Items = new List<KeyValuePair<string, int>>();
 		/// <summary>Place among the island's zones (file order: the same on every machine).</summary>
 		public int Ordinal;
@@ -42,6 +45,7 @@ namespace DynamicIslands.Editor
 			z.Message = ObjectProps.Get(o.Props, ObjectProps.ZoneMessage);
 			z.Radius = ObjectProps.Radius(o.Props);
 			z.Repeats = ObjectProps.Repeats(o.Props);
+			z.OnceEver = ObjectProps.Get(o.Props, ObjectProps.ZoneRepeat) == ObjectProps.ZoneOnceEver;
 			z.Items = ObjectProps.Loot(o.Props);
 			z.Ordinal = ordinal;
 			return z;

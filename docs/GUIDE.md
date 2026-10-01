@@ -713,6 +713,8 @@ starting Raft:
 ### 5.3 Chests and loot
 
 "Loot & chests" has chests, a crate, a wooden box and barrels, and **any object can hold loot** (**A chest...**).
+**Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest that
+holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
 
 ![The loot inspector](images/editor-loot.jpg)
 *A chest's loot: planks, plastic, palm leaves, rope and nails. The Basics, Metal, Food and Treasure sets fill it
@@ -732,8 +734,9 @@ stays gone, and comes back after the island's regrow days like harvested things 
 ### 5.4 Trigger zones and ambushes
 
 A **trigger zone** ("Zones & triggers") is an invisible sphere. When a player walks in it shows your **message**,
-**gives items**, and wakes the creatures that wait for it. It fires **once** per world (again after the regrow days)
-or **every time**.
+**gives items**, and wakes the creatures that wait for it. **Fires:** **Once** (for the first player - and ready again
+after the island's regrow days, like loot), **Once ever** (never again in that world: for the story - an ambush, a
+bridge shown) or **Every time** (each time a player walks in, at most every half minute).
 
 ![A trigger zone](images/editor-zone.jpg)
 *A trigger zone (the orange sphere): its name, size 10 m, the message "You hear grunting...", fires once, and one
@@ -1899,16 +1902,18 @@ and work in every event.
 **Why:** a saved world remembers its progress on an island by the order of things: its objects, its quest steps, its
 bring rules. Some edits reach saved worlds and change what those numbers point at: a rule that already brought its
 island brings it again (or a new rule counts as done and never comes), the quest jumps to another step or waits for a
-note that was renamed. In a plan, worlds remember rules by their **id**: a deleted rule's id reused by a new rule counts
-as done.
+note that was renamed. In a plan, worlds remember rules by their **id**: a rule renamed after it fired brings its island
+again. (A new rule that gets a fired rule's old id - World Plans numbers new rules `rule3`, `rule4`... - is fine: when it
+brings another island it comes as a new rule.)
 
 **What to do:**
 1. **Safe** on an island worlds use: moving things, changing settings, adding objects, painting and shaping the ground.
 2. **Not safe:** deleting or reordering its **Islands it brings...** rules, adding, removing or reordering **quest
    steps**, renaming a note, zone or object a step points at. For these: **Save as** a new name (`Camp v2`) and use the
    new island in new worlds and plans.
-3. In a plan that worlds play: **add** new rules with **new ids** (`treasure2`, not `rule3`); don't delete a rule and
-   add another in its place; don't rename a rule's id after it has fired.
+3. In a plan that worlds play: don't rename a rule's id after it has fired (its island would come again). Adding and
+   deleting rules is fine, and so is changing a fired rule's words, WHEN or WHERE; changing what a fired rule **brings**
+   makes it a new rule - that island comes too.
 4. When the editor says which saved worlds use the island you are saving, stop and think whether the change is safe.
 
 #### Other things to know

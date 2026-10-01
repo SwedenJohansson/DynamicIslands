@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +32,7 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 0), 3), ObjectProps.ZoneId, "gift", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Rope*3", ObjectProps.ZoneMessage, "A gift"));
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(0, 12), 4), ObjectProps.NoteTitle, "Box", ObjectProps.LootItems, "Plank*2", ObjectProps.LootRefill, "0"));
 			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(12, 12), 5), ObjectProps.NoteTitle, "Box2", ObjectProps.LootItems, "Nail*4", ObjectProps.LootRefill, "0"));
+			f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(-12, 12), 6), ObjectProps.NoteTitle, "Box3", ObjectProps.LootItems, "Scrap*3", ObjectProps.LootRefill, "0")); // (busyclaim: AU13)
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, 12), 6), ObjectProps.ZoneId, "gift2", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Scrap*3", ObjectProps.ZoneMessage, "Another gift"));
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-12, -12), 7), ObjectProps.ZoneId, "gift3", ObjectProps.ZoneRadius, "4", ObjectProps.LootItems, "Stone*3", ObjectProps.ZoneMessage, "A third gift"));
 			f.Save(IslandSpawner.PathFor(ScMpIsland));
@@ -104,6 +106,14 @@ namespace DynamicIslands
 			foreach (int note in notes) book.UnlockSpecificNoteNetworked(note, false);
 			Log("Read the story notes " + string.Join(", ", notes.Select(x => x.ToString()).ToArray()) + " (" + (Raft_Network.IsHost ? "host" : "player") + ")");
 			Log("PASS: read story note");
+		}
+
+		[ConsoleCommand(name: "CIClaimDelay", docs: "Dev, host: answers players' claims (chests, once-zones) that many seconds late, as a host busy sending island files does (AU13, AT4): CIClaimDelay <seconds> (0 = at once again)")]
+		public static void ClaimDelayCommand(string[] args)
+		{
+			float s;
+			Claims.TestAnswerDelay = args != null && args.Length > 0 && float.TryParse(args[0], NumberStyles.Float, CultureInfo.InvariantCulture, out s) ? Mathf.Max(0f, s) : 0f;
+			Log("Claim answers " + (Claims.TestAnswerDelay > 0f ? Claims.TestAnswerDelay.ToString("0.#", CultureInfo.InvariantCulture) + " s late" : "at once"));
 		}
 
 		[ConsoleCommand(name: "CIScReadNoteFor", docs: "Dev, in game (either player): this player finds Raft's frequency note that names one of its story islands (the note lies on the island before it in Raft's story), through Raft's own network path: CIScReadNoteFor <Tangaroa|Caravan Town|...>")]

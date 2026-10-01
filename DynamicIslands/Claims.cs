@@ -68,7 +68,7 @@ namespace DynamicIslands.Editor
 			if (IslandNetwork.HostAnswersClaims)
 			{
 				Debug.Log("[CUSTOM ISLANDS] [net] The host hasn't answered a claim yet (busy?): waiting for it");
-				IslandInfo.ShowMessage("Waiting for the host... (it is busy - this happens when its answer comes)");
+				IslandInfo.ShowMessage("Waiting for the host's answer (it is busy) - this happens as soon as it answers");
 				yield return new WaitForSeconds(LateAnswerSeconds);
 				// (no answer at all: the next try asks again)
 				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again"); }
@@ -82,6 +82,15 @@ namespace DynamicIslands.Editor
 
 		/// <summary>How long a late answer of a host that answers claims is waited for.</summary>
 		const float LateAnswerSeconds = 30f;
+
+		/// <summary>Tests (CIClaimDelay): the host answers claims this many seconds late, as a host busy sending island files.</summary>
+		public static float TestAnswerDelay;
+
+		static IEnumerator AnswerLater(float seconds, Action send)
+		{
+			yield return new WaitForSecondsRealtime(seconds);
+			try { send(); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Claim answer: " + ex.Message); }
+		}
 
 		/// <summary>Host: may this player have it? Grants the first to ask (not used yet, nobody else holding it) and holds it for them.</summary>
 		public static bool HostGrant(IslandWorldState.Entry e, int key, ulong who)
@@ -105,7 +114,9 @@ namespace DynamicIslands.Editor
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == msg.Ids[0]);
 				bool ok = e != null && HostGrant(e, msg.Index, from);
 				Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " by " + from + ": " + (ok ? "granted" : "refused"));
-				reply(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = msg.Ids, Index = msg.Index, Count = ok ? 1 : 0 });
+				var answer = new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = msg.Ids, Index = msg.Index, Count = ok ? 1 : 0 };
+				if (TestAnswerDelay > 0f) { DynamicIslands.instance.StartCoroutine(AnswerLater(TestAnswerDelay, () => reply(answer))); return; }
+				reply(answer);
 				return;
 			}
 			IslandNetwork.HostAnswersClaims = true;

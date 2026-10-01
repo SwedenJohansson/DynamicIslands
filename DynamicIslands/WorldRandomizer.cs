@@ -692,6 +692,10 @@ namespace DynamicIslands.Editor
 			return list;
 		}
 
+		/// <summary>Tests (AT36): the animal gets the alpha look and stats as when the world's roll makes it one - again each
+		/// time, as every change of the randomizer looks at the animals again.</summary>
+		internal static void ApplyAlphaForTest(AI_NetworkBehaviour ai) { if (ai != null) Apply(ai, AlphaFur); }
+
 		static void Apply(AI_NetworkBehaviour ai, Variant v)
 		{
 			int tinted = 0;
@@ -713,7 +717,9 @@ namespace DynamicIslands.Editor
 				ai.transform.localScale = Vector3.one * (baseScale > 0f ? baseScale : 1f) * 1.4f;
 			}
 			string label = LabelOf(ai.behaviourType);
-			if (Raft_Network.IsHost)
+			// (its stats once: every change of the randomizer - even its level clicked again - looks at the animals again,
+			// and an alpha got x3 health on top of x3, healed: Big Bruce killed in one bite after two clicks)
+			if (Raft_Network.IsHost && !alphas.ContainsKey(ai))
 			{
 				var props = new Dictionary<string, string>
 				{

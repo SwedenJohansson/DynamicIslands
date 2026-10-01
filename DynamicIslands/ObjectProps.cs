@@ -27,6 +27,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
 		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>
 		public const string ZoneId = "zone.id", ZoneRadius = "zone.radius", ZoneMessage = "zone.message", ZoneRepeat = "zone.repeat", CreatureZone = "creature.zone";
+		/// <summary>zone.repeat for a zone that fires once ever (never again after the regrow days).</summary>
+		public const string ZoneOnceEver = "never";
 		public const float MinZoneRadius = 1f, MaxZoneRadius = 50f;
 
 		/// <summary>Atmosphere zones: fog colour and thickness, light tint and strength, particles (AtmosphereZone.ParticleKinds).</summary>
