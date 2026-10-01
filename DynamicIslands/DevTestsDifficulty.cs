@@ -62,13 +62,14 @@ namespace DynamicIslands
 				List<string> wrong = parse.Where(kv => MonsterDifficulty.Parse(kv.Key) != kv.Value).Select(kv => "'" + kv.Key + "' -> " + MonsterDifficulty.Parse(kv.Key)).ToList();
 				Check(ref ok, wrong.Count == 0, "names, Easy/Moderate/Hard/Impossible and numbers are understood" + (wrong.Count > 0 ? ": " + string.Join(", ", wrong.ToArray()) : ""));
 
-				// Which of Raft's animals are monsters
-				var monsters = new[] { AI_NetworkBehaviourType.Shark, AI_NetworkBehaviourType.Boar, AI_NetworkBehaviourType.Bear, AI_NetworkBehaviourType.MamaBear, AI_NetworkBehaviourType.StoneBird,
-					AI_NetworkBehaviourType.StoneBird_Caravan, AI_NetworkBehaviourType.PufferFish, AI_NetworkBehaviourType.Rat, AI_NetworkBehaviourType.Rat_Tangaroa, AI_NetworkBehaviourType.BugSwarm_Bee,
-					AI_NetworkBehaviourType.ButlerBot, AI_NetworkBehaviourType.Boss_Varuna, AI_NetworkBehaviourType.AnglerFish, AI_NetworkBehaviourType.PolarBear, AI_NetworkBehaviourType.Hyena, AI_NetworkBehaviourType.HyenaBoss };
+				// Which of Raft's animals are monsters - the same ones that give EXP (AU69: one list; Raft's pig charges at
+				// players and the Tangaroa roach attacks, Utopia's butler bots don't)
+				var monsters = new[] { AI_NetworkBehaviourType.Shark, AI_NetworkBehaviourType.Boar, AI_NetworkBehaviourType.Pig, AI_NetworkBehaviourType.Bear, AI_NetworkBehaviourType.MamaBear, AI_NetworkBehaviourType.StoneBird,
+					AI_NetworkBehaviourType.StoneBird_Caravan, AI_NetworkBehaviourType.PufferFish, AI_NetworkBehaviourType.Rat, AI_NetworkBehaviourType.Rat_Tangaroa, AI_NetworkBehaviourType.Roach, AI_NetworkBehaviourType.BugSwarm_Bee,
+					AI_NetworkBehaviourType.Boss_Varuna, AI_NetworkBehaviourType.AnglerFish, AI_NetworkBehaviourType.PolarBear, AI_NetworkBehaviourType.Hyena, AI_NetworkBehaviourType.HyenaBoss };
 				var all = Enum.GetValues(typeof(AI_NetworkBehaviourType)).Cast<AI_NetworkBehaviourType>().ToList();
 				List<string> mixed = all.Where(t => MonsterDifficulty.IsMonsterType(t) != monsters.Contains(t)).Select(t => t.ToString()).ToList();
-				Check(ref ok, mixed.Count == 0, monsters.Length + " kinds are monsters, the other " + (all.Count - monsters.Length) + " (llama, goat, chicken, pig, sea life, people) aren't" + (mixed.Count > 0 ? ": wrong " + string.Join(", ", mixed.ToArray()) : ""));
+				Check(ref ok, mixed.Count == 0, monsters.Length + " kinds are monsters, the other " + (all.Count - monsters.Length) + " (llama, goat, chicken, butler bots, sea life, people) aren't" + (mixed.Count > 0 ? ": wrong " + string.Join(", ", mixed.ToArray()) : ""));
 
 				// Every kind of hit, at every level (stand-in entities: a player, a monster of Raft's without an animal brain, a thing)
 				var holder = new GameObject("CIMonsterUnit");
