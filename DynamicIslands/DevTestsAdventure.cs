@@ -54,8 +54,8 @@ namespace DynamicIslands
 				log.Props[BehaviourProps.EventPrefix + "read"] = "give||story:civoy-map*1";
 				IslandObject sup = k.Chest("Loot_Chest", at(new Vector2(-12, 0)), "Supplies", "Plank*5;Rope*2");
 				sup.Props[ObjectProps.LootRefill] = "0";
-				k.Creature("Creature_Boar", at(new Vector2(0, 18)), 2, "Normal", 1f, null, false);
-				k.Creature("Creature_Chicken", at(new Vector2(0, -18)), 2, "Normal", 1f, null, false);
+				k.Creature("Boar", at(new Vector2(0, 18)), 2, "Normal", 1f, null, false);
+				k.Creature("Chicken", at(new Vector2(0, -18)), 2, "Normal", 1f, null, false);
 				k.Quest("The landing", "Make the landing safe.", "The landing is safe. The chart points north.", "Nail*5",
 					"reach|camp|1|Find the camp", "read|Captain's log|1|Read the captain's log", "open|Supplies|1|Open the supplies",
 					"kill|Warthog|2|Chase off the warthogs", "catch|Chicken|1|Catch a chicken");
@@ -134,6 +134,11 @@ namespace DynamicIslands
 				IslandFile f = null;
 				try { f = IslandFile.Load(IslandSpawner.PathFor(n)); } catch { }
 				Check(ref ok, f != null && f.Objects.Count > 0 && IslandSpawner.LandRadius(f) > 10f, "'" + n + "' built and saved (" + (f != null ? f.Objects.Count + " objects, land " + IslandSpawner.LandRadius(f).ToString("F0") + " m" : "unreadable") + ")");
+				// (a world leaves out what the mod doesn't know, with only a log line: "Creature_Creature_Boar" once made a
+				// landing without its warthogs, found only when the play test waited for them)
+				if (f == null) continue;
+				string[] unknown = f.Objects.Select(o => o.Name).Where(x => !ContentCatalog.IsCreature(x) && !ContentCatalog.IsZone(x) && !ContentCatalog.IsHelper(x) && PlaceableCatalog.Get(x) == null).Distinct().ToArray();
+				Check(ref ok, unknown.Length == 0, "... every object of '" + n + "' is one the mod knows" + (unknown.Length > 0 ? " - not: " + string.Join(", ", unknown) : ""));
 			}
 			IslandQuest lq = IslandQuest.From(IslandFile.Load(IslandSpawner.PathFor(VoyageLanding)).Props);
 			Check(ref ok, lq.Steps.Select(s => s.Type).Distinct().Count() == 5, "the landing's quest has reach, read, open, kill and catch steps; the cove's collect, the vault's pages");

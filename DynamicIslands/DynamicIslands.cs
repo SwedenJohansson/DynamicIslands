@@ -807,6 +807,9 @@ namespace DynamicIslands
 				entry.Loading = false;
 				// Removed while loading, or the world changed
 				if (!IslandWorldState.Contains(entry)) yield break;
+				// Made meanwhile by another spawn of this entry (the streaming started one in the same frame an island was
+				// loaded again): a second copy would stay in the world for good, the entry knowing only one of them
+				if (entry.Root != null) { Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "' is there already - not made twice"); yield break; }
 				position = entry.Position; // follows world shifts that happened meanwhile
 			}
 			// (no entry - SpawnIsland, the editor's Test: the world shifts meanwhile too, or it landed hundreds of metres off)

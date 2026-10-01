@@ -679,7 +679,19 @@ namespace DynamicIslands
 			}
 			CustomIslandSpawner.UnloadDistance = unloadBefore;
 			Check(ref ok, changes <= 1, "unload distance 300, an island 350 m off: it loads or unloads at most once in 20 s (" + changes + " changes) - AU56");
+			// Two loads of one island in the same moment (the streaming and a reload): one copy. The second once stayed in the
+			// world for good, unknown to the world's list - a later test's raft ran aground on it
+			if (e.Root != null) { IslandObjectState.Capture(e); IslandSpawner.Despawn(e.Root); e.Root = null; }
+			e.Loading = true;
+			Coroutine first = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			yield return first;
+			yield return new WaitForSeconds(0.5f);
+			string rootName = e.Root != null ? e.Root.name : "?";
+			int copies = IslandSpawner.SpawnedRoots.Count(r => r != null && r.name == rootName);
+			Check(ref ok, e.Root != null && copies == 1, "the island loaded twice in the same moment: one copy in the world (" + copies + ")");
 			ScRemove(made, isl);
+			Check(ref ok, !IslandSpawner.SpawnedRoots.Any(r => r != null && r.name == rootName), "... and none left once it is removed");
 			if (ok) Log("PASS: scenario stream loop"); else Fail("scenario stream loop");
 		}
 
