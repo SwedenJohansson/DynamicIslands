@@ -446,6 +446,7 @@ namespace DynamicIslands.Editor
 				if (b != null && !b.Loop) b.Snap(open);
 			}
 			arrived.Remove(e.Id);
+			try { ResumePending(e); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Actions after a wait on '" + e.HostName + "': " + ex.Message); }
 		}
 
 		#endregion
@@ -630,7 +631,7 @@ namespace DynamicIslands.Editor
 			int key = DoneBase + index;
 			// (read again - by anyone: its messages and sounds only - its items and teleports came again at every read, and
 			// its checks were skipped: "uses up 5 scrap, gives titanium" was free from the second read)
-			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, true); return; }
+			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, true, ev); return; }
 			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);
@@ -658,10 +659,10 @@ namespace DynamicIslands.Editor
 		static void Run(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions, bool localPlayer)
 		{
 			if (actions.Count == 0) return;
-			if (localPlayer) Schedule(e, index, actions, false, false);
+			if (localPlayer) Schedule(e, index, actions, false, false, ev);
 			if (HasSharedPart(actions))
 			{
-				if (Raft_Network.IsHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false); }
+				if (Raft_Network.IsHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev); }
 				else IslandNetwork.SendEvent(e.Id, index, ev, false);
 			}
 		}
@@ -717,8 +718,8 @@ namespace DynamicIslands.Editor
 			if (actions.Count == 0 && checks.Count == 0) return;
 			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
-			if (Near(e)) Schedule(e, index, actions, false, false);
-			Schedule(e, index, actions, true, false);
+			if (Near(e)) Schedule(e, index, actions, false, false, ev);
+			Schedule(e, index, actions, true, false, ev);
 			IslandNetwork.SendEvent(e.Id, index, ev, true);
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
@@ -730,20 +731,24 @@ namespace DynamicIslands.Editor
 			if (e == null) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			// (the client made the checks already)
-			if (Raft_Network.IsHost && !fromHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false); }
-			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false);
+			if (Raft_Network.IsHost && !fromHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev); }
+			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false, ev);
 		}
 
 		/// <summary>
-		/// Runs one part of the actions (shared or personal), the ones after a wait that many seconds later. Waiting
-		/// actions need the island to stay loaded: when it unloads (the raft sails away), what's left does nothing.
+		/// Runs one part of the actions (shared or personal), the ones after a wait that many seconds later.
 		/// The personal part after a wait is for the player who was there: not after they died (a respawned player was
 		/// teleported back to the island) or went away from the island.
+		/// The shared part after a wait (the host's: a door opened, a bridge shown, a signal) is kept with the island until
+		/// it has run: when the island unloads during the wait, or the host saves and quits, it runs when the island loads
+		/// again (ev: the event, to find its actions then; firstPart: the part these actions start at, when resumed).
 		/// </summary>
-		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly)
+		static void Schedule(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool shared, bool messagesOnly, string ev = null, int firstPart = 0)
 		{
 			float delay = 0f;
-			int deathsThen = deaths;
+			int deathsThen = deaths, partNo = 0, parts = actions.Count(a => a.Verb == "wait") + 1;
+			bool keep = shared && ev != null && Raft_Network.IsHost && PendingEventNo(ev) >= 0;
+			int token = ++pendingTokens; // (the latest scheduling of an event is the one that runs: resumed after a reload, the old timers stop)
 			var part = new List<ObjAction>();
 			foreach (ObjAction a in actions.Concat(new[] { new ObjAction { Verb = "wait", Arg = "0" } }))
 			{
@@ -751,20 +756,89 @@ namespace DynamicIslands.Editor
 				if (part.Count > 0)
 				{
 					List<ObjAction> now = part;
+					int no = firstPart + partNo;
 					if (delay <= 0f) RunPart(e, index, now, shared, messagesOnly);
-					else DynamicIslands.instance.StartCoroutine(Later(delay, () =>
+					else
 					{
-						if (!IslandWorldState.Contains(e) || !LoadSceneManager.IsGameSceneLoaded) return;
-						if (!shared && (deaths != deathsThen || wasDead || !Near(e)))
+						if (keep) KeepPending(e, index, ev, no, token);
+						DynamicIslands.instance.StartCoroutine(Later(delay, () =>
 						{
-							Debug.Log("[CUSTOM ISLANDS] What comes after the wait on '" + e.HostName + "' is left out for this player: " + (deaths != deathsThen || wasDead ? "they died meanwhile" : "they left the island"));
-							return;
-						}
-						RunPart(e, index, now, shared, messagesOnly);
-					}));
+							if (!IslandWorldState.Contains(e) || !LoadSceneManager.IsGameSceneLoaded) return;
+							if (!shared && (deaths != deathsThen || wasDead || !Near(e)))
+							{
+								Debug.Log("[CUSTOM ISLANDS] What comes after the wait on '" + e.HostName + "' is left out for this player: " + (deaths != deathsThen || wasDead ? "they died meanwhile" : "they left the island"));
+								return;
+							}
+							// (unloaded meanwhile: it runs when the island loads again - kept in its state)
+							if (keep && (e.Root == null || !IsPending(e, index, ev, token))) return;
+							RunPart(e, index, now, shared, messagesOnly);
+							if (keep) PendingDone(e, index, ev, no, firstPart + parts - 1, token);
+						}));
+					}
 				}
 				part = new List<ObjAction>();
 				delay += a.Seconds;
+				partNo++;
+			}
+		}
+
+		/// <summary>An event's shared actions still to come after a wait (host): PendingBase + object index * 16 + the
+		/// event's number; Yield = the part (counted in waits) they go on from; Day = the scheduling's token (this session).</summary>
+		public const int PendingBase = 0x900000;
+		static int pendingTokens;
+		static readonly string[] PendingEvents = BehaviourProps.ObjectEvents.Concat(BehaviourProps.IslandEvents).ToArray();
+
+		static int PendingEventNo(string ev)
+		{
+			int n = Array.IndexOf(PendingEvents, (ev ?? "").TrimEnd('!'));
+			return n < 0 ? -1 : n + ((ev ?? "").EndsWith("!") ? PendingEvents.Length : 0);
+		}
+
+		static int PendingKey(int index, string ev) { return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev); }
+
+		static void KeepPending(IslandWorldState.Entry e, int index, string ev, int part, int token)
+		{
+			int key = PendingKey(index, ev);
+			ObjectState s;
+			if (!e.State.TryGetValue(key, out s) || s.Day != token || s.Yield > part) e.State[key] = new ObjectState { Active = true, Yield = part, Day = token };
+		}
+
+		static bool IsPending(IslandWorldState.Entry e, int index, string ev, int token)
+		{
+			ObjectState s;
+			return e.State.TryGetValue(PendingKey(index, ev), out s) && s.Day == token;
+		}
+
+		static void PendingDone(IslandWorldState.Entry e, int index, string ev, int part, int lastPart, int token)
+		{
+			int key = PendingKey(index, ev);
+			ObjectState s;
+			if (!e.State.TryGetValue(key, out s) || s.Day != token || s.Yield > part) return;
+			if (part >= lastPart) e.State.Remove(key);
+			else e.State[key] = new ObjectState { Active = true, Yield = part + 1, Day = token };
+		}
+
+		/// <summary>Host, an island loaded: what was still to come after a wait when it unloaded (or the host saved and
+		/// quit) goes on now - it was lost, and the note, zone or chest counted as used: a door the story needed never opened.</summary>
+		static void ResumePending(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost) return;
+			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => k.Key >= PendingBase && k.Key < PendingBase + 0x100000).ToList())
+			{
+				int rel = kv.Key - PendingBase, index = rel >> 4, evNo = rel & 15;
+				string ev = evNo < PendingEvents.Length ? PendingEvents[evNo] : evNo < PendingEvents.Length * 2 ? PendingEvents[evNo - PendingEvents.Length] + "!" : null;
+				e.State.Remove(kv.Key);
+				if (ev == null) continue;
+				int from = kv.Value.Yield, waits = 0;
+				var rest = new List<ObjAction>();
+				foreach (ObjAction a in ActionsOf(e, index == 0xFFFF ? IslandIndex : index, ev))
+				{
+					if (waits >= from) rest.Add(a);
+					if (a.Verb == "wait") waits++;
+				}
+				if (rest.Count == 0) continue;
+				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': what came after a wait on '" + ev + "' goes on now (the island unloaded or the world was left meanwhile)");
+				Schedule(e, index == 0xFFFF ? IslandIndex : index, rest, true, false, ev, from);
 			}
 		}
 

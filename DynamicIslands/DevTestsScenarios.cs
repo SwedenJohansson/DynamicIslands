@@ -1248,6 +1248,75 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario come back"); else Fail("scenario come back");
 		}
 
+		[ConsoleCommand(name: "CIScWaitSave", docs: "Dev, world (host, 'CI ...'): AT21 - what comes after a wait isn't lost: CIScWaitSave prep = a note's 'wait 8 then show' with the island unloaded and loaded again during the wait (the vault shows), then a second note read just before the runner saves, quits and loads; CIScWaitSave check = after the load its vault shows (AU2)")]
+		public static void ScWaitSaveCommand(string[] args) { DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScWaitSaveCheck() : ScWaitSavePrep()); }
+
+		const string WaitIsland = "ciscwait";
+
+		static IEnumerator ScWaitSavePrep()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario wait save prep: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			IslandFile f;
+			try { f = ScIsland(WaitIsland, "Waiting Rock"); } catch (Exception ex) { Fail("scenario wait save prep: " + ex.Message); yield break; }
+			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-8, 0), 1), ObjectProps.NoteTitle, "First note", ObjectProps.NoteText, "Wait for it.",
+				BehaviourProps.EventPrefix + "read", "message||The ground shakes...\nwait||8\nshow|vault1|"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-8, 10), 2), BehaviourProps.Name, "vault1", BehaviourProps.Hidden, "1"));
+			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(8, 0), 3), ObjectProps.NoteTitle, "Second note", ObjectProps.NoteText, "Wait again.",
+				BehaviourProps.EventPrefix + "read", "wait||20\nshow|vault2|"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(8, 10), 4), BehaviourProps.Name, "vault2", BehaviourProps.Hidden, "1"));
+			f.Save(IslandSpawner.PathFor(WaitIsland));
+			Vector3? spot = ScSpot(WaitIsland, 400f);
+			if (!spot.HasValue) { ScRemove(made, WaitIsland); Fail("scenario wait save prep: no open sea near the raft"); yield break; }
+			yield return ScBring(WaitIsland, spot.Value, made);
+			IslandWorldState.Entry e = made.FirstOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, WaitIsland); Fail("scenario wait save prep: the island didn't come"); yield break; }
+			// (a) unloaded during the wait, loaded again after it: the vault shows when it loads
+			ScReadNote(e, "First note");
+			yield return new WaitForSeconds(0.5f);
+			NoteReader.Close();
+			IslandObjectState.Capture(e);
+			IslandSpawner.Despawn(e.Root);
+			e.Root = null;
+			yield return new WaitForSeconds(10f);
+			e.Loading = true;
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			yield return new WaitForSeconds(1.5f);
+			IslandObjectRef v1 = ScObjOf(e, "vault1");
+			Check(ref ok, v1 != null && v1.gameObject.activeInHierarchy, "the island unloaded during the note's 8 s wait: loaded again, the vault shows (" + (v1 != null && v1.gameObject.activeInHierarchy ? "shown" : "still hidden") + ") - AU2");
+			// (b) the second note's wait (20 s) is still running when the runner saves and quits now
+			ScReadNote(e, "Second note");
+			yield return new WaitForSeconds(0.5f);
+			NoteReader.Close();
+			IslandObjectState.Capture(e);
+			IslandWorldState.Save();
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario wait save prep"); else Fail("scenario wait save prep");
+		}
+
+		static IEnumerator ScWaitSaveCheck()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario wait save check: run in a world, as the host"); yield break; }
+			bool ok = true;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == WaitIsland);
+			if (e == null) { Fail("scenario wait save check: the island isn't in the world any more"); yield break; }
+			if (e.Root == null)
+			{
+				// (loaded where it was: bring the raft's player there so it loads)
+				PlayerMove.To(RAPI.GetLocalPlayer(), ScLandCentre(e) + Vector3.up * 3f);
+				for (float t = 0; t < 30f && e.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
+			}
+			yield return new WaitForSeconds(2f);
+			IslandObjectRef v2 = ScObjOf(e, "vault2");
+			Check(ref ok, v2 != null && v2.gameObject.activeInHierarchy, "saved and quit during the second note's 20 s wait: after loading, its vault shows (" + (v2 != null && v2.gameObject.activeInHierarchy ? "shown" : "still hidden") + ") - AU2");
+			var gone = new List<IslandWorldState.Entry> { e };
+			ScRemove(gone, WaitIsland);
+			OnRaftCommand();
+			if (ok) Log("PASS: scenario wait save check"); else Fail("scenario wait save check");
+		}
+
 		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1)")]
 		public static void ScEarlyCommand() { DynamicIslands.instance.StartCoroutine(ScEarlyRoutine()); }
 

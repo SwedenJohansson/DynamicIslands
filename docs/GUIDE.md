@@ -807,7 +807,9 @@ Select any object → **Behaviour + events...**. No code needed:
   player, send a signal, write a journal page, or **wait** some seconds first. Each action is chosen from a **▼ list**
   that says what it does; **…** beside a name lists the names on this island. A note's "read" and the island's "first
   come" happen **once per world**: whoever reads the note again (anyone) gets its messages and sounds, not its items or
-  teleports again.
+  teleports again. After a **wait**, what changes the island (show, open, a signal, a journal page) happens even when the
+  crew sails away or the host saves and quits meanwhile: it happens when the island loads again. What is for the player
+  (a message, items, a teleport) is left out for a player who died or left the island meanwhile.
 - **Only if ...:** the player **has** an item or story item (or **uses one up**, like a key), an object is open,
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message.
@@ -1824,19 +1826,6 @@ These are the traps island builders run into. Always play your adventure once wi
 ([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose.
 
 
-#### Put important actions before a "wait", not after
-
-**Why:** what comes after a **wait** only happens while the island stays loaded and the game runs. If the host saves and
-quits, or the crew sails away, during the wait, the rest never happens - and the note, arrival, once-zone or chest
-already counts as used, so it doesn't run again. A door the story needs stays shut.
-
-**What to do:** in **Behaviour + events...**, order the actions so the important ones come first:
-- **Good:** `show vault` > `say "The ground shakes..."` > `wait 5` > `play sound`.
-- **Bad:** `say "The ground shakes..."` > `wait 30` > `show vault`.
-
-Keep waits short (a few seconds) and use them for effects - messages, sounds - not for what the story needs. (What
-comes after a wait for the player - a message, items, a teleport - is left out for a player who died or left the island
-meanwhile: a respawned player isn't pulled back.)
 
 #### No toggles in events that happen again
 
