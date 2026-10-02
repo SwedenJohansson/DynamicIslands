@@ -101,7 +101,7 @@ namespace DynamicIslands.Editor
 				// (on bare ground, standing straight: down to the lowest ground under its base, so a house on legs or a van on
 				// a slope doesn't stand on its high side with the low side in the air)
 				if (hit.collider is TerrainCollider && !PlacementOptions.AlignToSlope && !PlacementOptions.SnapToGrid)
-					transform.position = new Vector3(transform.position.x, PlacementOptions.LowestGroundUnder(gameObject), transform.position.z);
+					transform.position = new Vector3(transform.position.x, PlacementOptions.RestingPivotY(gameObject), transform.position.z);
 				groundNormal = hit.normal;
 				return;
 			}

@@ -499,7 +499,7 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, float> retryAt = new Dictionary<string, float>();
 		static readonly HashSet<string> warned = new HashSet<string>();
 
-		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
+		internal static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [director] " + msg); }
 
 		#region World file
@@ -753,6 +753,7 @@ namespace DynamicIslands.Editor
 			UpdateVisits();
 			Evaluate();
 			StoryChain.Tick();
+			ReturningIslands.Tick();
 		}
 
 		/// <summary>Checks every rule that hasn't fired yet (host; tests call it directly).</summary>
@@ -849,7 +850,7 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
-		static bool Happened(IntroRule r, IslandWorldState.Entry e)
+		internal static bool Happened(IntroRule r, IslandWorldState.Entry e)
 		{
 			switch (r.When)
 			{
@@ -1153,5 +1154,182 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Chunk point check: " + ex.Message); }
 		}
+	}
+
+	/// <summary>
+	/// Islands the players still need come back. An island the raft has left behind - unloaded, past the unload distance
+	/// from every player - comes back ahead of the raft after ReturnMinutes, as it was (its quest, chests and harvest
+	/// kept; the other players' copies move too), when:
+	///   - something still waits for it - a rule of the world's plan or of an island (its quest, a step, a zone, a signal,
+	///     players reaching it), or the Receiver chain (an island it comes after): the island leads on, so it comes back
+	///     every time until that happened;
+	///   - or players reached it and its quest isn't done: it comes back MaxReturns times (an island left on purpose
+	///     stops coming back).
+	/// Not an island a Receiver frequency brought (the Receiver shows the way to it), the randomizer's extras on Raft's
+	/// islands, or an island nobody needs. Raft's current carries a raft one way: before this, an unfinished island that
+	/// drifted out of reach was lost (the user, 2026-10-02: The Long Voyage's first side trip, with no Receiver yet).
+	/// </summary>
+	public static class ReturningIslands
+	{
+		/// <summary>Minutes an island waits behind the raft before it comes back (spawnpool.txt returnMinutes; 0 = never).</summary>
+		public static float ReturnMinutes = 12f;
+		/// <summary>How often an island nothing waits for comes back (its quest begun and not done).</summary>
+		public const int MaxReturns = 3;
+		/// <summary>State key: how often the island came back (kept with the island's state, saved with the world).</summary>
+		public const int ReturnsKey = 0x50F00;
+		const float TickSeconds = 2f, RetrySeconds = 30f;
+
+		static readonly Dictionary<int, float> awaySince = new Dictionary<int, float>();
+		static float nextTick;
+		static Guid clocksFor;
+
+		/// <summary>Raised on the host when an island came back (tests listen).</summary>
+		public static event Action<IslandWorldState.Entry> Returned;
+
+		/// <summary>The clocks start again (another world: Tick does it by itself).</summary>
+		public static void Reset() { awaySince.Clear(); }
+
+		/// <summary>Host, from WorldDirector.Tick.</summary>
+		public static void Tick()
+		{
+			if (Time.unscaledTime < nextTick) return;
+			nextTick = Time.unscaledTime + TickSeconds;
+			if (!Raft_Network.IsHost || ReturnMinutes <= 0f) return;
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue) return;
+			// (another world loaded: the clocks start again - only then: reset while the director waited for a NEW world, the
+			// clocks of a loaded world were wiped every second and no island ever came back, 2026-10-03)
+			if (SaveAndLoad.WorldGuid != clocksFor) { awaySince.Clear(); clocksFor = SaveAndLoad.WorldGuid; }
+			// (game time: a paused game doesn't bring islands back)
+			float now = Time.time;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
+			{
+				string why = Why(e);
+				float edge = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name));
+				bool away = e.Root == null && !e.Loading && Flat(e.Position - raft.Value) - edge > WorldRules.UnloadDistance;
+				if (why == null || !away) { awaySince.Remove(e.Id); continue; }
+				float since;
+				if (!awaySince.TryGetValue(e.Id, out since))
+				{
+					awaySince[e.Id] = now;
+					Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' left behind (" + Flat(e.Position - raft.Value).ToString("F0") + " m): back ahead of the raft in " +
+						ReturnMinutes.ToString("0.##") + " min (" + (why == "awaited" ? "something waits for it" : "its quest is unfinished") + ")");
+					continue;
+				}
+				if (now - since < ReturnMinutes * 60f) continue;
+				if (Bring(e, raft.Value, why)) awaySince.Remove(e.Id);
+				else awaySince[e.Id] = now - ReturnMinutes * 60f + RetrySeconds;
+			}
+		}
+
+		/// <summary>Why the players still need this island - "awaited" (something waits for it) or "quest" (begun and not
+		/// done) - or null when it doesn't come back.</summary>
+		public static string Why(IslandWorldState.Entry e)
+		{
+			if (e == null || e.Failed || e.WaitingForFile || WorldRandomizer.IsExtras(e)) return null;
+			IntroRule brought = RuleThatBrought(e);
+			if (brought != null && brought.Where == "receiver") return null;
+			if (Awaited(e)) return "awaited";
+			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count, step = QuestTracker.StepOf(e);
+			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || step > 0;
+			if (steps == 0 || step >= steps || !begun) return null;
+			return Returns(e) < MaxReturns ? "quest" : null;
+		}
+
+		public static int Returns(IslandWorldState.Entry e)
+		{
+			ObjectState r;
+			return e != null && e.State.TryGetValue(ReturnsKey, out r) ? r.Yield : 0;
+		}
+
+		static IntroRule RuleThatBrought(IslandWorldState.Entry e)
+		{
+			if (string.IsNullOrEmpty(e.Rule)) return null;
+			IntroRule r = WorldDirector.Plan != null ? WorldDirector.Plan.Rules.FirstOrDefault(x => x.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase)) : null;
+			if (r != null) return r;
+			foreach (IslandWorldState.Entry owner in IslandWorldState.Islands)
+			{
+				r = WorldDirector.RulesOf(owner).FirstOrDefault(x => x.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase));
+				if (r != null) return r;
+			}
+			return null;
+		}
+
+		/// <summary>Whether a rule that hasn't fired yet waits for something to happen on this island.</summary>
+		static bool Awaited(IslandWorldState.Entry e)
+		{
+			if (WorldDirector.Plan != null)
+				foreach (IntroRule r in WorldDirector.Plan.Rules)
+				{
+					if (r.StoryPlace.StartsWith("after:", StringComparison.OrdinalIgnoreCase))
+					{
+						// (the Receiver chain: an island the next one comes after, until the chain counts it done)
+						string after = r.StoryPlace.Substring(6).Trim();
+						if (StoryOrder.Parse(after) == ChunkPointType.None && WorldDirector.Refs(after, null).Contains(e) && !StoryChain.Done.Contains(StoryChain.RuleKey(e.Rule))) return true;
+						continue;
+					}
+					if (!WorldDirector.Done.Contains(r.Id) && !r.Special && WaitsFor(r, null, e)) return true;
+				}
+			foreach (IslandWorldState.Entry owner in IslandWorldState.Islands)
+			{
+				List<IntroRule> rules = WorldDirector.RulesOf(owner);
+				for (int i = 0; i < rules.Count; i++)
+					if (!owner.State.ContainsKey(WorldDirector.RuleKeyBase + i) && WaitsFor(rules[i], owner, e)) return true;
+			}
+			return false;
+		}
+
+		static bool WaitsFor(IntroRule r, IslandWorldState.Entry owner, IslandWorldState.Entry e)
+		{
+			if (r.When != "quest" && r.When != "step" && r.When != "zone" && r.When != "visit" && r.When != "signal") return false;
+			return WorldDirector.Refs(r.WhenRef, owner).Contains(e) && !WorldDirector.Happened(r, e);
+		}
+
+		/// <summary>Moves the island to a free spot ahead of the raft and tells everyone. False: no room there yet.</summary>
+		static bool Bring(IslandWorldState.Entry e, Vector3 raft, string why)
+		{
+			float radius = Mathf.Max(10f, CustomIslandSpawner.LandRadius(e.Name));
+			Vector3? spot = CustomIslandSpawner.SpotAhead(raft, radius, e.Position.y, e);
+			if (!spot.HasValue) { Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' can't come back yet: no free spot ahead of the raft"); return false; }
+			float behind = Flat(e.Position - raft);
+			e.Position = spot.Value;
+			int returned = Returns(e) + 1;
+			e.State[ReturnsKey] = new ObjectState { Active = true, Yield = returned, Day = WorldDirector.Today };
+			// (the other players' copies move too: a known island at another place)
+			IslandNetwork.BroadcastAdded(e);
+			string title = TitleOf(e);
+			string message = why == "awaited" ? "Back in sight: the way on starts there." : "Back in sight: you left its quest unfinished.";
+			IslandNetwork.SendAnnounce(e, title, message);
+			WorldDirector.Show(title, message, e.Position);
+			Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' comes back " + Flat(e.Position - raft).ToString("F0") + " m ahead of the raft (left " +
+				behind.ToString("F0") + " m behind; " + (why == "awaited" ? "something waits for it" : "its quest is unfinished") + "; return " + returned + ")");
+			if (Returned != null) Returned(e);
+			return true;
+		}
+
+		/// <summary>Each island as the clock sees it: why it is needed, how far it is (from the raft, to its land's edge), away
+		/// or not, and how long it has waited (tests, CIReturnState).</summary>
+		public static IEnumerable<string> Describe()
+		{
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
+			{
+				float edge = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)), far = raft.HasValue ? Flat(e.Position - raft.Value) : -1f;
+				float since;
+				yield return "'" + e.HostName + "': " + (Why(e) ?? "not needed") + ", " + far.ToString("F0") + " m from the raft, land radius " + edge.ToString("F0") +
+					(e.Root != null ? ", loaded" : e.Loading ? ", loading" : "") + (awaySince.TryGetValue(e.Id, out since) ? ", away for " + (Time.time - since).ToString("F0") + " s" : "") +
+					", came back " + Returns(e) + "x";
+			}
+			yield return "host " + Raft_Network.IsHost + ", return after " + ReturnMinutes.ToString("0.##") + " min, unload distance " + WorldRules.UnloadDistance.ToString("F0") + " m, next look in " + (nextTick - Time.unscaledTime).ToString("F1") + " s";
+		}
+
+		static string TitleOf(IslandWorldState.Entry e)
+		{
+			if (!string.IsNullOrEmpty(e.Label)) return e.Label;
+			string title = ObjectProps.Get(IslandCache.PropsOf(e), IslandProps.Title);
+			return title.Length > 0 ? title : e.HostName;
+		}
+
+		static float Flat(Vector3 v) { return new Vector2(v.x, v.z).magnitude; }
 	}
 }

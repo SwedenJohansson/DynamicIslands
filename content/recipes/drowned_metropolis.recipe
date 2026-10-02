@@ -36,6 +36,9 @@ place UT_Set_Tower02 - at 104 72 centred h=-90 tilt=-11 yaw=40
 # when the island was generated (the recipe logs it when it saves). The probe tools measure from that centre too.
 push at -13.83 9.66
 brush lower at 20 -42 r=11 s=20 frames=6
+# (the council offices' pit dug down to their ground floor: the sea floor covered it, with its furniture and the filing
+# cabinet the quest's keycard is in)
+brush flatten at 5 -28 r=8 s=20 frames=60 h=-12.65
 clear at 20 -42 r=14 all
 clear at 8 -28 r=12 all
 

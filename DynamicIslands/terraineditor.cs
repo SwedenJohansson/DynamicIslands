@@ -245,19 +245,22 @@ namespace DynamicIslands
 			return moved;
 		}
 
-		/// <summary>Runs a complete brush stroke at a point without the mouse (used by the automated tests).</summary>
-		public void SimulateStroke(Vector3 point, int frames, float deltaTime)
+		/// <summary>Runs a complete brush stroke at a point without the mouse (used by the automated tests). flattenTo: Flatten
+		/// to this height above the terrain's base instead of the height where the stroke starts (a recipe's "h=").</summary>
+		public void SimulateStroke(Vector3 point, int frames, float deltaTime, float? flattenTo = null)
 		{
 			BeginStroke(point);
+			if (flattenTo.HasValue) flattenTarget = Mathf.Clamp01(flattenTo.Value / terrainData.size.y);
 			for (int i = 0; i < frames; i++) ApplyAt(point, deltaTime);
 			EndStroke();
 		}
 
 		/// <summary>A brush stroke dragged from one point to another without the mouse (the recipes: Flatten to the
-		/// height where the drag starts, Sample there and flatten along).</summary>
-		public void SimulateDrag(Vector3 from, Vector3 to, int frames, float deltaTime)
+		/// height where the drag starts - or to flattenTo - Sample there and flatten along).</summary>
+		public void SimulateDrag(Vector3 from, Vector3 to, int frames, float deltaTime, float? flattenTo = null)
 		{
 			BeginStroke(from);
+			if (flattenTo.HasValue) flattenTarget = Mathf.Clamp01(flattenTo.Value / terrainData.size.y);
 			for (int i = 0; i < frames; i++) ApplyAt(Vector3.Lerp(from, to, frames > 1 ? i / (float)(frames - 1) : 1f), deltaTime);
 			EndStroke();
 		}

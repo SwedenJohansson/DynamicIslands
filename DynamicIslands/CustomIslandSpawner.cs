@@ -300,6 +300,26 @@ namespace DynamicIslands.Editor
 			return null;
 		}
 
+		/// <summary>
+		/// A free spot ahead of the raft for an island of this land radius, as a new island gets one (off-centre, a little
+		/// further out each try), at height y, or null. ignore: the island that is moving there itself (ReturningIslands);
+		/// other custom islands are kept clear of by their land, not the spacing new islands keep.
+		/// </summary>
+		internal static Vector3? SpotAhead(Vector3 raftPos, float radius, float y, IslandWorldState.Entry ignore)
+		{
+			Vector3 dir = SailDirection();
+			for (int attempt = 0; attempt < 12; attempt++)
+			{
+				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
+				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
+				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance);
+				Vector3 c = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
+				c.y = y;
+				if (Rejects(c, radius, raftPos, true, 0f, ignore) == null) return c;
+			}
+			return null;
+		}
+
 		/// <summary>Why an island of this land radius shouldn't go at candidate because one of Raft's islands is there, or null.</summary>
 		public static string OverlapsRaftIsland(Vector3 candidate, float radius)
 		{
@@ -311,13 +331,14 @@ namespace DynamicIslands.Editor
 		/// Why an island of this land radius can't go at candidate, or null if it can. minSpacing: centre-to-centre
 		/// distance kept from other custom islands (-1 = the minSpacing setting; 0 = just clear of their land).
 		/// </summary>
-		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f)
+		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f, IslandWorldState.Entry ignore = null)
 		{
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance) return "too close to the raft";
 			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (WorldRandomizer.IsExtras(e)) continue; // (on one of Raft's islands: its chunk point below keeps the room)
+				if (e == ignore) continue; // (the island moving there itself)
 				float d = Flat(candidate - e.Position).magnitude;
 				if (d < Mathf.Max(spacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
 			}
@@ -446,6 +467,9 @@ spawnDistanceMin = 250
 spawnDistanceMax = 350
 # Islands further than this from the raft are unloaded (and come back when the raft returns)
 unloadDistance = 800
+# An island the players still need - its quest begun and not done, or one a world plan waits for - that the raft left
+# behind comes back ahead of the raft after this many minutes (0 = never)
+returnMinutes = 12
 # Harvested trees and picked-up items grow back after this many in-game days (0 = never). Checked when an island loads.
 regrowDays = 3
 # Show custom islands as green dots on Raft's Receiver (1 = yes, 0 = no)
@@ -537,6 +561,7 @@ type:sunken 0.2
 				case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); return true;
 				case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); return true;
 				case "unloaddistance": UnloadDistance = Mathf.Max(300f, v); return true;
+				case "returnminutes": ReturningIslands.ReturnMinutes = Mathf.Max(0f, v); return true;
 				case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); return true;
 				case "showonreceiver": ShowOnReceiver = v != 0f; return true;
 				case "generated": GeneratedWeight = Mathf.Max(0f, v); return true;

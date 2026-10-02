@@ -15,6 +15,12 @@ generate
 brush lower at 22 0 r=12 s=10 frames=8
 clear at 22 0 r=13
 clear at -2 2 r=4
+# (the shed's ground levelled: on the islet's slope its floor was under the ground on the high side)
+brush flatten at -3.25 5.5 r=3.5 s=20 frames=20
+clear at -3.25 5.5 r=4
+# (the way from the plank walkway up the beach to the shed kept clear of the generator's rocks and driftwood)
+clear from 10 0.75 to 4 0.75 r=2.5
+clear from 4 0.75 to -2 3 r=2.5
 
 # --- The tool shed on the islet: a hut of Raft's planks, a flat roof, the farmer's chest ------------------------
 push at -4 4 y=0.05

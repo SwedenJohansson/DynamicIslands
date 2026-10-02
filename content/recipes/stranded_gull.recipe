@@ -49,7 +49,7 @@ place "VG_DecorationPrefabBase_WoodenBoxes_ShortRect Variant" - at 1.5 4.5 sit y
 place "Box Small" - at 2.2 2.6 sit yaw=40
 place "Box Small" - at 2.9 3.6 sit yaw=10
 place BoatLandmark_Flag flag at -13 8 sit yaw=40
-place Pickup_Landmark_LandmarkCrateRaft - at -15 -7 h=0.1
+place Pickup_Landmark_LandmarkCrateRaft - at -15 -7
 place Zone_Trigger camp at -4 3 y=1
 
 # --- Palms and bushes on the sand, shells and stones to pick up ---------------------------------------------------

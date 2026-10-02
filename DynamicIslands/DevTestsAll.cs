@@ -497,6 +497,27 @@ namespace DynamicIslands
 			Log("Journal " + (JournalWindow.IsOpen ? "open" : "closed") + ", note reader " + (NoteReader.IsOpen ? "open" : "closed"));
 		}
 
+		[ConsoleCommand(name: "CIJournalShot", docs: "Dev, in game: the journal opened on a page (the newest, or the one whose title contains <text>) and its picture taken: shot_journal_world.png (the guide's). CIJournalShot [text]")]
+		public static void JournalShotCommand(string[] args)
+		{
+			string part = args != null && args.Length > 0 ? string.Join(" ", args) : null;
+			DynamicIslands.instance.StartCoroutine(JournalShotRoutine(part));
+		}
+
+		static IEnumerator JournalShotRoutine(string part)
+		{
+			JournalWindow.Open();
+			yield return new WaitForSeconds(0.5f);
+			StoryBook.Page p = StoryBook.Pages.LastOrDefault(x => part == null || x.Title.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (p != null) JournalWindow.ShowKey(p.Key);
+			yield return new WaitForSeconds(0.8f);
+			Log("  the list: " + string.Join(" | ", JournalWindow.ListLines().ToArray()));
+			Screenshot(new[] { "journal_world" });
+			yield return new WaitForSeconds(0.6f);
+			JournalWindow.Close();
+			Log("PASS: journal picture (" + StoryBook.Pages.Count + " pages)");
+		}
+
 		#endregion
 
 		#region Round trip of every saved island

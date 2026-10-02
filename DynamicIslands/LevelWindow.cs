@@ -674,8 +674,8 @@ namespace DynamicIslands.Editor
 				UIKit.Hint(row.gameObject, LevelRules.StatHints[i]);
 			}
 
-			Text about = UIKit.Label(panel, "Hit monsters to earn EXP: the tougher the monster and the harder it bites, the more (Bruce the shark is worth " + LevelRules.ReferenceXp +
-				"). Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level. Every level gives " + LevelRules.PointsPerLevel +
+			Text about = UIKit.Label(panel, "Hit monsters to earn EXP: the tougher the monster and the harder it bites, the more (Bruce the shark is worth " + LevelRules.BruceXp +
+				"). Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level. Every level gives " + LevelRules.PointsPerLevel +
 				" stat points; each point is +1% (Hunger, Thirst and Oxygen last 1% longer), at most " + LevelRules.MaxPoints + " points in a stat. With every stat full the levels go on, without points.", 12, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "About");
 			about.lineSpacing = 1.05f;
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");

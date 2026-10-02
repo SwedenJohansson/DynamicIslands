@@ -268,10 +268,98 @@ namespace DynamicIslands
 				lifted++;
 				if (lifted <= 30) Log("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
 			}
-			Log((found + partly + lifted == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature);
+			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
+			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
+			int all = 0, alone = 0, buried = 0;
+			List<EditorGameObject> placed = PlacedEditorObjects().ToList();
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null) continue;
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				if (parts.Length == 0) continue;
+				Bounds whole = parts[0].bounds;
+				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+				all++;
+				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
+				// (things on the water - a buoy, a raft's foundation - float; the sea holds them)
+				bool onWater = whole.min.y < sea && whole.max.y > sea - 0.3f;
+				if (!onWater && whole.min.y - land > 0.5f)
+				{
+					Collider[] touching = Physics.OverlapBox(whole.center, whole.extents + Vector3.one * 0.15f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+					// (the terrain counts where the box meets its surface: a beam laid across a gap rests on the rock at its ends)
+					if (!touching.Any(c => !c.transform.IsChildOf(e.transform)))
+					{
+						alone++;
+						if (alone <= 30) Log("  in the air, touching nothing: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground");
+					}
+				}
+				// (buried whole: its top under the ground everywhere over its footprint - a rock sunk into a slope shows on its low
+				// side and is meant so - and not inside a cave or a building of other objects)
+				if (!ShowsAboveGround(whole, ground) && !n.Contains("Cave") && !n.Contains("Tunnel") &&
+					!placed.Any(o => o != e && o.GetComponentsInChildren<Collider>(false).Any(c => !c.isTrigger && c.bounds.Contains(whole.center))))
+				{
+					buried++;
+					if (buried <= 30) Log("  buried under the ground: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its top h=" + Num(whole.max.y - sea) + " is " + Num(land - whole.max.y) + " m under the ground");
+				}
+			}
+			Log((found + partly + lifted + alone + buried == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature +
+				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all);
 		}
 
-		[ConsoleCommand(name: "CIStandOn", docs: "Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n] [from this height above the sea: under a roof]")]
+		[ConsoleCommand(name: "CIBoundsOf", docs: "Dev, editor: where the island's objects whose name contains <part> are and how far they reach - pivot (m from the island's middle, h above the sea), turn, the box around their meshes (bottom and top h), the ground under its middle and the colliders it touches: fixing a recipe's floating or buried things. CIBoundsOf <part>")]
+		public static void BoundsOfCommand(string[] args)
+		{
+			if (args == null || args.Length < 1 || !DynamicIslands.InEditor()) { Fail("CIBoundsOf <part> (in the editor)"); return; }
+			string part = string.Join(" ", args);
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Terrain ground = terraineditor.terrain;
+			Physics.SyncTransforms();
+			int n = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string name = e.GameObjectName ?? "";
+				if (name.IndexOf(part, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				Vector3 p = e.transform.position;
+				float land = ground != null ? ground.SampleHeight(b.center) + ground.transform.position.y : sea;
+				Collider[] touching = Physics.OverlapBox(b.center, b.extents + Vector3.one * 0.15f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+				string others = string.Join(", ", touching.Where(c => !c.transform.IsChildOf(e.transform)).Select(c => c.GetComponent<Terrain>() != null ? "terrain" : c.GetComponentInParent<EditorGameObject>() != null ? c.GetComponentInParent<EditorGameObject>().GameObjectName : c.name).Distinct().Take(6).ToArray());
+				Log("  " + name + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + " h=" + Num(p.y - sea) + " turn " + e.transform.eulerAngles.ToString("F0") + ": box " + Num(b.min.x - mid.x) + ".." + Num(b.max.x - mid.x) + " x " +
+					Num(b.min.z - mid.y) + ".." + Num(b.max.z - mid.y) + ", h " + Num(b.min.y - sea) + ".." + Num(b.max.y - sea) + "; ground under its middle h=" + Num(land - sea) + "; touches " + (others.Length > 0 ? others : "nothing"));
+				n++;
+			}
+			Log("PASS: " + n + " objects with '" + part + "'");
+		}
+
+		[ConsoleCommand(name: "CIViewAt", docs: "Dev, editor: a picture of one spot of the island - the camera <dist> m from the point <x> <z> (m from the island's middle) <h> (above the sea), from <yaw> and <pitch> degrees: shot_<name>.png. CIViewAt <x> <z> <h> <yaw> <pitch> <dist> <name>")]
+		public static void ViewAtCommand(string[] args)
+		{
+			if (args == null || args.Length < 7 || !DynamicIslands.InEditor() || Camera.main == null) { Fail("CIViewAt <x> <z> <h> <yaw> <pitch> <dist> <name> (in the editor)"); return; }
+			Vector2 mid = EditorLandCentre();
+			Vector3 at = new Vector3(mid.x + F(args[0]), DynamicIslands.EditorWaterLevel + F(args[2]), mid.y + F(args[1]));
+			Quaternion look = Quaternion.Euler(F(args[4]), F(args[3]), 0f);
+			EditorCamera ec = Camera.main.GetComponent<EditorCamera>();
+			if (ec != null) ec.enabled = false; // (it would move the camera back to where it was steering)
+			Camera.main.transform.SetPositionAndRotation(at - look * Vector3.forward * F(args[5]), look);
+			DynamicIslands.instance.StartCoroutine(ViewAtShot(args[6], ec));
+		}
+
+		static IEnumerator ViewAtShot(string name, EditorCamera ec)
+		{
+			yield return new WaitForSecondsRealtime(0.8f);
+			Screenshot(new[] { name });
+			yield return new WaitForSecondsRealtime(0.5f);
+			if (ec != null) ec.enabled = true;
+			Log("PASS: view " + name);
+		}
+
+		[ConsoleCommand(name: "CIStandOn", docs:"Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n] [from this height above the sea: under a roof]")]
 		public static void ProbeCommand(string[] args)
 		{
 			if (args == null || args.Length < 4 || !DynamicIslands.InEditor()) { Fail("CIStandOn <x1> <z1> <x2> <z2> [n] (in the editor)"); return; }
@@ -675,6 +763,7 @@ namespace DynamicIslands
 			RecipeObjects.Clear();
 			recipeGroups.Clear();
 			recipePlaced.Clear();
+			leftOutBuried = 0;
 			pendingQuest = null;
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
@@ -810,6 +899,7 @@ namespace DynamicIslands
 							if (at < 0 || at + 2 >= t.Length) { error = "place: <Object> <alias> at <x> <z>"; break; }
 							if (obj == "none") break; // (a macro's slot left empty: no wall there)
 							var opt = Options(t.Skip(at + 3));
+							if (alias == "-") opt[SkipBuried] = "1";
 							EditorGameObject e;
 							error = Place(obj, F(t[at + 1]), F(t[at + 2]), opt, out e);
 							if (e != null)
@@ -847,6 +937,9 @@ namespace DynamicIslands
 								o["yaw"] = opt.ContainsKey("yaw") ? opt["yaw"] : Num(rnd.NextDouble() * 360);
 								o["scale"] = Num(s0 + rnd.NextDouble() * (s1 - s0));
 								o.Remove("r"); o.Remove("seed");
+								// (on the terrain it was picked on, also in a frame with a floor: Ironreef's Drowned Shaft scattered its
+								// boulders at its floor 4 m under the sea - under the banks they were picked on, 2026-10-02)
+								if (!o.ContainsKey("y") && !o.ContainsKey("h")) o["ground"] = "1";
 								EditorGameObject e;
 								error = Place(t[1], px, pz, o, out e);
 								if (error != null) break;
@@ -857,15 +950,18 @@ namespace DynamicIslands
 						case "line":
 						{
 							// line <Object> from x1 z1 to x2 z2 step=<m> [ends] [yaw=offset] [y=|h=] [sit]: a row along a line, each turned along it
+							// (follow: end to end over the ground instead - LineFollow)
 							int from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
 							if (from < 0 || to < 0 || to + 2 >= t.Length) { error = "line <Object> from <x1> <z1> to <x2> <z2> step=<m>"; break; }
 							var opt = Options(t.Skip(to + 3));
+							opt[SkipBuried] = "1";
 							float x1 = F(t[from + 1]), z1 = F(t[from + 2]), x2 = F(t[to + 1]), z2 = F(t[to + 2]);
 							float len = Mathf.Sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1)), step = opt.ContainsKey("step") ? F(opt["step"]) : 1.5f;
 							int n = Mathf.Max(1, Mathf.RoundToInt(len / step));
 							// (the yaw that turns an object's x axis along the line, in the frame)
 							float yaw = Mathf.Atan2(-(z2 - z1), x2 - x1) * Mathf.Rad2Deg + (opt.ContainsKey("yaw") ? F(opt["yaw"]) : 0f);
 							bool ends = opt.ContainsKey("ends");
+							if (opt.ContainsKey("follow")) { error = LineFollow(t[1], x1, z1, x2, z2, yaw, opt, ref placed); break; }
 							for (int k = 0; k < n && error == null; k++)
 							{
 								float f = len > 0 ? (k + (ends ? 0f : 0.5f)) * step / len : 0f;
@@ -904,6 +1000,7 @@ namespace DynamicIslands
 									{ "h", Num(hh) }, { "yaw", Num(yaw) }, { "roll", Num(roll) }, { "sx", Num(slope / n / piece) }
 								};
 								if (opt.ContainsKey("rot")) o["rot"] = opt["rot"];
+								o[SkipBuried] = "1"; // (a bridge's first plank inside the bank: left out, as line's)
 								EditorGameObject e;
 								error = Place(t[1], x1 + (x2 - x1) * f, z1 + (z2 - z1) * f, o, out e);
 								if (e != null) placed++;
@@ -1088,7 +1185,7 @@ namespace DynamicIslands
 				if (steps % 40 == 0) yield return null;
 			}
 			EditorUI.RefreshIsland();
-			Log("PASS: recipe " + name + " (" + steps + " steps, " + placed + " objects placed, " + (Time.realtimeSinceStartup - started).ToString("F0") + " s" + (RecipeSaved != null ? ", saved '" + RecipeSaved + "'" : "") + ")");
+			Log("PASS: recipe " + name + " (" + steps + " steps, " + placed + " objects placed, " + (leftOutBuried > 0 ? leftOutBuried + " left out under the ground, " : "") + (Time.realtimeSinceStartup - started).ToString("F0") + " s" + (RecipeSaved != null ? ", saved '" + RecipeSaved + "'" : "") + ")");
 		}
 
 		[ConsoleCommand(name: "CIView", docs: "Dev, editor: pictures of the editor's island without the editor's panels (Mods\\DynamicIslands\\recipes\\view_<name>_<n>.jpg, 1280x720): from four sides and from above, framed on the land - or one view from a point to a point (metres from the island's middle, heights above the sea): CIView <name> [x y z lookx looky lookz]")]
@@ -1208,7 +1305,8 @@ namespace DynamicIslands
 		}
 
 		/// <summary>A terrain stroke through the editor's brush: brush raise|lower|flatten|smooth|sample|sand|grass|rock|seabed|auto|stamp:i
-		/// at x z (a stroke there) or from x1 z1 to x2 z2 (dragged) [r=radius] [s=strength] [frames=n] [rot=degrees].</summary>
+		/// at x z (a stroke there) or from x1 z1 to x2 z2 (dragged) [r=radius] [s=strength] [frames=n] [rot=degrees] [h=: flatten to
+		/// that height above the sea].</summary>
 		static string Brush(string[] t)
 		{
 			int at = Array.IndexOf(t, "at"), from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
@@ -1240,15 +1338,107 @@ namespace DynamicIslands
 			int frames = opt.ContainsKey("frames") ? Mathf.Clamp((int)F(opt["frames"]), 1, 600) : 30;
 			terraineditor te = Camera.main != null ? Camera.main.GetComponent<terraineditor>() : null;
 			if (te == null) return "brush: the editor's terrain tool isn't there";
+			// (flatten h=: to that height above the sea instead of the ground's where the stroke starts - a sunken building's
+			// pit dug down to its floor)
+			float? flattenTo = opt.ContainsKey("h") ? DynamicIslands.EditorWaterLevel + F(opt["h"]) : (float?)null;
 			if (at >= 0)
 			{
 				Vector2 p = WorldXZ(F(t[at + 1]), F(t[at + 2]));
-				te.SimulateStroke(new Vector3(p.x, GroundY(p.x, p.y), p.y), frames, 0.05f);
+				te.SimulateStroke(new Vector3(p.x, GroundY(p.x, p.y), p.y), frames, 0.05f, flattenTo);
 			}
 			else
 			{
 				Vector2 a = WorldXZ(F(t[from + 1]), F(t[from + 2])), b = WorldXZ(F(t[to + 1]), F(t[to + 2]));
-				te.SimulateDrag(new Vector3(a.x, GroundY(a.x, a.y), a.y), new Vector3(b.x, GroundY(b.x, b.y), b.y), frames, 0.05f);
+				te.SimulateDrag(new Vector3(a.x, GroundY(a.x, a.y), a.y), new Vector3(b.x, GroundY(b.x, b.y), b.y), frames, 0.05f, flattenTo);
+			}
+			return null;
+		}
+
+		/// <summary>Place's option (set by the place step for an unnamed object, and by line): leave it out if it is under the ground whole.</summary>
+		const string SkipBuried = "\u0001skipburied";
+
+		/// <summary>Pieces the recipe left out because they were under the ground whole (this run).</summary>
+		static int leftOutBuried;
+
+		/// <summary>Whether an object is under the ground whole (ShowsAboveGround).</summary>
+		static bool BuriedWhole(GameObject go)
+		{
+			Terrain ground = terraineditor.terrain;
+			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+			if (ground == null || rs.Length == 0) return false;
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			return !ShowsAboveGround(b, ground);
+		}
+
+		/// <summary>
+		/// Whether the box around an object's meshes shows above the terrain somewhere over its footprint (5 x 5 points, 15 %
+		/// in): its top at least 3 cm over the ground there (a third of a very flat thing's height). A floor laid flush with
+		/// the ground shows 4 cm, a flat flower 5 cm; a boulder sunk to 1 cm doesn't.
+		/// </summary>
+		static bool ShowsAboveGround(Bounds b, Terrain ground)
+		{
+			float need = Mathf.Min(0.03f, 0.3f * b.size.y);
+			for (int i = 0; i <= 4; i++)
+				for (int j = 0; j <= 4; j++)
+				{
+					var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.15f, b.max.x - b.size.x * 0.15f, i / 4f), 0f, Mathf.Lerp(b.min.z + b.size.z * 0.15f, b.max.z - b.size.z * 0.15f, j / 4f));
+					if (b.max.y > ground.SampleHeight(p) + ground.transform.position.y + need) return true;
+				}
+			return false;
+		}
+
+		/// <summary>
+		/// line ... follow [y=0.1] [step=]: pieces end to end over the ground under the line - each from the ground (+y) at its
+		/// start to the ground at its end, tilted and stretched to reach it (their long side is their x; step: how long each is
+		/// along the ground, else its own length) - a pipe or a cable down a cliff. Laid level at their own heights, Stilt
+		/// Hollow's red pipe was steps hanging over the reef wall, its down-pipe inside the rock (2026-10-02).
+		/// </summary>
+		static string LineFollow(string name, float x1, float z1, float x2, float z2, float yaw, Dictionary<string, string> opt, ref int placed)
+		{
+			Bounds lb;
+			GameObject proto = PlaceableCatalog.Get(name);
+			if (proto == null || !PlaceableCatalog.LocalBounds(name, out lb)) return "line ... follow: no shape for '" + name + "'";
+			float own = Mathf.Max(0.05f, lb.size.x * Mathf.Abs(proto.transform.localScale.x));
+			float piece = opt.ContainsKey("step") ? Mathf.Max(0.2f, F(opt["step"])) : own;
+			float above = opt.ContainsKey("y") ? F(opt["y"]) : 0.1f;
+			float len = Mathf.Sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
+			if (len < 0.01f) return "line ... follow: the line has no length";
+			Vector2 dir = new Vector2(x2 - x1, z2 - z1) / len;
+			Func<float, float> ground = d => { Vector2 w = WorldXZ(x1 + dir.x * d, z1 + dir.y * d); return GroundY(w.x, w.y) + above; };
+			Func<float, float, float> reach = (a, run) => { float r = ground(a + run) - ground(a); return Mathf.Sqrt(run * run + r * r); };
+			float at = 0f;
+			for (int k = 0; k < 400 && at < len - 0.01f; k++)
+			{
+				// (as far along as one piece reaches over the ground there - less down a cliff)
+				float run = Mathf.Min(piece, len - at);
+				if (reach(at, run) > piece)
+				{
+					float lo = 0f, hi = run;
+					for (int i = 0; i < 24; i++) { float m = (lo + hi) / 2f; if (reach(at, m) > piece) hi = m; else lo = m; }
+					run = Mathf.Max(0.02f, lo);
+				}
+				// (a last bit shorter than a quarter piece: this piece reaches the end instead)
+				if (len - (at + run) < piece * 0.25f) run = len - at;
+				float ya = ground(at), rise = ground(at + run) - ya;
+				var o = new Dictionary<string, string>(opt, StringComparer.OrdinalIgnoreCase);
+				o.Remove("step"); o.Remove("follow"); o.Remove("y"); o.Remove("sit"); o.Remove("ends"); o.Remove(SkipBuried);
+				o["yaw"] = Num(yaw);
+				o["roll"] = Num(Mathf.Atan2(rise, run) * Mathf.Rad2Deg);
+				o["sx"] = Num(Mathf.Sqrt(run * run + rise * rise) / own);
+				o["h"] = Num(ya - DynamicIslands.EditorWaterLevel);
+				EditorGameObject e;
+				string error = Place(name, x1 + dir.x * at, z1 + dir.y * at, o, out e);
+				if (error != null) return error;
+				if (e != null)
+				{
+					// (its start - the middle of its end face - on the ground at the start of its stretch)
+					Vector2 w = WorldXZ(x1 + dir.x * at, z1 + dir.y * at);
+					Vector3 start = e.transform.TransformPoint(new Vector3(lb.min.x, lb.center.y, lb.center.z));
+					e.transform.position += new Vector3(w.x, ya, w.y) - start;
+					placed++;
+				}
+				at += run;
 			}
 			return null;
 		}
@@ -1281,7 +1471,7 @@ namespace DynamicIslands
 			if (opt.ContainsKey("centred"))
 			{
 				// (its visible middle at the point, not its pivot - some of Raft's scene objects have their pivot tens of metres away)
-				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
 				if (rs.Length > 0)
 				{
 					Bounds b = rs[0].bounds;
@@ -1295,17 +1485,39 @@ namespace DynamicIslands
 			{
 				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y, go.transform.position.z);
 				y = Mathf.Min(y, PlacementOptions.LowestGroundUnder(go));
-				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y, go.transform.position.z);
+				// (as the placer: an object whose pivot is well above its bottom rests on its bottom - RestingPivotY)
+				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y + PlacementOptions.PivotAboveBottom(go), go.transform.position.z);
 			}
 			if (opt.ContainsKey("sit"))
 			{
-				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
 				if (rs.Length > 0)
 				{
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					go.transform.position += Vector3.up * (y - b.min.y);
 				}
+			}
+			bool onGround = !opt.ContainsKey("h") && !opt.ContainsKey("y") && (!TopFrame.HasFloor || opt.ContainsKey("ground"));
+			// (set down on the lowest ground under it, a small thing on a steep slope can be under the ground whole - Ranger's
+			// Rest's firewood: on the ground at its middle instead)
+			if (onGround && BuriedWhole(go))
+			{
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				go.transform.position += Vector3.up * (GroundY(b.center.x, b.center.z) - b.min.y);
+			}
+			// (an unnamed piece at a set height buried whole - a stilt's lower segment where the sea floor is higher than the
+			// recipe guessed, a walkway's planks inside the beach - is left out: nobody sees it, and CIFloating counts it as
+			// buried, 2026-10-02)
+			else if (!onGround && opt.ContainsKey(SkipBuried) && BuriedWhole(go))
+			{
+				go.SetActive(false);
+				UnityEngine.Object.Destroy(go);
+				leftOutBuried++;
+				Log("  left out, under the ground: " + name + " at " + Num(x) + " " + Num(z));
+				return null;
 			}
 			Collider ownCollider = go.GetComponent<Collider>();
 			if (ownCollider != null) ownCollider.enabled = true;

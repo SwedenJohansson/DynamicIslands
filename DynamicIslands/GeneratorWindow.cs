@@ -358,7 +358,7 @@ namespace DynamicIslands.Editor
 		{
 			Choice(parent, "Level up", new[] { "Off", "On (EXP from monsters)" }, () => s.Levels ? 1 : 0, v => s.Levels = v == 1,
 				"The level up system: once the island is in a world, players there earn EXP by hitting monsters (the number floats over the monster) and level up. " +
-				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level; every level gives " + LevelRules.PointsPerLevel + " stat points for walk, run and swim speed, jump height, damage, health, hunger and oxygen " +
+				"Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level; every level gives " + LevelRules.PointsPerLevel + " stat points for walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen " +
 				"(+1% a point, at most " + LevelRules.MaxPoints + " each; the stats page is " + PlayerLevels.Key + " in a world). Also on the Island tab (Rules).");
 		}
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using DynamicIslands.Editor;
 using HMLLibrary;
 using RaftModLoader;
@@ -367,6 +368,137 @@ namespace DynamicIslands
 				}
 			}
 			Log("PASS: terrain details");
+		}
+
+		[ConsoleCommand(name: "CIIslandDensity", docs: "Dev, editor: the island being edited against Raft's islands of its style (the user, 2026-10-02: no sea full of grass, no beaches full of stones, Raft's finds under water) - things per 1000 m2 of land (trees, bushes, rocks, harvestables, beach things), of the beach strip (stones, clay, sand on it) and of sea floor 0-40 m deep (corals and plants, sea vines and kelp, rocks, finds, sunken things); the finds kind by kind (ores, clay, sand, scrap, stones, clams, algae) and any of Raft's sea finds lying on dry land; DENSE / THIN where it is off by more than 1.6 times. CIIslandDensity [style 0-4]")]
+		public static void IslandDensityCommand(string[] args)
+		{
+			if (!DynamicIslands.InEditor() || terraineditor.terrain == null) { Fail("CIIslandDensity (in the editor, an island open)"); return; }
+			Terrain ground = terraineditor.terrain;
+			int style = args != null && args.Length > 0 ? int.Parse(args[0]) : TerrainPainter.StyleOf(ground);
+			float sea = DynamicIslands.EditorWaterLevel, baseY = ground.transform.position.y;
+			Vector3 size = ground.terrainData.size;
+			// (the ground on a 2 m grid: land, its beach strip - under 1.5 m above the sea - and sea floor 0-40 m deep within 60 m
+			// of the land, as Raft's were measured round its islands: over the whole terrain a shallow floor counted 1 km2)
+			const float cell = 2f, reach = 60f;
+			int nx = Mathf.CeilToInt(size.x / cell), nz = Mathf.CeilToInt(size.z / cell);
+			var heights = new float[nx, nz];
+			var dist = new int[nx, nz];
+			var queue = new Queue<int>();
+			float land = 0f, beach = 0f, floor = 0f;
+			for (int i = 0; i < nx; i++)
+				for (int j = 0; j < nz; j++)
+				{
+					float h = heights[i, j] = ground.SampleHeight(new Vector3(ground.transform.position.x + (i + 0.5f) * cell, 0f, ground.transform.position.z + (j + 0.5f) * cell)) + baseY - sea;
+					dist[i, j] = h > 0f ? 0 : int.MaxValue;
+					if (h > 0f) { land += cell * cell; if (h < 1.5f) beach += cell * cell; queue.Enqueue(i * nz + j); }
+				}
+			int steps = Mathf.CeilToInt(reach / cell);
+			while (queue.Count > 0)
+			{
+				int c = queue.Dequeue(), ci = c / nz, cj = c % nz;
+				if (dist[ci, cj] >= steps) continue;
+				foreach (int[] o in new[] { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } })
+				{
+					int a = ci + o[0], b = cj + o[1];
+					if (a < 0 || b < 0 || a >= nx || b >= nz || dist[a, b] <= dist[ci, cj] + 1) continue;
+					dist[a, b] = dist[ci, cj] + 1;
+					queue.Enqueue(a * nz + b);
+				}
+			}
+			for (int i = 0; i < nx; i++)
+				for (int j = 0; j < nz; j++)
+					if (heights[i, j] <= 0f && heights[i, j] > -40f && dist[i, j] <= steps) floor += cell * cell;
+			Func<Vector3, bool> nearLand = p =>
+			{
+				int i = Mathf.Clamp(Mathf.FloorToInt((p.x - ground.transform.position.x) / cell), 0, nx - 1), j = Mathf.Clamp(Mathf.FloorToInt((p.z - ground.transform.position.z) / cell), 0, nz - 1);
+				return dist[i, j] <= steps;
+			};
+			int farOut = 0;
+			bool small = Mathf.Sqrt(land / Mathf.PI) < (RaftIslands.SmallRadius + RaftIslands.LargeRadius) / 2f;
+			LandStyle raft = RaftLand.For(style, small);
+			var landKind = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			for (int st = 0; st < TerrainPainter.Styles.Length; st++) foreach (LandThing t in RaftLand.For(st).Things) if (!landKind.ContainsKey(t.Name)) landKind[t.Name] = t.Category;
+			foreach (LandThing t in raft.Things) landKind[t.Name] = t.Category;
+			string[] landCats = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest, IslandGenerator.CatBeach };
+			string[] seaCats = { IslandGenerator.CatWater, IslandGenerator.CatSeaRocks, IslandGenerator.CatSeaFinds, IslandGenerator.CatSunken };
+			var onLand = landCats.ToDictionary(c => c, c => 0);
+			var underWater = seaCats.ToDictionary(c => c, c => 0);
+			var finds = new SortedDictionary<string, int>();
+			var findsDry = new SortedDictionary<string, int>();
+			int vines = 0, beachThings = 0, other = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string n = e.GameObjectName ?? "";
+				Vector3 p = e.transform.position;
+				float h = ground.SampleHeight(p) + baseY - sea, above = p.y - sea;
+				string seaCat = RaftUnderwater.CategoryOf(n), landCat;
+				if (above < -0.3f && h < 0f)
+				{
+					if (!nearLand(p)) { farOut++; continue; }
+					if (seaCat != null) underWater[seaCat]++; else other++;
+					if (seaCat == IslandGenerator.CatSeaFinds) { string k = FindKind(n); finds[k] = finds.ContainsKey(k) ? finds[k] + 1 : 1; }
+					if (Regex.IsMatch(n, @"^(SeaVine3|SeaVine3_klump|[Ss]eavine_tongue|Pillar_\d+)$")) vines++;
+				}
+				else if (landKind.TryGetValue(n, out landCat))
+				{
+					onLand[landCat]++;
+					if (h < 1.5f && (landCat == IslandGenerator.CatBeach || landCat == IslandGenerator.CatRocks)) beachThings++;
+				}
+				else if (seaCat == IslandGenerator.CatSeaFinds && h > 0.3f && Regex.IsMatch(n, @"Iron|Copper|Scrap|GiantClam|SilverAlgae"))
+				{
+					// (Raft keeps its ores, scrap, clams and algae under water)
+					string k = FindKind(n);
+					findsDry[k] = findsDry.ContainsKey(k) ? findsDry[k] + 1 : 1;
+				}
+				else other++;
+			}
+			bool ok = true;
+			Func<float, float, string> judge = (mine, theirs) => theirs <= 0.01f ? (mine > 0.5f ? "  (Raft has none)" : "") : mine > theirs * 1.6f ? "  DENSE" : mine < theirs / 1.6f ? "  THIN" : "";
+			Log("  " + TerrainPainter.StyleName(style) + (small ? " (small)" : " (big)") + ": land " + land.ToString("F0") + " m2 (beach strip " + beach.ToString("F0") + "), sea floor 0-40 m within " + reach.ToString("F0") + " m of it " + floor.ToString("F0") + " m2 (" + farOut + " things further out)");
+			float raftArea = Mathf.Max(1f, raft.Area.Sum());
+			foreach (string c in landCats)
+			{
+				float mine = land > 1f ? onLand[c] * 1000f / land : 0f, theirs = raft.CountOf(c) * 1000f / raftArea;
+				Log("  land " + c + ": " + onLand[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs));
+			}
+			Log("  on the beach strip (rocks and beach things): " + beachThings + " = " + (beach > 1f ? beachThings * 1000f / beach : 0f).ToString("F1") + " per 1000 m2");
+			foreach (string c in seaCats)
+			{
+				float mine = floor > 1f ? underWater[c] * 1000f / floor : 0f, theirs = RaftUnderwater.DensityOf(style, c);
+				Log("  under water " + c + ": " + underWater[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs));
+			}
+			// (Raft's: its vine and kelp kinds per 1000 m2 of sea floor 0-40 m deep)
+			SeaStyle raftSea = RaftUnderwater.For(style);
+			float raftFloor = 0f, raftVines = 0f;
+			for (int band = 0; band < 5; band++)
+			{
+				raftFloor += raftSea.Area[band];
+				raftVines += raftSea.Things.Where(t => Regex.IsMatch(t.Name, @"^(SeaVine3|SeaVine3_klump|[Ss]eavine_tongue|Pillar_\d+)$")).Sum(t => t.Density[band]) * raftSea.Area[band];
+			}
+			float myVines = floor > 1f ? vines * 1000f / floor : 0f, theirVines = raftFloor > 0f ? raftVines * 1000f / raftFloor : 0f;
+			Log("  sea vines and kelp: " + vines + " = " + myVines.ToString("F1") + " per 1000 m2 (Raft " + theirVines.ToString("F1") + ")" + judge(myVines, theirVines));
+			Log("  finds under water: " + (finds.Count > 0 ? string.Join(", ", finds.Select(kv => kv.Key + " " + kv.Value).ToArray()) : "none"));
+			string[] raftFinds = { "stone", "clay", "sand", "scrap", "metal ore", "copper ore" };
+			string[] missing = raftFinds.Where(k => !finds.ContainsKey(k)).ToArray();
+			if (floor > 2000f && missing.Length > 0) Log("  missing under water (Raft has them): " + string.Join(", ", missing));
+			if (findsDry.Count > 0) { ok = false; Log("  Raft's sea finds on dry land: " + string.Join(", ", findsDry.Select(kv => kv.Key + " " + kv.Value).ToArray())); }
+			Log("  other objects (the island's own): " + other);
+			if (ok) Log("PASS: island density"); else Fail("island density");
+		}
+
+		/// <summary>The kind of one of Raft's sea finds, by its name.</summary>
+		static string FindKind(string n)
+		{
+			if (n.Contains("Iron")) return "metal ore";
+			if (n.Contains("Copper")) return "copper ore";
+			if (n.Contains("Clay")) return "clay";
+			if (n.Contains("Sand")) return "sand";
+			if (n.Contains("Scrap")) return "scrap";
+			if (n.Contains("GiantClam")) return "giant clam";
+			if (n.Contains("SilverAlgae")) return "silver algae";
+			if (n.Contains("Rock")) return "stone";
+			return n;
 		}
 
 		[ConsoleCommand(name: "CIGenLikeRaft", docs: "Dev, anywhere: the generator's Like Raft (the Nature and Life under water quick buttons) against Raft's own islands, kind by kind: trees, bushes, rocks, harvestables and beach things per 1000 m² of land on tropical islands the size of Raft's small ones and of its big ones (raft_land.txt), and corals, rocks, finds and sunken things per 1000 m² of sea floor 0-40 m deep (raft_underwater.txt) - each within a third of Raft's; and the slider values that would hit Raft's. CIGenLikeRaft [trees bushes rocks harvest beach]: other land values to try")]

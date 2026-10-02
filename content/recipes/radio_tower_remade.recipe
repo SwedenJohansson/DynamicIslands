@@ -64,7 +64,8 @@ place Zone_Trigger radioroom at -3 0 y=1.2
 # its roof: the dish, the floodlights - and Old Beak's nest
 place RT_Floor - at 0 4.5 y=3
 place RT_SatteliteDisc - at -4.6 -2.5 y=3 sit yaw=200
-place RT_Floodlight - at -5.8 4.3 y=4.35 yaw=315
+# (on the roof itself - it has no railing to stand on, at the railing's height it hung 1.35 m over the roof)
+place RT_Floodlight - at -5.5 4.0 y=3 sit yaw=315
 place Bird_Nest - at -2 2 y=3 sit
 place Creature_StoneBird oldbeak at -2 2 y=5
 place Zone_Trigger roofzone at -3 0 y=6.5

@@ -33,15 +33,15 @@ place RT_Floor - at $fx 9
 next
 call selene_cell -6 3 e=none s=TP_Selene_Int_Room_Entrance floor=none
 call selene_cell 0 3 w=none floor=none
-# the lab (west room): the analyzer, its light, the director's safe
+# the lab (west room): the analyzer, its light (the lamps' tops at the ceiling, 4.73 m over the floor), the director's safe
 place TP_Selene_ComputerRoom_Server01 analyzer at -5.2 1.5 sit yaw=90
-place Stairwell_CeilingLamp analyzerlight at -3 0 y=4.4
+place Stairwell_CeilingLamp analyzerlight at -3 0 y=4.72
 place VG_Safe safe at -5.3 -2 sit yaw=90
 # the director's office (east room): her desk and log, a lamp
 place "VG_DecorationPrefabBase_Desk Variant" - at 3 1.6 sit yaw=180
 place Note_Paper directorlog at 3 1.6 y=0.8 sit yaw=180
 place TP_DeskLamp - at 3.8 1.8 y=0.8 sit yaw=180
-place Stairwell_CeilingLamp - at 3 0 y=4.4
+place Stairwell_CeilingLamp - at 3 0 y=4.72
 # on the deck: the dive locker by the bridge, the radio mast, lamps, crates
 place Locker divelocker at 10 -3 sit yaw=270
 place RT_PillarThick mast at -9 6.5 y=0

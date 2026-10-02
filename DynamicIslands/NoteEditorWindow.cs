@@ -112,15 +112,15 @@ namespace DynamicIslands.Editor
 			// Right: how it looks
 			RectTransform look = UIKit.Group(columns, "Preview");
 			UIKit.Size(look.gameObject, 410, 470);
-			RectTransform sheet = UIKit.Rect("Sheet", look);
-			UIKit.Size(sheet.gameObject, -1, 430);
-			UIKit.Background(sheet.gameObject, new Color(0.94f, 0.9f, 0.8f, 1f), 6);
-			UIKit.Border(sheet, new Color(0.55f, 0.45f, 0.3f, 1f), 6, 2f);
-			UIKit.Vertical(sheet.gameObject, 8f, new RectOffset(20, 20, 16, 16));
-			Color ink = new Color(0.2f, 0.15f, 0.1f, 1f);
-			previewTitle = UIKit.Label(sheet, "", 20, ink, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
+			// (as the note reader shows it: the title in Raft's lettering over the text on Raft's light tan)
+			previewTitle = UIKit.Label(look, "", 20, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.Size(previewTitle.gameObject, -1, 30);
-			previewText = UIKit.Label(sheet, "", 14, ink, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
+			RectTransform sheet = UIKit.Rect("Sheet", look);
+			UIKit.Size(sheet.gameObject, -1, 396);
+			UIKit.ParchmentSheet(sheet);
+			UIKit.Vertical(sheet.gameObject, 8f, new RectOffset(20, 20, 16, 16));
+			previewText = UIKit.Label(sheet, "", 14, UIKit.ParchmentInk, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
+			{ Shadow sh = previewText.GetComponent<Shadow>(); if (sh != null) UnityEngine.Object.Destroy(sh); }
 			previewText.supportRichText = false;
 			previewText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Size(previewText.gameObject, -1, -1).flexibleHeight = 1f;

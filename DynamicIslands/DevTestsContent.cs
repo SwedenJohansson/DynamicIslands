@@ -686,6 +686,183 @@ namespace DynamicIslands
 			if (ok) Log("PASS: objects placed standing straight"); else Fail("objects placed standing straight");
 		}
 
+		[ConsoleCommand(name: "CIDrawnInPlace", docs: "Dev, editor: every object of the catalog is drawn where it stands - copies placed, then moved 100 m: each of their meshes moves with them (Raft's statically batched scenery drew where it stands in Raft's own scene: the Stranded Gull's boat was invisible, its locker floating). Lists the batched objects and any still drawn elsewhere. CIDrawnInPlace [all: every one of Raft's island scenes loaded first]")]
+		public static void DrawnInPlace(string[] args) { DynamicIslands.instance.StartCoroutine(DrawnInPlaceRoutine(args != null && args.Contains("all"))); }
+
+		static IEnumerator DrawnInPlaceRoutine(bool all)
+		{
+			yield return WaitForEditor(false);
+			if (all) yield return PlaceableCatalog.EnsureLoaded(PlaceableCatalog.IndexedNames.ToList());
+			bool ok = true;
+			Transform parent = new GameObject("CI_DrawnInPlace").transform;
+			Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 60f, 500f), step = new Vector3(100f, 0f, 0f);
+			var elsewhere = new List<string>();
+			var batched = new List<string>();
+			List<string> names = PlaceableCatalog.Names.ToList();
+			int checkedCount = 0;
+			// (in chunks: placed, a frame, their meshes' places read; moved 100 m, a frame, read again)
+			for (int start = 0; start < names.Count; start += 100)
+			{
+				var copies = new List<KeyValuePair<string, GameObject>>();
+				foreach (string name in names.Skip(start).Take(100))
+				{
+					GameObject go = null;
+					try { go = PlaceableCatalog.Spawn(name, parent); } catch (Exception e) { Log("  " + name + ": " + e.Message); }
+					if (go == null) continue;
+					go.transform.position = at;
+					copies.Add(new KeyValuePair<string, GameObject>(name, go));
+				}
+				yield return null;
+				Func<GameObject, MeshRenderer[]> meshes = go => go.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled && r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh != null).ToArray();
+				var before = copies.Select(c => meshes(c.Value).Select(r => r.bounds.center).ToArray()).ToList();
+				foreach (var c in copies) c.Value.transform.position = at + step;
+				yield return null;
+				for (int k = 0; k < copies.Count; k++)
+				{
+					MeshRenderer[] rs = meshes(copies[k].Value);
+					if (rs.Length != before[k].Length) continue;
+					int stuck = 0;
+					for (int i = 0; i < rs.Length; i++)
+						if ((rs[i].bounds.center - before[k][i] - step).magnitude > 0.5f) stuck++;
+					if (rs.Any(r => r.isPartOfStaticBatch)) batched.Add(copies[k].Key);
+					if (stuck > 0) elsewhere.Add(copies[k].Key + " (" + stuck + " of " + rs.Length + " meshes)");
+					checkedCount++;
+				}
+				foreach (var c in copies) UnityEngine.Object.Destroy(c.Value);
+				yield return null;
+			}
+			UnityEngine.Object.Destroy(parent.gameObject);
+			Log("  " + batched.Count + " objects have statically batched meshes (" + PlaceableCatalog.AnchoredRenderers + " meshes anchored in the catalog): " + string.Join(", ", batched.Take(80).ToArray()));
+			Check(ref ok, checkedCount > 100 && elsewhere.Count == 0, checkedCount + " objects checked: " + (elsewhere.Count == 0 ? "each drawn where it stands" : elsewhere.Count + " drawn elsewhere: " + string.Join(", ", elsewhere.Take(60).ToArray())));
+			if (ok) Log("PASS: objects drawn where they stand"); else Fail("objects drawn where they stand");
+		}
+
+		[ConsoleCommand(name: "CIDumpPlaced", docs: "Dev, in game: how a loaded island's objects are drawn - for each object whose name contains <part>: its renderers (on, seen, layer and the camera's culling of it, bounds), materials and shaders (found again by name the same?), LOD groups. CIDumpPlaced <island part> <object part>")]
+		public static void DumpPlaced(string[] args)
+		{
+			if (args == null || args.Length < 2) { Fail("CIDumpPlaced <island part> <object part>"); return; }
+			string islandPart = args[0], objectPart = string.Join(" ", args.Skip(1).ToArray());
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && x.HostName.IndexOf(islandPart, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (e == null) { Fail("no loaded island with '" + islandPart + "' in its name"); return; }
+			Camera cam = Camera.main;
+			float[] culls = cam != null ? cam.layerCullDistances : null;
+			int found = 0;
+			// (the island's objects: the children of its objects' parent - or anything with that name)
+			List<Transform> matches = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.IndexOf(objectPart, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			matches = matches.Where(x => !matches.Any(o => o != x && x.IsChildOf(o))).ToList();
+			if (matches.Count == 0) Log("  no '" + objectPart + "'; the island's objects are named like: " + string.Join(", ", e.Root.GetComponentsInChildren<Transform>(true).Select(x => x.name).Distinct().Take(60).ToArray()));
+			foreach (Transform t in matches)
+			{
+				found++;
+				Log("  object '" + t.name + "' at " + (t.position - e.Position).ToString("F1") + " active " + t.gameObject.activeInHierarchy + ", scripts: " + string.Join(", ", t.GetComponentsInChildren<MonoBehaviour>(true).Where(m => m != null).Select(m => m.GetType().Name).Distinct().ToArray()));
+				foreach (LODGroup g in t.GetComponentsInChildren<LODGroup>(true))
+					Log("    LOD group '" + g.name + "' enabled " + g.enabled + ", size " + g.size.ToString("F1") + ", levels " + string.Join(" / ", g.GetLODs().Select(l => l.screenRelativeTransitionHeight.ToString("F3") + " (" + l.renderers.Length + ")").ToArray()));
+				foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
+				{
+					int layer = r.gameObject.layer;
+					bool seenByCamera = cam != null && (cam.cullingMask & (1 << layer)) != 0;
+					Log("    renderer '" + r.name + "' (" + r.GetType().Name + ") on " + r.enabled + ", active " + r.gameObject.activeInHierarchy + ", visible " + r.isVisible + ", layer " + LayerMask.LayerToName(layer) + " (" + layer + ") " +
+						(seenByCamera ? "in the camera's mask" : "NOT in the camera's mask") + (culls != null && culls[layer] > 0f ? ", culled beyond " + culls[layer].ToString("F0") + " m" : "") + ", bounds " + (r.bounds.center - e.Position).ToString("F1") + " size " + r.bounds.size.ToString("F1") +
+						(r is MeshRenderer && r.GetComponent<MeshFilter>() != null ? ", mesh " + (r.GetComponent<MeshFilter>().sharedMesh != null ? r.GetComponent<MeshFilter>().sharedMesh.name + " (" + r.GetComponent<MeshFilter>().sharedMesh.vertexCount + " vertices)" : "NONE") : ""));
+					foreach (Material m in r.sharedMaterials)
+					{
+						if (m == null) { Log("      material: none"); continue; }
+						Shader byName = m.shader != null ? Shader.Find(m.shader.name) : null;
+						Log("      material '" + m.name + "' shader '" + (m.shader != null ? m.shader.name : "none") + "' supported " + (m.shader != null && m.shader.isSupported) + ", queue " + m.renderQueue +
+							(m.HasProperty("_Color") ? ", colour " + m.GetColor("_Color") : "") + ", found by name: " + (byName == null ? "NOTHING" : byName == m.shader ? "the same" : "ANOTHER shader") + ", keywords " + string.Join(" ", m.shaderKeywords));
+					}
+				}
+			}
+			if (found == 0) Fail("no object with '" + objectPart + "' on '" + e.HostName + "'");
+			else Log("PASS: dumped " + found + " object(s) of '" + e.HostName + "'");
+		}
+
+		[ConsoleCommand(name: "CIReturningIslands", docs: "Dev, in game (host, a test world 'CI ...'): islands the players still need come back ahead of the raft (ReturningIslands) - one with its quest begun and one a plan's rule waits for (never reached), left 1.3 km behind: after the return time (3 s here) both are ahead of the raft, load there, the quest where it was, a banner; one with its quest done, one never reached that nothing waits for, and one that came back 3 times stay; one a Receiver frequency brought doesn't count")]
+		public static void ReturningIslandsTest() { DynamicIslands.instance.StartCoroutine(ReturningIslandsRoutine()); }
+
+		static IEnumerator ReturningIslandsRoutine()
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...' (it changes the world's plan for a moment)"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
+			if (source == null) { Fail("no generated_sample or citest island to build on"); yield break; }
+			// Six copies of an island with a two-step quest
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			f.Props[IslandQuest.KeyTitle] = "Come back";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			string[] names = { "cireturn-begun", "cireturn-awaited", "cireturn-done", "cireturn-unseen", "cireturn-often", "cireturn-receiver" };
+			foreach (string n in names) { f.Name = n; f.Save(IslandSpawner.PathFor(n)); }
+			float minutesBefore = ReturningIslands.ReturnMinutes;
+			WorldPlan planBefore = WorldDirector.Plan;
+			var made = new List<IslandWorldState.Entry>();
+			int returnedCount = 0;
+			Action<IslandWorldState.Entry> onReturn = e => returnedCount++;
+			ReturningIslands.Returned += onReturn;
+			try
+			{
+				// Left behind the raft past the unload distance from their land's edge (unloaded), each its own way - an old
+				// sample island counts its whole raised sea floor as land (700 m): 1.3 km wasn't away for it
+				Vector3 back = -CustomIslandSpawner.SailDirection();
+				float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+				for (int i = 0; i < names.Length; i++)
+				{
+					Vector3 at = raftAt.Value + Quaternion.Euler(0f, -75f + i * 30f, 0f) * back * behindBy;
+					at.y = 0f;
+					made.Add(IslandWorldState.Add(names[i], at, null, false));
+				}
+				Log("  six islands left " + behindBy.ToString("F0") + " m behind the raft (land radius " + CustomIslandSpawner.LandRadius(names[0]).ToString("F0") + " m)");
+				IslandWorldState.Entry begun = made[0], awaited = made[1], done = made[2], unseen = made[3], often = made[4], receiver = made[5];
+				var visit = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				begun.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(begun, 1, 0, false);
+				awaited.Rule = "awaited";
+				done.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(done, 2, 0, false);
+				often.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(often, 1, 0, false);
+				often.State[ReturningIslands.ReturnsKey] = new ObjectState { Active = true, Yield = ReturningIslands.MaxReturns, Day = 0 };
+				receiver.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(receiver, 1, 0, false); receiver.Rule = "radio";
+				// (a Receiver island, checked with no moment in between: the Receiver chain mustn't act on the plan for the moment)
+				WorldDirector.Plan = WorldPlan.Parse("CI returning", "rule = radio | island:cireturn-receiver | start | receiver:900 | | \n");
+				string receiverWhy = ReturningIslands.Why(receiver);
+				// A plan whose rule waits for players to reach 'awaited'
+				WorldDirector.Plan = WorldPlan.Parse("CI returning", "rule = next | island:cireturn-none | visit:awaited | ahead:300 | | \n");
+				Check(ref ok, receiverWhy == null, "an island a Receiver frequency brought doesn't come back (the Receiver shows the way): " + (receiverWhy ?? "no"));
+				// (out of the world for the rest: under the second plan its rule isn't there, so it would look like any begun quest)
+				IslandWorldState.RemoveIds(new List<int> { receiver.Id }, false);
+				made.Remove(receiver);
+				Check(ref ok, ReturningIslands.Why(begun) == "quest" && ReturningIslands.Why(awaited) == "awaited" && ReturningIslands.Why(done) == null && ReturningIslands.Why(unseen) == null && ReturningIslands.Why(often) == null,
+					"which ones are needed: begun " + (ReturningIslands.Why(begun) ?? "no") + ", awaited " + (ReturningIslands.Why(awaited) ?? "no") + ", done " + (ReturningIslands.Why(done) ?? "no") + ", unseen " + (ReturningIslands.Why(unseen) ?? "no") + ", came back 3 times " + (ReturningIslands.Why(often) ?? "no"));
+				ReturningIslands.ReturnMinutes = 0.05f;
+				for (float t = 0f; t < 40f && returnedCount < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(3f);
+				if (returnedCount < 2) foreach (string l in ReturningIslands.Describe().Where(l => l.Contains("cireturn") || l.StartsWith("host"))) Log("  " + l);
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				Func<IslandWorldState.Entry, float> from = e => new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
+				Func<IslandWorldState.Entry, bool> ahead = e => Vector3.Dot(new Vector3(e.Position.x - raftNow.x, 0f, e.Position.z - raftNow.z), CustomIslandSpawner.SailDirection()) > 0f;
+				Check(ref ok, returnedCount == 2 && from(begun) < behindBy - 300f && from(awaited) < behindBy - 300f && ahead(begun) && ahead(awaited),
+					"the two needed islands came back ahead of the raft: " + from(begun).ToString("F0") + " m and " + from(awaited).ToString("F0") + " m away (" + returnedCount + " came back)");
+				Check(ref ok, from(done) > behindBy - 300f && from(unseen) > behindBy - 300f && from(often) > behindBy - 300f,
+					"the others stayed behind: " + string.Join(", ", new[] { done, unseen, often }.Select(e => e.Name.Substring(9) + " " + from(e).ToString("F0") + " m").ToArray()));
+				Check(ref ok, QuestTracker.StepOf(begun) == 1 && ReturningIslands.Returns(begun) == 1, "its quest where it was (step " + QuestTracker.StepOf(begun) + "), came back once (" + ReturningIslands.Returns(begun) + ")");
+				Check(ref ok, (WorldDirector.LastAnnouncement ?? "").Contains("Back in sight"), "a banner says so: " + WorldDirector.LastAnnouncement);
+				for (float t = 0f; t < 30f && (begun.Root == null || awaited.Root == null); t += 0.5f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, begun.Root != null && awaited.Root != null, "they load where they came back to");
+			}
+			finally
+			{
+				ReturningIslands.Returned -= onReturn;
+				ReturningIslands.ReturnMinutes = minutesBefore;
+				WorldDirector.Plan = planBefore;
+				IslandWorldState.RemoveIds(made.Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+			}
+			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
+		}
+
+		[ConsoleCommand(name: "CIReturnState", docs: "Dev, in game (host): every island as the returning-islands clock sees it - why it is needed, how far, its land radius, loaded, how long it has been away, how often it came back")]
+		public static void ReturnState() { foreach (string l in ReturningIslands.Describe()) Log("  " + l); Log("PASS: return state"); }
+
 		[ConsoleCommand(name: "CIWreckDeck", docs: "Dev, in game (host): a wreck (the map type: Raft's foundations on open water) ahead of the raft - a player put on its deck stands on it; dropped onto it from 5 m lands on it, also when a frame takes 0.6 s on the way down (a big island loading: The Abyss Expedition's test fell through); dropped onto its roof, they end on the roof or the deck. CIWreckDeck [keep]")]
 		public static void WreckDeck(string[] args) { DynamicIslands.instance.StartCoroutine(WreckDeckRoutine(args != null && args.Contains("keep"))); }
 

@@ -1997,6 +1997,7 @@ namespace DynamicIslands.Editor
 					// or a log stood in the air; then sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
 					float y = flat ? ground.Surface(x, z0) - 0.2f : h - (kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0 ? 0f : BaseDrop(ground, x, z0, kind, cat, scale));
 					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
+					if (!flat) y = Mathf.Max(y, LowestShowing(kind, scale, ground.Surface(x, z0), 0.35f)); // (never out of sight)
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
 					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
 					cats.Add(cat);
@@ -2123,6 +2124,23 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// The lowest a thing's pivot may be set so part of it still stands above the ground at its middle: its top at least
+		/// share of its height (and 0.15 m) and 10 cm more - the terrain made from the grid lies up to 17 cm off it on a rough sea
+		/// floor - but never more than four fifths of its height over the terrain's surface. Raft sinks its boulders
+		/// a third of their size into the slopes - but sunk by a share of its width a flat rock went under, and corals, rocks and
+		/// finds sunk by a whole size under water were out of sight: 14 to 27 on every library island (CIFloating, 2026-10-02).
+		/// </summary>
+		static float LowestShowing(string name, float scale, float surface, float share)
+		{
+			GameObject proto = PlaceableCatalog.Get(name);
+			Bounds b;
+			if (proto == null || !PlaceableCatalog.LocalBounds(name, out b)) return float.NegativeInfinity;
+			float ly = Mathf.Abs(proto.transform.localScale.y) * scale, height = b.size.y * ly;
+			float keep = Mathf.Min(Mathf.Max(share * height, 0.15f) + 0.1f, 0.8f * height);
+			return surface + keep - b.max.y * ly;
+		}
+
+		/// <summary>
 		/// Whether an object is flat and wide (a snow drift: less than a quarter as high as it is wide) - it lies along the
 		/// slope (lean: the ground's up there, averaged over its width) instead of sinking to its low edge. Else lean is up.
 		/// </summary>
@@ -2222,8 +2240,9 @@ namespace DynamicIslands.Editor
 							if (!spots.Free(x, z, foot)) continue;
 							spots.Add(x, z, foot);
 							float y = h - BaseDrop(ground, x, z, t.Name, cat, scale); // (all of its base on the sea floor, as on land)
-							if (t.Above < -0.3f && t.Size > 0.5f) y += Mathf.Max(t.Above / t.Size, -1f) * actual; // (sunk into the slope as on Raft's islands)
+							if (t.Above < -0.3f && t.Size > 0.5f) y += Mathf.Max(t.Above / t.Size, -0.6f) * actual; // (sunk into the slope as on Raft's islands)
 							else if (pickup && slope > 30f) y -= 0.15f;
+							y = Mathf.Max(y, LowestShowing(t.Name, scale, ground.Surface(x, z), pickup ? 0.5f : 0.35f)); // (never out of sight: a find half)
 							float yaw = (float)rnd.NextDouble() * 360f;
 							Vector3 euler = cat == CatSeaRocks ? new Vector3(((float)rnd.NextDouble() - 0.5f) * 16f, yaw, ((float)rnd.NextDouble() - 0.5f) * 16f) : new Vector3(0f, yaw, 0f);
 							owners.Add(new IslandObject { Name = t.Name, Position = new Vector3(x, y, z), EulerRotation = euler, Scale = proto.transform.localScale * scale });

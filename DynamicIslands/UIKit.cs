@@ -240,6 +240,36 @@ namespace DynamicIslands.Editor
 			r.sizeDelta = size;
 		}
 
+		/// <summary>Raft's light tan of its item slots, as a sheet to read on (tinted as a slot button at rest).</summary>
+		public static readonly Color Parchment = new Color(0.86f, 0.83f, 0.78f, 1f);
+		/// <summary>Lettering on the tan sheet: Raft's dark brown.</summary>
+		public static readonly Color ParchmentInk = new Color(0.2f, 0.13f, 0.06f, 1f);
+
+		/// <summary>
+		/// A sheet to read on in Raft's light tan - its item slots' look (ItemBG_wo_Frame), with Raft's dark rim: the journal's
+		/// page and the note reader (the user, 2026-10-02: the cream paper felt like Windows Notepad). Without Raft's sprite a
+		/// tan rounded sheet.
+		/// </summary>
+		public static Image ParchmentSheet(RectTransform r)
+		{
+			Image img = Ensure<Image>(r.gameObject);
+			Sprite s = RaftSprite("ItemBG_wo_Frame");
+			if (s != null)
+			{
+				img.sprite = s;
+				img.type = s.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+				img.color = Parchment;
+			}
+			else
+			{
+				img.sprite = Rounded(6);
+				img.type = Image.Type.Sliced;
+				img.color = Tan;
+			}
+			Border(r, PanelRim, 6, 2f);
+			return img;
+		}
+
 		public static Image Background(GameObject go, Color color, int radius = 8)
 		{
 			Image img = Ensure<Image>(go);

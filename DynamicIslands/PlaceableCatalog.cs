@@ -192,6 +192,9 @@ namespace DynamicIslands.Editor
 		public static int BuildDone, BuildTotal;
 		/// <summary>All loaded objects (core plus on-demand ones loaded so far).</summary>
 		public static IEnumerable<string> Names { get { return prototypes.Keys.OrderBy(n => n); } }
+
+		/// <summary>Every object of Raft's island scenes the index knows (loaded or not) - the tests load them all.</summary>
+		internal static IEnumerable<string> IndexedNames { get { return index.Keys; } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
 		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n); } }
 
@@ -418,6 +421,7 @@ namespace DynamicIslands.Editor
 		{
 			// Parent is inactive, so the clone's Awake/OnEnable don't run here
 			GameObject clone = UnityEngine.Object.Instantiate(source.gameObject, container.transform);
+			AnchorBatches(clone, source);
 			clone.name = name;
 			clone.transform.localPosition = Vector3.zero;
 			clone.transform.localRotation = source.rotation;
@@ -431,6 +435,76 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The inactive container the catalog's prototypes live in.</summary>
 		internal static GameObject Container { get { return container; } }
+
+		static readonly System.Reflection.PropertyInfo batchRootProperty = typeof(Renderer).GetProperty("staticBatchRootTransform",
+			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+		/// <summary>Unity's static batch root of a renderer (internal in Unity 2019), or null.</summary>
+		internal static Transform BatchRoot(Renderer r)
+		{
+			try { return batchRootProperty != null && r != null ? batchRootProperty.GetValue(r, null) as Transform : null; }
+			catch { return null; }
+		}
+
+		internal static void SetBatchRoot(Renderer r, Transform root)
+		{
+			try { if (batchRootProperty != null && r != null) batchRootProperty.SetValue(r, root, null); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Anchoring a batched mesh: " + e.Message); }
+		}
+
+		/// <summary>How many renderers of the catalog's copies were anchored (AnchorBatches) - the tests read it.</summary>
+		internal static int AnchoredRenderers { get; private set; }
+
+		/// <summary>
+		/// Raft's island scenes are statically batched: the meshes of their scenery are combined into big meshes laid out
+		/// where the objects stand in Raft's scene, and each renderer draws its part of them. A copy of such an object drew
+		/// its mesh where the original stands in Raft's scene - far from where it was placed - while its collider stayed
+		/// with it: the library's Stranded Gull had an invisible beached boat, its locker and crate floating over the sand
+		/// (found by the user, 2026-10-02). Each batched renderer of a copy gets an anchor (Unity's static batch root, set
+		/// by BatchAnchor in every copy) that maps the original's place onto the copy's own: under the renderer, the inverse
+		/// of the original's scale, turn and place, then the original's own batch root when it had one.
+		/// </summary>
+		static int AnchorBatches(GameObject clone, Transform source)
+		{
+			Renderer[] mine = clone.GetComponentsInChildren<Renderer>(true), theirs = source.GetComponentsInChildren<Renderer>(true);
+			if (mine.Length != theirs.Length) return 0;
+			int n = 0;
+			for (int i = 0; i < mine.Length; i++)
+			{
+				if (!(theirs[i] is MeshRenderer) || !theirs[i].isPartOfStaticBatch) continue;
+				Transform o = theirs[i].transform, oldRoot = BatchRoot(theirs[i]);
+				// (anchor = the copy's renderer x the original's place, inverted x the original's batch root)
+				Vector3 s = o.lossyScale;
+				Transform t = Node("CI_BatchAnchor", mine[i].transform);
+				t.localScale = new Vector3(1f / NonZero(s.x), 1f / NonZero(s.y), 1f / NonZero(s.z));
+				t = Node("CI_BatchTurn", t);
+				t.localRotation = Quaternion.Inverse(o.rotation);
+				t = Node("CI_BatchPlace", t);
+				t.localPosition = -o.position;
+				if (oldRoot != null)
+				{
+					t = Node("CI_BatchRootPlace", t);
+					t.localPosition = oldRoot.position;
+					t = Node("CI_BatchRootTurn", t);
+					t.localRotation = oldRoot.rotation;
+					t = Node("CI_BatchRootScale", t);
+					t.localScale = oldRoot.lossyScale;
+				}
+				mine[i].gameObject.AddComponent<BatchAnchor>().Leaf = t;
+				n++;
+			}
+			AnchoredRenderers += n;
+			return n;
+		}
+
+		static Transform Node(string name, Transform parent)
+		{
+			Transform t = new GameObject(name).transform;
+			t.SetParent(parent, false);
+			return t;
+		}
+
+		static float NonZero(float v) { return Mathf.Abs(v) < 1e-6f ? 1e-6f : v; }
 
 		/// <summary>
 		/// Adds (or replaces) an object made by the mod itself: a creature marker, or a readable note that shows one of
@@ -461,6 +535,7 @@ namespace DynamicIslands.Editor
 		static void AddHarvestable(string name, Transform t)
 		{
 			GameObject clone = UnityEngine.Object.Instantiate(t.gameObject, container.transform);
+			AnchorBatches(clone, t);
 			clone.name = name;
 			clone.transform.localPosition = Vector3.zero;
 			harvestables.Add(name, clone);
@@ -491,7 +566,8 @@ namespace DynamicIslands.Editor
 			// first: on each object, remove the scripts nothing else needs, round by round
 			foreach (Transform t in go.GetComponentsInChildren<Transform>(true))
 			{
-				List<MonoBehaviour> left = t.GetComponents<MonoBehaviour>().Where(m => m != null).ToList();
+				// (not the mod's own BatchAnchor: it keeps a batched mesh drawn where the copy stands)
+				List<MonoBehaviour> left = t.GetComponents<MonoBehaviour>().Where(m => m != null && !(m is BatchAnchor)).ToList();
 				for (int round = 0; left.Count > 0 && round < 8; round++)
 				{
 					List<MonoBehaviour> free = left.Where(m => !left.Any(o => o != m && Requires(o.GetType(), m.GetType()))).ToList();
@@ -1070,6 +1146,25 @@ namespace DynamicIslands.Editor
 		public static string CleanName(string name)
 		{
 			return duplicateSuffix.Replace(cloneSuffix.Replace(name, ""), "").Trim();
+		}
+	}
+
+	/// <summary>
+	/// On a renderer of a copy of one of Raft's statically batched objects (PlaceableCatalog.AnchorBatches): points
+	/// Unity's static batch root at the copy's own anchor, so the batched mesh is drawn where the copy stands. Again in
+	/// every copy made of it (Unity copies the root as it was: a copy of a copy drew where the first copy stood).
+	/// </summary>
+	public class BatchAnchor : MonoBehaviour
+	{
+		public Transform Leaf;
+
+		void Awake() { Apply(); }
+		void OnEnable() { Apply(); }
+
+		public void Apply()
+		{
+			Renderer r = GetComponent<Renderer>();
+			if (r != null && Leaf != null) PlaceableCatalog.SetBatchRoot(r, Leaf);
 		}
 	}
 }

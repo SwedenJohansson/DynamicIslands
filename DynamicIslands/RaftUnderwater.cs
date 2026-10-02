@@ -118,7 +118,7 @@ namespace DynamicIslands.Editor
 		{
 			public string Name;
 			public float[] Counts = new float[BandCount];
-			public double W, DepthLow, Depth, DepthHigh, Coast, CoastHigh, Slope, Size, Above;
+			public double W, DepthLow, Depth, DepthHigh, Coast, CoastHigh, Slope, Size, Above, AboveW;
 		}
 
 		static float Num(string s) { float v; return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0f; }
@@ -178,7 +178,8 @@ namespace DynamicIslands.Editor
 						for (int b = 0; b < BandCount; b++) a.Counts[b] += perBand[b];
 						a.W += n; a.DepthLow += depth[0] * n; a.Depth += depth[1] * n; a.DepthHigh += depth[2] * n;
 						a.Coast += coast[1] * n; a.CoastHigh += coast[2] * n;
-						a.Slope += Num(f[6]) * n; a.Size += Num(f[7]) * n; a.Above += Num(f[8]) * n;
+						a.Slope += Num(f[6]) * n; a.Size += Num(f[7]) * n;
+						if (RaftLand.Plausible(Num(f[8]), Num(f[7]))) { a.Above += Num(f[8]) * n; a.AboveW += n; } // (see RaftLand.Plausible)
 					}
 				}
 			}
@@ -195,7 +196,7 @@ namespace DynamicIslands.Editor
 					{
 						Name = a.Name, Category = CategoryOf(a.Name), Count = (int)a.W,
 						DepthLow = (float)(a.DepthLow / a.W), Depth = (float)(a.Depth / a.W), DepthHigh = (float)(a.DepthHigh / a.W),
-						Coast = (float)(a.Coast / a.W), CoastHigh = (float)(a.CoastHigh / a.W), Slope = (float)(a.Slope / a.W), Size = (float)(a.Size / a.W), Above = (float)(a.Above / a.W),
+						Coast = (float)(a.Coast / a.W), CoastHigh = (float)(a.CoastHigh / a.W), Slope = (float)(a.Slope / a.W), Size = (float)(a.Size / a.W), Above = a.AboveW > 0 ? (float)(a.Above / a.AboveW) : 0f,
 					};
 					for (int b = 0; b < BandCount; b++) t.Density[b] = style.Area[b] > 1f ? a.Counts[b] / style.Area[b] : 0f;
 					style.Things.Add(t);

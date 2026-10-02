@@ -52,6 +52,19 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// The renderers that make an object's shape: its meshes (on, not the editor's marker) - not a particle effect, a
+		/// rope's line or a trail, whose bounds can reach 100 m: an anchor and a receiver aerial set down by them hung 100 m and
+		/// 50 m over the Abyss's raft, a sprinkler 20 m over Tide Farm's glasshouse (2026-10-02).
+		/// </summary>
+		public static Renderer[] ShapeRenderers(GameObject go)
+		{
+			// (its plain meshes; skinned ones only when it has nothing else - the anchor's rope and the aerial's wire are skinned,
+			// and with their joints' scripts gone their bones drift: those boxes were the 200 m and 100 m ones)
+			Renderer[] meshes = go.GetComponentsInChildren<Renderer>().Where(r => r.enabled && r is MeshRenderer && r.name != ContentCatalog.MarkerOnly).ToArray();
+			return meshes.Length > 0 ? meshes : go.GetComponentsInChildren<Renderer>().Where(r => r.enabled && r is SkinnedMeshRenderer && r.name != ContentCatalog.MarkerOnly).ToArray();
+		}
+
+		/// <summary>
 		/// The lowest ground under an object's base - under the parts of it that reach down to its bottom (a stilt house's
 		/// legs, a van's wheels, the underside of a rock or a bush), not just under its pivot: set down by its pivot on a
 		/// slope, its low side stood in the air. The terrain only (an object on another object is put there by hand).
@@ -60,7 +73,7 @@ namespace DynamicIslands.Editor
 		{
 			Vector3 point, normal;
 			float pivot = GroundAt(go.transform.position, out point, out normal) ? point.y : go.transform.position.y;
-			Renderer[] rs = go.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !(r is ParticleSystemRenderer) && r.name != ContentCatalog.MarkerOnly).ToArray();
+			Renderer[] rs = ShapeRenderers(go);
 			if (rs.Length == 0) return pivot;
 			float bottom = rs.Min(r => r.bounds.min.y);
 			Bounds foot = new Bounds();
@@ -75,6 +88,30 @@ namespace DynamicIslands.Editor
 			Vector3 at = go.transform.position;
 			bool pivotOverBase = at.x >= foot.min.x && at.x <= foot.max.x && at.z >= foot.min.z && at.z <= foot.max.z;
 			return pivotOverBase ? Mathf.Min(pivot, LowestGroundUnder(foot)) : LowestGroundUnder(foot);
+		}
+
+		/// <summary>
+		/// Where an object's pivot goes when it is set down on the ground: at the lowest ground under its base - and, when
+		/// its pivot is well above its bottom (Raft's stranded boat has it in its middle, 3.4 m up), that much higher, so its
+		/// bottom rests there. Set down by its pivot, the boat sank whole under a beach and the locker on its deck hung in
+		/// the air (the user, 2026-10-02). An object whose pivot is at or near its base - most; a tree's roots or a rock's
+		/// underside reaching a little below it belong in the ground - is set down by its pivot as before.
+		/// </summary>
+		public static float RestingPivotY(GameObject go)
+		{
+			float low = LowestGroundUnder(go);
+			return low + PivotAboveBottom(go);
+		}
+
+		/// <summary>How far an object's pivot is above its bottom when that is more than a base's own depth (more than 1 m and
+		/// a third of its height): the lift RestingPivotY gives it; 0 for an object set down by its pivot.</summary>
+		public static float PivotAboveBottom(GameObject go)
+		{
+			Renderer[] rs = ShapeRenderers(go);
+			if (rs.Length == 0) return 0f;
+			float bottom = rs.Min(r => r.bounds.min.y), top = rs.Max(r => r.bounds.max.y);
+			float below = go.transform.position.y - bottom;
+			return below > Mathf.Max(1f, (top - bottom) / 3f) ? below : 0f;
 		}
 
 		/// <summary>The lowest terrain under a footprint (its edges kept 12 % in: a base's rounded rim, a crown hanging over).</summary>
@@ -139,7 +176,7 @@ namespace DynamicIslands.Editor
 				t.position = point;
 				// (standing straight, all of its base on the ground: down to the lowest ground under it - on a slope the low
 				// side of a house on legs, a van or a rock stood in the air)
-				if (!AlignToSlope) t.position = new Vector3(point.x, LowestGroundUnder(t.gameObject), point.z);
+				if (!AlignToSlope) t.position = new Vector3(point.x, RestingPivotY(t.gameObject), point.z);
 				if (AlignToSlope)
 				{
 					// Keep the object's turn around its own up axis, lean it with the ground

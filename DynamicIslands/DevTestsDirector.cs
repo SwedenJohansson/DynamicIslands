@@ -610,16 +610,29 @@ namespace DynamicIslands
 		{
 			bool ok = true;
 			float t0 = Time.realtimeSinceStartup;
-			while (WorldDirector.Plan != null && WorldDirector.Plan.Rules.Any(r => r.When == "start" && !WorldDirector.Done.Contains(r.Id)) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+			while (WorldDirector.Plan != null && WorldDirector.Plan.Rules.Any(r => r.When == "start" && !r.Special && !WorldDirector.Done.Contains(r.Id)) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(2f);
 			Check(ref ok, WorldDirector.PlanName.Equals(expected, StringComparison.OrdinalIgnoreCase), "the world's plan is '" + WorldDirector.PlanName + "'");
 			WorldPlan p = WorldDirector.Plan;
 			if (p != null)
-				foreach (IntroRule r in p.Rules.Where(r => r.When == "start"))
+			{
+				foreach (IntroRule r in p.Rules.Where(r => r.When == "start" && !r.Special))
 				{
 					IslandWorldState.Entry e = WorldDirector.Refs(r.Id, null).FirstOrDefault();
 					Check(ref ok, e != null, "start rule '" + r.Id + "' brought " + (e != null ? "'" + e.HostName + "' (" + e.Label + ")" : "nothing"));
 				}
+				// (an island in Raft's story - found on the Receiver after its story island: in the chain from the start, not
+				// brought yet; and an island at a distance sailed: none sailed yet - The Long Voyage's fresh start, 2026-10-02)
+				foreach (IntroRule r in p.Rules.Where(r => r.InStory))
+				{
+					string key = StoryChain.RuleKey(r.Id);
+					bool brought = WorldDirector.Refs(r.Id, null).Any();
+					Check(ref ok, StoryChain.Steps.Contains(key) && !brought && !StoryChain.Done.Contains(key), "'" + r.Id + "' waits in the story chain (" + r.StoryPlace + "), not brought yet" + (brought ? " - BROUGHT" : ""));
+				}
+				foreach (IntroRule r in p.Rules.Where(r => r.When == "km"))
+					Check(ref ok, !WorldDirector.Refs(r.Id, null).Any(), "'" + r.Id + "' waits for " + r.WhenArg + " km sailed (" + (WorldDirector.Sailed / 1000f).ToString("F1") + " km so far)");
+				if (p.Rules.Any(r => r.InStory)) Log("  the story: " + string.Join(" > ", StoryChain.Steps.Select(StoryChain.StepName).ToArray()));
+			}
 			Check(ref ok, CustomIslandSpawner.Enabled == (p == null || p.Random), "random islands " + (CustomIslandSpawner.Enabled ? "on" : "off") + " as the plan says");
 			Screenshot(new[] { "plan_check" });
 			Log(WorldDirector.Describe());

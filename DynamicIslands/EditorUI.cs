@@ -458,7 +458,7 @@ namespace DynamicIslands.Editor
 			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
 			infoLevelsOn = UIKit.Button(levels, "On", () => { SetInfo(IslandProps.Levels, "on"); RefreshInfo(); }, "Players level up: hitting monsters gives EXP, every level gives stat points (K in a world)", 50, 26f, 12);
 			UIKit.Help(levels, "The level up system: once this island is in a world, players there earn EXP by hitting monsters (anywhere in that world: the island's animals, Bruce, Raft's own), shown over the monster (+5). " +
-				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level. Every level gives " + LevelRules.PointsPerLevel + " stat points to spend on the stats page (" + PlayerLevels.Key + "): walk, run and swim speed, jump height, damage, health, hunger and oxygen, +1% a point, at most " + LevelRules.MaxPoints + " points each. " +
+				"Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level. Every level gives " + LevelRules.PointsPerLevel + " stat points to spend on the stats page (" + PlayerLevels.Key + "): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen, +1% a point, at most " + LevelRules.MaxPoints + " points each. " +
 				"The levels are kept with the world, for every player.");
 			RectTransform quest = UIKit.Group(s, "Quest");
 			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);

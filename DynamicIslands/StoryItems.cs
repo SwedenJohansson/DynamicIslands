@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
+using HarmonyLib;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
@@ -325,19 +327,161 @@ namespace DynamicIslands.Editor
 	/// The crew's journal in a world (J): the story items with their pictures, and the pages found (custom notes
 	/// read, "journal" actions). In the look of Raft's menus, with the page on paper.
 	/// </summary>
+	/// <summary>
+	/// The world's quests, for the journal's count (the user, 2026-10-02: "35/100% completed quests"):
+	/// - Raft's story islands in this world's story (a plan can leave them out or the whole story): each done when its note
+	///   gives the next island's frequency - Utopia, the ending, when its people are rescued (Raft's own quest record);
+	/// - the plan's islands in the story (done as the story counts them: their quest, by default) and the saved islands its
+	///   other rules bring that have a quest - known from the start of the world, also before they come;
+	/// - every other island with a quest that has come: by chance, a map type's, an island's own rule, the randomizer's.
+	/// An island counts once, however many rules or copies name it.
+	/// </summary>
+	public static class QuestCount
+	{
+		public const string RaftStory = "Raft's story", PlanStory = "The plan's story", PlanIslands = "The plan's other islands", Met = "Other islands with a quest";
+
+		public class Quest
+		{
+			public string Name = "", Group = "";
+			public bool Done;
+		}
+
+		static MethodInfo finished;
+
+		/// <summary>Whether Utopia's people are rescued - Raft's ending (its own quest record, saved and shared by Raft).</summary>
+		public static bool UtopiaDone()
+		{
+			try
+			{
+				if (finished == null) finished = AccessTools.Method(typeof(QuestProgressTracker), "HasFinishedQuest");
+				return finished != null && (bool)finished.Invoke(null, new object[] { QuestType.Utopia_People_Rescued });
+			}
+			catch { return false; }
+		}
+
+		/// <summary>Tests: Utopia counted as done (null: Raft's record).</summary>
+		public static bool? TestUtopiaDone;
+
+		static bool Utopia() { return TestUtopiaDone ?? UtopiaDone(); }
+
+		/// <summary>Every quest of this world, in order: Raft's story (with the plan's islands in it), the plan's other islands, the rest.</summary>
+		public static List<Quest> All()
+		{
+			var list = new List<Quest>();
+			var counted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			WorldPlan plan = WorldDirector.Plan;
+			if (StoryChain.Active && StoryChain.Steps.Count > 0)
+			{
+				// (a plan changed the story: the chain says what is done, its own islands in their places)
+				foreach (string step in StoryChain.Steps)
+				{
+					if (StoryChain.IsRaft(step))
+					{
+						ChunkPointType t = StoryChain.TypeOfStep(step);
+						list.Add(new Quest { Name = StoryOrder.Name(t), Group = RaftStory, Done = t == ChunkPointType.Landmark_Utopia ? Utopia() : StoryChain.Done.Contains(step) });
+						continue;
+					}
+					string id = StoryChain.RuleIdOf(step);
+					IntroRule r = StoryChain.RuleOf(id) ?? (plan != null ? plan.Rules.FirstOrDefault(x => x.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) : null);
+					List<IslandWorldState.Entry> at = WorldDirector.Refs(id, null);
+					if (at.Count > 0) counted.Add(at[0].HostName);
+					if (r != null && r.What == "island" && r.WhatArg.Length > 0) counted.Add(r.WhatArg);
+					list.Add(new Quest { Name = NameOf(at, r, id), Group = PlanStory, Done = StoryChain.Done.Contains(step) });
+				}
+			}
+			else if (plan == null || plan.RaftStory)
+			{
+				// (Raft's own story, in this world's order - the World settings can shuffle it): done when the next is unlocked
+				ChunkPointType[] order = StoryOrder.Order;
+				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType ?? new List<ChunkPointType>();
+				for (int i = 0; i < order.Length; i++)
+				{
+					bool done = order[i] == ChunkPointType.Landmark_Utopia ? Utopia() : i + 1 < order.Length && unlocked.Contains(order[i + 1]);
+					list.Add(new Quest { Name = StoryOrder.Name(order[i]), Group = RaftStory, Done = done });
+				}
+			}
+			// The plan's other rules that bring a saved island with a quest (known before they come)
+			if (plan != null)
+				foreach (IntroRule r in plan.Rules.Where(x => !x.InStory && x.What == "island" && x.WhatArg.Length > 0))
+				{
+					if (counted.Contains(r.WhatArg)) continue;
+					List<IslandWorldState.Entry> at = WorldDirector.Refs(r.Id, null);
+					if (at.Count == 0) at = WorldDirector.Refs(r.WhatArg, null);
+					IslandQuest q = IslandQuest.From(at.Count > 0 ? IslandCache.PropsOf(at[0]) : IslandCache.Props(r.WhatArg));
+					if (q.Steps.Count == 0) continue;
+					counted.Add(r.WhatArg);
+					if (at.Count > 0) counted.Add(at[0].HostName);
+					list.Add(new Quest { Name = NameOf(at, r, r.Id), Group = PlanIslands, Done = at.Any(e => QuestTracker.StepOf(e) >= q.Steps.Count) });
+				}
+			// Every other island with a quest that has come
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Failed || counted.Contains(e.HostName)) continue;
+				IslandQuest q = IslandQuest.From(IslandCache.PropsOf(e));
+				if (q.Steps.Count == 0) continue;
+				counted.Add(e.HostName);
+				List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)).ToList();
+				list.Add(new Quest { Name = Behaviours.IslandTitle(e) + (q.Title.Length > 0 ? " \u2013 " + q.Title : ""), Group = Met, Done = same.Any(x => QuestTracker.StepOf(x) >= q.Steps.Count) });
+			}
+			return list;
+		}
+
+		/// <summary>"Wreckers' Cove - The False Light": the island (as it came, or as the rule names it) and its quest.</summary>
+		static string NameOf(List<IslandWorldState.Entry> at, IntroRule r, string id)
+		{
+			if (at.Count > 0)
+			{
+				IslandQuest q = IslandQuest.From(IslandCache.PropsOf(at[0]));
+				return Behaviours.IslandTitle(at[0]) + (q.Title.Length > 0 ? " \u2013 " + q.Title : "");
+			}
+			if (r != null && r.What == "island" && r.WhatArg.Length > 0)
+			{
+				Dictionary<string, string> props = IslandCache.Props(r.WhatArg);
+				string title = ObjectProps.Get(props, IslandProps.Title);
+				IslandQuest q = IslandQuest.From(props);
+				return (title.Length > 0 ? title : r.WhatArg) + (q.Title.Length > 0 ? " \u2013 " + q.Title : "");
+			}
+			return r != null && r.Label.Length > 0 ? r.Label : "'" + id + "'";
+		}
+
+		/// <summary>Done and all.</summary>
+		public static void Count(List<Quest> quests, out int done, out int total)
+		{
+			done = quests.Count(q => q.Done);
+			total = quests.Count;
+		}
+
+		/// <summary>"7 of 20 quests done (35%)"</summary>
+		public static string Summary(List<Quest> quests)
+		{
+			int done, total;
+			Count(quests, out done, out total);
+			return total == 0 ? "No quests yet" : done + " of " + total + " quests done (" + Percent(done, total) + "%)";
+		}
+
+		public static int Percent(int done, int total) { return total == 0 ? 0 : Mathf.FloorToInt(100f * done / total); }
+	}
+
 	public class JournalWindow : MonoBehaviour
 	{
 		static JournalWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 		public const KeyCode Key = KeyCode.J;
 
-		static readonly Color Paper = new Color(0.94f, 0.9f, 0.8f, 0.98f), Ink = new Color(0.2f, 0.15f, 0.1f, 1f);
+		static readonly Color Ink = UIKit.ParchmentInk;
 
 		RectTransform itemGrid, pageList;
 		Text countText, readTitle, readText, emptyItems, emptyPages;
 		Image readIcon;
 		string shownKey;
 		bool cursorWasFree, dirty;
+		/// <summary>The quests' count in the head: a button (the list on the paper) with a bar behind its words.</summary>
+		Button questButton;
+		RectTransform questFill;
+		float questRefreshAt;
+		const string QuestsKey = "quests";
+		/// <summary>The page each page button shows (two islands may have a page of the same title).</summary>
+		readonly Dictionary<Button, string> pageKeys = new Dictionary<Button, string>();
 
 		/// <summary>Every frame from the mod: J opens and closes the journal in a world.</summary>
 		public static void Tick()
@@ -374,6 +518,16 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(980, 620));
 			RectTransform head = UIKit.Row(panel, 34f, 8f, "Head");
 			UIKit.Label(head, "JOURNAL", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			// (the world's quests done: Raft's story islands, the plan's and every other island's with a quest - click for the list)
+			instance.questButton = UIKit.Button(head, "", () => instance.ShowQuests(), "Quests done in this world: Raft's story islands (each done when its note gives the next frequency; Utopia when its people are rescued), the world plan's islands with quests (counted from the start), and every other island with a quest that has come. Click for the list.", 360, 30, 14);
+			RectTransform fill = UIKit.Rect("Fill", instance.questButton.transform);
+			fill.SetAsFirstSibling();
+			fill.anchorMin = new Vector2(0f, 0f); fill.anchorMax = new Vector2(0f, 1f);
+			fill.offsetMin = new Vector2(2f, 2f); fill.offsetMax = new Vector2(-2f, -2f);
+			Image fillImage = fill.gameObject.AddComponent<Image>();
+			fillImage.color = new Color(UIKit.Good.r, UIKit.Good.g, UIKit.Good.b, 0.55f);
+			fillImage.raycastTarget = false;
+			instance.questFill = fill;
 			instance.countText = UIKit.Label(head, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight);
 			UIKit.Separator(panel);
 
@@ -408,8 +562,7 @@ namespace DynamicIslands.Editor
 
 			// Right: the page (or item) on paper
 			RectTransform sheet = UIKit.Rect("Sheet", body);
-			UIKit.Background(sheet.gameObject, Paper, 6);
-			UIKit.Border(sheet, new Color(0.55f, 0.45f, 0.3f, 1f), 6, 2f);
+			UIKit.ParchmentSheet(sheet);
 			UIKit.Vertical(sheet.gameObject, 10f, new RectOffset(28, 28, 22, 18));
 			RectTransform titleRow = UIKit.Row(sheet, 44f, 10f, "TitleRow");
 			RectTransform iconRect = UIKit.Rect("Icon", titleRow);
@@ -451,6 +604,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Input.GetKeyDown(KeyCode.Escape)) { Hide(); return; }
 			if (dirty) Fill();
+			else if (Time.unscaledTime >= questRefreshAt) RefreshQuests();
 		}
 
 		/// <summary>Fills the lists from the story book.</summary>
@@ -462,10 +616,19 @@ namespace DynamicIslands.Editor
 			List<StoryBook.Held> items = StoryBook.Items.ToList();
 			foreach (StoryBook.Held h in items) ItemTile(h);
 			emptyItems.gameObject.SetActive(items.Count == 0);
-			foreach (StoryBook.Page p in StoryBook.Pages.Reverse()) PageButton(p);
+			// (by island - the island seen last first - under its name and its quest: pages of several islands in one list got
+			// mixed up, the user found, 2026-10-02)
+			pageKeys.Clear();
+			foreach (IGrouping<string, StoryBook.Page> island in StoryBook.Pages.Reverse().GroupBy(p => p.Island ?? ""))
+			{
+				IslandHeader(island.Key, island.First());
+				foreach (StoryBook.Page p in island) PageButton(p);
+			}
 			emptyPages.gameObject.SetActive(StoryBook.Pages.Count == 0);
 			countText.text = items.Count + " story item(s) \u00B7 " + StoryBook.Pages.Count + " page(s)";
-			if (shownKey == null || (!StoryBook.Pages.Any(p => p.Key == shownKey) && !items.Any(h => "item:" + h.Def.Id == shownKey)))
+			RefreshQuests();
+			if (shownKey == QuestsKey) ShowQuests();
+			else if (shownKey == null || (!StoryBook.Pages.Any(p => p.Key == shownKey) && !items.Any(h => "item:" + h.Def.Id == shownKey)))
 			{
 				if (StoryBook.Pages.Count > 0) ShowPage(StoryBook.Pages.Last());
 				else if (items.Count > 0) ShowItem(items[0]);
@@ -502,9 +665,34 @@ namespace DynamicIslands.Editor
 		void PageButton(StoryBook.Page p)
 		{
 			Button b = UIKit.Button(pageList, p.Title.Length > 0 ? p.Title : "(a page)", () => ShowPage(p), p.Island.Length > 0 ? "Found on " + p.Island : null, -1, 30f, 13);
+			pageKeys[b] = p.Key;
 			if (p.Key == shownKey) UIKit.SetActive(b, true); else UIKit.Flat(b);
 			Text t = UIKit.LabelOf(b);
 			t.alignment = TextAnchor.MiddleLeft;
+		}
+
+		/// <summary>An island's line over its pages: its name and its quest (a tick once done).</summary>
+		void IslandHeader(string island, StoryBook.Page sample)
+		{
+			bool done;
+			string quest = QuestOf(sample, out done);
+			Text t = UIKit.Label(pageList, (island.Length > 0 ? island : "Other pages") + (quest.Length > 0 ? "  \u00B7  " + quest + (done ? "  \u221a done" : "") : ""), 13, UIKit.Accent, TextAnchor.LowerLeft, FontStyle.Bold, "Island");
+			UIKit.Size(t.gameObject, -1, 24);
+		}
+
+		/// <summary>The quest of the island a page came from (the island's name is in the page's key: note:&lt;island&gt;:&lt;n&gt;,
+		/// act:&lt;island&gt;:...), and whether it is done; "" when the page isn't an island's or the island has no quest.</summary>
+		public static string QuestOf(StoryBook.Page p, out bool done)
+		{
+			done = false;
+			string[] k = (p != null ? p.Key ?? "" : "").Split(':');
+			if (k.Length < 3 || (k[0] != "note" && k[0] != "act")) return "";
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.Equals(k[1], StringComparison.OrdinalIgnoreCase));
+			if (e == null) return "";
+			IslandQuest q = IslandQuest.From(IslandCache.PropsOf(e));
+			if (q.Steps.Count == 0) return "";
+			done = QuestTracker.StepOf(e) >= q.Steps.Count;
+			return q.Title;
 		}
 
 		void ShowPage(StoryBook.Page p)
@@ -512,7 +700,9 @@ namespace DynamicIslands.Editor
 			shownKey = p.Key;
 			readIcon.enabled = false;
 			readTitle.text = p.Title.Length > 0 ? p.Title : "A page";
-			readText.text = (p.Text.Length > 0 ? p.Text : "(The page is empty.)") + (p.Island.Length > 0 ? "\n\n\u2014 " + p.Island + ", day " + p.Day : "");
+			bool done;
+			string quest = QuestOf(p, out done);
+			readText.text = (p.Text.Length > 0 ? p.Text : "(The page is empty.)") + (p.Island.Length > 0 ? "\n\n\u2014 " + p.Island + (quest.Length > 0 ? " (" + quest + ")" : "") + ", day " + p.Day : "");
 			RefreshSelection();
 		}
 
@@ -530,13 +720,84 @@ namespace DynamicIslands.Editor
 		{
 			foreach (Button b in pageList.GetComponentsInChildren<Button>())
 			{
-				StoryBook.Page p = StoryBook.Pages.FirstOrDefault(x => ("Button_" + (x.Title.Length > 0 ? x.Title : "(a page)")) == b.name);
-				if (p != null && p.Key == shownKey) UIKit.SetActive(b, true); else UIKit.Flat(b);
+				string key;
+				if (pageKeys.TryGetValue(b, out key) && key == shownKey) UIKit.SetActive(b, true); else UIKit.Flat(b);
 				UIKit.LabelOf(b).alignment = TextAnchor.MiddleLeft;
 			}
 		}
 
+		/// <summary>The count in the head, and its bar (when the journal opens, and every 2 s while it is open: quests done
+		/// elsewhere, by other players, count at once).</summary>
+		void RefreshQuests()
+		{
+			questRefreshAt = Time.unscaledTime + 2f;
+			List<QuestCount.Quest> quests = QuestCount.All();
+			int done, total;
+			QuestCount.Count(quests, out done, out total);
+			UIKit.LabelOf(questButton).text = total == 0 ? "QUESTS: NONE YET" : "QUESTS  " + done + " / " + total + "  \u00B7  " + QuestCount.Percent(done, total) + "%";
+			questFill.anchorMax = new Vector2(total == 0 ? 0f : (float)done / total, 1f);
+			if (shownKey == QuestsKey) readText.text = QuestList(quests);
+		}
+
+		/// <summary>The world's quests on the paper: done and still to do, by kind.</summary>
+		void ShowQuests()
+		{
+			shownKey = QuestsKey;
+			readIcon.enabled = false;
+			List<QuestCount.Quest> quests = QuestCount.All();
+			readTitle.text = "Quests: " + QuestCount.Summary(quests).Replace(" quests done", " done");
+			readText.text = QuestList(quests);
+			RefreshSelection();
+		}
+
+		static string QuestList(List<QuestCount.Quest> quests)
+		{
+			if (quests.Count == 0) return "No quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
+			var sb = new System.Text.StringBuilder();
+			foreach (IGrouping<string, QuestCount.Quest> g in quests.GroupBy(q => q.Group))
+			{
+				sb.Append(g.Key).Append(" (").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(")\n");
+				foreach (QuestCount.Quest q in g) sb.Append(q.Done ? "   \u221a  " : "   \u2013  ").Append(q.Name).Append(q.Done ? "" : "").Append('\n');
+				sb.Append('\n');
+			}
+			sb.Append("\u221a done   \u2013 still to do. Raft's story islands count when their note gives the next frequency (Utopia when its people are rescued); a plan's islands count from the start; other islands with a quest count once they have come.");
+			return sb.ToString();
+		}
+
+		/// <summary>The quests' count in the head now (tests).</summary>
+		public static string QuestsShown { get { return IsOpen ? UIKit.LabelOf(instance.questButton).text : null; } }
+
+		/// <summary>Shows the quest list on the paper (tests: as a click on the count).</summary>
+		public static void ShowQuestList() { if (IsOpen) instance.ShowQuests(); }
+
 		/// <summary>What the journal shows now (tests).</summary>
 		public static string ShownTitle { get { return IsOpen ? instance.readTitle.text : null; } }
+
+		/// <summary>The text on the paper now (tests).</summary>
+		public static string ShownText { get { return IsOpen ? instance.readText.text : null; } }
+
+		/// <summary>The pages list as it reads now, top to bottom: an island's line as "# " + its text, a page by its title (tests).</summary>
+		public static List<string> ListLines()
+		{
+			var lines = new List<string>();
+			if (!IsOpen) return lines;
+			foreach (Transform c in instance.pageList)
+			{
+				if (!c.gameObject.activeSelf || c == instance.emptyPages.transform) continue;
+				Button b = c.GetComponent<Button>();
+				Text t = b != null ? UIKit.LabelOf(b) : c.GetComponent<Text>();
+				if (t != null) lines.Add((b == null ? "# " : "") + t.text);
+			}
+			return lines;
+		}
+
+		/// <summary>Shows the page with this key on the paper (tests: as a click on it).</summary>
+		public static bool ShowKey(string key)
+		{
+			StoryBook.Page p = StoryBook.Pages.FirstOrDefault(x => x.Key == key);
+			if (!IsOpen || p == null) return false;
+			instance.ShowPage(p);
+			return true;
+		}
 	}
 }

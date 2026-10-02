@@ -31,6 +31,7 @@ namespace DynamicIslands
 	///   tune &lt;rule&gt;                     the Receiver tuned to a plan island's frequency: it comes, and "island &lt;name&gt;"
 	///                                   (an island's own test, included) plays the one the plan brought
 	///   arrive &lt;rule&gt;                   the island a rule brings by itself (ahead, near another one) comes and is played
+	///   sail km                         the raft has sailed that much further (a plan's km rules: its side trips)
 	///   expect chain &lt;rule|Raft island&gt; done|unlocked|locked     its place in the story
 	/// </summary>
 	public static partial class DevTests
@@ -83,7 +84,8 @@ namespace DynamicIslands
 				var opt = Options(t.Skip(1));
 				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
-				if (playEntry != null && playEntry.Root == null && verb != "log" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
+				// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
+				if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
 				KeepAlive(me);
 				switch (verb)
 				{
@@ -309,11 +311,23 @@ namespace DynamicIslands
 						StoryChain.Tick();
 						string freq = StoryChain.FrequencyOf(rule);
 						Check(ref ok, freq != null, "a frequency on the Receiver for '" + rule + "' (" + (freq ?? "none") + ")");
-						yield return TuneTo(rule);
-						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
-						Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
+						// (brought is enough: with the test's raft standing still, earlier islands take the spots ahead and one may come
+						// beyond the load distance - Thornwood 1530 m off - loading as the player goes there, as in a game)
+						yield return TuneTo(rule, 60f, false);
+						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
+						Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", loads as players come near" : "") + ")" : ""));
 						checks += 2;
 						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
+						break;
+					}
+					case "sail":
+					{
+						// sail <km>: the raft has sailed that much further - as the distance sailed counts it, for a plan's
+						// km rules (The Long Voyage's side trips come at 2 to 32 km); "arrive <rule>" then waits for the island
+						float km = t.Length > 1 ? F(t[1]) : 1f;
+						WorldDirector.Sailed += km * 1000f;
+						Log("  sailed " + Num(km) + " km more: " + (WorldDirector.Sailed / 1000f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " km in all");
+						yield return new WaitForSeconds(0.5f);
 						break;
 					}
 					case "arrive":
@@ -417,6 +431,8 @@ namespace DynamicIslands
 			IslandCache.Forget();
 			StoryChain.Reset();
 			WorldDirector.Done.Clear();
+			// (from the start: nothing sailed yet - a test world sailed 40 km in earlier tests brought every side trip at once)
+			WorldDirector.Sailed = 0f;
 		}
 
 		static void PlayExpect(string[] t, string line, ref bool ok)
@@ -496,7 +512,8 @@ namespace DynamicIslands
 		/// <summary>
 		/// Walks the player through points with Raft's own CharacterController at walking speed (as BringIn does, without
 		/// jumps): stairs and ramps the controller steps up, walls and gaps stop it. Each point must be reached (within
-		/// 0.7 m) before it has been stuck for 2 s.
+		/// 0.7 m) before it has been stuck for 2 s. An animal standing in the way is waited for, then moved aside (a player
+		/// walks round it: Ranger's Rest's goats wander across its terrace); what stops it otherwise is named.
 		/// </summary>
 		static IEnumerator PlayWalk(Network_Player player, List<Vector3> points, Action<bool, string> result)
 		{
@@ -508,6 +525,7 @@ namespace DynamicIslands
 			foreach (Vector3 rel in points.Select(q => q - playEntry.Position).ToList())
 			{
 				float stuck = 0f, total = 0f;
+				int animalWaits = 0;
 				Vector3 last = player.transform.position;
 				Vector3 target = playEntry.Position + rel;
 				while (ScFlat(player.transform.position, target = playEntry.Position + rel) > 0.7f)
@@ -524,13 +542,47 @@ namespace DynamicIslands
 					total += Time.deltaTime;
 					if (stuck > 2f || total > 40f)
 					{
-						result(false, "stuck at " + (now - playEntry.Position).ToString("F1") + " on the way to " + (target - playEntry.Position).ToString("F1"));
+						Collider blocker = WhatBlocks(player, dir);
+						AI_NetworkBehaviour animal = blocker != null ? blocker.GetComponentInParent<AI_NetworkBehaviour>() : null;
+						if (animal != null && animalWaits < 2 && total < 40f)
+						{
+							animalWaits++;
+							if (animalWaits == 2)
+							{
+								Vector3 aside = animal.transform.position + Vector3.Cross(Vector3.up, dir).normalized * 3f;
+								UnityEngine.AI.NavMeshAgent agent = animal.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>();
+								if (agent != null && agent.isOnNavMesh) agent.Warp(aside); else animal.transform.position = aside;
+								Log("  " + animal.name + " stood in the way: moved aside");
+							}
+							else Log("  " + animal.name + " stands in the way: waiting for it");
+							stuck = 0f;
+							yield return new WaitForSeconds(3f);
+							continue;
+						}
+						result(false, "stuck at " + (now - playEntry.Position).ToString("F1") + " on the way to " + (target - playEntry.Position).ToString("F1") +
+							" (in the way: " + (blocker != null ? BlockerName(blocker) : "nothing found ahead") + ")");
 						yield break;
 					}
 					yield return null;
 				}
 			}
 			result(true, "got there, " + (player.transform.position.y - playEntry.Position.y).ToString("F2") + " m above the sea");
+		}
+
+		/// <summary>What stops a walking player: the nearest collider within a metre ahead at waist height, not the player's own.</summary>
+		static Collider WhatBlocks(Network_Player player, Vector3 dir)
+		{
+			RaycastHit[] hits = Physics.SphereCastAll(player.transform.position + Vector3.up * 0.6f, 0.35f, dir, 1.2f, ~0, QueryTriggerInteraction.Ignore);
+			return hits.Where(h => h.collider != null && !h.collider.transform.IsChildOf(player.transform)).OrderBy(h => h.distance).Select(h => h.collider).FirstOrDefault();
+		}
+
+		/// <summary>A collider's object as the island has it (its name, under which object of the island).</summary>
+		static string BlockerName(Collider c)
+		{
+			if (c.GetComponent<Terrain>() != null) return "the ground (a step too high)";
+			Transform t = c.transform, island = playEntry != null && playEntry.Root != null ? playEntry.Root.transform : null;
+			while (t.parent != null && island != null && t.parent != island && t.parent.parent != island) t = t.parent;
+			return t.name + (t != c.transform ? " (" + c.name + ")" : "") + " at " + (c.bounds.center - (playEntry != null ? playEntry.Position : Vector3.zero)).ToString("F1");
 		}
 
 		/// <summary>A picture with Raft's own camera (its water and light, no HUD, no held tool) for the guide:

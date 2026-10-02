@@ -38,6 +38,8 @@ brush smooth from 10 26 to 17 3 r=3 s=6 frames=30
 # (the terrace's north bank eased into a slope the trail can climb)
 brush smooth from 12 11 to 18 4 r=4 s=20 frames=40
 brush smooth from 12 11 to 18 4 r=4 s=20 frames=40
+# (what the smoothing buried or lifted along it: a boulder ended 2.2 m under the ground)
+clear from 12 11 to 18 4 r=4.5
 brush sand from 10 26 to 12 14 r=1.5 s=8 frames=24
 brush sand from 12 14 to 14 8 r=1.5 s=8 frames=20
 brush sand from 14 8 to 18 3 r=1.5 s=8 frames=18

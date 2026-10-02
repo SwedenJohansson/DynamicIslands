@@ -39,10 +39,18 @@ namespace DynamicIslands.Editor
 		/// <summary>Stat points a player has had at this level: 2 a level, until every stat could be full.</summary>
 		public static int PointsAt(int level) { return Mathf.Min(AllPoints, Mathf.Max(0, level - 1) * PointsPerLevel); }
 
-		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark.</summary>
+		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark (before GainMultiplier).</summary>
 		public const int ReferenceXp = 20;
 
-		/// <summary>Monster kills (worth ReferenceXp each) from this level to the next: 5, 10, 20, 30, 40, ...</summary>
+		/// <summary>EXP gained is doubled (the user, 2026-10-02): every monster is worth twice what the levels are measured in -
+		/// Bruce gives 40 - so a level takes half the kills; the EXP each level needs stays as it was (100, 200, 400...).</summary>
+		public const float GainMultiplier = 2f;
+
+		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
+		public static int BruceXp { get { return Mathf.RoundToInt(ReferenceXp * GainMultiplier); } }
+
+		/// <summary>Monster kills worth ReferenceXp each from this level to the next: 5, 10, 20, 30, 40, ... (half as many of
+		/// Bruce, GainMultiplier).</summary>
 		public static int KillsFor(int level) { return level <= 1 ? 5 : 10 * (level - 1); }
 
 		/// <summary>EXP from this level to the next: 100, 200, 400, 600, 800, ...</summary>
@@ -82,11 +90,11 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// A monster's EXP from its health and damage (as they are on this animal, so the editor's Easy/Hard/Boss
 		/// settings count): half from how tough it is, half from how hard it hits, both compared with Bruce, who is
-		/// worth ReferenceXp. At least 1.
+		/// worth BruceXp. At least 1.
 		/// </summary>
 		public static int XpOf(float health, float damage)
 		{
-			float x = ReferenceXp * (0.5f * health / SharkHealth + 0.5f * damage / SharkDamage);
+			float x = GainMultiplier * ReferenceXp * (0.5f * health / SharkHealth + 0.5f * damage / SharkDamage);
 			return Mathf.Max(1, Mathf.RoundToInt(x));
 		}
 	}

@@ -131,7 +131,7 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) |
+| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
 Then click Raft's **Create** as usual. Your choices are remembered for the next new world. They belong to the world:
@@ -149,6 +149,9 @@ together near the end of this guide.
 
 ### Islands appear while you sail
 
+*Random islands, side trips and main quest islands - the three kinds of islands you meet, and how each is set up - are
+explained side by side in [section 7](#the-three-kinds-of-islands-you-meet-at-sea).*
+
 With the **Random islands** plan, now and then an island appears **250-350 m ahead of the raft** (about one island
 every 4 km). It can be:
 
@@ -163,6 +166,20 @@ settings add more things to meet at sea: the randomizer's odd islands, large isl
 
 Islands keep clear of Raft's own islands and of each other, and Raft won't put its islands on top of them later.
 Islands far behind the raft are unloaded (after 800 m) and come back when you return.
+
+**Islands you still need come back.** Raft's current carries the raft one way, so an island can drift out of reach -
+and without a Receiver nothing shows the way back. An island the players still need comes back on its own: about
+**12 minutes** after the raft left it behind (800 m and more), it turns up ahead of the raft again just as you left
+it - its quest where it was, opened chests still open - and a banner says "Back in sight". That is:
+
+- an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
+  stops coming back);
+- an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
+  island: it comes back every time, until you've done there what the plan waits for.
+
+An island found with a Receiver frequency stays where it is (the Receiver shows the way), and so do islands nobody
+needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
+`spawnpool.txt`, [10](#10-settings-files); 0 = never.)
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
 even far ones. An island a rule brought (a quest reward, a plan) carries its name on its dot.
@@ -215,7 +232,7 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   Killed and caught animals come back after the regrow days unless the builder said never.
 
 ![Reading a note](images/world-note.jpg)
-*A note found on an island ("Warthogs live here. Bring a spear."). Press E, Tab or Esc to close it.*
+*A note found on an island ("Warthogs live here. Bring a spear."), its title in Raft's lettering and its text on Raft's light tan, as the journal shows its pages. Press E, Tab or Esc to close it.*
 
 ### Quests
 
@@ -247,7 +264,7 @@ or console, while a note is open, or in the editor.) Its key is also shown at th
 page's (**K**, a star).
 
 ![The journal](images/world-journal.jpg)
-*The journal: two story items at the top left, the pages read below, and the page "The keeper's note" open.*
+*The journal: the quests done at the top (1 of 9: Raft's eight story islands and this island's quest), two story items at the top left, the pages below under their island and its quest ("√ done"), and the page "The vault" open, signed with the island, its quest and the day.*
 
 **What's in it**
 
@@ -255,17 +272,39 @@ page's (**K**, a star).
   name, with **×2**, **×3**... when the crew has more than one. Click one to see its picture and description on the
   paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
-- **Pages** (bottom left), newest first: every note you read on a custom island - the first time anyone reads it,
-  once, with its title - pages an island writes when something happens (an island event "write a journal page"), and
-  the frequencies a world plan gives out ("Tune the Receiver to #4821"). Point at a page for the island it came from;
-  click it to read it on the paper, signed with the island and the day it was found.
+- **Pages** (bottom left), **by island**: each island's pages under its name and its quest's title (**√ done** once the
+  quest is done) - the island you were at last first, its newest page first - so notes of several islands don't get
+  mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
+  pages an island writes when something happens (an island event "write a journal page"), and, under **Other pages**,
+  the frequencies a world plan gives out ("Tune the Receiver to #4821"). Click a page to read it on the paper, signed
+  with the island, its quest and the day it was found.
+- **QUESTS 7 / 20 · 35%** (top, next to the title): how many of this world's quests are done, with a green bar
+  that fills as you go. It counts:
+  - **Raft's story islands** that are in this world's story (Radio Tower ... Utopia; a world plan can leave some or
+    all of them out, and then they don't count). Each counts as done when its note gives the next island's frequency;
+    Utopia, the ending, when its people are rescued. With the World settings' "story islands in a new order", in
+    that order;
+  - **a world plan's own islands in the story** (the main quest islands, such as Wreckers' Cove after the Radio Tower
+    in The Long Voyage): done as the story counts them - by default when their quest is done;
+  - **the plan's other islands that have a quest** (side trips, a quest chain...): counted **from the start of the
+    world**, even before they come, so the total shows how much there is to do. One that comes as a new island of a
+    map type or from a list counts once it has come (until then nobody knows what it is);
+  - **every other island with a quest** that has come to the world: by chance while sailing, brought by another
+    island's rule, the world randomizer's treasure hunts. These add to the total as you meet them.
+
+  An island counts once, however many rules name it. **Click the count** for the whole list on the paper, by kind:
+  √ done, – still to do. The count is the same for every player and is worked out again every 2 seconds while the
+  journal is open, so a quest another player finishes shows at once.
+
+  ![The quests list in the journal](images/world-journal-quests.jpg)
+  *A click on the count: Raft's story islands (none done yet) and the islands with a quest met so far.*
 - The top right counts the story items and the pages. An empty journal says where to look.
 
 **One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
 journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
 saved with the world, and it goes back with an older save ([8](#8-playing-together)).
 
-**The journal and quests.** The journal doesn't list quests: an island's quest is shown in the **quest panel** on the
+**The journal and quests.** Besides the count and its list (above), the journal doesn't show a quest's steps: an island's quest is shown in the **quest panel** on the
 right while you are **at that island** ([Quests](#quests)), and it leaves when you sail away. But the journal is what
 some steps count:
 
@@ -966,7 +1005,7 @@ done stays, and your Receiver islands keep their frequencies.
   found with the Receiver).
 - **The journal (J) is only for custom content** - but not only for quests. It collects from every custom island,
   with or without a quest: notes read, pages events write, story items, and the frequencies the plan gives out. It
-  never holds Raft's notes or quest items, and it lists no quests: a quest shows in the **quest panel** while you are
+  never holds Raft's notes or quest items. Of quests it shows only how many are done (Raft's story islands among them) and their list: a quest's steps show in the **quest panel** while you are
   at its island ([3](#quests)), the same in every kind of plan.
 - **Custom islands outside the story** (by chance, or brought by an ordinary rule) work the same in every case below:
   their quest in the quest panel, their notes and story items in the journal.
@@ -1004,6 +1043,220 @@ Game** box. You don't need to have built any islands yourself: the mod's map typ
 are enough for a whole plan.
 
 Before you share a plan or change one that running worlds use, see [12.4](#124-making-quests-and-plans-that-work).
+
+### The three kinds of islands you meet at sea
+
+Every custom island that turns up in a world came there in one of **three ways**. When you stand on them they are all
+the same - land, objects, maybe a quest - but they are set up in different places, they come at different times, they
+behave differently if you sail past them, and only one kind is part of a story. This part explains all three, with
+The Long Voyage (a plan of the island library, [16.4](#164-the-world-plans)) as the example, because it has all three
+at once.
+
+**The short version:**
+
+- **Random islands** come **by chance** while you sail. Nobody planned them: which island, where and when is rolled
+  as you go. A world gets them when its plan has **Random islands while sailing: on** (the plan called *Random islands*,
+  the default, has nothing else).
+- **Side trips** are islands a **plan** brings at a **set point of the voyage** - "after sailing 4 km, 450 m ahead of
+  the raft" - with a message on screen. Every world of that plan gets the same island at the same point. They are
+  extras: nothing else in the plan waits for them. In The Long Voyage: **The Stranded Gull** after 2 km, **Signal
+  Rock** after 4 km (its quest is called **"Dead Air"**), Ranger's Rest after 7 km, and so on.
+- **Main quest islands** are islands a plan puts **into a story chain** - here into Raft's own story, each found with
+  the **Receiver** on its own frequency - and the story only goes on when their quest is done. In The Long Voyage:
+  **Wreckers' Cove** after Raft's Radio Tower, **Thornwood** after Vasagatan, and five more.
+
+A **quest** belongs to an island, not to the way it came. "Dead Air" is the quest of the island Signal Rock; Signal Rock
+would bring its quest along as a random island too. So "a quest island" can be any of the three kinds: what makes an
+island a *main* quest island is that a plan's story waits for its quest.
+
+#### The three kinds side by side
+
+| | Random islands | Side trips | Main quest islands |
+|---|---|---|---|
+| **What it is** | An island picked by chance from the **spawn pool**: one of your saved islands, a brand-new generated island, or a new island of a map type (a sandbar, a wreck, an atoll...) | An island a **plan rule** brings at a set point: after a distance sailed, on a day, when the world starts | An island a **plan rule** puts into a **story chain**: after one of Raft's story islands (or in place of one, or first) |
+| **Example in The Long Voyage** | Any island of your pool, a generated jungle island... | The Stranded Gull (2 km), Signal Rock - quest "Dead Air" (4 km), Ranger's Rest (7 km), Stilt Hollow (10 km)... | Wreckers' Cove (after the Radio Tower), Thornwood (after Vasagatan), Scrapyard Haven (after Balboa)... |
+| **When it comes** | Any time while the raft sails: each km sailed has a 25 % chance (about one island every 4 km), never while the raft is at one of Raft's islands | When the rule's **WHEN** happens. The Long Voyage's side trips: when the raft has sailed that many km in this world (counted from the world's start) | When it is **unlocked** - the story island before it is done (for Raft's islands: when you read the note there that would give the next frequency) - **and** a player tunes the Receiver to its frequency |
+| **Where it appears** | 250-350 m ahead of the raft, a little to one side (10-35 degrees), at least 800 m from other custom islands | Where the rule's **WHERE** says. The Long Voyage's side trips: **450 m ahead** of the raft | The rule's metres **ahead of the raft when a player tunes the Receiver** to it (700-1000 m in The Long Voyage), like Raft's own story islands |
+| **What tells you** | Nothing when it appears: you see it. Near it, its banner with its name | The rule's **message** on every player's screen as it appears, with how far and which way ("A mast on a rock ahead - its light is dead."), and its name on its Receiver dot | When it is unlocked: a banner with the rule's message and "Tune the Receiver to #4821", a page in the journal (J), and that number on Raft's note. On the Receiver: its name and frequency |
+| **The same in every world?** | No: different islands at different places every time | Yes: the same island at the same distance in every world of the plan (only the exact spot ahead depends on where you sail) | Yes: the same island at the same place in the story. Only the 4-digit frequency is made new for each world |
+| **Needed to finish the plan?** | No | No: optional extras. Skip them and nothing is missing from the story | **Yes** (in a plan with a story): its quest done unlocks the next step of the story - in The Long Voyage, the next story island's frequency |
+| **If you sail past it** | It stays where it appeared. Beyond 800 m it is unloaded and comes back when you return. If you **reached it and its quest isn't done**, it comes back ahead of the raft by itself about 12 minutes later (up to 3 times) | The same as a random island: stays where it appeared; if you reached it and left its quest unfinished, it comes back ahead of the raft about 12 minutes later (up to 3 times). One you never reached doesn't come back | It stays where it came up: its dot on the Receiver shows the way back. It doesn't come back by itself |
+| **Where you set it** | The plan's switch **Random islands while sailing** (World plans window); *which* islands: **World settings > Islands while sailing** ([9.5](#95-islands-while-sailing)) and `spawnpool.txt` ([10](#10-settings-files)) | A **rule** in the World plans window: WHEN **After sailing a distance**, BRING **One of my saved islands**, WHERE **Ahead of the raft**, TELL a message and a Receiver name, STORY **not in Raft's story** | A **rule** in the World plans window: WHEN **When the world starts**, BRING **One of my saved islands**, WHERE **On the Receiver**, STORY **After** a story island, **Done when** its quest is done |
+| **In the plan file** ([7.7](#77-the-plan-file)) | `random = on` | `rule = signal \| island:Signal Rock \| km:4 \| ahead:450 \| A mast on a rock ahead - its light is dead. \| Signal Rock` | `rule = cove \| island:Wreckers' Cove \| start \| receiver:700 \| Under the Radio Tower's signal hides another... \| Wreckers' Cove \| after:RadioTower \| quest` |
+
+#### Random islands, in detail
+
+**How a world gets them.** In Raft's **New Game** box, the **Custom Islands plan** list ([2](#2-starting-a-new-world)):
+
+- **Random islands** (the default): *only* random islands, no story of the mod's.
+- **No custom islands**: none at all.
+- **Any other plan**: random islands only if that plan has **Random islands while sailing: on**. The Long Voyage has it
+  on, so you meet random islands *between* its side trips and quest islands; The Abyss Expedition too. A plan made for
+  a tight story usually has it off: then the world has only the plan's islands.
+
+You switch it for a plan in the editor's **World plans** window: the switch **Random islands while sailing** at the top
+of the plan (step 4 of [7.2](#72-your-first-world-plan-step-by-step)); in the plan file it is the line `random = on` or
+`random = off`. In a running world the host can switch them with `CustomIslandsAuto on` / `off` (F10).
+
+**Which islands can come.** The **spawn pool**: every island you have saved or downloaded (unless `spawnpool.txt`
+gives it weight 0), brand-new generated islands (`generated` in `spawnpool.txt`), and the map types listed there. For
+each new world you can untick islands in **World settings > Islands while sailing > CHOOSE ISLANDS...**
+([9.5](#95-islands-while-sailing)). A **plan's own islands never come by chance**: when you install a plan from the
+island library, its islands get weight 0 in `spawnpool.txt`, so Signal Rock can't turn up early as a random island and
+then again at 4 km. (Islands you built or saved yourself are in the pool unless you give them 0 - if a plan of yours
+uses one of your islands as a side trip or quest island, set it to 0 there, or untick it in the world's list.)
+
+**How often and where.** `chancePerKm` (0.25: about one island every 4 km sailed), `spawnDistanceMin` /
+`spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in `spawnpool.txt`
+([10](#10-settings-files)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
+islands on top of a custom one later.
+
+#### Side trips, in detail
+
+A side trip is one **rule** of a plan: "bring this island at this point of the voyage, here, and tell the players".
+To make one in the **World plans** window ([7.2](#72-your-first-world-plan-step-by-step) shows every click):
+
+1. Open your plan and click **+ Add a rule**. Give it a name, for example `signal`.
+2. **WHEN**: choose **After sailing a distance** and type the km, for example `4`. The distance is what the raft has
+   sailed in this world since it started (`WorldPlan` in F10 shows it). Other WHENs make side trips too: **On a day**
+   (day 5), or **When the world starts** for an island right at the beginning.
+3. **BRING**: **One of my saved islands** and pick the island with **▾** (`Signal Rock`). Or **A new island of a map
+   type** (`wreck`, `camp`, `sunken`...) for an island made new in every world, or **One island from a list** for a
+   different one each time.
+4. **WHERE**: **Ahead of the raft** and the metres (`450`). Raft draws about 400 m far, so at 450 m the island is just
+   coming into sight. **By chance while sailing** instead makes it come up some time *after* the distance, like a
+   random island.
+5. **TELL**: the message every player sees when it appears (`A mast on a rock ahead - its light is dead.`) - the mod
+   adds how far and which way - and the name on the Receiver (`Signal Rock`). Both are optional, but without a message
+   players can't tell it from a random island.
+6. **STORY**: leave it on **Not in Raft's story**. That is what keeps it a side trip: nothing waits for it.
+7. **Check**, then **Save**.
+
+As a line of the plan file:
+
+```
+rule = signal | island:Signal Rock | km:4 | ahead:450 | A mast on a rock ahead - its light is dead. | Signal Rock
+```
+
+Good to know:
+- Each rule fires **once per world**. Sail on to 4 km a second time (in the same world) and nothing new comes.
+- If the raft is far from where it was when the rule fired, the island is still there: the rule placed it once, ahead
+  of the raft at that moment. Its Receiver dot (with the name from TELL) shows it.
+- A side trip can have its own quest. If you reach it and leave before the quest is done, it comes back ahead of the
+  raft about 12 minutes later, up to three times ([3](#islands-appear-while-you-sail)); `returnMinutes` in
+  `spawnpool.txt` changes the minutes (0 = never).
+- Another rule can wait for a side trip ("when Signal Rock's quest is done, bring...") - then it is no longer a mere
+  extra: the plan waits for it, and it comes back every time until that is done.
+
+#### Main quest islands, in detail
+
+A main quest island is a rule with a **place in a story chain**. The Long Voyage puts one after each of Raft's story
+islands; your own plan can also make a story without Raft's ([6.5](#65-your-islands-in-rafts-story-the-receiver):
+**Raft's story islands: off** and your islands **First**, **After** each other). To make one in the **World plans**
+window:
+
+1. Make sure the plan has **Raft's story islands: on** (the switch at the top), unless your story replaces Raft's.
+2. **+ Add a rule**, name it (`cove`).
+3. **WHEN**: **When the world starts**. That only means the rule doesn't wait for anything *else*: the **STORY** place
+   below decides when the island is unlocked.
+4. **BRING**: **One of my saved islands**, pick it with **▾** (`Wreckers' Cove`). It needs a **quest** ([6.1](#61-quests)).
+5. **WHERE**: **On the Receiver**, and the metres it comes up ahead of the raft when a player tunes to it (`700`). The
+   island gets its own 4-digit frequency, made new for each world.
+6. **TELL**: a message (shown when the frequency is unlocked: `Under the Radio Tower's signal hides another: a lantern
+   code, blinking over and over.`) and the name on the Receiver (`Wreckers' Cove`).
+7. **STORY**: **After** and the story island (**Radio Tower**). **Done when**: **its quest is done** (the default).
+8. **Check** shows the whole chain ("Radio Tower > 'cove' > Vasagatan > ..."); then **Save**.
+
+As a line of the plan file:
+
+```
+rule = cove | island:Wreckers' Cove | start | receiver:700 | Under the Radio Tower's signal hides another: a lantern code, blinking over and over. | Wreckers' Cove | after:RadioTower | quest
+```
+
+**What players see, step by step** (The Long Voyage, first quest island):
+
+1. On Raft's **Radio Tower** they read the note that normally gives Vasagatan's frequency. In this world it gives the
+   **Wreckers' Cove** frequency instead: a banner says "Tune the Receiver to #4821" (each world has its own number),
+   the journal (J) gets a page with it, and the note shows the number.
+2. A player tunes Raft's **Receiver** to it. Wreckers' Cove comes up about 700 m ahead of the raft, and shows on the
+   Receiver with its name.
+3. They sail there and do its **quest** (the quest panel shows its steps while they are at the island).
+4. The quest done, the story goes on: **Vasagatan's** frequency is unlocked ("The Receiver picks up a new frequency:
+   #1234", and a journal page "A new signal"), and Raft's story continues as Raft has it - until Vasagatan's note
+   unlocks the next quest island, Thornwood.
+
+If you don't do the quest, the story stops there: the next story island's frequency never comes. `StoryChain` (F10)
+shows the whole chain, what is unlocked and done, and every frequency.
+
+#### Other ways an island can come
+
+The three above are what you meet in most worlds. A plan or an island can also bring islands in other ways - they work
+like side trips (a rule with a WHEN, a WHERE and a message), only the WHEN is something that happens on an island:
+
+- **Quest chains**: "when Old Camp's quest is done, bring Skull Rock 800 m north-east of it" ([7.2](#72-your-first-world-plan-step-by-step),
+  [7.4](#74-everything-a-rule-can-do)). The Abyss Expedition is made of these: each island comes **near the one before**
+  when its quest is done or players reach it. The plan waits for them, so if one drifts out of reach before you've done
+  what the plan waits for, it comes back every time.
+- **Islands that bring islands**: an island's own rules, made in the editor ([6.4](#64-islands-that-bring-islands)) -
+  for example a quest reward that brings a treasure island.
+- **The world randomizer's islands** (World settings, [9.3](#93-the-world-randomizer)): oddity islands, large islands
+  and boss lairs while sailing - random islands of their own, not from your spawn pool.
+
+#### How to tell them apart in a world
+
+| You see... | It is... |
+|---|---|
+| An island comes up with **no message**; its Receiver dot has **no name** | A random island (or one of the randomizer's) |
+| A **message** on screen as it appears ("A white hull glints on a sandbar ahead.") and a **named** Receiver dot | A plan rule's island: a side trip, or part of a quest chain |
+| A banner "**Tune the Receiver to #....**", then the island comes when you tune to it | A main quest island in the story chain |
+
+In F10 (Raft's console):
+- `WorldPlan` - the world's plan, whether random islands are on, the km sailed and the day, and **every rule** with
+  **[done]** in front of the ones that have brought their island;
+- `StoryChain` - the story in order (Raft's islands and the plan's), what is unlocked and done, and the frequencies;
+- `ListSpawned` - every custom island in this world, with how far it is from the raft.
+
+#### The Long Voyage from start to end
+
+| When | What comes | Kind |
+|---|---|---|
+| From the start, all voyage long | Now and then an island of your spawn pool | Random island |
+| 2 km sailed | **The Stranded Gull**, 450 m ahead: "A white hull glints on a sandbar ahead." | Side trip |
+| 4 km | **Signal Rock** (quest "Dead Air"): "A mast on a rock ahead - its light is dead." | Side trip |
+| After the Radio Tower's note | **Wreckers' Cove** on the Receiver | Main quest island |
+| 7 km | **Ranger's Rest** | Side trip |
+| After the Cove's quest | Vasagatan's frequency, as Raft has it | Raft's story |
+| After Vasagatan's note | **Thornwood** on the Receiver | Main quest island |
+| 10, 13, 16 km | **Stilt Hollow**, **Mayor's Wharf**, **Crane Yard** | Side trips |
+| ... | the same after Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance | Main quest islands |
+| 20, 24, 28, 32 km | **Frost Hollow**, **Tide Farm**, **Old Mine Islet**, **Shelter Atoll** | Side trips |
+| After Temperance's quest island | Utopia, Raft's ending | Raft's story |
+
+The side trips come by distance and the quest islands by the story, so where they fall between each other depends on
+how fast you sail and play: a quick player may reach Vasagatan before 7 km, a slow one may have met five side trips
+by then. [16.4](#164-the-world-plans) lists every island of the plan.
+
+#### Questions
+
+- **"An island appeared - is it random or part of the plan?"** Look for a message when it appeared and a name on its
+  Receiver dot (the table above), or type `WorldPlan` in F10: a plan island's rule is marked **[done]**.
+- **"Do I have to do the side trips?"** No. They are there to explore; the story never waits for them.
+- **"I sailed past a side trip - is it gone?"** It stays where it came up (its Receiver dot shows where). If you had
+  reached it and its quest wasn't done, it comes back ahead of the raft by itself after about 12 minutes, up to three
+  times. One you never reached stays where it is.
+- **"A quest island drifted away before I finished it."** Main quest islands stay where they came up - follow
+  their dot on the Receiver, which shows the way and the distance. Islands a plan waits for in other ways come back by themselves until you've done
+  what the plan waits for ([3](#islands-appear-while-you-sail)).
+- **"Can I have only the plan's islands, no random ones?"** Yes: in your own plan, set **Random islands while sailing**
+  to off. For a plan someone else made, make a copy (**Copy...** in World plans) and switch it off there, or untick
+  every island in **World settings > Islands while sailing** for that world.
+- **"Can a random island be one of the plan's islands?"** Not for a plan installed from the library (its islands have
+  weight 0 in `spawnpool.txt`). For your own plan with your own islands, give them 0 in `spawnpool.txt` or untick them
+  in the world's list, or they can turn up by chance too.
+- **"Where do I change the km, the message, or which island?"** In the editor: **WORLD PLANS**, open the plan, change
+  the rule's card, **Save**. A world already playing that plan gets the change the next time it loads; rules that have
+  already fired stay done.
+
 ### 7.1 The plans that come with the mod
 
 Choose one in the New Game box (**Custom Islands plan**), or open it in World plans to see how it's made:
@@ -1576,25 +1829,25 @@ Chickens, goats, llamas, turtles, stingrays, dolphins, whales and people give no
 ![+2 EXP floating over a warthog](images/levels-hit.jpg)
 *A hit on a warthog: +2 EXP.*
 
-Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **20 EXP**:
+Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **40 EXP**:
 
 | Monster | EXP | Monster | EXP |
 |---|---|---|---|
-| Bruce (shark) | 20 | Bear | 13 |
-| Warthog | 13 | Polar bear | 15 |
-| Screecher | 12 | Hyena | 7 |
-| Puffer fish | 9 | Rat | 7 |
-| Mama bear (Balboa) | 67 | Hyena boss | 40 |
+| Bruce (shark) | 40 | Bear | 27 |
+| Warthog | 25 | Polar bear | 29 |
+| Screecher | 23 | Hyena | 13 |
+| Puffer fish | 19 | Rat | 13 |
+| Mama bear (Balboa) | 133 | Hyena boss | 80 |
 
 An island's own Hard or Boss animals are worth more than Raft's plain ones.
 
 | From level | EXP to the next | About |
 |---|---|---|
-| 1 → 2 | 100 | 5 sharks |
-| 2 → 3 | 200 | 10 sharks |
-| 3 → 4 | 400 | 20 sharks |
-| 4 → 5 | 600 | 30 sharks |
-| then | 200 more each level | 10 more sharks each level |
+| 1 → 2 | 100 | 3 sharks |
+| 2 → 3 | 200 | 5 sharks |
+| 3 → 4 | 400 | 10 sharks |
+| 4 → 5 | 600 | 15 sharks |
+| then | 200 more each level | 5 more sharks each level |
 
 #### Levelling up and spending points
 
@@ -1646,6 +1899,7 @@ up while the game runs.
 | `minSpacing` | 800 | Metres kept between custom islands |
 | `spawnDistanceMin`, `spawnDistanceMax` | 250, 350 | How far ahead of the raft an island appears |
 | `unloadDistance` | 800 | Islands further away are unloaded (and come back when you return) |
+| `returnMinutes` | 12 | An island the players still need (its quest begun and not done, or one a plan waits for) that the raft left behind comes back ahead of the raft after this many minutes (0 = never; [3](#islands-appear-while-you-sail)) |
 | `regrowDays` | 3 | In-game days until harvested things grow back (0 = never) |
 | `showOnReceiver` | 1 | Custom islands as green dots on Raft's Receiver (0 = no) |
 | `defaultPlan` | Random islands | The plan new worlds get when none is chosen |
@@ -2257,8 +2511,28 @@ on as Raft's. The smaller library islands turn up as side trips while you sail (
 | Varuna Point | ![](images/library/coral_observatory.jpg) **Coral Observatory** | A research platform moored in an atoll's lagoon, coral samples in cases on the lagoon floor and a giant angler fish at the reef's edge |
 | Temperance | **Glacier Station** | ([16.3](#163-the-very-large-islands)) |
 
-What it shows: rules with a **story place** ("after" a story island) and a **Receiver** frequency, "done when its
-quest is done", and side trips brought **after a distance sailed**, ahead of the raft.
+The **side trips** - every one 450 m ahead of the raft, with its message on screen and its name on the Receiver:
+
+| Sailed | Island | The message |
+|---|---|---|
+| 2 km | **The Stranded Gull** | A white hull glints on a sandbar ahead. |
+| 4 km | **Signal Rock** (quest "Dead Air") | A mast on a rock ahead - its light is dead. |
+| 7 km | **Ranger's Rest** | A jungle hill with a watch tower comes up ahead. |
+| 10 km | **Stilt Hollow** | Trailers on stilts over a reef - someone lived out here. |
+| 13 km | **Mayor's Wharf** | Rooftops stick out of the sea ahead: a sunken city block. |
+| 16 km | **Crane Yard** | A crane rises from the sea ahead. |
+| 20 km | **Frost Hollow** | A snowy islet with a hut - it's getting colder. |
+| 24 km | **Tide Farm** | Water wheels turn on a floating farm ahead. |
+| 28 km | **Old Mine Islet** | A headframe stands over an old shaft on the islet ahead. |
+| 32 km | **Shelter Atoll** | A quiet atoll ahead - and a hatch in the middle of it. |
+
+The **main quest islands** are each on the Receiver, 700 m (Wreckers' Cove), 900 m (Thornwood, Scrapyard Haven,
+Ironreef Caverns) or 1000 m (the rest) ahead when tuned, and each is done when its quest is done. The plan also has
+**Random islands while sailing: on** and **Raft's story islands: on** (all eight).
+
+What it shows: all [three kinds of islands](#the-three-kinds-of-islands-you-meet-at-sea) in one plan - rules with a
+**story place** ("after" a story island) and a **Receiver** frequency, "done when its quest is done", and side trips
+brought **after a distance sailed**, ahead of the raft.
 
 **The Abyss Expedition** - an expedition downwards beside Raft's story: each island comes **near the one before**
 when its quest is done or players reach it - an old mine, a buried shelter, a **sunken island** and a **wreck** made

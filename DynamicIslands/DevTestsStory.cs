@@ -281,6 +281,51 @@ namespace DynamicIslands
 			JournalWindow.Open();
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, JournalWindow.IsOpen && JournalWindow.ShownTitle != null, "the journal opens (" + JournalWindow.ShownTitle + ")");
+			// (the pages by island: under the island's name and its quest, a tick once done - the user, 2026-10-02: notes of
+			// several islands in one list got mixed up)
+			string islandTitle = Behaviours.IslandTitle(e), questTitle = IslandQuest.From(IslandCache.PropsOf(e)).Title;
+			List<string> listed = JournalWindow.ListLines();
+			int head = listed.FindIndex(l => l.StartsWith("# " + islandTitle));
+			Check(ref ok, head >= 0 && listed[head].Contains(questTitle) && listed[head].Contains("done"), "the journal lists the island's pages under its name and its quest, done: \"" + (head >= 0 ? listed[head] : "(no line for " + islandTitle + ")") + "\"");
+			int vault = listed.IndexOf("The vault"), keeper = listed.IndexOf("The keeper's note");
+			Check(ref ok, head >= 0 && vault > head && keeper > head && !listed.Skip(head + 1).Take(Math.Max(vault, keeper) - head - 1).Any(l => l.StartsWith("# ")),
+				"its pages (the vault, the keeper's note) are under it: " + string.Join(" | ", listed.ToArray()));
+			StoryBook.Page vaultPage = StoryBook.Pages.FirstOrDefault(p => p.Title == "The vault");
+			Check(ref ok, vaultPage != null && JournalWindow.ShowKey(vaultPage.Key) && JournalWindow.ShownText.Contains("\u2014 " + islandTitle + " (" + questTitle + "), day "),
+				"a page is signed with its island and quest: \"" + (JournalWindow.ShownText ?? "").Split('\n').Last() + "\"");
+			// (the world's quests done, in the head - the user, 2026-10-02: "35/100% completed quests": Raft's story islands,
+			// the plan's, and every island with a quest that came; this island's quest is done)
+			List<QuestCount.Quest> quests = QuestCount.All();
+			QuestCount.Quest mine = quests.FirstOrDefault(q => q.Name.StartsWith(islandTitle));
+			Check(ref ok, mine != null && mine.Done, "the quest count has this island's quest, done: " + (mine != null ? mine.Name + " (" + mine.Group + ")" : "missing - " + string.Join(", ", quests.Select(q => q.Name).ToArray())));
+			int qDone, qTotal;
+			QuestCount.Count(quests, out qDone, out qTotal);
+			yield return new WaitForSeconds(0.2f);
+			Check(ref ok, JournalWindow.QuestsShown == "QUESTS  " + qDone + " / " + qTotal + "  \u00B7  " + QuestCount.Percent(qDone, qTotal) + "%", "the journal's head shows it: \"" + JournalWindow.QuestsShown + "\" (" + QuestCount.Summary(quests) + ")");
+			// (Raft's story, without a plan's chain: each island done when its note gives the next frequency, Utopia when its
+			// people are rescued - Raft's record, faked here)
+			if (!StoryChain.Active && (WorldDirector.Plan == null || WorldDirector.Plan.RaftStory) && NoteBook.unlockedChunkPointType != null)
+			{
+				List<ChunkPointType> keep = NoteBook.unlockedChunkPointType.ToList();
+				ChunkPointType[] order = StoryOrder.Order;
+				NoteBook.unlockedChunkPointType.RemoveAll(t => StoryOrder.Chain.Contains(t));
+				NoteBook.unlockedChunkPointType.AddRange(new[] { order[0], order[1], order[2] });
+				QuestCount.TestUtopiaDone = true;
+				List<QuestCount.Quest> raft = QuestCount.All().Where(q => q.Group == QuestCount.RaftStory).ToList();
+				string doneNames = string.Join(", ", raft.Where(q => q.Done).Select(q => q.Name).ToArray());
+				Check(ref ok, raft.Count == 8 && doneNames == StoryOrder.Name(order[0]) + ", " + StoryOrder.Name(order[1]) + ", Utopia",
+					"Raft's story counts: 8 islands, done " + doneNames + " (three frequencies found, Utopia's people rescued)");
+				QuestCount.TestUtopiaDone = null;
+				NoteBook.unlockedChunkPointType.Clear();
+				NoteBook.unlockedChunkPointType.AddRange(keep);
+			}
+			JournalWindow.ShowQuestList();
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, JournalWindow.ShownTitle.StartsWith("Quests: ") && JournalWindow.ShownText.Contains("\u221a  " + mine.Name), "a click on the count lists the quests on the paper: \"" + JournalWindow.ShownTitle + "\"");
+			Screenshot(new[] { "journal_quests" });
+			yield return new WaitForSeconds(0.5f); // (the picture is taken at the end of the frame)
+			JournalWindow.ShowKey(vaultPage.Key);
+			yield return new WaitForSeconds(0.3f);
 			Screenshot(new[] { "journal" });
 			yield return new WaitForSeconds(0.5f);
 			JournalWindow.Close();

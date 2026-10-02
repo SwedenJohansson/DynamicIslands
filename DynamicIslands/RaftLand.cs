@@ -130,7 +130,7 @@ namespace DynamicIslands.Editor
 			public string Name, Category;
 			public int Count;
 			public float[] Counts = new float[BinCount];
-			public double W, H0, H1, H2, I0, I1, I2, S0, S1, S2, Sand, Grass, Rock, Size, Above, Near;
+			public double W, H0, H1, H2, I0, I1, I2, S0, S1, S2, Sand, Grass, Rock, Size, Above, AboveW, Near;
 		}
 
 		static void Load()
@@ -196,7 +196,8 @@ namespace DynamicIslands.Editor
 							a.I0 += i[0] * n; a.I1 += i[1] * n; a.I2 += i[2] * n;
 							a.S0 += s[0] * n; a.S1 += s[1] * n; a.S2 += s[2] * n;
 							if (t.Length >= 3) { a.Sand += t[0] * n; a.Grass += t[1] * n; a.Rock += t[2] * n; }
-							a.Size += Num(f[10]) * n; a.Above += Num(f[11]) * n; a.Near += Num(f[12]) * n;
+							a.Size += Num(f[10]) * n; a.Near += Num(f[12]) * n;
+							if (Plausible(Num(f[11]), Num(f[10]))) { a.Above += Num(f[11]) * n; a.AboveW += n; }
 						}
 					}
 				}
@@ -208,6 +209,16 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] On the land of Raft's islands: " + string.Join(", ", Enumerable.Range(0, styles.Length).Where(i => styles[i] != null)
 				.Select(i => TerrainPainter.StyleName(i) + " " + styles[i].Things.Count + " kinds (small islands " + (smallStyles[i] != null ? smallStyles[i].Things.Sum(t => t.Count) : 0) +
 					" things, big " + (bigStyles[i] != null ? bigStyles[i].Things.Sum(t => t.Count) : 0) + ")").ToArray()));
+		}
+
+		/// <summary>
+		/// Whether an island's "above the ground" for a kind is how deep it stands in its ground: no deeper or higher than the
+		/// thing is big. Else the measured ground was something else's - the top of a big rock over it, a cliff in the sample's
+		/// cell - and is left out: one island's -22 m for a coral 2.6 m big sank every coral of the style out of sight (2026-10-02).
+		/// </summary>
+		public static bool Plausible(float above, float size)
+		{
+			return Mathf.Abs(above) <= Mathf.Max(size, 0.5f);
 		}
 
 		/// <summary>A pool of islands per style: the land's area per bin and every kind with its densities and where it stands.</summary>
@@ -228,7 +239,7 @@ namespace DynamicIslands.Editor
 						Inland = new[] { (float)(a.I0 / w), (float)(a.I1 / w), (float)(a.I2 / w) },
 						Slope = new[] { (float)(a.S0 / w), (float)(a.S1 / w), (float)(a.S2 / w) },
 						OnSand = (float)(a.Sand / w), OnGrass = (float)(a.Grass / w), OnRock = (float)(a.Rock / w),
-						Size = (float)(a.Size / w), Above = (float)(a.Above / w), NearestSame = (float)(a.Near / w),
+						Size = (float)(a.Size / w), Above = a.AboveW > 0 ? (float)(a.Above / a.AboveW) : 0f, NearestSame = (float)(a.Near / w),
 					};
 					for (int b = 0; b < BinCount; b++) t.Density[b] = style.Area[b] > 1f ? a.Counts[b] * 1000f / style.Area[b] : 0f;
 					style.Things.Add(t);

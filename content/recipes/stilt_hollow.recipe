@@ -34,7 +34,8 @@ place Creature_Hyena hyenas at 7.5 -10.6 h=4.8
 # --- From the landing up to the pump stack: a scaffold walkway; on the pump stack the pump, the notice, the well ---
 ramp Scaffolding_6x4m from 10 -11.8 4.45 to 15 -1.3 6.2
 place Pump pump at 16.6 0.6 h=6.2 sit yaw=90
-place Pump_Handle - at 16.6 1.1 h=6.9 yaw=90
+# (the handle's mesh is 1.05 m above its pivot: it stands on the pump's top, not 0.65 m over it)
+place Pump_Handle - at 16.6 0.46 h=6.15 yaw=90
 place Note_Board notice at 18.8 -1.6 h=7.2 yaw=200
 place Well - at 18.2 2.6 sit
 place Zone_Sound pumpsound at 16.6 0.6 h=7
@@ -42,11 +43,9 @@ place Banner_01 - at 14.6 3.8 h=9 yaw=170
 place PlasticChair_01 - at 19.2 -1.8 h=6.2 sit yaw=220
 
 # --- The red pipe: from the pump over the edge, down the cliff and east over the reef to the divers' air pocket ----
-line WaterPipe_Long_2 from 17 0.6 to 20.8 0.8 step=1.5 h=6.3
-for py 0.6 5.1 1.5
-place WaterPipe_Long_2 - at 21.2 0.8 h=$py roll=90 yaw=0
-next
-line WaterPipe_Long_2 from 22 0.8 to 25.5 3.2 step=1.5 y=0.15
+# (follow: end to end over the ground, down the wall too - laid level, the pieces hung over the slope as steps)
+line WaterPipe_Long_2 from 17 0.6 to 21.4 0.8 follow y=0.12
+line WaterPipe_Long_2 from 21.4 0.8 to 25.5 3.2 follow y=0.12
 place AirPocket_1 airpocket at 26.5 3.6 sit
 place Loot_ChestSmall valvebox at 26.5 3.6 y=0.4 sit yaw=200
 
@@ -58,10 +57,14 @@ place Block_Wall_Tier3 gate3 at 13.4 2.62 h=6.2 yaw=90
 
 # --- The mayor's rock: his trailer, an awning over his chest, the town's flag, the white screecher ---------------
 place Caravan_Yellow_01 mayortrailer at -3.6 4.6 h=8.9
-place MetalSheet_2 - at -2 0.6 h=11.3 tilt=8
-place Beam_Long_01 - at -4.2 -0.2 h=8.9 roll=90
-place Beam_Long_01 - at 0.2 -0.2 h=8.9 roll=90
-place MayorsChest mayorchest at -2.2 0.8 h=8.9 sit yaw=90
+# (the awning on four posts, all on the rock's flat top - within 3 m of its middle; Raft's long beam is 3.6 m along its
+# own x and stands upright: shortened to reach the awning's high and low edge)
+place MetalSheet_2 - at -2.5 1.4 h=11.3 tilt=8
+place Beam_Long_01 - at -4.7 0.6 h=8.7 sx=0.755
+place Beam_Long_01 - at -0.3 0.6 h=8.4 sx=0.84
+place Beam_Long_01 - at -4.7 2.2 h=8.9 sx=0.62
+place Beam_Long_01 - at -0.3 2.2 h=8.9 sx=0.62
+place MayorsChest mayorchest at -2.5 1.5 h=8.9 sit yaw=90
 place PulauKafilahFlag - at -5.6 0.2 h=8.9 sit yaw=110
 place BenchTable_01 - at -0.5 4 h=8.9 sit yaw=10
 place Zone_Trigger mayor at 0 2.5 h=10

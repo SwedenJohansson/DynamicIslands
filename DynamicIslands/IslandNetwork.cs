@@ -496,6 +496,17 @@ namespace DynamicIslands.Editor
 				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
 				if (known != null)
 				{
+					// (moved by the host: an island the players still need came back ahead of the raft - ReturningIslands)
+					if (msg.Offsets != null && i * 3 + 2 < msg.Offsets.Length)
+					{
+						Vector3 at = FromHost(raft, msg.Offsets, i);
+						if (new Vector2(at.x - known.Position.x, at.z - known.Position.z).magnitude > 5f)
+						{
+							if (known.Root != null) { IslandObjectState.Capture(known); IslandSpawner.Despawn(known.Root); known.Root = null; }
+							known.Position = at;
+							Log("Island " + known.Id + " '" + known.HostName + "' moved by the host to " + at.ToString("F0"));
+						}
+					}
 					// (known without its file - it came while the host was still making it, or its file failed here: the
 					// host's hash now lets it come after all; Resync didn't help before)
 					string hash = msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "";

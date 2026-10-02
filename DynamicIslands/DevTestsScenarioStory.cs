@@ -40,14 +40,16 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Tunes the host's Receiver to a plan rule's frequency and waits for its island.</summary>
-		static IEnumerator TuneTo(string rule, float seconds = 60f)
+		/// <summary>The Receiver tuned to a plan island's frequency; waits until it is brought (and loaded, unless loaded is
+		/// false: brought beyond the load distance - its spot ahead taken - it loads only as players come near).</summary>
+		static IEnumerator TuneTo(string rule, float seconds = 60f, bool loaded = true)
 		{
 			StoryChain.Tick();
 			int type = StoryChain.TypeOfRule(rule);
 			if (type < StoryChain.ModTypeBase) { Log("  (no frequency for '" + rule + "')"); yield break; }
 			ChunkManager cm = ComponentManager<ChunkManager>.Value;
 			if (cm != null) cm.AddChunkPointForcibly((ChunkPointType)type);
-			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == rule && e.Root != null), seconds);
+			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == rule && (!loaded || e.Root != null)), seconds);
 		}
 
 		[ConsoleCommand(name: "CIStoryWeave", docs: "Dev, world (host, a test world 'CI ...'): SC63/SC34 - the woven story (Balboa left out, a harbor instead of Vasagatan, an island after Tangaroa) walked with Raft's own calls. CIStoryWeave part1 = to Caravan Town (then the runner saves and loads); CIStoryWeave part2 = on to Utopia; CIStoryWeave clean = the world's story back to Raft's")]
