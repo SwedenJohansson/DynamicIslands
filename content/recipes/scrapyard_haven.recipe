@@ -26,8 +26,8 @@ origin
 place UT_Set_Prison - at -30 -10 centred sit yaw=-90
 place Loot_ChestLarge hoard at -20 -10 h=18.8 sit yaw=90
 place Zone_Trigger fortress at -20 -10 h=20
-# (two ladders up the stilts to its deck)
-place LandmarkLadder_6m fortressladder at -14.6 -10 h=6.3 yaw=90
+# (two ladders up the stilts to its deck, the first from the ground)
+place LandmarkLadder_6m fortressladder at -14.6 -10 h=9 yaw=90
 place LandmarkLadder_6m - at -14.6 -10 h=13.0 yaw=90
 
 # --- The town: a ring of stacked caravans around the terrace (open to the bay), the gate trailer and its winch ------
