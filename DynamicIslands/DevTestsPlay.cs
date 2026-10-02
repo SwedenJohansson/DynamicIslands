@@ -37,7 +37,11 @@ namespace DynamicIslands
 		static IslandWorldState.Entry playEntry;
 
 		/// <summary>A point of the played island (metres from its land middle) in the world.</summary>
-		static Vector3 PlayPoint(float x, float z) { return playEntry.Position + new Vector3(x, 0f, z); }
+		static Vector3 PlayPoint(float x, float z) { return playEntry.Position + new Vector3(x - playOffset.x, 0f, z - playOffset.y); }
+
+		/// <summary>How far the island's land centre lies from its recipe's origin ("offset" step; the recipe logs it when it
+		/// saves): a world spawns an island by its land centre, the recipe's points are from its origin.</summary>
+		static Vector2 playOffset;
 
 		/// <summary>The top of what is at a point (land, a deck, a roof), below a height.</summary>
 		static float PlaySurface(Vector3 p, float below = 400f)
@@ -75,6 +79,7 @@ namespace DynamicIslands
 					{
 						string island = Rest(line, 1).Replace(" keep", "").Trim();
 						keep = line.EndsWith(" keep");
+						playOffset = Vector2.zero;
 						// (a copy left by an earlier run that stopped half way: removed first)
 						var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 						if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
@@ -134,7 +139,7 @@ namespace DynamicIslands
 						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
 						Collider grip = playEntry.Root.GetComponentsInChildren<Collider>(true).Where(c => c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0)
 							.OrderBy(c => ScFlat(c.bounds.center, p)).FirstOrDefault();
-						if (grip == null || ScFlat(grip.bounds.center, p) > 3f) { Check(ref ok, false, "a ladder near " + t[1] + "," + t[2] + (grip != null ? " (the nearest is " + ScFlat(grip.bounds.center, p).ToString("F1") + " m off)" : "")); checks++; break; }
+						if (grip == null || ScFlat(grip.bounds.center, p) > 3f) { Check(ref ok, false, "a ladder near " + t[1] + "," + t[2] + (grip != null ? " (the nearest is " + ScFlat(grip.bounds.center, p).ToString("F1") + " m off: " + grip.transform.parent?.name + "/" + grip.name + " at " + (grip.bounds.center - playEntry.Position).ToString("F1") + ")" : "")); checks++; break; }
 						float foot = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : grip.bounds.min.y;
 						p = new Vector3(grip.bounds.center.x, Mathf.Max(foot, grip.bounds.min.y) + 1f, grip.bounds.center.z);
 						PlayerMove.To(me, p);
@@ -232,6 +237,21 @@ namespace DynamicIslands
 						AzureSkyHour(F(t[1]));
 						yield return new WaitForSeconds(1f);
 						break;
+					case "offset":
+						// offset <x> <z>: the island's land centre from its recipe's origin (the recipe says so when it saves)
+						playOffset = new Vector2(F(t[1]), F(t[2]));
+						break;
+					case "where":
+					{
+						// where <name>: logs where the island's objects of that name are, in the test's island coordinates
+						string what = Rest(line, 1).Trim();
+						foreach (Transform tr in playEntry.Root.GetComponentsInChildren<Transform>(true).Where(x => x.parent != null && x.name.StartsWith(what, StringComparison.OrdinalIgnoreCase) && x.parent.name.IndexOf(what, StringComparison.OrdinalIgnoreCase) < 0))
+						{
+							Vector3 d = tr.position - playEntry.Position + new Vector3(playOffset.x, 0f, playOffset.y);
+							Log("  where " + tr.name + ": " + d.x.ToString("F1", CultureInfo.InvariantCulture) + " " + d.z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + d.y.ToString("F1", CultureInfo.InvariantCulture));
+						}
+						break;
+					}
 					case "weather":
 						// weather <name>: Raft's weather changed at once (pictures in clear weather); weather alone lists them
 						PlayWeather(t.Length > 1 ? Rest(line, 1).Trim() : "");

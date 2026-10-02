@@ -106,6 +106,20 @@ namespace DynamicIslands
 			Log("WHERE " + (DynamicIslands.InEditor() ? "editor" : LoadSceneManager.IsGameSceneLoaded ? "world" : "menu"));
 		}
 
+		[ConsoleCommand(name: "CIInstances", docs: "Dev: logs every object named <name> in the scene (editor or world): where it is, its parent, and where its parts are")]
+		public static void InstancesCommand(string[] args)
+		{
+			string name = string.Join(" ", args ?? new string[0]);
+			int n = 0;
+			foreach (Transform tr in UnityEngine.Object.FindObjectsOfType<Transform>().Where(x => x.name == name || x.name == name + "(Clone)"))
+			{
+				n++;
+				Log("instance " + tr.name + " at " + tr.position.ToString("F1") + " rot " + tr.eulerAngles.ToString("F0") + " in " + (tr.parent != null ? tr.parent.name : "-"));
+				foreach (Transform c in tr) Log("   part " + c.name + " at " + c.position.ToString("F1") + " (local " + c.localPosition.ToString("F1") + ")");
+			}
+			Log("PASS: " + n + " instances of " + name);
+		}
+
 		[ConsoleCommand(name: "CIAtmoInfo", docs: "Dev: logs how Raft lights the scene where the camera is (ambient, fog, probes, directional lights, the atmosphere zone there)")]
 		public static void AtmoInfoCommand()
 		{
@@ -757,11 +771,26 @@ namespace DynamicIslands
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							Log("  saved '" + island + "'");
+							// (a world puts an island's land centre - the land above the sea, as saved - where it spawns; the recipe's
+							// points are from its origin, the land centre when it was generated: land changed since moves them)
+							Vector2 moved = EditorLandCentre() - frames[0].Origin;
+							if (moved.magnitude > 0.5f) Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'");
 							break;
 						}
 						case "log":
 							Log("  " + Rest(line, 1));
 							break;
+						case "where":
+						{
+							// where <alias>: logs where the objects placed under it ended up (island x z, height above the sea, turn)
+							Frame root = frames[0];
+							foreach (EditorGameObject e in Group(t[1]))
+							{
+								Vector3 p = e.transform.position;
+								Log("  where " + t[1] + ": " + Num(p.x - root.Origin.x) + " " + Num(p.z - root.Origin.y) + " h=" + Num(p.y - DynamicIslands.EditorWaterLevel) + " rot " + e.transform.eulerAngles.ToString("F0"));
+							}
+							break;
+						}
 						default:
 							error = "unknown step '" + verb + "'";
 							break;
