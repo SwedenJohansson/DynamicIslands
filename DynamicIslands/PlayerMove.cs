@@ -17,6 +17,12 @@ namespace DynamicIslands.Editor
 			PersonController pc = player.PersonController;
 			CharacterController cc = pc != null ? pc.controller : null;
 			if (cc != null) cc.enabled = false;
+			// (off any ladder first: a player moved away while holding one stays in Raft's climbing state - no falling)
+			if (pc != null && pc.climbing)
+			{
+				try { pc.DetachFromLadders(); }
+				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Letting go of a ladder: " + e.Message); }
+			}
 			if (pc != null && pc.HasRaftAsParent) player.transform.SetParent(null, true);
 			player.transform.position = at;
 			if (pc != null)
