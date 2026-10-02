@@ -8,8 +8,9 @@
 # Built by the recipe player (CIRecipe radio_tower_remade) through the editor's own operations.
 include lib_rt
 new
-gen ObjectDensity=0.4 Trees=0.3 Bushes=0.4 Rocks=0.5 BeachThings=0.5 Harvest=0.3 Water=0.6 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.3
-randomize Radar like Seed=7101 Radius=34 Height=28 Cliffs=0.6 Peaks=1 PeakShape=0.7
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0 SeaLife=0.3
+randomize Radar like Seed=7101 Radius=34 Height=28 Cliffs=0.6 Peaks=1 PeakShape=0.7 Hostiles=0
 
 # --- Terrain: the tower's footing levelled on the south terrace, a dock's beach below it -----------------------------
 brush flatten at -1 -18 r=7 s=20 frames=40

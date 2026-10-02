@@ -6,9 +6,11 @@
 # Built by the recipe player (CIRecipe rangers_rest) through the editor's own operations.
 
 new
+# (nature: a jungle hill: twice Raft's trees and bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.4 Bushes=0.38 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=517 Radius=36 Height=24 Roughness=0.45 Peaks=2 Shape=0 Style=0 BeachWidth=0.4 Cliffs=0.2 PeakShape=0.25
-gen SeaFloor=0 Shelf=0.35 DropOff=0.5 Seabed=0 ObjectDensity=0.6 Trees=0.65 Bushes=0.6 Rocks=0.4 Harvest=0.4
-gen BeachThings=0.4 Water=0.4 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=2 HostileKinds=Boar Friendly=0 SeaLife=0
+gen SeaFloor=0 Shelf=0.35 DropOff=0.5 Seabed=0
+gen Water=0.4 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=2 HostileKinds=Boar Friendly=0 SeaLife=0
 generate
 
 # --- Terrain: a terrace for the ranger station and its watchtower (east, ~10 m up), the den's beach levelled at the
@@ -40,6 +42,15 @@ brush sand from 10 26 to 12 14 r=1.5 s=8 frames=24
 brush sand from 12 14 to 14 8 r=1.5 s=8 frames=20
 brush sand from 14 8 to 18 3 r=1.5 s=8 frames=18
 brush sand from 12 -26 to 6 -27 r=1.4 s=8 frames=18
+
+# --- The hill's crown: a few big jungle trees and banana bushes, so it reads from the sea as the jungle hill it is ---
+place "Pickup_Landmark_Tree_Mango" - at -8 -2 yaw=30
+place "Pickup_Landmark_Tree_Mango" - at -11 2.5 yaw=200
+place BigPalm2 - at -4.5 -6 yaw=110
+place BigPalm3 - at -12.5 -5.5 yaw=300
+place Banana_Bush_1 - at -9.5 0.5 yaw=60
+place Banana_Bush_3 - at -6 -3 yaw=150
+place Banana_Bush_2 - at -13 0 yaw=250
 
 # --- The ranger station: Balboa's log cabin on the terrace, its porch facing the sea --------------------------------
 place Balboa_Shack cabin at 22 -2

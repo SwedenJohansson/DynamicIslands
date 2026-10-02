@@ -1,7 +1,9 @@
 # Thornwood - a very large island of the library (jungle)
 new
+# (nature: a jungle: three times Raft's trees, two and a half times its bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=8831 Radius=115 Height=16 Roughness=0.55 Peaks=2 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.25 PeakShape=0.35
-gen SeaFloor=0 Shelf=0.45 Seabed=1 ObjectDensity=0.8 Trees=1 Bushes=0.85 Rocks=0.5 BeachThings=0.4 Harvest=0.1
+gen SeaFloor=0 Shelf=0.45 Seabed=1
 gen Water=0.4 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.4 SeaLife=0.4
 generate
 

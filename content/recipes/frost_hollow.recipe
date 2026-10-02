@@ -6,8 +6,10 @@
 # Built by the recipe player (CIRecipe frost_hollow) through the editor's own operations (macros from lib_selene).
 include lib_selene
 new
+# (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
 gen Seed=907 Radius=30 Height=12 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.3 PeakShape=0.3
-gen SeaFloor=1 Seabed=1 ObjectDensity=0.4 Trees=0.4 Bushes=0.3 Rocks=0.5 BeachThings=0.2 Harvest=0.2
+gen SeaFloor=1 Seabed=1
 gen Water=0.3 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0
 generate
 

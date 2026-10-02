@@ -187,8 +187,9 @@ namespace DynamicIslands
 					legs++;
 					Vector3 foot = new Vector3(b.center.x, b.min.y, b.center.z);
 					float land = ground != null ? ground.SampleHeight(foot) + ground.transform.position.y : float.MinValue;
-					// (on something right under its foot: a pillar stacked on another starts inside the one below it)
-					if (Physics.OverlapSphere(foot + Vector3.down * 0.12f, 0.1f, ~0, QueryTriggerInteraction.Ignore).Any(c => c.gameObject != r.gameObject && !c.transform.IsChildOf(r.transform))) continue;
+					// (on something right at its foot: a pillar stacked on another starts inside the one below it, a pole or a
+					// locker set down a few centimetres into the roof or floor it stands on)
+					if (Physics.OverlapSphere(foot + Vector3.up * 0.03f, 0.12f, ~0, QueryTriggerInteraction.Ignore).Any(c => c.gameObject != r.gameObject && !c.transform.IsChildOf(r.transform) && c.GetComponent<Terrain>() == null)) continue;
 					RaycastHit hit;
 					bool under = Physics.Raycast(foot + Vector3.down * 0.02f, Vector3.down, out hit, 300f, ~0, QueryTriggerInteraction.Ignore);
 					float support = Mathf.Max(land, under ? hit.point.y : float.MinValue);
@@ -252,6 +253,18 @@ namespace DynamicIslands
 				Vector3 p = e.transform.position;
 				float land = ground.SampleHeight(p) + ground.transform.position.y;
 				if (p.y - land <= 0.5f) continue;
+				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
+				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				if (parts.Length > 0)
+				{
+					Bounds whole = parts[0].bounds;
+					foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+					if (whole.min.y - (ground.SampleHeight(whole.center) + ground.transform.position.y) <= 0.5f) continue;
+					RaycastHit on;
+					if (Physics.Raycast(new Vector3(whole.center.x, whole.min.y + 0.1f, whole.center.z), Vector3.down, out on, 0.8f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
+						on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
+				}
 				lifted++;
 				if (lifted <= 30) Log("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
 			}
