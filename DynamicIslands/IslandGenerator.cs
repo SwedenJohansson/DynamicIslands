@@ -1851,14 +1851,22 @@ namespace DynamicIslands.Editor
 					float maxSize = MaxSize(cat, zone);
 					if (objectSize * scale > maxSize) scale = Mathf.Max(0.15f, maxSize / objectSize);
 					float foot = Footprint(cat, objectSize * scale);
+					// (something flat and wide - a snow drift - lies along a gentle slope: sunk to its low edge it was buried, set
+					// down flat its low edge stood in the air; on a steep one it would hang down the slope like a sheet - not there.
+					// Ice at the shore stays as Raft has it, flat at the waterline)
+					Vector3 lean = Vector3.up;
+					bool flat = kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) < 0 && LiesFlat(kind, scale, ground, x, z0, out lean);
+					if (flat && Vector3.Angle(Vector3.up, lean) > 20f) continue; // (lean down: the ground under its rim isn't level enough)
 					if (!spots.Free(x, z0, foot)) continue;
 					spots.Add(x, z0, foot);
 					GameObject proto = PlaceableCatalog.Get(kind);
 					Vector3 baseScale = proto != null ? proto.transform.localScale : Vector3.one;
-					// (sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
-					float y = h;
+					// (all of its base on the ground: down to the lowest ground under it - on a slope the low side of a rock, a bush
+					// or a log stood in the air; then sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
+					float y = h - (flat ? 0.2f : kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0 ? 0f : BaseDrop(ground, x, z0, kind, cat, scale));
 					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
-					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = new Vector3(0, yaw, 0), Scale = baseScale * scale });
+					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
+					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
 					cats.Add(cat);
 					placed++;
 				}
@@ -1957,6 +1965,56 @@ namespace DynamicIslands.Editor
 			return list;
 		}
 
+		/// <summary>
+		/// How far below the ground at its middle an object goes so that all of its base stands on the ground: the lowest
+		/// ground under its base - a tree's trunk, else most of its width (set down by its middle on a slope, the low side
+		/// of a rock, a bush, a log or a snow drift stood in the air). 0 on level ground; it doesn't change what is placed
+		/// where, so a seed still gives the same island.
+		/// </summary>
+		static float BaseDrop(Ground ground, float x, float z, string name, string cat, float scale)
+		{
+			GameObject proto = PlaceableCatalog.Get(name);
+			Vector3 ls = proto != null ? proto.transform.localScale : Vector3.one;
+			Bounds b;
+			float width = PlaceableCatalog.LocalBounds(name, out b) ? Mathf.Max(b.size.x * Mathf.Abs(ls.x), b.size.z * Mathf.Abs(ls.z)) * scale : 1f;
+			float radius = cat == CatTrees ? Mathf.Min(0.5f * scale, width * 0.15f) : Mathf.Min(width * 0.38f, 6f);
+			float h = ground.At(x, z), low = h;
+			for (int i = 0; i < 8; i++)
+			{
+				float a = i * Mathf.PI / 4f;
+				low = Mathf.Min(low, ground.At(x + Mathf.Cos(a) * radius, z + Mathf.Sin(a) * radius));
+			}
+			// (a mesh whose bottom is above its pivot - some of Raft's stood on their pivot in a hollow - comes down onto the ground too)
+			float lift = proto != null && PlaceableCatalog.LocalBounds(name, out b) ? Mathf.Max(0f, b.min.y * Mathf.Abs(ls.y) * scale) : 0f;
+			return h - low + lift;
+		}
+
+		/// <summary>
+		/// Whether an object is flat and wide (a snow drift: less than a quarter as high as it is wide) - it lies along the
+		/// slope (lean: the ground's up there, averaged over its width) instead of sinking to its low edge. Else lean is up.
+		/// </summary>
+		static bool LiesFlat(string name, float scale, Ground ground, float x, float z, out Vector3 lean)
+		{
+			lean = Vector3.up;
+			GameObject proto = PlaceableCatalog.Get(name);
+			Vector3 ls = proto != null ? proto.transform.localScale : Vector3.one;
+			Bounds b;
+			if (!PlaceableCatalog.LocalBounds(name, out b)) return false;
+			float width = Mathf.Max(b.size.x * Mathf.Abs(ls.x), b.size.z * Mathf.Abs(ls.z)) * scale, height = b.size.y * Mathf.Abs(ls.y) * scale;
+			if (width < 2f || height > 0.25f * width) return false;
+			float d = Mathf.Clamp(width * 0.3f, 0.5f, 4f);
+			float dx = (ground.At(x + d, z) - ground.At(x - d, z)) / (2f * d), dz = (ground.At(x, z + d) - ground.At(x, z - d)) / (2f * d);
+			lean = new Vector3(-dx, 1f, -dz).normalized;
+			// (the ground under its rim must lie about in that plane: at a cliff's edge or over a gully it would hang in the air)
+			float h = ground.At(x, z), r = width * 0.38f;
+			for (int i = 0; i < 8; i++)
+			{
+				float a = i * Mathf.PI / 4f, ox = Mathf.Cos(a) * r, oz = Mathf.Sin(a) * r;
+				if (ground.At(x + ox, z + oz) < h + dx * ox + dz * oz - 0.5f) { lean = Vector3.down; break; }
+			}
+			return true;
+		}
+
 		/// <summary>Largest dimension (m) of a catalog object spawned at its prototype's own scale (the scale its Raft original had).</summary>
 		static float SpawnSize(string name)
 		{
@@ -2030,7 +2088,7 @@ namespace DynamicIslands.Editor
 							float foot = SeaFootprint(cat, actual);
 							if (!spots.Free(x, z, foot)) continue;
 							spots.Add(x, z, foot);
-							float y = h;
+							float y = h - BaseDrop(ground, x, z, t.Name, cat, scale); // (all of its base on the sea floor, as on land)
 							if (t.Above < -0.3f && t.Size > 0.5f) y += Mathf.Max(t.Above / t.Size, -1f) * actual; // (sunk into the slope as on Raft's islands)
 							else if (pickup && slope > 30f) y -= 0.15f;
 							float yaw = (float)rnd.NextDouble() * 360f;
@@ -2222,7 +2280,7 @@ namespace DynamicIslands.Editor
 				if (tier == 1 && !sunken && rnd.NextDouble() < 0.5) box = "Loot_Box";
 				var props = new Dictionary<string, string> { { ObjectProps.LootItems, TierLoot(tier, rnd) }, { ObjectProps.NoteTitle, (sunken ? "Sunken barrel" : TierTitles[tier - 1]) + " (tier " + tier + ")" } };
 				GameObject proto = PlaceableCatalog.Get(box);
-				result.Add(new IslandObject { Name = box, Position = new Vector3(at.x, ground.At(at.x, at.y), at.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
+				result.Add(new IslandObject { Name = box, Position = new Vector3(at.x, ground.At(at.x, at.y) - BaseDrop(ground, at.x, at.y, box, "", 1f), at.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
 				spots.Add(at.x, at.y, 0.8f);
 				owners.Add(null);
 				cats.Add(null);

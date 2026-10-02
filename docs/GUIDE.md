@@ -339,7 +339,9 @@ the editor (Noon the first time).
 ### 4.2 Shaping the land (Terrain tab)
 
 - **Sculpt:** **Raise**, **Lower**, **Flatten**, **Smooth**. Hold the left mouse button on the ground; the white ring
-  shows the brush.
+  shows the brush. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
+  the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
+  roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
 - **Paint ground:** the style's four textures (for a tropical island Sand, Grass, Rock, Seabed). **Auto** textures an
   area by its height and slope again.
 - **Brush:** size and strength.
@@ -364,13 +366,16 @@ on a raft, and the objects of Raft's story islands (they load the first time you
 finds objects in every category.
 
 - **Place:** click an object in the browser, then click the ground. **Q/E** turn it, **[** and **]** resize it,
-  **Shift+click** keeps placing, **Esc** stops.
+  **Shift+click** keeps placing, **Esc** stops. On a slope an object goes down to the **lowest ground under its base**,
+  so a house on legs or a van stands on all of its legs and wheels instead of its high side (with **Slope** on, it leans
+  with the ground instead).
 - **Select:** click a placed object; **Shift+click** adds more.
 - **Transform** (keys 1-4): Move, Turn, Scale or All, with the coloured handles. **X** switches the arrows between the
   world's directions and the object's own turn; **P** turns and scales around each object's own point or the middle of
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
   says so past 12 000: big islands take longer to appear in a world).
-- **Selection:** **Ground** drops the selection onto the terrain, **Duplicate** (Ctrl+D), **Deselect**, **Delete**.
+- **Selection:** **Ground** puts the selection down on the terrain - by its base: on a slope down to the lowest ground
+  under it, so nothing of it stands in the air - **Duplicate** (Ctrl+D), **Deselect**, **Delete**.
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
   snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
 - **Groups:** select several objects and click **Save as group...**. The group appears under **My groups** at the top
@@ -415,7 +420,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   or a reef ring).
 - **Nature:** trees, bushes, rocks, beach things and harvestables, with quick buttons **None**, **Sparse**,
   **Like Raft**, **Dense** and **Jungle**. "Like Raft" places everything where Raft's own islands have it: a nearly
-  bare beach, palms inland on grass, boulders on steep ground.
+  bare beach, palms inland on grass, boulders on steep ground. Everything stands with **all of its base on the ground**:
+  on a slope a rock, a bush or a log goes down to the lowest ground under it (its high side a little in the slope, as
+  Raft's own are), and flat things such as snow drifts lie along gentle slopes and are left off steep ones.
 - **Life under water:** corals, sea vines, kelp, rocks, stones, ores, giant clams and sunken barrels, placed like
   around Raft's own islands.
 - **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss),

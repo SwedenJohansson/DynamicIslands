@@ -1,5 +1,7 @@
 using DynamicIslands.Editor;
 using System;
+using System.Collections.Generic;
+using CommandUndoRedo;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -195,11 +197,52 @@ namespace DynamicIslands
 			RectInt alphaRect;
 			if (!TerrainPainter.WorldToAlphamapRect(terrain, dirtyMin - Vector3.one * 2f, dirtyMax + Vector3.one * 2f, out alphaRect)) { strokeHeights = null; return; }
 
-			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(terrainData,
+			var stroke = new TerrainStrokeCommand(terrainData,
 				heightRect, TerrainStrokeCommand.Crop(strokeHeights, heightRect),
 				alphaRect, TerrainStrokeCommand.Crop(strokeAlpha, alphaRect),
-				strokeMask != null ? TerrainStrokeCommand.Crop(strokeMask, alphaRect) : null, paintMask));
+				strokeMask != null ? TerrainStrokeCommand.Crop(strokeMask, alphaRect) : null, paintMask);
+			List<CommandUndoRedo.ICommand> follow = FollowGround();
+			if (follow.Count == 0) CommandUndoRedo.UndoRedoManager.Insert(stroke);
+			else
+			{
+				var group = new CommandUndoRedo.CommandGroup();
+				group.Add(stroke);
+				foreach (CommandUndoRedo.ICommand c in follow) group.Add(c);
+				CommandUndoRedo.UndoRedoManager.Insert(group);
+			}
 			strokeHeights = null; strokeAlpha = null; strokeMask = null;
+		}
+
+		/// <summary>
+		/// Placed objects that stood on the ground where a stroke raised or lowered it go up or down with it (the same undo
+		/// step as the stroke): lowered ground left trees, rocks and huts standing in the air, raised ground buried them.
+		/// What stands higher - on a deck, a roof, a tower - stays where it is.
+		/// </summary>
+		List<CommandUndoRedo.ICommand> FollowGround()
+		{
+			var moved = new List<CommandUndoRedo.ICommand>();
+			GameObject root = GameObject.Find("PlacedObjects");
+			RuntimeGizmos.TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
+			if (root == null || gizmo == null || strokeHeights == null || modificationAction == TerrainModificationAction.PaintLayer || modificationAction == TerrainModificationAction.AutoPaint) return moved;
+			int res = terrainData.heightmapResolution;
+			Vector3 o = terrain.transform.position, size = terrainData.size;
+			foreach (EditorGameObject e in root.GetComponentsInChildren<EditorGameObject>(false))
+			{
+				Vector3 p = e.transform.position;
+				if (p.x < dirtyMin.x - 1f || p.x > dirtyMax.x + 1f || p.z < dirtyMin.z - 1f || p.z > dirtyMax.z + 1f) continue;
+				// (the ground there before the stroke, from its snapshot, and now)
+				float u = Mathf.Clamp((p.x - o.x) / size.x * (res - 1), 0f, res - 1.001f), v = Mathf.Clamp((p.z - o.z) / size.z * (res - 1), 0f, res - 1.001f);
+				int x0 = (int)u, z0 = (int)v;
+				float fx = u - x0, fz = v - z0;
+				float before = Mathf.Lerp(Mathf.Lerp(strokeHeights[z0, x0], strokeHeights[z0, x0 + 1], fx), Mathf.Lerp(strokeHeights[z0 + 1, x0], strokeHeights[z0 + 1, x0 + 1], fx), fz) * size.y + o.y;
+				float now = terrain.SampleHeight(p) + o.y;
+				if (Mathf.Abs(now - before) < 0.02f || p.y > before + 0.6f || p.y < before - 8f) continue; // (a van set down on a slope by its base stands a few metres below the ground under its middle)
+				var command = new RuntimeGizmos.TransformCommand(gizmo, e.transform);
+				e.transform.position = p + Vector3.up * (now - before);
+				command.StoreNewTransformValues();
+				moved.Add(command);
+			}
+			return moved;
 		}
 
 		/// <summary>Runs a complete brush stroke at a point without the mouse (used by the automated tests).</summary>

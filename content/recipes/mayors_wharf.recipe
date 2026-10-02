@@ -62,7 +62,7 @@ pop
 line Block_Floor_Wood from 8.5 -5.25 to 27 -5.25 step=1.5 h=0.5
 line Block_Floor_Wood from 8.5 -6.75 to 27 -6.75 step=1.5 h=0.5
 for px 12 26 3.5
-place Block_Pillar_Wood - at $px -7.6 h=-2
+place Relay_support_beam_wood - at $px -7.6 h=-7 rot=0,0,-90 sx=0.8
 next
 place Block_Wall_Fence_Rope - at 19 -7.8 h=0.5
 place Block_Wall_Fence_Rope - at 22 -7.8 h=0.5
@@ -71,7 +71,7 @@ place Placeable_Lantern_Basic - at 25.6 -7.4 h=0.5 sit
 
 # --- Chis Burgers: one storey above the water, a cafe on its roof, joined to City Hall's roof ------------------------
 push at 27 12 h=0.5
-call rt_legs d=6
+call rt_legs d=12
 call rt_storey l2=RT_WallWindow1 l3=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
 place TangaroaKitchen_Bench4 - at -5.4 0 sit yaw=90
 place "VG_DecorationPrefabBase_Refrigerator Variant" - at -1 3.9 sit yaw=180

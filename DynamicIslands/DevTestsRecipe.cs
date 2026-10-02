@@ -66,7 +66,101 @@ namespace DynamicIslands
 
 		/// <summary>What CIFloating doesn't measure the base of: the generator's plants and rocks (a crown or a boulder is wider
 		/// than what touches the ground), caves and tunnels (set into the land on purpose).</summary>
-		static readonly Regex NotABase = new Regex("Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo", RegexOptions.IgnoreCase);
+		static readonly Regex NotABase = new Regex("Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift", RegexOptions.IgnoreCase);
+		/// <summary>What hangs or lies on purpose: a buoy's chain, pipes, cables, lamps, flags; decks, floors and ramps on their
+		/// posts; a crane's jib reaching out over the water.</summary>
+		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
+
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]
+		public static void GroundingTestCommand()
+		{
+			DynamicIslands.instance.StartCoroutine(GroundingTestRoutine());
+		}
+
+		static IEnumerator GroundingTestRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			// 1. The generator on a steep, rocky snow island: rocks stand with all of their base on the ground
+			int count = IslandGenerator.GenerateInEditor(IslandGenSettings.FromText("Seed=777\nRadius=70\nHeight=30\nRoughness=0.6\nPeaks=3\nShape=0\nStyle=1\nCliffs=0.5\nObjectDensity=0.7\nRocks=0.8\nBushes=0.6\nTrees=0.4"));
+			yield return null;
+			Physics.SyncTransforms();
+			Terrain ground = terraineditor.terrain;
+			float sea = DynamicIslands.EditorWaterLevel;
+			int rocks = 0, standing = 0, drifts = 0, flatDrifts = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string n = e.GameObjectName ?? "";
+				if (n.IndexOf("Rock", StringComparison.OrdinalIgnoreCase) >= 0 && e.transform.position.y > sea + 0.5f)
+				{
+					rocks++;
+					// (its pivot no higher than the ground under the middle of its base: on a slope, down to the low side)
+					Bounds b;
+					if (!PlaceableCatalog.LocalBounds(n, out b)) continue;
+					float w = Mathf.Max(b.size.x * e.transform.lossyScale.x, b.size.z * e.transform.lossyScale.z) * 0.3f;
+					float low = float.MaxValue;
+					for (int i = 0; i < 8; i++)
+					{
+						Vector3 q = e.transform.position + new Vector3(Mathf.Cos(i * Mathf.PI / 4f) * w, 0f, Mathf.Sin(i * Mathf.PI / 4f) * w);
+						low = Mathf.Min(low, ground.SampleHeight(q) + ground.transform.position.y);
+					}
+					if (e.transform.position.y <= low + 0.05f) standing++;
+				}
+				if (n.StartsWith("TP_SnowDrift"))
+				{
+					drifts++;
+					if (Vector3.Angle(e.transform.up, Vector3.up) <= 20.5f) flatDrifts++;
+				}
+			}
+			Check(ref ok, count > 0 && rocks > 10 && standing >= rocks * 0.97f, "the generator: " + standing + " of " + rocks + " rocks on land stand with all of their base on the ground (" + count + " objects)");
+			Check(ref ok, drifts > 0 && flatDrifts == drifts, "snow drifts lie along gentle slopes only: " + flatDrifts + " of " + drifts + " lean 20 degrees or less");
+
+			// 2. Ground puts a wide object down by its base: on the slope of a hill, its low side doesn't stand in the air
+			IslandGenerator.GenerateInEditor(IslandGenSettings.FromText("Seed=5\nRadius=60\nHeight=26\nRoughness=0.2\nPeaks=1\nShape=0\nObjectDensity=0"));
+			yield return null;
+			Vector2 mid = EditorLandCentre();
+			Vector3 slope = Vector3.zero;
+			float steepest = 0f;
+			for (float x = -30f; x <= 30f; x += 3f)
+				for (float z = -30f; z <= 30f; z += 3f)
+				{
+					Vector3 point, normal;
+					if (PlacementOptions.GroundAt(new Vector3(mid.x + x, 0f, mid.y + z), out point, out normal) && point.y > sea + 3f && Vector3.Angle(normal, Vector3.up) > steepest && Vector3.Angle(normal, Vector3.up) < 35f) { steepest = Vector3.Angle(normal, Vector3.up); slope = point; }
+				}
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Van_1" });
+			GameObject van = PlaceableCatalog.Spawn("Van_1", GameObject.Find("PlacedObjects").transform);
+			if (van == null) { Fail("grounding test: no Van_1"); yield break; }
+			EditorGameObject.Attach(van, "Van_1");
+			van.transform.position = slope + Vector3.up * 30f;
+			RuntimeGizmos.TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
+			gizmo.ClearTargets(false);
+			gizmo.AddTarget(van.transform, false);
+			PlacementOptions.AlignToSlope = false;
+			PlacementOptions.DropSelectionToGround();
+			gizmo.ClearTargets(false);
+			Physics.SyncTransforms();
+			float under = PlacementOptions.LowestGroundUnder(van);
+			Vector3 at;
+			Vector3 up;
+			PlacementOptions.GroundAt(van.transform.position, out at, out up);
+			Check(ref ok, Mathf.Abs(van.transform.position.y - under) < 0.05f && van.transform.position.y < at.y - 0.1f, "Ground on a " + steepest.ToString("F0") + " degree slope puts the van down by its base: " + (at.y - van.transform.position.y).ToString("F2") + " m below the ground under its middle, at the lowest ground under it");
+
+			// 3. A brush stroke lowers the ground under it: the van goes down with it; one undo puts both back
+			float before = van.transform.position.y;
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Lower;
+			terraineditor.brushRadius = 12f;
+			terraineditor.strength = 6f;
+			terraineditor editor = UnityEngine.Object.FindObjectOfType<terraineditor>();
+			editor.SimulateStroke(van.transform.position, 20, 0.05f);
+			yield return null;
+			float lowered = van.transform.position.y;
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return null;
+			Check(ref ok, lowered < before - 1f && Mathf.Abs(van.transform.position.y - before) < 0.01f, "lowering the ground under it took the van down " + (before - lowered).ToString("F2") + " m with it; Ctrl+Z put the ground and the van back (" + (van.transform.position.y - before).ToString("F3") + ")");
+			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
+			UnityEngine.Object.Destroy(van);
+			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
+		}
 
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air): CIFloating [gap] [name part]")]
 		public static void FloatingCommand(string[] args)
@@ -83,7 +177,7 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
 				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
 				{
 					if (!(r is MeshRenderer) || !r.enabled) continue;
@@ -93,10 +187,14 @@ namespace DynamicIslands
 					legs++;
 					Vector3 foot = new Vector3(b.center.x, b.min.y, b.center.z);
 					float land = ground != null ? ground.SampleHeight(foot) + ground.transform.position.y : float.MinValue;
+					// (on something right under its foot: a pillar stacked on another starts inside the one below it)
+					if (Physics.OverlapSphere(foot + Vector3.down * 0.12f, 0.1f, ~0, QueryTriggerInteraction.Ignore).Any(c => c.gameObject != r.gameObject && !c.transform.IsChildOf(r.transform))) continue;
 					RaycastHit hit;
 					bool under = Physics.Raycast(foot + Vector3.down * 0.02f, Vector3.down, out hit, 300f, ~0, QueryTriggerInteraction.Ignore);
 					float support = Mathf.Max(land, under ? hit.point.y : float.MinValue);
 					if (foot.y - support <= gap) continue;
+					// (above another part of the same object - a chimney on its roof - it is attached, not standing)
+					if (under && hit.point.y >= land && hit.collider.GetComponentInParent<EditorGameObject>() == e) continue;
 					found++;
 					Log("  floating: " + n + " (" + r.name + ") at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its foot h=" + Num(foot.y - sea) + " is " + Num(foot.y - support) + " m above " +
 						(under && hit.point.y >= land && hit.collider != null ? hit.collider.name : "the ground"));
@@ -109,9 +207,12 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || NotABase.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
 				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
 				if (rs.Length == 0 || ground == null) continue;
+				// (its base: the parts that reach down to its bottom - not a windmill's sails or a telescope's tube above it)
+				float bottom = rs.Min(r => r.bounds.min.y);
+				rs = rs.Where(r => r.bounds.min.y < bottom + 0.6f).ToArray();
 				Bounds b = rs[0].bounds;
 				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 				// (a deck, floor or plank lies on its posts: its base is the posts')
@@ -122,13 +223,18 @@ namespace DynamicIslands
 				for (int i = 0; i <= steps; i++)
 					for (int j = 0; j <= steps; j++)
 					{
-						var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.12f, b.max.x - b.size.x * 0.12f, i / (float)steps), 0f, Mathf.Lerp(b.min.z + b.size.z * 0.12f, b.max.z - b.size.z * 0.12f, j / (float)steps));
+						// (20 % in from the box around it: a rounded base, or one turned in its box, doesn't reach the box's corners)
+						var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.2f, b.max.x - b.size.x * 0.2f, i / (float)steps), 0f, Mathf.Lerp(b.min.z + b.size.z * 0.2f, b.max.z - b.size.z * 0.2f, j / (float)steps));
 						float g = b.min.y - (ground.SampleHeight(p) + ground.transform.position.y);
 						if (g < lowest) lowest = g;
 						if (g > highest) { highest = g; at = p; }
 					}
-				// (only what stands on the ground somewhere: decks on posts, roofs and things on tables touch no ground)
+				// (only what stands on the ground somewhere: decks on posts, roofs and things on tables touch no ground; and not
+				// what stands on another object - a wall on its floor, rubble on a roof)
 				if (lowest > 0.4f) continue;
+				RaycastHit on;
+				if (Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out on, 0.6f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
+					on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				bases++;
 				if (highest <= 0.6f) continue;
 				partly++;
@@ -568,6 +674,8 @@ namespace DynamicIslands
 							RaftIsland source = RaftIslands.Offered.FirstOrDefault(i => i.Scene.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0);
 							if (source == null) { error = "no Raft island like '" + part + "' (" + string.Join(", ", RaftIslands.Offered.Select(i => i.Scene).ToArray()) + ")"; break; }
 							IslandGenSettings s = RaftIslands.VariationOf(source, IslandGenSettings.FromText(gen.ToString() + string.Join("\n", t.Skip(2).ToArray())));
+							// (then its sliders changed, as in the window after picking the island: randomize Balboa Radius=140 Height=60)
+							if (t.Length > 2) s = IslandGenSettings.FromText(s.ToText() + string.Join("\n", t.Skip(2).ToArray()));
 							gen.Length = 0;
 							int count = IslandGenerator.GenerateInEditor(s);
 							SetOrigin(EditorLandCentre());
@@ -1116,16 +1224,6 @@ namespace DynamicIslands
 			if (opt.ContainsKey("sx") || opt.ContainsKey("sy") || opt.ContainsKey("sz"))
 				go.transform.localScale = Vector3.Scale(go.transform.localScale, new Vector3(opt.ContainsKey("sx") ? Mathf.Clamp(F(opt["sx"]), 0.05f, 20f) : 1f,
 					opt.ContainsKey("sy") ? Mathf.Clamp(F(opt["sy"]), 0.05f, 20f) : 1f, opt.ContainsKey("sz") ? Mathf.Clamp(F(opt["sz"]), 0.05f, 20f) : 1f));
-			if (opt.ContainsKey("sit"))
-			{
-				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
-				if (rs.Length > 0)
-				{
-					Bounds b = rs[0].bounds;
-					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
-					go.transform.position += Vector3.up * (y - b.min.y);
-				}
-			}
 			if (opt.ContainsKey("centred"))
 			{
 				// (its visible middle at the point, not its pivot - some of Raft's scene objects have their pivot tens of metres away)
@@ -1135,6 +1233,24 @@ namespace DynamicIslands
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					go.transform.position += new Vector3(w.x - b.center.x, 0f, w.y - b.center.z);
+				}
+			}
+			// (on the ground, no height given: down to the lowest ground under its base, as the editor's placer and Ground put
+			// it - set down by its middle on a slope, a stilt house's or a van's low side stood in the air)
+			if (!opt.ContainsKey("h") && !opt.ContainsKey("y") && (!TopFrame.HasFloor || opt.ContainsKey("ground")))
+			{
+				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y, go.transform.position.z);
+				y = Mathf.Min(y, PlacementOptions.LowestGroundUnder(go));
+				if (!opt.ContainsKey("sit")) go.transform.position = new Vector3(go.transform.position.x, y, go.transform.position.z);
+			}
+			if (opt.ContainsKey("sit"))
+			{
+				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+				if (rs.Length > 0)
+				{
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					go.transform.position += Vector3.up * (y - b.min.y);
 				}
 			}
 			Collider ownCollider = go.GetComponent<Collider>();

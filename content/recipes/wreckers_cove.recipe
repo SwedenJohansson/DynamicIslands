@@ -71,8 +71,8 @@ place Zone_Trigger cove at -10 -4 y=1.5
 # the jetty: planks on posts from the terrace out over the cove
 for jz -0.8 -21.6 -5.2
 place Relay_Floor_deck - at -9.4 $jz h=2.6
-place Relay_support_beam_wood - at -14 {$jz-0.4} h=-3 rot=0,0,-90 sx=0.62
-place Relay_support_beam_wood - at -9.6 {$jz-0.4} h=-3 rot=0,0,-90 sx=0.62
+place Relay_support_beam_wood - at -14 {$jz-0.4} h=-4.5 rot=0,0,-90 sx=0.78
+place Relay_support_beam_wood - at -9.6 {$jz-0.4} h=-4.5 rot=0,0,-90 sx=0.78
 next
 place RT_PlasticBoat - at -6 -26 h=0.3 yaw=10
 

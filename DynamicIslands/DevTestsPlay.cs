@@ -29,6 +29,7 @@ namespace DynamicIslands
 	///   note &lt;Raft story island&gt;        Raft's note that gives that island's frequency read (the Receiver's own: RadioTower)
 	///   tune &lt;rule&gt;                     the Receiver tuned to a plan island's frequency: it comes, and "island &lt;name&gt;"
 	///                                   (an island's own test, included) plays the one the plan brought
+	///   arrive &lt;rule&gt;                   the island a rule brings by itself (ahead, near another one) comes and is played
 	///   expect chain &lt;rule|Raft island&gt; done|unlocked|locked     its place in the story
 	/// </summary>
 	public static partial class DevTests
@@ -79,7 +80,7 @@ namespace DynamicIslands
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				var opt = Options(t.Skip(1));
-				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
 				if (playEntry != null && playEntry.Root == null && verb != "log" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
 				KeepAlive(me);
@@ -283,6 +284,19 @@ namespace DynamicIslands
 						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
 						break;
 					}
+					case "arrive":
+					{
+						// arrive <rule>: the island a plan rule brings by itself (ahead of the raft at the start, near another island
+						// when a quest is done, after a visit) comes; the steps after it play on it
+						string rule = Rest(line, 1).Trim();
+						StoryChain.Tick();
+						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && x.Root != null), 90f);
+						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
+						Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
+						checks++;
+						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
+						break;
+					}
 					case "expect":
 						checks++;
 						if (t.Length > 2 && t[1] == "chain")
@@ -457,11 +471,14 @@ namespace DynamicIslands
 			PersonController pc = player.PersonController;
 			CharacterController cc = pc.controller;
 			pc.SwitchControllerType(ControllerType.Ground);
-			foreach (Vector3 target in points)
+			// (the points from the island: Raft shifts the whole world by 1000 m when the player wanders far from its
+			// middle - a walk aimed at a point fixed in the world then went 1000 m off)
+			foreach (Vector3 rel in points.Select(q => q - playEntry.Position).ToList())
 			{
 				float stuck = 0f, total = 0f;
 				Vector3 last = player.transform.position;
-				while (ScFlat(player.transform.position, target) > 0.7f)
+				Vector3 target = playEntry.Position + rel;
+				while (ScFlat(player.transform.position, target = playEntry.Position + rel) > 0.7f)
 				{
 					KeepAlive(player);
 					Vector3 d = target - player.transform.position;

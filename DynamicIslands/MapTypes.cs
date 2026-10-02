@@ -102,6 +102,13 @@ namespace DynamicIslands.Editor
 		public IslandObject Add(string name, Vector3 position, float yaw = 0f, Dictionary<string, string> props = null, float clear = 3f)
 		{
 			var p2 = new Vector2(position.x, position.z);
+			// (set on the ground: down to the lowest ground under its base, as the generator and the randomizer's props stand -
+			// on a slope its low side stood in the air)
+			if (Mathf.Abs(position.y - Ground(p2)) < 0.01f)
+			{
+				float low = RandomizerIslands.LowestUnder((x, z) => Ground(new Vector2(x, z)), name, p2, yaw);
+				if (!float.IsNaN(low)) position.y = Mathf.Min(position.y, low);
+			}
 			if (clear > 0f) Clear(p2, clear);
 			GameObject proto = PlaceableCatalog.Get(name);
 			var o = new IslandObject { Name = name, Position = position, EulerRotation = new Vector3(0, yaw, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props };

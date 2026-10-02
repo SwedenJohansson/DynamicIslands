@@ -66,7 +66,7 @@ place Balboa_DecorationPrefabBase_Desk - at 1.2 -31.5 sit
 place Balboa_DecorationPrefabBase_Desk_Chair - at 1.2 -30.3 sit yaw=180
 place Balboa_DecorationPrefabBase_Lantern - at 0.2 -31.5 y=0.94 sit
 place Note_Book foremanlog at 1.6 -31.4 y=0.94
-place Balboa_DecorationPrefabBase_SmallLocker minelocker at 5 -32.5 sit
+place Balboa_DecorationPrefabBase_SmallLocker minelocker at 3.4 -29.5 sit
 place Zone_Trigger irongate at 1 -4 y=1.5
 place Creature_Boar hogs at 1 -22 y=0.8
 place Zone_Atmosphere minedark at 1.2 -18 y=4

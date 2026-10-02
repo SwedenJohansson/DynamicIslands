@@ -51,6 +51,48 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>
+		/// The lowest ground under an object's base - under the parts of it that reach down to its bottom (a stilt house's
+		/// legs, a van's wheels, the underside of a rock or a bush), not just under its pivot: set down by its pivot on a
+		/// slope, its low side stood in the air. The terrain only (an object on another object is put there by hand).
+		/// </summary>
+		public static float LowestGroundUnder(GameObject go)
+		{
+			Vector3 point, normal;
+			float pivot = GroundAt(go.transform.position, out point, out normal) ? point.y : go.transform.position.y;
+			Renderer[] rs = go.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !(r is ParticleSystemRenderer) && r.name != ContentCatalog.MarkerOnly).ToArray();
+			if (rs.Length == 0) return pivot;
+			float bottom = rs.Min(r => r.bounds.min.y);
+			Bounds foot = new Bounds();
+			bool any = false;
+			foreach (Renderer r in rs)
+			{
+				if (r.bounds.min.y > bottom + 0.6f) continue;
+				if (!any) { foot = r.bounds; any = true; } else foot.Encapsulate(r.bounds);
+			}
+			// (the ground under its pivot only counts when the pivot is over its base: some of Raft's scene objects have their
+			// pivot tens of metres away - a stilt house's over the sea sank it 15 m into its shelf)
+			Vector3 at = go.transform.position;
+			bool pivotOverBase = at.x >= foot.min.x && at.x <= foot.max.x && at.z >= foot.min.z && at.z <= foot.max.z;
+			return pivotOverBase ? Mathf.Min(pivot, LowestGroundUnder(foot)) : LowestGroundUnder(foot);
+		}
+
+		/// <summary>The lowest terrain under a footprint (its edges kept 12 % in: a base's rounded rim, a crown hanging over).</summary>
+		public static float LowestGroundUnder(Bounds foot)
+		{
+			float low = float.MaxValue;
+			int n = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(foot.size.x, foot.size.z) / 1.5f), 1, 8);
+			for (int i = 0; i <= n; i++)
+				for (int j = 0; j <= n; j++)
+				{
+					var p = new Vector3(Mathf.Lerp(foot.min.x + foot.size.x * 0.12f, foot.max.x - foot.size.x * 0.12f, i / (float)n), 0f,
+						Mathf.Lerp(foot.min.z + foot.size.z * 0.12f, foot.max.z - foot.size.z * 0.12f, j / (float)n));
+					Vector3 point, normal;
+					if (GroundAt(p, out point, out normal) && point.y < low) low = point.y;
+				}
+			return low == float.MaxValue ? foot.min.y : low;
+		}
+
 		/// <summary>Leans up to this much (degrees) are taken off when an object is placed (Straight).</summary>
 		public const float StraightenUpTo = 25f;
 
@@ -95,6 +137,9 @@ namespace DynamicIslands.Editor
 				if (!GroundAt(t.position, out point, out normal)) continue;
 				var command = new TransformCommand(gizmo, t);
 				t.position = point;
+				// (standing straight, all of its base on the ground: down to the lowest ground under it - on a slope the low
+				// side of a house on legs, a van or a rock stood in the air)
+				if (!AlignToSlope) t.position = new Vector3(point.x, LowestGroundUnder(t.gameObject), point.z);
 				if (AlignToSlope)
 				{
 					// Keep the object's turn around its own up axis, lean it with the ground
