@@ -1,0 +1,8 @@
+# Caravan Town Remade - an island of the library's plan Raft Remade (in place of Raft's Caravan Town)
+# Raft's Caravan Town made anew: stacked caravans on its remade red cliffs, a hub bridge on a winch, the mayor's office on the top stack. Quest "The Mayor's Bridge".
+#
+# Built by the recipe player (CIRecipe caravan_town_remade) through the editor's own operations.
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize CaravanIsland Seed=7104 Hostiles=0

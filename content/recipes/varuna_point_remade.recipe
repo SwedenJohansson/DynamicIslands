@@ -1,0 +1,9 @@
+# Varuna Point Remade - an island of the library's plan Raft Remade (in place of Raft's Varuna Point)
+# Raft's Varuna Point made anew: a construction site on a rocky point, scaffolding up a half-built tower, the floodlight's parts on the seabed. Quest "Floodlight Down".
+#
+# Built by the recipe player (CIRecipe varuna_point_remade) through the editor's own operations.
+include lib_rt
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize VarunaPoint Seed=7106 Height=36 Hostiles=0

@@ -312,6 +312,63 @@ namespace DynamicIslands
 			return sb.ToString();
 		}
 
+		[ConsoleCommand(name: "CITerrainDetails", docs: "Dev, anywhere: every terrain in the scene and its detail layers (Raft's grass and sea grass are terrain details, not objects): prototype, size, how many in all")]
+		public static void TerrainDetailsCommand()
+		{
+			foreach (Terrain t in UnityEngine.Object.FindObjectsOfType<Terrain>())
+			{
+				TerrainData td = t.terrainData;
+				int res = td.detailResolution;
+				Log("  terrain " + t.name + " of " + t.transform.root.name + ": size " + td.size + ", detail resolution " + res + ", " + td.detailPrototypes.Length + " detail layers, drawn " + t.drawTreesAndFoliage + " (density " + t.detailObjectDensity + ", distance " + t.detailObjectDistance + ")");
+				if (res <= 0 || td.detailPrototypes.Length == 0) continue;
+				// (per height band above the sea, the world's 0: its area, and per detail layer how many stand in it and on which
+				// ground texture - Raft's own islands, to set the generator's grass and sea grass as thick as there)
+				float[] edges = { -1e6f, -12f, -8f, -5f, -3f, -1.5f, 0f, 1f, 2.5f, 5f, 10f, 1e6f };
+				int bands = edges.Length - 1, ares = td.alphamapResolution, layers = td.alphamapLayers;
+				float[,,] paint = td.GetAlphamaps(0, 0, ares, ares);
+				float cell = td.size.x / res * (td.size.z / res);
+				var area = new float[bands];
+				var count = new long[td.detailPrototypes.Length, bands];
+				var onTex = new Dictionary<string, long>[td.detailPrototypes.Length];
+				var layerData = new int[td.detailPrototypes.Length][,];
+				for (int i = 0; i < td.detailPrototypes.Length; i++) { layerData[i] = td.GetDetailLayer(0, 0, res, res, i); onTex[i] = new Dictionary<string, long>(); }
+				var texArea = new Dictionary<string, float>();
+				for (int z = 0; z < res; z++)
+					for (int x = 0; x < res; x++)
+					{
+						float h = t.transform.position.y + td.GetInterpolatedHeight((x + 0.5f) / res, (z + 0.5f) / res);
+						int b = 0;
+						while (b < bands - 1 && h >= edges[b + 1]) b++;
+						area[b] += cell;
+						// (the ground texture there: the strongest layer of the paint)
+						int ax = Mathf.Clamp(x * ares / res, 0, ares - 1), az = Mathf.Clamp(z * ares / res, 0, ares - 1), best = 0;
+						for (int l = 1; l < layers; l++) if (paint[az, ax, l] > paint[az, ax, best]) best = l;
+						string tex = td.terrainLayers != null && best < td.terrainLayers.Length && td.terrainLayers[best] != null && td.terrainLayers[best].diffuseTexture != null ? td.terrainLayers[best].diffuseTexture.name : "layer" + best;
+						string key = (h < 0f ? "under " : "land ") + tex;
+						texArea[key] = (texArea.ContainsKey(key) ? texArea[key] : 0f) + cell;
+						for (int i = 0; i < td.detailPrototypes.Length; i++)
+						{
+							int v = layerData[i][z, x];
+							if (v == 0) continue;
+							count[i, b] += v;
+							onTex[i][key] = (onTex[i].ContainsKey(key) ? onTex[i][key] : 0) + v;
+						}
+					}
+				Log("    ground: " + string.Join(", ", texArea.OrderByDescending(kv => kv.Value).Take(8).Select(kv => kv.Key + " " + kv.Value.ToString("F0") + " m²").ToArray()));
+				for (int i = 0; i < td.detailPrototypes.Length; i++)
+				{
+					DetailPrototype p = td.detailPrototypes[i];
+					long n = 0;
+					for (int b = 0; b < bands; b++) n += count[i, b];
+					if (n == 0) { Log("    layer " + i + ": " + (p.prototypeTexture != null ? p.prototypeTexture.name : p.prototype != null ? p.prototype.name : "?") + " - none"); continue; }
+					Log("    layer " + i + ": " + (p.prototype != null ? "mesh " + p.prototype.name : p.prototypeTexture != null ? "texture " + p.prototypeTexture.name : "?") + " " + p.renderMode + ", " + p.minWidth + "-" + p.maxWidth + " wide, " + p.minHeight + "-" + p.maxHeight + " high, " + n + " in all; per m² by height: " +
+						string.Join(" ", Enumerable.Range(0, bands).Where(b => count[i, b] > 0).Select(b => (edges[b] < -1e5f ? "<" : edges[b].ToString("0.#")) + ".." + (edges[b + 1] > 1e5f ? "" : edges[b + 1].ToString("0.#")) + ":" + (count[i, b] / Mathf.Max(1f, area[b])).ToString("F2")).ToArray()) +
+						"; on " + string.Join(", ", onTex[i].OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key + " " + (kv.Value / Mathf.Max(1f, texArea[kv.Key])).ToString("F2") + "/m²").ToArray()));
+				}
+			}
+			Log("PASS: terrain details");
+		}
+
 		[ConsoleCommand(name: "CIGenLikeRaft", docs: "Dev, anywhere: the generator's Like Raft (the Nature and Life under water quick buttons) against Raft's own islands, kind by kind: trees, bushes, rocks, harvestables and beach things per 1000 m² of land on tropical islands the size of Raft's small ones and of its big ones (raft_land.txt), and corals, rocks, finds and sunken things per 1000 m² of sea floor 0-40 m deep (raft_underwater.txt) - each within a third of Raft's; and the slider values that would hit Raft's. CIGenLikeRaft [trees bushes rocks harvest beach]: other land values to try")]
 		public static void GenLikeRaftCommand(string[] args)
 		{

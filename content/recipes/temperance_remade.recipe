@@ -1,0 +1,9 @@
+# Temperance Remade - an island of the library's plan Raft Remade (in place of Raft's Temperance)
+# Raft's Temperance made anew: a snowfield with an igloo village, an observatory on its ridge, a Selene lab dug into the hill. Quest "The Cold Core".
+#
+# Built by the recipe player (CIRecipe temperance_remade) through the editor's own operations.
+include lib_selene
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize Temperance Seed=7107 Radius=140 Height=45 Hostiles=0

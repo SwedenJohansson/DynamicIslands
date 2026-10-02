@@ -1,0 +1,11 @@
+# The Sunken Archive - an island of the library's plan Raft 2: The Drowned Frontier (station Four of the Frontier Corps)
+# The Corps' archive tower half under the sea on a shallow bank. Quest "Station Four".
+#
+# Built by the recipe player (CIRecipe sunken_archive) through the editor's own operations.
+include lib_rt
+new
+# (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
+gen Seed=8104 Radius=70 Height=6 Roughness=0.3 Shape=2 Style=0
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate

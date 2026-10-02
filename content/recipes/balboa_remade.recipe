@@ -1,0 +1,8 @@
+# Balboa Remade - an island of the library's plan Raft Remade (in place of Raft's Balboa)
+# Raft's Balboa made anew: a jungle mountain remade from Balboa's own, the rangers' station on its beach, their radio mast on the summit, a bear's cave in its flank. Quest "The Rangers' Mast".
+#
+# Built by the recipe player (CIRecipe balboa_remade) through the editor's own operations.
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize BalboaIsland Seed=7103 Radius=120 Height=55 Hostiles=0

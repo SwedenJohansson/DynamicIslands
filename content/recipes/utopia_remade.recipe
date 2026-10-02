@@ -1,0 +1,8 @@
+# Utopia Remade - an island of the library's plan Raft Remade (in place of Raft's Utopia)
+# Raft's Utopia made anew - the end of the voyage: Utopia's towers, docks and arena on a rock of their own, its gate shut by the warden and his hyenas. Quest "The End of the Sea".
+#
+# Built by the recipe player (CIRecipe utopia_remade) through the editor's own operations.
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize Utopia Seed=7108 Height=45 Hostiles=0

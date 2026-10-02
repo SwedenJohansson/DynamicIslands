@@ -1,0 +1,11 @@
+# The Frontier - an island of the library's plan Raft 2: The Drowned Frontier (station Ten of the Frontier Corps)
+# The last high ground: a plateau with the Corps' headquarters, the Old Queen in the quarry below. Quest "The Frontier".
+#
+# Built by the recipe player (CIRecipe the_frontier) through the editor's own operations.
+include lib_rt
+new
+# (nature: forest: Like Raft's Balboa - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.18 Bushes=0.38 Rocks=0.4 Harvest=0.05 BeachThings=0.3
+gen Seed=8110 Radius=110 Height=35 Roughness=0.35 Shape=4 Style=3 Cliffs=0.6
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate

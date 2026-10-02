@@ -1,0 +1,9 @@
+# Tangaroa Remade - an island of the library's plan Raft Remade (in place of Raft's Tangaroa)
+# Raft's Tangaroa made anew: the floating city's apartment blocks on a hill of their own, its harbour on a floating base. Quest "The Lights of Tangaroa".
+#
+# Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
+include lib_rt
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0.2 SeaLife=0.3
+randomize Tangaroa Seed=7105 Height=40 Hostiles=0
