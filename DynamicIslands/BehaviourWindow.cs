@@ -199,8 +199,12 @@ namespace DynamicIslands.Editor
 			RectTransform g = UIKit.Group(body, "Movement (in a world)");
 			RectTransform a = UIKit.Row(g, 28f, 6f, "SpinBob");
 			UIKit.Size(UIKit.Label(a, "Spins", 13, UIKit.TextMuted).gameObject, 60);
-			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Spin), 70, "Degrees per second around its up axis (negative = the other way; 0 = still)", v => SetNumber(BehaviourProps.Spin, v));
+			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Spin), 70, "Degrees per second around the vertical (negative = the other way; 0 = still)", v => SetNumber(BehaviourProps.Spin, v));
 			UIKit.Size(UIKit.Label(a, "\u00B0/s", 12, UIKit.TextMuted).gameObject, 30);
+			bool own = ObjectProps.GetBool(props, BehaviourProps.SpinOwn, false);
+			Button ownAxis = UIKit.Button(a, "Own axis", () => { if (own) props.Remove(BehaviourProps.SpinOwn); else props[BehaviourProps.SpinOwn] = "1"; Rebuild(); },
+				"Spins around its own up axis instead of the vertical: tilt it first - a water wheel, a windmill's blades, a fan", 76, 26f, 12);
+			UIKit.SetActive(ownAxis, own);
 			UIKit.Size(UIKit.Label(a, "Bobs", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 60);
 			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Bob), 60, "How far it floats up and down (metres; 0 = not at all)", v => SetNumber(BehaviourProps.Bob, v));
 			UIKit.Size(UIKit.Label(a, "m every", 12, UIKit.TextMuted).gameObject, 56);
@@ -491,7 +495,7 @@ namespace DynamicIslands.Editor
 			var parts = new List<string>();
 			string name = ObjectProps.Get(p, BehaviourProps.Name);
 			if (name.Length > 0) parts.Add("named '" + name + "'");
-			if (ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f) != 0f) parts.Add("spins");
+			if (ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f) != 0f) parts.Add(ObjectProps.GetBool(p, BehaviourProps.SpinOwn, false) ? "spins (own axis)" : "spins");
 			if (ObjectProps.GetFloat(p, BehaviourProps.Bob, 0f) != 0f) parts.Add("bobs");
 			if (BehaviourProps.Moves(p)) parts.Add(BehaviourProps.Switches(p) ? "opens and closes" : "moves back and forth");
 			if (BehaviourProps.StartsHidden(p)) parts.Add("hidden at first");

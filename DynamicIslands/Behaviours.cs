@@ -11,7 +11,8 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// Behaviours and events of island objects (object settings, saved with the island):
 	///   obj.name                        a name that actions refer to (several objects may share one: they act together)
-	///   beh.spin                        turns around its up axis (degrees per second)
+	///   beh.spin                        turns around the vertical (degrees per second); beh.spinOwn = 1: around its own
+	///                                   up axis instead (tilted first: a water wheel, a windmill's blades, a fan)
 	///   beh.bob / beh.bobTime           floats up and down (metres, seconds per cycle)
 	///   beh.move (x,y,z) / beh.turn / beh.moveTime / beh.moveMode
 	///                                   moves by an offset and turns (degrees) over a time: "loop" = back and forth for
@@ -38,6 +39,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class BehaviourProps
 	{
+		public const string SpinOwn = "beh.spinOwn";
 		public const string Name = "obj.name", Spin = "beh.spin", Bob = "beh.bob", BobTime = "beh.bobTime", Move = "beh.move", Turn = "beh.turn",
 			MoveTime = "beh.moveTime", MoveMode = "beh.moveMode", Hidden = "beh.hidden", Use = "beh.use", Collision = "col.mode";
 		public const string EventPrefix = "on.";
@@ -243,6 +245,8 @@ namespace DynamicIslands.Editor
 	{
 		public float SpinSpeed, BobHeight, BobTime = 3f, MoveTime = 2f;
 		public bool Loop;
+		/// <summary>Spins around its own up axis (a tilted water wheel turns like one), not the vertical.</summary>
+		public bool SpinOwn;
 		public Vector3 Offset;
 		public float TurnDegrees;
 		/// <summary>0 = closed (placed pose), 1 = open.</summary>
@@ -254,6 +258,7 @@ namespace DynamicIslands.Editor
 		public void Configure(IDictionary<string, string> p, int index)
 		{
 			SpinSpeed = ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f);
+			SpinOwn = ObjectProps.GetBool(p, BehaviourProps.SpinOwn, false);
 			BobHeight = ObjectProps.GetFloat(p, BehaviourProps.Bob, 0f);
 			BobTime = Mathf.Max(0.2f, ObjectProps.GetFloat(p, BehaviourProps.BobTime, 3f));
 			Offset = BehaviourProps.Offset(p);
@@ -288,7 +293,9 @@ namespace DynamicIslands.Editor
 			// The offset is in world directions (as the builder sees them); the island root isn't turned, so local = world
 			Vector3 pos = startPos + Offset * s;
 			if (BobHeight != 0f) pos += Vector3.up * BobHeight * Mathf.Sin(now * Mathf.PI * 2f / BobTime);
-			Quaternion rot = Quaternion.Euler(0f, TurnDegrees * s + Mathf.Repeat(SpinSpeed * now, 360f), 0f) * startRot;
+			float spin = Mathf.Repeat(SpinSpeed * now, 360f);
+			Quaternion rot = SpinOwn ? Quaternion.Euler(0f, TurnDegrees * s, 0f) * startRot * Quaternion.Euler(0f, spin, 0f)
+				: Quaternion.Euler(0f, TurnDegrees * s + spin, 0f) * startRot;
 			transform.localPosition = pos;
 			transform.localRotation = rot;
 		}

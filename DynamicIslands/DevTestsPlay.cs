@@ -19,7 +19,7 @@ namespace DynamicIslands
 	///                                   h= above the sea)
 	///   walk x z to x z [to x z ...]    walked with Raft's own controller (no jumping, no flying): it must get there
 	///   climb x z h=                    the player at a ladder's foot: Raft's controller takes hold of the ladder
-	///   zone id | read title | open title | openat x z | use name | kill label
+	///   zone id | read title | open title | openat x z | use name | kill label | catch label [n]
 	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
 	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
 	///                                   heights above the sea, or "+h" above what is below)
@@ -194,8 +194,32 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(2f);
 						break;
 					}
+					case "catch":
+					{
+						// catch <label> [n]: animals caught as Raft's net does it (captured, carried off)
+						string label = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? string.Join(" ", t.Skip(1).Take(t.Length - 2).ToArray()) : Rest(line, 1).Trim();
+						int want = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? (int)F(t[t.Length - 1]) : 1;
+						yield return ScWaitAnimals(playEntry, label, want, 15f);
+						// (only the island's own: animals caught in an earlier run stay in the world, without a spawn spot)
+						var animals = ScAnimals(playEntry, label).OfType<AI_NetworkBehaviour_Domestic>()
+							.Where(an => an.connectedSpawner != null && an.connectedSpawner.transform.IsChildOf(playEntry.Root.transform)).Take(want).ToList();
+						Check(ref ok, animals.Count >= want, "animals '" + label + "' to catch (" + animals.Count + " of " + want + ")");
+						foreach (AI_NetworkBehaviour_Domestic a in animals) yield return ScCarryHome(a, false);
+						yield return new WaitForSeconds(1f);
+						break;
+					}
 					case "expect":
 						checks++;
+						if (t.Length > 2 && t[1] == "spinsown")
+						{
+							// (turning around its own up axis: that axis stays put while the object turns - a water wheel)
+							IslandObjectRef r = ScObjOf(playEntry, t[2]);
+							if (r == null) { Check(ref ok, false, "'" + t[2] + "' to spin (not there)"); break; }
+							Vector3 up0 = r.transform.up, fwd0 = r.transform.forward;
+							yield return new WaitForSeconds(1f);
+							Check(ref ok, Vector3.Angle(up0, r.transform.up) < 2f && Vector3.Angle(fwd0, r.transform.forward) > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + Vector3.Angle(up0, r.transform.up).ToString("F1") + " deg, it turned " + Vector3.Angle(fwd0, r.transform.forward).ToString("F1") + " deg)");
+							break;
+						}
 						yield return new WaitForSeconds(0.3f);
 						try { PlayExpect(t, line, ref ok); }
 						catch (Exception e) { Check(ref ok, false, rl.Where + " (" + line + "): " + e.Message); }
