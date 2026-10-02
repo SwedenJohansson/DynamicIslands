@@ -1,0 +1,187 @@
+# Glacier Station - a very large island of the library (ice)
+# A snowy island at the edge of a glacier: a research station dark since its reactor failed. The station village of
+# glowing Moontown domes on the east shore, a radio mast; Temperance's weather station as the observatory on the glacier
+# peak, its cabin up a ladder; the glacier's crevasse, where the Polar Bear Queen has her den;
+# and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night": the village, the
+# station log, the observatory, three reactor fuses, the Queen, the reactor basin, the reactor restarted and its vault.
+# (Temperance's ice ravine piece is a slab of its snowfield - it only works sunk into ground as high as its top, so the
+# crevasse is cut into the plateau instead.)
+#
+# Built by the recipe player (CIRecipe glacier_station) through the editor's own operations.
+new
+gen Seed=6021 Radius=115 Height=34 Roughness=0.5 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.4 PeakShape=0.5
+gen SeaFloor=0 Shelf=0.4 Seabed=1 ObjectDensity=0.5 Trees=0.32 Bushes=0.3 Rocks=0.5 BeachThings=0.3 Harvest=0.2
+gen Water=0.2 SeaRocks=0.6 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- Terrain: the peak's top levelled for the observatory, its south flank eased; the village's terrace on the east
+# shore; the reactor basin in the north; the west plateau where the glacier's ice ravine lies -------------------------
+brush flatten at -12 -6 r=8 s=20 frames=40
+brush smooth from -12 -20 to -12 -50 r=9 s=20 frames=60
+brush flatten at 75 -10 r=18 s=20 frames=50
+brush lower at 15 55 r=16 s=20 frames=4
+brush flatten at 15 55 r=12 s=20 frames=40
+brush flatten from -80 -40 to -80 20 r=12 s=20 frames=60
+# the glacier's crevasse: a cleft down through the west plateau, shallow where it starts in the east, deepest (still
+# above the sea) at the Queen's den in the west
+for i 0 10
+brush lower at {-72-24*$i/10} {8-46*$i/10} r=6 s=20 frames={1+floor($i/2)}
+next
+brush flatten at -96 -38 r=6 s=20 frames=30
+brush smooth from -74 4 to -94 -34 r=5 s=20 frames=60
+# (its banks raised into ice ridges on both sides)
+brush raise from -66.7 5.2 to -90.7 -40.8 r=4 s=20 frames=30
+brush raise from -77.3 10.8 to -101.3 -35.2 r=4 s=20 frames=30
+brush rock from -72 8 to -96 -38 r=5 s=10 frames=40
+origin
+
+# --- Trails through the pines: the village to the peak (up its eased south flank), the peak to the crevasse, the
+# village to the reactor basin --------------------------------------------------------------------------------------
+macro trail x1 z1 x2 z2
+clear from $x1 $z1 to $x2 $z2 r=4
+brush sand from $x1 $z1 to $x2 $z2 r=1.6 s=8 frames=20
+end
+call trail 66 -26 60 -30
+call trail 60 -30 40 -30
+call trail 40 -30 20 -30
+call trail 20 -30 10 -30
+call trail 10 -30 0 -40
+call trail 0 -40 -10 -40
+call trail -10 -40 -10 -20
+call trail -10 -20 -10 -12
+brush smooth from 22 -30 to -2 -41 r=6 s=20 frames=60
+brush smooth from -10 -42 to -10 -16 r=5 s=20 frames=50
+call trail -10 -30 -40 -20
+call trail -40 -20 -60 0
+call trail -60 0 -70 8
+call trail 72 -2 70 10
+call trail 70 10 60 30
+call trail 60 30 40 45
+call trail 40 45 25 50
+clear at 12 54 r=18
+
+# --- The observatory on the peak: Temperance's weather station, its foot on the levelled top -------------------------
+clear at -12 -6 r=12
+place TP_WeatherStation observatory at -12 -6 centred h=22.5
+place TP_Moontown_TarpCrate02 - at -4 -12 ground sit yaw=30
+place Loot_Crate obslocker at -6 -13 ground sit yaw=200
+place Note_Sign obssign at -9 -15 ground yaw=190
+place Zone_Trigger observatory at -10 -12 y=1.5
+place TP_SnowDrift01 - at -18 -14 ground sit yaw=40
+place TP_SnowDrift02 - at -2 -4 ground sit
+
+# --- The station village on the east shore: glowing domes, crates and barrels, the radio mast, the station log -------
+clear at 75 -10 r=22
+place TP_Igloo_Large_1 dome at 81 -1 centred sit yaw=200
+place TP_Igloo_Medium_1 - at 90 14 centred sit yaw=150
+place TP_Igloo_Small_1 - at 89 -26 centred sit yaw=-30
+place TP_TelephoneAntenna mast at 60 12 centred sit
+place Note_Board stationlog at 70 -12 ground yaw=80
+place Loot_Crate toolcrate at 72.5 -17 ground sit yaw=10
+place TP_Moontown_TarpCrate03 - at 68 -4 ground sit yaw=15
+place TP_Moontown_SealedCrate03 - at 74 -20 ground sit yaw=-20
+place TP_Moontown_Barrel01 - at 66.5 -14 ground sit
+place TP_Moontown_Barrel03 - at 67.2 -15 ground sit
+place TP_Moontown_Barrel04 - at 66.4 -15.8 ground sit
+place Placeable_Lantern_Metal - at 70.6 -12.4 ground sit
+place Zone_Trigger village at 72 -10 y=1.5
+
+# --- The glacier's crevasse: ice pillars along its floor, a snow crag closing its west end - the Polar Bear Queen's den --
+clear from -72 8 to -96 -38 r=10
+place TP_IcePillar04_Snow - at -79.5 -1 ground sit yaw=20
+place TP_IcePillar04_Snow - at -78.2 -10 ground sit
+place TP_IcePillar04_Snow - at -88.8 -17 ground sit yaw=70
+place TP_IcePillar01 - at -100 -33 ground sit yaw=40
+place TP_IcePillar02 - at -89 -42 ground sit yaw=10
+place TP_BigRock02 - at -104 -44 ground sit scale=0.6 yaw=30
+place TP_SnowDrift01 - at -94 -42 ground sit yaw=10
+place TP_SnowDrift02 - at -98 -35 ground sit
+place Creature_PolarBear queen at -94 -36 ground
+place Loot_Crate frozencrate at -97 -40 ground sit yaw=60
+place Zone_Trigger ravine at -90 -32 y=1.5
+# ice pillars along the shore
+place TP_IcePillar01 - at -96 -48 ground sit
+place TP_IcePillar02 - at -100 30 ground sit yaw=40
+place TP_IcePillar04_Snow - at -66 -46 ground sit
+place TP_IcePillar01 - at 90 30 ground sit yaw=70
+place TP_IcePillar02 - at 96 -40 ground sit
+
+# --- The reactor basin in the north: the twin chimneys, the dead core's pool, the controls and the vault -------------
+place TP_SeleneReactorChimney chimneys at 10 64 centred sit
+place TP_SeleneReactor_Water_Radiated reactorglow at 10 49 ground
+place TP_SeleneReactorControls controls at 2 47 ground sit yaw=90
+place Loot_ChestLarge reactorvault at 18 47 ground sit yaw=270
+place Zone_Trigger reactor at 10 50 y=2
+place Zone_Sound reactorhum at 10 52 y=3
+
+# --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+info title=Glacier Station
+info author=Custom Islands
+info description=A research station at the edge of a glacier, dark since its reactor failed: glowing domes on the shore, an observatory on the peak, a crevasse where the Polar Bear Queen dens, and the reactor's twin chimneys in a basin of snow. Inspired by Raft's Temperance.
+island on.arrive=message||A glacier island: domes glowing on the shore, a mast on the peak, two chimneys cold in the snow.
+
+story fuse|Reactor fuse|quest:Tangaroa_GeneratorPart|A heavy ceramic reactor fuse. The station's reactor takes three.
+note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the dogs called her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin north of the village.
+note obssign Observatory | GLACIER STATION OBSERVATORY\nWeather and aurora recording. The cabin is up the ladder.\nSpare parts in the locker by the mast.
+note toolcrate Tool crate | The station's tool crate: a reactor fuse in its padded case, and the usual spanners.
+loot toolcrate story:fuse*1;Bolt*4;Nail*8
+prop toolcrate loot.refill=0
+note obslocker Observatory locker | The observatory's spare-parts locker, half buried in snow: a reactor fuse and a battery.
+loot obslocker story:fuse*1;Battery*1
+prop obslocker loot.refill=0
+note frozencrate Frozen crate | Petrov's crate, frozen into the crevasse floor beside the Queen's bed of bones: the third fuse - and his notes on the aurora.
+loot frozencrate story:fuse*1;Wool*4;Leather*3
+prop frozencrate loot.refill=0
+note reactorvault Reactor vault | The reactor vault: the station's emergency stores, sealed until the reactor runs again.
+loot reactorvault Blueprint_ElectricPurifier*1;Battery_Advanced*1;TitaniumIngot*3;Glass*4
+prop reactorvault loot.refill=0
+prop reactorvault if.open=signal|reactor
+prop reactorvault else.open=message||The vault is sealed. It opens when the reactor runs.
+
+prop controls obj.name=controls
+prop controls beh.use=Fit the reactor fuses
+prop controls if.use=take|story:fuse|3
+prop controls on.use=message||Three fuses click home. Deep under the snow the reactor catches - the pool glows, the chimneys breathe, and up on the shore the domes light one by one.\nshow|reactorglow\nshow|reactorhum\nsignal||reactor\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
+prop controls else.use=message||The control column is dead. Three fuse sockets stand empty.
+prop reactorglow obj.name=reactorglow
+prop reactorglow beh.hidden=1
+prop reactorhum obj.name=reactorhum
+prop reactorhum beh.hidden=1
+prop reactorhum sound.event=event:/exploring/temperence/generator
+prop reactorhum sound.volume=0.7
+prop reactorhum zone.radius=25
+
+prop village zone.id=village
+prop village zone.radius=12
+prop village zone.message=The station village: domes glowing in the snow, a radio mast - and nobody about.
+prop observatory zone.id=observatory
+prop observatory zone.radius=9
+prop observatory zone.message=The observatory on the glacier peak. The whole island lies below - and the reactor's chimneys, cold.
+prop ravine zone.id=ravine
+prop ravine zone.radius=10
+prop ravine zone.message=The crevasse ends in a den of ice. Bones on the floor - and a great white shape rising from them: the Queen!
+prop reactor zone.id=reactor
+prop reactor zone.radius=12
+prop reactor zone.message=The reactor basin: two chimneys, a dead pool, a control column with three empty sockets.
+prop queen creature.count=1
+prop queen creature.size=2.4
+prop queen creature.health=8
+prop queen creature.damage=2.5
+prop queen creature.respawn=0
+prop queen creature.zone=ravine
+prop queen tint.color=#e8f0ff
+prop queen tint.amount=0.3
+
+quest title=The Long Night
+quest intro=A research station at the edge of a glacier, dark since its reactor failed. Its igloo village stands on the east shore - and something big has been taking the station's dogs.
+step reach|village|1|Land at the station's igloo village
+step read|Station log|1|Read the station log
+step reach|observatory|1|Climb the glacier peak to the observatory
+step collect|story:fuse|3|Find three reactor fuses
+step kill|Polar bear|1|Defeat the Polar Bear Queen in the glacier's crevasse
+step reach|reactor|1|Go down into the reactor basin
+step open|Reactor vault|1|Restart the reactor and open its vault
+quest done=The reactor hums, the pool glows and the domes are lit: the long night at Glacier Station is over.
+quest reward=CircuitBoard*3;Battery*2;Wool*6
+
+save Glacier Station
