@@ -240,7 +240,22 @@ namespace DynamicIslands
 				partly++;
 				Log("  partly in the air: " + n + " at " + Num(b.center.x - mid.x) + " " + Num(b.center.z - mid.y) + ": its base h=" + Num(b.min.y - sea) + " is up to " + Num(highest) + " m above the ground (at " + Num(at.x - mid.x) + " " + Num(at.z - mid.y) + ")");
 			}
-			Log((found + partly == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases);
+			// The land's and the sea's plants, rocks and corals (the generator's): their pivot is their foot - none above the
+			// ground under it (a stroke that lowered the ground under them, or a slope they were set on by their middle)
+			int nature = 0, lifted = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string n = e.GameObjectName ?? "";
+				if (!NotABase.IsMatch(n) || n.IndexOf("Cave", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) >= 0 || ground == null) continue;
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				nature++;
+				Vector3 p = e.transform.position;
+				float land = ground.SampleHeight(p) + ground.transform.position.y;
+				if (p.y - land <= 0.5f) continue;
+				lifted++;
+				if (lifted <= 30) Log("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+			}
+			Log((found + partly + lifted == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature);
 		}
 
 		[ConsoleCommand(name: "CIStandOn", docs: "Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n] [from this height above the sea: under a roof]")]
