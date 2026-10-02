@@ -92,8 +92,23 @@ namespace DynamicIslands
 						keep = line.EndsWith(" keep");
 						playOffset = Vector2.zero;
 						// (a plan's test: the copy the plan brought - tuned to - is the one played)
-						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule) && x.Root != null) : null;
-						if (planned != null) playEntry = planned;
+						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule)) : null;
+						Vector3 offIsland = planned != null ? me.transform.position - planned.Position : Vector3.zero;
+						offIsland.y = 0f;
+						if (planned != null && (planned.Root == null || offIsland.magnitude > 300f))
+						{
+							// (it came where the plan brings it, ahead of the raft - out of reach of a player still on the last island:
+							// it isn't loaded, or unloads a moment later. The player goes there, as a player sails there, and it loads)
+							Vector3 toward = me.transform.position - planned.Position;
+							toward.y = 0f;
+							Vector3 near = planned.Position + (toward.sqrMagnitude > 1f ? toward.normalized : Vector3.back) * 150f;
+							near.y = 0.5f;
+							PlayerMove.To(me, near);
+							for (float w = 0f; w < 40f && planned.Root == null; w += 0.5f) yield return new WaitForSeconds(0.5f);
+							Log("  went to the plan's '" + island + "' (" + (planned.Root != null ? "loaded" : "still not loaded") + ")");
+						}
+						if (planned != null && planned.Root != null) playEntry = planned;
+						else if (planned != null) { Fail("play " + name + ": the plan's '" + island + "' didn't load when the player came"); yield break; }
 						else
 						{
 							// (a copy left by an earlier run that stopped half way: removed first)
