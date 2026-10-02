@@ -24,6 +24,12 @@ namespace DynamicIslands
 	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
 	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
 	///                                   heights above the sea, or "+h" above what is below)
+	/// A world plan's test plays its story the same way (only in a test world 'CI ...'):
+	///   plan &lt;name&gt; | plan end          the world gets the plan from its start / the world's story back to Raft's
+	///   note &lt;Raft story island&gt;        Raft's note that gives that island's frequency read (the Receiver's own: RadioTower)
+	///   tune &lt;rule&gt;                     the Receiver tuned to a plan island's frequency: it comes, and "island &lt;name&gt;"
+	///                                   (an island's own test, included) plays the one the plan brought
+	///   expect chain &lt;rule|Raft island&gt; done|unlocked|locked     its place in the story
 	/// </summary>
 	public static partial class DevTests
 	{
@@ -35,6 +41,9 @@ namespace DynamicIslands
 		}
 
 		static IslandWorldState.Entry playEntry;
+
+		/// <summary>A world plan's test is playing ("plan" step): "island" plays the island the plan brought.</summary>
+		static bool planMode;
 
 		/// <summary>A point of the played island (metres from its land middle) in the world.</summary>
 		static Vector3 PlayPoint(float x, float z) { return playEntry.Position + new Vector3(x - playOffset.x, 0f, z - playOffset.y); }
@@ -70,8 +79,9 @@ namespace DynamicIslands
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				var opt = Options(t.Skip(1));
-				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
-				if (playEntry != null && playEntry.Root == null && verb != "log") { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
+				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
+				if (playEntry != null && playEntry.Root == null && verb != "log" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
 				KeepAlive(me);
 				switch (verb)
 				{
@@ -80,18 +90,26 @@ namespace DynamicIslands
 						string island = Rest(line, 1).Replace(" keep", "").Trim();
 						keep = line.EndsWith(" keep");
 						playOffset = Vector2.zero;
-						// (a copy left by an earlier run that stopped half way: removed first)
-						var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
-						if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
-						Vector3? spot = ScSpot(island, 400f);
-						if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
-						yield return ScBring(island, spot.Value, made);
-						playEntry = made.LastOrDefault();
-						if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
+						// (a plan's test: the copy the plan brought - tuned to - is the one played)
+						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule) && x.Root != null) : null;
+						if (planned != null) playEntry = planned;
+						else
+						{
+							// (a copy left by an earlier run that stopped half way: removed first)
+							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+							if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
+							Vector3? spot = ScSpot(island, 400f);
+							if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
+							yield return ScBring(island, spot.Value, made);
+							playEntry = made.LastOrDefault();
+							if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
+						}
 						yield return new WaitForSeconds(3f);
 						// (a clean start: the crew holds none of the island's story items - an earlier run in this world left them)
 						foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
 							if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));
+						// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
+						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
 						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
 						break;
 					}
@@ -214,8 +232,67 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(1f);
 						break;
 					}
+					case "plan":
+					{
+						// plan <name>: the test world plays a world plan from its start (a clean slate of the story first);
+						// plan end: the world's story back to Raft's, the plan's islands gone
+						if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("play " + name + ": a plan only in a test world 'CI ...' (it changes the world's story)"); yield break; }
+						string plan = Rest(line, 1).Trim();
+						PlanCleanSlate();
+						if (plan == "end")
+						{
+							WorldDirector.SetPlan(WorldPlan.RandomName, false);
+							StoryChain.OnWorldRead();
+							IslandWorldState.Save();
+							planMode = false;
+							playEntry = null;
+							Log("  the world's story is Raft's again");
+							break;
+						}
+						Check(ref ok, ScSetPlan(plan, true), "the world gets the plan '" + plan + "'");
+						checks++;
+						planMode = true;
+						playEntry = null;
+						yield return new WaitForSeconds(1f);
+						Log("  the story: " + string.Join(" > ", StoryChain.Steps.Select(StoryChain.StepName).ToArray()));
+						break;
+					}
+					case "note":
+					{
+						// note <Raft story island>: Raft's note that gives its frequency read, as reading it in the game does
+						ChunkPointType nt = StoryOrder.Parse(Rest(line, 1).Trim());
+						if (nt == ChunkPointType.None) { Check(ref ok, false, rl.Where + ": no Raft story island '" + Rest(line, 1).Trim() + "'"); break; }
+						PlayNote(nt);
+						StoryChain.Tick();
+						yield return new WaitForSeconds(1f);
+						break;
+					}
+					case "tune":
+					{
+						// tune <rule>: the Receiver tuned to a plan island's frequency (unlocked by then): the island comes
+						string rule = Rest(line, 1).Trim();
+						StoryChain.Tick();
+						string freq = StoryChain.FrequencyOf(rule);
+						Check(ref ok, freq != null, "a frequency on the Receiver for '" + rule + "' (" + (freq ?? "none") + ")");
+						yield return TuneTo(rule);
+						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
+						Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
+						checks += 2;
+						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
+						break;
+					}
 					case "expect":
 						checks++;
+						if (t.Length > 2 && t[1] == "chain")
+						{
+							// expect chain <rule|Raft story island> done|unlocked|locked: its place in the story (a moment allowed)
+							ChunkPointType ct = StoryOrder.Parse(t[2]);
+							string key = ct != ChunkPointType.None ? StoryChain.RaftKey(ct) : "rule:" + t[2], state = t.Length > 3 ? t[3].ToLowerInvariant() : "done";
+							Func<bool> holds = () => state == "done" ? StoryChain.Done.Contains(key) : state == "locked" ? !StoryChain.Unlocked.Contains(key) && !StoryChain.Done.Contains(key) : StoryChain.Unlocked.Contains(key);
+							for (float w = 0f; w < 15f && !holds(); w += 0.5f) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
+							Check(ref ok, holds(), "the story: " + StoryChain.StepName(key) + " " + state + " (" + string.Join(" > ", StoryChain.Steps.Select(x => StoryChain.StepName(x) + (StoryChain.Done.Contains(x) ? " (done)" : StoryChain.Unlocked.Contains(x) ? " (unlocked)" : "")).ToArray()) + ")");
+							break;
+						}
 						if (t.Length > 2 && t[1] == "spinsown")
 						{
 							// (turning around its own up axis: that axis stays put while the object turns - a water wheel)
@@ -277,7 +354,21 @@ namespace DynamicIslands
 				}
 			}
 			if (!keep && made.Count > 0) { ScRemove(made); OnRaftCommand(); }
+			if (planMode) { PlanCleanSlate(); WorldDirector.SetPlan(WorldPlan.RandomName, false); StoryChain.OnWorldRead(); IslandWorldState.Save(); planMode = false; OnRaftCommand(); }
 			if (ok) Log("PASS: play " + name + " (" + checks + " checks)"); else Fail("play " + name);
+		}
+
+		/// <summary>A test world's story from nothing: none of Raft's story notes read, no plan island in the world, the story
+		/// chain and the rules' state forgotten (as a new world's).</summary>
+		static void PlanCleanSlate()
+		{
+			Dictionary<int, ChunkPointType> notes = StoryOrder.FrequencyNotes();
+			NoteBook.unlockedNoteBookIndexes.RemoveAll(i => notes.ContainsKey(i));
+			NoteBook.unlockedChunkPointType.RemoveAll(c => Chain.Contains(c) || (int)c >= StoryChain.ModTypeBase);
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => !string.IsNullOrEmpty(x.Rule)).Select(x => x.Id).ToList(), true);
+			IslandCache.Forget();
+			StoryChain.Reset();
+			WorldDirector.Done.Clear();
 		}
 
 		static void PlayExpect(string[] t, string line, ref bool ok)

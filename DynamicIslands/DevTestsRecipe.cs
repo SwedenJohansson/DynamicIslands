@@ -26,10 +26,14 @@ namespace DynamicIslands
 	/// "end" and "call name args" (params with =default, args by position or name=value), "include file" (macros
 	/// shared by recipes). "push at x z [y=|h=] [yaw=]" ... "pop": a frame - positions inside are turned with it and
 	/// heights are from its floor (y= above the ground there, h= above the sea), for buildings put together from pieces.
+	///
+	/// World plans are made the same way, in the editor's World plans window: "plan new <name>", "plan description",
+	/// "plan random on|off", "plan story on|off", "plan leaveout <Raft story island>", "plan rule <rule line>" (its card
+	/// filled in) and "plan save" (Save - Check finding a problem stops the recipe).
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. CIRecipe <name>")]
+		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. CIRecipe <name>")]
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
@@ -255,7 +259,7 @@ namespace DynamicIslands
 					if (first == "include")
 					{
 						string file = Path.Combine(RecipeFolder, Rest(line, 1).Trim());
-						if (!file.EndsWith(".recipe")) file += ".recipe";
+						if (!file.EndsWith(".recipe") && !file.EndsWith(".play")) file += ".recipe"; // (a play test may include another: a plan's test plays its islands' own)
 						if (!File.Exists(file)) throw new Exception("no file " + file);
 						ExpandLines(ReadRecipe(file), vars, macros, output, depth + 1);
 						continue;
@@ -775,6 +779,54 @@ namespace DynamicIslands
 							// points are from its origin, the land centre when it was generated: land changed since moves them)
 							Vector2 moved = EditorLandCentre() - frames[0].Origin;
 							if (moved.magnitude > 0.5f) Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'");
+							break;
+						}
+						case "plan":
+						{
+							// (a world plan made in the World plans window: plan new <name> / description <text> / random on|off /
+							// story on|off / leaveout <Raft story island> / rule <rule line> / save - Check finding a problem stops it)
+							string what = t.Length > 1 ? t[1].ToLowerInvariant() : "", arg = Rest(line, 2).Trim();
+							if (what != "new" && WorldPlanWindow.Plan == null) { error = "plan " + what + ": no plan yet (plan new <name>)"; break; }
+							switch (what)
+							{
+								case "new":
+								{
+									string why = FileNames.IslandProblem(arg);
+									if (why != null || WorldPlan.IsBuiltIn(arg)) { error = why ?? "'" + arg + "' is a built-in plan"; break; }
+									WorldPlanWindow.RecipeNew(arg);
+									if (!WorldPlanWindow.IsOpen || WorldPlanWindow.Plan == null || WorldPlanWindow.Plan.Name != arg) error = "World plans didn't open on a new plan '" + arg + "'";
+									break;
+								}
+								case "description": WorldPlanWindow.RecipeDescription(Unescape(arg)); break;
+								case "random": WorldPlanWindow.RecipeRandom(arg == "on"); break;
+								case "story": WorldPlanWindow.RecipeStory(arg == "on"); break;
+								case "leaveout":
+								{
+									ChunkPointType st = StoryOrder.Parse(arg);
+									if (st == ChunkPointType.None || !WorldPlanWindow.RecipeLeaveOut(StoryOrder.Key(st))) error = "no story island '" + arg + "' to leave out";
+									break;
+								}
+								case "rule":
+								{
+									IntroRule r = IntroRule.Parse(arg);
+									if (r == null) { error = "plan rule: a rule line (id | what | when | where | message | label [| story place | done when])"; break; }
+									WorldPlanWindow.RecipeRule(r);
+									break;
+								}
+								case "save":
+								{
+									string planName = WorldPlanWindow.Plan.Name;
+									List<string> problems = WorldPlanWindow.RecipeSave();
+									foreach (string f in WorldPlanWindow.RecipeFindings()) Log("  check: " + f);
+									if (problems.Count > 0) { error = "Check found " + problems.Count + " problem(s): " + string.Join(" | ", problems.ToArray()); break; }
+									if (!File.Exists(WorldPlan.PathFor(planName))) { error = "the plan didn't save as '" + planName + "'"; break; }
+									WorldPlanWindow.Close();
+									RecipeSaved = planName;
+									Log("  saved plan '" + planName + "' (" + WorldPlan.Load(planName).Rules.Count + " rules)");
+									break;
+								}
+								default: error = "plan new|description|random|story|leaveout|rule|save"; break;
+							}
 							break;
 						}
 						case "log":

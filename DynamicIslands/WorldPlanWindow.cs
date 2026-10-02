@@ -128,6 +128,68 @@ namespace DynamicIslands.Editor
 			ShowRules();
 		}
 
+		#region The recipe player (the library's plans made in this window, step by step)
+
+		/// <summary>A new, empty plan in the window, as New... makes it (a plan saved under that name before is replaced).</summary>
+		public static void RecipeNew(string name)
+		{
+			if (instance == null) return;
+			instance.islandMode = false;
+			instance.Show(NewPlan(name));
+		}
+
+		/// <summary>The description typed into its field.</summary>
+		public static void RecipeDescription(string text)
+		{
+			if (instance == null) return;
+			instance.descriptionField.text = text;
+			instance.descriptionField.onEndEdit.Invoke(text);
+			instance.plan.Description = text;
+		}
+
+		/// <summary>"Random islands while sailing" clicked until it says on / off.</summary>
+		public static void RecipeRandom(bool on) { if (instance != null && instance.plan.Random != on) instance.randomButton.onClick.Invoke(); }
+
+		/// <summary>"Raft's story islands" clicked until it says on / off.</summary>
+		public static void RecipeStory(bool on) { if (instance != null && instance.plan.RaftStory != on) instance.storyButton.onClick.Invoke(); }
+
+		/// <summary>One of Raft's story islands clicked out of the plan's story (false: no such island in the story row).</summary>
+		public static bool RecipeLeaveOut(string key)
+		{
+			Button b = StoryIslandButton(key);
+			if (b == null) return false;
+			if (!instance.plan.LeaveOut.Contains(key)) b.onClick.Invoke();
+			return instance.plan.LeaveOut.Contains(key);
+		}
+
+		/// <summary>A rule as its card's fields are filled in (Add rule, then each field): one with the same id is replaced.</summary>
+		public static void RecipeRule(IntroRule r)
+		{
+			if (instance == null) return;
+			instance.Keep();
+			int at = instance.plan.Rules.FindIndex(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+			if (at >= 0) instance.plan.Rules[at] = r; else instance.plan.Rules.Add(r);
+			instance.ShowRandom();
+			instance.ShowRules();
+		}
+
+		/// <summary>Save clicked (Check runs): the problems Check found, empty when there are none.</summary>
+		public static List<string> RecipeSave()
+		{
+			if (instance == null) return new List<string> { "the World plans window isn't there" };
+			instance.Save();
+			PlanCheckWindow.Close();
+			return (instance.findings ?? new List<PlanChecker.Finding>()).Where(f => f.Level == PlanChecker.Level.Problem).Select(f => f.Text).ToList();
+		}
+
+		/// <summary>The plan's Check report as text (warnings and tips too), for the recipe's log.</summary>
+		public static List<string> RecipeFindings()
+		{
+			return instance != null && instance.findings != null ? instance.findings.Select(f => f.Level + ": " + f.Text).ToList() : new List<string>();
+		}
+
+		#endregion
+
 		/// <summary>What Check showed last (tests read it).</summary>
 		public static string LastCheck { get; private set; }
 
