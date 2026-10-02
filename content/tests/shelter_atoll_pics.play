@@ -2,6 +2,7 @@
 # dark, then with the generator running
 island Shelter Atoll
 hour 11
+weather Calm
 at 24 2
 wait 2
 picture shelter_atoll_island 40 24 -46 0 5 0

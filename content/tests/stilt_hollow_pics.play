@@ -1,6 +1,7 @@
 # Guide pictures of Stilt Hollow (CIPlay stilt_hollow_pics): Raft's camera and water at midday
 island Stilt Hollow
 hour 11
+weather Calm
 at 9.5 -12.5
 wait 2
 picture stilt_hollow_island 42 16 -36 2 5 -3

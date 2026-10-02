@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using DynamicIslands.Editor;
 using RaftModLoader;
 using UnityEngine;
@@ -231,6 +232,11 @@ namespace DynamicIslands
 						AzureSkyHour(F(t[1]));
 						yield return new WaitForSeconds(1f);
 						break;
+					case "weather":
+						// weather <name>: Raft's weather changed at once (pictures in clear weather); weather alone lists them
+						PlayWeather(t.Length > 1 ? Rest(line, 1).Trim() : "");
+						yield return new WaitForSeconds(3f);
+						break;
 					case "log":
 						Log("  " + Rest(line, 1));
 						break;
@@ -367,6 +373,34 @@ namespace DynamicIslands
 
 		/// <summary>A picture with Raft's own camera (its water and light, no HUD, no held tool) for the guide:
 		/// Mods\DynamicIslands\recipes\play_&lt;file&gt;.jpg 1280x720.</summary>
+		/// <summary>
+		/// Raft's weather set at once, by the name of one of its weathers, through Raft's weather manager (found by
+		/// reflection) - the library's pictures were taken in a passing fog. Without a name (or none matching) it logs the
+		/// weathers there are and how the manager sets one.
+		/// </summary>
+		static void PlayWeather(string name)
+		{
+			const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+			Type managerType = typeof(Network_Player).Assembly.GetType("WeatherManager");
+			UnityEngine.Object manager = managerType != null ? UnityEngine.Object.FindObjectOfType(managerType) : null;
+			if (manager == null) { Log("  weather: Raft's weather manager isn't there"); return; }
+			Type weatherType = managerType.Assembly.GetType("Weather");
+			List<UnityEngine.Object> weathers = weatherType != null ? Resources.FindObjectsOfTypeAll(weatherType).ToList() : new List<UnityEngine.Object>();
+			// (Raft: SetWeather(Weather weather, bool instant))
+			MethodInfo set = managerType.GetMethods(all).FirstOrDefault(m => m.Name == "SetWeather" && m.GetParameters().Length == 2 && m.GetParameters()[0].ParameterType == weatherType);
+			UnityEngine.Object pick = name.Length == 0 ? null : weathers.FirstOrDefault(w => w.name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (pick == null || set == null)
+			{
+				Log("  weathers: " + string.Join(", ", weathers.Select(w => w.name).Distinct().ToArray()) + " | set by: " + (set != null ? set.Name + "(" + string.Join(", ", set.GetParameters().Select(p => p.ParameterType.Name).ToArray()) + ")" : "-"));
+				foreach (MethodInfo m in managerType.GetMethods(all).Where(m => m.DeclaringType == managerType))
+					Log("  manager: " + m.Name + "(" + string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name).ToArray()) + ")");
+				return;
+			}
+			object[] args = { pick, true };
+			try { set.Invoke(set.IsStatic ? null : manager, args); Log("  weather: " + pick.name); }
+			catch (Exception e) { Log("  weather: " + pick.name + " failed - " + (e.InnerException ?? e).Message); }
+		}
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look)
 		{
 			Camera cam = Camera.main;

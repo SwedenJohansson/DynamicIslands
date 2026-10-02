@@ -1,6 +1,7 @@
 ﻿# Guide pictures of The Stranded Gull (CIPlay stranded_gull_pics): Raft's camera and water at midday
 island The Stranded Gull
 hour 11
+weather Calm
 at -4 0.6
 wait 2
 picture stranded_gull_flag -30 9 -24 -2 3 0

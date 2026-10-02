@@ -1,6 +1,7 @@
 # Guide pictures of Tide Farm (CIPlay tide_farm_pics): Raft's camera and water at midday
 island Tide Farm
 hour 11
+weather Calm
 at 18 0.4
 wait 2
 picture tide_farm_island 40 13 -30 16 1.5 0

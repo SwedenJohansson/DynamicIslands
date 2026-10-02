@@ -1,6 +1,7 @@
 # Guide pictures of Old Mine Islet (CIPlay old_mine_islet_pics): Raft's camera and water at midday, inside the mine
 island Old Mine Islet
 hour 11
+weather Calm
 at 22 -12
 wait 2
 picture old_mine_islet_island 46 17 -44 2 6 -12
