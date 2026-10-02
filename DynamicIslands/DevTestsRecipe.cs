@@ -590,6 +590,38 @@ namespace DynamicIslands
 							}
 							break;
 						}
+						case "ramp":
+						{
+							// ramp <Object> from x1 z1 h1 to x2 z2 h2 [len=6] [top=1]: pieces end to end from one height to another (h above the
+							// sea, or above the frame's floor in a frame with one), each turned along the way and tilted with it, stretched
+							// to fill it exactly (their long side is their x; top = their walking surface above their pivot) - walkways,
+							// ramps and bridges between platforms
+							int from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
+							if (from < 0 || to < 0 || from + 3 >= t.Length || to + 3 >= t.Length) { error = "ramp <Object> from <x1> <z1> <h1> to <x2> <z2> <h2> [len=] [top=]"; break; }
+							var opt = Options(t.Skip(to + 4));
+							float x1 = F(t[from + 1]), z1 = F(t[from + 2]), h1 = F(t[from + 3]), x2 = F(t[to + 1]), z2 = F(t[to + 2]), h2 = F(t[to + 3]);
+							float piece = opt.ContainsKey("len") ? F(opt["len"]) : 6f, top = opt.ContainsKey("top") ? F(opt["top"]) : 1f;
+							float run = Mathf.Sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1)), rise = h2 - h1;
+							float slope = Mathf.Sqrt(run * run + rise * rise);
+							int n = Mathf.Max(1, Mathf.CeilToInt(slope / piece - 0.05f));
+							float yaw = Mathf.Atan2(-(z2 - z1), x2 - x1) * Mathf.Rad2Deg, roll = Mathf.Atan2(rise, run) * Mathf.Rad2Deg;
+							float floor = TopFrame.HasFloor ? TopFrame.FloorY - DynamicIslands.EditorWaterLevel : 0f;
+							for (int k = 0; k < n && error == null; k++)
+							{
+								float f = (k + 0.5f) / n;
+								// (the pivot under the walking surface, along the tilted piece's up)
+								float hh = h1 + rise * f + floor - top * Mathf.Cos(roll * Mathf.Deg2Rad);
+								var o = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+								{
+									{ "h", Num(hh) }, { "yaw", Num(yaw) }, { "roll", Num(roll) }, { "sx", Num(slope / n / piece) }
+								};
+								if (opt.ContainsKey("rot")) o["rot"] = opt["rot"];
+								EditorGameObject e;
+								error = Place(t[1], x1 + (x2 - x1) * f, z1 + (z2 - z1) * f, o, out e);
+								if (e != null) placed++;
+							}
+							break;
+						}
 						case "prop":
 						case "beh":
 						{
@@ -883,6 +915,10 @@ namespace DynamicIslands
 			if (opt.ContainsKey("rot")) { string[] r = opt["rot"].Split(','); own = Quaternion.Euler(F(r[0]), r.Length > 1 ? F(r[1]) : 0f, r.Length > 2 ? F(r[2]) : 0f); }
 			go.transform.rotation = Quaternion.Euler(opt.ContainsKey("tilt") ? F(opt["tilt"]) : 0f, yaw, opt.ContainsKey("roll") ? F(opt["roll"]) : 0f) * own;
 			if (opt.ContainsKey("scale")) go.transform.localScale = go.transform.localScale * Mathf.Clamp(F(opt["scale"]), 0.05f, 20f);
+			// (sx/sy/sz: stretched along one of its own axes, as the editor's scale tool's handles do)
+			if (opt.ContainsKey("sx") || opt.ContainsKey("sy") || opt.ContainsKey("sz"))
+				go.transform.localScale = Vector3.Scale(go.transform.localScale, new Vector3(opt.ContainsKey("sx") ? Mathf.Clamp(F(opt["sx"]), 0.05f, 20f) : 1f,
+					opt.ContainsKey("sy") ? Mathf.Clamp(F(opt["sy"]), 0.05f, 20f) : 1f, opt.ContainsKey("sz") ? Mathf.Clamp(F(opt["sz"]), 0.05f, 20f) : 1f));
 			if (opt.ContainsKey("sit"))
 			{
 				Renderer[] rs = go.GetComponentsInChildren<Renderer>();

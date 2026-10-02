@@ -107,6 +107,8 @@ namespace DynamicIslands
 						var points = new List<Vector3>();
 						var wopt = Options(t.Where(x => x.Contains("=")));
 						string[] coords = t.Where(x => !x.Contains("=")).ToArray();
+						bool blocked = coords.Contains("blocked");
+						coords = coords.Where(x => x != "blocked").ToArray();
 						for (int i = 1; i + 1 < coords.Length; i += 3) points.Add(PlayPoint(F(coords[i]), F(coords[i + 1])));
 						Vector3 start = points[0];
 						start.y = PlaySurface(start) + 0.3f;
@@ -116,7 +118,9 @@ namespace DynamicIslands
 						string where = "";
 						yield return PlayWalk(me, points.Skip(1).ToList(), (g, w) => { got = g; where = w; });
 						if (got && wopt.ContainsKey("h") && Mathf.Abs(me.transform.position.y - playEntry.Position.y - F(wopt["h"])) > 1.6f) { got = false; where += " - not at " + wopt["h"] + " m"; }
-						Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
+						// ("blocked": the way must be shut - a locked gate, a wall)
+						if (blocked) Check(ref ok, !got, "the way " + line.Substring(5) + " is blocked: " + where);
+						else Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
 						checks++;
 						break;
 					}
