@@ -321,7 +321,7 @@ less after that. The editor opens on the sea with an empty build area.
 
 | Do this | To |
 |---|---|
-| **Right-drag** | look around; while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
+| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
 | **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |

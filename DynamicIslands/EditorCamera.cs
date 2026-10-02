@@ -5,7 +5,7 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// The editor's camera, handled like Unity's scene view and other modern editors (it replaces the 2021 RTS camera):
-	///   Right mouse held   look around; WASD flies where you look, Q/E down and up; the wheel sets the flying speed
+	///   Right mouse held   look around (dragging up tilts the view down); WASD flies where you look, Q/E down and up; the wheel sets the flying speed
 	///   WASD / arrows      move over the island at the same height (without the right mouse)
 	///   Middle mouse       pan: the ground under the cursor sticks to it
 	///   Alt + left mouse   orbit around the selected objects, or the ground in the middle of the view
@@ -162,12 +162,13 @@ namespace DynamicIslands.Editor
 
 		#region The controls
 
-		/// <summary>Turns the view by mouse pixels (right mouse held).</summary>
+		/// <summary>Turns the view by mouse pixels (right mouse held). Dragging up tilts the view down, as if the scene were
+		/// dragged (the user, 2026-10-02: the other way felt inverted).</summary>
 		public void Look(Vector2 pixels)
 		{
 			flying = false;
 			yaw += pixels.x * LookSensitivity;
-			pitch = Mathf.Clamp(pitch - pixels.y * LookSensitivity, -89f, 89f);
+			pitch = Mathf.Clamp(pitch + pixels.y * LookSensitivity, -89f, 89f);
 		}
 
 		/// <summary>Starts orbiting around the selected objects, or the ground in the middle of the view (Alt + left mouse).</summary>
