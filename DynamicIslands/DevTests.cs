@@ -799,6 +799,13 @@ namespace DynamicIslands
 				target = new Vector3(b.center.x, b.max.y + 3f, b.center.z);
 				RaycastHit hit;
 				if (Physics.Raycast(target, Vector3.down, out hit, 20f) && hit.collider.transform.IsChildOf(island.transform)) target.y = hit.point.y + 1.5f;
+				// (a raft of foundations: on a deck tile with open sky over it as wide as a player, the one nearest the middle - a
+				// wreck's middle can be one of its missing foundations, and the player put above it fell through the hole into the
+				// sea: The Abyss Expedition's test, 2026-10-02; CIWreckDeck shows the deck itself holds)
+				Func<BoxCollider, Vector3> topOf = d => new Vector3(d.bounds.center.x, d.bounds.max.y, d.bounds.center.z);
+				BoxCollider tile = island.GetComponentsInChildren<BoxCollider>().Where(d => d.name == "CustomIslands_Deck").OrderBy(d => (topOf(d) - b.center).sqrMagnitude)
+					.FirstOrDefault(d => { RaycastHit h; return Physics.SphereCast(topOf(d) + Vector3.up * 8f, 0.6f, Vector3.down, out h, 9f, ~0, QueryTriggerInteraction.Ignore) && h.collider == d; });
+				if (tile != null) target = topOf(tile) + Vector3.up * 1.5f;
 			}
 
 			// (as the mod moves a player: off the raft first - a player still a child of the rocking raft dropped through the island -

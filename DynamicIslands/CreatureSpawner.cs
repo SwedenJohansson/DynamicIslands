@@ -289,6 +289,9 @@ namespace DynamicIslands.Editor
 				LandmarkEntitySpawner spawner = home.AddComponent<LandmarkEntitySpawner>();
 				spawner.entityType = p.Kind.Type;
 				spawner.setStartRotation = true;
+				// (a sea animal that swims rounds gets rounds of its own around its spot: see Rounds)
+				WaypointHandler rounds = prefab.GetComponentInChildren<AI_State_Waypoint_Circulation>(true) != null ? Rounds(home.transform, p, pos) : null;
+				if (rounds != null) Traverse.Create(spawner).Field("waypointHandler").SetValue(rounds);
 
 				float scale = -1f;
 				try { scale = prefab.localScaleInterval.GetRandomValue(); } catch { }
@@ -300,6 +303,7 @@ namespace DynamicIslands.Editor
 				spawner.spawnedEntityBehaviour = ai;
 				ours.Add(ai);
 				p.Spawned.Add(ai);
+				if (rounds != null) KeepRounds(ai, rounds);
 				ApplyStats(ai, p.Props);
 				ObjectProps.ApplyTint(ai.gameObject, p.Props);
 
@@ -317,6 +321,91 @@ namespace DynamicIslands.Editor
 				Debug.LogError("[CUSTOM ISLANDS] Spawning a " + (p.Kind != null ? p.Kind.Label : "creature") + " failed: " + e);
 				return null;
 			}
+		}
+
+		/// <summary>Waypoints in a ring around a sea animal's spot: as many, and how far out at most (m).</summary>
+		const int RoundPoints = 6;
+		const float RoundRadius = 8f;
+
+		/// <summary>
+		/// Raft's angler fish swim rounds (AI_State_Waypoint_Circulation) along waypoints a landmark has for them - those
+		/// of the spawner they come from, or of a Raft island registered for them. A built island had neither: Raft
+		/// logged "Unable to find proper waypoint manager", its state threw every frame (a NullReferenceException in
+		/// UpdateState) and the fish hung in the water. Found with the Abyss's lair. Each such animal now gets a ring of
+		/// waypoints around its spot, in open water: below the surface, clear of the ground and of objects - a point is
+		/// pulled in towards the spot until it is (a trench's lair is narrow). Under the switched-off home the handler's
+		/// own start-up (which would register it for Raft's islands) doesn't run.
+		/// </summary>
+		static WaypointHandler Rounds(Transform home, CreatureSpawnPoint p, Vector3 centre)
+		{
+			var go = new GameObject("CI_Rounds");
+			go.transform.SetParent(home, false);
+			IslandSettings island = p.GetComponentInParent<IslandSettings>();
+			float sea = island != null ? island.transform.position.y + island.WaterLevel : 0f;
+			centre.y = Mathf.Min(centre.y, sea - 1.5f);
+			go.transform.position = centre;
+			int mask = (int)LayerMasks.MASK_GroundMask_NonRaft | (int)LayerMasks.MASK_Obstruction | (1 << IslandSpawner.TerrainLayer);
+			float radius = Mathf.Clamp(4f * ObjectProps.Size(p.Props), 4f, RoundRadius);
+			var points = new List<Waypoint>();
+			for (int i = 0; i < RoundPoints; i++)
+			{
+				float a = i * Mathf.PI * 2f / RoundPoints;
+				Vector3 dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)), at = centre;
+				for (float r = radius; r >= 1f; r -= 1f)
+				{
+					Vector3 q = centre + dir * r;
+					if (Physics.Linecast(centre, q, mask, QueryTriggerInteraction.Ignore) || Physics.CheckSphere(q, 1f, mask, QueryTriggerInteraction.Ignore)) continue;
+					at = q;
+					break;
+				}
+				var w = new GameObject("Waypoint_" + i);
+				w.transform.SetParent(go.transform, false);
+				w.transform.position = at;
+				points.Add(w.AddComponent<Waypoint>());
+			}
+			WaypointHandler handler = go.AddComponent<WaypointHandler>();
+			// (a loop: Raft's state goes on to the next one, or the one before, when it reaches a point)
+			for (int i = 0; i < points.Count; i++)
+			{
+				Traverse w = Traverse.Create(points[i]);
+				w.Field("next").SetValue(points[(i + 1) % points.Count]);
+				w.Field("previous").SetValue(points[(i + points.Count - 1) % points.Count]);
+				w.Field("waypointHandler").SetValue(handler);
+			}
+			Traverse h = Traverse.Create(handler);
+			h.Field("autoHandleRegistrationInAwake").SetValue(false);
+			h.Field("waypoints").SetValue(points);
+			h.Field("calculationWayPoints").SetValue(new List<Waypoint>(points));
+			return handler;
+		}
+
+		/// <summary>
+		/// The animal's swimming states use its spot's rounds (set before they start, so they don't look for a Raft
+		/// island's), and don't switch to other rounds later: their list of rounds to switch between is emptied (Raft's
+		/// own islands' rounds are far away, or not there).
+		/// </summary>
+		static void KeepRounds(AI_NetworkBehaviour ai, WaypointHandler rounds)
+		{
+			foreach (AI_State_Waypoint_Circulation s in ai.GetComponentsInChildren<AI_State_Waypoint_Circulation>(true))
+			{
+				Traverse t = Traverse.Create(s);
+				t.Field("waypointHandler").SetValue(rounds);
+				IList switches = t.Field("cirulationIDInterestTypes").GetValue() as IList;
+				if (switches != null) switches.Clear();
+			}
+		}
+
+		/// <summary>The rounds an animal's swimming state follows (null: none, or no such state) - for the tests.</summary>
+		public static WaypointHandler RoundsOf(AI_NetworkBehaviour ai)
+		{
+			AI_State_Waypoint_Circulation s = ai != null ? ai.GetComponentInChildren<AI_State_Waypoint_Circulation>(true) : null;
+			return s != null ? Traverse.Create(s).Field("waypointHandler").GetValue() as WaypointHandler : null;
+		}
+
+		/// <summary>The points of a ring of rounds (for the tests).</summary>
+		public static List<Waypoint> PointsOf(WaypointHandler rounds)
+		{
+			return rounds != null ? (Traverse.Create(rounds).Field("waypoints").GetValue() as List<Waypoint>) ?? new List<Waypoint>() : new List<Waypoint>();
 		}
 
 		#endregion

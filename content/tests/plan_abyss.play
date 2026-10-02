@@ -7,7 +7,8 @@ include old_mine_islet.play
 arrive shelter
 include shelter_atoll.play
 arrive sunken
-stand
+# (its top is under water: the player swims over it - a visit counts within its land's radius)
+at 0 0
 arrive caverns
 include ironreef_caverns.play
 arrive wreck

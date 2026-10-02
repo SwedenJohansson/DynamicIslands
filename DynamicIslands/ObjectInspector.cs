@@ -292,6 +292,15 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(ever, onceEver);
 			UIKit.SetActive(every, repeats);
 
+			// (an air pocket: a diver breathes inside it, as in Raft's air pockets under Caravan Town)
+			RectTransform air = UIKit.Row(g, 26f, 4f, "Air");
+			UIKit.Size(UIKit.Label(air, "Air", 13, UIKit.TextMuted).gameObject, 44);
+			bool isAir = ObjectProps.GetBool(p, ObjectProps.ZoneAir, false);
+			Button noAir = UIKit.Button(air, "None", () => { Set(target, ObjectProps.ZoneAir, null); Refresh(); }, "An ordinary zone: no air in it", -1, 26f, 12);
+			Button yesAir = UIKit.Button(air, "Air pocket", () => { Set(target, ObjectProps.ZoneAir, "1"); Refresh(); }, "An air pocket: a player inside breathes - breath back to full, while the zone is shown (for a dive, as in Raft's air pockets under Caravan Town)", -1, 26f, 12);
+			UIKit.SetActive(noAir, !isAir);
+			UIKit.SetActive(yesAir, isAir);
+
 			GameObject placed = GameObject.Find("PlacedObjects");
 			int linked = placed == null || id.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == id);
 			UIKit.Label(g, linked > 0 ? linked + " creature spot(s) wait for this zone (an ambush)." : "<i>Creatures can wait for it: select one and set \"Appears\".</i>", 12, UIKit.TextMuted);

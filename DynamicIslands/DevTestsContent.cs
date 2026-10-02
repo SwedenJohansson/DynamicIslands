@@ -203,13 +203,14 @@ namespace DynamicIslands
 			Log("Interactable layers: " + LayerList(mask) + "; rays hit triggers: " + Physics.queriesHitTriggers + "; NavMesh agent types: " + NavMesh.GetSettingsCount());
 		}
 
-		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
+		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
 		public static void CreatureTest(string[] args)
 		{
 			DynamicIslands.instance.StartCoroutine(CreatureTestRoutine(args != null && args.Contains("keep")));
 		}
 
-		/// <summary>Writes cicreature.island: the sample island with a herd of warthogs, a chicken, a puffer fish, a sign and an island name.</summary>
+		/// <summary>Writes cicreature.island: the sample island with a herd of warthogs, a chicken, a puffer fish, an angler fish
+		/// deeper down, a sign and an island name.</summary>
 		static bool MakeCreatureIsland(out string error)
 		{
 			error = null;
@@ -235,6 +236,10 @@ namespace DynamicIslands
 			Vector3 sea = ground(c.x, c.y);
 			for (float d = 10f; d < 300f; d += 5f) { Vector3 p = ground(c.x + d, c.y); if (p.y < f.WaterLevel - 4f) { sea = new Vector3(p.x, f.WaterLevel - 3f, p.z); break; } }
 			f.Objects.Add(new IslandObject { Name = "Creature_PufferFish", Position = sea });
+			// An angler fish deeper down, 8 m under the surface where the sea is deeper than 14 m (Raft's swim their rounds)
+			Vector3 deep = sea;
+			for (float d = 10f; d < 300f; d += 5f) { Vector3 p = ground(c.x - d, c.y); if (p.y < f.WaterLevel - 14f) { deep = new Vector3(p.x, f.WaterLevel - 8f, p.z); break; } }
+			f.Objects.Add(new IslandObject { Name = "Creature_AnglerFish", Position = deep });
 			f.Objects.Add(new IslandObject { Name = "Note_Sign", Position = ground(c.x - 5f, c.y), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Warning" }, { ObjectProps.NoteText, "Warthogs live here.\nBring a spear." } } });
 			f.Props[IslandProps.Title] = "Warthog Hill";
 			f.Props[IslandProps.Author] = "CI";
@@ -265,10 +270,14 @@ namespace DynamicIslands
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; Fail("the creature island did not spawn"); yield break; }
 			List<CreatureSpawnPoint> points = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
-			Check(ref ok, points.Count == 3, points.Count + " creature spawn points (no markers in the world: " + (entry.Root.GetComponentsInChildren<Transform>(true).All(t => t.name != "Marker")) + ")");
+			Check(ref ok, points.Count == 4, points.Count + " creature spawn points (no markers in the world: " + (entry.Root.GetComponentsInChildren<Transform>(true).All(t => t.name != "Marker")) + ")");
+			// (Raft's angler fish found no rounds to swim on a built island: it said so and its state threw every frame)
+			int noRounds = 0;
+			Application.LogCallback roundsCounter = (msg, trace, type) => { if (msg.Contains("Unable to find proper waypoint manager") || trace.Contains("AI_State_Waypoint_Circulation")) noRounds++; };
+			Application.logMessageReceived += roundsCounter;
 
 			float t0 = Time.realtimeSinceStartup;
-			while (points.Sum(p => p.Spawned.Count) < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (points.Sum(p => p.Spawned.Count) < 5 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(1f);
 			foreach (CreatureSpawnPoint p in points)
 				Log("  " + p.Kind.Label + ": " + p.Spawned.Count + " spawned " + string.Join(", ", p.Spawned.Where(a => a != null).Select(a => a.transform.position.ToString() + " hp " + a.networkEntity.stat_health.Value + "/" + a.networkEntity.stat_health.Max).ToArray()));
@@ -278,6 +287,24 @@ namespace DynamicIslands
 			Check(ref ok, boars != null && boars.Spawned.Count == 2, "two warthogs spawned (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			Check(ref ok, chicken != null && chicken.Spawned.Count == 1 && chicken.Spawned[0] is AI_NetworkBehaviour_Domestic, "a chicken spawned (catchable)");
 			Check(ref ok, fish != null && fish.Spawned.Count == 1, "a puffer fish spawned in the sea");
+			// The angler fish swims rounds around its spot: a ring of waypoints in open water, and it moves along them
+			CreatureSpawnPoint anglers = points.FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.AnglerFish);
+			AI_NetworkBehaviour angler = anglers != null ? anglers.Spawned.FirstOrDefault(a => a != null) : null;
+			Check(ref ok, angler != null, "an angler fish spawned in the deep");
+			if (angler != null)
+			{
+				WaypointHandler rounds = CreatureSpawner.RoundsOf(angler);
+				List<Waypoint> ring = CreatureSpawner.PointsOf(rounds);
+				float sea = entry.Position.y + (entry.Root.GetComponent<IslandSettings>() != null ? entry.Root.GetComponent<IslandSettings>().WaterLevel : 0f);
+				int clear = ring.Count(w => w != null && w.transform.position.y < sea - 1f && !Physics.CheckSphere(w.transform.position, 0.5f, 1 << IslandSpawner.TerrainLayer, QueryTriggerInteraction.Ignore));
+				Check(ref ok, rounds != null && ring.Count == 6 && clear == 6, "the angler fish's rounds: " + ring.Count + " waypoints around its spot, " + clear + " of them in open water");
+				Vector3 was = angler.transform.position;
+				yield return new WaitForSeconds(4f);
+				float moved = angler != null ? Vector3.Distance(was, angler.transform.position) : 0f;
+				Check(ref ok, moved > 0.5f, "the angler fish swims its rounds: " + moved.ToString("F1") + " m in 4 s");
+			}
+			Application.logMessageReceived -= roundsCounter;
+			Check(ref ok, noRounds == 0, "no 'Unable to find proper waypoint manager' and no errors from Raft's swimming rounds (" + noRounds + ")");
 			NavMeshHit hit;
 			Check(ref ok, boars != null && NavMesh.SamplePosition(boars.transform.position, out hit, 3f, NavMesh.AllAreas), "the island has a NavMesh at the warthogs' spot");
 
@@ -348,7 +375,7 @@ namespace DynamicIslands
 			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			Check(ref ok, entry.Root != null && IslandSpawner.SpawnedRoots.Count(r => r != null && r.name == "CustomIsland_" + CreatureIsland) == 1, "the island comes back once (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			t0 = Time.realtimeSinceStartup;
-			while (CreatureSpawner.LiveCount < 3 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(1f);
 			CreatureSpawnPoint boars2 = entry.Root != null ? entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.Boar) : null;
 			Check(ref ok, boars2 != null && boars2.Spawned.Count == 1, "after reloading, one warthog (the other was killed): " + (boars2 != null ? boars2.Spawned.Count : -1));
@@ -583,6 +610,15 @@ namespace DynamicIslands
 			TransformGizmoSelect(zone.transform);
 			yield return null; yield return null;
 			Check(ref ok, ObjectInspector.Visible && ObjectInspector.Target == zone, "selecting the zone opens the zone editor");
+			// Its Air row: "Air pocket" makes the zone an air pocket, "None" an ordinary zone again (the two did the opposite
+			// when the row was new); the panel is built again after each click
+			Func<string, Button> airButton = label => UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.transform.parent != null && b.transform.parent.name == "Air"
+				&& b.GetComponentInChildren<Text>() != null && b.GetComponentInChildren<Text>().text == label);
+			Check(ref ok, airButton("Air pocket") != null && airButton("None") != null, "the zone editor has an Air row: None / Air pocket");
+			if (airButton("Air pocket") != null) { airButton("Air pocket").onClick.Invoke(); yield return null; yield return null; }
+			Check(ref ok, ObjectProps.GetBool(zone.Props, ObjectProps.ZoneAir, false), "Air pocket makes the zone an air pocket (zone.air = '" + ObjectProps.Get(zone.Props, ObjectProps.ZoneAir) + "')");
+			if (airButton("None") != null) { airButton("None").onClick.Invoke(); yield return null; yield return null; }
+			Check(ref ok, !ObjectProps.GetBool(zone.Props, ObjectProps.ZoneAir, false), "None makes it an ordinary zone again (zone.air = '" + ObjectProps.Get(zone.Props, ObjectProps.ZoneAir) + "')");
 			Screenshot(new[] { "zone_inspector" });
 			yield return new WaitForSecondsRealtime(0.5f);
 			TransformGizmoSelect(boar.transform);
@@ -605,6 +641,131 @@ namespace DynamicIslands
 				&& ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays) == "5", "the zone, the link and the island rule load back");
 			File.Delete(IslandSpawner.PathFor("cizone"));
 			if (ok) Log("PASS: trigger zones in the editor"); else Fail("trigger zones in the editor");
+		}
+
+		[ConsoleCommand(name: "CIBannerQueue", docs: "Dev (anywhere): banners and messages come one after another - a second one waits until the first has shown 3 s; the same one again while it is up shows once")]
+		public static void BannerQueue() { DynamicIslands.instance.StartCoroutine(BannerQueueRoutine()); }
+
+		static IEnumerator BannerQueueRoutine()
+		{
+			bool ok = true;
+			IslandInfo.ForgetShown();
+			for (float t = 0f; t < 15f && IslandInfo.OnScreen != null; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			IslandInfo.ShowMessage("CI first message");
+			IslandInfo.ShowMessage("CI second message");
+			IslandInfo.ShowMessage("CI first message");
+			yield return null;
+			Check(ref ok, IslandInfo.OnScreen == "CI first message", "the first message shows at once (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(2f);
+			Check(ref ok, IslandInfo.OnScreen == "CI first message", "2 s later it is still up: the second one waits (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(1.6f);
+			Check(ref ok, IslandInfo.OnScreen == "CI second message", "after 3 s the second one takes its place (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(3.5f);
+			Check(ref ok, IslandInfo.OnScreen != "CI first message", "the first one, asked for twice, doesn't come again (" + (IslandInfo.OnScreen ?? "none up") + ")");
+			IslandInfo.ForgetShown();
+			if (ok) Log("PASS: banners one after another"); else Fail("banners one after another");
+		}
+
+		[ConsoleCommand(name: "CIStraightUnit", docs: "Dev (anywhere): objects placed standing straight (PlacementOptions.Straight, the placer's): a lean up to 25 degrees is taken off whichever of their own axes points up, the heading kept; a bigger lean is the object's look and kept")]
+		public static void StraightUnit()
+		{
+			bool ok = true;
+			foreach (float heading in new[] { 0f, 37f, 200f })
+				foreach (Vector3 lean in new[] { new Vector3(14f, 0f, 0f), new Vector3(0f, 0f, -20f), new Vector3(9f, 0f, 12f) })
+				{
+					Quaternion r = Quaternion.Euler(0f, heading, 0f) * Quaternion.Euler(lean), s = PlacementOptions.Straight(r);
+					float up = Vector3.Angle(s * Vector3.up, Vector3.up);
+					float turned = Vector3.Angle(Vector3.ProjectOnPlane(r * Vector3.forward, Vector3.up), Vector3.ProjectOnPlane(s * Vector3.forward, Vector3.up));
+					Check(ref ok, up < 0.05f && turned < 3f, "heading " + heading + ", lean " + lean + ": straight (" + up.ToString("F2") + " deg off), heading kept (" + turned.ToString("F1") + " deg)");
+				}
+			Quaternion big = Quaternion.Euler(40f, 30f, 0f);
+			Check(ref ok, Quaternion.Angle(PlacementOptions.Straight(big), big) < 0.05f, "a 40 degree lean is the object's look: kept");
+			// (an object whose own z points up - lying in its model - leaning 10 degrees: its z stands straight up)
+			Quaternion lying = Quaternion.Euler(-80f, 0f, 0f), ls = PlacementOptions.Straight(lying);
+			Check(ref ok, Vector3.Angle(ls * Vector3.forward, Vector3.up) < 0.05f, "an object whose own z points up stands on it (" + Vector3.Angle(ls * Vector3.forward, Vector3.up).ToString("F2") + " deg off)");
+			if (ok) Log("PASS: objects placed standing straight"); else Fail("objects placed standing straight");
+		}
+
+		[ConsoleCommand(name: "CIWreckDeck", docs: "Dev, in game (host): a wreck (the map type: Raft's foundations on open water) ahead of the raft - a player put on its deck stands on it; dropped onto it from 5 m lands on it, also when a frame takes 0.6 s on the way down (a big island loading: The Abyss Expedition's test fell through); dropped onto its roof, they end on the roof or the deck. CIWreckDeck [keep]")]
+		public static void WreckDeck(string[] args) { DynamicIslands.instance.StartCoroutine(WreckDeckRoutine(args != null && args.Contains("keep"))); }
+
+		static IEnumerator WreckDeckRoutine(bool keep)
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			MapType type = MapTypes.Get("wreck");
+			float elevation;
+			// (the seed of the wreck the plan test fell through: it has a roof)
+			IslandGenSettings s = MapTypes.Roll(type, new System.Random(957038), out elevation);
+			IslandFile f = MapTypes.Create(type, s, elevation, "ciwreck");
+			f.Save(IslandSpawner.PathFor("ciwreck"));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, 30f, 300f);
+			if (!spot.HasValue) { Fail("no open sea near the raft for the wreck"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("ciwreck", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the wreck did not spawn"); yield break; }
+			yield return new WaitForSeconds(1f);
+			List<BoxCollider> decks = entry.Root.GetComponentsInChildren<BoxCollider>(true).Where(x => x.name == "CustomIslands_Deck").ToList();
+			Check(ref ok, decks.Count >= 4, "the wreck has " + decks.Count + " deck tiles");
+			// (a tile with open sky above it as wide as a player - not under the roof or its edge)
+			Func<BoxCollider, Vector3> topOf = d => new Vector3(d.bounds.center.x, d.bounds.max.y, d.bounds.center.z);
+			BoxCollider tile = decks.FirstOrDefault(d => { RaycastHit hit; return Physics.SphereCast(topOf(d) + Vector3.up * 8f, 0.6f, Vector3.down, out hit, 9f, ~0, QueryTriggerInteraction.Ignore) && hit.collider == d; });
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (tile != null && player != null)
+			{
+				Vector3 top = topOf(tile);
+				string[] labels = { "put on its deck", "dropped onto its deck from 5 m", "dropped onto its deck from 5 m with a 0.6 s frame on the way",
+					"dropped onto its deck from 5 m while a very large island loads" };
+				float[] heights = { 1.2f, 5f, 5f, 5f };
+				int[] hitches = { 0, 0, 600, 0 };
+				IslandWorldState.Entry big = null;
+				for (int k = 0; k < labels.Length; k++)
+				{
+					yield return PutPlayer(player, top + Vector3.up * heights[k], false);
+					if (hitches[k] > 0) { yield return new WaitForSeconds(0.2f); System.Threading.Thread.Sleep(hitches[k]); }
+					// (as in the plan test: reaching the wreck brought The Drowned Metropolis, 3 900 objects, that moment)
+					if (k == 3 && IslandSpawner.ListSavedIslands().Contains("The Drowned Metropolis"))
+					{
+						int n0 = IslandWorldState.Islands.Count;
+						DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile("The Drowned Metropolis", spot.Value + new Vector3(800f, 0f, 0f), false));
+						yield return null;
+						big = IslandWorldState.Islands.Skip(n0).FirstOrDefault();
+					}
+					bool stood = false; string seen = "";
+					for (int i = 0; i < 16 && !stood; i++)
+					{
+						yield return new WaitForSeconds(0.25f);
+						Collider under = player.PersonController.groundRaycastHit.collider;
+						float above = player.transform.position.y - top.y;
+						stood = player.PersonController.IsGrounded && under != null && under.name == "CustomIslands_Deck" && above > 0.5f && above < 2f;
+						seen = (player.PersonController.IsGrounded ? "grounded" : "in the air") + " on " + (under != null ? under.name : "nothing") + ", " + above.ToString("F1") + " m above the deck";
+					}
+					Check(ref ok, stood, "a player " + labels[k] + " stands on it (" + seen + ")");
+				}
+				for (float w = 0f; w < 20f && big == null; w += 0.5f) { yield return new WaitForSeconds(0.5f); big = IslandWorldState.Islands.FirstOrDefault(e => e.Name == "The Drowned Metropolis" && e.Root != null && (e.Root.transform.position - (spot.Value + new Vector3(800f, 0f, 0f))).sqrMagnitude < 100f); }
+				if (big != null) IslandWorldState.RemoveIds(new List<int> { big.Id }, true);
+				// The thatch roof (when the wreck has one): dropped onto it, a player ends on the roof or the deck - never in the sea
+				Transform roof = entry.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Block_Roof"));
+				if (roof != null)
+				{
+					Bounds rb = roof.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, b) => { a.Encapsulate(b); return a; });
+					yield return PutPlayer(player, new Vector3(rb.center.x, rb.max.y + 3f, rb.center.z), false);
+					yield return new WaitForSeconds(3f);
+					float above = player.transform.position.y - top.y;
+					Check(ref ok, above > 0.5f, "a player dropped onto its roof ends on the roof or the deck (" + above.ToString("F1") + " m above the deck)");
+				}
+				OnRaftCommand();
+			}
+			else Check(ref ok, false, "an open deck tile to stand on");
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(new List<int> { entry.Id }, true);
+				File.Delete(IslandSpawner.PathFor("ciwreck"));
+			}
+			if (ok) Log("PASS: a wreck's deck holds players" + (keep ? " (wreck kept)" : "")); else Fail("a wreck's deck holds players");
 		}
 
 		[ConsoleCommand(name: "CIZoneWorld", docs: "Dev, in game (host): a trigger zone with a message, items and an ambush warthog; the island rule for regrowing")]
@@ -849,6 +1010,22 @@ namespace DynamicIslands
 			Check(ref ok, inside == az && w > 0.99f, "from inside the zone it acts fully (" + w.ToString("F2") + ")");
 			Screenshot(new[] { "atmosphere_inside" });
 			yield return new WaitForSecondsRealtime(0.5f);
+
+			// A dark light tint really darkens: the sun takes it too while the camera draws inside (a cave was lit like the
+			// beach - found building Shelter Atoll), and has its own colour again after
+			PropsCommand.Change(atmo, ObjectProps.With(ObjectProps.With(p, ObjectProps.AtmoLight, "#101010"), ObjectProps.AtmoLightAmount, "0.9"));
+			yield return null; yield return null; yield return null;
+			Light sunNow = RenderSettings.sun != null ? RenderSettings.sun : UnityEngine.Object.FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional && l.isActiveAndEnabled).OrderByDescending(l => l.intensity).FirstOrDefault();
+			float before = AtmosphereZone.SunBefore.grayscale, drawn = AtmosphereZone.SunWhileDrawn.grayscale;
+			Check(ref ok, sunNow != null && before > 0f && drawn < before * 0.3f && Mathf.Abs(sunNow.color.grayscale - before) < 0.01f,
+				"in a dark zone the sun is dimmed while the camera draws (" + before.ToString("F2") + " -> " + drawn.ToString("F2") + ") and its own colour again after (" + (sunNow != null ? sunNow.color.grayscale.ToString("F2") : "no sun") + ")");
+			// Bubbles: they rise
+			PropsCommand.Change(atmo, ObjectProps.With(p, ObjectProps.AtmoParticles, "bubbles"));
+			yield return new WaitForSeconds(1f);
+			ParticleSystem bubbles = atmo.GetComponentInChildren<ParticleSystem>();
+			Check(ref ok, bubbles != null && bubbles.isPlaying && bubbles.particleCount > 0 && bubbles.main.gravityModifier.constant < 0f, "bubbles rise from the zone (" + (bubbles != null ? bubbles.particleCount + " now, gravity " + bubbles.main.gravityModifier.constant : "no particles") + ")");
+			PropsCommand.Change(atmo, p);
+			yield return new WaitForSeconds(0.5f);
 			cam.transform.position = c0 + new Vector3(0, 30, -60);
 			yield return null;
 			AtmosphereZone.Strongest(cam.transform.position, out w);

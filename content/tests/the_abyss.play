@@ -1,0 +1,44 @@
+# Play test of The Abyss (CIPlay the_abyss, in a test world 'CI ...'). Points as in its recipe: the expedition's raft
+# over the trench's east edge (its deck 0.13 m above the sea, x 14-23, z -8.75 to -1.25), the air line's valve at its
+# west edge; the air pockets down the trench - the container on the shelf (12 m down), the gas tank on the ledge
+# (18 m), the shack on the floor (42 m) - and the lair on the floor.
+island The Abyss
+expect step 0
+expect title The Bottom of the Abyss
+
+# Onto the expedition's raft: the leader's log on the table
+walk 22 -5 to 18 -5 to 16 -6.5 h=0.2
+zone camp
+expect step 1
+read Expedition leader's log
+expect step 2
+
+# The air line's valve is rusted fast without the wrench; the air pockets are empty
+use airvalve
+expect message rusted fast
+expect hidden airpockets
+
+# The wrench from the camp chest turns it: the pockets fill
+open Camp chest
+expect story abysswrench 1
+expect step 3
+use airvalve
+expect message wrench bites
+expect story abysswrench 0
+expect shown airpockets
+
+# The dive: breath at each pocket on the way down - the container on the shelf, the gas tank on the ledge, the shack
+# on the floor
+air pocket1
+air pocket2
+air pocket3
+
+# The lair: the Abyssal Angler and its brood, the hoard
+zone lair
+expect step 4
+expect message not a fish's
+kill Angler fish
+expect step 5
+open Lair hoard
+expect item Blueprint_HeadLight_Advanced 1
+expect done

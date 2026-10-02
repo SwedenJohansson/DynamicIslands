@@ -28,7 +28,7 @@ namespace DynamicIslands.Editor
 		void OnEnable() { zones.Add(this); Hook(); }
 		void OnDisable() { zones.Remove(this); }
 
-		public static readonly string[] ParticleKinds = { "none", "fireflies", "mist", "snow", "embers" };
+		public static readonly string[] ParticleKinds = { "none", "fireflies", "mist", "snow", "embers", "bubbles" };
 
 		/// <summary>Sets a zone up from its settings (on a spawned island, or live in the editor).</summary>
 		public void Configure(IDictionary<string, string> p)
@@ -93,6 +93,14 @@ namespace DynamicIslands.Editor
 					shape.shapeType = ParticleSystemShapeType.Circle; shape.rotation = new Vector3(90, 0, 0); shape.position = new Vector3(0, 15f, 0);
 					noise.enabled = true; noise.strength = 0.3f; noise.frequency = 0.3f;
 					break;
+				case "bubbles":
+					// (air rising from a spot under water: an air pocket filling, a vent)
+					main.startLifetime = 4f; main.startSpeed = 0.5f; main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.22f); main.maxParticles = 600; main.gravityModifier = -0.15f;
+					main.startColor = new Color(0.85f, 0.95f, 1f, 0.8f);
+					emission.rateOverTime = Mathf.Clamp(area * 0.5f, 10f, 120f);
+					shape.shapeType = ParticleSystemShapeType.Circle; shape.rotation = new Vector3(90, 0, 0); shape.radius = Mathf.Min(Radius, 1.5f);
+					noise.enabled = true; noise.strength = 0.25f; noise.frequency = 1.2f;
+					break;
 				case "embers":
 					main.startLifetime = 4f; main.startSpeed = 1f; main.startSize = 0.07f; main.maxParticles = 800; main.gravityModifier = -0.08f;
 					main.startColor = new Color(1f, 0.5f, 0.15f, 1f);
@@ -156,6 +164,10 @@ namespace DynamicIslands.Editor
 
 		static Saved saved;
 		static bool applied;
+
+		/// <summary>The sun's colour before, and while the camera last drew in a zone with a light tint (the tests read it).</summary>
+		public static Color SunBefore { get; private set; }
+		public static Color SunWhileDrawn { get; private set; }
 		static Image screenTint;
 		static Light sunFound;
 		static float sunLookedAt = -10f;
@@ -238,7 +250,7 @@ namespace DynamicIslands.Editor
 				// (the sun and the sky's reflections take the tint too: Raft's sun lit a cave or a buried room as brightly
 				// as the beach, so a dark zone wasn't dark - found building the library's Shelter Atoll)
 				saved.Sun = Sun();
-				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * k; }
+				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * k; SunBefore = saved.SunColor; SunWhileDrawn = saved.Sun.color; }
 				RenderSettings.reflectionIntensity = saved.Reflection * (k.r + k.g + k.b) / 3f;
 			}
 		}

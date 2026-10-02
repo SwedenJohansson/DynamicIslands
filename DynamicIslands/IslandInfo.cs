@@ -67,6 +67,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The last banners asked for, oldest first (the automated tests look at them: one may still be waiting).</summary>
 		public static readonly List<string> Recent = new List<string>();
 
+		/// <summary>The text on the banner now - its message, else its title (null: no banner up). The tests look at it.</summary>
+		public static string OnScreen { get { return banner != null && banner.gameObject.activeSelf ? (descText.text.Length > 0 && !titleText.gameObject.activeSelf ? descText.text : titleText.text) : null; } }
+
 		/// <summary>Forgets which islands were announced, so their banners show again (tests).</summary>
 		public static void ForgetShown() { shown.Clear(); waiting.Clear(); LastShown = null; LastMessage = null; }
 

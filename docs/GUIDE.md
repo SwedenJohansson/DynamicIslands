@@ -91,6 +91,9 @@ Pick what you want to do; each line leads to the part of the guide you need.
 13. [Limitations: what can't be changed](#13-limitations-what-cant-be-changed)
 14. [Questions and problems](#14-questions-and-problems)
 15. [Reporting a problem](#15-reporting-a-problem)
+16. [Learn from the library: example islands and plans](#16-learn-from-the-library-example-islands-and-plans)
+   - [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
+     [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for)
 
 ---
 
@@ -167,7 +170,8 @@ even far ones. An island a rule brought (a quest reward, a plan) carries its nam
 ### Arriving
 
 An island with a name shows it as a **banner** when you come near (once per island per session), with its author and
-a short welcome if the builder wrote them.
+a short welcome if the builder wrote them. Banners and messages (an island's, a zone's, a lever's) come **one after
+another**: one that arrives while another is on screen waits until that one has shown for at least 3 seconds.
 
 ![Arriving at an oddity island](images/world-arrival-banner.jpg)
 *Arriving at "Van Island", one of the world randomizer's oddity islands.*
@@ -204,7 +208,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
 - **Chests:** look at one and press **E**: the items go into your inventory. The chest is then empty for everyone
   until it fills up again (after the regrow days, or never). Some chests are **locked** until you have their key.
 - **Trigger zones:** invisible areas that fire when a player walks in: a message, items, or an **ambush** (animals
-  that appear the moment you step in).
+  that appear the moment you step in). Under water, a zone can be an **air pocket**: inside it your breath fills up
+  again, as in Raft's air pockets under Caravan Town.
 - **Creatures:** Raft's own animals at the island's creature spots, with the builder's toughness, size and colour.
   Warthogs and bears fight you; chickens, goats and llamas can be caught with Raft's net launcher and kept on the raft.
   Killed and caught animals come back after the regrow days unless the builder said never.
@@ -364,6 +369,9 @@ The **object browser** on the right has **every object of Raft**, about 1,900, e
 trees and rocks, Raft's 88 building blocks (to build huts or your own abandoned rafts), everything else you can build
 on a raft, and the objects of Raft's story islands (they load the first time you open their category). **Search**
 finds objects in every category.
+
+Objects from Raft's islands are placed **standing straight**: one that leant a little where Raft has it (a ladder
+against a wall) stands up straight; a bigger lean - more than 25°, a boulder lying on its side - is its look and stays.
 
 - **Place:** click an object in the browser, then click the ground. **Q/E** turn it, **[** and **]** resize it,
   **Shift+click** keeps placing, **Esc** stops. On a slope an object goes down to the **lowest ground under its base**,
@@ -707,6 +715,10 @@ turtle, stingray, dolphin, whale.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Colour** (every object): a swatch, the strength, or your own mix.
 
+**Angler fish swim rounds** around their spot, through the open water near it (in Raft they follow a route of their
+island's; here the mod lays one out in a ring around the spot, clear of the ground and of objects). Give them room:
+a spot a few metres from walls and the sea floor, in water deeper than they are long.
+
 In the editor a creature is a coloured marker with its name, or Raft's real model once you have been in a world since
 starting Raft:
 
@@ -760,13 +772,23 @@ creature spot waits for it.*
 *The warthog's **Appears** is set to "when zone-158 fires": its name tag says it waits. It appears the moment a player
 walks into the zone.*
 
+**Air pockets.** A trigger zone's **Air** row makes it an **air pocket**: a player inside it breathes - their breath is
+full again - as in Raft's air pockets under Caravan Town. Raft's own air-pocket objects (the shack, the gas tank and
+the container in Caravan Town's list) come without their air, so put an air-pocket zone on each, about as big as the
+object. A zone **hidden** by a behaviour gives no air until it is shown: *The Abyss* in the library keeps its three
+pockets empty until the air line's valve is opened (the valve's action shows them, with bubbles - [5.5](#55-atmosphere-and-sound)).
+
 **Invisible walls and ramps** (also in "Zones & triggers") are solid in the world but not seen: block a path, fence
 an arena, or make a cliff climbable.
 
 ### 5.5 Atmosphere and sound
 
-An **atmosphere zone** changes the fog colour, the light and adds particles (fireflies, mist, snow, embers) around a
-spot; a **sound zone** plays one of Raft's 500+ sounds while a player is inside, or once on entering.
+An **atmosphere zone** changes the fog colour, the light and adds particles (fireflies, mist, snow, embers, bubbles)
+around a spot; a **sound zone** plays one of Raft's 500+ sounds while a player is inside, or once on entering.
+**Bubbles** rise from the zone's middle in a column, about 14 m high - under water, for an air pocket filling or a
+vent; give the zone only bubbles (no fog or light) and it changes nothing else.
+A **dark light tint** makes the inside really dark: Raft's sun, the sky's light and its reflections all take the tint
+while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet and Shelter Atoll in the library).
 
 ![An atmosphere zone](images/editor-atmosphere.jpg)
 *An atmosphere zone: its size, fog colour and strength, light tint and strength, and particles (fireflies).*
@@ -813,7 +835,8 @@ Select any object → **Behaviour + events...**. No code needed:
 
 - **A name** that actions refer to (objects with the same name act together).
 - **Movement:** spin, bob, move back and forth, or **open and close** like a door, gate, bridge or lift (with a
-  Preview in the editor).
+  Preview in the editor). A spin turns around the vertical, or with **Own axis** around the object's own up axis:
+  tilt it first - a water wheel, a windmill's blades, a fan (Tide Farm's wheel in the library).
 - **At first:** there, or **hidden until shown** (a hidden creature spot is an ambush).
 - **Players can use it:** Raft's "press E" hint with your own text ("Pull the lever").
 - **Collision:** Raft's own, walk through, one box, or solid.
@@ -2161,6 +2184,113 @@ World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, 
 Islands and world plans used: (names, files or download links)
 Attached: Player.log, Player-prev.log, screenshots, ...
 ```
+
+---
+
+## 16. Learn from the library: example islands and plans
+
+The **island library** (ISLAND LIBRARY in the main menu) has islands and world plans made with this mod's own editors -
+every hill, door, quest and rule in them was made with the buttons this guide shows. Play them, then **open them in
+the editor** and take them apart: they are the quickest way to learn how a quest island or a whole adventure is put
+together.
+
+### 16.1 Opening an example in the editor
+
+1. **ISLAND LIBRARY** → **Islands** (or **World plans**) → **Download** the one you want (a plan downloads with every
+   island it needs).
+2. **EDITOR** → Island tab → **Load...** → pick the island. Everything is there as its builder left it.
+3. Click any object to see its **inspector**: a chest's loot, a note's text, a creature's toughness, a zone's message,
+   and **Behaviour + events...** for doors, winches, valves and levers (what happens on use, the checks, the signals).
+4. **Edit quest...** shows the quest's steps and reward; **Story items...** the keys and logs it uses.
+5. A plan: **WORLD PLANS** → **Plan ▼** → pick it: one rule card per island, and **Check** explains the whole story.
+
+Change anything and **Save as** a new name: the original stays as downloaded.
+
+> The examples were built step by step by a script that clicks the editor's own buttons (the "recipe player"), so
+> they test the editors too. The scripts are in the mod's source (`content\recipes`), one line per editor action -
+> readable as a building diary of each island.
+
+**As thick with things as Raft's own islands.** Every example starts from the generator with its nature at **Like
+Raft** - trees, bushes, rocks, things to pick up and the corals as thick on the ground as on Raft's own islands of the
+style (see [4.5](#45-the-island-generator)). Where an island's theme asks for more (Thornwood's jungle) or less (a
+sandbar, a snowfield), its script says so in a line starting `# (nature:`. To see the difference, generate an island
+with **Like Raft** and with **Dense**, and dive at both.
+
+### 16.2 The small and medium islands
+
+| Island | What it is | What it shows you how to build |
+|---|---|---|
+| ![](images/library/signal_rock.jpg) **Signal Rock** | A rock with a radio relay station: climb the station, dive for the lost transmitter coil, put the radio on the air and light the beacon (Raft's Radio Tower) | A building from Raft's radio tower pieces on pillars, ladders, a story item from a sunk crate, an object that is "used" with a story item (the transmitter), things shown and hidden by a behaviour (the beacon) |
+| ![](images/library/stranded_gull.jpg) **The Stranded Gull** | A motor yacht aground on a sandbar, the crew's camp, the yacht's stern on the reef - with an angler fish in it (Raft's Vasagatan) | A wreck from Raft's stranded boat, a camp of Vasagatan's furniture, a creature under water guarding a safe |
+| ![](images/library/rangers_rest.jpg) **Ranger's Rest** | A jungle hill: a ranger's cabin, a watchtower and the den of Old Scar, the bear that stole the supplies (Raft's Balboa) | A boss (a bear made bigger and tougher, tinted), a watchtower to climb, a cave den |
+| ![](images/library/stilt_hollow.jpg) **Stilt Hollow** | Trailers on sandstone stacks joined by scaffold walkways; follow the red pipe to the valve, start the pump (Raft's Caravan Town) | Walkways between heights (scaffolding as ramps), a pump started with a story item, a white screecher |
+| ![](images/library/mayors_wharf.jpg) **Mayor's Wharf** | A drowned city block: City Hall's flooded floors, the mayor's office at its wharf, a cafe on a roof (Raft's Tangaroa) | Rooms under water, a keycard in a flooded locker, a vault, a pier of Raft's planks |
+| ![](images/library/crane_yard.jpg) **Crane Yard** | A construction islet under a giant crane; the spotlight's parts went down with the pier's end (Raft's Varuna Point) | Three story items to collect under water, angler fish, a spotlight that is fixed and points to the reward |
+| ![](images/library/frost_hollow.jpg) **Frost Hollow** | A snowy islet with igloos, a telescope and a dark lab; three cables, a power box, a polar bear (Raft's Temperance) | A power box that takes three story items, a sliding lab door that opens on a signal |
+| ![](images/library/tide_farm.jpg) **Tide Farm** | A floating farm of Raft's foundations: crop beds, a glasshouse, a water wheel jammed by a crate (Raft's Utopia) | An island of only building blocks over water, a turning wheel, animals to **catch** as a quest step |
+| ![](images/library/old_mine_islet.jpg) **Old Mine Islet** | An old mine in a rock mound: timbered tunnels, rails, ore carts - dark further in, where something has dug in | A cave from Balboa's cave pieces set into the land, darkness (an atmosphere zone) and lanterns, a head lamp in a locker |
+| ![](images/library/shelter_atoll.jpg) **Shelter Atoll** | A bomb shelter under an atoll's islet: seven dark rooms, rats, a dry generator, a blast gate | Rooms **under the ground** (a pit under a concrete roof), a hatch and a ladder down, a generator that lights the rooms and opens doors |
+
+### 16.3 The very large islands
+
+| Island | What it is | What it shows you how to build |
+|---|---|---|
+| ![](images/library/ironreef_caverns.jpg) **Ironreef Caverns** | A jungle mountain over four caves: a mine, a vine crawl, a flooded shaft and the Bear Hall behind a rockfall | Several caves in one mountain, a plank road up a flank, a rockfall blown with charges (an object hidden by a behaviour), a boss in its hall |
+| ![](images/library/drowned_metropolis.jpg) **The Drowned Metropolis** | Meridian, a city the sea took: tower crowns over the water, a ferry, a penthouse, offices on the sea floor, the Lantern Lord | Buildings standing in the sea, a penthouse on legs, three keycards, an angler fish boss in deep water |
+| ![](images/library/thornwood.jpg) **Thornwood** | A jungle split by a river gorge: a rope bridge, three shrines, a stone circle where the Warthog King guards the idol | A gorge cut with the terrain brushes, a rope bridge, trails through dense jungle, a boss and its guards |
+| ![](images/library/glacier_station.jpg) **Glacier Station** | A station on a glacier: glowing domes, an observatory on the peak, a crevasse with the Polar Bear Queen, a reactor | A reactor that, once running, sends a **signal** that opens its vault; a crevasse cut into the ice |
+| ![](images/library/scrapyard_haven.jpg) **Scrapyard Haven** | A junk town in a ring of stacked caravans: a gate trailer on a winch, a hyena pit, the scrap king's fortress on stilts | A gate that a **winch** lifts (moving objects), a stilt house set level on a ridge, a pack with an alpha |
+
+### 16.4 The world plans
+
+**The Long Voyage** - Raft's whole story, twice as long. After every story island but Utopia, a big quest island of
+the library comes on its own Receiver frequency (the story island's radio picks it up); its quest done, the story goes
+on as Raft's. The smaller library islands turn up as side trips while you sail (one every few km).
+
+| After | The plan's island | What it is |
+|---|---|---|
+| Radio Tower | ![](images/library/wreckers_cove.jpg) **Wreckers' Cove** | A cove with a wreckers' hamlet, the schooner Marigold on the reef, a smugglers' den in a sea cave and the false lantern that lured her there |
+| Vasagatan | **Thornwood** | ([16.3](#163-the-very-large-islands)) |
+| Balboa | **Scrapyard Haven** | ([16.3](#163-the-very-large-islands)) |
+| Caravan Town | **Ironreef Caverns** | ([16.3](#163-the-very-large-islands)) |
+| Tangaroa | **The Drowned Metropolis** | ([16.3](#163-the-very-large-islands)) |
+| Varuna Point | ![](images/library/coral_observatory.jpg) **Coral Observatory** | A research platform moored in an atoll's lagoon, coral samples in cases on the lagoon floor and a giant angler fish at the reef's edge |
+| Temperance | **Glacier Station** | ([16.3](#163-the-very-large-islands)) |
+
+What it shows: rules with a **story place** ("after" a story island) and a **Receiver** frequency, "done when its
+quest is done", and side trips brought **after a distance sailed**, ahead of the raft.
+
+**The Abyss Expedition** - an expedition downwards beside Raft's story: each island comes **near the one before**
+when its quest is done or players reach it - an old mine, a buried shelter, a **sunken island** and a **wreck** made
+new for every world (map types), caverns, a drowned city - and at the end **The Abyss**.
+
+| The plan's last island | What it is | What it shows you how to build |
+|---|---|---|
+| ![](images/library/the_abyss.jpg) **The Abyss** | A ring of black sea stacks around a trench 42 m deep: the expedition's raft moored over its edge, its air line running down to three air pockets (a container on a shelf, a gas tank on a ledge, a shack on the floor) and, on the floor, the lair of the Abyssal Angler and its brood | A raft of Raft's foundations, a trench cut with the brushes (a bowl, a shaft, a shelf and a ledge flattened into its walls), **air pockets** - trigger zones with Air, hidden until the valve shows them, with rising bubbles ([5.4](#54-trigger-zones-and-ambushes)) |
+
+What it shows: rules brought by **quests and visits**, **near** another island in a direction, and map types mixed
+with your own islands.
+
+### 16.5 Where to look for...
+
+| To learn how to make... | Open |
+|---|---|
+| Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
+| A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door) |
+| Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
+| An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve) |
+| Caves | Old Mine Islet, Ironreef Caverns (four), Wreckers' Cove (a sea cave) |
+| Rooms under the ground | Shelter Atoll |
+| Darkness and light (atmosphere zones, lamps that come on) | Shelter Atoll, Old Mine Islet, Ironreef Caverns, The Abyss (its lair) |
+| Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |
+| Air pockets for a long dive | The Abyss |
+| A boss (bigger, tougher, tinted) | Ranger's Rest (Old Scar), Thornwood (the Warthog King), Glacier Station (the Polar Bear Queen), The Drowned Metropolis (the Lantern Lord), Scrapyard Haven (the alpha), Coral Observatory (the giant angler), The Abyss (the Abyssal Angler) |
+| Animals to catch | Tide Farm |
+| Buildings from Raft's pieces | Signal Rock and Wreckers' Cove (radio tower pieces), Shelter Atoll and Coral Observatory (Selene rooms), Mayor's Wharf (City Hall) |
+| A raft or a deck of Raft's foundations | Tide Farm, The Abyss |
+| Land shaped with the brushes | Thornwood (a gorge), Glacier Station (a crevasse), Coral Observatory (a blue hole), Scrapyard Haven (a pit and a terrace), The Abyss (a trench with a shelf and a ledge) |
+| An island in Raft's story | The Long Voyage (after each story island) |
+| A chain of islands that bring each other | The Abyss Expedition |
 
 ---
 

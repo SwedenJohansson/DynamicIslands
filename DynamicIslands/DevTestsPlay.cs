@@ -21,6 +21,7 @@ namespace DynamicIslands
 	///   walk x z to x z [to x z ...]    walked with Raft's own controller (no jumping, no flying): it must get there
 	///   climb x z h=                    the player at a ladder's foot: Raft's controller takes hold of the ladder
 	///   zone id | read title | open title | openat x z | use name | kill label | catch label [n]
+	///   air id                          a diver in an air pocket (a shown zone with Air): breath back to full
 	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
 	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
 	///                                   heights above the sea, or "+h" above what is below)
@@ -195,6 +196,22 @@ namespace DynamicIslands
 						Check(ref ok, ScEnterZone(playEntry, Rest(line, 1).Trim()), "zone '" + Rest(line, 1).Trim() + "' there");
 						yield return new WaitForSeconds(1.2f);
 						break;
+					case "air":
+					{
+						// air <zone id>: a diver in the air pocket breathes - put there with little breath left, it is full again a
+						// moment later (only a shown zone: one still hidden isn't found)
+						string zid = Rest(line, 1).Trim();
+						TriggerZone pocket = playEntry.Root.GetComponentsInChildren<TriggerZone>(false).FirstOrDefault(x => x.Id == zid && x.Air);
+						Check(ref ok, pocket != null, "an air pocket '" + zid + "' there");
+						if (pocket == null) break;
+						PlayerMove.To(me, pocket.transform.position);
+						yield return new WaitForSeconds(0.5f);
+						me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max * 0.1f;
+						yield return new WaitForSeconds(1.2f);
+						float breath = me.Stats.stat_oxygen.Value / Mathf.Max(0.01f, me.Stats.stat_oxygen.Max);
+						Check(ref ok, breath > 0.9f, "breathing in the air pocket '" + zid + "': breath back to " + (breath * 100f).ToString("F0") + " %");
+						break;
+					}
 					case "read":
 					{
 						// (a note, or the note in a chest - read once the chest is emptied, as its hint says)

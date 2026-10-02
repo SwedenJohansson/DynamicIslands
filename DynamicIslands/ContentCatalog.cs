@@ -496,7 +496,8 @@ namespace DynamicIslands.Editor
 					int items = ObjectProps.Loot(props).Count;
 					string msg = ObjectProps.Get(props, ObjectProps.ZoneMessage);
 					zl.text = "Trigger: " + ObjectProps.Get(props, ObjectProps.ZoneId) + (ObjectProps.Repeats(props) ? " (every time)" : " (once)") +
-						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") + "</size>";
+						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") +
+						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + "</size>";
 				}
 				return;
 			}

@@ -21,6 +21,8 @@ namespace DynamicIslands.Editor
 		public string Id = "", Message = "";
 		public float Radius = 6f;
 		public bool Repeats;
+		/// <summary>An air pocket: a player inside breathes (ObjectProps.ZoneAir) - while the zone is shown.</summary>
+		public bool Air;
 		/// <summary>Fires once ever: never ready again after the regrow days (a story's once-zone fired again: a double
 		/// ambush, a bridge flipped back).</summary>
 		public bool OnceEver;
@@ -47,6 +49,7 @@ namespace DynamicIslands.Editor
 			z.Repeats = ObjectProps.Repeats(o.Props);
 			z.OnceEver = ObjectProps.Get(o.Props, ObjectProps.ZoneRepeat) == ObjectProps.ZoneOnceEver;
 			z.Items = ObjectProps.Loot(o.Props);
+			z.Air = ObjectProps.GetBool(o.Props, ObjectProps.ZoneAir, false);
 			z.Ordinal = ordinal;
 			return z;
 		}
@@ -62,6 +65,14 @@ namespace DynamicIslands.Editor
 			bool now = (player.transform.position - transform.position).sqrMagnitude <= Radius * Radius;
 			if (now && !inside) Enter();
 			inside = now;
+			if (now && Air) Breathe(player);
+		}
+
+		/// <summary>A player in an air pocket breathes: breath back to full.</summary>
+		public static void Breathe(Network_Player player)
+		{
+			try { if (player.Stats != null && player.Stats.stat_oxygen != null) player.Stats.stat_oxygen.Value = player.Stats.stat_oxygen.Max; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Breathing in an air pocket: " + e.Message); }
 		}
 
 		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes.</summary>
