@@ -47,7 +47,8 @@ place Creature_PolarBear bear at -1.5 12.5 y=0.5
 push at -22 -4 h=4.62
 call selene_cell 0 0 n=TP_Selene_Int_Room_Entrance e=none
 call selene_cell 6 0 w=none
-place TP_Selene_Int_DoorLargeL doorL at 0.6 0 yaw=90
+# (both leaves pivot on the doorway's middle: the left one reaches east, the right one west)
+place TP_Selene_Int_DoorLargeL doorL at 3 0 yaw=90
 place TP_Selene_Int_DoorLargeR doorR at 3 0 yaw=90
 place RT_PowerBox powerbox at 6.3 0.25 y=1.4 yaw=180
 place TP_Selene_ComputerRoom_Server01 - at 10.6 -2 sit yaw=270
@@ -109,11 +110,11 @@ prop powerbox if.use=take|story:cable|3
 prop powerbox on.use=message||The power box hums. Lights flicker on inside the lab and the doors slide apart.\nopen|labdoor\nsound||event:/raft/door/door_selene_open
 prop powerbox else.use=message||The power box is dead. Three cables are missing from it.
 prop doorL obj.name=labdoor
-prop doorL beh.move=-2.3,0,0
+prop doorL beh.move=2.3,0,0
 prop doorL beh.moveTime=1.5
 prop doorL beh.moveMode=switch
 prop doorR obj.name=labdoor
-prop doorR beh.move=2.3,0,0
+prop doorR beh.move=-2.3,0,0
 prop doorR beh.moveTime=1.5
 prop doorR beh.moveMode=switch
 prop labair atmo.light=#b8d4ff

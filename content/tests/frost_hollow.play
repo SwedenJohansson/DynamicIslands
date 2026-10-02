@@ -28,10 +28,13 @@ expect step 4
 # The lab: shut, then powered - its doors slide open; the locker inside
 walk -19 3 to -19 -2 h=5.5
 walk -19 -2 to -19 -7 blocked
+walk -20.4 -2 to -20.4 -7 blocked
+walk -17.6 -2 to -17.6 -7 blocked
 use powerbox
 expect message doors slide apart
 expect story cable 0
 wait 2
+walk -17.6 -2 to -17.6 -7 h=5.5
 walk -19 -2 to -19 -7 to -12 -8 h=5.5
 open Lab locker
 expect item Battery_Advanced 1

@@ -106,6 +106,26 @@ namespace DynamicIslands
 			Log("WHERE " + (DynamicIslands.InEditor() ? "editor" : LoadSceneManager.IsGameSceneLoaded ? "world" : "menu"));
 		}
 
+		[ConsoleCommand(name: "CIAtmoInfo", docs: "Dev: logs how Raft lights the scene where the camera is (ambient, fog, probes, directional lights, the atmosphere zone there)")]
+		public static void AtmoInfoCommand()
+		{
+			Camera cam = Camera.main;
+			if (cam == null) { Log("FAIL: no main camera"); return; }
+			Log("camera " + cam.name + " at " + cam.transform.position + " path " + cam.actualRenderingPath + " hdr " + cam.allowHDR + " clear " + cam.clearFlags);
+			Log("ambient " + RenderSettings.ambientMode + " intensity " + RenderSettings.ambientIntensity + " light " + RenderSettings.ambientLight + " sky " + RenderSettings.ambientSkyColor
+				+ " | sun " + (RenderSettings.sun != null ? RenderSettings.sun.name : "none") + " | fog " + RenderSettings.fog + " " + RenderSettings.fogMode + " " + RenderSettings.fogDensity.ToString("F4")
+				+ " | reflections " + RenderSettings.defaultReflectionMode + " " + RenderSettings.reflectionIntensity + " | probes " + (LightmapSettings.lightProbes != null ? LightmapSettings.lightProbes.count : 0)
+				+ " | lightmaps " + LightmapSettings.lightmaps.Length);
+			foreach (Light l in UnityEngine.Object.FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional))
+				Log("directional " + l.name + " i=" + l.intensity.ToString("F2") + " c=" + l.color + " shadows " + l.shadows + " on " + l.isActiveAndEnabled + " mode " + l.renderMode);
+			float w;
+			AtmosphereZone z = AtmosphereZone.Strongest(cam.transform.position, out w);
+			Log("zone at the camera: " + (z != null ? z.name + " fog " + z.FogAmount + " light " + z.LightAmount + " " + z.Light : "none") + " weight " + w.ToString("F2"));
+			Renderer near = UnityEngine.Object.FindObjectsOfType<Renderer>().Where(r => r.isVisible).OrderBy(r => (r.bounds.center - cam.transform.position).sqrMagnitude).FirstOrDefault();
+			if (near != null) Log("nearest renderer " + near.name + " shader " + (near.sharedMaterial != null ? near.sharedMaterial.shader.name : "-") + " probes " + near.lightProbeUsage + " reflprobes " + near.reflectionProbeUsage);
+			Log("PASS: atmo info");
+		}
+
 		[ConsoleCommand(name: "CIQuestIcons", docs: "Dev: writes the pictures of Raft's quest items (story items' icons \"quest:<type>\") to Mods\\DynamicIslands\\recipes\\questicons.txt")]
 		public static void QuestIconsCommand()
 		{
@@ -124,9 +144,12 @@ namespace DynamicIslands
 			if (lines.Length > 0) Log("PASS: " + lines.Length + " sounds written to sounds.txt"); else Fail("no sounds (Raft's sound banks aren't loaded)");
 		}
 
-		/// <summary>What the last recipe made: its island's name, the objects it placed by alias.</summary>
+		/// <summary>What the last recipe made: its island's name, the objects it placed by alias (the last one of each).</summary>
 		public static string RecipeSaved;
 		public static readonly Dictionary<string, EditorGameObject> RecipeObjects = new Dictionary<string, EditorGameObject>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Every object placed under an alias: prop, loot and note set them all (seven lamps that a generator
+		/// shows, seven dark zones it hides - before, only the last lamp got its settings).</summary>
+		static readonly Dictionary<string, List<EditorGameObject>> recipeGroups = new Dictionary<string, List<EditorGameObject>>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
@@ -403,6 +426,7 @@ namespace DynamicIslands
 			catch (Exception e) { Fail("recipe " + name + ": " + e.Message); yield break; }
 			RecipeSaved = null;
 			RecipeObjects.Clear();
+			recipeGroups.Clear();
 			recipePlaced.Clear();
 			pendingQuest = null;
 			yield return WaitForEditor(false);
@@ -535,7 +559,17 @@ namespace DynamicIslands
 							var opt = Options(t.Skip(at + 3));
 							EditorGameObject e;
 							error = Place(obj, F(t[at + 1]), F(t[at + 2]), opt, out e);
-							if (e != null) { placed++; if (alias != "-") RecipeObjects[alias] = e; }
+							if (e != null)
+							{
+								placed++;
+								if (alias != "-")
+								{
+									RecipeObjects[alias] = e;
+									List<EditorGameObject> group;
+									if (!recipeGroups.TryGetValue(alias, out group)) recipeGroups[alias] = group = new List<EditorGameObject>();
+									group.Add(e);
+								}
+							}
 							break;
 						}
 						case "scatter":
@@ -626,31 +660,32 @@ namespace DynamicIslands
 						case "prop":
 						case "beh":
 						{
-							// prop <alias> key=value (the value to the line's end, \n for new lines; empty removes the key)
-							EditorGameObject e;
-							if (!RecipeObjects.TryGetValue(t[1], out e) || e == null) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
+							// prop <alias> key=value (the value to the line's end, \n for new lines; empty removes the key) - on
+							// every object placed under the alias
+							List<EditorGameObject> group = Group(t[1]);
+							if (group.Count == 0) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
 							string rest = Rest(line, 2);
 							int eq = rest.IndexOf('=');
 							if (eq <= 0) { error = "prop: key=value"; break; }
 							string key = rest.Substring(0, eq).Trim(), value = Unescape(rest.Substring(eq + 1));
-							PropsCommand.Change(e, ObjectProps.With(e.Props, key, value.Length == 0 ? null : value));
+							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, key, value.Length == 0 ? null : value));
 							break;
 						}
 						case "loot":
 						{
-							EditorGameObject e;
-							if (!RecipeObjects.TryGetValue(t[1], out e) || e == null) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
-							PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.LootItems, Rest(line, 2)));
+							List<EditorGameObject> group = Group(t[1]);
+							if (group.Count == 0) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
+							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.LootItems, Rest(line, 2)));
 							break;
 						}
 						case "note":
 						{
 							// note <alias> <title> | <text>  (the note editor's Apply)
-							EditorGameObject e;
-							if (!RecipeObjects.TryGetValue(t[1], out e) || e == null) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
+							List<EditorGameObject> group = Group(t[1]);
+							if (group.Count == 0) { error = "no object '" + t[1] + "' placed by this recipe"; break; }
 							string rest = Rest(line, 2);
 							int bar = rest.IndexOf('|');
-							NoteEditorWindow.Apply(e, (bar < 0 ? rest : rest.Substring(0, bar)).Trim(), bar < 0 ? "" : Unescape(rest.Substring(bar + 1)).Trim());
+							foreach (EditorGameObject e in group) NoteEditorWindow.Apply(e, (bar < 0 ? rest : rest.Substring(0, bar)).Trim(), bar < 0 ? "" : Unescape(rest.Substring(bar + 1)).Trim());
 							break;
 						}
 						case "story":
@@ -841,6 +876,13 @@ namespace DynamicIslands
 			Vector2 ab = b - a;
 			float f = ab.sqrMagnitude < 0.0001f ? 0f : Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
 			return Vector2.Distance(p, a + ab * f);
+		}
+
+		/// <summary>The objects placed under an alias (still there).</summary>
+		static List<EditorGameObject> Group(string alias)
+		{
+			List<EditorGameObject> group;
+			return recipeGroups.TryGetValue(alias, out group) ? group.Where(e => e != null).ToList() : new List<EditorGameObject>();
 		}
 
 		static float GroundY(float x, float z)

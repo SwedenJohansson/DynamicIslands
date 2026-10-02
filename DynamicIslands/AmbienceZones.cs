@@ -151,11 +151,26 @@ namespace DynamicIslands.Editor
 		{
 			public bool Fog; public Color FogColor; public float Density, Start, End;
 			public SphericalHarmonicsL2 Probe; public Color Ambient;
+			public Light Sun; public Color SunColor; public float Reflection; public Color Equator, Ground;
 		}
 
 		static Saved saved;
 		static bool applied;
 		static Image screenTint;
+		static Light sunFound;
+		static float sunLookedAt = -10f;
+
+		/// <summary>The sun (or the moon at night): the scene's sun light, else its brightest directional light.</summary>
+		static Light Sun()
+		{
+			if (RenderSettings.sun != null) return RenderSettings.sun;
+			if ((sunFound == null || !sunFound.isActiveAndEnabled) && Time.unscaledTime - sunLookedAt > 2f)
+			{
+				sunLookedAt = Time.unscaledTime;
+				sunFound = FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional && l.isActiveAndEnabled).OrderByDescending(l => l.intensity).FirstOrDefault();
+			}
+			return sunFound;
+		}
 
 		static void Hook()
 		{
@@ -196,7 +211,8 @@ namespace DynamicIslands.Editor
 			saved = new Saved
 			{
 				Fog = RenderSettings.fog, FogColor = RenderSettings.fogColor, Density = RenderSettings.fogDensity,
-				Start = RenderSettings.fogStartDistance, End = RenderSettings.fogEndDistance, Probe = RenderSettings.ambientProbe, Ambient = RenderSettings.ambientLight
+				Start = RenderSettings.fogStartDistance, End = RenderSettings.fogEndDistance, Probe = RenderSettings.ambientProbe, Ambient = RenderSettings.ambientLight,
+				Reflection = RenderSettings.reflectionIntensity, Equator = RenderSettings.ambientEquatorColor, Ground = RenderSettings.ambientGroundColor
 			};
 			applied = true;
 			if (z.FogAmount > 0f)
@@ -215,6 +231,15 @@ namespace DynamicIslands.Editor
 				for (int c = 0; c < 9; c++) { sh[0, c] *= k.r; sh[1, c] *= k.g; sh[2, c] *= k.b; }
 				RenderSettings.ambientProbe = sh;
 				RenderSettings.ambientLight = saved.Ambient * k;
+				// (Raft lights with three ambient colours - sky, horizon, ground: all three take the tint, or setting the sky
+				// alone rebuilds the ambient from a bright horizon and ground)
+				RenderSettings.ambientEquatorColor = saved.Equator * k;
+				RenderSettings.ambientGroundColor = saved.Ground * k;
+				// (the sun and the sky's reflections take the tint too: Raft's sun lit a cave or a buried room as brightly
+				// as the beach, so a dark zone wasn't dark - found building the library's Shelter Atoll)
+				saved.Sun = Sun();
+				if (saved.Sun != null) { saved.SunColor = saved.Sun.color; saved.Sun.color = saved.SunColor * k; }
+				RenderSettings.reflectionIntensity = saved.Reflection * (k.r + k.g + k.b) / 3f;
 			}
 		}
 
@@ -229,6 +254,10 @@ namespace DynamicIslands.Editor
 			RenderSettings.fogEndDistance = saved.End;
 			RenderSettings.ambientProbe = saved.Probe;
 			RenderSettings.ambientLight = saved.Ambient;
+			RenderSettings.ambientEquatorColor = saved.Equator;
+			RenderSettings.ambientGroundColor = saved.Ground;
+			RenderSettings.reflectionIntensity = saved.Reflection;
+			if (saved.Sun != null) { saved.Sun.color = saved.SunColor; saved.Sun = null; }
 		}
 
 		/// <summary>

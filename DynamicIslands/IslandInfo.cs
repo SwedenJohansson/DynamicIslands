@@ -142,8 +142,10 @@ namespace DynamicIslands.Editor
 		public static void Show(string title, string author, string description)
 		{
 			if (banner == null) Build();
-			LastShown = (title.Length > 0 ? title : "Unknown island") + (author.Length > 0 ? " | by " + author : "") + (description.Length > 0 ? " | " + description : "");
-			Debug.Log("[CUSTOM ISLANDS] Arriving at: " + LastShown);
+			// (a zone's message has no title: logged as a message, not as arriving at an "Unknown island")
+			bool message = title.Length == 0 && author.Length == 0 && description.Length > 0;
+			LastShown = message ? description : (title.Length > 0 ? title : "Unknown island") + (author.Length > 0 ? " | by " + author : "") + (description.Length > 0 ? " | " + description : "");
+			Debug.Log("[CUSTOM ISLANDS] " + (message ? "Message: " : "Arriving at: ") + LastShown);
 			Recent.Add(LastShown);
 			if (Recent.Count > 20) Recent.RemoveAt(0);
 			bool busy = banner.gameObject.activeSelf && Time.unscaledTime - shownAt < MinSeconds;

@@ -67,7 +67,7 @@ place Zone_Trigger tower at 0 0.5 y=7.6
 pop
 
 # --- Old Scar's den: Balboa's bear cave on the levelled beach, its mouth to the east --------------------------------
-place BalboaCave_Bear den at -8 -27 h=7.45 yaw=90
+place BalboaCave_Bear - at -8 -27 h=7.45 yaw=90
 
 # --- The ranger's things: the diary on his table, signs on the trails, the generator, a tent -----------------------
 place Note_Book diary at 22.3 -4.0 h=11.05 sit yaw=80
