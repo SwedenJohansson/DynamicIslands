@@ -246,7 +246,7 @@ namespace DynamicIslands
 			foreach (EditorGameObject e in PlacedEditorObjects())
 			{
 				string n = e.GameObjectName ?? "";
-				if (!NotABase.IsMatch(n) || n.IndexOf("Cave", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) >= 0 || ground == null) continue;
+				if (!NotABase.IsMatch(n) || ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.IndexOf("Cave", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) >= 0 || ground == null) continue;
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				nature++;
 				Vector3 p = e.transform.position;
@@ -684,13 +684,17 @@ namespace DynamicIslands
 						}
 						case "randomize":
 						{
-							// (Raft's own island remade: the generator's Randomize existing - the island by part of its name)
+							// (Raft's own island remade: the generator's Randomize existing - the island by part of its name; "like" picks
+							// "something new like it" instead of "a variation of it")
 							string part = t.Length > 1 ? t[1] : "";
 							RaftIsland source = RaftIslands.Offered.FirstOrDefault(i => i.Scene.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0);
 							if (source == null) { error = "no Raft island like '" + part + "' (" + string.Join(", ", RaftIslands.Offered.Select(i => i.Scene).ToArray()) + ")"; break; }
-							IslandGenSettings s = RaftIslands.VariationOf(source, IslandGenSettings.FromText(gen.ToString() + string.Join("\n", t.Skip(2).ToArray())));
+							bool like = t.Skip(2).Contains("like");
+							string[] sliders = t.Skip(2).Where(x => x != "like").ToArray();
+							IslandGenSettings from = IslandGenSettings.FromText(gen.ToString() + string.Join("\n", sliders));
+							IslandGenSettings s = like ? RaftIslands.LikeIt(source, from) : RaftIslands.VariationOf(source, from);
 							// (then its sliders changed, as in the window after picking the island: randomize Balboa Radius=140 Height=60)
-							if (t.Length > 2) s = IslandGenSettings.FromText(s.ToText() + string.Join("\n", t.Skip(2).ToArray()));
+							if (sliders.Length > 0) s = IslandGenSettings.FromText(s.ToText() + string.Join("\n", sliders));
 							gen.Length = 0;
 							int count = IslandGenerator.GenerateInEditor(s);
 							SetOrigin(EditorLandCentre());
