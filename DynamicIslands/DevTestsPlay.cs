@@ -103,8 +103,11 @@ namespace DynamicIslands
 					case "walk":
 					{
 						// walk x z to x z ...: from the first point, with Raft's controller at walking speed; stuck = failed
+						// (h=: the walk ends about this high above the sea - on the deck, not fallen off it)
 						var points = new List<Vector3>();
-						for (int i = 1; i + 1 < t.Length; i += 3) points.Add(PlayPoint(F(t[i]), F(t[i + 1])));
+						var wopt = Options(t.Where(x => x.Contains("=")));
+						string[] coords = t.Where(x => !x.Contains("=")).ToArray();
+						for (int i = 1; i + 1 < coords.Length; i += 3) points.Add(PlayPoint(F(coords[i]), F(coords[i + 1])));
 						Vector3 start = points[0];
 						start.y = PlaySurface(start) + 0.3f;
 						PlayerMove.To(me, start);
@@ -112,15 +115,21 @@ namespace DynamicIslands
 						bool got = true;
 						string where = "";
 						yield return PlayWalk(me, points.Skip(1).ToList(), (g, w) => { got = g; where = w; });
+						if (got && wopt.ContainsKey("h") && Mathf.Abs(me.transform.position.y - playEntry.Position.y - F(wopt["h"])) > 1.6f) { got = false; where += " - not at " + wopt["h"] + " m"; }
 						Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
 						checks++;
 						break;
 					}
 					case "climb":
 					{
-						// the player at the ladder's foot, pressed against it: Raft's controller holds the ladder
+						// the ladder nearest the point (its own climb collider): the player in it, a metre above its foot - Raft's
+						// controller takes hold of the ladder
 						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
-						p.y = playEntry.Position.y + (opt.ContainsKey("h") ? F(opt["h"]) : 0f);
+						Collider grip = playEntry.Root.GetComponentsInChildren<Collider>(true).Where(c => c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0)
+							.OrderBy(c => ScFlat(c.bounds.center, p)).FirstOrDefault();
+						if (grip == null || ScFlat(grip.bounds.center, p) > 3f) { Check(ref ok, false, "a ladder near " + t[1] + "," + t[2] + (grip != null ? " (the nearest is " + ScFlat(grip.bounds.center, p).ToString("F1") + " m off)" : "")); checks++; break; }
+						float foot = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : grip.bounds.min.y;
+						p = new Vector3(grip.bounds.center.x, Mathf.Max(foot, grip.bounds.min.y) + 1f, grip.bounds.center.z);
 						PlayerMove.To(me, p);
 						yield return new WaitForSeconds(0.3f);
 						bool held = false;

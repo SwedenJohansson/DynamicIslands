@@ -511,15 +511,17 @@ namespace DynamicIslands
 							break;
 						case "clear":
 						{
-							// clear at x z r=<m> [all]: the generator's objects there removed (deleted: an undo step) - "all" also this recipe's
-							int at = Array.IndexOf(t, "at");
-							if (at < 0 || at + 2 >= t.Length) { error = "clear at <x> <z> r=<m>"; break; }
-							var opt = Options(t.Skip(at + 3));
-							Vector2 w = WorldXZ(F(t[at + 1]), F(t[at + 2]));
+							// clear at x z r=<m> [all] | clear from x1 z1 to x2 z2 r=<m>: the generator's objects there (in a circle, or along
+							// a trail) removed - deleted as one undo step; "all" also this recipe's own
+							int at = Array.IndexOf(t, "at"), from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
+							if ((at < 0 || at + 2 >= t.Length) && (from < 0 || to < 0 || to + 2 >= t.Length)) { error = "clear at <x> <z> r=<m> | clear from <x1> <z1> to <x2> <z2> r=<m>"; break; }
+							var opt = Options(t.Skip(at >= 0 ? at + 3 : to + 3));
+							Vector2 w = at >= 0 ? WorldXZ(F(t[at + 1]), F(t[at + 2])) : WorldXZ(F(t[from + 1]), F(t[from + 2]));
+							Vector2 w2 = at >= 0 ? w : WorldXZ(F(t[to + 1]), F(t[to + 2]));
 							float r = opt.ContainsKey("r") ? F(opt["r"]) : 5f;
 							Transform root = GameObject.Find("PlacedObjects").transform;
 							var gone = root.GetComponentsInChildren<EditorGameObject>().Select(e => e.gameObject)
-								.Where(g => (opt.ContainsKey("all") || !recipePlaced.Contains(g)) && Vector2.Distance(new Vector2(g.transform.position.x, g.transform.position.z), w) <= r).ToList();
+								.Where(g => (opt.ContainsKey("all") || !recipePlaced.Contains(g)) && DistanceToSegment(new Vector2(g.transform.position.x, g.transform.position.z), w, w2) <= r).ToList();
 							if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
 							break;
 						}
@@ -799,6 +801,13 @@ namespace DynamicIslands
 			Vector3 o = terraineditor.terrain.transform.position;
 			if (count == 0) return new Vector2(o.x + data.size.x / 2f, o.z + data.size.z / 2f);
 			return new Vector2(o.x + (float)(sx / count) / (res - 1) * data.size.x, o.z + (float)(sz / count) / (res - 1) * data.size.z);
+		}
+
+		static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+		{
+			Vector2 ab = b - a;
+			float f = ab.sqrMagnitude < 0.0001f ? 0f : Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+			return Vector2.Distance(p, a + ab * f);
 		}
 
 		static float GroundY(float x, float z)
