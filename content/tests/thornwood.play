@@ -1,0 +1,50 @@
+# Play test of Thornwood (CIPlay thornwood, in a test world 'CI ...'). Points as in its recipe (from the land centre
+# of the finished land): the camp on the south beach, the rope bridge over the gorge at x -20, the shrines, the temple
+# on the hill at 15 25 (23.4 m).
+island Thornwood
+expect step 0
+expect title The Boar King of Thornwood
+
+# The explorer's camp: the diary and the map
+walk -50 -78 to -45 -74 h=3
+zone camp
+expect step 1
+read Explorer's diary
+expect step 2
+read Map of Thornwood
+
+# The Shrine of the Roots, this side of the gorge
+open Shrine of the Roots
+expect story tusk 1
+
+# Up to the rope bridge and across the gorge
+walk -45 -70 to -40 -60 to -32 -50 to -25 -40 to -20 -33 h=14
+walk -20 -33 to -20 -22 to -20 -12 h=13.2
+expect stand -20.75 -22 h=13.6
+zone bridge
+expect step 3
+
+# The Shrine of the Falls; the temple's chest stays shut with two tusks
+open Shrine of the Falls
+expect story tusk 2
+open Temple offering
+expect message won't open without three
+expect story tusk 2
+
+# The Shrine of the Hill
+open Shrine of the Hill
+expect story tusk 3
+# (opening the temple's chest above took the player into the stone ring: that step is done already)
+expect step 5
+
+# Up the hill into the stone ring: the Warthog King and his guards
+walk -20 -12 to -10 0 to 0 10 to 10 18 to 15 21 h=23.4
+zone temple
+expect message Warthog King
+kill Warthog
+expect step 6
+expect animals Warthog 0
+open Temple offering
+expect story tusk 0
+expect item Blueprint_Machete 1
+expect done
