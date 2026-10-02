@@ -111,7 +111,8 @@ namespace DynamicIslands
 						coords = coords.Where(x => x != "blocked").ToArray();
 						for (int i = 1; i + 1 < coords.Length; i += 3) points.Add(PlayPoint(F(coords[i]), F(coords[i + 1])));
 						Vector3 start = points[0];
-						start.y = PlaySurface(start) + 0.3f;
+						// (a little above what is there: the player lands on it, not half inside a thick plank)
+						start.y = PlaySurface(start) + 1.1f;
 						PlayerMove.To(me, start);
 						yield return new WaitForSeconds(1f);
 						bool got = true;

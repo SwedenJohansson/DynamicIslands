@@ -409,7 +409,7 @@ namespace DynamicIslands
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
 			// (the objects the recipe places, loaded first - Raft's scenes for the on-demand ones)
-			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line")).Select(t => t[1]).Distinct().ToList();
+			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp")).Select(t => t[1]).Where(n => n != "none").Distinct().ToList();
 			yield return PlaceableCatalog.EnsureLoaded(wanted);
 			string missing = wanted.FirstOrDefault(w => !PlaceableCatalog.IsLoaded(w));
 			if (missing != null) { Fail("recipe " + name + ": '" + missing + "' isn't an object the editor has"); yield break; }
@@ -531,6 +531,7 @@ namespace DynamicIslands
 							string obj = t[1], alias = t.Length > 2 ? t[2] : "-";
 							int at = Array.IndexOf(t, "at");
 							if (at < 0 || at + 2 >= t.Length) { error = "place: <Object> <alias> at <x> <z>"; break; }
+							if (obj == "none") break; // (a macro's slot left empty: no wall there)
 							var opt = Options(t.Skip(at + 3));
 							EditorGameObject e;
 							error = Place(obj, F(t[at + 1]), F(t[at + 2]), opt, out e);
@@ -927,6 +928,17 @@ namespace DynamicIslands
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					go.transform.position += Vector3.up * (y - b.min.y);
+				}
+			}
+			if (opt.ContainsKey("centred"))
+			{
+				// (its visible middle at the point, not its pivot - some of Raft's scene objects have their pivot tens of metres away)
+				Renderer[] rs = go.GetComponentsInChildren<Renderer>();
+				if (rs.Length > 0)
+				{
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					go.transform.position += new Vector3(w.x - b.center.x, 0f, w.y - b.center.z);
 				}
 			}
 			Collider ownCollider = go.GetComponent<Collider>();

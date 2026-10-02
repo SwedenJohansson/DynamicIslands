@@ -1,0 +1,17 @@
+# Kit check (not content): Tangaroa's floating base, harbor platform, apartment modules, underground room, hatch
+new
+place Flotation flot at 0 0 h=0
+place FlotationBase_Ladders flotl at 0 0 h=0
+place HarborPlatform harbor at 40 0 h=0
+place Apartment_Int_BaseFloor af at -40 0 h=0
+place Apartment_Int_BaseMidMid amm at -40 6 h=0
+place Apartment_Int_BaseMidMidWindow ammw at -40 12 h=0
+place Apartment_Int_BaseMidCorner amc at -34 0 h=0
+place Apartment_Int_BaseDoor01 ad at -34 6 h=0
+place Apartment_Int_FoundStair afs at -34 14 h=0
+place Underground_Room_Floor uf at 0 -40 h=-10
+place Underground_Room_Wall_Bot uw at 0 -40 h=-10
+place Underground_Room_Ceiling uc at 0 -40 h=-3
+place TangaroaHatchRoom hatch at 12 -40 h=-6
+place Underground_Stairwell stw at 20 -40 h=-8
+place TangaroaFounderStatue statue at 0 0 h=3.1
