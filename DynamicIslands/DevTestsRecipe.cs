@@ -60,19 +60,19 @@ namespace DynamicIslands
 			}
 		}
 
-		[ConsoleCommand(name: "CIStandOn", docs: "Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n]")]
+		[ConsoleCommand(name: "CIStandOn", docs: "Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n] [from this height above the sea: under a roof]")]
 		public static void ProbeCommand(string[] args)
 		{
 			if (args == null || args.Length < 4 || !DynamicIslands.InEditor()) { Fail("CIStandOn <x1> <z1> <x2> <z2> [n] (in the editor)"); return; }
 			Vector2 mid = EditorLandCentre();
 			float x1 = F(args[0]), z1 = F(args[1]), x2 = F(args[2]), z2 = F(args[3]);
 			int n = args.Length > 4 ? Mathf.Clamp((int)F(args[4]), 2, 200) : 11;
-			float sea = DynamicIslands.EditorWaterLevel;
+			float sea = DynamicIslands.EditorWaterLevel, from0 = args.Length > 5 ? F(args[5]) : 300f;
 			Physics.SyncTransforms();
 			for (int i = 0; i < n; i++)
 			{
 				float f = i / (float)(n - 1);
-				Vector3 from = new Vector3(mid.x + x1 + (x2 - x1) * f, sea + 300f, mid.y + z1 + (z2 - z1) * f);
+				Vector3 from = new Vector3(mid.x + x1 + (x2 - x1) * f, sea + from0, mid.y + z1 + (z2 - z1) * f);
 				RaycastHit hit;
 				string what = Physics.Raycast(from, Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore)
 					? (hit.point.y - sea).ToString("F2", CultureInfo.InvariantCulture) + " " + (hit.collider.GetComponentInParent<EditorGameObject>() != null ? hit.collider.GetComponentInParent<EditorGameObject>().GameObjectName : hit.collider.name)
@@ -98,6 +98,12 @@ namespace DynamicIslands
 				Log("  proto " + n + ": " + (p == null ? "not in the catalog" : "rot " + p.transform.rotation.eulerAngles.ToString("F0") + " scale " + p.transform.localScale.ToString("F2")));
 			}
 			Log("PASS: proto info");
+		}
+
+		[ConsoleCommand(name: "CIScene", docs: "Dev, anywhere: logs WHERE world / editor / menu (the content tools ask before building or playing)")]
+		public static void WhereCommand()
+		{
+			Log("WHERE " + (DynamicIslands.InEditor() ? "editor" : LoadSceneManager.IsGameSceneLoaded ? "world" : "menu"));
 		}
 
 		[ConsoleCommand(name: "CIQuestIcons", docs: "Dev: writes the pictures of Raft's quest items (story items' icons \"quest:<type>\") to Mods\\DynamicIslands\\recipes\\questicons.txt")]

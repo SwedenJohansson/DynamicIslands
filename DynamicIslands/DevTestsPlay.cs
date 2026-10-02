@@ -21,7 +21,8 @@ namespace DynamicIslands
 	///   climb x z h=                    the player at a ladder's foot: Raft's controller takes hold of the ladder
 	///   zone id | read title | open title | openat x z | use name | kill label
 	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
-	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide)
+	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
+	///                                   heights above the sea, or "+h" above what is below)
 	/// </summary>
 	public static partial class DevTests
 	{
@@ -73,12 +74,18 @@ namespace DynamicIslands
 					{
 						string island = Rest(line, 1).Replace(" keep", "").Trim();
 						keep = line.EndsWith(" keep");
+						// (a copy left by an earlier run that stopped half way: removed first)
+						var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+						if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
 						Vector3? spot = ScSpot(island, 400f);
 						if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
 						yield return ScBring(island, spot.Value, made);
 						playEntry = made.LastOrDefault();
 						if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
 						yield return new WaitForSeconds(3f);
+						// (a clean start: the crew holds none of the island's story items - an earlier run in this world left them)
+						foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
+							if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));
 						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
 						break;
 					}
@@ -132,9 +139,17 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(1.2f);
 						break;
 					case "read":
-						ScReadNote(playEntry, Rest(line, 1).Trim());
+					{
+						// (a note, or the note in a chest - read once the chest is emptied, as its hint says)
+						string title = Rest(line, 1).Trim();
+						CustomNote inChest = playEntry.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(c => c.GetComponent<LootCrate>() != null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
+						bool plain = playEntry.Root.GetComponentsInChildren<CustomNote>(true).Any(c => c.GetComponent<LootCrate>() == null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
+						if (!plain && inChest != null) { PutPlayerNear(inChest.transform); NoteReader.Open(inChest); NoteReader.Close(); }
+						else ScReadNote(playEntry, title);
+						Check(ref ok, plain || inChest != null, "a note '" + title + "' to read");
 						yield return new WaitForSeconds(1.2f);
 						break;
+					}
 					case "open":
 						Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
 						yield return new WaitForSeconds(1.2f);
@@ -167,7 +182,8 @@ namespace DynamicIslands
 					case "expect":
 						checks++;
 						yield return new WaitForSeconds(0.3f);
-						PlayExpect(t, line, ref ok);
+						try { PlayExpect(t, line, ref ok); }
+						catch (Exception e) { Check(ref ok, false, rl.Where + " (" + line + "): " + e.Message); }
 						break;
 					case "wait":
 						yield return new WaitForSeconds(t.Length > 1 ? F(t[1]) : 1f);
@@ -181,9 +197,12 @@ namespace DynamicIslands
 						break;
 					case "picture":
 					{
+						// (a height "+h": that far above what is below the camera - the sand, a roof, the reef)
 						string file = t[1];
-						Vector3 from = PlayPoint(F(t[2]), F(t[4])) + Vector3.up * F(t[3]);
-						Vector3 look = PlayPoint(F(t[5]), F(t[7])) + Vector3.up * F(t[6]);
+						Vector3 from = PlayPoint(F(t[2]), F(t[4]));
+						from.y = t[3].StartsWith("+") ? PlaySurface(from) + F(t[3].Substring(1)) : playEntry.Position.y + F(t[3]);
+						Vector3 look = PlayPoint(F(t[5]), F(t[7]));
+						look.y = t[6].StartsWith("+") ? PlaySurface(look) + F(t[6].Substring(1)) : playEntry.Position.y + F(t[6]);
 						yield return PlayPicture(file, from, look);
 						break;
 					}
@@ -239,8 +258,10 @@ namespace DynamicIslands
 				}
 				case "animals":
 				{
-					int n = ScAnimals(playEntry, t[2]).Count;
-					Check(ref ok, n == (int)F(t[3]), "animals '" + t[2] + "' alive: " + n + " (expected " + t[3] + ")");
+					// (expect animals <label, may have spaces> <count>)
+					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
+					int n = ScAnimals(playEntry, label).Count;
+					Check(ref ok, n == (int)F(t[t.Length - 1]), "animals '" + label + "' alive: " + n + " (expected " + t[t.Length - 1] + ")");
 					break;
 				}
 				case "stand":
