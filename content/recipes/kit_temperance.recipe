@@ -1,0 +1,19 @@
+# Kit check (not content): Temperance's igloo, the Selene room and tunnel kit, sliding doors, telescope, shed
+new
+gen Seed=1 Radius=60 Height=4 Shape=4 Roughness=0.1 ObjectDensity=0 Trees=0 Bushes=0 Rocks=0 BeachThings=0 Harvest=0
+gen Hostiles=0 Friendly=0 SeaLife=0 Water=0 SeaRocks=0 SeaFinds=0 Sunken=0
+generate
+brush flatten at 0 0 r=60 s=20 frames=80
+place TP_Igloo_Small_1 igloo at -24 0
+place TP_Selene_Int_Room_Floor_Plain rf at 0 0
+place TP_Selene_Int_Room_Wall rw at 0 8
+place TP_Selene_Int_Room_Entrance re at 8 8
+place TP_Selene_Int_Room_Corner rc at 16 8
+place TP_Selene_Int_Room_Ceiling rcl at 8 0 y=2
+place TP_Selene_Int_DoorLargeL dl at 16 0
+place TP_Selene_Int_DoorLargeR dr at 18 0
+place TP_Selene_Int_Tunnel_Straight ts at 0 -16
+place TP_Selene_Int_Tunnel_Ladder_Bot lb at 10 -16
+place TP_Selene_Int_Tunnel_Ladder_Top lt at 20 -16
+place TP_Telescope tel at -12 -20
+place SnowmobileShedMesh shed at -24 -20
