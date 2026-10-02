@@ -17,13 +17,13 @@ expect story gatekey 1
 expect step 3
 
 # The gate: shut until the winch hoists it
-walk 9.5 21 to 3.8 19.8 to -1 14 h=4 blocked
+walk 9.5 21 to 3.8 19.8 to -1 14 h=4.5 blocked
 use winch
 expect message rises on its chains
 wait 5
-expect stand -1 14 h=2.9
-expect stand 2.2 16.6 h=3.1
-walk 9.5 21 to 3.8 19.8 to -1 14 h=3
+expect stand -1 14 h=3.6
+expect stand 1.4 16.9 h=4.4
+walk 9.5 21 to 3.8 19.8 to -1 14 h=3.6
 zone gate
 expect step 4
 
@@ -36,7 +36,7 @@ expect step 5
 expect animals Hyena 0
 
 # Up the ladders to the scrap king's fortress: the hoard on its deck
-climb -14.6 -10 h=6.5
+climb -14.6 -10 h=9.1
 climb -14.6 -10 h=13
 expect stand -18.5 -10 h=18.7
 zone fortress

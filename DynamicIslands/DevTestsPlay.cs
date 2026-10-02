@@ -119,7 +119,9 @@ namespace DynamicIslands
 					case "at":
 					{
 						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
-						p.y = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : PlaySurface(p) + 0.2f + (opt.ContainsKey("y") ? F(opt["y"]) : 0f);
+						// (on what is there: the player's middle a metre above it - put lower, the player started inside bare
+						// ground and fell through it into the sea, and the island's pictures showed the water's wobble)
+						p.y = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : PlaySurface(p) + 1.1f + (opt.ContainsKey("y") ? F(opt["y"]) : 0f);
 						PlayerMove.To(me, p);
 						yield return new WaitForSeconds(1f);
 						break;
@@ -534,7 +536,9 @@ namespace DynamicIslands
 			}
 			string path = Path.Combine(RecipeFolder, "play_" + file + ".jpg");
 			File.WriteAllBytes(path, pic);
-			Log("PICTURE " + Path.GetFullPath(path));
+			Network_Player me = RAPI.GetLocalPlayer();
+			PersonController pc = me != null ? me.PersonController : null;
+			Log("PICTURE " + Path.GetFullPath(path) + (pc != null ? " (the player " + pc.controllerType + " at " + (me.transform.position - (playEntry != null ? playEntry.Position : Vector3.zero)).ToString("F1") + ")" : ""));
 		}
 	}
 }

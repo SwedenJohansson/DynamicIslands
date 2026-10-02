@@ -64,6 +64,79 @@ namespace DynamicIslands
 			}
 		}
 
+		/// <summary>What CIFloating doesn't measure the base of: the generator's plants and rocks (a crown or a boulder is wider
+		/// than what touches the ground), caves and tunnels (set into the land on purpose).</summary>
+		static readonly Regex NotABase = new Regex("Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo", RegexOptions.IgnoreCase);
+
+		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air): CIFloating [gap] [name part]")]
+		public static void FloatingCommand(string[] args)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("CIFloating [gap] (in the editor)"); return; }
+			float gap = args != null && args.Length > 0 ? F(args[0]) : 0.3f;
+			string only = args != null && args.Length > 1 ? args[1] : "";
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Terrain ground = terraineditor.terrain;
+			Physics.SyncTransforms();
+			int found = 0, legs = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string n = e.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
+				{
+					if (!(r is MeshRenderer) || !r.enabled) continue;
+					Bounds b = r.bounds;
+					// (a leg, post or pillar: upright and slim - a brace or a beam lying down is wider than it is tall)
+					if (b.size.y < 1.2f || b.size.y < 2.5f * Mathf.Max(b.size.x, b.size.z)) continue;
+					legs++;
+					Vector3 foot = new Vector3(b.center.x, b.min.y, b.center.z);
+					float land = ground != null ? ground.SampleHeight(foot) + ground.transform.position.y : float.MinValue;
+					RaycastHit hit;
+					bool under = Physics.Raycast(foot + Vector3.down * 0.02f, Vector3.down, out hit, 300f, ~0, QueryTriggerInteraction.Ignore);
+					float support = Mathf.Max(land, under ? hit.point.y : float.MinValue);
+					if (foot.y - support <= gap) continue;
+					found++;
+					Log("  floating: " + n + " (" + r.name + ") at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its foot h=" + Num(foot.y - sea) + " is " + Num(foot.y - support) + " m above " +
+						(under && hit.point.y >= land && hit.collider != null ? hit.collider.name : "the ground"));
+				}
+			}
+			// Objects standing on the ground with part of their base only (a stilt house on a slope: the legs over the low side
+			// end in the air - its legs are one mesh with the house, so the ground under its whole footprint is measured)
+			int bases = 0, partly = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				string n = e.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || NotABase.IsMatch(n)) continue;
+				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				if (rs.Length == 0 || ground == null) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				// (a deck, floor or plank lies on its posts: its base is the posts')
+				if (Mathf.Max(b.size.x, b.size.z) < 1.5f || b.size.y < 0.6f || b.min.y < sea - 0.5f) continue;
+				float lowest = float.MaxValue, highest = float.MinValue;
+				Vector3 at = Vector3.zero;
+				int steps = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(b.size.x, b.size.z)), 3, 30);
+				for (int i = 0; i <= steps; i++)
+					for (int j = 0; j <= steps; j++)
+					{
+						var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.12f, b.max.x - b.size.x * 0.12f, i / (float)steps), 0f, Mathf.Lerp(b.min.z + b.size.z * 0.12f, b.max.z - b.size.z * 0.12f, j / (float)steps));
+						float g = b.min.y - (ground.SampleHeight(p) + ground.transform.position.y);
+						if (g < lowest) lowest = g;
+						if (g > highest) { highest = g; at = p; }
+					}
+				// (only what stands on the ground somewhere: decks on posts, roofs and things on tables touch no ground)
+				if (lowest > 0.4f) continue;
+				bases++;
+				if (highest <= 0.6f) continue;
+				partly++;
+				Log("  partly in the air: " + n + " at " + Num(b.center.x - mid.x) + " " + Num(b.center.z - mid.y) + ": its base h=" + Num(b.min.y - sea) + " is up to " + Num(highest) + " m above the ground (at " + Num(at.x - mid.x) + " " + Num(at.z - mid.y) + ")");
+			}
+			Log((found + partly == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases);
+		}
+
 		[ConsoleCommand(name: "CIStandOn", docs: "Dev, editor: what a player would stand on along a line - rays down at n points from x1 z1 to x2 z2 (metres from the island's middle): the height above the sea and the object hit. CIStandOn <x1> <z1> <x2> <z2> [n] [from this height above the sea: under a roof]")]
 		public static void ProbeCommand(string[] args)
 		{
