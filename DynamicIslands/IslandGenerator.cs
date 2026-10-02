@@ -62,7 +62,7 @@ namespace DynamicIslands.Editor
 		public int Seabed;
 		public const int SeabedSand = 0, SeabedRocky = 1, SeabedReef = 2;
 
-		// Objects, each 0..1 (-1 = follow ObjectDensity); Clusters: 0 = spread evenly, 1 = in groves and fields
+		// Objects, each 0..1 (-1 = follow ObjectDensity: at 0.5 each kind Like Raft); Clusters: 0 = spread evenly, 1 = in groves and fields
 		public float Trees = -1f, Bushes = -1f, Rocks = -1f, BeachThings = -1f, Harvest = -1f;
 		public float Clusters = 0.35f;
 		// Under water, each 0..1 where 0.5 = as dense as around Raft's islands (-1 = like Raft, or none if ObjectDensity is 0):
@@ -380,15 +380,23 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A category's slider in the settings.</summary>
+		/// <summary>A land slider's value: its own, or (at -1) its kind's Like Raft for the style, as thick again as ObjectDensity
+		/// says (0.5 = as on Raft's islands, 1 = twice as thick, 0 = none).</summary>
+		static float LandAmount(IslandGenSettings s, float own, string cat)
+		{
+			if (own >= 0f) return Mathf.Clamp01(own);
+			return s.ObjectDensity <= 0.001f ? 0f : Mathf.Clamp01(LikeRaftAmount(s.Style, cat) * Mathf.Sqrt(2f * s.ObjectDensity));
+		}
+
 		public static float AmountOf(IslandGenSettings s, string cat)
 		{
 			switch (cat)
 			{
-				case CatTrees: return s.Amount(s.Trees);
-				case CatBushes: return s.Amount(s.Bushes);
-				case CatRocks: return s.Amount(s.Rocks);
-				case CatHarvest: return s.Amount(s.Harvest);
-				case CatBeach: return s.Amount(s.BeachThings);
+				case CatTrees: return LandAmount(s, s.Trees, cat);
+				case CatBushes: return LandAmount(s, s.Bushes, cat);
+				case CatRocks: return LandAmount(s, s.Rocks, cat);
+				case CatHarvest: return LandAmount(s, s.Harvest, cat);
+				case CatBeach: return LandAmount(s, s.BeachThings, cat);
 				case CatSeaRocks: return s.AmountSea(s.SeaRocks);
 				case CatSeaFinds: return s.AmountSea(s.SeaFinds);
 				case CatSunken: return s.AmountSea(s.Sunken);
@@ -396,8 +404,81 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>How many times as dense as around Raft's islands an under-water slider makes its kind (0.5 = as on Raft, 1 = three times).</summary>
-		public static float SeaFactor(float amount) { return amount <= 0f ? 0f : Mathf.Pow(2f * amount, 1.6f); }
+		/// <summary>How many times as dense as around Raft's islands an under-water slider makes its kind (0.5 = as on Raft, 1 = twice
+		/// that: three times carpeted a shallow lagoon's floor with corals, nothing like Raft's own reefs).</summary>
+		public static float SeaFactor(float amount) { return amount <= 0f ? 0f : amount <= 0.5f ? Mathf.Pow(2f * amount, 1.6f) : 2f * amount; }
+
+		/// <summary>The Nature quick button Like Raft: each land slider where its kind is as thick on the ground as on Raft's own
+		/// islands of the style (LikeRaftAmount) - Raft's small islands' way on a small island, its big ones' on a big one.</summary>
+		public static void NatureLikeRaft(IslandGenSettings s)
+		{
+			s.Trees = LikeRaftAmount(s.Style, CatTrees);
+			s.Bushes = LikeRaftAmount(s.Style, CatBushes);
+			s.Rocks = LikeRaftAmount(s.Style, CatRocks);
+			s.Harvest = LikeRaftAmount(s.Style, CatHarvest);
+			s.BeachThings = LikeRaftAmount(s.Style, CatBeach);
+		}
+
+		/// <summary>How thick a kind usually stands on the land of Raft's small (or big) islands of a style, per 1000 m² (0: not measured).</summary>
+		public static float TypicalDensity(int style, string cat, bool small)
+		{
+			Habitat h = HabitatOf(style, cat, small);
+			return h != null ? h.Typical : 0f;
+		}
+
+		/// <summary>
+		/// A land slider's Like Raft for a style: the value at which its kind stands as thick on the ground as on Raft's big
+		/// islands of the style (raft_land.txt; a small island then gets its small islands' density by itself), allowing for
+		/// the spots the generator can't use. 0.33 without the measurements.
+		/// </summary>
+		public static float LikeRaftAmount(int style, string cat)
+		{
+			if (cat == CatBeach) return 0.3f; // (the beach keeps the zone rule: Raft has a few logs, mostly inland)
+			Habitat h = HabitatOf(style, cat, false);
+			if (h != null) return Mathf.Clamp01(Mathf.Sqrt(h.Typical * PlacingLoss(cat) / MaxDensity(cat)));
+			// (too few of the kind on Raft's islands of the style to say where it grows - Temperance's bushes, Balboa's
+			// pickups: as few as there, which is next to none)
+			LandStyle land = RaftLand.For(style);
+			float area = land.Area.Sum();
+			if (land.Things.Count == 0 || area < 1f) return 0.33f;
+			return Mathf.Clamp01(Mathf.Sqrt(land.CountOf(cat) * 1000f / area * PlacingLoss(cat) / MaxDensity(cat)));
+		}
+
+		/// <summary>
+		/// How much more of a kind Like Raft asks for than its habitats alone would give: a generated island has more land
+		/// a kind grows poorly on (cliffs, high ground, bare beach) than Raft's own, so the same habitat densities came out
+		/// thinner over its land. Measured with CIGenLikeRaft on islands of the size and height of Raft's big ones.
+		/// </summary>
+		static float PlacingLoss(string cat)
+		{
+			switch (cat)
+			{
+				case CatTrees: return 1.28f;
+				case CatBushes: return 1.69f;
+				case CatRocks: return 1.2f;
+				case CatHarvest: return 2.38f;
+				default: return 1f;
+			}
+		}
+
+		/// <summary>
+		/// On a small island, how much more again (on top of Raft's small islands being thicker with things): a small
+		/// generated island has more bare beach and steep shore for its size than Raft's small ones. Measured with
+		/// CIGenLikeRaft on islands of the size and height of Raft's small ones.
+		/// </summary>
+		static float SmallBoost(string cat)
+		{
+			switch (cat)
+			{
+				case CatTrees: return 1.66f;
+				case CatBushes: return 1.69f;
+				case CatRocks: return 1.39f;
+				default: return 1f;
+			}
+		}
+
+		/// <summary>The Life under water quick button Like Raft: as dense as around Raft's own islands.</summary>
+		public static void SeaLikeRaft(IslandGenSettings s) { s.Water = s.SeaRocks = s.SeaFinds = s.Sunken = 0.5f; }
 
 		/// <summary>The slider value that gives this many objects per 1000 m² (the inverse of the density curve).</summary>
 		public static float AmountFor(string cat, float perThousand) { return Mathf.Clamp01(Mathf.Sqrt(Mathf.Max(0f, perThousand) / MaxDensity(cat))); }
@@ -1419,14 +1500,15 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, Habitat> habitats = new Dictionary<string, Habitat>();
 
-		static Habitat HabitatOf(int style, string cat)
+		/// <summary>Where Raft's islands of the style grow a category: its small islands' way (small) or its big ones'.</summary>
+		static Habitat HabitatOf(int style, string cat, bool small)
 		{
 			if (cat == CatBeach) return null; // (driftwood and pebbles on the beach: Raft's few logs lie inland; the beach keeps the zone rule)
 			if (!PlaceableCatalog.IsBuilt) return null; // (not cached: the catalog's names aren't known yet)
-			string key = style + "/" + cat;
+			string key = style + "/" + cat + (small ? "/small" : "/big");
 			Habitat h;
 			if (habitats.TryGetValue(key, out h)) return h;
-			LandStyle land = RaftLand.For(style);
+			LandStyle land = RaftLand.For(style, small);
 			var core = new HashSet<string>(PlaceableCatalog.CoreNames);
 			LandThing[] kinds = land.Of(cat).Where(t => core.Contains(t.Name)).ToArray();
 			h = null;
@@ -1480,16 +1562,19 @@ namespace DynamicIslands.Editor
 		/// off the beach as far as it keeps off it (its 10th percentiles of distance inland and height, three quarters of
 		/// them, but never asking more than 9 m inland or 4.5 m up: an island's size isn't Raft's).
 		/// </summary>
-		static bool WithinHabit(LandThing t, float categorySlope, float slope, float height, float inland)
+		static bool WithinHabit(LandThing t, float categorySlope, float slope, float height, float inland, Ground island)
 		{
+			Vector2 grassLine = island.GrassLine;
 			if (slope > Mathf.Min(t.Slope[2], categorySlope) + 5f) return false;
 			// (and on the ground texture it grows on: Raft's palms and bushes stand on grass nearly always - the automatic
-			// paint (TerrainPainter.AutoWeights) makes rock from 28° and sand below 2.5-5 m, where they'd look planted on stone)
-			float rock = Mathf.InverseLerp(28f, 42f, slope), grass = Mathf.InverseLerp(2.5f, 5f, height) * (1f - rock);
+			// paint (TerrainPainter.AutoWeights) makes rock from 28° and sand below the island's grass line, where they'd
+			// look planted on stone or sand)
+			float rock = Mathf.InverseLerp(28f, 42f, slope), grass = Mathf.InverseLerp(grassLine.x, grassLine.y, height) * (1f - rock);
 			if (t.OnGrass >= 0.85f && grass < 0.5f) return false;
 			if (t.OnRock < 0.15f && rock > 0.5f) return false;
-			if (t.Inland[0] > 2f && inland < Mathf.Min(t.Inland[0], 12f) * 0.75f) return false;
-			if (t.Height[0] > 1f && height < Mathf.Min(t.Height[0], 6f) * 0.75f) return false;
+			// (an island's size isn't Raft's: never asking more than a third of how far inland and how high it goes)
+			if (t.Inland[0] > 2f && inland < Mathf.Min(t.Inland[0], 12f, island.MostInland / 3f) * 0.75f) return false;
+			if (t.Height[0] > 1f && height < Mathf.Min(t.Height[0], 6f, island.Top / 3f) * 0.75f) return false;
 			return true;
 		}
 
@@ -1602,6 +1687,13 @@ namespace DynamicIslands.Editor
 			public float BinArea(int b) { return BinCells[b].Count * Step * Step; }
 			/// <summary>Metres inland from the nearest water, per cell (z * Res + x; 0 under water).</summary>
 			public float[] Inland;
+			/// <summary>m² of land; small = as Raft's small islands (RaftLand.SmallLand), which grow their own way.</summary>
+			public float LandArea;
+			/// <summary>The farthest any land is from the water (m).</summary>
+			public float MostInland;
+			public bool Small { get { return LandArea < RaftLand.SmallLand; } }
+			/// <summary>Where the paint turns from sand to grass here (TerrainPainter.GrassLine), m above the sea: from - to.</summary>
+			public Vector2 GrassLine = new Vector2(2.5f, 5f);
 
 			public float At(float x, float z)
 			{
@@ -1610,6 +1702,10 @@ namespace DynamicIslands.Editor
 				float tx = fx - x0, tz = fz - z0;
 				return Mathf.Lerp(Mathf.Lerp(M[z0, x0], M[z0, x0 + 1], tx), Mathf.Lerp(M[z0 + 1, x0], M[z0 + 1, x0 + 1], tx), tz);
 			}
+
+			/// <summary>The ground where the terrain has it (its triangles, TerrainSurface) - what an object's foot stands on;
+			/// At blends smoothly, for the decisions (what grows where), as it always did.</summary>
+			public float Surface(float x, float z) { return TerrainSurface(M, Step, x, z); }
 
 			public float Slope(float x, float z)
 			{
@@ -1626,6 +1722,25 @@ namespace DynamicIslands.Editor
 				if (slope > 32f || above > Mathf.Max(6f, Top * 0.82f)) return ZRock;
 				return above < ShelfHeight + 1.2f ? ZBeach : ZLand;
 			}
+		}
+
+		/// <summary>
+		/// The height of a heights grid (metres, [z, x], cells of step metres from its corner) where Unity's terrain has it:
+		/// two triangles per cell, split from the cell's corner (0,0) to (1,1). Between the corners that lies above or below
+		/// smooth (bilinear) blending by up to a quarter of the cell's twist - on an uneven steep slope half a metre and more
+		/// (a coral set down on the blended height stood in the water). split: 1 = the other diagonal, 2 = blended (the
+		/// test that checks which one the terrain has, CIGroundSplit).
+		/// </summary>
+		public static float TerrainSurface(float[,] m, float step, float x, float z, int split = 0)
+		{
+			int res = m.GetLength(0);
+			float fx = Mathf.Clamp(x / step, 0, res - 1.001f), fz = Mathf.Clamp(z / step, 0, res - 1.001f);
+			int x0 = (int)fx, z0 = (int)fz;
+			float u = fx - x0, v = fz - z0;
+			float h00 = m[z0, x0], h10 = m[z0, x0 + 1], h01 = m[z0 + 1, x0], h11 = m[z0 + 1, x0 + 1];
+			if (split == 2) return Mathf.Lerp(Mathf.Lerp(h00, h10, u), Mathf.Lerp(h01, h11, u), v);
+			if (split == 1) return u + v <= 1f ? h00 + (h10 - h00) * u + (h01 - h00) * v : h11 + (h01 - h11) * (1f - u) + (h10 - h11) * (1f - v);
+			return u > v ? h00 + (h10 - h00) * u + (h11 - h10) * v : h00 + (h11 - h01) * u + (h01 - h00) * v;
 		}
 
 		static Ground Survey(float[,] metres, float step)
@@ -1675,6 +1790,10 @@ namespace DynamicIslands.Editor
 					if (zone >= 0) g.Zones[zone].Add(z * res + x);
 					if (e > Sea) g.BinCells[RaftLand.BinOf(inland[z * res + x], slope, e - Sea)].Add(z * res + x);
 				}
+			g.LandArea = g.BinCells.Sum(c => c.Count) * g.Step * g.Step;
+			g.MostInland = 0f;
+			foreach (float v in inland) if (v < 1e8f) g.MostInland = Mathf.Max(g.MostInland, v);
+			g.GrassLine = TerrainPainter.GrassLine(g.LandArea);
 			return g;
 		}
 
@@ -1732,8 +1851,9 @@ namespace DynamicIslands.Editor
 			foreach (string cat in LandCategories)
 			{
 				float area = 0f;
-				Habitat hab = HabitatOf(s.Style, cat);
+				Habitat hab = HabitatOf(s.Style, cat, ground.Small);
 				if (hab != null)
+				{
 					// (as much land as suits the kind the way Raft's islands have it: none on the bare beach, cliffs or where Raft never grows it)
 					for (int b = 0; b < RaftLand.BinCount; b++)
 					{
@@ -1742,6 +1862,17 @@ namespace DynamicIslands.Editor
 						if (hab.OnGrass && bs == RaftLand.Bins1 - 1) continue;
 						area += Suitability(hab, b) * ground.BinArea(b);
 					}
+					// (a slider's Like Raft is the density of Raft's big islands; its small ones are that much thicker with things:
+					// five times the bushes, three times the trees - at most eight times, for the desert's shrub-covered islets)
+					if (ground.Small)
+					{
+						// (a style without small islands of Raft's to go by - Balboa's and Temperance's are all big - gets the
+						// tropical ones' difference: Raft's small islands are that much thicker with things than its big ones)
+						int by = RaftLand.HasSmall(s.Style) ? s.Style : TerrainPainter.Tropical;
+						Habitat small = HabitatOf(by, cat, true), big = HabitatOf(by, cat, false);
+						if (small != null && big != null && small != big && big.Typical > 0f) area *= Mathf.Clamp(small.Typical / big.Typical, 0.25f, 8f) * SmallBoost(cat);
+					}
+				}
 				else
 				{
 					float[] w = ZoneWeights(cat);
@@ -1774,7 +1905,7 @@ namespace DynamicIslands.Editor
 				Vector2 clusterOff = RandomOffset(rnd);
 				// Where: in the habitat bins Raft's islands of the style have this kind of thing in, as often as there (or,
 				// without a measurement, the zones)
-				Habitat hab = HabitatOf(s.Style, cat);
+				Habitat hab = HabitatOf(s.Style, cat, ground.Small);
 				int slots = hab != null ? RaftLand.BinCount : ZoneCount;
 				float[] w = hab != null ? hab.Weight : ZoneWeights(cat);
 				Func<int, List<int>> cellsOf = i => hab != null ? ground.BinCells[i] : ground.Zones[i];
@@ -1790,7 +1921,8 @@ namespace DynamicIslands.Editor
 				if (total <= 0f) continue;
 				float[] kindCum = hab != null ? new float[hab.Kinds.Length] : null;
 				int placed = 0;
-				for (int attempt = 0; attempt < target * 5 + 50 && placed < target; attempt++)
+				// (tries enough spots: on a small island most are taken or outside a kind's habits, and giving up early left it bare)
+				for (int attempt = 0; attempt < target * 12 + 100 && placed < target; attempt++)
 				{
 					float r = (float)rnd.NextDouble() * total;
 					int slot = 0;
@@ -1819,7 +1951,7 @@ namespace DynamicIslands.Editor
 						float kt = 0f;
 						for (int k = 0; k < hab.Kinds.Length; k++)
 						{
-							if (cat == CatRocks || WithinHabit(hab.Kinds[k], hab.Slope90, slopeHere, above, inlandHere)) kt += hab.KindWeight[k][slot];
+							if (cat == CatRocks || WithinHabit(hab.Kinds[k], hab.Slope90, slopeHere, above, inlandHere, ground)) kt += hab.KindWeight[k][slot];
 							kindCum[k] = kt;
 						}
 						if (kt <= 0f) continue;
@@ -1863,7 +1995,7 @@ namespace DynamicIslands.Editor
 					Vector3 baseScale = proto != null ? proto.transform.localScale : Vector3.one;
 					// (all of its base on the ground: down to the lowest ground under it - on a slope the low side of a rock, a bush
 					// or a log stood in the air; then sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
-					float y = h - (flat ? 0.2f : kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0 ? 0f : BaseDrop(ground, x, z0, kind, cat, scale));
+					float y = flat ? ground.Surface(x, z0) - 0.2f : h - (kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0 ? 0f : BaseDrop(ground, x, z0, kind, cat, scale));
 					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
 					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
@@ -1978,11 +2110,12 @@ namespace DynamicIslands.Editor
 			Bounds b;
 			float width = PlaceableCatalog.LocalBounds(name, out b) ? Mathf.Max(b.size.x * Mathf.Abs(ls.x), b.size.z * Mathf.Abs(ls.z)) * scale : 1f;
 			float radius = cat == CatTrees ? Mathf.Min(0.5f * scale, width * 0.15f) : Mathf.Min(width * 0.38f, 6f);
-			float h = ground.At(x, z), low = h;
+			// (from the blended height the caller sets things down at, to the terrain's own surface under the base)
+			float h = ground.At(x, z), low = ground.Surface(x, z);
 			for (int i = 0; i < 8; i++)
 			{
 				float a = i * Mathf.PI / 4f;
-				low = Mathf.Min(low, ground.At(x + Mathf.Cos(a) * radius, z + Mathf.Sin(a) * radius));
+				low = Mathf.Min(low, ground.Surface(x + Mathf.Cos(a) * radius, z + Mathf.Sin(a) * radius));
 			}
 			// (a mesh whose bottom is above its pivot - some of Raft's stood on their pivot in a hollow - comes down onto the ground too)
 			float lift = proto != null && PlaceableCatalog.LocalBounds(name, out b) ? Mathf.Max(0f, b.min.y * Mathf.Abs(ls.y) * scale) : 0f;
@@ -2205,7 +2338,8 @@ namespace DynamicIslands.Editor
 					props[ObjectProps.CreatureSpeed] = ObjectProps.Format(stats[2]);
 				}
 				GameObject proto = PlaceableCatalog.Get("Creature_" + kind);
-				result.Add(new IslandObject { Name = "Creature_" + kind, Position = new Vector3(p.x, ground.At(p.x, p.y) + lift, p.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
+				// (not under the terrain's own surface where it lies above the blended height)
+				result.Add(new IslandObject { Name = "Creature_" + kind, Position = new Vector3(p.x, Mathf.Max(ground.At(p.x, p.y), ground.Surface(p.x, p.y)) + lift, p.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
 				spots.Add(p.x, p.y, 1.5f);
 				owners.Add(null);
 				cats.Add(null);

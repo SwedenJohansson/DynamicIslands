@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -1190,10 +1190,10 @@ namespace DynamicIslands
 			Check(ref ok, sticking.Count == 0, "rocks out in deeper water stay under the surface (" + sticking.Count + " stick out" + (sticking.Count > 0 ? ": " + string.Join(", ", sticking.Take(5).ToArray()) : "") + ")");
 			yield return null;
 
-			// 3. The sliders: Teeming is about three times Like Raft; none is none
+			// 3. The sliders: Teeming is about twice Like Raft (three times carpeted a lagoon's floor); none is none
 			IslandGenSettings rich = s.Copy(); rich.Water = 1f;
 			int richCorals = IslandGenerator.PlanAll(rich, m, size).Count(o => RaftUnderwater.CategoryOf(o.Name) == IslandGenerator.CatWater);
-			Check(ref ok, richCorals > corals.Count * 2f && richCorals < corals.Count * 4f, "Teeming: " + richCorals + " corals and plants against " + corals.Count + " like Raft");
+			Check(ref ok, richCorals > corals.Count * 1.5f && richCorals < corals.Count * 2.6f, "Teeming: " + richCorals + " corals and plants against " + corals.Count + " like Raft (about twice)");
 
 			// 4. The styles: Balboa's barrels and no corals (forest), Temperance's bare rock (snowy)
 			IslandGenSettings forest = s.Copy(); forest.Style = TerrainPainter.Forest;
@@ -1444,7 +1444,8 @@ namespace DynamicIslands
 		public static void DiveShotsCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Log("Usage: CIDiveShots <island> [keep]"); return; }
-			DynamicIslands.instance.StartCoroutine(DiveShotsRoutine(args[0], args.Length > 1 && args[1] == "keep"));
+			bool keep = args.Length > 1 && args[args.Length - 1] == "keep";
+			DynamicIslands.instance.StartCoroutine(DiveShotsRoutine(string.Join(" ", args.Take(keep ? args.Length - 1 : args.Length).ToArray()), keep));
 		}
 
 		/// <summary>Turns the player's view (Raft's MouseLook keeps its own angles, so they are set too).</summary>
@@ -1463,16 +1464,47 @@ namespace DynamicIslands
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (!raft.HasValue || player == null) { Fail("not in a world"); yield break; }
-			if (!File.Exists(IslandSpawner.PathFor(name))) { Fail("no island file '" + name + "'"); yield break; }
+			// ("real" / "real:Big" ...: one of Raft's own islands, Landmark_<kind>, for comparing the two under water)
+			bool real = name == "real" || name.StartsWith("real:");
+			if (!real && !File.Exists(IslandSpawner.PathFor(name))) { Fail("no island file '" + name + "'"); yield break; }
 			yield return EnsureAlive();
 			int count0 = IslandWorldState.Islands.Count;
 			Vector3 pos = raft.Value + Vector3.forward * 330f; pos.y = 0f;
 			float t0 = Time.realtimeSinceStartup;
-			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+			IslandWorldState.Entry entry = null;
+			Terrain terrain = null;
+			if (real)
+			{
+				ChunkPointType kind;
+				try { kind = (ChunkPointType)Enum.Parse(typeof(ChunkPointType), "Landmark_" + (name.Length > 5 ? name.Substring(5) : "Small")); }
+				catch { Fail("no Raft island kind '" + name.Substring(5) + "'"); yield break; }
+				// (the nearest of that kind already in the world, else one called up ahead of the raft)
+				Vector3 at = raft.Value;
+				Func<Landmark> nearest = () => UnityEngine.Object.FindObjectsOfType<Landmark>()
+					.Where(l => l.name.Contains("#" + kind + "#") && l.GetComponentInChildren<Terrain>() != null)
+					.OrderBy(l => (l.transform.position - at).sqrMagnitude).FirstOrDefault();
+				Landmark landmark = nearest();
+				if (landmark == null) ComponentManager<ChunkManager>.Value.AddChunkPointCheat(kind, pos);
+				for (float w = 0f; w < 30f && landmark == null; w += 0.5f)
+				{
+					yield return new WaitForSeconds(0.5f);
+					landmark = nearest();
+				}
+				terrain = landmark != null ? landmark.GetComponentInChildren<Terrain>() : null;
+				if (terrain != null)
+				{
+					pos = terrain.transform.position + terrain.terrainData.size / 2f; pos.y = 0f;
+					name = "real_" + landmark.name.Replace(" ", "").Replace("(Clone)", "");
+				}
+			}
+			else
+			{
+				yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+				entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
+				if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
+				terrain = entry.Root.GetComponentInChildren<Terrain>();
+			}
 			float spawn = Time.realtimeSinceStartup - t0;
-			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
-			if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
-			Terrain terrain = entry.Root.GetComponentInChildren<Terrain>();
 			Log("Spawned '" + name + "' in " + spawn.ToString("F1") + " s: terrain " + (terrain != null ? terrain.terrainData.size.x.ToString("F0") + " m, " + terrain.terrainData.heightmapResolution + " samples, from " + terrain.transform.position.y.ToString("F0") + " m" : "none"));
 			if (terrain == null) { Fail("no terrain"); yield break; }
 			yield return new WaitForSeconds(2f);
@@ -1486,6 +1518,7 @@ namespace DynamicIslands
 			var views = new[]
 			{
 				new { Key = "surface", Out = 45f, Y = 0.2f, Pitch = 5f },
+				new { Key = "floor", Out = 10f, Y = -0.8f, Pitch = 50f },
 				new { Key = "reef", Out = 14f, Y = -4f, Pitch = 20f },
 				new { Key = "shelf", Out = 25f, Y = -8f, Pitch = 10f },
 				new { Key = "dropoff", Out = 45f, Y = -16f, Pitch = 35f },
@@ -1510,7 +1543,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			OnRaftCommand();
 			yield return new WaitForSeconds(1f);
-			if (!keep) IslandWorldState.Remove(entry.Name);
+			if (!keep && entry != null) IslandWorldState.Remove(entry.Name);
 			Log("PASS: dive pictures of '" + name + "' (coast " + d.ToString("F0") + " m from its middle)");
 		}
 

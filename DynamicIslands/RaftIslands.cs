@@ -291,24 +291,28 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static bool DensitiesLikeRaft(IslandGenSettings s, bool small)
 		{
-			var list = All.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big").ToList();
-			if (list.Count == 0) return false;
-			s.Trees = IslandGenerator.AmountFor(IslandGenerator.CatTrees, list.Average(i => i.Density(Trees)));
-			s.Bushes = IslandGenerator.AmountFor(IslandGenerator.CatBushes, list.Average(i => i.Density(Bushes)));
-			s.Rocks = IslandGenerator.AmountFor(IslandGenerator.CatRocks, list.Average(i => i.Density(Rocks)));
-			s.Harvest = IslandGenerator.AmountFor(IslandGenerator.CatHarvest, list.Average(i => i.Density(Harvest)));
-			s.BeachThings = 0.3f;
+			// (Like Raft: a small island gets Raft's small islands' density by itself, from its land - CIGenLikeRaft)
+			if (!RaftLand.Loaded) return false;
+			IslandGenerator.NatureLikeRaft(s);
 			return true;
 		}
 
 		/// <summary>The object sliders set to the island's own densities (and a few creatures and boxes if it has spawners and loot).</summary>
 		static void ObjectsLike(RaftIsland i, IslandGenSettings s)
 		{
-			s.Trees = IslandGenerator.AmountFor(IslandGenerator.CatTrees, i.Density(Trees));
-			s.Bushes = IslandGenerator.AmountFor(IslandGenerator.CatBushes, i.Density(Bushes));
-			s.Rocks = IslandGenerator.AmountFor(IslandGenerator.CatRocks, i.Density(Rocks));
-			s.Harvest = IslandGenerator.AmountFor(IslandGenerator.CatHarvest, i.Density(Harvest));
-			s.BeachThings = 0.3f;
+			// (each kind as thick on the land as on the island itself, against Raft's islands of its size: Like Raft when it's
+			// as thick as they usually are - counted on its land only, raft_land.txt; what lies under water is the sea's)
+			float[] own = RaftLand.IslandDensities(i.Label);
+			bool small = i.Area < RaftLand.SmallLand;
+			string[] cats = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest };
+			var v = new float[cats.Length];
+			for (int k = 0; k < cats.Length; k++)
+			{
+				float like = IslandGenerator.LikeRaftAmount(s.Style, cats[k]), typical = IslandGenerator.TypicalDensity(s.Style, cats[k], small);
+				v[k] = own != null && typical > 0f ? Mathf.Clamp01(like * Mathf.Sqrt(own[k] / typical)) : like;
+			}
+			s.Trees = v[0]; s.Bushes = v[1]; s.Rocks = v[2]; s.Harvest = v[3];
+			s.BeachThings = IslandGenerator.LikeRaftAmount(s.Style, IslandGenerator.CatBeach);
 			// (under water: as dense as around Raft's islands of its style, measured by CIMeasureUnderwater)
 			s.Water = s.SeaRocks = s.SeaFinds = s.Sunken = 0.5f;
 			s.Hostiles = Mathf.Clamp(Mathf.RoundToInt(i.Count(Spawners) * 0.5f), 0, 12);

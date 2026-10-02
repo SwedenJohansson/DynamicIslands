@@ -30,6 +30,8 @@ namespace DynamicIslands
 		internal static string LandKindOf(string name)
 		{
 			if (System.Text.RegularExpressions.Regex.IsMatch(name, @"^(Log|TreeLog_\d+|Driftwood\w*|Plank\w*)$")) return IslandGenerator.CatBeach;
+			// (Raft's flowers are pickups, but plants: raft_land.txt has them with the bushes, and so does the generator)
+			if (name.StartsWith("Pickup_Landmark_Flower_")) return IslandGenerator.CatBushes;
 			string k = KindOfObject(name);
 			if (k == RaftIslands.Trees) return IslandGenerator.CatTrees;
 			if (k == RaftIslands.Bushes) return IslandGenerator.CatBushes;
@@ -308,6 +310,173 @@ namespace DynamicIslands
 					.Append('\t').Append(P(g.Select(x => nearSame[x.i]).ToList(), 0.5f)).Append('\t').Append(P(g.Select(x => nearAny[x.i]).ToList(), 0.5f)).Append('\n');
 			}
 			return sb.ToString();
+		}
+
+		[ConsoleCommand(name: "CIGenLikeRaft", docs: "Dev, anywhere: the generator's Like Raft (the Nature and Life under water quick buttons) against Raft's own islands, kind by kind: trees, bushes, rocks, harvestables and beach things per 1000 m² of land on tropical islands the size of Raft's small ones and of its big ones (raft_land.txt), and corals, rocks, finds and sunken things per 1000 m² of sea floor 0-40 m deep (raft_underwater.txt) - each within a third of Raft's; and the slider values that would hit Raft's. CIGenLikeRaft [trees bushes rocks harvest beach]: other land values to try")]
+		public static void GenLikeRaftCommand(string[] args)
+		{
+			float[] values = args != null && args.Length == 5 ? args.Select(a => float.Parse(a, System.Globalization.CultureInfo.InvariantCulture)).ToArray() : null;
+			DynamicIslands.instance.StartCoroutine(GenLikeRaftRoutine(values));
+		}
+
+		static IEnumerator GenLikeRaftRoutine(float[] values)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			var inv = System.Globalization.CultureInfo.InvariantCulture;
+			string[] cats = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest, IslandGenerator.CatBeach };
+			string[] groups = { "small", "big" };
+			// Raft's: the land of its small and of its big tropical islands, pooled (raft_land.txt)
+			byte[] bytes = RaftIslands.ModFile(RaftLand.FileName);
+			if (bytes == null) { Fail("no " + RaftLand.FileName); yield break; }
+			var groupOf = new Dictionary<string, string>();
+			var raftArea = new Dictionary<string, float> { { "small", 0f }, { "big", 0f } };
+			var raftCount = groups.ToDictionary(g => g, g => cats.ToDictionary(c => c, c => 0f));
+			var raftNames = new Dictionary<string, float>();
+			var genNames = new Dictionary<string, float>();
+			foreach (string raw in Encoding.UTF8.GetString(bytes).Split('\n'))
+			{
+				string[] f = raw.TrimEnd('\r').Split('\t');
+				if (f[0] == "land" && f.Length >= 5 && f[2] == "Tropical")
+				{
+					string g = f[1].StartsWith("Small island") ? "small" : f[1].StartsWith("Big island") || f[1] == "Big" ? "big" : null;
+					if (g == null) continue;
+					groupOf[f[1]] = g;
+					raftArea[g] += f[4].Split(' ').Where(p => p.IndexOf(':') > 0).Sum(p => float.Parse(p.Substring(p.IndexOf(':') + 1), inv));
+				}
+				else if (f[0] == "lobj" && f.Length >= 5 && groupOf.ContainsKey(f[1]) && cats.Contains(f[3]))
+				{
+					raftCount[groupOf[f[1]]][f[3]] += float.Parse(f[4], inv);
+					string key = groupOf[f[1]] + "/" + f[3] + "/" + f[2];
+					raftNames[key] = (raftNames.ContainsKey(key) ? raftNames[key] : 0f) + float.Parse(f[4], inv);
+				}
+			}
+
+			// The generator's, with the Like Raft quick buttons (or the land values given), on islands as big and high as Raft's
+			Vector3 size = IslandGenerator.BuildArea;
+			int res = IslandGenerator.BuildResolution;
+			float step = size.x / (res - 1);
+			var genArea = new Dictionary<string, float> { { "small", 0f }, { "big", 0f } };
+			var genCount = groups.ToDictionary(g => g, g => cats.ToDictionary(c => c, c => 0f));
+			string[] seaCats = { IslandGenerator.CatWater, IslandGenerator.CatSeaRocks, IslandGenerator.CatSeaFinds, IslandGenerator.CatSunken };
+			float seaArea = 0f;
+			var seaCount = seaCats.ToDictionary(c => c, c => 0f);
+			float[] used = null;
+			foreach (string g in groups)
+			{
+				int seeds = g == "small" ? 8 : 3;
+				for (int seed = 1; seed <= seeds; seed++)
+				{
+					var s = new IslandGenSettings { Seed = 900 + seed, Style = TerrainPainter.Tropical, Radius = g == "small" ? RaftIslands.SmallRadius : RaftIslands.LargeRadius, Height = g == "small" ? RaftIslands.SmallTop : RaftIslands.LargeTop, Hostiles = 0, Friendly = 0, SeaLife = 0, Loot = 0 };
+					IslandGenerator.NatureLikeRaft(s);
+					IslandGenerator.SeaLikeRaft(s);
+					if (values != null) { s.Trees = values[0]; s.Bushes = values[1]; s.Rocks = values[2]; s.Harvest = values[3]; s.BeachThings = values[4]; }
+					used = cats.Select(c => IslandGenerator.AmountOf(s, c)).ToArray();
+					float sea = s.WaterLevel;
+					float[,] m = IslandGenerator.HeightsMetres(s, size, res);
+					List<IslandObject> list = IslandGenerator.PlanAll(s, m, size);
+					for (int z = 0; z < res; z++)
+						for (int x = 0; x < res; x++)
+						{
+							float d = sea - m[z, x];
+							if (d < 0f) genArea[g] += step * step;
+							else if (d < 40f) seaArea += step * step;
+						}
+					foreach (IslandObject o in list)
+					{
+						float d = sea - IslandGenerator.SampleHeights(m, res, step, o.Position.x, o.Position.z);
+						if (d < 0f)
+						{
+							string k = LandKindOf(o.Name);
+							if (!genCount[g].ContainsKey(k)) continue;
+							genCount[g][k]++;
+							string key = g + "/" + k + "/" + o.Name;
+							genNames[key] = (genNames.ContainsKey(key) ? genNames[key] : 0f) + 1f;
+						}
+						else if (d < 40f) { string k = RaftUnderwater.CategoryOf(o.Name); if (k != null) seaCount[k]++; }
+					}
+					yield return null;
+				}
+			}
+			for (int i = 0; i < cats.Length; i++)
+			{
+				var line = new StringBuilder("  " + IslandGenerator.CategoryLabel(cats[i]) + " (slider " + used[i].ToString("F2", inv) + ")");
+				foreach (string g in groups)
+				{
+					float raft = raftCount[g][cats[i]] * 1000f / Mathf.Max(1f, raftArea[g]), gen = genCount[g][cats[i]] * 1000f / Mathf.Max(1f, genArea[g]);
+					float ratio = raft > 0.05f ? gen / raft : gen > 0.05f ? 99f : 1f;
+					// (judged where Raft has enough of the kind to go by: a handful of logs on its small islands isn't a density)
+					bool judged = raftCount[g][cats[i]] >= 20f;
+					bool good = !judged || ratio >= 0.67f && ratio <= 1.5f;
+					if (!good) ok = false;
+					line.Append("; " + g + " islands: Raft " + raft.ToString("F1", inv) + ", here " + gen.ToString("F1", inv) + " per 1000 m² (x" + ratio.ToString("F2", inv) + (!judged ? ", too few of Raft's to judge" : good ? "" : " - off") + ", slider for Raft's: " +
+						(gen > 0.05f ? Mathf.Clamp01(used[i] * Mathf.Sqrt(raft / gen)).ToString("F2", inv) : "?") + ")");
+				}
+				Log(line.ToString());
+				foreach (string g in groups)
+				{
+					Func<Dictionary<string, float>, float, string> top = (names, landArea) => string.Join(", ", names.Where(kv => kv.Key.StartsWith(g + "/" + cats[i] + "/"))
+						.OrderByDescending(kv => kv.Value).Take(6).Select(kv => kv.Key.Substring(kv.Key.LastIndexOf('/') + 1) + " " + (kv.Value * 1000f / Mathf.Max(1f, landArea)).ToString("F1", inv)).ToArray());
+					Log("      " + g + ": Raft's " + top(raftNames, raftArea[g]) + " | here " + top(genNames, genArea[g]));
+				}
+			}
+			SeaStyle raftSea = RaftUnderwater.For(TerrainPainter.Tropical);
+			float raftSeaArea = raftSea.Area.Take(5).Sum();
+			foreach (string c in seaCats)
+			{
+				float raft = raftSea.Of(c).Sum(t => Enumerable.Range(0, 5).Sum(b => t.Density[b] * raftSea.Area[b])) * 1000f / Mathf.Max(1f, raftSeaArea);
+				float gen = seaCount[c] * 1000f / Mathf.Max(1f, seaArea);
+				float ratio = raft > 0.05f ? gen / raft : 1f;
+				bool good = ratio >= 0.67f && ratio <= 1.5f;
+				if (!good) ok = false;
+				Log("  " + IslandGenerator.CategoryLabel(c) + " 0-40 m down: Raft " + raft.ToString("F1", inv) + ", here " + gen.ToString("F1", inv) + " per 1000 m² (x" + ratio.ToString("F2", inv) + (good ? "" : " - off") + ")");
+			}
+			Log("  Raft's land: small islands " + raftArea["small"].ToString("F0", inv) + " m², big " + raftArea["big"].ToString("F0", inv) + " m²; generated: small " + genArea["small"].ToString("F0", inv) + " m², big " + genArea["big"].ToString("F0", inv) + " m²");
+
+			// The quick button per style
+			for (int st = 0; st < TerrainPainter.Styles.Length; st++)
+			{
+				var x = new IslandGenSettings { Style = st };
+				IslandGenerator.NatureLikeRaft(x);
+				Log("  Like Raft, " + TerrainPainter.StyleName(st) + ": Trees=" + x.Trees.ToString("F2", inv) + " Bushes=" + x.Bushes.ToString("F2", inv) + " Rocks=" + x.Rocks.ToString("F2", inv) +
+					" Harvest=" + x.Harvest.ToString("F2", inv) + " BeachThings=" + x.BeachThings.ToString("F2", inv));
+			}
+
+			// Randomize existing: a variation of some of Raft's own islands is as thick with things as the island itself
+			foreach (string label in new[] { "Small island 3", "Small island 6", "Small island 10", "Big island OG", "Big", "Balboa Small 2", "Caravan Island Real Deal" })
+			{
+				RaftIsland isl = RaftIslands.All.FirstOrDefault(r => r.Label == label);
+				float[] own = RaftLand.IslandDensities(label);
+				if (isl == null || own == null) { Log("  " + label + ": not measured"); continue; }
+				IslandGenSettings v = RaftIslands.VariationOf(isl, new IslandGenSettings { Seed = 77, Hostiles = 0, Friendly = 0, SeaLife = 0, Loot = 0 });
+				float sea = v.WaterLevel;
+				float[,] m = IslandGenerator.HeightsMetres(v, size, res);
+				List<IslandObject> list = IslandGenerator.PlanAll(v, m, size);
+				float land = 0f;
+				for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (m[z, x] > sea) land += step * step;
+				string[] four = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest };
+				var n = new float[4];
+				foreach (IslandObject o in list)
+					if (IslandGenerator.SampleHeights(m, res, step, o.Position.x, o.Position.z) > sea)
+					{
+						int k = Array.IndexOf(four, LandKindOf(o.Name));
+						if (k >= 0) n[k]++;
+					}
+				var parts = new List<string>();
+				bool fits = true;
+				for (int k = 0; k < 4; k++)
+				{
+					float here = n[k] * 1000f / Mathf.Max(1f, land), r = own[k] > 0.05f ? here / own[k] : here > 0.05f ? 99f : 1f;
+					// (judged where the island has enough of the kind to go by)
+					bool judged = own[k] * isl.Area / 1000f >= 20f;
+					if (judged && (r < 0.45f || r > 2.2f)) fits = false;
+					parts.Add(IslandGenerator.CategoryLabel(four[k]) + " " + own[k].ToString("F1", inv) + " -> " + here.ToString("F1", inv) + (judged ? " (x" + r.ToString("F2", inv) + ")" : ""));
+				}
+				if (!fits) ok = false;
+				Log("  " + (fits ? "" : "OFF: ") + "a variation of " + label + " (" + TerrainPainter.StyleName(v.Style) + ", " + isl.Area.ToString("F0", inv) + " m² of land, here " + land.ToString("F0", inv) + "): " + string.Join(", ", parts.ToArray()) + " per 1000 m²");
+				yield return null;
+			}
+			if (ok) Log("PASS: the generator's Like Raft is like Raft's islands"); else Fail("the generator's Like Raft is like Raft's islands");
 		}
 	}
 }

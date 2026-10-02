@@ -280,6 +280,28 @@ namespace DynamicIslands
 			Log("PASS: probe");
 		}
 
+		[ConsoleCommand(name: "CIGroundSplit", docs: "Dev, editor: whether the generator sets things down on the terrain's own surface - the editor terrain's heights at random points (Unity's SampleHeight) against IslandGenerator.TerrainSurface (its cells' triangles) and against smooth blending: the largest differences (m)")]
+		public static void GroundSplitCommand(string[] args)
+		{
+			Terrain ground = terraineditor.terrain;
+			if (ground == null || !DynamicIslands.InEditor()) { Fail("CIGroundSplit (in the editor)"); return; }
+			TerrainData data = ground.terrainData;
+			int res = data.heightmapResolution;
+			float[,] m = data.GetHeights(0, 0, res, res);
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) m[z, x] *= data.size.y;
+			float step = data.size.x / (res - 1);
+			var rnd = new System.Random(7);
+			float[] worst = new float[3];
+			for (int i = 0; i < 4000; i++)
+			{
+				float x = (float)rnd.NextDouble() * data.size.x, z = (float)rnd.NextDouble() * data.size.z;
+				float unity = ground.SampleHeight(ground.transform.position + new Vector3(x, 0f, z));
+				for (int split = 0; split < 3; split++) worst[split] = Mathf.Max(worst[split], Mathf.Abs(IslandGenerator.TerrainSurface(m, step, x, z, split) - unity));
+			}
+			Log("  triangles (0,0)-(1,1): " + Num(worst[0]) + " m; the other diagonal: " + Num(worst[1]) + " m; blended: " + Num(worst[2]) + " m");
+			Log((worst[0] < 0.01f ? "PASS" : "FAIL") + ": the generator's ground is the terrain's (largest difference " + Num(worst[0]) + " m)");
+		}
+
 		[ConsoleCommand(name: "CIProtoInfo", docs: "Dev, editor: how catalog objects spawn - their own rotation and scale (Raft's scene objects keep the turn and lean of the copy found in Raft's scene): CIProtoInfo <name>,<name>,...")]
 		public static void ProtoInfoCommand(string[] args)
 		{

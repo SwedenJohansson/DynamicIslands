@@ -66,9 +66,30 @@ namespace DynamicIslands.Editor
 		/// <summary>The islands that count (as RaftUnderwater): Raft's natural islands.</summary>
 		static readonly System.Text.RegularExpressions.Regex Natural = new System.Text.RegularExpressions.Regex(@"^(Big island .+|Big|Small island \d+|Pilot|Boat|Balboa .+|Caravan .+|Temperance Small \d+)$");
 
-		static LandStyle[] styles;
+		/// <summary>Raft's islands with less land than this (m²) are its small ones: its "Small island"s, Pilot and Boat have up
+		/// to about 2100 m², Caravan's small ones about 5000; its big ones 12 000 and more.</summary>
+		public const float SmallLand = 6000f;
+		/// <summary>The fewest objects a size's pool needs to go by (else all of the style's islands are used).</summary>
+		const int MinPooled = 150;
 
-		public static void Reload() { styles = null; }
+		/// <summary>Per style: all of Raft's natural islands of it, only its small ones, only its big ones.</summary>
+		static LandStyle[] styles, smallStyles, bigStyles;
+		/// <summary>Every measured island (by label): m² of land, then trees, bushes, rocks and harvestables on it.</summary>
+		static Dictionary<string, float[]> islands;
+
+		public static void Reload() { styles = smallStyles = bigStyles = null; islands = null; }
+
+		/// <summary>
+		/// An island's own trees, bushes, rocks and harvestables per 1000 m² of its land (on the land only: what lies under
+		/// water around it isn't counted), as measured on it; null if it wasn't.
+		/// </summary>
+		public static float[] IslandDensities(string label)
+		{
+			if (styles == null) Load();
+			float[] n;
+			if (islands == null || label == null || !islands.TryGetValue(label, out n) || n[0] < 1f) return null;
+			return new[] { n[1] * 1000f / n[0], n[2] * 1000f / n[0], n[3] * 1000f / n[0], n[4] * 1000f / n[0] };
+		}
 
 		public static bool Loaded { get { if (styles == null) Load(); return styles.Any(s => s != null && s.Things.Count > 0); } }
 
@@ -78,6 +99,27 @@ namespace DynamicIslands.Editor
 			if (styles == null) Load();
 			LandStyle s = styles[Mathf.Clamp(style, 0, styles.Length - 1)];
 			return s ?? new LandStyle { Name = TerrainPainter.StyleName(style) };
+		}
+
+		/// <summary>
+		/// Raft's small islands of a style, or its big ones: a small island of Raft's is far thicker with things (five times
+		/// the bushes, three times the trees for its land) and everything on it stands nearer the shore and lower down. All of
+		/// the style's islands where Raft has too few of that size to go by.
+		/// </summary>
+		/// <summary>Whether Raft has small islands of the style to go by (only its tropical ones and Caravan's islets).</summary>
+		public static bool HasSmall(int style)
+		{
+			if (styles == null) Load();
+			LandStyle s = smallStyles[Mathf.Clamp(style, 0, smallStyles.Length - 1)];
+			return s != null && s.Things.Sum(t => t.Count) >= MinPooled;
+		}
+
+		public static LandStyle For(int style, bool small)
+		{
+			if (styles == null) Load();
+			LandStyle[] pool = small ? smallStyles : bigStyles;
+			LandStyle s = pool[Mathf.Clamp(style, 0, pool.Length - 1)];
+			return s != null && s.Things.Sum(t => t.Count) >= MinPooled ? s : For(style);
 		}
 
 		static float Num(string s) { float v; return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0f; }
@@ -93,12 +135,18 @@ namespace DynamicIslands.Editor
 
 		static void Load()
 		{
-			styles = new LandStyle[TerrainPainter.Styles.Length];
+			int count = TerrainPainter.Styles.Length;
+			styles = new LandStyle[count]; smallStyles = new LandStyle[count]; bigStyles = new LandStyle[count];
 			byte[] bytes = RaftIslands.ModFile(FileName);
 			if (bytes == null) { Debug.LogWarning("[CUSTOM ISLANDS] " + FileName + " is missing: land objects are placed by the generator's own rules"); return; }
 			var islandStyle = new Dictionary<string, int>();
-			var areas = new Dictionary<int, Dictionary<string, float[]>>();
-			var acc = new Dictionary<int, Dictionary<string, Acc>>();
+			var islandSmall = new Dictionary<string, bool>();
+			islands = new Dictionary<string, float[]>();
+			string[] kinds = { "trees", "bushes", "rocks", "harvest" };
+			// (pools: 0 = all of a style's islands, 1 = its small ones, 2 = its big ones)
+			var areas = new Dictionary<int, Dictionary<string, float[]>>[3];
+			var acc = new Dictionary<int, Dictionary<string, Acc>>[3];
+			for (int p = 0; p < 3; p++) { areas[p] = new Dictionary<int, Dictionary<string, float[]>>(); acc[p] = new Dictionary<int, Dictionary<string, Acc>>(); }
 			try
 			{
 				foreach (string raw in Encoding.UTF8.GetString(bytes).Split('\n'))
@@ -106,6 +154,11 @@ namespace DynamicIslands.Editor
 					string line = raw.TrimEnd('\r');
 					if (line.Length == 0 || line.StartsWith("#")) continue;
 					string[] f = line.Split('\t');
+					// (every island's own numbers, for making one like it)
+					if (f[0] == "land" && f.Length >= 5)
+						islands[f[1]] = new[] { f[4].Split(' ').Where(p => p.IndexOf(':') > 0).Sum(p => Num(p.Substring(p.IndexOf(':') + 1))), 0f, 0f, 0f, 0f };
+					else if (f[0] == "lobj" && f.Length >= 5 && islands.ContainsKey(f[1]) && Array.IndexOf(kinds, f[3]) >= 0)
+						islands[f[1]][1 + Array.IndexOf(kinds, f[3])] += Num(f[4]);
 					// (Raft's natural islands only: towns, the radio tower and the story islands' insides aren't how islands grow)
 					if (f.Length > 1 && !Natural.IsMatch(f[1])) continue;
 					if (f[0] == "land" && f.Length >= 5)
@@ -114,9 +167,14 @@ namespace DynamicIslands.Editor
 						islandStyle[f[1]] = st;
 						var a = new float[BinCount];
 						foreach (string pair in f[4].Split(' ')) { int c = pair.IndexOf(':'); if (c > 0) { int b; if (int.TryParse(pair.Substring(0, c), out b) && b >= 0 && b < BinCount) a[b] = Num(pair.Substring(c + 1)); } }
-						if (!areas.ContainsKey(st)) areas[st] = new Dictionary<string, float[]>();
-						// (islands sharing one terrain - Raft's small islands share a few - count once)
-						areas[st][f[4]] = a;
+						bool small = a.Sum() < SmallLand;
+						islandSmall[f[1]] = small;
+						foreach (int p in new[] { 0, small ? 1 : 2 })
+						{
+							if (!areas[p].ContainsKey(st)) areas[p][st] = new Dictionary<string, float[]>();
+							// (islands sharing one terrain - Raft's small islands share a few - count once)
+							areas[p][st][f[4]] = a;
+						}
 					}
 					else if (f[0] == "lobj" && f.Length >= 14 && islandStyle.ContainsKey(f[1]))
 					{
@@ -124,22 +182,38 @@ namespace DynamicIslands.Editor
 						string name = f[2], cat = f[3];
 						int n = (int)Num(f[4]);
 						if (n <= 0) continue;
-						if (!acc.ContainsKey(st)) acc[st] = new Dictionary<string, Acc>();
-						Acc a;
-						if (!acc[st].TryGetValue(name, out a)) acc[st][name] = a = new Acc { Name = name, Category = cat };
-						foreach (string pair in f[5].Split(' ')) { int c = pair.IndexOf(':'); if (c > 0) { int b; if (int.TryParse(pair.Substring(0, c), out b) && b >= 0 && b < BinCount) a.Counts[b] += Num(pair.Substring(c + 1)); } }
+						var counts = new float[BinCount];
+						foreach (string pair in f[5].Split(' ')) { int c = pair.IndexOf(':'); if (c > 0) { int b; if (int.TryParse(pair.Substring(0, c), out b) && b >= 0 && b < BinCount) counts[b] += Num(pair.Substring(c + 1)); } }
 						float[] h = Triple(f[6]), i = Triple(f[7]), s = Triple(f[8]), t = f[9].Split('/').Select(Num).ToArray();
-						a.Count += n; a.W += n;
-						a.H0 += h[0] * n; a.H1 += h[1] * n; a.H2 += h[2] * n;
-						a.I0 += i[0] * n; a.I1 += i[1] * n; a.I2 += i[2] * n;
-						a.S0 += s[0] * n; a.S1 += s[1] * n; a.S2 += s[2] * n;
-						if (t.Length >= 3) { a.Sand += t[0] * n; a.Grass += t[1] * n; a.Rock += t[2] * n; }
-						a.Size += Num(f[10]) * n; a.Above += Num(f[11]) * n; a.Near += Num(f[12]) * n;
+						foreach (int p in new[] { 0, islandSmall[f[1]] ? 1 : 2 })
+						{
+							if (!acc[p].ContainsKey(st)) acc[p][st] = new Dictionary<string, Acc>();
+							Acc a;
+							if (!acc[p][st].TryGetValue(name, out a)) acc[p][st][name] = a = new Acc { Name = name, Category = cat };
+							for (int b = 0; b < BinCount; b++) a.Counts[b] += counts[b];
+							a.Count += n; a.W += n;
+							a.H0 += h[0] * n; a.H1 += h[1] * n; a.H2 += h[2] * n;
+							a.I0 += i[0] * n; a.I1 += i[1] * n; a.I2 += i[2] * n;
+							a.S0 += s[0] * n; a.S1 += s[1] * n; a.S2 += s[2] * n;
+							if (t.Length >= 3) { a.Sand += t[0] * n; a.Grass += t[1] * n; a.Rock += t[2] * n; }
+							a.Size += Num(f[10]) * n; a.Above += Num(f[11]) * n; a.Near += Num(f[12]) * n;
+						}
 					}
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + FileName + ": " + e.Message); }
+			styles = Build(acc[0], areas[0], count);
+			smallStyles = Build(acc[1], areas[1], count);
+			bigStyles = Build(acc[2], areas[2], count);
+			Debug.Log("[CUSTOM ISLANDS] On the land of Raft's islands: " + string.Join(", ", Enumerable.Range(0, styles.Length).Where(i => styles[i] != null)
+				.Select(i => TerrainPainter.StyleName(i) + " " + styles[i].Things.Count + " kinds (small islands " + (smallStyles[i] != null ? smallStyles[i].Things.Sum(t => t.Count) : 0) +
+					" things, big " + (bigStyles[i] != null ? bigStyles[i].Things.Sum(t => t.Count) : 0) + ")").ToArray()));
+		}
 
+		/// <summary>A pool of islands per style: the land's area per bin and every kind with its densities and where it stands.</summary>
+		static LandStyle[] Build(Dictionary<int, Dictionary<string, Acc>> acc, Dictionary<int, Dictionary<string, float[]>> areas, int count)
+		{
+			var result = new LandStyle[count];
 			foreach (var kv in acc)
 			{
 				var style = new LandStyle { Name = TerrainPainter.StyleName(kv.Key) };
@@ -161,11 +235,10 @@ namespace DynamicIslands.Editor
 				}
 				// (a stable order: the generator's islands must not depend on the file's order)
 				style.Things.Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
-				styles[kv.Key] = style;
+				result[kv.Key] = style;
 			}
-			if (styles[TerrainPainter.Volcanic] == null && styles[TerrainPainter.Desert] != null) styles[TerrainPainter.Volcanic] = styles[TerrainPainter.Desert];
-			Debug.Log("[CUSTOM ISLANDS] On the land of Raft's islands: " + string.Join(", ", Enumerable.Range(0, styles.Length).Where(i => styles[i] != null)
-				.Select(i => TerrainPainter.StyleName(i) + " " + styles[i].Things.Count + " kinds").ToArray()));
+			if (result[TerrainPainter.Volcanic] == null && result[TerrainPainter.Desert] != null) result[TerrainPainter.Volcanic] = result[TerrainPainter.Desert];
+			return result;
 		}
 	}
 }

@@ -278,6 +278,7 @@ namespace DynamicIslands.Editor
 		public static void Setup(Terrain terrain, float waterLevelWorldY, float[,] mask = null)
 		{
 			TerrainData data = terrain.terrainData;
+			ForgetGrassLine(terrain); // (a new island: its land is measured again)
 			EnsureLayers(terrain, AlphamapResolution);
 			ApplyMaterial(terrain);
 			Paint(terrain, waterLevelWorldY, new RectInt(0, 0, data.alphamapWidth, data.alphamapHeight), mask);
@@ -287,6 +288,7 @@ namespace DynamicIslands.Editor
 		public static void ApplySaved(Terrain terrain, float[,,] maps)
 		{
 			TerrainData data = terrain.terrainData;
+			ForgetGrassLine(terrain);
 			EnsureLayers(terrain, maps.GetLength(0));
 			ApplyMaterial(terrain);
 			data.SetAlphamaps(0, 0, maps);
@@ -340,6 +342,40 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Automatic layer weights for one alphamap pixel.</summary>
+		/// <summary>
+		/// Where sand gives way to grass (m above the sea: from - to) on an island with this much land (m²), as on Raft's:
+		/// its small islands are green nearly down to the water (bushes at half a metre stand on grass), its big ones have
+		/// sandy beaches up to 2.5-5 m. In between it moves with the land's size.
+		/// </summary>
+		public static Vector2 GrassLine(float landArea)
+		{
+			float t = Mathf.InverseLerp(Mathf.Log(2000f), Mathf.Log(18000f), Mathf.Log(Mathf.Max(1f, landArea)));
+			return new Vector2(Mathf.Lerp(0.4f, 2.5f, t), Mathf.Lerp(1.4f, 5f, t));
+		}
+
+		static readonly Dictionary<TerrainData, Vector2> grassLines = new Dictionary<TerrainData, Vector2>();
+
+		/// <summary>The terrain's grass line, from its land (measured once per island, on a coarse grid of its heights).</summary>
+		public static Vector2 GrassLineOf(Terrain terrain, float waterLevelWorldY)
+		{
+			TerrainData data = terrain.terrainData;
+			Vector2 line;
+			if (grassLines.TryGetValue(data, out line)) return line;
+			int res = data.heightmapResolution, step = Mathf.Max(1, (res - 1) / 128);
+			float cell = data.size.x / (res - 1) * step, water = (waterLevelWorldY - terrain.transform.position.y) / data.size.y;
+			float[,] h = data.GetHeights(0, 0, res, res);
+			int land = 0;
+			for (int z = 0; z < res; z += step)
+				for (int x = 0; x < res; x += step)
+					if (h[z, x] > water) land++;
+			line = GrassLine(land * cell * cell);
+			grassLines[data] = line;
+			return line;
+		}
+
+		/// <summary>The terrain has another island now: its grass line is measured again when it's next needed.</summary>
+		public static void ForgetGrassLine(Terrain terrain) { if (terrain != null) grassLines.Remove(terrain.terrainData); }
+
 		public static void AutoWeights(Terrain terrain, float waterLevelWorldY, int px, int pz, float[] result)
 		{
 			TerrainData data = terrain.terrainData;
@@ -348,7 +384,8 @@ namespace DynamicIslands.Editor
 			float height = terrain.transform.position.y + data.GetInterpolatedHeight(nx, nz) - waterLevelWorldY; // metres above water
 			float slope = data.GetSteepness(nx, nz); // degrees
 
-			float grass = Mathf.InverseLerp(2.5f, 5f, height);
+			Vector2 line = GrassLineOf(terrain, waterLevelWorldY);
+			float grass = Mathf.InverseLerp(line.x, line.y, height);
 			float sand = 1f - grass;
 			float rock = Mathf.InverseLerp(28f, 42f, slope);
 

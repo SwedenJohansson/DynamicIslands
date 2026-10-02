@@ -258,23 +258,38 @@ namespace DynamicIslands.Editor
 		{
 			RectTransform nature = UIKit.Group(root, "Nature");
 			RectTransform quick = UIKit.Row(nature, 26f, 4f, "Quick");
-			foreach (var q in new[] { new KeyValuePair<string, float>("None", 0f), new KeyValuePair<string, float>("Sparse", 0.18f), new KeyValuePair<string, float>("Like Raft", 0.33f), new KeyValuePair<string, float>("Dense", 0.62f), new KeyValuePair<string, float>("Jungle", 1f) })
+			// (each quick button against Like Raft: every kind as thick on the ground as on Raft's own islands of the style)
+			foreach (var q in new[] { new KeyValuePair<string, float>("None", 0f), new KeyValuePair<string, float>("Sparse", 0.55f), new KeyValuePair<string, float>("Like Raft", 1f), new KeyValuePair<string, float>("Dense", 1.9f), new KeyValuePair<string, float>("Jungle", -1f) })
 			{
-				float v = q.Value;
-				UIKit.Button(quick, q.Key, () => { s.Trees = s.Bushes = v; s.Rocks = s.Harvest = Mathf.Min(v, 0.75f); s.BeachThings = Mathf.Min(v, 0.6f); ShowAll(); },
-					"Set the land's object sliders at once" + (v >= 1f ? " (max: barely walkable)" : ""), -1, 26f, 12);
+				float f = q.Value;
+				UIKit.Button(quick, q.Key, () =>
+				{
+					if (f < 0f) { s.Trees = s.Bushes = 1f; s.Rocks = s.Harvest = 0.75f; s.BeachThings = 0.6f; }
+					else
+					{
+						IslandGenerator.NatureLikeRaft(s);
+						s.Trees = Mathf.Clamp01(s.Trees * f); s.Bushes = Mathf.Clamp01(s.Bushes * f); s.Rocks = Mathf.Clamp01(s.Rocks * f);
+						s.Harvest = Mathf.Clamp01(s.Harvest * f); s.BeachThings = Mathf.Clamp01(s.BeachThings * f);
+					}
+					ShowAll();
+				}, "Set the land's object sliders at once" + (f < 0f ? " (max: barely walkable)" : f == 1f ? " (as on Raft's own islands of the style)" : ""), -1, 26f, 12);
 			}
-			UIKit.Help(quick, "Quick settings for all the land's object sliders at once (not the life under water): None, Sparse, Like Raft (about as dense as Raft's big islands), Dense, and Jungle (the maximum: trees about 3 m apart with bushes between, barely walkable). Fine-tune each kind below.");
-			Func<float, string> amount = v => v <= 0.01f ? "none" : v < 0.25f ? "sparse" : v < 0.45f ? "like Raft" : v < 0.75f ? "dense" : v < 0.97f ? "very dense" : "jungle";
-			Slider(nature, "Trees", 0f, 1f, () => s.Amount(s.Trees), v => s.Trees = v, amount, "Palms, pines, birches, cacti... by style",
+			UIKit.Help(quick, "Quick settings for all the land's object sliders at once (not the life under water). Like Raft sets each kind as thick on the ground as on Raft's own islands of the style - measured on them: a small island like Raft's small ones (five times the bushes and three times the trees for its land, green nearly down to the water), a big one like its big ones (sandy beaches, few things to pick up on the land). Sparse is about a third of that, Dense about three and a half times; Jungle is the maximum: trees about 3 m apart with bushes between, barely walkable. Fine-tune each kind below.");
+			// (each slider's word against its own Like Raft)
+			Func<string, Func<float, string>> amount = cat => v =>
+			{
+				float r = v / Mathf.Max(0.01f, IslandGenerator.LikeRaftAmount(s.Style, cat));
+				return v <= 0.01f ? "none" : r < 0.75f ? "less than Raft" : r < 1.3f ? "like Raft" : v >= 0.97f ? "jungle" : r < 2f ? "dense" : "very dense";
+			};
+			Slider(nature, "Trees", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatTrees), v => s.Trees = v, amount(IslandGenerator.CatTrees), "Palms, pines, birches, cacti... by style",
 				"Trees of the style, where Raft's own islands have them (measured): bamboo by the beach, palms from a few metres inland, mango trees further in (tropical); snowy pines; bushy trees and cacti (desert); birches and pines (forest) - on grass, not on the bare beach or rocky cliffs. At the top they stand about 3 m apart: a jungle. Harvestable palms and trees give Raft's wood and fruit.");
-			Slider(nature, "Bushes and plants", 0f, 1f, () => s.Amount(s.Bushes), v => s.Bushes = v, amount, "Undergrowth between the trees",
+			Slider(nature, "Bushes and plants", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatBushes), v => s.Bushes = v, amount(IslandGenerator.CatBushes), "Undergrowth between the trees",
 				"Bushes, ferns, grass and other undergrowth (snow drifts on snowy islands). They fill the gaps between the trees; dense undergrowth makes an island feel wild.");
-			Slider(nature, "Rocks", 0f, 1f, () => s.Amount(s.Rocks), v => s.Rocks = v, amount, "Boulders on steep and high ground",
+			Slider(nature, "Rocks", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatRocks), v => s.Rocks = v, amount(IslandGenerator.CatRocks), "Boulders on steep and high ground",
 				"Boulders and stones, mostly on steep slopes and high ground, some on the land and beach. Big ones are scaled down so they don't swamp the island.");
-			Slider(nature, "Beach things", 0f, 1f, () => s.Amount(s.BeachThings), v => s.BeachThings = v, amount, "Driftwood and stones on the beach",
+			Slider(nature, "Beach things", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatBeach), v => s.BeachThings = v, amount(IslandGenerator.CatBeach), "Driftwood and stones on the beach",
 				"Driftwood logs and small stones on the beach and the wet sand.");
-			Slider(nature, "Harvestables", 0f, 1f, () => s.Amount(s.Harvest), v => s.Harvest = v, amount, "Stone, clay, sand, berries, pineapples on the land",
+			Slider(nature, "Harvestables", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatHarvest), v => s.Harvest = v, amount(IslandGenerator.CatHarvest), "Stone, clay, sand, berries, pineapples on the land",
 				"Things players collect with Raft's tools on the land and beach: stones, clay and sand, berry bushes or pineapples by style. (What lies under water is below, in Life under water.)");
 			Slider(nature, "Groups", 0f, 1f, () => s.Clusters, v => s.Clusters = v, v => v < 0.15f ? "spread evenly" : v < 0.6f ? "some groves" : "groves and clearings",
 				"Spread evenly, or in groves with clearings", "How much the objects gather: evenly spread on the left; groves of trees, fields of bushes and rock piles with open clearings between them on the right, and corals in reefs with sand between them. The amounts stay the same.");
@@ -290,7 +305,7 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.Help(sq, "The sea around the island is dressed like Raft's own islands of its style, from measurements of them: which corals, sea plants, rocks, pickups and sunken things lie there, how dense they are at each depth, how far from the coast, and on how steep ground. " +
 				"Tropical islands get Raft's coral reefs, sea vines with seaweed, stones, clay, sand, scrap, metal and copper ore on the steep slopes and giant clams; forest islands Balboa's sunken barrels and ore; desert islands Caravan's sea vines and red rock; snowy islands Temperance's bare, icy rock. " +
-				"Like Raft sets them as dense as there; Teeming is three times that.");
+				"Like Raft sets them as dense as there; Teeming is twice that.");
 			Func<float, string> sea = v => v <= 0.01f ? "none" : v < 0.3f ? "sparse" : v < 0.44f ? "less than Raft" : v < 0.57f ? "like Raft" : v < 0.8f ? "richer than Raft" : "teeming";
 			Slider(life, "Corals and plants", 0f, 1f, () => s.AmountSea(s.Water), v => s.Water = v, sea, "Corals, sea vines (with seaweed) and kelp",
 				"Corals of Raft's reefs, sea vines with seaweed to pick, and tall kelp, at the depths they grow at around Raft's islands (most 4-25 m down). They gather in reefs (Groups). Separate from the land, so an island can have a rich reef and a bare top.");
