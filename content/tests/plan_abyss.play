@@ -1,0 +1,19 @@
+# Play test of the plan 'The Abyss Expedition' (CIPlay plan_abyss, in a test world 'CI ...'): each island comes near
+# the one before when its quest is done (or, for the generated sunken island and wreck, when players reach them), and
+# is played to its end with its own test.
+plan The Abyss Expedition
+arrive mine
+include old_mine_islet.play
+arrive shelter
+include shelter_atoll.play
+arrive sunken
+stand
+arrive caverns
+include ironreef_caverns.play
+arrive wreck
+stand
+arrive city
+include drowned_metropolis.play
+arrive abyss
+include the_abyss.play
+plan end
