@@ -1046,6 +1046,32 @@ namespace DynamicIslands
 							}
 							break;
 						}
+						case "roof":
+						{
+							// roof <w> <d> at <x> <z> [y=|h=] [wood] - a hipped roof of Raft's roof blocks over w x d cells of the 1.5 m grid,
+							// its -x -z corner at x z, resting on walls and pillars that stand on a deck at y (over the frame's floor) or h
+							// (over the sea): RaftRoof.Hip, as the generator's huts have it (the user, 2026-10-03: no roof floating over its
+							// pillars). Without a floor or h, the deck is the ground at its corner.
+							int at = Array.IndexOf(t, "at");
+							int rw, rd;
+							if (at != 3 || at + 2 >= t.Length || !int.TryParse(t[1], out rw) || !int.TryParse(t[2], out rd) || rw < 1 || rd < 1) { error = "roof <w> <d> at <x> <z> [y=|h=] [wood]"; break; }
+							var opt = Options(t.Skip(at + 3));
+							float rx = F(t[at + 1]), rz = F(t[at + 2]), deckY = opt.ContainsKey("y") ? F(opt["y"]) : 0f;
+							bool overSea = opt.ContainsKey("h") || !TopFrame.HasFloor;
+							Vector2 corner = WorldXZ(rx, rz);
+							float deckH = opt.ContainsKey("h") ? F(opt["h"]) : GroundY(corner.x, corner.y) - DynamicIslands.EditorWaterLevel + deckY;
+							string err = null;
+							RaftRoof.Hip((n, p, ry) =>
+							{
+								if (err != null) return;
+								var o = new Dictionary<string, string> { { overSea ? "h" : "y", Num((overSea ? deckH : deckY) + p.y) }, { "yaw", Num(ry) } };
+								EditorGameObject e;
+								err = Place(n, p.x, p.z, o, out e);
+								if (e != null) placed++;
+							}, new Vector3(rx + PlacementOptions.GridSize / 2f, RaftRoof.OnWalls, rz + PlacementOptions.GridSize / 2f), rw, rd, opt.ContainsKey("wood"));
+							error = err;
+							break;
+						}
 						case "scatter":
 						{
 							// scatter <Object> <count> at x z r=<m> [seed=] [scale=a-b] [y=] [wet] [any] [yaw=] (yaw: none = random)

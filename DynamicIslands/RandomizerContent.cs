@@ -447,7 +447,8 @@ namespace DynamicIslands.Editor
 			float top = float.MinValue;
 			for (int x = -1; x <= w; x++) for (int z = -1; z <= d; z++) top = Mathf.Max(top, k.Ground(c + new Vector2(x * g, z * g)));
 			Vector3 o = new Vector3(c.x, top, c.y);
-			float deck = top + PlacementOptions.FloatDepth;
+			// (walls, pillars and things on the foundations' planks - FloatDepth, 0.35, put them 0.35 m over them, in the air)
+			float deck = top + PlacementOptions.FoundationPlanks;
 			// (and the ground built up under it to that height, blended over 3 m: on a slope its low side hung 0.7 m in the air)
 			IslandFile f = k.File;
 			float step = f.TerrainSize.x / (f.HeightmapResolution - 1);

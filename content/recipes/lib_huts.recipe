@@ -38,3 +38,24 @@ place Block_Roof_Straight_Thatch - at 0 2.25 y={$y+2.85} yaw=270
 place Block_Roof_Straight_Thatch - at 4.5 2.25 y={$y+2.85} yaw=90
 place Block_Roof_Thatch_Pyramid - at 2.25 2.25 y={$y+4.06}
 end
+
+# boardwalk: a walkway of Raft's wooden floor blocks n long (along +x) and wide blocks across at deck height (y, the
+# floor's top) over the frame's floor, on reef hut posts down both long sides every 3 m and at its ends, stretched from
+# the floor up into the deck's underside (never hanging under it - the user, 2026-10-03). Spans x 0..n*1.5, z
+# 0..wide*1.5. rs / rn: a rail along its south (z 0) / north side - Raft's rope fence, or none (where huts or the quay
+# open onto it).
+macro boardwalk n=4 wide=1 y=2.6 rs=Block_Wall_Fence_Rope rn=Block_Wall_Fence_Rope
+for bx 0.75 {$n*1.5-0.75} 1.5
+for bz 0.75 {$wide*1.5-0.75} 1.5
+place Block_Floor_Wood - at $bx $bz y=$y
+next
+place $rs - at $bx 0 y=$y
+place $rn - at $bx {$wide*1.5} y=$y
+next
+for px 0.1 {$n*1.5-1.6} 3
+place ReefHuts_Pillar3 - at $px 0.1 y=0 sy={($y-0.05)/4.815}
+place ReefHuts_Pillar3 - at $px {$wide*1.5-0.1} y=0 sy={($y-0.05)/4.815}
+next
+place ReefHuts_Pillar3 - at {$n*1.5-0.1} 0.1 y=0 sy={($y-0.05)/4.815}
+place ReefHuts_Pillar3 - at {$n*1.5-0.1} {$wide*1.5-0.1} y=0 sy={($y-0.05)/4.815}
+end

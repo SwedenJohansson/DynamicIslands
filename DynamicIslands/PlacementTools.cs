@@ -22,6 +22,11 @@ namespace DynamicIslands.Editor
 		/// <summary>A floating foundation's own height above the sea, and the deck a player walks on above it - measured on the
 		/// player's raft (CIRaftDeckProbe: the block at 0.13 m, Raft's raft collider 0.22 m higher).</summary>
 		public const float FoundationFloat = 0.13f, FoundationTop = 0.22f;
+		/// <summary>Where Raft's walls, pillars and things stand on a Block_Foundation: its planks, whose top is at the block's
+		/// pivot (its mesh's top 0.001 m over it; kit_found, 2026-10-03) - a wall's foot is 0.04 m under its own pivot, so 0.03 m
+		/// over the block's sets it on the planks. At FoundationTop they hung 0.17 m in the air (the user saw a generated hut's
+		/// walls float). Players still walk on FoundationTop: Raft's raft collider, the islands' CustomIslands_Deck.</summary>
+		public const float FoundationPlanks = 0.03f;
 
 		/// <summary>Grid-snapped position (x/z only) when "Grid" is on.</summary>
 		public static Vector3 Snap(Vector3 p)

@@ -339,7 +339,7 @@ namespace DynamicIslands
 			for (int x = 0; x < 4; x++)
 				for (int z = 0; z < 3; z++)
 					put("Block_Foundation", PlacementOptions.FloatIfBlock("Block_Foundation", origin + new Vector3(x * g, 0, z * g)), 0);
-			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationTop; // the deck of the foundations, as on the player's raft
+			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationPlanks; // the foundations' planks, where walls stand
 			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, -g / 2), 0);
 			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, -g / 2), 0);
 			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, g / 2), 0);
@@ -384,7 +384,7 @@ namespace DynamicIslands
 				int w = s[0], d = s[1];
 				float ground = terrain.SampleHeight(new Vector3(x0, 0f, mid.y)) + terrain.transform.position.y;
 				Vector3 o = new Vector3(x0 + g / 2f, ground, mid.y - d * g / 2f + g / 2f);
-				float deck = ground + PlacementOptions.FloatDepth;
+				float deck = ground + PlacementOptions.FoundationPlanks;
 				for (int x = 0; x < w; x++)
 					for (int z = 0; z < d; z++)
 						put("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f);
