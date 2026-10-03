@@ -2564,6 +2564,8 @@ Raft** - trees, bushes, rocks, things to pick up and the corals as thick on the 
 style (see [4.5](#45-the-island-generator)). Where an island's theme asks for more (Thornwood's jungle) or less (a
 sandbar, a snowfield), its script says so in a line starting `# (nature:`. To see the difference, generate an island
 with **Like Raft** and with **Dense**, and dive at both.
+The themed islands ([16.6](#166-the-themed-islands)) also have Raft's finds in the **shallow sea round them** - sand, clay, stones, metal and
+copper ore, scrap and a giant clam to gather just off the shore, as every one of Raft's islands has.
 
 ### 16.2 The small and medium islands
 
@@ -2734,6 +2736,7 @@ script is in `content\recipes` and the island opens in the editor.
 | ![](images/library/tiki_lagoon.jpg) **Tiki Lagoon** | A beach club on sandy keys, left in a hurry before a storm: a tiki bar, bungalows on stilts over the lagoon, a deep pool with a sunken pedal boat, two runaway goats | A bar of Raft's floor blocks under a thatch hip roof (`roof`), huts on stilts and walkways over water (`stilt_hut`, `boardwalk`), a generator that switches lights and music on (things **shown** by a behaviour) and opens a safe (a **signal**), animals to **catch** |
 | ![](images/library/sun_atoll.jpg) **Sun Atoll** | A ring of sun-baked islets round a lagoon after a weapons test: an observation blockhouse buried in a dune, the tower's stumps round a crater at ground zero, measuring posts behind wire | Rooms in pits under concrete slabs (on the terrain's 1.95 m grid), a trench, a crater dive, a story item that turns a **zone** on (the dosimeter), three films for a projector that opens a safe |
 | ![](images/library/the_safe_room.jpg) **The Safe Room** | A concrete villa on a red desert bluff, broken into one night: the owner and her daughter hid in the steel room behind the study's bookshelf, and the men's dogs still guard the garden | A driveway cut up a cliff face, rooms of the radio tower's pieces, a keypad that wants three story items, a bookshelf that **slides** aside (a mover) and shows hidden dogs, a hatch that **teleports** down an escape shaft |
+| ![](images/library/highmoor_lodge.jpg) **Highmoor Lodge** | A mountain lodge on a snowy hill, closed for the winter: the caretaker's typed pages all over the house, music in the empty ballroom, a maze of young firs with a white bear at its heart, a boiler to vent | A two-storey house of Raft's solid wooden walls with a stair and a hip roof, wings with their own roofs, a maze (evergreen runs with invisible walls, `Helper_Wall`), a **Find pages** step, three valves in order (signals), a door that **slides** aside on a key |
 
 ---
 

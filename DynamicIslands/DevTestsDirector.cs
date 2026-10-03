@@ -627,6 +627,13 @@ namespace DynamicIslands
 				{
 					string key = StoryChain.RuleKey(r.Id);
 					bool brought = WorldDirector.Refs(r.Id, null).Any();
+					// (the story's first island brought at the start - ahead of the raft, not on the Receiver - is there at once:
+					// Raft 2's beacon, 2026-10-03)
+					if (r.StoryPlace == "first" && r.When == "start" && r.Where != "receiver" && r.Where != "sailing")
+					{
+						Check(ref ok, StoryChain.Steps.Contains(key) && brought, "'" + r.Id + "' is the story's first island, brought at the start (" + r.Where + ")" + (brought ? "" : " - NOT BROUGHT"));
+						continue;
+					}
 					Check(ref ok, StoryChain.Steps.Contains(key) && !brought && !StoryChain.Done.Contains(key), "'" + r.Id + "' waits in the story chain (" + r.StoryPlace + "), not brought yet" + (brought ? " - BROUGHT" : ""));
 				}
 				foreach (IntroRule r in p.Rules.Where(r => r.When == "km"))

@@ -11,6 +11,7 @@
 #
 # Built by the recipe player (CIRecipe tiki_lagoon) through the editor's own operations.
 include lib_huts
+include lib_sea
 new
 # (nature: tropical, Like Raft - the generator's marsh grows bamboo only and few bushes: more bushes and rocks here, palms
 # planted on the keys below - CIIslandDensity against Raft's small tropical islands)
@@ -195,6 +196,9 @@ scatter "Pickup_Landmark_Tree_Palm 4" 4 at -16 35 r=6 seed=54
 scatter "Pickup_Landmark_Tree_Palm 1" 4 at 14 36 r=6 seed=55
 scatter "Pickup_Landmark_Tree_Palm 2" 3 at -30 0 r=5 seed=56
 scatter BigPalm2 1 at -26 -20 r=4 seed=57
+
+# --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
+call shallows r=60 deep=5
 
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Tiki Lagoon

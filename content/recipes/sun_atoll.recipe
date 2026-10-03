@@ -12,6 +12,7 @@
 #
 # Built by the recipe player (CIRecipe sun_atoll) through the editor's own operations.
 include lib_rt
+include lib_sea
 new
 # (nature: desert, Like Raft - a few desert trees and scrub on the islets, the lagoon's corals Like Raft)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
@@ -235,6 +236,9 @@ where sunkbarrel
 where goats
 
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
+# --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
+call shallows r=60 deep=5
+
 info title=Sun Atoll
 info author=Custom Islands
 info description=A ring of sun-baked islets round a turquoise lagoon - and in the lagoon, the stumps of a tower round a crater. The last test burned the atoll bare; a scientist stayed to film it. Her three films are still out there, and her safe waits for them.

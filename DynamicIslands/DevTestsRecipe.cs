@@ -1144,7 +1144,7 @@ namespace DynamicIslands
 						}
 						case "scatter":
 						{
-							// scatter <Object> <count> at x z r=<m> [seed=] [scale=a-b] [y=] [wet] [any] [yaw=] (yaw: none = random)
+							// scatter <Object> <count> at x z r=<m> [seed=] [scale=a-b] [y=] [wet] [deep=<m>] [any] [yaw=] (yaw: none = random)
 							int at = Array.IndexOf(t, "at");
 							if (at < 0 || at + 2 >= t.Length || t.Length < 3) { error = "scatter <Object> <count> at <x> <z> r=<m>"; break; }
 							var opt = Options(t.Skip(at + 3));
@@ -1160,7 +1160,11 @@ namespace DynamicIslands
 								Vector2 w = WorldXZ(px, pz);
 								float ground = GroundY(w.x, w.y), sea = DynamicIslands.EditorWaterLevel;
 								if (!opt.ContainsKey("any") && (opt.ContainsKey("wet") ? ground > sea - 0.6f : ground < sea + 0.3f)) continue;
+								// (deep=: no deeper than this under the sea - Raft's finds in the shallows round an island, lib_sea's
+								// shallows: the user, 2026-10-04)
+								if (opt.ContainsKey("deep") && ground < sea - F(opt["deep"])) continue;
 								var o = new Dictionary<string, string>(opt, StringComparer.OrdinalIgnoreCase);
+								o.Remove("deep");
 								o["yaw"] = opt.ContainsKey("yaw") ? opt["yaw"] : Num(rnd.NextDouble() * 360);
 								o["scale"] = Num(s0 + rnd.NextDouble() * (s1 - s0));
 								o.Remove("r"); o.Remove("seed");

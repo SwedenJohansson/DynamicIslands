@@ -12,6 +12,7 @@
 #
 # Built by the recipe player (CIRecipe gilded_skull_cove) through the editor's own operations.
 include lib_huts
+include lib_sea
 new
 # (nature: tropical, Like Raft - palms and jungle on the peaks as on Raft's own tropical islands, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -196,6 +197,9 @@ where blackflag
 where hens
 
 # --- Settings, story items, notes, behaviours, quest (8 steps) ---------------------------------------------------------
+# --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
+call shallows r=60 deep=5
+
 info title=Gilded Skull Cove
 info author=Custom Islands
 info description=Two jungle peaks over a small cove, like the brows of a skull: a pirate captain's camp on the beach, her ship sunk in the cove's mouth, and somewhere on the saddle her hoard. She tore the map in three - find the pieces, read the verse, move the stones and dig.

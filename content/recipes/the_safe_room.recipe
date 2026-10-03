@@ -13,6 +13,7 @@
 # Built by the recipe player (CIRecipe the_safe_room) through the editor's own operations.
 include lib_rt
 include lib_huts
+include lib_sea
 new
 # (nature: desert, Like Raft - acacias and scrub on the bluff, the villa's garden the recipe's own)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
@@ -219,6 +220,9 @@ scatter CaravanIsland_SmallRock_1 5 at -24 0 r=5 seed=41 rot=0,0,0
 scatter CaravanIsland_SmallRock_2 4 at 20 -6 r=4 seed=42 rot=0,0,0
 scatter CaravanIsland_SmallRock_3 4 at 8 -36 r=5 seed=43 rot=0,0,0
 scatter CaravanIsland_SmallRock_1 3 at -14 34 r=4 seed=44 rot=0,0,0
+
+# --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
+call shallows r=60 deep=5
 
 # ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
 info title=The Safe Room
