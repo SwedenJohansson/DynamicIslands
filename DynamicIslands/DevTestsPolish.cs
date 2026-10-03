@@ -184,7 +184,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: editor light"); else Fail("editor light");
 		}
 
-		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
+		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it (with the starter kit, its switch and Give the kit) - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
 		public static void IslandTestCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
 
 		static IEnumerator IslandTestRoutine(bool big)
@@ -200,6 +200,8 @@ namespace DynamicIslands
 			GeneratorWindow.Close();
 			yield return null;
 			Check(ref ok, DynamicIslands.SaveIsland(name), (big ? "a big" : "a small") + " test island saved as '" + name + "'");
+			bool kitWas = IslandTest.KitOn;
+			IslandTest.KitOn = true;
 			IslandTest.Start();
 			Check(ref ok, IslandTest.Busy && IslandTest.Island == name, "Test in a world: on its way");
 			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
@@ -210,16 +212,37 @@ namespace DynamicIslands
 			Check(ref ok, IslandTest.Testing && (SaveAndLoad.CurrentGameFileName ?? "") == IslandTest.WorldName, "in the test world '" + SaveAndLoad.CurrentGameFileName + "' (" + IslandTest.LastStep + ")");
 			Check(ref ok, e != null && e.Root != null && dist >= 0f && dist < CustomIslandSpawner.LandRadius(name) + 5f, "the island is beside the raft and the player on it (" + dist.ToString("0") + " m from its middle)");
 			Check(ref ok, IslandWorldState.Islands.Count() == 1, "only the island being tried is in the test world (" + IslandWorldState.Islands.Count() + " island(s); ones tried before are taken away)");
+			// The starter kit (the user, 2026-10-03): weapons, tools, food and water, hunger and thirst full
+			PlayerInventory inv = me != null ? me.Inventory : null;
+			List<string> missing = IslandTest.KitItems.Where(k => inv == null || inv.GetItemCount(k.Key) < 1).Select(k => k.Key).ToList();
+			Check(ref ok, inv != null && missing.Count == 0, "the starter kit is in the inventory (" + IslandTest.KitItems.Length + " kinds" + (missing.Count > 0 ? "; missing: " + string.Join(", ", missing.ToArray()) : "") + ")");
+			Check(ref ok, me != null && me.Stats.stat_hunger.Normal.Value >= me.Stats.stat_hunger.Normal.Max - 1f && me.Stats.stat_thirst.Normal.Value >= me.Stats.stat_thirst.Normal.Max - 1f,
+				"hunger and thirst are full (" + (me != null ? me.Stats.stat_hunger.Normal.Value.ToString("0") + "/" + me.Stats.stat_thirst.Normal.Value.ToString("0") : "-") + ")");
 			WorldWindow.Open();
 			yield return null;
 			UnityEngine.UI.Button back = WorldWindow.ButtonNamed("BackToEditor");
 			Check(ref ok, back != null && back.gameObject.activeInHierarchy && back.interactable, "the world window offers Back to the editor");
+			UnityEngine.UI.Button kitButton = WorldWindow.ButtonNamed("TestKit"), giveKit = WorldWindow.ButtonNamed("GiveKit");
+			Check(ref ok, kitButton != null && kitButton.gameObject.activeInHierarchy && UIKit.LabelOf(kitButton).text == "Kit: On" && giveKit != null && giveKit.gameObject.activeInHierarchy,
+				"the world window has the kit switch (\"" + (kitButton != null ? UIKit.LabelOf(kitButton).text : "-") + "\") and Give the kit");
+			int arrows = inv != null ? inv.GetItemCount("Arrow_Metal") : 0;
+			if (inv != null) inv.RemoveItem("Arrow_Metal", Mathf.Min(5, arrows));
+			if (giveKit != null) giveKit.onClick.Invoke();
+			yield return null;
+			Check(ref ok, inv != null && inv.GetItemCount("Arrow_Metal") >= arrows - 5 + 20, "Give the kit gives it again (metal arrows " + (inv != null ? inv.GetItemCount("Arrow_Metal") : 0) + ")");
+			if (kitButton != null) kitButton.onClick.Invoke();
+			yield return null;
+			Check(ref ok, !IslandTest.KitOn && kitButton != null && UIKit.LabelOf(kitButton).text == "Kit: Off", "the kit switched off for the next Test (testkit.txt), the button says so");
+			if (kitButton != null) kitButton.onClick.Invoke();
+			yield return null;
+			Check(ref ok, IslandTest.KitOn, "and on again");
 			Screenshot(new[] { "island_test" });
 			yield return new WaitForSeconds(1f);
 			if (back != null) back.onClick.Invoke();
 			for (float t = 0; t < 240f && !(DynamicIslands.InEditor() && !IslandTest.Busy); t += 1f) yield return new WaitForSeconds(1f);
 			yield return new WaitForSeconds(2f);
 			Check(ref ok, DynamicIslands.InEditor() && DynamicIslands.currentIslandName == name, "back in the editor with '" + DynamicIslands.currentIslandName + "' open");
+			IslandTest.KitOn = kitWas;
 			try { DynamicIslands.NewIsland(); IslandFilesWindow.MoveToDeleted(name); System.IO.File.Delete(System.IO.Path.Combine(System.IO.Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), name + IslandFile.Extension)); } catch { }
 			if (ok) Log("PASS: island test"); else Fail("island test");
 		}

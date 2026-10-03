@@ -660,9 +660,28 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 2. The mod goes to the main menu and loads the world **Custom Islands test** - it makes it the first time, as a normal
    world with the plan **No custom islands**, so nothing else turns up.
 3. Your island is put beside the raft and you stand on it. Islands tried there before are taken away first.
+   You arrive with the **starter kit** (below), hunger, thirst, health and oxygen full.
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
+
+**The starter kit.** So you can try everything on the island at once - fight its creatures, chop and dig, explore its
+caves and dive at its reef - Test puts these in your inventory when you arrive (what doesn't fit is dropped at your
+feet):
+
+| For | Items |
+|---|---|
+| Fighting | a metal spear, a machete, a bow and 20 metal arrows |
+| Gathering and building | a metal axe, a building hammer, a scrap hook, a metal fishing rod, a shovel (for buried treasure) |
+| Caves and diving | a head light, flippers, an oxygen bottle |
+| Food and water | 10 cooked meat, 3 canteens of fresh water |
+
+Hunger, thirst, health and oxygen are filled up as well. In the test world, **Esc → Custom Islands** has two buttons
+for it next to Back to the editor:
+- **Kit: On / Off** - switch it off to try your island the way a new player meets it, with empty hands (from the next
+  Test; the choice is remembered in `testkit.txt` in `Mods\DynamicIslands`);
+- **Give the kit** - the kit again right now (lost your spear, ate the food), with hunger, thirst, health and oxygen
+  full.
 
 The test world is made with your last World settings choices (monsters, randomizer, extra options...); change them
 there with **Esc → Custom Islands** if you want to try the island another way. It never counts as a saved world that

@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -31,6 +33,79 @@ namespace DynamicIslands.Editor
 		public static string LastStep { get; private set; }
 
 		static void Step(string s) { LastStep = s; Debug.Log("[CUSTOM ISLANDS] [test] " + s); }
+
+		#region The starter kit
+
+		/// <summary>
+		/// What the player gets on arrival in the test world (the user, 2026-10-03: "the character would start with weapons and
+		/// gathering tools, food and water"): weapons, tools to gather and dig, a head light, flippers and an oxygen bottle for
+		/// caves and dives, food and fresh water. Hunger, thirst, health and oxygen are filled up too.
+		/// </summary>
+		public static readonly KeyValuePair<string, int>[] KitItems =
+		{
+			new KeyValuePair<string, int>("Spear_Scrap", 1), new KeyValuePair<string, int>("Machete", 1),
+			new KeyValuePair<string, int>("Bow", 1), new KeyValuePair<string, int>("Arrow_Metal", 20),
+			new KeyValuePair<string, int>("Axe", 1), new KeyValuePair<string, int>("Hammer", 1),
+			new KeyValuePair<string, int>("Hook_Scrap", 1), new KeyValuePair<string, int>("FishingRod_Metal", 1),
+			new KeyValuePair<string, int>("Shovel", 1), new KeyValuePair<string, int>("HeadLight", 1),
+			new KeyValuePair<string, int>("Flipper", 1), new KeyValuePair<string, int>("OxygenBottle", 1),
+			new KeyValuePair<string, int>("Cooked_GenericMeat", 10), new KeyValuePair<string, int>("Canteen_Water", 3),
+		};
+
+		static string KitFile { get { return Path.Combine(DynamicIslands.assetpath, "testkit.txt"); } }
+
+		/// <summary>Whether Test gives the starter kit (on by default; switched in Esc > Custom Islands while testing, remembered
+		/// in testkit.txt).</summary>
+		public static bool KitOn
+		{
+			get
+			{
+				try { return !File.Exists(KitFile) || !File.ReadAllText(KitFile).Contains("kit=off"); }
+				catch { return true; }
+			}
+			set
+			{
+				try { Directory.CreateDirectory(DynamicIslands.assetpath); SafeFile.WriteAllText(KitFile, "# Test in a world: start with the starter kit (on/off)\nkit=" + (value ? "on" : "off") + "\n"); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] testkit.txt: " + e.Message); }
+			}
+		}
+
+		/// <summary>Gives the local player the starter kit (what doesn't fit in the inventory is dropped at their feet) and
+		/// fills hunger, thirst, health and oxygen. Returns what was given.</summary>
+		public static List<string> GiveKit()
+		{
+			var given = new List<string>();
+			Network_Player player = RAPI.GetLocalPlayer();
+			PlayerInventory inv = player != null ? player.Inventory : null;
+			if (inv == null) return given;
+			foreach (KeyValuePair<string, int> k in KitItems)
+			{
+				Item_Base item = ItemManager.GetItemByName(k.Key);
+				if (item == null) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Raft has no item '" + k.Key + "'"); continue; }
+				try
+				{
+					int before = inv.GetItemCount(k.Key);
+					inv.AddItem(k.Key, k.Value);
+					int left = k.Value - (inv.GetItemCount(k.Key) - before);
+					if (left > 0) inv.DropItem(item, left);
+					given.Add(ContentCatalog.ItemLabel(k.Key) + (k.Value > 1 ? " \u00D7" + k.Value : ""));
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Giving " + k.Key + " failed: " + e.Message); }
+			}
+			try
+			{
+				PlayerStats s = player.Stats;
+				s.stat_hunger.Normal.Value = s.stat_hunger.Normal.Max;
+				s.stat_thirst.Normal.Value = s.stat_thirst.Normal.Max;
+				s.stat_health.Value = s.stat_health.Max;
+				s.stat_oxygen.Value = s.stat_oxygen.Max;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [test] Filling the stats failed: " + e.Message); }
+			Step("Starter kit: " + string.Join(", ", given.ToArray()));
+			return given;
+		}
+
+		#endregion
 
 		static void Stop(string why, bool warn)
 		{
@@ -203,7 +278,9 @@ namespace DynamicIslands.Editor
 			Vector3 stand = Physics.Raycast(top, Vector3.down, out hit, 800f, ~0, QueryTriggerInteraction.Ignore) ? hit.point + Vector3.up * 1.5f : e.Position + Vector3.up * 5f;
 			PlayerMove.To(player, stand);
 			Step("Testing '" + Island + "' (" + e.Position + ")");
-			IslandInfo.Show("Testing '" + Island + "'", "", "Esc > Custom Islands > Back to the editor (the test world isn't saved)");
+			bool kit = KitOn;
+			if (kit) GiveKit();
+			IslandInfo.Show("Testing '" + Island + "'", kit ? "With the starter kit: weapons, tools, food and water" : "", "Esc > Custom Islands > Back to the editor (the test world isn't saved)");
 		}
 	}
 }
