@@ -895,6 +895,8 @@ namespace DynamicIslands
 				string verb = t[0].ToLowerInvariant();
 				steps++;
 				if (verb == "wait") { for (int i = 0; i < Math.Max(1, t.Length > 1 ? (int)F(t[1]) : 1); i++) yield return null; continue; }
+				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
+				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
 				{
 					switch (verb)

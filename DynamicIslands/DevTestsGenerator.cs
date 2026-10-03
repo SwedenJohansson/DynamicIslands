@@ -677,6 +677,66 @@ namespace DynamicIslands
 			return all;
 		}
 
+		[ConsoleCommand(name: "CIGenQuest", docs: "Dev, editor: the generator's Quest steps - islands with quests of 1, 3, 5 and 8 steps: the island's quest has them, every step has what it needs on the island (the note, chest, zone, creatures, map pieces in chests, animals), the hoard last; 0 steps leaves the quest alone; Ctrl+Z brings the old quest back; the window steps aside after Generate")]
+		public static void GenQuestCommand() { DynamicIslands.instance.StartCoroutine(GenQuestRoutine()); }
+
+		static IEnumerator GenQuestRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIGenQuest (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			List<EditorGameObject> objs = null;
+			Func<string, string, bool> has = (name, title) => objs.Any(e => (e.GameObjectName ?? "").StartsWith(name) && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == title);
+			foreach (int n in new[] { 1, 3, 5, 8 })
+			{
+				var gs = new IslandGenSettings { Seed = 777 + n, Radius = 120f, Height = 28f, Roughness = 0.35f, Peaks = 2, ObjectDensity = 0.3f, QuestSteps = n };
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.4f);
+				objs = PlacedEditorObjects();
+				IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
+				var missing = new List<string>();
+				foreach (IslandQuest.Step st in q.Steps)
+				{
+					bool there;
+					switch (st.Type)
+					{
+						case "read": there = objs.Any(e => (e.GameObjectName ?? "").StartsWith("Note_") && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == st.Target); break;
+						case "open": there = objs.Any(e => ContentCatalog.IsLootObject(e.GameObjectName ?? "") && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == st.Target); break;
+						case "reach": there = objs.Any(e => e.GameObjectName == ContentCatalog.TriggerZone && ObjectProps.Get(e.Props, ObjectProps.ZoneId) == st.Target); break;
+						case "kill": case "catch": there = objs.Count(e => { ContentCatalog.CreatureKind ck = ContentCatalog.CreatureOf(e.GameObjectName ?? ""); return ck != null && ck.Label == st.Target; }) > 0; break;
+						case "collect": there = objs.Count(e => ObjectProps.Get(e.Props, ObjectProps.LootItems).Contains(StoryItems.Prefix + st.Target + "*")) >= st.Count && StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == st.Target); break;
+						default: there = false; break;
+					}
+					if (!there) missing.Add(st.Type + "|" + st.Target);
+				}
+				bool last = q.Steps.Count > 0 && q.Steps.Last().Type == "open" && q.Steps.Last().Target.EndsWith("hoard");
+				Check(ref ok, q.Steps.Count == n && missing.Count == 0 && last && q.Title.Length > 0 && (n == 1 || q.Steps[0].Type == "read"),
+					n + " step(s): \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + (missing.Count > 0 ? " - nothing on the island for: " + string.Join(", ", missing.ToArray()) : "") + " (" + IslandGenerator.LastReport.Describe() + ")");
+			}
+			// Quest steps 0: the island's quest as it was; and Ctrl+Z gives the quest before back
+			string before = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps);
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 31, Radius = 90f, Height = 20f, QuestSteps = 0 });
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "no quest steps: the island's quest stays as it was");
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 32, Radius = 120f, Height = 28f, Peaks = 2, QuestSteps = 4 });
+			yield return new WaitForSecondsRealtime(0.3f);
+			bool changed = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) != before;
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, changed && ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "Ctrl+Z after generating a quest brings the island's quest before back");
+			// The window steps aside after Generate (the user: so the new island is in view at once)
+			GeneratorWindow.Open();
+			yield return new WaitForSecondsRealtime(0.5f);
+			System.Reflection.MethodInfo gen = typeof(GeneratorWindow).GetMethod("OnGenerate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+			GeneratorWindow w = UnityEngine.Object.FindObjectOfType<GeneratorWindow>();
+			if (gen != null && w != null) gen.Invoke(w, null);
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, !GeneratorWindow.IsOpen && (GeneratorWindow.LastResult ?? "").StartsWith("Island "), "Generate closes the window and says what it made: \"" + GeneratorWindow.LastResult + "\"");
+			Screenshot(new[] { "genquest_after" });
+			if (ok) Log("PASS: generator quests"); else Fail("generator quests");
+		}
+
 		[ConsoleCommand(name: "CIUnderwaterShots", docs: "Dev, editor: generates an island on the deep sea floor (style: CIUnderwaterShots [Tropical|Snowy|Desert|Forest|Volcanic]) and takes pictures: from above, from the side under water, the reef on the shelf, and the drop-off (shot_uw_*.png)")]
 		public static void UnderwaterShotsCommand(string[] args)
 		{

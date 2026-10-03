@@ -88,6 +88,8 @@ namespace DynamicIslands.Editor
 		public int BuildingCount = 2;
 		/// <summary>A cave set into the land, with a guard and a hoard (GenBuildings).</summary>
 		public bool Caves;
+		/// <summary>A quest made with the island: how many steps (0 = none; GenQuest).</summary>
+		public int QuestSteps;
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -241,6 +243,128 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
+	/// A quest made with the island (the user, 2026-10-03: "select how many steps the quest should have and it generates
+	/// that together with the island"): 1 to 8 steps of the quest editor's own kinds, each with what it needs put on the
+	/// island - a note to read where players land, a lookout to reach, monsters to defeat, map pieces in chests to collect,
+	/// animals to catch, a torn page, a supply crate - and the hoard to open last. A step whose place doesn't fit is left
+	/// out (the report says how many it got). Deterministic for the seed.
+	/// </summary>
+	public static class GenQuest
+	{
+		public const int MaxSteps = 8;
+		static readonly string[] Titles = { "The castaway's trail", "Lost supplies", "The keeper's secret", "The last signal", "The hermit's hoard", "Buried treasure", "The drowned expedition", "The lookout's log" };
+
+		/// <summary>Adds the quest (and its notes, chests, zones, creatures, story item) to the kit's file. Returns how many steps it got (0: none).</summary>
+		public static int Make(MapKit k, IslandGenSettings s)
+		{
+			int want = Mathf.Clamp(s.QuestSteps, 0, MaxSteps);
+			if (want == 0) return 0;
+			System.Random r = k.Rnd;
+			string title = Titles[r.Next(Titles.Length)];
+			var steps = new List<string>();
+			Func<Func<float, float, bool>, float, Vector2?> spot = (ok, apart) => k.Find(k.Mid, s.Radius * 0.85f, ok, apart);
+			// The hoard: high up and out of the way
+			Vector2 hoard = k.Highest(k.Mid, s.Radius * 0.6f);
+			if (want == 1)
+			{
+				k.Chest("Loot_ChestLarge", hoard, "Hidden hoard", MapKit.Loot("Treasure"));
+				steps.Add("open|Hidden hoard|1|Find the hidden hoard (it's up high)");
+				k.Quest(title, "Someone hid a hoard on this island.", "The hoard is yours!", "", steps.ToArray());
+				return 1;
+			}
+			// First: a note where players come ashore
+			Vector2? landing = spot(MapKit.Beach, 10f) ?? spot(MapKit.Dry, 10f);
+			if (landing.HasValue)
+			{
+				k.Note("Note_Paper", landing.Value, "Castaway's note", "If you're reading this, the sea brought you here too. I left what I could for whoever came next - " +
+					"but I didn't make it easy. Look around the island: " + (want > 3 ? "the lookout up high, the pieces of my map, " : "") + "and my hoard at the top.");
+				steps.Add("read|Castaway's note|1|Read the castaway's note on the beach");
+			}
+			// The middle, from what an island can have
+			var pool = new List<string> { "reach", "kill", "collect", "page", "crate", "catch" };
+			for (int i = pool.Count - 1; i > 0; i--) { int j = r.Next(i + 1); string t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+			// (the lookout and the monsters first when there's room for few: they need least)
+			pool = pool.OrderBy(p => p == "catch" ? 2 : p == "page" || p == "crate" ? 1 : 0).ToList();
+			int middle = want - 2;
+			string hostile = s.Style == TerrainPainter.Snowy ? "PolarBear" : s.Style == TerrainPainter.Forest ? "Bear" : s.Style == TerrainPainter.Desert ? "Hyena" : r.NextDouble() < 0.5 ? "Boar" : "Rat";
+			string friendly = s.Style == TerrainPainter.Snowy ? "Goat" : s.Style == TerrainPainter.Desert ? "Llama" : "Chicken";
+			foreach (string kind in pool.Take(middle))
+			{
+				switch (kind)
+				{
+					case "reach":
+					{
+						Vector2 top = k.Highest(k.Mid, s.Radius * 0.9f);
+						if ((top - hoard).magnitude < 12f) { Vector2? other = spot((a, sl) => a > 6f && sl < 30f, 20f); if (other.HasValue) top = other.Value; }
+						k.Zone(top, "lookout", 6f, "From up here you see the whole island.");
+						steps.Add("reach|lookout|1|Climb to the lookout");
+						break;
+					}
+					case "kill":
+					{
+						Vector2? den = spot(MapKit.Dry, 18f);
+						if (!den.HasValue) break;
+						int n = hostile == "Bear" || hostile == "PolarBear" ? 1 : 2 + r.Next(2);
+						k.Creature(hostile, den.Value, n, "Normal", 1f, null, false);
+						ContentCatalog.CreatureKind ck = ContentCatalog.CreatureOf("Creature_" + hostile);
+						string label = ck != null ? ck.Label : hostile;
+						steps.Add("kill|" + label + "|" + n + "|" + (n > 1 ? "Chase off the " + label.ToLowerInvariant() + "s" : "Defeat the " + label.ToLowerInvariant()));
+						break;
+					}
+					case "collect":
+					{
+						string id = "mappiece";
+						int got = 0;
+						for (int c = 0; c < 3; c++)
+						{
+							Vector2? p = spot(MapKit.Dry, 14f);
+							if (!p.HasValue) continue;
+							k.Chest("Loot_ChestSmall", p.Value, "Map piece box", StoryItems.Prefix + id + "*1;" + MapKit.Loot("Basics").Split(';').First());
+							got++;
+						}
+						if (got == 0) break;
+						var defs = StoryItems.Of(k.File.Props);
+						if (!defs.Any(d => d.Id == id)) defs.Add(new StoryItemDef { Id = id, Name = "Map piece", Icon = StoryItems.QuestIcon + "Vasagatan_FourDigitCode", Description = "A torn piece of the castaway's map." });
+						k.File.Props[StoryItems.Key] = StoryItems.Text(defs);
+						steps.Add("collect|" + id + "|" + got + "|Find the " + got + " pieces of the map");
+						break;
+					}
+					case "page":
+					{
+						Vector2? p = spot(MapKit.Dry, 14f);
+						if (!p.HasValue) break;
+						k.Note("Note_Papers", p.Value, "Torn page", "...the hoard is where the island is highest. I marked the way with stones, but the storm took them. Keep climbing.");
+						steps.Add("read|Torn page|1|Find the torn page of the castaway's diary");
+						break;
+					}
+					case "crate":
+					{
+						Vector2? p = spot(MapKit.Dry, 14f);
+						if (!p.HasValue) break;
+						k.Chest("Loot_Crate", p.Value, "Supply crate", MapKit.Loot("Food"));
+						steps.Add("open|Supply crate|1|Find the castaway's supply crate");
+						break;
+					}
+					case "catch":
+					{
+						Vector2? p = spot((a, sl) => a > 1.5f && sl < 12f, 16f);
+						if (!p.HasValue) break;
+						k.Creature(friendly, p.Value, 2, "Normal", 1f, null, true);
+						ContentCatalog.CreatureKind ck = ContentCatalog.CreatureOf("Creature_" + friendly);
+						steps.Add("catch|" + (ck != null ? ck.Label : friendly) + "|1|Catch one of the island's " + (ck != null ? ck.Label.ToLowerInvariant() : friendly.ToLowerInvariant()) + "s (Raft's net launcher)");
+						break;
+					}
+				}
+			}
+			// Last: the hoard
+			k.Chest("Loot_ChestLarge", hoard, "Castaway's hoard", MapKit.Loot("Treasure") + ";" + MapKit.Loot("Metal").Split(';').First());
+			steps.Add("open|Castaway's hoard|1|Open the castaway's hoard at the top of the island");
+			k.Quest(title, "A castaway lived here. Their note should be near the beach.", "You found everything the castaway left behind.", "", steps.ToArray());
+			return steps.Count;
+		}
+	}
+
+	/// <summary>
 	/// Buildings and caves on a generated island (the user, 2026-10-03: "a toggle to generate houses and structures, with
 	/// options for different types, and a checkbox if caves should be generated"). Kinds: castaway huts of Raft's thatch
 	/// and wooden cabins (Raft's foundations, walls, corner pillars and a hipped roof - RaftRoof.Hip - on the ground built up
@@ -293,7 +417,7 @@ namespace DynamicIslands.Editor
 		public static List<string> Apply(IslandFile file, IslandGenSettings s)
 		{
 			var done = new List<string>();
-			if ((!s.Buildings && !s.Caves) || file == null || file.Heights == null) return done;
+			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0) || file == null || file.Heights == null) return done;
 			var k = new MapKit(file, s.Seed * 7919 + 13);
 			System.Random r = k.Rnd;
 			// A cave first: it needs the most room (an outcrop over land, open ground at its mouth)
@@ -303,7 +427,7 @@ namespace DynamicIslands.Editor
 				bool cave = RandomizerIslands.CanBuildCaves && RandomizerIslands.EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
 				done.Add(cave ? "a cave" : RandomizerIslands.CanBuildCaves ? "no cave (no spot fits: it needs a hill by open, level land)" : "no cave (Raft's cave pieces aren't loaded)");
 			}
-			if (!s.Buildings) return done;
+			if (!s.Buildings) { Quest(k, s, done); return done; }
 			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
 			int count = Mathf.Clamp(s.BuildingCount, 1, MaxCount), built = 0;
 			var spots = new List<Vector2>();
@@ -332,7 +456,16 @@ namespace DynamicIslands.Editor
 				done.Add(Label(kind).ToLowerInvariant().TrimEnd('s').Replace("castaway hut", "a castaway hut").Replace("wooden cabin", "a wooden cabin"));
 			}
 			if (built < count) done.Add((count - built) + " building(s) found no level spot");
+			Quest(k, s, done);
 			return done;
+		}
+
+		/// <summary>The quest last: its notes and chests go where the buildings left room.</summary>
+		static void Quest(MapKit k, IslandGenSettings s, List<string> done)
+		{
+			if (s.QuestSteps <= 0) return;
+			int got = GenQuest.Make(k, s);
+			done.Add("a quest of " + got + (got == 1 ? " step" : " steps") + (got == s.QuestSteps ? "" : " (" + (s.QuestSteps - got) + " found no place)"));
 		}
 
 		/// <summary>
@@ -778,6 +911,21 @@ namespace DynamicIslands.Editor
 			}
 			if (made.Count > 0) group.Add(new ObjectVisibilityCommand(made, true));
 
+			// (a generated quest becomes the island's quest - with its story item - in the same undo step)
+			if (s.QuestSteps > 0 && planned != null && planned.Props.ContainsKey(IslandQuest.KeySteps))
+			{
+				IslandFile q = planned;
+				ICommand quest = IslandSettingsUndo.Record(() =>
+				{
+					foreach (string key in new[] { IslandQuest.KeyTitle, IslandQuest.KeyIntro, IslandQuest.KeySteps, IslandQuest.KeyReward, IslandQuest.KeyDone, StoryItems.Key })
+					{
+						string v;
+						if (q.Props.TryGetValue(key, out v) && v.Length > 0) DynamicIslands.currentIslandProps[key] = v;
+						else DynamicIslands.currentIslandProps.Remove(key);
+					}
+				});
+				if (quest != null) group.Add(quest);
+			}
 			// (the island's rule; left as it is when off, so an island set to On on the Island tab keeps it. Part of the
 			// generation's undo step: undoing it left the rule on)
 			if (s.Levels)

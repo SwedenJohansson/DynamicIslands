@@ -464,7 +464,8 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 **Generate** (top bar) makes a whole island for you to start from. The **preview** map on the right follows every
 change; the line under it says how big the island is and how many objects it will get. The **seed** picks one island
 of all possible ones: the same seed and settings always give the same island. Every setting has a **?** to hover.
-Generating replaces the island you have; **Ctrl+Z** brings it back.
+Generating replaces the island you have; **Ctrl+Z** brings it back. After **Generate** the window steps aside so you
+see the new island at once (a message says what it made); **Generate** in the top bar opens it again, with your settings.
 
 ![The generator, Normal tab](images/generator-normal.jpg)
 *The Normal tab: your presets, the style and layout, the size and height (with buttons for the size and height of
@@ -531,6 +532,18 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
   (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same
   settings and seed always give the same buildings in the same places. A preset keeps these settings too.
+- **Quest** (the very last group): **Quest steps**, 0 to 8 - a quest made together with the island, and everything it
+  needs put on the island:
+  - first a **castaway's note** to read where players come ashore;
+  - then, chosen by the seed: a **lookout** to climb to (a trigger zone up high), **monsters** to defeat (the style's own:
+    warthogs or rats, a bear in a forest, a polar bear on snow, hyenas in the desert), **map pieces** to collect from
+    three small chests (a story item, in the journal), a **torn page** to read, a **supply crate** to open, **animals**
+    to catch with Raft's net launcher;
+  - last the **castaway's hoard** to open at the top of the island. With 1 step there is only a hidden hoard.
+
+  It replaces the island's quest (Ctrl+Z brings the old one back): the Island tab's **Quest** shows it, and you can
+  change it there like any quest. On a small island a step whose place doesn't fit is left out; the message says how
+  many steps it got. 0 leaves the island's quest as it is.
 - **My presets:** **Save these settings...** keeps them under a name; **Defaults** starts over.
 
 ![Under water, and a help popup](images/generator-underwater.jpg)
@@ -550,7 +563,10 @@ ladder or foundations). It is worked out with Raft's own player: how steep it ca
 
 **Randomize existing:** click one of Raft's 33 islands (each has a picture). **Something new like it** makes a new
 island with its size, height and look; **A variation of it** starts from the island's own ground and reshapes it
-(stretch, mirror, roughen, coast, valleys...).
+(stretch, mirror, roughen, coast, valleys...). This tab shows only what remakes the chosen island - and a **Quest**
+group - not the Normal tab's other groups (its buildings and caves aren't used here). It remakes the island's
+**ground and nature**: the buildings of Raft's story islands (the Radio Tower's tower, Vasagatan's ship) aren't part of
+it yet.
 
 ![Randomize existing](images/generator-randomize.jpg)
 *Randomize existing: Raft's islands, measured, with a picture each. Here a variation of "Big Island OG".*

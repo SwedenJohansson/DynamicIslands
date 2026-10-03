@@ -365,6 +365,15 @@ namespace DynamicIslands.Editor
 				"How many buildings or scenes", "How many buildings or scenes the island gets, at least 22 m apart on open, level land. A small or steep island has room for fewer: the report under the preview says how many found a spot.", true);
 			Choice(built, "Caves", new[] { "Off", "On" }, () => s.Caves ? 1 : 0, v => s.Caves = v == 1,
 				"A cave set into the land: one of Raft's own cave pieces (Balboa's), its mouth towards open, level ground, with a guard (a bear, polar bear, hyena, warthog or rat by style) and a hoard inside. It needs a hill next to open, level land; if none fits, the report says so.");
+			QuestGroup(root);
+		}
+
+		/// <summary>A quest made with the island: how many steps (Normal and Randomize existing tabs; the user, 2026-10-03).</summary>
+		void QuestGroup(Transform root)
+		{
+			RectTransform quest = UIKit.Group(root, "Quest");
+			Slider(quest, "Quest steps", 0, GenQuest.MaxSteps, () => s.QuestSteps, v => s.QuestSteps = Mathf.RoundToInt(v), v => v < 0.5f ? "no quest" : v.ToString("F0") + " step" + (v < 1.5f ? "" : "s"),
+				"A quest made with the island", "A quest of this many steps, made with the island and its things: first a castaway's note to read where players come ashore, then (by the seed) a lookout to climb to, monsters to defeat, map pieces to collect from small chests, a torn page to find, a supply crate, animals to catch - and last the castaway's hoard at the top of the island. One step: just the hidden hoard. It replaces the island's quest; the Island tab's Quest shows it and you can change it there. A step whose place doesn't fit on a small island is left out (the report says so).", true);
 		}
 
 		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>
@@ -476,7 +485,8 @@ namespace DynamicIslands.Editor
 			SeaFloorChoice(variationGroup);
 			Choice(variationGroup, "Seabed", new[] { "Sand", "Rocky", "Reef ring" }, () => s.Seabed, v => s.Seabed = v, "The shallow sea floor around it: as measured (Sand), with rocky bumps, or with a reef ring just under the surface.");
 
-			BuildContent(root);
+			// (this tab remakes the chosen island: the Normal tab's other groups aren't shown here - the user, 2026-10-03)
+			QuestGroup(root);
 			refresh.Add(() =>
 			{
 				likeGroup.gameObject.SetActive(chosen != null && !variation);
@@ -851,7 +861,7 @@ namespace DynamicIslands.Editor
 			if (tab == TabReady) { OnMakeType(); return; }
 			if (tab == TabRandomize && chosen == null) { SetStatus("Pick one of Raft's islands first."); return; }
 			// (buildings and caves use objects of Raft's own islands: their scenes load first, then it generates)
-			List<string> scenes = PlaceableCatalog.ScenesNeededFor(GenBuildings.NeededNames(s));
+			List<string> scenes = PlaceableCatalog.ScenesNeededFor(GenBuildings.NeededNames(Effective()));
 			if (scenes.Count > 0)
 			{
 				if (loadingBuildings) return;
@@ -865,9 +875,22 @@ namespace DynamicIslands.Editor
 
 		bool loadingBuildings;
 
+		/// <summary>The settings Generate uses: on the Randomize existing tab only what it shows (not the Normal tab's buildings and caves).</summary>
+		IslandGenSettings Effective()
+		{
+			if (tab != TabRandomize) return s;
+			IslandGenSettings run = s.Copy();
+			run.Buildings = false;
+			run.Caves = false;
+			return run;
+		}
+
+		/// <summary>What the last Generate made (the window closes after it; tests read it).</summary>
+		public static string LastResult { get; private set; }
+
 		System.Collections.IEnumerator LoadThenGenerate()
 		{
-			yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(s));
+			yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(Effective()));
 			loadingBuildings = false;
 			if (this != null && gameObject.activeInHierarchy) Generate();
 		}
@@ -876,12 +899,18 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				int n = IslandGenerator.GenerateInEditor(s);
-				IslandGenerator.FrameCamera(s);
+				IslandGenSettings run = Effective();
+				int n = IslandGenerator.GenerateInEditor(run);
+				IslandGenerator.FrameCamera(run);
 				EditorUI.RefreshIsland();
 				GenReport r = IslandGenerator.LastReport;
-				SetStatus("Island " + s.Seed + " generated in " + r.Seconds.ToString("F1") + " s: land about " + r.LandLength.ToString("F0") + " x " + r.LandWidth.ToString("F0") + " m, " + r.Top.ToString("F0") + " m high; " +
-					n + " objects (" + r.Describe() + ")" + (r.Wanted > IslandGenerator.MaxObjects ? " - thinned from " + r.Wanted : "") + ". Ctrl+Z undoes it.");
+				string done = "Island " + s.Seed + " generated in " + r.Seconds.ToString("F1") + " s: land about " + r.LandLength.ToString("F0") + " x " + r.LandWidth.ToString("F0") + " m, " + r.Top.ToString("F0") + " m high; " +
+					n + " objects (" + r.Describe() + ")" + (r.Wanted > IslandGenerator.MaxObjects ? " - thinned from " + r.Wanted : "") + ". Ctrl+Z undoes it.";
+				SetStatus(done);
+				// (the window steps aside so the new island is in view at once - GENERATE opens it again; the user, 2026-10-03)
+				LastResult = done;
+				Close();
+				DynamicIslands.Notify(done);
 			}
 			catch (Exception e)
 			{
