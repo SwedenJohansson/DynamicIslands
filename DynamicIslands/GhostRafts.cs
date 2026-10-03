@@ -181,9 +181,9 @@ namespace DynamicIslands.Editor
 			k.Add("Block_Wall_Thatch", c + new Vector3(0f, 0f, -g / 2), 0f, null, 0f);
 			k.Add("Block_Wall_Thatch", c + new Vector3(g, 0f, g * 1.5f), 180f, null, 0f);
 			k.Add("Block_Wall_Thatch", c + new Vector3(-g / 2, 0f, g), 90f, null, 0f);
-			k.Add("Block_Roof_Straight_Thatch", c + new Vector3(0f, 2.4f, 0f), 0f, null, 0f);
-			k.Add("Block_Roof_Straight_Thatch", c + new Vector3(g, 2.4f, 0f), 0f, null, 0f);
-			if (rnd.NextDouble() < 0.5) k.Add("Block_Roof_Straight_Thatch", c + new Vector3(0f, 2.4f, g), 0f, null, 0f);
+			// (a hipped roof on the pillars and walls - half the time with its back corner gone: the ghost raft is a ruin)
+			bool whole = rnd.NextDouble() < 0.5;
+			RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), c + new Vector3(0f, RaftRoof.OnWalls, 0f), 2, 2, false, i => !whole && i == 3);
 		}
 
 		#endregion

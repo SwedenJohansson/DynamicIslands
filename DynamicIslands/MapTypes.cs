@@ -30,6 +30,74 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
+	/// Roofs of Raft's own roof blocks, put together the way Raft's building snaps them, resting on Raft's walls and pillars
+	/// (both 2.37-2.39 m over the deck). Measured in the editor (recipes kit_roof2, kit_genhuts): a straight piece's pivot is
+	/// on its eave - the edge of its cell - and it climbs 1.2 m across the cell away from it (turned 0: towards -z, 90: -x,
+	/// 180: +z, 270: +x); corners, V ridges, end caps and pyramids sit in their cell's middle (a corner turned 0 has its
+	/// eaves on -x and +z, 90: +x +z, 180: +x -z, 270: -x -z; an end cap turned 0 closes a ridge's +x end). A roof's pivots go
+	/// 2.42 m over the deck, its underside 0.1 m below them, on the walls' and pillars' tops; each ring further in sits
+	/// 1.21 m higher. The generator's huts had one straight piece per cell at the cell's middle: half a cell out over the
+	/// front wall, 0.6 m over its pillars, the back half of the hut open to the sky (the user, 2026-10-03).
+	/// </summary>
+	public static class RaftRoof
+	{
+		/// <summary>How far over the deck a roof on Raft's walls and pillars has its pivots.</summary>
+		public const float OnWalls = 2.42f;
+		/// <summary>How much higher each ring of a roof sits than the one around it.</summary>
+		public const float Ring = 1.21f;
+
+		/// <summary>
+		/// A hipped roof over w x d cells of the 1.5 m grid: add(name, pivot, yaw) for each piece. first: the middle of the
+		/// cell at the -x -z corner, at the roof's pivot height (the deck + OnWalls). One row: a ridge with closed ends (one
+		/// cell: a pyramid); two or more each way: corners, straight pieces along the sides, the inside one ring up. wood:
+		/// Raft's wooden roof blocks instead of thatch. skip(i): leaves the i-th piece out (a ruin's hole in the roof).
+		/// </summary>
+		public static void Hip(Action<string, Vector3, float> add, Vector3 first, int w, int d, bool wood = false, Func<int, bool> skip = null)
+		{
+			int n = 0;
+			Action<string, Vector3, float> put = (name, at, yaw) => { if (skip == null || !skip(n)) add(name, at, yaw); n++; };
+			string straight = wood ? "Block_Roof_Straight_Wood" : "Block_Roof_Straight_Thatch", corner = wood ? "Block_Roof_Corner_Wood" : "Block_Roof_Corner_Thatch",
+				pyramid = wood ? "Block_Roof_Wood_Pyramid" : "Block_Roof_Thatch_Pyramid", cap = wood ? "Block_Roof_Wood_EndCap" : "Block_Roof_Thatch_EndCap",
+				ridge = wood ? "Block_Roof_Wood_StraightV" : "Block_Roof_Thatch_StraightV";
+			float g = PlacementOptions.GridSize;
+			for (; w > 0 && d > 0; w -= 2, d -= 2, first += new Vector3(g, Ring, g))
+			{
+				Vector3 o = first;
+				Func<int, int, Vector3> cell = (x, z) => o + new Vector3(x * g, 0f, z * g);
+				if (w == 1 && d == 1) { put(pyramid, cell(0, 0), 0f); return; }
+				if (d == 1)
+				{
+					put(cap, cell(0, 0), 180f);
+					for (int x = 1; x < w - 1; x++) put(ridge, cell(x, 0), 0f);
+					put(cap, cell(w - 1, 0), 0f);
+					return;
+				}
+				if (w == 1)
+				{
+					put(cap, cell(0, 0), 90f);
+					for (int z = 1; z < d - 1; z++) put(ridge, cell(0, z), 90f);
+					put(cap, cell(0, d - 1), 270f);
+					return;
+				}
+				put(corner, cell(0, 0), 270f);
+				put(corner, cell(w - 1, 0), 180f);
+				put(corner, cell(0, d - 1), 0f);
+				put(corner, cell(w - 1, d - 1), 90f);
+				for (int x = 1; x < w - 1; x++)
+				{
+					put(straight, cell(x, 0) + new Vector3(0f, 0f, -g / 2f), 180f);
+					put(straight, cell(x, d - 1) + new Vector3(0f, 0f, g / 2f), 0f);
+				}
+				for (int z = 1; z < d - 1; z++)
+				{
+					put(straight, cell(0, z) + new Vector3(-g / 2f, 0f, 0f), 270f);
+					put(straight, cell(w - 1, z) + new Vector3(g / 2f, 0f, 0f), 90f);
+				}
+			}
+		}
+	}
+
+	/// <summary>
 	/// Places content on a generated island file: heights come from the file, positions are terrain-local (as in
 	/// IslandFile), and content pushes aside scattered nature around it. Deterministic for a seed.
 	/// </summary>
@@ -439,14 +507,23 @@ namespace DynamicIslands.Editor
 			Vector3 o = new Vector3(k.Mid.x, 0f, k.Mid.y);
 			float floatY = sea + PlacementOptions.FoundationFloat, deck = floatY + PlacementOptions.FoundationTop;
 			int w = 3 + rnd.Next(3), d = 2 + rnd.Next(3);
+			bool second = true;
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
 					if (rnd.NextDouble() > 0.12 || (x == 0 && z == 0)) // a few foundations are gone
 						k.Add("Block_Foundation", o + new Vector3(x * g, floatY, z * g), 0f, null, 0f);
+					else if (x == 1 && z == 0) second = false;
 			k.Add("Block_Pillar_Wood", o + new Vector3(-g / 2, deck, -g / 2), 0f, null, 0f);
 			k.Add("Block_Pillar_Wood", o + new Vector3(g * 1.5f, deck, -g / 2), 0f, null, 0f);
 			k.Add("Block_Wall_Thatch", o + new Vector3(0, deck, -g / 2), 0f, null, 0f);
-			if (rnd.NextDouble() < 0.6) k.Add("Block_Roof_Straight_Thatch", o + new Vector3(0, deck + 2.4f, 0), 0f, null, 0f);
+			// (a shelter over the first two cells - when the second is there: two more pillars at their back and a roof on all four,
+			// as Raft's building puts it)
+			if (rnd.NextDouble() < 0.6 && second)
+			{
+				k.Add("Block_Pillar_Wood", o + new Vector3(-g / 2, deck, g / 2), 0f, null, 0f);
+				k.Add("Block_Pillar_Wood", o + new Vector3(g * 1.5f, deck, g / 2), 0f, null, 0f);
+				RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), o + new Vector3(0f, deck + RaftRoof.OnWalls, 0f), 2, 1);
+			}
 			k.Add("Block_Ladder", o + new Vector3(g * w, deck, g), 90f, null, 0f);
 			var loot = new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Basics") }, { ObjectProps.NoteTitle, "Wreckage" } };
 			k.Add("Loot_Barrel", o + new Vector3(g, deck, g * (d - 1)), 0f, loot, 0f);

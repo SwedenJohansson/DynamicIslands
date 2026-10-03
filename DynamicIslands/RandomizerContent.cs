@@ -463,10 +463,9 @@ namespace DynamicIslands.Editor
 				}
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
-				{
 					k.Add("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f, null, 0f);
-					k.Add("Block_Roof_Straight_Thatch", new Vector3(o.x + x * g, deck + 2.4f, o.z + z * g), 0f, null, 0f);
-				}
+			// (a hipped roof on the walls and the corner pillars, as Raft's building puts one)
+			RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), new Vector3(o.x, deck + RaftRoof.OnWalls, o.z), w, d);
 			for (int x = 0; x < w; x++)
 			{
 				k.Add("Block_Wall_Thatch", new Vector3(o.x + x * g, deck, o.z - g / 2f), 0f, null, 0f);

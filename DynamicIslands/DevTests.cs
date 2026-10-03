@@ -342,15 +342,88 @@ namespace DynamicIslands
 			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationTop; // the deck of the foundations, as on the player's raft
 			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, -g / 2), 0);
 			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, -g / 2), 0);
+			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, g / 2), 0);
+			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, g / 2), 0);
 			put("Block_Wall_Thatch", origin + new Vector3(0, deck, -g / 2), 0);
-			put("Block_Roof_Straight_Thatch", origin + new Vector3(0, deck + 2.4f, 0), 0);
+			// (a roof on the four pillars, as the wreck map type's shelter has: Raft's roof blocks as its building puts them)
+			RaftRoof.Hip((n, p, ry) => put(n, p, ry), origin + new Vector3(0, deck + RaftRoof.OnWalls, 0), 2, 1);
 			put("Block_Ladder", origin + new Vector3(g * 3, deck, g), 90);
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
 			Transform cam = Camera.main.transform;
 			cam.position = origin + new Vector3(-8f, sea + 8f, -12f);
 			cam.LookAt(origin + new Vector3(g * 1.5f, sea, g));
 			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea + PlacementOptions.FoundationFloat)) < 0.01f);
-			Log((floating && spawned.Count == 17 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+			Log((floating && spawned.Count == 20 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+		}
+
+		[ConsoleCommand(name: "CIRoofDemo", docs: "Dev, editor: RaftRoof's hipped roofs of Raft's roof blocks (as the generator's huts get them) over huts of 1 x 1 to 5 x 4 cells in a row through the island's middle, Raft's pillars at every outer corner (an undoable placement): each pillar's top is under the roof (a ray up from it meets the roof within 0.3 m) and doesn't stick out of it (a ray down from above meets the roof first, over the pillar's top) - no roof floating over its pillars (the user, 2026-10-03). old: the generator's huts' roofs before (one straight piece in each cell's middle) - must FAIL. CIRoofDemo [wood|old]")]
+		public static void RoofDemo(string[] args)
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first"); return; }
+			bool wood = args != null && args.Contains("wood"), old = args != null && args.Contains("old");
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Terrain terrain = terraineditor.terrain;
+			Vector2 mid = EditorLandCentre();
+			float g = PlacementOptions.GridSize;
+			var spawned = new List<GameObject>();
+			var pillars = new List<KeyValuePair<GameObject, Vector3>>();
+			Func<string, Vector3, float, GameObject> put = (name, pos, yaw) =>
+			{
+				GameObject go = PlaceableCatalog.Spawn(name, placed);
+				if (go == null) { Log("missing " + name); return null; }
+				go.transform.position = pos;
+				go.transform.rotation = Quaternion.Euler(0, yaw, 0) * go.transform.rotation;
+				go.AddComponent<EditorGameObject>().GameObjectName = name;
+				spawned.Add(go);
+				return go;
+			};
+			int[][] sizes = { new[] { 1, 1 }, new[] { 2, 1 }, new[] { 1, 3 }, new[] { 2, 2 }, new[] { 3, 2 }, new[] { 3, 3 }, new[] { 4, 3 }, new[] { 5, 4 } };
+			float x0 = mid.x - 27f;
+			foreach (int[] s in sizes)
+			{
+				int w = s[0], d = s[1];
+				float ground = terrain.SampleHeight(new Vector3(x0, 0f, mid.y)) + terrain.transform.position.y;
+				Vector3 o = new Vector3(x0 + g / 2f, ground, mid.y - d * g / 2f + g / 2f);
+				float deck = ground + PlacementOptions.FloatDepth;
+				for (int x = 0; x < w; x++)
+					for (int z = 0; z < d; z++)
+						put("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f);
+				for (int x = 0; x <= w; x++)
+					for (int z = 0; z <= d; z++)
+						if (x == 0 || z == 0 || x == w || z == d)
+							pillars.Add(new KeyValuePair<GameObject, Vector3>(put("Block_Pillar_Wood", new Vector3(o.x + (x - 0.5f) * g, deck, o.z + (z - 0.5f) * g), 0f), o + new Vector3((w - 1) * g / 2f, 0f, (d - 1) * g / 2f)));
+				if (old) { for (int x = 0; x < w; x++) for (int z = 0; z < d; z++) put("Block_Roof_Straight_Thatch", new Vector3(o.x + x * g, deck + 2.4f, o.z + z * g), 0f); }
+				else RaftRoof.Hip((n, p, ry) => put(n, p, ry), new Vector3(o.x, deck + RaftRoof.OnWalls, o.z), w, d, wood);
+				x0 += w * g + 3f;
+			}
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
+			// (on the roof blocks' meshes - their colliders sit lower than the thatch at the eaves, under a corner pillar's top: a
+			// pillar is under the roof when its top - 6 cm in from its middle towards the hut's - is under the eave of a roof
+			// block: within 0.3 m of the block's edge, the block's lowest edge within 10 cm of the pillar's top (a block of the
+			// old huts in its cell's middle had a corner pillar 0.8 m from its edges, under thatch 0.6 m up); inside it when no
+			// block over it comes lower than 25 cm under its top)
+			var roofs = spawned.Where(go => go != null && go.GetComponent<EditorGameObject>().GameObjectName.StartsWith("Block_Roof"))
+				.Select(go => go.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, c) => { a.Encapsulate(c); return a; })).ToList();
+			int under = 0, through = 0;
+			foreach (KeyValuePair<GameObject, Vector3> pc in pillars.Where(pc => pc.Key != null))
+			{
+				Bounds b = pc.Key.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, c) => { a.Encapsulate(c); return a; });
+				Vector3 inward = new Vector3(pc.Value.x - b.center.x, 0f, pc.Value.z - b.center.z).normalized * 0.06f;
+				Vector3 top = new Vector3(b.center.x, b.max.y, b.center.z) + inward;
+				var over = roofs.Where(rb => top.x >= rb.min.x && top.x <= rb.max.x && top.z >= rb.min.z && top.z <= rb.max.z).ToList();
+				string at = "  the pillar at " + Num(top.x - mid.x) + " " + Num(top.z - mid.y) + " (top h=" + Num(top.y) + ")";
+				if (over.Count == 0) { Log(at + ": no roof over it"); continue; }
+				Func<Bounds, float> fromEdge = rb => Mathf.Min(Mathf.Min(top.x - rb.min.x, rb.max.x - top.x), Mathf.Min(top.z - rb.min.z, rb.max.z - top.z));
+				if (over.Any(rb => fromEdge(rb) <= 0.3f && Mathf.Abs(rb.min.y - top.y) <= 0.1f)) under++;
+				else Log(at + ": under no roof block's eave (" + string.Join(", ", over.Select(rb => Num(fromEdge(rb)) + " m from its edge, its eave " + Num(rb.min.y - top.y) + " m up").ToArray()) + ") - floating over it");
+				float low = over.Min(rb => rb.min.y) - top.y;
+				if (low >= -0.25f) through++; else Log(at + ": goes " + Num(-low) + " m up past a roof block's lowest edge - through it");
+			}
+			Transform cam = Camera.main.transform;
+			cam.position = new Vector3(mid.x, terrain.SampleHeight(new Vector3(mid.x, 0f, mid.y)) + terrain.transform.position.y + 14f, mid.y - 26f);
+			cam.LookAt(new Vector3(mid.x, cam.position.y - 12f, mid.y));
+			int count = pillars.Count(pc => pc.Key != null);
+			Log((count > 0 && under == count && through == count ? "PASS" : "FAIL") + ": roofs of " + sizes.Length + " huts (" + (old ? "the old ones" : wood ? "wood" : "thatch") + "), " + spawned.Count + " blocks: " + under + " of " + count + " pillars right under the roof, " + through + " of " + count + " inside it");
 		}
 
 		[ConsoleCommand(name: "CIPlaceTest", docs: "Dev, editor: object list search, Ground (with and without Slope) and its undo")]
