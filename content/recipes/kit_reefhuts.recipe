@@ -1,0 +1,34 @@
+# Kit check (not content): Raft's reef huts - walls, pillars, tarpaulin, sticks - and a stilt house built of them over water
+new
+gen Seed=1 Radius=40 Height=4 Shape=4 Roughness=0.1 ObjectDensity=0 Trees=0 Bushes=0 Rocks=0 BeachThings=0 Harvest=0
+gen Hostiles=0 Friendly=0 SeaLife=0 Water=0 SeaRocks=0 SeaFinds=0 Sunken=0
+generate
+brush flatten at 0 0 r=35 s=20 frames=60
+# the pieces in a row
+place ReefHuts_Wall1 w1 at -16 10
+place ReefHuts_Wall2 w2 at -12 10
+place ReefHuts_Wall3 w3 at -8 10
+place ReefHuts_Wall5 w5 at -4 10
+place ReefHuts_PlasticWall1 pw1 at 0 10
+place ReefHuts_PlasticWall4 pw4 at 4 10
+place ReefHuts_Pillar1 p1 at 8 10
+place ReefHuts_Pillar3 p3 at 10 10
+place ReefHuts_Tarpaulin tarp at 14 10 y=2.5
+place ReefHuts_Stick1 st1 at 20 10 y=1
+place ReefHuts_Cloths cl at 26 10 y=2
+# a stilt house: four tall pillars, a deck of Raft's wooden floor on them (a raft's upper floor - no floats), walls of reef hut walls, a tarpaulin roof
+push at -6 -8
+place ReefHuts_Pillar3 - at 0 0
+place ReefHuts_Pillar3 - at 4 0
+place ReefHuts_Pillar3 - at 0 4
+place ReefHuts_Pillar3 - at 4 4
+place Block_Floor_Wood - at 0.75 0.75 y=2.6
+place Block_Floor_Wood - at 2.25 0.75 y=2.6
+place Block_Floor_Wood - at 3.75 0.75 y=2.6
+place Block_Floor_Wood - at 0.75 2.25 y=2.6
+place Block_Floor_Wood - at 2.25 2.25 y=2.6
+place Block_Floor_Wood - at 3.75 2.25 y=2.6
+place Block_Floor_Wood - at 0.75 3.75 y=2.6
+place Block_Floor_Wood - at 2.25 3.75 y=2.6
+place Block_Floor_Wood - at 3.75 3.75 y=2.6
+pop
