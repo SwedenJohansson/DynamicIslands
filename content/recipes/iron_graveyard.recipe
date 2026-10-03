@@ -109,6 +109,13 @@ place "Box Big" bladecrate4 at -1.5 -95.5 ground yaw=15
 place Zone_Trigger barge at -6 -99 h=-4
 place Creature_AnglerFish lurker at -6 -97 h=-5
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): llamas on the mesa's top, dolphins off the beach -
+place Creature_Llama llamas at 5 -15
+prop llamas creature.count=2
+place Creature_Dolphin dolphins at 0 -125 h=-3
+prop dolphins creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest (11 steps) -------------------------------------------------------
 info title=The Iron Graveyard
 info author=Custom Islands

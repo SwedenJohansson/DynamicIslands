@@ -97,6 +97,11 @@ place Zone_Atmosphere crevasse at -24 5 h=6
 place Creature_PolarBear matriarch at -17 5 h=4.5
 place "Box Big" denpack at -14.5 5.5 ground yaw=70
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): goats on the south snowfield -
+place Creature_Goat goats at -30 -40
+prop goats creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest (16 steps) --------------------------------------------------------
 info title=Whiteout Reach
 info author=Custom Islands

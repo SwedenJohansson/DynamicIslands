@@ -79,6 +79,16 @@ place "Box Small" reedchest at -1.6 -1.6 ground yaw=10
 place Crate_Big_02 - at 2.8 1.6 ground yaw=80
 pop
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): hens by the Corps' office, goats on the marsh, dolphins off
+# the north shore -
+place Creature_Chicken hens at -18 23
+prop hens creature.count=3
+place Creature_Goat marshgoats at 25 -15
+prop marshgoats creature.count=2
+place Creature_Dolphin dolphins at 20 115 h=-3
+prop dolphins creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Saltmarsh Ferry
 info author=Custom Islands

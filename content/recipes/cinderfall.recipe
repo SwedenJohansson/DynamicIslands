@@ -80,6 +80,13 @@ place UT_DrawBridgeMechanism_Cogwheel01 valve3 at -7.78 12 h=17.2 yaw=0
 place Zone_Trigger nest at -8 14 h=17.2
 place Creature_StoneBird matriarch at -10 15 h=17.5
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): hens behind the workers' tents, dolphins off the north shore -
+place Creature_Chicken hens at -13 56
+prop hens creature.count=3
+place Creature_Dolphin dolphins at 0 100 h=-3
+prop dolphins creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Cinderfall
 info author=Custom Islands

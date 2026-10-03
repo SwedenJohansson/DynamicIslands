@@ -7,22 +7,6 @@
 # Built by the recipe player (CIRecipe the_frontier) through the editor's own operations.
 include lib_rt
 include lib_huts
-
-# floors: Raft's wooden floor blocks over w x d cells from the frame's corner, their tops at y (5-10 cm over a levelled pad)
-macro floors w=2 d=2 y=0.1
-for fx 0.75 {$w*1.5-0.75} 1.5
-for fz 0.75 {$d*1.5-0.75} 1.5
-place Block_Floor_Wood - at $fx $fz y=$y
-next
-next
-end
-# corners: Raft's wooden pillars at a w x d building's four corners, standing on its floor and up into its roof
-macro corners w=2 d=2 y=0.1
-place Block_Pillar_Wood - at 0 0 y=$y
-place Block_Pillar_Wood - at {$w*1.5} 0 y=$y
-place Block_Pillar_Wood - at 0 {$d*1.5} y=$y
-place Block_Pillar_Wood - at {$w*1.5} {$d*1.5} y=$y
-end
 new
 # (nature: forest: Like Raft's Balboa - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft; thicker than
 # that in the wild west and south of the mesa, where the town and the terraces were cleared out of it - CIIslandDensity)

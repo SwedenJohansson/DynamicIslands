@@ -93,7 +93,8 @@ Pick what you want to do; each line leads to the part of the guide you need.
 15. [Reporting a problem](#15-reporting-a-problem)
 16. [Learn from the library: example islands and plans](#16-learn-from-the-library-example-islands-and-plans)
    - [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
-     [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for)
+     [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for) ·
+     [16.6 The themed islands](#166-the-themed-islands)
 
 ---
 
@@ -2702,8 +2703,8 @@ player (**teleport the player**); doors that slide aside when three seals are se
 | A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks), The Frontier (the hall's sliding doors) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
 | An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve), The Frontier (three valve wheels, the horn's reed, the seal press - each used up only once the quest has counted it) |
-| A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport the player** to its other end) |
-| Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff) |
+| A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport the player** to its other end), The Safe Room (a hatch down an escape shaft and back) |
+| Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |
 | A town | Hightide Harbor (a fishing town on stilts), The Frontier (a harbour town and an upper town of four quarters) |
 | Caves | Old Mine Islet, Ironreef Caverns (four), Wreckers' Cove (a sea cave) |
 | Rooms under the ground | Shelter Atoll |
@@ -2711,13 +2712,28 @@ player (**teleport the player**); doors that slide aside when three seals are se
 | Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |
 | Air pockets for a long dive | The Abyss |
 | A boss (bigger, tougher, tinted) | Ranger's Rest (Old Scar), Thornwood (the Warthog King), Glacier Station (the Polar Bear Queen), The Drowned Metropolis (the Lantern Lord), Scrapyard Haven (the alpha), Coral Observatory (the giant angler), The Abyss (the Abyssal Angler), and one on each of Raft Remade's islands (the Mama bear, the white screecher, the giant angler, the polar bear mother, the hyena alpha...) |
-| Animals to catch | Tide Farm, The Frontier (the grower's goats) |
+| Animals to catch | Tide Farm, The Frontier (the grower's goats), Tiki Lagoon (the petting zoo's runaway goats) |
 | Buildings from Raft's pieces | Signal Rock and Wreckers' Cove (radio tower pieces), Shelter Atoll and Coral Observatory (Selene rooms), Mayor's Wharf (City Hall), Hightide Harbor and The Frontier (Raft's own wooden walls with hip roofs on their pillars) |
 | A raft or a deck of Raft's foundations | Tide Farm, The Abyss |
 | Land shaped with the brushes | Thornwood (a gorge), Glacier Station (a crevasse), Coral Observatory (a blue hole), Scrapyard Haven (a pit and a terrace), The Abyss (a trench with a shelf and a ledge) |
 | An island in Raft's story | The Long Voyage (after each story island), Raft Remade (instead of each story island) |
 | An island made from one of Raft's own (the generator's **like**) | Raft Remade's eight islands |
 | A chain of islands that bring each other | The Abyss Expedition |
+
+
+### 16.6 The themed islands
+
+Islands built round a theme the movies love - a pirate cove, a beach club, a desert villa with a safe room and more -
+each with its own island type and its own quest. Most are the normal size; some are two, three, five or even ten times
+as big (the island's **Radius** in the generator, [4.5](#45-the-island-generator)). Like the other examples, each one's
+script is in `content\recipes` and the island opens in the editor.
+
+| Island | What it is | What it shows you how to build |
+|---|---|---|
+| ![](images/library/gilded_skull_cove.jpg) **Gilded Skull Cove** | Two jungle peaks over a cove like the brows of a skull: a pirate captain's camp, her ship sunk in the cove's mouth, her map torn in three and her hoard under three standing stones | A map of three story items laid together on a table, a stilt lookout to climb, stones to push in a verse's order (each one moves only after the one before it: a chain of **signals**), feral hogs |
+| ![](images/library/tiki_lagoon.jpg) **Tiki Lagoon** | A beach club on sandy keys, left in a hurry before a storm: a tiki bar, bungalows on stilts over the lagoon, a deep pool with a sunken pedal boat, two runaway goats | A bar of Raft's floor blocks under a thatch hip roof (`roof`), huts on stilts and walkways over water (`stilt_hut`, `boardwalk`), a generator that switches lights and music on (things **shown** by a behaviour) and opens a safe (a **signal**), animals to **catch** |
+| ![](images/library/sun_atoll.jpg) **Sun Atoll** | A ring of sun-baked islets round a lagoon after a weapons test: an observation blockhouse buried in a dune, the tower's stumps round a crater at ground zero, measuring posts behind wire | Rooms in pits under concrete slabs (on the terrain's 1.95 m grid), a trench, a crater dive, a story item that turns a **zone** on (the dosimeter), three films for a projector that opens a safe |
+| ![](images/library/the_safe_room.jpg) **The Safe Room** | A concrete villa on a red desert bluff, broken into one night: the owner and her daughter hid in the steel room behind the study's bookshelf, and the men's dogs still guard the garden | A driveway cut up a cliff face, rooms of the radio tower's pieces, a keypad that wants three story items, a bookshelf that **slides** aside (a mover) and shows hidden dogs, a hatch that **teleports** down an escape shaft |
 
 ---
 

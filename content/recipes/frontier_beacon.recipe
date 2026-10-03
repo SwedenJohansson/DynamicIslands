@@ -58,6 +58,13 @@ place Creature_StoneBird sentinel at -3 10 h=17.5
 # --- The supply boat, sunk off the landing: the beacon's spare cell in its crate ----------------------------------
 place "Box Small" supplycrate at -54 -12 ground yaw=30
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): hens by the keeper's hut, dolphins out west -
+place Creature_Chicken hens at -30 -6
+prop hens creature.count=2
+place Creature_Dolphin dolphins at -75 -25 h=-3
+prop dolphins creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Frontier Beacon
 info author=Custom Islands

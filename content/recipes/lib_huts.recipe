@@ -59,3 +59,20 @@ next
 place ReefHuts_Pillar3 - at {$n*1.5-0.1} 0.1 y=0 sy={($y-0.05)/4.815}
 place ReefHuts_Pillar3 - at {$n*1.5-0.1} {$wide*1.5-0.1} y=0 sy={($y-0.05)/4.815}
 end
+
+
+# floors (Raft's wooden buildings, from The Frontier): Raft's wooden floor blocks over w x d cells from the frame's corner, their tops at y (5-10 cm over a levelled pad)
+macro floors w=2 d=2 y=0.1
+for fx 0.75 {$w*1.5-0.75} 1.5
+for fz 0.75 {$d*1.5-0.75} 1.5
+place Block_Floor_Wood - at $fx $fz y=$y
+next
+next
+end
+# corners: Raft's wooden pillars at a w x d building's four corners, standing on its floor and up into its roof
+macro corners w=2 d=2 y=0.1
+place Block_Pillar_Wood - at 0 0 y=$y
+place Block_Pillar_Wood - at {$w*1.5} 0 y=$y
+place Block_Pillar_Wood - at 0 {$d*1.5} y=$y
+place Block_Pillar_Wood - at {$w*1.5} {$d*1.5} y=$y
+end

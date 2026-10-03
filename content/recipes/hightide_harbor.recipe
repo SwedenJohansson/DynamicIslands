@@ -222,6 +222,13 @@ place ReefHuts_Pillar3 outerpost at -47 -11 ground sy=1.07
 place BoatStranded heron at -40 -14 ground yaw=35 roll=-12
 place "Box Big" heronhold at -35.6 -17.2 ground yaw=35
 
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): hens by the water works on the saddle, turtles in the bay -
+place Creature_Chicken hens at 21 -4
+prop hens creature.count=3
+place Creature_Turtle turtles at -35 0 h=-1.5
+prop turtles creature.count=2
+
 # --- Settings, story items, notes, behaviours, quest (13 steps) ------------------------------------------------------
 info title=Hightide Harbor
 info author=Custom Islands
