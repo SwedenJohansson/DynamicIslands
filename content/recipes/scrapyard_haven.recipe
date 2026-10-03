@@ -11,7 +11,8 @@ new
 gen Trees=0.19 Bushes=0.35 Rocks=0.42 Harvest=0.2 BeachThings=0.3
 gen Seed=3355 Radius=110 Height=14 Roughness=0.4 Peaks=2 Shape=6 Style=2 BeachWidth=0.6 Cliffs=0.3 PeakShape=0.3
 gen SeaFloor=0 Shelf=0.5 Seabed=1
-gen Water=0.2 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.4
+# (sea: Raft's desert corals and sea vines - Like Raft 0.5, at 0.2 a quarter of them - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.4
 generate
 
 # --- Terrain: the town's terrace by the bay, the fortress's shelf on the west ridge, the scrap pit in the south ---------

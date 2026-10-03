@@ -4,7 +4,8 @@ new
 gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=8831 Radius=115 Height=16 Roughness=0.55 Peaks=2 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.25 PeakShape=0.35
 gen SeaFloor=0 Shelf=0.45 Seabed=1
-gen Water=0.4 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.4 SeaLife=0.4
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.2 Hostiles=0 Friendly=0.4 SeaLife=0.4
 generate
 
 # --- The temple hill: raised in the north-east, its top levelled for the stone ring ---------------------------------

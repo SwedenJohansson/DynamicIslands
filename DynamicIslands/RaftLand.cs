@@ -157,7 +157,7 @@ namespace DynamicIslands.Editor
 					// (every island's own numbers, for making one like it)
 					if (f[0] == "land" && f.Length >= 5)
 						islands[f[1]] = new[] { f[4].Split(' ').Where(p => p.IndexOf(':') > 0).Sum(p => Num(p.Substring(p.IndexOf(':') + 1))), 0f, 0f, 0f, 0f };
-					else if (f[0] == "lobj" && f.Length >= 5 && islands.ContainsKey(f[1]) && Array.IndexOf(kinds, f[3]) >= 0)
+					else if (f[0] == "lobj" && f.Length >= 5 && islands.ContainsKey(f[1]) && Array.IndexOf(kinds, f[3]) >= 0 && !UnderWaterOnly(f[2]))
 						islands[f[1]][1 + Array.IndexOf(kinds, f[3])] += Num(f[4]);
 					// (Raft's natural islands only: towns, the radio tower and the story islands' insides aren't how islands grow)
 					if (f.Length > 1 && !Natural.IsMatch(f[1])) continue;
@@ -180,6 +180,9 @@ namespace DynamicIslands.Editor
 					{
 						int st = islandStyle[f[1]];
 						string name = f[2], cat = f[3];
+						// (Raft's sea finds - ores, scrap, clams, silver algae - are the sea's: a few lay at the waterline and were
+						// counted as land, and the generator put ore and clams on land; the user wants them under water, 2026-10-03)
+						if (UnderWaterOnly(name)) continue;
 						int n = (int)Num(f[4]);
 						if (n <= 0) continue;
 						var counts = new float[BinCount];
@@ -209,6 +212,12 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] On the land of Raft's islands: " + string.Join(", ", Enumerable.Range(0, styles.Length).Where(i => styles[i] != null)
 				.Select(i => TerrainPainter.StyleName(i) + " " + styles[i].Things.Count + " kinds (small islands " + (smallStyles[i] != null ? smallStyles[i].Things.Sum(t => t.Count) : 0) +
 					" things, big " + (bigStyles[i] != null ? bigStyles[i].Things.Sum(t => t.Count) : 0) + ")").ToArray()));
+		}
+
+		/// <summary>Raft's finds that belong under water only: metal and copper ore, scrap, giant clams, silver algae.</summary>
+		public static bool UnderWaterOnly(string name)
+		{
+			return System.Text.RegularExpressions.Regex.IsMatch(name ?? "", @"^Pickup_Landmark_(Iron \d+|Copper \d+|Scrap \d+_OceanBottom|GiantClam|SilverAlgae)$");
 		}
 
 		/// <summary>

@@ -10,7 +10,8 @@ new
 gen Trees=0.4 Bushes=0.38 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=517 Radius=36 Height=24 Roughness=0.45 Peaks=2 Shape=0 Style=0 BeachWidth=0.4 Cliffs=0.2 PeakShape=0.25
 gen SeaFloor=0 Shelf=0.35 DropOff=0.5 Seabed=0
-gen Water=0.4 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=2 HostileKinds=Boar Friendly=0 SeaLife=0
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.5 Sunken=0.2 Hostiles=2 HostileKinds=Boar Friendly=0 SeaLife=0
 generate
 
 # --- Terrain: a terrace for the ranger station and its watchtower (east, ~10 m up), the den's beach levelled at the

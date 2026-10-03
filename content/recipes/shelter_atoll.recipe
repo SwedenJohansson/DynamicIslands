@@ -15,7 +15,8 @@ new
 gen Trees=0 Bushes=0.25 Rocks=0.3 Harvest=0.15 BeachThings=0.5
 gen Seed=707 Radius=50 Height=3 Roughness=0.35 Peaks=0 Shape=1 Style=0 BeachWidth=0.6 Cliffs=0 PeakShape=0.3
 gen SeaFloor=0 Shelf=0.4 Seabed=1
-gen Water=0.2 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
 generate
 
 # --- The islet: a hill raised from the lagoon floor, its top levelled; it falls away east to the ring ----------------

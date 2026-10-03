@@ -1911,11 +1911,30 @@ namespace DynamicIslands.Editor
 				Func<int, List<int>> cellsOf = i => hab != null ? ground.BinCells[i] : ground.Zones[i];
 				float[] cum = new float[slots];
 				float total = 0f;
+				// (thicker than Like Raft - a jungle - thickens the island's higher ground, not its low shore and flats: under 4 m
+				// above the sea it stays as thick as Raft's, where Raft's bamboo stands thick; the jungle islands' wide low beaches
+				// were fields of bamboo, the review 2026-10-03)
+				float inside = 1f;
+				if (hab != null)
+				{
+					float like = LikeRaftAmount(s.Style, cat), now = AmountOf(s, cat);
+					float factor = like > 0.01f ? now * now / (like * like) : 1f;
+					if (factor > 1.05f)
+					{
+						float coast = 0f, inner = 0f;
+						for (int i = 0; i < slots; i++)
+						{
+							float wi = w[i] * cellsOf(i).Count;
+							if (i % RaftLand.Bins1 <= 1) coast += wi; else inner += wi;
+						}
+						if (inner > 0f) inside = Mathf.Max(1f, (factor * (coast + inner) - coast) / inner);
+					}
+				}
 				for (int i = 0; i < slots; i++)
 				{
 					// (grass-bound kinds: not on the cliffs, WithinHabit wouldn't take a spot there)
 					if (hab != null && hab.OnGrass && i / RaftLand.Bins1 % RaftLand.Bins1 == RaftLand.Bins1 - 1) { cum[i] = total; continue; }
-					total += w[i] * cellsOf(i).Count;
+					total += w[i] * cellsOf(i).Count * (hab != null && i % RaftLand.Bins1 > 1 ? inside : 1f);
 					cum[i] = total;
 				}
 				if (total <= 0f) continue;
@@ -2018,8 +2037,19 @@ namespace DynamicIslands.Editor
 			public float Step;
 			/// <summary>Metres from the nearest land, per cell (z * Res + x).</summary>
 			public float[] Coast;
+			/// <summary>The cells of each depth band, nearest the land first.</summary>
 			public readonly List<int>[] Bands = new List<int>[RaftUnderwater.BandCount];
 			public float Area(int band) { return Bands[band].Count * Step * Step; }
+			/// <summary>How many of a band's cells (the first ones of Bands) lie within this many metres of the land.</summary>
+			public int Within(int band, float reach)
+			{
+				List<int> cells = Bands[band];
+				int lo = 0, hi = cells.Count;
+				while (lo < hi) { int mid = (lo + hi) / 2; if (Coast[cells[mid]] <= reach) lo = mid + 1; else hi = mid; }
+				return lo;
+			}
+			/// <summary>How far from the land a kind goes (m): as far as nearly all of Raft's own.</summary>
+			public static float Reach(SeaThing t) { return t.CoastHigh * 1.3f + 6f; }
 		}
 
 		/// <summary>How far from the land the sea's objects go (Raft: most within 70 m of the coast, big rocks further out).</summary>
@@ -2066,10 +2096,13 @@ namespace DynamicIslands.Editor
 					if (depth < 0.3f || e < 0.5f || depth > MaxSeaDepth || d[i] > SeaReach) continue;
 					g.Bands[RaftUnderwater.BandOf(depth)].Add(i);
 				}
+			// (nearest the land first - ties by cell, so a seed always gives the same island)
+			foreach (List<int> cells in g.Bands) cells.Sort((p, q) => { int c = g.Coast[p].CompareTo(g.Coast[q]); return c != 0 ? c : p.CompareTo(q); });
 			return g;
 		}
 
-		/// <summary>How many objects of each under-water kind (before the cap): Raft's density per depth band x this island's ground in that band x the slider.</summary>
+		/// <summary>How many objects of each under-water kind (before the cap): Raft's density per depth band x this island's ground in that band
+		/// within the kind's reach of the land x the slider.</summary>
 		static Dictionary<string, float> SeaTargets(IslandGenSettings s, SeaGround sea)
 		{
 			var wanted = SeaCategories.ToDictionary(c => c, c => 0f);
@@ -2077,10 +2110,31 @@ namespace DynamicIslands.Editor
 			{
 				float f = SeaFactor(AmountOf(s, cat));
 				if (f <= 0f) continue;
+				f *= SeaCap(s, sea, cat, f);
 				foreach (SeaThing t in SeaThingsOf(s.Style, cat))
-					for (int b = 0; b < RaftUnderwater.BandCount; b++) wanted[cat] += t.Density[b] * sea.Area(b) * f;
+					for (int b = 0; b < RaftUnderwater.BandCount; b++) wanted[cat] += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * sea.Step * sea.Step * f;
 			}
 			return wanted;
+		}
+
+		/// <summary>
+		/// How much of a category's count under water is kept: the rocks at most half as many again as Raft's islands of the
+		/// style have on their sea floor (per m², 0-40 m deep within 60 m of the land, as CIIslandDensity compares them) x the
+		/// slider. Raft's measurement read the ground under its shore boulders as land where their tops break the surface -
+		/// Temperance's ice boulders and Balboa's rocks all in the shallowest band, 0 m from the coast - so a wide shallow shelf
+		/// got a wall of them (Glacier Station: eight times Temperance's, the review 2026-10-03).
+		/// </summary>
+		static float SeaCap(IslandGenSettings s, SeaGround sea, string cat, float f)
+		{
+			if (cat != CatSeaRocks || f <= 0f) return 1f;
+			float raft = RaftUnderwater.DensityOf(s.Style, cat);
+			if (raft <= 0f) return 1f;
+			float zone = 0f, total = 0f, cell = sea.Step * sea.Step;
+			for (int b = 0; b < 5; b++) zone += sea.Within(b, 60f) * cell;
+			foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+				for (int b = 0; b < RaftUnderwater.BandCount; b++) total += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * cell * f;
+			float most = 1.5f * raft / 1000f * zone * f;
+			return total > most ? most / total : 1f;
 		}
 
 		static HashSet<string> coreNames;
@@ -2199,6 +2253,7 @@ namespace DynamicIslands.Editor
 				report.Counts[cat] = 0;
 				float f = SeaFactor(AmountOf(s, cat)) * cap;
 				if (f <= 0f) continue;
+				f *= SeaCap(s, sea, cat, f);
 				var rnd = new System.Random(s.Seed * 4099 + 71 + ci * 577);
 				Vector2 reefOff = RandomOffset(rnd);
 				int placed = 0;
@@ -2208,47 +2263,78 @@ namespace DynamicIslands.Editor
 					if (proto == null) continue;
 					bool pickup = t.Name.StartsWith("Pickup_");
 					float protoSize = Mathf.Max(0.2f, SpawnSize(t.Name)); // (as spawned at the prototype's scale, like Raft's measured size)
+					// (one try at a spot of a depth band within the kind's reach of the land: the spot rules, then the thing set down
+					// there; steep: ores and cliff rocks keep to the steep slopes - the rule the guarantee below may drop)
+					float reach = SeaGround.Reach(t), placeReach = reach;
+					Func<int, System.Random, bool, bool> tryPlace = (b, r, steep) =>
+					{
+						int near = sea.Within(b, placeReach);
+						if (near == 0) return false;
+						int cell = sea.Bands[b][r.Next(near)];
+						float x = (cell % sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step, z = (cell / sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step;
+						float h = ground.At(x, z), depth = Sea - h;
+						if (depth < 0.3f || RaftUnderwater.BandOf(depth) != b) return false;
+						float slope = ground.Slope(x, z);
+						if (t.Slope >= 40f && steep) { if ((float)r.NextDouble() > SS(12f, t.Slope, slope) + 0.08f) return false; } // (ores and cliff rocks keep to the steep slopes)
+						else if (slope > 62f) return false;
+						if (cat == CatWater && s.Clusters > 0f)
+						{
+							// (Raft's corals grow in reefs with sand between them)
+							float nz = Fbm(new Vector2(x, z) / 16f + reefOff, 3);
+							if ((float)r.NextDouble() > Mathf.Lerp(1f, SS(-0.2f, 0.3f, nz), s.Clusters)) return false;
+						}
+						// As big as Raft's (a little either way); never much taller than the water is deep
+						float scale = pickup ? 1f : Mathf.Clamp(t.Size / protoSize, 0.3f, 3f) * (0.8f + 0.4f * (float)r.NextDouble());
+						float actual = protoSize * scale;
+						// (only rocks right at the shore break the surface, as on Raft's islands; further out they stay under water)
+						float room = sea.Coast[cell] < 8f ? Mathf.Max(4f, depth * 1.3f) : Mathf.Max(2.5f, depth * 0.8f);
+						if (!pickup && actual > room) { scale *= room / actual; actual = protoSize * scale; }
+						float foot = SeaFootprint(cat, actual);
+						if (!spots.Free(x, z, foot)) return false;
+						spots.Add(x, z, foot);
+						float y = h - BaseDrop(ground, x, z, t.Name, cat, scale); // (all of its base on the sea floor, as on land)
+						if (t.Above < -0.3f && t.Size > 0.5f) y += Mathf.Max(t.Above / t.Size, -0.6f) * actual; // (sunk into the slope as on Raft's islands)
+						else if (pickup && slope > 30f) y -= 0.15f;
+						y = Mathf.Max(y, LowestShowing(t.Name, scale, ground.Surface(x, z), pickup ? 0.5f : 0.35f)); // (never out of sight: a find half)
+						float yaw = (float)r.NextDouble() * 360f;
+						Vector3 euler = cat == CatSeaRocks ? new Vector3(((float)r.NextDouble() - 0.5f) * 16f, yaw, ((float)r.NextDouble() - 0.5f) * 16f) : new Vector3(0f, yaw, 0f);
+						owners.Add(new IslandObject { Name = t.Name, Position = new Vector3(x, y, z), EulerRotation = euler, Scale = proto.transform.localScale * scale });
+						cats.Add(cat);
+						return true;
+					};
+					int ofKind = 0, bestBand = -1, bestAnyBand = -1;
+					float expectedAll = 0f, bestExpected = 0f, bestAny = 0f;
+					// As many as Raft has on as much ground within their reach of the land - not on all of the band's ground: on a
+					// wide shallow shelf most of it is further out, and its share crowded the strip by the shore - a wall of ice
+					// boulders along Glacier Station's shores, ten times Temperance's (the review, 2026-10-03)
 					for (int b = 0; b < RaftUnderwater.BandCount; b++)
 					{
-						List<int> cells = sea.Bands[b];
-						if (cells.Count == 0 || t.Density[b] <= 0f) continue;
-						float expected = t.Density[b] * sea.Area(b) * f;
+						if (t.Density[b] <= 0f) continue;
+						float onAll = t.Density[b] * sea.Area(b) * f; // (on all of the band's ground: whether the guarantee below gives one)
+						expectedAll += onAll;
+						if (onAll > bestAny) { bestAny = onAll; bestAnyBand = b; }
+						int within = sea.Within(b, reach);
+						if (within == 0) continue;
+						float expected = t.Density[b] * within * sea.Step * sea.Step * f;
+						if (expected > bestExpected) { bestExpected = expected; bestBand = b; }
 						int n = (int)expected + (rnd.NextDouble() < expected - (int)expected ? 1 : 0);
 						for (int attempt = 0, got = 0; attempt < n * 8 + 4 && got < n; attempt++)
-						{
-							int cell = cells[rnd.Next(cells.Count)];
-							float x = (cell % sea.Res + (float)rnd.NextDouble() - 0.5f) * sea.Step, z = (cell / sea.Res + (float)rnd.NextDouble() - 0.5f) * sea.Step;
-							float h = ground.At(x, z), depth = Sea - h;
-							if (depth < 0.3f || RaftUnderwater.BandOf(depth) != b) continue;
-							if (sea.Coast[cell] > t.CoastHigh * 1.3f + 6f) continue;
-							float slope = ground.Slope(x, z);
-							if (t.Slope >= 40f) { if ((float)rnd.NextDouble() > SS(12f, t.Slope, slope) + 0.08f) continue; } // (ores and cliff rocks keep to the steep slopes)
-							else if (slope > 62f) continue;
-							if (cat == CatWater && s.Clusters > 0f)
-							{
-								// (Raft's corals grow in reefs with sand between them)
-								float nz = Fbm(new Vector2(x, z) / 16f + reefOff, 3);
-								if ((float)rnd.NextDouble() > Mathf.Lerp(1f, SS(-0.2f, 0.3f, nz), s.Clusters)) continue;
-							}
-							// As big as Raft's (a little either way); never much taller than the water is deep
-							float scale = pickup ? 1f : Mathf.Clamp(t.Size / protoSize, 0.3f, 3f) * (0.8f + 0.4f * (float)rnd.NextDouble());
-							float actual = protoSize * scale;
-							// (only rocks right at the shore break the surface, as on Raft's islands; further out they stay under water)
-							float room = sea.Coast[cell] < 8f ? Mathf.Max(4f, depth * 1.3f) : Mathf.Max(2.5f, depth * 0.8f);
-							if (!pickup && actual > room) { scale *= room / actual; actual = protoSize * scale; }
-							float foot = SeaFootprint(cat, actual);
-							if (!spots.Free(x, z, foot)) continue;
-							spots.Add(x, z, foot);
-							float y = h - BaseDrop(ground, x, z, t.Name, cat, scale); // (all of its base on the sea floor, as on land)
-							if (t.Above < -0.3f && t.Size > 0.5f) y += Mathf.Max(t.Above / t.Size, -0.6f) * actual; // (sunk into the slope as on Raft's islands)
-							else if (pickup && slope > 30f) y -= 0.15f;
-							y = Mathf.Max(y, LowestShowing(t.Name, scale, ground.Surface(x, z), pickup ? 0.5f : 0.35f)); // (never out of sight: a find half)
-							float yaw = (float)rnd.NextDouble() * 360f;
-							Vector3 euler = cat == CatSeaRocks ? new Vector3(((float)rnd.NextDouble() - 0.5f) * 16f, yaw, ((float)rnd.NextDouble() - 0.5f) * 16f) : new Vector3(0f, yaw, 0f);
-							owners.Add(new IslandObject { Name = t.Name, Position = new Vector3(x, y, z), EulerRotation = euler, Scale = proto.transform.localScale * scale });
-							cats.Add(cat);
-							got++; placed++;
-						}
+							if (tryPlace(b, rnd, true)) { got++; placed++; ofKind++; }
+					}
+					// (each of Raft's finds is there where Raft has them - ores, clay, sand, scrap, clams: the user wants Raft's
+					// resources under water on every island, 2026-10-03; a small island's share of a rare one rounded to none, and
+					// ores keep to steep slopes it may not have - one is placed then, on any slope of its usual depth; and where its
+					// depth lies further out than Raft has it, on the nearest ground of that depth: Tide Farm's copper ore)
+					if (cat == CatSeaFinds && pickup && ofKind == 0 && expectedAll >= 0.1f && bestAnyBand >= 0)
+					{
+						var extra = new System.Random(s.Seed * 7919 + StableHash(t.Name));
+						for (int attempt = 0; attempt < 80 && ofKind == 0 && bestBand >= 0; attempt++)
+							if (tryPlace(bestBand, extra, false)) { placed++; ofKind++; }
+						List<int> band = sea.Bands[bestAnyBand];
+						placeReach = Mathf.Max(reach, sea.Coast[band[Mathf.Min(band.Count - 1, 40)]]);
+						for (int attempt = 0; attempt < 80 && ofKind == 0; attempt++)
+							if (tryPlace(bestAnyBand, extra, false)) { placed++; ofKind++; }
+						placeReach = reach;
 					}
 				}
 				report.Counts[cat] = placed;
@@ -2258,6 +2344,17 @@ namespace DynamicIslands.Editor
 		#endregion
 
 		#region Content: creatures and loot
+
+		/// <summary>A hash of a name that is the same in every run (string.GetHashCode needn't be).</summary>
+		static int StableHash(string s)
+		{
+			unchecked
+			{
+				int h = 23;
+				foreach (char c in s) h = h * 31 + c;
+				return h & 0x7fffffff;
+			}
+		}
 
 		/// <summary>The hostile creatures of each style (AI types), when no kinds are chosen.</summary>
 		static readonly string[][] StyleHostiles =

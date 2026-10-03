@@ -10,7 +10,8 @@ new
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
 gen Seed=907 Radius=30 Height=12 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.3 PeakShape=0.3
 gen SeaFloor=1 Seabed=1
-gen Water=0.3 SeaRocks=0.5 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.3 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0
 generate
 
 # --- Terrain: the village's pad (east), the lab's plateau (south-west), the shed's ledge (north) levelled ----------

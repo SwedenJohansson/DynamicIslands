@@ -14,7 +14,8 @@ new
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
 gen Seed=2077 Radius=130 Height=5 Roughness=0.4 Peaks=1 Shape=2 Style=0 BeachWidth=0.6 Cliffs=0 PeakShape=0.3
 gen SeaFloor=0 Shelf=0.3 Seabed=1
-gen Water=0.2 SeaRocks=0.6 SeaFinds=0.6 Sunken=0.6 Hostiles=0 Friendly=0 SeaLife=0.6
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.3 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.6 Hostiles=0 Friendly=0 SeaLife=0.6
 generate
 
 # --- The sea floor: the old city centre deeper, the Spire's foundations a dark pit ----------------------------------

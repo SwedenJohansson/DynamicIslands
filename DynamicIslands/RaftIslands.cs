@@ -309,7 +309,9 @@ namespace DynamicIslands.Editor
 			for (int k = 0; k < cats.Length; k++)
 			{
 				float like = IslandGenerator.LikeRaftAmount(s.Style, cats[k]), typical = IslandGenerator.TypicalDensity(s.Style, cats[k], small);
-				v[k] = own != null && typical > 0f ? Mathf.Clamp01(like * Mathf.Sqrt(own[k] / typical)) : like;
+				// (at most twice Like Raft: a tiny island with a handful of plants - Raft's Radar - scaled up to the slider's top,
+				// twelve times Raft's harvestables on Radio Tower Remade, 2026-10-03)
+				v[k] = own != null && typical > 0f ? Mathf.Clamp01(Mathf.Min(like * Mathf.Sqrt(own[k] / typical), like * 2f)) : like;
 			}
 			s.Trees = v[0]; s.Bushes = v[1]; s.Rocks = v[2]; s.Harvest = v[3];
 			s.BeachThings = IslandGenerator.LikeRaftAmount(s.Style, IslandGenerator.CatBeach);

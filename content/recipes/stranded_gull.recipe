@@ -11,7 +11,8 @@ new
 gen Trees=0.15 Bushes=0.25 Rocks=0.1 Harvest=0.24 BeachThings=0.7
 gen Seed=421 Radius=22 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 BeachWidth=1 Cliffs=0 PeakShape=0
 gen Stretch=1.7 StretchAngle=30 SeaFloor=1 Seabed=2
-gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0
 generate
 
 # --- The beached boat on the south-east shore (Raft's stranded boat, listing on the sand): the yacht's tender -------
@@ -57,7 +58,8 @@ scatter "Pickup_Landmark_Tree_Palm 2" 2 at -10 0 r=5 seed=31
 scatter "Pickup_Landmark_Tree_Palm 4" 2 at 8 4 r=5 seed=32
 scatter "Pickup_Landmark_Tree_Palm 1" 1 at -16 -4 r=3 seed=33
 scatter Bush2 5 at 0 0 r=14 seed=34
-scatter Pickup_Landmark_GiantClam 3 at 12 0 r=6 seed=35
+# (giant clams in the shallows off the beach, not on it: Raft has them under water)
+scatter Pickup_Landmark_GiantClam 3 at 20 0 r=9 wet seed=35
 scatter "Pickup_Landmark_Rock 2" 4 at -8 -6 r=6 seed=36
 
 # --- The yacht's stern on the reef slope (south-east, 8 to 13 m down): engine, lockers, a container, the safe ------

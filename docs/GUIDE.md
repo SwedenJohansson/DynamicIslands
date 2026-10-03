@@ -470,12 +470,19 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   bare beach, palms inland on grass, boulders on steep ground - and as thick on the land as there, kind by kind,
   measured on Raft's islands of the style: a big island like Raft's big ones (sparse, few things to pick up on the
   land), a small one like its small ones (bamboo, bushes and flowers close together, green nearly down to the water).
-  Each slider's word says how it stands against Raft ("less than Raft", "like Raft", "dense"...). Everything stands with **all of its base on the ground**:
+  Each slider's word says how it stands against Raft ("less than Raft", "like Raft", "dense"...). Thicker than Like
+  Raft (**Dense**, **Jungle**) thickens the island's higher ground: its low beach and flats - under 4 m above the sea,
+  where Raft's islands grow bamboo - stay as thick as Raft's, so a jungle island's beaches don't become fields of
+  bamboo. Everything stands with **all of its base on the ground**:
   on a slope a rock, a bush or a log goes down to the lowest ground under it (its high side a little in the slope, as
   Raft's own are), and flat things such as snow drifts lie along gentle slopes and are left off steep ones. They are
   set down on the terrain's own surface (its triangles), so nothing hangs in the air over a steep, uneven slope.
 - **Life under water:** corals, sea vines, kelp, rocks, stones, ores, giant clams and sunken barrels, placed like
-  around Raft's own islands. **Like Raft** is as dense as Raft's own reefs (about 160 corals and plants per 1000 m²
+  around Raft's own islands: each kind as close to the shore as there (boulders by the shore, rock formations on the
+  drop-off) and as thick, and at Like Raft never more rocks than half as many again as around Raft's own islands - an
+  island with a wide shallow shelf gets more sea floor, not more rocks crowded along its beaches. Raft's resources stay where Raft has them: metal and copper ore, scrap, giant clams and
+  silver algae only under water, never on the land - and every island with sea floor around it gets at least one of
+  each that Raft's islands of its style have, so even a small island has its ore. **Like Raft** is as dense as Raft's own reefs (about 160 corals and plants per 1000 m²
   2-10 m down, with sand between the reef patches); **Teeming**, the top of the sliders, is twice that. More than
   that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) gathers them into reefs with
   sand between.

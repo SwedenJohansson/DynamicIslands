@@ -14,7 +14,8 @@ new
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.45
 gen Seed=5122 Radius=95 Height=28 Roughness=0.4 Peaks=2 Shape=6 Style=0 BeachWidth=0.5 Cliffs=0.5 PeakShape=0.4
 gen SeaFloor=0 Shelf=0.5 Seabed=1
-gen Water=0.3 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.5
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.5
 generate
 
 # --- Terrain: the hamlet's terrace on the north shore, the lantern's point, the den's passage into the east arm --------

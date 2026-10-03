@@ -10,7 +10,8 @@ new
 # (nature: a rocky island: half again Raft's rocks - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.28 Rocks=0.55 Harvest=0.24 BeachThings=0.3
 gen Seed=311 Radius=30 Height=17 Roughness=0.55 Peaks=1 Shape=6 Style=0 Cliffs=0.6 BeachWidth=0.25 PeakShape=0.55
-gen SeaFloor=1 Seabed=1 Water=0.3 SeaRocks=0.6 SeaFinds=0.2 Sunken=0.1
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen SeaFloor=1 Seabed=1 Water=0.5 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.1
 gen Hostiles=0 Friendly=0 SeaLife=0
 generate
 

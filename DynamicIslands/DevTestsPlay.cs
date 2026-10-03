@@ -525,7 +525,7 @@ namespace DynamicIslands
 			foreach (Vector3 rel in points.Select(q => q - playEntry.Position).ToList())
 			{
 				float stuck = 0f, total = 0f;
-				int animalWaits = 0;
+				int animalWaits = 0, sidesteps = 0;
 				Vector3 last = player.transform.position;
 				Vector3 target = playEntry.Position + rel;
 				while (ScFlat(player.transform.position, target = playEntry.Position + rel) > 0.7f)
@@ -544,6 +544,9 @@ namespace DynamicIslands
 					{
 						Collider blocker = WhatBlocks(player, dir);
 						AI_NetworkBehaviour animal = blocker != null ? blocker.GetComponentInParent<AI_NetworkBehaviour>() : null;
+						// (nothing ahead, but an animal close by: a warthog charging from the side knocks the player about -
+						// Thornwood's king and his guards round its stone ring, 2026-10-03)
+						if (blocker == null) animal = NearestAnimal(now, 3f);
 						if (animal != null && animalWaits < 2 && total < 40f)
 						{
 							animalWaits++;
@@ -559,6 +562,23 @@ namespace DynamicIslands
 							yield return new WaitForSeconds(3f);
 							continue;
 						}
+						// (nothing a sphere at knee height finds ahead - a low lip of rock or ground: a player steps round it, one
+						// way and then the other)
+						if (blocker == null && sidesteps < 2 && total < 40f)
+						{
+							Vector3 side = Vector3.Cross(Vector3.up, dir).normalized * (sidesteps == 0 ? 1f : -1f);
+							sidesteps++;
+							Log("  stuck with nothing ahead: a step to the side");
+							for (float t = 0f; t < 0.6f; t += Time.deltaTime)
+							{
+								KeepAlive(player);
+								cc.Move(side * pc.normalSpeed * Time.deltaTime);
+								yield return null;
+							}
+							stuck = 0f;
+							last = player.transform.position;
+							continue;
+						}
 						result(false, "stuck at " + (now - playEntry.Position).ToString("F1") + " on the way to " + (target - playEntry.Position).ToString("F1") +
 							" (in the way: " + (blocker != null ? BlockerName(blocker) : "nothing found ahead") + ")");
 						yield break;
@@ -570,6 +590,13 @@ namespace DynamicIslands
 		}
 
 		/// <summary>What stops a walking player: the nearest collider within a metre ahead at waist height, not the player's own.</summary>
+		/// <summary>The nearest living animal within this many metres of a point (or null).</summary>
+		static AI_NetworkBehaviour NearestAnimal(Vector3 at, float within)
+		{
+			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && a.isActiveAndEnabled && Vector3.Distance(a.transform.position, at) <= within)
+				.OrderBy(a => Vector3.Distance(a.transform.position, at)).FirstOrDefault();
+		}
+
 		static Collider WhatBlocks(Network_Player player, Vector3 dir)
 		{
 			RaycastHit[] hits = Physics.SphereCastAll(player.transform.position + Vector3.up * 0.6f, 0.35f, dir, 1.2f, ~0, QueryTriggerInteraction.Ignore);

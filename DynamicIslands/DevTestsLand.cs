@@ -423,9 +423,22 @@ namespace DynamicIslands
 			string[] landCats = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest, IslandGenerator.CatBeach };
 			string[] seaCats = { IslandGenerator.CatWater, IslandGenerator.CatSeaRocks, IslandGenerator.CatSeaFinds, IslandGenerator.CatSunken };
 			var onLand = landCats.ToDictionary(c => c, c => 0);
+			// (the kinds behind each number: "Radio Tower Remade: 124 harvestables" needed them named)
+			var kinds = new Dictionary<string, Dictionary<string, int>>();
+			Action<string, string> count = (where, n) =>
+			{
+				Dictionary<string, int> k;
+				if (!kinds.TryGetValue(where, out k)) kinds[where] = k = new Dictionary<string, int>();
+				k[n] = k.ContainsKey(n) ? k[n] + 1 : 1;
+			};
+			Func<string, string> top = where => kinds.ContainsKey(where) ? "  [" + string.Join(", ", kinds[where].OrderByDescending(kv => kv.Value).Take(5).Select(kv => kv.Key + " " + kv.Value).ToArray()) + "]" : "";
 			var underWater = seaCats.ToDictionary(c => c, c => 0);
 			var finds = new SortedDictionary<string, int>();
+			// (further out than the zone: Raft's copper lies 50 m out as a rule, up to 135 m - Tide Farm's at 60-84 m was "missing")
+			var findsOut = new SortedDictionary<string, int>();
 			var findsDry = new SortedDictionary<string, int>();
+			var dryAt = new List<string>();
+			Vector2 mid = EditorLandCentre();
 			int vines = 0, beachThings = 0, other = 0;
 			foreach (EditorGameObject e in PlacedEditorObjects())
 			{
@@ -435,14 +448,20 @@ namespace DynamicIslands
 				string seaCat = RaftUnderwater.CategoryOf(n), landCat;
 				if (above < -0.3f && h < 0f)
 				{
-					if (!nearLand(p)) { farOut++; continue; }
-					if (seaCat != null) underWater[seaCat]++; else other++;
+					if (!nearLand(p))
+					{
+						farOut++;
+						if (seaCat == IslandGenerator.CatSeaFinds) { string kf = FindKind(n); findsOut[kf] = findsOut.ContainsKey(kf) ? findsOut[kf] + 1 : 1; }
+						continue;
+					}
+					if (seaCat != null) { underWater[seaCat]++; count("sea " + seaCat, n); } else other++;
 					if (seaCat == IslandGenerator.CatSeaFinds) { string k = FindKind(n); finds[k] = finds.ContainsKey(k) ? finds[k] + 1 : 1; }
 					if (Regex.IsMatch(n, @"^(SeaVine3|SeaVine3_klump|[Ss]eavine_tongue|Pillar_\d+)$")) vines++;
 				}
 				else if (landKind.TryGetValue(n, out landCat))
 				{
 					onLand[landCat]++;
+					count("land " + landCat, n);
 					if (h < 1.5f && (landCat == IslandGenerator.CatBeach || landCat == IslandGenerator.CatRocks)) beachThings++;
 				}
 				else if (seaCat == IslandGenerator.CatSeaFinds && h > 0.3f && Regex.IsMatch(n, @"Iron|Copper|Scrap|GiantClam|SilverAlgae"))
@@ -450,6 +469,7 @@ namespace DynamicIslands
 					// (Raft keeps its ores, scrap, clams and algae under water)
 					string k = FindKind(n);
 					findsDry[k] = findsDry.ContainsKey(k) ? findsDry[k] + 1 : 1;
+					if (dryAt.Count < 6) dryAt.Add(k + " at " + (p.x - mid.x).ToString("F1") + " " + (p.z - mid.y).ToString("F1") + " h=" + above.ToString("F1") + " (ground " + h.ToString("F1") + ")");
 				}
 				else other++;
 			}
@@ -460,13 +480,13 @@ namespace DynamicIslands
 			foreach (string c in landCats)
 			{
 				float mine = land > 1f ? onLand[c] * 1000f / land : 0f, theirs = raft.CountOf(c) * 1000f / raftArea;
-				Log("  land " + c + ": " + onLand[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs));
+				Log("  land " + c + ": " + onLand[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs) + top("land " + c));
 			}
 			Log("  on the beach strip (rocks and beach things): " + beachThings + " = " + (beach > 1f ? beachThings * 1000f / beach : 0f).ToString("F1") + " per 1000 m2");
 			foreach (string c in seaCats)
 			{
 				float mine = floor > 1f ? underWater[c] * 1000f / floor : 0f, theirs = RaftUnderwater.DensityOf(style, c);
-				Log("  under water " + c + ": " + underWater[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs));
+				Log("  under water " + c + ": " + underWater[c] + " = " + mine.ToString("F1") + " per 1000 m2 (Raft " + theirs.ToString("F1") + ")" + judge(mine, theirs) + top("sea " + c));
 			}
 			// (Raft's: its vine and kelp kinds per 1000 m2 of sea floor 0-40 m deep)
 			SeaStyle raftSea = RaftUnderwater.For(style);
@@ -480,10 +500,74 @@ namespace DynamicIslands
 			Log("  sea vines and kelp: " + vines + " = " + myVines.ToString("F1") + " per 1000 m2 (Raft " + theirVines.ToString("F1") + ")" + judge(myVines, theirVines));
 			Log("  finds under water: " + (finds.Count > 0 ? string.Join(", ", finds.Select(kv => kv.Key + " " + kv.Value).ToArray()) : "none"));
 			string[] raftFinds = { "stone", "clay", "sand", "scrap", "metal ore", "copper ore" };
-			string[] missing = raftFinds.Where(k => !finds.ContainsKey(k)).ToArray();
+			if (findsOut.Count > 0) Log("  finds further out (more than " + reach.ToString("F0") + " m from the land): " + string.Join(", ", findsOut.Select(kv => kv.Key + " " + kv.Value).ToArray()));
+			string[] missing = raftFinds.Where(k => !finds.ContainsKey(k) && !findsOut.ContainsKey(k)).ToArray();
 			if (floor > 2000f && missing.Length > 0) Log("  missing under water (Raft has them): " + string.Join(", ", missing));
-			if (findsDry.Count > 0) { ok = false; Log("  Raft's sea finds on dry land: " + string.Join(", ", findsDry.Select(kv => kv.Key + " " + kv.Value).ToArray())); }
+			if (findsDry.Count > 0) { ok = false; Log("  Raft's sea finds on dry land: " + string.Join(", ", findsDry.Select(kv => kv.Key + " " + kv.Value).ToArray()) + " - " + string.Join("; ", dryAt.ToArray())); }
 			Log("  other objects (the island's own): " + other);
+			// (Raft's big islands grow their bamboo thick within 20 m of the water, under 4 m up: how far from the water - any,
+			// and the open sea - the island's bamboo stands; the big tropical islands' wide beaches were fields of it, the review
+			// 2026-10-03)
+			{
+				var fromAny = new int[nx, nz]; var fromSea = new int[nx, nz];
+				var qa = new Queue<int>(); var qs = new Queue<int>();
+				for (int i = 0; i < nx; i++)
+					for (int j = 0; j < nz; j++)
+					{
+						fromAny[i, j] = heights[i, j] <= 0f ? 0 : int.MaxValue;
+						fromSea[i, j] = int.MaxValue;
+						if (heights[i, j] <= 0f) qa.Enqueue(i * nz + j);
+						if (heights[i, j] <= 0f && (i == 0 || j == 0 || i == nx - 1 || j == nz - 1)) { fromSea[i, j] = 0; qs.Enqueue(i * nz + j); }
+					}
+				int[][] steps4 = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+				// (the open sea: all the water reached through water from the terrain's edge, at 0 - the land is measured from its
+				// shore, not from the terrain's edge)
+				var open = new Queue<int>(qs);
+				while (open.Count > 0)
+				{
+					int c = open.Dequeue(), ci = c / nz, cj = c % nz;
+					foreach (int[] o in steps4)
+					{
+						int a = ci + o[0], b = cj + o[1];
+						if (a < 0 || b < 0 || a >= nx || b >= nz || heights[a, b] > 0f || fromSea[a, b] == 0) continue;
+						fromSea[a, b] = 0;
+						open.Enqueue(a * nz + b);
+						qs.Enqueue(a * nz + b);
+					}
+				}
+				Action<int[,], Queue<int>, bool> spread = (d, q, waterFirst) =>
+				{
+					while (q.Count > 0)
+					{
+						int c = q.Dequeue(), ci = c / nz, cj = c % nz;
+						foreach (int[] o in steps4)
+						{
+							int a = ci + o[0], b = cj + o[1];
+							if (a < 0 || b < 0 || a >= nx || b >= nz) continue;
+							// (from the open sea over the land: a lagoon or a lake in it isn't the sea)
+							if (waterFirst && heights[ci, cj] > 0f && heights[a, b] <= 0f) continue;
+							if (d[a, b] <= d[ci, cj] + 1) continue;
+							d[a, b] = d[ci, cj] + 1;
+							q.Enqueue(a * nz + b);
+						}
+					}
+				};
+				spread(fromAny, qa, false);
+				spread(fromSea, qs, true);
+				var bins = new[] { 3f, 8f, 20f, 50f, 1e9f };
+				var anyHist = new int[5]; var seaHist = new int[5];
+				foreach (EditorGameObject e in PlacedEditorObjects())
+				{
+					if (!(e.GameObjectName ?? "").StartsWith("Bamboo")) continue;
+					Vector3 p = e.transform.position;
+					int i = Mathf.Clamp(Mathf.FloorToInt((p.x - ground.transform.position.x) / cell), 0, nx - 1), j = Mathf.Clamp(Mathf.FloorToInt((p.z - ground.transform.position.z) / cell), 0, nz - 1);
+					float da = fromAny[i, j] == int.MaxValue ? 1e9f : fromAny[i, j] * cell, ds = fromSea[i, j] == int.MaxValue ? 1e9f : fromSea[i, j] * cell;
+					anyHist[Array.FindIndex(bins, x => da < x)]++;
+					seaHist[Array.FindIndex(bins, x => ds < x)]++;
+				}
+				if (anyHist.Sum() > 0)
+					Log("  bamboo by metres from water (0-3, 3-8, 8-20, 20-50, 50+): any water " + string.Join("/", anyHist.Select(v => v.ToString()).ToArray()) + ", the open sea " + string.Join("/", seaHist.Select(v => v.ToString()).ToArray()) + " (Raft's big islands: thick within 20 m of the water, under 4 m up)");
+			}
 			if (ok) Log("PASS: island density"); else Fail("island density");
 		}
 

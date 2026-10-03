@@ -10,7 +10,8 @@ new
 gen Trees=0.28 Bushes=0.28 Rocks=0.2 Harvest=0.4 BeachThings=0.3
 gen Seed=1013 Radius=11 Height=3.5 Roughness=0.3 Peaks=1 Shape=0 Style=0 BeachWidth=0.8 Cliffs=0 PeakShape=0.2
 gen SeaFloor=1 Seabed=0
-gen Water=0.4 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.5 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0
 generate
 brush lower at 22 0 r=12 s=10 frames=8
 clear at 22 0 r=13
@@ -55,6 +56,9 @@ next
 next
 
 # --- On deck: crop beds, the scarecrow, the water tank, baskets and crates, light bottles on poles, the notebook --
+# (all of it on the deck - a frame whose floor is the foundations' top: set down "on the ground", the crop beds,
+# scarecrow, table and baskets lay 7-10 m down on the sea floor under the farm, found in the review, 2026-10-03)
+push at 0 0 h=0.13
 place Placeable_Cropplot_Large - at 16 -3.5 sit
 place Placeable_Cropplot_Large - at 16 3.5 sit
 place Placeable_Cropplot_Medium - at 17.2 -4.4 sit
@@ -70,7 +74,7 @@ place UT_LightBottle01 - at 14 5.7 h=2.6
 place Block_Pillar_Wood - at 14 -5.7 h=0.13
 place UT_LightBottle02 - at 14 -5.7 h=2.6
 place Placeable_Table_Basic - at 21.5 0 sit
-place Note_Book notebook at 21.5 0 y=0.78 sit
+place Note_Book notebook at 21.5 0 y=0.74 sit
 place Placeable_Chair_Wood - at 21.5 1.2 sit yaw=180
 place Zone_Trigger farm at 18 0 y=1
 
@@ -97,6 +101,7 @@ place UT_MarketCrateSmall01 - at 22.4 1.6 sit yaw=-20
 place Placeable_Storage_Medium - at 26.6 2.4 sit yaw=270
 place UT_DreamCatcher01 - at 14 5.7 h=2.4
 place UT_DanglyDecoration02 - at 14 -5.7 h=2.4
+pop
 place Block_Pillar_Wood - at 27.4 -5.7 h=0.13
 place UT_LightBottle03 - at 27.4 -5.7 h=2.6
 

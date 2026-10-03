@@ -65,8 +65,9 @@ namespace DynamicIslands
 		}
 
 		/// <summary>What CIFloating doesn't measure the base of: the generator's plants and rocks (a crown or a boulder is wider
-		/// than what touches the ground), caves and tunnels (set into the land on purpose).</summary>
-		static readonly Regex NotABase = new Regex("Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift", RegexOptions.IgnoreCase);
+		/// than what touches the ground), caves and tunnels (set into the land on purpose) - not the players' buildables (a
+		/// grass crop plot on Tide Farm's deck was a plant 8 m over the sea floor, the review 2026-10-03).</summary>
+		static readonly Regex NotABase = new Regex("^(?!Placeable_).*(Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift)", RegexOptions.IgnoreCase);
 		/// <summary>What hangs or lies on purpose: a buoy's chain, pipes, cables, lamps, flags; decks, floors and ramps on their
 		/// posts; a crane's jib reaching out over the water.</summary>
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
@@ -304,8 +305,30 @@ namespace DynamicIslands
 					if (buried <= 30) Log("  buried under the ground: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its top h=" + Num(whole.max.y - sea) + " is " + Num(land - whole.max.y) + " m under the ground");
 				}
 			}
+			// Things on the sea floor under a deck that stands above the sea - more than 4 m under it, so not a flooded room:
+			// set down "on the ground", Tide Farm's crop beds, scarecrow and table lay 7-10 m down under its farm raft (the
+			// review, 2026-10-03). Named, not failed: a trench's floor under a raft can be meant
+			int underDeck = 0;
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (RaftUnderwater.CategoryOf(n) != null || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ContentCatalog.IsCreature(n)) continue;
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				if (parts.Length == 0) continue;
+				Bounds whole = parts[0].bounds;
+				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+				if (whole.max.y > sea - 0.5f) continue;
+				RaycastHit up;
+				if (!Physics.Raycast(new Vector3(whole.center.x, whole.max.y + 0.05f, whole.center.z), Vector3.up, out up, 80f, ~0, QueryTriggerInteraction.Ignore)) continue;
+				EditorGameObject over = up.collider.GetComponentInParent<EditorGameObject>();
+				if (over == null || over == e || up.point.y < sea - 0.3f || up.point.y - whole.max.y < 4f) continue;
+				underDeck++;
+				if (underDeck <= 20) Log("  on the sea floor under a deck: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ", top h=" + Num(whole.max.y - sea) + " - " + over.GameObjectName + " over it at h=" + Num(up.point.y - sea));
+			}
+			if (underDeck > 0) Log("  (" + underDeck + " on the sea floor under a deck - meant for the deck? set them down in a frame with its floor)");
 			Log((found + partly + lifted + alone + buried == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature +
-				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all);
+				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all + "; under a deck: " + underDeck);
 		}
 
 		[ConsoleCommand(name: "CIBoundsOf", docs: "Dev, editor: where the island's objects whose name contains <part> are and how far they reach - pivot (m from the island's middle, h above the sea), turn, the box around their meshes (bottom and top h), the ground under its middle and the colliders it touches: fixing a recipe's floating or buried things. CIBoundsOf <part>")]
@@ -1104,6 +1127,28 @@ namespace DynamicIslands
 							string island = Rest(line, 1).Trim();
 							string why = FileNames.IslandProblem(island);
 							if (why != null) { error = why; break; }
+							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
+							// the generator had dressed: Ironreef's ore lay 30-57 m up its slope - are the sea's: removed, the review 2026-10-03)
+							float seaY = DynamicIslands.EditorWaterLevel;
+							var dried = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>()
+								.Where(e => RaftLand.UnderWaterOnly(e.GameObjectName) && e.transform.position.y > seaY - 0.3f && GroundY(e.transform.position.x, e.transform.position.z) > seaY)
+								.Select(e => e.gameObject).ToList();
+							if (dried.Count > 0)
+							{
+								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(dried, false));
+								Log("  " + dried.Count + " of Raft's sea finds out of the water (carried up by the ground) left out");
+							}
+							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
+							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
+							var covered = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>()
+								.Where(e => e.gameObject.activeSelf && (NotABase.IsMatch(e.GameObjectName ?? "") || RaftUnderwater.CategoryOf(e.GameObjectName ?? "") != null) &&
+									(e.GameObjectName ?? "").IndexOf("Cave", StringComparison.OrdinalIgnoreCase) < 0 && (e.GameObjectName ?? "").IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) < 0 && BuriedWhole(e.gameObject))
+								.Select(e => e.gameObject).ToList();
+							if (covered.Count > 0)
+							{
+								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(covered, false));
+								Log("  " + covered.Count + " plants, rocks, corals or finds under the ground (buried by the recipe's strokes) left out");
+							}
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							Log("  saved '" + island + "'");
