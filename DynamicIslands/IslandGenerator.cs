@@ -90,6 +90,9 @@ namespace DynamicIslands.Editor
 		public bool Caves;
 		/// <summary>A quest made with the island: how many steps (0 = none; GenQuest).</summary>
 		public int QuestSteps;
+		/// <summary>One of Raft's story islands rebuilt from its own pieces: a design id, "&lt;scene&gt;:any" for one of its
+		/// designs at random, or "" (Remakes; the Randomize existing tab).</summary>
+		public string Remake = "";
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -240,6 +243,362 @@ namespace DynamicIslands.Editor
 			parts.AddRange(Built);
 			return parts.Count > 0 ? string.Join(", ", parts.ToArray()) : "no objects";
 		}
+	}
+
+	/// <summary>
+	/// Raft's story islands rebuilt in a new way from their own pieces (the user, 2026-10-03: "the radio tower graphics can
+	/// become an oil rig, a different kind of radio tower or a lighthouse in construction - rebuild something similar, not
+	/// just shuffle things around"). A design builds a new structure of the island's kit on the generated ground, different
+	/// by the seed (how high, how many storeys and decks, which walls have windows, which way it faces). The Radio Tower's
+	/// kit (floors 6 x 9 m with their pivot on their +x +z corner, walls 3 m high and 3 m wide, railings 1.5 m, thick
+	/// pillars 6 m - placed as the library's lib_rt recipes place them): a radio tower, an oil rig, a lighthouse under
+	/// construction.
+	/// </summary>
+	public static class Remakes
+	{
+		public class Design
+		{
+			public string Id, Label, Hint, Scene;
+			public Func<MapKit, IslandGenSettings, string> Build;
+		}
+
+		public const string Any = ":any";
+
+		static readonly string[] RtKit = { "RT_Floor", "RT_Wall1", "RT_WallWindow1", "RT_WallWindow2", "RT_WallDoor1", "RT_Fence", "RT_PillarThick", "RT_SatteliteDisc", "RT_WindMill",
+			"RT_RoofLamp", "RT_Floodlight", "RT_PowerBox", "RT_CommRadio", "RT_RadarScreen", "RT_PlasticBoat", "LandmarkLadder_6m", "Table Office", "Chair Office", "Locker" };
+
+		public static readonly Design[] All =
+		{
+			new Design { Id = "rt.tower", Scene = "Landmark_Radar", Label = "A radio tower", Build = Tower,
+				Hint = "A new radio tower of the Radio Tower's pieces: a station on the ground, legs 6 to 18 m up to the radio room, a roof with the dish, the windmill and a mast, ladders all the way" },
+			new Design { Id = "rt.rig", Scene = "Landmark_Radar", Label = "An oil rig", Build = Rig,
+				Hint = "An oil rig over the shallow sea off the island: four of the tower's floors on legs down to the sea floor, railings, a control room with the dish, a flare stack, ladders down to a boat" },
+			new Design { Id = "rt.lighthouse", Scene = "Landmark_Radar", Label = "A lighthouse under construction", Build = Lighthouse,
+				Hint = "A lighthouse being built on a headland: 3 to 5 storeys of the tower's walls and floors, the top ones unfinished, poles around it, the lamp still waiting by the door (or up, when it's finished)" },
+		};
+
+		/// <summary>The designs for one of Raft's islands (its scene name).</summary>
+		public static List<Design> For(string scene) { return All.Where(d => (scene ?? "").IndexOf(d.Scene, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); }
+
+		/// <summary>The objects of Raft's islands a remake uses (loaded on demand before generating).</summary>
+		public static List<string> NeededNames(IslandGenSettings s) { return string.IsNullOrEmpty(s.Remake) ? new List<string>() : RtKit.ToList(); }
+
+		/// <summary>Builds the settings' design (or one of the island's at random) on the kit's file; what it built, or why not.</summary>
+		public static string Build(MapKit k, IslandGenSettings s)
+		{
+			if (string.IsNullOrEmpty(s.Remake)) return null;
+			Design d;
+			if (s.Remake.EndsWith(Any))
+			{
+				List<Design> list = For(s.Remake.Substring(0, s.Remake.Length - Any.Length));
+				d = list.Count > 0 ? list[k.Rnd.Next(list.Count)] : null;
+			}
+			else d = All.FirstOrDefault(x => x.Id == s.Remake);
+			if (d == null) return "no design '" + s.Remake + "'";
+			return d.Build(k, s) ?? "no place for " + d.Label.ToLowerInvariant() + " on this ground";
+		}
+
+		#region The kit
+
+		/// <summary>A frame: its origin (terrain-local x z), its turn (a multiple of 90) and its floor (terrain height).</summary>
+		struct Frame
+		{
+			public Vector2 O;
+			public float Yaw, Y;
+			public Frame(Vector2 o, float yaw, float y) { O = o; Yaw = yaw; Y = y; }
+			public Frame Up(float dy) { return new Frame(O, Yaw, Y + dy); }
+			public Vector2 At(float x, float z) { Vector3 v = Quaternion.Euler(0f, Yaw, 0f) * new Vector3(x, 0f, z); return new Vector2(O.x + v.x, O.y + v.z); }
+		}
+
+		static IslandObject P(MapKit k, Frame f, string name, float x, float z, float dy = 0f, float yaw = 0f, Dictionary<string, string> props = null)
+		{
+			Vector2 w = f.At(x, z);
+			return k.Add(name, new Vector3(w.x, f.Y + dy, w.y), f.Yaw + yaw, props, 0f);
+		}
+
+		/// <summary>A thing standing on what is under it (a floor dy over the frame's): its own bottom there, as a recipe's
+		/// "sit" puts it - a table's mesh reaches 0.54 m under its pivot: set by its pivot it sank into the floor, and the radio
+		/// on it hung 0.54 m over it.</summary>
+		static IslandObject Sit(MapKit k, Frame f, string name, float x, float z, float dy = 0f, float yaw = 0f, Dictionary<string, string> props = null)
+		{
+			Bounds b;
+			return P(k, f, name, x, z, dy - (GenBuildings.Measured(name, out b) ? b.min.y : 0f), yaw, props);
+		}
+
+		/// <summary>A frame whose 6 x 9 floor (x -6..0, z -4.5..4.5) has its middle at c.</summary>
+		static Frame Around(Vector2 c, float yaw, float y) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(-3f, 0f, 0f); return new Frame(c - new Vector2(v.x, v.z), yaw, y); }
+
+		static readonly string[] Slots = { "b1", "b2", "f1", "f2", "l1", "l2", "l3", "r1", "r2", "r3" };
+
+		/// <summary>One storey (lib_rt's rt_storey): the floor and ten wall slots (a name, or null for an opening).</summary>
+		static void Storey(MapKit k, Frame f, Func<string, string> slot, bool floor = true)
+		{
+			if (floor) P(k, f, "RT_Floor", 0f, 4.5f);
+			var at = new Dictionary<string, Vector3>
+			{
+				{ "b1", new Vector3(-3f, 4.5f, 0f) }, { "b2", new Vector3(0f, 4.5f, 0f) }, { "f1", new Vector3(-3f, -4.5f, 0f) }, { "f2", new Vector3(0f, -4.5f, 0f) },
+				{ "l1", new Vector3(-6.04f, -4.5f, 90f) }, { "l2", new Vector3(-6.04f, -1.5f, 90f) }, { "l3", new Vector3(-6.04f, 1.5f, 90f) },
+				{ "r1", new Vector3(0f, -4.5f, 90f) }, { "r2", new Vector3(0f, -1.5f, 90f) }, { "r3", new Vector3(0f, 1.5f, 90f) },
+			};
+			foreach (string sl in Slots)
+			{
+				string piece = slot(sl);
+				if (piece != null) P(k, f, piece, at[sl].x, at[sl].y, 0f, at[sl].z);
+			}
+		}
+
+		/// <summary>Railings round a 6 x 9 floor (lib_rt's rt_railing), each side on or off; gap: leaves out the front's pieces over x gap-1.5..gap+1.5.</summary>
+		static void Railing(MapKit k, Frame f, float dy, bool back = true, bool front = true, bool left = true, bool right = true, float gap = float.NaN)
+		{
+			foreach (float x in new[] { -4.5f, -3f, -1.5f, 0f })
+			{
+				if (back) P(k, f, "RT_Fence", x, 4.5f, dy);
+				bool inGap = !float.IsNaN(gap) && x - 1.5f < gap + 0.9f && x > gap - 0.9f;
+				if (front && !inGap) P(k, f, "RT_Fence", x, -4.5f, dy);
+			}
+			foreach (float z in new[] { -4.5f, -3f, -1.5f, 0f, 1.5f, 3f })
+			{
+				if (left) P(k, f, "RT_Fence", -6f, z, dy, 90f);
+				if (right) P(k, f, "RT_Fence", 0f, z, dy, 90f);
+			}
+		}
+
+		static readonly Vector2[] LegSpots = { new Vector2(-5.9f, -4.4f), new Vector2(-5.9f, 4.4f), new Vector2(-0.1f, -4.4f), new Vector2(-0.1f, 4.4f) };
+
+		/// <summary>Thick pillars under a 6 x 9 floor (lib_rt's rt_legs), 6 m each, from the floor down until one reaches the ground.</summary>
+		static int Legs(MapKit k, Frame f, HashSet<Vector2> done = null)
+		{
+			int n = 0;
+			foreach (Vector2 l in LegSpots)
+			{
+				Vector2 w = f.At(l.x, l.y);
+				if (done != null) { Vector2 key = new Vector2(Mathf.Round(w.x * 2f), Mathf.Round(w.y * 2f)); if (done.Contains(key)) continue; done.Add(key); }
+				float ground = k.Ground(w);
+				for (int i = 1; i <= 12 && f.Y - 6f * (i - 1) > ground + 0.05f; i++) { P(k, f, "RT_PillarThick", l.x, l.y, -6f * i); n++; }
+			}
+			return n;
+		}
+
+		/// <summary>Ladders (Raft's 6 m one) against a floor's front edge at x, from a bottom height up to the top (terrain heights).</summary>
+		static void Ladders(MapKit k, Frame f, float x, float bottom, float top)
+		{
+			for (float b = top - 6f; b > bottom - 6f + 0.01f; b -= 6f) P(k, f, "LandmarkLadder_6m", x, -4.62f, b - f.Y);
+		}
+
+		/// <summary>Levels the ground under a frame's floor (x0..x1, z0..z1) to a height, blended into the land over blend metres.</summary>
+		static void Level(MapKit k, Frame f, float x0, float x1, float z0, float z1, float height, float blend)
+		{
+			IslandFile file = k.File;
+			int res = file.HeightmapResolution;
+			float step = file.TerrainSize.x / (res - 1);
+			Quaternion back = Quaternion.Euler(0f, -f.Yaw, 0f);
+			float reach = Mathf.Max(x1 - x0, z1 - z0) + blend + 2f;
+			Vector2 mid = f.At((x0 + x1) / 2f, (z0 + z1) / 2f);
+			for (int zi = Mathf.Max(0, Mathf.FloorToInt((mid.y - reach) / step)); zi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.y + reach) / step)); zi++)
+				for (int xi = Mathf.Max(0, Mathf.FloorToInt((mid.x - reach) / step)); xi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.x + reach) / step)); xi++)
+				{
+					Vector3 l = back * new Vector3(xi * step - f.O.x, 0f, zi * step - f.O.y);
+					float outside = Mathf.Max(Mathf.Max(x0 - l.x, l.x - x1), Mathf.Max(z0 - l.z, l.z - z1));
+					float weight = outside <= 0f ? 1f : outside < blend ? 1f - outside / blend : 0f;
+					if (weight <= 0f) continue;
+					float h = file.Heights[zi, xi] * file.TerrainSize.y;
+					file.Heights[zi, xi] = Mathf.Lerp(h, height, weight * weight * (3f - 2f * weight)) / file.TerrainSize.y;
+				}
+		}
+
+		static string Wall(System.Random r, int windows) { int v = r.Next(10); return v < windows ? (r.NextDouble() < 0.5 ? "RT_WallWindow1" : "RT_WallWindow2") : "RT_Wall1"; }
+
+		static float Turn(System.Random r) { return 90f * r.Next(4); }
+
+		/// <summary>The highest ground of a 6 x 9 floor's corners and middle (terrain height).</summary>
+		static float TopUnder(MapKit k, Frame f)
+		{
+			float top = float.MinValue;
+			foreach (Vector2 p in new[] { new Vector2(-6f, -4.5f), new Vector2(-6f, 4.5f), new Vector2(0f, -4.5f), new Vector2(0f, 4.5f), new Vector2(-3f, 0f) }) top = Mathf.Max(top, k.Ground(f.At(p.x, p.y)));
+			return top;
+		}
+
+		/// <summary>A radio room's things on its floor: the radio on its table, a chair, a locker with loot, the radar screen, a lamp.</summary>
+		static void RadioRoom(MapKit k, Frame f, string title)
+		{
+			Bounds table;
+			Sit(k, f, "Table Office", -3f, 3.4f);
+			// (the radio on the table's top)
+			Sit(k, f, "RT_CommRadio", -3.3f, 3.8f, GenBuildings.Measured("Table Office", out table) ? table.size.y : 1.08f);
+			Sit(k, f, "Chair Office", -3f, 2.6f, 0f, 170f);
+			Sit(k, f, "Locker", -0.6f, 2.5f, 0f, 270f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Metal") }, { ObjectProps.NoteTitle, title } });
+			Sit(k, f, "RT_RadarScreen", -5.45f, -0.5f, 0f, 90f);
+			P(k, f, "RT_RoofLamp", -3f, 0f, 2.95f);
+		}
+
+		#endregion
+
+		#region The Radio Tower's designs
+
+		static string Tower(MapKit k, IslandGenSettings s)
+		{
+			System.Random r = k.Rnd;
+			Vector2 c = k.Highest(k.Mid, s.Radius * 0.5f);
+			if (k.Ground(c) - k.Sea < 1.5f) return null;
+			Frame f = Around(c, Turn(r), 0f);
+			float y0 = TopUnder(k, f) + 0.05f;
+			f = new Frame(f.O, f.Yaw, y0);
+			Level(k, f, -7f, 1f, -6f, 6f, y0 - 0.05f, 5f);
+			k.Clear(c, 14f);
+			int legs = 1 + r.Next(3);
+			// The station on the ground: a door at the front left, windows here and there
+			Storey(k, f, sl => sl == "f1" ? "RT_WallDoor1" : Wall(r, 4));
+			Sit(k, f, "RT_PowerBox", -5.4f, 2.6f, 0f, 90f);
+			Sit(k, f, "Locker", -0.6f, 3.4f, 0f, 270f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Basics") }, { ObjectProps.NoteTitle, "Station locker" } });
+			// Its roof, railed but open where the ladder comes up
+			Frame roof = f.Up(3f);
+			P(k, roof, "RT_Floor", 0f, 4.5f);
+			Railing(k, roof, 0f, gap: -1.5f);
+			// Legs up to the radio room, a ladder from the ground all the way
+			for (int i = 0; i < legs; i++) foreach (Vector2 l in LegSpots) P(k, roof, "RT_PillarThick", l.x, l.y, 6f * i);
+			Frame room = roof.Up(6f * legs);
+			Ladders(k, f, -1.5f, y0, room.Y);
+			Storey(k, room, sl => sl == "f2" ? "RT_WallDoor1" : sl.StartsWith("l") || sl.StartsWith("r") ? Wall(r, 7) : Wall(r, 5));
+			RadioRoom(k, room, "Radio locker");
+			// The roof: the dish, the windmill, a mast with a lamp
+			Frame top = room.Up(3f);
+			P(k, top, "RT_Floor", 0f, 4.5f);
+			Railing(k, top, 0f);
+			Sit(k, top, "RT_SatteliteDisc", -4.6f, -2.5f, 0f, 200f);
+			Sit(k, top, "RT_WindMill", -1.2f, 3.2f, 0f, Turn(r));
+			P(k, top, "RT_PillarThick", -3f, 1.5f);
+			P(k, top, "RT_RoofLamp", -3f, 1.5f, 6f);
+			Sit(k, top, "RT_Floodlight", -5.5f, 4f, 0f, 315f);
+			return "a radio tower " + Mathf.RoundToInt(3f + 6f * legs + 3f) + " m high";
+		}
+
+		static string Rig(MapKit k, IslandGenSettings s)
+		{
+			System.Random r = k.Rnd;
+			// (the shallow sea off the island, out to the shelf's edge - the whole rig and 6 m round it over water at least 4 m
+			// deep: one built where the coast was close stood half in the island's slope)
+			float yaw = 0f;
+			Vector2? site = null;
+			for (int tries = 0; tries < 90 && !site.HasValue; tries++)
+			{
+				Vector2? c = k.Find(k.Mid, s.Radius + (tries < 30 ? 80f : 170f), (above, slope) => above < -5f && above > (tries < 30 ? -25f : -40f), 0f);
+				if (!c.HasValue) continue;
+				yaw = Turn(r);
+				Quaternion q = Quaternion.Euler(0f, yaw, 0f);
+				bool clear = true;
+				for (float x = -12f; x <= 12f && clear; x += 3f)
+					for (float z = -15f; z <= 15f && clear; z += 3f)
+					{
+						Vector3 v = q * new Vector3(x, 0f, z);
+						clear = k.Ground(c.Value + new Vector2(v.x, v.z)) < k.Sea - 4f;
+					}
+				if (clear) site = c;
+			}
+			if (!site.HasValue) return null;
+			float deck = k.Sea + 6f + r.Next(3);
+			// Four floors: 12 x 18 m, x -6..6, z -4.5..13.5 around the frame's origin; its middle on the site
+			Vector3 off = Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, 0f, 4.5f);
+			var rig = new Frame(site.Value - new Vector2(off.x, off.z), yaw, deck);
+			var legsDone = new HashSet<Vector2>();
+			int legs = 0;
+			var floors = new[] { new Vector2(0f, 0f), new Vector2(6f, 0f), new Vector2(0f, 9f), new Vector2(6f, 9f) };
+			foreach (Vector2 o in floors)
+			{
+				var fl = new Frame(rig.At(o.x, o.y), yaw, deck);
+				P(k, fl, "RT_Floor", 0f, 4.5f);
+				legs += Legs(k, fl, legsDone);
+				// (railings on the rig's outer edges only)
+				Railing(k, fl, 0f, back: o.y > 0f, front: o.y == 0f, left: o.x == 0f, right: o.x > 0f, gap: o.x == 0f && o.y == 0f ? -1.5f : float.NaN);
+			}
+			// The control room on the back right floor, its door towards the deck; the dish on its roof
+			var control = new Frame(rig.At(6f, 9f), yaw, deck);
+			Storey(k, control, sl => sl == "l2" ? "RT_WallDoor1" : sl.StartsWith("b") || sl.StartsWith("r") ? Wall(r, 6) : Wall(r, 3), floor: false);
+			RadioRoom(k, control, "Rig locker");
+			P(k, control.Up(3f), "RT_Floor", 0f, 4.5f);
+			Railing(k, control.Up(3f), 0f);
+			Sit(k, control.Up(3f), "RT_SatteliteDisc", -3f, 0f, 0f, Turn(r));
+			// The flare stack at the front right corner, lit at the top; the windmill; the power box
+			var front = new Frame(rig.At(6f, 0f), yaw, deck);
+			int stack = 2 + r.Next(2);
+			for (int i = 0; i < stack; i++) P(k, front, "RT_PillarThick", -0.6f, -3.8f, 6f * i);
+			Sit(k, front, "RT_Floodlight", -0.6f, -3.8f, 6f * stack, Turn(r));
+			Sit(k, front, "RT_WindMill", -4f, 2f, 0f, Turn(r));
+			Sit(k, rig, "RT_PowerBox", -5.3f, 7f, 0f, 90f);
+			Sit(k, rig, "Loot_Crate", -2f, 11f, 0f, 0f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Metal") }, { ObjectProps.NoteTitle, "Rig supplies" } });
+			// Down to the water: ladders at the front left, the boat at their foot
+			Ladders(k, rig, -1.5f, k.Sea - 6f, deck);
+			P(k, rig, "RT_PlasticBoat", -1.5f, -6.5f, k.Sea - 0.3f - deck, Turn(r));
+			return "an oil rig over " + Mathf.RoundToInt(k.Sea - k.Ground(site.Value)) + " m of water, its deck " + Mathf.RoundToInt(deck - k.Sea) + " m up on " + legs + " legs";
+		}
+
+		static string Lighthouse(MapKit k, IslandGenSettings s)
+		{
+			System.Random r = k.Rnd;
+			// A headland: high ground with the sea close by
+			Vector2 best = Vector2.zero;
+			float bestH = float.MinValue;
+			for (int i = 0; i < 400; i++)
+			{
+				float a = (float)r.NextDouble() * Mathf.PI * 2f, d = (float)Math.Sqrt(r.NextDouble()) * s.Radius;
+				Vector2 p = k.Mid + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d;
+				float above = k.Ground(p) - k.Sea;
+				if (above < 2f || above > 40f || k.Slope(p) > 24f || above <= bestH) continue;
+				bool coast = false;
+				for (int j = 0; j < 8 && !coast; j++) { float b = j * Mathf.PI / 4f; coast = k.Ground(p + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * 32f) < k.Sea; }
+				if (!coast) continue;
+				best = p; bestH = above;
+			}
+			// (no headland on a small, steep island: its highest ground)
+			if (bestH == float.MinValue) { best = k.Highest(k.Mid, s.Radius * 0.6f); if (k.Ground(best) - k.Sea < 1.5f) return null; }
+			Frame f = Around(best, Turn(r), 0f);
+			float y0 = TopUnder(k, f) + 0.05f;
+			f = new Frame(f.O, f.Yaw, y0);
+			Level(k, f, -8f, 2f, -7f, 7f, y0 - 0.05f, 5f);
+			k.Clear(best, 14f);
+			int storeys = 4 + r.Next(3), unfinished = r.Next(3); // (0: finished, its lantern room lit at the top)
+			int built = storeys - unfinished;
+			// (the storeys built, and over them the one being built: its floor and some of its walls - nothing above it, so
+			// no wall stands on air)
+			int standing = built + (unfinished > 0 ? 1 : 0);
+			for (int i = 0; i < standing; i++)
+			{
+				Frame fl = f.Up(3f * i);
+				bool open = i >= built;
+				// (the front right slot stays open on the upper storeys: the ladder comes in there; a finished lighthouse's top
+				// storey is its lantern room, windows all round - a box of plain storeys didn't look like one)
+				bool lantern = unfinished == 0 && i == storeys - 1;
+				Storey(k, fl, sl => i == 0 && sl == "f1" ? "RT_WallDoor1" : i > 0 && sl == "f2" ? null : lantern ? "RT_WallWindow2" : open && r.NextDouble() < 0.45 ? null : Wall(r, open ? 2 : i == 0 ? 3 : 1));
+				if (lantern) foreach (float yaw in new[] { 0f, 90f, 180f, 270f }) Sit(k, fl, "RT_Floodlight", -3f + (yaw == 90f ? 1.2f : yaw == 270f ? -1.2f : 0f), (yaw == 0f ? 1.2f : yaw == 180f ? -1.2f : 0f), 0f, yaw);
+			}
+			Frame roof = f.Up(3f * Mathf.Max(built, 1));
+			if (unfinished == 0)
+			{
+				// (the roof over the lantern room, railed, and a lit mast in its middle)
+				P(k, roof, "RT_Floor", 0f, 4.5f);
+				Railing(k, roof, 0f, gap: -1.5f);
+				P(k, roof, "RT_PillarThick", -3f, 0f);
+				P(k, roof, "RT_RoofLamp", -3f, 0f, 6f);
+				Sit(k, roof, "RT_Floodlight", -3f, 1.2f, 0f, 0f);
+			}
+			else
+			{
+				// The lamp still waits by the door, in its crate
+				Sit(k, f, "RT_Floodlight", -4.5f, -7f, k.Ground(f.At(-4.5f, -7f)) - f.Y, Turn(r));
+				Sit(k, f, "Loot_Crate", -2.5f, -7.2f, k.Ground(f.At(-2.5f, -7.2f)) - f.Y, 0f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Metal") }, { ObjectProps.NoteTitle, "Lamp parts" } });
+			}
+			// Poles round it while it is built: thick pillars at its corners, up to its top
+			float topY = f.Y + 3f * standing;
+			foreach (Vector2 c in new[] { new Vector2(-6.6f, -5.1f), new Vector2(-6.6f, 5.1f), new Vector2(0.6f, -5.1f), new Vector2(0.6f, 5.1f) })
+			{
+				if (unfinished == 0) break;
+				float g = k.Ground(f.At(c.x, c.y));
+				for (float b = g - 0.3f; b < topY; b += 6f) P(k, f, "RT_PillarThick", c.x, c.y, b - f.Y);
+			}
+			Ladders(k, f, -1.5f, y0, f.Y + 3f * Mathf.Max(built, 1));
+			return "a lighthouse " + (unfinished == 0 ? "of " + storeys + " storeys, its lamp lit" : "under construction: " + built + " of " + storeys + " storeys built");
+		}
+
+		#endregion
 	}
 
 	/// <summary>
@@ -410,6 +769,7 @@ namespace DynamicIslands.Editor
 					names.AddRange(t.Anchors.Concat(t.Medium).Concat(t.Small).Concat(new[] { t.Container, t.NoteKind }).Where(n => !string.IsNullOrEmpty(n)));
 			}
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
+			names.AddRange(Remakes.NeededNames(s));
 			return names.Distinct().ToList();
 		}
 
@@ -417,9 +777,12 @@ namespace DynamicIslands.Editor
 		public static List<string> Apply(IslandFile file, IslandGenSettings s)
 		{
 			var done = new List<string>();
-			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0) || file == null || file.Heights == null) return done;
+			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && string.IsNullOrEmpty(s.Remake)) || file == null || file.Heights == null) return done;
 			var k = new MapKit(file, s.Seed * 7919 + 13);
 			System.Random r = k.Rnd;
+			// A story island rebuilt first: it takes the island's best place (its top, a headland, the sea off the coast)
+			string remade = Remakes.Build(k, s);
+			if (remade != null) done.Add(remade);
 			// A cave first: it needs the most room (an outcrop over land, open ground at its mouth)
 			if (s.Caves)
 			{
@@ -547,7 +910,7 @@ namespace DynamicIslands.Editor
 		/// An object's box as an island spawns it unturned (relative to its pivot): from a copy spawned once and measured. The
 		/// catalog's prototype measure put a bed's box on the wrong side of its pivot, out through the front wall.
 		/// </summary>
-		static bool Measured(string name, out Bounds b)
+		internal static bool Measured(string name, out Bounds b)
 		{
 			if (measured.TryGetValue(name, out b)) return true;
 			GameObject go = PlaceableCatalog.Spawn(name, null);

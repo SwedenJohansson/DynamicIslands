@@ -485,6 +485,14 @@ namespace DynamicIslands.Editor
 			SeaFloorChoice(variationGroup);
 			Choice(variationGroup, "Seabed", new[] { "Sand", "Rocky", "Reef ring" }, () => s.Seabed, v => s.Seabed = v, "The shallow sea floor around it: as measured (Sand), with rocky bumps, or with a reef ring just under the surface.");
 
+			// Rebuild it: a story island's structure made anew from its own pieces (the user, 2026-10-03: the Radio Tower's
+			// pieces can become another radio tower, an oil rig, a lighthouse under construction)
+			rebuildGroup = UIKit.Group(root, "Rebuild it");
+			UIKit.Label(rebuildGroup, "Built anew from the island's own pieces on the new ground, different with every seed.", 12, UIKit.TextMuted);
+			Stepper(rebuildGroup, "Design", "What the island's pieces become", "Each of Raft's story islands with designs rebuilds something like it from its own pieces: the Radio Tower's floors, walls, railings, pillars, ladders, dish, windmill and lamps become a new radio tower, an oil rig over the shallow sea, or a lighthouse being built. Random design picks one by the seed. None keeps only the ground and nature.",
+				() => RemakeLabel(), step => { List<string> ids = RemakeIds(); int i = Mathf.Max(0, ids.IndexOf(s.Remake ?? "")); s.Remake = ids[((i + step) % ids.Count + ids.Count) % ids.Count]; },
+				Enumerable.Range(0, RemakeIds().Count).Select(i => new DropList.Option(i.ToString(), RemakeLabel(i), RemakeHint(i))).ToList(), () => Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? "")), i => { List<string> ids = RemakeIds(); if (i < ids.Count) s.Remake = ids[i]; });
+			refresh.Add(() => rebuildGroup.gameObject.SetActive(chosen != null && Remakes.For(chosen.Scene).Count > 0));
 			// (this tab remakes the chosen island: the Normal tab's other groups aren't shown here - the user, 2026-10-03)
 			QuestGroup(root);
 			refresh.Add(() =>
@@ -498,6 +506,8 @@ namespace DynamicIslands.Editor
 		void Choose(RaftIsland island)
 		{
 			chosen = island;
+			List<Remakes.Design> designs = Remakes.For(island.Scene);
+			s.Remake = designs.Count > 0 ? designs[0].Scene + Remakes.Any : "";
 			ApplyChosen();
 			chosenText.text = "<color=#eddeba>" + island.Label + "</color>  (" + island.Style.ToLowerInvariant() + ")\nLand about " + island.Length.ToString("F0") + " x " + island.Width.ToString("F0") + " m, highest point " + island.Top.ToString("F0") +
 				" m, " + island.Peaks + " peak(s), shallow water to " + island.Shelf.ToString("F0") + " m from its middle.\n" +
@@ -874,12 +884,52 @@ namespace DynamicIslands.Editor
 		}
 
 		bool loadingBuildings;
+		RectTransform rebuildGroup;
+
+		/// <summary>The design choices: random, each design, none. (The list is made once, with the window: every design is
+		/// the Radio Tower's so far - when other islands get theirs, the list goes by the chosen island.)</summary>
+		static List<string> RemakeIds()
+		{
+			var ids = new List<string>();
+			if (Remakes.All.Length > 0) ids.Add(Remakes.All[0].Scene + Remakes.Any);
+			ids.AddRange(Remakes.All.Select(d => d.Id));
+			ids.Add("");
+			return ids;
+		}
+
+		string RemakeLabel() { return RemakeLabel(Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? ""))); }
+
+		string RemakeLabel(int i)
+		{
+			List<string> ids = RemakeIds();
+			if (i >= ids.Count) return "-";
+			string id = ids[i];
+			if (id.Length == 0) return "None (ground and nature only)";
+			if (id.EndsWith(Remakes.Any)) return "Random design";
+			Remakes.Design d = Remakes.All.FirstOrDefault(x => x.Id == id);
+			return d != null ? d.Label : id;
+		}
+
+		string RemakeHint(int i)
+		{
+			List<string> ids = RemakeIds();
+			if (i >= ids.Count) return "";
+			Remakes.Design d = Remakes.All.FirstOrDefault(x => x.Id == ids[i]);
+			return d != null ? d.Hint : ids[i].Length == 0 ? "Only the island's ground and nature, made anew" : "One of the designs, picked by the seed";
+		}
 
 		/// <summary>The settings Generate uses: on the Randomize existing tab only what it shows (not the Normal tab's buildings and caves).</summary>
 		IslandGenSettings Effective()
 		{
-			if (tab != TabRandomize) return s;
+			if (tab != TabRandomize)
+			{
+				if (string.IsNullOrEmpty(s.Remake)) return s;
+				IslandGenSettings normal = s.Copy();
+				normal.Remake = "";
+				return normal;
+			}
 			IslandGenSettings run = s.Copy();
+			if (chosen == null || Remakes.For(chosen.Scene).Count == 0) run.Remake = "";
 			run.Buildings = false;
 			run.Caves = false;
 			return run;

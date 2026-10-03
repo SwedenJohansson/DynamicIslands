@@ -565,8 +565,24 @@ ladder or foundations). It is worked out with Raft's own player: how steep it ca
 island with its size, height and look; **A variation of it** starts from the island's own ground and reshapes it
 (stretch, mirror, roughen, coast, valleys...). This tab shows only what remakes the chosen island - and a **Quest**
 group - not the Normal tab's other groups (its buildings and caves aren't used here). It remakes the island's
-**ground and nature**: the buildings of Raft's story islands (the Radio Tower's tower, Vasagatan's ship) aren't part of
-it yet.
+**ground and nature**, and for a story island with designs also **what is built on it**:
+
+- **Rebuild it** (shown for the Radio Tower; more of Raft's story islands to come): **Design** - something like the
+  island built anew from **its own pieces** on the new ground, different with every seed (how high, how many storeys
+  and decks, which walls have windows, which way it faces):
+  - **A radio tower** - a station on the ground (its door, a power box, a locker), legs 6 to 18 m up to the radio room
+    (the radio on its table, a chair, the radar screen, a locker), a roof with the dish, the windmill, a floodlight and
+    a mast with a lamp; a ladder all the way up;
+  - **An oil rig** - over the open sea off the island (water at least 4 m deep under all of it): four of the tower's
+    floors on legs down to the sea floor, railings, a control room with the dish on its roof, a lit flare stack, the
+    windmill, supplies, and ladders down to a moored boat;
+  - **A lighthouse under construction** - on a headland (high ground with the sea close by): 4 to 6 storeys of the
+    tower's walls and floors with a ladder up the outside, the top ones still being built - poles round it, the
+    lamp's parts waiting by the door - or finished, with a lantern room of windows, lamps facing out and a lit mast;
+  - **Random design** (picked by the seed), or **None** (only ground and nature).
+
+  Its furniture stands on the floors and its legs reach the ground or the sea floor: nothing of it floats. The pieces
+  come from Raft's own island: the first Generate loads it (a few seconds).
 
 ![Randomize existing](images/generator-randomize.jpg)
 *Randomize existing: Raft's islands, measured, with a picture each. Here a variation of "Big Island OG".*

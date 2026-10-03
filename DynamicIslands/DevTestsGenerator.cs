@@ -737,6 +737,54 @@ namespace DynamicIslands
 			if (ok) Log("PASS: generator quests"); else Fail("generator quests");
 		}
 
+		[ConsoleCommand(name: "CIRemake", docs: "Dev, editor: Randomize existing's Rebuild it - the Radio Tower remade as a radio tower, an oil rig and a lighthouse under construction (each with two seeds): built of the tower's own pieces, all of them loaded (no missing-object blocks), nothing of it in the air (CIFloating), the report says what it built; pictures shot_remake_*.png. CIRemake [design id]")]
+		public static void RemakeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RemakeRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+
+		static IEnumerator RemakeRoutine(string only)
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIRemake (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			RaftIsland radar = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains("Landmark_Radar"));
+			if (radar == null) { Fail("no measured Radio Tower (raft_islands.txt)"); yield break; }
+			foreach (Remakes.Design d in Remakes.For(radar.Scene))
+			{
+				if (only != null && d.Id != only) continue;
+				foreach (int seed in new[] { 11, 12 })
+				{
+					IslandGenSettings gs = RaftIslands.LikeIt(radar, new IslandGenSettings { Seed = seed });
+					gs.Seed = seed;
+					gs.Remake = d.Id;
+					yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+					IslandGenerator.GenerateInEditor(gs);
+					yield return new WaitForSecondsRealtime(0.6f);
+					List<string> built = IslandGenerator.LastReport.Built;
+					List<EditorGameObject> objs = PlacedEditorObjects();
+					int floors = objs.Count(e => e.GameObjectName == "RT_Floor"), walls = objs.Count(e => (e.GameObjectName ?? "").StartsWith("RT_Wall")), pillars = objs.Count(e => e.GameObjectName == "RT_PillarThick");
+					int missing = PlacedEditorObjects().Count(e => e.gameObject.name.Contains(IslandSpawner.MissingTag));
+					string word = d.Id == "rt.tower" ? "radio tower" : d.Id == "rt.rig" ? "oil rig" : "lighthouse";
+					Check(ref ok, built.Any(x => x.Contains(word)) && floors >= 2 && (pillars >= 1 || d.Id == "rt.lighthouse") && missing == 0,
+						d.Label + ", seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + floors + " floors, " + walls + " walls, " + pillars + " pillars" + (missing > 0 ? ", " + missing + " objects not loaded" : ""));
+					// Nothing of it in the air: the floating check on the RT pieces and ladders
+					FloatingCommand(new[] { "0.3", "RT_" });
+					FloatingCommand(new[] { "0.3", "Ladder" });
+					EditorGameObject mid = objs.Where(e => e.GameObjectName == "RT_Floor").OrderBy(e => e.transform.position.y).FirstOrDefault();
+					if (mid != null && Camera.main != null)
+					{
+						Vector3 at = mid.transform.position + new Vector3(-3f, 0f, 0f);
+						float height = objs.Where(e => (e.GameObjectName ?? "").StartsWith("RT_")).Max(e => e.transform.position.y) - at.y;
+						Vector3 from = at + new Vector3(-22f - height * 0.6f, height * 0.6f + 6f, -22f - height * 0.6f);
+						Camera.main.transform.SetPositionAndRotation(from, Quaternion.LookRotation(at + Vector3.up * height * 0.45f - from));
+						yield return new WaitForSecondsRealtime(1.2f);
+						Screenshot(new[] { "remake_" + d.Id.Replace("rt.", "") + "_" + seed });
+						yield return new WaitForSecondsRealtime(0.5f);
+					}
+				}
+			}
+			if (ok) Log("PASS: remakes of Raft's islands"); else Fail("remakes of Raft's islands");
+		}
+
 		[ConsoleCommand(name: "CIUnderwaterShots", docs: "Dev, editor: generates an island on the deep sea floor (style: CIUnderwaterShots [Tropical|Snowy|Desert|Forest|Volcanic]) and takes pictures: from above, from the side under water, the reef on the shelf, and the drop-off (shot_uw_*.png)")]
 		public static void UnderwaterShotsCommand(string[] args)
 		{
