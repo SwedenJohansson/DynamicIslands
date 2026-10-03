@@ -3,36 +3,36 @@
 # test - and its quest done unlocks the next one.
 plan Raft Remade
 note RadioTower
-expect chain radiotower unlocked
-tune radiotower
+expect chain radioremade unlocked
+tune radioremade
 include radio_tower_remade.play
-expect chain radiotower done
-expect chain vasagatan unlocked
-tune vasagatan
+expect chain radioremade done
+expect chain vasagatanremade unlocked
+tune vasagatanremade
 include vasagatan_remade.play
-expect chain vasagatan done
-expect chain balboa unlocked
-tune balboa
+expect chain vasagatanremade done
+expect chain balboaremade unlocked
+tune balboaremade
 include balboa_remade.play
-expect chain balboa done
-expect chain caravan unlocked
-tune caravan
+expect chain balboaremade done
+expect chain caravanremade unlocked
+tune caravanremade
 include caravan_town_remade.play
-expect chain caravan done
-expect chain tangaroa unlocked
-tune tangaroa
+expect chain caravanremade done
+expect chain tangaroaremade unlocked
+tune tangaroaremade
 include tangaroa_remade.play
-expect chain tangaroa done
-expect chain varuna unlocked
-tune varuna
+expect chain tangaroaremade done
+expect chain varunaremade unlocked
+tune varunaremade
 include varuna_point_remade.play
-expect chain varuna done
-expect chain temperance unlocked
-tune temperance
+expect chain varunaremade done
+expect chain temperanceremade unlocked
+tune temperanceremade
 include temperance_remade.play
-expect chain temperance done
-expect chain utopia unlocked
-tune utopia
+expect chain temperanceremade done
+expect chain utopiaremade unlocked
+tune utopiaremade
 include utopia_remade.play
-expect chain utopia done
+expect chain utopiaremade done
 plan end

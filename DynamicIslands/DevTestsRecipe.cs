@@ -379,6 +379,46 @@ namespace DynamicIslands
 			Log("PASS: height map");
 		}
 
+		[ConsoleCommand(name: "CISeaSpots", docs: "Dev, editor: level spots of sea floor <min> to <max> m down (3 to 8), for a recipe's crates and wrecks to lie on - the ground within 0.8 m of the spot's height 1.5 m around it, spots at least 10 m apart, nearest the land first, in recipe coordinates. CISeaSpots [min] [max] [step] [half]")]
+		public static void SeaSpotsCommand(string[] args)
+		{
+			// (a generated island's sea floor is steep in most places: crates set on its slopes lay half inside them or hung
+			// over the drop - Varuna Point Remade needed 108 probe crates, Temperance Remade 198, to find a few level spots)
+			if (terraineditor.terrain == null) { Fail("no terrain here (the editor, an island open)"); return; }
+			float min = args != null && args.Length > 0 ? F(args[0]) : 3f, max = args != null && args.Length > 1 ? F(args[1]) : 8f;
+			float step = args != null && args.Length > 2 ? F(args[2]) : 2f, half = args != null && args.Length > 3 ? F(args[3]) : 120f;
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Func<float, float, float> above = (x, z) => GroundY(mid.x + x, mid.y + z) - sea;
+			int n = Mathf.Max(1, Mathf.RoundToInt(half / step));
+			var land = new List<Vector2>();
+			var level = new List<KeyValuePair<Vector2, float>>();
+			for (int j = -n; j <= n; j++)
+				for (int i = -n; i <= n; i++)
+				{
+					float x = i * step, z = j * step, v = above(x, z);
+					if (v > 0f) { if ((i + j) % 2 == 0) land.Add(new Vector2(x, z)); continue; }
+					if (-v < min || -v > max) continue;
+					bool flat = true;
+					for (int a = 0; a < 8 && flat; a++)
+					{
+						float ang = a * Mathf.PI / 4f;
+						flat = Mathf.Abs(above(x + 1.5f * Mathf.Cos(ang), z + 1.5f * Mathf.Sin(ang)) - v) < 0.8f;
+					}
+					if (flat) level.Add(new KeyValuePair<Vector2, float>(new Vector2(x, z), v));
+				}
+			Func<Vector2, float> fromLand = p => land.Count == 0 ? 0f : land.Min(l => Vector2.Distance(l, p));
+			var spots = new List<KeyValuePair<Vector2, float>>();
+			foreach (var c in level.OrderBy(c => fromLand(c.Key)))
+			{
+				if (spots.Count >= 16) break;
+				if (spots.All(s => Vector2.Distance(s.Key, c.Key) >= 10f)) spots.Add(c);
+			}
+			foreach (var s in spots)
+				Log("SPOT " + s.Key.x.ToString("F0", CultureInfo.InvariantCulture) + " " + s.Key.y.ToString("F0", CultureInfo.InvariantCulture) + ": " + (-s.Value).ToString("F1", CultureInfo.InvariantCulture) + " m down, " + fromLand(s.Key).ToString("F0", CultureInfo.InvariantCulture) + " m from the land");
+			Log((spots.Count > 0 ? "PASS" : "FAIL") + ": sea spots " + min.ToString("0.#", CultureInfo.InvariantCulture) + "-" + max.ToString("0.#", CultureInfo.InvariantCulture) + " m down: " + spots.Count + " (" + level.Count + " level cells)");
+		}
+
 		[ConsoleCommand(name: "CIBoundsOf", docs: "Dev, editor: where the island's objects whose name contains <part> are and how far they reach - pivot (m from the island's middle, h above the sea), turn, the box around their meshes (bottom and top h), the ground under its middle and the colliders it touches: fixing a recipe's floating or buried things. CIBoundsOf <part>")]
 		public static void BoundsOfCommand(string[] args)
 		{

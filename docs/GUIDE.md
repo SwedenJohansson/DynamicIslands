@@ -2541,6 +2541,32 @@ What it shows: all [three kinds of islands](#the-three-kinds-of-islands-you-meet
 **story place** ("after" a story island) and a **Receiver** frequency, "done when its quest is done", and side trips
 brought **after a distance sailed**, ahead of the raft.
 
+**Raft Remade** - Raft's story as you know it, but every story island is made anew. Each of Raft's eight story
+islands is replaced on the Receiver by a remade version of itself: its land made by the generator **like** Raft's own
+island ([4.5](#45-the-island-generator) - its shape and style, something new each time it is built), then rebuilt with
+new set pieces, new missions, other monsters and a boss. Each hands out the blueprints the original island has, so the
+raft still gets its steering wheel, engine, fuel, machete and everything the story needs; the last island's quest is
+the ending.
+
+| Instead of | The plan's island | What it is |
+|---|---|---|
+| Radio Tower | ![](images/library/radio_tower_remade.jpg) **Radio Tower Remade** | A three-deck tower on a steep rock, a battery bank in the old shark cage, Old Beak on the roof |
+| Vasagatan | ![](images/library/vasagatan_remade.jpg) **Vasagatan Remade** | A ship broken in two on the reef - her bow on a sandbar full of rats, her stern sunk in the bay, her crew's camp in the dunes |
+| Balboa | ![](images/library/balboa_remade.jpg) **Balboa Remade** | A forest of pine and maple round a mountain: the rangers' station, the Mama bear's den behind a vine-grown barricade (cut with the machete), a radio mast on the summit |
+| Caravan Town | ![](images/library/caravan_town_remade.jpg) **Caravan Town Remade** | Red sandstone stacks: a market in the inlet, a lift of ladders, a bridge slid across by a winch to the mayor's pillar - and a white screecher on his roof |
+| Tangaroa | ![](images/library/tangaroa_remade.jpg) **Tangaroa Remade** | The floating city on a hill of its own: a harbour deck on one of the old ring pontoons, the pump house, the square with the founder's statue, the generator and the council's vault (three key cards) |
+| Varuna Point | ![](images/library/varuna_point_remade.jpg) **Varuna Point Remade** | A construction site on a long rocky point: the half-built tower in its scaffolding, the floodlight's four parts on the sea floor, the floodlight tower, a giant angler in the deep |
+| Temperance | ![](images/library/temperance_remade.jpg) **Temperance Remade** | An igloo village, Selene's station whose reactor opens its inner doors (three cable drums - one under the ice), the telescope on the peak, the polar bear mother |
+| Utopia | ![](images/library/utopia_remade.jpg) **Utopia Remade** | The end of the voyage: docks with Utopia's market, the warden's prison house on its stilts, and his yard on the summit behind a palisade - a gate with two keys, his hyena pack and their alpha |
+
+Each island is on the Receiver at its story island's place (600 to 1200 m ahead when tuned), and each is done when its
+quest is done; the plan also has **Random islands while sailing: on** and **Raft's story islands: on**.
+
+What it shows: rules that take a story island's place (**instead of**, [7.4](#74-everything-a-rule-can-do)), islands
+made from Raft's own islands with the generator's **like**, and on each island a different way to lock the reward:
+a story item used on an object (a battery, a crank, cables, floodlight parts), a key card count (Tangaroa's vault takes
+three), a signal (Varuna's strongbox opens only once the floodlight burns), two keys at once (Utopia's gate).
+
 **The Abyss Expedition** - an expedition downwards beside Raft's story: each island comes **near the one before**
 when its quest is done or players reach it - an old mine, a buried shelter, a **sunken island** and a **wreck** made
 new for every world (map types), caverns, a drowned city - and at the end **The Abyss**.
@@ -2557,7 +2583,7 @@ with your own islands.
 | To learn how to make... | Open |
 |---|---|
 | Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
-| A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door) |
+| A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
 | An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve) |
 | Caves | Old Mine Islet, Ironreef Caverns (four), Wreckers' Cove (a sea cave) |
@@ -2565,12 +2591,13 @@ with your own islands.
 | Darkness and light (atmosphere zones, lamps that come on) | Shelter Atoll, Old Mine Islet, Ironreef Caverns, The Abyss (its lair) |
 | Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |
 | Air pockets for a long dive | The Abyss |
-| A boss (bigger, tougher, tinted) | Ranger's Rest (Old Scar), Thornwood (the Warthog King), Glacier Station (the Polar Bear Queen), The Drowned Metropolis (the Lantern Lord), Scrapyard Haven (the alpha), Coral Observatory (the giant angler), The Abyss (the Abyssal Angler) |
+| A boss (bigger, tougher, tinted) | Ranger's Rest (Old Scar), Thornwood (the Warthog King), Glacier Station (the Polar Bear Queen), The Drowned Metropolis (the Lantern Lord), Scrapyard Haven (the alpha), Coral Observatory (the giant angler), The Abyss (the Abyssal Angler), and one on each of Raft Remade's islands (the Mama bear, the white screecher, the giant angler, the polar bear mother, the hyena alpha...) |
 | Animals to catch | Tide Farm |
 | Buildings from Raft's pieces | Signal Rock and Wreckers' Cove (radio tower pieces), Shelter Atoll and Coral Observatory (Selene rooms), Mayor's Wharf (City Hall) |
 | A raft or a deck of Raft's foundations | Tide Farm, The Abyss |
 | Land shaped with the brushes | Thornwood (a gorge), Glacier Station (a crevasse), Coral Observatory (a blue hole), Scrapyard Haven (a pit and a terrace), The Abyss (a trench with a shelf and a ledge) |
-| An island in Raft's story | The Long Voyage (after each story island) |
+| An island in Raft's story | The Long Voyage (after each story island), Raft Remade (instead of each story island) |
+| An island made from one of Raft's own (the generator's **like**) | Raft Remade's eight islands |
 | A chain of islands that bring each other | The Abyss Expedition |
 
 ---
