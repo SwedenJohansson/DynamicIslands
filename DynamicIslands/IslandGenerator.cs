@@ -2118,6 +2118,8 @@ namespace DynamicIslands.Editor
 		class ReefMask
 		{
 			public readonly List<int>[] Core = new List<int>[RaftUnderwater.BandCount], Halo = new List<int>[RaftUnderwater.BandCount];
+			/// <summary>All of the reefs' cells, whatever their depth.</summary>
+			public readonly List<int> CoreAll = new List<int>(), HaloAll = new List<int>();
 			static readonly Regex LooseKinds = new Regex(@"^(SeaVine|[Ss]eavine|Seaweed|Kelp|Pillar_\d)");
 			/// <summary>Sea vines, seaweed and kelp: round the reefs, not only on them.</summary>
 			public static bool Loose(string name) { return LooseKinds.IsMatch(name); }
@@ -2177,8 +2179,8 @@ namespace DynamicIslands.Editor
 						near = Mathf.Min(near, Mathf.Sqrt(dx * dx + dz * dz) / q.z);
 					}
 					float ragged = 0.7f + 0.6f * Mathf.PerlinNoise(x / 5f + off.x, z / 5f + off.y);
-					if (near < ragged) mask.Core[b].Add(c);
-					if (near < ragged * 1.8f) mask.Halo[b].Add(c);
+					if (near < ragged) { mask.Core[b].Add(c); mask.CoreAll.Add(c); }
+					if (near < ragged * 1.8f) { mask.Halo[b].Add(c); mask.HaloAll.Add(c); }
 				}
 			Debug.Log("[CUSTOM ISLANDS] Reefs: " + corals.ToString("F0") + " corals wanted, " + reefs.Count + " of " + wanted + " reefs, " +
 				string.Join(" ", Enumerable.Range(0, RaftUnderwater.BandCount).Select(b => mask.Core[b].Count.ToString()).ToArray()) + " reef cells by band (" + sea.Step.ToString("F1") + " m)");
@@ -2366,8 +2368,9 @@ namespace DynamicIslands.Editor
 						int cell;
 						if (reefs != null)
 						{
-							// (corals and plants only on the island's reefs - see PlanReefs; sea vines and kelp round them too)
-							List<int> pool = (ReefMask.Loose(t.Name) ? reefs.Halo : reefs.Core)[b];
+							// (corals and plants only on the island's reefs - see PlanReefs; sea vines and kelp round them too - at
+							// whatever depth the reef is, as deep as Raft has the kind)
+							List<int> pool = ReefMask.Loose(t.Name) ? reefs.HaloAll : reefs.CoreAll;
 							if (pool.Count == 0) return false;
 							cell = pool[r.Next(pool.Count)];
 							if (sea.Coast[cell] > placeReach) return false;
@@ -2380,7 +2383,8 @@ namespace DynamicIslands.Editor
 						}
 						float x = (cell % sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step, z = (cell / sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step;
 						float h = ground.At(x, z), depth = Sea - h;
-						if (depth < 0.3f || RaftUnderwater.BandOf(depth) != b) return false;
+						if (depth < 0.3f) return false;
+						if (b >= 0 ? RaftUnderwater.BandOf(depth) != b : depth < t.DepthLow * 0.6f || depth > t.DepthHigh * 1.4f + 2f) return false;
 						float slope = ground.Slope(x, z);
 						if (t.Slope >= 40f && steep) { if ((float)r.NextDouble() > SS(12f, t.Slope, slope) + 0.08f) return false; } // (ores and cliff rocks keep to the steep slopes)
 						else if (slope > 62f) return false;
@@ -2405,7 +2409,7 @@ namespace DynamicIslands.Editor
 						return true;
 					};
 					int ofKind = 0, bestBand = -1, bestAnyBand = -1;
-					float expectedAll = 0f, bestExpected = 0f, bestAny = 0f;
+					float expectedAll = 0f, bestExpected = 0f, bestAny = 0f, reefWanted = 0f;
 					// As many as Raft has on as much ground within their reach of the land - not on all of the band's ground: on a
 					// wide shallow shelf most of it is further out, and its share crowded the strip by the shore - a wall of ice
 					// boulders along Glacier Station's shores, ten times Temperance's (the review, 2026-10-03)
@@ -2419,9 +2423,17 @@ namespace DynamicIslands.Editor
 						if (within == 0) continue;
 						float expected = t.Density[b] * within * sea.Step * sea.Step * f;
 						if (expected > bestExpected) { bestExpected = expected; bestBand = b; }
+						if (reefs != null) { reefWanted += expected; continue; }
 						int n = (int)expected + (rnd.NextDouble() < expected - (int)expected ? 1 : 0);
-						for (int attempt = 0, got = 0; attempt < n * (reefs != null ? 14 : 8) + 4 && got < n; attempt++)
+						for (int attempt = 0, got = 0; attempt < n * 8 + 4 && got < n; attempt++)
 							if (tryPlace(b, rnd, true)) { got++; placed++; ofKind++; }
+					}
+					// (a reef's corals: as many of each as the island's sea floor would hold at Raft's density, all on the reefs)
+					if (reefs != null && reefWanted > 0f)
+					{
+						int n = (int)reefWanted + (rnd.NextDouble() < reefWanted - (int)reefWanted ? 1 : 0);
+						for (int attempt = 0, got = 0; attempt < n * 14 + 4 && got < n; attempt++)
+							if (tryPlace(-1, rnd, true)) { got++; placed++; ofKind++; }
 					}
 					// (each of Raft's finds is there where Raft has them - ores, clay, sand, scrap, clams: the user wants Raft's
 					// resources under water on every island, 2026-10-03; a small island's share of a rare one rounded to none, and
