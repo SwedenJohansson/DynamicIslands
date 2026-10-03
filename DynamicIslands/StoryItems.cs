@@ -488,6 +488,23 @@ namespace DynamicIslands.Editor
 				}
 		}
 
+		/// <summary>One island's notes found of its notes with a text (the island by its name in the journal's page keys, the
+		/// name of the island it came as): the journal's line over its pages, "(5/7 notes)" - so players know there are some left.
+		/// False when the island isn't in the world or has no notes.</summary>
+		public static bool OfIsland(string hostName, out int found, out int total)
+		{
+			found = total = 0;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => !x.Failed && x.HostName.Equals(hostName ?? "", StringComparison.OrdinalIgnoreCase));
+			if (e == null) return false;
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			foreach (int n in IslandCache.NotesOf(e.Name))
+			{
+				total++;
+				if (pages.Contains("note:" + e.HostName + ":" + n)) found++;
+			}
+			return total > 0;
+		}
+
 		/// <summary>"5 / 38 notes found"</summary>
 		public static string Summary()
 		{
@@ -631,7 +648,8 @@ namespace DynamicIslands.Editor
 			g.constraintCount = 4;
 			instance.emptyItems = UIKit.Label(itemContent, "<i>No story items yet. Look for them in chests and on the islands.</i>", 13, UIKit.TextMuted);
 
-			RectTransform pagesGroup = UIKit.Group(left, "Pages");
+			// (each island under it is its quest line: "Quest Pages", the user, 2026-10-03; the object keeps its name)
+			RectTransform pagesGroup = UIKit.Group(left, "Quest Pages", "Group_Pages");
 			UIKit.Size(pagesGroup.gameObject, -1, 268);
 			RectTransform pageBox = UIKit.Rect("PageBox", pagesGroup);
 			UIKit.Size(pageBox.gameObject, -1, 230);
@@ -701,7 +719,7 @@ namespace DynamicIslands.Editor
 			pageKeys.Clear();
 			foreach (IGrouping<string, StoryBook.Page> island in StoryBook.Pages.Reverse().GroupBy(p => p.Island ?? ""))
 			{
-				IslandHeader(island.Key, island.First());
+				IslandHeader(island.Key, island.First(), island);
 				foreach (StoryBook.Page p in island) PageButton(p);
 			}
 			emptyPages.gameObject.SetActive(StoryBook.Pages.Count == 0);
@@ -753,11 +771,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An island's line over its pages: its name and its quest (a tick once done).</summary>
-		void IslandHeader(string island, StoryBook.Page sample)
+		void IslandHeader(string island, StoryBook.Page sample, IEnumerable<StoryBook.Page> pages)
 		{
 			bool done;
 			string quest = QuestOf(sample, out done);
-			Text t = UIKit.Label(pageList, (island.Length > 0 ? island : "Other pages") + (quest.Length > 0 ? "  \u00B7  " + quest + (done ? "  \u221a done" : "") : ""), 13, UIKit.Accent, TextAnchor.LowerLeft, FontStyle.Bold, "Island");
+			// (its notes found of its notes - the user, 2026-10-03: "so you would know if you have some left on it")
+			string host = pages.Select(p => (p.Key ?? "").Split(':')).Where(k => k.Length >= 3 && (k[0] == "note" || k[0] == "act")).Select(k => k[1]).FirstOrDefault();
+			int found, total;
+			string notes = host != null && NoteCount.OfIsland(host, out found, out total) ? "  (" + found + "/" + total + " notes)" : "";
+			Text t = UIKit.Label(pageList, (island.Length > 0 ? island : "Other pages") + (quest.Length > 0 ? "  \u00B7  " + quest + (done ? "  \u221a done" : "") : "") + notes, 13, UIKit.Accent, TextAnchor.LowerLeft, FontStyle.Bold, "Island");
 			UIKit.Size(t.gameObject, -1, 24);
 		}
 

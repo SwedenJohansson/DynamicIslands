@@ -323,6 +323,11 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, JournalWindow.IsOpen && JournalWindow.ShownTitle != null, "the journal opens (" + JournalWindow.ShownTitle + ")");
 			Check(ref ok, (JournalWindow.CountsShown ?? "").Contains(notesFound1 + " / " + notesTotal1 + " notes found"), "the journal shows the notes found: \"" + JournalWindow.CountsShown + "\"");
+			// (and each island's line its own: "(1/1 notes)" - the user, 2026-10-03: so you know if some are left on it)
+			int isleFound, isleTotal;
+			bool isle = NoteCount.OfIsland(e.HostName, out isleFound, out isleTotal);
+			string isleLine = JournalWindow.ListLines().FirstOrDefault(l => l.StartsWith("# " + Behaviours.IslandTitle(e))) ?? "";
+			Check(ref ok, isle && isleFound >= 1 && isleLine.EndsWith("(" + isleFound + "/" + isleTotal + " notes)"), "the island's line shows its notes found: \"" + isleLine + "\"");
 			// (the pages by island: under the island's name and its quest, a tick once done - the user, 2026-10-02: notes of
 			// several islands in one list got mixed up)
 			string islandTitle = Behaviours.IslandTitle(e), questTitle = IslandQuest.From(IslandCache.PropsOf(e)).Title;

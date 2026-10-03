@@ -274,8 +274,8 @@ page's (**K**, a star).
   name, with **×2**, **×3**... when the crew has more than one. Click one to see its picture and description on the
   paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
-- **Pages** (bottom left), **by island**: each island's pages under its name and its quest's title (**√ done** once the
-  quest is done) - the island you were at last first, its newest page first - so notes of several islands don't get
+- **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the
+  quest is done) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
   pages an island writes when something happens (an island event "write a journal page"), and, under **Other pages**,
   the frequencies a world plan gives out ("Tune the Receiver to #4821"). Click a page to read it on the paper, signed
