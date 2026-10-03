@@ -259,10 +259,16 @@ namespace DynamicIslands.Editor
 
 		#region The quest panel
 
-		static RectTransform panel;
-		static Text titleText, stepsText;
+		static RectTransform panel, stepsView, stepsContent;
+		static ScrollRect stepsScroll;
+		static Text titleText;
+		static readonly List<Text> stepLines = new List<Text>();
 		static float nextHud;
+		static int followedIsland = -1, followedStep = -1;
 		static readonly HashSet<int> introduced = new HashSet<int>();
+		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
+		/// covered the right side of the screen).</summary>
+		public const int VisibleSteps = 5;
 
 		/// <summary>Every frame from the mod: the panel for the quest of the island the player is at (and its introduction once).</summary>
 		public static void Tick()
@@ -291,7 +297,51 @@ namespace DynamicIslands.Editor
 				}
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
-			stepsText.text = string.Join("\n", lines.ToArray());
+			ShowSteps(lines, step, at.Id);
+		}
+
+		/// <summary>
+		/// The steps, one line each, in a list at most VisibleSteps tall: a longer quest scrolls - by itself to the
+		/// current step (the step done before it, then it and the next ones) whenever the step changes, and with the
+		/// mouse wheel while the cursor is free (the inventory, the journal, Raft's menu) - never fighting the player's
+		/// own scrolling between two steps.
+		/// </summary>
+		static void ShowSteps(List<string> lines, int step, int island)
+		{
+			while (stepLines.Count < lines.Count) stepLines.Add(StepLine());
+			for (int i = 0; i < stepLines.Count; i++)
+			{
+				bool used = i < lines.Count;
+				if (stepLines[i].gameObject.activeSelf != used) stepLines[i].gameObject.SetActive(used);
+				if (used && stepLines[i].text != lines[i]) stepLines[i].text = lines[i];
+			}
+			LayoutRebuilder.ForceRebuildLayoutImmediate(stepsContent);
+			// (the window: one done step above the current one, so the player sees what was just done)
+			int first = Mathf.Clamp(step - 1, 0, Mathf.Max(0, lines.Count - VisibleSteps));
+			float spacing = stepsContent.GetComponent<VerticalLayoutGroup>().spacing, top = 0f, height = 0f;
+			for (int i = 0; i < lines.Count; i++)
+			{
+				float h = LayoutUtility.GetPreferredHeight(stepLines[i].rectTransform);
+				if (i < first) top += h + spacing;
+				else if (i < first + VisibleSteps) height += h + (i > first ? spacing : 0f);
+			}
+			height += 4f; // (the content's bottom padding)
+			LayoutElement size = stepsView.GetComponent<LayoutElement>();
+			if (Mathf.Abs(size.preferredHeight - height) > 0.5f) UIKit.Size(stepsView.gameObject, -1, height);
+			bool scrolls = lines.Count > VisibleSteps;
+			stepsScroll.vertical = scrolls;
+			if (island != followedIsland || step != followedStep || !scrolls)
+			{
+				followedIsland = island; followedStep = step;
+				stepsContent.anchoredPosition = new Vector2(stepsContent.anchoredPosition.x, scrolls ? top : 0f);
+			}
+		}
+
+		static Text StepLine()
+		{
+			Text t = UIKit.Label(stepsContent, "", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Step");
+			t.lineSpacing = 1.15f;
+			return t;
 		}
 
 		/// <summary>How far a counted step is: story items the crew holds, or journal pages found on the island.</summary>
@@ -335,9 +385,18 @@ namespace DynamicIslands.Editor
 			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(12, 12, 8, 10), true);
 			titleText = UIKit.Label(panel, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
-			stepsText = UIKit.Label(panel, "", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Steps");
-			stepsText.lineSpacing = 1.15f;
+			stepsContent = UIKit.ScrollList(panel, out stepsScroll, 3f);
+			stepsView = (RectTransform)stepsScroll.transform;
+			stepsView.name = "Steps";
+			UIKit.Size(stepsView.gameObject, -1, 20f);
+			stepsScroll.scrollSensitivity = 18f;
+			stepLines.Clear();
+			followedIsland = followedStep = -1;
 			foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
+			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
+			stepsScroll.GetComponent<Image>().raycastTarget = true;
+			if (stepsScroll.verticalScrollbar != null)
+				foreach (Graphic g in stepsScroll.verticalScrollbar.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 		}
 
 		#endregion
