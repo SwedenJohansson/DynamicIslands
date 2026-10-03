@@ -21,6 +21,8 @@ namespace DynamicIslands
 	///   walk x z to x z [to x z ...]    walked with Raft's own controller (no jumping, no flying): it must get there
 	///   climb x z h=                    the player at a ladder's foot: Raft's controller takes hold of the ladder
 	///   zone id | read title | open title | openat x z | use name | kill label | catch label [n]
+	///   reach title                     a chest the player can open from where the walk left them (Raft's use reach,
+	///                                   2.5 m from the eye, nothing in between) - "open" puts the player next to it
 	///   air id                          a diver in an air pocket (a shown zone with Air): breath back to full
 	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
 	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
@@ -230,6 +232,12 @@ namespace DynamicIslands
 						Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
 						yield return new WaitForSeconds(1.2f);
 						break;
+					case "reach":
+					{
+						string why = ScReach(playEntry, Rest(line, 1).Trim());
+						Check(ref ok, why == null, "chest '" + Rest(line, 1).Trim() + "' within reach of the player's eye" + (why != null ? " - " + why : ""));
+						break;
+					}
 					case "openat":
 					{
 						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
@@ -590,6 +598,38 @@ namespace DynamicIslands
 		}
 
 		/// <summary>What stops a walking player: the nearest collider within a metre ahead at waist height, not the player's own.</summary>
+		/// <summary>
+		/// Whether the player, standing where the walk left them, can open a chest: within Raft's use reach of the eye (2.5 m,
+		/// Player.UseDistanceDefault) with nothing in between - Vasagatan Remade's safe behind a doorway too low to walk
+		/// through is opened from the doorway (the review, 2026-10-03). Null when they can, else why not.
+		/// </summary>
+		static string ScReach(IslandWorldState.Entry e, string title)
+		{
+			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c =>
+			{
+				IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>();
+				return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle).Equals(title, StringComparison.OrdinalIgnoreCase);
+			});
+			if (chest == null) return "no chest '" + title + "'";
+			Camera cam = Camera.main;
+			if (cam == null) return "no camera";
+			Transform root = chest.GetComponentInParent<IslandObjectRef>().transform;
+			Renderer[] parts = root.GetComponentsInChildren<Renderer>(false);
+			Vector3 to = root.position;
+			if (parts.Length > 0) { Bounds b = parts[0].bounds; foreach (Renderer p in parts) b.Encapsulate(p.bounds); to = b.center; }
+			Vector3 eye = cam.transform.position;
+			float dist = Vector3.Distance(eye, to);
+			// (the chest's own colliders count whether solid or a trigger - Raft uses chests through either; anything else
+			// solid on the way is in the way, other triggers - zones - are not)
+			foreach (RaycastHit hit in Physics.RaycastAll(eye, (to - eye).normalized, 2.5f, ~0, QueryTriggerInteraction.Collide).OrderBy(h => h.distance))
+			{
+				if (hit.collider.transform.IsChildOf(root)) return null;
+				if (hit.collider.isTrigger || hit.collider.transform.IsChildOf(cam.transform.root)) continue;
+				return hit.collider.name + " in the way " + hit.distance.ToString("F1") + " m from the eye (the chest " + dist.ToString("F1") + " m)";
+			}
+			return "nothing of it within 2.5 m toward it (it is " + dist.ToString("F1") + " m from the eye)";
+		}
+
 		/// <summary>The nearest living animal within this many metres of a point (or null).</summary>
 		static AI_NetworkBehaviour NearestAnimal(Vector3 at, float within)
 		{

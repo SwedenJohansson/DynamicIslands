@@ -554,7 +554,7 @@ namespace DynamicIslands
 				};
 				spread(fromAny, qa, false);
 				spread(fromSea, qs, true);
-				var bins = new[] { 3f, 8f, 20f, 50f, 1e9f };
+				var bins = new[] { 3f, 8f, 20f, 50f, float.PositiveInfinity }; // (the last: also bamboo no water reaches - by a lagoon the open sea doesn't)
 				var anyHist = new int[5]; var seaHist = new int[5];
 				foreach (EditorGameObject e in PlacedEditorObjects())
 				{

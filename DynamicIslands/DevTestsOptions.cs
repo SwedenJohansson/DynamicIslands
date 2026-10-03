@@ -374,6 +374,45 @@ namespace DynamicIslands
 			Log("PASS: deck probe");
 		}
 
+		[ConsoleCommand(name: "CIRayLine", docs: "Dev, in game: what stands along a line on a custom island, for a walk that sticks - at <n> points from <x1> <z1> to <x2> <z2> (m from its middle, as play tests give them) everything a ray down from 40 m meets and its height above the sea: CIRayLine <island> <x1> <z1> <x2> <z2> <n>")]
+		public static void RayLineCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 6) { Fail("CIRayLine <island> <x1> <z1> <x2> <z2> <n>"); return; }
+			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
+			float x1 = num(1), z1 = num(2), x2 = num(3), z2 = num(4);
+			int n = Mathf.Max(2, Mathf.RoundToInt(num(5)));
+			for (int i = 0; i < n; i++)
+			{
+				float f = i / (float)(n - 1), x = Mathf.Lerp(x1, x2, f), z = Mathf.Lerp(z1, z2, f);
+				Vector3 from = new Vector3(e.Position.x + x, 40f, e.Position.z + z);
+				RaycastHit[] hits = Physics.RaycastAll(from, Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderByDescending(h => h.point.y).ToArray();
+				Log("RAY " + x.ToString("F2") + " " + z.ToString("F2") + ": " + (hits.Length == 0 ? "nothing" :
+					string.Join(", ", hits.Select(h => h.collider.name + (h.collider.GetComponent<Terrain>() != null ? " (terrain)" : "") + " " + h.point.y.ToString("F2")).ToArray())));
+			}
+			Log("PASS: ray line");
+		}
+
+		[ConsoleCommand(name: "CIRaySlice", docs: "Dev, in game: a doorway's opening on a custom island - from <x> <z> (m from its middle) rays toward <x2> <z2>, one every 25 cm of height from <h1> to <h2> above the sea: how far each goes and what stops it: CIRaySlice <island> <x> <z> <x2> <z2> <h1> <h2>")]
+		public static void RaySliceCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 7) { Fail("CIRaySlice <island> <x> <z> <x2> <z2> <h1> <h2>"); return; }
+			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
+			Vector3 a = new Vector3(e.Position.x + num(1), 0f, e.Position.z + num(2)), b = new Vector3(e.Position.x + num(3), 0f, e.Position.z + num(4));
+			Vector3 dir = (b - a).normalized;
+			float reach = Vector3.Distance(a, b);
+			for (float h = num(5); h <= num(6) + 0.001f; h += 0.25f)
+			{
+				RaycastHit hit;
+				bool got = Physics.Raycast(new Vector3(a.x, h, a.z), dir, out hit, reach, ~0, QueryTriggerInteraction.Ignore);
+				Log("SLICE h=" + h.ToString("F2") + ": " + (got ? hit.collider.name + (hit.collider.GetComponent<Terrain>() != null ? " (terrain)" : "") + " at " + hit.distance.ToString("F2") + " m" : "clear for " + reach.ToString("F1") + " m"));
+			}
+			Log("PASS: ray slice");
+		}
+
 		[ConsoleCommand(name: "CIRaftDeckProbe", docs: "Dev, in game: Raft's own raft - for a few foundations: the block's height, the top of what a player stands on above it (Raft's raft collider), and the block's own colliders (their bounds) - to give the mod's rafts of blocks the same floor")]
 		public static void RaftDeckProbeCommand()
 		{

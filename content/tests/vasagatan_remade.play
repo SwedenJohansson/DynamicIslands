@@ -37,10 +37,12 @@ zone bow
 kill Rat
 expect step 5
 
-# The door forced with the crowbar - in through it, past the bunks, to the safe by the wheel
+# The door forced with the crowbar - the safe is bolted just inside (the boat's doorway is too low to walk through:
+# it is opened from the doorway, within Raft's reach of the player's eye)
 use chartdoor
 expect message swings free
-walk -26.97 -26.16 to -26.59 -23.99 to -26.03 -20.84 h=1.5
+walk -27.2 -27.4 to -26.92 -25.86 h=1.4
+reach Captain's safe
 open Captain's safe
 expect item Blueprint_MotorWheel 1
 expect item Blueprint_SteeringWheel 1
