@@ -1,6 +1,6 @@
 # Storm Spire - an island of the library's plan Raft 2: The Drowned Frontier (station Seven of the Frontier Corps)
 # A needle of rock in the storm belt, its top cut flat for the Corps' weather station (33.5 m): a radio tower room with a
-# mast, a turning wind vane and a lightning rod on its roof; up the needle's west side the station's lift tower - its car
+# mast and a turning wind vane on its roof; up the needle's west side the station's lift tower - its car
 # stuck at the top, a ladder up the tower with a landing halfway - and a bridge from its top to the station; the shed and
 # the meteorologist's tapes at the landing on the west beach; grey storm light, mist and rain round the spire. Quest "Eye
 # of the Storm" (6 steps, short on purpose): the foot, the tapes, three conductor rods (the shed, the tower's landing, the
@@ -97,7 +97,8 @@ next
 pop
 
 # --- The weather station on the needle's top: a radio tower room (its door to the bridge), the instrument panel and the
-# locker behind it; on its roof the mast with a wind vane turning in the storm, the lightning rod, the storm bird --------
+# locker behind it; on its roof the mast with a wind vane turning in the storm, the storm bird (the radio tower's
+# down-pipe as a lightning rod lay flat on the roof - left out) ----------------------------------------------------------
 push at 4 9 h=33.5
 call rt_storey l2=RT_WallDoor1 f1=RT_WallWindow1 b2=RT_WallWindow1 r2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3.05
@@ -107,7 +108,6 @@ place Locker stationlocker at -0.55 2.4 sit yaw=270
 place Placeable_Lantern_Metal - at -4.2 3.6 y=1.2 sit drop
 place RT_PillarThick mast at -1.2 -3.2 y=3.05
 place Placeable_WindTurbine vane at -1.2 -3.2 y=9.05 scale=0.45
-place RT_PipeDownStraight lightningrod at -5.4 3.9 y=3.05
 place Zone_Trigger spiretop at -3 0 y=1.5
 place Creature_StoneBird stormbird at -3 0 y=9
 pop
