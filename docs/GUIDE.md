@@ -266,7 +266,7 @@ or console, while a note is open, or in the editor.) Its key is also shown at th
 page's (**K**, a star).
 
 ![The journal](images/world-journal.jpg)
-*The journal: the custom quests done at the top, the Progress panel (quests, islands reached, notes, story items, journal pages, overall - each with its ?), the story items at the top left, the pages under Quest Pages by island with its quest and its notes found ("(1/1 notes)"), and the page "The vault" open, signed with the island, its quest and the day.*
+*The journal: the custom quests done at the top, the Progress panel (quests, islands reached, notes, story items, journal pages, overall - hover a line for what it counts), the story items at the top left, the pages under Quest Pages by island with its quest and its notes found ("(1/1 notes)"), and the page "The vault" open, signed with the island, its quest and the day.*
 
 **What's in it**
 
@@ -305,8 +305,8 @@ page's (**K**, a star).
 
   ![The quests list in the journal](images/world-journal-quests.jpg)
   *A click on the count: the custom quests by kind, done and still to do.*
-- **Progress** (top right, over the page): how far the crew has come in this world, each as found / total, with a **?**
-  on each line that says what it counts:
+- **Progress** (top right, over the page): how far the crew has come in this world, each as found / total - hover a
+  line to see what it counts:
   - **Quests** - quests done, and the per cent (the same as the bar at the top);
   - **Islands reached** - custom islands someone has set foot on, of those in the world and those its plan will bring;
   - **Notes found** - notes read of the notes with a text on those islands (each island's line under Quest Pages has

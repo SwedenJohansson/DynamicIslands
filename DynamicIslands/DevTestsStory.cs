@@ -328,6 +328,8 @@ namespace DynamicIslands
 			Check(ref ok, progress.Count == 6 && progress[0].StartsWith("Quests  " + rowsNow[0].Done + "/" + rowsNow[0].Total) && progress.Any(l => l == "Notes found  " + notesFound1 + "/" + notesTotal1)
 				&& progress.Any(l => l.StartsWith("Story items found  ")) && progress.Any(l => l.StartsWith("Islands reached  ")) && progress.Any(l => l.StartsWith("Journal pages  ")) && progress.Last().StartsWith("Overall  ") && progress.Last().EndsWith("%"),
 				"the journal's Progress panel: " + string.Join(" | ", progress.ToArray()));
+			List<string> helps = JournalWindow.ProgressHelp;
+			Check(ref ok, helps.Count == 6 && helps.All(h => !string.IsNullOrEmpty(h)) && JournalWindow.ProgressMarks == 0, "each Progress line shows its help on hover, no ? marks (" + JournalWindow.ProgressMarks + " buttons in the panel)");
 			WorldProgress.Row itemsRow = rowsNow.First(r => r.Name == "Story items found"), pagesRow = rowsNow.First(r => r.Name == "Journal pages");
 			Check(ref ok, itemsRow.Total >= 1 && itemsRow.Done >= 1 && pagesRow.Done >= 2 && pagesRow.Total >= pagesRow.Done, "story items found " + itemsRow.Done + "/" + itemsRow.Total + " (the brass key, used up, still counts), journal pages " + pagesRow.Done + "/" + pagesRow.Total + " (the note and the vault's page)");
 			// (and each island's line its own: "(1/1 notes)" - the user, 2026-10-03: so you know if some are left on it)

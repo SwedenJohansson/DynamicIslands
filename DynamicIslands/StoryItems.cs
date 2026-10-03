@@ -711,9 +711,11 @@ namespace DynamicIslands.Editor
 				RectTransform cell = UIKit.Rect("Row_" + row.Name, grid);
 				UIKit.Horizontal(cell.gameObject, 2f, new RectOffset(0, 0, 0, 0));
 				Text t = UIKit.Label(cell, "", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Value");
-				UIKit.Size(t.gameObject, 140);
+				UIKit.Size(t.gameObject, 166);
 				t.resizeTextForBestFit = true; t.resizeTextMinSize = 10; t.resizeTextMaxSize = 13;
-				UIKit.Help(cell, row.Help, 16f);
+				// (hover the line itself for what it counts - the user, 2026-10-03: instead of a ? after each)
+				t.raycastTarget = true;
+				t.gameObject.AddComponent<UIKit.HelpMark>().Text = row.Help;
 				instance.progressText.Add(t);
 			}
 			RectTransform sheet = UIKit.Rect("Sheet", right);
@@ -913,6 +915,10 @@ namespace DynamicIslands.Editor
 				progressText[i].text = "<color=#f7cc6b>" + r.Name + "</color>  " + (r.Total == 0 ? "-" : r.Done + "/" + r.Total + (r.Name == "Quests" || r.Name == "Overall" ? "  \u00B7  " + r.Percent + "%" : ""));
 			}
 		}
+
+		/// <summary>The Progress panel's lines' hover help, and how many ? marks it has (tests: none - the lines themselves carry it).</summary>
+		public static List<string> ProgressHelp { get { return IsOpen ? instance.progressText.Select(t => { UIKit.HelpMark m = t.GetComponent<UIKit.HelpMark>(); return m != null ? m.Text : null; }).ToList() : new List<string>(); } }
+		public static int ProgressMarks { get { return IsOpen && instance.progressText.Count > 0 ? instance.progressText[0].transform.parent.parent.GetComponentsInChildren<Button>(true).Length : -1; } }
 
 		/// <summary>The Progress panel's lines now (tests).</summary>
 		public static List<string> ProgressShown { get { return IsOpen ? instance.progressText.Select(t => System.Text.RegularExpressions.Regex.Replace(t.text, "<[^>]+>", "")).ToList() : new List<string>(); } }
