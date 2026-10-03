@@ -463,6 +463,41 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
+	/// The world's notes for the journal ("5 / 38 notes found", the user, 2026-10-03): every note with a text on the
+	/// islands in the world and on the saved islands the world plan names (also before they come) - found once its page is
+	/// in the journal. An island made new from a map type counts once it has come. Raft's own notes are Raft's notebook's.
+	/// </summary>
+	public static class NoteCount
+	{
+		public static void Count(out int found, out int total)
+		{
+			found = total = 0;
+			// (island name as the journal's page keys have it -> its file)
+			var islands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+				if (!e.Failed && !islands.ContainsKey(e.HostName)) islands[e.HostName] = e.Name;
+			IEnumerable<IntroRule> rules = (WorldDirector.Plan != null ? WorldDirector.Plan.Rules : new List<IntroRule>()).Concat(StoryChain.Rules);
+			foreach (IntroRule r in rules)
+				if (r.What == "island" && r.WhatArg.Length > 0 && !islands.ContainsKey(r.WhatArg)) islands[r.WhatArg] = r.WhatArg;
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			foreach (KeyValuePair<string, string> island in islands)
+				foreach (int n in IslandCache.NotesOf(island.Value))
+				{
+					total++;
+					if (pages.Contains("note:" + island.Key + ":" + n)) found++;
+				}
+		}
+
+		/// <summary>"5 / 38 notes found"</summary>
+		public static string Summary()
+		{
+			int found, total;
+			Count(out found, out total);
+			return found + " / " + total + " notes found";
+		}
+	}
+
+	/// <summary>
 	/// Host: a banner for every player when the world's quests (QuestCount) reach 90 % - "You are nearing the end" - and
 	/// 100 % - "You have completed the whole quest line" (the user, 2026-10-03). Each once per world (marks in the plan's
 	/// done list, saved with the world); straight to 100 % shows only that one. Not in a world with fewer than MinQuests
@@ -671,6 +706,7 @@ namespace DynamicIslands.Editor
 			}
 			emptyPages.gameObject.SetActive(StoryBook.Pages.Count == 0);
 			countText.text = items.Count + " story item(s) \u00B7 " + StoryBook.Pages.Count + " page(s)";
+			NoteRefresh();
 			RefreshQuests();
 			if (shownKey == QuestsKey) ShowQuests();
 			else if (shownKey == null || (!StoryBook.Pages.Any(p => p.Key == shownKey) && !items.Any(h => "item:" + h.Def.Id == shownKey)))
@@ -781,8 +817,18 @@ namespace DynamicIslands.Editor
 			QuestCount.Count(quests, out done, out total);
 			UIKit.LabelOf(questButton).text = total == 0 ? "QUESTS: NONE YET" : "QUESTS  " + done + " / " + total + "  \u00B7  " + QuestCount.Percent(done, total) + "%" + (done == total ? "  \u00B7  ALL DONE" : "");
 			questFill.anchorMax = new Vector2(total == 0 ? 0f : (float)done / total, 1f);
+			NoteRefresh();
 			if (shownKey == QuestsKey) readText.text = QuestList(quests);
 		}
+
+		/// <summary>The top right: story items, notes found of the world's notes, pages (the user, 2026-10-03: "5/38 notes found").</summary>
+		void NoteRefresh()
+		{
+			countText.text = StoryBook.Items.Count() + " story item(s) \u00B7 " + NoteCount.Summary() + " \u00B7 " + StoryBook.Pages.Count + " page(s)";
+		}
+
+		/// <summary>The top right's text now (tests).</summary>
+		public static string CountsShown { get { return IsOpen ? instance.countText.text : null; } }
 
 		/// <summary>The world's quests on the paper: done and still to do, by kind.</summary>
 		void ShowQuests()

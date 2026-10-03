@@ -308,14 +308,21 @@ namespace DynamicIslands
 			Check(ref ok, QuestTracker.StepOf(e) >= 2, "a journal page from this island (the vault) does the pages step: the quest is done");
 
 			// Reading a note puts it in the journal; the journal window
+			int notesFound0, notesTotal0, notesFound1, notesTotal1;
+			NoteCount.Count(out notesFound0, out notesTotal0);
 			CustomNote note = obj(noteIdx) != null ? obj(noteIdx).GetComponentInChildren<CustomNote>(true) : null;
 			NoteReader.Open(note);
 			yield return null;
 			NoteReader.Close();
 			Check(ref ok, StoryBook.Pages.Any(p => p.Title == "The keeper's note" && p.Text.Contains("small chest")), "a note read goes into the journal");
+			// (notes found of the world's notes - the user, 2026-10-03: "5/38 notes found")
+			NoteCount.Count(out notesFound1, out notesTotal1);
+			Check(ref ok, notesTotal1 == notesTotal0 && notesTotal1 >= IslandCache.NotesOf(e.Name).Count && notesTotal1 > 0 && notesFound1 == notesFound0 + 1,
+				"the note counts as found: " + notesFound0 + " / " + notesTotal0 + " -> " + notesFound1 + " / " + notesTotal1 + " notes found (this island has " + IslandCache.NotesOf(e.Name).Count + ")"); 
 			JournalWindow.Open();
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, JournalWindow.IsOpen && JournalWindow.ShownTitle != null, "the journal opens (" + JournalWindow.ShownTitle + ")");
+			Check(ref ok, (JournalWindow.CountsShown ?? "").Contains(notesFound1 + " / " + notesTotal1 + " notes found"), "the journal shows the notes found: \"" + JournalWindow.CountsShown + "\"");
 			// (the pages by island: under the island's name and its quest, a tick once done - the user, 2026-10-02: notes of
 			// several islands in one list got mixed up)
 			string islandTitle = Behaviours.IslandTitle(e), questTitle = IslandQuest.From(IslandCache.PropsOf(e)).Title;

@@ -379,6 +379,8 @@ namespace DynamicIslands.Editor
 			public List<string> Zones;
 			/// <summary>Signals its objects and island events send ("send a signal" actions).</summary>
 			public List<string> Signals;
+			/// <summary>Its notes with a text (their object numbers): each gives a journal page when read.</summary>
+			public List<int> Notes;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -399,6 +401,7 @@ namespace DynamicIslands.Editor
 					.SelectMany(p => p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
 					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "signal" && a.Arg.Trim().Length > 0)
 					.Select(a => a.Arg.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+				info.Notes = Enumerable.Range(0, f.Objects.Count).Where(i => ObjectProps.IsNote(f.Objects[i].Name, f.Objects[i].Props) && ObjectProps.Get(f.Objects[i].Props, ObjectProps.NoteText).Trim().Length > 0).ToList();
 				cache[name] = info;
 				return info;
 			}
@@ -428,6 +431,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The signals the island's objects and events send (empty if none or the file is missing).</summary>
 		public static List<string> SignalsOf(string name) { Info i = Get(name); return i != null ? i.Signals : new List<string>(); }
+
+		/// <summary>The island's notes with a text, by object number (the journal's "note:&lt;island&gt;:&lt;n&gt;" pages; empty if the file is missing).</summary>
+		public static List<int> NotesOf(string name) { Info i = Get(name); return i != null && i.Notes != null ? i.Notes : new List<int>(); }
 
 		/// <summary>The island's quest (none if the file is missing).</summary>
 		public static IslandQuest QuestOf(string name) { return IslandQuest.From(Props(name)); }

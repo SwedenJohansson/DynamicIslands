@@ -306,7 +306,11 @@ page's (**K**, a star).
 
   ![The quests list in the journal](images/world-journal-quests.jpg)
   *A click on the count: Raft's story islands (none done yet) and the islands with a quest met so far.*
-- The top right counts the story items and the pages. An empty journal says where to look.
+- The top right counts the story items, the **notes found** - **5 / 38 notes found** - and the pages. The notes are
+  every note with a text on the islands in the world and on the saved islands the world plan brings, counted from the
+  start of the world (also those still to come); a note is found when anyone in the crew has read it. An island made
+  new from a map type counts once it has come, and an island that comes by chance adds its notes when it comes. Raft's
+  own notes aren't counted: they are in Raft's notebook (T). An empty journal says where to look.
 
 **One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
 journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
