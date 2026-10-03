@@ -1621,6 +1621,9 @@ namespace DynamicIslands
 				{
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					// (what the recipe put down a line before is not in the physics scene until it is synced: Varuna Point
+					// Remade's log dropped through the table placed for it onto the ground, 2026-10-03)
+					Physics.SyncTransforms();
 					RaycastHit[] under = Physics.RaycastAll(new Vector3(b.center.x, b.min.y + 0.05f, b.center.z), Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore)
 						.Where(h => !h.collider.transform.IsChildOf(go.transform)).OrderBy(h => h.distance).ToArray();
 					if (under.Length > 0) go.transform.position += Vector3.up * (under[0].point.y - b.min.y);

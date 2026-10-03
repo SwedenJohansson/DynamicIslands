@@ -80,7 +80,7 @@ place RT_RadarScreen - at -0.5 0 sit yaw=-90
 place "Box Big" - at -5.3 -3.6 sit yaw=15
 pop
 place Relay_Fence_pole - at 54.6 -2.4 h=1.96
-place Note_Paper councilnotice at 54.6 -2.4 h=3.08 sit drop
+place Note_Paper councilnotice at 54.6 -2.4 h=3.05 sit
 place Crate_Big_01 - at 60 -12 h=1.96 yaw=20
 place Crate_Big_02 - at 61.5 -13.6 h=1.96 yaw=-15
 place "Box Small" - at 62.4 -11.2 h=1.96 yaw=40

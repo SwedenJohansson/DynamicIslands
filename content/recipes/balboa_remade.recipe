@@ -59,7 +59,7 @@ place "overgrowthIvy_long_01 Variant" vinewall at -2.4 -0.7 y=0
 place "overgrowthIvy_long_02 Variant" vinewall at 1 -0.7 y=0
 place "overgrowthIvy_long_01 Variant" vinewall at 4.3 -0.7 y=0
 place Relay_Fence_pole - at -6 3 ground
-place Note_Paper trailsign at -6 3 y=1.1 sit drop
+place Note_Paper trailsign at -6 3 y=1.1 ground sit
 place Zone_Trigger den at 1 -12 y=1.5
 place Creature_Bear mamabear at 1 -22 y=0.5
 place "Box Small" pack at -3 -27 ground yaw=30

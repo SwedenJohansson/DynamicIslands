@@ -36,7 +36,7 @@ place Crate_Big_01 ledgerbox at -8.4 -2.2 ground yaw=15
 place Note_Paper ledger at -8.4 -2.2 h=4 sit drop yaw=70
 place Candle_01 - at -8.8 -1.9 h=4 sit drop
 place Relay_Fence_pole - at -10.3 -5.6 ground
-place Note_Paper tollnotice at -10.3 -5.6 y=1.12 ground sit drop
+place Note_Paper tollnotice at -10.3 -5.6 y=1.1 ground sit
 place PulauKafilahFlag - at -17.6 -4.6 ground
 place Zone_Trigger market at -11 -1 y=1.2
 
