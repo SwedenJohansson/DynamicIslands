@@ -130,6 +130,41 @@ namespace DynamicIslands
 
 		#region World
 
+		[ConsoleCommand(name: "CIQuestMilestones", docs: "Dev, in game (host): the quests' milestones - at 90 % done a banner for every player \"Nearing the end\", at 100 % \"The whole quest line is done\", each once per world (saved with it), straight to 100 % only that one, none with fewer than 5 quests; the journal says ALL DONE")]
+		public static void QuestMilestonesCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIQuestMilestones (in a world, host)"); return; }
+			bool ok = true;
+			bool hadNear = WorldDirector.Done.Contains(QuestMilestones.NearMark), hadAll = WorldDirector.Done.Contains(QuestMilestones.AllMark);
+			Func<int, int, List<QuestCount.Quest>> count = (done, total) => Enumerable.Range(0, total).Select(i => new QuestCount.Quest { Name = "q" + i, Group = QuestCount.Met, Done = i < done }).ToList();
+			Action clear = () => { WorldDirector.Done.Remove(QuestMilestones.NearMark); WorldDirector.Done.Remove(QuestMilestones.AllMark); };
+			try
+			{
+				clear();
+				Check(ref ok, QuestMilestones.Check(count(5, 10)) == null, "5 of 10 done: no banner");
+				Check(ref ok, QuestMilestones.Check(count(8, 10)) == null, "8 of 10 (80 %): no banner");
+				string near = QuestMilestones.Check(count(9, 10));
+				Check(ref ok, near == QuestMilestones.NearTitle && StoryChain.LastBanner.Contains("You are nearing the end: 9 of 10 quests done (90%)"), "9 of 10 (90 %): \"" + StoryChain.LastBanner + "\"");
+				Check(ref ok, QuestMilestones.Check(count(9, 10)) == null && QuestMilestones.Check(count(19, 20)) == null, "only once: not again at 9 of 10 or 19 of 20");
+				string all = QuestMilestones.Check(count(10, 10));
+				Check(ref ok, all == QuestMilestones.AllTitle && StoryChain.LastBanner.Contains("You have completed the whole quest line: all 10 quests"), "10 of 10: \"" + StoryChain.LastBanner + "\"");
+				Check(ref ok, QuestMilestones.Check(count(12, 12)) == null, "only once: not again when more quests came and are done (12 of 12)");
+				Check(ref ok, WorldDirector.WriteLines().Any(l => l.StartsWith("@done=") && l.Contains(QuestMilestones.NearMark) && l.Contains(QuestMilestones.AllMark)), "both marks are saved with the world (@done=)");
+				clear();
+				string straight = QuestMilestones.Check(count(10, 10));
+				Check(ref ok, straight == QuestMilestones.AllTitle && QuestMilestones.Check(count(10, 10)) == null && WorldDirector.Done.Contains(QuestMilestones.NearMark), "straight to 100 %: only the whole quest line's banner (the 90 % one never comes after it)");
+				clear();
+				Check(ref ok, QuestMilestones.Check(count(4, 4)) == null && QuestMilestones.Check(count(3, 3)) == null, "a world with fewer than " + QuestMilestones.MinQuests + " quests: no banner (one island's quest isn't the whole quest line)");
+			}
+			finally
+			{
+				clear();
+				if (hadNear) WorldDirector.Done.Add(QuestMilestones.NearMark);
+				if (hadAll) WorldDirector.Done.Add(QuestMilestones.AllMark);
+			}
+			if (ok) Log("PASS: quest milestones"); else Fail("quest milestones");
+		}
+
 		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps")]
 		public static void StoryWorld()
 		{

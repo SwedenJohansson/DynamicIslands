@@ -462,6 +462,51 @@ namespace DynamicIslands.Editor
 		public static int Percent(int done, int total) { return total == 0 ? 0 : Mathf.FloorToInt(100f * done / total); }
 	}
 
+	/// <summary>
+	/// Host: a banner for every player when the world's quests (QuestCount) reach 90 % - "You are nearing the end" - and
+	/// 100 % - "You have completed the whole quest line" (the user, 2026-10-03). Each once per world (marks in the plan's
+	/// done list, saved with the world); straight to 100 % shows only that one. Not in a world with fewer than MinQuests
+	/// quests, where one island's quest would already be "the whole quest line".
+	/// </summary>
+	public static class QuestMilestones
+	{
+		public const int MinQuests = 5, NearPercent = 90;
+		public const string NearMark = "milestone:90", AllMark = "milestone:100";
+		public const string NearTitle = "Nearing the end", AllTitle = "The whole quest line is done";
+		const float CheckSeconds = 5f;
+		static float next;
+
+		/// <summary>From the director's tick (host, in a world).</summary>
+		public static void Tick()
+		{
+			if (Time.unscaledTime < next) return;
+			next = Time.unscaledTime + CheckSeconds;
+			try { Check(QuestCount.All()); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quests] " + e.Message); }
+		}
+
+		/// <summary>Shows the banner a count has reached and marks it; returns its title, or null (tests call it with their own counts).</summary>
+		public static string Check(List<QuestCount.Quest> quests)
+		{
+			int done, total;
+			QuestCount.Count(quests, out done, out total);
+			if (total < MinQuests) return null;
+			HashSet<string> marks = WorldDirector.Done;
+			if (done >= total)
+			{
+				if (marks.Contains(AllMark)) return null;
+				marks.Add(AllMark);
+				marks.Add(NearMark);
+				StoryChain.Announce(AllTitle, "You have completed the whole quest line: all " + total + " quests of this world are done!");
+				return AllTitle;
+			}
+			if (done * 100 < NearPercent * total || marks.Contains(NearMark)) return null;
+			marks.Add(NearMark);
+			StoryChain.Announce(NearTitle, "You are nearing the end: " + done + " of " + total + " quests done (" + QuestCount.Percent(done, total) + "%). The journal (J) lists what is left.");
+			return NearTitle;
+		}
+	}
+
 	public class JournalWindow : MonoBehaviour
 	{
 		static JournalWindow instance;
@@ -734,7 +779,7 @@ namespace DynamicIslands.Editor
 			List<QuestCount.Quest> quests = QuestCount.All();
 			int done, total;
 			QuestCount.Count(quests, out done, out total);
-			UIKit.LabelOf(questButton).text = total == 0 ? "QUESTS: NONE YET" : "QUESTS  " + done + " / " + total + "  \u00B7  " + QuestCount.Percent(done, total) + "%";
+			UIKit.LabelOf(questButton).text = total == 0 ? "QUESTS: NONE YET" : "QUESTS  " + done + " / " + total + "  \u00B7  " + QuestCount.Percent(done, total) + "%" + (done == total ? "  \u00B7  ALL DONE" : "");
 			questFill.anchorMax = new Vector2(total == 0 ? 0f : (float)done / total, 1f);
 			if (shownKey == QuestsKey) readText.text = QuestList(quests);
 		}

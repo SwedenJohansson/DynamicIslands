@@ -469,6 +469,9 @@ namespace DynamicIslands.Editor
 			Broadcast(null);
 		}
 
+		/// <summary>Host: a banner on every machine (the quests' milestones, QuestMilestones).</summary>
+		internal static void Announce(string title, string text) { Banner(title, text); }
+
 		/// <summary>A banner on every machine (and the host's own).</summary>
 		static void Banner(string title, string text)
 		{

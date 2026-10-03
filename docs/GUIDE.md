@@ -296,6 +296,14 @@ page's (**K**, a star).
   √ done, – still to do. The count is the same for every player and is worked out again every 2 seconds while the
   journal is open, so a quest another player finishes shows at once.
 
+  **The end in sight.** When **90%** of the world's quests are done, every player gets a banner: *"Nearing the end -
+  You are nearing the end: 18 of 20 quests done (90%). The journal (J) lists what is left."* At **100%** it says *"The
+  whole quest line is done - You have completed the whole quest line: all 20 quests of this world are done!"*, and the
+  count reads **ALL DONE**. Each banner comes once per world (it is remembered with the world, for every host), and a
+  world that gets to 100% in one go shows only the second. A world with fewer than 5 quests has no banners: there, one
+  island's quest isn't a quest line. Islands with quests that come later (by chance while sailing) add to the count
+  again, but the banners don't come twice.
+
   ![The quests list in the journal](images/world-journal-quests.jpg)
   *A click on the count: Raft's story islands (none done yet) and the islands with a quest met so far.*
 - The top right counts the story items and the pages. An empty journal says where to look.
@@ -473,19 +481,25 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   Each slider's word says how it stands against Raft ("less than Raft", "like Raft", "dense"...). Thicker than Like
   Raft (**Dense**, **Jungle**) thickens the island's higher ground: its low beach and flats - under 4 m above the sea,
   where Raft's islands grow bamboo - stay as thick as Raft's, so a jungle island's beaches don't become fields of
-  bamboo. Everything stands with **all of its base on the ground**:
+  bamboo. And at Like Raft no kind is ever thicker on the land than on Raft's own islands of the style and size: a
+  cluster of little islets, all shore, would otherwise get twice the bushes of Raft's small islands.
+  Everything stands with **all of its base on the ground**:
   on a slope a rock, a bush or a log goes down to the lowest ground under it (its high side a little in the slope, as
   Raft's own are), and flat things such as snow drifts lie along gentle slopes and are left off steep ones. They are
   set down on the terrain's own surface (its triangles), so nothing hangs in the air over a steep, uneven slope.
 - **Life under water:** corals, sea vines, kelp, rocks, stones, ores, giant clams and sunken barrels, placed like
   around Raft's own islands: each kind as close to the shore as there (boulders by the shore, rock formations on the
-  drop-off) and as thick, and at Like Raft never more rocks than half as many again as around Raft's own islands - an
-  island with a wide shallow shelf gets more sea floor, not more rocks crowded along its beaches. Raft's resources stay where Raft has them: metal and copper ore, scrap, giant clams and
+  drop-off) and as thick. The corals grow in **reefs** as Raft's do: a few tight patches some 15 m across (one per
+  250 corals or so), 2-20 m down and 6-45 m out from the land, more on the slopes than on flat sand, with bare sand
+  and rock between them - sea vines and kelp round them - never a carpet of coral over the whole sea floor. At Like
+  Raft there are never more corals and plants per m² of sea floor than around Raft's own islands, nor more rocks than
+  half as many again - an island with a wide shallow shelf gets more sea floor, not more rocks crowded along its
+  beaches. Raft's resources stay where Raft has them: metal and copper ore, scrap, giant clams and
   silver algae only under water, never on the land - and every island with sea floor around it gets at least one of
   each that Raft's islands of its style have, so even a small island has its ore. **Like Raft** is as dense as Raft's own reefs (about 160 corals and plants per 1000 m²
   2-10 m down, with sand between the reef patches); **Teeming**, the top of the sliders, is twice that. More than
-  that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) gathers them into reefs with
-  sand between.
+  that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) makes the reefs tighter (or
+  looser).
 - **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss),
   friendly animals to catch, sea creatures.
 - **Loot:** how many loot boxes, their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive

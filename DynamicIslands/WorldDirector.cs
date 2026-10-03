@@ -754,6 +754,7 @@ namespace DynamicIslands.Editor
 			Evaluate();
 			StoryChain.Tick();
 			ReturningIslands.Tick();
+			QuestMilestones.Tick();
 		}
 
 		/// <summary>Checks every rule that hasn't fired yet (host; tests call it directly).</summary>

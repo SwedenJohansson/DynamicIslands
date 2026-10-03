@@ -1879,7 +1879,20 @@ namespace DynamicIslands.Editor
 					for (int z = 0; z < ZoneCount; z++) area += w[z] * ground.ZoneArea(z);
 				}
 				float v = AmountOf(s, cat);
-				targets[cat] = Mathf.RoundToInt(MaxDensity(cat) * v * v * area / 1000f);
+				float target = MaxDensity(cat) * v * v * area / 1000f;
+				// (never much thicker than Raft's own islands of the style and size at the slider's Like Raft: a cluster of
+				// little islets got bushes at twice Raft's small islands' - "way too much", the user, 2026-10-03)
+				if (cat != CatBeach && ground.LandArea > 1f)
+				{
+					LandStyle raft = RaftLand.For(s.Style, ground.Small);
+					float raftArea = raft != null ? raft.Area.Sum() : 0f, like = LikeRaftAmount(s.Style, cat);
+					if (raftArea > 1f && like > 0.01f)
+					{
+						float most = raft.CountOf(cat) * 1000f / raftArea * (v / like) * (v / like) * ground.LandArea / 1000f;
+						if (most > 0f && target > most) target = most;
+					}
+				}
+				targets[cat] = Mathf.RoundToInt(target);
 			}
 			return targets;
 		}
@@ -2101,6 +2114,77 @@ namespace DynamicIslands.Editor
 			return g;
 		}
 
+		/// <summary>The island's reefs: the sea floor's cells its corals grow on (Core) and its sea vines and kelp (Halo), by depth band.</summary>
+		class ReefMask
+		{
+			public readonly List<int>[] Core = new List<int>[RaftUnderwater.BandCount], Halo = new List<int>[RaftUnderwater.BandCount];
+			static readonly Regex LooseKinds = new Regex(@"^(SeaVine|[Ss]eavine|Seaweed|Kelp|Pillar_\d)");
+			/// <summary>Sea vines, seaweed and kelp: round the reefs, not only on them.</summary>
+			public static bool Loose(string name) { return LooseKinds.IsMatch(name); }
+			public ReefMask() { for (int b = 0; b < RaftUnderwater.BandCount; b++) { Core[b] = new List<int>(); Halo[b] = new List<int>(); } }
+		}
+
+		/// <summary>Corals per reef, its radius (m) and the least gap between two reefs' middles.</summary>
+		const float PerReef = 250f, ReefRadius = 7.5f, ReefGap = 18f;
+
+		/// <summary>
+		/// Where an island's corals grow: Raft's own islands have theirs in a few dense reefs - two or three tight patches some
+		/// 15 m across on its small islands, and along the reef's rim round its big ones, with bare sand, rock and the inner
+		/// lagoon between - and the generator had spread as many evenly over all of the sea floor around the land: a carpet
+		/// of coral over a wide shallow bank ("way too much", the user, 2026-10-03; seen beside Raft's own with CIRaftView).
+		/// One reef per 250 corals, 2-20 m down and 6-45 m from the coast, more on the slopes than on flat sand, at least 18 m
+		/// apart; each reef a ragged patch of about 7.5 m radius (Groups makes them tighter or looser); sea vines and kelp
+		/// round them too.
+		/// </summary>
+		static ReefMask PlanReefs(IslandGenSettings s, Ground ground, SeaGround sea, float corals)
+		{
+			var mask = new ReefMask();
+			if (corals < 1f) return mask;
+			var rnd = new System.Random(s.Seed * 6007 + 911);
+			int wanted = Mathf.Clamp(Mathf.RoundToInt(corals / PerReef), 1, 80);
+			var cand = new List<int>();
+			var cum = new List<float>();
+			float total = 0f;
+			for (int b = 1; b <= 3; b++)
+				foreach (int c in sea.Bands[b])
+				{
+					float d = sea.Coast[c];
+					if (d < 6f || d > 45f) continue;
+					total += 0.3f + SS(2f, 15f, ground.Slope((c % sea.Res) * sea.Step, (c / sea.Res) * sea.Step));
+					cand.Add(c);
+					cum.Add(total);
+				}
+			if (cand.Count == 0) return mask;
+			var reefs = new List<Vector3>(); // x, z, radius
+			float size = Mathf.Lerp(1.35f, 0.75f, Mathf.Clamp01(s.Clusters)); // (Groups: tighter reefs)
+			for (int tries = 0; reefs.Count < wanted && tries < wanted * 50; tries++)
+			{
+				int i = cum.BinarySearch((float)rnd.NextDouble() * total);
+				if (i < 0) i = ~i;
+				int c = cand[Mathf.Min(i, cand.Count - 1)];
+				var p = new Vector2((c % sea.Res) * sea.Step, (c / sea.Res) * sea.Step);
+				if (reefs.Any(q => (new Vector2(q.x, q.y) - p).sqrMagnitude < ReefGap * ReefGap)) continue;
+				reefs.Add(new Vector3(p.x, p.y, ReefRadius * size * (0.7f + 0.6f * (float)rnd.NextDouble())));
+			}
+			Vector2 off = RandomOffset(rnd);
+			for (int b = 0; b < RaftUnderwater.BandCount; b++)
+				foreach (int c in sea.Bands[b])
+				{
+					float x = (c % sea.Res) * sea.Step, z = (c / sea.Res) * sea.Step, near = float.MaxValue;
+					foreach (Vector3 q in reefs)
+					{
+						float dx = x - q.x, dz = z - q.y;
+						near = Mathf.Min(near, Mathf.Sqrt(dx * dx + dz * dz) / q.z);
+					}
+					float ragged = 0.7f + 0.6f * Mathf.PerlinNoise(x / 5f + off.x, z / 5f + off.y);
+					if (near < ragged) mask.Core[b].Add(c);
+					if (near < ragged * 1.8f) mask.Halo[b].Add(c);
+				}
+			Debug.Log("[CUSTOM ISLANDS] Reefs: " + corals.ToString("F0") + " corals wanted, " + reefs.Count + " of " + wanted + " reefs, " +
+				string.Join(" ", Enumerable.Range(0, RaftUnderwater.BandCount).Select(b => mask.Core[b].Count.ToString()).ToArray()) + " reef cells by band (" + sea.Step.ToString("F1") + " m)");
+			return mask;
+		}
+
 		/// <summary>How many objects of each under-water kind (before the cap): Raft's density per depth band x this island's ground in that band
 		/// within the kind's reach of the land x the slider.</summary>
 		static Dictionary<string, float> SeaTargets(IslandGenSettings s, SeaGround sea)
@@ -2126,14 +2210,17 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		static float SeaCap(IslandGenSettings s, SeaGround sea, string cat, float f)
 		{
-			if (cat != CatSeaRocks || f <= 0f) return 1f;
+			// (the corals and plants too, at Raft's own: a generated island on a wide shallow bank had nearly half as many again
+			// as Raft's per m² - "way too much", the user, 2026-10-03)
+			float times = cat == CatSeaRocks ? 1.5f : cat == CatWater ? 1f : 0f;
+			if (times <= 0f || f <= 0f) return 1f;
 			float raft = RaftUnderwater.DensityOf(s.Style, cat);
 			if (raft <= 0f) return 1f;
 			float zone = 0f, total = 0f, cell = sea.Step * sea.Step;
 			for (int b = 0; b < 5; b++) zone += sea.Within(b, 60f) * cell;
 			foreach (SeaThing t in SeaThingsOf(s.Style, cat))
 				for (int b = 0; b < RaftUnderwater.BandCount; b++) total += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * cell * f;
-			float most = 1.5f * raft / 1000f * zone * f;
+			float most = times * raft / 1000f * zone * f;
 			return total > most ? most / total : 1f;
 		}
 
@@ -2257,6 +2344,14 @@ namespace DynamicIslands.Editor
 				var rnd = new System.Random(s.Seed * 4099 + 71 + ci * 577);
 				Vector2 reefOff = RandomOffset(rnd);
 				int placed = 0;
+				ReefMask reefs = null;
+				if (cat == CatWater)
+				{
+					float corals = 0f;
+					foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+						for (int b = 0; b < RaftUnderwater.BandCount; b++) corals += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * sea.Step * sea.Step * f;
+					reefs = PlanReefs(s, ground, sea, corals);
+				}
 				foreach (SeaThing t in SeaThingsOf(s.Style, cat))
 				{
 					GameObject proto = PlaceableCatalog.Get(t.Name);
@@ -2268,21 +2363,27 @@ namespace DynamicIslands.Editor
 					float reach = SeaGround.Reach(t), placeReach = reach;
 					Func<int, System.Random, bool, bool> tryPlace = (b, r, steep) =>
 					{
-						int near = sea.Within(b, placeReach);
-						if (near == 0) return false;
-						int cell = sea.Bands[b][r.Next(near)];
+						int cell;
+						if (reefs != null)
+						{
+							// (corals and plants only on the island's reefs - see PlanReefs; sea vines and kelp round them too)
+							List<int> pool = (ReefMask.Loose(t.Name) ? reefs.Halo : reefs.Core)[b];
+							if (pool.Count == 0) return false;
+							cell = pool[r.Next(pool.Count)];
+							if (sea.Coast[cell] > placeReach) return false;
+						}
+						else
+						{
+							int near = sea.Within(b, placeReach);
+							if (near == 0) return false;
+							cell = sea.Bands[b][r.Next(near)];
+						}
 						float x = (cell % sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step, z = (cell / sea.Res + (float)r.NextDouble() - 0.5f) * sea.Step;
 						float h = ground.At(x, z), depth = Sea - h;
 						if (depth < 0.3f || RaftUnderwater.BandOf(depth) != b) return false;
 						float slope = ground.Slope(x, z);
 						if (t.Slope >= 40f && steep) { if ((float)r.NextDouble() > SS(12f, t.Slope, slope) + 0.08f) return false; } // (ores and cliff rocks keep to the steep slopes)
 						else if (slope > 62f) return false;
-						if (cat == CatWater && s.Clusters > 0f)
-						{
-							// (Raft's corals grow in reefs with sand between them)
-							float nz = Fbm(new Vector2(x, z) / 16f + reefOff, 3);
-							if ((float)r.NextDouble() > Mathf.Lerp(1f, SS(-0.2f, 0.3f, nz), s.Clusters)) return false;
-						}
 						// As big as Raft's (a little either way); never much taller than the water is deep
 						float scale = pickup ? 1f : Mathf.Clamp(t.Size / protoSize, 0.3f, 3f) * (0.8f + 0.4f * (float)r.NextDouble());
 						float actual = protoSize * scale;
@@ -2290,6 +2391,7 @@ namespace DynamicIslands.Editor
 						float room = sea.Coast[cell] < 8f ? Mathf.Max(4f, depth * 1.3f) : Mathf.Max(2.5f, depth * 0.8f);
 						if (!pickup && actual > room) { scale *= room / actual; actual = protoSize * scale; }
 						float foot = SeaFootprint(cat, actual);
+						if (reefs != null) foot = Mathf.Max(0.22f, foot * 0.65f); // (a reef's corals grow close together, as Raft's do)
 						if (!spots.Free(x, z, foot)) return false;
 						spots.Add(x, z, foot);
 						float y = h - BaseDrop(ground, x, z, t.Name, cat, scale); // (all of its base on the sea floor, as on land)
@@ -2318,7 +2420,7 @@ namespace DynamicIslands.Editor
 						float expected = t.Density[b] * within * sea.Step * sea.Step * f;
 						if (expected > bestExpected) { bestExpected = expected; bestBand = b; }
 						int n = (int)expected + (rnd.NextDouble() < expected - (int)expected ? 1 : 0);
-						for (int attempt = 0, got = 0; attempt < n * 8 + 4 && got < n; attempt++)
+						for (int attempt = 0, got = 0; attempt < n * (reefs != null ? 14 : 8) + 4 && got < n; attempt++)
 							if (tryPlace(b, rnd, true)) { got++; placed++; ofKind++; }
 					}
 					// (each of Raft's finds is there where Raft has them - ores, clay, sand, scrap, clams: the user wants Raft's
