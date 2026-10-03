@@ -154,6 +154,8 @@ namespace DynamicIslands.Editor
 		public static event Action Changed;
 
 		public static IEnumerable<Held> Items { get { return held.Values.Where(h => h.Count > 0).OrderBy(h => h.Def.ShownName, StringComparer.OrdinalIgnoreCase); } }
+		/// <summary>Every story item the crew has found, also ones used up since (kept at 0, saved with the world).</summary>
+		public static IEnumerable<string> FoundIds { get { return held.Keys; } }
 		public static IList<Page> Pages { get { return pages; } }
 		public static bool HasState { get { return held.Count > 0 || pages.Count > 0; } }
 
@@ -328,9 +330,8 @@ namespace DynamicIslands.Editor
 	/// read, "journal" actions). In the look of Raft's menus, with the page on paper.
 	/// </summary>
 	/// <summary>
-	/// The world's quests, for the journal's count (the user, 2026-10-02: "35/100% completed quests"):
-	/// - Raft's story islands in this world's story (a plan can leave them out or the whole story): each done when its note
-	///   gives the next island's frequency - Utopia, the ending, when its people are rescued (Raft's own quest record);
+	/// The world's custom quests, for the journal's count (the user, 2026-10-02: "35/100% completed quests"; 2026-10-03:
+	/// "it should count all quest islands, not the original Raft quests" - the journal is the custom islands' book):
 	/// - the plan's islands in the story (done as the story counts them: their quest, by default) and the saved islands its
 	///   other rules bring that have a quest - known from the start of the world, also before they come;
 	/// - every other island with a quest that has come: by chance, a map type's, an island's own rule, the randomizer's.
@@ -338,7 +339,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class QuestCount
 	{
-		public const string RaftStory = "Raft's story", PlanStory = "The plan's story", PlanIslands = "The plan's other islands", Met = "Other islands with a quest";
+		public const string PlanStory = "The plan's story", PlanIslands = "The plan's other islands", Met = "Other islands with a quest";
 
 		public class Quest
 		{
@@ -346,25 +347,7 @@ namespace DynamicIslands.Editor
 			public bool Done;
 		}
 
-		static MethodInfo finished;
-
-		/// <summary>Whether Utopia's people are rescued - Raft's ending (its own quest record, saved and shared by Raft).</summary>
-		public static bool UtopiaDone()
-		{
-			try
-			{
-				if (finished == null) finished = AccessTools.Method(typeof(QuestProgressTracker), "HasFinishedQuest");
-				return finished != null && (bool)finished.Invoke(null, new object[] { QuestType.Utopia_People_Rescued });
-			}
-			catch { return false; }
-		}
-
-		/// <summary>Tests: Utopia counted as done (null: Raft's record).</summary>
-		public static bool? TestUtopiaDone;
-
-		static bool Utopia() { return TestUtopiaDone ?? UtopiaDone(); }
-
-		/// <summary>Every quest of this world, in order: Raft's story (with the plan's islands in it), the plan's other islands, the rest.</summary>
+		/// <summary>Every custom quest of this world, in order: the plan's islands in the story, the plan's other islands, the rest.</summary>
 		public static List<Quest> All()
 		{
 			var list = new List<Quest>();
@@ -372,32 +355,16 @@ namespace DynamicIslands.Editor
 			WorldPlan plan = WorldDirector.Plan;
 			if (StoryChain.Active && StoryChain.Steps.Count > 0)
 			{
-				// (a plan changed the story: the chain says what is done, its own islands in their places)
+				// (a plan changed the story: the chain says what is done - its own islands only, not Raft's)
 				foreach (string step in StoryChain.Steps)
 				{
-					if (StoryChain.IsRaft(step))
-					{
-						ChunkPointType t = StoryChain.TypeOfStep(step);
-						list.Add(new Quest { Name = StoryOrder.Name(t), Group = RaftStory, Done = t == ChunkPointType.Landmark_Utopia ? Utopia() : StoryChain.Done.Contains(step) });
-						continue;
-					}
+					if (StoryChain.IsRaft(step)) continue;
 					string id = StoryChain.RuleIdOf(step);
 					IntroRule r = StoryChain.RuleOf(id) ?? (plan != null ? plan.Rules.FirstOrDefault(x => x.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) : null);
 					List<IslandWorldState.Entry> at = WorldDirector.Refs(id, null);
 					if (at.Count > 0) counted.Add(at[0].HostName);
 					if (r != null && r.What == "island" && r.WhatArg.Length > 0) counted.Add(r.WhatArg);
 					list.Add(new Quest { Name = NameOf(at, r, id), Group = PlanStory, Done = StoryChain.Done.Contains(step) });
-				}
-			}
-			else if (plan == null || plan.RaftStory)
-			{
-				// (Raft's own story, in this world's order - the World settings can shuffle it): done when the next is unlocked
-				ChunkPointType[] order = StoryOrder.Order;
-				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType ?? new List<ChunkPointType>();
-				for (int i = 0; i < order.Length; i++)
-				{
-					bool done = order[i] == ChunkPointType.Landmark_Utopia ? Utopia() : i + 1 < order.Length && unlocked.Contains(order[i + 1]);
-					list.Add(new Quest { Name = StoryOrder.Name(order[i]), Group = RaftStory, Done = done });
 				}
 			}
 			// The plan's other rules that bring a saved island with a quest (known before they come)
@@ -515,6 +482,70 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
+	/// The world's progress for the journal's Progress panel (the user, 2026-10-03: "the total progress for each category,
+	/// detailed, so the player can follow the progression - 3/10, 63/100%, 3/15 found"): quests done, custom islands
+	/// reached, notes found, story items found (used-up ones too), journal pages, and all of them together. What counts is
+	/// what this world has: the custom islands in it and the saved islands its plan brings (counted before they come);
+	/// an island made new from a map type, or one that comes by chance, counts once it has come.
+	/// </summary>
+	public static class WorldProgress
+	{
+		public class Row
+		{
+			public string Name, Help;
+			public int Done, Total;
+			public int Percent { get { return QuestCount.Percent(Done, Total); } }
+		}
+
+		/// <summary>The rows: Quests, Islands reached, Notes found, Story items found, Journal pages, and Overall (the five together).</summary>
+		public static List<Row> Rows()
+		{
+			var rows = new List<Row>();
+			int done, total;
+			QuestCount.Count(QuestCount.All(), out done, out total);
+			rows.Add(new Row { Name = "Quests", Done = done, Total = total, Help = "The custom islands' quests done, of all this world has: the world plan's islands with a quest (counted from the start, also before they come) and every other island with a quest that has come. Raft's own story isn't counted. Click the bar at the top for the list." });
+			// The islands: in the world (not Raft's islands' extras) and the plan's saved islands still to come
+			var islands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			int reached = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Failed || WorldRandomizer.IsExtras(e) || islands.ContainsKey(e.HostName)) continue;
+				islands[e.HostName] = e.Name;
+				if (IslandWorldState.Islands.Any(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase) && x.State.ContainsKey(WorldDirector.VisitKey))) reached++;
+			}
+			WorldPlan plan = WorldDirector.Plan;
+			foreach (IntroRule r in (plan != null ? plan.Rules : new List<IntroRule>()).Concat(StoryChain.Rules))
+				if (r.What == "island" && r.WhatArg.Length > 0 && !islands.ContainsKey(r.WhatArg)) islands[r.WhatArg] = r.WhatArg;
+			rows.Add(new Row { Name = "Islands reached", Done = reached, Total = islands.Count, Help = "Custom islands someone of the crew has set foot on, of the custom islands in this world and the ones its plan will still bring. Islands that turn up by chance while sailing add to it as they come. Raft's own islands aren't counted." });
+			int nf, nt;
+			NoteCount.Count(out nf, out nt);
+			rows.Add(new Row { Name = "Notes found", Done = nf, Total = nt, Help = "Notes read (by anyone of the crew) of the notes with a text on those islands. Each island's line under Quest Pages says how many of its own you have found." });
+			// Story items: every one those islands give, found - also used up since
+			var found = new HashSet<string>(StoryBook.FoundIds, StringComparer.OrdinalIgnoreCase);
+			var items = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (KeyValuePair<string, string> island in islands)
+			{
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.Equals(island.Key, StringComparison.OrdinalIgnoreCase));
+				foreach (StoryItemDef d in StoryItems.Of(e != null ? IslandCache.PropsOf(e) : IslandCache.Props(island.Value))) if (d.Id.Length > 0) items.Add(d.Id);
+			}
+			rows.Add(new Row { Name = "Story items found", Done = items.Count(found.Contains), Total = items.Count, Help = "Story items found (keys, map pieces, logs...) of those the islands have - one used up since (a key a door took) still counts as found." });
+			// Journal pages: the islands' notes and the pages their events write
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			int pt = 0, pf = 0;
+			foreach (KeyValuePair<string, string> island in islands)
+			{
+				string file = IslandWorldState.Islands.Where(x => x.HostName.Equals(island.Key, StringComparison.OrdinalIgnoreCase)).Select(x => x.Name).FirstOrDefault() ?? island.Value;
+				foreach (int n in IslandCache.NotesOf(file)) { pt++; if (pages.Contains("note:" + island.Key + ":" + n)) pf++; }
+				foreach (string ev in IslandCache.EventPagesOf(file)) { pt++; if (pages.Contains("act:" + island.Key + ":" + ev)) pf++; }
+			}
+			rows.Add(new Row { Name = "Journal pages", Done = pf, Total = pt, Help = "Pages in the journal of all the islands can give: their notes, and the pages their events write when something happens. (The frequencies a plan gives out are pages too, but not counted here.)" });
+			int sd = rows.Sum(r => r.Done), st = rows.Sum(r => r.Total);
+			rows.Add(new Row { Name = "Overall", Done = sd, Total = st, Help = "All of it together: quests, islands, notes, story items and pages done of all there is." });
+			return rows;
+		}
+	}
+
+	/// <summary>
 	/// Host: a banner for every player when the world's quests (QuestCount) reach 90 % - "You are nearing the end" - and
 	/// 100 % - "You have completed the whole quest line" (the user, 2026-10-03). Each once per world (marks in the plan's
 	/// done list, saved with the world); straight to 100 % shows only that one. Not in a world with fewer than MinQuests
@@ -575,6 +606,8 @@ namespace DynamicIslands.Editor
 		/// <summary>The quests' count in the head: a button (the list on the paper) with a bar behind its words.</summary>
 		Button questButton;
 		RectTransform questFill;
+		/// <summary>The Progress panel's lines, one per WorldProgress row.</summary>
+		readonly List<Text> progressText = new List<Text>();
 		float questRefreshAt;
 		const string QuestsKey = "quests";
 		/// <summary>The page each page button shows (two islands may have a page of the same title).</summary>
@@ -616,7 +649,7 @@ namespace DynamicIslands.Editor
 			RectTransform head = UIKit.Row(panel, 34f, 8f, "Head");
 			UIKit.Label(head, "JOURNAL", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			// (the world's quests done: Raft's story islands, the plan's and every other island's with a quest - click for the list)
-			instance.questButton = UIKit.Button(head, "", () => instance.ShowQuests(), "Quests done in this world: Raft's story islands (each done when its note gives the next frequency; Utopia when its people are rescued), the world plan's islands with quests (counted from the start), and every other island with a quest that has come. Click for the list.", 360, 30, 14);
+			instance.questButton = UIKit.Button(head, "", () => instance.ShowQuests(), "The custom islands' quests done in this world: the world plan's islands with quests (counted from the start) and every other island with a quest that has come - not Raft's own story. Click for the list.", 360, 30, 14);
 			RectTransform fill = UIKit.Rect("Fill", instance.questButton.transform);
 			fill.SetAsFirstSibling();
 			fill.anchorMin = new Vector2(0f, 0f); fill.anchorMax = new Vector2(0f, 1f);
@@ -659,7 +692,32 @@ namespace DynamicIslands.Editor
 			instance.emptyPages = UIKit.Label(instance.pageList, "<i>Notes you read on the islands are written down here.</i>", 13, UIKit.TextMuted);
 
 			// Right: the page (or item) on paper
-			RectTransform sheet = UIKit.Rect("Sheet", body);
+			// Right: the world's progress (the user, 2026-10-03), and under it the page (or item) on paper
+			RectTransform right = UIKit.Rect("Right", body);
+			UIKit.Vertical(right.gameObject, 8f, new RectOffset(0, 0, 0, 0));
+			UIKit.Size(right.gameObject, -1, -1).flexibleWidth = 1f;
+			RectTransform progress = UIKit.Group(right, "Progress");
+			UIKit.Size(progress.gameObject, -1, 108);
+			RectTransform grid = UIKit.Rect("Grid", progress);
+			var pg = grid.gameObject.AddComponent<GridLayoutGroup>();
+			// (three cells in the right column's 530 px less the group's padding: at 176 px the panel ran 22 px past the journal)
+			pg.cellSize = new Vector2(166f, 26f);
+			pg.spacing = new Vector2(4f, 2f);
+			pg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+			pg.constraintCount = 3;
+			UIKit.Size(grid.gameObject, -1, 56);
+			foreach (WorldProgress.Row row in WorldProgress.Rows())
+			{
+				RectTransform cell = UIKit.Rect("Row_" + row.Name, grid);
+				UIKit.Horizontal(cell.gameObject, 2f, new RectOffset(0, 0, 0, 0));
+				Text t = UIKit.Label(cell, "", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Value");
+				UIKit.Size(t.gameObject, 140);
+				t.resizeTextForBestFit = true; t.resizeTextMinSize = 10; t.resizeTextMaxSize = 13;
+				UIKit.Help(cell, row.Help, 16f);
+				instance.progressText.Add(t);
+			}
+			RectTransform sheet = UIKit.Rect("Sheet", right);
+			UIKit.Size(sheet.gameObject, -1, -1).flexibleHeight = 1f;
 			UIKit.ParchmentSheet(sheet);
 			UIKit.Vertical(sheet.gameObject, 10f, new RectOffset(28, 28, 22, 18));
 			RectTransform titleRow = UIKit.Row(sheet, 44f, 10f, "TitleRow");
@@ -846,8 +904,18 @@ namespace DynamicIslands.Editor
 		/// <summary>The top right: story items, notes found of the world's notes, pages (the user, 2026-10-03: "5/38 notes found").</summary>
 		void NoteRefresh()
 		{
-			countText.text = StoryBook.Items.Count() + " story item(s) \u00B7 " + NoteCount.Summary() + " \u00B7 " + StoryBook.Pages.Count + " page(s)";
+			// (the counts are in the Progress panel now: the line of story items, notes found and pages read like a puzzle)
+			countText.text = "";
+			List<WorldProgress.Row> rows = WorldProgress.Rows();
+			for (int i = 0; i < rows.Count && i < progressText.Count; i++)
+			{
+				WorldProgress.Row r = rows[i];
+				progressText[i].text = "<color=#f7cc6b>" + r.Name + "</color>  " + (r.Total == 0 ? "-" : r.Done + "/" + r.Total + (r.Name == "Quests" || r.Name == "Overall" ? "  \u00B7  " + r.Percent + "%" : ""));
+			}
 		}
+
+		/// <summary>The Progress panel's lines now (tests).</summary>
+		public static List<string> ProgressShown { get { return IsOpen ? instance.progressText.Select(t => System.Text.RegularExpressions.Regex.Replace(t.text, "<[^>]+>", "")).ToList() : new List<string>(); } }
 
 		/// <summary>The top right's text now (tests).</summary>
 		public static string CountsShown { get { return IsOpen ? instance.countText.text : null; } }
@@ -865,7 +933,7 @@ namespace DynamicIslands.Editor
 
 		static string QuestList(List<QuestCount.Quest> quests)
 		{
-			if (quests.Count == 0) return "No quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
+			if (quests.Count == 0) return "No custom quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
 			var sb = new System.Text.StringBuilder();
 			foreach (IGrouping<string, QuestCount.Quest> g in quests.GroupBy(q => q.Group))
 			{
@@ -873,7 +941,7 @@ namespace DynamicIslands.Editor
 				foreach (QuestCount.Quest q in g) sb.Append(q.Done ? "   \u221a  " : "   \u2013  ").Append(q.Name).Append(q.Done ? "" : "").Append('\n');
 				sb.Append('\n');
 			}
-			sb.Append("\u221a done   \u2013 still to do. Raft's story islands count when their note gives the next frequency (Utopia when its people are rescued); a plan's islands count from the start; other islands with a quest count once they have come.");
+			sb.Append("\u221a done   \u2013 still to do. The custom islands' quests: a plan's islands count from the start; other islands with a quest count once they have come. Raft's own story isn't counted here.");
 			return sb.ToString();
 		}
 

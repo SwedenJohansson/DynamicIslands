@@ -322,7 +322,14 @@ namespace DynamicIslands
 			JournalWindow.Open();
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, JournalWindow.IsOpen && JournalWindow.ShownTitle != null, "the journal opens (" + JournalWindow.ShownTitle + ")");
-			Check(ref ok, (JournalWindow.CountsShown ?? "").Contains(notesFound1 + " / " + notesTotal1 + " notes found"), "the journal shows the notes found: \"" + JournalWindow.CountsShown + "\"");
+			// (the Progress panel: every category as found / total - the user, 2026-10-03)
+			List<string> progress = JournalWindow.ProgressShown;
+			List<WorldProgress.Row> rowsNow = WorldProgress.Rows();
+			Check(ref ok, progress.Count == 6 && progress[0].StartsWith("Quests  " + rowsNow[0].Done + "/" + rowsNow[0].Total) && progress.Any(l => l == "Notes found  " + notesFound1 + "/" + notesTotal1)
+				&& progress.Any(l => l.StartsWith("Story items found  ")) && progress.Any(l => l.StartsWith("Islands reached  ")) && progress.Any(l => l.StartsWith("Journal pages  ")) && progress.Last().StartsWith("Overall  ") && progress.Last().EndsWith("%"),
+				"the journal's Progress panel: " + string.Join(" | ", progress.ToArray()));
+			WorldProgress.Row itemsRow = rowsNow.First(r => r.Name == "Story items found"), pagesRow = rowsNow.First(r => r.Name == "Journal pages");
+			Check(ref ok, itemsRow.Total >= 1 && itemsRow.Done >= 1 && pagesRow.Done >= 2 && pagesRow.Total >= pagesRow.Done, "story items found " + itemsRow.Done + "/" + itemsRow.Total + " (the brass key, used up, still counts), journal pages " + pagesRow.Done + "/" + pagesRow.Total + " (the note and the vault's page)");
 			// (and each island's line its own: "(1/1 notes)" - the user, 2026-10-03: so you know if some are left on it)
 			int isleFound, isleTotal;
 			bool isle = NoteCount.OfIsland(e.HostName, out isleFound, out isleTotal);
@@ -348,24 +355,10 @@ namespace DynamicIslands
 			int qDone, qTotal;
 			QuestCount.Count(quests, out qDone, out qTotal);
 			yield return new WaitForSeconds(0.2f);
-			Check(ref ok, JournalWindow.QuestsShown == "QUESTS  " + qDone + " / " + qTotal + "  \u00B7  " + QuestCount.Percent(qDone, qTotal) + "%", "the journal's head shows it: \"" + JournalWindow.QuestsShown + "\" (" + QuestCount.Summary(quests) + ")");
-			// (Raft's story, without a plan's chain: each island done when its note gives the next frequency, Utopia when its
-			// people are rescued - Raft's record, faked here)
-			if (!StoryChain.Active && (WorldDirector.Plan == null || WorldDirector.Plan.RaftStory) && NoteBook.unlockedChunkPointType != null)
-			{
-				List<ChunkPointType> keep = NoteBook.unlockedChunkPointType.ToList();
-				ChunkPointType[] order = StoryOrder.Order;
-				NoteBook.unlockedChunkPointType.RemoveAll(t => StoryOrder.Chain.Contains(t));
-				NoteBook.unlockedChunkPointType.AddRange(new[] { order[0], order[1], order[2] });
-				QuestCount.TestUtopiaDone = true;
-				List<QuestCount.Quest> raft = QuestCount.All().Where(q => q.Group == QuestCount.RaftStory).ToList();
-				string doneNames = string.Join(", ", raft.Where(q => q.Done).Select(q => q.Name).ToArray());
-				Check(ref ok, raft.Count == 8 && doneNames == StoryOrder.Name(order[0]) + ", " + StoryOrder.Name(order[1]) + ", Utopia",
-					"Raft's story counts: 8 islands, done " + doneNames + " (three frequencies found, Utopia's people rescued)");
-				QuestCount.TestUtopiaDone = null;
-				NoteBook.unlockedChunkPointType.Clear();
-				NoteBook.unlockedChunkPointType.AddRange(keep);
-			}
+			Check(ref ok, (JournalWindow.QuestsShown ?? "").StartsWith("QUESTS  " + qDone + " / " + qTotal + "  \u00B7  " + QuestCount.Percent(qDone, qTotal) + "%") && (qDone < qTotal || JournalWindow.QuestsShown.EndsWith("ALL DONE")), "the journal's head shows it: \"" + JournalWindow.QuestsShown + "\" (" + QuestCount.Summary(quests) + ")");
+			// (only the custom islands' quests: Raft's own story isn't counted - the user, 2026-10-03)
+			string[] raftNames = StoryOrder.Chain.Select(StoryOrder.Name).ToArray();
+			Check(ref ok, !quests.Any(q => raftNames.Contains(q.Name)), "the count leaves Raft's story out: " + string.Join(", ", quests.Select(q => q.Name).ToArray()));
 			JournalWindow.ShowQuestList();
 			yield return new WaitForSeconds(0.3f);
 			Check(ref ok, JournalWindow.ShownTitle.StartsWith("Quests: ") && JournalWindow.ShownText.Contains("\u221a  " + mine.Name), "a click on the count lists the quests on the paper: \"" + JournalWindow.ShownTitle + "\"");

@@ -381,6 +381,8 @@ namespace DynamicIslands.Editor
 			public List<string> Signals;
 			/// <summary>Its notes with a text (their object numbers): each gives a journal page when read.</summary>
 			public List<int> Notes;
+			/// <summary>The journal pages its events write ("object number:title", as the page keys "act:&lt;island&gt;:..." end).</summary>
+			public List<string> EventPages;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -402,6 +404,10 @@ namespace DynamicIslands.Editor
 					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "signal" && a.Arg.Trim().Length > 0)
 					.Select(a => a.Arg.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 				info.Notes = Enumerable.Range(0, f.Objects.Count).Where(i => ObjectProps.IsNote(f.Objects[i].Name, f.Objects[i].Props) && ObjectProps.Get(f.Objects[i].Props, ObjectProps.NoteText).Trim().Length > 0).ToList();
+				Func<int, IDictionary<string, string>, IEnumerable<string>> journal = (i, p) => p == null ? Enumerable.Empty<string>() : p
+					.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
+					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "journal" && a.Target.Length > 0).Select(a => i + ":" + a.Target);
+				info.EventPages = Enumerable.Range(0, f.Objects.Count).SelectMany(i => journal(i, f.Objects[i].Props)).Concat(journal(Behaviours.IslandIndex, f.Props)).Distinct().ToList();
 				cache[name] = info;
 				return info;
 			}
@@ -434,6 +440,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The island's notes with a text, by object number (the journal's "note:&lt;island&gt;:&lt;n&gt;" pages; empty if the file is missing).</summary>
 		public static List<int> NotesOf(string name) { Info i = Get(name); return i != null && i.Notes != null ? i.Notes : new List<int>(); }
+
+		/// <summary>The journal pages the island's events write ("object number:title"; empty if the file is missing).</summary>
+		public static List<string> EventPagesOf(string name) { Info i = Get(name); return i != null && i.EventPages != null ? i.EventPages : new List<string>(); }
 
 		/// <summary>The island's quest (none if the file is missing).</summary>
 		public static IslandQuest QuestOf(string name) { return IslandQuest.From(Props(name)); }

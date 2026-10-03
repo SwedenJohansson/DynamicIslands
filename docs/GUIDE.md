@@ -266,7 +266,7 @@ or console, while a note is open, or in the editor.) Its key is also shown at th
 page's (**K**, a star).
 
 ![The journal](images/world-journal.jpg)
-*The journal: the quests done at the top (1 of 9: Raft's eight story islands and this island's quest), two story items at the top left, the pages below under their island and its quest ("√ done"), and the page "The vault" open, signed with the island, its quest and the day.*
+*The journal: the custom quests done at the top, the Progress panel (quests, islands reached, notes, story items, journal pages, overall - each with its ?), the story items at the top left, the pages under Quest Pages by island with its quest and its notes found ("(1/1 notes)"), and the page "The vault" open, signed with the island, its quest and the day.*
 
 **What's in it**
 
@@ -280,12 +280,9 @@ page's (**K**, a star).
   pages an island writes when something happens (an island event "write a journal page"), and, under **Other pages**,
   the frequencies a world plan gives out ("Tune the Receiver to #4821"). Click a page to read it on the paper, signed
   with the island, its quest and the day it was found.
-- **QUESTS 7 / 20 · 35%** (top, next to the title): how many of this world's quests are done, with a green bar
-  that fills as you go. It counts:
-  - **Raft's story islands** that are in this world's story (Radio Tower ... Utopia; a world plan can leave some or
-    all of them out, and then they don't count). Each counts as done when its note gives the next island's frequency;
-    Utopia, the ending, when its people are rescued. With the World settings' "story islands in a new order", in
-    that order;
+- **QUESTS 7 / 20 · 35%** (top, next to the title): how many of this world's **custom islands' quests** are done,
+  with a green bar that fills as you go. Raft's own story (Radio Tower ... Utopia) isn't counted - the journal is the
+  custom islands' book. It counts:
   - **a world plan's own islands in the story** (the main quest islands, such as Wreckers' Cove after the Radio Tower
     in The Long Voyage): done as the story counts them - by default when their quest is done;
   - **the plan's other islands that have a quest** (side trips, a quest chain...): counted **from the start of the
@@ -307,12 +304,21 @@ page's (**K**, a star).
   again, but the banners don't come twice.
 
   ![The quests list in the journal](images/world-journal-quests.jpg)
-  *A click on the count: Raft's story islands (none done yet) and the islands with a quest met so far.*
-- The top right counts the story items, the **notes found** - **5 / 38 notes found** - and the pages. The notes are
-  every note with a text on the islands in the world and on the saved islands the world plan brings, counted from the
-  start of the world (also those still to come); a note is found when anyone in the crew has read it. An island made
-  new from a map type counts once it has come, and an island that comes by chance adds its notes when it comes. Raft's
-  own notes aren't counted: they are in Raft's notebook (T). An empty journal says where to look.
+  *A click on the count: the custom quests by kind, done and still to do.*
+- **Progress** (top right, over the page): how far the crew has come in this world, each as found / total, with a **?**
+  on each line that says what it counts:
+  - **Quests** - quests done, and the per cent (the same as the bar at the top);
+  - **Islands reached** - custom islands someone has set foot on, of those in the world and those its plan will bring;
+  - **Notes found** - notes read of the notes with a text on those islands (each island's line under Quest Pages has
+    its own, "(5/7 notes)");
+  - **Story items found** - of those the islands have; one used up since (a key a door took) still counts;
+  - **Journal pages** - pages in the journal of all the islands can give: their notes and the pages their events write;
+  - **Overall** - all of it together, with the per cent.
+
+  What counts is what this world has: the custom islands in it and the saved islands its plan brings, counted from the
+  start of the world (also those still to come). An island made new from a map type counts once it has come, and an
+  island that comes by chance adds to every line when it comes. Raft's own islands count only in Quests (their notes
+  are in Raft's notebook, T). An empty journal says where to look.
 
 **One journal for the whole crew.** Everyone in the world shares it: a note one player reads is in everyone's
 journal, and a key one player finds opens the door for all. The host keeps it, a player who joins gets it, it is
@@ -1087,7 +1093,7 @@ done stays, and your Receiver islands keep their frequencies.
   found with the Receiver).
 - **The journal (J) is only for custom content** - but not only for quests. It collects from every custom island,
   with or without a quest: notes read, pages events write, story items, and the frequencies the plan gives out. It
-  never holds Raft's notes or quest items. Of quests it shows only how many are done (Raft's story islands among them) and their list: a quest's steps show in the **quest panel** while you are
+  never holds Raft's notes or quest items. Of quests it shows only how many of the custom islands' are done, and their list: a quest's steps show in the **quest panel** while you are
   at its island ([3](#quests)), the same in every kind of plan.
 - **Custom islands outside the story** (by chance, or brought by an ordinary rule) work the same in every case below:
   their quest in the quest panel, their notes and story items in the journal.
