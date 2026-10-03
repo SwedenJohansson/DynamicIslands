@@ -9,6 +9,11 @@ island The Frontier
 expect step 0
 expect title Almost Home
 wait 5
+# (the island's friendly animals as it arrives: hens in the lower town and by the grower's house, turtles in the harbour,
+# dolphins off the north shore - checked here, not at the end: in a long story sea creatures don't always last)
+expect animals Chicken 5
+expect animals Turtle 2
+expect animals Dolphin 2
 
 # Chapter 1 - arrival: along the quay to the shelf, the welcome board, the harbour office, the square
 walk 4 91 to 0 96 to 0 118.75 h=2.6
@@ -154,8 +159,3 @@ expect done
 at 72 7.5 h=3.6
 use liftup
 expect message stops behind the hall
-
-# The island's friendly animals: hens in the lower town and by the grower's house, turtles in the harbour, dolphins
-expect animals Chicken 5
-expect animals Turtle 2
-expect animals Dolphin 2

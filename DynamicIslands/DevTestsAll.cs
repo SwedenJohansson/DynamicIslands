@@ -518,6 +518,51 @@ namespace DynamicIslands
 			Log("PASS: journal picture (" + StoryBook.Pages.Count + " pages)");
 		}
 
+		[ConsoleCommand(name: "CIJournalTour", docs: "Dev, in game: the journal opened and its notes list scrolled island by island - each island's line at the top, its first note on the paper - a picture of each: shot_journal_<nn>_<island>.png at the game's resolution (the user, 2026-10-03: pictures of the journal, its notes scrolled for each island). CIJournalTour [most islands, 30]")]
+		public static void JournalTourCommand(string[] args)
+		{
+			int most = args != null && args.Length > 0 ? Mathf.Max(1, (int)F(args[0])) : 30;
+			DynamicIslands.instance.StartCoroutine(JournalTourRoutine(most));
+		}
+
+		static IEnumerator JournalTourRoutine(int most)
+		{
+			JournalWindow.Open();
+			yield return new WaitForSeconds(0.8f);
+			// (the journal's own lists, read as the window has them: the pages list and the page each of its buttons shows)
+			const System.Reflection.BindingFlags Any = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+			object window = typeof(JournalWindow).GetField("instance", Any).GetValue(null);
+			var pageList = window != null ? typeof(JournalWindow).GetField("pageList", Any).GetValue(window) as RectTransform : null;
+			var pageKeys = window != null ? typeof(JournalWindow).GetField("pageKeys", Any).GetValue(window) as Dictionary<Button, string> : null;
+			ScrollRect scroll = pageList != null ? pageList.GetComponentInParent<ScrollRect>() : null;
+			if (pageList == null || pageKeys == null || scroll == null) { Fail("journal tour: the journal's lists not found"); JournalWindow.Close(); yield break; }
+			var children = pageList.Cast<Transform>().Where(c => c.gameObject.activeSelf).ToList();
+			int shots = 0;
+			for (int i = 0; i < children.Count && shots < most; i++)
+			{
+				if (children[i].GetComponent<Button>() != null) continue;
+				Text line = children[i].GetComponent<Text>() ?? children[i].GetComponentInChildren<Text>();
+				if (line == null || string.IsNullOrEmpty(line.text) || children[i].gameObject.name == "Label" && line.text.StartsWith("<i>")) continue;
+				// (the island's line at the top of the list, its first note on the paper)
+				Canvas.ForceUpdateCanvases();
+				float y = -((RectTransform)children[i]).anchoredPosition.y - ((RectTransform)children[i]).rect.height * (1f - ((RectTransform)children[i]).pivot.y);
+				float room = Mathf.Max(0f, scroll.content.rect.height - scroll.viewport.rect.height);
+				scroll.content.anchoredPosition = new Vector2(scroll.content.anchoredPosition.x, Mathf.Clamp(y - 2f, 0f, room));
+				Button first = children.Skip(i + 1).TakeWhile(c => c.GetComponent<Button>() != null).Select(c => c.GetComponent<Button>()).FirstOrDefault();
+				string key;
+				if (first != null && pageKeys.TryGetValue(first, out key)) JournalWindow.ShowKey(key);
+				yield return new WaitForSeconds(0.8f);
+				string island = System.Text.RegularExpressions.Regex.Replace(System.Text.RegularExpressions.Regex.Replace(line.text, "<[^>]+>", ""), "[^A-Za-z0-9]+", "_").Trim('_');
+				if (island.Length > 40) island = island.Substring(0, 40);
+				shots++;
+				Screenshot(new[] { "journal_" + shots.ToString("00") + "_" + island });
+				Log("  " + shots + ": " + System.Text.RegularExpressions.Regex.Replace(line.text, "<[^>]+>", ""));
+				yield return new WaitForSeconds(0.8f);
+			}
+			JournalWindow.Close();
+			Log("PASS: journal tour (" + shots + " islands, " + StoryBook.Pages.Count + " pages)");
+		}
+
 		#endregion
 
 		#region Round trip of every saved island
