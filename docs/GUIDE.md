@@ -238,7 +238,9 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
 
 An island with a quest shows a **quest panel** on the right when you arrive, with its steps: go somewhere, read a
 note, open a chest, defeat or catch animals, collect story items, find journal pages. Each step done shows what's
-next; the last one gives the reward to every player near the island.
+next; the last one gives the reward to every player near the island. The panel shows **five steps at a time**: the one
+just done, the one you're on and what comes after. A longer quest scrolls - to your step by itself whenever it changes,
+and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 
 ![The quest panel](images/world-quest-panel.jpg)
 *The quest panel of "The lost camp" on the right: the first step is "Go to camp".*
@@ -2253,6 +2255,12 @@ brings another island it comes as a new rule.)
 - **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a big
   island) waits without telling anyone; the host's log says "waits: no free spot".
 - **Avoid two copies of the same island in one world** when its quest counts journal pages.
+- **A lock that uses up story items before the quest has counted them** (a chest that takes the key, a machine that
+  takes three parts) leaves the quest's "collect" step for them waiting for ever: the items are gone before it counts.
+  Give such a lock an **Only if** the quest reached that step, before the check that uses the items up (The Frontier in
+  the library does it for each of its locks).
+- **Raft's door walls** (the Wall door blocks) **can't be walked through** on an island yet: Raft's own helper box for
+  building fills the doorway. For a doorway, leave a gap between two walls (the library's buildings do).
 
 ### 12.5 Names, files and your PC
 
@@ -2651,22 +2659,54 @@ new for every world (map types), caverns, a drowned city - and at the end **The 
 What it shows: rules brought by **quests and visits**, **near** another island in a direction, and map types mixed
 with your own islands.
 
+**Raft 2: The Drowned Frontier** - a sequel with a story of its own: years after Utopia the sea is rising again, and a
+trail of the old Frontier Corps' stations leads across the storm belt to the last high ground. Raft's story islands are
+off; the plan's ten quest islands come one after the other - the first comes into sight by itself, and each quest done
+gives the next station's frequency on the Receiver. Raft's key blueprints are found along the way in Raft's order, so
+the raft can still be steered, driven and fuelled; the tenth island's quest is the ending.
+
+| Station | The plan's island | What it is |
+|---|---|---|
+| 1 | ![](images/library/frontier_beacon.jpg) **Frontier Beacon** | A black volcanic spike: the keeper's hut on the ash flats, a ramp of fill up to the beacon's terrace, a spare cell in a sunk supply boat, stone birds and their sentinel (the Receiver's and the antenna's blueprints) |
+| 2 | ![](images/library/saltmarsh_ferry.jpg) **Saltmarsh Ferry** | A salt marsh cut by a tidal channel, the Corps' ferry beached at its end - pump her dry, clear the rats out of her hold (the motor wheel's and the steering wheel's) |
+| 3 | ![](images/library/cinderfall.jpg) **Cinderfall** | A volcano with a geothermal plant at its foot - three relief valves on its flanks, the stone birds' matriarch, roaches in the turbine hall (the machete and the fuel blueprints) |
+| 4 | ![](images/library/sunken_archive.jpg) **The Sunken Archive** | An archive standing in the sea between five palm islets, its stacks flooded - catalogue cards, an air pocket, an angler at the vault (the engine controls', the metal detector's, the firework's and the zipline's) |
+| 5 | ![](images/library/hightide_harbor.jpg) **Hightide Harbor** | A fishing town on stilts round a bay - bears in the fish hall, the water works on the hill, a lamp tower of Raft's blocks to light (the water blueprints) |
+| 6 | ![](images/library/iron_graveyard.jpg) **The Iron Graveyard** | A ship breakers' yard on a red mesa's beach - beached hulls to climb, a barge sunk off the beach, a crawler crane, the turbine on the mesa (the power blueprints) |
+| 7 | ![](images/library/storm_spire.jpg) **Storm Spire** | A weather station on a needle of rock in the storm belt - a short climb, three conductor rods, the storm bird; six steps, short on purpose (the electric smelter's, the advanced biofuel extractor's and anchor's) |
+| 8 | ![](images/library/whiteout_reach.jpg) **Whiteout Reach** | The Corps' winter camp on a snowy hill - a supply ship frozen into the shore ice, the polar bear matriarch in a crevasse, the radio hut on the summit |
+| 9 | ![](images/library/drowned_gate.jpg) **The Drowned Gate** | A sea wall across a strait between two hills - its lock of two steel gates that sink to open, the pump house's flooded hall with an angler in it, the gate office's vault (the titanium tools', the big backpack's and the electric zipline's) |
+| 10 | ![](images/library/the_frontier.jpg) **The Frontier** | The last high ground: a harbour town under a great mesa, farm terraces climbing its face, the upper town and the Corps' hall on the rim, the Corps' lift down the cliff to a vault sunk in a cove - thirty-two steps in six chapters |
+
+The first island comes into sight 450 m ahead by itself; each one after it is on the Receiver (800 to 1300 m ahead when
+tuned) once the one before is done, and each is done when its quest is done. The plan has **Random islands while
+sailing: on** and **Raft's story islands: off**.
+
+What it shows: a plan with a story chain of its own (**first** and **after**, [7.4](#74-everything-a-rule-can-do)) and
+no island of Raft's; quests of every length - six steps on Storm Spire, thirty-two in six chapters on The Frontier;
+story items an object only uses up once the quest has counted them (an **Only if** the quest reached that step before
+the check that **uses them up**, so a player who finds things early can't lock the quest); a lift that moves the
+player (**teleport the player**); doors that slide aside when three seals are set.
+
 ### 16.5 Where to look for...
 
 | To learn how to make... | Open |
 |---|---|
 | Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
-| A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks) |
+| A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks), The Frontier (the hall's sliding doors) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
-| An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve) |
+| An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve), The Frontier (three valve wheels, the horn's reed, the seal press - each used up only once the quest has counted it) |
+| A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport the player** to its other end) |
+| Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff) |
+| A town | Hightide Harbor (a fishing town on stilts), The Frontier (a harbour town and an upper town of four quarters) |
 | Caves | Old Mine Islet, Ironreef Caverns (four), Wreckers' Cove (a sea cave) |
 | Rooms under the ground | Shelter Atoll |
 | Darkness and light (atmosphere zones, lamps that come on) | Shelter Atoll, Old Mine Islet, Ironreef Caverns, The Abyss (its lair) |
 | Things under water to dive for | The Stranded Gull, Mayor's Wharf, Crane Yard, The Drowned Metropolis, Coral Observatory, The Abyss |
 | Air pockets for a long dive | The Abyss |
 | A boss (bigger, tougher, tinted) | Ranger's Rest (Old Scar), Thornwood (the Warthog King), Glacier Station (the Polar Bear Queen), The Drowned Metropolis (the Lantern Lord), Scrapyard Haven (the alpha), Coral Observatory (the giant angler), The Abyss (the Abyssal Angler), and one on each of Raft Remade's islands (the Mama bear, the white screecher, the giant angler, the polar bear mother, the hyena alpha...) |
-| Animals to catch | Tide Farm |
-| Buildings from Raft's pieces | Signal Rock and Wreckers' Cove (radio tower pieces), Shelter Atoll and Coral Observatory (Selene rooms), Mayor's Wharf (City Hall) |
+| Animals to catch | Tide Farm, The Frontier (the grower's goats) |
+| Buildings from Raft's pieces | Signal Rock and Wreckers' Cove (radio tower pieces), Shelter Atoll and Coral Observatory (Selene rooms), Mayor's Wharf (City Hall), Hightide Harbor and The Frontier (Raft's own wooden walls with hip roofs on their pillars) |
 | A raft or a deck of Raft's foundations | Tide Farm, The Abyss |
 | Land shaped with the brushes | Thornwood (a gorge), Glacier Station (a crevasse), Coral Observatory (a blue hole), Scrapyard Haven (a pit and a terrace), The Abyss (a trench with a shelf and a ledge) |
 | An island in Raft's story | The Long Voyage (after each story island), Raft Remade (instead of each story island) |
