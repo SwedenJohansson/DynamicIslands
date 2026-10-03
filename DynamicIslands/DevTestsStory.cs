@@ -361,6 +361,16 @@ namespace DynamicIslands
 			// (only the custom islands' quests: Raft's own story isn't counted - the user, 2026-10-03)
 			string[] raftNames = StoryOrder.Chain.Select(StoryOrder.Name).ToArray();
 			Check(ref ok, !quests.Any(q => raftNames.Contains(q.Name)), "the count leaves Raft's story out: " + string.Join(", ", quests.Select(q => q.Name).ToArray()));
+			// (the story items' list scrolls when it holds more than it shows - the user, 2026-10-03: twelve more items)
+			for (int i = 1; i <= 12; i++) StoryBook.Give("ciscroll" + i, 1);
+			yield return new WaitForSeconds(0.6f);
+			string[] scroll = (JournalWindow.ItemsScrollCheck() ?? "0|0|False").Split('|');
+			float contentH = float.Parse(scroll[0], System.Globalization.CultureInfo.InvariantCulture), viewH = scroll.Length > 1 ? float.Parse(scroll[1], System.Globalization.CultureInfo.InvariantCulture) : 0f;
+			Check(ref ok, scroll.Length == 3 && contentH > viewH + 20f && scroll[2] == "True", "the story items' list scrolls: " + (StoryBook.Items.Count()) + " items, the list " + scroll[0] + " px in a view of " + (scroll.Length > 1 ? scroll[1] : "?") + " px, the last one in view at the bottom: " + (scroll.Length > 2 ? scroll[2] : "?"));
+			Screenshot(new[] { "journal_items_scroll" });
+			yield return new WaitForSeconds(0.5f);
+			for (int i = 1; i <= 12; i++) StoryBook.Take("ciscroll" + i, 1);
+			yield return new WaitForSeconds(0.4f);
 			JournalWindow.ShowQuestList();
 			yield return new WaitForSeconds(0.3f);
 			Check(ref ok, JournalWindow.ShownTitle.StartsWith("Quests: ") && JournalWindow.ShownText.Contains("\u221a  " + mine.Name), "a click on the count lists the quests on the paper: \"" + JournalWindow.ShownTitle + "\"");

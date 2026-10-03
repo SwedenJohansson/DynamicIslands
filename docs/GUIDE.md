@@ -271,7 +271,7 @@ page's (**K**, a star).
 **What's in it**
 
 - **Story items** (top left): keys, map pieces, logs... that the islands' builders made. Each shows its picture and
-  name, with **×2**, **×3**... when the crew has more than one. Click one to see its picture and description on the
+  name, with **×2**, **×3**... when the crew has more than one. Past eight, the list scrolls (the mouse wheel or its bar). Click one to see its picture and description on the
   paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
 - **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the

@@ -920,6 +920,27 @@ namespace DynamicIslands.Editor
 		public static List<string> ProgressHelp { get { return IsOpen ? instance.progressText.Select(t => { UIKit.HelpMark m = t.GetComponent<UIKit.HelpMark>(); return m != null ? m.Text : null; }).ToList() : new List<string>(); } }
 		public static int ProgressMarks { get { return IsOpen && instance.progressText.Count > 0 ? instance.progressText[0].transform.parent.parent.GetComponentsInChildren<Button>(true).Length : -1; } }
 
+		/// <summary>Tests: the story items' list scrolls - its content's and view's heights, and whether its last tile is in
+		/// view once scrolled to the bottom ("content|view|True"); null when the journal is closed.</summary>
+		public static string ItemsScrollCheck()
+		{
+			if (!IsOpen || instance.itemGrid.childCount == 0) return null;
+			ScrollRect sr = instance.itemGrid.GetComponentInParent<ScrollRect>();
+			if (sr == null) return "no scroll list";
+			Canvas.ForceUpdateCanvases();
+			RectTransform view = sr.viewport != null ? sr.viewport : (RectTransform)sr.transform;
+			float ch = sr.content.rect.height, vh = view.rect.height;
+			sr.verticalNormalizedPosition = 0f;
+			Canvas.ForceUpdateCanvases();
+			var last = (RectTransform)instance.itemGrid.GetChild(instance.itemGrid.childCount - 1);
+			Vector3[] c = new Vector3[4], v = new Vector3[4];
+			last.GetWorldCorners(c);
+			view.GetWorldCorners(v);
+			bool visible = c[0].y >= v[0].y - 1f && c[1].y <= v[1].y + 1f;
+			sr.verticalNormalizedPosition = 1f;
+			return ch.ToString("F0", CultureInfo.InvariantCulture) + "|" + vh.ToString("F0", CultureInfo.InvariantCulture) + "|" + visible;
+		}
+
 		/// <summary>The Progress panel's lines now (tests).</summary>
 		public static List<string> ProgressShown { get { return IsOpen ? instance.progressText.Select(t => System.Text.RegularExpressions.Regex.Replace(t.text, "<[^>]+>", "")).ToList() : new List<string>(); } }
 
