@@ -508,6 +508,29 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   friendly animals to catch, sea creatures.
 - **Loot:** how many loot boxes, their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive
   goo, batteries), in the open or hidden.
+- **Buildings and caves** (the last group):
+  - **Buildings: Off / On** - buildings on the island's open, level land, each with a chest (most with a note too, which
+    counts in the journal's notes).
+  - **Kind** (a ▼ list, or the arrows):
+    - **Mixed** - a bit of everything that suits the island's style;
+    - **Castaway huts** - Raft's thatch walls and roof on Raft's foundations, a hammock and a chest inside;
+    - **Wooden cabins** - the same in Raft's wooden walls and roof, with a bed, a chest and a cabin log;
+    - the quest islands' **scenes**, made of their own props, each with a chest and a note: **Castaways' camp**,
+      **Caravan outpost**, **Radio outpost**, **Scrapyard**, **Old market**, **Bear country** (with a bear nearby),
+      **Frozen camp** and **Hotel garden**.
+
+    A hut or cabin is 3 x 2 or 2 x 2 cells of Raft's building grid, open on one side. It stands level on the highest
+    ground under it, with the ground built up under it (blended over 3 m, so nothing hangs in the air on a slope), and
+    its roof rests on its walls and corner pillars as Raft's own building puts one.
+  - **How many** - 1 to 6, at least 22 m apart. A small or steep island has room for fewer: the line under the
+    preview after **Generate** says how many found a spot ("2 building(s) found no level spot").
+  - **Caves: Off / On** - one of Raft's own cave pieces (Balboa's) set into the land, its mouth towards open, level
+    ground, with a guard inside (a polar bear on a snowy island, a bear in a forest, a hyena in the desert, else a
+    warthog or a rat) and a hoard. It needs a hill next to open, level land; if none fits, the line says so.
+
+  The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
+  (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same
+  settings and seed always give the same buildings in the same places. A preset keeps these settings too.
 - **My presets:** **Save these settings...** keeps them under a name; **Defaults** starts over.
 
 ![Under water, and a help popup](images/generator-underwater.jpg)

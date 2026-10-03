@@ -351,6 +351,20 @@ namespace DynamicIslands.Editor
 				"The richest boxes", "The best tier a box can have (see Lowest tier for what each tier holds). Set both the same for boxes of one tier only.", true);
 			Choice(loot, "Placed", new[] { "In the open", "Hidden" }, () => s.LootHidden ? 1 : 0, v => s.LootHidden = v == 1,
 				"In the open: boxes stand on clear ground where players see them. Hidden: tucked in next to trees, bushes and rocks, so players have to search.");
+
+			// Buildings and caves (the user, 2026-10-03)
+			RectTransform built = UIKit.Group(root, "Buildings and caves");
+			Choice(built, "Buildings", new[] { "Off", "On" }, () => s.Buildings ? 1 : 0, v => s.Buildings = v == 1,
+				"Buildings on the island's open, level land: huts and cabins of Raft's building blocks (on foundations, the ground built up under them, a roof on their walls and pillars) or scenes from the quest islands, each with a chest and often a note. Kind and How many choose them.");
+			List<string> buildKinds = GenBuildings.Kinds;
+			Stepper(built, "Kind", "Which buildings: mixed, huts, cabins or one of the quest islands' scenes",
+				"Mixed: a bit of everything that suits the island's style. Castaway huts: Raft's thatch walls and roof, a hammock and a chest. Wooden cabins: Raft's wooden walls and roof, a bed, a chest and a log. The scenes (castaways' camp, caravan outpost, radio outpost, scrapyard, old market, bear country, frozen camp, hotel garden) are made of the quest islands' own props, with a chest and a note - a scene whose props this Raft hasn't loaded is left out.",
+				() => GenBuildings.Label(s.BuildingKind) + (s.Buildings ? "" : " (Buildings off)"), step => { int i = Mathf.Max(0, buildKinds.IndexOf(s.BuildingKind)); s.BuildingKind = buildKinds[((i + step) % buildKinds.Count + buildKinds.Count) % buildKinds.Count]; },
+				Enumerable.Range(0, buildKinds.Count).Select(i => new DropList.Option(i.ToString(), GenBuildings.Label(buildKinds[i]), GenBuildings.Hint(buildKinds[i]))).ToList(), () => Mathf.Max(0, buildKinds.IndexOf(s.BuildingKind)), i => s.BuildingKind = buildKinds[i]);
+			Slider(built, "How many", 1, GenBuildings.MaxCount, () => s.BuildingCount, v => s.BuildingCount = Mathf.RoundToInt(v), v => v.ToString("F0"),
+				"How many buildings or scenes", "How many buildings or scenes the island gets, at least 22 m apart on open, level land. A small or steep island has room for fewer: the report under the preview says how many found a spot.", true);
+			Choice(built, "Caves", new[] { "Off", "On" }, () => s.Caves ? 1 : 0, v => s.Caves = v == 1,
+				"A cave set into the land: one of Raft's own cave pieces (Balboa's), its mouth towards open, level ground, with a guard (a bear, polar bear, hyena, warthog or rat by style) and a hoard inside. It needs a hill next to open, level land; if none fits, the report says so.");
 		}
 
 		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>
@@ -836,6 +850,30 @@ namespace DynamicIslands.Editor
 			else { s.Seed = UnityEngine.Random.Range(1, 999999); seedField.text = s.Seed.ToString(CultureInfo.InvariantCulture); }
 			if (tab == TabReady) { OnMakeType(); return; }
 			if (tab == TabRandomize && chosen == null) { SetStatus("Pick one of Raft's islands first."); return; }
+			// (buildings and caves use objects of Raft's own islands: their scenes load first, then it generates)
+			List<string> scenes = PlaceableCatalog.ScenesNeededFor(GenBuildings.NeededNames(s));
+			if (scenes.Count > 0)
+			{
+				if (loadingBuildings) return;
+				loadingBuildings = true;
+				SetStatus("Loading Raft's islands for the buildings and caves (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in.");
+				DynamicIslands.instance.StartCoroutine(LoadThenGenerate());
+				return;
+			}
+			Generate();
+		}
+
+		bool loadingBuildings;
+
+		System.Collections.IEnumerator LoadThenGenerate()
+		{
+			yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(s));
+			loadingBuildings = false;
+			if (this != null && gameObject.activeInHierarchy) Generate();
+		}
+
+		void Generate()
+		{
 			try
 			{
 				int n = IslandGenerator.GenerateInEditor(s);

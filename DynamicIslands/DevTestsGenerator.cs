@@ -566,6 +566,117 @@ namespace DynamicIslands
 
 		static IslandGenSettings Tweak(IslandGenSettings s, Action<IslandGenSettings> change) { IslandGenSettings c = s.Copy(); change(c); return c; }
 
+		[ConsoleCommand(name: "CIGenBuildings", docs: "Dev, editor: the generator's Buildings and caves - huts with a cave, cabins, a themed scene, a mix, and neither: what each puts on the island (foundations, walls, pillars, a roof on them, a bed and a chest; the scene's props; Raft's cave piece with its guard), the ground levelled under a hut, the settings kept by a preset; pictures shot_genbuild_*.png")]
+		public static void GenBuildingsCommand() { DynamicIslands.instance.StartCoroutine(GenBuildingsRoutine()); }
+
+		static IEnumerator GenBuildingsRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIGenBuildings (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			Func<string, int> count = n => PlacedEditorObjects().Count(e => (e.GameObjectName ?? "") == n);
+			Func<string, int> countLike = n => PlacedEditorObjects().Count(e => (e.GameObjectName ?? "").IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+			Func<string, bool, string, int, bool, IslandGenSettings> make = (kind, on, style, n, caves) => new IslandGenSettings
+			{
+				Seed = 4242, Radius = 110f, Height = 22f, Roughness = 0.3f, Peaks = 1, ObjectDensity = 0.3f,
+				Style = style == "snowy" ? TerrainPainter.Snowy : TerrainPainter.Tropical, Buildings = on, BuildingKind = kind, BuildingCount = n, Caves = caves,
+			};
+			var cases = new[]
+			{
+				new { Name = "huts", S = make(GenBuildings.Huts, true, "tropical", 3, true) },
+				new { Name = "cabins", S = make(GenBuildings.Cabins, true, "tropical", 2, false) },
+				new { Name = "raftcamp", S = make("raftcamp", true, "tropical", 1, false) },
+				new { Name = "mixed", S = make(GenBuildings.Mixed, true, "snowy", 4, false) },
+				new { Name = "none", S = make(GenBuildings.Mixed, false, "tropical", 3, false) },
+			};
+			foreach (var c in cases)
+			{
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(c.S));
+				IslandGenerator.GenerateInEditor(c.S);
+				yield return new WaitForSecondsRealtime(0.5f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				string what = string.Join(", ", built.ToArray());
+				int found = count("Block_Foundation"), roofs = countLike("Roof"), pillars = count("Block_Pillar_Wood");
+				switch (c.Name)
+				{
+					case "huts":
+						Check(ref ok, built.Count(b => b == "a castaway hut") == 3 && count("Block_Wall_Thatch") >= 3 * 7 && found >= 3 * 4 && pillars >= 12 && roofs >= 3 && count("Placeable_Bed_Hammock") + count("Placeable_Bed_Basic") == 3,
+							"3 castaway huts: " + found + " foundations, " + count("Block_Wall_Thatch") + " thatch walls, " + pillars + " corner pillars, " + roofs + " roof pieces, " + count("Placeable_Bed_Hammock") + " hammocks and " + count("Placeable_Bed_Basic") + " beds (" + what + ")");
+						if (RandomizerIslands.CanBuildCaves)
+							Check(ref ok, built.Contains("a cave") && RandomizerIslands.Dens.Any(d => count(d) == 1), "a cave: Raft's cave piece set into the land (" + string.Join(", ", RandomizerIslands.Dens.Select(d => d + " " + count(d)).ToArray()) + ")");
+						else Log("  (no measured cave pieces on this Raft: the cave is left out - " + what + ")");
+						// (the ground under each hut was built up: no foundation more than 0.5 m over the terrain under it)
+						Check(ref ok, InsideWalls("Placeable_Bed_Hammock") && InsideWalls("Placeable_Bed_Basic") && InsideWalls("Loot_Chest"), "the hammocks and chests are inside their huts' walls");
+						// (the walls and pillars stand on the foundations' deck: their bottoms at the foundations' tops - at FloatDepth they
+						// hung 0.13 m in the air, the user saw, 2026-10-03)
+						Func<EditorGameObject, Bounds> box = e => { Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject); Bounds bb = rs[0].bounds; foreach (Renderer r in rs) bb.Encapsulate(r.bounds); return bb; };
+						List<EditorGameObject> decks = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").ToList();
+						// (how far each one's foot is over the deck under it: above it floats; a pillar reaching a little into the floor is fine)
+						Func<string, float> over = n => PlacedEditorObjects().Where(e => e.GameObjectName == n).Select(e =>
+						{
+							Bounds wb = box(e);
+							EditorGameObject under = decks.OrderBy(d => new Vector2(d.transform.position.x - wb.center.x, d.transform.position.z - wb.center.z).sqrMagnitude).First();
+							return wb.min.y - box(under).max.y;
+						}).DefaultIfEmpty(0f).Max();
+						float walls = Mathf.Max(over("Block_Wall_Thatch"), over("Block_Wall_Wood")), posts = over("Block_Pillar_Wood");
+						Check(ref ok, walls < 0.04f && walls > -0.1f && posts < 0.04f, "the walls and pillars stand on the foundations' deck: a wall's foot at most " + walls.ToString("F3") + " m over it, a pillar's " + posts.ToString("F3") + " m");
+						Terrain t = terraineditor.terrain;
+						float worst = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").Select(e => e.transform.position.y - (t.SampleHeight(e.transform.position) + t.transform.position.y)).DefaultIfEmpty(0f).Max();
+						Check(ref ok, worst < 0.5f, "the huts stand on their ground: a foundation at most " + worst.ToString("F2") + " m over the terrain under it");
+						break;
+					case "cabins":
+						Check(ref ok, built.Count(b => b == "a wooden cabin") == 2 && count("Block_Wall_Wood") >= 14 && count("Placeable_Bed_Wood") == 2 && PlacedEditorObjects().Count(e => e.GameObjectName == "Note_Book" && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == "Cabin log") == 2 && !built.Any(b => b.Contains("cave")),
+							"2 wooden cabins with a bed and a log, no cave: " + count("Block_Wall_Wood") + " wooden walls (" + what + ")");
+						Check(ref ok, InsideWalls("Placeable_Bed_Wood") && InsideWalls("Loot_Chest") && InsideWalls("Note_Book") && count("Bed_Simple") == 0, "the beds, chests and logs are inside their cabins' walls (a bed stuck out through the front wall, 2026-10-03)");
+						break;
+					case "raftcamp":
+						Check(ref ok, built.Count == 1 && built[0].Contains("castaway") && count("campfire_1") >= 1, "a castaways' camp: its campfire and props (" + what + ")");
+						break;
+					case "mixed":
+						Check(ref ok, built.Count(b => !b.Contains("found no")) >= 2, "mixed on a snowy island: " + what);
+						break;
+					case "none":
+						Check(ref ok, built.Count == 0 && found == 0, "buildings and caves off: nothing built (" + found + " foundations)");
+						break;
+				}
+				EditorGameObject first = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "Block_Foundation" || e.GameObjectName == "campfire_1");
+				if (first != null && Camera.main != null)
+				{
+					Vector3 at = first.transform.position;
+					Camera.main.transform.SetPositionAndRotation(at + new Vector3(-9f, 6f, -9f), Quaternion.LookRotation(at + new Vector3(2f, 1f, 1.5f) - (at + new Vector3(-9f, 6f, -9f))));
+					yield return new WaitForSecondsRealtime(1f);
+					Screenshot(new[] { "genbuild_" + c.Name });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
+			// The settings go with a preset
+			IslandGenSettings back = IslandGenSettings.FromText(cases[0].S.ToText());
+			Check(ref ok, back.Buildings && back.BuildingKind == GenBuildings.Huts && back.BuildingCount == 3 && back.Caves, "a preset keeps Buildings, Kind, How many and Caves");
+			if (ok) Log("PASS: generator buildings and caves"); else Fail("generator buildings and caves");
+		}
+
+		/// <summary>Every object of this name (a hut's chest: titled "... chest", not the cave's hoard) lies within the box of the hut around it (its foundations' outer edges, 1.5 m cells), give or take 5 cm.</summary>
+		static bool InsideWalls(string name)
+		{
+			List<EditorGameObject> found = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").ToList();
+			bool all = true;
+			foreach (EditorGameObject e in PlacedEditorObjects().Where(x => x.GameObjectName == name && (name != "Loot_Chest" || ObjectProps.Get(x.Props, ObjectProps.NoteTitle).EndsWith(" chest"))))
+			{
+				Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				List<EditorGameObject> hut = found.Where(f => new Vector2(f.transform.position.x - b.center.x, f.transform.position.z - b.center.z).magnitude < 5f).ToList();
+				if (hut.Count == 0) { Log("  " + name + ": no hut around it"); all = false; continue; }
+				float x0 = hut.Min(f => f.transform.position.x) - 0.75f - 0.05f, x1 = hut.Max(f => f.transform.position.x) + 0.75f + 0.05f;
+				float z0 = hut.Min(f => f.transform.position.z) - 0.75f - 0.05f, z1 = hut.Max(f => f.transform.position.z) + 0.75f + 0.05f;
+				bool inside = b.min.x >= x0 && b.max.x <= x1 && b.min.z >= z0 && b.max.z <= z1;
+				if (!inside) { Log("  " + name + " sticks out of its hut: its box x " + b.min.x.ToString("F2") + ".." + b.max.x.ToString("F2") + " z " + b.min.z.ToString("F2") + ".." + b.max.z.ToString("F2") + ", the hut x " + x0.ToString("F2") + ".." + x1.ToString("F2") + " z " + z0.ToString("F2") + ".." + z1.ToString("F2")); all = false; }
+			}
+			return all;
+		}
+
 		[ConsoleCommand(name: "CIUnderwaterShots", docs: "Dev, editor: generates an island on the deep sea floor (style: CIUnderwaterShots [Tropical|Snowy|Desert|Forest|Volcanic]) and takes pictures: from above, from the side under water, the reef on the shelf, and the drop-off (shot_uw_*.png)")]
 		public static void UnderwaterShotsCommand(string[] args)
 		{

@@ -82,6 +82,12 @@ namespace DynamicIslands.Editor
 		public bool LootHidden;
 		/// <summary>The island turns the level up system on in a world (IslandProps.Levels, PlayerLevels).</summary>
 		public bool Levels;
+		/// <summary>Buildings on the land (GenBuildings): on or off, of which kind (mixed, huts, cabins or a themed scene), how many.</summary>
+		public bool Buildings;
+		public string BuildingKind = GenBuildings.Mixed;
+		public int BuildingCount = 2;
+		/// <summary>A cave set into the land, with a guard and a hoard (GenBuildings).</summary>
+		public bool Caves;
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -218,6 +224,8 @@ namespace DynamicIslands.Editor
 		public int Wanted;
 		public float LandArea, Top, Seconds;
 		public float LandLength, LandWidth;
+		/// <summary>The buildings and caves put on it (GenBuildings), or why not.</summary>
+		public List<string> Built = new List<string>();
 
 		public int Nature { get { return Counts.Values.Sum(); } }
 		public int Count(string key) { int n; return Counts.TryGetValue(key, out n) ? n : 0; }
@@ -227,7 +235,204 @@ namespace DynamicIslands.Editor
 			var parts = IslandGenerator.Categories.Where(c => Count(c) > 0).Select(c => Count(c) + " " + IslandGenerator.CategoryLabel(c)).ToList();
 			if (Creatures > 0) parts.Add(Creatures + " creature spot" + (Creatures == 1 ? "" : "s"));
 			if (Chests > 0) parts.Add(Chests + " loot box" + (Chests == 1 ? "" : "es"));
+			parts.AddRange(Built);
 			return parts.Count > 0 ? string.Join(", ", parts.ToArray()) : "no objects";
+		}
+	}
+
+	/// <summary>
+	/// Buildings and caves on a generated island (the user, 2026-10-03: "a toggle to generate houses and structures, with
+	/// options for different types, and a checkbox if caves should be generated"). Kinds: castaway huts of Raft's thatch
+	/// and wooden cabins (Raft's foundations, walls, corner pillars and a hipped roof - RaftRoof.Hip - on the ground built up
+	/// under them), the world randomizer's themed scenes from the quest islands (RandomizerIslands.Themes), or a mix of what
+	/// suits the style. A cave is one of Raft's own cave pieces set into the land with a guard and a hoard
+	/// (RandomizerIslands.EmbeddedCave). Put on the planned file before it is used, so the ground they level goes with it.
+	/// </summary>
+	public static class GenBuildings
+	{
+		public const string Mixed = "mixed", Huts = "huts", Cabins = "cabins";
+		public const int MaxCount = 6;
+
+		/// <summary>The kinds in the generator's list: mixed, huts, cabins, then the themed scenes.</summary>
+		public static List<string> Kinds { get { return new[] { Mixed, Huts, Cabins }.Concat(RandomizerIslands.Themes.Select(t => t.Name)).ToList(); } }
+
+		public static string Label(string kind)
+		{
+			if (kind == Mixed) return "Mixed";
+			if (kind == Huts) return "Castaway huts";
+			if (kind == Cabins) return "Wooden cabins";
+			Theme t = RandomizerIslands.ThemeOf(kind);
+			return t != null ? t.Label : kind;
+		}
+
+		public static string Hint(string kind)
+		{
+			if (kind == Mixed) return "A bit of everything that suits the style: huts, cabins and scenes";
+			if (kind == Huts) return "Huts of Raft's thatch walls and roof on foundations, a hammock and a chest inside";
+			if (kind == Cabins) return "Cabins of Raft's wooden walls and roof on foundations, a bed, a chest and a log inside";
+			Theme t = RandomizerIslands.ThemeOf(kind);
+			return t != null ? "A scene from the quest islands, with its props, a " + (t.Container ?? "chest").Replace("Loot_", "").ToLowerInvariant() + " and a note" : "";
+		}
+
+		/// <summary>The objects the settings' buildings and caves may use that come from Raft's island scenes (loaded on demand:
+		/// PlaceableCatalog.EnsureLoaded before generating in the editor - the huts' blocks are always there).</summary>
+		public static List<string> NeededNames(IslandGenSettings s)
+		{
+			var names = new List<string>();
+			if (s.Buildings && s.BuildingKind != Huts && s.BuildingKind != Cabins)
+			{
+				IEnumerable<Theme> themes = s.BuildingKind == Mixed ? RandomizerIslands.ThemesFor(s.Style) : new[] { RandomizerIslands.ThemeOf(s.BuildingKind) }.Where(t => t != null);
+				foreach (Theme t in themes)
+					names.AddRange(t.Anchors.Concat(t.Medium).Concat(t.Small).Concat(new[] { t.Container, t.NoteKind }).Where(n => !string.IsNullOrEmpty(n)));
+			}
+			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
+			return names.Distinct().ToList();
+		}
+
+		/// <summary>Adds what the settings ask for to a planned island file (its Heights may change). Returns what was put, for the report.</summary>
+		public static List<string> Apply(IslandFile file, IslandGenSettings s)
+		{
+			var done = new List<string>();
+			if ((!s.Buildings && !s.Caves) || file == null || file.Heights == null) return done;
+			var k = new MapKit(file, s.Seed * 7919 + 13);
+			System.Random r = k.Rnd;
+			// A cave first: it needs the most room (an outcrop over land, open ground at its mouth)
+			if (s.Caves)
+			{
+				string guard = s.Style == TerrainPainter.Snowy ? "PolarBear" : s.Style == TerrainPainter.Forest ? "Bear" : s.Style == TerrainPainter.Desert ? "Hyena" : r.NextDouble() < 0.5 ? "Boar" : "Rat";
+				bool cave = RandomizerIslands.CanBuildCaves && RandomizerIslands.EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
+				done.Add(cave ? "a cave" : RandomizerIslands.CanBuildCaves ? "no cave (no spot fits: it needs a hill by open, level land)" : "no cave (Raft's cave pieces aren't loaded)");
+			}
+			if (!s.Buildings) return done;
+			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
+			int count = Mathf.Clamp(s.BuildingCount, 1, MaxCount), built = 0;
+			var spots = new List<Vector2>();
+			for (int i = 0, tries = 0; built < count && tries < count * 4; tries++)
+			{
+				string kind = s.BuildingKind;
+				if (kind == Mixed)
+				{
+					var pool = new List<string> { Huts, Cabins };
+					pool.AddRange(suits.Select(t => t.Name));
+					kind = pool[r.Next(pool.Count)];
+				}
+				bool hut = kind == Huts || kind == Cabins;
+				Theme theme = hut ? null : RandomizerIslands.ThemeOf(kind);
+				if (!hut && theme == null) break;
+				// (open, level, dry land; apart from each other, the cave, its guard and the ground in front of its mouth)
+				Vector2? spot = k.Find(k.Mid, s.Radius * 0.8f, (above, slope) => above > 1.5f && above < 30f && slope < (hut ? 9f : 10f), 24f);
+				if (!spot.HasValue) continue;
+				Vector2 p = spot.Value;
+				if (spots.Any(o => (o - p).magnitude < 22f)) continue;
+				if (file.Objects.Any(o => o.Props != null && o.Props.ContainsKey("cave") && new Vector2(o.Position.x - p.x, o.Position.z - p.y).magnitude < 38f)) continue;
+				bool ok = hut ? Hut(k, p, kind == Cabins) : RandomizerIslands.Dress(k, theme, p, 9f);
+				if (!ok) continue;
+				spots.Add(p);
+				built++;
+				done.Add(Label(kind).ToLowerInvariant().TrimEnd('s').Replace("castaway hut", "a castaway hut").Replace("wooden cabin", "a wooden cabin"));
+			}
+			if (built < count) done.Add((count - built) + " building(s) found no level spot");
+			return done;
+		}
+
+		/// <summary>
+		/// A hut of w x d cells (3 x 2 or 2 x 2) on Raft's foundations, levelled on the highest ground under it - the ground
+		/// built up under it to that height, blended over 3 m (on a slope its low side hung in the air) - with walls on three
+		/// sides (the fourth open), pillars at the corners and a hipped roof resting on them (RaftRoof.Hip: no roof floats).
+		/// Thatch with a hammock, or wood with a bed and a log; a chest in both.
+		/// </summary>
+		public static bool Hut(MapKit k, Vector2 c, bool wood)
+		{
+			float g = PlacementOptions.GridSize;
+			int w = k.Rnd.NextDouble() < 0.6 ? 3 : 2, d = 2;
+			k.Clear(c + new Vector2((w - 1) * g / 2f, (d - 1) * g / 2f), 6f);
+			float top = float.MinValue;
+			for (int x = -1; x <= w; x++) for (int z = -1; z <= d; z++) top = Mathf.Max(top, k.Ground(c + new Vector2(x * g, z * g)));
+			if (top - k.Sea < 0.8f) return false;
+			Vector3 o = new Vector3(c.x, top, c.y);
+			// (the deck: the foundations' visible top, measured - 0.05 m over their pivot. At FloatDepth (0.35) the walls and
+			// pillars hung 0.3 m in the air, the user saw; at the raft deck's walking height (0.22) still 0.17 m)
+			Bounds fb;
+			float deck = top + (Measured("Block_Foundation", out fb) ? fb.max.y : 0.05f);
+			IslandFile f = k.File;
+			float step = f.TerrainSize.x / (f.HeightmapResolution - 1);
+			Vector2 lo = c - new Vector2(g, g), hi = c + new Vector2(w * g, d * g);
+			for (int zi = Mathf.Max(0, Mathf.FloorToInt((lo.y - 4f) / step)); zi <= Mathf.Min(f.HeightmapResolution - 1, Mathf.CeilToInt((hi.y + 4f) / step)); zi++)
+				for (int xi = Mathf.Max(0, Mathf.FloorToInt((lo.x - 4f) / step)); xi <= Mathf.Min(f.HeightmapResolution - 1, Mathf.CeilToInt((hi.x + 4f) / step)); xi++)
+				{
+					float px = xi * step, pz = zi * step;
+					float outside = Mathf.Max(Mathf.Max(lo.x - px, px - hi.x), Mathf.Max(lo.y - pz, pz - hi.y));
+					float weight = outside <= 0f ? 1f : outside < 3f ? 1f - outside / 3f : 0f;
+					float h = f.Heights[zi, xi] * f.TerrainSize.y;
+					if (weight > 0f && h < top) f.Heights[zi, xi] = Mathf.Lerp(h, top - 0.05f, weight) / f.TerrainSize.y;
+				}
+			for (int x = 0; x < w; x++)
+				for (int z = 0; z < d; z++)
+					k.Add("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f, null, 0f);
+			RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), new Vector3(o.x, deck + RaftRoof.OnWalls, o.z), w, d, wood);
+			string wall = wood ? "Block_Wall_Wood" : "Block_Wall_Thatch";
+			for (int x = 0; x < w; x++)
+			{
+				k.Add(wall, new Vector3(o.x + x * g, deck, o.z - g / 2f), 0f, null, 0f);
+				k.Add(wall, new Vector3(o.x + x * g, deck, o.z + (d - 1) * g + g / 2f), 0f, null, 0f);
+			}
+			for (int z = 0; z < d; z++) k.Add(wall, new Vector3(o.x - g / 2f, deck, o.z + z * g), 90f, null, 0f);
+			foreach (Vector2 corner in new[] { new Vector2(-g / 2f, -g / 2f), new Vector2((w - 0.5f) * g, -g / 2f), new Vector2(-g / 2f, (d - 0.5f) * g), new Vector2((w - 0.5f) * g, (d - 0.5f) * g) })
+				k.Add("Block_Pillar_Wood", new Vector3(o.x + corner.x, deck, o.z + corner.y), 0f, null, 0f);
+			// Inside, fitted by their own size (a bed set by a guess stuck out through the front wall): the bed or hammock along
+			// the back wall, the chest in the front corner by the closed side, the log by the open side
+			Vector2 inMin = new Vector2(o.x - g / 2f + 0.15f, o.z - g / 2f + 0.15f), inMax = new Vector2(o.x + (w - 0.5f) * g - 0.15f, o.z + (d - 0.5f) * g - 0.15f);
+			// (Raft's own beds, always loaded - the abandoned rafts' bed loads with their scenes, and was a missing-object block;
+			// the hammock is 3.6 m long: only in a hut three cells long)
+			Inside(k, wood ? "Placeable_Bed_Wood" : w >= 3 ? "Placeable_Bed_Hammock" : "Placeable_Bed_Basic", inMin, inMax, 0.5f, 1f, deck, null);
+			Inside(k, "Loot_Chest", inMin, inMax, 0f, 0f, deck, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot(wood ? "Metal" : "Basics") + ";" + MapKit.Loot("Food").Split(';').First() }, { ObjectProps.NoteTitle, wood ? "Cabin chest" : "Castaway's chest" } });
+			if (wood)
+				Inside(k, "Note_Book", inMin, inMax, 1f, 0f, deck, new Dictionary<string, string> { { ObjectProps.NoteTitle, "Cabin log" }, { ObjectProps.NoteText, "Built it plank by plank. The roof keeps the rain out, the walls keep the wind out. The sharks I keep out myself." } });
+			return true;
+		}
+
+		/// <summary>
+		/// Puts an object inside a box on the floor by its own size: turned so its long side runs along x, its box against the
+		/// box's side at fx, fz (0 = the min side, 1 = the max side, 0.5 = the middle).
+		/// </summary>
+		static void Inside(MapKit k, string name, Vector2 min, Vector2 max, float fx, float fz, float floor, Dictionary<string, string> props)
+		{
+			Bounds b;
+			if (!Measured(name, out b)) { k.Add(name, new Vector3(Mathf.Lerp(min.x, max.x, fx), floor, Mathf.Lerp(min.y, max.y, fz)), 0f, props, 0f); return; }
+			float yaw = b.size.z > b.size.x ? 90f : 0f;
+			// (turned 90 its own z runs along the world's x: the box's centre turns with it)
+			Vector3 c = Quaternion.Euler(0f, yaw, 0f) * b.center;
+			float sx = yaw == 0f ? b.size.x : b.size.z, sz = yaw == 0f ? b.size.z : b.size.x;
+			float x = sx > max.x - min.x ? (min.x + max.x) / 2f : Mathf.Lerp(min.x + sx / 2f, max.x - sx / 2f, fx);
+			float z = sz > max.y - min.y ? (min.y + max.y) / 2f : Mathf.Lerp(min.y + sz / 2f, max.y - sz / 2f, fz);
+			k.Add(name, new Vector3(x - c.x, floor, z - c.z), yaw, props, 0f);
+		}
+
+		static readonly Dictionary<string, Bounds> measured = new Dictionary<string, Bounds>();
+
+		/// <summary>
+		/// An object's box as an island spawns it unturned (relative to its pivot): from a copy spawned once and measured. The
+		/// catalog's prototype measure put a bed's box on the wrong side of its pivot, out through the front wall.
+		/// </summary>
+		static bool Measured(string name, out Bounds b)
+		{
+			if (measured.TryGetValue(name, out b)) return true;
+			GameObject go = PlaceableCatalog.Spawn(name, null);
+			if (go == null) return false;
+			try
+			{
+				go.transform.position = Vector3.zero;
+				go.transform.rotation = Quaternion.identity;
+				GameObject proto = PlaceableCatalog.Get(name);
+				if (proto != null) go.transform.localScale = proto.transform.localScale;
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+				if (rs.Length == 0) return false;
+				b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				measured[name] = b;
+				return true;
+			}
+			finally { UnityEngine.Object.DestroyImmediate(go); }
 		}
 	}
 
@@ -520,7 +725,19 @@ namespace DynamicIslands.Editor
 			DynamicIslands.SetEditorWaterLevel(s.WaterLevel);
 			float[,] metres = HeightsMetres(s, data.size, hres);
 			UseSea(s);
-			data.SetHeights(0, 0, Normalised(metres, data.size.y));
+			// (the objects planned first, with the buildings and caves, which level the ground under them: the terrain then
+			// gets the heights they leave, in the same undo step)
+			var report = new GenReport();
+			IslandFile planned = null;
+			float[,] heights = Normalised(metres, data.size.y);
+			if (PlaceableCatalog.IsBuilt)
+			{
+				planned = new IslandFile { WaterLevel = s.WaterLevel, TerrainSize = data.size, HeightmapResolution = hres, Heights = heights };
+				planned.Objects = PlanAll(s, metres, data.size, report);
+				report.Built = GenBuildings.Apply(planned, s);
+				heights = planned.Heights;
+			}
+			data.SetHeights(0, 0, heights);
 			// A new island starts with automatic texturing everywhere
 			if (terraineditor.paintMask == null || terraineditor.paintMask.GetLength(0) != ares) terraineditor.paintMask = new float[ares, ares];
 			else Array.Clear(terraineditor.paintMask, 0, terraineditor.paintMask.Length);
@@ -532,7 +749,6 @@ namespace DynamicIslands.Editor
 			group.Add(new TerrainStrokeCommand(data, new RectInt(0, 0, hres, hres), heightsBefore, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
 
 			// The old objects go (hidden, so undo brings them back), the new ones come
-			var report = new GenReport();
 			Transform placed = GameObject.Find("PlacedObjects") != null ? GameObject.Find("PlacedObjects").transform : null;
 			var made = new List<GameObject>();
 			if (placed != null)
@@ -549,10 +765,9 @@ namespace DynamicIslands.Editor
 					if (old.Count > 0) group.Add(new ObjectVisibilityCommand(old, false));
 				}
 
-				if (PlaceableCatalog.IsBuilt)
+				if (planned != null)
 				{
-					var file = new IslandFile { WaterLevel = s.WaterLevel, TerrainSize = data.size, HeightmapResolution = hres };
-					file.Objects = PlanAll(s, metres, data.size, report);
+					IslandFile file = planned;
 					var holder = new GameObject("GeneratedObjects");
 					holder.transform.SetParent(placed, false);
 					holder.transform.position = terrain.transform.position;
@@ -2685,6 +2900,8 @@ namespace DynamicIslands.Editor
 				Style = s.Style == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(s.Style),
 			};
 			file.Objects = PlanAll(s, metres, BuildArea);
+			List<string> built = GenBuildings.Apply(file, s);
+			if (built.Count > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + string.Join(", ", built.ToArray()));
 			if (s.Levels) file.Props[IslandProps.Levels] = "on";
 			return file;
 		}
