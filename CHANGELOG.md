@@ -195,6 +195,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   `spawnpool.txt` settings.
 - Version notices: plans and worlds remember which mod version wrote them and warn when they come from a newer one;
   players with different mod versions are told, and an update check offers the new version.
+- **Starter kit for Test in a world:** you arrive with weapons, tools, a head light, flippers, an oxygen bottle, food
+  and water, hunger and thirst full; in the test world **Esc → Custom Islands** has **Kit: On/Off** (for the next
+  Test, kept in `testkit.txt`) and **Give the kit**.
 
 ### Changed
 - **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest

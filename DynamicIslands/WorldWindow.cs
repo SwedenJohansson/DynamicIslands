@@ -146,6 +146,9 @@ namespace DynamicIslands.Editor
 
 			RectTransform buttonsRow = UIKit.Row(panel, 30f, 8f, "Buttons");
 			UIKit.Label(buttonsRow, "", 11);
+			// (while trying an island from the editor: the starter kit - on for the next Test, or given again now)
+			Add("TestKit", UIKit.Button(buttonsRow, "", () => { IslandTest.KitOn = !IslandTest.KitOn; Refresh(); }, "Test in a world starts you with a starter kit: weapons, tools, a head light, flippers, an oxygen bottle, food and water, hunger and thirst full. Switch it off to try the island with empty hands (from the next Test)", 120, 30f, 13));
+			Add("GiveKit", UIKit.Button(buttonsRow, "Give the kit", () => { List<string> got = IslandTest.GiveKit(); DynamicIslands.Notify(got.Count > 0 ? "Starter kit: " + string.Join(", ", got.ToArray()) : "The starter kit couldn't be given"); }, "The starter kit again, now (lost it, used it up), and hunger, thirst, health and oxygen full", 120, 30f, 13));
 			Add("BackToEditor", UIKit.Button(buttonsRow, "Back to the editor", IslandTest.Back, "Leave the test world without saving it and open the island in the editor again", 170, 30f, 13));
 			Button close = UIKit.Button(buttonsRow, "Close", Close, "Back to the game menu (Esc)", 130, 30f, 14);
 			UIKit.Primary(close);
@@ -393,6 +396,10 @@ namespace DynamicIslands.Editor
 			hostText.text = host ? "you are the host: changes are for every player" : "the host's settings - only the host changes them";
 			foreach (var kv in buttons) kv.Value.interactable = host && kv.Key != "BuildCost_Value";
 			buttons["BackToEditor"].gameObject.SetActive(IslandTest.Testing);
+			buttons["TestKit"].gameObject.SetActive(IslandTest.Testing);
+			buttons["GiveKit"].gameObject.SetActive(IslandTest.Testing);
+			UIKit.LabelOf(buttons["TestKit"]).text = "Kit: " + (IslandTest.KitOn ? "On" : "Off");
+			UIKit.SetActive(buttons["TestKit"], IslandTest.KitOn);
 			// (a plan tried from the main menu goes back to its plan there, not to the editor)
 			if (IslandTest.Testing) UIKit.LabelOf(buttons["BackToEditor"]).text = IslandTest.FromMenu ? "Back to the world plan" : "Back to the editor";
 			buttons["BackToEditor"].interactable = true;
