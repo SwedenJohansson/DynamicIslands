@@ -331,6 +331,54 @@ namespace DynamicIslands
 				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all + "; under a deck: " + underDeck);
 		}
 
+		[ConsoleCommand(name: "CIHeightMap", docs: "Dev, editor: the island's ground as text, to place a recipe's pieces on - a character every <step> m (8) out to <half> m (120) from the land's middle in recipe coordinates (x left to right, z top to bottom): ~ sea, . under 2 m, : 2-5, - 5-10, = 10-20, + 20-35, # 35-60, @ higher; then its highest points and level spots by height. CIHeightMap [step] [half]")]
+		public static void HeightMapCommand(string[] args)
+		{
+			if (terraineditor.terrain == null) { Fail("no terrain here (the editor, an island open)"); return; }
+			float step = args != null && args.Length > 0 ? F(args[0]) : 8f, half = args != null && args.Length > 1 ? F(args[1]) : 120f;
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			Func<float, float, float> above = (x, z) => GroundY(mid.x + x, mid.y + z) - sea;
+			const string chars = "~.:-=+#@";
+			float[] edges = { 0f, 2f, 5f, 10f, 20f, 35f, 60f };
+			int n = Mathf.Max(1, Mathf.RoundToInt(half / step));
+			var cells = new List<KeyValuePair<Vector2, float>>();
+			for (int j = n; j >= -n; j--)
+			{
+				var row = new StringBuilder();
+				for (int i = -n; i <= n; i++)
+				{
+					float v = above(i * step, j * step);
+					cells.Add(new KeyValuePair<Vector2, float>(new Vector2(i * step, j * step), v));
+					int k = 0;
+					while (k < edges.Length && v >= edges[k]) k++;
+					row.Append(chars[k]);
+				}
+				Log("MAP " + (j * step).ToString("F0", CultureInfo.InvariantCulture).PadLeft(5) + " " + row);
+			}
+			Log("MAP columns: x from " + (-n * step).ToString("F0", CultureInfo.InvariantCulture) + " to " + (n * step).ToString("F0", CultureInfo.InvariantCulture) + " every " + step.ToString("0.#", CultureInfo.InvariantCulture) + " m");
+			// (its peaks: the highest cells at least 3 steps apart)
+			var peaks = new List<KeyValuePair<Vector2, float>>();
+			foreach (var c in cells.OrderByDescending(c => c.Value))
+			{
+				if (c.Value <= 2f || peaks.Count >= 5) break;
+				if (peaks.All(p => Vector2.Distance(p.Key, c.Key) >= 3f * step)) peaks.Add(c);
+			}
+			Log("MAP highest: " + string.Join(", ", peaks.Select(p => p.Key.x.ToString("F0", CultureInfo.InvariantCulture) + " " + p.Key.y.ToString("F0", CultureInfo.InvariantCulture) + " (" + p.Value.ToString("F1", CultureInfo.InvariantCulture) + " m)").ToArray()));
+			// (level spots for a building: the ground within 1 m of its middle's height over the step around it, by height band)
+			foreach (float[] band in new[] { new[] { 0.5f, 3f }, new[] { 3f, 10f }, new[] { 10f, 25f }, new[] { 25f, 1000f } })
+			{
+				var level = cells.Where(c => c.Value >= band[0] && c.Value < band[1]).Where(c =>
+				{
+					float r = step * 0.5f;
+					return new[] { new Vector2(r, 0f), new Vector2(-r, 0f), new Vector2(0f, r), new Vector2(0f, -r) }.All(o => Mathf.Abs(above(c.Key.x + o.x, c.Key.y + o.y) - c.Value) < 1f);
+				}).Take(8).ToList();
+				Log("MAP level " + band[0].ToString("0.#", CultureInfo.InvariantCulture) + "-" + (band[1] > 999f ? "up" : band[1].ToString("0.#", CultureInfo.InvariantCulture)) + " m: " +
+					(level.Count == 0 ? "none" : string.Join(", ", level.Select(c => c.Key.x.ToString("F0", CultureInfo.InvariantCulture) + " " + c.Key.y.ToString("F0", CultureInfo.InvariantCulture) + " (" + c.Value.ToString("F1", CultureInfo.InvariantCulture) + ")").ToArray())));
+			}
+			Log("PASS: height map");
+		}
+
 		[ConsoleCommand(name: "CIBoundsOf", docs: "Dev, editor: where the island's objects whose name contains <part> are and how far they reach - pivot (m from the island's middle, h above the sea), turn, the box around their meshes (bottom and top h), the ground under its middle and the colliders it touches: fixing a recipe's floating or buried things. CIBoundsOf <part>")]
 		public static void BoundsOfCommand(string[] args)
 		{
@@ -901,15 +949,35 @@ namespace DynamicIslands
 						case "clear":
 						{
 							// clear at x z r=<m> [all] | clear from x1 z1 to x2 z2 r=<m>: the generator's objects there (in a circle, or along
-							// a trail) removed - deleted as one undo step; "all" also this recipe's own
+							// a trail) removed - deleted as one undo step; "all" also this recipe's own; only=<name pattern> just those whose
+							// name matches (only=Rock|Boulder), below=<m> / above=<m> just those under / over that height above the sea,
+							// on=sand|grass|rock|seabed just those on ground painted so (a beach's boulders, not the sea's or the hills' -
+							// Balboa Remade's wide sandy flats, 2-5 m up, were strewn with them, 2026-10-03)
 							int at = Array.IndexOf(t, "at"), from = Array.IndexOf(t, "from"), to = Array.IndexOf(t, "to");
 							if ((at < 0 || at + 2 >= t.Length) && (from < 0 || to < 0 || to + 2 >= t.Length)) { error = "clear at <x> <z> r=<m> | clear from <x1> <z1> to <x2> <z2> r=<m>"; break; }
 							var opt = Options(t.Skip(at >= 0 ? at + 3 : to + 3));
 							Vector2 w = at >= 0 ? WorldXZ(F(t[at + 1]), F(t[at + 2])) : WorldXZ(F(t[from + 1]), F(t[from + 2]));
 							Vector2 w2 = at >= 0 ? w : WorldXZ(F(t[to + 1]), F(t[to + 2]));
 							float r = opt.ContainsKey("r") ? F(opt["r"]) : 5f;
+							Regex only = opt.ContainsKey("only") ? new Regex(opt["only"], RegexOptions.IgnoreCase) : null;
+							float below = opt.ContainsKey("below") ? F(opt["below"]) : float.MaxValue, above = opt.ContainsKey("above") ? F(opt["above"]) : float.MinValue;
+							float seaY = DynamicIslands.EditorWaterLevel;
+							int onLayer = opt.ContainsKey("on") ? Array.IndexOf(new[] { "seabed", "sand", "grass", "rock" }, opt["on"].ToLowerInvariant()) : -1;
+							if (opt.ContainsKey("on") && onLayer < 0) { error = "clear: on=sand|grass|rock|seabed"; break; }
+							Terrain land = terraineditor.terrain;
+							Func<Vector3, bool> painted = p =>
+							{
+								if (onLayer < 0 || land == null) return true;
+								TerrainData td = land.terrainData;
+								Vector3 l = p - land.transform.position;
+								int ax = Mathf.Clamp(Mathf.FloorToInt(l.x / td.size.x * td.alphamapResolution), 0, td.alphamapResolution - 1);
+								int az = Mathf.Clamp(Mathf.FloorToInt(l.z / td.size.z * td.alphamapResolution), 0, td.alphamapResolution - 1);
+								return td.GetAlphamaps(ax, az, 1, 1)[0, 0, onLayer] >= 0.5f;
+							};
 							Transform root = GameObject.Find("PlacedObjects").transform;
-							var gone = root.GetComponentsInChildren<EditorGameObject>().Select(e => e.gameObject)
+							var gone = root.GetComponentsInChildren<EditorGameObject>()
+								.Where(e => (only == null || only.IsMatch(e.GameObjectName ?? "")) && e.transform.position.y - seaY < below && e.transform.position.y - seaY >= above && painted(e.transform.position))
+								.Select(e => e.gameObject)
 								.Where(g => (opt.ContainsKey("all") || !recipePlaced.Contains(g)) && DistanceToSegment(new Vector2(g.transform.position.x, g.transform.position.z), w, w2) <= r).ToList();
 							if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
 							break;
@@ -1490,7 +1558,8 @@ namespace DynamicIslands
 
 		/// <summary>Places an object as the editor's placer does: the object from the catalog, turned (standing straight,
 		/// as with the grid on) and scaled, its collider on, made an editor object with its default settings, shown as one
-		/// undo step. "sit": its bottom rests at the height (else its pivot is there).</summary>
+		/// undo step. "sit": its bottom rests at the height (else its pivot is there). "drop": then set down on whatever is
+		/// under it - a porch, a table, a crate - from where it was put.</summary>
 		static string Place(string name, float x, float z, Dictionary<string, string> opt, out EditorGameObject result)
 		{
 			result = null;
@@ -1541,6 +1610,20 @@ namespace DynamicIslands
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					go.transform.position += Vector3.up * (y - b.min.y);
+				}
+			}
+			// ("drop": set down on whatever is under it, from where it was put - the rangers' locker and logbook on Balboa
+			// Remade's porch: "sit" at a guessed height left them floating beyond the porch's ends, 2026-10-03)
+			if (opt.ContainsKey("drop"))
+			{
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+				if (rs.Length > 0)
+				{
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					RaycastHit[] under = Physics.RaycastAll(new Vector3(b.center.x, b.min.y + 0.05f, b.center.z), Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore)
+						.Where(h => !h.collider.transform.IsChildOf(go.transform)).OrderBy(h => h.distance).ToArray();
+					if (under.Length > 0) go.transform.position += Vector3.up * (under[0].point.y - b.min.y);
 				}
 			}
 			bool onGround = !opt.ContainsKey("h") && !opt.ContainsKey("y") && (!TopFrame.HasFloor || opt.ContainsKey("ground"));

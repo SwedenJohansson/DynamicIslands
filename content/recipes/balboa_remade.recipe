@@ -1,8 +1,151 @@
 # Balboa Remade - an island of the library's plan Raft Remade (in place of Raft's Balboa)
-# Raft's Balboa made anew: a jungle mountain remade from Balboa's own, the rangers' station on its beach, their radio mast on the summit, a bear's cave in its flank. Quest "The Rangers' Mast".
+# Raft's Balboa made anew: a forest island like Balboa (the generator's "something new like" it) - hills of pine and
+# maple round a mountain, beaches in the east and south. The rangers' station on a terrace above the east beach; the
+# Mama bear's den in a rock outcrop on the west plateau, its mouth behind the rangers' old plank barricade, grown over
+# with vines; the rangers' radio mast on the summit. Quest "The Rangers' Last Call": the station, the logbook, the
+# machete from the tool locker, the vines cut, the Mama bear, Hendricks' pack and the strongbox key in it, the summit's
+# radio, the rangers' strongbox (Balboa's blueprints: the machete, the biofuel refiner, the fuel tank and its pipe).
 #
 # Built by the recipe player (CIRecipe balboa_remade) through the editor's own operations.
 new
-# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
-gen Friendly=0.2 SeaLife=0.3
-randomize BalboaIsland Seed=7103 Radius=120 Height=55 Hostiles=0
+# (nature like Raft's Balboa - the generator's "something new like" it - with fewer cliffs and wider beaches than its
+# own: like Balboa as it is, it was a plateau ringed by cliffs with no beach to land on, 2026-10-03)
+# (its trees as thick as on Raft's Balboa - 2.9 per 1000 m2; Like Raft's own pick gave half - and no boulders strewn
+# over its wide beaches: the user doesn't want beaches full of stones, the review 2026-10-03)
+randomize BalboaIsland like Seed=7103 Radius=110 Height=55 Hostiles=0 Cliffs=0.2 BeachWidth=0.6 Trees=0.26
+clear at 0 0 r=200 only=Rock|Boulder on=sand above=0.2
+
+# --- Terrain: the station's terrace above the east beach (5 m), the den's ground on the west plateau (its own height,
+# about 9 m), the summit levelled for the mast (50 m) ------------------------------------------------------------------
+brush flatten at 80 4 r=11 s=20 frames=40 h=5
+# (and east of it, where the locker, the logbook's crate and the strongbox stand in front of the porch)
+brush flatten at 90 3 r=8 s=20 frames=40 h=5
+# (and a level spot north of the shack for the strongbox)
+brush flatten at 80 12.5 r=4 s=20 frames=30 h=5
+brush flatten from -80 -8.8 to -92 -8.8 r=17 s=20 frames=60
+brush flatten at 18 -18 r=7 s=20 frames=40 h=50
+origin
+
+# --- The rangers' station on its terrace above the east beach (5 m): Balboa's shack -------------------------------------
+clear at 80 4 r=15
+push at 80 4 h=5 yaw=90
+# (its porch and steps to the east, toward the beach)
+place Balboa_Shack station at 0 0 yaw=-60
+pop
+# in front of the porch (its boards have no collider in Raft's model - things set on them fell through): the tool
+# locker by its north end, the logbook on a crate under the window; the strongbox on the terrace north of the shack (its\n# floor has no collider either, and its room is full of Raft's own furniture)
+place Locker toollocker at 90.4 8.2 ground yaw=90
+place Crate_Big_01 - at 90.7 5 ground yaw=5
+place Note_Paper logbook at 90.7 5 h=7 sit drop yaw=80
+place Placeable_Lantern_Metal - at 90.6 4.4 h=7 sit drop
+place VG_Safe strongbox at 80.2 12 ground yaw=0
+# by the station: the flag, the rangers' supplies, firewood, the station's zone
+place Placeable_Flag_03 - at 93 -6 ground
+place Crate_Big_02 - at 74 -4.4 ground yaw=20
+place "Box Small" - at 76 -4.6 ground yaw=-10
+place Firewood_1 - at 73.5 11 ground yaw=80
+place Zone_Trigger station at 91 3 h=6
+
+# --- The Mama bear's den: Balboa's bear cave as a rock outcrop on the west plateau, its mouth to the east; the rangers'
+# plank barricade across the mouth, grown over with vines; inside, the bear and Hendricks' pack -------------------------
+push at -66 -9 yaw=90
+clear from 0 6 to 0 -36 r=17
+brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
+place BalboaCave_Bear den at 1.2 -18.4 y=5.2 scale=1.15
+for vx -3.45 5.55 1.5
+place Block_Wall_Wood vinewall at $vx -1 y=0
+next
+place "overgrowthIvy_long_01 Variant" vinewall at -2.4 -0.7 y=0
+place "overgrowthIvy_long_02 Variant" vinewall at 1 -0.7 y=0
+place "overgrowthIvy_long_01 Variant" vinewall at 4.3 -0.7 y=0
+place Relay_Fence_pole - at -6 3 ground
+place Note_Paper trailsign at -6 3 y=1.1 sit drop
+place Zone_Trigger den at 1 -12 y=1.5
+place Creature_Bear mamabear at 1 -22 y=0.5
+place "Box Small" pack at -3 -27 ground yaw=30
+place Note_Paper scrawl at 4.5 -7 ground yaw=200
+pop
+
+# --- The summit (50 m): the rangers' radio mast - two of the radio tower's thick pillars, its dish and lamp - and the
+# radio desk under it ----------------------------------------------------------------------------------------------------
+clear at 18 -18 r=8
+push at 18 -18 h=50
+place RT_PillarThick - at 0 0 y=0
+place RT_PillarThick - at 0 0 y=6
+place RT_SatteliteDisc - at 0 0 y=12
+place RT_RoofLamp - at 0 0 y=12.6
+place "Table Office" radiodesk at 3 1.5 y=0 yaw=180
+place RT_CommRadio mastradio at 3 1.5 y=2 sit drop yaw=180
+place "Chair Office" - at 3 0.4 y=0 yaw=20
+place "Box Small" - at -2.5 2 y=0 yaw=15
+place Zone_Trigger summit at 0 0 y=1.5
+pop
+
+# --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
+info title=Balboa Remade
+info author=Custom Islands
+info description=Raft's Balboa made anew: a forest of pine and maple round a mountain, the rangers' station on its east terrace, the Mama bear's den in a rock outcrop on the west plateau and the rangers' radio mast on the summit. The rangers fled the bear - their strongbox still holds Balboa's blueprints. Raft Remade's third island.
+island on.arrive=message||A forest of pine and maple climbs to a mountain - a radio mast on its summit. Below it on the east terrace, a ranger station, its door hanging open.
+
+story machete|Ranger's machete|Machete|The rangers' old machete, from their tool locker: it cuts through vines.
+story stationkey|Strongbox key|quest:Caravan_KeyInfirmary|The key to the rangers' strongbox, from Hendricks' pack.
+
+note logbook Ranger's logbook | BALBOA RANGER STATION - LOGBOOK\n\nDay 41. The Mama bear came down to the terrace again. She took Hendricks' pack - the strongbox key was in it - and dragged it off to her den in the rocks on the west plateau.\nDay 43. Vines have grown over our old barricade at the den's mouth. The machete is in the tool locker.\nDay 44. We are leaving. Whoever reads this: the radio on the summit still works. Call out, and its desk will open for you.\n\n- Ranger Hayes
+note trailsign Warning sign | BEAR DEN - KEEP OUT\nThe rangers' barricade. Do not cut the vines.
+note scrawl Scrawled on a crate | She sleeps in the back. Hendricks' pack is in there with her - and the key with it.
+note toollocker Tool locker | The rangers' tool locker: a machete in its sheath, rope, nails.
+loot toollocker story:machete*1;Rope*2;Nail*8
+prop toollocker loot.refill=0
+note pack Hendricks' pack | Hendricks' pack, torn by claws: his flask, his notes - and the strongbox key.
+loot pack story:stationkey*1;Rope*1;Scrap*3
+prop pack loot.refill=0
+note radiodesk Radio desk | The radio desk under the mast: a battery, the rangers' frequency list - and their last message, never sent.
+loot radiodesk Battery*1;BioFuel*1;Plank*6
+prop radiodesk loot.refill=0
+prop radiodesk if.open=signal|ranger
+prop radiodesk else.open=message||The desk's drawer is wired to the radio. Call out first.
+note strongbox Ranger's strongbox | The rangers' strongbox: Balboa's blueprints and their fuel - and Hayes' last note: "Whoever opens this: the fuel pipes go to the engine room. Good luck."
+loot strongbox Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;BioFuel*2;Nail*10
+prop strongbox loot.refill=0
+prop strongbox if.open=take|story:stationkey|1
+prop strongbox else.open=message||The strongbox is locked. Hayes wrote that the key went with Hendricks' pack.
+
+prop vinewall obj.name=vinewall
+prop vinewall beh.use=Cut through the vines
+prop vinewall if.use=has|story:machete|1
+prop vinewall on.use=message||The machete bites into the vines. They fall away - and the rotten planks behind them with them: the den's mouth is open.\nhide|vinewall
+prop vinewall else.use=message||Thick vines over the rangers' plank barricade. You'd need a blade.
+prop mastradio obj.name=mastradio
+prop mastradio beh.use=Call out on the rangers' radio
+prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle south."\nsignal||ranger
+
+prop station zone.id=station
+prop station zone.radius=8
+prop station zone.message=The ranger station: its door hangs open, a logbook on a crate by the steps.
+prop den zone.id=den
+prop den zone.radius=8
+prop den zone.message=The den: dark, the smell of bear - and something big stirring in the back.
+prop summit zone.id=summit
+prop summit zone.radius=7
+prop summit zone.message=The summit: the rangers' radio mast, their desk and their radio.
+prop mamabear creature.count=1
+prop mamabear creature.size=1.15
+prop mamabear creature.health=6
+prop mamabear creature.damage=1.5
+prop mamabear creature.respawn=0
+prop mamabear creature.zone=den
+
+quest title=The Rangers' Last Call
+quest intro=A forest island with a ranger station on its east terrace. The rangers are gone; their logbook may say why.
+step reach|station|1|Find the ranger station on the east terrace
+step read|Ranger's logbook|1|Read the rangers' logbook
+step open|Tool locker|1|Take the machete from the tool locker
+step reach|den|1|Cut through the vines into the Mama bear's den
+step kill|Bear|1|Face the Mama bear
+step open|Hendricks' pack|1|Take the strongbox key from Hendricks' pack
+step open|Radio desk|1|Call out on the summit's radio and open its desk
+step open|Ranger's strongbox|1|Open the rangers' strongbox at the station
+quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said south - toward the traders.
+quest reward=Plank*8;Rope*4;BioFuel*1
+
+save Balboa Remade

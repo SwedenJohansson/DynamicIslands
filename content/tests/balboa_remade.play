@@ -1,0 +1,54 @@
+# Play test of Balboa Remade (CIPlay balboa_remade, in a test world 'CI ...'). Points as in its recipe: the rangers'
+# station on the east terrace (5 m), the den's mouth on the west plateau facing east (8.9 m), the summit (50 m).
+island Balboa Remade
+expect step 0
+expect title The Rangers' Last Call
+
+# Up from the east beach to the station: the logbook, the machete
+at 110 3
+walk 110 3 to 100 3 to 93 4 h=5
+zone station
+expect step 1
+read Ranger's logbook
+expect step 2
+open Tool locker
+expect story machete 1
+expect step 3
+
+# The strongbox stays shut without its key
+open Ranger's strongbox
+expect message The strongbox is locked
+expect step 3
+
+# The den on the west plateau: the vines over the barricade cut with the machete, in to the Mama bear
+at -52 -9.5
+walk -52 -9.5 to -62 -9.5 h=8.9
+use vinewall
+expect message machete bites
+expect hidden vinewall
+walk -62 -9.5 to -70 -9.5 to -78 -9.5
+zone den
+expect step 4
+kill Bear
+expect step 5
+open Hendricks' pack
+expect story stationkey 1
+expect step 6
+
+# The summit: the radio called, its desk opened
+at 26 -18
+walk 26 -18 to 22 -17 h=50
+zone summit
+open Radio desk
+expect message Call out first
+use mastradio
+expect message We hear you
+open Radio desk
+expect step 7
+
+# Back at the station: the strongbox on the terrace north of the shack
+at 82 15
+open Ranger's strongbox
+expect item Blueprint_Machete 1
+expect item Blueprint_Fueltank 1
+expect done
