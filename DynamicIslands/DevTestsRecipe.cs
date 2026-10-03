@@ -203,14 +203,16 @@ namespace DynamicIslands
 				}
 			}
 			// Objects standing on the ground with part of their base only (a stilt house on a slope: the legs over the low side
-			// end in the air - its legs are one mesh with the house, so the ground under its whole footprint is measured)
+			// end in the air - its legs are one mesh with the house, so the ground under its whole footprint is measured). The
+			// editor's name tags over chests (CI_NoTint) aren't the object: a chest's 14 m label made Hightide Harbor's chest on a
+			// stilt house's floor "partly in the air" (2026-10-03).
 			int bases = 0, partly = 0;
 			foreach (EditorGameObject e in PlacedEditorObjects())
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
-				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (rs.Length == 0 || ground == null) continue;
 				// (its base: the parts that reach down to its bottom - not a windmill's sails or a telescope's tube above it)
 				float bottom = rs.Min(r => r.bounds.min.y);
@@ -256,7 +258,7 @@ namespace DynamicIslands
 				if (p.y - land <= 0.5f) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
-				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length > 0)
 				{
 					Bounds whole = parts[0].bounds;
@@ -278,7 +280,7 @@ namespace DynamicIslands
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null) continue;
-				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length == 0) continue;
 				Bounds whole = parts[0].bounds;
 				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
@@ -314,7 +316,7 @@ namespace DynamicIslands
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
 				if (RaftUnderwater.CategoryOf(n) != null || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ContentCatalog.IsCreature(n)) continue;
-				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length == 0) continue;
 				Bounds whole = parts[0].bounds;
 				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
@@ -444,6 +446,47 @@ namespace DynamicIslands
 				Log("  " + name + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + " h=" + Num(p.y - sea) + " turn " + e.transform.eulerAngles.ToString("F0") + ": box " + Num(b.min.x - mid.x) + ".." + Num(b.max.x - mid.x) + " x " +
 					Num(b.min.z - mid.y) + ".." + Num(b.max.z - mid.y) + ", h " + Num(b.min.y - sea) + ".." + Num(b.max.y - sea) + "; ground under its middle h=" + Num(land - sea) + "; touches " + (others.Length > 0 ? others : "nothing"));
 				n++;
+			}
+			Log("PASS: " + n + " objects with '" + part + "'");
+		}
+
+		[ConsoleCommand(name: "CIColliders", docs: "Dev, editor: the colliders of the island's objects whose name contains <part> (kind, size, layer, trigger, convex), and for the first one how much of its top a ray straight down meets - every 0.1 m over its box: a recipe's 'sit' and a play test's walk look for floors so (Hightide Harbor's chest fell through a floor of Raft's blocks onto the sand, 2026-10-03). CIColliders <part>")]
+		public static void CollidersCommand(string[] args)
+		{
+			if (args == null || args.Length < 1 || !DynamicIslands.InEditor()) { Fail("CIColliders <part> (in the editor)"); return; }
+			string part = string.Join(" ", args);
+			Physics.SyncTransforms();
+			EditorGameObject first = null;
+			int n = 0;
+			foreach (EditorGameObject e in PlacedEditorObjects())
+			{
+				if ((e.GameObjectName ?? "").IndexOf(part, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (first == null) first = e;
+				if (n++ >= 3) continue;
+				foreach (Collider c in e.GetComponentsInChildren<Collider>(true))
+				{
+					string kind = c is BoxCollider ? "box " + ((BoxCollider)c).size.ToString("F2") : c is MeshCollider ? "mesh" + (((MeshCollider)c).convex ? " convex" : "") + " (" + (((MeshCollider)c).sharedMesh != null ? ((MeshCollider)c).sharedMesh.vertexCount + " vertices" : "no mesh") + ")" : c.GetType().Name;
+					Log("  " + e.GameObjectName + " / " + c.name + ": " + kind + ", bounds " + c.bounds.size.ToString("F2") + " h " + Num(c.bounds.min.y - DynamicIslands.EditorWaterLevel) + ".." + Num(c.bounds.max.y - DynamicIslands.EditorWaterLevel) + ", layer " + LayerMask.LayerToName(c.gameObject.layer) + (c.isTrigger ? ", trigger" : "") + (c.enabled ? "" : ", off"));
+				}
+				// (and its renderers: a part far off its shape - a glow, a decal - makes the checks' boxes wrong)
+				Vector2 mid = EditorLandCentre();
+				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(true))
+					Log("  " + e.GameObjectName + " / renderer " + r.name + " (" + r.GetType().Name + (r.enabled ? "" : ", off") + (r.gameObject.activeInHierarchy ? "" : ", hidden") + "): middle " + Num(r.bounds.center.x - mid.x) + " " + Num(r.bounds.center.z - mid.y) + ", size " + r.bounds.size.ToString("F2") + ", h " + Num(r.bounds.min.y - DynamicIslands.EditorWaterLevel) + ".." + Num(r.bounds.max.y - DynamicIslands.EditorWaterLevel));
+			}
+			if (first != null)
+			{
+				Renderer[] rs = PlacementOptions.ShapeRenderers(first.gameObject);
+				Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(first.transform.position, Vector3.one);
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				int rays = 0, hits = 0;
+				for (float x = b.min.x + 0.05f; x < b.max.x; x += 0.1f)
+					for (float z = b.min.z + 0.05f; z < b.max.z; z += 0.1f)
+					{
+						rays++;
+						RaycastHit hit;
+						if (Physics.Raycast(new Vector3(x, b.max.y + 2f, z), Vector3.down, out hit, 3f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(first.transform)) hits++;
+					}
+				Log("  rays down onto the first " + first.GameObjectName + ": " + hits + " of " + rays + " meet it");
 			}
 			Log("PASS: " + n + " objects with '" + part + "'");
 		}
