@@ -450,6 +450,30 @@ namespace DynamicIslands
 			Log("PASS: " + n + " objects with '" + part + "'");
 		}
 
+		[ConsoleCommand(name: "CIProfile", docs: "Dev, editor: the island's profile along a line - at <n> points from <x1> <z1> to <x2> <z2> (recipe coordinates) the first thing a ray down from 40 m over the sea meets and its height above the sea: where a hull's deck and sides are, to set stairs to them. CIProfile <x1> <z1> <x2> <z2> <n>")]
+		public static void ProfileCommand(string[] args)
+		{
+			if (args == null || args.Length < 5 || !DynamicIslands.InEditor()) { Fail("CIProfile <x1> <z1> <x2> <z2> <n> (in the editor)"); return; }
+			Physics.SyncTransforms();
+			Vector2 mid = EditorLandCentre();
+			float sea = DynamicIslands.EditorWaterLevel;
+			int n = Mathf.Clamp(int.Parse(args[4]), 2, 200);
+			for (int i = 0; i < n; i++)
+			{
+				float f = i / (float)(n - 1);
+				float x = Mathf.Lerp(F(args[0]), F(args[2]), f), z = Mathf.Lerp(F(args[1]), F(args[3]), f);
+				RaycastHit hit;
+				string what = "nothing";
+				if (Physics.Raycast(new Vector3(mid.x + x, sea + 40f, mid.y + z), Vector3.down, out hit, 120f, ~0, QueryTriggerInteraction.Ignore))
+				{
+					EditorGameObject e = hit.collider.GetComponentInParent<EditorGameObject>();
+					what = (hit.collider.GetComponent<Terrain>() != null ? "ground" : e != null ? e.GameObjectName : hit.collider.name) + " h=" + Num(hit.point.y - sea);
+				}
+				Log("  " + Num(x) + " " + Num(z) + ": " + what);
+			}
+			Log("PASS: profile");
+		}
+
 		[ConsoleCommand(name: "CIColliders", docs: "Dev, editor: the colliders of the island's objects whose name contains <part> (kind, size, layer, trigger, convex), and for the first one how much of its top a ray straight down meets - every 0.1 m over its box: a recipe's 'sit' and a play test's walk look for floors so (Hightide Harbor's chest fell through a floor of Raft's blocks onto the sand, 2026-10-03). CIColliders <part>")]
 		public static void CollidersCommand(string[] args)
 		{
@@ -466,7 +490,8 @@ namespace DynamicIslands
 				foreach (Collider c in e.GetComponentsInChildren<Collider>(true))
 				{
 					string kind = c is BoxCollider ? "box " + ((BoxCollider)c).size.ToString("F2") : c is MeshCollider ? "mesh" + (((MeshCollider)c).convex ? " convex" : "") + " (" + (((MeshCollider)c).sharedMesh != null ? ((MeshCollider)c).sharedMesh.vertexCount + " vertices" : "no mesh") + ")" : c.GetType().Name;
-					Log("  " + e.GameObjectName + " / " + c.name + ": " + kind + ", bounds " + c.bounds.size.ToString("F2") + " h " + Num(c.bounds.min.y - DynamicIslands.EditorWaterLevel) + ".." + Num(c.bounds.max.y - DynamicIslands.EditorWaterLevel) + ", layer " + LayerMask.LayerToName(c.gameObject.layer) + (c.isTrigger ? ", trigger" : "") + (c.enabled ? "" : ", off"));
+					Vector2 cm = EditorLandCentre();
+					Log("  " + e.GameObjectName + " / " + c.name + ": " + kind + ", middle " + Num(c.bounds.center.x - cm.x) + " " + Num(c.bounds.center.z - cm.y) + ", bounds " + c.bounds.size.ToString("F2") + " h " + Num(c.bounds.min.y - DynamicIslands.EditorWaterLevel) + ".." + Num(c.bounds.max.y - DynamicIslands.EditorWaterLevel) + ", layer " + LayerMask.LayerToName(c.gameObject.layer) + (c.isTrigger ? ", trigger" : "") + (c.enabled ? "" : ", off"));
 				}
 				// (and its renderers: a part far off its shape - a glow, a decal - makes the checks' boxes wrong)
 				Vector2 mid = EditorLandCentre();
