@@ -2700,6 +2700,33 @@ story items an object only uses up once the quest has counted them (an **Only if
 the check that **uses them up**, so a player who finds things early can't lock the quest); a lift that moves the
 player (**teleport the player**); doors that slide aside when three seals are set.
 
+**Silver Screen Seas** - Raft's whole story with the library's themed islands ([16.6](#166-the-themed-islands)). After
+every story island a big themed island comes on its own Receiver frequency (after Temperance two, one after the other);
+its quest done, the story goes on as Raft's. The ten normal-size themed islands turn up as side trips while you sail.
+
+| After | The plan's island | Size |
+|---|---|---|
+| Radio Tower | ![](images/library/camp_blackwater.jpg) **Camp Blackwater** | twice the size |
+| Vasagatan | ![](images/library/sunken_liner.jpg) **The Sunken Liner** | twice the size |
+| Balboa | ![](images/library/step_pyramid.jpg) **The Step Pyramid** | twice the size |
+| Caravan Town | ![](images/library/the_arena.jpg) **The Arena** | three times the size |
+| Tangaroa | ![](images/library/albatross_field.jpg) **Albatross Field** | three times the size |
+| Varuna Point | ![](images/library/island_of_stations.jpg) **The Island of Stations** | five times the size |
+| Temperance | ![](images/library/primeval_park.jpg) **Primeval Park** | five times the size |
+| Primeval Park | ![](images/library/sundown_canyons.jpg) **Sundown Canyons** | ten times the size |
+
+The **side trips**, every one 450 m ahead of the raft: Tiki Lagoon (2 km), Gilded Skull Cove (4 km), The Drowned
+Labyrinth (7 km), Keeper's Light (10 km), Embers Isle (13 km), The Safe Room (16 km), Sun Atoll (20 km), The Rock Pen
+(24 km), Highmoor Lodge (28 km) and Crater Lair (32 km).
+
+The main quest islands are on the Receiver 700 m (Camp Blackwater), 900 m (the next three) or 1000 m (the rest) ahead
+when tuned, and each is done when its quest is done. The plan has **Random islands while sailing: on** and **Raft's
+story islands: on** (all eight).
+
+What it shows: a story island's place taken by **two** islands in a row - Sundown Canyons comes **after** Primeval
+Park, a rule of the plan itself ([7.4](#74-everything-a-rule-can-do)) - because nothing can come after Utopia, which
+ends Raft's story and never counts as done.
+
 ### 16.5 Where to look for...
 
 | To learn how to make... | Open |
