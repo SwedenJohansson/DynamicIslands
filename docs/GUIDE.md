@@ -1098,7 +1098,7 @@ The tab shows the island's name (or the **tab title** you give it) and, for an i
   Receiver to it", followed by the rule's message);
 - **the quest's checklist** - its steps as they are done, crossed out, and the one to do now; a long quest goes on
   over more pages. The steps are no longer listed in the journal;
-- **the notes read on the island**, two to a page, in their order on the island.
+- **the notes read on the island**, two to a page (a long one on a page of its own), in their order on the island.
 
 Its **story items** show under Raft's **Found items**, with their pictures (Raft's quest item pictures). When the last
 main story island is done, the plan's **ending page** (the card **THE END** under the rules) comes last in the book,
@@ -1134,7 +1134,7 @@ bar at the bottom steps through the story the way players will meet it: **|◀ S
 "the next coordinates"...), **All ▶|**. **Back to World Plans** returns to the plan with your changes still there.
 
 **Check** warns about the notebook too: a main story island without notes (its tab shows only its intro and steps), a
-note too long for its paper (over 600 letters), a story item without a picture, a "next coordinates" note that isn't
+note too long for its paper (over 1100 letters; a note over 300 gets a page of its own), a story item without a picture, a "next coordinates" note that isn't
 on the island.
 
 The world option **Story islands in a new order** ([9.4](#94-extra-options)) works the same way for the notebook:

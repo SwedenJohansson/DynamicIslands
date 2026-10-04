@@ -474,7 +474,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Longer than this, a note's text gets small on its paper in Raft's notebook (Raft's own are up to ~350).</summary>
-		public const int NotebookNoteLength = 600;
+		public const int NotebookNoteLength = 1100;
 
 		/// <summary>A main story island in Raft's notebook (QuestBook): notes for its pages, notes that fit the paper, its story
 		/// items' pictures, a tab title that fits.</summary>

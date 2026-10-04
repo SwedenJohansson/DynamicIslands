@@ -285,11 +285,14 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestBookPreview", docs: "Dev, editor: World Plans' Preview notebook as a builder uses it - a plan (CIQuestBookPreview <plan>, default 'Raft 2 - The Drowned Frontier') opened, a change made and not saved, Preview notebook: the test world with Raft's book open on the plan's tabs; the step-through from the start (no tabs) one moment at a time, All; pictures; Back to World Plans with the unsaved change still there (TEST_CATALOGUE QB7). Several minutes")]
 		public static void QuestBookPreviewCommand(string[] args)
 		{
-			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "Raft 2 - The Drowned Frontier";
-			DynamicIslands.instance.StartCoroutine(QuestBookPreviewRoutine(name));
+			// (CIQuestBookPreview <plan> stay: the preview stays open after the checks, for pictures)
+			bool stay = args != null && args.Contains("stay");
+			string[] words = args != null ? args.Where(a => a != "stay").ToArray() : new string[0];
+			string name = words.Length > 0 ? string.Join(" ", words) : "Raft 2 - The Drowned Frontier";
+			DynamicIslands.instance.StartCoroutine(QuestBookPreviewRoutine(name, stay));
 		}
 
-		static IEnumerator QuestBookPreviewRoutine(string name)
+		static IEnumerator QuestBookPreviewRoutine(string name, bool stay)
 		{
 			if (!DynamicIslands.InEditor()) { Fail("quest book preview: in the editor"); yield break; }
 			WorldPlan saved = WorldPlan.Load(name);
@@ -318,17 +321,16 @@ namespace DynamicIslands
 			QuestBookPreview.Show(0);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, QuestBook.Tabs.Count == 0, "the start: no tab yet (" + QuestBook.Tabs.Count + ")");
-			QuestBookPreview.Show(1);
+			// (the plan's own islands' moments: with Raft's story on, Raft's islands come between them)
+			List<int> opens = Enumerable.Range(0, QuestBookPreview.Moments.Count).Where(k => QuestBookPreview.Moments[k].Kind == "open" && !StoryChain.IsRaft(QuestBookPreview.Moments[k].Step)).ToList();
+			int first = opens.Count > 0 ? opens[0] : 0, second = opens.Count > 1 ? opens[1] : QuestBookPreview.Moments.Count - 1;
+			QuestBookPreview.Show(first + 1);
 			yield return new WaitForSeconds(0.5f);
-			Check(ref ok, QuestBook.Tabs.Count == 1, "one moment on: the first island's tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ") - " + QuestBookPreview.Current);
-			int firstDone = QuestBookPreview.Moments.FindIndex(m => m.Kind == "done");
-			QuestBookPreview.Show(firstDone);
+			Check(ref ok, QuestBook.Tabs.Count == 1, "the first island's coordinates found: its tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ") - " + QuestBookPreview.Current);
+			QuestBookPreview.Show(second);
 			yield return new WaitForSeconds(0.5f);
-			int pagesBefore = QuestBook.PageTexts.Values.Sum(v => v.Count);
-			QuestBookPreview.Show(firstDone + 1);
-			yield return new WaitForSeconds(0.5f);
-			Check(ref ok, QuestBook.Tabs.Count == (main > 1 ? 1 : 1), "its last quest step: still one tab - " + QuestBookPreview.Current);
-			QuestBookPreview.Show(firstDone + 2);
+			Check(ref ok, QuestBook.Tabs.Count == 1, "everything up to the second island's coordinates: still one tab of ours - " + QuestBookPreview.Current);
+			QuestBookPreview.Show(second + 1);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, main < 2 || QuestBook.Tabs.Count == 2, "the next coordinates: the second tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ")");
 			uint openAt = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
@@ -341,6 +343,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, QuestBook.Tabs.Count == main, "All again: every tab");
 			Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 20000), "Raft's list of notes found has none of ours");
+			if (stay) { Log((ok ? "PASS" : "FAIL") + ": quest book preview (staying in the preview)"); yield break; }
 			IslandTest.Back();
 			yield return WaitFor(() => DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, 180f);
 			Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Plan.Description == marker, "back in World Plans on the plan, the unsaved change still there");

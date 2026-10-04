@@ -30,6 +30,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Our notes' numbers (never in Raft's unlock list; only to tell them apart).</summary>
 		const int IndexBase = 20000;
 		const int PadLines = 15;
+		/// <summary>Notes longer than this get a whole page (Raft's notepad) instead of half a page (a letter).</summary>
+		public const int LetterLength = 300;
 
 		static NoteBookUI ui;
 		static bool captured;
@@ -494,7 +496,7 @@ namespace DynamicIslands.Editor
 		internal static void AfterFlip(NoteBookUI book)
 		{
 			if (book != ui || strip == null) return;
-			ScrollRect sr = strip.GetComponentInParent<ScrollRect>();
+			ScrollRect sr = (strip.parent != null ? strip.parent.GetComponent<ScrollRect>() : null);
 			if (sr == null) return;
 			uint at = (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>();
 			Transform tab = null;
@@ -546,7 +548,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: scroll the tab strip (0 top, 1 bottom); false when it doesn't scroll.</summary>
 		public static bool ScrollTabs(float f)
 		{
-			ScrollRect sr = strip != null ? strip.GetComponentInParent<ScrollRect>() : null;
+			ScrollRect sr = strip != null ? (strip.parent != null ? strip.parent.GetComponent<ScrollRect>() : null) : null;
 			if (sr == null) return false;
 			sr.verticalNormalizedPosition = 1f - Mathf.Clamp01(f);
 			return true;
@@ -632,9 +634,17 @@ namespace DynamicIslands.Editor
 			int onPage = 0;
 			foreach (KeyValuePair<string, string> note in i.Notes)
 			{
-				if (page == null || onPage == 2) { page = NewPage(group.Count % 2 == 0, i.Title); group.Add(page); onPage = 0; }
 				string title = note.Key.Trim();
 				string text = (title.Length > 0 && !title.Equals("note", StringComparison.OrdinalIgnoreCase) ? "<b>" + title + "</b>\n\n" : "") + note.Value.Trim();
+				// (a long note gets a page of its own on Raft's tall notepad: on a half-page letter it ran off the paper)
+				if (note.Value.Trim().Length > LetterLength)
+				{
+					page = NewPage(group.Count % 2 == 0, i.Title); group.Add(page);
+					AddPaper(page, tplPad, text, 30f, 340f);
+					onPage = 2;
+					continue;
+				}
+				if (page == null || onPage == 2) { page = NewPage(group.Count % 2 == 0, i.Title); group.Add(page); onPage = 0; }
 				AddPaper(page, tplLetter, text, onPage == 0 ? 35f : 205f, 160f);
 				onPage++;
 			}
