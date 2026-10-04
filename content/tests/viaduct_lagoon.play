@@ -1,0 +1,48 @@
+# Play test of Viaduct Lagoon (CIPlay viaduct_lagoon, in a test world 'CI ...'). Points as in its recipe ("offset").
+# The station on the west ring (6 m; the platform x -52..-40 z 5.5..7.6), the viaduct's deck along z 2.5..5.5 at 7 m from
+# x -40 to -15.8 (the brake van at -20) and from 2.3 to 36, the trench below the break (11 m down) with the three cars at
+# -9 6, -1 2 and 7 5; the signal cabin on the east ring (x 45.5..54.5, z 4..10, its door on the west side).
+island Viaduct Lagoon
+offset 0 0
+expect step 0
+expect title The Winter Post
+wait 5
+expect animals Goat 3
+expect animals Dolphin 2
+at -46 9 h=7.5
+zone station
+expect step 1
+read Station master's telegram
+expect step 2
+open Platform parcel box
+open Coal barrel
+at -9 4 h=-7
+open Mail locker of car one
+expect message bent shut
+at -26 4 h=8
+walk -26 4 to -21.5 4 h=7.05
+open Brake van locker
+expect story crowbar 1
+expect step 3
+at -9 4 h=-7
+zone wreckage
+air air1
+open Mail locker of car one
+at -1 4 h=-7.5
+air air2
+open Mail locker of car two
+at 7 3 h=-7.5
+air air3
+open Mail locker of car three
+expect story mailbag 3
+expect step 4
+open Mail sack in the silt
+at 43.5 8.5 h=7
+walk 43.5 8.5 to 47.5 8.5 h=6.1
+zone office
+expect step 5
+use counter
+expect story receipt 1
+expect step 6
+open Station master's safe
+expect done
