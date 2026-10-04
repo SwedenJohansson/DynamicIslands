@@ -367,9 +367,10 @@ namespace DynamicIslands.Editor
 					list.Add(new Quest { Name = NameOf(at, r, id), Group = PlanStory, Done = StoryChain.Done.Contains(step) });
 				}
 			}
-			// The plan's other rules that bring a saved island with a quest (known before they come)
+			// The plan's other rules that bring a saved island with a quest (known before they come); main story islands beside
+			// Raft's story count with the story
 			if (plan != null)
-				foreach (IntroRule r in plan.Rules.Where(x => !x.InStory && x.What == "island" && x.WhatArg.Length > 0))
+				foreach (IntroRule r in plan.Rules.Where(x => !x.InStory && x.What == "island" && x.WhatArg.Length > 0).OrderBy(x => x.Beside ? 0 : 1))
 				{
 					if (counted.Contains(r.WhatArg)) continue;
 					List<IslandWorldState.Entry> at = WorldDirector.Refs(r.Id, null);
@@ -378,7 +379,7 @@ namespace DynamicIslands.Editor
 					if (q.Steps.Count == 0) continue;
 					counted.Add(r.WhatArg);
 					if (at.Count > 0) counted.Add(at[0].HostName);
-					list.Add(new Quest { Name = NameOf(at, r, r.Id), Group = PlanIslands, Done = at.Any(e => QuestTracker.StepOf(e) >= q.Steps.Count) });
+					list.Add(new Quest { Name = NameOf(at, r, r.Id), Group = r.Beside ? PlanStory : PlanIslands, Done = at.Any(e => QuestTracker.StepOf(e) >= q.Steps.Count) });
 				}
 			// Every other island with a quest that has come
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)

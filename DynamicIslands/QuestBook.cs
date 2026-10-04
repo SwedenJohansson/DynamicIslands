@@ -47,6 +47,11 @@ namespace DynamicIslands.Editor
 		static readonly List<GameObject> made = new List<GameObject>();
 		static readonly HashSet<ChunkPointType> hiddenRaft = new HashSet<ChunkPointType>();
 		static readonly List<KeyValuePair<Notebook_ThumbnailShortcut, uint[]>> tabPages = new List<KeyValuePair<Notebook_ThumbnailShortcut, uint[]>>();
+		/// <summary>Each chain step's first page in the book as laid out ("end": the ending page).</summary>
+		static readonly Dictionary<string, int> stepPage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>A chain step's first page now (-1: not in the book).</summary>
+		public static int FirstPageOfStep(string step) { int p; return step != null && stepPage.TryGetValue(step, out p) ? p : -1; }
 		static string lastSig;
 		static float nextCheck;
 		static bool endingShown, endingKnown;
@@ -80,42 +85,100 @@ namespace DynamicIslands.Editor
 		public static List<Island> OpenIslands(bool all = false)
 		{
 			var list = new List<Island>();
-			List<IntroRule> rules = StoryChain.BookRules;
+			List<IntroRule> rules = RulesNow;
 			int ordinal = 0;
-			foreach (string step in StoryChain.Steps)
+			foreach (string step in StepsNow)
 			{
 				if (StoryChain.IsRaft(step)) continue;
 				IntroRule r = rules.FirstOrDefault(x => x.Id.Equals(StoryChain.RuleIdOf(step), StringComparison.OrdinalIgnoreCase));
 				if (r == null) continue;
 				ordinal++;
-				bool open = all || StoryChain.Fired.Contains(r.Id) || StoryChain.Unlocked.Contains(step) || StoryChain.Done.Contains(step);
-				if (!open) continue;
-				list.Add(Describe(r, ordinal, StoryChain.Done.Contains(step)));
+				if (!all && !OpenNow(r, step)) continue;
+				list.Add(Preview ? DescribePreview(r, ordinal) : Describe(r, ordinal, DoneNow(step)));
 			}
 			return list;
+		}
+
+		#region Where the book's story comes from: the world's chain, or World Plans' preview of a plan
+
+		static bool Preview { get { return QuestBookPreview.Active; } }
+		/// <summary>The book's steps in order: the chain (Raft's own order when the plan doesn't change it), then the main story
+		/// islands beside Raft's story.</summary>
+		static List<string> StepsNow
+		{
+			get
+			{
+				if (Preview) return QuestBookPreview.Steps;
+				List<string> steps = (StoryChain.Active ? StoryChain.Steps : StoryChain.BuildSteps(true, new HashSet<string>(), new IntroRule[0])).ToList();
+				steps.AddRange(StoryChain.BookRules.Where(r => r.Beside).Select(r => StoryChain.RuleKey(r.Id)));
+				return steps;
+			}
+		}
+		static List<IntroRule> RulesNow { get { return Preview ? QuestBookPreview.Rules.ToList() : StoryChain.BookRules; } }
+		static bool OpenNow(IntroRule r, string step)
+		{
+			if (Preview) return QuestBookPreview.Opened(step);
+			if (r.Beside) return WorldDirector.Done.Contains(r.Id) || IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+			return StoryChain.Fired.Contains(r.Id) || StoryChain.Unlocked.Contains(step) || StoryChain.Done.Contains(step);
+		}
+		static bool DoneNow(string step)
+		{
+			if (Preview) return QuestBookPreview.IsDone(step);
+			IntroRule r = StoryChain.IsRaft(step) ? null : StoryChain.BookRules.FirstOrDefault(x => x.Id.Equals(StoryChain.RuleIdOf(step), StringComparison.OrdinalIgnoreCase));
+			return r != null && r.Beside ? StoryChain.IsDone(r) : StoryChain.Done.Contains(step);
+		}
+		static string EndingNow { get { return Preview ? QuestBookPreview.Plan.StoryEnding ?? "" : StoryChain.StoryEnding; } }
+		static string FrequencyNow(IntroRule r) { return Preview ? (r.Where == "receiver" ? QuestBookPreview.Frequency(r.Id) : "") : StoryChain.FrequencyOf(r.Id) ?? ""; }
+
+		#endregion
+
+		static string IntroOf(IntroRule r, string title, string frequency)
+		{
+			return r.TabIntro.Trim().Length > 0 ? r.TabIntro.Trim() :
+				(r.Where == "receiver" && frequency.Length > 0 ? "A new frequency: " + frequency + ".\nTune the Receiver to it to find " + title + "." : "The way to " + title + " is open.") +
+				(r.Message.Trim().Length > 0 ? "\n\n" + r.Message.Trim() : "");
+		}
+
+		static void Checklist(Island i, IslandQuest q, int at)
+		{
+			i.HasQuest = true;
+			at = Mathf.Clamp(at, 0, q.Steps.Count);
+			i.QuestDone = at >= q.Steps.Count;
+			i.Checklist.Add("<b>" + q.ShownTitle + "</b>");
+			for (int k = 0; k < at; k++) i.Checklist.Add("<s>" + q.Steps[k].Describe() + "</s>");
+			if (at < q.Steps.Count) i.Checklist.Add("> " + q.Steps[at].Describe());
+			else i.Checklist.Add("Done!");
+		}
+
+		/// <summary>An island of the previewed plan: its quest and notes from its file, as far as the preview has come.</summary>
+		static Island DescribePreview(IntroRule r, int ordinal)
+		{
+			var i = new Island { Rule = r, Title = r.TabName, Colour = ValidColour(r.TabColour) ? r.TabColour : AutoColour(ordinal) };
+			i.Frequency = FrequencyNow(r);
+			i.Intro = IntroOf(r, i.Title, i.Frequency);
+			string island = r.What == "island" ? r.WhatArg : null;
+			IslandQuest q = island != null ? IslandCache.QuestOfFile(island) : new IslandQuest();
+			if (q.Exists) Checklist(i, q, QuestBookPreview.StepsDone(r.Id));
+			else if (island == null) i.Checklist.Add("(a new island made in the world: its quest isn't known before)");
+			Dictionary<int, KeyValuePair<string, string>> texts = island != null ? IslandCache.NoteTextsOf(island) : new Dictionary<int, KeyValuePair<string, string>>();
+			foreach (int n in QuestBookPreview.NotesRead(r.Id).OrderBy(x => x))
+			{
+				KeyValuePair<string, string> t;
+				if (texts.TryGetValue(n, out t)) i.Notes.Add(t);
+			}
+			return i;
 		}
 
 		static Island Describe(IntroRule r, int ordinal, bool stepDone)
 		{
 			var i = new Island { Rule = r, Title = r.TabName, Colour = ValidColour(r.TabColour) ? r.TabColour : AutoColour(ordinal) };
-			string f = StoryChain.FrequencyOf(r.Id);
+			string f = FrequencyNow(r);
 			i.Frequency = f ?? "";
-			i.Intro = r.TabIntro.Trim().Length > 0 ? r.TabIntro.Trim() :
-				(r.Where == "receiver" && i.Frequency.Length > 0 ? "A new frequency: " + i.Frequency + ".\nTune the Receiver to it to find " + i.Title + "." : "The way to " + i.Title + " is open.") +
-				(r.Message.Trim().Length > 0 ? "\n\n" + r.Message.Trim() : "");
+			i.Intro = IntroOf(r, i.Title, i.Frequency);
 			List<IslandWorldState.Entry> entries = IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase)).ToList();
 			IslandWorldState.Entry entry = entries.FirstOrDefault();
 			IslandQuest q = entry != null ? QuestTracker.QuestOf(entry) : null;
-			if (q != null && q.Exists)
-			{
-				i.HasQuest = true;
-				int at = Mathf.Clamp(QuestTracker.StepOf(entry), 0, q.Steps.Count);
-				i.QuestDone = at >= q.Steps.Count;
-				i.Checklist.Add("<b>" + q.ShownTitle + "</b>");
-				for (int k = 0; k < at; k++) i.Checklist.Add("<s>" + q.Steps[k].Describe() + "</s>");
-				if (at < q.Steps.Count) i.Checklist.Add("> " + q.Steps[at].Describe());
-				else i.Checklist.Add("Done!");
-			}
+			if (q != null && q.Exists) Checklist(i, q, QuestTracker.StepOf(entry));
 			else if (entry == null) i.Checklist.Add(stepDone ? "Done." : "Not reached yet.");
 			foreach (IslandWorldState.Entry e in entries)
 			{
@@ -132,6 +195,12 @@ namespace DynamicIslands.Editor
 		{
 			var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			if (!Applies) return ids;
+			if (Preview)
+			{
+				foreach (Island i in OpenIslands())
+					if (i.Rule.What == "island") foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(i.Rule.WhatArg))) ids.Add(d.Id);
+				return ids;
+			}
 			foreach (IntroRule r in StoryChain.BookRules)
 				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase)))
 					foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(e))) ids.Add(d.Id);
@@ -162,6 +231,15 @@ namespace DynamicIslands.Editor
 		public static List<StoryBook.Held> MainItems()
 		{
 			HashSet<string> ids = MainItemIds();
+			if (Preview)
+			{
+				// (the preview shows the open islands' items as found)
+				var held = new List<StoryBook.Held>();
+				foreach (Island i in OpenIslands())
+					if (i.Rule.What == "island")
+						foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(i.Rule.WhatArg))) if (!held.Any(h => h.Def.Id == d.Id)) held.Add(new StoryBook.Held { Def = d, Count = 1 });
+				return held;
+			}
 			return ids.Count == 0 ? new List<StoryBook.Held>() : StoryBook.Items.Where(h => ids.Contains(h.Def.Id)).ToList();
 		}
 
@@ -179,20 +257,24 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
-				List<string> main = StoryChain.Steps.Where(s => !StoryChain.IsRaft(s) && StoryChain.BookRules.Any(r => r.Id.Equals(StoryChain.RuleIdOf(s), StringComparison.OrdinalIgnoreCase))).ToList();
-				return main.Count > 0 && StoryChain.Steps.All(s => StoryChain.Done.Contains(s) || (StoryChain.IsRaft(s) && StoryChain.TypeOfStep(s) == ChunkPointType.Landmark_Utopia)) &&
-					main.All(s => StoryChain.Done.Contains(s));
+				if (Preview) return QuestBookPreview.Over;
+				List<string> steps = StepsNow;
+				List<string> main = steps.Where(s => !StoryChain.IsRaft(s) && StoryChain.BookRules.Any(r => r.Id.Equals(StoryChain.RuleIdOf(s), StringComparison.OrdinalIgnoreCase))).ToList();
+				// (Raft's islands count only when the plan's chain has them: beside Raft's own story, only the plan's)
+				bool raftDone = !StoryChain.Active || steps.Where(StoryChain.IsRaft).All(s => StoryChain.Done.Contains(s) || StoryChain.TypeOfStep(s) == ChunkPointType.Landmark_Utopia);
+				return main.Count > 0 && raftDone && main.All(DoneNow);
 			}
 		}
 
 		/// <summary>The book differs from Raft's: a chain with main story islands, or Raft's islands left out.</summary>
-		static bool Applies { get { return StoryChain.HasSnapshot && StoryChain.Active; } }
+		static bool Applies { get { return Preview || (StoryChain.HasSnapshot && (StoryChain.Active || StoryChain.BookRules.Count > 0)); } }
 
 		static string Signature()
 		{
+			if (Preview) return "preview " + QuestBookPreview.At + "\n" + QuestBookPreview.Plan.ToText();
 			if (!Applies) return "raft";
 			var parts = new List<string> { string.Join(",", StoryChain.Steps.ToArray()), string.Join(",", StoryChain.Unlocked.OrderBy(s => s).ToArray()),
-				string.Join(",", StoryChain.Done.OrderBy(s => s).ToArray()), string.Join(",", StoryChain.Fired.OrderBy(s => s).ToArray()), StoryChain.StoryEnding };
+				string.Join(",", StoryChain.Done.OrderBy(s => s).ToArray()), string.Join(",", StoryChain.Fired.OrderBy(s => s).ToArray()), StoryChain.StoryEnding, "over " + StoryOver };
 			foreach (IntroRule r in StoryChain.BookRules) parts.Add(r.ToLine() + "@" + StoryChain.FrequencyOf(r.Id));
 			foreach (StoryBook.Held h in MainItems()) parts.Add("item " + h.Def.Id + "=" + h.Count);
 			foreach (Island i in OpenIslands()) parts.Add(i.Title + ":" + string.Join(";", i.Checklist.ToArray()) + ":" + i.Notes.Count);
@@ -321,12 +403,14 @@ namespace DynamicIslands.Editor
 			int tabAt = 1;
 			List<Island> open = OpenIslands();
 			var stepTypes = new HashSet<ChunkPointType>();
-			foreach (string step in StoryChain.Steps)
+			stepPage.Clear();
+			foreach (string step in StepsNow)
 			{
 				if (StoryChain.IsRaft(step))
 				{
 					ChunkPointType t = StoryChain.TypeOfStep(step);
 					stepTypes.Add(t);
+					stepPage[step] = (int)next;
 					place(StoryOrder.Name(t), RaftGroup(t));
 					Notebook_ThumbnailShortcut tab;
 					if (raftTabs.TryGetValue(t, out tab)) tab.transform.SetSiblingIndex(tabAt++);
@@ -335,6 +419,7 @@ namespace DynamicIslands.Editor
 				Island i = open.FirstOrDefault(x => x.Rule.Id.Equals(StoryChain.RuleIdOf(step), StringComparison.OrdinalIgnoreCase));
 				if (i == null) continue;
 				List<NoteBookPage> group = BuildIsland(i);
+				stepPage[step] = (int)next;
 				place(i.Title + (i.Frequency.Length > 0 ? " " + i.Frequency : ""), group);
 				Notebook_ThumbnailShortcut ours = MakeTab(i, group[0]);
 				ours.transform.SetSiblingIndex(tabAt++);
@@ -342,8 +427,8 @@ namespace DynamicIslands.Editor
 				Tabs.Add(i.Title + "|" + i.Frequency + "|" + i.Colour + "|" + group[0].pageIndex);
 			}
 			bool over = StoryOver;
-			if (over && StoryChain.StoryEnding.Trim().Length > 0) place("The end", BuildEnding());
-			if (endingKnown && over && !endingShown && Raft_Network.IsHost)
+			if (over && EndingNow.Trim().Length > 0) { stepPage["end"] = (int)next; place("The end", BuildEnding()); }
+			if (endingKnown && over && !endingShown && Raft_Network.IsHost && !Preview)
 				StoryChain.Announce("The end of the story", "A last page waits in your notebook.");
 			endingShown = over; endingKnown = true;
 			// Raft's islands the chain hasn't got: their pages at the back, their tabs hidden
@@ -377,11 +462,24 @@ namespace DynamicIslands.Editor
 		/// <summary>After Raft sets its notes' visibility: Raft's tabs of islands not in this story stay hidden.</summary>
 		internal static void AfterRaftVisibility(NoteBookUI book)
 		{
-			if (book != ui || hiddenRaft.Count == 0) return;
+			if (book != ui) return;
 			foreach (ChunkPointType t in hiddenRaft)
 			{
 				Notebook_ThumbnailShortcut tab;
 				if (raftTabs.TryGetValue(t, out tab) && tab != null) tab.gameObject.SetActive(false);
+			}
+			if (!Preview) return;
+			// (the preview: Raft's islands of the chain as far as it has come - their tab and every note of theirs shown, without
+			// touching Raft's list of notes found; the next real redraw puts Raft's own state back)
+			foreach (string step in StepsNow.Where(StoryChain.IsRaft))
+			{
+				ChunkPointType t = StoryChain.TypeOfStep(step);
+				bool open = QuestBookPreview.Opened(step);
+				Notebook_ThumbnailShortcut tab;
+				if (raftTabs.TryGetValue(t, out tab) && tab != null) tab.gameObject.SetActive(open);
+				foreach (NoteBookPage p in RaftGroup(t))
+					foreach (NoteBookNote n in (NoteBookNote[])Traverse.Create(p).Field("notes").GetValue() ?? new NoteBookNote[0])
+						if (n != null) { n.isUnlocked = open; n.gameObject.SetActive(open); }
 			}
 		}
 
@@ -579,7 +677,7 @@ namespace DynamicIslands.Editor
 		static List<NoteBookPage> BuildEnding()
 		{
 			NoteBookPage pg = NewPage(true, "The end");
-			AddPaper(pg, tplPad, StoryChain.StoryEnding.Trim(), 40f, 320f);
+			AddPaper(pg, tplPad, EndingNow.Trim(), 40f, 320f);
 			return new List<NoteBookPage> { pg };
 		}
 

@@ -74,7 +74,9 @@ namespace DynamicIslands.Editor
 		/// <summary>A player's copy of the main story rules (the host sends them with the chain: the book needs their tabs).</summary>
 		static readonly List<IntroRule> clientBook = new List<IntroRule>();
 		/// <summary>The main story islands' rules (in the chain: their tabs in Raft's notebook) - on every machine.</summary>
-		public static List<IntroRule> BookRules { get { return Raft_Network.IsHost ? Rules.Where(r => r.MainStory).ToList() : clientBook.ToList(); } }
+		public static List<IntroRule> BookRules { get { return Raft_Network.IsHost ? Rules.Where(r => r.MainStory).Concat(beside).ToList() : clientBook.ToList(); } }
+		/// <summary>Main story islands beside Raft's story (not in the chain, brought by WorldDirector): the book needs them too (host).</summary>
+		static readonly List<IntroRule> beside = new List<IntroRule>();
 
 		#region The chain
 
@@ -135,6 +137,8 @@ namespace DynamicIslands.Editor
 			if (plan == null || !Raft_Network.IsHost) return;
 			Rules.Clear();
 			Rules.AddRange(plan.Rules.Where(r => r.Special).Select(r => r.Clone()));
+			beside.Clear();
+			beside.AddRange(plan.Rules.Where(r => r.Beside && !r.Special).Select(r => r.Clone()));
 			active = plan.ChangesStory;
 			Steps.Clear();
 			Steps.AddRange(BuildSteps(plan.RaftStory, plan.LeaveOut, Rules));
@@ -535,6 +539,7 @@ namespace DynamicIslands.Editor
 			due.Clear(); retryAt.Clear(); warned.Clear();
 			StoryEnding = "";
 			clientBook.Clear();
+			beside.Clear();
 			LastBanner = null;
 			dirty = false;
 			RaiseChanged();
@@ -569,6 +574,7 @@ namespace DynamicIslands.Editor
 				case "storychain": HasSnapshot = true; active = value.StartsWith("on;"); Steps.Clear(); Steps.AddRange(value.Substring(value.IndexOf(';') + 1).Split(',').Select(s => s.Trim()).Where(s => s.Length > 0)); return true;
 				case "storyrule": IntroRule r = IntroRule.Parse(value); if (r != null) { HasSnapshot = true; Rules.Add(r); } return true;
 				case "storyending": StoryEnding = IntroRule.UnMulti(value); return true;
+				case "storybeside": IntroRule b = IntroRule.Parse(value); if (b != null) { HasSnapshot = true; beside.Add(b); } return true;
 				case "storyfreq": ReadFreqs(value); return true;
 				case "storyunlocked": ReadSet(Unlocked, value); return true;
 				case "storydone": ReadSet(Done, value); return true;
@@ -586,7 +592,7 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
-		internal static bool HasState { get { return HasSnapshot && (active || Rules.Count > 0); } }
+		internal static bool HasState { get { return HasSnapshot && (active || Rules.Count > 0 || beside.Count > 0); } }
 
 		internal static IEnumerable<string> WriteLines()
 		{
@@ -594,6 +600,7 @@ namespace DynamicIslands.Editor
 			yield return "@storychain=" + (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray());
 			foreach (IntroRule r in Rules) yield return "@storyrule=" + r.ToLine();
 			if (StoryEnding.Length > 0) yield return "@storyending=" + IntroRule.Multi(StoryEnding);
+			foreach (IntroRule r in beside) yield return "@storybeside=" + r.ToLine();
 			if (Frequencies.Count > 0) yield return "@storyfreq=" + Freqs();
 			if (Unlocked.Count > 0) yield return "@storyunlocked=" + string.Join(",", Unlocked.ToArray());
 			if (Done.Count > 0) yield return "@storydone=" + string.Join(",", Done.ToArray());

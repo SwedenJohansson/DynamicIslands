@@ -55,10 +55,14 @@ namespace DynamicIslands.Editor
 		public int TabColour;
 
 		/// <summary>Handled by StoryChain rather than brought straight away: in the story chain, on the Receiver, or by chance while sailing.</summary>
-		public bool Special { get { return StoryPlace.Length > 0 || Where == "receiver" || Where == "sailing"; } }
-		public bool InStory { get { return StoryPlace.Length > 0; } }
-		/// <summary>Main story = in the story chain: its island goes into Raft's notebook; every other island is a side quest (the journal).</summary>
-		public bool MainStory { get { return InStory; } }
+		public bool Special { get { return InStory || Where == "receiver" || Where == "sailing"; } }
+		/// <summary>In Raft's Receiver chain (first / after / instead).</summary>
+		public bool InStory { get { return StoryPlace.Length > 0 && !Beside; } }
+		/// <summary>Main story beside Raft's story: in Raft's notebook, but not in the Receiver chain - its own WHEN brings it
+		/// (an expedition that runs alongside Raft's story, each island when the one before is done).</summary>
+		public bool Beside { get { return StoryPlace == "beside"; } }
+		/// <summary>Main story = in the story chain, or beside it: its island goes into Raft's notebook; every other island is a side quest (the journal).</summary>
+		public bool MainStory { get { return InStory || Beside; } }
 
 		/// <summary>The tab's title in Raft's notebook.</summary>
 		public string TabName { get { return TabTitle.Length > 0 ? TabTitle : Label.Length > 0 ? Label : What == "island" && WhatArg.Length > 0 ? WhatArg : Id; } }
@@ -158,6 +162,7 @@ namespace DynamicIslands.Editor
 		{
 			s = (s ?? "").Trim();
 			if (s.Equals("first", StringComparison.OrdinalIgnoreCase)) return "first";
+			if (s.Equals("beside", StringComparison.OrdinalIgnoreCase)) return "beside";
 			int c = s.IndexOf(':');
 			if (c <= 0) return "";
 			string kind = s.Substring(0, c).Trim().ToLowerInvariant(), what = s.Substring(c + 1).Trim();
@@ -228,6 +233,7 @@ namespace DynamicIslands.Editor
 		public string DescribeStory()
 		{
 			if (StoryPlace.Length == 0) return "";
+			if (Beside) return "main story beside Raft's story (its WHEN brings it)";
 			string place = StoryPlace == "first" ? "first in the story" : StoryPlace.StartsWith("instead:") ? "in place of " + StoryOrder.NameOfKey(StoryPlace.Substring(8)) :
 				"after " + StoryOrder.NameOfKey(StoryPlace.Substring(6));
 			return place + "; done when " + DescribeDone();
@@ -278,7 +284,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The plan changes Raft's story chain (StoryChain takes it over in its worlds).</summary>
 		public bool ChangesStory { get { return !RaftStory || LeaveOut.Count > 0 || Rules.Any(r => r.InStory); } }
 		/// <summary>The plan has rules StoryChain handles (the story chain, Receiver frequencies, islands by chance).</summary>
-		public bool HasStory { get { return ChangesStory || Rules.Any(r => r.Special); } }
+		public bool HasStory { get { return ChangesStory || Rules.Any(r => r.Special || r.Beside); } }
 
 		public bool BuiltIn { get { return IsBuiltIn(Name); } }
 		public static bool IsBuiltIn(string name) { return name.Equals(RandomName, StringComparison.OrdinalIgnoreCase) || name.Equals(NoneName, StringComparison.OrdinalIgnoreCase); }
@@ -367,7 +373,8 @@ namespace DynamicIslands.Editor
 #   <ref> is an island in the world: the id of the rule that brought it, or its island name.
 #   The message is shown to every player when the island appears; the label is its name on the Receiver.
 #   Two more parts put the island into Raft's story (the Receiver chain):
-#   rule = ... | label | first / after:<story island or rule id> / instead:<story island> | done when
+#   rule = ... | label | first / after:<story island or rule id> / instead:<story island> / beside | done when
+#          beside = main story beside Raft's story: in Raft's notebook, brought by its own WHEN (not the Receiver chain)
 #          done when: quest, visit, step:<n>, zone:<zone>, signal:<signal>, note:<note number> (empty: its quest,
 #          or reaching it) - then the next island's coordinates are found
 #   An island in the story is MAIN STORY: it gets a tab in Raft's notebook (its quest steps, intro and notes there);
@@ -411,6 +418,8 @@ namespace DynamicIslands.Editor
 			public List<string> Signals;
 			/// <summary>Its notes with a text (their object numbers): each gives a journal page when read.</summary>
 			public List<int> Notes;
+			/// <summary>Those notes' titles and texts (the quest book's preview shows notes not read yet).</summary>
+			public Dictionary<int, KeyValuePair<string, string>> NoteTexts;
 			/// <summary>The journal pages its events write ("object number:title", as the page keys "act:&lt;island&gt;:..." end).</summary>
 			public List<string> EventPages;
 		}
@@ -434,6 +443,7 @@ namespace DynamicIslands.Editor
 					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "signal" && a.Arg.Trim().Length > 0)
 					.Select(a => a.Arg.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 				info.Notes = Enumerable.Range(0, f.Objects.Count).Where(i => ObjectProps.IsNote(f.Objects[i].Name, f.Objects[i].Props) && ObjectProps.Get(f.Objects[i].Props, ObjectProps.NoteText).Trim().Length > 0).ToList();
+				info.NoteTexts = info.Notes.ToDictionary(i => i, i => new KeyValuePair<string, string>(ObjectProps.Get(f.Objects[i].Props, ObjectProps.NoteTitle).Trim(), ObjectProps.Get(f.Objects[i].Props, ObjectProps.NoteText).Trim()));
 				Func<int, IDictionary<string, string>, IEnumerable<string>> journal = (i, p) => p == null ? Enumerable.Empty<string>() : p
 					.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
 					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "journal" && a.Target.Length > 0).Select(a => i + ":" + a.Target);
@@ -470,6 +480,12 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The island's notes with a text, by object number (the journal's "note:&lt;island&gt;:&lt;n&gt;" pages; empty if the file is missing).</summary>
 		public static List<int> NotesOf(string name) { Info i = Get(name); return i != null && i.Notes != null ? i.Notes : new List<int>(); }
+
+		/// <summary>The island's notes' titles and texts by object number (empty if the file is missing).</summary>
+		public static Dictionary<int, KeyValuePair<string, string>> NoteTextsOf(string name) { Info i = Get(name); return i != null && i.NoteTexts != null ? i.NoteTexts : new Dictionary<int, KeyValuePair<string, string>>(); }
+
+		/// <summary>The quest of a saved island (an empty one if the file is missing).</summary>
+		public static IslandQuest QuestOfFile(string name) { return IslandQuest.From(Props(name)); }
 
 		/// <summary>The journal pages the island's events write ("object number:title"; empty if the file is missing).</summary>
 		public static List<string> EventPagesOf(string name) { Info i = Get(name); return i != null && i.EventPages != null ? i.EventPages : new List<string>(); }

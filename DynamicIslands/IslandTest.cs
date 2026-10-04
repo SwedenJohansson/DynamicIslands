@@ -39,6 +39,12 @@ namespace DynamicIslands.Editor
 			state = State.None;
 		}
 
+		/// <summary>World Plans' Preview notebook: the plan (as it is in the window, saved or not) shown in Raft's notebook in
+		/// the test world (QuestBookPreview), then back to World Plans on it.</summary>
+		public static WorldPlan PreviewPlan { get; private set; }
+		/// <summary>The island the editor had open when the preview started (opened again after it).</summary>
+		static string previewIsland;
+
 		/// <summary>The editor's Test in a world: saves the island (when it has a name) and goes to try it.</summary>
 		public static void Start()
 		{
@@ -53,10 +59,27 @@ namespace DynamicIslands.Editor
 			if (EditorAutosave.Unsaved || !System.IO.File.Exists(IslandSpawner.PathFor(name)))
 				if (!DynamicIslands.SaveIsland(name)) return;
 			Island = name;
+			PreviewPlan = null;
+			Go("Trying '" + name + "' in the world '" + WorldName + "'", "Trying '" + name + "' in a world...");
+		}
+
+		/// <summary>World Plans' Preview notebook: to the test world with the plan (the island being edited saved first, as Test does).</summary>
+		public static void StartPreview(WorldPlan plan)
+		{
+			if (!DynamicIslands.InEditor() || Busy || plan == null) return;
+			previewIsland = DynamicIslands.IsUnnamed ? null : DynamicIslands.currentIslandName;
+			if (previewIsland != null && EditorAutosave.Unsaved && !DynamicIslands.SaveIsland(previewIsland)) return;
+			PreviewPlan = WorldPlan.Parse(plan.Name, plan.ToText());
+			Island = null;
+			Go("Previewing the notebook of '" + plan.Name + "' in the world '" + WorldName + "'", "Opening Raft's notebook for '" + plan.Name + "'...");
+		}
+
+		static void Go(string step, string notice)
+		{
 			state = State.ToMenu;
 			giveUpAt = Time.unscaledTime + 240f;
-			Step("Trying '" + name + "' in the world '" + WorldName + "'");
-			DynamicIslands.Notify("Trying '" + name + "' in a world...");
+			Step(step);
+			DynamicIslands.Notify(notice);
 			menuLoaded = false;
 			UnityEngine.SceneManagement.SceneManager.sceneLoaded -= MenuLoaded;
 			UnityEngine.SceneManagement.SceneManager.sceneLoaded += MenuLoaded;
@@ -77,7 +100,8 @@ namespace DynamicIslands.Editor
 			if (state != State.Testing) return;
 			state = State.Returning;
 			giveUpAt = Time.unscaledTime + 120f;
-			Step("Back to the editor with '" + Island + "'");
+			Step(PreviewPlan != null ? "Back to World Plans with '" + PreviewPlan.Name + "'" : "Back to the editor with '" + Island + "'");
+			QuestBookPreview.End();
 			WorldWindow.Close();
 			// (Raft's leave without saving; the pause menu's own button leaves for no scene unless its exit box chose one)
 			Raft_Network net = ComponentManager<Raft_Network>.Value;
@@ -101,7 +125,7 @@ namespace DynamicIslands.Editor
 					{ state = State.Testing; DynamicIslands.instance.StartCoroutine(BringIsland()); }
 					break;
 				case State.Testing:
-					if (!LoadSceneManager.IsGameSceneLoaded && menu) Stop("Left the test world", false); // (by Raft's own menu)
+					if (!LoadSceneManager.IsGameSceneLoaded && menu) { QuestBookPreview.End(); PreviewPlan = null; Stop("Left the test world", false); } // (by Raft's own menu)
 					break;
 				case State.Returning:
 					if (menu) { state = State.OpeningEditor; DynamicIslands.LoadEditor(new string[0]); }
@@ -111,7 +135,15 @@ namespace DynamicIslands.Editor
 					{
 						string n = Island;
 						state = State.None;
-						if (DynamicIslands.LoadIsland(n)) Step("Back in the editor with '" + n + "'");
+						if (PreviewPlan != null)
+						{
+							WorldPlan p = PreviewPlan;
+							PreviewPlan = null;
+							if (previewIsland != null) DynamicIslands.LoadIsland(previewIsland);
+							WorldPlanWindow.OpenWith(p);
+							Step("Back in World Plans with '" + p.Name + "'");
+						}
+						else if (DynamicIslands.LoadIsland(n)) Step("Back in the editor with '" + n + "'");
 					}
 					break;
 			}
@@ -186,6 +218,12 @@ namespace DynamicIslands.Editor
 			if (old > 0) Step("Took away " + old + " island(s) tried before");
 			// (and their journal pages and story items: a quest counting pages or items started half done)
 			if (StoryBook.HasState) { StoryBook.Reset(); Step("Cleared the journal of the islands tried before"); }
+			if (PreviewPlan != null)
+			{
+				QuestBookPreview.Begin(PreviewPlan);
+				Step("Previewing the notebook of '" + PreviewPlan.Name + "'");
+				yield break;
+			}
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			float radius = Mathf.Max(20f, CustomIslandSpawner.LandRadius(Island));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, radius, radius + 400f);

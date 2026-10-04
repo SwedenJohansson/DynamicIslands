@@ -322,6 +322,13 @@ namespace DynamicIslands.Editor
 				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a trigger zone of " + f.Describe + " but doesn't say which.", "Choose the zone with the ▾ after the zone field.");
 				else if (!f.Zones.Contains(arg.Trim())) c.Add(i, Level.Problem, who + " waits for the zone '" + arg + "' of " + f.Describe + ", which has " + (f.Zones.Count == 0 ? "no trigger zones" : "only " + List(f.Zones)) + ".", "Pick the zone from the ▾ list" + (f.Sample ? "" : ", or place a trigger zone named '" + arg + "' on the island") + ".");
 			}
+			else if (kind == "note")
+			{
+				int n;
+				List<int> notes = f.Sample ? null : IslandCache.NotesOf(f.Name);
+				if (!int.TryParse(arg.Trim(), out n)) c.Add(i, Level.Problem, who + " waits for a note of " + f.Describe + " but doesn't say which.", "Choose the note with the ▾ after the note field.");
+				else if (notes != null && !notes.Contains(n)) c.Add(i, Level.Problem, who + " waits for note #" + n + " of " + f.Describe + ", which has " + (notes.Count == 0 ? "no notes with a text" : "only notes " + string.Join(", ", notes.Select(x => "#" + x).ToArray())) + ".", "Pick the note from the ▾ list.");
+			}
 			else if (kind == "signal")
 			{
 				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a signal from " + f.Describe + " but doesn't say which.", "Choose the signal with the ▾ after the signal field.");
@@ -447,6 +454,7 @@ namespace DynamicIslands.Editor
 		static void CheckStory(Ctx c, int i)
 		{
 			IntroRule r = c.Plan.Rules[i];
+			if (r.Beside) foreach (Facts f in Brings(c, r)) CheckNotebook(c, i, r, f);
 			if (!r.InStory) return;
 			bool endsWithUtopia = StoryChain.EndsStory(c.Plan, ChunkPointType.Landmark_Utopia);
 			// (Utopia ends Raft's story: it never counts as done, so an island after it never unlocks)
@@ -458,10 +466,32 @@ namespace DynamicIslands.Editor
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			foreach (Facts f in Brings(c, r))
 			{
+				CheckNotebook(c, i, r, f);
 				if (kind == "" && !f.Quest.Exists) continue; // (no quest: reaching it counts)
 				if (kind == "" || kind == "quest") CheckIslandFor(c, i, "quest", "", f, "STORY");
-				else if (kind == "step" || kind == "zone" || kind == "signal") CheckIslandFor(c, i, kind, arg, f, "STORY");
+				else if (kind == "step" || kind == "zone" || kind == "signal" || kind == "note") CheckIslandFor(c, i, kind, arg, f, "STORY");
 			}
+		}
+
+		/// <summary>Longer than this, a note's text gets small on its paper in Raft's notebook (Raft's own are up to ~350).</summary>
+		public const int NotebookNoteLength = 600;
+
+		/// <summary>A main story island in Raft's notebook (QuestBook): notes for its pages, notes that fit the paper, its story
+		/// items' pictures, a tab title that fits.</summary>
+		static void CheckNotebook(Ctx c, int i, IntroRule r, Facts f)
+		{
+			if (f.Sample) return;
+			Dictionary<int, KeyValuePair<string, string>> notes = IslandCache.NoteTextsOf(f.Name);
+			if (notes.Count == 0)
+				c.Add(i, Level.Tip, R(c, i) + " is main story, but '" + f.Name + "' has no notes with a text: its tab in Raft's notebook shows only its intro and quest steps.", "Place notes with a text on the island (they become the tab's pages when read), or write a tab intro (NOTEBOOK).");
+			foreach (KeyValuePair<int, KeyValuePair<string, string>> n in notes)
+				if (n.Value.Value.Length > NotebookNoteLength)
+					c.Add(i, Level.Warning, R(c, i) + ": the note '" + (n.Value.Key.Length > 0 ? n.Value.Key : "#" + n.Key) + "' on '" + f.Name + "' is " + n.Value.Value.Length + " characters long: on its paper in Raft's notebook the writing gets very small.", "Keep notes of main story islands under " + NotebookNoteLength + " characters (split a long one in two).");
+			foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.Name)).Where(d => d.Icon.Trim().Length == 0))
+				c.Add(i, Level.Tip, R(c, i) + ": the story item '" + d.ShownName + "' of '" + f.Name + "' has no picture: in Raft's 'Found items' it shows an empty slot.", "Give it one of Raft's quest item pictures (Island tab > Story items...).");
+			if (r.TabName.Length > 24)
+				c.Add(i, Level.Tip, R(c, i) + ": its tab title '" + r.TabName + "' is long - on the tab the writing gets small.", "A short tab title (NOTEBOOK > tab title), up to about 18 letters.");
+			if (r.TabColour == 3) c.Add(i, Level.Tip, R(c, i) + ": tab colour 3 isn't one of Raft's (Raft has no third tab picture): it gets a colour by its place.", "Choose a colour from the list (NOTEBOOK).");
 		}
 
 		/// <summary>Rules that wait for each other, and rules waiting for a rule that can't work.</summary>

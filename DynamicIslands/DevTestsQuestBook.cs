@@ -170,6 +170,173 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest book unit");
 		}
 
+		[ConsoleCommand(name: "CIQuestBookWorld", docs: "Dev, world (host, test world 'CI ...'): the main story in Raft's notebook - a plan with two main story islands (a camp first, a sandbar on the Receiver after it) and a side quest on the Receiver: the first tab with its intro, Raft's islands at the back with their tabs hidden, a note read on its pages, the side quest only in the journal, the next tab with its #digits when the first is done, its tab pressed, the ending page when the story is over, the same book after the world file is read back, nothing of ours in Raft's save (TEST_CATALOGUE QB3, QB8-QB14, QB17)")]
+		public static void QuestBookWorldCommand() { DynamicIslands.instance.StartCoroutine(QuestBookWorldRoutine()); }
+
+		static IEnumerator QuestBookWorldRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest book world: host, in a test world 'CI ...'"); yield break; }
+			bool ok = true;
+			List<string> linesBefore = StoryChain.WriteLines().ToList();
+			var unlockedBefore = NoteBook.unlockedChunkPointType.ToList();
+			var indexesBefore = NoteBook.unlockedNoteBookIndexes.ToList();
+			RecieverFrequency[] freqBefore = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.ToArray() : null;
+			var made = new List<int>();
+			var pageKeys = new List<string>();
+			try
+			{
+				StoryChain.Reset();
+				WorldPlan plan = WorldPlan.Parse("CI quest book", "story = off\nstoryending = The end test.\\nThank you.\n" +
+					"rule = a | type:camp | start | ahead:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
+					"rule = b | type:sandbar | start | receiver:400 | | Bar | after:a | visit\n" +
+					"rule = c | type:sandbar | start | receiver:400 | | Side\n");
+				StoryChain.FromPlan(plan);
+				yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "a"), 60f);
+				IslandWorldState.Entry a = IslandWorldState.Islands.FirstOrDefault(e => e.Rule == "a");
+				if (a != null) made.Add(a.Id);
+				QuestBook.Refresh();
+				Check(ref ok, a != null, "the first main story island came (" + (a != null ? a.HostName : "none") + ")");
+				Check(ref ok, QuestBook.Tabs.Count == 1 && QuestBook.Tabs[0].StartsWith("Alpha Camp||9|2"), "one tab of ours: " + string.Join(" ; ", QuestBook.Tabs.ToArray()));
+				Check(ref ok, (QuestBook.Layout ?? "").StartsWith("First page[0-1] > Alpha Camp[2-") && QuestBook.Layout.Contains("(Radio Tower, not in this story)"), "the book: " + QuestBook.Layout);
+				Check(ref ok, !StoryOrder.Chain.Any(QuestBook.RaftTabShown), "Raft's story is off: none of Raft's tabs shown");
+				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Key == 2 && kv.Value.Any(t => t == "Hello\nworld")), "its first page has the intro written in the plan");
+				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Value.Any(t => t.Contains("<b>") || t.Contains("Not reached") || t.Contains("Done"))), "its checklist page is there");
+
+				// A note read on it: on its pages, not in the journal
+				string noteKey = a != null ? "note:" + a.HostName + ":5" : "note:x:5";
+				pageKeys.Add(noteKey);
+				StoryBook.AddPage(noteKey, "Diary", "Dear diary, the camp is cold.", "Alpha");
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				Check(ref ok, QuestBook.PageTexts.Values.Any(v => v.Any(t => t.Contains("Dear diary"))), "a note read on it goes onto its pages");
+				StoryBook.Page notePage = StoryBook.Pages.FirstOrDefault(p => p.Key == noteKey);
+				Check(ref ok, notePage != null && QuestBook.IsMainPage(notePage), "... and is kept out of the journal");
+
+				// The side quest: in the journal, never a tab
+				StoryChain.Tick();
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				Check(ref ok, StoryChain.Fired.Contains("c") && !QuestBook.Tabs.Any(t => t.StartsWith("Side|")), "the side quest's frequency came and it has no tab");
+				StoryBook.Page sidePage = StoryBook.Pages.FirstOrDefault(p => p.Key == "storyfreq:c");
+				Check(ref ok, sidePage != null && !QuestBook.IsMainPage(sidePage), "its frequency stays in the journal");
+
+				// The first done: the next tab with its frequency
+				StoryChain.MarkDone("rule:a");
+				StoryChain.Tick();
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				string freqB = StoryChain.FrequencyOf("b");
+				Check(ref ok, QuestBook.Tabs.Count == 2 && QuestBook.Tabs[1].StartsWith("Bar|" + freqB + "|"), "the first done: the second tab with its frequency " + freqB + ": " + string.Join(" ; ", QuestBook.Tabs.ToArray()));
+				StoryBook.Page freqPage = StoryBook.Pages.FirstOrDefault(p => p.Key == "storyfreq:b");
+				Check(ref ok, freqPage == null || QuestBook.IsMainPage(freqPage), "its frequency page belongs to the notebook, not the journal");
+				NoteBookUI ui = LocalNoteBookUI();
+				if (ui != null && !ui.isDisplayed) ui.SetBookActive(true);
+				yield return new WaitForSeconds(0.5f);
+				QuestBook.PressTab("Bar");
+				yield return new WaitForSeconds(0.5f);
+				uint at = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
+				Check(ref ok, at == QuestBook.PageOfTab("Bar"), "its tab pressed: the book at page " + at + " (its first page " + QuestBook.PageOfTab("Bar") + ")");
+				Shot("questbook_world");
+				yield return new WaitForSeconds(0.6f);
+
+				// The end
+				Check(ref ok, !(QuestBook.Layout ?? "").Contains("The end"), "no ending page while the story goes on");
+				StoryChain.MarkDone("rule:b");
+				yield return new WaitForSeconds(0.5f);
+				QuestBook.Refresh();
+				Check(ref ok, QuestBook.StoryOver && (QuestBook.Layout ?? "").Contains("The end[") && QuestBook.PageTexts.Values.Any(v => v.Any(t => t == "The end test.\nThank you.")), "the story over: the ending page (" + QuestBook.Layout + ")");
+
+				// The world file read back: the same book
+				string layoutBefore = QuestBook.Layout, tabsBefore = string.Join(";", QuestBook.Tabs.ToArray());
+				List<string> lines = StoryChain.WriteLines().ToList();
+				StoryChain.Reset();
+				foreach (string l in lines) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				StoryChain.OnWorldRead();
+				QuestBook.Refresh();
+				Check(ref ok, QuestBook.Layout == layoutBefore && string.Join(";", QuestBook.Tabs.ToArray()) == tabsBefore, "read back from the world file: the same book (" + QuestBook.Layout + ")");
+				Check(ref ok, lines.Any(l => l.StartsWith("@storyending=")), "the ending page is kept in the world file");
+				Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 10000), "Raft's list of notes found (its save) has none of ours");
+				if (ui != null) ui.SetBookActive(false);
+			}
+			finally
+			{
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule == "a" || e.Rule == "b" || e.Rule == "c").ToList()) made.Add(e.Id);
+				if (made.Count > 0) IslandWorldState.RemoveIds(made.Distinct().ToList(), true);
+				StoryChain.Reset();
+				foreach (string l in linesBefore) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				NoteBook.unlockedNoteBookIndexes.Clear(); NoteBook.unlockedNoteBookIndexes.AddRange(indexesBefore);
+				NoteBook.unlockedChunkPointType.Clear(); NoteBook.unlockedChunkPointType.AddRange(unlockedBefore);
+				if (freqBefore != null) RecieverFrequency.AllFrequencies = freqBefore;
+				StoryChain.OnWorldRead();
+				IslandWorldState.Save();
+				QuestBook.Refresh();
+			}
+			if (ok) Log("PASS: quest book world");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookPreview", docs: "Dev, editor: World Plans' Preview notebook as a builder uses it - a plan (CIQuestBookPreview <plan>, default 'Raft 2 - The Drowned Frontier') opened, a change made and not saved, Preview notebook: the test world with Raft's book open on the plan's tabs; the step-through from the start (no tabs) one moment at a time, All; pictures; Back to World Plans with the unsaved change still there (TEST_CATALOGUE QB7). Several minutes")]
+		public static void QuestBookPreviewCommand(string[] args)
+		{
+			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "Raft 2 - The Drowned Frontier";
+			DynamicIslands.instance.StartCoroutine(QuestBookPreviewRoutine(name));
+		}
+
+		static IEnumerator QuestBookPreviewRoutine(string name)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("quest book preview: in the editor"); yield break; }
+			WorldPlan saved = WorldPlan.Load(name);
+			if (saved == null) { Fail("quest book preview: no plan '" + name + "'"); yield break; }
+			bool ok = true;
+			int main = saved.Rules.Count(r => r.MainStory);
+			WorldPlanWindow.Open(name);
+			yield return new WaitForSeconds(0.5f);
+			WorldPlan open = WorldPlanWindow.Plan;
+			string marker = "Preview test " + DateTime.Now.ToString("HHmmss");
+			open.Description = marker; // (a change not saved: it must come back)
+			Button preview = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.name == "Button_PreviewNotebook");
+			Check(ref ok, preview != null && preview.gameObject.activeInHierarchy, "World Plans has Preview notebook");
+			if (preview == null) yield break;
+			preview.onClick.Invoke();
+			yield return WaitFor(() => QuestBookPreview.Active && IslandTest.Testing && LoadSceneManager.IsGameSceneLoaded, 240f);
+			Check(ref ok, QuestBookPreview.Active && IslandTest.Testing, "the test world with the preview (" + IslandTest.LastStep + ")");
+			if (!QuestBookPreview.Active) yield break;
+			yield return new WaitForSeconds(3f);
+			QuestBook.Refresh();
+			Check(ref ok, QuestBookPreview.At == QuestBookPreview.Moments.Count && QuestBook.Tabs.Count == main, "All: every main story tab (" + QuestBook.Tabs.Count + " of " + main + "), " + QuestBookPreview.Moments.Count + " moments");
+			NoteBookUI ui = LocalNoteBookUI();
+			Check(ref ok, ui != null && ui.isDisplayed, "Raft's notebook is open");
+			Shot("questbook_preview_all");
+			yield return new WaitForSeconds(0.6f);
+			QuestBookPreview.Show(0);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestBook.Tabs.Count == 0, "the start: no tab yet (" + QuestBook.Tabs.Count + ")");
+			QuestBookPreview.Show(1);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestBook.Tabs.Count == 1, "one moment on: the first island's tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ") - " + QuestBookPreview.Current);
+			int firstDone = QuestBookPreview.Moments.FindIndex(m => m.Kind == "done");
+			QuestBookPreview.Show(firstDone);
+			yield return new WaitForSeconds(0.5f);
+			int pagesBefore = QuestBook.PageTexts.Values.Sum(v => v.Count);
+			QuestBookPreview.Show(firstDone + 1);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestBook.Tabs.Count == (main > 1 ? 1 : 1), "its last quest step: still one tab - " + QuestBookPreview.Current);
+			QuestBookPreview.Show(firstDone + 2);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, main < 2 || QuestBook.Tabs.Count == 2, "the next coordinates: the second tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ")");
+			Shot("questbook_preview_step");
+			yield return new WaitForSeconds(0.6f);
+			QuestBookPreview.Show(QuestBookPreview.Moments.Count);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestBook.Tabs.Count == main, "All again: every tab");
+			Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 10000), "Raft's list of notes found has none of ours");
+			IslandTest.Back();
+			yield return WaitFor(() => DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, 180f);
+			Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Plan.Description == marker, "back in World Plans on the plan, the unsaved change still there");
+			Check(ref ok, !QuestBookPreview.Active, "the preview is over");
+			WorldPlanWindow.Close();
+			if (ok) Log("PASS: quest book preview");
+		}
+
 		[ConsoleCommand(name: "CIQuestBookState", docs: "Dev, world: the quest book now - its layout, our tabs, Raft's tabs shown, our pages' texts")]
 		public static void QuestBookStateCommand()
 		{
