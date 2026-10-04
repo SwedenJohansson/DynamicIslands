@@ -94,7 +94,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 16. [Learn from the library: example islands and plans](#16-learn-from-the-library-example-islands-and-plans)
    - [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
      [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for) ·
-     [16.6 The themed islands](#166-the-themed-islands)
+     [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands)
 
 ---
 
@@ -2787,6 +2787,21 @@ script is in `content\recipes` and the island opens in the editor.
 | ![](images/library/island_of_stations.jpg) **The Island of Stations** (five times the size) | A misty forest marsh where a plane came down among the stations of a vanished research initiative: a radio station, a lab sunk in the bay, a zoo of empty cages, a village round a green, an observatory - and a hatch whose vault opens for sixty seconds | Five story items gathered across a big island, rooms under a slab reached by a ladder down a shaft, a lab under water with air under its ceiling, a vault door that **opens** for a while and **closes** again (and a lever inside that opens it), a long quest in chapters |
 | ![](images/library/primeval_park.jpg) **Primeval Park** (five times the size) | A park of giant beasts on a jungle crescent round a bay, dark since a storm blew its fuses: a visitor centre, a boar paddock, a river ride, a power house, an aviary, a show lagoon - and behind the great gate, the park's Queen | A low crescent from the generator (a tall one is all ridge), a terrace cut for a block of rooms, a channel dug from the bay inland, three story items **taken** together by a switch that **shows** the park's lights, a gate that wants power, a card and a key, animals that wake when you enter their **zone**, a quest in four chapters |
 | ![](images/library/sundown_canyons.jpg) **Sundown Canyons** (ten times the size) | A red-rock island of canyons and mesas: a frontier town on the west shore with a bank, saloon, jail and station, a silver train derailed in a canyon, a blown trestle over a river, a mine whose lift runs up through Black Mesa - and the outlaw gang's fort on top | A railroad of ties and rails laid up a canyon cut through the hills (`rot=0,0,0` keeps them lying flat), a river let in from the sea through a gorge, a lift that **teleports** you up through a mesa, a ladder trail up cliff bands faced with timber walls, animals to **catch** with a net, a long quest in chapters |
+
+
+### 16.7 The new islands
+
+More islands of the library, each with its own theme and island type - and a quest of its own kind: a timed escape, an
+underwater survey, a climb and a riddle, a barter chain, a round-up... (some have no quest at all: islands to wander).
+They come in five sizes: normal, twice, four times, seven times and twenty times the usual size.
+
+| Island | What it is | What it shows you how to build |
+|---|---|---|
+| ![](images/library/sulphur_vent.jpg) **Sulphur Vent** | A fuming volcanic cone with a sulphur works on its shoulder; lift the sample case off the vent's cap and you have forty seconds to reach the boathouse | A **timed** escape: a chest whose opening **shows** a gas zone, **opens** a shutter and **closes** it again 40 seconds later, and a lever that runs the same again for a second try |
+| ![](images/library/kelpdeep_rock.jpg) **Kelpdeep Rock** | Pine islets over a forest of giant kelp, and four caves under it to measure | Kelp scattered on the sea floor (`scatter ... wet`), caves dug into a reef with fallen rocks over them, air pockets, four posts that each **give** a reading once (`!signal`), a recorder that **takes** all four |
+| ![](images/library/hermits_table.jpg) **Hermit's Table** | A flat-topped rock on sheer cliffs, a ladder scaffold up its face, a hermit's hut with three riddles and three levers | A scaffold of thick pillars with ladders stacked up its face and a ledge, three levers of which two **show** hidden birds and one **gives** the key |
+| ![](images/library/gullsong_bazaar.jpg) **Gullsong Bazaar** | A floating bazaar on a marsh lagoon, closed for the season: five stalls, one thing left at each | A lagoon dug in a marsh with a boardwalk and pontoons over it (a `stall` macro), a **barter chain**: each stall **takes** one story item and **gives** the next |
+| ![](images/library/crowfield_farm.jpg) **Crowfield Farm** | A small farm on a green island - a farmhouse, a barn, a windmill, scarecrows - and three goats loose on the hill | A farmyard levelled on a plain with fields of harvestables, a **catch** step with the net launcher from a chest, a basket that opens once the quest has reached it (`quest|4`) |
 
 ---
 
