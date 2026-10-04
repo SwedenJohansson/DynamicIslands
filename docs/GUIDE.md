@@ -1107,6 +1107,11 @@ with a banner to every player. The world goes on.
 When there are more tabs than fit on the book's edge, the tabs **scroll** (mouse wheel over them); the open island's
 tab is scrolled into view when you turn the pages.
 
+![The main story in Raft's notebook](images/notebook-main-story.jpg)
+*Silver Screen Seas (Raft's story on): Raft's tabs and the plan's islands in story order - Radio Tower, Camp Blackwater,
+Vasagatan, The Sunken Liner, Balboa... (the strip scrolls for the rest). The Sunken Liner's pages: a long note on Raft's
+notepad on a page of its own, two shorter ones on the page beside it.*
+
 Raft's own islands are shown as the plan's story has them: an island **left out** or **replaced** has no tab (its pages
 go to the back of the book), and with **Raft's story off** none of Raft's tabs show. Everything else of Raft's notebook
 is Raft's: its notes, voice lines, quest items and the page you are on (another player turning the page turns it for
@@ -1132,6 +1137,13 @@ own notebook: the mod goes to the test world (as Test in a world does), opens th
 bar at the bottom steps through the story the way players will meet it: **|◀ Start** (nothing found yet), **◀ Back**,
 **Next ▶** ("Saltmarsh Ferry: its coordinates are found", "quest step 3 of 6 done", "'The ferryman's log' is read",
 "the next coordinates"...), **All ▶|**. **Back to World Plans** returns to the plan with your changes still there.
+
+![Preview notebook: Raft 2's ten tabs](images/notebook-preview-all.jpg)
+*Preview notebook on "Raft 2 - The Drowned Frontier" (Raft's story off): First page, then the plan's ten islands in
+story order, each with its Receiver number; the plan's story items under Found items; the step-through bar below.*
+
+![Preview notebook, one step](images/notebook-preview-step.jpg)
+*Stepping through: Saltmarsh Ferry's coordinates are found - its tab, its intro and its quest's first step.*
 
 **Check** warns about the notebook too: a main story island without notes (its tab shows only its intro and steps), a
 note too long for its paper (over 1100 letters; a note over 300 gets a page of its own), a story item without a picture, a "next coordinates" note that isn't
