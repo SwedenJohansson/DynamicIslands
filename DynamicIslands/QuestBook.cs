@@ -169,6 +169,12 @@ namespace DynamicIslands.Editor
 				KeyValuePair<string, string> t;
 				if (texts.TryGetValue(n, out t)) i.Notes.Add(t);
 			}
+			Dictionary<string, string> events = island != null ? IslandCache.EventPageTextsOf(island) : new Dictionary<string, string>();
+			foreach (string ev in QuestBookPreview.PagesWritten(r.Id))
+			{
+				string text;
+				if (events.TryGetValue(ev, out text)) i.Notes.Add(new KeyValuePair<string, string>(ev.Substring(ev.IndexOf(':') + 1), text));
+			}
 			return i;
 		}
 
@@ -183,11 +189,12 @@ namespace DynamicIslands.Editor
 			IslandQuest q = entry != null ? QuestTracker.QuestOf(entry) : null;
 			if (q != null && q.Exists) Checklist(i, q, QuestTracker.StepOf(entry));
 			else if (entry == null) i.Checklist.Add(stepDone ? "Done." : "Not reached yet.");
+			// (its notes read and the pages its events wrote - everything the journal would have had of it - in the order the
+			// crew found them)
 			foreach (IslandWorldState.Entry e in entries)
 			{
-				string prefix = "note:" + e.HostName + ":";
-				foreach (StoryBook.Page p in StoryBook.Pages.Where(p => p.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-					.OrderBy(p => { int n; return int.TryParse(p.Key.Substring(prefix.Length), out n) ? n : int.MaxValue; }))
+				string note = "note:" + e.HostName + ":", act = "act:" + e.HostName + ":";
+				foreach (StoryBook.Page p in StoryBook.Pages.Where(p => p.Key.StartsWith(note, StringComparison.OrdinalIgnoreCase) || p.Key.StartsWith(act, StringComparison.OrdinalIgnoreCase)))
 					i.Notes.Add(new KeyValuePair<string, string>(p.Title ?? "", p.Text ?? ""));
 			}
 			return i;

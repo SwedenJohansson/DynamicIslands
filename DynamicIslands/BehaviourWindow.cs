@@ -47,7 +47,7 @@ namespace DynamicIslands.Editor
 			{ "open", "A door, gate, bridge or lift opens" }, { "close", "It closes" }, { "switch", "Open if closed, closed if open (a lever)" },
 			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays" },
 			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
-			{ "journal", "A page is written into the crew's journal (J)" }, { "wait", "Waits some seconds before the actions below" },
+			{ "journal", "A page is written into the crew's journal (J) - or, on a main story island, onto its tab in Raft's notebook (T)" }, { "wait", "Waits some seconds before the actions below" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>

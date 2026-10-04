@@ -19,7 +19,7 @@ namespace DynamicIslands.Editor
 	{
 		public class Moment
 		{
-			public string Kind = "", Step = "", Rule = "", Text = "";
+			public string Kind = "", Step = "", Rule = "", Text = "", Key = "";
 			public int Arg;
 		}
 
@@ -104,6 +104,10 @@ namespace DynamicIslands.Editor
 					}
 					if (k < qs.Count) Moments.Add(new Moment { Kind = "step", Step = step, Rule = r.Id, Arg = k + 1, Text = title + ": quest step " + (k + 1) + " of " + qs.Count + " done - " + qs[k].Describe() });
 				}
+				// (the pages its events write - "journal page" actions: they go onto its tab too)
+				if (island != null)
+					foreach (string ev in IslandCache.EventPagesOf(island))
+						Moments.Add(new Moment { Kind = "page", Step = step, Rule = r.Id, Key = ev, Text = title + ": an event writes '" + ev.Substring(ev.IndexOf(':') + 1) + "'" });
 				Moments.Add(new Moment { Kind = "done", Step = step, Rule = r.Id, Text = title + " is done (" + r.DescribeDone() + "): the next coordinates" });
 			}
 			if (Plan.StoryEnding.Trim().Length > 0) Moments.Add(new Moment { Kind = "end", Text = "The story ends: the last page" });
@@ -115,6 +119,8 @@ namespace DynamicIslands.Editor
 		public static bool IsDone(string step) { return Happened.Any(m => m.Kind == "done" && m.Step == step); }
 		public static int StepsDone(string ruleId) { return Happened.Count(m => m.Kind == "step" && m.Rule == ruleId); }
 		public static List<int> NotesRead(string ruleId) { return Happened.Where(m => m.Kind == "note" && m.Rule == ruleId).Select(m => m.Arg).ToList(); }
+		/// <summary>The event pages written so far ("object number:title").</summary>
+		public static List<string> PagesWritten(string ruleId) { return Happened.Where(m => m.Kind == "page" && m.Rule == ruleId).Select(m => m.Key).ToList(); }
 		public static bool Over { get { return Happened.Any(m => m.Kind == "end"); } }
 
 		/// <summary>An example frequency for the preview (the world makes the real one): 4 digits from the rule's name.</summary>

@@ -220,6 +220,15 @@ namespace DynamicIslands
 				Check(ref ok, QuestBook.PageTexts.Values.Any(v => v.Any(t => t.Contains("Dear diary"))), "a note read on it goes onto its pages");
 				StoryBook.Page notePage = StoryBook.Pages.FirstOrDefault(p => p.Key == noteKey);
 				Check(ref ok, notePage != null && QuestBook.IsMainPage(notePage), "... and is kept out of the journal");
+				// A page an event writes on it ("journal page" action): its notebook pages too
+				string actKey = a != null ? "act:" + a.HostName + ":3:Painted sign" : "act:x:3:Painted sign";
+				pageKeys.Add(actKey);
+				StoryBook.AddPage(actKey, "Painted sign", "KEEP OUT - the camp is closed.", "Alpha");
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				StoryBook.Page actPage = StoryBook.Pages.FirstOrDefault(p => p.Key == actKey);
+				Check(ref ok, QuestBook.PageTexts.Values.Any(v => v.Any(t => t.Contains("KEEP OUT"))) && actPage != null && QuestBook.IsMainPage(actPage),
+					"a page its events write goes onto its notebook pages, not the journal");
 
 				// The side quest: in the journal, never a tab
 				StoryChain.Tick();

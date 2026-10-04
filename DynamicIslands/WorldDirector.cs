@@ -422,6 +422,8 @@ namespace DynamicIslands.Editor
 			public Dictionary<int, KeyValuePair<string, string>> NoteTexts;
 			/// <summary>The journal pages its events write ("object number:title", as the page keys "act:&lt;island&gt;:..." end).</summary>
 			public List<string> EventPages;
+			/// <summary>Those pages' texts ("object number:title" -> text).</summary>
+			public Dictionary<string, string> EventPageTexts;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -448,6 +450,14 @@ namespace DynamicIslands.Editor
 					.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
 					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "journal" && a.Target.Length > 0).Select(a => i + ":" + a.Target);
 				info.EventPages = Enumerable.Range(0, f.Objects.Count).SelectMany(i => journal(i, f.Objects[i].Props)).Concat(journal(Behaviours.IslandIndex, f.Props)).Distinct().ToList();
+				// (and what those pages say: the quest book's preview shows them)
+				Func<int, IDictionary<string, string>, IEnumerable<KeyValuePair<string, string>>> journalText = (i, p) => p == null ? Enumerable.Empty<KeyValuePair<string, string>>() : p
+					.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
+					.SelectMany(kv => ObjAction.ParseLines(kv.Value)).Where(a => a.Verb == "journal" && a.Target.Length > 0)
+					.Select(a => new KeyValuePair<string, string>(i + ":" + a.Target, (a.Arg ?? "").Replace("\\n", "\n")));
+				info.EventPageTexts = new Dictionary<string, string>();
+				foreach (KeyValuePair<string, string> kv in Enumerable.Range(0, f.Objects.Count).SelectMany(i => journalText(i, f.Objects[i].Props)).Concat(journalText(Behaviours.IslandIndex, f.Props)))
+					if (!info.EventPageTexts.ContainsKey(kv.Key)) info.EventPageTexts[kv.Key] = kv.Value;
 				cache[name] = info;
 				return info;
 			}
@@ -480,6 +490,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The island's notes with a text, by object number (the journal's "note:&lt;island&gt;:&lt;n&gt;" pages; empty if the file is missing).</summary>
 		public static List<int> NotesOf(string name) { Info i = Get(name); return i != null && i.Notes != null ? i.Notes : new List<int>(); }
+
+		/// <summary>The journal pages the island's events write, with their texts ("object number:title" -> text; empty if the file is missing).</summary>
+		public static Dictionary<string, string> EventPageTextsOf(string name) { Info i = Get(name); return i != null && i.EventPageTexts != null ? i.EventPageTexts : new Dictionary<string, string>(); }
 
 		/// <summary>The island's notes' titles and texts by object number (empty if the file is missing).</summary>
 		public static Dictionary<int, KeyValuePair<string, string>> NoteTextsOf(string name) { Info i = Get(name); return i != null && i.NoteTexts != null ? i.NoteTexts : new Dictionary<int, KeyValuePair<string, string>>(); }

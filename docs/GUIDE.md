@@ -313,7 +313,8 @@ page's (**K**, a star).
   - **Notes found** - notes read of the notes with a text on those islands (each island's line under Quest Pages has
     its own, "(5/7 notes)");
   - **Story items found** - of those the islands have; one used up since (a key a door took) still counts;
-  - **Journal pages** - pages in the journal of all the islands can give: their notes and the pages their events write;
+  - **Journal pages** - the pages all the islands can give: their notes and the pages their events write (a side
+    quest's are in the journal, a main story island's in Raft's notebook);
   - **Overall** - all of it together, with the per cent.
 
   What counts is what this world has: the custom islands in it and the saved islands its plan brings, counted from the
@@ -1103,7 +1104,8 @@ The tab shows the island's name (or the **tab title** you give it) and, for an i
   Receiver to it", followed by the rule's message);
 - **the quest's checklist** - its steps as they are done, crossed out, and the one to do now; a long quest goes on
   over more pages. The steps are no longer listed in the journal;
-- **the notes read on the island**, two to a page (a long one on a page of its own), in their order on the island.
+- **the notes read on the island and the pages its events write** ("journal page" actions), two to a page (a long one
+  on a page of its own), in the order the crew found them.
 
 Its **story items** show under Raft's **Found items**, with their pictures (Raft's quest item pictures). When the last
 main story island is done, the plan's **ending page** (the card **THE END** under the rules) comes last in the book,
