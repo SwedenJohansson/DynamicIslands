@@ -860,6 +860,170 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
+		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done; or without a quest, reached) is never picked again; an unfinished one (quest begun, or never reached) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy")]
+		public static void PoolAgainTest() { DynamicIslands.instance.StartCoroutine(PoolAgainRoutine()); }
+
+		static IEnumerator PoolAgainRoutine()
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
+			if (source == null) { Fail("no generated_sample or citest island to build on"); yield break; }
+			// Two islands with a two-step quest, two without a quest
+			string[] names = { "ciagain-done", "ciagain-begun", "ciagain-seen", "ciagain-unseen" };
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			f.Props[IslandQuest.KeyTitle] = "Again";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			for (int i = 0; i < 2; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			for (int i = 2; i < 4; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			CustomIslandSpawner.LoadPool(true);
+			var made = new List<IslandWorldState.Entry>();
+			try
+			{
+				Vector3 back = -CustomIslandSpawner.SailDirection();
+				float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+				for (int i = 0; i < names.Length; i++)
+				{
+					Vector3 at = raftAt.Value + Quaternion.Euler(0f, -45f + i * 30f, 0f) * back * behindBy;
+					at.y = 0f;
+					made.Add(IslandWorldState.Add(names[i], at, null, false));
+				}
+				IslandWorldState.Entry done = made[0], begun = made[1], seen = made[2], unseen = made[3];
+				var visit = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				done.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(done, 2, 0, false);
+				begun.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(begun, 1, 0, false);
+				seen.State[WorldDirector.VisitKey] = visit;
+				Check(ref ok, ReturningIslands.Finished(done) && !ReturningIslands.Finished(begun) && ReturningIslands.Finished(seen) && !ReturningIslands.Finished(unseen),
+					"finished: quest done " + ReturningIslands.Finished(done) + ", begun " + ReturningIslands.Finished(begun) + ", no quest reached " + ReturningIslands.Finished(seen) + ", no quest never reached " + ReturningIslands.Finished(unseen));
+				var pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
+				Func<string, bool> inPool = n => pool.Contains(n, StringComparer.OrdinalIgnoreCase);
+				Check(ref ok, !inPool(names[0]) && !inPool(names[2]), "the finished ones are not in the pool: done " + inPool(names[0]) + ", reached " + inPool(names[2]));
+				Check(ref ok, inPool(names[1]) && inPool(names[3]), "the unfinished ones are: begun " + inPool(names[1]) + ", never reached " + inPool(names[3]));
+				// Picked again: the island the world has comes back, no second copy
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				foreach (IslandWorldState.Entry e in new[] { begun, unseen })
+				{
+					string said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
+					float away = new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
+					int copies = IslandWorldState.Islands.Count(x => x.HostName == e.HostName);
+					Check(ref ok, copies == 1 && away < behindBy - 300f && Vector3.Dot(e.Position - raftNow, CustomIslandSpawner.SailDirection()) > 0f,
+						"'" + e.HostName + "' picked again comes back ahead (" + away.ToString("F0") + " m, " + copies + " in the world): " + said);
+				}
+				Check(ref ok, QuestTracker.StepOf(begun) == 1, "its quest where it was (step " + QuestTracker.StepOf(begun) + ")");
+				// Here already (loading near the raft): not picked again either
+				for (float t = 0f; t < 30f && begun.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, CustomIslandSpawner.NotAgain(names[1]), "an island loaded near the players isn't picked again (" + (begun.Root != null ? "loaded" : "not loaded") + ")");
+			}
+			finally
+			{
+				IslandWorldState.RemoveIds(made.Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+				CustomIslandSpawner.LoadPool(true);
+			}
+			if (ok) Log("PASS: finished islands are not picked again, unfinished ones come back"); else Fail("finished islands are not picked again, unfinished ones come back");
+		}
+
+		[ConsoleCommand(name: "CIRaftGap", docs: "Dev, in game (host, a test world 'CI ...' with random islands): random custom islands come after every min-max of Raft's own islands met - the span's limits (min 2-20, max 4-50, default 3-6), the world file lines, no island before its turn, one when its turn came (then a new count), and a long sail: Raft's islands met and custom islands brought (at most one per min). CIRaftGap [km]")]
+		public static void RaftGapTest(string[] args)
+		{
+			float km = 8f;
+			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out km);
+			DynamicIslands.instance.StartCoroutine(RaftGapRoutine(km));
+		}
+
+		static IEnumerator RaftGapRoutine(float km)
+		{
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj == null || raftObj.body == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); yield break; }
+			if (!CustomIslandSpawner.Enabled) { Fail("random islands are off in this world (a plan with random islands, or CustomIslandsAuto on)"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Func<string, string> parsed = t => { int[] g = WorldIslands.ParseGap(t); return g[0] + "-" + g[1]; };
+			Check(ref ok, parsed("3-6") == "3-6" && parsed("1-100") == "2-50" && parsed("30-10") == "20-20" && parsed("4-3") == "4-4" && parsed("2-2") == "2-4" && parsed("nonsense") == "3-6",
+				"the span's limits: 3-6 " + parsed("3-6") + ", 1-100 " + parsed("1-100") + ", 30-10 " + parsed("30-10") + ", 4-3 " + parsed("4-3") + ", 2-2 " + parsed("2-2") + ", nonsense " + parsed("nonsense"));
+			int minBefore = WorldIslands.GapMin, maxBefore = WorldIslands.GapMax;
+			int spawnedLog = 0, metLog = 0;
+			Application.LogCallback listen = (msg, trace, type) =>
+			{
+				if (msg.Contains("Random island after")) spawnedLog++;
+				if (msg.Contains("Raft's islands met since the last random custom island")) metLog++;
+			};
+			Application.logMessageReceived += listen;
+			Rigidbody body = raftObj.body;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+			Func<float, float, IEnumerator> sail = (metres, speed) => SailStraight(body, player, dir, metres, speed);
+			try
+			{
+				// The world file keeps a span that isn't the default
+				WorldIslands.GapMin = 5; WorldIslands.GapMax = 12;
+				string lines = string.Join(" ", WorldIslands.WriteLines().ToArray());
+				Check(ref ok, lines.Contains("@raftgap=5-12"), "the world file keeps the span: " + lines);
+				WorldIslands.ReadLine("raftgap", "7-20");
+				Check(ref ok, WorldIslands.GapMin == 7 && WorldIslands.GapMax == 20, "and reads it back: " + WorldIslands.GapMin + "-" + WorldIslands.GapMax);
+
+				// Not before its turn: one more of Raft's islands to go
+				WorldIslands.GapMin = 2; WorldIslands.GapMax = 4;
+				WorldIslands.Target = 3; WorldIslands.RaftIslandsSince = 0;
+				int before = IslandWorldState.Islands.Count;
+				yield return sail(300f, 15f);
+				int metEarly = WorldIslands.RaftIslandsSince;
+				Check(ref ok, metEarly >= WorldIslands.Target || IslandWorldState.Islands.Count == before,
+					"no island before its turn: " + (IslandWorldState.Islands.Count - before) + " came, Raft's islands met " + metEarly + " of " + WorldIslands.Target);
+				// Its turn: Raft's islands counted up to the target - an island comes, and a new count starts
+				WorldIslands.RaftIslandsSince = WorldIslands.Target;
+				before = IslandWorldState.Islands.Count;
+				int spawnedBefore = spawnedLog;
+				for (int i = 0; i < 8 && spawnedLog == spawnedBefore; i++) yield return sail(150f, 15f);
+				Check(ref ok, spawnedLog > spawnedBefore && IslandWorldState.Islands.Count > before - 1 && WorldIslands.RaftIslandsSince < WorldIslands.Target && WorldIslands.Target >= 2 && WorldIslands.Target <= 4,
+					"its turn: an island came (" + (spawnedLog - spawnedBefore) + "), a new count: " + WorldIslands.RaftIslandsSince + " of " + WorldIslands.Target);
+
+				// A long sail with the default span: Raft's islands met and the custom islands they let come
+				WorldIslands.GapMin = WorldIslands.GapDefaultMin; WorldIslands.GapMax = WorldIslands.GapDefaultMax; WorldIslands.NewTarget();
+				int met0 = metLog, spawned0 = spawnedLog;
+				int countedBefore = WorldIslands.RaftIslandsSince;
+				int metTotal = 0, lastSince = WorldIslands.RaftIslandsSince;
+				Log("  sailing " + km + " km with the default span " + WorldIslands.GapMin + "-" + WorldIslands.GapMax);
+				for (float done = 0f; done < km * 1000f; done += 500f)
+				{
+					yield return sail(500f, 40f);
+					int since = WorldIslands.RaftIslandsSince;
+					metTotal += since >= lastSince ? since - lastSince : since; // (a spawn starts the count again)
+					lastSince = since;
+				}
+				int customs = spawnedLog - spawned0;
+				Log("  " + km + " km: Raft's islands met " + metTotal + ", random custom islands " + customs + " (" + WorldIslands.DescribeGap() + ")");
+				Check(ref ok, customs <= metTotal / WorldIslands.GapDefaultMin + 1, "at most one custom island per " + WorldIslands.GapDefaultMin + " of Raft's islands: " + customs + " for " + metTotal);
+			}
+			finally
+			{
+				Application.logMessageReceived -= listen;
+				WorldIslands.GapMin = minBefore; WorldIslands.GapMax = maxBefore; WorldIslands.NewTarget();
+			}
+			if (ok) Log("PASS: random custom islands follow Raft's own islands"); else Fail("random custom islands follow Raft's own islands");
+		}
+
+		static IEnumerator SailStraight(Rigidbody body, Network_Player player, Vector3 dir, float metres, float speed)
+		{
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
+			float sailed = 0f;
+			Vector3 last = body.position;
+			while (sailed < metres)
+			{
+				yield return new WaitForFixedUpdate();
+				KeepAlive(player);
+				body.MovePosition(body.position + dir * speed * Time.fixedDeltaTime);
+				Vector3 d = Flat(body.position - last);
+				if (d.magnitude < 100f) sailed += d.magnitude;
+				last = body.position;
+			}
+		}
+
 		[ConsoleCommand(name: "CIReturnState", docs: "Dev, in game (host): every island as the returning-islands clock sees it - why it is needed, how far, its land radius, loaded, how long it has been away, how often it came back")]
 		public static void ReturnState() { foreach (string l in ReturningIslands.Describe()) Log("  " + l); Log("PASS: return state"); }
 

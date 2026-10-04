@@ -34,6 +34,53 @@ namespace DynamicIslands.Editor
 
 		public static bool TakesPart(string entry) { return !Off.Contains(entry); }
 
+		#region How often: one random custom island per so many of Raft's own islands
+
+		// (the user, 2026-10-04: random custom islands come between every 3-6 of Raft's normal islands by default; the
+		// world's creator chooses from 2-4 up to 20-50 - however many islands are ticked, they never crowd the sea)
+		public const int GapLowest = 2, GapLowestTop = 4, GapHighest = 20, GapHighestTop = 50, GapDefaultMin = 3, GapDefaultMax = 6;
+		const string GapKey = "raftgap", CountKey = "raftgapcount";
+
+		/// <summary>This world: a random custom island comes after GapMin to GapMax of Raft's own islands met (host).</summary>
+		public static int GapMin = GapDefaultMin, GapMax = GapDefaultMax;
+		/// <summary>This world: Raft's islands met since the last random custom island, and how many this time (host; saved).</summary>
+		public static int RaftIslandsSince, Target;
+		/// <summary>The world being created (null = the last choice).</summary>
+		static int[] pendingGap;
+
+		public static int[] ChosenGap { get { if (pendingGap == null) pendingGap = ParseGap(WorldRules.ReadDefault(GapKey)); return pendingGap; } }
+
+		/// <summary>"3-6" -> {3, 6}, kept inside the allowed spans (min 2-20, max 4-50, max at least min); the default when unreadable.</summary>
+		public static int[] ParseGap(string text)
+		{
+			int lo = GapDefaultMin, hi = GapDefaultMax;
+			string[] parts = (text ?? "").Split('-');
+			int a, b;
+			if (parts.Length == 2 && int.TryParse(parts[0].Trim(), out a) && int.TryParse(parts[1].Trim(), out b)) { lo = a; hi = b; }
+			return ClampGap(lo, hi);
+		}
+
+		public static int[] ClampGap(int lo, int hi)
+		{
+			lo = Mathf.Clamp(lo, GapLowest, GapHighest);
+			hi = Mathf.Clamp(hi, Mathf.Max(GapLowestTop, lo), GapHighestTop);
+			return new[] { lo, hi };
+		}
+
+		public static string GapText(int lo, int hi) { return lo + "-" + hi; }
+
+		/// <summary>The World settings window: the next world's span changed (saved as the last choice at once).</summary>
+		public static void SetChosenGap(int lo, int hi)
+		{
+			pendingGap = ClampGap(lo, hi);
+			WorldRules.SaveDefault(GapKey, GapText(pendingGap[0], pendingGap[1]));
+		}
+
+		/// <summary>A new number of Raft's islands to wait for, inside this world's span.</summary>
+		public static void NewTarget() { Target = UnityEngine.Random.Range(GapMin, GapMax + 1); RaftIslandsSince = 0; }
+
+		#endregion
+
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [islands] " + msg); }
 
 		public static HashSet<string> Parse(string list)
@@ -105,19 +152,31 @@ namespace DynamicIslands.Editor
 		internal static void Reset()
 		{
 			Off.Clear();
-			if (!Raft_Network.IsHost) { Pending = null; return; }
+			GapMin = GapDefaultMin; GapMax = GapDefaultMax; Target = 0; RaftIslandsSince = 0;
+			if (!Raft_Network.IsHost) { Pending = null; pendingGap = null; return; }
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			if (isNew)
 			{
 				foreach (string o in Pending ?? Defaults) Off.Add(o);
-				Log("New world: " + Describe());
+				int[] gap = ChosenGap;
+				GapMin = gap[0]; GapMax = gap[1];
+				Log("New world: " + Describe() + "; a random custom island after every " + GapText(GapMin, GapMax) + " of Raft's islands");
 			}
 			Pending = null;
+			pendingGap = null;
 		}
 
 		internal static bool ReadLine(string key, string value)
 		{
+			if (key == GapKey) { int[] g = ParseGap(value); GapMin = g[0]; GapMax = g[1]; return true; }
+			if (key == CountKey)
+			{
+				string[] parts = (value ?? "").Split('/');
+				int n, t;
+				if (parts.Length == 2 && int.TryParse(parts[0], out n) && int.TryParse(parts[1], out t)) { RaftIslandsSince = Mathf.Max(0, n); Target = Mathf.Max(0, t); }
+				return true;
+			}
 			if (key != DefaultKey) return false;
 			Off.Clear();
 			foreach (string o in Parse(value)) Off.Add(o);
@@ -127,9 +186,11 @@ namespace DynamicIslands.Editor
 		internal static IEnumerable<string> WriteLines()
 		{
 			if (Off.Count > 0) yield return "@" + DefaultKey + "=" + Join(Off);
+			if (GapMin != GapDefaultMin || GapMax != GapDefaultMax) yield return "@" + GapKey + "=" + GapText(GapMin, GapMax);
+			if (Target > 0 || RaftIslandsSince > 0) yield return "@" + CountKey + "=" + RaftIslandsSince + "/" + Target;
 		}
 
-		internal static bool HasState { get { return Off.Count > 0; } }
+		internal static bool HasState { get { return Off.Count > 0 || GapMin != GapDefaultMin || GapMax != GapDefaultMax || Target > 0 || RaftIslandsSince > 0; } }
 
 		/// <summary>A player who joined: the islands the host left out of this world (from the host's copy of the world file).</summary>
 		public static string DescribeForPlayer()
@@ -140,6 +201,27 @@ namespace DynamicIslands.Editor
 		}
 
 		#endregion
+
+		public static string DescribeGap()
+		{
+			return "a random custom island after every " + GapText(GapMin, GapMax) + " of Raft's own islands (" + RaftIslandsSince + " met since the last" + (Target > 0 ? ", this time " + Target : "") + ")";
+		}
+
+		[ConsoleCommand(name: "WorldIslandsGap", docs: "How often random custom islands come: one after every <min>-<max> of Raft's own islands met (default 3-6; min 2-20, max 4-50). WorldIslandsGap = this world's (or, in the main menu, the next new world's); WorldIslandsGap 5-12 = change it (host in a world)")]
+		public static void GapCommand(string[] args)
+		{
+			string arg = args != null ? string.Join("", args).Trim() : "";
+			bool inWorld = LoadSceneManager.IsGameSceneLoaded;
+			if (arg.Length > 0)
+			{
+				if (inWorld && !Raft_Network.IsHost) { Debug.Log("[CUSTOM ISLANDS] Only the host chooses how often islands come"); return; }
+				int[] g = ParseGap(arg);
+				if (inWorld) { GapMin = g[0]; GapMax = g[1]; if (Target < GapMin || Target > GapMax) Target = UnityEngine.Random.Range(GapMin, GapMax + 1); IslandWorldState.Save(); }
+				else { SetChosenGap(g[0], g[1]); try { WorldSettingsWindow.Show(); } catch { } }
+			}
+			if (inWorld) Debug.Log("[CUSTOM ISLANDS] This world: " + DescribeGap());
+			else Debug.Log("[CUSTOM ISLANDS] The next new world: a random custom island after every " + GapText(ChosenGap[0], ChosenGap[1]) + " of Raft's own islands");
+		}
 
 		public static string Describe()
 		{

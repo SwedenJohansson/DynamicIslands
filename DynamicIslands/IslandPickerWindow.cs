@@ -43,7 +43,39 @@ namespace DynamicIslands.Editor
 			entryText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			entryText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Size(entryText.gameObject, -1, 28);
+			// How often: one random custom island after every <min>-<max> of Raft's own islands (default 3-6; min 2-20, max 4-50)
+			const string gapHint = "How often an island from this list turns up: one after every so many of Raft's own islands you meet - a number between these two each time. 3-6 by default; the lowest 2-4, the highest 20-50. However many islands are ticked, they never crowd the sea.";
+			RectTransform gapRow = UIKit.Row(group, 26f, 4f, "Gap");
+			Text lead = UIKit.Label(gapRow, "One after every", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "GapLead");
+			UIKit.Size(lead.gameObject, 104);
+			UIKit.Button(gapRow, "-", () => StepGap(-1, 0), gapHint, 24, 24f, 14).name = "GapMinLess";
+			gapMinText = UIKit.Label(gapRow, "", 13, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold, "GapMin");
+			UIKit.Size(gapMinText.gameObject, 26);
+			UIKit.Button(gapRow, "+", () => StepGap(1, 0), gapHint, 24, 24f, 14).name = "GapMinMore";
+			Text to = UIKit.Label(gapRow, "to", 12, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Normal, "GapTo");
+			UIKit.Size(to.gameObject, 20);
+			UIKit.Button(gapRow, "-", () => StepGap(0, -1), gapHint, 24, 24f, 14).name = "GapMaxLess";
+			gapMaxText = UIKit.Label(gapRow, "", 13, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold, "GapMax");
+			UIKit.Size(gapMaxText.gameObject, 26);
+			UIKit.Button(gapRow, "+", () => StepGap(0, 1), gapHint, 24, 24f, 14).name = "GapMaxMore";
+			UIKit.Label(gapRow, "of Raft's islands", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "GapTail");
+			UIKit.Hint(gapRow.gameObject, gapHint);
 			Build(screen);
+			ShowEntry();
+		}
+
+		static Text gapMinText, gapMaxText;
+
+		/// <summary>The World settings window's - and + by the span (tests click them as a player would).</summary>
+		internal static void StepGap(int min, int max)
+		{
+			int[] g = WorldIslands.ChosenGap;
+			int lo = g[0] + min, hi = g[1];
+			// (the top goes in ones up to 10, then in fives: 10, 15, 20 ... 50)
+			if (max > 0) hi = hi < 10 ? hi + 1 : (hi / 5 + 1) * 5;
+			else if (max < 0) hi = hi <= 10 ? hi - 1 : ((hi - 1) / 5) * 5;
+			if (lo > hi) hi = lo;
+			WorldIslands.SetChosenGap(lo, hi);
 			ShowEntry();
 		}
 
@@ -206,6 +238,9 @@ namespace DynamicIslands.Editor
 			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : (all.Count - taking) + " left out of this world.") : note;
 			if (planNote != null) planNote.text = random ? "Plan: '" + (plan != null ? plan.Name : WorldPlan.RandomName) + "' - islands from this list turn up by chance while sailing." : note;
 			if (countText != null) countText.text = taking + " of " + all.Count + " take part" + (taking < all.Count ? ",  " + (all.Count - taking) + " left out" : "");
+			int[] gap = WorldIslands.ChosenGap;
+			if (gapMinText != null) gapMinText.text = gap[0].ToString();
+			if (gapMaxText != null) gapMaxText.text = gap[1].ToString();
 		}
 	}
 }

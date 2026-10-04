@@ -1311,6 +1311,24 @@ namespace DynamicIslands.Editor
 			return Returns(e) < MaxReturns ? "quest" : null;
 		}
 
+		/// <summary>Whether the players are done with this island: its quest is done, or - an island without a quest - they
+		/// reached it. A finished island never comes again as a random island (the user, 2026-10-04: "finished islands
+		/// don't show up again, unfinished/started islands can").</summary>
+		public static bool Finished(IslandWorldState.Entry e)
+		{
+			if (e == null) return false;
+			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
+			if (steps > 0) return QuestTracker.StepOf(e) >= steps;
+			return e.State.ContainsKey(WorldDirector.VisitKey);
+		}
+
+		/// <summary>Host: the spawn pool picked an island this world already has, not finished and left behind: it comes
+		/// back ahead of the raft as it was (quest, chests and harvest kept) instead of a second, fresh copy.</summary>
+		public static bool BringAgain(IslandWorldState.Entry e, Vector3 raft)
+		{
+			return Bring(e, raft, Why(e) ?? "again");
+		}
+
 		public static int Returns(IslandWorldState.Entry e)
 		{
 			ObjectState r;
@@ -1373,11 +1391,11 @@ namespace DynamicIslands.Editor
 			// (the other players' copies move too: a known island at another place)
 			IslandNetwork.BroadcastAdded(e);
 			string title = TitleOf(e);
-			string message = why == "awaited" ? "Back in sight: the way on starts there." : "Back in sight: you left its quest unfinished.";
+			string message = why == "awaited" ? "Back in sight: the way on starts there." : why == "quest" ? "Back in sight: you left its quest unfinished." : "Back in sight.";
 			IslandNetwork.SendAnnounce(e, title, message);
 			WorldDirector.Show(title, message, e.Position);
 			Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' comes back " + Flat(e.Position - raft).ToString("F0") + " m ahead of the raft (left " +
-				behind.ToString("F0") + " m behind; " + (why == "awaited" ? "something waits for it" : "its quest is unfinished") + "; return " + returned + ")");
+				behind.ToString("F0") + " m behind; " + (why == "awaited" ? "something waits for it" : why == "quest" ? "its quest is unfinished" : "picked again by the spawn pool") + "; return " + returned + ")");
 			if (Returned != null) Returned(e);
 			return true;
 		}

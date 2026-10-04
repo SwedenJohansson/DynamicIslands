@@ -127,10 +127,54 @@ namespace DynamicIslands.Editor
 			GhostRafts.OnSailed(sailed, pos.Value); // (the world option Ghost rafts)
 			if (!Enabled || ChancePerKm <= 0f) return;
 
-			// Chance of at least one island over this stretch, for a given chance per km
-			float chance = 1f - Mathf.Pow(1f - Mathf.Clamp01(ChancePerKm), sailed / 1000f);
-			if (UnityEngine.Random.value < chance) TrySpawn(pos.Value, false);
+			// One random custom island after every few of Raft's own islands met (the world's span, WorldIslands.GapMin -
+			// GapMax: 3-6 by default) - not by distance: however many islands are ticked, they never crowd the sea
+			CountRaftIslands();
+			if (WorldIslands.Target <= 0) WorldIslands.NewTarget();
+			if (WorldIslands.RaftIslandsSince < WorldIslands.Target) return;
+			// (its turn: tried every 10 s of sailing until there's a free spot - not at one of Raft's islands)
+			if (Time.unscaledTime < nextTry) return;
+			nextTry = Time.unscaledTime + 10f;
+			spawned = false;
+			string said = TrySpawn(pos.Value, false);
+			if (spawned)
+			{
+				Debug.Log("[CUSTOM ISLANDS] Random island after " + WorldIslands.RaftIslandsSince + " of Raft's islands (span " + WorldIslands.GapMin + "-" + WorldIslands.GapMax + "): " + said);
+				WorldIslands.NewTarget();
+				IslandWorldState.Save();
+			}
 		}
+
+		static float nextTry;
+		static bool spawned;
+		/// <summary>Raft's islands already counted (instance and spawn), and the world they were counted in.</summary>
+		static readonly HashSet<long> raftIslandsCounted = new HashSet<long>();
+		static Guid countedFor;
+		static bool countPrimed;
+
+		/// <summary>Host: counts Raft's own plain islands the raft meets (their ground switched on - within about a kilometre;
+		/// story islands, the stranded boat, floating rafts don't count). Those around the raft when a world loads count
+		/// as met already.</summary>
+		static void CountRaftIslands()
+		{
+			if (SaveAndLoad.WorldGuid != countedFor) { raftIslandsCounted.Clear(); countedFor = SaveAndLoad.WorldGuid; countPrimed = false; }
+			int added = 0;
+			foreach (Landmark l in WorldManager.AllLandmarks)
+			{
+				if (l == null || !l.isSpawned || !WorldRandomizer.GroundOn(l) || !WorldRandomizer.IsNatural(l)) continue;
+				long key = ((long)l.GetInstanceID() << 32) ^ WorldRandomizer.SpawnKey(l);
+				if (raftIslandsCounted.Add(key) && countPrimed) added++;
+			}
+			countPrimed = true;
+			if (added > 0)
+			{
+				WorldIslands.RaftIslandsSince += added;
+				Debug.Log("[CUSTOM ISLANDS] Raft's islands met since the last random custom island: " + WorldIslands.RaftIslandsSince + " of " + WorldIslands.Target);
+			}
+		}
+
+		/// <summary>Tests: count one of Raft's islands as met.</summary>
+		internal static void CountRaftIslandForTest(int n) { WorldIslands.RaftIslandsSince += n; }
 
 		#region Streaming
 
@@ -212,6 +256,19 @@ namespace DynamicIslands.Editor
 				radiusCache[name] = MapTypes.EstimatedRadius(generate);
 				elevationCache[name] = elevation;
 			}
+			// An island this world already has (not finished - the pool leaves those out - and left behind): it comes back
+			// ahead of the raft as it was, its quest and chests kept, instead of a second, fresh copy
+			if (generate == null)
+			{
+				IslandWorldState.Entry known = InWorld(name);
+				if (known != null)
+				{
+					if (!ReturningIslands.BringAgain(known, raftPos)) return Skip("no free spot ahead of the raft for '" + name + "' (it comes again)");
+					sailedSinceSpawn = 0f;
+					spawned = true;
+					return "'" + name + "' comes again, " + Flat(known.Position - raftPos).magnitude.ToString("F0") + " m ahead";
+				}
+			}
 			float radius = LandRadius(name);
 			if (radius < 0) return Skip("could not read island '" + name + "'");
 
@@ -231,6 +288,7 @@ namespace DynamicIslands.Editor
 				if (why != null) { reasons.Add(why); continue; }
 
 				sailedSinceSpawn = 0f;
+				spawned = true;
 				Debug.Log("[CUSTOM ISLANDS] Auto spawn: island '" + name + "' (land radius " + radius.ToString("F0") + " m) at " + candidate +
 					", " + distance.ToString("F0") + " m from the raft at " + angle.ToString("F0") + " degrees");
 				// In the list straight away, so spacing checks see it while it loads (clients hear about a generated
@@ -433,7 +491,29 @@ namespace DynamicIslands.Editor
 					result.Add(p);
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
-			return result.Where(p => p.Value > 0f && (!forWorld || WorldIslands.TakesPart(p.Key))).ToList();
+			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key)))).ToList();
+		}
+
+		/// <summary>The island of this world with this name (a saved island the spawn pool brought before), or null.</summary>
+		internal static IslandWorldState.Entry InWorld(string name)
+		{
+			return IslandWorldState.Islands.FirstOrDefault(e => !WorldRandomizer.IsExtras(e) && !e.Failed &&
+				string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase));
+		}
+
+		/// <summary>An island the pool must not pick now: this world has it and it is finished (its quest done, or reached when
+		/// it has no quest - it never comes again), or it is here already (loaded or loading near the players). An island the
+		/// world has that isn't finished and was left behind may be picked: it comes back as it was (TrySpawn).</summary>
+		internal static bool NotAgain(string name)
+		{
+			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
+				if (e.Failed) continue;
+				if (ReturningIslands.Finished(e) || e.Root != null || e.Loading || e.WaitingForFile) return true;
+			}
+			return false;
 		}
 
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
@@ -458,7 +538,8 @@ namespace DynamicIslands.Editor
 @"# Custom Islands: islands that appear on their own while sailing (host only).
 # Changes are picked up while the game runs.
 
-# Chance that an island appears for each km the raft sails (0 to 1)
+# Random islands on (any number above 0) or off (0). How often they come is the world's own setting: one after every
+# 3-6 of Raft's own islands met by default (World settings > Islands while sailing; WorldIslandsGap in a world).
 chancePerKm = 0.25
 # Metres kept between custom islands (centre to centre)
 minSpacing = 800
@@ -584,8 +665,9 @@ type:sunken 0.2
 			var lines = new List<string>
 			{
 				"Automatic islands in this world: " + (Enabled ? "on" : "off") + " (CustomIslandsAuto on|off)",
-				string.Format(CultureInfo.InvariantCulture, "Chance per km sailed: {0:P0} (about one island every {1:F1} km), min spacing {2:F0} m, appear {3:F0}-{4:F0} m ahead, unload beyond {5:F0} m, regrow after {6} day(s)",
-					ChancePerKm, ChancePerKm > 0 ? 1f / ChancePerKm : float.PositiveInfinity, MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance, RegrowDays > 0 ? RegrowDays.ToString() : "never"),
+				"How often: " + WorldIslands.DescribeGap() + (ChancePerKm <= 0f ? " - off (chancePerKm 0)" : ""),
+				string.Format(CultureInfo.InvariantCulture, "Min spacing {0:F0} m, appear {1:F0}-{2:F0} m ahead, unload beyond {3:F0} m, regrow after {4} day(s)",
+					MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance, RegrowDays > 0 ? RegrowDays.ToString() : "never"),
 				"Sailed since the last automatic island: " + sailedSinceSpawn.ToString("F0") + " m",
 				"This world's choice (New Game box, WorldIslands): " + WorldIslands.Describe(),
 				"Pool (" + PoolPath + "): " + (pool.Count == 0 ? "empty" : "")
