@@ -1,0 +1,275 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using HarmonyLib;
+using HMLLibrary;
+using RaftModLoader;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DynamicIslands
+{
+	/// <summary>
+	/// The quest book spike (NextTask_QuestBook.md, Q0): what Raft's notebook is made of, and whether the mod can add
+	/// tabs and pages to it. CINoteBookDump writes the book's objects to notebook_dump.txt; CINoteBookOpen opens it at a
+	/// page (pictures); CINoteBookUnlockAll unlocks every note of Raft's (test worlds only).
+	/// </summary>
+	public static partial class DevTests
+	{
+		static NoteBookUI LocalNoteBookUI()
+		{
+			Network_Player p = null;
+			try { p = RAPI.GetLocalPlayer(); } catch { }
+			return p != null ? p.NoteBookUI : null;
+		}
+
+		static string RectOf(Transform t)
+		{
+			RectTransform r = t as RectTransform;
+			if (r == null) return "pos=" + t.localPosition;
+			return "anch=" + r.anchoredPosition + " size=" + r.sizeDelta + " min=" + r.anchorMin + " max=" + r.anchorMax + " piv=" + r.pivot + " rot=" + t.localEulerAngles.z.ToString("0") + " scale=" + t.localScale.x.ToString("0.##");
+		}
+
+		static void DumpTree(StringBuilder sb, Transform t, string indent, int depth)
+		{
+			string comps = string.Join(",", t.GetComponents<Component>().Where(c => c != null && !(c is Transform)).Select(c => c.GetType().Name).ToArray());
+			TMP_Text text = t.GetComponent<TMP_Text>();
+			Image img = t.GetComponent<Image>();
+			sb.Append(indent).Append(t.gameObject.activeSelf ? "" : "(off) ").Append(t.name).Append(" [").Append(comps).Append("] ").Append(RectOf(t));
+			if (text != null) sb.Append(" TEXT=\"").Append((text.text ?? "").Replace("\n", "\\n").Substring(0, Math.Min(80, (text.text ?? "").Length))).Append("\" font=").Append(text.font != null ? text.font.name : "-").Append(" fs=").Append(text.fontSize);
+			if (img != null) sb.Append(" IMG=").Append(img.sprite != null ? img.sprite.name : "-").Append(" col=").Append(img.color);
+			sb.AppendLine();
+			if (depth <= 0) { if (t.childCount > 0) sb.Append(indent).Append("  ... ").Append(t.childCount).AppendLine(" children"); return; }
+			foreach (Transform c in t) DumpTree(sb, c, indent + "  ", depth - 1);
+		}
+
+		static string NbPath(Transform t, Transform root)
+		{
+			var parts = new List<string>();
+			for (Transform x = t; x != null && x != root; x = x.parent) parts.Insert(0, x.name);
+			return string.Join("/", parts.ToArray());
+		}
+
+		[ConsoleCommand(name: "CINoteBookDump", docs: "Dev, world: writes Raft's notebook (pages, notes, tabs, found items, the whole object tree) to Mods\\DynamicIslands\\notebook_dump.txt (quest book spike)")]
+		public static void NoteBookDumpCommand()
+		{
+			NoteBookUI ui = LocalNoteBookUI();
+			if (ui == null) { Fail("NoteBookDump: no local player's notebook (in a world?)"); return; }
+			var sb = new StringBuilder();
+			Traverse tr = Traverse.Create(ui);
+			NoteBookPage[] pages = tr.Field("pageObjs").GetValue<NoteBookPage[]>() ?? new NoteBookPage[0];
+			NoteBookNote[] notes = tr.Field("notes").GetValue<NoteBookNote[]>() ?? new NoteBookNote[0];
+			Canvas canvas = tr.Field("noteBookCanvas").GetValue<Canvas>();
+			Transform root = canvas != null ? canvas.transform : ui.transform;
+			sb.AppendLine("NoteBookUI on " + NbPath(ui.transform, null) + "; canvas " + (canvas != null ? canvas.name + " mode=" + canvas.renderMode + " scale=" + canvas.transform.localScale : "-"));
+			sb.AppendLine("currentPageIndex=" + tr.Field("currentPageIndex").GetValue() + " highestUnlockedPageIndex=" + tr.Field("highestUnlockedPageIndex").GetValue() + " isDisplayed=" + ui.isDisplayed);
+			sb.AppendLine("unlocked note indexes: " + string.Join(",", (NoteBook.unlockedNoteBookIndexes ?? new List<int>()).Select(i => i.ToString()).ToArray()));
+			sb.AppendLine("unlocked chunk types: " + string.Join(",", (NoteBook.unlockedChunkPointType ?? new List<ChunkPointType>()).Select(i => i.ToString()).ToArray()));
+			sb.AppendLine();
+			sb.AppendLine("PAGES " + pages.Length);
+			foreach (NoteBookPage pg in pages)
+			{
+				if (pg == null) { sb.AppendLine("  null"); continue; }
+				Traverse pt = Traverse.Create(pg);
+				NoteBookNote[] pn = pt.Field("notes").GetValue<NoteBookNote[]>() ?? new NoteBookNote[0];
+				sb.AppendLine("  page " + pg.pageIndex + " '" + pg.name + "' type=" + pg.GetType().Name + " title='" + pt.Field("pageTitleString").GetValue() + "' active=" + pg.gameObject.activeSelf + " path=" + NbPath(pg.transform, root) + " notes=" + string.Join(",", pn.Select(n => n == null ? "null" : n.noteIndex.ToString()).ToArray()));
+			}
+			sb.AppendLine();
+			sb.AppendLine("NOTES " + notes.Length);
+			foreach (NoteBookNote n in notes)
+			{
+				if (n == null) { sb.AppendLine("  null"); continue; }
+				TMP_Text[] texts = n.GetComponentsInChildren<TMP_Text>(true);
+				sb.AppendLine("  note " + n.noteIndex + " '" + n.name + "' land=" + n.landmarkType + " unlocked=" + n.isUnlocked + " thumb=" + n.isFrequencyThumbnail + "/" + n.thumbNailLandmarkType + " path=" + NbPath(n.transform, root)
+					+ " comps=" + string.Join(",", n.GetComponents<Component>().Where(c => c != null).Select(c => c.GetType().Name).ToArray())
+					+ " texts=" + string.Join(" | ", texts.Select(t => t.name + ":" + (t.text ?? "").Replace("\n", "\\n").Substring(0, Math.Min(50, (t.text ?? "").Length))).ToArray()));
+			}
+			sb.AppendLine();
+			Notebook_ThumbnailShortcut[] tabs = ui.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true);
+			if (tabs.Length == 0 && canvas != null) tabs = canvas.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true);
+			sb.AppendLine("TABS " + tabs.Length);
+			foreach (Notebook_ThumbnailShortcut tab in tabs)
+			{
+				sb.AppendLine("  tab '" + tab.name + "' target=" + (tab.targetPage != null ? tab.targetPage.pageIndex + " " + tab.targetPage.name : "null") + " active=" + tab.gameObject.activeInHierarchy + " path=" + NbPath(tab.transform, root) + " " + RectOf(tab.transform));
+				foreach (Transform c in tab.GetComponentsInChildren<Transform>(true)) if (c != tab.transform) sb.AppendLine("     " + NbPath(c, tab.transform) + " [" + string.Join(",", c.GetComponents<Component>().Where(x => x != null && !(x is Transform)).Select(x => x.GetType().Name).ToArray()) + "] " + (c.GetComponent<TMP_Text>() != null ? "TEXT=\"" + c.GetComponent<TMP_Text>().text.Replace("\n", "\\n") + "\"" : ""));
+			}
+			sb.AppendLine();
+			NoteBook_QuestItem[] items = tr.Field("questItemUIs").GetValue<NoteBook_QuestItem[]>() ?? new NoteBook_QuestItem[0];
+			sb.AppendLine("QUEST ITEM SLOTS " + items.Length + (items.Length > 0 && items[0] != null ? " first at " + NbPath(items[0].transform, root) : ""));
+			sb.AppendLine();
+			sb.AppendLine("TREE (from " + root.name + ")");
+			DumpTree(sb, root, "", 9);
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "notebook_dump.txt"));
+			File.WriteAllText(file, sb.ToString());
+			Log("PASS: notebook dumped to " + file + " (" + pages.Length + " pages, " + notes.Length + " notes, " + tabs.Length + " tabs)");
+		}
+
+		[ConsoleCommand(name: "CINoteBookOpen", docs: "Dev, world: opens Raft's notebook at a page (CINoteBookOpen [page]); CINoteBookOpen close shuts it")]
+		public static void NoteBookOpenCommand(string[] args)
+		{
+			NoteBookUI ui = LocalNoteBookUI();
+			if (ui == null) { Fail("NoteBookOpen: no notebook"); return; }
+			if (args != null && args.Length > 0 && args[0] == "close") { ui.SetBookActive(false); Log("PASS: notebook closed"); return; }
+			if (!ui.isDisplayed) ui.SetBookActive(true);
+			uint page;
+			if (args != null && args.Length > 0 && uint.TryParse(args[0], out page)) ui.FlipToPageLocally(page);
+			Log("PASS: notebook open at " + Traverse.Create(ui).Field("currentPageIndex").GetValue());
+		}
+
+		[ConsoleCommand(name: "CINoteBookUnlockAll", docs: "Dev, world (test worlds only): unlocks every note in Raft's notebook (pictures)")]
+		public static void NoteBookUnlockAllCommand()
+		{
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("NoteBookUnlockAll: only in a test world (named CI ...)"); return; }
+			NoteBookUI ui = LocalNoteBookUI();
+			NoteBook nb = UnityEngine.Object.FindObjectOfType<NoteBook>();
+			if (ui == null || nb == null) { Fail("NoteBookUnlockAll: no notebook"); return; }
+			NoteBookNote[] notes = Traverse.Create(ui).Field("notes").GetValue<NoteBookNote[]>() ?? new NoteBookNote[0];
+			int n = 0;
+			foreach (NoteBookNote note in notes) if (note != null && !note.isUnlocked) { nb.UnlockSpecificNoteWithUniqueNoteIndex(note.noteIndex, true, false); n++; }
+			Traverse.Create(ui).Method("UpdatePages").GetValue();
+			Log("PASS: " + n + " notes unlocked");
+		}
+
+		static void DropComponents(GameObject go, params string[] typeNames)
+		{
+			foreach (Component c in go.GetComponentsInChildren<Component>(true))
+				if (c != null && typeNames.Contains(c.GetType().Name)) UnityEngine.Object.DestroyImmediate(c);
+		}
+
+		[ConsoleCommand(name: "CINoteBookClone", docs: "Dev, world (test worlds only): quest book spike - adds <n> test islands to Raft's notebook (a tab each, cloned from Vasagatan's, and two pages with a note), unlocks them and opens the book at the first; CINoteBookClone <n> scroll also puts the tabs into a scrolling strip")]
+		public static void NoteBookCloneCommand(string[] args)
+		{
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("NoteBookClone: only in a test world (named CI ...)"); return; }
+			int count = 1;
+			if (args != null && args.Length > 0) int.TryParse(args[0], out count);
+			bool scroll = args != null && args.Contains("scroll");
+			NoteBookUI ui = LocalNoteBookUI();
+			NoteBook nb = UnityEngine.Object.FindObjectOfType<NoteBook>();
+			if (ui == null || nb == null) { Fail("NoteBookClone: no notebook"); return; }
+			Traverse tr = Traverse.Create(ui);
+			var pages = (tr.Field("pageObjs").GetValue<NoteBookPage[]>() ?? new NoteBookPage[0]).ToList();
+			var notes = (tr.Field("notes").GetValue<NoteBookNote[]>() ?? new NoteBookNote[0]).ToList();
+			NoteBookPage tplL = pages.FirstOrDefault(p => p.pageIndex == 6), tplR = pages.FirstOrDefault(p => p.pageIndex == 7);
+			Notebook_ThumbnailShortcut tplTab = ui.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true).FirstOrDefault(t => t.name.Contains("Vasagatan"));
+			if (tplL == null || tplR == null || tplTab == null) { Fail("NoteBookClone: Vasagatan's pages or tab not found"); return; }
+			uint next = pages.Max(p => p.pageIndex) + 1;
+			if (next % 2 == 1) next++; // a spread starts on an even (left) page
+			int firstPage = (int)next;
+			Sprite[] tabSprites = Resources.FindObjectsOfTypeAll<Sprite>().Where(s => s.name.StartsWith("NoteBook_Thumbnail_")).OrderBy(s => s.name).ToArray();
+			for (int i = 0; i < count; i++)
+			{
+				int idx = 10000 + i * 100;
+				string title = "Test Island " + (i + 1);
+				NoteBookPage left = null;
+				foreach (NoteBookPage tpl in new[] { tplL, tplR })
+				{
+					NoteBookPage pg = UnityEngine.Object.Instantiate(tpl, tpl.transform.parent);
+					pg.pageIndex = next;
+					pg.name = (tpl == tplL ? "NoteBookPageL_" : "NoteBookPageR_") + title + "_PageIndex " + next + "_CI";
+					Traverse.Create(pg).Field("pageTitleString").SetValue(title);
+					Transform tt = pg.transform.Find("Page Title");
+					if (tt != null && tt.GetComponent<TMP_Text>() != null) tt.GetComponent<TMP_Text>().text = title;
+					Transform nt = pg.transform.Find("Page Title/Page number");
+					if (nt != null && nt.GetComponent<TMP_Text>() != null) nt.GetComponent<TMP_Text>().text = (next + 1).ToString();
+					// one note kept (the first), the rest removed
+					NoteBookNote[] pn = pg.GetComponentsInChildren<NoteBookNote>(true);
+					for (int k = 1; k < pn.Length; k++) UnityEngine.Object.DestroyImmediate(pn[k].gameObject);
+					NoteBookNote note = pn[0];
+					note.noteIndex = idx + 1 + (tpl == tplL ? 0 : 1);
+					note.landmarkType = ChunkPointType.None;
+					note.isUnlocked = false;
+					note.name = "NoteBookNote_Index" + note.noteIndex + "_CI";
+					Traverse.Create(note).Field("voiceActor").SetValue(null);
+					Traverse.Create(note).Field("voiceData").SetValue(null);
+					DropComponents(note.gameObject, "Localize");
+					Transform play = note.transform.Find("Play&Stop Button");
+					if (play != null) play.gameObject.SetActive(false);
+					TMP_Text[] tx = note.GetComponentsInChildren<TMP_Text>(true);
+					if (tx.Length > 0) tx[0].text = tpl == tplL
+						? "This is a page of " + title + ", added by Custom Islands while the game runs. If you can read this in Raft's own book, with Raft's paper and handwriting, the quest book can be done.\n\n-The mod"
+						: "A second note on the right page. Notes can be as long as Raft's (about 350 characters).";
+					for (int k = 1; k < tx.Length; k++) tx[k].text = "";
+					Traverse.Create(pg).Field("notes").SetValue(new[] { note });
+					pages.Add(pg);
+					notes.Add(note);
+					if (tpl == tplL) left = pg;
+					next++;
+				}
+				Notebook_ThumbnailShortcut tab = UnityEngine.Object.Instantiate(tplTab, tplTab.transform.parent);
+				tab.name = "ThumbNailButton_" + title + "_CI";
+				tab.targetPage = left;
+				NoteBookNote tn = tab.GetComponent<NoteBookNote>();
+				tn.noteIndex = idx;
+				tn.isFrequencyThumbnail = false;
+				tn.thumbNailLandmarkType = ChunkPointType.None;
+				tn.isUnlocked = false;
+				DropComponents(tab.gameObject, "FrequencyTextMeshProUI", "Localize");
+				foreach (TMP_Text t in tab.GetComponentsInChildren<TMP_Text>(true))
+				{
+					if (t.name == "DestinationName") t.text = title;
+					if (t.name == "DestinationFrequency") { t.text = "#" + (1000 + i * 37).ToString(); t.gameObject.SetActive(true); }
+				}
+				Image img = tab.GetComponent<Image>();
+				if (img != null && tabSprites.Length > 0) img.sprite = tabSprites[i % tabSprites.Length];
+				notes.Add(tn);
+			}
+			tr.Field("pageObjs").SetValue(pages.ToArray());
+			tr.Field("notes").SetValue(notes.ToArray());
+			if (scroll) MakeTabsScroll(tplTab.transform.parent as RectTransform);
+			int unlocked = 0;
+			foreach (NoteBookNote n in notes) if (n.noteIndex >= 10000) { nb.UnlockSpecificNoteWithUniqueNoteIndex(n.noteIndex, true, false); unlocked++; }
+			tr.Method("UpdatePages").GetValue();
+			if (!ui.isDisplayed) ui.SetBookActive(true);
+			bool flipped = ui.FlipToPageLocally((uint)firstPage);
+			Log("PASS: " + count + " test islands added (pages from " + firstPage + ", " + unlocked + " notes unlocked, flip " + flipped + ", now at " + tr.Field("currentPageIndex").GetValue() + ", highest " + tr.Field("highestUnlockedPageIndex").GetValue() + ", tab sprites " + tabSprites.Length + (scroll ? ", tabs scroll" : "") + ")");
+		}
+
+		/// <summary>The tab strip (Raft's ThumbNails, a VerticalLayoutGroup as tall as the book) inside a scrolling viewport.</summary>
+		static void MakeTabsScroll(RectTransform strip)
+		{
+			if (strip == null || strip.parent.name == "CI_TabViewport") return;
+			var vp = new GameObject("CI_TabViewport", typeof(RectTransform), typeof(RectMask2D), typeof(Image), typeof(ScrollRect));
+			RectTransform v = vp.GetComponent<RectTransform>();
+			v.SetParent(strip.parent, false);
+			v.SetSiblingIndex(strip.GetSiblingIndex());
+			v.anchorMin = strip.anchorMin; v.anchorMax = strip.anchorMax; v.pivot = strip.pivot;
+			v.anchoredPosition = strip.anchoredPosition; v.sizeDelta = new Vector2(strip.sizeDelta.x + 30f, strip.sizeDelta.y);
+			vp.GetComponent<Image>().color = new Color(1, 1, 1, 0.003f); // catches the wheel between tabs
+			strip.SetParent(v, false);
+			strip.anchorMin = new Vector2(0.5f, 1f); strip.anchorMax = new Vector2(0.5f, 1f); strip.pivot = new Vector2(0.5f, 1f);
+			strip.anchoredPosition = new Vector2(15f, 0f);
+			var fit = strip.gameObject.AddComponent<ContentSizeFitter>();
+			fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+			ScrollRect sr = vp.GetComponent<ScrollRect>();
+			sr.content = strip; sr.horizontal = false; sr.vertical = true; sr.movementType = ScrollRect.MovementType.Clamped; sr.scrollSensitivity = 20f;
+			sr.viewport = v;
+			LayoutRebuilder.ForceRebuildLayoutImmediate(strip);
+		}
+
+		[ConsoleCommand(name: "CINoteBookScrollTo", docs: "Dev, world: scrolls the quest book spike's tab strip (0 = top, 1 = bottom)")]
+		public static void NoteBookScrollToCommand(string[] args)
+		{
+			ScrollRect sr = UnityEngine.Object.FindObjectsOfType<ScrollRect>().FirstOrDefault(s => s.name == "CI_TabViewport");
+			if (sr == null) { Fail("NoteBookScrollTo: no tab strip that scrolls"); return; }
+			float f = 0f;
+			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f);
+			sr.verticalNormalizedPosition = 1f - f;
+			Log("PASS: tabs scrolled to " + f + " (content " + sr.content.rect.height.ToString("0") + " in " + ((RectTransform)sr.transform).rect.height.ToString("0") + ")");
+		}
+
+		[ConsoleCommand(name: "CINoteBookTab", docs: "Dev, world: presses a notebook tab by its title (as a player's click does)")]
+		public static void NoteBookTabCommand(string[] args)
+		{
+			string title = args != null ? string.Join(" ", args) : "";
+			NoteBookUI ui = LocalNoteBookUI();
+			Notebook_ThumbnailShortcut tab = ui != null ? ui.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true).FirstOrDefault(t => t.GetComponentsInChildren<TMP_Text>(true).Any(x => x.name == "DestinationName" && x.text == title)) : null;
+			if (tab == null) { Fail("NoteBookTab: no tab '" + title + "'"); return; }
+			tab.OnThumbnailButtonPress();
+			Log("PASS: tab '" + title + "' pressed, at page " + Traverse.Create(ui).Field("currentPageIndex").GetValue());
+		}
+	}
+}

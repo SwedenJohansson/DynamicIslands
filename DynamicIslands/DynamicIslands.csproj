@@ -77,6 +77,7 @@
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsQuestBook.cs" />
     <Compile Include="DevTestsSafety.cs" />
     <Compile Include="DevTestsPolish.cs" />
     <Compile Include="DevTestsLibrary.cs" />
