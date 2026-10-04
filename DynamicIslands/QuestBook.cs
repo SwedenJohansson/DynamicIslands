@@ -120,7 +120,8 @@ namespace DynamicIslands.Editor
 		static bool OpenNow(IntroRule r, string step)
 		{
 			if (Preview) return QuestBookPreview.Opened(step);
-			if (r.Beside) return WorldDirector.Done.Contains(r.Id) || IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+			// (beside Raft's story: on the Receiver its tab opens with its frequency; an older plan's, when it comes)
+			if (r.Beside && r.Where != "receiver") return WorldDirector.Done.Contains(r.Id) || IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
 			return StoryChain.Fired.Contains(r.Id) || StoryChain.Unlocked.Contains(step) || StoryChain.Done.Contains(step);
 		}
 		static bool DoneNow(string step)

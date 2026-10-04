@@ -500,7 +500,9 @@ namespace DynamicIslands.Editor
 
 			// WHERE
 			RectTransform where = Section(card, "WHERE", ref height);
-			List<DropList.Option> whereOptions = (islandMode ? WhereOptions.Where(o => o.Value == "ahead" || o.Value == "near") : WhereOptions).ToList();
+			List<DropList.Option> whereOptions = (islandMode ? WhereOptions.Where(o => o.Value == "ahead" || o.Value == "near") :
+				// (main story: only the Receiver - its coordinates are what players follow, and its notebook tab shows them)
+				r.MainStory ? WhereOptions.Where(o => o.Value == "receiver") : WhereOptions).ToList();
 			DropList.Make(where, "Drop_Where", whereOptions, r.Where, v =>
 			{
 				Keep();
@@ -525,7 +527,7 @@ namespace DynamicIslands.Editor
 			}
 			Fill(where);
 			HelpMark(where, islandMode ? HelpWhereIsland : HelpWhere);
-			Explain(card, WhereHint(r), ref height);
+			Explain(card, r.MainStory && !islandMode ? "MAIN STORY: found by its coordinates - its own frequency on the Receiver (shown on its notebook tab); it comes about this far away when a player tunes to it" : WhereHint(r), ref height);
 
 			// TELL
 			RectTransform tell = Section(card, "TELL", ref height);
@@ -602,7 +604,14 @@ namespace DynamicIslands.Editor
 		void StoryRow(RectTransform card, IntroRule r, ref float height)
 		{
 			RectTransform c = Section(card, "STORY", ref height);
-			Button place = DropList.Make(c, "StoryPlace", StoryPlaces(r), r.StoryPlace, v => { Keep(); r.StoryPlace = IntroRule.NormalPlace(v); ShowRules(); }, 260,
+			Button place = DropList.Make(c, "StoryPlace", StoryPlaces(r), r.StoryPlace, v =>
+			{
+				Keep();
+				r.StoryPlace = IntroRule.NormalPlace(v);
+				// (a main story island is found by its coordinates: on the Receiver)
+				if (r.MainStory && r.Where != "receiver") { r.Where = "receiver"; r.Distance = Mathf.Max(r.Distance, 600f); }
+				ShowRules();
+			}, 260,
 				"Put this island into Raft's story chain: first, after one of Raft's story islands (or another of your islands in the story), or in place of one");
 			if (r.InStory)
 			{

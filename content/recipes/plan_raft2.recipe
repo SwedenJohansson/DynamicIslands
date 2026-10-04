@@ -11,7 +11,7 @@ plan new Raft 2 - The Drowned Frontier
 plan description A sequel: years after Utopia the sea rises again, and a trail of the old Frontier Corps' stations leads to the last high ground. Ten quest islands of its own on the Receiver, no island of Raft's story - Raft's key blueprints are found along the way.
 plan random on
 plan story off
-plan rule beacon | island:Frontier Beacon | start | ahead:450 | A light blinks on a pinnacle of black rock: three short, three long. | Frontier Beacon | first | quest
+plan rule beacon | island:Frontier Beacon | start | receiver:500 | A light blinks on a pinnacle of black rock: three short, three long. | Frontier Beacon | first | quest
 plan rule ferry | island:Saltmarsh Ferry | start | receiver:800 | The beacon's log gives the next station: a ferry's emergency band. | Saltmarsh Ferry | after:beacon | quest
 plan rule cinder | island:Cinderfall | start | receiver:900 | A geothermal plant still reports its pressure: rising. | Cinderfall | after:ferry | quest
 plan rule archive | island:The Sunken Archive | start | receiver:900 | A library's catalogue, read out number by number. | Sunken Archive | after:cinder | quest

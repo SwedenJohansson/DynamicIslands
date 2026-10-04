@@ -194,17 +194,18 @@ namespace DynamicIslands
 			{
 				StoryChain.Reset();
 				WorldPlan plan = WorldPlan.Parse("CI quest book", "story = off\nstoryending = The end test.\\nThank you.\n" +
-					"rule = a | type:camp | start | ahead:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
+					"rule = a | type:camp | start | receiver:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
 					"rule = b | type:sandbar | start | receiver:400 | | Bar | after:a | visit\n" +
 					"rule = c | type:sandbar | start | receiver:400 | | Side\n");
 				StoryChain.FromPlan(plan);
+				StoryChain.Tick(); StoryChain.OnTuned(StoryChain.TypeOfRule("a")); // (its coordinates found at the start: a player tunes to them)
 				yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "a"), 60f);
 				IslandWorldState.Entry a = IslandWorldState.Islands.FirstOrDefault(e => e.Rule == "a");
 				if (a != null) made.Add(a.Id);
 				QuestBook.Refresh();
 				Check(ref ok, a != null, "the first main story island came (" + (a != null ? a.HostName : "none") + ")");
-				Check(ref ok, QuestBook.Tabs.Count == 1 && QuestBook.Tabs[0].StartsWith("Alpha Camp||9|2"), "one tab of ours: " + string.Join(" ; ", QuestBook.Tabs.ToArray()));
-				Check(ref ok, (QuestBook.Layout ?? "").StartsWith("First page[0-1] > Alpha Camp[2-") && QuestBook.Layout.Contains("(Radio Tower, not in this story)"), "the book: " + QuestBook.Layout);
+				Check(ref ok, QuestBook.Tabs.Count == 1 && QuestBook.Tabs[0].StartsWith("Alpha Camp|" + StoryChain.FrequencyOf("a") + "|9|2"), "one tab of ours, with its coordinates: " + string.Join(" ; ", QuestBook.Tabs.ToArray()));
+				Check(ref ok, (QuestBook.Layout ?? "").StartsWith("First page[0-1] > Alpha Camp " + StoryChain.FrequencyOf("a") + "[2-") && QuestBook.Layout.Contains("(Radio Tower, not in this story)"), "the book: " + QuestBook.Layout);
 				Check(ref ok, !StoryOrder.Chain.Any(QuestBook.RaftTabShown), "Raft's story is off: none of Raft's tabs shown");
 				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Key == 2 && kv.Value.Any(t => t == "Hello\nworld")), "its first page has the intro written in the plan");
 				bool hasQuest = a != null && QuestTracker.QuestOf(a).Exists;
@@ -377,8 +378,8 @@ namespace DynamicIslands
 			Check(ref ok, why == null && !MainStoryHelper.IsOpen && made.Count == 3, "Done made three main story cards" + (why != null ? ": " + why : ""));
 			if (made.Count == 3)
 			{
-				Check(ref ok, !p.RaftStory && made[0].StoryPlace == "first" && made[0].Where == "ahead" && made[1].StoryPlace == "after:" + made[0].Id && made[1].Where == "receiver" && made[2].StoryPlace == "after:" + made[1].Id,
-					"Raft's story off: the first ahead, each next one on the Receiver after the one before (" + string.Join(" ; ", made.Select(r => r.Id + " " + r.StoryPlace + " " + r.Where).ToArray()) + ")");
+				Check(ref ok, !p.RaftStory && made[0].StoryPlace == "first" && made[0].Where == "receiver" && made[1].StoryPlace == "after:" + made[0].Id && made[1].Where == "receiver" && made[2].StoryPlace == "after:" + made[1].Id,
+					"Raft's story off: every island on the Receiver (main story = coordinates), each after the one before (" + string.Join(" ; ", made.Select(r => r.Id + " " + r.StoryPlace + " " + r.Where).ToArray()) + ")");
 				Check(ref ok, made[1].TabColour == 5 && made[2].StoryDone == "visit" && made.All(r => r.What == "island"), "their colours and next-coordinates choices kept");
 			}
 			Button nb = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.name == "Drop_TabColour");
@@ -408,6 +409,13 @@ namespace DynamicIslands
 			Check(ref ok, f.Any(x => x.Level == PlanChecker.Level.Problem && x.Text.Contains("note #99999")), "Check: a next-coordinates note that isn't on the island is a problem");
 			Check(ref ok, f.Any(x => x.Text.Contains("tab colour 3")), "Check: colour 3 isn't one of Raft's");
 			Check(ref ok, f.Any(x => x.Text.Contains("tab title") && x.Text.Contains("long")), "Check: a long tab title");
+			if (made.Count == 2)
+			{
+				made[1].Where = "ahead";
+				f = PlanChecker.Check(p, false, false);
+				Check(ref ok, f.Any(x => x.Level == PlanChecker.Level.Problem && x.Text.Contains("isn't on the Receiver")), "Check: a main story island without coordinates (not on the Receiver) is a problem");
+				made[1].Where = "receiver";
+			}
 			string bare = islands.FirstOrDefault(n => IslandCache.NoteTextsOf(n).Count == 0);
 			if (bare != null)
 			{
@@ -489,7 +497,7 @@ namespace DynamicIslands
 		}
 
 		const string MpPlan = "story = off\nstoryending = The end test.\\nThank you.\n" +
-			"rule = a | type:camp | start | ahead:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
+			"rule = a | type:camp | start | receiver:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
 			"rule = b | type:sandbar | start | receiver:400 | | Bar | after:a | visit\n" +
 			"rule = c | type:sandbar | start | receiver:400 | | Side\n";
 
@@ -524,6 +532,8 @@ namespace DynamicIslands
 
 		static IEnumerator MpBrought()
 		{
+			StoryChain.Tick();
+			StoryChain.OnTuned(StoryChain.TypeOfRule("a")); // (its coordinates found at the start: the host tunes to them)
 			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "a"), 60f);
 			if (IslandWorldState.Islands.Any(e => e.Rule == "a")) Log("PASS: quest book mp start"); else Fail("quest book mp start: the first island didn't come");
 		}

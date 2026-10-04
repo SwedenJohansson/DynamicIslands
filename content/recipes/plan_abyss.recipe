@@ -10,12 +10,12 @@ plan new The Abyss Expedition
 plan description An expedition downwards beside Raft's story: an old mine, a buried shelter, a sunken island, caverns, a wreck and a drowned city - each found when the one before is done - and at the end the Abyss, a trench where something old lives in the dark.
 plan random off
 plan story on
-plan rule mine | island:Old Mine Islet | start | ahead:400 | A headframe over an old shaft on the islet ahead. The expedition starts here. | Old Mine Islet | beside
-plan rule shelter | island:Shelter Atoll | quest:mine | near:mine:700:east | The miner's map marks a shelter under an atoll to the east. | Shelter Atoll | beside
-plan rule sunken | type:sunken | quest:shelter | near:shelter:600:south-east | The shelter's charts show an island under the sea to the south-east. Dive! | Sunken island | beside
-plan rule caverns | island:Ironreef Caverns | visit:sunken | near:sunken:800:east | From the sunken island's peak: a mountain to the east, full of caves. | Ironreef Caverns | beside
-plan rule wreck | type:wreck | quest:caverns | near:caverns:600:south | Something floats south of the mountain: a wreck. | Wreck | beside
-plan rule city | island:The Drowned Metropolis | visit:wreck | near:wreck:800:east | The wreck's log: "Meridian, east. Don't go down to the foundations." | Drowned Metropolis | beside
-plan rule abyss | island:The Abyss | quest:city | near:city:900:south | The Lantern Lord's lair opened onto a trench to the south. The Abyss. | The Abyss | beside
+plan rule mine | island:Old Mine Islet | start | receiver:500 | A mining company's old beacon still answers on the Receiver: the headframe over its shaft is where the expedition starts. | Old Mine Islet | beside
+plan rule shelter | island:Shelter Atoll | quest:mine | receiver:700 | The miner's logbook ends with a shelter's call sign - an atoll, its emergency band still open. | Shelter Atoll | beside
+plan rule sunken | type:sunken | quest:shelter | receiver:600 | The shelter's radio picks up a buoy over an island under the sea. Dive! | Sunken island | beside
+plan rule caverns | island:Ironreef Caverns | visit:sunken | receiver:800 | From the sunken island's peak the Receiver catches a mine's relay: a mountain full of caves. | Ironreef Caverns | beside
+plan rule wreck | type:wreck | quest:caverns | receiver:600 | A ship's distress beacon, faint and looping: a wreck adrift beyond the caverns. | Wreck | beside
+plan rule city | island:The Drowned Metropolis | visit:wreck | receiver:800 | The wreck's log gives Meridian's harbour band: "Don't go down to the foundations." | Drowned Metropolis | beside
+plan rule abyss | island:The Abyss | quest:city | receiver:900 | The Lantern Lord's lair hums with a signal from below: a trench - the Abyss. | The Abyss | beside
 plan ending Down in the trench the lights go out one by one, and the thing in the dark sleeps again. The Abyss is charted; the expedition is over.\n\nThe end of The Abyss Expedition.
 plan save

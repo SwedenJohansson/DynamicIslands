@@ -1044,8 +1044,13 @@ chain, in the editor's **World plans** window:
   - **After** one of Raft's story islands, or after another of your islands in the story;
   - **In place of** a story island: that island is left out and yours takes its place. Its note leads to your island,
     and your island leads on to the one after;
-  - **Main story, beside Raft's**: in the notebook, but *not* in the Receiver chain - its own WHEN brings it (for an
-    expedition that runs alongside Raft's story, each island when the one before is done, like The Abyss Expedition).
+  - **Main story, beside Raft's**: in the notebook, but *not* in Raft's chain of story islands - its own WHEN gives
+    its coordinates (for an expedition that runs alongside Raft's story, each island's when the one before is done,
+    like The Abyss Expedition).
+- **Every main story island has coordinates.** A main story island is always found **on the Receiver**: choosing a
+  place in the story sets its WHERE to "On the Receiver" (the only choice then), and **Check** calls a main story island
+  that isn't a problem. Its frequency comes on its notebook tab and in a banner when its coordinates are found - the
+  first island's at the start of the world.
 - **Next coordinates when:** when your island counts as done, so the next island's coordinates are found:
   - by default, when its quest is done, or when players reach it if it has no quest;
   - or when players reach it, when N steps of its quest are done, when one of its zones fires, when it sends a
@@ -1129,8 +1134,8 @@ story each time it loads. A world opened without the mod has Raft's own notebook
 
 **New main story...** (World plans, next to Templates...) makes a main story step by step: Raft's story on or off,
 then your saved islands in the order players meet them - for each, where it sits in Raft's story, its tab colour and
-what gives the next coordinates. **Done** makes the rule cards (each island on the Receiver after the one before; the
-first in sight by itself when Raft's story is off) and runs Check. Change the cards as you like after.
+what gives the next coordinates. **Done** makes the rule cards (every island on the Receiver, each after the one
+before; the first one's coordinates given at the start when Raft's story is off) and runs Check. Change the cards as you like after.
 
 **Preview notebook** (World plans, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
 own notebook: the mod goes to the test world (as Test in a world does), opens the book with every tab and page, and a

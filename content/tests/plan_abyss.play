@@ -1,20 +1,20 @@
-# Play test of the plan 'The Abyss Expedition' (CIPlay plan_abyss, in a test world 'CI ...'): each island comes near
-# the one before when its quest is done (or, for the generated sunken island and wreck, when players reach them), and
-# is played to its end with its own test.
+# Play test of the plan 'The Abyss Expedition' (CIPlay plan_abyss, in a test world 'CI ...'): main story beside Raft's
+# story - each island's coordinates come when the one before is done (its quest, or players reaching it), it is tuned
+# to on the Receiver and played to its end with its own test.
 plan The Abyss Expedition
-arrive mine
+tune mine
 include old_mine_islet.play
-arrive shelter
+tune shelter
 include shelter_atoll.play
-arrive sunken
+tune sunken
 # (its top is under water: the player swims over it - a visit counts within its land's radius)
 at 0 0
-arrive caverns
+tune caverns
 include ironreef_caverns.play
-arrive wreck
+tune wreck
 stand
-arrive city
+tune city
 include drowned_metropolis.play
-arrive abyss
+tune abyss
 include the_abyss.play
 plan end

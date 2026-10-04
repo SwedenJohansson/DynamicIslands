@@ -10,7 +10,7 @@ namespace DynamicIslands.Editor
 	/// World Plans' "New main story..." (NextTask_QuestBook.md, Q6): a main story made step by step - Raft's story on or off,
 	/// then the saved islands in the order players meet them, each with where it sits in Raft's story, its tab colour and
 	/// what gives the next coordinates. Done makes the rule cards (each island on the Receiver, after the one before; the
-	/// first in sight by itself when Raft's story is off), runs Check, and offers Preview notebook. The cards can be edited after.
+	/// first one's frequency given at the start), runs Check, and offers Preview notebook. The cards can be edited after.
 	/// </summary>
 	public class MainStoryHelper : MonoBehaviour
 	{
@@ -100,7 +100,7 @@ namespace DynamicIslands.Editor
 
 		void Show()
 		{
-			storyLabel.text = RaftStory ? "ON: your islands go between Raft's own story islands (choose after which one)." : "OFF: only your islands - the first comes into sight by itself, each next one is found on the Receiver.";
+			storyLabel.text = RaftStory ? "ON: your islands go between Raft's own story islands (choose after which one)." : "OFF: only your islands - the first one's coordinates come at the start, each next one's when the one before is done.";
 			foreach (Transform c in list) Destroy(c.gameObject);
 			if (Entries.Count == 0) UIKit.Label(list, "<i>No islands yet: + Add a saved island.</i>", 13, UIKit.TextMuted);
 			for (int k = 0; k < Entries.Count; k++)
@@ -145,9 +145,10 @@ namespace DynamicIslands.Editor
 				if (first) r.StoryPlace = "first";
 				else if (RaftStory && e.After.Length > 0) r.StoryPlace = "after:" + e.After;
 				else r.StoryPlace = "after:" + before;
-				// (the first of a new adventure comes into sight by itself; every other one is found on the Receiver)
-				if (first && !RaftStory) { r.Where = "ahead"; r.Distance = 450f; }
-				else { r.Where = "receiver"; r.Distance = 800f; }
+				// (every main story island is found by its coordinates on the Receiver - the first one too: its frequency comes
+				// at the start, on its notebook tab and in a banner)
+				r.Where = "receiver";
+				r.Distance = 800f;
 				rules.Add(r);
 				before = id;
 			}

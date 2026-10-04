@@ -1,10 +1,10 @@
 # Play test of the plan 'Raft 2 - The Drowned Frontier' (CIPlay plan_raft2, in a test world 'CI ...'): the story from
-# its start without Raft's islands - the first island comes into sight by itself, each one after it is tuned to on the
-# Receiver once the one before is done, and played to its end with its own test.
+# its start without Raft's islands - the first island's coordinates come at the start, each one after it once the one
+# before is done; each is tuned to on the Receiver and played to its end with its own test.
 plan Raft 2 - The Drowned Frontier
 expect chain beacon unlocked
 expect chain RadioTower locked
-arrive beacon
+tune beacon
 include frontier_beacon.play
 expect chain beacon done
 expect chain ferry unlocked

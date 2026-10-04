@@ -454,6 +454,10 @@ namespace DynamicIslands.Editor
 		static void CheckStory(Ctx c, int i)
 		{
 			IntroRule r = c.Plan.Rules[i];
+			// (the user, 2026-10-04: main story islands are found by their coordinates - a frequency on the Receiver)
+			if (r.MainStory && r.Where != "receiver")
+				c.Add(i, Level.Problem, R(c, i) + " is main story, but it isn't on the Receiver: a main story island needs coordinates (its own frequency) - its tab in Raft's notebook shows them.",
+					"WHERE: choose \"On the Receiver\" (or make it a side quest in STORY).");
 			if (r.Beside) foreach (Facts f in Brings(c, r)) CheckNotebook(c, i, r, f);
 			if (!r.InStory) return;
 			bool endsWithUtopia = StoryChain.EndsStory(c.Plan, ChunkPointType.Landmark_Utopia);
