@@ -322,6 +322,9 @@ namespace DynamicIslands
 						// (brought is enough: with the test's raft standing still, earlier islands take the spots ahead and one may come
 						// beyond the load distance - Thornwood 1530 m off - loading as the player goes there, as in a game)
 						yield return TuneTo(rule, 60f, false);
+						// (one that comes within the load distance spawns a moment later: the steps after it need it loaded - The
+						// Abyss Expedition's sunken island, 293 m off, wasn't yet)
+						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && (x.Root != null || (x.Position - me.transform.position).magnitude > 450f)), 30f);
 						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
 						Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", loads as players come near" : "") + ")" : ""));
 						checks += 2;
