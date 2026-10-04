@@ -1264,7 +1264,8 @@ To make one in the **World plans** window ([7.2](#72-your-first-world-plan-step-
 5. **TELL**: the message every player sees when it appears (`A mast on a rock ahead - its light is dead.`) - the mod
    adds how far and which way - and the name on the Receiver (`Signal Rock`). Both are optional, but without a message
    players can't tell it from a random island.
-6. **STORY**: leave it on **Not in Raft's story**. That is what keeps it a side trip: nothing waits for it.
+6. **STORY**: leave it on **Side quest (not in the story)**. That is what keeps it a side trip: nothing waits for it,
+   and its notes and story items go into the journal (J).
 7. **Check**, then **Save**.
 
 As a line of the plan file:
@@ -1299,8 +1300,13 @@ window:
    island gets its own 4-digit frequency, made new for each world.
 6. **TELL**: a message (shown when the frequency is unlocked: `Under the Radio Tower's signal hides another: a lantern
    code, blinking over and over.`) and the name on the Receiver (`Wreckers' Cove`).
-7. **STORY**: **After** and the story island (**Radio Tower**). **Done when**: **its quest is done** (the default).
-8. **Check** shows the whole chain ("Radio Tower > 'cove' > Vasagatan > ..."); then **Save**.
+7. **STORY**: **After** and the story island (**Radio Tower**) - that makes it **main story** (and WHERE stays **On the
+   Receiver**: a main story island is always found by its coordinates). **Next coordinates when**: **its quest is done**
+   (the default).
+8. **NOTEBOOK** (it appears for a main story island): a tab title if the island's name is too long, a tab colour, and
+   the intro on its first page in Raft's notebook (optional).
+9. **Check** shows the whole chain ("Radio Tower > 'cove' > Vasagatan > ..."); **Preview notebook** shows the tab and
+   its pages; then **Save**.
 
 As a line of the plan file:
 
@@ -1312,12 +1318,13 @@ rule = cove | island:Wreckers' Cove | start | receiver:700 | Under the Radio Tow
 
 1. On Raft's **Radio Tower** they read the note that normally gives Vasagatan's frequency. In this world it gives the
    **Wreckers' Cove** frequency instead: a banner says "Tune the Receiver to #4821" (each world has its own number),
-   the journal (J) gets a page with it, and the note shows the number.
+   Raft's notebook (T) gets a **Wreckers' Cove #4821** tab after the Radio Tower's, and the note shows the number.
 2. A player tunes Raft's **Receiver** to it. Wreckers' Cove comes up about 700 m ahead of the raft, and shows on the
    Receiver with its name.
-3. They sail there and do its **quest** (the quest panel shows its steps while they are at the island).
+3. They sail there and do its **quest**: its steps are on the tab's checklist page (crossed out as they are done) and in
+   the quest panel while they are at the island; the notes they read there go onto the tab's pages.
 4. The quest done, the story goes on: **Vasagatan's** frequency is unlocked ("The Receiver picks up a new frequency:
-   #1234", and a journal page "A new signal"), and Raft's story continues as Raft has it - until Vasagatan's note
+   #1234") and its tab shows in the notebook, and Raft's story continues as Raft has it - until Vasagatan's note
    unlocks the next quest island, Thornwood.
 
 If you don't do the quest, the story stops there: the next story island's frequency never comes. `StoryChain` (F10)
@@ -1543,7 +1550,9 @@ or a click outside closes the list).*
 | **BRING** | What kind of island: a new island of a map type, one of your saved islands, one island from a list, or a random one from the spawn pool. The field after it says which (**map type**, **island**, **islands**) |
 | **WHERE** | Ahead of the raft, near an island, on the Receiver, or by chance while sailing; then the **metres**. For "near an island", also the **direction** (a ▼ list: Any way, North, North-east...) and **of** which island (empty = the island where the WHEN happened) |
 | **TELL** | The message every player sees when the island appears (with how far and which way it is), and the island's name **on the Receiver**. Both optional |
-| **STORY** | World plans only: the island's place in Raft's story (a ▼ list: not in it, first, after or in place of one of Raft's story islands...) and, when it's in the story, **done when** ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
+| **STORY** | World plans only: **side quest** (the journal) or **main story** (Raft's notebook) - the island's place in the story (a ▼ list: side quest, main story first, after or in place of one of Raft's story islands, or beside Raft's story) and, for the main story, **next coordinates when** ([6.5](#65-your-islands-in-rafts-story-the-receiver)). A main story island's WHERE is always **On the Receiver** |
+| **NOTEBOOK** | Main story only: the island's **tab title**, **tab colour** (Raft's nine) and the **first page** intro in Raft's notebook |
+| **THE END** | Under the rules, when the plan has a main story: the last page of the story in Raft's notebook (optional) |
 | **The lines in italics** | Under each section: what the chosen option does, with the numbers and names you gave. For a map type, what kind of island it makes |
 | **?** | At the end of each section: hover it for every choice of that section in a few words |
 
@@ -1627,7 +1636,7 @@ What Check looks for:
 | **BRING** | no island chosen, an island that isn't saved, a map type that doesn't exist, a list with no saved island, an empty spawn pool | some islands of a list aren't saved; a very big island (over 12 000 objects); the same island brought twice |
 | **WHERE** | near an island nobody has; near "the island where it happened" when the WHEN happens at no island; near its own island | near a saved island no rule brings; near a rule it doesn't wait for (it waits until that island is there); very far away |
 | **TELL** | | no message; found by Receiver but no Receiver name |
-| **STORY** | its "done when" can't happen (as WHEN above); after Utopia while Utopia ends the story (it never counts as done) | after an island that isn't in the story; Raft's story order and missing blueprints |
+| **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
@@ -2387,8 +2396,9 @@ instead, and on the project's roadmap.
 - **Levels, the place a player stood and private storages belong to a Steam account**: Raft knows players by their
   Steam id. A player who comes back with another Steam account starts over there.
 - **Raft has no pets**: "catchable" animals are Raft's domestic ones (chicken, goat, llama), caught with the net launcher.
-- **Story items live in the crew's journal, not in Raft's inventory.** Raft's items are a fixed list; a new item would
-  break the save for anyone who opens the world without the mod.
+- **Story items live with the crew, not in Raft's inventory** (in the journal, or for the main story in Raft's
+  notebook's Found items, which the mod builds again each time - nothing of it is in Raft's save). Raft's items are a
+  fixed list; a new item would break the save for anyone who opens the world without the mod.
 - **Objects from Raft's other islands and Raft's buildable items are decoration** in custom islands: a chest from
   Tangaroa doesn't store anything, a character doesn't move. Their game code belongs to Raft's own islands. The mod's own
   chests, notes, zones and creature spots, and the harvestable trees, rocks, ores and plants, have their gameplay.
@@ -2435,9 +2445,9 @@ the island before it is done.
 **One of my islands never turns up.** It may be unticked for this world ([9.5](#95-islands-while-sailing)): run
 `WorldIslands`, and `WorldIslands +<island>` lets it take part again. Its weight in `spawnpool.txt` may also be 0.
 
-**A story item isn't in my inventory, or Raft's notebook has no page for a custom island's note.** They are in
-the journal (**J**): custom islands keep their story items and notes there, for the whole crew ([3](#the-journal-j)).
-Raft's notebook (T) only has Raft's own story.
+**A story item isn't in my inventory, or I can't find a custom island's note.** A **main story** island's notes and
+story items are in Raft's notebook (**T**: its tab, and Found items); a **side quest** island's are in the journal
+(**J**). Both are the whole crew's ([3](#the-journal-j)).
 
 **A note I read isn't in the journal.** Notes with no text add no page, and each note adds one page once per world
 (someone else may have read it first: look for its title).

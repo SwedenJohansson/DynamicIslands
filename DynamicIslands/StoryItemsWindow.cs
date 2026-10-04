@@ -68,7 +68,7 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(940, 0));
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
 			UIKit.Label(head, "STORY ITEMS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
-			UIKit.Label(head, "Keys, map pieces, logs... the crew keeps them in the journal (J) in a world", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			UIKit.Label(head, "Keys, map pieces, logs... the crew keeps them: in Raft's notebook (main story) or the journal (side quests)", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			RectTransform box = UIKit.Rect("Body", panel);
 			UIKit.Size(box.gameObject, -1, 560);
 			ScrollRect scroll;

@@ -204,9 +204,17 @@ namespace DynamicIslands.Editor
 			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
 			IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
 			if (r != null) Behaviours.Fire(ContentState.EntryOf(n.transform), r.Index, "read", true);
-			// Every note read goes into the crew's journal (once)
+			// Every note read goes into the crew's book (once): a main story island's onto its tab in Raft's notebook
+			// (QuestBook), a side quest's into the journal
 			IslandWorldState.Entry e = ContentState.EntryOf(n.transform);
-			if (e != null && r != null && n.Text.Trim().Length > 0) StoryBook.AddPage("note:" + e.HostName + ":" + r.Index, titleText.text, n.Text, Behaviours.IslandTitle(e));
+			if (e != null && r != null && n.Text.Trim().Length > 0)
+			{
+				string key = "note:" + e.HostName + ":" + r.Index;
+				bool first = !StoryBook.Pages.Any(p => p.Key == key);
+				StoryBook.AddPage(key, titleText.text, n.Text, Behaviours.IslandTitle(e));
+				if (first && StoryChain.BookRules.Any(x => x.Id.Equals(e.Rule ?? "", StringComparison.OrdinalIgnoreCase)))
+					IslandInfo.ShowMessage("Written into Raft's notebook (T): '" + titleText.text + "'");
+			}
 		}
 
 		void Hide()

@@ -105,7 +105,7 @@ namespace DynamicIslands.Editor
 			tiles.RemoveAll(t => t.Value == null || t.Value.transform.parent == storyGrid);
 			if (!withStory) return;
 			foreach (StoryItemDef d in StoryItems.Of(DynamicIslands.currentIslandProps))
-				Tile(storyGrid, StoryItems.Ref(d.Id), d.ShownName + " (story)", StoryItems.IconSprite(d.Icon), "Story item '" + d.ShownName + "': the crew keeps it in the journal");
+				Tile(storyGrid, StoryItems.Ref(d.Id), d.ShownName + " (story)", StoryItems.IconSprite(d.Icon), "Story item '" + d.ShownName + "': the crew keeps it (Raft's notebook for the main story, else the journal)");
 		}
 
 		void Pick(string name)

@@ -191,7 +191,8 @@ namespace DynamicIslands.Editor
 			if (id.Length == 0 || count <= 0) return;
 			StoryItemDef d = StoryItems.Find(id) ?? new StoryItemDef { Id = id };
 			Change("give", Fields(d.Id, count.ToString(CultureInfo.InvariantCulture), d.Name, d.Icon, d.Description));
-			IslandInfo.ShowMessage("Story item: " + d.ShownName + (count > 1 ? " \u00D7" + count : "") + "   (J: journal)");
+			// (the main story's items are in Raft's notebook's Found items, the side quests' in the journal)
+			IslandInfo.ShowMessage("Story item: " + d.ShownName + (count > 1 ? " \u00D7" + count : "") + (QuestBook.MainItemIds().Contains(d.Id) ? "   (T: notebook)" : "   (J: journal)"));
 		}
 
 		/// <summary>The crew's story items are used up (a "take" check passed).</summary>
