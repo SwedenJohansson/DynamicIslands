@@ -771,25 +771,28 @@ namespace DynamicIslands.Editor
 			dirty = false;
 			foreach (Transform c in itemGrid) Destroy(c.gameObject);
 			foreach (Transform c in pageList) if (c != emptyPages.transform) Destroy(c.gameObject);
-			List<StoryBook.Held> items = StoryBook.Items.ToList();
+			// (the main story's items and pages are in Raft's notebook - QuestBook - the journal keeps the side quests')
+			HashSet<string> mainItems = QuestBook.MainItemIds();
+			List<StoryBook.Held> items = StoryBook.Items.Where(h => !mainItems.Contains(h.Def.Id)).ToList();
+			List<StoryBook.Page> pages = StoryBook.Pages.Where(p => !QuestBook.IsMainPage(p)).ToList();
 			foreach (StoryBook.Held h in items) ItemTile(h);
 			emptyItems.gameObject.SetActive(items.Count == 0);
 			// (by island - the island seen last first - under its name and its quest: pages of several islands in one list got
 			// mixed up, the user found, 2026-10-02)
 			pageKeys.Clear();
-			foreach (IGrouping<string, StoryBook.Page> island in StoryBook.Pages.Reverse().GroupBy(p => p.Island ?? ""))
+			foreach (IGrouping<string, StoryBook.Page> island in Enumerable.Reverse(pages).GroupBy(p => p.Island ?? ""))
 			{
 				IslandHeader(island.Key, island.First(), island);
 				foreach (StoryBook.Page p in island) PageButton(p);
 			}
-			emptyPages.gameObject.SetActive(StoryBook.Pages.Count == 0);
-			countText.text = items.Count + " story item(s) \u00B7 " + StoryBook.Pages.Count + " page(s)";
+			emptyPages.gameObject.SetActive(pages.Count == 0);
+			countText.text = items.Count + " story item(s) \u00B7 " + pages.Count + " page(s)" + (QuestBook.InNotebook ? " \u00B7 main story: Raft's notebook" : "");
 			NoteRefresh();
 			RefreshQuests();
 			if (shownKey == QuestsKey) ShowQuests();
-			else if (shownKey == null || (!StoryBook.Pages.Any(p => p.Key == shownKey) && !items.Any(h => "item:" + h.Def.Id == shownKey)))
+			else if (shownKey == null || (!pages.Any(p => p.Key == shownKey) && !items.Any(h => "item:" + h.Def.Id == shownKey)))
 			{
-				if (StoryBook.Pages.Count > 0) ShowPage(StoryBook.Pages.Last());
+				if (pages.Count > 0) ShowPage(pages.Last());
 				else if (items.Count > 0) ShowItem(items[0]);
 				else { shownKey = null; readIcon.enabled = false; readTitle.text = "Journal"; readText.text = "Nothing here yet. Read notes on the islands and look for story items: they are kept here for the whole crew."; }
 			}
@@ -964,6 +967,12 @@ namespace DynamicIslands.Editor
 			var sb = new System.Text.StringBuilder();
 			foreach (IGrouping<string, QuestCount.Quest> g in quests.GroupBy(q => q.Group))
 			{
+				// (the main story's steps are in Raft's notebook: only how far it is, here)
+				if (g.Key == QuestCount.PlanStory && QuestBook.InNotebook)
+				{
+					sb.Append("Main story: ").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(" islands done - its quests, notes and items are in Raft's notebook\n\n");
+					continue;
+				}
 				sb.Append(g.Key).Append(" (").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(")\n");
 				foreach (QuestCount.Quest q in g) sb.Append(q.Done ? "   \u221a  " : "   \u2013  ").Append(q.Name).Append(q.Done ? "" : "").Append('\n');
 				sb.Append('\n');

@@ -176,6 +176,7 @@ namespace DynamicIslands
 			QuestBook.Refresh();
 			Log("QUESTBOOK layout: " + QuestBook.Layout);
 			foreach (string t in QuestBook.Tabs) Log("QUESTBOOK tab: " + t);
+			Log("QUESTBOOK items: " + string.Join(", ", QuestBook.Items.ToArray()));
 			Log("QUESTBOOK Raft tabs shown: " + string.Join(",", StoryOrder.Chain.Where(QuestBook.RaftTabShown).Select(StoryOrder.Name).ToArray()));
 			foreach (KeyValuePair<uint, List<string>> kv in QuestBook.PageTexts.OrderBy(k => k.Key))
 				Log("QUESTBOOK page " + kv.Key + ": " + string.Join(" || ", kv.Value.Select(x => x.Replace("\n", "\\n")).ToArray()));

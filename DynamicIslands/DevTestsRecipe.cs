@@ -1383,6 +1383,7 @@ namespace DynamicIslands
 									break;
 								}
 								case "description": WorldPlanWindow.RecipeDescription(Unescape(arg)); break;
+								case "ending": WorldPlanWindow.RecipeEnding(IntroRule.UnMulti(Unescape(arg))); break;
 								case "random": WorldPlanWindow.RecipeRandom(arg == "on"); break;
 								case "story": WorldPlanWindow.RecipeStory(arg == "on"); break;
 								case "leaveout":
@@ -1410,7 +1411,7 @@ namespace DynamicIslands
 									Log("  saved plan '" + planName + "' (" + WorldPlan.Load(planName).Rules.Count + " rules)");
 									break;
 								}
-								default: error = "plan new|description|random|story|leaveout|rule|save"; break;
+								default: error = "plan new|description|ending|random|story|leaveout|rule|save"; break;
 							}
 							break;
 						}

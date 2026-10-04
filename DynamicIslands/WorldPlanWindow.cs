@@ -326,6 +326,18 @@ namespace DynamicIslands.Editor
 			new DropList.Option("step", "Quest steps are done", "This many steps of its quest are done"),
 			new DropList.Option("zone", "Its trigger zone fires", "A player walks into this trigger zone on it"),
 			new DropList.Option("signal", "Its signal is sent", "An object on it sends this signal"),
+			new DropList.Option("note", "Its note is read", "A player reads this note on it (by the note's number)"),
+		};
+		/// <summary>Raft's ten tab colours (the sprites NoteBook_Thumbnail_1..10), and "by its place".</summary>
+		static readonly DropList.Option[] TabColourOptions =
+		{
+			new DropList.Option("0", "Automatic colour", "A colour by its place in the story"),
+			// (Raft has nine: there is no NoteBook_Thumbnail_3)
+			new DropList.Option("1", "Pink", "Raft's tab colour 1 (Utopia's)"), new DropList.Option("2", "Sand", "Raft's tab colour 2 (First page's)"),
+			new DropList.Option("4", "Purple", "Raft's tab colour 4 (Caravan Town's)"), new DropList.Option("5", "Teal", "Raft's tab colour 5 (Varuna Point's)"),
+			new DropList.Option("6", "Olive", "Raft's tab colour 6 (Tangaroa's)"), new DropList.Option("7", "Red", "Raft's tab colour 7 (Radio Tower's)"),
+			new DropList.Option("8", "Green", "Raft's tab colour 8 (Vasagatan's)"), new DropList.Option("9", "Blue", "Raft's tab colour 9 (Balboa's)"),
+			new DropList.Option("10", "Light blue", "Raft's tab colour 10 (Temperance's)"),
 		};
 		static DropList.Option[] DirectionOptions
 		{
@@ -347,6 +359,7 @@ namespace DynamicIslands.Editor
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(rulesList));
 			for (int i = 0; i < plan.Rules.Count; i++) RuleCard(i);
 			if (plan.Rules.Count == 0) UIKit.Label(rulesList, "<i>No rules yet. \"+ Add a rule\", or Templates... for a ready-made set.</i>", 13, UIKit.TextMuted);
+			if (!islandMode && plan.Rules.Any(r => r.InStory)) EndingCard();
 			DrawMap();
 			ShowRandom(); // (the story row follows the rules: an island of the plan in a story island's place)
 		}
@@ -554,17 +567,18 @@ namespace DynamicIslands.Editor
 				"Put this island into Raft's story chain: first, after one of Raft's story islands (or another of your islands in the story), or in place of one");
 			if (r.InStory)
 			{
-				Tag(c, "done when");
+				Tag(c, "next coordinates when");
 				string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 				DropList.Make(c, "Drop_Done", DoneOptions, kind, v =>
 				{
 					Keep();
-					r.StoryDone = v == "step" ? "step:1" : v == "zone" || v == "signal" ? v + ":" : v;
+					r.StoryDone = v == "step" ? "step:1" : v == "zone" || v == "signal" || v == "note" ? v + ":" : v;
 					ShowRules();
-				}, 200, "When this island counts as done in the story (then the next island of the story is unlocked)");
-				if (kind == "step" || kind == "zone" || kind == "signal")
+				}, 200, "When the players find the NEXT island's coordinates: when this island counts as done in the story (then the next island of the story is unlocked)");
+				if (kind == "step" || kind == "zone" || kind == "signal" || kind == "note")
 				{
-					SmallField(c, kind == "step" ? "steps" : kind + " name", arg, kind == "step" ? 50 : 110, kind == "step" ? "How many steps of its quest" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
+					SmallField(c, kind == "step" ? "steps" : kind == "note" ? "note #" : kind + " name", arg, kind == "step" || kind == "note" ? 50 : 110,
+						kind == "step" ? "How many steps of its quest" : kind == "note" ? "The note's number on the island (▾ lists them)" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
 					string own = r.What == "island" ? r.WhatArg : null;
 					Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
 						Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
@@ -572,14 +586,63 @@ namespace DynamicIslands.Editor
 			}
 			Fill(c);
 			HelpMark(c, HelpStoryPlace);
-			Explain(card, !r.InStory ? "Not in Raft's story: its own WHEN decides when it comes. Choose a place to make it part of the Receiver's chain of islands."
-				: r.DescribeStory() + (r.Where == "receiver" ? " - then players tune the Receiver to its frequency" : ""), ref height);
+			Explain(card, !r.InStory ? "SIDE QUEST: it goes into the JOURNAL (J). Its own WHEN decides when it comes. Choose a place in the story to make it MAIN STORY (Raft's notebook)."
+				: "MAIN STORY: it goes into Raft's NOTEBOOK. " + r.DescribeStory().Replace("; done when ", "; the next coordinates come when ") + (r.Where == "receiver" ? " - players tune the Receiver to its frequency" : ""), ref height);
+			if (r.InStory) NotebookRow(card, r, ref height);
 		}
+
+		/// <summary>After the rules (a plan with a main story): the last page of the story in Raft's notebook.</summary>
+		void EndingCard()
+		{
+			RectTransform card = UIKit.Group(rulesList, "", "Ending");
+			float height = 16f;
+			RectTransform c = Section(card, "THE END", ref height);
+			InputField f = SmallField(c, "The last page of the main story in Raft's notebook (optional)", plan.StoryEnding, -1,
+				"Shown in Raft's notebook, with a banner, when every main story island is done. Enter = a new line", v => plan.StoryEnding = v.Trim());
+			f.lineType = InputField.LineType.MultiLineNewline;
+			f.characterLimit = 600;
+			f.name = "Field_StoryEnding";
+			HelpMark(c, HelpNotebook);
+			Explain(card, "When the last main story island is done, this page appears at the end of the notebook and every player gets a banner. The world goes on.", ref height);
+			UIKit.Size(card.gameObject, -1, height);
+		}
+
+		/// <summary>Recipes and tests: the ending page typed in.</summary>
+		public static void RecipeEnding(string text)
+		{
+			if (instance == null || instance.plan == null) return;
+			instance.plan.StoryEnding = (text ?? "").Trim();
+			instance.ShowRules();
+		}
+
+		/// <summary>A main story island's tab in Raft's notebook: its title, colour and the intro on its first page.</summary>
+		void NotebookRow(RectTransform card, IntroRule r, ref float height)
+		{
+			RectTransform c = Section(card, "NOTEBOOK", ref height);
+			Tag(c, "tab title");
+			SmallField(c, r.TabName, r.TabTitle, 150, "The tab's title in Raft's notebook (empty: the Receiver name, else the island's name)", v => r.TabTitle = v.Replace("|", "/").Trim()).characterLimit = 24;
+			DropList.Make(c, "Drop_TabColour", TabColourOptions, r.TabColour.ToString(CultureInfo.InvariantCulture), v => { Keep(); int n; r.TabColour = int.TryParse(v, out n) ? n : 0; ShowRules(); }, 170,
+				"The tab's colour: one of Raft's ten notebook tab colours");
+			Fill(c);
+			HelpMark(c, HelpNotebook);
+			RectTransform intro = Section(card, "", ref height);
+			Tag(intro, "first page");
+			InputField f = SmallField(intro, "The intro on the tab's first page (empty: \"A new frequency: #1234...\")", r.TabIntro, -1,
+				"Shown on the tab's first page when the island's coordinates are found, before any note is read. Enter = a new line", v => r.TabIntro = v.Trim());
+			f.lineType = InputField.LineType.MultiLineNewline;
+			f.characterLimit = 400;
+			Explain(card, "Its tab: the title" + (r.Where == "receiver" ? ", its Receiver #digits" : "") + " and this intro; then a page with its quest's steps (ticked off as players do them) and the notes read on it. Preview notebook shows it.", ref height);
+		}
+
+		const string HelpNotebook = "MAIN STORY islands get a tab in Raft's own notebook, in story order (between Raft's own islands when Raft's story is on).\n\n" +
+			"The tab shows its title and, for an island on the Receiver, its frequency. Its pages: the intro you write here (shown when its coordinates are found), " +
+			"its quest's steps (the steps done are crossed out), and the notes players read on the island - in Raft's paper and handwriting. Its story items show under Raft's 'Found items'.\n\n" +
+			"Side quests (islands not in the story) stay in the journal (J).";
 
 		/// <summary>The places an island can have in Raft's story, for the drop-down.</summary>
 		List<DropList.Option> StoryPlaces(IntroRule r)
 		{
-			var list = new List<DropList.Option> { new DropList.Option("", "Not in Raft's story", "Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "First in the story", "Unlocked from the start of the world, before Raft's first island") };
+			var list = new List<DropList.Option> { new DropList.Option("", "Side quest (not in the story)", "A side quest: the journal (J). Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "Main story: first", "Main story (Raft's notebook): unlocked from the start of the world, before Raft's first island") };
 			foreach (ChunkPointType t in StoryOrder.Chain)
 			{
 				// (Raft's Utopia ends the story: it never counts as done, so nothing after it could come - offered only when
@@ -685,7 +748,7 @@ namespace DynamicIslands.Editor
 			return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n.Equals(reference, StringComparison.OrdinalIgnoreCase));
 		}
 
-		static string ThingsOf(string kind) { return kind == "zone" ? "trigger zones" : kind == "signal" ? "signals" : "quest steps"; }
+		static string ThingsOf(string kind) { return kind == "zone" ? "trigger zones" : kind == "signal" ? "signals" : kind == "note" ? "notes" : "quest steps"; }
 		static string Capital(string s) { return s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1); }
 		static string RefLabel(string reference) { return string.IsNullOrEmpty(reference) ? "the island" : "'" + reference + "'"; }
 
@@ -696,6 +759,7 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(island)) return list;
 			if (kind == "zone") list.AddRange(IslandCache.ZonesOf(island).Select(z => new ChoiceWindow.Choice(z, z, "trigger zone on " + island)));
 			else if (kind == "signal") list.AddRange(IslandCache.SignalsOf(island).Select(s => new ChoiceWindow.Choice(s, s, "sent on " + island)));
+			else if (kind == "note") list.AddRange(IslandCache.NotesOf(island).Select(n => new ChoiceWindow.Choice(n.ToString(CultureInfo.InvariantCulture), "Note #" + n, "a note with a text on " + island)));
 			else
 			{
 				List<IslandQuest.Step> steps = IslandCache.QuestOf(island).Steps;

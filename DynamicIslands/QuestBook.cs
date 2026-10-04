@@ -41,6 +41,8 @@ namespace DynamicIslands.Editor
 		static RectTransform strip;
 		static NoteBookPage tplLeft, tplRight;
 		static NoteBookNote tplLetter, tplPad, tplPostit;
+		static NoteBook_QuestItem slotTpl;
+		static TMP_Text itemText;
 		static readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 		static readonly List<GameObject> made = new List<GameObject>();
 		static readonly HashSet<ChunkPointType> hiddenRaft = new HashSet<ChunkPointType>();
@@ -95,7 +97,7 @@ namespace DynamicIslands.Editor
 
 		static Island Describe(IntroRule r, int ordinal, bool stepDone)
 		{
-			var i = new Island { Rule = r, Title = r.TabName, Colour = r.TabColour > 0 ? r.TabColour : AutoColour(ordinal) };
+			var i = new Island { Rule = r, Title = r.TabName, Colour = ValidColour(r.TabColour) ? r.TabColour : AutoColour(ordinal) };
 			string f = StoryChain.FrequencyOf(r.Id);
 			i.Frequency = f ?? "";
 			i.Intro = r.TabIntro.Trim().Length > 0 ? r.TabIntro.Trim() :
@@ -125,8 +127,52 @@ namespace DynamicIslands.Editor
 			return i;
 		}
 
+		/// <summary>The story items of the main story islands (they go into Raft's Found items, not the journal).</summary>
+		public static HashSet<string> MainItemIds()
+		{
+			var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (!Applies) return ids;
+			foreach (IntroRule r in StoryChain.BookRules)
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase)))
+					foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(e))) ids.Add(d.Id);
+			return ids;
+		}
+
+		/// <summary>A journal page that belongs to the main story (Raft's notebook shows it): a note or event page of a main
+		/// story island, or a frequency of the chain - the journal leaves these out.</summary>
+		public static bool IsMainPage(StoryBook.Page p)
+		{
+			if (!Applies || p == null) return false;
+			string k = p.Key ?? "";
+			if (k.StartsWith("storyfreq:", StringComparison.OrdinalIgnoreCase))
+			{
+				string what = k.Substring(10);
+				return StoryChain.IsRaft(what) || StoryChain.BookRules.Any(r => r.Id.Equals(what, StringComparison.OrdinalIgnoreCase));
+			}
+			foreach (IntroRule r in StoryChain.BookRules)
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase)))
+					if (k.StartsWith("note:" + e.HostName + ":", StringComparison.OrdinalIgnoreCase) || k.StartsWith("act:" + e.HostName + ":", StringComparison.OrdinalIgnoreCase)) return true;
+			return false;
+		}
+
+		/// <summary>The main story is in Raft's notebook in this world (the journal says so instead of listing it).</summary>
+		public static bool InNotebook { get { return Applies && StoryChain.BookRules.Count > 0; } }
+
+		/// <summary>The crew's story items of the main story (held now).</summary>
+		public static List<StoryBook.Held> MainItems()
+		{
+			HashSet<string> ids = MainItemIds();
+			return ids.Count == 0 ? new List<StoryBook.Held>() : StoryBook.Items.Where(h => ids.Contains(h.Def.Id)).ToList();
+		}
+
 		/// <summary>A colour for a tab without one: Raft's tabs use 1, 2 and 4-10 for its own islands; ours go round from 3.</summary>
-		static int AutoColour(int ordinal) { return ((2 + (ordinal - 1) * 3) % IntroRule.TabColours) + 1; }
+		static int AutoColour(int ordinal) { return AutoColours[(ordinal - 1) % AutoColours.Length]; }
+
+		/// <summary>Raft's nine tab sprites (there is no 3), in the order tabs without a colour get them.</summary>
+		static readonly int[] AutoColours = { 8, 9, 4, 6, 5, 10, 1, 7, 2 };
+
+		/// <summary>A tab colour Raft has a sprite for (3, or out of range: by its place).</summary>
+		public static bool ValidColour(int c) { return c >= 1 && c <= IntroRule.TabColours && c != 3; }
 
 		/// <summary>The main story is over: every main story step done (the plan's ending page shows).</summary>
 		public static bool StoryOver
@@ -148,6 +194,7 @@ namespace DynamicIslands.Editor
 			var parts = new List<string> { string.Join(",", StoryChain.Steps.ToArray()), string.Join(",", StoryChain.Unlocked.OrderBy(s => s).ToArray()),
 				string.Join(",", StoryChain.Done.OrderBy(s => s).ToArray()), string.Join(",", StoryChain.Fired.OrderBy(s => s).ToArray()), StoryChain.StoryEnding };
 			foreach (IntroRule r in StoryChain.BookRules) parts.Add(r.ToLine() + "@" + StoryChain.FrequencyOf(r.Id));
+			foreach (StoryBook.Held h in MainItems()) parts.Add("item " + h.Def.Id + "=" + h.Count);
 			foreach (Island i in OpenIslands()) parts.Add(i.Title + ":" + string.Join(";", i.Checklist.ToArray()) + ":" + i.Notes.Count);
 			return string.Join("\n", parts.ToArray());
 		}
@@ -202,6 +249,10 @@ namespace DynamicIslands.Editor
 				strip = t.transform.parent as RectTransform;
 			}
 			if (strip != null) foreach (Transform c in strip) raftTabOrder.Add(c);
+			NoteBook_QuestItem[] slots = tr.Field("questItemUIs").GetValue<NoteBook_QuestItem[]>() ?? new NoteBook_QuestItem[0];
+			slotTpl = slots.FirstOrDefault(s => s != null);
+			Transform desc = ui.transform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Text_ItemDescription");
+			itemText = desc != null ? desc.GetComponent<TMP_Text>() : null;
 			sprites.Clear();
 			foreach (Sprite s in Resources.FindObjectsOfTypeAll<Sprite>())
 				if (s != null && s.name.StartsWith("NoteBook_Thumbnail_") && !sprites.ContainsKey(s.name)) sprites[s.name] = s;
@@ -300,6 +351,7 @@ namespace DynamicIslands.Editor
 				if (!stepTypes.Contains(kv.Key)) { hiddenRaft.Add(kv.Key); place("(" + StoryOrder.Name(kv.Key) + ", not in this story)", RaftGroup(kv.Key)); }
 			foreach (NoteBookPage p in raftPages.Where(p => !placed.Contains(p))) { p.pageIndex = next++; pages.Add(p); }
 			tr.Field("pageObjs").SetValue(pages.ToArray());
+			BuildItems();
 			if (tabPages.Count + raftTabs.Count - hiddenRaft.Count > 11) MakeTabsScroll();
 			Layout = string.Join(" > ", layout.ToArray());
 			Log("Laid out: " + Layout);
@@ -492,6 +544,38 @@ namespace DynamicIslands.Editor
 			return group;
 		}
 
+		/// <summary>The main story's items in Raft's Found items: copies of Raft's own slots after Raft's quest items.</summary>
+		static void BuildItems()
+		{
+			Items.Clear();
+			if (slotTpl == null) return;
+			foreach (StoryBook.Held h in MainItems())
+			{
+				GameObject g = UnityEngine.Object.Instantiate(slotTpl.gameObject, slotTpl.transform.parent);
+				g.name = "QuestItem_" + h.Def.Id + Mark;
+				made.Add(g);
+				// (Raft's slot script reads one of Raft's quest items: ours shows its own picture and name)
+				foreach (Component c in g.GetComponentsInChildren<Component>(true))
+					if (c is NoteBook_QuestItem) UnityEngine.Object.DestroyImmediate(c);
+				Transform img = g.transform.Find("ItemImage");
+				Sprite s = StoryItems.IconSprite(h.Def.Icon);
+				if (img != null && img.GetComponent<Image>() != null && s != null) img.GetComponent<Image>().sprite = s;
+				Transform amount = g.transform.Find("AmountText"), amountBack = g.transform.Find("AmountBackground");
+				if (amount != null && amount.GetComponent<TMP_Text>() != null) amount.GetComponent<TMP_Text>().text = h.Count.ToString(CultureInfo.InvariantCulture);
+				if (amount != null) amount.gameObject.SetActive(h.Count > 1);
+				if (amountBack != null) amountBack.gameObject.SetActive(h.Count > 1);
+				QuestBookItemHover hover = g.AddComponent<QuestBookItemHover>();
+				hover.Text = itemText;
+				hover.Label = h.Def.ShownName;
+				g.transform.SetAsLastSibling();
+				g.SetActive(true);
+				Items.Add(h.Def.ShownName + (h.Count > 1 ? " x" + h.Count : ""));
+			}
+		}
+
+		/// <summary>Our items now in Found items (tests).</summary>
+		public static readonly List<string> Items = new List<string>();
+
 		static List<NoteBookPage> BuildEnding()
 		{
 			NoteBookPage pg = NewPage(true, "The end");
@@ -547,6 +631,15 @@ namespace DynamicIslands.Editor
 			Notebook_ThumbnailShortcut tab;
 			return raftTabs.TryGetValue(t, out tab) && tab != null && tab.gameObject.activeSelf;
 		}
+	}
+
+	/// <summary>A story item's slot in Found items: its name under the title while the mouse is on it, as Raft's do.</summary>
+	public class QuestBookItemHover : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
+	{
+		public TMP_Text Text;
+		public string Label = "";
+		public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData e) { if (Text != null) Text.text = Label; }
+		public void OnPointerExit(UnityEngine.EventSystems.PointerEventData e) { if (Text != null && Text.text == Label) Text.text = ""; }
 	}
 
 	[HarmonyPatch(typeof(NoteBookUI), "UpdateAllNotesVisibility")]
