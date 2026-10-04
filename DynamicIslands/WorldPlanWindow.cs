@@ -1277,6 +1277,7 @@ namespace DynamicIslands.Editor
 				Description = "A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency",
 				Text = "random = off\n" +
 					"story = off\n" +
+					"storyending = The treasure is yours, and the last frequency falls silent. Every island of the adventure is in this book.\\n\\nThe end.\n" +
 					"rule = camp | type:camp | start | receiver:600 | A faint signal crackles on the Receiver... | Old camp | first | quest\n" +
 					"rule = islets | type:archipelago | start | receiver:800 | The camp's radio log names another frequency. | Islets | after:camp | quest\n" +
 					"rule = beast | type:boss | start | receiver:900 | A distress call from a plateau... | Plateau | after:islets | quest\n" +

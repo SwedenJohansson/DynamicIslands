@@ -425,6 +425,19 @@ namespace DynamicIslands
 			}
 			else Log("  (every saved island has notes: the no-notes tip isn't checked)");
 			WorldPlanWindow.Close();
+			// (a new plan is saved at once: the test's own is moved out of the plans, not left among the player's)
+			string testPlan = WorldPlan.PathFor("CI quest book editor");
+			try
+			{
+				if (File.Exists(testPlan))
+				{
+					string away = Path.Combine(Path.GetTempPath(), "ci_old_plans");
+					Directory.CreateDirectory(away);
+					File.Copy(testPlan, Path.Combine(away, "CI quest book editor " + DateTime.Now.ToString("MMddHHmmss") + ".plan"), true);
+					File.Delete(testPlan);
+				}
+			}
+			catch (Exception e) { Log("  (the test plan couldn't be moved: " + e.Message + ")"); }
 			if (ok) Log("PASS: quest book editor");
 		}
 
