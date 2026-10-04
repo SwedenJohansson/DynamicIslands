@@ -27,7 +27,7 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 		/// <summary>What the helper holds (tests).</summary>
 		public static readonly List<Entry> Entries = new List<Entry>();
-		public static bool RaftStory { get; private set; }
+		public static bool RaftStory { get; set; }
 
 		RectTransform list;
 		Text storyLabel, summary;

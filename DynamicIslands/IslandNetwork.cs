@@ -67,6 +67,9 @@ namespace DynamicIslands.Editor
 		public string[] States;
 		/// <summary>Names shown on the Receiver (Entry.Label).</summary>
 		public string[] Labels;
+		/// <summary>The rule that brought each island (Entry.Rule): players' notebooks find a main story island's quest and
+		/// notes by it (QuestBook) - since 2026-10-04.</summary>
+		public string[] Rules;
 		public bool FullList;
 
 		// FileRequest / FileChunk: island file with this name and content hash, chunk Index of Count (base64)
@@ -286,6 +289,7 @@ namespace DynamicIslands.Editor
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
 				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
 				Labels = list.Select(e => e.Label ?? "").ToArray(),
+				Rules = list.Select(e => e.Rule ?? "").ToArray(),
 				Offsets = new float[list.Count * 3]
 			};
 			for (int i = 0; i < list.Count; i++)
@@ -494,6 +498,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < n; i++)
 			{
 				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
+				if (known != null && msg.Rules != null && i < msg.Rules.Length && !string.IsNullOrEmpty(msg.Rules[i])) known.Rule = msg.Rules[i];
 				if (known != null)
 				{
 					// (moved by the host: an island the players still need came back ahead of the raft - ReturningIslands)
@@ -524,6 +529,7 @@ namespace DynamicIslands.Editor
 					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
 				if (msg.Labels != null && i < msg.Labels.Length) entry.Label = msg.Labels[i] ?? "";
+				if (msg.Rules != null && i < msg.Rules.Length) entry.Rule = msg.Rules[i] ?? "";
 				ResolveFile(entry);
 				added++;
 			}

@@ -349,6 +349,195 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest book preview");
 		}
 
+		[ConsoleCommand(name: "CIQuestBookEditor", docs: "Dev, editor: the quest book in World Plans - New main story... makes the cards (Raft's story off: the first island ahead, the others on the Receiver each after the one before; on: after the Raft island chosen), the NOTEBOOK row on a main story card, Check's notebook warnings (a next-coordinates note that isn't there, colour 3, a long tab title, an island without notes); nothing saved (TEST_CATALOGUE QB4-QB6)")]
+		public static void QuestBookEditorCommand() { DynamicIslands.instance.StartCoroutine(QuestBookEditorRoutine()); }
+
+		static IEnumerator QuestBookEditorRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("quest book editor: in the editor"); yield break; }
+			bool ok = true;
+			List<string> islands = ChoiceWindow.Islands().Select(c => c.Value).ToList();
+			if (islands.Count < 3) { Fail("quest book editor: needs three saved islands"); yield break; }
+			WorldPlanWindow.RecipeNew("CI quest book editor");
+			yield return null;
+			// The helper, Raft's story off
+			MainStoryHelper.Open();
+			yield return null;
+			Check(ref ok, MainStoryHelper.IsOpen, "New main story... opens the helper");
+			MainStoryHelper.RaftStory = false;
+			MainStoryHelper.Entries.Clear();
+			for (int k = 0; k < 3; k++) MainStoryHelper.Entries.Add(new MainStoryHelper.Entry { Island = islands[k], Colour = k == 1 ? 5 : 0, Next = k == 2 ? "visit" : "" });
+			string why = MainStoryHelper.Finish();
+			yield return null;
+			WorldPlan p = WorldPlanWindow.Plan;
+			List<IntroRule> made = p != null ? p.Rules.Where(r => r.MainStory).ToList() : new List<IntroRule>();
+			Check(ref ok, why == null && !MainStoryHelper.IsOpen && made.Count == 3, "Done made three main story cards" + (why != null ? ": " + why : ""));
+			if (made.Count == 3)
+			{
+				Check(ref ok, !p.RaftStory && made[0].StoryPlace == "first" && made[0].Where == "ahead" && made[1].StoryPlace == "after:" + made[0].Id && made[1].Where == "receiver" && made[2].StoryPlace == "after:" + made[1].Id,
+					"Raft's story off: the first ahead, each next one on the Receiver after the one before (" + string.Join(" ; ", made.Select(r => r.Id + " " + r.StoryPlace + " " + r.Where).ToArray()) + ")");
+				Check(ref ok, made[1].TabColour == 5 && made[2].StoryDone == "visit" && made.All(r => r.What == "island"), "their colours and next-coordinates choices kept");
+			}
+			Button nb = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.name == "Drop_TabColour");
+			Check(ref ok, nb != null, "a main story card has the NOTEBOOK row");
+			// Raft's story on: after the Raft island chosen
+			WorldPlanWindow.RecipeNew("CI quest book editor");
+			yield return null;
+			MainStoryHelper.Open();
+			MainStoryHelper.RaftStory = true;
+			MainStoryHelper.Entries.Clear();
+			MainStoryHelper.Entries.Add(new MainStoryHelper.Entry { Island = islands[0], After = "Vasagatan" });
+			MainStoryHelper.Entries.Add(new MainStoryHelper.Entry { Island = islands[1] });
+			MainStoryHelper.Finish();
+			yield return null;
+			p = WorldPlanWindow.Plan;
+			made = p.Rules.Where(r => r.MainStory).ToList();
+			Check(ref ok, p.RaftStory && made.Count == 2 && made[0].StoryPlace == "after:Vasagatan" && made[1].StoryPlace == "after:" + made[0].Id && made.All(r => r.Where == "receiver"),
+				"Raft's story on: after Vasagatan, the next after it, both on the Receiver (" + string.Join(" ; ", made.Select(r => r.StoryPlace).ToArray()) + ")");
+			// Check's notebook warnings
+			if (made.Count == 2)
+			{
+				made[0].StoryDone = "note:99999";
+				made[0].TabColour = 3;
+				made[1].TabTitle = "A very long tab title for a tab";
+			}
+			List<PlanChecker.Finding> f = PlanChecker.Check(p, false, false);
+			Check(ref ok, f.Any(x => x.Level == PlanChecker.Level.Problem && x.Text.Contains("note #99999")), "Check: a next-coordinates note that isn't on the island is a problem");
+			Check(ref ok, f.Any(x => x.Text.Contains("tab colour 3")), "Check: colour 3 isn't one of Raft's");
+			Check(ref ok, f.Any(x => x.Text.Contains("tab title") && x.Text.Contains("long")), "Check: a long tab title");
+			string bare = islands.FirstOrDefault(n => IslandCache.NoteTextsOf(n).Count == 0);
+			if (bare != null)
+			{
+				p.Rules.Add(new IntroRule { Id = "bare", What = "island", WhatArg = bare, StoryPlace = "after:" + made[1].Id, Where = "receiver", Distance = 600f });
+				f = PlanChecker.Check(p, false, false);
+				Check(ref ok, f.Any(x => x.Level == PlanChecker.Level.Tip && x.Text.Contains("has no notes with a text")), "Check: a main story island without notes ('" + bare + "')");
+			}
+			else Log("  (every saved island has notes: the no-notes tip isn't checked)");
+			WorldPlanWindow.Close();
+			if (ok) Log("PASS: quest book editor");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookTabs", docs: "Dev, world (host, test world 'CI ...'): Raft's story on with Balboa left out and a plan island after Vasagatan - its tab between Vasagatan's and Caravan Town's, Balboa's tab hidden; then 14 main story islands open: the tabs scroll, every tab in the strip (TEST_CATALOGUE QB3, QB15, QB16)")]
+		public static void QuestBookTabsCommand() { DynamicIslands.instance.StartCoroutine(QuestBookTabsRoutine()); }
+
+		static IEnumerator QuestBookTabsRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest book tabs: host, in a test world 'CI ...'"); yield break; }
+			bool ok = true;
+			List<string> linesBefore = StoryChain.WriteLines().ToList();
+			var unlockedBefore = NoteBook.unlockedChunkPointType.ToList();
+			var indexesBefore = NoteBook.unlockedNoteBookIndexes.ToList();
+			RecieverFrequency[] freqBefore = RecieverFrequency.AllFrequencies != null ? RecieverFrequency.AllFrequencies.ToArray() : null;
+			try
+			{
+				StoryChain.Reset();
+				StoryChain.FromPlan(WorldPlan.Parse("CI tabs", "storyleaveout = Balboa\nrule = detour | type:sandbar | start | receiver:400 | | Detour | after:Vasagatan | visit | My Detour | 4 | \n"));
+				NoteBook.UnlockFrequency(ChunkPointType.Landmark_RadioTower);
+				NoteBook.UnlockFrequency(ChunkPointType.Landmark_Vasagatan);
+				NoteBook.UnlockFrequency(ChunkPointType.Landmark_Balboa); // (Vasagatan's note: here it leads to the detour)
+				StoryChain.Tick();
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				string layout = QuestBook.Layout ?? "";
+				int vas = layout.IndexOf("Vasagatan["), det = layout.IndexOf("My Detour"), car = layout.IndexOf("Caravan Town[");
+				Check(ref ok, vas >= 0 && det > vas && car > det, "the plan's island between Vasagatan and Caravan Town in the book: " + layout);
+				Check(ref ok, layout.Contains("(Balboa, not in this story)") && !QuestBook.RaftTabShown(ChunkPointType.Landmark_Balboa), "Balboa left out: its pages at the back, its tab hidden");
+				Check(ref ok, QuestBook.Tabs.Count == 1 && QuestBook.Tabs[0].StartsWith("My Detour|#"), "our tab with its frequency: " + string.Join(";", QuestBook.Tabs.ToArray()));
+				NoteBookUI ui = LocalNoteBookUI();
+				Notebook_ThumbnailShortcut[] tabs = ui != null ? ui.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true) : new Notebook_ThumbnailShortcut[0];
+				Func<string, int> sib = t => { Notebook_ThumbnailShortcut x = tabs.FirstOrDefault(y => y.name.Contains(t)); return x != null ? x.transform.GetSiblingIndex() : -1; };
+				Check(ref ok, sib("Vasagatan") >= 0 && sib("My Detour") > sib("Vasagatan") && sib("CaravanIsland") > sib("My Detour"), "on the book's edge too: Vasagatan, My Detour, Caravan Town (" + sib("Vasagatan") + ", " + sib("My Detour") + ", " + sib("CaravanIsland") + ")");
+
+				// Many tabs: 14 main story islands, all open
+				StoryChain.Reset();
+				var text = new System.Text.StringBuilder("story = off\n");
+				for (int i = 1; i <= 14; i++) text.Append("rule = s" + i + " | type:sandbar | start | receiver:400 | | Isle " + i + " | " + (i == 1 ? "first" : "after:s" + (i - 1)) + " | visit\n");
+				StoryChain.FromPlan(WorldPlan.Parse("CI many tabs", text.ToString()));
+				for (int i = 1; i <= 14; i++) { StoryChain.Tick(); if (i < 14) StoryChain.MarkDone("rule:s" + i); }
+				StoryChain.Tick();
+				yield return new WaitForSeconds(1f);
+				QuestBook.Refresh();
+				Check(ref ok, QuestBook.Tabs.Count == 14, "14 main story tabs: " + QuestBook.Tabs.Count);
+				if (ui != null && !ui.isDisplayed) ui.SetBookActive(true);
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, QuestBook.ScrollTabs(1f), "the tabs scroll (more than fit on the book's edge)");
+				yield return new WaitForSeconds(0.3f);
+				Shot("questbook_tabs_scroll");
+				yield return new WaitForSeconds(0.6f);
+				QuestBook.PressTab("Isle 14");
+				yield return new WaitForSeconds(0.3f);
+				uint at = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
+				Check(ref ok, at == QuestBook.PageOfTab("Isle 14"), "the last tab pressed: its page (" + at + ")");
+				if (ui != null) ui.SetBookActive(false);
+			}
+			finally
+			{
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule == "detour" || System.Text.RegularExpressions.Regex.IsMatch(e.Rule, "^s[0-9]+$")).ToList()) IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
+				StoryChain.Reset();
+				foreach (string l in linesBefore) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				NoteBook.unlockedNoteBookIndexes.Clear(); NoteBook.unlockedNoteBookIndexes.AddRange(indexesBefore);
+				NoteBook.unlockedChunkPointType.Clear(); NoteBook.unlockedChunkPointType.AddRange(unlockedBefore);
+				if (freqBefore != null) RecieverFrequency.AllFrequencies = freqBefore;
+				StoryChain.OnWorldRead();
+				IslandWorldState.Save();
+				QuestBook.Refresh();
+			}
+			if (ok) Log("PASS: quest book tabs");
+		}
+
+		const string MpPlan = "story = off\nstoryending = The end test.\\nThank you.\n" +
+			"rule = a | type:camp | start | ahead:300 | | Camp A | first | visit | Alpha Camp | 9 | Hello\\nworld\n" +
+			"rule = b | type:sandbar | start | receiver:400 | | Bar | after:a | visit\n" +
+			"rule = c | type:sandbar | start | receiver:400 | | Side\n";
+
+		[ConsoleCommand(name: "CIQuestBookMP", docs: "Dev, world, two players (mpquestbook.ps1): start (host: the quest book test plan's chain in this test world, the first island brought), done <a|b> (host: that island done), note (any player: a note read on the first island)")]
+		public static void QuestBookMPCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && Raft_Network.IsHost) { Fail("quest book mp: a test world 'CI ...'"); return; }
+			switch (what)
+			{
+				case "start":
+					if (!Raft_Network.IsHost) { Fail("quest book mp start: the host"); return; }
+					StoryChain.Reset();
+					StoryChain.FromPlan(WorldPlan.Parse("CI quest book", MpPlan));
+					DynamicIslands.instance.StartCoroutine(MpBrought());
+					return;
+				case "done":
+					if (!Raft_Network.IsHost) { Fail("quest book mp done: the host"); return; }
+					StoryChain.MarkDone("rule:" + (args.Length > 1 ? args[1] : "a"));
+					StoryChain.Tick();
+					Log("PASS: quest book mp done " + (args.Length > 1 ? args[1] : "a"));
+					return;
+				case "note":
+					IslandWorldState.Entry a = IslandWorldState.Islands.FirstOrDefault(e => e.Rule == "a");
+					if (a == null) { Fail("quest book mp note: the first island isn't in this world"); return; }
+					StoryBook.AddPage("note:" + a.HostName + ":5", "Diary", "Dear diary, the camp is cold.", "Alpha");
+					Log("PASS: quest book mp note");
+					return;
+			}
+			Fail("CIQuestBookMP start | done <a|b> | note");
+		}
+
+		static IEnumerator MpBrought()
+		{
+			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "a"), 60f);
+			if (IslandWorldState.Islands.Any(e => e.Rule == "a")) Log("PASS: quest book mp start"); else Fail("quest book mp start: the first island didn't come");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookCheck", docs: "Dev, world (either player): this player's quest book in one line (QBOOK tabs | notes | ending), to compare the players' (mpquestbook.ps1); CIQuestBookCheck <tabs> also checks the number of our tabs")]
+		public static void QuestBookCheckCommand(string[] args)
+		{
+			QuestBook.Refresh();
+			string tabs = string.Join(";", QuestBook.Tabs.ToArray());
+			bool note = QuestBook.PageTexts.Values.Any(v => v.Any(t => t.Contains("Dear diary")));
+			bool end = (QuestBook.Layout ?? "").Contains("The end[");
+			Log("QBOOK " + tabs + " | note " + note + " | end " + end + " | " + (QuestBook.Layout ?? "").Split(new[] { " > (" }, StringSplitOptions.None)[0]);
+			int want;
+			if (args != null && args.Length > 0 && int.TryParse(args[0], out want) && QuestBook.Tabs.Count != want) { Fail("quest book check: " + QuestBook.Tabs.Count + " tabs, " + want + " expected"); return; }
+			Log("PASS: quest book check");
+		}
+
 		[ConsoleCommand(name: "CIQuestBookState", docs: "Dev, world: the quest book now - its layout, our tabs, Raft's tabs shown, our pages' texts")]
 		public static void QuestBookStateCommand()
 		{
