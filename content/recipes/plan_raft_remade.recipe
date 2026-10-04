@@ -19,4 +19,5 @@ plan rule tangaroaremade | island:Tangaroa Remade | start | receiver:1000 | The 
 plan rule varunaremade | island:Varuna Point Remade | start | receiver:1000 | A construction site's safety recording, still running. | Varuna Point | instead:VarunaPoint | quest
 plan rule temperanceremade | island:Temperance Remade | start | receiver:1000 | A weather report from the far north: snow, snow and a reactor alarm. | Temperance | instead:Temperance | quest
 plan rule utopiaremade | island:Utopia Remade | start | receiver:1200 | Utopia's call - the last frequency on the dial. | Utopia | instead:Utopia | quest
+plan ending Utopia is behind you, and every island of the old story has been walked anew - new land, new bosses, the same long sea.\n\nThe end of Raft Remade.
 plan save

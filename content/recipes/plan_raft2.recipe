@@ -21,4 +21,5 @@ plan rule spire | island:Storm Spire | start | receiver:1100 | A weather spire i
 plan rule whiteout | island:Whiteout Reach | start | receiver:1100 | The corps' winter camp: "Do not come in winter." | Whiteout Reach | after:spire | quest
 plan rule gate | island:The Drowned Gate | start | receiver:1200 | The sea wall's lock keeper, counting the hours. | Drowned Gate | after:whiteout | quest
 plan rule frontier | island:The Frontier | start | receiver:1300 | The Frontier: "If you can hear this, you are almost home." | The Frontier | after:gate | quest
+plan ending The Frontier holds. Ten stations, one trail, and the last high ground above the rising sea - you followed the Corps all the way.\n\nThe end of Raft 2 - The Drowned Frontier.
 plan save

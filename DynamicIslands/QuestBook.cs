@@ -345,6 +345,13 @@ namespace DynamicIslands.Editor
 		/// <summary>Raft's book as it came (our pages and tabs taken out, Raft's page numbers and tab order back).</summary>
 		static void Restore()
 		{
+			// (Raft's open spread may be one of ours: point it at Raft's first one, or Raft's redraw stops on a page that's gone
+			// - the book stayed blank after the preview moved on)
+			Traverse tr = Traverse.Create(ui);
+			NoteBookPage left = raftPages.FirstOrDefault(p => raftIndex[p] == 0), right = raftPages.FirstOrDefault(p => raftIndex[p] == 1);
+			NoteBookPage openLeft = tr.Field("leftPage").GetValue<NoteBookPage>(), openRight = tr.Field("rightPage").GetValue<NoteBookPage>();
+			if (openLeft == null || openLeft.name.EndsWith(Mark)) { if (openLeft != null) openLeft.gameObject.SetActive(false); tr.Field("leftPage").SetValue(left); }
+			if (openRight == null || openRight.name.EndsWith(Mark)) { if (openRight != null) openRight.gameObject.SetActive(false); tr.Field("rightPage").SetValue(right); }
 			// (at once: the tab strip's order and Raft's page list are set up again in the same frame)
 			foreach (GameObject g in made) if (g != null) UnityEngine.Object.DestroyImmediate(g);
 			made.Clear();
@@ -609,14 +616,7 @@ namespace DynamicIslands.Editor
 			NoteBookPage first = NewPage(true, i.Title);
 			group.Add(first);
 			AddPaper(first, tplLetter, i.Intro, 30f, 125f);
-			if (i.Frequency.Length > 0 && tplPostit != null)
-			{
-				NoteBookNote post = AddPaper(first, tplPostit, i.Frequency, 20f);
-				RectTransform pr = (RectTransform)post.transform;
-				pr.sizeDelta *= 0.55f;
-				pr.anchoredPosition = new Vector2(80f, -40f);
-				pr.localEulerAngles = new Vector3(0f, 0f, -8f);
-			}
+			// (no post-it with the frequency: Raft's post-it has its own number printed on it - the tab and the intro give ours)
 			// (the checklist on the page opposite the intro, and on as many pages as it needs)
 			int line = 0;
 			List<string> rows = i.Checklist;

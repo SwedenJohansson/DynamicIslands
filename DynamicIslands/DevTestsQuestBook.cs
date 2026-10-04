@@ -161,12 +161,19 @@ namespace DynamicIslands
 			IntroRule pipeBack = IntroRule.Parse(pipe.ToLine());
 			Check(ref ok, pipeBack != null && pipeBack.TabTitle == "A/B" && pipeBack.TabIntro == "x / y\nz", "a '|' in a title or intro can't break the line: " + (pipeBack != null ? pipeBack.TabTitle + " / " + pipeBack.TabIntro.Replace("\n", "\\n") : "null"));
 
+			IntroRule beside = IntroRule.Parse("shelter | island:Shelter Atoll | quest:mine | near:mine:700:east | A shelter. | Shelter Atoll | Beside");
+			Check(ref ok, beside != null && beside.Beside && beside.MainStory && !beside.InStory && !beside.Special && beside.ToLine().EndsWith("| beside | "),
+				"a main story island beside Raft's story: in the notebook, not in the Receiver chain: " + (beside != null ? beside.ToLine() : "null"));
+			WorldPlan bp = WorldPlan.Parse("t", "rule = " + (beside != null ? beside.ToLine() : "") + "\n");
+			Check(ref ok, !bp.ChangesStory && bp.HasStory && StoryChain.BuildSteps(true, new HashSet<string>(), bp.Rules.Where(x => x.Special)).All(StoryChain.IsRaft),
+				"a plan with only islands beside Raft's story leaves Raft's chain alone (but has a story for the book)");
+
 			WorldPlan p = WorldPlan.Parse("t", "story = off\nstoryending = The sea gives up its last secret.\\n\\nThe end.\nrule = a | island:X | start | receiver:600 | | | first | quest | Start | 2 | \n");
 			Check(ref ok, p.StoryEnding == "The sea gives up its last secret.\n\nThe end." && p.Rules.Count == 1 && p.Rules[0].TabColour == 2, "a plan's ending page read (line breaks kept)");
 			WorldPlan p2 = WorldPlan.Parse("t", p.ToText());
 			Check(ref ok, p2.StoryEnding == p.StoryEnding && p2.Rules[0].ToLine() == p.Rules[0].ToLine(), "... written and read again the same");
 			WorldPlan plain = WorldPlan.Parse("t", "rule = camp | type:camp | start | ahead:350 | | \n");
-			Check(ref ok, plain.StoryEnding == "" && !plain.ToText().Contains("storyending ="), "an older plan has no ending page and writes none");
+			Check(ref ok, plain.StoryEnding == "" && !plain.ToText().Split('\n').Any(l => l.StartsWith("storyending")), "an older plan has no ending page and writes none");
 			if (ok) Log("PASS: quest book unit");
 		}
 
@@ -200,7 +207,8 @@ namespace DynamicIslands
 				Check(ref ok, (QuestBook.Layout ?? "").StartsWith("First page[0-1] > Alpha Camp[2-") && QuestBook.Layout.Contains("(Radio Tower, not in this story)"), "the book: " + QuestBook.Layout);
 				Check(ref ok, !StoryOrder.Chain.Any(QuestBook.RaftTabShown), "Raft's story is off: none of Raft's tabs shown");
 				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Key == 2 && kv.Value.Any(t => t == "Hello\nworld")), "its first page has the intro written in the plan");
-				Check(ref ok, QuestBook.PageTexts.Any(kv => kv.Value.Any(t => t.Contains("<b>") || t.Contains("Not reached") || t.Contains("Done"))), "its checklist page is there");
+				bool hasQuest = a != null && QuestTracker.QuestOf(a).Exists;
+				Check(ref ok, hasQuest == QuestBook.PageTexts.Any(kv => kv.Value.Any(t => t.StartsWith("<b>"))), "a checklist page when the island has a quest (" + (hasQuest ? "it has" : "it has none") + ")");
 
 				// A note read on it: on its pages, not in the journal
 				string noteKey = a != null ? "note:" + a.HostName + ":5" : "note:x:5";
@@ -255,7 +263,7 @@ namespace DynamicIslands
 				QuestBook.Refresh();
 				Check(ref ok, QuestBook.Layout == layoutBefore && string.Join(";", QuestBook.Tabs.ToArray()) == tabsBefore, "read back from the world file: the same book (" + QuestBook.Layout + ")");
 				Check(ref ok, lines.Any(l => l.StartsWith("@storyending=")), "the ending page is kept in the world file");
-				Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 10000), "Raft's list of notes found (its save) has none of ours");
+				Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 20000), "Raft's list of notes found (its save) has none of ours");
 				if (ui != null) ui.SetBookActive(false);
 			}
 			finally
@@ -292,7 +300,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.5f);
 			WorldPlan open = WorldPlanWindow.Plan;
 			string marker = "Preview test " + DateTime.Now.ToString("HHmmss");
-			open.Description = marker; // (a change not saved: it must come back)
+			WorldPlanWindow.RecipeDescription(marker); // (a change not saved, typed in: it must come back)
 			Button preview = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.name == "Button_PreviewNotebook");
 			Check(ref ok, preview != null && preview.gameObject.activeInHierarchy, "World Plans has Preview notebook");
 			if (preview == null) yield break;
@@ -323,12 +331,16 @@ namespace DynamicIslands
 			QuestBookPreview.Show(firstDone + 2);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, main < 2 || QuestBook.Tabs.Count == 2, "the next coordinates: the second tab (" + string.Join(";", QuestBook.Tabs.ToArray()) + ")");
+			uint openAt = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
+			NoteBookPage leftOpen = ui != null ? Traverse.Create(ui).Field("leftPage").GetValue<NoteBookPage>() : null;
+			Check(ref ok, QuestBook.PageTexts.ContainsKey(openAt) && leftOpen != null && leftOpen.pageIndex == openAt && leftOpen.gameObject.activeInHierarchy,
+				"the book is open on the new island's first page (" + openAt + "), and it shows");
 			Shot("questbook_preview_step");
 			yield return new WaitForSeconds(0.6f);
 			QuestBookPreview.Show(QuestBookPreview.Moments.Count);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, QuestBook.Tabs.Count == main, "All again: every tab");
-			Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 10000), "Raft's list of notes found has none of ours");
+			Check(ref ok, !NoteBook.unlockedNoteBookIndexes.Any(i => i >= 20000), "Raft's list of notes found has none of ours");
 			IslandTest.Back();
 			yield return WaitFor(() => DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, 180f);
 			Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Plan.Description == marker, "back in World Plans on the plan, the unsaved change still there");

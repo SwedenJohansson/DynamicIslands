@@ -32,4 +32,5 @@ plan rule sunatoll | island:Sun Atoll | km:20 | ahead:450 | A ring of bleached i
 plan rule rockpen | island:The Rock Pen | km:24 | ahead:450 | A guard tower stands over a granite rock in the fog ahead. | The Rock Pen
 plan rule highmoor | island:Highmoor Lodge | km:28 | ahead:450 | A lodge on a snowy hill ahead, its windows dark. | Highmoor Lodge
 plan rule crater | island:Crater Lair | km:32 | ahead:450 | A great dish turns slowly in the crater of a black cone ahead. | Crater Lair
+plan ending Roll the credits. Eight great islands, eight stories the movies love - and you sailed through every one of them.\n\nThe end of Silver Screen Seas.
 plan save

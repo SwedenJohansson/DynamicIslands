@@ -67,7 +67,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 6. [Stories: quests, behaviours, story items](#6-stories-quests-behaviours-story-items)
    - [6.1 Quests](#61-quests) · [6.2 Behaviour and events](#62-behaviour-and-events) · [6.3 Story items](#63-story-items-and-story-sets)
    - [6.4 Islands that bring islands](#64-islands-that-bring-islands) · [6.5 Your islands in Raft's story (the Receiver)](#65-your-islands-in-rafts-story-the-receiver) ·
-     [Raft's notebook and the journal in each kind of plan](#rafts-notebook-and-the-journal-in-each-kind-of-plan)
+     [The main story in Raft's notebook](#the-main-story-in-rafts-notebook-side-quests-in-the-journal) · [Making a main story](#making-a-main-story-the-helper-and-preview-notebook)
 7. [World plans: which islands a world gets](#7-world-plans-which-islands-a-world-gets)
    - [7.1 The plans that come with the mod](#71-the-plans-that-come-with-the-mod)
    - [7.2 Your first world plan, step by step](#72-your-first-world-plan-step-by-step)
@@ -336,23 +336,22 @@ some steps count:
 
 So when a quest step waits for items or pages, press J to see what the crew has.
 
-**The journal and Raft's notebook.** Raft's own notebook (**T**) stays as it always was, and the two don't mix:
+**The journal and Raft's notebook: side quests and the main story.** A world plan's **main story** islands are in
+**Raft's own notebook (T)**; everything else - the **side quests** - is in the journal:
 
 | | Raft's notebook (T) | The journal (J) |
 |---|---|---|
-| **Pages** | The notes of Raft's story islands (Radio Tower, Vasagatan, Balboa...) | The notes of custom islands, pages their events write, and frequencies a world plan gives out |
-| **Items** | Raft's quest items (Raft's keys, key cards...) | The custom islands' story items |
-| **The Receiver** | The frequencies of Raft's story; when a plan changes Raft's story, the notebook follows it ([6.5](#65-your-islands-in-rafts-story-the-receiver)) | A page with each frequency a plan's rule unlocks for its own island, and with a Raft story island's frequency when one of the plan's islands unlocked it (no Raft note gives it then) |
-| **Quests** | - (Raft's story goes by its notes and the Receiver) | - (the quest panel shows the quest of the island you're at) |
-| **Without the mod** | Always there | Kept in the mod's file of the world: the world still loads without the mod, and the journal comes back with it |
+| **Islands** | Raft's story islands, and the plan's **main story** islands (a tab each, in story order) | **Side quests**: every custom island outside the plan's main story |
+| **Pages** | Raft's notes; for a main story island its intro, its quest's steps and the notes read on it | The notes of side quest islands, pages their events write, and their frequencies |
+| **Items** | Raft's quest items, and the main story's story items (Found items) | The side quests' story items |
+| **The Receiver** | Raft's frequencies, and each main story island's #frequency on its tab | A page with each side quest island's frequency |
+| **Quests** | The main story islands' steps (crossed out as they are done) | How far the main story is, and the side quests' list; a side quest's steps show in the quest panel at its island |
+| **Without the mod** | Raft's own notebook: the mod's tabs and pages aren't in Raft's save, they are made again when the world loads | Kept in the mod's file of the world: it comes back with the mod |
 
-How the two books look when a plan keeps all, some or none of Raft's story, with or without its own islands in it:
-[Raft's notebook and the journal in each kind of plan](#rafts-notebook-and-the-journal-in-each-kind-of-plan).
+More: [The main story in Raft's notebook, side quests in the journal](#the-main-story-in-rafts-notebook-side-quests-in-the-journal).
 
-Why two books? Raft's notebook has a fixed set of pages and quest items, made for Raft's story. New pages or items put
-into it would be lost, or break the world's save when it is opened without the mod. So custom islands write into
-their own book, kept with the mod's state of the world. For the same reason story items aren't in your inventory:
-the crew holds them in the journal, like Raft holds its quest items outside the inventory.
+Story items aren't in your inventory: the crew holds them (in the journal, or in Raft's Found items for the main
+story), like Raft holds its quest items outside the inventory.
 
 ---
 
@@ -1038,15 +1037,19 @@ chain, in the editor's **World plans** window:
   out: the plan's own islands are the whole adventure. Raft's ordinary islands still turn up as in any world.
 - **Leave out one story island:** click its name in the row next to the switch (it goes dark). The note before it then
   leads to the one after it. For example, without Balboa, Vasagatan's note gives Caravan Town's frequency.
-- **Put your island into the story:** on a rule's card, the **STORY** list chooses its place:
-  - **First**: before everything, unlocked from the start of the world;
+- **Main story or side quest:** on a rule's card, the **STORY** list decides. **Side quest (not in the story)** keeps
+  the island out of the story: it goes into the **journal (J)**. Any other choice makes it **main story**: it gets a
+  tab in **Raft's own notebook** (see below). The places:
+  - **Main story: first**: before everything, unlocked from the start of the world;
   - **After** one of Raft's story islands, or after another of your islands in the story;
   - **In place of** a story island: that island is left out and yours takes its place. Its note leads to your island,
-    and your island leads on to the one after.
-- **Done when:** when your island counts as done, so the next step is unlocked:
+    and your island leads on to the one after;
+  - **Main story, beside Raft's**: in the notebook, but *not* in the Receiver chain - its own WHEN brings it (for an
+    expedition that runs alongside Raft's story, each island when the one before is done, like The Abyss Expedition).
+- **Next coordinates when:** when your island counts as done, so the next island's coordinates are found:
   - by default, when its quest is done, or when players reach it if it has no quest;
-  - or when players reach it, when N steps of its quest are done, when one of its zones fires, or when it sends a
-    signal.
+  - or when players reach it, when N steps of its quest are done, when one of its zones fires, when it sends a
+    signal, or when a player reads one of its notes (pick it with ▾).
 - **Where** it appears, for any rule:
   - **on the Receiver**: it gets its own 4-digit frequency, made for each world. When it is unlocked, every player sees
     a banner "Tune the Receiver to #4821", the journal gets a page, and the number on the note before it shows it.
@@ -1082,31 +1085,57 @@ later (its islands, Raft's story on or off, the islands left out), the changed c
 loads, like any change to your plan ([section 7](#7-world-plans-which-islands-a-world-gets)): what is unlocked and
 done stays, and your Receiver islands keep their frequencies.
 
-### Raft's notebook and the journal in each kind of plan
+### The main story in Raft's notebook, side quests in the journal
 
-**The short answer:**
+**The short answer:** the **main story** is in **Raft's own notebook (T)**, the **side quests** are in the
+**journal (J)**. Which is which, the world plan decides (the **STORY** list on each rule card, above).
 
-- **Raft's notebook (T) never shows custom content.** It only ever holds Raft's own story: the notes found on
-  Raft's story islands and Raft's quest items. A custom island's notes, story items, quests and pages never go into
-  it - not even when your island takes a story island's place. The plan changes only two things there: **which of
-  Raft's frequencies get unlocked**, and **the number written on a Raft note** - a note shows the frequency of what
-  comes next in *this world's* chain (your island's, when it is on the Receiver, or "#----" when what comes next isn't
-  found with the Receiver).
-- **The journal (J) is only for custom content** - but not only for quests. It collects from every custom island,
-  with or without a quest: notes read, pages events write, story items, and the frequencies the plan gives out. It
-  never holds Raft's notes or quest items. Of quests it shows only how many of the custom islands' are done, and their list: a quest's steps show in the **quest panel** while you are
-  at its island ([3](#quests)), the same in every kind of plan.
-- **Custom islands outside the story** (by chance, or brought by an ordinary rule) work the same in every case below:
-  their quest in the quest panel, their notes and story items in the journal.
+**Raft's notebook (T): the main story.** Every main story island gets a **tab** on the book's edge, in story order
+- between Raft's own tabs (Radio Tower, Vasagatan...) when Raft's story is on, alone after "First page" when it is off.
+The tab shows the island's name (or the **tab title** you give it) and, for an island on the Receiver, its
+**#frequency**; it appears when the island's coordinates are found. Its pages, in Raft's paper and handwriting:
+- **the intro** - the text you write under **NOTEBOOK > first page** (or, empty, "A new frequency: #1234 - tune the
+  Receiver to it", followed by the rule's message);
+- **the quest's checklist** - its steps as they are done, crossed out, and the one to do now; a long quest goes on
+  over more pages. The steps are no longer listed in the journal;
+- **the notes read on the island**, two to a page, in their order on the island.
 
-**Case by case.** "Your islands in the story" means rules with a place in the **STORY** list (first, after, in place
-of); islands with quests that a plan brings in other ways count as "outside the story" above.
+Its **story items** show under Raft's **Found items**, with their pictures (Raft's quest item pictures). When the last
+main story island is done, the plan's **ending page** (the card **THE END** under the rules) comes last in the book,
+with a banner to every player. The world goes on.
 
-| The plan keeps... | Without your islands in the story | With your islands in the story |
-|---|---|---|
-| **All of Raft's story** (on, nothing left out) | **Notebook:** exactly as in Raft without the mod. **Journal:** only what custom islands you meet give (empty if none have notes or story items) | **Notebook:** Raft's notes and quest items as usual, but the note before your island shows *your island's* number instead of the next Raft island's. **Journal:** your island's frequency (a page, with the banner), its notes and story items. When your island is done, the next Raft island's number comes as a banner **and a journal page** ("A new signal") - no Raft note gives it any more |
-| **Some of it** (islands left out or replaced) | **Notebook:** the note before a left-out island shows the number of the one after it; a left-out island's notes and quest items never come (the island never does). **Journal:** nothing about the left-out islands | As in the row above, and an island **in place of** a story island takes that island's spot: the note before it shows your island's number, and after it the story goes on to the next Raft island (a banner and a journal page give its number) |
-| **None of it** (Raft's story off) | **Notebook:** none of Raft's story notes, quest items or story frequencies - the Receiver finds nothing of Raft's. **Journal:** only what custom islands you meet give | **Notebook:** as on the left - it stays out of the adventure. **Journal:** the whole adventure is followed here: each Receiver island's frequency as it is unlocked, the notes and story items of your islands; each island's quest in the quest panel. The first island of the chain is unlocked from the start |
+When there are more tabs than fit on the book's edge, the tabs **scroll** (mouse wheel over them); the open island's
+tab is scrolled into view when you turn the pages.
+
+Raft's own islands are shown as the plan's story has them: an island **left out** or **replaced** has no tab (its pages
+go to the back of the book), and with **Raft's story off** none of Raft's tabs show. Everything else of Raft's notebook
+is Raft's: its notes, voice lines, quest items and the page you are on (another player turning the page turns it for
+everyone, as in Raft).
+
+**The journal (J): side quests.** Islands outside the story - by chance, ordinary rules, side trips - keep everything
+in the journal as before: their notes, story items, pages from events and their Receiver frequencies. The journal's
+quest list says only how far the main story is ("Main story: 3 of 10 islands done - its quests, notes and items are
+in Raft's notebook"); the per cent at the top still counts every quest.
+
+**Saves.** Nothing of the mod goes into Raft's own notebook save: the tabs and pages are made again from the world's
+story each time it loads. A world opened without the mod has Raft's own notebook.
+
+### Making a main story: the helper, and Preview notebook
+
+**New main story...** (World plans, next to Templates...) makes a main story step by step: Raft's story on or off,
+then your saved islands in the order players meet them - for each, where it sits in Raft's story, its tab colour and
+what gives the next coordinates. **Done** makes the rule cards (each island on the Receiver after the one before; the
+first in sight by itself when Raft's story is off) and runs Check. Change the cards as you like after.
+
+**Preview notebook** (World plans, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
+own notebook: the mod goes to the test world (as Test in a world does), opens the book with every tab and page, and a
+bar at the bottom steps through the story the way players will meet it: **|◀ Start** (nothing found yet), **◀ Back**,
+**Next ▶** ("Saltmarsh Ferry: its coordinates are found", "quest step 3 of 6 done", "'The ferryman's log' is read",
+"the next coordinates"...), **All ▶|**. **Back to World Plans** returns to the plan with your changes still there.
+
+**Check** warns about the notebook too: a main story island without notes (its tab shows only its intro and steps), a
+note too long for its paper (over 600 letters), a story item without a picture, a "next coordinates" note that isn't
+on the island.
 
 The world option **Story islands in a new order** ([9.4](#94-extra-options)) works the same way for the notebook:
 the numbers on Raft's notes follow the world's order.

@@ -30,4 +30,5 @@ plan rule frost | island:Frost Hollow | km:20 | ahead:450 | A snowy islet with a
 plan rule farm | island:Tide Farm | km:24 | ahead:450 | Water wheels turn on a floating farm ahead. | Tide Farm
 plan rule mine | island:Old Mine Islet | km:28 | ahead:450 | A headframe stands over an old shaft on the islet ahead. | Old Mine Islet
 plan rule shelter | island:Shelter Atoll | km:32 | ahead:450 | A quiet atoll ahead - and a hatch in the middle of it. | Shelter Atoll
+plan ending Every island of the long voyage is in this book now - Raft's own story and one of your own after each, twice the sea it was.\n\nThe end of The Long Voyage.
 plan save
