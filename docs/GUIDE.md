@@ -153,8 +153,10 @@ together near the end of this guide.
 *Random islands, side trips and main quest islands - the three kinds of islands you meet, and how each is set up - are
 explained side by side in [section 7](#the-three-kinds-of-islands-you-meet-at-sea).*
 
-With the **Random islands** plan, now and then an island appears **250-350 m ahead of the raft** (about one island
-every 4 km). It can be:
+With the **Random islands** plan, now and then an island appears **250-350 m ahead of the raft**: one after every
+**3-6 of Raft's own islands** you meet (a number in that span each time; the world's creator can choose another span,
+[9.5](#95-islands-while-sailing)), and **none in a new world's first 10 minutes of play**. However many islands take
+part, they never crowd the sea. It can be:
 
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
@@ -181,6 +183,14 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
 An island found with a Receiver frequency stays where it is (the Receiver shows the way), and so do islands nobody
 needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
 `spawnpool.txt`, [10](#10-settings-files); 0 = never.)
+
+**A finished island never comes again by chance.** When the spawn pool picks an island this world already has:
+
+- **finished** - its quest done, or, for an island without a quest, reached by a player - it isn't picked; another
+  island comes instead;
+- **not finished** - its quest begun and not done, or never reached - it comes back ahead of the raft **as you left
+  it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy;
+- already near the players (loaded) - not picked.
 
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
 even far ones. An island a rule brought (a quest reward, a plan) carries its name on its dot.
@@ -767,6 +777,9 @@ entry is looked at before it goes in.
   Without internet it says "Can't reach the island library"; packs someone sent you still install with **Import...**.
   `Mods\DynamicIslands\library.txt` can switch it off (`online = off`).
 
+**The guide:** **Guide** at the top of the island library opens this guide (its PDF) - chapter 16 is about the
+library's example islands and plans.
+
 **Sharing yours in the library:** click **Submit yours...** at the top of the island library. It explains the three steps:
 1. **Export** your island or plan in the editor (above), with a title, summary, description and picture;
 2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/U7DfKY9tN) with a few words about it;
@@ -1212,7 +1225,7 @@ island a *main* quest island is that a plan's story waits for its quest.
 |---|---|---|---|
 | **What it is** | An island picked by chance from the **spawn pool**: one of your saved islands, a brand-new generated island, or a new island of a map type (a sandbar, a wreck, an atoll...) | An island a **plan rule** brings at a set point: after a distance sailed, on a day, when the world starts | An island a **plan rule** puts into a **story chain**: after one of Raft's story islands (or in place of one, or first) |
 | **Example in The Long Voyage** | Any island of your pool, a generated jungle island... | The Stranded Gull (2 km), Signal Rock - quest "Dead Air" (4 km), Ranger's Rest (7 km), Stilt Hollow (10 km)... | Wreckers' Cove (after the Radio Tower), Thornwood (after Vasagatan), Scrapyard Haven (after Balboa)... |
-| **When it comes** | Any time while the raft sails: each km sailed has a 25 % chance (about one island every 4 km), never while the raft is at one of Raft's islands | When the rule's **WHEN** happens. The Long Voyage's side trips: when the raft has sailed that many km in this world (counted from the world's start) | When it is **unlocked** - the story island before it is done (for Raft's islands: when you read the note there that would give the next frequency) - **and** a player tunes the Receiver to its frequency |
+| **When it comes** | While the raft sails: one after every 3-6 of Raft's own islands met (the world's span), none in a new world's first 10 minutes, never while the raft is at one of Raft's islands | When the rule's **WHEN** happens. The Long Voyage's side trips: when the raft has sailed that many km in this world (counted from the world's start) | When it is **unlocked** - the story island before it is done (for Raft's islands: when you read the note there that would give the next frequency) - **and** a player tunes the Receiver to its frequency |
 | **Where it appears** | 250-350 m ahead of the raft, a little to one side (10-35 degrees), at least 800 m from other custom islands | Where the rule's **WHERE** says. The Long Voyage's side trips: **450 m ahead** of the raft | The rule's metres **ahead of the raft when a player tunes the Receiver** to it (700-1000 m in The Long Voyage), like Raft's own story islands |
 | **What tells you** | Nothing when it appears: you see it. Near it, its banner with its name | The rule's **message** on every player's screen as it appears, with how far and which way ("A mast on a rock ahead - its light is dead."), and its name on its Receiver dot | When it is unlocked: a banner with the rule's message and "Tune the Receiver to #4821", a page in the journal (J), and that number on Raft's note. On the Receiver: its name and frequency |
 | **The same in every world?** | No: different islands at different places every time | Yes: the same island at the same distance in every world of the plan (only the exact spot ahead depends on where you sail) | Yes: the same island at the same place in the story. Only the 4-digit frequency is made new for each world |
@@ -1243,9 +1256,14 @@ island library, its islands get weight 0 in `spawnpool.txt`, so Signal Rock can'
 then again at 4 km. (Islands you built or saved yourself are in the pool unless you give them 0 - if a plan of yours
 uses one of your islands as a side trip or quest island, set it to 0 there, or untick it in the world's list.)
 
-**How often and where.** `chancePerKm` (0.25: about one island every 4 km sailed), `spawnDistanceMin` /
-`spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in `spawnpool.txt`
-([10](#10-settings-files)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
+**How often and where.** One after every **3-6 of Raft's own islands** met (Raft's plain islands - not its story
+islands - counted as the raft comes within about a kilometre of them; a new number in the span after each custom
+island). The span is the world's: chosen in **World settings > Islands while sailing** ([9.5](#95-islands-while-sailing)),
+`WorldIslandsGap` in a world. None in a new world's first **10 minutes** of play (`quietMinutes`; game time, kept with
+the world - worlds made before this don't wait). `chancePerKm` only switches them on (above 0) or off (0).
+`spawnDistanceMin` / `spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in
+`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one comes back as it was
+([3](#islands-appear-while-you-sail)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
 islands on top of a custom one later.
 
 #### Side trips, in detail
@@ -1808,6 +1826,7 @@ The host can also change every group with a console command (F10):
 | World randomizer | `Randomizer` | `Randomizer wild`, `Randomizer -alphas +bosses` |
 | Extra options | `WorldOptions` | `WorldOptions +ghostrafts -privatestorage` |
 | Islands while sailing | `WorldIslands` | `WorldIslands -<island>`, `WorldIslands +<island>`, `WorldIslands all` |
+| How often they come | `WorldIslandsGap` | `WorldIslandsGap 5-12` |
 
 ### 9.2 World rules: monster difficulty and build cost
 
@@ -1948,6 +1967,14 @@ you make a new world. The choice belongs to the world (saved with it, so it stay
 later), and the next new world starts from it. In a world the host can change it with `WorldIslands -<island>` /
 `+<island>` / `all`; `WorldIslands` alone shows the list.
 
+**How often:** under the button, **One after every [-] 3 [+] to [-] 6 [+] of Raft's islands**: an island from the list
+comes after every so many of Raft's own islands you meet - a number between the two, new each time. **3-6** by default;
+the lower number can be **2 to 20**, the higher **4 to 50** (in ones up to 10, then in fives), and the higher is never
+below the lower. So 2-4 brings custom islands often, 20-50 rarely - however many islands are ticked, they never crowd
+the sea. The span is saved with the world; in a world the host can change it with `WorldIslandsGap 5-12`
+(`WorldIslandsGap` alone shows it and how many of Raft's islands were met since the last one). No island comes by chance
+in a new world's first 10 minutes of play (`quietMinutes` in `spawnpool.txt`).
+
 Islands that a quest, an island's rule or a world plan brings ([section 6.4](#64-islands-that-bring-islands),
 [section 7](#7-world-plans-which-islands-a-world-gets)) come anyway: the list is only about islands by chance.
 
@@ -1972,28 +1999,29 @@ Hit a monster and the EXP it gave you floats up over it. Each hit gives the shar
 its health, so killing it gives all of it. If you fight it together with a friend, each of you gets your own share.
 Chickens, goats, llamas, turtles, stingrays, dolphins, whales and people give nothing.
 
-![+2 EXP floating over a warthog](images/levels-hit.jpg)
-*A hit on a warthog: +2 EXP.*
+![EXP floating over a warthog](images/levels-hit.jpg)
+*A hit on a warthog: its EXP floats up (this picture is from before EXP was tripled).*
 
-Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **40 EXP**:
+Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **120 EXP** (EXP
+gained was doubled on 2026-10-02 and tripled on 2026-10-04: six times what the levels are measured in):
 
 | Monster | EXP | Monster | EXP |
 |---|---|---|---|
-| Bruce (shark) | 40 | Bear | 27 |
-| Warthog | 25 | Polar bear | 29 |
-| Screecher | 23 | Hyena | 13 |
-| Puffer fish | 19 | Rat | 13 |
-| Mama bear (Balboa) | 133 | Hyena boss | 80 |
+| Bruce (shark) | 120 | Bear | 80 |
+| Warthog | 76 | Polar bear | 88 |
+| Screecher | 70 | Hyena | 40 |
+| Puffer fish | 56 | Rat | 40 |
+| Mama bear (Balboa) | 400 | Hyena boss | 240 |
 
 An island's own Hard or Boss animals are worth more than Raft's plain ones.
 
 | From level | EXP to the next | About |
 |---|---|---|
-| 1 → 2 | 100 | 3 sharks |
-| 2 → 3 | 200 | 5 sharks |
-| 3 → 4 | 400 | 10 sharks |
-| 4 → 5 | 600 | 15 sharks |
-| then | 200 more each level | 5 more sharks each level |
+| 1 → 2 | 100 | 1 shark |
+| 2 → 3 | 200 | 2 sharks |
+| 3 → 4 | 400 | 4 sharks |
+| 4 → 5 | 600 | 5 sharks |
+| then | 200 more each level | about 2 more sharks each level |
 
 #### Levelling up and spending points
 
@@ -2041,7 +2069,8 @@ up while the game runs.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `chancePerKm` | 0.25 | Chance that an island appears for each km the raft sails (0 to 1) |
+| `chancePerKm` | 0.25 | Random islands on (above 0) or off (0). How often they come is the world's own span: one after every 3-6 of Raft's islands met by default ([9.5](#95-islands-while-sailing)) |
+| `quietMinutes` | 10 | No random island in a new world's first minutes of play (game time, kept with the world; 0-240) |
 | `minSpacing` | 800 | Metres kept between custom islands |
 | `spawnDistanceMin`, `spawnDistanceMax` | 250, 350 | How far ahead of the raft an island appears |
 | `unloadDistance` | 800 | Islands further away are unloaded (and come back when you return) |
@@ -2097,6 +2126,7 @@ Press **F10** for RML's console.
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host) |
+| `WorldIslandsGap` / `WorldIslandsGap <min>-<max>` | World or main menu | How often random islands come: one after every min-max of Raft's own islands met (default 3-6; min 2-20, max 4-50) / change it (host; at the main menu: the next new world) |
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world) |
 | `LoadEditor` | Main menu | Opens the editor |

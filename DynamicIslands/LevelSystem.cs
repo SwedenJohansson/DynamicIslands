@@ -42,14 +42,15 @@ namespace DynamicIslands.Editor
 		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark (before GainMultiplier).</summary>
 		public const int ReferenceXp = 20;
 
-		/// <summary>EXP gained is doubled (the user, 2026-10-02): every monster is worth twice what the levels are measured in -
-		/// Bruce gives 40 - so a level takes half the kills; the EXP each level needs stays as it was (100, 200, 400...).</summary>
-		public const float GainMultiplier = 2f;
+		/// <summary>EXP gained is six times what the levels are measured in (the user: doubled 2026-10-02, tripled again
+		/// 2026-10-04) - Bruce gives 120 - so a level takes a sixth of the kills; the EXP each level needs stays as it was
+		/// (100, 200, 400...).</summary>
+		public const float GainMultiplier = 6f;
 
 		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
 		public static int BruceXp { get { return Mathf.RoundToInt(ReferenceXp * GainMultiplier); } }
 
-		/// <summary>Monster kills worth ReferenceXp each from this level to the next: 5, 10, 20, 30, 40, ... (half as many of
+		/// <summary>Monster kills worth ReferenceXp each from this level to the next: 5, 10, 20, 30, 40, ... (a sixth as many of
 		/// Bruce, GainMultiplier).</summary>
 		public static int KillsFor(int level) { return level <= 1 ? 5 : 10 * (level - 1); }
 

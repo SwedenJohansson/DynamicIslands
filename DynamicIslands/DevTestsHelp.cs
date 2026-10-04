@@ -163,6 +163,15 @@ namespace DynamicIslands
 					yield return null;
 					Check(ref ok, !InfoWindow.IsOpen && LibraryWindow.IsOpen, "Close goes back to the library");
 				}
+				// The Guide button (the user, 2026-10-04): the illustrated guide
+				Button guide = LibraryWindow.Root != null ? LibraryWindow.Root.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Button_Guide") : null;
+				Check(ref ok, guide != null, "the library has a Guide button");
+				if (guide != null)
+				{
+					guide.onClick.Invoke();
+					string opened = HelpLinks.LastOpened ?? "";
+					Check(ref ok, opened.EndsWith(HelpLinks.PdfName) || opened == HelpLinks.GuidePdfOnline, "Guide opens the guide: " + opened);
+				}
 			}
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); LibraryWindow.Close(); }
 			if (ok) Log("PASS: menu library"); else Fail("menu library");

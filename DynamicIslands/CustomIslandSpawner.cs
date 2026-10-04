@@ -116,6 +116,10 @@ namespace DynamicIslands.Editor
 			StreamIslands(pos.Value);
 			if (!Raft_Network.IsHost) { lastRaftPosition = null; return; }
 			LoadPool(false);
+			// (this world's play time: game time, so a paused game doesn't count)
+			float gameNow = Time.time;
+			if (lastGameTime > 0f && gameNow > lastGameTime && gameNow - lastGameTime < 60f && WorldIslands.PlaySeconds < WorldIslands.LongPlayed) WorldIslands.PlaySeconds += gameNow - lastGameTime;
+			lastGameTime = gameNow;
 
 			float sailed = lastRaftPosition.HasValue ? Flat(pos.Value - lastRaftPosition.Value).magnitude : 0f;
 			lastRaftPosition = pos.Value;
@@ -126,10 +130,11 @@ namespace DynamicIslands.Editor
 			WorldRandomizer.OnSailed(sailed, pos.Value); // (its own islands, also in worlds without random custom islands)
 			GhostRafts.OnSailed(sailed, pos.Value); // (the world option Ghost rafts)
 			if (!Enabled || ChancePerKm <= 0f) return;
-
 			// One random custom island after every few of Raft's own islands met (the world's span, WorldIslands.GapMin -
 			// GapMax: 3-6 by default) - not by distance: however many islands are ticked, they never crowd the sea
 			CountRaftIslands();
+			// None in a new world's first minutes (the user: at least 10)
+			if (WorldIslands.PlaySeconds < QuietMinutes * 60f) return;
 			if (WorldIslands.Target <= 0) WorldIslands.NewTarget();
 			if (WorldIslands.RaftIslandsSince < WorldIslands.Target) return;
 			// (its turn: tried every 10 s of sailing until there's a free spot - not at one of Raft's islands)
@@ -145,8 +150,10 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static float nextTry;
+		static float nextTry, lastGameTime;
 		static bool spawned;
+		/// <summary>No random custom island in a new world's first so many minutes of play (spawnpool.txt quietMinutes).</summary>
+		public static float QuietMinutes = 10f;
 		/// <summary>Raft's islands already counted (instance and spawn), and the world they were counted in.</summary>
 		static readonly HashSet<long> raftIslandsCounted = new HashSet<long>();
 		static Guid countedFor;
@@ -541,6 +548,8 @@ namespace DynamicIslands.Editor
 # Random islands on (any number above 0) or off (0). How often they come is the world's own setting: one after every
 # 3-6 of Raft's own islands met by default (World settings > Islands while sailing; WorldIslandsGap in a world).
 chancePerKm = 0.25
+# No random island in a new world's first minutes of play (game time; worlds made before this don't wait)
+quietMinutes = 10
 # Metres kept between custom islands (centre to centre)
 minSpacing = 800
 # How far ahead of the raft an island appears (m). Raft's camera renders to about 400 m.
@@ -638,6 +647,7 @@ type:sunken 0.2
 			switch (key)
 			{
 				case "chanceperkm": ChancePerKm = Mathf.Clamp01(v); return true;
+				case "quietminutes": QuietMinutes = Mathf.Clamp(v, 0f, 240f); return true;
 				case "minspacing": MinSpacing = Mathf.Max(0f, v); return true;
 				case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); return true;
 				case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); return true;
@@ -666,6 +676,7 @@ type:sunken 0.2
 			{
 				"Automatic islands in this world: " + (Enabled ? "on" : "off") + " (CustomIslandsAuto on|off)",
 				"How often: " + WorldIslands.DescribeGap() + (ChancePerKm <= 0f ? " - off (chancePerKm 0)" : ""),
+				"This world's play time: " + (WorldIslands.PlaySeconds >= WorldIslands.LongPlayed ? "long (an older world)" : (WorldIslands.PlaySeconds / 60f).ToString("F1") + " min") + "; none before " + QuietMinutes.ToString("0.#") + " min",
 				string.Format(CultureInfo.InvariantCulture, "Min spacing {0:F0} m, appear {1:F0}-{2:F0} m ahead, unload beyond {3:F0} m, regrow after {4} day(s)",
 					MinSpacing, SpawnDistanceMin, SpawnDistanceMax, UnloadDistance, RegrowDays > 0 ? RegrowDays.ToString() : "never"),
 				"Sailed since the last automatic island: " + sailedSinceSpawn.ToString("F0") + " m",

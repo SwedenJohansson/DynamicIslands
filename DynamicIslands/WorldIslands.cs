@@ -45,6 +45,12 @@ namespace DynamicIslands.Editor
 		public static int GapMin = GapDefaultMin, GapMax = GapDefaultMax;
 		/// <summary>This world: Raft's islands met since the last random custom island, and how many this time (host; saved).</summary>
 		public static int RaftIslandsSince, Target;
+		/// <summary>This world's play time in seconds (game time, host; saved): no random custom island before
+		/// CustomIslandSpawner.QuietMinutes of it (the user, 2026-10-04: none in a new world's first 10 minutes). Worlds made
+		/// before this have no line and count as long played.</summary>
+		public static float PlaySeconds = LongPlayed;
+		public const float LongPlayed = 1e7f;
+		const string PlayKey = "playtime";
 		/// <summary>The world being created (null = the last choice).</summary>
 		static int[] pendingGap;
 
@@ -152,12 +158,13 @@ namespace DynamicIslands.Editor
 		internal static void Reset()
 		{
 			Off.Clear();
-			GapMin = GapDefaultMin; GapMax = GapDefaultMax; Target = 0; RaftIslandsSince = 0;
+			GapMin = GapDefaultMin; GapMax = GapDefaultMax; Target = 0; RaftIslandsSince = 0; PlaySeconds = LongPlayed;
 			if (!Raft_Network.IsHost) { Pending = null; pendingGap = null; return; }
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			if (isNew)
 			{
+				PlaySeconds = 0f;
 				foreach (string o in Pending ?? Defaults) Off.Add(o);
 				int[] gap = ChosenGap;
 				GapMin = gap[0]; GapMax = gap[1];
@@ -170,6 +177,7 @@ namespace DynamicIslands.Editor
 		internal static bool ReadLine(string key, string value)
 		{
 			if (key == GapKey) { int[] g = ParseGap(value); GapMin = g[0]; GapMax = g[1]; return true; }
+			if (key == PlayKey) { float sec; PlaySeconds = float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out sec) ? Mathf.Max(0f, sec) : LongPlayed; return true; }
 			if (key == CountKey)
 			{
 				string[] parts = (value ?? "").Split('/');
@@ -188,9 +196,10 @@ namespace DynamicIslands.Editor
 			if (Off.Count > 0) yield return "@" + DefaultKey + "=" + Join(Off);
 			if (GapMin != GapDefaultMin || GapMax != GapDefaultMax) yield return "@" + GapKey + "=" + GapText(GapMin, GapMax);
 			if (Target > 0 || RaftIslandsSince > 0) yield return "@" + CountKey + "=" + RaftIslandsSince + "/" + Target;
+			if (PlaySeconds < LongPlayed) yield return "@" + PlayKey + "=" + Mathf.Min(PlaySeconds, 3600f * 24f * 365f).ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
 		}
 
-		internal static bool HasState { get { return Off.Count > 0 || GapMin != GapDefaultMin || GapMax != GapDefaultMax || Target > 0 || RaftIslandsSince > 0; } }
+		internal static bool HasState { get { return Off.Count > 0 || GapMin != GapDefaultMin || GapMax != GapDefaultMax || Target > 0 || RaftIslandsSince > 0 || PlaySeconds < LongPlayed; } }
 
 		/// <summary>A player who joined: the islands the host left out of this world (from the host's copy of the world file).</summary>
 		public static string DescribeForPlayer()

@@ -927,7 +927,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: finished islands are not picked again, unfinished ones come back"); else Fail("finished islands are not picked again, unfinished ones come back");
 		}
 
-		[ConsoleCommand(name: "CIRaftGap", docs: "Dev, in game (host, a test world 'CI ...' with random islands): random custom islands come after every min-max of Raft's own islands met - the span's limits (min 2-20, max 4-50, default 3-6), the world file lines, no island before its turn, one when its turn came (then a new count), and a long sail: Raft's islands met and custom islands brought (at most one per min). CIRaftGap [km]")]
+		[ConsoleCommand(name: "CIRaftGap", docs: "Dev, in game (host, a test world 'CI ...' with random islands): random custom islands come after every min-max of Raft's own islands met - the span's limits (min 2-20, max 4-50, default 3-6), the world file lines, no island before its turn, none in a new world's first 10 minutes of play, one when its turn came (then a new count), and a long sail: Raft's islands met and custom islands brought (at most one per min). CIRaftGap [km]")]
 		public static void RaftGapTest(string[] args)
 		{
 			float km = 8f;
@@ -947,6 +947,7 @@ namespace DynamicIslands
 			Check(ref ok, parsed("3-6") == "3-6" && parsed("1-100") == "2-50" && parsed("30-10") == "20-20" && parsed("4-3") == "4-4" && parsed("2-2") == "2-4" && parsed("nonsense") == "3-6",
 				"the span's limits: 3-6 " + parsed("3-6") + ", 1-100 " + parsed("1-100") + ", 30-10 " + parsed("30-10") + ", 4-3 " + parsed("4-3") + ", 2-2 " + parsed("2-2") + ", nonsense " + parsed("nonsense"));
 			int minBefore = WorldIslands.GapMin, maxBefore = WorldIslands.GapMax;
+			float playBefore = WorldIslands.PlaySeconds;
 			int spawnedLog = 0, metLog = 0;
 			Application.LogCallback listen = (msg, trace, type) =>
 			{
@@ -968,6 +969,7 @@ namespace DynamicIslands
 				Check(ref ok, WorldIslands.GapMin == 7 && WorldIslands.GapMax == 20, "and reads it back: " + WorldIslands.GapMin + "-" + WorldIslands.GapMax);
 
 				// Not before its turn: one more of Raft's islands to go
+				WorldIslands.PlaySeconds = WorldIslands.LongPlayed;
 				WorldIslands.GapMin = 2; WorldIslands.GapMax = 4;
 				WorldIslands.Target = 3; WorldIslands.RaftIslandsSince = 0;
 				int before = IslandWorldState.Islands.Count;
@@ -975,6 +977,13 @@ namespace DynamicIslands
 				int metEarly = WorldIslands.RaftIslandsSince;
 				Check(ref ok, metEarly >= WorldIslands.Target || IslandWorldState.Islands.Count == before,
 					"no island before its turn: " + (IslandWorldState.Islands.Count - before) + " came, Raft's islands met " + metEarly + " of " + WorldIslands.Target);
+				// Its turn, but in a new world's first minutes of play: none yet
+				WorldIslands.RaftIslandsSince = WorldIslands.Target;
+				WorldIslands.PlaySeconds = 60f;
+				int quietBefore = spawnedLog;
+				yield return sail(300f, 15f);
+				Check(ref ok, spawnedLog == quietBefore, "none in a new world's first " + CustomIslandSpawner.QuietMinutes + " minutes (played " + (WorldIslands.PlaySeconds / 60f).ToString("F1") + " min): " + (spawnedLog - quietBefore) + " came");
+				WorldIslands.PlaySeconds = CustomIslandSpawner.QuietMinutes * 60f + 1f;
 				// Its turn: Raft's islands counted up to the target - an island comes, and a new count starts
 				WorldIslands.RaftIslandsSince = WorldIslands.Target;
 				before = IslandWorldState.Islands.Count;
@@ -1004,6 +1013,7 @@ namespace DynamicIslands
 			{
 				Application.logMessageReceived -= listen;
 				WorldIslands.GapMin = minBefore; WorldIslands.GapMax = maxBefore; WorldIslands.NewTarget();
+				WorldIslands.PlaySeconds = playBefore;
 			}
 			if (ok) Log("PASS: random custom islands follow Raft's own islands"); else Fail("random custom islands follow Raft's own islands");
 		}

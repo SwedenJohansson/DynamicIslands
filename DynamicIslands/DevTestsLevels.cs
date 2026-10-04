@@ -31,12 +31,12 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			bool ok = true;
 
-			// The curve: level 2 after about 3 kills of Bruce (EXP gained is doubled), level 3 about 5 more, level 4 about 10
-			// more, level 5 about 15 more
+			// The curve: level 2 after 1 kill of Bruce (EXP gained is six times the measure), level 3 about 2 more, level 4 about 4
+			// more, level 5 about 5 more
 			int bruce = LevelRules.XpOf(LevelRules.SharkHealth, LevelRules.SharkDamage);
-			Check(ref ok, bruce == LevelRules.BruceXp && bruce == 2 * LevelRules.ReferenceXp, "Bruce is worth " + bruce + " EXP (twice what the levels are measured in)");
+			Check(ref ok, bruce == LevelRules.BruceXp && bruce == 6 * LevelRules.ReferenceXp, "Bruce is worth " + bruce + " EXP (six times what the levels are measured in)");
 			int[] kills = Enumerable.Range(1, 5).Select(l => Mathf.CeilToInt(LevelRules.XpFor(l) / (float)bruce)).ToArray();
-			Check(ref ok, kills.SequenceEqual(new[] { 3, 5, 10, 15, 20 }), "kills of Bruce from each level to the next: " + string.Join(", ", kills.Select(k => k.ToString()).ToArray()));
+			Check(ref ok, kills.SequenceEqual(new[] { 1, 2, 4, 5, 7 }), "kills of Bruce from each level to the next: " + string.Join(", ", kills.Select(k => k.ToString()).ToArray()));
 			Check(ref ok, LevelRules.TotalFor(1) == 0 && LevelRules.TotalFor(2) == 100 && LevelRules.TotalFor(3) == 300 && LevelRules.TotalFor(4) == 700 && LevelRules.TotalFor(5) == 1300,
 				"EXP at which levels 2-5 start: " + string.Join(", ", Enumerable.Range(2, 4).Select(l => LevelRules.TotalFor(l).ToString()).ToArray()));
 			Check(ref ok, LevelRules.LevelOf(0) == 1 && LevelRules.LevelOf(99) == 1 && LevelRules.LevelOf(100) == 2 && LevelRules.LevelOf(299) == 2 && LevelRules.LevelOf(300) == 3 && LevelRules.LevelOf(1300) == 5,
@@ -437,7 +437,7 @@ namespace DynamicIslands
 			if (File.Exists(IslandSpawner.PathFor(LevelIsland))) File.Delete(IslandSpawner.PathFor(LevelIsland));
 		}
 
-		[ConsoleCommand(name: "CILevelTable", docs: "Dev, in game: every monster Raft has - its health, damage and EXP (Bruce first), and how many kills of it make level 2; checks Bruce is worth " + "40" + " EXP (twice the 20 the levels are measured in)")]
+		[ConsoleCommand(name: "CILevelTable", docs: "Dev, in game: every monster Raft has - its health, damage and EXP (Bruce first), and how many kills of it make level 2; checks Bruce is worth " + "120" + " EXP (six times the 20 the levels are measured in)")]
 		public static void LevelTable()
 		{
 			Network_Host_Entities host = ComponentManager<Network_Host_Entities>.Value;
@@ -466,7 +466,7 @@ namespace DynamicIslands
 			}
 			foreach (string r in rows) Log(r);
 			Check(ref ok, sharkHp > 0f, "Bruce found (health " + sharkHp + ", damage " + sharkDmg + "; the rules use " + LevelRules.SharkHealth + " / " + LevelRules.SharkDamage + ")");
-			if (sharkHp > 0f) Check(ref ok, Math.Abs(LevelRules.XpOf(sharkHp, sharkDmg) - LevelRules.BruceXp) <= 1, "Bruce is worth " + LevelRules.XpOf(sharkHp, sharkDmg) + " EXP (3 kills for level 2)");
+			if (sharkHp > 0f) Check(ref ok, Math.Abs(LevelRules.XpOf(sharkHp, sharkDmg) - LevelRules.BruceXp) <= 1, "Bruce is worth " + LevelRules.XpOf(sharkHp, sharkDmg) + " EXP (1 kill for level 2)");
 			if (ok) Log("PASS: monster EXP table"); else Fail("monster EXP table");
 		}
 

@@ -62,6 +62,9 @@ namespace DynamicIslands.Editor
 			Button submit = UIKit.Button(head, "Submit yours...", OpenSubmit, "How to get your own island or plan into the library", 150, 32f, 13);
 			submit.name = "Button_Submit";
 			UIKit.Primary(submit);
+			// (the user, 2026-10-04: a manual button here, so players can read how the library, islands, world plans and the
+			// editor work - the illustrated guide, chapter 16 about the library's examples)
+			UIKit.Button(head, "Guide", HelpLinks.OpenGuide, "The illustrated guide (PDF): the island library and its examples (chapter 16), world plans, the editor and everything else", 100, 32f, 13).name = "Button_Guide";
 			UIKit.Button(head, "Refresh", () => Load(true), "Read the library's list again", 110, 32f, 13);
 			UIKit.Button(head, "Close", Close, "Close the library", 110, 32f, 13);
 
