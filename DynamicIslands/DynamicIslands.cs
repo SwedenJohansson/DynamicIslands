@@ -272,6 +272,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
 			try { JournalWindow.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
+			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) QuestBook.Tick(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest book] " + e.Message); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Hotbar key tabs: " + e); }
 			try { WorldRandomizer.Tick(); ScrambledBlueprints.Tick(); }

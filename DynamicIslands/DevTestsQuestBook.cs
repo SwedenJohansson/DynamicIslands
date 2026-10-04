@@ -10,6 +10,7 @@ using RaftModLoader;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DynamicIslands.Editor;
 
 namespace DynamicIslands
 {
@@ -132,6 +133,66 @@ namespace DynamicIslands
 			foreach (NoteBookNote note in notes) if (note != null && !note.isUnlocked) { nb.UnlockSpecificNoteWithUniqueNoteIndex(note.noteIndex, true, false); n++; }
 			Traverse.Create(ui).Method("UpdatePages").GetValue();
 			Log("PASS: " + n + " notes unlocked");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookUnit", docs: "Dev, anywhere: the quest book's plan data without a world - a rule's tab title, colour and intro (written and read back, line breaks kept), 'next coordinates when a note is read', the tab's name when none is given, a plan's ending page, older rules and plans unchanged (TEST_CATALOGUE QB1)")]
+		public static void QuestBookUnitCommand()
+		{
+			bool ok = true;
+			IntroRule r = IntroRule.Parse("ferry | island:Saltmarsh Ferry | start | receiver:800 | A ferry's band. | Ferry | after:beacon | note:5 | The Ferry | 4 | Line one\\nLine two");
+			Check(ref ok, r != null && r.TabTitle == "The Ferry" && r.TabColour == 4 && r.TabIntro == "Line one\nLine two" && r.StoryDone == "note:5" && r.MainStory,
+				"a main story rule with a tab title, colour and a two-line intro read: " + (r != null ? r.TabTitle + " / " + r.TabColour + " / " + r.TabIntro.Replace("\n", "\\n") + " / " + r.StoryDone : "null"));
+			IntroRule back = r != null ? IntroRule.Parse(r.ToLine()) : null;
+			Check(ref ok, back != null && back.ToLine() == r.ToLine() && back.TabIntro == r.TabIntro, "... written and read back the same: " + (r != null ? r.ToLine() : ""));
+			Check(ref ok, r != null && r.DescribeDone() == "its note #5 is read" && IntroRule.NormalDone("Note: 7") == "note:7", "next coordinates when a note is read: " + (r != null ? r.DescribeDone() : ""));
+			string oldLine = "cove | island:Wreckers' Cove | start | receiver:700 | A lantern code. | Wreckers' Cove | after:RadioTower | quest";
+			IntroRule old = IntroRule.Parse(oldLine);
+			Check(ref ok, old != null && old.ToLine() == oldLine && old.TabTitle == "" && old.TabColour == 0 && old.TabIntro == "" && old.MainStory, "an older story rule (eight parts) reads and writes as before, and is main story");
+			IntroRule side = IntroRule.Parse("trip | island:Signal Rock | km:3 | sailing:300 | | ");
+			Check(ref ok, side != null && !side.MainStory, "a rule outside the chain is a side quest");
+			IntroRule wild = IntroRule.Parse("w | island:X | start | ahead:300 | | | | | | 15 | ");
+			Check(ref ok, wild != null && wild.TabColour == IntroRule.TabColours && !wild.MainStory, "a colour past Raft's ten is cut to 10: " + (wild != null ? wild.TabColour.ToString() : "null"));
+			IntroRule bad = IntroRule.Parse("w | island:X | start | ahead:300 | | | first | | | blue | ");
+			Check(ref ok, bad != null && bad.TabColour == 0, "a colour that isn't a number = chosen by place");
+			Check(ref ok, old != null && old.TabName == "Wreckers' Cove", "no tab title: the Receiver label");
+			IntroRule noLabel = IntroRule.Parse("isle | island:Thornwood | start | receiver:900 | | | after:Vasagatan | quest");
+			Check(ref ok, noLabel != null && noLabel.TabName == "Thornwood", "no title or label: the island's name");
+			IntroRule pipe = new IntroRule { Id = "p", What = "island", WhatArg = "X", StoryPlace = "first", TabTitle = "A|B", TabIntro = "x | y\r\nz" };
+			IntroRule pipeBack = IntroRule.Parse(pipe.ToLine());
+			Check(ref ok, pipeBack != null && pipeBack.TabTitle == "A/B" && pipeBack.TabIntro == "x / y\nz", "a '|' in a title or intro can't break the line: " + (pipeBack != null ? pipeBack.TabTitle + " / " + pipeBack.TabIntro.Replace("\n", "\\n") : "null"));
+
+			WorldPlan p = WorldPlan.Parse("t", "story = off\nstoryending = The sea gives up its last secret.\\n\\nThe end.\nrule = a | island:X | start | receiver:600 | | | first | quest | Start | 2 | \n");
+			Check(ref ok, p.StoryEnding == "The sea gives up its last secret.\n\nThe end." && p.Rules.Count == 1 && p.Rules[0].TabColour == 2, "a plan's ending page read (line breaks kept)");
+			WorldPlan p2 = WorldPlan.Parse("t", p.ToText());
+			Check(ref ok, p2.StoryEnding == p.StoryEnding && p2.Rules[0].ToLine() == p.Rules[0].ToLine(), "... written and read again the same");
+			WorldPlan plain = WorldPlan.Parse("t", "rule = camp | type:camp | start | ahead:350 | | \n");
+			Check(ref ok, plain.StoryEnding == "" && !plain.ToText().Contains("storyending ="), "an older plan has no ending page and writes none");
+			if (ok) Log("PASS: quest book unit");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookState", docs: "Dev, world: the quest book now - its layout, our tabs, Raft's tabs shown, our pages' texts")]
+		public static void QuestBookStateCommand()
+		{
+			QuestBook.Refresh();
+			Log("QUESTBOOK layout: " + QuestBook.Layout);
+			foreach (string t in QuestBook.Tabs) Log("QUESTBOOK tab: " + t);
+			Log("QUESTBOOK Raft tabs shown: " + string.Join(",", StoryOrder.Chain.Where(QuestBook.RaftTabShown).Select(StoryOrder.Name).ToArray()));
+			foreach (KeyValuePair<uint, List<string>> kv in QuestBook.PageTexts.OrderBy(k => k.Key))
+				Log("QUESTBOOK page " + kv.Key + ": " + string.Join(" || ", kv.Value.Select(x => x.Replace("\n", "\\n")).ToArray()));
+			Log("PASS: quest book state");
+		}
+
+		[ConsoleCommand(name: "CIQuestBookOpen", docs: "Dev, world: opens Raft's notebook at one of the quest book's tabs (CIQuestBookOpen <tab title>), or at a page number")]
+		public static void QuestBookOpenCommand(string[] args)
+		{
+			string title = args != null ? string.Join(" ", args) : "";
+			NoteBookUI ui = LocalNoteBookUI();
+			if (ui == null) { Fail("QuestBookOpen: no notebook"); return; }
+			if (!ui.isDisplayed) ui.SetBookActive(true);
+			uint page;
+			if (uint.TryParse(title, out page)) ui.FlipToPageLocally(page);
+			else if (!QuestBook.PressTab(title)) { Fail("QuestBookOpen: no tab '" + title + "'"); return; }
+			Log("PASS: notebook open at " + Traverse.Create(ui).Field("currentPageIndex").GetValue());
 		}
 
 		static void DropComponents(GameObject go, params string[] typeNames)

@@ -47,6 +47,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Steps unlocked / done (step keys); rules whose moment came / whose island is in the world (ids).</summary>
 		public static readonly HashSet<string> Unlocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Done = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 			Fired = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Brought = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>The plan's last page of the main story (Raft's notebook), kept with the world and sent to every player.</summary>
+		public static string StoryEnding = "";
+		/// <summary>Raised on every machine when the chain, its rules or what is done changed (QuestBook listens).</summary>
+		public static event Action ChainChanged;
 		/// <summary>Rules by chance: the km sailed (metres) at which it comes up.</summary>
 		static readonly Dictionary<string, float> due = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static readonly Dictionary<string, float> retryAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
@@ -66,6 +70,11 @@ namespace DynamicIslands.Editor
 		public static ChunkPointType TypeOfStep(string step) { return IsRaft(step) ? StoryOrder.Parse(step.Substring(5)) : ChunkPointType.None; }
 		public static string RuleIdOf(string step) { return IsRaft(step) ? null : step.Substring(5); }
 		public static IntroRule RuleOf(string id) { return Rules.FirstOrDefault(r => r.Id.Equals(id ?? "", StringComparison.OrdinalIgnoreCase)); }
+
+		/// <summary>A player's copy of the main story rules (the host sends them with the chain: the book needs their tabs).</summary>
+		static readonly List<IntroRule> clientBook = new List<IntroRule>();
+		/// <summary>The main story islands' rules (in the chain: their tabs in Raft's notebook) - on every machine.</summary>
+		public static List<IntroRule> BookRules { get { return Raft_Network.IsHost ? Rules.Where(r => r.MainStory).ToList() : clientBook.ToList(); } }
 
 		#region The chain
 
@@ -129,6 +138,7 @@ namespace DynamicIslands.Editor
 			active = plan.ChangesStory;
 			Steps.Clear();
 			Steps.AddRange(BuildSteps(plan.RaftStory, plan.LeaveOut, Rules));
+			StoryEnding = plan.StoryEnding ?? "";
 			HasSnapshot = true;
 			AssignFrequencies();
 			if (active || Rules.Count > 0) Log("From plan '" + plan.Name + "': " + Describe().Replace("\n", " | "));
@@ -404,6 +414,7 @@ namespace DynamicIslands.Editor
 			if (entries.Count == 0) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
+			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + e.HostName + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
 			IslandWorldState.Entry at;
 			return WorldDirector.Met(new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg }, null, out at);
 		}
@@ -467,7 +478,11 @@ namespace DynamicIslands.Editor
 			if (rebuilding) return;
 			Rebuild();
 			Broadcast(null);
+			RaiseChanged();
 		}
+
+		// (the main story's tabs travel after the chain's parts: "\u001d" ending "\u001d" rule lines joined by "\u001e")
+		const char BookSep = '\u001d', RuleSep = '\u001e';
 
 		/// <summary>Host: a banner on every machine (the quests' milestones, QuestMilestones).</summary>
 		internal static void Announce(string title, string text) { Banner(title, text); }
@@ -518,8 +533,17 @@ namespace DynamicIslands.Editor
 			Frequencies.Clear();
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
 			due.Clear(); retryAt.Clear(); warned.Clear();
+			StoryEnding = "";
+			clientBook.Clear();
 			LastBanner = null;
 			dirty = false;
+			RaiseChanged();
+		}
+
+		static void RaiseChanged()
+		{
+			if (ChainChanged == null) return;
+			try { ChainChanged(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
 		}
 
 		static string Freqs() { return string.Join(",", Frequencies.Select(kv => kv.Key.Replace(",", "").Replace(":", "") + ":" + string.Concat(kv.Value.Select(d => d.ToString(CultureInfo.InvariantCulture)).ToArray())).ToArray()); }
@@ -544,6 +568,7 @@ namespace DynamicIslands.Editor
 			{
 				case "storychain": HasSnapshot = true; active = value.StartsWith("on;"); Steps.Clear(); Steps.AddRange(value.Substring(value.IndexOf(';') + 1).Split(',').Select(s => s.Trim()).Where(s => s.Length > 0)); return true;
 				case "storyrule": IntroRule r = IntroRule.Parse(value); if (r != null) { HasSnapshot = true; Rules.Add(r); } return true;
+				case "storyending": StoryEnding = IntroRule.UnMulti(value); return true;
 				case "storyfreq": ReadFreqs(value); return true;
 				case "storyunlocked": ReadSet(Unlocked, value); return true;
 				case "storydone": ReadSet(Done, value); return true;
@@ -568,6 +593,7 @@ namespace DynamicIslands.Editor
 			if (!HasState) yield break;
 			yield return "@storychain=" + (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray());
 			foreach (IntroRule r in Rules) yield return "@storyrule=" + r.ToLine();
+			if (StoryEnding.Length > 0) yield return "@storyending=" + IntroRule.Multi(StoryEnding);
 			if (Frequencies.Count > 0) yield return "@storyfreq=" + Freqs();
 			if (Unlocked.Count > 0) yield return "@storyunlocked=" + string.Join(",", Unlocked.ToArray());
 			if (Done.Count > 0) yield return "@storydone=" + string.Join(",", Done.ToArray());
@@ -596,7 +622,9 @@ namespace DynamicIslands.Editor
 		{
 			string data = (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray()) + "|" + Freqs() + "|" + string.Join(",", Unlocked.ToArray()) + "|" + string.Join(",", Fired.ToArray()) +
 				// (done and brought since 2026-09-29: a player's world window and StoryChain never showed a step done)
-				"|" + string.Join(",", Done.ToArray()) + "|" + string.Join(",", Brought.ToArray());
+				"|" + string.Join(",", Done.ToArray()) + "|" + string.Join(",", Brought.ToArray()) +
+				// (the main story's rules and ending since 2026-10-04: every player's notebook shows their tabs)
+				BookSep + IntroRule.Multi(StoryEnding) + BookSep + string.Join(RuleSep.ToString(), BookRules.Select(r => r.ToLine()).ToArray());
 			return new IslandNetMessage { Kind = IslandNetMessage.StoryChain, Data = HasState ? data : "", Name = banner };
 		}
 
@@ -612,6 +640,11 @@ namespace DynamicIslands.Editor
 			if (data.Length == 0) { Reset(); }
 			else
 			{
+				string[] book = data.Split(BookSep);
+				data = book[0];
+				StoryEnding = book.Length > 1 ? IntroRule.UnMulti(book[1]) : "";
+				clientBook.Clear();
+				if (book.Length > 2) foreach (string line in book[2].Split(RuleSep)) { IntroRule r = IntroRule.Parse(line); if (r != null) clientBook.Add(r); }
 				string[] p = data.Split('|');
 				string chain = p[0];
 				active = chain.StartsWith("on;");
@@ -625,6 +658,7 @@ namespace DynamicIslands.Editor
 				ReadSet(Brought, p.Length > 5 ? p[5] : "");
 			}
 			Rebuild();
+			RaiseChanged();
 			if (!string.IsNullOrEmpty(msg.Name))
 			{
 				int nl = msg.Name.IndexOf('\n');

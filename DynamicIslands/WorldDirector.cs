@@ -33,7 +33,9 @@ namespace DynamicIslands.Editor
 		public static readonly string[] WhatKinds = { "island", "type", "pool", "oneof" };
 		public static readonly string[] WhenKinds = { "start", "km", "day", "quest", "step", "zone", "visit", "rule", "signal" };
 		public static readonly string[] WhereKinds = { "ahead", "near", "receiver", "sailing" };
-		public static readonly string[] DoneKinds = { "", "quest", "visit", "step", "zone", "signal" };
+		public static readonly string[] DoneKinds = { "", "quest", "visit", "step", "zone", "signal", "note" };
+		/// <summary>Raft's notebook has ten tab colours (sprites NoteBook_Thumbnail_1..10); 0 = one chosen by the island's place.</summary>
+		public const int TabColours = 10;
 		public static readonly string[] Directions = { "any", "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
 
 		public string Id = "";
@@ -47,10 +49,23 @@ namespace DynamicIslands.Editor
 		public string StoryPlace = "";
 		/// <summary>When it counts as done in the chain: "" (its quest, or reaching it), quest, visit, step:n, zone:name, signal:name.</summary>
 		public string StoryDone = "";
+		/// <summary>Main story islands (in the chain) get a tab in Raft's notebook (QuestBook): its title ("" = the receiver
+		/// label, else the island's name), its colour (1-10, 0 = by its place) and the intro on its first page ("" = an automatic line).</summary>
+		public string TabTitle = "", TabIntro = "";
+		public int TabColour;
 
 		/// <summary>Handled by StoryChain rather than brought straight away: in the story chain, on the Receiver, or by chance while sailing.</summary>
 		public bool Special { get { return StoryPlace.Length > 0 || Where == "receiver" || Where == "sailing"; } }
 		public bool InStory { get { return StoryPlace.Length > 0; } }
+		/// <summary>Main story = in the story chain: its island goes into Raft's notebook; every other island is a side quest (the journal).</summary>
+		public bool MainStory { get { return InStory; } }
+
+		/// <summary>The tab's title in Raft's notebook.</summary>
+		public string TabName { get { return TabTitle.Length > 0 ? TabTitle : Label.Length > 0 ? Label : What == "island" && WhatArg.Length > 0 ? WhatArg : Id; } }
+
+		/// <summary>Text with line breaks in one part of a line: a break is written "\n", "|" becomes "/".</summary>
+		public static string Multi(string s) { return (s ?? "").Replace("\r", "").Replace("|", "/").Replace("\n", "\\n").Trim(); }
+		public static string UnMulti(string s) { return (s ?? "").Replace("\\n", "\n").Trim(); }
 
 		public IntroRule Clone() { return (IntroRule)MemberwiseClone(); }
 
@@ -90,7 +105,9 @@ namespace DynamicIslands.Editor
 			}
 			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : Where + ":" + Num(Distance);
 			var parts = new List<string> { Part(Id), what, when, where, Text(Message), Text(Label) };
-			if (StoryPlace.Length > 0 || StoryDone.Length > 0) { parts.Add(Text(StoryPlace)); parts.Add(Text(StoryDone)); }
+			bool tab = TabTitle.Length > 0 || TabColour > 0 || TabIntro.Length > 0;
+			if (StoryPlace.Length > 0 || StoryDone.Length > 0 || tab) { parts.Add(Text(StoryPlace)); parts.Add(Text(StoryDone)); }
+			if (tab) { parts.Add(Text(TabTitle)); parts.Add(TabColour > 0 ? TabColour.ToString(CultureInfo.InvariantCulture) : ""); parts.Add(Multi(TabIntro)); }
 			return string.Join(" | ", parts.ToArray());
 		}
 
@@ -100,7 +117,10 @@ namespace DynamicIslands.Editor
 			string[] p = (line ?? "").Split('|').Select(x => x.Trim()).ToArray();
 			if (p.Length < 4) return null;
 			var r = new IntroRule { Id = CleanId(p[0]), Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "",
-				StoryPlace = p.Length > 6 ? NormalPlace(p[6]) : "", StoryDone = p.Length > 7 ? NormalDone(p[7]) : "" };
+				StoryPlace = p.Length > 6 ? NormalPlace(p[6]) : "", StoryDone = p.Length > 7 ? NormalDone(p[7]) : "",
+				TabTitle = p.Length > 8 ? p[8] : "", TabIntro = p.Length > 10 ? UnMulti(p[10]) : "" };
+			int colour;
+			if (p.Length > 9 && int.TryParse(p[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out colour)) r.TabColour = Mathf.Clamp(colour, 0, TabColours);
 
 			string[] what = p[1].Split(new[] { ':' }, 2);
 			r.What = what[0].Trim().ToLowerInvariant();
@@ -223,6 +243,7 @@ namespace DynamicIslands.Editor
 				case "step": return arg + " step(s) of its quest are done";
 				case "zone": return "its zone '" + arg + "' fires";
 				case "signal": return "its signal '" + arg + "' is sent";
+				case "note": return "its note #" + arg + " is read";
 			}
 			return "its quest is done (or players reach it, if it has none)";
 		}
@@ -251,6 +272,8 @@ namespace DynamicIslands.Editor
 		public bool RaftStory = true;
 		/// <summary>Raft's story islands left out of this plan's story (StoryOrder.Key names: "Balboa"...).</summary>
 		public HashSet<string> LeaveOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>The last page of the main story in Raft's notebook, shown (with a banner) when the last main story island is done ("" = none).</summary>
+		public string StoryEnding = "";
 
 		/// <summary>The plan changes Raft's story chain (StoryChain takes it over in its worlds).</summary>
 		public bool ChangesStory { get { return !RaftStory || LeaveOut.Count > 0 || Rules.Any(r => r.InStory); } }
@@ -310,6 +333,7 @@ namespace DynamicIslands.Editor
 							if (t != ChunkPointType.None) plan.LeaveOut.Add(StoryOrder.Key(t));
 						}
 						break;
+					case "storyending": plan.StoryEnding = IntroRule.UnMulti(value); break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
 						if (r != null) plan.Rules.Add(r);
@@ -344,8 +368,13 @@ namespace DynamicIslands.Editor
 #   The message is shown to every player when the island appears; the label is its name on the Receiver.
 #   Two more parts put the island into Raft's story (the Receiver chain):
 #   rule = ... | label | first / after:<story island or rule id> / instead:<story island> | done when
-#          done when: quest, visit, step:<n>, zone:<zone>, signal:<signal> (empty: its quest, or reaching it)
-# story = on|off         (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
+#          done when: quest, visit, step:<n>, zone:<zone>, signal:<signal>, note:<note number> (empty: its quest,
+#          or reaching it) - then the next island's coordinates are found
+#   An island in the story is MAIN STORY: it gets a tab in Raft's notebook (its quest steps, intro and notes there);
+#   every other island is a side quest (the journal). Three more parts style the tab:
+#   rule = ... | place | done when | tab title | tab colour 1-10 | tab intro (\n = a new line)
+# storyending = the last page of the main story in Raft's notebook (\n = a new line)
+# story = on|off        (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
 #                         Varuna Point, Temperance, Utopia. off = only the plan's own islands: a new adventure)
 # storyleaveout = Balboa, Tangaroa   (story islands left out: the note before them leads to the one after)
 ";
@@ -354,6 +383,7 @@ namespace DynamicIslands.Editor
 		{
 			var lines = new List<string> { Help, "description = " + (Description ?? "").Replace("\n", " "), "random = " + (Random ? "on" : "off"), "story = " + (RaftStory ? "on" : "off") };
 			if (LeaveOut.Count > 0) lines.Add("storyleaveout = " + string.Join(", ", StoryOrder.Chain.Select(StoryOrder.Key).Where(k => LeaveOut.Contains(k)).ToArray()));
+			if ((StoryEnding ?? "").Trim().Length > 0) lines.Add("storyending = " + IntroRule.Multi(StoryEnding));
 			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
 			return string.Join("\r\n", lines.ToArray()) + "\r\n";
