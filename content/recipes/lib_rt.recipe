@@ -3,20 +3,20 @@
 # rt_storey: one storey, in a frame whose floor is the storey's floor (push at x z h=... yaw=...). Its footprint is
 # x -6..0, z -4.5..4.5 (6 x 9 m: one RT_Floor), walls 3 m high on four sides. Each wall slot takes a piece:
 # RT_Wall1, RT_WallWindow1, RT_WallWindow2, RT_WallWindowBroken (no glass: swim or climb through), RT_WallDoor1, or
-# none (an opening). Slots: b1 b2 at the back (z 4.5, x -6..-3 and -3..0), f1 f2 at the front (z -4.5), l1 l2 l3 on
+# none (an opening). a: an alias for all its pieces (to tint them together; - none). Slots: b1 b2 at the back (z 4.5, x -6..-3 and -3..0), f1 f2 at the front (z -4.5), l1 l2 l3 on
 # the left (x -6, z -4.5..-1.5, -1.5..1.5, 1.5..4.5), r1 r2 r3 on the right (x 0). floor=none leaves the floor out.
-macro rt_storey floor=RT_Floor b1=RT_Wall1 b2=RT_Wall1 f1=RT_Wall1 f2=RT_Wall1 l1=RT_Wall1 l2=RT_Wall1 l3=RT_Wall1 r1=RT_Wall1 r2=RT_Wall1 r3=RT_Wall1
-place $floor - at 0 4.5
-place $b1 - at -3 4.5
-place $b2 - at 0 4.5
-place $f1 - at -3 -4.5
-place $f2 - at 0 -4.5
-place $l1 - at -6.04 -4.5 yaw=90
-place $l2 - at -6.04 -1.5 yaw=90
-place $l3 - at -6.04 1.5 yaw=90
-place $r1 - at 0 -4.5 yaw=90
-place $r2 - at 0 -1.5 yaw=90
-place $r3 - at 0 1.5 yaw=90
+macro rt_storey floor=RT_Floor b1=RT_Wall1 b2=RT_Wall1 f1=RT_Wall1 f2=RT_Wall1 l1=RT_Wall1 l2=RT_Wall1 l3=RT_Wall1 r1=RT_Wall1 r2=RT_Wall1 r3=RT_Wall1 a=-
+place $floor $a at 0 4.5
+place $b1 $a at -3 4.5
+place $b2 $a at 0 4.5
+place $f1 $a at -3 -4.5
+place $f2 $a at 0 -4.5
+place $l1 $a at -6.04 -4.5 yaw=90
+place $l2 $a at -6.04 -1.5 yaw=90
+place $l3 $a at -6.04 1.5 yaw=90
+place $r1 $a at 0 -4.5 yaw=90
+place $r2 $a at 0 -1.5 yaw=90
+place $r3 $a at 0 1.5 yaw=90
 end
 
 # rt_railing: RT_Fence all round a 6 x 9 roof (or floor) at height y; bm / fm / lm / rm = none leaves the middle 3 m
