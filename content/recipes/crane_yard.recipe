@@ -48,7 +48,9 @@ place Zone_Trigger yard at 0 0 y=1.5
 place VP_Scaffolding_M_Open tower1 at 6 -5
 place VP_Scaffolding_M_Open tower2 at 6 -5 y=3
 place Scaffolding_6x4m towertop at 6 -5 y=5
-place VP_Spotlight spotlight at 6 -4.6 y=6 rot=0,0,0 yaw=60
+# (Raft's radio tower floodlight, not Varuna Point's spotlight: that one shoots any player it sees - the builder's find
+# in Crater Lair, 2026-10-04)
+place RT_Floodlight spotlight at 6 -4.6 y=6 sit scale=2.2 yaw=60
 place RT_Floodlight beam at 6 -4.6 y=7.6
 place LandmarkLadder_6m towerladder at 6 -7.15 rot=0,0,0
 line RT_Fence from 3 -3.05 to 9 -3.05 step=1.5 ends yaw=180 y=6

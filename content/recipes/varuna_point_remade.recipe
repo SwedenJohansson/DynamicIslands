@@ -45,7 +45,9 @@ next
 place RT_Floor lightdeckfloor at 0 4.5 y=6.3
 call rt_railing y=6.37 fm=none
 place LandmarkLadder_6m towerladder at -1.5 -4.62 y=0
-place VP_Spotlight floodlight at -3 3 y=6.37 yaw=0
+# (Raft's radio tower floodlight, not Varuna Point's own spotlight: placed on an island that one shoots any player it
+# sees, 2026-10-04)
+place RT_Floodlight floodlight at -3 3 y=6.37 sit scale=2.2 yaw=0
 place VP_Cable_Roll01 - at -5 -3 y=6.37
 place Zone_Trigger lightdeck at -3 0 y=7.5
 pop

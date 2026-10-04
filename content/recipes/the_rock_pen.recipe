@@ -132,7 +132,8 @@ place RT_Fence - at 0 1.5 y=6 yaw=90
 place RT_Fence - at 3 0 y=6
 # (the ladder up the south side's west half, its rail left open)
 place LandmarkLadder_6m - at 0.75 -0.12 y=0 rot=0,0,0
-place VP_Spotlight searchlight at 1.5 2.2 y=6 sit
+# (Raft's radio tower floodlight, not Varuna Point's spotlight: that one shoots any player it sees, 2026-10-04)
+place RT_Floodlight searchlight at 2.45 2.45 y=6 sit scale=2.2
 place "Box Small" towerbox at 2.3 1 y=6 sit yaw=10
 pop
 pop

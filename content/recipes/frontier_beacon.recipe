@@ -44,7 +44,8 @@ place Placeable_Lantern_Metal - at -31 0.6 h=6 sit drop
 
 # --- The beacon terrace (16 m): the beacon's mast with its lamp, its control box, the keeper's locker, a railing -------
 place RT_PillarThick beaconmast at -2 6 h=16
-place VP_Spotlight beaconspot at -2 6 h=22.05 yaw=0
+# (Raft's radio tower floodlight, not Varuna Point's spotlight: that one shoots any player it sees, 2026-10-04)
+place RT_Floodlight beaconspot at -2 6 h=22.05 sit scale=2.2 yaw=0
 place RT_RoofLamp beaconlamp at -2 5.55 h=21.4
 place Placeable_Flag_03 - at 3.5 5.5 ground
 place Crate_Big_02 - at -6.5 11 ground yaw=20
