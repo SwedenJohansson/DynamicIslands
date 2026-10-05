@@ -211,8 +211,49 @@ namespace DynamicIslands.Editor
 					"Let the first rule be \"When the world starts\" (or after a distance / on a day).");
 			if (islandMode && rules.Any(x => x.Special)) c.Add(-1, Level.Problem, "An island's own rules can't use Raft's story or the Receiver (a world plan can).", "Use \"Ahead of the raft\" or \"Near an island\", or make these rules in a world plan.");
 			foreach (string tip in StoryTips(plan, islandMode)) c.Add(-1, tip.StartsWith("Story:") ? Level.Tip : Level.Tip, tip);
+			if (!islandMode) CheckBlueprints(c);
 			return c.Out.OrderBy(f => f.Level).ThenBy(f => f.Rule).ToList();
 		}
+
+		/// <summary>Raft's progression (the user, 2026-10-05): every blueprint that lies on Raft's story islands
+		/// (raft_blueprints.txt) must be found somewhere in a plan - on the story islands it keeps, or given by its own
+		/// islands (quest rewards, chest loot, notes) - or the player can never build it. Says which island of the plan gives
+		/// which, in the plan's order, and warns about any never given.</summary>
+		static void CheckBlueprints(Ctx c)
+		{
+			ScrambledBlueprints.Read();
+			if (ScrambledBlueprints.OnIslands.Count == 0) return;
+			Func<string, string> key = n => { ChunkPointType t = StoryOrder.Parse(n); return t != ChunkPointType.None ? StoryOrder.Key(t) : n; };
+			var replaced = new HashSet<string>(c.Plan.Rules.Where(r => r.StoryPlace.StartsWith("instead:")).Select(r => key(r.StoryPlace.Substring(8))), StringComparer.OrdinalIgnoreCase);
+			var kept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (c.Plan.RaftStory)
+				foreach (var kv in ScrambledBlueprints.OnIslands)
+					foreach (string isl in kv.Value)
+						if (!c.Plan.LeaveOut.Any(l => key(l).Equals(key(isl), StringComparison.OrdinalIgnoreCase)) && !replaced.Contains(key(isl))) kept.Add(kv.Key);
+			var given = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
+			var order = new List<string>();
+			var bp = new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+			{
+				var mine = new List<string>();
+				foreach (Facts f in Brings(c, c.Plan.Rules[i]))
+					foreach (System.Text.RegularExpressions.Match m in bp.Matches(f.AllText))
+						if (ScrambledBlueprints.OnIslands.ContainsKey(m.Value) && !mine.Contains(m.Value)) mine.Add(m.Value);
+				if (mine.Count == 0) continue;
+				foreach (string b in mine) given.Add(b);
+				order.Add("rule " + (i + 1) + " '" + c.Plan.Rules[i].Id + "': " + string.Join(", ", mine.Select(Pretty).ToArray()));
+			}
+			var missing = ScrambledBlueprints.OnIslands.Keys.Where(b => !given.Contains(b)).OrderBy(b => b).ToList();
+			if (missing.Count > 0)
+				c.Add(-1, Level.Warning, "Raft's blueprints never given in this plan: " + string.Join(", ", missing.Select(b => Pretty(b) + " (on " + string.Join("/", ScrambledBlueprints.OnIslands[b].ToArray()) + " in Raft)").ToArray()) +
+					". The story islands that carry them are left out or replaced, and no island of the plan gives them - the player can never build these.",
+					"Give each as a quest reward, in a chest's loot or from a note on one of the plan's islands, in a sensible order (early tools early, the engine before the long legs) - or keep those story islands.");
+			if (order.Count > 0)
+				c.Add(-1, Level.Tip, "Raft's blueprints given by the plan's islands, in its order: " + string.Join("; ", order.ToArray()) +
+					(kept.Count > 0 ? ". The story islands it keeps give " + kept.Count + " more." : "."));
+		}
+
+		static string Pretty(string blueprint) { return blueprint.Replace("Blueprint_", "").Replace("_", " "); }
 
 		/// <summary>The islands a rule's reference means: a rule of the plan (what it brings), this island (self), or a saved island.</summary>
 		static List<Facts> RefFacts(Ctx c, string reference, out string what, out bool known, out int ruleIndex)
