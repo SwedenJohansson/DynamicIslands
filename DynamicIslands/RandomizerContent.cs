@@ -340,7 +340,7 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>Stands a set piece on the generated ground at p, sunk a little and tilted (a wreck lies crooked).</summary>
-		static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
+		internal static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
 		{
 			if (clear > 0f) k.Clear(p, clear);
 			// Its bottom as measured (raft_props.txt; the table above where it wasn't), on the lowest ground under it
@@ -356,7 +356,7 @@ namespace DynamicIslands.Editor
 
 		static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
 
-		static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
+		internal static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
 
 		/// <summary>An oddity island's content: the set piece near the middle, its loot and a note (kind null = any).</summary>
 		public static void Oddity(MapKit k, IslandGenSettings s, string kind)

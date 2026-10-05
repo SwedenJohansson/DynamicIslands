@@ -552,6 +552,10 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     - **Mixed** - a bit of everything that suits the island's style;
     - **Castaway huts** - Raft's thatch walls and roof on Raft's foundations, a hammock and a chest inside;
     - **Wooden cabins** - the same in Raft's wooden walls and roof, with a bed, a chest and a cabin log;
+    - **Wrecks and landmarks** - Raft's own set pieces, on the land and in the water: a boat run aground on the beach
+      or sunk 5-14 m down off the coast, a plane crashed on the land or lying on the sea floor, a small boat pulled up
+      the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris - with a chest by the ones on
+      land (Mixed includes them too);
     - the quest islands' **scenes**, made of their own props, each with a chest and a note: **Castaways' camp**,
       **Caravan outpost**, **Radio outpost**, **Scrapyard**, **Old market**, **Bear country** (with a bear nearby),
       **Frozen camp** and **Hotel garden**.
@@ -559,7 +563,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     A hut or cabin is 3 x 2 or 2 x 2 cells of Raft's building grid, open on one side. It stands level on the highest
     ground under it, with the ground built up under it (blended over 3 m, so nothing hangs in the air on a slope), and
     its roof rests on its walls and corner pillars as Raft's own building puts one.
-  - **How many** - 1 to 6, at least 22 m apart. A small or steep island has room for fewer: the line under the
+  - **How many** - 0 to 25, at least 22 m apart (0: none). A small or steep island has room for fewer: the line under the
     preview after **Generate** says how many found a spot ("2 building(s) found no level spot").
   - **Caves: Off / On** - one of Raft's own cave pieces (Balboa's) set into the land, its mouth towards open, level
     ground, with a guard inside (a polar bear on a snowy island, a bear in a forest, a hyena in the desert, else a

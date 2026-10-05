@@ -589,6 +589,10 @@ namespace DynamicIslands
 				new { Name = "raftcamp", S = make("raftcamp", true, "tropical", 1, false) },
 				new { Name = "mixed", S = make(GenBuildings.Mixed, true, "snowy", 4, false) },
 				new { Name = "none", S = make(GenBuildings.Mixed, false, "tropical", 3, false) },
+				// (ROADMAP LM10: 0 to 25 structures, wrecks and landmarks on land and in the water)
+				new { Name = "zero", S = make(GenBuildings.Mixed, true, "tropical", 0, false) },
+				new { Name = "landmarks", S = make(GenBuildings.Landmarks, true, "tropical", 25, false) },
+				new { Name = "many", S = make(GenBuildings.Mixed, true, "tropical", 25, false) },
 			};
 			foreach (var c in cases)
 			{
@@ -639,8 +643,26 @@ namespace DynamicIslands
 					case "none":
 						Check(ref ok, built.Count == 0 && found == 0, "buildings and caves off: nothing built (" + found + " foundations)");
 						break;
+					case "zero":
+						Check(ref ok, built.Count == 0 && found == 0 && GenBuildings.LandmarkNames.All(n => count(n) == 0), "How many 0: nothing built (" + what + ")");
+						break;
+					case "landmarks":
+					{
+						int made = built.Count(b => !b.Contains("found no"));
+						float sea = DynamicIslands.EditorWaterLevel;
+						List<EditorGameObject> pieces = PlacedEditorObjects().Where(e => GenBuildings.LandmarkNames.Contains(e.GameObjectName)).ToList();
+						int sunk = built.Count(b => b.Contains("sunken")), wetPieces = pieces.Count(e => e.transform.position.y < sea - 2f);
+						Check(ref ok, made >= 12 && pieces.Count >= made, "wrecks and landmarks, 25 asked: " + made + " made, " + pieces.Count + " set pieces (" + what + ")");
+						Check(ref ok, sunk == 0 || wetPieces >= sunk, "the sunken ones lie on the sea floor: " + sunk + " sunken, " + wetPieces + " pieces under water");
+						Check(ref ok, built.Select(b => b.Replace("a ", "")).Distinct().Count() >= 5, "of many kinds: " + string.Join(", ", built.Select(b => b.Replace("a ", "")).Distinct().ToArray()));
+						break;
+					}
+					case "many":
+						Check(ref ok, built.Count(b => !b.Contains("found no")) >= 10 && built.Count(b => !b.Contains("found no")) <= 25, "25 of a mix asked on a big island: " + built.Count(b => !b.Contains("found no")) + " (" + what + ")");
+						break;
 				}
-				EditorGameObject first = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "Block_Foundation" || e.GameObjectName == "campfire_1");
+				EditorGameObject first = c.Name == "landmarks" ? PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "BoatStranded" || e.GameObjectName == "Airplane")
+					: PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "Block_Foundation" || e.GameObjectName == "campfire_1");
 				if (first != null && Camera.main != null)
 				{
 					Vector3 at = first.transform.position;

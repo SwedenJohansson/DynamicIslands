@@ -736,17 +736,19 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class GenBuildings
 	{
-		public const string Mixed = "mixed", Huts = "huts", Cabins = "cabins";
-		public const int MaxCount = 6;
+		public const string Mixed = "mixed", Huts = "huts", Cabins = "cabins", Landmarks = "landmarks";
+		// (the user, 2026-10-05, ROADMAP LM10: "0 to 25" structures of any kind, on land or in the water)
+		public const int MaxCount = 25;
 
 		/// <summary>The kinds in the generator's list: mixed, huts, cabins, then the themed scenes.</summary>
-		public static List<string> Kinds { get { return new[] { Mixed, Huts, Cabins }.Concat(RandomizerIslands.Themes.Select(t => t.Name)).ToList(); } }
+		public static List<string> Kinds { get { return new[] { Mixed, Huts, Cabins, Landmarks }.Concat(RandomizerIslands.Themes.Select(t => t.Name)).ToList(); } }
 
 		public static string Label(string kind)
 		{
 			if (kind == Mixed) return "Mixed";
 			if (kind == Huts) return "Castaway huts";
 			if (kind == Cabins) return "Wooden cabins";
+			if (kind == Landmarks) return "Wrecks and landmarks";
 			Theme t = RandomizerIslands.ThemeOf(kind);
 			return t != null ? t.Label : kind;
 		}
@@ -755,6 +757,7 @@ namespace DynamicIslands.Editor
 		{
 			if (kind == Mixed) return "A bit of everything that suits the style: huts, cabins and scenes";
 			if (kind == Huts) return "Huts of Raft's thatch walls and roof on foundations, a hammock and a chest inside";
+			if (kind == Landmarks) return "Boats on the beach and sunk in the sea, plane wrecks on land and under water, vans, caravans, shacks, statues and rocket debris";
 			if (kind == Cabins) return "Cabins of Raft's wooden walls and roof on foundations, a bed, a chest and a log inside";
 			Theme t = RandomizerIslands.ThemeOf(kind);
 			return t != null ? "A scene from the quest islands, with its props, a " + (t.Container ?? "chest").Replace("Loot_", "").ToLowerInvariant() + " and a note" : "";
@@ -765,7 +768,8 @@ namespace DynamicIslands.Editor
 		public static List<string> NeededNames(IslandGenSettings s)
 		{
 			var names = new List<string>();
-			if (s.Buildings && s.BuildingKind != Huts && s.BuildingKind != Cabins)
+			if (s.Buildings && (s.BuildingKind == Mixed || s.BuildingKind == Landmarks)) names.AddRange(LandmarkNames);
+			if (s.Buildings && s.BuildingKind != Huts && s.BuildingKind != Cabins && s.BuildingKind != Landmarks)
 			{
 				IEnumerable<Theme> themes = s.BuildingKind == Mixed ? RandomizerIslands.ThemesFor(s.Style) : new[] { RandomizerIslands.ThemeOf(s.BuildingKind) }.Where(t => t != null);
 				foreach (Theme t in themes)
@@ -795,16 +799,24 @@ namespace DynamicIslands.Editor
 			}
 			if (!s.Buildings) { Quest(k, s, done); return done; }
 			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
-			int count = Mathf.Clamp(s.BuildingCount, 1, MaxCount), built = 0;
+			int count = Mathf.Clamp(s.BuildingCount, 0, MaxCount), built = 0;
 			var spots = new List<Vector2>();
 			for (int i = 0, tries = 0; built < count && tries < count * 4; tries++)
 			{
 				string kind = s.BuildingKind;
 				if (kind == Mixed)
 				{
-					var pool = new List<string> { Huts, Cabins };
+					var pool = new List<string> { Huts, Cabins, Landmarks };
 					pool.AddRange(suits.Select(t => t.Name));
 					kind = pool[r.Next(pool.Count)];
+				}
+				if (kind == Landmarks)
+				{
+					string what = Landmark(k, s, spots);
+					if (what == null) continue;
+					built++;
+					done.Add(what);
+					continue;
 				}
 				bool hut = kind == Huts || kind == Cabins;
 				Theme theme = hut ? null : RandomizerIslands.ThemeOf(kind);
@@ -824,6 +836,87 @@ namespace DynamicIslands.Editor
 			if (built < count) done.Add((count - built) + " building(s) found no level spot");
 			Quest(k, s, done);
 			return done;
+		}
+
+		/// <summary>The wrecks and landmarks' set pieces (Raft's quest islands' own; loaded with their scenes).</summary>
+		public static readonly string[] LandmarkNames = { "BoatStranded", "Airplane", "RT_PlasticBoat", "Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01",
+			"Caravan_Yellow_01", "Balboa_Shack", "TangaroaFounderStatue", "RaftMonument", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };
+
+		/// <summary>
+		/// One wreck or landmark (ROADMAP LM10): a boat run aground on the beach or sunk off the coast, a plane crashed on the
+		/// land or lying under water, a small boat pulled up the beach, a van, a caravan, a shack, a statue on high ground or a
+		/// rocket's debris - Raft's own set pieces, stood on the ground as the randomizer's oddities are, with a chest by the
+		/// ones on land. Kept 22 m from the island's other buildings (spots). Returns what was put, or null (no spot).
+		/// </summary>
+		static string Landmark(MapKit k, IslandGenSettings s, List<Vector2> spots)
+		{
+			System.Random r = k.Rnd;
+			string[] kinds = { "beached boat", "sunken boat", "plane wreck", "sunken plane", "small boat", "van", "caravan", "shack", "statue", "rocket debris" };
+			string kind = kinds[r.Next(kinds.Length)];
+			bool wet = kind == "sunken boat" || kind == "sunken plane", beach = kind == "beached boat" || kind == "small boat";
+			Func<float, float, bool> ok;
+			if (kind == "sunken boat") ok = (above, slope) => above < -5f && above > -14f && slope < 22f;
+			else if (wet) ok = (above, slope) => above < -4f && above > -10f && slope < 22f;
+			else if (beach) ok = (above, slope) => above > 0.3f && above < 1.8f && slope < 15f;
+			else if (kind == "statue") ok = (above, slope) => above > 4f && slope < 12f;
+			else ok = (above, slope) => above > 1.3f && above < 30f && slope < 9f;
+			Vector2? found = null;
+			for (int i = 0; i < 12 && found == null; i++)
+			{
+				Vector2? p = k.Find(k.Mid, s.Radius * (wet ? 1.5f : beach ? 1.2f : 0.85f), ok, 12f);
+				if (!p.HasValue || spots.Any(o => (o - p.Value).magnitude < 22f)) continue;
+				// (the big ones on land on even ground: a shack on a 9-degree slope stood 3 m up on its low side)
+				if (!wet && !beach && Uneven(k, p.Value, kind == "shack" || kind == "plane wreck" ? 7f : 4f) > 1f) continue;
+				found = p;
+			}
+			if (!found.HasValue) return null;
+			Vector2 c = found.Value;
+			Vector2 toMid = k.Mid - c;
+			float yaw = (float)r.NextDouble() * 360f, shore = Mathf.Atan2(toMid.x, toMid.y) * Mathf.Rad2Deg + 90f;
+			Func<string[], string> one = a => a[r.Next(a.Length)];
+			switch (kind)
+			{
+				case "beached boat": RandomizerContent.Piece(k, "BoatStranded", c, shore, 1.3f, RandomizerContent.Tilt(r, 4f), 12f + (float)r.NextDouble() * 8f, 10f); break;
+				case "sunken boat": RandomizerContent.Piece(k, "BoatStranded", c, yaw, 1.0f, RandomizerContent.Tilt(r, 10f), 18f + (float)r.NextDouble() * 20f, 0f); break;
+				case "plane wreck": RandomizerContent.Piece(k, "Airplane", c, yaw, 0.6f, RandomizerContent.Tilt(r, 7f), RandomizerContent.Tilt(r, 12f), 9f); break;
+				case "sunken plane": RandomizerContent.Piece(k, "Airplane", c, yaw, 0.8f, RandomizerContent.Tilt(r, 10f), RandomizerContent.Tilt(r, 25f), 0f); break;
+				case "small boat": RandomizerContent.Piece(k, "RT_PlasticBoat", c, shore, 0.15f, RandomizerContent.Tilt(r, 4f), 8f + (float)r.NextDouble() * 10f, 4f); break;
+				case "van": RandomizerContent.Piece(k, one(new[] { "Van_1", "Van_2", "Van3", "Van_4", "Van_5" }), c, yaw, 0.35f, RandomizerContent.Tilt(r, 4f), RandomizerContent.Tilt(r, 5f), 7f); break;
+				case "caravan": RandomizerContent.Piece(k, one(new[] { "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Yellow_01" }), c, yaw, 0.05f, 0f, RandomizerContent.Tilt(r, 2f), 6f); break;
+				case "shack": RandomizerContent.Piece(k, "Balboa_Shack", c, yaw, 0.1f, 0f, 0f, 10f); break;
+				case "statue": RandomizerContent.Piece(k, one(new[] { "TangaroaFounderStatue", "RaftMonument" }), c, yaw, 0.15f, 0f, 0f, 5f); break;
+				default:
+					RandomizerContent.Piece(k, "CaravanRocket", c, yaw, 0.2f, 25f + (float)r.NextDouble() * 20f, RandomizerContent.Tilt(r, 20f), 5f);
+					string[] debris = { "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };
+					for (int i = 0; i < 5; i++)
+					{
+						float a = (float)r.NextDouble() * Mathf.PI * 2f, d = 3f + (float)r.NextDouble() * 5f;
+						RandomizerContent.Piece(k, one(debris), c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d, (float)r.NextDouble() * 360f, 0.05f, RandomizerContent.Tilt(r, 40f), RandomizerContent.Tilt(r, 40f));
+					}
+					break;
+			}
+			spots.Add(c);
+			// (a chest by the ones on land: the boat's stores, the plane's cargo, the van's glovebox...)
+			if (!wet)
+			{
+				Vector2? dry = k.Find(c, 12f, MapKit.Dry, 4f);
+				if (dry.HasValue) k.Chest(one(new[] { "Loot_Barrel", "Loot_Box", "Loot_Crate" }), dry.Value, beach ? "Ship's stores" : kind == "plane wreck" ? "Cargo" : "Stores", MapKit.Loot(r.NextDouble() < 0.5 ? "Food" : "Metal"));
+			}
+			return "a " + kind;
+		}
+
+		/// <summary>How much the ground rises and falls within radius of p (m).</summary>
+		static float Uneven(MapKit k, Vector2 p, float radius)
+		{
+			float lo = float.MaxValue, hi = float.MinValue;
+			for (float x = -radius; x <= radius; x += 1.5f)
+				for (float z = -radius; z <= radius; z += 1.5f)
+				{
+					if (x * x + z * z > radius * radius) continue;
+					float g = k.Ground(p + new Vector2(x, z));
+					lo = Mathf.Min(lo, g); hi = Mathf.Max(hi, g);
+				}
+			return hi - lo;
 		}
 
 		/// <summary>The quest last: its notes and chests go where the buildings left room.</summary>
