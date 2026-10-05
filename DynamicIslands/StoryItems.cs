@@ -65,6 +65,9 @@ namespace DynamicIslands.Editor
 			if (id.Length == 0) return null;
 			StoryItemDef d = StoryBook.DefOf(id);
 			if (d != null) return d;
+			// (Raft's own quest items: "raft-<type>", known without a definition on the island - QuestItemPickups)
+			d = QuestItemPickups.Def(id);
+			if (d != null) return d;
 			if (DynamicIslands.InEditor() && DynamicIslands.currentIslandProps != null)
 			{
 				d = Of(DynamicIslands.currentIslandProps).FirstOrDefault(x => x.Id.Equals(id, StringComparison.OrdinalIgnoreCase));

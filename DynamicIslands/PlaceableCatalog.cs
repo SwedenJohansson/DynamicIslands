@@ -116,7 +116,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The crate on Raft's abandoned (drifting) rafts: grabbed whole, it gives random loot (Raft's own table) - and
 		/// now and then a cooking recipe or a mystery package, as there.</summary>
 		public const string RaftCrate = "Pickup_Landmark_LandmarkCrateRaft";
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft|DirtPickup)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft|DirtPickup|Beehive)$");
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
@@ -426,6 +426,8 @@ namespace DynamicIslands.Editor
 			clone.transform.localPosition = Vector3.zero;
 			clone.transform.localRotation = source.rotation;
 			clone.transform.localScale = source.lossyScale;
+			// (a quest item pickup: which of Raft's quest items it is, read before its scripts go)
+			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Remember(name, source.gameObject);
 			// Island decoration from story places carries quest, AI and trigger scripts that expect their own island
 			if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
 			KeepVisibleFarAway(clone);
@@ -746,6 +748,9 @@ namespace DynamicIslands.Editor
 
 		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
 
+		/// <summary>Whether the editor's object list has the object (loaded, or in the index of Raft's island scenes).</summary>
+		internal static bool Known(string name) { return !string.IsNullOrEmpty(name) && (prototypes.ContainsKey(name) || index.ContainsKey(name)); }
+
 		#endregion
 
 		#region On-demand objects: the index of all of Raft's island scenes
@@ -756,7 +761,8 @@ namespace DynamicIslands.Editor
 			public bool Harvestable, Hidden;
 		}
 
-		const int IndexVersion = 2;
+		// (3: Raft's quest item pickups, its wild beehive and the story islands' finds - ROADMAP LM12, 2026-10-05)
+		const int IndexVersion = 4;
 		static readonly Dictionary<string, IndexEntry> index = new Dictionary<string, IndexEntry>();
 		/// <summary>Scenes whose on-demand objects are loaded.</summary>
 		static readonly HashSet<string> loadedScenes = new HashSet<string>();
@@ -1021,9 +1027,10 @@ namespace DynamicIslands.Editor
 
 		static bool IsPlaceable(Transform t, string name)
 		{
-			if (excluded.IsMatch(name) || excludedExtra.IsMatch(name) || treeParent.IsMatch(name)) return false;
+			bool questItem = QuestItemPickups.IsModel(name);
+			if (!questItem && (excluded.IsMatch(name) || excludedExtra.IsMatch(name) || treeParent.IsMatch(name))) return false;
 			// Inside a pickup (harvestable tree, quest item...): its parts aren't objects of their own
-			for (Transform p = t; p != null; p = p.parent)
+			for (Transform p = questItem ? t.parent : t; p != null; p = p.parent)
 				if (pickupAncestor.IsMatch(p.name)) return false;
 			// Must show a mesh (not only an effect, and not a hidden collider shape)
 			foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
@@ -1054,6 +1061,8 @@ namespace DynamicIslands.Editor
 			while (stack.Count > 0)
 			{
 				Transform t = stack.Pop();
+				// (a quest item pickup is one object, its model inside it: QuestItemPickups)
+				if (QuestItemPickups.IsModel(CleanName(t.name))) { yield return new KeyValuePair<string, Transform>(CleanName(t.name), t); continue; }
 				if (t.GetComponent<Renderer>() != null || t.GetComponent<LODGroup>() != null)
 				{
 					yield return new KeyValuePair<string, Transform>(IsTreeModel(t) ? TreeName(t.parent.name) : CleanName(t.name), t);

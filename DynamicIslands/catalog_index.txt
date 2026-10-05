@@ -1,4 +1,4 @@
-# CustomIslands object index 2 raft=1.1.01
+# CustomIslands object index 4 raft=1.1.01
 # Every placeable object of Raft's island scenes that isn't in the core list: name, scene, category, flags (h = harvestable, x = left out of the list).
 # Made by the editor; delete this file to scan Raft's islands again.
 Bed_Simple	15#Landmark_Raft#Floating raft	Abandoned rafts	
@@ -120,6 +120,7 @@ WingBroken	31#Landmark_Pilot#	Pilot island
 ReefHuts_PlasticWall1	32#Landmark_Big#	Islands	
 BoatLandmark_Flag	33#Landmark_Boat#	Boat	
 BoatStranded	33#Landmark_Boat#	Boat	
+QuestItemPickup_Vasagatan_MechanicalPart	44#Landmark_Vasagatan	Vasagatan	
 AchievementBranch	45#Landmark_BalboaIsland	Balboa	
 Antenna_bowl	45#Landmark_BalboaIsland	Balboa	
 Antenna_cone	45#Landmark_BalboaIsland	Balboa	
@@ -219,6 +220,10 @@ Model_TV	45#Landmark_BalboaIsland	Balboa
 Obstacle_Moving_Base_PlasticBox_Blue	45#Landmark_BalboaIsland	Balboa	
 Obstacle_Moving_Base_PlasticContainer_Red	45#Landmark_BalboaIsland	Balboa	
 Obstacle_PoisonLake_WoodBox	45#Landmark_BalboaIsland	Balboa	
+QuestItemPickup_Balboa_BrunosTool_2	45#Landmark_BalboaIsland	Balboa	
+QuestItemPickup_Balboa_BrunosTool_3	45#Landmark_BalboaIsland	Balboa	
+QuestItemPickup_Balboa_BrunosTool_Saw	45#Landmark_BalboaIsland	Balboa	
+QuestItemPickup_Balboa_WildBerries	45#Landmark_BalboaIsland	Balboa	
 Reef_Wheelbarrow	45#Landmark_BalboaIsland	Balboa	
 Relay_beam_cap	45#Landmark_BalboaIsland	Balboa	
 Relay_beam_crosscap	45#Landmark_BalboaIsland	Balboa	
@@ -314,6 +319,12 @@ PlasticChair_01	49#Landmark_CaravanIsland#RealDeal	Caravan Town
 PulauKafilahFlag	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
 Pump	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
 Pump_Handle	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_BatteryChargerPart	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_Key_Infirmary	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_Key_Mayor	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_ZipHandlePart	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_ZipLinePart	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
+QuestItemPickup_Caravan_ZipLinePart_Rocket	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
 RaftMonument	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
 Ramp	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
 Roof	49#Landmark_CaravanIsland#RealDeal	Caravan Town	
@@ -482,10 +493,16 @@ Painting_07	50#Landmark_Tangaroa#	Tangaroa
 Painting_08	50#Landmark_Tangaroa#	Tangaroa	
 Painting_Architect	50#Landmark_Tangaroa#	Tangaroa	
 Painting_Captain	50#Landmark_Tangaroa#	Tangaroa	
+Pickup_Landmark_Tree_Banana	50#Landmark_Tangaroa#	Harvestable	h
 PlantationDoor	50#Landmark_Tangaroa#	Tangaroa	
 PlantationDoorFrame	50#Landmark_Tangaroa#	Tangaroa	
 PlantationDoorGreenLight	50#Landmark_Tangaroa#	Tangaroa	
 Plate_01	50#Landmark_Tangaroa#	Tangaroa	
+QuestItemPickup_Tangaroa_GeneratorPart 1	50#Landmark_Tangaroa#	Tangaroa	
+QuestItemPickup_Tangaroa_GeneratorPart 2	50#Landmark_Tangaroa#	Tangaroa	
+QuestItemPickup_Tangaroa_GeneratorPart 4	50#Landmark_Tangaroa#	Tangaroa	
+QuestItemPickup_Tangaroa_Tape	50#Landmark_Tangaroa#	Tangaroa	
+QuestItemPickup_Tangaroa_Token	50#Landmark_Tangaroa#	Tangaroa	
 RestaFence	50#Landmark_Tangaroa#	Tangaroa	
 RestaSunshadeGround	50#Landmark_Tangaroa#	Tangaroa	
 RestaSunshadeWall	50#Landmark_Tangaroa#	Tangaroa	
@@ -700,6 +717,9 @@ Model_Frame	54#Landmark_VarunaPoint#	Varuna Point
 Model_key	54#Landmark_VarunaPoint#	Varuna Point	
 PlasticCup_Empty	54#Landmark_VarunaPoint#	Varuna Point	
 QuestInteractable_VP_Door_Executive	54#Landmark_VarunaPoint#	Varuna Point	
+QuestItemPickup_VP_CraneKey	54#Landmark_VarunaPoint#	Varuna Point	
+QuestItemPickup_VP_MotherloadKey	54#Landmark_VarunaPoint#	Varuna Point	
+QuestItemPickup_VP_SpotlightPart	54#Landmark_VarunaPoint#	Varuna Point	
 SeaWeed	54#Landmark_VarunaPoint#	Varuna Point	
 TEMP LIGHT CONE	54#Landmark_VarunaPoint#	Varuna Point	
 test_debris_plank	54#Landmark_VarunaPoint#	Varuna Point	
@@ -884,6 +904,9 @@ VP_Whiteboard	54#Landmark_VarunaPoint#	Varuna Point
 GameObject	55#Landmark_Temperance#	Temperance	
 Keypad	55#Landmark_Temperance#	Temperance	
 QuestInteractable_TP_WeatherStationSafe	55#Landmark_Temperance#	Temperance	
+QuestItemPickup_Tangaroa_ControlRod_Base	55#Landmark_Temperance#	Temperance	
+QuestItemPickup_Temperance_MasterKey	55#Landmark_Temperance#	Temperance	
+QuestItemPickup_TP_Blowtorch	55#Landmark_Temperance#	Temperance	
 RadiationMap_Off	55#Landmark_Temperance#	Temperance	
 RadiationMap_On	55#Landmark_Temperance#	Temperance	
 Ravine_Cave	55#Landmark_Temperance#	Temperance	
@@ -1106,6 +1129,7 @@ LandmarkLadder_Bamboo_Small (JumpPuzzle)	56#Landmark_Utopia#	Utopia
 MapPickup_Model	56#Landmark_Utopia#	Utopia	
 Meat	56#Landmark_Utopia#	Utopia	
 model_bench	56#Landmark_Utopia#	Utopia	
+QuestItemPickup_Utopia_Cable	56#Landmark_Utopia#	Utopia	
 Rope	56#Landmark_Utopia#	Utopia	
 Tangaroa_OutdoorFurnitureSilver_Bench	56#Landmark_Utopia#	Utopia	
 Tangaroa_OutdoorFurnitureSilver_Chair	56#Landmark_Utopia#	Utopia	

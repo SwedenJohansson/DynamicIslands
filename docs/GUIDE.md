@@ -94,7 +94,8 @@ Pick what you want to do; each line leads to the part of the guide you need.
 16. [Learn from the library: example islands and plans](#16-learn-from-the-library-example-islands-and-plans)
    - [16.2 The small and medium islands](#162-the-small-and-medium-islands) · [16.3 The very large islands](#163-the-very-large-islands) ·
      [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for) ·
-     [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands)
+     [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands) ·
+     [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece)
 
 ---
 
@@ -2984,3 +2985,28 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 *This guide describes Custom Islands 3.0, the Experimental Alpha Release. It is kept up to date with the mod: every
 change to a feature updates this guide, the README and the PDF copy of this guide (`docs/Custom-Islands-Guide.pdf`)
 together.*
+
+
+### 16.8 Raft's story islands, piece by piece
+
+What Raft's own story islands (the Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance
+and Utopia) are made of, and how to make the same on your island. From a scan of their scenes: 1,912 pieces with a
+script that makes them do something (`CIStoryAudit` writes the list).
+
+| On Raft's islands | On your island |
+|---|---|
+| Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town) and its **dirt spots** |
+| Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (23 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
+| Notes and notebook pages (68) | Notes, the journal and the quest book (chapters 7-8) |
+| Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... |
+| Animations, lights, sounds, particles, screen shake when something is used | Behaviours (move, turn, show/hide lamps), sound and atmosphere zones |
+| Trigger boxes | Trigger zones |
+| Enemy spawners that keep coming until a quest step (30) | Creature spots that come back, or a show action (an ambush) |
+| Elevators and lifts (23) | A moving platform (Behaviour: move), or **teleport the player** |
+| Zipline lines (7) | Raft's **zipline lines**, ridden with the zipline tool, their far end set in the object panel |
+| The machete's vines (Balboa) | Raft's **choppable vines**, cut with the machete (kept for the next vines) |
+| Treasure for the metal detector and the shovel (Caravan Town, 175 dig piles) | **Buried treasure** (Raft's own treasure points) |
+| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music |
+| The Receiver's frequencies and the story chain | World plans and Raft's story chain (chapters 10-11) |
+| Character unlocks, cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
+| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane and keypad code | Build them as **sequences**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill), a code read from notes and entered as story items. Raft's own mini-games are on the roadmap |

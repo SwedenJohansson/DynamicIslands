@@ -173,6 +173,9 @@
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
     <Compile Include="GenGather.cs" />
+    <Compile Include="DevTestsQuestItems.cs" />
+    <Compile Include="QuestItemPickups.cs" />
+    <Compile Include="DevTestsStoryAudit.cs" />
     <Compile Include="DevTestsGatherAll.cs" />
     <Compile Include="DevTestsFeatureCheck.cs" />
     <Compile Include="ZiplineEnds.cs" />

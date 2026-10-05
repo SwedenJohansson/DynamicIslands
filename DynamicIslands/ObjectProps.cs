@@ -72,6 +72,7 @@ namespace DynamicIslands.Editor
 			if (ContentCatalog.IsZone(name)) props[ZoneId] = ContentCatalog.NewZoneId();
 			// Raft's machete vines (the user, 2026-10-05: Raft's quest items put to work): cut with the player's own machete,
 			// which they keep for the next vines (a "has" check, not "take")
+			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Defaults(name, props);
 			if (name == ContentCatalog.MacheteVines)
 			{
 				props[BehaviourProps.Use] = "Cut the vines with the machete";
