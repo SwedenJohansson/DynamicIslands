@@ -7,6 +7,7 @@
 # radio, the rangers' strongbox (Balboa's blueprints: the machete, the biofuel refiner, the fuel tank and its pipe).
 #
 # Built by the recipe player (CIRecipe balboa_remade) through the editor's own operations.
+include lib_sea
 new
 # (nature like Raft's Balboa - the generator's "something new like" it - with fewer cliffs and wider beaches than its
 # own: like Balboa as it is, it was a plateau ringed by cliffs with no beach to land on, 2026-10-03)
@@ -59,7 +60,7 @@ place "overgrowthIvy_long_01 Variant" vinewall at -2.4 -0.7 y=0
 place "overgrowthIvy_long_02 Variant" vinewall at 1 -0.7 y=0
 place "overgrowthIvy_long_01 Variant" vinewall at 4.3 -0.7 y=0
 place Relay_Fence_pole - at -6 3 ground
-place Note_Paper trailsign at -6 3 y=1.1 ground sit
+place Note_Paper trailsign at -6 3 y=1.1 drop
 place Zone_Trigger den at 1 -12 y=1.5
 place Creature_Bear mamabear at 1 -22 y=0.5
 place "Box Small" pack at -3 -27 ground yaw=30
@@ -82,6 +83,14 @@ place Zone_Trigger summit at 0 0 y=1.5
 pop
 
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=77.0 seed=4165 free=5
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=77.0 seed=4175 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=77.0 seed=4176 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=77.0 seed=4185 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=130 deep=5 n=3
+
 info title=Balboa Remade
 info author=Custom Islands
 info description=Raft's Balboa made anew: a forest of pine and maple round a mountain, the rangers' station on its east terrace, the Mama bear's den in a rock outcrop on the west plateau and the rangers' radio mast on the summit. The rangers fled the bear - their strongbox still holds Balboa's blueprints. Raft Remade's third island.

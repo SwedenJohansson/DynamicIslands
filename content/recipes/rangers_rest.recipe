@@ -5,6 +5,7 @@
 #
 # Built by the recipe player (CIRecipe rangers_rest) through the editor's own operations.
 
+include lib_sea
 new
 # (nature: a jungle hill: twice Raft's trees and bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.4 Bushes=0.38 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -84,7 +85,7 @@ pop
 place BalboaCave_Bear - at -8 -27 h=7.45 yaw=90
 
 # --- The ranger's things: the diary on his table, signs on the trails, the generator, a tent -----------------------
-place Note_Book diary at 22.3 -4.0 h=11.05 sit yaw=80
+place Note_Book diary at 22.3 -4.0 h=11.4 drop yaw=80
 place Balboa_DirectionSign - at 16 -8 sit yaw=60
 place BearSign1 - at 13.5 -17 sit yaw=30
 place "BearSign3 Variant" - at 10 -23.5 sit yaw=80
@@ -109,6 +110,9 @@ place Zone_Atmosphere gloom at -8 -27 h=5
 place Zone_Sound drips at -8 -27 h=5
 
 # --- Settings, notes, behaviours, quest -----------------------------------------------------------------------
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=56 deep=5 n=1
+
 info title=Ranger's Rest
 info author=Custom Islands
 info description=A jungle hill with a ranger's log cabin and a watchtower - and on the south shore the den of Old Scar, the bear that stole the ranger's supplies. Inspired by Raft's Balboa.

@@ -9,6 +9,7 @@
 # Built by the recipe player (CIRecipe ironreef_caverns) through the editor's own operations. Each cave is placed
 # from a frame at its mouth: the ground there is the frame's floor, and the ground is levelled from the mouth into the
 # mountain where the cave's passage runs (the ground can't lie over a cave - the cave's own rock is its roof).
+include lib_sea
 new
 # (nature: a jungle mountain: twice Raft's trees and bushes, a little rockier - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.4 Bushes=0.38 Rocks=0.5 Harvest=0.24 BeachThings=0.3
@@ -68,7 +69,7 @@ place "Pickup_Landmark_Copper 2" - at -3.5 -31 sit
 place Balboa_DecorationPrefabBase_Desk - at 1.2 -31.5 sit
 place Balboa_DecorationPrefabBase_Desk_Chair - at 1.2 -30.3 sit yaw=180
 place Balboa_DecorationPrefabBase_Lantern - at 0.2 -31.5 y=0.94 sit
-place Note_Book foremanlog at 1.6 -31.4 y=0.94
+place Note_Book foremanlog at 1.6 -31.4 y=1.3 drop
 place Balboa_DecorationPrefabBase_SmallLocker minelocker at 3.4 -29.5 sit
 place Zone_Trigger irongate at 1 -4 y=1.5
 place Creature_Boar hogs at 1 -22 y=0.8
@@ -88,7 +89,7 @@ pop
 place CaveVine1 - at 41 4 h=13.2
 place CaveVine2 - at 43.5 3.5 h=13
 place CaveVine3 - at 38.8 5 h=12.8
-place Loot_Crate powdercrate at 39.4 4 h=9.95 sit yaw=15
+place Loot_Crate powdercrate at 39.4 4 h=10.5 drop yaw=15
 place Zone_Trigger vines at 48 4 h=10.5
 place Creature_BugSwarm_Bee bees at 42 4 h=11.2
 place Zone_Atmosphere vinedark at 42 4 h=11
@@ -166,6 +167,15 @@ ramp Block_Floor_Wood from 21 -56.25 19.6 to 13 -56.25 23.6 len=1.5 top=0
 place Balboa_DirectionSign - at 70 -8 ground yaw=220
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, flowers ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=77.0 seed=4590 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=77.0 seed=4591 free=5
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=77.0 seed=4600 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=77.0 seed=4610 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=77.0 seed=4611 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=130 deep=5 n=3
+
 info title=Ironreef Caverns
 info author=Custom Islands
 info description=A jungle mountain where the Ironreef Mining Company struck iron - and fled. Four caves in its flanks: the Iron Gate mine, the Vine Crawl, the flooded Drowned Shaft and the Bear Hall behind a rockfall, where Ironhide waits. Bring a light and a full breath.

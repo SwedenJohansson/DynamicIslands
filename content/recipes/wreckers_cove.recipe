@@ -8,6 +8,7 @@
 # Inspired by Raft's Vasagatan (a wreck to search) and Radio Tower (a tower to climb).
 #
 # Built by the recipe player (CIRecipe wreckers_cove) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: Like Raft, with more driftwood on the wreckers' beaches - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -82,7 +83,7 @@ place RT_PlasticBoat - at -6 -26 h=0.3 yaw=10
 # --- The Marigold on the reef at the cove's mouth: her log, the captain's chest -----------------------------------------
 place BoatStranded marigold at -8 -50 ground sit yaw=30 roll=10
 place Zone_Trigger aboard at -8 -50 h=1.5
-place Note_Paper marigoldlog at -8 -50 h=0.5 sit
+place Note_Paper marigoldlog at -8 -50 h=1.2 drop
 place Loot_Chest captainchest at -7 -48 h=0.5 sit yaw=30
 
 # --- The smugglers' den: crates, lanterns, the strongbox at the back - and the rats ----------------------------------
@@ -139,6 +140,14 @@ place Note_Paper keeperlog at -1.5 3 y=0.05 sit
 pop
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, pineapples ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=66.5 seed=4458 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=66.5 seed=4459 free=5
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=66.5 seed=4468 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=66.5 seed=4478 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=115 deep=5 n=2
+
 info title=Wreckers' Cove
 info author=Custom Islands
 info description=A green crescent around a shallow cove: a wreckers' hamlet on the shore, the schooner Marigold wrecked on the reef at the mouth, a smugglers' den in a sea cave - and on the south point the false lantern that lured her there. Inspired by Raft's Vasagatan and Radio Tower.

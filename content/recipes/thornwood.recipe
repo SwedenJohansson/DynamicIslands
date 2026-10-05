@@ -1,4 +1,5 @@
 # Thornwood - a very large island of the library (jungle)
+include lib_sea
 new
 # (nature: a jungle: three times Raft's trees, two and a half times its bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -132,6 +133,14 @@ place Zone_Atmosphere templeair at 15 25 y=3
 place Zone_Sound jungle at 0 0 y=8
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80.5 seed=4582 free=5
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=80.5 seed=4592 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=80.5 seed=4593 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80.5 seed=4602 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=135 deep=5 n=3
+
 info title=Thornwood
 info author=Custom Islands
 info description=A jungle island split by a river gorge. An explorer's camp on the beach, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Warthog King guards the boar idol. Inspired by Raft's Balboa.

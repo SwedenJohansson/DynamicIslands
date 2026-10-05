@@ -7,6 +7,7 @@
 # and the captain's safe (the motor wheel's and steering wheel's blueprints, as Raft's Vasagatan has them).
 #
 # Built by the recipe player (CIRecipe vasagatan_remade) through the editor's own operations.
+include lib_sea
 new
 # (nature and the life under water as on Raft's island itself: its counts - 81 trees, 23 bushes, 53 rocks and 42
 # harvestables on its 5744 m2 of land; Randomize existing's own sliders gave 17, 13, 16 and 2 on this steeper ridge,
@@ -119,7 +120,7 @@ place Firewood_1 - at -36.4 -19.4
 place Placeable_FirewoodRack - at -38.6 -20.4 yaw=30
 place Loot_Chest campchest at -35.3 -16.0 yaw=250
 place "Box Small" - at -39.0 -19.0 yaw=20
-place Note_Paper diary at -39.0 -19.0 y=0.97 sit yaw=15
+place Note_Paper diary at -39.0 -19.0 y=1.3 drop yaw=15
 place TP_Moontown_TarpCrate01 - at -35.0 -13.6 yaw=35
 place Placeable_Lantern_Metal - at -38.0 -17.4
 place Placeable_Flag_03 - at -34.4 -19.8 yaw=90
@@ -127,6 +128,13 @@ place Zone_Trigger camp at -37.2 -17.6 y=1
 place BoatLandmark_Flag distressflag at -38.2 -8 yaw=150
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): melons, pineapples, bananas ----------
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=42.0 seed=4113 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=42.0 seed=4123 free=3
+scatter "Banana_Bush_2" 6 at 0 0 r=42.0 seed=4133 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=80 deep=5 n=2
+
 info title=Vasagatan Remade
 info author=Custom Islands
 info description=Raft's Vasagatan, made anew: a ship broke in two on the reef of the island's lagoon - her bow run up on a sandbar and full of rats, her stern sunk in the bay below, her crew's camp in the dunes above. The captain's safe still holds the ship's papers and two blueprints the raft needs. Raft Remade's second island.

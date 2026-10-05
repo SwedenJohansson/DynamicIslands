@@ -5,6 +5,7 @@
 # floor (a keycard), the vault's shutter and the safe.
 #
 # Built by the recipe player (CIRecipe mayors_wharf) through the editor's own operations (macros from lib_rt).
+include lib_sea
 include lib_rt
 new
 # (nature: a sandy islet: fewer trees and rocks than Raft's, more driftwood - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -103,6 +104,12 @@ place Shelves - at 31 -2 sit tilt=60 yaw=90
 place Loot_SunkenBarrel barrel at 17 -2 sit tilt=40
 
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): melons, pineapples ----------
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=9.8 seed=4145 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=9.8 seed=4222 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=34 deep=5 n=1
+
 info title=Mayor's Wharf
 info author=Custom Islands
 info description=A sandy islet beside a drowned city block: City Hall's lower floors are flooded, the mayor's office stands just above the waterline at its wooden wharf, and the burger bar next door keeps a cafe on its roof. Rats, a keycard and the mayor's vault. Inspired by Raft's Tangaroa.

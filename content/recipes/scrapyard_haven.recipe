@@ -6,6 +6,7 @@
 # the fortress, the scrap king's hoard. Inspired by Raft's Caravan Town and Utopia.
 #
 # Built by the recipe player (CIRecipe scrapyard_haven) through the editor's own operations.
+include lib_sea
 new
 # (nature: desert, Like Raft but built up: a third of the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.35 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -27,7 +28,7 @@ origin
 
 # --- The scrap king's fortress: Utopia's bamboo stilt house on the west ridge, its stairs turned towards the trail ---
 place UT_Set_Prison - at -30 -10 centred sit yaw=-90
-place Loot_ChestLarge hoard at -20 -10 h=18.8 sit yaw=90
+place Loot_ChestLarge hoard at -20 -10 h=20 drop yaw=90
 place Zone_Trigger fortress at -20 -10 h=20
 # (two ladders up the stilts to its deck, the first from the ground)
 place LandmarkLadder_6m fortressladder at -14.6 -10 h=9 yaw=90
@@ -103,6 +104,15 @@ place Creature_Hyena alpha at -12 -49 ground
 place Zone_Trigger pit at -10 -42 y=1.5
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): date palms, flowers, pineapples ----------
+scatter "Pickup_Landmark_Tree_Palm 2" 4 at 0 0 r=77.0 seed=4209 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 4 at 0 0 r=77.0 seed=4210 free=5
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=77.0 seed=4219 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=77.0 seed=4220 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=77.0 seed=4229 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=130 deep=5 n=3
+
 info title=Scrapyard Haven
 info author=Custom Islands
 info description=A junk town on a desert crescent: a harbour of wrecks, a ring of stacked caravans for a wall, a gate trailer on a winch, a scrap pit with a hyena pack - and on the ridge, the scrap king's bamboo fortress on stilts. Inspired by Raft's Caravan Town and Utopia.

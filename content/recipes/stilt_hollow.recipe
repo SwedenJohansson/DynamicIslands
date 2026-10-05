@@ -5,6 +5,7 @@
 #
 # Built by the recipe player (CIRecipe stilt_hollow) through the editor's own operations.
 
+include lib_sea
 new
 # (nature: desert, Like Raft with half the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.5 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -72,6 +73,12 @@ place Zone_Trigger mayor at 0 2.5 h=10
 place Creature_StoneBird whitescreecher at -3 3 h=13
 
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): melons, pineapples ----------
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=18.2 seed=4271 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=18.2 seed=4348 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=46 deep=5 n=1
+
 info title=Stilt Hollow
 info author=Custom Islands
 info description=A trailer town on sandstone stacks in a desert reef, joined by scaffold walkways. Its pump is dead and its mayor's rock locked: follow the red pipe down the reef wall. Hyenas and a white screecher. Inspired by Raft's Caravan Town.

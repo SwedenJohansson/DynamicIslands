@@ -5,6 +5,7 @@
 # beam finds the buoy over the foreman's lockbox.
 #
 # Built by the recipe player (CIRecipe crane_yard) through the editor's own operations (macros from lib_rt).
+include lib_sea
 include lib_rt
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -88,6 +89,11 @@ place VP_AirPocket_Buoy buoy at 34 12 h=-0.5
 place Loot_ChestSmall lockbox at 34 12 sit
 
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pineapples ----------
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=16.8 seed=4197 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=44 deep=5 n=1
+
 info title=Crane Yard
 info author=Custom Islands
 info description=A construction islet under a giant tower crane. The pier's end has collapsed into the sea with the spotlight's parts - angler fish nest in the wreckage. Fix the light on the scaffold tower and its beam will find what else went down. Inspired by Raft's Varuna Point.

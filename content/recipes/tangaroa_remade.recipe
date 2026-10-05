@@ -8,6 +8,7 @@
 # the electric purifier, the water tank, the large storage).
 #
 # Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
@@ -80,7 +81,7 @@ place RT_RadarScreen - at -0.5 0 sit yaw=-90
 place "Box Big" - at -5.3 -3.6 sit yaw=15
 pop
 place Relay_Fence_pole - at 54.6 -2.4 h=1.96
-place Note_Paper councilnotice at 54.6 -2.4 h=3.05 sit
+place Note_Paper councilnotice at 54.6 -2.4 h=3.6 drop
 place Crate_Big_01 - at 60 -12 h=1.96 yaw=20
 place Crate_Big_02 - at 61.5 -13.6 h=1.96 yaw=-15
 place "Box Small" - at 62.4 -11.2 h=1.96 yaw=40
@@ -175,6 +176,15 @@ place Zone_Trigger flat at -5 17.5 h=13.7
 place Creature_Roach roaches at -5 19 h=12.6
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, mangoes ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=36.4 seed=4374 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=36.4 seed=4375 free=5
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=36.4 seed=4384 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=36.4 seed=4385 free=3
+scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=36.4 seed=4394 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=72 deep=5 n=2
+
 info title=Tangaroa Remade
 info author=Custom Islands
 info description=Raft's Tangaroa made anew: the floating city on a hill of its own - its harbour on one of the old pontoons, Chi's Burgers on the harbour front, the founder's statue on the square - and every light out. Three key cards, a generator part and the council's vault. Raft Remade's fifth island.
