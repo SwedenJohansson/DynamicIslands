@@ -1970,7 +1970,8 @@ what is left in the pickups back to Raft's own.
 Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance come in a shuffled order. Raft has
 no fixed places for them: each appears near the raft when the Receiver is tuned to a frequency a note unlocked. With the
 option on, the Receiver's first frequency leads to the new order's first island, and the note you find there to the
-next. The frequency numbers written on the notes follow; the notes' text still speaks of Raft's own order. **Utopia**,
+next. The frequency numbers written on the notes follow, with the name of the island each now leads to ("#1234 -
+Caravan Town"); the notes' own words still speak of Raft's order. **Utopia**,
 the ending, stays last. Each story island holds its own keys and parts, so any order can be finished.
 
 #### Ghost rafts

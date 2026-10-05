@@ -91,6 +91,9 @@ namespace DynamicIslands
 				StoryChain.Frequencies.Clear();
 				StoryChain.Frequencies.Add(new KeyValuePair<string, int[]>("detour", new[] { 1, 2, 3, 4 }));
 				Check(ref ok, StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_Balboa) == "#1234", "Vasagatan's note (Raft's way to Balboa) shows the frequency of the island in Balboa's place: " + StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_Balboa));
+				// (ROADMAP LM1: the label next to the number names where the note now leads)
+				string toBalboa = StoryChain.NextNameForNote(ChunkPointType.Landmark_Balboa), toTangaroa = StoryChain.NextNameForNote(ChunkPointType.Landmark_Tangaroa);
+				Check(ref ok, toBalboa != null && toBalboa.Contains("detour") && toTangaroa == "Varuna Point", "the notes' labels name where they lead now: Raft's way to Balboa -> " + toBalboa + ", to Tangaroa -> " + toTangaroa);
 				Check(ref ok, StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_VarunaPoint) == "#----", "Tangaroa is left out: its own note (Raft's way to Varuna Point) is never found and shows no number: " + StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_VarunaPoint));
 				if (RecieverFrequency.AllFrequencies != null)
 				{

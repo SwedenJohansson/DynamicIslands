@@ -256,6 +256,19 @@ namespace DynamicIslands.Editor
 			return FrequencyOf(RuleIdOf(next)) ?? "#----";
 		}
 
+		/// <summary>The island a note of Raft's now leads to (ROADMAP LM1): the step after the note's island in this chain, by
+		/// its name (Raft's island, or a plan island's label), or null.</summary>
+		public static string NextNameForNote(ChunkPointType original)
+		{
+			int i = Array.IndexOf(StoryOrder.Chain, original);
+			if (i < 0) return null;
+			string next = i == 0 ? Steps.FirstOrDefault() : NextAfter(RaftKey(StoryOrder.Chain[i - 1]));
+			if (next == null) return null;
+			if (IsRaft(next)) return StoryOrder.Name(TypeOfStep(next));
+			IntroRule r = RuleOf(RuleIdOf(next));
+			return r != null && r.Label.Length > 0 ? r.Label : RuleIdOf(next);
+		}
+
 		#endregion
 
 		#region Leading on (host)

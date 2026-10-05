@@ -184,9 +184,21 @@ namespace DynamicIslands.Editor
 			return f != null ? f.ToString() : null;
 		}
 
+		/// <summary>The island a note's frequency now leads to, when the story runs in another order or a chain (ROADMAP LM1:
+		/// the note's own words still name Raft's next island; the label next to the number says where it really leads).</summary>
+		public static string TargetName(ChunkPointType original)
+		{
+			if (StoryChain.Active) return StoryChain.NextNameForNote(original);
+			if (!Active) return null;
+			ChunkPointType t = Map(original);
+			return t != original ? Name(t) : null;
+		}
+
 		static void Relabel(Component c, ChunkPointType original)
 		{
 			string text = FrequencyText(original);
+			string target = TargetName(original);
+			if (text != null && target != null && target != Name(original)) text += " - " + target;
 			if (text == null || c == null) return;
 			object tmp = Traverse.Create(c).Field("frequencyText").GetValue(); // (a TextMeshPro text: set through its "text" property)
 			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(text);
