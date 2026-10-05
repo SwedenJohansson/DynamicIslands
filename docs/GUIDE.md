@@ -2910,6 +2910,7 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 | ![](images/library/cablecar_stacks.jpg) **Cablecar Stacks** (four times the size) | A cable car up four forested sea stacks, stopped by three faults: a spare fuse lost in the sea, screechers in the mid station's wheel, the high station's brakes locked | **Restoring a network**: each station's fault fixed in its own way (a dive, a fight, three brakes released in order), each car a ride (`wait`, then a `teleport` to the next station) |
 | ![](images/library/sargasso_town.jpg) **Sargasso Town** (four times the size) | A floating town of wrecks in a volcano's lagoon: hulls roped to hulls, plank streets, a council house on a weed islet - and five captains away for the season | **Five favours for five votes**: a fetch, a fight in a galley, a dive under a capsized hull (air in it), a repair, a lost spyglass - plank streets as boardwalks turned with `push ... yaw=`, a ballot box that waits for all five |
 
+| ![](images/library/glasshouse_gardens.jpg) **Glasshouse Gardens** (four times the size) | A botanist's gardens on a cliff-top plateau: a palm house, a lily house, a potting shed, and one slanting road cut up the cliff from the cove | One long **slanting road** cut into a cliff (flatten strokes stepping up, smoothed), doors walked through, a hidden lever in the lily house |
 ---
 
 *This guide describes Custom Islands 3.0, the Experimental Alpha Release. It is kept up to date with the mod: every
