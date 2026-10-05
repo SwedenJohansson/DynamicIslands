@@ -66,7 +66,7 @@ namespace DynamicIslands.Editor
 				props[NoteTitle] = ContentCatalog.DefaultNoteTitle(name);
 				props[NoteText] = "";
 			}
-			if (ContentCatalog.IsLootObject(name)) props[LootItems] = ContentCatalog.DefaultLoot();
+			if (ContentCatalog.IsLootObject(name)) props[LootItems] = name == ContentCatalog.WildHive ? ContentCatalog.PresetLoot(new[] { ContentCatalog.WildHiveLoot }) : ContentCatalog.DefaultLoot();
 			if (ContentCatalog.IsZone(name)) props[ZoneId] = ContentCatalog.NewZoneId();
 			return props;
 		}

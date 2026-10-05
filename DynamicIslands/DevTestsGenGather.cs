@@ -27,6 +27,9 @@ namespace DynamicIslands
 				int l1 = a1.Count(o => !wet(o)), l2 = a2.Count(o => !wet(o)), w1 = a1.Count(wet), w2 = a2.Count(wet);
 				Check(ref ok, l1 > 0 && l2 > l1 * 1.5f, "style " + style + ": things to gather on land, a little " + l1 + ", much " + l2 + " (" + string.Join(", ", a2.Where(o => !wet(o)).Select(o => o.Name.Replace("Pickup_Landmark_", "")).Distinct().ToArray()) + ")");
 				Check(ref ok, w1 > 0 && w2 > w1 * 1.5f && w2 >= 10, "style " + style + ": finds in the shallows, a little " + w1 + ", much " + w2);
+				if (style != TerrainPainter.Snowy && style != TerrainPainter.Desert)
+					Check(ref ok, a2.Any(o => o.Name == ContentCatalog.WildHive && ObjectProps.Get(o.Props, ObjectProps.LootItems).Contains("HoneyComb")) && a2.Any(o => o.Name == "Pickup_Landmark_DirtPickup"),
+						"style " + style + ": dirt spots and a wild beehive with honeycomb among them");
 				float sea = much.WaterLevel;
 				Check(ref ok, a2.Where(o => !wet(o)).All(o => o.Position.y > sea + 0.3f), "style " + style + ": land things above the sea");
 				Check(ref ok, a2.Where(wet).All(o => o.Position.y < sea - 0.5f && o.Position.y > sea - 6.1f), "style " + style + ": sea finds 0.6-6 m down");

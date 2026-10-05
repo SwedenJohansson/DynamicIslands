@@ -17,13 +17,13 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<int, KeyValuePair<string, bool>[]> Kinds = new Dictionary<int, KeyValuePair<string, bool>[]>
 		{
 			{ TerrainPainter.Tropical, new[] { T("Pickup_Landmark_Tree_Palm 1"), T("Pickup_Landmark_Tree_Palm 3"), T("Pickup_Landmark_Tree_Mango"), S("Pickup_Landmark_PineappleLandmark"),
-				S("Pickup_Landmark_WatermelonLandmark"), S("Banana_Bush_2"), S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_Flower_Yellow") } },
+				S("Pickup_Landmark_WatermelonLandmark"), S("Banana_Bush_2"), S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_Flower_Yellow"), S("Pickup_Landmark_DirtPickup") } },
 			{ 1, new[] { T("Pickup_Landmark_Tree_Pine"), S("Pickup_Landmark_BerryBush"), S("Pickup_Landmark_Flower_White"), S("Pickup_Landmark_Flower_Blue") } },
 			{ 2, new[] { T("Pickup_Landmark_Tree_Palm 2"), T("Pickup_Landmark_Tree_Palm 4"), S("Pickup_Landmark_PineappleLandmark"), S("Pickup_Landmark_WatermelonLandmark"),
 				S("Pickup_Landmark_Flower_Yellow"), S("Pickup_Landmark_Flower_Red") } },
 			{ 3, new[] { T("Pickup_Landmark_Tree_Birch"), T("Pickup_Landmark_Tree_Pine"), S("Pickup_Landmark_BerryBush"), S("Pickup_Landmark_Flower_Blue"), S("Pickup_Landmark_Flower_White"),
-				S("Pickup_Landmark_Flower_Red") } },
-			{ 4, new[] { T("Pickup_Landmark_Tree_Palm 3"), T("Pickup_Landmark_Tree_Mango"), S("Pickup_Landmark_PineappleLandmark"), S("Pickup_Landmark_Flower_Black"), S("Pickup_Landmark_Flower_Red") } },
+				S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_DirtPickup") } },
+			{ 4, new[] { T("Pickup_Landmark_Tree_Palm 3"), T("Pickup_Landmark_Tree_Mango"), S("Pickup_Landmark_PineappleLandmark"), S("Pickup_Landmark_Flower_Black"), S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_DirtPickup") } },
 		};
 		static KeyValuePair<string, bool> T(string n) { return new KeyValuePair<string, bool>(n, true); }
 		static KeyValuePair<string, bool> S(string n) { return new KeyValuePair<string, bool>(n, false); }
@@ -40,6 +40,9 @@ namespace DynamicIslands.Editor
 		/// <summary>At 1 (much): this many things to gather per 1000 m2 of land, sea finds per 1000 m2 of shallows.</summary>
 		public const float LandPer1000 = 10f, SeaPer1000 = 30f;
 		public const int MaxEach = 400;
+
+		/// <summary>An object's own scale (as the generator's other objects get it).</summary>
+		static Vector3 ScaleOf(string name) { GameObject p = PlaceableCatalog.Get(name); return p != null ? p.transform.localScale : Vector3.one; }
 
 		/// <summary>Adds the things to gather to a generated island's objects; returns how many (land, sea).</summary>
 		public static KeyValuePair<int, int> Apply(IslandFile f, IslandGenSettings s, int seed)
@@ -80,9 +83,21 @@ namespace DynamicIslands.Editor
 					if (Mathf.Abs(ground(x + 1f, z) - h) > 0.8f || Mathf.Abs(ground(x, z + 1f) - h) > 0.8f) continue;
 					var kind = kinds[rnd.Next(kinds.Length)];
 					if (!free(x, z, kind.Value ? 4f : 2f)) continue;
-					f.Objects.Add(new IslandObject { Name = kind.Key, Position = new Vector3(x, h, z), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
+					f.Objects.Add(new IslandObject { Name = kind.Key, Position = new Vector3(x, h, z), Scale = ScaleOf(kind.Key), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					land++;
+				}
+				// Wild beehives (honey: Raft has none wild - a container of honeycomb in Raft's beehive, refilling), where
+				// flowers grow: tropical, forest and volcanic islands, about one per 3000 m2 of land at the top, at most 3
+				int hives = s.Style == TerrainPainter.Snowy || s.Style == TerrainPainter.Desert ? 0 : Mathf.Min(3, Mathf.FloorToInt(landArea / 3000f * s.Gather));
+				for (int k = 0, made = 0; k < 400 && made < hives; k++)
+				{
+					float x = (float)rnd.NextDouble() * f.TerrainSize.x, z = (float)rnd.NextDouble() * f.TerrainSize.z, h = ground(x, z);
+					if (h < sea + 1f || Mathf.Abs(ground(x + 1f, z) - h) > 0.5f || Mathf.Abs(ground(x, z + 1f) - h) > 0.5f || !free(x, z, 3f)) continue;
+					f.Objects.Add(new IslandObject { Name = ContentCatalog.WildHive, Position = new Vector3(x, h, z), Scale = ScaleOf(ContentCatalog.WildHive), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f),
+						Props = new Dictionary<string, string> { { ObjectProps.LootItems, ContentCatalog.WildHiveLoot }, { ObjectProps.NoteTitle, "Wild beehive" } } });
+					taken.Add(cell(x, z));
+					made++; land++;
 				}
 			}
 			if (s.Shallows > 0f)
@@ -97,7 +112,7 @@ namespace DynamicIslands.Editor
 					int pick = rnd.Next(total);
 					string name = SeaFinds[0].Key;
 					foreach (var w in SeaFinds) { if (pick < w.Value) { name = w.Key; break; } pick -= w.Value; }
-					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
+					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					wet++;
 				}

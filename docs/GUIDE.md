@@ -442,7 +442,10 @@ finds objects in every category.
 
 **Things to gather** is the category of what a player can pick, cut or dig: palms, mangoes, pine and birch to cut,
 pineapples, melons and berry bushes, flowers, and Raft's finds on the sea floor - sand, clay, stone, iron and copper
-ore, scrap, giant clams, silver algae, seaweed. They work for the player as on Raft's own islands.
+ore, scrap, giant clams, silver algae, seaweed - and Raft's **dirt spots** (the mounds its big islands have; players dig
+them with the shovel for dirt). They work for the player as on Raft's own islands. **Honey**: Raft has no wild hives
+(its honey comes from the beehives players build), so "Loot & chests" has a **Wild beehive** - Raft's beehive holding
+three honeycombs, refilling after the island's regrow days like any chest.
 
 **Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
 looking at: **how many**, within a **radius** in metres, and **keep** - not within that many metres of anything
@@ -524,7 +527,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   unless you move them: more of what players gather on the land, chosen by the style - palms, mango trees, pineapples,
   watermelons, bananas and flowers (tropical), pines, berry bushes and flowers (snowy), palms, pineapples, watermelons
   and flowers (desert), birches, pines, berry bushes and flowers (forest), palms, mango trees, pineapples and black
-  flowers (volcanic) - on fairly flat land, kept off the island's other objects; and Raft's sea finds where players
+  flowers (volcanic), with dirt spots and up to three wild beehives on tropical, forest and volcanic islands - on fairly flat land, kept off the island's other objects; and Raft's sea finds where players
   reach them easily, 0.6-6 m down just off the shore: sand, clay, stones, metal and copper ore, scrap, giant clams and
   seaweed. At the top about 10 things per 1000 m² of land and 30 per 1000 m² of shallows. In recipes: `gen Gather=1
   Shallows=0.5`.
@@ -900,7 +903,7 @@ starting Raft:
 
 ### 5.3 Chests and loot
 
-"Loot & chests" has chests, a crate, a wooden box and barrels, and **any object can hold loot** (**A chest...**).
+"Loot & chests" has chests, a crate, a wooden box, barrels and a wild beehive (honeycomb), and **any object can hold loot** (**A chest...**).
 **Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest that
 holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
 

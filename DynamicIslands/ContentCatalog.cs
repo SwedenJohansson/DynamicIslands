@@ -107,9 +107,16 @@ namespace DynamicIslands.Editor
 			new[] { LootPrefix + "Box", "VG_DecorationPrefabBase_WoodenBoxes_ShortSquare Variant", "Wooden box" },
 			new[] { LootPrefix + "Barrel", "TP_Moontown_Barrel01", "Barrel" },
 			new[] { LootPrefix + "SunkenBarrel", "Reef_Barrel1", "Sunken barrel" },
+			// (honey on islands, the user 2026-10-05: Raft has no wild hive - its honey comes from the player's own beehives -
+			// so a wild one is a container of honeycomb in Raft's beehive, refilling after the island's regrow days)
+			new[] { WildHive, "Placeable_BeeHive", "Wild beehive" },
 		};
 
 		public static bool IsNoteObject(string name) { return name != null && name.StartsWith(NotePrefix) && NoteObjects.Any(n => n[0] == name); }
+
+		public const string WildHive = LootPrefix + "WildHive";
+		/// <summary>A wild beehive's honey (and a little wax-less luck: a jar now and then is in the Treasure preset).</summary>
+		public const string WildHiveLoot = "HoneyComb*3";
 
 		public static bool IsLootObject(string name) { return name != null && name.StartsWith(LootPrefix) && LootObjects.Any(n => n[0] == name); }
 
