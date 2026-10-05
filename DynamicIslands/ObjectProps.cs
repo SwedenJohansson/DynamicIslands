@@ -68,6 +68,15 @@ namespace DynamicIslands.Editor
 			}
 			if (ContentCatalog.IsLootObject(name)) props[LootItems] = name == ContentCatalog.WildHive ? ContentCatalog.PresetLoot(new[] { ContentCatalog.WildHiveLoot }) : ContentCatalog.DefaultLoot();
 			if (ContentCatalog.IsZone(name)) props[ZoneId] = ContentCatalog.NewZoneId();
+			// Raft's machete vines (the user, 2026-10-05: Raft's quest items put to work): cut with the player's own machete,
+			// which they keep for the next vines (a "has" check, not "take")
+			if (name == ContentCatalog.MacheteVines)
+			{
+				props[BehaviourProps.Use] = "Cut the vines with the machete";
+				props[BehaviourProps.CheckKey("use")] = "has|" + ContentCatalog.MacheteItem + "|1";
+				props[BehaviourProps.EventKey("use")] = "hide|";
+				props[BehaviourProps.ElseKey("use")] = "message||The vines are too thick to tear. A machete would cut through them.";
+			}
 			return props;
 		}
 

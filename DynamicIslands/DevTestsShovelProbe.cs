@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using DynamicIslands.Editor;
 using RaftModLoader;
 using UnityEngine;
 
@@ -57,6 +58,46 @@ namespace DynamicIslands
 				Log("terrain " + t.name + " tag=" + t.gameObject.tag + " layer=" + LayerMask.LayerToName(t.gameObject.layer) + " (" + t.gameObject.layer + ") at " + t.transform.position + " layers: " +
 					(d != null && d.terrainLayers != null ? string.Join(", ", d.terrainLayers.Select(l => l != null ? l.name : "-").ToArray()) : "-") + " parent " + (t.transform.parent != null ? t.transform.parent.name : "-"));
 			}
+		}
+
+		[ConsoleCommand(name: "CIProbeWorking", docs: "Dev, in game (host): spawns an island with Raft's vines and zipline lines and lists their scripts and the scripts' methods - to make Raft's quest items work on custom islands")]
+		public static void ProbeWorking(string[] args) { DynamicIslands.instance.StartCoroutine(ProbeWorkingRoutine()); }
+
+		static System.Collections.IEnumerator ProbeWorkingRoutine()
+		{
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue) { Fail("in a world"); yield break; }
+			string[] names = { "ChoppableVines", "ZiplinePath", "ZiplinePath_Landmark" };
+			yield return global::DynamicIslands.Editor.PlaceableCatalog.EnsureLoaded(names.ToList());
+			foreach (string n in names)
+			{
+				GameObject p = global::DynamicIslands.Editor.PlaceableCatalog.Get(n);
+				if (p == null) { Log("probe: " + n + " not in the catalog"); continue; }
+				foreach (Transform t in p.GetComponentsInChildren<Transform>(true))
+				{
+					MonoBehaviour[] ms = t.GetComponents<MonoBehaviour>().Where(m => m != null).ToArray();
+					Collider[] cs = t.GetComponents<Collider>();
+					if (ms.Length == 0 && cs.Length == 0) continue;
+					Log("probe: " + n + "/" + t.name + " tag=" + t.tag + " layer=" + LayerMask.LayerToName(t.gameObject.layer) + " scripts: " + string.Join(", ", ms.Select(m => m.GetType().Name).ToArray()) + " colliders: " + cs.Length);
+					foreach (MonoBehaviour m in ms.Where(m => !(m is global::DynamicIslands.Editor.BatchAnchor)))
+					{
+						const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+						Log("    " + m.GetType().Name + " : " + (m.GetType().BaseType != null ? m.GetType().BaseType.Name : "") + " methods: " + string.Join(", ", m.GetType().GetMethods(all).Select(x => x.Name).Distinct().Take(30).ToArray()));
+						foreach (FieldInfo f in m.GetType().GetFields(all).Take(14)) { try { Log("      " + f.FieldType.Name + " " + f.Name + " = " + Show(f.GetValue(m))); } catch { } }
+					}
+				}
+			}
+			GameObject v = PlaceableCatalog.Get("ChoppableVines");
+			if (v != null) foreach (Transform t in v.GetComponentsInChildren<Transform>(true)) Log("probe vines: " + t.name + " parent " + (t.parent != null ? t.parent.name : "-") + " comps: " + string.Join(", ", t.GetComponents<Component>().Select(c => c != null ? c.GetType().Name : "-").ToArray()));
+			Type[] types;
+			try { types = typeof(Network_Player).Assembly.GetTypes(); } catch (ReflectionTypeLoadException e) { types = e.Types.Where(x => x != null).ToArray(); }
+			foreach (Type ty in types)
+				foreach (MethodInfo m in ty.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+					.Where(m => m.Name == "AttachToZipline" || m.Name == "AttachPlayerToZipline" || m.Name.Contains("Machete") || m.Name == "OnChop" || ty.Name.Contains("Macheteable")))
+					Log("probe method " + ty.FullName + "." + m.Name + "(" + string.Join(", ", m.GetParameters().Select(x => x.ParameterType.Name + " " + x.Name).ToArray()) + ")");
+			foreach (Type ty in types.Where(x => x.Name.Contains("Machete") || x.Name.Contains("Zipline")))
+				Log("probe type " + ty.FullName + " : " + (ty.BaseType != null ? ty.BaseType.Name : ""));
+			Log("probe done");
 		}
 
 		static string Show(object v)

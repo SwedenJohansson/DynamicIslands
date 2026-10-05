@@ -740,6 +740,10 @@ namespace DynamicIslands.Editor
 		internal static IEnumerable<KeyValuePair<string, Transform>> PlaceablesOf(Scene scene) { return PickAll(scene); }
 
 		/// <summary>Raft's harvestable things: trees, rocks, ores, clay, sand, scrap, fruit bushes ("Pickup_Landmark_...").</summary>
+		/// <summary>Raft's story pieces that keep their own scripts, so they work for the player (the user, 2026-10-05: Raft's
+		/// quest items put to work on custom islands): the machete's vines and the zipline tool's lines.</summary>
+		internal static readonly Regex Working = new Regex(@"^(ChoppableVines|ZiplinePath|ZiplinePath_Landmark)$");
+
 		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
 
 		#endregion
@@ -979,7 +983,7 @@ namespace DynamicIslands.Editor
 			foreach (KeyValuePair<string, Transform> pick in PickAll(opened.Scene))
 			{
 				if (!wanted.Contains(pick.Key) || prototypes.ContainsKey(pick.Key)) continue;
-				Add(pick.Key, pick.Value, index[pick.Key].Category, true);
+				Add(pick.Key, pick.Value, index[pick.Key].Category, !Working.IsMatch(pick.Key));
 				// Picked from a switched-off scene: the clone of a scene root would stay switched off
 				prototypes[pick.Key].SetActive(true);
 				if (index[pick.Key].Hidden) hidden.Add(pick.Key);

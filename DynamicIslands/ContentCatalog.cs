@@ -115,6 +115,8 @@ namespace DynamicIslands.Editor
 		public static bool IsNoteObject(string name) { return name != null && name.StartsWith(NotePrefix) && NoteObjects.Any(n => n[0] == name); }
 
 		public const string WildHive = LootPrefix + "WildHive";
+		/// <summary>Raft's story pieces that use the player's own quest tools (the machete; the zipline tool rides Raft's zipline lines as they are).</summary>
+		public const string MacheteVines = "ChoppableVines", MacheteItem = "Machete", ZiplineItem = "ZiplineTool";
 		/// <summary>A wild beehive's honey (and a little wax-less luck: a jar now and then is in the Treasure preset).</summary>
 		public const string WildHiveLoot = "HoneyComb*3";
 
