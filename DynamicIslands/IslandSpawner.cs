@@ -339,6 +339,7 @@ namespace DynamicIslands.Editor
 				else
 				{
 					ObjectProps.ApplyTint(go, o.Props);
+					ZiplineEnds.Apply(go, o.Props, parent.position);
 					if (ObjectProps.IsNote(o.Name, o.Props))
 					{
 						CustomNote.Attach(go, o.Props);

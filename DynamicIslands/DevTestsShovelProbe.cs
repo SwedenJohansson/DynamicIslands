@@ -87,6 +87,18 @@ namespace DynamicIslands
 					}
 				}
 			}
+			foreach (string zn in new[] { "ZiplinePath", "ZiplinePath_Landmark" })
+			{
+				GameObject z = PlaceableCatalog.Get(zn);
+				MeshPath_Zipline_Landmark ml = z != null ? z.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+				if (ml == null) continue;
+				FieldInfo fa = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public), fb = typeof(MeshPath_Zipline_Landmark).GetField("pointB", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+				Transform pa = fa != null ? fa.GetValue(ml) as Transform : null, pb = fb != null ? fb.GetValue(ml) as Transform : null;
+				if (pa != null && pb != null) Log("probe zip " + zn + ": A " + z.transform.InverseTransformPoint(pa.position) + " B " + z.transform.InverseTransformPoint(pb.position) + " length " + Vector3.Distance(pa.position, pb.position).ToString("F1") + " scale " + z.transform.localScale);
+				Renderer[] rs = z.GetComponentsInChildren<Renderer>(true);
+				if (rs.Length > 0) { Bounds bb = rs[0].bounds; foreach (Renderer r in rs) bb.Encapsulate(r.bounds); Log("probe zip " + zn + " bounds " + (bb.min - z.transform.position) + " .. " + (bb.max - z.transform.position)); }
+				foreach (Transform t in z.GetComponentsInChildren<Transform>(true)) Log("probe zip   " + t.name + " at " + z.transform.InverseTransformPoint(t.position));
+			}
 			GameObject v = PlaceableCatalog.Get("ChoppableVines");
 			if (v != null) foreach (Transform t in v.GetComponentsInChildren<Transform>(true)) Log("probe vines: " + t.name + " parent " + (t.parent != null ? t.parent.name : "-") + " comps: " + string.Join(", ", t.GetComponents<Component>().Select(c => c != null ? c.GetType().Name : "-").ToArray()));
 			Type[] types;

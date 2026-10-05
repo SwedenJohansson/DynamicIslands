@@ -451,7 +451,10 @@ three honeycombs, refilling after the island's regrow days like any chest.
 with Raft's **machete** cuts them away (without one they are told they need it), and keeps the machete for the next
 vines on any later island - the vines stay cut. Raft's **zipline lines** (**ZiplinePath** from Tangaroa,
 **ZiplinePath_Landmark** from Caravan Town) keep Raft's own zipline: a player with the **zipline tool** rides them as
-on Raft's islands. Search the browser for them.
+on Raft's islands. Search the browser for them. Select a line to set its **far end**: **Far end: where I look**
+puts the far end's floor on the ground the camera looks at (keep it lower - a zipline runs downhill); in a world Raft
+makes the line from the object to there (the editor still shows Raft's own line). **Raft's own** puts it back. In
+recipes: the setting `zip.to=x y z` in the island's coordinates.
 
 **Buried treasure** (in "Loot & chests"; a red cross on a mound in the editor) is Raft's own treasure for the
 **metal detector** and the **shovel**: in a world the detector beeps as players come near it, three digs bring up the

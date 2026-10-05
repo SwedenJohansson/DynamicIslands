@@ -109,6 +109,7 @@ namespace DynamicIslands.Editor
 					if (loot) LootGroup(target, false);
 					if (!note || !loot) AddFeatureGroup(target, note, loot);
 				}
+				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
 			}
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
@@ -122,6 +123,26 @@ namespace DynamicIslands.Editor
 			t.lineSpacing = 1.05f;
 			Button b = UIKit.Button(g, "Behaviour & events...", () => BehaviourWindow.Open(target), "A name, movement (spin, bob, a door or lift), hidden at first, players can use it, collision, and what happens when...", -1, 26f, 13);
 			if (BehaviourProps.Any(target.Props)) UIKit.SetActive(b, true);
+		}
+
+		/// <summary>Raft's zipline line: where its far end stands (ZiplineEnds; in a world Raft makes the line there).</summary>
+		static void ZiplineGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Zipline");
+			Terrain terrain = terraineditor.terrain;
+			Vector3? far = ZiplineEnds.FarEnd(target.Props);
+			string where = far.HasValue && terrain != null
+				? "Far end " + Vector3.Distance(terrain.transform.position + far.Value, target.transform.position).ToString("F0") + " m away, " + (terrain.transform.position.y + far.Value.y - target.transform.position.y).ToString("+0;-0") + " m up"
+				: "Raft's own line (as in its scene). Players ride it with the zipline tool.";
+			UIKit.Label(g, where, 12, UIKit.TextMuted);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "ZipRow");
+			UIKit.Button(row, "Far end: where I look", () =>
+			{
+				Vector3? at = ScatterTool.ViewCentre();
+				if (!at.HasValue || terrain == null) return;
+				PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(at.Value - terrain.transform.position)));
+			}, "Puts the line's far end (its lower floor) on the ground the camera looks at; in a world the line runs from this object to there. Keep it lower than this end, as a zipline runs downhill.", -1, 26f, 12);
+			if (far.HasValue) UIKit.Button(row, "Raft's own", () => PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, null)), "Back to the line as Raft made it", 90, 26f, 12);
 		}
 
 		#region Creature editor
