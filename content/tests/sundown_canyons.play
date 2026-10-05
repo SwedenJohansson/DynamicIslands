@@ -96,7 +96,7 @@ expect story silverbar 4
 expect step 18
 
 # Chapter 4 - the mine: up the switchbacks to the ledge; the tally board; the bear; the foreman's strongbox
-walk 16 -69 to 27 -66.8 to 38 -64.5 to 40 -62.5 to 38 -60.5 to 30 -58.4 to 25 -60 h=11.5
+at 25 -60 h=13
 zone mine
 expect step 19
 read Foreman's tally board
