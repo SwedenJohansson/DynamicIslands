@@ -36,7 +36,7 @@ use frag6
 expect story fragment 6
 expect step 6
 at 2 -1 h=15
-at -18 8 h=9
+walk 2 -1 to -18 8 h=7.5
 walk -18 8 to -8 11.8 h=1
 at -6 15 h=0
 zone lakebed

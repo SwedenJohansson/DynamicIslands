@@ -536,7 +536,7 @@ namespace DynamicIslands
 			foreach (Vector3 rel in points.Select(q => q - playEntry.Position).ToList())
 			{
 				float stuck = 0f, total = 0f;
-				int animalWaits = 0, sidesteps = 0;
+				int animalWaits = 0, sidesteps = 0, hops = 0;
 				Vector3 last = player.transform.position;
 				Vector3 target = playEntry.Position + rel;
 				while (ScFlat(player.transform.position, target = playEntry.Position + rel) > 0.7f)
@@ -590,8 +590,27 @@ namespace DynamicIslands
 							last = player.transform.position;
 							continue;
 						}
+						// (still stuck with nothing ahead, hanging a little over a slope and not grounded: a player jumps - the walker
+						// hops forward too, twice at most: Starfall Crater's rim path and Crater Lair late in a plan, 2026-10-05)
+						if (blocker == null && hops < 2 && total < 40f)
+						{
+							hops++;
+							Log("  stuck with nothing ahead (grounded " + cc.isGrounded + "): a hop forward");
+							for (float t = 0f; t < 0.5f; t += Time.deltaTime)
+							{
+								KeepAlive(player);
+								cc.Move((Vector3.up * (t < 0.25f ? 3f : -3f) + dir * pc.normalSpeed) * Time.deltaTime);
+								yield return null;
+							}
+							stuck = 0f;
+							last = player.transform.position;
+							continue;
+						}
 						result(false, "stuck at " + (now - playEntry.Position).ToString("F1") + " on the way to " + (target - playEntry.Position).ToString("F1") +
-							" (in the way: " + (blocker != null ? BlockerName(blocker) : "nothing found ahead") + ")");
+							" (in the way: " + (blocker != null ? BlockerName(blocker) : "nothing found ahead") + ")" +
+							// (what the player's own state was - the walks that stall with nothing ahead, 2026-10-05)
+							" [speed " + pc.normalSpeed.ToString("F2") + ", controller " + (cc.enabled ? "on" : "OFF") + ", grounded " + cc.isGrounded +
+							", parent " + (player.transform.parent != null ? player.transform.parent.name : "-") + "]");
 						yield break;
 					}
 					yield return null;
