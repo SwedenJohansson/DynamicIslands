@@ -95,6 +95,18 @@ namespace DynamicIslands
 				foreach (MethodInfo m in ty.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
 					.Where(m => m.Name == "AttachToZipline" || m.Name == "AttachPlayerToZipline" || m.Name.Contains("Machete") || m.Name == "OnChop" || ty.Name.Contains("Macheteable")))
 					Log("probe method " + ty.FullName + "." + m.Name + "(" + string.Join(", ", m.GetParameters().Select(x => x.ParameterType.Name + " " + x.Name).ToArray()) + ")");
+			foreach (Type ty in types.Where(x => x.Name.Contains("TreasurePoint") || x.Name.Contains("MetalDetector") || x.Name == "Shovel"))
+			{
+				Log("probe ttype " + ty.FullName + " : " + (ty.BaseType != null ? ty.BaseType.Name : ""));
+				foreach (MethodInfo m in ty.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+					Log("probe tm " + ty.Name + "." + m.Name + "(" + string.Join(", ", m.GetParameters().Select(x => x.ParameterType.Name + " " + x.Name).ToArray()) + ")");
+				foreach (FieldInfo fi in ty.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+				{
+					string val = "";
+					try { if (fi.IsStatic) val = Show(fi.GetValue(null)); else if (typeof(UnityEngine.Object).IsAssignableFrom(ty)) { UnityEngine.Object o = Resources.FindObjectsOfTypeAll(ty).FirstOrDefault(); if (o != null) val = Show(fi.GetValue(o)) + " (on " + o.name + ")"; } } catch { }
+					Log("probe tf " + ty.Name + "." + fi.Name + " : " + fi.FieldType.Name + " = " + val);
+				}
+			}
 			foreach (Type ty in types.Where(x => x.Name.Contains("Machete") || x.Name.Contains("Zipline")))
 				Log("probe type " + ty.FullName + " : " + (ty.BaseType != null ? ty.BaseType.Name : ""));
 			Log("probe done");

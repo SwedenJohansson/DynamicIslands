@@ -182,6 +182,21 @@ namespace DynamicIslands.Editor
 
 		public static bool IsHelper(string name) { return name == HelperWall || name == HelperRamp; }
 
+		/// <summary>Buried treasure for the metal detector and the shovel (BuriedTreasure): a marker in the editor, Raft's own treasure point in a world.</summary>
+		public const string BuriedTreasure = "Treasure_Buried";
+		public static bool IsTreasure(string name) { return name == BuriedTreasure; }
+
+		static GameObject BuildTreasureMarker()
+		{
+			var root = new GameObject(BuriedTreasure);
+			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
+			Part(PrimitiveType.Cylinder, "Mound", root.transform, new Vector3(0f, 0.05f, 0f), Quaternion.identity, new Vector3(1.4f, 0.05f, 1.4f), MarkerMaterial(new Color(0.45f, 0.32f, 0.18f)));
+			Part(PrimitiveType.Cube, "X1", root.transform, new Vector3(0f, 0.12f, 0f), Quaternion.Euler(0f, 45f, 0f), new Vector3(1.2f, 0.04f, 0.15f), MarkerMaterial(new Color(0.85f, 0.15f, 0.1f)));
+			Part(PrimitiveType.Cube, "X2", root.transform, new Vector3(0f, 0.12f, 0f), Quaternion.Euler(0f, -45f, 0f), new Vector3(1.2f, 0.04f, 0.15f), MarkerMaterial(new Color(0.85f, 0.15f, 0.1f)));
+			AddLabel(root.transform, "Buried treasure", 1.2f);
+			return root;
+		}
+
 		/// <summary>The see-through slab of an invisible wall (4 x 3 m, 30 cm thick) or ramp (4 m wide, 8 m long, 20 degrees up towards its front).</summary>
 		static GameObject BuildHelperMarker(string name, string label)
 		{
@@ -312,6 +327,7 @@ namespace DynamicIslands.Editor
 				PlaceableCatalog.AddCustom(z.Key, BuildZoneMarker(z.Key, z.Value), ZoneCategory, z.Value);
 			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
+			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");

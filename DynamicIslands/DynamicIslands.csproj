@@ -173,6 +173,9 @@
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
     <Compile Include="GenGather.cs" />
+    <Compile Include="DevTestsBuriedTreasure.cs" />
+    <Compile Include="BuriedTreasure.cs" />
+    <Compile Include="DevTestsTreasureProbe.cs" />
     <Compile Include="DevTestsStoryPieces.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />

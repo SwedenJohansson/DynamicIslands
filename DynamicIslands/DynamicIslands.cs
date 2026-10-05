@@ -830,6 +830,7 @@ namespace DynamicIslands
 					if (Raft_Network.IsHost) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
+					BuriedTreasure.OnIslandReady(entry);
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);

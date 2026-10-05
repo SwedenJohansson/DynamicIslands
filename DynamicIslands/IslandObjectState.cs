@@ -62,6 +62,7 @@ namespace DynamicIslands.Editor
 				int day = e.State.TryGetValue(ord, out old) && old.Active == active && old.Yield == yield ? old.Day : today;
 				e.State[ord] = new ObjectState { Active = active, Yield = yield, Day = day };
 			}
+			BuriedTreasure.Capture(e, today);
 		}
 
 		/// <summary>

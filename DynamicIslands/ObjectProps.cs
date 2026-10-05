@@ -23,6 +23,8 @@ namespace DynamicIslands.Editor
 		public const string TintColor = "tint.color", TintAmount = "tint.amount";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
+		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
+		public const string TreasureKind = "treasure.kind";
 		public const int MaxLootStacks = 12, MaxLootAmount = 999;
 		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
 		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>

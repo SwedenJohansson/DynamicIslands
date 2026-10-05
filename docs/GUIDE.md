@@ -453,6 +453,12 @@ vines on any later island - the vines stay cut. Raft's **zipline lines** (**Zipl
 **ZiplinePath_Landmark** from Caravan Town) keep Raft's own zipline: a player with the **zipline tool** rides them as
 on Raft's islands. Search the browser for them.
 
+**Buried treasure** (in "Loot & chests"; a red cross on a mound in the editor) is Raft's own treasure for the
+**metal detector** and the **shovel**: in a world the detector beeps as players come near it, three digs bring up the
+chest, and the chest gives Raft's treasure loot. Once dug up it stays gone (also for the other players, and after
+saving and loading) and is buried again after the island's regrow days. Nothing shows above the ground - players
+need the detector, so a note or a quest step can hint where to search.
+
 **Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
 looking at: **how many**, within a **radius** in metres, and **keep** - not within that many metres of anything
 already on the island (its buildings, its quest's objects, its plants). **On land / Under water** says where they

@@ -40,6 +40,7 @@ namespace DynamicIslands.Editor
 		public static void Despawn(GameObject root)
 		{
 			if (root == null) return;
+			BuriedTreasure.OnDespawn(root);
 			try { CreatureSpawner.OnIslandDespawned(root); }
 			catch (System.Exception e) { Debug.LogError("[CUSTOM ISLANDS] Removing the island's creatures: " + e); }
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
@@ -253,7 +254,7 @@ namespace DynamicIslands.Editor
 
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
-			int missing = 0, creature = 0, loot = 0, zone = 0;
+			int missing = 0, creature = 0, loot = 0, zone = 0, treasure = 0;
 			for (int index = 0; index < island.Objects.Count; index++)
 			{
 				IslandObject o = island.Objects[index];
@@ -284,6 +285,19 @@ namespace DynamicIslands.Editor
 						else if (o.Name == ContentCatalog.SoundZoneName) zgo.AddComponent<SoundZone>().Configure(o.Props ?? new Dictionary<string, string>());
 					}
 					Behaviours.Attach(zgo, o.Name, o.Props, index);
+					continue;
+				}
+				// Buried treasure: Raft's own treasure point, made once the island's state is known (BuriedTreasure.OnIslandReady)
+				if (!editable && ContentCatalog.IsTreasure(o.Name))
+				{
+					if (underSea) { treasure++; continue; }
+					var tgo = new GameObject(o.Name);
+					tgo.transform.SetParent(parent, false);
+					tgo.transform.position = parent.position + o.Position;
+					BuriedTreasure bt = tgo.AddComponent<BuriedTreasure>();
+					bt.Number = treasure++;
+					int kind;
+					bt.Kind = int.TryParse(ObjectProps.Get(o.Props, ObjectProps.TreasureKind), out kind) ? kind : 0;
 					continue;
 				}
 				// Invisible walls and ramps: only their collision in a world
