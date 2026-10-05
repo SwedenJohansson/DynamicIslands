@@ -2432,11 +2432,6 @@ brings another island it comes as a new rule.)
   takes three parts) leaves the quest's "collect" step for them waiting for ever: the items are gone before it counts.
   Give such a lock an **Only if** the quest reached that step, before the check that uses the items up (The Frontier in
   the library does it for each of its locks).
-- **Raft's door walls** (the Wall door blocks) **can't be walked through** on an island yet: Raft's own helper box for
-  building fills the doorway. For a doorway, leave a gap between two walls (the library's buildings do).
-- **Varuna Point's spotlight shoots** on an island: placed from the Objects tab it keeps its own behaviour and fires
-  at any player it can see. For a searchlight or a beacon use the radio tower's floodlight instead (the library's
-  islands do).
 
 ### 12.5 Names, files and your PC
 

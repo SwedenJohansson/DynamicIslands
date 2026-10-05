@@ -435,6 +435,31 @@ namespace DynamicIslands.Editor
 			categories[name] = category;
 		}
 
+		/// <summary>
+		/// Raft's door walls on an island (ROADMAP E11): Raft's helper "block collider" fills the whole wall cell, and on the
+		/// player's raft its door script opens and shuts the way through - without scripts the doorway was a wall nobody walks
+		/// through. The collider is cut down to the lintel over the doorway and the door leaves stand open.
+		/// </summary>
+		static void OpenDoorway(GameObject clone)
+		{
+			Transform[] leaves = clone.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("door", StringComparison.OrdinalIgnoreCase) && t.GetComponent<Renderer>() != null).ToArray();
+			if (!clone.name.StartsWith("Block_Wall_Door", StringComparison.Ordinal) || leaves.Length == 0) return;
+			// (the top of the door leaves: the doorway's height)
+			float top = leaves.Max(l => l.GetComponent<Renderer>().bounds.max.y) - clone.transform.position.y;
+			foreach (BoxCollider bc in clone.GetComponentsInChildren<BoxCollider>(true).Where(c => !c.isTrigger && c.name == "block collider"))
+			{
+				Transform bt = bc.transform;
+				float bottom = bt.localPosition.y + bc.center.y - bc.size.y / 2f, ceiling = bt.localPosition.y + bc.center.y + bc.size.y / 2f;
+				float lintel = Mathf.Max(0.05f, ceiling - top);
+				bc.size = new Vector3(bc.size.x, lintel, bc.size.z);
+				bc.center = new Vector3(bc.center.x, top + lintel / 2f - bt.localPosition.y, bc.center.z);
+			}
+			// (Raft's door animator would set the leaves shut again every frame: it goes)
+			foreach (Animator an in clone.GetComponentsInChildren<Animator>(true)) UnityEngine.Object.DestroyImmediate(an);
+			// (each leaf turned on its hinge, away from the doorway's middle)
+			foreach (Transform l in leaves) l.localRotation = Quaternion.Euler(0f, l.localPosition.x < 0f ? -95f : 95f, 0f) * l.localRotation;
+		}
+
 		/// <summary>The inactive container the catalog's prototypes live in.</summary>
 		internal static GameObject Container { get { return container; } }
 
@@ -625,6 +650,7 @@ namespace DynamicIslands.Editor
 					// Raft's "Block" layer is only walkable as part of the player's raft; as island scenery they go on the
 					// terrain's layer, so players walk on them, the editor can stack them, and a raft stops against them
 					foreach (Transform t in clone.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = IslandSpawner.TerrainLayer;
+					OpenDoorway(clone);
 					KeepVisibleFarAway(clone);
 					prototypes.Add(item.UniqueName, clone);
 					core.Add(item.UniqueName);

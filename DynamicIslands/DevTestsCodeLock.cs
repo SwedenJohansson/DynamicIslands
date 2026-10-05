@@ -251,6 +251,128 @@ namespace DynamicIslands
 			Log("PASS: quest count mp");
 		}
 
+		[ConsoleCommand(name: "CISpotlightProbe", docs: "Dev, in game (host): ROADMAP E13 - Varuna Point's spotlight on an island next to the player: what it is made of, and whether the player is hurt in 12 s")]
+		public static void SpotlightProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(SpotlightProbeRoutine(args != null && args.Length > 0 ? args[0] : "VP_Spotlight")); }
+
+		static IEnumerator SpotlightProbeRoutine(string what)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { what });
+			const string name = "cispotlight";
+			var s = new IslandGenSettings { Seed = 9191, Radius = 30f, Height = 4f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Vector2 c = IslandSpawner.LandCentre(f);
+			float gy = IslandGenerator.SampleHeights(f.Heights, res, step, c.x + 6f, c.y) * f.TerrainSize.y;
+			f.Objects.Add(new IslandObject { Name = what, Position = new Vector3(c.x + 6f, gy, c.y), Scale = PlaceableCatalog.Get(what).transform.localScale });
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail("no island"); yield break; }
+			Transform lightT = e.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(tr => tr.name.StartsWith(what));
+			if (lightT != null)
+				foreach (Transform tr in lightT.GetComponentsInChildren<Transform>(true))
+					Log("spot: " + tr.name + " tag=" + tr.tag + " layer=" + LayerMask.LayerToName(tr.gameObject.layer) + " comps: " + string.Join(", ", tr.GetComponents<Component>().Select(cp => cp != null ? cp.GetType().Name : "-").ToArray()));
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			player.transform.position = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) + Vector3.up * 2f;
+			float h0 = player.Stats.stat_health.Value;
+			yield return new WaitForSeconds(12f);
+			float h1 = player.Stats.stat_health.Value;
+			Log("spot: health " + h0.ToString("F0") + " -> " + h1.ToString("F0"));
+			OnRaftCommand();
+			IslandWorldState.Remove(name);
+			if (h1 >= h0 - 0.5f) Log("PASS: spotlight probe"); else Fail("spotlight probe: the player was hurt");
+		}
+
+		[ConsoleCommand(name: "CIBlockProbe", docs: "Dev, anywhere: ROADMAP E11 - Raft's door wall blocks as Raft makes them: every child with a collider, its layer, size and trigger flag")]
+		public static void BlockProbeCommand(string[] args)
+		{
+			foreach (Item_Base item in ItemManager.GetAllItems().Where(i => i != null && i.UniqueName != null && i.UniqueName.StartsWith("Block_") && (i.UniqueName.Contains("Door") || i.UniqueName == "Block_Wall_Wood")))
+			{
+				Block[] blocks;
+				try { blocks = item.settings_buildable.GetBlockPrefabs(); } catch { continue; }
+				Block prefab = blocks != null ? blocks.FirstOrDefault(b => b != null) : null;
+				if (prefab == null) continue;
+				foreach (Collider col in prefab.GetComponentsInChildren<Collider>(true))
+				{
+					Bounds b = col is BoxCollider ? new Bounds(((BoxCollider)col).center, ((BoxCollider)col).size) : new Bounds();
+					Log("block: " + item.UniqueName + " / " + col.name + " " + col.GetType().Name + " layer=" + LayerMask.LayerToName(col.gameObject.layer) + " trigger=" + col.isTrigger + " enabled=" + col.enabled + (col is BoxCollider ? " size=" + b.size + " centre=" + b.center : ""));
+				}
+			}
+			foreach (Item_Base item in ItemManager.GetAllItems().Where(i => i != null && i.UniqueName == "Block_Wall_Door_Wood"))
+			{
+				Block prefab = item.settings_buildable.GetBlockPrefabs().FirstOrDefault(b => b != null);
+				foreach (Transform tr in prefab.GetComponentsInChildren<Transform>(true))
+				{
+					Renderer rr = tr.GetComponent<Renderer>();
+					Log("block part: " + tr.name + " parent=" + (tr.parent != null ? tr.parent.name : "-") + " local=" + tr.localPosition + " rot=" + tr.localEulerAngles + (rr != null ? " bounds=" + rr.bounds.size + " at " + (rr.bounds.center - prefab.transform.position) : "") + " comps: " + string.Join(", ", tr.GetComponents<Component>().Select(cp => cp != null ? cp.GetType().Name : "-").ToArray()));
+				}
+			}
+			Log("PASS: block probe");
+		}
+
+		[ConsoleCommand(name: "CIDoorway", docs: "Dev, in game (host): ROADMAP E11 - Raft's door walls on an island: the doorway lets a player through (nothing at chest height), the lintel over it still blocks; a picture shot_doorway.png")]
+		public static void DoorwayCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DoorwayRoutine()); }
+
+		static IEnumerator DoorwayRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureBuilt();
+			const string name = "cidoorway";
+			var s = new IslandGenSettings { Seed = 9292, Radius = 30f, Height = 4f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Vector2 c = IslandSpawner.LandCentre(f);
+			float gy = IslandGenerator.SampleHeights(f.Heights, res, step, c.x, c.y) * f.TerrainSize.y;
+			string[] kinds = { "Block_Wall_Door_Wood", "Block_Wall_Door_Thatch", "Block_Wall_Door_Tier3" };
+			for (int i = 0; i < kinds.Length; i++)
+				f.Objects.Add(new IslandObject { Name = kinds[i], Position = new Vector3(c.x + i * 4f - 4f, gy, c.y), Props = new Dictionary<string, string> { { BehaviourProps.Name, "door" + i } } });
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail("no island"); yield break; }
+			yield return new WaitForSeconds(1f);
+			Physics.SyncTransforms();
+			for (int i = 0; i < kinds.Length; i++)
+			{
+				IslandObjectRef r = ScObjOf(e, "door" + i);
+				if (r == null) { Check(ref ok, false, kinds[i] + " on the island"); continue; }
+				Vector3 at = r.transform.position;
+				Func<float, bool> blocked = h => Physics.RaycastAll(at + new Vector3(0f, h, -2f), Vector3.forward, 4f, ~0, QueryTriggerInteraction.Ignore).Any(hit => hit.collider.transform.IsChildOf(r.transform));
+				Check(ref ok, !blocked(1.0f) && !blocked(1.7f), kinds[i] + ": the doorway is open (nothing at 1.0 or 1.7 m)");
+				Check(ref ok, blocked(2.17f), kinds[i] + ": the lintel over it still blocks (2.17 m)");
+			}
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			IslandObjectRef first = ScObjOf(e, "door0");
+			if (first != null)
+			{
+				player.transform.position = first.transform.position + new Vector3(0f, 0.5f, -5f);
+				Camera cam = Camera.main;
+				if (cam != null) cam.transform.rotation = Quaternion.LookRotation(first.transform.position + Vector3.up * 1.2f - cam.transform.position);
+				yield return new WaitForSeconds(0.5f);
+				Screenshot(new[] { "doorway" });
+				yield return new WaitForSeconds(0.6f);
+			}
+			OnRaftCommand();
+			IslandWorldState.Remove(name);
+			if (ok) Log("PASS: doorway"); else Fail("doorway");
+		}
+
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]
