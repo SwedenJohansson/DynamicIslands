@@ -84,6 +84,63 @@ namespace DynamicIslands
 			if (ok) Log("PASS: reward later"); else Fail("reward later");
 		}
 
+		[ConsoleCommand(name: "CILightColours", docs: "Dev, in game (host): ROADMAP LM5 - four real warthogs: as they are, the randomizer's light snow and cream (brightened textures) and its charcoal; a picture shot_light_colours.png")]
+		public static void LightColoursCommand(string[] args) { DynamicIslands.instance.StartCoroutine(LightColoursRoutine()); }
+
+		static IEnumerator LightColoursRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			const string name = "cilightcolours";
+			var s = new IslandGenSettings { Seed = 8888, Radius = 40f, Height = 4f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Vector2 c = IslandSpawner.LandCentre(f);
+			Func<float, float, float> ground = (x, z) => IslandGenerator.SampleHeights(f.Heights, res, step, x, z) * f.TerrainSize.y;
+			for (int i = 0; i < 4; i++)
+			{
+				float x = c.x + (i - 1.5f) * 3f, z = c.y + 6f;
+				f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = new Vector3(x, ground(x, z), z), Props = new Dictionary<string, string> { { ObjectProps.CreatureCount, "1" } } });
+			}
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			Vector3 mid = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			player.transform.position = mid + Vector3.up * 2f;
+			yield return ScWaitAnimals(e, "Warthog", 4, 15f);
+			List<AI_NetworkBehaviour> hogs = ScAnimals(e, "Warthog").OrderBy(a => a.transform.position.x).ToList();
+			if (hogs.Count < 4) { Fail("only " + hogs.Count + " warthogs"); yield break; }
+			string[] looks = { null, "snow", "cream", "charcoal" };
+			bool ok = true;
+			for (int i = 0; i < 4; i++)
+			{
+				AI_NetworkBehaviour a = hogs[i];
+				// (still for the picture: in a row in front of the player)
+				foreach (MonoBehaviour m in a.GetComponents<MonoBehaviour>()) if (m != a && m.GetType().Name.StartsWith("AI_State")) m.enabled = false;
+				a.transform.position = mid + new Vector3((i - 1.5f) * 2.6f, 0.2f, 6f);
+				a.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+				if (looks[i] != null) ok &= WorldRandomizer.ApplyColourForTest(a, looks[i]);
+			}
+			player.transform.position = mid + new Vector3(0f, 0.5f, 0f);
+			player.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+			Camera cam = Camera.main;
+			if (cam != null) cam.transform.rotation = Quaternion.LookRotation(new Vector3(0f, -0.15f, 1f));
+			yield return new WaitForSeconds(0.4f);
+			Screenshot(new[] { "light_colours" });
+			yield return new WaitForSeconds(0.8f);
+			OnRaftCommand();
+			IslandWorldState.Remove(name);
+			if (ok) Log("PASS: light colours"); else Fail("light colours");
+		}
+
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]

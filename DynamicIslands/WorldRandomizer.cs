@@ -587,20 +587,24 @@ namespace DynamicIslands.Editor
 			public string Name;
 			public Color Tint;
 			public bool Alpha;
+			/// <summary>Lighter than the animal: its textures brightened (TintTextures), not its colour multiplied.</summary>
+			public bool Light;
 		}
 
-		// Colours multiply the animal's own texture: darker or tinted, never brighter
+		// Colours multiply the animal's own texture: darker or tinted; the light ones (a channel over 1: snow, cream, pale -
+		// ROADMAP LM5) brighten copies of its textures instead, as a colour property can't lighten
 		static readonly Variant[] Fur =
 		{
 			V("charcoal", 0.36f, 0.36f, 0.38f), V("ash", 0.72f, 0.72f, 0.76f), V("umber", 0.72f, 0.52f, 0.38f), V("rust", 0.95f, 0.58f, 0.40f),
 			V("sand", 1.00f, 0.88f, 0.66f), V("moss", 0.68f, 0.80f, 0.56f), V("frost", 0.78f, 0.88f, 1.00f), V("night", 0.45f, 0.48f, 0.66f),
+			V("snow", 1.75f, 1.75f, 1.8f), V("cream", 1.6f, 1.48f, 1.2f),
 		};
 		static readonly Variant[] Feathers = { V("crimson", 1f, 0.52f, 0.48f), V("slate", 0.55f, 0.6f, 0.72f), V("gold", 1f, 0.84f, 0.45f), V("charcoal", 0.38f, 0.38f, 0.4f), V("moss", 0.7f, 0.82f, 0.58f) };
-		static readonly Variant[] Scales = { V("midnight", 0.42f, 0.46f, 0.6f), V("tiger", 0.88f, 0.74f, 0.5f), V("rust", 0.9f, 0.56f, 0.44f), V("reef", 0.55f, 0.82f, 0.86f), V("olive", 0.7f, 0.76f, 0.5f), V("gold", 1f, 0.8f, 0.36f) };
+		static readonly Variant[] Scales = { V("midnight", 0.42f, 0.46f, 0.6f), V("tiger", 0.88f, 0.74f, 0.5f), V("rust", 0.9f, 0.56f, 0.44f), V("reef", 0.55f, 0.82f, 0.86f), V("olive", 0.7f, 0.76f, 0.5f), V("gold", 1f, 0.8f, 0.36f), V("pale", 1.7f, 1.75f, 1.8f) };
 		static readonly Variant AlphaFur = new Variant { Name = "alpha", Tint = new Color(0.46f, 0.3f, 0.28f), Alpha = true };
 		static readonly Variant BigBruce = new Variant { Name = "big bruce", Tint = new Color(0.34f, 0.36f, 0.44f), Alpha = true };
 
-		static Variant V(string name, float r, float g, float b) { return new Variant { Name = name, Tint = new Color(r, g, b) }; }
+		static Variant V(string name, float r, float g, float b) { return new Variant { Name = name, Tint = new Color(r, g, b), Light = r > 1f || g > 1f || b > 1f }; }
 
 		static readonly HashSet<AI_NetworkBehaviourType> LandAnimals = new HashSet<AI_NetworkBehaviourType>
 		{
@@ -696,11 +700,21 @@ namespace DynamicIslands.Editor
 		/// time, as every change of the randomizer looks at the animals again.</summary>
 		internal static void ApplyAlphaForTest(AI_NetworkBehaviour ai) { if (ai != null) Apply(ai, AlphaFur); }
 
+		/// <summary>Tests (LM5): the animal gets one of the colours by name ("snow", "charcoal"...).</summary>
+		internal static bool ApplyColourForTest(AI_NetworkBehaviour ai, string name)
+		{
+			Variant v = Fur.Concat(Feathers).Concat(Scales).FirstOrDefault(x => x.Name == name);
+			if (ai == null || v == null) return false;
+			Apply(ai, v);
+			return true;
+		}
+
 		static void Apply(AI_NetworkBehaviour ai, Variant v)
 		{
 			int tinted = 0;
 			foreach (Renderer r in BodyOf(ai))
 			{
+				if (v.Light) { tinted += TintTextures(r, v.Tint); continue; }
 				int n = ObjectProps.TintRenderer(r, v.Tint);
 				// (the shark's shader has no colour, only textures)
 				tinted += n > 0 ? n : TintTextures(r, v.Tint);

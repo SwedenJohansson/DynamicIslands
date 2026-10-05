@@ -1924,7 +1924,7 @@ The parts (all on unless you click one off):
 
 | Part | What you'll find |
 |---|---|
-| **Colours** | Animals and sharks (Bruce too) now and then in another colour: charcoal, ash, rust, moss, frost, night... and rarely a gold shark |
+| **Colours** | Animals and sharks (Bruce too) now and then in another colour: charcoal, ash, rust, moss, frost, night... lighter ones too (snow, cream, a pale shark: their textures brightened), and rarely a gold shark |
 | **Animals** | More animals on Raft's islands, now and then puffer fish on the reef |
 | **Alphas** | Rare bigger, darker **alpha** warthogs, bears, hyenas and screechers (3× health), and a huge **Big Bruce**. A banner warns you. Killed, they drop a **trophy head**, meat and leather |
 | **Loot** | Some of the crates and giant clams on Raft's islands lie in other places; now and then extra crates and barrels |
