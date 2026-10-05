@@ -68,6 +68,9 @@ namespace DynamicIslands.Editor
 		// Under water, each 0..1 where 0.5 = as dense as around Raft's islands (-1 = like Raft, or none if ObjectDensity is 0):
 		// corals and sea plants, rocks, things to collect (stones, clay, sand, scrap, ores, giant clams), sunken barrels
 		public float Water = -1f, SeaRocks = -1f, SeaFinds = -1f, Sunken = -1f;
+		// Things to gather (GenGather, ROADMAP LM9), each 0..1 (0 = none, as before): Gather - what suits the style on the land
+		// (trees to cut, fruit, berries, flowers); Shallows - Raft's sea finds just off the shore (sand, clay, stone, ores, scrap, clams, seaweed)
+		public float Gather = 0f, Shallows = 0f;
 
 		// Content: creature spots and loot boxes
 		public int Hostiles, Friendly, SeaLife;
@@ -123,7 +126,7 @@ namespace DynamicIslands.Editor
 			PeakShape = Mathf.Clamp01(PeakShape); Terraces = Mathf.Clamp01(Terraces); Lakes = Mathf.Clamp01(Lakes); Valleys = Mathf.Clamp01(Valleys); Erosion = Mathf.Clamp01(Erosion);
 			Shelf = Mathf.Clamp01(Shelf); Seabed = Mathf.Clamp(Seabed, 0, 2);
 			SeaFloor = Mathf.Clamp(SeaFloor, 0, 1); DropOff = Mathf.Clamp01(DropOff);
-			Clusters = Mathf.Clamp01(Clusters);
+			Clusters = Mathf.Clamp01(Clusters); Gather = Mathf.Clamp01(Gather); Shallows = Mathf.Clamp01(Shallows);
 			Hostiles = Mathf.Clamp(Hostiles, 0, MaxCreatureSpots); Friendly = Mathf.Clamp(Friendly, 0, MaxCreatureSpots); SeaLife = Mathf.Clamp(SeaLife, 0, MaxCreatureSpots);
 			Loot = Mathf.Clamp(Loot, 0, MaxLoot);
 			LootMin = Mathf.Clamp(LootMin, 1, 5); LootMax = Mathf.Clamp(LootMax, LootMin, 5);
@@ -3412,6 +3415,8 @@ namespace DynamicIslands.Editor
 			};
 			file.Objects = PlanAll(s, metres, BuildArea);
 			List<string> built = GenBuildings.Apply(file, s);
+			KeyValuePair<int, int> gathered = GenGather.Apply(file, s, s.Seed);
+			if (gathered.Key + gathered.Value > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + gathered.Key + " things to gather on the land, " + gathered.Value + " in the shallows");
 			if (built.Count > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + string.Join(", ", built.ToArray()));
 			if (s.Levels) file.Props[IslandProps.Levels] = "on";
 			return file;

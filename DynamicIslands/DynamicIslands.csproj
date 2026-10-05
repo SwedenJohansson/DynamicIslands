@@ -172,6 +172,8 @@
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
+    <Compile Include="GenGather.cs" />
+    <Compile Include="DevTestsGenGather.cs" />
     <Compile Include="DevTestsScatter.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="ScatterTool.cs" />

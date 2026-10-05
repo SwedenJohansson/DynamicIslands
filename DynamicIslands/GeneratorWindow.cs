@@ -291,6 +291,8 @@ namespace DynamicIslands.Editor
 				"Driftwood logs and small stones on the beach and the wet sand.");
 			Slider(nature, "Harvestables", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatHarvest), v => s.Harvest = v, amount(IslandGenerator.CatHarvest), "Stone, clay, sand, berries, pineapples on the land",
 				"Things players collect with Raft's tools on the land and beach: stones, clay and sand, berry bushes or pineapples by style. (What lies under water is below, in Life under water.)");
+			Slider(nature, "Things to gather", 0f, 1f, () => s.Gather, v => s.Gather = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
+				"Trees to cut, fruit, berries and flowers that suit the style", "More of what players gather and cut on the land, chosen by the style: palms, mango trees, pineapples, watermelons, bananas and flowers (tropical); pines, berry bushes and flowers (snowy); palms, pineapples, watermelons and flowers (desert); birches, pines, berry bushes and flowers (forest); palms, mango trees, pineapples and black flowers (volcanic). On fairly flat land above the sea, kept off the island's other objects; at the top about " + GenGather.LandPer1000.ToString("F0") + " per 1000 m2 of land. Off (none) as before.");
 			Slider(nature, "Groups", 0f, 1f, () => s.Clusters, v => s.Clusters = v, v => v < 0.15f ? "spread evenly" : v < 0.6f ? "some groves" : "groves and clearings",
 				"Spread evenly, or in groves with clearings", "How much the objects gather: evenly spread on the left; groves of trees, fields of bushes and rock piles with open clearings between them on the right, and corals in reefs with sand between them. The amounts stay the same.");
 			UIKit.Label(nature, "Very dense islands take a few seconds to generate; one island gets at most " + IslandGenerator.MaxObjects + " objects (land and sea together).", 12, UIKit.TextMuted);
@@ -313,6 +315,8 @@ namespace DynamicIslands.Editor
 				"Boulders in the shallow water and big rock formations sunk into the drop-off further down, as around Raft's islands.");
 			Slider(life, "Things to collect", 0f, 1f, () => s.AmountSea(s.SeaFinds), v => s.SeaFinds = v, sea, "Stones, clay, sand, scrap, ores, giant clams",
 				"Raft's pickups under water: stones, clay and sand on the shelf, scrap on the sea floor, metal and copper ore on the steep slopes further down, giant clams and silver algae now and then. Players dive for them.");
+			Slider(life, "Finds in the shallows", 0f, 1f, () => s.Shallows, v => s.Shallows = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
+				"Sand, clay, stone, ores, scrap, clams and seaweed just off the shore", "Raft's sea finds where players reach them easily, 0.6-6 m under water just off the shore: sand, clay, stones, metal and copper ore, scrap, giant clams and seaweed - as the library's islands have them. On top of Things to collect above; at the top about " + GenGather.SeaPer1000.ToString("F0") + " per 1000 m2 of shallows. Off (none) as before.");
 			Slider(life, "Sunken barrels", 0f, 1f, () => s.AmountSea(s.Sunken), v => s.Sunken = v, sea, "Barrels, containers, buoys and wreckage on the sea floor",
 				"Sunken barrels, containers, buoys and bits of wreckage, as around Balboa and Caravan Island (Raft's tropical islands have few). Decoration: the loot boxes are under Loot.");
 

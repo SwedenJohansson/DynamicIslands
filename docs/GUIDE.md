@@ -520,6 +520,14 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   on a slope a rock, a bush or a log goes down to the lowest ground under it (its high side a little in the slope, as
   Raft's own are), and flat things such as snow drifts lie along gentle slopes and are left off steep ones. They are
   set down on the terrain's own surface (its triangles), so nothing hangs in the air over a steep, uneven slope.
+- **Things to gather** (in Nature) and **Finds in the shallows** (in Life under water), from none to much, both off
+  unless you move them: more of what players gather on the land, chosen by the style - palms, mango trees, pineapples,
+  watermelons, bananas and flowers (tropical), pines, berry bushes and flowers (snowy), palms, pineapples, watermelons
+  and flowers (desert), birches, pines, berry bushes and flowers (forest), palms, mango trees, pineapples and black
+  flowers (volcanic) - on fairly flat land, kept off the island's other objects; and Raft's sea finds where players
+  reach them easily, 0.6-6 m down just off the shore: sand, clay, stones, metal and copper ore, scrap, giant clams and
+  seaweed. At the top about 10 things per 1000 m² of land and 30 per 1000 m² of shallows. In recipes: `gen Gather=1
+  Shallows=0.5`.
 - **Life under water:** corals, sea vines, kelp, rocks, stones, ores, giant clams and sunken barrels, placed like
   around Raft's own islands: each kind as close to the shore as there (boulders by the shore, rock formations on the
   drop-off) and as thick. The corals grow in **reefs** as Raft's do: a few tight patches some 15 m across (one per
