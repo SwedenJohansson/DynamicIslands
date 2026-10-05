@@ -614,7 +614,19 @@ namespace DynamicIslands.Editor
 	public static class GenQuest
 	{
 		public const int MaxSteps = 8;
-		static readonly string[] Titles = { "The castaway's trail", "Lost supplies", "The keeper's secret", "The last signal", "The hermit's hoard", "Buried treasure", "The drowned expedition", "The lookout's log" };
+		// (titles that fit any quest; the others only fit some steps - ROADMAP CW6: "The lookout's log" came without a lookout)
+		static readonly string[] Titles = { "The castaway's trail", "Lost supplies", "The last signal", "The hermit's hoard", "The drowned expedition" };
+
+		/// <summary>A title that fits the steps chosen.</summary>
+		static string TitleFor(System.Random r, List<string> steps, bool hutKey, bool cave)
+		{
+			var fits = new List<string>(Titles);
+			if (steps.Any(s => s.StartsWith("reach|lookout"))) fits.Add("The lookout's log");
+			if (steps.Any(s => s.StartsWith("collect|mappiece"))) { fits.Add("Buried treasure"); fits.Add("The torn map"); }
+			if (hutKey) { fits.Add("The keeper's secret"); fits.Add("The hut's key"); }
+			if (cave) { fits.Add("The cave's hoard"); fits.Add("Into the dark"); }
+			return fits[r.Next(fits.Count)];
+		}
 
 		/// <summary>Adds the quest (and its notes, chests, zones, creatures, story item) to the kit's file. Returns how many steps it got (0: none).</summary>
 		public static int Make(MapKit k, IslandGenSettings s)
@@ -622,16 +634,23 @@ namespace DynamicIslands.Editor
 			int want = Mathf.Clamp(s.QuestSteps, 0, MaxSteps);
 			if (want == 0) return 0;
 			System.Random r = k.Rnd;
-			string title = Titles[r.Next(Titles.Length)];
 			var steps = new List<string>();
+			// (the island's buildings and cave, when the generator made them - CW6: a key in a hut opens the hoard, the hoard
+			// in the cave)
+			IslandObject hutChest = k.File.Objects.FirstOrDefault(o => o.Props != null && (ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Castaway's chest" || ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Cabin chest"));
+			IslandObject caveHoard = k.File.Objects.FirstOrDefault(o => o.Props != null && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Cave hoard");
 			Func<Func<float, float, bool>, float, Vector2?> spot = (ok, apart) => k.Find(k.Mid, s.Radius * 0.85f, ok, apart);
 			// The hoard: high up and out of the way
 			Vector2 hoard = k.Highest(k.Mid, s.Radius * 0.6f);
 			if (want == 1)
 			{
-				k.Chest("Loot_ChestLarge", hoard, "Hidden hoard", MapKit.Loot("Treasure"));
-				steps.Add("open|Hidden hoard|1|Find the hidden hoard (it's up high)");
-				k.Quest(title, "Someone hid a hoard on this island.", "The hoard is yours!", "", steps.ToArray());
+				if (caveHoard != null) steps.Add("open|Cave hoard|1|Find the hoard in the island's cave");
+				else
+				{
+					k.Chest("Loot_ChestLarge", hoard, "Hidden hoard", MapKit.Loot("Treasure"));
+					steps.Add("open|Hidden hoard|1|Find the hidden hoard (it's up high)");
+				}
+				k.Quest(TitleFor(r, steps, false, caveHoard != null), "Someone hid a hoard on this island.", "The hoard is yours!", "", steps.ToArray());
 				return 1;
 			}
 			// First: a note where players come ashore
@@ -648,6 +667,17 @@ namespace DynamicIslands.Editor
 			// (the lookout and the monsters first when there's room for few: they need least)
 			pool = pool.OrderBy(p => p == "catch" ? 2 : p == "page" || p == "crate" ? 1 : 0).ToList();
 			int middle = want - 2;
+			// (a key in a hut: one of the middle steps, and the hoard won't open without it)
+			bool hutKey = hutChest != null && middle > 0;
+			if (hutKey)
+			{
+				middle--;
+				hutChest.Props[ObjectProps.LootItems] = StoryItems.Prefix + "hoardkey*1;" + ObjectProps.Get(hutChest.Props, ObjectProps.LootItems);
+				var keyDefs = StoryItems.Of(k.File.Props);
+				if (!keyDefs.Any(d => d.Id == "hoardkey")) keyDefs.Add(new StoryItemDef { Id = "hoardkey", Name = "Hoard key", Icon = StoryItems.QuestIcon + "Vasagatan_Key_Red", Description = "The castaway's key, kept in their hut." });
+				k.File.Props[StoryItems.Key] = StoryItems.Text(keyDefs);
+				steps.Add("collect|hoardkey|1|Find the key in the castaway's " + (ObjectProps.Get(hutChest.Props, ObjectProps.NoteTitle) == "Cabin chest" ? "cabin" : "hut"));
+			}
 			string hostile = s.Style == TerrainPainter.Snowy ? "PolarBear" : s.Style == TerrainPainter.Forest ? "Bear" : s.Style == TerrainPainter.Desert ? "Hyena" : r.NextDouble() < 0.5 ? "Boar" : "Rat";
 			string friendly = s.Style == TerrainPainter.Snowy ? "Goat" : s.Style == TerrainPainter.Desert ? "Llama" : "Chicken";
 			foreach (string kind in pool.Take(middle))
@@ -718,10 +748,17 @@ namespace DynamicIslands.Editor
 					}
 				}
 			}
-			// Last: the hoard
-			k.Chest("Loot_ChestLarge", hoard, "Castaway's hoard", MapKit.Loot("Treasure") + ";" + MapKit.Loot("Metal").Split(';').First());
-			steps.Add("open|Castaway's hoard|1|Open the castaway's hoard at the top of the island");
-			k.Quest(title, "A castaway lived here. Their note should be near the beach.", "You found everything the castaway left behind.", "", steps.ToArray());
+			// Last: the hoard - in the cave when the island has one, else at the top; locked when a hut keeps its key
+			string hoardTitle = caveHoard != null ? "Cave hoard" : "Castaway's hoard";
+			IslandObject hoardChest = caveHoard;
+			if (hoardChest == null) hoardChest = k.Chest("Loot_ChestLarge", hoard, "Castaway's hoard", MapKit.Loot("Treasure") + ";" + MapKit.Loot("Metal").Split(';').First());
+			if (hutKey)
+			{
+				hoardChest.Props[BehaviourProps.CheckKey("open")] = "take|" + StoryItems.Prefix + "hoardkey|1";
+				hoardChest.Props[BehaviourProps.ElseKey("open")] = "message||It's locked. The castaway must have kept the key somewhere safe - their hut?";
+			}
+			steps.Add("open|" + hoardTitle + "|1|" + (caveHoard != null ? "Open the hoard in the island's cave" : "Open the castaway's hoard at the top of the island"));
+			k.Quest(TitleFor(r, steps, hutKey, caveHoard != null), "A castaway lived here. Their note should be near the beach.", "You found everything the castaway left behind.", "", steps.ToArray());
 			return steps.Count;
 		}
 	}

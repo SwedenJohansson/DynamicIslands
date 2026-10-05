@@ -726,6 +726,16 @@ namespace DynamicIslands
 			return all;
 		}
 
+		/// <summary>CW6: the island Check on the generated quest (the island in the editor): no problems.</summary>
+		static void CheckGeneratedQuest(ref bool ok, string label)
+		{
+			var f = new IslandFile { Name = "generated", Props = new Dictionary<string, string>(DynamicIslands.currentIslandProps) };
+			foreach (EditorGameObject e in PlacedEditorObjects()) f.Objects.Add(new IslandObject { Name = e.GameObjectName, Props = e.Props != null ? new Dictionary<string, string>(e.Props) : null });
+			List<PlanChecker.Finding> found = PlanChecker.QuestFindings(f);
+			var bad = found.Where(x => x.Level == PlanChecker.Level.Problem).Select(x => x.Text).ToList();
+			Check(ref ok, bad.Count == 0, label + ": Check finds no problem in the quest" + (bad.Count > 0 ? " - " + string.Join(" / ", bad.ToArray()) : "") + (found.Count > bad.Count ? " (" + (found.Count - bad.Count) + " tip/warning)" : ""));
+		}
+
 		[ConsoleCommand(name: "CIGenQuest", docs: "Dev, editor: the generator's Quest steps - islands with quests of 1, 3, 5 and 8 steps: the island's quest has them, every step has what it needs on the island (the note, chest, zone, creatures, map pieces in chests, animals), the hoard last; 0 steps leaves the quest alone; Ctrl+Z brings the old quest back; the window steps aside after Generate")]
 		public static void GenQuestCommand() { DynamicIslands.instance.StartCoroutine(GenQuestRoutine()); }
 
@@ -762,6 +772,23 @@ namespace DynamicIslands
 				bool last = q.Steps.Count > 0 && q.Steps.Last().Type == "open" && q.Steps.Last().Target.EndsWith("hoard");
 				Check(ref ok, q.Steps.Count == n && missing.Count == 0 && last && q.Title.Length > 0 && (n == 1 || q.Steps[0].Type == "read"),
 					n + " step(s): \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + (missing.Count > 0 ? " - nothing on the island for: " + string.Join(", ", missing.ToArray()) : "") + " (" + IslandGenerator.LastReport.Describe() + ")");
+				CheckGeneratedQuest(ref ok, n + " step(s)");
+				Check(ref ok, !(q.Title == "The lookout's log" && !q.Steps.Any(x => x.Type == "reach")), n + " step(s): the title fits the steps (\"" + q.Title + "\")");
+			}
+			// CW6: with huts and a cave - the key in a hut opens the hoard, the hoard in the cave
+			{
+				var gs = new IslandGenSettings { Seed = 791, Radius = 120f, Height = 28f, Roughness = 0.35f, Peaks = 2, ObjectDensity = 0.3f, QuestSteps = 5, Buildings = true, BuildingKind = GenBuildings.Huts, BuildingCount = 2, Caves = true };
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.5f);
+				objs = PlacedEditorObjects();
+				IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
+				bool keyStep = q.Steps.Any(x => x.Type == "collect" && x.Target == "hoardkey");
+				EditorGameObject hoardObj = objs.FirstOrDefault(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == q.Steps.Last().Target);
+				bool locked = hoardObj != null && ObjectProps.Get(hoardObj.Props, BehaviourProps.CheckKey("open")).Contains("hoardkey");
+				bool caveMade = IslandGenerator.LastReport.Built.Contains("a cave");
+				Check(ref ok, keyStep && locked && (!caveMade || q.Steps.Last().Target == "Cave hoard"), "with huts and a cave: \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + " (the hoard " + (locked ? "locked by the hut's key" : "not locked") + (caveMade ? ", a cave made" : ", no cave fitted") + ")");
+				CheckGeneratedQuest(ref ok, "with huts and a cave");
 			}
 			// Quest steps 0: the island's quest as it was; and Ctrl+Z gives the quest before back
 			string before = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps);

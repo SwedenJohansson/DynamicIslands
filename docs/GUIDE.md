@@ -596,6 +596,18 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
   (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same
   settings and seed always give the same buildings in the same places. A preset keeps these settings too.
+
+  ![Castaway huts](images/generator-buildings-huts.jpg)
+  *Castaway huts: Raft's foundations, thatch walls and pillars, the roof resting on them, a hammock and a chest inside.*
+
+  ![A lighthouse](images/generator-lighthouse.jpg)
+  *Wrecks and landmarks: a lighthouse of Raft's radio tower pieces near the coast, two decks, ladders, a chest on top.*
+
+  ![A jetty](images/generator-jetty.jpg)
+  *A jetty of Raft's foundations out over the water from the beach, a small boat floating at its end.*
+
+  ![A sunken plane](images/generator-sunken-plane.jpg)
+  *A plane wreck lying on the sea floor off the coast (the editor shows the sea floor without water).*
 - **Quest** (the very last group): **Quest steps**, 0 to 8 - a quest made together with the island, and everything it
   needs put on the island:
   - first a **castaway's note** to read where players come ashore;
@@ -604,10 +616,15 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     three small chests (a story item, in the journal), a **torn page** to read, a **supply crate** to open, **animals**
     to catch with Raft's net launcher;
   - last the **castaway's hoard** to open at the top of the island. With 1 step there is only a hidden hoard.
+  - with **Buildings** (huts or cabins) a step is the **key in the castaway's hut**, and the hoard won't open without
+    it; with a **Cave** the hoard is the one in the cave. The quest's title fits the steps it got.
 
   It replaces the island's quest (Ctrl+Z brings the old one back): the Island tab's **Quest** shows it, and you can
   change it there like any quest. On a small island a step whose place doesn't fit is left out; the message says how
   many steps it got. 0 leaves the island's quest as it is.
+
+  ![A generated quest](images/generator-quest.jpg)
+  *A generated island with its quest: the castaway's note by the landing, a lookout, map pieces, the hoard at the top.*
 - **My presets:** **Save these settings...** keeps them under a name; **Defaults** starts over.
 
 ![Under water, and a help popup](images/generator-underwater.jpg)
@@ -630,6 +647,9 @@ island with its size, height and look; **A variation of it** starts from the isl
 (stretch, mirror, roughen, coast, valleys...). This tab shows only what remakes the chosen island - and a **Quest**
 group - not the Normal tab's other groups (its buildings and caves aren't used here). It remakes the island's
 **ground and nature**, and for a story island with designs also **what is built on it**:
+
+![Rebuild it: an oil rig](images/generator-rebuild-rig.jpg)
+*Rebuild it: the Radio Tower rebuilt as an oil rig off the island - the tower's floors on legs, the dish, the windmill.*
 
 - **Rebuild it** (shown for the Radio Tower; more of Raft's story islands to come): **Design** - something like the
   island built anew from **its own pieces** on the new ground, different with every seed (how high, how many storeys

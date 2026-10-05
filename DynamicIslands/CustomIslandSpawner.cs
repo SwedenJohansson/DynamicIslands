@@ -500,7 +500,30 @@ namespace DynamicIslands.Editor
 					result.Add(p);
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
-			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key)))).ToList();
+			HashSet<string> planned = forWorld ? PlanIslandNames() : new HashSet<string>();
+			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key)))).ToList();
+		}
+
+		/// <summary>
+		/// Islands this world's plan and its islands' own rules bring by name (ROADMAP CW4): never by chance too - a plan's
+		/// island that came by chance came twice (two Signal Rocks, their quests mixed up by name).
+		/// </summary>
+		internal static HashSet<string> PlanIslandNames()
+		{
+			var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var rules = new List<IntroRule>();
+			try
+			{
+				if (WorldDirector.Plan != null) rules.AddRange(WorldDirector.Plan.Rules);
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands) rules.AddRange(WorldDirector.RulesOf(e));
+			}
+			catch { }
+			foreach (IntroRule r in rules)
+			{
+				if (r.What == "island" && r.WhatArg.Trim().Length > 0) names.Add(r.WhatArg.Trim());
+				else if (r.What == "oneof") foreach (string n in r.WhatArg.Split(',')) if (n.Trim().Length > 0) names.Add(n.Trim());
+			}
+			return names;
 		}
 
 		/// <summary>The island of this world with this name (a saved island the spawn pool brought before), or null.</summary>

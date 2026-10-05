@@ -188,6 +188,69 @@ namespace DynamicIslands
 			if (ok) Log("PASS: more quests"); else Fail("more quests");
 		}
 
+		[ConsoleCommand(name: "CIPoolNoPlanIslands", docs: "Dev, anywhere: ROADMAP CW4 - an island the world plan brings by name is never picked by chance (the pool leaves it out; the whole pool still lists it)")]
+		public static void PoolNoPlanIslandsCommand(string[] args)
+		{
+			bool ok = true;
+			List<string> all = CustomIslandSpawner.Pool(false).Select(p => p.Key).Where(n => !n.StartsWith("type:") && n != CustomIslandSpawner.GeneratedEntry).ToList();
+			// (the islands with weight 0 aren't in the pool at all: then any saved island, with the pool's own line for it)
+			string name = all.Count > 0 ? all[0] : IslandSpawner.ListSavedIslands().FirstOrDefault(n => !n.StartsWith("gen-") && !n.StartsWith("ci"));
+			if (name == null) { Fail("no saved islands"); return; }
+			bool inWhole = all.Count > 0;
+			WorldPlan keep = WorldDirector.Plan;
+			try
+			{
+				WorldDirector.Plan = new WorldPlan { Name = "CI pool", Random = true, Rules = { IntroRule.Parse("planned | island:" + name + " | start | ahead:300 | | ") } };
+				Check(ref ok, CustomIslandSpawner.PlanIslandNames().Contains(name), "the plan's island '" + name + "' is known as the plan's");
+				Check(ref ok, !CustomIslandSpawner.Pool(true).Any(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)), "the pool for this world leaves it out");
+				if (inWhole) Check(ref ok, CustomIslandSpawner.Pool(false).Any(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)), "the whole pool (the New Game box's list) still has it");
+				else Log("  (the pool has no islands with weight here: only the plan's names checked)");
+			}
+			finally { WorldDirector.Plan = keep; }
+			if (ok) Log("PASS: pool without plan islands"); else Fail("pool without plan islands");
+		}
+
+		[ConsoleCommand(name: "CIQuestCountCheck", docs: "Dev, in game (either player): ROADMAP CW3 - this machine's quest count as the journal shows it: QCOUNT <done>/<total> <fingerprint> (two players compare)")]
+		public static void QuestCountCheckCommand(string[] args)
+		{
+			List<QuestCount.Quest> quests = QuestCount.All();
+			int done, total;
+			QuestCount.Count(quests, out done, out total);
+			string text = string.Join(";", quests.Select(q => q.Group + "/" + q.Name + "/" + q.Done).ToArray());
+			Log("QCOUNT " + done + "/" + total + " " + Fnv(text).ToString("X8"));
+			Log("PASS: quest count check");
+		}
+
+		[ConsoleCommand(name: "CIQuestCountMP", docs: "Dev, in game (host): ROADMAP CW3 for two players - start: an island with two quests next to the raft (kept); done: its second quest done")]
+		public static void QuestCountMPCommand(string[] args) { DynamicIslands.instance.StartCoroutine(QuestCountMPRoutine(args != null && args.Length > 0 ? args[0] : "start")); }
+
+		static IEnumerator QuestCountMPRoutine(string what)
+		{
+			const string name = "ciqcount";
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue || !Raft_Network.IsHost) { Fail("quest count mp (host, in a world)"); yield break; }
+			if (what == "done")
+			{
+				IslandWorldState.Entry d = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+				if (d == null) { Fail("quest count mp: no island"); yield break; }
+				QuestTracker.Event(d, "reach", "pen");
+				yield return new WaitForSeconds(1f);
+				if (QuestTracker.IsDone(d, 1)) Log("PASS: quest count mp"); else Fail("quest count mp: not done");
+				yield break;
+			}
+			var s = new IslandGenSettings { Seed = 9090, Radius = 30f, Height = 6f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			new IslandQuest { Title = "Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" } }, Reward = "Rope*1" }.To(f.Props, 0);
+			new IslandQuest { Title = "Side", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" } }, Reward = "Plank*1" }.To(f.Props, 1);
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("quest count mp: no open sea"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			yield return new WaitForSeconds(2f);
+			Log("PASS: quest count mp");
+		}
+
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]

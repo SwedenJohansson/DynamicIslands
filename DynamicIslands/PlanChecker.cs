@@ -377,6 +377,15 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>An island's own quest checked against what the island has (ROADMAP CW6: every generated quest).</summary>
+		public static List<Finding> QuestFindings(IslandFile f)
+		{
+			var c = new Ctx { Plan = new WorldPlan(), IslandMode = true, SavedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) };
+			Facts x = FromFile(f, f.Name ?? "island", false);
+			CheckQuest(c, -1, x, x.Quest.Steps.Count, "The island");
+			return c.Out;
+		}
+
 		/// <summary>The first `steps` steps of an island's quest: can each be done there?</summary>
 		static void CheckQuest(Ctx c, int i, Facts f, int steps, string who)
 		{

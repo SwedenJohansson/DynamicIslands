@@ -53,6 +53,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (and each player who joins): the story chain (StoryChain) - Data = "on;steps|frequencies|unlocked|fired",
 		/// Name = a banner to show ("title\ntext"), if any.</summary>
 		public const int StoryChain = 19;
+		/// <summary>Host -> everyone (when it changes, and each player who joins): the world's quest count (QuestCount, ROADMAP
+		/// CW3) - Data = one line per quest, "group\tname\t1|0", so every player's journal shows the host's count.</summary>
+		public const int QuestCount = 20;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -397,6 +400,7 @@ namespace DynamicIslands.Editor
 							SendToPlayer(WorldRandomizer.Message(), from);
 							SendToPlayer(WorldOptions.Message(), from);
 							SendToPlayer(global::DynamicIslands.Editor.StoryChain.Message(), from);
+							SendToPlayer(global::DynamicIslands.Editor.QuestCount.Message(), from);
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
@@ -461,6 +465,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.StoryChain:
 						global::DynamicIslands.Editor.StoryChain.OnMessage(msg);
+						break;
+					case IslandNetMessage.QuestCount:
+						global::DynamicIslands.Editor.QuestCount.OnMessage(msg);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)

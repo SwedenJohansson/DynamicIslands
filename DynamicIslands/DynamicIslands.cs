@@ -258,7 +258,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Player hold: " + e); }
 			try { CreatureSpawner.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Creatures: " + e); }
-			try { QuestTracker.Tick(); }
+			try { QuestTracker.Tick(); QuestCount.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Quests: " + e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }

@@ -351,8 +351,62 @@ namespace DynamicIslands.Editor
 			public bool Done;
 		}
 
-		/// <summary>Every custom quest of this world, in order: the plan's islands in the story, the plan's other islands, the rest.</summary>
+		// (CW3: the host counts and every player shows its count - each counting from its own copy of the world, players
+		// saw other numbers than the host)
+		static List<Quest> fromHost;
+		static string lastSent;
+		static float nextCount;
+
+		/// <summary>Every custom quest of this world, in order: the plan's islands in the story, the plan's other islands, the
+		/// rest - the host's list on a player's machine (ROADMAP CW3), this machine's own count on the host.</summary>
 		public static List<Quest> All()
+		{
+			if (!Raft_Network.IsHost && fromHost != null && LoadSceneManager.IsGameSceneLoaded) return fromHost.Select(q => new Quest { Name = q.Name, Group = q.Group, Done = q.Done }).ToList();
+			return CountHere();
+		}
+
+		/// <summary>The host's list as a message (Data: "group\tname\t1|0" lines).</summary>
+		internal static IslandNetMessage Message()
+		{
+			return new IslandNetMessage { Kind = IslandNetMessage.QuestCount, Data = Text(CountHere()) };
+		}
+
+		static string Text(List<Quest> quests) { return string.Join("\n", quests.Select(q => Clean(q.Group) + "\t" + Clean(q.Name) + "\t" + (q.Done ? "1" : "0")).ToArray()); }
+
+		static string Clean(string s) { return (s ?? "").Replace("\t", " ").Replace("\n", " "); }
+
+		/// <summary>A player: the host's count arrived.</summary>
+		internal static void OnMessage(IslandNetMessage msg)
+		{
+			if (Raft_Network.IsHost) return;
+			var list = new List<Quest>();
+			foreach (string line in (msg.Data ?? "").Split('\n'))
+			{
+				string[] p = line.Split('\t');
+				if (p.Length < 3) continue;
+				list.Add(new Quest { Group = p[0], Name = p[1], Done = p[2] == "1" });
+			}
+			fromHost = list;
+		}
+
+		/// <summary>A player's world was left or another came: the host's count goes until the next arrives.</summary>
+		internal static void Reset() { fromHost = null; lastSent = null; }
+
+		/// <summary>Host, every few seconds: the count sent to everyone when it changed.</summary>
+		public static void Tick()
+		{
+			if (Time.unscaledTime < nextCount) return;
+			nextCount = Time.unscaledTime + 5f;
+			if (!LoadSceneManager.IsGameSceneLoaded) { Reset(); return; }
+			if (!Raft_Network.IsHost) return;
+			string text = Text(CountHere());
+			if (text == lastSent) return;
+			lastSent = text;
+			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.QuestCount, Data = text });
+		}
+
+		/// <summary>This machine's own count (the host's, the one it sends).</summary>
+		internal static List<Quest> CountHere()
 		{
 			var list = new List<Quest>();
 			var counted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
