@@ -129,6 +129,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether custom islands show on the Receiver in this world: the host's setting.</summary>
 		public static bool ShowOnReceiver { get { return UseHost ? hostReceiver : CustomIslandSpawner.ShowOnReceiver; } }
 
+		/// <summary>How far the Receiver shows custom islands (m, 0 = all): the host's setting.</summary>
+		public static float ReceiverDistance { get { return UseHost ? hostReceiverDistance : CustomIslandSpawner.ReceiverDistance; } }
+		static float hostReceiverDistance = 2000f;
+
 		/// <summary>How far away a custom island unloads in this world: the host's setting.</summary>
 		public static float UnloadDistance { get { return UseHost ? hostUnload : CustomIslandSpawner.UnloadDistance; } }
 
@@ -141,7 +145,7 @@ namespace DynamicIslands.Editor
 		static string HostSettingsData()
 		{
 			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
-				";regrow=" + CustomIslandSpawner.RegrowDays;
+				";regrow=" + CustomIslandSpawner.RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("F0", CultureInfo.InvariantCulture);
 		}
 
 		static void HostSettingsFrom(string data)
@@ -157,6 +161,7 @@ namespace DynamicIslands.Editor
 				if (key == "receiver") hostReceiver = v != 0f;
 				else if (key == "unload") hostUnload = Mathf.Max(300f, v);
 				else if (key == "regrow") hostRegrow = Mathf.Max(0, Mathf.RoundToInt(v));
+				else if (key == "rdist") hostReceiverDistance = Mathf.Max(0f, v);
 			}
 			hostKnown = true;
 			Debug.Log("[CUSTOM ISLANDS] [world rules] The host's settings: " + HostSettingsDescribe());

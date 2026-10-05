@@ -10,6 +10,80 @@ namespace DynamicIslands
 {
 	public static partial class DevTests
 	{
+		[ConsoleCommand(name: "CIMapReach", docs: "Dev, anywhere: ROADMAP LM3 - every map type's islands (3 seeds each): no chest or note left where players can't get without building (the reach check moves them)")]
+		public static void MapReachCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MapReachRoutine()); }
+
+		static IEnumerator MapReachRoutine()
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			int total = 0, movedAll = 0;
+			foreach (MapType type in MapTypes.All)
+				for (int seed = 1; seed <= 3; seed++)
+				{
+					float elevation;
+					IslandGenSettings s = MapTypes.Roll(type, new System.Random(seed * 7919 + type.Name.Length), out elevation);
+					IslandFile f = MapTypes.Create(type, s, elevation, "cimapreach");
+					if (elevation != 0f) continue;
+					// (the check again on the result: what is still out of reach)
+					int moved = IslandReach.MoveContentWithinReach(f);
+					int content = f.Objects.Count(o => ContentCatalog.IsLootObject(o.Name) || ContentCatalog.IsNoteObject(o.Name));
+					total += content; movedAll += moved;
+					if (moved > 0) Check(ref ok, false, type.Name + " seed " + seed + ": " + moved + " of " + content + " chests/notes still out of reach after Create");
+					yield return null;
+				}
+			Check(ref ok, total > 0, total + " chests and notes on the map types' islands, all where players reach them");
+			if (ok) Log("PASS: map reach"); else Fail("map reach");
+		}
+
+		[ConsoleCommand(name: "CIRewardLater", docs: "Dev, in game (host): ROADMAP LM8 - a quest done while this player is far away: no reward then; coming to the island gives it, once (done again or coming again gives nothing)")]
+		public static void RewardLaterCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RewardLaterRoutine()); }
+
+		static IEnumerator RewardLaterRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			const string name = "cirewardlater";
+			var s = new IslandGenSettings { Seed = 8787, Radius = 30f, Height = 6f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			f.Props[IslandQuest.KeyTitle] = "CI reward later";
+			f.Props[IslandQuest.KeySteps] = "reach|cirewardzone|1|";
+			f.Props[IslandQuest.KeyReward] = "Plank*7";
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
+			OnRaftCommand();
+			yield return new WaitForSeconds(1f);
+			Dictionary<string, int> before = Items(player);
+			QuestTracker.Set(e, 1, 0, true);
+			yield return new WaitForSeconds(1f);
+			string got = Gained(before, Items(player));
+			Check(ref ok, got.Length == 0 && QuestRewards.Owed(e.HostName), "done while far away: nothing given yet, the reward kept (" + (got.Length > 0 ? got : "nothing") + ")");
+			PutPlayerNear(e.Root.transform, 2f);
+			Vector3 c = e.Position + new Vector3(0f, 0f, 0f);
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			if (tag != null) player.transform.position = e.Root.transform.position + tag.LocalCentre + Vector3.up * 3f;
+			yield return new WaitForSeconds(2.5f);
+			got = Gained(before, Items(player));
+			Check(ref ok, got.Contains("Plank") && !QuestRewards.Owed(e.HostName) && QuestRewards.Rewarded(e.HostName), "coming to the island gives it: " + (got.Length > 0 ? got : "nothing"));
+			Dictionary<string, int> mid = Items(player);
+			OnRaftCommand();
+			yield return new WaitForSeconds(1f);
+			if (tag != null) player.transform.position = e.Root.transform.position + tag.LocalCentre + Vector3.up * 3f;
+			yield return new WaitForSeconds(2f);
+			Check(ref ok, Gained(mid, Items(player)).Length == 0, "coming again gives nothing more");
+			OnRaftCommand();
+			IslandWorldState.Remove(name);
+			if (ok) Log("PASS: reward later"); else Fail("reward later");
+		}
+
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]

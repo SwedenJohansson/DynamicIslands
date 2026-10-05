@@ -313,6 +313,14 @@ namespace DynamicIslands
 				Log("Island 0 is at " + new Vector2(toIsland.x, toIsland.z) + ", its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
 			}
 			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for " + IslandWorldState.Islands.Count + " island(s)");
+			// (ROADMAP LM2: with a short receiverDistance only the islands within it, and those still needed, show)
+			float keep = CustomIslandSpawner.ReceiverDistance;
+			CustomIslandSpawner.ReceiverDistance = 1f;
+			IslandRadar.Draw(r);
+			int near = IslandRadar.DotsOf(r).Count(d => d != null && d.gameObject.activeSelf);
+			int needed = IslandWorldState.Islands.Count(e => ReturningIslands.Why(e) != null);
+			CustomIslandSpawner.ReceiverDistance = keep;
+			Log((near == needed ? "PASS" : "FAIL") + ": receiverDistance 1 m: " + near + " dot(s), the " + needed + " island(s) still needed");
 			UnityEngine.Object.Destroy(go);
 		}
 

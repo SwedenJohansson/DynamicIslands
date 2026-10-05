@@ -39,6 +39,20 @@ namespace DynamicIslands.Editor
 			return dots.TryGetValue(r, out list) ? list : new List<Reciever_Dot>();
 		}
 
+		/// <summary>An island the players still need (its quest begun, one the plan waits for: ReturningIslands), cached a second.</summary>
+		static bool Needed(IslandWorldState.Entry e)
+		{
+			float t;
+			bool v;
+			if (neededAt.TryGetValue(e.Id, out t) && Time.time - t < 1f && needed.TryGetValue(e.Id, out v)) return v;
+			try { v = ReturningIslands.Why(e) != null; } catch { v = false; }
+			needed[e.Id] = v; neededAt[e.Id] = Time.time;
+			return v;
+		}
+
+		static readonly Dictionary<int, float> neededAt = new Dictionary<int, float>();
+		static readonly Dictionary<int, bool> needed = new Dictionary<int, bool>();
+
 		internal static void Draw(Reciever r)
 		{
 			if (r == null || r.dotPrefab == null || r.dotParent == null) return;
@@ -51,7 +65,11 @@ namespace DynamicIslands.Editor
 
 			bool show = WorldRules.ShowOnReceiver && r.radarSection != null && r.radarSection.activeSelf; // (the host's setting)
 			// (not the randomizer's extras on Raft's own islands: Raft shows those islands itself)
-			List<IslandWorldState.Entry> islands = IslandWorldState.Islands.Where(e => !WorldRandomizer.IsExtras(e)).ToList();
+			// (ROADMAP LM2: only what helps - the islands within receiverDistance, and those the players still need however far)
+			float range = WorldRules.ReceiverDistance;
+			Vector3 rp0 = r.transform.position;
+			List<IslandWorldState.Entry> islands = IslandWorldState.Islands.Where(e => !WorldRandomizer.IsExtras(e) &&
+				(range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))).ToList();
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)
 			{

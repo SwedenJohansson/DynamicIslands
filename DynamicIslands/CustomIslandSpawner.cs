@@ -34,6 +34,8 @@ namespace DynamicIslands.Editor
 		public static int RegrowDays = 3;
 		/// <summary>Custom islands appear as green dots on Raft's Receiver (IslandRadar).</summary>
 		public static bool ShowOnReceiver = true;
+		/// <summary>Receiver dots only for islands this close (m; 0 = all) - and every island the players still need (ROADMAP LM2).</summary>
+		public static float ReceiverDistance = 2000f;
 		/// <summary>Weight of brand-new, randomly generated islands in the pool (0 = never).</summary>
 		public static float GeneratedWeight = 1f;
 		/// <summary>Styles generated islands can have.</summary>
@@ -564,6 +566,9 @@ returnMinutes = 12
 regrowDays = 3
 # Show custom islands as green dots on Raft's Receiver (1 = yes, 0 = no)
 showOnReceiver = 1
+# ... only for islands within this many metres of the receiver (0 = all of them); an island the players still need (a
+# quest begun, one the world plan waits for) shows however far it is
+receiverDistance = 2000
 # The world plan new worlds get when none is chosen in the New Game box (plans are in Mods\DynamicIslands\plans)
 defaultPlan = Random islands
 
@@ -655,6 +660,7 @@ type:sunken 0.2
 				case "returnminutes": ReturningIslands.ReturnMinutes = Mathf.Max(0f, v); return true;
 				case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); return true;
 				case "showonreceiver": ShowOnReceiver = v != 0f; return true;
+				case "receiverdistance": ReceiverDistance = Mathf.Max(0f, v); return true;
 				case "generated": GeneratedWeight = Mathf.Max(0f, v); return true;
 				case "generatedflyingchance": GeneratedFlyingChance = Mathf.Clamp01(v); return true;
 				default: return false;

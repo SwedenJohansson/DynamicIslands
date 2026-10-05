@@ -561,6 +561,9 @@ namespace DynamicIslands.Editor
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Content of a '" + type.Name + "' island: " + e); }
 			}
 			if (type.Title.Length > 0 && !file.Props.ContainsKey(IslandProps.Title)) file.Props[IslandProps.Title] = type.Title;
+			// (no chest or note where players can't get without building - ROADMAP LM3)
+			try { int moved = IslandReach.MoveContentWithinReach(file); if (moved > 0) Debug.Log("[CUSTOM ISLANDS] '" + fileName + "': " + moved + " chest(s)/note(s) moved to where players reach them"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reach check of a '" + type.Name + "' island: " + e.Message); }
 			return file;
 		}
 

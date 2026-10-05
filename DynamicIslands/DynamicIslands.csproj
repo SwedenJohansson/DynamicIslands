@@ -173,6 +173,7 @@
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
     <Compile Include="GenGather.cs" />
+    <Compile Include="QuestRewards.cs" />
     <Compile Include="DevTestsCodeLock.cs" />
     <Compile Include="CodeLock.cs" />
     <Compile Include="DevTestsQuestItems.cs" />

@@ -235,7 +235,16 @@ namespace DynamicIslands.Editor
 			// Raft's items go to each player near the island
 			if (Raft_Network.IsHost)
 				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value);
-			if (!Near(e)) return;
+			// Raft's items: each player's share once - now when near, or when they come to the island (or join) later (LM8)
+			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
+			bool near = Near(e);
+			QuestRewards.OnCompleted(e.HostName, near, () => GiveItems(q));
+			if (!near) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island");
+		}
+
+		static void GiveItems(IslandQuest q)
+		{
+			List<KeyValuePair<string, int>> reward = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } });
 			List<string> given = TriggerZone.Give(reward.Where(l => !StoryItems.IsStory(l.Key)));
 			Debug.Log("[CUSTOM ISLANDS] Quest reward: " + string.Join(", ", given.ToArray()));
 		}
@@ -281,6 +290,12 @@ namespace DynamicIslands.Editor
 			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			IslandQuest q = QuestOf(at);
 			int step = StepOf(at);
+			// (a reward kept for this player, who wasn't here when the quest was done: now - LM8)
+			if (step >= q.Steps.Count && QuestRewards.Owed(at.HostName))
+			{
+				QuestRewards.Collect(at.HostName, () => GiveItems(q));
+				Show("Your share of the reward: " + q.ShownTitle, "");
+			}
 			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
 			if (panel == null) Build();
 			panel.gameObject.SetActive(true);

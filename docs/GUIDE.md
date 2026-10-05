@@ -250,7 +250,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
 
 An island with a quest shows a **quest panel** on the right when you arrive, with its steps: go somewhere, read a
 note, open a chest, defeat or catch animals, collect story items, find journal pages. Each step done shows what's
-next; the last one gives the reward to every player near the island. The panel shows **five steps at a time**: the one
+next; the last one gives the reward to every player near the island - and a crew member who was elsewhere (or joins
+later) gets their share when they come to the island, once. The panel shows **five steps at a time**: the one
 just done, the one you're on and what comes after. A longer quest scrolls - to your step by itself whenever it changes,
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 
@@ -665,7 +666,8 @@ The editor's view under water shows what a deep sea floor looks like:
 
 The generator's **Ready-made (with content)** tab makes whole islands with a story: chests, notes, creatures, zones
 and a quest, from a seed. Click a card, then **Make** (click twice): the island is saved as `gen-<type>-<seed>` and
-opened for you to change.
+opened for you to change. A chest or note that would stand where players can't get without building (on a sea stack's
+top, a cliff ledge) is moved to the nearest place they can reach.
 
 ![The Ready-made tab](images/generator-readymade.jpg)
 *The Ready-made tab: plain islands of each style, and the map types with their content.*
@@ -2125,6 +2127,7 @@ up while the game runs.
 | `returnMinutes` | 12 | An island the players still need (its quest begun and not done, or one a plan waits for) that the raft left behind comes back ahead of the raft after this many minutes (0 = never; [3](#islands-appear-while-you-sail)) |
 | `regrowDays` | 3 | In-game days until harvested things grow back (0 = never) |
 | `showOnReceiver` | 1 | Custom islands as green dots on Raft's Receiver (0 = no) |
+| `receiverDistance` | 2000 | ... only those within this many metres (0 = all); an island the players still need (its quest begun, one the plan waits for) shows however far |
 | `defaultPlan` | Random islands | The plan new worlds get when none is chosen |
 | `generated` | 1 | How often a brand-new generated island is picked (0 = never) |
 | `generatedStyles` | all five | The styles generated islands can have |
