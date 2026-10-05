@@ -672,6 +672,33 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(0.5f);
 				}
 			}
+			// Each of the structures of Raft's pieces (LM10): lighthouse, lookout mast, jetty, ruin - three of a kind
+			foreach (string only in new[] { "lighthouse", "lookout mast", "jetty", "ruin" })
+			{
+				GenBuildings.OnlyLandmark = only;
+				IslandGenSettings ls = make(GenBuildings.Landmarks, true, "tropical", 3, false);
+				ls.Seed = 4343;
+				try
+				{
+					yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(ls));
+					IslandGenerator.GenerateInEditor(ls);
+				}
+				finally { GenBuildings.OnlyLandmark = null; }
+				yield return new WaitForSecondsRealtime(0.5f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				int made = built.Count(b => b == "a " + only);
+				string key = only == "jetty" ? "Block_Foundation" : only == "ruin" ? "Loot_Crate" : "RT_PillarThick";
+				Check(ref ok, made >= 1 && count(key) >= made, only + ": " + made + " of 3 made (" + count(key) + " " + key + ") - " + string.Join(", ", built.ToArray()));
+				EditorGameObject piece = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == key);
+				if (piece != null && Camera.main != null)
+				{
+					Vector3 at = piece.transform.position;
+					Camera.main.transform.SetPositionAndRotation(at + new Vector3(-16f, 12f, -16f), Quaternion.LookRotation(at + new Vector3(-3f, 5f, 0f) - (at + new Vector3(-16f, 12f, -16f))));
+					yield return new WaitForSecondsRealtime(1f);
+					Screenshot(new[] { "genbuild_" + only.Replace(" ", "") });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
 			// The settings go with a preset
 			IslandGenSettings back = IslandGenSettings.FromText(cases[0].S.ToText());
 			Check(ref ok, back.Buildings && back.BuildingKind == GenBuildings.Huts && back.BuildingCount == 3 && back.Caves, "a preset keeps Buildings, Kind, How many and Caves");

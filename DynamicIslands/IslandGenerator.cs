@@ -838,8 +838,12 @@ namespace DynamicIslands.Editor
 			return done;
 		}
 
+		/// <summary>Tests: every wreck or landmark of this kind ("lighthouse", "jetty"...), null = any.</summary>
+		internal static string OnlyLandmark;
+
 		/// <summary>The wrecks and landmarks' set pieces (Raft's quest islands' own; loaded with their scenes).</summary>
-		public static readonly string[] LandmarkNames = { "BoatStranded", "Airplane", "RT_PlasticBoat", "Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01",
+		public static readonly string[] LandmarkNames = { "BoatStranded", "Airplane", "RT_PlasticBoat", "RT_PillarThick", "RT_Floor", "RT_Fence", "LandmarkLadder_6m", "TP_RotatingRedLight", "RT_Floodlight",
+			"RT_SatteliteDisc", "RT_WindMill", "RT_Wall1", "RT_WallWindowBroken", "RT_WallWindowBroken1", "RT_WallWindowBroken2", "Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01",
 			"Caravan_Yellow_01", "Balboa_Shack", "TangaroaFounderStatue", "RaftMonument", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };
 
 		/// <summary>
@@ -851,14 +855,17 @@ namespace DynamicIslands.Editor
 		static string Landmark(MapKit k, IslandGenSettings s, List<Vector2> spots)
 		{
 			System.Random r = k.Rnd;
-			string[] kinds = { "beached boat", "sunken boat", "plane wreck", "sunken plane", "small boat", "van", "caravan", "shack", "statue", "rocket debris" };
-			string kind = kinds[r.Next(kinds.Length)];
-			bool wet = kind == "sunken boat" || kind == "sunken plane", beach = kind == "beached boat" || kind == "small boat";
+			string[] kinds = { "beached boat", "sunken boat", "plane wreck", "sunken plane", "small boat", "van", "caravan", "shack", "statue", "rocket debris", "lighthouse", "lookout mast", "jetty", "ruin" };
+			string kind = OnlyLandmark ?? kinds[r.Next(kinds.Length)];
+			bool wet = kind == "sunken boat" || kind == "sunken plane", beach = kind == "beached boat" || kind == "small boat" || kind == "jetty";
+			bool jetty = kind == "jetty";
 			Func<float, float, bool> ok;
 			if (kind == "sunken boat") ok = (above, slope) => above < -5f && above > -14f && slope < 22f;
 			else if (wet) ok = (above, slope) => above < -4f && above > -10f && slope < 22f;
+			else if (jetty) ok = (above, slope) => above > -0.2f && above < 0.35f && slope < 12f; // (at the waterline)
 			else if (beach) ok = (above, slope) => above > 0.3f && above < 1.8f && slope < 15f;
-			else if (kind == "statue") ok = (above, slope) => above > 4f && slope < 12f;
+			else if (kind == "statue" || kind == "lookout mast") ok = (above, slope) => above > 4f && slope < 12f;
+			else if (kind == "lighthouse") ok = (above, slope) => above > 1.3f && above < 8f && slope < 10f;
 			else ok = (above, slope) => above > 1.3f && above < 30f && slope < 9f;
 			Vector2? found = null;
 			for (int i = 0; i < 12 && found == null; i++)
@@ -866,7 +873,12 @@ namespace DynamicIslands.Editor
 				Vector2? p = k.Find(k.Mid, s.Radius * (wet ? 1.5f : beach ? 1.2f : 0.85f), ok, 12f);
 				if (!p.HasValue || spots.Any(o => (o - p.Value).magnitude < 22f)) continue;
 				// (the big ones on land on even ground: a shack on a 9-degree slope stood 3 m up on its low side)
-				if (!wet && !beach && Uneven(k, p.Value, kind == "shack" || kind == "plane wreck" ? 7f : 4f) > 1f) continue;
+				bool tower = kind == "lighthouse" || kind == "lookout mast" || kind == "ruin";
+				if (!wet && !beach && Uneven(k, p.Value + (tower ? new Vector2(-3f, 0f) : Vector2.zero), kind == "shack" || kind == "plane wreck" || tower ? 7f : 4f) > (tower ? 1.5f : 1f)) continue;
+				// (a lighthouse near the coast: open sea within 25 m)
+				if (kind == "lighthouse" && !Enumerable.Range(0, 16).Any(a => k.Ground(p.Value + new Vector2(Mathf.Cos(a * 0.3927f), Mathf.Sin(a * 0.3927f)) * 25f) < k.Sea)) continue;
+				// (a jetty: the sea 12 m out from the beach, away from the land's middle)
+				if (kind == "jetty" && k.Ground(p.Value - (k.Mid - p.Value).normalized * 12f) > k.Sea - 1f) continue;
 				found = p;
 			}
 			if (!found.HasValue) return null;
@@ -885,6 +897,10 @@ namespace DynamicIslands.Editor
 				case "caravan": RandomizerContent.Piece(k, one(new[] { "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Yellow_01" }), c, yaw, 0.05f, 0f, RandomizerContent.Tilt(r, 2f), 6f); break;
 				case "shack": RandomizerContent.Piece(k, "Balboa_Shack", c, yaw, 0.1f, 0f, 0f, 10f); break;
 				case "statue": RandomizerContent.Piece(k, one(new[] { "TangaroaFounderStatue", "RaftMonument" }), c, yaw, 0.15f, 0f, 0f, 5f); break;
+				case "lighthouse": RtTower(k, c, true); break;
+				case "lookout mast": RtTower(k, c, false); break;
+				case "jetty": Jetty(k, c, -toMid.normalized); break;
+				case "ruin": Ruin(k, c, r); break;
 				default:
 					RandomizerContent.Piece(k, "CaravanRocket", c, yaw, 0.2f, 25f + (float)r.NextDouble() * 20f, RandomizerContent.Tilt(r, 20f), 5f);
 					string[] debris = { "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };
@@ -903,6 +919,97 @@ namespace DynamicIslands.Editor
 				if (dry.HasValue) k.Chest(one(new[] { "Loot_Barrel", "Loot_Box", "Loot_Crate" }), dry.Value, beach ? "Ship's stores" : kind == "plane wreck" ? "Cargo" : "Stores", MapKit.Loot(r.NextDouble() < 0.5 ? "Food" : "Metal"));
 			}
 			return "a " + kind;
+		}
+
+		/// <summary>The lowest ground under the four legs of a 6 x 9 m radio-tower footprint whose -x +z corner pivot is at c (x -6..0, z -4.5..4.5 of c).</summary>
+		static float LegsGround(MapKit k, Vector2 c)
+		{
+			float low = float.MaxValue;
+			foreach (float lx in new[] { -5.9f, -0.1f }) foreach (float lz in new[] { -4.4f, 4.4f }) low = Mathf.Min(low, k.Ground(c + new Vector2(lx, lz)));
+			return low;
+		}
+
+		/// <summary>A piece of a radio-tower frame at c (its floor y0), x z y in the frame (as lib_rt's macros place them), turned yaw.</summary>
+		static IslandObject Rt(MapKit k, string name, Vector2 c, float y0, float x, float z, float y, float yaw = 0f)
+		{
+			return k.Add(name, new Vector3(c.x + x, y0 + y, c.y + z), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+		}
+
+		/// <summary>
+		/// A lookout of Raft's radio tower pieces (as Radio Tower Remade's tower, two decks): four thick legs from the lowest
+		/// ground under them, decks at 6.3 and 13.3 m, ladders up its front, railings; on top a lighthouse's rotating light and
+		/// floodlights, or a lookout mast's dish and wind wheel - and a chest on the top deck.
+		/// </summary>
+		static void RtTower(MapKit k, Vector2 c, bool lighthouse)
+		{
+			k.Clear(c + new Vector2(-3f, 0f), 8f);
+			float y0 = LegsGround(k, c);
+			foreach (float lx in new[] { -5.9f, -0.1f })
+				foreach (float lz in new[] { -4.4f, 4.4f })
+				{
+					Rt(k, "RT_PillarThick", c, y0, lx, lz, 0f);
+					Rt(k, "RT_PillarThick", c, y0, lx, lz, 6f);
+					IslandObject last = Rt(k, "RT_PillarThick", c, y0, lx, lz, 12f);
+					last.Scale = new Vector3(last.Scale.x, last.Scale.y * (1.3f / 6f), last.Scale.z);
+				}
+			foreach (float d in new[] { 6.3f, 13.3f })
+			{
+				Rt(k, "RT_Floor", c, y0, 0f, 4.5f, d);
+				for (float x = 0f; x >= -6f; x -= 1.5f) Rt(k, "RT_Fence", c, y0, x, 4.5f, d);
+				foreach (float z in new[] { -3f, 0f, 3f }) { Rt(k, "RT_Fence", c, y0, -6f, z, d, 90f); Rt(k, "RT_Fence", c, y0, 0f, z, d, 90f); }
+			}
+			Rt(k, "LandmarkLadder_6m", c, y0, -1.5f, -4.62f, 0f);
+			Rt(k, "LandmarkLadder_6m", c, y0, -4.5f, -4.62f, 6.3f);
+			if (lighthouse)
+			{
+				Rt(k, "TP_RotatingRedLight", c, y0, -3f, 0f, 13.3f);
+				Rt(k, "RT_Floodlight", c, y0, -1.5f, 3.6f, 13.3f, 180f);
+				Rt(k, "RT_Floodlight", c, y0, -4.5f, 3.6f, 13.3f, 180f);
+			}
+			else
+			{
+				Rt(k, "RT_SatteliteDisc", c, y0, -4.5f, 2.5f, 13.3f);
+				Rt(k, "RT_WindMill", c, y0, -1.5f, 3f, 13.3f);
+			}
+			k.Add("Loot_Chest", new Vector3(c.x - 3f, y0 + 13.3f, c.y + 1.5f), 0f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot(lighthouse ? "Metal" : "Basics") }, { ObjectProps.NoteTitle, lighthouse ? "Keeper's chest" : "Lookout's chest" } }, 0f);
+		}
+
+		/// <summary>A jetty of Raft's foundations from the beach out over the water (two wide, eight long), a small boat at its end.</summary>
+		static void Jetty(MapKit k, Vector2 c, Vector2 seaward)
+		{
+			float g = PlacementOptions.GridSize;
+			float yaw = Mathf.Atan2(seaward.x, seaward.y) * Mathf.Rad2Deg;
+			Vector2 side = new Vector2(seaward.y, -seaward.x);
+			k.Clear(c + seaward * 6f, 8f);
+			for (int i = 0; i < 8; i++)
+				for (int j = 0; j < 2; j++)
+				{
+					Vector2 p = c + seaward * (i * g) + side * (j * g);
+					// (one level deck from the waterline out, a little over the sea as a raft's deck is; a foundation set on the sand
+					// sank into it, one at the sea's level drowned under the water, 2026-10-05)
+					float y = Mathf.Max(k.Ground(p) + 0.05f, k.Sea + 0.45f);
+					k.Add("Block_Foundation", new Vector3(p.x, y + 0.001f, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+				}
+			Vector2 end = c + seaward * (8.5f * g) + side * (2.2f * g);
+			// (floating by it, as Radio Tower Remade's boat: set on the sea floor it lay drowned under the deck)
+			k.Add("RT_PlasticBoat", new Vector3(end.x, k.Sea - 0.3f, end.y), yaw + 90f, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+		}
+
+		/// <summary>A ruin: a radio-tower room's walls on the ground, half of them broken or gone, no floor or roof, a crate inside.</summary>
+		static void Ruin(MapKit k, Vector2 c, System.Random r)
+		{
+			k.Clear(c + new Vector2(-3f, 0f), 7f);
+			float y0 = LegsGround(k, c);
+			string[] wall = { "RT_Wall1", "RT_WallWindowBroken", "RT_WallWindowBroken1", "RT_WallWindowBroken2", null, null };
+			// (no floor: on a slope it sank half into the ground; the room's ground is grown over)
+			var slots = new[] { new Vector3(-3f, 4.5f, 0f), new Vector3(0f, 4.5f, 0f), new Vector3(-3f, -4.5f, 0f), new Vector3(0f, -4.5f, 0f),
+				new Vector3(-6.04f, -4.5f, 90f), new Vector3(-6.04f, -1.5f, 90f), new Vector3(-6.04f, 1.5f, 90f), new Vector3(0f, -4.5f, 90f), new Vector3(0f, -1.5f, 90f), new Vector3(0f, 1.5f, 90f) };
+			foreach (Vector3 sl in slots)
+			{
+				string w = wall[r.Next(wall.Length)];
+				if (w != null) Rt(k, w, c, y0, sl.x, sl.y, 0.05f, sl.z);
+			}
+			k.Add("Loot_Crate", k.At(new Vector2(c.x - 3f, c.y)), (float)r.NextDouble() * 360f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Treasure") }, { ObjectProps.NoteTitle, "Ruin's crate" } }, 0f);
 		}
 
 		/// <summary>How much the ground rises and falls within radius of p (m).</summary>

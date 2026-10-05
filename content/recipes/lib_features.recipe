@@ -1,0 +1,33 @@
+# lib_features - Raft's special features for the library's islands ("include lib_features"). The user, 2026-10-05: "I want
+# all raft special features to be included in at least 1 island. So that we have a pool of islands that utilize
+# everything that raft offers" - vines for the machete, ziplines, treasure for the metal detector, dirt, wild honey.
+#
+# vinecache: a chest hidden behind Balboa's choppable vines, somewhere free within r of x z: the chest only shows once a
+# player cuts the vines with Raft's machete (they keep the machete for the next vines)
+macro vinecache x=0 z=0 r=20 seed=1 chest=vinechest vines=vinechestvines items=Rope*4;Nail*10
+scatter Loot_Chest 1 at $x $z r=$r seed=$seed free=5 as=$chest
+prop $chest obj.name=$chest
+prop $chest note.title=Behind the vines
+prop $chest beh.hidden=1
+loot $chest $items
+beside ChoppableVines $vines $chest d=1.6
+prop $vines on.use=hide|\nshow|$chest\nmessage||The machete bites through the vines. Something was hidden behind them.
+end
+#
+# treasure: n buried treasures for Raft's metal detector and shovel, free spots within r of x z (nothing shows above ground)
+macro treasure x=0 z=0 r=20 n=1 seed=1 kind=0
+scatter Treasure_Buried $n at $x $z r=$r seed=$seed free=4 as=treasure$seed
+prop treasure$seed treasure.kind=$kind
+end
+#
+# dirt: n of Raft's dirt spots (the shovel digs them) within r of x z
+macro dirt x=0 z=0 r=20 n=4 seed=1
+scatter "Pickup_Landmark_DirtPickup" $n at $x $z r=$r seed=$seed free=3
+end
+#
+# hives: n wild beehives (three honeycombs each, filling up again after the island's regrow days) within r of x z
+macro hives x=0 z=0 r=20 n=2 seed=1
+scatter Loot_WildHive $n at $x $z r=$r seed=$seed free=3 as=hives$seed
+loot hives$seed HoneyComb*3
+prop hives$seed note.title=Wild beehive
+end

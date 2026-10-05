@@ -10,6 +10,7 @@
 include lib_rt
 include lib_huts
 include lib_sea
+include lib_features
 new
 # (nature: desert, Like Raft - acacias and scrub on the slopes and peaks; the terraces cleared for the vines)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.12 BeachThings=0.3
@@ -232,6 +233,12 @@ prop sun zone.radius=45
 prop hens creature.count=3
 prop goats creature.count=3
 prop dolphins creature.count=2
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): the old vintner's dirt for his vines and a
+# hive at the press house; his tool cache under the wild vines on the goats' slope
+call dirt x=0 z=0 r=40 n=5 seed=81
+call hives x=0 z=10 r=30 n=1 seed=82
+call vinecache x=-30 z=30 r=15 seed=83 chest=vintnercache vines=vintnervines items=Shovel*1;Plank*4;Nail*8
 
 quest title=The Founding Vintage
 quest intro=A vineyard on two sunny peaks, abandoned with the grapes still on the vines. The vintner left a letter in the press house.

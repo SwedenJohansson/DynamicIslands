@@ -12,6 +12,7 @@
 # summit); the mead shed (a relay house) on the north plain, x -2.47..8, z 29.5..40, its door on the veranda.
 include lib_relay
 include lib_sea
+include lib_features
 new
 gen Trees=0.21 Bushes=0.38 Rocks=0.4 Harvest=0.1 BeachThings=0.15
 gen Seed=9111 Radius=45 Height=16 Roughness=0.3 Peaks=1 Shape=0 Style=3 BeachWidth=0.4 Cliffs=0.1 PeakShape=0.4
@@ -194,6 +195,10 @@ prop hivehaze atmo.fog=#e8d8a0
 prop hivehaze atmo.fogAmount=0.12
 prop hivehaze atmo.particles=fireflies
 prop hivehaze zone.radius=26
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): wild beehives gone feral round the knoll -
+# Bram's honey for anyone who takes it, three combs each, filling up again
+call hives x=0 z=0 r=30 n=3 seed=111
 
 quest title=First Mead
 quest intro=A hill of hives, its keeper gone, and a custom older than him. His note is on the table in the mead shed by the landing.

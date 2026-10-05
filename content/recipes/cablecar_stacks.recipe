@@ -16,6 +16,7 @@
 # its roof.
 include lib_rt
 include lib_sea
+include lib_features
 new
 # (nature: forest, Like Raft - pines clinging to the stacks' tops and ledges)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
@@ -187,7 +188,7 @@ prop supplycar loot.refill=0
 note linenote Lineman's note | HIGH STATION - BRAKE RELEASE\n\nNever all at once! Release in this order or they lock again:\nBLUE first (the holding brake),\nthen GREEN (the service brake),\nthen RED (the emergency).\n\nThen the car goes up to the summit by itself.\n- Jens, lineman
 note keeperdiary Summit keeper's diary | SUMMIT - KEEPER'S DIARY\n\nThe view was the job. Forty kilometres on a clear day.\n\nThe vault's key lives in the box on the signal mast's platform - I liked to make the tourists' guides climb for it.\n\nIn the vault: what the line owes whoever runs it next. And the express car - the old staff car straight down to the beach - runs when the vault's been opened. Enjoy the ride.\n- Mo
 note vault Summit vault | The summit vault: the cableway's takings, the plans for the staff's zipline tool, a guide's warm coat, rope.
-loot vault TradeToken*10;Blueprint_ZiplineTool*1;Equipment_LeatherChest*1;Rope*4
+loot vault TradeToken*10;Blueprint_ZiplineTool*1;ZiplineTool*1;Equipment_LeatherChest*1;Rope*4
 prop vault loot.refill=0
 prop vault if.open=has|story:vaultkey|1
 prop vault else.open=message||The summit vault. Its key is where the keeper liked it: high up.
@@ -300,6 +301,11 @@ prop cloud zone.radius=25
 prop goats creature.count=3
 prop hens creature.count=2
 prop dolphins creature.count=2
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): Raft's zipline - the operator's own line
+# off the summit's east edge down to the shore stack's meadow; the zipline tool waits in the summit vault with its blueprint
+place ZiplinePath_Landmark summitzip at 10.2 -2 h=56.14
+zipto summitzip 28 -24
 
 quest title=The Skyline
 quest intro=A cable car up four sea stacks, stopped by three faults. The operator's log is in the shore station.

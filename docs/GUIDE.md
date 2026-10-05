@@ -440,7 +440,8 @@ trees and rocks, Raft's 88 building blocks (to build huts or your own abandoned 
 on a raft, and the objects of Raft's story islands (they load the first time you open their category). **Search**
 finds objects in every category.
 
-**Things to gather** is the category of what a player can pick, cut or dig: palms, mangoes, pine and birch to cut,
+**Things to gather** (in groups by the islands they suit: tropical, forest and snow, flowers, stone/clay/sand, dirt,
+under water) is the category of what a player can pick, cut or dig: palms, mangoes, pine and birch to cut,
 pineapples, melons and berry bushes, flowers, and Raft's finds on the sea floor - sand, clay, stone, iron and copper
 ore, scrap, giant clams, silver algae, seaweed - and Raft's **dirt spots** (the mounds its big islands have; players dig
 them with the shovel for dirt). They work for the player as on Raft's own islands. **Honey**: Raft has no wild hives
@@ -572,8 +573,11 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     - **Wooden cabins** - the same in Raft's wooden walls and roof, with a bed, a chest and a cabin log;
     - **Wrecks and landmarks** - Raft's own set pieces, on the land and in the water: a boat run aground on the beach
       or sunk 5-14 m down off the coast, a plane crashed on the land or lying on the sea floor, a small boat pulled up
-      the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris - with a chest by the ones on
-      land (Mixed includes them too);
+      the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris, and structures of Raft's radio
+      tower pieces: a **lighthouse** near the coast and a **lookout mast** on high ground (two decks on four legs, ladders
+      up, a chest on top), a **jetty** of Raft's foundations out over the water with a boat at its end, and a **ruin**
+      (a room with half its walls broken or gone, a crate inside) - with a chest by the ones on land (Mixed includes
+      them too);
     - the quest islands' **scenes**, made of their own props, each with a chest and a note: **Castaways' camp**,
       **Caravan outpost**, **Radio outpost**, **Scrapyard**, **Old market**, **Bear country** (with a bear nearby),
       **Frozen camp** and **Hotel garden**.
@@ -2891,6 +2895,11 @@ ends Raft's story and never counts as done.
 | An island in Raft's story | The Long Voyage (after each story island), Raft Remade (instead of each story island) |
 | An island made from one of Raft's own (the generator's **like**) | Raft Remade's eight islands |
 | A chain of islands that bring each other | The Abyss Expedition |
+| **Raft's zipline** (a line with its far end moved, the zipline tool in a chest) | Cablecar Stacks (from the summit down to the shore stack) |
+| **Machete vines** hiding a chest that shows once they are cut | Thornwood (two caches; the Boar King's offering gives a machete), Gilded Skull Cove, Primeval Park, Old Vine Hill |
+| **Buried treasure** for the metal detector and the shovel | Gilded Skull Cove (the detector in the hoard), The Cartographer's Isles (the detector and a shovel in the map case), Wreckers' Cove |
+| Raft's **dirt spots** (the shovel) | Crowfield Farm, The Clockwork Orchard, Old Vine Hill, Primeval Park, Glasshouse Gardens |
+| **Wild beehives** (honeycomb that fills up again) | Bramblehive Knoll, Crowfield Farm, Old Vine Hill, Thornwood, Glasshouse Gardens |
 
 
 ### 16.6 The themed islands

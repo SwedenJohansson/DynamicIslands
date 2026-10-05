@@ -9,6 +9,7 @@
 include lib_rt
 include lib_huts
 include lib_sea
+include lib_features
 new
 # (nature: forest, Like Raft - birch and pine round the plateau's edge, gardens on its top)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
@@ -291,6 +292,11 @@ prop greathouse zone.message=The Great House: and in its bed, taller than a pers
 prop hens creature.count=3
 prop goats creature.count=2
 prop dolphins creature.count=2
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): a wild hive among the flowers and the
+# gardener's dirt beds
+call hives x=0 z=0 r=40 n=2 seed=121
+call dirt x=0 z=0 r=40 n=4 seed=122
 
 quest title=The Titan Blooms
 quest intro=Glasshouses on a forest plateau, and a giant flower thirty years in bud. Professor Lind's journal is in her cottage by the gate.

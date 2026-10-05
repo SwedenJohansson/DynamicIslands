@@ -17,6 +17,7 @@ include lib_rt
 include lib_huts
 include lib_relay
 include lib_sea
+include lib_features
 new
 # (nature: a jungle a little denser than Raft's tropical islands; the park's terraces, roads and paddocks cleared)
 gen Trees=0.35 Bushes=0.35 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -431,6 +432,11 @@ prop leviathan creature.respawn=0
 prop leviathan creature.zone=lagoonshow
 prop leviathan tint.color=#2a4a3a
 prop leviathan tint.amount=0.5
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): the keepers' storm cache, overgrown by
+# the jungle's vines - for a player with Raft's machete; Raft's dirt spots on the park's lawns
+call vinecache x=-20 z=-20 r=30 seed=71 chest=keepercache vines=keepervines items=Rope*3;Cooked_GenericMeat*2;Bolt*3;Battery*1
+call dirt x=0 z=20 r=40 n=4 seed=72
 
 quest title=Welcome to Primeval Park
 quest intro=A park of giant beasts, dark since the storm. The welcome arch is still up. Start at the dock.

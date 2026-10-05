@@ -1168,7 +1168,7 @@ namespace DynamicIslands
 								if (opt.ContainsKey("free") && Physics.OverlapSphere(new Vector3(w.x, ground + 1f, w.y), F(opt["free"]), ~0, QueryTriggerInteraction.Ignore)
 									.Any(c => c.GetComponentInParent<EditorGameObject>() != null)) continue;
 								var o = new Dictionary<string, string>(opt, StringComparer.OrdinalIgnoreCase);
-								o.Remove("deep"); o.Remove("free");
+								o.Remove("deep"); o.Remove("free"); o.Remove("as");
 								o["yaw"] = opt.ContainsKey("yaw") ? opt["yaw"] : Num(rnd.NextDouble() * 360);
 								o["scale"] = Num(s0 + rnd.NextDouble() * (s1 - s0));
 								o.Remove("r"); o.Remove("seed");
@@ -1179,6 +1179,14 @@ namespace DynamicIslands
 								error = Place(t[1], px, pz, o, out e);
 								if (error != null) break;
 								made++; placed++;
+								// (as=<alias>: the scattered objects can be given settings, loot and behaviours like placed ones)
+								if (e != null && opt.ContainsKey("as"))
+								{
+									RecipeObjects[opt["as"]] = e;
+									List<EditorGameObject> sg;
+									if (!recipeGroups.TryGetValue(opt["as"], out sg)) recipeGroups[opt["as"]] = sg = new List<EditorGameObject>();
+									sg.Add(e);
+								}
 							}
 							break;
 						}
@@ -1254,6 +1262,43 @@ namespace DynamicIslands
 							if (eq <= 0) { error = "prop: key=value"; break; }
 							string key = rest.Substring(0, eq).Trim(), value = Unescape(rest.Substring(eq + 1));
 							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, key, value.Length == 0 ? null : value));
+							break;
+						}
+						case "beside":
+						{
+							// beside <Object> <alias|-> <of-alias> d=<m> [yaw=<deg>] [turn=<deg>] - next to an object the recipe placed:
+							// d metres in front of it (its facing turned by yaw), on the ground there, facing it (+turn)
+							List<EditorGameObject> of = t.Length > 3 ? Group(t[3]) : new List<EditorGameObject>();
+							if (of.Count == 0) { error = "beside <Object> <alias> <of-alias> d=<m>: no object '" + (t.Length > 3 ? t[3] : "") + "'"; break; }
+							var opt = Options(t.Skip(4));
+							float d = opt.ContainsKey("d") ? F(opt["d"]) : 2f, turn = opt.ContainsKey("turn") ? F(opt["turn"]) : 0f;
+							Transform b = of[0].transform;
+							Vector3 dir = Quaternion.Euler(0f, opt.ContainsKey("yaw") ? F(opt["yaw"]) : 0f, 0f) * Vector3.ProjectOnPlane(b.forward, Vector3.up).normalized;
+							Vector3 at = b.position + dir * d;
+							EditorGameObject e;
+							var po = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "ground", "1" } };
+							error = Place(t[1], 0f, 0f, po, out e);
+							if (error != null || e == null) break;
+							e.transform.position = new Vector3(at.x, GroundY(at.x, at.z), at.z);
+							e.transform.rotation = Quaternion.LookRotation(-dir, Vector3.up) * Quaternion.Euler(0f, turn, 0f);
+							placed++;
+							if (t[2] != "-")
+							{
+								RecipeObjects[t[2]] = e;
+								List<EditorGameObject> g2;
+								if (!recipeGroups.TryGetValue(t[2], out g2)) recipeGroups[t[2]] = g2 = new List<EditorGameObject>();
+								g2.Add(e);
+							}
+							break;
+						}
+						case "zipto":
+						{
+							// zipto <alias> <x> <z> - a zipline line's far end (its lower floor) on the ground at x z (ZiplineEnds)
+							List<EditorGameObject> group = Group(t[1]);
+							if (group.Count == 0 || t.Length < 4) { error = "zipto <alias> <x> <z> (a zipline placed by this recipe)"; break; }
+							Vector2 w = WorldXZ(F(t[2]), F(t[3]));
+							Vector3 end = new Vector3(w.x, GroundY(w.x, w.y), w.y) - terraineditor.terrain.transform.position;
+							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(end)));
 							break;
 						}
 						case "loot":

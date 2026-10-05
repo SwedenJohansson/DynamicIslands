@@ -183,6 +183,16 @@ namespace DynamicIslands.Editor
 					bool unloaded = cat.Value.Any(e => !e.Loaded);
 					Header(cat.Key, cat.Value.Count, isOpen, unloaded);
 					if (!isOpen) continue;
+					// Things to gather in groups by the islands they suit (ROADMAP LM11): all of them, under small headings
+					if (cat.Key == PlaceableCatalog.HarvestableCategory)
+					{
+						foreach (var grp in cat.Value.GroupBy(e => GatherGroup(e.Name)).OrderBy(gr => Array.IndexOf(GatherGroups, gr.Key)))
+						{
+							UIKit.Label(content, grp.Key, 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+							Tiles(cat.Key + "_" + grp.Key, grp.ToList());
+						}
+						continue;
+					}
 					List<PlaceableCatalog.Entry> list = showAll.Contains(cat.Key) ? cat.Value : cat.Value.Take(TilesPerCategory).ToList();
 					Tiles(cat.Key, list);
 					if (list.Count < cat.Value.Count)
@@ -197,6 +207,20 @@ namespace DynamicIslands.Editor
 
 			Canvas.ForceUpdateCanvases();
 			content.anchoredPosition = new Vector2(content.anchoredPosition.x, scrollY);
+		}
+
+		static readonly string[] GatherGroups = { "Tropical: palms, fruit and bananas", "Forest and snow: pines, birches and berries", "Flowers", "Stone, clay and sand", "Dirt (the shovel)", "Under water: ores, scrap, clams and algae", "Other" };
+
+		/// <summary>The heading a thing to gather goes under (the style of island it suits).</summary>
+		static string GatherGroup(string name)
+		{
+			if (name.Contains("Flower")) return GatherGroups[2];
+			if (name.Contains("DirtPickup")) return GatherGroups[4];
+			if (name.EndsWith("_OceanBottom") || name.Contains("GiantClam") || name.Contains("SilverAlgae") || name.Contains("Iron") || name.Contains("Copper")) return GatherGroups[5];
+			if (name.Contains("Palm") || name.Contains("Mango") || name.Contains("Banana") || name.Contains("Pineapple") || name.Contains("Watermelon")) return GatherGroups[0];
+			if (name.Contains("Pine") || name.Contains("Birch") || name.Contains("BerryBush")) return GatherGroups[1];
+			if (name.Contains("Rock") || name.Contains("Clay") || name.Contains("Sand")) return GatherGroups[3];
+			return GatherGroups[6];
 		}
 
 		/// <summary>A category header: click to open or close it (opening loads its island scenes if needed).</summary>

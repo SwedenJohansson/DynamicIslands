@@ -14,6 +14,7 @@
 include lib_rt
 include lib_huts
 include lib_sea
+include lib_features
 new
 gen Trees=0.4 Bushes=0.45 Rocks=0.5 Harvest=0.4 BeachThings=0.3
 gen Seed=9112 Radius=45 Height=10 Roughness=0.25 Peaks=1 Shape=4 Style=0 BeachWidth=0.6 Cliffs=0.6 PeakShape=0.3
@@ -182,6 +183,9 @@ prop orchard zone.message=The Clockwork Orchard: fruit trees in rows, wind tower
 prop workshop zone.id=workshop
 prop workshop zone.radius=3.5
 prop workshop zone.message=The inventor's workshop: cogs on every surface, a clock with no hands, and his strongbox under the bench.
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): dirt spots in the orchard rows, for its seeds
+call dirt x=0 z=0 r=20 n=5 seed=101
 
 quest title=The Water Order
 quest intro=An orchard on a rock where nothing turns. The inventor left his diagram in the lean-to at the top of the ramp.

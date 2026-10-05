@@ -1,5 +1,6 @@
 # Thornwood - a very large island of the library (jungle)
 include lib_sea
+include lib_features
 new
 # (nature: a jungle: three times Raft's trees, two and a half times its bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -159,7 +160,7 @@ note shrine3 Shrine of the Hill | An offering box on the hill's east slope, faci
 loot shrine3 story:tusk*1;Feather*4
 prop shrine3 loot.refill=0
 note offering Temple offering | The temple's offering chest at the foot of the boar idol, its lid carved with three tusks.
-loot offering Blueprint_Machete*1;HealingSalve_Good*3;Jar_Honey*2;Seed_Mango*3
+loot offering Blueprint_Machete*1;Machete*1;HealingSalve_Good*3;Jar_Honey*2;Seed_Mango*3
 prop offering loot.refill=0
 prop offering if.open=take|story:tusk|3
 prop offering else.open=message||Three tusks are carved into the lid. The chest won't open without three carved tusks laid on the altar.
@@ -198,6 +199,12 @@ prop templeair zone.radius=16
 prop jungle sound.event=event:/amb/grass
 prop jungle sound.volume=0.6
 prop jungle zone.radius=90
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): two caches behind the jungle's vines, for the machete
+# the Boar King's offering gives (its blueprint and one to start with)
+call vinecache x=-45 z=-60 r=22 seed=61 chest=thornvine1 vines=thornvines1 items=Rope*4;Seed_Banana*2;Bolt*3
+call vinecache x=15 z=45 r=20 seed=62 chest=thornvine2 vines=thornvines2 items=HealingSalve*2;MetalIngot*2;Plank*6
+call hives x=0 z=0 r=60 n=2 seed=63
 
 quest title=The Boar King of Thornwood
 quest intro=A jungle island split by a deep gorge. On the south beach, an explorer's camp - abandoned in a hurry, the diary still on a crate.

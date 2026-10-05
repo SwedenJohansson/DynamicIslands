@@ -7,6 +7,7 @@
 # Built by the recipe player (CIRecipe crowfield_farm) through the editor's own operations.
 include lib_relay
 include lib_sea
+include lib_features
 new
 gen Trees=0.21 Bushes=0.38 Rocks=0.3 Harvest=0.1 BeachThings=0.3
 gen Seed=9105 Radius=45 Height=10 Roughness=0.25 Peaks=1 Shape=0 Style=3 BeachWidth=0.4 Cliffs=0.1 PeakShape=0.3
@@ -84,6 +85,11 @@ prop feedbin loot.refill=0
 prop farmyard zone.id=farmyard
 prop farmyard zone.radius=10
 prop farmyard zone.message=Crowfield Farm: a farmhouse, a barn, a windmill turning - and an empty pen with its gate open.
+
+# --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): Raft's dirt spots in the fields and a wild
+# hive by the windmill - dirt for the crop plots the farm's blueprint gives
+call dirt x=0 z=0 r=35 n=6 seed=91
+call hives x=0 z=0 r=35 n=1 seed=92
 
 quest title=Three Goats
 quest intro=A farm on a green island, its goats loose. The farmer left a note on the farmhouse door.
