@@ -7,6 +7,7 @@
 # refiner, the advanced stationary anchor).
 #
 # Built by the recipe player (CIRecipe temperance_remade) through the editor's own operations (macros from lib_selene).
+include lib_sea
 include lib_selene
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
@@ -97,6 +98,14 @@ place TP_SnowVehicle02 sunksled at -32 52 ground tilt=10 yaw=40
 place Loot_Crate cable3 at -34 50 ground yaw=60
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=43.4 seed=4524 free=5
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=43.4 seed=4534 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=43.4 seed=4535 free=3
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=43.4 seed=4544 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=82 deep=5 n=2
+
 info title=Temperance Remade
 info author=Custom Islands
 info description=Raft's Temperance made anew: an igloo village on a snowy ridge island, Selene's station on the terrace above it - its reactor tripped, its inner doors shut - the telescope on the peak and a snowmobile under the ice. Three cable drums, a reactor and a polar bear mother. Raft Remade's seventh island.

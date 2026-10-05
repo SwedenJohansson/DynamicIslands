@@ -8,6 +8,7 @@
 # extractor's and the advanced anchor's blueprints).
 #
 # Built by the recipe player (CIRecipe storm_spire) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: forest, Like Raft - pines up a rock needle; Whiteout Reach after it is the snowy one)
@@ -120,6 +121,13 @@ place Zone_Atmosphere storm at 0 9 h=18
 place Zone_Sound rain at 0 9 h=10
 
 # --- Settings, story items, notes, behaviours, quest (6 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, birches, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=38.5 seed=4353 free=5
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=38.5 seed=4363 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=38.5 seed=4373 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=75 deep=5 n=2
+
 info title=Storm Spire
 info author=Custom Islands
 info description=Station Seven of the Frontier Corps: a weather station on a needle of rock in the storm belt, its lightning line broken. A short climb, three conductor rods and a storm bird. The seventh island of Raft 2: The Drowned Frontier.

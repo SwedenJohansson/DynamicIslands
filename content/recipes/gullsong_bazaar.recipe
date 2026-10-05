@@ -70,6 +70,13 @@ place Creature_Dolphin dolphins at 0 60 h=-3
 prop dolphins creature.count=2
 call shallows r=58 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, palms, flowers ----------
+scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4559 free=5
+scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=31.5 seed=4569 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=31.5 seed=4570 free=5
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4579 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=31.5 seed=4580 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
 info title=Gullsong Bazaar
 info author=Custom Islands

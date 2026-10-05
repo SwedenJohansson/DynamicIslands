@@ -193,6 +193,12 @@ scatter "Balboa_Bush_03 Variant" 6 at -36 -8 r=3 seed=46
 scatter SmallRock_01 6 at -14 34 r=5 seed=51 rot=0,0,0
 scatter SmallRock_03 5 at 30 -24 r=5 seed=52 rot=0,0,0
 scatter SmallRock_02 4 at 35 14 r=4 seed=53 rot=0,0,0
+# --- Things to gather, as suits the island (the user, 2026-10-05): birches, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4235 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4245 free=3
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4255 free=3
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4256 free=3
+
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 

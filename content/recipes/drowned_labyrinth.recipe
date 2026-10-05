@@ -154,6 +154,12 @@ where mouthbarrel
 where campcrate
 where isletbox
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): date palms, pineapples, melons ----------
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at 0 0 r=31.5 seed=4528 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 2 at 0 0 r=31.5 seed=4529 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4538 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4548 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (9 steps) ==========================================================
 info title=The Drowned Labyrinth
 info author=Custom Islands

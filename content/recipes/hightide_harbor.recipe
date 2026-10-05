@@ -8,6 +8,7 @@
 # (the water plans: pipes, purifier, tank, big storage).
 #
 # Built by the recipe player (CIRecipe hightide_harbor) through the editor's own operations.
+include lib_sea
 include lib_rt
 include lib_huts
 new
@@ -230,6 +231,14 @@ place Creature_Turtle turtles at -35 0 h=-1.5
 prop turtles creature.count=2
 
 # --- Settings, story items, notes, behaviours, quest (13 steps) ------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): birches, pines, flowers ----------
+scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=56.0 seed=4454 free=5
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=56.0 seed=4464 free=5
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=56.0 seed=4474 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=56.0 seed=4475 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=100 deep=5 n=2
+
 info title=Hightide Harbor
 info author=Custom Islands
 info description=Station Five of the Frontier Corps: a fishing town on stilts round a sheltered bay - its fleet gone out and never come back, its water works dead, bears in the fish hall and its harbour lamp dark. The fifth island of Raft 2: The Drowned Frontier.

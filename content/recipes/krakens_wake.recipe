@@ -169,6 +169,12 @@ prop hens creature.count=3
 prop turtles creature.count=2
 prop dolphins creature.count=2
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): birches, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=54.6 seed=4164 free=5
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=54.6 seed=4174 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=54.6 seed=4175 free=3
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=54.6 seed=4184 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (10 steps) =========================================================
 info title=The Kraken's Wake
 info author=Custom Islands

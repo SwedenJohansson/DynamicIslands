@@ -187,7 +187,11 @@ namespace DynamicIslands
 			string label = bySize ? string.Join(" ", k.Take(k.Length - 1).ToArray()) : kind ?? "";
 			List<CreatureSpawnPoint> spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && (label.Length == 0 || p.Kind.Label.Equals(label, StringComparison.OrdinalIgnoreCase))).ToList();
 			float reach = CustomIslandSpawner.LandRadius(e.Name) + margin;
-			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && spots.Any(p => p.Kind.Type == a.behaviourType) &&
+			// (on the host: only what the island's own spots spawned - a generated island or Raft's own island with the
+			// randomizer's extra hens 230 m off Camp Blackwater were counted with it in Silver Screen Seas, 2026-10-05)
+			HashSet<AI_NetworkBehaviour> own = new HashSet<AI_NetworkBehaviour>(spots.SelectMany(p => p.Spawned).Where(a => a != null));
+			bool byOwn = Raft_Network.IsHost && own.Count > 0;
+			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && (!byOwn || own.Contains(a)) && spots.Any(p => p.Kind.Type == a.behaviourType) &&
 					FlatDistance(a.transform.position, e.Position) < reach && (!bySize || Mathf.Abs(a.transform.localScale.x - size) < 0.05f))
 				.OrderBy(a => a.transform.position.x).ToList();
 		}

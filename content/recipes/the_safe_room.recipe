@@ -221,6 +221,12 @@ scatter CaravanIsland_SmallRock_2 4 at 20 -6 r=4 seed=42 rot=0,0,0
 scatter CaravanIsland_SmallRock_3 4 at 8 -36 r=5 seed=43 rot=0,0,0
 scatter CaravanIsland_SmallRock_1 3 at -14 34 r=4 seed=44 rot=0,0,0
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, pineapples, melons ----------
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=31.5 seed=4290 free=3
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4291 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4300 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4310 free=3
+
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 

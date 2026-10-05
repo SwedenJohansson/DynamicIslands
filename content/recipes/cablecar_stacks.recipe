@@ -165,6 +165,12 @@ place Zone_Atmosphere cloud at -4 -4 h=50
 place Creature_Dolphin dolphins at 60 -60 h=-2
 call shallows r=110 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): berries, flowers, birches ----------
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=63.0 seed=4405 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=63.0 seed=4415 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=63.0 seed=4416 free=3
+scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=63.0 seed=4425 free=5
+
 # ===== Settings, story items, notes, behaviours, quest (14 steps) =========================================================
 info title=Cablecar Stacks
 info author=Custom Islands

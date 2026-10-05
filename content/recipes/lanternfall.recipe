@@ -174,6 +174,11 @@ place Creature_Dolphin dolphins at 0 35 h=-2.5
 place Creature_Turtle turtle at 4 9 h=-1.5
 call shallows r=83 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): melons, bananas, pineapples ----------
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=44.1 seed=4480 free=3
+scatter "Banana_Bush_2" 6 at 0 0 r=44.1 seed=4490 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4500 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
 info title=Lanternfall
 info author=Custom Islands

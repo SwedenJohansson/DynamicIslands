@@ -271,6 +271,12 @@ prop coal tint.color=#202020
 prop coal tint.amount=0.7
 
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=44.1 seed=4469 free=5
+scatter "Pickup_Landmark_Flower_Black" 4 at 0 0 r=44.1 seed=4479 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=44.1 seed=4480 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4489 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
 info title=Blackwall
 info author=Custom Islands

@@ -188,6 +188,12 @@ place Creature_Stingray rays at 20 0 h=-9
 place Creature_Goat goats at 66 0 ground
 prop goats creature.count=3
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, flowers ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=70.0 seed=4361 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=70.0 seed=4371 free=3
+scatter "Pickup_Landmark_Flower_Black" 4 at 0 0 r=70.0 seed=4381 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=70.0 seed=4382 free=3
+
 # --- Raft's finds in the shallows round the rim and over the lagoon (lib_sea) ---------------------------------------------
 call shallows r=118 deep=5 n=1
 

@@ -236,6 +236,12 @@ where sunkbarrel
 where goats
 
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, melons, pineapples ----------
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=31.5 seed=4384 free=3
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4385 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4394 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4404 free=3
+
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 

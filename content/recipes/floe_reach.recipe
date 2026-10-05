@@ -114,6 +114,11 @@ place Zone_Atmosphere snow at -30 -30 y=10
 place Zone_Atmosphere snow at 30 20 y=10
 place Loot_SunkenBarrel sunksledge at -24 -54 h=-2 drop
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, berries ----------
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=63.0 seed=4110 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=63.0 seed=4111 free=3
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=63.0 seed=4120 free=3
+
 # --- Raft's finds in the shallows round the islets (lib_sea) ---------------------------------------------------------------
 call shallows r=110 deep=5 n=1
 

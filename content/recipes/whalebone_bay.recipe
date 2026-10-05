@@ -289,6 +289,12 @@ prop coal tint.amount=0.7
 prop coalsacks tint.color=#202020
 prop coalsacks tint.amount=0.8
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=54.6 seed=4160 free=5
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=54.6 seed=4170 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=54.6 seed=4180 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=54.6 seed=4181 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (14 steps) =========================================================
 info title=Whalebone Bay
 info author=Custom Islands

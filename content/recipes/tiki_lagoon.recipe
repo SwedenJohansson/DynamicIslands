@@ -197,6 +197,11 @@ scatter "Pickup_Landmark_Tree_Palm 1" 4 at 14 36 r=6 seed=55
 scatter "Pickup_Landmark_Tree_Palm 2" 3 at -30 0 r=5 seed=56
 scatter BigPalm2 1 at -26 -20 r=4 seed=57
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pineapples, bananas, melons ----------
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4519 free=3
+scatter "Banana_Bush_2" 3 at 0 0 r=31.5 seed=4529 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4539 free=3
+
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 

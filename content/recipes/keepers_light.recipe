@@ -272,6 +272,12 @@ where supplybarrel
 where goats
 
 # --- Settings, story items, notes, behaviours, quest (5 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, birches, berries ----------
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4403 free=3
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4404 free=3
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4413 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4423 free=3
+
 info title=Keeper's Light
 info author=Custom Islands
 info description=Sea stacks in a grey sea, a lighthouse dark for three nights, and two keepers' diaries that can't both be true. The last can of lamp oil is at the bottom of the flooded cistern - with the thing that lives there.

@@ -5,6 +5,7 @@
 # the east rim, its lift down the cliff to the flooded vault in the east cove. Quest "Almost Home" (the finale).
 #
 # Built by the recipe player (CIRecipe the_frontier) through the editor's own operations.
+include lib_sea
 include lib_rt
 include lib_huts
 new
@@ -542,6 +543,9 @@ place Creature_Turtle turtles at -9 116 h=-1.6
 place Creature_Dolphin dolphins at 24 156 h=-3
 
 # --- Settings, story items, notes, behaviours, quest (Almost Home: 32 steps in six chapters - the finale) -------------------
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=130 deep=5 n=3
+
 info title=The Frontier
 info author=Custom Islands
 info description=The last high ground beyond the storm belt: the Frontier Corps' town on a great mesa - a harbour and a lower town on the shelf, farm terraces climbing the north face, the upper town with its reservoir, builders' tower and archive, and the Corps' hall on the east rim with its lift down to a flooded vault. Six chapters, thirty-two steps: the end of Raft 2: The Drowned Frontier.

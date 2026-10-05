@@ -196,6 +196,12 @@ prop goats creature.count=3
 prop turtles creature.count=2
 prop dolphins creature.count=2
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=44.1 seed=4299 free=5
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=44.1 seed=4309 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=44.1 seed=4310 free=3
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=44.1 seed=4319 free=3
+
 info title=Frostgold Creek
 info author=Custom Islands
 info description=A gold-rush boomtown on a snowy creek between two peaks. Abbie Starling's claim was the richest on the creek - until the Rourke brothers pulled up her stakes. She hid five nuggets in plain sight: weigh them at the assay office and set the slip on her claim post, and the claim is yours.

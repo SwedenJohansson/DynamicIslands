@@ -68,6 +68,12 @@ place Creature_Dolphin dolphins at 30 50 h=-3
 prop dolphins creature.count=2
 call shallows r=58 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=31.5 seed=4368 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4378 free=3
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4388 free=3
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4389 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
 info title=Hermit's Table
 info author=Custom Islands

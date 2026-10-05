@@ -245,6 +245,11 @@ place Zone_Atmosphere snow at -60 60 y=10
 place Zone_Atmosphere snow at -40 -60 y=10
 place Zone_Atmosphere snow at 40 20 y=8
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): berries, flowers ----------
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=83.3 seed=4228 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=83.3 seed=4238 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=83.3 seed=4239 free=3
+
 # --- Raft's finds in the shallows round the mountain (lib_sea; keep this after the terrain and building lines) ----------
 call shallows r=139 deep=5 n=2
 

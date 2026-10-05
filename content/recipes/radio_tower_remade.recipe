@@ -6,6 +6,7 @@
 # bank from the cage, Old Beak, the radio room, the radio on the air and the keeper's locker.
 #
 # Built by the recipe player (CIRecipe radio_tower_remade) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
@@ -93,6 +94,14 @@ place RT_SharkCage cage at -13 -33 ground sit yaw=30
 place Loot_Chest cagebox at -13 -33 ground sit yaw=30
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, bananas ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=23.8 seed=4282 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=23.8 seed=4283 free=5
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=23.8 seed=4292 free=3
+scatter "Banana_Bush_2" 3 at 0 0 r=23.8 seed=4302 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=54 deep=5 n=1
+
 info title=Radio Tower Remade
 info author=Custom Islands
 info description=Raft's radio tower, made anew: a steeper rock, a tower of three storeys climbing it, the old shark cage on the seabed - and a screecher that has taken the roof. The battery bank fell into the sea in a storm; the radio waits for it. Raft Remade's first island.

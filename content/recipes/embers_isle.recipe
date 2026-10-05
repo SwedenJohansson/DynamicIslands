@@ -167,6 +167,12 @@ where bountifulbarrel
 where boat
 
 # --- Settings, story items, notes, behaviours, quest (4 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, pineapples, palms ----------
+scatter "Pickup_Landmark_Flower_Black" 2 at 0 0 r=31.5 seed=4541 free=3
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4542 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4551 free=3
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 0 r=31.5 seed=4561 free=5
+
 info title=Embers Isle
 info author=Custom Islands
 info description=A black volcanic crescent with a fire that never goes out above its bay. The crew of a whaler wrecked in the bay eleven years ago live up there still - and hunt anything that lands. A botanist they caught left her journal in her cage, and her boat in a sea cave. Take the key and run.

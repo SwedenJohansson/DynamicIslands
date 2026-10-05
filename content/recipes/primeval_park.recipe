@@ -304,6 +304,12 @@ place Creature_Dolphin dolphins at 95 0 h=-3
 prop dolphins creature.count=3
 place Zone_Sound jungle at -20 10 y=10
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, melons, mangoes ----------
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=70.0 seed=4144 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=70.0 seed=4145 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=70.0 seed=4154 free=3
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=70.0 seed=4164 free=5
+
 # --- Raft's finds in the shallows round the island and over the bay (lib_sea) -------------------------------------------
 call shallows r=125 deep=5 n=2
 call shallows x=52 z=30 r=15 deep=4 seed=90

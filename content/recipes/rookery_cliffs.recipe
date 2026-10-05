@@ -107,6 +107,12 @@ place Zone_Atmosphere snowtops at 0 -20 h=30
 place Creature_Dolphin dolphins at -72 0 h=-3
 call shallows r=83 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=44.1 seed=4478 free=5
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=44.1 seed=4488 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=44.1 seed=4498 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=44.1 seed=4499 free=3
+
 # ===== Settings, notes, behaviours (no quest) =============================================================================
 info title=Rookery Cliffs
 info author=Custom Islands

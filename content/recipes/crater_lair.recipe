@@ -208,6 +208,12 @@ where dockexit
 where dockbarrel
 
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pineapples, palms, flowers ----------
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4232 free=3
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 0 r=31.5 seed=4242 free=5
+scatter "Pickup_Landmark_Flower_Black" 2 at 0 0 r=31.5 seed=4252 free=3
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4253 free=3
+
 info title=Crater Lair
 info author=Custom Islands
 info description=A black volcanic cone with a dish in its crater and a hangar hidden in its flank: the lair of a man who wanted to steer storms onto the shipping lanes. His codes are in his safe, his keycard in his pet's pool - and his incinerator seals the control wing forty-five seconds after it runs.

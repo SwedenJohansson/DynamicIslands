@@ -143,6 +143,12 @@ place Creature_Dolphin dolphins at 0 58 h=-3
 place Zone_Atmosphere haze at 0 0 h=10
 call shallows r=83 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): melons, flowers, pineapples ----------
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=44.1 seed=4381 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=44.1 seed=4391 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=44.1 seed=4392 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4401 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (11 steps) =========================================================
 info title=The Cartographer's Isles
 info author=Custom Islands

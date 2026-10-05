@@ -306,6 +306,12 @@ prop goats creature.count=2
 place Creature_Dolphin dolphins at 0 64 h=-3
 prop dolphins creature.count=2
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=31.5 seed=4200 free=5
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4210 free=3
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4211 free=3
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4220 free=3
+
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 

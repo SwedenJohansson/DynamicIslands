@@ -4,6 +4,7 @@
 # mine, its notice, the miner's head lamp, the beast in the deep tunnel and the last ore cart.
 #
 # Built by the recipe player (CIRecipe old_mine_islet) through the editor's own operations.
+include lib_sea
 new
 # (nature: forest: Like Raft's Balboa, a little more wooded - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.38 Rocks=0.45 Harvest=0.1 BeachThings=0.3
@@ -62,6 +63,13 @@ place VP_Wagon02 - at 25.5 -12.5 sit yaw=30 tilt=8
 place Zone_Trigger minehead at 22 -19 y=1.5
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, birches ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=23.8 seed=4325 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=23.8 seed=4335 free=3
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=23.8 seed=4345 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=54 deep=5 n=1
+
 info title=Old Mine Islet
 info author=Custom Islands
 info description=A wooded islet around a rock mound with an old mine inside: timbered tunnels, rails and ore carts - pitch dark further in, where something big has dug in. Bring a light.

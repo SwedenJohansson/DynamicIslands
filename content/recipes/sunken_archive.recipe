@@ -7,6 +7,7 @@
 # and the zipline's blueprints).
 #
 # Built by the recipe player (CIRecipe sunken_archive) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -64,6 +65,14 @@ place Creature_Dolphin dolphins at 0 90 h=-3
 prop dolphins creature.count=2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, palms, pineapples ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=49.0 seed=4545 free=5
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=49.0 seed=4555 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=49.0 seed=4556 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=49.0 seed=4565 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=90 deep=5 n=2
+
 info title=The Sunken Archive
 info author=Custom Islands
 info description=Station Four of the Frontier Corps: five palm islets on a coral bank, and in a basin between them the Corps' archive, two of its floors flooded - the stacks full of books and fish, the rare book vault at the bottom. The fourth island of Raft 2: The Drowned Frontier.

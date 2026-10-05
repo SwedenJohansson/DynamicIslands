@@ -117,6 +117,11 @@ place Creature_Whale whale at 0 -100 h=-8
 place Zone_Atmosphere snow at -30 10 y=12
 place Zone_Atmosphere snow at 30 10 y=12
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): berries, flowers ----------
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=44.1 seed=4544 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=44.1 seed=4554 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=44.1 seed=4555 free=3
+
 # --- Raft's finds in the shallows round the ring and in the lagoon (lib_sea) -------------------------------------------------
 call shallows r=83 deep=5 n=1
 

@@ -72,6 +72,12 @@ place Creature_Dolphin dolphins at 40 -40 h=-3
 prop dolphins creature.count=2
 call shallows r=58 deep=5 n=1
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): berries, birches, flowers ----------
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4575 free=3
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4585 free=5
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4595 free=3
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4596 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Kelpdeep Rock
 info author=Custom Islands

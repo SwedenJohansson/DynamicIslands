@@ -130,6 +130,12 @@ place Loot_Barrel boatbarrel at 8 -74 ground sit
 scatter "Pickup_Landmark_Tree_Palm 2" 2 at 0 -70 r=8 seed=1601
 place Creature_Dolphin dolphins at 10 -100 h=-3
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, melons, pineapples ----------
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=63.0 seed=4520 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=63.0 seed=4521 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=63.0 seed=4530 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=63.0 seed=4540 free=3
+
 # --- Raft's finds in the shallows round the island (lib_sea) ------------------------------------------------------------
 call shallows r=110 deep=5 n=1
 

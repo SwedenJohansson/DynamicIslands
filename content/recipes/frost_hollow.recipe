@@ -4,6 +4,7 @@
 # electrical cables (one in a polar bear's shed), the power box - the lab's doors slide open - and the lab locker.
 #
 # Built by the recipe player (CIRecipe frost_hollow) through the editor's own operations (macros from lib_selene).
+include lib_sea
 include lib_selene
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -86,6 +87,14 @@ scatter TP_SmallRock03 2 at 8 16 r=6 seed=52
 scatter TP_SnowDrift01 5 at 6 -6 r=14 seed=53
 
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=21.0 seed=4473 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=21.0 seed=4483 free=3
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=21.0 seed=4493 free=3
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=21.0 seed=4494 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=50 deep=5 n=1
+
 info title=Frost Hollow
 info author=Custom Islands
 info description=A snowy islet with two Moontown igloo houses, a snowmobile shed, a telescope on the hill - and a small research lab whose power is dead. Three cables, a power box and a polar bear. Inspired by Raft's Temperance.

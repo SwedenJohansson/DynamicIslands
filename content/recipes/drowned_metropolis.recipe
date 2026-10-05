@@ -8,6 +8,7 @@
 #
 # Built by the recipe player (CIRecipe drowned_metropolis) through the editor's own operations (macros from lib_rt).
 # The towers are Utopia's skyline towers, 400 m tall: placed so that only their crowns stand out of the sea.
+include lib_sea
 include lib_rt
 new
 # (nature: Like Raft - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -126,6 +127,14 @@ place Floorlamp_01 - at 28 36 ground
 pop
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): flowers, mangoes, bananas ----------
+scatter "Pickup_Landmark_Flower_Red" 6 at 0 0 r=91.0 seed=4293 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 6 at 0 0 r=91.0 seed=4294 free=3
+scatter "Pickup_Landmark_Tree_Mango" 9 at 0 0 r=91.0 seed=4303 free=5
+scatter "Banana_Bush_2" 9 at 0 0 r=91.0 seed=4313 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=150 deep=5 n=3
+
 info title=The Drowned Metropolis
 info author=Custom Islands
 info description=Meridian, a city the sea took: skyscraper crowns over a shallow sea, a wrecked ferry, the mayor's penthouse on a sloping roof, council offices on the sea floor - and in the Spire's foundations, the Lantern Lord. Three keycards open the city vault on the Meridian Tower.

@@ -129,6 +129,12 @@ call shallows r=50 deep=5 n=1
 prop goats creature.count=2
 prop dolphins creature.count=2
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=31.5 seed=4242 free=5
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4252 free=3
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4253 free=3
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4262 free=3
+
 # ===== Settings, story items, notes, behaviours, quest (4 steps) ==========================================================
 info title=The Bell Stack
 info author=Custom Islands

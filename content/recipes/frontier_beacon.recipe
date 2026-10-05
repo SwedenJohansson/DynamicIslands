@@ -5,6 +5,7 @@
 # beacon lit, the keeper's locker (the Receiver's and the antenna's blueprints - the plan's first step on the Receiver).
 #
 # Built by the recipe player (CIRecipe frontier_beacon) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -67,6 +68,14 @@ place Creature_Dolphin dolphins at -75 -25 h=-3
 prop dolphins creature.count=2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, flowers ----------
+scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4483 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4493 free=3
+scatter "Pickup_Landmark_Flower_Black" 2 at 0 0 r=31.5 seed=4503 free=3
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4504 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=65 deep=5 n=2
+
 info title=Frontier Beacon
 info author=Custom Islands
 info description=Station One of the Frontier Corps: a black volcanic spike, the keeper's hut on the flats, the beacon on a terrace cut into the spike - dark since its cell died. The first island of Raft 2: The Drowned Frontier.

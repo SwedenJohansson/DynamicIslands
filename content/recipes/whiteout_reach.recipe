@@ -8,6 +8,7 @@
 # crystal, the radio hut's last transmission, the commander's chest.
 #
 # Built by the recipe player (CIRecipe whiteout_reach) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance; Rocks 0.25 gave 2.5 per 1000 m2 against Raft's 1.1)
@@ -103,6 +104,14 @@ place Creature_Goat goats at -30 -40
 prop goats creature.count=2
 
 # --- Settings, story items, notes, behaviours, quest (16 steps) --------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=70.0 seed=4367 free=5
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=70.0 seed=4377 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=70.0 seed=4378 free=3
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=70.0 seed=4387 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=120 deep=5 n=3
+
 info title=Whiteout Reach
 info author=Custom Islands
 info description=Station Eight of the Frontier Corps: the winter camp on a snowy hill, its boiler cold and its domes empty, a supply ship frozen in the north shore's ice and a polar bear matriarch in a crevasse. The eighth island of Raft 2: The Drowned Frontier.

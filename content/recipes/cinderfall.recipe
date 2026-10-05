@@ -6,6 +6,7 @@
 # the biofuel refiner's, the fuel tank's and the fuel pipe's blueprints).
 #
 # Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -88,6 +89,14 @@ place Creature_Dolphin dolphins at 0 100 h=-3
 prop dolphins creature.count=2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, pineapples, flowers ----------
+scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4476 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=56.0 seed=4486 free=3
+scatter "Pickup_Landmark_Flower_Black" 4 at 0 0 r=56.0 seed=4496 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=56.0 seed=4497 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=100 deep=5 n=2
+
 info title=Cinderfall
 info author=Custom Islands
 info description=Station Three of the Frontier Corps: a volcano of black rock and ash, the Corps' geothermal plant at its foot - and three relief valves stuck open on its flanks while the pressure rises. The third island of Raft 2: The Drowned Frontier.

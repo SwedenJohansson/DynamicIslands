@@ -6,6 +6,7 @@
 # the sample cases, the giant angler, three samples, the analyzer and the director's safe.
 #
 # Built by the recipe player (CIRecipe coral_observatory) through the editor's own operations.
+include lib_sea
 include lib_selene
 new
 # (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -78,6 +79,14 @@ place Creature_AnglerFish lanternjaw at -26 -8 h=-8
 place Zone_Trigger edge at -26 -8 h=-4
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=61.6 seed=4175 free=5
+scatter "Banana_Bush_2" 6 at 0 0 r=61.6 seed=4185 free=3
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=61.6 seed=4195 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=61.6 seed=4196 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=108 deep=5 n=2
+
 info title=Coral Observatory
 info author=Custom Islands
 info description=A ring of palm islets around a wide lagoon, and moored in the lagoon a research platform - one of Tangaroa's floating rings with a lab on it. The scientists' last coral samples still lie in cases on the lagoon floor, and one in the blue hole, where a giant angler fish lives. Inspired by Raft's Tangaroa and Varuna Point.

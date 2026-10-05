@@ -9,6 +9,7 @@
 # (the titanium tools', the big backpack's and the electric zipline's blueprints).
 #
 # Built by the recipe player (CIRecipe drowned_gate) through the editor's own operations.
+include lib_sea
 include lib_rt
 new
 # (nature: tropical, Like Raft; no cliffs - the generator's cliffs cut the land into flat sectors)
@@ -274,6 +275,15 @@ clear at 50.9 -49 r=2.5 only=Log
 clear at 55.7 53.9 r=2.5 only=Log
 
 # --- Settings, story items, notes, behaviours, quest (10 steps) -------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, pineapples ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=63.0 seed=4122 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=63.0 seed=4123 free=5
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=63.0 seed=4132 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=63.0 seed=4133 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=63.0 seed=4142 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=110 deep=5 n=2
+
 info title=The Drowned Gate
 info author=Custom Islands
 info description=Station Nine of the Frontier Corps: a sea wall across the strait between two hills, its locks and its pump house - the outer gate jammed, the pump hall flooded and something with a lamp on its head in its water. The ninth island of Raft 2: The Drowned Frontier.

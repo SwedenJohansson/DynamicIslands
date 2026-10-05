@@ -8,6 +8,7 @@
 # crevasse is cut into the plateau instead.)
 #
 # Built by the recipe player (CIRecipe glacier_station) through the editor's own operations.
+include lib_sea
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
@@ -118,6 +119,14 @@ place Zone_Trigger reactor at 10 50 y=2
 place Zone_Sound reactorhum at 10 52 y=3
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
+scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=80.5 seed=4270 free=5
+scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=80.5 seed=4280 free=3
+scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=80.5 seed=4290 free=3
+scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=80.5 seed=4291 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=135 deep=5 n=3
+
 info title=Glacier Station
 info author=Custom Islands
 info description=A research station at the edge of a glacier, dark since its reactor failed: glowing domes on the shore, an observatory on the peak, a crevasse where the Polar Bear Queen dens, and the reactor's twin chimneys in a basin of snow. Inspired by Raft's Temperance.

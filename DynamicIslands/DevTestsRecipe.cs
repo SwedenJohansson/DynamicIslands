@@ -1163,8 +1163,12 @@ namespace DynamicIslands
 								// (deep=: no deeper than this under the sea - Raft's finds in the shallows round an island, lib_sea's
 								// shallows: the user, 2026-10-04)
 								if (opt.ContainsKey("deep") && ground < sea - F(opt["deep"])) continue;
+								// (free=: not within that many metres of anything the recipe placed - things to gather kept off the
+								// buildings, the paths' props and the quest's objects: the user, 2026-10-05)
+								if (opt.ContainsKey("free") && Physics.OverlapSphere(new Vector3(w.x, ground + 1f, w.y), F(opt["free"]), ~0, QueryTriggerInteraction.Ignore)
+									.Any(c => c.GetComponentInParent<EditorGameObject>() != null)) continue;
 								var o = new Dictionary<string, string>(opt, StringComparer.OrdinalIgnoreCase);
-								o.Remove("deep");
+								o.Remove("deep"); o.Remove("free");
 								o["yaw"] = opt.ContainsKey("yaw") ? opt["yaw"] : Num(rnd.NextDouble() * 360);
 								o["scale"] = Num(s0 + rnd.NextDouble() * (s1 - s0));
 								o.Remove("r"); o.Remove("seed");

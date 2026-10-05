@@ -249,6 +249,13 @@ prop hens creature.count=4
 place Creature_Dolphin dolphins at 0 105 h=-3
 prop dolphins creature.count=2
 
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, bananas, flowers ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=54.6 seed=4144 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=54.6 seed=4145 free=5
+scatter "Banana_Bush_2" 6 at 0 0 r=54.6 seed=4154 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=54.6 seed=4164 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=54.6 seed=4165 free=3
+
 # --- Raft's finds in the shallows round the island and along the sandbank (lib_sea) ------------------------------------
 call shallows r=100 deep=5 n=1
 call shallows x=106 z=0 r=20 deep=4 n=1 seed=90
