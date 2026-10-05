@@ -18,6 +18,10 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		IslandQuest quest = new IslandQuest();
+		/// <summary>Which of the island's quests is shown (0 = the main quest; ROADMAP LM4) and the edits of each.</summary>
+		int number;
+		readonly Dictionary<int, IslandQuest> working = new Dictionary<int, IslandQuest>();
+		RectTransform questTabs, bringGroup;
 		InputField titleField, introField, doneField;
 		RectTransform stepsRoot;
 		Text rewardText, namesText;
@@ -47,19 +51,69 @@ namespace DynamicIslands.Editor
 		public static void Open()
 		{
 			if (instance == null) return;
-			instance.quest = IslandQuest.From(DynamicIslands.currentIslandProps);
-			if (!instance.quest.Exists) instance.quest.Steps.Add(new IslandQuest.Step());
+			instance.working.Clear();
+			int count = IslandQuest.CountIn(DynamicIslands.currentIslandProps);
+			for (int i = 0; i < count; i++) instance.working[i] = IslandQuest.From(DynamicIslands.currentIslandProps, i);
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
-			instance.titleField.text = instance.quest.Title;
-			instance.introField.text = instance.quest.Intro;
-			instance.doneField.text = instance.quest.Done;
-			instance.ShowSteps();
-			instance.ShowReward();
-			instance.ShowNames();
+			instance.Show(0);
 			instance.bring = QuestBringRule(DynamicIslands.currentIslandProps);
 			instance.bring = instance.bring != null ? instance.bring.Clone() : null;
 			instance.ShowBring();
+		}
+
+		/// <summary>Shows quest n of the island (its edits kept while another is shown).</summary>
+		void Show(int n)
+		{
+			number = n;
+			IslandQuest q;
+			if (!working.TryGetValue(n, out q)) working[n] = q = new IslandQuest();
+			if (!q.Exists) q.Steps.Add(new IslandQuest.Step());
+			quest = q;
+			titleField.text = quest.Title;
+			introField.text = quest.Intro;
+			doneField.text = quest.Done;
+			ShowSteps();
+			ShowReward();
+			ShowNames();
+			ShowTabs();
+			// ("bring a new island" belongs to the main quest)
+			if (bringGroup != null) bringGroup.gameObject.SetActive(n == 0);
+		}
+
+		/// <summary>The fields' text into the quest shown.</summary>
+		void Keep()
+		{
+			quest.Title = titleField.text;
+			quest.Intro = introField.text;
+			quest.Done = doneField.text;
+			working[number] = quest;
+		}
+
+		/// <summary>The buttons for the island's quests: one per quest, another quest, remove this one.</summary>
+		void ShowTabs()
+		{
+			foreach (Transform c in questTabs) Destroy(c.gameObject);
+			int count = working.Keys.Count == 0 ? 1 : working.Keys.Max() + 1;
+			for (int i = 0; i < count; i++)
+			{
+				int n = i;
+				IslandQuest q;
+				string label = n == 0 ? "Main quest" : "Quest " + (n + 1);
+				if (working.TryGetValue(n, out q) && q.Title.Trim().Length > 0) label += ": " + (q.Title.Trim().Length > 16 ? q.Title.Trim().Substring(0, 15) + "\u2026" : q.Title.Trim());
+				Button b = UIKit.Button(questTabs, label, () => { Keep(); Show(n); }, n == 0 ? "The island's main quest: the panel shows it first, world plans and the story wait for it" : "Another quest of the island, with its own steps and reward", -1, 26f, 12);
+				if (n == number) UIKit.SetActive(b, true);
+			}
+			if (count < IslandQuest.MaxQuests)
+				UIKit.Button(questTabs, "+ Another quest", () => { Keep(); Show(count); }, "A side quest of this island: its own steps, reward and messages. Players see one quest at a time in the panel (the first not done yet)", 130, 26f, 12);
+			if (number > 0)
+				UIKit.Button(questTabs, "Remove this quest", () =>
+				{
+					// (the ones after it move up one: "Quest 3" becomes "Quest 2")
+					for (int i = number; i < count - 1; i++) { IslandQuest next; if (working.TryGetValue(i + 1, out next)) working[i] = next; else working.Remove(i); }
+					working.Remove(count - 1);
+					Show(0);
+				}, "Takes this quest off the island (Save to keep it so)", 140, 26f, 12);
 		}
 
 		/// <summary>The island's rule that fires when its own quest is done, or null.</summary>
@@ -97,18 +151,23 @@ namespace DynamicIslands.Editor
 
 		void Save()
 		{
-			quest.Title = titleField.text;
-			quest.Intro = introField.text;
-			quest.Done = doneField.text;
-			quest.Steps.RemoveAll(s => s.Type == "reach" && s.Target.Trim().Length == 0 && s.Text.Trim().Length == 0); // ("go to" nowhere)
+			Keep();
+			foreach (IslandQuest q in working.Values) q.Steps.RemoveAll(s => s.Type == "reach" && s.Target.Trim().Length == 0 && s.Text.Trim().Length == 0); // ("go to" nowhere)
 			KeepBring();
+			IslandQuest main;
+			if (!working.TryGetValue(0, out main)) main = new IslandQuest();
+			// (the further quests in order, the empty ones left out: "Quest 2" ... as many as have steps)
+			List<IslandQuest> more = working.Where(kv => kv.Key > 0 && kv.Value.Exists).OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
 			IslandSettingsUndo.Change(() =>
 			{
-				SetQuestBringRule(DynamicIslands.currentIslandProps, quest.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
-				Apply(quest);
+				SetQuestBringRule(DynamicIslands.currentIslandProps, main.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
+				Apply(main);
+				for (int i = 1; i < IslandQuest.MaxQuests; i++)
+					(i - 1 < more.Count ? more[i - 1] : new IslandQuest()).To(DynamicIslands.currentIslandProps, i);
+				EditorUI.RefreshIsland();
 			});
-			DynamicIslands.Notify(quest.Exists ? "Quest \"" + quest.ShownTitle + "\" with " + quest.Steps.Count + " step(s)" + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
-				" saved with the island (Ctrl+S)" : "The island has no quest now");
+			DynamicIslands.Notify(main.Exists ? "Quest \"" + main.ShownTitle + "\" with " + main.Steps.Count + " step(s)" + (more.Count > 0 ? " and " + more.Count + " more quest(s)" : "") + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
+				" saved with the island (Ctrl+S)" : more.Count > 0 ? more.Count + " quest(s) saved with the island (Ctrl+S); no main quest" : "The island has no quest now");
 			Close();
 		}
 
@@ -129,6 +188,8 @@ namespace DynamicIslands.Editor
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
 			UIKit.Label(head, "QUEST EDITOR", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Label(head, "Players see the quest when they come to the island; steps are done in order", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			// (the island's quests: the main one and up to eight more - LM4)
+			questTabs = UIKit.Row(panel, 26f, 6f, "Quests");
 
 			// (each field says what it is, also once it's filled in)
 			RectTransform top = UIKit.Row(panel, 30f, 8f, "Top");
@@ -167,6 +228,7 @@ namespace DynamicIslands.Editor
 
 			// A new island when the quest is done (the island's own rule; works in any world, and for every player)
 			RectTransform next = UIKit.Group(panel, "When the quest is done, bring a new island");
+			bringGroup = next;
 			RectTransform kindRow = UIKit.Row(next, 26f, 6f, "Kind");
 			bringKindButton = DropList.Make(kindRow, "Drop_BringKind", new List<DropList.Option>
 			{
@@ -244,11 +306,6 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
-		void Keep()
-		{
-			quest.Title = titleField.text; quest.Intro = introField.text; quest.Done = doneField.text;
-		}
-
 		void ShowSteps()
 		{
 			foreach (Transform child in stepsRoot) { child.gameObject.SetActive(false); Destroy(child.gameObject); }

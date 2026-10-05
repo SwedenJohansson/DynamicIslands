@@ -141,6 +141,53 @@ namespace DynamicIslands
 			if (ok) Log("PASS: light colours"); else Fail("light colours");
 		}
 
+		[ConsoleCommand(name: "CIMoreQuests", docs: "Dev, in game (host): ROADMAP LM4 - an island with a main quest and a second one: each counts its own steps, the second done first gives its reward and leaves the main quest open, the panel shows the one not done; both stay done after a reload; a plan rule waits for 'quest 2'")]
+		public static void MoreQuestsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MoreQuestsRoutine()); }
+
+		static IEnumerator MoreQuestsRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			const string name = "cimorequests";
+			var s = new IslandGenSettings { Seed = 8989, Radius = 30f, Height = 6f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			new IslandQuest { Title = "Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" }, new IslandQuest.Step { Type = "reach", Target = "tower" } }, Reward = "Rope*2" }.To(f.Props, 0);
+			new IslandQuest { Title = "The lost goat", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" } }, Reward = "Plank*5" }.To(f.Props, 1);
+			Check(ref ok, IslandQuest.CountIn(f.Props) == 2 && f.Props.ContainsKey("quest2.steps"), "two quests in the island's settings (quest2.steps)");
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			player.transform.position = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) + Vector3.up * 3f;
+			yield return new WaitForSeconds(1.5f);
+			Dictionary<string, int> before = Items(player);
+			QuestTracker.Event(e, "reach", "pen");
+			yield return new WaitForSeconds(1f);
+			string got = Gained(before, Items(player));
+			Check(ref ok, QuestTracker.IsDone(e, 1) && !QuestTracker.IsDone(e, 0) && QuestTracker.StepOf(e, 0) == 0, "the second quest done on its own: the main quest still at its first step");
+			Check(ref ok, got.Contains("Plank") && !got.Contains("Rope"), "the second quest's reward: " + got);
+			QuestTracker.Event(e, "reach", "gate");
+			QuestTracker.Event(e, "reach", "tower");
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, QuestTracker.IsDone(e, 0), "the main quest done with its own steps");
+			OnRaftCommand();
+			yield return new WaitForSeconds(0.5f);
+			yield return ReloadIslandRoutine(e);
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, QuestTracker.IsDone(e, 0) && QuestTracker.IsDone(e, 1), "after a reload both stay done");
+			IntroRule r = IntroRule.Parse("after2 | island:" + name + " | quest:" + name + ":2 | ahead:300 | | test");
+			Check(ref ok, r != null && r.ToLine().Contains("quest:" + name + ":2") && WorldDirector.Happened(r, e), "a plan rule waiting for quest 2 of the island (" + (r != null ? r.ToLine() : "no rule") + ") sees it done");
+			IslandWorldState.Remove(name);
+			if (ok) Log("PASS: more quests"); else Fail("more quests");
+		}
+
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]

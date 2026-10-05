@@ -188,6 +188,15 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry entry = entries.FirstOrDefault();
 			IslandQuest q = entry != null ? QuestTracker.QuestOf(entry) : null;
 			if (q != null && q.Exists) Checklist(i, q, QuestTracker.StepOf(entry));
+			// (its further quests after the main one - LM4)
+			if (entry != null)
+				for (int n = 1, count = QuestTracker.QuestsOf(entry); n < count; n++)
+				{
+					IslandQuest more = QuestTracker.QuestOf(entry, n);
+					if (!more.Exists) continue;
+					i.Checklist.Add(more.ShownTitle + ":");
+					Checklist(i, more, QuestTracker.StepOf(entry, n));
+				}
 			else if (entry == null) i.Checklist.Add(stepDone ? "Done." : "Not reached yet.");
 			// (its notes read and the pages its events wrote - everything the journal would have had of it - in the order the
 			// crew found them)

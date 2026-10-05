@@ -56,14 +56,30 @@ namespace DynamicIslands.Editor
 
 		static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
 
-		public static IslandQuest From(IDictionary<string, string> props)
+		/// <summary>Most quests an island has: its main quest and up to eight more (ROADMAP LM4).</summary>
+		public const int MaxQuests = 9;
+
+		/// <summary>The settings' key of quest n (0 = the main quest, "quest.title"; 1 = "quest2.title" ...).</summary>
+		public static string Key(string key, int n) { return n == 0 ? key : "quest" + (n + 1) + key.Substring("quest".Length); }
+
+		/// <summary>How many quests the island has (the main one counts, with steps or not; then those with steps).</summary>
+		public static int CountIn(IDictionary<string, string> props)
+		{
+			int n = 1;
+			for (int i = 1; i < MaxQuests; i++) if (ObjectProps.Get(props, Key(KeySteps, i)).Trim().Length > 0) n = i + 1;
+			return n;
+		}
+
+		public static IslandQuest From(IDictionary<string, string> props) { return From(props, 0); }
+
+		public static IslandQuest From(IDictionary<string, string> props, int n)
 		{
 			var q = new IslandQuest
 			{
-				Title = ObjectProps.Get(props, KeyTitle), Intro = ObjectProps.Get(props, KeyIntro),
-				Reward = ObjectProps.Get(props, KeyReward), Done = ObjectProps.Get(props, KeyDone)
+				Title = ObjectProps.Get(props, Key(KeyTitle, n)), Intro = ObjectProps.Get(props, Key(KeyIntro, n)),
+				Reward = ObjectProps.Get(props, Key(KeyReward, n)), Done = ObjectProps.Get(props, Key(KeyDone, n))
 			};
-			foreach (string line in ObjectProps.Get(props, KeySteps).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string line in ObjectProps.Get(props, Key(KeySteps, n)).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				string[] p = line.Split('|');
 				if (p.Length < 1 || !Types.Contains(p[0])) continue;
@@ -74,15 +90,17 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Writes the quest into island settings (an empty quest removes the keys).</summary>
-		public void To(IDictionary<string, string> props)
+		public void To(IDictionary<string, string> props) { To(props, 0); }
+
+		public void To(IDictionary<string, string> props, int n)
 		{
-			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(k);
+			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(Key(k, n));
 			if (!Exists) return;
-			if (Title.Trim().Length > 0) props[KeyTitle] = Title.Trim();
-			if (Intro.Trim().Length > 0) props[KeyIntro] = Intro.Trim();
-			if (Reward.Length > 0) props[KeyReward] = Reward;
-			if (Done.Trim().Length > 0) props[KeyDone] = Done.Trim();
-			props[KeySteps] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
+			if (Title.Trim().Length > 0) props[Key(KeyTitle, n)] = Title.Trim();
+			if (Intro.Trim().Length > 0) props[Key(KeyIntro, n)] = Intro.Trim();
+			if (Reward.Length > 0) props[Key(KeyReward, n)] = Reward;
+			if (Done.Trim().Length > 0) props[Key(KeyDone, n)] = Done.Trim();
+			props[Key(KeySteps, n)] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
 		}
 
 		public string ShownTitle { get { return Title.Trim().Length > 0 ? Title.Trim() : "Quest"; } }
@@ -107,21 +125,41 @@ namespace DynamicIslands.Editor
 		public static string LastMessage { get; private set; }
 
 		/// <summary>The island's quest (also while it's unloaded here: a client may be at it while the host is far away).</summary>
-		public static IslandQuest QuestOf(IslandWorldState.Entry e)
+		public static IslandQuest QuestOf(IslandWorldState.Entry e) { return QuestOf(e, 0); }
+
+		/// <summary>The island's quest n (0 = the main quest).</summary>
+		public static IslandQuest QuestOf(IslandWorldState.Entry e, int n)
 		{
-			return e != null ? IslandQuest.From(IslandCache.PropsOf(e)) : new IslandQuest();
+			return e != null ? IslandQuest.From(IslandCache.PropsOf(e), n) : new IslandQuest();
 		}
 
-		public static int StepOf(IslandWorldState.Entry e)
+		/// <summary>How many quests the island has (ROADMAP LM4).</summary>
+		public static int QuestsOf(IslandWorldState.Entry e) { return e != null ? IslandQuest.CountIn(IslandCache.PropsOf(e)) : 0; }
+
+		// State keys of quest n: the main quest's as before; the others after the main quest's early work (0x40100 + step)
+		static int StepKeyOf(int n) { return n == 0 ? StepKey : 0x40200 + n * 2; }
+		static int ProgressKeyOf(int n) { return n == 0 ? ProgressKey : 0x40201 + n * 2; }
+		static int EarlyKeyOf(int n, int step) { return n == 0 ? EarlyKeyBase + step : 0x40300 + n * 0x40 + Mathf.Min(step, 0x3F); }
+
+		public static int StepOf(IslandWorldState.Entry e) { return StepOf(e, 0); }
+
+		public static int StepOf(IslandWorldState.Entry e, int n)
 		{
 			ObjectState s;
-			return e != null && e.State.TryGetValue(StepKey, out s) ? s.Yield : 0;
+			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? s.Yield : 0;
 		}
 
-		static int ProgressOf(IslandWorldState.Entry e)
+		static int ProgressOf(IslandWorldState.Entry e, int n = 0)
 		{
 			ObjectState s;
-			return e != null && e.State.TryGetValue(ProgressKey, out s) ? s.Yield : 0;
+			return e != null && e.State.TryGetValue(ProgressKeyOf(n), out s) ? s.Yield : 0;
+		}
+
+		/// <summary>Whether quest n of the island is done (it has steps, all done).</summary>
+		public static bool IsDone(IslandWorldState.Entry e, int n)
+		{
+			IslandQuest q = QuestOf(e, n);
+			return q.Exists && StepOf(e, n) >= q.Steps.Count;
 		}
 
 		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
@@ -130,8 +168,15 @@ namespace DynamicIslands.Editor
 		public static void Event(IslandWorldState.Entry e, string type, string target, int amount = 1)
 		{
 			if (e == null) return;
-			IslandQuest q = QuestOf(e);
-			int step = StepOf(e);
+			// (every quest of the island: what one player does may count for several)
+			int count = QuestsOf(e);
+			for (int n = 0; n < count; n++) Event(e, n, type, target, amount);
+		}
+
+		static void Event(IslandWorldState.Entry e, int n, string type, string target, int amount)
+		{
+			IslandQuest q = QuestOf(e, n);
+			int step = StepOf(e, n);
 			if (!q.Exists || step >= q.Steps.Count) return;
 			IslandQuest.Step s = q.Steps[step];
 			if (!Matches(s, type, target))
@@ -141,20 +186,20 @@ namespace DynamicIslands.Editor
 				for (int later = step + 1; later < q.Steps.Count; later++)
 				{
 					if (IslandQuest.Counted(q.Steps[later].Type) || !Matches(q.Steps[later], type, target)) continue;
-					if (Raft_Network.IsHost) Remember(e, later, amount);
-					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, later, amount); // (an older host would jump to that step)
+					if (Raft_Network.IsHost) Remember(e, n, later, amount);
+					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, n, later, amount); // (an older host would jump to that step)
 					break;
 				}
 				return;
 			}
-			int progress = ProgressOf(e) + amount;
+			int progress = ProgressOf(e, n) + amount;
 			// A player's machine moves its own view on at once and sends the host its amount, not its total: two players'
 			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
 			// (an older host takes what it gets for the total: it gets the total, as before)
 			bool adds = !Raft_Network.IsHost && IslandNetwork.HostAddsCounts;
-			if (progress >= s.Count) Set(e, step + 1, 0, !adds);
-			else Set(e, step, progress, !adds);
-			if (adds) IslandNetwork.SendQuestAdd(e.Id, step, amount);
+			if (progress >= s.Count) Set(e, n, step + 1, 0, !adds);
+			else Set(e, n, step, progress, !adds);
+			if (adds) IslandNetwork.SendQuestAdd(e.Id, n, step, amount);
 		}
 
 		static bool Matches(IslandQuest.Step s, string type, string target)
@@ -166,67 +211,82 @@ namespace DynamicIslands.Editor
 		public const int EarlyKeyBase = 0x40100;
 
 		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step.</summary>
-		static void Remember(IslandWorldState.Entry e, int step, int amount)
+		static void Remember(IslandWorldState.Entry e, int quest, int step, int amount)
 		{
 			ObjectState had;
-			int n = (e.State.TryGetValue(EarlyKeyBase + step, out had) ? had.Yield : 0) + amount;
-			e.State[EarlyKeyBase + step] = new ObjectState { Active = true, Yield = n, Day = Today };
-			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " done early (" + n + "), counted when it comes");
+			int n = (e.State.TryGetValue(EarlyKeyOf(quest, step), out had) ? had.Yield : 0) + amount;
+			e.State[EarlyKeyOf(quest, step)] = new ObjectState { Active = true, Yield = n, Day = Today };
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (quest + 1) + " of '" + e.HostName + "': step " + (step + 1) + " done early (" + n + "), counted when it comes");
 		}
 
 		/// <summary>Host: the quest reached this step - what was done for it early counts now (it may finish it at once).</summary>
-		static void CreditEarly(IslandWorldState.Entry e, IslandQuest q, int step)
+		static void CreditEarly(IslandWorldState.Entry e, int n, IslandQuest q, int step)
 		{
 			ObjectState had;
-			if (!Raft_Network.IsHost || step >= q.Steps.Count || !e.State.TryGetValue(EarlyKeyBase + step, out had) || had.Yield <= 0) return;
-			e.State.Remove(EarlyKeyBase + step);
-			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " gets what was done for it early (" + had.Yield + ")");
-			int progress = ProgressOf(e) + had.Yield;
-			if (progress >= q.Steps[step].Count) Set(e, step + 1, 0, true);
-			else Set(e, step, progress, true);
+			if (!Raft_Network.IsHost || step >= q.Steps.Count || !e.State.TryGetValue(EarlyKeyOf(n, step), out had) || had.Yield <= 0) return;
+			e.State.Remove(EarlyKeyOf(n, step));
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " gets what was done for it early (" + had.Yield + ")");
+			int progress = ProgressOf(e, n) + had.Yield;
+			if (progress >= q.Steps[step].Count) Set(e, n, step + 1, 0, true);
+			else Set(e, n, step, progress, true);
 		}
 
 		/// <summary>Host: a player's event counted on an island's quest - their amount at that step, added to the host's
 		/// count and sent to everyone. A step the quest has moved past counted already; a later one keeps it for then.</summary>
-		public static void AddFromPlayer(int islandId, int step, int amount)
+		public static void AddFromPlayer(int islandId, int step, int amount) { AddFromPlayer(islandId, 0, step, amount); }
+
+		public static void AddFromPlayer(int islandId, int n, int step, int amount)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null || amount <= 0) return;
-			IslandQuest q = QuestOf(e);
-			int now = StepOf(e);
+			IslandQuest q = QuestOf(e, n);
+			int now = StepOf(e, n);
 			if (!q.Exists) return;
-			if (step > now && step < q.Steps.Count) { Remember(e, step, amount); return; }
-			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, now, ProgressOf(e)); return; } // (the player's view put right)
-			int progress = ProgressOf(e) + amount;
-			if (progress >= q.Steps[now].Count) Set(e, now + 1, 0, true);
-			else Set(e, now, progress, true);
+			if (step > now && step < q.Steps.Count) { Remember(e, n, step, amount); return; }
+			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); return; } // (the player's view put right)
+			int progress = ProgressOf(e, n) + amount;
+			if (progress >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
+			else Set(e, n, now, progress, true);
 		}
 
 		/// <summary>Records the quest's state here, tells the others (unless it came from them), and shows what changed.</summary>
-		public static void Set(IslandWorldState.Entry e, int step, int progress, bool send)
+		public static void Set(IslandWorldState.Entry e, int step, int progress, bool send) { Set(e, 0, step, progress, send); }
+
+		/// <summary>Quest n: records its state here, tells the others (unless it came from them), and shows what changed.</summary>
+		public static void Set(IslandWorldState.Entry e, int n, int step, int progress, bool send)
 		{
-			int before = StepOf(e);
+			int before = StepOf(e, n);
 			if (step < before) return;
-			e.State[StepKey] = new ObjectState { Active = true, Yield = step, Day = Today };
-			if (progress > 0) e.State[ProgressKey] = new ObjectState { Active = true, Yield = progress, Day = Today };
-			else e.State.Remove(ProgressKey);
-			if (send) IslandNetwork.SendQuest(e.Id, step, progress);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
+			else e.State.Remove(ProgressKeyOf(n));
+			if (send) IslandNetwork.SendQuest(e.Id, n, step, progress);
 			if (step == before) return;
-			IslandQuest q = QuestOf(e);
-			if (step >= q.Steps.Count) Completed(e, q);
+			IslandQuest q = QuestOf(e, n);
+			if (step >= q.Steps.Count) Completed(e, q, n);
 			else Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
-			if (Advanced != null) try { Advanced(e.Id, step); } catch { }
-			CreditEarly(e, q, step);
+			// (the main quest's "quest" event and rules as before; any quest: AdvancedAny)
+			if (n == 0 && Advanced != null) try { Advanced(e.Id, step); } catch { }
+			if (AdvancedAny != null) try { AdvancedAny(e.Id, n, step); } catch { }
+			CreditEarly(e, n, q, step);
 		}
+
+		/// <summary>Raised on every machine when any quest of an island moves on: island id, quest number (0 = main), new step.</summary>
+		public static event Action<int, int, int> AdvancedAny;
 
 		/// <summary>From the network (another player moved the quest on).</summary>
-		public static void Apply(int islandId, int step, int progress)
+		public static void Apply(int islandId, int step, int progress) { Apply(islandId, 0, step, progress); }
+
+		public static void Apply(int islandId, int n, int step, int progress)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
-			if (e != null) Set(e, step, progress, false);
+			if (e != null) Set(e, n, step, progress, false);
 		}
 
-		static void Completed(IslandWorldState.Entry e, IslandQuest q)
+		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards).</summary>
+		static string RewardKey(IslandWorldState.Entry e, int n) { return n == 0 ? e.HostName : e.HostName + "#quest" + (n + 1); }
+
+		static void Completed(IslandWorldState.Entry e, IslandQuest q, int n)
 		{
 			Show("Quest complete: " + q.ShownTitle, q.Done);
 			if (q.Reward.Length == 0) return;
@@ -238,7 +298,7 @@ namespace DynamicIslands.Editor
 			// Raft's items: each player's share once - now when near, or when they come to the island (or join) later (LM8)
 			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
 			bool near = Near(e);
-			QuestRewards.OnCompleted(e.HostName, near, () => GiveItems(q));
+			QuestRewards.OnCompleted(RewardKey(e, n), near, () => GiveItems(q));
 			if (!near) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island");
 		}
 
@@ -286,20 +346,29 @@ namespace DynamicIslands.Editor
 			nextHud = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); if (panel != null) panel.gameObject.SetActive(false); return; }
 			if (Raft_Network.IsHost) CheckCounted();
-			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && QuestOf(e).Exists && Near(e));
+			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => QuestOf(e, n).Exists));
 			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
-			IslandQuest q = QuestOf(at);
-			int step = StepOf(at);
-			// (a reward kept for this player, who wasn't here when the quest was done: now - LM8)
-			if (step >= q.Steps.Count && QuestRewards.Owed(at.HostName))
+			int quests = QuestsOf(at);
+			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8)
+			for (int n = 0; n < quests; n++)
 			{
-				QuestRewards.Collect(at.HostName, () => GiveItems(q));
-				Show("Your share of the reward: " + q.ShownTitle, "");
+				IslandQuest qn = QuestOf(at, n);
+				if (qn.Exists && StepOf(at, n) >= qn.Steps.Count && QuestRewards.Owed(RewardKey(at, n)))
+				{
+					QuestRewards.Collect(RewardKey(at, n), () => GiveItems(qn));
+					Show("Your share of the reward: " + qn.ShownTitle, "");
+				}
 			}
+			// (the panel: the first quest not done yet, the main one first - LM4; all done: the main quest, ticked)
+			int shown = Enumerable.Range(0, quests).FirstOrDefault(n => QuestOf(at, n).Exists && StepOf(at, n) < QuestOf(at, n).Steps.Count);
+			if (!QuestOf(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => QuestOf(at, n).Exists);
+			IslandQuest q = QuestOf(at, shown);
+			int step = StepOf(at, shown);
 			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
 			if (panel == null) Build();
 			panel.gameObject.SetActive(true);
-			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "");
+			int open = Enumerable.Range(0, quests).Count(n => n != shown && QuestOf(at, n).Exists && StepOf(at, n) < QuestOf(at, n).Steps.Count);
+			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
 			var lines = new List<string>();
 			for (int i = 0; i < q.Steps.Count; i++)
 			{
@@ -307,12 +376,12 @@ namespace DynamicIslands.Editor
 				if (i < step) lines.Add("<color=#8fdc8f>\u221A</color> <color=#b89e70>" + d + "</color>");
 				else if (i == step)
 				{
-					int progress = IslandQuest.Counted(q.Steps[i].Type) ? Mathf.Min(Found(at, q.Steps[i]), q.Steps[i].Count) : ProgressOf(at);
+					int progress = IslandQuest.Counted(q.Steps[i].Type) ? Mathf.Min(Found(at, q.Steps[i]), q.Steps[i].Count) : ProgressOf(at, shown);
 					lines.Add("<color=#ffc766>\u25BA</color> " + d + (q.Steps[i].Count > 1 ? " (" + progress + "/" + q.Steps[i].Count + ")" : ""));
 				}
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
-			ShowSteps(lines, step, at.Id);
+			ShowSteps(lines, step, at.Id * 16 + shown);
 		}
 
 		/// <summary>
@@ -373,12 +442,15 @@ namespace DynamicIslands.Editor
 		{
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
-				IslandQuest q = QuestOf(e);
-				int step = StepOf(e);
-				if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
-				// (only while someone is there: a quest whose items the crew already held finished the moment its island
-				// appeared far away, and nobody got its reward)
-				if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, step + 1, 0, true);
+				for (int n = 0, count = QuestsOf(e); n < count; n++)
+				{
+					IslandQuest q = QuestOf(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
+					// (only while someone is there: a quest whose items the crew already held finished the moment its island
+					// appeared far away, and nobody got its reward)
+					if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, n, step + 1, 0, true);
+				}
 			}
 		}
 

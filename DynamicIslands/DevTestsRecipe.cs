@@ -667,6 +667,16 @@ namespace DynamicIslands
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
+		static readonly Dictionary<int, IslandQuest> pendingMore = new Dictionary<int, IslandQuest>();
+
+		/// <summary>The recipe's quest n (0 = the main one), kept until it has steps.</summary>
+		static IslandQuest PendingQuest(int n)
+		{
+			if (n == 0) { if (pendingQuest == null) pendingQuest = IslandQuest.From(DynamicIslands.currentIslandProps); return pendingQuest; }
+			IslandQuest q;
+			if (!pendingMore.TryGetValue(n, out q)) pendingMore[n] = q = IslandQuest.From(DynamicIslands.currentIslandProps, n);
+			return q;
+		}
 
 		#region Writing recipes: variables, arithmetic, loops, macros, includes
 
@@ -944,6 +954,7 @@ namespace DynamicIslands
 			recipePlaced.Clear();
 			leftOutBuried = 0;
 			pendingQuest = null;
+			pendingMore.Clear();
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
@@ -962,6 +973,10 @@ namespace DynamicIslands
 				string[] t = Tokens(line);
 				string verb = t[0].ToLowerInvariant();
 				steps++;
+				// (quest2 ... / step2 ...: the island's further quests - ROADMAP LM4)
+				int questNo = 0;
+				System.Text.RegularExpressions.Match qm = System.Text.RegularExpressions.Regex.Match(verb, @"^(quest|step)([2-9])$");
+				if (qm.Success) { questNo = int.Parse(qm.Groups[2].Value) - 1; verb = qm.Groups[1].Value; }
 				if (verb == "wait") { for (int i = 0; i < Math.Max(1, t.Length > 1 ? (int)F(t[1]) : 1); i++) yield return null; continue; }
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
@@ -971,6 +986,7 @@ namespace DynamicIslands
 					{
 						case "new":
 							pendingQuest = null;
+							pendingMore.Clear();
 							DynamicIslands.NewIsland();
 							SetOrigin(new Vector2(500f, 500f));
 							break;
@@ -1339,11 +1355,11 @@ namespace DynamicIslands
 							if (eq <= 0) { error = "quest: field=text"; break; }
 							string field = rest.Substring(0, eq).Trim().ToLowerInvariant(), value = Unescape(rest.Substring(eq + 1)).Trim();
 							// (as the quest window: its fields are kept until the quest has a step - one without steps is no quest)
-							if (pendingQuest == null) pendingQuest = IslandQuest.From(DynamicIslands.currentIslandProps);
-							IslandQuest q = pendingQuest;
+							IslandQuest q = PendingQuest(questNo);
 							if (field == "title") q.Title = value; else if (field == "intro") q.Intro = value; else if (field == "done") q.Done = value; else if (field == "reward") q.Reward = value;
 							else { error = "quest: title, intro, done or reward"; break; }
-							if (q.Exists) IslandSettingsUndo.Change(() => QuestEditorWindow.Apply(q));
+							int qn = questNo;
+							if (q.Exists) IslandSettingsUndo.Change(() => { q.To(DynamicIslands.currentIslandProps, qn); EditorUI.RefreshIsland(); });
 							break;
 						}
 						case "step":
@@ -1353,10 +1369,10 @@ namespace DynamicIslands
 							if (p.Length < 4) { error = "step: type|target|count|text"; break; }
 							if (!IslandQuest.Types.Contains(p[0].Trim())) { error = "step: no step type '" + p[0].Trim() + "' (" + string.Join(", ", IslandQuest.Types) + ")"; break; }
 							var step = new IslandQuest.Step { Type = p[0].Trim(), Target = p[1].Trim(), Count = Math.Max(1, (int)F(p[2])), Text = Unescape(string.Join("|", p.Skip(3).ToArray())).Trim() };
-							if (pendingQuest == null) pendingQuest = IslandQuest.From(DynamicIslands.currentIslandProps);
-							IslandQuest sq = pendingQuest;
+							IslandQuest sq = PendingQuest(questNo);
 							sq.Steps.Add(step);
-							IslandSettingsUndo.Change(() => QuestEditorWindow.Apply(sq));
+							int sn = questNo;
+							IslandSettingsUndo.Change(() => { sq.To(DynamicIslands.currentIslandProps, sn); EditorUI.RefreshIsland(); });
 							break;
 						}
 						case "questbring":

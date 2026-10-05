@@ -995,6 +995,13 @@ while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet 
 **Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 10 steps in order, a
 reward and a closing message.
 
+**Several quests on one island:** the buttons at the top of the quest editor are the island's quests - the **Main
+quest** and **+ Another quest** (up to nine). Each has its own steps, reward and messages and is done on its own;
+what a player does counts for every quest waiting for it. The panel shows the first quest not done yet ("+1 more"
+when others are open), the journal lists each, and world plans and the story wait for the main quest - or for another
+one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up. In recipes:
+`quest2 title=...`, `step2 reach|zone|1|Text`.
+
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
 planks and rope, and when the quest is done it brings a saved island "Old camp" 700 m north, with a message and a

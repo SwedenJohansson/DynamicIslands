@@ -316,15 +316,20 @@ namespace DynamicIslands.Editor
 
 		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
 		/// total, as before).</summary>
-		public static void SendQuestAdd(int islandId, int step, int amount)
+		public static void SendQuestAdd(int islandId, int step, int amount) { SendQuestAdd(islandId, 0, step, amount); }
+
+		/// <summary>Quest n of an island (0 = the main quest): its number goes as a second id (an island's further quests, LM4).</summary>
+		public static void SendQuestAdd(int islandId, int n, int step, int amount)
 		{
 			if (Raft_Network.IsHost) return;
-			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = amount, Name = "add" });
+			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = amount, Name = "add" });
 		}
 
-		public static void SendQuest(int islandId, int step, int progress)
+		public static void SendQuest(int islandId, int step, int progress) { SendQuest(islandId, 0, step, progress); }
+
+		public static void SendQuest(int islandId, int n, int step, int progress)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = progress };
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = progress };
 			if (Raft_Network.IsHost) SendToClients(msg);
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
@@ -427,8 +432,9 @@ namespace DynamicIslands.Editor
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
 							// (a player's amount: the host adds it up and tells everyone the total)
-							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], msg.Index, msg.Count); break; }
-							QuestTracker.Apply(msg.Ids[0], msg.Index, msg.Count);
+							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
+							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
+							QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg);
 						}
 						break;

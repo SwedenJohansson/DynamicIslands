@@ -104,7 +104,9 @@ namespace DynamicIslands.Editor
 			{
 				case "start": when = "start"; break;
 				case "km": case "day": when = When + ":" + Part(WhenArg); break;
-				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Text(WhenArg); break; // (a zone may be called "cave:1": the reading joins what comes after the island again)
+				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Text(WhenArg); break;
+				// ("quest:<island>:2" - the island's second quest, ROADMAP LM4; the main quest without a number, as before)
+				case "quest": when = "quest:" + Part(WhenRef.Length > 0 ? WhenRef : Self) + (WhenArg.Trim().Length > 0 ? ":" + Text(WhenArg) : ""); break; // (a zone may be called "cave:1": the reading joins what comes after the island again)
 				default: when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : (When == "rule" ? "" : Self)); break;
 			}
 			string where = Where == "near" ? "near:" + Part(WhereRef.Length > 0 ? WhereRef : Self) + ":" + Num(Distance) + ":" + Part(Direction) : Where + ":" + Num(Distance);
@@ -930,8 +932,9 @@ namespace DynamicIslands.Editor
 			switch (r.When)
 			{
 				case "quest":
-					int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
-					return steps > 0 && QuestTracker.StepOf(e) >= steps;
+					// ("quest" = the main quest; "quest 2".. = the island's further quests - ROADMAP LM4)
+					int qn = r.WhenArg.Trim().Length > 0 ? Mathf.Clamp((int)Number(r.WhenArg) - 1, 0, IslandQuest.MaxQuests - 1) : 0;
+					return QuestTracker.IsDone(e, qn);
 				case "step": return QuestTracker.StepOf(e) >= Mathf.Max(1, (int)Number(r.WhenArg));
 				case "zone":
 					// (any zone of that name: with two zones called 'gate' the quest counted either, the rule only the first)

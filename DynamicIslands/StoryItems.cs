@@ -395,6 +395,21 @@ namespace DynamicIslands.Editor
 				List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)).ToList();
 				list.Add(new Quest { Name = Behaviours.IslandTitle(e) + (q.Title.Length > 0 ? " \u2013 " + q.Title : ""), Group = Met, Done = same.Any(x => QuestTracker.StepOf(x) >= q.Steps.Count) });
 			}
+			// The islands' further quests (ROADMAP LM4), each on its own line
+			var further = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Failed || !further.Add(e.HostName)) continue;
+				int count = QuestTracker.QuestsOf(e);
+				List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)).ToList();
+				for (int n = 1; n < count; n++)
+				{
+					IslandQuest q = QuestTracker.QuestOf(e, n);
+					if (!q.Exists) continue;
+					int qn = n;
+					list.Add(new Quest { Name = Behaviours.IslandTitle(e) + " \u2013 " + (q.Title.Length > 0 ? q.Title : "quest " + (n + 1)), Group = Met, Done = same.Any(x => QuestTracker.IsDone(x, qn)) });
+				}
+			}
 			return list;
 		}
 
