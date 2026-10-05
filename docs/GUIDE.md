@@ -1023,7 +1023,10 @@ Select any object → **Behaviour + events...**. No code needed:
   Preview in the editor). A spin turns around the vertical, or with **Own axis** around the object's own up axis:
   tilt it first - a water wheel, a windmill's blades, a fan (Tide Farm's wheel in the library).
 - **At first:** there, or **hidden until shown** (a hidden creature spot is an ambush).
-- **Players can use it:** Raft's "press E" hint with your own text ("Pull the lever").
+- **Players can use it:** Raft's "press E" hint with your own text ("Pull the lever"). With a **keypad code** (the
+  field under Behaviour & events in the object panel; `lock.code` in recipes) a keypad opens first, as on Tangaroa:
+  the right digits run the object's use (its checks and actions), a wrong code says so, and once opened it stays open
+  for everyone. Put the code on a note somewhere on the island.
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, or all the animals of a
   spot are defeated → show / hide objects, open / close doors, say a message, give items, play a sound, teleport the
@@ -3009,4 +3012,5 @@ script that makes them do something (`CIStoryAudit` writes the list).
 | Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music |
 | The Receiver's frequencies and the story chain | World plans and Raft's story chain (chapters 10-11) |
 | Character unlocks, cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
-| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane and keypad code | Build them as **sequences**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill), a code read from notes and entered as story items. Raft's own mini-games are on the roadmap |
+| Keypads with a code (Tangaroa, Vasagatan) | A **keypad code** on any usable object (chapter 7) |
+| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Build them as **sequences**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). Raft's own mini-games are on the roadmap |

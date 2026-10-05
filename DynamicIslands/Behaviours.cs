@@ -350,7 +350,9 @@ namespace DynamicIslands.Editor
 			{
 				cooldown = Time.time + 0.5f;
 				if (hints != null) hints.HideDisplayTexts();
-				Behaviours.Fire(ContentState.EntryOf(transform), Ref != null ? Ref.Index : -1, "use", true);
+				// (a keypad code lock: the keypad first - CodeLock)
+				if (Ref != null && CodeLock.HasCode(Ref.Props)) CodeLock.Use(ContentState.EntryOf(transform), Ref.Index, ObjectProps.Get(Ref.Props, CodeLock.Code), transform);
+				else Behaviours.Fire(ContentState.EntryOf(transform), Ref != null ? Ref.Index : -1, "use", true);
 			}
 		}
 

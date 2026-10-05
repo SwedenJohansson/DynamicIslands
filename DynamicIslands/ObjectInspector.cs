@@ -123,6 +123,13 @@ namespace DynamicIslands.Editor
 			t.lineSpacing = 1.05f;
 			Button b = UIKit.Button(g, "Behaviour & events...", () => BehaviourWindow.Open(target), "A name, movement (spin, bob, a door or lift), hidden at first, players can use it, collision, and what happens when...", -1, 26f, 13);
 			if (BehaviourProps.Any(target.Props)) UIKit.SetActive(b, true);
+			// A keypad code lock (CodeLock): players type the code before the use runs
+			if (ObjectProps.Get(target.Props, BehaviourProps.Use).Length > 0)
+			{
+				InputField code = UIKit.Field(g, "Keypad code (none)", ObjectProps.Get(target.Props, CodeLock.Code), 26f, "Digits a player types on a keypad before using it (Tangaroa's launch keypad, Vasagatan's code): put the code on a note somewhere. Empty: no keypad");
+				code.contentType = InputField.ContentType.IntegerNumber;
+				code.onEndEdit.AddListener(v => Set(target, CodeLock.Code, v.Trim().Length > 0 ? v.Trim() : null, null));
+			}
 		}
 
 		/// <summary>Raft's zipline line: where its far end stands (ZiplineEnds; in a world Raft makes the line there).</summary>
