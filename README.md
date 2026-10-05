@@ -165,7 +165,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 
 **EDITOR** in the main menu (or `LoadEditor`) opens it. A loading box covers the screen until it is ready ("Opening the editor", then "Loading Raft's objects from its islands" with a bar): a few seconds the first time after starting Raft, less after that.
 
-The screen has a **top bar**, a **tool panel** on the left (it scrolls when a tall inspector doesn't fit the screen), the **object browser** on the right (Objects tab) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
+The screen has a **top bar**, a **tool panel** on the left (it scrolls when a tall inspector doesn't fit the screen), the **object browser** on the right (Objects tab; its **Things to gather** category, and **Scatter** under it: many of the last picked object round where you look, on land or under water, kept off the island's objects, one undo) and a **status bar** at the bottom. The status bar explains the current tool, or the button under the mouse. Related buttons sit together in bordered groups, and the active choice of a group is lit like Raft's chosen tab (the others are dark). Main buttons (Save, Done) are Raft's green craft button, deleting ones its red button.
 
 | Where | Control | What it does |
 |---|---|---|

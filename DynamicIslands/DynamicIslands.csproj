@@ -172,6 +172,9 @@
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
+    <Compile Include="DevTestsScatter.cs" />
+    <Compile Include="DevTestsPlanBlueprints.cs" />
+    <Compile Include="ScatterTool.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
     <Compile Include="EditorCamera.cs" />

@@ -440,6 +440,15 @@ trees and rocks, Raft's 88 building blocks (to build huts or your own abandoned 
 on a raft, and the objects of Raft's story islands (they load the first time you open their category). **Search**
 finds objects in every category.
 
+**Things to gather** is the category of what a player can pick, cut or dig: palms, mangoes, pine and birch to cut,
+pineapples, melons and berry bushes, flowers, and Raft's finds on the sea floor - sand, clay, stone, iron and copper
+ore, scrap, giant clams, silver algae, seaweed. They work for the player as on Raft's own islands.
+
+**Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
+looking at: **how many**, within a **radius** in metres, and **keep** - not within that many metres of anything
+already on the island (its buildings, its quest's objects, its plants). **On land / Under water** says where they
+go (Raft's sea finds always go under water). Each is set down on the ground as the placer does; when the area has no
+room for all of them it says how many it placed, and **Ctrl+Z** takes the whole scatter back.
 Objects from Raft's islands are placed **standing straight**: one that leant a little where Raft has it (a ladder
 against a wall) stands up straight; a bigger lean - more than 25°, a boulder lying on its side - is its look and stays.
 

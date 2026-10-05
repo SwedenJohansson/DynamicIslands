@@ -53,7 +53,37 @@ namespace DynamicIslands.Editor
 			var le = UIKit.Size(scroll.gameObject, -1, -1);
 			le.flexibleHeight = 1f;
 
+			// (the scatter: many of the last picked object round the point the camera looks at - things to gather, bushes,
+			// rocks - kept off what is already on the island; one undo takes them back: ROADMAP LM11, 2026-10-05)
+			RectTransform sc = UIKit.Row(panel, 28f, 4f, "Scatter");
+			scatterButton = UIKit.Button(sc, "Scatter", ScatterNow, "Scatter many of the last object you picked round the middle of your view", 70f, 26f, 12);
+			scatterCount = UIKit.Field(sc, "how many", "8", 26f, "How many to scatter");
+			scatterRadius = UIKit.Field(sc, "radius m", "15", 26f, "Within this many metres of the middle of your view");
+			scatterFree = UIKit.Field(sc, "keep m", "3", 26f, "Not within this many metres of anything already on the island (its buildings, its quest's objects)");
+			waterButton = UIKit.Button(sc, "On land", () => { scatterWater = !scatterWater; UIKit.LabelOf(waterButton).text = scatterWater ? "Under water" : "On land"; },
+				"Where they go: on land, or on the sea floor (Raft's sea finds: sand, clay, stone, ores, scrap, clams, seaweed)", 86f, 26f, 12);
 			PlaceableCatalog.Changed += MarkDirty;
+		}
+
+		Button scatterButton, waterButton;
+		InputField scatterCount, scatterRadius, scatterFree;
+		bool scatterWater;
+		/// <summary>The object last picked in the list: what Scatter spreads.</summary>
+		public static string LastPicked = "";
+
+		void ScatterNow()
+		{
+			if (LastPicked.Length == 0) { DynamicIslands.Notify("Pick an object in the list first (a pineapple, a palm, a rock...), then Scatter", true); return; }
+			Vector3? centre = ScatterTool.ViewCentre();
+			if (centre == null) { DynamicIslands.Notify("Look at the island (or the sea floor) where they should go, then Scatter", true); return; }
+			int n; float r, keep;
+			if (!int.TryParse(scatterCount.text, out n)) n = 8;
+			if (!float.TryParse(scatterRadius.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r)) r = 15f;
+			if (!float.TryParse(scatterFree.text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out keep)) keep = 3f;
+			bool water = scatterWater || ScatterTool.OnlyUnderWater(LastPicked);
+			int made = ScatterTool.Scatter(LastPicked, centre.Value, Mathf.Clamp(n, 1, 200), Mathf.Clamp(r, 1f, 300f), Mathf.Clamp(keep, 0f, 30f), water, Environment.TickCount).Count;
+			DynamicIslands.Notify(made == 0 ? "No room for " + PlaceableCatalog.DisplayName(LastPicked) + " there (" + (water ? "under water" : "on land") + ", away from other objects)"
+				: "Scattered " + made + " " + PlaceableCatalog.DisplayName(LastPicked) + (made < n ? " (no room for more)" : "") + " - Ctrl+Z takes them back");
 		}
 
 		void OnDestroy()
@@ -172,7 +202,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A category header: click to open or close it (opening loads its island scenes if needed).</summary>
 		void Header(string category, int count, bool isOpen, bool unloaded)
 		{
-			Button b = UIKit.Button(content, (isOpen ? "\u25BC  " : "\u25BA  ") + category, () => Toggle(category), unloaded ? "Objects from Raft's own islands: they load when you open the category" : null, -1, 28f, 13);
+			Button b = UIKit.Button(content, (isOpen ? "\u25BC  " : "\u25BA  ") + (category == PlaceableCatalog.HarvestableCategory ? "Things to gather" : category), () => Toggle(category), unloaded ? "Objects from Raft's own islands: they load when you open the category" : null, -1, 28f, 13);
 			Text t = UIKit.LabelOf(b);
 			t.alignment = TextAnchor.MiddleLeft;
 			t.fontStyle = FontStyle.Bold;
@@ -249,6 +279,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Starts placing an object (loading its island scene first if needed).</summary>
 		public void Pick(string name)
 		{
+			LastPicked = name;
 			if (PlaceableCatalog.IsLoaded(name)) { StartPlacing(name); return; }
 			DynamicIslands.instance.StartCoroutine(LoadThenPlace(name));
 		}
