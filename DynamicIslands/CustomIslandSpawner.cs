@@ -488,13 +488,19 @@ namespace DynamicIslands.Editor
 			Vector3 dir = Flat(entry.Position - raft);
 			if (dir.sqrMagnitude < 1f) dir = Vector3.forward;
 			dir.Normalize();
-			for (int i = 0; i < 8; i++)
+			// (just clear of the other islands' land: a plan's island was placed near another one, closer than minSpacing)
+			for (int i = 0; i <= 8; i++)
 			{
-				if (Rejects(entry.Position, radius, raft, false, -1f, entry) == null) return;
+				if (Rejects(entry.Position, radius, raft, false, 0f, entry) == null) return;
+				if (i == 8) break;
 				Vector3 at = entry.Position + dir * 40f;
 				Debug.Log("[CUSTOM ISLANDS] Generated island '" + entry.Name + "' is bigger than estimated (" + radius.ToString("F0") + " m): moved out to " + at.ToString("F0"));
 				entry.Position = at;
 			}
+			// (still in the way of something after the last move - one of Raft's islands further out: a free spot ahead instead)
+			Vector3? free = SpotAhead(raft, radius, entry.Position.y, entry);
+			if (free.HasValue) entry.Position = free.Value;
+			Debug.Log("[CUSTOM ISLANDS] Generated island '" + entry.Name + "': no room along its line" + (free.HasValue ? ", moved to " + free.Value.ToString("F0") : ", left at " + entry.Position.ToString("F0")));
 		}
 
 		/// <summary>

@@ -319,10 +319,10 @@ namespace DynamicIslands.Editor
 						{
 							string[] p = value.Split('|');
 							t.FlyingChance = Mathf.Clamp01(Num(p[0]));
-							if (p.Length > 1) { float a, b; Range(p[1], out a, out b); t.FlyingMin = a; t.FlyingMax = b; }
+							if (p.Length > 1) { float a, b; Range(p[1], out a, out b); t.FlyingMin = Mathf.Clamp(a, 0f, IslandSpawner.MaxElevation); t.FlyingMax = Mathf.Clamp(b, 0f, IslandSpawner.MaxElevation); }
 							break;
 						}
-						case "sunken": t.SunkenDepth = Mathf.Max(0f, Num(value)); break;
+						case "sunken": t.SunkenDepth = Mathf.Clamp(Num(value), 0f, -IslandSpawner.MinElevation); break;
 						case "settings":
 							settings = value.ToLowerInvariant();
 							if (settings != "ranges" && settings != "random" && MapTypes.BuiltIn(settings) == null) throw new FormatException("settings = ranges, random or a built-in map type (no '" + value + "')");
@@ -461,6 +461,9 @@ namespace DynamicIslands.Editor
 					if (r.Kind == "quest") { quest = p; continue; }
 					if (r.Kind == "step") { steps.Add(Part(p, 0) + "|" + Part(p, 1) + "|" + Mathf.RoundToInt(Part(p, 2, 1f)) + "|" + Text(Part(p, 3))); continue; }
 					Vector2? at = Spot(k, s, r.At, last);
+					// (a chest, note or zone a quest step may need: at the island's top when its spot isn't on this island -
+					// no lagoon, fewer islets - rather than a quest that can't be finished)
+					if (!at.HasValue && (r.Kind == "chest" || r.Kind == "note" || r.Kind == "zone")) at = k.Highest(k.Mid, s.Radius * 0.5f);
 					if (!at.HasValue) continue;
 					last = at.Value;
 					float lift = r.At.Lift;

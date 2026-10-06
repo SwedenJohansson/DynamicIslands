@@ -520,7 +520,8 @@ namespace DynamicIslands.Editor
 					for (float z = -15f; z <= 15f && clear; z += 3f)
 					{
 						Vector3 v = q * new Vector3(x, 0f, z);
-						clear = k.Ground(c.Value + new Vector2(v.x, v.z)) < k.Sea - 4f;
+						float g = k.Ground(c.Value + new Vector2(v.x, v.z));
+						clear = g < k.Sea - 4f && g > k.Sea - 60f; // (and not past a drop-off: the legs, 12 of 6 m from the deck, would end above the sea floor)
 					}
 				if (clear) site = c;
 			}
@@ -669,6 +670,8 @@ namespace DynamicIslands.Editor
 			Func<Func<float, float, bool>, float, Vector2?> spot = (ok, apart) => k.Find(k.Mid, s.Radius * 0.85f, ok, apart);
 			// The hoard: high up and out of the way
 			Vector2 hoard = k.Highest(k.Mid, s.Radius * 0.6f);
+			// (not on what was built at the top - a remade tower or lighthouse: the chest's clearing took its floors, walls and ladders)
+			if (!k.IsFree(hoard, 6f)) hoard = k.Find(k.Mid, s.Radius * 0.6f, MapKit.Dry, 6f) ?? hoard;
 			if (want == 1)
 			{
 				if (caveHoard != null) steps.Add("open|Cave hoard|1|Find the hoard in the island's cave");
@@ -1027,7 +1030,7 @@ namespace DynamicIslands.Editor
 				foreach (float z in new[] { -3f, 0f, 3f }) { Rt(k, "RT_Fence", c, y0, -6f, z, d, 90f); Rt(k, "RT_Fence", c, y0, 0f, z, d, 90f); }
 			}
 			Rt(k, "LandmarkLadder_6m", c, y0, -1.5f, -4.62f, 0f);
-			Rt(k, "LandmarkLadder_6m", c, y0, -4.5f, -4.62f, 6.3f);
+			Rt(k, "LandmarkLadder_6m", c, y0, -4.5f, -4.62f, 7.3f); // (its top at the top deck, as Ladders puts them: from 6.3 it ended 1 m under it)
 			if (lighthouse)
 			{
 				Rt(k, "TP_RotatingRedLight", c, y0, -3f, 0f, 13.3f);
@@ -1507,6 +1510,7 @@ namespace DynamicIslands.Editor
 				planned = new IslandFile { WaterLevel = s.WaterLevel, TerrainSize = data.size, HeightmapResolution = hres, Heights = heights };
 				planned.Objects = PlanAll(s, metres, data.size, report);
 				report.Built = GenBuildings.Apply(planned, s);
+				GenGather.Apply(planned, s, s.Seed); // (as CreateFile: the same seed and settings, the same island)
 				heights = planned.Heights;
 			}
 			data.SetHeights(0, 0, heights);
