@@ -114,6 +114,17 @@ namespace DynamicIslands
 			if (terraineditor.terrain != null) TerrainPainter.SetStyle(terraineditor.terrain, currentStyle);
 			EditorUI.RefreshStyle();
 		}
+
+		/// <summary>A second style mixed into the island being edited (its textures are paint layers 5-8, ROADMAP E6), or -1; saved with it.</summary>
+		public static int currentMixStyle = -1;
+
+		/// <summary>Mixes a second style into the island being edited (-1: none): the terrain gets its four textures as layers 5-8 (TerrainBrushes.SetEditorMix is the undoable one).</summary>
+		public static void SetEditorMixStyle(int mix)
+		{
+			currentMixStyle = mix < 0 ? -1 : Mathf.Clamp(mix, 0, TerrainPainter.Styles.Length - 1);
+			if (terraineditor.terrain != null) TerrainPainter.SetStyle(terraineditor.terrain, currentStyle, currentMixStyle);
+			EditorUI.RefreshStyle();
+		}
 		public static LoadSceneManager loadSceneManagerinstance;
 
 		public AssetBundle mainbundle;
@@ -561,6 +572,7 @@ namespace DynamicIslands
 			// at sea level
 			currentElevation = 0f;
 			SetEditorStyle(TerrainPainter.Tropical);
+			SetEditorMixStyle(-1);
 			EditorUI.RefreshIsland();
 
 			try { EditorLighting.OnEditorOpened(); EditorUI.RefreshLight(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Editor light: " + e.Message); }
@@ -606,6 +618,7 @@ namespace DynamicIslands
 			currentIslandProps = new Dictionary<string, string>();
 			currentIslandTail = new Dictionary<string, byte[]>();
 			SetEditorStyle(TerrainPainter.Tropical);
+			SetEditorMixStyle(-1);
 			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
 			SetEditorWaterLevel(IslandFile.DefaultWaterLevel);
 			TerrainPainter.Setup(terrain, EditorWaterLevel);
@@ -677,6 +690,7 @@ namespace DynamicIslands
 			island.Elevation = currentElevation;
 			island.Tail = new Dictionary<string, byte[]>(currentIslandTail);
 			island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
+			island.MixStyle = currentMixStyle >= 0 ? TerrainPainter.StyleName(currentMixStyle) : "";
 			island.Props = new Dictionary<string, string>(currentIslandProps);
 			return island;
 		}
@@ -808,6 +822,7 @@ namespace DynamicIslands
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
 				SetEditorWaterLevel(island.WaterLevel);
 				SetEditorStyle(TerrainPainter.StyleIndex(island.Style)); // before painting, so the right textures go on
+				SetEditorMixStyle(island.HasMix ? TerrainPainter.StyleIndex(island.MixStyle) : -1);
 				if (island.HasPaint)
 				{
 					TerrainPainter.ApplySaved(terrain, island.GetAlphamapBlock(0, 0, island.AlphamapResolution));

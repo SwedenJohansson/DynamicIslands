@@ -50,6 +50,11 @@ namespace DynamicIslands.Editor
 	///     int32    island property count, then per property: string key, string value (IslandProps: author, description...)
 	///     int32    count of objects with properties, then per object: int32 index in the object list above,
 	///              int32 property count, then per property: string key, string value (creatures, notes, tints: ObjectProps)
+	///   tagged tail blocks this version writes (see Tail):
+	///     "mix"    a second style mixed in as texture layers 5-8 (ROADMAP E6): string style name, int32 alphamap
+	///              resolution (R), byte[4*R*R] weights of layers 5-8, layer-major then row-major. The paint above then
+	///              holds layers 1-4 with layers 5-8 added onto them (5 onto 1, 6 onto 2...), so a version without mixed
+	///              styles shows the first style's matching texture there; this version takes layers 5-8 back out.
 	/// </summary>
 	public class IslandFile
 	{
@@ -86,6 +91,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Island style (TerrainPainter.Styles: "Snowy", "Desert"...); empty = tropical.</summary>
 		public string Style = "";
 
+		/// <summary>
+		/// A second style mixed in (ROADMAP E6): its four textures are paint layers 5-8 (AlphamapLayers 8), saved in the
+		/// tail's "mix" block. Empty = none.
+		/// </summary>
+		public string MixStyle = "";
+
+		/// <summary>The tail tag of the mixed style's paint (layers 5-8).</summary>
+		public const string MixTag = "mix";
+
+		public bool HasMix { get { return !string.IsNullOrEmpty(MixStyle) && HasPaint && AlphamapLayers == TerrainPainter.MixLayerCount; } }
+
 		/// <summary>Island-wide settings (format 4), see IslandProps for the keys.</summary>
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
 
@@ -111,8 +127,20 @@ namespace DynamicIslands.Editor
 			{
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
+				// (a mixed style: four layers in the paint block as before, layers 5-8 in the tail)
+				byte[] paint = Alphamaps;
+				int paintLayers = AlphamapLayers;
+				var tail = new Dictionary<string, byte[]>(Tail ?? new Dictionary<string, byte[]>());
+				tail.Remove(MixTag);
+				if (HasPaint && AlphamapLayers > TerrainPainter.LayerCount)
+				{
+					byte[] extra;
+					paint = FoldPaint(out extra);
+					paintLayers = TerrainPainter.LayerCount;
+					if (HasMix) tail[MixTag] = MixBlock(extra);
+				}
 				// Each file uses the oldest format that holds what it needs, so simple islands stay readable by older versions of the mod
-				bool v4 = NeedsFormat4 || (Tail != null && Tail.Count > 0), v3 = v4 || NeedsFormat3;
+				bool v4 = NeedsFormat4 || tail.Count > 0, v3 = v4 || NeedsFormat3;
 				header.Write(v4 ? 4 : v3 ? 3 : 2);
 				header.Flush();
 
@@ -140,8 +168,8 @@ namespace DynamicIslands.Editor
 					if (HasPaint)
 					{
 						w.Write(AlphamapResolution);
-						w.Write(AlphamapLayers);
-						w.Write(Alphamaps);
+						w.Write(paintLayers);
+						w.Write(paint);
 						w.Write(PaintMask != null);
 						if (PaintMask != null) w.Write(PaintMask);
 					}
@@ -152,9 +180,9 @@ namespace DynamicIslands.Editor
 						List<int> withProps = Enumerable.Range(0, Objects.Count).Where(i => Objects[i].Props != null && Objects[i].Props.Count > 0).ToList();
 						w.Write(withProps.Count);
 						foreach (int i in withProps) { w.Write(i); WriteProps(w, Objects[i].Props); }
-						if (Tail != null && Tail.Count > 0)
+						if (tail.Count > 0)
 						{
-							foreach (var kv in Tail.Where(kv => !string.IsNullOrEmpty(kv.Key)))
+							foreach (var kv in tail.Where(kv => !string.IsNullOrEmpty(kv.Key)))
 							{
 								byte[] data = kv.Value ?? new byte[0];
 								w.Write(kv.Key); w.Write(data.Length); w.Write(data);
@@ -272,9 +300,75 @@ namespace DynamicIslands.Editor
 							}
 						}
 						catch (EndOfStreamException) { }
+						island.ReadMix();
 					}
 					return island;
 				}
+			}
+		}
+
+		/// <summary>
+		/// The paint as saved: layers 1-4 with layers 5-8 added onto the matching ones (what an older version shows), and
+		/// layers 5-8 on their own (extra).
+		/// </summary>
+		byte[] FoldPaint(out byte[] extra)
+		{
+			int n = AlphamapResolution * AlphamapResolution, four = TerrainPainter.LayerCount;
+			var folded = new byte[four * n];
+			extra = new byte[four * n];
+			for (int l = 0; l < AlphamapLayers; l++)
+				for (int p = 0; p < n; p++)
+				{
+					int slot = l % four;
+					folded[slot * n + p] = (byte)Math.Min(255, folded[slot * n + p] + Alphamaps[l * n + p]);
+					if (l >= four && l < four * 2) extra[(l - four) * n + p] = Alphamaps[l * n + p];
+				}
+			return folded;
+		}
+
+		byte[] MixBlock(byte[] extra)
+		{
+			using (var m = new MemoryStream())
+			{
+				using (var w = new BinaryWriter(m))
+				{
+					w.Write(MixStyle ?? "");
+					w.Write(AlphamapResolution);
+					w.Write(extra);
+				}
+				return m.ToArray();
+			}
+		}
+
+		/// <summary>The tail's "mix" block, if any: the mixed style, and the paint back to eight layers (it is taken out of Tail, and written again from the paint on Save).</summary>
+		void ReadMix()
+		{
+			byte[] block;
+			if (Tail == null || !Tail.TryGetValue(MixTag, out block)) return;
+			Tail.Remove(MixTag);
+			try
+			{
+				using (var r = new BinaryReader(new MemoryStream(block)))
+				{
+					string style = r.ReadString();
+					int res = r.ReadInt32(), four = TerrainPainter.LayerCount, n = res * res;
+					if (string.IsNullOrEmpty(style) || !HasPaint || res != AlphamapResolution || AlphamapLayers != four) return;
+					byte[] extra = ReadExactly(r, four * n);
+					var all = new byte[four * 2 * n];
+					for (int l = 0; l < four; l++)
+						for (int p = 0; p < n; p++)
+						{
+							all[l * n + p] = (byte)Math.Max(0, Alphamaps[l * n + p] - extra[l * n + p]);
+							all[(l + four) * n + p] = extra[l * n + p];
+						}
+					Alphamaps = all;
+					AlphamapLayers = four * 2;
+					MixStyle = style;
+				}
+			}
+			catch (Exception e) when (e is EndOfStreamException || e is InvalidDataException)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] The island's mixed style couldn't be read (" + e.Message + "): its first style's textures are shown");
 			}
 		}
 
