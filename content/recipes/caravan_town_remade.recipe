@@ -3,9 +3,10 @@
 # "a variation of it"). The market in the inlet between the west mesa and the mayor's pillar; the town lift - a tower
 # of the radio tower's pillars and decks with ladders - up the west mesa to the upper town of stacked trailers; the
 # mayor's pillar beside it, its top a yard of trailers stacked three high, its bridge pulled in by the mayor; a trailer
-# sunk in the bay, an air pocket beside it. Quest "The Mayor's Toll": the market, the toll notice, the winch's crank
-# from the sunken trailer, the bridge slid back across, the mayor's hyenas, the white screecher on his roof, his key in
-# her nest and his chest (Caravan Town's blueprints: the firework, the engine controls, the metal detector).
+# sunk in the bay, an air pocket beside it. Quest "The Mayor's Toll" (12 steps): the market, the toll notice, the
+# market's ledger, the air pocket by the sunken trailer, the diver's crate and the winch's crank in it, the bridge slid
+# back across, the mayor's hyenas, his roof, the white screecher on it, his key in her nest and his chest (Caravan
+# Town's blueprints: the firework, the engine controls, the metal detector).
 #
 # Built by the recipe player (CIRecipe caravan_town_remade) through the editor's own operations.
 include lib_sea
@@ -138,6 +139,7 @@ prop market zone.message=The market: trailers, crates, an empty stall - and a to
 prop airpocket zone.id=airpocket
 prop airpocket zone.radius=3
 prop airpocket zone.air=1
+prop airpocket zone.message=An air pocket by the sunken trailer - breathe, then search round her.
 prop mayortower zone.id=mayortower
 prop mayortower zone.radius=7
 prop mayortower zone.message=The mayor's pillar. Something growls behind his trailers.
@@ -159,11 +161,15 @@ quest title=The Mayor's Toll
 quest intro=Red stacks of trailers, a market in the inlet - and the mayor's pillar with its bridge pulled in. The market is the place to start.
 step reach|market|1|Come into the market in the inlet
 step read|Toll notice|1|Read the toll notice by the market
-step collect|story:crank|1|Dive to the sunken trailer in the bay for the winch's crank
+step read|Market ledger|1|Leaf through the market's ledger - the mayor's cut on every page
+step reach|airpocket|1|Dive to the sunken trailer in the bay - breathe in the air pocket by it
+step open|Diver's crate|1|Open the diver's crate by his sunken trailer
+step collect|story:crank|1|Bring the winch's crank up from the bay
 step reach|mayortower|1|Ride the lift up, wind the bridge across and cross to the mayor's pillar
 step kill|Hyena|3|Deal with the mayor's three hyenas
+step reach|roof|1|Climb the ladder to the mayor's roof
 step kill|Screecher|1|Drive the white screecher off his roof
-step collect|story:mayorkey|1|Take the mayor's key from her nest
+step open|Screecher's nest|1|Take the mayor's key from her nest of wire and rags
 step open|Mayor's chest|1|Open the mayor's chest
 quest done=The chest opens: the fireworks' plans, the engine controls', a metal detector's. Down in the market, someone has already started to sweep.
 quest reward=Plank*8;Scrap*6;Rope*3

@@ -4,25 +4,29 @@ island Caravan Town Remade
 expect step 0
 expect title The Mayor's Toll
 
-# Into the market: the toll notice
+# Into the market: the toll notice, the ledger
 at -9 -1
 zone market
 expect step 1
 read Toll notice
 expect step 2
+read Market ledger
+expect step 3
 
 # The winch has no crank yet
 at -16.5 8
 use winch
 expect message no crank
-expect step 2
+expect step 3
 
-# Down into the bay: the diver's crate by the sunken trailer
+# Down into the bay: the air pocket, the diver's crate by the sunken trailer
 at -12.5 -12 h=-1
 air airpocket
+zone airpocket
+expect step 4
 open Diver's crate
 expect story crank 1
-expect step 3
+expect step 6
 
 # Up the lift - its three ladders - and out onto the upper town; the bridge wound across, over to the mayor's pillar
 climb -12.5 -5.6 h=1.6
@@ -34,18 +38,19 @@ expect message slides out
 wait 4
 walk -15.5 6.5 to -9.5 6.5 to -3 6.5 to 0 3 h=21.9
 zone mayortower
-expect step 4
+expect step 7
 
 # The mayor's hyenas; up the ladder to his roof, where the white screecher rises from her nest
 kill Hyena
-expect step 5
+expect step 8
 climb 3 -2.6 h=21.9
 zone roof
+expect step 9
 kill Screecher
-expect step 6
+expect step 10
 open Screecher's nest
 expect story mayorkey 1
-expect step 7
+expect step 11
 open Mayor's chest
 expect item Blueprint_EngineControls 1
 expect item Blueprint_MetalDetector 1

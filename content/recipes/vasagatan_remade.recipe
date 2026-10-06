@@ -2,9 +2,10 @@
 # Raft's Vasagatan made anew: its island remade with the generator's "Randomize existing" - a long ridge between two
 # sandbank arms - and a ship broken in two on the reef of its west lagoon: her bow run up on a sandbar, sand to the
 # rails and full of rats, her stern sunk in the bay below the reef, the captain's cabin torn open; the crew's camp in
-# the dunes of the west arm, their distress flag on the dune's top. Quest "Two Halves of a Ship": the camp, the first mate's
-# diary, the crowbar, the captain's key from the sunk stern, the rats and their king, the bow's jammed wheelhouse door
-# and the captain's safe (the motor wheel's and steering wheel's blueprints, as Raft's Vasagatan has them).
+# the dunes of the west arm, their distress flag on the dune's top. Quest "Two Halves of a Ship" (10 steps): the camp,
+# the first mate's diary, the tool chest and its crowbar, the sunk stern, its cabin locker and the captain's key, the
+# beached bow, the rats and their king, the bow's jammed wheelhouse door and the captain's safe (the motor wheel's and
+# steering wheel's blueprints, as Raft's Vasagatan has them).
 #
 # Built by the recipe player (CIRecipe vasagatan_remade) through the editor's own operations.
 include lib_sea
@@ -201,9 +202,13 @@ quest title=Two Halves of a Ship
 quest intro=A broken ship on a reef: her bow on a sandbar, her stern under the bay. The crew's camp in the dunes is the place to start.
 step reach|camp|1|Find the crew's camp in the dunes
 step read|First mate's diary|1|Read the first mate's diary
-step collect|story:crowbar|1|Take the crowbar from the camp's tool chest
-step collect|story:capkey|1|Dive to the sunk stern for the captain's key
-step kill|Rat|5|Clear the rats - and their king - out of the beached bow
+step open|Camp tool chest|1|Open the crew's tool chest by the cold fire
+step collect|story:crowbar|1|Take the crowbar - it opens what is jammed
+step reach|stern|1|Dive to the sunk stern on the bay's floor below the reef
+step open|Captain's cabin locker|1|Search the locker in the captain's torn-open cabin
+step collect|story:capkey|1|Bring up the captain's key on its red cord
+step reach|bow|1|Wade out to the beached bow on the sandbar
+step kill|Rat|5|Clear the rats - and their king - out of the bow's sand
 step open|Captain's safe|1|Force the wheelhouse door and open the captain's safe
 quest done=The ship's papers are yours, and with them the drawings of an engine and a steering wheel. Her last log names a ranger station on a jungle mountain.
 quest reward=Plank*10;Rope*4;Nail*12
