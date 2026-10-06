@@ -508,7 +508,15 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 *The Island tab: style, height in the world, the generator, the name players see, the island's rules and its quest.*
 
 - **Style** and **Height** in the world: **At sea** (0), **Flying** (60 m up) or **Sunken** (30 m under water), or any
-  number. The editor always shows the island at sea level; the height applies in the game.
+  number. The island stays where it is in the editor; the **blue plane moves to where the sea will be** in a world -
+  60 m below a flying island's water line, 30 m above a sunken one's (it can be seen from below too), and back at the
+  water line at 0.
+
+| Sunken (-30 m) | Flying (60 m) |
+|---|---|
+| ![The sea 30 m above the island](images/editor-elevation-sunken.jpg) | ![The sea 60 m below the island](images/editor-elevation-flying.jpg) |
+
+*The same island at two heights: the blue plane is the sea it will meet in a world.*
 - **Shown to players:** the island's **name**, your name and a short welcome. Players see them as a banner.
 - **Rules:** how many in-game days until chopped trees, picked items, killed animals, looted chests and fired zones
   come back on this island (empty = the world's setting, 0 = never).

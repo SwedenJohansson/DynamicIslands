@@ -154,5 +154,42 @@ namespace DynamicIslands
 			foreach (string f in cleanup) try { if (File.Exists(f)) File.Delete(f); } catch { }
 			if (ok) Log("PASS: groups and stamps"); else Fail("groups and stamps");
 		}
+			[ConsoleCommand(name: "CIElevationPreview", docs: "Dev, editor: ROADMAP E2 - the blue sea plane follows the island's height: a saved island opened, Sunken (-30) puts the sea 30 m above its water line, Flying (60) 60 m below, 0 back; pictures shot_elev_sunken.png and shot_elev_flying.png; the island left as it was")]
+		public static void ElevationPreviewCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ElevationPreviewRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
+
+		static IEnumerator ElevationPreviewRoutine(string island)
+		{
+			if (!DynamicIslands.InEditor() || DynamicIslands.WaterPlane == null) { Fail("elevation preview: in the editor"); yield break; }
+			bool ok = true;
+			island = island ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().First(n => !n.StartsWith("ci"));
+			DynamicIslands.LoadIsland(island);
+			// (opening may first load Raft scenes its objects come from: wait until it is open)
+			for (float end = Time.realtimeSinceStartup + 90f; DynamicIslands.currentIslandName != island && Time.realtimeSinceStartup < end; ) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			float before = DynamicIslands.currentElevation;
+			Terrain terrain = terraineditor.terrain;
+			float waterLine = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
+			Vector3 centre = terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
+			Transform cam = Camera.main.transform;
+			foreach (float h in new[] { -30f, 60f, 0f })
+			{
+				IslandSettingsUndo.Change(() => DynamicIslands.currentElevation = h);
+				yield return null; yield return null;
+				float y = DynamicIslands.WaterPlane.transform.position.y;
+				Check(ref ok, Mathf.Abs(y - (waterLine - h)) < 0.05f, "height " + h + " m: the blue plane is at the sea in a world (" + (y - waterLine).ToString("F1") + " m from the water line; terrain " + terraineditor.terrain.transform.position.y.ToString("F1") + ", sea level " + DynamicIslands.EditorWaterLevel.ToString("F1") + ", height " + DynamicIslands.currentElevation + ")");
+				if (h != 0f)
+				{
+					cam.position = centre + new Vector3(-170f, h > 0 ? -20f : 75f, -230f);
+					cam.LookAt(centre + new Vector3(0f, h > 0 ? -25f : -10f, 0f));
+					yield return new WaitForSecondsRealtime(0.6f);
+					Screenshot(new[] { h > 0 ? "elev_flying" : "elev_sunken" });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
+			IslandSettingsUndo.Change(() => DynamicIslands.currentElevation = before);
+			yield return null;
+			EditorAutosave.Saved(island); // (only the test's changes: the island's file is as it was)
+			if (ok) Log("PASS: elevation preview"); else Fail("elevation preview");
+		}
 	}
 }

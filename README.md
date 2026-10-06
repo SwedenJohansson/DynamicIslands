@@ -194,7 +194,7 @@ The screen has a **top bar**, a **tool panel** on the left (it scrolls when a ta
 | Keys | Ctrl+S / Ctrl+O | Save / open |
 | Camera | | Like Unity's scene view: **right-drag** to look around (dragging up tilts the view down; while held: **WASD** flies where you look, **Q/E** down and up, the **wheel** sets the flying speed); **WASD** or arrows alone move over the island at the same height; **Space** / **C** go straight up / down; **middle-drag** pans (the ground follows the cursor); **Alt+left-drag** orbits around the selected objects, or the ground in the middle of the view; the **wheel** zooms towards whatever is under the cursor (never through it; not over a panel); **F** frames the selection, or the whole island when nothing is selected; **Shift** is three times faster. Moves are smoothed and faster high up; the camera stays above the ground but can dive under the sea. |
 
-The blue plane is sea level. Anything below it is under water in game.
+The blue plane is sea level. Anything below it is under water in game. For a flying or sunken island (Island tab > Height) the plane moves to where the sea will be in a world: below a flying island, above a sunken one.
 
 ## The island generator
 

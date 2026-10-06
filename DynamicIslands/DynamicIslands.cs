@@ -46,11 +46,37 @@ namespace DynamicIslands
 		public static void SetEditorWaterLevel(float level)
 		{
 			EditorWaterLevel = Mathf.Clamp(level, 1f, IslandGenerator.BuildArea.y - 10f);
-			if (waterPlane != null)
-			{
-				Vector3 p = waterPlane.transform.position;
-				waterPlane.transform.position = new Vector3(p.x, (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + EditorWaterLevel, p.z);
-			}
+			PlaceWaterPlane();
+		}
+
+		static float planeFor = float.NaN;
+		/// <summary>Tests: the blue sea plane.</summary>
+		internal static GameObject WaterPlane { get { return waterPlane; } }
+
+		/// <summary>
+		/// Editor Y of the sea as the island will meet it in a world (ROADMAP E2): the sea level less the island's height -
+		/// 60 m below a flying island, 30 m above a sunken one. The blue plane is shown there.
+		/// </summary>
+		public static float EditorSeaInWorld { get { return (terraineditor.terrain != null ? terraineditor.terrain.transform.position.y : 0f) + EditorWaterLevel - currentElevation; } }
+
+		/// <summary>The blue plane where the sea will be (again when the island's height or sea level changed).</summary>
+		static void PlaceWaterPlane()
+		{
+			if (waterPlane == null) return;
+			Vector3 p = waterPlane.transform.position;
+			waterPlane.transform.position = new Vector3(p.x, EditorSeaInWorld, p.z);
+			planeFor = currentElevation;
+		}
+
+		/// <summary>Every frame in the editor: the island's height changed (the Island tab, undo, opening an island) - the plane follows.</summary>
+		static void TickWaterPlane()
+		{
+			if (waterPlane == null || currentElevation == planeFor) return;
+			bool first = float.IsNaN(planeFor);
+			PlaceWaterPlane();
+			if (!first && InEditor() && !IslandTest.Busy)
+				Notify(Mathf.Abs(currentElevation) < 0.01f ? "The blue plane is the sea again, at the island's water line"
+					: "The blue plane shows the sea as it will be in a world: " + Mathf.Abs(currentElevation).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " m " + (currentElevation > 0 ? "below" : "above") + " the island's water line");
 		}
 
 		/// <summary>Sets the style of the island being edited: re-skins the editor terrain and relabels the paint buttons.</summary>
@@ -282,6 +308,8 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Levels: " + e); }
 			try { EditorAutosave.Tick(); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Autosave: " + e); }
+			try { TickWaterPlane(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Sea plane: " + e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -713,11 +741,19 @@ namespace DynamicIslands
 				Vector3 size = terraineditor.terrain != null ? terraineditor.terrain.terrainData.size : new Vector3(1000, 600, 1000);
 				plane.transform.position = new Vector3(size.x / 2f, EditorWaterLevel, size.z / 2f);
 				waterPlane = plane;
+				planeFor = float.NaN;
 				plane.transform.localScale = new Vector3(size.x / 10f, 1, size.z / 10f); // Unity plane is 10x10
 				Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
 				if (shader != null)
 				{
 					plane.GetComponent<Renderer>().material = new Material(shader) { color = new Color(0.1f, 0.45f, 0.8f, 0.35f) };
+					// (seen from below too: a sunken island's sea is above it - ROADMAP E2; Unity's plane has one side)
+					GameObject under = GameObject.CreatePrimitive(PrimitiveType.Plane);
+					under.name = "WaterLevelUnder";
+					Destroy(under.GetComponent<Collider>());
+					under.transform.SetParent(plane.transform, false);
+					under.transform.localRotation = Quaternion.Euler(180f, 0f, 0f);
+					under.GetComponent<Renderer>().sharedMaterial = plane.GetComponent<Renderer>().sharedMaterial;
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not create water level plane: " + e); }
