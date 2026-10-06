@@ -46,6 +46,8 @@ namespace DynamicIslands.Editor
 			/// <summary>Story items the island's checks want (has/take story:...) and those it gives (loot, zones, give actions,
 			/// Raft's quest item pickups) - the plan's order of them (Check).</summary>
 			public readonly HashSet<string> NeedsStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase), GivesStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>The quest traps of guide 12.4 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
+			public readonly List<Finding> Traps = new List<Finding>();
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
 
@@ -119,6 +121,7 @@ namespace DynamicIslands.Editor
 					else foreach (System.Text.RegularExpressions.Match m in GiveRx.Matches(line)) x.GivesStory.Add(m.Groups[1].Value);
 				}
 			}
+			if (!sample) FindTraps(f, x, islandNever);
 			return x;
 		}
 
@@ -231,6 +234,7 @@ namespace DynamicIslands.Editor
 				CheckTell(c, i);
 				if (!islandMode) CheckStory(c, i);
 			}
+			CheckTraps(c);
 			CheckOrder(c);
 			if (!islandMode && rules.Count > 0 && !plan.Random && !rules.Any(r => r.When == "start" || r.When == "km" || r.When == "day" || r.Where == "receiver"))
 				c.Add(-1, Level.Warning, "Nothing of the plan comes by itself: no rule starts with the world, a distance or a day, and random islands are off. Every rule waits for another island - so none ever comes.",
@@ -483,6 +487,167 @@ namespace DynamicIslands.Editor
 						break;
 				}
 			}
+		}
+
+		/// <summary>The quest traps found on the islands (AU47): the island being edited, or each saved island the plan
+		/// brings (once, at the first rule that brings it).</summary>
+		static void CheckTraps(Ctx c)
+		{
+			if (c.IslandMode)
+			{
+				if (c.Own != null) foreach (Finding t in c.Own.Traps) c.Add(-1, t.Level, "This island: " + t.Text, t.Fix);
+				return;
+			}
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+				foreach (Facts f in Brings(c, c.Plan.Rules[i]))
+					if (!f.Sample && seen.Add(f.Name))
+						foreach (Finding t in f.Traps) c.Add(i, t.Level, R(c, i) + " brings " + f.Describe + ": " + t.Text, t.Fix);
+		}
+
+		/// <summary>
+		/// The traps of guide 12.4 that can be seen in an island's file (AU47), each with the object or step and the fix:
+		/// a later quest step's chest or creatures there from the start, story items given again by something that happens
+		/// again, show/hide and open/close in events that happen again, Raft item checks on events no player sets off, and
+		/// Raft items given by a note. (Already fixed in the game, so not here: actions after a wait are kept with the island
+		/// until they have run; a chest with story items never fills up again; shared actions run on the host for everyone;
+		/// collect and pages steps count the crew's items and pages.)
+		/// </summary>
+		static void FindTraps(IslandFile f, Facts x, bool islandNever)
+		{
+			var objects = f.Objects.Select(o => new KeyValuePair<IslandObject, IDictionary<string, string>>(o, o.Props ?? new Dictionary<string, string>())).ToList();
+			// A later step's chest or creature spot that is there from the start: players get to it before the step (what
+			// they do is kept and counted when the step comes - QuestTracker - but its loot and the story come too early)
+			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)
+			{
+				IslandQuest q = IslandQuest.From(f.Props, n);
+				string quest = n == 0 ? "the quest" : "quest " + (n + 1) + (q.Title.Trim().Length > 0 ? " '" + q.Title.Trim() + "'" : "");
+				for (int s = 1; s < q.Steps.Count; s++)
+				{
+					IslandQuest.Step st = q.Steps[s];
+					if (st.Type != "open" && st.Type != "kill" && st.Type != "catch") continue;
+					string t = st.Target.Trim();
+					// (an earlier step wants the same: what players do then counts for that one)
+					if (q.Steps.Take(s).Any(e => e.Type == st.Type && e.Target.Trim().Equals(t, StringComparison.OrdinalIgnoreCase))) continue;
+					var early = new List<string>();
+					foreach (KeyValuePair<IslandObject, IDictionary<string, string>> o in objects)
+					{
+						if (BehaviourProps.StartsHidden(o.Value)) continue;
+						if (st.Type == "open")
+						{
+							if (!ObjectProps.IsLoot(o.Key.Name, o.Value) || t.Length > 0 && !ObjectProps.Get(o.Value, ObjectProps.NoteTitle).Trim().Equals(t, StringComparison.OrdinalIgnoreCase)) continue;
+							// (a locked chest - "Only if..." - keeps its loot until its checks pass)
+							if (ObjCheck.ParseLines(ObjectProps.Get(o.Value, BehaviourProps.CheckKey("open"))).Count > 0) continue;
+						}
+						else
+						{
+							ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Key.Name);
+							if (k == null || t.Length > 0 && !k.Label.Equals(t, StringComparison.OrdinalIgnoreCase)) continue;
+							// (an ambush: the animals wait for a trigger zone of the island)
+							string zone = ObjectProps.Get(o.Value, ObjectProps.CreatureZone);
+							if (zone.Length > 0 && x.Zones.Contains(zone)) continue;
+						}
+						early.Add(Thing(o.Key, o.Value));
+					}
+					if (early.Count == 0) continue;
+					bool chest = st.Type == "open";
+					x.Traps.Add(new Finding(-1, Level.Warning, "step " + (s + 1) + " of " + quest + " (\"" + st.Describe() + "\") wants " + Things(early) + ", which " + (early.Count == 1 ? "is" : "are") +
+						" there from the start: players can " + (chest ? "open " + (early.Count == 1 ? "it" : "them") : (st.Type == "kill" ? "defeat" : "catch") + " the animals") + " before step " + (s + 1) +
+						" comes. It counts when the step comes, but " + (chest ? "the loot" : "the fight") + " and the story come too early.",
+						chest ? "Give it a name and set it to \"Hidden until shown\" (Behaviour & events...), and show it with a \"show\" action on what step " + s + " wants (its note, zone or chest) - or lock it: + Only if... > quest step " + s + "."
+							: "Give the spot a name and set it to \"Hidden (ambush)\" (Behaviour & events...), and show it with a \"show\" action on what step " + s + " wants (its note, zone or chest) - or let it appear when a trigger zone fires (Appears: when '...' fires)."));
+				}
+			}
+			foreach (KeyValuePair<IslandObject, IDictionary<string, string>> o in objects)
+			{
+				IDictionary<string, string> p = o.Value;
+				string thing = Thing(o.Key, p);
+				// Events that happen again: a zone ready again after the regrow days (or every time), a chest that fills up
+				// again (one with story items never does - LootCrate), a spot whose animals come back (its defeat again)
+				string ev = null, again = "";
+				if (o.Key.Name == ContentCatalog.TriggerZone)
+				{
+					ev = "enter";
+					if (ObjectProps.Repeats(p)) again = "every time a player walks in";
+					else if (ObjectProps.Get(p, ObjectProps.ZoneRepeat) != ObjectProps.ZoneOnceEver && !islandNever) again = "when the zone is ready again after the regrow days (Fires: Once)";
+				}
+				else if (ContentCatalog.IsCreature(o.Key.Name))
+				{
+					ev = "defeat";
+					if (ObjectProps.Respawns(p) && !islandNever) again = "when its animals come back and are defeated again";
+				}
+				else if (ObjectProps.IsLoot(o.Key.Name, p))
+				{
+					ev = "open";
+					if (ObjectProps.LootRefills(p) && !ObjectProps.Loot(p).Any(l => StoryItems.IsStory(l.Key)) && !islandNever) again = "when it fills up again and is opened again";
+				}
+				List<ObjAction> acts = ev != null ? ObjAction.ParseLines(ObjectProps.Get(p, BehaviourProps.EventKey(ev))) : new List<ObjAction>();
+				if (again.Length > 0)
+				{
+					// Story items given again: the crew gets a second key or log
+					var story = new List<string>();
+					if (ev == "enter") story.AddRange(ObjectProps.Loot(p).Where(l => StoryItems.IsStory(l.Key)).Select(l => StoryItems.Label(l.Key)));
+					foreach (ObjAction a in acts.Where(Behaviours.GivesStory))
+						story.AddRange(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => StoryItems.IsStory(l.Key)).Select(l => StoryItems.Label(l.Key)));
+					if (story.Count > 0)
+						x.Traps.Add(new Finding(-1, Level.Warning, thing + " gives the story item" + (story.Count > 1 ? "s " : " ") + string.Join(", ", story.Distinct().ToArray()) + ", and gives " + (story.Count > 1 ? "them" : "it") + " again " + again +
+							": the crew gets a second key or log, and counts and \"uses up\" checks go wrong.",
+							ev == "enter" ? "Set the zone to Fires: Once ever - it never fires again."
+							: ev == "open" ? "Put the story item in the chest's loot (a chest with story items never fills up again), or set Fills up again: Never."
+							: "Set the animals to come back: Never, or give the story item where it happens once (a chest's loot, a note, the quest's reward)."));
+					// show/hide and open/close there flip the bridge or door back
+					List<ObjAction> flips = acts.Where(a => a.Verb == "toggle" || a.Verb == "switch").ToList();
+					if (flips.Count > 0)
+						x.Traps.Add(new Finding(-1, Level.Warning, thing + " does " + string.Join(", ", flips.Select(a => (a.Verb == "toggle" ? "show/hide " : "open/close ") + (a.Target.Length > 0 ? "'" + a.Target + "'" : "itself")).ToArray()) +
+							" " + (ev == "enter" ? "when a player walks in" : ev == "open" ? "when it is opened" : "when its animals are defeated") + ", and that happens again " + again + ": the " + (flips.Any(a => a.Verb == "toggle") ? "show/hide" : "open/close") + " flips the bridge or door back.",
+							(ev == "enter" ? "For a zone the story needs only once (an ambush, a bridge shown): Fires: Once ever - it never fires again. Or: " : "") +
+							"in events that can happen again, use show, open, journal page and say - not show/hide or open/close."));
+				}
+				// Raft item checks on a defeat event: no player sets it off, so it looked at the host's inventory - left out (AU17)
+				if (ev == "defeat") ItemChecksTrap(x, p, "defeat", "the defeat event of " + thing);
+				// A note's actions run once, for its first reader: Raft items given there go to one player
+				if (ObjectProps.IsNote(o.Key.Name, p))
+				{
+					var items = new List<string>();
+					foreach (ObjAction a in ObjAction.ParseLines(ObjectProps.Get(p, BehaviourProps.EventKey("read"))).Where(y => y.Verb == "give"))
+						items.AddRange(ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, a.Arg } }).Where(l => !StoryItems.IsStory(l.Key)).Select(l => ContentCatalog.ItemLabel(l.Key) + " \u00D7" + l.Value));
+					if (items.Count > 0)
+						x.Traps.Add(new Finding(-1, Level.Warning, thing + " gives " + string.Join(", ", items.ToArray()) + " when it is read: a note's actions run once, for its first reader (reading it again shows its messages only) - the other players get nothing.",
+							"For something every player should get, use the quest's reward or a chest per player (story items go to the whole crew)."));
+				}
+			}
+			ItemChecksTrap(x, f.Props, "quest", "the island's \"when its quest is done\" event");
+		}
+
+		/// <summary>Raft item checks (has / uses up) on an event no single player sets off (the quest done, a spot's animals
+		/// defeated): it fires on the host, and since AU17 such checks are left out there.</summary>
+		static void ItemChecksTrap(Facts x, IDictionary<string, string> p, string ev, string what)
+		{
+			List<ObjCheck> items = ObjCheck.ParseLines(ObjectProps.Get(p, BehaviourProps.CheckKey(ev))).Where(c => c.IsItem && !StoryItems.IsStory(c.Target)).ToList();
+			if (items.Count == 0) return;
+			x.Traps.Add(new Finding(-1, Level.Warning, what + " checks " + string.Join(", ", items.Select(c => "\"" + c.Describe() + "\"").ToArray()) +
+				": no single player sets it off - it fires on the host, whose inventory isn't the player's who did it - so these checks are left out (the host's log says so) and the actions run without them.",
+				"Use a story item instead (Island tab > Story items...): story items belong to the whole crew and work in every event. Then + Only if... > uses up item (or has item) > the story item."));
+		}
+
+		/// <summary>An object as the builder knows it: the zone's name, the chest's or note's title, the creature kind, and its name.</summary>
+		static string Thing(IslandObject o, IDictionary<string, string> p)
+		{
+			string what, title = ObjectProps.Get(p, ObjectProps.NoteTitle).Trim();
+			ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Name);
+			if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId).Trim(); what = z.Length > 0 ? "the trigger zone '" + z + "'" : "a trigger zone"; }
+			else if (k != null) what = "a " + k.Label.ToLowerInvariant() + " spot";
+			else if (ObjectProps.IsLoot(o.Name, p)) what = title.Length > 0 ? "the chest \"" + title + "\"" : "a chest";
+			else if (ObjectProps.IsNote(o.Name, p)) what = title.Length > 0 ? "the note \"" + title + "\"" : "a note";
+			else what = "an object";
+			string name = ObjectProps.Get(p, BehaviourProps.Name).Trim();
+			return what + (name.Length > 0 ? " (named '" + name + "')" : "");
+		}
+
+		static string Things(List<string> things)
+		{
+			var l = things.Distinct().ToList();
+			return l.Count <= 3 ? string.Join(", ", l.ToArray()) : string.Join(", ", l.Take(3).ToArray()) + " and " + (l.Count - 3) + " more";
 		}
 
 		static void CheckBring(Ctx c, int i)
