@@ -183,6 +183,8 @@
     <Compile Include="WorldRules.cs" />
     <Compile Include="DevTestsDifficulty.cs" />
     <Compile Include="DevTestsHostSettings.cs" />
+    <Compile Include="DefaultsWindow.cs" />
+    <Compile Include="DevTestsSettingsWindow.cs" />
     <Compile Include="PlaceableCatalog.cs" />
     <Compile Include="ObjectPlacer.cs" />
     <Compile Include="ObjectBrowser.cs" />
