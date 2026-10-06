@@ -27,6 +27,8 @@ namespace DynamicIslands.Editor
 			"Blueprint_Reciever", "Blueprint_Antenna", "Blueprint_SteeringWheel", "Blueprint_MotorWheel", "Blueprint_EngineControls",
 			"Blueprint_Fueltank", "Blueprint_Pipe_Fuel", "Blueprint_BiofuelExtractor", "Blueprint_Machete", "Blueprint_ZiplineTool",
 			"Blueprint_ZiplineBase", "Blueprint_HeadLight", "Blueprint_BatteryCharger",
+			// (the electric zipline: Utopia's cables may want it - AU42; kept where Raft puts it to be safe)
+			"Blueprint_ZiplineToolElectric",
 		};
 
 		/// <summary>Blueprint -> the story island(s) it lies on (from raft_blueprints.txt).</summary>
