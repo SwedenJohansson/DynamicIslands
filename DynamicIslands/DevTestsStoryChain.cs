@@ -165,12 +165,12 @@ namespace DynamicIslands
 				Check(ref ok, dialled.IsValid(), "dialling " + freq + " finds a valid frequency on the Receiver");
 				RecieverFrequency balboa = RecieverFrequency.AllFrequencies.FirstOrDefault(f => f != null && f.chunkPointType == ChunkPointType.Landmark_Balboa);
 				Check(ref ok, balboa != null && !balboa.IsValid(), "Balboa's frequency " + (balboa != null ? balboa.ToString() : "?") + " leads nowhere");
-				Check(ref ok, RecieverFrequency.AllFrequencies.Count(f => f != null && (int)f.chunkPointType < StoryChain.ModTypeBase) == 8, "Raft's eight frequencies are still there");
+				Check(ref ok, RecieverFrequency.AllFrequencies.Count(f => f != null && (int)f.chunkPointType < StoryChain.ModTypeBase) == Chain.Length, "Raft's " + Chain.Length + " frequencies are still there");
 
 				// Raft saving and restoring its frequencies (a save loaded): the mod's stays
 				var rgd = new RGD_RecieverFrequencies();
 				rgd.RestoreFrequencies();
-				Check(ref ok, RecieverFrequency.AllFrequencies.Any(f => f != null && (int)f.chunkPointType == type && f.numbers.SequenceEqual(digits)) && RecieverFrequency.AllFrequencies.Length == 9,
+				Check(ref ok, RecieverFrequency.AllFrequencies.Any(f => f != null && (int)f.chunkPointType == type && f.numbers.SequenceEqual(digits)) && RecieverFrequency.AllFrequencies.Length == Chain.Length + 1,
 					"after Raft restores its frequencies the mod's is there once more (" + RecieverFrequency.AllFrequencies.Length + " in all)");
 
 				// The Receiver tuned to it: Raft asks for an island of that type, the mod brings the sandbar
@@ -299,6 +299,9 @@ namespace DynamicIslands
 			string path = WorldPlan.PathFor(name);
 			string planBefore = WorldDirector.PlanName;
 			float sailedBefore = WorldDirector.Sailed;
+			ulong ownerBefore = WorldDirector.PlanOwner;
+			var unlockedBefore = NoteBook.unlockedChunkPointType.ToList();
+			var indexesBefore = NoteBook.unlockedNoteBookIndexes.ToList();
 			try
 			{
 				File.WriteAllText(path, "storyleaveout = Balboa\nrule = detour | type:sandbar | start | receiver:400 | | Detour | after:Vasagatan | visit\n");
@@ -340,6 +343,9 @@ namespace DynamicIslands
 			{
 				if (File.Exists(path)) File.Delete(path);
 				WorldDirector.SetPlan(planBefore, false);
+				WorldDirector.PlanOwner = ownerBefore; // (SetPlan makes this PC the owner)
+				NoteBook.unlockedNoteBookIndexes.Clear(); NoteBook.unlockedNoteBookIndexes.AddRange(indexesBefore);
+				NoteBook.unlockedChunkPointType.Clear(); NoteBook.unlockedChunkPointType.AddRange(unlockedBefore);
 				StoryChain.FromPlan(WorldDirector.Plan);
 				WorldDirector.Sailed = sailedBefore;
 				IslandWorldState.Save();

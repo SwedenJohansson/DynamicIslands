@@ -102,7 +102,7 @@ namespace DynamicIslands
 			Check(ref ok, pool.All(WorldIslands.TakesPart) && all.Where(WorldIslands.TakesPart).All(pool.Contains), "the spawner's pool is the whole pool less those (" + pool.Count + " of " + all.Count + ")");
 			var picked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			for (int i = 0; i < 400; i++) { string p = CustomIslandSpawner.PickFromPool(); if (p != null) picked.Add(p); }
-			Check(ref ok, !picked.Any(p => want.Contains(p)), "400 picks: none left out (" + picked.Count + " different ones picked)");
+			Check(ref ok, (CustomIslandSpawner.Pool().Sum(p => p.Value) <= 0f || picked.Count > 0) && !picked.Any(p => want.Contains(p)), "400 picks: none left out (" + picked.Count + " different ones picked)");
 
 			// The world file
 			IslandWorldState.Save();

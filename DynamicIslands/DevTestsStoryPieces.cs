@@ -45,10 +45,10 @@ namespace DynamicIslands
 			IslandWorldState.Remove(StoryPiecesIsland);
 			f.Save(IslandSpawner.PathFor(StoryPiecesIsland));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(StoryPiecesIsland), 450f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { System.IO.File.Delete(IslandSpawner.PathFor(StoryPiecesIsland)); Fail("no open sea near the raft"); yield break; }
 			yield return DynamicIslands.instance.SpawnIslandFile(StoryPiecesIsland, spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == StoryPiecesIsland);
-			if (e == null || e.Root == null) { Fail(StoryPiecesIsland + " did not spawn"); yield break; }
+			if (e == null || e.Root == null) { IslandWorldState.Remove(StoryPiecesIsland); System.IO.File.Delete(IslandSpawner.PathFor(StoryPiecesIsland)); Fail(StoryPiecesIsland + " did not spawn"); yield break; }
 			yield return new WaitForSeconds(1f);
 
 			// Vines: not without the machete; with it they go, and the machete stays the player's
@@ -63,7 +63,7 @@ namespace DynamicIslands
 				Check(ref ok, vines.gameObject.activeInHierarchy, "without a machete the vines stay");
 				inv.AddItem(ContentCatalog.MacheteItem, 1);
 				ScUse(e, "vines");
-				yield return new WaitForSeconds(0.8f);
+				yield return WaitFor(() => !vines.gameObject.activeInHierarchy, 5f);
 				Check(ref ok, !vines.gameObject.activeInHierarchy, "with the machete they are cut away");
 				Check(ref ok, inv.GetItemCount(ContentCatalog.MacheteItem) == 1, "the player keeps the machete for the next vines (" + inv.GetItemCount(ContentCatalog.MacheteItem) + ")");
 			}
@@ -115,6 +115,7 @@ namespace DynamicIslands
 			IslandObjectRef again = ScObjOf(e, "vines");
 			Check(ref ok, again != null && !again.gameObject.activeInHierarchy, "after a reload the vines stay cut");
 			IslandWorldState.Remove(StoryPiecesIsland);
+			System.IO.File.Delete(IslandSpawner.PathFor(StoryPiecesIsland));
 			if (ok) Log("PASS: story pieces"); else Fail("story pieces");
 		}
 	}

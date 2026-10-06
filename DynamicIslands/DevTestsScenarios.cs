@@ -1140,7 +1140,7 @@ namespace DynamicIslands
 			Network_Player player = RAPI.GetLocalPlayer();
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			ScEnterZone(e, "camp");
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 1, 10f);
 			Check(ref ok, QuestTracker.StepOf(e) == 1, "step 1 of the island's quest done (" + QuestTracker.StepOf(e) + ")");
 			ScReadNote(e, "Trap note");
 			yield return new WaitForSeconds(0.5f);
@@ -1221,6 +1221,7 @@ namespace DynamicIslands
 					if (e == null || e.Root == null) { Check(ref ok, false, mode + ": the island came"); ScRemove(made, isl); continue; }
 					yield return ScWaitAnimals(e, "Warthog", 2, 20f);
 					yield return new WaitForSeconds(2f);
+					if (mode != GameMode.Creative) yield return ScWaitAnimals(e, "Screecher", 1, 15f);
 					int birds = ScAnimals(e, "Screecher").Count, puffers = ScAnimals(e, "Puffer fish").Count;
 					LevelRecord rec = PlayerLevels.Mine;
 					int xp0 = rec != null ? rec.Xp : 0;
@@ -1231,6 +1232,7 @@ namespace DynamicIslands
 						for (int i = 0; i < 40 && a != null && a.networkEntity != null && !a.networkEntity.IsDead; i++) { ScKill(a, 25f); yield return new WaitForSeconds(0.1f); }
 					}
 					yield return new WaitForSeconds(2.5f); // (kills are counted once a second)
+					yield return WaitFor(() => QuestTracker.StepOf(e) >= 1, 10f);
 					rec = PlayerLevels.Mine;
 					int xp = (rec != null ? rec.Xp : 0) - xp0;
 					int left = ScAnimals(e, "Warthog").Count;
@@ -1285,7 +1287,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(2f);
 			string messageBefore = Behaviours.LastMessage;
 			yield return ScCarryHome(chickens[1] as AI_NetworkBehaviour_Domestic, false);
-			yield return new WaitForSeconds(2.5f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 1 && (Behaviours.LastMessage ?? "").Contains("chickens are gone"), 10f);
 			Check(ref ok, QuestTracker.StepOf(e) >= 1, "the netted chicken counts for the catch step (" + QuestTracker.StepOf(e) + ")");
 			Check(ref ok, Behaviours.LastMessage != messageBefore && Behaviours.LastMessage.Contains("chickens are gone"), "the spot's 'defeat' fires when its last chicken is netted, not killed ('" + Behaviours.LastMessage + "') - AU60");
 			// A goat and a llama carried home to the raft
@@ -1499,7 +1501,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(10f);
 			e.Loading = true;
 			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => { IslandObjectRef v = ScObjOf(e, "vault1"); return v != null && v.gameObject.activeInHierarchy; }, 10f);
 			IslandObjectRef v1 = ScObjOf(e, "vault1");
 			Check(ref ok, v1 != null && v1.gameObject.activeInHierarchy, "the island unloaded during the note's 8 s wait: loaded again, the vault shows (" + (v1 != null && v1.gameObject.activeInHierarchy ? "shown" : "still hidden") + ") - AU2");
 			// (b) the second note's wait (20 s) is still running when the runner saves and quits now
@@ -1524,7 +1526,7 @@ namespace DynamicIslands
 				PlayerMove.To(RAPI.GetLocalPlayer(), ScLandCentre(e) + Vector3.up * 3f);
 				for (float t = 0; t < 30f && e.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
 			}
-			yield return new WaitForSeconds(2f);
+			yield return WaitFor(() => { IslandObjectRef v = ScObjOf(e, "vault2"); return v != null && v.gameObject.activeInHierarchy; }, 10f);
 			IslandObjectRef v2 = ScObjOf(e, "vault2");
 			Check(ref ok, v2 != null && v2.gameObject.activeInHierarchy, "saved and quit during the second note's 20 s wait: after loading, its vault shows (" + (v2 != null && v2.gameObject.activeInHierarchy ? "shown" : "still hidden") + ") - AU2");
 			var gone = new List<IslandWorldState.Entry> { e };
@@ -1569,9 +1571,9 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, QuestTracker.StepOf(e) == 0, "... and the supplies opened: it still waits for the diary");
 				ScReadNote(e, "Diary");
-				yield return new WaitForSeconds(1.5f);
-				NoteReader.Close();
 				int steps = QuestTracker.QuestOf(e).Steps.Count;
+				yield return WaitFor(() => QuestTracker.StepOf(e) >= steps, 10f);
+				NoteReader.Close();
 				Check(ref ok, QuestTracker.StepOf(e) >= steps, "the diary read: the supplies and the warthogs done before count now - the quest is done (" + QuestTracker.StepOf(e) + " of " + steps + ") - AU1");
 			}
 			finally { ScRemove(made, isl); }
@@ -1696,6 +1698,7 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
 			yield return new WaitForSeconds(5f);
 			Check(ref ok, ScAnimals(e, "Warthog").Count == 0, "killed and unloaded within half a second: the warthog stays dead (" + ScAnimals(e, "Warthog").Count + " alive) - AU60");
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 1, 10f);
 			Check(ref ok, QuestTracker.StepOf(e) >= 1, "... and the kill step counts (" + QuestTracker.StepOf(e) + ")");
 			ScRemove(made, isl);
 			if (ok) Log("PASS: scenario last kill"); else Fail("scenario last kill");
@@ -1724,13 +1727,14 @@ namespace DynamicIslands
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-10, 0), 3), BehaviourProps.Name, "vault", BehaviourProps.Hidden, "1"));
 			f.Save(IslandSpawner.PathFor(isl));
 			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled;
 			var doneBefore = WorldDirector.Done.ToList();
 			int? today = ScDay;
-			if (!today.HasValue) { Fail("scenario sleep: no day counter"); yield break; }
+			if (!today.HasValue) { ScRemove(made, isl); Fail("scenario sleep: no day counter"); yield break; }
 			// (Raft's BedManager.Slumber is a private static coroutine, started by the bed manager when everyone sleeps)
 			BedManager beds = ComponentManager<BedManager>.Value ?? UnityEngine.Object.FindObjectOfType<BedManager>() ?? Resources.FindObjectsOfTypeAll<BedManager>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			MethodInfo slumber = typeof(BedManager).GetMethod("Slumber", BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			if (slumber == null) { Fail("scenario sleep: Raft's BedManager.Slumber wasn't found"); yield break; }
+			if (slumber == null) { ScRemove(made, isl); Fail("scenario sleep: Raft's BedManager.Slumber wasn't found"); yield break; }
 			MonoBehaviour runner = beds != null ? (MonoBehaviour)beds : DynamicIslands.instance;
 			Vector3? spot = ScSpot(isl, 320f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario sleep: no open sea near the raft"); yield break; }
@@ -1757,6 +1761,7 @@ namespace DynamicIslands
 					yield return new WaitForSeconds(1.5f);
 					if (night == 0)
 					{
+						yield return WaitFor(() => WorldDirector.Done.Contains("tomorrow"), 10f);
 						Check(ref ok, ScDay == today.Value + 1, "one night's sleep: the day counter moves on (" + today.Value + " -> " + ScDay + ")");
 						Check(ref ok, WorldDirector.Done.Contains("tomorrow"), "... and the 'on day " + (today.Value + 1) + "' rule fires within seconds");
 					}
@@ -1785,7 +1790,9 @@ namespace DynamicIslands
 				if (System.IO.File.Exists(WorldPlan.PathFor(plan))) System.IO.File.Delete(WorldPlan.PathFor(plan));
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
-				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				// (ScSetPlan: the chain of the plan before too; random islands as they were - the test plan turned them off)
+				if (!ScSetPlan(planBefore, false)) ScSetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
 				AzureSkyHour(10f);
 			}
 			// (the wreck the day rule brought, and the test island)
@@ -1847,6 +1854,7 @@ namespace DynamicIslands
 		static IEnumerator ScDiveCheckRoutine()
 		{
 			yield return new WaitForSeconds(5f);
+			yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.HostName == "ciscdive" && x.Root != null), 30f);
 			bool ok = true;
 			Network_Player p = RAPI.GetLocalPlayer();
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == "ciscdive");

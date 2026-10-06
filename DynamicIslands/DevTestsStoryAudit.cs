@@ -55,7 +55,8 @@ namespace DynamicIslands
 			string path = Path.Combine(DynamicIslands.assetpath, "story_audit.txt");
 			File.WriteAllLines(path, lines.ToArray());
 			Log("story audit: " + (lines.Count - 1) + " pieces with scripts, " + lines.Count(l => l.EndsWith("\tno\t-")) + " not in the editor - " + path);
-			Log("PASS: story audit");
+			// (no scenes or no pieces found: the audit saw nothing - the scene names or the catalog changed)
+			if (scenes.Count > 0 && lines.Count > 1) Log("PASS: story audit"); else Fail("story audit: " + scenes.Count + " scenes, " + (lines.Count - 1) + " pieces found");
 		}
 
 		static string Clean(string n) { return Regex.Replace(n ?? "", @"\s*\(\d+\)$|\(Clone\)", "").Trim(); }

@@ -154,7 +154,7 @@ namespace DynamicIslands
 				string straight = QuestMilestones.Check(count(10, 10));
 				Check(ref ok, straight == QuestMilestones.AllTitle && QuestMilestones.Check(count(10, 10)) == null && WorldDirector.Done.Contains(QuestMilestones.NearMark), "straight to 100 %: only the whole quest line's banner (the 90 % one never comes after it)");
 				clear();
-				Check(ref ok, QuestMilestones.Check(count(4, 4)) == null && QuestMilestones.Check(count(3, 3)) == null, "a world with fewer than " + QuestMilestones.MinQuests + " quests: no banner (one island's quest isn't the whole quest line)");
+				Check(ref ok, QuestMilestones.Check(count(QuestMilestones.MinQuests - 1, QuestMilestones.MinQuests - 1)) == null && QuestMilestones.Check(count(QuestMilestones.MinQuests - 2, QuestMilestones.MinQuests - 2)) == null, "a world with fewer than " + QuestMilestones.MinQuests + " quests: no banner (one island's quest isn't the whole quest line)");
 			}
 			finally
 			{
@@ -221,11 +221,11 @@ namespace DynamicIslands
 			var created = new List<string> { "cistoryworld" };
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("cistoryworld"), 390f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { File.Delete(IslandSpawner.PathFor("cistoryworld")); Fail("no open sea near the raft"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile("cistoryworld", spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (e == null || e.Root == null) { Fail("the island did not spawn"); yield break; }
+			if (e == null || e.Root == null) { IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(x => x.Id).ToList(), true); File.Delete(IslandSpawner.PathFor("cistoryworld")); Fail("the island did not spawn"); yield break; }
 			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
 			Func<int, bool> isOpen = i => { ObjectState s; return e.State.TryGetValue(Behaviours.StateBase + i, out s) && s.Yield == 1; };
 			yield return EnsureAlive();
@@ -273,7 +273,7 @@ namespace DynamicIslands
 			// A client's lever: the host does the shared part, with the wait
 			Behaviours.OnEventMessage(e.Id, leverIdx, "use", false);
 			Check(ref ok, isOpen(gateIdx), "a client's lever reaches the host: the gate opens");
-			yield return new WaitForSeconds(2.5f);
+			yield return WaitFor(() => !isOpen(gateIdx), 6f);
 			Check(ref ok, !isOpen(gateIdx), "... and falls shut after the wait on the host");
 			// A client's story change reaches the host
 			StoryBook.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Story, Name = "give", Data = "brass-key|2|Brass%20key||" });
@@ -302,9 +302,9 @@ namespace DynamicIslands
 			// Counted quest steps: collect story items, find pages
 			Check(ref ok, QuestTracker.StepOf(e) == 0, "the quest waits for 2 gems");
 			StoryBook.Give("gem", 2);
-			yield return new WaitForSecondsRealtime(1.2f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 1, 10f); // (QuestTracker.Tick counts every 0.5 s)
 			Check(ref ok, QuestTracker.StepOf(e) >= 1, "collecting 2 gems (story items) does the collect step");
-			yield return new WaitForSecondsRealtime(1.2f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 2, 10f);
 			Check(ref ok, QuestTracker.StepOf(e) >= 2, "a journal page from this island (the vault) does the pages step: the quest is done");
 
 			// Reading a note puts it in the journal; the journal window
