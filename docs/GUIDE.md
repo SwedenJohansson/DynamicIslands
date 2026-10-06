@@ -419,12 +419,21 @@ the editor (Noon the first time).
   shows the brush. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
   the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
   roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
+  **Noise** roughens the ground under the brush (**Noise size**: small bumps or big swells; hold **Shift** at the start
+  of a stroke to take the same noise off again). **Erode** lets steep ground slide down until no slope is steeper than
+  **Talus** - cliffs crumble into screes, spikes into hills; the ground is moved, not lost.
 - **Paint ground:** the style's four textures (for a tropical island Sand, Grass, Rock, Seabed). **Auto** textures an
-  area by its height and slope again.
-- **Brush:** size and strength.
+  area by its height and slope again. **Mix** adds a second style's four textures (eight in all): a tropical island
+  with a snowy peak, a desert with forest ground. Older versions of the mod show the first style's textures there.
+- **Brush:** size, strength and **Edge**: **Smooth** (soft all the way out, as before), **Linear** or **Hard** (full
+  strength up to a thin rim - for terraces and sharp paint borders).
 - **Stamps:** click the ground to put down a **Hill**, **Peak**, **Crater**, **Mesa**, **Lagoon** or **Ridge**, as big
   as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own; **Manage...** beside it renames or
   deletes your stamps.
+
+**Sea floor.** On the Island tab, **Sea floor: Deep / Shallow** switches the sea around the island without making it
+again: the land keeps its height above the sea, the untouched sea floor goes down (a slope falls away from the shore)
+or up, and objects on the ground move with it. One Ctrl+Z undoes it.
 
 **Island styles.** On the Island tab, **Style** ◄ ► steps through Tropical, Snowy, Desert, Forest and Volcanic (or click the name for the list): the
 ground takes the style's textures, the paint buttons get its names, and the generator uses its plants and animals.
@@ -2577,9 +2586,12 @@ say so in the log.
 - **Don't delete `gen-...` island files by hand** while a saved world uses them. A generated island is a file like any
   other: without it the world simply lacks that island, for you and everyone who joins (the log says "Could not read
   island"). Remove unused ones with **Tidy up** in the island library, which leaves the ones worlds use.
-- **Don't use the mod loader's Unload / Load** (F9) on Custom Islands during a session - restart Raft instead.
-- **Island packs from people you don't know:** a damaged pack can install and fail later. Prefer the island library
-  (every entry is looked at), and report a pack that fails ([chapter 15](#15-reporting-a-problem)).
+- **Don't use the mod loader's Unload / Load** (F9) on Custom Islands during a session - restart Raft instead. (Unload
+  takes the mod's patches and hooks out and says so, but its windows and the islands already in the world stay until
+  Raft restarts.)
+- **Island packs from people you don't know:** every island in a pack is read in full before anything is installed, and a
+  pack that fails half way puts back what it changed - but prefer the island library (every entry is looked at), and
+  report a pack that fails ([chapter 15](#15-reporting-a-problem)).
 
 ## 13. Limitations: what can't be changed
 
