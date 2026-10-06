@@ -7,8 +7,9 @@
 # The last session went home early: a huge bear from the ridge had been in the kitchens three nights running. The head
 # counselor stayed to close up and to lure it away from the cabins with honey at the old boathouse, then fire a flare from
 # the lookout for the ranger boat. Her last note is still pinned in the boathouse.
-# Quest "The Last Week of Summer" (9 steps): the gate, the counselor's logbook, the honey, the flare pistol, the old
-# boathouse, the bait and the Ridge Bear, her last note, the lookout's flare (her key), her footlocker (canteen blueprint).
+# Quest "The Last Week of Summer" (11 steps): the gate, the counselor's logbook, the honey, the flare pistol, the dock
+# box, the old boathouse, the bait and the Ridge Bear, her last note, the lookout, the flare (her key), her footlocker
+# (canteen blueprint).
 #
 # Built by the recipe player (CIRecipe camp_blackwater) through the editor's own operations.
 include lib_huts
@@ -191,7 +192,7 @@ scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=44.1 seed=4585 free=3
 call shallows r=72 deep=5 n=2
 call shallows x=12 z=38 r=14 deep=3 seed=90
 
-# ===== Settings, story items, notes, behaviours, quest (9 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (11 steps) ==========================================================
 info title=Camp Blackwater
 info author=Custom Islands
 info description=A summer camp on a forest lake, empty since the season ended early: cabins, canoes, an archery range, a radio still playing the camp song. The head counselor stayed behind to deal with the bear from the ridge. Her last note is in the old boathouse across the lake.
@@ -229,7 +230,7 @@ prop lakebox loot.refill=0
 
 prop baitpost obj.name=baitpost
 prop baitpost beh.use=Set the honey on the bait pile
-prop baitpost if.use=quest|5\ntake|story:honey|1
+prop baitpost if.use=quest|6\ntake|story:honey|1
 prop baitpost on.use=message||You smear the honey over the bait pile and back away. For a while there's only the lake lapping - then branches snapping, and something huge shoulders out of the trees.\nshow|ridgebear\nsound||event:/wildlife/bear/bear_roar
 prop baitpost else.use=message||A bait pile, picked clean. Dana's plan was honey from the camp pantry.
 prop ridgebear obj.name=ridgebear
@@ -273,11 +274,13 @@ step reach|campgate|1|Walk in under the camp's banner
 step read|Head counselor's logbook|1|Read the head counselor's logbook in the mess hall
 step collect|story:honey|1|Take the bear bait - a crock of honey - from the pantry
 step collect|story:flaregun|1|Find the flare pistol in the archery range's shed
+step open|Dock box|1|Check the canoe dock the bear took apart - its box is still at the end
 step reach|boathouse|1|Go round the lake to the old boathouse on the far shore
 step kill|Bear|1|Set the bait and face the Ridge Bear when it comes for it
 step read|Dana's last note|1|Read the note pinned inside the old boathouse
 step reach|lookout|1|Climb to the fire lookout on the hill
-step open|Counselor's footlocker|1|Fire the flare, take her key and open her footlocker in cabin 1
+step collect|story:lockerkey|1|Fire the flare for the ranger boat and take the key from the nail by the post
+step open|Counselor's footlocker|1|Take her key back down to cabin 1 and open her footlocker
 quest done=The flare has been fired and the ranger boat answered - a whole summer late. The Ridge Bear is gone; whatever happened to Dana, her camp is quiet now.
 quest reward=Plank*8;Rope*4;Raw_Salmon*3
 

@@ -1,7 +1,8 @@
 # Frost Hollow - a small/medium island of the library (inspired by Raft's Temperance)
 # A snowy islet with two Moontown igloo houses, a snowmobile shed, a telescope on the hill and a small research lab
-# of Selene's rooms whose power is dead. Quest "Power for Frost Hollow": the village, the researcher's log, three
-# electrical cables (one in a polar bear's shed), the power box - the lab's doors slide open - and the lab locker.
+# of Selene's rooms whose power is dead. Quest "Power for Frost Hollow" (6 steps): the village, the researcher's log,
+# the cables by the two igloo doors, the polar bear in front of the snowmobile shed, the third cable in its shed crate,
+# the power box - the lab's doors slide open - and the lab locker.
 #
 # Built by the recipe player (CIRecipe frost_hollow) through the editor's own operations (macros from lib_selene).
 include lib_sea
@@ -147,8 +148,9 @@ quest title=Power for Frost Hollow
 quest intro=An igloo village with its lights on and nobody home, and a research lab on the hill, dark and shut.
 step reach|village|1|Find the igloo village
 step read|Research log|1|Read the research log
-step collect|story:cable|3|Collect three electrical cables
-step kill|Polar bear|1|Deal with the polar bear at the shed
+step collect|story:cable|2|Take the cables from the supply crates by both igloo doors
+step kill|Polar bear|1|Deal with the polar bear sleeping in front of the snowmobile shed
+step collect|story:cable|3|Dig the third cable out of the shed crate, from under the fur
 step open|Lab locker|1|Power the lab and open its locker
 quest done=The lab's lights are on again. Whatever Dr. Lindqvist saw over the ice, her notes are yours.
 quest reward=Glass*2;CopperIngot*3

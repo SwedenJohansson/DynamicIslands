@@ -12,17 +12,17 @@ wait 5
 # The camp: the dive plan on the chart table, a reel from the dive locker, the camp crate
 walk -9 7 to -8.5 13 h=4.5
 zone camp
-expect step 1
+expect step 0
 read Dive leader's plan
-expect step 2
+expect step 1
 open Dive locker
 expect story reel 1
-expect step 3
+expect step 2
 open Camp crate
 
 # Down the hole by the buoy to the mouth; the line post - the lamps light down the tunnel; the barrel at the mouth
 zone entrance
-expect step 4
+expect step 2
 use linepost
 expect message small lamps wake
 expect shown guidelamps
@@ -31,21 +31,21 @@ open Barrel at the mouth
 
 # The first fork: the slate; the dead end's box
 read First fork slate
-expect step 5
+expect step 3
 open Dead end box
 
 # The second fork's air bell
 air airbell
 zone airbell
-expect step 6
+expect step 4
 
 # The Hall of Columns: the angler, the trader's strongbox, the leader's last slate, the second air pocket
 zone hall
 kill Angler fish
-expect step 7
+expect step 5
 open Trader's strongbox
 expect item Blueprint_Canteen 1
-expect step 8
+expect step 6
 read Leader's last slate
 air airbell2
 

@@ -2,7 +2,7 @@
 # A low tropical marsh, and in its middle a lagoon dug down to the sea's level with a boardwalk out over it from the north
 # landing: five stall pontoons along it (the net-maker, the spice-seller, the potter, the lamp-maker, and the merchant's
 # at its south end with his strongbox), awnings, tables with the keepers' last goods, chalk prices. Closed for the season.
-# Quest "A Fair Trade" (8 steps): a barter chain - a pink shell traded up, stall by stall, to the merchant's key.
+# Quest "A Fair Trade" (6 steps): the notice, the shell bucket, a barter chain - a pink shell traded up, stall by stall, to the merchant's key.
 #
 # Built by the recipe player (CIRecipe gullsong_bazaar) through the editor's own operations.
 include lib_huts
@@ -77,7 +77,7 @@ scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=31.5 seed=4570 free=5
 scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4579 free=3
 scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=31.5 seed=4580 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
 info title=Gullsong Bazaar
 info author=Custom Islands
 info description=A floating bazaar of stalls on pontoons in a mangrove marsh, closed for the season - but each stall still holds one thing, and each keeper left a note saying what they'd take for it. Trade your way from a pink shell to the merchant's strongbox.
@@ -140,12 +140,10 @@ prop gulls zone.radius=25
 
 quest title=A Fair Trade
 quest intro=A floating bazaar, closed for the season. The keepers left a notice on the landing.
-step reach|bazaar|1|Tie up at the floating bazaar
-step read|Notice of the closing bazaar|1|Read the notice on the landing
-step collect|story:rope|1|Find a pink shell and trade it for the net-maker's rope
-step collect|story:pepper|1|Trade the rope at the spice stall
-step collect|story:jar|1|Trade the pepper at the potter's stall
-step collect|story:lamp|1|Trade the jar at the lamp-maker's stall
+step read|Notice of the closing bazaar|1|Tie up at the bazaar and read the notice on the landing
+step open|Shell bucket|1|Find the pink shell in the bucket on the south bank
+step collect|story:rope|1|Trade the pink shell for the net-maker's rope
+step collect|story:lamp|1|Trade down the boardwalk: rope for pepper, pepper for a jar, a jar for a lamp
 step collect|story:merchantkey|1|Trade the lamp for the merchant's key
 step open|Merchant's strongbox|1|Open the merchant's strongbox
 quest done=From a pink shell to the best thing in the bazaar, in five fair trades. The gulls approve.

@@ -25,10 +25,15 @@ expect message coil socket is empty
 expect hidden printout
 expect hidden beaconswitch
 
+# The puffer fish round the coil's crate on the cove floor
+kill Puffer fish
+expect step 3
+expect animals Puffer fish 0
+
 # The coil's crate on the cove floor
 openat -15 -14.5
 expect story coil 1
-expect step 3
+expect step 4
 
 # Fitted: the transmitter works, the printout appears
 use radioDead
@@ -41,7 +46,7 @@ expect shown beaconswitch
 use radioLive
 expect message Follow the beacons east
 read Signal printout
-expect step 4
+expect step 5
 
 # Up the stair to the roof, up the mast ladder to the platform
 walk -2.87 -14.18 to -4.46 -12.24 to -8.88 -7.82 to -13.12 -8.88

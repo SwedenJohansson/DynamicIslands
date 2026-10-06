@@ -4,8 +4,9 @@
 # pump east - stone gutters from each to the dry fountain in the middle, the inventor's lean-to by the head of the cliff
 # ramp; below the plateau on the south plain (2.5 m) his workshop, its door a steel shutter that only the fountain's
 # pressure lifts.
-# Quest "The Water Order" (6 steps, a sequence): the plateau, the diagram, the crank, the three pumps in the diagram's
-# order (a wrong pump chokes them all and they must be started again), the workshop, the strongbox.
+# Quest "The Water Order" (5 steps, a sequence): the diagram, the crank, the three pumps in the diagram's order (a wrong
+# pump chokes them all and they must be started again), the parts crate behind the crank wheel by the workshop, the
+# strongbox inside.
 #
 # Built by the recipe player (CIRecipe clockwork_orchard) through the editor's own operations. Points: the plateau's top
 # at 9.8 m (x -24..24, z -21..21); the ramp up its north-west cliff from -28 24 (2.6 m) to -6 21 (9.8 m); the lean-to at
@@ -114,7 +115,7 @@ call shallows r=58 deep=5 n=1
 prop goats creature.count=3
 prop dolphins creature.count=2
 
-# ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=The Clockwork Orchard
 info author=Custom Islands
 info description=An inventor's orchard on a flat-topped rock: mango, banana and pineapple in rows, three hand pumps with their wind towers at the rim, stone gutters to a dry fountain - and below the cliff, his workshop, its steel shutter down. Start the pumps in the order on his diagram and the water does the rest.
@@ -208,12 +209,11 @@ call leverchest x=6.5 z=-36 yaw=270 alias=sparelever sig=sparelever chest=sparec
 
 quest title=The Water Order
 quest intro=An orchard on a rock where nothing turns. The inventor left his diagram in the lean-to at the top of the ramp.
-step reach|orchard|1|Climb the ramp onto the orchard plateau
-step read|Inventor's diagram|1|Read the inventor's diagram in his lean-to
+step read|Inventor's diagram|1|Climb the ramp to the orchard and read the inventor's diagram in his lean-to
 step open|Inventor's toolbox|1|Take the pump crank from his toolbox
 step collect|story:flow|1|Start the three pumps in the diagram's order and get the water running
-step reach|workshop|1|Go down to the workshop under the cliff - its shutter is up
-step open|Inventor's strongbox|1|Open the inventor's strongbox
+step open|Inventor's parts crate|1|Down by the workshop, turn the crank wheel and take his parts crate
+step open|Inventor's strongbox|1|Duck under the raised shutter and open the inventor's strongbox
 quest done=The pumps chug in time, the fountain turns, and the orchard drinks. The inventor's plans are yours - keep it running.
 quest reward=Mango*4;Banana*4;Pineapple*2
 

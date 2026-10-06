@@ -1,9 +1,10 @@
 # Cinderfall - an island of the library's plan Raft 2: The Drowned Frontier (station Three of the Frontier Corps)
 # A volcano of black rock and ash, the Corps' geothermal plant at its foot: the workers' tents on the ash plain, the
 # turbine hall, pipes up the slope - and three relief valves stuck open on its flanks, the pressure rising. Quest
-# "Pressure": the camp, the engineer's warning, the three valves (the west plateau, the south-east spur, the north
-# shoulder where the stone birds' matriarch nests), the roaches in the turbine hall and the plant's store (the machete's,
-# the biofuel refiner's, the fuel tank's and the fuel pipe's blueprints).
+# "Pressure" (10 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
+# spur, the north shoulder where the stone birds' matriarch nests - reached, she driven off, then its valve), the turbine
+# hall reached and its roaches, the plant's store opened (the machete's, the biofuel refiner's, the fuel tank's and the
+# fuel pipe's blueprints).
 #
 # Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
 include lib_sea
@@ -151,8 +152,12 @@ quest title=Pressure
 quest intro=A volcano breathing steam and a plant at its foot, its pressure rising. Station Three: start at the workers' camp.
 step reach|camp|1|Come to the workers' camp on the ash plain
 step read|Engineer's warning|1|Read the engineer's warning
-step collect|story:valvetag|3|Shut the three relief valves and take their tags: the west plateau, the south-east spur, the north shoulder
+step collect|story:valvetag|1|Climb to the west plateau, shut its relief valve and pocket the brass tag
+step collect|story:valvetag|2|Cross the plain to the south-east spur and shut the second valve
+step reach|nest|1|Take the ramp up to the north shoulder, where the stone birds nest
 step kill|Screecher|1|Drive off the stone birds' matriarch by the third valve
+step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hiss dies
+step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
 step open|Plant store|1|Open the plant's store with the three valve tags
 quest done=The gauges settle, the hiss is gone. In the store the Corps left a machete and their fuel plans - and a note: the Sunken Archive, out in the lagoon.

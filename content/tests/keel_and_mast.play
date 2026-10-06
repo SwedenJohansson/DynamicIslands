@@ -16,9 +16,9 @@ wait 5
 # The yard: the letter, the nail barrel; the three planks - the shed, the east beach, the drying rack (and its bear)
 walk -12 3 to -18 4 h=2
 zone yard
-expect step 1
+expect step 0
 read Brandvold's letter
-expect step 2
+expect step 1
 open Nail barrel
 use plank1
 expect story plank 1
@@ -27,9 +27,9 @@ expect story plank 2
 zone dryingrack
 use plank3
 expect story plank 3
-expect step 3
+expect step 2
 kill Bear
-expect step 4
+expect step 3
 
 # Up the scaffold onto her deck: the strakes fitted
 walk -17 7 to -19.5 8.2 h=2
@@ -38,38 +38,38 @@ climb -20 8.8 h=4.42
 climb -20 8.8 h=6.84
 expect stand -20.75 10.5 h=6.9 below=8
 zone hull
-expect step 5
+expect step 3
 use ship
 expect shown strakes
 expect story mark 1
-expect step 6
+expect step 4
 
 # The mast spar on the bay's floor; stepped
 zone mastwreck
-expect step 7
+expect step 5
 open Sunk tool chest
 use mastspar
 expect story mast 1
-expect step 8
+expect step 6
 use maststep
 expect shown mast
 expect story mark 2
-expect step 9
+expect step 7
 
 # The loft key from the coat; the sail from the loft; bent on
 open Brandvold's coat
 expect story loftkey 1
-expect step 10
+expect step 8
 open Sail loft chest
-expect step 11
+expect step 9
 use rigging
 expect shown sail
 expect story mark 3
-expect step 12
+expect step 10
 
 # The rhyme; the chocks in its order - she slides into the bay; aboard her afloat; the slip board; the gift
 read The launching rhyme
-expect step 13
+expect step 11
 use chockmid
 expect message settles back
 use chockfore
@@ -79,8 +79,8 @@ wait 12
 expect shown afloat
 expect shown nameboard
 zone afloat
-expect step 14
+expect step 12
 read The slip board
-expect step 15
+expect step 13
 open The shipwright's gift
 expect done

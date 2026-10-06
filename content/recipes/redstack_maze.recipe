@@ -3,7 +3,8 @@
 # six cells by six, 3.5 m channels, walls of red rock 7 m over the water - and in its north-east corner a heron shrine on
 # a stack behind a water gate. Old Tamsin the tide-keeper's hut stands on stilts by the maze's mouth; her chart gives the
 # way in words, and her lever at the mouth opens the shrine's gate for seventy-five seconds.
-# Quest "Before the Tide Turns" (6 steps): a maze by water against the clock, a climb, a bell's ride home.
+# Quest "Before the Tide Turns" (10 steps): the hut and its box, a dead end, the puffers, a maze by water against the
+# clock, a climb, a bell's ride home, Tamsin's strongbox and her hens.
 #
 # Built by the recipe player (CIRecipe redstack_maze) through the editor's own operations.
 include lib_huts
@@ -200,7 +201,7 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4503 free=3
 # --- Raft's finds in the shallows round the stacks (lib_sea) ----------------------------------------------------------------
 call shallows r=83 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (10 steps) ==========================================================
 info title=Redstack Maze
 info author=Custom Islands
 info description=A field of red rock stacks so close together that the channels between them make a maze, and at its heart a heron shrine behind a water gate. The tide-keeper's lever opens the gate for seventy-five seconds. Her chart knows the way.
@@ -273,10 +274,14 @@ quest title=Before the Tide Turns
 quest intro=A maze of red stacks with a heron shrine at its heart. The tide-keeper's hut is on the outer stack.
 step reach|tidehouse|1|Climb up to the tide-keeper's hut on the outer stack
 step read|The tide-keeper's chart|1|Read the tide-keeper's chart
+step open|Tide-keeper's box|1|Take the rope and bait from the box in the corner of Tamsin's hut
 step reach|mazemouth|1|Find the lever at the maze's mouth
+step open|Barrel in the dead end|1|Learn the channels first - find the barrel wedged in a dead end
+step kill|Puffer fish|2|Clear the two puffers out of the dead ends before you race the gate
 step reach|shrine|1|Pull the lever and get through the maze before the shrine's gate closes
 step collect|story:heronpearl|1|Climb the shrine stack and take the pearl from the heron's nest
 step open|Tide-keeper's strongbox|1|Ring the heron's bell to ride the tide home - and open the strongbox
+step catch|Chicken|2|Catch Tamsin's two hens on the outer stack - they'll do better on a raft
 quest done=Left, right, straight, straight, left - and home on the tide. Tamsin would have been impressed.
 quest reward=Cooked_Herring*3;Rope*2;Stone*4
 

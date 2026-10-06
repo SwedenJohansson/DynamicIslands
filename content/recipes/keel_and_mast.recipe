@@ -3,7 +3,7 @@
 # the sawpit, the timber stacks and the drying shed; on the slipway the Second Wind, nearly finished - a gap in her side,
 # no mast, no sail - on her chocks with a scaffold up to her deck; the drying rack in the west horn's woods, the sail loft
 # on the east horn's shore, the mast spar on the bay's floor. Brandvold built ships here for fifty years and died a month
-# before her launch; his letter asks whoever comes to finish her and knock out the chocks. Quest "The Second Wind" (16
+# before her launch; his letter asks whoever comes to finish her and knock out the chocks. Quest "The Second Wind" (14
 # steps, build and launch): three planks (the bear at the drying rack), the strakes, the mast dive, the mast stepped, the
 # loft key, the sail bent on, the launching rhyme, the chocks in its order - she slides down the slip into the bay - and
 # boarding her afloat, the slip board, the shipwright's gift.
@@ -171,7 +171,7 @@ place Creature_Dolphin dolphins at -35 -60 h=-1.6
 place Zone_Sound baysound at -24 -20 h=2
 call shallows r=110 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (16 steps) =========================================================
+# ===== Settings, story items, notes, behaviours, quest (14 steps) =========================================================
 info title=Keel & Mast
 info author=Custom Islands
 info description=A shipwright's yard on a wooded bay, and on the slipway a great ship nearly finished - waiting for her last planks, her mast and her sail. The old shipwright left a letter. Finish her, knock out the chocks, and watch her slide into the bay.
@@ -223,7 +223,7 @@ prop shiphull beh.move=0,-4,-24
 prop shiphull beh.moveTime=10
 prop shiphull beh.moveMode=switch
 prop shiphull beh.use=Fit the three planks as the last strakes
-prop shiphull if.use=quest|5\ntake|story:plank|3
+prop shiphull if.use=quest|3\ntake|story:plank|3
 prop shiphull on.use=message||You fit the three planks into the gap and drive the nails home. The hull is whole.\nshow|strakes\ngive||story:mark*1\nsound||event:/crafting/hammer_impact
 prop shiphull else.use=message||A gap in the hull where the last three strakes go. Brandvold's letter says where the planks are.
 prop strakes obj.name=strakes
@@ -236,7 +236,7 @@ prop maststep beh.move=0,-4,-24
 prop maststep beh.moveTime=10
 prop maststep beh.moveMode=switch
 prop maststep beh.use=Step the mast
-prop maststep if.use=quest|8\ntake|story:mast|1
+prop maststep if.use=quest|6\ntake|story:mast|1
 prop maststep on.use=message||You heave the spar up the scaffold and drop its heel into the step. The mast stands - the ship suddenly looks like a ship.\nshow|mast\nshow|rigging\ngive||story:mark*1\nsound||event:/exploring/utopia/wood_putdown
 prop maststep else.use=message||The mast step, empty. The spar is on the bay's floor.
 prop mast obj.name=mast
@@ -250,7 +250,7 @@ prop rigging beh.move=0,-4,-24
 prop rigging beh.moveTime=10
 prop rigging beh.moveMode=switch
 prop rigging beh.use=Bend on the sail
-prop rigging if.use=quest|11\ntake|story:sailcloth|1
+prop rigging if.use=quest|9\ntake|story:sailcloth|1
 prop rigging on.use=message||You haul the sail up and lash it to the yard. It fills a little in the breeze from the bay.\nshow|sail\ngive||story:mark*1\nsound||event:/raft/sail/sail_set
 prop rigging else.use=message||The rigging, waiting for a sail.
 prop sail obj.name=sail
@@ -264,7 +264,7 @@ prop mastspar if.use=!signal|freed
 prop mastspar on.use=message||You saw through the rope. The spar lifts off the floor, floating - you tow it up and ashore.\nhide|mastspar\ngive||story:mast*1\nsignal||freed\nsound||event:/crafting/scissors
 prop chockfore obj.name=chockfore
 prop chockfore beh.use=Knock out the fore chock
-prop chockfore if.use=quest|13\n!signal|c1
+prop chockfore if.use=quest|11\n!signal|c1
 prop chockfore on.use=message||Fore to free her nose. The hull creaks.\nhide|chockfore\nsignal||c1\nsound||event:/crafting/hammer_impact
 prop chockfore else.use=message||The fore chock. Finish her first - and read the rhyme at the slip's head.
 prop chockaft obj.name=chockaft
@@ -310,12 +310,10 @@ prop dolphins creature.count=2
 
 quest title=The Second Wind
 quest intro=A shipwright's yard on a wooded bay and an unfinished ship on its slip. Brandvold's letter is on his house door.
-step reach|yard|1|Walk up into the shipwright's yard
-step read|Brandvold's letter|1|Read Brandvold's letter
+step read|Brandvold's letter|1|Walk up into the shipwright's yard and read Brandvold's letter
 step collect|story:plank|3|Fetch the three seasoned planks: the drying shed, the east beach, the rack in the west woods
 step kill|Bear|1|Deal with the bear at the drying rack
-step reach|hull|1|Climb the scaffold onto the ship's deck
-step collect|story:mark|1|Fit the three planks as the last strakes
+step collect|story:mark|1|Climb the scaffold onto her deck and fit the three planks as the last strakes
 step reach|mastwreck|1|Dive to the mast spar on the bay's floor
 step collect|story:mast|1|Cut the spar free of its anchor and bring it ashore
 step collect|story:mark|2|Step the mast

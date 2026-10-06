@@ -12,18 +12,22 @@ expect step 1
 read Keeper's log
 expect step 2
 
+# The keeper's hens, loose on the flats by his hut
+catch Chicken 2
+expect step 3
+
 # The sunken supply boat off the landing: the spare beacon cell
 at -54 -10 h=-3
 open Supply crate
 expect story beaconcell 1
-expect step 3
+expect step 4
 
 # Up the ramp of fill to the beacon terrace - its stone birds
 walk -34 20 to -28.2 17.8 to -22.4 15.6 to -16.7 13.3 to -10.9 11.1 to -6 9.5 to -2 9 h=16
 zone terrace
-expect step 4
-kill Screecher
 expect step 5
+kill Screecher
+expect step 6
 
 # The beacon lit with the cell: the keeper's locker opens
 use beaconbox

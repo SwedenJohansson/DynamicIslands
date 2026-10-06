@@ -6,7 +6,7 @@
 # Granite Point penitentiary closed after the only escape it ever had: inmate 1147 spent fourteen months opening his
 # cell's vent with a sharpened spoon, crawled down an old drain through the rock to the sea and swam to a kit he'd hidden
 # on the outer rock. His notes are still under his mattress in cell 14. Do it his way.
-# Quest "Fourteen Months" (9 steps): the dock, the warden's notice, the yard, the rats in cell block B, the key ring in the
+# Quest "Fourteen Months" (7 steps): the warden's notice at the dock, up to the rats in cell block B, the key ring in the
 # guard tower, cell 14 and his notes, the spoon in the mess hall, down the vent and the drain, the swim to his escape kit
 # on the outer rock (zipline blueprint, rope, plastic).
 #
@@ -202,7 +202,7 @@ scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4256 free=3
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 
-# ===== Settings, story items, notes, behaviours, quest (9 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
 info title=The Rock Pen
 info author=Custom Islands
 info description=A prison on a flat granite rock in the fog, closed after the only escape it ever had. Inmate 1147 opened his vent with a sharpened spoon over fourteen months, crawled down a drain through the rock and swam for it. His notes are still in cell 14. Do it his way.
@@ -295,10 +295,8 @@ prop waves zone.radius=45
 
 quest title=Fourteen Months
 quest intro=A prison on a rock in the fog, closed after one man left it without the ferry. Start at the dock.
-step reach|dock|1|Land at the prison's dock below the rock
-step read|Warden's notice|1|Read the warden's notice on the dock gate
-step reach|yard|1|Climb the road to the prison yard
-step kill|Rat|3|Clear the rats out of cell block B
+step read|Warden's notice|1|Land at the dock and read the warden's notice on its gate
+step kill|Rat|3|Climb the road to the yard and clear the rats out of cell block B
 step collect|story:cellkeys|1|Find the cell block's key ring in the guard tower
 step read|Inmate 1147's notes|1|Open cell 14 and read the notes hidden under the mattress
 step collect|story:spoon|1|Find the sharpened spoon he hid in the mess hall

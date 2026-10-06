@@ -2,7 +2,8 @@
 # A flat-topped mesa of snowy rock standing 33 m out of the sea with sheer cliffs all round; up its north cliff the
 # hermit's ladder scaffold (five ladders on a tower of thick pillars, a ledge halfway) and on the snowy table top his hut,
 # a bench and a post with three levers. His riddles say which lever to pull; the other two call his birds.
-# Quest "Three Levers" (7 steps): a climb and a riddle.
+# Quest "Three Levers" (5 steps): a climb and a riddle - the climber's note at the foot, the box on the ledge where he
+# gave up, the hermit's riddles on top, the right lever, the hermit's chest.
 #
 # Built by the recipe player (CIRecipe hermits_table) through the editor's own operations.
 include lib_huts
@@ -74,7 +75,7 @@ scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4378 free=3
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4388 free=3
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4389 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Hermit's Table
 info author=Custom Islands
 info description=A table of snowy rock standing out of the sea on sheer cliffs, a ladder scaffold up its north face - and on top, a hermit's hut with three riddles and three levers. Pull the right one.
@@ -126,11 +127,9 @@ prop wind zone.radius=20
 
 quest title=Three Levers
 quest intro=A table of rock with a hermit's hut on top and a ladder scaffold up its north cliff. Start at its foot.
-step reach|foot|1|Land at the foot of the north cliff
-step read|Climber's note|1|Read the note nailed to the post
-step reach|ledge|1|Climb the scaffold to its ledge
-step reach|top|1|Climb to the hermit's hut on top
-step read|The hermit's riddles|1|Read the hermit's riddles
+step read|Climber's note|1|Land at the foot of the north cliff and read the note nailed to the post
+step open|Ledge box|1|Climb the scaffold to the ledge and open the box wedged there - someone gave up here
+step read|The hermit's riddles|1|Don't look down: climb on to the hermit's hut and read his riddles
 step collect|story:hermitkey|1|Pull the lever that answers the first riddle
 step open|Hermit's chest|1|Open the hermit's chest
 quest done=Footsteps: the more you take, the more you leave behind. You leave a few more on the way down.

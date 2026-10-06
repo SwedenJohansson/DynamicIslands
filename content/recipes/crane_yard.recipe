@@ -1,8 +1,8 @@
 # Crane Yard - a small/medium island of the library (inspired by Raft's Varuna Point)
 # A construction islet under a giant tower crane: scaffolding, machines, the site office - and a pier whose end
-# collapsed into the sea, taking the spotlight's parts down with it. Quest "Lights On": the yard, the foreman's
-# whiteboard, three spotlight parts from the flooded deck (angler fish), the spotlight on its scaffold tower - its
-# beam finds the buoy over the foreman's lockbox.
+# collapsed into the sea, taking the spotlight's parts down with it. Quest "Lights On" (4 steps): the foreman's
+# whiteboard, the angler fish under the flooded deck, its three stencilled spotlight crates, the spotlight on its
+# scaffold tower - its beam finds the buoy over the foreman's lockbox.
 #
 # Built by the recipe player (CIRecipe crane_yard) through the editor's own operations (macros from lib_rt).
 include lib_sea
@@ -139,10 +139,9 @@ prop anglers creature.health=1.5
 
 quest title=Lights On
 quest intro=A construction yard under a tower crane, abandoned mid-shift. The foreman left notes.
-step reach|yard|1|Land at the construction yard
-step read|Foreman's whiteboard|1|Read the foreman's whiteboard
+step read|Foreman's whiteboard|1|Read the foreman's whiteboard in the yard
 step kill|Angler fish|2|Clear the angler fish from the collapsed deck
-step collect|story:part|3|Bring up three spotlight parts
+step open|Spotlight crate|3|Dive to the three stencilled spotlight crates - VP-SPOT 1/3, 2/3, 3/3
 step open|Foreman's lockbox|1|Fix the spotlight on the scaffold tower and follow its beam
 quest done=The light is on, the wages are found, and nobody finished the crane.
 quest reward=Bolt*6;Hinge*4

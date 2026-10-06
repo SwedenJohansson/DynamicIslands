@@ -32,27 +32,29 @@ open Oil store crate
 read Keeper Lusk's diary
 expect step 3
 
-# Up the lighthouse's ladders to the gallery: the screechers; the lamp is dry, the horn and the locker wait
+# Up the lighthouse's ladders to the gallery: the screechers driven off; the lamp is dry, the horn and the locker wait
 walk 17.15 24.4 to 17.15 22.6 to 14.3 22.6 h=8.5 below=11
 climb 14.3 23.1 h=8.5
 climb 14.3 23.1 h=14.5
 climb 14.3 23.1 h=20.5
 expect stand 13.6 24.6 h=26.03 below=28
 zone lamptop
+kill Screecher
+expect step 4
 use lamp
 expect message bone dry
 use foghorn
 expect message Light the lamp first
 open Lamp room locker
 expect message wired to the foghorn
-expect step 3
+expect step 4
 
 # Down to the cistern: back over the bridges, round the cottage, down the stair onto the slab, in at the hatch - the thing
 # comes up; the oil at the bottom; up the ladder again
 walk 17.75 22.2 to 17.75 11 to 13.83 8.92 to 6.49 -3.36 to 6.9 -6.4 to 3.55 -6.7 to 3.55 -8.3 to 3.55 -13.9 to 3.55 -19.6 to 6.4 -19.4 h=3.96
 zone cistern
 kill Angler fish
-expect step 4
+expect step 5
 open Iron oil box
 expect story lampoil 1
 climb 7.9 -18.1 h=-2

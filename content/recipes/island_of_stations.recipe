@@ -8,7 +8,8 @@
 # Pike (zoology) in the marsh south of the middle (36 -40), Moth (the residents' village) round a green in the west
 # (-58 9), Lantern (the observatory) on the north hill (-8 60); the hatch under a concrete slab on the wooded rise at the
 # marsh's heart (0 3). The plane is Raft's light plane, scaled up and nose-down in the reeds.
-# Quest "The Sequence" (18 steps, 3 chapters): the crash (3), the stations and their five cards (10), the hatch and the
+# Quest "The Sequence" (22 steps, 3 chapters): the crash - camp, journal, the passenger's trunk (4), the stations and
+# their five cards - Pike's sign and its bear, a village fridge, the boars under the north hill (13), the hatch and the
 # vault (5, timed).
 include lib_rt
 include lib_selene
@@ -306,7 +307,7 @@ scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=70.0 seed=4421 free=5
 scatter "Pickup_Landmark_BerryBush" 6 at 0 0 r=70.0 seed=4431 free=3
 scatter "Pickup_Landmark_Tree_Birch" 6 at 0 0 r=70.0 seed=4441 free=5
 
-# ===== Settings, story items, notes, behaviours, quest (18 steps, 3 chapters) =============================================
+# ===== Settings, story items, notes, behaviours, quest (22 steps, 3 chapters) =============================================
 info title=The Island of Stations
 info author=Custom Islands
 info description=A misty forest marsh where a plane came down - and found the island already full of buildings: the stations of a research initiative that vanished, each keeping one card of a Sequence. Gather the five cards, find the hatch in the marsh and enter the Sequence before the counter runs out.
@@ -435,16 +436,20 @@ quest intro=A misty island with a plane in its marsh - and buildings that were h
 # Chapter 1 - the crash
 step reach|crashcamp|1|Reach the survivors' camp by the wreck of Flight 9
 step read|Survivors' journal|1|Read the survivors' journal
+step open|Passenger's trunk|1|Search the reeds by the plane for a passenger's trunk
 step reach|stationgull|1|Find the station with the aerials on the east rise
 # Chapter 2 - the stations
 step read|Orientation notes|1|Read the orientation notes in Station Gull
 step collect|story:seqcard|1|Take Station Gull's Sequence card from the comms desk
 step reach|stationkelp|1|Dive to Station Kelp, sunk in the bay
 step collect|story:seqcard|2|Find Kelp's card in its flooded lab
+step read|Station Pike|1|Read the sign at Station Pike's fence before you go in
 step kill|Polar bear|1|Face the bear that broke out of Station Pike
 step collect|story:seqcard|3|Take Pike's card from the keeper's locker
 step reach|village|1|Walk into the residents' village in the west
+step open|Village fridge|1|Raid the fridge humming in a village house - somebody still stocks it
 step collect|story:seqcard|4|Find Station Moth's card in the village's council hall
+step kill|Warthog|2|Drive off the boars rooting in the woods under the north hill
 step reach|stationlantern|1|Climb to Station Lantern, the observatory on the north hill
 step collect|story:seqcard|5|Take the last card from the observatory
 # Chapter 3 - the hatch

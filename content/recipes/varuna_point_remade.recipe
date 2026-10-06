@@ -1,10 +1,10 @@
 # Varuna Point Remade - an island of the library's plan Raft Remade (in place of Raft's Varuna Point)
 # Raft's Varuna Point made anew: a long rocky point, a construction site cut into its east end - the half-built tower
 # (Varuna's elevator shaft in its scaffolding), the site office, the machines - and the floodlight tower over the north
-# water, its light knocked out in a storm. Quest "Floodlight Down": the site, the foreman's log, the floodlight's four
-# parts from crates sunk on the reef, the floodlight lit again from its tower, the giant angler in the deep under the
-# point and the foreman's strongbox it guards (Varuna's blueprints: the wind turbine, the advanced battery, the advanced
-# head light, the electric grill).
+# water, its light knocked out in a storm. Quest "Floodlight Down" (6 steps): the foreman's log at the site, the bulb's
+# crate under the tower, the floodlight's four parts from crates sunk on the reef, the floodlight lit again from its
+# tower, the giant angler in the deep under the point and the foreman's strongbox it guards (Varuna's blueprints: the
+# wind turbine, the advanced battery, the advanced head light, the electric grill).
 #
 # Built by the recipe player (CIRecipe varuna_point_remade) through the editor's own operations.
 include lib_sea
@@ -150,9 +150,9 @@ prop angler creature.zone=deep
 
 quest title=Floodlight Down
 quest intro=A construction site on a rocky point, its floodlight dark since the storm. Go up to the site.
-step reach|site|1|Come up to the construction site on the point
-step read|Foreman's log|1|Read the foreman's log on his desk by the site office
-step collect|story:part|4|Dive for the floodlight's four parts in the crates on the reef
+step read|Foreman's log|1|Come up to the site and read the foreman's log on his desk by the office
+step open|Bulb crate|1|Dive below the floodlight tower for the crate with the bulb
+step collect|story:part|4|Find the other three parts on the reef: the lens, the reflector, the cable drum
 step reach|lightdeck|1|Climb the floodlight tower
 step kill|Angler fish|1|Light the floodlight, then face the giant angler in the deep under the point
 step open|Foreman's strongbox|1|Open the foreman's strongbox in the deep

@@ -1,4 +1,8 @@
 # Thornwood - a very large island of the library (jungle)
+# Quest "The Boar King of Thornwood" (21 steps): the explorer's camp, his diary and map; the Shrine of the Roots and its
+# tusk; the gorge's rim, the carved post and the rope bridge; the trail to the falls, the Shrine of the Falls and its
+# tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail up the hill, the stone temple, the
+# Warthog King and his guards, the boar idol, the offering on the altar (the machete); the explorer's two vine caches.
 include lib_sea
 include lib_features
 new
@@ -86,13 +90,17 @@ ramp Block_Floor_Wood from -20.75 -13.2 13.2 to -20.75 -31 14.15 len=1.5 top=0
 ramp Block_Floor_Wood from -19.25 -13.2 13.2 to -19.25 -31 14.15 len=1.5 top=0
 place ReefHuts_Pillar3 - at -21.8 -13 ground
 place ReefHuts_Pillar3 - at -18.2 -13 ground
-place ReefHuts_Pillar3 - at -21.8 -31.2 ground
+place ReefHuts_Pillar3 bridgepost at -21.8 -31.2 ground
 place ReefHuts_Pillar3 - at -18.2 -31.2 ground
 for rz -16 -28 -5.5
 place RopeFence_Medium - at -21.6 $rz h={13.2+(-13.2-$rz)/17.8*0.95} sit rot=0,0,0 yaw=90
 place RopeFence_Medium - at -18.4 $rz h={13.2+(-13.2-$rz)/17.8*0.95} sit rot=0,0,0 yaw=90
 next
 place Zone_Trigger bridge at -20 -11 y=1.5
+# (quest zones on the trails: the gorge's rim on the way to the bridge, the trail to the falls, the boar trail up the hill)
+place Zone_Trigger gorgerim at -25 -40 y=1.5
+place Zone_Trigger falls at -42 6.7 y=1.5
+place Zone_Trigger hilltrail at 0 10 y=1.5
 
 # --- The three jungle shrines: a stone ring, two pillars, a brazier, an offering box with a carved tusk ---------------
 macro shrine x z box
@@ -168,6 +176,8 @@ prop offering tint.color=#77756a
 prop offering tint.amount=0.5
 prop idol tint.color=#4f6a3c
 prop idol tint.amount=0.6
+note idol The boar idol | A stone boar, mossed green, its eyes two polished shells. Spirals run down its flanks to the altar - and three of them end in the shape of a carved tusk, empty.
+note bridgepost Carved post | Spirals and a boar's head cut deep into the bridge's post, and the explorer's pencil beside them: "Same marks as the shrines. A warning, I think - the boar's land starts on the other side."
 prop stone tint.color=#6b6a5e
 prop stone tint.amount=0.3
 
@@ -177,6 +187,15 @@ prop camp zone.message=An explorer's camp, abandoned in a hurry: a tent, a cold 
 prop bridge zone.id=bridge
 prop bridge zone.radius=4
 prop bridge zone.message=The old rope bridge creaks under you - and holds.
+prop gorgerim zone.id=gorgerim
+prop gorgerim zone.radius=3
+prop gorgerim zone.message=The jungle drops away into the gorge - a river far below, and the old rope bridge strung across it.
+prop falls zone.id=falls
+prop falls zone.radius=3
+prop falls zone.message=Spray drifts up from the gorge's mouth. The Shrine of the Falls is just ahead.
+prop hilltrail zone.id=hilltrail
+prop hilltrail zone.radius=3
+prop hilltrail zone.message=The trail steepens. Boar tracks in the mud, big ones - all heading up the hill.
 prop temple zone.id=temple
 prop temple zone.radius=12
 prop temple zone.message=The stone ring of Thornwood. Something huge snorts behind the idol - the Warthog King!
@@ -204,18 +223,37 @@ prop jungle zone.radius=90
 # the Boar King's offering gives (its blueprint and one to start with)
 call vinecache x=-45 z=-60 r=22 seed=61 chest=thornvine1 vines=thornvines1 items=Rope*4;Seed_Banana*2;Bolt*3
 call vinecache x=15 z=45 r=20 seed=62 chest=thornvine2 vines=thornvines2 items=HealingSalve*2;MetalIngot*2;Plank*6
+# (the explorer's own caches, the vines grown over them since: his notes in them; the vines named for the play test)
+note thornvine1 Vine cache by the camp | Another oilcloth bundle, a short walk from the camp: rope, bolts, banana seed. The note inside:\n\n"Day 7. The boat's ready. If anyone finds this - the King can be beaten. I just couldn't do it alone."
+note thornvine2 Vine cache by the temple | The explorer's oilcloth bundle, grown over with vines: salve, two ingots, planks. A note pinned inside:\n\n"Day 4. Kit stashed by the temple path, in case the boar keeps me off the hill. The vines here grow a hand's width a night."
+prop thornvines1 obj.name=thornvines1
+prop thornvines2 obj.name=thornvines2
 call hives x=0 z=0 r=60 n=2 seed=63
 
 quest title=The Boar King of Thornwood
 quest intro=A jungle island split by a deep gorge. On the south beach, an explorer's camp - abandoned in a hurry, the diary still on a crate.
 step reach|camp|1|Find the explorer's camp on the south beach
 step read|Explorer's diary|1|Read the explorer's diary
+step read|Map of Thornwood|1|Study the expedition's map on the board by the tent
+step open|Shrine of the Roots|1|Follow the trail east to the Shrine of the Roots
+step collect|story:tusk|1|Take the first carved tusk from its offering box
+step reach|gorgerim|1|Follow the trail north to the rim of the gorge
+step read|Carved post|1|Read the marks carved into the rope bridge's post
 step reach|bridge|1|Cross the gorge on the old rope bridge
-step collect|story:tusk|3|Find the carved tusks at the three jungle shrines
+step reach|falls|1|Take the west trail towards the falls at the gorge's mouth
+step open|Shrine of the Falls|1|Find the Shrine of the Falls where the gorge meets the sea
+step collect|story:tusk|2|Take the second tusk, damp with the falls' spray
+step open|Wild beehive|1|Raid a wild beehive in the jungle for its honeycomb
+step open|Shrine of the Hill|1|Find the Shrine of the Hill on the temple hill's east slope
+step collect|story:tusk|3|Carry all three carved tusks up the hill
+step reach|hilltrail|1|Follow the boar trail up the temple hill
 step reach|temple|1|Climb to the stone temple on the hill
 step kill|Warthog|3|Defeat the Warthog King and his guards
+step read|The boar idol|1|Read the spirals carved down the boar idol's flanks
 step open|Temple offering|1|Lay the three tusks on the altar
-quest done=The Warthog King is dead and the tusks lie on the altar. The temple's offering - and a machete blueprint the explorer left - are yours.
+step open|Vine cache by the temple|1|Cut through the vines near the temple with the new machete
+step open|Vine cache by the camp|1|Back towards the beach: cut open the second cache behind the vines
+quest done=The Warthog King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.
 quest reward=Leather*6;Feather*6;Rope*4
 
 save Thornwood

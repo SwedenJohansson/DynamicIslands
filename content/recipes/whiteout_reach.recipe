@@ -2,10 +2,11 @@
 # A wide snowfield round a central hill: the Corps' winter camp on the hill's north-east shoulder (11.5 m) - two of
 # Temperance's domes (the mess, the commander's), the boiler house, the snowmobile shed, the camp's store -, the radio
 # hut on the summit (21 m), the supply ship Kestrel stranded in the ice of the north shore, and a crevasse cut into the
-# hill's west flank where the polar bear matriarch has her den. Quest "Do Not Come in Winter" (16 steps): the camp, the
-# commander's order, the mess locker, the Kestrel and her manifest, the shed's bear and the store key, three boiler parts
-# (the store, the Kestrel's flooded hold, the survey pack in the den - past the matriarch), the boiler lit, the radio's
-# crystal, the radio hut's last transmission, the commander's chest.
+# hill's west flank where the polar bear matriarch has her den. Quest "Do Not Come in Winter" (20 steps): the camp, the
+# commander's order, the mess locker, the Kestrel and her manifest, the snowmobile shed and its bear, the store key, three
+# boiler parts (the store, back to the Kestrel for her flooded hold, the survey pack in the den - past the matriarch),
+# the boiler lit, the radio's crystal, the two goats netted, the radio hut's last transmission, the
+# commander's chest.
 #
 # Built by the recipe player (CIRecipe whiteout_reach) through the editor's own operations.
 include lib_sea
@@ -103,7 +104,7 @@ place "Box Big" denpack at -14.5 5.5 ground yaw=70
 place Creature_Goat goats at -30 -40
 prop goats creature.count=2
 
-# --- Settings, story items, notes, behaviours, quest (16 steps) --------------------------------------------------------
+# --- Settings, story items, notes, behaviours, quest (20 steps) --------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=70.0 seed=4367 free=5
 scatter "Pickup_Landmark_Flower_White" 4 at 0 0 r=70.0 seed=4377 free=3
@@ -160,7 +161,7 @@ prop kestrel zone.id=kestrel
 prop kestrel zone.radius=10
 prop kestrel zone.message=The supply ship Kestrel, frozen into the shore ice - broken open at her stern.
 prop shed zone.id=shed
-prop shed zone.radius=7
+prop shed zone.radius=4
 prop shed zone.message=Something big has been sleeping in the snowmobile shed - and it's waking up!
 prop icecaves zone.id=icecaves
 prop icecaves zone.radius=8
@@ -190,14 +191,18 @@ step read|Commander's order|1|Read the commander's order in the mess dome
 step open|Mess dome locker|1|Open the mess dome's locker
 step reach|kestrel|1|Find the supply ship Kestrel in the north shore's ice
 step read|Ship's manifest|1|Read the Kestrel's manifest on her deck
+step reach|shed|1|Go back up the hill to the snowmobile shed for the store key
 step kill|Polar bear|1|Drive the polar bear out of the snowmobile shed
 step collect|story:storekey|1|Find the camp store's key in the shed
-step collect|story:heatpart|1|Take the first boiler part from the camp store
+step open|Camp store|1|Unlock the camp store with the key
+step collect|story:heatpart|1|Take the first boiler part from its crate
+step reach|kestrel|1|Back down to the Kestrel - the manifest says a part is still in her hold
 step collect|story:heatpart|2|Dive by the Kestrel's stern for the second
 step reach|icecaves|1|Find the crevasse in the hill's west side
 step kill|Polar bear|1|Face the polar bear matriarch in her den
 step collect|story:heatpart|3|Take the third part from the survey team's pack
 step collect|story:radiocrystal|1|Fit the parts to the camp's boiler and light it
+step catch|Goat|2|The camp is warm again - net the two goats on the south snowfield
 step reach|radiohut|1|Climb to the radio hut on the summit
 step read|Last transmission|1|Read the radio's last transmission
 step open|Commander's chest|1|Open the commander's chest

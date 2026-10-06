@@ -2,9 +2,10 @@
 # Five palm islets on a shallow coral bank, and in a basin in the middle the Corps' archive, two of its three floors under
 # the sea: the reading room on top with its jetty and the index desk, the flooded stacks below (broken windows to swim in
 # by, air under the reading room's floor and a pocket of it in the deepest room), the rare book vault and its keeper.
-# Quest "Card Catalogue": the reading room, the archivist's letter, three catalogue cards from the flooded stacks, the
-# index desk, the angler in the vault and the vault itself (the engine controls', the metal detector's, the firework's
-# and the zipline's blueprints).
+# Quest "Card Catalogue" (10 steps): the reading room, the archivist's letter, the shelf's and the floor's card boxes in
+# the flooded stacks, the deepest room's air pocket, the vault, the angler there, the deep card box, the three cards, the
+# index desk and the vault opened (the engine controls', the metal detector's, the firework's and the zipline's
+# blueprints).
 #
 # Built by the recipe player (CIRecipe sunken_archive) through the editor's own operations.
 include lib_sea
@@ -121,9 +122,14 @@ quest title=Card Catalogue
 quest intro=Palm islets on a coral bank and a building standing in the sea. Station Four: start in the archive's reading room.
 step reach|readingroom|1|Climb onto the jetty and into the archive's reading room
 step read|Archivist's letter|1|Read the archivist's letter
-step collect|story:card|3|Dive into the flooded stacks for three catalogue cards
-step kill|Angler fish|1|Feed the cards through the index, then face the vault's keeper in the deepest room
-step open|Rare book vault|1|Open the rare book vault
+step open|Shelf card box|1|Dive into the flooded stacks: a card box waits on a shelf
+step open|Floor card box|1|Find the second card box on the stacks' floor
+step reach|deepair|1|Swim down to the deepest room and breathe in its air pocket
+step reach|vault|1|Find the lamp swinging in the dark by the vault
+step kill|Angler fish|1|Face the vault's keeper, the angler with the lamp on its head
+step open|Deep card box|1|Take the last catalogue card from the deep room's box
+step collect|story:card|3|Carry the three catalogue cards up to the index desk
+step open|Rare book vault|1|Feed the cards through the index, then open the rare book vault
 quest done=The vault gives up the Corps' rarest plans - and their map: Hightide Harbor, a fishing town on stilts, where the fleet went.
 quest reward=Plank*6;Plastic*6;Rope*2
 

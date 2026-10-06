@@ -3,8 +3,9 @@
 # other, with the bee-mother skep on the summit; the mead shed on the north plain by the landing.
 # Old Bram kept bees here for forty years. He left the island the summer his knees gave out, and the custom with it:
 # the first mead of the season goes back up the hill to the bee-mother, or the hives sulk all year.
-# Quest "First Mead" (5 steps, a delivery): a comb from each terrace's marked hive - each terrace has its swarm, which
-# can't be beaten, only outrun - pressed into the season's first mead, carried up to the summit.
+# Quest "First Mead" (6 steps, a delivery): a comb from each terrace's marked hive - each terrace has its swarm, which
+# can't be beaten, only outrun - pressed into the season's first mead, carried up every ramp to the summit, into the
+# bee-mother's chest.
 #
 # Built by the recipe player (CIRecipe bramblehive_knoll) through the editor's own operations. Points: the knoll's middle
 # at 0 0; the plain round it at 2.6 m; the ring terraces at 4.5 m (r 17..25), 7 m (r 10..17), 9.5 m (r 4..10) and the
@@ -131,7 +132,7 @@ scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4495 free=3
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4496 free=3
 scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4505 free=5
 
-# ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
 info title=Bramblehive Knoll
 info author=Custom Islands
 info description=A beekeeper's knoll: three ring terraces of hives among the brambles, a mead shed by the landing and a great old skep on the summit. Take a comb from each terrace - the swarms can't be beaten, only outrun - press the season's first mead and carry it up the hill, the way old Bram always did.
@@ -206,7 +207,8 @@ step reach|knoll|1|Land at the foot of the beekeeper's knoll
 step read|Old Bram's note|1|Read old Bram's note in the mead shed
 step collect|story:comb|3|Take a comb from the marked hive on each of the three terraces - and keep walking
 step collect|story:mead|1|Press the three combs into the season's first mead
-step open|Bee-mother's chest|1|Carry the mead up to the bee-mother's chest on the summit
+step reach|summit|1|Carry the mead up every ramp to the bee-mother skep on the summit
+step open|Bee-mother's chest|1|Set the mead in the bee-mother's chest, the way Bram always did
 quest done=The first mead is in the bee-mother's chest and the hill hums a little louder. Bram's custom holds for another year.
 quest reward=Jar_Honey*2;Rope*3;Plank*6
 

@@ -160,7 +160,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 2 at 0 0 r=31.5 seed=4529 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4538 free=3
 scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4548 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (9 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
 info title=The Drowned Labyrinth
 info author=Custom Islands
 info description=Sandy desert islets on a reef, and under the reef a labyrinth of flooded tunnels: a cave-diving expedition's guideline, the slates they left at the forks, an air bell halfway - and in the hall of columns at its heart, an old trader's strongbox and something with a light on its head.
@@ -192,7 +192,7 @@ prop isletbox loot.refill=0
 
 prop linepost obj.name=linepost
 prop linepost beh.use=Tie off the guideline at the mouth
-prop linepost if.use=quest|3\ntake|story:reel|1
+prop linepost if.use=quest|2\ntake|story:reel|1
 prop linepost on.use=message||You tie the reel off on the post and let the line run into the dark. One after another, down the tunnel, small lamps wake along the line - the right way, the way the expedition laid it.\nshow|guidelamps\nsignal||lined\nsound||event:/crafting/hook_impact_reef
 prop linepost else.use=message||An old post at the labyrinth's mouth, worn smooth by guidelines. The dive plan says: tie a line off here before you go in.
 prop guidelamps obj.name=guidelamps
@@ -249,11 +249,9 @@ prop mazesound zone.radius=30
 
 quest title=Forty Breaths
 quest intro=A dive camp on a desert reef, and a labyrinth under the reef that one diver went into alone. Start at the camp.
-step reach|camp|1|Land at the divers' camp on the largest islet
-step read|Dive leader's plan|1|Read the dive plan on the chart table
+step read|Dive leader's plan|1|Land at the divers' camp and read the dive plan on the chart table
 step collect|story:reel|1|Take a guideline reel from the dive locker
-step reach|entrance|1|Dive to the labyrinth's mouth in the reef
-step read|First fork slate|1|Tie off the line, follow the lamps and read the slate at the first fork
+step read|First fork slate|1|Dive to the mouth, tie off the line and follow the lamps to the first fork's slate
 step reach|airbell|1|Find the air bell halfway and breathe
 step kill|Angler fish|1|Face the light that waits in the Hall of Columns
 step open|Trader's strongbox|1|Open the old trader's strongbox in the hall

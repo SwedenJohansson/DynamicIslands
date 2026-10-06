@@ -6,9 +6,9 @@
 # The lodge closed for the winter with one caretaker to keep the boiler vented. In spring the drive was buried, the house
 # cold, the boiler groaning - and the caretaker gone, his typed pages all over the house. The last one says his boiler
 # room key is in his coat at the heart of the maze, where a white bear walked in during the storm and never came out.
-# Quest "The Winter Book" (8 steps): the drive, the manager's ledger, six pages (a "find pages" step), the maze, the bear
+# Quest "The Winter Book" (7 steps): the manager's ledger up the drive, six pages (a "find pages" step), the maze, the bear
 # at its heart, the key in the caretaker's coat, the boiler house, three valves in order and his strongbox.
-# PAGES: step 3 counts every note read on this island (6 = the ledger + five typed pages). The loot boxes have NO note on
+# PAGES: step 2 counts every note read on this island (6 = the ledger + five typed pages). The loot boxes have NO note on
 # purpose: a chest with a note adds a page when opened and would finish the step early.
 #
 # Built by the recipe player (CIRecipe highmoor_lodge) through the editor's own operations.
@@ -315,7 +315,7 @@ scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4220 free=3
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 
-# ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
 info title=Highmoor Lodge
 info author=Custom Islands
 info description=A mountain lodge on a snowy island, closed for the winter with one caretaker to keep the boiler vented. In spring he was gone, his typed pages all over the house, music playing in the empty ballroom - and his key at the heart of the hedge maze, where a white bear walked in and never came out.
@@ -415,8 +415,7 @@ prop wind zone.radius=45
 
 quest title=The Winter Book
 quest intro=A lodge closed for the winter with one man to look after it. He isn't here any more - but his pages are. Start up the drive.
-step reach|lodge|1|Climb the drive to Highmoor Lodge
-step read|Manager's ledger|1|Read the manager's ledger on the front desk
+step read|Manager's ledger|1|Climb the drive to the lodge and read the ledger on the front desk
 step pages||6|Read the six pages of the lodge's winter: the ledger and the caretaker's five typed pages
 step reach|maze|1|Find the way into the hedge maze west of the lodge
 step kill|Polar bear|1|Survive what waits at the heart of the maze

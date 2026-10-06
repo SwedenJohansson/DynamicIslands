@@ -2,7 +2,10 @@
 # A ring of black sea stacks around a trench that falls away 42 m into the dark: the expedition's raft moored over its
 # edge, its air line running down to three air pockets (Raft's own, from under Caravan Town) - a container on a shelf,
 # a gas tank on a ledge, a shack on the floor - and on the floor the lair of the Abyssal Angler. Quest "The Bottom of
-# the Abyss": the raft, the leader's log, the valve wrench, the air valve, the dive, the angler and its brood, the hoard.
+# the Abyss" (20 steps, in four chapters): the raft - the leader's log, the camp chest, the valve wrench, the air valve
+# (a journal page); the dive - the container, the gas tank, the shack; the lair - the Abyssal Angler (a journal page when
+# it dies), its brood, the hoard; the way up - the shack, the tank, the container, the raft, the log read once more.
+# The journal's pages (the log, the chest's and the hoard's tags, the valve, the angler) are steps of their own.
 #
 # Built by the recipe player (CIRecipe the_abyss) through the editor's own operations. Its play test:
 # content\tests\the_abyss.play.
@@ -104,7 +107,7 @@ prop lairhoard loot.refill=0
 prop airvalve obj.name=airvalve
 prop airvalve beh.use=Open the air line's valve
 prop airvalve if.use=take|story:abysswrench|1
-prop airvalve on.use=message||The wrench bites and the wheel turns. The pump hisses - far below, one by one, the air pockets swell with air, and bubbles rise out of the dark.\nshow|airpockets\nsignal||airon\nsound||event:/exploring/obstacles/varuna/garagedoor_open
+prop airvalve on.use=message||The wrench bites and the wheel turns. The pump hisses - far below, one by one, the air pockets swell with air, and bubbles rise out of the dark.\nshow|airpockets\nsignal||airon\njournal|The air line's valve|The valve is open. The container on the shelf, the tank on the ledge, the shack on the floor: air all the way down. Breathe at each one.\nsound||event:/exploring/obstacles/varuna/garagedoor_open
 prop airvalve else.use=message||The valve wheel is rusted fast. The expedition had a wrench for it - in the camp chest?
 
 prop pocket1 zone.id=pocket1
@@ -163,15 +166,30 @@ prop abyssal creature.respawn=0
 prop abyssal creature.zone=lair
 prop abyssal tint.color=#1a1426
 prop abyssal tint.amount=0.6
+prop abyssal on.defeat=journal|The Abyssal Angler|The light that was not a fish's has gone out. The thing the expedition came to find lies on the floor of the Abyss - and its brood is still in the dark.
 
 quest title=The Bottom of the Abyss
 quest intro=The expedition's last stop: a trench among black sea stacks. Their raft is still moored over it.
-step reach|camp|1|Board the expedition's raft
-step read|Expedition leader's log|1|Read the expedition leader's log
-step collect|story:abysswrench|1|Take the valve wrench from the camp chest
-step reach|lair|1|Open the air line's valve and dive to the bottom of the Abyss
-step kill|Angler fish|4|Defeat the Abyssal Angler and its brood
+step reach|camp|1|Board the expedition's raft, moored over the trench
+step read|Expedition leader's log|1|Read the expedition leader's log on the table
+step pages||1|Keep the leader's warning in your journal
+step open|Camp chest|1|Open the expedition's camp chest
+step collect|story:abysswrench|1|Take the valve wrench - the air line's valve won't turn without it
+step pages||2|Copy the camp chest's list into your journal
+step pages||3|Turn the air line's valve with the wrench and log it in your journal
+step reach|pocket1|1|Dive to the container on the shelf and breathe
+step reach|pocket2|1|Sink to the gas tank on the ledge, 18 m down
+step reach|pocket3|1|Down to the shack on the floor - the last air before the lair
+step reach|lair|1|Face the light that is not a fish's at the bottom of the Abyss
+step pages||4|Kill the Abyssal Angler and write its end into your journal
+step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
 step open|Lair hoard|1|Open what the lair kept
+step pages||5|Write the hoard into your journal - the expedition's answer
+step reach|pocket3|1|Catch your breath in the shack before the long climb
+step reach|pocket2|1|Climb the air line to the gas tank on the ledge
+step reach|pocket1|1|On up to the container on the shelf
+step reach|camp|1|Surface and haul yourself back aboard the expedition's raft
+step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now
 quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
 quest reward=MetalIngot*8;Nail*30;OxygenBottle*2
 

@@ -3,8 +3,8 @@
 # mast and a turning wind vane on its roof; up the needle's west side the station's lift tower - its car
 # stuck at the top, a ladder up the tower with a landing halfway - and a bridge from its top to the station; the shed and
 # the meteorologist's tapes at the landing on the west beach; grey storm light, mist and rain round the spire. Quest "Eye
-# of the Storm" (6 steps, short on purpose): the foot, the tapes, three conductor rods (the shed, the tower's landing, the
-# cove), the climb, the storm bird on the mast, the station's locker (the electric smelter's, the advanced biofuel
+# of the Storm" (6 steps, short on purpose): the tapes, the climb, the storm bird on the mast, the dive for the cove's
+# box, three conductor rods (the shed, the tower's landing, the cove), the station's locker (the electric smelter's, the advanced biofuel
 # extractor's and the advanced anchor's blueprints).
 #
 # Built by the recipe player (CIRecipe storm_spire) through the editor's own operations.
@@ -176,11 +176,11 @@ prop rain zone.radius=40
 
 quest title=Eye of the Storm
 quest intro=A weather spire in the storm belt, its lightning line broken. Station Seven: start at the spire's landing.
-step reach|spirefoot|1|Land at the spire's landing
-step read|Meteorologist's tapes|1|Listen to the meteorologist's tapes
-step collect|story:rod|3|Find three conductor rods: the shed, the lift tower's landing, the north cove
-step reach|spiretop|1|Climb the lift tower to the station
+step read|Meteorologist's tapes|1|Listen to the meteorologist's tapes at the spire's landing
+step reach|spiretop|1|Climb the lift tower to the station - a rod waits on the landing halfway
 step kill|Screecher|1|Drive off the storm bird on the mast
+step open|Cove box|1|Dive into the north cove for the rod that went over the edge
+step collect|story:rod|3|Have all three conductor rods: the shed, the tower's landing, the cove
 step open|Station locker|1|Mend the lightning line and open the station's locker
 quest done=The line holds as the next strike hits - the instruments live again, and their last reading points north: Whiteout Reach.
 quest reward=CopperIngot*2;Plank*6;Rope*2

@@ -2,8 +2,11 @@
 # A snowy island at the edge of a glacier: a research station dark since its reactor failed. The station village of
 # glowing Moontown domes on the east shore, a radio mast; Temperance's weather station as the observatory on the glacier
 # peak, its cabin up a ladder; the glacier's crevasse, where the Polar Bear Queen has her den;
-# and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night": the village, the
-# station log, the observatory, three reactor fuses, the Queen, the reactor basin, the reactor restarted and its vault.
+# and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night" (20 steps): the village,
+# the station log, the tool crate and its fuse, the domes, the radio mast, the reactor basin and its dead controls, the
+# observatory, its sign and locker (the second fuse), the crevasse's head and its end, the Queen, Petrov's frozen crate
+# (the third fuse), the reactor restarted, its vault, the chimneys breathing. (The two "pages" steps count notes read -
+# a chest's note is read as it opens - and the controls' two journal pages: 2 before the first try, 6 before the restart.)
 # (Temperance's ice ravine piece is a slab of its snowfield - it only works sunk into ground as high as its top, so the
 # crevasse is cut into the plateau instead.)
 #
@@ -89,6 +92,9 @@ place TP_Moontown_Barrel03 - at 67.2 -15 ground sit
 place TP_Moontown_Barrel04 - at 66.4 -15.8 ground sit
 place Placeable_Lantern_Metal - at 70.6 -12.4 ground sit
 place Zone_Trigger village at 72 -10 y=1.5
+# (between the domes on the village's north side, and at the radio mast: quest steps)
+place Zone_Trigger domes at 86 12 y=1.5
+place Zone_Trigger mast at 62 14 y=1.5
 
 # --- The glacier's crevasse: ice pillars along its floor, a snow crag closing its west end - the Polar Bear Queen's den --
 clear from -72 8 to -96 -38 r=10
@@ -103,6 +109,8 @@ place TP_SnowDrift02 - at -98 -35 ground sit
 place Creature_PolarBear queen at -94 -36 ground
 place Loot_Crate frozencrate at -97 -40 ground sit yaw=60
 place Zone_Trigger ravine at -90 -32 y=1.5
+# (the crevasse's shallow east head, where the trail from the peak ends: a quest step)
+place Zone_Trigger crevassehead at -70 8 y=1.5
 # ice pillars along the shore
 place TP_IcePillar01 - at -96 -48 ground sit
 place TP_IcePillar02 - at -100 30 ground sit yaw=40
@@ -117,6 +125,8 @@ place TP_SeleneReactorControls controls at 2 47 ground sit yaw=90
 place Loot_ChestLarge reactorvault at 18 47 ground sit yaw=270
 place Zone_Trigger reactor at 10 50 y=2
 place Zone_Sound reactorhum at 10 52 y=3
+# (at the foot of the chimneys, north of the pool: the quest's last step)
+place Zone_Trigger chimneys at 10 57 y=2
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
@@ -153,8 +163,8 @@ prop reactorvault else.open=message||The vault is sealed. It opens when the reac
 prop controls obj.name=controls
 prop controls beh.use=Fit the reactor fuses
 prop controls if.use=take|story:fuse|3
-prop controls on.use=message||Three fuses click home. Deep under the snow the reactor catches - the pool glows, the chimneys breathe, and up on the shore the domes light one by one.\nshow|reactorglow\nshow|reactorhum\nsignal||reactor\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
-prop controls else.use=message||The control column is dead. Three fuse sockets stand empty.
+prop controls on.use=message||Three fuses click home. Deep under the snow the reactor catches - the pool glows, the chimneys breathe, and up on the shore the domes light one by one.\nshow|reactorglow\nshow|reactorhum\nsignal||reactor\nsound||event:/exploring/obstacles/tangaroa/generator_placepart\njournal|The reactor restarted|Three fuses home. The pool glows, the chimneys breathe, and the domes on the shore are lit again.
+prop controls else.use=message||The control column is dead. Three fuse sockets stand empty.\njournal|The dead reactor|The control column in the basin: three fuse sockets, all empty. The log says one fuse is in the tool crate, one at the observatory, one down the crevasse with Petrov.
 prop reactorglow obj.name=reactorglow
 prop reactorglow beh.hidden=1
 prop reactorhum obj.name=reactorhum
@@ -175,6 +185,18 @@ prop ravine zone.message=The crevasse ends in a den of ice. Bones on the floor -
 prop reactor zone.id=reactor
 prop reactor zone.radius=12
 prop reactor zone.message=The reactor basin: two chimneys, a dead pool, a control column with three empty sockets.
+prop domes zone.id=domes
+prop domes zone.radius=5
+prop domes zone.message=Between the domes: doors drifted shut, a dog's bowl frozen to a step. The lights inside burn for nobody.
+prop mast zone.id=mast
+prop mast zone.radius=5
+prop mast zone.message=The radio mast, furred with rime. Its set hums faintly - not enough power to call anyone.
+prop crevassehead zone.id=crevassehead
+prop crevassehead zone.radius=5
+prop crevassehead zone.message=The head of the crevasse: a cleft in the ice falling away west. Boot prints going down - none coming back.
+prop chimneys zone.id=chimneys
+prop chimneys zone.radius=5
+prop chimneys zone.message=Warm air rolls down from the twin chimneys. For the first time in months, the station breathes.
 prop queen creature.count=1
 prop queen creature.size=2.4
 prop queen creature.health=8
@@ -187,12 +209,25 @@ prop queen tint.amount=0.3
 quest title=The Long Night
 quest intro=A research station at the edge of a glacier, dark since its reactor failed. Its igloo village stands on the east shore - and something big has been taking the station's dogs.
 step reach|village|1|Land at the station's igloo village
-step read|Station log|1|Read the station log
+step read|Station log|1|Read the station log on the board by the lantern
+step open|Tool crate|1|Open the station's tool crate beside the log
+step collect|story:fuse|1|Take the first spare reactor fuse from its padded case
+step reach|domes|1|Look in among the domes on the village's north side
+step reach|mast|1|Climb to the radio mast above the village
+step reach|reactor|1|Find the reactor basin north of the village
+step pages||3|Try the dead control column and note what it needs
 step reach|observatory|1|Climb the glacier peak to the observatory
-step collect|story:fuse|3|Find three reactor fuses
-step kill|Polar bear|1|Defeat the Polar Bear Queen in the glacier's crevasse
-step reach|reactor|1|Go down into the reactor basin
-step open|Reactor vault|1|Restart the reactor and open its vault
+step read|Observatory|1|Read the sign at the foot of the observatory's ladder
+step open|Observatory locker|1|Dig the observatory's spare-parts locker out of the snow
+step collect|story:fuse|2|Pocket the second fuse - the third went into the crevasse with Petrov
+step reach|crevassehead|1|Follow the trail west to the head of the glacier's crevasse
+step reach|ravine|1|Climb down the crevasse to its end, where Petrov went
+step kill|Polar bear|1|Defeat the Polar Bear Queen in her den of bones
+step open|Frozen crate|1|Break open Petrov's crate, frozen into the crevasse floor
+step collect|story:fuse|3|Carry all three reactor fuses out of the crevasse
+step pages||7|Bring the fuses back to the basin and restart the reactor
+step open|Reactor vault|1|Open the reactor vault, unsealed at last
+step reach|chimneys|1|Stand under the twin chimneys as they breathe again
 quest done=The reactor hums, the pool glows and the domes are lit: the long night at Glacier Station is over.
 quest reward=CircuitBoard*3;Battery*2;Wool*6
 

@@ -16,23 +16,28 @@ zone ribvillage
 expect step 1
 read The festival invitation
 expect step 2
-kill Roach
+open Tail box
 expect step 3
+kill Roach
+expect step 4
 open First song shell
+expect step 5
 open Second song shell
 expect story songshell 2
-expect step 4
+expect step 6
 at 22.6 -1.4 h=15
 zone ribtop
+expect step 7
 open Third song shell
+expect step 8
 open Fourth song shell
 expect story songshell 4
-expect step 5
+expect step 9
 at 44 -3 h=3
 zone jawstage
-expect step 6
+expect step 10
 read The song's rule
-expect step 7
+expect step 11
 use ribwind
 expect message dead clack
 use ribtide
@@ -40,36 +45,35 @@ use ribwind
 use ribstar
 use ribdeep
 expect story mask 1
-expect step 8
+expect step 12
 wait 4
 at 54 6 h=1.5
 zone throatzone
-expect step 9
+expect step 13
 at 60.5 20 h=-5
 at 62 27 h=-7.5
 zone skull
-expect step 10
+expect step 14
 read The eldest singer's tablet
-expect step 11
+expect step 15
 open The eye's pearl
 expect story pearl 1
-expect step 12
+expect step 16
 kill Angler fish
-expect step 13
+expect step 17
 expect shown braincase
 open The skull's brain-case
 expect story heartbone 1
-expect step 14
+expect step 18
 at 92 16 h=5
 zone altarzone
-expect step 15
+expect step 19
 use altar
 expect shown festival
-expect step 16
+expect step 20
 read The singers' blessing
-expect step 17
+expect step 21
 open The festival chest
 expect done
 open Cook pot box
 open Sunk canoe
-open Tail box

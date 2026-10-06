@@ -20,8 +20,9 @@ expect step 3
 # Old Beak on the roof
 zone roof
 expect message doesn't share
-kill Screecher
 expect step 4
+kill Screecher
+expect step 5
 
 # Up the tower's three ladders, across the top deck into the radio room
 climb 0.5 -22.6 h=2.7
@@ -30,7 +31,7 @@ climb 0.5 -22.6 h=16
 expect stand -1 -20 h=23.06
 walk 0.5 -20 to 0.5 -15 to 0.5 -10.5 h=23.1
 zone radioroom
-expect step 5
+expect step 6
 
 # The radio on the air: the locker opens
 use radio

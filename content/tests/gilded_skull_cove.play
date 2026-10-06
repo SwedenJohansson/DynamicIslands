@@ -10,22 +10,22 @@ wait 3
 # Ashore at the captain's camp: the cove, her letter in the longboat
 walk 6 27 to 4 25.5 to 1.5 24.5 h=1.8
 zone cove
-expect step 1
+expect step 0
 read Captain's last letter
-expect step 2
+expect step 1
 
 # The cook's glade up the bank west of the camp: her hogs come out of the ferns; her tin by the hollow log
 walk 1 23.5 to -3 23.4 to -7 23.2 to -10.5 23 h=4
 zone spring
 kill Warthog
-expect step 3
+expect step 2
 open Cook Tamsin's tin
 expect story mappiece 1
 
 # Out to the cove's mouth: the wreck of the Gilded Skull, the navigator's chart chest by her side, the sunken barrel
 at 3 47 h=-5.5
 zone wreck
-expect step 4
+expect step 3
 open Navigator Pell's chart chest
 open Sunken rum barrel
 expect story mappiece 2
@@ -39,7 +39,7 @@ expect stand 10.5 -5 h=15.5 below=17
 open Bosun Kell's sea chest
 open Bosun's stash
 expect story mappiece 3
-expect step 5
+expect step 4
 
 # Back at the camp: the map table takes the three pieces and gives the whole map and its verse (the stones' step, done
 # early on the way up, counts at once)
@@ -49,7 +49,7 @@ expect story mappiece 0
 expect story wholemap 1
 walk 4 23.5 to 5.3 16.2 to 6.7 10.8 to 5.25 7 to 3.5 4.5 h=6
 zone stones
-expect step 7
+expect step 6
 
 # The stones: the wrong order first (they refuse), then the verse's: north, tall, flat - the hoard comes up
 use stone2

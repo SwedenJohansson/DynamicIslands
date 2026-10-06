@@ -17,8 +17,9 @@ expect step 3
 walk 20 -17.4 to 12 -17.4 to 2 -17.4 h=5.2
 zone deep
 expect message grunts in the dark
-kill Warthog
 expect step 4
+kill Warthog
+expect step 5
 expect animals Warthog 0
 
 # To the end of the line: the last ore cart

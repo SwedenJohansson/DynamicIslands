@@ -13,6 +13,7 @@ wait 5
 # The landing: the driftwood man's bottle, the welcome board
 walk -4 0 to -1.5 0 h=0.4
 zone landing
+expect step 1
 read Pell's bottle, the driftwood man
 read Welcome board
 expect story bottle 1
@@ -22,6 +23,7 @@ climb -6 24.9 h=4.8
 expect stand -6 27 h=5.8 below=7
 read Pell's bottle, the hut
 read Pell's diary
+expect step 2
 open Pell's box
 # The other six: the horns, the scrap whale, the bay's floor, the east reef, the north-west shallows
 read Pell's bottle, the north horn
@@ -31,7 +33,7 @@ read Pell's bottle, the bay
 read Pell's bottle, the east reef
 read Pell's bottle, the north-west shallows
 expect story bottle 8
-expect step 1
+expect step 3
 
 # Up the south horn and along the crest; the tower's ladder to the lamp; the lamp filled
 walk -22 -27 to -15 -25 to -5 -24 to 3 -20 to 8 -12 to 8 -4 h=6
@@ -40,10 +42,11 @@ walk 8 -3.5 to 10 -2.6 h=6
 climb 10 -1.9 h=6
 expect stand 10 -1 h=11.97 below=14
 zone lamptop
+expect step 4
 use lamp
 expect shown lamplight
 expect story lamplit 1
 expect story bottle 0
-expect step 2
+expect step 5
 open Pell's chest
 expect done

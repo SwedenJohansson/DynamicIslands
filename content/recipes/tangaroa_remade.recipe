@@ -2,10 +2,10 @@
 # Raft's Tangaroa made anew: the floating city's people moved onto a hill of their own and took the city with them -
 # its floating harbour on one of Tangaroa's great pontoons, a harbour front with Chi's Burgers and the pump house, a road
 # up to the square: the founder's statue, the city generator, the council office and an apartment block. Its first
-# statue lies toppled in the harbour. Quest "The Lights of Tangaroa": the harbour, the council's notice, three key
-# cards (the harbour master's, the caretaker's, the one in the old statue's strongbox under water), the rats in the pump
-# house and the generator's part, the generator started, the council's vault (Tangaroa's blueprints: the water pipe,
-# the electric purifier, the water tank, the large storage).
+# statue lies toppled in the harbour. Quest "The Lights of Tangaroa" (6 steps): the council's notice on the harbour, the
+# dive to the old statue's strongbox, the rats in the pump house and the generator's part, the three key cards (the
+# founder's, the harbour master's, the caretaker's), the generator started and the council's vault (Tangaroa's
+# blueprints: the water pipe, the electric purifier, the water tank, the large storage).
 #
 # Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
 include lib_sea
@@ -244,11 +244,11 @@ prop roaches creature.zone=flat
 
 quest title=The Lights of Tangaroa
 quest intro=A floating city remade on a hill of its own, dark from the harbour to the square. Start at the floating harbour.
-step reach|harbour|1|Tie up at Tangaroa's floating harbour
-step read|Council notice|1|Read the council's notice on the harbour
-step collect|story:keycard|3|Find the three key cards: the harbour master's, the caretaker's, the founder's (his statue went into the harbour)
+step read|Council notice|1|Tie up at the floating harbour and read the council's notice by the pier
+step open|Founder's strongbox|1|Dive to the founder's toppled statue for his strongbox
 step kill|Tangaroa rat|3|Clear the rats out of the pump house
 step collect|story:genpart|1|Take the generator's part from the pump house
+step collect|story:keycard|3|Find the other two key cards: the harbour master's and the caretaker's
 step open|Council's vault|1|Start the generator on the square and open the council's vault
 quest done=The vault opens on a city lit again: water pipes, purifiers, tanks - the founders' plans for keeping a floating city alive.
 quest reward=Plank*10;Plastic*6;Battery*1

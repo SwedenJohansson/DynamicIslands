@@ -10,10 +10,10 @@ wait 5
 # The landing: the tapes, the shed's rod
 walk -42 4 to -36.5 4 to -31 4.5 to -31 8 h=3
 zone spirefoot
-expect step 1
+expect step 0
 walk -32 8 to -30.9 8.9 h=3
 read Meteorologist's tapes
-expect step 2
+expect step 1
 walk -31 7.75 to -33 7.75 to -34.2 7.6 h=3.2 below=5
 open Shed box
 expect story rod 1
@@ -30,9 +30,11 @@ climb -12.45 9 h=27.5
 expect stand -10.6 8.4 h=33.5 below=36
 walk -10.2 9.3 to -6 9.3 to -2.6 9.3 h=33.5
 zone spiretop
+expect step 2
 kill Screecher
+expect step 3
 
-# The north cove: the third rod on its floor; then the station's locker
+# The north cove: the third rod on its floor (the cove's box, then all three rods); then the station's locker
 at -30 56 h=-2.2
 open Cove box
 expect story rod 3

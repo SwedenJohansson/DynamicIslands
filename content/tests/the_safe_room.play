@@ -14,12 +14,12 @@ expect animals Dolphin 2
 # Up the driveway from the shelf to the gatehouse
 walk -28 -33.3 to -20 -31.9 to -8 -29.8 to 4 -27.6 to 16 -25.5 to 19 -23.5 h=15.6
 zone driveway
-expect step 1
+expect step 0
 
 # The gatehouse: the night guard's log and his locker (a code part)
 walk 19 -23.5 to 15.5 -22 to 13.3 -19.3 h=15.95
 read Security log
-expect step 2
+expect step 1
 open Night guard's locker
 expect story codepart 1
 
@@ -27,7 +27,7 @@ expect story codepart 1
 walk 14 -17 to 13.5 -8 to 10 4 to 4 13 h=15.9
 zone garden
 kill Hyena
-expect step 3
+expect step 2
 
 # Round to the front door; the keypad in the study before the code is whole; the kitchen drawer, Lia's treasure box
 walk 9 4 to 9 -10 to -4.5 -10 to -4.5 -6 to -1 -5.5 to -1.5 -1 to -1.5 3 to -1.1 4.9 h=15.95
@@ -40,7 +40,7 @@ expect story codepart 2
 walk 0.6 -3 to -1.5 -4 to -7 -3 to -10.5 -3.6 h=15.95 below=18
 open Lia's treasure box
 expect story codepart 3
-expect step 4
+expect step 3
 
 # The keypad: the bookshelf rolls aside, the dogs come back; through the door into the safe room, its log
 walk -7 -3 to -5 -3 to -1.5 -1 to -1.5 3 to -1.1 4.9 h=15.95 below=18
@@ -49,6 +49,7 @@ expect message bolts slide back
 expect shown ambushdogs
 wait 4
 kill Hyena
+expect step 4
 walk -1.1 4.9 to -1.3 6 to 1.5 6 to 3.2 8.4 h=15.95 below=18
 read Safe room log
 expect step 5

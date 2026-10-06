@@ -1,8 +1,8 @@
 # The Stranded Gull - a small island of the library (inspired by Raft's Vasagatan)
 # A long sandbar where the motor yacht "Gull" ran aground: the boat beached on the sand, the crew's castaway camp
 # furnished with what they saved from the yacht, and the yacht's torn-off stern lying dark on the reef below, an
-# angler fish's lure the only light. Quest "The Gull's Safe": the camp, the deckhand's note, the captain's key in the
-# wheelhouse (rats!), the angler fish, the ship's safe.
+# angler fish's lure the only light. Quest "The Gull's Safe" (5 steps): the deckhand's note at the camp, the rats in
+# the tender's wheelhouse, the captain's key in his locker, the angler fish, the ship's safe.
 #
 # Built by the recipe player (CIRecipe stranded_gull) through the editor's own operations.
 
@@ -136,9 +136,9 @@ prop angler creature.respawn=0
 
 quest title=The Gull's Safe
 quest intro=A distress flag over a sandbar, a camp with yacht furniture and nobody in it. Find out what happened to the crew of the Gull.
-step reach|camp|1|Find the crew's camp on the sandbar
-step read|Deckhand's note|1|Read the note left at the camp
-step open|Captain's locker|1|Search the captain's locker on the beached tender
+step read|Deckhand's note|1|Find the crew's camp and read the note left on the table
+step kill|Rat|3|Board the beached tender and clear the rats out of the wheelhouse
+step open|Captain's locker|1|Search the captain's locker on the tender's bow
 step kill|Angler fish|1|Deal with the light in the sunken stern
 step open|Ship's safe|1|Open the ship's safe on the reef
 quest done=The Gull's secret is out: she carried parts for the relay stations. East, from beacon to beacon.

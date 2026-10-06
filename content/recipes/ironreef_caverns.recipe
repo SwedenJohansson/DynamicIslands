@@ -3,8 +3,11 @@
 # mountain's flanks: the Iron Gate (the mine, high on the south flank, warthogs in the dark), the Vine Crawl (a low
 # cave choked with vines and bees), the Drowned Shaft (the mine's sea adit on the west coast, flooded - dive for what
 # is down there) and the Bear Hall (north), its mouth shut by a rockfall - and behind it Ironhide, the beast that drove
-# the miners out. Quest "The Heart of Ironreef": the camp, the company's notice, the mine and the foreman's log, two
-# blasting charges, the rockfall blown, Ironhide, the company's strongbox.
+# the miners out. Quest "The Heart of Ironreef" (21 steps): the camp, the company's notice, the supply
+# barrel, the plank road's top, the mine and its warthogs, the foreman's log and locker, the Vine Crawl's powder crate
+# (one charge), the Bear Hall's blocked mouth, the rockfall's warning and a try at it, the Drowned Shaft's sunken box
+# (the second), the rockfall blown, the Bear Hall, Ironhide, the company's strongbox. (The two "pages" steps count notes read - a chest's note is read as it opens - and
+# the rockfall's two journal pages: 6 before the first try, 8 before the blast.)
 #
 # Built by the recipe player (CIRecipe ironreef_caverns) through the editor's own operations. Each cave is placed
 # from a frame at its mouth: the ground there is the frame's floor, and the ground is levelled from the mouth into the
@@ -109,6 +112,8 @@ place SmallBoulder3 rockfall at 4.5 2 sit yaw=30
 place SmallBoulder4 rockface at 0.8 2.6 sit
 place Note_Sign rocksign at -6.5 3.5 yaw=200
 place Zone_Trigger bearhall at 0 -10 y=1.5
+# (in front of the rockfall, outside the hall: a quest step)
+place Zone_Trigger hallmouth at 0 8 y=1.5
 place Creature_Bear ironhide at 0 -26 ground
 place Loot_ChestLarge strongbox at -0.5 -35 ground sit
 place Zone_Atmosphere halldark at 0 -20 y=5
@@ -165,6 +170,8 @@ next
 ramp Block_Floor_Wood from 21 -54.75 19.6 to 13 -54.75 23.6 len=1.5 top=0
 ramp Block_Floor_Wood from 21 -56.25 19.6 to 13 -56.25 23.6 len=1.5 top=0
 place Balboa_DirectionSign - at 70 -8 ground yaw=220
+# (the top of the plank road, on the mountain's shoulder: a quest step)
+place Zone_Trigger shoulder at 53 -29 y=1.5
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, flowers ----------
@@ -218,6 +225,12 @@ prop bearhall zone.message=The Bear Hall. Bones crunch underfoot. Out of the dar
 prop drowned zone.id=drowned
 prop drowned zone.radius=6
 prop drowned zone.message=The Drowned Shaft: the sea has taken the old adit to the roof. Take a deep breath.
+prop shoulder zone.id=shoulder
+prop shoulder zone.radius=5
+prop shoulder zone.message=The top of the plank road. The camp lies small below - and the mountain's caves gape in its flanks.
+prop hallmouth zone.id=hallmouth
+prop hallmouth zone.radius=4
+prop hallmouth zone.message=The Bear Hall's mouth, choked with fallen rock. Claw marks on the boulders - made from the inside.
 prop hogs creature.count=2
 prop hogs creature.respawn=0
 prop hogs creature.zone=irongate
@@ -238,8 +251,8 @@ prop rockfall obj.name=rockfall
 prop rockface obj.name=rockface
 prop rockface beh.use=Set the blasting charges
 prop rockface if.use=take|story:charges|2
-prop rockface on.use=message||You wedge both charges into the rockfall, light the fuse and run. The blast shakes the mountain - and the way into the Bear Hall is open.\nhide|rockfall\nhide|rockface\nsound||event:/exploring/obstacles/door_explosion
-prop rockface else.use=message||A wall of fallen rock. Two blasting charges would clear it.
+prop rockface on.use=message||You wedge both charges into the rockfall, light the fuse and run. The blast shakes the mountain - and the way into the Bear Hall is open.\nhide|rockfall\nhide|rockface\nsound||event:/exploring/obstacles/door_explosion\njournal|The rockfall blown|Both charges wedged in and lit. The blast shook the mountain - the Bear Hall stands open.
+prop rockface else.use=message||A wall of fallen rock. Two blasting charges would clear it.\njournal|The rockfall|A wall of fallen rock over the Bear Hall's mouth. One charge won't shift it - the foreman wrote that two will.
 
 prop minedark atmo.fog=#070605
 prop minedark atmo.fogAmount=0.8
@@ -270,10 +283,23 @@ quest title=The Heart of Ironreef
 quest intro=A ruined mining camp on a jungle mountain. The Ironreef Mining Company struck rich iron here - then left in a hurry. Their notice board still stands on the beach.
 step reach|camp|1|Land at the abandoned mining camp
 step read|Company notice|1|Read the company's notice board
-step reach|irongate|1|Climb the plank road to the Iron Gate mine
+step open|Supply barrel|1|Raid the company's supply barrel by the campfire
+step reach|shoulder|1|Climb the plank road up the cliff to the mountain's shoulder
+step reach|irongate|1|Follow the shoulder to the Iron Gate mine
+step kill|Warthog|2|Drive the two warthogs out of the dark along the rails
 step read|Foreman's log|1|Read the foreman's log at the back of the mine
-step collect|story:charges|2|Find the two hidden blasting charges
-step reach|bearhall|1|Blast the rockfall and enter the Bear Hall
+step open|Foreman's locker|1|Take the foreman's spare lamp from his locker
+step reach|vines|1|Crawl into the Vine Crawl on the east flank
+step open|Powder crate|1|Find the powder crate wedged behind the vines
+step collect|story:charges|1|Take the first bundle of charges - the other is down the sea adit
+step reach|hallmouth|1|Go round to the north flank, where the Bear Hall was blasted shut
+step read|Rockfall|1|Read the foreman's warning on the rockfall
+step pages||7|Try the rockfall - see what one charge won't do
+step reach|drowned|1|Take a deep breath and dive into the Drowned Shaft
+step open|Sunken powder box|1|Find the sunken powder box on the flooded floor of the adit
+step collect|story:charges|2|Bring both blasting charges back to the rockfall
+step pages||9|Wedge both charges into the rockfall and blow it open
+step reach|bearhall|1|Enter the Bear Hall
 step kill|Bear|1|Defeat Ironhide
 step open|Company strongbox|1|Open the company's strongbox
 quest done=Ironhide is dead and the strongbox is open: the Heart of Ironreef - a fist-sized lump of pure iron - and the blueprint the company kept from its miners are yours.

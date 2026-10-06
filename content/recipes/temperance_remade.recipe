@@ -1,10 +1,11 @@
 # Temperance Remade - an island of the library's plan Raft Remade (in place of Raft's Temperance)
 # Raft's Temperance made anew: a snowy ridge island - an igloo village on the north flats, Selene's station on a terrace
 # above it (its reactor tripped in a storm, its inner doors shut), the telescope on a terrace cut into the peak, and a
-# snowmobile that went through the ice in the bay. Quest "The Reactor's Last Breath": the village, the station chief's
-# note, three cable drums (the village store, the telescope, the sunken snowmobile), the reactor started, the polar bear
-# mother behind the inner doors and the chief's vault (Temperance's blueprints: the electric smelter, the advanced biofuel
-# refiner, the advanced stationary anchor).
+# snowmobile that went through the ice in the bay. Quest "The Reactor's Last Breath" (10 steps): the village, the
+# station chief's note, three cable drums each from its crate (the village store, the sunken snowmobile, the telescope)
+# and all three carried, the station, the reactor started and the inner doors passed, the polar bear mother and the
+# chief's vault (Temperance's blueprints: the electric smelter, the advanced biofuel refiner, the advanced stationary
+# anchor).
 #
 # Built by the recipe player (CIRecipe temperance_remade) through the editor's own operations (macros from lib_selene).
 include lib_sea
@@ -163,9 +164,13 @@ quest title=The Reactor's Last Breath
 quest intro=A snowy island, an igloo village with its lamps out and Selene's station dark on the terrace above. Start at the village.
 step reach|village|1|Come to the igloo village
 step read|Station chief's note|1|Read the station chief's note
-step collect|story:cable|3|Find the three cable drums: the village store, the telescope on the peak, the snowmobile under the ice
+step open|Village store crate|1|Open the village store's crate - the first drum of cable
+step open|Sled crate|1|Dive to Mikkel's snowmobile under the ice in the bay and open its crate
+step open|Survey crate|1|Climb to the telescope on the peak - the survey team left a drum there
+step collect|story:cable|3|Carry all three cable drums - one for each torn cable run
 step reach|station|1|Go up to Selene's station on the terrace
-step kill|Polar bear|1|Start the reactor - and face the polar bear mother behind the inner doors
+step reach|inner|1|Connect the cables, start the reactor and go through the inner doors
+step kill|Polar bear|1|Face the polar bear mother in the inner hall
 step open|Chief's vault|1|Open the station chief's vault
 quest done=The vault opens on the chief's plans: an electric smelter, an advanced refinery, an anchor for any storm. Behind you the reactor hums, and the station's lights burn over the snow again.
 quest reward=Wool*4;Plank*8;Glass*2

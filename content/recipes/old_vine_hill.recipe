@@ -3,8 +3,9 @@
 # saddle, the cellar on the west peak's seaward flank with the old vintner's four great casks and his air pump - and below
 # it, off the west shore, the reserve vault the sea got into, its door shut. The old vintner's labels give the casks'
 # order; tap them in it and the pump starts, blows the flooded vault full of air and swings its door open.
-# Quest "The Founding Vintage" (8 steps): a pages hunt (the letter and four labels), boars, a cask sequence (signals),
-# a dive into the vault, a toast at the grave on the east top.
+# Quest "The Founding Vintage" (11 steps): the letter, two runaway hens, the Old Wall terrace and its boars, a pages
+# hunt (the letter and four labels), a cask sequence (signals), a dive into the vault, the climb to the grave on the east
+# top and a toast there.
 #
 # Built by the recipe player (CIRecipe old_vine_hill) through the editor's own operations.
 include lib_rt
@@ -137,7 +138,7 @@ place Zone_Atmosphere sun at 0 0 y=20
 # --- Raft's finds in the shallows round the island (lib_sea) ------------------------------------------------------------
 call shallows r=83 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (11 steps) ==========================================================
 info title=Old Vine Hill
 info author=Custom Islands
 info description=A terraced vineyard on a sunny two-peaked island, a press house, a cellar in the hill - and below it, off the shore, a reserve vault the sea got into. The old vintner's labels tell the order of his four great casks. Tap them right and the vault is yours.
@@ -198,7 +199,7 @@ prop vaultbubbles atmo.particles=bubbles
 prop vaultbubbles zone.radius=4
 prop grave obj.name=grave
 prop grave beh.use=Pour a glass of the founding vintage on the grave
-prop grave if.use=quest|7\nhas|story:firstvintage|1
+prop grave if.use=quest|9\nhas|story:firstvintage|1
 prop grave on.use=message||You pour a glass into the dry earth by the stone. As it soaks in, letters darken on the board beside it that weren't there before.\nshow|toast\nsound||event:/char/cup_pour
 prop grave else.use=message||Tomas Ferrand's grave, looking over his vines. He asked for a glass of the founding vintage.
 prop toast obj.name=toast
@@ -244,12 +245,15 @@ quest title=The Founding Vintage
 quest intro=A vineyard on two sunny peaks, abandoned with the grapes still on the vines. The vintner left a letter in the press house.
 step reach|presshouse|1|Climb the cart track to the press house in the saddle
 step read|Tomas's letter|1|Read Tomas's letter on the long table
-step pages||5|Find the labels of the four terraces (with the letter, five pages)
+step catch|Chicken|2|Catch two of Tomas's hens running wild round the press house yard
+step reach|topterrace|1|Climb to the Old Wall terrace on the west peak, the first vines on the hill
 step kill|Warthog|3|Drive the boars out of the Old Wall terrace
+step pages||5|Find the labels of the four terraces (with the letter, five pages)
 step reach|cellar|1|Find the cellar on the west peak's seaward flank
 step reach|vault|1|Tap the four casks in the labels' order - and dive down to the vault the pump fills with air
 step open|Reserve vault|1|Open the reserve vault
-step read|The vintner's toast|1|Pour a glass of the founding vintage on Tomas's grave on the east top
+step reach|gravetop|1|Carry the founding vintage up to Tomas's grave on the east top
+step read|The vintner's toast|1|Pour a glass of the founding vintage on Tomas's grave
 quest done=The hill is yours: four terraces, four casks, and a glass poured for the man who planted them. Salut.
 quest reward=Mango*3;Seed_Strawberry*3;Plank*4
 

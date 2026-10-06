@@ -10,15 +10,17 @@ expect animals Turtle 2
 expect animals Dolphin 2
 at 15.25 29.5 h=6
 zone hut
-expect step 1
+expect step 0
 read Survey orders
-expect step 2
+expect step 1
 open Survey hut box
 open Survey chest
 expect message Four readings first
 at -6 22 h=-9
 use post1
 air air1
+zone air1
+expect step 2
 at 30 4 h=-9
 use post2
 air air2

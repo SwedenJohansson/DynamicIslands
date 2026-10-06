@@ -3,9 +3,9 @@
 # meet in a hook of snow. Halvard Rime, an organist, spent thirty winters tuning five pillars of ice in the sea cave under
 # the south ridge; his score is cut into an ice slab beside them, and behind the organ an iron gate shuts the crypt he
 # called the house of the last note. Strike the pipes in the score's order with his felt mallet and the great icicle over
-# the organ lets go of the crypt's key - and the white bear sleeping in the crypt wakes. Quest "The Frozen Score" (9 steps,
-# a music sequence): the bay, the letter, the mallet, the cave, the score, the five pipes in order (the key), the bear,
-# the last page, the coffer (the head light blueprint).
+# the organ lets go of the crypt's key - and the white bear sleeping in the crypt wakes. Quest "The Frozen Score" (12 steps,
+# a music sequence): the bay, the letter, the mallet, the snowmobile box, the cave, the score, the cave cache, the five
+# pipes in order (the key), the crypt, the bear, the last page, the coffer (the head light blueprint).
 #
 # Built by the recipe player (CIRecipe ice_organ) through the editor's own operations. Points: the bay's south beach at
 # -14 1 (0.3 m); the organ cave (Balboa's bear cave) under the south ridge, its mouth north at -15 -3 (2.1 m), a ramp
@@ -107,7 +107,7 @@ place Zone_Atmosphere snowfall at -22 -15 h=15
 place Zone_Atmosphere snowfall at 22 22 h=15
 call shallows r=83 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (9 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (12 steps) ==========================================================
 info title=The Ice Organ
 info author=Custom Islands
 info description=A frozen crescent with an organ of ice in its sea cave: five pillars that each ring a different note when struck. The old organist's score is cut into an ice slab beside them - play it right and the house of the last note opens.
@@ -214,10 +214,13 @@ quest intro=A frozen bay, an organist's hut, and a cave that hums. Halvard left 
 step reach|bay|1|Land in the frozen bay
 step read|Halvard's letter|1|Read the letter on the hut's door post
 step open|Organist's chest|1|Take Halvard's felt mallet from his chest
+step open|Snowmobile box|1|Dig out the box by the dead snowmobile below the hut
 step reach|organcave|1|Find the organ cave in the southern cliff
 step read|The frozen score|1|Read the score cut into the ice slab
+step open|Cave cache|1|Look behind the snow bank in the cave - someone kept a cache there
 step collect|story:icekey|1|Play the five pipes in the score's order
-step kill|Polar bear|1|Open the crypt gate - and face its sleeper
+step reach|crypt|1|Unlock the crypt gate and step into the house of the last note
+step kill|Polar bear|1|Face the sleeper when it wakes
 step read|Halvard's last page|1|Read Halvard's last page on the stone
 step open|Halvard's coffer|1|Open Halvard's coffer
 quest done=The last note still rings faintly in the cave when you leave. Somebody finally played Halvard's music all the way through.

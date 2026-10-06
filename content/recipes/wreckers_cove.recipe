@@ -3,8 +3,9 @@
 # the wreckers' false lantern, which showed passing ships a "safe" channel - straight onto the reef at the cove's mouth;
 # on that reef lies the schooner Marigold, wrecked and stripped. On the cove's north shore the wreckers' hamlet: a
 # longhouse, net huts and a jetty; in the east arm's cliff a sea cave, the smugglers' den, where rats nest among the
-# loot. Quest "The False Lantern": the cove, the Marigold's log, the captain's chest and its den key, the smugglers'
-# den and its rats, the den's strongbox and the lantern key, up the false lantern, doused - and the wreckers' hoard.
+# loot. Quest "The False Lantern" (12 steps): the cove, the hamlet's notice, aboard the Marigold, her log, the
+# captain's chest and its den key, the smugglers' den and its rats, the den's strongbox and the lantern key, the keeper's
+# log, up the false lantern, doused - and the wreckers' hoard.
 # Inspired by Raft's Vasagatan (a wreck to search) and Radio Tower (a tower to climb).
 #
 # Built by the recipe player (CIRecipe wreckers_cove) through the editor's own operations.
@@ -201,12 +202,16 @@ call treasure x=-12 z=4 r=30 n=2 seed=51
 quest title=The False Lantern
 quest intro=A quiet cove with a wreck on the reef at its mouth - and a lantern still burning on the point. The hamlet on the north shore is the place to start.
 step reach|cove|1|Land at the wreckers' hamlet
-step read|Marigold's log|1|Wade out to the wrecked Marigold and read her log
-step collect|story:denkey|1|Find the key in the captain's chest
+step read|Hamlet notice|1|Read the notice board by the longhouse - the wreckers' own rules
+step reach|aboard|1|Wade out to the wrecked Marigold on the reef at the cove's mouth
+step read|Marigold's log|1|Read her log in the wheelhouse
+step open|Captain's chest|1|Open the captain's chest wedged under his bunk
+step collect|story:denkey|1|Take the den key on its tarred cord
 step reach|den|1|Find the smugglers' den in the east cliff
 step kill|Rat|4|Drive the rats out of the den
-step collect|story:lanternkey|1|Open the smugglers' strongbox
-step reach|lantern|1|Climb the false lantern on the south point
+step open|Smugglers' strongbox|1|Open the smugglers' strongbox for the lantern key
+step read|Keeper's log|1|Follow the boardwalk to the south point and read the keeper's log
+step reach|lantern|1|Climb the false lantern to its roof
 step open|Wreckers' hoard|1|Douse the lantern and open the wreckers' hoard
 quest done=The point is dark, the hoard is yours - and no ship will follow the red light onto the reef again.
 quest reward=Rope*4;Nail*20;Plastic*8

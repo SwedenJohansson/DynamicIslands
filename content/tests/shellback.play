@@ -16,24 +16,24 @@ wait 5
 # The tail beach: the tablet, the canoe's box
 walk 6 -86 to 1 -81 h=1.5
 zone tailbeach
-expect step 1
+expect step 0
 read The Shell-keepers' tablet
-expect step 2
+expect step 1
 open Canoe box
 
 # The Sea shrine: the dive into the flooded cave, its air pocket, the scute's chest
 walk -56 -56 to -62 -60.5 h=1.2
 zone diveshrine
-expect step 3
+expect step 2
 air seaair
 open The Sea shrine's scute
 expect story scute 1
-expect step 4
+expect step 3
 
 # The Sky shrine: up the needle's ladders, ledge by ledge, to the nest on top
 walk 58 29 to 58 34.5 h=3
 zone climbshrine
-expect step 5
+expect step 4
 climb 58 35.8 h=2.8
 climb 58 35.8 h=5.22
 climb 58 35.8 h=7.64
@@ -49,44 +49,44 @@ climb 58 43.7 h=19.34
 expect stand 57 46.6 h=21 below=23
 use skynest
 expect story scute 2
-expect step 6
+expect step 5
 
 # The Tusk shrine: up the ramp onto the plateau, into the ring; the boars; the stone chest
 walk 22 -68 to 31 -62.5 to 40 -57 to 55 -52 h=10.9
 zone fightshrine
-expect step 7
+expect step 6
 kill Warthog
-expect step 8
+expect step 7
 expect shown tuskchest
 open The Tusk shrine's scute
 expect story scute 3
-expect step 9
+expect step 8
 
 # The Wing shrine: the keeper-box is shut till the hens are home; the net basket; the hens caught
 walk -40 46 to -45.5 46 h=2.6
 zone catchshrine
-expect step 10
+expect step 9
 open The Wing shrine's scute
 expect message BRING HOME HER HENS
 open The keepers' net basket
 catch Chicken 3
-expect step 11
+expect step 10
 open The Wing shrine's scute
 expect story scute 4
-expect step 12
+expect step 11
 
 # The head-temple: over the pass and along the ridge; the sockets refused till the carving is read; the gate; the treasure
 walk -9 47 to 9 50 to 13 51 to 13 66 h=10.5
 zone headtemple
-expect step 13
+expect step 11
 use sockets
 expect message Read the carving
 read The head-temple's carving
-expect step 14
+expect step 12
 use sockets
 wait 7
 walk 13 70 to 13 76 h=10.5
 zone sanctum
-expect step 15
+expect step 13
 open The Tortoise's treasure
 expect done

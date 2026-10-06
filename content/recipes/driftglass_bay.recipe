@@ -3,8 +3,8 @@
 # crescent a lighthouse built of glass bottles round a concrete pipe, its lamp dark; on the north horn the beachcomber's
 # hut on low stilts; drift-sculptures of planks and scrap along the shore. Old Pell, the beachcomber, built the light out
 # of what the sea brought him and wrote his last message across eight bottles, then threw them back. Quest "The Bottle
-# Light" (3 steps, a long search): find the eight bottles round the bay and under water (read each one: it is kept),
-# fill the lamp with them, open Pell's chest at the tower's foot.
+# Light" (6 steps): the landing by the driftwood man, Pell's diary in his hut, the eight bottles round the bay and under
+# water (read each one: it is kept), up the tower to the lamp, fill the lamp with them, open Pell's chest at its foot.
 #
 # Built by the recipe player (CIRecipe driftglass_bay) through the editor's own operations. Points: the bay's floor at
 # about -4 m round -25 0; the landing beach on the bay's east shore at -1 0 (0.4 m); the crest of the crescent along x 10
@@ -139,7 +139,7 @@ scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4465 free=3
 scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4474 free=3
 scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4484 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (3 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
 info title=Driftglass Bay
 info author=Custom Islands
 info description=A desert crescent round a shallow bay, and on its crest a lighthouse built of glass bottles - dark. Old Pell the beachcomber wrote his last message across eight bottles and gave them back to the sea. Find them all, round the bay and under the water, and fill the lamp with them.
@@ -178,7 +178,7 @@ prop bottle8 on.read=give||story:bottle*1
 
 prop lamp obj.name=lamp
 prop lamp beh.use=Fill the lamp with Pell's bottles
-prop lamp if.use=quest|1\ntake|story:bottle|8
+prop lamp if.use=quest|3\ntake|story:bottle|8
 prop lamp on.use=message||One by one the bottles go into the lamp, their messages inside. The wick catches - and the light comes out of the tower green and brown and clear, every bottle in it lit.\nshow|lamplight\ngive||story:lamplit*1\nsound||event:/crafting/torch
 prop lamp else.use=message||The lamp's bowl is lined with bottle-shaped hollows: eight of them. Pell's bottles go here - all eight.
 prop lamplight obj.name=lamplight
@@ -196,8 +196,11 @@ prop lamptop zone.message=The lamp room. The lamp is dry, and its bowl has eight
 
 quest title=The Bottle Light
 quest intro=A lighthouse made of bottles, dark on the crest of a sandy crescent. A bottle lies at the feet of a driftwood man on the beach.
+step reach|landing|1|Land on the beach where the driftwood man keeps watch
+step read|Pell's diary|1|Climb into Pell's hut on the north horn and read his diary
 step collect|story:bottle|8|Find the eight bottles of Pell's message - round the bay, and under the water
-step collect|story:lamplit|1|Climb the bottle tower and fill the lamp with the eight bottles
+step reach|lamptop|1|Climb the bottle tower to the dark lamp at its top
+step collect|story:lamplit|1|Fill the lamp with the eight bottles
 step open|Pell's chest|1|Open Pell's chest at the tower's foot
 quest done=The bottle light burns over Driftglass Bay, green and brown and clear - and Pell's message burns in it.
 quest reward=TradeToken*3;Rope*3;Plank*6

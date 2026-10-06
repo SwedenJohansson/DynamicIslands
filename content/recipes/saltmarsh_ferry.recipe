@@ -1,8 +1,9 @@
 # Saltmarsh Ferry - an island of the library's plan Raft 2: The Drowned Frontier (station Two of the Frontier Corps)
 # A salt marsh of pools and reed beds cut by a tidal channel; at the channel's end the Corps' ferry, beached on a mud bank
-# when the tide went out for good. Quest "Down the Marsh": the ferry, the captain's notice at the Corps' office, the bilge
-# pump's handle from the reed cutter's camp, the pump, the ferry's rats and their king, the engineer's locker and the captain's safe
-# (the motor wheel's and the steering wheel's blueprints).
+# when the tide went out for good. Quest "Down the Marsh" (10 steps): the ferry, the captain's notice at the Corps'
+# office, two of its hens netted, the reed cutter's chest out in the marsh and the bilge pump's handle from it, the
+# marsh goats netted, the ferry's hold, the rats and their king, the engineer's locker (after the pump) and the
+# captain's safe (the motor wheel's and the steering wheel's blueprints).
 #
 # Built by the recipe player (CIRecipe saltmarsh_ferry) through the editor's own operations.
 include lib_sea
@@ -143,7 +144,11 @@ quest title=Down the Marsh
 quest intro=A salt marsh, a channel - and the Corps' ferry stranded at its end. Station Two: start at the ferry.
 step reach|ferry|1|Find the Corps' ferry at the channel's end
 step read|Captain's notice|1|Read the captain's notice by the Corps' office
-step collect|story:pumphandle|1|Fetch the bilge pump's handle from the reed cutter's camp in the marsh
+step catch|Chicken|2|Net two of the Corps' hens scratching about the office
+step open|Reed cutter's chest|1|Cross the marsh to the reed cutter's camp and open his chest
+step collect|story:pumphandle|1|Take the bilge pump's handle, greased and wrapped in oilcloth
+step catch|Goat|2|Net the two goats grazing the eastern marsh
+step reach|hold|1|Look into the ferry's hold, where something scratches
 step kill|Rat|4|Clear the rats - and their king - out of the ferry's hold
 step open|Engineer's locker|1|Pump the ferry dry and open the engineer's locker
 step open|Captain's safe|1|Open the captain's safe on the bank

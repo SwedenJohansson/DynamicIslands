@@ -12,19 +12,20 @@ expect animals Dolphin 2
 at 3 38 h=3
 walk 3 37.5 to 3 35 h=2.6
 zone foot
-expect step 1
+expect step 0
 read Climber's note
-expect step 2
+expect step 1
 open Climbers' box
 at 6.4 31.5 h=17.4
 zone ledge
-expect step 3
+expect step 1
 open Ledge box
+expect step 2
 at 3 19 h=34.5
 zone top
-expect step 4
+expect step 2
 read The hermit's riddles
-expect step 5
+expect step 3
 open Hermit's chest
 expect message locked
 use leverstones
@@ -32,7 +33,7 @@ expect shown birds
 kill Screecher
 use leverfootsteps
 expect story hermitkey 1
-expect step 6
+expect step 4
 use leverfootsteps
 expect message The drawer is empty
 open Hermit's chest

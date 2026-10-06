@@ -3,8 +3,9 @@
 # kept non-graphic: the "tribe" is a shipwrecked whaling crew gone feral, no real people or cultures pictured.
 # A black volcanic crescent round a bay (Shape 6, Style 4): the landing on the bay's south shore, the whalers' village of
 # stilt huts round a fire on the east horn above the bay, a black crag on the ridge, and under the east headland's cliff
-# a vine-hung sea cave where a botanist hid her boat. Take the fire-keeper's key and run the shore path round the
-# headland to the cave before the hunters and their boars come back.
+# a vine-hung sea cave where a botanist hid her boat. Quest "Before They Come Back" (5 steps): the village, her journal,
+# the fire-keeper's key - then run the shore path round the headland, snatching her dropped satchel on the way, to the
+# cave before the hunters and their boars catch up.
 #
 # Built on the land as generated (lower and gentler than the draft's - Height 14, Cliffs 0.2 - so the trails can climb
 # it); every position below is m from the recipe's origin (play tests: 'offset' as the save logs it).
@@ -171,7 +172,7 @@ where hunterstore
 where bountifulbarrel
 where boat
 
-# --- Settings, story items, notes, behaviours, quest (4 steps) ---------------------------------------------------------
+# --- Settings, story items, notes, behaviours, quest (5 steps) ---------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): flowers, pineapples, palms ----------
 scatter "Pickup_Landmark_Flower_Black" 2 at 0 0 r=31.5 seed=4541 free=3
 scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=31.5 seed=4542 free=3
@@ -248,7 +249,8 @@ quest intro=Smoke over the huts of a black island, and nobody at the fire. Whoev
 step reach|village|1|Climb from the landing to the village above the bay
 step read|Botanist's journal|1|Read the journal left in the open cage by the fire
 step collect|story:chainkey|1|Take the boat chain's key from the fire-keeper's hut
-step open|Botanist's sea chest|1|Run the shore path round the headland to the sea cave and open her sea chest before the hunters catch you
+step open|Botanist's satchel|1|Run the shore path round the headland - snatch up her dropped satchel, don't stop
+step open|Botanist's sea chest|1|On to the sea cave and open her sea chest before the hunters catch you
 quest done=The chain falls away and the little boat rocks free. Behind you the horn blows on the ridge, again and again - but you're already gone.
 quest reward=Plank*6;Rope*4;Leather*2
 
