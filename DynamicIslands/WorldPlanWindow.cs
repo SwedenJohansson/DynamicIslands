@@ -78,6 +78,20 @@ namespace DynamicIslands.Editor
 			instance.problemsText.text = rules.Count + " main story card(s) made. Look them over (NOTEBOOK: tab title and intro), then Preview notebook. " + instance.problemsText.text;
 		}
 
+		Button testButton;
+
+		/// <summary>Test this plan (ROADMAP T2b): the plan saved, then a new test world with it.</summary>
+		void TestPlan()
+		{
+			if (islandMode) return;
+			Keep();
+			try { plan.Save(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+			string name = plan.Name;
+			Close();
+			IslandTest.StartPlan(name);
+		}
+
 		/// <summary>Preview notebook: the plan as it is now, in Raft's notebook in the test world.</summary>
 		void PreviewNotebook()
 		{
@@ -321,6 +335,8 @@ namespace DynamicIslands.Editor
 			HelpMark(buttons, HelpCheck);
 			previewButton = UIKit.Button(buttons, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, 34f, 13);
 			previewButton.name = "Button_PreviewNotebook";
+			testButton = UIKit.Button(buttons, "Test this plan", TestPlan, "Play the plan in a new test world (saved first): its islands come as in any world; Esc > Custom Islands > Back to the editor brings you back here", 130, 34f, 13);
+			testButton.name = "Button_TestPlan";
 			exportButton = UIKit.Button(buttons, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, 34f, 13);
 			importButton = UIKit.Button(buttons, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, 34f, 13);
 			shareHelp = HelpMark(buttons, HelpShare);

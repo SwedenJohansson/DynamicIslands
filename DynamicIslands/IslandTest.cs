@@ -42,6 +42,9 @@ namespace DynamicIslands.Editor
 		/// <summary>World Plans' Preview notebook: the plan (as it is in the window, saved or not) shown in Raft's notebook in
 		/// the test world (QuestBookPreview), then back to World Plans on it.</summary>
 		public static WorldPlan PreviewPlan { get; private set; }
+		/// <summary>Test this plan (ROADMAP T2b): the plan played in a new test world, then back to World Plans on it.</summary>
+		public static string PlanToTest { get; private set; }
+
 		/// <summary>The island the editor had open when the preview started (opened again after it).</summary>
 		static string previewIsland;
 
@@ -60,7 +63,20 @@ namespace DynamicIslands.Editor
 				if (!DynamicIslands.SaveIsland(name)) return;
 			Island = name;
 			PreviewPlan = null;
+			PlanToTest = null;
 			Go("Trying '" + name + "' in the world '" + WorldName + "'", "Trying '" + name + "' in a world...");
+		}
+
+		/// <summary>World Plans' Test this plan: a new test world made with the plan (its islands come as in any world).</summary>
+		public static void StartPlan(string plan)
+		{
+			if (!DynamicIslands.InEditor() || Busy || string.IsNullOrEmpty(plan)) return;
+			previewIsland = DynamicIslands.IsUnnamed ? null : DynamicIslands.currentIslandName;
+			if (previewIsland != null && EditorAutosave.Unsaved && !DynamicIslands.SaveIsland(previewIsland)) return;
+			PlanToTest = plan;
+			PreviewPlan = null;
+			Island = null;
+			Go("Testing the plan '" + plan + "' in a new world", "Making a test world for the plan '" + plan + "'...");
 		}
 
 		/// <summary>World Plans' Preview notebook: to the test world with the plan (the island being edited saved first, as Test does).</summary>
@@ -70,6 +86,7 @@ namespace DynamicIslands.Editor
 			previewIsland = DynamicIslands.IsUnnamed ? null : DynamicIslands.currentIslandName;
 			if (previewIsland != null && EditorAutosave.Unsaved && !DynamicIslands.SaveIsland(previewIsland)) return;
 			PreviewPlan = WorldPlan.Parse(plan.Name, plan.ToText());
+			PlanToTest = null;
 			Island = null;
 			Go("Previewing the notebook of '" + plan.Name + "' in the world '" + WorldName + "'", "Opening Raft's notebook for '" + plan.Name + "'...");
 		}
@@ -100,7 +117,7 @@ namespace DynamicIslands.Editor
 			if (state != State.Testing) return;
 			state = State.Returning;
 			giveUpAt = Time.unscaledTime + 120f;
-			Step(PreviewPlan != null ? "Back to World Plans with '" + PreviewPlan.Name + "'" : "Back to the editor with '" + Island + "'");
+			Step(PreviewPlan != null ? "Back to World Plans with '" + PreviewPlan.Name + "'" : PlanToTest != null ? "Back to World Plans with '" + PlanToTest + "'" : "Back to the editor with '" + Island + "'");
 			QuestBookPreview.End();
 			WorldWindow.Close();
 			// (Raft's leave without saving; the pause menu's own button leaves for no scene unless its exit box chose one)
@@ -125,7 +142,7 @@ namespace DynamicIslands.Editor
 					{ state = State.Testing; DynamicIslands.instance.StartCoroutine(BringIsland()); }
 					break;
 				case State.Testing:
-					if (!LoadSceneManager.IsGameSceneLoaded && menu) { QuestBookPreview.End(); PreviewPlan = null; Stop("Left the test world", false); } // (by Raft's own menu)
+					if (!LoadSceneManager.IsGameSceneLoaded && menu) { QuestBookPreview.End(); PreviewPlan = null; PlanToTest = null; Stop("Left the test world", false); } // (by Raft's own menu)
 					break;
 				case State.Returning:
 					if (menu) { state = State.OpeningEditor; DynamicIslands.LoadEditor(new string[0]); }
@@ -135,7 +152,16 @@ namespace DynamicIslands.Editor
 					{
 						string n = Island;
 						state = State.None;
-						if (PreviewPlan != null)
+						if (PlanToTest != null)
+						{
+							string pn = PlanToTest;
+							PlanToTest = null;
+							if (previewIsland != null) DynamicIslands.LoadIsland(previewIsland);
+							WorldPlan wp = WorldPlan.Load(pn);
+							if (wp != null) WorldPlanWindow.OpenWith(wp);
+							Step("Back in World Plans with '" + pn + "'");
+						}
+						else if (PreviewPlan != null)
 						{
 							WorldPlan p = PreviewPlan;
 							PreviewPlan = null;
@@ -159,6 +185,8 @@ namespace DynamicIslands.Editor
 			// over 10 s to start filling, and with many saved worlds it is long)
 			bool saved = false;
 			try { saved = !string.IsNullOrEmpty(SaveAndLoad.WorldPath) && System.IO.Directory.Exists(System.IO.Path.Combine(SaveAndLoad.WorldPath, WorldName)); } catch { }
+			// (a plan is tested in a world of its own, new each time: a plan's rules start with its world)
+			if (PlanToTest != null) saved = false;
 			if (saved && load != null)
 			{
 				load.gameObject.SetActive(true);
@@ -196,11 +224,13 @@ namespace DynamicIslands.Editor
 				try { box.Close(); } catch { }
 				box.Open();
 				yield return new WaitForSecondsRealtime(1f);
-				box.inputfield_GameName.text = WorldName;
-				box.GameNameEndEdit(WorldName);
+				// (a short name: Raft refuses longer new world names)
+				string worldName = PlanToTest != null ? "Plan test " + DateTime.Now.ToString("HHmm") : WorldName;
+				box.inputfield_GameName.text = worldName;
+				box.GameNameEndEdit(worldName);
 				for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
 				if (box.createGameButton != null && !box.createGameButton.interactable) { Stop("Raft's Create button is off - the island wasn't tried", true); yield break; }
-				WorldDirector.PendingPlan = WorldPlan.NoneName; // (only the island being tried)
+				WorldDirector.PendingPlan = PlanToTest ?? WorldPlan.NoneName; // (only the island being tried; or the plan being tested)
 				Step("Making the test world");
 				try { box.Button_CreateNewGame(); }
 				catch (Exception e) { Stop("Raft's Create didn't work (" + e.GetType().Name + ") - the island wasn't tried; try Test again", true); Debug.LogWarning("[CUSTOM ISLANDS] [test] " + e); yield break; }
@@ -213,6 +243,13 @@ namespace DynamicIslands.Editor
 		static IEnumerator BringIsland()
 		{
 			yield return new WaitForSeconds(2f);
+			// (a plan's own new world: its islands are the plan's - nothing to take away)
+			if (PlanToTest != null)
+			{
+				Step("Testing the plan '" + PlanToTest + "' (" + WorldDirector.PlanName + ")");
+				IslandInfo.Show("Testing the plan '" + PlanToTest + "'", "", "Its islands come as in any world. Esc > Custom Islands > Back to the editor (the test world stays, under Load)");
+				yield break;
+			}
 			// (islands tried before stay in the test world when Raft saved it meanwhile: only the one being tried now)
 			int old = IslandWorldState.Remove(null);
 			if (old > 0) Step("Took away " + old + " island(s) tried before");

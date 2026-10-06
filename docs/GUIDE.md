@@ -1742,6 +1742,9 @@ names are the same every time, its exact places aren't.
 
 ### 7.6 Playing, changing and sharing a plan
 
+- **Test this plan** (World plans, next to Preview notebook) saves the plan and makes a new world with it, a test world
+  "Plan test <time>": its islands come as in any world. **Esc → Custom Islands → Back to the editor** brings you
+  back to World plans on the plan (the test world stays under Load; delete old ones there).
 - **Choose it** in the New Game box: click the **Custom Islands plan** list and choose your plan, then **Create**. The
   choice is remembered for the next new world. In a running world, the host can give it another plan: **Esc → CUSTOM
   ISLANDS → Plan** (a list of the plans; its islands come from now on, what is done or unlocked stays), or F10 →

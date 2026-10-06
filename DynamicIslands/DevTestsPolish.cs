@@ -188,6 +188,37 @@ namespace DynamicIslands
 			if (ok) Log("PASS: editor light"); else Fail("editor light");
 		}
 
+		[ConsoleCommand(name: "CITestThisPlan", docs: "Dev, editor: ROADMAP T2b - World Plans' Test this plan: a small plan saved, a new world 'Plan test <time>' made with it, its island comes, Back to the editor in the world window, World Plans open again on the plan")]
+		public static void TestThisPlanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TestThisPlanRoutine()); }
+
+		static IEnumerator TestThisPlanRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("plan test: in the editor"); yield break; }
+			bool ok = true;
+			string island = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => !n.StartsWith("gen-") && !n.StartsWith("ci"));
+			var plan = new WorldPlan { Name = "CI Plan Test", Random = false, Description = "Test this plan (CIPlanTest)" };
+			plan.Rules.Add(IntroRule.Parse("first | island:" + island + " | start | ahead:300 | A first island | First"));
+			plan.Save();
+			IslandTest.StartPlan(plan.Name);
+			Check(ref ok, IslandTest.Busy && IslandTest.PlanToTest == plan.Name, "Test this plan: on its way");
+			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
+			for (float t = 0; t < 40f && !IslandWorldState.Islands.Any(x => x.HostName.Equals(island, StringComparison.OrdinalIgnoreCase)); t += 1f) yield return new WaitForSeconds(1f);
+			string world = SaveAndLoad.CurrentGameFileName ?? "";
+			Check(ref ok, IslandTest.Testing && world.StartsWith("Plan test"), "in a new world '" + world + "' (" + IslandTest.LastStep + ")");
+			Check(ref ok, WorldDirector.PlanName == plan.Name, "the world's plan is '" + WorldDirector.PlanName + "'");
+			Check(ref ok, IslandWorldState.Islands.Any(x => x.HostName.Equals(island, StringComparison.OrdinalIgnoreCase)), "the plan's first island '" + island + "' came");
+			WorldWindow.Open();
+			yield return null;
+			UnityEngine.UI.Button back = WorldWindow.ButtonNamed("BackToEditor");
+			Check(ref ok, back != null && back.gameObject.activeInHierarchy, "the world window offers Back to the editor");
+			if (back != null) back.onClick.Invoke();
+			for (float t = 0; t < 240f && !(DynamicIslands.InEditor() && !IslandTest.Busy); t += 1f) yield return new WaitForSeconds(1f);
+			yield return new WaitForSeconds(2f);
+			Check(ref ok, DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, "back in the editor with World Plans open");
+			WorldPlanWindow.Close();
+			if (ok) Log("PASS: plan test"); else Fail("plan test");
+		}
+
 		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
 		public static void IslandTestCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
 
