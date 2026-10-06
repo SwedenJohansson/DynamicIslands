@@ -277,5 +277,78 @@ namespace DynamicIslands
 			DynamicIslands.NewIsland();
 			if (ok) Log("PASS: clipboard and place exactly"); else Fail("clipboard and place exactly");
 		}
+			[ConsoleCommand(name: "CISelectionTools", docs: "Dev, editor: ROADMAP E3 - Same kind, All, box select (a box around the herds), the Placed objects list (Hide signs, Lock herds: clicks, boxes and All pass them by; Show all / Unlock all), hidden objects still saved; pictures shot_box_select.png and shot_placed_list.png")]
+		public static void SelectionToolsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(SelectionToolsRoutine()); }
+
+		static IEnumerator SelectionToolsRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			DynamicIslands.NewIsland();
+			yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
+			string plainName = PlaceableCatalog.CoreNames.FirstOrDefault(n => PlaceableCatalog.CategoryOf(n) == PlaceableCatalog.NatureCategory && ContentCatalog.CreatureOf(n) == null);
+			EditorGameObject s1 = PlaceForTest("Note_Sign", c0, placed), s2 = PlaceForTest("Note_Sign", c0 + new Vector3(0f, 0f, 5f), placed);
+			EditorGameObject b1 = PlaceForTest("Creature_Boar", c0 + new Vector3(10f, 0f, 0f), placed), b2 = PlaceForTest("Creature_Boar", c0 + new Vector3(10f, 0f, 5f), placed);
+			EditorGameObject p1 = PlaceForTest(plainName, c0 + new Vector3(-10f, 0f, 2f), placed);
+			Transform cam = Camera.main.transform;
+			cam.position = c0 + new Vector3(0f, 22f, -18f);
+			cam.LookAt(c0 + new Vector3(0f, 0f, 3f));
+			yield return null;
+
+			SelectionTools.Select(new List<EditorGameObject> { s1 }, false);
+			Check(ref ok, SelectionTools.SelectSameKind() == 2 && gizmo.SelectedRoots.Count(x => x != null) == 2, "Same kind: both signs");
+			Check(ref ok, Click(EditorUI.Canvas.gameObject, "SelectAll"), "the Selection group's All button");
+			Check(ref ok, gizmo.SelectedRoots.Count(x => x != null) == 5, "All: the 5 objects (" + gizmo.SelectedRoots.Count(x => x != null) + ")");
+			// A box around the two herds
+			Camera c = Camera.main;
+			Vector3 a = c.WorldToScreenPoint(b1.transform.position), z = c.WorldToScreenPoint(b2.transform.position);
+			Vector2 from = new Vector2(Mathf.Min(a.x, z.x) - 40f, Mathf.Min(a.y, z.y) - 40f), to = new Vector2(Mathf.Max(a.x, z.x) + 40f, Mathf.Max(a.y, z.y) + 40f);
+			SelectionTools.DrawBox(from, to);
+			int boxed = SelectionTools.BoxSelect(from, to, false);
+			Check(ref ok, boxed == 2 && gizmo.SelectedRoots.Contains(b1.transform) && gizmo.SelectedRoots.Contains(b2.transform), "box select: the two herds (" + boxed + ")");
+			yield return new WaitForSecondsRealtime(0.5f);
+			Screenshot(new[] { "box_select" });
+			yield return new WaitForSecondsRealtime(0.4f);
+			SelectionTools.ShowBox(false);
+			Check(ref ok, SelectionTools.BoxSelect(from, to, true) == 2 && gizmo.SelectedRoots.Count(x => x != null) == 2, "Shift + box adds (nothing new here)");
+
+			// The list: hide the signs, lock the herds
+			PlacedListWindow.Open();
+			yield return null;
+			GameObject root = PlacedListWindow.Root;
+			Check(ref ok, Click(root, "Hide_Note_Sign"), "the list has the signs (Hide)");
+			yield return null;
+			Check(ref ok, SelectionTools.IsHidden(s1) && SelectionTools.IsHidden(s2) && !s1.GetComponentsInChildren<Renderer>().Any(r => r.enabled), "Hide: the signs aren't drawn");
+			Check(ref ok, Click(root, "Lock_Creature_Boar"), "the list has the herds (Lock)");
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.4f);
+			Screenshot(new[] { "placed_list" });
+			yield return new WaitForSecondsRealtime(0.4f);
+			PlacedListWindow.Close();
+			Check(ref ok, SelectionTools.SelectAll() == 1, "All passes hidden and locked objects by (1 left)");
+			Ray ray = c.ScreenPointToRay(c.WorldToScreenPoint(b1.transform.position + Vector3.up * 0.5f));
+			Check(ref ok, PlacementOptions.PickObject(ray, Physics.DefaultRaycastLayers) != b1.transform, "a click on a locked herd doesn't pick it");
+			ray = c.ScreenPointToRay(c.WorldToScreenPoint(s1.transform.position + Vector3.up * 1f));
+			Check(ref ok, PlacementOptions.PickObject(ray, Physics.DefaultRaycastLayers) != s1.transform, "nor on a hidden sign");
+			Check(ref ok, SelectionTools.BoxSelect(from, to, false) == 0, "a box passes the locked herds by");
+			// Still saved
+			const string isl = "citest-sel";
+			DynamicIslands.SaveIsland(isl);
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(isl));
+			Check(ref ok, f.Objects.Count == 5, "saved with every object, hidden and locked ones too (" + f.Objects.Count + ")");
+			System.IO.File.Delete(IslandSpawner.PathFor(isl));
+			PlacedListWindow.Open();
+			yield return null;
+			Click(PlacedListWindow.Root, "Show all"); Click(PlacedListWindow.Root, "Unlock all");
+			PlacedListWindow.Close();
+			Check(ref ok, SelectionTools.HiddenCount == 0 && SelectionTools.LockedCount == 0 && s1.GetComponentsInChildren<Renderer>().Any(r => r.enabled) && SelectionTools.SelectAll() == 5, "Show all and Unlock all: all 5 again");
+			DynamicIslands.NewIsland();
+			if (ok) Log("PASS: selection tools"); else Fail("selection tools");
+		}
 	}
 }

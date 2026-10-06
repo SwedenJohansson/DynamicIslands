@@ -487,6 +487,14 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   under it, so nothing of it stands in the air - **Duplicate** (Ctrl+D), **Deselect**, **Delete**. **Copy** (Ctrl+C)
   and **Paste** (Ctrl+V) move objects between islands: copy, open another island (or New), paste - they come with
   their spacing and settings, where the mouse points (Ctrl+V) or the middle of the screen (the button).
+- **Selecting many:** drag on empty ground to select everything in a box (Shift adds to the selection); **All**
+  (Ctrl+A) selects every object, **Same kind** every object like the selected ones. **List...** shows the island's
+  objects by kind with how many: **Select** a kind, **Hide** it (not drawn, can't be picked) or **Lock** it (drawn, but
+  clicks, boxes and All pass it by) while you edit around it - hidden and locked objects are still saved and in the
+  game, and opening another island shows and unlocks everything.
+
+![Placed objects](images/editor-placed-list.jpg)
+*The Placed objects list: the signs hidden, the warthog herds locked.*
 - **Place exactly** (the last group when one object is selected): its **Position** (X and Z in metres across the build
   area, Y in metres above the sea), **Turn** in degrees and **Size** (1 = as made), typed. Enter moves it; Ctrl+Z
   undoes. The fields follow the object when you move it with the gizmo.

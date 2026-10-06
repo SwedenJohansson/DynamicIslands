@@ -212,7 +212,7 @@ namespace DynamicIslands.Editor
 			{
 				if (hit.collider.GetComponent<Terrain>() != null) { terrainDistance = hit.distance; break; }
 				EditorGameObject owner = hit.collider.GetComponentInParent<EditorGameObject>();
-				if (owner != null && owner.gameObject.activeInHierarchy) return owner.transform;
+				if (owner != null && owner.gameObject.activeInHierarchy) { if (SelectionTools.IsLocked(owner)) continue; return owner.transform; }
 			}
 			GameObject placedRoot = GameObject.Find("PlacedObjects");
 			if (placedRoot == null) return null;
@@ -220,6 +220,7 @@ namespace DynamicIslands.Editor
 			float bestDistance = terrainDistance;
 			foreach (EditorGameObject o in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
 			{
+				if (!SelectionTools.Pickable(o)) continue; // (hidden or locked - ROADMAP E3)
 				foreach (Renderer r in o.GetComponentsInChildren<Renderer>())
 				{
 					float d;

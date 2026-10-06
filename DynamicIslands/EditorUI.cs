@@ -297,6 +297,14 @@ namespace DynamicIslands.Editor
 			UIKit.Button(s2, "Deselect", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(); }, "Clear the selection");
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
 			UIKit.DangerButton(del);
+			RectTransform sa = UIKit.Row(sel, 26f, 4f, "SelectMore");
+			UIKit.Button(sa, "All", SelectAll, "Select every placed object (Ctrl+A) - not the hidden or locked ones. Drag on empty ground to select with a box (Shift adds)", -1, 26f, 13).name = "Button_SelectAll";
+			UIKit.Button(sa, "Same kind", () =>
+			{
+				int n = SelectionTools.SelectSameKind();
+				DynamicIslands.Notify(n > 0 ? "Selected " + n + " object(s) of the same kind" : "Select an object first: Same kind adds every object like it", n == 0);
+			}, "Select every object of the kinds selected now", -1, 26f, 13).name = "Button_SameKind";
+			UIKit.Button(sa, "List...", PlacedListWindow.Open, "The island's objects by kind: select a kind, hide or lock it while you edit", -1, 26f, 13).name = "Button_PlacedList";
 			RectTransform sc = UIKit.Row(sel, 26f, 4f, "Clipboard");
 			UIKit.Button(sc, "Copy", CopySelected, "Copy the selected objects (Ctrl+C) - they stay copied when you open another island", -1, 26f, 13);
 			UIKit.Button(sc, "Paste", () => Paste(false), "Put the copied objects down where the middle of the screen points (Ctrl+V: where the mouse points)", -1, 26f, 13);
@@ -314,7 +322,7 @@ namespace DynamicIslands.Editor
 			slopeButton = UIKit.Button(o1, "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); }, "On: objects lean with the ground instead of standing straight up");
 			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: Raft's 1.5 m building grid and 90\u00B0 turns, for huts and rafts of Raft blocks");
 
-			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nSelect one object to edit its settings here\nSpace / C: camera straight up / down").gameObject;
+			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nDrag on empty ground: select with a box \u00B7 Ctrl+A: all\nSelect one object to edit its settings here\nSpace / C: camera straight up / down").gameObject;
 			return s;
 		}
 
@@ -413,6 +421,13 @@ namespace DynamicIslands.Editor
 				SetStamp(TerrainStamps.All.FindIndex(s => s.Name == name && !s.BuiltIn));
 				DynamicIslands.Notify("Saved stamp '" + name + "': click the ground to put it down");
 			});
+		}
+
+		/// <summary>Select all (Ctrl+A, ROADMAP E3).</summary>
+		internal static void SelectAll()
+		{
+			int n = SelectionTools.SelectAll();
+			DynamicIslands.Notify(n > 0 ? "Selected all " + n + " object(s)" + (SelectionTools.HiddenCount + SelectionTools.LockedCount > 0 ? " (not the hidden or locked ones)" : "") : "Nothing to select", n == 0);
 		}
 
 		/// <summary>Copy (Ctrl+C): the selection to the editor's clipboard (ROADMAP E4).</summary>
@@ -710,7 +725,10 @@ namespace DynamicIslands.Editor
 				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
 				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.C) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) CopySelected();
 				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.V) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) Paste(true);
+				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.A) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) SelectAll();
 			}
+
+			if (tabs != null && tabs.SelectedTab == TAB.ObjectPlace && !PlacedListWindow.IsOpen) SelectionTools.Tick();
 
 			int selected = g != null ? g.SelectedRoots.Count(t => t != null) : 0;
 			Transform first = selected > 0 ? g.SelectedRoots.First(t => t != null) : null;
