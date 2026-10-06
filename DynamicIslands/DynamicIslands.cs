@@ -155,7 +155,7 @@ namespace DynamicIslands
 			StartStep("the scene loader", () => loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>());
 			StartStep("the patches", () =>
 			{
-				var harmony = new Harmony("com.franzfischer.customislands");
+				var harmony = harmonyInstance = new Harmony(HarmonyId);
 				// (each patch on its own: after a Raft update one that no longer fits is named, the others still work)
 				Editor.PatchHealth.PatchAll(harmony);
 				try { CreatureSpawner.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("CreatureSpawner", e); }
@@ -342,11 +342,57 @@ namespace DynamicIslands
 			return IslandNetwork.OnMessage(message, from) || base.OnNetworkMessage(message, from, modslug);
 		}
 
+		/// <summary>The id of the mod's Harmony patches (OnModUnload takes off these, never another mod's).</summary>
+		const string HarmonyId = "com.franzfischer.customislands";
+		static Harmony harmonyInstance;
+
+		/// <summary>
+		/// RML's Unload (AU40): what the mod hooked into Raft and Unity is taken off again - its Harmony patches, its handlers
+		/// on Raft's and Unity's static events (they kept calling the unloaded mod's code: after a Load, every world shift,
+		/// world load and main menu ran twice, the second time on the old copy), its asset bundles (a Load after this loads
+		/// them again, and Unity refuses a second copy of a loaded bundle: the editor didn't open) and Raft's own build costs.
+		/// What can't be taken back cleanly - its windows, the islands and creatures already in this world, the open editor -
+		/// stays until Raft restarts, so the player is told to restart Raft.
+		/// </summary>
 		public void OnModUnload()
 		{
-			//The mod will not be able to be unloaded, therefore this will be unused
-			try { Editor.BuildCost.RestoreAll(); } catch { } // (Raft's own build costs back, should it ever be)
-			Debug.Log("Mod Custom Islands has been unloaded!");
+			UnloadStep("Raft's build costs", () => Editor.BuildCost.RestoreAll());
+			UnloadStep("the patches", () =>
+			{
+				if (harmonyInstance == null) return;
+				// (each patched method, only this mod's patches on it: UnpatchAll without an id took every mod's off)
+				foreach (MethodBase original in Harmony.GetAllPatchedMethods().ToList())
+					harmonyInstance.Unpatch(original, HarmonyPatchType.All, HarmonyId);
+				harmonyInstance = null;
+			});
+			UnloadStep("the world hooks", () =>
+			{
+				SceneManager.sceneLoaded -= OnSceneLoaded;
+				SaveAndLoad.LoadComplete -= IslandWorldState.OnWorldLoaded;
+				SaveAndLoad.LoadComplete -= CreatureSpawner.OnWorldLoaded;
+				QuestTracker.Advanced -= Behaviours.OnQuestAdvanced;
+				WorldShiftManager.OnWorldShift -= onWorldShift;
+				Raft_Network.OnWorldReceivedLate -= onWorldReceived;
+				AtmosphereZone.Unhook();
+			});
+			UnloadStep("the editor's assets", () =>
+			{
+				// (false: what is loaded from them now - an open editor - stays until it is left)
+				if (mainbundle != null) mainbundle.Unload(false);
+				if (helperbundle != null) helperbundle.Unload(false);
+				mainbundle = helperbundle = null;
+			});
+			// (RML destroys the mod's object; should it not, Update would hook Raft's events again every frame)
+			enabled = false;
+			Notify("Custom Islands is unloaded. Its windows and the custom islands already in this world stay until Raft restarts - restart Raft before loading the mod again.");
+			Debug.Log("[CUSTOM ISLANDS] Mod Custom Islands has been unloaded (patches, event handlers and asset bundles taken off)");
+		}
+
+		/// <summary>One step of OnModUnload on its own: one that fails doesn't stop the others.</summary>
+		static void UnloadStep(string what, Action step)
+		{
+			try { step(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Unloading: " + what + " failed: " + e.Message); }
 		}
 
 

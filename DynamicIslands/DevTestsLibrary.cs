@@ -68,7 +68,7 @@ namespace DynamicIslands
 		static KeyValuePair<string, byte[]> Entry(string name, string text) { return new KeyValuePair<string, byte[]>(name, Encoding.UTF8.GetBytes(text)); }
 		static KeyValuePair<string, byte[]> Entry(string name, byte[] b) { return new KeyValuePair<string, byte[]>(name, b); }
 
-		[ConsoleCommand(name: "CILibraryUnit", docs: "Dev, anywhere: the pack rules without the game - versions compared as numbers, ids from titles, safe file names, and broken or harmful packs refused with a reason and nothing written (a cut-off zip, a file outside its folder, 70 files, a zip bomb, a program, no info.json, a newer island format, a plan naming an island it doesn't hold)")]
+		[ConsoleCommand(name: "CILibraryUnit", docs: "Dev, anywhere: the pack rules without the game - versions compared as numbers, ids from titles, safe file names, and broken or harmful packs refused with a reason and nothing written (a cut-off zip, a file outside its folder, 70 files, a zip bomb, a program, no info.json, a newer island format, an island with a damaged body, an info.json nested too deep, a plan naming an island it doesn't hold)")]
 		public static void LibraryUnitCommand()
 		{
 			bool ok = true;
@@ -79,7 +79,12 @@ namespace DynamicIslands
 
 			string dir = Path.Combine(LibraryPack.LibraryFolder, "citest");
 			Directory.CreateDirectory(dir);
-			byte[] island = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(4)).Concat(new byte[40]).ToArray();
+			// (a real island: a pack's islands are read in full - AU39)
+			string realPath = Path.Combine(dir, "real" + IslandFile.Extension);
+			new IslandFile { Name = "x", TerrainSize = new Vector3(10, 10, 10), HeightmapResolution = 33, Heights = new float[33, 33] }.Save(realPath);
+			byte[] island = File.ReadAllBytes(realPath);
+			File.Delete(realPath);
+			byte[] damaged = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(4)).Concat(new byte[40]).ToArray();
 			byte[] newer = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(99)).Concat(new byte[40]).ToArray();
 			string info = "{\"id\":\"ci-bad\",\"kind\":\"island\",\"title\":\"Bad\",\"author\":\"x\"}";
 			var cases = new List<KeyValuePair<string, Action<string>>>
@@ -92,6 +97,8 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action<string>>("no info.json", p => WriteTestZip(p, new[] { Entry("ci-bad/x.island", island) })),
 				new KeyValuePair<string, Action<string>>("a newer island format", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", newer) })),
 				new KeyValuePair<string, Action<string>>("not an island file", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", "hello") })),
+				new KeyValuePair<string, Action<string>>("an island with a damaged body", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", damaged) })),
+				new KeyValuePair<string, Action<string>>("an info.json nested 100,000 deep", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", "{\"id\":\"ci-bad\",\"tags\":" + new string('[', 100000) + "}"), Entry("ci-bad/x.island", island) })),
 				new KeyValuePair<string, Action<string>>("a plan naming an island it doesn't hold", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", "{\"id\":\"ci-bad\",\"kind\":\"plan\",\"title\":\"Bad\",\"author\":\"x\",\"plan\":\"P.plan\"}"), Entry("ci-bad/x.island", island), Entry("ci-bad/P.plan", "rule = a | island:y | start | ahead:300 | | ") })),
 				new KeyValuePair<string, Action<string>>("two entries' folders", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("other/x.island", island) })),
 			};

@@ -192,6 +192,15 @@ namespace DynamicIslands.Editor
 			Camera.onPostRender += PostRender;
 		}
 
+		/// <summary>Takes the camera handlers off again (the mod's Unload, AU40).</summary>
+		internal static void Unhook()
+		{
+			if (!hooked) return;
+			hooked = false;
+			Camera.onPreRender -= PreRender;
+			Camera.onPostRender -= PostRender;
+		}
+
 		/// <summary>How strongly the zone acts at a point: 1 inside two thirds of its radius, fading to 0 at the edge.</summary>
 		public float WeightAt(Vector3 p)
 		{
