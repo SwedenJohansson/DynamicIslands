@@ -569,6 +569,9 @@ namespace DynamicIslands.Editor
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			if (l == null || !l.isSpawned || !GroundOn(l) || !Raft_Network.IsHost) yield break;
+			// (where the island is now: a world shift while the catalog was made moved it, and extras put at the old spot never
+			// loaded - they wait for Raft's island under them - AU58)
+			at = new Vector3(l.transform.position.x, 0f, l.transform.position.z);
 			string name = ExtrasPrefix + Current.Seed + "-" + key;
 			IslandFile file = null;
 			string what = "";
