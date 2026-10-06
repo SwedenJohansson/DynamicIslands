@@ -42,6 +42,16 @@ namespace DynamicIslands.Editor
 		public static int[] GeneratedStyles = { TerrainPainter.Tropical, TerrainPainter.Snowy, TerrainPainter.Desert, TerrainPainter.Forest, TerrainPainter.Volcanic };
 		/// <summary>Chance that a generated island is a flying one.</summary>
 		public static float GeneratedFlyingChance = 0.1f;
+		/// <summary>The generator's things to gather on generated islands (GenGather, ROADMAP LM9): how much on the land and in
+		/// the shallows (0-1, 0 = none as before), how deep the shallows' finds go (m) and the kinds switched off ("" = all on).</summary>
+		public static float GeneratedGather = 0f, GeneratedShallows = 0f, GeneratedShallowsDepth = GenGather.DefaultDepth;
+		public static string GeneratedGatherOff = "";
+
+		/// <summary>A generated island's things to gather as spawnpool.txt sets them.</summary>
+		internal static void GatherFor(IslandGenSettings s)
+		{
+			s.Gather = GeneratedGather; s.Shallows = GeneratedShallows; s.ShallowsDepth = GeneratedShallowsDepth; s.GatherOff = GeneratedGatherOff;
+		}
 
 		/// <summary>Pool entry standing for "generate a new island".</summary>
 		public const string GeneratedEntry = "<generated>";
@@ -251,6 +261,7 @@ namespace DynamicIslands.Editor
 				mapType = MapTypes.Get(name.Substring(TypePrefix.Length));
 				if (mapType == null) return Skip("there is no map type '" + name.Substring(TypePrefix.Length) + "'");
 				generate = MapTypes.Roll(mapType, new System.Random(), out elevation);
+				WorldRandomizer.GatherFor(generate, mapType.Name, WorldRandomizer.Current);
 				name = MapTypes.FreeFileName(mapType, generate);
 				radiusCache[name] = MapTypes.EstimatedRadius(generate);
 				elevationCache[name] = elevation;
@@ -259,6 +270,7 @@ namespace DynamicIslands.Editor
 			{
 				var rnd = new System.Random();
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
+				GatherFor(generate);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;
 				name = FreeName(GeneratedPrefix + TerrainPainter.StyleName(generate.Style).ToLowerInvariant() + "-" + generate.Seed);
 				// (used for placing until the real file exists)
@@ -375,6 +387,7 @@ namespace DynamicIslands.Editor
 				{
 					IslandGenSettings s = IslandGenerator.RandomSettings(new System.Random(seed), new[] { style });
 					s.Seed = seed; s.Style = style;
+					GatherFor(s);
 					return IslandGenerator.CreateFile(s, name);
 				};
 			}
@@ -385,6 +398,7 @@ namespace DynamicIslands.Editor
 				float elevation;
 				IslandGenSettings s = MapTypes.Roll(type, new System.Random(seed), out elevation);
 				s.Seed = seed;
+				WorldRandomizer.GatherFor(s, type.Name, WorldRandomizer.Current);
 				return MapTypes.Create(type, s, elevation, name);
 			};
 		}
@@ -713,6 +727,14 @@ generated = 1
 # Styles they can have (Tropical, Snowy, Desert, Forest, Volcanic), and the chance that one is a flying island
 generatedStyles = Tropical, Snowy, Desert, Forest, Volcanic
 generatedFlyingChance = 0.1
+# Their things to gather (the generator's Things to gather and Finds in the shallows): how much on the land and in the
+# shallows (0-1, 0 = none), how deep the finds in the shallows go (2-20 m), and kinds switched off (palm, datepalm, mango,
+# pineapple, watermelon, banana, pine, birch, berry, flower, dirt, hive, sand, clay, stone, iron, copper, scrap, clam,
+# seaweed; comma separated, nothing = all on)
+generatedGather = 0
+generatedShallows = 0
+generatedShallowsDepth = 6
+generatedGatherOff =
 
 # Islands taking part, one per line: <island name> <weight>
 # A higher weight makes an island more likely. Weight 0 leaves it out.
@@ -804,6 +826,7 @@ type:sunken 0.2
 							if (GeneratedStyles.Length == 0) { BadLine(line); GeneratedStyles = new[] { TerrainPainter.Tropical }; }
 							continue;
 						}
+						if (key == "generatedgatheroff") { GeneratedGatherOff = GenGather.Clean(value); continue; }
 						if (key == "defaultplan") { WorldDirector.DefaultPlan = value.Length > 0 ? value : WorldPlan.RandomName; continue; }
 						float v;
 						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) { BadLine(line); continue; }
@@ -845,6 +868,9 @@ type:sunken 0.2
 				case "receiverdistance": ReceiverDistance = v; break;
 				case "generated": GeneratedWeight = v; break;
 				case "generatedflyingchance": GeneratedFlyingChance = v; break;
+				case "generatedgather": GeneratedGather = v; break;
+				case "generatedshallows": GeneratedShallows = v; break;
+				case "generatedshallowsdepth": GeneratedShallowsDepth = v; break;
 			}
 			return true;
 		}
@@ -866,13 +892,17 @@ type:sunken 0.2
 				case "receiverdistance": return Mathf.Max(0f, v);
 				case "generated": return Mathf.Max(0f, v);
 				case "generatedflyingchance": return Mathf.Clamp01(v);
+				case "generatedgather": return Mathf.Clamp01(v);
+				case "generatedshallows": return Mathf.Clamp01(v);
+				case "generatedshallowsdepth": return Mathf.Clamp(v, GenGather.MinDepth, GenGather.MaxDepth);
 				default: return null;
 			}
 		}
 
 		/// <summary>The number settings of spawnpool.txt, as the file spells them (ROADMAP AU46: the Defaults window).</summary>
 		public static readonly string[] NumberKeys = { "chancePerKm", "quietMinutes", "minSpacing", "spawnDistanceMin", "spawnDistanceMax", "unloadDistance",
-			"returnMinutes", "regrowDays", "showOnReceiver", "receiverDistance", "generated", "generatedFlyingChance" };
+			"returnMinutes", "regrowDays", "showOnReceiver", "receiverDistance", "generated", "generatedFlyingChance",
+			"generatedGather", "generatedShallows", "generatedShallowsDepth" };
 
 		/// <summary>A number setting's value on this machine now (by its key, any case); NaN if there is none.</summary>
 		public static float ValueOf(string key)
@@ -891,6 +921,9 @@ type:sunken 0.2
 				case "receiverdistance": return ReceiverDistance;
 				case "generated": return GeneratedWeight;
 				case "generatedflyingchance": return GeneratedFlyingChance;
+				case "generatedgather": return GeneratedGather;
+				case "generatedshallows": return GeneratedShallows;
+				case "generatedshallowsdepth": return GeneratedShallowsDepth;
 				default: return float.NaN;
 			}
 		}
@@ -931,6 +964,15 @@ type:sunken 0.2
 					if (names.Length == 0 || names.Any(n => !TerrainPainter.Styles.Any(st => st.Name.Equals(n, StringComparison.OrdinalIgnoreCase))))
 						throw new ArgumentException("generatedStyles: one or more of " + string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).ToArray()));
 					write["generatedStyles"] = string.Join(", ", names);
+					continue;
+				}
+				if (key.Equals("generatedGatherOff", StringComparison.OrdinalIgnoreCase))
+				{
+					// (kinds of things to gather switched off; nothing = all on)
+					string[] keys = value.Split(',', ' ').Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
+					string bad = keys.FirstOrDefault(k => !GenGather.LandKeys.Concat(GenGather.SeaKeys).Contains(k.ToLowerInvariant()));
+					if (bad != null) throw new ArgumentException("generatedGatherOff: '" + bad + "' is none of " + string.Join(", ", GenGather.LandKeys.Concat(GenGather.SeaKeys).ToArray()));
+					write["generatedGatherOff"] = GenGather.Clean(string.Join(",", keys));
 					continue;
 				}
 				if (key.Equals("defaultPlan", StringComparison.OrdinalIgnoreCase))
@@ -1005,7 +1047,9 @@ type:sunken 0.2
 				lines.Add(string.Format(CultureInfo.InvariantCulture, "  {0}: weight {1}, {2:P0} of spawns", p.Key == GeneratedEntry ? "a new generated island" : p.Key, p.Value, p.Value / total));
 			if (GeneratedWeight > 0f)
 				lines.Add("Generated islands: " + string.Join(", ", GeneratedStyles.Select(TerrainPainter.StyleName).ToArray()) + ", " +
-					GeneratedFlyingChance.ToString("P0", CultureInfo.InvariantCulture) + " of them flying");
+					GeneratedFlyingChance.ToString("P0", CultureInfo.InvariantCulture) + " of them flying" +
+					(GeneratedGather + GeneratedShallows > 0f ? string.Format(CultureInfo.InvariantCulture, ", things to gather {0:0.##} on the land and {1:0.##} in the shallows (down to {2:0} m){3}",
+						GeneratedGather, GeneratedShallows, GeneratedShallowsDepth, GeneratedGatherOff.Length > 0 ? ", off: " + GeneratedGatherOff : "") : ""));
 			lines.Add("Custom islands on the Receiver: " + (ShowOnReceiver ? "shown" : "hidden"));
 			// (a player in someone else's game: only the host places islands, and these come from the host's file)
 			if (WorldRules.HostSettingsFromHost) lines.Add("In this game (the host's settings): " + WorldRules.HostSettingsDescribe());

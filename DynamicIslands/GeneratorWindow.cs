@@ -293,6 +293,7 @@ namespace DynamicIslands.Editor
 				"Things players collect with Raft's tools on the land and beach: stones, clay and sand, berry bushes or pineapples by style. (What lies under water is below, in Life under water.)");
 			Slider(nature, "Things to gather", 0f, 1f, () => s.Gather, v => s.Gather = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
 				"Trees to cut, fruit, berries and flowers that suit the style", "More of what players gather and cut on the land, chosen by the style: palms, mango trees, pineapples, watermelons, bananas and flowers (tropical); pines, berry bushes and flowers (snowy); palms, pineapples, watermelons and flowers (desert); birches, pines, berry bushes and flowers (forest); palms, mango trees, pineapples and black flowers (volcanic). On fairly flat land above the sea, kept off the island's other objects; at the top about " + GenGather.LandPer1000.ToString("F0") + " per 1000 m2 of land. Off (none) as before.");
+			GatherKinds(nature, GenGather.LandKeys, GenGather.LandLabels, true);
 			Slider(nature, "Groups", 0f, 1f, () => s.Clusters, v => s.Clusters = v, v => v < 0.15f ? "spread evenly" : v < 0.6f ? "some groves" : "groves and clearings",
 				"Spread evenly, or in groves with clearings", "How much the objects gather: evenly spread on the left; groves of trees, fields of bushes and rock piles with open clearings between them on the right, and corals in reefs with sand between them. The amounts stay the same.");
 			UIKit.Label(nature, "Very dense islands take a few seconds to generate; one island gets at most " + IslandGenerator.MaxObjects + " objects (land and sea together).", 12, UIKit.TextMuted);
@@ -316,7 +317,10 @@ namespace DynamicIslands.Editor
 			Slider(life, "Things to collect", 0f, 1f, () => s.AmountSea(s.SeaFinds), v => s.SeaFinds = v, sea, "Stones, clay, sand, scrap, ores, giant clams",
 				"Raft's pickups under water: stones, clay and sand on the shelf, scrap on the sea floor, metal and copper ore on the steep slopes further down, giant clams and silver algae now and then. Players dive for them.");
 			Slider(life, "Finds in the shallows", 0f, 1f, () => s.Shallows, v => s.Shallows = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
-				"Sand, clay, stone, ores, scrap, clams and seaweed just off the shore", "Raft's sea finds where players reach them easily, 0.6-6 m under water just off the shore: sand, clay, stones, metal and copper ore, scrap, giant clams and seaweed - as the library's islands have them. On top of Things to collect above; at the top about " + GenGather.SeaPer1000.ToString("F0") + " per 1000 m2 of shallows. Off (none) as before.");
+				"Sand, clay, stone, ores, scrap, clams and seaweed just off the shore", "Raft's sea finds where players reach them easily, 0.6-6 m under water just off the shore (How far out below sets the depth): sand, clay, stones, metal and copper ore, scrap, giant clams and seaweed - as the library's islands have them. On top of Things to collect above; at the top about " + GenGather.SeaPer1000.ToString("F0") + " per 1000 m2 of shallows. Off (none) as before.");
+			GatherKinds(life, GenGather.SeaKeys, GenGather.SeaLabels, false);
+			Slider(life, "How far out", GenGather.MinDepth, GenGather.MaxDepth, () => s.ShallowsDepth, v => s.ShallowsDepth = v, v => "down to " + v.ToString("F0") + " m" + (v < 4f ? " (at the shore)" : v < 8f ? " (just off it)" : v < 13f ? " (out on the shelf)" : " (far out)"),
+				"How far out (how deep) the finds in the shallows go", "Finds in the shallows lie from 0.6 m under water down to this depth: on the left only right at the shore, where players wade for them; to the right further out over the shelf, where they dive. 6 m as before. The same amount (Finds in the shallows) spread over more water.");
 			Slider(life, "Sunken barrels", 0f, 1f, () => s.AmountSea(s.Sunken), v => s.Sunken = v, sea, "Barrels, containers, buoys and wreckage on the sea floor",
 				"Sunken barrels, containers, buoys and bits of wreckage, as around Balboa and Caravan Island (Raft's tropical islands have few). Decoration: the loot boxes are under Loot.");
 
@@ -370,6 +374,47 @@ namespace DynamicIslands.Editor
 			Choice(built, "Caves", new[] { "Off", "On" }, () => s.Caves ? 1 : 0, v => s.Caves = v == 1,
 				"A cave set into the land: one of Raft's own cave pieces (Balboa's), its mouth towards open, level ground, with a guard (a bear, polar bear, hyena, warthog or rat by style) and a hoard inside. It needs a hill next to open, level land; if none fits, the report says so.");
 			QuestGroup(root);
+		}
+
+		/// <summary>The kinds of things to gather the builder switches on and off (GatherOff, ROADMAP LM9): on the land only the
+		/// style's own (the others hidden), in the shallows all of Raft's sea finds. "All" switches the group's kinds on again.</summary>
+		void GatherKinds(Transform parent, string[] keys, string[] labels, bool land)
+		{
+			RectTransform own = UIKit.Row(parent, 24f, 3f, land ? "GatherAll" : "ShallowsAll");
+			Button all = UIKit.Button(own, "All kinds", () => { foreach (string k in keys) if (!GenGather.IsOn(s.GatherOff, k)) s.GatherOff = GenGather.Toggle(s.GatherOff, k); ShowAll(); },
+				land ? "Every kind of thing to gather the style has" : "Every kind of find in the shallows", -1, 24f, 11);
+			UIKit.Help(own, land
+				? "Which things to gather come: click a kind to switch it off or on again (lit = on). Only the island's style's own kinds are listed: palms, mangoes, pineapples, watermelons, bananas, flowers, dirt and wild beehives (tropical); pines, berries and flowers (snowy); date palms, pineapples, watermelons and flowers (desert); birches, pines, berries, flowers, dirt and beehives (forest); palms, mangoes, pineapples, flowers, dirt and beehives (volcanic). With every kind off, Things to gather adds nothing. Saved with the settings and in recipes (GatherOff); all on as before."
+				: "Which finds lie in the shallows: click a kind to switch it off or on again (lit = on) - sand, clay, stone, iron and copper ore, scrap, giant clams and seaweed. With every kind off, Finds in the shallows adds nothing. Saved with the settings and in recipes (GatherOff); all on as before.");
+			refresh.Add(() => UIKit.SetActive(all, keys.All(k => GenGather.IsOn(s.GatherOff, k))));
+			const int perRow = 6;
+			for (int r = 0; r * perRow < keys.Length; r++)
+			{
+				RectTransform row = UIKit.Row(parent, 24f, 3f, land ? "GatherKinds" : "ShallowsKinds");
+				var inRow = new List<KeyValuePair<Button, string>>();
+				for (int i = r * perRow; i < Math.Min(keys.Length, (r + 1) * perRow); i++)
+				{
+					string key = keys[i];
+					Button b = UIKit.Button(row, labels[i], () => { s.GatherOff = GenGather.Toggle(s.GatherOff, key); ShowAll(); },
+						labels[i] + ": switch " + (land ? "this thing to gather" : "this find") + " on or off", -1, 24f, 11);
+					b.name = "Gather_" + key;
+					inRow.Add(new KeyValuePair<Button, string>(b, key));
+				}
+				GameObject rowObject = row.gameObject;
+				refresh.Add(() =>
+				{
+					List<string> offered = land ? GenGather.LandKeysOf(s.Style) : null;
+					bool any = false;
+					foreach (var kb in inRow)
+					{
+						bool shown = offered == null || offered.Contains(kb.Value);
+						kb.Key.gameObject.SetActive(shown);
+						UIKit.SetActive(kb.Key, GenGather.IsOn(s.GatherOff, kb.Value));
+						any |= shown;
+					}
+					rowObject.SetActive(any);
+				});
+			}
 		}
 
 		/// <summary>A quest made with the island: how many steps (Normal and Randomize existing tabs; the user, 2026-10-03).</summary>

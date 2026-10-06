@@ -9,7 +9,7 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// "Defaults..." (ROADMAP AU46): the settings of this PC's Mods\DynamicIslands\spawnpool.txt in a window, so nobody has to
 	/// edit the file by hand - how often random islands come, how far apart and ahead, when they unload and come back, the
-	/// Receiver's dots, the regrow days new worlds get, and the generated islands. Opened from World settings in the New
+	/// Receiver's dots, the regrow days new worlds get, and the generated islands (with their things to gather - ROADMAP LM9). Opened from World settings in the New
 	/// Game box and from Esc > Custom Islands (host). Each value is saved as soon as its field is left (or its button
 	/// pressed), kept within its range, through CustomIslandSpawner.SetPoolValues: the file is written whole, its comments
 	/// and island lines as they were. In a world the host's players get the settings they share at once (OnPoolChanged).
@@ -52,6 +52,9 @@ namespace DynamicIslands.Editor
 		{
 			new Setting("generated", "Weight of new generated islands", "Brand-new random islands join the pool with this weight (0 = never); each is saved as gen-<style>-<seed>.island"),
 			new Setting("generatedFlyingChance", "Chance one flies (0-1)", "The chance that a generated island is a flying one (0-1)"),
+			new Setting("generatedGather", "Things to gather (0-1)", "The generator's Things to gather on them: trees to cut, fruit, berries and flowers that suit the style (0 = none, 1 = much)"),
+			new Setting("generatedShallows", "Finds in the shallows (0-1)", "The generator's Finds in the shallows on them: sand, clay, stone, ores, scrap, clams and seaweed just off the shore (0 = none, 1 = much)"),
+			new Setting("generatedShallowsDepth", "... down to (m)", "How far out the finds in the shallows go: from 0.6 m under water down to this depth (2-20 m; 6 as the generator has it)"),
 		};
 
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
@@ -108,6 +111,16 @@ namespace DynamicIslands.Editor
 			{
 				string name = st.Name;
 				Add("Style_" + name, UIKit.Button(styles, name, () => FlipStyle(name), "Generated islands can be " + name + " (at least one style)", -1, 26f, 12));
+			}
+			// (which things to gather they get: lit = on - each style uses the ones it has)
+			string[] keys = GenGather.LandKeys.Concat(GenGather.SeaKeys).ToArray(), labels = GenGather.LandLabels.Concat(GenGather.SeaLabels).ToArray();
+			RectTransform kinds = null;
+			for (int i = 0; i < keys.Length; i++)
+			{
+				if (i % 5 == 0) kinds = UIKit.Row(gen, 24f, 3f, "GatherKinds");
+				string key = keys[i];
+				Add("Gather_" + key, UIKit.Button(kinds, labels[i], () => Write(new Dictionary<string, string> { { "generatedGatherOff", GenGather.Toggle(CustomIslandSpawner.GeneratedGatherOff, key) } }, null),
+					labels[i] + " on generated islands' Things to gather / Finds in the shallows: on (lit) or off", -1, 24f, 11));
 			}
 
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic, "Status");
@@ -193,6 +206,7 @@ namespace DynamicIslands.Editor
 				if (!float.IsNaN(v)) values[key] = CustomIslandSpawner.FormatValue(v);
 			}
 			values["generatedStyles"] = string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).ToArray());
+			values["generatedGatherOff"] = "";
 			Write(values, null);
 		}
 
@@ -225,6 +239,11 @@ namespace DynamicIslands.Editor
 			{
 				Button b;
 				if (buttons.TryGetValue("Style_" + st.Name, out b)) UIKit.SetActive(b, CustomIslandSpawner.GeneratedStyles.Select(TerrainPainter.StyleName).Contains(st.Name));
+			}
+			foreach (string key in GenGather.LandKeys.Concat(GenGather.SeaKeys))
+			{
+				Button b;
+				if (buttons.TryGetValue("Gather_" + key, out b)) UIKit.SetActive(b, GenGather.IsOn(CustomIslandSpawner.GeneratedGatherOff, key));
 			}
 		}
 

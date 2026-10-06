@@ -378,6 +378,21 @@ namespace DynamicIslands.Editor
 		internal static bool OddityDue { get { return oddityDue; } }
 		static float sinceOddityTry, sinceBossTry;
 
+		/// <summary>The randomizer's own islands (map types it brings while sailing).</summary>
+		public static readonly string[] OwnTypes = { "oddity", "lair", "large" };
+
+		/// <summary>
+		/// Things to gather on the randomizer's own islands (ROADMAP LM9): the generator's Things to gather and Finds in the
+		/// shallows set by its level - light a little, normal some, wild much - where the type's settings have none. Other
+		/// map types, and worlds without the randomizer, are left as they are.
+		/// </summary>
+		public static void GatherFor(IslandGenSettings s, string type, RandomizerSettings r)
+		{
+			if (s == null || r == null || !r.On || !OwnTypes.Contains(type ?? "", StringComparer.OrdinalIgnoreCase)) return;
+			if (s.Gather <= 0f) s.Gather = r.Pick(0.3f, 0.55f, 0.85f);
+			if (s.Shallows <= 0f) s.Shallows = r.Pick(0.3f, 0.5f, 0.8f);
+		}
+
 		static bool Bring(string type, ref float sinceTry, float metres, Vector3 raftPos)
 		{
 			sinceTry += metres;

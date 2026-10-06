@@ -10,6 +10,8 @@ namespace DynamicIslands.Editor
 	/// water, little or much): Gather spreads what suits the island's style on the land - trees to cut, fruit, berries,
 	/// flowers - and Shallows Raft's sea finds just off the shore (sand, clay, stone, iron and copper ore, scrap, giant
 	/// clams, seaweed), as the library's islands have them. Both 0 by default: islands made before are unchanged.
+	/// Which kinds come can be switched off one by one (GatherOff: kind keys, "" = all on, so older settings and recipes
+	/// are unchanged), and ShallowsDepth sets how far out the sea finds go (how deep: 6 m as before).
 	/// </summary>
 	public static class GenGather
 	{
@@ -37,6 +39,71 @@ namespace DynamicIslands.Editor
 		};
 		static KeyValuePair<string, int> W(string n, int w) { return new KeyValuePair<string, int>(n, w); }
 
+		/// <summary>The kinds the builder can switch off (GatherOff's keys), with what they are called: on the land, then in the shallows.</summary>
+		public static readonly string[] LandKeys = { "palm", "datepalm", "mango", "pineapple", "watermelon", "banana", "pine", "birch", "berry", "flower", "dirt", "hive" };
+		public static readonly string[] LandLabels = { "Palms", "Date palms", "Mangoes", "Pineapples", "Watermelons", "Bananas", "Pines", "Birches", "Berries", "Flowers", "Dirt", "Beehives" };
+		public static readonly string[] SeaKeys = { "sand", "clay", "stone", "iron", "copper", "scrap", "clam", "seaweed" };
+		public static readonly string[] SeaLabels = { "Sand", "Clay", "Stone", "Iron ore", "Copper ore", "Scrap", "Giant clams", "Seaweed" };
+
+		/// <summary>The kind key of one of the objects above ("" if none).</summary>
+		public static string KeyOf(string name)
+		{
+			if (name == ContentCatalog.WildHive) return "hive";
+			if (name.Contains("Palm 2") || name.Contains("Palm 4")) return "datepalm";
+			if (name.Contains("Palm")) return "palm";
+			if (name.Contains("Mango")) return "mango";
+			if (name.Contains("Pineapple")) return "pineapple";
+			if (name.Contains("Watermelon")) return "watermelon";
+			if (name.Contains("Banana")) return "banana";
+			if (name.Contains("Tree_Pine")) return "pine";
+			if (name.Contains("Birch")) return "birch";
+			if (name.Contains("BerryBush")) return "berry";
+			if (name.Contains("Flower")) return "flower";
+			if (name.Contains("DirtPickup")) return "dirt";
+			if (name.Contains("Sand")) return "sand";
+			if (name.Contains("Clay")) return "clay";
+			if (name.Contains("Rock")) return "stone";
+			if (name.Contains("Iron")) return "iron";
+			if (name.Contains("Copper")) return "copper";
+			if (name.Contains("Scrap")) return "scrap";
+			if (name.Contains("GiantClam")) return "clam";
+			if (name.Contains("SeaVine")) return "seaweed";
+			return "";
+		}
+
+		/// <summary>The land kinds a style has (in LandKeys' order): what its pick list offers.</summary>
+		public static List<string> LandKeysOf(int style)
+		{
+			KeyValuePair<string, bool>[] kinds;
+			var keys = Kinds.TryGetValue(style, out kinds) ? kinds.Select(k => KeyOf(k.Key)).ToList() : new List<string>();
+			if (HivesFor(style)) keys.Add("hive");
+			return LandKeys.Where(keys.Contains).ToList();
+		}
+
+		static bool HivesFor(int style) { return style != TerrainPainter.Snowy && style != TerrainPainter.Desert; }
+
+		/// <summary>Whether a kind is switched on in a GatherOff list (comma separated keys; "" = all on).</summary>
+		public static bool IsOn(string off, string key) { return !(off ?? "").Split(',').Any(k => k.Trim().Equals(key, StringComparison.OrdinalIgnoreCase)); }
+
+		/// <summary>The GatherOff list with a kind switched the other way (keys kept in LandKeys/SeaKeys order).</summary>
+		public static string Toggle(string off, string key)
+		{
+			var list = (off ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).Where(k => k.Length > 0).ToList();
+			if (list.Contains(key)) list.Remove(key); else list.Add(key);
+			return string.Join(",", LandKeys.Concat(SeaKeys).Where(list.Contains).ToArray());
+		}
+
+		/// <summary>A GatherOff list with only known keys, in order ("" = all on).</summary>
+		public static string Clean(string off)
+		{
+			var list = (off ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).ToList();
+			return string.Join(",", LandKeys.Concat(SeaKeys).Where(list.Contains).ToArray());
+		}
+
+		/// <summary>How deep the shallows' finds go (ShallowsDepth, m): from MinDepth (right at the shore) to MaxDepth (well out
+		/// on the shelf); DefaultDepth as before. They always lie at least 0.6 m down.</summary>
+		public const float MinDepth = 2f, MaxDepth = 20f, DefaultDepth = 6f;
+
 		/// <summary>At 1 (much): this many things to gather per 1000 m2 of land, sea finds per 1000 m2 of shallows.</summary>
 		public const float LandPer1000 = 10f, SeaPer1000 = 30f;
 		public const int MaxEach = 400;
@@ -62,20 +129,22 @@ namespace DynamicIslands.Editor
 				return true;
 			};
 			// The land and the shallows, counted on a 2 m grid
-			float landArea = 0f, shallowArea = 0f;
+			float landArea = 0f, shallowArea = 0f, deep = Mathf.Clamp(s.ShallowsDepth, MinDepth, MaxDepth);
 			for (float x = 0; x < f.TerrainSize.x; x += 2f)
 				for (float z = 0; z < f.TerrainSize.z; z += 2f)
 				{
 					float h = ground(x, z);
-					if (h > sea + 0.3f) landArea += 4f; else if (h < sea - 0.6f && h > sea - 6f) shallowArea += 4f;
+					if (h > sea + 0.3f) landArea += 4f; else if (h < sea - 0.6f && h > sea - deep) shallowArea += 4f;
 				}
 			var rnd = new System.Random(seed ^ 0x6a7e);
 			int land = 0, wet = 0;
-			KeyValuePair<string, bool>[] kinds;
-			if (s.Gather > 0f && Kinds.TryGetValue(s.Style, out kinds))
+			KeyValuePair<string, bool>[] all;
+			if (s.Gather > 0f && Kinds.TryGetValue(s.Style, out all))
 			{
+				// (only the kinds switched on; none on = no land things, maybe beehives)
+				KeyValuePair<string, bool>[] kinds = all.Where(k => IsOn(s.GatherOff, KeyOf(k.Key))).ToArray();
 				int want = Mathf.Min(MaxEach, Mathf.RoundToInt(landArea / 1000f * LandPer1000 * s.Gather));
-				for (int k = 0; k < want * 30 && land < want; k++)
+				for (int k = 0; kinds.Length > 0 && k < want * 30 && land < want; k++)
 				{
 					float x = (float)rnd.NextDouble() * f.TerrainSize.x, z = (float)rnd.NextDouble() * f.TerrainSize.z, h = ground(x, z);
 					if (h < sea + 0.4f) continue;
@@ -89,7 +158,7 @@ namespace DynamicIslands.Editor
 				}
 				// Wild beehives (honey: Raft has none wild - a container of honeycomb in Raft's beehive, refilling), where
 				// flowers grow: tropical, forest and volcanic islands, about one per 3000 m2 of land at the top, at most 3
-				int hives = s.Style == TerrainPainter.Snowy || s.Style == TerrainPainter.Desert ? 0 : Mathf.Min(3, Mathf.FloorToInt(landArea / 3000f * s.Gather));
+				int hives = !HivesFor(s.Style) || !IsOn(s.GatherOff, "hive") ? 0 : Mathf.Min(3, Mathf.FloorToInt(landArea / 3000f * s.Gather));
 				for (int k = 0, made = 0; k < 400 && made < hives; k++)
 				{
 					float x = (float)rnd.NextDouble() * f.TerrainSize.x, z = (float)rnd.NextDouble() * f.TerrainSize.z, h = ground(x, z);
@@ -100,18 +169,19 @@ namespace DynamicIslands.Editor
 					made++; land++;
 				}
 			}
-			if (s.Shallows > 0f)
+			KeyValuePair<string, int>[] finds = SeaFinds.Where(w => IsOn(s.GatherOff, KeyOf(w.Key))).ToArray();
+			if (s.Shallows > 0f && finds.Length > 0)
 			{
-				int total = SeaFinds.Sum(w => w.Value);
+				int total = finds.Sum(w => w.Value);
 				int want = Mathf.Min(MaxEach, Mathf.RoundToInt(shallowArea / 1000f * SeaPer1000 * s.Shallows));
 				for (int k = 0; k < want * 30 && wet < want; k++)
 				{
 					float x = (float)rnd.NextDouble() * f.TerrainSize.x, z = (float)rnd.NextDouble() * f.TerrainSize.z, h = ground(x, z);
-					if (h > sea - 0.6f || h < sea - 6f) continue;
+					if (h > sea - 0.6f || h < sea - deep) continue;
 					if (!free(x, z, 1.5f)) continue;
 					int pick = rnd.Next(total);
-					string name = SeaFinds[0].Key;
-					foreach (var w in SeaFinds) { if (pick < w.Value) { name = w.Key; break; } pick -= w.Value; }
+					string name = finds[0].Key;
+					foreach (var w in finds) { if (pick < w.Value) { name = w.Key; break; } pick -= w.Value; }
 					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					wet++;

@@ -71,6 +71,10 @@ namespace DynamicIslands.Editor
 		// Things to gather (GenGather, ROADMAP LM9), each 0..1 (0 = none, as before): Gather - what suits the style on the land
 		// (trees to cut, fruit, berries, flowers); Shallows - Raft's sea finds just off the shore (sand, clay, stone, ores, scrap, clams, seaweed)
 		public float Gather = 0f, Shallows = 0f;
+		/// <summary>Kinds of things to gather switched off (GenGather.LandKeys / SeaKeys, comma separated): "" = all on, as before.</summary>
+		public string GatherOff = "";
+		/// <summary>How deep the finds in the shallows go (m, GenGather.MinDepth-MaxDepth): further out the deeper; 6 as before.</summary>
+		public float ShallowsDepth = GenGather.DefaultDepth;
 
 		// Content: creature spots and loot boxes
 		public int Hostiles, Friendly, SeaLife;
@@ -130,6 +134,7 @@ namespace DynamicIslands.Editor
 			Shelf = Mathf.Clamp01(Shelf); Seabed = Mathf.Clamp(Seabed, 0, 2);
 			SeaFloor = Mathf.Clamp(SeaFloor, 0, 1); DropOff = Mathf.Clamp01(DropOff);
 			Clusters = Mathf.Clamp01(Clusters); Gather = Mathf.Clamp01(Gather); Shallows = Mathf.Clamp01(Shallows);
+			GatherOff = GenGather.Clean(GatherOff); ShallowsDepth = Mathf.Clamp(ShallowsDepth, GenGather.MinDepth, GenGather.MaxDepth);
 			Hostiles = Mathf.Clamp(Hostiles, 0, MaxCreatureSpots); Friendly = Mathf.Clamp(Friendly, 0, MaxCreatureSpots); SeaLife = Mathf.Clamp(SeaLife, 0, MaxCreatureSpots);
 			Loot = Mathf.Clamp(Loot, 0, MaxLoot);
 			LootMin = Mathf.Clamp(LootMin, 1, 5); LootMax = Mathf.Clamp(LootMax, LootMin, 5);
