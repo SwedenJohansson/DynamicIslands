@@ -517,6 +517,7 @@ namespace DynamicIslands.Editor
 			{
 				if (WorldRandomizer.IsExtras(e)) continue; // (on one of Raft's islands: its chunk point below keeps the room)
 				if (e == ignore) continue; // (the island moving there itself)
+				if (TestAllRound) continue; // (tests of join timing: room from the other test islands doesn't matter there)
 				float d = Flat(candidate - e.Position).magnitude;
 				if (d < Mathf.Max(spacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
 			}
