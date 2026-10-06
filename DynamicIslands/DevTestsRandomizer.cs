@@ -179,7 +179,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
-			int islandsBefore = IslandWorldState.Islands.Count;
+			int islandsBefore = IslandWorldState.Islands.Count, movedBefore = WorldRandomizer.MovedCount;
 			WorldRandomizer.ForgetSeen();
 			WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = 20260926 });
 			Log("Randomizer: " + WorldRandomizer.Current.Describe());
@@ -187,6 +187,7 @@ namespace DynamicIslands
 
 			// Raft's islands get handled (a second after they are seen)
 			yield return new WaitForSeconds(4f);
+			yield return WaitFor(() => WorldRandomizer.MovedCount > movedBefore, 20f); // (a slow PC: until some crates moved)
 			List<Landmark> spawned = WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned).ToList();
 			List<Landmark> nat = spawned.Where(WorldRandomizer.IsNatural).ToList();
 			Check(ref ok, nat.Count > 0, spawned.Count + " of Raft's islands spawned, " + nat.Count + " plain ones randomized: " + string.Join(", ", nat.Select(l => l.name).Take(8).ToArray()));
@@ -207,10 +208,12 @@ namespace DynamicIslands
 			Check(ref ok, findable, "Raft still finds every crate and clam by the place it knows (picking up, saving and the network use it)");
 			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(m.Key.GetComponentInParent<Landmark>(), m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
 			Check(ref ok, land, "crates on land stay on land, under-water ones under water");
+			int movedOnce = WorldRandomizer.MovedCount;
 			WorldRandomizer.Rehandle();
-			yield return new WaitForSeconds(3f);
+			yield return WaitFor(() => WorldRandomizer.MovedCount > movedOnce, 20f); // (handled again: its crates moved again)
+			yield return new WaitForSeconds(1f);
 			float drift = moved.Count == 0 ? 0f : moved.Max(m => (m.Key.transform.position - m.Value).magnitude);
-			Check(ref ok, drift < 0.05f, "handled again (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
+			Check(ref ok, (moved.Count == 0 || WorldRandomizer.MovedCount > movedOnce) && drift < 0.05f, "handled again (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
 
 			// Extras over Raft's islands
 			List<IslandWorldState.Entry> extras = IslandWorldState.Islands.Where(WorldRandomizer.IsExtras).ToList();
@@ -730,6 +733,7 @@ namespace DynamicIslands
 			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(x => x != null && x.behaviourType == type && x.ObjectIndex != 0 && x.networkEntity != null && !x.networkEntity.IsDead && !CreatureSpawner.IsOnCustomIsland(x))
 				.OrderBy(x => (x.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
 			if (a == null) { Fail("no live " + type + " in the world (CIRandomizerLarge keep brings warthogs)"); yield break; }
+			RandomizerSettings was = WorldRandomizer.Current;
 			var s = new RandomizerSettings { Level = RandomizerSettings.Wild };
 			int seed = 0;
 			for (int tryseed = 1; tryseed < 200000 && seed == 0; tryseed++)
@@ -739,9 +743,10 @@ namespace DynamicIslands
 				WorldRandomizer.Variant v = WorldRandomizer.VariantOf(type, a.ObjectIndex);
 				if (v != null && v.Alpha) seed = tryseed;
 			}
-			if (seed == 0) { Fail("no seed makes #" + a.ObjectIndex + " an alpha"); yield break; }
+			if (seed == 0) { WorldRandomizer.Current = was; Fail("no seed makes #" + a.ObjectIndex + " an alpha"); yield break; }
 			WorldRandomizer.Set(s); // (sent to every player: they work out the same alpha)
 			for (float t = 0; t < 10f && !(WorldRandomizer.VariantOfIndex.ContainsKey(a.ObjectIndex) && WorldRandomizer.VariantOfIndex[a.ObjectIndex] == "alpha"); t += 0.5f) yield return new WaitForSeconds(0.5f);
+			if (!(WorldRandomizer.VariantOfIndex.ContainsKey(a.ObjectIndex) && WorldRandomizer.VariantOfIndex[a.ObjectIndex] == "alpha")) { Fail("#" + a.ObjectIndex + " didn't become an alpha (seed " + seed + ")"); yield break; }
 			Log("ALPHA " + a.ObjectIndex + " " + type + " (seed " + seed + "), health " + a.networkEntity.stat_health.Value.ToString("F0") + "/" + a.networkEntity.stat_health.Max.ToString("F0") + ", size " + a.transform.localScale.x.ToString("F2"));
 			Log("PASS: alpha forced");
 		}
@@ -791,7 +796,7 @@ namespace DynamicIslands
 				if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
 				IslandWorldState.Entry e = SpawnTypeNear("large", CustomIslandSpawner.RaftPosition ?? Vector3.zero);
 				for (float t = 0; e != null && e.Root == null && !e.Failed && t < 120f; t += 1f) yield return new WaitForSeconds(1f);
-				if (e == null || e.Root == null) { Check(ref ok, false, mode + ": the large island didn't load"); GameModeValueManager.SelectCurrentGameMode(before); yield break; }
+				if (e == null || e.Root == null) { Check(ref ok, false, mode + ": the large island didn't load"); if (e != null) IslandWorldState.RemoveIds(new[] { e.Id }, true); GameModeValueManager.SelectCurrentGameMode(before); yield break; }
 				yield return new WaitForSeconds(15f);
 				float reach = CustomIslandSpawner.LandRadius(e.Name) + 60f;
 				var alive = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && a.networkEntity != null && !a.networkEntity.IsDead &&
@@ -835,6 +840,7 @@ namespace DynamicIslands
 			TriggerZone x = null;
 			LootCrate chest = null;
 			var tried = new List<string>();
+			var forced = new List<int>(); // (every island's forced extras: taken out after, the kept one aside)
 			foreach (Landmark candidate in near)
 			{
 				l = candidate;
@@ -851,6 +857,7 @@ namespace DynamicIslands
 				for (float t = 0; t < 30f && mine() == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
 				RandomizerContent.ForceFind = null;
 				e = mine();
+				if (e != null) forced.Add(e.Id);
 				for (float t = 0; e != null && e.Root == null && !e.Failed && t < 60f; t += 1f) yield return new WaitForSeconds(1f);
 				if (e == null || e.Root == null) { tried.Add(l.name + ": the extras didn't load"); continue; }
 				Log("Treasure extras: '" + e.Name + "'");
@@ -862,26 +869,27 @@ namespace DynamicIslands
 				tried.Add(l.name + ": no room for a treasure hunt (a stash instead)");
 			}
 			if (tried.Count > 0) Log("  (islands tried first: " + string.Join("; ", tried.ToArray()) + ")");
-			if (e == null || e.Root == null) { Fail("the extras didn't load: " + string.Join("; ", tried.ToArray())); WorldRandomizer.Set(before); yield break; }
+			if (e == null || e.Root == null) { IslandWorldState.RemoveIds(forced, true); Fail("the extras didn't load: " + string.Join("; ", tried.ToArray())); WorldRandomizer.Set(before); yield break; }
 			Check(ref ok, q.Exists && q.Steps.Count == 3 && map != null && x != null && chest != null, "'" + l.name + "' has a treasure hunt: quest '" + q.ShownTitle + "' (" + q.Steps.Count + " steps), the map in a bottle " + (map != null) + ", the X " + (x != null) + ", the buried chest " + (chest != null));
-			if (map == null || x == null || chest == null) { WorldRandomizer.Set(before); yield break; }
+			if (map == null || x == null || chest == null) { IslandWorldState.RemoveIds(forced, true); WorldRandomizer.Set(before); yield break; }
 			// Played as a player would: the map, the X, the chest
 			PutPlayerNear(map.transform);
 			NoteReader.Open(map); NoteReader.Close();
-			yield return new WaitForSeconds(1f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 1, 10f);
 			int s1 = QuestTracker.StepOf(e);
 			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
-			yield return new WaitForSeconds(2f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 2, 10f);
 			int s2 = QuestTracker.StepOf(e);
 			PutPlayerNear(chest.transform);
 			List<string> got = chest.Open(); NoteReader.Close();
-			yield return new WaitForSeconds(1f);
+			yield return WaitFor(() => QuestTracker.StepOf(e) >= 3, 10f);
 			int s3 = QuestTracker.StepOf(e);
 			Check(ref ok, s1 == 1 && s2 == 2 && s3 == 3, "the quest moves on: the map read " + s1 + ", the X reached " + s2 + ", the chest opened " + s3 + " (1, 2, 3 = done)");
 			Check(ref ok, got.Count > 0 && x.HasFired && chest.Looted, "the treasure: " + string.Join(", ", got.ToArray()));
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
-			if (!keep) { IslandWorldState.RemoveIds(new[] { e.Id }, true); WorldRandomizer.Set(before); }
+			IslandWorldState.RemoveIds(forced.Where(id => keep ? id != e.Id : true).ToList(), true);
+			if (!keep) WorldRandomizer.Set(before);
 			if (ok) Log("PASS: treasure hunt"); else Fail("treasure hunt");
 		}
 		[ConsoleCommand(name: "CIRandomizerPending", docs: "Dev, main menu: the randomizer settings the next new world gets (as if chosen in the New Game box): CIRandomizerPending <off|light|normal|wild> [-part ...]")]
@@ -1203,7 +1211,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = SpawnTypeNear("large", raft);
 			if (e == null) { Fail("no free spot for a large island near the raft (sail on)"); yield break; }
 			for (float t = 0; t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
-			if (e.Root == null) { Fail("the large island didn't load"); yield break; }
+			if (e.Root == null) { IslandWorldState.RemoveIds(new[] { e.Id }, true); Fail("the large island didn't load"); yield break; }
 			GameObject root = e.Root;
 			var tag = root.GetComponent<IslandInfoTag>();
 			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
@@ -1423,18 +1431,21 @@ namespace DynamicIslands
 			foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
 			{
 				RandomizerContent.ForceBigFinds = true;
+				// (this roll's extras by their name: not another island's, nor the arrival's own - and ForceBigFinds held until they are made)
+				string forcedName = WorldRandomizer.ExtrasPrefix + WorldRandomizer.Current.Seed + "-" + (WorldRandomizer.SpawnKey(big) ^ (uint)salt);
 				try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(big, salt)); }
 				finally { }
 				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Name == forcedName), 30f);
 				RandomizerContent.ForceBigFinds = false;
-				e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
+				e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x) && x.Name == forcedName);
 				for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
 				if (e == null || e.Root == null) continue;
 				caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
 				Log("  (no den with roll " + salt + ": another)");
 			}
-			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			if (e == null || e.Root == null) { if (!keep) { IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n).Select(x => x.Id).ToList(), true); WorldRandomizer.Set(before); } Fail("the extras didn't load"); yield break; }
 			Log("Den extras: '" + e.Name + "'");
 			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
 			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();

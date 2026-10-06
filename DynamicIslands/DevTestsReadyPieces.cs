@@ -47,13 +47,14 @@ namespace DynamicIslands
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
 			yield return DynamicIslands.instance.SpawnIslandFile(ReadyIsland, spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == ReadyIsland);
-			if (e == null || e.Root == null) { Fail(ReadyIsland + " did not spawn"); yield break; }
+			if (e == null || e.Root == null) { IslandWorldState.Remove(ReadyIsland); Fail(ReadyIsland + " did not spawn"); yield break; }
 			yield return new WaitForSeconds(1f);
 			int missing = e.Root.GetComponentsInChildren<Transform>(true).Count(t => t.name.Contains(IslandSpawner.MissingTag));
 			Check(ref ok, missing == 0, "the pieces spawn (" + missing + " missing)");
 
 			// The keycard door
 			string card = StoryItems.Ref(ReadyPieces.ItemOf("PlantationDoor"));
+			int hadCards = StoryBook.Count(card); // (the crew's own keycards: given back after)
 			StoryBook.Take(card, 99);
 			IslandObjectRef door = ScObjOf(e, "door");
 			Check(ref ok, door != null, "the keycard door is on the island");
@@ -64,20 +65,22 @@ namespace DynamicIslands
 				Check(ref ok, door.gameObject.activeInHierarchy, "without the keycard it stays shut");
 				StoryBook.Give(card, 1);
 				ScUse(e, "door");
-				yield return new WaitForSeconds(0.8f);
+				yield return WaitFor(() => !door.gameObject.activeInHierarchy, 10f);
 				Check(ref ok, !door.gameObject.activeInHierarchy, "with Raft's Tangaroa keycard (" + card + ") it opens");
 				Check(ref ok, StoryBook.Count(card) == 1, "the crew keeps the keycard for the next door (" + StoryBook.Count(card) + ")");
 			}
 			IslandObjectRef hatch = ScObjOf(e, "hatch");
-			if (hatch != null) { ScUse(e, "hatch"); yield return new WaitForSeconds(0.6f); }
+			if (hatch != null) { ScUse(e, "hatch"); yield return WaitFor(() => !hatch.gameObject.activeInHierarchy, 10f); }
 			Check(ref ok, hatch != null && !hatch.gameObject.activeInHierarchy, "the hatch opens when used");
 			foreach (string sig in new[] { "crank", "lever" })
 			{
 				ScUse(e, sig);
-				yield return new WaitForSeconds(0.5f);
+				yield return WaitFor(() => e.State.ContainsKey(Behaviours.SignalKey(sig)), 10f);
 				Check(ref ok, e.State.ContainsKey(Behaviours.SignalKey(sig)), "the " + sig + " sends the signal '" + sig + "'");
 			}
 			StoryBook.Take(card, 99);
+			if (hadCards > 0) StoryBook.Give(card, hadCards);
+			IslandWorldState.Remove(ReadyIsland);
 			if (ok) Log("PASS: ready pieces"); else Fail("ready pieces");
 		}
 
@@ -338,7 +341,7 @@ namespace DynamicIslands
 			WorldRules.SetRegrow(before == 7 ? 8 : 7);
 			int set = WorldRules.RegrowDays;
 			bool inFile = System.IO.File.Exists(IslandWorldState.WorldFilePath) && System.IO.File.ReadAllLines(IslandWorldState.WorldFilePath).Contains("@regrow=" + set);
-			Check(ref ok, set != CustomIslandSpawner.RegrowDays || set == 7 || set == 8, "the world has its own regrow days: " + set + " (this PC's spawnpool.txt: " + CustomIslandSpawner.RegrowDays + ")");
+			Check(ref ok, set == (before == 7 ? 8 : 7), "the world has its own regrow days: " + set + " (this PC's spawnpool.txt: " + CustomIslandSpawner.RegrowDays + ")");
 			Check(ref ok, inFile, "kept in the world's file (@regrow=" + set + ") (AU20)");
 			WorldRules.SetRegrow(before);
 			// Two of the host's islands with the same content: the download is saved for both names

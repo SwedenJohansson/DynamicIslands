@@ -136,6 +136,10 @@ namespace DynamicIslands
 			RuntimeGizmos.TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
 			gizmo.ClearTargets(false);
 			gizmo.AddTarget(van.transform, false);
+			// (the editor's own settings this test changes: put back after)
+			bool alignWas = PlacementOptions.AlignToSlope;
+			terraineditor.TerrainModificationAction actionWas = terraineditor.modificationAction;
+			float radiusWas = terraineditor.brushRadius, strengthWas = terraineditor.strength;
 			PlacementOptions.AlignToSlope = false;
 			PlacementOptions.DropSelectionToGround();
 			gizmo.ClearTargets(false);
@@ -158,7 +162,9 @@ namespace DynamicIslands
 			CommandUndoRedo.UndoRedoManager.Undo();
 			yield return null;
 			Check(ref ok, lowered < before - 1f && Mathf.Abs(van.transform.position.y - before) < 0.01f, "lowering the ground under it took the van down " + (before - lowered).ToString("F2") + " m with it; Ctrl+Z put the ground and the van back (" + (van.transform.position.y - before).ToString("F3") + ")");
-			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
+			terraineditor.modificationAction = actionWas;
+			terraineditor.brushRadius = radiusWas; terraineditor.strength = strengthWas;
+			PlacementOptions.AlignToSlope = alignWas;
 			UnityEngine.Object.Destroy(van);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
