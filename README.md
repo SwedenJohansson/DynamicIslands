@@ -160,6 +160,8 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `deleted\` | Islands deleted in the editor, and generated islands Tidy up cleared (moved here, not erased) |
 | `worlds\removed\` | The files of worlds deleted in Raft, moved here by Tidy up |
 | `editor_light.txt` | The editor's time of day (the Light button) |
+| `editor_skysea.txt` | The editor's view: Raft's own sky and sea (`on`) or the editor's own sky and blue sea plane |
+| `maptypes\<name>.maptype` | Your own map types as text (land, height, content lines; a help header explains them); `ExportMapType` writes a built-in one to start from |
 
 ## The editor
 
@@ -528,6 +530,9 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `DeleteGroup <name>` | Editor | Deletes a saved object group (or: Manage... beside Save as group - rename or delete groups and stamps) |
 | `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one. Warns if it would overlap one of Raft's own islands (players can fall through the ground there). |
 | `RegrowDays [days]` | World | This world's days until things come back (kept with the world; host changes it; 0 = never) |
+| `ExportMapType <type> [file name]` | Anywhere | Writes a built-in map type as a `.maptype` file in `maptypes\` (never over an existing one) |
+| `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again |
+| `ReRollMapType <type> [seed]` | Editor | Puts a map type's content on the island being edited (not its land) - one Ctrl+Z takes it off |
 | `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | Editor | The island's style (ground textures; saved with it) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
@@ -665,6 +670,11 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `WorldWindow.cs` | Esc → Custom Islands in a running world: the button in Raft's pause menu (a postfix on `PauseMenu.Start`) and the world's settings window (host changes, others read only; Back to the editor while testing) |
 | `IslandTest.cs` | The editor's Test: save, the test world "Custom Islands test" (loaded, or made the first time), the island beside the raft, Back to the editor without saving |
 | `EditorLighting.cs` | The editor's Light button: five times of day (sun, ambient, haze), kept in `editor_light.txt` |
+| `RaftSkySea.cs` | The editor's "Raft's sky and sea": the main menu's AzureSky, ocean and camera kept into the editor, the Light list setting the sky's hour, removed when leaving |
+| `MapTypeFiles.cs` | Map types as `.maptype` text files: parse, write, export, re-roll onto the open island |
+| `TerrainBrushes.cs` | The brush edge, the Noise and Erode brushes, the sea floor switch and the mixed second style |
+| `RaftColliderGuard.cs` | Gives the raft Raft's grounding colliders back when Raft didn't set them up (R16) |
+| `DefaultsWindow.cs` | The Defaults... window: the `spawnpool.txt` values in a window |
 | `PatchHealth.cs` | The mod's Harmony patches applied one class at a time (Harmony's PatchAll stops at the first failure); a failed one is logged and named on the main menu in players' words |
 | `IslandSettingsUndo.cs` | The island's own settings (Island tab texts, regrow, levels, style, height, quest, events, story items, rules) as undo steps - so they count as unsaved changes for the autosave and leaving |
 | `LibraryOnline.cs`, `LibraryWindow.cs` | The island library online: its list (index.json from the address in library.txt), pictures (cached), downloads with every file's size and SHA-256 checked (from the commit the list was built from), installing through LibraryPack; the ISLAND LIBRARY window (plans and islands, search, pictures, Download / Update / Installed / Remove) |
