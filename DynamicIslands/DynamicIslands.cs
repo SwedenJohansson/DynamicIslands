@@ -602,7 +602,6 @@ namespace DynamicIslands
 		public const string UnnamedIsland = "myisland";
 		public static bool IsUnnamed { get { return string.IsNullOrEmpty(currentIslandName) || currentIslandName.Equals(UnnamedIsland, StringComparison.OrdinalIgnoreCase); } }
 
-		/// <summary>Editor: starts an empty island (flat seabed, no objects, tropical, at sea level).</summary>
 		/// <summary>
 		/// The editor's own build area (1000 x 600 x 1000 m, 513 heights) again: an island opened before - a small one, or at
 		/// a lower resolution - left its own size, and New or Generate then worked in that. True when it was changed.
@@ -617,6 +616,7 @@ namespace DynamicIslands
 			return true;
 		}
 
+		/// <summary>Editor: starts an empty island (flat seabed, no objects, tropical, at sea level).</summary>
 		public static void NewIsland()
 		{
 			if (!InEditor()) return;

@@ -836,11 +836,11 @@ namespace DynamicIslands.Editor
 		/// <summary>The placeable objects of a scene as the object list sees them (top-most things that render a mesh; no pickups).</summary>
 		internal static IEnumerable<KeyValuePair<string, Transform>> PlaceablesOf(Scene scene) { return PickAll(scene); }
 
-		/// <summary>Raft's harvestable things: trees, rocks, ores, clay, sand, scrap, fruit bushes ("Pickup_Landmark_...").</summary>
 		/// <summary>Raft's story pieces that keep their own scripts, so they work for the player (the user, 2026-10-05: Raft's
 		/// quest items put to work on custom islands): the machete's vines and the zipline tool's lines.</summary>
 		internal static readonly Regex Working = new Regex(@"^(ChoppableVines|ZiplinePath|ZiplinePath_Landmark)$");
 
+		/// <summary>Raft's harvestable things: trees, rocks, ores, clay, sand, scrap, fruit bushes ("Pickup_Landmark_...").</summary>
 		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
 
 		/// <summary>Every thing to gather the catalog takes with its gameplay: Raft's harvestables, also the ones added for

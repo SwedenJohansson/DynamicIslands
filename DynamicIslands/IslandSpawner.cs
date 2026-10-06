@@ -235,10 +235,6 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Instantiates the island's objects under parent. Positions in the file are relative to the terrain origin,
-		/// so parent should sit at the terrain origin. Returns the number of objects that could not be found.
-		/// </summary>
-		/// <summary>
 		/// A foundation of Raft's in a world: the deck a player walks on. On the player's raft Raft adds one for each foundation
 		/// (its raft collider, 0.22 m above the block); a copy on a custom island has only the block's own collider, which
 		/// players fall through - so a ghost raft or a wreck had no floor. This is the same deck, solid like the island's land.
@@ -260,6 +256,10 @@ namespace DynamicIslands.Editor
 		/// file order, the same on every machine).</summary>
 		class Counts { public int missing, creature, loot, zone, treasure; }
 
+		/// <summary>
+		/// Instantiates the island's objects under parent. Positions in the file are relative to the terrain origin,
+		/// so parent should sit at the terrain origin. Returns the number of objects that could not be found.
+		/// </summary>
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
 			var c = new Counts();

@@ -477,10 +477,6 @@ namespace DynamicIslands.Editor
 			return why != null && why.StartsWith("Raft's") ? why : null;
 		}
 
-		/// <summary>
-		/// Why an island of this land radius can't go at candidate, or null if it can. minSpacing: centre-to-centre
-		/// distance kept from other custom islands (-1 = the minSpacing setting; 0 = just clear of their land).
-		/// </summary>
 		/// <summary>A generated island turned out bigger than estimated: moved out from the raft until nothing is in its way.</summary>
 		static void MakeRoom(IslandWorldState.Entry entry, float radius)
 		{
@@ -523,6 +519,10 @@ namespace DynamicIslands.Editor
 		}
 		static float raftRadius, raftRadiusAt;
 
+		/// <summary>
+		/// Why an island of this land radius can't go at candidate, or null if it can. minSpacing: centre-to-centre
+		/// distance kept from other custom islands (-1 = the minSpacing setting; 0 = just clear of their land).
+		/// </summary>
 		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f, IslandWorldState.Entry ignore = null)
 		{
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft (it reaches " + RaftRadius.ToString("F0") + " m)";

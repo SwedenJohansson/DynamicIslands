@@ -127,7 +127,6 @@ namespace DynamicIslands.Editor
 			f.SetAsLastSibling();
 		}
 
-		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
 		/// <summary>The plan's own description, its story and each of its rules in words (ROADMAP T6).</summary>
 		internal static string PlanText(WorldPlan p)
 		{
@@ -147,6 +146,7 @@ namespace DynamicIslands.Editor
 			InfoWindow.Open("Plan: " + name, PlanText(p), new InfoWindow.Choice("Close", null));
 		}
 
+		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
 		internal static List<DropList.Option> PlanOptions()
 		{
 			return WorldPlan.All().Select(n => WorldPlan.Load(n)).Where(p => p != null).Select(p => new DropList.Option(p.Name, p.Name, Describe(p))).ToList();

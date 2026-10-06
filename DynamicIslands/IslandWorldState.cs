@@ -110,14 +110,14 @@ namespace DynamicIslands.Editor
 			if (loadedFor != WorldKey) { islands.Clear(); loadedFor = WorldKey; }
 		}
 
+		/// <summary>Every world shift added up (this session): a spawn without a world entry follows the ones made while it loaded.</summary>
+		public static Vector3 ShiftedBy { get; private set; }
+
 		/// <summary>
 		/// Raft keeps the raft near the origin: when it drifts more than a chunk away, the host shifts the whole
 		/// world back (everything does position -= shift, clients get the same shift). Custom islands must follow,
 		/// on every machine, and the saved positions follow too so they stay in Raft's coordinate frame.
 		/// </summary>
-		/// <summary>Every world shift added up (this session): a spawn without a world entry follows the ones made while it loaded.</summary>
-		public static Vector3 ShiftedBy { get; private set; }
-
 		public static void OnWorldShift(Vector3 shift)
 		{
 			ShiftedBy += shift;

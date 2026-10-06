@@ -889,7 +889,6 @@ namespace DynamicIslands.Editor
 		/// <summary>Islands a rule couldn't bring because their file isn't on this PC (told once per island).</summary>
 		static readonly HashSet<string> missingNoted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		/// <summary>Host: a rule's island is missing on this PC - say so on the screen once, and where to get it.</summary>
 		/// <summary>The rule's island isn't on this PC (a rule waiting for it, the story chain): the host is told once.</summary>
 		internal static void NoteMissingIf(string why, IntroRule r, IslandWorldState.Entry owner)
 		{
@@ -910,6 +909,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether Bring's answer means the island's file isn't on this PC.</summary>
 		internal static bool IsMissing(string why) { return why != null && (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix)); }
 
+		/// <summary>Host: a rule's island is missing on this PC - say so on the screen once, and where to get it.</summary>
 		static void NoteMissing(IntroRule r, IslandWorldState.Entry owner)
 		{
 			string name = r.What == "island" ? r.WhatArg.Trim() : r.WhatArg;

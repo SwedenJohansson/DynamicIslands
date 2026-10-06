@@ -284,7 +284,6 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) SendToClients(msg);
 		}
 
-		/// <summary>The level up system: the host to one player (to set) or everyone; a player to the host.</summary>
 		/// <summary>The world file's copy: the host to one player (who joined) or everyone.</summary>
 		public static void SendWorldCopy(IslandNetMessage msg, Network_UserId? to)
 		{
@@ -300,6 +299,7 @@ namespace DynamicIslands.Editor
 			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(msg);
 		}
 
+		/// <summary>The level up system: the host to one player (to set) or everyone; a player to the host.</summary>
 		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
 		{
 			msg.Kind = IslandNetMessage.Levels;

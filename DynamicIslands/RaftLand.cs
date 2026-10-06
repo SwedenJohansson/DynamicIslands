@@ -101,11 +101,6 @@ namespace DynamicIslands.Editor
 			return s ?? new LandStyle { Name = TerrainPainter.StyleName(style) };
 		}
 
-		/// <summary>
-		/// Raft's small islands of a style, or its big ones: a small island of Raft's is far thicker with things (five times
-		/// the bushes, three times the trees for its land) and everything on it stands nearer the shore and lower down. All of
-		/// the style's islands where Raft has too few of that size to go by.
-		/// </summary>
 		/// <summary>Whether Raft has small islands of the style to go by (only its tropical ones and Caravan's islets).</summary>
 		public static bool HasSmall(int style)
 		{
@@ -114,6 +109,11 @@ namespace DynamicIslands.Editor
 			return s != null && s.Things.Sum(t => t.Count) >= MinPooled;
 		}
 
+		/// <summary>
+		/// Raft's small islands of a style, or its big ones: a small island of Raft's is far thicker with things (five times
+		/// the bushes, three times the trees for its land) and everything on it stands nearer the shore and lower down. All of
+		/// the style's islands where Raft has too few of that size to go by.
+		/// </summary>
 		public static LandStyle For(int style, bool small)
 		{
 			if (styles == null) Load();

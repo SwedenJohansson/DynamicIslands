@@ -1351,7 +1351,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>A category's slider in the settings.</summary>
 		/// <summary>A land slider's value: its own, or (at -1) its kind's Like Raft for the style, as thick again as ObjectDensity
 		/// says (0.5 = as on Raft's islands, 1 = twice as thick, 0 = none).</summary>
 		static float LandAmount(IslandGenSettings s, float own, string cat)
@@ -1360,6 +1359,7 @@ namespace DynamicIslands.Editor
 			return s.ObjectDensity <= 0.001f ? 0f : Mathf.Clamp01(LikeRaftAmount(s.Style, cat) * Mathf.Sqrt(2f * s.ObjectDensity));
 		}
 
+		/// <summary>A category's slider in the settings.</summary>
 		public static float AmountOf(IslandGenSettings s, string cat)
 		{
 			switch (cat)

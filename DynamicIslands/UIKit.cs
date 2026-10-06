@@ -815,10 +815,10 @@ namespace DynamicIslands.Editor
 			return b;
 		}
 
-		/// <summary>The help text shown now (null when no popup is open): the tests check that popups close.</summary>
 		/// <summary>Tests: the popup itself (where it is on the screen).</summary>
 		public static RectTransform HelpPopup { get { return helpPopup; } }
 
+		/// <summary>The help text shown now (null when no popup is open): the tests check that popups close.</summary>
 		public static string ShownHelp { get { return helpPopup != null && helpPopup.gameObject.activeSelf ? helpText.text : null; } }
 
 		public class HelpMark : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler

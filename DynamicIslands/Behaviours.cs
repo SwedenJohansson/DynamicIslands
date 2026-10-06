@@ -1082,7 +1082,6 @@ namespace DynamicIslands.Editor
 		static readonly HashSet<int> arrived = new HashSet<int>();
 		static float nextTick;
 
-		/// <summary>Every frame from the mod: players arriving at islands with "on.arrive" actions (each machine its own player).</summary>
 		/// <summary>This machine's player's deaths (this session): what comes after a wait is for the player who was there.</summary>
 		static int deaths;
 		static bool wasDead;
@@ -1097,6 +1096,7 @@ namespace DynamicIslands.Editor
 			wasDead = dead;
 		}
 
+		/// <summary>Every frame from the mod: players arriving at islands with "on.arrive" actions (each machine its own player).</summary>
 		public static void Tick()
 		{
 			try { if (LoadSceneManager.IsGameSceneLoaded) WatchDeath(); } catch { }

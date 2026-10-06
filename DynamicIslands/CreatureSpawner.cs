@@ -544,11 +544,6 @@ namespace DynamicIslands.Editor
 
 		#region NavMesh
 
-		/// <summary>
-		/// Builds a NavMesh per kind of agent from the island's colliders (terrain and objects), in the background.
-		/// Raft's object meshes can't be read at runtime, so those colliders count as their bounding boxes. The data
-		/// is registered through a NavMeshSurface on the island, which moves it along with Raft's world shifts.
-		/// </summary>
 		/// <summary>Raft's object meshes can't be read at runtime: those colliders count as their bounding boxes.</summary>
 		static void UnreadableAsBoxes(List<NavMeshBuildSource> sources)
 		{
@@ -613,6 +608,11 @@ namespace DynamicIslands.Editor
 			return null;
 		}
 
+		/// <summary>
+		/// Builds a NavMesh per kind of agent from the island's colliders (terrain and objects), in the background.
+		/// Raft's object meshes can't be read at runtime, so those colliders count as their bounding boxes. The data
+		/// is registered through a NavMeshSurface on the island, which moves it along with Raft's world shifts.
+		/// </summary>
 		static IEnumerator BuildNavMesh(GameObject root, IEnumerable<int> agentTypes, Landmark ground = null)
 		{
 			// The island was made this frame: let physics catch up with where its colliders were moved to

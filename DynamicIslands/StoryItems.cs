@@ -415,10 +415,6 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
-	/// The crew's journal in a world (J): the story items with their pictures, and the pages found (custom notes
-	/// read, "journal" actions). In the look of Raft's menus, with the page on paper.
-	/// </summary>
-	/// <summary>
 	/// The world's custom quests, for the journal's count (the user, 2026-10-02: "35/100% completed quests"; 2026-10-03:
 	/// "it should count all quest islands, not the original Raft quests" - the journal is the custom islands' book):
 	/// - the plan's islands in the story (done as the story counts them: their quest, by default) and the saved islands its
@@ -752,6 +748,10 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	/// <summary>
+	/// The crew's journal in a world (J): the story items with their pictures, and the pages found (custom notes
+	/// read, "journal" actions). In the look of Raft's menus, with the page on paper.
+	/// </summary>
 	public class JournalWindow : MonoBehaviour
 	{
 		static JournalWindow instance;

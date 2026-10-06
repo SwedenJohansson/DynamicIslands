@@ -659,7 +659,6 @@ namespace DynamicIslands.Editor
 			if (due.Count > 0) yield return "@storydue=" + string.Join(",", due.Select(kv => kv.Key + ":" + kv.Value.ToString("F0", CultureInfo.InvariantCulture)).ToArray());
 		}
 
-		/// <summary>After the world file was read (host): the notebook and the frequencies follow it.</summary>
 		/// <summary>Host: the chain's islands that aren't on this PC are said at once (it was said only when someone tuned to one).</summary>
 		static void NoteMissingIslands()
 		{
@@ -668,6 +667,7 @@ namespace DynamicIslands.Editor
 				try { WorldDirector.NoteIfMissing(r); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
 		}
 
+		/// <summary>After the world file was read (host): the notebook and the frequencies follow it.</summary>
 		internal static void OnWorldRead()
 		{
 			if (HasSnapshot) { AssignFrequencies(); Rebuild(); }

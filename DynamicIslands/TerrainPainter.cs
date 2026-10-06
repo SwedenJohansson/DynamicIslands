@@ -446,7 +446,6 @@ namespace DynamicIslands.Editor
 			data.SetAlphamaps(area.x, area.y, maps);
 		}
 
-		/// <summary>Automatic layer weights for one alphamap pixel.</summary>
 		/// <summary>
 		/// Where sand gives way to grass (m above the sea: from - to) on an island with this much land (m²), as on Raft's:
 		/// its small islands are green nearly down to the water (bushes at half a metre stand on grass), its big ones have
@@ -481,6 +480,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The terrain has another island now: its grass line is measured again when it's next needed.</summary>
 		public static void ForgetGrassLine(Terrain terrain) { if (terrain != null) grassLines.Remove(terrain.terrainData); }
 
+		/// <summary>Automatic layer weights for one alphamap pixel.</summary>
 		public static void AutoWeights(Terrain terrain, float waterLevelWorldY, int px, int pz, float[] result)
 		{
 			TerrainData data = terrain.terrainData;

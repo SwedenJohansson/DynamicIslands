@@ -83,12 +83,12 @@ namespace DynamicIslands.Editor
 
 		#region The world file
 
-		/// <summary>Before a world's island list is read (host) or when joining one (client: the host's come).</summary>
 		/// <summary>An option was on at some point in this world: its seed stays in the world file even with every option off
 		/// (the file was deleted then, and an option switched on again got another seed - another story order, other
 		/// blueprint pairs). A world that never had one writes no file for it.</summary>
 		static bool used;
 
+		/// <summary>Before a world's island list is read (host) or when joining one (client: the host's come).</summary>
 		internal static void Reset()
 		{
 			Current.Clear();
