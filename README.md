@@ -9,6 +9,8 @@ By FranzFischer78 (code) and MegaMatrixs (design). Version 3 was rebuilt for Raf
 > The main menu shows this in a box (**Got it** folds it until the next version). Found a problem? See
 > [Reporting a problem](#reporting-a-problem).
 
+**What changed:** see the [changelog](CHANGELOG.md) for every version 3.0 update since v1.1.1.
+
 **New here? Start with the [illustrated guide](docs/GUIDE.md)** (also as a [PDF](docs/Custom-Islands-Guide.pdf) to download or print): installing, starting a world, what you meet while
 sailing, building your own islands in the editor and giving them quests and stories, world plans that make your own adventure (with a step-by-step first plan), playing together, and at the end
 the optional world systems (world rules, randomizer, extra options, the level up system), step by step with 69 pictures. It starts with a quick start table and the words it uses.
