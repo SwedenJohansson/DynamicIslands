@@ -435,7 +435,8 @@ namespace DynamicIslands.Editor
 				SetStatus(scan.Describe() + " Click again to clear it.", false);
 				return;
 			}
-			Housekeeping.Scan found = tidyPending;
+			// (looked at again: a world saved or an island used since the first click keeps its files)
+			Housekeeping.Scan found = Housekeeping.Look().Within(tidyPending);
 			tidyPending = null;
 			SetStatus(Housekeeping.TidyUp(found) + " (Island copies and generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
 			ShowInstalled();

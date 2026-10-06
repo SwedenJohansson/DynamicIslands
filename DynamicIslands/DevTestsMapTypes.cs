@@ -14,7 +14,7 @@ namespace DynamicIslands
 	/// <summary>ROADMAP T7: map types as data (.maptype files) - export, read back, roll, content lines, bad files, re-roll.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIMapTypeFiles", docs: "Dev, editor: ROADMAP T7 - every built-in map type written as a .maptype text and read back has the same key settings and rolls the same islands (3 seeds); ExportMapType boss -> citest-mt-boss.maptype makes the same island as the built-in boss; a file of content lines (chest, note, creature, zone, atmosphere, quest) rolls an island with them; bad files (a bad number, an unknown key, a bad spot, a bad name, a built-in's name) are left out, never crash; ReRollMapType puts content on the open island as one undo step. The test files are deleted again")]
+		[ConsoleCommand(name: "CIMapTypeFiles", docs: "Dev, editor: ROADMAP T7 - every built-in map type written as a .maptype text and read back has the same key settings and rolls the same islands (3 seeds); ExportMapType boss -> citest-mt-boss.maptype makes the same island as the built-in boss; a file of content lines (chest, note, creature, zone, atmosphere, quest) rolls an island with them; bad files (a bad number, a bad spot, a bad name, a built-in's name) are left out, never crash, and a file with an unknown key is read with that line kept and warned about; ReRollMapType puts content on the open island as one undo step. The test files are deleted again")]
 		public static void MapTypeFilesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MapTypeFilesRoutine()); }
 
 		const string MtRules =
@@ -123,7 +123,7 @@ step = open | CI cache | 1 |
 					Check(ref ok, back != null && back.Rules.SequenceEqual(rules.Rules) && back.Sets.SequenceEqual(rules.Sets) && back.Ranges.Differs(rules.Ranges) == "", "written again, it reads back the same (" + (again ?? "ok") + ")");
 				}
 
-				// 4. Bad files: left out with a line in the log, never a crash, the others still read
+				// 4. Bad files: left out with a line in the log, never a crash, the others still read (an unknown key: read, the line warned about)
 				write("citest-mt-bad1", "radius = big\r\n");
 				write("citest-mt-bad2", "colour = blue\r\n");
 				write("citest-mt-bad3", "chest = Loot_Chest | nowhere | x | Basics\r\n");
@@ -134,9 +134,11 @@ step = open | CI cache | 1 |
 				int read = -1;
 				try { read = MapTypeFiles.LoadAll(); } catch (Exception e) { Check(ref ok, false, "reading bad files throws: " + e.Message); }
 				Func<string, bool> skipped = n => MapTypeFiles.Skipped.Any(x => x.StartsWith(n + ":"));
-				Check(ref ok, read >= 2 && skipped("citest-mt-bad1") && skipped("citest-mt-bad2") && skipped("citest-mt-bad3") && skipped("citest mt bad4") && (!clashMade || skipped("Sandbar")),
+				Check(ref ok, read >= 2 && skipped("citest-mt-bad1") && !skipped("citest-mt-bad2") && skipped("citest-mt-bad3") && skipped("citest mt bad4") && (!clashMade || skipped("Sandbar")),
 					"bad files left out: " + string.Join("; ", MapTypeFiles.Skipped.ToArray()));
-				Check(ref ok, MapTypes.Get("citest-mt-bad1") == null && MapTypes.Get("citest-mt-bad2") == null && MapTypes.Get("citest-mt-rules") != null && MapTypes.Get("citest-mt-boss") != null && MapTypes.Get("sandbar").FromFile == null && MapTypes.Get("sandbar").Label == "Sandbar",
+				Check(ref ok, MapTypes.Get("citest-mt-bad2") != null && MapTypes.Get("citest-mt-bad2").Rules.Contains("colour = blue") && MapTypeFiles.Unknown.Any(x => x.StartsWith("citest-mt-bad2:")),
+					"a file with an unknown key is read, the line kept and warned about: " + string.Join("; ", MapTypeFiles.Unknown.ToArray()));
+				Check(ref ok, MapTypes.Get("citest-mt-bad1") == null && MapTypes.Get("citest-mt-rules") != null && MapTypes.Get("citest-mt-boss") != null && MapTypes.Get("sandbar").FromFile == null && MapTypes.Get("sandbar").Label == "Sandbar",
 					"the good files are still read, and the built-in sandbar is the built-in one");
 
 				// 5. ReRollMapType: the content on the open island as one undo step, the land as it was

@@ -117,8 +117,13 @@ namespace DynamicIslands.Editor
 					// (the island open in the editor: its settings in memory too, or its next save would bring the old name back)
 					if (other.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase) || (other.Equals(to, StringComparison.OrdinalIgnoreCase) && from.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase)))
 					{
+						// (as an undo step in the editor, like any change to its rules: Ctrl+Z takes it back, and it counts as unsaved)
 						List<IntroRule> open = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps);
-						if (RenameIn(open, from, to)) WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, open);
+						if (RenameIn(open, from, to))
+						{
+							if (DynamicIslands.InEditor()) IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, open));
+							else WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, open);
+						}
 					}
 					if (!other.Equals(to, StringComparison.OrdinalIgnoreCase)) islands.Add(other);
 				}

@@ -192,7 +192,9 @@ namespace DynamicIslands.Editor
 			return to;
 		}
 
-		/// <summary>Every ".tmp" under a folder (and its folders): brought back or removed. Once when the mod starts.</summary>
+		/// <summary>Every ".tmp" under a folder (and its folders): brought back or removed. Once when the mod starts. A
+		/// "X.renaming" (a change of case only stopped between its two moves - PiecesFiles.Move, IslandRename) gets its name
+		/// back too, when no X is there.</summary>
 		public static int RecoverAll(string folder)
 		{
 			int n = 0;
@@ -201,6 +203,14 @@ namespace DynamicIslands.Editor
 				if (!Directory.Exists(folder)) return 0;
 				foreach (string tmp in Directory.GetFiles(folder, "*.tmp", SearchOption.AllDirectories))
 					if (Recover(tmp.Substring(0, tmp.Length - 4))) n++;
+				foreach (string renaming in Directory.GetFiles(folder, "*.renaming", SearchOption.AllDirectories))
+				{
+					string path = renaming.Substring(0, renaming.Length - ".renaming".Length);
+					if (File.Exists(path)) continue;
+					File.Move(renaming, path);
+					UnityEngine.Debug.LogWarning("[CUSTOM ISLANDS] A rename stopped half way: " + path + " got its name back");
+					n++;
+				}
 			}
 			catch (Exception e) { UnityEngine.Debug.LogWarning("[CUSTOM ISLANDS] Looking for unfinished saves: " + e.Message); }
 			return n;

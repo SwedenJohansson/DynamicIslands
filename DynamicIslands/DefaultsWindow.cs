@@ -139,7 +139,7 @@ namespace DynamicIslands.Editor
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(status.gameObject, -1, 30);
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K too (the island list stays as it is)", 150, 34f, 14);
+			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K too (the island list stays as it is) - click twice", 150, 34f, 14);
 			UIKit.Label(buttonsRow, "", 12);
 			Button close = UIKit.Button(buttonsRow, "Close", Close, "Close (Esc)", 140, 34f, 15);
 			UIKit.Primary(close);
@@ -166,6 +166,7 @@ namespace DynamicIslands.Editor
 		{
 			if (canvas == null) Build();
 			canvas.gameObject.SetActive(true);
+			modsOwnUntil = 0f;
 			CustomIslandSpawner.LoadPool(false); // (the file as it is now, if it was changed by hand)
 			SetStatus("Each value is saved as soon as its field is left.", false);
 			Refresh();
@@ -239,9 +240,19 @@ namespace DynamicIslands.Editor
 			Write(new Dictionary<string, string> { { "generatedStyles", string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).Where(on.Contains).ToArray()) } }, null);
 		}
 
-		/// <summary>Every setting back to the mod's own (the numbers and styles a new spawnpool.txt has).</summary>
+		static float modsOwnUntil;
+
+		/// <summary>Every setting back to the mod's own (the numbers and styles a new spawnpool.txt has). Asks first: the
+		/// first click says what it does, a second within a few seconds does it.</summary>
 		public static void ModsOwn()
 		{
+			if (Time.unscaledTime > modsOwnUntil)
+			{
+				modsOwnUntil = Time.unscaledTime + 6f;
+				SetStatus("Every setting here (the keys J and K too) goes back to the mod's own. Click Mod's own again to go ahead.", true);
+				return;
+			}
+			modsOwnUntil = 0f;
 			var values = new Dictionary<string, string>();
 			foreach (string key in CustomIslandSpawner.NumberKeys)
 			{

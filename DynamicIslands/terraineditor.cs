@@ -130,7 +130,7 @@ namespace DynamicIslands
 			bool overTerrain = canSculpt && TerrainUnderMouse(out point);
 			BrushCursor.Update(terrain, overTerrain, overTerrain ? point : Vector3.zero);
 			if (overTerrain) LastPoint = point;
-			if (modificationAction == TerrainModificationAction.Stamp && canSculpt && !EditorInput.IsTyping)
+			if (modificationAction == TerrainModificationAction.Stamp && canSculpt && !EditorInput.IsTyping && !EditorCamera.Looking) // (Q/E fly the camera then)
 			{
 				if (Input.GetKeyDown(KeyCode.Q)) TerrainStamps.Rotation -= 15f;
 				if (Input.GetKeyDown(KeyCode.E)) TerrainStamps.Rotation += 15f;

@@ -479,12 +479,26 @@ namespace DynamicIslands.Editor
 			float radius = terraineditor.brushRadius;
 			TextPromptWindow.Open("Save stamp", "The land in the brush circle (" + (radius * 2f).ToString("F0") + " m across, at the last place the brush was) becomes a stamp to put down anywhere.", "my stamp", name =>
 			{
+				if (TerrainStamps.Exists(name) && !ReplaceAgain("stamp", name)) return;
 				TerrainStamps.Save(TerrainStamps.Capture(terraineditor.terrain, at, radius, name));
 				TerrainStamps.Load();
 				RefreshStamps();
 				SetStamp(TerrainStamps.All.FindIndex(s => s.Name == name && !s.BuiltIn));
 				DynamicIslands.Notify("Saved stamp '" + name + "': click the ground to put it down");
 			});
+		}
+
+		static string replaceArmed;
+		static float replaceUntil;
+
+		/// <summary>Saving under a name in use (a stamp, a group): replaces only when saved under it again - two steps, like Delete.</summary>
+		static bool ReplaceAgain(string what, string name)
+		{
+			string key = what + ":" + name.ToLowerInvariant();
+			if (replaceArmed == key && Time.unscaledTime <= replaceUntil) { replaceArmed = null; return true; }
+			replaceArmed = key; replaceUntil = Time.unscaledTime + 10f;
+			DynamicIslands.Notify("There is a " + what + " '" + name + "' already: save under that name again to replace it", true);
+			return false;
 		}
 
 		/// <summary>Select all (Ctrl+A, ROADMAP E3).</summary>
@@ -519,6 +533,7 @@ namespace DynamicIslands.Editor
 				"my group", name =>
 				{
 					bool exists = GroupLibrary.Saved().Contains(name, StringComparer.OrdinalIgnoreCase);
+					if (exists && !ReplaceAgain("group", name)) return;
 					int n = GroupLibrary.Save(name, sel);
 					DynamicIslands.instance.StartCoroutine(GroupLibrary.Register(name));
 					DynamicIslands.Notify((exists ? "Replaced" : "Saved") + " group '" + name + "' (" + n + " objects): find it under \"My groups\"");

@@ -454,6 +454,15 @@ namespace DynamicIslands.Editor
 
 		#region Reading a pack
 
+		/// <summary>What zip tools add on their own (macOS's __MACOSX folder and ._ files, .DS_Store, Windows' Thumbs.db and
+		/// desktop.ini): passed by, so a pack repacked by one still reads.</summary>
+		static bool IsZipJunk(string[] parts)
+		{
+			string name = parts[parts.Length - 1];
+			return parts.Any(p => p.Equals("__MACOSX", StringComparison.OrdinalIgnoreCase)) || name.StartsWith("._")
+				|| name.Equals(".DS_Store", StringComparison.OrdinalIgnoreCase) || name.Equals("Thumbs.db", StringComparison.OrdinalIgnoreCase) || name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
+		}
+
 		/// <summary>
 		/// Reads and checks a pack: at most 64 files and 50 MB unpacked (counted while unpacking, whatever the zip claims),
 		/// plain file names only (one folder at most, no "..", nothing that could land outside the mod's folder), known kinds
@@ -477,6 +486,7 @@ namespace DynamicIslands.Editor
 						if (e.IsDirectory) continue;
 						string full = (e.Name ?? "").Replace('\\', '/');
 						string[] parts = full.Split('/');
+						if (IsZipJunk(parts)) continue;
 						if (parts.Length > 2 || parts.Any(p => p == ".." || p == ".")) { error = "It holds a file in a place it may not ('" + full + "')."; return null; }
 						string top = parts.Length == 2 ? parts[0] : "";
 						if (folder == null) folder = top;

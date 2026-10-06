@@ -64,6 +64,7 @@ namespace DynamicIslands.Editor
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.picked = instance.pendingDelete = instance.pendingGive = null;
+			instance.pendingTidy = null;
 			instance.ShowGive();
 			instance.nameField.text = "";
 			instance.search.text = "";
@@ -129,7 +130,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "Rename", OnRename, "Give the picked island the name typed above", -1, 32, 14);
 			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island (asks first, says who uses it; moved to Mods\\DynamicIslands\\deleted)", -1, 32, 14);
 			UIKit.DangerButton(del);
-			UIKit.Button(buttons, "Tidy up", OnTidy, "Move copies from hosts no saved world uses and generated islands nothing uses to the deleted folder", -1, 32, 14).name = "Button_TidyUp";
+			UIKit.Button(buttons, "Tidy up", OnTidy, "Move copies from hosts no saved world uses and generated islands nothing uses to the deleted folder (click twice)", -1, 32, 14).name = "Button_TidyUp";
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 32, 14);
 		}
 
@@ -195,25 +196,33 @@ namespace DynamicIslands.Editor
 			wf.characterLimit = 5;
 			wf.interactable = src != Hosts;
 			if (!listedInPool && wf.textComponent != null) wf.textComponent.color = UIKit.TextMuted;
-			wf.onEndEdit.AddListener(v => SetWeight(name, v));
+			wf.onEndEdit.AddListener(v => SetWeight(name, v, wf));
 		}
 
-		void SetWeight(string name, string text)
+		/// <summary>A row's weight typed: written to spawnpool.txt and the field updated in place (the list isn't built
+		/// again - that destroyed the button the click that left the field was on, and the click was lost).</summary>
+		void SetWeight(string name, string text, InputField wf)
 		{
 			float w;
-			if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out w) || w < 0f) { SetStatus("The weight is a number: 1 = like any island, 2 = twice as likely, 0 = never by chance.", true); Refresh(); return; }
 			bool listedInPool;
+			if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out w) || w < 0f)
+			{
+				SetStatus("The weight is a number: 1 = like any island, 2 = twice as likely, 0 = never by chance.", true);
+				wf.text = CustomIslandSpawner.PoolWeight(name, out listedInPool).ToString("0.##", CultureInfo.InvariantCulture);
+				return;
+			}
 			if (Mathf.Approximately(CustomIslandSpawner.PoolWeight(name, out listedInPool), w) && listedInPool) return;
 			try { CustomIslandSpawner.SetPoolWeight(name, w); }
 			catch (Exception e) { SetStatus("Could not change spawnpool.txt: " + e.Message, true); return; }
 			SetStatus("'" + name + "' now has weight " + w.ToString("0.##", CultureInfo.InvariantCulture) + " in the random pool" + (w == 0f ? " (it never comes by chance)" : "") + ".", false);
-			Refresh();
+			if (wf.textComponent != null) wf.textComponent.color = UIKit.TextColor;
 		}
 
 		void OnPick(string n)
 		{
 			picked = n;
 			pendingDelete = pendingGive = null;
+			pendingTidy = null;
 			nameField.text = n;
 			ShowGive();
 			HashSet<string> by;
@@ -244,8 +253,10 @@ namespace DynamicIslands.Editor
 				string from = picked;
 				List<string> also = IslandRename.Rename(from, to);
 				picked = to;
+				pendingGive = null;
 				Look();
 				Refresh();
+				ShowGive();
 				SetStatus("Renamed '" + from + "' to '" + to + "'." + (also.Count > 0 ? " Changed too: " + string.Join("; ", also.ToArray()) + "." : ""), false);
 				DynamicIslands.Notify("Renamed '" + from + "' to '" + to + "'");
 			}
@@ -270,10 +281,11 @@ namespace DynamicIslands.Editor
 			try
 			{
 				IslandFilesWindow.MoveToDeleted(n);
-				picked = pendingDelete = null;
+				picked = pendingDelete = pendingGive = null;
 				nameField.text = "";
 				IslandCache.Forget();
 				Refresh();
+				ShowGive();
 				SetStatus("Deleted '" + n + "' (kept in " + IslandFilesWindow.DeletedFolderName + ").", false);
 				DynamicIslands.Notify("Deleted island '" + n + "' (kept in " + IslandFilesWindow.DeletedFolderName + " until you remove it there)");
 			}
@@ -315,13 +327,26 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { SetStatus(SafeFile.InUse(e) ? "A world file is in use by another program - close it there and try again." : "Could not change them: " + e.Message, true); }
 		}
 
+		Housekeeping.Scan pendingTidy;
+
+		/// <summary>Tidy up asks first: the first press looks and says what it would clear, the second looks again and clears
+		/// what was shown and is still unused.</summary>
 		void OnTidy()
 		{
 			Housekeeping.Scan scan = Housekeeping.Look();
-			if (scan.UnusedCopies + scan.UnusedGenerated.Count == 0) { SetStatus("Nothing to tidy up: every copy from a host and every generated island is used.", false); return; }
+			if (pendingTidy == null)
+			{
+				if (scan.UnusedCopies + scan.UnusedGenerated.Count == 0) { SetStatus("Nothing to tidy up: every copy from a host and every generated island is used.", false); return; }
+				pendingTidy = scan;
+				SetStatus(scan.Describe() + " Press Tidy up again to clear it.", true);
+				return;
+			}
+			scan = scan.Within(pendingTidy);
+			pendingTidy = null;
 			string text = Housekeeping.TidyUp(scan);
 			Look();
 			Refresh();
+			ShowGive();
 			SetStatus(text, false);
 		}
 
