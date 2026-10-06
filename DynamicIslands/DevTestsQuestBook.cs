@@ -174,7 +174,7 @@ namespace DynamicIslands
 			Check(ref ok, p2.StoryEnding == p.StoryEnding && p2.Rules[0].ToLine() == p.Rules[0].ToLine(), "... written and read again the same");
 			WorldPlan plain = WorldPlan.Parse("t", "rule = camp | type:camp | start | ahead:350 | | \n");
 			Check(ref ok, plain.StoryEnding == "" && !plain.ToText().Split('\n').Any(l => l.StartsWith("storyending")), "an older plan has no ending page and writes none");
-			if (ok) Log("PASS: quest book unit");
+			if (ok) Log("PASS: quest book unit"); else Fail("quest book unit");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookWorld", docs: "Dev, world (host, test world 'CI ...'): the main story in Raft's notebook - a plan with two main story islands (a camp first, a sandbar on the Receiver after it) and a side quest on the Receiver: the first tab with its intro, Raft's islands at the back with their tabs hidden, a note read on its pages, the side quest only in the journal, the next tab with its #digits when the first is done, its tab pressed, the ending page when the story is over, the same book after the world file is read back, nothing of ours in Raft's save (TEST_CATALOGUE QB3, QB8-QB14, QB17)")]
@@ -213,7 +213,7 @@ namespace DynamicIslands
 
 				// A note read on it: on its pages, not in the journal
 				string noteKey = a != null ? "note:" + a.HostName + ":5" : "note:x:5";
-				pageKeys.Add(noteKey);
+				if (!StoryBook.Pages.Any(x => x.Key == noteKey)) pageKeys.Add(noteKey);
 				StoryBook.AddPage(noteKey, "Diary", "Dear diary, the camp is cold.", "Alpha");
 				yield return new WaitForSeconds(1f);
 				QuestBook.Refresh();
@@ -222,7 +222,7 @@ namespace DynamicIslands
 				Check(ref ok, notePage != null && QuestBook.IsMainPage(notePage), "... and is kept out of the journal");
 				// A page an event writes on it ("journal page" action): its notebook pages too
 				string actKey = a != null ? "act:" + a.HostName + ":3:Painted sign" : "act:x:3:Painted sign";
-				pageKeys.Add(actKey);
+				if (!StoryBook.Pages.Any(x => x.Key == actKey)) pageKeys.Add(actKey);
 				StoryBook.AddPage(actKey, "Painted sign", "KEEP OUT - the camp is closed.", "Alpha");
 				yield return new WaitForSeconds(1f);
 				QuestBook.Refresh();
@@ -251,7 +251,7 @@ namespace DynamicIslands
 				if (ui != null && !ui.isDisplayed) ui.SetBookActive(true);
 				yield return new WaitForSeconds(0.5f);
 				QuestBook.PressTab("Bar");
-				yield return new WaitForSeconds(0.5f);
+				yield return WaitFor(() => ui == null || (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() == QuestBook.PageOfTab("Bar"), 5f);
 				uint at = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
 				Check(ref ok, at == QuestBook.PageOfTab("Bar"), "its tab pressed: the book at page " + at + " (its first page " + QuestBook.PageOfTab("Bar") + ")");
 				Shot("questbook_world");
@@ -280,6 +280,8 @@ namespace DynamicIslands
 			{
 				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => e.Rule == "a" || e.Rule == "b" || e.Rule == "c").ToList()) made.Add(e.Id);
 				if (made.Count > 0) IslandWorldState.RemoveIds(made.Distinct().ToList(), true);
+				// (the pages this test wrote, not left in the world's journal)
+				foreach (string k in pageKeys) { StoryBook.Page pg = StoryBook.Pages.FirstOrDefault(x => x.Key == k); if (pg != null) StoryBook.Pages.Remove(pg); }
 				StoryChain.Reset();
 				foreach (string l in linesBefore) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
 				NoteBook.unlockedNoteBookIndexes.Clear(); NoteBook.unlockedNoteBookIndexes.AddRange(indexesBefore);
@@ -289,7 +291,7 @@ namespace DynamicIslands
 				IslandWorldState.Save();
 				QuestBook.Refresh();
 			}
-			if (ok) Log("PASS: quest book world");
+			if (ok) Log("PASS: quest book world"); else Fail("quest book world");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookPreview", docs: "Dev, editor: World Plans' Preview notebook as a builder uses it - a plan (CIQuestBookPreview <plan>, default 'Raft 2 - The Drowned Frontier') opened, a change made and not saved, Preview notebook: the test world with Raft's book open on the plan's tabs; the step-through from the start (no tabs) one moment at a time, All; pictures; Back to World Plans with the unsaved change still there (TEST_CATALOGUE QB7). Several minutes")]
@@ -359,7 +361,7 @@ namespace DynamicIslands
 			Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Plan.Description == marker, "back in World Plans on the plan, the unsaved change still there");
 			Check(ref ok, !QuestBookPreview.Active, "the preview is over");
 			WorldPlanWindow.Close();
-			if (ok) Log("PASS: quest book preview");
+			if (ok) Log("PASS: quest book preview"); else Fail("quest book preview");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookEditor", docs: "Dev, editor: the quest book in World Plans - New main story... makes the cards (Raft's story off: the first island ahead, the others on the Receiver each after the one before; on: after the Raft island chosen), the NOTEBOOK row on a main story card, Check's notebook warnings (a next-coordinates note that isn't there, colour 3, a long tab title, an island without notes); nothing saved (TEST_CATALOGUE QB4-QB6)")]
@@ -447,7 +449,7 @@ namespace DynamicIslands
 				}
 			}
 			catch (Exception e) { Log("  (the test plan couldn't be moved: " + e.Message + ")"); }
-			if (ok) Log("PASS: quest book editor");
+			if (ok) Log("PASS: quest book editor"); else Fail("quest book editor");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookTabs", docs: "Dev, world (host, test world 'CI ...'): Raft's story on with Balboa left out and a plan island after Vasagatan - its tab between Vasagatan's and Caravan Town's, Balboa's tab hidden; then 14 main story islands open: the tabs scroll, every tab in the strip (TEST_CATALOGUE QB3, QB15, QB16)")]
@@ -498,7 +500,7 @@ namespace DynamicIslands
 				Shot("questbook_tabs_scroll");
 				yield return new WaitForSeconds(0.6f);
 				QuestBook.PressTab("Isle 14");
-				yield return new WaitForSeconds(0.3f);
+				yield return WaitFor(() => ui == null || (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() == QuestBook.PageOfTab("Isle 14"), 5f);
 				uint at = ui != null ? (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>() : 999;
 				Check(ref ok, at == QuestBook.PageOfTab("Isle 14"), "the last tab pressed: its page (" + at + ")");
 				if (ui != null) ui.SetBookActive(false);
@@ -515,7 +517,7 @@ namespace DynamicIslands
 				IslandWorldState.Save();
 				QuestBook.Refresh();
 			}
-			if (ok) Log("PASS: quest book tabs");
+			if (ok) Log("PASS: quest book tabs"); else Fail("quest book tabs");
 		}
 
 		const string MpPlan = "story = off\nstoryending = The end test.\\nThank you.\n" +

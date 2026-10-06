@@ -79,364 +79,371 @@ namespace DynamicIslands
 			var made = new List<IslandWorldState.Entry>();
 			playEntry = null;
 			int checks = 0;
-			foreach (RLine rl in lines)
+			try
 			{
-				string line = rl.Text.Trim();
-				string[] t = Tokens(line);
-				string verb = t[0].ToLowerInvariant();
-				var opt = Options(t.Skip(1));
-				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
-				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
-				// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
-				if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
-				KeepAlive(me);
-				switch (verb)
+				foreach (RLine rl in lines)
 				{
-					case "island":
+					string line = rl.Text.Trim();
+					string[] t = Tokens(line);
+					string verb = t[0].ToLowerInvariant();
+					var opt = Options(t.Skip(1));
+					bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+					if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
+					// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
+					if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
+					KeepAlive(me);
+					switch (verb)
 					{
-						string island = Rest(line, 1).Replace(" keep", "").Trim();
-						keep = line.EndsWith(" keep");
-						playOffset = Vector2.zero;
-						// (a plan's test: the copy the plan brought - tuned to - is the one played)
-						IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule)) : null;
-						Vector3 offIsland = planned != null ? me.transform.position - planned.Position : Vector3.zero;
-						offIsland.y = 0f;
-						if (planned != null && (planned.Root == null || offIsland.magnitude > 300f))
+						case "island":
 						{
-							// (it came where the plan brings it, ahead of the raft - out of reach of a player still on the last island:
-							// it isn't loaded, or unloads a moment later. The player goes there, as a player sails there, and it loads)
-							Vector3 toward = me.transform.position - planned.Position;
-							toward.y = 0f;
-							Vector3 near = planned.Position + (toward.sqrMagnitude > 1f ? toward.normalized : Vector3.back) * 150f;
-							near.y = 0.5f;
-							PlayerMove.To(me, near);
-							for (float w = 0f; w < 40f && planned.Root == null; w += 0.5f) yield return new WaitForSeconds(0.5f);
-							Log("  went to the plan's '" + island + "' (" + (planned.Root != null ? "loaded" : "still not loaded") + ")");
-						}
-						if (planned != null && planned.Root != null) playEntry = planned;
-						else if (planned != null) { Fail("play " + name + ": the plan's '" + island + "' didn't load when the player came"); yield break; }
-						else
-						{
-							// (a copy left by an earlier run that stopped half way: removed first)
-							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
-							if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
-							Vector3? spot = ScSpot(island, 400f);
-							if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
-							yield return ScBring(island, spot.Value, made);
-							playEntry = made.LastOrDefault();
-							if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
-						}
-						yield return new WaitForSeconds(3f);
-						// (a clean start: the crew holds none of the island's story items - an earlier run in this world left them)
-						foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
-							if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));
-						// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
-						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
-						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
-						break;
-					}
-					case "stand":
-						yield return StandRoutine(playEntry.Root);
-						break;
-					case "at":
-					{
-						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
-						// (on what is there: the player's middle a metre above it - put lower, the player started inside bare
-						// ground and fell through it into the sea, and the island's pictures showed the water's wobble)
-						p.y = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : PlaySurface(p) + 1.1f + (opt.ContainsKey("y") ? F(opt["y"]) : 0f);
-						PlayerMove.To(me, p);
-						yield return new WaitForSeconds(1f);
-						break;
-					}
-					case "walk":
-					{
-						// walk x z to x z ...: from the first point, with Raft's controller at walking speed; stuck = failed
-						// (h=: the walk ends about this high above the sea - on the deck, not fallen off it)
-						var points = new List<Vector3>();
-						var wopt = Options(t.Where(x => x.Contains("=")));
-						string[] coords = t.Where(x => !x.Contains("=")).ToArray();
-						bool blocked = coords.Contains("blocked");
-						coords = coords.Where(x => x != "blocked").ToArray();
-						for (int i = 1; i + 1 < coords.Length; i += 3) points.Add(PlayPoint(F(coords[i]), F(coords[i + 1])));
-						Vector3 start = points[0];
-						// (a little above what is there: the player lands on it, not half inside a thick plank)
-						// (below=: what is there under that height - a deck under a crane's jib)
-						start.y = PlaySurface(start, wopt.ContainsKey("below") ? playEntry.Position.y + F(wopt["below"]) : 400f) + 1.1f;
-						PlayerMove.To(me, start);
-						yield return new WaitForSeconds(1f);
-						bool got = true;
-						string where = "";
-						yield return PlayWalk(me, points.Skip(1).ToList(), (g, w) => { got = g; where = w; });
-						if (got && wopt.ContainsKey("h") && Mathf.Abs(me.transform.position.y - playEntry.Position.y - F(wopt["h"])) > 1.6f) { got = false; where += " - not at " + wopt["h"] + " m"; }
-						// ("blocked": the way must be shut - a locked gate, a wall)
-						if (blocked) Check(ref ok, !got, "the way " + line.Substring(5) + " is blocked: " + where);
-						else Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
-						checks++;
-						break;
-					}
-					case "climb":
-					{
-						// the ladder nearest the point (its own climb collider): the player in it, a metre above its foot - Raft's
-						// controller takes hold of the ladder
-						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
-						Collider grip = playEntry.Root.GetComponentsInChildren<Collider>(true).Where(c => c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0)
-							.OrderBy(c => ScFlat(c.bounds.center, p)).FirstOrDefault();
-						if (grip == null || ScFlat(grip.bounds.center, p) > 3f) { Check(ref ok, false, "a ladder near " + t[1] + "," + t[2] + (grip != null ? " (the nearest is " + ScFlat(grip.bounds.center, p).ToString("F1") + " m off: " + grip.transform.parent?.name + "/" + grip.name + " at " + (grip.bounds.center - playEntry.Position).ToString("F1") + ")" : "")); checks++; break; }
-						float foot = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : grip.bounds.min.y;
-						p = new Vector3(grip.bounds.center.x, Mathf.Max(foot, grip.bounds.min.y) + 1f, grip.bounds.center.z);
-						PlayerMove.To(me, p);
-						yield return new WaitForSeconds(0.3f);
-						bool held = false;
-						for (float s = 0f; s < 3f && !held; s += Time.deltaTime)
-						{
-							held = Climbing(me);
-							yield return null;
-						}
-						Check(ref ok, held, "a ladder at " + F(t[1]) + "," + F(t[2]) + " takes hold of the player" + (held ? "" : " (Raft's controller isn't climbing)"));
-						checks++;
-						PlayerMove.To(me, p + Vector3.up * 0.1f);
-						break;
-					}
-					case "zone":
-						Check(ref ok, ScEnterZone(playEntry, Rest(line, 1).Trim()), "zone '" + Rest(line, 1).Trim() + "' there");
-						yield return new WaitForSeconds(1.2f);
-						break;
-					case "air":
-					{
-						// air <zone id>: a diver in the air pocket breathes - put there with little breath left, it is full again a
-						// moment later (only a shown zone: one still hidden isn't found)
-						string zid = Rest(line, 1).Trim();
-						TriggerZone pocket = playEntry.Root.GetComponentsInChildren<TriggerZone>(false).FirstOrDefault(x => x.Id == zid && x.Air);
-						Check(ref ok, pocket != null, "an air pocket '" + zid + "' there");
-						if (pocket == null) break;
-						PlayerMove.To(me, pocket.transform.position);
-						yield return new WaitForSeconds(0.5f);
-						me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max * 0.1f;
-						yield return new WaitForSeconds(1.2f);
-						float breath = me.Stats.stat_oxygen.Value / Mathf.Max(0.01f, me.Stats.stat_oxygen.Max);
-						Check(ref ok, breath > 0.9f, "breathing in the air pocket '" + zid + "': breath back to " + (breath * 100f).ToString("F0") + " %");
-						break;
-					}
-					case "read":
-					{
-						// (a note, or the note in a chest - read once the chest is emptied, as its hint says)
-						string title = Rest(line, 1).Trim();
-						CustomNote inChest = playEntry.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(c => c.GetComponent<LootCrate>() != null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
-						bool plain = playEntry.Root.GetComponentsInChildren<CustomNote>(true).Any(c => c.GetComponent<LootCrate>() == null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
-						if (!plain && inChest != null) { PutPlayerNear(inChest.transform); NoteReader.Open(inChest); NoteReader.Close(); }
-						else ScReadNote(playEntry, title);
-						Check(ref ok, plain || inChest != null, "a note '" + title + "' to read");
-						yield return new WaitForSeconds(1.2f);
-						break;
-					}
-					case "open":
-						Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
-						yield return new WaitForSeconds(1.2f);
-						break;
-					case "reach":
-					{
-						string why = ScReach(playEntry, Rest(line, 1).Trim());
-						Check(ref ok, why == null, "chest '" + Rest(line, 1).Trim() + "' within reach of the player's eye" + (why != null ? " - " + why : ""));
-						break;
-					}
-					case "openat":
-					{
-						Vector3 p = PlayPoint(F(t[1]), F(t[2]));
-						LootCrate chest = playEntry.Root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => ScFlat(c.transform.position, p)).FirstOrDefault();
-						Check(ref ok, chest != null && ScFlat(chest.transform.position, p) < 4f, "a chest at " + t[1] + "," + t[2] + (chest != null ? " (" + ScFlat(chest.transform.position, p).ToString("F1") + " m off)" : ""));
-						if (chest != null) { PutPlayerNear(chest.transform); chest.LastGiven = new List<string>(); chest.Open(); }
-						checks++;
-						yield return new WaitForSeconds(1.2f);
-						break;
-					}
-					case "use":
-					{
-						// (use <name> stay: used from where the player is - standing on a lift, it carries them)
-						string what = Rest(line, 1).Trim();
-						bool stay = what.EndsWith(" stay");
-						if (stay) what = what.Substring(0, what.Length - 5).Trim();
-						IslandObjectRef used = ScObjOf(playEntry, what);
-						Check(ref ok, used != null, "object '" + what + "' there");
-						if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); }
-						else ScUse(playEntry, what);
-						yield return new WaitForSeconds(1.2f);
-						break;
-					}
-					case "kill":
-					{
-						string label = Rest(line, 1).Trim();
-						yield return ScWaitAnimals(playEntry, label, 1, 15f);
-						List<AI_NetworkBehaviour> animals = ScAnimals(playEntry, label);
-						Check(ref ok, animals.Count > 0, "animals '" + label + "' to defeat (" + animals.Count + ")");
-						foreach (AI_NetworkBehaviour a in animals) { PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); }
-						yield return new WaitForSeconds(2f);
-						break;
-					}
-					case "catch":
-					{
-						// catch <label> [n]: animals caught as Raft's net does it (captured, carried off)
-						string label = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? string.Join(" ", t.Skip(1).Take(t.Length - 2).ToArray()) : Rest(line, 1).Trim();
-						int want = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? (int)F(t[t.Length - 1]) : 1;
-						yield return ScWaitAnimals(playEntry, label, want, 15f);
-						// (only the island's own: animals caught in an earlier run stay in the world, without a spawn spot)
-						var animals = ScAnimals(playEntry, label).OfType<AI_NetworkBehaviour_Domestic>()
-							.Where(an => an.connectedSpawner != null && an.connectedSpawner.transform.IsChildOf(playEntry.Root.transform)).Take(want).ToList();
-						Check(ref ok, animals.Count >= want, "animals '" + label + "' to catch (" + animals.Count + " of " + want + ")");
-						foreach (AI_NetworkBehaviour_Domestic a in animals) yield return ScCarryHome(a, false);
-						yield return new WaitForSeconds(1f);
-						break;
-					}
-					case "plan":
-					{
-						// plan <name>: the test world plays a world plan from its start (a clean slate of the story first);
-						// plan end: the world's story back to Raft's, the plan's islands gone
-						if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("play " + name + ": a plan only in a test world 'CI ...' (it changes the world's story)"); yield break; }
-						string plan = Rest(line, 1).Trim();
-						PlanCleanSlate();
-						if (plan == "end")
-						{
-							WorldDirector.SetPlan(WorldPlan.RandomName, false);
-							StoryChain.OnWorldRead();
-							IslandWorldState.Save();
-							planMode = false;
-							playEntry = null;
-							Log("  the world's story is Raft's again");
+							string island = Rest(line, 1).Replace(" keep", "").Trim();
+							keep = line.EndsWith(" keep");
+							playOffset = Vector2.zero;
+							// (a plan's test: the copy the plan brought - tuned to - is the one played)
+							IslandWorldState.Entry planned = planMode ? IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Rule)) : null;
+							Vector3 offIsland = planned != null ? me.transform.position - planned.Position : Vector3.zero;
+							offIsland.y = 0f;
+							if (planned != null && (planned.Root == null || offIsland.magnitude > 300f))
+							{
+								// (it came where the plan brings it, ahead of the raft - out of reach of a player still on the last island:
+								// it isn't loaded, or unloads a moment later. The player goes there, as a player sails there, and it loads)
+								Vector3 toward = me.transform.position - planned.Position;
+								toward.y = 0f;
+								Vector3 near = planned.Position + (toward.sqrMagnitude > 1f ? toward.normalized : Vector3.back) * 150f;
+								near.y = 0.5f;
+								PlayerMove.To(me, near);
+								for (float w = 0f; w < 40f && planned.Root == null; w += 0.5f) yield return new WaitForSeconds(0.5f);
+								Log("  went to the plan's '" + island + "' (" + (planned.Root != null ? "loaded" : "still not loaded") + ")");
+							}
+							if (planned != null && planned.Root != null) playEntry = planned;
+							else if (planned != null) { Fail("play " + name + ": the plan's '" + island + "' didn't load when the player came"); yield break; }
+							else
+							{
+								// (a copy left by an earlier run that stopped half way: removed first)
+								var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+								if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
+								Vector3? spot = ScSpot(island, 400f);
+								if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
+								yield return ScBring(island, spot.Value, made);
+								playEntry = made.LastOrDefault();
+								if (playEntry == null || playEntry.Root == null) { Fail("play " + name + ": '" + island + "' didn't come"); yield break; }
+							}
+							yield return new WaitForSeconds(3f);
+							// (a clean start: the crew holds none of the island's story items - an earlier run in this world left them)
+							foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
+								if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));
+							// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
+							if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
+							Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
 							break;
 						}
-						Check(ref ok, ScSetPlan(plan, true), "the world gets the plan '" + plan + "'");
-						checks++;
-						planMode = true;
-						playEntry = null;
-						yield return new WaitForSeconds(1f);
-						Log("  the story: " + string.Join(" > ", StoryChain.Steps.Select(StoryChain.StepName).ToArray()));
-						break;
-					}
-					case "note":
-					{
-						// note <Raft story island>: Raft's note that gives its frequency read, as reading it in the game does
-						ChunkPointType nt = StoryOrder.Parse(Rest(line, 1).Trim());
-						if (nt == ChunkPointType.None) { Check(ref ok, false, rl.Where + ": no Raft story island '" + Rest(line, 1).Trim() + "'"); break; }
-						PlayNote(nt);
-						StoryChain.Tick();
-						yield return new WaitForSeconds(1f);
-						break;
-					}
-					case "tune":
-					{
-						// tune <rule>: the Receiver tuned to a plan island's frequency (unlocked by then): the island comes
-						string rule = Rest(line, 1).Trim();
-						StoryChain.Tick();
-						string freq = StoryChain.FrequencyOf(rule);
-						Check(ref ok, freq != null, "a frequency on the Receiver for '" + rule + "' (" + (freq ?? "none") + ")");
-						// (brought is enough: with the test's raft standing still, earlier islands take the spots ahead and one may come
-						// beyond the load distance - Thornwood 1530 m off - loading as the player goes there, as in a game)
-						yield return TuneTo(rule, 60f, false);
-						// (one that comes within the load distance spawns a moment later: the steps after it need it loaded - The
-						// Abyss Expedition's sunken island, 293 m off, wasn't yet)
-						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && (x.Root != null || (x.Position - me.transform.position).magnitude > 450f)), 30f);
-						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
-						Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", loads as players come near" : "") + ")" : ""));
-						checks += 2;
-						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
-						break;
-					}
-					case "sail":
-					{
-						// sail <km>: the raft has sailed that much further - as the distance sailed counts it, for a plan's
-						// km rules (The Long Voyage's side trips come at 2 to 32 km); "arrive <rule>" then waits for the island
-						float km = t.Length > 1 ? F(t[1]) : 1f;
-						WorldDirector.Sailed += km * 1000f;
-						Log("  sailed " + Num(km) + " km more: " + (WorldDirector.Sailed / 1000f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " km in all");
-						yield return new WaitForSeconds(0.5f);
-						break;
-					}
-					case "arrive":
-					{
-						// arrive <rule>: the island a plan rule brings by itself (ahead of the raft at the start, near another island
-						// when a quest is done, after a visit) comes; the steps after it play on it
-						string rule = Rest(line, 1).Trim();
-						StoryChain.Tick();
-						yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && x.Root != null), 90f);
-						IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
-						Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
-						checks++;
-						if (e != null) { playEntry = e; playOffset = Vector2.zero; }
-						break;
-					}
-					case "expect":
-						checks++;
-						if (t.Length > 2 && t[1] == "chain")
-						{
-							// expect chain <rule|Raft story island> done|unlocked|locked: its place in the story (a moment allowed)
-							ChunkPointType ct = StoryOrder.Parse(t[2]);
-							string key = ct != ChunkPointType.None ? StoryChain.RaftKey(ct) : "rule:" + t[2], state = t.Length > 3 ? t[3].ToLowerInvariant() : "done";
-							Func<bool> holds = () => state == "done" ? StoryChain.Done.Contains(key) : state == "locked" ? !StoryChain.Unlocked.Contains(key) && !StoryChain.Done.Contains(key) : StoryChain.Unlocked.Contains(key);
-							for (float w = 0f; w < 15f && !holds(); w += 0.5f) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
-							Check(ref ok, holds(), "the story: " + StoryChain.StepName(key) + " " + state + " (" + string.Join(" > ", StoryChain.Steps.Select(x => StoryChain.StepName(x) + (StoryChain.Done.Contains(x) ? " (done)" : StoryChain.Unlocked.Contains(x) ? " (unlocked)" : "")).ToArray()) + ")");
+						case "stand":
+							yield return StandRoutine(playEntry.Root);
 							break;
-						}
-						if (t.Length > 2 && t[1] == "spinsown")
+						case "at":
 						{
-							// (turning around its own up axis: that axis stays put while the object turns - a water wheel)
-							IslandObjectRef r = ScObjOf(playEntry, t[2]);
-							if (r == null) { Check(ref ok, false, "'" + t[2] + "' to spin (not there)"); break; }
-							Vector3 up0 = r.transform.up, fwd0 = r.transform.forward;
+							Vector3 p = PlayPoint(F(t[1]), F(t[2]));
+							// (on what is there: the player's middle a metre above it - put lower, the player started inside bare
+							// ground and fell through it into the sea, and the island's pictures showed the water's wobble)
+							p.y = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : PlaySurface(p) + 1.1f + (opt.ContainsKey("y") ? F(opt["y"]) : 0f);
+							PlayerMove.To(me, p);
 							yield return new WaitForSeconds(1f);
-							Check(ref ok, Vector3.Angle(up0, r.transform.up) < 2f && Vector3.Angle(fwd0, r.transform.forward) > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + Vector3.Angle(up0, r.transform.up).ToString("F1") + " deg, it turned " + Vector3.Angle(fwd0, r.transform.forward).ToString("F1") + " deg)");
 							break;
 						}
-						yield return new WaitForSeconds(0.3f);
-						try { PlayExpect(t, line, ref ok); }
-						catch (Exception e) { Check(ref ok, false, rl.Where + " (" + line + "): " + e.Message); }
-						break;
-					case "wait":
-						yield return new WaitForSeconds(t.Length > 1 ? F(t[1]) : 1f);
-						break;
-					case "hour":
-						AzureSkyHour(F(t[1]));
-						yield return new WaitForSeconds(1f);
-						break;
-					case "offset":
-						// offset <x> <z>: the island's land centre from its recipe's origin (the recipe says so when it saves)
-						playOffset = new Vector2(F(t[1]), F(t[2]));
-						break;
-					case "where":
-					{
-						// where <name>: logs where the island's objects of that name are, in the test's island coordinates
-						string what = Rest(line, 1).Trim();
-						foreach (Transform tr in playEntry.Root.GetComponentsInChildren<Transform>(true).Where(x => x.parent != null && x.name.StartsWith(what, StringComparison.OrdinalIgnoreCase) && x.parent.name.IndexOf(what, StringComparison.OrdinalIgnoreCase) < 0))
+						case "walk":
 						{
-							Vector3 d = tr.position - playEntry.Position + new Vector3(playOffset.x, 0f, playOffset.y);
-							Log("  where " + tr.name + ": " + d.x.ToString("F1", CultureInfo.InvariantCulture) + " " + d.z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + d.y.ToString("F1", CultureInfo.InvariantCulture));
+							// walk x z to x z ...: from the first point, with Raft's controller at walking speed; stuck = failed
+							// (h=: the walk ends about this high above the sea - on the deck, not fallen off it)
+							var points = new List<Vector3>();
+							var wopt = Options(t.Where(x => x.Contains("=")));
+							string[] coords = t.Where(x => !x.Contains("=")).ToArray();
+							bool blocked = coords.Contains("blocked");
+							coords = coords.Where(x => x != "blocked").ToArray();
+							for (int i = 1; i + 1 < coords.Length; i += 3) points.Add(PlayPoint(F(coords[i]), F(coords[i + 1])));
+							Vector3 start = points[0];
+							// (a little above what is there: the player lands on it, not half inside a thick plank)
+							// (below=: what is there under that height - a deck under a crane's jib)
+							start.y = PlaySurface(start, wopt.ContainsKey("below") ? playEntry.Position.y + F(wopt["below"]) : 400f) + 1.1f;
+							PlayerMove.To(me, start);
+							yield return new WaitForSeconds(1f);
+							bool got = true;
+							string where = "";
+							yield return PlayWalk(me, points.Skip(1).ToList(), (g, w) => { got = g; where = w; });
+							if (got && wopt.ContainsKey("h") && Mathf.Abs(me.transform.position.y - playEntry.Position.y - F(wopt["h"])) > 1.6f) { got = false; where += " - not at " + wopt["h"] + " m"; }
+							// ("blocked": the way must be shut - a locked gate, a wall)
+							if (blocked) Check(ref ok, !got, "the way " + line.Substring(5) + " is blocked: " + where);
+							else Check(ref ok, got, "walked " + line.Substring(5) + ": " + where);
+							checks++;
+							break;
 						}
-						break;
+						case "climb":
+						{
+							// the ladder nearest the point (its own climb collider): the player in it, a metre above its foot - Raft's
+							// controller takes hold of the ladder
+							Vector3 p = PlayPoint(F(t[1]), F(t[2]));
+							Collider grip = playEntry.Root.GetComponentsInChildren<Collider>(true).Where(c => c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0)
+								.OrderBy(c => ScFlat(c.bounds.center, p)).FirstOrDefault();
+							if (grip == null || ScFlat(grip.bounds.center, p) > 3f) { Check(ref ok, false, "a ladder near " + t[1] + "," + t[2] + (grip != null ? " (the nearest is " + ScFlat(grip.bounds.center, p).ToString("F1") + " m off: " + grip.transform.parent?.name + "/" + grip.name + " at " + (grip.bounds.center - playEntry.Position).ToString("F1") + ")" : "")); checks++; break; }
+							float foot = opt.ContainsKey("h") ? playEntry.Position.y + F(opt["h"]) : grip.bounds.min.y;
+							p = new Vector3(grip.bounds.center.x, Mathf.Max(foot, grip.bounds.min.y) + 1f, grip.bounds.center.z);
+							PlayerMove.To(me, p);
+							yield return new WaitForSeconds(0.3f);
+							bool held = false;
+							for (float s = 0f; s < 3f && !held; s += Time.deltaTime)
+							{
+								held = Climbing(me);
+								yield return null;
+							}
+							Check(ref ok, held, "a ladder at " + F(t[1]) + "," + F(t[2]) + " takes hold of the player" + (held ? "" : " (Raft's controller isn't climbing)"));
+							checks++;
+							PlayerMove.To(me, p + Vector3.up * 0.1f);
+							break;
+						}
+						case "zone":
+							Check(ref ok, ScEnterZone(playEntry, Rest(line, 1).Trim()), "zone '" + Rest(line, 1).Trim() + "' there");
+							yield return new WaitForSeconds(1.2f);
+							break;
+						case "air":
+						{
+							// air <zone id>: a diver in the air pocket breathes - put there with little breath left, it is full again a
+							// moment later (only a shown zone: one still hidden isn't found)
+							string zid = Rest(line, 1).Trim();
+							TriggerZone pocket = playEntry.Root.GetComponentsInChildren<TriggerZone>(false).FirstOrDefault(x => x.Id == zid && x.Air);
+							Check(ref ok, pocket != null, "an air pocket '" + zid + "' there");
+							if (pocket == null) break;
+							PlayerMove.To(me, pocket.transform.position);
+							yield return new WaitForSeconds(0.5f);
+							me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max * 0.1f;
+							yield return new WaitForSeconds(1.2f);
+							float breath = me.Stats.stat_oxygen.Value / Mathf.Max(0.01f, me.Stats.stat_oxygen.Max);
+							Check(ref ok, breath > 0.9f, "breathing in the air pocket '" + zid + "': breath back to " + (breath * 100f).ToString("F0") + " %");
+							break;
+						}
+						case "read":
+						{
+							// (a note, or the note in a chest - read once the chest is emptied, as its hint says)
+							string title = Rest(line, 1).Trim();
+							CustomNote inChest = playEntry.Root.GetComponentsInChildren<CustomNote>(true).FirstOrDefault(c => c.GetComponent<LootCrate>() != null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
+							bool plain = playEntry.Root.GetComponentsInChildren<CustomNote>(true).Any(c => c.GetComponent<LootCrate>() == null && (c.Title ?? "").IndexOf(title, StringComparison.OrdinalIgnoreCase) >= 0);
+							if (!plain && inChest != null) { PutPlayerNear(inChest.transform); NoteReader.Open(inChest); NoteReader.Close(); }
+							else ScReadNote(playEntry, title);
+							Check(ref ok, plain || inChest != null, "a note '" + title + "' to read");
+							yield return new WaitForSeconds(1.2f);
+							break;
+						}
+						case "open":
+							Check(ref ok, ScOpenChest(playEntry, Rest(line, 1).Trim()) != null, "chest '" + Rest(line, 1).Trim() + "' opened");
+							yield return new WaitForSeconds(1.2f);
+							break;
+						case "reach":
+						{
+							string why = ScReach(playEntry, Rest(line, 1).Trim());
+							Check(ref ok, why == null, "chest '" + Rest(line, 1).Trim() + "' within reach of the player's eye" + (why != null ? " - " + why : ""));
+							break;
+						}
+						case "openat":
+						{
+							Vector3 p = PlayPoint(F(t[1]), F(t[2]));
+							LootCrate chest = playEntry.Root.GetComponentsInChildren<LootCrate>(true).OrderBy(c => ScFlat(c.transform.position, p)).FirstOrDefault();
+							Check(ref ok, chest != null && ScFlat(chest.transform.position, p) < 4f, "a chest at " + t[1] + "," + t[2] + (chest != null ? " (" + ScFlat(chest.transform.position, p).ToString("F1") + " m off)" : ""));
+							if (chest != null) { PutPlayerNear(chest.transform); chest.LastGiven = new List<string>(); chest.Open(); }
+							checks++;
+							yield return new WaitForSeconds(1.2f);
+							break;
+						}
+						case "use":
+						{
+							// (use <name> stay: used from where the player is - standing on a lift, it carries them)
+							string what = Rest(line, 1).Trim();
+							bool stay = what.EndsWith(" stay");
+							if (stay) what = what.Substring(0, what.Length - 5).Trim();
+							IslandObjectRef used = ScObjOf(playEntry, what);
+							Check(ref ok, used != null, "object '" + what + "' there");
+							if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); }
+							else ScUse(playEntry, what);
+							yield return new WaitForSeconds(1.2f);
+							break;
+						}
+						case "kill":
+						{
+							string label = Rest(line, 1).Trim();
+							yield return ScWaitAnimals(playEntry, label, 1, 15f);
+							List<AI_NetworkBehaviour> animals = ScAnimals(playEntry, label);
+							Check(ref ok, animals.Count > 0, "animals '" + label + "' to defeat (" + animals.Count + ")");
+							foreach (AI_NetworkBehaviour a in animals) { PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.4f); }
+							yield return new WaitForSeconds(2f);
+							break;
+						}
+						case "catch":
+						{
+							// catch <label> [n]: animals caught as Raft's net does it (captured, carried off)
+							string label = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? string.Join(" ", t.Skip(1).Take(t.Length - 2).ToArray()) : Rest(line, 1).Trim();
+							int want = t.Length > 2 && !char.IsLetter(t[t.Length - 1][0]) ? (int)F(t[t.Length - 1]) : 1;
+							yield return ScWaitAnimals(playEntry, label, want, 15f);
+							// (only the island's own: animals caught in an earlier run stay in the world, without a spawn spot)
+							var animals = ScAnimals(playEntry, label).OfType<AI_NetworkBehaviour_Domestic>()
+								.Where(an => an.connectedSpawner != null && an.connectedSpawner.transform.IsChildOf(playEntry.Root.transform)).Take(want).ToList();
+							Check(ref ok, animals.Count >= want, "animals '" + label + "' to catch (" + animals.Count + " of " + want + ")");
+							foreach (AI_NetworkBehaviour_Domestic a in animals) yield return ScCarryHome(a, false);
+							yield return new WaitForSeconds(1f);
+							break;
+						}
+						case "plan":
+						{
+							// plan <name>: the test world plays a world plan from its start (a clean slate of the story first);
+							// plan end: the world's story back to Raft's, the plan's islands gone
+							if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("play " + name + ": a plan only in a test world 'CI ...' (it changes the world's story)"); yield break; }
+							string plan = Rest(line, 1).Trim();
+							PlanCleanSlate();
+							if (plan == "end")
+							{
+								WorldDirector.SetPlan(WorldPlan.RandomName, false);
+								StoryChain.OnWorldRead();
+								IslandWorldState.Save();
+								planMode = false;
+								playEntry = null;
+								Log("  the world's story is Raft's again");
+								break;
+							}
+							Check(ref ok, ScSetPlan(plan, true), "the world gets the plan '" + plan + "'");
+							checks++;
+							planMode = true;
+							playEntry = null;
+							yield return new WaitForSeconds(1f);
+							Log("  the story: " + string.Join(" > ", StoryChain.Steps.Select(StoryChain.StepName).ToArray()));
+							break;
+						}
+						case "note":
+						{
+							// note <Raft story island>: Raft's note that gives its frequency read, as reading it in the game does
+							ChunkPointType nt = StoryOrder.Parse(Rest(line, 1).Trim());
+							if (nt == ChunkPointType.None) { Check(ref ok, false, rl.Where + ": no Raft story island '" + Rest(line, 1).Trim() + "'"); break; }
+							PlayNote(nt);
+							StoryChain.Tick();
+							yield return new WaitForSeconds(1f);
+							break;
+						}
+						case "tune":
+						{
+							// tune <rule>: the Receiver tuned to a plan island's frequency (unlocked by then): the island comes
+							string rule = Rest(line, 1).Trim();
+							StoryChain.Tick();
+							string freq = StoryChain.FrequencyOf(rule);
+							Check(ref ok, freq != null, "a frequency on the Receiver for '" + rule + "' (" + (freq ?? "none") + ")");
+							// (brought is enough: with the test's raft standing still, earlier islands take the spots ahead and one may come
+							// beyond the load distance - Thornwood 1530 m off - loading as the player goes there, as in a game)
+							yield return TuneTo(rule, 60f, false);
+							// (one that comes within the load distance spawns a moment later: the steps after it need it loaded - The
+							// Abyss Expedition's sunken island, 293 m off, wasn't yet)
+							yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && (x.Root != null || (x.Position - me.transform.position).magnitude > 450f)), 30f);
+							IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
+							Check(ref ok, e != null, "tuned to " + freq + ": '" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away" + (e.Root == null ? ", loads as players come near" : "") + ")" : ""));
+							checks += 2;
+							if (e != null) { playEntry = e; playOffset = Vector2.zero; }
+							break;
+						}
+						case "sail":
+						{
+							// sail <km>: the raft has sailed that much further - as the distance sailed counts it, for a plan's
+							// km rules (The Long Voyage's side trips come at 2 to 32 km); "arrive <rule>" then waits for the island
+							float km = t.Length > 1 ? F(t[1]) : 1f;
+							WorldDirector.Sailed += km * 1000f;
+							Log("  sailed " + Num(km) + " km more: " + (WorldDirector.Sailed / 1000f).ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + " km in all");
+							yield return new WaitForSeconds(0.5f);
+							break;
+						}
+						case "arrive":
+						{
+							// arrive <rule>: the island a plan rule brings by itself (ahead of the raft at the start, near another island
+							// when a quest is done, after a visit) comes; the steps after it play on it
+							string rule = Rest(line, 1).Trim();
+							StoryChain.Tick();
+							yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.Rule == rule && x.Root != null), 90f);
+							IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule && x.Root != null);
+							Check(ref ok, e != null, "'" + rule + "' comes" + (e != null ? " ('" + e.HostName + "', " + (e.Position - me.transform.position).magnitude.ToString("F0") + " m away)" : ""));
+							checks++;
+							if (e != null) { playEntry = e; playOffset = Vector2.zero; }
+							break;
+						}
+						case "expect":
+							checks++;
+							if (t.Length > 2 && t[1] == "chain")
+							{
+								// expect chain <rule|Raft story island> done|unlocked|locked: its place in the story (a moment allowed)
+								ChunkPointType ct = StoryOrder.Parse(t[2]);
+								string key = ct != ChunkPointType.None ? StoryChain.RaftKey(ct) : "rule:" + t[2], state = t.Length > 3 ? t[3].ToLowerInvariant() : "done";
+								Func<bool> holds = () => state == "done" ? StoryChain.Done.Contains(key) : state == "locked" ? !StoryChain.Unlocked.Contains(key) && !StoryChain.Done.Contains(key) : StoryChain.Unlocked.Contains(key);
+								for (float w = 0f; w < 15f && !holds(); w += 0.5f) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
+								Check(ref ok, holds(), "the story: " + StoryChain.StepName(key) + " " + state + " (" + string.Join(" > ", StoryChain.Steps.Select(x => StoryChain.StepName(x) + (StoryChain.Done.Contains(x) ? " (done)" : StoryChain.Unlocked.Contains(x) ? " (unlocked)" : "")).ToArray()) + ")");
+								break;
+							}
+							if (t.Length > 2 && t[1] == "spinsown")
+							{
+								// (turning around its own up axis: that axis stays put while the object turns - a water wheel)
+								IslandObjectRef r = ScObjOf(playEntry, t[2]);
+								if (r == null) { Check(ref ok, false, "'" + t[2] + "' to spin (not there)"); break; }
+								Vector3 up0 = r.transform.up, fwd0 = r.transform.forward;
+								yield return new WaitForSeconds(1f);
+								Check(ref ok, Vector3.Angle(up0, r.transform.up) < 2f && Vector3.Angle(fwd0, r.transform.forward) > 5f, "'" + t[2] + "' turns around its own axis (its axis moved " + Vector3.Angle(up0, r.transform.up).ToString("F1") + " deg, it turned " + Vector3.Angle(fwd0, r.transform.forward).ToString("F1") + " deg)");
+								break;
+							}
+							yield return new WaitForSeconds(0.3f);
+							try { PlayExpect(t, line, ref ok); }
+							catch (Exception e) { Check(ref ok, false, rl.Where + " (" + line + "): " + e.Message); }
+							break;
+						case "wait":
+							yield return new WaitForSeconds(t.Length > 1 ? F(t[1]) : 1f);
+							break;
+						case "hour":
+							AzureSkyHour(F(t[1]));
+							yield return new WaitForSeconds(1f);
+							break;
+						case "offset":
+							// offset <x> <z>: the island's land centre from its recipe's origin (the recipe says so when it saves)
+							playOffset = new Vector2(F(t[1]), F(t[2]));
+							break;
+						case "where":
+						{
+							// where <name>: logs where the island's objects of that name are, in the test's island coordinates
+							string what = Rest(line, 1).Trim();
+							foreach (Transform tr in playEntry.Root.GetComponentsInChildren<Transform>(true).Where(x => x.parent != null && x.name.StartsWith(what, StringComparison.OrdinalIgnoreCase) && x.parent.name.IndexOf(what, StringComparison.OrdinalIgnoreCase) < 0))
+							{
+								Vector3 d = tr.position - playEntry.Position + new Vector3(playOffset.x, 0f, playOffset.y);
+								Log("  where " + tr.name + ": " + d.x.ToString("F1", CultureInfo.InvariantCulture) + " " + d.z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + d.y.ToString("F1", CultureInfo.InvariantCulture));
+							}
+							break;
+						}
+						case "weather":
+							// weather <name>: Raft's weather changed at once (pictures in clear weather); weather alone lists them
+							PlayWeather(t.Length > 1 ? Rest(line, 1).Trim() : "");
+							yield return new WaitForSeconds(3f);
+							break;
+						case "log":
+							Log("  " + Rest(line, 1));
+							break;
+						case "picture":
+						{
+							// (a height "+h": that far above what is below the camera - the sand, a roof, the reef)
+							string file = t[1];
+							Vector3 from = PlayPoint(F(t[2]), F(t[4]));
+							from.y = t[3].StartsWith("+") ? PlaySurface(from) + F(t[3].Substring(1)) : playEntry.Position.y + F(t[3]);
+							Vector3 look = PlayPoint(F(t[5]), F(t[7]));
+							look.y = t[6].StartsWith("+") ? PlaySurface(look) + F(t[6].Substring(1)) : playEntry.Position.y + F(t[6]);
+							yield return PlayPicture(file, from, look);
+							break;
+						}
+						default:
+							Check(ref ok, false, rl.Where + ": unknown step '" + verb + "'");
+							break;
 					}
-					case "weather":
-						// weather <name>: Raft's weather changed at once (pictures in clear weather); weather alone lists them
-						PlayWeather(t.Length > 1 ? Rest(line, 1).Trim() : "");
-						yield return new WaitForSeconds(3f);
-						break;
-					case "log":
-						Log("  " + Rest(line, 1));
-						break;
-					case "picture":
-					{
-						// (a height "+h": that far above what is below the camera - the sand, a roof, the reef)
-						string file = t[1];
-						Vector3 from = PlayPoint(F(t[2]), F(t[4]));
-						from.y = t[3].StartsWith("+") ? PlaySurface(from) + F(t[3].Substring(1)) : playEntry.Position.y + F(t[3]);
-						Vector3 look = PlayPoint(F(t[5]), F(t[7]));
-						look.y = t[6].StartsWith("+") ? PlaySurface(look) + F(t[6].Substring(1)) : playEntry.Position.y + F(t[6]);
-						yield return PlayPicture(file, from, look);
-						break;
-					}
-					default:
-						Check(ref ok, false, rl.Where + ": unknown step '" + verb + "'");
-						break;
 				}
 			}
-			if (!keep && made.Count > 0) { ScRemove(made); OnRaftCommand(); }
-			if (planMode) { PlanCleanSlate(); WorldDirector.SetPlan(WorldPlan.RandomName, false); StoryChain.OnWorldRead(); IslandWorldState.Save(); planMode = false; OnRaftCommand(); }
+			finally
+			{
+				// (also after a step that stops the play: the islands it brought and a plan's story don't stay for the next test)
+				if (!keep && made.Count > 0) { ScRemove(made); OnRaftCommand(); }
+				if (planMode) { PlanCleanSlate(); WorldDirector.SetPlan(WorldPlan.RandomName, false); StoryChain.OnWorldRead(); IslandWorldState.Save(); planMode = false; OnRaftCommand(); }
+			}
 			if (ok) Log("PASS: play " + name + " (" + checks + " checks)"); else Fail("play " + name);
 		}
 

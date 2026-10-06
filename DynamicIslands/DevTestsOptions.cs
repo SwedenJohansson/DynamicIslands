@@ -90,7 +90,7 @@ namespace DynamicIslands
 			{
 				ChunkPointType[] o = StoryOrder.OrderFor(seed * 7919);
 				firsts.Add(o[0]);
-				bool good = o.Length == 8 && o.Distinct().Count() == 8 && o.All(t => StoryOrder.Chain.Contains(t)) && o[7] == ChunkPointType.Landmark_Utopia &&
+				bool good = o.Length == StoryOrder.Chain.Length && o.Distinct().Count() == StoryOrder.Chain.Length && o.All(t => StoryOrder.Chain.Contains(t)) && o[o.Length - 1] == ChunkPointType.Landmark_Utopia &&
 					!o.SequenceEqual(StoryOrder.Chain) && o.SequenceEqual(StoryOrder.OrderFor(seed * 7919));
 				if (!good) badOrders.Add(seed + ": " + StoryOrder.Describe(o));
 			}
@@ -148,11 +148,12 @@ namespace DynamicIslands
 			// The last choice
 			string rules = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName);
 			string before = File.Exists(rules) ? File.ReadAllText(rules) : null;
+			string monstersBefore = WorldRules.ReadDefault("monsters");
 			try
 			{
 				WorldOptions.SaveDefaults(new[] { WorldOptions.GhostRafts, WorldOptions.Blueprints });
 				HashSet<string> d = WorldOptions.Defaults;
-				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.Blueprints) && WorldRules.ReadDefault("monsters") == (before != null ? WorldRules.ReadDefault("monsters") : null), "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
+				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.Blueprints) && WorldRules.ReadDefault("monsters") == monstersBefore, "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
 				WorldOptions.SaveDefaults(new string[0]);
 				Check(ref ok, WorldOptions.Defaults.Count == 0, "... and none");
 			}
@@ -474,7 +475,7 @@ namespace DynamicIslands
 				WorldOptions.Set(on);
 				yield return null;
 				ChunkPointType[] order = StoryOrder.Order;
-				Check(ref ok, StoryOrder.Active && order[7] == ChunkPointType.Landmark_Utopia && !order.SequenceEqual(StoryOrder.Chain), "the option on: the order " + StoryOrder.Describe(order));
+				Check(ref ok, StoryOrder.Active && order[order.Length - 1] == ChunkPointType.Landmark_Utopia && !order.SequenceEqual(StoryOrder.Chain), "the option on: the order " + StoryOrder.Describe(order));
 				// The story played along the order: the Receiver's note first, then on each island the note Raft put there
 				// (the one that unlocks Raft's next island after it): each must unlock the order's next - all of them, in turn
 				var got = new List<string>();
@@ -862,7 +863,7 @@ namespace DynamicIslands
 			PrivateStorage.Decode(storagesBefore + ";999999:12345");
 			try
 			{
-				for (int mask = 0; mask < 16; mask++)
+				for (int mask = 0; mask < 1 << WorldOptions.All.Length; mask++)
 				{
 					var on = new HashSet<string>(WorldOptions.All.Where((o, i) => (mask & (1 << i)) != 0));
 					WorldOptions.Set(on);
@@ -887,7 +888,7 @@ namespace DynamicIslands
 				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
 			}
-			Check(ref ok, bad.Count == 0, "16 combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
+			Check(ref ok, bad.Count == 0, (1 << WorldOptions.All.Length) + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
 			Check(ref ok, errors.Count == 0, "no errors while they ran" + (errors.Count > 0 ? " - " + errors[0] : ""));
 			if (ok) Log("PASS: options matrix"); else Fail("options matrix");
 		}

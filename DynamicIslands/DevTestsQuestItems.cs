@@ -59,45 +59,54 @@ namespace DynamicIslands
 				k++;
 			}
 			IslandWorldState.Remove(QuestItemsIsland);
-			f.Save(IslandSpawner.PathFor(QuestItemsIsland));
-			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(QuestItemsIsland), 450f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
-			yield return DynamicIslands.instance.SpawnIslandFile(QuestItemsIsland, spot.Value, true);
-			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == QuestItemsIsland);
-			if (e == null || e.Root == null) { Fail(QuestItemsIsland + " did not spawn"); yield break; }
-			yield return new WaitForSeconds(1.5f);
+			try
+			{
+				f.Save(IslandSpawner.PathFor(QuestItemsIsland));
+				Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(QuestItemsIsland), 450f);
+				if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+				yield return DynamicIslands.instance.SpawnIslandFile(QuestItemsIsland, spot.Value, true);
+				IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == QuestItemsIsland);
+				if (e == null || e.Root == null) { Fail(QuestItemsIsland + " did not spawn"); yield break; }
+				yield return new WaitForSeconds(1.5f);
 
-			for (int i = 0; i < pick.Count; i++)
-			{
-				string id = QuestItemPickups.StoryId(pick[i]);
-				IslandObjectRef r = ScObjOf(e, "piece" + i);
-				if (r == null) { Check(ref ok, false, pick[i] + " on the island"); continue; }
-				Log("  piece" + i + " props: " + string.Join("; ", r.Props.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
-				ScUse(e, "piece" + i);
-				yield return new WaitForSeconds(0.8f);
-				bool held = StoryBook.Items.Any(h => h.Def.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && h.Count > 0);
-				Check(ref ok, held && !r.gameObject.activeInHierarchy, pick[i] + ": picked up, the crew holds '" + StoryItems.Label(id) + "' (" + held + "), the model gone (" + !r.gameObject.activeInHierarchy + ")");
-			}
-			Pickup pickup = player.GetComponentInChildren<Pickup>(true);
-			foreach (string n in finds)
-			{
-				PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => p.gameObject.activeInHierarchy && p.GetComponentsInParent<Transform>(true).Any(tr => tr.name.StartsWith(n, StringComparison.Ordinal)));
-				if (pn == null)
+				for (int i = 0; i < pick.Count; i++)
 				{
-					Transform piece = e.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(tr => tr.name.StartsWith(n, StringComparison.Ordinal));
-					Check(ref ok, false, n + ": none to pick" + (piece != null ? " (" + piece.name + " active " + piece.gameObject.activeInHierarchy + ": " + string.Join(", ", piece.GetComponentsInChildren<Component>(true).Select(cp => cp != null ? cp.GetType().Name : "-").Distinct().ToArray()) + ")" : " (not spawned)"));
-					continue;
+					string id = QuestItemPickups.StoryId(pick[i]);
+					IslandObjectRef r = ScObjOf(e, "piece" + i);
+					if (r == null) { Check(ref ok, false, pick[i] + " on the island"); continue; }
+					Log("  piece" + i + " props: " + string.Join("; ", r.Props.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+					ScUse(e, "piece" + i);
+					Func<bool> holds = () => StoryBook.Items.Any(h => h.Def.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && h.Count > 0);
+					yield return WaitFor(() => holds() && !r.gameObject.activeInHierarchy, 10f);
+					bool held = holds();
+					Check(ref ok, held && !r.gameObject.activeInHierarchy, pick[i] + ": picked up, the crew holds '" + StoryItems.Label(id) + "' (" + held + "), the model gone (" + !r.gameObject.activeInHierarchy + ")");
 				}
-				PutPlayerNear(pn.transform, 1.2f);
-				yield return new WaitForSeconds(0.3f);
-				Dictionary<string, int> before = Items(player);
-				pickup.PickupItemByType(pn.GetComponent<PickupItem>(), true);
-				yield return new WaitForSeconds(1f);
-				string got = Gained(before, Items(player));
-				Check(ref ok, got.Length > 0 || !pn.gameObject.activeInHierarchy, n + ": picked, gives " + (got.Length > 0 ? got : "nothing in the inventory") + " (gone: " + !pn.gameObject.activeInHierarchy + ")");
+				Pickup pickup = player.GetComponentInChildren<Pickup>(true);
+				foreach (string n in finds)
+				{
+					PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => p.gameObject.activeInHierarchy && p.GetComponentsInParent<Transform>(true).Any(tr => tr.name.StartsWith(n, StringComparison.Ordinal)));
+					if (pn == null)
+					{
+						Transform piece = e.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(tr => tr.name.StartsWith(n, StringComparison.Ordinal));
+						Check(ref ok, false, n + ": none to pick" + (piece != null ? " (" + piece.name + " active " + piece.gameObject.activeInHierarchy + ": " + string.Join(", ", piece.GetComponentsInChildren<Component>(true).Select(cp => cp != null ? cp.GetType().Name : "-").Distinct().ToArray()) + ")" : " (not spawned)"));
+						continue;
+					}
+					PutPlayerNear(pn.transform, 1.2f);
+					yield return new WaitForSeconds(0.3f);
+					Dictionary<string, int> before = Items(player);
+					pickup.PickupItemByType(pn.GetComponent<PickupItem>(), true);
+					yield return WaitFor(() => Gained(before, Items(player)).Length > 0 || !pn.gameObject.activeInHierarchy, 10f);
+					string got = Gained(before, Items(player));
+					Check(ref ok, got.Length > 0 || !pn.gameObject.activeInHierarchy, n + ": picked, gives " + (got.Length > 0 ? got : "nothing in the inventory") + " (gone: " + !pn.gameObject.activeInHierarchy + ")");
+				}
+				OnRaftCommand();
 			}
-			OnRaftCommand();
-			IslandWorldState.Remove(QuestItemsIsland);
+			finally
+			{
+				// (the test island gone from the world and the islands folder, also after an early stop)
+				IslandWorldState.Remove(QuestItemsIsland);
+				try { if (System.IO.File.Exists(IslandSpawner.PathFor(QuestItemsIsland))) System.IO.File.Delete(IslandSpawner.PathFor(QuestItemsIsland)); } catch { }
+			}
 			if (ok) Log("PASS: quest item pickups"); else Fail("quest item pickups");
 		}
 	}

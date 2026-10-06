@@ -103,8 +103,11 @@ namespace DynamicIslands
 			float t0 = Time.realtimeSinceStartup;
 			List<CreatureSpawnPoint> spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
 			while (Time.realtimeSinceStartup - t0 < 60f && spots.Where(p => p.gameObject.activeInHierarchy).Any(p => p.Spawned.Count == 0)) yield return new WaitForSeconds(0.5f);
-			Log("PASS: " + FullIsland + " spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + ", creatures " +
-				string.Join(", ", spots.Select(p => p.Kind.Label + " " + p.Spawned.Count + (p.gameObject.activeInHierarchy ? "" : " (hidden)")).ToArray()));
+			// (a shown spot still without its animal after the wait: the two-player test would play without it)
+			bool spawned = !spots.Where(p => p.gameObject.activeInHierarchy).Any(p => p.Spawned.Count == 0);
+			string creatures = string.Join(", ", spots.Select(p => p.Kind.Label + " " + p.Spawned.Count + (p.gameObject.activeInHierarchy ? "" : " (hidden)")).ToArray());
+			if (spawned) Log("PASS: " + FullIsland + " spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + ", creatures " + creatures);
+			else Fail(FullIsland + " spawned (island " + e.Id + ") but its creatures didn't come in 60 s: " + creatures);
 		}
 
 		/// <summary>cimpvisit: a small island 600 m ahead (the host's raft is too far to count as visiting) whose rule brings a sandbar when players first get there.</summary>
@@ -360,7 +363,7 @@ namespace DynamicIslands
 			yield return null;
 			e.Loading = true;
 			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
-			Log("Reloaded '" + e.HostName + "' (" + (e.Root != null ? "loaded" : "FAILED") + ")");
+			if (e.Root != null) Log("Reloaded '" + e.HostName + "' (loaded)"); else Fail("reload '" + e.HostName + "': not loaded again");
 		}
 	}
 }

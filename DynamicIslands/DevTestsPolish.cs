@@ -129,7 +129,7 @@ namespace DynamicIslands
 					yield return null;
 					Check(ref ok, MonsterDifficulty.Current == MonsterDifficulty.Savage, "Savage clicked: monsters are Savage in this world");
 					Check(ref ok, BuildCost.Current == Mathf.Min(BuildCost.Max, cost + BuildCost.Step), "+5 %: the build cost is " + BuildCost.Current + " %");
-					Check(ref ok, WorldRandomizer.Current.Level == 1 && WorldRandomizer.Current.Disabled.Contains(RandomizerSettings.Features[0]), "the randomizer Light, " + RandomizerSettings.FeatureLabels[0] + " off");
+					Check(ref ok, WorldRandomizer.Current.Level == RandomizerSettings.Light && WorldRandomizer.Current.Disabled.Contains(RandomizerSettings.Features[0]), "the randomizer Light, " + RandomizerSettings.FeatureLabels[0] + " off");
 					Check(ref ok, WorldOptions.On(WorldOptions.GhostRafts) != options.Contains(WorldOptions.GhostRafts), "ghost rafts switched");
 					Check(ref ok, PlayerLevels.On != levels, "the level up system switched");
 					Check(ref ok, island == null || !WorldIslands.TakesPart(island), "the island '" + island + "' left out of this world");
@@ -243,9 +243,11 @@ namespace DynamicIslands
 			Check(ref ok, back != null && back.gameObject.activeInHierarchy, "the world window offers Back to the editor");
 			if (back != null) back.onClick.Invoke();
 			for (float t = 0; t < 240f && !(DynamicIslands.InEditor() && !IslandTest.Busy); t += 1f) yield return new WaitForSeconds(1f);
-			yield return new WaitForSeconds(2f);
+			yield return WaitFor(() => DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, 30f);
 			Check(ref ok, DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, "back in the editor with World Plans open");
 			WorldPlanWindow.Close();
+			// (the test's plan not left among the player's)
+			try { if (System.IO.File.Exists(WorldPlan.PathFor(plan.Name))) System.IO.File.Delete(WorldPlan.PathFor(plan.Name)); } catch { }
 			if (ok) Log("PASS: plan test"); else Fail("plan test");
 		}
 
@@ -268,7 +270,15 @@ namespace DynamicIslands
 			IslandTest.Start();
 			Check(ref ok, IslandTest.Busy && IslandTest.Island == name, "Test in a world: on its way");
 			for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
-			yield return new WaitForSeconds(6f);
+			// (the island loaded and the player put on it - a big island takes a while)
+			Func<bool> onIt = () =>
+			{
+				IslandWorldState.Entry x = IslandWorldState.Islands.LastOrDefault(y => y.Name == name);
+				Network_Player p = RAPI.GetLocalPlayer();
+				return x != null && x.Root != null && p != null && new Vector2(p.transform.position.x - x.Position.x, p.transform.position.z - x.Position.z).magnitude < CustomIslandSpawner.LandRadius(name) + 5f;
+			};
+			yield return WaitFor(onIt, 90f);
+			yield return new WaitForSeconds(1f);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.Name == name);
 			Network_Player me = RAPI.GetLocalPlayer();
 			float dist = e != null && me != null ? new Vector2(me.transform.position.x - e.Position.x, me.transform.position.z - e.Position.z).magnitude : -1f;
@@ -283,7 +293,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			if (back != null) back.onClick.Invoke();
 			for (float t = 0; t < 240f && !(DynamicIslands.InEditor() && !IslandTest.Busy); t += 1f) yield return new WaitForSeconds(1f);
-			yield return new WaitForSeconds(2f);
+			yield return WaitFor(() => DynamicIslands.InEditor() && DynamicIslands.currentIslandName == name, 30f);
 			Check(ref ok, DynamicIslands.InEditor() && DynamicIslands.currentIslandName == name, "back in the editor with '" + DynamicIslands.currentIslandName + "' open");
 			try { DynamicIslands.NewIsland(); IslandFilesWindow.MoveToDeleted(name); System.IO.File.Delete(System.IO.Path.Combine(System.IO.Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), name + IslandFile.Extension)); } catch { }
 			if (ok) Log("PASS: island test"); else Fail("island test");

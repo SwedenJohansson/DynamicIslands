@@ -168,10 +168,10 @@ namespace DynamicIslands
 				"a hidden chest in a cage, the bolt cutters in the explorer's chest");
 			Check(ref ok, lift != null && BehaviourProps.Offset(lift.Props).y >= 2.5f && ObjectProps.GetBool(lift.Props, BehaviourProps.Carry, false), "a lift up a cliff" + (lift != null ? " (" + BehaviourProps.Offset(lift.Props).y.ToString("F1") + " m)" : ""));
 			Check(ref ok, report.Contains("generator") && report.Contains("vines"), "the report: " + report);
-			var six = new IslandGenSettings { Seed = 5252, Radius = 90f, Height = 34f, Peaks = 3, ObjectDensity = 0.3f, Style = TerrainPainter.Tropical, Features = 6 };
+			var six = new IslandGenSettings { Seed = 5252, Radius = 90f, Height = 34f, Peaks = 3, ObjectDensity = 0.3f, Style = TerrainPainter.Tropical, Features = GenFeatures.Kinds.Length }; // (six: the last count without the machinery)
 			IslandGenerator.GenerateInEditor(six);
 			yield return new WaitForSecondsRealtime(0.4f);
-			Check(ref ok, !PlacedEditorObjects().Any(e => GenFeatures.MoreNames.Contains(e.GameObjectName)), "6 features: none of the machinery (islands as before)");
+			Check(ref ok, !PlacedEditorObjects().Any(e => GenFeatures.MoreNames.Contains(e.GameObjectName)), GenFeatures.Kinds.Length + " features: none of the machinery (islands as before)");
 			if (ok) Log("PASS: generator machinery"); else Fail("generator machinery");
 		}
 	}
