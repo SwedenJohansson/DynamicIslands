@@ -63,6 +63,12 @@ namespace DynamicIslands.Editor
 		/// harvests left (-1 = none), Index = its ordinal, Count = in-game day. Client -> host, host -> everyone; an older
 		/// version ignores it.</summary>
 		public const int ObjectHarvest = 22;
+		/// <summary>Host -> players: the host lacks an island file its world needs (AU6) - Name = the island's name, Hash = its
+		/// content hash. A player with a file of that content sends it back as FileChunks (SendFile's path); an older one ignores it.</summary>
+		public const int FileWanted = 23;
+		/// <summary>Player -> host, as the host's copy of the world arrives on joining: the player's kept copy of this world is
+		/// newer (AU26) - Name = world id, Data = "savecount;savedat ticks"; the host is warned.</summary>
+		public const int WorldCopyNewer = 24;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -143,6 +149,7 @@ namespace DynamicIslands.Editor
 			WorldRules.OnWorldReceived();
 			WorldOptions.OnWorldReceived();
 			global::DynamicIslands.Editor.StoryChain.OnWorldReceived();
+			global::DynamicIslands.Editor.WorldCopy.OnWorldReceived();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
@@ -166,6 +173,8 @@ namespace DynamicIslands.Editor
 			requestedAt.Clear();
 			toldWaiting.Clear();
 			toldNoList = false;
+			wanted.Clear();
+			nextWantedAsk = 0f;
 		}
 
 		/// <summary>Called every frame. Clients keep asking the host for the island list until it arrives.</summary>
@@ -176,6 +185,8 @@ namespace DynamicIslands.Editor
 			if (LoadSceneManager.IsGameSceneLoaded) wasInGame = true;
 			else if (wasInGame) { wasInGame = false; worldReceived = false; }
 			if (!Raft_Network.IsHost && worldReceived && InMultiplayerGame && Time.unscaledTime >= nextFileCheck) { nextFileCheck = Time.unscaledTime + 5f; RetryLateFiles(); }
+			// (the host: the island files it asked the players for, asked again now and then - AU6)
+			if (Raft_Network.IsHost && wanted.Count > 0 && InMultiplayerGame && Time.unscaledTime >= nextWantedAsk) { nextWantedAsk = Time.unscaledTime + FileRetrySeconds; AskPlayers(null); }
 			if (synced || Raft_Network.IsHost || !worldReceived || !InMultiplayerGame || Time.unscaledTime < nextSyncTry) return;
 			// (after the first minute: still asking, slowly - a host busy loading, or a message lost, was left without islands for
 			// the whole session before)
@@ -280,6 +291,13 @@ namespace DynamicIslands.Editor
 			msg.Kind = IslandNetMessage.WorldCopy;
 			if (!Raft_Network.IsHost) return;
 			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+		}
+
+		/// <summary>A player -> the host: their kept copy of the world is newer than the host's (AU26).</summary>
+		public static void SendWorldCopyNewer(IslandNetMessage msg)
+		{
+			msg.Kind = IslandNetMessage.WorldCopyNewer;
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(msg);
 		}
 
 		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
@@ -447,7 +465,16 @@ namespace DynamicIslands.Editor
 							// (their own copy of the world, to host it later)
 							try { global::DynamicIslands.Editor.WorldCopy.Send(to); }
 							catch (Exception e) { JoinPartFailed("world copy", e); }
+							// (island files the host lacks: the player who joined may have them - AU6)
+							if (wanted.Count > 0) AskPlayers(to);
 						}
+						break;
+					case IslandNetMessage.FileWanted:
+						// (a player: the host lacks this file - sent back if this PC has one with that content, else nothing - AU6)
+						if (!Raft_Network.IsHost) SendFile(msg.Name, msg.Hash, from, true);
+						break;
+					case IslandNetMessage.WorldCopyNewer:
+						if (Raft_Network.IsHost) global::DynamicIslands.Editor.WorldCopy.OnPlayerNewer(msg, from);
 						break;
 					case IslandNetMessage.WorldRules:
 						WorldRules.OnMessage(msg);
@@ -469,7 +496,8 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost) IslandWorldState.RemoveIds(msg.Ids, false);
 						break;
 					case IslandNetMessage.FileChunk:
-						if (!Raft_Network.IsHost) ReceiveChunk(msg);
+						// (the host too: a file it asked the players for - only hashes it asked for are taken - AU6)
+						ReceiveChunk(msg);
 						break;
 					case IslandNetMessage.QuestStep:
 						if (msg.Ids != null && msg.Ids.Length > 0)
@@ -741,7 +769,13 @@ namespace DynamicIslands.Editor
 
 			incoming.Remove(msg.Hash);
 			byte[] bytes = Convert.FromBase64String(string.Concat(parts));
-			if (Hash(bytes) != msg.Hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Island file '" + msg.Name + "' arrived damaged, asking again"); requested.Remove(msg.Hash); RetryWaiting(msg.Hash); return; }
+			if (Hash(bytes) != msg.Hash)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] [net] Island file '" + msg.Name + "' arrived damaged, asking again");
+				// (the host keeps asking the players at its next round - AU6)
+				if (Raft_Network.IsHost) return;
+				requested.Remove(msg.Hash); RetryWaiting(msg.Hash); return;
+			}
 			string name = DownloadName(msg.Name, msg.Hash);
 			Directory.CreateDirectory(DynamicIslands.assetpath);
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
@@ -754,8 +788,84 @@ namespace DynamicIslands.Editor
 				string want = DownloadName(e.HostName, msg.Hash);
 				try { if (want != name && !File.Exists(IslandSpawner.PathFor(want))) { File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(want)); IslandCache.ForgetFile(IslandSpawner.PathFor(want)); } }
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Copying '" + name + "' for '" + e.HostName + "': " + ex.Message); }
+				// (the host: an island of its world that waited for this file - or played another version of it, not loaded
+				// yet - plays the one the world was saved with now, and players who joined meanwhile get it - AU6)
+				if (Raft_Network.IsHost && (e.WaitingForFile || (e.Root == null && !e.Loading && HashOf(e.Name) != msg.Hash)))
+				{
+					bool waited = e.WaitingForFile;
+					e.Name = want;
+					e.Failed = false;
+					e.WaitingForFile = false;
+					if (waited) SendToClients(IslandsMessage(new[] { e }, false));
+					continue;
+				}
 				e.WaitingForFile = false;
 			}
+			hashMissAt.Remove(msg.Hash);
+			// (the host asked everyone: one answer is enough, a second player's parts are no longer taken)
+			if (Raft_Network.IsHost) requested.Remove(msg.Hash);
+			if (Raft_Network.IsHost && wanted.Remove(msg.Hash))
+			{
+				Log("A player had the island file '" + msg.Name + "' (" + msg.Hash + ") this host lacked: the world plays it");
+				DynamicIslands.Notify("A player had the island '" + msg.Name + "' this world needs: it is on this PC now.");
+			}
+		}
+
+		/// <summary>Host: island files the world needs that this PC lacks, by hash (with the island's name) - asked of the players (AU6).</summary>
+		static readonly Dictionary<string, string> wanted = new Dictionary<string, string>();
+		static float nextWantedAsk;
+
+		/// <summary>The island files the host is asking the players for (tests): hashes.</summary>
+		public static IEnumerable<string> Wanted { get { return wanted.Keys; } }
+
+		/// <summary>
+		/// Host: the world needs the island file with this content and this PC has none (an island saved by another host, a
+		/// plan's coming island - AU6). The players are asked (now, each who joins, and every 30 s); one who has it sends it,
+		/// it is kept as name_hash like a downloaded file, and islands waiting for it play it.
+		/// </summary>
+		public static void WantFromPlayers(string name, string hash)
+		{
+			if (!Raft_Network.IsHost || !IsHash(hash) || ReceivedProblem(name, hash) != null || wanted.ContainsKey(hash)) return;
+			wanted[hash] = name;
+			requested.Add(hash);
+			Log("This host lacks the island file '" + name + "' (" + hash + "): asking the players for it");
+			if (InGame) AskPlayers(null);
+		}
+
+		/// <summary>Host: asks one player (who joined) or everyone for the island files the host lacks.</summary>
+		static void AskPlayers(Network_UserId? to)
+		{
+			foreach (var w in wanted.ToList())
+			{
+				requested.Add(w.Key);
+				var msg = new IslandNetMessage { Kind = IslandNetMessage.FileWanted, Name = w.Value, Hash = w.Key };
+				if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+			}
+		}
+
+		static readonly Dictionary<string, float> hashMissAt = new Dictionary<string, float>();
+
+		/// <summary>
+		/// Any island file on this PC with this content (AU6): the preferred name or its name_hash copy, else another copy
+		/// with that hash, else any island file of that content (an imported pack's island renamed "Camp (Pack title)").
+		/// Null when there is none. Not found is remembered for 10 s: the first look hashes every island file.
+		/// </summary>
+		internal static string FileWithHash(string hash, string prefer)
+		{
+			if (!IsHash(hash)) return null;
+			if (!string.IsNullOrEmpty(prefer))
+			{
+				if (HashOf(prefer) == hash) return prefer;
+				if (HashOf(DownloadName(prefer, hash)) == hash) return DownloadName(prefer, hash);
+			}
+			float at;
+			if (hashMissAt.TryGetValue(hash, out at) && Time.unscaledTime - at < 10f) return null;
+			List<string> all;
+			try { all = IslandSpawner.ListSavedIslands().ToList(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for an island file by its content: " + e.Message); return null; }
+			string found = all.Where(n => n.EndsWith("_" + hash, StringComparison.OrdinalIgnoreCase)).FirstOrDefault(n => HashOf(n) == hash) ?? all.FirstOrDefault(n => HashOf(n) == hash);
+			if (found == null) hashMissAt[hash] = Time.unscaledTime; else hashMissAt.Remove(hash);
+			return found;
 		}
 
 		/// <summary>
@@ -789,7 +899,11 @@ namespace DynamicIslands.Editor
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == hash).ToList()) ResolveFile(e);
 		}
 
-		internal static void SendFile(string name, string hash, Network_UserId to)
+		internal static void SendFile(string name, string hash, Network_UserId to) { SendFile(name, hash, to, false); }
+
+		/// <summary>Sends an island file by its content hash (quiet: a player answering the host's FileWanted, which most
+		/// players can't - nothing logged when this PC hasn't got it).</summary>
+		internal static void SendFile(string name, string hash, Network_UserId to, bool quiet)
 		{
 			// (a host playing an island from a copy - name_hash, downloaded as a player or kept for a saved world - sends
 			// that copy, under the island's own name: the player saves it as name_hash, the name its entry waits for; sent
@@ -799,8 +913,16 @@ namespace DynamicIslands.Editor
 			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for an island file that isn't one: " + problem); return; }
 			string file = name;
 			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) file = DownloadName(name, hash);
+			// (the same content under another name - a pack's island renamed on import, which a plan's island was brought
+			// from: still sent under the island's own name - AU6)
+			if (HashOf(file) != hash) file = FileWithHash(hash, null) ?? file;
 			string path = IslandSpawner.PathFor(file);
-			if (!File.Exists(path) || HashOf(file) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
+			if (!File.Exists(path) || HashOf(file) != hash)
+			{
+				if (!quiet) Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has");
+				return;
+			}
+			if (quiet) Log("The host lacks island file '" + name + "' (" + hash + "): sending this PC's " + file);
 			byte[] bytes = File.ReadAllBytes(path);
 			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(SendChunks(name, hash, bytes, to));
 		}

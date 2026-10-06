@@ -654,6 +654,14 @@ namespace DynamicIslands.Editor
 		/// different plan with the same name, so there the world's own copy plays.
 		/// </summary>
 		public static ulong PlanOwner;
+		/// <summary>
+		/// The content hash of each island the world's plan brings, by island name ("@planhash=&lt;island&gt;:&lt;hash&gt;", AU6):
+		/// recorded when the world takes the plan (from the files of the PC that picked it), when a world from before is loaded
+		/// (from the islands it already has, or on the plan owner's PC its files), and when a rule first brings an island.
+		/// Another host then brings that very island - not their own, different island of the same name - and finds it under
+		/// another name too (a pack's island renamed on import). An older version keeps the lines as they are.
+		/// </summary>
+		public static readonly Dictionary<string, string> PlanHashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>True when the last load found the plan file changed since the world was saved (and plays the file).</summary>
 		public static bool PlanWasEdited { get; private set; }
 		/// <summary>Steam id of the PC that saved the world last ("@savedby=", 0 = not known): the plan's owner when the world names none.</summary>
@@ -697,6 +705,7 @@ namespace DynamicIslands.Editor
 			savedBy = 0;
 			stored = null;
 			missingNoted.Clear();
+			PlanHashes.Clear();
 			Done.Clear();
 			Sailed = 0f;
 			retryAt.Clear(); noRoom.Clear();
@@ -714,6 +723,13 @@ namespace DynamicIslands.Editor
 				// The world's own copy of its plan (written since worlds keep one)
 				case "planfrom": PlanFrom = value.Trim(); return true;
 				case "planowner": ulong o; if (ulong.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out o)) PlanOwner = o; return true;
+				case "planhash":
+					// ("<island>:<hash>" - the island's name may have a ':' itself, the hash never - AU6)
+					int colon = value.LastIndexOf(':');
+					string hashed = colon > 0 ? value.Substring(colon + 1).Trim() : "";
+					if (!IslandNetwork.IsHash(hashed)) return false; // (kept as it is - AU5)
+					PlanHashes[value.Substring(0, colon).Trim()] = hashed;
+					return true;
 				case "planrandom": Stored().Random = value.Trim().Equals("on", StringComparison.OrdinalIgnoreCase); return true;
 				case "plandesc": Stored().Description = value.Trim(); return true;
 				case "planrule":
@@ -745,6 +761,13 @@ namespace DynamicIslands.Editor
 				yield return "@planrandom=" + (Plan.Random ? "on" : "off");
 				if ((Plan.Description ?? "").Length > 0) yield return "@plandesc=" + Plan.Description.Replace("\r", " ").Replace("\n", " ");
 				foreach (IntroRule r in Plan.Rules) yield return "@planrule=" + r.ToLine();
+				// (which island each name is, by its content - AU6; on the plan owner's PC its own files, edits too)
+				if (Raft_Network.IsHost) RecordPlanHashes(OwnsPlan);
+				foreach (string n in PlanIslands(Plan))
+				{
+					string h;
+					if (PlanHashes.TryGetValue(n, out h)) yield return "@planhash=" + n + ":" + h;
+				}
 			}
 			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
 			if (PlanOwner != 0) yield return "@planowner=" + PlanOwner.ToString(CultureInfo.InvariantCulture);
@@ -832,6 +855,8 @@ namespace DynamicIslands.Editor
 				}
 			}
 			stored = null;
+			// (a world saved before plans kept their islands' hashes - or a rule added since: what can be known is recorded - AU6)
+			RecordPlanHashes(OwnsPlan);
 			// (a world from before the story chain, whose plan changes Raft's story: the chain from the plan now)
 			if (Plan != null && !StoryChain.HasSnapshot && Plan.HasStory) StoryChain.FromPlan(Plan);
 			if (Plan != null && Plan.Rules.Count > 0)
@@ -893,7 +918,13 @@ namespace DynamicIslands.Editor
 			string where = from.StartsWith("library:") ? "It comes with the library entry '" + LibrarySource.Describe(from) + "' - download it in the island library."
 				: from.StartsWith("import:") ? "It came with '" + LibrarySource.Describe(from) + "' - import that again."
 				: "Ask the player who made this world for it (they can export the plan or island), then import it.";
-			DynamicIslands.Notify("The world's story needs the island '" + name + "', which isn't on this PC, so it can't appear yet. " + where, true);
+			// (this PC has an island of that name, but another one than the world's plan was made with - AU6)
+			bool other = r.What == "island" && PlanHashes.ContainsKey(name) && File.Exists(IslandSpawner.PathFor(name));
+			string what = other ? "The world's story needs the island '" + name + "' it was made with - this PC's '" + name + "' is another island - so it can't appear yet. "
+				: "The world's story needs the island '" + name + "', which isn't on this PC, so it can't appear yet. ";
+			// (the players are asked for it: one who joined this world before may have it - AU6)
+			if (r.What == "island" && PlanHashes.ContainsKey(name)) where += " A player who has it can bring it: it is asked of everyone who joins.";
+			DynamicIslands.Notify(what + where, true);
 		}
 
 		/// <summary>
@@ -925,6 +956,9 @@ namespace DynamicIslands.Editor
 			PlanFromWorld = false;
 			PlanFrom = LibrarySource.OfPlan(plan.Name) ?? "";
 			PlanOwner = LocalSteamId; // (the host who picks the plan: their plan file is the one an edit happens in)
+			// (the plan's islands as this PC has them: the ones any later host brings - AU6)
+			PlanHashes.Clear();
+			RecordPlanHashes(true);
 			if (applyRandom) CustomIslandSpawner.Enabled = plan.Random;
 			retryAt.Clear();
 			return true;
@@ -1102,16 +1136,78 @@ namespace DynamicIslands.Editor
 		const string NoIslandPrefix = "there is no saved island ", NoneOfPrefix = "none of the islands ";
 
 		/// <summary>
-		/// The file a rule plays for an island named so: its own, else the newest copy of it this PC has (name_hash: a player
-		/// who hosts a world after another did - host swap - may have only the copy they downloaded when they joined; the
-		/// rule found nothing and the story stopped). Null when there is neither.
+		/// The file a rule plays for an island named so. When the world's plan recorded the island's content hash (AU6): the
+		/// file with that content - this PC's own when it matches, else its name_hash copy, else any island file with it (a
+		/// pack's island renamed "Camp (Pack title)" on import) - and on the plan owner's PC their own file (their edits play,
+		/// as before); else null: the island is missing here (and the players are asked for it), rather than another host's
+		/// own, different island of the same name being brought. Without a recorded hash (an island's own rules, a world from
+		/// before): its own, else the newest copy of it this PC has (name_hash: a player who hosts a world after another did -
+		/// host swap - may have only the copy they downloaded when they joined). Null when there is neither.
 		/// </summary>
 		internal static string FileFor(string name)
+		{
+			string hash;
+			if (PlanHashes.TryGetValue(name, out hash))
+			{
+				string found = IslandNetwork.FileWithHash(hash, name);
+				if (found != null) return found;
+				if (OwnsPlan && File.Exists(IslandSpawner.PathFor(name))) return name;
+				if (Raft_Network.IsHost) IslandNetwork.WantFromPlayers(name, hash);
+				return null;
+			}
+			return AnyFileFor(name);
+		}
+
+		/// <summary>An island's own file, else the newest name_hash copy of it here (any version), else null.</summary>
+		static string AnyFileFor(string name)
 		{
 			if (File.Exists(IslandSpawner.PathFor(name))) return name;
 			string prefix = name + "_";
 			return IslandSpawner.ListSavedIslands().Where(n => n.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && n.Length == prefix.Length + 12 && IslandNetwork.IsDownloadName(n))
 				.OrderByDescending(n => File.GetLastWriteTimeUtc(IslandSpawner.PathFor(n))).FirstOrDefault();
+		}
+
+		static ulong localId;
+
+		/// <summary>This PC picked the world's plan (or saved the world when no owner is known): its island files are the plan's (AU6).</summary>
+		static bool OwnsPlan
+		{
+			get
+			{
+				if (localId == 0) localId = LocalSteamId;
+				ulong owner = PlanOwner != 0 ? PlanOwner : savedBy;
+				return owner != 0 && owner == localId;
+			}
+		}
+
+		/// <summary>The island names a plan's rules bring ("island" and "oneof" rules).</summary>
+		internal static IEnumerable<string> PlanIslands(WorldPlan plan)
+		{
+			if (plan == null) return Enumerable.Empty<string>();
+			return plan.Rules.SelectMany(r => r.What == "island" ? new[] { r.WhatArg.Trim() } : r.What == "oneof" ? r.WhatArg.Split(',').Select(n => n.Trim()).ToArray() : new string[0])
+				.Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase);
+		}
+
+		/// <summary>
+		/// Records the content hash of the plan's islands not recorded yet (AU6): from an island of that name already in the
+		/// world, else - ownFiles: this PC picked the plan - from this PC's file of it (its own, else the newest copy). On the
+		/// owner's PC its own file's hash replaces a recorded one: the owner's edited island is the plan's from then on.
+		/// </summary>
+		internal static void RecordPlanHashes(bool ownFiles)
+		{
+			foreach (string n in PlanIslands(Plan).ToList())
+			{
+				if (ownFiles && File.Exists(IslandSpawner.PathFor(n)))
+				{
+					string own = IslandNetwork.HashOf(n);
+					if (own != null) { PlanHashes[n] = own; continue; }
+				}
+				if (PlanHashes.ContainsKey(n)) continue;
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.Equals(n, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(x.Hash ?? IslandNetwork.HashOf(x.Name)));
+				string h = e != null ? e.Hash ?? IslandNetwork.HashOf(e.Name) : null;
+				if (h == null && ownFiles) { string f = AnyFileFor(n); if (f != null) h = IslandNetwork.HashOf(f); }
+				if (h != null && IslandNetwork.IsHash(h)) PlanHashes[n] = h;
+			}
 		}
 
 		/// <summary>Brings the rule's island; null when it's on its way, else why not (yet).</summary>
@@ -1175,8 +1271,14 @@ namespace DynamicIslands.Editor
 			if (!spot.HasValue) return why;
 
 			IslandWorldState.Entry entry = IslandWorldState.Add(name, spot.Value, null, false);
-			if (file != name) { entry.Name = file; entry.Hash = IslandNetwork.HashOf(file); Log("'" + name + "' isn't on this PC: played from its copy " + file); }
+			if (file != name) { entry.Name = file; entry.Hash = IslandNetwork.HashOf(file); Log("'" + name + "' as the world's plan has it isn't on this PC under its name: played from " + file); }
 			entry.Rule = r.Id;
+			// (the first time the world brings a plan island with no hash recorded: this one is the plan's from now on - AU6)
+			if (type == null && !PlanHashes.ContainsKey(name) && PlanIslands(Plan).Contains(name, StringComparer.OrdinalIgnoreCase))
+			{
+				string h = IslandNetwork.HashOf(file);
+				if (h != null) PlanHashes[name] = h;
+			}
 			entry.Label = LabelFor(r, file, type);
 			entry.Loading = true;
 			if (gen != null)

@@ -266,8 +266,11 @@ namespace DynamicIslands.Editor
 					continue;
 				}
 				string hash = p.Length > 7 ? p[7].Trim() : "";
-				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
-					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" });
+				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
+					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" };
+				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
+				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash)) read.WaitingForFile = true;
+				islands.Add(read);
 			}
 			// (one line that can't be read is left out - the rest of the world still loads; before, it stopped the reading
 			// half way and the next save wrote the half over the whole file - AU12)
