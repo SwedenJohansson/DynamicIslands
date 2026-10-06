@@ -210,8 +210,13 @@ namespace DynamicIslands.Editor
 			void Update()
 			{
 				if (panel == null) return;
-				// (Raft's boxes found again now and then: closed ones are inactive, so inactive ones count)
-				if (Time.unscaledTime >= nextLook) { boxes = Resources.FindObjectsOfTypeAll<MenuBox>().Where(b => b != null && b.gameObject.scene.IsValid()).ToArray(); nextLook = Time.unscaledTime + 1f; }
+				// (Raft's boxes found again now and then: closed ones are inactive, so inactive ones count. Every object is
+				// searched: once they are found, every 15 s - or at once when one is gone)
+				if (Time.unscaledTime >= nextLook || Array.Exists(boxes, b => b == null))
+				{
+					boxes = Resources.FindObjectsOfTypeAll<MenuBox>().Where(b => b != null && b.gameObject.scene.IsValid()).ToArray();
+					nextLook = Time.unscaledTime + (boxes.Length > 0 ? 15f : 1f);
+				}
 				bool show = OtherWindow() == null;
 				if (panel.gameObject.activeSelf != show) panel.gameObject.SetActive(show);
 			}

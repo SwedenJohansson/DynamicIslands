@@ -506,10 +506,12 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextCheck) return;
 			nextCheck = Time.unscaledTime + 0.5f;
+			// (levels off: nothing to show once the tags shown are hidden)
+			if (!PlayerLevels.On && Shown.Count == 0) return;
 			Shown.Clear();
 			Network_Player local = null;
 			try { local = RAPI.GetLocalPlayer(); } catch { }
-			foreach (Network_Player p in Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				if (p == null || p == local || p.playerNameTextMesh == null) continue;
 				TextMesh name = p.playerNameTextMesh;

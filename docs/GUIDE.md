@@ -2162,6 +2162,10 @@ opens the list:
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
   shown, for example all your test islands at once.
+- **Plans' islands** (off unless you tick it): the islands that world plans bring - each plan's own story islands, and
+  the islands those bring - are left out of the list and never turn up by chance, so you don't meet another plan's
+  island out of its story. Tick it to let them in too (for every new world, until you untick it). The world randomizer's
+  own extras (`rnd-...` files) are never in the list.
 
 Only what you untick is kept, so islands you make or download later join older worlds too, unless you untick them when
 you make a new world. The choice belongs to the world (saved with it, so it stays when another player hosts the world

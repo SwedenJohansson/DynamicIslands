@@ -212,7 +212,7 @@ namespace DynamicIslands.Editor
 			// any player is at it: its creatures, ambushes, shared actions and where each player stood live on the host's
 			// copy - a crew that splits up, three players at an island far behind the raft, still has all of it)
 			var players = new List<Vector3>();
-			if (Raft_Network.IsHost) players.AddRange(UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null).Select(p => p.transform.position));
+			if (Raft_Network.IsHost) players.AddRange(Players.All.Where(p => p != null).Select(p => p.transform.position));
 			else { Network_Player player = RAPI.GetLocalPlayer(); if (player != null) players.Add(player.transform.position); }
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
@@ -639,7 +639,12 @@ namespace DynamicIslands.Editor
 			var result = new List<KeyValuePair<string, float>>();
 			// Copies downloaded from a multiplayer host (<name>_<hash>) and islands generated while sailing (gen-...,
 			// which live on in their worlds) only join the pool when listed by name
-			var saved = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase)).ToList();
+			// (also never: the world randomizer's extras (rnd-...), which belong to one of Raft's islands in one world; and, unless
+			// the player asks for them, the islands any world plan brings - a plan's island that turned up by chance in another
+			// world was out of its story - the user, 2026-10-06)
+			HashSet<string> ofPlans = PlanIslandsInPool ? new HashSet<string>() : AllPlansIslandNames();
+			var saved = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase) &&
+				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && !ofPlans.Contains(n)).ToList();
 			var listed = new HashSet<string>(poolLines.Where(p => p.Key != "*").Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
 			foreach (var p in poolLines)
 			{
@@ -656,6 +661,55 @@ namespace DynamicIslands.Editor
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
 			HashSet<string> planned = forWorld ? PlanIslandNames() : new HashSet<string>();
 			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key)))).ToList();
+		}
+
+		/// <summary>
+		/// Whether the islands of world plans may turn up by chance while sailing (off unless the player switches it on in the
+		/// island list: world_rules.txt "planislands=on"). Islands listed by name in spawnpool.txt take part either way.
+		/// </summary>
+		public static bool PlanIslandsInPool
+		{
+			get { return (WorldRules.ReadDefault("planislands") ?? "").Trim().Equals("on", StringComparison.OrdinalIgnoreCase); }
+			set { WorldRules.SaveDefault("planislands", value ? "on" : "off"); allPlansAt = -100f; }
+		}
+
+		static HashSet<string> allPlans;
+		static float allPlansAt = -100f;
+
+		/// <summary>
+		/// Every island the saved world plans bring by name, and the islands those islands' own rules bring (looked at again
+		/// every 10 s at most): left out of the random pool unless PlanIslandsInPool.
+		/// </summary>
+		public static HashSet<string> AllPlansIslandNames()
+		{
+			if (allPlans != null && Time.unscaledTime - allPlansAt < 10f) return allPlans;
+			var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			Action<IEnumerable<IntroRule>, Queue<string>> take = (rules, next) =>
+			{
+				foreach (IntroRule r in rules)
+				{
+					var found = new List<string>();
+					if (r.What == "island" && r.WhatArg.Trim().Length > 0) found.Add(r.WhatArg.Trim());
+					else if (r.What == "oneof") found.AddRange(r.WhatArg.Split(',').Select(n => n.Trim()).Where(n => n.Length > 0));
+					foreach (string n in found) if (names.Add(n)) next.Enqueue(n);
+				}
+			};
+			try
+			{
+				var queue = new Queue<string>();
+				foreach (string p in WorldPlan.All())
+				{
+					if (WorldPlan.IsBuiltIn(p)) continue;
+					WorldPlan plan = WorldPlan.Load(p);
+					if (plan != null) take(plan.Rules, queue);
+				}
+				// (islands that bring other islands: those come with the plan too)
+				for (int guard = 0; queue.Count > 0 && guard < 2000; guard++) take(IslandCache.RulesOf(queue.Dequeue()), queue);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for the world plans' islands: " + e.Message); }
+			allPlans = names;
+			allPlansAt = Time.unscaledTime;
+			return names;
 		}
 
 		/// <summary>

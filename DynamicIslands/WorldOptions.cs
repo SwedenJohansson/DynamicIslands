@@ -178,6 +178,15 @@ namespace DynamicIslands.Editor
 			try { ScrambledBlueprints.ApplyNow(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] Blueprints: " + e.Message); }
 		}
 
+		/// <summary>The world was left (every machine): none until the next world's are read or come.</summary>
+		internal static void Forget()
+		{
+			Current.Clear();
+			Seed = 0;
+			used = false;
+			ScrambledBlueprints.Reset();
+		}
+
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>
 		internal static void OnWorldReceived()
 		{

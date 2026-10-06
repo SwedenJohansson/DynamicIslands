@@ -138,6 +138,32 @@ namespace DynamicIslands
 			if (ok) Log("PASS: randomizer hints"); else Fail("randomizer hints");
 		}
 
+		[ConsoleCommand(name: "CIPlanIslandsPool", docs: "Dev, anywhere: the islands world plans bring and the randomizer's rnd- extras are not in the sailing list / random pool; switched on, the plans' islands are (the user, 2026-10-06)")]
+		public static void PlanIslandsPoolCommand()
+		{
+			bool ok = true;
+			bool before = CustomIslandSpawner.PlanIslandsInPool;
+			try
+			{
+				HashSet<string> planned = CustomIslandSpawner.AllPlansIslandNames();
+				List<string> withFiles = planned.Where(n => System.IO.File.Exists(IslandSpawner.PathFor(n))).ToList();
+				Check(ref ok, withFiles.Count > 0, "the plans bring " + planned.Count + " island(s), " + withFiles.Count + " of them on this PC (e.g. " + string.Join(", ", withFiles.Take(4).ToArray()) + ")");
+				CustomIslandSpawner.PlanIslandsInPool = false;
+				CustomIslandSpawner.LoadPool(true);
+				List<string> off = WorldIslands.Candidates();
+				Check(ref ok, !off.Any(planned.Contains), "off: none of them in the list (" + off.Count + " entries)");
+				Check(ref ok, !off.Any(n => n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase)), "the randomizer's rnd- extras never in it");
+				CustomIslandSpawner.PlanIslandsInPool = true;
+				CustomIslandSpawner.LoadPool(true);
+				List<string> on = WorldIslands.Candidates();
+				// (a library plan's islands have weight 0 in spawnpool.txt: they stay out either way)
+				int planIn = on.Count(planned.Contains);
+				Check(ref ok, planIn > 0 && on.Count == off.Count + planIn, "on: the plans' islands with a weight are in it too (" + planIn + " more, " + on.Count + " entries)");
+			}
+			finally { CustomIslandSpawner.PlanIslandsInPool = before; CustomIslandSpawner.LoadPool(true); }
+			if (ok) Log("PASS: plan islands pool"); else Fail("plan islands pool");
+		}
+
 		[ConsoleCommand(name: "CIUniqueCopy", docs: "Dev: CIUniqueCopy <island> <new name> - a copy of a saved island with a setting of its own, so no other file has its content (host-swap tests: B must have no file of it, AU6 finds islands by content)")]
 		public static void UniqueCopyCommand(string[] args)
 		{

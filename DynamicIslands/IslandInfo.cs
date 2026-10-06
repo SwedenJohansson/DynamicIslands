@@ -96,6 +96,9 @@ namespace DynamicIslands.Editor
 		/// <summary>A banner shows at least this long before the next one takes its place.</summary>
 		const float MinSeconds = 3f;
 
+		/// <summary>The world was left: its banners still waiting aren't shown in the next one.</summary>
+		internal static void Forget() { waiting.Clear(); }
+
 		public static void Tick()
 		{
 			if (banner != null && banner.gameObject.activeSelf)

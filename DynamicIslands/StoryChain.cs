@@ -762,7 +762,8 @@ namespace DynamicIslands.Editor
 		{
 			if (!StoryChain.Active || StoryChain.Bypass || (int)chunkPointType >= StoryChain.ModTypeBase || Array.IndexOf(StoryOrder.Chain, chunkPointType) < 0) return true;
 			// (the host leads on through the chain and sends every player the result; a player's own unlock waits for it)
-			if (Raft_Network.IsHost) StoryChain.OnRaftUnlock(chunkPointType);
+			try { if (Raft_Network.IsHost) StoryChain.OnRaftUnlock(chunkPointType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] Unlocking " + chunkPointType + ": " + e); }
 			return false;
 		}
 	}
@@ -785,12 +786,20 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(RecieverFrequency), "InitializeAllFrequencies")]
 	static class StoryChainFrequenciesMade
 	{
-		static void Postfix() { StoryChain.InstallFrequencies(); }
+		static void Postfix()
+		{
+			try { StoryChain.InstallFrequencies(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
+		}
 	}
 
 	[HarmonyPatch(typeof(RGD_RecieverFrequencies), "RestoreFrequencies")]
 	static class StoryChainFrequenciesRestored
 	{
-		static void Postfix() { StoryChain.InstallFrequencies(); }
+		static void Postfix()
+		{
+			try { StoryChain.InstallFrequencies(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
+		}
 	}
 }

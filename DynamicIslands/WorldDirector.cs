@@ -780,6 +780,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world in the game scene has been set up (a saved world's list read, or a new world started).</summary>
 		static bool worldHandled;
+		/// <summary>The game scene was there at the last tick.</summary>
+		static bool inWorld;
 
 		/// <summary>
 		/// Raft raises SaveAndLoad.LoadComplete only when it restores a saved world, never for a brand-new one. A new
@@ -973,7 +975,15 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + TickInterval;
-			if (!LoadSceneManager.IsGameSceneLoaded) { worldHandled = false; return; }
+			if (!LoadSceneManager.IsGameSceneLoaded)
+			{
+				worldHandled = false;
+				// (the world was left: its randomizer, options and waiting banners go with it - the next world used them until
+				// its own were read, a new one for a second)
+				if (inWorld) { inWorld = false; WorldRandomizer.Reset(); WorldOptions.Forget(); IslandInfo.Forget(); }
+				return;
+			}
+			inWorld = true;
 			if (!worldHandled) CheckNewWorld();
 			if (!Raft_Network.IsHost || Time.unscaledTime - loadedAt < StartDelay) return;
 			if (!CustomIslandSpawner.RaftPosition.HasValue) return;
@@ -1114,7 +1124,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: marks islands a player has come to (for "visit" rules; kept with the island's state).</summary>
 		static void UpdateVisits()
 		{
-			List<Vector3> players = UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null).Select(p => p.transform.position).ToList();
+			List<Vector3> players = Players.All.Where(p => p != null).Select(p => p.transform.position).ToList();
 			if (players.Count == 0) return;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
