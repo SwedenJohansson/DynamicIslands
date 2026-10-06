@@ -14,7 +14,9 @@ namespace DynamicIslands.Editor
 	/// the extra options and the level up system, which islands turn up while sailing, and the world's plan and story. The
 	/// host changes them here for every player (the same as the F10 commands Monsters, BuildCost, Randomizer, WorldOptions,
 	/// Levels, WorldIslands); other players see the host's settings, read only. Before, a running world's settings could
-	/// only be changed with F10 commands.
+	/// only be changed with F10 commands. The world's regrow days (WorldRules.SetRegrow) and the host's spawnpool.txt
+	/// settings every player shares - the Receiver's dots and range, the unload distance - are fields here too, and
+	/// "Defaults..." opens all of spawnpool.txt (DefaultsWindow; ROADMAP AU46).
 	/// </summary>
 	public class WorldWindow : MonoBehaviour
 	{
@@ -24,6 +26,7 @@ namespace DynamicIslands.Editor
 		static Text hostText, planText, islandsText, hereText;
 		static RectTransform islandList;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
+		static readonly Dictionary<string, InputField> fields = new Dictionary<string, InputField>();
 		static float nextRefresh;
 		/// <summary>
 		/// The spawn pool's entries and the plan list as last read, with what they were read from (AU41): the window refreshes
@@ -99,6 +102,19 @@ namespace DynamicIslands.Editor
 				}
 			}
 
+			// This world's regrow days and the host's spawnpool.txt settings every player shares (ROADMAP AU46: no file to edit)
+			RectTransform shared = UIKit.Group(left, "Regrow and the Receiver (the host's, for every player)", "HostSettings");
+			RectTransform srow = UIKit.Row(shared, 28f, 6f, "Regrow");
+			UIKit.Label(srow, "Regrow days", 12, UIKit.TextMuted);
+			AddField("RegrowDays", srow, true, "Days until chopped trees, picked items, animals and looted chests come back in this world (0 = never; an island's own rule wins). Kept with the world, the same as the F10 command RegrowDays", SetRegrow);
+			UIKit.Label(srow, "Unload beyond (m)", 12, UIKit.TextMuted);
+			AddField("UnloadDistance", srow, false, "Custom islands further than this from the raft are unloaded, and come back when it returns (300 or more). Saved in your spawnpool.txt for every world you host", v => SetPool("unloadDistance", v));
+			RectTransform rrow2 = UIKit.Row(shared, 28f, 6f, "Receiver");
+			Add("Receiver", UIKit.Button(rrow2, "", () => SetPool("showOnReceiver", WorldRules.ShowOnReceiver ? "0" : "1"), "Custom islands as green dots on Raft's Receiver. Saved in your spawnpool.txt for every world you host", 150, 28f, 12));
+			UIKit.Label(rrow2, "Range (m, 0 = all)", 12, UIKit.TextMuted);
+			AddField("ReceiverDistance", rrow2, false, "Receiver dots only for islands this close (0 = all); an island the players still need shows however far it is. Saved in your spawnpool.txt for every world you host", v => SetPool("receiverDistance", v));
+			Add("Defaults", UIKit.Button(rrow2, "Defaults...", DefaultsWindow.Open, "Every setting of your spawnpool.txt: random islands, spacing, distances, the Receiver, regrow days for new worlds, generated islands", 100, 28f, 12));
+
 			// Islands while sailing
 			Heading(left, "ISLANDS WHILE SAILING");
 			islandsText = UIKit.Label(left, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "IslandsNote");
@@ -155,6 +171,48 @@ namespace DynamicIslands.Editor
 		}
 
 		static void Add(string name, Button b) { b.name = name; buttons[name] = b; }
+
+		/// <summary>A number field of the window (host: applied when left), named Field_&lt;name&gt;.</summary>
+		static void AddField(string name, Transform row, bool whole, string hint, Action<string> onDone)
+		{
+			InputField f = UIKit.Field(row, "0", "", 28f, hint);
+			f.name = "Field_" + name;
+			UIKit.Size(f.gameObject, 70, 28);
+			f.contentType = whole ? InputField.ContentType.IntegerNumber : InputField.ContentType.DecimalNumber;
+			f.characterLimit = 7;
+			f.onEndEdit.AddListener(v => onDone(v));
+			fields[name] = f;
+		}
+
+		/// <summary>Tests: a number field of the window by its name ("RegrowDays", "UnloadDistance", "ReceiverDistance").</summary>
+		public static InputField FieldNamed(string name) { InputField f; return fields.TryGetValue(name, out f) ? f : null; }
+
+		/// <summary>Host: the world's own regrow days (WorldRules.SetRegrow: kept with the world, sent to every player).</summary>
+		static void SetRegrow(string text)
+		{
+			int d;
+			if (!Host || !int.TryParse((text ?? "").Trim(), out d)) { Refresh(); return; }
+			d = Mathf.Max(0, d);
+			if (d != WorldRules.RegrowDays)
+			{
+				WorldRules.SetRegrow(d);
+				DynamicIslands.Notify("In this world things come back after " + (d > 0 ? d + " day(s)" : "never") + " (an island's own rule wins)");
+			}
+			Refresh();
+		}
+
+		/// <summary>Host: a spawnpool.txt setting every player shares, written to the file (players get it: WorldRules.OnPoolChanged).</summary>
+		static void SetPool(string key, string text)
+		{
+			if (!Host) { Refresh(); return; }
+			text = (text ?? "").Trim().Replace(',', '.');
+			if (text.Length > 0 && text != CustomIslandSpawner.FormatValue(CustomIslandSpawner.ValueOf(key)))
+			{
+				try { CustomIslandSpawner.SetPoolValues(new Dictionary<string, string> { { key, text } }); }
+				catch (Exception e) { DynamicIslands.Notify("Could not change " + CustomIslandSpawner.PoolFileName + ": " + (SafeFile.InUse(e) ? "it is in use by another program" : e.Message), true); }
+			}
+			Refresh();
+		}
 
 		static void SetRandomizer(Action<RandomizerSettings> change)
 		{
@@ -228,7 +286,8 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
+			// (Esc over the Defaults window closes that one only)
+			if (Input.GetKeyDown(KeyCode.Escape) && !DefaultsWindow.IsOpen && DefaultsWindow.ClosedFrame != Time.frameCount) { Close(); return; }
 			if (!LoadSceneManager.IsGameSceneLoaded) { Close(); return; }
 			// (a client sees the host's changes as they come)
 			if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 1f; Refresh(); }
@@ -260,6 +319,12 @@ namespace DynamicIslands.Editor
 			buttons["BackToEditor"].interactable = true;
 			for (int i = 0; i < MonsterDifficulty.Names.Length; i++) UIKit.SetActive(buttons["Monsters_" + MonsterDifficulty.Names[i]], MonsterDifficulty.Current == i);
 			UIKit.LabelOf(buttons["BuildCost_Value"]).text = BuildCost.Describe(BuildCost.Current);
+			// (the world's regrow days and the host's shared settings - a player sees the host's)
+			UIKit.LabelOf(buttons["Receiver"]).text = "Receiver dots:  " + (WorldRules.ShowOnReceiver ? "ON" : "off");
+			UIKit.SetActive(buttons["Receiver"], WorldRules.ShowOnReceiver);
+			ShowField("RegrowDays", WorldRules.RegrowDays, host);
+			ShowField("UnloadDistance", WorldRules.UnloadDistance, host);
+			ShowField("ReceiverDistance", WorldRules.ReceiverDistance, host);
 			RandomizerSettings r = WorldRandomizer.Current;
 			for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++) UIKit.SetActive(buttons["Randomizer_" + RandomizerSettings.LevelNames[i]], r.Level == i);
 			foreach (string part in RandomizerSettings.Features)
@@ -303,6 +368,13 @@ namespace DynamicIslands.Editor
 
 			planText.text = host ? PlanSummary() : WorldDirector.DescribeForPlayer(false) + (StoryChain.Active ? "\n" + StorySummary() : "");
 			hereText.text = IslandsHere();
+		}
+
+		static void ShowField(string name, float value, bool host)
+		{
+			InputField f = fields[name];
+			f.interactable = host;
+			if (!f.isFocused) f.text = CustomIslandSpawner.FormatValue(value);
 		}
 
 		/// <summary>The plan and its rules, and the story chain if the plan changed Raft's story (host).</summary>

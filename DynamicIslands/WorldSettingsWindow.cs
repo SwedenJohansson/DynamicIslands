@@ -16,7 +16,8 @@ namespace DynamicIslands.Editor
 	///   - Extra options: scrambled blueprints, story islands in a new order, ghost rafts, private storages (WorldOptions),
 	///     each switched with its own button and explained under it;
 	///   - Islands while sailing: which islands of the spawn pool the world gets (IslandPickerWindow, WorldIslands).
-	/// "Raft's own" puts every one of them back to plain Raft; "Done" closes it. The choices are kept for the world being
+	/// "Raft's own" puts every one of them back to plain Raft; "Defaults..." opens this PC's spawnpool.txt settings
+	/// (DefaultsWindow); "Done" closes it. The choices are kept for the world being
 	/// made and remembered for the next one when Create is pressed.
 	/// </summary>
 	[HarmonyPatch(typeof(NewGameBox), "Open")]
@@ -138,6 +139,8 @@ namespace DynamicIslands.Editor
 			UIKit.Size(summary.gameObject, -1, 30);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Button(buttons, "Raft's own", RaftsOwn, "Every setting back to plain Raft: Normal monsters, Raft's build cost, no randomizer, no extra options", 150, 34f, 14);
+			// (spawnpool.txt's settings for every world this PC hosts, without editing the file - ROADMAP AU46)
+			UIKit.Button(buttons, "Defaults...", DefaultsWindow.Open, "This PC's settings for every world it hosts (spawnpool.txt): random islands, spacing, distances, the Receiver, regrow days, generated islands", 150, 34f, 14).name = "Button_Defaults";
 			UIKit.Label(buttons, "", 12);
 			Button done = UIKit.Button(buttons, "Done", Close, "Keep these settings for the world you create", 150, 34f, 15);
 			UIKit.Primary(done);

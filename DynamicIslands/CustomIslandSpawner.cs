@@ -822,23 +822,156 @@ type:sunken 0.2
 		/// <summary>A number setting of spawnpool.txt by its (lower-case) key; false if there is none.</summary>
 		internal static bool SetValue(string key, float v)
 		{
+			float? c = Clamped(key, v);
+			if (!c.HasValue) return false;
+			v = c.Value;
 			switch (key)
 			{
-				case "chanceperkm": ChancePerKm = Mathf.Clamp01(v); return true;
-				case "quietminutes": QuietMinutes = Mathf.Clamp(v, 0f, 240f); return true;
-				case "minspacing": MinSpacing = Mathf.Max(0f, v); return true;
-				case "spawndistancemin": SpawnDistanceMin = Mathf.Max(20f, v); return true;
-				case "spawndistancemax": SpawnDistanceMax = Mathf.Max(20f, v); return true;
-				case "unloaddistance": UnloadDistance = Mathf.Max(300f, v); return true;
-				case "returnminutes": ReturningIslands.ReturnMinutes = Mathf.Max(0f, v); return true;
-				case "regrowdays": RegrowDays = Mathf.Max(0, Mathf.RoundToInt(v)); return true;
-				case "showonreceiver": ShowOnReceiver = v != 0f; return true;
-				case "receiverdistance": ReceiverDistance = Mathf.Max(0f, v); return true;
-				case "generated": GeneratedWeight = Mathf.Max(0f, v); return true;
-				case "generatedflyingchance": GeneratedFlyingChance = Mathf.Clamp01(v); return true;
-				default: return false;
+				case "chanceperkm": ChancePerKm = v; break;
+				case "quietminutes": QuietMinutes = v; break;
+				case "minspacing": MinSpacing = v; break;
+				case "spawndistancemin": SpawnDistanceMin = v; break;
+				case "spawndistancemax": SpawnDistanceMax = v; break;
+				case "unloaddistance": UnloadDistance = v; break;
+				case "returnminutes": ReturningIslands.ReturnMinutes = v; break;
+				case "regrowdays": RegrowDays = Mathf.RoundToInt(v); break;
+				case "showonreceiver": ShowOnReceiver = v != 0f; break;
+				case "receiverdistance": ReceiverDistance = v; break;
+				case "generated": GeneratedWeight = v; break;
+				case "generatedflyingchance": GeneratedFlyingChance = v; break;
+			}
+			return true;
+		}
+
+		/// <summary>A number setting kept within what it may be (the same for the file and the Defaults window); null if the key (lower-case) is none.</summary>
+		internal static float? Clamped(string key, float v)
+		{
+			switch (key)
+			{
+				case "chanceperkm": return Mathf.Clamp01(v);
+				case "quietminutes": return Mathf.Clamp(v, 0f, 240f);
+				case "minspacing": return Mathf.Max(0f, v);
+				case "spawndistancemin": return Mathf.Max(20f, v);
+				case "spawndistancemax": return Mathf.Max(20f, v);
+				case "unloaddistance": return Mathf.Max(300f, v);
+				case "returnminutes": return Mathf.Max(0f, v);
+				case "regrowdays": return Mathf.Max(0, Mathf.RoundToInt(v));
+				case "showonreceiver": return v != 0f ? 1f : 0f;
+				case "receiverdistance": return Mathf.Max(0f, v);
+				case "generated": return Mathf.Max(0f, v);
+				case "generatedflyingchance": return Mathf.Clamp01(v);
+				default: return null;
 			}
 		}
+
+		/// <summary>The number settings of spawnpool.txt, as the file spells them (ROADMAP AU46: the Defaults window).</summary>
+		public static readonly string[] NumberKeys = { "chancePerKm", "quietMinutes", "minSpacing", "spawnDistanceMin", "spawnDistanceMax", "unloadDistance",
+			"returnMinutes", "regrowDays", "showOnReceiver", "receiverDistance", "generated", "generatedFlyingChance" };
+
+		/// <summary>A number setting's value on this machine now (by its key, any case); NaN if there is none.</summary>
+		public static float ValueOf(string key)
+		{
+			switch (key.ToLowerInvariant())
+			{
+				case "chanceperkm": return ChancePerKm;
+				case "quietminutes": return QuietMinutes;
+				case "minspacing": return MinSpacing;
+				case "spawndistancemin": return SpawnDistanceMin;
+				case "spawndistancemax": return SpawnDistanceMax;
+				case "unloaddistance": return UnloadDistance;
+				case "returnminutes": return ReturningIslands.ReturnMinutes;
+				case "regrowdays": return RegrowDays;
+				case "showonreceiver": return ShowOnReceiver ? 1f : 0f;
+				case "receiverdistance": return ReceiverDistance;
+				case "generated": return GeneratedWeight;
+				case "generatedflyingchance": return GeneratedFlyingChance;
+				default: return float.NaN;
+			}
+		}
+
+		/// <summary>A number setting's value in the mod's own spawnpool.txt (the file a new install gets); NaN if there is none.</summary>
+		public static float DefaultOf(string key)
+		{
+			foreach (string raw in DefaultPool.Split('\n'))
+			{
+				string line = raw.Trim();
+				int eq = line.IndexOf('=');
+				if (line.StartsWith("#") || eq < 1 || !line.Substring(0, eq).Trim().Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
+				float v;
+				if (float.TryParse(line.Substring(eq + 1).Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v)) return v;
+			}
+			return float.NaN;
+		}
+
+		/// <summary>
+		/// Changes settings of spawnpool.txt (ROADMAP AU46 - the Defaults window and the world window, instead of editing the
+		/// file by hand): key -> value, numbers (NumberKeys), generatedStyles (style names) or defaultPlan. Every value is
+		/// checked and kept within its range first (the clamps LoadPool applies; spawnDistanceMax never below
+		/// spawnDistanceMin), so a bad one changes nothing; then the file is written once, whole (SafeFile), its comments and
+		/// island lines as they were: a setting's line is changed where it is, one the file hasn't gets a line after its last
+		/// setting. The file is read again at once - and the host's players get the settings they share (OnPoolChanged).
+		/// Returns the values as written. Throws ArgumentException for a bad value (nothing written).
+		/// </summary>
+		public static Dictionary<string, string> SetPoolValues(IDictionary<string, string> values)
+		{
+			LoadPool(false); // (makes the file if it isn't there)
+			var write = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			foreach (var kv in values)
+			{
+				string key = kv.Key.Trim(), value = (kv.Value ?? "").Trim();
+				if (key.Equals("generatedStyles", StringComparison.OrdinalIgnoreCase))
+				{
+					string[] names = value.Split(',', ' ').Where(x => x.Trim().Length > 0).Select(x => x.Trim()).ToArray();
+					if (names.Length == 0 || names.Any(n => !TerrainPainter.Styles.Any(st => st.Name.Equals(n, StringComparison.OrdinalIgnoreCase))))
+						throw new ArgumentException("generatedStyles: one or more of " + string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).ToArray()));
+					write["generatedStyles"] = string.Join(", ", names);
+					continue;
+				}
+				if (key.Equals("defaultPlan", StringComparison.OrdinalIgnoreCase))
+				{
+					if (value.Length == 0) throw new ArgumentException("defaultPlan: a plan's name");
+					write["defaultPlan"] = value;
+					continue;
+				}
+				string spelt = NumberKeys.FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase));
+				if (spelt == null) throw new ArgumentException("'" + key + "' is not a setting of " + PoolFileName);
+				float v;
+				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) || float.IsNaN(v) || float.IsInfinity(v)) throw new ArgumentException(spelt + ": a number, not '" + value + "'");
+				write[spelt] = FormatValue(Clamped(spelt.ToLowerInvariant(), v).Value);
+			}
+			// (the far end of where islands appear never nearer than the near end, as LoadPool keeps it)
+			if (write.ContainsKey("spawnDistanceMin") || write.ContainsKey("spawnDistanceMax"))
+			{
+				string s;
+				float min = write.TryGetValue("spawnDistanceMin", out s) ? float.Parse(s, CultureInfo.InvariantCulture) : SpawnDistanceMin;
+				float max = write.TryGetValue("spawnDistanceMax", out s) ? float.Parse(s, CultureInfo.InvariantCulture) : SpawnDistanceMax;
+				if (max < min) write["spawnDistanceMax"] = FormatValue(min);
+			}
+			if (write.Count == 0) return write;
+
+			List<string> lines = File.Exists(PoolPath) ? File.ReadAllLines(PoolPath).ToList() : new List<string>();
+			var done = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			int lastSetting = -1;
+			for (int i = 0; i < lines.Count; i++)
+			{
+				string l = lines[i].Trim();
+				int eq = l.IndexOf('=');
+				if (l.Length == 0 || l.StartsWith("#") || eq < 1) continue;
+				lastSetting = i;
+				string k = l.Substring(0, eq).Trim(), to;
+				if (!write.TryGetValue(k, out to)) continue;
+				lines[i] = k + " = " + to; // (every line of it: the file's last one counts when it is read)
+				done.Add(k);
+			}
+			lines.InsertRange(lastSetting + 1, write.Where(kv => !done.Contains(kv.Key)).Select(kv => kv.Key + " = " + kv.Value));
+			SafeFile.WriteAllLines(PoolPath, lines.ToArray());
+			Debug.Log("[CUSTOM ISLANDS] " + PoolFileName + ": " + string.Join(", ", write.Select(kv => kv.Key + " = " + kv.Value).ToArray()));
+			LoadPool(true);
+			return write;
+		}
+
+		/// <summary>A number as spawnpool.txt has it (no more than three decimals, a point).</summary>
+		public static string FormatValue(float v) { return v.ToString("0.###", CultureInfo.InvariantCulture); }
 
 		/// <summary>Dev tests (CISpawnPoolSet): numbers that replace this machine's spawnpool.txt ones, kept when the file is read
 		/// again (each world load) - to give a player who joins other settings than the host's.</summary>
