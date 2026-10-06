@@ -287,7 +287,7 @@ namespace DynamicIslands.Editor
 			{
 				// Off-centre so it's reachable but not always dead ahead; later attempts spread wider
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
+				float angle = TestAllRound ? UnityEngine.Random.Range(0f, 360f) : side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
 				// Later attempts also look a little further out
 				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
@@ -315,6 +315,10 @@ namespace DynamicIslands.Editor
 			}
 			return Skip("no free spot ahead of the raft for '" + name + "' (" + string.Join("; ", reasons.Distinct().Take(3).ToArray()) + ")");
 		}
+
+		/// <summary>Tests (CISpawnGenerated): look all round the raft, not only ahead (Raft's own islands ahead made the
+		/// join-while-generating test depend on the sea's layout).</summary>
+		internal static bool TestAllRound;
 
 		/// <summary>Tests (CIGenDelay): a generated island's file is written this many seconds late - a player joins meanwhile (AT1).</summary>
 		public static float TestGenerateDelay;

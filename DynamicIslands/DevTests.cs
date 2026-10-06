@@ -245,7 +245,10 @@ namespace DynamicIslands
 			if (!pos.HasValue) { Fail("not in a world"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			CustomIslandSpawner.ForceNextPick = CustomIslandSpawner.GeneratedEntry;
-			string result = CustomIslandSpawner.TrySpawn(pos.Value, true);
+			string result;
+			CustomIslandSpawner.TestAllRound = true;
+			try { result = CustomIslandSpawner.TrySpawn(pos.Value, true); }
+			finally { CustomIslandSpawner.TestAllRound = false; }
 			Log(result);
 			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (e == null) { Fail("no island was added (" + result + ")"); yield break; }
