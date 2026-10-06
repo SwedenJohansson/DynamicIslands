@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using DynamicIslands.Editor;
@@ -55,13 +56,13 @@ namespace DynamicIslands
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
 			yield return DynamicIslands.instance.SpawnIslandFile(TreasureIsland, spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == TreasureIsland);
-			if (e == null || e.Root == null) { Fail(TreasureIsland + " did not spawn"); yield break; }
-			yield return new WaitForSeconds(1f);
+			if (e == null || e.Root == null) { Fail(TreasureIsland + " did not spawn"); IslandWorldState.Remove(TreasureIsland); File.Delete(IslandSpawner.PathFor(TreasureIsland)); yield break; }
 			TreasurePointManager tm = UnityEngine.Object.FindObjectOfType<TreasurePointManager>();
+			yield return WaitFor(() => tm != null && e.Root != null && BuriedTreasure.PointsOf(tm, e.Root.transform).Count >= 2, 15f);
 			List<TreasurePoint> pts = BuriedTreasure.PointsOf(tm, e.Root.transform);
 			Check(ref ok, pts.Count == 2, "2 buried treasures on the island (" + pts.Count + ")");
 			BuriedTreasure first = e.Root.GetComponentsInChildren<BuriedTreasure>(true).FirstOrDefault(b => b.Number == 0);
-			if (first == null || first.Point == null) { Fail("no treasure point"); yield break; }
+			if (first == null || first.Point == null) { Fail("no treasure point"); IslandWorldState.Remove(TreasureIsland); File.Delete(IslandSpawner.PathFor(TreasureIsland)); yield break; }
 			float d;
 			TreasurePoint near = tm.GetClosestTreasurePointTo(first.transform.position, 60f, true, true, out d);
 			Check(ref ok, near == first.Point && d < 1f, "the detector's search finds it where the marker is (" + d.ToString("F2") + " m)");
@@ -71,13 +72,13 @@ namespace DynamicIslands
 			MethodInfo progress = typeof(TreasurePoint).GetMethod("ProgressExcevation", all);
 			PutPlayerNear(first.transform, 1.5f);
 			for (int i = 0; i < 3; i++) { progress.Invoke(first.Point, new object[] { 1, true }); yield return new WaitForSeconds(0.6f); }
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => first.Point.pickupNetworked != null && !first.Point.IsBuried, 15f);
 			PickupItem chest = first.Point.pickupNetworked != null ? first.Point.pickupNetworked.GetComponent<PickupItem>() : null;
 			Check(ref ok, chest != null && !first.Point.IsBuried, "three digs bring the chest up (buried: " + first.Point.IsBuried + ")");
 			Dictionary<string, int> before = Items(player);
 			Pickup pickup = player.GetComponentInChildren<Pickup>(true);
 			if (chest != null && pickup != null) pickup.PickupItemByType(chest, true);
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => Gained(before, Items(player)).Length > 0, 15f);
 			string got = Gained(before, Items(player));
 			Check(ref ok, got.Length > 0, "the chest gives " + (got.Length > 0 ? got : "nothing"));
 
@@ -99,12 +100,16 @@ namespace DynamicIslands
 			IslandObjectState.Capture(e);
 			foreach (ObjectState st in e.State.Values) st.Day -= days;
 			yield return ReloadIslandRoutine(e);
-			yield return new WaitForSeconds(1f);
+			yield return WaitFor(() => e.Root != null && BuriedTreasure.PointsOf(tm, e.Root.transform).Count >= 2, 15f);
 			pts = BuriedTreasure.PointsOf(tm, e.Root.transform);
 			Check(ref ok, pts.Count == 2, days + " days later it is buried again: " + pts.Count);
+			// (the root is destroyed by then: PointsOf(null) is always empty - Raft's own list is looked at for the old root)
+			Transform rootT = e.Root != null ? e.Root.transform : null;
 			IslandWorldState.Remove(TreasureIsland);
 			yield return new WaitForSeconds(1f);
-			Check(ref ok, BuriedTreasure.PointsOf(tm, e.Root != null ? e.Root.transform : null).Count == 0, "removing the island takes its treasure out of Raft's list");
+			var kept = typeof(TreasurePointManager).GetField("treasurePoints", all).GetValue(tm) as Dictionary<Transform, List<TreasurePoint>>;
+			Check(ref ok, rootT != null && kept != null && !kept.Keys.Any(k => ReferenceEquals(k, rootT)), "removing the island takes its treasure out of Raft's list");
+			File.Delete(IslandSpawner.PathFor(TreasureIsland));
 			if (ok) Log("PASS: buried treasure"); else Fail("buried treasure");
 		}
 	}

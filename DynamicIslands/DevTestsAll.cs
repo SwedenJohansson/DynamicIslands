@@ -138,7 +138,12 @@ namespace DynamicIslands
 				yield return GeneratorScreens(run);
 				if (missingKinds > 0) run.Errors.Add(missingKinds + " kind(s) of object not in the catalog: their screens were not tested");
 			}
-			finally { Application.logMessageReceived -= watch; HelpLinks.TestMode = false; }
+			finally
+			{
+				Application.logMessageReceived -= watch; HelpLinks.TestMode = false;
+				// (the walk presses Save: the test island's file would stay in the saved islands and the random pool)
+				try { if (File.Exists(IslandSpawner.PathFor("cibuttons"))) File.Delete(IslandSpawner.PathFor("cibuttons")); } catch { }
+			}
 
 			// Coverage: every button the mod made that still exists (and isn't a sampled list entry or skipped)
 			UIKit.AllButtons.RemoveAll(b => b == null);
@@ -398,6 +403,8 @@ namespace DynamicIslands
 			Application.LogCallback watch = (msg, trace, type) => { if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]")) run.Errors.Add(run.Current + ": " + msg.Split('\n')[0]); };
 			Application.logMessageReceived += watch;
 			bool ok = true;
+			int heldBefore = StoryBook.Count("ci-button-test");
+			bool pageBefore = StoryBook.Pages.Any(p => p.Key == "ci:buttons");
 			try
 			{
 				StoryBook.Give("ci-button-test", 1);
@@ -423,7 +430,13 @@ namespace DynamicIslands
 				Check(ref ok, !NoteReader.IsOpen, "the note reader closes");
 				UnityEngine.Object.Destroy(go);
 			}
-			finally { Application.logMessageReceived -= watch; }
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				// (the test's item and page out of the world's journal again: saved with the world, they showed in its snapshots)
+				StoryBook.Take("ci-button-test", StoryBook.Count("ci-button-test") - heldBefore);
+				if (!pageBefore && Raft_Network.IsHost && StoryBook.Pages.Remove(StoryBook.Pages.FirstOrDefault(p => p.Key == "ci:buttons"))) IslandNetwork.SendStory(StoryBook.StateMessage());
+			}
 			foreach (string e in run.Errors.Distinct()) Log("  ERROR " + e);
 			ok &= run.Errors.Count == 0 && run.Unclosed.Count == 0;
 			Log("Pressed " + run.Pressed + " buttons in the journal and the note reader");

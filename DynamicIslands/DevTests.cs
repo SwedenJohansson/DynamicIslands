@@ -138,6 +138,7 @@ namespace DynamicIslands
 			TerrainData data = terrain.terrainData;
 			CommandUndoRedo.UndoRedoManager.Clear();
 			var savedAction = terraineditor.modificationAction;
+			int savedLayer = terraineditor.paintLayer;
 			bool ok = true;
 
 			// 1. Sculpt: raise a flat spot away from the test hill, undo, redo
@@ -211,6 +212,7 @@ namespace DynamicIslands
 			ok &= windowOk;
 
 			terraineditor.modificationAction = savedAction;
+			terraineditor.paintLayer = savedLayer;
 			CommandUndoRedo.UndoRedoManager.Clear();
 			if (ok) Log("PASS: undo/redo and islands window");
 			else Fail("undo/redo or islands window");
@@ -279,6 +281,7 @@ namespace DynamicIslands
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue) { Fail("not in a world"); yield break; }
+			int spawnedFrom = IslandWorldState.Islands.Count;
 			if (IslandWorldState.Islands.Count == 0)
 			{
 				string name = IslandSpawner.ListSavedIslands().FirstOrDefault();
@@ -325,6 +328,8 @@ namespace DynamicIslands
 			CustomIslandSpawner.ReceiverDistance = keep;
 			Log((near == needed ? "PASS" : "FAIL") + ": receiverDistance 1 m: " + near + " dot(s), the " + needed + " island(s) still needed");
 			UnityEngine.Object.Destroy(go);
+			// (the island this test spawned goes again: it stayed in the world and its save)
+			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(spawnedFrom).Select(x => x.Id).ToList(), true);
 		}
 
 		[ConsoleCommand(name: "CIRaftDemo", docs: "Dev, editor: builds a small abandoned raft from Raft's blocks on the water (an undoable placement) and points the camera at it")]
@@ -357,14 +362,15 @@ namespace DynamicIslands
 			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, g / 2), 0);
 			put("Block_Wall_Thatch", origin + new Vector3(0, deck, -g / 2), 0);
 			// (a roof on the four pillars, as the wreck map type's shelter has: Raft's roof blocks as its building puts them)
-			RaftRoof.Hip((n, p, ry) => put(n, p, ry), origin + new Vector3(0, deck + RaftRoof.OnWalls, 0), 2, 1);
+			int roofPieces = 0;
+			RaftRoof.Hip((n, p, ry) => { roofPieces++; put(n, p, ry); }, origin + new Vector3(0, deck + RaftRoof.OnWalls, 0), 2, 1);
 			put("Block_Ladder", origin + new Vector3(g * 3, deck, g), 90);
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
 			Transform cam = Camera.main.transform;
 			cam.position = origin + new Vector3(-8f, sea + 8f, -12f);
 			cam.LookAt(origin + new Vector3(g * 1.5f, sea, g));
 			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea + PlacementOptions.FoundationFloat)) < 0.01f);
-			Log((floating && spawned.Count == 20 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+			Log((floating && roofPieces > 0 && spawned.Count == 18 + roofPieces ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
 		}
 
 		[ConsoleCommand(name: "CIRoofDemo", docs: "Dev, editor: RaftRoof's hipped roofs of Raft's roof blocks (as the generator's huts get them) over huts of 1 x 1 to 5 x 4 cells in a row through the island's middle, Raft's pillars at every outer corner (an undoable placement): each pillar's top is under the roof (a ray up from it meets the roof within 0.3 m) and doesn't stick out of it (a ray down from above meets the roof first, over the pillar's top) - no roof floating over its pillars (the user, 2026-10-03). old: the generator's huts' roofs before (one straight piece in each cell's middle) - must FAIL. CIRoofDemo [wood|old]")]
@@ -475,6 +481,7 @@ namespace DynamicIslands
 			var gizmo = DynamicIslands.EditorGizmoHandler;
 			gizmo.ClearTargets(false);
 			foreach (Transform t in objs) gizmo.AddTarget(t, false);
+			bool slopeWas = PlacementOptions.AlignToSlope;
 			PlacementOptions.AlignToSlope = false;
 			int n = PlacementOptions.DropSelectionToGround();
 			// (without Slope an object keeps its own rotation; some of Raft's rocks come tilted; it goes down to the lowest
@@ -493,7 +500,7 @@ namespace DynamicIslands
 				PlacementOptions.GroundAt(t.position, out point, out normal);
 				return Vector3.Angle(t.up, normal);
 			});
-			PlacementOptions.AlignToSlope = false;
+			PlacementOptions.AlignToSlope = slopeWas;
 			Check(ref ok, worst < 2f, "with Slope on, objects lean with the ground (largest difference " + worst.ToString("F1") + " degrees)");
 			gizmo.ClearTargets(false);
 			foreach (Transform t in objs) UnityEngine.Object.Destroy(t.gameObject);
@@ -794,7 +801,7 @@ namespace DynamicIslands
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
 			IslandWorldState.Entry fly = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (fly == null || fly.Root == null) { Fail("flying island did not spawn"); yield break; }
+			if (fly == null || fly.Root == null) { Fail("flying island did not spawn"); if (fly != null && !keep) IslandWorldState.RemoveIds(new[] { fly.Id }, true); yield break; }
 			yield return new WaitForSeconds(0.5f);
 			Terrain terrain = fly.Root.GetComponentInChildren<Terrain>();
 			TerrainData data = terrain.terrainData;
@@ -819,14 +826,14 @@ namespace DynamicIslands
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
-			yield return StandRoutine(); // puts the player on the nearest island's peak and logs PASS/FAIL
+			yield return StandRoutine(fly.Root); // puts the player on the flying island's peak and logs PASS/FAIL
 
 			// Under water, 250 m to the side
 			pos = raftPos.Value + Vector3.right * 300f; pos.y = Sunken;
 			before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
 			IslandWorldState.Entry sunk = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (sunk == null || sunk.Root == null) { Fail("underwater island did not spawn"); yield break; }
+			if (sunk == null || sunk.Root == null) { Fail("underwater island did not spawn"); if (!keep) IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => x == fly || x == sunk).Select(x => x.Id).ToList(), true); yield break; }
 			Terrain t2 = sunk.Root.GetComponentInChildren<Terrain>();
 			Vector3 top2 = HighestPoint(t2);
 			bool noHoles = t2.terrainData.GetHoles(0, 0, t2.terrainData.holesResolution, t2.terrainData.holesResolution).Cast<bool>().All(solid => solid);
@@ -2125,6 +2132,7 @@ namespace DynamicIslands
 			yield return null;
 			DynamicIslands.LoadIsland("cicatalog");
 			yield return new WaitForSecondsRealtime(1f);
+			yield return WaitFor(() => DynamicIslands.currentIslandName == "cicatalog" && names.All(placed.GetComponentsInChildren<EditorGameObject>().Select(e => e.GameObjectName).ToList().Contains), 30f);
 			var back = placed.GetComponentsInChildren<EditorGameObject>().Select(e => e.GameObjectName).ToList();
 			Check(ref ok, saved && names.Count > 0 && names.All(back.Contains), "an island with " + string.Join(", ", names.Select(PlaceableCatalog.DisplayName).ToArray()) + " saves and loads (" + back.Count + " objects back)");
 
@@ -2134,7 +2142,7 @@ namespace DynamicIslands
 				var raw = new GameObject("CITestThumb", typeof(RectTransform), typeof(UnityEngine.UI.RawImage));
 				raw.transform.SetParent(EditorUI.Canvas.transform, false);
 				ObjectThumbnails.Request(names[0], raw.GetComponent<UnityEngine.UI.RawImage>());
-				yield return new WaitForSecondsRealtime(0.5f);
+				yield return WaitFor(() => ObjectThumbnails.Has(names[0]), 10f);
 				Check(ref ok, ObjectThumbnails.Has(names[0]), "a picture of " + PlaceableCatalog.DisplayName(names[0]) + " was rendered");
 				UnityEngine.Object.Destroy(raw);
 			}

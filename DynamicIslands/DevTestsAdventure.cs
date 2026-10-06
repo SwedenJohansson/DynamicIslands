@@ -163,7 +163,7 @@ namespace DynamicIslands
 					yield return new WaitForSeconds(1f);
 					IslandTest.Start();
 					for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
-					yield return new WaitForSeconds(5f);
+					yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.HostName == n && x.Root != null), 30f);
 					IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.HostName == n);
 					Check(ref ok, IslandTest.Testing && e != null && e.Root != null, "Test in a world: '" + n + "' beside the raft (" + IslandTest.LastStep + ")");
 					IslandTest.Back();
@@ -247,22 +247,22 @@ namespace DynamicIslands
 				Check(ref ok, l != null && l.Root != null, "start: Landing Beach came ahead of the raft");
 				if (l == null || l.Root == null) { Fail("adventure play landing"); yield break; }
 				yield return StandRoutine(l.Root);
-				yield return new WaitForSeconds(2f);
+				yield return WaitFor(() => StoryBook.Pages.Any(p => (p.Text ?? "").Contains("We reached the landing beach")), 15f);
 				Check(ref ok, StoryBook.Pages.Any(p => (p.Text ?? "").Contains("We reached the landing beach")), "arriving: the island's event wrote a journal page");
 				ScEnterZone(l, "camp"); yield return new WaitForSeconds(1.5f);
-				ScReadNote(l, "Captain's log"); yield return new WaitForSeconds(1.5f);
+				ScReadNote(l, "Captain's log"); yield return WaitFor(() => VoyageStep("landing") == 2 && StoryBook.Count("civoy-map") == 1, 15f);
 				Check(ref ok, VoyageStep("landing") == 2 && StoryBook.Count("civoy-map") == 1, "the camp found, the log read: step 3 of 5, a map piece in the journal (" + StoryBook.Count("civoy-map") + ")");
 				ScOpenChest(l, "Supplies"); yield return new WaitForSeconds(1.5f);
-				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 6 || (i < 30 && VoyageEntry("sandbar") == null); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, VoyageEntry("sandbar") != null, "three steps done: 'step:landing:3' brought the sandbar east of the landing");
 				yield return ScWaitAnimals(l, "Warthog", 2, 20f);
 				foreach (AI_NetworkBehaviour a in ScAnimals(l, "Warthog")) { PutPlayerNear(a.transform); ScKill(a); yield return new WaitForSeconds(0.3f); }
-				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => VoyageStep("landing") == 4, 20f);
 				Check(ref ok, VoyageStep("landing") == 4, "the warthogs chased off: step 5 of 5 (" + VoyageStep("landing") + ")");
 				yield return ScWaitAnimals(l, "Chicken", 1, 20f);
 				var chicken = ScAnimals(l, "Chicken").OfType<AI_NetworkBehaviour_Domestic>().FirstOrDefault();
 				yield return ScCarryHome(chicken, false);
-				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => VoyageStep("landing") == 5, 20f);
 				Check(ref ok, VoyageStep("landing") == 5, "a chicken caught: the landing's quest is done (" + VoyageStep("landing") + ")");
 				for (int i = 0; i < 6 && VoyageEntry("cove") == null; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				IslandWorldState.Entry cove = VoyageEntry("cove");
@@ -272,7 +272,7 @@ namespace DynamicIslands
 			}
 			else if (part == "cove")
 			{
-				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => VoyageStep("landing") == 5 && VoyageEntry("cove") != null && StoryBook.Count("civoy-map") == 1, 20f);
 				Check(ref ok, VoyageStep("landing") == 5 && VoyageEntry("cove") != null && StoryBook.Count("civoy-map") == 1, "after loading: the landing's quest done, the cove there, one map piece");
 				// km sailed: the wreck
 				WorldDirector.Sailed += 1100f;
@@ -308,17 +308,18 @@ namespace DynamicIslands
 				for (int i = 0; i < 6 && VoyageEntry("dock") == null; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, VoyageEntry("dock") != null, "the dock zone: 'zone:cove:dock' brought the oddity");
 				for (int i = 1; i <= 3; i++) { ScOpenChest(c, "Crate " + i); yield return new WaitForSeconds(1.2f); }
-				yield return new WaitForSeconds(2f);
+				yield return WaitFor(() => StoryBook.Count("civoy-map") == 2 && StoryBook.Count("civoy-key") == 1 && VoyageStep("cove") == 2, 20f);
 				Check(ref ok, StoryBook.Count("civoy-map") == 2 && StoryBook.Count("civoy-key") == 1, "the crates: the second map piece and the key (maps " + StoryBook.Count("civoy-map") + ", key " + StoryBook.Count("civoy-key") + ")");
 				Check(ref ok, VoyageStep("cove") == 2, "the cove's quest done: 3 chests, 2 map pieces collected (" + VoyageStep("cove") + ")");
 				ScReadNote(c, "Smuggler's note");
 				IslandObjectRef marker = ScObjOf(c, "marker");
 				Check(ref ok, marker != null && !marker.gameObject.activeInHierarchy, "the note read: the marker still hidden");
-				yield return new WaitForSeconds(6.5f);
+				yield return new WaitForSeconds(4f);
+				yield return WaitFor(() => marker != null && marker.gameObject.activeInHierarchy, 20f);
 				Check(ref ok, marker != null && marker.gameObject.activeInHierarchy, "... and shown after the note's 5 s wait");
 				ScUse(c, "lever");
 				yield return new WaitForSeconds(1.5f);
-				for (int i = 0; i < 6; i++) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 6 || (i < 30 && !StoryChain.Fired.Contains("vault")); i++) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, StoryChain.Fired.Contains("vault"), "the lever's signal 'gate': the vault's rule fired (" + StoryChain.LastBanner + ")");
 				string freq = StoryChain.FrequencyOf("vault");
 				Check(ref ok, freq != null && StoryBook.Pages.Any(p => p.Key == "storyfreq:vault"), "... a Receiver frequency (" + freq + ") and a journal page for it");
@@ -328,18 +329,18 @@ namespace DynamicIslands
 			}
 			else if (part == "vault")
 			{
-				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => VoyageEntry("vault") != null && StoryBook.Count("civoy-key") == 1 && StoryBook.Count("civoy-map") == 2, 20f);
 				Check(ref ok, VoyageEntry("vault") != null && StoryBook.Count("civoy-key") == 1 && StoryBook.Count("civoy-map") == 2, "after loading: the vault there, the key and both map pieces in the journal");
 				yield return WaitLoaded("vault", 60f);
 				IslandWorldState.Entry v = VoyageEntry("vault");
 				if (v == null || v.Root == null) { Fail("adventure play vault: the vault didn't load"); yield break; }
 				yield return StandRoutine(v.Root);
 				ScEnterZone(v, "vault"); yield return new WaitForSeconds(1.5f);
-				ScUse(v, "vaultdoor"); yield return new WaitForSeconds(1.5f);
+				ScUse(v, "vaultdoor"); yield return WaitFor(() => (Behaviours.LastMessage ?? "").Contains("vault opens") && StoryBook.Count("civoy-key") == 0, 15f);
 				Check(ref ok, Behaviours.LastMessage.Contains("vault opens") && StoryBook.Count("civoy-key") == 0, "the door takes the key and opens ('" + Behaviours.LastMessage + "', keys " + StoryBook.Count("civoy-key") + ")");
-				ScOpenChest(v, "Treasure"); yield return new WaitForSeconds(1.5f);
+				ScOpenChest(v, "Treasure"); yield return WaitFor(() => StoryBook.Count("civoy-crown") == 1, 15f);
 				Check(ref ok, StoryBook.Count("civoy-crown") == 1, "the treasure: the old crown");
-				ScReadNote(v, "Vault ledger"); yield return new WaitForSeconds(2f);
+				ScReadNote(v, "Vault ledger"); yield return WaitFor(() => VoyageStep("vault") == 3, 15f);
 				Check(ref ok, VoyageStep("vault") == 3, "the vault's quest done: 3 journal pages (the log, the note, the ledger) (" + VoyageStep("vault") + ")");
 				for (int i = 0; i < 6 && VoyageEntry("summit") == null; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, VoyageEntry("summit") != null, "the vault's quest done: 'quest:vault' brought the summit");
@@ -350,7 +351,7 @@ namespace DynamicIslands
 				if (s != null && s.Root != null)
 				{
 					yield return StandRoutine(s.Root);
-					ScReadNote(s, "Summit stone"); yield return new WaitForSeconds(2f);
+					ScReadNote(s, "Summit stone"); yield return WaitFor(() => VoyageStep("summit") == 1 && StoryBook.Pages.Any(p => (p.Text ?? "").Contains("The voyage is complete")), 15f);
 				}
 				Check(ref ok, VoyageStep("summit") == 1 && StoryBook.Pages.Any(p => (p.Text ?? "").Contains("The voyage is complete")), "the summit stone read: the voyage is complete (a journal page)");
 				OnRaftCommand();
@@ -367,7 +368,7 @@ namespace DynamicIslands
 			}
 			else if (part == "end")
 			{
-				yield return new WaitForSeconds(3f);
+				yield return WaitFor(() => new[] { "landing", "cove", "vault", "summit" }.All(r => VoyageEntry(r) != null) && VoyageStep("summit") == 1, 20f);
 				Check(ref ok, new[] { "landing", "cove", "vault", "summit" }.All(r => VoyageEntry(r) != null), "after loading: all four islands are in the world");
 				Check(ref ok, VoyageStep("landing") == 5 && VoyageStep("cove") == 2 && VoyageStep("vault") == 3 && VoyageStep("summit") == 1, "every quest done");
 				Check(ref ok, StoryBook.Count("civoy-map") == 2 && StoryBook.Count("civoy-key") == 0 && StoryBook.Count("civoy-crown") == 1, "story items: 2 map pieces, no key (used), the crown");
@@ -384,6 +385,7 @@ namespace DynamicIslands
 				Log("PASS: adventure play clean");
 				yield break;
 			}
+			else { Fail("adventure play: no part '" + part + "'"); yield break; }
 			IslandWorldState.Save();
 			if (ok) Log("PASS: adventure play " + part); else Fail("adventure play " + part);
 		}

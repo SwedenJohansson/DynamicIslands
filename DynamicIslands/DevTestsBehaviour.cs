@@ -157,11 +157,11 @@ namespace DynamicIslands
 			var created = new List<string> { "cibehworld" };
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("cibehworld"), 390f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { Fail("no open sea near the raft"); File.Delete(IslandSpawner.PathFor("cibehworld")); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile("cibehworld", spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (e == null || e.Root == null) { Fail("the island did not spawn"); yield break; }
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(x => x.Id).ToList(), true); File.Delete(IslandSpawner.PathFor("cibehworld")); yield break; }
 			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
 
 			// What the objects became
@@ -186,6 +186,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			yield return StandRoutine(e.Root);
 			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => Behaviours.LastMessage == "Welcome to the behaviour test", 15f);
 			// (over half a second: 90 degrees a second would wrap round over a longer time)
 			r0 = spin != null ? spin.transform.rotation : Quaternion.identity;
 			yield return new WaitForSeconds(0.5f);
@@ -209,6 +210,7 @@ namespace DynamicIslands
 			finally { IslandNetwork.Loopback = null; }
 			Quaternion d0 = obj(doorIdx).transform.rotation;
 			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => Mathf.Abs(Quaternion.Angle(d0, obj(doorIdx).transform.rotation) - 90f) < 8f, 10f);
 			Check(ref ok, Mathf.Abs(Quaternion.Angle(d0, obj(doorIdx).transform.rotation) - 90f) < 8f, "the door turned (" + Quaternion.Angle(d0, obj(doorIdx).transform.rotation).ToString("F0") + " degrees)");
 			Screenshot(new[] { "behaviour_door" });
 
@@ -229,6 +231,7 @@ namespace DynamicIslands
 			AI_NetworkBehaviour first = boar != null && boar.Spawned.Count > 0 ? boar.Spawned[0] : null;
 			Behaviours.Fire(e, hiderIdx, "use", true);
 			yield return new WaitForSeconds(2.5f);
+			yield return WaitFor(() => boar == null || (boar.Spawned.Count == 0 && (first == null || !first.gameObject.activeInHierarchy)), 15f);
 			Check(ref ok, boar != null && boar.Spawned.Count == 0 && (first == null || !first.gameObject.activeInHierarchy) && !obj(ambushIdx).gameObject.activeSelf,
 				"hiding the ambush spot takes its warthog away (not counted as defeated)");
 			Behaviours.Fire(e, hiderIdx, "use", true);
@@ -242,6 +245,7 @@ namespace DynamicIslands
 			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault();
 			if (chest != null) { chest.Open(); NoteReader.Close(); }
 			yield return new WaitForSeconds(0.5f);
+			yield return WaitFor(() => chest == null || new Vector2(RAPI.GetLocalPlayer().transform.position.x - obj(leverIdx).transform.position.x, RAPI.GetLocalPlayer().transform.position.z - obj(leverIdx).transform.position.z).magnitude < 2f, 10f);
 			Vector3 pp = RAPI.GetLocalPlayer().transform.position, lp = obj(leverIdx).transform.position;
 			Check(ref ok, chest != null && new Vector2(pp.x - lp.x, pp.z - lp.z).magnitude < 2f, "opening the chest teleports the player to the lever");
 
