@@ -484,7 +484,15 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   the selection; hold **Ctrl** while dragging to snap (0.25 m, 15°). An island holds at most 100 000 objects (the editor
   says so past 12 000: big islands take longer to appear in a world).
 - **Selection:** **Ground** puts the selection down on the terrain - by its base: on a slope down to the lowest ground
-  under it, so nothing of it stands in the air - **Duplicate** (Ctrl+D), **Deselect**, **Delete**.
+  under it, so nothing of it stands in the air - **Duplicate** (Ctrl+D), **Deselect**, **Delete**. **Copy** (Ctrl+C)
+  and **Paste** (Ctrl+V) move objects between islands: copy, open another island (or New), paste - they come with
+  their spacing and settings, where the mouse points (Ctrl+V) or the middle of the screen (the button).
+- **Place exactly** (the last group when one object is selected): its **Position** (X and Z in metres across the build
+  area, Y in metres above the sea), **Turn** in degrees and **Size** (1 = as made), typed. Enter moves it; Ctrl+Z
+  undoes. The fields follow the object when you move it with the gizmo.
+
+![Place exactly](images/editor-place-exactly.jpg)
+*A pasted sign placed exactly: X 510, 3 m above the sea, Z 520.5, turned 90 degrees, twice the size.*
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
   snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
 - **Groups:** select several objects and click **Save as group...**. The group appears under **My groups** at the top

@@ -261,6 +261,63 @@ namespace DynamicIslands.Editor
 			foreach (GameObject c in copies) gizmo.AddTarget(c.transform, false);
 			return copies.Count;
 		}
+
+		/// <summary>
+		/// The editor's clipboard (ROADMAP E4): objects copied with Copy (Ctrl+C), around their middle at the lowest one's
+		/// height, with their settings. It stays while another island is opened, so Paste puts them on that one.
+		/// </summary>
+		static readonly List<GroupLibrary.Member> clipboard = new List<GroupLibrary.Member>();
+		public static int ClipboardCount { get { return clipboard.Count; } }
+
+		/// <summary>Copy: the selected objects to the clipboard. Returns how many.</summary>
+		public static int CopySelection()
+		{
+			TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
+			if (gizmo == null) return 0;
+			List<EditorGameObject> list = gizmo.SelectedRoots.Where(t => t != null).Select(t => t.GetComponent<EditorGameObject>()).Where(e => e != null).ToList();
+			if (list.Count == 0) return 0;
+			Vector3 pivot = new Vector3(list.Average(o => o.transform.position.x), list.Min(o => o.transform.position.y), list.Average(o => o.transform.position.z));
+			clipboard.Clear();
+			foreach (EditorGameObject o in list)
+				clipboard.Add(new GroupLibrary.Member { Name = o.GameObjectName, Position = o.transform.position - pivot, Euler = o.transform.rotation.eulerAngles, Scale = o.transform.lossyScale,
+					Props = new Dictionary<string, string>(o.Props ?? new Dictionary<string, string>()) });
+			return clipboard.Count;
+		}
+
+		/// <summary>
+		/// Paste: the clipboard's objects put down where the mouse points on the ground (atMouse; Ctrl+V) or where the
+		/// middle of the screen does (the button), selected and one undo step. Returns how many.
+		/// </summary>
+		public static int PasteClipboard(bool atMouse)
+		{
+			TransformGizmo gizmo = DynamicIslands.EditorGizmoHandler;
+			GameObject placedRoot = GameObject.Find("PlacedObjects");
+			Camera cam = Camera.main;
+			if (gizmo == null || placedRoot == null || cam == null || clipboard.Count == 0) return 0;
+			if (!ObjectLimit.Allow(clipboard.Count)) return 0;
+			Ray ray = atMouse ? cam.ScreenPointToRay(Input.mousePosition) : cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+			Vector3 at = cam.transform.position + cam.transform.forward * 20f;
+			RaycastHit hit;
+			TerrainCollider tc = terraineditor.terrain != null ? terraineditor.terrain.GetComponent<TerrainCollider>() : null;
+			if (tc != null && tc.Raycast(ray, out hit, 5000f)) at = hit.point;
+			var copies = new List<GameObject>();
+			foreach (GroupLibrary.Member m in clipboard)
+			{
+				GameObject copy = PlaceableCatalog.Spawn(m.Name, placedRoot.transform);
+				if (copy == null) { DynamicIslands.Notify("'" + m.Name + "' isn't in this Raft version: it can't be pasted", true); continue; }
+				copy.transform.position = at + m.Position;
+				copy.transform.rotation = Quaternion.Euler(m.Euler);
+				copy.transform.localScale = m.Scale;
+				foreach (Collider c in copy.GetComponentsInChildren<Collider>()) c.enabled = true;
+				EditorGameObject.Attach(copy, m.Name, new Dictionary<string, string>(m.Props));
+				copies.Add(copy);
+			}
+			if (copies.Count == 0) return 0;
+			UndoRedoManager.Insert(new ObjectVisibilityCommand(copies, true));
+			gizmo.ClearTargets(false);
+			foreach (GameObject c in copies) gizmo.AddTarget(c.transform, false);
+			return copies.Count;
+		}
 	}
 
 }

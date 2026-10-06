@@ -68,7 +68,8 @@ namespace DynamicIslands.Editor
 			bool gone = !ReferenceEquals(shown, null) && shown == null;
 			if (sel != shown || dirty || gone) Rebuild(sel);
 
-			bool nowTyping = (titleField != null && titleField.isFocused) || amountFields.Any(f => f != null && f.isFocused);
+			bool nowTyping = (titleField != null && titleField.isFocused) || amountFields.Any(f => f != null && f.isFocused) || placeFields.Any(f => f != null && f.isFocused);
+			if (!nowTyping) ShowPlace();
 			if (nowTyping) EditorInput.IsTyping = true;
 			else if (typing && !NoteEditorWindow.IsOpen && !ItemPickerWindow.IsOpen) EditorInput.IsTyping = false;
 			typing = nowTyping;
@@ -81,10 +82,17 @@ namespace DynamicIslands.Editor
 			shown = target;
 			titleField = null;
 			amountFields.Clear();
+			placeFields.Clear();
 			foreach (Transform child in root) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			root.gameObject.SetActive(target != null);
 			if (target == null) return;
 			if (target.Props == null) target.Props = new Dictionary<string, string>();
+			Groups(target);
+			PlaceGroup(target);
+		}
+
+		static void Groups(EditorGameObject target)
+		{
 
 			ContentCatalog.CreatureKind kind = ContentCatalog.CreatureOf(target.GameObjectName);
 			if (ContentCatalog.IsZone(target.GameObjectName))
@@ -505,6 +513,87 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly List<InputField> amountFields = new List<InputField>();
+
+		#region Place exactly
+
+		/// <summary>Position X, Y, Z / Turn X, Y, Z / Size X, Y, Z of the shown object (ROADMAP E4), in that order.</summary>
+		static readonly List<InputField> placeFields = new List<InputField>();
+		static readonly string[] PlaceRows = { "Position", "Turn", "Size" };
+		static float nextPlaceShow;
+
+		/// <summary>Tests: the place fields (position, turn, size; x, y, z each).</summary>
+		internal static IList<InputField> PlaceFields { get { return placeFields; } }
+
+		/// <summary>
+		/// "Place exactly": the object's position (metres from the build area's corner, Y above the sea), turn (degrees)
+		/// and size, typed. Enter (or leaving a field) moves it - one undo step.
+		/// </summary>
+		static void PlaceGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Place exactly");
+			UIKit.Hint(g.gameObject, "Type where the object is: X and Z in metres across the build area, Y in metres above the sea; its turn in degrees; its size (1 = as made). Enter moves it (Ctrl+Z undoes).");
+			for (int r = 0; r < 3; r++)
+			{
+				RectTransform row = UIKit.Row(g, 24f, 3f, PlaceRows[r]);
+				Text l = UIKit.Label(row, PlaceRows[r], 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Label");
+				UIKit.Size(l.gameObject, 52, 24);
+				for (int a = 0; a < 3; a++)
+				{
+					InputField f = UIKit.Field(row, "xyz"[a].ToString(), "", 24f, PlaceRows[r] + " " + "XYZ"[a]);
+					f.name = "Place_" + PlaceRows[r] + "_" + "XYZ"[a];
+					f.contentType = InputField.ContentType.DecimalNumber;
+					f.characterLimit = 9;
+					f.onEndEdit.AddListener(v => ApplyPlace(target));
+					placeFields.Add(f);
+				}
+			}
+			nextPlaceShow = 0f;
+			ShowPlace();
+		}
+
+		static Vector3 Corner { get { return terraineditor.terrain != null ? terraineditor.terrain.transform.position + new Vector3(0f, DynamicIslands.EditorWaterLevel, 0f) : new Vector3(0f, DynamicIslands.EditorWaterLevel, 0f); } }
+
+		static string Num(float v) { return (Mathf.Round(v * 100f) / 100f).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+
+		/// <summary>The fields show where the object is now (it may have been moved with the gizmo).</summary>
+		static void ShowPlace()
+		{
+			if (placeFields.Count != 9 || shown == null || Time.unscaledTime < nextPlaceShow) return;
+			nextPlaceShow = Time.unscaledTime + 0.2f;
+			Transform t = shown.transform;
+			Vector3 p = t.position - Corner, e = t.rotation.eulerAngles, s = t.lossyScale;
+			float[] v = { p.x, p.y, p.z, e.x, e.y, e.z, s.x, s.y, s.z };
+			for (int i = 0; i < 9; i++)
+			{
+				string text = Num(i >= 3 && i < 6 && v[i] > 180f ? v[i] - 360f : v[i]);
+				if (placeFields[i].text != text) placeFields[i].text = text;
+			}
+		}
+
+		/// <summary>The typed place applied to the object, one undo step.</summary>
+		internal static void ApplyPlace(EditorGameObject target)
+		{
+			if (target == null || placeFields.Count != 9) return;
+			var v = new float[9];
+			for (int i = 0; i < 9; i++)
+				if (!float.TryParse(placeFields[i].text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[i])) { nextPlaceShow = 0f; return; }
+			Transform t = target.transform;
+			Vector3 pos = Corner + new Vector3(v[0], v[1], v[2]);
+			Quaternion rot = Quaternion.Euler(v[3], v[4], v[5]);
+			Vector3 scale = new Vector3(Mathf.Clamp(v[6], 0.01f, 100f), Mathf.Clamp(v[7], 0.01f, 100f), Mathf.Clamp(v[8], 0.01f, 100f));
+			if ((pos - t.position).sqrMagnitude < 1e-6f && Quaternion.Angle(rot, t.rotation) < 0.01f && (scale - t.lossyScale).sqrMagnitude < 1e-6f) return;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			var cmd = new RuntimeGizmos.TransformCommand(gizmo, t);
+			t.position = pos;
+			t.rotation = rot;
+			t.localScale = t.parent != null && t.parent.lossyScale != Vector3.one ? Vector3.Scale(scale, new Vector3(1f / t.parent.lossyScale.x, 1f / t.parent.lossyScale.y, 1f / t.parent.lossyScale.z)) : scale;
+			cmd.StoreNewTransformValues();
+			CommandUndoRedo.UndoRedoManager.Insert(cmd);
+			if (gizmo != null) gizmo.SetPivotPoint();
+			nextPlaceShow = 0f;
+		}
+
+		#endregion
 
 		static void SetLootAmount(EditorGameObject target, int index, int amount)
 		{

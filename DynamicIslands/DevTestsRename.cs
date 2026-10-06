@@ -191,5 +191,91 @@ namespace DynamicIslands
 			EditorAutosave.Saved(island); // (only the test's changes: the island's file is as it was)
 			if (ok) Log("PASS: elevation preview"); else Fail("elevation preview");
 		}
+			[ConsoleCommand(name: "CIClipboard", docs: "Dev, editor: ROADMAP E4 - Copy a sign and a warthog herd, New island, Paste: both come back with their spacing and settings, selected, one undo step; the inspector's Place exactly fields move, turn and size an object (one undo step) and follow the gizmo; picture shot_place_exactly.png")]
+		public static void ClipboardCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ClipboardRoutine()); }
+
+		static IEnumerator ClipboardRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			EditorUI.SetTab(TAB.ObjectPlace);
+			DynamicIslands.NewIsland();
+			yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
+			EditorGameObject sign = PlaceForTest("Note_Sign", c0, placed);
+			EditorGameObject boar = PlaceForTest("Creature_Boar", c0 + new Vector3(4f, 0f, 2f), placed);
+			NoteEditorWindow.Apply(sign, "Clip note", "Copied along");
+			PropsCommand.Change(boar, ObjectProps.With(boar.Props, ObjectProps.CreatureCount, "3"));
+			gizmo.ClearTargets(false);
+			gizmo.AddTarget(sign.transform, false); gizmo.AddTarget(boar.transform, false);
+			EditorUI.CopySelected();
+			Check(ref ok, PlacementOptions.ClipboardCount == 2, "Copy: 2 objects on the clipboard");
+
+			DynamicIslands.NewIsland();
+			yield return null; yield return null;
+			CommandUndoRedo.UndoRedoManager.Clear();
+			Check(ref ok, placed.Cast<Transform>().Count(x => x.gameObject.activeSelf && x.GetComponent<EditorGameObject>() != null) == 0 && PlacementOptions.ClipboardCount == 2, "New island: nothing placed, the clipboard kept");
+			Transform cam = Camera.main.transform;
+			Vector3 c1 = c0 + new Vector3(60f, 0f, 40f);
+			cam.position = c1 + new Vector3(0f, 25f, -25f);
+			cam.LookAt(c1);
+			EditorUI.Paste(false);
+			yield return null;
+			List<EditorGameObject> pasted = placed.Cast<Transform>().Where(x => x.gameObject.activeSelf).Select(x => x.GetComponent<EditorGameObject>()).Where(e => e != null).ToList();
+			EditorGameObject ps = pasted.FirstOrDefault(e => e.GameObjectName == "Note_Sign"), pb = pasted.FirstOrDefault(e => e.GameObjectName == "Creature_Boar");
+			Check(ref ok, pasted.Count == 2 && ps != null && pb != null, "Paste: both objects on the new island (" + pasted.Count + ")");
+			if (ps != null && pb != null)
+			{
+				Check(ref ok, ((pb.transform.position - ps.transform.position) - new Vector3(4f, 0f, 2f)).magnitude < 0.05f, "... with their spacing kept");
+				// (the clipboard's middle, at the lowest one's height, is where the screen's middle meets the ground)
+				Vector3 mid = new Vector3((ps.transform.position.x + pb.transform.position.x) / 2f, Mathf.Min(ps.transform.position.y, pb.transform.position.y), (ps.transform.position.z + pb.transform.position.z) / 2f);
+				Ray centre = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+				float off = Vector3.Cross(centre.direction, mid - centre.origin).magnitude;
+				Check(ref ok, off < 0.5f && Mathf.Abs(terraineditor.terrain.SampleHeight(mid) + terraineditor.terrain.transform.position.y - mid.y) < 0.1f, "... where the middle of the screen meets the ground (" + off.ToString("F2") + " m off the line)");
+				Check(ref ok, ObjectProps.Get(ps.Props, ObjectProps.NoteTitle) == "Clip note" && ObjectProps.Get(pb.Props, ObjectProps.CreatureCount) == "3", "... with their settings (the note, the herd of 3)");
+				Check(ref ok, gizmo.SelectedRoots.Count(x => x != null) == 2, "... and selected");
+				CommandUndoRedo.UndoRedoManager.Undo();
+				yield return null;
+				Check(ref ok, !ps.gameObject.activeSelf && !pb.gameObject.activeSelf, "one Undo takes the paste away");
+				CommandUndoRedo.UndoRedoManager.Redo();
+				yield return null;
+
+				// Place exactly
+				gizmo.ClearTargets(false);
+				gizmo.AddTarget(ps.transform, false);
+				for (int i = 0; i < 5; i++) yield return null;
+				IList<UnityEngine.UI.InputField> f = ObjectInspector.PlaceFields;
+				Check(ref ok, f.Count == 9, "the inspector has Place exactly: position, turn, size");
+				if (f.Count == 9)
+				{
+					Vector3 before = ps.transform.position;
+					string[] values = { "510", "3", "520.5", "0", "90", "0", "2", "2", "2" };
+					for (int i = 0; i < 9; i++) f[i].text = values[i];
+					f[8].onEndEdit.Invoke(f[8].text);
+					Vector3 corner = terraineditor.terrain.transform.position + new Vector3(0f, DynamicIslands.EditorWaterLevel, 0f);
+					Check(ref ok, (ps.transform.position - (corner + new Vector3(510f, 3f, 520.5f))).magnitude < 0.01f && Mathf.Abs(Mathf.DeltaAngle(ps.transform.eulerAngles.y, 90f)) < 0.1f && Mathf.Abs(ps.transform.lossyScale.x - 2f) < 0.01f,
+						"typed: X 510, Y 3 above the sea, Z 520.5, turned 90, size 2 (" + (ps.transform.position - corner) + ")");
+					cam.position = ps.transform.position + new Vector3(-6f, 4f, -8f);
+					cam.LookAt(ps.transform.position + Vector3.up);
+					UnityEngine.UI.ScrollRect panel = f[0].GetComponentInParent<UnityEngine.UI.ScrollRect>();
+					if (panel != null) panel.verticalNormalizedPosition = 0f; // (Place exactly is the last group)
+					yield return new WaitForSecondsRealtime(0.6f);
+					Screenshot(new[] { "place_exactly" });
+					yield return new WaitForSecondsRealtime(0.4f);
+					CommandUndoRedo.UndoRedoManager.Undo();
+					yield return null;
+					Check(ref ok, (ps.transform.position - before).magnitude < 0.01f && Mathf.Abs(ps.transform.lossyScale.x - 1f) < 0.01f, "one Undo puts it back");
+					ps.transform.position += new Vector3(1.5f, 0f, 0f);
+					yield return new WaitForSecondsRealtime(0.35f);
+					float x;
+					Check(ref ok, float.TryParse(f[0].text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x) && Mathf.Abs(x - (ps.transform.position.x - corner.x)) < 0.02f, "the fields follow a move with the gizmo (X " + f[0].text + ")");
+				}
+			}
+			DynamicIslands.NewIsland();
+			if (ok) Log("PASS: clipboard and place exactly"); else Fail("clipboard and place exactly");
+		}
 	}
 }

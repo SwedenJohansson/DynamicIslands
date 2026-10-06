@@ -297,6 +297,9 @@ namespace DynamicIslands.Editor
 			UIKit.Button(s2, "Deselect", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(); }, "Clear the selection");
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
 			UIKit.DangerButton(del);
+			RectTransform sc = UIKit.Row(sel, 26f, 4f, "Clipboard");
+			UIKit.Button(sc, "Copy", CopySelected, "Copy the selected objects (Ctrl+C) - they stay copied when you open another island", -1, 26f, 13);
+			UIKit.Button(sc, "Paste", () => Paste(false), "Put the copied objects down where the middle of the screen points (Ctrl+V: where the mouse points)", -1, 26f, 13);
 			RectTransform s3 = UIKit.Row(sel, 26f);
 			UIKit.Button(s3, "Save as group...", SaveGroup, "Keep the selected objects (a hut with its furniture, a camp...) as a group in \"My groups\", to place again on any island", -1, 26f, 13);
 			UIKit.Button(s3, "Manage...", () => PiecesWindow.Open(false), "Rename or delete your saved groups", 86, 26f, 13).name = "Button_ManageGroups";
@@ -410,6 +413,21 @@ namespace DynamicIslands.Editor
 				SetStamp(TerrainStamps.All.FindIndex(s => s.Name == name && !s.BuiltIn));
 				DynamicIslands.Notify("Saved stamp '" + name + "': click the ground to put it down");
 			});
+		}
+
+		/// <summary>Copy (Ctrl+C): the selection to the editor's clipboard (ROADMAP E4).</summary>
+		internal static void CopySelected()
+		{
+			int n = PlacementOptions.CopySelection();
+			DynamicIslands.Notify(n > 0 ? "Copied " + n + " object(s): Paste (Ctrl+V) puts them down - on another island too" : "Select objects to copy first", n == 0);
+		}
+
+		/// <summary>Paste (Ctrl+V): the clipboard's objects put down, selected (ROADMAP E4).</summary>
+		internal static void Paste(bool atMouse)
+		{
+			if (PlacementOptions.ClipboardCount == 0) { DynamicIslands.Notify("Nothing copied yet: select objects and press Copy (Ctrl+C)", true); return; }
+			int n = PlacementOptions.PasteClipboard(atMouse);
+			if (n > 0) DynamicIslands.Notify("Pasted " + n + " object(s)");
 		}
 
 		/// <summary>Selection's "Save as group...": asks a name, saves the selected objects as a group and adds it to "My groups".</summary>
@@ -690,6 +708,8 @@ namespace DynamicIslands.Editor
 				else if (Input.GetKeyDown(KeyCode.F2)) SetTab(TAB.ObjectPlace);
 				else if (Input.GetKeyDown(KeyCode.F3)) SetTab(TAB.Island);
 				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
+				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.C) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) CopySelected();
+				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.V) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) Paste(true);
 			}
 
 			int selected = g != null ? g.SelectedRoots.Count(t => t != null) : 0;
