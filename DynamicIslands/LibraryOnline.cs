@@ -25,10 +25,10 @@ namespace DynamicIslands.Editor
 		public int Islands;
 		public List<LibraryFileRef> Files = new List<LibraryFileRef>();
 
-		/// <summary>The files an install needs: the islands and the plan (not the pictures).</summary>
+		/// <summary>The files an install needs: the islands, the plan and the map types they bring (not the pictures).</summary>
 		public IEnumerable<LibraryFileRef> InstallFiles
 		{
-			get { return Files.Where(f => f.Name.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase)); }
+			get { return Files.Where(f => f.Name.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)); }
 		}
 	}
 
@@ -251,7 +251,7 @@ namespace DynamicIslands.Editor
 		#region Downloading
 
 		/// <summary>
-		/// Downloads an entry's islands and plan (each file's size and SHA-256 checked), checks them as a pack and installs
+		/// Downloads an entry's islands, plan and map types (each file's size and SHA-256 checked), checks them as a pack and installs
 		/// it. progress(text) as it goes; done(report or null, error or null). Nothing is installed unless every file arrived.
 		/// </summary>
 		public static IEnumerator Download(LibraryEntry e, bool appearWhileSailing, bool replaceChanged, Action<string> progress, Action<LibraryPack.Report, string> done)

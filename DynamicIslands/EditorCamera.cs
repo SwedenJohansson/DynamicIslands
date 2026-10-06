@@ -27,6 +27,8 @@ namespace DynamicIslands.Editor
 		public const float LookSensitivity = 0.18f;
 
 		/// <summary>True while the camera uses the mouse (looking, panning, orbiting), or Alt is held: the tools leave the mouse alone then.</summary>
+		/// <summary>Flying with the right mouse held: Q/E move the camera down/up then, not turn the stamp or the object.</summary>
+		public static bool Looking { get { return Instance != null && Instance.isActiveAndEnabled && Instance.looking; } }
 		public static bool UsingMouse { get { return Instance != null && Instance.isActiveAndEnabled && (Instance.looking || Instance.panning || Instance.orbiting || Alt); } }
 		static bool Alt { get { return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt); } }
 

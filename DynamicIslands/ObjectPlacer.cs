@@ -76,8 +76,8 @@ namespace DynamicIslands.Editor
 			if (!EditorInput.IsTyping)
 			{
 				float turn = PlacementOptions.SnapToGrid ? 90f : 15f;
-				if (Input.GetKeyDown(KeyCode.Q)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw - turn) / turn) * turn : yaw - turn;
-				if (Input.GetKeyDown(KeyCode.E)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw + turn) / turn) * turn : yaw + turn;
+				if (Input.GetKeyDown(KeyCode.Q) && !EditorCamera.Looking) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw - turn) / turn) * turn : yaw - turn;
+				if (Input.GetKeyDown(KeyCode.E) && !EditorCamera.Looking) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw + turn) / turn) * turn : yaw + turn;
 				if (Input.GetKeyDown(KeyCode.LeftBracket)) scale = Mathf.Max(0.1f, scale / 1.1f);
 				if (Input.GetKeyDown(KeyCode.RightBracket)) scale = Mathf.Min(10f, scale * 1.1f);
 			}

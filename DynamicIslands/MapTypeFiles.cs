@@ -78,7 +78,8 @@ namespace DynamicIslands.Editor
 	/// (the help at the top of each file says them all). Read when the mod starts (and by ExportMapType / ReloadMapTypes)
 	/// and added after the built-in types in MapTypes.All, so plans ("type:&lt;name&gt;"), spawnpool.txt, the quest editor and
 	/// the generator's Ready-made tab use them like the built-in ones. A file with a built-in type's name, or one that can't
-	/// be read, is left out with a line in the log - never more. ExportMapType writes a built-in type as such a file (an
+	/// be read, is left out with a line in the log - never more (a line with a setting this version doesn't know is kept
+	/// and warned about, the rest of the file read). ExportMapType writes a built-in type as such a file (an
 	/// example to start from); ReRollMapType puts a type's content (not its land) onto the island in the editor.
 	/// </summary>
 	public static class MapTypeFiles
@@ -90,6 +91,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The files read at the last load that were left out, and why (tests, the log).</summary>
 		public static readonly List<string> Skipped = new List<string>();
+
+		/// <summary>Lines with a setting this version doesn't know, read since the last load: kept in the type, warned about (tests, the log).</summary>
+		public static readonly List<string> Unknown = new List<string>();
 
 		static readonly Regex NameRule = new Regex("^[A-Za-z0-9][A-Za-z0-9_-]{0,47}$");
 
@@ -151,6 +155,7 @@ namespace DynamicIslands.Editor
 		{
 			MapTypes.All.RemoveAll(t => t.FromFile != null);
 			Skipped.Clear();
+			Unknown.Clear();
 			int n = 0;
 			string[] files;
 			try { files = Directory.Exists(Folder) ? Directory.GetFiles(Folder, "*" + Extension).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToArray() : new string[0]; }
@@ -175,6 +180,14 @@ namespace DynamicIslands.Editor
 			}
 			if (n > 0) Debug.Log("[CUSTOM ISLANDS] Map types of files: " + string.Join(", ", MapTypes.All.Where(t => t.FromFile != null).Select(t => t.Name).ToArray()));
 			return n;
+		}
+
+		class UnknownSettingException : FormatException { public UnknownSettingException(string m) : base(m) { } }
+
+		static void WarnUnknown(string name, int line, string why)
+		{
+			Unknown.Add(name + ": line " + (line + 1) + ": " + why);
+			Debug.LogWarning("[CUSTOM ISLANDS] Map type file '" + name + Extension + "' line " + (line + 1) + ": " + why + " - kept, it may need a newer Custom Islands (the rest is read)");
 		}
 
 		static void Skip(string name, string why)
@@ -267,7 +280,7 @@ namespace DynamicIslands.Editor
 			string[] p = v.Trim().Split(new[] { ' ', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
 			if (p.Length != 2) throw new FormatException("set = <setting> <value>");
 			FieldInfo f = typeof(IslandGenSettings).GetField(p[0], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-			if (f == null) throw new FormatException("the generator has no setting '" + p[0] + "'");
+			if (f == null) throw new UnknownSettingException("the generator has no setting '" + p[0] + "'");
 			if (f.FieldType == typeof(float)) Num(p[1]);
 			else if (f.FieldType == typeof(int)) { int i; if (!int.TryParse(p[1].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out i)) throw new FormatException("'" + p[1] + "' isn't a whole number"); }
 			else if (f.FieldType == typeof(bool)) { bool b; if (!bool.TryParse(p[1].Trim(), out b)) throw new FormatException("'" + p[1] + "' isn't true or false"); }
@@ -343,7 +356,12 @@ namespace DynamicIslands.Editor
 							else throw new FormatException("likeraft = off, large or small");
 							break;
 						}
-						case "set": CheckSet(value); t.Sets.Add(value); break;
+						case "set":
+							// (a generator setting this version doesn't know: kept - ApplySets passes it by - and warned about)
+							try { CheckSet(value); }
+							catch (UnknownSettingException e) { WarnUnknown(name, i, e.Message); }
+							t.Sets.Add(value);
+							break;
 						case "content":
 						{
 							MapType b = MapTypes.BuiltIn(value);
@@ -356,7 +374,8 @@ namespace DynamicIslands.Editor
 						default:
 						{
 							int need;
-							if (!RuleParts.TryGetValue(key, out need)) throw new FormatException("no setting '" + key + "' (see the help at the top)");
+							// (a setting this version doesn't know - a newer Custom Islands' file: the line is kept and warned about, the rest read)
+							if (!RuleParts.TryGetValue(key, out need)) { WarnUnknown(name, i, "no setting '" + key + "'"); t.Rules.Add(line); break; }
 							string[] parts = value.Split('|').Select(p => p.Trim()).ToArray();
 							if (parts.Length < need || parts[0].Length == 0) throw new FormatException(key + " needs at least " + need + " parts split by |");
 							var r = new Rule { Kind = key, Parts = parts };
@@ -655,7 +674,7 @@ namespace DynamicIslands.Editor
 		public static void ReloadCommand(string[] args)
 		{
 			int n = LoadAll();
-			DynamicIslands.Notify(n + " map type file(s) read" + (Skipped.Count > 0 ? "; left out: " + string.Join("; ", Skipped.ToArray()) : ""), Skipped.Count > 0, 10);
+			DynamicIslands.Notify(n + " map type file(s) read" + (Skipped.Count > 0 ? "; left out: " + string.Join("; ", Skipped.ToArray()) : "") + (Unknown.Count > 0 ? "; unknown settings kept: " + string.Join("; ", Unknown.ToArray()) : ""), Skipped.Count > 0 || Unknown.Count > 0, 10);
 		}
 
 		[ConsoleCommand(name: "ReRollMapType", docs: "Editor: puts a map type's content (chests, notes, creatures, zones, quest - not its land) onto the island being edited, as one undo step. Usage: ReRollMapType <type> [seed]")]

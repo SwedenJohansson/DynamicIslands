@@ -870,12 +870,23 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		string saveArmed;
+		float saveUntil;
+
 		void SavePreset()
 		{
 			TextPromptWindow.Open("Save generator preset", "All of the generator's settings on this tab (not the seed) are kept under this name, to use again with any seed.", "my island", name =>
 			{
 				string safe = new string((name ?? "").Trim().Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
 				if (safe.Length == 0) { SetStatus("A preset needs a name."); return; }
+				// (a name in use: replaced only when saved under it again - two steps, like ×)
+				if (File.Exists(Path.Combine(PresetFolder, safe + ".txt")) && (!safe.Equals(saveArmed, StringComparison.OrdinalIgnoreCase) || Time.unscaledTime > saveUntil))
+				{
+					saveArmed = safe; saveUntil = Time.unscaledTime + 10f;
+					SetStatus("There is a preset '" + safe + "' already: Save these settings under that name again to replace it.");
+					return;
+				}
+				saveArmed = null;
 				Directory.CreateDirectory(PresetFolder);
 				IslandGenSettings keep = s.Copy();
 				keep.Source = ""; // (a variation of a Raft island isn't a preset for the Normal tab)

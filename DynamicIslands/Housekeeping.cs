@@ -49,6 +49,17 @@ namespace DynamicIslands.Editor
 				if (DeletedWorlds.Count > 0) parts.Add("the files of " + DeletedWorlds.Count + " deleted world(s)");
 				return "To tidy up: " + string.Join(", ", parts.ToArray()) + ".";
 			}
+
+			/// <summary>What this (newer) look found that the earlier one showed too: Tidy up's second click looks again and
+			/// clears only what the player was shown and is still unused (a world saved between the clicks keeps its files).</summary>
+			public Scan Within(Scan earlier)
+			{
+				var r = new Scan();
+				r.Copies.AddRange(Copies.Where(c => earlier.Copies.Any(e => e.Value.Count == 0 && e.Key.Equals(c.Key, StringComparison.OrdinalIgnoreCase))));
+				r.UnusedGenerated.AddRange(UnusedGenerated.Where(g => earlier.UnusedGenerated.Contains(g, StringComparer.OrdinalIgnoreCase)));
+				r.DeletedWorlds.AddRange(DeletedWorlds.Where(w => earlier.DeletedWorlds.Any(e => e.Key.Equals(w.Key, StringComparison.OrdinalIgnoreCase))));
+				return r;
+			}
 		}
 
 		/// <summary>Every copy of every world's state on this PC: (world name, lines).</summary>

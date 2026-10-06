@@ -240,6 +240,8 @@ namespace DynamicIslands
 		{
 			if (mode == LoadSceneMode.Single && GameObject.Find("MainMenuCanvas") != null)
 			{
+				// (the editor left - Main menu, a test: its undo steps hold the destroyed island's objects and terrain)
+				CommandUndoRedo.UndoRedoManager.Clear();
 				try { HookUI(); }
 				catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] The main menu's buttons (Raft's menu changed?): " + e); }
 			}
