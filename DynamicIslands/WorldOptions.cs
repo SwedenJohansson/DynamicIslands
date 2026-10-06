@@ -174,6 +174,8 @@ namespace DynamicIslands.Editor
 			if (msg.Name != null) global::DynamicIslands.Editor.PrivateStorage.Decode(msg.Name);
 			Log("The host's options: " + Describe());
 			Notify();
+			// (the blueprints swapped now, not at the next look 1.5 s on - AU65)
+			try { ScrambledBlueprints.ApplyNow(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] Blueprints: " + e.Message); }
 		}
 
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>

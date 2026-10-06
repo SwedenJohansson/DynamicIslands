@@ -209,7 +209,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry e = ContentState.EntryOf(n.transform);
 			if (e != null && r != null && n.Text.Trim().Length > 0)
 			{
-				string key = "note:" + e.HostName + ":" + r.Index;
+				string key = "note:" + StoryBook.PageIsland(e) + ":" + r.Index;
 				bool first = !StoryBook.Pages.Any(p => p.Key == key);
 				StoryBook.AddPage(key, titleText.text, n.Text, Behaviours.IslandTitle(e));
 				if (first && StoryChain.BookRules.Any(x => x.Id.Equals(e.Rule ?? "", StringComparison.OrdinalIgnoreCase)))

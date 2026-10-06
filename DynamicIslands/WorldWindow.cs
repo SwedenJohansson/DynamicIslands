@@ -25,6 +25,15 @@ namespace DynamicIslands.Editor
 		static RectTransform islandList;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static float nextRefresh;
+		/// <summary>
+		/// The spawn pool's entries and the plan list as last read, with what they were read from (AU41): the window refreshes
+		/// every second so a client sees the host's changes, and that read every saved island's name and every plan file each
+		/// time. They are read again only when their signature changed - the islands folder's and spawnpool.txt's times, the
+		/// plan files' names and times. The island list's buttons are made again only when the entries changed.
+		/// </summary>
+		static List<string> candidates, filledFrom;
+		static List<DropList.Option> planOptions;
+		static string candidatesSig, plansSig;
 
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>Tests: a button of the window by its name ("Monsters_Savage", "Option_ghostrafts", "Levels"...).</summary>
@@ -160,8 +169,56 @@ namespace DynamicIslands.Editor
 			if (!LoadSceneManager.IsGameSceneLoaded) return;
 			if (canvas == null) Build();
 			canvas.gameObject.SetActive(true);
+			// (read afresh each time the window opens)
+			candidatesSig = plansSig = null;
 			FillIslands();
 			Refresh();
+		}
+
+		/// <summary>A cheap look at what the island list depends on: the islands folder's time (a file added, removed or renamed) and spawnpool.txt's. Null if it can't be told.</summary>
+		static string CandidatesSignature()
+		{
+			try
+			{
+				string folder = DynamicIslands.assetpath, pool = System.IO.Path.Combine(folder, CustomIslandSpawner.PoolFileName);
+				return (System.IO.Directory.Exists(folder) ? System.IO.Directory.GetLastWriteTimeUtc(folder).Ticks : 0L) + "/" + (System.IO.File.Exists(pool) ? System.IO.File.GetLastWriteTimeUtc(pool).Ticks : 0L);
+			}
+			catch { return null; }
+		}
+
+		/// <summary>The plan files' names and times (a plan edited changes its description in the list). Null if it can't be told.</summary>
+		static string PlansSignature()
+		{
+			try
+			{
+				if (!System.IO.Directory.Exists(WorldPlan.Folder)) return "";
+				return string.Join("|", new System.IO.DirectoryInfo(WorldPlan.Folder).GetFiles("*" + WorldPlan.Extension).Select(f => f.Name + ":" + f.LastWriteTimeUtc.Ticks).OrderBy(s => s, StringComparer.OrdinalIgnoreCase).ToArray());
+			}
+			catch { return null; }
+		}
+
+		/// <summary>WorldIslands.Candidates, read again only when the islands folder or spawnpool.txt changed.</summary>
+		static List<string> Candidates()
+		{
+			string sig = CandidatesSignature();
+			if (candidates == null || sig == null || sig != candidatesSig)
+			{
+				candidates = WorldIslands.Candidates();
+				candidatesSig = sig;
+			}
+			return candidates;
+		}
+
+		/// <summary>The plan list (NewWorldOptions.PlanOptions), read again only when a plan file was added, removed or changed.</summary>
+		static List<DropList.Option> PlanOptions()
+		{
+			string sig = PlansSignature();
+			if (planOptions == null || sig == null || sig != plansSig)
+			{
+				planOptions = NewWorldOptions.PlanOptions();
+				plansSig = sig;
+			}
+			return planOptions;
 		}
 
 		public static void Close()
@@ -182,8 +239,10 @@ namespace DynamicIslands.Editor
 		{
 			foreach (Transform c in islandList) Destroy(c.gameObject);
 			foreach (string key in buttons.Keys.Where(k => k.StartsWith("Island_")).ToList()) buttons.Remove(key);
+			filledFrom = null;
 			if (!Host) return;
-			foreach (string entry in WorldIslands.Candidates())
+			filledFrom = Candidates();
+			foreach (string entry in filledFrom)
 			{
 				string e = entry;
 				Button b = UIKit.Button(islandList, "", () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); }, WorldIslands.Detail(e), -1, 24f, 12);
@@ -219,13 +278,15 @@ namespace DynamicIslands.Editor
 			UIKit.LabelOf(buttons["Levels"]).text = "Level up system:  " + (PlayerLevels.On ? "ON" : "off");
 			Button planPick = buttons["WorldPlan"];
 			DropdownButton pd = planPick.GetComponent<DropdownButton>();
-			if (pd != null) { pd.Options = NewWorldOptions.PlanOptions(); pd.Value = WorldDirector.PlanName; }
+			if (pd != null) { pd.Options = PlanOptions(); pd.Value = WorldDirector.PlanName; }
 			UIKit.LabelOf(planPick).text = WorldDirector.PlanName;
 			UIKit.SetActive(buttons["Levels"], PlayerLevels.On);
 
 			if (host)
 			{
-				List<string> all = WorldIslands.Candidates();
+				List<string> all = Candidates();
+				// (an island saved or removed meanwhile: the list made again - only then)
+				if (!ReferenceEquals(all, filledFrom)) FillIslands();
 				int part = all.Count(WorldIslands.TakesPart);
 				islandsText.text = (CustomIslandSpawner.Enabled ? "" : "Random islands are off in this world (its plan, or CustomIslandsAuto off) - the list counts when they are on. ") +
 					part + " of " + all.Count + " take part: untick what this world shouldn't meet by chance (islands a plan or quest brings still come).";

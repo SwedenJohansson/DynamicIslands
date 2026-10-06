@@ -442,7 +442,13 @@ namespace DynamicIslands.Editor
 			// (found in all, also those a lock or a machine used up before this step came - ROADMAP E12)
 			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.FoundCount(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
 			if (s.Type == "pages")
-				return StoryBook.Pages.Count(p => s.Target == "all" || p.Key.StartsWith("note:" + e.HostName + ":") || p.Key.StartsWith("act:" + e.HostName + ":"));
+			{
+				// ("all": the islands' pages - not the frequencies the story chain writes into the journal; this island: its own
+				// copy's - two copies of one island shared their pages, AU41)
+				if (s.Target == "all") return StoryBook.Pages.Count(p => p.Key.StartsWith("note:") || p.Key.StartsWith("act:"));
+				string island = StoryBook.PageIsland(e);
+				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
+			}
 			return 0;
 		}
 

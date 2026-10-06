@@ -375,7 +375,15 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class Behaviours
 	{
-		public const int StateBase = 0x60000, DoneBase = 0x70000, SignalBase = 0x7F000, IslandIndex = 0xFFFF;
+		public const int StateBase = 0x60000, DoneBase = 0x70000, IslandIndex = 0xFFFF;
+		/// <summary>
+		/// Signals' keys: 0x1000000 + 20 bits of the name's hash, above every other key (AU41). They were 0x7F000 + 12 bits:
+		/// 4096 slots inside the "done" keys (DoneBase + object), and one of them was the island's own "arrive" (DoneBase +
+		/// IslandIndex) - a signal with that hash counted as arrived, and arriving as that signal sent.
+		/// </summary>
+		public const int SignalBase = 0x1000000;
+		/// <summary>Where signals were kept before (read still, so worlds saved before keep the signals they had).</summary>
+		const int OldSignalBase = 0x7F000;
 		/// <summary>Host only: the shared part of an event that happens once (a note read, arriving) has run - once, however many players set it off together.</summary>
 		public const int SharedOnceBase = 0x80000;
 		const float NearDistance = 120f;
@@ -388,11 +396,22 @@ namespace DynamicIslands.Editor
 		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
 
 		/// <summary>The key a signal is kept under in the island's state.</summary>
-		public static int SignalKey(string name)
+		public static int SignalKey(string name) { return SignalBase + (SignalHash(name) & 0xFFFFF); }
+
+		static int SignalHash(string name)
 		{
 			int h = 17;
 			foreach (char c in (name ?? "").Trim().ToLowerInvariant()) h = h * 31 + c;
-			return SignalBase + (h & 0xFFF);
+			return h;
+		}
+
+		/// <summary>Whether the island has had this signal: under its key, or under the key it had before (not the one that was "arrive").</summary>
+		public static bool HasSignal(IslandWorldState.Entry e, string name)
+		{
+			if (e == null) return false;
+			if (e.State.ContainsKey(SignalKey(name))) return true;
+			int old = OldSignalBase + (SignalHash(name) & 0xFFF);
+			return old != DoneBase + IslandIndex && e.State.ContainsKey(old);
 		}
 
 		#region Spawning (IslandSpawner)
@@ -614,7 +633,7 @@ namespace DynamicIslands.Editor
 					}
 					return true;
 				case "signal":
-					return e.State.ContainsKey(SignalKey(c.Target));
+					return HasSignal(e, c.Target);
 				case "quest":
 					int steps;
 					int need = int.TryParse(c.Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out steps) ? steps : QuestTracker.QuestOf(e).Steps.Count;
@@ -895,7 +914,7 @@ namespace DynamicIslands.Editor
 				}
 				if (a.Verb == "journal")
 				{
-					StoryBook.AddPage("act:" + e.HostName + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));
+					StoryBook.AddPage("act:" + StoryBook.PageIsland(e) + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));
 					continue;
 				}
 				foreach (IslandObjectRef r in Targets(e, index, a.Target))

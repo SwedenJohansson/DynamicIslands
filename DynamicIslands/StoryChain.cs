@@ -435,7 +435,7 @@ namespace DynamicIslands.Editor
 			if (entries.All(e => e.Failed && e.Root == null || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name)))) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
-			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + e.HostName + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
+			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
 			IslandWorldState.Entry at;
 			return WorldDirector.Met(new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg }, null, out at);
 		}

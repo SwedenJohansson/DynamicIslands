@@ -432,6 +432,8 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
 		static readonly Dictionary<string, DateTime> broken = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Islands whose file was missing or broken when last looked at, and when (looked at again after 2 s, as cached ones).</summary>
+		static readonly Dictionary<string, float> none = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 		static Info Get(string name)
 		{
@@ -442,15 +444,20 @@ namespace DynamicIslands.Editor
 				Info info;
 				// (looked at again on disk at most every 2 s: a file saved meanwhile is read within that)
 				if (cache.TryGetValue(name, out info) && Time.unscaledTime - info.CheckedAt < 2f && Time.unscaledTime >= info.CheckedAt) return info;
-				if (!File.Exists(path)) return null;
+				// (a file that is missing or broken is looked for again at most every 2 s too - AU41: the director, the
+				// behaviours and the quest book ask for unloaded islands every tick, and only a file that was there was cached)
+				float noneAt;
+				if (none.TryGetValue(name, out noneAt) && Time.unscaledTime - noneAt < 2f && Time.unscaledTime >= noneAt) return null;
+				none.Remove(name);
+				if (!File.Exists(path)) { none[name] = Time.unscaledTime; return null; }
 				DateTime t = File.GetLastWriteTimeUtc(path);
 				if (info != null && info.Time == t) { info.CheckedAt = Time.unscaledTime; return info; }
 				// (a broken file is read again only once it changed - AU37: it was read and logged on every director tick)
 				DateTime brokenAt;
-				if (broken.TryGetValue(name, out brokenAt) && brokenAt == t) return null;
+				if (broken.TryGetValue(name, out brokenAt) && brokenAt == t) { none[name] = Time.unscaledTime; return null; }
 				IslandFile f;
 				try { f = IslandFile.Load(path); }
-				catch (Exception e) { broken[name] = t; Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "' (not read again until it changes): " + e.Message); return null; }
+				catch (Exception e) { broken[name] = t; none[name] = Time.unscaledTime; Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "' (not read again until it changes): " + e.Message); return null; }
 				info = new Info { Time = t, Props = f.Props, Zones = f.Objects.Where(o => o.Name == ContentCatalog.TriggerZone).Select(o => ObjectProps.Get(o.Props, ObjectProps.ZoneId)).ToList() };
 				info.Signals = f.Objects.Select(o => o.Props).Concat(new[] { f.Props }).Where(p => p != null)
 					.SelectMany(p => p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
@@ -478,7 +485,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
-		public static void Forget() { cache.Clear(); }
+		public static void Forget() { cache.Clear(); none.Clear(); }
 
 		#region Rules, kept on disk (ROADMAP P6)
 
@@ -548,7 +555,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Forgets one island file (it was just saved: read it again next time, not after the 2 s wait).</summary>
 		public static void ForgetFile(string path)
 		{
-			try { cache.Remove(System.IO.Path.GetFileNameWithoutExtension(path)); } catch { }
+			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); } catch { }
 		}
 
 		/// <summary>The island's own settings (empty if the file is missing).</summary>
@@ -635,6 +642,8 @@ namespace DynamicIslands.Editor
 		public static ulong PlanOwner;
 		/// <summary>True when the last load found the plan file changed since the world was saved (and plays the file).</summary>
 		public static bool PlanWasEdited { get; private set; }
+		/// <summary>Steam id of the PC that saved the world last ("@savedby=", 0 = not known): the plan's owner when the world names none.</summary>
+		static ulong savedBy;
 
 		static ulong LocalSteamId { get { try { return Steamworks.SteamUser.GetSteamID().m_SteamID; } catch { return 0UL; } } }
 		/// <summary>The plan as the world file keeps it ("@planrandom=", "@plandesc=", "@planrule=" lines), while it is read.</summary>
@@ -671,6 +680,7 @@ namespace DynamicIslands.Editor
 			PlanFromWorld = false;
 			PlanWasEdited = false;
 			PlanOwner = 0;
+			savedBy = 0;
 			stored = null;
 			missingNoted.Clear();
 			Done.Clear();
@@ -702,6 +712,13 @@ namespace DynamicIslands.Editor
 		}
 
 		static WorldPlan Stored() { if (stored == null) stored = new WorldPlan { Random = false }; return stored; }
+
+		/// <summary>The world file's "@savedby=" line (read by WorldCopy).</summary>
+		internal static void ReadSavedBy(string value)
+		{
+			ulong id;
+			if (ulong.TryParse((value ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out id)) savedBy = id;
+		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
@@ -761,6 +778,9 @@ namespace DynamicIslands.Editor
 				WorldRandomizer.OnNewWorld();
 				return;
 			}
+			// (a world that names no owner of its plan - saved before it did: the PC that saved it is the owner. Before, a world
+			// without an owner took the plan file of whoever hosted it, another player's plan of the same name too - AU25)
+			if (PlanOwner == 0 && savedBy != 0) PlanOwner = savedBy;
 			if (stored != null && !WorldPlan.IsBuiltIn(PlanName))
 			{
 				stored.Name = PlanName;
@@ -774,7 +794,6 @@ namespace DynamicIslands.Editor
 					PlanWasEdited = true;
 					// (its story chain too: what is unlocked and done stays, the islands keep their frequencies)
 					StoryChain.FromPlan(edited);
-					if (PlanOwner == 0) PlanOwner = LocalSteamId;
 					Log("The plan '" + PlanName + "' was changed since the world was saved: the changed plan plays");
 					DynamicIslands.Notify("You changed the plan '" + PlanName + "' since this world was last saved: the changed plan plays from now on.");
 				}
@@ -819,8 +838,9 @@ namespace DynamicIslands.Editor
 			// (a library or imported plan: only while this PC has the version the world was made with - an update of the
 			// entry doesn't change worlds already started, just as their islands keep their version)
 			if (PlanFrom.Length > 0 || source.Length > 0) return source.Equals(PlanFrom, StringComparison.OrdinalIgnoreCase) ? file : null;
+			// (the owner's PC only: with no owner known the world's own copy plays - AU25)
 			ulong me = LocalSteamId;
-			return PlanOwner == 0 || PlanOwner == me ? file : null;
+			return PlanOwner != 0 && PlanOwner == me ? file : null;
 		}
 
 		/// <summary>The islands the host was told are missing (tests).</summary>
@@ -1037,7 +1057,7 @@ namespace DynamicIslands.Editor
 					// (any zone of that name: with two zones called 'gate' the quest counted either, the rule only the first)
 					return IslandCache.ZoneOrdinals(e.Name, r.WhenArg).Any(o => ContentState.IsUsed(e, TriggerZone.KeyBase + o));
 				case "visit": return e.State.ContainsKey(VisitKey);
-				case "signal": return e.State.ContainsKey(Behaviours.SignalKey(r.WhenArg));
+				case "signal": return Behaviours.HasSignal(e, r.WhenArg);
 			}
 			return false;
 		}

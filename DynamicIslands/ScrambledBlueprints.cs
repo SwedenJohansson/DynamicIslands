@@ -153,6 +153,34 @@ namespace DynamicIslands.Editor
 			nextTick = 0f;
 		}
 
+		/// <summary>
+		/// The islands there now get their partners at once, not at the next look (AU65: the host's options reach a player who
+		/// joins a few seconds in; until the next look a blueprint picked up was Raft's own).
+		/// </summary>
+		public static void ApplyNow()
+		{
+			nextTick = 0f;
+			Tick();
+		}
+
+		/// <summary>
+		/// This machine's player picks something up: a blueprint pickup of Raft's island that the 1.5 s look hasn't got to yet
+		/// (its island just appeared or grew, or the options just came) gets its partner first, so what is picked up is the
+		/// partner (AU65). Pickups without a blueprint that moves cost nothing here.
+		/// </summary>
+		internal static void BeforePickup(PickupItem p)
+		{
+			if (p == null || !LoadSceneManager.IsGameSceneLoaded) return;
+			int want = Active ? WorldOptions.Seed : 0;
+			Original o;
+			if (originals.TryGetValue(p, out o)) { if (o.Seed == want) return; }
+			else if (want == 0 || !HasMovable(p)) return;
+			Landmark l = p.GetComponentInParent<Landmark>();
+			if (l == null) return;
+			looked[l] = l.GetComponentsInChildren<PickupItem>(true).Length;
+			Apply(l);
+		}
+
 		static void Apply(Landmark l)
 		{
 			foreach (PickupItem p in l.GetComponentsInChildren<PickupItem>(true))
@@ -229,5 +257,36 @@ namespace DynamicIslands.Editor
 		}
 
 		#endregion
+	}
+
+	/// <summary>
+	/// Raft's player picks something up (Pickup.PickupItem, on the machine of the player who picks it up): a blueprint gets
+	/// its partner first if it hasn't yet (ScrambledBlueprints.BeforePickup - AU65). Found by name: a Raft version without
+	/// it only loses this check (PatchHealth says so), the 1.5 s look still swaps.
+	/// </summary>
+	[HarmonyPatch]
+	static class ScrambledBlueprintsPickup
+	{
+		static System.Reflection.MethodBase TargetMethod()
+		{
+			// (Raft's own class, from the assembly PickupItem is in)
+			Type pickup = typeof(PickupItem).Assembly.GetType("Pickup");
+			const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
+			return pickup == null ? null : pickup.GetMethods(all).FirstOrDefault(m => m.Name == "PickupItem" && m.GetParameters().Any(x => x.ParameterType == typeof(PickupItem)));
+		}
+
+		static void Prefix(object[] __args)
+		{
+			try
+			{
+				if (__args == null) return;
+				foreach (object a in __args)
+				{
+					PickupItem p = a as PickupItem;
+					if (p != null) { ScrambledBlueprints.BeforePickup(p); return; }
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] Before a pickup: " + e.Message); }
+		}
 	}
 }
