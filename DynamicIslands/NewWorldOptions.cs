@@ -207,10 +207,14 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			WorldDirector.PendingPlan = NewWorldOptions.Selected;
-			RandomizerSettings r = NewWorldOptions.Randomizer;
-			WorldRandomizer.SaveDefaults(r);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the plan '" + WorldDirector.PendingPlan + "', world randomizer " + r.Describe());
+			try
+			{
+				WorldDirector.PendingPlan = NewWorldOptions.Selected;
+				RandomizerSettings r = NewWorldOptions.Randomizer;
+				WorldRandomizer.SaveDefaults(r);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the plan '" + WorldDirector.PendingPlan + "', world randomizer " + r.Describe());
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world plan: " + e); }
 		}
 	}
 }

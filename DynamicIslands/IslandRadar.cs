@@ -52,6 +52,11 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<int, float> neededAt = new Dictionary<int, float>();
 		static readonly Dictionary<int, bool> needed = new Dictionary<int, bool>();
+		/// <summary>The islands shown this frame (one list kept: HandleUI runs every frame).</summary>
+		static readonly List<IslandWorldState.Entry> islands = new List<IslandWorldState.Entry>();
+		/// <summary>Each dot's text and what it was made from (label, metres): made again only when they change.</summary>
+		sealed class DotText { public string Label, Text; public int Metres; }
+		static readonly Dictionary<Reciever_Dot, DotText> dotText = new Dictionary<Reciever_Dot, DotText>();
 
 		internal static void Draw(Reciever r)
 		{
@@ -68,8 +73,13 @@ namespace DynamicIslands.Editor
 			// (ROADMAP LM2: only what helps - the islands within receiverDistance, and those the players still need however far)
 			float range = WorldRules.ReceiverDistance;
 			Vector3 rp0 = r.transform.position;
-			List<IslandWorldState.Entry> islands = IslandWorldState.Islands.Where(e => !WorldRandomizer.IsExtras(e) &&
-				(range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))).ToList();
+			islands.Clear();
+			IList<IslandWorldState.Entry> all = IslandWorldState.Islands;
+			for (int k = 0; k < all.Count; k++)
+			{
+				IslandWorldState.Entry e = all[k];
+				if (!WorldRandomizer.IsExtras(e) && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))) islands.Add(e);
+			}
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)
 			{
@@ -106,8 +116,18 @@ namespace DynamicIslands.Editor
 				d.SetLengthToPoint(dist);
 				// Islands brought by a rule (WorldDirector) carry a name, e.g. "Old camp 820m"
 				string label = islands[i].Label ?? "";
-				if (label.Length > 18) label = label.Substring(0, 17) + "\u2026";
-				d.SetText((label.Length > 0 ? label + " " : "") + dist.ToString("F0") + "m");
+				int metres = Mathf.RoundToInt(dist);
+				DotText t;
+				if (!dotText.TryGetValue(d, out t)) dotText[d] = t = new DotText();
+				if (t.Text == null || t.Label != label || t.Metres != metres)
+				{
+					t.Label = label;
+					t.Metres = metres;
+					if (label.Length > 18) label = label.Substring(0, 17) + "\u2026";
+					t.Text = (label.Length > 0 ? label + " " : "") + metres + "m";
+				}
+				// (set again only if something else wrote over it)
+				if (d.dotNumberText == null || d.dotNumberText.text != t.Text) d.SetText(t.Text);
 				r.isCurrentlyShowingRadarDot = true;
 			}
 		}

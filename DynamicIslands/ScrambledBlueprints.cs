@@ -119,6 +119,8 @@ namespace DynamicIslands.Editor
 		class Original { public ItemInstance Instance; public int Seed; }
 		static readonly Dictionary<PickupItem, Original> originals = new Dictionary<PickupItem, Original>();
 		static readonly Dictionary<Landmark, int> looked = new Dictionary<Landmark, int>();
+		/// <summary>Each island's hierarchy size when its pickups were last counted: unchanged, they aren't counted again.</summary>
+		static readonly Dictionary<Landmark, int> lookedShape = new Dictionary<Landmark, int>();
 		static float nextTick;
 
 		/// <summary>Tests: the pickups changed now (their island and "from > to").</summary>
@@ -137,6 +139,10 @@ namespace DynamicIslands.Editor
 				foreach (Landmark l in WorldManager.AllLandmarks)
 				{
 					if (l == null || !l.isSpawned) continue;
+					// (nothing added or taken away under it since the last look: the same pickups - no walk through the island)
+					int shape = l.transform.hierarchyCount, seenShape;
+					if (lookedShape.TryGetValue(l, out seenShape) && seenShape == shape && looked.ContainsKey(l)) continue;
+					lookedShape[l] = shape;
 					int count = l.GetComponentsInChildren<PickupItem>(true).Length;
 					int seen;
 					if (looked.TryGetValue(l, out seen) && seen == count) continue;

@@ -214,12 +214,16 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			HashSet<string> on = WorldSettingsWindow.Chosen;
-			WorldOptions.SaveDefaults(on);
-			WorldIslands.SaveDefaults(WorldIslands.Chosen);
-			PlayerLevels.SaveDefault(PlayerLevels.Chosen);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
-				(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
+			try
+			{
+				HashSet<string> on = WorldSettingsWindow.Chosen;
+				WorldOptions.SaveDefaults(on);
+				WorldIslands.SaveDefaults(WorldIslands.Chosen);
+				PlayerLevels.SaveDefault(PlayerLevels.Chosen);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
+					(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world options: " + e); }
 		}
 	}
 }

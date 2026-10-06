@@ -134,8 +134,8 @@ namespace DynamicIslands.Editor
 			foreach (GameObject r in IslandSpawner.SpawnedRoots)
 			{
 				if (r == null) continue;
-				foreach (CreatureSpawnPoint p in r.GetComponentsInChildren<CreatureSpawnPoint>(true))
-					if (p.Kind != null && p.Kind.Type == ai.behaviourType && (p.transform.position - ai.transform.position).sqrMagnitude < 150f * 150f) return true;
+				foreach (CreatureSpawnPoint p in SpotsOf(r))
+					if (p != null && p.Kind != null && p.Kind.Type == ai.behaviourType && (p.transform.position - ai.transform.position).sqrMagnitude < 150f * 150f) return true;
 			}
 			return false;
 		}
@@ -722,6 +722,22 @@ namespace DynamicIslands.Editor
 
 		#region Watching the animals (host) and colouring them (clients)
 
+		/// <summary>Each island's spawn points (by its root), with its hierarchy size then: looked up again only when something
+		/// was added under it or taken away (an island still spawning its objects, an object removed) - the looks every second
+		/// walked every island's whole hierarchy.</summary>
+		static readonly Dictionary<GameObject, KeyValuePair<int, CreatureSpawnPoint[]>> spotsOf = new Dictionary<GameObject, KeyValuePair<int, CreatureSpawnPoint[]>>();
+
+		static CreatureSpawnPoint[] SpotsOf(GameObject root)
+		{
+			int shape = root.transform.hierarchyCount;
+			KeyValuePair<int, CreatureSpawnPoint[]> c;
+			if (spotsOf.TryGetValue(root, out c) && c.Key == shape) return c.Value;
+			if (c.Value == null) foreach (GameObject gone in spotsOf.Keys.Where(k => k == null).ToList()) spotsOf.Remove(gone);
+			CreatureSpawnPoint[] spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true);
+			spotsOf[root] = new KeyValuePair<int, CreatureSpawnPoint[]>(shape, spots);
+			return spots;
+		}
+
 		/// <summary>Every frame from the mod: once a second, records killed and caught animals.</summary>
 		public static void Tick()
 		{
@@ -737,9 +753,9 @@ namespace DynamicIslands.Editor
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (e.Root == null) continue;
-				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
+				foreach (CreatureSpawnPoint p in SpotsOf(e.Root))
 				{
-					if (p.RecordedAlive < 0) continue; // not spawned yet
+					if (p == null || p.RecordedAlive < 0) continue; // not spawned yet
 					// A "hide" action on the spot: its animals go too (not counted as defeated), and come back when it is shown
 					if (!p.gameObject.activeInHierarchy)
 					{
@@ -835,7 +851,7 @@ namespace DynamicIslands.Editor
 		static void TintRemote()
 		{
 			List<CreatureSpawnPoint> spots = IslandSpawner.SpawnedRoots.Where(r => r != null)
-				.SelectMany(r => r.GetComponentsInChildren<CreatureSpawnPoint>(true)).Where(p => p.Kind != null).ToList();
+				.SelectMany(r => SpotsOf(r)).Where(p => p != null && p.Kind != null).ToList();
 			if (!spots.Any(p => ObjectProps.HasTint(p.Props) || !Mathf.Approximately(ObjectProps.Health(p.Props), 1f))) return;
 			AI_NetworkBehaviour[] all = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>();
 			Network_Host_Entities host = HostEntities;

@@ -70,6 +70,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static void Reset()
 		{
+			worldRegrow = -1;
 			if (!Raft_Network.IsHost) return;
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
@@ -77,7 +78,6 @@ namespace DynamicIslands.Editor
 			MonsterDifficulty.Reset(newWorld);
 			BuildCost.Reset(newWorld);
 			BuildCostRefund.Reset(BuildCost.Current);
-			worldRegrow = -1;
 			if (newWorld) Broadcast();
 		}
 
@@ -156,6 +156,7 @@ namespace DynamicIslands.Editor
 			BuildCost.OnWorldReceived();
 			BuildCostRefund.Reset(0);
 			hostKnown = false;
+			worldRegrow = -1;
 		}
 
 		#region The host's settings (spawnpool.txt)
@@ -436,19 +437,32 @@ namespace DynamicIslands.Editor
 			EnsureKeeper();
 			bool inGame = false;
 			try { inGame = LoadSceneManager.IsGameSceneLoaded; } catch { }
+			if (!inGame) { searchWait = 0f; nextSearch = 0f; }
 			int want = inGame ? Current : 0;
 			if (want == Applied) return;
 			if (want == 0) { RestoreAll(); return; }
 			if (items == null || items.Count == 0)
 			{
+				if (Time.unscaledTime < nextSearch) return;
 				items = FindBuildMenuItems();
-				if (items.Count == 0) return; // (the build menu isn't there yet: the keeper tries again)
+				if (items.Count == 0)
+				{
+					// (the build menu isn't there yet: the keeper tries again, less often the longer it isn't - every object
+					// was searched 4 times a second for as long as the world was open)
+					searchWait = Mathf.Min(Mathf.Max(searchWait * 2f, 0.5f), 30f);
+					nextSearch = Time.unscaledTime + searchWait;
+					return;
+				}
+				searchWait = 0f;
 			}
 			List<CostMultiple> entries = Entries(items);
 			ApplyTo(entries, want);
 			Applied = want;
 			Log("Build menu costs " + Describe(want) + ": " + items.Count + " items, " + entries.Count + " amounts (e.g. " + Example() + ")");
 		}
+
+		/// <summary>When the build menu is looked for again, and how long the last wait was (it doubles, up to 30 s).</summary>
+		static float nextSearch, searchWait;
 
 		static string Example()
 		{
@@ -736,12 +750,16 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			int l = NewWorldRulesBox.MonsterLevel, p = NewWorldRulesBox.BuildPercent;
-			MonsterDifficulty.Pending = l;
-			BuildCost.Pending = p;
-			MonsterDifficulty.SaveDefault(l);
-			BuildCost.SaveDefault(p);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the monster difficulty " + MonsterDifficulty.Describe(l) + " and the build cost " + BuildCost.Describe(p));
+			try
+			{
+				int l = NewWorldRulesBox.MonsterLevel, p = NewWorldRulesBox.BuildPercent;
+				MonsterDifficulty.Pending = l;
+				BuildCost.Pending = p;
+				MonsterDifficulty.SaveDefault(l);
+				BuildCost.SaveDefault(p);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the monster difficulty " + MonsterDifficulty.Describe(l) + " and the build cost " + BuildCost.Describe(p));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world rules: " + e); }
 		}
 	}
 }

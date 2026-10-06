@@ -747,7 +747,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			Network_Player local = Local;
-			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				Stat_Health h = p != null && p.Stats != null ? p.Stats.stat_health : null;
 				if (h == null) continue;
@@ -876,20 +876,27 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(Stat_Oxygen), "Update")]
 	static class LevelOxygenPatch
 	{
-		static readonly FieldInfo LostPerSecond = AccessTools.Field(typeof(Stat_Oxygen), "oxygenLostPerSecond");
+		// (a reference to the field, not FieldInfo: GetValue and SetValue boxed the float twice a frame)
+		static readonly AccessTools.FieldRef<Stat_Oxygen, float> LostPerSecond = OxygenField();
+
+		static AccessTools.FieldRef<Stat_Oxygen, float> OxygenField()
+		{
+			try { return AccessTools.FieldRefAccess<Stat_Oxygen, float>("oxygenLostPerSecond"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); return null; }
+		}
 
 		static void Prefix(Stat_Oxygen __instance, out float __state)
 		{
 			__state = -1f;
 			if (LostPerSecond == null || !StatApply.IsLocalOxygen(__instance)) return;
-			__state = (float)LostPerSecond.GetValue(__instance);
-			LostPerSecond.SetValue(__instance, __state / PlayerLevels.Factor(LevelRules.Oxygen));
+			__state = LostPerSecond(__instance);
+			LostPerSecond(__instance) = __state / PlayerLevels.Factor(LevelRules.Oxygen);
 		}
 
 		// (a Finalizer: put back also when Raft's Update throws - AU41)
 		static Exception Finalizer(Exception __exception, Stat_Oxygen __instance, float __state)
 		{
-			try { if (__state >= 0f && LostPerSecond != null) LostPerSecond.SetValue(__instance, __state); }
+			try { if (__state >= 0f && LostPerSecond != null) LostPerSecond(__instance) = __state; }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); }
 			return __exception;
 		}

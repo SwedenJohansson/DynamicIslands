@@ -194,17 +194,45 @@ namespace DynamicIslands.Editor
 	{
 		static void Postfix(Network_Player __instance)
 		{
-			if (__instance == null || !__instance.IsLocalPlayer) return;
-			if (PlayerHold.TestOffset != Vector3.zero)
+			try
 			{
-				CharacterController cc = __instance.PersonController.controller;
-				cc.enabled = false;
-				__instance.transform.position += PlayerHold.TestOffset;
-				cc.enabled = true;
-				Debug.Log("[CUSTOM ISLANDS] Dev: the player put " + PlayerHold.TestOffset.ToString("F0") + " off, as Raft once did");
-				PlayerHold.TestOffset = Vector3.zero;
+				if (__instance == null || !__instance.IsLocalPlayer) return;
+				if (PlayerHold.TestOffset != Vector3.zero)
+				{
+					CharacterController cc = __instance.PersonController.controller;
+					cc.enabled = false;
+					__instance.transform.position += PlayerHold.TestOffset;
+					cc.enabled = true;
+					Debug.Log("[CUSTOM ISLANDS] Dev: the player put " + PlayerHold.TestOffset.ToString("F0") + " off, as Raft once did");
+					PlayerHold.TestOffset = Vector3.zero;
+				}
+				PlayerHold.Begin();
 			}
-			PlayerHold.Begin();
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Holding the player: " + e); }
+		}
+	}
+
+	/// <summary>
+	/// Every player in the game, looked up at most twice a second: the level stats, name tags, players' places, the director
+	/// and the island streaming each wanted them every tick (about 9 searches of the whole scene a second). May hold a
+	/// player who just left (null to Unity): skip those.
+	/// </summary>
+	public static class Players
+	{
+		static Network_Player[] all = new Network_Player[0];
+		static float until = -1f;
+
+		public static Network_Player[] All
+		{
+			get
+			{
+				if (Time.unscaledTime >= until)
+				{
+					all = Object.FindObjectsOfType<Network_Player>();
+					until = Time.unscaledTime + 0.5f;
+				}
+				return all;
+			}
 		}
 	}
 
@@ -241,7 +269,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!Raft_Network.IsHost) return;
 			var present = new HashSet<ulong>();
-			foreach (Network_Player p in Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				if (p == null) continue;
 				ulong id = p.steamID.Id;

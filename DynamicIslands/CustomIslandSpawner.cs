@@ -205,7 +205,7 @@ namespace DynamicIslands.Editor
 			// any player is at it: its creatures, ambushes, shared actions and where each player stood live on the host's
 			// copy - a crew that splits up, three players at an island far behind the raft, still has all of it)
 			var players = new List<Vector3>();
-			if (Raft_Network.IsHost) players.AddRange(UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null).Select(p => p.transform.position));
+			if (Raft_Network.IsHost) players.AddRange(Players.All.Where(p => p != null).Select(p => p.transform.position));
 			else { Network_Player player = RAPI.GetLocalPlayer(); if (player != null) players.Add(player.transform.position); }
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
