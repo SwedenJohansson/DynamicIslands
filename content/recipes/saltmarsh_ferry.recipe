@@ -45,7 +45,7 @@ clear at 0 0 r=120 only=Rock|Boulder on=sand above=0.2
 # --- The ferry, beached at the channel's end: Raft's stranded boat, its bow in the channel, its stern on the mud bank;
 # the captain's safe, the engineer's locker and the bilge pump on the bank beside it ------------------------------------------------
 push at 2 31 h=1.0 yaw=10
-place BoatStranded ferry at 0 0 y=0
+place BoatStranded ferryhull at 0 0 y=0
 place Placeable_Lantern_Metal - at -1.0 3.7 y=1.14 sit
 place Zone_Trigger hold at 0 -6 y=1
 place Creature_Rat rats at 0.6 -8 y=0.4
@@ -105,7 +105,7 @@ island on.arrive=message||Reeds, salt pools, a channel winding in from the sea -
 
 story pumphandle|Pump handle|quest:Balboa_BrunosTool_Wrench|The ferry's bilge pump handle, from the reed cutter's camp in the marsh.
 
-note captainsnotice Captain's notice | FRONTIER CORPS - STATION TWO - FERRY NOTICE\n\nThe tide is gone and the ferry is on the mud. Her bilge is full and the rats have the hold.\n\nThe pump's handle is at the reed cutter's camp, out in the marsh - I took it so nobody would run the pump dry.\n\nThe engineer's locker and my safe have what the next crew needs to get a raft moving: the motor wheel, the steering. Station Three is in the volcano's crater - mind the pressure.
+note captainsnotice Captain's notice | FRONTIER CORPS - STATION TWO - FERRY NOTICE\n\nThe tide is gone and the ferry is on the mud. Her bilge is full and the rats have the hold.\n\nThe pump's handle is at the reed cutter's camp, out in the marsh - I took it so nobody would run the pump dry.\n\nThe engineer's locker and my safe have what the next crew needs to get a raft moving: the motor wheel, the steering. Station Three is at the foot of the volcano - mind the pressure.
 note reedchest Reed cutter's chest | The reed cutter's chest by his tent: the ferry's pump handle, greased and wrapped in oilcloth.
 loot reedchest story:pumphandle*1;Rope*2;Plank*3
 prop reedchest loot.refill=0
@@ -147,7 +147,7 @@ step collect|story:pumphandle|1|Fetch the bilge pump's handle from the reed cutt
 step kill|Rat|4|Clear the rats - and their king - out of the ferry's hold
 step open|Engineer's locker|1|Pump the ferry dry and open the engineer's locker
 step open|Captain's safe|1|Open the captain's safe on the bank
-quest done=The ferry's papers give the next station: Cinderfall, a geothermal plant in a volcano's crater. With a motor wheel and a steering wheel, the raft can get there under its own power.
+quest done=The ferry's papers give the next station: Cinderfall, a geothermal plant at the foot of a volcano. With a motor wheel and a steering wheel, the raft can get there under its own power.
 quest reward=Plank*8;Rope*3;Nail*6
 
 save Saltmarsh Ferry

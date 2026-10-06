@@ -189,7 +189,7 @@ story brush|Pollen brush|PaintBrush|Lind's soft sable brush in a glass tube, for
 story pollen|Pollen vial|Placeable_Utopia_LightBottleYellow|A stoppered vial of golden pollen, labelled in Lind's hand.
 story titanseed|Titan seed|Seed_Pineapple|A seed as big as a hen's egg, from the Titan's bloom.
 
-note journal Professor Lind's journal | THE TITAN - J. LIND\n\nThirty years in bud. It will bloom only with pollen from its three cousins - and they are sulky things:\n- the ghost orchid opens only in mist: turn the misting valve in the Orchid house;\n- the sago palm flowers up under the Palm house's roof: climb the gantry;\n- the night lily opens only in the dark: draw the Lily house's blinds.\nUse the sable brush (potting shed - mind the beetles, they ate my seedlings).\n\nThree vials to the Titan, and it blooms. I won't see it. You will.
+note journal Professor Lind's journal | THE TITAN - H. LIND\n\nThirty years in bud. It will bloom only with pollen from its three cousins - and they are sulky things:\n- the ghost orchid opens only in mist: turn the misting valve in the Orchid house;\n- the sago palm flowers up under the Palm house's roof: climb the gantry;\n- the night lily opens only in the dark: draw the Lily house's blinds.\nUse the sable brush (potting shed - mind the beetles, they ate my seedlings).\n\nThree vials to the Titan, and it blooms. I won't see it. You will.
 note shedchest Potting shed chest | The potting shed's chest: trowels, twine, seed packets - and Lind's sable brush in its glass tube.
 loot shedchest story:brush*1;Seed_Flower_Red*2;Rope*2
 prop shedchest loot.refill=0

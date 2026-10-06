@@ -91,7 +91,7 @@ place campfire_1 - at -60 97 ground
 place Creature_Boar ashboars at -62 96 ground
 place Zone_Trigger village at -60 96 y=1.5
 # (after the bloom: a new carved post with the elders' welcome, the canoes coming home on the bay, the homecoming zone)
-place Pillar_04 welcomepost at -55 92 ground sit
+place Pillar_04 welcomepillar at -55 92 ground sit
 place Note_Sign welcomepost at -55 91.2 ground sit yaw=180
 place RT_PlasticBoat canoes at -94 92 h=0.3 yaw=80
 place RT_PlasticBoat canoes at -97 98 h=0.3 yaw=95
@@ -434,6 +434,9 @@ prop canoes obj.name=canoes
 prop canoes beh.hidden=1
 prop welcomepost obj.name=welcomepost
 prop welcomepost beh.hidden=1
+# (the carved post apart from its sign: under the sign's alias it was a second note "The elders' welcome")
+prop welcomepillar obj.name=welcomepost
+prop welcomepillar beh.hidden=1
 prop homecoming obj.name=homecoming
 prop homecoming beh.hidden=1
 

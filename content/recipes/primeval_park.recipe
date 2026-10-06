@@ -384,6 +384,11 @@ prop queengate obj.name=queengate
 prop queengate beh.move=0,-12.8,0
 prop queengate beh.moveTime=8
 prop queengate beh.moveMode=switch
+# (Utopia's entrance door as a ready piece wants Raft's entrance key and goes when used: this gate only sinks when the gate panel is used - the ready piece's settings taken off)
+prop queengate beh.use=
+prop queengate if.use=
+prop queengate else.use=
+prop queengate on.use=
 prop queen obj.name=queen
 prop queen creature.count=1
 prop queen creature.size=1.3

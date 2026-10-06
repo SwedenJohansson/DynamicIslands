@@ -566,7 +566,7 @@ prop foremanbox loot.refill=0
 prop foremanbox if.open=quest|21\ntake|story:dynamite|1
 prop foremanbox else.open=message||The foreman's strongbox, locked. His board said: use powder on it.
 prop foremanbox on.open=sound||event:/weapons/dynamite/explode\nmessage||BOOM. The lock is gone, and so are your eyebrows.
-note gangloot Gang's loot chest | The gang's loot chest: two bars of the town's silver, the sheriff's badge - and the Bank of Sundown's vault key.
+note gangloot Gang's loot chest | The gang's loot chest: two bars of the town's silver, a fistful of coin - and the Bank of Sundown's vault key.
 loot gangloot story:silverbar*2;story:vaultkey*1;TradeToken*5
 prop gangloot loot.refill=0
 note bankvault Bank vault | The Bank of Sundown's vault: the town's trust - deeds, the telegraph office's charger plans, the carpenter's patterns, a machine for turning scrap back into iron, coin, and yes, the mayor's hat.

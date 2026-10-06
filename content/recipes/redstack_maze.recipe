@@ -203,7 +203,7 @@ call shallows r=83 deep=5 n=1
 # ===== Settings, story items, notes, behaviours, quest (6 steps) ==========================================================
 info title=Redstack Maze
 info author=Custom Islands
-info description=A field of red rock stacks so close together that the channels between them make a maze, and at its heart a heron shrine behind a water gate. The tide-keeper's lever opens the gate for seventy-five seconds. His chart knows the way.
+info description=A field of red rock stacks so close together that the channels between them make a maze, and at its heart a heron shrine behind a water gate. The tide-keeper's lever opens the gate for seventy-five seconds. Her chart knows the way.
 island on.arrive=message||Red columns standing out of the sea like a stone forest, the water between them green and quiet. On the tallest, far inside, a little thatched roof - and a grey bird, standing on one leg.
 
 story heronpearl|The heron's pearl|Placeable_Utopia_LightBottleWhite|A grey pearl the size of a thumb, from the heron shrine's nest.

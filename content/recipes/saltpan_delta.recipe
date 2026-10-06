@@ -175,7 +175,7 @@ story crank|Sluice crank|quest:Varuna_CraneKey|A cranked iron handle that fits t
 story saltsack|Sack of salt|quest:Caravan_BatteryChargerPart|A sack of coarse white salt, raked from a pan.
 story waybill|Waybill|quest:Tangaroa_Tape|The wagon's waybill: THREE SACKS - SALT - FOR THE JETTY.
 
-note notice Foreman's notice | SALTPAN DELTA WORKS - NOTICE\n\nThe company has gone under. Wages stop today. Sorry, lads.\n\nThe last harvest is still in the pans. The brine runs north to south: open the north sluice first, then the middle, then the south - open them out of order and you flood the pan below. The crank is in my locker.\n\nThree sacks on the wagon and down to the jetty, and the pay chest in the office is whoever's that does it. Mind the store. The rats have had it since Tuesday.\n- Gus, foreman
+note notice Foreman's notice | SALTPAN DELTA WORKS - NOTICE\n\nThe company has gone under. Wages stop today. Sorry, lads.\n\nThe last harvest is still in the pans. The brine runs north to south: open the north sluice first, then the middle, then the south - open them out of order and you flood the pan below. The crank is in my locker.\n\nThree sacks on the wagon and down to the jetty, and the pay chest in the office is for whoever does it. Mind the store. The rats have had it since Tuesday.\n- Gus, foreman
 note locker Foreman's locker | Gus's locker: his spare shirt, his pipe, and the sluice crank on a hook.
 loot locker story:crank*1;Rope*2;Leather*1
 prop locker loot.refill=0

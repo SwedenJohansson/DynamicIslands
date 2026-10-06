@@ -108,7 +108,7 @@ island on.arrive=message||A long rocky point, a construction site cut into its e
 
 story part|Floodlight part|quest:Varuna_SpotlightPart|One of the floodlight's four parts - lens, bulb, reflector, cable - from a crate on the reef.
 
-note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea off the north-east shelf. The reef has them now.\nDay 42. Without the light we can't work the north water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.
+note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea - the current has spread them round the point. The reef has them now.\nDay 42. Without the light we can't work the north water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.
 note partcrate1 Lens crate | A crate on the sea floor off the north-east shelf: the floodlight's lens, wrapped in sacking.
 loot partcrate1 story:part*1;Plastic*3
 prop partcrate1 loot.refill=0

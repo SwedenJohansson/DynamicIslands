@@ -219,6 +219,9 @@ prop radioLive obj.name=radioLive
 prop radioLive beh.hidden=1
 prop radioLive beh.use=Listen
 prop radioLive on.use=message||Static... then, faintly, the same words over and over: "Follow the beacons east."
+# (Raft's comm radio as a ready piece only works with power (a running generator or Raft's battery charger part), which this island has none of: the radio, live once the coil is fitted, answered "The radio is dead". The ready piece's lock taken off)
+prop radioLive if.use=
+prop radioLive else.use=
 prop printout obj.name=printout
 prop printout beh.hidden=1
 

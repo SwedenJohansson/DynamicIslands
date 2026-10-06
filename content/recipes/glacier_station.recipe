@@ -66,7 +66,7 @@ clear at 12 54 r=18
 
 # --- The observatory on the peak: Temperance's weather station, its foot on the levelled top -------------------------
 clear at -12 -6 r=12
-place TP_WeatherStation observatory at -12 -6 centred h=22.5
+place TP_WeatherStation observatoryhut at -12 -6 centred h=22.5
 place TP_Moontown_TarpCrate02 - at -4 -12 ground sit yaw=30
 place Loot_Crate obslocker at -6 -13 ground sit yaw=200
 place Note_Sign obssign at -9 -15 ground yaw=190
@@ -133,7 +133,7 @@ info description=A research station at the edge of a glacier, dark since its rea
 island on.arrive=message||A glacier island: domes glowing on the shore, a mast on the peak, two chimneys cold in the snow.
 
 story fuse|Reactor fuse|quest:Tangaroa_GeneratorPart|A heavy ceramic reactor fuse. The station's reactor takes three.
-note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the dogs called her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin north of the village.
+note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the men call her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin north of the village.
 note obssign Observatory | GLACIER STATION OBSERVATORY\nWeather and aurora recording. The cabin is up the ladder.\nSpare parts in the locker by the mast.
 note toolcrate Tool crate | The station's tool crate: a reactor fuse in its padded case, and the usual spanners.
 loot toolcrate story:fuse*1;Bolt*4;Nail*8

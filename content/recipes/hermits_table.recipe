@@ -92,7 +92,7 @@ prop hermitchest else.open=message||The hermit's chest is locked. The key is in 
 note footbox Climbers' box | A box at the cliff's foot: chalk, rope, a dented flask.
 loot footbox Rope*3;PlasticBottle_Water*2;Plank*3
 prop footbox loot.refill=0
-note ledgebox Ledge box | A box wedged on the first ledge: someone gave up here.
+note ledgebox Ledge box | A box wedged on the ledge: someone gave up here.
 loot ledgebox Cooked_GenericMeat*2;HealingSalve*1
 prop ledgebox loot.refill=0
 

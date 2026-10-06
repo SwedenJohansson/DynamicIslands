@@ -33,8 +33,8 @@ clear at 28 0 r=7
 
 # --- The big top: Caravan Town's great roof on its pillars; inside, a sand ring of wooden curbs, benches round it, the
 # little stage on the west side with the ringmaster's cash box; the notice at the entrance on the east, flags --------------
-place Pillars bigtop at -10 -44 h=2.2
-place Roof bigtop at -10 -44 h=2.2
+place Pillars bigtoptent at -10 -44 h=2.2
+place Roof bigtoptent at -10 -44 h=2.2
 for i 0 13 1
 place Relay_Fence_wood - at {-10+4*cos(25.714*$i)} {-44+4*sin(25.714*$i)} ground yaw={90-25.714*$i}
 next

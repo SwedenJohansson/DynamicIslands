@@ -10,8 +10,8 @@ plan new The Abyss Expedition
 plan description An expedition downwards beside Raft's story: an old mine, a buried shelter, a sunken island, caverns, a wreck and a drowned city - each found when the one before is done - and at the end the Abyss, a trench where something old lives in the dark.
 plan random off
 plan story on
-plan rule mine | island:Old Mine Islet | start | receiver:500 | A mining company's old beacon still answers on the Receiver: the headframe over its shaft is where the expedition starts. | Old Mine Islet | beside
-plan rule shelter | island:Shelter Atoll | quest:mine | receiver:700 | The miner's logbook ends with a shelter's call sign - an atoll, its emergency band still open. | Shelter Atoll | beside
+plan rule mine | island:Old Mine Islet | start | receiver:500 | A mining company's old beacon still answers on the Receiver: the timbered portal in its rock mound is where the expedition starts. | Old Mine Islet | beside
+plan rule shelter | island:Shelter Atoll | quest:mine | receiver:700 | The receiver picks up a shelter's call sign - an atoll, its emergency band still open. | Shelter Atoll | beside
 plan rule sunken | type:sunken | quest:shelter | receiver:600 | The shelter's radio picks up a buoy over an island under the sea. Dive! | Sunken island | beside
 plan rule caverns | island:Ironreef Caverns | visit:sunken | receiver:800 | From the sunken island's peak the Receiver catches a mine's relay: a mountain full of caves. | Ironreef Caverns | beside
 plan rule wreck | type:wreck | quest:caverns | receiver:600 | A ship's distress beacon, faint and looping: a wreck adrift beyond the caverns. | Wreck | beside

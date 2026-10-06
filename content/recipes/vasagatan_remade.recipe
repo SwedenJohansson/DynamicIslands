@@ -41,7 +41,7 @@ clear at -38.2 -8 r=4
 # 2026-10-03); the papers and a lantern by the wheel further in; the rats in the sand of her open deck,
 # torn plating and spilled cargo where she broke, in the surf at the reef's edge ------------------------------------
 push at -26.5 -23.5 h=1.1 yaw=10
-place BoatStranded bow at 0 0 y=0
+place BoatStranded bowhull at 0 0 y=0
 place DoorMetal chartdoor at 0.55 -1.75 y=0.98 rot=-90,0,0
 place VG_SignBridge - at 0 -1.98 y=2.4
 place VG_Safe safe at 0 -0.9 y=0.39 sit yaw=180

@@ -458,7 +458,7 @@ island on.arrive=message||Reeds and willows and water to the horizon, stilt vill
 
 story bridgepin|Bridge pin|quest:Varuna_CraneKey|An iron pin as long as your forearm: the Eel Bridge's windlass won't turn without it.
 story fenmint|Fen-mint|Placeable_Utopia_Herb_6|A bunch of fen-mint from the hermit's isle, sharp enough to make your eyes water.
-story townseal|Sevenbridge's seal|quest:Tangaroa_Token|The town seal, given by the vault when the bell rings for seven bridges.
+story townseal|Sevenbridge's seal|quest:Tangaroa_Token|The town seal, dropped from the town bell's rope when it rings for seven bridges.
 
 note wardenmap The fen-warden's map | THE GREAT FEN - WARDEN'S MAP\n\nSevenbridge raised its seven bridges in the fever year. Each windlass is held by a village:\nREEDCUT (north) - the Reed Bridge. EELMARSH (north-east) - the Eel Bridge. MOTHWICK (east) - the Wisp Bridge. TURFHOLM (south-east) - the Turf Bridge. HERONSBY (south) - the Heron Bridge. WILLOWBEND (west) - the Mill Bridge. STILLWATER (north-west) - the Still Bridge.\nEach village will lower its bridge for whoever helps it. When all seven are down, ring the town bell: the hall's vault opens.\nNet launcher in my chest - Reedcut's geese are loose again.
 note wardenchest Warden's chest | The fen-warden's chest: a net launcher, waders, a bag of dried eel.

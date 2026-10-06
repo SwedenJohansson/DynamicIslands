@@ -120,7 +120,7 @@ info author=Custom Islands
 info description=An inventor's orchard on a flat-topped rock: mango, banana and pineapple in rows, three hand pumps with their wind towers at the rim, stone gutters to a dry fountain - and below the cliff, his workshop, its steel shutter down. Start the pumps in the order on his diagram and the water does the rest.
 island on.arrive=message||A flat-topped rock with an orchard on it, wind towers at its edges, and a ramp cut up the cliff. Nothing turns. Nothing drips.
 
-story crank|Pump crank|Pump_Handle|The inventor's pump crank, from his toolbox: it fits all three pumps.
+story crank|Pump crank|quest:Balboa_BrunosTool_Wrench|The inventor's pump crank, from his toolbox: it fits all three pumps.
 story flow|Running water|Placeable_Pipe_Water|The orchard's water running again, pumps to fountain - the workshop shutter's pressure line is live.
 
 note diagram Inventor's diagram | (chalk on a board, much rubbed out and redrawn)\n\nTHE WATER ORDER\n\nThe gutters fill the fountain; the fountain lifts the workshop shutter.\nThe pumps must run in the order the fruit ripens - lowest first, highest last:\n\n  the PINEAPPLE (it sits on the ground),\n  then the MANGO (it hangs on the tree),\n  then the BANANA (it hangs highest of all).\n\nStart one out of order and they choke each other - all three stop and you start again.\nThe crank is in my toolbox. I am at the market, back Thursday.\n- O.V.
@@ -137,12 +137,27 @@ prop strongbox loot.refill=0
 prop pineapplecog obj.name=pineapplecog
 prop pineapplecog beh.hidden=1
 prop pineapplecog beh.spin=90
+# (Selene's cogwheel as a ready piece is a crank players turn: this one only spins when its pump runs - the ready piece's settings taken off)
+prop pineapplecog beh.use=
+prop pineapplecog if.use=
+prop pineapplecog else.use=
+prop pineapplecog on.use=
 prop mangocog obj.name=mangocog
 prop mangocog beh.hidden=1
 prop mangocog beh.spin=90
+# (Selene's cogwheel as a ready piece is a crank players turn: this one only spins when its pump runs - the ready piece's settings taken off)
+prop mangocog beh.use=
+prop mangocog if.use=
+prop mangocog else.use=
+prop mangocog on.use=
 prop bananacog obj.name=bananacog
 prop bananacog beh.hidden=1
 prop bananacog beh.spin=90
+# (Selene's cogwheel as a ready piece is a crank players turn: this one only spins when its pump runs - the ready piece's settings taken off)
+prop bananacog beh.use=
+prop bananacog if.use=
+prop bananacog else.use=
+prop bananacog on.use=
 prop pineapplepump obj.name=pineapplepump
 prop pineapplepump beh.use=Crank the pineapple pump
 prop pineapplepump if.use=has|story:crank|1

@@ -280,7 +280,7 @@ step reach|anvil|1|Walk to the Anvil, Brann's forge at the saddle's north-east e
 step read|Brann's chalkboard|1|Read Brann's chalkboard
 step collect|story:ore|3|Fetch three lumps of ore from the carts in the adit
 step collect|story:northblade|1|Feed the ore to the Anvil's furnace for Brann's blade
-step kill|Warthog|3|Drive the boars off the charcoal clamps on the south peak
+step kill|Warthog|3|Drive the boars off the charcoal clamps on the south slope
 step collect|story:charcoal|3|Take three sacks of charcoal from the clamps
 step collect|story:southblade|1|Feed the charcoal to the Bellows' furnace for Kessa's blade
 step read|The verdict|1|Lay both blades on the judging stone and read the verdict

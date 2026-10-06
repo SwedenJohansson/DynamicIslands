@@ -42,7 +42,7 @@ brush flatten from 0 0 to 0 -34 r=6 s=20 frames=70
 brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
 clear from 0 6 to 0 -34 r=8
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
-place BalboaCave_Bear irongate at 1.2 -18.4 y=5.2 scale=1.15
+place BalboaCave_Bear irongatecave at 1.2 -18.4 y=5.2 scale=1.15
 # the timbered portal at the mouth, rails along the floor, ore carts, lanterns on crates, veins of iron and copper
 place Relay_support_beam_wood - at -4.2 -1 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 6.6 -1 rot=0,0,-90 sx=0.75
@@ -101,7 +101,7 @@ brush flatten from 0 0 to 0 12 r=10 s=20 frames=30
 clear from 0 10 to 0 -40 r=10
 brush sand from 0 0 to 0 -40 r=9 s=10 frames=40
 brush rock from 0 -8 to 0 -38 r=6 s=10 frames=30
-place BalboaCave_DeadEnd bearhall at -1.7 -20.5 y=9.4 scale=1.25
+place BalboaCave_DeadEnd bearhallcave at -1.7 -20.5 y=9.4 scale=1.25
 place BigBoulder2_Low rockfall at -3.8 -1.5 sit scale=0.6 yaw=10
 place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
 place SmallBoulder2 rockfall at -1 1.5 sit yaw=80
@@ -125,7 +125,7 @@ brush flatten from 0 0 to 0 -32 r=6 s=20 frames=80
 brush flatten from 0 0 to 0 30 r=8 s=20 frames=60
 brush smooth from 0 4 to 0 30 r=12 s=20 frames=40
 clear from 0 28 to 0 -32 r=8 all
-place BalboaCave_DeadEnd drowned at -1.4 -16 y=7.5
+place BalboaCave_DeadEnd drownedcave at -1.4 -16 y=7.5
 place VP_Wagon02 - at 0.5 -12 ground yaw=10
 place VP_Wagon02 - at -2 -18 ground tilt=80 yaw=-30
 for rz -26 -2 3.5

@@ -256,6 +256,11 @@ prop hangardoor obj.name=hangardoor
 prop hangardoor beh.move=0,4.8,0
 prop hangardoor beh.moveTime=4
 prop hangardoor beh.moveMode=switch
+# (Varuna Point's garage door as a ready piece wants Raft's motherlode key and goes when used: this hangar door only lifts from the hidden door panel - the ready piece's settings taken off)
+prop hangardoor beh.use=
+prop hangardoor if.use=
+prop hangardoor else.use=
+prop hangardoor on.use=
 prop furnace obj.name=furnace
 prop furnace beh.use=Feed the launch codes to the incinerator
 prop furnace if.use=quest|5\ntake|story:codes|1

@@ -12,7 +12,7 @@ plan story on
 
 # --- The story: a big quest island after each of Raft's (done when its quest is) -------------------------------------
 plan rule cove | island:Wreckers' Cove | start | receiver:700 | Under the Radio Tower's signal hides another: a lantern code, blinking over and over. | Wreckers' Cove | after:RadioTower | quest
-plan rule thornwood | island:Thornwood | start | receiver:900 | The Vasagatan's radio picks up drums - and a ranger's call for help from a jungle island. | Thornwood | after:Vasagatan | quest
+plan rule thornwood | island:Thornwood | start | receiver:900 | The Vasagatan's radio picks up drums - and an explorer's call for help from a jungle island. | Thornwood | after:Vasagatan | quest
 plan rule scrapyard | island:Scrapyard Haven | start | receiver:900 | Balboa's radio mast catches a trader's broadcast: Scrapyard Haven, open for business. | Scrapyard Haven | after:Balboa | quest
 plan rule ironreef | island:Ironreef Caverns | start | receiver:900 | A mining company's beacon, still running after all these years. | Ironreef Caverns | after:CaravanTown | quest
 plan rule metropolis | island:The Drowned Metropolis | start | receiver:1000 | Tangaroa's archives name a sister city: Meridian, drowned when the water rose. | The Drowned Metropolis | after:Tangaroa | quest
@@ -22,7 +22,7 @@ plan rule glacier | island:Glacier Station | start | receiver:1000 | A weak call
 # --- Side trips: the smaller islands, now and then ahead while sailing ------------------------------------------------
 plan rule gull | island:The Stranded Gull | km:2 | ahead:450 | A white hull glints on a sandbar ahead. | The Stranded Gull
 plan rule signal | island:Signal Rock | km:4 | ahead:450 | A mast on a rock ahead - its light is dead. | Signal Rock
-plan rule ranger | island:Ranger's Rest | km:7 | ahead:450 | A jungle hill with a watch tower comes up ahead. | Ranger's Rest
+plan rule ranger | island:Ranger's Rest | km:7 | ahead:450 | A jungle hill with a watchtower comes up ahead. | Ranger's Rest
 plan rule stilt | island:Stilt Hollow | km:10 | ahead:450 | Trailers on stilts over a reef - someone lived out here. | Stilt Hollow
 plan rule wharf | island:Mayor's Wharf | km:13 | ahead:450 | Rooftops stick out of the sea ahead: a sunken city block. | Mayor's Wharf
 plan rule crane | island:Crane Yard | km:16 | ahead:450 | A crane rises from the sea ahead. | Crane Yard

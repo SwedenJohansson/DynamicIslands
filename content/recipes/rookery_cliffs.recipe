@@ -128,7 +128,7 @@ info author=Custom Islands
 info description=Two snowy crags loud with sea-birds, an egg collector's cabin at their foot, a winch basket up the south crag's cliff and ladders from ledge to ledge. No quest - climb, gather the eggs, read his log, and mind the screechers on the top ledges.
 island on.arrive=message||Two white crags and a noise like a market: thousands of birds on the cliffs. At their foot, a little cabin with smoke-black windows.
 
-note collectorlog The egg collector's log | ROOKERY CLIFFS - COLLECTOR'S LOG\n\nMay 2. Up the ladders at first light. 60 eggs. The guillemots don't mind me. The big grey things on the top ledges DO.\nMay 9. Winch cable frayed. Spliced it. The basket still goes up the south crag if you pull the lever slow.\nMay 20. 140 eggs. Took the boat round to the trading post.\nJune 3. The grey ones took my hat.\nJune 4. The grey ones took my basket. It's on the west top ledge. They can keep it.\nJune 30. Season's end. Leaving the cabin open for whoever comes. Take what eggs you like - the birds lay more.\n- Eskil
+note collectorlog The egg collector's log | ROOKERY CLIFFS - COLLECTOR'S LOG\n\nMay 2. Up the ladders at first light. 60 eggs. The guillemots don't mind me. The big grey things on the top ledges DO.\nMay 9. Winch cable frayed. Spliced it. The basket still goes up the south crag if you pull the lever slow.\nMay 20. 140 eggs. Took the boat round to the trading post.\nJune 3. The grey ones took my hat.\nJune 4. The grey ones took my basket. It's on the north crag's top ledge. They can keep it.\nJune 30. Season's end. Leaving the cabin open for whoever comes. Take what eggs you like - the birds lay more.\n- Eskil
 note tally Tally of the seasons | (chalked on a board, one line a year)\n\n11 seasons. Best year 1,200 eggs. Worst year: the year of the grey ones (210, and a hat).
 note cliffsign Warning sign | LADDERS ARE OLD. LEDGES ARE SLIPPERY. THE GREY BIRDS ON TOP ARE NOT BIRDS YOU WANT TO MEET.\n- E.
 note cabinchest Collector's chest | Eskil's chest: a wool jumper, egg wax, a tin of biscuits, rope for the ladders.
@@ -204,7 +204,7 @@ prop saddle zone.radius=10
 prop saddle zone.message=The flat at the crags' foot: the collector's cabin, his tally board, goats in the lee of the rocks.
 prop highledge zone.id=highledge
 prop highledge zone.radius=4
-prop highledge zone.message=The west crag's top ledge - and the grey ones' ledge. Something big shifts on the rock above you.
+prop highledge zone.message=The north crag's top ledge - and the grey ones' ledge. Something big shifts on the rock above you.
 prop screechers creature.count=2
 prop wind sound.event=event:/amb/temperance
 prop wind sound.volume=0.6
