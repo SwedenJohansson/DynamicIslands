@@ -479,6 +479,13 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
+							// (a player's day isn't trusted - AU60: only the host makes things available again, and what a player
+							// used gets the host's day, the one its regrow counts from - on every machine, as it is passed on so)
+							if (Raft_Network.IsHost)
+							{
+								if (msg.Count < 0) { Log("A player said " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " is available again: only the host decides that"); break; }
+								msg.Count = ContentState.Today;
+							}
 							ContentState.ApplyUsed(msg.Ids[0], msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg); // everyone else learns it from the host
 						}

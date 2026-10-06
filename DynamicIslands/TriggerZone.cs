@@ -31,8 +31,12 @@ namespace DynamicIslands.Editor
 		public int Ordinal;
 		public int StateKey { get { return KeyBase + Ordinal; } }
 
-		bool inside;
-		float nextCheck, cooldownUntil;
+		/// <summary>A once-zone another player had first is tried again this often while the local player stays inside
+		/// (the host holds it for them about as long: their "only if" may fail, or they walk off without setting it off).</summary>
+		const float RetrySeconds = 6f;
+
+		bool inside, toldRefused;
+		float nextCheck, cooldownUntil, retryAt;
 
 		/// <summary>Raised on every machine when the local player sets a zone off (tests and quests listen).</summary>
 		public static event Action<TriggerZone> Fired;
@@ -64,6 +68,9 @@ namespace DynamicIslands.Editor
 			if (player == null) return;
 			bool now = (player.transform.position - transform.position).sqrMagnitude <= Radius * Radius;
 			if (now && !inside) Enter();
+			// (refused by the host - another player had it: tried again while the player stays inside - AU70)
+			else if (now && retryAt > 0f && Time.time >= retryAt) { retryAt = 0f; Enter(false, true); }
+			if (!now) { retryAt = 0f; toldRefused = false; }
 			inside = now;
 			if (now && Air) Breathe(player);
 		}
@@ -75,16 +82,17 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Breathing in an air pocket: " + e.Message); }
 		}
 
-		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes.</summary>
-		public void Enter() { Enter(false); }
+		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes;
+		/// again: tried again while the player stayed inside after a refusal (not a new arrival).</summary>
+		public void Enter() { Enter(false, false); }
 
-		void Enter(bool granted)
+		void Enter(bool granted, bool again)
 		{
 			// A quest step "go to this zone" counts every time (even when the zone itself has fired already)
-			if (!granted) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
+			if (!granted && !again) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
 			bool fired = HasFired;
 			if (fired && !Repeats) return;
-			if (!Repeats && !granted) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
+			if (!Repeats && !granted && !again) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
 			if (Repeats && Time.time < cooldownUntil) return;
 			// (a zone the player can't set off yet says why before it is claimed: claimed, it was held from the others)
 			IslandObjectRef self = GetComponent<IslandObjectRef>();
@@ -93,8 +101,14 @@ namespace DynamicIslands.Editor
 				Behaviours.Allows(ContentState.EntryOf(transform), self.Index, "enter");
 				return;
 			}
-			// A zone that fires once fires for one player: a client asks the host first (Claims)
-			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (yes && this != null) Enter(true); })) return;
+			// A zone that fires once fires for one player: a client asks the host first (Claims). Refused (another player
+			// has it), the player is told so and it is tried again while they stay inside (before: nothing was said, and
+			// it never went off for them until they walked out and in again - AU70)
+			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (this == null) return; if (yes) Enter(true, false); else Refused(); }))
+			{
+				if (Raft_Network.IsHost) Refused(); // (the host is answered at once: another player holds it)
+				return;
+			}
 			// Its "only if" checks first: when they fail the player is told why and the zone stays ready - not marked
 			// as fired, no cooldown. (Before, a failed check still used the zone up: a treasure map's X crossed
 			// without the map did nothing when the player came back with it within half a minute, and a zone that
@@ -110,6 +124,15 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
 			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
+		}
+
+		/// <summary>The host gave this once-zone to another player: the local player is told once while inside, and it is
+		/// tried again in a few seconds (when the other player set it off, it has fired by then and nothing happens).</summary>
+		void Refused()
+		{
+			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "': another player has it");
+			if (!toldRefused) { toldRefused = true; DynamicIslands.Notify("Someone else got here first"); }
+			retryAt = Time.time + RetrySeconds;
 		}
 
 		/// <summary>Puts items in the local player's inventory; what doesn't fit is dropped in front of them. Story items go to the crew's journal.</summary>
