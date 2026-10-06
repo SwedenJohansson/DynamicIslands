@@ -94,6 +94,10 @@ namespace DynamicIslands.Editor
 				islands.Remove(e);
 			}
 			if (broadcast) IslandNetwork.BroadcastRemoved(gone.Select(e => e.Id));
+			// (host, islands taken out on purpose - RemoveIsland, the randomizer: a story step's island comes again, AU50. Not
+			// a generated island that failed: brought again it would fail again every second)
+			if (broadcast && gone.Count > 0 && Raft_Network.IsHost)
+				try { StoryChain.OnIslandsRemoved(gone); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] An island removed: " + ex.Message); }
 			return gone.Count;
 		}
 

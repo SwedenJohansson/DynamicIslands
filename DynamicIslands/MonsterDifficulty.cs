@@ -82,7 +82,11 @@ namespace DynamicIslands.Editor
 					string.Join("\n", Enumerable.Range(0, Names.Length).Select(i => Names[i] + " (" + FactorText(i) + "): " + Short(i)).ToArray()) +
 					"\nBruce and your raft stay as in Raft: his bites on it, how often he comes for it and how soon he is back after you kill him. " +
 					"Puffer fish: only their health changes, their explosion and poison hurt as in Raft.\n" +
-					"It comes on top of the game mode above. Tame animals (llamas, goats, chickens) and seagulls don't change. " +
+					"It comes on top of the game mode: Easy's monsters hit softer, Hard's harder (and in Hard your hits do 20% less). " +
+					"In Peaceful monsters leave you alone (only Raft's Varuna Point and Utopia bosses still fight), so mostly their health changes. " +
+					"In Creative nothing can hurt you, and no screechers or puffer fish come (a quest step that needs them can't be done there). " +
+					"In every mode your hits count, so kill quests and lairs can be done.\n" +
+					"Tame animals (llamas, goats, chickens) and seagulls don't change. " +
 					"The host can change it later with the console command Monsters (F10).";
 			}
 		}

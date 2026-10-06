@@ -676,6 +676,23 @@ namespace DynamicIslands.Editor
 		static string MonsterFormat(int level) { return MonsterDifficulty.Name(level).ToUpperInvariant() + "   " + MonsterDifficulty.FactorText(level); }
 		static string BuildFormat(int percent) { return percent <= 0 ? "RAFT'S OWN" : "+" + percent + "%"; }
 
+		/// <summary>
+		/// What the game mode tab does with the monster level, after its text - as Raft's own modes are (AU61, their values
+		/// read from Raft's game files): in Peaceful the monsters are tame and players' hits count as usual, in Creative
+		/// players take no damage, Easy and Hard change the monsters' hits (and Hard players' hits on them, x0.8) as well.
+		/// </summary>
+		static string ModeNote(GameMode mode)
+		{
+			switch (mode)
+			{
+				case GameMode.Peaceful: return " In Peaceful monsters leave you alone, so only their health changes.";
+				case GameMode.Creative: return " In Creative nothing can hurt you, so only their health changes.";
+				case GameMode.Easy: return " On top of Easy: their hits hurt you less.";
+				case GameMode.Hardcore: return " On top of Hard: their hits hurt more and yours do less.";
+				default: return "";
+			}
+		}
+
 		internal static void Refresh()
 		{
 			if (monsterSlider != null && monsterSlider.Slider != null)
@@ -683,10 +700,7 @@ namespace DynamicIslands.Editor
 				int l = MonsterLevel;
 				if (Mathf.RoundToInt(monsterSlider.Slider.value) != l) monsterSlider.Slider.SetValueWithoutNotify(l);
 				monsterSlider.Value.text = MonsterFormat(l);
-				GameMode mode = GameManager.GameMode;
-				monsterDetail.text = MonsterDifficulty.Descriptions[l] +
-					(l == MonsterDifficulty.Normal ? "" : mode == GameMode.Peaceful ? " In Peaceful monsters leave you alone, so only their health changes." :
-					mode == GameMode.Creative ? " In Creative nothing can hurt you, so mostly their health changes." : "");
+				monsterDetail.text = MonsterDifficulty.Descriptions[l] + (l == MonsterDifficulty.Normal ? "" : ModeNote(GameManager.GameMode));
 				// (the chosen one golden; Raft's body font is bold already)
 				for (int i = 0; i < ticks.Count; i++)
 					if (ticks[i] != null) ticks[i].color = i == l ? UIKit.Accent : UIKit.TextMuted;

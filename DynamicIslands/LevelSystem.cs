@@ -933,7 +933,8 @@ namespace DynamicIslands.Editor
 			{
 				if (!PlayerLevels.On || entity == null || damageInflictorEntityType != EntityType.Player || entity.entityType != EntityType.Enemy) return;
 				damage *= PlayerLevels.Factor(LevelRules.Damage);
-				// What Raft does to it next (DamageEntity): peaceful mode takes it away, the PvE multiplier scales it
+				// What Raft does to it next (DamageEntity): a mode that takes players' damage away makes it 0 (none of Raft's own
+				// does; never on an island creature - IslandCreatureHitPatch), the mode's PvE multiplier scales it (Hard x0.8)
 				SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
 				float dealt = damage;
 				if (mode != null && mode.playerSpecificVariables != null)
