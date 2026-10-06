@@ -41,6 +41,10 @@ namespace DynamicIslands.Editor
 		{
 			if (root == null) return;
 			BuriedTreasure.OnDespawn(root);
+			// (a claim the host granted for this island's chest or zone and not used yet is forgotten: kept, it let the
+			// thing through without asking when the island came back, long after the host stopped holding it - AU41)
+			IslandWorldState.Entry entry = IslandWorldState.Islands.FirstOrDefault(x => x.Root == root);
+			if (entry != null) Claims.ForgetIsland(entry.Id);
 			try { CreatureSpawner.OnIslandDespawned(root); }
 			catch (System.Exception e) { Debug.LogError("[CUSTOM ISLANDS] Removing the island's creatures: " + e); }
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))

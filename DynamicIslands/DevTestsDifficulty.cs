@@ -152,25 +152,27 @@ namespace DynamicIslands
 
 		#region The build cost's rules (anywhere)
 
-		[ConsoleCommand(name: "CIBuildCostUnit", docs: "Dev, anywhere: the build cost's rules - amounts rounded up at every percent, set from Raft's own numbers (never on top of an earlier change), back to Raft's at 0, the texts, the world file line, the last choice")]
+		[ConsoleCommand(name: "CIBuildCostUnit", docs: "Dev, anywhere: the build cost's rules - amounts rounded to the nearest (never below Raft's) at every percent, set from Raft's own numbers (never on top of an earlier change), back to Raft's at 0, the texts, the world file line, the last choice")]
 		public static void BuildCostUnit()
 		{
 			bool ok = true;
 			int before = BuildCost.Current, monstersBefore = MonsterDifficulty.Current;
 			try
 			{
-				// Rounded up, at every percent and amount
-				var table = new[] { new[] { 1, 50, 2 }, new[] { 2, 50, 3 }, new[] { 3, 50, 5 }, new[] { 4, 50, 6 }, new[] { 5, 50, 8 }, new[] { 1, 5, 2 }, new[] { 10, 5, 11 },
-					new[] { 20, 5, 21 }, new[] { 7, 100, 14 }, new[] { 3, 0, 3 }, new[] { 0, 50, 0 }, new[] { 6, 50, 9 }, new[] { 10, 25, 13 } };
+				// Rounded to the nearest (a half up), never below Raft's own, at every percent and amount (AU41: rounded up, +5 %
+				// doubled every 1-item cost)
+				var table = new[] { new[] { 1, 50, 2 }, new[] { 2, 50, 3 }, new[] { 3, 50, 5 }, new[] { 4, 50, 6 }, new[] { 5, 50, 8 }, new[] { 1, 5, 1 }, new[] { 1, 45, 1 }, new[] { 10, 5, 11 },
+					new[] { 20, 5, 21 }, new[] { 7, 100, 14 }, new[] { 3, 0, 3 }, new[] { 0, 50, 0 }, new[] { 6, 50, 9 }, new[] { 10, 25, 13 }, new[] { 3, 10, 3 }, new[] { 2, 25, 3 } };
 				List<string> wrong = table.Where(r => BuildCost.Cost(r[0], r[1]) != r[2]).Select(r => r[0] + " at " + r[1] + "% -> " + BuildCost.Cost(r[0], r[1]) + " (want " + r[2] + ")").ToList();
 				for (int a = 1; a <= 40; a++)
 					for (int p = 0; p <= BuildCost.Max; p += BuildCost.Step)
 					{
 						float exact = a * (100 + p) / 100f;
+						int want = Mathf.Max(a, Mathf.FloorToInt(exact + 0.5f + 0.0001f));
 						int c = BuildCost.Cost(a, p);
-						if (c < exact - 0.0001f || c >= exact + 0.9999f) wrong.Add(a + " at " + p + "% -> " + c + " (exactly " + exact + ")");
+						if (c != want) wrong.Add(a + " at " + p + "% -> " + c + " (exactly " + exact + ", want " + want + ")");
 					}
-				Check(ref ok, wrong.Count == 0, "amounts at every percent are rounded up (1 plank at 50% is 2, 2 are 3, 3 are 5)" + (wrong.Count > 0 ? ": " + string.Join("; ", wrong.Take(8).ToArray()) : ""));
+				Check(ref ok, wrong.Count == 0, "amounts at every percent are rounded to the nearest, never below Raft's (1 plank at 5% is 1, at 50% 2; 2 are 3, 3 are 5)" + (wrong.Count > 0 ? ": " + string.Join("; ", wrong.Take(8).ToArray()) : ""));
 
 				// Set from Raft's own numbers: never on top of an earlier change, and back at 0
 				var entries = new List<CostMultiple> { new CostMultiple { items = new Item_Base[0], amount = 1 }, new CostMultiple { items = new Item_Base[0], amount = 2 }, new CostMultiple { items = new Item_Base[0], amount = 3 } };
@@ -191,8 +193,8 @@ namespace DynamicIslands
 				Check(ref ok, BuildCost.DescriptionFor(0).Contains("Raft") && BuildCost.DescriptionFor(50).Contains("50% more") && BuildCost.DescriptionFor(50).Contains("1 plank becomes 2") &&
 					BuildCost.DescriptionFor(50).Contains("half of what it cost"), "what 0% and 50% say: \"" + BuildCost.DescriptionFor(0) + "\" / \"" + BuildCost.DescriptionFor(50) + "\"");
 				string help = BuildCost.HelpText;
-				Check(ref ok, help.Contains("rounded up") && help.Contains("crafting menu") && help.Contains("join") && help.Contains("repairing") && help.Contains("half"),
-					"the ? says rounded up, half back when removing, repairs, the crafting menu stays, players who join get it (" + help.Length + " characters)");
+				Check(ref ok, help.Contains("rounded") && help.Contains("crafting menu") && help.Contains("join") && help.Contains("repairing") && help.Contains("half"),
+					"the ? says rounded, half back when removing, repairs, the crafting menu stays, players who join get it (" + help.Length + " characters)");
 
 				// The world file
 				BuildCost.Current = 0;
@@ -305,7 +307,7 @@ namespace DynamicIslands
 			yield return null;
 			Check(ref ok, badSteps.Count == 0, "every step shows its percent and what it does (at 50%: \"" + NewWorldRulesBox.BuildText + "\")" + (badSteps.Count > 0 ? ": WRONG " + string.Join("; ", badSteps.ToArray()) : ""));
 
-			// The two "?": every level; rounded up and what players who join get
+			// The two "?": every level; rounded and what players who join get
 			List<UIKit.HelpMark> marks = panel.GetComponentsInChildren<UIKit.HelpMark>().ToList();
 			var shown = new List<string>();
 			foreach (UIKit.HelpMark m in marks)
@@ -315,7 +317,7 @@ namespace DynamicIslands
 				shown.Add(UIKit.ShownHelp ?? "");
 				if (UIKit.ShownHelp != null) m.Toggle();
 			}
-			Check(ref ok, marks.Count == 2 && MonsterDifficulty.Names.All(n => shown[0].Contains(n)) && shown[1].Contains("rounded up") && shown[1].Contains("join"), "two ?: every monster level, and the build cost (rounded up, players who join get it)");
+			Check(ref ok, marks.Count == 2 && MonsterDifficulty.Names.All(n => shown[0].Contains(n)) && shown[1].Contains("rounded") && shown[1].Contains("join"), "two ?: every monster level, and the build cost (rounded, players who join get it)");
 
 			// The layout: in the World settings window, inside its frame, nothing else of it drawn on top; Raft's box its own
 			Canvas.ForceUpdateCanvases();
@@ -713,7 +715,7 @@ namespace DynamicIslands
 		/// <summary>Each material's amount in the cost, and what taking it (Raft's RemoveCostMultiple) or giving back half (Raft's refund) should change.</summary>
 		static string CostText(IEnumerable<CostMultiple> cost) { return string.Join(" + ", cost.Select(c => c.amount + " " + c.items[0].UniqueName + " (Raft " + BuildCost.OriginalOf(c) + ")").ToArray()); }
 
-		[ConsoleCommand(name: "CIBuildCostWorld", docs: "Dev, in game (host): the build cost in a world - Raft's build menu items, every amount at 0 / 50 / 100 / 35 %, never on top of an earlier change; a real block placed through Raft's BlockCreator takes that many % more materials, rounded up, and removing it gives half of that back as Raft does; Raft's numbers again at 0")]
+		[ConsoleCommand(name: "CIBuildCostWorld", docs: "Dev, in game (host): the build cost in a world - Raft's build menu items, every amount at 0 / 50 / 100 / 35 %, never on top of an earlier change; a real block placed through Raft's BlockCreator takes that many % more materials, rounded, and removing it gives half of that back as Raft does; Raft's numbers again at 0")]
 		public static void BuildCostWorld()
 		{
 			DynamicIslands.instance.StartCoroutine(BuildCostWorldRoutine());
@@ -744,7 +746,7 @@ namespace DynamicIslands
 			{
 				BuildCost.Set(p);
 				List<string> wrong = WrongAmounts(p);
-				Check(ref ok, BuildCost.Applied == p && wrong.Count == 0, BuildCost.Describe(p) + ": every amount is " + (p == 0 ? "Raft's own" : "Raft's + " + p + "%, rounded up") +
+				Check(ref ok, BuildCost.Applied == p && wrong.Count == 0, BuildCost.Describe(p) + ": every amount is " + (p == 0 ? "Raft's own" : "Raft's + " + p + "%, rounded") +
 					(wrong.Count > 0 ? " - WRONG " + string.Join(", ", wrong.Take(6).ToArray()) : ""));
 				yield return null;
 			}

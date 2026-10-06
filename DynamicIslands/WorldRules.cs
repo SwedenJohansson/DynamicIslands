@@ -233,7 +233,8 @@ namespace DynamicIslands.Editor
 
 	/// <summary>
 	/// How many more materials everything in Raft's build menu (the hammer's blocks) costs in a world: 0-100 %, each amount
-	/// rounded up. Raft keeps one cost list per buildable item (ItemInstance_Recipe.NewCost); placing a block takes it from
+	/// rounded to the nearest (never below Raft's own). Raft keeps one cost list per buildable item
+	/// (ItemInstance_Recipe.NewCost); placing a block takes it from
 	/// the builder's inventory on the builder's machine (BlockCreator.CreateBlock), removing one gives it back
 	/// (RemovePlaceables.ReturnItemsFromBlock), and the hammer's repair and reinforce use it too - so those follow.
 	/// The amounts are set from Raft's own numbers as first seen (never on top of an earlier change) while a world is
@@ -259,11 +260,12 @@ namespace DynamicIslands.Editor
 
 		public static int Clamp(int percent) { return Mathf.Clamp(percent, 0, Max); }
 
-		/// <summary>An amount at this percent, always rounded up (1 at 50 % is 2, 2 is 3, 3 is 5).</summary>
+		/// <summary>An amount at this percent, rounded to the nearest (a half up) and never below Raft's own: 1 at 5-45 % stays 1,
+		/// 1 at 50 % is 2, 2 is 3, 3 is 5. (Rounded up before, "+5 %" doubled every 1-item cost - AU41.)</summary>
 		public static int Cost(int amount, int percent)
 		{
 			if (percent <= 0 || amount <= 0) return amount;
-			return (amount * (100 + percent) + 99) / 100;
+			return Mathf.Max(amount, (amount * (100 + percent) + 50) / 100);
 		}
 
 		public static string Describe(int percent) { return percent <= 0 ? "Raft's own" : "+" + percent + "%"; }
@@ -272,7 +274,7 @@ namespace DynamicIslands.Editor
 		public static string DescriptionFor(int percent)
 		{
 			if (percent <= 0) return "Building costs what it does in Raft.";
-			return "Everything in the build menu costs " + percent + "% more materials, rounded up: 1 plank becomes " + Cost(1, percent) + ", 2 become " + Cost(2, percent) +
+			return "Everything in the build menu costs " + percent + "% more materials, rounded: 1 plank becomes " + Cost(1, percent) + ", 2 become " + Cost(2, percent) +
 				", 3 become " + Cost(3, percent) + ". Removing a block gives back half of what it cost when it was placed.";
 		}
 
@@ -283,7 +285,7 @@ namespace DynamicIslands.Editor
 			{
 				return "How many more materials everything in the build menu costs in this world: the hammer's foundations, floors, walls, " +
 					"roofs, stairs, pillars and the rest. 0% is Raft's own cost, 100% twice as much.\n" +
-					"Amounts are always rounded up: at 50% one plank becomes two and two planks become three.\n" +
+					"Amounts are rounded to the nearest whole number (a half up), never below Raft's own: at 50% one plank becomes two and two planks become three; below 50% one plank stays one.\n" +
 					"Removing a block with the hammer gives back half of what it cost when it was placed, as in Raft (a change later doesn't change it), and repairing and reinforcing blocks cost more too. " +
 					"What you make in the crafting menu (Tab) costs the same as in Raft.\n" +
 					"Every player in the world pays the same: players who join get the host's setting. " +
@@ -465,7 +467,7 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		[ConsoleCommand(name: "BuildCost", docs: "Build cost: BuildCost = this world's; BuildCost <0-100> = everything in the build menu costs that many % more, rounded up (host), or at the main menu for the next new world")]
+		[ConsoleCommand(name: "BuildCost", docs: "Build cost: BuildCost = this world's; BuildCost <0-100> = everything in the build menu costs that many % more, rounded (host), or at the main menu for the next new world")]
 		public static void BuildCostCommand(string[] args)
 		{
 			string arg = args != null ? string.Join(" ", args).Trim().TrimEnd('%') : "";

@@ -288,11 +288,13 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: tell clients about islands (new ones, or the whole list for a client that asked).</summary>
 		internal static IslandNetMessage IslandsMessage(IEnumerable<IslandWorldState.Entry> entries, bool fullList)
 		{
-			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			// (an island still being made - its file not written yet - is left out: a player who joined in that moment got
 			// it without a hash, it failed there, and its announcement later was ignored as known; it comes with that)
 			var list = entries.Where(e => !e.Failed && HashOf(e.Name) != null).ToList();
 			foreach (var e in list) IslandObjectState.Capture(e);
+			// (the raft once for the whole message, as it is made - after the files were hashed - and the same place
+			// (CustomIslandSpawner.RaftPosition) the player measures from as it arrives - AU41)
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			var msg = new IslandNetMessage
 			{
 				Kind = IslandNetMessage.Islands,
@@ -409,21 +411,24 @@ namespace DynamicIslands.Editor
 							// can still read it: everything else follows it)
 							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
-							SendToPlayer(WorldRules.Message(), from);
-							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
-							SendToPlayer(StoryBook.StateMessage(), from);
-							SendToPlayer(WorldRandomizer.Message(), from);
-							SendToPlayer(WorldOptions.Message(), from);
-							SendToPlayer(global::DynamicIslands.Editor.StoryChain.Message(), from);
-							SendToPlayer(global::DynamicIslands.Editor.QuestCount.Message(), from);
-							SendToPlayer(CreatureSpawner.SpotsMessage(null), from);
+							// (each part on its own: one that fails is logged and the rest still goes - before, one failing part
+							// dropped everything after it, and the player had the islands without the story or their levels - AU41)
+							Network_UserId to = from;
+							JoinPart("world rules", () => WorldRules.Message(), to);
+							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to);
+							JoinPart("story", () => StoryBook.StateMessage(), to);
+							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
+							JoinPart("world options", () => WorldOptions.Message(), to);
+							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
+							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
+							JoinPart("animal spots", () => CreatureSpawner.SpotsMessage(null), to);
 							// (after the list: the island it names is in the player's list then)
-							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
-							if (place != null) SendToPlayer(place, from);
-							IslandNetMessage levels = PlayerLevels.StateFor(from.Id);
-							if (levels != null) SendLevels(levels, from);
+							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
+							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
+							catch (Exception e) { JoinPartFailed("levels", e); }
 							// (their own copy of the world, to host it later)
-							global::DynamicIslands.Editor.WorldCopy.Send(from);
+							try { global::DynamicIslands.Editor.WorldCopy.Send(to); }
+							catch (Exception e) { JoinPartFailed("world copy", e); }
 						}
 						break;
 					case IslandNetMessage.WorldRules:
@@ -489,8 +494,9 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost) CreatureSpawner.OnSpots(msg.Data);
 						break;
 					case IslandNetMessage.Announce:
-						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
-							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition ?? Vector3.zero, msg.Offsets, 0));
+						// (from the raft as it arrives, like an island list; none here yet: no banner pointing from the scene's origin)
+						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3 && CustomIslandSpawner.RaftPosition.HasValue)
+							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition.Value, msg.Offsets, 0));
 						break;
 					case IslandNetMessage.Claim:
 						Claims.OnMessage(msg, from.Id, answer => SendToPlayer(answer, from));
@@ -515,6 +521,22 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Host: one part of the reply to a player who joined, made and sent on its own (nothing when it makes none).</summary>
+		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to)
+		{
+			try
+			{
+				IslandNetMessage part = make();
+				if (part != null) SendToPlayer(part, to);
+			}
+			catch (Exception e) { JoinPartFailed(what, e); }
+		}
+
+		static void JoinPartFailed(string what, Exception e)
+		{
+			Debug.LogError("[CUSTOM ISLANDS] [net] The reply to a player who joined: its " + what + " failed (the other parts are sent): " + e);
+		}
+
 		/// <summary>Where the host's island number i is here: beside this machine's raft as it is beside the host's, at its own height.</summary>
 		static Vector3 FromHost(Vector3 raft, float[] offsets, int i)
 		{
@@ -527,7 +549,16 @@ namespace DynamicIslands.Editor
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
 			// (the host's version reply comes ahead of its list: none came, so the host is older than it - AU35)
 			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + UpdateCheck.Older, "The host");
-			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			// (the raft as this message arrives, once for all its islands - the host took its own once as it made the message;
+			// no raft here yet: nothing is placed around the scene's origin, the whole list is asked for again - AU41)
+			Vector3? raftNow = CustomIslandSpawner.RaftPosition;
+			if (!raftNow.HasValue)
+			{
+				Log("Island message before the raft is here: asking for the whole list again");
+				synced = false; syncTries = 0; nextSyncTry = Time.unscaledTime + SyncRetrySeconds;
+				return;
+			}
+			Vector3 raft = raftNow.Value;
 			int n = msg.Ids != null ? msg.Ids.Length : 0;
 			if (msg.FullList)
 			{

@@ -36,6 +36,8 @@ namespace DynamicIslands.Editor
 		const float RetrySeconds = 6f;
 
 		bool inside, toldRefused;
+		/// <summary>The quest step "go to this zone" was counted for this arrival (once per walk-in).</summary>
+		bool reachCounted;
 		float nextCheck, cooldownUntil, retryAt;
 
 		/// <summary>Raised on every machine when the local player sets a zone off (tests and quests listen).</summary>
@@ -84,16 +86,17 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes;
 		/// again: tried again while the player stayed inside after a refusal (not a new arrival).</summary>
-		public void Enter() { Enter(false, false); }
+		public void Enter() { reachCounted = false; Enter(false, false); }
 
 		void Enter(bool granted, bool again)
 		{
-			// A quest step "go to this zone" counts every time (even when the zone itself has fired already)
-			if (!granted && !again) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
+			// A quest step "go to this zone" counts on every arrival (even when the zone itself has fired already), but
+			// only once the zone's own "only if" passes (before, it counted as the player walked in: a "go to" step was
+			// done at a zone that refused the player - AU41)
 			bool fired = HasFired;
-			if (fired && !Repeats) return;
+			if (fired && !Repeats) { Reached(); return; }
 			if (!Repeats && !granted && !again) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
-			if (Repeats && Time.time < cooldownUntil) return;
+			if (Repeats && Time.time < cooldownUntil) { Reached(); return; }
 			// (a zone the player can't set off yet says why before it is claimed: claimed, it was held from the others)
 			IslandObjectRef self = GetComponent<IslandObjectRef>();
 			if (!fired && !Repeats && !granted && self != null && !Behaviours.WouldAllow(ContentState.EntryOf(transform), self.Index, "enter"))
@@ -117,6 +120,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry entry = ContentState.EntryOf(transform);
 			if (r != null && !Behaviours.Allows(entry, r.Index, "enter")) return;
 			cooldownUntil = Time.time + RepeatCooldown;
+			if (!reachCounted) { reachCounted = true; QuestTracker.Event(entry, "reach", Id); } // (passed just above)
 
 			if (Message.Length > 0) IslandInfo.ShowMessage(Message);
 			if (Items.Count > 0) Give(Items);
@@ -126,11 +130,25 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
 		}
 
+		/// <summary>Counts the quest step "go to this zone" for this arrival when the zone's "only if" passes - checked
+		/// quietly (nothing taken, no "otherwise"): for a zone that doesn't fire now (fired already, cooling down, or another
+		/// player's).</summary>
+		void Reached()
+		{
+			if (reachCounted) return;
+			IslandWorldState.Entry entry = ContentState.EntryOf(transform);
+			IslandObjectRef r = GetComponent<IslandObjectRef>();
+			if (r != null && !Behaviours.WouldAllow(entry, r.Index, "enter")) return;
+			reachCounted = true;
+			QuestTracker.Event(entry, "reach", Id);
+		}
+
 		/// <summary>The host gave this once-zone to another player: the local player is told once while inside, and it is
 		/// tried again in a few seconds (when the other player set it off, it has fired by then and nothing happens).</summary>
 		void Refused()
 		{
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "': another player has it");
+			Reached(); // (the player got there: the "go to" step counts even though the zone is another player's)
 			if (!toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
 			retryAt = Time.time + RetrySeconds;
 		}

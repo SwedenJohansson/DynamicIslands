@@ -70,7 +70,8 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				File.WriteAllLines(FilePath, rewarded.Select(r => "rewarded " + r).Concat(owed.Where(o => !rewarded.Contains(o)).Select(o => "owed " + o)).ToArray());
+				// (in one step: a crash part way no longer leaves half a file, and the rewards given twice - AU41)
+				SafeFile.WriteAllLines(FilePath, rewarded.Select(r => "rewarded " + r).Concat(owed.Where(o => !rewarded.Contains(o)).Select(o => "owed " + o)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards file: " + e.Message); }
 		}
