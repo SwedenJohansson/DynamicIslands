@@ -112,6 +112,7 @@
     <Compile Include="ReadyPieces.cs" />
     <Compile Include="GenFeatures.cs" />
     <Compile Include="PcCheck.cs" />
+    <Compile Include="UpdateCheck.cs" />
     <Compile Include="BuildCostRefund.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />

@@ -265,6 +265,7 @@ namespace DynamicIslands
 			ExperimentalNotice.Show(MainMenuParent.transform);
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
+			UpdateCheck.OnMainMenu(); // (a newer Custom Islands is out: once per start - AU44)
 
 
 
@@ -528,12 +529,13 @@ namespace DynamicIslands
 			return FileNames.IslandProblem(name) == null;
 		}
 
-		internal static void Notify(string text, bool error = false)
+		/// <summary>A message for the player (Raft's notification, seconds long), also in the log.</summary>
+		internal static void Notify(string text, bool error = false, int seconds = 4)
 		{
 			if (error) Debug.LogWarning("[CUSTOM ISLANDS] " + text); else Debug.Log("[CUSTOM ISLANDS] " + text);
 			try
 			{
-				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, text, 4, error ? HNotify.ErrorSprite : HNotify.CheckSprite);
+				FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, text, seconds, error ? HNotify.ErrorSprite : HNotify.CheckSprite);
 			}
 			catch { }
 		}
