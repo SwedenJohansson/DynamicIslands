@@ -246,6 +246,8 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(2f);
 			Check(ref ok, DynamicIslands.InEditor() && WorldPlanWindow.IsOpen, "back in the editor with World Plans open");
 			WorldPlanWindow.Close();
+			// (the test plan isn't left in the players' plan list - the user, 2026-10-06)
+			try { if (System.IO.File.Exists(WorldPlan.PathFor(plan.Name))) System.IO.File.Delete(WorldPlan.PathFor(plan.Name)); } catch { }
 			if (ok) Log("PASS: plan test"); else Fail("plan test");
 		}
 

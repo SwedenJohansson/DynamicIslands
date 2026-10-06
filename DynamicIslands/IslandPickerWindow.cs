@@ -104,8 +104,6 @@ namespace DynamicIslands.Editor
 			search.onValueChanged.AddListener(Filter);
 			UIKit.Button(tools, "Tick shown", () => SetShown(true), "Tick every island shown (all of them, or the ones the search found)", 130, 30f, 13);
 			UIKit.Button(tools, "Untick shown", () => SetShown(false), "Untick every island shown (all of them, or the ones the search found)", 130, 30f, 13);
-			planIslandsButton = UIKit.Button(tools, "", TogglePlanIslands, "Islands that world plans bring (their own story islands) are left out of this list and never turn up by chance - " +
-				"click to let them in too (for every new world, until clicked again)", 190, 30f, 12);
 
 			RectTransform listBox = UIKit.Rect("ListBox", panel);
 			UIKit.Size(listBox.gameObject, -1, 360);
@@ -138,24 +136,9 @@ namespace DynamicIslands.Editor
 			ShowEntry();
 		}
 
-		static Button planIslandsButton;
-
-		/// <summary>Islands of world plans in the list (and the pool) or not - off unless chosen (the user, 2026-10-06).</summary>
-		static void TogglePlanIslands()
-		{
-			CustomIslandSpawner.PlanIslandsInPool = !CustomIslandSpawner.PlanIslandsInPool;
-			CustomIslandSpawner.LoadPool(true);
-			Refresh();
-		}
-
 		/// <summary>One row per pool entry: first the kinds of new islands, then the saved islands by name.</summary>
 		static void Refresh()
 		{
-			if (planIslandsButton != null)
-			{
-				int planned = CustomIslandSpawner.AllPlansIslandNames().Count(n => System.IO.File.Exists(IslandSpawner.PathFor(n)));
-				UIKit.LabelOf(planIslandsButton).text = (CustomIslandSpawner.PlanIslandsInPool ? "[x]" : "[  ]") + " Plans' islands (" + planned + ")";
-			}
 			foreach (Transform child in list) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			rows.Clear();
 			List<string> all = WorldIslands.Candidates();
@@ -253,7 +236,7 @@ namespace DynamicIslands.Editor
 			bool random = plan == null || plan.Random;
 			string note = random ? "" : "The plan '" + plan.Name + "' has no random islands, so this list only counts with a plan that has them (like Random islands).";
 			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : (all.Count - taking) + " left out of this world.") : note;
-			if (planNote != null) planNote.text = random ? "Plan: '" + (plan != null ? plan.Name : WorldPlan.RandomName) + "' - islands from this list turn up by chance while sailing." : note;
+			if (planNote != null) planNote.text = random ? "Plan: '" + (plan != null ? plan.Name : WorldPlan.RandomName) + "' - islands from this list turn up by chance while sailing (a world plan's own islands only come in their plan)." : note;
 			if (countText != null) countText.text = taking + " of " + all.Count + " take part" + (taking < all.Count ? ",  " + (all.Count - taking) + " left out" : "");
 			int[] gap = WorldIslands.ChosenGap;
 			if (gapMinText != null) gapMinText.text = gap[0].ToString();

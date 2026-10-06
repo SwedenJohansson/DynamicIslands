@@ -639,10 +639,10 @@ namespace DynamicIslands.Editor
 			var result = new List<KeyValuePair<string, float>>();
 			// Copies downloaded from a multiplayer host (<name>_<hash>) and islands generated while sailing (gen-...,
 			// which live on in their worlds) only join the pool when listed by name
-			// (also never: the world randomizer's extras (rnd-...), which belong to one of Raft's islands in one world; and, unless
-			// the player asks for them, the islands any world plan brings - a plan's island that turned up by chance in another
-			// world was out of its story - the user, 2026-10-06)
-			HashSet<string> ofPlans = PlanIslandsInPool ? new HashSet<string>() : AllPlansIslandNames();
+			// (also never: the world randomizer's extras (rnd-...), which belong to one of Raft's islands in one world; and the
+			// islands any world plan brings, even when listed by name - they only come in their own plans: a plan's island that
+			// turned up by chance in another world was out of its story - the user, 2026-10-06)
+			HashSet<string> ofPlans = AllPlansIslandNames();
 			var saved = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase) &&
 				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && !ofPlans.Contains(n)).ToList();
 			var listed = new HashSet<string>(poolLines.Where(p => p.Key != "*").Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
@@ -654,7 +654,9 @@ namespace DynamicIslands.Editor
 						if (!listed.Contains(s) && !result.Any(x => x.Key.Equals(s, StringComparison.OrdinalIgnoreCase))) result.Add(new KeyValuePair<string, float>(s, p.Value));
 				}
 				else if (IslandSpawner.ListSavedIslands().Contains(p.Key, StringComparer.OrdinalIgnoreCase))
-					result.Add(p);
+				{
+					if (!ofPlans.Contains(p.Key)) result.Add(p);
+				}
 				else if (p.Key.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase) && MapTypes.Get(p.Key.Substring(TypePrefix.Length)) != null)
 					result.Add(p);
 			}
@@ -663,22 +665,12 @@ namespace DynamicIslands.Editor
 			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key)))).ToList();
 		}
 
-		/// <summary>
-		/// Whether the islands of world plans may turn up by chance while sailing (off unless the player switches it on in the
-		/// island list: world_rules.txt "planislands=on"). Islands listed by name in spawnpool.txt take part either way.
-		/// </summary>
-		public static bool PlanIslandsInPool
-		{
-			get { return (WorldRules.ReadDefault("planislands") ?? "").Trim().Equals("on", StringComparison.OrdinalIgnoreCase); }
-			set { WorldRules.SaveDefault("planislands", value ? "on" : "off"); allPlansAt = -100f; }
-		}
-
 		static HashSet<string> allPlans;
 		static float allPlansAt = -100f;
 
 		/// <summary>
 		/// Every island the saved world plans bring by name, and the islands those islands' own rules bring (looked at again
-		/// every 10 s at most): left out of the random pool unless PlanIslandsInPool.
+		/// every 10 s at most): never in the random pool, only in their plans.
 		/// </summary>
 		public static HashSet<string> AllPlansIslandNames()
 		{
