@@ -1,7 +1,7 @@
 # Old Mine Islet - a small/medium island of the library (a new theme: caves)
 # A wooded islet around a rock mound with an old mine inside: a timbered portal, rails of beams, ore carts and
-# lanterns - pitch dark further in, where a giant boar has dug in. Quest "Down the Old Mine": the
-# mine, its notice, the miner's head lamp, the beast in the deep tunnel and the last ore cart.
+# lanterns - pitch dark further in, where a giant boar has dug in. Quest "Down the Old Mine" (6 steps):
+# the mine, its notice, the miner's head lamp, the rails into the deep tunnel, the beast there and the last ore cart.
 #
 # Built by the recipe player (CIRecipe old_mine_islet) through the editor's own operations.
 include lib_sea
@@ -112,6 +112,7 @@ quest intro=An old mine in a rock mound, closed after a cave-in. The notice at t
 step reach|minehead|1|Find the old mine
 step read|Mine notice|1|Read the mine notice
 step open|Miner's locker|1|Take the miner's head lamp
+step reach|deep|1|Light the lamp and follow the rails into the dark to the deep tunnel
 step kill|Warthog|1|Face the beast at the end of the line
 step open|Last ore cart|1|Bring out the last ore cart
 quest done=The beast is gone and the last ore cart is yours - half of it, anyway.

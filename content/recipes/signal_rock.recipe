@@ -1,7 +1,8 @@
 # Signal Rock - a small island of the library (inspired by Raft's Radio Tower)
 # A crescent ridge around a sheltered cove; in the cove a radio relay station stands on legs: a deck, a radio room,
-# a roof platform and a 20 m mast with a beacon. Quest "Dead Air": climb up, read the log, dive for the transmitter
-# coil, fit it, read the printout, climb the mast and light the beacon. Screechers nest on the ridge.
+# a roof platform and a 20 m mast with a beacon. Quest "Dead Air" (6 steps): climb up, read the log, clear the puffer
+# fish off the coil's crate, dive for the transmitter coil, fit it, read the printout, climb the mast and light the
+# beacon. Screechers nest on the ridge.
 #
 # Built by the recipe player (CIRecipe signal_rock) through the editor's own operations - open the saved island in
 # the editor to see how each part is made.
@@ -246,6 +247,7 @@ quest title=Dead Air
 quest intro=A relay mast stands in the cove of Signal Rock, silent for weeks. Find out why the station went quiet - and bring it back on the air.
 step reach|deck|1|Climb up to the station deck
 step read|Operator's log|1|Read the operator's log in the radio room
+step kill|Puffer fish|2|Dive to the cove floor and clear the puffer fish off the coil's crate
 step collect|story:coil|1|Find the transmitter coil in the cove
 step read|Signal printout|1|Fit the coil in the transmitter and read the printout
 step reach|beaconswitch|1|Climb the mast and light the beacon

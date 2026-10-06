@@ -7,9 +7,9 @@ expect title Shelter No. 7
 # Over the land bridge from the ring onto the islet's roof slab: the hatch and its notice
 walk 30 0 to 22 0 to 16 1 to 8 6 h=7.75
 zone roof
-expect step 1
+expect step 0
 read Shelter notice
-expect step 2
+expect step 1
 
 # Down the hatch: through the collar to the hall's floor; the ladder takes hold at the top and at the foot
 expect stand 0 5.6 h=1.69
@@ -17,13 +17,13 @@ climb 0 7.1 h=6.3
 climb 0 7.1 h=0.3
 at 0 4 h=1.9
 zone hatchhall
-expect step 3
+expect step 2
 expect message red light turns
 
 # The main hall into the radio room: the radio log
 walk 0 4 to 2 2 to 2 0 to 4 0 to 6.5 -0.8 h=1.69 below=5
 read Radio log
-expect step 4
+expect step 3
 
 # The generator room: the generator is dry; the commander's door and the blast gate stay shut
 walk 6.5 -0.8 to 2 -0.5 to 1.8 -2 to 0 -5 to -3 -6 to -5.5 -6.5 h=1.69 below=5
@@ -41,11 +41,11 @@ walk 0 -6 to -1.8 -2 to -2 0 to -5 0.5 h=1.69 below=5
 zone dorm
 expect message rats, big ones
 kill Rat
-expect step 5
+expect step 4
 expect animals Rat 0
 open Bunk locker
 expect story fuel 1
-expect step 6
+expect step 5
 
 # The generator runs: lamps on, the dark air gone, the commander's door and the blast gate open
 walk -5 0.5 to -2 0 to -1.8 -2 to 0 -5 to -3 -6 to -5.5 -6.5 h=1.69 below=5
@@ -60,6 +60,7 @@ wait 7
 # Through the commander's door: his orders and his safe
 walk -5.5 -6.5 to -3 -6 to 0 -6 to 4 -6 to 4.2 -8.3 to 6.6 -8.2 h=1.69 below=5
 read Commander's orders
+expect step 6
 open Commander's safe
 expect item Blueprint_Fueltank 1
 expect done

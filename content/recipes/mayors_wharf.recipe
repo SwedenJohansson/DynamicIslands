@@ -1,8 +1,8 @@
 # Mayor's Wharf - a small/medium island of the library (inspired by Raft's Tangaroa)
 # A sandy islet beside a drowned city block: City Hall stands in the sea, its two lower floors flooded, the mayor's
 # office just above the waterline with a wooden wharf at its door; next to it the burger bar with a cafe on its roof.
-# Quest "The Mayor's Safe": the wharf, the rats in the office, the mayor's memo, the security locker on the flooded
-# floor (a keycard), the vault's shutter and the safe.
+# Quest "The Mayor's Safe" (5 steps): the wharf, the rats in the office, the mayor's memo, the spare keycard from the
+# security locker on the flooded floor, the vault's shutter and the safe.
 #
 # Built by the recipe player (CIRecipe mayors_wharf) through the editor's own operations (macros from lib_rt).
 include lib_sea
@@ -160,7 +160,7 @@ quest intro=City Hall stands in the sea up to its third floor. Somewhere below t
 step reach|wharf|1|Tie up at the mayor's wharf
 step kill|Tangaroa rat|3|Clear the rats out of the mayor's office
 step read|Mayor's memo|1|Read the memo on the mayor's desk
-step open|Security locker|1|Find the vault keycard on the flooded floor below
+step collect|story:keycard|1|Swim down to level 1 and take the spare keycard from Darnell's locker
 step open|Mayor's safe|1|Open the mayor's safe in the vault
 quest done=The founders' charter is safe with you. The floating towns are out there somewhere.
 quest reward=Rope*4;Hinge*2

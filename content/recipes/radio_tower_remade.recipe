@@ -2,8 +2,8 @@
 # Raft's radio tower made anew: its rock remade with the generator's "Randomize existing" (bigger and steeper), and on it
 # a tower of three storeys of the radio tower's pieces climbing the rock: the landing at the sea, the generator room
 # halfway up, the radio room at the top with its roof. The storm took the battery bank into the sea by the old shark
-# cage; a screecher, Old Beak, has taken the roof. Quest "Back on the Air": the landing, the keeper's note, the battery
-# bank from the cage, Old Beak, the radio room, the radio on the air and the keeper's locker.
+# cage; a screecher, Old Beak, has taken the roof. Quest "Back on the Air" (7 steps): the landing, the keeper's note, the
+# battery bank from the cage, the roof and its nest, Old Beak, the radio room, the radio on the air and the keeper's locker.
 #
 # Built by the recipe player (CIRecipe radio_tower_remade) through the editor's own operations.
 include lib_sea
@@ -149,6 +149,7 @@ quest intro=A tower of steel rooms on a black rock, its antenna dead. The landin
 step reach|landing|1|Land at the tower's landing
 step read|Keeper's note|1|Read the keeper's note on the landing
 step collect|story:battery|1|Dive to the old shark cage for the battery bank
+step reach|roof|1|Climb the tower's three ladders to the nest of wire and bones on its roof
 step kill|Screecher|1|Drive Old Beak off the tower's roof
 step reach|radioroom|1|Climb to the radio room at the top
 step open|Radio room locker|1|Put the tower on the air and open the keeper's locker

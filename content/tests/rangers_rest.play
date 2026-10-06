@@ -6,9 +6,13 @@ expect title Old Scar
 # From the north beach up the trail to the station on its terrace, round the cabin to the porch
 walk 10 26 to 12 14 to 14 8 to 18 3.6 to 29.5 3.6 to 29.5 -2 h=10.5
 zone station
-expect step 1
+expect step 0
 expect message stove is cold
 read Ranger's diary
+expect step 1
+
+# The ranger's two goats by the campfire behind the cabin
+catch Goat 2
 expect step 2
 
 # The watchtower beside the station: its ladder, the deck

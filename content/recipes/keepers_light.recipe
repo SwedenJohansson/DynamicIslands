@@ -5,9 +5,9 @@
 # northern one facing the open sea; under the cottage stack, on a rock shelf at its foot, the flooded cistern under a
 # concrete slab. The light has been dark for three nights; the two keepers' diaries contradict each other - each says the
 # other hid the last can of lamp oil and talks at night to something in the cistern. Both are gone. The oil is at the
-# bottom of the cistern, and so is the thing with a lamp on its head. Quest "The Dark Light" (5 steps): the landing, the
-# head keeper's diary, the assistant's diary, the thing in the cistern, the lamp lit, the foghorn sounded and the lamp
-# room's locker (the head light blueprint, batteries, glass).
+# bottom of the cistern, and so is the thing with a lamp on its head. Quest "The Dark Light" (6 steps): the landing, the
+# head keeper's diary, the assistant's diary, the screechers on the gallery, the thing in the cistern, the lamp lit, the
+# foghorn sounded and the lamp room's locker (the head light blueprint, batteries, glass).
 #
 # Built by the recipe player (CIRecipe keepers_light) through the editor's own operations.
 include lib_rt
@@ -271,7 +271,7 @@ where cisternthing
 where supplybarrel
 where goats
 
-# --- Settings, story items, notes, behaviours, quest (5 steps) ---------------------------------------------------------
+# --- Settings, story items, notes, behaviours, quest (6 steps) ---------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): flowers, birches, berries ----------
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4403 free=3
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4404 free=3
@@ -312,7 +312,7 @@ prop lamplocker else.open=message||The locker is wired to the foghorn's switch -
 
 prop lamp obj.name=lamp
 prop lamp beh.use=Fill the lamp and light it
-prop lamp if.use=quest|4\ntake|story:lampoil|1
+prop lamp if.use=quest|5\ntake|story:lampoil|1
 prop lamp on.use=message||The oil glugs in, the wick catches, the lens begins to turn - and the light sweeps out over the fog for the first time in three nights.\nshow|lamplight\nshow|beam\nsignal||lit\nsound||event:/crafting/torch
 prop lamp else.use=message||The lamp's tank is bone dry. The last can of oil is somewhere on this rock - and whatever keeps it.
 prop lamplight obj.name=lamplight
@@ -375,6 +375,7 @@ quest intro=A lighthouse on a rock in the fog, dark for three nights. Two keeper
 step reach|landing|1|Climb the landing stair onto the keepers' rock
 step read|Head Keeper Shale's diary|1|Read the head keeper's diary in the cottage
 step read|Keeper Lusk's diary|1|Read the assistant keeper's diary in the oil store under the lighthouse
+step kill|Screecher|2|Climb to the dark lamp gallery and drive the screechers off it
 step kill|Angler fish|1|Go down into the flooded cistern and face what lives in it
 step open|Lamp room locker|1|Bring up the oil, light the lamp, sound the foghorn - and open the lamp room's locker
 quest done=The light turns and the horn sounds over the fog. Whatever the two keepers saw in each other, the ships see the light again.

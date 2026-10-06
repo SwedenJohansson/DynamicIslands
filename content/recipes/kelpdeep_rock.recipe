@@ -2,7 +2,8 @@
 # Pine-topped islets on a shallow reef and between them a forest of giant kelp; under the kelp four caves dug into the
 # reef - north, east, south, west - each with a numbered marker post at its mouth, two with air trapped under a rock. The
 # survey hut on the north-east islet, the survey buoy with its recorder out in the kelp.
-# Quest "Under the Kelp" (4 steps): an underwater survey - a reading from each of four caves, logged at the buoy.
+# Quest "Under the Kelp" (4 steps): an underwater survey - the orders, the air under the north cave's overhang, a reading
+# from each of four caves, logged at the buoy.
 #
 # Built by the recipe player (CIRecipe kelpdeep_rock) through the editor's own operations.
 include lib_huts
@@ -78,7 +79,7 @@ scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4585 free=5
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4595 free=3
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4596 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (4 steps) ==========================================================
 info title=Kelpdeep Rock
 info author=Custom Islands
 info description=Two pine-topped islets over a forest of giant kelp, a survey hut and a buoy - and under the kelp four caves nobody has measured. Take a depth reading in each and log them at the buoy.
@@ -151,8 +152,8 @@ prop kelplight zone.radius=30
 
 quest title=Under the Kelp
 quest intro=A survey hut on a pine islet over a forest of kelp. The surveyor's orders are pinned up inside.
-step reach|hut|1|Find the survey hut on the east islet
-step read|Survey orders|1|Read the survey orders
+step read|Survey orders|1|Read the survey orders pinned up in the hut on the east islet
+step reach|air1|1|Dive to the north cave and find the air trapped under its overhang
 step collect|story:reading|4|Take the depth readings at the four kelp caves' marker posts
 step open|Survey chest|1|Log the readings at the buoy's recorder and open the survey chest
 quest done=The chart of Kelpdeep is complete - four caves, four depths, and a note in the margin about the west one.

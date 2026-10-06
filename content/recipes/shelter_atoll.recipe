@@ -3,8 +3,9 @@
 # hatch - Civil Defence Shelter No. 7, buried in the islet. Down the hatch's ladder: seven of Selene's rooms (the hatch
 # hall, the main hall, the dormitory, the radio room, the generator room, the gate hall and the commander's room), dark
 # but for two red emergency lights - until the generator runs again, which lights the rooms and opens the commander's
-# door and the blast gate onto the lagoon. Quest "Shelter No. 7": the hatch, its notice, down the ladder, the radio
-# log, the rats in the dormitory, the last can of fuel, the generator and the commander's safe.
+# door and the blast gate onto the lagoon. Quest "Shelter No. 7" (7 steps): the notice at the hatch, down the
+# ladder, the radio log, the rats in the dormitory, the last can of fuel, the generator and the commander's orders, and
+# his safe.
 #
 # Built by the recipe player (CIRecipe shelter_atoll) through the editor's own operations (macros from lib_selene).
 # The shelter sits in a pit under a roof slab at ground level: the ground can't lie over rooms, so the islet's top is
@@ -306,13 +307,13 @@ prop redlight beh.spin=90
 
 quest title=Shelter No. 7
 quest intro=A concrete slab on the islet in the lagoon, with vents, a radio mast and a hatch. Something was built under this atoll - and nobody has come out in a long time.
-step reach|roof|1|Find the hatch on the islet
-step read|Shelter notice|1|Read the notice at the hatch
+step read|Shelter notice|1|Find the hatch on the islet and read the notice beside it
 step reach|hatchhall|1|Climb down the ladder into the shelter
 step read|Radio log|1|Read the radio log
 step kill|Rat|3|Clear the rats out of the dormitory
 step collect|story:fuel|1|Find the last can of fuel
-step open|Commander's safe|1|Start the generator and open the commander's safe
+step read|Commander's orders|1|Start the generator and read the commander's final orders behind his door
+step open|Commander's safe|1|Open the commander's safe and take his charts
 quest done=The lights are on, the blast gate stands open onto the lagoon, and the commander's charts are yours.
 quest reward=Battery*2;CircuitBoard*2;Scrap*6
 

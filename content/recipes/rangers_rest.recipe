@@ -1,7 +1,8 @@
 # Ranger's Rest - a small/medium island of the library (inspired by Raft's Balboa)
 # A jungle hill: the ranger's log cabin on a terrace, a wooden watchtower, trails, warthogs in the undergrowth - and
 # at the foot of the hill the den of Old Scar, the bear that dragged the ranger's supply crate into his cave.
-# Quest "Old Scar": the station, the ranger's diary, the tower (spot the den), the bear, the stash.
+# Quest "Old Scar" (5 steps): the ranger's diary, his two goats by the campfire, the tower (spot the den), the bear, the
+# stash.
 #
 # Built by the recipe player (CIRecipe rangers_rest) through the editor's own operations.
 
@@ -154,8 +155,8 @@ prop goats creature.count=2
 
 quest title=Old Scar
 quest intro=A ranger station on a jungle hill - its door open, nobody home. Find out what happened to the ranger.
-step reach|station|1|Find the ranger station
-step read|Ranger's diary|1|Read the ranger's diary
+step read|Ranger's diary|1|Find the ranger station on the hill and read the ranger's diary
+step catch|Goat|2|Pen the ranger's two goats - loose by the campfire since he went up the tower
 step reach|tower|1|Climb the watchtower and look for the den
 step kill|Bear|1|Drive off Old Scar
 step open|Ranger's stash|1|Take back the ranger's supply crate
