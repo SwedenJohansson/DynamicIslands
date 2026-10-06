@@ -283,13 +283,13 @@ namespace DynamicIslands.Editor
 
 			Vector3 dir = SailDirection();
 			var reasons = new List<string>();
-			for (int attempt = 0; attempt < 8; attempt++)
+			for (int attempt = 0; attempt < (TestAllRound ? 24 : 8); attempt++)
 			{
 				// Off-centre so it's reachable but not always dead ahead; later attempts spread wider
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 				float angle = TestAllRound ? UnityEngine.Random.Range(0f, 360f) : side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
 				// Later attempts also look a little further out
-				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
+				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * (TestAllRound ? 40f : 20f)), radius + Clearance + RaftRadius);
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
