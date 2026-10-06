@@ -15,11 +15,16 @@ namespace DynamicIslands.Editor
 	{
 		#region Reading
 
+		/// <summary>Objects and lists inside each other at most this deep (AU39: a crafted info.json of thousands of "[" ended
+		/// Raft with a stack overflow, which no catch stops; the mod's own files are 3 deep).</summary>
+		public const int MaxDepth = 64;
+
 		/// <summary>The value of a JSON text; throws FormatException on bad JSON.</summary>
 		public static object Parse(string text)
 		{
+			text = text ?? "";
 			int i = 0;
-			object v = Value(text ?? "", ref i);
+			object v = Value(text, ref i, 0);
 			Skip(text, ref i);
 			if (i < text.Length) throw new FormatException("Unexpected '" + text[i] + "' at " + i);
 			return v;
@@ -27,11 +32,16 @@ namespace DynamicIslands.Editor
 
 		static void Skip(string s, ref int i) { while (i < s.Length && char.IsWhiteSpace(s[i])) i++; }
 
-		static object Value(string s, ref int i)
+		/// <summary>True when the text has this word at i, compared in place (AU39: a copy of the rest of the text for every
+		/// number made a long info.json slow to read).</summary>
+		static bool At(string s, int i, string word) { return i + word.Length <= s.Length && string.CompareOrdinal(s, i, word, 0, word.Length) == 0; }
+
+		static object Value(string s, ref int i, int depth)
 		{
 			Skip(s, ref i);
 			if (i >= s.Length) throw new FormatException("Unexpected end");
 			char c = s[i];
+			if ((c == '{' || c == '[') && depth >= MaxDepth) throw new FormatException("Nested more than " + MaxDepth + " deep at " + i);
 			if (c == '{')
 			{
 				var obj = new Dictionary<string, object>();
@@ -44,7 +54,7 @@ namespace DynamicIslands.Editor
 					Skip(s, ref i);
 					if (i >= s.Length || s[i] != ':') throw new FormatException("Expected ':' at " + i);
 					i++;
-					obj[key] = Value(s, ref i);
+					obj[key] = Value(s, ref i, depth + 1);
 					Skip(s, ref i);
 					if (i < s.Length && s[i] == ',') { i++; continue; }
 					if (i < s.Length && s[i] == '}') { i++; return obj; }
@@ -58,7 +68,7 @@ namespace DynamicIslands.Editor
 				if (i < s.Length && s[i] == ']') { i++; return list; }
 				while (true)
 				{
-					list.Add(Value(s, ref i));
+					list.Add(Value(s, ref i, depth + 1));
 					Skip(s, ref i);
 					if (i < s.Length && s[i] == ',') { i++; continue; }
 					if (i < s.Length && s[i] == ']') { i++; return list; }
@@ -66,13 +76,13 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (c == '"') return String(s, ref i);
-			if (s.Substring(i).StartsWith("true")) { i += 4; return true; }
-			if (s.Substring(i).StartsWith("false")) { i += 5; return false; }
-			if (s.Substring(i).StartsWith("null")) { i += 4; return null; }
+			if (At(s, i, "true")) { i += 4; return true; }
+			if (At(s, i, "false")) { i += 5; return false; }
+			if (At(s, i, "null")) { i += 4; return null; }
 			int start = i;
 			while (i < s.Length && "+-0123456789.eE".IndexOf(s[i]) >= 0) i++;
 			double d;
-			if (i == start || !double.TryParse(s.Substring(start, i - start), NumberStyles.Float, CultureInfo.InvariantCulture, out d)) throw new FormatException("Bad value at " + start);
+			if (i == start || i - start > 64 || !double.TryParse(s.Substring(start, i - start), NumberStyles.Float, CultureInfo.InvariantCulture, out d)) throw new FormatException("Bad value at " + start);
 			return d;
 		}
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ICSharpCode.SharpZipLib.Zip;
+using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using UnityEngine;
 
 namespace DynamicIslands.Editor
@@ -214,6 +215,50 @@ namespace DynamicIslands.Editor
 		{
 			if (b == null || b.Length < 8 || b[0] != 'C' || b[1] != 'I' || b[2] != 'S' || b[3] != 'L') return -1;
 			return BitConverter.ToInt32(b, 4);
+		}
+
+		/// <summary>An island file's body may unpack to at most this much (the densest islands are a few MB): more is a damaged
+		/// or harmful file - a few packed MB can unpack to gigabytes.</summary>
+		public const long MaxIslandBytes = 64L * 1024 * 1024;
+
+		/// <summary>
+		/// Why an island file's bytes (with a valid header, IslandFormat) can't be installed - its body unpacks to more than
+		/// MaxIslandBytes, or it doesn't read in full as an island - or null when it is fine (AU39).
+		/// </summary>
+		static string IslandBodyProblem(byte[] bytes, string label)
+		{
+			try
+			{
+				// (counted while unpacking, before IslandFile reads it: what it allocates is then bounded by real data)
+				long size = 0;
+				using (var m = new MemoryStream(bytes, 8, bytes.Length - 8))
+				using (var inflate = new InflaterInputStream(m))
+				{
+					var buffer = new byte[65536];
+					int n;
+					while ((n = inflate.Read(buffer, 0, buffer.Length)) > 0)
+					{
+						size += n;
+						if (size > MaxIslandBytes) return "unpacks to more than " + (MaxIslandBytes / 1024 / 1024) + " MB - it isn't a real island.";
+					}
+				}
+				IslandFile.FromBytes(bytes, label);
+				return null;
+			}
+			catch (Exception e) { return "is damaged and can't be read (" + e.Message + ")."; }
+		}
+
+		/// <summary>
+		/// Text from a pack (its title or author) as part of a file name (AU39 - the author went into the plan's file name
+		/// as it was, "/" and ".." too): only characters a file name and the mod's lists may hold, at most max characters
+		/// (Windows refuses paths over 260 characters), no dot or space at the end. Empty when nothing is left.
+		/// </summary>
+		static string NamePart(string text, int max)
+		{
+			char[] invalid = Path.GetInvalidFileNameChars();
+			string clean = new string((text ?? "").Where(c => !char.IsControl(c) && !invalid.Contains(c) && "#%?=,;".IndexOf(c) < 0).ToArray()).Trim();
+			if (clean.Length > max) clean = clean.Substring(0, max);
+			return clean.TrimEnd('.', ' ');
 		}
 
 		#endregion
@@ -475,6 +520,12 @@ namespace DynamicIslands.Editor
 				int format = IslandFormat(pack.Files[n]);
 				if (format < 0) { error = "'" + n + "' isn't an island file."; return false; }
 				if (format > IslandFile.FormatVersion) { error = "'" + n + "' was saved by a newer Custom Islands than this one - update the mod to use it."; return false; }
+				// (AU39: the name as an island name here - at most 60 characters, nothing the mod's lists use - and the whole
+				// file read, not only its header: a damaged or huge body installed, and failed later in the editor or a world)
+				string nameProblem = FileNames.IslandProblem(n.Substring(0, n.Length - IslandFile.Extension.Length));
+				if (nameProblem != null) { error = "'" + n + "' has a name this version can't use: " + nameProblem; return false; }
+				string bodyProblem = IslandBodyProblem(pack.Files[n], n);
+				if (bodyProblem != null) { error = "'" + n + "' " + bodyProblem; return false; }
 			}
 			// (a plan may bring only new islands of a map type: no island file in it)
 			if (!pack.IslandNames.Any() && !info.IsPlan) { error = "It holds no island."; return false; }
@@ -482,6 +533,8 @@ namespace DynamicIslands.Editor
 			{
 				byte[] planBytes;
 				if (info.plan.Length == 0 || !pack.Files.TryGetValue(info.plan, out planBytes)) { error = "Its plan '" + info.plan + "' isn't in it."; return false; }
+				string planProblem = FileNames.Problem(Path.GetFileNameWithoutExtension(info.plan));
+				if (planProblem != null) { error = "Its plan '" + info.plan + "' has a name this version can't use: " + planProblem; return false; }
 				WorldPlan plan = WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(planBytes));
 				var names = new HashSet<string>(pack.IslandNames, StringComparer.OrdinalIgnoreCase);
 				string absent = plan.Rules.SelectMany(IslandsOf).FirstOrDefault(n => !names.Contains(n));
@@ -590,8 +643,59 @@ namespace DynamicIslands.Editor
 		/// Installs a pack (checked by Read). appearWhileSailing: an island entry's islands also turn up by chance while
 		/// sailing (spawnpool.txt weight 1, else 0; a plan's islands always 0). replaceChanged: an earlier version's file the
 		/// player has changed since is replaced too (else kept). source: SourceImport or SourceLibrary.
+		/// An install that fails part way (a full disk, a file in use, a path Windows refuses) puts back every file it had
+		/// written or removed, so no file is left that installed.json doesn't know (AU39), and throws.
 		/// </summary>
 		public static Report Install(LibraryPackContents pack, bool appearWhileSailing, bool replaceChanged, string source)
+		{
+			var undo = new InstallUndo();
+			try { return InstallFiles(pack, appearWhileSailing, replaceChanged, source, undo); }
+			catch (Exception e)
+			{
+				int put = undo.RollBack();
+				IslandCache.Forget();
+				Log("Installing '" + (pack.Info != null ? pack.Info.title : "?") + "' failed part way (" + e.Message + "): " + put + " file(s) put back as they were");
+				throw new IOException(e.Message + " - nothing was installed (what it had written was put back)", e);
+			}
+		}
+
+		/// <summary>
+		/// The files an install wrote or removed, as they were before (null: the file wasn't there), to put back when it
+		/// fails part way (AU39: islands were written first and installed.json last, so a failure in between left islands
+		/// no entry knew - never updated, never removed with it). Not undone: a kept copy of an island for saved worlds
+		/// (KeepForWorlds) - it holds the version that is put back, so those worlds play the same island either way.
+		/// </summary>
+		class InstallUndo
+		{
+			readonly List<KeyValuePair<string, byte[]>> before = new List<KeyValuePair<string, byte[]>>();
+
+			/// <summary>Called before a file is written or deleted (once per file: the first time is how it was).</summary>
+			public void Remember(string path)
+			{
+				if (before.Any(b => b.Key.Equals(path, StringComparison.OrdinalIgnoreCase))) return;
+				before.Add(new KeyValuePair<string, byte[]>(path, File.Exists(path) ? File.ReadAllBytes(path) : null));
+			}
+
+			/// <summary>Every remembered file as it was, the last one first. Returns how many were put back.</summary>
+			public int RollBack()
+			{
+				int n = 0;
+				for (int i = before.Count - 1; i >= 0; i--)
+				{
+					string path = before[i].Key;
+					try
+					{
+						if (before[i].Value != null) SafeFile.WriteAllBytes(path, before[i].Value);
+						else if (File.Exists(path)) File.Delete(path);
+						n++;
+					}
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Could not put back " + path + ": " + e.Message); }
+				}
+				return n;
+			}
+		}
+
+		static Report InstallFiles(LibraryPackContents pack, bool appearWhileSailing, bool replaceChanged, string source, InstallUndo undo)
 		{
 			var report = new Report();
 			LibraryInfo info = pack.Info;
@@ -661,6 +765,7 @@ namespace DynamicIslands.Editor
 						// that would shift what was used there keeps them on the version they started with)
 						KeepForWorlds(t, bytes, report);
 					}
+					undo.Remember(path);
 					SafeFile.WriteAllBytes(path, bytes);
 					// (the island open in the editor was replaced under it: the next Ctrl+S put the old one back without a word)
 					if (DynamicIslands.InEditor() && t.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase))
@@ -711,6 +816,7 @@ namespace DynamicIslands.Editor
 				else report.Add("Updated the plan '" + name + "' (worlds already started keep their own copy of it)");
 				plan.Name = name;
 				Directory.CreateDirectory(WorldPlan.Folder);
+				undo.Remember(WorldPlan.PathFor(name));
 				SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
 				entry.plan = name;
 				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
@@ -720,15 +826,16 @@ namespace DynamicIslands.Editor
 			// An earlier version's files the new one doesn't have any more
 			if (old != null)
 				foreach (LibraryInstalledFile f in old.files.Where(f => !f.shared && !entry.files.Any(x => x.name.Equals(f.name, StringComparison.OrdinalIgnoreCase) && x.kind == f.kind)))
-					RemoveFile(f, entry.id, all, report);
-
-			// Random islands while sailing: a plan's islands never, an island entry's as the player chose (their own islands untouched)
-			foreach (LibraryInstalledFile f in entry.files.Where(f => f.kind == KindIsland && !f.shared))
-				SetPoolWeight(f.name, !info.IsPlan && appearWhileSailing ? 1f : 0f);
+					RemoveFile(f, entry.id, all, report, undo);
 
 			all.RemoveAll(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
 			all.Add(entry);
 			SaveInstalled(all);
+
+			// Random islands while sailing: a plan's islands never, an island entry's as the player chose (their own islands
+			// untouched). (After installed.json: an install that fails before it leaves spawnpool.txt as it was)
+			foreach (LibraryInstalledFile f in entry.files.Where(f => f.kind == KindIsland && !f.shared))
+				SetPoolWeight(f.name, !info.IsPlan && appearWhileSailing ? 1f : 0f);
 			IslandCache.Forget();
 			return report;
 		}
@@ -773,7 +880,7 @@ namespace DynamicIslands.Editor
 
 		static string FreeName(string name, string title, List<string> originals, Dictionary<string, string> target)
 		{
-			string clean = new string((title ?? "").Where(c => !Path.GetInvalidFileNameChars().Contains(c) && c != '#' && c != '%' && c != '?').ToArray()).Trim();
+			string clean = NamePart(title, 30);
 			if (clean.Length == 0) clean = "library";
 			for (int i = 1; ; i++)
 			{
@@ -785,9 +892,11 @@ namespace DynamicIslands.Editor
 
 		static string FreePlanName(string name, string author)
 		{
+			string clean = NamePart(author, 30);
+			if (clean.Length == 0) clean = "library";
 			for (int i = 1; ; i++)
 			{
-				string candidate = name + " (" + (author.Trim().Length > 0 ? author.Trim() : "library") + ")" + (i > 1 ? " " + i : "");
+				string candidate = name + " (" + clean + ")" + (i > 1 ? " " + i : "");
 				if (!File.Exists(WorldPlan.PathFor(candidate)) && !WorldPlan.IsBuiltIn(candidate)) return candidate;
 			}
 		}
@@ -907,7 +1016,8 @@ namespace DynamicIslands.Editor
 			return report;
 		}
 
-		static void RemoveFile(LibraryInstalledFile f, string id, List<LibraryInstalled> all, Report report)
+		/// <summary>undo: an install's removal of an earlier version's file, put back if the install then fails.</summary>
+		static void RemoveFile(LibraryInstalledFile f, string id, List<LibraryInstalled> all, Report report, InstallUndo undo = null)
 		{
 			bool plan = f.kind == KindPlan;
 			string path = plan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
@@ -916,6 +1026,7 @@ namespace DynamicIslands.Editor
 			{ report.Add("Kept '" + f.name + "': another installed entry uses it too"); return; }
 			List<string> worlds = plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
 			if (worlds.Count > 0) { report.Add("Kept '" + f.name + "': " + (worlds.Count == 1 ? "the world " : "the worlds ") + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + (worlds.Count == 1 ? " uses it" : " use it")); return; }
+			if (undo != null) undo.Remember(path);
 			try { File.Delete(path); }
 			catch (Exception e) when (SafeFile.InUse(e)) { report.Add("Kept '" + f.name + "': it is in use by another program (close it there and Remove again)"); return; }
 			if (!plan) RemovePoolLine(f.name);
