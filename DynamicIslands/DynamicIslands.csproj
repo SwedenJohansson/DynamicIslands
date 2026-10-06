@@ -87,6 +87,7 @@
     <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
+    <Compile Include="DevTestsMapTypes.cs" />
     <Compile Include="DevTestsReleaseFixes.cs" />
     <Compile Include="DevTestsScenarios.cs" />
     <Compile Include="DevTestsScenarioStory.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="Behaviours.cs" />
     <Compile Include="Claims.cs" />
     <Compile Include="BehaviourWindow.cs" />
+    <Compile Include="MapTypeFiles.cs" />
     <Compile Include="MapTypes.cs" />
     <Compile Include="RaftIslands.cs" />
     <Compile Include="RaftUnderwater.cs" />
