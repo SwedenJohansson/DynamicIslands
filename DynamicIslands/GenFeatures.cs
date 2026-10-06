@@ -10,11 +10,23 @@ namespace DynamicIslands.Editor
 	/// the island's top down to its beach, a strongbox behind a code panel (the code on a note elsewhere), a grove of wild
 	/// beehives and patches of dirt for the shovel. How many (0-6), different ones first; an explorer's chest by the beach
 	/// holds the tools they need (machete, detector, shovel, zipline tool), as players may not have them yet.
+	/// Past six, Raft's story machinery (LM12, 2026-10-06; ReadyPieces): a generator to start with a part from a toolbox,
+	/// then a radio that works with its power and shows a hidden cache; an engine to start with fuel from a crate, showing
+	/// another; a cage cut open with Raft's bolt cutters (in the explorer's chest) with a chest inside; a lift up a cliff.
+	/// Islands with six or fewer are as before (the extra kinds only come in past six).
 	/// </summary>
 	public static class GenFeatures
 	{
-		public const int Max = 6;
+		public const int Max = 10;
 		public static readonly string[] Kinds = { "vines", "treasure", "zipline", "code", "hives", "dirt" };
+		/// <summary>Raft's story machinery (LM12), placed when more than Kinds.Length features are asked for.</summary>
+		public static readonly string[] MoreKinds = { "power", "engine", "cage", "lift" };
+		const string GeneratorPiece = "VG_DecorationPrefabBase_EmergencyGenerator Variant", RadioPiece = "RT_CommRadio", EnginePiece = "VG_DecorationPrefabBase_Engine Variant",
+			CagePiece = "RT_SharkCage", LiftPiece = "VP_Skylift";
+		public static readonly string[] MoreNames = { GeneratorPiece, RadioPiece, EnginePiece, CagePiece, LiftPiece };
+
+		/// <summary>The objects the features need loaded (the machinery's only past six).</summary>
+		public static IEnumerable<string> NamesFor(IslandGenSettings s) { return s.Features > Kinds.Length ? Names.Concat(MoreNames) : Names; }
 
 		public static readonly string[] Names = { ContentCatalog.MacheteVines, ContentCatalog.BuriedTreasure, "ZiplinePath_Landmark", ContentCatalog.WildHive,
 			"Pickup_Landmark_DirtPickup", "Loot_Chest", "Loot_ChestLarge", "RT_PowerBox", "Note_Papers" };
@@ -26,6 +38,8 @@ namespace DynamicIslands.Editor
 			if (want == 0) return;
 			System.Random r = k.Rnd;
 			List<string> order = Kinds.OrderBy(x => r.Next()).ToList();
+			// (the machinery after the first six; the random numbers drawn for six or fewer stay as they were)
+			if (want > Kinds.Length) order.AddRange(MoreKinds.OrderBy(x => r.Next()));
 			var made = new List<string>();
 			var tools = new List<string>();
 			for (int i = 0; i < want; i++)
@@ -110,6 +124,69 @@ namespace DynamicIslands.Editor
 					k.Add("RT_PowerBox", k.At(dry.Value + new Vector2(0f, 1.8f)), (float)r.NextDouble() * 360f, pp, 0f);
 					k.Note("Note_Papers", other.Value, "Scribbled numbers", "Don't forget it this time: " + code + ". The panel by the strongbox.");
 					return "a strongbox behind a code panel (" + code + ")";
+				}
+				case "power":
+				{
+					// A generator, a radio beside it that works once it runs, a cache the radio's voice leads to (shown), and
+					// the generator's missing part in a toolbox elsewhere
+					Vector2? other = k.Find(k.Mid, s.Radius * 0.8f, MapKit.Dry, 15f);
+					if (!dry.HasValue || !other.HasValue) return null;
+					string cache = "radiocache" + n;
+					k.Add("Loot_Chest", k.At(dry.Value + new Vector2(-2.5f, 1.5f)), (float)r.NextDouble() * 360f,
+						new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Treasure") }, { ObjectProps.NoteTitle, "Supply drop" }, { BehaviourProps.Name, cache }, { BehaviourProps.Hidden, "1" } }, 3f);
+					k.Add(GeneratorPiece, k.At(dry.Value), (float)r.NextDouble() * 360f, ObjectProps.Defaults(GeneratorPiece), 3f);
+					Dictionary<string, string> rp = ObjectProps.Defaults(RadioPiece);
+					rp[BehaviourProps.EventKey("use")] = ObjectProps.Get(rp, BehaviourProps.EventKey("use")) + "\nshow|" + cache + "\nmessage||The voice gives a place on this island. A supply drop!";
+					k.Add(RadioPiece, k.At(dry.Value + new Vector2(2.2f, 0f)), (float)r.NextDouble() * 360f, rp, 0f);
+					k.Chest("Loot_Chest", other.Value, "Mechanic's toolbox", StoryItems.Ref(ReadyPieces.ItemOf(GeneratorPiece)) + "*1;" + MapKit.Loot("Metal").Split(';').First(), "A spare part for the generator.");
+					return "a generator and a radio (the part in a toolbox)";
+				}
+				case "engine":
+				{
+					Vector2? other = k.Find(k.Mid, s.Radius * 0.8f, MapKit.Dry, 15f);
+					if (!dry.HasValue || !other.HasValue) return null;
+					string cache = "enginecache" + n;
+					k.Add("Loot_ChestLarge", k.At(dry.Value + new Vector2(0f, -2.6f)), (float)r.NextDouble() * 360f,
+						new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Metal") }, { ObjectProps.NoteTitle, "Engine room locker" }, { BehaviourProps.Name, cache }, { BehaviourProps.Hidden, "1" } }, 3f);
+					Dictionary<string, string> ep = ObjectProps.Defaults(EnginePiece);
+					ep[BehaviourProps.EventKey("use")] = ObjectProps.Get(ep, BehaviourProps.EventKey("use")) + "\nshow|" + cache;
+					k.Add(EnginePiece, k.At(dry.Value), (float)r.NextDouble() * 360f, ep, 0f);
+					k.Chest("Loot_Chest", other.Value, "Fuel crate", StoryItems.Ref(ReadyPieces.ItemOf(EnginePiece)) + "*1", "Fuel for the engine.");
+					return "an engine to start (the fuel in a crate)";
+				}
+				case "cage":
+				{
+					if (!dry.HasValue) return null;
+					string chest = "cagechest" + n;
+					k.Add("Loot_Chest", k.At(dry.Value), (float)r.NextDouble() * 360f,
+						new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Treasure") }, { ObjectProps.NoteTitle, "Caged chest" }, { BehaviourProps.Name, chest }, { BehaviourProps.Hidden, "1" } }, 3f);
+					Dictionary<string, string> cp = ObjectProps.Defaults(CagePiece);
+					cp[BehaviourProps.EventKey("use")] = ObjectProps.Get(cp, BehaviourProps.EventKey("use")) + "\nshow|" + chest;
+					k.Add(CagePiece, k.At(dry.Value), (float)r.NextDouble() * 360f, cp, 0f);
+					tools.Add(StoryItems.Ref(ReadyPieces.ItemOf(CagePiece)));
+					return "a chest in a cage (bolt cutters)";
+				}
+				case "lift":
+				{
+					// At the foot of a cliff: ground 3.5 m away is 4-14 m higher and level enough to step off onto
+					for (int i = 0; i < 60; i++)
+					{
+						Vector2? p = k.Find(k.Mid, s.Radius * 0.85f, (above, slope) => above > 0.6f && slope < 22f, 6f);
+						if (!p.HasValue) return null;
+						for (int d = 0; d < 8; d++)
+						{
+							float a = d * Mathf.PI / 4f;
+							Vector2 q = p.Value + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 3.5f;
+							float rise = k.Ground(q) - k.Ground(p.Value);
+							if (rise < 4f || rise > 14f || k.Slope(q) > 25f) continue;
+							Dictionary<string, string> lp = ObjectProps.Defaults(LiftPiece);
+							lp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, rise + 0.3f, 0f));
+							lp[BehaviourProps.MoveTime] = Mathf.Clamp(rise * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+							k.Add(LiftPiece, k.At(p.Value), a * Mathf.Rad2Deg, lp, 2f);
+							return "a lift up a cliff (" + rise.ToString("F0") + " m)";
+						}
+					}
+					return null;
 				}
 				case "hives":
 				{

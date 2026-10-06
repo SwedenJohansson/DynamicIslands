@@ -17,6 +17,7 @@ namespace DynamicIslands.Editor
 	///   beh.move (x,y,z) / beh.turn / beh.moveTime / beh.moveMode
 	///                                   moves by an offset and turns (degrees) over a time: "loop" = back and forth for
 	///                                   ever, "switch" = a door, gate or lift that actions (or using it) open and close
+	///   beh.carry = 1                   a mover that carries the player standing on it (a lift, a moving platform)
 	///   beh.hidden = 1                  not there at first; a "show" action makes it appear (creatures: an ambush)
 	///   beh.use                         players can use it (interact key); the text is the hint ("Pull the lever")
 	///   col.mode                        collision: "" = Raft's own, "none" = walk through, "box" = one box around it,
@@ -40,6 +41,8 @@ namespace DynamicIslands.Editor
 	public static class BehaviourProps
 	{
 		public const string SpinOwn = "beh.spinOwn";
+		/// <summary>A mover that carries the player standing on it along (a lift, a moving platform - ROADMAP LM12).</summary>
+		public const string Carry = "beh.carry";
 		public const string Name = "obj.name", Spin = "beh.spin", Bob = "beh.bob", BobTime = "beh.bobTime", Move = "beh.move", Turn = "beh.turn",
 			MoveTime = "beh.moveTime", MoveMode = "beh.moveMode", Hidden = "beh.hidden", Use = "beh.use", Collision = "col.mode";
 		public const string EventPrefix = "on.";
@@ -247,6 +250,8 @@ namespace DynamicIslands.Editor
 		public bool Loop;
 		/// <summary>Spins around its own up axis (a tilted water wheel turns like one), not the vertical.</summary>
 		public bool SpinOwn;
+		/// <summary>Carries this machine's player when they stand on it (a lift): each machine carries its own player.</summary>
+		public bool Carry;
 		public Vector3 Offset;
 		public float TurnDegrees;
 		/// <summary>0 = closed (placed pose), 1 = open.</summary>
@@ -265,6 +270,7 @@ namespace DynamicIslands.Editor
 			TurnDegrees = ObjectProps.GetFloat(p, BehaviourProps.Turn, 0f);
 			MoveTime = Mathf.Max(0.1f, ObjectProps.GetFloat(p, BehaviourProps.MoveTime, 2f));
 			Loop = ObjectProps.Get(p, BehaviourProps.MoveMode) == "loop";
+			Carry = ObjectProps.GetBool(p, BehaviourProps.Carry, false);
 			startPos = transform.localPosition;
 			startRot = transform.localRotation;
 			// Objects start at different points of their cycles, the same on every machine (from their place in the island file)
@@ -280,9 +286,31 @@ namespace DynamicIslands.Editor
 		{
 			if (!Animates) return;
 			float t = SharedClock.Now + phase;
+			Vector3 before = transform.position;
 			if (Loop) Current = Mathf.PingPong(t / MoveTime, 1f);
 			else if (Current != Target) Current = Mathf.MoveTowards(Current, Target, Time.deltaTime / MoveTime);
 			Pose();
+			if (Carry) CarryPlayer(transform.position - before);
+		}
+
+		/// <summary>The local player stands on this mover (a ray down from just above their feet meets it).</summary>
+		public bool Carries(Transform player)
+		{
+			if (player == null) return false;
+			foreach (RaycastHit hit in Physics.RaycastAll(player.position + Vector3.up * 1.2f, Vector3.down, 3f, ~0, QueryTriggerInteraction.Ignore))
+				if (hit.collider != null && hit.collider.transform.IsChildOf(transform)) return true;
+			return false;
+		}
+
+		void CarryPlayer(Vector3 delta)
+		{
+			if (delta.sqrMagnitude < 1e-10f) return;
+			Network_Player p = null;
+			try { p = RAPI.GetLocalPlayer(); } catch { }
+			if (p == null || !Carries(p.transform)) return;
+			p.transform.position += delta;
+			// (the player's character controller reads its place from the physics scene: told now, it doesn't step back)
+			Physics.SyncTransforms();
 		}
 
 		void Pose()

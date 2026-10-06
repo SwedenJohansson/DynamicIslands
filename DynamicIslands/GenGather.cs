@@ -20,13 +20,47 @@ namespace DynamicIslands.Editor
 		{
 			{ TerrainPainter.Tropical, new[] { T("Pickup_Landmark_Tree_Palm 1"), T("Pickup_Landmark_Tree_Palm 3"), T("Pickup_Landmark_Tree_Mango"), S("Pickup_Landmark_PineappleLandmark"),
 				S("Pickup_Landmark_WatermelonLandmark"), S("Banana_Bush_2"), S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_Flower_Yellow"), S("Pickup_Landmark_DirtPickup") } },
-			{ 1, new[] { T("Pickup_Landmark_Tree_Pine"), S("Pickup_Landmark_BerryBush"), S("Pickup_Landmark_Flower_White"), S("Pickup_Landmark_Flower_Blue") } },
+			{ 1, new[] { T(PlaceableCatalog.SnowyPine), S("Pickup_Landmark_BerryBush"), S("Pickup_Landmark_Flower_White"), S("Pickup_Landmark_Flower_Blue") } },
 			{ 2, new[] { T("Pickup_Landmark_Tree_Palm 2"), T("Pickup_Landmark_Tree_Palm 4"), S("Pickup_Landmark_PineappleLandmark"), S("Pickup_Landmark_WatermelonLandmark"),
 				S("Pickup_Landmark_Flower_Yellow"), S("Pickup_Landmark_Flower_Red") } },
 			{ 3, new[] { T("Pickup_Landmark_Tree_Birch"), T("Pickup_Landmark_Tree_Pine"), S("Pickup_Landmark_BerryBush"), S("Pickup_Landmark_Flower_Blue"), S("Pickup_Landmark_Flower_White"),
 				S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_DirtPickup") } },
 			{ 4, new[] { T("Pickup_Landmark_Tree_Palm 3"), T("Pickup_Landmark_Tree_Mango"), S("Pickup_Landmark_PineappleLandmark"), S("Pickup_Landmark_Flower_Black"), S("Pickup_Landmark_Flower_Red"), S("Pickup_Landmark_DirtPickup") } },
 		};
+		/// <summary>
+		/// The object list's groups of things to gather, by the style of island they suit (ROADMAP LM11, the user 2026-10-05:
+		/// "by style"). A thing can be in several (berries suit snowy and forest islands). Raft has no date palm: desert
+		/// islands get Raft's palms that its desert-like islands have, and Caravan Town's acacias.
+		/// </summary>
+		public static readonly string[] Styles =
+		{
+			"Tropical: palms, mangoes, pineapples, melons, bananas, flowers", "Snowy: snowy pines, berries, white and blue flowers",
+			"Desert: palms, acacias, pineapples, melons, flowers", "Forest: birches, pines, berries, mushrooms, flowers",
+			"Volcanic: palms, mangoes, pineapples, black and red flowers", "Sea finds (under water): sand, clay, stone, ores, scrap, clams, seaweed, silver algae",
+			"Finds on land: stone, scrap, titanium, planks, plastic, dirt, wild beehives", "Other",
+		};
+
+		static readonly System.Text.RegularExpressions.Regex[] StyleOf =
+		{
+			R(@"Tree_Palm [13]$|Palmtree \d|Tree_Mango|MangoTree|PineappleLandmark|WatermelonLandmark|Tree_Banana|Tree_Tangaroa|Strawberry|Flower_(Red|Yellow)$"),
+			R(@"Tree_PineSnowy$|BerryBush|Flower_(White|Blue)$"),
+			R(@"Tree_Palm [24]$|AcaciaTree|PineappleLandmark|WatermelonLandmark|Flower_(Yellow|Red)$|Sand_Caravan$"),
+			R(@"Tree_Birch|Tree_Pine$|BerryBush|Mushroom|Flower_(Blue|White|Red)$"),
+			R(@"Tree_Palm 3$|Tree_Mango|PineappleLandmark|Flower_(Black|Red)$"),
+			R(@"_OceanBottom$|GiantClam|SilverAlgae|^SeaVine|Landmark_Sand$|Clay \d|Landmark_Rock \d|Iron \d|Copper \d"),
+			R(@"_Land$|DirtPickup|Beehive"),
+		};
+		static System.Text.RegularExpressions.Regex R(string p) { return new System.Text.RegularExpressions.Regex(p); }
+
+		/// <summary>The style groups (Styles) a thing to gather is listed under; "Other" when none fits.</summary>
+		public static List<string> StylesOf(string name)
+		{
+			var list = new List<string>();
+			for (int i = 0; i < StyleOf.Length; i++) if (StyleOf[i].IsMatch(name ?? "")) list.Add(Styles[i]);
+			if (list.Count == 0) list.Add(Styles[Styles.Length - 1]);
+			return list;
+		}
+
 		static KeyValuePair<string, bool> T(string n) { return new KeyValuePair<string, bool>(n, true); }
 		static KeyValuePair<string, bool> S(string n) { return new KeyValuePair<string, bool>(n, false); }
 
@@ -152,7 +186,9 @@ namespace DynamicIslands.Editor
 					if (Mathf.Abs(ground(x + 1f, z) - h) > 0.8f || Mathf.Abs(ground(x, z + 1f) - h) > 0.8f) continue;
 					var kind = kinds[rnd.Next(kinds.Length)];
 					if (!free(x, z, kind.Value ? 4f : 2f)) continue;
-					f.Objects.Add(new IslandObject { Name = kind.Key, Position = new Vector3(x, h, z), Scale = ScaleOf(kind.Key), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
+					// (snowy islands' pines to cut wear snow - LM11; Raft's own pine if the snowy one couldn't be made)
+					string name = kind.Key == PlaceableCatalog.SnowyPine && PlaceableCatalog.Get(kind.Key) == null ? "Pickup_Landmark_Tree_Pine" : kind.Key;
+					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					land++;
 				}

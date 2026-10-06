@@ -1,4 +1,4 @@
-# CustomIslands object index 4 raft=1.1.01
+# CustomIslands object index 5 raft=1.1.01
 # Every placeable object of Raft's island scenes that isn't in the core list: name, scene, category, flags (h = harvestable, x = left out of the list).
 # Made by the editor; delete this file to scan Raft's islands again.
 Bed_Simple	15#Landmark_Raft#Floating raft	Abandoned rafts	
@@ -1263,3 +1263,23 @@ ZiplinePath_Utopia_ZipineHook	56#Landmark_Utopia#	Utopia
 TP_TelephoneAntenna_NoQuestItem	57#Landmark_TemperanceSmall#1	Temperance	
 TP_IceShore_Small2	58#Landmark_TemperanceSmall#2	Temperance	
 TP_IceShore_Small3	59#Landmark_TemperanceSmall#3	Temperance	
+Pickup_Landmark_Scrap 1_Land	19#Landmark_Radar#Big radio tower	Harvestable	h
+Pickup_Landmark_Scrap 2_Land	19#Landmark_Radar#Big radio tower	Harvestable	h
+Pickup_Landmark_Scrap 3_Land	19#Landmark_Radar#Big radio tower	Harvestable	h
+Pickup_Landmark_Plastic3_Land	19#Landmark_Radar#Big radio tower	Harvestable	h
+Pickup_Landmark_Plastic6_Land	19#Landmark_Radar#Big radio tower	Harvestable	h
+Pickup_Landmark_Palmtree 1	34#Landmark_Small#1	Harvestable	h
+Pickup_Landmark_Palmtree 3	34#Landmark_Small#1	Harvestable	h
+Pickup_Landmark_Palmtree 4	35#Landmark_Small#2	Harvestable	h
+Pickup_Landmark_Palmtree 2	36#Landmark_Small#3	Harvestable	h
+Pickup_Landmark_Scrap 4_Land	44#Landmark_Vasagatan	Harvestable	h
+Pickup_Landmark_Rock_2_Land	45#Landmark_BalboaIsland	Harvestable	h
+Pickup_Landmark_Mushroom 1	45#Landmark_BalboaIsland	Harvestable	h
+Pickup_Landmark_Mushroom 2	45#Landmark_BalboaIsland	Harvestable	h
+Pickup_Landmark_Mushroom 3	45#Landmark_BalboaIsland	Harvestable	h
+Pickup_Landmark_Tree_AcaciaTree_Big 1	49#Landmark_CaravanIsland#RealDeal	Harvestable	h
+Pickup_Landmark_Tree_AcaciaTree_Big 3	49#Landmark_CaravanIsland#RealDeal	Harvestable	h
+Pickup_Landmark_Tree_Tangaroa_1	50#Landmark_Tangaroa#	Harvestable	h
+Pickup_Landmark_Strawberry	50#Landmark_Tangaroa#	Harvestable	h
+Pickup_Landmark_Titanium_Land	50#Landmark_Tangaroa#	Harvestable	h
+Pickup_Landmark_Plank_Land	50#Landmark_Tangaroa#	Harvestable	h

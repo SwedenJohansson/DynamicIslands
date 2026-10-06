@@ -222,6 +222,11 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(sw, mode == "switch");
 			UIKit.SetActive(loop, mode == "loop");
 			if (mode == "none") return;
+			// (a lift or a moving platform: the player standing on it rides along - LM12)
+			bool carry = ObjectProps.GetBool(props, BehaviourProps.Carry, false);
+			Button ride = UIKit.Button(m, "Carries players", () => { if (carry) props.Remove(BehaviourProps.Carry); else props[BehaviourProps.Carry] = "1"; Rebuild(); },
+				"A lift or a moving platform: players standing on it ride along", 130, 26f, 12);
+			UIKit.SetActive(ride, carry);
 
 			Vector3 off = BehaviourProps.Offset(props);
 			RectTransform o = UIKit.Row(g, 28f, 6f, "Offset");

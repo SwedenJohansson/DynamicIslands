@@ -10,6 +10,11 @@ namespace DynamicIslands.Editor
 	/// item raft-&lt;type&gt; a quest item pickup gives, kept for later doors: a "has" check, not "take"); a hatch opens when
 	/// used; a crank wheel or a lever sends the signal "crank" or "lever" that the island's other objects, its quest and
 	/// the world plan can wait for. Every setting can be changed in the behaviour window like any other.
+	/// More of Raft's story machinery (LM12, 2026-10-06): lifts that carry the player up and down when used (Tangaroa's
+	/// elevator, Varuna Point's skylifts), cages cut open with Raft's bolt cutters, security cameras that sweep, generators
+	/// that start with Raft's generator part and send "power", radios that work with power (a started generator or Raft's
+	/// battery charger part) and send "radio", Vasagatan's engine that starts with Raft's gas tank and sends "engine", and
+	/// Temperance's turning mirrors (a puzzle piece: each use turns it, sending "mirror").
 	/// </summary>
 	public static class ReadyPieces
 	{
@@ -19,6 +24,9 @@ namespace DynamicIslands.Editor
 		}
 
 		public const string Door = "door", Hatch = "hatch", Crank = "crank", Lever = "lever";
+		public const string Lift = "lift", Cage = "cage", Camera = "camera", Generator = "generator", Radio = "radio", Engine = "engine", Mirror = "mirror";
+		/// <summary>The signals the new kinds send (a quest, the world plan or other objects can wait for them).</summary>
+		public const string PowerSignal = "power", RadioSignal = "radio", EngineSignal = "engine", MirrorSignal = "mirror", CageSignal = "cage";
 
 		public static readonly Piece[] All =
 		{
@@ -39,7 +47,28 @@ namespace DynamicIslands.Editor
 			new Piece { Name = "TP_CoolingStation_Monitor_Lever", Kind = Lever, Use = "Pull the lever" },
 			new Piece { Name = "TP_LaserControlPanel_lever", Kind = Lever, Use = "Pull the lever" },
 			new Piece { Name = "TradingPost_Register_Lever", Kind = Lever, Use = "Pull the lever" },
+			// (LM12, 2026-10-06)
+			new Piece { Name = "Elevator", Kind = Lift, Use = "Ride the lift" },
+			new Piece { Name = "VP_Skylift", Kind = Lift, Use = "Ride the lift" },
+			new Piece { Name = "VP_Skylift_Extended", Kind = Lift, Use = "Ride the lift" },
+			new Piece { Name = "UT_DogCage_Medium02", Kind = Cage, Item = "Vasagatan_BoltCutter", Use = "Cut the cage open", Locked = "The cage is chained shut. Bolt cutters would get through the chain." },
+			new Piece { Name = "RT_SharkCage", Kind = Cage, Item = "Vasagatan_BoltCutter", Use = "Cut the cage open", Locked = "The cage is chained shut. Bolt cutters would get through the chain." },
+			new Piece { Name = "RT_Camera", Kind = Camera },
+			new Piece { Name = "EmergencyGenerator", Kind = Generator, Item = "Tangaroa_GeneratorPart", Use = "Start the generator", Locked = "It won't start. A part is missing - a generator part." },
+			new Piece { Name = "Generator", Kind = Generator, Item = "Tangaroa_GeneratorPart", Use = "Start the generator", Locked = "It won't start. A part is missing - a generator part." },
+			new Piece { Name = "UT_Generator01", Kind = Generator, Item = "Tangaroa_GeneratorPart", Use = "Start the generator", Locked = "It won't start. A part is missing - a generator part." },
+			new Piece { Name = "VG_DecorationPrefabBase_EmergencyGenerator Variant", Kind = Generator, Item = "Tangaroa_GeneratorPart", Use = "Start the generator", Locked = "It won't start. A part is missing - a generator part." },
+			new Piece { Name = "RT_CommRadio", Kind = Radio, Item = "Caravan_BatteryChargerPart", Use = "Use the radio", Locked = "The radio is dead. It needs power - a running generator, or a battery." },
+			new Piece { Name = "Model_Radio", Kind = Radio, Item = "Caravan_BatteryChargerPart", Use = "Use the radio", Locked = "The radio is dead. It needs power - a running generator, or a battery." },
+			new Piece { Name = "Balboa_DecorationPrefabBase_RadioDevice", Kind = Radio, Item = "Caravan_BatteryChargerPart", Use = "Use the radio", Locked = "The radio is dead. It needs power - a running generator, or a battery." },
+			new Piece { Name = "VG_DecorationPrefabBase_Engine Variant", Kind = Engine, Item = "Vasagatan_GasTank", Use = "Start the engine", Locked = "The tank is dry. It needs fuel - a gas tank." },
+			new Piece { Name = "TP_MirrorHousing_Rotating", Kind = Mirror, Use = "Turn the mirror" },
+			new Piece { Name = "TP_MirrorHousing_InteractableMirror", Kind = Mirror, Use = "Turn the mirror" },
 		};
+
+		/// <summary>The pieces added for LM12's rest (2026-10-06): lifts, cages, cameras, generators, radios, the engine, mirrors.</summary>
+		public static IEnumerable<Piece> Machinery { get { return All.Where(p => p.Kind == Lift || p.Kind == Cage || p.Kind == Camera || p.Kind == Generator || p.Kind == Radio || p.Kind == Engine || p.Kind == Mirror); } }
+
 
 		public static Piece Of(string name) { return All.FirstOrDefault(p => p.Name == name); }
 
@@ -48,9 +77,45 @@ namespace DynamicIslands.Editor
 		{
 			Piece p = Of(name);
 			if (p == null) return;
-			props[BehaviourProps.Use] = p.Use;
+			if (p.Use != null) props[BehaviourProps.Use] = p.Use;
+			string item = p.Item != null ? StoryItems.Prefix + QuestItemPickups.IdPrefix + p.Item : null;
 			switch (p.Kind)
 			{
+				case Lift:
+					// (used, it goes up 6 m and down again on the next use, carrying the player standing on it)
+					props[BehaviourProps.Move] = "0,6,0";
+					props[BehaviourProps.MoveTime] = "5";
+					props[BehaviourProps.Carry] = "1";
+					break;
+				case Cage:
+					props[BehaviourProps.CheckKey("use")] = "has|" + item + "|1";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "message||The chain snaps and the cage swings open." + "\n" + "hide|" + "\n" + "signal||" + CageSignal;
+					break;
+				case Camera:
+					// (sweeps 70 degrees and back, for ever)
+					props[BehaviourProps.Turn] = "70";
+					props[BehaviourProps.MoveMode] = "loop";
+					props[BehaviourProps.MoveTime] = "4";
+					break;
+				case Generator:
+				case Engine:
+					// (started once it runs for good: a later use finds the signal and runs again without wanting the part)
+					string sig = p.Kind == Generator ? PowerSignal : EngineSignal;
+					props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nsignal|" + sig + "|\ntake|" + item + "|1";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "message||" + (p.Kind == Generator ? "The generator coughs, then hums. The power is on." : "The engine sputters, then roars.") + "\n" + "signal||" + sig;
+					break;
+				case Radio:
+					props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nsignal|" + PowerSignal + "|\nhas|" + item + "|1";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "message||Static crackles... then a voice, far away, repeating a frequency." + "\n" + "signal||" + RadioSignal;
+					break;
+				case Mirror:
+					props[BehaviourProps.Turn] = "90";
+					props[BehaviourProps.MoveTime] = "0.8";
+					props[BehaviourProps.EventKey("use")] = "switch|" + "\n" + "signal||" + MirrorSignal;
+					break;
 				case Door:
 					// (it goes when opened: Raft's doors swing on hinges this piece doesn't have)
 					props[BehaviourProps.CheckKey("use")] = "has|" + StoryItems.Prefix + QuestItemPickups.IdPrefix + p.Item + "|1";
