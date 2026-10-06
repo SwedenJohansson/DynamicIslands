@@ -203,7 +203,10 @@ namespace DynamicIslands.Editor
 			sailedOddity = sailedBoss = 0f;
 			oddityDue = bossDue = largeDue = false;
 			sailedLarge = 0f;
+			broughtOddity = broughtBoss = broughtLarge = 0;
+			triesOddity = triesBoss = triesLarge = 0;
 			groundOf.Clear();
+			positionKeys.Clear();
 			ColouredCount = AlphaCount = MovedCount = ExtrasCount = 0;
 		}
 
@@ -224,11 +227,23 @@ namespace DynamicIslands.Editor
 					return true;
 				case "rndsailed":
 					string[] v = value.Split(',');
-					if (v.Length >= 2) { float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedOddity); float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedBoss); }
-					if (v.Length >= 3) float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedLarge);
+					if (v.Length >= 2) { sailedOddity = Metres(v[0]); sailedBoss = Metres(v[1]); }
+					if (v.Length >= 3) sailedLarge = Metres(v[2]);
+					return true;
+				case "rndcount":
+					string[] c = value.Split(',');
+					if (c.Length >= 3) { int.TryParse(c[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtOddity); int.TryParse(c[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtBoss); int.TryParse(c[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtLarge); }
 					return true;
 			}
 			return false;
+		}
+
+		/// <summary>A distance sailed of the world file: NaN, infinite or below 0 (an edited or broken file) is 0 - NaN never
+		/// grew past the threshold, and that kind of island never came again.</summary>
+		static float Metres(string text)
+		{
+			float m;
+			return float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out m) && !float.IsNaN(m) && !float.IsInfinity(m) && m > 0f ? m : 0f;
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -236,6 +251,8 @@ namespace DynamicIslands.Editor
 			if (!Current.On && seen.Count == 0) yield break;
 			yield return "@randomizer=" + Current.Encode();
 			yield return "@rndsailed=" + sailedOddity.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedBoss.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedLarge.ToString("F0", CultureInfo.InvariantCulture);
+			if (broughtOddity + broughtBoss + broughtLarge > 0)
+				yield return "@rndcount=" + broughtOddity.ToString(CultureInfo.InvariantCulture) + "," + broughtBoss.ToString(CultureInfo.InvariantCulture) + "," + broughtLarge.ToString(CultureInfo.InvariantCulture);
 			if (seen.Count > 0)
 				yield return "@rndseen=" + string.Join(";", seen.Select(p => p.x.ToString("F1", CultureInfo.InvariantCulture) + "," + p.z.ToString("F1", CultureInfo.InvariantCulture)).ToArray());
 		}
@@ -324,6 +341,11 @@ namespace DynamicIslands.Editor
 		public static void OnWorldShift(Vector3 shift)
 		{
 			for (int i = 0; i < seen.Count; i++) seen[i] -= new Vector3(shift.x, 0f, shift.z);
+			foreach (Landmark l in positionKeys.Keys.ToList())
+			{
+				if (l == null) { positionKeys.Remove(l); continue; }
+				positionKeys[l] = new KeyValuePair<uint, Vector3>(positionKeys[l].Key, positionKeys[l].Value - shift);
+			}
 		}
 
 		#endregion
@@ -380,20 +402,20 @@ namespace DynamicIslands.Editor
 			{
 				sailedOddity += metres;
 				// Not within the first stretch of a world (the start is Raft's own), then a chance per km
-				if (!oddityDue && sailedOddity > 1500f && Roll(metres, Current.Pick(0.08f, 0.15f, 0.25f))) { oddityDue = true; sinceOddityTry = RetryMetres; }
-				if (oddityDue && Bring("oddity", ref sinceOddityTry, metres, raftPos)) { oddityDue = false; sailedOddity = 1500f - 400f; } // (not two right after each other)
+				if (!oddityDue && sailedOddity > 1500f + DueAfter(OdditySalt, broughtOddity, Current.Pick(0.08f, 0.15f, 0.25f))) { oddityDue = true; sinceOddityTry = RetryMetres; triesOddity = 0; }
+				if (oddityDue && Bring("oddity", OdditySalt, broughtOddity, ref triesOddity, ref sinceOddityTry, metres, raftPos)) { oddityDue = false; sailedOddity = 1500f - 400f; broughtOddity++; } // (not two right after each other)
 			}
 			if (Current.Has(RandomizerSettings.Bosses))
 			{
 				sailedBoss += metres;
-				if (!bossDue && sailedBoss > 4000f && Roll(metres, Current.Pick(0.025f, 0.05f, 0.08f))) { bossDue = true; sinceBossTry = RetryMetres; }
-				if (bossDue && Bring("lair", ref sinceBossTry, metres, raftPos)) { bossDue = false; sailedBoss = 4000f - 2500f; }
+				if (!bossDue && sailedBoss > 4000f + DueAfter(BossSalt, broughtBoss, Current.Pick(0.025f, 0.05f, 0.08f))) { bossDue = true; sinceBossTry = RetryMetres; triesBoss = 0; }
+				if (bossDue && Bring("lair", BossSalt, broughtBoss, ref triesBoss, ref sinceBossTry, metres, raftPos)) { bossDue = false; sailedBoss = 4000f - 2500f; broughtBoss++; }
 			}
 			if (Current.Has(RandomizerSettings.Large))
 			{
 				sailedLarge += metres;
-				if (!largeDue && sailedLarge > 3000f && Roll(metres, Current.Pick(0.05f, 0.1f, 0.15f))) { largeDue = true; sinceLargeTry = RetryMetres; }
-				if (largeDue && Bring("large", ref sinceLargeTry, metres, raftPos)) { largeDue = false; sailedLarge = 3000f - 2000f; }
+				if (!largeDue && sailedLarge > 3000f + DueAfter(LargeSalt, broughtLarge, Current.Pick(0.05f, 0.1f, 0.15f))) { largeDue = true; sinceLargeTry = RetryMetres; triesLarge = 0; }
+				if (largeDue && Bring("large", LargeSalt, broughtLarge, ref triesLarge, ref sinceLargeTry, metres, raftPos)) { largeDue = false; sailedLarge = 3000f - 2000f; broughtLarge++; }
 			}
 		}
 
@@ -405,6 +427,11 @@ namespace DynamicIslands.Editor
 		static bool oddityDue, bossDue;
 		internal static bool OddityDue { get { return oddityDue; } }
 		static float sinceOddityTry, sinceBossTry;
+
+		// How many of each of its own islands this world has had (saved with the world): with the world seed they decide
+		// when the next one is due, what it is and where it goes - CA18. Tries: spots tried for the one due now.
+		static int broughtOddity, broughtBoss, broughtLarge, triesOddity, triesBoss, triesLarge;
+		const int OdditySalt = 41, BossSalt = 43, LargeSalt = 47;
 
 		/// <summary>The randomizer's own islands (map types it brings while sailing).</summary>
 		public static readonly string[] OwnTypes = { "oddity", "lair", "large" };
@@ -421,19 +448,26 @@ namespace DynamicIslands.Editor
 			if (s.Shallows <= 0f) s.Shallows = r.Pick(0.3f, 0.5f, 0.8f);
 		}
 
-		static bool Bring(string type, ref float sinceTry, float metres, Vector3 raftPos)
+		static bool Bring(string type, int salt, int count, ref int tries, ref float sinceTry, float metres, Vector3 raftPos)
 		{
 			sinceTry += metres;
 			if (sinceTry < RetryMetres) return false;
 			sinceTry = 0f;
-			string r = CustomIslandSpawner.TrySpawn(raftPos, false, CustomIslandSpawner.TypePrefix + type);
+			string r = CustomIslandSpawner.TrySpawn(raftPos, false, CustomIslandSpawner.TypePrefix + type, Hash(Current.Seed, salt, count), tries++);
 			Log((type == "lair" ? "Boss lair: " : type == "large" ? "Large island: " : "Oddity island: ") + r);
 			return r.StartsWith("Spawning");
 		}
 
-		static bool Roll(float metres, float chancePerKm)
+		/// <summary>
+		/// Metres sailed past the first stretch before the count-th island of this kind is due, from the world seed: the same
+		/// chance per km as rolling it every stretch sailed ((1 - chance)^km of none yet), but the same for every sail of
+		/// this world. Infinite when the chance is 0.
+		/// </summary>
+		static float DueAfter(int salt, int count, float chancePerKm)
 		{
-			return chancePerKm > 0f && UnityEngine.Random.value < 1f - Mathf.Pow(1f - Mathf.Clamp01(chancePerKm), metres / 1000f);
+			if (chancePerKm <= 0f) return float.PositiveInfinity;
+			float u = Unit(Hash(Current.Seed, salt, count, 1));
+			return 1000f * Mathf.Log(1f - u) / Mathf.Log(1f - Mathf.Min(chancePerKm, 0.99f));
 		}
 
 		#endregion
@@ -482,9 +516,18 @@ namespace DynamicIslands.Editor
 		{
 			PickupItem_Networked net = l.GetComponent<PickupItem_Networked>();
 			if (net != null && net.ObjectIndex != 0) return net.ObjectIndex;
+			// (none: by where it is - kept through world shifts, which move it but don't make it another spawn; a pooled
+			// island moved somewhere else is one)
 			Vector3 p = l.transform.position;
-			return (uint)Hash((int)l.uniqueLandmarkIndex, Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.z));
+			KeyValuePair<uint, Vector3> known;
+			if (positionKeys.TryGetValue(l, out known) && Flat(known.Value - p).sqrMagnitude < 1f) return known.Key;
+			uint key = (uint)Hash((int)l.uniqueLandmarkIndex, Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.z));
+			positionKeys[l] = new KeyValuePair<uint, Vector3>(key, p);
+			return key;
 		}
+
+		/// <summary>Raft's islands without a network id: the key each got from where it was, and where it is now.</summary>
+		static readonly Dictionary<Landmark, KeyValuePair<uint, Vector3>> positionKeys = new Dictionary<Landmark, KeyValuePair<uint, Vector3>>();
 
 		static readonly Type[] StoryParts = { typeof(QuestItemPickup), typeof(NoteBookNotePickup), typeof(LandmarkItem_Quest), typeof(LandmarkItem_Quest_OneWay),
 			typeof(LandmarkItem_CharacterUnlock), typeof(LandmarkItem_Keypad), typeof(LandmarkEntitySpawner_UniqueQuest), typeof(LandmarkEntitySpawner_Repeating_QuestRequirement) };
@@ -523,6 +566,9 @@ namespace DynamicIslands.Editor
 				float since;
 				if (!waiting.TryGetValue(l, out since)) { waiting[l] = now; continue; }
 				if (now - since < 1f) continue;
+				// (a player whose copy of the island's extras is still on its way waits for it before moving crates - they keep
+				// out of its dens and outposts, as on the host - for at most half a minute)
+				if (Current.Has(RandomizerSettings.Loot) && now - since < 30f && IsNatural(l) && ExtrasOf(l) != null && ExtrasOf(l).WaitingForFile) continue;
 				waiting.Remove(l);
 				handled[l] = key;
 				if (!IsNatural(l)) continue;
@@ -574,6 +620,9 @@ namespace DynamicIslands.Editor
 			// (everything of Raft's on the island keeps its room, where Raft put it)
 			List<Vector3> taken = l.landmarkItems.Where(i => i != null && !loot.Contains(i)).Select(i => i.transform.position).ToList();
 			taken.AddRange(loot.Select(i => i.transform.position));
+			// (not into the randomizer's dens and outposts on the island: made while Loot was off, they kept clear of where Raft
+			// put the crates, not of where they go - CA23)
+			Func<Vector3, bool> inExtras = ExtrasPieces(l);
 			int moved = 0;
 			foreach (LandmarkItem i in loot)
 			{
@@ -586,7 +635,7 @@ namespace DynamicIslands.Editor
 				float lift = ground.Hit(from.x, from.z, out hit, out normal) ? Mathf.Clamp(from.y - hit.y, -0.6f, 0.6f) : 0f;
 				var r = new System.Random(seed);
 				Vector3? to = ground.Find(r, (h, slope) => (under ? h > -16f && h < -2.5f : h > 1.2f && h < 45f) && slope < 32f, taken, 3f, 80);
-				if (!to.HasValue) continue;
+				if (!to.HasValue || (inExtras != null && inExtras(to.Value))) continue;
 				ground.Hit(to.Value.x, to.Value.z, out hit, out normal);
 				i.transform.position = to.Value + Vector3.up * lift;
 				i.transform.rotation = Quaternion.FromToRotation(Vector3.up, Vector3.Slerp(Vector3.up, normal, 0.5f)) * Quaternion.Euler(0f, (float)r.NextDouble() * 360f, 0f);
@@ -595,6 +644,57 @@ namespace DynamicIslands.Editor
 			}
 			MovedCount += moved;
 			if (moved > 0) Log("'" + l.name + "': " + moved + " of " + loot.Count + " crates and clams lie somewhere else");
+		}
+
+		/// <summary>The randomizer's extras on this island of Raft's in the world's list, or null.</summary>
+		static IslandWorldState.Entry ExtrasOf(Landmark l)
+		{
+			Vector3 at = new Vector3(l.transform.position.x, 0f, l.transform.position.z);
+			return IslandWorldState.Islands.FirstOrDefault(e => IsExtras(e) && Flat(e.Position - at).sqrMagnitude < 100f);
+		}
+
+		/// <summary>
+		/// Whether a world spot is under one of the dens or outposts of this island's extras (a den by the ellipse its outcrop's
+		/// footprint holds and a metre around - Grotto; an outpost's props by the room DressWorld keeps around them), from the
+		/// extras' file; null when there are none, or no file here yet.
+		/// </summary>
+		static Func<Vector3, bool> ExtrasPieces(Landmark l)
+		{
+			IslandWorldState.Entry e = ExtrasOf(l);
+			if (e == null || e.WaitingForFile) return null;
+			IslandFile file;
+			try { string path = IslandSpawner.PathFor(e.Name); if (!File.Exists(path)) return null; file = IslandFile.Load(path); }
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Reading the extras of '" + l.name + "': " + x.Message); return null; }
+			Vector2 mid = new Vector2(file.TerrainSize.x / 2f, file.TerrainSize.z / 2f);
+			string centre;
+			if (file.Props != null && file.Props.TryGetValue(IslandProps.Centre, out centre))
+			{
+				string[] xz = centre.Split(',');
+				float cx, cz;
+				if (xz.Length == 2 && float.TryParse(xz[0], NumberStyles.Float, CultureInfo.InvariantCulture, out cx) && float.TryParse(xz[1], NumberStyles.Float, CultureInfo.InvariantCulture, out cz)) mid = new Vector2(cx, cz);
+			}
+			Vector3 island = l.transform.position;
+			var tests = new List<Func<Vector3, bool>>();
+			foreach (IslandObject o in file.Objects)
+			{
+				if (o == null || o.Props == null || !o.Props.ContainsKey("set.piece")) continue;
+				float wx = o.Position.x - mid.x + island.x, wz = o.Position.z - mid.y + island.z;
+				PropInfo pi = RaftProps.Get(o.Name);
+				if (o.Props.ContainsKey("cave") && pi != null)
+				{
+					Quaternion toDen = Quaternion.Inverse(Quaternion.Euler(0f, o.EulerRotation.y, 0f));
+					float ax = pi.Size.x * 0.5f + 1f, az = pi.Size.z * 0.5f + 1f;
+					Vector3 centreOf = new Vector3(pi.Centre.x, 0f, pi.Centre.z);
+					tests.Add(p => { Vector3 d = toDen * new Vector3(p.x - wx, 0f, p.z - wz) - centreOf; return d.x * d.x / (ax * ax) + d.z * d.z / (az * az) < 1f; });
+				}
+				else
+				{
+					float clear = pi != null ? Mathf.Max(1.5f, Mathf.Max(pi.Size.x, pi.Size.z) * 0.4f + 0.5f) : 1.5f;
+					tests.Add(p => (p.x - wx) * (p.x - wx) + (p.z - wz) * (p.z - wz) < clear * clear);
+				}
+			}
+			if (tests.Count == 0) return null;
+			return p => tests.Any(t => t(p));
 		}
 
 		/// <summary>Host: an island of Raft's appears for the first time in this world: maybe it gets extras (once).</summary>

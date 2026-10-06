@@ -142,11 +142,37 @@ namespace DynamicIslands.Editor
 		public const float LandPer1000 = 10f, SeaPer1000 = 30f;
 		public const int MaxEach = 400;
 
+		/// <summary>Takes the 1 m cells under a building's footprint (its meshes' bounds, scaled and turned, 0.5 m around): small
+		/// things are kept clear of by their middle alone.</summary>
+		static void TakeFootprint(IslandObject o, HashSet<long> taken, Func<float, float, long> cell)
+		{
+			Bounds b;
+			if (o == null || string.IsNullOrEmpty(o.Name) || !PlaceableCatalog.LocalBounds(o.Name, out b)) return;
+			Vector3 c = Vector3.Scale(b.center, o.Scale), e = Vector3.Scale(b.extents, o.Scale);
+			e = new Vector3(Mathf.Abs(e.x), 0f, Mathf.Abs(e.z));
+			if (Mathf.Max(e.x, e.z) < 1.5f) return;
+			const float pad = 0.5f;
+			Quaternion back = Quaternion.Euler(0f, -o.EulerRotation.y, 0f);
+			int reach = Mathf.CeilToInt(new Vector2(Mathf.Abs(c.x) + e.x, Mathf.Abs(c.z) + e.z).magnitude + pad) + 1;
+			int x0 = Mathf.FloorToInt(o.Position.x), z0 = Mathf.FloorToInt(o.Position.z);
+			for (int dx = -reach; dx <= reach; dx++)
+				for (int dz = -reach; dz <= reach; dz++)
+				{
+					float x = x0 + dx + 0.5f, z = z0 + dz + 0.5f;
+					Vector3 local = back * new Vector3(x - o.Position.x, 0f, z - o.Position.z) - new Vector3(c.x, 0f, c.z);
+					if (Mathf.Abs(local.x) <= e.x + pad && Mathf.Abs(local.z) <= e.z + pad) taken.Add(cell(x, z));
+				}
+		}
+
 		/// <summary>An object's own scale (as the generator's other objects get it).</summary>
 		static Vector3 ScaleOf(string name) { GameObject p = PlaceableCatalog.Get(name); return p != null ? p.transform.localScale : Vector3.one; }
 
-		/// <summary>Adds the things to gather to a generated island's objects; returns how many (land, sea).</summary>
-		public static KeyValuePair<int, int> Apply(IslandFile f, IslandGenSettings s, int seed)
+		/// <summary>
+		/// Adds the things to gather to a generated island's objects; returns how many (land, sea). planned: the objects
+		/// there before the buildings were put (null: none known) - every other object is kept clear of by its footprint,
+		/// not only its middle (CA20: a palm grew inside a shack, a sea find lay in a sunken plane).
+		/// </summary>
+		public static KeyValuePair<int, int> Apply(IslandFile f, IslandGenSettings s, int seed, ICollection<IslandObject> planned = null)
 		{
 			if (s.Gather <= 0f && s.Shallows <= 0f) return new KeyValuePair<int, int>(0, 0);
 			int res = f.HeightmapResolution;
@@ -156,6 +182,9 @@ namespace DynamicIslands.Editor
 			var taken = new HashSet<long>();
 			Func<float, float, long> cell = (x, z) => ((long)Mathf.FloorToInt(x) << 32) ^ (uint)Mathf.FloorToInt(z);
 			foreach (IslandObject o in f.Objects) taken.Add(cell(o.Position.x, o.Position.z));
+			if (planned != null)
+				foreach (IslandObject o in f.Objects)
+					if (!planned.Contains(o)) TakeFootprint(o, taken, cell);
 			Func<float, float, float, bool> free = (x, z, r) =>
 			{
 				int ir = Mathf.CeilToInt(r);
