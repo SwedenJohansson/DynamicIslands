@@ -378,6 +378,8 @@ namespace DynamicIslands.Editor
 			RectTransform quest = UIKit.Group(root, "Quest");
 			Slider(quest, "Quest steps", 0, GenQuest.MaxSteps, () => s.QuestSteps, v => s.QuestSteps = Mathf.RoundToInt(v), v => v < 0.5f ? "no quest" : v.ToString("F0") + " step" + (v < 1.5f ? "" : "s"),
 				"A quest made with the island", "A quest of this many steps, made with the island and its things: first a castaway's note to read where players come ashore, then (by the seed) a lookout to climb to, monsters to defeat, map pieces to collect from small chests, a torn page to find, a supply crate, animals to catch - and last the castaway's hoard at the top of the island. One step: just the hidden hoard. It replaces the island's quest; the Island tab's Quest shows it and you can change it there. A step whose place doesn't fit on a small island is left out (the report says so).", true);
+			Slider(quest, "Raft's features", 0, GenFeatures.Max, () => s.Features, v => s.Features = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0"),
+				"Things Raft's story islands have the player do", "Things Raft's story islands have the player do, put on the island (different ones first): a cache behind vines for the machete, treasure buried for the metal detector and the shovel, a zipline from the top down to the beach, a strongbox behind a code panel (its code on a note elsewhere), a grove of wild beehives, dirt for the shovel. An explorer's chest near the shore holds the tools they need.", true);
 		}
 
 		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>

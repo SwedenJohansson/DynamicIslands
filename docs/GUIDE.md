@@ -657,6 +657,12 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
 
   ![A generated quest](images/generator-quest.jpg)
   *A generated island with its quest: the castaway's note by the landing, a lookout, map pieces, the hoard at the top.*
+
+  **Raft's features**, 0 to 6 (same group): things Raft's story islands have the player do, different ones first - a
+  **cache behind vines** (it shows once the vines are cut with the machete), **buried treasure** for the metal detector
+  and the shovel, a **zipline** from the island's top down to its beach, a **strongbox behind a code panel** (the code is
+  on a note elsewhere on the island), a **grove of wild beehives**, **dirt** for the shovel. An **explorer's chest** near
+  the shore holds the tools they need (machete, metal detector, shovel, zipline tool).
 - **My presets:** **Save these settings...** keeps them under a name; **Defaults** starts over.
 
 ![Under water, and a help popup](images/generator-underwater.jpg)

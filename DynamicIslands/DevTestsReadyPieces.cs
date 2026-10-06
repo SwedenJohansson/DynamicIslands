@@ -119,5 +119,54 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: story item order check"); else Fail("story item order check");
 		}
+			[ConsoleCommand(name: "CIGenRaftFeatures", docs: "Dev, editor: ROADMAP LM12 - the generator's Raft's features: 6 on a tropical island (with buildings, and without) - vines in front of a hidden cache, buried treasure, a zipline with its far end at the beach, a code panel showing a hidden strongbox with its code on a note, wild beehives, dirt spots, and an explorer's chest with the tools; 0 puts none; a preset keeps the number")]
+		public static void GenRaftFeaturesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GenRaftFeaturesRoutine()); }
+
+		static IEnumerator GenRaftFeaturesRoutine()
+		{
+			yield return WaitForEditor(false);
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			foreach (bool buildings in new[] { false, true })
+			{
+				var gs = new IslandGenSettings { Seed = 5151, Radius = 85f, Height = 30f, Peaks = 2, ObjectDensity = 0.4f, Style = TerrainPainter.Tropical, Features = 6, Buildings = buildings, BuildingKind = GenBuildings.Huts, BuildingCount = 2 };
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.5f);
+				List<EditorGameObject> objs = PlacedEditorObjects();
+				Func<string, List<EditorGameObject>> all = n => objs.Where(e => e.GameObjectName == n).ToList();
+				string report = string.Join(", ", IslandGenerator.LastReport.Built.ToArray());
+				EditorGameObject vines = all(ContentCatalog.MacheteVines).FirstOrDefault(v => ObjectProps.Get(v.Props, BehaviourProps.EventKey("use")).Contains("show|vinecache"));
+				EditorGameObject cache = all("Loot_Chest").FirstOrDefault(c => ObjectProps.Get(c.Props, BehaviourProps.Name).StartsWith("vinecache"));
+				EditorGameObject zip = all("ZiplinePath_Landmark").FirstOrDefault(z => ObjectProps.Get(z.Props, ZiplineEnds.ZipTo).Length > 0);
+				EditorGameObject panel = all("RT_PowerBox").FirstOrDefault(b => CodeLock.HasCode(b.Props));
+				string code = panel != null ? ObjectProps.Get(panel.Props, CodeLock.Code) : "?";
+				bool note = objs.Any(e => ObjectProps.Get(e.Props, ObjectProps.NoteText).Contains(code));
+				EditorGameObject tools = all("Loot_Chest").FirstOrDefault(c => ObjectProps.Get(c.Props, ObjectProps.NoteTitle) == "Explorer's chest");
+				string loot = tools != null ? ObjectProps.Get(tools.Props, ObjectProps.LootItems) : "";
+				string tag = buildings ? "with buildings: " : "no buildings: ";
+				Check(ref ok, vines != null && cache != null && BehaviourProps.StartsHidden(cache.Props), tag + "vines in front of a hidden cache");
+				Check(ref ok, all(ContentCatalog.BuriedTreasure).Count >= 1, tag + all(ContentCatalog.BuriedTreasure).Count + " buried treasure");
+				Check(ref ok, zip != null, tag + "a zipline with its far end set");
+				Check(ref ok, panel != null && note, tag + "a code panel (" + code + ") with the code on a note");
+				Check(ref ok, all(ContentCatalog.WildHive).Count >= 1 && all("Pickup_Landmark_DirtPickup").Count >= 1, tag + all(ContentCatalog.WildHive).Count + " wild beehives, " + all("Pickup_Landmark_DirtPickup").Count + " dirt spots");
+				Check(ref ok, new[] { ContentCatalog.MacheteItem, "MetalDetector", "Shovel", ContentCatalog.ZiplineItem }.All(x => loot.Contains(x + "*")), tag + "the explorer's chest has the tools (" + loot + ")");
+				Check(ref ok, report.Contains("zipline") && report.Contains("vines"), tag + "the report: " + report);
+				if (!buildings && zip != null && Camera.main != null)
+				{
+					Vector3 at = zip.transform.position;
+					Camera.main.transform.SetPositionAndRotation(at + new Vector3(-25f, 15f, -25f), Quaternion.LookRotation(new Vector3(25f, -12f, 25f)));
+					yield return new WaitForSecondsRealtime(1f);
+					Screenshot(new[] { "gen_features" });
+					yield return new WaitForSecondsRealtime(0.4f);
+				}
+			}
+			var none = new IslandGenSettings { Seed = 5151, Radius = 85f, Height = 30f, Style = TerrainPainter.Tropical, Features = 0 };
+			IslandGenerator.GenerateInEditor(none);
+			yield return new WaitForSecondsRealtime(0.4f);
+			Check(ref ok, !PlacedEditorObjects().Any(e => e.GameObjectName == ContentCatalog.MacheteVines || e.GameObjectName == "RT_PowerBox"), "0 features: none");
+			Check(ref ok, IslandGenSettings.FromText(new IslandGenSettings { Features = 4 }.ToText()).Features == 4, "a preset keeps the number");
+			if (ok) Log("PASS: generator features"); else Fail("generator features");
+		}
 	}
 }

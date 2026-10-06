@@ -93,6 +93,9 @@ namespace DynamicIslands.Editor
 		public bool Caves;
 		/// <summary>A quest made with the island: how many steps (0 = none; GenQuest).</summary>
 		public int QuestSteps;
+		/// <summary>Raft's features on the island (GenFeatures, ROADMAP LM12): how many, 0-6 - a cache behind vines, buried
+		/// treasure, a zipline, a strongbox behind a code panel, wild beehives, dirt for the shovel.</summary>
+		public int Features;
 		/// <summary>One of Raft's story islands rebuilt from its own pieces: a design id, "&lt;scene&gt;:any" for one of its
 		/// designs at random, or "" (Remakes; the Randomize existing tab).</summary>
 		public string Remake = "";
@@ -825,6 +828,7 @@ namespace DynamicIslands.Editor
 			}
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
 			names.AddRange(Remakes.NeededNames(s));
+			if (s.Features > 0) names.AddRange(GenFeatures.Names);
 			return names.Distinct().ToList();
 		}
 
@@ -832,7 +836,7 @@ namespace DynamicIslands.Editor
 		public static List<string> Apply(IslandFile file, IslandGenSettings s)
 		{
 			var done = new List<string>();
-			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && string.IsNullOrEmpty(s.Remake)) || file == null || file.Heights == null) return done;
+			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && s.Features <= 0 && string.IsNullOrEmpty(s.Remake)) || file == null || file.Heights == null) return done;
 			var k = new MapKit(file, s.Seed * 7919 + 13);
 			System.Random r = k.Rnd;
 			// A story island rebuilt first: it takes the island's best place (its top, a headland, the sea off the coast)
@@ -845,7 +849,7 @@ namespace DynamicIslands.Editor
 				bool cave = RandomizerIslands.CanBuildCaves && RandomizerIslands.EmbeddedCave(k, s, guard, "Treasure", "Cave hoard");
 				done.Add(cave ? "a cave" : RandomizerIslands.CanBuildCaves ? "no cave (no spot fits: it needs a hill by open, level land)" : "no cave (Raft's cave pieces aren't loaded)");
 			}
-			if (!s.Buildings) { Quest(k, s, done); return done; }
+			if (!s.Buildings) { GenFeatures.Make(k, s, done); Quest(k, s, done); return done; }
 			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
 			int count = Mathf.Clamp(s.BuildingCount, 0, MaxCount), built = 0;
 			var spots = new List<Vector2>();
@@ -882,6 +886,7 @@ namespace DynamicIslands.Editor
 				done.Add(Label(kind).ToLowerInvariant().TrimEnd('s').Replace("castaway hut", "a castaway hut").Replace("wooden cabin", "a wooden cabin"));
 			}
 			if (built < count) done.Add((count - built) + " building(s) found no level spot");
+			GenFeatures.Make(k, s, done);
 			Quest(k, s, done);
 			return done;
 		}
