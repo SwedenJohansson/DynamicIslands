@@ -615,6 +615,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `Quest.cs`, `QuestEditorWindow.cs` | Quests: the steps, progress shared by all players and saved with the world, the quest panel, and the quest editor |
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |
 | `SelectionTools.cs` | Box select, select all / same kind, hidden and locked objects, and the Placed objects list |
+| `ReadyPieces.cs` | Raft's keycard/key doors, hatches, crank wheels and levers working as placed (default behaviours; Raft's quest items as keys) |
 | `PiecesWindow.cs` | My groups and stamps: rename or delete saved groups and stamps (deleted ones are moved to `deleted\groups`, `deleted\stamps`) |
 | `MyIslandsWindow.cs` | My islands: every island file with its source, the worlds using it and its pool weight (spawnpool.txt); open, rename, delete, tidy up |
 | `IslandRename.cs` | Renaming a saved island: its file, kept copies, spawnpool.txt, plans, other islands' rules and saved worlds follow |

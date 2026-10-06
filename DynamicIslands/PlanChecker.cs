@@ -43,6 +43,9 @@ namespace DynamicIslands.Editor
 			/// <summary>The island's own rules: plan rules may point at the islands they bring by their names.</summary>
 			public List<IntroRule> Rules = new List<IntroRule>();
 			public string AllText = ""; // (every setting's value: to see whether a story item is given anywhere)
+			/// <summary>Story items the island's checks want (has/take story:...) and those it gives (loot, zones, give actions,
+			/// Raft's quest item pickups) - the plan's order of them (Check).</summary>
+			public readonly HashSet<string> NeedsStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase), GivesStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
 		}
 
@@ -96,8 +99,31 @@ namespace DynamicIslands.Editor
 					if (a.Verb == "journal") x.PageCount++;
 				}
 			x.AllText = text.ToString();
+			// Story items: wanted by checks, given by everything else (loot, zone items, give actions) and by Raft's pickups
+			var sources = new List<KeyValuePair<string, string>>(f.Props.Where(kv => kv.Key != StoryItems.Key));
+			foreach (IslandObject o in f.Objects)
+			{
+				if (o.Props != null) sources.AddRange(o.Props);
+				if (QuestItemPickups.IsModel(o.Name)) { string id = QuestItemPickups.StoryId(o.Name); if (id != null) x.GivesStory.Add(id); }
+			}
+			foreach (var kv in sources)
+			{
+				bool check = kv.Key.StartsWith(BehaviourProps.CheckPrefix);
+				foreach (string line in (kv.Value ?? "").Split('\n'))
+				{
+					if (check)
+					{
+						System.Text.RegularExpressions.Match m = NeedRx.Match(line.Trim());
+						if (m.Success) x.NeedsStory.Add(m.Groups[1].Value);
+					}
+					else foreach (System.Text.RegularExpressions.Match m in GiveRx.Matches(line)) x.GivesStory.Add(m.Groups[1].Value);
+				}
+			}
 			return x;
 		}
+
+		static readonly System.Text.RegularExpressions.Regex NeedRx = new System.Text.RegularExpressions.Regex(@"^(?:has|take)\|" + StoryItems.Prefix + @"([^|;*\s]+)");
+		static readonly System.Text.RegularExpressions.Regex GiveRx = new System.Text.RegularExpressions.Regex(StoryItems.Prefix + @"([^|;*\s]+)");
 
 		/// <summary>A saved island's facts (read again when its file changed), or null if there is no such island.</summary>
 		public static Facts Saved(string name)
@@ -212,7 +238,29 @@ namespace DynamicIslands.Editor
 			if (islandMode && rules.Any(x => x.Special)) c.Add(-1, Level.Problem, "An island's own rules can't use Raft's story or the Receiver (a world plan can).", "Use \"Ahead of the raft\" or \"Near an island\", or make these rules in a world plan.");
 			foreach (string tip in StoryTips(plan, islandMode)) c.Add(-1, tip.StartsWith("Story:") ? Level.Tip : Level.Tip, tip);
 			if (!islandMode) CheckBlueprints(c);
+			if (!islandMode) CheckStoryOrder(c);
 			return c.Out.OrderBy(f => f.Level).ThenBy(f => f.Rule).ToList();
+		}
+
+		/// <summary>
+		/// Story items in the plan's order (TODO "Raft's quest items used in the plans"): an island whose doors or chests want
+		/// a story item (a keycard, a key...) that neither it nor any island of an earlier rule gives - the player reaches the
+		/// lock without the key. Raft's own quest items (raft-...) are given only by their pickups on custom islands.
+		/// </summary>
+		static void CheckStoryOrder(Ctx c)
+		{
+			var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var all = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 0; i < c.Plan.Rules.Count; i++) foreach (Facts f in Brings(c, c.Plan.Rules[i])) all.UnionWith(f.GivesStory);
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+			{
+				List<Facts> here = Brings(c, c.Plan.Rules[i]).ToList();
+				foreach (Facts f in here) given.UnionWith(f.GivesStory);
+				foreach (Facts f in here)
+					foreach (string need in f.NeedsStory.Where(n => !given.Contains(n)))
+						c.Add(i, Level.Warning, f.Describe + " has a lock that wants the story item " + StoryItems.Label(need) + (all.Contains(need) ? ", which only an island of a later rule gives: players get there without it." : ", which no island of the plan gives: it stays locked."),
+							"Give it on an earlier island of the plan (a chest's loot, a zone's items, an action, or one of Raft's quest item pickups), or on this island before the lock.");
+			}
 		}
 
 		/// <summary>Raft's progression (the user, 2026-10-05): every blueprint that lies on Raft's story islands

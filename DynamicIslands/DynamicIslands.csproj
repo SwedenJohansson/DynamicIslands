@@ -84,6 +84,7 @@
     <Compile Include="DevTestsSafety.cs" />
     <Compile Include="DevTestsPolish.cs" />
     <Compile Include="DevTestsRename.cs" />
+    <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
     <Compile Include="DevTestsReleaseFixes.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="SelectionTools.cs" />
     <Compile Include="MyIslandsWindow.cs" />
     <Compile Include="StoryRemakes.cs" />
+    <Compile Include="ReadyPieces.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />

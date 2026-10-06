@@ -532,5 +532,10 @@ namespace DynamicIslands
 			Screenshot(new[] { "kit" });
 			Log("PASS: kit show: " + string.Join(" | ", lines.ToArray()));
 		}
+			[ConsoleCommand(name: "CIQuestItemTypes", docs: "Dev: lists Raft's quest item types (the story items raft-<type> they become)")]
+		public static void QuestItemTypesCommand(string[] args)
+		{
+			Log("PASS: quest item types: " + string.Join(", ", StoryItems.QuestItems.Select(q => q.questItemType.ToString()).OrderBy(x => x).ToArray()));
+		}
 	}
 }
