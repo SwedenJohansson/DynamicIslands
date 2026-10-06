@@ -48,12 +48,27 @@ namespace DynamicIslands.Editor
 			var d = new LibraryInfo();
 			return new LibraryInfo
 			{
-				id = LibraryJson.Str(o, "id"), kind = LibraryJson.Str(o, "kind", d.kind), title = LibraryJson.Str(o, "title"), author = LibraryJson.Str(o, "author"),
-				version = Math.Max(1, LibraryJson.Int(o, "version", 1)), summary = LibraryJson.Str(o, "summary"), description = LibraryJson.Str(o, "description"),
-				tags = LibraryJson.Strings(o, "tags"), players = LibraryJson.Str(o, "players", d.players), length = LibraryJson.Str(o, "length"), icon = LibraryJson.Str(o, "icon"),
+				id = LibraryJson.Str(o, "id"), kind = LibraryJson.Str(o, "kind", d.kind), title = Plain(LibraryJson.Str(o, "title"), 80), author = Plain(LibraryJson.Str(o, "author"), 60),
+				version = Math.Max(1, LibraryJson.Int(o, "version", 1)), summary = Plain(LibraryJson.Str(o, "summary"), 300), description = Plain(LibraryJson.Str(o, "description"), 4000),
+				tags = LibraryJson.Strings(o, "tags").Select(x => Plain(x, 30)).ToArray(), players = LibraryJson.Str(o, "players", d.players), length = LibraryJson.Str(o, "length"), icon = LibraryJson.Str(o, "icon"),
 				pictures = LibraryJson.Strings(o, "pictures"), plan = LibraryJson.Str(o, "plan"), remix = LibraryJson.Bool(o, "remix", true), featured = LibraryJson.Bool(o, "featured"),
 				minModVersion = LibraryJson.Str(o, "minModVersion"), created = LibraryJson.Str(o, "created"), basedOn = LibraryJson.Str(o, "basedOn"),
 			};
+		}
+
+		static readonly System.Text.RegularExpressions.Regex RichTag = new System.Text.RegularExpressions.Regex(@"</?(size|color|b|i|material|quad|sprite|link|font|mark|align|voffset|cspace|indent|line-height|pos|rotate|s|u|sub|sup|alpha|nobr|page|br)(=[^>]*)?>",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// An entry's text as plain text (ROADMAP X6, test UL7): Unity's rich text tags taken out - a "&lt;size=300&gt;" title
+		/// covered the library window - tabs as spaces, other control characters gone, and at most max characters.
+		/// </summary>
+		public static string Plain(string s, int max)
+		{
+			if (string.IsNullOrEmpty(s)) return "";
+			string t = RichTag.Replace(s, "").Replace('\t', ' ');
+			t = new string(t.Where(ch => ch == '\n' || !char.IsControl(ch)).ToArray()).Trim();
+			return t.Length > max ? t.Substring(0, max - 3).TrimEnd() + "..." : t;
 		}
 
 		public static LibraryInfo FromJson(string json)

@@ -149,7 +149,7 @@ namespace DynamicIslands.Editor
 			if (genToCheck) {
 			try { foreach (string p in WorldPlan.All()) { WorldPlan plan = WorldPlan.Load(p); if (plan != null) foreach (IntroRule r in plan.Rules) foreach (string n in RuleIslands(r)) named.Add(n); } } catch { }
 			foreach (string i in islands.Where(n => !IslandNetwork.IsDownloadName(n)))
-				try { foreach (IntroRule r in WorldDirector.RulesFromProps(IslandCache.Props(i))) foreach (string n in RuleIslands(r)) named.Add(n); } catch { }
+				try { foreach (IntroRule r in IslandCache.RulesOf(i)) foreach (string n in RuleIslands(r)) named.Add(n); } catch { }
 			try { foreach (LibraryInstalled e in LibraryPack.Installed()) foreach (LibraryInstalledFile f in e.files) named.Add(f.name); } catch { }
 			try
 			{
@@ -158,6 +158,7 @@ namespace DynamicIslands.Editor
 			}
 			catch { }
 			if (!string.IsNullOrEmpty(DynamicIslands.currentIslandName)) named.Add(DynamicIslands.currentIslandName);
+			IslandCache.SaveRules();
 			}
 			tNamed = clock.ElapsedMilliseconds;
 

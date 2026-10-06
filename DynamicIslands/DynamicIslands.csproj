@@ -111,6 +111,7 @@
     <Compile Include="StoryRemakes.cs" />
     <Compile Include="ReadyPieces.cs" />
     <Compile Include="GenFeatures.cs" />
+    <Compile Include="PcCheck.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />

@@ -562,7 +562,7 @@ namespace DynamicIslands.Editor
 			if (tab != TAB.ObjectPlace)
 			{
 				if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(false);
-				ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
+				ObjectPlacer placer = ObjectPlacer.Current;
 				if (placer != null) UnityEngine.Object.Destroy(placer.gameObject);
 				if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false;
 			}
@@ -753,7 +753,7 @@ namespace DynamicIslands.Editor
 		static string ToolHint()
 		{
 			if (tabs == null) return "";
-			ObjectPlacer placer = tabs.SelectedTab == TAB.ObjectPlace ? UnityEngine.Object.FindObjectOfType<ObjectPlacer>() : null;
+			ObjectPlacer placer = tabs.SelectedTab == TAB.ObjectPlace ? ObjectPlacer.Current : null;
 			if (placer != null) return "Placing " + PlaceableCatalog.DisplayName(placer.GameObjectName) + ": click the ground \u00B7 Shift+click keeps placing \u00B7 Q/E turn \u00B7 [ ] size \u00B7 Esc cancels";
 			switch (tabs.SelectedTab)
 			{

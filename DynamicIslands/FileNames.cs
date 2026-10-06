@@ -58,6 +58,9 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class SafeFile
 	{
+		/// <summary>Tries of a replace held up by another program before giving up.</summary>
+		internal const int Retries = 5;
+
 		public static void WriteAllBytes(string path, byte[] bytes)
 		{
 			string tmp = path + ".tmp";
@@ -73,6 +76,14 @@ namespace DynamicIslands.Editor
 		public static void Commit(string tmp, string path)
 		{
 			if (!File.Exists(path)) { File.Move(tmp, path); return; }
+			// (a lock that goes by itself - an antivirus scanning the file, a cloud sync - is waited out: tried again a few
+			// times, 0.1 s apart, before the player is told - AU36)
+			for (int attempt = 1; attempt < Retries; attempt++)
+			{
+				try { File.Replace(tmp, path, null); return; }
+				catch (Exception e) when (InUse(e)) { System.Threading.Thread.Sleep(100); }
+				catch (Exception) { break; }
+			}
 			try { File.Replace(tmp, path, null); return; }
 			catch (Exception e)
 			{

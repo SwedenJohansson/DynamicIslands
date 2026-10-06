@@ -231,5 +231,91 @@ namespace DynamicIslands
 			try { System.IO.File.Delete(IslandSpawner.PathFor(name)); } catch { }
 			if (ok) Log("PASS: remake missing"); else Fail("remake missing");
 		}
+			[ConsoleCommand(name: "CIPerfChecks", docs: "Dev, in game (host): ROADMAP P1-P3 - a big island spawns over several frames, its longest frame measured; spawned again, no shader is looked up again; the object root and the placing object are cached")]
+		public static void PerfChecksCommand(string[] args) { DynamicIslands.instance.StartCoroutine(PerfChecksRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
+
+		static IEnumerator PerfChecksRoutine(string island)
+		{
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			island = island ?? IslandSpawner.ListSavedIslands().Select(n => new { N = n, S = new System.IO.FileInfo(IslandSpawner.PathFor(n)).Length }).Where(x => !x.N.StartsWith("ci") && !x.N.StartsWith("gen-") && !IslandNetwork.IsDownloadName(x.N)).OrderByDescending(x => x.S).First().N;
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(island));
+			yield return PlaceableCatalog.EnsureLoaded(f.Objects.Select(o => o.Name).ToList());
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, IslandSpawner.LandRadius(f), 900f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			for (int round = 0; round < 2; round++)
+			{
+				int findsBefore = ReApplyShaders.Finds;
+				float longest = 0f;
+				bool done = false;
+				DynamicIslands.instance.StartCoroutine(Watch(() => done, ms => longest = ms));
+				yield return DynamicIslands.instance.SpawnIslandFile(island, spot.Value, false);
+				done = true;
+				yield return null; yield return null;
+				Check(ref ok, IslandSpawner.LastSpawnFrames > 1 || f.Objects.Count < 400, "round " + (round + 1) + ": '" + island + "' (" + f.Objects.Count + " objects) made over " + IslandSpawner.LastSpawnFrames + " frames, the longest " + longest.ToString("F0") + " ms (" + IslandSpawner.LastSpawnTiming + "; " + DynamicIslands.LastLoadTiming + ")");
+				if (round == 1) Check(ref ok, ReApplyShaders.Finds == findsBefore, "spawned again: no shader looked up again (" + (ReApplyShaders.Finds - findsBefore) + ")");
+				GameObject root = IslandSpawner.SpawnedRoots.LastOrDefault(r => r != null && r.name == "CustomIsland_" + (f.Name ?? island));
+				Check(ref ok, root != null && root.transform.Find("Objects") != null && root.transform.Find("Objects").gameObject.activeSelf, "its objects are there and switched on");
+				IslandSpawner.Despawn(root);
+				yield return new WaitForSeconds(0.5f);
+			}
+			Check(ref ok, !DynamicIslands.InEditor(), "in a world InEditor() is false (no search)");
+			if (ok) Log("PASS: perf checks"); else Fail("perf checks");
+		}
+
+		static IEnumerator Watch(Func<bool> done, Action<float> longest)
+		{
+			float most = 0f;
+			while (!done())
+			{
+				most = Mathf.Max(most, Time.unscaledDeltaTime * 1000f);
+				longest(most);
+				yield return null;
+			}
+		}
+			[ConsoleCommand(name: "CIPlainText", docs: "Dev, anywhere: ROADMAP X6 / UL7 - a library entry's texts and an island's quest come as plain text: rich text tags out (size, color, b...), tabs as spaces, control characters gone, long texts cut")]
+		public static void PlainTextCommand(string[] args)
+		{
+			bool ok = true;
+			string json = "{ \"id\": \"x\", \"title\": \"<size=300>Huge</size> <color=red>red</color> <b>bold</b>\", \"summary\": \"a\\tb\", \"description\": \"" + new string('x', 5000) + "\", \"tags\": [\"<i>tag</i>\"] }";
+			LibraryInfo i = LibraryInfo.FromJson(json);
+			Check(ref ok, i.title == "Huge red bold", "the title without its tags: '" + i.title + "'");
+			Check(ref ok, i.summary == "a b", "a tab as a space: '" + i.summary + "'");
+			Check(ref ok, i.description.Length == 4000 && i.description.EndsWith("..."), "a 5000-character description cut to 4000 (" + i.description.Length + ")");
+			Check(ref ok, i.tags.Length == 1 && i.tags[0] == "tag", "the tags too: " + string.Join(",", i.tags));
+			var props = new Dictionary<string, string> { { "quest.title", "<size=200>The hoard</size>" }, { "quest.steps", "reach|top|1|<size=99>Climb</size>" } };
+			IslandQuest q = IslandQuest.From(props);
+			Check(ref ok, q.Title == "The hoard" && (q.Steps.Count == 0 || q.Steps[0].Text == "Climb"), "a quest's title and steps as plain text: '" + q.Title + "'" + (q.Steps.Count > 0 ? " / '" + q.Steps[0].Text + "'" : ""));
+			if (ok) Log("PASS: plain text"); else Fail("plain text");
+		}
+			[ConsoleCommand(name: "CIStartChecks", docs: "Dev, anywhere: AU11/AU36/AU38/AU45 - every part of the mod started; the PC check on this PC (lists what it finds); the mod's own files come from the .rmod, not older copies in its folder; a save waits out a short lock by another program; the quest rewards record is per world and player")]
+		public static void StartChecksCommand(string[] args)
+		{
+			bool ok = true;
+			Check(ref ok, DynamicIslands.StartFailures.Count == 0, "every part of the mod started" + (DynamicIslands.StartFailures.Count > 0 ? ": failed " + string.Join(", ", DynamicIslands.StartFailures.ToArray()) : ""));
+			List<string> pc = PcCheck.Problems();
+			Check(ref ok, pc.Count == 0, "the PC check finds nothing on this PC" + (pc.Count > 0 ? ": " + string.Join(" / ", pc.ToArray()) : ""));
+			foreach (string f in new[] { "raft_islands.txt", "raft_land.txt", "raft_blueprints.txt", "modinfo.json" })
+			{
+				byte[] read = RaftIslands.ModFile(f), shipped = null;
+				try { DynamicIslands.instance.modlistEntry.modinfo.modFiles.TryGetValue(f, out shipped); } catch { }
+				Check(ref ok, read != null && shipped != null && read.SequenceEqual(shipped), f + ": the .rmod's copy is read (" + (read != null ? read.Length : 0) + " bytes)");
+			}
+			// A lock held for 0.25 s (an antivirus scan) is waited out
+			string path = System.IO.Path.Combine(DynamicIslands.assetpath, "citest-lock.txt");
+			try
+			{
+				System.IO.File.WriteAllText(path, "old");
+				var held = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.None);
+				System.Threading.Tasks.Task.Delay(250).ContinueWith(_ => held.Dispose());
+				SafeFile.WriteAllText(path, "new");
+				Check(ref ok, System.IO.File.ReadAllText(path) == "new", "a save waits out a short lock by another program");
+			}
+			catch (Exception e) { Check(ref ok, false, "a save waits out a short lock: " + e.Message); }
+			finally { try { System.IO.File.Delete(path); } catch { } }
+			Check(ref ok, QuestRewards.WhereKept.Count(ch => ch == '-') == 5, "the quest rewards record is per world and player (" + QuestRewards.WhereKept + ")");
+			if (ok) Log("PASS: start checks"); else Fail("start checks");
+		}
 	}
 }

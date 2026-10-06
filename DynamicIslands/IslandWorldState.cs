@@ -136,6 +136,13 @@ namespace DynamicIslands.Editor
 			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
 			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
 			if (loadedFor != WorldKey) return;
+			// (the world's file couldn't be read: saving what little was read would write over the good file - AU12)
+			if (loadFailed)
+			{
+				if (!loadFailedTold) { loadFailedTold = true; DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): they aren't saved, so their file stays as it was. Load the world again.", true); }
+				Debug.LogWarning("[CUSTOM ISLANDS] Not saving the world's custom islands: its file couldn't be read when it loaded");
+				return;
+			}
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
@@ -166,17 +173,34 @@ namespace DynamicIslands.Editor
 					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
 						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
 				}
+				lines.AddRange(keptLines);
 				SafeFile.WriteAllLines(FilePath, lines.ToArray());
 				WorldCopy.AfterSave(lines.ToArray());
 			}
-			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
+			catch (Exception ex)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message);
+				// (the player is told once a minute at most: before, a failed save was only a line in the log - AU36)
+				if (Time.unscaledTime >= nextSaveFailNotice)
+				{
+					nextSaveFailNotice = Time.unscaledTime + 60f;
+					DynamicIslands.Notify("Custom Islands couldn't save this world's islands: " + (SafeFile.InUse(ex) ? "their file is in use by another program (an antivirus or a cloud sync?)" : ex.Message) + ". It tries again at the next save.", true);
+				}
+			}
 		}
 
 		/// <summary>Reads the island list of the world that just finished loading; CustomIslandSpawner spawns the ones near the raft.</summary>
+		static bool loadFailed, loadFailedTold;
+		static float nextSaveFailNotice;
+		/// <summary>Lines of the world's file this version couldn't read: written back as they were.</summary>
+		static readonly List<string> keptLines = new List<string>();
+
 		public static void OnWorldLoaded()
 		{
 			islands.Clear();
 			loadedFor = WorldKey;
+			loadFailed = loadFailedTold = false;
+			keptLines.Clear();
 			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
 			CustomIslandSpawner.OnWorldLoaded();
@@ -192,9 +216,17 @@ namespace DynamicIslands.Editor
 			WorldIslands.Reset();
 			StoryChain.Reset();
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
-			string[] fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null;
+			string[] fileLines = null;
+			try { fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null; }
+			catch (Exception e)
+			{
+				loadFailed = true;
+				Debug.LogError("[CUSTOM ISLANDS] Reading the world's custom islands (" + FilePath + ") failed: " + e);
+				DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): nothing of them is saved until it loads again", true);
+			}
 			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in fileLines)
+			try
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
@@ -219,6 +251,9 @@ namespace DynamicIslands.Editor
 				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
 					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" });
 			}
+			// (one line that can't be read is left out - the rest of the world still loads; before, it stopped the reading
+			// half way and the next save wrote the half over the whole file - AU12)
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read a line of " + FilePath + " (left as it is): " + line + " - " + e.Message); keptLines.Add(line); }
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
 			StoryChain.OnWorldRead();

@@ -99,7 +99,7 @@ namespace DynamicIslands
 			if (IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen || TextPromptWindow.IsOpen || NoteEditorWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || QuestEditorWindow.IsOpen || ChoiceWindow.IsOpen || WorldPlanWindow.IsOpen || BehaviourWindow.IsOpen) return false;
 			if (TabSelector.instance != null && TabSelector.instance.SelectedTab != TAB.TerrainEdit) return false;
 			if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return false;
-			if (FindObjectOfType<ObjectPlacer>() != null) return false;
+			if (ObjectPlacer.Current != null) return false;
 			if (DynamicIslands.EditorGizmoHandler != null && DynamicIslands.EditorGizmoHandler.isTransforming) return false;
 			return true;
 		}

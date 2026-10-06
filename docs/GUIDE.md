@@ -2506,6 +2506,10 @@ brings another island it comes as a new rule.)
 
 ### 12.5 Names, files and your PC
 
+When Custom Islands starts it checks the PC: whether it can save in `Mods\DynamicIslands`, whether Raft sits under
+Program Files or in a synced folder, whether the .rmod was unzipped there, and whether every part of the mod started.
+If something is wrong, one box on the main menu says what and how to fix it.
+
 #### Install the .rmod file as it is - don't unzip it
 
 **Why:** an `.rmod` is a zip file, and unzipping it into `Mods\DynamicIslands` looks harmless - but the mod reads its

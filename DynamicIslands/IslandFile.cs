@@ -168,6 +168,7 @@ namespace DynamicIslands.Editor
 			}
 			// (in the old file's place in one step: a crash mid-save never destroys the previous file)
 			SafeFile.Commit(tmp, path);
+			IslandCache.ForgetFile(path);
 		}
 
 		public static IslandFile Load(string path)

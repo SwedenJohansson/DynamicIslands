@@ -76,15 +76,16 @@ namespace DynamicIslands.Editor
 		{
 			var q = new IslandQuest
 			{
-				Title = ObjectProps.Get(props, Key(KeyTitle, n)), Intro = ObjectProps.Get(props, Key(KeyIntro, n)),
-				Reward = ObjectProps.Get(props, Key(KeyReward, n)), Done = ObjectProps.Get(props, Key(KeyDone, n))
+				// (plain text: an island's "<size=300>" title covered the quest panel - ROADMAP X6)
+				Title = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyTitle, n)), 200), Intro = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyIntro, n)), 4000),
+				Reward = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyReward, n)), 4000), Done = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyDone, n)), 4000)
 			};
 			foreach (string line in ObjectProps.Get(props, Key(KeySteps, n)).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				string[] p = line.Split('|');
 				if (p.Length < 1 || !Types.Contains(p[0])) continue;
 				int count;
-				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? p[3] : "" });
+				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? LibraryInfo.Plain(p[3], 400) : "" });
 			}
 			return q;
 		}
@@ -289,7 +290,7 @@ namespace DynamicIslands.Editor
 		static void Completed(IslandWorldState.Entry e, IslandQuest q, int n)
 		{
 			Show("Quest complete: " + q.ShownTitle, q.Done);
-			if (q.Reward.Length == 0) return;
+			if (q.Reward.Length == 0) { Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "' done: no reward"); return; }
 			List<KeyValuePair<string, int>> reward = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } });
 			// Story items are the crew's: the host gives them once (every player near giving them gave one per player);
 			// Raft's items go to each player near the island
@@ -298,8 +299,8 @@ namespace DynamicIslands.Editor
 			// Raft's items: each player's share once - now when near, or when they come to the island (or join) later (LM8)
 			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
 			bool near = Near(e);
-			QuestRewards.OnCompleted(RewardKey(e, n), near, () => GiveItems(q));
-			if (!near) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island");
+			if (!QuestRewards.OnCompleted(RewardKey(e, n), near, () => GiveItems(q))) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + RewardKey(e, n) + "': this player got it already in this world (" + QuestRewards.WhereKept + ")");
+			else if (!near) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island");
 		}
 
 		static void GiveItems(IslandQuest q)

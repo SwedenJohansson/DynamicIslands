@@ -519,19 +519,21 @@ namespace DynamicIslands.Editor
 		static string UtopiaWater(MapKit k, IslandGenSettings s)
 		{
 			System.Random r = k.Rnd;
-			Frame? pad = Pad(k, s, 12f);
+			Frame? pad = Pad(k, s, 13f);
 			if (!pad.HasValue) return null;
 			Frame f = pad.Value;
-			Put(k, f, "UT_WaterTank", -4f, 5f, 0f, 0f, null, true);
-			Put(k, f, "UT_WaterTank", 6f, 5f, 0f, 0f, null, true);
-			Foot(k, f, "UT_WaterPump", -4f, -2f, 0f);
-			Foot(k, f, "UT_WaterPump", 6f, -2f, 0f);
-			Put(k, f, "UT_ElectricityIsland_Crane01", -8f, -5f, 90f, 0f, null, true);
-			Put(k, f, "UT_CoveredCrate03", 4f, -7f, 15f, 0f, LootOf("Station stores", "Basics"), true);
-			Put(k, f, "UT_CoveredCrate02", 7.5f, -8f, 80f, 0f, null, true);
-			Put(k, f, "UT_CoveredCrate01", 1f, -9f, 30f, 0f, null, true);
-			for (int i = 0; i < 3; i++) Put(k, f, Pick(r, "UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03"), 9.5f + Jit(r, 1f), -2f + i * 1.3f, Jit(r, 180f), 0f, null, true);
-			Put(k, f, "Tire_01", -10f, 4f, Jit(r, 180f), 0f, null, true);
+			// The crane lengthwise along the pad's west side (its frame is 10 x 20 m: turned across, it stood out over the
+			// pad's edge and past the island - the user, 2026-10-06), the tanks and pumps beside it
+			Put(k, f, "UT_ElectricityIsland_Crane01", -7f, 0f, 0f, 0f, null, true);
+			Put(k, f, "UT_WaterTank", 4f, 6f, 0f, 0f, null, true);
+			Put(k, f, "UT_WaterTank", 4f, -1f, 0f, 0f, null, true);
+			Foot(k, f, "UT_WaterPump", 10.5f, 6f, 270f);
+			Foot(k, f, "UT_WaterPump", 10.5f, -1f, 270f);
+			Put(k, f, "UT_CoveredCrate03", 2f, -8.5f, 15f, 0f, LootOf("Station stores", "Basics"), true);
+			Put(k, f, "UT_CoveredCrate02", 6.5f, -9f, 80f, 0f, null, true);
+			Put(k, f, "UT_CoveredCrate01", 9.5f, -8f, 30f, 0f, null, true);
+			for (int i = 0; i < 3; i++) Put(k, f, Pick(r, "UT_MarketBasket01", "UT_MarketBasket02", "UT_MarketBasket03"), 0.5f + i * 1.3f, 10.5f + Jit(r, 0.4f), Jit(r, 180f), 0f, null, true);
+			Put(k, f, "Tire_01", -1f, -10.5f, Jit(r, 180f), 0f, null, true);
 			return "a water station of Utopia's tanks";
 		}
 

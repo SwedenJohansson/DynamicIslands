@@ -422,6 +422,8 @@ namespace DynamicIslands.Editor
 			public List<int> Notes;
 			/// <summary>Those notes' titles and texts (the quest book's preview shows notes not read yet).</summary>
 			public Dictionary<int, KeyValuePair<string, string>> NoteTexts;
+			/// <summary>When the file's time was last looked at (ROADMAP P3: behaviours asked every 0.5 s, each a disk check).</summary>
+			public float CheckedAt;
 			/// <summary>The journal pages its events write ("object number:title", as the page keys "act:&lt;island&gt;:..." end).</summary>
 			public List<string> EventPages;
 			/// <summary>Those pages' texts ("object number:title" -> text).</summary>
@@ -429,6 +431,7 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
+		static readonly Dictionary<string, DateTime> broken = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
 		static Info Get(string name)
 		{
@@ -436,11 +439,18 @@ namespace DynamicIslands.Editor
 			string path = IslandSpawner.PathFor(name);
 			try
 			{
+				Info info;
+				// (looked at again on disk at most every 2 s: a file saved meanwhile is read within that)
+				if (cache.TryGetValue(name, out info) && Time.unscaledTime - info.CheckedAt < 2f && Time.unscaledTime >= info.CheckedAt) return info;
 				if (!File.Exists(path)) return null;
 				DateTime t = File.GetLastWriteTimeUtc(path);
-				Info info;
-				if (cache.TryGetValue(name, out info) && info.Time == t) return info;
-				IslandFile f = IslandFile.Load(path);
+				if (info != null && info.Time == t) { info.CheckedAt = Time.unscaledTime; return info; }
+				// (a broken file is read again only once it changed - AU37: it was read and logged on every director tick)
+				DateTime brokenAt;
+				if (broken.TryGetValue(name, out brokenAt) && brokenAt == t) return null;
+				IslandFile f;
+				try { f = IslandFile.Load(path); }
+				catch (Exception e) { broken[name] = t; Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "' (not read again until it changes): " + e.Message); return null; }
 				info = new Info { Time = t, Props = f.Props, Zones = f.Objects.Where(o => o.Name == ContentCatalog.TriggerZone).Select(o => ObjectProps.Get(o.Props, ObjectProps.ZoneId)).ToList() };
 				info.Signals = f.Objects.Select(o => o.Props).Concat(new[] { f.Props }).Where(p => p != null)
 					.SelectMany(p => p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
@@ -460,6 +470,7 @@ namespace DynamicIslands.Editor
 				info.EventPageTexts = new Dictionary<string, string>();
 				foreach (KeyValuePair<string, string> kv in Enumerable.Range(0, f.Objects.Count).SelectMany(i => journalText(i, f.Objects[i].Props)).Concat(journalText(Behaviours.IslandIndex, f.Props)))
 					if (!info.EventPageTexts.ContainsKey(kv.Key)) info.EventPageTexts[kv.Key] = kv.Value;
+				info.CheckedAt = Time.unscaledTime;
 				cache[name] = info;
 				return info;
 			}
@@ -468,6 +479,74 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
 		public static void Forget() { cache.Clear(); }
+
+		#region Rules, kept on disk (ROADMAP P6)
+
+		// name -> (file time, its rules' text): reading every island's rules for Tidy up, Delete and Rename loaded each whole
+		// file (heights, objects) - 8 s for 1286 islands. Kept in Mods\DynamicIslands\rulescache.txt between sessions.
+		static Dictionary<string, KeyValuePair<long, string>> rules;
+		static bool rulesDirty;
+		static string RulesPath { get { return Path.Combine(DynamicIslands.assetpath, "rulescache.txt"); } }
+
+		/// <summary>An island's own rules (as in its settings), read from the file only when it changed since last time.</summary>
+		public static List<IntroRule> RulesOf(string name)
+		{
+			if (rules == null) LoadRules();
+			string path = IslandSpawner.PathFor(name);
+			try
+			{
+				if (!File.Exists(path)) return new List<IntroRule>();
+				long t = File.GetLastWriteTimeUtc(path).Ticks;
+				KeyValuePair<long, string> had;
+				string text;
+				if (rules.TryGetValue(name, out had) && had.Key == t) text = had.Value;
+				else
+				{
+					text = ObjectProps.Get(Props(name), WorldDirector.IslandRulesKey);
+					rules[name] = new KeyValuePair<long, string>(t, text);
+					rulesDirty = true;
+				}
+				return WorldDirector.RulesFromProps(new Dictionary<string, string> { { WorldDirector.IslandRulesKey, text } });
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Rules of '" + name + "': " + e.Message); return new List<IntroRule>(); }
+		}
+
+		static void LoadRules()
+		{
+			rules = new Dictionary<string, KeyValuePair<long, string>>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				if (!File.Exists(RulesPath)) return;
+				foreach (string line in File.ReadAllLines(RulesPath))
+				{
+					string[] p = line.Split('\t');
+					long t;
+					if (p.Length != 3 || !long.TryParse(p[1], out t)) continue;
+					rules[p[0]] = new KeyValuePair<long, string>(t, System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(p[2])));
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading rulescache.txt: " + e.Message); }
+		}
+
+		/// <summary>Writes what RulesOf read since (after a look through every island).</summary>
+		public static void SaveRules()
+		{
+			if (rules == null || !rulesDirty) return;
+			try
+			{
+				SafeFile.WriteAllLines(RulesPath, rules.Select(kv => kv.Key + "\t" + kv.Value.Key + "\t" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(kv.Value.Value ?? ""))).ToArray());
+				rulesDirty = false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing rulescache.txt: " + e.Message); }
+		}
+
+		#endregion
+
+		/// <summary>Forgets one island file (it was just saved: read it again next time, not after the 2 s wait).</summary>
+		public static void ForgetFile(string path)
+		{
+			try { cache.Remove(System.IO.Path.GetFileNameWithoutExtension(path)); } catch { }
+		}
 
 		/// <summary>The island's own settings (empty if the file is missing).</summary>
 		public static Dictionary<string, string> Props(string name)

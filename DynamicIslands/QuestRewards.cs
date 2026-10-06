@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using RaftModLoader;
 
 namespace DynamicIslands.Editor
 {
@@ -17,7 +18,20 @@ namespace DynamicIslands.Editor
 		static readonly HashSet<string> rewarded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> owed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), SaveAndLoad.WorldGuid + ".rewards"); } }
+		// (per world and player: a player who joins uses the host's world id, and two players on one PC - or a host who
+		// later joins its own world - each have their own record)
+		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), SaveAndLoad.WorldGuid + "-" + PlayerId + ".rewards"); } }
+		/// <summary>The record before 2026-10-06, by world only: kept by the PC that hosted the world (it was that player's).</summary>
+		static string OldFilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), SaveAndLoad.WorldGuid + ".rewards"); } }
+
+		static string PlayerId
+		{
+			get
+			{
+				try { Network_Player p = RAPI.GetLocalPlayer(); if (p != null) return p.steamID.Id.ToString(System.Globalization.CultureInfo.InvariantCulture); } catch { }
+				return "local";
+			}
+		}
 
 		static void Load()
 		{
@@ -26,8 +40,10 @@ namespace DynamicIslands.Editor
 			rewarded.Clear(); owed.Clear();
 			try
 			{
-				if (!File.Exists(FilePath)) return;
-				foreach (string line in File.ReadAllLines(FilePath))
+				string path = FilePath;
+				if (!File.Exists(path) && Raft_Network.IsHost && File.Exists(OldFilePath)) path = OldFilePath;
+				if (!File.Exists(path)) return;
+				foreach (string line in File.ReadAllLines(path))
 				{
 					if (line.StartsWith("rewarded ")) rewarded.Add(line.Substring(9).Trim());
 					else if (line.StartsWith("owed ")) owed.Add(line.Substring(5).Trim());
@@ -38,6 +54,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Read the file again when next asked (an island was renamed in it).</summary>
 		internal static void Forget() { loadedFor = Guid.Empty; }
+
+		/// <summary>The file this player's rewards of the world are kept in (logs).</summary>
+		internal static string WhereKept { get { return Path.GetFileName(FilePath); } }
 
 		static void Save()
 		{

@@ -131,7 +131,7 @@ namespace DynamicIslands.Editor
 				!PlaceableCatalog.IsBuilt ? "Loading objects..." : "";
 
 			// The object being placed is outlined in its tile
-			ObjectPlacer placer = FindObjectOfType<ObjectPlacer>();
+			ObjectPlacer placer = ObjectPlacer.Current;
 			string now = placer != null ? placer.GameObjectName : null;
 			if (now != highlighted)
 			{

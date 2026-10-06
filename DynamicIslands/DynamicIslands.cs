@@ -115,57 +115,71 @@ namespace DynamicIslands
 		#endregion
 
 
+		/// <summary>Parts of Start that failed (AU11: named on the main menu, and the rest still starts).</summary>
+		internal static readonly List<string> StartFailures = new List<string>();
+
+		/// <summary>One step of Start on its own (ROADMAP AU11: one failure - a renamed menu, a read-only Mods folder - stopped
+		/// Start before the world hooks, and worlds then loaded without their islands and the next save rewrote their file).</summary>
+		static void StartStep(string what, Action step)
+		{
+			try { step(); }
+			catch (Exception e)
+			{
+				StartFailures.Add(what);
+				Debug.LogError("[CUSTOM ISLANDS] Starting: " + what + " failed: " + e);
+			}
+		}
+
 		public void Start()
 		{
-			//Pushing notification for mod loading
-			HNotification DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading Custom Islands...");
-
-
 			instance = this;
-			Editor.UIKit.CaptureRaftLook(); // Raft's menu sprites and fonts, while the main menu has them loaded
-			// The await helpers normally self-initialise at game startup, which never happens for a mod
-			Redcode.Awaiting.Engine.ContextHelper.SaveContext();
-			Redcode.Awaiting.Engine.RoutineHelper.CreateInstance();
-			loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>();
-			var harmony = new Harmony("com.franzfischer.customislands");
-			// (each patch on its own: after a Raft update one that no longer fits is named, the others still work)
-			Editor.PatchHealth.PatchAll(harmony);
-			try { CreatureSpawner.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("CreatureSpawner", e); }
-
-			//INIT FOLDER
-			if (!Directory.Exists(assetpath))
+			HNotification loading = null;
+			StartStep("the loading notice", () => loading = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading Custom Islands..."));
+			// The world hooks first: whatever else fails, worlds still load and save their custom islands
+			StartStep("the world hooks", () =>
 			{
-				Directory.CreateDirectory(assetpath);
-			}
-			// (saves that Raft stopped half way: brought back)
-			Editor.SafeFile.RecoverAll(assetpath);
-			if (Directory.EnumerateFiles(assetpath).Count() == 0)
+				SceneManager.sceneLoaded += OnSceneLoaded;
+				// Custom islands saved with a world come back when it loads
+				SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
+				SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
+				// An island's quest done: its "on.quest" actions
+				QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
+			});
+			StartStep("Raft's menu look", () => Editor.UIKit.CaptureRaftLook()); // Raft's menu sprites and fonts, while the main menu has them loaded
+			StartStep("the await helpers", () =>
 			{
-				Debug.LogWarning("There are no custom Islands installed!");
-			}
-
-			if (GetEmbeddedFileBytes("editorsceneci.assets").Length == 0)
+				// The await helpers normally self-initialise at game startup, which never happens for a mod
+				Redcode.Awaiting.Engine.ContextHelper.SaveContext();
+				Redcode.Awaiting.Engine.RoutineHelper.CreateInstance();
+			});
+			StartStep("the scene loader", () => loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>());
+			StartStep("the patches", () =>
 			{
-				Debug.Log("embeddedfilebytes are null");
-			}
-
-			mainbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("editorsceneci.assets"));
-			helperbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("maincustomislandsbundle.assets"));
-
-			//Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
-			HookUI();
-			SceneManager.sceneLoaded += OnSceneLoaded;
+				var harmony = new Harmony("com.franzfischer.customislands");
+				// (each patch on its own: after a Raft update one that no longer fits is named, the others still work)
+				Editor.PatchHealth.PatchAll(harmony);
+				try { CreatureSpawner.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("CreatureSpawner", e); }
+			});
+			StartStep("the Mods\\DynamicIslands folder", () =>
+			{
+				if (!Directory.Exists(assetpath)) Directory.CreateDirectory(assetpath);
+				// (saves that Raft stopped half way: brought back)
+				Editor.SafeFile.RecoverAll(assetpath);
+				if (Directory.EnumerateFiles(assetpath).Count() == 0) Debug.LogWarning("There are no custom Islands installed!");
+			});
+			StartStep("the editor's assets", () =>
+			{
+				if (GetEmbeddedFileBytes("editorsceneci.assets").Length == 0) Debug.Log("embeddedfilebytes are null");
+				mainbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("editorsceneci.assets"));
+				helperbundle = AssetBundle.LoadFromMemory(GetEmbeddedFileBytes("maincustomislandsbundle.assets"));
+			});
+			// Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
+			StartStep("the main menu buttons", HookUI);
 			// Sample world plans, the first time (Mods\DynamicIslands\plans)
-			WorldPlanWindow.EnsureSamples();
-			// Custom islands saved with a world come back when it loads
-			SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
-			SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
+			StartStep("the sample world plans", WorldPlanWindow.EnsureSamples);
 			// Raft's world shifts and "world received" (for clients): hooked every frame by HookRaftEvents, since
 			// Raft empties these events when a game is left
-			HookRaftEvents();
-			// An island's quest done: its "on.quest" actions
-			QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
-
+			StartStep("Raft's world events", HookRaftEvents);
 
 			// Dev builds: the test commands can also be run from a file (release builds leave DevTests out)
 			try
@@ -175,15 +189,22 @@ namespace DynamicIslands
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dev tests: " + e.Message); }
 
-			DynamicIslandsLoad.Close();
-			DynamicIslandsLoad = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands has been loaded!", 5);
-			Debug.Log("[CUSTOM ISLANDS] Mod Custom Islands has been loaded successfully!");
+			StartStep("the loaded notice", () =>
+			{
+				if (loading != null) loading.Close();
+				if (StartFailures.Count == 0) FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands has been loaded!", 5);
+				else FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.normal, "Custom Islands started, but not all of it: " + string.Join(", ", StartFailures.ToArray()) + " (see the log, F10)", 12);
+			});
+			Debug.Log("[CUSTOM ISLANDS] Mod Custom Islands has been loaded" + (StartFailures.Count == 0 ? " successfully!" : " - these parts failed: " + string.Join(", ", StartFailures.ToArray())));
 		}
 
 		private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 		{
 			if (mode == LoadSceneMode.Single && GameObject.Find("MainMenuCanvas") != null)
-				HookUI();
+			{
+				try { HookUI(); }
+				catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] The main menu's buttons (Raft's menu changed?): " + e); }
+			}
 		}
 
 		private void HookUI()
@@ -243,6 +264,7 @@ namespace DynamicIslands
 			// The first release: a box telling new players it is experimental
 			ExperimentalNotice.Show(MainMenuParent.transform);
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
+			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
 
 
 
@@ -277,41 +299,41 @@ namespace DynamicIslands
 		private void Update()
 		{
 			try { HookRaftEvents(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Raft events: " + e); }
+			catch (Exception e) { TickError("Raft events", e); }
 			try { CustomIslandSpawner.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island spawner: " + e); }
+			catch (Exception e) { TickError("Island spawner", e); }
 			try { IslandNetwork.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island network: " + e); }
+			catch (Exception e) { TickError("Island network", e); }
 			try { PlayerHold.Tick(); PlayerPlaces.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Player hold: " + e); }
+			catch (Exception e) { TickError("Player hold", e); }
 			try { CreatureSpawner.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Creatures: " + e); }
+			catch (Exception e) { TickError("Creatures", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Quests: " + e); }
+			catch (Exception e) { TickError("Quests", e); }
 			try { IslandInfo.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island banner: " + e); }
+			catch (Exception e) { TickError("Island banner", e); }
 			try { Behaviours.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Behaviours: " + e); }
+			catch (Exception e) { TickError("Behaviours", e); }
 			try { IslandTest.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Island test: " + e); }
+			catch (Exception e) { TickError("Island test", e); }
 			try { StoryChain.WatchWorld(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Story chain: " + e); }
+			catch (Exception e) { TickError("Story chain", e); }
 			try { WorldDirector.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World director: " + e); }
+			catch (Exception e) { TickError("World director", e); }
 			try { JournalWindow.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Journal: " + e); }
+			catch (Exception e) { TickError("Journal", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) QuestBook.Tick(); }
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest book] " + e.Message); }
+			catch (Exception e) { TickError("Quest book", e); }
 			try { if (LoadSceneManager.IsGameSceneLoaded && !InEditor()) HotkeyHints.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Hotbar key tabs: " + e); }
+			catch (Exception e) { TickError("Hotbar key tabs", e); }
 			try { WorldRandomizer.Tick(); ScrambledBlueprints.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World randomizer: " + e); }
+			catch (Exception e) { TickError("World randomizer", e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Levels: " + e); }
+			catch (Exception e) { TickError("Levels", e); }
 			try { EditorAutosave.Tick(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Autosave: " + e); }
+			catch (Exception e) { TickError("Autosave", e); }
 			try { TickWaterPlane(); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Sea plane: " + e); }
+			catch (Exception e) { TickError("Sea plane", e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -518,8 +540,13 @@ namespace DynamicIslands
 
 		public static bool InEditor()
 		{
-			return terraineditor.terrain != null && GameObject.Find("PlacedObjects") != null;
+			if (terraineditor.terrain == null) return false;
+			// (the editor's object root, found once per editor scene: ROADMAP P3 - GameObject.Find several times a frame before)
+			if (placedRoot == null) placedRoot = GameObject.Find("PlacedObjects");
+			return placedRoot != null;
 		}
+
+		static GameObject placedRoot;
 
 		[ConsoleCommand(name: "SaveIsland", docs: "Editor: saves the island. Usage: SaveIsland <name>  (no name = current island)")]
 		public static void SaveIslandCommand(string[] args)
@@ -770,7 +797,7 @@ namespace DynamicIslands
 		public static void PlaceObject(string objectName)
 		{
 			//Only one object can be in "placing" mode at a time
-			ObjectPlacer existing = FindObjectOfType<ObjectPlacer>();
+			ObjectPlacer existing = ObjectPlacer.Current;
 			if (existing != null) Destroy(existing.gameObject);
 
 			GameObject NewObjectToPlace = PlaceableCatalog.Spawn(objectName, null);
@@ -817,16 +844,42 @@ namespace DynamicIslands
 		/// <param name="broadcast">host spawning a new island: tell clients and remember it in the world's island list</param>
 		/// <param name="entry">host (re)loading an island that is already in the world's island list (automatic
 		/// spawns and streaming): its Root is set once spawned, and nothing is shown to the player</param>
+		static readonly Dictionary<string, KeyValuePair<float, int>> tickErrors = new Dictionary<string, KeyValuePair<float, int>>();
+
+		/// <summary>
+		/// An error in one of the per-frame ticks (ROADMAP AU37: logged every frame, Player.log grew by hundreds of MB an
+		/// hour): the first in full, then once a minute how many more there were.
+		/// </summary>
+		static void TickError(string what, Exception e)
+		{
+			KeyValuePair<float, int> seen;
+			if (!tickErrors.TryGetValue(what, out seen)) { tickErrors[what] = new KeyValuePair<float, int>(Time.unscaledTime, 0); Debug.LogError("[CUSTOM ISLANDS] " + what + ": " + e); return; }
+			if (Time.unscaledTime - seen.Key < 60f) { tickErrors[what] = new KeyValuePair<float, int>(seen.Key, seen.Value + 1); return; }
+			Debug.LogError("[CUSTOM ISLANDS] " + what + ": " + (seen.Value + 1) + " more errors in the last minute, the latest: " + e.Message);
+			tickErrors[what] = new KeyValuePair<float, int>(Time.unscaledTime, 0);
+		}
+
 		static readonly HashSet<string> remaking = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Tests (CIPerfChecks): how long the last island file took to read.</summary>
+		internal static string LastLoadTiming = "";
 
 		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast, IslandWorldState.Entry entry = null)
 		{
 			bool quiet = entry != null;
 			string path = IslandSpawner.PathFor(name);
 			IslandFile island = null;
+			// The file read and unpacked on a worker thread (ROADMAP P1: 150-170 ms on the main thread for a big island, a
+			// stutter each time one streamed in)
+			System.Threading.Tasks.Task<IslandFile> reading = null;
+			var lc = System.Diagnostics.Stopwatch.StartNew();
+			if (File.Exists(path))
+			{
+				reading = System.Threading.Tasks.Task.Run(() => IslandFile.Load(path));
+				while (!reading.IsCompleted) yield return null;
+			}
 			try
 			{
-				if (File.Exists(path)) island = IslandFile.Load(path);
+				if (reading != null) { island = reading.Result; LastLoadTiming = "reading the file " + lc.ElapsedMilliseconds + " ms (on a worker thread)"; }
 				// (a generated island of the world whose file was deleted: made again from its name - ROADMAP R15)
 				else if (entry != null && Raft_Network.IsHost && CustomIslandSpawner.RemakeOf(name) != null && !remaking.Contains(name)) { remaking.Add(name); }
 				// (one of the world's islands: said which, and that the rest plays - a player hosting a world they got as a
@@ -858,20 +911,39 @@ namespace DynamicIslands
 
 			if (entry != null)
 			{
-				entry.Loading = false;
 				// Removed while loading, or the world changed
-				if (!IslandWorldState.Contains(entry)) yield break;
+				if (!IslandWorldState.Contains(entry)) { entry.Loading = false; yield break; }
 				// Made meanwhile by another spawn of this entry (the streaming started one in the same frame an island was
 				// loaded again): a second copy would stay in the world for good, the entry knowing only one of them
-				if (entry.Root != null) { Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "' is there already - not made twice"); yield break; }
+				if (entry.Root != null) { entry.Loading = false; Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "' is there already - not made twice"); yield break; }
 				position = entry.Position; // follows world shifts that happened meanwhile
 			}
 			// (no entry - SpawnIsland, the editor's Test: the world shifts meanwhile too, or it landed hundreds of metres off)
 			else position -= IslandWorldState.ShiftedBy - shiftedBefore;
 
+			// The objects over several frames (ROADMAP P1); the entry stays "loading" meanwhile, so nothing spawns it twice
+			GameObject made = null;
+			bool spawnFailed = false;
+			System.Collections.IEnumerator slices = null;
+			try { slices = IslandSpawner.SpawnInWorldSliced(island, position, r => made = r); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e); spawnFailed = true; }
+			if (slices != null) yield return slices;
+			if (entry != null)
+			{
+				entry.Loading = false;
+				// (removed, or made by another spawn, while its objects were being made)
+				if (!IslandWorldState.Contains(entry) || entry.Root != null) { IslandSpawner.Despawn(made); yield break; }
+			}
+			if (made == null || spawnFailed)
+			{
+				if (entry != null) entry.Failed = true;
+				Notify("Spawning '" + name + "' failed - see console (F10)", true);
+				yield break;
+			}
+
 			try
 			{
-				GameObject root = IslandSpawner.SpawnInWorld(island, position);
+				GameObject root = made;
 				root.AddComponent<ReApplyShaders>();
 				if (entry == null && Raft_Network.IsHost && broadcast) entry = IslandWorldState.Add(name, position, root);
 				if (entry != null)
@@ -922,6 +994,12 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "SpawnPool", docs: "Shows which islands appear on their own while sailing, and how often (edit Mods\\DynamicIslands\\spawnpool.txt to change)")]
 		public static void SpawnPoolCommand()
 		{
+			// (a player in a host's world: the host's pool decides, this PC's spawnpool.txt is for worlds it hosts - ROADMAP M4)
+			if (LoadSceneManager.IsGameSceneLoaded && !Raft_Network.IsHost)
+			{
+				Debug.Log("[CUSTOM ISLANDS] In this world the host's spawnpool.txt decides which islands come while sailing (yours counts when you host). " + WorldIslands.DescribeForPlayer());
+				return;
+			}
 			foreach (string line in CustomIslandSpawner.Describe().Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
@@ -1143,54 +1221,42 @@ namespace DynamicIslands
 		}
 	}
 
-	//SHADER FIX 
+	//SHADER FIX
+	/// <summary>
+	/// Shaders of a spawned island's objects looked up again (asset bundle copies render pink otherwise). Each material once
+	/// per session and each shader name once (ROADMAP P2: it ran Shader.Find for every material of every spawned island,
+	/// though the materials are the shared prototypes' and were fixed already).
+	/// </summary>
 	public class ReApplyShaders : MonoBehaviour
 	{
-		public Renderer[] renderers;
-		public Material[] materials;
-		public string[] shaders;
-
-		void Awake()
-		{
-			Debug.Log("Getting renderers");
-			renderers = GetComponentsInChildren<Renderer>();
-		}
+		static readonly HashSet<int> done = new HashSet<int>();
+		static readonly Dictionary<string, Shader> found = new Dictionary<string, Shader>();
+		/// <summary>Tests (CIPerfChecks): how many materials were fixed, and Shader.Find calls made, this session.</summary>
+		internal static int Fixed, Finds;
 
 		void Start()
 		{
-			Debug.Log("FIXING SHADERS");
-			foreach (var rend in renderers)
+			foreach (Renderer rend in GetComponentsInChildren<Renderer>())
 			{
-				try
+				Material[] materials;
+				try { materials = rend.sharedMaterials; } catch { continue; }
+				foreach (Material m in materials)
 				{
-					materials = rend.sharedMaterials;
-					shaders = new string[materials.Length];
-
-					for (int i = 0; i < materials.Length; i++)
+					if (m == null || !done.Add(m.GetInstanceID())) continue;
+					try
 					{
-						try
-						{
-							shaders[i] = materials[i].shader.name;
-						}
-						catch { }
+						string name = m.shader != null ? m.shader.name : null;
+						if (string.IsNullOrEmpty(name)) continue;
+						Shader s;
+						if (!found.TryGetValue(name, out s)) { s = Shader.Find(name); found[name] = s; Finds++; }
+						if (s != null) { m.shader = s; Fixed++; }
 					}
-
-					for (int i = 0; i < materials.Length; i++)
-					{
-						try
-						{
-							materials[i].shader = Shader.Find(shaders[i]);
-						}
-						catch { }
-					}
-				}
-				catch
-				{
-
+					catch { }
 				}
 			}
 		}
 	}
+
 
 
 	#endregion

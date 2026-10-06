@@ -440,7 +440,7 @@ namespace DynamicIslands
 		{
 			if (!DynamicIslands.InEditor()) { Fail("not in the editor"); return; }
 			var g = DynamicIslands.EditorGizmoHandler;
-			ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
+			ObjectPlacer placer = ObjectPlacer.Current;
 			Log("Editor state: tab " + EditorUI.CurrentTab + ", brush " + terraineditor.modificationAction + ", gizmo " + (g != null ? g.transformType.ToString() : "?") +
 				", random " + PlacementOptions.RandomTurnAndSize + ", slope " + PlacementOptions.AlignToSlope + ", grid " + PlacementOptions.SnapToGrid +
 				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", objects " + PlacedEditorObjects().Count +

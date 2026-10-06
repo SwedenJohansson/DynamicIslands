@@ -862,7 +862,13 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryRemake", docs: "Dev, editor: ROADMAP CW1 - Rebuild it for Raft's other story islands: each design (or those whose id has <part>) generated on its island's ground with seed [seed] (11): built, every piece loaded, its loot container there, the pieces standing on the ground (none more than 0.4 m over it); a picture shot_sr_<id>.png. CIStoryRemake [part] [seed]")]
-		public static void StoryRemakeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryRemakeRoutine(args != null && args.Length > 0 ? args[0] : "", args != null && args.Length > 1 ? int.Parse(args[1]) : 11)); }
+		public static void StoryRemakeCommand(string[] args)
+		{
+			// (a part and/or a seed, in any order: "CIStoryRemake 12" is seed 12 for all of them)
+			string part = ""; int seed = 11, n;
+			foreach (string a in args ?? new string[0]) { if (int.TryParse(a, out n)) seed = n; else if (a.Trim().Length > 0) part = a.Trim(); }
+			DynamicIslands.instance.StartCoroutine(StoryRemakeRoutine(part, seed));
+		}
 
 		static IEnumerator StoryRemakeRoutine(string part, int seed)
 		{
@@ -901,8 +907,20 @@ namespace DynamicIslands
 					if (b.min.y - ground > 0.4f && !mine.Any(o => o != e && o.transform.position.y < e.transform.position.y - 0.2f && (new Vector2(o.transform.position.x - e.transform.position.x, o.transform.position.z - e.transform.position.z)).magnitude < 6f))
 						floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
 				}
-				Check(ref ok, built.Count > 0 && mine.Count >= 8 && missing == 0 && loot && floating.Count == 0,
-					d.Label + " (" + d.Id + "), seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + mine.Count + " pieces" + (missing > 0 ? ", " + missing + " not loaded" : "") + (loot ? ", loot" : ", NO LOOT") + (floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : ""));
+				// (and on the land: no part of a piece out over the sea - the user, 2026-10-06: Utopia's crane stood off the island)
+				float sea = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
+				var overSea = new List<string>();
+				foreach (EditorGameObject e in mine)
+				{
+					Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					foreach (Vector3 corner in new[] { new Vector3(b.min.x, 0f, b.min.z), new Vector3(b.min.x, 0f, b.max.z), new Vector3(b.max.x, 0f, b.min.z), new Vector3(b.max.x, 0f, b.max.z) })
+						if (terrain.SampleHeight(corner) + terrain.transform.position.y < sea - 0.3f) { overSea.Add(e.GameObjectName); break; }
+				}
+				Check(ref ok, built.Count > 0 && mine.Count >= 8 && missing == 0 && loot && floating.Count == 0 && overSea.Count == 0,
+					d.Label + " (" + d.Id + "), seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + mine.Count + " pieces" + (missing > 0 ? ", " + missing + " not loaded" : "") + (loot ? ", loot" : ", NO LOOT") + (floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : "") + (overSea.Count > 0 ? ", out over the sea: " + string.Join(", ", overSea.Distinct().Take(6).ToArray()) : ""));
 				if (mine.Count > 0 && Camera.main != null)
 				{
 					Vector3 c = new Vector3(mine.Average(e => e.transform.position.x), mine.Min(e => e.transform.position.y), mine.Average(e => e.transform.position.z));

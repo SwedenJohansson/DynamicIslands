@@ -112,25 +112,37 @@ namespace DynamicIslands.Editor
 			return l.StartsWith("Small ") || l.StartsWith("Big ") ? "Islands" : l.Split(' ')[0];
 		}
 
-		/// <summary>A file of the mod: Mods\DynamicIslands\&lt;path&gt; if it is there (a new measurement), else the copy in the .rmod (null if neither).</summary>
+		/// <summary>
+		/// A file of the mod: the copy in the .rmod; Mods\DynamicIslands\&lt;path&gt; only when the .rmod has none, or on a
+		/// developer's PC with the file "dev_overrides" there (a new measurement being tried). ROADMAP AU38: the disk came
+		/// first, so an unzipped .rmod's or an old measurement's copy won over every update - the mod's version and the
+		/// blueprint list too.
+		/// </summary>
 		public static byte[] ModFile(string path)
 		{
+			bool devFirst = false;
+			try { devFirst = File.Exists(Path.Combine(DynamicIslands.assetpath, DevOverrides)); } catch { }
+			byte[] shipped = null;
+			try
+			{
+				// (asked for directly, a missing file would log an error: look it up in the mod's file list first)
+				var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+				byte[] b;
+				if (files != null && files.TryGetValue(path.Replace('\\', '/'), out b)) shipped = b;
+			}
+			catch { }
+			if (shipped != null && !devFirst) return shipped;
 			try
 			{
 				string disk = Path.Combine(DynamicIslands.assetpath, path);
 				if (File.Exists(disk)) return File.ReadAllBytes(disk);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + path + ": " + e.Message); }
-			try
-			{
-				// (asked for directly, a missing file would log an error: look it up in the mod's file list first)
-				var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
-				byte[] b;
-				if (files != null && files.TryGetValue(path.Replace('\\', '/'), out b)) return b;
-			}
-			catch { }
-			return null;
+			return shipped;
 		}
+
+		/// <summary>A file in Mods\DynamicIslands that lets its copies of the mod's files win (developers trying a measurement).</summary>
+		public const string DevOverrides = "dev_overrides";
 
 		static void Load()
 		{

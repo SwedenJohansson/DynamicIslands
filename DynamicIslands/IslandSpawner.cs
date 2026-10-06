@@ -252,10 +252,44 @@ namespace DynamicIslands.Editor
 
 		static readonly HashSet<string> toldMissing = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>Running numbers while an island's objects are made (creatures, chests, zones and treasure are numbered in
+		/// file order, the same on every machine).</summary>
+		class Counts { public int missing, creature, loot, zone, treasure; }
+
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
-			int missing = 0, creature = 0, loot = 0, zone = 0, treasure = 0;
+			var c = new Counts();
+			for (int index = 0; index < island.Objects.Count; index++) SpawnOne(island, index, parent, editable, skipUnderwater, c);
+			return c.missing;
+		}
+
+		/// <summary>
+		/// SpawnObjects spread over frames (ROADMAP P1: up to 12 000 objects were made in one frame, a long stutter when a big
+		/// island streamed in): as many as fit in budgetMs a frame. The caller keeps the parent inactive meanwhile.
+		/// </summary>
+		public static System.Collections.IEnumerator SpawnObjectsSliced(IslandFile island, Transform parent, bool skipUnderwater, float budgetMs, System.Action<int> done)
+		{
+			var c = new Counts();
+			var clock = System.Diagnostics.Stopwatch.StartNew();
 			for (int index = 0; index < island.Objects.Count; index++)
+			{
+				if (parent == null) yield break; // (removed meanwhile)
+				try { SpawnOne(island, index, parent, false, skipUnderwater, c); }
+				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Object " + index + " of '" + island.Name + "': " + e.Message); }
+				if (clock.Elapsed.TotalMilliseconds > budgetMs) { yield return null; clock.Reset(); clock.Start(); }
+			}
+			done(c.missing);
+		}
+
+		static void SpawnOne(IslandFile island, int index, Transform parent, bool editable, bool skipUnderwater, Counts c)
+		{
+				int missing = 0, creature = c.creature, loot = c.loot, zone = c.zone, treasure = c.treasure;
+				try { SpawnBody(island, index, parent, editable, skipUnderwater, ref missing, ref creature, ref loot, ref zone, ref treasure); }
+				finally { c.missing += missing; c.creature = creature; c.loot = loot; c.zone = zone; c.treasure = treasure; }
+		}
+
+		static void SpawnBody(IslandFile island, int index, Transform parent, bool editable, bool skipUnderwater, ref int missing, ref int creature, ref int loot, ref int zone, ref int treasure)
+		{
 			{
 				IslandObject o = island.Objects[index];
 				// A flying island has no sea around it: what lies under its own sea level (a lagoon's turtles, an underwater
@@ -265,15 +299,15 @@ namespace DynamicIslands.Editor
 				// They are numbered in file order, which is the same on every machine.
 				if (!editable && ContentCatalog.IsCreature(o.Name))
 				{
-					if (underSea) { creature++; continue; }
+					if (underSea) { creature++; return; }
 					CreatureSpawnPoint point = CreatureSpawnPoint.Create(parent, o, creature++);
 					if (point != null) Behaviours.Attach(point.gameObject, o.Name, o.Props, index);
-					continue;
+					return;
 				}
 				// Zones are invisible in a world
 				if (!editable && ContentCatalog.IsZone(o.Name))
 				{
-					if (underSea) { if (o.Name == ContentCatalog.TriggerZone) zone++; continue; }
+					if (underSea) { if (o.Name == ContentCatalog.TriggerZone) zone++; return; }
 					GameObject zgo;
 					if (o.Name == ContentCatalog.TriggerZone) zgo = TriggerZone.Create(parent, o, zone++).gameObject;
 					else
@@ -285,12 +319,12 @@ namespace DynamicIslands.Editor
 						else if (o.Name == ContentCatalog.SoundZoneName) zgo.AddComponent<SoundZone>().Configure(o.Props ?? new Dictionary<string, string>());
 					}
 					Behaviours.Attach(zgo, o.Name, o.Props, index);
-					continue;
+					return;
 				}
 				// Buried treasure: Raft's own treasure point, made once the island's state is known (BuriedTreasure.OnIslandReady)
 				if (!editable && ContentCatalog.IsTreasure(o.Name))
 				{
-					if (underSea) { treasure++; continue; }
+					if (underSea) { treasure++; return; }
 					var tgo = new GameObject(o.Name);
 					tgo.transform.SetParent(parent, false);
 					tgo.transform.position = parent.position + o.Position;
@@ -298,22 +332,22 @@ namespace DynamicIslands.Editor
 					bt.Number = treasure++;
 					int kind;
 					bt.Kind = int.TryParse(ObjectProps.Get(o.Props, ObjectProps.TreasureKind), out kind) ? kind : 0;
-					continue;
+					return;
 				}
 				// Invisible walls and ramps: only their collision in a world
 				if (!editable && ContentCatalog.IsHelper(o.Name))
 				{
-					if (underSea) continue;
+					if (underSea) return;
 					GameObject hgo = ContentCatalog.SpawnHelperSolid(o.Name, parent);
-					if (hgo == null) continue;
+					if (hgo == null) return;
 					hgo.transform.position = parent.position + o.Position;
 					hgo.transform.rotation = Quaternion.Euler(o.EulerRotation);
 					hgo.transform.localScale = o.Scale;
 					Behaviours.Attach(hgo, o.Name, o.Props, index);
-					continue;
+					return;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
-				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) continue;
+				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) return;
 				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
 				if (go == null)
 				{
@@ -324,7 +358,7 @@ namespace DynamicIslands.Editor
 					if (editable) MissingPlaceholder(o, parent);
 					// (in a world a chest still takes its number: the chests after it keep their saved state)
 					else if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
-					continue;
+					return;
 				}
 				go.transform.position = parent.position + o.Position;
 				go.transform.rotation = Quaternion.Euler(o.EulerRotation);
@@ -351,8 +385,8 @@ namespace DynamicIslands.Editor
 					Behaviours.Attach(go, o.Name, o.Props, index);
 				}
 			}
-			return missing;
 		}
+
 
 		/// <summary>Name of the placeholders for objects this Raft doesn't have (tests).</summary>
 		public const string MissingTag = "MissingObject";
@@ -482,6 +516,58 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static GameObject SpawnInWorld(IslandFile island, Vector3 worldPosition)
 		{
+			bool flying;
+			GameObject root = MakeRoot(island, worldPosition, out flying);
+			var objects = new GameObject("Objects");
+			objects.transform.SetParent(root.transform, false);
+			int missing = SpawnObjects(island, objects.transform, false, flying);
+			Spawned(island, worldPosition, flying, missing);
+			return root;
+		}
+
+		/// <summary>Tests (CIPerfChecks): how many frames the last sliced spawn took.</summary>
+		internal static int LastSpawnFrames;
+		internal static string LastSpawnTiming = "";
+
+		/// <summary>
+		/// SpawnInWorld over several frames (ROADMAP P1): the land at once, then the objects a few milliseconds a frame under
+		/// a parent kept inactive until all are there (nothing of the island runs half made). result gets the root, or null
+		/// when it was removed meanwhile.
+		/// </summary>
+		public static System.Collections.IEnumerator SpawnInWorldSliced(IslandFile island, Vector3 worldPosition, System.Action<GameObject> result, float budgetMs = 6f)
+		{
+			bool flying;
+			var clock = System.Diagnostics.Stopwatch.StartNew();
+			GameObject root = MakeRoot(island, worldPosition, out flying);
+			long land = clock.ElapsedMilliseconds;
+			var objects = new GameObject("Objects");
+			objects.SetActive(false);
+			objects.transform.SetParent(root.transform, false);
+			int missing = 0, startFrame = Time.frameCount;
+			yield return SpawnObjectsSliced(island, objects.transform, flying, budgetMs, m => missing = m);
+			LastSpawnFrames = Time.frameCount - startFrame + 1;
+			if (root == null || objects == null) { result(null); yield break; }
+			clock.Reset(); clock.Start();
+			objects.SetActive(true);
+			LastSpawnTiming = "land " + land + " ms, objects over " + LastSpawnFrames + " frames, switching them on " + clock.ElapsedMilliseconds + " ms";
+			Spawned(island, worldPosition, flying, missing);
+			result(root);
+		}
+
+		static void Spawned(IslandFile island, Vector3 worldPosition, bool flying, int missing)
+		{
+			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
+			// (the player is told once per island and Raft start: an object Raft doesn't have any more is left out)
+			if (missing > 0 && toldMissing.Add(island.Name ?? ""))
+				DynamicIslands.Notify("The island '" + island.Name + "' has " + missing + " object(s) this Raft version doesn't have: they are left out", true);
+			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
+				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
+				(wanted < island.Objects.Count ? " (" + (island.Objects.Count - wanted) + " under-water objects left out)" : ""));
+		}
+
+		/// <summary>The island's root in the world and its land (the objects come after).</summary>
+		static GameObject MakeRoot(IslandFile island, Vector3 worldPosition, out bool flying)
+		{
 			var root = new GameObject("CustomIsland_" + island.Name);
 			SpawnedRoots.Add(root);
 			IslandInfo.Tag(root, island);
@@ -490,7 +576,7 @@ namespace DynamicIslands.Editor
 			Vector2 land = LandCentre(island);
 			root.transform.position = worldPosition - new Vector3(land.x, island.WaterLevel, land.y);
 
-			bool flying = worldPosition.y > FlyingThreshold;
+			flying = worldPosition.y > FlyingThreshold;
 			if (HasLand(island)) // an island of only objects (e.g. an abandoned raft of Raft blocks) gets no terrain
 			{
 				// Only bring the part of the heightmap that has been shaped, not the whole flat 1000 x 1000 m seabed
@@ -528,17 +614,6 @@ namespace DynamicIslands.Editor
 				if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
 			}
 
-			var objects = new GameObject("Objects");
-			objects.transform.SetParent(root.transform, false);
-			int missing = SpawnObjects(island, objects.transform, false, flying);
-			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
-			// (the player is told once per island and Raft start: an object Raft doesn't have any more is left out)
-			if (missing > 0 && toldMissing.Add(island.Name ?? ""))
-				DynamicIslands.Notify("The island '" + island.Name + "' has " + missing + " object(s) this Raft version doesn't have: they are left out", true);
-
-			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
-				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
-				(wanted < island.Objects.Count ? " (" + (island.Objects.Count - wanted) + " under-water objects left out)" : ""));
 			return root;
 		}
 	}

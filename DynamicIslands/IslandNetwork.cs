@@ -648,13 +648,25 @@ namespace DynamicIslands.Editor
 			string path = IslandSpawner.PathFor(file);
 			if (!File.Exists(path) || HashOf(file) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
 			byte[] bytes = File.ReadAllBytes(path);
+			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(SendChunks(name, hash, bytes, to));
+		}
+
+		/// <summary>Chunks sent a frame (ROADMAP M3: all ~300 chunks of a 900 KB island went out in one loop, a burst that
+		/// a slow connection dropped messages of).</summary>
+		internal const int ChunksPerFrame = 6;
+
+		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to)
+		{
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
+			float started = Time.realtimeSinceStartup;
 			for (int i = 0; i < count; i++)
 			{
 				int len = Mathf.Min(ChunkBytes, bytes.Length - i * ChunkBytes);
-				SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to);
+				try { SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending '" + name + "' chunk " + i + ": " + e.Message); }
+				if ((i + 1) % ChunksPerFrame == 0) yield return null;
 			}
-			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks) to " + to);
+			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + to);
 		}
 
 		#endregion

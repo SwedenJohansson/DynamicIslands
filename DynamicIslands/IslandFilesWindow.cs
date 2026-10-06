@@ -323,10 +323,11 @@ namespace DynamicIslands.Editor
 				{
 					string other = Path.GetFileNameWithoutExtension(file);
 					if (other.Equals(island, StringComparison.OrdinalIgnoreCase) || IslandNetwork.IsDownloadName(other)) continue;
-					if (WorldDirector.RulesFromProps(IslandCache.Props(other)).Any(r => LibraryPack.RuleNames(r, island))) result.Add(other);
+					if (IslandCache.RulesOf(other).Any(r => LibraryPack.RuleNames(r, island))) result.Add(other);
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for islands that bring '" + island + "': " + e.Message); }
+			IslandCache.SaveRules();
 			return result;
 		}
 

@@ -1135,7 +1135,7 @@ namespace DynamicIslands
 		public static void EditorMoreCommand()
 		{
 			if (!DynamicIslands.InEditor()) { Fail("not in the editor"); return; }
-			ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
+			ObjectPlacer placer = ObjectPlacer.Current;
 			var g = DynamicIslands.EditorGizmoHandler;
 			Log("Editor more: heights " + TerrainFingerprint() + ", speed " + EditorCamera.SpeedFactor.ToString("F2", Inv) + ", flash '" + FlashText() + "', selection " + SelectionInView() +
 				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", placing " + (placer != null ? placer.GameObjectName : "none") + ", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", objects " + PlacedEditorObjects().Count);

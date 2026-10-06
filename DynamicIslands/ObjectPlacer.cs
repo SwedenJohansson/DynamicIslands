@@ -14,6 +14,13 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class ObjectPlacer : MonoBehaviour
 	{
+		/// <summary>The object being placed now, or null (ROADMAP P3: looked up with FindObjectOfType every frame before).</summary>
+		public static ObjectPlacer Current { get { return current != null ? current : null; } }
+		static ObjectPlacer current;
+
+		void Awake() { current = this; }
+		void OnDestroy() { if (current == this) current = null; }
+
 		public string GameObjectName;
 
 		public Terrain terrain;

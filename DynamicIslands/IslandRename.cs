@@ -104,7 +104,7 @@ namespace DynamicIslands.Editor
 				if (IslandNetwork.IsDownloadName(other)) continue;
 				try
 				{
-					List<IntroRule> rules = WorldDirector.RulesFromProps(IslandCache.Props(other));
+					List<IntroRule> rules = IslandCache.RulesOf(other);
 					if (!RenameIn(rules, from, to)) continue;
 					IslandFile f = IslandFile.Load(file);
 					rules = WorldDirector.RulesFromProps(f.Props);
@@ -121,6 +121,7 @@ namespace DynamicIslands.Editor
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Renaming '" + from + "' in the rules of '" + other + "': " + e.Message); }
 			}
+			IslandCache.SaveRules();
 			if (islands.Count > 0) report.Add("the rules of " + string.Join(", ", islands.Take(6).Select(x => "'" + x + "'").ToArray()) + (islands.Count > 6 ? " and " + (islands.Count - 6) + " more" : ""));
 
 			// Saved worlds: their island lists, kept plans and story rules, and quest rewards

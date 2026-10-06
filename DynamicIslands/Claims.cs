@@ -69,7 +69,15 @@ namespace DynamicIslands.Editor
 			{
 				Debug.Log("[CUSTOM ISLANDS] [net] The host hasn't answered a claim yet (busy?): waiting for it");
 				IslandInfo.ShowMessage("Waiting for the host's answer (it is busy) - this happens as soon as it answers");
-				yield return new WaitForSeconds(LateAnswerSeconds);
+				// (asked again now and then: an answer - or the question - lost on the way left the player standing in a zone
+				// that never went off, as they never walked in again - ROADMAP M2)
+				for (float waited = 0f; waited < LateAnswerSeconds && waiting.ContainsKey(k); waited += AskAgainSeconds)
+				{
+					yield return new WaitForSeconds(AskAgainSeconds);
+					if (!waiting.ContainsKey(k)) yield break;
+					Debug.Log("[CUSTOM ISLANDS] [net] Asking the host again for " + ((int)(uint)k).ToString("X") + " on island " + (int)(k >> 32));
+					IslandNetwork.SendClaim((int)(k >> 32), (int)(uint)k);
+				}
 				// (no answer at all: the next try asks again)
 				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again"); }
 				yield break;
@@ -82,6 +90,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>How long a late answer of a host that answers claims is waited for.</summary>
 		const float LateAnswerSeconds = 30f;
+		/// <summary>How often a client asks again meanwhile.</summary>
+		const float AskAgainSeconds = 5f;
 
 		/// <summary>Tests (CIClaimDelay): the host answers claims this many seconds late, as a host busy sending island files.</summary>
 		public static float TestAnswerDelay;
