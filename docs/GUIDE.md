@@ -1887,7 +1887,8 @@ final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
 opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
-while sailing, plus the world's plan and story. The **host** changes them there, and every player gets the change at
+while sailing, plus the world's plan and story, and **the islands in this world** - nearest first, how far and which
+way, and how far their quest has come. The **host** changes them there, and every player gets the change at
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 

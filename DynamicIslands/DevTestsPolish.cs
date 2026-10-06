@@ -135,6 +135,10 @@ namespace DynamicIslands
 					Check(ref ok, island == null || !WorldIslands.TakesPart(island), "the island '" + island + "' left out of this world");
 					Check(ref ok, UIKit.LabelOf(b("Option_ghostrafts")).text.EndsWith(WorldOptions.On(WorldOptions.GhostRafts) ? "ON" : "off"), "the window shows it: " + UIKit.LabelOf(b("Option_ghostrafts")).text);
 				}
+				// (T1b: the islands in this world, nearest first, with how far and which way)
+				string here = WorldWindow.IslandsHere();
+				int islands = IslandWorldState.Islands.Count(x => !x.Failed && !WorldRandomizer.IsExtras(x));
+				Check(ref ok, islands == 0 ? here == "None yet." : here.Contains(" m "), "the window lists the world's " + islands + " island(s): " + here.Replace("\n", " / "));
 				Screenshot(new[] { "world_window" });
 				yield return new WaitForSeconds(1f);
 			}

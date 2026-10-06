@@ -1,3 +1,4 @@
+using HMLLibrary;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace DynamicIslands.Editor
 		public const string CanvasName = "CustomIslands_WorldWindow", ButtonName = "CustomIslands_PauseButton";
 		static Canvas canvas;
 		static WorldWindow instance;
-		static Text hostText, planText, islandsText;
+		static Text hostText, planText, islandsText, hereText;
 		static RectTransform islandList;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static float nextRefresh;
@@ -122,6 +123,13 @@ namespace DynamicIslands.Editor
 			planText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			planText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Size(planText.gameObject, -1, 170);
+
+			// The islands in this world, nearest first (ROADMAP T1b)
+			Heading(right, "ISLANDS IN THIS WORLD");
+			hereText = UIKit.Label(right, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Here");
+			hereText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			hereText.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(hereText.gameObject, -1, 130);
 
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Label(buttonsRow, "Changes are for every player and saved with the world. The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands, WorldPlan.", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
@@ -233,6 +241,7 @@ namespace DynamicIslands.Editor
 			else islandsText.text = WorldIslands.DescribeForPlayer();
 
 			planText.text = host ? PlanSummary() : WorldDirector.DescribeForPlayer(false) + (StoryChain.Active ? "\n" + StorySummary() : "");
+			hereText.text = IslandsHere();
 		}
 
 		/// <summary>The plan and its rules, and the story chain if the plan changed Raft's story (host).</summary>
@@ -248,6 +257,28 @@ namespace DynamicIslands.Editor
 			}
 			if (StoryChain.Active) lines.Add(StorySummary());
 			lines.Add("<i>Another plan: pick it in the list above - its islands come from now on, what is done or unlocked stays.</i>");
+			return string.Join("\n", lines.ToArray());
+		}
+
+		/// <summary>The custom islands of this world, nearest first: their name, how far and which way, their quest's state.</summary>
+		internal static string IslandsHere()
+		{
+			Vector3 from = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p != null) from = p.transform.position;
+			var list = IslandWorldState.Islands.Where(e => !e.Failed && !WorldRandomizer.IsExtras(e)).Select(e => new { E = e, D = new Vector2(e.Position.x - from.x, e.Position.z - from.z) })
+				.OrderBy(x => x.D.magnitude).ToList();
+			if (list.Count == 0) return "None yet.";
+			var lines = new List<string>();
+			foreach (var x in list.Take(8))
+			{
+				IslandQuest q = QuestTracker.QuestOf(x.E);
+				int step = QuestTracker.StepOf(x.E);
+				string state = !q.Exists ? "" : step >= q.Steps.Count ? "  <color=#8fdc8f>quest done</color>" : step > 0 ? "  quest " + step + "/" + q.Steps.Count : "  quest not begun";
+				float angle = Mathf.Atan2(x.D.x, x.D.y) * Mathf.Rad2Deg;
+				lines.Add(Behaviours.IslandTitle(x.E) + "  -  " + (Mathf.Round(x.D.magnitude / 10f) * 10f).ToString("F0") + " m " + IntroRule.DirectionName(angle) + state);
+			}
+			if (list.Count > 8) lines.Add("... and " + (list.Count - 8) + " more further away");
 			return string.Join("\n", lines.ToArray());
 		}
 
