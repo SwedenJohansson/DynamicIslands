@@ -23,14 +23,17 @@ expect story mallet 1
 expect step 3
 open Woodpile box
 open Snowmobile box
+expect step 4
 
-# The organ cave: the score; a wrong pipe first; then the five in the score's order - the key
+# The organ cave: the score, the cache behind the snow bank; a wrong pipe first; then the five in the score's order - the key
 walk -6 0.6 to -12.5 -2.5 to -15 -5 to -15 -9 h=2.5
 zone organcave
-expect step 4
+expect step 5
 walk -15 -10 to -15 -14 h=2.5 below=5
 read The frozen score
-expect step 5
+expect step 6
+open Cave cache
+expect step 7
 use cryptgate
 expect message frozen over
 use pipegreat
@@ -41,17 +44,17 @@ use pipegreat
 use pipebent
 use pipeblue
 expect story icekey 1
-expect step 6
-open Cave cache
+expect step 8
 
 # The crypt: the gate sinks; in - the bear wakes; the last page, the coffer
 use cryptgate
 wait 4
 walk -14 -20 to -14 -24 to -14 -26.5 h=2.5 below=5
 zone crypt
+expect step 9
 kill Polar bear
-expect step 7
+expect step 10
 read Halvard's last page
-expect step 8
+expect step 11
 open Halvard's coffer
 expect done
