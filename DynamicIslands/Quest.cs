@@ -354,21 +354,35 @@ namespace DynamicIslands.Editor
 		/// covered the right side of the screen).</summary>
 		public const int VisibleSteps = 5;
 
+		/// <summary>The quests read once per tick (the panel and CheckCounted asked for each one 4-6 times, every 0.5 s, each a
+		/// full parse of its texts - audit 2026-10-06). Only within one tick: an island's settings can change between them.</summary>
+		static readonly Dictionary<long, IslandQuest> tickQuests = new Dictionary<long, IslandQuest>();
+
+		static IslandQuest TickQuest(IslandWorldState.Entry e, int n)
+		{
+			if (e == null) return new IslandQuest();
+			long key = ((long)e.Id << 16) | (uint)(n & 0xFFFF);
+			IslandQuest q;
+			if (!tickQuests.TryGetValue(key, out q)) tickQuests[key] = q = QuestOf(e, n);
+			return q;
+		}
+
 		/// <summary>Every frame from the mod: the panel for the quest of the island the player is at (and its introduction once).</summary>
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
+			tickQuests.Clear();
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); if (panel != null) panel.gameObject.SetActive(false); return; }
 			if (Raft_Network.IsHost) CheckCounted();
-			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => QuestOf(e, n).Exists));
+			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
 			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			int quests = QuestsOf(at);
 			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined
 			// after it was done: the step came with the island list, no "done" ran here, and nothing was ever owed to them)
 			for (int n = 0; n < quests; n++)
 			{
-				IslandQuest qn = QuestOf(at, n);
+				IslandQuest qn = TickQuest(at, n);
 				if (!qn.Exists || StepOf(at, n) < qn.Steps.Count) continue;
 				string key = RewardKey(at, n);
 				if (QuestRewards.Owed(key)) QuestRewards.Collect(key, () => GiveItems(qn));
@@ -377,14 +391,14 @@ namespace DynamicIslands.Editor
 				Show("Your share of the reward: " + qn.ShownTitle, "");
 			}
 			// (the panel: the first quest not done yet, the main one first - LM4; all done: the main quest, ticked)
-			int shown = Enumerable.Range(0, quests).FirstOrDefault(n => QuestOf(at, n).Exists && StepOf(at, n) < QuestOf(at, n).Steps.Count);
-			if (!QuestOf(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => QuestOf(at, n).Exists);
-			IslandQuest q = QuestOf(at, shown);
+			int shown = Enumerable.Range(0, quests).FirstOrDefault(n => TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
+			if (!TickQuest(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => TickQuest(at, n).Exists);
+			IslandQuest q = TickQuest(at, shown);
 			int step = StepOf(at, shown);
 			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
 			if (panel == null) Build();
 			panel.gameObject.SetActive(true);
-			int open = Enumerable.Range(0, quests).Count(n => n != shown && QuestOf(at, n).Exists && StepOf(at, n) < QuestOf(at, n).Steps.Count);
+			int open = Enumerable.Range(0, quests).Count(n => n != shown && TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
 			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
 			var lines = new List<string>();
 			for (int i = 0; i < q.Steps.Count; i++)
@@ -409,13 +423,16 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		static void ShowSteps(List<string> lines, int step, int island)
 		{
+			bool changed = stepLines.Count < lines.Count;
 			while (stepLines.Count < lines.Count) stepLines.Add(StepLine());
 			for (int i = 0; i < stepLines.Count; i++)
 			{
 				bool used = i < lines.Count;
-				if (stepLines[i].gameObject.activeSelf != used) stepLines[i].gameObject.SetActive(used);
-				if (used && stepLines[i].text != lines[i]) stepLines[i].text = lines[i];
+				if (stepLines[i].gameObject.activeSelf != used) { stepLines[i].gameObject.SetActive(used); changed = true; }
+				if (used && stepLines[i].text != lines[i]) { stepLines[i].text = lines[i]; changed = true; }
 			}
+			// (nothing new since the last tick: the layout as it was - it was rebuilt every 0.5 s, audit 2026-10-06)
+			if (!changed && island == followedIsland && step == followedStep) return;
 			LayoutRebuilder.ForceRebuildLayoutImmediate(stepsContent);
 			// (the window: one done step above the current one, so the player sees what was just done)
 			int first = Mathf.Clamp(step - 1, 0, Mathf.Max(0, lines.Count - VisibleSteps));
@@ -468,7 +485,7 @@ namespace DynamicIslands.Editor
 			{
 				for (int n = 0, count = QuestsOf(e); n < count; n++)
 				{
-					IslandQuest q = QuestOf(e, n);
+					IslandQuest q = TickQuest(e, n);
 					int step = StepOf(e, n);
 					if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
 					// (only while someone is there: a quest whose items the crew already held finished the moment its island

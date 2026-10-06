@@ -945,14 +945,14 @@ namespace DynamicIslands.Editor
 		public static void Patch(Harmony harmony)
 		{
 			Try(harmony, typeof(AI_Movement), "SetMovementSpeed", "SetSpeedPrefix", null);
-			Try(harmony, typeof(AI_Movement), "ChangeMovementSpeedTowards", "TargetPrefix", "GuardPostfix");
-			Try(harmony, typeof(AI_Movement), "LerpMovementSpeedTowards", "TargetPrefix", "GuardPostfix");
-			Try(harmony, typeof(AI_Movement), "HandleLerpData", "GuardPrefix", "GuardPostfix");
+			Try(harmony, typeof(AI_Movement), "ChangeMovementSpeedTowards", "TargetPrefix", null, "GuardFinalizer");
+			Try(harmony, typeof(AI_Movement), "LerpMovementSpeedTowards", "TargetPrefix", null, "GuardFinalizer");
+			Try(harmony, typeof(AI_Movement), "HandleLerpData", "GuardPrefix", null, "GuardFinalizer");
 			Try(harmony, typeof(AI_NetworkBehaviour_Animal), "Serialize_CreateFromIDManager", null, "CreateForJoinersPostfix");
 			Try(harmony, typeof(Network_Host_Entities), "Deserialize", null, "CreateOnClientPostfix");
 		}
 
-		static void Try(Harmony harmony, Type type, string method, string prefix, string postfix)
+		static void Try(Harmony harmony, Type type, string method, string prefix, string postfix, string finalizer = null)
 		{
 			try
 			{
@@ -960,7 +960,9 @@ namespace DynamicIslands.Editor
 				if (original == null) { Debug.LogWarning("[CUSTOM ISLANDS] " + type.Name + "." + method + " not found: creature settings may not fully apply"); return; }
 				harmony.Patch(original,
 					prefix != null ? new HarmonyMethod(typeof(CreatureSpawner).GetMethod(prefix, BindingFlags.Static | BindingFlags.NonPublic)) : null,
-					postfix != null ? new HarmonyMethod(typeof(CreatureSpawner).GetMethod(postfix, BindingFlags.Static | BindingFlags.NonPublic)) : null);
+					postfix != null ? new HarmonyMethod(typeof(CreatureSpawner).GetMethod(postfix, BindingFlags.Static | BindingFlags.NonPublic)) : null,
+					null,
+					finalizer != null ? new HarmonyMethod(typeof(CreatureSpawner).GetMethod(finalizer, BindingFlags.Static | BindingFlags.NonPublic)) : null);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not patch " + type.Name + "." + method + ": " + e.Message); }
 		}
@@ -970,9 +972,11 @@ namespace DynamicIslands.Editor
 		[ThreadStatic] static int guard;
 
 		static void SetSpeedPrefix(AI_Movement __instance, ref float value) { if (guard == 0) value *= SpeedOf(__instance); }
-		static void TargetPrefix(AI_Movement __instance, ref float target) { target *= SpeedOf(__instance); guard++; }
+		static void TargetPrefix(AI_Movement __instance, ref float target) { guard++; target *= SpeedOf(__instance); }
 		static void GuardPrefix() { guard++; }
-		static void GuardPostfix() { if (guard > 0) guard--; }
+		// (a Finalizer, not a Postfix: a Postfix is skipped when Raft's method throws, and the guard then stayed up - every
+		// creature speed setting off until Raft restarted. Audit 2026-10-06, as AU41)
+		static Exception GuardFinalizer(Exception __exception) { if (guard > 0) guard--; return __exception; }
 
 		/// <summary>
 		/// Raft sends the animals that exist to a player who joins, except those tied to a landmark's spawner (the

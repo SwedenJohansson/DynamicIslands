@@ -105,6 +105,11 @@ namespace DynamicIslands.Editor
 			lastRaftPosition = null;
 			sailedSinceSpawn = 0f;
 			nextTick = 0f; // (stream the islands in at once: a player may be standing on one - PlayerHold)
+			// (Raft's islands counted afresh: the same world loaded again kept its GUID, so the old set stayed - its keys are
+			// instance ids of the scene left - and every island around the raft counted as met again. Audit 2026-10-06)
+			raftIslandsCounted.Clear();
+			countedFor = Guid.Empty;
+			countPrimed = false;
 			LoadPool(true);
 		}
 

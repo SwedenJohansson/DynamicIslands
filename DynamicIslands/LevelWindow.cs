@@ -475,7 +475,8 @@ namespace DynamicIslands.Editor
 				if (t > bannerSeconds) banner.gameObject.SetActive(false);
 			}
 			// The level bar: placed again now and then (Raft's HUD can change size), lit up for a moment after EXP
-			if (Time.unscaledTime >= nextPlace || hud == null) { nextPlace = Time.unscaledTime + 2f; PlaceHud(); }
+			// (not every frame while the bar can't be built - no Raft HUD found: a FindObjectOfType each frame. Audit 2026-10-06)
+			if (Time.unscaledTime >= nextPlace) { nextPlace = Time.unscaledTime + (hud == null ? 0.5f : 2f); PlaceHud(); }
 			if (hud == null) return;
 			if (!hud.gameObject.activeSelf) { hud.gameObject.SetActive(true); RefreshBar(); }
 			float p = Mathf.Clamp01(1f - (Time.unscaledTime - pulseAt) / PulseSeconds);

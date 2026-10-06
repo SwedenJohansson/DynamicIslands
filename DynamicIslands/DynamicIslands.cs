@@ -346,13 +346,24 @@ namespace DynamicIslands
 		/// </summary>
 		static void HookRaftEvents()
 		{
+			// (looked into only when the event changed since the last frame: GetInvocationList made two arrays every frame,
+			// also on the main menu - audit 2026-10-06. Delegates are immutable: the same reference is the same handlers)
 			// (the custom islands follow Raft's floating-origin world shifts)
-			if (WorldShiftManager.OnWorldShift == null || Array.IndexOf(WorldShiftManager.OnWorldShift.GetInvocationList(), onWorldShift) < 0)
-				WorldShiftManager.OnWorldShift += onWorldShift;
+			if (WorldShiftManager.OnWorldShift == null || (object)WorldShiftManager.OnWorldShift != hookedShift)
+			{
+				if (WorldShiftManager.OnWorldShift == null || Array.IndexOf(WorldShiftManager.OnWorldShift.GetInvocationList(), onWorldShift) < 0)
+					WorldShiftManager.OnWorldShift += onWorldShift;
+				hookedShift = WorldShiftManager.OnWorldShift;
+			}
 			// (a client asks for the host's islands once the host's world is here: the raft is where the host's is)
-			if (Raft_Network.OnWorldReceivedLate == null || Array.IndexOf(Raft_Network.OnWorldReceivedLate.GetInvocationList(), onWorldReceived) < 0)
-				Raft_Network.OnWorldReceivedLate += onWorldReceived;
+			if (Raft_Network.OnWorldReceivedLate == null || (object)Raft_Network.OnWorldReceivedLate != hookedReceived)
+			{
+				if (Raft_Network.OnWorldReceivedLate == null || Array.IndexOf(Raft_Network.OnWorldReceivedLate.GetInvocationList(), onWorldReceived) < 0)
+					Raft_Network.OnWorldReceivedLate += onWorldReceived;
+				hookedReceived = Raft_Network.OnWorldReceivedLate;
+			}
 		}
+		static object hookedShift, hookedReceived;
 
 		private void Update()
 		{

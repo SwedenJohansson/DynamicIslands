@@ -285,6 +285,9 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (!Animates) return;
+			// (a door, gate or lift at rest: already posed - it was set again every frame, moving its colliders in the physics
+			// scene each time, for every mover on every loaded island. Audit 2026-10-06)
+			if (!Loop && SpinSpeed == 0f && BobHeight == 0f && Current == Target) return;
 			float t = SharedClock.Now + phase;
 			Vector3 before = transform.position;
 			if (Loop) Current = Mathf.PingPong(t / MoveTime, 1f);
