@@ -62,7 +62,7 @@ namespace DynamicIslands.Editor
 				if (!File.Exists(path) || new FileInfo(path).Length != pdf.Length)
 				{
 					Directory.CreateDirectory(DynamicIslands.assetpath);
-					File.WriteAllBytes(path, pdf);
+					SafeFile.WriteAllBytes(path, pdf); // (in one step: a PDF cut short isn't left for the reader - AU41)
 				}
 				return path;
 			}

@@ -98,7 +98,7 @@ namespace DynamicIslands.Editor
 			if (cam != null && cam.clearFlags != CameraClearFlags.Skybox) cam.backgroundColor = p.Haze;
 			if (keep)
 			{
-				try { File.WriteAllText(FilePath, Names[Current]); } catch { }
+				try { SafeFile.WriteAllText(FilePath, Names[Current]); } catch { } // (in one step - AU41)
 				DynamicIslands.Notify("Light: " + Names[Current] + " (how the island looks at that time of day; only in the editor)");
 			}
 		}

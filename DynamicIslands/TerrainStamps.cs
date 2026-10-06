@@ -134,11 +134,14 @@ namespace DynamicIslands.Editor
 		public static void Save(Stamp st)
 		{
 			Directory.CreateDirectory(Folder);
-			using (var w = new BinaryWriter(File.Create(Path.Combine(Folder, st.Name + ".stamp"))))
+			// (written whole, then in the file's place in one step - SafeFile: a crash mid-save left a broken stamp, AU41)
+			var bytes = new MemoryStream();
+			using (var w = new BinaryWriter(bytes))
 			{
 				w.Write(Magic); w.Write(1); w.Write(Size);
 				for (int z = 0; z < Size; z++) for (int x = 0; x < Size; x++) w.Write(st.Heights[z, x]);
 			}
+			SafeFile.WriteAllBytes(Path.Combine(Folder, st.Name + ".stamp"), bytes.ToArray());
 		}
 
 		/// <summary>Height of a stamp at (u, v) in -1..1 (bilinear), in units of its radius.</summary>

@@ -75,7 +75,9 @@ namespace DynamicIslands.Editor
 			// The pivot: the middle of the objects, at the lowest one's height (so the group stands on the ground)
 			Vector3 pivot = new Vector3(list.Average(o => o.transform.position.x), list.Min(o => o.transform.position.y), list.Average(o => o.transform.position.z));
 			Directory.CreateDirectory(Folder);
-			using (var w = new BinaryWriter(File.Create(PathFor(name))))
+			// (written whole, then in the file's place in one step - SafeFile: a crash mid-save left a broken group, AU41)
+			var bytes = new MemoryStream();
+			using (var w = new BinaryWriter(bytes))
 			{
 				w.Write(Magic); w.Write(1); w.Write(list.Count);
 				foreach (EditorGameObject o in list)
@@ -87,6 +89,7 @@ namespace DynamicIslands.Editor
 					foreach (var kv in p) { w.Write(kv.Key); w.Write(kv.Value ?? ""); }
 				}
 			}
+			SafeFile.WriteAllBytes(PathFor(name), bytes.ToArray());
 			return list.Count;
 		}
 
