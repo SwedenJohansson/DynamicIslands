@@ -284,6 +284,11 @@ prop sheltergate obj.name=sheltergate
 prop sheltergate beh.move=0,-12.8,0
 prop sheltergate beh.moveTime=5
 prop sheltergate beh.moveMode=switch
+# (Utopia's entrance door as a ready piece wants Raft's entrance key and goes when used: this gate only sinks when the bell is rung - the ready piece's settings taken off)
+prop sheltergate beh.use=
+prop sheltergate if.use=
+prop sheltergate else.use=
+prop sheltergate on.use=
 
 prop rooftops zone.id=rooftops
 prop rooftops zone.radius=10

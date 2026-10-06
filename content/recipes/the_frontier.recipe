@@ -633,6 +633,11 @@ prop sluice on.use=message||Wheel by wheel the sluice opens - the pump hums, wat
 prop sluice else.use=message||The sluice box is missing its three valve wheels. The reservoir keeper's note said where they are.
 prop wheels obj.name=wheels
 prop wheels beh.hidden=1
+# (Selene's crank wheel as a ready piece is turned by players: these are the fitted valve wheels the sluice shows - the ready piece's settings taken off)
+prop wheels beh.use=
+prop wheels if.use=
+prop wheels else.use=
+prop wheels on.use=
 prop halldoora obj.name=halldoor
 prop halldoora beh.move=0,0,-1.5
 prop halldoorb obj.name=halldoor
@@ -648,9 +653,15 @@ prop halldoorb beh.moveMode=switch
 prop liftdown obj.name=liftdown
 prop liftdown beh.use=Ride the Corps' lift down to the cove
 prop liftdown on.use=message||The cage rattles down the shaft - thirty metres of cliff - and stops at the cove.\nteleport|liftbottom\nsound||event:/exploring/elevator/elevator_changefloor
+# (the emergency generator as a ready piece wants Raft's generator part before it runs: as the lift's controls it locked the Corps' lift for good. The ready piece's lock taken off)
+prop liftdown if.use=
+prop liftdown else.use=
 prop liftup obj.name=liftup
 prop liftup beh.use=Ride the Corps' lift up to the hall
 prop liftup on.use=message||The cage climbs the shaft and stops behind the hall.\nteleport|lifttop\nsound||event:/exploring/elevator/elevator_changefloor
+# (the emergency generator as a ready piece wants Raft's generator part before it runs: as the lift's controls it locked the Corps' lift for good. The ready piece's lock taken off)
+prop liftup if.use=
+prop liftup else.use=
 prop lifttop obj.name=lifttop
 prop liftbottom obj.name=liftbottom
 prop halllights obj.name=halllights

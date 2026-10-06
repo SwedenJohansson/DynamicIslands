@@ -229,7 +229,7 @@ prop autumntoken loot.refill=0
 prop autumntoken obj.name=autumntoken
 prop autumntoken beh.hidden=1
 note lastpage Maren's last page | (it fell out of the wheel's hub as it turned)\n\nYou did it. The north is thawing, the east is ripening, the south is turning gold and the west has its first frost. Next quarter-day, turn it again - or don't. The islets will take their seasons as they come.\n\nMy chest is yours. Plant something.\n- Maren
-note keeperchest Weather-keeper's chest | Maren's chest: the plans for her planting beds - small, medium and large - seeds of every season, a coat for winter and a hat for summer.
+note keeperchest Weather-keeper's chest | Maren's chest: the plans for her planting beds - small and medium - seeds of every season, a coat for winter and a hat for summer.
 loot keeperchest Blueprint_Cropplot_Small_Tier3*1;Blueprint_Cropplot_Medium_Tier3*1;Seed_Strawberry*4;Seed_Watermelon*4;Seed_Mango*3;Seed_Birch*3;Equipment_LeatherChest*1;Hat_Fishing*1
 prop keeperchest loot.refill=0
 prop keeperchest if.open=signal|turned

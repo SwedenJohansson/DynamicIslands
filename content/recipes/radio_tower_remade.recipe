@@ -91,6 +91,11 @@ place Zone_Trigger landing at -1 -26 h=2.5
 
 # --- The old shark cage on the seabed south-west, the cage locker wedged inside it ----------------------------------
 place RT_SharkCage cage at -13 -33 ground sit yaw=30
+# (the shark cage as a ready piece is chained shut, wants Raft's bolt cutters and goes when used: here it is the old cage the battery bank lies by, open to divers - the ready piece's settings taken off)
+prop cage beh.use=
+prop cage if.use=
+prop cage else.use=
+prop cage on.use=
 place Loot_Chest cagebox at -13 -33 ground sit yaw=30
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
@@ -128,7 +133,7 @@ prop onairlights beh.hidden=1
 
 prop landing zone.id=landing
 prop landing zone.radius=7
-prop landing zone.message=The tower's landing: a plastic boat tied up, crates, and a note nailed to the door.
+prop landing zone.message=The tower's landing: a plastic boat tied up, crates, and a note nailed to the tower's foot.
 prop radioroom zone.id=radioroom
 prop radioroom zone.radius=2.5
 prop radioroom zone.message=The radio room: a dead panel, a radar screen, an empty battery bay.

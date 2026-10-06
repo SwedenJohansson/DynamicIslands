@@ -108,7 +108,7 @@ prop minesound sound.volume=0.7
 prop minesound zone.radius=18
 
 quest title=Down the Old Mine
-quest intro=An old mine in a rock mound, closed after a cave-in. The notice at the mouth says the last ore cart is still down there.
+quest intro=An old mine in a rock mound, closed since a tunnel broke into a burrow. The notice at the mouth says the last ore cart is still down there.
 step reach|minehead|1|Find the old mine
 step read|Mine notice|1|Read the mine notice
 step open|Miner's locker|1|Take the miner's head lamp

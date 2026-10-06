@@ -223,7 +223,7 @@ note offering Rain Kings' offering chest | The Kings' own offering: jade beads, 
 loot offering Blueprint_Cropplot_Medium_Tier3*1;TradeToken*15;Seed_Banana*2;Chili*3;Turmeric*3;Clay*6
 prop offering loot.refill=0
 prop offering if.open=signal|tablets
-prop offering else.open=message||The chest's lid is one block of stone, carved with three hollows on the altar beside it. They are empty.
+prop offering else.open=message||The chest's lid is one block of stone. On the altar beside it, three hollows - all empty.
 note campbox Base camp box | The explorers' box: rope, a machete's whetstone, dried beans.
 loot campbox Rope*3;Plank*5;Raw_Potato*2
 prop campbox loot.refill=0

@@ -421,7 +421,7 @@ step pages||6|Read the six pages of the lodge's winter: the ledger and the caret
 step reach|maze|1|Find the way into the hedge maze west of the lodge
 step kill|Polar bear|1|Survive what waits at the heart of the maze
 step collect|story:boilerkey|1|Take the boiler house key from the caretaker's coat
-step reach|boilerroom|1|Unlock the boiler house behind the kitchen
+step reach|boilerroom|1|Unlock the boiler house behind the lodge
 step open|Caretaker's strongbox|1|Vent the three valves in the order of his pages - and open his strongbox
 quest done=The boiler sighs and goes cold, and the music in the ballroom stops. The winter book has its last chapter - you wrote it.
 quest reward=Plank*6;Wool*3;Cooked_GenericMeat*2

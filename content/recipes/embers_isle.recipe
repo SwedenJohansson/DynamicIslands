@@ -107,6 +107,11 @@ place Zone_Atmosphere embers at 23.5 3 h=5
 # (two cages by the fire; in the open one the botanist's journal)
 place UT_DogCage_Medium02 - at 24.6 6.8 ground yaw=180
 place UT_DogCage_Medium02 opencage at 21.4 6.8 ground yaw=150
+# (the dog cage as a ready piece is chained shut and wants Raft's bolt cutters: this is the open one, the journal inside - the ready piece's settings taken off)
+prop opencage beh.use=
+prop opencage if.use=
+prop opencage else.use=
+prop opencage on.use=
 place Note_Book journal at 21.4 6.9 h=3.6 yaw=20
 # (effigies dressed in sailcloth at the village's edges, a charm post with dangling charms by the trail, an old whaling
 # harpoon stuck in the ground, barrels, the hunters' store)

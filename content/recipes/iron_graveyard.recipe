@@ -104,7 +104,7 @@ place RT_Floodlight yardlight at -2 -61 h=2 ground yaw=200
 
 # --- The barge, sunk off the beach on her side, two of her containers spilled beside her, the fourth blade's crate in
 # the hole; what lives in her ----------------------------------------------------------------------------------------
-place BoatStranded barge at -6 -99 ground yaw=70 roll=-28
+place BoatStranded bargehull at -6 -99 ground yaw=70 roll=-28
 place Reef_Container - at -14 -95 ground sit yaw=30
 place Reef_Container - at 2 -104 ground sit yaw=-20
 place "Box Big" bladecrate4 at -1.5 -95.5 ground yaw=15

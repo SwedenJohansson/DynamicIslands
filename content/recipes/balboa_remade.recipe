@@ -31,7 +31,7 @@ origin
 clear at 80 4 r=15
 push at 80 4 h=5 yaw=90
 # (its porch and steps to the east, toward the beach)
-place Balboa_Shack station at 0 0 yaw=-60
+place Balboa_Shack stationhut at 0 0 yaw=-60
 pop
 # in front of the porch (its boards have no collider in Raft's model - things set on them fell through): the tool
 # locker by its north end, the logbook on a crate under the window; the strongbox on the terrace north of the shack (its\n# floor has no collider either, and its room is full of Raft's own furniture)
@@ -52,7 +52,7 @@ place Zone_Trigger station at 91 3 h=6
 push at -66 -9 yaw=90
 clear from 0 6 to 0 -36 r=17
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
-place BalboaCave_Bear den at 1.2 -18.4 y=5.2 scale=1.15
+place BalboaCave_Bear dencave at 1.2 -18.4 y=5.2 scale=1.15
 for vx -3.45 5.55 1.5
 place Block_Wall_Wood vinewall at $vx -1 y=0
 next
@@ -127,6 +127,9 @@ prop vinewall else.use=message||Thick vines over the rangers' plank barricade. Y
 prop mastradio obj.name=mastradio
 prop mastradio beh.use=Call out on the rangers' radio
 prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle south."\nsignal||ranger
+# (Raft's comm radio as a ready piece only works with power (a running generator or Raft's battery charger part), which this island has none of: the rangers' radio worked for anyone and the radio desk - quest step 7 - stayed shut for good. The ready piece's lock taken off)
+prop mastradio if.use=
+prop mastradio else.use=
 
 prop station zone.id=station
 prop station zone.radius=8

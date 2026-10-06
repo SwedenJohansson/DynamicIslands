@@ -385,7 +385,7 @@ step reach|square|1|Walk into Halcyon Cove's town square
 step read|Welcome board|1|Read the town's welcome board
 step read|Neighbour's script|1|Read the note left on the porch table of the house east of the square
 step collect|story:tape|4|Find the four hidden cameras round the town and pull their tapes
-step reach|weathertower|1|Climb the weather tower behind the town hall
+step reach|weathertower|1|Climb the weather tower on the hill south of the town
 step read|Weather log|1|Read the weather log in the hut at the tower's foot
 step collect|story:boothkey|1|Switch the rain machine off - its box holds the booth key
 step reach|moon|1|Find the booth inside the "moon" on the hilltop

@@ -120,7 +120,7 @@ note mayorschest Mayor's chest | The mayor's chest: the toll money, the town's d
 loot mayorschest Blueprint_Firework*1;Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Scrap*6;Nail*10
 prop mayorschest loot.refill=0
 prop mayorschest if.open=take|story:mayorkey|1
-prop mayorschest else.open=message||The mayor's chest is locked. The toll notice said the white bird keeps the key.
+prop mayorschest else.open=message||The mayor's chest is locked. Perhaps the white bird on his roof has the key.
 
 prop winch obj.name=winch
 prop winch beh.use=Turn the winch

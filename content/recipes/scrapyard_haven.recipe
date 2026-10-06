@@ -119,8 +119,8 @@ info description=A junk town on a desert crescent: a harbour of wrecks, a ring o
 island on.arrive=message||A red crescent of sand around a bay - and on its shore, a town of stacked caravans and scrap.
 
 story gatekey|Gate key|quest:Caravan_KeyMayor|The winch key of Scrapyard Haven's gate, on a ring with a bottle opener.
-note notice Harbour notice | SCRAPYARD HAVEN - HARBOUR\n\nTraders welcome. The gate is SHUT since the hyenas got into the scrap pit.\n\nThe harbour master keeps the gate key in his lockbox by his van. Whoever clears the pit can see the King about a reward - his fortress is up on the ridge, and he's been gone a while.
-note lockbox Harbour master's lockbox | The harbour master's lockbox under his van: the gate key, his ledger, a bag of bolts.
+note notice Harbour notice | SCRAPYARD HAVEN - HARBOUR\n\nTraders welcome. The gate has been SHUT since the hyenas got into the scrap pit.\n\nThe harbour master keeps the gate key in his lockbox by his van. Whoever clears the pit can see the King about a reward - his fortress is up on the ridge, and he's been gone a while.
+note lockbox Harbour master's lockbox | The harbour master's lockbox by his van: the gate key, his ledger, a bag of bolts.
 loot lockbox story:gatekey*1;Bolt*6;Rope*2
 prop lockbox loot.refill=0
 note hoard Scrap king's hoard | The scrap king's hoard, on the fortress's deck: everything worth keeping that ever washed up on the crescent.

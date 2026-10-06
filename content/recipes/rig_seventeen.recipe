@@ -201,7 +201,7 @@ story startkey|Start key|quest:Temperance_ReactorKey|The rig's start key on a re
 story diesel|Can of diesel|quest:Vasagatan_GasTank|A jerrycan of diesel from the tank stack, for the start generator.
 story valvetag|Valve tag|quest:Tangaroa_Token|A brass tag from a closed valve: SHUT.
 
-note handover Manager's handover | RIG SEVENTEEN - HANDOVER TO THE SALVAGE CREW\n\nShe needs one cold start to blow the lines clean before she's towed. Start key in my locker in the control room; diesel for the start generator on the tank stack (rope bridge off the main deck).\n\nWARNING: she ALWAYS catches fire on a cold start. Three valves feed it - the wellhead (cellar deck), the pump room and the flare line (main deck). Shut each and its fire dies. The lifeboat bay's fire door shuts two minutes after the alarm; the override lever by the control room stair gives you two more.\n\nAnd the birds on the derrick bite.\n- D. Okoro, rig manager
+note handover Manager's handover | RIG SEVENTEEN - HANDOVER TO THE SALVAGE CREW\n\nShe needs one cold start to blow the lines clean before she's towed. Start key in my locker in the control room; diesel for the start generator on the tank stack (rope bridge off the main deck).\n\nWARNING: she ALWAYS catches fire on a cold start. Three valves feed it - the wellhead (cellar deck), the pump room and the flare line (main deck). Shut each and its fire dies. The lifeboat bay's fire door shuts two minutes after the alarm; the override lever on the cellar deck by the bay door gives you two more.\n\nAnd the birds on the derrick bite.\n- D. Okoro, rig manager
 note checklist Restart checklist | COLD START - CHECKLIST\n\n1. Diesel in the start generator.\n2. Start key in, turn to START.\n3. When the alarm goes: down the stairs, valve one (wellhead), valve two (pump room), valve three (flare line).\n4. Lifeboat. Don't look back.
 note managerlocker Manager's locker | Okoro's locker: his overalls, a hard hat, a flask - and the start key on its red tag.
 loot managerlocker story:startkey*1;Hat_Construction*1;PlasticBottle_Water*1
@@ -225,7 +225,7 @@ prop sunkdrum loot.refill=0
 prop controldesk obj.name=controldesk
 prop controldesk beh.use=Cold start the rig
 prop controldesk if.use=quest|6\nhas|story:startkey|1\ntake|story:diesel|1
-prop controldesk on.use=message||Diesel in, key in, START. The start generator coughs, catches, roars - the lights come on all over the rig, the flare stack lights with a WHUMP -\nsignal||started\nshow|riglights\nshow|flare\nsound||event:/exploring/temperence/generator\nwait|6\nshow|fire1\nshow|fire2\nshow|fire3\nshow|smoke\nshow|alarm\nshow|firedeck\nopen|baydoor\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||- and the alarm. FIRE on the cellar deck! Two minutes until the lifeboat bay's fire door shuts!\nwait|120\nclose|baydoor\nmessage||Somewhere below, the lifeboat bay's fire door slams. The override lever by the stair opens it again.
+prop controldesk on.use=message||Diesel in, key in, START. The start generator coughs, catches, roars - the lights come on all over the rig, the flare stack lights with a WHUMP -\nsignal||started\nshow|riglights\nshow|flare\nsound||event:/exploring/temperence/generator\nwait|6\nshow|fire1\nshow|fire2\nshow|fire3\nshow|smoke\nshow|alarm\nshow|firedeck\nopen|baydoor\nsound||event:/exploring/temperence/selene/reactor_alarm\nmessage||- and the alarm. FIRE on the cellar deck! Two minutes until the lifeboat bay's fire door shuts!\nwait|120\nclose|baydoor\nmessage||Somewhere below, the lifeboat bay's fire door slams. The override lever by the bay door opens it again.
 prop controldesk else.use=message||The control desk. The checklist: diesel in the start generator, start key in.
 prop override obj.name=override
 prop override beh.use=Pull the fire door override (two more minutes)
@@ -235,12 +235,12 @@ prop override else.use=message||The fire door override. The door is open - or th
 prop valve1 obj.name=valve1
 prop valve1 beh.use=Shut valve one (the wellhead)
 prop valve1 if.use=signal|started\n!signal|v1
-prop valve1 on.use=message||The wheel fights you, then turns. The wellhead fire gutters and dies.\nhide|fire1\nsignal||v1\ngive||story:valvetag*1\nsound||event:/exploring/temperence/selene/handle_spin
+prop valve1 on.use=message||The wheel fights you, then turns. Up on the main deck, the fire at the pump room's door gutters and dies.\nhide|fire1\nsignal||v1\ngive||story:valvetag*1\nsound||event:/exploring/temperence/selene/handle_spin
 prop valve1 else.use=message||Valve one - nothing to shut yet, or already shut.
 prop valve2 obj.name=valve2
 prop valve2 beh.use=Shut valve two (the pump room)
 prop valve2 if.use=signal|started\n!signal|v2
-prop valve2 on.use=message||Valve two shut. The pump room's fire sinks to nothing.\nhide|fire2\nsignal||v2\ngive||story:valvetag*1\nsound||event:/exploring/temperence/selene/handle_spin
+prop valve2 on.use=message||Valve two shut. Out on the main deck, the fire by valve three sinks to nothing.\nhide|fire2\nsignal||v2\ngive||story:valvetag*1\nsound||event:/exploring/temperence/selene/handle_spin
 prop valve2 else.use=message||Valve two - nothing to shut yet, or already shut.
 prop valve3 obj.name=valve3
 prop valve3 beh.use=Shut valve three (the flare line)

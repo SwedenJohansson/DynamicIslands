@@ -103,7 +103,7 @@ prop suppliescrate loot.refill=0
 note medicinebox Warden's medicine box | Bandages, sun cream, a salve for coral cuts.
 loot medicinebox HealingSalve*2;Plastic*2
 prop medicinebox loot.refill=0
-note hatcherybox Hatchery box | Nest markers, a bucket, a notebook of dates - and a coconut someone forgot.
+note hatcherybox Hatchery box | Nest markers, a bucket, a notebook of dates - and a couple of coconuts someone forgot.
 loot hatcherybox Coconut*2;Plank*3;Rope*2
 prop hatcherybox loot.refill=0
 note landingbox Landing box | A box by the board: water for visitors, fruit, a sign-in sheet with three names on it.

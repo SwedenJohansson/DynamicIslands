@@ -292,7 +292,7 @@ step reach|frostgold|1|Walk into the boomtown of Frostgold at the creek's mouth
 step read|Assay office notice|1|Read the notice nailed to the assay office door
 step read|Abbie Starling's letter|1|Read Abbie Starling's letter in her cabin up the creek
 step collect|story:nugget|3|Find the nuggets she hid in the three sluice boxes along the creek
-step reach|mine|1|Climb to the old mine on the north peak's shoulder
+step reach|mine|1|Climb to the old mine on the north-east peak's shoulder
 step kill|Polar bear|1|Drive the white bear out of the mine
 step collect|story:nugget|5|Take the mine's nugget and dive for the one in the creek pool
 step collect|story:assayslip|1|Weigh the five nuggets on the assay office's scales

@@ -94,7 +94,7 @@ note closing Notice of the closing bazaar | GULLSONG BAZAAR - CLOSED FOR THE SEA
 note shellbucket Shell bucket | A bucket on the south bank, full of shells - and one pink one, polished, the kind the net-maker wants.
 loot shellbucket story:shell*1;Clay*2
 prop shellbucket loot.refill=0
-note strongbox Merchant's strongbox | The merchant's strongbox: a season's takings in trade coin, a spyglass, the plans for a sail that never tears.
+note strongbox Merchant's strongbox | The merchant's strongbox: a season's takings in trade coin, a spyglass, the plans for a recycler.
 loot strongbox TradeToken*15;Blueprint_Recycler*1;Glass*4;Plastic*4
 prop strongbox loot.refill=0
 prop strongbox if.open=has|story:merchantkey|1
@@ -109,32 +109,32 @@ prop pontoonbarrel loot.refill=0
 prop netstall obj.name=netstall
 prop netstall beh.use=Trade the pink shell for the net-maker's rope
 prop netstall if.use=take|story:shell|1
-prop netstall on.use=message||You leave the shell on the net-maker's board and take the coil of rope.\ngive||story:rope*1\nsound||event:/raft/item/pickup
+prop netstall on.use=message||You leave the shell on the net-maker's board and take the coil of rope.\ngive||story:rope*1\nsound||event:/ui/pickup
 prop netstall else.use=message||NET-MAKER: rope for a pink shell. (They wash up on the south bank.)
 prop spicestall obj.name=spicestall
 prop spicestall beh.use=Trade the rope for the pepper pouch
 prop spicestall if.use=take|story:rope|1
-prop spicestall on.use=message||The rope for the pepper. It smells like a kitchen on fire.\ngive||story:pepper*1\nsound||event:/raft/item/pickup
+prop spicestall on.use=message||The rope for the pepper. It smells like a kitchen on fire.\ngive||story:pepper*1\nsound||event:/ui/pickup
 prop spicestall else.use=message||SPICE-SELLER: pepper for rope.
 prop potstall obj.name=potstall
 prop potstall beh.use=Trade the pepper for a glazed jar
 prop potstall if.use=take|story:pepper|1
-prop potstall on.use=message||The pepper for the blue jar.\ngive||story:jar*1\nsound||event:/raft/item/pickup
+prop potstall on.use=message||The pepper for the blue jar.\ngive||story:jar*1\nsound||event:/ui/pickup
 prop potstall else.use=message||POTTER: a jar for pepper.
 prop lampstall obj.name=lampstall
 prop lampstall beh.use=Trade the jar for a brass lamp
 prop lampstall if.use=take|story:jar|1
-prop lampstall on.use=message||The jar for the lamp. It still smells of fish oil.\ngive||story:lamp*1\nsound||event:/raft/item/pickup
+prop lampstall on.use=message||The jar for the lamp. It still smells of fish oil.\ngive||story:lamp*1\nsound||event:/ui/pickup
 prop lampstall else.use=message||LAMP-MAKER: a lamp for a jar.
 prop merchantstall obj.name=merchantstall
 prop merchantstall beh.use=Trade the lamp for the merchant's key
 prop merchantstall if.use=take|story:lamp|1
-prop merchantstall on.use=message||The lamp for the key. The merchant's board says: A FAIR TRADE.\ngive||story:merchantkey*1\nsound||event:/raft/item/pickup
+prop merchantstall on.use=message||The lamp for the key. The merchant's board says: A FAIR TRADE.\ngive||story:merchantkey*1\nsound||event:/ui/pickup
 prop merchantstall else.use=message||MERCHANT: the strongbox key for a lamp.
 prop bazaar zone.id=bazaar
 prop bazaar zone.radius=10
 prop bazaar zone.message=Gullsong Bazaar: stalls on pontoons, faded awnings, chalk prices - and gulls singing on every roof.
-prop gulls sound.event=event:/amb/beach
+prop gulls sound.event=event:/amb/ocean
 prop gulls sound.volume=0.5
 prop gulls zone.radius=25
 

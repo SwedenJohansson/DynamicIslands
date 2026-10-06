@@ -545,6 +545,11 @@ prop forestgatedoor obj.name=forestgatedoor
 prop forestgatedoor beh.move=0,-12.8,0
 prop forestgatedoor beh.moveTime=6
 prop forestgatedoor beh.moveMode=switch
+# (Utopia's entrance door as a ready piece wants Raft's entrance key and goes when used: this gate only sinks when the forest lock takes the farm's key - the ready piece's settings taken off)
+prop forestgatedoor beh.use=
+prop forestgatedoor if.use=
+prop forestgatedoor else.use=
+prop forestgatedoor on.use=
 prop oakowl obj.name=oakowl
 prop oakowl beh.use=Reach into the hollow
 prop oakowl if.use=!signal|seal2
@@ -770,7 +775,7 @@ step reach|hermithut|1|Find the hermit's hut in the deepest wood
 step read|The hermit's riddle|1|Read the hermit's riddle
 step collect|story:seal|2|Find the right hollow oak in the glade for the second seal
 step kill|Bear|1|Face the old bear of the glade
-step reach|forestshrine|1|Go on to the forest shrine on the north edge
+step reach|forestshrine|1|Go on to the forest shrine on the south edge
 # Chapter 4 - the lake
 step reach|lakeshore|1|Go down to the ferryman's landing on the lake
 step read|The ferryman's chart|1|Read the ferryman's chart
