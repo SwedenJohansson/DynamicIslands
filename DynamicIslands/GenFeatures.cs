@@ -172,21 +172,47 @@ namespace DynamicIslands.Editor
 					for (int i = 0; i < 60; i++)
 					{
 						Vector2? p = k.Find(k.Mid, s.Radius * 0.85f, (above, slope) => above > 0.6f && slope < 22f, 6f);
-						if (!p.HasValue) return null;
+						if (!p.HasValue) break;
+						// (3.5 m out first, then a little further: a generated island's slopes are rarely sheer - 3 m up is a lift's worth)
+						for (int d = 0; d < 32; d++)
+						{
+							float a = (d % 8) * Mathf.PI / 4f, reach = 3.5f + (d / 8) * 1.5f;
+							Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+							Vector2 q = p.Value + dir * reach;
+							// (the lift stands 3.5 m before the high ground, so its top is beside it: step off there)
+							Vector2 foot = q - dir * 3.5f;
+							float rise = k.Ground(q) - k.Ground(foot);
+							if (rise < (d < 8 ? 4f : 3f) || rise > 14f || k.Slope(q) > 25f || k.Slope(foot) > 30f) continue;
+							Dictionary<string, string> lp = ObjectProps.Defaults(LiftPiece);
+							lp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, rise + 0.3f, 0f));
+							lp[BehaviourProps.MoveTime] = Mathf.Clamp(rise * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+							k.Add(LiftPiece, k.At(foot), a * Mathf.Rad2Deg, lp, 2f);
+							return "a lift up a cliff (" + rise.ToString("F0") + " m)";
+						}
+					}
+					// (no cliff: the steepest rise found, at least 2.5 m - a lift up a slope players could also climb)
+					float best = 2.5f; Vector2 bestFoot = Vector2.zero; float bestAngle = 0f; bool found = false; float seen = 0f; int tried = 0;
+					for (int i = 0; i < 200; i++)
+					{
+						Vector2? p = k.Find(k.Mid, s.Radius * 0.85f, (above, slope) => above > 0.6f && slope < 30f, 2f);
+						if (!p.HasValue) break;
 						for (int d = 0; d < 8; d++)
 						{
 							float a = d * Mathf.PI / 4f;
 							Vector2 q = p.Value + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 3.5f;
 							float rise = k.Ground(q) - k.Ground(p.Value);
-							if (rise < 4f || rise > 14f || k.Slope(q) > 25f) continue;
-							Dictionary<string, string> lp = ObjectProps.Defaults(LiftPiece);
-							lp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, rise + 0.3f, 0f));
-							lp[BehaviourProps.MoveTime] = Mathf.Clamp(rise * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-							k.Add(LiftPiece, k.At(p.Value), a * Mathf.Rad2Deg, lp, 2f);
-							return "a lift up a cliff (" + rise.ToString("F0") + " m)";
+							seen = Mathf.Max(seen, rise); tried++;
+							// (the top's slope looked at a little past the edge: where players step off)
+							Vector2 off = q + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 1.5f;
+							if (rise > best && rise <= 14f && k.Ground(off) >= k.Ground(q) - 0.5f) { best = rise; bestFoot = p.Value; bestAngle = a; found = true; }
 						}
 					}
-					return null;
+					if (!found) { Debug.Log("[CUSTOM ISLANDS] [gen] No place for a lift: the steepest rise in 3.5 m was " + seen.ToString("F1") + " m (" + tried + " tries)"); return null; }
+					Dictionary<string, string> fp = ObjectProps.Defaults(LiftPiece);
+					fp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, best + 0.3f, 0f));
+					fp[BehaviourProps.MoveTime] = Mathf.Clamp(best * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+					k.Add(LiftPiece, k.At(bestFoot), bestAngle * Mathf.Rad2Deg, fp, 2f);
+					return "a lift up a slope (" + best.ToString("F0") + " m)";
 				}
 				case "hives":
 				{

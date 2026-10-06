@@ -116,7 +116,19 @@ namespace DynamicIslands
 						Bounds b;
 						var feet = new GameObject("CI_Feet").transform;
 						feet.position = CustomNote.LocalBounds(live, out b) ? live.transform.TransformPoint(new Vector3(b.center.x, b.max.y, b.center.z)) + Vector3.up * 0.05f : live.transform.position + Vector3.up;
-						if (!mover.Carry || !mover.Carries(feet)) why = "a player standing on it isn't carried (no floor under them)";
+						// (a cabin - Raft's elevator: its floor is at the bottom, under the roof - the lowest of its surfaces under the top)
+						if (mover.Carry && !mover.Carries(feet))
+						{
+							RaycastHit[] down = Physics.RaycastAll(feet.position + Vector3.up * 0.5f, Vector3.down, b.size.y + 2f, ~0, QueryTriggerInteraction.Ignore)
+								.Where(h => h.collider != null && h.collider.transform.IsChildOf(live.transform)).ToArray();
+							if (down.Length > 0) feet.position = down.OrderBy(h => h.point.y).First().point + Vector3.up * 0.05f;
+						}
+						if (!mover.Carry || !mover.Carries(feet))
+						{
+							Collider[] cs = live.GetComponentsInChildren<Collider>(true);
+							why = "a player standing on it isn't carried (no floor under them: " + cs.Count(c => c.enabled && c.gameObject.activeInHierarchy && !c.isTrigger) + " of " + cs.Length +
+								" colliders solid, feet at " + (feet.position - live.transform.position).ToString("F1") + ", " + string.Join(", ", cs.Take(6).Select(c => c.name + (c.enabled ? "" : " off") + (c.isTrigger ? " trigger" : "")).ToArray()) + ")";
+						}
 						UnityEngine.Object.DestroyImmediate(feet.gameObject);
 					}
 					UnityEngine.Object.DestroyImmediate(live);
@@ -140,7 +152,7 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			yield return PlaceableCatalog.EnsureBuilt();
 			bool ok = true;
-			var gs = new IslandGenSettings { Seed = 5252, Radius = 90f, Height = 34f, Peaks = 3, ObjectDensity = 0.3f, Style = TerrainPainter.Tropical, Features = GenFeatures.Max };
+			var gs = new IslandGenSettings { Seed = 5252, Radius = 90f, Height = 34f, Peaks = 3, Shape = IslandShapes.Plateau, Terraces = 0.8f, ObjectDensity = 0.3f, Style = TerrainPainter.Tropical, Features = GenFeatures.Max };
 			yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
 			IslandGenerator.GenerateInEditor(gs);
 			yield return new WaitForSecondsRealtime(0.5f);
@@ -154,7 +166,7 @@ namespace DynamicIslands
 			Check(ref ok, engine != null && chestWith("Fuel crate", StoryItems.Ref(ReadyPieces.ItemOf("VG_DecorationPrefabBase_Engine Variant"))), "an engine, its fuel in a crate");
 			Check(ref ok, cage != null && chestWith("Explorer's chest", StoryItems.Ref(ReadyPieces.ItemOf("RT_SharkCage"))) && objs.Any(e => ObjectProps.Get(e.Props, BehaviourProps.Name).StartsWith("cagechest") && BehaviourProps.StartsHidden(e.Props)),
 				"a hidden chest in a cage, the bolt cutters in the explorer's chest");
-			Check(ref ok, lift != null && BehaviourProps.Offset(lift.Props).y >= 4f && ObjectProps.GetBool(lift.Props, BehaviourProps.Carry, false), "a lift up a cliff" + (lift != null ? " (" + BehaviourProps.Offset(lift.Props).y.ToString("F1") + " m)" : ""));
+			Check(ref ok, lift != null && BehaviourProps.Offset(lift.Props).y >= 2.5f && ObjectProps.GetBool(lift.Props, BehaviourProps.Carry, false), "a lift up a cliff" + (lift != null ? " (" + BehaviourProps.Offset(lift.Props).y.ToString("F1") + " m)" : ""));
 			Check(ref ok, report.Contains("generator") && report.Contains("vines"), "the report: " + report);
 			var six = new IslandGenSettings { Seed = 5252, Radius = 90f, Height = 34f, Peaks = 3, ObjectDensity = 0.3f, Style = TerrainPainter.Tropical, Features = 6 };
 			IslandGenerator.GenerateInEditor(six);
