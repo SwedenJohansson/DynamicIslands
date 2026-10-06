@@ -864,7 +864,8 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			deleteArmed = null;
-			try { File.Delete(Path.Combine(PresetFolder, name + ".txt")); } catch (Exception e) { SetStatus("Could not delete: " + e.Message); return; }
+			// (to deleted\presets, not deleted for good, like the rest of the mod's files - AU41)
+			try { string f = Path.Combine(PresetFolder, name + ".txt"); if (File.Exists(f)) PiecesFiles.MoveToDeleted(f, "presets"); } catch (Exception e) { SetStatus("Could not delete: " + e.Message); return; }
 			RefreshPresets();
 			SetStatus("Deleted the preset '" + name + "'.");
 		}

@@ -67,7 +67,8 @@ namespace DynamicIslands.Editor
 
 		static void Delete(string name)
 		{
-			try { string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
+			// (moved to deleted\autosave, not deleted for good, like the rest of the mod's files - AU41)
+			try { string p = PathFor(name); if (File.Exists(p)) { PiecesFiles.MoveToDeleted(p, "autosave"); Log("'" + name + "' is saved: its autosave is moved to the deleted folder"); } }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove the autosave of '" + name + "': " + e.Message); }
 		}
 
@@ -170,8 +171,9 @@ namespace DynamicIslands.Editor
 			if (value == null || value == LaterChoice) return;
 			if (value == DiscardChoice)
 			{
-				foreach (string n in Waiting()) { try { File.Delete(PathFor(n)); } catch { } }
-				Log("The autosaves were thrown away");
+				// (to deleted\autosave, not deleted for good: a click on the wrong choice can be undone by hand - AU41)
+				foreach (string n in Waiting()) { try { PiecesFiles.MoveToDeleted(PathFor(n), "autosave"); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + n + "' aside: " + e.Message); } }
+				Log("The autosaves were thrown away (moved to the deleted folder)");
 				return;
 			}
 			if (DynamicIslands.LoadIsland(value, PathFor(value)))

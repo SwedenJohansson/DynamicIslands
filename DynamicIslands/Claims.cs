@@ -40,6 +40,18 @@ namespace DynamicIslands.Editor
 		public static void Reset() { held.Clear(); granted.Clear(); waiting.Clear(); }
 
 		/// <summary>
+		/// An island is unloaded or removed on this machine: this player's grants and questions for its things are
+		/// forgotten (a late answer is then ignored, and the next try asks again). The host's holds stay: they end on
+		/// their own within seconds, and another player may still have the island loaded.
+		/// </summary>
+		public static void ForgetIsland(int islandId)
+		{
+			int forgotten = granted.RemoveWhere(x => (int)(x >> 32) == islandId);
+			foreach (long k in waiting.Keys.Where(x => (int)(x >> 32) == islandId).ToList()) { waiting.Remove(k); forgotten++; }
+			if (forgotten > 0) Debug.Log("[CUSTOM ISLANDS] [net] Island " + islandId + " unloaded: " + forgotten + " claim(s) of it forgotten");
+		}
+
+		/// <summary>
 		/// Whether this player may use the thing now. The host: unless another player holds it. A client: when the host
 		/// granted it (asked earlier); otherwise it asks the host now and then(granted) runs when the answer comes.
 		/// </summary>

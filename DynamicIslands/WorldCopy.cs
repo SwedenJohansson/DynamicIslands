@@ -112,6 +112,7 @@ namespace DynamicIslands.Editor
 			// (a file that is there but can't be read - locked by an antivirus or a sync - throws: the world then loads as
 			// "couldn't be read" and isn't saved, instead of as "no file", which the next save deleted - review 2026-10-06)
 			string[] mine = ReadThere(modFile);
+			WarnIfShared(mine);
 			string folder = RaftWorldFolder;
 			string copy = folder != null ? Path.Combine(folder, FileName) : null;
 			string[] travelled = copy != null ? ReadThere(copy) : null;
@@ -161,6 +162,34 @@ namespace DynamicIslands.Editor
 			}
 			LastSource = "mod folder";
 			return mine;
+		}
+
+		/// <summary>The world folders warned about this session ("world id|other folder"): once each.</summary>
+		static readonly HashSet<string> warnedShared = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		/// Host, loading a world: the mod's file of this world id was last saved by another of Raft's world folders that is
+		/// still there. A world folder copied (or one copied over another) keeps the world's id, and the mod's state is kept
+		/// by that id: both folders then share one state of the custom islands - what is looted, done or brought in one is
+		/// so in the other. The host is told once; the state isn't split (which folder had what can't be told apart). A
+		/// renamed world (the other folder gone) says nothing. (AU41)
+		/// </summary>
+		static void WarnIfShared(string[] mine)
+		{
+			if (mine == null) return;
+			try
+			{
+				string here = SaveAndLoad.CurrentGameFileName, raft = SaveAndLoad.WorldPath;
+				if (string.IsNullOrEmpty(here) || string.IsNullOrEmpty(raft)) return;
+				// (the world's name in the file's first line: the folder of the world that saved it)
+				string other = Housekeeping.WorldName(mine, "");
+				if (other.Length == 0 || other.Equals(here, StringComparison.OrdinalIgnoreCase) || other.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return;
+				if (!Directory.Exists(Path.Combine(raft, other))) return;
+				if (!warnedShared.Add(SaveAndLoad.WorldGuid + "|" + other)) return;
+				Debug.LogWarning("[CUSTOM ISLANDS] The world '" + here + "' has the same world id as '" + other + "' (a copy of its folder?): both share one state of the custom islands (" + SaveAndLoad.WorldGuid + ")");
+				DynamicIslands.Notify("This world looks like a copy of the world '" + other + "' (same world id): both share one state of their custom islands - chests, quests and story. Play only one of them, or keep the copy as a backup.", true);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for a copy of this world's folder: " + e.Message); }
 		}
 
 		/// <summary>Host, after writing the world file: the copy in Raft's world folder, and the copy for every player.</summary>

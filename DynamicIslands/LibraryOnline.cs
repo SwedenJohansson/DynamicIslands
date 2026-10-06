@@ -237,7 +237,8 @@ namespace DynamicIslands.Editor
 					if (!Failed(req)) bytes = req.downloadHandler.data;
 				}
 				if (bytes == null || (f.Sha256.Length > 0 && LibraryPack.Sha256(bytes) != f.Sha256)) { done(null); yield break; }
-				try { Directory.CreateDirectory(CacheFolder); File.WriteAllBytes(cached, bytes); } catch { }
+				// (in one step: a half-written picture in the cache was read as the whole one next time - AU41)
+				try { Directory.CreateDirectory(CacheFolder); SafeFile.WriteAllBytes(cached, bytes); } catch { }
 			}
 			tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
 			if (!tex.LoadImage(bytes)) { UnityEngine.Object.Destroy(tex); done(null); yield break; }
