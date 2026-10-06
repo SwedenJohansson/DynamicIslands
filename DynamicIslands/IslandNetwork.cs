@@ -109,6 +109,8 @@ namespace DynamicIslands.Editor
 		// Client: when each file was asked for (asked again when it doesn't come), and whether the player was told
 		static readonly Dictionary<string, float> requestedAt = new Dictionary<string, float>();
 		static readonly HashSet<string> toldWaiting = new HashSet<string>();
+		// Client: the host's island names left out (not file names here - AU41), the player told once each
+		static readonly HashSet<string> toldRefused = new HashSet<string>();
 		static bool toldNoList;
 		static float nextFileCheck;
 		const float FileRetrySeconds = 30f, SlowSyncSeconds = 30f;
@@ -542,6 +544,7 @@ namespace DynamicIslands.Editor
 					// (known without its file - it came while the host was still making it, or its file failed here: the
 					// host's hash now lets it come after all; Resync didn't help before)
 					string hash = msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "";
+					if (!IsHash(hash)) hash = ""; // (part of a file's name here - AU41)
 					if ((known.Failed || string.IsNullOrEmpty(known.Hash)) && hash.Length > 0 && known.Root == null && !known.Loading)
 					{
 						known.Hash = hash;
@@ -552,6 +555,15 @@ namespace DynamicIslands.Editor
 					}
 					// (still waiting for its file after a Resync, which forgot the requests: asked for again - AU64)
 					else if (known.WaitingForFile && known.Root == null && !string.IsNullOrEmpty(known.Hash) && !requested.Contains(known.Hash)) ResolveFile(known);
+					continue;
+				}
+				// (the host's name and hash become a file's name here: one that isn't a plain file name - "..\..\x" wrote
+				// outside the mod's folder - is left out, not written - AU41)
+				string problem = ReceivedProblem(msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] : null);
+				if (problem != null)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] [net] The host's island " + msg.Ids[i] + " is left out: " + problem);
+					if (toldRefused.Add(msg.Names[i] ?? "")) DynamicIslands.Notify("An island from the host is left out: its name can't be a file name here (see the log, F10)", true);
 					continue;
 				}
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
@@ -606,6 +618,26 @@ namespace DynamicIslands.Editor
 
 		internal static string DownloadName(string name, string hash) { return name + "_" + hash; }
 
+		/// <summary>A content hash as Hash makes it: 12 digits 0-9 a-f (no wildcards or folders for a file's name).</summary>
+		public static bool IsHash(string hash)
+		{
+			return hash != null && hash.Length == 12 && hash.All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
+		}
+
+		/// <summary>
+		/// Why an island name and hash from another PC can't make a file's name here (AU41: the host's names went into paths
+		/// unchecked), or null. The hash may be missing (an island the host couldn't hash).
+		/// </summary>
+		internal static string ReceivedProblem(string name, string hash)
+		{
+			string p = FileNames.ReceivedProblem(name);
+			if (p != null) return "the name '" + Shown(name) + "' " + p;
+			if (!string.IsNullOrEmpty(hash) && !IsHash(hash)) return "'" + Shown(hash) + "' isn't a content hash";
+			return null;
+		}
+
+		static string Shown(string s) { return s == null ? "" : s.Length > 80 ? s.Substring(0, 80) + "..." : s; }
+
 		/// <summary>
 		/// True for island files downloaded from a host (or kept for a saved world): &lt;name&gt;_&lt;12 hex digits&gt;, where the
 		/// digits are the file's own content hash. (A player's island named like "camp_202609281530" - a date and time are
@@ -622,6 +654,9 @@ namespace DynamicIslands.Editor
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
 			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			// (the name the host sends with it is the saved file's - AU41)
+			string problem = ReceivedProblem(msg.Name, msg.Hash);
+			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] An island file from the host isn't saved: " + problem); return; }
 			string[] parts;
 			if (!incoming.TryGetValue(msg.Hash, out parts) || parts.Length != msg.Count) incoming[msg.Hash] = parts = new string[msg.Count];
 			parts[msg.Index] = msg.Data;
@@ -684,6 +719,9 @@ namespace DynamicIslands.Editor
 			// (a host playing an island from a copy - name_hash, downloaded as a player or kept for a saved world - sends
 			// that copy, under the island's own name: the player saves it as name_hash, the name its entry waits for; sent
 			// as name_hash it was saved as name_hash_hash and the island never loaded)
+			// (a player's name is a file's here: only plain file names in the mod's folder are sent - AU41)
+			string problem = ReceivedProblem(name, hash);
+			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for an island file that isn't one: " + problem); return; }
 			string file = name;
 			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) file = DownloadName(name, hash);
 			string path = IslandSpawner.PathFor(file);

@@ -410,7 +410,7 @@ namespace DynamicIslands.Editor
 
 		static void WriteZip(string path, string folder, IEnumerable<KeyValuePair<string, byte[]>> files)
 		{
-			string tmp = path + ".tmp";
+			string tmp = SafeFile.TempFor(path);
 			using (var zip = new ZipOutputStream(File.Create(tmp)))
 			{
 				zip.SetLevel(6);
@@ -423,8 +423,8 @@ namespace DynamicIslands.Editor
 				}
 				zip.Finish();
 			}
-			if (File.Exists(path)) File.Delete(path);
-			File.Move(tmp, path);
+			// (in the old export's place in one step; it was deleted, then moved - AU41)
+			SafeFile.Commit(tmp, path);
 		}
 
 		#endregion

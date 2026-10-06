@@ -891,7 +891,7 @@ namespace DynamicIslands.Editor
 
 		const string HelpPlans = "A world plan is a list of rules: which custom islands a world gets, when they come and where. Each rule brings one island.\n\n" +
 			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name (a good way to start from a sample plan). " +
-			"Delete: removes the plan file at once - worlds that use it keep their own copy.";
+			"Delete: moves the plan file to Mods\\DynamicIslands\\deleted\\plans, where you can get it back - worlds that use it keep their own copy.";
 		const string HelpTemplates = "Adds a ready-made set of rules to this plan: an island-hopping trail, a story chain of your islands, flying islands, a quest reward, " +
 			"your island in Raft's story... They are added to the rules you have; change them afterwards like any rule.";
 		const string HelpRandom = "On: islands from your spawn pool (spawnpool.txt) also turn up by chance while sailing, between the plan's islands.\n\n" +
@@ -1037,8 +1037,10 @@ namespace DynamicIslands.Editor
 		void DeletePlan()
 		{
 			string path = WorldPlan.PathFor(plan.Name);
-			if (File.Exists(path)) File.Delete(path);
-			DynamicIslands.Notify("Deleted plan '" + plan.Name + "'");
+			// (moved to deleted\plans, where it can be got back, like islands, groups and stamps - it was deleted for good, AU41)
+			try { if (File.Exists(path)) PiecesFiles.MoveToDeleted(path, "plans"); }
+			catch (Exception e) { DynamicIslands.Notify(SafeFile.InUse(e) ? "The plan '" + plan.Name + "' is in use by another program - close it there and try again" : "Could not delete the plan '" + plan.Name + "': " + e.Message, true); return; }
+			DynamicIslands.Notify("Deleted plan '" + plan.Name + "' (kept in " + IslandFilesWindow.DeletedFolderName + " until you remove it there)");
 			lastPlan = null;
 			Open();
 		}

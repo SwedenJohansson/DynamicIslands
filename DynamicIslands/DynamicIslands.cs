@@ -23,7 +23,33 @@ namespace DynamicIslands
 {
 	public class DynamicIslands : Mod
 	{
-		public static readonly string assetpath = @"Mods\DynamicIslands\";
+		public static readonly string assetpath = FullAssetPath();
+
+		/// <summary>
+		/// Mods\DynamicIslands\ as a full path, made once (AU41: it was relative, so a working directory changed by anything
+		/// in Raft redirected every save): beside Raft_Data, in Raft's folder - where it was found so far, Raft being started
+		/// in its folder. Where that differs from the working directory at the start and only the latter has the folder,
+		/// that one, as before.
+		/// </summary>
+		static string FullAssetPath()
+		{
+			const string relative = @"Mods\DynamicIslands\";
+			string before = Path.GetFullPath(relative);
+			try
+			{
+				string raft = Path.GetDirectoryName(Path.GetFullPath(UnityEngine.Application.dataPath));
+				if (string.IsNullOrEmpty(raft)) return before;
+				string beside = Path.Combine(raft, relative);
+				if (!beside.Equals(before, StringComparison.OrdinalIgnoreCase) && Directory.Exists(before) && !Directory.Exists(beside))
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] Raft's folder is " + raft + " but its files are in " + before + ": using those");
+					return before;
+				}
+				return beside;
+			}
+			// (Application.dataPath can't be read here - not on Unity's main thread: where it was found so far)
+			catch (Exception) { return before; }
+		}
 
 		/// <summary>Name used by the editor's Save/Load menu entries; set by LoadIsland/SaveIsland commands.</summary>
 		public static string currentIslandName = "myisland";

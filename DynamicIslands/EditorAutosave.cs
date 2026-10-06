@@ -125,8 +125,9 @@ namespace DynamicIslands.Editor
 					string island = IslandSpawner.PathFor(name);
 					if (File.Exists(island) && File.GetLastWriteTimeUtc(island) >= File.GetLastWriteTimeUtc(f))
 					{
-						// (saved since, e.g. by a test or by hand: nothing to give back)
-						try { File.Delete(f); } catch { }
+						// (saved since, e.g. by a test or by hand: nothing to give back - moved to deleted\autosave, not deleted:
+						// a clock or a copied-in island can make the island look newer than the work in its autosave - AU41)
+						try { PiecesFiles.MoveToDeleted(f, "autosave"); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave " + f + " aside: " + e.Message); }
 						continue;
 					}
 					result.Add(name);
