@@ -90,7 +90,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++)
 			{
 				int level = i;
-				Add("Randomizer_" + RandomizerSettings.LevelNames[i], UIKit.Button(rrow, RandomizerSettings.LevelNames[i], () => SetRandomizer(s => s.Level = level), "How much of a normal Raft world is made different", -1, 28f, 12));
+				Add("Randomizer_" + RandomizerSettings.LevelNames[i], UIKit.Button(rrow, RandomizerSettings.LevelNames[i], () => SetRandomizer(s => s.Level = level), RandomizerSettings.LevelHint(level), -1, 28f, 12));
 			}
 			for (int row = 0; row < 2; row++)
 			{

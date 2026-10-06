@@ -123,6 +123,21 @@ namespace DynamicIslands
 			if (ok) Log("PASS: host-only commands refused"); else Fail("host-only commands refused");
 		}
 
+		[ConsoleCommand(name: "CIRandomizerHints", docs: "Dev, anywhere: each randomizer part and level has its hover hint, with how often per level and what stays as Raft has it (the user, 2026-10-04)")]
+		public static void RandomizerHintsCommand()
+		{
+			bool ok = true;
+			Check(ref ok, RandomizerSettings.FeatureHints.Length == RandomizerSettings.Features.Length, "a hint for each of the " + RandomizerSettings.Features.Length + " parts");
+			for (int i = 0; i < RandomizerSettings.FeatureHints.Length; i++)
+			{
+				string h = RandomizerSettings.FeatureHints[i];
+				Check(ref ok, h.Contains(" / ") && h.Contains("Stays"), RandomizerSettings.FeatureLabels[i] + ": per level and what stays (" + h.Length + " characters)");
+			}
+			for (int l = 0; l < RandomizerSettings.LevelNames.Length; l++)
+				Check(ref ok, RandomizerSettings.LevelHint(l).StartsWith(RandomizerSettings.LevelNames[l].ToUpperInvariant()), "level " + RandomizerSettings.LevelNames[l] + ": " + RandomizerSettings.LevelHint(l));
+			if (ok) Log("PASS: randomizer hints"); else Fail("randomizer hints");
+		}
+
 		[ConsoleCommand(name: "CIUniqueCopy", docs: "Dev: CIUniqueCopy <island> <new name> - a copy of a saved island with a setting of its own, so no other file has its content (host-swap tests: B must have no file of it, AU6 finds islands by content)")]
 		public static void UniqueCopyCommand(string[] args)
 		{

@@ -2054,7 +2054,8 @@ as in Raft.
 The randomizer makes a **normal Raft world** play out differently every time, with or without custom islands, and
 without touching Raft's story (the radio tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance
 and Utopia stay as they are). Choose it in the World settings window (New Game box, **WORLD SETTINGS...**): **Off**,
-**Light**, **Normal** or **Wild**, and which parts take part. The level sets how often things happen:
+**Light**, **Normal** or **Wild**, and which parts take part (hover a level or a part: it says exactly what it does,
+how often at each level, where, and what stays as Raft has it). The level sets how often things happen:
 
 | | Light | Normal | Wild |
 |---|---|---|---|

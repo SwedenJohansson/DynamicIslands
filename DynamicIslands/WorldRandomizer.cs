@@ -18,17 +18,45 @@ namespace DynamicIslands.Editor
 		public const string Colours = "colours", Animals = "animals", Alphas = "alphas", Loot = "loot", Finds = "finds", Oddities = "oddities", Bosses = "bosses", Large = "large";
 		public static readonly string[] Features = { Colours, Animals, Alphas, Loot, Finds, Oddities, Bosses, Large };
 		public static readonly string[] FeatureLabels = { "Colours", "Animals", "Alphas", "Loot", "Finds", "Oddities", "Bosses", "Large" };
+		/// <summary>
+		/// What each part does exactly - what changes, how often (Light / Normal / Wild), where, and what stays as Raft has it.
+		/// Shown when the part's button is hovered (New Game box, Esc > Custom Islands; the user, 2026-10-04). The numbers are
+		/// the code's own (Pick(light, normal, wild) below and in RandomizerContent).
+		/// </summary>
 		public static readonly string[] FeatureHints =
 		{
-			"Animals and sharks (Bruce too) now and then have another colour: charcoal, ash, rust, moss, gold...",
-			"More animals on Raft's islands, and animals on islands that had none",
-			"Rare alpha animals and a huge Bruce: bigger, darker, much tougher, and they drop a trophy head and more",
-			"Some of Raft's crates and giant clams lie somewhere else, and islands sometimes have extra crates and sunken barrels",
-			"Now and then an island hides a treasure hunt (a map in a bottle), an abandoned camp or a castaway's stash",
-			"Small islands with something odd on them appear while sailing: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris, a hut",
-			"Now and then a boss lair appears: a plateau with a huge, very tough beast and its guards, and a big hoard",
-			"Now and then a large island like Raft's big ones appears (warthogs, animals to catch, puffer fish), with scenes from the quest islands and a cave with a guard and a hoard",
+			"COLOURS: animals and sharks (Bruce too) get another colour - charcoal, ash, rust, moss, frost, night, snow, cream, rarely a gold shark. " +
+				"How often: about 15% / 30% / 55% of them (Light / Normal / Wild). Where: everywhere - Raft's islands, the sea, custom islands. " +
+				"Stays as in Raft: how they behave, their health and damage.",
+			"ANIMALS: more animals on Raft's islands. An island that has animals gets more of its own kinds near where Raft puts them " +
+				"(50% / 80% / every island: 1 / 2 / 3 spots); an island without any gets warthogs, chickens, goats or llamas (15% / 30% / 50%; bears on Wild); " +
+				"a puffer fish guarding the reef (10% / 25% / 40%). Where: Raft's islands as you meet them. Stays: Raft's own animals and spawners.",
+			"ALPHAS: rare bigger, darker alpha warthogs, bears, hyenas and screechers (3x health, harder hits) and a huge Big Bruce - " +
+				"about 3% / 6% / 12% of fighters, 6% / 12% / 22% of sharks. A banner warns you; killed, they drop a trophy head, meat and leather. " +
+				"Stays: every other animal; the raft takes Bruce's bites as in Raft.",
+			"LOOT: some of the crates and giant clams on Raft's islands lie in other places (on 30% / 50% / 80% of islands), and now and then " +
+				"extra crates on land and barrels under water (35% / 60% / 85% of islands: up to 1 / 2 / 3 on land, 1 / 2 / 3 under water). " +
+				"Stays: what is in Raft's crates; its story items and blueprints are never moved.",
+			"FINDS: a treasure hunt (a map in a bottle leads to a buried chest), an abandoned camp or a castaway's stash on 10% / 20% / 30% of Raft's islands " +
+				"(more on big ones); on Raft's big islands a den under rocks with a guard and a hoard (25% / 45% / 70%) and an outpost with props of the quest islands " +
+				"(20% / 35% / 50%). Stays: everything Raft put on the island keeps its place.",
+			"ODDITIES: small odd islands while you sail - a van, a caravan, a crashed plane, a stranded boat, a hermit's shack, a statue, rocket debris, a hut of raft blocks, " +
+				"each with loot, a note and a name banner. How often: after the first 1.5 km, about every 12 / 7 / 4 km. Stays: Raft's own islands and story.",
+			"BOSSES: a boss lair - a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One) wakes with two guards " +
+				"and guards a big hoard. How often: after the first 4 km, about every 40 / 20 / 12 km. Stays: Raft's story bosses.",
+			"LARGE: a large island as big as Raft's big ones, with a made-up name, warthogs and animals to catch, things to gather, hidden loot, scenes of the " +
+				"quest islands, a den and up to two landmarks (a wreck, a lighthouse, a jetty...). How often: after the first 3 km, about every 20 / 10 / 7 km. " +
+				"Stays: Raft's own big islands.",
 		};
+
+		/// <summary>The levels' hover text (New Game box and Esc > Custom Islands): how much each changes, in numbers.</summary>
+		public static string LevelHint(int level)
+		{
+			return level <= Off ? "OFF: a normal Raft world - nothing is changed." :
+				level == Light ? "LIGHT: now and then something is different - about 15% of animals in another colour, 3% alphas (6% of sharks), an oddity island about every 12 km, a large island every 20 km, a boss lair every 40 km." :
+				level == Normal ? "NORMAL: a good share of the world is different - about 30% of animals in another colour, 6% alphas (12% of sharks), an oddity island about every 7 km, a large island every 10 km, a boss lair every 20 km; more loot and finds." :
+				"WILD: lots of surprises - about 55% of animals in another colour, 12% alphas (22% of sharks), an oddity island about every 4 km, a large island every 7 km, a boss lair every 12 km; most islands get extra animals, loot and finds.";
+		}
 
 		public int Level;
 		public int Seed;
