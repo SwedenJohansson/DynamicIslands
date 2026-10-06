@@ -996,16 +996,7 @@ namespace DynamicIslands.Editor
 			int count = 0;
 			try
 			{
-				var files = new List<string>();
-				if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt"));
-				// (and the copies in Raft's world folders and their saves: loading an older save reads its own copy - AU27)
-				try
-				{
-					string raftWorlds = SaveAndLoad.WorldPath;
-					if (!string.IsNullOrEmpty(raftWorlds) && Directory.Exists(raftWorlds)) files.AddRange(Directory.GetFiles(raftWorlds, global::DynamicIslands.Editor.WorldCopy.FileName, SearchOption.AllDirectories));
-				}
-				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
-				foreach (string file in files)
+				foreach (string file in WorldStateFiles())
 				{
 					string[] lines = File.ReadAllLines(file);
 					bool changed = false;
@@ -1028,6 +1019,123 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Pointing saved worlds at the kept version of '" + island + "': " + e.Message); }
 			return count;
+		}
+
+		/// <summary>Every file with a saved world's islands: the mod's worlds\*.txt and the copies in Raft's world folders and their saves (AU27).</summary>
+		static List<string> WorldStateFiles()
+		{
+			var files = new List<string>();
+			if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt"));
+			try
+			{
+				string raftWorlds = SaveAndLoad.WorldPath;
+				if (!string.IsNullOrEmpty(raftWorlds) && Directory.Exists(raftWorlds)) files.AddRange(Directory.GetFiles(raftWorlds, global::DynamicIslands.Editor.WorldCopy.FileName, SearchOption.AllDirectories));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
+			return files;
+		}
+
+		/// <summary>The hash a world line plays an island from, when it isn't the island's file now ("" otherwise).</summary>
+		static string OlderHash(string line, string island, string now)
+		{
+			if (line.StartsWith("@") || line.StartsWith("#")) return "";
+			string[] p = line.Split('|');
+			if (p.Length < 8 || !p[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) return "";
+			string had = p[7].Trim();
+			return had.Length == 0 || had == now ? "" : had;
+		}
+
+		/// <summary>
+		/// R1c: the saved worlds that play an island from an older version (a kept copy &lt;island&gt;_&lt;hash&gt;, see
+		/// KeepForWorlds) instead of its file now - by their names, without the editor's test world. Empty when none.
+		/// </summary>
+		public static List<string> WorldsOnOlderVersion(string island)
+		{
+			var result = new List<string>();
+			try
+			{
+				string now = IslandNetwork.HashOf(island);
+				if (now == null || IslandNetwork.IsDownloadName(island)) return result;
+				foreach (string file in WorldStateFiles())
+				{
+					string[] lines = File.ReadAllLines(file);
+					if (!lines.Any(l => OlderHash(l, island, now).Length > 0)) continue;
+					string world = Housekeeping.WorldName(lines, file);
+					if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) result.Add(world);
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for worlds on an older '" + island + "': " + e.Message); }
+			return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>
+		/// R1c "Give my worlds this version": every saved world that plays an older copy of the island (the mod's world
+		/// files and the copies in Raft's world folders) is pointed at the island's file now, and the old copies no world
+		/// names any more go to deleted\kept versions (never erased; the worlds' lines name the new hash now, so a copy put
+		/// back is only another island file).
+		/// Returns the worlds that changed; moved gets the copies that were moved aside.
+		/// </summary>
+		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved)
+		{
+			moved = new List<string>();
+			var worlds = new List<string>();
+			string now = IslandNetwork.HashOf(island);
+			if (now == null) throw new FileNotFoundException("'" + island + "' has no file");
+			var olds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			List<string> files = WorldStateFiles();
+			foreach (string file in files)
+			{
+				string[] lines = File.ReadAllLines(file);
+				bool changed = false;
+				for (int i = 0; i < lines.Length; i++)
+				{
+					string had = OlderHash(lines[i], island, now);
+					if (had.Length == 0) continue;
+					string[] p = lines[i].Split('|');
+					p[7] = now;
+					lines[i] = string.Join("|", p);
+					olds.Add(had);
+					changed = true;
+				}
+				if (!changed) continue;
+				SafeFile.WriteAllLines(file, lines);
+				string world = Housekeeping.WorldName(lines, file);
+				if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) worlds.Add(world);
+				Debug.Log("[CUSTOM ISLANDS] " + file + ": '" + island + "' is played from its file now (" + now + ")");
+			}
+			// (the old copies: only those no world line names any more, as its own island or by a hash of this one)
+			var stillNamed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (string file in files)
+				foreach (string l in File.ReadAllLines(file))
+				{
+					if (l.StartsWith("@") || l.StartsWith("#")) continue;
+					string[] p = l.Split('|');
+					stillNamed.Add(p[0].Trim());
+					if (p.Length >= 8 && p[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase) && p[7].Trim().Length > 0) stillNamed.Add(IslandNetwork.DownloadName(island, p[7].Trim()));
+				}
+			foreach (string had in olds)
+			{
+				string copy = IslandNetwork.DownloadName(island, had);
+				string path = IslandSpawner.PathFor(copy);
+				if (stillNamed.Contains(copy) || !File.Exists(path)) continue;
+				try { PiecesFiles.MoveToDeleted(path, KeptVersionsFolder); moved.Add(copy); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the old copy " + copy + " aside: " + e.Message); }
+			}
+			if (moved.Count > 0) IslandCache.Forget();
+			Debug.Log("[CUSTOM ISLANDS] Gave " + worlds.Count + " world(s) the version " + now + " of '" + island + "', moved " + moved.Count + " old cop" + (moved.Count == 1 ? "y" : "ies") + " aside");
+			return worlds.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>Where "Give my worlds this version" moves the old copies: Mods\DynamicIslands\deleted\&lt;this&gt;.</summary>
+		public const string KeptVersionsFolder = "kept versions";
+
+		/// <summary>The player's message for GiveWorldsThisVersion's result.</summary>
+		public static string GaveText(string island, List<string> worlds, List<string> moved)
+		{
+			if (worlds.Count == 0) return "No saved world plays an older '" + island + "' - nothing was changed.";
+			return "These worlds play this '" + island + "' now: " + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + "." +
+				(moved.Count > 0 ? " The old cop" + (moved.Count == 1 ? "y was" : "ies were") + " moved to Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName + "\\" + KeptVersionsFolder + "." : "") +
+				" What was picked, looted or opened there may now fit other objects.";
 		}
 
 		/// <summary>Sets an island's weight in spawnpool.txt (0 = never turns up by chance while sailing).</summary>

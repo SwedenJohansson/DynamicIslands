@@ -709,7 +709,10 @@ namespace DynamicIslands
 			return island;
 		}
 
-		public static bool SaveIsland(string name)
+		public static bool SaveIsland(string name) { return SaveIsland(name, false); }
+
+		/// <summary>offerVersions (the Save button, Ctrl+S, Save as): saved worlds on an older copy of it get the choice of this version (R1c).</summary>
+		public static bool SaveIsland(string name, bool offerVersions)
 		{
 			if (!InEditor()) { Notify("SaveIsland only works inside the editor", true); return false; }
 			if (!IsValidIslandName(name)) { Notify("Can't save '" + name + "': " + FileNames.IslandProblem(name), true); return false; }
@@ -727,6 +730,7 @@ namespace DynamicIslands
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
 				EditorAutosave.Saved(name);
 				if (overwrote && !kept) TellWorldsUsing(name);
+				if (overwrote && offerVersions) OfferThisVersion(name, kept);
 				return true;
 			}
 			catch (Exception e)
@@ -766,6 +770,47 @@ namespace DynamicIslands
 				return true;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Keeping the old version of '" + name + "' for saved worlds: " + e.Message); return false; }
+		}
+
+		/// <summary>Islands whose "Give my worlds this version" box was shown in this Raft session without a copy just kept (once each).</summary>
+		static readonly HashSet<string> offeredVersions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		/// R1c: after a save, saved worlds that play an older copy of the island (kept now, or at an earlier save or library
+		/// update) can be given this version - a box with "Give my worlds this version" and "Keep their version". Shown when
+		/// a copy was just kept, otherwise once per island in a Raft session (not at every Ctrl+S).
+		/// </summary>
+		static void OfferThisVersion(string name, bool justKept)
+		{
+			try
+			{
+				if (!justKept && offeredVersions.Contains(name)) return;
+				List<string> worlds = LibraryPack.WorldsOnOlderVersion(name);
+				if (worlds.Count == 0) return;
+				offeredVersions.Add(name);
+				string list = string.Join(", ", worlds.Take(6).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 6 ? " and " + (worlds.Count - 6) + " more" : "");
+				InfoWindow.Open("Saved worlds keep an older '" + name + "'",
+					"These saved worlds play an older version of '" + name + "' (a copy kept for them, " + name + "_<hash>): " + list + ".\n\n" +
+					(justKept ? "This save removed objects or changed their order, so they were kept on the version they started with. " : "") +
+					"<b>Give my worlds this version</b> makes them play the island as it is now and moves the old copies to Mods\\DynamicIslands\\" +
+					IslandFilesWindow.DeletedFolderName + "\\" + LibraryPack.KeptVersionsFolder + ". What was picked, looted or opened there is remembered by the objects' order, " +
+					"so it may land on other objects. <b>Keep their version</b> changes nothing (also later in My islands).",
+					new InfoWindow.Choice("Give my worlds this version", () =>
+					{
+						try
+						{
+							List<string> moved;
+							List<string> changed = LibraryPack.GiveWorldsThisVersion(name, out moved);
+							string text = LibraryPack.GaveText(name, changed, moved);
+							InfoWindow.SetStatus(changed.Count + " world" + (changed.Count == 1 ? "" : "s") + " changed");
+							InfoWindow.Close();
+							Notify(text, false, 8);
+						}
+						catch (Exception e) { InfoWindow.SetStatus(SafeFile.InUse(e) ? "A world file is in use by another program - close it there and try again" : "Could not change them: " + e.Message); }
+					}, "Saved worlds with an older copy of this island play it as it is now", true),
+					new InfoWindow.Choice("Keep their version", InfoWindow.Close, "Change nothing: they keep playing the copy (Esc)"));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Offering this version of '" + name + "' to saved worlds: " + e.Message); }
 		}
 
 		/// <summary>Whether saved state would land on other objects: the old objects aren't an unchanged beginning of the new ones.</summary>
