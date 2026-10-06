@@ -892,7 +892,8 @@ namespace DynamicIslands.Editor
 		/// <summary>The wrecks and landmarks' set pieces (Raft's quest islands' own; loaded with their scenes).</summary>
 		public static readonly string[] LandmarkNames = { "BoatStranded", "Airplane", "RT_PlasticBoat", "RT_PillarThick", "RT_Floor", "RT_Fence", "LandmarkLadder_6m", "TP_RotatingRedLight", "RT_Floodlight",
 			"RT_SatteliteDisc", "RT_WindMill", "RT_Wall1", "RT_WallWindowBroken", "RT_WallWindowBroken1", "RT_WallWindowBroken2", "Van_1", "Van_2", "Van3", "Van_4", "Van_5", "Caravan_Blue_01", "Caravan_Green_01",
-			"Caravan_Yellow_01", "Balboa_Shack", "TangaroaFounderStatue", "RaftMonument", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };
+			"Caravan_Yellow_01", "Balboa_Shack", "TangaroaFounderStatue", "RaftMonument", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister",
+			"RT_WallWindow1", "RT_WallWindow2", "RT_WallDoor1", "RT_RoofLamp", "Locker" };
 
 		/// <summary>
 		/// One wreck or landmark (ROADMAP LM10): a boat run aground on the beach or sunk off the coast, a plane crashed on the
@@ -900,10 +901,10 @@ namespace DynamicIslands.Editor
 		/// rocket's debris - Raft's own set pieces, stood on the ground as the randomizer's oddities are, with a chest by the
 		/// ones on land. Kept 22 m from the island's other buildings (spots). Returns what was put, or null (no spot).
 		/// </summary>
-		static string Landmark(MapKit k, IslandGenSettings s, List<Vector2> spots)
+		internal static string Landmark(MapKit k, IslandGenSettings s, List<Vector2> spots)
 		{
 			System.Random r = k.Rnd;
-			string[] kinds = { "beached boat", "sunken boat", "plane wreck", "sunken plane", "small boat", "van", "caravan", "shack", "statue", "rocket debris", "lighthouse", "lookout mast", "jetty", "ruin" };
+			string[] kinds = { "beached boat", "sunken boat", "plane wreck", "sunken plane", "small boat", "van", "caravan", "shack", "statue", "rocket debris", "lighthouse", "lookout mast", "jetty", "ruin", "skyscraper" };
 			string kind = OnlyLandmark ?? kinds[r.Next(kinds.Length)];
 			bool wet = kind == "sunken boat" || kind == "sunken plane", beach = kind == "beached boat" || kind == "small boat" || kind == "jetty";
 			bool jetty = kind == "jetty";
@@ -921,8 +922,8 @@ namespace DynamicIslands.Editor
 				Vector2? p = k.Find(k.Mid, s.Radius * (wet ? 1.5f : beach ? 1.2f : 0.85f), ok, 12f);
 				if (!p.HasValue || spots.Any(o => (o - p.Value).magnitude < 22f)) continue;
 				// (the big ones on land on even ground: a shack on a 9-degree slope stood 3 m up on its low side)
-				bool tower = kind == "lighthouse" || kind == "lookout mast" || kind == "ruin";
-				if (!wet && !beach && Uneven(k, p.Value + (tower ? new Vector2(-3f, 0f) : Vector2.zero), kind == "shack" || kind == "plane wreck" || tower ? 7f : 4f) > (tower ? 1.5f : 1f)) continue;
+				bool tower = kind == "lighthouse" || kind == "lookout mast" || kind == "ruin" || kind == "skyscraper";
+				if (!wet && !beach && Uneven(k, p.Value + (tower && kind != "skyscraper" ? new Vector2(-3f, 0f) : Vector2.zero), kind == "skyscraper" ? 8f : kind == "shack" || kind == "plane wreck" || tower ? 7f : 4f) > (tower ? 1.5f : 1f)) continue;
 				// (a lighthouse near the coast: open sea within 25 m)
 				if (kind == "lighthouse" && !Enumerable.Range(0, 16).Any(a => k.Ground(p.Value + new Vector2(Mathf.Cos(a * 0.3927f), Mathf.Sin(a * 0.3927f)) * 25f) < k.Sea)) continue;
 				// (a jetty: the sea 12 m out from the beach, away from the land's middle)
@@ -949,6 +950,7 @@ namespace DynamicIslands.Editor
 				case "lookout mast": RtTower(k, c, false); break;
 				case "jetty": Jetty(k, c, -toMid.normalized); break;
 				case "ruin": Ruin(k, c, r); break;
+				case "skyscraper": Remakes.Skyscraper(k, c, r); break;
 				default:
 					RandomizerContent.Piece(k, "CaravanRocket", c, yaw, 0.2f, 25f + (float)r.NextDouble() * 20f, RandomizerContent.Tilt(r, 20f), 5f);
 					string[] debris = { "CaravanRocketDebris_Body1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister" };

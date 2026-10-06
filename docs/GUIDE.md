@@ -609,8 +609,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
       the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris, and structures of Raft's radio
       tower pieces: a **lighthouse** near the coast and a **lookout mast** on high ground (two decks on four legs, ladders
       up, a chest on top), a **jetty** of Raft's foundations out over the water with a boat at its end, and a **ruin**
-      (a room with half its walls broken or gone, a crate inside) - with a chest by the ones on land (Mixed includes
-      them too);
+      (a room with half its walls broken or gone, a crate inside), and a **skyscraper** (12 x 9 m, 6 to 10 storeys of
+      the tower's windowed walls, a ladder up its front to a railed roof with a lamp, the dish and a locker) - with a
+      chest by the ones on land (Mixed includes them too);
     - the quest islands' **scenes**, made of their own props, each with a chest and a note: **Castaways' camp**,
       **Caravan outpost**, **Radio outpost**, **Scrapyard**, **Old market**, **Bear country** (with a bear nearby),
       **Frozen camp** and **Hotel garden**.
@@ -2023,7 +2024,7 @@ The parts (all on unless you click one off):
 | **Finds** | A **treasure hunt** (a map in a bottle on the beach leads to a buried chest), an **abandoned camp**, a **castaway's stash**, and on Raft's big islands a **den** with a guard and a hoard |
 | **Oddities** | Small odd islands while you sail: a van, a caravan, a crashed plane, a stranded boat, a hermit's shack, a statue, rocket debris, a hut of raft blocks |
 | **Bosses** | Now and then a **boss lair**: climb the plateau and a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One) wakes with two guards |
-| **Large** | Now and then a **large island** as big as Raft's big ones, with a made-up name, animals, hidden loot, scenes from the quest islands and a den |
+| **Large** | Now and then a **large island** as big as Raft's big ones, with a made-up name, animals, hidden loot, scenes from the quest islands, a den and up to two of the generator's landmarks (a wreck, a lighthouse, a jetty, a skyscraper...) |
 
 ![Oddity islands](images/randomizer-oddities.jpg)
 *The oddity islands. Each has loot, a note and a banner with its name when you arrive.*

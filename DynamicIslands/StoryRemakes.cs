@@ -85,6 +85,43 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
+		#region A skyscraper (ROADMAP LM10)
+
+		/// <summary>
+		/// A skyscraper of the Radio Tower's walls and floors (the generator's landmarks, ROADMAP LM10): 12 x 9 m, 6 to 10
+		/// storeys of windows on levelled ground at c, a door on the ground floor, a ladder up its front to a railed roof with
+		/// a lamp, the dish and a chest.
+		/// </summary>
+		internal static void Skyscraper(MapKit k, Vector2 c, System.Random r)
+		{
+			float yaw = Turn(r);
+			var a = new Frame(c, yaw, 0f);
+			float y0 = Mathf.Max(TopUnder(k, a), TopUnder(k, new Frame(a.At(6f, 0f), yaw, 0f))) + 0.05f;
+			a = new Frame(c, yaw, y0);
+			var b = new Frame(a.At(6f, 0f), yaw, y0);
+			Level(k, a, -7f, 7f, -5.5f, 5.5f, y0 - 0.05f, 6f);
+			k.Clear(c, 12f);
+			int storeys = 6 + r.Next(5);
+			for (int i = 0; i < storeys; i++)
+			{
+				int floor = i;
+				// (open inside: no walls between the halves)
+				Storey(k, a.Up(3f * i), sl => sl.StartsWith("r") ? null : floor == 0 && sl == "f1" ? "RT_WallDoor1" : Wall(r, 8));
+				Storey(k, b.Up(3f * i), sl => sl.StartsWith("l") ? null : Wall(r, 8));
+			}
+			Frame ra = a.Up(3f * storeys), rb = b.Up(3f * storeys);
+			P(k, ra, "RT_Floor", 0f, 4.5f);
+			P(k, rb, "RT_Floor", 0f, 4.5f);
+			Railing(k, ra, 0f, right: false);
+			Railing(k, rb, 0f, left: false, gap: -1.5f);
+			Ladders(k, b, -1.5f, y0, rb.Y);
+			P(k, ra, "RT_RoofLamp", -3f, 0f, 0.05f);
+			Sit(k, rb, "RT_SatteliteDisc", -4.5f, 2.5f, 0f, 200f);
+			Sit(k, ra, "Locker", -5.4f, 3.4f, 0f, 90f, LootOf("Rooftop locker", "Treasure"));
+		}
+
+		#endregion
+
 		#region Helpers
 
 		/// <summary>

@@ -656,6 +656,11 @@ namespace DynamicIslands.Editor
 				if (Dress(k, t, spot.Value, 9f)) used.Add(spot.Value);
 				if (themes.Count == 0) break;
 			}
+			// Up to two of the generator's landmarks (ROADMAP LM10): a wreck, a lighthouse, a jetty, a skyscraper... - away
+			// from the scenes and the cave
+			var spots = new List<Vector2>(used);
+			spots.AddRange(k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("cave")).Select(o => new Vector2(o.Position.x, o.Position.z)));
+			for (int i = r.Next(3); i > 0; i--) GenBuildings.Landmark(k, s, spots);
 		}
 
 		#endregion

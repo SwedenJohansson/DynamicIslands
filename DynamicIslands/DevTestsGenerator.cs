@@ -672,8 +672,8 @@ namespace DynamicIslands
 					yield return new WaitForSecondsRealtime(0.5f);
 				}
 			}
-			// Each of the structures of Raft's pieces (LM10): lighthouse, lookout mast, jetty, ruin - three of a kind
-			foreach (string only in new[] { "lighthouse", "lookout mast", "jetty", "ruin" })
+			// Each of the structures of Raft's pieces (LM10): lighthouse, lookout mast, jetty, ruin, skyscraper - three of a kind
+			foreach (string only in new[] { "lighthouse", "lookout mast", "jetty", "ruin", "skyscraper" })
 			{
 				GenBuildings.OnlyLandmark = only;
 				IslandGenSettings ls = make(GenBuildings.Landmarks, true, "tropical", 3, false);
@@ -687,7 +687,7 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.5f);
 				List<string> built = IslandGenerator.LastReport.Built;
 				int made = built.Count(b => b == "a " + only);
-				string key = only == "jetty" ? "Block_Foundation" : only == "ruin" ? "Loot_Crate" : "RT_PillarThick";
+				string key = only == "jetty" ? "Block_Foundation" : only == "ruin" ? "Loot_Crate" : only == "skyscraper" ? "RT_RoofLamp" : "RT_PillarThick";
 				Check(ref ok, made >= 1 && count(key) >= made, only + ": " + made + " of 3 made (" + count(key) + " " + key + ") - " + string.Join(", ", built.ToArray()));
 				EditorGameObject piece = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == key);
 				if (piece != null && Camera.main != null)
