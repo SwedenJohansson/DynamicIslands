@@ -49,7 +49,8 @@ namespace DynamicIslands
 				LibraryPack.SaveInstalled(installed);
 			string fake = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), "cilib-fake-world.txt");
 			if (File.Exists(fake)) File.Delete(fake);
-			foreach (string z in new[] { Path.Combine(LibraryPack.ExportFolder, "ci-lib-pack.zip"), Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip") }) if (File.Exists(z)) File.Delete(z);
+			foreach (string z in new[] { Path.Combine(LibraryPack.ExportFolder, "ci-lib-pack.zip"), Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip"),
+				Path.Combine(LibraryPack.LibraryFolder, "ci-lib-pack2.zip"), Path.Combine(LibraryPack.LibraryFolder, "ci-lib-pack3.zip"), Path.Combine(LibraryPack.LibraryFolder, "a2.tmp") }) if (File.Exists(z)) File.Delete(z);
 			string last = Path.Combine(LibraryPack.ExportFolder, "exports.json");
 			if (File.Exists(last) && File.ReadAllText(last).Contains("ci-lib")) File.Delete(last);
 			IslandCache.Forget();
@@ -285,57 +286,65 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			bool ok = true;
 			CleanLibTests();
-			MakeLibIsland(LibC, 3);
-			MakeLibIsland(LibB, 2, LibC);
-			IslandFilesWindow.Open();
-			yield return null;
-			GameObject files = GameObject.Find("IslandFilesWindow");
-			InputField nameField = files != null ? files.GetComponentsInChildren<InputField>(true).FirstOrDefault() : null;
-			if (nameField != null) nameField.text = LibB;
-			Check(ref ok, files != null && Click(files, "Export..."), "the Islands window has Export...");
-			yield return null;
-			Check(ref ok, LibraryExportWindow.IsOpen, "it opens the Share window");
-			Text includes = LibraryExportWindow.Window.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Includes");
-			Check(ref ok, includes != null && includes.text.Contains(LibB) && includes.text.Contains(LibC), "it says what goes along: " + (includes != null ? includes.text : "?"));
-			RawImage pic = LibraryExportWindow.Window.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Preview");
-			Check(ref ok, pic != null && pic.texture != null && pic.texture.width == 1280, "a picture of the editor's view is taken (" + (pic != null && pic.texture != null ? pic.texture.width + "x" + pic.texture.height : "none") + ")");
-			Check(ref ok, TypeInto(LibraryExportWindow.Window.gameObject, "e.g. First Voyage", "CI Lib Pack") && TypeInto(LibraryExportWindow.Window.gameObject, "your name", "CI Tester") && TypeInto(LibraryExportWindow.Window.gameObject, "one line for the list", "a test"), "title, author and summary typed");
-			Screenshot(new[] { "library_share" });
-			yield return new WaitForSecondsRealtime(0.6f);
-			var off = OffScreen(LibraryExportWindow.Window.gameObject, Screen.width, Screen.height);
-			Check(ref ok, off.Count == 0, "the Share window fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
-			Check(ref ok, Click(LibraryExportWindow.Window.gameObject, "Export"), "Export clicked");
-			yield return null;
-			string zip = LibraryExportWindow.LastZip;
-			Check(ref ok, zip != null && File.Exists(zip) && Path.GetFileName(zip) == "ci-lib-pack.zip", "the pack is written: " + (zip ?? LibraryExportWindow.Status));
-			LibraryExportWindow.Close();
+			try
+			{
+				MakeLibIsland(LibC, 3);
+				MakeLibIsland(LibB, 2, LibC);
+				IslandFilesWindow.Open();
+				yield return null;
+				GameObject files = GameObject.Find("IslandFilesWindow");
+				InputField nameField = files != null ? files.GetComponentsInChildren<InputField>(true).FirstOrDefault() : null;
+				if (nameField != null) nameField.text = LibB;
+				Check(ref ok, files != null && Click(files, "Export..."), "the Islands window has Export...");
+				yield return null;
+				Check(ref ok, LibraryExportWindow.IsOpen, "it opens the Share window");
+				Text includes = LibraryExportWindow.Window.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Includes");
+				Check(ref ok, includes != null && includes.text.Contains(LibB) && includes.text.Contains(LibC), "it says what goes along: " + (includes != null ? includes.text : "?"));
+				RawImage pic = LibraryExportWindow.Window.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Preview");
+				Check(ref ok, pic != null && pic.texture != null && pic.texture.width == 1280, "a picture of the editor's view is taken (" + (pic != null && pic.texture != null ? pic.texture.width + "x" + pic.texture.height : "none") + ")");
+				Check(ref ok, TypeInto(LibraryExportWindow.Window.gameObject, "e.g. First Voyage", "CI Lib Pack") && TypeInto(LibraryExportWindow.Window.gameObject, "your name", "CI Tester") && TypeInto(LibraryExportWindow.Window.gameObject, "one line for the list", "a test"), "title, author and summary typed");
+				Screenshot(new[] { "library_share" });
+				yield return new WaitForSecondsRealtime(0.6f);
+				var off = OffScreen(LibraryExportWindow.Window.gameObject, Screen.width, Screen.height);
+				Check(ref ok, off.Count == 0, "the Share window fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+				Check(ref ok, Click(LibraryExportWindow.Window.gameObject, "Export"), "Export clicked");
+				yield return null;
+				string zip = LibraryExportWindow.LastZip;
+				Check(ref ok, zip != null && File.Exists(zip) && Path.GetFileName(zip) == "ci-lib-pack.zip", "the pack is written: " + (zip ?? LibraryExportWindow.Status));
+				LibraryExportWindow.Close();
 
-			// Import it where the islands aren't
-			Directory.CreateDirectory(LibraryPack.ImportFolder);
-			if (zip != null) File.Copy(zip, Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip"), true);
-			DeleteLib(LibB, LibC);
-			LibraryImportWindow.Open();
-			yield return null;
-			Check(ref ok, LibraryImportWindow.IsOpen && Click(LibraryImportWindow.Window.gameObject, "ci-lib-pack.zip"), "the Import window lists the pack; picked");
-			yield return null;
-			Check(ref ok, LibraryImportWindow.Detail.Contains("CI Lib Pack") && LibraryImportWindow.Detail.Contains(LibC), "it shows what the pack holds: " + LibraryImportWindow.Detail.Replace("\n", " / "));
-			Check(ref ok, Click(LibraryImportWindow.Window.gameObject, "Install"), "Install clicked");
-			yield return null;
-			Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && File.Exists(IslandSpawner.PathFor(LibC)) && LibraryImportWindow.Status.Contains("Installed"), "installed: " + LibraryImportWindow.Status.Replace("\n", " / "));
-			Transform row = LibraryImportWindow.Window.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Installed_ci-lib-pack");
-			Check(ref ok, row != null, "the Installed list has it");
-			Screenshot(new[] { "library_import" });
-			yield return new WaitForSecondsRealtime(0.6f);
-			off = OffScreen(LibraryImportWindow.Window.gameObject, Screen.width, Screen.height);
-			Check(ref ok, off.Count == 0, "the Import window fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
-			LibraryImportWindow.AskRemove("ci-lib-pack");
-			yield return null;
-			Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && Click(LibraryImportWindow.Window.gameObject, "Sure? Remove"), "Remove asks first ('Sure? Remove')");
-			yield return null;
-			Check(ref ok, !File.Exists(IslandSpawner.PathFor(LibB)) && !LibraryPack.Installed().Any(e => e.id == "ci-lib-pack"), "then removes it");
-			LibraryImportWindow.Close();
-			CleanLibTests();
-			RemovePoolTestLines();
+				// Import it where the islands aren't
+				Directory.CreateDirectory(LibraryPack.ImportFolder);
+				if (zip != null) File.Copy(zip, Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip"), true);
+				DeleteLib(LibB, LibC);
+				LibraryImportWindow.Open();
+				yield return null;
+				Check(ref ok, LibraryImportWindow.IsOpen && Click(LibraryImportWindow.Window.gameObject, "ci-lib-pack.zip"), "the Import window lists the pack; picked");
+				yield return null;
+				Check(ref ok, LibraryImportWindow.Detail.Contains("CI Lib Pack") && LibraryImportWindow.Detail.Contains(LibC), "it shows what the pack holds: " + LibraryImportWindow.Detail.Replace("\n", " / "));
+				Check(ref ok, Click(LibraryImportWindow.Window.gameObject, "Install"), "Install clicked");
+				yield return null;
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && File.Exists(IslandSpawner.PathFor(LibC)) && LibraryImportWindow.Status.Contains("Installed"), "installed: " + LibraryImportWindow.Status.Replace("\n", " / "));
+				Transform row = LibraryImportWindow.Window.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Installed_ci-lib-pack");
+				Check(ref ok, row != null, "the Installed list has it");
+				Screenshot(new[] { "library_import" });
+				yield return new WaitForSecondsRealtime(0.6f);
+				off = OffScreen(LibraryImportWindow.Window.gameObject, Screen.width, Screen.height);
+				Check(ref ok, off.Count == 0, "the Import window fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+				LibraryImportWindow.AskRemove("ci-lib-pack");
+				yield return null;
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && Click(LibraryImportWindow.Window.gameObject, "Sure? Remove"), "Remove asks first ('Sure? Remove')");
+				yield return null;
+				Check(ref ok, !File.Exists(IslandSpawner.PathFor(LibB)) && !LibraryPack.Installed().Any(e => e.id == "ci-lib-pack"), "then removes it");
+			}
+			finally
+			{
+				// (also when it stops part way: no window left open, no test files left)
+				LibraryExportWindow.Close();
+				LibraryImportWindow.Close();
+				CleanLibTests();
+				RemovePoolTestLines();
+			}
 			if (ok) Log("PASS: library windows"); else Fail("library windows");
 		}
 

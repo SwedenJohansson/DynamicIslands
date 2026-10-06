@@ -89,6 +89,9 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.5f);
 
 			// The generator: the choice on its tabs, and the files it makes
+			// (it opens with the last generated settings: Off first, so On is the click's; given back after)
+			IslandGenSettings lastGen = IslandGenerator.Last.Copy();
+			IslandGenerator.Last.Levels = false;
 			GeneratorWindow.Open();
 			yield return new WaitForSecondsRealtime(0.3f);
 			GameObject gw = GameObject.Find("GeneratorWindow");
@@ -118,6 +121,7 @@ namespace DynamicIslands
 				Check(ref ok, PlayerLevels.IsOn(DynamicIslands.currentIslandProps), "generating in the editor with On gives the island its rule");
 				CommandUndoRedo.UndoRedoManager.Undo();
 			}
+			IslandGenerator.Last = lastGen;
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			EditorUI.RefreshIsland();
@@ -170,14 +174,14 @@ namespace DynamicIslands
 			f.Save(IslandSpawner.PathFor(LevelIsland));
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius(LevelIsland), 390f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { Fail("no open sea near the raft"); LevelCleanup(null); yield break; }
 			var sent = new List<IslandNetMessage>();
 			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.Levels) sent.Add(m); };
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(LevelIsland, spot.Value, true);
 			IslandNetwork.Loopback = null;
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault(e => e.HostName == LevelIsland);
-			if (entry == null || entry.Root == null) { Fail("the level island did not spawn"); yield break; }
+			if (entry == null || entry.Root == null) { Fail("the level island did not spawn"); LevelCleanup(entry); yield break; }
 			Check(ref ok, PlayerLevels.On && PlayerLevels.Mine != null && PlayerLevels.Mine.Level == 1, "the island turns the level up system on (level " + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Level : 0) + ")");
 			Check(ref ok, sent.Any(m => m.Name == "on"), "the other players are told");
 			Check(ref ok, LevelHud.LastAnnounce != null && LevelHud.LastAnnounce.StartsWith("LEVEL UP SYSTEM"), "a banner says so: " + LevelHud.LastAnnounce);
@@ -372,7 +376,7 @@ namespace DynamicIslands
 				", jump " + jump.ToString("F2") + " -> " + pc.jumpSpeed.ToString("F2") + " m/s (15% higher)");
 			StatApply.Restore(pc, sv);
 			Check(ref ok, pc.normalSpeed == walk && pc.sprintSpeed == run && pc.swimSpeed == swim && pc.jumpSpeed == jump, "and Raft's own numbers after (Raft's flippers still change them as usual)");
-			yield return new WaitForSeconds(0.6f);
+			yield return WaitFor(() => StatApply.HealthBase > 0f && Near(player.Stats.stat_health.Max, StatApply.HealthBase * 1.15f), 10f);
 			Stat_Health health = player.Stats.stat_health;
 			float baseMax = StatApply.HealthBase;
 			Check(ref ok, baseMax > 0f && Near(health.Max, baseMax * 1.15f), "maximum health " + baseMax.ToString("F0") + " -> " + health.Max.ToString("F1"));
@@ -387,7 +391,7 @@ namespace DynamicIslands
 			float thirstRaft = thirst.LostPerSecond;
 			Check(ref ok, thirstRaft > 0f && Near(thirstLost, thirstRaft / 1.15f), "thirst drains " + thirstRaft.ToString("F4") + " -> " + thirstLost.ToString("F4") + " a second (lasts 15% longer)");
 			PlayerLevels.SetMine(new LevelRecord());
-			yield return new WaitForSeconds(0.6f);
+			yield return WaitFor(() => Near(health.Max, baseMax), 10f);
 			Check(ref ok, Near(health.Max, baseMax) && health.Value <= baseMax, "no points: Raft's health again (" + health.Max.ToString("F0") + ")");
 			Check(ref ok, Near(PlayerLevels.Factor(LevelRules.Oxygen), 1f), "no points: breath as Raft's");
 
@@ -403,7 +407,7 @@ namespace DynamicIslands
 			// Everyone's level goes to everyone (for the "Lv n" under each other player's name)
 			var levelMsgs = new List<IslandNetMessage>();
 			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.Levels && m.Name == "levels") levelMsgs.Add(m); };
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => levelMsgs.Any(m => (m.Data ?? "").Contains("4242=")), 10f);
 			IslandNetwork.Loopback = null;
 			string list = levelMsgs.Count > 0 ? levelMsgs.Last().Data : "";
 			Check(ref ok, list.Contains("4242=" + guest.Level) && list.Contains(me + "=" + PlayerLevels.Mine.Level) && PlayerLevels.LevelOf(4242UL) == guest.Level,

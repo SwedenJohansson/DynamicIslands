@@ -127,16 +127,16 @@ namespace DynamicIslands
 			GameObject j = GameObject.Find(HotkeyHints.JournalName), note = GameObject.Find("UI_Hotkey_Element_NoteBook");
 			Func<GameObject, string> text = g => { if (g == null) return null; Component t = g.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI"); return t != null ? HarmonyLib.Traverse.Create(t).Property("text").GetValue<string>() : null; };
 			Check(ref ok, j != null && note != null && j.transform.parent == note.transform.parent, "the journal's tab is beside Raft's notebook tab");
-			Check(ref ok, text(j) == JournalWindow.Key.ToString(), "it says the journal's key: " + text(j));
+			Check(ref ok, text(j) == ModKeys.Name(JournalWindow.Key), "it says the journal's key: " + text(j));
 			Check(ref ok, j != null && note != null && j.transform.position.x > note.transform.position.x, "... after the notebook's tab (right of it)");
 			PlayerLevels.SetEnabled(true);
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => GameObject.Find(HotkeyHints.StatsName) != null, 10f);
 			GameObject k = GameObject.Find(HotkeyHints.StatsName);
-			Check(ref ok, k != null && k.activeInHierarchy && text(k) == PlayerLevels.Key.ToString(), "the level up system on: the stats tab shows its key " + text(k));
+			Check(ref ok, k != null && k.activeInHierarchy && text(k) == ModKeys.Name(PlayerLevels.Key), "the level up system on: the stats tab shows its key " + text(k));
 			Screenshot(new[] { "hotkey_tabs" });
 			yield return new WaitForSeconds(0.5f);
 			PlayerLevels.SetEnabled(false);
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => GameObject.Find(HotkeyHints.StatsName) == null, 10f);
 			GameObject k2 = GameObject.Find(HotkeyHints.StatsName); // (Find skips inactive objects)
 			Check(ref ok, k2 == null, "off: the stats tab is gone again");
 			if (levels) PlayerLevels.SetEnabled(true);
@@ -340,7 +340,7 @@ namespace DynamicIslands
 			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft, CustomIslandSpawner.LandRadius(CrateIsland), 700f) ?? CustomIslandSpawner.FindClearSpot(raft, CustomIslandSpawner.LandRadius(CrateIsland), 1500f);
 			Check(ref ok, spot.HasValue, "a place for the island near the raft");
-			if (!spot.HasValue) { Fail("raft crate world"); yield break; }
+			if (!spot.HasValue) { try { System.IO.File.Delete(IslandSpawner.PathFor(CrateIsland)); } catch { } Fail("raft crate world"); yield break; }
 			// (the player there first: islands stay loaded where a player is, however far the raft)
 			{ CharacterController c0 = player.PersonController.controller; c0.enabled = false; player.transform.position = spot.Value + Vector3.up * 30f; player.PersonController.SwitchControllerType(ControllerType.Ground); c0.enabled = true; }
 			yield return new WaitForSeconds(1f);

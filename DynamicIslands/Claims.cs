@@ -19,7 +19,7 @@ namespace DynamicIslands.Editor
 	public static class Claims
 	{
 		/// <summary>How long the host keeps a granted thing for its player (their "used" comes well before).</summary>
-		const float HoldSeconds = 6f;
+		internal const float HoldSeconds = 6f;
 		/// <summary>A client with no answer by then goes ahead (an older host).</summary>
 		const float NoAnswerSeconds = 3f;
 

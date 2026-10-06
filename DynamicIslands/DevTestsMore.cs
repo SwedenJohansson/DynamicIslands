@@ -585,7 +585,7 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1f);
 				int back = picked.Count(kv => e.Root != null && PickupsOf(e, kv.Key).Any(p => (int)(p.ObjectIndex & 0xFFFF) == kv.Value && p.gameObject.activeInHierarchy));
 				Check(ref ok, back == picked.Count, days + " days later " + back + " of " + picked.Count + " are back");
-				if (Raft_Network.IsHost) IslandWorldState.Remove(UnderwaterPickIsland);
+				if (Raft_Network.IsHost) { IslandWorldState.Remove(UnderwaterPickIsland); try { File.Delete(IslandSpawner.PathFor(UnderwaterPickIsland)); } catch { } }
 			}
 			if (ok) Log("PASS: underwater pickups"); else Fail("underwater pickups");
 		}
@@ -657,10 +657,10 @@ namespace DynamicIslands
 				for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) m[z, x] = f.Heights[z, x] * f.TerrainSize.y;
 				ReachResult r = IslandReach.Assess(m, step, f.WaterLevel);
 				Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(f.Name), 500f);
-				if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+				if (!spot.HasValue) { Fail("no open sea near the raft"); foreach (var ki in islands) try { File.Delete(IslandSpawner.PathFor(ki.Value.Name)); } catch { } yield break; }
 				yield return DynamicIslands.instance.SpawnIslandFile(f.Name, spot.Value, true);
 				IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == f.Name);
-				if (e == null || e.Root == null) { Check(ref ok, false, f.Name + " did not spawn"); continue; }
+				if (e == null || e.Root == null) { Check(ref ok, false, f.Name + " did not spawn"); try { File.Delete(IslandSpawner.PathFor(f.Name)); } catch { } continue; }
 				yield return new WaitForSeconds(1f);
 				Physics.SyncTransforms();
 				Terrain terrain = e.Root.GetComponentInChildren<Terrain>();
@@ -715,6 +715,7 @@ namespace DynamicIslands
 				OnRaftCommand();
 				yield return new WaitForSeconds(0.5f);
 				IslandWorldState.Remove(f.Name);
+				try { File.Delete(IslandSpawner.PathFor(f.Name)); } catch { }
 				yield return null;
 			}
 			if (ok) Log("PASS: can players reach it, with Raft's player"); else Fail("can players reach it, with Raft's player");
@@ -800,13 +801,14 @@ namespace DynamicIslands
 
 			// 1. At sea: the ground kept to 110 m down, no edge of the terrain above 100 m
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius("cideep"), 500f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			Action deleteFiles = () => { foreach (string n in new[] { "cideep", "cideepshallow" }) try { File.Delete(IslandSpawner.PathFor(n)); } catch { } };
+			if (!spot.HasValue) { Fail("no open sea near the raft"); deleteFiles(); yield break; }
 			var nav = new List<string>();
 			Application.LogCallback watch = (msg, trace, type) => { if (msg.Contains("NavMesh for")) nav.Add(msg); };
 			Application.logMessageReceived += watch;
 			yield return DynamicIslands.instance.SpawnIslandFile("cideep", spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == "cideep");
-			if (e == null || e.Root == null) { Application.logMessageReceived -= watch; Fail("cideep did not spawn"); yield break; }
+			if (e == null || e.Root == null) { Application.logMessageReceived -= watch; Fail("cideep did not spawn"); IslandWorldState.Remove("cideep"); deleteFiles(); yield break; }
 			Terrain terrain = e.Root.GetComponentInChildren<Terrain>();
 			TerrainData td = terrain.terrainData;
 			float lowest = float.MaxValue, edgeShallowest = float.MaxValue;
@@ -894,6 +896,7 @@ namespace DynamicIslands
 			Log(string.Format(Inv, "BENCH {0} deep islands ({1} objects each) at once: frame {2:F1} ms before, {3:F1} ms with them", spawned, deepF.Objects.Count, before, after));
 			Check(ref ok, spawned >= 2 && after < Mathf.Max(before * 2.5f, before + 25f), spawned + " deep islands at once: frame " + before.ToString("F1") + " -> " + after.ToString("F1") + " ms");
 			IslandWorldState.Remove("cideep");
+			deleteFiles();
 			OnRaftCommand();
 			if (ok) Log("PASS: the deep sea floor in a world"); else Fail("the deep sea floor in a world");
 		}

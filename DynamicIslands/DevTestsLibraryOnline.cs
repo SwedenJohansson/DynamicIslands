@@ -103,7 +103,10 @@ namespace DynamicIslands
 				Check(ref ok, menuButton != null && menuButton.activeInHierarchy, "the main menu has ISLAND LIBRARY");
 				if (menuButton != null) menuButton.GetComponent<Button>().onClick.Invoke(); else LibraryWindow.Open();
 				yield return LoadList(false);
-				yield return new WaitForSecondsRealtime(1f);
+				// (the icon and the picture load on their own: until both are shown, or 15 s)
+				Func<bool> shown = () => { Button r0 = LibraryWindow.Row("ci-lib-pack"); RawImage i0 = r0 != null ? r0.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Icon") : null; return i0 != null && i0.texture != null && LibraryWindow.Picture != null; };
+				for (float t = 0; !shown() && t < 15f; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				yield return new WaitForSecondsRealtime(0.25f);
 				Check(ref ok, LibraryWindow.IsOpen && LibraryClient.Entries != null && LibraryClient.Entries.Count == 2, "the window opens and lists the library's 2 entries (" + LibraryWindow.Status + ")");
 				Check(ref ok, LibraryWindow.Shown().SequenceEqual(new[] { "ci-lib-pack" }), "the plans tab shows the plan: " + string.Join(", ", LibraryWindow.Shown().ToArray()));
 				Button pr = LibraryWindow.Row("ci-lib-pack");
@@ -372,7 +375,9 @@ namespace DynamicIslands
 				"the library's list reads from " + LibraryClient.Address + ": " + (LibraryClient.Entries != null ? string.Join(", ", LibraryClient.Entries.Select(e => e.Info.id).ToArray()) : LibraryClient.LastError));
 			if (LibraryClient.Entries == null) { Fail("library online"); yield break; }
 			LibraryWindow.Select("palm-cove");
-			yield return new WaitForSecondsRealtime(4f);
+			// (downloaded: until the icon and the picture are shown, or 30 s)
+			Func<bool> shown = () => { Button r0 = LibraryWindow.Row("palm-cove"); RawImage i0 = r0 != null ? r0.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Icon") : null; return i0 != null && i0.texture != null && LibraryWindow.Picture != null && LibraryWindow.Picture.width == 1280; };
+			for (float t = 0; !shown() && t < 30f; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 			Button row = LibraryWindow.Row("palm-cove");
 			RawImage icon = row != null ? row.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Icon") : null;
 			Check(ref ok, icon != null && icon.texture != null && LibraryWindow.Picture != null && LibraryWindow.Picture.width == 1280, "its icon and picture download (" + (LibraryWindow.Picture != null ? LibraryWindow.Picture.width + "x" + LibraryWindow.Picture.height : "none") + ")");

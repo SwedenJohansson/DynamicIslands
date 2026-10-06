@@ -295,7 +295,7 @@ namespace DynamicIslands
 			Check(ref ok, players.All(p => !Claims.HostGrant(e, chest, p)), "once it is used: no one gets it");
 			// A hold that is never used (the player's checks failed: no key) ends, and someone else may try
 			Check(ref ok, !Claims.HostGrant(e, zone, players[2]), "the zone held for another player: no");
-			yield return new WaitForSecondsRealtime(6.5f);
+			yield return new WaitForSecondsRealtime(Claims.HoldSeconds + 0.5f);
 			Check(ref ok, Claims.HostGrant(e, zone, players[2]), "the hold ends after a few seconds when the zone was never set off: the next player gets it");
 
 			// Once-events: seven players arriving together - the shared part runs once; other events every time
