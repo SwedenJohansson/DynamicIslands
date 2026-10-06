@@ -773,6 +773,15 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Wreck, ghost raft | No land: an abandoned raft of Raft's own blocks, floating like a real raft (the deck just above the water). A wreck has barrels to loot; a ghost raft is small, medium or large with a note, and the large ones are guarded by rats and screechers ([9.4](#94-extra-options)) |
 | Oddities, boss lair, large island | The world randomizer's islands ([section 9.3](#93-the-world-randomizer)) |
 
+**Your own map types.** A map type can also be a text file: `Mods\DynamicIslands\maptypes\<name>.maptype`, read at
+start (F10 `ReloadMapTypes` reads them again). Its help header explains every line: the land (styles, shape, radius,
+height... or `settings = <built-in type>`), the height (flying, sunken), and the content - `content = <built-in type>`
+reuses a built-in type's content, then your own lines add chests, notes, creatures, zones, atmosphere, objects and a quest
+at spots like `top`, `beach`, `near:20`. F10 `ExportMapType <type>` writes a built-in type as a file to start from.
+Your types show in the Ready-made tab and can be named in `spawnpool.txt` (`type:<name>`) and in plans like the built-in
+ones, and an island pack can carry them. **`ReRollMapType <type> [seed]`** (F10, in the editor) puts a type's content
+onto the island you are editing, without touching the land: one Ctrl+Z takes it off again.
+
 ### 4.7 Saving and sharing
 
 **Save** (Ctrl+S) saves straight away once the island has its own name (a new island asks for one first: until then it
@@ -2226,7 +2235,10 @@ small gold **Lv 5** under your name.
 ## 10. Settings files
 
 In `<Raft>\Mods\DynamicIslands\`. Text files: open them with Notepad. They explain themselves, and changes are picked
-up while the game runs.
+up while the game runs. You don't need to edit them by hand: **Defaults...** (in World settings of Raft's New Game box, and in
+**Esc > Custom Islands**) sets the `spawnpool.txt` values in a window - each field is saved when you leave it, capped to
+its range, and **Mod's own** puts the defaults back. In a world, **Esc > Custom Islands** also has the world's own
+regrow days and the host's unload distance and Receiver settings (players who joined see the host's).
 
 **`spawnpool.txt`** (islands that appear on their own; the host's counts):
 
