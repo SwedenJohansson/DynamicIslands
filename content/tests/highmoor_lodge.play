@@ -13,12 +13,12 @@ expect animals Dolphin 2
 # Off the jetty and up the drive to the lodge's door
 walk 1.5 49 to 1.5 42 to 3.5 38 to 4.75 35.5 h=3.4
 zone lodge
-expect step 1
+expect step 0
 
 # The lobby: the ledger on the front desk (a page), page two beside it; the lounge's typewriter, page one
 walk 4.75 35.5 to 4.75 32 to 5 30.6 h=3.45 below=5.5
 read Manager's ledger
-expect step 2
+expect step 1
 read Typed page, chapter four
 read Typed page, chapter one
 
@@ -34,19 +34,19 @@ walk 8 29 to 7.75 28.3 to 7.75 26 to 7.6 24.6 h=3.45 below=5.5
 read Typed page, chapter eleven
 walk 7.75 26 to 7.75 28.6 to 3 30.75 to 1.5 30.75 to -1 30.75 h=3.45 below=5.5
 read Typed page, chapter twelve
-expect step 3
+expect step 2
 # Out of the front door, round the ballroom to the maze on the west lowland; through its turns to the heart
 walk -1 30.75 to 3 30.75 to 4.75 32 to 4.75 35.5 h=3.45 below=5.5
 walk 4.75 35.5 to -9 35 to -12 20 to -28 13.5 h=4.5
 zone maze
-expect step 4
+expect step 3
 walk -28 13 to -28 8 to -36 8 to -36 -8 to -28 -8 to -28 -4 h=4.55
 zone mazeheart
 kill Polar bear
-expect step 5
+expect step 4
 open Caretaker's coat
 expect story boilerkey 1
-expect step 6
+expect step 5
 
 # Back to the boiler house behind the ballroom: the key slides its door aside; the valves - the wrong one first
 walk -28 -4 to -28 -8 to -36 -8 to -36 8 to -28 8 to -28 13 h=4.55
@@ -56,7 +56,7 @@ expect message slides aside on heat and noise
 wait 2
 walk 1.4 26 to 1.6 24.4 h=3.45 below=5.5
 zone boilerroom
-expect step 7
+expect step 6
 use valvebrass
 expect message Wrong valve
 use valvered
@@ -68,4 +68,4 @@ open Caretaker's strongbox
 expect done
 
 # (the pantry, the jetty and shed boxes and the barrel off the jetty have no note on purpose - a note would be a page for
-# step 3 - so the play runner, which opens chests by their note's title, leaves them)
+# step 2 - so the play runner, which opens chests by their note's title, leaves them)

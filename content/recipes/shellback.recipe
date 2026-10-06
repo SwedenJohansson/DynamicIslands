@@ -5,7 +5,7 @@
 # (a dive into a flooded cave off the rocks), the Sky shrine on the north-east plain (a climb up a needle of rock), the
 # Tusk shrine on the plateau's south end (a fight in a ring of stones), the Wing shrine on the north-west plain (a catch:
 # her three sacred hens). Each keeps one scute; the four laid in the sockets at the temple open its gate. Quest "The Four
-# Scutes" (16 steps, four trials of four kinds).
+# Scutes" (14 steps, four trials of four kinds).
 #
 # Built by the recipe player (CIRecipe shellback) through the editor's own operations. Points: the plain round the dome
 # at about 3 m; the tail beach on the south at 0 -82; the Sea shrine at -64 -62 (on the shore), its cave (Balboa's bear
@@ -193,7 +193,7 @@ place Placeable_TikiPole_Complete - at -40 -42 ground tilt=80 yaw=30
 place "Box Small" pathbox at -38.6 -43.4 ground sit yaw=10
 call shallows r=110 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (16 steps) =========================================================
+# ===== Settings, story items, notes, behaviours, quest (14 steps) =========================================================
 info title=Shellback
 info author=Custom Islands
 info description=An island shaped like a giant tortoise's shell, with a shrine at each of its four legs and a temple at its head. Each shrine keeps one scute behind its own trial - a dive, a climb, a fight, a catch. Bring all four to the head-temple.
@@ -221,7 +221,7 @@ prop netbasket loot.refill=0
 note wingbox The Wing shrine's scute | The Wing shrine's keeper-box: the fourth scute, and grain for the hens.
 loot wingbox story:scute*1;Seed_Banana*2
 prop wingbox loot.refill=0
-prop wingbox if.open=quest|11
+prop wingbox if.open=quest|10
 prop wingbox else.open=message||The keeper-box is shut with a peg. Carved on it: BRING HOME HER HENS.
 note carving The head-temple's carving | (over the bamboo gate)\n\nFour scutes in the four sockets - Sea, Sky, Tusk and Wing - and the gate of the Tortoise opens.\nWhat she keeps inside is for the one who carried her plates home.
 note treasure The Tortoise's treasure | In the inner room, at the priestess's feet: the keepers' offerings of a hundred years - shell coins, the plans for their lines from the head to the tail, pearls, and a carved turtle that floats.
@@ -242,7 +242,7 @@ prop pathbox loot.refill=0
 
 prop sockets obj.name=sockets
 prop sockets beh.use=Lay the four scutes in the sockets
-prop sockets if.use=quest|14\ntake|story:scute|4
+prop sockets if.use=quest|12\ntake|story:scute|4
 prop sockets on.use=message||Sea, Sky, Tusk, Wing: each scute clicks into its hollow. The ground under the temple sighs like something very large breathing out - and the bamboo gate sinks into the earth.\nopen|templedoor\nsound||event:/exploring/utopia/door_entrance_open
 prop sockets else.use=message||Four hollows in the altar stone, each the shape of a scute. Read the carving over the gate.
 prop templedoor obj.name=templedoor
@@ -294,8 +294,7 @@ prop dolphins creature.count=2
 
 quest title=The Four Scutes
 quest intro=An island like a sleeping tortoise, a shrine at each of her legs. The Shell-keepers' tablet stands at the tail beach.
-step reach|tailbeach|1|Land on the tail beach
-step read|The Shell-keepers' tablet|1|Read the tablet on the standing stone
+step read|The Shell-keepers' tablet|1|Land on the tail beach and read the tablet on the standing stone
 step reach|diveshrine|1|Go to the Sea shrine on the south-west leg
 step collect|story:scute|1|Dive through the sea tunnel to the flooded chamber for the Sea scute
 step reach|climbshrine|1|Go to the Sky shrine on the north-east leg
@@ -306,8 +305,7 @@ step collect|story:scute|3|Take the Tusk scute from the stone chest
 step reach|catchshrine|1|Go to the Wing shrine on the north-west leg
 step catch|Chicken|3|Net the three sacred hens and bring them home
 step collect|story:scute|4|Take the Wing scute from the keeper-box
-step reach|headtemple|1|Climb to the head-temple on the north headland
-step read|The head-temple's carving|1|Read the carving over the temple's gate
+step read|The head-temple's carving|1|Climb to the head-temple on the north headland and read the carving over its gate
 step reach|sanctum|1|Lay the four scutes in the sockets and enter the inner room
 step open|The Tortoise's treasure|1|Open the Tortoise's treasure
 quest done=Four plates of the Great Tortoise home in her head. Somewhere under your feet, something enormous and patient goes back to sleep - and your raft, the keepers would say, will never sink.

@@ -13,20 +13,20 @@ expect animals Dolphin 2
 # The dock on the west beach: off the jetty to the gate, the warden's notice
 walk -46.5 21.5 to -38 21.5 to -35.5 23.5 h=1.6
 zone dock
-expect step 1
+expect step 0
 read Warden's notice
-expect step 2
+expect step 1
 
 # Up the prison road along the west face to the yard
 walk -35 25 to -32 24 to -30.4 18 to -27.9 9.2 to -25.5 0.3 to -23 -8.6 to -21 -16 to -17 -16 to -8 -12 to 3 -6 h=17.75
 zone yard
-expect step 3
+expect step 1
 
 # Cell block B: the rats; cell 14 locked
 walk 3 -6 to -4.5 2.5 to -4.5 8 to 0 9 h=17.8 below=20
 zone cellblock
 kill Rat
-expect step 4
+expect step 2
 use cell14
 expect message would be up in the tower
 
@@ -37,7 +37,7 @@ expect stand 9.5 -12.5 h=23.8 below=25
 at 9.5 -12.5 h=24.6
 open Guard tower box
 expect story cellkeys 1
-expect step 5
+expect step 3
 
 # Cell 14 unlocked: the notes under the mattress; the vent wants a screwdriver
 use cell14
@@ -45,7 +45,7 @@ expect message roll aside
 wait 3
 walk 3 -6 to -4.5 2.5 to -4.5 8 to 4.5 10 to 4.5 13.2 h=17.8 below=20
 read Inmate 1147's notes
-expect step 6
+expect step 4
 use vent
 expect message something like one
 
@@ -53,13 +53,13 @@ expect message something like one
 walk 4.5 10 to -4.5 8 to -4.5 2.5 to -5.5 0.5 to -9 0.5 to -10.2 -2.4 h=17.8 below=20
 open Cutlery drawer
 expect story spoon 1
-expect step 7
+expect step 5
 
 # The vent: down his drain to the cliff's foot, out of its mouth onto the shelf and the beach; the swim to the outer rock
 use vent
 expect message you crawl
 zone tunnel
-expect step 8
+expect step 6
 expect shown escapekit
 walk 5 31.6 to 5 34 to 5 36.6 to 5 39.5 h=2.4 below=4.5
 at 4 64.5 h=3

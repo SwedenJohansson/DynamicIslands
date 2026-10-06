@@ -6,8 +6,8 @@
 # glade west of the camp, where the crew's hogs run wild), the bosun (his stilt lookout on the east peak's shoulder) and
 # the navigator (his chart chest, down with the ship). The captain's camp on the cove's beach: her longboat, a tarp over
 # her map table, a ragged flag; a trail up over the low ground east of it to the saddle between the peaks, where three
-# standing stones keep her hoard, and on along the east peak to the lookout. Quest "The Gilded Skull's Hoard" (8 steps):
-# the cove, the captain's letter, the hogs, the wreck dive, three map pieces, the map table (the verse), the stones on
+# standing stones keep her hoard, and on along the east peak to the lookout. Quest "The Gilded Skull's Hoard" (7 steps):
+# the captain's letter in the cove, the hogs, the wreck dive, three map pieces, the map table (the verse), the stones on
 # the saddle, the hoard (the detail plank blueprint, a pirate hat, trade coins).
 #
 # Built by the recipe player (CIRecipe gilded_skull_cove) through the editor's own operations.
@@ -197,7 +197,7 @@ where campbarrel
 where blackflag
 where hens
 
-# --- Settings, story items, notes, behaviours, quest (8 steps) ---------------------------------------------------------
+# --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
 
@@ -234,7 +234,7 @@ prop hoard loot.refill=0
 
 prop maptable obj.name=maptable
 prop maptable beh.use=Lay the three map pieces together
-prop maptable if.use=quest|5\ntake|story:mappiece|3
+prop maptable if.use=quest|4\ntake|story:mappiece|3
 prop maptable on.use=message||The torn edges fit. The cove, the two peaks, three stones drawn on the saddle - and on the back the verse, whole at last.\ngive||story:wholemap*1\njournal|Captain Marrow's verse|North stone first, where the gulls sit. Then the tall one that throws the noon shadow. The flat one last - and dig where it lay.\nsound||event:/char/logbook_flip
 prop maptable else.use=message||A chart table with three empty pins. The captain's letter said the map is in three pieces.
 prop stone1 obj.name=stone1
@@ -286,8 +286,7 @@ call vinecache x=-14 z=10 r=14 seed=32 chest=cookcache vines=cookvines items=Rop
 
 quest title=The Gilded Skull's Hoard
 quest intro=A pirate captain's camp in a cove under two jungle peaks, her ship sunk in the cove's mouth. Start at her longboat.
-step reach|cove|1|Land on the beach inside the cove
-step read|Captain's last letter|1|Read the letter left in the beached longboat
+step read|Captain's last letter|1|Land in the cove and read the letter left in the beached longboat
 step kill|Warthog|3|Drive the cook's runaway hogs away from her spring
 step reach|wreck|1|Dive to the wreck of the Gilded Skull in the cove's mouth
 step collect|story:mappiece|3|Find the three map pieces: the cook's hollow log, the bosun's lookout, the navigator's chart chest
