@@ -2020,6 +2020,8 @@ Every player sees the same ghost raft: the host brings it, as an island of the m
 A storage opens only for the player who built it. Looking at someone else's shows whose it is instead of "Open", and
 **E** does nothing. Storages built while the option was off (or before this version of the mod) have no builder and
 open for everyone. The host keeps who built which with the world, so it stays after saving, loading and joining again.
+The **host** may open the storage of a builder who isn't in the game (one who left and doesn't come back), so
+nothing stays locked for good; other players still can't.
 
 #### For every player
 
@@ -2534,7 +2536,8 @@ for a new world, or with `Levels on` (host, F10) in this one; an island made wit
 too (see [section 9.6](#96-the-level-up-system)).
 
 **A friend's storage won't open.** The world has **Private storages** on ([9.4](#94-extra-options)): a storage opens
-only for the player who built it. The host can switch it off with `WorldOptions -privatestorage`.
+only for the player who built it. When its builder isn't in the game, the host can open it; or the host switches the
+option off with `WorldOptions -privatestorage`.
 
 **The Receiver led me to the wrong story island / the blueprint isn't where the wiki says.** The world has **Story
 islands in a new order** or **Scrambled blueprints** on ([9.4](#94-extra-options)); `WorldOptions` shows which.

@@ -53,8 +53,26 @@ namespace DynamicIslands.Editor
 		{
 			if (!WorldOptions.On(WorldOptions.PrivateStorage)) return true;
 			ulong b = BuilderOf(objectIndex);
-			return b == 0UL || b == player;
+			if (b == 0UL || b == player) return true;
+			// (ROADMAP T9: the host may open the storage of a builder who isn't in the game - it was locked for everyone for
+			// good when its builder never came back)
+			return player == HostId() && !InGame(b);
 		}
+
+		/// <summary>The game's host (its Steam id; 0 unknown).</summary>
+		static ulong HostId()
+		{
+			try
+			{
+				Raft_Network network = ComponentManager<Raft_Network>.Value;
+				if (Raft_Network.IsHost) { Network_Player local = RAPI.GetLocalPlayer(); return local != null ? local.steamID.Id : 0UL; }
+				return network != null ? network.HostID.Id : 0UL;
+			}
+			catch { return 0UL; }
+		}
+
+		/// <summary>Whether a player is in the game now.</summary>
+		static bool InGame(ulong id) { return UnityEngine.Object.FindObjectsOfType<Network_Player>().Any(p => p != null && p.steamID.Id == id); }
 
 		#region The world file and the network
 

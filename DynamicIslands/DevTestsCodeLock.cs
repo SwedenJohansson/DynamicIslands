@@ -417,6 +417,31 @@ namespace DynamicIslands
 			if (ok) Log("PASS: lock first"); else Fail("lock first");
 		}
 
+		[ConsoleCommand(name: "CIStorageAbsent", docs: "Dev, in game (host): ROADMAP T9 - with private storages on, a storage whose builder isn't in the game opens for the host, not for another player; the builder's own still opens for them")]
+		public static void StorageAbsentCommand(string[] args)
+		{
+			Network_Player local = RAPI.GetLocalPlayer();
+			if (local == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
+			bool ok = true;
+			bool had = WorldOptions.On(WorldOptions.PrivateStorage);
+			string keep = PrivateStorage.Encode();
+			try
+			{
+				WorldOptions.Current.Add(WorldOptions.PrivateStorage);
+				const ulong gone = 76561190000000001UL, other = 76561190000000002UL;
+				PrivateStorage.Decode("4242:" + gone + ";4343:" + other);
+				Check(ref ok, PrivateStorage.MayOpen(4242, local.steamID.Id), "the host opens the storage of a builder who left");
+				Check(ref ok, !PrivateStorage.MayOpen(4242, other), "another player still can't");
+				Check(ref ok, PrivateStorage.MayOpen(4343, other), "the builder opens their own");
+			}
+			finally
+			{
+				if (!had) WorldOptions.Current.Remove(WorldOptions.PrivateStorage);
+				PrivateStorage.Decode(keep);
+			}
+			if (ok) Log("PASS: storage absent"); else Fail("storage absent");
+		}
+
 		/// <summary>A spot on the island's land, near its middle (the ground there, from a ray down).</summary>
 		static Vector3 LandSpot(IslandWorldState.Entry e)
 		{
