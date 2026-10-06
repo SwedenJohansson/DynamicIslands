@@ -143,6 +143,7 @@ namespace DynamicIslands.Editor
 			synced = false;
 			syncTries = 0;
 			nextSyncTry = 0;
+			hostToldVersion = false;
 			Log("The host's world arrived: asking for its islands");
 		}
 
@@ -204,19 +205,24 @@ namespace DynamicIslands.Editor
 		/// <summary>The last version difference seen (tests), or "".</summary>
 		public static string VersionNotice { get; private set; }
 
-		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each.</summary>
+		/// <summary>A player: the host's version reply came (since this world arrived). A full island list without one first is
+		/// from a host older than the version reply (it is sent ahead of the list) - AU35.</summary>
+		static bool hostToldVersion;
+
+		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each,
+		/// with both versions and which one to install. A version that couldn't be read ("?", modinfo.json unreadable) is
+		/// unknown, never taken as the same (AU35).</summary>
 		static void CompareVersions(string tag, string who)
 		{
 			if (string.IsNullOrEmpty(tag) || !tag.StartsWith(VersionTag)) return;
 			string theirs = tag.Substring(VersionTag.Length), mine = LibraryPack.ModVersion;
-			if (theirs == mine) return;
-			string text = Raft_Network.IsHost
-				? who + " joined with Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version."
-				: "The host has Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version.";
+			if (theirs == mine && UpdateCheck.IsKnown(mine)) return;
+			string text = UpdateCheck.MismatchText(Raft_Network.IsHost, who, theirs, mine);
 			if (VersionNotice == text) return;
 			VersionNotice = text;
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] " + text);
-			global::DynamicIslands.DynamicIslands.Notify(text, true);
+			// (shown longer than other notices: a long text, and it explains whatever goes wrong next)
+			global::DynamicIslands.DynamicIslands.Notify(text, true, 15);
 		}
 
 		#region Sending
@@ -393,10 +399,14 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
-							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
+							// (a player older than the version handshake sends no version; a name for who joined, if Raft shows one)
+							string who = PrivateStorage.NameOf(from.Id);
+							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + UpdateCheck.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'");
+							// (the version first, alone in a message kind and with fields every version has, so an older player
+							// can still read it: everything else follows it)
 							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							SendToPlayer(WorldRules.Message(), from);
@@ -515,7 +525,8 @@ namespace DynamicIslands.Editor
 		{
 			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
-			synced = true;
+			// (the host's version reply comes ahead of its list: none came, so the host is older than it - AU35)
+			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + UpdateCheck.Older, "The host");
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			int n = msg.Ids != null ? msg.Ids.Length : 0;
 			if (msg.FullList)
@@ -523,9 +534,11 @@ namespace DynamicIslands.Editor
 				var keep = new HashSet<int>(msg.Ids ?? new int[0]);
 				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(e => !keep.Contains(e.Id)).Select(e => e.Id).ToArray(), false);
 			}
-			int added = 0;
+			int added = 0, skipped = 0;
 			for (int i = 0; i < n; i++)
 			{
+				// (an older or damaged message: an entry without its name or place is left out, not the whole list - AU35)
+				bool whole = msg.Names != null && i < msg.Names.Length && !string.IsNullOrEmpty(msg.Names[i]) && msg.Offsets != null && i * 3 + 2 < msg.Offsets.Length;
 				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
 				if (known != null && msg.Rules != null && i < msg.Rules.Length && !string.IsNullOrEmpty(msg.Rules[i])) known.Rule = msg.Rules[i];
 				if (known != null)
@@ -566,7 +579,8 @@ namespace DynamicIslands.Editor
 					if (toldRefused.Add(msg.Names[i] ?? "")) DynamicIslands.Notify("An island from the host is left out: its name can't be a file name here (see the log, F10)", true);
 					continue;
 				}
-				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
+				if (!whole) { skipped++; continue; }
+				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "",
 					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
 				if (msg.Labels != null && i < msg.Labels.Length) entry.Label = msg.Labels[i] ?? "";
@@ -574,7 +588,10 @@ namespace DynamicIslands.Editor
 				ResolveFile(entry);
 				added++;
 			}
-			Log("Host sent " + n + " island(s)" + (msg.FullList ? " (full list)" : "") + ", " + added + " new");
+			// (only once the whole list was taken: a single new island that came first no longer stops the asking, and a list
+			// that failed half way is asked for again)
+			if (msg.FullList) synced = true;
+			Log("Host sent " + n + " island(s)" + (msg.FullList ? " (full list)" : "") + ", " + added + " new" + (skipped > 0 ? ", " + skipped + " left out (incomplete)" : ""));
 		}
 
 		/// <summary>
