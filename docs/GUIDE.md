@@ -410,6 +410,10 @@ can see how the island will look at that time in Raft (a dark cave mouth at nigh
 only how the editor shows the island - nothing is saved in the island. Your choice is kept for the next time you open
 the editor (Noon the first time).
 
+**Raft's sky and sea.** On the Island tab, **View: Raft's sky and sea** shows the island under Raft's own sky and on its
+real ocean (with waves) instead of the editor's plain sky and blue plane - the Light list then sets the hour of Raft's
+sky. It takes effect the next time you open the editor from the main menu; off again works at once.
+
 ![The editor light](images/editor-light.jpg)
 *The same island at Morning, Noon, Evening and Night.*
 
@@ -2325,8 +2329,9 @@ the newest, and every player who joined keeps a copy too. These rules make sure 
 #### Host from the folder of whoever hosted last
 
 **Why:** the mod can't tell "an older copy on purpose" from "an older copy by mistake". If you host from your own older
-copy, it simply continues that one - and your first save then replaces the newer copy the other players kept. Everything
-done in the sessions you missed is lost, without a warning.
+copy, it simply continues that one. Since 2026-10-06 a player who joins with a newer copy keeps it aside
+(`worlds\<world id>.kept-<n>.txt` in their `Mods\DynamicIslands`) and the host is told "<player>'s copy ... is newer -
+your world may be missing their progress" - but the world you host still goes on from your older copy.
 
 **What to do:**
 1. The player who hosted last session presses **Esc** and chooses Raft's **Main menu** (this saves the world), then
@@ -2394,9 +2399,11 @@ used zones fire again - a key can be found twice, an ambush comes back.
 
 #### The next host has no own island named like one in the plan
 
-**Why:** islands a plan still has to bring are looked up **by name** on the host's PC. If the next host has an island
-of their own with the same name ("Camp"), that one is brought instead of the plan's - with other content and quests, and
-nobody is told. If the host has no such island at all, the rule waits and the host is told which island is missing.
+**Why:** since 2026-10-06 a world remembers each plan island's content (a hash), and the plan's islands are found by it:
+the host's own file if it is the same island, a downloaded copy, or the same island under another name (a pack's
+"Camp (Pack title)"). A different island of the same name is **not** brought: the host is told the plan's island is
+missing, and players who join are asked for it - when one has it, it comes. Worlds saved before that day still look
+islands up **by name** for the islands not brought yet: an own "Camp" of the next host would be brought instead.
 
 **What to do:**
 1. In the world, press **F10** and type `WorldPlan`: it lists the plan's rules and the islands they bring.
