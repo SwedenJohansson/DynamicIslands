@@ -2,9 +2,9 @@
 # A ring of palm islets around a wide lagoon, and moored in the lagoon a research platform: one of Tangaroa's floating
 # bases with a lab of Temperance's Selene rooms on it, a radio mast and a footbridge to the ring. The scientists left
 # when the reef began to die; their last samples still lie in cases on the lagoon floor - and one in the blue hole,
-# where a giant angler fish has made its home. Quest "The Reef Remembers" (12 steps): the platform, the director's
+# where a giant angler fish has made its home. Quest "The Reef Remembers" (11 steps): the platform, the director's
 # log, the dive locker's case key, the two garden cases, the blue hole's edge, the puffer fish by it, the giant angler, the
-# hole's case, the three samples, the analyzer and the director's safe, her notes read.
+# hole's case, the three samples, the analyzer and the director's safe.
 #
 # Built by the recipe player (CIRecipe coral_observatory) through the editor's own operations.
 include lib_sea
@@ -158,7 +158,6 @@ step kill|Angler fish|1|Drive the giant angler fish out of the blue hole
 step open|Blue hole sample case C|1|Go down the hole for the last case, C
 step collect|story:sample|3|Carry all three coral samples back to the lab
 step open|Director's safe|1|Run the analyzer and open the director's safe
-step read|Director's safe|1|Read the director's notes on the cold current
 quest done=The analyzer's printout says it plainly: the reef is dying of cold, a current from the north. Wherever it comes from, that is where the story goes next.
 quest reward=CopperIngot*4;Plastic*10;Glass*6
 

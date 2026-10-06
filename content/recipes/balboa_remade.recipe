@@ -2,9 +2,12 @@
 # Raft's Balboa made anew: a forest island like Balboa (the generator's "something new like" it) - hills of pine and
 # maple round a mountain, beaches in the east and south. The rangers' station on a terrace above the east beach; the
 # Mama bear's den in a rock outcrop on the west plateau, its mouth behind the rangers' old plank barricade, grown over
-# with vines; the rangers' radio mast on the summit. Quest "The Rangers' Last Call": the station, the logbook, the
-# machete from the tool locker, the vines cut, the Mama bear, Hendricks' pack and the strongbox key in it, the summit's
-# radio, the rangers' strongbox (Balboa's blueprints: the machete, the biofuel refiner, the fuel tank and its pipe).
+# with vines; the rangers' radio mast on the summit. Quest "The Rangers' Last Call" (20 steps, in three legs): the
+# station - the flag post, its logbook, the crate it lay on, the supply crate, the machete from the tool locker, the
+# ration box and the woodpile (seven pages for the journal); the den - the warning sign, the vines cut, the scrawl
+# inside, the Mama bear, Hendricks' pack and the strongbox key in it; the summit - the plate on the mast, the spare
+# parts box, the radio called and its desk opened; then back to the rangers' strongbox (Balboa's blueprints: the
+# machete, the biofuel refiner, the fuel tank and its pipe).
 #
 # Built by the recipe player (CIRecipe balboa_remade) through the editor's own operations.
 include lib_sea
@@ -36,15 +39,15 @@ pop
 # in front of the porch (its boards have no collider in Raft's model - things set on them fell through): the tool
 # locker by its north end, the logbook on a crate under the window; the strongbox on the terrace north of the shack (its\n# floor has no collider either, and its room is full of Raft's own furniture)
 place Locker toollocker at 90.4 8.2 ground yaw=90
-place Crate_Big_01 - at 90.7 5 ground yaw=5
+place Crate_Big_01 logcrate at 90.7 5 ground yaw=5
 place Note_Paper logbook at 90.7 5 h=7 sit drop yaw=80
 place Placeable_Lantern_Metal - at 90.6 4.4 h=7 sit drop
 place VG_Safe strongbox at 80.2 12 ground yaw=0
 # by the station: the flag, the rangers' supplies, firewood, the station's zone
-place Placeable_Flag_03 - at 93 -6 ground
-place Crate_Big_02 - at 74 -4.4 ground yaw=20
-place "Box Small" - at 76 -4.6 ground yaw=-10
-place Firewood_1 - at 73.5 11 ground yaw=80
+place Placeable_Flag_03 flagpost at 93 -6 ground
+place Crate_Big_02 supplycrate at 74 -4.4 ground yaw=20
+place "Box Small" rationbox at 76 -4.6 ground yaw=-10
+place Firewood_1 woodpile at 73.5 11 ground yaw=80
 place Zone_Trigger station at 91 3 h=6
 
 # --- The Mama bear's den: Balboa's bear cave as a rock outcrop on the west plateau, its mouth to the east; the rangers'
@@ -71,14 +74,14 @@ pop
 # radio desk under it ----------------------------------------------------------------------------------------------------
 clear at 18 -18 r=8
 push at 18 -18 h=50
-place RT_PillarThick - at 0 0 y=0
+place RT_PillarThick mastplate at 0 0 y=0
 place RT_PillarThick - at 0 0 y=6
 place RT_SatteliteDisc - at 0 0 y=12
 place RT_RoofLamp - at 0 0 y=12.6
 place "Table Office" radiodesk at 3 1.5 y=0 yaw=180
 place RT_CommRadio mastradio at 3 1.5 y=2 sit drop yaw=180
 place "Chair Office" - at 3 0.4 y=0 yaw=20
-place "Box Small" - at -2.5 2 y=0 yaw=15
+place "Box Small" sparesbox at -2.5 2 y=0 yaw=15
 place Zone_Trigger summit at 0 0 y=1.5
 pop
 
@@ -100,14 +103,31 @@ story machete|Ranger's machete|Machete|The rangers' old machete, from their tool
 story stationkey|Strongbox key|quest:Caravan_KeyInfirmary|The key to the rangers' strongbox, from Hendricks' pack.
 
 note logbook Ranger's logbook | BALBOA RANGER STATION - LOGBOOK\n\nDay 41. The Mama bear came down to the terrace again. She took Hendricks' pack - the strongbox key was in it - and dragged it off to her den in the rocks on the west plateau.\nDay 43. Vines have grown over our old barricade at the den's mouth. The machete is in the tool locker.\nDay 44. We are leaving. Whoever reads this: the radio on the summit still works. Call out, and its desk will open for you.\n\n- Ranger Hayes
+note flagpost Flag post | Nailed to the flag post: BALBOA RANGER STATION. Visitors report to the station. Beware of bears.
+note mastplate Mast plate | Painted on the mast: BALBOA RANGER RADIO. Call on the desk set - the drawer opens when the line is live. Keep the lamp lit.
 note trailsign Warning sign | BEAR DEN - KEEP OUT\nThe rangers' barricade. Do not cut the vines.
 note scrawl Scrawled on a crate | She sleeps in the back. Hendricks' pack is in there with her - and the key with it.
+note logcrate Crate under the window | The crate the logbook lay on: lamp oil, a spare coil of rope - and Hayes' pencil, worn to a stub.
+loot logcrate Rope*1;Nail*4
+prop logcrate loot.refill=0
+note supplycrate Rangers' supply crate | The rangers' supply crate: planks for the barricade they never finished mending.
+loot supplycrate Plank*5;Nail*6
+prop supplycrate loot.refill=0
+note rationbox Rangers' ration box | Hendricks' ration box: two tins gone, a note in his hand - "back by dark, bear or no bear".
+loot rationbox Rope*1;Scrap*2
+prop rationbox loot.refill=0
+note woodpile Woodpile | Hendricks' firewood, split and stacked behind the shack against the winter - a few good planks among the logs.
+loot woodpile Plank*3
+prop woodpile loot.refill=0
 note toollocker Tool locker | The rangers' tool locker: a machete in its sheath, rope, nails.
 loot toollocker story:machete*1;Rope*2;Nail*8
 prop toollocker loot.refill=0
 note pack Hendricks' pack | Hendricks' pack, torn by claws: his flask, his notes - and the strongbox key.
 loot pack story:stationkey*1;Rope*1;Scrap*3
 prop pack loot.refill=0
+note sparesbox Spare parts box | The rangers' spare parts for the mast: wire, a fuse, a cracked bulb for the lamp up top.
+loot sparesbox Scrap*3;Nail*4
+prop sparesbox loot.refill=0
 note radiodesk Radio desk | The radio desk under the mast: a battery, the rangers' frequency list - and their last message, never sent.
 loot radiodesk Battery*1;BioFuel*1;Plank*6
 prop radiodesk loot.refill=0
@@ -147,13 +167,25 @@ prop mamabear creature.zone=den
 quest title=The Rangers' Last Call
 quest intro=A forest island with a ranger station on its east terrace. The rangers are gone; their logbook may say why.
 step reach|station|1|Find the ranger station on the east terrace
-step read|Ranger's logbook|1|Read the rangers' logbook
-step open|Tool locker|1|Take the machete from the tool locker
+step read|Flag post|1|Read the sign on the rangers' flag post by the beach path
+step read|Ranger's logbook|1|Read the rangers' logbook on the crate by the steps
+step open|Crate under the window|1|Open the crate the logbook lay on
+step open|Rangers' supply crate|1|Search the rangers' supply crate south of the shack
+step open|Tool locker|1|Open the tool locker at the porch's north end
+step collect|story:machete|1|Take the rangers' machete - it cuts through vines
+step open|Rangers' ration box|1|Check Hendricks' ration box beside the supply crate
+step pages||7|Search the woodpile behind the shack: seven station pages for the journal
+step read|Warning sign|1|Cross to the den on the west plateau and read the rangers' warning sign
 step reach|den|1|Cut through the vines into the Mama bear's den
+step read|Scrawled on a crate|1|Read what's scrawled on the crate inside the mouth
 step kill|Bear|1|Face the Mama bear
-step open|Hendricks' pack|1|Take the strongbox key from Hendricks' pack
+step open|Hendricks' pack|1|Search Hendricks' pack in the back of the den
+step collect|story:stationkey|1|Take the strongbox key from his pack
+step reach|summit|1|Climb the mountain to the rangers' radio mast
+step read|Mast plate|1|Read the plate painted on the radio mast
+step open|Spare parts box|1|Search the rangers' spare parts box under the mast
 step open|Radio desk|1|Call out on the summit's radio and open its desk
-step open|Ranger's strongbox|1|Open the rangers' strongbox at the station
+step open|Ranger's strongbox|1|Back at the station, open the rangers' strongbox with the key
 quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said south - toward the traders.
 quest reward=Plank*8;Rope*4;BioFuel*1
 

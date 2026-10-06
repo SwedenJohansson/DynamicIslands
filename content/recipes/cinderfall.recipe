@@ -1,10 +1,10 @@
 # Cinderfall - an island of the library's plan Raft 2: The Drowned Frontier (station Three of the Frontier Corps)
 # A volcano of black rock and ash, the Corps' geothermal plant at its foot: the workers' tents on the ash plain, the
 # turbine hall, pipes up the slope - and three relief valves stuck open on its flanks, the pressure rising. Quest
-# "Pressure" (11 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
+# "Pressure" (10 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
 # spur, the north shoulder where the stone birds' matriarch nests - reached, she driven off, then its valve), the turbine
 # hall reached and its roaches, the plant's store opened (the machete's, the biofuel refiner's, the fuel tank's and the
-# fuel pipe's blueprints) and its list read.
+# fuel pipe's blueprints).
 #
 # Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
 include lib_sea
@@ -160,7 +160,6 @@ step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hi
 step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
 step open|Plant store|1|Open the plant's store with the three valve tags
-step read|Plant store|1|Read the store's list: what the Corps left for a raft
 quest done=The gauges settle, the hiss is gone. In the store the Corps left a machete and their fuel plans - and a note: the Sunken Archive, out in the lagoon.
 quest reward=Plank*8;Scrap*6;Rope*2
 

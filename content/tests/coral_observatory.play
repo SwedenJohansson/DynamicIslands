@@ -1,7 +1,7 @@
 # Play test of the Coral Observatory (CIPlay coral_observatory, in a test world 'CI ...'). Points as in its recipe: the
 # ring's east shore (about 4 m), the footbridge (2-2.9 m) to the floating deck (2 m) in the lagoon (3.3 m deep), the
-# blue hole in the lagoon's west part. Quest "The Reef Remembers", 12 steps: platform, log, dive locker, cases A
-# and B, the hole's edge, the puffer fish, the angler, case C, the samples, the safe, the director's notes.
+# blue hole in the lagoon's west part. Quest "The Reef Remembers", 11 steps: platform, log, dive locker, cases A
+# and B, the hole's edge, the puffer fish, the angler, case C, the samples, the safe.
 island Coral Observatory
 expect step 0
 expect title The Reef Remembers
@@ -41,6 +41,4 @@ expect shown analyzerlight
 expect story sample 0
 open Director's safe
 expect item Blueprint_Recycler 1
-expect step 11
-read Director's safe
 expect done

@@ -1,7 +1,7 @@
 # Play test of Cinderfall (CIPlay cinderfall, in a test world 'CI ...'). Points as in its recipe: the camp on the ash
 # plain (3.2 m), the turbine hall's pad (3.45 m), the valves' ledges - the west plateau (10.4 m), the south-east spur
-# (7 m), the north shoulder (16 m) up the ramp. Quest "Pressure", 11 steps: camp, warning, valve 1, valve 2, the nest,
-# the matriarch, valve 3, the hall, its roaches, the store opened, its list read.
+# (7 m), the north shoulder (16 m) up the ramp. Quest "Pressure", 10 steps: camp, warning, valve 1, valve 2, the nest,
+# the matriarch, valve 3, the hall, its roaches, the store opened.
 island Cinderfall
 expect step 0
 expect title Pressure
@@ -47,6 +47,4 @@ reach Plant store
 open Plant store
 expect item Blueprint_Machete 1
 expect item Blueprint_Pipe_Fuel 1
-expect step 10
-read Plant store
 expect done

@@ -1,8 +1,8 @@
 # Play test of The Sunken Archive (CIPlay sunken_archive, in a test world 'CI ...'). Points as in its recipe: the jetty
 # (0.55 m) at the reading room's door on the archive's north face, the reading room (0.5 m), the flooded stacks below
 # (floors at -2.55 and -5.6 m, broken windows), the air pocket in the deepest room.
-# Quest "Card Catalogue", 10 steps: reading room, letter, shelf box, floor box, the deepest room's air pocket, the keeper,
-# the deep box, the three cards, the vault opened and read.
+# Quest "Card Catalogue", 10 steps: reading room, letter, shelf box, floor box, the deepest room's air pocket, the vault,
+# the keeper, the deep box, the three cards, the vault opened.
 island The Sunken Archive
 expect step 0
 expect title Card Catalogue
@@ -24,13 +24,13 @@ open Floor card box
 expect step 4
 at -4.5 -14.5 h=-4.4
 air deepair
-expect step 5
 zone vault
-kill Angler fish
 expect step 6
+kill Angler fish
+expect step 7
 open Deep card box
 expect story card 3
-expect step 8
+expect step 9
 
 # Up in the reading room: the cards through the index desk; down to the vault
 use indexterminal
@@ -39,6 +39,4 @@ expect story card 0
 open Rare book vault
 expect item Blueprint_EngineControls 1
 expect item Blueprint_ZiplineBase 1
-expect step 9
-read Rare book vault
 expect done
