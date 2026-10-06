@@ -349,6 +349,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Island spawner", e); }
 			try { IslandNetwork.Tick(); }
 			catch (Exception e) { TickError("Island network", e); }
+			try { IslandObjectState.Tick(); }
+			catch (Exception e) { TickError("Harvests", e); }
 			try { PlayerHold.Tick(); PlayerPlaces.Tick(); }
 			catch (Exception e) { TickError("Player hold", e); }
 			try { CreatureSpawner.Tick(); }
