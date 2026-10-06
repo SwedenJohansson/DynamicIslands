@@ -2,8 +2,11 @@
 # A red desert crescent around a shallow bay, and on its shore a junk town: a harbour with a pier and wrecks, a ring of
 # stacked caravans for a wall, a winch that hoists the gate trailer, a market under a bamboo canopy, Caravan Town's raft
 # monument; outside the wall a scrap pit where a hyena pack and its alpha live, and on the west ridge the scrap king's
-# bamboo fortress on stilts. Quest "King of the Scrapyard": the harbour, its notice, the gate key, the gate, the hyenas,
-# the fortress, the scrap king's hoard. Inspired by Raft's Caravan Town and Utopia.
+# bamboo fortress on stilts. Quest "King of the Scrapyard" (21 steps): the harbour, its notice, the King's wreck, the
+# fisherman's dinghy, the harbour master's lockbox and the gate key; the town - the monument's square, the market and
+# its barrel, the King's tithe pile, the trader's van, the caravan watchtower; the gate, the pit's edge, the scrap pit,
+# the hyenas, the scrapper's note and the pit's sign; the fortress's stilts, the fortress, the scrap king's hoard.
+# Inspired by Raft's Caravan Town and Utopia.
 #
 # Built by the recipe player (CIRecipe scrapyard_haven) through the editor's own operations.
 include lib_sea
@@ -70,38 +73,46 @@ place LandmarkLadder_6m quayladder at 43.1 25 h=-1.6 yaw=90
 place Van_2 harbourvan at 18 20 ground sit yaw=10
 place Loot_Chest lockbox at 21 18.5 ground sit yaw=200
 place Note_Board notice at 21 27.5 ground yaw=90
-place BoatStranded - at 40 8 ground yaw=60 tilt=12
-place RT_PlasticBoat - at 45 21 h=0.3 yaw=100
+place BoatStranded wreck at 40 8 ground yaw=60 tilt=12
+place RT_PlasticBoat dinghy at 45 21 h=0.3 yaw=100
 place Zone_Trigger harbour at 24 25 y=1.5
+place Zone_Trigger wreckzone at 40 8 y=1.5
 
 # Inside the wall: the market under the canopy, the raft monument, a well, a watchtower of three caravans, scrap
 place Pillars - at 15 33 centred sit
 place Roof - at 15 33 centred sit
-place RaftMonument - at 11 24 ground sit yaw=200
-place Well - at 7 31 ground sit
+place RaftMonument monument at 11 24 ground sit yaw=200
+place Well well at 7 31 ground sit
 place Caravan_Blue_01 - at 8 36 ground sit yaw=20
 place Caravan_Green_02 - at 8 36 ground sit yaw=20 y=2.75
 place Caravan_Yellow_01 - at 8 36 ground sit yaw=20 y=5.5
 place LandmarkLadder_6m - at 9.8 33.7 ground yaw=20
-place Scrap_02 - at 17 38 ground sit yaw=30
+place Scrap_02 tithe at 17 38 ground sit yaw=30
 place Pallet - at 14 26 ground sit yaw=15
 place MetalSheet_2 - at 17 22 ground sit yaw=80 tilt=70
-place Loot_Barrel - at 18 30 ground sit
-place Van3 - at 5 28 ground sit yaw=100
+place Loot_Barrel barrel at 18 30 ground sit
+place Van3 tradervan at 5 28 ground sit yaw=100
 place Banner_01 - at 15 33 y=4 yaw=0
+# (quest zones at the town's landmarks: the monument's square, the market, the top of the caravan watchtower)
+place Zone_Trigger square at 11 24 y=1.5
+place Zone_Trigger market at 14 34 y=1.5
+place Zone_Trigger lookout at 8 36 y=6
 
 # --- The scrap pit below the ridge: vans, trailer shells and scrap around it - the hyena pack and their alpha --------
 clear at -10 -45 r=14
-place Van_1 - at -15 -41 ground sit yaw=60
+place Van_1 pitvan at -15 -41 ground sit yaw=60
 place Van_4 - at -5 -50 ground sit yaw=-30
 place CaravanBarebones1 - at -14 -54 ground sit yaw=20 tilt=8
 place Van_5 - at -16 -49 ground sit yaw=10
 place Scrap_02 - at -6 -40 ground sit yaw=40
 place Scrap_02 - at -14 -38 ground sit yaw=-20
-place MetalSheet_5 - at 0 -45 ground sit yaw=90 tilt=60
+place MetalSheet_5 pitsign at 0 -45 ground sit yaw=90 tilt=60
 place Creature_Hyena pack at -10 -46 ground
 place Creature_Hyena alpha at -12 -49 ground
 place Zone_Trigger pit at -10 -42 y=1.5
+# (the trail's end above the pit, and the foot of the fortress's stilts)
+place Zone_Trigger pitedge at -9 -28 y=1.5
+place Zone_Trigger stilts at -13 -10 y=1.5
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): date palms, flowers, pineapples ----------
@@ -120,14 +131,25 @@ island on.arrive=message||A red crescent of sand around a bay - and on its shore
 
 story gatekey|Gate key|quest:Caravan_KeyMayor|The winch key of Scrapyard Haven's gate, on a ring with a bottle opener.
 note notice Harbour notice | SCRAPYARD HAVEN - HARBOUR\n\nTraders welcome. The gate is SHUT since the hyenas got into the scrap pit.\n\nThe harbour master keeps the gate key in his lockbox by his van. Whoever clears the pit can see the King about a reward - his fortress is up on the ridge, and he's been gone a while.
-note lockbox Harbour master's lockbox | The harbour master's lockbox under his van: the gate key, his ledger, a bag of bolts.
+note lockbox Harbour master's lockbox | The harbour master's lockbox under his van: the gate key, his ledger, a bag of bolts.\n\nThe ledger's last page: "Day 41. Gate shut, the pit lost to the dogs. The King went up to his fortress on day 40 and hasn't come down since. If anyone wants this town back, someone else will have to clear that pit."
 loot lockbox story:gatekey*1;Bolt*6;Rope*2
 prop lockbox loot.refill=0
-note hoard Scrap king's hoard | The scrap king's hoard, on the fortress's deck: everything worth keeping that ever washed up on the crescent.
+note hoard Scrap king's hoard | The scrap king's hoard, on the fortress's deck: everything worth keeping that ever washed up on the crescent.\n\nScratched inside the lid: "Barred the hall and took the back way down to the sea. If you got past my dog, you've earned the rest. The town's yours - keep the gate shut at night. - K."
 loot hoard Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;MetalIngot*6;Scrap*10;Battery*2
 prop hoard loot.refill=0
 prop hoard tint.color=#b07a3a
 prop hoard tint.amount=0.4
+# (the town's own papers and signs, on what stands there already - read on the way round)
+note wreck Name board of the Rusty Crown | RUSTY CROWN - CARAVAN TOWN\n\nThe wreck's name board, its paint flaking. Scratched under it: "Ran her up the sand myself. Called the place Haven, called myself King. Nobody argued."
+note dinghy Fisherman's tally | Tally marks scratched along the dinghy's gunwale: fish landed, fish lost. The last row only says:\n\nHYENAS ON THE PIER AGAIN. TOLD THE HARBOUR MASTER. HE SAYS ASK THE KING. THE KING ISN'T ANSWERING.
+note monument Raft monument plaque | CARAVAN TOWN REMEMBERS\n\nThe raft that carried the first caravans here. Bolted to its mast, a newer plate: "...and Scrapyard Haven, built from what the sea gave back. Long live the King."
+note barrel Market barrel | A trader's barrel left under the canopy when the market closed: odds and ends nobody came back for.
+loot barrel Rope*2;Plastic*4;Nail*6
+note tithe King's tithe pile | A heap of the best scrap, a tin sign stuck in the top: THE KING'S TENTH - COLLECTED EVERY THIRD DAY. TOUCH IT AND SWIM HOME.\n\nThe heap is rusting. Nobody has come down from the ridge to collect it in weeks.
+note tradervan Trader's price list | Chalked on the van's side:\n\nWATER - 1 bolt a cup\nFISH - 2 bolts\nROPE - 3 bolts\nSCRAP - NONE. PIT CLOSED (HYENAS)\n\nAll prices double till the gate opens.
+note well Well rota | A board nailed to the well: one bucket a family a day, by the King's order.\n\nThe King's own line has been blank for a month. Someone has written beneath it: "Is he even still up there?"
+note pitvan Scrapper's note | Wedged under the van's wiper: "Came for copper, found dogs. The big one with the bolt collar is the King's old guard dog - he fed it scraps up on the ridge till it bit him. Then it brought friends."
+note pitsign King's pit sign | Painted on a sheet of scrap: KING'S PIT - SCRAPPERS PAY THE KING ONE PIECE IN TEN.\n\nUnder it, in fresher paint: CLOSED.
 
 prop winch obj.name=winch
 prop winch beh.use=Turn the gate winch
@@ -151,6 +173,24 @@ prop outside zone.message=Outside the wall. The trail runs down the shore to the
 prop pit zone.id=pit
 prop pit zone.radius=10
 prop pit zone.message=The scrap pit. Hyenas pour out from under the vans - and the biggest one wears a collar of bolts.
+prop wreckzone zone.id=wreck
+prop wreckzone zone.radius=5
+prop wreckzone zone.message=A wreck run up on the sand, RUSTY CROWN on her bow. The King came ashore in her - and never sailed again.
+prop square zone.id=square
+prop square zone.radius=3
+prop square zone.message=The town square: Caravan Town's raft monument, a well, and nobody about. The shutters are all down.
+prop market zone.id=market
+prop market zone.radius=3
+prop market zone.message=The market under its bamboo canopy - empty stalls, a barrel left behind, and the King's tithe pile rusting at the back.
+prop lookout zone.id=lookout
+prop lookout zone.radius=3.5
+prop lookout zone.message=From the top of the caravan tower: the whole crescent. The scrap pit below the ridge - and up on it, the King's fortress, no smoke from it.
+prop pitedge zone.id=pitedge
+prop pitedge zone.radius=3
+prop pitedge zone.message=The trail ends above the scrap pit. Laughing from under the vans - the hyenas know you're here.
+prop stilts zone.id=stilts
+prop stilts zone.radius=3
+prop stilts zone.message=The fortress's stilts: two ladders lashed end to end, up to the King's deck.
 prop pack creature.count=3
 prop pack creature.respawn=0
 prop pack creature.zone=pit
@@ -167,10 +207,24 @@ quest title=King of the Scrapyard
 quest intro=A junk town on a red crescent of sand, its gate shut since the hyenas came. The harbour's notice board is the place to start.
 step reach|harbour|1|Tie up at the scrapyard's harbour
 step read|Harbour notice|1|Read the notice on the pier
-step collect|story:gatekey|1|Get the gate key from the harbour master's lockbox
+step reach|wreck|1|Walk down the beach to the wreck of the Rusty Crown
+step read|Fisherman's tally|1|Read the tally scratched on the fisherman's dinghy by the quay
+step open|Harbour master's lockbox|1|Open the lockbox under the harbour master's van
+step collect|story:gatekey|1|Take the gate key on its bottle-opener ring
+step reach|square|1|Walk up into the town square by the raft monument
+step reach|market|1|Go under the canopy into the empty market
+step open|Market barrel|1|Rummage through the barrel the traders left behind
+step read|King's tithe pile|1|Read the tin sign on the King's tithe pile behind the market
+step read|Trader's price list|1|Check the price list chalked on the trader's van
+step reach|lookout|1|Climb the caravan watchtower and look out over the crescent
 step reach|gate|1|Winch the gate open and step outside the wall
+step reach|pitedge|1|Follow the trail down the shore to the edge of the scrap pit
+step reach|pit|1|Go down into the scrap pit
 step kill|Hyena|4|Clear the scrap pit of the hyena pack and its alpha
-step reach|fortress|1|Climb up to the scrap king's fortress
+step read|Scrapper's note|1|Search the vans in the pit for the last scrapper's note
+step read|King's pit sign|1|Read the painted sign at the pit's edge
+step reach|stilts|1|Climb the ridge to the foot of the fortress's stilts
+step reach|fortress|1|Climb the ladders up to the scrap king's fortress
 step open|Scrap king's hoard|1|Open the scrap king's hoard
 quest done=The pit is quiet and the hoard is open. The scrap king never came back - so his crown, of sorts, is yours.
 quest reward=MetalIngot*4;Nail*20;Plastic*10
