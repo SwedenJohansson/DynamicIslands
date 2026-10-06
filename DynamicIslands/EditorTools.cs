@@ -13,10 +13,35 @@ namespace DynamicIslands.Editor
 		public static bool Ctrl { get { return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); } }
 		public static bool Shift { get { return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift); } }
 
+		/// <summary>
+		/// One of the editor's windows that dim the editor (modal) is open: the editor's own shortcuts wait. (Ctrl+O over the
+		/// quest editor opened another island while the quest editor stayed open - its Save then wrote the first island's
+		/// quest into the second; Ctrl+Z, Ctrl+V, Delete changed the island behind a window.)
+		/// </summary>
+		public static bool WindowOpen
+		{
+			get
+			{
+				return IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen || TextPromptWindow.IsOpen || NoteEditorWindow.IsOpen || ItemPickerWindow.IsOpen ||
+					SoundPickerWindow.IsOpen || QuestEditorWindow.IsOpen || ChoiceWindow.IsOpen || WorldPlanWindow.IsOpen || BehaviourWindow.IsOpen ||
+					MyIslandsWindow.IsOpen || MainStoryHelper.IsOpen || PlanCheckWindow.IsOpen || StoryItemsWindow.IsOpen || PiecesWindow.IsOpen ||
+					LibraryExportWindow.IsOpen || LibraryImportWindow.IsOpen || LibraryWindow.IsOpen;
+			}
+		}
+
+		/// <summary>
+		/// The frame a window opened from another one (a prompt, a picker, a choice) closed: its Esc or Enter is still down
+		/// for the window under it that frame, which closed too (losing its edits) or acted on it (Enter in the generator's
+		/// name prompt generated). The windows under them wait that frame, as for an open drop-down list (DropList.Busy).
+		/// </summary>
+		public static int SubWindowClosedFrame = -1;
+		public static bool SubWindowJustClosed { get { return SubWindowClosedFrame == Time.frameCount; } }
+
 		/// <summary>Global editor shortcuts; called every frame by the terrain editor (which lives as long as the editor).</summary>
 		public static void HandleShortcuts()
 		{
-			if (IsTyping || !Ctrl) return;
+			// (not mid-stroke or mid-drag either: an undo then, and the stroke's "before" kept what was just undone)
+			if (IsTyping || !Ctrl || WindowOpen || Input.GetMouseButton(0)) return;
 			if (Input.GetKeyDown(KeyCode.Z) && !Shift) UndoRedoManager.Undo();
 			else if (Input.GetKeyDown(KeyCode.Y) || (Input.GetKeyDown(KeyCode.Z) && Shift)) UndoRedoManager.Redo();
 			else if (Input.GetKeyDown(KeyCode.S)) IslandFilesWindow.QuickSave();

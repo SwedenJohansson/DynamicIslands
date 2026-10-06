@@ -55,7 +55,10 @@ namespace DynamicIslands.Editor
 			instance.Show();
 		}
 
-		public static void Close() { if (instance != null) { DropList.Close(); instance.gameObject.SetActive(false); } }
+		public static void Close() { if (instance != null) { DropList.Close(); if (instance.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount; instance.gameObject.SetActive(false); } }
+
+		// (Esc: it had none - the World plans window under it closed instead, and Done then added to a closed plan)
+		void Update() { if (!DropList.Busy && !ChoiceWindow.IsOpen && !EditorInput.SubWindowJustClosed && Input.GetKeyDown(KeyCode.Escape)) Close(); }
 
 		void Build()
 		{

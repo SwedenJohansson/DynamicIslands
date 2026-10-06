@@ -77,7 +77,7 @@ namespace DynamicIslands.Editor
 		{
 			EditorInput.IsTyping = (nameField != null && nameField.isFocused) || (elevationField != null && elevationField.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
-			else if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && nameField.text.Trim().Length > 0) OnSave();
+			else if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && nameField.text.Trim().Length > 0) { if (renameFrom != null) OnRename(); else OnSave(); } // (Enter after Rename renames: it saved the open island under the new name)
 		}
 
 		void OnDisable()

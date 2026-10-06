@@ -171,9 +171,25 @@ namespace DynamicIslands.Editor
 			Close();
 		}
 
+		/// <summary>
+		/// "Remove quest": every quest of the island as one undo step. (It wrote the shown quest, emptied, over quest 0: on
+		/// the Quest 2 tab it took the main quest away and left Quest 2, and Ctrl+Z couldn't bring it back.)
+		/// </summary>
+		void RemoveAll()
+		{
+			IslandSettingsUndo.Change(() =>
+			{
+				SetQuestBringRule(DynamicIslands.currentIslandProps, null);
+				for (int i = 0; i < IslandQuest.MaxQuests; i++) new IslandQuest().To(DynamicIslands.currentIslandProps, i);
+				EditorUI.RefreshIsland();
+			});
+			DynamicIslands.Notify("The island has no quest now");
+			Close();
+		}
+
 		void Update()
 		{
-			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy) return;
+			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
 			if (pickingReward) { pickingReward = false; ShowReward(); }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
@@ -277,7 +293,7 @@ namespace DynamicIslands.Editor
 			fields.Add(bringLabelField);
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "Remove quest", () => { quest.Steps.Clear(); SetQuestBringRule(DynamicIslands.currentIslandProps, null); Apply(quest); DynamicIslands.Notify("The island has no quest now"); Close(); }, "Delete the quest from the island", 130, 34);
+			UIKit.Button(buttons, "Remove quest", RemoveAll, "Delete the quest from the island", 130, 34);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the quest (save the island to keep it for good)", 110, 34);
 			UIKit.Primary(save);

@@ -894,6 +894,8 @@ namespace DynamicIslands
 					TerrainPainter.Setup(terrain, island.WaterLevel);
 				}
 
+				// (the selection too, as New and Generate do: the gizmo stayed on the destroyed objects - Shift+click added to it, no handles)
+				if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);
 				Transform placed = GameObject.Find("PlacedObjects").transform;
 				foreach (Transform child in placed) Destroy(child.gameObject);
 				// PlacedObjects may not sit at the terrain origin; place relative to the terrain

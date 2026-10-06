@@ -268,7 +268,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen) return;
+			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
