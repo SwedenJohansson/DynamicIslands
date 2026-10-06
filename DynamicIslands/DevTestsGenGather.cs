@@ -33,7 +33,7 @@ namespace DynamicIslands
 						"style " + style + ": dirt spots and a wild beehive with honeycomb among them");
 				float sea = much.WaterLevel;
 				Check(ref ok, a2.Where(o => !wet(o)).All(o => o.Position.y > sea + 0.3f), "style " + style + ": land things above the sea");
-				Check(ref ok, a2.Where(wet).All(o => o.Position.y < sea - 0.5f && o.Position.y > sea - 6.1f), "style " + style + ": sea finds 0.6-6 m down");
+				Check(ref ok, a2.Where(wet).All(o => o.Position.y < sea - 0.5f && o.Position.y > sea - GenGather.DefaultDepth - 0.1f), "style " + style + ": sea finds 0.6-6 m down");
 			}
 			// Which kinds (GatherOff) and how far out (ShallowsDepth): ROADMAP LM9's rest
 			{
@@ -43,7 +43,7 @@ namespace DynamicIslands
 				Func<IslandObject, bool> sea = o => GenGather.SeaKeys.Contains(GenGather.KeyOf(o.Name));
 				// (old settings and recipes: no GatherOff / ShallowsDepth lines = every kind on, 6 m)
 				IslandGenSettings old = IslandGenSettings.FromText("Gather=1\nShallows=1\n");
-				Check(ref ok, old.GatherOff == "" && Mathf.Approximately(old.ShallowsDepth, 6f), "older settings: every kind on, finds down to 6 m");
+				Check(ref ok, old.GatherOff == "" && Mathf.Approximately(old.ShallowsDepth, GenGather.DefaultDepth), "older settings: every kind on, finds down to 6 m");
 				IslandGenSettings read = IslandGenSettings.FromText(new IslandGenSettings { GatherOff = "pine,flower,clam", ShallowsDepth = 12f }.ToText());
 				Check(ref ok, read.GatherOff == "pine,flower,clam" && Mathf.Approximately(read.ShallowsDepth, 12f), "GatherOff and ShallowsDepth saved and read back (" + read.GatherOff + ", " + read.ShallowsDepth + " m)");
 				Check(ref ok, IslandGenSettings.FromText("GatherOff=nonsense,Palm\nShallowsDepth=99").GatherOff == "palm" && IslandGenSettings.FromText("ShallowsDepth=99").ShallowsDepth == GenGather.MaxDepth,

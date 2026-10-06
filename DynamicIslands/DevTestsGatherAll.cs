@@ -77,6 +77,7 @@ namespace DynamicIslands
 				}
 				else pickup.PickupItemByType(pn.GetComponent<PickupItem>(), true);
 				yield return new WaitForSeconds(0.6f);
+				yield return WaitFor(() => Gained(before, Items(player)).Length > 0, 5f); // (a slow PC: the items come later)
 				Dictionary<string, int> after = Items(player);
 				string got = Gained(before, after);
 				if (got.Length == 0) nothing.Add(label + " (" + string.Join(", ", pn.GetComponents<Component>().Select(cp => cp != null ? cp.GetType().Name : "-").ToArray()) + ")");
@@ -85,22 +86,22 @@ namespace DynamicIslands
 				used[(int)(pn.ObjectIndex & 0xFFFF)] = label;
 				player.PersonController.SwitchControllerType(ControllerType.Ground);
 			}
-			Check(ref ok, nothing.Count == 0, used.Count + " things gathered, each giving Raft's items" + (nothing.Count > 0 ? " - nothing from: " + string.Join(", ", nothing.ToArray()) : ""));
+			Check(ref ok, used.Count > 0 && nothing.Count == 0, used.Count + " things gathered, each giving Raft's items" + (nothing.Count > 0 ? " - nothing from: " + string.Join(", ", nothing.ToArray()) : ""));
 			OnRaftCommand();
 			yield return new WaitForSeconds(1f);
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
-			Func<int, PickupItem_Networked> byOrd = o => e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (int)(p.ObjectIndex & 0xFFFF) == o);
+			Func<int, PickupItem_Networked> byOrd = o => e.Root == null ? null : e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (int)(p.ObjectIndex & 0xFFFF) == o);
 			Func<PickupItem_Networked, bool> isUsed = p => p == null || !p.gameObject.activeSelf || (p.GetComponent<HarvestableTree>() != null && p.GetComponent<HarvestableTree>().Depleted);
 			string[] back = used.Where(kv => !isUsed(byOrd(kv.Key))).Select(kv => kv.Value).ToArray();
-			Check(ref ok, back.Length == 0, "after a reload all " + used.Count + " stay used" + (back.Length > 0 ? " - back: " + string.Join(", ", back) : ""));
+			Check(ref ok, e.Root != null && back.Length == 0, "after a reload all " + used.Count + " stay used" + (back.Length > 0 ? " - back: " + string.Join(", ", back) : ""));
 			int days = IslandRules.RegrowDays(e) + 1;
 			IslandObjectState.Capture(e);
 			foreach (ObjectState st in e.State.Values) st.Day -= days;
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
 			string[] still = used.Where(kv => isUsed(byOrd(kv.Key))).Select(kv => kv.Value).ToArray();
-			Check(ref ok, still.Length == 0, days + " days later all are back" + (still.Length > 0 ? " - still used: " + string.Join(", ", still) : ""));
+			Check(ref ok, e.Root != null && still.Length == 0, days + " days later all are back" + (still.Length > 0 ? " - still used: " + string.Join(", ", still) : ""));
 			IslandWorldState.Remove(GatherAllIsland);
 			if (ok) Log("PASS: gather all"); else Fail("gather all");
 		}

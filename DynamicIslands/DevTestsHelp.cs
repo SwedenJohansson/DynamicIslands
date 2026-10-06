@@ -242,94 +242,102 @@ namespace DynamicIslands
 				"rule = story | island:" + PickShrine + " | start | receiver:600 | | Story | first | zone:altar\n"); // 7
 			p.Save();
 			Transform window = EditorUI.Canvas.transform.Find("WorldPlanWindow");
+			// (the island's rules, the plan and the cipick-* islands put back however it ends)
+			var saved = new Dictionary<string, string>(DynamicIslands.currentIslandProps);
 			try
 			{
-				WorldPlanWindow.Open(PickPlan);
-			}
-			catch (Exception e) { Check(ref ok, false, "open: " + e.Message); }
-			yield return new WaitForSecondsRealtime(0.5f);
-			Func<int, string, List<string>> values = (rule, field) => WorldPlanWindow.FieldChoices(rule, field).Select(c => c.Value).ToList();
-			List<ChoiceWindow.Choice> refs = WorldPlanWindow.FieldChoices(1, "whenref");
-			var refValues = refs.Select(c => c.Value).ToList();
-			Check(ref ok, refValues.Contains("shrine") && refValues.Contains("z") && !refValues.Contains("next") && refValues.Contains(PickShrine) && refValues.Contains(PickPlain),
-				"'quest done at' lists the plan's other rules and your saved islands (" + refValues.Count + ")");
-			ChoiceWindow.Choice shrineRule = refs.FirstOrDefault(c => c.Value == "shrine"), plain = refs.FirstOrDefault(c => c.Value == PickPlain);
-			Check(ref ok, shrineRule != null && shrineRule.Detail.Contains("quest, 4 steps") && plain != null && plain.Detail.Contains("no quest"), "each says whether it has a quest: " + (shrineRule != null ? shrineRule.Detail : "?") + " / " + (plain != null ? plain.Detail : "?"));
-			List<string> afterRule = values(5, "whenref");
-			Check(ref ok, afterRule.Contains("shrine") && !afterRule.Contains(PickShrine) && !afterRule.Contains("after"), "'after rule' lists rules only: " + string.Join(", ", afterRule.ToArray()));
-			Check(ref ok, values(2, "whenarg").SequenceEqual(new[] { "altar", "cave" }), "'zone fires at shrine' lists its zones: " + string.Join(", ", values(2, "whenarg").ToArray()));
-			Check(ref ok, values(3, "whenarg").SequenceEqual(new[] { "gate open" }), "'signal sent at shrine' lists its signal: " + string.Join(", ", values(3, "whenarg").ToArray()));
-			Check(ref ok, values(4, "whenarg").SequenceEqual(new[] { "1", "2", "3", "4" }), "'quest step done at shrine' lists its 4 steps");
-			Check(ref ok, values(6, "whenarg").Count == 0, "a map-type island's zones can't be listed");
-			List<string> near = values(2, "whereref");
-			Check(ref ok, near.Count > 0 && near[0] == "" && near.Contains("shrine") && near.Contains(PickPlain), "'near an island' lists 'where it happened', the rules and your islands");
-			Check(ref ok, values(7, "donearg").SequenceEqual(new[] { "altar", "cave" }), "the story's 'done when its zone fires' lists the zones of the island it brings");
-
-			// As a player clicks: the ▼ opens the list, a pick fills the field
-			Func<int, string, Button> pickButton = (rule, name) =>
-			{
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(rule);
-				return card != null ? card.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == name) : null;
-			};
-			Button zoneButton = pickButton(2, "Pick_WhenArg");
-			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && pickButton(7, "Pick_DoneArg") != null && pickButton(0, "Pick_WhenArg") == null,
-				"a ▾ after the fields that name something (none after 'the world starts')");
-			if (zoneButton != null)
-			{
-				// (the card in view, as a player scrolls to it before clicking)
-				ScrollRect rulesScroll = window.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault(s => zoneButton.transform.IsChildOf(s.content));
-				if (rulesScroll != null)
+				try
 				{
-					RectTransform zoneCard = (RectTransform)window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAt(2);
-					Canvas.ForceUpdateCanvases();
-					float gap = ScreenRect(rulesScroll.viewport).yMax - ScreenRect(zoneCard).yMax;
-					rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
-					yield return null;
+					WorldPlanWindow.Open(PickPlan);
 				}
-				zoneButton.onClick.Invoke();
-				yield return new WaitForSecondsRealtime(0.4f);
-				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.SequenceEqual(new[] { "altar", "cave" }) && ChoiceWindow.Title.Contains("TRIGGER ZONES"), "clicking it lists the zones: " + ChoiceWindow.Title);
-				Screenshot(new[] { "planpicks_zones" });
+				catch (Exception e) { Check(ref ok, false, "open: " + e.Message); }
+				yield return new WaitForSecondsRealtime(0.5f);
+				Func<int, string, List<string>> values = (rule, field) => WorldPlanWindow.FieldChoices(rule, field).Select(c => c.Value).ToList();
+				List<ChoiceWindow.Choice> refs = WorldPlanWindow.FieldChoices(1, "whenref");
+				var refValues = refs.Select(c => c.Value).ToList();
+				Check(ref ok, refValues.Contains("shrine") && refValues.Contains("z") && !refValues.Contains("next") && refValues.Contains(PickShrine) && refValues.Contains(PickPlain),
+					"'quest done at' lists the plan's other rules and your saved islands (" + refValues.Count + ")");
+				ChoiceWindow.Choice shrineRule = refs.FirstOrDefault(c => c.Value == "shrine"), plain = refs.FirstOrDefault(c => c.Value == PickPlain);
+				Check(ref ok, shrineRule != null && shrineRule.Detail.Contains("quest, 4 steps") && plain != null && plain.Detail.Contains("no quest"), "each says whether it has a quest: " + (shrineRule != null ? shrineRule.Detail : "?") + " / " + (plain != null ? plain.Detail : "?"));
+				List<string> afterRule = values(5, "whenref");
+				Check(ref ok, afterRule.Contains("shrine") && !afterRule.Contains(PickShrine) && !afterRule.Contains("after"), "'after rule' lists rules only: " + string.Join(", ", afterRule.ToArray()));
+				Check(ref ok, values(2, "whenarg").SequenceEqual(new[] { "altar", "cave" }), "'zone fires at shrine' lists its zones: " + string.Join(", ", values(2, "whenarg").ToArray()));
+				Check(ref ok, values(3, "whenarg").SequenceEqual(new[] { "gate open" }), "'signal sent at shrine' lists its signal: " + string.Join(", ", values(3, "whenarg").ToArray()));
+				Check(ref ok, values(4, "whenarg").SequenceEqual(new[] { "1", "2", "3", "4" }), "'quest step done at shrine' lists its 4 steps");
+				Check(ref ok, values(6, "whenarg").Count == 0, "a map-type island's zones can't be listed");
+				List<string> near = values(2, "whereref");
+				Check(ref ok, near.Count > 0 && near[0] == "" && near.Contains("shrine") && near.Contains(PickPlain), "'near an island' lists 'where it happened', the rules and your islands");
+				Check(ref ok, values(7, "donearg").SequenceEqual(new[] { "altar", "cave" }), "the story's 'done when its zone fires' lists the zones of the island it brings");
+
+				// As a player clicks: the ▼ opens the list, a pick fills the field
+				Func<int, string, Button> pickButton = (rule, name) =>
+				{
+					Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(rule);
+					return card != null ? card.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == name) : null;
+				};
+				Button zoneButton = pickButton(2, "Pick_WhenArg");
+				Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && pickButton(7, "Pick_DoneArg") != null && pickButton(0, "Pick_WhenArg") == null,
+					"a ▾ after the fields that name something (none after 'the world starts')");
+				if (zoneButton != null)
+				{
+					// (the card in view, as a player scrolls to it before clicking)
+					ScrollRect rulesScroll = window.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault(s => zoneButton.transform.IsChildOf(s.content));
+					if (rulesScroll != null)
+					{
+						RectTransform zoneCard = (RectTransform)window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAt(2);
+						Canvas.ForceUpdateCanvases();
+						float gap = ScreenRect(rulesScroll.viewport).yMax - ScreenRect(zoneCard).yMax;
+						rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
+						yield return null;
+					}
+					zoneButton.onClick.Invoke();
+					yield return new WaitForSecondsRealtime(0.4f);
+					Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.SequenceEqual(new[] { "altar", "cave" }) && ChoiceWindow.Title.Contains("TRIGGER ZONES"), "clicking it lists the zones: " + ChoiceWindow.Title);
+					Screenshot(new[] { "planpicks_zones" });
+					yield return new WaitForSecondsRealtime(0.6f);
+					ChoiceWindow.PickValue("cave");
+					yield return null;
+					Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(2);
+					bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "cave");
+					Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && shown, "picking 'cave' fills the field and the rule");
+				}
+				Button refButton = pickButton(1, "Pick_WhenRef");
+				if (refButton != null) { refButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(PickPlain); yield return null; }
+				Check(ref ok, WorldPlanWindow.Current.Rules[1].WhenRef == PickPlain, "picking an island for 'quest done at': " + WorldPlanWindow.Current.Rules[1].WhenRef);
+				Button whereButton = pickButton(2, "Pick_WhereRef");
+				if (whereButton != null) { whereButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(""); yield return null; }
+				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhereRef == "", "picking 'where it happened' empties 'of'");
+				Button doneButton = pickButton(7, "Pick_DoneArg");
+				if (doneButton != null) { doneButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue("cave"); yield return null; }
+				Check(ref ok, WorldPlanWindow.Current.Rules[7].StoryDone == "zone:cave", "picking the story's zone: " + WorldPlanWindow.Current.Rules[7].StoryDone);
+				Button typedButton = pickButton(6, "Pick_WhenArg");
+				if (typedButton != null) { typedButton.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.4f); }
+				string why = ChoiceWindow.EmptyText;
+				Check(ref ok, ChoiceWindow.IsOpen && why != null && why.Contains("map type") && why.Contains("type the name"), "a map-type island's empty list says why: " + why);
+				Screenshot(new[] { "planpicks_empty" });
 				yield return new WaitForSecondsRealtime(0.6f);
-				ChoiceWindow.PickValue("cave");
-				yield return null;
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(2);
-				bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "cave");
-				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && shown, "picking 'cave' fills the field and the rule");
+				ChoiceWindow.Close();
+				WorldPlanWindow.Close();
+
+				// The island's own rules: self first
+				DynamicIslands.currentIslandProps.Clear();
+				WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, new[] { IntroRule.Parse("reward | type:random | quest:self | near:self:600:north | Well done | Reward") });
+				WorldPlanWindow.OpenIsland();
+				yield return new WaitForSecondsRealtime(0.4f);
+				List<string> own = values(0, "whenref"), ownNear = values(0, "whereref");
+				Check(ref ok, own.Count > 0 && own[0] == IntroRule.Self && ownNear.Count > 0 && ownNear[0] == IntroRule.Self, "an island's own rules offer 'self' first");
+				WorldPlanWindow.Close();
 			}
-			Button refButton = pickButton(1, "Pick_WhenRef");
-			if (refButton != null) { refButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(PickPlain); yield return null; }
-			Check(ref ok, WorldPlanWindow.Current.Rules[1].WhenRef == PickPlain, "picking an island for 'quest done at': " + WorldPlanWindow.Current.Rules[1].WhenRef);
-			Button whereButton = pickButton(2, "Pick_WhereRef");
-			if (whereButton != null) { whereButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(""); yield return null; }
-			Check(ref ok, WorldPlanWindow.Current.Rules[2].WhereRef == "", "picking 'where it happened' empties 'of'");
-			Button doneButton = pickButton(7, "Pick_DoneArg");
-			if (doneButton != null) { doneButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue("cave"); yield return null; }
-			Check(ref ok, WorldPlanWindow.Current.Rules[7].StoryDone == "zone:cave", "picking the story's zone: " + WorldPlanWindow.Current.Rules[7].StoryDone);
-			Button typedButton = pickButton(6, "Pick_WhenArg");
-			if (typedButton != null) { typedButton.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.4f); }
-			string why = ChoiceWindow.EmptyText;
-			Check(ref ok, ChoiceWindow.IsOpen && why != null && why.Contains("map type") && why.Contains("type the name"), "a map-type island's empty list says why: " + why);
-			Screenshot(new[] { "planpicks_empty" });
-			yield return new WaitForSecondsRealtime(0.6f);
-			ChoiceWindow.Close();
-			WorldPlanWindow.Close();
-
-			// The island's own rules: self first
-			var saved = new Dictionary<string, string>(DynamicIslands.currentIslandProps);
-			DynamicIslands.currentIslandProps.Clear();
-			WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, new[] { IntroRule.Parse("reward | type:random | quest:self | near:self:600:north | Well done | Reward") });
-			WorldPlanWindow.OpenIsland();
-			yield return new WaitForSecondsRealtime(0.4f);
-			List<string> own = values(0, "whenref"), ownNear = values(0, "whereref");
-			Check(ref ok, own.Count > 0 && own[0] == IntroRule.Self && ownNear.Count > 0 && ownNear[0] == IntroRule.Self, "an island's own rules offer 'self' first");
-			WorldPlanWindow.Close();
-			DynamicIslands.currentIslandProps.Clear();
-			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
-
-			File.Delete(WorldPlan.PathFor(PickPlan));
-			foreach (string n in new[] { PickShrine, PickPlain }) { string path = IslandSpawner.PathFor(n); if (File.Exists(path)) File.Delete(path); }
-			IslandCache.Forget();
+			finally
+			{
+				ChoiceWindow.Close();
+				WorldPlanWindow.Close();
+				DynamicIslands.currentIslandProps.Clear();
+				foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
+				File.Delete(WorldPlan.PathFor(PickPlan));
+				foreach (string n in new[] { PickShrine, PickPlain }) { string path = IslandSpawner.PathFor(n); if (File.Exists(path)) File.Delete(path); }
+				IslandCache.Forget();
+			}
 			if (ok) Log("PASS: plan picks"); else Fail("plan picks");
 		}
 

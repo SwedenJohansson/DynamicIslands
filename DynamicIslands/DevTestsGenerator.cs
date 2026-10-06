@@ -829,7 +829,9 @@ namespace DynamicIslands
 			System.Reflection.MethodInfo gen = typeof(GeneratorWindow).GetMethod("OnGenerate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 			GeneratorWindow w = UnityEngine.Object.FindObjectOfType<GeneratorWindow>();
 			if (gen != null && w != null) gen.Invoke(w, null);
-			yield return new WaitForSecondsRealtime(1f);
+			// (it may load Raft's scenes first: until the window closes, realtime - not the editor's time scale)
+			for (float t = 0f; t < 60f && GeneratorWindow.IsOpen; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			yield return new WaitForSecondsRealtime(0.5f);
 			Check(ref ok, !GeneratorWindow.IsOpen && (GeneratorWindow.LastResult ?? "").StartsWith("Island "), "Generate closes the window and says what it made: \"" + GeneratorWindow.LastResult + "\"");
 			Screenshot(new[] { "genquest_after" });
 			if (ok) Log("PASS: generator quests"); else Fail("generator quests");
@@ -846,9 +848,11 @@ namespace DynamicIslands
 			bool ok = true;
 			RaftIsland radar = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains("Landmark_Radar"));
 			if (radar == null) { Fail("no measured Radio Tower (raft_islands.txt)"); yield break; }
+			int designs = 0;
 			foreach (Remakes.Design d in Remakes.For(radar.Scene))
 			{
 				if (only != null && d.Id != only) continue;
+				designs++;
 				foreach (int seed in new[] { 11, 12 })
 				{
 					IslandGenSettings gs = RaftIslands.LikeIt(radar, new IslandGenSettings { Seed = seed });
@@ -880,7 +884,7 @@ namespace DynamicIslands
 					}
 				}
 			}
-			if (ok) Log("PASS: remakes of Raft's islands"); else Fail("remakes of Raft's islands");
+			if (ok && designs > 0) Log("PASS: remakes of Raft's islands (" + designs + ")"); else Fail("remakes of Raft's islands (" + designs + " designs)");
 		}
 
 		[ConsoleCommand(name: "CIStoryRemake", docs: "Dev, editor: ROADMAP CW1 - Rebuild it for Raft's other story islands: each design (or those whose id has <part>) generated on its island's ground with seed [seed] (11): built, every piece loaded, its loot container there, the pieces standing on the ground (none more than 0.4 m over it); a picture shot_sr_<id>.png. CIStoryRemake [part] [seed]")]
@@ -1806,12 +1810,11 @@ namespace DynamicIslands
 			string navmesh = null;
 			Application.LogCallback watch = (msg, trace, type) => { if (msg.Contains("NavMesh for")) navmesh = msg.Substring(msg.IndexOf("NavMesh")); };
 			Application.logMessageReceived += watch;
-			int count0 = IslandWorldState.Islands.Count;
 			Vector3 pos = raft.Value + Vector3.forward * 330f; pos.y = 0f;
 			float t0 = Time.realtimeSinceStartup;
 			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
 			float spawn = Time.realtimeSinceStartup - t0;
-			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
+			IslandWorldState.Entry entry = IslandWorldState.Islands.LastOrDefault(e => e.HostName == name);
 			if (entry == null || entry.Root == null) { Application.logMessageReceived -= watch; Fail("the island did not spawn"); yield break; }
 			Transform objects = entry.Root.transform.Find("Objects");
 			int n = objects != null ? objects.childCount : 0;
@@ -1864,7 +1867,6 @@ namespace DynamicIslands
 			bool real = name == "real" || name.StartsWith("real:");
 			if (!real && !File.Exists(IslandSpawner.PathFor(name))) { Fail("no island file '" + name + "'"); yield break; }
 			yield return EnsureAlive();
-			int count0 = IslandWorldState.Islands.Count;
 			Vector3 pos = raft.Value + Vector3.forward * 330f; pos.y = 0f;
 			float t0 = Time.realtimeSinceStartup;
 			IslandWorldState.Entry entry = null;
@@ -1896,7 +1898,7 @@ namespace DynamicIslands
 			else
 			{
 				yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
-				entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
+				entry = IslandWorldState.Islands.LastOrDefault(e => e.HostName == name);
 				if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
 				terrain = entry.Root.GetComponentInChildren<Terrain>();
 			}
@@ -2055,7 +2057,7 @@ namespace DynamicIslands
 			}
 			GeneratorWindow.Close();
 			yield return null;
-			Log(UIKit.ShownHelp == null ? "PASS: generator pictures" : "FAIL: a help popup stayed open");
+			if (UIKit.ShownHelp == null) Log("PASS: generator pictures"); else Fail("generator pictures: a help popup stayed open");
 		}
 
 		#endregion

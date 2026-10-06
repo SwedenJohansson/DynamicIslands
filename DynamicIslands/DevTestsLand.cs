@@ -624,6 +624,8 @@ namespace DynamicIslands
 					raftNames[key] = (raftNames.ContainsKey(key) ? raftNames[key] : 0f) + float.Parse(f[4], inv);
 				}
 			}
+			// (nothing of Raft's read: every kind below would count as "too few to judge" and pass)
+			if (raftArea["small"] <= 0f || raftArea["big"] <= 0f) { ok = false; Log("  no small or no big tropical islands in " + RaftLand.FileName); }
 
 			// The generator's, with the Like Raft quick buttons (or the land values given), on islands as big and high as Raft's
 			Vector3 size = IslandGenerator.BuildArea;
@@ -695,6 +697,7 @@ namespace DynamicIslands
 			}
 			SeaStyle raftSea = RaftUnderwater.For(TerrainPainter.Tropical);
 			float raftSeaArea = raftSea.Area.Take(5).Sum();
+			if (raftSeaArea <= 0f) { ok = false; Log("  no tropical sea floor measured (" + RaftUnderwater.FileName + ")"); }
 			foreach (string c in seaCats)
 			{
 				float raft = raftSea.Of(c).Sum(t => Enumerable.Range(0, 5).Sum(b => t.Density[b] * raftSea.Area[b])) * 1000f / Mathf.Max(1f, raftSeaArea);

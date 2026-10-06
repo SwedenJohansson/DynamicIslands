@@ -50,6 +50,7 @@ namespace DynamicIslands
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (!raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			bool ok = true;
+			Check(ref ok, names.Length > 0, names.Length + " island(s) named to check");
 			Check(ref ok, new[] { ContentCatalog.MacheteItem, ContentCatalog.ZiplineItem, "MetalDetector", "Shovel" }.All(ContentCatalog.ItemExists), "Raft's tools exist: machete, zipline tool, metal detector, shovel");
 			TreasurePointManager tm = UnityEngine.Object.FindObjectOfType<TreasurePointManager>();
 			FieldInfo pa = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -63,7 +64,7 @@ namespace DynamicIslands
 				if (!spot.HasValue) { Check(ref ok, false, "'" + name + "': no open sea"); continue; }
 				yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
 				IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
-				if (e == null || e.Root == null) { Check(ref ok, false, "'" + name + "' did not spawn"); continue; }
+				if (e == null || e.Root == null) { Check(ref ok, false, "'" + name + "' did not spawn"); IslandWorldState.Remove(name); continue; }
 				yield return new WaitForSeconds(1.5f);
 				var said = new List<string>();
 				// Ziplines: both floors on the ground (or a deck), the line made
