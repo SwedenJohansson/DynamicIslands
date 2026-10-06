@@ -150,7 +150,8 @@ namespace DynamicIslands.Editor
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState && !WorldIslands.HasState && !StoryChain.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
+				// (not while it has lines this version couldn't read - a newer version's settings: deleting it lost them)
+				if (islands.Count == 0 && keptLines.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState && !WorldIslands.HasState && !StoryChain.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label|island file hash",
@@ -265,6 +266,10 @@ namespace DynamicIslands.Editor
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
 					continue;
 				}
+				// (the name becomes a file's path, and the file may have come from another host with Raft's world folder: one
+				// that isn't a plain file name - "..\..\x" - is kept as it is, not read)
+				string bad = FileNames.ReceivedProblem(p[0]);
+				if (bad != null) { Debug.LogWarning("[CUSTOM ISLANDS] An island of " + FilePath + " is left out (kept in the file): its name " + bad); keptLines.Add(line); continue; }
 				string hash = p.Length > 7 ? p[7].Trim() : "";
 				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
 					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" };

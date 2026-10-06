@@ -220,7 +220,9 @@ namespace DynamicIslands.Editor
 		{
 			LibraryFileRef f = e.Files.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 			if (f == null || f.Size > 600 * 1024) { done(null); yield break; }
-			string key = e.Info.id + "-" + (f.Sha256.Length >= 12 ? f.Sha256.Substring(0, 12) : f.Name);
+			// (a file's name in the cache: the index's id and names go through IdFrom - "..\\..\\x" or "C:\\x" from the index wrote
+			// a picture anywhere)
+			string key = LibraryPack.IdFrom(e.Info.id) + "-" + LibraryPack.IdFrom(f.Sha256.Length >= 12 ? f.Sha256.Substring(0, 12) : f.Name);
 			Texture2D tex;
 			if (textures.TryGetValue(key, out tex) && tex != null) { done(tex); yield break; }
 			string cached = System.IO.Path.Combine(CacheFolder, key + ".img");

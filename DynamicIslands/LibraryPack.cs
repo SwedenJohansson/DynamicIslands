@@ -593,6 +593,22 @@ namespace DynamicIslands.Editor
 		public static void SaveInstalled(List<LibraryInstalled> entries)
 		{
 			Directory.CreateDirectory(LibraryFolder);
+			// (an installed.json that can't be read was taken for an empty one by Installed, and this wrote over it: every
+			// other entry forgotten - its files never updated or removed. A copy goes to the deleted folder first; one that
+			// can't be read at all - locked - isn't written over)
+			if (File.Exists(InstalledPath))
+			{
+				string text = null;
+				try { text = File.ReadAllText(InstalledPath); } catch (Exception e) { throw new IOException(Path.GetFileName(InstalledPath) + " can't be read (" + e.Message + ") - it isn't written over", e); }
+				try { LibraryJson.Objects(LibraryJson.Parse(text) as Dictionary<string, object>, "entries").Select(LibraryInstalled.From).ToList(); }
+				catch (Exception)
+				{
+					string folder = Path.Combine(Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), "library");
+					Directory.CreateDirectory(folder);
+					File.Copy(InstalledPath, Path.Combine(folder, "installed " + DateTime.Now.ToString("yyyy-MM-dd HHmmss", CultureInfo.InvariantCulture) + ".json"), true);
+					Debug.LogWarning("[CUSTOM ISLANDS] " + InstalledPath + " couldn't be read: a copy is kept in " + folder);
+				}
+			}
 			SafeFile.WriteAllText(InstalledPath, LibraryJson.Write(new Dictionary<string, object> { { "entries", entries.Select(e => (object)e.ToDict()).ToList() } }));
 		}
 
@@ -789,7 +805,9 @@ namespace DynamicIslands.Editor
 						string current = ShaOfFile(path);
 						if (current != before.sha256 && !replaceChanged)
 						{
-							entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = current, kind = KindIsland });
+							// (the hash the entry installed, not the player's: with theirs the file counted as unchanged, and the next
+							// update replaced it without asking)
+							entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = before.sha256, kind = KindIsland });
 							report.Add("Kept your changed '" + t + "' (the new version's is not installed)");
 							continue;
 						}
@@ -832,7 +850,7 @@ namespace DynamicIslands.Editor
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindPlan && !f.shared) : null;
 				string name = before != null ? before.name : plan.Name;
 				string text = plan.ToText();
-				bool same = false;
+				bool same = false, keep = false;
 				if (before == null)
 				{
 					string existing = WorldPlan.PathFor(name);
@@ -845,13 +863,21 @@ namespace DynamicIslands.Editor
 					else if (File.Exists(existing)) { same = true; report.Add("The plan '" + name + "' is already here (the same plan) - shared"); }
 					else report.Add("Installed the plan '" + name + "'");
 				}
+				// (the player's changes to the installed plan, as for its islands: kept unless they chose to replace them - it
+				// was written over at every update; the hash recorded stays the entry's, so the next update asks again)
+				else if (!replaceChanged && File.Exists(WorldPlan.PathFor(name)) && ShaOfFile(WorldPlan.PathFor(name)) != before.sha256 && ShaOfFile(WorldPlan.PathFor(name)) != Sha256(Encoding.UTF8.GetBytes(text)))
+					keep = true;
 				else report.Add("Updated the plan '" + name + "' (worlds already started keep their own copy of it)");
 				plan.Name = name;
-				Directory.CreateDirectory(WorldPlan.Folder);
-				undo.Remember(WorldPlan.PathFor(name));
-				SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
+				if (keep) report.Add("Kept your changed plan '" + name + "' (the new version's is not installed)");
+				else
+				{
+					Directory.CreateDirectory(WorldPlan.Folder);
+					undo.Remember(WorldPlan.PathFor(name));
+					SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
+				}
 				entry.plan = name;
-				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
+				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = keep ? before.sha256 : Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
 				report.PlanName = name;
 			}
 
@@ -872,7 +898,7 @@ namespace DynamicIslands.Editor
 				}
 				if (File.Exists(path) && (before == null || (ShaOfFile(path) != before.sha256 && !replaceChanged)))
 				{
-					if (before != null) entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = ShaOfFile(path), kind = KindMapType });
+					if (before != null) entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = before.sha256, kind = KindMapType });
 					report.Add("Kept your map type '" + t + "' (the pack's is different and is not installed: new islands of that type are made from yours)");
 					continue;
 				}
@@ -947,10 +973,18 @@ namespace DynamicIslands.Editor
 			if (clean.Length == 0) clean = "library";
 			for (int i = 1; ; i++)
 			{
-				string candidate = name + " (" + clean + ")" + (i > 1 ? " " + i : "");
+				string candidate = Fit(name, " (" + clean + ")" + (i > 1 ? " " + i : ""));
 				bool used = File.Exists(IslandSpawner.PathFor(candidate)) || originals.Any(o => target[o].Equals(candidate, StringComparison.OrdinalIgnoreCase));
 				if (!used) return candidate;
 			}
+		}
+
+		/// <summary>name + tail within FileNames.MaxLength (the name shortened): a longer one installed, but this version
+		/// refused it when the pack was exported again and imported, and players' PCs refused it from a host.</summary>
+		static string Fit(string name, string tail)
+		{
+			if (name.Length + tail.Length <= FileNames.MaxLength) return name + tail;
+			return name.Substring(0, Math.Max(1, FileNames.MaxLength - tail.Length)).TrimEnd('.', ' ') + tail;
 		}
 
 		static string FreePlanName(string name, string author)
@@ -959,7 +993,7 @@ namespace DynamicIslands.Editor
 			if (clean.Length == 0) clean = "library";
 			for (int i = 1; ; i++)
 			{
-				string candidate = name + " (" + clean + ")" + (i > 1 ? " " + i : "");
+				string candidate = Fit(name, " (" + clean + ")" + (i > 1 ? " " + i : ""));
 				if (!File.Exists(WorldPlan.PathFor(candidate)) && !WorldPlan.IsBuiltIn(candidate)) return candidate;
 			}
 		}
@@ -980,7 +1014,8 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, hash));
-			if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(island), copy);
+			// (whole or not at all: a copy Raft stopped in was never written again, and the worlds were pointed at it)
+			if (!File.Exists(copy)) SafeFile.WriteAllBytes(copy, File.ReadAllBytes(IslandSpawner.PathFor(island)));
 			RepointWorlds(island, hash);
 			report.Add("Kept the version of '" + island + "' that " + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + " started with");
 		}
@@ -1207,11 +1242,13 @@ namespace DynamicIslands.Editor
 			List<string> worlds = type ? new List<string>() : plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
 			if (worlds.Count > 0) { report.Add("Kept '" + f.name + "': " + (worlds.Count == 1 ? "the world " : "the worlds ") + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + (worlds.Count == 1 ? " uses it" : " use it")); return; }
 			if (undo != null) undo.Remember(path);
-			try { File.Delete(path); }
+			// (to the deleted folder, never for good: the player may have changed it, and an update's undo is only in memory -
+			// Raft stopping before installed.json was written lost the file)
+			try { PiecesFiles.MoveToDeleted(path, "library"); }
 			catch (Exception e) when (SafeFile.InUse(e)) { report.Add("Kept '" + f.name + "': it is in use by another program (close it there and Remove again)"); return; }
 			if (!plan && !type) RemovePoolLine(f.name);
 			if (type) MapTypeFiles.LoadAll();
-			report.Add("Removed " + (plan ? "the plan '" : type ? "the map type '" : "'") + f.name + "'");
+			report.Add("Removed " + (plan ? "the plan '" : type ? "the map type '" : "'") + f.name + "' (kept in Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName + "\\library)");
 		}
 
 		/// <summary>The copies of islands downloaded from multiplayer hosts (&lt;name&gt;_&lt;hash&gt;), with the saved worlds that use each
@@ -1224,7 +1261,7 @@ namespace DynamicIslands.Editor
 			int n = 0;
 			foreach (var c in HostCopies().Where(c => c.Value.Count == 0))
 			{
-				try { File.Delete(IslandSpawner.PathFor(c.Key)); n++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
+				try { IslandFilesWindow.MoveToDeleted(c.Key); n++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
 			}
 			if (n > 0) { Log("Removed " + n + " unused island copies downloaded from hosts"); IslandCache.Forget(); }
 			return n;

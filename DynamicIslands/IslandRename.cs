@@ -65,9 +65,9 @@ namespace DynamicIslands.Editor
 				{
 					string n = Path.GetFileNameWithoutExtension(file);
 					if (n.Length != from.Length + 13 || !n.StartsWith(from + "_", StringComparison.OrdinalIgnoreCase) || !IsCopyName(n) || !IslandNetwork.IsDownloadName(n)) continue;
-					movedCopies.Add(n);
-					MoveFile(file, IslandSpawner.PathFor(to + n.Substring(from.Length)));
-					copies++;
+					// (each on its own: one in use - an antivirus - left every copy after it under the old name)
+					try { MoveFile(file, IslandSpawner.PathFor(to + n.Substring(from.Length))); movedCopies.Add(n); copies++; }
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Renaming the copy " + n + ": " + e.Message); }
 				}
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Renaming the copies of '" + from + "': " + e.Message); }
@@ -144,6 +144,13 @@ namespace DynamicIslands.Editor
 							IntroRule r = IntroRule.Parse(l.Substring(ruleKey.Length));
 							if (r != null && RenameIn(new List<IntroRule> { r }, from, to, false)) { lines[i] = ruleKey + r.ToLine(); changed = true; }
 						}
+						else if (l.StartsWith("@planhash="))
+						{
+							// (the version of the island the world's plan brings - AU6: lost with the old name, and the copy it names
+							// looked unused to Tidy up)
+							int colon = l.LastIndexOf(':');
+							if (colon > 10 && l.Substring(10, colon - 10).Trim().Equals(from, StringComparison.OrdinalIgnoreCase)) { lines[i] = "@planhash=" + to + l.Substring(colon); changed = true; }
+						}
 						else if (l.StartsWith("@islandsoff="))
 						{
 							// (the pool's islands left out of this world: the island stays left out - review 2026-10-06)
@@ -188,6 +195,8 @@ namespace DynamicIslands.Editor
 
 			// The world loaded now (the editor's): its list in memory, or its next save would write the old name again
 			if (WorldIslands.Off.Remove(from)) WorldIslands.Off.Add(to);
+			string planHash;
+			if (WorldDirector.PlanHashes.TryGetValue(from, out planHash)) { WorldDirector.PlanHashes.Remove(from); WorldDirector.PlanHashes[to] = planHash; }
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (e.HostName.Equals(from, StringComparison.OrdinalIgnoreCase)) e.HostName = to;
