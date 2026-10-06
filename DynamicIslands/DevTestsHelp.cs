@@ -348,6 +348,7 @@ namespace DynamicIslands
 				case "islandfiles": open = IslandFilesWindow.Open; close = IslandFilesWindow.Close; break;
 				case "quest": open = QuestEditorWindow.Open; close = QuestEditorWindow.Close; break;
 				case "storyitems": open = StoryItemsWindow.Open; close = StoryItemsWindow.Close; break;
+				case "pieces": open = () => PiecesWindow.Open(false); close = PiecesWindow.Close; break;
 				case "generator": open = () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(0); }; close = GeneratorWindow.Close; break;
 			}
 			if (open == null) { Fail("window shot: no window '" + name + "'"); yield break; }

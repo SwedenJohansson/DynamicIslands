@@ -423,7 +423,8 @@ the editor (Noon the first time).
   area by its height and slope again.
 - **Brush:** size and strength.
 - **Stamps:** click the ground to put down a **Hill**, **Peak**, **Crater**, **Mesa**, **Lagoon** or **Ridge**, as big
-  as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own.
+  as the brush (Q/E turn it). **Save stamp...** keeps the land under the brush as a stamp of your own; **Manage...** beside it renames or
+  deletes your stamps.
 
 **Island styles.** On the Island tab, **Style** ◄ ► steps through Tropical, Snowy, Desert, Forest and Volcanic (or click the name for the list): the
 ground takes the style's textures, the paint buttons get its names, and the generator uses its plants and animals.
@@ -487,7 +488,13 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
 - **Placing:** **Random** gives each placed object a random turn and size, **Slope** leans it with the ground, **Grid**
   snaps to Raft's 1.5 m building grid (Q/E then turn in 90° steps).
 - **Groups:** select several objects and click **Save as group...**. The group appears under **My groups** at the top
-  of the browser, to place on any island.
+  of the browser, to place on any island. **Manage...** beside it opens **My groups and stamps**: pick a group (or, on
+  the Stamps tab, a stamp), type a new name and press **Rename**, or press **Delete** twice - it is moved to
+  `Mods\DynamicIslands\deleted\groups` (or `...\stamps`), where you can get it back. Islands keep what was placed
+  from a group: a placed group is separate objects.
+
+![My groups and stamps](images/editor-groups-stamps.jpg)
+*My groups and stamps: the saved groups (or stamps), the name to rename to, Rename and Delete.*
 
 ![A creature and a sign in the editor, a saved group in the browser](images/editor-groups.jpg)
 *A herd of two warthogs (the pink marker) and a sign. "My groups" in the browser holds two saved groups.*

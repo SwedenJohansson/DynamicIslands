@@ -95,5 +95,64 @@ namespace DynamicIslands
 			yield return null;
 			if (ok) Log("PASS: rename island"); else Fail("rename island");
 		}
+			[ConsoleCommand(name: "CIPieces", docs: "Dev, editor: ROADMAP T4 - My groups and stamps: a test group and stamp renamed (a used name refused) and deleted (moved to deleted/groups / deleted/stamps), the object list and the stamp buttons follow; Manage... buttons in both tabs")]
+		public static void PiecesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(PiecesRoutine()); }
+
+		static IEnumerator PiecesRoutine()
+		{
+			if (!DynamicIslands.InEditor() || PiecesWindow.Root == null) { Fail("pieces: in the editor"); yield break; }
+			bool ok = true;
+			string deleted = Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName);
+			var cleanup = new List<string>
+			{
+				Path.Combine(GroupLibrary.Folder, "cigrp-a.group"), Path.Combine(GroupLibrary.Folder, "cigrp-b.group"), Path.Combine(GroupLibrary.Folder, "cigrp-used.group"),
+				Path.Combine(TerrainStamps.Folder, "cistamp-a.stamp"), Path.Combine(TerrainStamps.Folder, "cistamp-b.stamp"),
+				Path.Combine(Path.Combine(deleted, "groups"), "cigrp-b.group"), Path.Combine(Path.Combine(deleted, "stamps"), "cistamp-b.stamp"),
+			};
+			Check(ref ok, GameObject.Find("Button_ManageGroups") != null || Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().Any(b => b.name == "Button_ManageGroups"), "Objects tab: Manage... beside Save as group");
+			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().Any(b => b.name == "Button_ManageStamps"), "Terrain tab: Manage... beside Save stamp");
+			// A group (empty: only its file matters here) and a stamp
+			Directory.CreateDirectory(GroupLibrary.Folder);
+			foreach (string g in new[] { "cigrp-a", "cigrp-used" })
+				using (var w = new BinaryWriter(File.Create(Path.Combine(GroupLibrary.Folder, g + ".group")))) { w.Write(0x52474943u); w.Write(1); w.Write(0); }
+			yield return GroupLibrary.Register("cigrp-a");
+			TerrainStamps.Save(new TerrainStamps.Stamp { Name = "cistamp-a" });
+			TerrainStamps.Load();
+			EditorUI.RefreshStamps();
+
+			PiecesWindow.Open(false);
+			GameObject root = PiecesWindow.Root;
+			PiecesWindow.Pick("cigrp-a");
+			PiecesWindow.NameField.text = "cigrp-used";
+			Click(root, "Rename");
+			Check(ref ok, PiecesWindow.StatusText.Contains("already") && GroupLibrary.Exists("cigrp-a"), "a group name in use is refused (" + PiecesWindow.StatusText + ")");
+			PiecesWindow.NameField.text = "cigrp-b";
+			Click(root, "Rename");
+			for (int i = 0; i < 30 && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") == null; i++) yield return null;
+			Check(ref ok, !GroupLibrary.Exists("cigrp-a") && GroupLibrary.Exists("cigrp-b") && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-a") == null && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") != null,
+				"the group is renamed: its file and its entry in My groups (" + PiecesWindow.StatusText + ")");
+			Click(root, "Delete");
+			Check(ref ok, GroupLibrary.Exists("cigrp-b") && PiecesWindow.StatusText.Contains("again"), "Delete asks first");
+			Click(root, "Delete");
+			Check(ref ok, !GroupLibrary.Exists("cigrp-b") && File.Exists(Path.Combine(Path.Combine(deleted, "groups"), "cigrp-b.group")) && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") == null,
+				"the group is deleted: moved to deleted/groups, gone from My groups");
+
+			Click(root, "Stamps");
+			PiecesWindow.Pick("cistamp-a");
+			Check(ref ok, PiecesWindow.Picked == "cistamp-a", "the Stamps tab lists the stamp");
+			PiecesWindow.NameField.text = "Hill";
+			Click(root, "Rename");
+			Check(ref ok, TerrainStamps.Exists("cistamp-a"), "renaming to a built-in name: still there (" + PiecesWindow.StatusText + ")");
+			PiecesWindow.NameField.text = "cistamp-b";
+			Click(root, "Rename");
+			Check(ref ok, !TerrainStamps.Exists("cistamp-a") && TerrainStamps.Exists("cistamp-b") && TerrainStamps.All.Any(s => s.Name == "cistamp-b") && !TerrainStamps.All.Any(s => s.Name == "cistamp-a"), "the stamp is renamed (the list read again)");
+			Click(root, "Delete"); Click(root, "Delete");
+			Check(ref ok, !TerrainStamps.Exists("cistamp-b") && File.Exists(Path.Combine(Path.Combine(deleted, "stamps"), "cistamp-b.stamp")) && !TerrainStamps.All.Any(s => s.Name == "cistamp-b"), "the stamp is deleted: moved to deleted/stamps");
+			Check(ref ok, !Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().Any(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("cistamp")), "the Terrain tab's stamp buttons follow");
+			PiecesWindow.Close();
+			PlaceableCatalog.RemoveCustom(GroupLibrary.Prefix + "cigrp-used");
+			foreach (string f in cleanup) try { if (File.Exists(f)) File.Delete(f); } catch { }
+			if (ok) Log("PASS: groups and stamps"); else Fail("groups and stamps");
+		}
 	}
 }

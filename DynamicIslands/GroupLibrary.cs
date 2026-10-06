@@ -117,6 +117,28 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		public static bool Exists(string name) { return File.Exists(PathFor(name)); }
+
+		/// <summary>
+		/// The groups window's Delete (ROADMAP T4): the group leaves "My groups" and its file is moved to
+		/// Mods\DynamicIslands\deleted\groups (an older one of the same name gets a date), where it can be got back.
+		/// </summary>
+		public static void MoveToDeleted(string name)
+		{
+			PiecesFiles.MoveToDeleted(PathFor(name), "groups");
+			PlaceableCatalog.RemoveCustom(Prefix + name);
+			PlaceableCatalog.NotifyChanged();
+		}
+
+		/// <summary>Renames a group (its file and its entry in "My groups"). Placed copies on islands are separate objects: untouched.</summary>
+		public static IEnumerator Rename(string from, string to)
+		{
+			PiecesFiles.Move(PathFor(from), PathFor(to));
+			PlaceableCatalog.RemoveCustom(Prefix + from);
+			ObjectThumbnails.Forget(Prefix + from);
+			yield return Register(to);
+		}
+
 		/// <summary>Puts every saved group in the object catalog (loading the Raft scenes their objects come from first).</summary>
 		public static IEnumerator RegisterAll()
 		{

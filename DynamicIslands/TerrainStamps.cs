@@ -107,6 +107,30 @@ namespace DynamicIslands.Editor
 			return st;
 		}
 
+		static string PathFor(string name) { return Path.Combine(Folder, name + ".stamp"); }
+
+		public static bool Exists(string name) { return File.Exists(PathFor(name)); }
+
+		/// <summary>Renames a saved stamp (ROADMAP T4); the list is read again, the same stamp stays chosen.</summary>
+		public static void Rename(string from, string to)
+		{
+			Stamp current = Current;
+			PiecesFiles.Move(PathFor(from), PathFor(to));
+			Load();
+			int i = All.FindIndex(s => !s.BuiltIn && s.Name == (current != null && !current.BuiltIn && current.Name == from ? to : current != null ? current.Name : ""));
+			Selected = i >= 0 ? i : 0;
+		}
+
+		/// <summary>Deletes a saved stamp (ROADMAP T4): moved to Mods\DynamicIslands\deleted\stamps, where it can be got back.</summary>
+		public static void MoveToDeleted(string name)
+		{
+			Stamp current = Current;
+			PiecesFiles.MoveToDeleted(PathFor(name), "stamps");
+			Load();
+			int i = current == null ? -1 : All.FindIndex(s => s.BuiltIn == current.BuiltIn && s.Name == current.Name);
+			Selected = i >= 0 ? i : 0;
+		}
+
 		public static void Save(Stamp st)
 		{
 			Directory.CreateDirectory(Folder);

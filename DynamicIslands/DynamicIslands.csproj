@@ -104,6 +104,7 @@
     <Compile Include="GeneratorWindow.cs" />
     <Compile Include="IslandFilesWindow.cs" />
     <Compile Include="IslandRename.cs" />
+    <Compile Include="PiecesWindow.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />

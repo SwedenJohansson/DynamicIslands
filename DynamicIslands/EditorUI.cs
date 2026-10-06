@@ -256,7 +256,9 @@ namespace DynamicIslands.Editor
 			RectTransform stamps = UIKit.Group(s, "Stamps");
 			stampButtonsRoot = UIKit.Rect("StampButtons", stamps);
 			UIKit.Vertical(stampButtonsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
-			UIKit.Button(stamps, "Save stamp...", SaveStamp, "Keep the land under the brush (as big as the brush) as a stamp of your own", -1, 24f, 12);
+			RectTransform stampRow = UIKit.Row(stamps, 24f, 4f, "StampSave");
+			UIKit.Button(stampRow, "Save stamp...", SaveStamp, "Keep the land under the brush (as big as the brush) as a stamp of your own", -1, 24f, 12);
+			UIKit.Button(stampRow, "Manage...", () => PiecesWindow.Open(true), "Rename or delete your own stamps", 80, 24f, 12).name = "Button_ManageStamps";
 			TerrainStamps.Load();
 			RefreshStamps();
 
@@ -297,6 +299,7 @@ namespace DynamicIslands.Editor
 			UIKit.DangerButton(del);
 			RectTransform s3 = UIKit.Row(sel, 26f);
 			UIKit.Button(s3, "Save as group...", SaveGroup, "Keep the selected objects (a hut with its furniture, a camp...) as a group in \"My groups\", to place again on any island", -1, 26f, 13);
+			UIKit.Button(s3, "Manage...", () => PiecesWindow.Open(false), "Rename or delete your saved groups", 86, 26f, 13).name = "Button_ManageGroups";
 
 			// The selected object's settings (creature editor, note, colour) appear here, in place of Placing and the tips
 			ObjectInspector.Build(s);

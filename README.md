@@ -523,7 +523,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `SaveIsland <name>` / `LoadIsland <name>` | Editor | Saves or loads an island |
 | `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1] [style]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
-| `DeleteGroup <name>` | Editor | Deletes a saved object group |
+| `DeleteGroup <name>` | Editor | Deletes a saved object group (or: Manage... beside Save as group - rename or delete groups and stamps) |
 | `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one. Warns if it would overlap one of Raft's own islands (players can fall through the ground there). |
 | `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | Editor | The island's style (ground textures; saved with it) |
@@ -612,6 +612,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `AmbienceZones.cs`, `SoundPickerWindow.cs` | Atmosphere zones (fog, light, particles, applied only while the camera renders) and sound zones (Raft's FMOD events), and the sound picker |
 | `Quest.cs`, `QuestEditorWindow.cs` | Quests: the steps, progress shared by all players and saved with the world, the quest panel, and the quest editor |
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |
+| `PiecesWindow.cs` | My groups and stamps: rename or delete saved groups and stamps (deleted ones are moved to `deleted\groups`, `deleted\stamps`) |
+| `IslandRename.cs` | Renaming a saved island: its file, kept copies, spawnpool.txt, plans, other islands' rules and saved worlds follow |
 | `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, Duplicate, picking objects with the mouse |
 | `UIKit.cs` | The editor's look: Raft's menu sprites and fonts (found in memory at the main menu; rounded sprites made at runtime stand in without them), panels, groups, the button looks (plain, choice, primary, delete, slot), sliders, fields, tabs, pictures, the "?" help marks and their popup, and the scrolling panel the tool panel uses |
