@@ -441,6 +441,8 @@ namespace DynamicIslands
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raft == null) { Fail("raft colliders: no raft"); return; }
+			// (R16: the guard's look right now - it hooks Raft's grid up when Raft didn't)
+			if (Raft_Network.IsHost) Log("raft collider guard: " + (RaftColliderGuard.Heal(false) ? "hooked Raft's grid up now" : "Raft's grid was hooked up") + ", healed " + RaftColliderGuard.Healed + " time(s) this session");
 			Collider[] near = Physics.OverlapSphere(raft.body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore);
 			Log("RAFTCOLLIDERS " + near.Length + " on RaftCollision within 40 m of the raft (" + string.Join(", ", near.Select(c => c.name + " under " + (c.transform.parent != null ? c.transform.parent.name : "-")).Distinct().Take(3).ToArray()) + ")");
 		}

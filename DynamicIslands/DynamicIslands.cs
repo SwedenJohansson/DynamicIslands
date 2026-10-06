@@ -166,8 +166,7 @@ namespace DynamicIslands
 			{
 				SceneManager.sceneLoaded += OnSceneLoaded;
 				// Custom islands saved with a world come back when it loads
-				SaveAndLoad.LoadComplete += IslandWorldState.OnWorldLoaded;
-				SaveAndLoad.LoadComplete += CreatureSpawner.OnWorldLoaded;
+				SaveAndLoad.LoadComplete += OnLoadComplete;
 				// An island's quest done: its "on.quest" actions
 				QuestTracker.Advanced += Behaviours.OnQuestAdvanced;
 			});
@@ -304,8 +303,27 @@ namespace DynamicIslands
 			LoadEditor(str);
 		}
 
-		static readonly Action<Vector3> onWorldShift = IslandWorldState.OnWorldShift;
-		static readonly Action onWorldReceived = IslandNetwork.OnWorldReceived;
+		static readonly Action<Vector3> onWorldShift = shift => RaftEvent("a world shift", () => IslandWorldState.OnWorldShift(shift));
+		static readonly Action onWorldReceived = () => RaftEvent("the host's world arriving", IslandNetwork.OnWorldReceived);
+
+		/// <summary>
+		/// Raft's world loaded (SaveAndLoad.LoadComplete). Raft's own handlers hang on the same event - among them
+		/// RaftCollisionManager.OnLoadComplete, which gives the raft the colliders that run it aground - and an exception in
+		/// a handler stops the ones after it: an error of the mod's in a long-used world left the raft without them, and it
+		/// drifted through islands (ROADMAP R16). The mod's part never throws into Raft's event now.
+		/// </summary>
+		static void OnLoadComplete()
+		{
+			RaftEvent("the world loading", IslandWorldState.OnWorldLoaded);
+			RaftEvent("the world loading (creatures)", CreatureSpawner.OnWorldLoaded);
+		}
+
+		/// <summary>The mod's part of one of Raft's events, never throwing into it (R16).</summary>
+		static void RaftEvent(string what, Action a)
+		{
+			try { a(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Handling " + what + " failed: " + e); }
+		}
 
 		/// <summary>
 		/// Keeps the mod on two of Raft's static events. Raft sets them to null when a game is left
@@ -335,6 +353,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Player hold", e); }
 			try { CreatureSpawner.Tick(); }
 			catch (Exception e) { TickError("Creatures", e); }
+			try { RaftColliderGuard.Tick(); }
+			catch (Exception e) { TickError("Raft colliders", e); }
 			try { QuestTracker.Tick(); QuestCount.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
 			try { IslandInfo.Tick(); }
@@ -395,8 +415,7 @@ namespace DynamicIslands
 			UnloadStep("the world hooks", () =>
 			{
 				SceneManager.sceneLoaded -= OnSceneLoaded;
-				SaveAndLoad.LoadComplete -= IslandWorldState.OnWorldLoaded;
-				SaveAndLoad.LoadComplete -= CreatureSpawner.OnWorldLoaded;
+				SaveAndLoad.LoadComplete -= OnLoadComplete;
 				QuestTracker.Advanced -= Behaviours.OnQuestAdvanced;
 				WorldShiftManager.OnWorldShift -= onWorldShift;
 				Raft_Network.OnWorldReceivedLate -= onWorldReceived;

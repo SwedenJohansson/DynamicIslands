@@ -114,6 +114,7 @@
     <Compile Include="PcCheck.cs" />
     <Compile Include="UpdateCheck.cs" />
     <Compile Include="BuildCostRefund.cs" />
+    <Compile Include="RaftColliderGuard.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />
