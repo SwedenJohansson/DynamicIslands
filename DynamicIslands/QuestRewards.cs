@@ -36,6 +36,9 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards file: " + e.Message); }
 		}
 
+		/// <summary>Read the file again when next asked (an island was renamed in it).</summary>
+		internal static void Forget() { loadedFor = Guid.Empty; }
+
 		static void Save()
 		{
 			try

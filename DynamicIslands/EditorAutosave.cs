@@ -57,6 +57,14 @@ namespace DynamicIslands.Editor
 			Opened(name, false);
 		}
 
+		/// <summary>The island open in the editor was renamed (IslandRename): its autosave goes with it.</summary>
+		public static void Renamed(string from, string to)
+		{
+			try { string a = PathFor(from), b = PathFor(to); if (File.Exists(a) && !File.Exists(b)) File.Move(a, b); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + from + "': " + e.Message); }
+			if (current != null && current.Equals(from, StringComparison.OrdinalIgnoreCase)) current = to;
+		}
+
 		static void Delete(string name)
 		{
 			try { string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }

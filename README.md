@@ -169,7 +169,7 @@ The screen has a **top bar**, a **tool panel** on the left (it scrolls when a ta
 
 | Where | Control | What it does |
 |---|---|---|
-| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Delete asks first). Save saves straight away once the island has a name. |
+| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Rename = press, type the new name, press again - worlds, plans and rules naming it follow; Delete asks first). Save saves straight away once the island has a name. |
 | Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
 | Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
 | Top bar | **Generate** | The island generator (see "The island generator"): tabs **Normal**, **Randomize existing** and **Ready-made (with content)**, a preview map, the seed, **Generate** (Enter) and **Close** (Esc). Generating replaces the current island; Ctrl+Z brings the old one back. On Ready-made, **Make** (click twice) makes an island of the chosen type from the seed, saves it as `gen-<type>-<seed>` and opens it. Every setting has a **?**: hover it (or click it) for a few sentences of help. |

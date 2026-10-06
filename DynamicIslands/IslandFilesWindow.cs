@@ -18,11 +18,16 @@ namespace DynamicIslands.Editor
 
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
+		/// <summary>Tests: the window, its name field and its status line.</summary>
+		internal static GameObject Root { get { return instance != null ? instance.gameObject : null; } }
+		internal static InputField NameField { get { return instance != null ? instance.nameField : null; } }
+		internal static string StatusText { get { return instance != null ? instance.status.text : ""; } }
+
 		InputField nameField;
 		InputField elevationField;
 		RectTransform listContent;
 		Text status;
-		string pendingOverwrite, pendingDelete;
+		string pendingOverwrite, pendingDelete, renameFrom;
 		string lastClicked;
 		float lastClickTime;
 
@@ -47,7 +52,7 @@ namespace DynamicIslands.Editor
 			instance.transform.SetAsLastSibling();
 			instance.nameField.text = DynamicIslands.currentIslandName;
 			instance.elevationField.text = DynamicIslands.currentElevation.ToString(System.Globalization.CultureInfo.InvariantCulture);
-			instance.pendingOverwrite = instance.pendingDelete = null;
+			instance.pendingOverwrite = instance.pendingDelete = instance.renameFrom = null;
 			instance.SetStatus("Type a name and press Save, or pick an island. Double-click an island to open it.", false);
 			instance.Refresh();
 			instance.nameField.ActivateInputField();
@@ -137,6 +142,8 @@ namespace DynamicIslands.Editor
 			Button save = UIKit.Button(buttons, "Save", OnSave, "Save the island under this name (Enter)", -1, 34, 15);
 			UIKit.Primary(save);
 			UIKit.Button(buttons, "Open", OnLoad, "Open the picked island (unsaved changes are lost)", -1, 34, 15);
+			Button ren = UIKit.Button(buttons, "Rename", OnRename, "Rename the picked island: press Rename, type the new name, press Rename again (worlds, plans and rules that name it follow)", -1, 34, 15);
+			ren.name = "Button_Rename";
 			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island's file (asks first)", -1, 34, 15);
 			UIKit.DangerButton(del);
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 34, 15);
@@ -217,6 +224,36 @@ namespace DynamicIslands.Editor
 			if (!File.Exists(IslandSpawner.PathFor(n))) { SetStatus("There is no saved island called '" + n + "'.", true); return; }
 			if (DynamicIslands.LoadIsland(n)) Close();
 			else SetStatus("Opening failed - see the console (F10).", true);
+		}
+
+		/// <summary>
+		/// Rename (ROADMAP E9): the first press keeps the picked island, the second renames it to the name typed then -
+		/// with the saved worlds, plans and island rules that name it (IslandRename).
+		/// </summary>
+		void OnRename()
+		{
+			string n = nameField.text.Trim();
+			if (renameFrom == null || !File.Exists(IslandSpawner.PathFor(renameFrom)))
+			{
+				if (n.Length == 0 || !File.Exists(IslandSpawner.PathFor(n))) { SetStatus("Pick an island to rename.", true); return; }
+				if (IslandRename.FromProblem(n) != null) { SetStatus(IslandRename.FromProblem(n), true); return; }
+				renameFrom = n;
+				SetStatus("Type the new name for '" + n + "' and press Rename again.", false);
+				nameField.ActivateInputField();
+				return;
+			}
+			if (n.Equals(renameFrom)) { SetStatus("Type the new name for '" + renameFrom + "' and press Rename again.", false); return; }
+			string problem = IslandRename.Problem(renameFrom, n);
+			if (problem != null) { SetStatus(problem, true); return; }
+			try
+			{
+				List<string> also = IslandRename.Rename(renameFrom, n);
+				DynamicIslands.Notify("Renamed '" + renameFrom + "' to '" + n + "'");
+				SetStatus("Renamed '" + renameFrom + "' to '" + n + "'." + (also.Count > 0 ? " Changed too: " + string.Join("; ", also.ToArray()) + "." : ""), false);
+				renameFrom = null;
+				Refresh();
+			}
+			catch (Exception ex) { SetStatus(SafeFile.InUse(ex) ? "'" + renameFrom + "' is in use by another program - close it there and rename again (nothing was changed)." : "Could not rename: " + ex.Message, true); }
 		}
 
 		void OnDelete()

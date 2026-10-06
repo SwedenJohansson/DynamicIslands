@@ -715,7 +715,10 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 **Save** (Ctrl+S) saves straight away once the island has its own name (a new island asks for one first: until then it
 is only "myisland"); **Save as** and **Open** show the **Islands** window: a name, the height in the world, and your
 saved islands (click = pick, double-click = open, Delete asks first and says which saved worlds, plans and other
-islands' rules use the island). A deleted island isn't erased: it is moved to `Mods\DynamicIslands\deleted` -
+islands' rules use the island). **Rename** gives the picked island a new name: press Rename, type the new name, press
+Rename again. Everything that names it follows: the saved worlds that have it (every copy of their state, their kept
+plans and quest rewards), the plans and other islands whose rules bring it, wait for its quest or stand near it, its
+`spawnpool.txt` line and the copies kept for saved worlds. A deleted island isn't erased: it is moved to `Mods\DynamicIslands\deleted` -
 move the file back into `Mods\DynamicIslands` to get it back. Copies kept for saved worlds (`<name>_<hash>`) aren't
 in the list: the island library's **Tidy up** clears the ones nothing uses.
 
@@ -723,7 +726,7 @@ in the list: the island library's **Tidy up** clears the ones nothing uses.
 changes keeps them as its autosave first (the editor says so, and offers them back the next time it opens).
 
 ![The Islands window](images/editor-islands-window.jpg)
-*The Islands window: the name and height, and the saved islands with their date and size.*
+*The Islands window: the name and height, the saved islands with their date and size, and Save, Open, Rename, Delete.*
 
 Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). In multiplayer the host's island files are sent
 to players who don't have them, so nobody needs to share files just to play together ([section 8](#8-playing-together)).
@@ -2308,8 +2311,8 @@ nobody is told. If the host has no such island at all, the rule waits and the ho
 **What to do:**
 1. In the world, press **F10** and type `WorldPlan`: it lists the plan's rules and the islands they bring.
 2. In the editor, click **Open** and compare with the host's own saved islands. An island of your own with one of those
-   names: open it, **Save as** a new name (for example `Camp - mine`), then **Delete** the old name (it is moved to the
-   `deleted` folder, not erased).
+   names: pick it in the Islands window and **Rename** it (for example `Camp - mine`); your own worlds and plans that
+   name it follow.
 3. If the host is missing an island of the plan: get it from the plan's maker - their pack (**Import...**), or the
    island library entry the message names - before playing on.
 
