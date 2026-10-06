@@ -350,5 +350,93 @@ namespace DynamicIslands
 			DynamicIslands.NewIsland();
 			if (ok) Log("PASS: selection tools"); else Fail("selection tools");
 		}
+			[ConsoleCommand(name: "CIMyIslands", docs: "Dev, editor: ROADMAP T3 - My islands: a test island of mine (used by a test world), one from the library, a generated one and a host copy, each under its filter; its world shown; a pool weight typed (spawnpool.txt); Rename and Delete from the list; the unused generated one is what Tidy up would move (not pressed: the player's own islands stay); picture shot_my_islands.png")]
+		public static void MyIslandsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MyIslandsRoutine()); }
+
+		static IEnumerator MyIslandsRoutine()
+		{
+			if (!DynamicIslands.InEditor() || MyIslandsWindow.Root == null) { Fail("my islands: in the editor"); yield break; }
+			bool ok = true;
+			const string mine = "citest-my-a", renamed = "citest-my-b", lib = "citest-my-lib", gen = "gen-citest-my";
+			string worlds = Path.Combine(DynamicIslands.assetpath, "worlds");
+			string worldFile = Path.Combine(worlds, "citest-my-world.txt");
+			string pool = Path.Combine(DynamicIslands.assetpath, CustomIslandSpawner.PoolFileName);
+			string poolBefore = File.Exists(pool) ? File.ReadAllText(pool) : null;
+			List<LibraryInstalled> installedBefore = LibraryPack.Installed();
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().First(n => !n.StartsWith("ci") && !IslandNetwork.IsDownloadName(n));
+			var made = new List<string> { mine, renamed, lib, gen };
+			try
+			{
+				foreach (string n in new[] { mine, lib, gen }) File.Copy(IslandSpawner.PathFor(source), IslandSpawner.PathFor(n), true);
+				string hash = IslandNetwork.HashOf(mine);
+				string copy = IslandNetwork.DownloadName(mine, hash);
+				File.Copy(IslandSpawner.PathFor(mine), IslandSpawner.PathFor(copy), true);
+				made.Add(copy); made.Add(IslandNetwork.DownloadName(renamed, hash));
+				Directory.CreateDirectory(worlds);
+				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI My World': name|...", mine + "|0|0|0||||" + hash });
+				var inst = LibraryPack.Installed();
+				inst.Add(new LibraryInstalled { id = "citest-my", title = "CI My Lib", files = new List<LibraryInstalledFile> { new LibraryInstalledFile { name = lib, original = lib } } });
+				LibraryPack.SaveInstalled(inst);
+
+				MyIslandsWindow.Open();
+				yield return null;
+				foreach (var f in new[] { new[] { MyIslandsWindow.Mine, mine }, new[] { MyIslandsWindow.Library, lib }, new[] { MyIslandsWindow.Generated, gen }, new[] { MyIslandsWindow.Hosts, copy } })
+				{
+					MyIslandsWindow.SetFilter(f[0]);
+					List<string> l = MyIslandsWindow.Listed;
+					Check(ref ok, l.Contains(f[1]) && !made.Where(m => m != f[1]).Any(l.Contains), f[0] + ": lists '" + f[1] + "' and none of the other test islands");
+				}
+				MyIslandsWindow.SetFilter(MyIslandsWindow.All);
+				MyIslandsWindow.SearchField.text = "citest-my";
+				yield return null;
+				Check(ref ok, MyIslandsWindow.Listed.Count == 4, "All + search: the 4 test islands (" + string.Join(", ", MyIslandsWindow.Listed.ToArray()) + ")");
+				MyIslandsWindow.Pick(mine);
+				Check(ref ok, MyIslandsWindow.StatusText.Contains("CI My World"), "picked: says which world uses it (" + MyIslandsWindow.StatusText + ")");
+				yield return new WaitForSecondsRealtime(0.5f);
+				Screenshot(new[] { "my_islands" });
+				yield return new WaitForSecondsRealtime(0.4f);
+
+				// A weight of its own
+				UnityEngine.UI.InputField wf = MyIslandsWindow.Root.GetComponentsInChildren<UnityEngine.UI.InputField>().FirstOrDefault(x => x.name == "Weight_" + mine);
+				Check(ref ok, wf != null, "the row has a weight field");
+				if (wf != null) { wf.text = "3"; wf.onEndEdit.Invoke("3"); }
+				bool listedInPool;
+				Check(ref ok, Mathf.Approximately(CustomIslandSpawner.PoolWeight(mine, out listedInPool), 3f) && listedInPool && File.ReadAllLines(pool).Any(x => x.Trim() == mine + " 3"), "weight 3 written to spawnpool.txt");
+				UnityEngine.UI.InputField cf = MyIslandsWindow.Root.GetComponentsInChildren<UnityEngine.UI.InputField>().FirstOrDefault(x => x.name == "Weight_" + copy);
+				Check(ref ok, cf != null && !cf.interactable && cf.text == "0", "a host copy: weight 0, not to change");
+
+				// Rename and delete
+				MyIslandsWindow.Pick(mine);
+				MyIslandsWindow.NameField.text = renamed;
+				Click(MyIslandsWindow.Root, "Rename");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(renamed)) && !File.Exists(IslandSpawner.PathFor(mine)) && File.ReadAllLines(worldFile).Any(x => x.StartsWith(renamed + "|")) && MyIslandsWindow.Listed.Contains(renamed), "Rename: the file, the world and the list (" + MyIslandsWindow.StatusText + ")");
+				Check(ref ok, File.ReadAllLines(pool).Any(x => x.Trim() == renamed + " 3"), "... and its pool weight");
+				MyIslandsWindow.Pick(lib);
+				MyIslandsWindow.NameField.text = lib + "2";
+				Click(MyIslandsWindow.Root, "Rename");
+				made.Add(lib + "2");
+				Check(ref ok, LibraryPack.Installed().Any(e => e.id == "citest-my" && e.files.Any(x => x.name == lib + "2")), "renaming a library island: the library's list follows");
+				MyIslandsWindow.Pick(renamed);
+				Click(MyIslandsWindow.Root, "Delete");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(renamed)) && MyIslandsWindow.StatusText.Contains("CI My World"), "Delete asks first and names the world that has it");
+				Click(MyIslandsWindow.Root, "Delete");
+				string deleted = Path.Combine(Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), renamed + IslandFile.Extension);
+				Check(ref ok, !File.Exists(IslandSpawner.PathFor(renamed)) && File.Exists(deleted) && !MyIslandsWindow.Listed.Contains(renamed), "Delete: moved to the deleted folder, gone from the list");
+				try { File.Delete(deleted); } catch { }
+				Housekeeping.Scan scan = Housekeeping.Look();
+				Check(ref ok, scan.UnusedGenerated.Contains(gen), "Tidy up would move the unused generated island (" + scan.UnusedGenerated.Count + " in all; not pressed)");
+				MyIslandsWindow.Close();
+			}
+			finally
+			{
+				MyIslandsWindow.Close();
+				foreach (string n in made) try { if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n)); } catch { }
+				try { if (File.Exists(worldFile)) File.Delete(worldFile); } catch { }
+				try { LibraryPack.SaveInstalled(installedBefore); } catch { }
+				try { if (poolBefore != null) File.WriteAllText(pool, poolBefore); CustomIslandSpawner.LoadPool(true); } catch { }
+				IslandCache.Forget();
+			}
+			if (ok) Log("PASS: my islands"); else Fail("my islands");
+		}
 	}
 }

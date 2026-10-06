@@ -169,7 +169,7 @@ The screen has a **top bar**, a **tool panel** on the left (it scrolls when a ta
 
 | Where | Control | What it does |
 |---|---|---|
-| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Rename = press, type the new name, press again - worlds, plans and rules naming it follow; Delete asks first). Save saves straight away once the island has a name. |
+| Top bar | **New** / **Open** / **Save** / **Save as** | New asks first (click twice), then starts an empty sea. Open and Save as open the Islands window: a name, a height (metres above sea in game: 0 = normal, 60 = flying, −30 = under water) and the saved islands (click = pick, double-click = open, Enter = save, Rename = press, type the new name, press again - worlds, plans and rules naming it follow; Delete asks first; My islands... = every island file with its source, worlds and pool weight). Save saves straight away once the island has a name. |
 | Top bar | **Undo** / **Redo** | Undo / redo sculpting, painting, placing, moving, rotating, scaling, duplicating and deleting (also Ctrl+Z / Ctrl+Y) |
 | Top bar | **Terrain** / **Objects** / **Island** (F1 / F2 / F3) | The three tabs |
 | Top bar | **Generate** | The island generator (see "The island generator"): tabs **Normal**, **Randomize existing** and **Ready-made (with content)**, a preview map, the seed, **Generate** (Enter) and **Close** (Esc). Generating replaces the current island; Ctrl+Z brings the old one back. On Ready-made, **Make** (click twice) makes an island of the chosen type from the seed, saves it as `gen-<type>-<seed>` and opens it. Every setting has a **?**: hover it (or click it) for a few sentences of help. |
@@ -616,6 +616,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `GroupLibrary.cs`, `TerrainStamps.cs`, `TextPromptWindow.cs` | Object groups ("My groups"), terrain stamps, and the small name window they use |
 | `SelectionTools.cs` | Box select, select all / same kind, hidden and locked objects, and the Placed objects list |
 | `PiecesWindow.cs` | My groups and stamps: rename or delete saved groups and stamps (deleted ones are moved to `deleted\groups`, `deleted\stamps`) |
+| `MyIslandsWindow.cs` | My islands: every island file with its source, the worlds using it and its pool weight (spawnpool.txt); open, rename, delete, tidy up |
 | `IslandRename.cs` | Renaming a saved island: its file, kept copies, spawnpool.txt, plans, other islands' rules and saved worlds follow |
 | `TerrainPainter.cs` | Automatic and hand texture painting, island styles (which of Raft's ground textures fill the four paint slots) |
 | `PlacementTools.cs`, `ObjectPlacer.cs` | Placing objects: placement options, Ground, Duplicate, picking objects with the mouse |

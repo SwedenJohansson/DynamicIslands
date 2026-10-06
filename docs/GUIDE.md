@@ -753,6 +753,16 @@ plans and quest rewards), the plans and other islands whose rules bring it, wait
 move the file back into `Mods\DynamicIslands` to get it back. Copies kept for saved worlds (`<name>_<hash>`) aren't
 in the list: the island library's **Tidy up** clears the ones nothing uses.
 
+**My islands...** (in the Islands window) lists every island file at once: where it came from (**Mine**, the island
+**Library**, **Generated** while sailing, copies **From hosts**), how many saved worlds use it (hover for their names)
+and its **weight** in the random pool - type a number to give it a line of its own in `spawnpool.txt` (2 = twice as
+likely, 0 = never by chance; grey = the weight every island not listed gets). Pick one to **Open**, **Rename** or
+**Delete** it (Delete names who uses it first). **Tidy up** removes copies from hosts no saved world uses and moves
+generated islands nothing uses to the `deleted` folder. The tabs and a search narrow the list.
+
+![My islands](images/editor-my-islands.jpg)
+*My islands: four test islands - one of mine used by a world, a copy from a host, one from the library, a generated one.*
+
 **Nothing unsaved is lost:** opening another island, **New**, or a map type's **Make** while the island has unsaved
 changes keeps them as its autosave first (the editor says so, and offers them back the next time it opens).
 

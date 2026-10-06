@@ -107,6 +107,23 @@ namespace DynamicIslands.Editor
 			else if (r.What == "oneof") foreach (string x in r.WhatArg.Split(',')) if (x.Trim().Length > 0) yield return x.Trim();
 		}
 
+		/// <summary>Each island named in a saved world (its list or its kept plan), with those worlds (not the editor's test world) - My islands.</summary>
+		public static Dictionary<string, HashSet<string>> WorldsByIsland()
+		{
+			var usedBy = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+			foreach (var w in AllWorldCopies())
+			{
+				if (w.Key.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
+				foreach (string n in NamesIn(w.Value))
+				{
+					HashSet<string> set;
+					if (!usedBy.TryGetValue(n, out set)) usedBy[n] = set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					set.Add(w.Key);
+				}
+			}
+			return usedBy;
+		}
+
 		/// <summary>Looks through everything (a moment with many worlds: done when the Installed tab is shown).</summary>
 		public static Scan Look()
 		{

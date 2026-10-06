@@ -134,6 +134,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(share, "Export...", OnExport, "Share the picked island: a pack (.zip) with the islands its rules bring, to send or to put in the island library", -1, 30, 13);
 			UIKit.Button(share, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install islands and plans from a pack (.zip) someone made, or remove what you installed", -1, 30, 13);
 			UIKit.Button(share, "Library...", () => { Close(); LibraryWindow.Open(1); }, "The island library: islands and plans others made, to download", -1, 30, 13);
+			UIKit.Button(share, "My islands...", () => { Close(); MyIslandsWindow.Open(); }, "Every island file: where it came from, which worlds use it, its weight in the random pool; open, rename, delete, tidy up", -1, 30, 13).name = "Button_MyIslands";
 
 			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			UIKit.Size(status.gameObject, -1, 34);

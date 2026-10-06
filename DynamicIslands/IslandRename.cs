@@ -72,6 +72,18 @@ namespace DynamicIslands.Editor
 
 			if (RenamePoolLine(from, to)) report.Add("spawnpool.txt");
 
+			// The island library's record of what it installed (its Remove would miss the island)
+			try
+			{
+				List<LibraryInstalled> installed = LibraryPack.Installed();
+				bool lib = false;
+				foreach (LibraryInstalled e in installed)
+					foreach (LibraryInstalledFile f in e.files)
+						if (f.kind != LibraryPack.KindPlan && f.name.Equals(from, StringComparison.OrdinalIgnoreCase)) { f.name = to; lib = true; }
+				if (lib) { LibraryPack.SaveInstalled(installed); report.Add("the island library's list of what it installed"); }
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Renaming '" + from + "' in installed.json: " + e.Message); }
+
 			// Plans and islands whose rules name it
 			var plans = new List<string>();
 			foreach (string p in WorldPlan.All().Where(x => !WorldPlan.IsBuiltIn(x)))

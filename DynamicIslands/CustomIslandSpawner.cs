@@ -614,6 +614,49 @@ type:atoll 0.3
 type:sunken 0.2
 ";
 
+		/// <summary>
+		/// An island's weight in the random pool (My islands - ROADMAP T3): its own line, else the "*" line's for a saved
+		/// island of the player's (copies from hosts and generated islands only take part by name), else 0.
+		/// </summary>
+		public static float PoolWeight(string name, out bool listed)
+		{
+			LoadPool(false);
+			var own = poolLines.Where(p => p.Key != "*" && p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+			listed = own.Count > 0;
+			if (listed) return own[0].Value;
+			if (IslandNetwork.IsDownloadName(name) || name.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase)) return 0f;
+			var star = poolLines.Where(p => p.Key == "*").ToList();
+			return star.Count > 0 ? star[0].Value : 0f;
+		}
+
+		/// <summary>Gives an island its own line in spawnpool.txt with this weight (0 leaves it out of the random pool).</summary>
+		public static void SetPoolWeight(string name, float weight)
+		{
+			LoadPool(false);
+			List<string> lines = File.Exists(PoolPath) ? File.ReadAllLines(PoolPath).ToList() : new List<string>();
+			string line = name + " " + Mathf.Max(0f, weight).ToString("0.###", CultureInfo.InvariantCulture);
+			bool done = false;
+			for (int i = 0; i < lines.Count; i++)
+			{
+				string l = lines[i].Trim();
+				if (l.Length == 0 || l.StartsWith("#") || l.Contains("=")) continue;
+				int sp = l.LastIndexOf(' ');
+				float w;
+				string n = sp > 0 && float.TryParse(l.Substring(sp + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out w) ? l.Substring(0, sp).Trim() : l;
+				if (!n.Equals(name, StringComparison.OrdinalIgnoreCase)) continue;
+				if (done) { lines.RemoveAt(i); i--; continue; }
+				lines[i] = line; done = true;
+			}
+			if (!done)
+			{
+				// (after the "*" line, where the file lists islands by name)
+				int star = lines.FindIndex(l => l.Trim().StartsWith("* ") || l.Trim() == "*");
+				lines.Insert(star >= 0 ? star + 1 : lines.Count, line);
+			}
+			SafeFile.WriteAllLines(PoolPath, lines.ToArray());
+			LoadPool(true);
+		}
+
 		/// <summary>Reads spawnpool.txt (creating it with defaults if missing) when it changed, or always when force is set.</summary>
 		public static void LoadPool(bool force)
 		{
