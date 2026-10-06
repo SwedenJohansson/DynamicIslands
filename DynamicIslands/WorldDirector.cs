@@ -1236,7 +1236,7 @@ namespace DynamicIslands.Editor
 			else
 			{
 				Vector3 dir = CustomIslandSpawner.SailDirection();
-				float distance = Mathf.Max(r.Distance, radius + CustomIslandSpawner.Clearance);
+				float distance = Mathf.Max(r.Distance, radius + CustomIslandSpawner.Clearance + CustomIslandSpawner.RaftRadius);
 				foreach (Vector2 o in Candidates(false).Where(o => wideSearch || Mathf.Abs(o.x) <= 60f))
 				{
 					Vector3 c = raft + Quaternion.Euler(0, o.x, 0) * dir * distance * o.y;

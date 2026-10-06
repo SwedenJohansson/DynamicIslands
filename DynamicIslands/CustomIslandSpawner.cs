@@ -289,7 +289,7 @@ namespace DynamicIslands.Editor
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
 				// Later attempts also look a little further out
-				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance);
+				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
@@ -421,7 +421,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static Vector3? FindClearSpot(Vector3 raftPos, float radius, float maxDistance)
 		{
-			for (float d = radius + Clearance + 10f; d <= Mathf.Max(maxDistance, radius + Clearance + 10f); d += 25f)
+			for (float d = radius + Clearance + RaftRadius + 10f; d <= Mathf.Max(maxDistance, radius + Clearance + RaftRadius + 10f); d += 25f)
 				for (int i = 0; i < 24; i++)
 				{
 					float a = i * 15f * Mathf.Deg2Rad;
@@ -444,7 +444,7 @@ namespace DynamicIslands.Editor
 			{
 				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
 				float angle = side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
-				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance);
+				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * 20f), radius + Clearance + RaftRadius);
 				Vector3 c = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				c.y = y;
 				if (Rejects(c, radius, raftPos, true, 0f, ignore) == null) return c;
@@ -507,7 +507,7 @@ namespace DynamicIslands.Editor
 
 		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f, IslandWorldState.Entry ignore = null)
 		{
-			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft";
+			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft (it reaches " + RaftRadius.ToString("F0") + " m)";
 			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
