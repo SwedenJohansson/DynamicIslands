@@ -103,8 +103,8 @@ namespace DynamicIslands.Editor
 			foreach (Setting s in Sailing) NumberRow(sailing, s);
 
 			// The mod's keys in a world (L2: world_rules.txt, this PC's own)
-			RectTransform keys = UIKit.Group(left, "Keys (this PC)", "Keys");
-			RectTransform keyRow = UIKit.Row(keys, 28f, 6f, "Row_Keys");
+			RectTransform keysGroup = UIKit.Group(left, "Keys (this PC)", "Keys");
+			RectTransform keyRow = UIKit.Row(keysGroup, 28f, 6f, "Row_Keys");
 			UIKit.Label(keyRow, "Journal", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "JournalLabel");
 			Add("Key_Journal", UIKit.Button(keyRow, "", () => ListenFor(true), "The key that opens the crew's journal in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
 			UIKit.Label(keyRow, "Stats", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "StatsLabel");
