@@ -437,6 +437,11 @@ prop leviathan tint.amount=0.5
 # the jungle's vines - for a player with Raft's machete; Raft's dirt spots on the park's lawns
 call vinecache x=-20 z=-20 r=30 seed=71 chest=keepercache vines=keepervines items=Rope*3;Cooked_GenericMeat*2;Bolt*3;Battery*1
 call dirt x=0 z=20 r=40 n=4 seed=72
+# --- Raft's story machinery (the user, 2026-10-06): the boar keeper's feed chest, locked in one of Utopia's dog cages in the
+# paddock's north-west corner - Raft's bolt cutters in his tool chest by the hut; and a security camera on the keeper's hut,
+# sweeping the paddock
+call cagecache x=-16 z=41.5 yaw=90 alias=feedcage sig=feedcage chest=feedchest items=Cooked_GenericMeat*3;Leather*2;Rope*2 title="Boar keeper's feed chest" kx=14 kz=38 kr=6 seed=73 keychest=keepertools keytitle="Keeper's tool chest" keyitems=Rope*2;Nail*6
+call camera x=8.2 z=43.2 h=8.5 yaw=-145 alias=paddockcam
 
 quest title=Welcome to Primeval Park
 quest intro=A park of giant beasts, dark since the storm. The welcome arch is still up. Start at the dock.

@@ -24,7 +24,8 @@ namespace DynamicIslands
 	///   reach title                     a chest the player can open from where the walk left them (Raft's use reach,
 	///                                   2.5 m from the eye, nothing in between) - "open" puts the player next to it
 	///   air id                          a diver in an air pocket (a shown zone with Air): breath back to full
-	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h=
+	///   expect step n | story id n | shown name | hidden name | message text | item name n | animals label n | stand x z h= |
+		///                                   height h (the player, above the sea); use name stay: used where the player stands
 	///   wait s | log text | hour h | picture file x y z lookx looky lookz (Raft's camera, its water - for the guide;
 	///                                   heights above the sea, or "+h" above what is below)
 	/// A world plan's test plays its story the same way (only in a test world 'CI ...'):
@@ -249,10 +250,18 @@ namespace DynamicIslands
 						break;
 					}
 					case "use":
-						Check(ref ok, ScObjOf(playEntry, Rest(line, 1).Trim()) != null, "object '" + Rest(line, 1).Trim() + "' there");
-						ScUse(playEntry, Rest(line, 1).Trim());
+					{
+						// (use <name> stay: used from where the player is - standing on a lift, it carries them)
+						string what = Rest(line, 1).Trim();
+						bool stay = what.EndsWith(" stay");
+						if (stay) what = what.Substring(0, what.Length - 5).Trim();
+						IslandObjectRef used = ScObjOf(playEntry, what);
+						Check(ref ok, used != null, "object '" + what + "' there");
+						if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); }
+						else ScUse(playEntry, what);
 						yield return new WaitForSeconds(1.2f);
 						break;
+					}
 					case "kill":
 					{
 						string label = Rest(line, 1).Trim();
@@ -493,6 +502,14 @@ namespace DynamicIslands
 					string label = string.Join(" ", t.Skip(2).Take(t.Length - 3).ToArray());
 					int n = ScAnimals(playEntry, label).Count;
 					Check(ref ok, n == (int)F(t[t.Length - 1]), "animals '" + label + "' alive: " + n + " (expected " + t[t.Length - 1] + ")");
+					break;
+				}
+				case "height":
+				{
+					// expect height h: the player is about this high above the sea (carried up by a lift)
+					Network_Player me = RAPI.GetLocalPlayer();
+					float hh = me != null ? me.transform.position.y - playEntry.Position.y : -99f;
+					Check(ref ok, Mathf.Abs(hh - F(t[2])) < 1.2f, "the player " + hh.ToString("F2") + " m above the sea (expected " + t[2] + ")");
 					break;
 				}
 				case "stand":

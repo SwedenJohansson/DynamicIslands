@@ -97,3 +97,16 @@ read Founder's farewell
 expect step 19
 open Founder's vault
 expect done
+# Raft's story machinery: the feed chest in the dog cage in the paddock's corner - refused while the cage is chained; the
+# bolt cutters from the keeper's tool chest; the cage opens and the chest with it. The camera on the keeper's hut sweeps
+open Boar keeper's feed chest
+expect message cage is chained shut
+use feedcage
+expect message Bolt cutters would get through
+open Keeper's tool chest
+expect story raft-Vasagatan_BoltCutter 1
+use feedcage
+expect hidden feedcage
+open Boar keeper's feed chest
+expect item Leather 2
+expect spinsown paddockcam

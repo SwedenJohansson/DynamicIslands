@@ -68,3 +68,13 @@ expect done
 open Barrow box
 open Cove barrel
 open Sunk crate of pots
+# Raft's story machinery: Lind's seed chest stays sun-locked until both mirrors are turned
+open Lind's seed chest
+expect message wants the light of both mirrors
+use sunmirror1
+expect message quarter turn
+open Lind's seed chest
+expect message wants the light of both mirrors
+use sunmirror2
+open Lind's seed chest
+expect item Seed_Flower_Red 3

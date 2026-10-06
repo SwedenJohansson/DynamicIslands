@@ -81,3 +81,30 @@ open Yard store
 expect item Blueprint_WindTurbine 1
 expect item Blueprint_ElectricGrill 1
 expect done
+# Raft's story machinery: the radio is dead without power and the generator won't start without its part; the part from
+# the mechanic's toolbox starts it, the radio then gives away the supply drop on the mesa. The trawler's engine is dry;
+# the gas tank from the fuel crate starts it and its locker shakes open
+use officeradio
+expect message radio is dead
+use yardgenerator
+expect message A part is missing
+open Mechanic's toolbox
+expect story raft-Tangaroa_GeneratorPart 1
+use yardgenerator
+expect message The power is on
+expect story raft-Tangaroa_GeneratorPart 0
+expect hidden supplydrop
+use officeradio
+expect shown supplydrop
+open Supply drop
+expect item Battery 2
+use trawlerengine
+expect message tank is dry
+expect hidden enginelocker
+open Fuel crate
+expect story raft-Vasagatan_GasTank 1
+use trawlerengine
+expect message sputters, then roars
+expect shown enginelocker
+open Engine room locker
+expect item Hinge 2

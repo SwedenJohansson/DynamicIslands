@@ -10,6 +10,7 @@
 # Built by the recipe player (CIRecipe iron_graveyard) through the editor's own operations.
 include lib_sea
 include lib_rt
+include lib_features
 new
 # (nature: desert - trees to cut on the mesa as on Raft's desert islands; Trees 0.19 gave 1.1 per 1000 m2 against Raft's 5.6)
 gen Trees=0.38 Bushes=0.5 Rocks=0.55 Harvest=0.25 BeachThings=0.3
@@ -123,6 +124,12 @@ scatter "Pickup_Landmark_Tree_Palm 2" 4 at 0 0 r=59.5 seed=4127 free=5
 scatter "Pickup_Landmark_Tree_Palm 4" 4 at 0 0 r=59.5 seed=4128 free=5
 scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=59.5 seed=4137 free=3
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=59.5 seed=4147 free=3
+# --- Raft's story machinery (lib_features; the user, 2026-10-06: every Raft feature on at least one island): the yard's
+# generator by the office, wanting a generator part (in a mechanic's toolbox at the yard's west end), and the office
+# radio on its table that works once the power is on - its voice gives away a supply drop up on the mesa; the trawler's
+# engine pulled out on the yard, dry - the gas tank in a fuel crate at the yard's north-west - and its locker beside it
+call powerradio x=10.5 z=-69.5 yaw=90 alias=yardgenerator rx=15.2 rz=-60.7 rh=4 ryaw=180 ralias=officeradio cache=supplydrop cx=0 cz=-25 cr=14 cseed=4161 items=Battery*2;CopperIngot*2;Bolt*3 kx=-18 kz=-70 kr=6 seed=4162 toolbox=mechanicsbox
+call enginecache x=-22 z=-65 yaw=0 alias=trawlerengine locker=enginelocker items=MetalIngot*3;Bolt*4;Hinge*2 kx=-28 kz=-52 kr=8 seed=4163 crate=fuelcrate
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=105 deep=5 n=2
 

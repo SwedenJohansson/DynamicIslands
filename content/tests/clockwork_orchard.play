@@ -51,3 +51,18 @@ expect step 5
 open Inventor's strongbox
 expect item Blueprint_WaterTank 1
 expect done
+# Raft's story machinery: the crank wheel by the workshop lifts the parts crate's shutter (once); the spare chest stays
+# bolted until the hand lever on the other side is pulled
+expect hidden partscrate
+use partscrank
+expect shown partscrate
+open Inventor's parts crate
+expect item Hinge 2
+use partscrank
+expect message turned as far as it goes
+open Inventor's spare chest
+expect message bolted shut
+use sparelever
+expect message bolt slides back
+open Inventor's spare chest
+expect item MetalIngot 2

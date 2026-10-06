@@ -186,6 +186,10 @@ prop workshop zone.message=The inventor's workshop: cogs on every surface, a clo
 
 # --- Raft's special features (the user, 2026-10-05: every Raft feature on at least one island): dirt spots in the orchard rows, for its seeds
 call dirt x=0 z=0 r=20 n=5 seed=101
+# --- Raft's story machinery (the user, 2026-10-06): on the plain either side of the workshop, one of Temperance's crank
+# wheels that lifts the shutter of the inventor's parts crate, and a hand lever that draws the bolt of his spare chest
+call crankcache x=-6.5 z=-36 yaw=90 alias=partscrank sig=partscrank chest=partscrate cx=-7.5 cz=-31.5 cyaw=90 items=Bolt*4;Hinge*2;Rope*2 title="Inventor's parts crate"
+call leverchest x=6.5 z=-36 yaw=270 alias=sparelever sig=sparelever chest=sparechest cx=7.5 cz=-31.5 cyaw=270 items=MetalIngot*2;Nail*12;Glass*2 title="Inventor's spare chest"
 
 quest title=The Water Order
 quest intro=An orchard on a rock where nothing turns. The inventor left his diagram in the lean-to at the top of the ramp.

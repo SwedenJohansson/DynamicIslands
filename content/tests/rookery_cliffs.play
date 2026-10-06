@@ -52,3 +52,21 @@ zone highledge
 use nest5
 open Eskil's lost basket
 kill Screecher
+# Raft's story machinery: Eskil's egg hoist (Varuna Point's scissor lift) in the saddle carries the player standing on it
+# 4.7 m up the south crag's north face and stands there extended, beside the lookout ledge (10.6 m) with the hoist chest;
+# used again it carries them down
+at -4 0.1 h=7.5
+use egghoist stay
+wait 7
+expect height 11.8
+expect hidden egghoist
+expect shown egghoistup
+
+open Eskil's hoist chest
+expect item Rope 2
+at -4 0.1 h=12.5
+use egghoistup stay
+wait 7
+expect shown egghoist
+expect hidden egghoistup
+expect height 7.1

@@ -94,3 +94,21 @@ open Barracks box
 open Cook house barrel
 open Sunk powder barrel
 open Outwork box
+# Raft's story machinery: the quartermaster's keycard door refuses without the card; his satchel on the glacis gives
+# it; the door goes and shows the strongroom chest. The hatch on the parade ground and the stores under it
+use qmdoor
+expect message keycard
+expect hidden qmvault
+open Quartermaster's satchel
+expect story raft-Tangaroa_KeyCard 1
+use qmdoor
+expect hidden qmdoor
+expect shown qmvault
+open Strongroom chest
+expect item TradeToken 6
+expect hidden storehatchchest
+use storehatch
+expect hidden storehatch
+expect shown storehatchchest
+open Under the hatch
+expect item PlasticBottle_Water 2

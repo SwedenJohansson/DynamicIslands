@@ -19,9 +19,26 @@ namespace DynamicIslands
 			new KeyValuePair<string, Func<IslandObject, bool>>("buried treasure", o => o.Name == ContentCatalog.BuriedTreasure),
 			new KeyValuePair<string, Func<IslandObject, bool>>("dirt", o => o.Name == "Pickup_Landmark_DirtPickup"),
 			new KeyValuePair<string, Func<IslandObject, bool>>("wild beehive", o => o.Name == ContentCatalog.WildHive),
+			// Raft's story machinery, the ready pieces (ReadyPieces; the user, 2026-10-06): each kind working as it is set up
+			// when placed - a door that wants one of Raft's quest items, a cage the bolt cutters, a generator its part...
+			new KeyValuePair<string, Func<IslandObject, bool>>("keycard / key door", o => Ready(o, ReadyPieces.Door) && Checks(o).Contains("has|" + StoryItems.Prefix + QuestItemPickups.IdPrefix)),
+			new KeyValuePair<string, Func<IslandObject, bool>>("hatch", o => Ready(o, ReadyPieces.Hatch) && Uses(o).Contains("hide|")),
+			new KeyValuePair<string, Func<IslandObject, bool>>("crank wheel", o => Ready(o, ReadyPieces.Crank) && Uses(o).Contains("signal||")),
+			new KeyValuePair<string, Func<IslandObject, bool>>("lever", o => Ready(o, ReadyPieces.Lever) && Uses(o).Length > 0),
+			new KeyValuePair<string, Func<IslandObject, bool>>("lift", o => Ready(o, ReadyPieces.Lift) && BehaviourProps.Offset(o.Props).y > 0f && ObjectProps.GetBool(o.Props, BehaviourProps.Carry, false)),
+			new KeyValuePair<string, Func<IslandObject, bool>>("cage (bolt cutters)", o => Ready(o, ReadyPieces.Cage) && Checks(o).Contains(StoryItems.Ref(ReadyPieces.ItemOf(o.Name)))),
+			new KeyValuePair<string, Func<IslandObject, bool>>("sweeping camera", o => Ready(o, ReadyPieces.Camera) && ObjectProps.Get(o.Props, BehaviourProps.MoveMode) == "loop" && ObjectProps.GetFloat(o.Props, BehaviourProps.Turn, 0f) != 0f),
+			new KeyValuePair<string, Func<IslandObject, bool>>("generator (its part)", o => Ready(o, ReadyPieces.Generator) && Checks(o).Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(o.Name))) && Uses(o).Contains("signal||" + ReadyPieces.PowerSignal)),
+			new KeyValuePair<string, Func<IslandObject, bool>>("radio (power)", o => Ready(o, ReadyPieces.Radio) && Checks(o).Contains("signal|" + ReadyPieces.PowerSignal)),
+			new KeyValuePair<string, Func<IslandObject, bool>>("engine (gas tank)", o => Ready(o, ReadyPieces.Engine) && Checks(o).Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(o.Name)))),
+			new KeyValuePair<string, Func<IslandObject, bool>>("turning mirror", o => Ready(o, ReadyPieces.Mirror) && ObjectProps.GetFloat(o.Props, BehaviourProps.Turn, 0f) != 0f && Uses(o).Contains("switch|")),
 		};
 
-		[ConsoleCommand(name: "CIFeatureCheck", docs: "Dev, in game (host): spawns saved islands by name and checks their Raft features work there - zipline ends on the ground, vines with their hidden chest, buried treasure made, dirt, wild hives. CIFeatureCheck <island>[,<island>...]")]
+		static bool Ready(IslandObject o, string kind) { ReadyPieces.Piece p = ReadyPieces.Of(o.Name); return p != null && p.Kind == kind && o.Props != null; }
+		static string Checks(IslandObject o) { return ObjectProps.Get(o.Props, BehaviourProps.CheckKey("use")); }
+		static string Uses(IslandObject o) { return ObjectProps.Get(o.Props, BehaviourProps.EventKey("use")); }
+
+		[ConsoleCommand(name: "CIFeatureCheck", docs: "Dev, in game (host): spawns saved islands by name and checks their Raft features work there - zipline ends on the ground, vines with their hidden chest, buried treasure made, dirt, wild hives; the story machinery (ready pieces: doors, hatches, cranks, levers, lifts, cages, cameras, generators, radios, the engine, mirrors) usable or moving, the quest item each wants on the island, what it shows hidden till then, chests locked on a signal something sends. CIFeatureCheck <island>[,<island>...]")]
 		public static void FeatureCheckCommand(string[] args)
 		{
 			string[] names = string.Join(" ", args ?? new string[0]).Split(',').Select(n => n.Trim()).Where(n => n.Length > 0).ToArray();
@@ -71,6 +88,62 @@ namespace DynamicIslands
 					Check(ref ok, ObjectProps.Get(v.Props, BehaviourProps.CheckKey("use")).Contains(ContentCatalog.MacheteItem) && (target == null || (chest != null && !chest.gameObject.activeInHierarchy)),
 						"'" + name + "': vines need the machete" + (target != null ? ", their chest '" + target + "' hidden until cut (" + (chest == null ? "missing" : chest.gameObject.activeInHierarchy ? "shown!" : "hidden") + ")" : ""));
 				}
+				// Raft's story machinery (the ready pieces): each usable (or moving), the quest item it wants on the island (in a
+				// chest or as Raft's pickup), what its use shows hidden till then, a chest it unlocks waiting for its signal
+				string allLoot = string.Join(";", f.Objects.Where(o => o.Props != null).Select(o => ObjectProps.Get(o.Props, ObjectProps.LootItems)).ToArray());
+				// (the signals any of the island's events send - a use, a defeat, a zone...)
+				var sent = new HashSet<string>(f.Objects.Where(o => o.Props != null).SelectMany(o => o.Props.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix)).Select(kv => kv.Value ?? ""))
+					.SelectMany(v => v.Split(new[] { "\\n", "\n" }, StringSplitOptions.None)).Where(l => l.StartsWith("signal||")).Select(l => l.Substring(8).Trim()));
+				foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(x => ReadyPieces.Of(x.ObjectName) != null && x.Props != null))
+				{
+					ReadyPieces.Piece p = ReadyPieces.Of(r.ObjectName);
+					string label = "'" + name + "': " + p.Kind + " " + r.ObjectName + (!string.IsNullOrEmpty(r.Name) ? " '" + r.Name + "'" : "");
+					if (p.Use != null) Check(ref ok, r.GetComponentInChildren<UseInteract>(true) != null, label + " - players can use it");
+					if (BehaviourProps.Moves(r.Props)) Check(ref ok, r.GetComponentInChildren<IslandBehaviour>(true) != null, label + " - it moves");
+					string checks = ObjectProps.Get(r.Props, BehaviourProps.CheckKey("use"));
+					// (a piece left with its ready settings by an island that wires nothing to it - one placed as decoration before the
+					// pieces had settings - is only noted: the island's own pieces must have what they want on the island)
+					Dictionary<string, string> ready = ObjectProps.Defaults(r.ObjectName);
+					bool untouched = ObjectProps.Get(r.Props, BehaviourProps.EventKey("use")) == ObjectProps.Get(ready, BehaviourProps.EventKey("use")) && checks == ObjectProps.Get(ready, BehaviourProps.CheckKey("use"));
+					// (checks that start with "any" are alternatives - a radio works on a generator's power or on Raft's battery
+					// part: one of them on the island is enough)
+					string[] lines = checks.Split(new[] { "\\n", "\n" }, StringSplitOptions.None).Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
+					bool any = lines.Length > 0 && lines[0] == ObjCheck.AnyLine;
+					var wants = new List<string>();
+					bool oneThere = false;
+					foreach (string l in lines)
+					{
+						System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(l, @"^(?:has|take)\|(" + System.Text.RegularExpressions.Regex.Escape(StoryItems.Prefix + QuestItemPickups.IdPrefix) + @"[A-Za-z0-9_]+)");
+						if (m.Success)
+						{
+							string item = m.Groups[1].Value, id = item.Substring(StoryItems.Prefix.Length);
+							bool there = allLoot.Contains(item + "*") || f.Objects.Any(o => QuestItemPickups.IsModel(o.Name) && QuestItemPickups.StoryId(o.Name) == id);
+							if (any) { wants.Add(id); oneThere |= there; }
+							else if (untouched && !there) Log("  " + label + ": left as placed (its ready settings, the island wires nothing to it) - the " + id + " it wants isn't on the island");
+							else Check(ref ok, there, label + " - the " + id + " it wants is on the island (a chest or Raft's pickup)");
+						}
+						else if (any && l.StartsWith("signal|"))
+						{
+							// (sent by something else on the island: a generator's own "power" doesn't start it)
+							string sg = l.Substring(7).Trim('|', ' ');
+							wants.Add("the signal '" + sg + "'");
+							int self = r.Index;
+							oneThere |= f.Objects.Where((o, i) => i != self && o.Props != null).Any(o => o.Props.Any(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) && (kv.Value ?? "").Contains("signal||" + sg)));
+						}
+					}
+					if (any && wants.Count > 0 && untouched && !oneThere) Log("  " + label + ": left as placed (its ready settings) - none of what it wants is on the island");
+					else if (any && wants.Count > 0) Check(ref ok, oneThere, label + " - one of what it wants is on the island (" + string.Join(" or ", wants.ToArray()) + ")");
+					// (a piece hidden at the start - a lift's top - shows its partner back: only those shown from the start count)
+					if (!BehaviourProps.StartsHidden(r.Props))
+					foreach (string target in ObjectProps.Get(r.Props, BehaviourProps.EventKey("use")).Split(new[] { "\\n", "\n" }, StringSplitOptions.None).Where(l => l.StartsWith("show|")).Select(l => l.Substring(5).Trim()))
+					{
+						IslandObjectRef shown = ScObjOf(e, target);
+						Check(ref ok, shown != null && !shown.gameObject.activeInHierarchy, label + " - shows '" + target + "' (" + (shown == null ? "missing" : shown.gameObject.activeInHierarchy ? "shown already!" : "hidden till then") + ")");
+					}
+				}
+				foreach (IslandObjectRef c in e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(x => x.Props != null && x.GetComponentInChildren<LootCrate>(true) != null))
+					foreach (string sig in ObjectProps.Get(c.Props, BehaviourProps.CheckKey("open")).Split(new[] { "\\n", "\n" }, StringSplitOptions.None).Where(l => l.StartsWith("signal|")).Select(l => l.Substring(7).Trim('|', ' ')))
+						Check(ref ok, sent.Contains(sig), "'" + name + "': the chest '" + ObjectProps.Get(c.Props, ObjectProps.NoteTitle) + "' opens on the signal '" + sig + "' - something on the island sends it");
 				int buried = e.Root.GetComponentsInChildren<BuriedTreasure>(true).Length;
 				if (buried > 0) Check(ref ok, tm != null && BuriedTreasure.PointsOf(tm, e.Root.transform).Count == buried, "'" + name + "': " + buried + " buried treasure(s) made as Raft's treasure points");
 				Log("  '" + name + "': " + (found.Length > 0 ? found : "no Raft features") + (said.Count > 0 ? " (" + string.Join(", ", said.ToArray()) + ")" : ""));
@@ -80,7 +153,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: feature check"); else Fail("feature check");
 		}
 
-		[ConsoleCommand(name: "CIFeatureCoverage", docs: "Dev, anywhere: every Raft feature (zipline, machete vines, buried treasure, dirt, wild beehive) is on at least one of the library's islands (installed island files): the table")]
+		[ConsoleCommand(name: "CIFeatureCoverage", docs: "Dev, anywhere: every Raft feature (zipline, machete vines, buried treasure, dirt, wild beehive, and the story machinery: a keycard door, a hatch, a crank wheel, a lever, a lift, a cage for the bolt cutters, a sweeping camera, a generator, a radio, the engine, a turning mirror - each with its working settings) is on at least one of the library's islands (installed island files): the table")]
 		public static void FeatureCoverageCommand(string[] args)
 		{
 			bool ok = true;
@@ -90,7 +163,19 @@ namespace DynamicIslands
 			{
 				IslandFile f = IslandFile.Load(path);
 				if (f == null) continue;
-				foreach (var ft in RaftFeatures) if (f.Objects.Any(ft.Value)) on[ft.Key].Add(f.Name);
+				// (a ready piece counts where what it wants is on the island too: a keycard door with its keycard in a chest)
+				string loot = string.Join(";", f.Objects.Where(o => o.Props != null).Select(o => ObjectProps.Get(o.Props, ObjectProps.LootItems)).ToArray());
+				Func<IslandObject, bool> supplied = o =>
+				{
+					var items = System.Text.RegularExpressions.Regex.Matches(Checks(o), @"(?:has|take)\|(" + System.Text.RegularExpressions.Regex.Escape(StoryItems.Prefix + QuestItemPickups.IdPrefix) + @"[A-Za-z0-9_]+)")
+						.Cast<System.Text.RegularExpressions.Match>().Select(m => m.Groups[1].Value).ToList();
+					if (items.Count == 0 || items.Any(i => loot.Contains(i + "*") || f.Objects.Any(x => QuestItemPickups.IsModel(x.Name) && StoryItems.Ref(QuestItemPickups.StoryId(x.Name) ?? "") == i))) return true;
+					// (or, for alternatives - "any": a radio on a generator's power - a signal one of the island's other objects sends)
+					if (!Checks(o).StartsWith(ObjCheck.AnyLine)) return false;
+					return Checks(o).Split(new[] { "\\n", "\n" }, StringSplitOptions.None).Where(l => l.StartsWith("signal|")).Select(l => l.Substring(7).Trim('|', ' '))
+						.Any(sg => f.Objects.Any(x => x != o && x.Props != null && x.Props.Any(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) && (kv.Value ?? "").Contains("signal||" + sg))));
+				};
+				foreach (var ft in RaftFeatures) if (f.Objects.Any(o => ft.Value(o) && supplied(o))) on[ft.Key].Add(f.Name);
 				f = null;
 				GC.Collect();
 			}

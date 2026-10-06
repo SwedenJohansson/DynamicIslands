@@ -14,6 +14,7 @@
 # z -14..-11.
 include lib_huts
 include lib_sea
+include lib_features
 new
 # (nature: snowy, Like Raft's Temperance - a few pines and drifts; the generator's own)
 gen Trees=0.08 Bushes=0.15 Rocks=0.15 Harvest=0.05 BeachThings=0.3
@@ -37,6 +38,10 @@ clear from -40 -2 to -28 -4 r=3
 clear at -19 -12.5 r=3
 clear from -15 -12.5 to -9 -12.5 r=2.5
 clear from -7.5 42 to -7.5 28 r=4
+# (Eskil's egg hoist: a lookout ledge cut into the south crag's sheer north face over the saddle, 10.6 m - Raft's lift up to it)
+brush flatten at -4 -4.2 r=2.2 s=20 frames=120 h=10.6
+clear at -4 -4.2 r=3
+clear at -4 0.5 r=3
 
 # ===== Eskil's cabin on the flat: low stilts, the stove, the bunk, egg crates; his log on the table, the chest; the tally
 # board outside, firewood; the goats ======================================================================================
@@ -106,6 +111,10 @@ place Zone_Atmosphere snowtops at 0 20 h=30
 place Zone_Atmosphere snowtops at 0 -20 h=30
 place Creature_Dolphin dolphins at -72 0 h=-3
 call shallows r=83 deep=5 n=1
+# --- Raft's story machinery (lib_features; the user, 2026-10-06: every Raft feature on at least one island): Eskil's egg
+# hoist - one of Varuna Point's skylifts at the foot of the south crag's north face in the saddle (5.4 m), riding 4.7 m up
+# to the lookout ledge cut into the face, his hoist chest up there
+call lift x=-4 z=0.1 yaw=90 alias=egghoist upalias=egghoistup chest=hoistchest tx=-4 tz=-5.4 items=Egg*3;Feather*4;Rope*2 title="Eskil's hoist chest"
 
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------
 scatter "Pickup_Landmark_Tree_Pine" 6 at 0 0 r=44.1 seed=4478 free=5

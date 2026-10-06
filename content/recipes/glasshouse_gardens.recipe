@@ -297,6 +297,9 @@ prop dolphins creature.count=2
 # gardener's dirt beds
 call hives x=0 z=0 r=40 n=2 seed=121
 call dirt x=0 z=0 r=40 n=4 seed=122
+# --- Raft's story machinery (the user, 2026-10-06): Lind's sun mirrors - two of Temperance's turning mirrors on the lawns
+# either side of the Great House, and her seed chest south of it with a sun-lock that opens when both are turned
+call mirrors x1=20 z1=-2 yaw1=0 x2=-14 z2=-6 yaw2=90 a1=sunmirror1 a2=sunmirror2 chest=seedchest cx=4 cz=-15 cyaw=0 items=Seed_Flower_Red*3;Glass*3;Pineapple*2 title="Lind's seed chest"
 
 quest title=The Titan Blooms
 quest intro=Glasshouses on a forest plateau, and a giant flower thirty years in bud. Professor Lind's journal is in her cottage by the gate.
