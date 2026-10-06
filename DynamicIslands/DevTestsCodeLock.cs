@@ -59,7 +59,9 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
 			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
-			OnRaftCommand();
+			// (far away: 500 m off the island, in the water)
+			Vector3 away = e.Position + (e.Position - (CustomIslandSpawner.RaftPosition ?? e.Position + Vector3.forward)).normalized * 500f;
+			player.transform.position = new Vector3(away.x, 0.5f, away.z);
 			yield return new WaitForSeconds(1f);
 			Dictionary<string, int> before = Items(player);
 			QuestTracker.Set(e, 1, 0, true);
@@ -69,14 +71,14 @@ namespace DynamicIslands
 			PutPlayerNear(e.Root.transform, 2f);
 			Vector3 c = e.Position + new Vector3(0f, 0f, 0f);
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			if (tag != null) player.transform.position = e.Root.transform.position + tag.LocalCentre + Vector3.up * 3f;
+			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
 			yield return new WaitForSeconds(2.5f);
 			got = Gained(before, Items(player));
 			Check(ref ok, got.Contains("Plank") && !QuestRewards.Owed(e.HostName) && QuestRewards.Rewarded(e.HostName), "coming to the island gives it: " + (got.Length > 0 ? got : "nothing"));
 			Dictionary<string, int> mid = Items(player);
 			OnRaftCommand();
 			yield return new WaitForSeconds(1f);
-			if (tag != null) player.transform.position = e.Root.transform.position + tag.LocalCentre + Vector3.up * 3f;
+			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
 			yield return new WaitForSeconds(2f);
 			Check(ref ok, Gained(mid, Items(player)).Length == 0, "coming again gives nothing more");
 			OnRaftCommand();
@@ -113,7 +115,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
 			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			Vector3 mid = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			Vector3 mid = LandSpot(e);
 			player.transform.position = mid + Vector3.up * 2f;
 			yield return ScWaitAnimals(e, "Warthog", 4, 15f);
 			List<AI_NetworkBehaviour> hogs = ScAnimals(e, "Warthog").OrderBy(a => a.transform.position.x).ToList();
@@ -165,7 +167,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
 			if (e == null || e.Root == null) { Fail(name + " did not spawn"); yield break; }
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			player.transform.position = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) + Vector3.up * 3f;
+			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
 			yield return new WaitForSeconds(1.5f);
 			Dictionary<string, int> before = Items(player);
 			QuestTracker.Event(e, "reach", "pen");
@@ -281,7 +283,7 @@ namespace DynamicIslands
 				foreach (Transform tr in lightT.GetComponentsInChildren<Transform>(true))
 					Log("spot: " + tr.name + " tag=" + tr.tag + " layer=" + LayerMask.LayerToName(tr.gameObject.layer) + " comps: " + string.Join(", ", tr.GetComponents<Component>().Select(cp => cp != null ? cp.GetType().Name : "-").ToArray()));
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			player.transform.position = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) + Vector3.up * 2f;
+			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
 			float h0 = player.Stats.stat_health.Value;
 			yield return new WaitForSeconds(12f);
 			float h1 = player.Stats.stat_health.Value;
@@ -371,6 +373,57 @@ namespace DynamicIslands
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
 			if (ok) Log("PASS: doorway"); else Fail("doorway");
+		}
+
+		[ConsoleCommand(name: "CILockFirst", docs: "Dev, in game (host): ROADMAP E12 - a 'find 2 gems' step whose gems a lock used up before the step came: it is done when it comes (found in all counts), and the count is saved with the world")]
+		public static void LockFirstCommand(string[] args) { DynamicIslands.instance.StartCoroutine(LockFirstRoutine()); }
+
+		static IEnumerator LockFirstRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			yield return EnsureAlive();
+			const string name = "cilockfirst";
+			var s = new IslandGenSettings { Seed = 9393, Radius = 30f, Height = 4f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, name);
+			new IslandQuest { Title = "Gems", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" }, new IslandQuest.Step { Type = "collect", Target = "story:cigem", Count = 2 } } }.To(f.Props, 0);
+			f.Props[StoryItems.Key] = "cigem|Gem||A test gem.";
+			IslandWorldState.Remove(name);
+			f.Save(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
+			if (!spot.HasValue) { Fail("no open sea"); yield break; }
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (e == null || e.Root == null) { Fail("no island"); yield break; }
+			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
+			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
+			yield return new WaitForSeconds(1f);
+			// The gems found, and a lock uses them up - before the step that asks for them
+			StoryBook.Give("cigem", 2);
+			yield return new WaitForSeconds(0.3f);
+			StoryBook.Take("cigem", 2);
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, StoryBook.Count("cigem") == 0 && StoryBook.FoundCount("cigem") == 2, "held 0 after the lock, found 2 in all");
+			QuestTracker.Event(e, "reach", "gate");
+			yield return new WaitForSeconds(2f);
+			Log("  entry at " + e.Position + ", root at " + e.Root.transform.position + ", player at " + player.transform.position + ", land radius " + CustomIslandSpawner.LandRadius(e.Name) + ", found " + QuestTracker.Found(e, QuestTracker.QuestOf(e).Steps[1]));
+			Check(ref ok, QuestTracker.IsDone(e, 0), "the 'find 2 gems' step is done when it comes (step " + QuestTracker.StepOf(e) + " of 2)");
+			string line = StoryBook.WriteLines().FirstOrDefault(l => l.StartsWith("@story.item=cigem"));
+			Check(ref ok, line != null && line.EndsWith("|2"), "saved with the world: " + line);
+			OnRaftCommand();
+			IslandWorldState.Remove(name);
+			if (ok) Log("PASS: lock first"); else Fail("lock first");
+		}
+
+		/// <summary>A spot on the island's land, near its middle (the ground there, from a ray down).</summary>
+		static Vector3 LandSpot(IslandWorldState.Entry e)
+		{
+			IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
+			Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
+			RaycastHit hit;
+			return Physics.Raycast(new Vector3(c.x, 200f, c.z), Vector3.down, out hit, 400f, LayerMasks.MASK_GroundMask, QueryTriggerInteraction.Ignore) ? hit.point : c + Vector3.up * 3f;
 		}
 
 		const string CodeLockIsland = "cicodelock";

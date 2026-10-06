@@ -2423,15 +2423,11 @@ brings another island it comes as a new rule.)
 
 - **Rewards in Raft items** go only to players within about 150 m of the island when the last step is done; players who
   come later get nothing. Story items go to the whole crew.
-- **"Collect N story items" and "find journal pages"** count what the crew already has, and finish when a player comes
-  to the island (so the reward reaches them).
+- **"Collect N story items" and "find journal pages"** count what the crew has found (story items also when a lock used
+  them up since), and finish when a player comes to the island (so the reward reaches them).
 - **Give "near an island" rules open sea.** A rule that finds no room (close to one of Raft's big islands, for a big
   island) waits without telling anyone; the host's log says "waits: no free spot".
 - **Avoid two copies of the same island in one world** when its quest counts journal pages.
-- **A lock that uses up story items before the quest has counted them** (a chest that takes the key, a machine that
-  takes three parts) leaves the quest's "collect" step for them waiting for ever: the items are gone before it counts.
-  Give such a lock an **Only if** the quest reached that step, before the check that uses the items up (The Frontier in
-  the library does it for each of its locks).
 
 ### 12.5 Names, files and your PC
 

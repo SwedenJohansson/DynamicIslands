@@ -142,6 +142,8 @@ namespace DynamicIslands.Editor
 		{
 			public StoryItemDef Def;
 			public int Count;
+			/// <summary>How many the crew has found in all, also those used up since (ROADMAP E12: a "find N" step counts these).</summary>
+			public int Found;
 		}
 
 		public class Page
@@ -166,6 +168,13 @@ namespace DynamicIslands.Editor
 		{
 			Held h;
 			return held.TryGetValue(StoryItems.IdOf(id), out h) ? h.Count : 0;
+		}
+
+		/// <summary>How many of a story item the crew has found in all (used up or not).</summary>
+		public static int FoundCount(string id)
+		{
+			Held h;
+			return held.TryGetValue(StoryItems.IdOf(id), out h) ? Mathf.Max(h.Found, h.Count) : 0;
 		}
 
 		public static StoryItemDef DefOf(string id)
@@ -240,6 +249,7 @@ namespace DynamicIslands.Editor
 						if (f[4].Length > 0) h.Def.Description = f[4];
 					}
 					h.Count += n;
+					h.Found = Mathf.Max(h.Found, h.Count - n) + n;
 					Debug.Log("[CUSTOM ISLANDS] Story item '" + h.Def.ShownName + "': " + h.Count);
 					return true;
 				case "take":
@@ -292,7 +302,7 @@ namespace DynamicIslands.Editor
 		static IEnumerable<string> Lines()
 		{
 			foreach (Held h in held.Values)
-				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description);
+				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description, Mathf.Max(h.Found, h.Count).ToString(CultureInfo.InvariantCulture));
 			foreach (Page p in pages)
 				yield return "story.page=" + Fields(p.Key, p.Day.ToString(CultureInfo.InvariantCulture), p.Title, p.Island, p.Text);
 		}
@@ -308,7 +318,10 @@ namespace DynamicIslands.Editor
 			if (key == "story.item")
 			{
 				if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) return true;
-				held[f[0]] = new Held { Count = n, Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "" } };
+				int found;
+				// (found in all: the 6th field since 2026-10-06; a world from before counts what it holds)
+				if (f.Length < 6 || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out found)) found = n;
+				held[f[0]] = new Held { Count = n, Found = Mathf.Max(found, n), Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "" } };
 				return true;
 			}
 			if (key == "story.page")

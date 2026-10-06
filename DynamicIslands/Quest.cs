@@ -320,9 +320,11 @@ namespace DynamicIslands.Editor
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || e.Root == null) return false;
+			// (the land's middle - where the island's entry stands - and how far its land reaches: an island without a title or
+			// description has no info tag, and was measured from its terrain's corner, hundreds of metres off its land)
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			Vector3 c = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
-			float r = tag != null ? tag.Radius : 150f;
+			Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
+			float r = tag != null ? tag.Radius : Mathf.Max(30f, CustomIslandSpawner.LandRadius(e.Name));
 			return new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude < r + NearDistance;
 		}
 
@@ -431,7 +433,8 @@ namespace DynamicIslands.Editor
 		/// <summary>How far a counted step is: story items the crew holds, or journal pages found on the island.</summary>
 		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
 		{
-			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.Count(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
+			// (found in all, also those a lock or a machine used up before this step came - ROADMAP E12)
+			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.FoundCount(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
 			if (s.Type == "pages")
 				return StoryBook.Pages.Count(p => s.Target == "all" || p.Key.StartsWith("note:" + e.HostName + ":") || p.Key.StartsWith("act:" + e.HostName + ":"));
 			return 0;
