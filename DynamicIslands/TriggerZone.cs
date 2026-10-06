@@ -38,6 +38,10 @@ namespace DynamicIslands.Editor
 		bool inside, toldRefused;
 		/// <summary>The quest step "go to this zone" was counted for this arrival (once per walk-in).</summary>
 		bool reachCounted;
+		// (spent before this player came near - an earlier session's, or before the island loaded: old news, said nothing;
+		// spent meanwhile by someone else: "someone else got here first" - SC50, the host losing the race was told nothing)
+		bool? spentWhenSeen;
+		bool firedHere;
 		float nextCheck, cooldownUntil, retryAt;
 
 		/// <summary>Raised on every machine when the local player sets a zone off (tests and quests listen).</summary>
@@ -66,6 +70,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.time < nextCheck) return;
 			nextCheck = Time.time + 0.25f;
+			if (spentWhenSeen == null) spentWhenSeen = HasFired; // (as the zone first came: SC50)
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			bool now = (player.transform.position - transform.position).sqrMagnitude <= Radius * Radius;
@@ -94,7 +99,13 @@ namespace DynamicIslands.Editor
 			// only once the zone's own "only if" passes (before, it counted as the player walked in: a "go to" step was
 			// done at a zone that refused the player - AU41)
 			bool fired = HasFired;
-			if (fired && !Repeats) { Reached(); return; }
+			if (spentWhenSeen == null) spentWhenSeen = fired;
+			if (fired && !Repeats)
+			{
+				if (spentWhenSeen == false && !firedHere && (Items.Count > 0 || Message.Length > 0) && !toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
+				Reached();
+				return;
+			}
 			if (!Repeats && !granted && !again) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
 			if (Repeats && Time.time < cooldownUntil) { Reached(); return; }
 			// (a zone the player can't set off yet says why before it is claimed: claimed, it was held from the others)
@@ -124,7 +135,7 @@ namespace DynamicIslands.Editor
 
 			if (Message.Length > 0) IslandInfo.ShowMessage(Message);
 			if (Items.Count > 0) Give(Items);
-			if (!fired) ContentState.MarkUsed(transform, StateKey); // the host wakes up the linked creatures
+			if (!fired) { firedHere = true; ContentState.MarkUsed(transform, StateKey); } // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
 			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }

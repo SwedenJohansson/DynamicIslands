@@ -447,6 +447,42 @@ namespace DynamicIslands
 			Log("RAFTCOLLIDERS " + near.Length + " on RaftCollision within 40 m of the raft (" + string.Join(", ", near.Select(c => c.name + " under " + (c.transform.parent != null ? c.transform.parent.name : "-")).Distinct().Take(3).ToArray()) + ")");
 		}
 
+		[ConsoleCommand(name: "CIRaftColliderGuard", docs: "Dev, world (host, 'CI ...'): R16 - Raft's collider grid unhooked and emptied as in the worlds that drifted (no grounding colliders); the guard hooks it up again and the raft has them back")]
+		public static void RaftColliderGuardCommand() { DynamicIslands.instance.StartCoroutine(RaftColliderGuardRoutine()); }
+
+		static IEnumerator RaftColliderGuardRoutine()
+		{
+			if (!Raft_Network.IsHost || !LoadSceneManager.IsGameSceneLoaded) { Fail("raft collider guard: run in a world, as the host"); yield break; }
+			bool ok = true;
+			var rcm = UnityEngine.Object.FindObjectOfType<RaftCollisionManager>();
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (rcm == null || raft == null) { Fail("raft collider guard: no raft"); yield break; }
+			Func<int> count = () => Physics.OverlapSphere(raft.body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore).Length;
+			int before = count();
+			Check(ref ok, before > 0, "the raft has Raft's grounding colliders: " + before);
+			// As in the worlds that drifted: Raft's manager doesn't hear of the blocks (it never listened) and has no grid
+			var tb = HarmonyLib.Traverse.Create(HarmonyLib.Traverse.Create(rcm).Field("raftBounds").GetValue<RaftBounds>());
+			foreach (string ev in new[] { "OnAddWalkableBlock", "OnRemoveWalkableBlocks" })
+			{
+				Delegate d = tb.Field(ev).GetValue<Delegate>();
+				if (d != null) foreach (Delegate x in d.GetInvocationList()) if (x.Target == (object)rcm) d = Delegate.Remove(d, x);
+				tb.Field(ev).SetValue(d);
+			}
+			HarmonyLib.Traverse.Create(rcm).Field("blocks").GetValue<List<Vector3>>().Clear();
+			rcm.Initialize();
+			yield return new WaitForFixedUpdate();
+			yield return null;
+			int gone = count();
+			Check(ref ok, gone == 0, "unhooked and emptied: " + gone + " left (the drifting worlds had none)");
+			bool healed = RaftColliderGuard.Heal(false);
+			yield return new WaitForFixedUpdate();
+			yield return null;
+			int after = count();
+			Check(ref ok, healed && after >= before, "the guard hooked Raft's grid up again: " + after + " collider(s) (" + before + " before)");
+			Check(ref ok, !RaftColliderGuard.Heal(false), "... and leaves it alone once it listens");
+			if (ok) Log("PASS: raft collider guard"); else Fail("raft collider guard");
+		}
+
 		[ConsoleCommand(name: "CIDriftProbe", docs: "Dev, world (host, 'CI ...'): logs the raft each second for <seconds> (default 90) as Raft's current takes it towards 'ciscbeach' put ahead of it (CIScBeached's island): where, how fast, how much land above it, what it touches")]
 		public static void DriftProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DriftProbeRoutine(args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 90f)); }
 
