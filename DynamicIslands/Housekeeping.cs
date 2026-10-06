@@ -103,6 +103,13 @@ namespace DynamicIslands.Editor
 					if (r != null) foreach (string n in RuleIslands(r)) yield return n;
 					continue;
 				}
+				// (the copy of a plan island the world will bring - its recorded version: not tidied away - AU6)
+				if (l.StartsWith("@planhash="))
+				{
+					int colon = l.LastIndexOf(':');
+					if (colon > 10 && IslandNetwork.IsHash(l.Substring(colon + 1).Trim())) yield return IslandNetwork.DownloadName(l.Substring(10, colon - 10).Trim(), l.Substring(colon + 1).Trim());
+					continue;
+				}
 				if (l.StartsWith("@")) continue;
 				string[] p = l.Split('|');
 				if (p.Length < 4 || p[0].Trim().Length == 0) continue;

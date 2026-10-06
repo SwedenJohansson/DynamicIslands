@@ -177,6 +177,15 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static string[] Choose(string modFile)
 		{
+			string[] chosen = ChooseCopy(modFile);
+			// (what a player who joins is sent until the next save: the copy the world loaded, not the mod's file, which is
+			// older when the copy in Raft's world folder was newer - a player's kept copy looked newer than it - AU26)
+			if (chosen != null) { last = chosen; lastKey = SaveAndLoad.WorldGuid.ToString(); }
+			return chosen;
+		}
+
+		static string[] ChooseCopy(string modFile)
+		{
 			// (a file that is there but can't be read - locked by an antivirus or a sync - throws: the world then loads as
 			// "couldn't be read" and isn't saved, instead of as "no file", which the next save deleted - review 2026-10-06)
 			string[] mine = ReadThere(modFile);
@@ -353,7 +362,69 @@ namespace DynamicIslands.Editor
 		/// its progress and the islands left out, for the player's WorldPlan, WorldIslands and world window (they showed
 		/// the player's own, empty, state).</summary>
 		public static string[] HostLines { get; private set; }
-		internal static void ForgetHostLines() { HostLines = null; }
+		internal static void ForgetHostLines() { HostLines = null; checkedJoin.Clear(); }
+		/// <summary>A player: the host's world arrived (a join) - its first copy is compared with the kept one again (AU26).</summary>
+		internal static void OnWorldReceived() { checkedJoin.Clear(); }
+
+		/// <summary>A player: the worlds whose host's copy came since this world loaded (the kept copy is compared once - AU26).</summary>
+		static readonly HashSet<string> checkedJoin = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>The file a player's newer kept copy is set aside as (tests), or "".</summary>
+		public static string LastSetAside { get; private set; }
+
+		/// <summary>
+		/// A player, as the host's copy arrives on joining: when this PC's kept copy of the world is newer (by the save counter,
+		/// AU4), it is kept as &lt;world id&gt;.kept-&lt;its save count&gt;.txt (the newer history the host's copy replaces), the host
+		/// is told (WorldCopyNewer) and so is the player. True when it was set aside (the host's copy may then be written).
+		/// </summary>
+		static bool KeepNewer(string path, string[] hosts, Guid guid)
+		{
+			string[] mine;
+			try { mine = File.ReadAllLines(path); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading this PC's copy of the world: " + e.Message); return false; }
+			if (!Newer(mine, hosts)) return false;
+			long count = CountOf(mine), at = StampOf(mine);
+			string aside = Path.Combine(Path.GetDirectoryName(path), guid + ".kept-" + count.ToString(CultureInfo.InvariantCulture) + ".txt");
+			try { if (!File.Exists(aside)) File.Copy(path, aside); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not keep this PC's newer copy of the world (" + aside + "): " + e.Message + " - the host's isn't kept over it"); return false; }
+			LastSetAside = aside;
+			Debug.LogWarning("[CUSTOM ISLANDS] This PC's copy of the world (save " + count + ") is newer than the host's (save " + CountOf(hosts) + "): kept as " + aside + ", the host's copy is taken");
+			DynamicIslands.Notify("Your copy of this world (" + When(at) + ") is newer than the host's: the host's is played, yours is kept as " + Path.GetFileName(aside) + " in Mods\\DynamicIslands\\worlds.", true);
+			IslandNetwork.SendWorldCopyNewer(new IslandNetMessage { Name = guid.ToString(), Data = count.ToString(CultureInfo.InvariantCulture) + ";" + at.ToString(CultureInfo.InvariantCulture) });
+			return true;
+		}
+
+		/// <summary>A copy's "@savedat=" stamp as a local date and time ("an unknown time" for none).</summary>
+		static string When(long ticks)
+		{
+			if (ticks <= 0 || ticks > DateTime.MaxValue.Ticks) return "an unknown time";
+			return new DateTime(ticks, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>The last player's newer copy the host was warned about (tests), or "".</summary>
+		public static string LastNewerWarning { get; private set; }
+
+		/// <summary>
+		/// Host: a player's kept copy of this world is newer than the copy it was sent (AU26). Warned when it is newer than
+		/// anything this host had (the world's save counter, AU4): the world was hosted from that copy since, and this one may
+		/// be missing their progress. (A copy newer only than the one sent - an older save loaded on purpose - is just logged.)
+		/// </summary>
+		public static void OnPlayerNewer(IslandNetMessage msg, Network_UserId from)
+		{
+			if (msg == null || !(msg.Name ?? "").Equals(SaveAndLoad.WorldGuid.ToString(), StringComparison.OrdinalIgnoreCase)) return;
+			string[] p = (msg.Data ?? "").Split(';');
+			long count, at = 0;
+			if (p.Length < 1 || !long.TryParse(p[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out count)) return;
+			if (p.Length > 1) long.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out at);
+			string who = PrivateStorage.NameOf(from.Id);
+			if (string.IsNullOrEmpty(who) || who == "another player") who = "A player"; else who = "'" + who + "'";
+			bool newer = count > SaveCount || (count == SaveCount && last != null && at > StampOf(last));
+			Debug.LogWarning("[CUSTOM ISLANDS] " + who + " has a copy of this world from " + When(at) + " (save " + count + ", this world's " + SaveCount + ")" +
+				(newer ? ": newer than this host's - the world may be missing their progress" : ": newer than the copy sent only (an older save loaded?)"));
+			if (!newer) return;
+			LastNewerWarning = who + " " + count;
+			DynamicIslands.Notify(who + "'s copy of this world from " + When(at) + " is newer - your world may be missing their progress. (They keep it as a file in their Mods\\DynamicIslands\\worlds.)", true, 15);
+		}
 
 		/// <summary>A value of the host's copy ("@key=value"), or null.</summary>
 		public static string HostValue(string key)
@@ -383,8 +454,13 @@ namespace DynamicIslands.Editor
 			string path = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), guid + ".txt");
 			try
 			{
+				// (the host's first copy since joining: this player's kept copy may be newer - the world hosted from it since,
+				// by this player or another - and the host plays an older one. It is kept beside it and the host is warned,
+				// then the host's copy is taken: the world goes on from what the host has - AU26)
+				bool joining = checkedJoin.Add(guid.ToString());
+				bool keptNewer = joining && File.Exists(path) && KeepNewer(path, lines, guid);
 				// (never over a newer copy: a late message from an older save)
-				if (File.Exists(path) && Newer(File.ReadAllLines(path), lines)) return;
+				if (!keptNewer && File.Exists(path) && Newer(File.ReadAllLines(path), lines)) return;
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 				SafeFile.WriteAllLines(path, lines);
 				LastKept = guid + " " + lines.Length + " lines";
@@ -395,7 +471,10 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// Host, reading an island line of the world file: the local file for an island saved by another host. Its own file
-		/// when that has the recorded hash (or no hash was recorded), else a copy downloaded while joining (name_hash).
+		/// when that has the recorded hash (or no hash was recorded), else a copy downloaded while joining (name_hash), else
+		/// any island file with that content (a pack's island renamed on import - AU6). When there is none, the players are
+		/// asked for it (AU6): with no file of that name here the island waits for it (name_hash, the name it arrives as);
+		/// with another version of it here, that one plays until a player sends the right one.
 		/// </summary>
 		public static string LocalFileFor(string name, string hash)
 		{
@@ -404,8 +483,11 @@ namespace DynamicIslands.Editor
 			if (own == hash) return name;
 			string downloaded = IslandNetwork.DownloadName(name, hash);
 			if (File.Exists(IslandSpawner.PathFor(downloaded))) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from the copy downloaded from its first host: " + downloaded); return downloaded; }
-			if (own != null) Debug.LogWarning("[CUSTOM ISLANDS] '" + name + "' differs from the one this world was saved with (" + own + ", not " + hash + "): playing this PC's own");
-			return name;
+			string same = IslandNetwork.IsHash(hash) ? IslandNetwork.FileWithHash(hash, null) : null;
+			if (same != null) { Debug.Log("[CUSTOM ISLANDS] '" + name + "' is played from " + same + ", the same island under another name"); return same; }
+			if (IslandNetwork.IsHash(hash) && Raft_Network.IsHost) IslandNetwork.WantFromPlayers(name, hash);
+			if (own != null) { Debug.LogWarning("[CUSTOM ISLANDS] '" + name + "' differs from the one this world was saved with (" + own + ", not " + hash + "): playing this PC's own until a player has that one"); return name; }
+			return IslandNetwork.IsHash(hash) && Raft_Network.IsHost ? downloaded : name;
 		}
 	}
 }
