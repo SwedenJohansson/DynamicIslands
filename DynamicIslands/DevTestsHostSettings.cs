@@ -123,6 +123,21 @@ namespace DynamicIslands
 			if (ok) Log("PASS: host-only commands refused"); else Fail("host-only commands refused");
 		}
 
+		[ConsoleCommand(name: "CIUniqueCopy", docs: "Dev: CIUniqueCopy <island> <new name> - a copy of a saved island with a setting of its own, so no other file has its content (host-swap tests: B must have no file of it, AU6 finds islands by content)")]
+		public static void UniqueCopyCommand(string[] args)
+		{
+			if (args == null || args.Length != 2) { Fail("usage: CIUniqueCopy <island> <new name>"); return; }
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(args[0]));
+				f.Name = args[1];
+				f.Props["test.unique"] = Guid.NewGuid().ToString("N");
+				f.Save(IslandSpawner.PathFor(args[1]));
+				Log("PASS: unique copy '" + args[1] + "' (" + IslandNetwork.HashOf(args[1]) + ")");
+			}
+			catch (Exception e) { Fail("unique copy: " + e.Message); }
+		}
+
 		[ConsoleCommand(name: "CISpawnPoolSet", docs: "Dev (either player): gives this machine other spawnpool.txt numbers than its file, kept when the file is read again - to test that a player who joins uses the host's: CISpawnPoolSet regrowDays 1 showOnReceiver 0 unloadDistance 350 ... | CISpawnPoolSet reset")]
 		public static void SpawnPoolSet(string[] args)
 		{
