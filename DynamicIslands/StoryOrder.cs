@@ -149,12 +149,25 @@ namespace DynamicIslands.Editor
 				Dictionary<int, ChunkPointType> notes = FrequencyNotes();
 				if (notes.Count == 0) return; // (no notebook yet: its own load unlocks them through the patch)
 				mapped = Active;
-				unlocked.RemoveAll(t => Array.IndexOf(Chain, t) >= 0);
+				// (in place: a story island that stays unlocked keeps its spot in Raft's list, the others take the places of
+				// those that go - switched mid-game, the Receiver's list was rebuilt and the island being sailed to could
+				// move or vanish from it - AU34)
+				var wanted = new List<ChunkPointType>();
 				foreach (int idx in NoteBook.unlockedNoteBookIndexes)
 				{
 					ChunkPointType t;
-					if (notes.TryGetValue(idx, out t) && !unlocked.Contains(Map(t))) unlocked.Add(Map(t));
+					if (notes.TryGetValue(idx, out t) && !wanted.Contains(Map(t))) wanted.Add(Map(t));
 				}
+				var toAdd = new Queue<ChunkPointType>(wanted.Where(w => !unlocked.Contains(w)));
+				for (int i = 0; i < unlocked.Count; i++)
+				{
+					if (Array.IndexOf(Chain, unlocked[i]) < 0 || wanted.Contains(unlocked[i])) continue;
+					if (toAdd.Count > 0) unlocked[i] = toAdd.Dequeue();
+					else unlocked.RemoveAt(i--);
+				}
+				while (toAdd.Count > 0) unlocked.Add(toAdd.Dequeue());
+				// (one of each: a slot filled above could already be later in the list)
+				for (int i = unlocked.Count - 1; i > 0; i--) if (Array.IndexOf(Chain, unlocked[i]) >= 0 && unlocked.IndexOf(unlocked[i]) < i) unlocked.RemoveAt(i);
 				RelabelAll();
 				if (Active) Log("Order " + Describe(Order) + "; unlocked: " + string.Join(", ", unlocked.Where(t => Array.IndexOf(Chain, t) >= 0).Select(Name).ToArray()));
 			}

@@ -174,6 +174,8 @@ namespace DynamicIslands.Editor
 						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
 				}
 				lines.AddRange(keptLines);
+				// (the version that wrote it: an older one reading it warns - AU5)
+				lines.Add("@modversion=" + LibraryPack.ModVersion);
 				SafeFile.WriteAllLines(FilePath, lines.ToArray());
 				WorldCopy.AfterSave(lines.ToArray());
 			}
@@ -194,6 +196,14 @@ namespace DynamicIslands.Editor
 		static float nextSaveFailNotice;
 		/// <summary>Lines of the world's file this version couldn't read: written back as they were.</summary>
 		static readonly List<string> keptLines = new List<string>();
+
+		/// <summary>The world file was written by this version (the "@modversion=" line): a newer one warns the host once.</summary>
+		static void NewerFile(string version)
+		{
+			if (string.IsNullOrEmpty(version) || LibraryPack.CompareVersions(version, LibraryPack.ModVersion) <= 0) return;
+			Debug.LogWarning("[CUSTOM ISLANDS] This world was saved by Custom Islands " + version + ", newer than this " + LibraryPack.ModVersion);
+			DynamicIslands.Notify("This world was saved by a newer Custom Islands (" + version + ", you have " + LibraryPack.ModVersion + "). What this version doesn't know is kept as it is, but please update the mod before playing on.", true);
+		}
 
 		public static void OnWorldLoaded()
 		{
@@ -230,6 +240,7 @@ namespace DynamicIslands.Editor
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
+				if (line.StartsWith("@modversion=")) { NewerFile(line.Substring("@modversion=".Length).Trim()); continue; }
 				int eq = line.IndexOf('=');
 				if (line.StartsWith("@") && eq > 1 && (WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
@@ -239,6 +250,9 @@ namespace DynamicIslands.Editor
 					WorldIslands.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					StoryChain.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
+				// (a setting this version doesn't know - written by a newer one: kept as it is, so this version's save doesn't
+				// erase it for everyone - AU5)
+				if (line.StartsWith("@")) { keptLines.Add(line); Debug.LogWarning("[CUSTOM ISLANDS] A setting this version doesn't know is kept as it is: " + line); continue; }
 				string[] p = line.Split('|');
 				float x, y, z;
 				if (p.Length < 4 || p.Length > 8 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
