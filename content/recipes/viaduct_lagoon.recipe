@@ -3,7 +3,8 @@
 # middle spans gave way under the mail train, and its cars lie on the lagoon's floor with the post still in them. The
 # station on the ring's west side (6 m), the viaduct west to east across the lagoon (deck 7 m, three middle spans gone,
 # a trench dug 11 m deep below the break), the brake van at the west end's edge, the signal cabin on the east side.
-# Quest "The Winter Post" (7 steps): salvage dives with air pockets - three mail bags signed in at the cabin.
+# Quest "The Winter Post" (12 steps): the platform, a first look at the wreck, the crowbar, salvage dives with
+# air pockets - three mail bags and a sack from the silt - signed in at the cabin, the safe, two goats off the north ring.
 #
 # Built by the recipe player (CIRecipe viaduct_lagoon) through the editor's own operations.
 include lib_rt
@@ -125,7 +126,7 @@ scatter "Pickup_Landmark_Flower_Blue" 4 at 0 0 r=44.1 seed=4555 free=3
 # --- Raft's finds in the shallows round the ring and in the lagoon (lib_sea) -------------------------------------------------
 call shallows r=83 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (12 steps) ==========================================================
 info title=Viaduct Lagoon
 info author=Custom Islands
 info description=A snowbound railway atoll whose viaduct gave way under the mail train one winter night. The cars lie on the lagoon's floor with air still under their roofs and the winter post still in their lockers - bring it up and sign it in.
@@ -171,7 +172,7 @@ prop silt loot.refill=0
 
 prop counter obj.name=counter
 prop counter beh.use=Sign the three mail bags in
-prop counter if.use=quest|5\ntake|story:mailbag|3
+prop counter if.use=quest|9\ntake|story:mailbag|3
 prop counter on.use=message||You drop the three wet bags on the counter and sign the receipt book: RECEIVED, with the date. Under the book, a small brass key.\ngive||story:receipt*1\nsound||event:/exploring/utopia/wood_putdown
 prop counter else.use=message||The counter's receipt book: THREE BAGS. Bring all three.
 
@@ -218,11 +219,16 @@ quest title=The Winter Post
 quest intro=A railway atoll with a broken viaduct and a train on the lagoon's floor. The station master left a telegram at the station.
 step reach|station|1|Walk up onto the station's platform
 step read|Station master's telegram|1|Read the telegram pinned on the platform
-step open|Brake van locker|1|Climb out along the viaduct to the brake van and take the crowbar
-step collect|story:mailbag|3|Dive to the three sunk cars and bring up the mail bags
+step open|Platform parcel box|1|Check the parcel box on the platform - rope and nails for the dive
+step reach|wreckage|1|Dive through the break and find the mail train on the lagoon's floor
+step open|Brake van locker|1|The lockers are jammed - climb out to the brake van and take the crowbar
+step open|Mail locker of car one|1|Catch your breath under the first car's roof and crowbar its locker
+step collect|story:mailbag|3|Work down the other two cars and bring up all three mail bags
+step open|Mail sack in the silt|1|Dig out the sack that fell from the train into the silt
 step reach|office|1|Cross to the signal cabin on the east side of the lagoon
 step collect|story:receipt|1|Sign the three bags in at the counter
 step open|Station master's safe|1|Open the station master's safe
+step catch|Goat|2|Round up two of the goats on the north ring - the line owes the island its milk
 quest done=The winter post is signed in, a season late and a little wet. Somewhere letters will arrive that everyone thought were lost.
 quest reward=Wool*2;Cooked_GenericMeat*3;Rope*2
 

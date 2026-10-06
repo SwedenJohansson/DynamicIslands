@@ -3,8 +3,9 @@
 # festival that never started - lantern posts along the shore walk and up the hill path, food stalls with their shades
 # up on the west shore, a stage under a thatch roof on the crescent's high middle, rockets in their rack. The festival
 # people sailed in for one night a year, and one year the storm came first: they ran for the boats and left everything
-# laid out. Quest "Twelve Lanterns" (8 steps, light the festival): the pier, the programme, the lamplighter's taper, six
-# lanterns along the shore, six up the hill, the stage, the fireworks finale, the festival prize (the zipline blueprint).
+# laid out. Quest "Twelve Lanterns" (11 steps, light the festival): the pier, the programme, the lamplighter's taper,
+# the sunk goods off the pier, the fish stall, six lanterns along the shore, two loose hens, six up the hill, the stage,
+# the fireworks finale, the festival prize (the zipline blueprint).
 #
 # Built by the recipe player (CIRecipe lanternfall) through the editor's own operations. Points: the bay's south shore
 # at z ~2 (0.5 m); the pier x -0.5..1, z 3..15 (deck 0.8 m); the shore walk from the west horn (-17 20) round the bay
@@ -179,7 +180,7 @@ scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=44.1 seed=4480 free=3
 scatter "Banana_Bush_2" 6 at 0 0 r=44.1 seed=4490 free=3
 scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4500 free=3
 
-# ===== Settings, story items, notes, behaviours, quest (8 steps) ==========================================================
+# ===== Settings, story items, notes, behaviours, quest (11 steps) ==========================================================
 info title=Lanternfall
 info author=Custom Islands
 info description=A festival island at dusk, every path lined with lanterns, the stalls laid out and the rockets in their rack - and every lantern unlit. Light all twelve and the finale is yours to set off.
@@ -297,7 +298,7 @@ prop glow12 obj.name=glow12
 prop glow12 beh.hidden=1
 prop rocketrack obj.name=rocketrack
 prop rocketrack beh.use=Light the fuse of the finale
-prop rocketrack if.use=quest|6\n!signal|finale
+prop rocketrack if.use=quest|9\n!signal|finale
 prop rocketrack on.use=message||The fuse fizzes along the rack and up the stage's roof - and the sky over Lanternfall breaks open in gold and red and green. Lights run along every string from the stage to the pier. On the rack, where the rockets stood, a paper fan.\nsignal||finale\nshow|fireworks\nshow|festlights\nshow|finaleglow\nshow|finalemusic\nsound||event:/weapons/firework/launch\nwait|2\nsound||event:/weapons/firework/explode\nwait|2\nsound||event:/weapons/firework/explode\ngive||story:fan*1
 prop rocketrack else.use=message||The finale's fuse. The programme says: when all twelve lanterns burn.
 prop fireworks obj.name=fireworks
@@ -338,7 +339,10 @@ quest intro=A festival island at dusk, every lantern dark. The programme is on t
 step reach|pier|1|Tie up at the festival pier
 step read|Festival programme|1|Read the festival programme
 step open|Lamplighter's box|1|Take the taper from the lamplighter's box
+step open|Sunk festival goods|1|Dive off the end of the pier for the festival goods the storm knocked in
+step open|Fish stall box|1|See what the fish stall in the square left behind when everyone ran
 step collect|story:lit|6|Light the six lanterns along the shore walk
+step catch|Chicken|2|Catch two of the festival hens loose round the stall square
 step collect|story:lit|12|Light the six lanterns up the hill path along the ridge
 step reach|stage|1|Climb to the stage on the hill
 step collect|story:fan|1|Set off the finale from the rocket rack

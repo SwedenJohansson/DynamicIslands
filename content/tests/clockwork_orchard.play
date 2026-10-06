@@ -13,15 +13,15 @@ wait 5
 # Up the ramp cut in the cliff onto the plateau; the diagram in the lean-to; the toolbox's crank
 walk -30.5 25.2 to -18.5 23 to -7 21 to -6 18 h=9.8
 zone orchard
-expect step 1
+expect step 0
 walk -6 18 to -6 9 to -9.75 9.5 to -9.75 12.5 h=9.9 below=12
 read Inventor's diagram
-expect step 2
+expect step 1
 use pineapplepump
 expect message crank
 open Inventor's toolbox
 expect story crank 1
-expect step 3
+expect step 2
 
 # The pumps out of order: the mango pump first chokes them all; then pineapple, mango, banana in the diagram's order
 walk -6 10 to -2 0 to 0 -10 to 0 -15 h=9.8
@@ -40,24 +40,25 @@ use bananapump
 expect shown bananacog
 expect shown fountainwheel
 expect story flow 1
-expect step 4
+expect step 3
 
-# Down the ramp and round to the workshop under the south cliff: its shutter is down into the floor; the strongbox
+# Down the ramp and round to the workshop under the south cliff: Raft's story machinery - the crank wheel by the workshop
+# lifts the parts crate's shutter (once); then in under the shutter (down into the floor) to the strongbox
 walk -7 21 to -18.5 23 to -30.5 25.2 h=2.6
 walk -32 22 to -30 0 to -24 -26 to -10 -38 to 1.5 -42 h=2.5
-walk 1.5 -42 to 1.5 -37.5 to 0 -35 to -1.5 -32 h=2.6 below=5
-zone workshop
-expect step 5
-open Inventor's strongbox
-expect item Blueprint_WaterTank 1
-expect done
-# Raft's story machinery: the crank wheel by the workshop lifts the parts crate's shutter (once); the spare chest stays
-# bolted until the hand lever on the other side is pulled
 expect hidden partscrate
 use partscrank
 expect shown partscrate
 open Inventor's parts crate
 expect item Hinge 2
+expect step 4
+walk 1.5 -42 to 1.5 -37.5 to 0 -35 to -1.5 -32 h=2.6 below=5
+zone workshop
+expect step 4
+open Inventor's strongbox
+expect item Blueprint_WaterTank 1
+expect done
+# (the crank wheel turns only once; the spare chest stays bolted until the hand lever on the other side is pulled)
 use partscrank
 expect message turned as far as it goes
 open Inventor's spare chest

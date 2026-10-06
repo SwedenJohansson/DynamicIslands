@@ -17,13 +17,15 @@ expect story cable 1
 walk 19 -2.5 to 15.8 1.4 h=3.9
 openat 14.4 3.4
 expect story cable 2
+expect step 3
 zone shedzone
 expect message polar bear rears up
 kill Polar bear
+expect step 4
 walk -1 7 to 0.5 11.8 h=8.2
 openat 1.5 13
 expect story cable 3
-expect step 4
+expect step 5
 
 # The lab: shut, then powered - its doors slide open; the locker inside
 walk -19 3 to -19 -2 h=5.5

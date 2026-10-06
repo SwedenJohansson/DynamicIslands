@@ -1,8 +1,9 @@
 # Frontier Beacon - an island of the library's plan Raft 2: The Drowned Frontier (station One of the Frontier Corps)
 # A black volcanic spike with the Corps' first beacon on a terrace cut into its north side, the keeper's hut and landing
-# on the west flats, the supply boat sunk off the landing with the beacon's spare cell. Quest "The First Signal": the
-# landing, the keeper's log, the cell from the sunken boat, the ramp up to the beacon terrace, its stone birds, the
-# beacon lit, the keeper's locker (the Receiver's and the antenna's blueprints - the plan's first step on the Receiver).
+# on the west flats, the supply boat sunk off the landing with the beacon's spare cell. Quest "The First Signal" (7
+# steps): the landing, the keeper's log, his hens loose on the flats, the cell from the sunken boat, the ramp up to the
+# beacon terrace, its stone birds, the beacon lit, the keeper's locker (the Receiver's and the antenna's blueprints -
+# the plan's first step on the Receiver).
 #
 # Built by the recipe player (CIRecipe frontier_beacon) through the editor's own operations.
 include lib_sea
@@ -122,6 +123,7 @@ quest title=The First Signal
 quest intro=A black spike of rock and a dark beacon: Station One of the Frontier Corps. Start at its landing.
 step reach|landing|1|Land at Station One's jetty
 step read|Keeper's log|1|Read the keeper's log by his hut
+step catch|Chicken|2|Round up the keeper's two hens, loose on the flats by his hut
 step collect|story:beaconcell|1|Dive to the sunken supply boat off the landing for a beacon cell
 step reach|terrace|1|Climb the ramp to the beacon terrace
 step kill|Screecher|3|Drive the stone birds off the terrace

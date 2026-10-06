@@ -5,8 +5,9 @@
 # over the sea a concrete wall with a garage door - the Chief's hangar, dug into the rock under a concrete roof: a dock
 # pool running out under the door, his seaplane on the floor, and at the back the control room and his office behind a
 # blast door, with a window onto his pet's pool. A jetty outside, his getaway boat moored to it. Quest "Storm Engine"
-# (7 steps): the hidden door, the engineer's memo, the pet, the keycard (a dive), the codes from the safe, burn them and
-# get out before the blast door seals (45 s), the getaway locker (zipline tool blueprint, disguise glasses).
+# (7 steps): the hidden door, the engineer's memo, the service rats by the hangar crates, the pet, the codes from the safe
+# (its keycard a dive in the pet's pool), burn them and get out before the blast door seals (45 s), the getaway locker
+# (zipline tool blueprint, disguise glasses).
 #
 # Built by the recipe player (CIRecipe crater_lair) through the editor's own operations.
 include lib_rt
@@ -308,9 +309,9 @@ quest title=Storm Engine
 quest intro=A black cone with a dish in its crater and a wall at its foot that is not rock. Somewhere in its west bluff there's a door.
 step reach|hangar|1|Find the hangar door hidden in the cone's west bluff and get inside
 step read|Chief engineer's memo|1|Read the chief engineer's memo on the hangar's board
+step kill|Tangaroa rat|3|Clear the service rats out from among the hangar crates
 step kill|Angler fish|1|Deal with the Chief's pet in the pool under the control room
-step collect|story:keycard|1|Dive for the Chief's keycard at the bottom of the pool
-step collect|story:codes|1|Open the Chief's office safe for the launch codes
+step collect|story:codes|1|Dive for his keycard in the pet's pool, then open his office safe for the codes
 step reach|dock|1|Burn the codes in the incinerator - and get out before the blast door seals
 step open|Getaway boat locker|1|Open the locker by the Chief's getaway boat
 quest done=The dish in the crater stands dead and the storms will blow where they like. The Chief's getaway kit is yours - and his boat, if you can start it.
