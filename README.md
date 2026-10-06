@@ -152,7 +152,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `catalog_index.txt` | Only after a Raft update: which of Raft's island scenes each of the other objects comes from, made by the editor (the mod ships one for the current Raft). Delete it to scan again. |
 | `<name>_<hash>.island` | Islands downloaded from a multiplayer host (also what a player hosts the world from later). |
 | `worlds\<world id>.txt` of a world you joined | The host's copy of that world, kept so you can host it later (with its Raft folder copied to your PC). Raft's world folder has one too: `CustomIslands.txt`. |
-| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monster difficulty, build cost, extra options, islands left out; the randomizer), the start for the next new world |
+| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monster difficulty, build cost, extra options, islands left out; the randomizer), the start for the next new world; `updatecheck=off` in `world_rules.txt` stops the main menu's "a newer Custom Islands is out" check |
 | `groups\`, `stamps\`, `generator_presets\` | Your saved object groups, terrain stamps and generator presets |
 | `notice.txt` | The version of the mod whose alpha box you folded with **Got it** (`seen=`), and where you dragged the box (`place=`) |
 | `Custom-Islands-Guide.pdf` | The guide, written out of the `.rmod` when a Guide button opens it |
@@ -608,6 +608,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `CreatureSpawner.cs` | Live creatures in a world: runtime NavMesh, spawning through Raft's `Network_Host_Entities`, stats, tint, killed/caught state, removal with the island, and Harmony patches for speed and players who join; on other players' machines the tint and the builder's health (`MatchHealth`, with the health Raft sent) |
 | `MonsterDifficulty.cs` | The monster difficulty: the five levels, the Harmony prefix on Raft's `Network_Host.DamageEntity` that changes hits on and by monsters, the patch that leaves puffer fish damage alone, the `Monsters` command |
 | `WorldRules.cs` | The world rules: saved with the world, sent to every player who joins (one network message with both, and the host's `spawnpool.txt` settings every player uses: Receiver, unload distance, regrow days), the last choices (`world_rules.txt`); the build cost (Raft's build menu items, their cost amounts set from Raft's own numbers while a world is open and put back outside, the `BuildCost` command); the two sliders in Raft's New Game box (which grows the box to make room) |
+| `BuildCostRefund.cs` | A block taken down gives back half of the cost it was placed at (`@builtat=` in the world file, sent with the world rules) |
+| `UpdateCheck.cs` | Once per start on the main menu: GitHub's latest release compared with this version; the version notice when joining a host with another one |
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |
