@@ -804,6 +804,12 @@ namespace DynamicIslands.Editor
 		/// <summary>Scenes currently being loaded for their objects (shown by the editor).</summary>
 		public static IEnumerable<string> LoadingScenes { get { return loadingScenes; } }
 
+		/// <summary>The indexed objects of the scenes whose name has this (e.g. "Balboa"), not the left-out ones (CIKitInfo).</summary>
+		internal static List<string> IndexedIn(string scenePart)
+		{
+			return index.Values.Where(e => !e.Hidden && e.Scene != null && e.Scene.IndexOf(scenePart, StringComparison.OrdinalIgnoreCase) >= 0).Select(e => e.Name).OrderBy(n => n).ToList();
+		}
+
 		public static string SceneOf(string name)
 		{
 			IndexEntry e;

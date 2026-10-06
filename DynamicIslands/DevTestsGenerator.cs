@@ -861,6 +861,64 @@ namespace DynamicIslands
 			if (ok) Log("PASS: remakes of Raft's islands"); else Fail("remakes of Raft's islands");
 		}
 
+		[ConsoleCommand(name: "CIStoryRemake", docs: "Dev, editor: ROADMAP CW1 - Rebuild it for Raft's other story islands: each design (or those whose id has <part>) generated on its island's ground with seed [seed] (11): built, every piece loaded, its loot container there, the pieces standing on the ground (none more than 0.4 m over it); a picture shot_sr_<id>.png. CIStoryRemake [part] [seed]")]
+		public static void StoryRemakeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryRemakeRoutine(args != null && args.Length > 0 ? args[0] : "", args != null && args.Length > 1 ? int.Parse(args[1]) : 11)); }
+
+		static IEnumerator StoryRemakeRoutine(string part, int seed)
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIStoryRemake (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			int count = 0;
+			foreach (Remakes.Design d in Remakes.All.Where(x => x.Kit != null && (part.Length == 0 || x.Id.Contains(part))))
+			{
+				RaftIsland island = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains(d.Scene));
+				if (island == null) { Check(ref ok, false, d.Id + ": no measured " + d.Scene + " (raft_islands.txt)"); continue; }
+				IslandGenSettings gs = RaftIslands.LikeIt(island, new IslandGenSettings { Seed = seed });
+				gs.Seed = seed;
+				gs.Remake = d.Id;
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.6f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				List<EditorGameObject> objs = PlacedEditorObjects();
+				var kit = new HashSet<string>(d.Kit);
+				List<EditorGameObject> mine = objs.Where(e => kit.Contains(e.GameObjectName)).ToList();
+				int missing = objs.Count(e => e.gameObject.name.Contains(IslandSpawner.MissingTag));
+				bool loot = mine.Any(e => e.Props != null && e.Props.ContainsKey(ObjectProps.LootItems));
+				// (standing: the bottom of each piece's meshes no more than 0.4 m over the ground under its middle - things set
+				// on another piece, a table's lantern, the roof, the mast, aren't counted)
+				Terrain terrain = terraineditor.terrain;
+				var floating = new List<string>();
+				foreach (EditorGameObject e in mine)
+				{
+					Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					float ground = terrain.SampleHeight(b.center) + terrain.transform.position.y;
+					if (b.min.y - ground > 0.4f && !mine.Any(o => o != e && o.transform.position.y < e.transform.position.y - 0.2f && (new Vector2(o.transform.position.x - e.transform.position.x, o.transform.position.z - e.transform.position.z)).magnitude < 6f))
+						floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
+				}
+				Check(ref ok, built.Count > 0 && mine.Count >= 8 && missing == 0 && loot && floating.Count == 0,
+					d.Label + " (" + d.Id + "), seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + mine.Count + " pieces" + (missing > 0 ? ", " + missing + " not loaded" : "") + (loot ? ", loot" : ", NO LOOT") + (floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : ""));
+				if (mine.Count > 0 && Camera.main != null)
+				{
+					Vector3 c = new Vector3(mine.Average(e => e.transform.position.x), mine.Min(e => e.transform.position.y), mine.Average(e => e.transform.position.z));
+					float size = Mathf.Max(12f, mine.Max(e => (new Vector2(e.transform.position.x - c.x, e.transform.position.z - c.z)).magnitude));
+					// (high enough to look over the trees round the pad)
+					Vector3 from = c + new Vector3(-size * 0.9f, size * 1.5f + 8f, -size * 0.9f);
+					Camera.main.transform.SetPositionAndRotation(from, Quaternion.LookRotation(c + Vector3.up * 2f - from));
+					yield return new WaitForSecondsRealtime(1.2f);
+					Screenshot(new[] { "sr_" + d.Id.Replace(".", "_") });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+				count++;
+			}
+			if (ok && count > 0) Log("PASS: story remakes (" + count + ")"); else Fail("story remakes");
+		}
+
 		[ConsoleCommand(name: "CIUnderwaterShots", docs: "Dev, editor: generates an island on the deep sea floor (style: CIUnderwaterShots [Tropical|Snowy|Desert|Forest|Volcanic]) and takes pictures: from above, from the side under water, the reef on the shelf, and the drop-off (shot_uw_*.png)")]
 		public static void UnderwaterShotsCommand(string[] args)
 		{

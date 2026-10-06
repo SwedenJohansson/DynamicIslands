@@ -257,12 +257,14 @@ namespace DynamicIslands.Editor
 	/// pillars 6 m - placed as the library's lib_rt recipes place them): a radio tower, an oil rig, a lighthouse under
 	/// construction.
 	/// </summary>
-	public static class Remakes
+	public static partial class Remakes
 	{
 		public class Design
 		{
 			public string Id, Label, Hint, Scene;
 			public Func<MapKit, IslandGenSettings, string> Build;
+			/// <summary>The pieces it uses (loaded before generating); null = the Radio Tower's kit.</summary>
+			public string[] Kit;
 		}
 
 		public const string Any = ":any";
@@ -270,7 +272,11 @@ namespace DynamicIslands.Editor
 		static readonly string[] RtKit = { "RT_Floor", "RT_Wall1", "RT_WallWindow1", "RT_WallWindow2", "RT_WallDoor1", "RT_Fence", "RT_PillarThick", "RT_SatteliteDisc", "RT_WindMill",
 			"RT_RoofLamp", "RT_Floodlight", "RT_PowerBox", "RT_CommRadio", "RT_RadarScreen", "RT_PlasticBoat", "LandmarkLadder_6m", "Table Office", "Chair Office", "Locker" };
 
-		public static readonly Design[] All =
+		static Design[] all;
+		/// <summary>Every design: the Radio Tower's, then the other story islands' (StoryRemakes.cs, ROADMAP CW1).</summary>
+		public static Design[] All { get { return all ?? (all = Radio.Concat(StoryDesigns()).ToArray()); } }
+
+		static readonly Design[] Radio =
 		{
 			new Design { Id = "rt.tower", Scene = "Landmark_Radar", Label = "A radio tower", Build = Tower,
 				Hint = "A new radio tower of the Radio Tower's pieces: a station on the ground, legs 6 to 18 m up to the radio room, a roof with the dish, the windmill and a mast, ladders all the way" },
@@ -284,7 +290,12 @@ namespace DynamicIslands.Editor
 		public static List<Design> For(string scene) { return All.Where(d => (scene ?? "").IndexOf(d.Scene, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); }
 
 		/// <summary>The objects of Raft's islands a remake uses (loaded on demand before generating).</summary>
-		public static List<string> NeededNames(IslandGenSettings s) { return string.IsNullOrEmpty(s.Remake) ? new List<string>() : RtKit.ToList(); }
+		public static List<string> NeededNames(IslandGenSettings s)
+		{
+			if (string.IsNullOrEmpty(s.Remake)) return new List<string>();
+			List<Design> ds = s.Remake.EndsWith(Any) ? For(s.Remake.Substring(0, s.Remake.Length - Any.Length)) : All.Where(d => d.Id == s.Remake).ToList();
+			return ds.SelectMany(d => d.Kit ?? RtKit).Distinct().ToList();
+		}
 
 		/// <summary>Builds the settings' design (or one of the island's at random) on the kit's file; what it built, or why not.</summary>
 		public static string Build(MapKit k, IslandGenSettings s)

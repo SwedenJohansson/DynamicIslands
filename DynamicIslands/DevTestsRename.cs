@@ -438,5 +438,99 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: my islands"); else Fail("my islands");
 		}
+			[ConsoleCommand(name: "CIKitInfo", docs: "Dev, editor: ROADMAP CW1 - every indexed object of the story scenes whose name has <part> (e.g. Balboa), loaded and measured: its mesh box from its pivot (min and max, metres) and its colliders; written to Mods/DynamicIslands/kitinfo_<part>.txt")]
+		public static void KitInfoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(KitInfoRoutine(args.Length > 0 ? args[0] : "")); }
+
+		static IEnumerator KitInfoRoutine(string part)
+		{
+			if (!DynamicIslands.InEditor() || part.Length == 0) { Fail("kit info: CIKitInfo <scene part>, in the editor"); yield break; }
+			List<string> names = PlaceableCatalog.IndexedIn(part);
+			if (part.Equals("core", StringComparison.OrdinalIgnoreCase) || names.Count == 0) names = PlaceableCatalog.Names.Where(n => n.IndexOf(args0(part), StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			yield return PlaceableCatalog.EnsureLoaded(names);
+			var lines = new List<string>();
+			Vector3 c = terraineditor.terrain.transform.position + new Vector3(500f, 300f, 500f);
+			foreach (string name in names)
+			{
+				GameObject go = PlaceableCatalog.Spawn(name, null);
+				if (go == null) { lines.Add(name + ": not loaded"); continue; }
+				go.transform.position = c; go.transform.rotation = Quaternion.identity;
+				Renderer[] rs = go.GetComponentsInChildren<Renderer>().Where(r => !(r is ParticleSystemRenderer)).ToArray();
+				if (rs.Length == 0) { lines.Add(name + ": no mesh"); UnityEngine.Object.Destroy(go); continue; }
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				Vector3 mn = b.min - c, mx = b.max - c;
+				int cols = go.GetComponentsInChildren<Collider>(true).Count(x => !x.isTrigger);
+				lines.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}	size {1:F2} x {2:F2} x {3:F2}	x {4:F2}..{5:F2}  y {6:F2}..{7:F2}  z {8:F2}..{9:F2}	{10} colliders",
+					name, b.size.x, b.size.y, b.size.z, mn.x, mx.x, mn.y, mx.y, mn.z, mx.z, cols));
+				UnityEngine.Object.Destroy(go);
+			}
+			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "kitinfo_" + part + ".txt"));
+			File.WriteAllLines(file, lines.ToArray());
+			Log("PASS: kit info " + part + ": " + names.Count + " objects measured, written to " + file);
+		}
+
+		static string args0(string s) { return s; }
+			[ConsoleCommand(name: "CIKitShow", docs: "Dev, editor: ROADMAP CW1 - a new island with flat land 2 m over the sea, the named pieces (separated by +) in a row from west to east, pivots on a line, each turned yaw (CIKitShow <yaw> <a+b+c> [camera height]); picture shot_kit.png. Leaves them placed for a look")]
+		public static void KitShowCommand(string[] args) { DynamicIslands.instance.StartCoroutine(KitShowRoutine(args)); }
+
+		static IEnumerator KitShowRoutine(string[] args)
+		{
+			if (!DynamicIslands.InEditor() || args.Length < 2) { Fail("kit show: CIKitShow <yaw> <a+b+c> [camera height]"); yield break; }
+			float yaw = float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture);
+			float camH = 0f;
+			string joined = string.Join(" ", args.Skip(1).ToArray());
+			string[] parts = joined.Split('+');
+			if (parts.Length > 0 && float.TryParse(parts[parts.Length - 1].Trim().Split(' ').Last(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out camH) && parts[parts.Length - 1].Trim().Contains(" "))
+			{
+				string last = parts[parts.Length - 1].Trim();
+				parts[parts.Length - 1] = last.Substring(0, last.LastIndexOf(' '));
+			}
+			else camH = 0f;
+			List<string> names = parts.Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+			EditorUI.SetTab(TAB.ObjectPlace);
+			DynamicIslands.NewIsland();
+			yield return null;
+			Terrain terrain = terraineditor.terrain;
+			TerrainData data = terrain.terrainData;
+			int res = data.heightmapResolution;
+			float h = (DynamicIslands.EditorWaterLevel + 2f) / data.size.y;
+			var heights = new float[res, res];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++)
+				{
+					float dx = (x / (float)(res - 1) - 0.5f) * data.size.x, dz = (z / (float)(res - 1) - 0.5f) * data.size.z;
+					float d = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz));
+					heights[z, x] = d < 150f ? h : d < 170f ? h * (1f - (d - 150f) / 20f) : 0f;
+				}
+			data.SetHeights(0, 0, heights);
+			yield return PlaceableCatalog.EnsureLoaded(names);
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			float ground = terrain.transform.position.y + DynamicIslands.EditorWaterLevel + 2f;
+			Vector3 start = terrain.transform.position + new Vector3(500f, 0f, 500f);
+			start.y = ground;
+			// widths first: the row is centred
+			var widths = new List<float>();
+			foreach (string n in names)
+			{
+				Bounds b;
+				widths.Add(GenBuildings.Measured(n, out b) ? Mathf.Max(b.size.x, b.size.z) : 4f);
+			}
+			float total = widths.Sum() + 3f * (names.Count - 1), x0 = -total / 2f;
+			var lines = new List<string>();
+			for (int i = 0; i < names.Count; i++)
+			{
+				Vector3 at = start + new Vector3(x0 + widths[i] / 2f, 0f, 0f);
+				EditorGameObject e = PlaceForTest(names[i], at, placed);
+				if (e != null) e.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+				lines.Add((i + 1) + ". " + names[i] + (e == null ? " (missing)" : "") + " at x " + (x0 + widths[i] / 2f).ToString("F1"));
+				x0 += widths[i] + 3f;
+			}
+			float span = Mathf.Max(total, 12f);
+			Transform cam = Camera.main.transform;
+			cam.position = start + new Vector3(0f, camH > 0f ? camH : span * 0.35f + 4f, -span * 0.75f - 6f);
+			cam.LookAt(start + new Vector3(0f, 2f, 0f));
+			yield return new WaitForSecondsRealtime(1.2f);
+			Screenshot(new[] { "kit" });
+			Log("PASS: kit show: " + string.Join(" | ", lines.ToArray()));
+		}
 	}
 }

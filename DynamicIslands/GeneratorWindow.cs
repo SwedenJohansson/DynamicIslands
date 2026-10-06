@@ -493,9 +493,13 @@ namespace DynamicIslands.Editor
 			// pieces can become another radio tower, an oil rig, a lighthouse under construction)
 			rebuildGroup = UIKit.Group(root, "Rebuild it");
 			UIKit.Label(rebuildGroup, "Built anew from the island's own pieces on the new ground, different with every seed.", 12, UIKit.TextMuted);
-			Stepper(rebuildGroup, "Design", "What the island's pieces become", "Each of Raft's story islands with designs rebuilds something like it from its own pieces: the Radio Tower's floors, walls, railings, pillars, ladders, dish, windmill and lamps become a new radio tower, an oil rig over the shallow sea, or a lighthouse being built. Random design picks one by the seed. None keeps only the ground and nature.",
+			Stepper(rebuildGroup, "Design", "What the island's pieces become", "Each of Raft's story islands rebuilds something like it from its own pieces: the Radio Tower's become a new radio tower, an oil rig or a lighthouse being built; Balboa's a logging camp or a relay station; Caravan Town's a caravan circle or a market on scaffold decks; Tangaroa's a seaside café or the founder's garden; Varuna Point's a building site or a half-built tower; Temperance's an igloo village or a weather outpost; Utopia's a water station or a market yard; the Vasagatan's its lounge or its engine yard on the land. Random design picks one by the seed. None keeps only the ground and nature.",
 				() => RemakeLabel(), step => { List<string> ids = RemakeIds(); int i = Mathf.Max(0, ids.IndexOf(s.Remake ?? "")); s.Remake = ids[((i + step) % ids.Count + ids.Count) % ids.Count]; },
-				Enumerable.Range(0, RemakeIds().Count).Select(i => new DropList.Option(i.ToString(), RemakeLabel(i), RemakeHint(i))).ToList(), () => Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? "")), i => { List<string> ids = RemakeIds(); if (i < ids.Count) s.Remake = ids[i]; });
+				RemakeOptions(), () => Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? "")), i => { List<string> ids = RemakeIds(); if (i < ids.Count) s.Remake = ids[i]; });
+			// (the list follows the chosen island)
+			DropdownButton designDrop = rebuildGroup.GetComponentsInChildren<DropdownButton>(true).FirstOrDefault(x => x.name == "Drop_Design");
+			RaftIsland designsFor = null;
+			refresh.Add(() => { if (designDrop != null && chosen != designsFor) { designsFor = chosen; designDrop.Options = RemakeOptions(); } });
 			refresh.Add(() => rebuildGroup.gameObject.SetActive(chosen != null && Remakes.For(chosen.Scene).Count > 0));
 			// (this tab remakes the chosen island: the Normal tab's other groups aren't shown here - the user, 2026-10-03)
 			QuestGroup(root);
@@ -890,16 +894,19 @@ namespace DynamicIslands.Editor
 		bool loadingBuildings;
 		RectTransform rebuildGroup;
 
-		/// <summary>The design choices: random, each design, none. (The list is made once, with the window: every design is
-		/// the Radio Tower's so far - when other islands get theirs, the list goes by the chosen island.)</summary>
-		static List<string> RemakeIds()
+		/// <summary>The design choices of the chosen island (ROADMAP CW1: each story island has its own): random, each
+		/// design, none.</summary>
+		List<string> RemakeIds()
 		{
-			var ids = new List<string>();
-			if (Remakes.All.Length > 0) ids.Add(Remakes.All[0].Scene + Remakes.Any);
-			ids.AddRange(Remakes.All.Select(d => d.Id));
+			List<Remakes.Design> designs = chosen != null ? Remakes.For(chosen.Scene) : new List<Remakes.Design>();
+			if (designs.Count == 0) designs = Remakes.All.Take(3).ToList();
+			var ids = new List<string> { designs[0].Scene + Remakes.Any };
+			ids.AddRange(designs.Select(d => d.Id));
 			ids.Add("");
 			return ids;
 		}
+
+		List<DropList.Option> RemakeOptions() { return Enumerable.Range(0, RemakeIds().Count).Select(i => new DropList.Option(i.ToString(), RemakeLabel(i), RemakeHint(i))).ToList(); }
 
 		string RemakeLabel() { return RemakeLabel(Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? ""))); }
 

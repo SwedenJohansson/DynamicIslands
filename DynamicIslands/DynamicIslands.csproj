@@ -107,6 +107,7 @@
     <Compile Include="PiecesWindow.cs" />
     <Compile Include="SelectionTools.cs" />
     <Compile Include="MyIslandsWindow.cs" />
+    <Compile Include="StoryRemakes.cs" />
     <Compile Include="IslandGenerator.cs" />
     <Compile Include="IslandNetwork.cs" />
     <Compile Include="IslandObjectState.cs" />

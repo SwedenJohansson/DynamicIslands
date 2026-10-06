@@ -682,7 +682,7 @@ group - not the Normal tab's other groups (its buildings and caves aren't used h
 ![Rebuild it: an oil rig](images/generator-rebuild-rig.jpg)
 *Rebuild it: the Radio Tower rebuilt as an oil rig off the island - the tower's floors on legs, the dish, the windmill.*
 
-- **Rebuild it** (shown for the Radio Tower; more of Raft's story islands to come): **Design** - something like the
+- **Rebuild it** (shown for Raft's story islands): **Design** - something like the
   island built anew from **its own pieces** on the new ground, different with every seed (how high, how many storeys
   and decks, which walls have windows, which way it faces):
   - **A radio tower** - a station on the ground (its door, a power box, a locker), legs 6 to 18 m up to the radio room
@@ -696,8 +696,24 @@ group - not the Normal tab's other groups (its buildings and caves aren't used h
     lamp's parts waiting by the door - or finished, with a lantern room of windows, lamps facing out and a lit mast;
   - **Random design** (picked by the seed), or **None** (only ground and nature).
 
+  The other story islands have two designs each, built from their own pieces on a levelled pad of the new land (made,
+  raised out of the sea, where the island has no flat land), turned by the seed, each with a container of loot:
+
+  | Island | Designs |
+  |---|---|
+  | Balboa | **A logging camp** (the shack, a plank fence, tents, a table with a lantern, the generator and barrels, bear signs) · **A relay station** (a hut of the relay walls, decks and roof, the radio racks and desk inside, a porch with a railing and an antenna mast) |
+  | Caravan Town | **A caravan circle** (caravans round the well and the raft monument, benches, the workbench, the mayor's chest) · **A market on scaffold decks** (caravans on the scaffold decks with steps, a workshop deck, crates and tyres) |
+  | Tangaroa | **A seaside café** (sunshades over outdoor tables, a kitchen counter, the burger sign, a vending machine, plants) · **The founder's garden** (the statue among benches and plants, the grand piano under a sunshade, the board room's table set for a sales pitch) |
+  | Varuna Point | **A building site** (the break room on its stilts, the excavator and forklift, dumpsters, rubble, beams, pipes, the skylift) · **A half-built tower** (a 22 m lift shaft, garage door frames, beams, the skylift) |
+  | Temperance | **An igloo village** (a big dome and two small, the snowmobile shed, snow vehicles, tarp crates, ice pillars) · **A weather outpost** (the electrical building under the telephone antenna, the telescope, mirror housings) |
+  | Utopia | **A water station** (water tanks on bamboo stands, pumps, the crane, covered crates) · **A market yard** (baskets and crates round silver tables, a dog cage, the harpoon platform) |
+  | Vasagatan | **The lounge on the beach** (the stage, bars, sofas, carpets, lamps, the DJ's table) · **The engine yard** (the engines and control board, lockers, bunk beds) |
+
   Its furniture stands on the floors and its legs reach the ground or the sea floor: nothing of it floats. The pieces
   come from Raft's own island: the first Generate loads it (a few seconds).
+
+  ![Rebuild it: the story islands' designs](images/generator-rebuild-story.jpg)
+  *Rebuild it for the other story islands: two designs each, from their own pieces.*
 
 ![Randomize existing](images/generator-randomize.jpg)
 *Randomize existing: Raft's islands, measured, with a picture each. Here a variation of "Big Island OG".*
