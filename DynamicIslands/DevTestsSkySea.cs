@@ -130,5 +130,16 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: editor sky and sea check"); else Fail("editor sky and sea check");
 		}
+	
+		[ConsoleCommand(name: "CICameraEffects", docs: "Dev, editor: lists the main camera's effects (behaviours) and their state; CICameraEffects <type name> on|off switches one (to find which one does what)")]
+		public static void CameraEffectsCommand(string[] args)
+		{
+			Camera cam = Camera.main;
+			if (cam == null) { Fail("camera effects: no main camera"); return; }
+			if (args != null && args.Length == 2)
+				foreach (Behaviour b in cam.GetComponents<Behaviour>())
+					if (b.GetType().Name == args[0]) b.enabled = args[1] == "on";
+			Log("EFFECTS " + string.Join(", ", cam.GetComponents<Behaviour>().Select(b => b.GetType().Name + (b.enabled ? " on" : " off")).ToArray()) + "; fog " + RenderSettings.fog + " " + RenderSettings.fogMode + " " + RenderSettings.fogDensity + " " + RenderSettings.fogStartDistance + "-" + RenderSettings.fogEndDistance);
+		}
 	}
 }

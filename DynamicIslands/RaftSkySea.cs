@@ -219,7 +219,9 @@ namespace DynamicIslands.Editor
 			if (!Carried) return;
 			skyRoot.SetActive(on);
 			seaRoot.SetActive(on);
-			foreach (Behaviour b in cameraEffects) if (b != null) b.enabled = on;
+			// (Raft's fog - the camera's AzureSkyFogScattering - is set for playing at sea: from the editor's camera, a few
+			// hundred metres out, it hid the island in blue haze; the sky, sun and ocean stay)
+			foreach (Behaviour b in cameraEffects) if (b != null) b.enabled = on && b.GetType().Name != "AzureSkyFogScattering";
 			foreach (Light l in editorSuns) if (l != null) l.enabled = !on;
 			GameObject plane = DynamicIslands.WaterPlane;
 			if (plane != null) foreach (Renderer r in plane.GetComponentsInChildren<Renderer>(true)) r.enabled = !on;
