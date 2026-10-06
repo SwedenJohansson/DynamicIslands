@@ -136,6 +136,24 @@ namespace DynamicIslands.Editor
 
 		static bool Failed(UnityWebRequest req) { return req.result != UnityWebRequest.Result.Success; }
 
+		/// <summary>The library's list at most this big, a picture at most this big (audit 2026-10-06).</summary>
+		const long MaxIndexBytes = 8L * 1024 * 1024, MaxPictureBytes = 600 * 1024;
+
+		/// <summary>
+		/// Sends the request and waits for it, stopping it once more than max bytes came (then Failed): a server that keeps
+		/// sending - or a file bigger than the list says - filled memory until Raft ended (audit 2026-10-06).
+		/// </summary>
+		static IEnumerator Send(UnityWebRequest req, long max, Action onProgress = null)
+		{
+			UnityWebRequestAsyncOperation op = req.SendWebRequest();
+			while (!op.isDone)
+			{
+				if ((long)req.downloadedBytes > max) { req.Abort(); yield break; }
+				if (onProgress != null) onProgress();
+				yield return null;
+			}
+		}
+
 		/// <summary>Reads the list (from the cache when it's under 10 minutes old, unless force). done(error or null).</summary>
 		public static IEnumerator LoadIndex(bool force, Action<string> done)
 		{
@@ -162,8 +180,8 @@ namespace DynamicIslands.Editor
 			string text = null;
 			using (UnityWebRequest req = Get(url))
 			{
-				yield return req.SendWebRequest();
-				if (Failed(req)) LastError = "Can't reach the island library (" + req.error + "). Packs someone sent you can still be installed: Import... in the island editor.";
+				yield return Send(req, MaxIndexBytes);
+				if (Failed(req) || (long)req.downloadedBytes > MaxIndexBytes) LastError = "Can't reach the island library (" + req.error + "). Packs someone sent you can still be installed: Import... in the island editor.";
 				else text = req.downloadHandler.text;
 			}
 			if (text == null) { entries = null; done(LastError); yield break; }
@@ -192,6 +210,8 @@ namespace DynamicIslands.Editor
 					Files = LibraryJson.Objects(o, "files").Select(f => new LibraryFileRef { Name = LibraryJson.Str(f, "name"), Size = LibraryJson.Int(f, "size"), Sha256 = LibraryJson.Str(f, "sha256").ToLowerInvariant() }).ToList(),
 				};
 				if (e.Info.id.Length == 0) e.Info.id = LibraryJson.Str(o, "id");
+				// (as an imported pack's: the id names a file in the picture cache - "..\\..\\x" wrote outside it - and installed.json holds this form - audit 2026-10-06)
+				e.Info.id = LibraryPack.IdFrom(e.Info.id);
 				if (e.Info.id.Length == 0 || e.Path.Length == 0 || e.Path.Contains("..")) continue;
 				list.Add(e);
 			}
@@ -219,7 +239,7 @@ namespace DynamicIslands.Editor
 		public static IEnumerator Picture(LibraryEntry e, string name, Action<Texture2D> done)
 		{
 			LibraryFileRef f = e.Files.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-			if (f == null || f.Size > 600 * 1024) { done(null); yield break; }
+			if (f == null || f.Size > MaxPictureBytes || !LibraryPack.IsSafeFileName(f.Name)) { done(null); yield break; }
 			string key = e.Info.id + "-" + (f.Sha256.Length >= 12 ? f.Sha256.Substring(0, 12) : f.Name);
 			Texture2D tex;
 			if (textures.TryGetValue(key, out tex) && tex != null) { done(tex); yield break; }
@@ -233,8 +253,8 @@ namespace DynamicIslands.Editor
 				if (url == null) { done(null); yield break; }
 				using (UnityWebRequest req = Get(url))
 				{
-					yield return req.SendWebRequest();
-					if (!Failed(req)) bytes = req.downloadHandler.data;
+					yield return Send(req, MaxPictureBytes);
+					if (!Failed(req) && (long)req.downloadedBytes <= MaxPictureBytes) bytes = req.downloadHandler.data;
 				}
 				if (bytes == null || (f.Sha256.Length > 0 && LibraryPack.Sha256(bytes) != f.Sha256)) { done(null); yield break; }
 				// (in one step: a half-written picture in the cache was read as the whole one next time - AU41)
@@ -270,12 +290,7 @@ namespace DynamicIslands.Editor
 					if (url == null) { failed = "'" + f.Name + "' isn't in the library (" + where + ")"; break; }
 					using (UnityWebRequest req = Get(url))
 					{
-						UnityWebRequestAsyncOperation op = req.SendWebRequest();
-						while (!op.isDone)
-						{
-							progress("Downloading '" + e.Info.title + "': " + Math.Min(100, (int)((got + (long)(req.downloadProgress * f.Size)) * 100 / total)) + " %");
-							yield return null;
-						}
+						yield return Send(req, Math.Max(0, f.Size), () => progress("Downloading '" + e.Info.title + "': " + Math.Min(100, (int)((got + (long)(req.downloadProgress * f.Size)) * 100 / total)) + " %"));
 						if (Failed(req)) { failed = "'" + f.Name + "' didn't download (" + req.error + ")"; break; }
 						byte[] bytes = req.downloadHandler.data;
 						if (bytes.Length != f.Size || LibraryPack.Sha256(bytes) != f.Sha256) { mismatch = f.Name; break; }

@@ -201,7 +201,7 @@ namespace DynamicIslands.Editor
 				if (eq < 1) continue;
 				string key = part.Substring(0, eq), value = part.Substring(eq + 1);
 				float v;
-				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) continue;
+				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) || float.IsNaN(v) || float.IsInfinity(v)) continue;
 				if (key == "receiver") hostReceiver = v != 0f;
 				else if (key == "unload") hostUnload = Mathf.Max(300f, v);
 				else if (key == "regrow") hostRegrow = Mathf.Max(0, Mathf.RoundToInt(v));

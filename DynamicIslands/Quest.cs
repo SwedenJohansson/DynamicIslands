@@ -280,6 +280,19 @@ namespace DynamicIslands.Editor
 		/// <summary>Raised on every machine when any quest of an island moves on: island id, quest number (0 = main), new step.</summary>
 		public static event Action<int, int, int> AdvancedAny;
 
+		/// <summary>
+		/// Host: whether an older player's quest state (its total, sent as before counts were added up) is one the quest can be
+		/// at - a quest the island has, at its step or the next (audit 2026-10-06).
+		/// </summary>
+		public static bool PlayerMayMove(int islandId, int n, int step)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || n < 0) return false;
+			IslandQuest q = QuestOf(e, n);
+			int now = StepOf(e, n);
+			return q.Exists && (step == now || step == now + 1) && step <= q.Steps.Count;
+		}
+
 		/// <summary>From the network (another player moved the quest on).</summary>
 		public static void Apply(int islandId, int step, int progress) { Apply(islandId, 0, step, progress); }
 

@@ -268,6 +268,9 @@ namespace DynamicIslands.Editor
 			if (changed) Raise();
 		}
 
+		/// <summary>At most this many of a story item given or taken at once.</summary>
+		const int MaxChange = 100000;
+
 		static bool Apply(string op, string data)
 		{
 			string[] f = Split(data);
@@ -275,7 +278,8 @@ namespace DynamicIslands.Editor
 			switch (op)
 			{
 				case "give":
-					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) return false;
+					// (a count that makes sense: a player's "give -5" took, its "take -1000" gave - audit 2026-10-06)
+					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0 || n > MaxChange) return false;
 					Held h;
 					if (!held.TryGetValue(f[0], out h)) held[f[0]] = h = new Held { Def = new StoryItemDef { Id = f[0] } };
 					if (f.Length >= 5)
@@ -291,7 +295,7 @@ namespace DynamicIslands.Editor
 					return true;
 				case "take":
 					Held t;
-					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || !held.TryGetValue(f[0], out t) || t.Count <= 0) return false;
+					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0 || n > MaxChange || !held.TryGetValue(f[0], out t) || t.Count <= 0) return false;
 					t.Count = Mathf.Max(0, t.Count - n);
 					Debug.Log("[CUSTOM ISLANDS] Story item '" + t.Def.ShownName + "' used: " + t.Count + " left");
 					return true;

@@ -19,12 +19,17 @@ namespace DynamicIslands.Editor
 		/// Raft with a stack overflow, which no catch stops; the mod's own files are 3 deep).</summary>
 		public const int MaxDepth = 64;
 
+		/// <summary>At most this many values in one text: 50 MB of "[{},{},...]" made millions of objects, gigabytes in memory
+		/// (audit 2026-10-06); a library list of hundreds of entries has some thousands.</summary>
+		public const int MaxValues = 200000;
+
 		/// <summary>The value of a JSON text; throws FormatException on bad JSON.</summary>
 		public static object Parse(string text)
 		{
 			text = text ?? "";
 			int i = 0;
-			object v = Value(text, ref i, 0);
+			int values = 0;
+			object v = Value(text, ref i, 0, ref values);
 			Skip(text, ref i);
 			if (i < text.Length) throw new FormatException("Unexpected '" + text[i] + "' at " + i);
 			return v;
@@ -36,10 +41,11 @@ namespace DynamicIslands.Editor
 		/// number made a long info.json slow to read).</summary>
 		static bool At(string s, int i, string word) { return i + word.Length <= s.Length && string.CompareOrdinal(s, i, word, 0, word.Length) == 0; }
 
-		static object Value(string s, ref int i, int depth)
+		static object Value(string s, ref int i, int depth, ref int values)
 		{
 			Skip(s, ref i);
 			if (i >= s.Length) throw new FormatException("Unexpected end");
+			if (++values > MaxValues) throw new FormatException("More than " + MaxValues + " values");
 			char c = s[i];
 			if ((c == '{' || c == '[') && depth >= MaxDepth) throw new FormatException("Nested more than " + MaxDepth + " deep at " + i);
 			if (c == '{')
@@ -54,7 +60,7 @@ namespace DynamicIslands.Editor
 					Skip(s, ref i);
 					if (i >= s.Length || s[i] != ':') throw new FormatException("Expected ':' at " + i);
 					i++;
-					obj[key] = Value(s, ref i, depth + 1);
+					obj[key] = Value(s, ref i, depth + 1, ref values);
 					Skip(s, ref i);
 					if (i < s.Length && s[i] == ',') { i++; continue; }
 					if (i < s.Length && s[i] == '}') { i++; return obj; }
@@ -68,7 +74,7 @@ namespace DynamicIslands.Editor
 				if (i < s.Length && s[i] == ']') { i++; return list; }
 				while (true)
 				{
-					list.Add(Value(s, ref i, depth + 1));
+					list.Add(Value(s, ref i, depth + 1, ref values));
 					Skip(s, ref i);
 					if (i < s.Length && s[i] == ',') { i++; continue; }
 					if (i < s.Length && s[i] == ']') { i++; return list; }

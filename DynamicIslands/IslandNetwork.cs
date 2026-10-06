@@ -512,6 +512,9 @@ namespace DynamicIslands.Editor
 							// (a player's amount: the host adds it up and tells everyone the total)
 							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
 							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
+							// (an older player's total: only a quest the island has, at its step or the next - any step, or a made-up
+							// quest number writing any of the island's state keys, was taken - audit 2026-10-06)
+							if (Raft_Network.IsHost && !QuestTracker.PlayerMayMove(msg.Ids[0], questNo, msg.Index)) { Log("A player's quest step " + msg.Index + " (quest " + questNo + ") on island " + msg.Ids[0] + " isn't one it can be at: left out"); break; }
 							QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg);
 						}
@@ -520,7 +523,7 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
 						break;
 					case IslandNetMessage.EventFired:
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from);
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList && !Raft_Network.IsHost, from); // (a player's "from the host" made the host do the personal part - audit 2026-10-06)
 						break;
 					case IslandNetMessage.Story:
 						StoryBook.OnMessage(msg, from.Id);

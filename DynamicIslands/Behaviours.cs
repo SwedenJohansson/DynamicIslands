@@ -806,6 +806,8 @@ namespace DynamicIslands.Editor
 			// (the client made the checks already - except the crew's story items, made again here: AU18)
 			if (Raft_Network.IsHost && !fromHost)
 			{
+				// (an object and event that do something: a made-up index wrote any of the island's state keys - audit 2026-10-06)
+				if (actions.Count == 0) return;
 				string failed;
 				if (!StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed))
 				{

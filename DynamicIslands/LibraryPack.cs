@@ -57,7 +57,7 @@ namespace DynamicIslands.Editor
 			};
 		}
 
-		static readonly System.Text.RegularExpressions.Regex RichTag = new System.Text.RegularExpressions.Regex(@"</?(size|color|b|i|material|quad|sprite|link|font|mark|align|voffset|cspace|indent|line-height|pos|rotate|s|u|sub|sup|alpha|nobr|page|br)(=[^>]*)?>",
+		static readonly System.Text.RegularExpressions.Regex RichTag = new System.Text.RegularExpressions.Regex(@"</?(size|color|b|i|material|quad|sprite|link|font|mark|align|voffset|cspace|indent|line-height|pos|rotate|s|u|sub|sup|alpha|nobr|page|br)(=[^<>]{0,100})?>",
 			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
 		/// <summary>
@@ -67,6 +67,9 @@ namespace DynamicIslands.Editor
 		public static string Plain(string s, int max)
 		{
 			if (string.IsNullOrEmpty(s)) return "";
+			// (cut first, and a tag's value at most 100 characters: "<b=<b=<b=..." without a ">" took the tag search time growing
+			// with the square of the text's length - a long description froze Raft - audit 2026-10-06)
+			if (s.Length > max * 4 + 1000) s = s.Substring(0, max * 4 + 1000);
 			string t = RichTag.Replace(s, "").Replace('\t', ' ');
 			t = new string(t.Where(ch => ch == '\n' || !char.IsControl(ch)).ToArray()).Trim();
 			return t.Length > max ? t.Substring(0, max - 3).TrimEnd() + "..." : t;
@@ -147,6 +150,8 @@ namespace DynamicIslands.Editor
 		public const string KindMapType = "maptype";
 		public const long MaxTotalBytes = 50L * 1024 * 1024;
 		public const int MaxFiles = 64;
+		/// <summary>At most this big an info.json (audit 2026-10-06).</summary>
+		public const int MaxInfoBytes = 256 * 1024;
 		static readonly string[] AllowedExtensions = { IslandFile.Extension, WorldPlan.Extension, MapTypeFiles.Extension, ".json", ".jpg", ".jpeg", ".png" };
 
 		/// <summary>Where an installed entry's file is: an island, the plan or a map type file.</summary>
@@ -501,6 +506,8 @@ namespace DynamicIslands.Editor
 				}
 				byte[] infoBytes;
 				if (!pack.Files.TryGetValue("info.json", out infoBytes)) { error = "It has no info.json - it isn't an island pack."; return null; }
+				// (the mod's own are a few KB: a huge one is read into objects that take many times its size - audit 2026-10-06)
+				if (infoBytes.Length > MaxInfoBytes) { error = "Its info.json is too big (more than " + (MaxInfoBytes / 1024) + " KB)."; return null; }
 				LibraryInfo info;
 				try { info = LibraryInfo.FromJson(Encoding.UTF8.GetString(infoBytes).TrimStart('﻿')); }
 				catch (Exception e) { error = "Its info.json can't be read (" + e.Message + ")."; return null; }

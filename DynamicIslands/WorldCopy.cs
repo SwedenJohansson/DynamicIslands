@@ -438,12 +438,17 @@ namespace DynamicIslands.Editor
 		/// <summary>A player: a part of the host's world file; when all have come, it is kept as worlds\&lt;world id&gt;.txt.</summary>
 		public static void OnMessage(IslandNetMessage msg)
 		{
-			if (Raft_Network.IsHost || string.IsNullOrEmpty(msg.Name) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			// (Count sizes what is allocated: at most 64 MB of text - audit 2026-10-06)
+			if (Raft_Network.IsHost || string.IsNullOrEmpty(msg.Name) || msg.Count <= 0 || msg.Count > 64 * 1024 * 1024 / ChunkChars || msg.Index < 0 || msg.Index >= msg.Count) return;
 			Guid guid;
 			if (!Guid.TryParse(msg.Name, out guid) || guid == Guid.Empty) return;
 			string key = msg.Name + "|" + msg.Hash;
 			string[] parts;
-			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count) incoming[key] = parts = new string[msg.Count];
+			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count)
+			{
+				if (incoming.Count >= 4) incoming.Clear(); // (copies that never finished aren't kept for good)
+				incoming[key] = parts = new string[msg.Count];
+			}
 			parts[msg.Index] = msg.Data ?? "";
 			if (parts.Any(p => p == null)) return;
 			incoming.Remove(key);
