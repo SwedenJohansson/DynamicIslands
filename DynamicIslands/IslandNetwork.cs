@@ -595,6 +595,9 @@ namespace DynamicIslands.Editor
 			string[] parts;
 			if (!incoming.TryGetValue(msg.Hash, out parts) || parts.Length != msg.Count) incoming[msg.Hash] = parts = new string[msg.Count];
 			parts[msg.Index] = msg.Data;
+			// (the wait for a retry starts again with every chunk: a big file over a slow line was asked for again every 30 s
+			// from the first request and never finished - AU14)
+			requestedAt[msg.Hash] = Time.unscaledTime;
 			if (parts.Any(p => p == null)) return;
 
 			incoming.Remove(msg.Hash);
@@ -604,7 +607,15 @@ namespace DynamicIslands.Editor
 			Directory.CreateDirectory(DynamicIslands.assetpath);
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
-			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash)) e.WaitingForFile = false;
+			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash))
+			{
+				// (two of the host's islands with the same content but other names: each entry waits for its own name's copy
+				// - only the first was saved and the other never loaded, AU15)
+				string want = DownloadName(e.HostName, msg.Hash);
+				try { if (want != name && !File.Exists(IslandSpawner.PathFor(want))) File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(want)); }
+				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Copying '" + name + "' for '" + e.HostName + "': " + ex.Message); }
+				e.WaitingForFile = false;
+			}
 		}
 
 		/// <summary>
@@ -618,9 +629,9 @@ namespace DynamicIslands.Editor
 				float at;
 				if (!requestedAt.TryGetValue(e.Hash, out at) || Time.unscaledTime - at < FileRetrySeconds) continue;
 				if (toldWaiting.Add(e.Hash)) DynamicIslands.Notify("Waiting for the island '" + e.HostName + "' from the host - still asking", true);
-				Log("Island file '" + e.HostName + "' (" + e.Hash + ") hasn't come: asking again");
+				Log("Island file '" + e.HostName + "' (" + e.Hash + ") hasn't come: asking again (keeping the " + (incoming.ContainsKey(e.Hash) ? incoming[e.Hash].Count(x => x != null) : 0) + " parts that came)");
 				requested.Remove(e.Hash);
-				incoming.Remove(e.Hash);
+				// (the parts that came are kept: the host's next sending fills in the rest - AU14)
 				RetryWaiting(e.Hash);
 			}
 		}

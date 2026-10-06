@@ -246,8 +246,7 @@ namespace DynamicIslands.Editor
 
 		static string WorldName(string[] lines, string file)
 		{
-			string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-			return head != null && head.IndexOf('\'') >= 0 ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file);
+			return Housekeeping.WorldName(lines, file);
 		}
 
 		static bool RenamePoolLine(string from, string to)

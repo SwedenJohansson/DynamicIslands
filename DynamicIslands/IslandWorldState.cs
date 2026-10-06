@@ -224,7 +224,7 @@ namespace DynamicIslands.Editor
 				Debug.LogError("[CUSTOM ISLANDS] Reading the world's custom islands (" + FilePath + ") failed: " + e);
 				DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): nothing of them is saved until it loads again", true);
 			}
-			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
+			if (fileLines == null) { WorldRules.OnWorldRead(); WorldDirector.OnWorldLoaded(); return; }
 			foreach (string line in fileLines)
 			try
 			{
@@ -257,6 +257,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
 			StoryChain.OnWorldRead();
+			WorldRules.OnWorldRead();
 			WorldDirector.OnWorldLoaded();
 		}
 	}

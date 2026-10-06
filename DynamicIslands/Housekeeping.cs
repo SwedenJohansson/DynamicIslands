@@ -75,10 +75,20 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static string WorldName(string[] lines, string file)
+		/// <summary>
+		/// The world's name from its file's first line ("# Custom islands in world '&lt;name&gt;': ..."), else the file's name.
+		/// The name runs to the "': " after it (ROADMAP AU29: it was read up to the first apostrophe - "Bob's raft" became
+		/// "Bob", looked deleted, and Tidy up moved the live world's file away).
+		/// </summary>
+		public static string WorldName(string[] lines, string file)
 		{
-			string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-			return head != null ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file);
+			const string prefix = "# Custom islands in world '";
+			string head = lines.FirstOrDefault(l => l.StartsWith(prefix));
+			if (head == null) return Path.GetFileNameWithoutExtension(file);
+			string rest = head.Substring(prefix.Length);
+			int end = rest.LastIndexOf("':");
+			if (end < 0) end = rest.LastIndexOf('\'');
+			return end >= 0 ? rest.Substring(0, end) : rest;
 		}
 
 		/// <summary>The island names a world's state uses: its islands (and the copy its hash names), the islands its kept plan brings.</summary>

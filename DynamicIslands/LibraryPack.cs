@@ -553,8 +553,7 @@ namespace DynamicIslands.Editor
 				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
 				{
 					string[] lines = File.ReadAllLines(file);
-					string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-					string world = head != null && head.IndexOf('\'') >= 0 ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file);
+					string world = Housekeeping.WorldName(lines, file);
 					// (the editor's test world: counted, every edit-and-test round kept another copy of the island for it, and
 					// the save notices and the Delete warning named it)
 					if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;

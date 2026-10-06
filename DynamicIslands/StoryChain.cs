@@ -429,6 +429,9 @@ namespace DynamicIslands.Editor
 		{
 			List<IslandWorldState.Entry> entries = WorldDirector.Refs(r.Id, null);
 			if (entries.Count == 0) return false;
+			// (an island whose file this PC can't read has no settings: its quest looked empty, a visit counted as done and
+			// the next island was unlocked - AU21. It isn't done until the file is there.)
+			if (entries.All(e => e.Failed || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name)))) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
 			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + e.HostName + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));

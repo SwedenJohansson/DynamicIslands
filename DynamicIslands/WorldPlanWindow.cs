@@ -92,6 +92,24 @@ namespace DynamicIslands.Editor
 			IslandTest.StartPlan(name);
 		}
 
+		/// <summary>
+		/// A name for a new rule that no rule of the plan has had (ROADMAP AU24: "rule" + the count came back after a delete -
+		/// "rule3" again, already done in running worlds, so the new rule never came): the next number with a letter of its
+		/// own, e.g. "rule4k".
+		/// </summary>
+		internal static string NewRuleId(WorldPlan p)
+		{
+			var used = new HashSet<string>(p.Rules.Select(x => x.Id), StringComparer.OrdinalIgnoreCase);
+			const string letters = "abcdefghjkmnpqrstuvwxyz";
+			var rnd = new System.Random();
+			for (int tries = 0; tries < 100; tries++)
+			{
+				string id = "rule" + (p.Rules.Count + 1) + letters[rnd.Next(letters.Length)];
+				if (!used.Contains(id)) return id;
+			}
+			return "rule" + DateTime.Now.Ticks.ToString("x");
+		}
+
 		/// <summary>Preview notebook: the plan as it is now, in Raft's notebook in the test world.</summary>
 		void PreviewNotebook()
 		{
@@ -968,7 +986,7 @@ namespace DynamicIslands.Editor
 		void AddRule()
 		{
 			Keep();
-			var r = new IntroRule { Id = "rule" + (plan.Rules.Count + 1), What = "type", WhatArg = "random" };
+			var r = new IntroRule { Id = NewRuleId(plan), What = "type", WhatArg = "random" };
 			if (islandMode) { r.When = "quest"; r.WhenRef = IntroRule.Self; r.Where = "near"; r.WhereRef = IntroRule.Self; r.Distance = 600f; }
 			else if (plan.Rules.Count > 0) { r.When = "quest"; r.WhenRef = plan.Rules[plan.Rules.Count - 1].Id; r.Where = "near"; r.WhereRef = ""; r.Distance = 600f; }
 			while (plan.Rules.Any(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) r.Id += "b";

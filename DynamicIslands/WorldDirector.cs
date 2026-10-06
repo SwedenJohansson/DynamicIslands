@@ -672,7 +672,7 @@ namespace DynamicIslands.Editor
 			missingNoted.Clear();
 			Done.Clear();
 			Sailed = 0f;
-			retryAt.Clear();
+			retryAt.Clear(); noRoom.Clear();
 			warned.Clear();
 		}
 
@@ -952,15 +952,30 @@ namespace DynamicIslands.Editor
 			else props[IslandRulesKey] = IntroRule.ToLines(list);
 		}
 
+		static readonly Dictionary<string, int> noRoom = new Dictionary<string, int>();
+		static bool wideSearch;
+
 		static void TryRule(IntroRule r, IslandWorldState.Entry owner, string key, Action markDone)
 		{
 			IslandWorldState.Entry at;
 			if (!Met(r, owner, out at)) return;
 			float t;
 			if (retryAt.TryGetValue(key, out t) && Time.unscaledTime < t) return;
-			string why = Bring(r, owner, at);
-			if (why == null) { markDone(); retryAt.Remove(key); return; }
+			// (no room after a few tries: looked for further out and all round - AU28)
+			int tries;
+			noRoom.TryGetValue(key, out tries);
+			wideSearch = tries >= 3;
+			string why;
+			try { why = Bring(r, owner, at); }
+			finally { wideSearch = false; }
+			if (why == null) { markDone(); retryAt.Remove(key); noRoom.Remove(key); return; }
 			retryAt[key] = Time.unscaledTime + RetrySeconds;
+			if (why.StartsWith("no free spot"))
+			{
+				noRoom[key] = tries + 1;
+				// (the host is told once: it only waited in the log before)
+				if (tries + 1 == 3 && Raft_Network.IsHost) DynamicIslands.Notify("A rule of the world's plan ('" + r.Id + "') has no room for its island near the raft: it keeps looking, further out", true);
+			}
 			if (warned.Add(key + why)) Log("Rule '" + r.Id + "' (" + r.Describe() + ") waits: " + why);
 			if (why.StartsWith(NoIslandPrefix) || why.StartsWith(NoneOfPrefix)) NoteMissing(r, owner);
 		}
@@ -1184,7 +1199,7 @@ namespace DynamicIslands.Editor
 			{
 				Vector3 dir = CustomIslandSpawner.SailDirection();
 				float distance = Mathf.Max(r.Distance, radius + CustomIslandSpawner.Clearance);
-				foreach (Vector2 o in Candidates(false).Where(o => Mathf.Abs(o.x) <= 60f))
+				foreach (Vector2 o in Candidates(false).Where(o => wideSearch || Mathf.Abs(o.x) <= 60f))
 				{
 					Vector3 c = raft + Quaternion.Euler(0, o.x, 0) * dir * distance * o.y;
 					c.y = elevation;
@@ -1205,7 +1220,7 @@ namespace DynamicIslands.Editor
 		static IEnumerable<Vector2> Candidates(bool anyDirection)
 		{
 			float[] offsets = anyDirection ? Enumerable.Range(0, 24).Select(i => i * 15f).ToArray() : new[] { 0f, 8f, -8f, 16f, -16f, 25f, -25f, 35f, -35f, 45f, -45f, 60f, -60f, 80f, -80f };
-			float[] factors = { 1f, 1.1f, 1.2f, 1.35f, 1.5f, 1.7f, 2f, 2.4f };
+			float[] factors = wideSearch ? new[] { 1f, 1.2f, 1.5f, 2f, 2.4f, 3f, 3.6f, 4.5f } : new[] { 1f, 1.1f, 1.2f, 1.35f, 1.5f, 1.7f, 2f, 2.4f };
 			return offsets.SelectMany(a => factors.Select(f => new Vector2(a, f)))
 				.OrderBy(v => (anyDirection ? 0f : Mathf.Abs(v.x) / 20f) + (v.y - 1f) * 2.5f)
 				.ToList();

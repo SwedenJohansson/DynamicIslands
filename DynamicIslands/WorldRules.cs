@@ -74,13 +74,51 @@ namespace DynamicIslands.Editor
 			bool newWorld = isNew;
 			MonsterDifficulty.Reset(newWorld);
 			BuildCost.Reset(newWorld);
+			worldRegrow = -1;
 			if (newWorld) Broadcast();
 		}
 
 		/// <summary>A "@key=value" line of the world file; false if it isn't one of the rules.</summary>
-		internal static bool ReadLine(string key, string value) { return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value); }
+		internal static bool ReadLine(string key, string value)
+		{
+			if (key.Equals("regrow", StringComparison.OrdinalIgnoreCase))
+			{
+				int d;
+				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
+				return true;
+			}
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value);
+		}
 
-		internal static IEnumerable<string> WriteLines() { return MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()); }
+		internal static IEnumerable<string> WriteLines()
+		{
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines());
+			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
+		}
+
+		/// <summary>
+		/// The world's days until things come back (ROADMAP AU20): taken from the host's spawnpool.txt when the world is first
+		/// played and kept with the world from then on - a later host with another setting refilled every chest a group had
+		/// emptied for good ("never"). -1 = not known yet.
+		/// </summary>
+		static int worldRegrow = -1;
+
+		/// <summary>Host, after the world file was read: a world without its own regrow days takes this PC's now.</summary>
+		internal static void OnWorldRead()
+		{
+			if (!Raft_Network.IsHost) return;
+			if (worldRegrow < 0) worldRegrow = CustomIslandSpawner.RegrowDays;
+			else if (worldRegrow != CustomIslandSpawner.RegrowDays) Debug.Log("[CUSTOM ISLANDS] [world rules] This world keeps its regrow days (" + worldRegrow + "); this PC's spawnpool.txt says " + CustomIslandSpawner.RegrowDays + " (for new worlds)");
+			Broadcast();
+		}
+
+		/// <summary>Host: changes the world's regrow days (the RegrowDays command).</summary>
+		public static void SetRegrow(int days)
+		{
+			worldRegrow = Mathf.Max(0, days);
+			Broadcast();
+			IslandWorldState.Save();
+		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
 		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState; } }
@@ -137,7 +175,7 @@ namespace DynamicIslands.Editor
 		public static float UnloadDistance { get { return UseHost ? hostUnload : CustomIslandSpawner.UnloadDistance; } }
 
 		/// <summary>The world's days until things come back (the host's; islands may have their own rule, IslandRules).</summary>
-		public static int RegrowDays { get { return UseHost ? hostRegrow : CustomIslandSpawner.RegrowDays; } }
+		public static int RegrowDays { get { return UseHost ? hostRegrow : worldRegrow >= 0 ? worldRegrow : CustomIslandSpawner.RegrowDays; } }
 
 		/// <summary>Whether this machine uses a host's settings (a client in a game whose host sent them).</summary>
 		public static bool HostSettingsFromHost { get { return UseHost; } }
@@ -145,7 +183,7 @@ namespace DynamicIslands.Editor
 		static string HostSettingsData()
 		{
 			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
-				";regrow=" + CustomIslandSpawner.RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("F0", CultureInfo.InvariantCulture);
+				";regrow=" + RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("F0", CultureInfo.InvariantCulture);
 		}
 
 		static void HostSettingsFrom(string data)

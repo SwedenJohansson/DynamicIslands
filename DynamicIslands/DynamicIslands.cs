@@ -1026,6 +1026,20 @@ namespace DynamicIslands
 			Notify("Level up system in this world: " + (PlayerLevels.On ? "on" : PlayerLevels.OffByHost ? "off (switched off; levels kept)" : "off"));
 		}
 
+		[ConsoleCommand(name: "RegrowDays", docs: "This world's days until chopped trees, picked items, animals and looted chests come back (kept with the world; an island's own rule wins). RegrowDays = show it; RegrowDays <days> = change it (host; 0 = never)")]
+		public static void RegrowDaysCommand(string[] args)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Notify("In a world: the days are kept with each world (new worlds take spawnpool.txt's regrowDays)", true); return; }
+			int d;
+			if (args != null && args.Length > 0)
+			{
+				if (!Raft_Network.IsHost) { Notify("Only the host changes the world's regrow days", true); return; }
+				if (!int.TryParse(args[0], out d) || d < 0) { Notify("RegrowDays <days> (0 = never)", true); return; }
+				WorldRules.SetRegrow(d);
+			}
+			Notify("In this world things come back after " + (WorldRules.RegrowDays > 0 ? WorldRules.RegrowDays + " day(s)" : "never") + " (an island's own rule wins)");
+		}
+
 		[ConsoleCommand(name: "Resync", docs: "A player who joined: ask the host for its custom islands again (the list and any island file that hasn't come)")]
 		public static void ResyncCommand()
 		{

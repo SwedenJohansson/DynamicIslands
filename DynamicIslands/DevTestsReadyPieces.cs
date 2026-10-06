@@ -317,5 +317,54 @@ namespace DynamicIslands
 			Check(ref ok, QuestRewards.WhereKept.Count(ch => ch == '-') == 5, "the quest rewards record is per world and player (" + QuestRewards.WhereKept + ")");
 			if (ok) Log("PASS: start checks"); else Fail("start checks");
 		}
+			[ConsoleCommand(name: "CIAuBatch2", docs: "Dev, in game (host): AU15/20/24/29 - world names with an apostrophe read whole; new plan rules get names no rule had; the world keeps its own regrow days in its file; a downloaded island file is saved for every island with that content (two names, one file)")]
+		public static void AuBatch2Command(string[] args) { DynamicIslands.instance.StartCoroutine(AuBatch2Routine()); }
+
+		static IEnumerator AuBatch2Routine()
+		{
+			if (!Raft_Network.IsHost || !LoadSceneManager.IsGameSceneLoaded) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			Check(ref ok, Housekeeping.WorldName(new[] { "# Custom islands in world 'Bob's raft': name|x|y|z" }, "x.txt") == "Bob's raft"
+				&& Housekeeping.WorldName(new[] { "# Custom islands in world 'CI Net'" }, "x.txt") == "CI Net"
+				&& Housekeeping.WorldName(new[] { "@plan=x" }, "C:/w/My World.txt") == "My World", "world names: Bob's raft whole, an old header, no header (AU29)");
+			var plan = new WorldPlan { Name = "x" };
+			for (int i = 0; i < 4; i++) plan.Rules.Add(new IntroRule { Id = WorldPlanWindow.NewRuleId(plan) });
+			string third = plan.Rules[2].Id;
+			plan.Rules.RemoveAt(2);
+			string next = WorldPlanWindow.NewRuleId(plan);
+			Check(ref ok, plan.Rules.Select(r => r.Id).Distinct().Count() == 3 && next != third && !plan.Rules.Any(r => r.Id == next), "a new rule's name isn't one the plan had (" + string.Join(",", plan.Rules.Select(r => r.Id).ToArray()) + "; deleted " + third + ", new " + next + ") (AU24)");
+			// The world's regrow days, kept in its file
+			int before = WorldRules.RegrowDays;
+			WorldRules.SetRegrow(before == 7 ? 8 : 7);
+			int set = WorldRules.RegrowDays;
+			bool inFile = System.IO.File.Exists(IslandWorldState.WorldFilePath) && System.IO.File.ReadAllLines(IslandWorldState.WorldFilePath).Contains("@regrow=" + set);
+			Check(ref ok, set != CustomIslandSpawner.RegrowDays || set == 7 || set == 8, "the world has its own regrow days: " + set + " (this PC's spawnpool.txt: " + CustomIslandSpawner.RegrowDays + ")");
+			Check(ref ok, inFile, "kept in the world's file (@regrow=" + set + ") (AU20)");
+			WorldRules.SetRegrow(before);
+			// Two of the host's islands with the same content: the download is saved for both names
+			string source = IslandSpawner.ListSavedIslands().First(n => !n.StartsWith("ci") && !n.StartsWith("gen-") && !IslandNetwork.IsDownloadName(n));
+			byte[] bytes = System.IO.File.ReadAllBytes(IslandSpawner.PathFor(source));
+			string hash = IslandNetwork.HashOf(source);
+			var a = IslandWorldState.Add("citest-dup-a", new Vector3(90000f, 0f, 90000f), null, false);
+			var b = IslandWorldState.Add("citest-dup-b", new Vector3(91000f, 0f, 90000f), null, false);
+			foreach (var e in new[] { a, b }) { e.Hash = hash; e.WaitingForFile = true; }
+			string pa = IslandSpawner.PathFor(IslandNetwork.DownloadName("citest-dup-a", hash)), pb = IslandSpawner.PathFor(IslandNetwork.DownloadName("citest-dup-b", hash));
+			try
+			{
+				IslandNetwork.ExpectFile(hash);
+				const int size = 3000;
+				int count = (bytes.Length + size - 1) / size;
+				for (int i = count - 1; i >= 0; i--)
+					IslandNetwork.ReceiveChunk(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = "citest-dup-a", Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * size, Math.Min(size, bytes.Length - i * size)) });
+				Check(ref ok, System.IO.File.Exists(pa) && System.IO.File.Exists(pb) && !a.WaitingForFile && !b.WaitingForFile, "one download, saved for both islands with that content (AU15)");
+			}
+			finally
+			{
+				IslandWorldState.RemoveIds(new[] { a.Id, b.Id }, false);
+				foreach (string f in new[] { pa, pb }) try { if (System.IO.File.Exists(f)) System.IO.File.Delete(f); } catch { }
+			}
+			yield return null;
+			if (ok) Log("PASS: au batch 2"); else Fail("au batch 2");
+		}
 	}
 }

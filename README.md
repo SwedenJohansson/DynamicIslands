@@ -527,6 +527,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `ListIslands` | Anywhere | Lists saved islands |
 | `DeleteGroup <name>` | Editor | Deletes a saved object group (or: Manage... beside Save as group - rename or delete groups and stamps) |
 | `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m), at its saved height or the given one. Warns if it would overlap one of Raft's own islands (players can fall through the ground there). |
+| `RegrowDays [days]` | World | This world's days until things come back (kept with the world; host changes it; 0 = never) |
 | `SetElevation <m>` | Editor | Height above sea the island will have in game (saved with it) |
 | `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | Editor | The island's style (ground textures; saved with it) |
 | `RemoveIsland <name>` / `RemoveIsland all` | Game, host | Removes spawned islands |
