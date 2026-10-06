@@ -68,9 +68,9 @@ namespace DynamicIslands.Editor
 			}
 			RectTransform cost = UIKit.Group(left, "Build cost", "BuildCost");
 			RectTransform crow = UIKit.Row(cost, 28f, 4f, "Cost");
-			Add("BuildCost_Less", UIKit.Button(crow, "- 5 %", () => { BuildCost.Set(Mathf.Max(0, BuildCost.Current - BuildCost.Step)); Refresh(); }, "The build menu costs 5 % less. Blocks built before give back by the new cost when taken down - best chosen when the world is made", 70, 28f, 12));
+			Add("BuildCost_Less", UIKit.Button(crow, "- 5 %", () => { BuildCost.Set(Mathf.Max(0, BuildCost.Current - BuildCost.Step)); Refresh(); }, "The build menu costs 5 % less. Blocks built before keep giving back by the cost they were built at", 70, 28f, 12));
 			Add("BuildCost_Value", UIKit.Button(crow, "", () => { }, "How many more materials the build menu costs than in Raft", -1, 28f, 13));
-			Add("BuildCost_More", UIKit.Button(crow, "+ 5 %", () => { BuildCost.Set(Mathf.Min(BuildCost.Max, BuildCost.Current + BuildCost.Step)); Refresh(); }, "The build menu costs 5 % more. Blocks built before give back by the new cost when taken down - best chosen when the world is made", 70, 28f, 12));
+			Add("BuildCost_More", UIKit.Button(crow, "+ 5 %", () => { BuildCost.Set(Mathf.Min(BuildCost.Max, BuildCost.Current + BuildCost.Step)); Refresh(); }, "The build menu costs 5 % more. Blocks built before keep giving back by the cost they were built at", 70, 28f, 12));
 
 			// World randomizer
 			RectTransform rnd = UIKit.Group(left, "World randomizer (islands already looked at keep what they got)", "Randomizer");

@@ -74,6 +74,7 @@ namespace DynamicIslands.Editor
 			bool newWorld = isNew;
 			MonsterDifficulty.Reset(newWorld);
 			BuildCost.Reset(newWorld);
+			BuildCostRefund.Reset(BuildCost.Current);
 			worldRegrow = -1;
 			if (newWorld) Broadcast();
 		}
@@ -87,12 +88,12 @@ namespace DynamicIslands.Editor
 				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
 				return true;
 			}
-			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value);
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
-			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines());
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines());
 			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
 		}
 
@@ -121,14 +122,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState; } }
+		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
 		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data).</summary>
 		internal static IslandNetMessage Message()
 		{
-			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData() };
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode() };
 		}
 
 		internal static void Broadcast()
@@ -141,6 +142,8 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			MonsterDifficulty.FromHost(msg.Index);
 			BuildCost.FromHost(msg.Count);
+			// (the cost each block was placed at, AU33; a host with an older version: its blocks at its cost)
+			if (msg.Name != null) BuildCostRefund.Decode(msg.Name); else BuildCostRefund.OnCostRead(msg.Count);
 			HostSettingsFrom(msg.Data);
 		}
 
@@ -149,6 +152,7 @@ namespace DynamicIslands.Editor
 		{
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
+			BuildCostRefund.Reset(0);
 			hostKnown = false;
 		}
 
@@ -268,7 +272,7 @@ namespace DynamicIslands.Editor
 		{
 			if (percent <= 0) return "Building costs what it does in Raft.";
 			return "Everything in the build menu costs " + percent + "% more materials, rounded up: 1 plank becomes " + Cost(1, percent) + ", 2 become " + Cost(2, percent) +
-				", 3 become " + Cost(3, percent) + ". Removing a block gives back half of what it cost.";
+				", 3 become " + Cost(3, percent) + ". Removing a block gives back half of what it cost when it was placed.";
 		}
 
 		/// <summary>The "?" next to the slider.</summary>
@@ -279,7 +283,7 @@ namespace DynamicIslands.Editor
 				return "How many more materials everything in the build menu costs in this world: the hammer's foundations, floors, walls, " +
 					"roofs, stairs, pillars and the rest. 0% is Raft's own cost, 100% twice as much.\n" +
 					"Amounts are always rounded up: at 50% one plank becomes two and two planks become three.\n" +
-					"Removing a block with the hammer gives back half of what it cost, as in Raft, and repairing and reinforcing blocks cost more too. " +
+					"Removing a block with the hammer gives back half of what it cost when it was placed, as in Raft (a change later doesn't change it), and repairing and reinforcing blocks cost more too. " +
 					"What you make in the crafting menu (Tab) costs the same as in Raft.\n" +
 					"Every player in the world pays the same: players who join get the host's setting. " +
 					"The host can change it later with the console command BuildCost (F10).";
@@ -315,6 +319,7 @@ namespace DynamicIslands.Editor
 			int p;
 			if (!int.TryParse(value.Trim().TrimEnd('%'), NumberStyles.Integer, CultureInfo.InvariantCulture, out p)) { Debug.LogWarning("[CUSTOM ISLANDS] Unknown build cost '" + value + "' in the world file: Raft's own"); p = 0; }
 			Current = Clamp(p);
+			BuildCostRefund.OnCostRead(Current);
 			Log("This world's build cost: " + Describe(Current));
 			Refresh();
 			return true;

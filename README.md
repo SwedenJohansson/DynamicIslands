@@ -435,7 +435,7 @@ These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they
 How many more materials everything in the **build menu** costs: the hammer's foundations, floors, walls, roofs, stairs, pillars and the rest. The slider goes from **0%** (Raft's own cost, the default) to **100%** (twice as much) in steps of 5.
 
 - **Always rounded up:** at 50% one plank becomes two, two become three, three become five.
-- **Removing a block** with the hammer gives back half of what it cost, as Raft does. At 50% a block that cost 3 planks gives 2 back.
+- **Removing a block** with the hammer gives back half of what it cost when it was placed, as Raft does (changing the cost later doesn't change that). At 50% a block that cost 3 planks gives 2 back.
 - **Repairing and reinforcing** blocks cost more too, since they use the same cost list. What you make in the crafting menu (Tab) costs the same as in Raft.
 - **For every player:** each player pays from their own inventory on their own machine, so every player who joins gets the host's percent.
 - **Never on top:** the mod sets the numbers from Raft's own each time, and puts Raft's own back as soon as you leave a world. Leaving and joining again, loading again or changing the percent several times never makes building dearer than the percent says, and the main menu, the editor and the next world start from Raft's numbers.

@@ -793,6 +793,41 @@ namespace DynamicIslands
 					yield return new WaitForSeconds(0.5f);
 				}
 
+			// AU33: a block gives back by the cost it was placed at, whatever the cost is when it is taken down
+			if (item != null)
+				foreach (int[] pair in new[] { new[] { 0, 100 }, new[] { 100, 0 }, new[] { 50, 100 } })
+				{
+					BuildCost.Set(pair[0]);
+					CostMultiple[] cost = item.settings_recipe.NewCost;
+					foreach (CostMultiple c in cost) player.Inventory.AddItem(c.items[0].UniqueName, BuildCost.Cost(BuildCost.OriginalOf(c), 100) * 3);
+					Block made = player.BlockCreator.CreateBlockCheat(item, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0);
+					Check(ref ok, made != null && BuildCostRefund.PercentOf(made.ObjectIndex) == pair[0], "placed at " + BuildCost.Describe(pair[0]) + ": noted as " + (made != null ? BuildCost.Describe(BuildCostRefund.PercentOf(made.ObjectIndex)) : "NO BLOCK"));
+					if (made == null) continue;
+					BuildCost.Set(pair[1]);
+					string kept = BuildCostRefund.Encode();
+					Dictionary<string, int> c1 = Counts(player, cost);
+					RemovePlaceables.ReturnItemsFromBlock(made, player, true);
+					Dictionary<string, int> c2 = Counts(player, cost);
+					List<string> back = cost.Where(c => c2[c.items[0].UniqueName] - c1[c.items[0].UniqueName] != Mathf.CeilToInt(BuildCost.Cost(BuildCost.OriginalOf(c), pair[0]) * 0.5f))
+						.Select(c => c.items[0].UniqueName + " gave back " + (c2[c.items[0].UniqueName] - c1[c.items[0].UniqueName]) + " (want " + Mathf.CeilToInt(BuildCost.Cost(BuildCost.OriginalOf(c), pair[0]) * 0.5f) + ")").ToList();
+					List<string> after = cost.Where(c => c.amount != BuildCost.Cost(BuildCost.OriginalOf(c), pair[1])).Select(c => c.items[0].UniqueName + " " + c.amount).ToList();
+					Check(ref ok, back.Count == 0 && after.Count == 0, "built at " + BuildCost.Describe(pair[0]) + ", taken down at " + BuildCost.Describe(pair[1]) + ": half of the placing cost back (" + kept + ")" +
+						(back.Count > 0 ? " - WRONG " + string.Join(", ", back.ToArray()) : "") + (after.Count > 0 ? " - the build menu's cost not put back: " + string.Join(", ", after.ToArray()) : ""));
+					BlockCreator.RemoveBlockNetwork(made, null, true);
+					yield return new WaitForSeconds(0.5f);
+				}
+			// The world file's line and an older world (no line: its blocks were built at its cost)
+			{
+				string keep = BuildCostRefund.Encode();
+				BuildCostRefund.Decode("40|0:7,8;100:9");
+				bool round = BuildCostRefund.Base == 40 && BuildCostRefund.PercentOf(7) == 0 && BuildCostRefund.PercentOf(9) == 100 && BuildCostRefund.PercentOf(5) == 40 && BuildCostRefund.Encode() == "40|0:7,8;100:9";
+				BuildCostRefund.Reset(0);
+				BuildCostRefund.OnCostRead(60);
+				bool older = BuildCostRefund.PercentOf(123) == 60;
+				BuildCostRefund.Decode(keep);
+				Check(ref ok, round && older, "@builtat read and written back (" + (round ? "same" : "DIFFERENT") + "); an older world's blocks give back by its cost (" + (older ? "yes" : "NO") + ")");
+			}
+
 			BuildCost.Set(before);
 			Application.logMessageReceived -= counter;
 			Check(ref ok, exceptions == 0, "no errors (" + exceptions + (firstException != null ? ", first: " + firstException : "") + ")");

@@ -1999,7 +1999,7 @@ In Peaceful and Creative monsters can't hurt you, so only their health changes.
 
 Everything in the **build menu** (the hammer's foundations, floors, walls, roofs, stairs...) costs **0-100 % more**,
 always rounded up: at +50 % one plank becomes two, two become three, three become five. Removing a block gives back
-half of what it cost (as in Raft), and repairing and reinforcing cost more too. The crafting menu (Tab) costs the same
+half of what it cost when it was placed (as in Raft; a later change of the cost doesn't change it), and repairing and reinforcing cost more too. The crafting menu (Tab) costs the same
 as in Raft.
 
 **Both rules** are the host's for every player, also players who join later. The host can change them in a world:
@@ -2423,15 +2423,15 @@ late; a lever pulled by several players in the same second moves once; quest ste
 
 #### Don't switch these in a running world
 
-**Why:** two settings in **Esc > Custom Islands** (and the F10 commands) don't handle being changed while the game runs:
+**Why:** one setting in **Esc > Custom Islands** (and the F10 commands) doesn't handle being changed while the game runs:
 - **Story islands in a new order:** Raft's Receiver list is rebuilt; the island you were sailing to may be gone from it.
-- **The build cost:** removing blocks gives back materials by the **new** cost, not by what you paid.
 
 **What to do:**
 1. Choose these in **World settings** when you **create** the world, and leave them.
 2. If you must change one: do it when nobody else is connected, then let Raft save (leave to the main menu once).
 
-(Fixed since 2026-10-01: switching the level up system off and on keeps everyone's levels, and changing the world
+(Fixed since 2026-10-06: changing the build cost later is fine - every block gives back by the cost it was placed at.
+Fixed since 2026-10-01: switching the level up system off and on keeps everyone's levels, and changing the world
 randomizer no longer makes alphas tougher again or heals them.)
 
 #### Other things to know
