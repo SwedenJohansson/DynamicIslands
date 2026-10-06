@@ -1225,7 +1225,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILastMessage", docs: "Dev, in game: the last message an island object gave this player, and whether the note reader is open")]
 		public static void LastMessageCommand()
 		{
-			Log("Last message '" + Behaviours.LastMessage + "', note reader " + (NoteReader.IsOpen ? "open" : "closed"));
+			Log("Last message '" + Behaviours.LastMessage + "', island message '" + IslandInfo.LastMessage + "', note reader " + (NoteReader.IsOpen ? "open" : "closed"));
 		}
 
 		#endregion

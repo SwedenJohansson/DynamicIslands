@@ -883,6 +883,10 @@ namespace DynamicIslands
 			// On top of one of Raft's own islands, players can fall through the ground: say so (the automatic spawner avoids it)
 			string overlap = CustomIslandSpawner.OverlapsRaftIsland(position, CustomIslandSpawner.LandRadius(name));
 			if (overlap != null) Notify("Careful: " + overlap + " - the islands overlap; try another distance or direction", true);
+			// (the raft itself: an island over it traps it - AU68)
+			float land = CustomIslandSpawner.LandRadius(name);
+			float gap = new Vector2(position.x - origin.x, position.z - origin.z).magnitude - land - CustomIslandSpawner.RaftRadius;
+			if (land > 0f && gap < 10f) Notify("Careful: the island reaches " + (gap < 0f ? "over the raft" : "within " + gap.ToString("F0") + " m of the raft") + " - try a larger distance (SpawnIsland " + name + " " + Mathf.CeilToInt(land + CustomIslandSpawner.RaftRadius + 30f) + ")", true);
 
 			instance.StartCoroutine(instance.SpawnIslandFile(name, position, true));
 		}

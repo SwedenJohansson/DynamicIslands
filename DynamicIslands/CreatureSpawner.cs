@@ -68,14 +68,68 @@ namespace DynamicIslands.Editor
 
 		public static bool IsOurs(AI_NetworkBehaviour ai) { return ai != null && ours.Contains(ai); }
 
+		/// <summary>A player: the host says which spot each island animal belongs to (since 2026-10-06); else, as before,
+		/// the nearest spot of its kind and size is guessed.</summary>
+		public static bool HostSendsSpots { get; internal set; }
+
+		// A player: island and spot of each island animal, by its object index (AU32: Raft's shark or a screecher near an
+		// island was taken for one of its animals; AU62: a plain animal next to a Boss spot got the Boss's tint and health)
+		static readonly Dictionary<uint, KeyValuePair<int, int>> spotOf = new Dictionary<uint, KeyValuePair<int, int>>();
+
+		/// <summary>Host: the spots message for one animal, or for all of them (null).</summary>
+		internal static IslandNetMessage SpotsMessage(AI_NetworkBehaviour only)
+		{
+			var parts = new List<string>();
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null) continue;
+				foreach (CreatureSpawnPoint p in e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true))
+					foreach (AI_NetworkBehaviour ai in p.Spawned)
+						if (ai != null && (only == null || ai == only))
+							parts.Add(ai.ObjectIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + e.Id + ":" + p.Ordinal);
+			}
+			if (only != null && parts.Count == 0) return null;
+			return new IslandNetMessage { Kind = IslandNetMessage.CreatureSpots, Data = string.Join(";", parts.ToArray()) };
+		}
+
+		/// <summary>A player: the host's spots for its island animals.</summary>
+		internal static void OnSpots(string data)
+		{
+			foreach (string part in (data ?? "").Split(';'))
+			{
+				string[] f = part.Split(':');
+				uint idx; int island, spot;
+				if (f.Length == 3 && uint.TryParse(f[0], out idx) && int.TryParse(f[1], out island) && int.TryParse(f[2], out spot))
+					spotOf[idx] = new KeyValuePair<int, int>(island, spot);
+			}
+			if (spotOf.Count > 4096)
+			{
+				// (animals long gone: only those still in the world are kept)
+				var live = new HashSet<uint>(UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null).Select(a => a.ObjectIndex));
+				foreach (uint gone in spotOf.Keys.Where(k => !live.Contains(k)).ToList()) spotOf.Remove(gone);
+			}
+		}
+
+		/// <summary>A player: the loaded spot the host said this animal belongs to (null: not known, or its island isn't loaded).</summary>
+		static CreatureSpawnPoint SentSpot(AI_NetworkBehaviour ai)
+		{
+			KeyValuePair<int, int> s;
+			if (ai == null || !spotOf.TryGetValue(ai.ObjectIndex, out s)) return null;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == s.Key);
+			if (e == null || e.Root == null) return null;
+			return e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).FirstOrDefault(p => p.Ordinal == s.Value);
+		}
+
 		/// <summary>
-		/// Whether an animal belongs to a custom island (it has the builder's looks): the host knows its own; a client goes
-		/// by a loaded spawn point of its kind near it (Raft's own islands' animals come tied to their island's spawner).
+		/// Whether an animal belongs to a custom island (it has the builder's looks): the host knows its own; a client is
+		/// told by the host (or, with an older host, goes by a loaded spawn point of its kind near it - Raft's own islands'
+		/// animals come tied to their island's spawner).
 		/// </summary>
 		public static bool IsOnCustomIsland(AI_NetworkBehaviour ai)
 		{
 			if (ai == null) return false;
 			if (Raft_Network.IsHost) return IsOurs(ai);
+			if (HostSendsSpots) return spotOf.ContainsKey(ai.ObjectIndex);
 			if (ai.connectedSpawner != null) return false;
 			foreach (GameObject r in IslandSpawner.SpawnedRoots)
 			{
@@ -99,6 +153,7 @@ namespace DynamicIslands.Editor
 			speed.Clear();
 			HealthBefore.Clear();
 			clientTinted.Clear();
+			spotOf.Clear();
 			clientHealth.Clear();
 			// (not sentHealth: a player who joins gets the host's animals before this runs - its entries go by age)
 			Network_Host_Entities h = HostEntities;
@@ -313,6 +368,9 @@ namespace DynamicIslands.Editor
 				{
 					var msg = new Message_CreateAINetworkBehaviour(Messages.CreateAINetworkBehaviour, network.NetworkIDManager, host.ObjectIndex, pos, ai, null);
 					network.RPC(msg, Target.Other, Steamworks.EP2PSend.k_EP2PSendReliable, NetworkChannel.Channel_Game);
+					// (and which island spot it is - AU32/AU62)
+					IslandNetMessage spots = SpotsMessage(ai);
+					if (spots != null) IslandNetwork.SendToEveryone(spots);
 				}
 				return ai;
 			}
@@ -784,6 +842,17 @@ namespace DynamicIslands.Editor
 			foreach (AI_NetworkBehaviour ai in all)
 			{
 				if (ai == null || clientTinted.Contains(ai) || ai.connectedSpawner != null) continue;
+				// (the host said whose it is: that spot, or none - not an island's animal, or its island isn't loaded yet)
+				if (HostSendsSpots)
+				{
+					CreatureSpawnPoint sent = SentSpot(ai);
+					if (sent == null) continue;
+					clientTinted.Add(ai);
+					if (ObjectProps.HasTint(sent.Props)) ObjectProps.ApplyTint(ai.gameObject, sent.Props);
+					float shp = ObjectProps.Health(sent.Props);
+					if (!Mathf.Approximately(shp, 1f)) MatchHealth(ai, shp);
+					continue;
+				}
 				// The animal's own spot: the nearest of its kind whose size it has (Raft sends the size; hostile
 				// animals roam far from their spot while chasing players, so the nearest tinted spot alone could
 				// colour an untinted animal of a spot next to it). Only that spot's tint counts. Raft rolls some kinds'

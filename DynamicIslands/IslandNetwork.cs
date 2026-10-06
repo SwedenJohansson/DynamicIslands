@@ -56,6 +56,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (when it changes, and each player who joins): the world's quest count (QuestCount, ROADMAP
 		/// CW3) - Data = one line per quest, "group\tname\t1|0", so every player's journal shows the host's count.</summary>
 		public const int QuestCount = 20;
+		/// <summary>Host -> players: which island spot animals belong to (AU32/AU62) - Data = "objectIndex:islandId:spot;..."
+		/// for one animal when it is made, for all of them to a player who joins.</summary>
+		public const int CreatureSpots = 21;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -189,7 +192,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>What this host does that older ones don't, told to players with its version ("counts": a player's quest
 		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total).</summary>
-		const string HostCapabilities = "counts";
+		const string HostCapabilities = "counts,spots";
 
 		/// <summary>A player: the host adds quest counts up (since 2026-10-01); else the player sends its total, as before.</summary>
 		public static bool HostAddsCounts { get; internal set; }
@@ -388,7 +391,7 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
 							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
@@ -401,6 +404,7 @@ namespace DynamicIslands.Editor
 							SendToPlayer(WorldOptions.Message(), from);
 							SendToPlayer(global::DynamicIslands.Editor.StoryChain.Message(), from);
 							SendToPlayer(global::DynamicIslands.Editor.QuestCount.Message(), from);
+							SendToPlayer(CreatureSpawner.SpotsMessage(null), from);
 							// (after the list: the island it names is in the player's list then)
 							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
 							if (place != null) SendToPlayer(place, from);
@@ -468,6 +472,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.QuestCount:
 						global::DynamicIslands.Editor.QuestCount.OnMessage(msg);
+						break;
+					case IslandNetMessage.CreatureSpots:
+						if (!Raft_Network.IsHost) CreatureSpawner.OnSpots(msg.Data);
 						break;
 					case IslandNetMessage.Announce:
 						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
@@ -543,6 +550,8 @@ namespace DynamicIslands.Editor
 						ResolveFile(known);
 						Log("Island " + known.Id + " '" + known.HostName + "' had no file here: trying again with the host's");
 					}
+					// (still waiting for its file after a Resync, which forgot the requests: asked for again - AU64)
+					else if (known.WaitingForFile && known.Root == null && !string.IsNullOrEmpty(known.Hash) && !requested.Contains(known.Hash)) ResolveFile(known);
 					continue;
 				}
 				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],

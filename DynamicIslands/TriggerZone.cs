@@ -131,7 +131,7 @@ namespace DynamicIslands.Editor
 		void Refused()
 		{
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "': another player has it");
-			if (!toldRefused) { toldRefused = true; DynamicIslands.Notify("Someone else got here first"); }
+			if (!toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
 			retryAt = Time.time + RetrySeconds;
 		}
 

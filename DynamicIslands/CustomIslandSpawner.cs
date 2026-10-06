@@ -328,7 +328,12 @@ namespace DynamicIslands.Editor
 			{
 				IslandFile file = create();
 				file.Save(IslandSpawner.PathFor(name));
+				float estimated;
+				bool hadEstimate = radiusCache.TryGetValue(name, out estimated);
 				radiusCache[name] = IslandSpawner.LandRadius(file);
+				// (placed by an estimated size: bigger than that, it may reach the raft or another island - moved further out
+				// along the same line until it is clear - AU68)
+				if (hadEstimate && radiusCache[name] > estimated + 1f && RaftPosition.HasValue && IslandWorldState.Contains(entry)) MakeRoom(entry, radiusCache[name]);
 				elevationCache[name] = file.Elevation;
 				Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + (string.IsNullOrEmpty(file.Style) ? "Tropical" : file.Style) + ", land radius " + radiusCache[name].ToString("F0") + " m, " +
 					file.Objects.Count + " objects" + (file.Elevation > 0f ? ", flying " + file.Elevation.ToString("F0") + " m up" : file.Elevation < 0f ? ", " + (-file.Elevation).ToString("F0") + " m under water" : ""));
@@ -458,9 +463,51 @@ namespace DynamicIslands.Editor
 		/// Why an island of this land radius can't go at candidate, or null if it can. minSpacing: centre-to-centre
 		/// distance kept from other custom islands (-1 = the minSpacing setting; 0 = just clear of their land).
 		/// </summary>
+		/// <summary>A generated island turned out bigger than estimated: moved out from the raft until nothing is in its way.</summary>
+		static void MakeRoom(IslandWorldState.Entry entry, float radius)
+		{
+			Vector3 raft = RaftPosition.Value;
+			Vector3 dir = Flat(entry.Position - raft);
+			if (dir.sqrMagnitude < 1f) dir = Vector3.forward;
+			dir.Normalize();
+			for (int i = 0; i < 8; i++)
+			{
+				if (Rejects(entry.Position, radius, raft, false, -1f, entry) == null) return;
+				Vector3 at = entry.Position + dir * 40f;
+				Debug.Log("[CUSTOM ISLANDS] Generated island '" + entry.Name + "' is bigger than estimated (" + radius.ToString("F0") + " m): moved out to " + at.ToString("F0"));
+				entry.Position = at;
+			}
+		}
+
+		/// <summary>
+		/// How far the raft's blocks reach from its centre (m; 0 without a raft) - the room it needs, not only its centre
+		/// (AU68: a big raft ran into islands placed just clear of its middle). Looked at every 10 s.
+		/// </summary>
+		public static float RaftRadius
+		{
+			get
+			{
+				if (Time.unscaledTime < raftRadiusAt) return raftRadius;
+				raftRadiusAt = Time.unscaledTime + 10f;
+				raftRadius = 0f;
+				try
+				{
+					Raft raft = ComponentManager<Raft>.Value;
+					List<Block> blocks = BlockCreator.GetPlacedBlocks();
+					if (raft == null || blocks == null) return raftRadius;
+					Vector3 c = raft.transform.position;
+					foreach (Block b in blocks)
+						if (b != null && b.transform.IsChildOf(raft.transform)) raftRadius = Mathf.Max(raftRadius, Flat(b.transform.position - c).magnitude);
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The raft's size: " + e.Message); }
+				return raftRadius;
+			}
+		}
+		static float raftRadius, raftRadiusAt;
+
 		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f, IslandWorldState.Entry ignore = null)
 		{
-			if (Flat(candidate - raftPos).magnitude < radius + Clearance) return "too close to the raft";
+			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft";
 			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{

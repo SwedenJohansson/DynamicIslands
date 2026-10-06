@@ -28,7 +28,12 @@ namespace DynamicIslands.Editor
 		const float SettleTime = 5f;
 
 		static Vector3? spot;
-		static float until;
+		static float until, heldSince;
+		// (the host's place for this player is used once per join: a second join reply - a Resync - doesn't take them back
+		// to last session's place - AU64)
+		static bool wentTo;
+		/// <summary>A client still downloading the island under them waits longer than ClientWait, up to this (AU64).</summary>
+		const float DownloadWait = 300f;
 		static bool holding;
 		// Set down, still watched: where, until when, how often put back
 		static Vector3? settled;
@@ -48,6 +53,7 @@ namespace DynamicIslands.Editor
 			holding = false;
 			spot = null;
 			settled = null;
+			wentTo = false;
 			if (player == null) return;
 			Vector3 p = player.transform.position;
 			// Where the host saw this player stand on a custom island (a joining player learns it from the host: GoTo)
@@ -67,7 +73,8 @@ namespace DynamicIslands.Editor
 		public static void GoTo(Vector3 target, string island)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
-			if (player == null) return;
+			if (player == null || wentTo) return;
+			wentTo = true;
 			Vector3 now = spot ?? player.transform.position;
 			if ((now - target).magnitude < Misplaced) return;
 			settled = null;
@@ -78,6 +85,7 @@ namespace DynamicIslands.Editor
 		{
 			spot = at;
 			holding = false;
+			heldSince = Time.unscaledTime;
 			until = Time.unscaledTime + (Raft_Network.IsHost ? HostWait : ClientWait);
 			Debug.Log("[CUSTOM ISLANDS] " + why);
 		}
@@ -90,7 +98,15 @@ namespace DynamicIslands.Editor
 		{
 			if (settled.HasValue) { Settle(); return; }
 			if (!spot.HasValue) return;
-			if (Time.unscaledTime > until) { Release(null, "gave up waiting for the island"); return; }
+			if (Time.unscaledTime > until)
+			{
+				// (a client whose island near them is still downloading - a big file, a slow host - keeps waiting: let go
+				// after 60 s, they fell into the sea and Raft put them on the raft - AU64)
+				Vector3 near = spot.Value;
+				bool downloading = !Raft_Network.IsHost && IslandWorldState.Islands.Any(e => e.WaitingForFile && !e.Failed && Flat(e.Position - near) < NearIsland);
+				if (downloading && Time.unscaledTime - heldSince < DownloadWait) until = Time.unscaledTime + 5f;
+				else { Release(null, "gave up waiting for the island"); return; }
+			}
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;

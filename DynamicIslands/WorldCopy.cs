@@ -131,6 +131,13 @@ namespace DynamicIslands.Editor
 					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the world's saves: " + e.Message); }
 				long newest = new[] { mine, travelled }.Concat(saves.Select(s => s.Value)).Where(l => l != null).Select(RaftSaveOf).DefaultIfEmpty(0L).Max();
 				KeyValuePair<string, string[]> match = saves.FirstOrDefault(s => RaftSaveOf(s.Value) == loading);
+				// (an older save without a copy of its own - the first save of a new world, or one made before saves had
+				// copies: its state isn't known; the newest is used, and the player is told - AU27)
+				if (loading < newest && match.Value == null)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] The save being loaded is older than the world's newest and has no copy of the custom islands' state: the newest is used");
+					DynamicIslands.Notify("This older save has no record of its custom islands: their chests, quests and story are as in the world's newest save.", true);
+				}
 				if (loading < newest && match.Value != null)
 				{
 					LastSource = "Raft's save " + Path.GetFileName(match.Key);

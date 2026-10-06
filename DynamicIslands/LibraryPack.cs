@@ -933,8 +933,16 @@ namespace DynamicIslands.Editor
 			int count = 0;
 			try
 			{
-				if (!Directory.Exists(WorldsFolder)) return 0;
-				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
+				var files = new List<string>();
+				if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt"));
+				// (and the copies in Raft's world folders and their saves: loading an older save reads its own copy - AU27)
+				try
+				{
+					string raftWorlds = SaveAndLoad.WorldPath;
+					if (!string.IsNullOrEmpty(raftWorlds) && Directory.Exists(raftWorlds)) files.AddRange(Directory.GetFiles(raftWorlds, global::DynamicIslands.Editor.WorldCopy.FileName, SearchOption.AllDirectories));
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
+				foreach (string file in files)
 				{
 					string[] lines = File.ReadAllLines(file);
 					bool changed = false;
