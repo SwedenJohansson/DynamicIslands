@@ -21,6 +21,8 @@ namespace DynamicIslands.Editor
 		const float TickInterval = 2f;
 		/// <summary>An island that was unloaded is loaded again this much closer than the unload distance, so it doesn't flicker.</summary>
 		const float ReloadHysteresis = 200f;
+		/// <summary>How far inside the unload distance the far end of where islands appear stays (an island loads again 100 m inside it).</summary>
+		const float SpawnUnloadGap = 150f;
 		/// <summary>Space kept between an island's land and the raft, or Raft's own islands, when placing it.</summary>
 		public const float Clearance = 60f;
 
@@ -248,9 +250,14 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// Tries to place an island from the pool ahead of the raft. Returns a message saying what happened.
 		/// force: ignore "raft is inside one of Raft's islands" (dev/testing).
+		/// seed: what a new map type island is and where it goes ahead come from it instead of unseeded randoms (the world
+		/// randomizer's islands follow the world seed - CA18); retry: this try's number for the same island (another spot,
+		/// the same island).
 		/// </summary>
-		public static string TrySpawn(Vector3 raftPos, bool force, string pick = null)
+		public static string TrySpawn(Vector3 raftPos, bool force, string pick = null, int? seed = null, int retry = 0)
 		{
+			System.Random placing = seed.HasValue ? new System.Random(WorldRandomizer.Hash(seed.Value, retry, 31)) : null;
+			Func<float, float, float> range = (a, b) => placing != null ? a + (float)placing.NextDouble() * (b - a) : UnityEngine.Random.Range(a, b);
 			if (!force && ChunkManager.RaftIsInsideChunkPoint) return Skip("the raft is at one of Raft's islands");
 			// (pick: this pool entry instead of one from the pool - the world randomizer's islands)
 			string name = pick ?? PickFromPool();
@@ -265,7 +272,14 @@ namespace DynamicIslands.Editor
 				// A new island of a map type (type:<name> in the pool)
 				mapType = MapTypes.Get(name.Substring(TypePrefix.Length));
 				if (mapType == null) return Skip("there is no map type '" + name.Substring(TypePrefix.Length) + "'");
-				generate = MapTypes.Roll(mapType, new System.Random(), out elevation);
+				if (seed.HasValue)
+				{
+					// (rolled as RemakeOf rolls it from the name's seed: a lost file comes back as the very same settings)
+					int islandSeed = 1 + (int)((uint)WorldRandomizer.Hash(seed.Value, 37) % 999998u);
+					generate = MapTypes.Roll(mapType, new System.Random(islandSeed), out elevation);
+					generate.Seed = islandSeed;
+				}
+				else generate = MapTypes.Roll(mapType, new System.Random(), out elevation);
 				WorldRandomizer.GatherFor(generate, mapType.Name, WorldRandomizer.Current);
 				name = MapTypes.FreeFileName(mapType, generate);
 				radiusCache[name] = MapTypes.EstimatedRadius(generate);
@@ -303,10 +317,12 @@ namespace DynamicIslands.Editor
 			for (int attempt = 0; attempt < (TestAllRound ? 24 : 8); attempt++)
 			{
 				// Off-centre so it's reachable but not always dead ahead; later attempts spread wider
-				float side = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-				float angle = TestAllRound ? UnityEngine.Random.Range(0f, 360f) : side * UnityEngine.Random.Range(10f, 35f + attempt * 10f);
+				float side = range(0f, 1f) < 0.5f ? -1f : 1f;
+				float angle = TestAllRound ? range(0f, 360f) : side * range(10f, 35f + attempt * 10f);
 				// Later attempts also look a little further out
-				float distance = Mathf.Max(UnityEngine.Random.Range(SpawnDistanceMin, SpawnDistanceMax + attempt * (TestAllRound ? 40f : 20f)), radius + Clearance + RaftRadius);
+				float distance = Mathf.Max(range(SpawnDistanceMin, SpawnDistanceMax + attempt * (TestAllRound ? 40f : 20f)), radius + Clearance + RaftRadius);
+				// (its land not beyond where islands load: the later, further tries of a far spawn distance unloaded it at once)
+				distance = Mathf.Min(distance, Mathf.Max(radius + Clearance + RaftRadius, WorldRules.UnloadDistance - 100f + radius));
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
@@ -816,8 +832,10 @@ type:sunken 0.2
 				DateTime t = File.GetLastWriteTimeUtc(PoolPath);
 				if (!force && t == poolFileTime) return;
 				poolFileTime = t;
-				radiusCache.Clear(); // islands may have been re-saved too
-				elevationCache.Clear();
+				// (islands may have been re-saved too; an island still being generated has no file yet - its estimated size and
+				// height stay, or it was spaced as unreadable and never moved clear once it came out bigger)
+				foreach (string n in radiusCache.Keys.ToList()) if (File.Exists(IslandSpawner.PathFor(n))) radiusCache.Remove(n);
+				foreach (string n in elevationCache.Keys.ToList()) if (File.Exists(IslandSpawner.PathFor(n))) elevationCache.Remove(n);
 
 				poolLines.Clear();
 				foreach (string raw in File.ReadAllLines(PoolPath))
@@ -853,7 +871,14 @@ type:sunken 0.2
 						poolLines.Add(new KeyValuePair<string, float>(line, 1f));
 				}
 				foreach (var kv in TestOverrides) SetValue(kv.Key, kv.Value);
-				if (SpawnDistanceMax < SpawnDistanceMin) SpawnDistanceMax = SpawnDistanceMin;
+				// (islands appear well inside the unload distance: one put beyond it unloaded at once, before anyone saw it)
+				if (SpawnDistanceMax > UnloadDistance - SpawnUnloadGap)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] " + PoolPath + ": spawnDistanceMax " + SpawnDistanceMax.ToString("F0", CultureInfo.InvariantCulture) + " is kept at " + (UnloadDistance - SpawnUnloadGap).ToString("F0", CultureInfo.InvariantCulture) +
+						" (" + SpawnUnloadGap.ToString("F0", CultureInfo.InvariantCulture) + " m inside unloadDistance " + UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) + ")");
+					SpawnDistanceMax = UnloadDistance - SpawnUnloadGap;
+				}
+				if (SpawnDistanceMin > SpawnDistanceMax) SpawnDistanceMin = SpawnDistanceMax;
 				WorldRules.OnPoolChanged(); // (host: the settings every player shares go out again if they changed)
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + PoolPath + ": " + ex.Message); }

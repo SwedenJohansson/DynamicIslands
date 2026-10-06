@@ -494,6 +494,15 @@ namespace DynamicIslands.Editor
 							if (blockers.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 6.25f)) { ok = false; raftThings++; break; }
 						}
 					if (!ok) continue;
+					// (nor under its outcrop round the passage: its rock buried Raft's crates and palms by the passage - CA23. The
+					// ellipse its measured footprint holds, a metre around)
+					Quaternion toDen = Quaternion.Inverse(Quaternion.Euler(0f, cave.Yaw, 0f));
+					float ax = cave.Info.Size.x * 0.5f + 1f, az = cave.Info.Size.z * 0.5f + 1f;
+					if (blockers.Any(x =>
+					{
+						Vector3 d = toDen * new Vector3(x.x - cave.Pivot.x, 0f, x.z - cave.Pivot.z) - new Vector3(cave.Info.Centre.x, 0f, cave.Info.Centre.z);
+						return d.x * d.x / (ax * ax) + d.z * d.z / (az * az) < 1f;
+					})) { raftThings++; continue; }
 					if (top - low > 5f) { bumpy++; continue; }
 					if (top - 0.3f > cave.Floor + 0.01f || top - 0.3f < cave.Floor - 0.01f) cave = PlaceDen(name, c, outward, top - 0.3f);
 					// Around it: land under the whole outcrop (not hanging over the sea)

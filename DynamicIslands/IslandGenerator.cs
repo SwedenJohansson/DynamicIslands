@@ -3035,7 +3035,10 @@ namespace DynamicIslands.Editor
 					Vector3 baseScale = proto != null ? proto.transform.localScale : Vector3.one;
 					// (all of its base on the ground: down to the lowest ground under it - on a slope the low side of a rock, a bush
 					// or a log stood in the air; then sunk as Raft sinks them: its big boulders stand a third of their size in the ground)
-					float y = flat ? ground.Surface(x, z0) - 0.2f : h - (kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0 ? 0f : BaseDrop(ground, x, z0, kind, cat, scale));
+					float y = flat ? ground.Surface(x, z0) - 0.2f : h - BaseDrop(ground, x, z0, kind, cat, scale);
+					// (ice at the shore lies flat at the waterline as Raft has it: down to the lowest ground under it but no lower than
+					// the sea - set at the ground under its middle, its low side stood in the air over a sloping beach)
+					if (kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0) y = Mathf.Min(h, Mathf.Max(y, Sea));
 					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
 					if (!flat) y = Mathf.Max(y, LowestShowing(kind, scale, ground.Surface(x, z0), 0.35f)); // (never out of sight)
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
@@ -3337,6 +3340,16 @@ namespace DynamicIslands.Editor
 			return PlaceableCatalog.ApproxSize(name) * Mathf.Max(Mathf.Abs(ls.x), Mathf.Max(Mathf.Abs(ls.y), Mathf.Abs(ls.z)));
 		}
 
+		/// <summary>How far an object's body reaches from its middle across the ground (its meshes' bounds as placed, the wider
+		/// way; 0 if unknown).</summary>
+		static float BodyReach(IslandObject o)
+		{
+			Bounds b;
+			if (!PlaceableCatalog.LocalBounds(o.Name, out b)) return 0f;
+			Vector3 c = Vector3.Scale(b.center, o.Scale), e = Vector3.Scale(b.extents, o.Scale);
+			return new Vector2(c.x, c.z).magnitude + Mathf.Max(Mathf.Abs(e.x), Mathf.Abs(e.z));
+		}
+
 		/// <summary>How close things under water may stand.</summary>
 		static float SeaFootprint(string cat, float size)
 		{
@@ -3619,10 +3632,19 @@ namespace DynamicIslands.Editor
 
 			// Loot boxes: out in the open, or tucked in next to a tree, bush or rock; now and then sunken
 			var hideBy = new List<int>();
+			// (rocks by how far their body reaches, not their spacing footprint - a third of their size, at most 4 m: a box
+			// tucked in by a 12 m boulder, or put in the open next to one, lay inside it - CA21)
+			var body = new Dictionary<int, float>();
+			var rocks = new List<Vector3>();
 			for (int i = 0; i < owners.Count; i++)
 			{
 				IslandObject o = owners[i];
 				if (o != null && !spots.Removed[i] && o.Position.y > Sea + 0.6f && !o.Name.StartsWith("Pickup_")) hideBy.Add(i);
+				if (o == null || spots.Removed[i] || (cats[i] != CatRocks && cats[i] != CatSeaRocks)) continue;
+				float reach = BodyReach(o);
+				if (reach <= spots.Spots[i].z) continue;
+				body[i] = reach;
+				rocks.Add(new Vector3(o.Position.x, o.Position.z, reach));
 			}
 			for (int i = 0; i < s.Loot; i++)
 			{
@@ -3640,7 +3662,10 @@ namespace DynamicIslands.Editor
 					}
 					else if (s.LootHidden && hideBy.Count > 0 && tries < 150)
 					{
-						Vector3 by = spots.Spots[hideBy[rnd.Next(hideBy.Count)]];
+						int byIndex = hideBy[rnd.Next(hideBy.Count)];
+						Vector3 by = spots.Spots[byIndex];
+						float reach;
+						if (body.TryGetValue(byIndex, out reach)) by.z = reach;
 						float a = (float)rnd.NextDouble() * Mathf.PI * 2f, d = by.z + 0.9f + (float)rnd.NextDouble() * 0.8f;
 						p = new Vector2(by.x + Mathf.Cos(a) * d, by.y + Mathf.Sin(a) * d);
 					}
@@ -3655,6 +3680,7 @@ namespace DynamicIslands.Editor
 					float above = ground.At(p.x, p.y) - Sea;
 					if (!sunken && (above < 0.6f || ground.Slope(p.x, p.y) > 25f)) continue;
 					if (!s.LootHidden && !sunken && !spots.Free(p.x, p.y, 0.8f)) continue;
+					if (rocks.Any(r => (r.x - p.x) * (r.x - p.x) + (r.y - p.y) * (r.y - p.y) < (r.z + 0.5f) * (r.z + 0.5f))) continue;
 					spot = p;
 				}
 				if (!spot.HasValue) continue;
@@ -3743,8 +3769,9 @@ namespace DynamicIslands.Editor
 				Style = s.Style == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(s.Style),
 			};
 			file.Objects = PlanAll(s, metres, area);
+			var planned = new HashSet<IslandObject>(file.Objects);
 			List<string> built = GenBuildings.Apply(file, s);
-			KeyValuePair<int, int> gathered = GenGather.Apply(file, s, s.Seed);
+			KeyValuePair<int, int> gathered = GenGather.Apply(file, s, s.Seed, planned);
 			if (gathered.Key + gathered.Value > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + gathered.Key + " things to gather on the land, " + gathered.Value + " in the shallows");
 			if (built.Count > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + string.Join(", ", built.ToArray()));
 			if (s.Levels) file.Props[IslandProps.Levels] = "on";
