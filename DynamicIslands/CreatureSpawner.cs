@@ -991,4 +991,44 @@ namespace DynamicIslands.Editor
 
 		#endregion
 	}
+
+	/// <summary>
+	/// AU61: a game mode that takes players' damage away (PlayerSpecificVariables.negateOutgoingPlayerDamage: Raft's
+	/// Network_Host.DamageEntity then makes every hit on an enemy 0) would leave an island's kill steps and lairs that can
+	/// never be done, and no EXP. None of Raft's own modes has it on (Peaceful, Easy, Normal, Hard and Creative, read from
+	/// Raft's game files 2026-10-06 - in Peaceful the monsters are tame, they don't fight back), but another mod's mode
+	/// could: for a player's hit on an island creature it is off, so the island's animals still fall to players' hits.
+	/// The rest of what the mode does to the hit (Hard's x0.8 for players' hits on monsters) stays: Raft applies it on the
+	/// hitting player's machine, before the hit goes to the host, as for its own islands.
+	/// First: the hit's EXP (LevelDamagePatch, last) reads the switch as Raft will.
+	/// </summary>
+	[HarmonyPatch(typeof(Network_Host), "DamageEntity")]
+	static class IslandCreatureHitPatch
+	{
+		[HarmonyPriority(Priority.First)]
+		static void Prefix(Network_Entity entity, EntityType damageInflictorEntityType, out PlayerSpecificVariables __state)
+		{
+			__state = null;
+			try
+			{
+				if (entity == null || damageInflictorEntityType != EntityType.Player || entity.entityType != EntityType.Enemy) return;
+				SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+				PlayerSpecificVariables v = mode != null ? mode.playerSpecificVariables : null;
+				if (v == null || !v.negateOutgoingPlayerDamage) return;
+				AI_NetworkBehaviour ai = entity.GetComponentInParent<AI_NetworkBehaviour>();
+				if (ai == null) ai = entity.GetComponentInChildren<AI_NetworkBehaviour>();
+				if (!CreatureSpawner.IsOnCustomIsland(ai)) return;
+				v.negateOutgoingPlayerDamage = false;
+				__state = v;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] A hit on an island creature: " + e.Message); }
+		}
+
+		// (a Finalizer: the mode gets its switch back also when Raft's DamageEntity throws)
+		static Exception Finalizer(Exception __exception, PlayerSpecificVariables __state)
+		{
+			if (__state != null) __state.negateOutgoingPlayerDamage = true;
+			return __exception;
+		}
+	}
 }

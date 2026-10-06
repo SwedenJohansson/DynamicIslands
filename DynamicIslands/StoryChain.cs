@@ -367,9 +367,42 @@ namespace DynamicIslands.Editor
 				Banner(title, text);
 				try { StoryBook.AddPage("storyfreq:" + r.Id, title, text.Replace("\n", " "), ""); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e.Message); }
 			}
-			else if (r.Where == "sailing")
-				due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(StableHash(r.Id + SaveAndLoad.WorldGuid)).NextDouble() * 1500f;
+			else if (r.Where == "sailing") DueFromNow(r);
 			Changed();
+		}
+
+		/// <summary>A rule by chance comes up 0.3 to 1.8 km of sailing from now (the same distance for the rule in this world).</summary>
+		static void DueFromNow(IntroRule r)
+		{
+			due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(StableHash(r.Id + SaveAndLoad.WorldGuid)).NextDouble() * 1500f;
+		}
+
+		/// <summary>
+		/// Host: islands were taken out of the world (RemoveIsland, IslandWorldState.RemoveIds). A chain step's island that
+		/// is gone while its step isn't done was never brought again - Brought stayed set, so the rule skipped it and the step
+		/// could never be done: the story stopped for good (AU50). Such a rule is "not brought" again and brings its island
+		/// once more when its moment comes: at once (ahead / near), on the Receiver when it is tuned to the frequency again,
+		/// or by chance after some more sailing. A rule with another island of its own still in the world, or whose step is
+		/// done, keeps it as it is.
+		/// </summary>
+		internal static void OnIslandsRemoved(IEnumerable<IslandWorldState.Entry> gone)
+		{
+			if (!Raft_Network.IsHost || !HasSnapshot || gone == null) return;
+			var ids = new HashSet<string>(gone.Where(e => e != null && !string.IsNullOrEmpty(e.Rule)).Select(e => e.Rule), StringComparer.OrdinalIgnoreCase);
+			if (ids.Count == 0) return;
+			bool changed = false;
+			foreach (IntroRule r in Rules.Where(x => x.InStory && ids.Contains(x.Id) && Brought.Contains(x.Id)).ToList())
+			{
+				if (Done.Contains(RuleKey(r.Id))) continue;
+				if (IslandWorldState.Islands.Any(e => e.Rule.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) continue;
+				Brought.Remove(r.Id);
+				retryAt.Remove(r.Id);
+				if (r.Where == "sailing" && Fired.Contains(r.Id)) DueFromNow(r);
+				Log("The island of '" + r.Id + "' was removed from the world before its step was done: it comes again " +
+					(r.Where == "receiver" ? "when the Receiver is tuned to " + FrequencyOf(r.Id) : r.Where == "sailing" ? "by chance while sailing" : "now"));
+				changed = true;
+			}
+			if (changed) Changed();
 		}
 
 		static void TryBring(IntroRule r)
