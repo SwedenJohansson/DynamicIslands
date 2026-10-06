@@ -70,6 +70,7 @@ namespace DynamicIslands
 				Check(ref ok, plane != null && plane.GetComponentsInChildren<Renderer>(true).All(r => !r.enabled), "the blue sea plane is hidden");
 				Check(ref ok, RaftSkySea.Sky != null && (RenderSettings.skybox == RaftSkySea.Sky.skyMaterial || RaftSkySea.Sky.options.shaderMode == 1), "Raft's sky material is the sky");
 				Check(ref ok, !RenderSettings.fog, "no Unity haze over Raft's own fog");
+				Check(ref ok, RaftSkySea.FogOff, "Raft's sea fog stays off (the water camera doesn't turn it on again: the island isn't hidden in haze)");
 
 				// The Light list: the sky's hour, held (Raft's clock stopped)
 				int before = EditorLighting.Current;
@@ -100,6 +101,8 @@ namespace DynamicIslands
 				RaftSkySea.Toggle();
 				yield return null;
 				Check(ref ok, RaftSkySea.Enabled && RaftSkySea.Showing && wc != null && wc.enabled && plane.GetComponentsInChildren<Renderer>(true).All(r => !r.enabled), "on again in the editor: Raft's sky and sea shown");
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, RaftSkySea.FogOff, "on again: Raft's sea fog still off");
 				EditorLighting.Apply(before, false);
 				Check(ref ok, exceptions == 0, "no errors with Raft's sky and sea in the editor (" + exceptions + (firstException != null ? ", first: " + firstException : "") + ")");
 

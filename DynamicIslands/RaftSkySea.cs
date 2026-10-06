@@ -220,8 +220,9 @@ namespace DynamicIslands.Editor
 			skyRoot.SetActive(on);
 			seaRoot.SetActive(on);
 			// (Raft's fog - the camera's AzureSkyFogScattering - is set for playing at sea: from the editor's camera, a few
-			// hundred metres out, it hid the island in blue haze; the sky, sun and ocean stay)
+			// hundred metres out, it hid the island in blue haze; the sky, sun and ocean stay - KeepFogOff)
 			foreach (Behaviour b in cameraEffects) if (b != null) b.enabled = on && b.GetType().Name != "AzureSkyFogScattering";
+			if (on) KeepFogOff();
 			foreach (Light l in editorSuns) if (l != null) l.enabled = !on;
 			GameObject plane = DynamicIslands.WaterPlane;
 			if (plane != null) foreach (Renderer r in plane.GetComponentsInChildren<Renderer>(true)) r.enabled = !on;
@@ -241,6 +242,42 @@ namespace DynamicIslands.Editor
 			}
 			// (the time of day again, in the sky now shown)
 			EditorLighting.Apply(EditorLighting.Current, false);
+		}
+
+		static readonly FieldInfo waterCameraImageEffects = typeof(UltimateWater.WaterCamera).GetField("_ImageEffects", BindingFlags.Instance | BindingFlags.NonPublic);
+		static bool fogWarned;
+
+		/// <summary>
+		/// Keeps Raft's fog (the camera's AzureSkyFogScattering) off. Switching it off is not enough: Raft's WaterCamera turns
+		/// it on again before every frame whenever the camera is above the water (OnPreCull: fog on unless fully under water)
+		/// - and the main menu's fog is a thick sea fog (its sky profile's fog distance is ~220 m), which hid the editor's
+		/// island in blue-white haze from a few hundred metres. The WaterCamera does that only while it has a list of image
+		/// effects; the menu camera has none (an empty list), so the list is taken away (null) - nothing else uses it.
+		/// (WaterCamera.OnEnable makes the list again: so here, every frame.)
+		/// </summary>
+		internal static void KeepFogOff()
+		{
+			if (camera == null) return;
+			UltimateWater.WaterCamera wc = camera.GetComponent<UltimateWater.WaterCamera>();
+			if (wc != null && waterCameraImageEffects != null)
+			{
+				Array list = waterCameraImageEffects.GetValue(wc) as Array;
+				if (list != null && list.Length == 0) waterCameraImageEffects.SetValue(wc, null);
+				else if (list != null && !fogWarned) { fogWarned = true; Debug.LogWarning("[CUSTOM ISLANDS] Raft's sky and sea: the water camera has image effects - Raft's fog may show in the editor"); }
+			}
+			foreach (Behaviour b in cameraEffects) if (b != null && b.enabled && b.GetType().Name == "AzureSkyFogScattering") b.enabled = false;
+		}
+
+		/// <summary>Tests: Raft's fog is off on the editor's camera (and the water camera won't turn it on again).</summary>
+		internal static bool FogOff
+		{
+			get
+			{
+				if (camera == null) return false;
+				Behaviour fog = cameraEffects.FirstOrDefault(b => b != null && b.GetType().Name == "AzureSkyFogScattering");
+				UltimateWater.WaterCamera wc = camera.GetComponent<UltimateWater.WaterCamera>();
+				return (fog == null || !fog.enabled) && (wc == null || waterCameraImageEffects == null || waterCameraImageEffects.GetValue(wc) == null);
+			}
 		}
 
 		/// <summary>EditorLighting's time of day in Raft's sky; false when Raft's sky isn't shown (EditorLighting lights
@@ -263,6 +300,7 @@ namespace DynamicIslands.Editor
 			float y = DynamicIslands.EditorSeaInWorld;
 			if (!Mathf.Approximately(p.y, y)) seaRoot.transform.position = new Vector3(p.x, y, p.z);
 			sky.timeOfDay.hour = hour;
+			KeepFogOff();
 			RenderSettings.ambientMode = AmbientMode.Trilight;
 			RenderSettings.ambientSkyColor = sky.ambientSkyColor;
 			RenderSettings.ambientEquatorColor = sky.ambientEquatorColor;
