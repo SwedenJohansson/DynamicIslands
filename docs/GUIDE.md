@@ -273,7 +273,7 @@ finished step.*
 ### The journal (J)
 
 The **journal** is the crew's book of the custom islands' story: what you found on them and what you carry for them.
-Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (J does nothing while you type in the chat
+Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
 or console, while a note is open, or in the editor.) Its key is also shown at the hotbar: after Raft's notebook tab
 (**T**) come the journal's tab (**J**, an open book) and, while the level up system is on in the world, the stats
 page's (**K**, a star).
@@ -602,6 +602,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   reach them easily, 0.6-6 m down just off the shore: sand, clay, stones, metal and copper ore, scrap, giant clams and
   seaweed. At the top about 10 things per 1000 m² of land and 30 per 1000 m² of shallows. In recipes: `gen Gather=1
   Shallows=0.5`.
+  **Which kinds:** under each slider the style's kinds can be switched off one by one (**All kinds** puts them back);
+  **How far out** (2-20 m deep, 6 by default) sets how deep the shallow finds may lie. The world randomizer's islands
+  get both by its level, and **Defaults...** sets them for islands generated while sailing (off unless you turn them up). In recipes: `GatherOff=pine,clam ShallowsDepth=12`.
 - **Life under water:** corals, sea vines, kelp, rocks, stones, ores, giant clams and sunken barrels, placed like
   around Raft's own islands: each kind as close to the shore as there (boulders by the shore, rock formations on the
   drop-off) and as thick. The corals grow in **reefs** as Raft's do: a few tight patches some 15 m across (one per
@@ -810,6 +813,11 @@ plans and quest rewards), the plans and other islands whose rules bring it, wait
 `spawnpool.txt` line and the copies kept for saved worlds. A deleted island isn't erased: it is moved to `Mods\DynamicIslands\deleted` -
 move the file back into `Mods\DynamicIslands` to get it back. Copies kept for saved worlds (`<name>_<hash>`) aren't
 in the list: the island library's **Tidy up** clears the ones nothing uses.
+
+**Give my worlds this version.** A saved world keeps playing the version of an island it was saved with. When you save
+an island that worlds play in an older version, the editor offers **Give my worlds this version** (also in **My islands**
+for the picked island): those worlds then play the island as you saved it now, and the old copies go to
+`deleted\kept versions`. **Keep their version** leaves them as they are.
 
 **My islands...** (in the Islands window) lists every island file at once: where it came from (**Mine**, the island
 **Library**, **Generated** while sailing, copies **From hosts**), how many saved worlds use it (hover for their names)
