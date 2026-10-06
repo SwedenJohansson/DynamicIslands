@@ -93,8 +93,9 @@ namespace DynamicIslands.Editor
 		public bool Caves;
 		/// <summary>A quest made with the island: how many steps (0 = none; GenQuest).</summary>
 		public int QuestSteps;
-		/// <summary>Raft's features on the island (GenFeatures, ROADMAP LM12): how many, 0-6 - a cache behind vines, buried
-		/// treasure, a zipline, a strongbox behind a code panel, wild beehives, dirt for the shovel.</summary>
+		/// <summary>Raft's features on the island (GenFeatures, ROADMAP LM12): how many, 0-10 - a cache behind vines, buried
+		/// treasure, a zipline, a strongbox behind a code panel, wild beehives, dirt for the shovel; past six Raft's story
+		/// machinery (LM12): a generator and a radio, an engine, a cage, a lift.</summary>
 		public int Features;
 		/// <summary>One of Raft's story islands rebuilt from its own pieces: a design id, "&lt;scene&gt;:any" for one of its
 		/// designs at random, or "" (Remakes; the Randomize existing tab).</summary>
@@ -828,7 +829,7 @@ namespace DynamicIslands.Editor
 			}
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
 			names.AddRange(Remakes.NeededNames(s));
-			if (s.Features > 0) names.AddRange(GenFeatures.Names);
+			if (s.Features > 0) names.AddRange(GenFeatures.NamesFor(s));
 			return names.Distinct().ToList();
 		}
 

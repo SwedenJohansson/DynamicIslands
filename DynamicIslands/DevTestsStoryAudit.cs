@@ -46,7 +46,7 @@ namespace DynamicIslands
 							string key = piece + "|" + type;
 							if (!seen.Add(key)) continue;
 							bool known = PlaceableCatalog.Known(piece);
-							bool working = known && (PlaceableCatalog.Working.IsMatch(piece) || PlaceableCatalog.IsHarvestableName(piece));
+							bool working = known && (PlaceableCatalog.Working.IsMatch(piece) || PlaceableCatalog.IsGatherName(piece) || ReadyPieces.Of(piece) != null);
 							lines.Add(PlaceableCatalog.SceneLabel(scene) + "\t" + piece + (piece != Clean(t.name) ? " / " + Clean(t.name) : "") + "\t" + type + "\t" + (known ? "yes" : "no") + "\t" + (working ? "yes" : "-"));
 						}
 					return Nothing();

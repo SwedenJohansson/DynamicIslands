@@ -12,7 +12,7 @@ namespace DynamicIslands
 	{
 		const string GatherAllIsland = "cigatherall";
 
-		[ConsoleCommand(name: "CIGatherAll", docs: "Dev, in game (host): every thing to gather of the editor (ROADMAP LM11) on one island - each picked up (or a tree chopped down) gives Raft's items, stays used after a reload, and is back after the regrow days")]
+		[ConsoleCommand(name: "CIGatherAll", docs: "Dev, in game (host): every thing to gather of the editor (ROADMAP LM11: also the snowy pine, seaweed, and those of Raft's story islands) on one island - each picked up (or a tree chopped down) gives Raft's items, stays used after a reload, and is back after the regrow days")]
 		public static void GatherAllCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GatherAllRoutine()); }
 
 		static IEnumerator GatherAllRoutine()
@@ -23,7 +23,8 @@ namespace DynamicIslands
 			bool ok = true;
 			yield return EnsureAlive();
 			yield return PlaceableCatalog.EnsureBuilt();
-			List<string> names = PlaceableCatalog.HarvestableNames.Where(n => n != PlaceableCatalog.RaftCrate).OrderBy(n => n).ToList();
+			// (every thing the editor lists under Things to gather, also those of Raft's other islands - loaded with their scene - LM11)
+			List<string> names = PlaceableCatalog.GatherNames().Where(n => n != PlaceableCatalog.RaftCrate).ToList();
 			yield return PlaceableCatalog.EnsureLoaded(names);
 			names = names.Where(n => PlaceableCatalog.Get(n) != null).ToList();
 			Check(ref ok, names.Count >= 25, names.Count + " things to gather in the catalog");

@@ -459,11 +459,17 @@ trees and rocks, Raft's 88 building blocks (to build huts or your own abandoned 
 on a raft, and the objects of Raft's story islands (they load the first time you open their category). **Search**
 finds objects in every category.
 
-**Things to gather** (in groups by the islands they suit: tropical, forest and snow, flowers, stone/clay/sand, dirt,
-under water) is the category of what a player can pick, cut or dig: palms, mangoes, pine and birch to cut,
-pineapples, melons and berry bushes, flowers, and Raft's finds on the sea floor - sand, clay, stone, iron and copper
-ore, scrap, giant clams, silver algae, seaweed - and Raft's **dirt spots** (the mounds its big islands have; players dig
-them with the shovel for dirt). They work for the player as on Raft's own islands. **Honey**: Raft has no wild hives
+**Things to gather** (in groups by the style of island they suit: tropical, snowy, desert, forest, volcanic, sea finds,
+finds on land - a thing that suits several styles is under each) is the category of what a player can pick, cut or
+dig: palms (also the small islands' palms), mangoes, banana trees, Tangaroa's trees, pines and birches to cut, a
+**snowy pine** to cut (Raft's pine wearing Temperance's snow), Caravan Town's acacias, pineapples, melons, strawberries,
+berry bushes, Balboa's mushrooms, flowers, Raft's finds on the sea floor - sand, clay, stone, iron and copper ore,
+scrap, giant clams, silver algae, **seaweed** - the finds lying on the story islands' land (stone, scrap, titanium ore,
+planks, plastic) and Raft's **dirt spots** (the mounds its big islands have; players dig them with the shovel for dirt).
+They work for the player as on Raft's own islands: picked, or cut with the axe, they give Raft's items and come back
+after the island's regrow days, the same for every player and after a reload. Raft has no date palm: desert islands
+get Raft's palms and acacias. Those from Raft's story islands (banana and Tangaroa trees, acacias, strawberries,
+mushrooms, the finds on land) load with their island's scene the first time they are wanted. **Honey**: Raft has no wild hives
 (its honey comes from the beehives players build), so "Loot & chests" has a **Wild beehive** - Raft's beehive holding
 three honeycombs, refilling after the island's regrow days like any chest.
 
@@ -674,11 +680,15 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   ![A generated quest](images/generator-quest.jpg)
   *A generated island with its quest: the castaway's note by the landing, a lookout, map pieces, the hoard at the top.*
 
-  **Raft's features**, 0 to 6 (same group): things Raft's story islands have the player do, different ones first - a
+  **Raft's features**, 0 to 10 (same group): things Raft's story islands have the player do, different ones first - a
   **cache behind vines** (it shows once the vines are cut with the machete), **buried treasure** for the metal detector
   and the shovel, a **zipline** from the island's top down to its beach, a **strongbox behind a code panel** (the code is
-  on a note elsewhere on the island), a **grove of wild beehives**, **dirt** for the shovel. An **explorer's chest** near
-  the shore holds the tools they need (machete, metal detector, shovel, zipline tool).
+  on a note elsewhere on the island), a **grove of wild beehives**, **dirt** for the shovel. Past six, Raft's story
+  machinery (ready pieces, chapter 16.8): a **generator** to start with Raft's generator part (in a mechanic's toolbox
+  elsewhere) and a **radio** beside it that then works and shows a supply drop, an **engine** to start with Raft's gas
+  tank (in a fuel crate) that shows a locker, a **chest in a cage** cut open with Raft's bolt cutters, a **lift** at the
+  foot of a cliff that carries players up. An **explorer's chest** near the shore holds the tools they need (machete,
+  metal detector, shovel, zipline tool, bolt cutters). Six or fewer give the same islands as before.
 - **My presets:** **Save these settings...** keeps them under a name; **Defaults** starts over.
 
 ![Under water, and a help popup](images/generator-underwater.jpg)
@@ -3159,19 +3169,21 @@ script that makes them do something (`CIStoryAudit` writes the list).
 
 | On Raft's islands | On your island |
 |---|---|
-| Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town) and its **dirt spots** |
+| Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town), its **dirt spots**, Tangaroa's banana trees, trees and strawberries, Caravan Town's acacias, Balboa's mushrooms and the finds on the story islands' land; a snowy pine to cut |
 | Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (23 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
 | Notes and notebook pages (68) | Notes, the journal and the quest book (chapters 7-8) |
 | Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door; **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
 | Animations, lights, sounds, particles, screen shake when something is used | Behaviours (move, turn, show/hide lamps), sound and atmosphere zones |
 | Trigger boxes | Trigger zones |
 | Enemy spawners that keep coming until a quest step (30) | Creature spots that come back, or a show action (an ambush) |
-| Elevators and lifts (23) | A moving platform (Behaviour: move), or **teleport the player** |
+| Elevators and lifts (23) | Ready **lifts**: Tangaroa's elevator and Varuna Point's skylifts go up 6 m when used and down on the next use, carrying the player standing on them (Behaviour: move, "Carries players" - any moving object can carry players); or **teleport the player** |
+| Generators, the radio and its battery, fuel and engine parts | Ready **generators** (Balboa's, Tangaroa's, Utopia's, Vasagatan's) start with Raft's generator part (used up) and send `power`; **radios** (the radio tower's, Balboa's) work with power - a started generator or Raft's battery charger part - and send `radio`; Vasagatan's **engine** starts with Raft's gas tank and sends `engine`. Started once, they run for good. The signals open what you like (show a cache, a quest step) |
+| Cages, security cameras | Ready **cages** (Utopia's dog cage, the radio tower's shark cage) open (go) for a crew with Raft's bolt cutters, sending `cage`; the radio tower's **camera** sweeps back and forth |
 | Zipline lines (7) | Raft's **zipline lines**, ridden with the zipline tool, their far end set in the object panel |
 | The machete's vines (Balboa) | Raft's **choppable vines**, cut with the machete (kept for the next vines) |
 | Treasure for the metal detector and the shovel (Caravan Town, 175 dig piles) | **Buried treasure** (Raft's own treasure points) |
-| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music |
+| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music; Utopia's boss room doors as scenery a defeat event can hide. Raft's own arenas (Olof's phases, the hyena boss) run on its story characters and are not on custom islands |
 | The Receiver's frequencies and the story chain | World plans and Raft's story chain (chapters 10-11) |
 | Character unlocks, cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
 | Keypads with a code (Tangaroa, Vasagatan) | A **keypad code** on any usable object (chapter 7) |
-| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Build them as **sequences**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). Raft's own mini-games are on the roadmap |
+| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Ready **turning mirrors** (Temperance's): each use turns one a quarter and sends `mirror`; checks on their state (open = turned) make a mirror puzzle. Otherwise build them as **sequences**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). Raft's own mini-games (the laser beam, wires, pipes, scales, claw crane) need their story scripts and are on the roadmap |

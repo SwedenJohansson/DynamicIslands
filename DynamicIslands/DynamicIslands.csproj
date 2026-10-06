@@ -210,6 +210,7 @@
     <Compile Include="DevTestsShovelProbe.cs" />
     <Compile Include="DevTestsGenGather.cs" />
     <Compile Include="DevTestsScatter.cs" />
+    <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="ScatterTool.cs" />

@@ -117,6 +117,30 @@ namespace DynamicIslands.Editor
 		/// now and then a cooking recipe or a mystery package, as there.</summary>
 		public const string RaftCrate = "Pickup_Landmark_LandmarkCrateRaft";
 		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft|DirtPickup|Beehive)$");
+		/// <summary>
+		/// More of Raft's things to gather (ROADMAP LM11, 2026-10-06): the small islands' palms, Caravan Town's acacias,
+		/// Tangaroa's trees and strawberries, Balboa's mushrooms and the finds lying on the story islands' land (stone,
+		/// scrap, titanium, planks, plastic). Taken with their gameplay like the others, but never core objects: the
+		/// generator's islands stay the same for a seed (it only uses core objects).
+		/// </summary>
+		static readonly Regex ExtraGatherObjects = new Regex(@"^Pickup_Landmark_(Palmtree \d+|Tree_AcaciaTree_Big \d+|Tree_Tangaroa_1|Strawberry|Mushroom \d+|Rock_2_Land|Scrap \d+_Land|Titanium_Land|Plank_Land|Plastic\d+_Land)$");
+		/// <summary>A snowy pine to cut (LM11): Raft's snowy islands' pines are scenery only, so this is Raft's pine (its
+		/// pickup, tree scripts and colliders: cut with the axe, gives what Raft's pine gives, regrows) wearing Temperance's
+		/// snowy pine.</summary>
+		public const string SnowyPine = "Pickup_Landmark_Tree_PineSnowy";
+		/// <summary>Raft's seaweed clump (its pickup gives seaweed) - listed with the things to gather (LM11).</summary>
+		public const string Seaweed = "SeaVine3_klump";
+		/// <summary>Labels of things to gather whose names say little ("Tree_AcaciaTree_Big 1").</summary>
+		static readonly Dictionary<string, string> gatherLabels = new Dictionary<string, string>
+		{
+			{ SnowyPine, "Snowy Pine Tree" }, { Seaweed, "Seaweed" },
+			{ "Pickup_Landmark_Tree_AcaciaTree_Big 1", "Acacia Tree 1" }, { "Pickup_Landmark_Tree_AcaciaTree_Big 3", "Acacia Tree 2" },
+			{ "Pickup_Landmark_Tree_Tangaroa_1", "Tangaroa Tree" }, { "Pickup_Landmark_Tree_Banana", "Banana Tree" },
+			{ "Pickup_Landmark_Palmtree 1", "Small Palm 1" }, { "Pickup_Landmark_Palmtree 2", "Small Palm 2" }, { "Pickup_Landmark_Palmtree 3", "Small Palm 3" }, { "Pickup_Landmark_Palmtree 4", "Small Palm 4" },
+			{ "Pickup_Landmark_Rock_2_Land", "Stone (on land)" }, { "Pickup_Landmark_Titanium_Land", "Titanium Ore (on land)" }, { "Pickup_Landmark_Plank_Land", "Planks (on land)" },
+			{ "Pickup_Landmark_Plastic3_Land", "Plastic (on land)" }, { "Pickup_Landmark_Plastic6_Land", "Plastic Pile (on land)" },
+			{ "Pickup_Landmark_Scrap 1_Land", "Scrap 1 (on land)" }, { "Pickup_Landmark_Scrap 2_Land", "Scrap 2 (on land)" }, { "Pickup_Landmark_Scrap 3_Land", "Scrap 3 (on land)" }, { "Pickup_Landmark_Scrap 4_Land", "Scrap 4 (on land)" },
+		};
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
@@ -371,10 +395,11 @@ namespace DynamicIslands.Editor
 					foreach (Transform t in AllTransforms(scene))
 					{
 						string hn = CleanName(t.name);
-						if (!HarvestableObjects.IsMatch(hn) || harvestables.ContainsKey(hn)) continue;
+						if (!IsGatherName(hn) || harvestables.ContainsKey(hn)) continue;
 						if (whitelist != null && !whitelist.Contains(hn)) continue;
 						AddHarvestable(hn, t);
-						core.Add(hn);
+						// (the more recent ones aren't core: the generator's islands stay as they were - LM11)
+						if (HarvestableObjects.IsMatch(hn)) core.Add(hn);
 					}
 
 				// Ground textures (and footstep sounds) for the island styles
@@ -386,6 +411,9 @@ namespace DynamicIslands.Editor
 			}
 
 			AddRaftBuildables(whitelist);
+			AddSnowyPine(whitelist);
+			// (Raft's seaweed with the things to gather: its pickup gives seaweed - LM11)
+			if (prototypes.ContainsKey(Seaweed)) categories[Seaweed] = HarvestableCategory;
 
 			if (whitelist == null)
 			{
@@ -570,6 +598,47 @@ namespace DynamicIslands.Editor
 			categories[name] = HarvestableCategory;
 			// (the abandoned rafts' crate: with the chests, where builders look for loot)
 			if (name == RaftCrate) { categories[name] = ContentCatalog.LootCategory; labels[name] = "Abandoned raft crate"; }
+		}
+
+		/// <summary>
+		/// The snowy pine to cut (ROADMAP LM11): a copy of Raft's pine (Balboa's: its pickup, tree scripts and colliders, so
+		/// the axe cuts it, it gives Raft's pine's items and regrows as Raft's trees do, in multiplayer too) whose own look
+		/// is switched off, wearing Temperance's snowy pine (scenery in Raft) scaled to the pine's height. The look sits
+		/// where the pine's own look was, so what hides the cut tree hides it too.
+		/// </summary>
+		static void AddSnowyPine(HashSet<string> whitelist)
+		{
+			const string pineName = "Pickup_Landmark_Tree_Pine", lookName = "TP_PineTreeSnowy";
+			GameObject pine, snowy = Get(lookName);
+			if (!harvestables.TryGetValue(pineName, out pine) || snowy == null || harvestables.ContainsKey(SnowyPine)) return;
+			if (whitelist != null && !whitelist.Contains(SnowyPine)) return;
+			try
+			{
+				Bounds pb, sb;
+				if (!LocalBounds(pineName, out pb) || !LocalBounds(lookName, out sb) || sb.size.y < 0.1f) return;
+				GameObject clone = UnityEngine.Object.Instantiate(pine, container.transform);
+				clone.name = SnowyPine;
+				clone.transform.localPosition = Vector3.zero;
+				// Where the pine's look hangs (a child "Model" on Raft's trees), else the tree itself
+				Transform holder = clone.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t != clone.transform && t.name == "Model") ?? clone.transform;
+				foreach (Renderer r in clone.GetComponentsInChildren<Renderer>(true))
+					if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+				GameObject look = UnityEngine.Object.Instantiate(snowy, container.transform);
+				look.name = "CI_SnowyLook";
+				StripScripts(look);
+				foreach (Collider c in look.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.DestroyImmediate(c);
+				// (as tall as Raft's pine, upright as in Temperance, standing where the pine stands)
+				float k = Mathf.Clamp(pb.size.y * clone.transform.lossyScale.y / (sb.size.y * snowy.transform.lossyScale.y), 0.3f, 3f);
+				look.transform.rotation = snowy.transform.rotation;
+				look.transform.localScale = snowy.transform.localScale * k;
+				look.transform.position = clone.transform.position + Vector3.up * (pb.min.y * clone.transform.lossyScale.y - sb.min.y * snowy.transform.lossyScale.y * k);
+				look.transform.SetParent(holder, true);
+				harvestables.Add(SnowyPine, clone);
+				prototypes[SnowyPine] = clone;
+				categories[SnowyPine] = HarvestableCategory;
+				sizes.Remove(SnowyPine);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not make the snowy pine: " + e.Message); }
 		}
 
 		/// <summary>
@@ -774,6 +843,20 @@ namespace DynamicIslands.Editor
 
 		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
 
+		/// <summary>Every thing to gather the catalog takes with its gameplay: Raft's harvestables, also the ones added for
+		/// LM11 (not core), and the snowy pine.</summary>
+		internal static bool IsGatherName(string name) { return name != null && (HarvestableObjects.IsMatch(name) || ExtraGatherObjects.IsMatch(name) || name == SnowyPine); }
+
+		/// <summary>
+		/// Every thing to gather the editor offers (ROADMAP LM11), loaded or not: the "Things to gather" category - Raft's
+		/// harvestables, seaweed, the snowy pine, and those of Raft's other islands (loaded with their scene when wanted).
+		/// </summary>
+		public static List<string> GatherNames()
+		{
+			return prototypes.Keys.Where(n => CategoryOf(n) == HarvestableCategory && !hidden.Contains(n))
+				.Concat(index.Values.Where(e => e.Category == HarvestableCategory && !e.Hidden).Select(e => e.Name)).Distinct().OrderBy(n => n).ToList();
+		}
+
 		/// <summary>Whether the editor's object list has the object (loaded, or in the index of Raft's island scenes).</summary>
 		internal static bool Known(string name) { return !string.IsNullOrEmpty(name) && (prototypes.ContainsKey(name) || index.ContainsKey(name)); }
 
@@ -787,8 +870,9 @@ namespace DynamicIslands.Editor
 			public bool Harvestable, Hidden;
 		}
 
-		// (3: Raft's quest item pickups, its wild beehive and the story islands' finds - ROADMAP LM12, 2026-10-05)
-		const int IndexVersion = 4;
+		// (3: Raft's quest item pickups, its wild beehive and the story islands' finds - ROADMAP LM12, 2026-10-05;
+		// 5: more things to gather - palms, acacias, Tangaroa's trees, strawberries, mushrooms, finds on land - LM11, 2026-10-06)
+		const int IndexVersion = 5;
 		static readonly Dictionary<string, IndexEntry> index = new Dictionary<string, IndexEntry>();
 		/// <summary>Scenes whose on-demand objects are loaded.</summary>
 		static readonly HashSet<string> loadedScenes = new HashSet<string>();
@@ -849,6 +933,18 @@ namespace DynamicIslands.Editor
 			string text = null;
 			try { if (File.Exists(IndexPath)) text = File.ReadAllText(IndexPath); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + IndexPath + ": " + e.Message); }
+			// (an index the editor made with an older version of the mod: the one the mod ships, when that one is current -
+			// so a mod update that adds objects doesn't wait for the editor's scan)
+			if (text != null && HeaderOf(text) != IndexVersion + " raft=" + Application.version)
+			{
+				try
+				{
+					byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
+					string mine = shipped != null && shipped.Length > 0 ? Encoding.UTF8.GetString(shipped) : null;
+					if (mine != null && HeaderOf(mine) == IndexVersion + " raft=" + Application.version) text = mine;
+				}
+				catch { }
+			}
 			if (text == null)
 			{
 				// The mod ships an index made with the current Raft, so islands can be spawned before the editor was opened
@@ -874,6 +970,13 @@ namespace DynamicIslands.Editor
 				if (f.Length < 3 || prototypes.ContainsKey(f[0]) && core.Contains(f[0])) continue;
 				index[f[0]] = new IndexEntry { Name = f[0], Scene = f[1], Category = f[2], Harvestable = f.Length > 3 && f[3].Contains("h"), Hidden = f.Length > 3 && f[3].Contains("x") };
 			}
+		}
+
+		/// <summary>"&lt;version&gt; raft=&lt;Raft's version&gt;" from an index file's first line ("" when it has none).</summary>
+		static string HeaderOf(string text)
+		{
+			Match m = Regex.Match(text ?? "", @"^# CustomIslands object index (\d+) raft=([^\r\n]*)");
+			return m.Success ? m.Groups[1].Value + " raft=" + m.Groups[2].Value.Trim() : "";
 		}
 
 		static void WriteIndex()
@@ -935,7 +1038,7 @@ namespace DynamicIslands.Editor
 					foreach (Transform t in AllTransforms(opened.Scene))
 					{
 						string hn = CleanName(t.name);
-						if (!HarvestableObjects.IsMatch(hn) || core.Contains(hn) || found.ContainsKey(hn)) continue;
+						if (!IsGatherName(hn) || core.Contains(hn) || found.ContainsKey(hn)) continue;
 						found[hn] = new IndexEntry { Name = hn, Scene = sceneName, Category = HarvestableCategory, Harvestable = true };
 						count++;
 					}
@@ -1026,7 +1129,8 @@ namespace DynamicIslands.Editor
 			if (!IndexIsCurrent && !staleTold && !DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded)
 			{
 				staleTold = true;
-				DynamicIslands.Notify("Raft was updated since the mod's object index was made: open the island editor once to scan Raft's islands again (until then an object of a custom island may be missing)", true);
+				DynamicIslands.Notify((indexRaftVersion == Application.version ? "The mod's object index is from an older version of the mod" : "Raft was updated since the mod's object index was made") +
+					": open the island editor once to scan Raft's islands again (until then an object of a custom island may be missing)", true);
 			}
 			return got;
 		}
@@ -1067,7 +1171,7 @@ namespace DynamicIslands.Editor
 			foreach (Transform t in AllTransforms(opened.Scene))
 			{
 				string hn = CleanName(t.name);
-				if (!wanted.Contains(hn) || prototypes.ContainsKey(hn) || !HarvestableObjects.IsMatch(hn)) continue;
+				if (!wanted.Contains(hn) || prototypes.ContainsKey(hn) || !IsGatherName(hn)) continue;
 				AddHarvestable(hn, t);
 				harvestables[hn].SetActive(true);
 			}
@@ -1212,7 +1316,7 @@ namespace DynamicIslands.Editor
 		public static string DisplayName(string name)
 		{
 			string label;
-			if (labels.TryGetValue(name, out label)) return label;
+			if (labels.TryGetValue(name, out label) || gatherLabels.TryGetValue(name, out label)) return label;
 			Match hm = harvestableLabel.Match(name);
 			if (hm.Success) name = hm.Groups[2].Success ? hm.Groups[2].Value + " Tree " + hm.Groups[3].Value : hm.Groups[4].Success ? hm.Groups[4].Value + " Tree" : hm.Groups[5].Value;
 			string s = displayPrefix.Replace(name, "").Replace('_', ' ').Trim();
