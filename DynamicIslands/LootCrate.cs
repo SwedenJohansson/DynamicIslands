@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	{
 		public const int LootKeyBase = 0x20000;
 
-		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
+		internal static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
 
 		/// <summary>The world's entry of the island this object is part of (null in the editor).</summary>
 		public static IslandWorldState.Entry EntryOf(Transform t)
@@ -62,21 +62,55 @@ namespace DynamicIslands.Editor
 			AfterChange(e, key, day);
 		}
 
-		/// <summary>Host: an island loaded; chests that were looted long enough ago fill up again (unless the builder said never).</summary>
+		/// <summary>
+		/// Host: an island loaded; chests that were looted long enough ago fill up again (unless the builder said never),
+		/// and zones re-arm. A zone with guards (a lair's, a den's: creatures waiting for it) re-arms with them: its guards
+		/// that come back are back in full with it, and a zone whose guards are all gone for good (the builder said they
+		/// never come back) stays as it is - re-armed, it woke nothing and said its message again (AU70).
+		/// </summary>
 		public static void OnIslandReady(IslandWorldState.Entry e)
 		{
 			if (e == null || e.Root == null || !Raft_Network.IsHost) return;
 			int days = IslandRules.RegrowDays(e);
 			if (days <= 0) return;
-			var keys = e.Root.GetComponentsInChildren<LootCrate>(true).Where(c => c.Refills).Select(c => c.StateKey)
-				.Concat(e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver).Select(z => z.StateKey)).ToList();
-			foreach (int key in keys)
+			foreach (LootCrate crate in e.Root.GetComponentsInChildren<LootCrate>(true).Where(c => c.Refills)) Refill(e, crate.StateKey, days);
+			CreatureSpawnPoint[] spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true);
+			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver))
 			{
-				ObjectState s;
-				if (!e.State.TryGetValue(key, out s) || Today - s.Day < days) continue;
-				e.State.Remove(key);
-				IslandNetwork.SendUsed(e.Id, key, -1);
+				if (!IsDue(e, zone.StateKey, days)) continue;
+				string id = zone.Id;
+				List<CreatureSpawnPoint> guards = id.Length == 0 ? new List<CreatureSpawnPoint>() :
+					spots.Where(p => p.Kind != null && ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == id).ToList();
+				if (guards.Count > 0 && guards.All(p => GoneForGood(e, p)))
+				{
+					Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': zone '" + id + "' stays spent - its guards don't come back");
+					continue;
+				}
+				// (the guards that come back come back with it: they may have been killed days after it fired)
+				foreach (CreatureSpawnPoint guard in guards.Where(p => ObjectProps.Respawns(p.Props))) e.State.Remove(guard.StateKey);
+				Refill(e, zone.StateKey, days);
 			}
+		}
+
+		static bool IsDue(IslandWorldState.Entry e, int key, int days)
+		{
+			ObjectState s;
+			return e.State.TryGetValue(key, out s) && Today - s.Day >= days;
+		}
+
+		/// <summary>Used long enough ago: available again, for everyone.</summary>
+		static void Refill(IslandWorldState.Entry e, int key, int days)
+		{
+			if (!IsDue(e, key, days)) return;
+			e.State.Remove(key);
+			IslandNetwork.SendUsed(e.Id, key, -1);
+		}
+
+		/// <summary>A creature spot whose animals are all gone (killed or caught) and never come back (the builder's "respawns" off).</summary>
+		static bool GoneForGood(IslandWorldState.Entry e, CreatureSpawnPoint p)
+		{
+			ObjectState s;
+			return !ObjectProps.Respawns(p.Props) && e.State.TryGetValue(p.StateKey, out s) && s.Yield <= 0;
 		}
 	}
 

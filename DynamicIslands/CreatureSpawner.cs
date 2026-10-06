@@ -412,12 +412,13 @@ namespace DynamicIslands.Editor
 
 		#region Stats
 
-		/// <summary>Host: the builder's health, damage and speed for a freshly spawned animal (Raft's values times the multipliers).</summary>
-		public static void ApplyStats(AI_NetworkBehaviour ai, IDictionary<string, string> props)
+		/// <summary>Host: the builder's health, damage and speed for a freshly spawned animal (Raft's values times the multipliers).
+		/// raftBites false: the damage it does to raft blocks stays Raft's (Big Bruce: the raft stays as in Raft - AU69).</summary>
+		public static void ApplyStats(AI_NetworkBehaviour ai, IDictionary<string, string> props, bool raftBites = true)
 		{
 			float hp = ObjectProps.Health(props), dmg = ObjectProps.Damage(props), spd = ObjectProps.Speed(props);
 			if (!Mathf.Approximately(hp, 1f)) DynamicIslands.instance.StartCoroutine(ApplyHealth(ai, hp));
-			if (!Mathf.Approximately(dmg, 1f)) ScaleDamage(ai.gameObject, dmg);
+			if (!Mathf.Approximately(dmg, 1f)) ScaleDamage(ai.gameObject, dmg, raftBites);
 			if (!Mathf.Approximately(spd, 1f))
 				foreach (AI_Movement m in ai.GetComponentsInChildren<AI_Movement>(true)) speed[m] = spd;
 		}
@@ -449,9 +450,10 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// Multiplies the damage an animal deals: Raft keeps it in the animal's own attack states and damage boxes
 		/// (fields like attackDamage, chargeDamage, explosionDamage, damage). Only this animal's copies are changed.
-		/// Returns the names of the fields that were scaled.
+		/// raftBites false: its attacks on raft blocks (the shark's AI_State_Attack_Block_Shark.attackBlockDamage) are left
+		/// as they are. Returns the names of the fields that were scaled.
 		/// </summary>
-		public static List<string> ScaleDamage(GameObject root, float multiplier)
+		public static List<string> ScaleDamage(GameObject root, float multiplier, bool raftBites = true)
 		{
 			var scaled = new List<string>();
 			foreach (MonoBehaviour mb in root.GetComponentsInChildren<MonoBehaviour>(true))
@@ -459,6 +461,7 @@ namespace DynamicIslands.Editor
 				if (mb == null) continue;
 				Type t = mb.GetType();
 				if (!(t.Name.StartsWith("AI_State") || typeof(DamageBox).IsAssignableFrom(t))) continue;
+				if (!raftBites && t.Name.StartsWith("AI_State_Attack_Block")) continue;
 				for (Type c = t; c != null && c != typeof(MonoBehaviour); c = c.BaseType)
 					foreach (FieldInfo f in c.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
 					{
