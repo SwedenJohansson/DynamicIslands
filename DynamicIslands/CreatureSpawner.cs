@@ -382,7 +382,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Waypoints in a ring around a sea animal's spot: as many, and how far out at most (m).</summary>
-		const int RoundPoints = 6;
+		internal const int RoundPoints = 6;
 		const float RoundRadius = 8f;
 
 		/// <summary>

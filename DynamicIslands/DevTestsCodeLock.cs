@@ -53,6 +53,7 @@ namespace DynamicIslands
 			f.Props[IslandQuest.KeySteps] = "reach|cirewardzone|1|";
 			f.Props[IslandQuest.KeyReward] = "Plank*7";
 			IslandWorldState.Remove(name);
+			ForgetReward(name); // (a run before in this world got it: this world's record)
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
@@ -72,7 +73,7 @@ namespace DynamicIslands
 			Vector3 c = e.Position + new Vector3(0f, 0f, 0f);
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
 			player.transform.position = LandSpot(e) + Vector3.up * 1.5f;
-			yield return new WaitForSeconds(2.5f);
+			yield return WaitFor(() => QuestRewards.Rewarded(e.HostName), 20f);
 			got = Gained(before, Items(player));
 			Check(ref ok, got.Contains("Plank") && !QuestRewards.Owed(e.HostName) && QuestRewards.Rewarded(e.HostName), "coming to the island gives it: " + (got.Length > 0 ? got : "nothing"));
 			Dictionary<string, int> mid = Items(player);
@@ -83,6 +84,7 @@ namespace DynamicIslands
 			Check(ref ok, Gained(mid, Items(player)).Length == 0, "coming again gives nothing more");
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (ok) Log("PASS: reward later"); else Fail("reward later");
 		}
 
@@ -140,6 +142,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.8f);
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (ok) Log("PASS: light colours"); else Fail("light colours");
 		}
 
@@ -160,6 +163,7 @@ namespace DynamicIslands
 			new IslandQuest { Title = "The lost goat", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" } }, Reward = "Plank*5" }.To(f.Props, 1);
 			Check(ref ok, IslandQuest.CountIn(f.Props) == 2 && f.Props.ContainsKey("quest2.steps"), "two quests in the island's settings (quest2.steps)");
 			IslandWorldState.Remove(name);
+			ForgetReward(name); ForgetReward(name + "#quest2");
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
@@ -187,6 +191,7 @@ namespace DynamicIslands
 			IntroRule r = IntroRule.Parse("after2 | island:" + name + " | quest:" + name + ":2 | ahead:300 | | test");
 			Check(ref ok, r != null && r.ToLine().Contains("quest:" + name + ":2") && WorldDirector.Happened(r, e), "a plan rule waiting for quest 2 of the island (" + (r != null ? r.ToLine() : "no rule") + ") sees it done");
 			IslandWorldState.Remove(name);
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (ok) Log("PASS: more quests"); else Fail("more quests");
 		}
 
@@ -245,11 +250,14 @@ namespace DynamicIslands
 			new IslandQuest { Title = "Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" } }, Reward = "Rope*1" }.To(f.Props, 0);
 			new IslandQuest { Title = "Side", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" } }, Reward = "Plank*1" }.To(f.Props, 1);
 			IslandWorldState.Remove(name);
+			ForgetReward(name); ForgetReward(name + "#quest2");
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
 			if (!spot.HasValue) { Fail("quest count mp: no open sea"); yield break; }
 			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
 			yield return new WaitForSeconds(2f);
+			IslandWorldState.Entry made = IslandWorldState.Islands.LastOrDefault(i => i.HostName == name);
+			if (made == null || made.Root == null) { Fail("quest count mp: " + name + " did not spawn"); yield break; }
 			Log("PASS: quest count mp");
 		}
 
@@ -290,6 +298,7 @@ namespace DynamicIslands
 			Log("spot: health " + h0.ToString("F0") + " -> " + h1.ToString("F0"));
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (h1 >= h0 - 0.5f) Log("PASS: spotlight probe"); else Fail("spotlight probe: the player was hurt");
 		}
 
@@ -372,6 +381,7 @@ namespace DynamicIslands
 			}
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (ok) Log("PASS: doorway"); else Fail("doorway");
 		}
 
@@ -391,6 +401,7 @@ namespace DynamicIslands
 			new IslandQuest { Title = "Gems", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" }, new IslandQuest.Step { Type = "collect", Target = "story:cigem", Count = 2 } } }.To(f.Props, 0);
 			f.Props[StoryItems.Key] = "cigem|Gem||A test gem.";
 			IslandWorldState.Remove(name);
+			ForgetStoryItem("cigem"); // (found in a run before: the counts below start from none)
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
 			if (!spot.HasValue) { Fail("no open sea"); yield break; }
@@ -407,13 +418,15 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.3f);
 			Check(ref ok, StoryBook.Count("cigem") == 0 && StoryBook.FoundCount("cigem") == 2, "held 0 after the lock, found 2 in all");
 			QuestTracker.Event(e, "reach", "gate");
-			yield return new WaitForSeconds(2f);
+			yield return WaitFor(() => QuestTracker.IsDone(e, 0), 15f);
 			Log("  entry at " + e.Position + ", root at " + e.Root.transform.position + ", player at " + player.transform.position + ", land radius " + CustomIslandSpawner.LandRadius(e.Name) + ", found " + QuestTracker.Found(e, QuestTracker.QuestOf(e).Steps[1]));
 			Check(ref ok, QuestTracker.IsDone(e, 0), "the 'find 2 gems' step is done when it comes (step " + QuestTracker.StepOf(e) + " of 2)");
 			string line = StoryBook.WriteLines().FirstOrDefault(l => l.StartsWith("@story.item=cigem"));
 			Check(ref ok, line != null && line.EndsWith("|2"), "saved with the world: " + line);
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
+			ForgetStoryItem("cigem");
+			System.IO.File.Delete(IslandSpawner.PathFor(name));
 			if (ok) Log("PASS: lock first"); else Fail("lock first");
 		}
 
@@ -440,6 +453,20 @@ namespace DynamicIslands
 				PrivateStorage.Decode(keep);
 			}
 			if (ok) Log("PASS: storage absent"); else Fail("storage absent");
+		}
+
+		/// <summary>This world's record of a quest reward (QuestRewards) forgotten: a test island's reward can be given again.</summary>
+		static void ForgetReward(string key)
+		{
+			QuestRewards.Rewarded(key); // (reads the record first)
+			foreach (string field in new[] { "rewarded", "owed" })
+				((HashSet<string>)typeof(QuestRewards).GetField(field, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).GetValue(null)).Remove(key);
+		}
+
+		/// <summary>A test story item taken out of the crew's book (held and found counts).</summary>
+		static void ForgetStoryItem(string id)
+		{
+			((System.Collections.IDictionary)typeof(StoryBook).GetField("held", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).GetValue(null)).Remove(StoryItems.IdOf(id));
 		}
 
 		/// <summary>A spot on the island's land, near its middle (the ground there, from a ray down).</summary>
@@ -487,13 +514,13 @@ namespace DynamicIslands
 			PutPlayerNear(pad.transform, 1.2f);
 			Check(ref ok, !safe.gameObject.activeInHierarchy, "the safe is hidden at first");
 			CodeLock.Use(e, pad.Index, ObjectProps.Get(pad.Props, CodeLock.Code), pad.transform);
-			yield return new WaitForSeconds(0.4f);
+			yield return WaitFor(() => CodeLock.IsOpen, 10f);
 			Check(ref ok, CodeLock.IsOpen, "using it opens the keypad");
 			foreach (string k in new[] { "1", "2", "3", "4", "OK" }) CodeLock.Press(k);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, CodeLock.IsOpen && !safe.gameObject.activeInHierarchy && !CodeLock.Unlocked(e, pad.Index), "a wrong code keeps it shut");
 			foreach (string k in new[] { "4", "7", "1", "1", "OK" }) CodeLock.Press(k);
-			yield return new WaitForSeconds(0.8f);
+			yield return WaitFor(() => !CodeLock.IsOpen && safe.gameObject.activeInHierarchy, 10f);
 			Check(ref ok, !CodeLock.IsOpen && safe.gameObject.activeInHierarchy && CodeLock.Unlocked(e, pad.Index), "the right code opens it: the safe shows");
 			OnRaftCommand();
 			yield return new WaitForSeconds(0.5f);
@@ -502,6 +529,7 @@ namespace DynamicIslands
 			IslandObjectRef safe2 = ScObjOf(e, "safe");
 			Check(ref ok, CodeLock.Unlocked(e, pad.Index) && safe2 != null && safe2.gameObject.activeInHierarchy, "after a reload it stays unlocked, the safe there");
 			IslandWorldState.Remove(CodeLockIsland);
+			System.IO.File.Delete(IslandSpawner.PathFor(CodeLockIsland));
 			if (ok) Log("PASS: code lock"); else Fail("code lock");
 		}
 	}

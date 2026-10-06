@@ -264,7 +264,7 @@ namespace DynamicIslands
 			yield return null; yield return null;
 			var panel = WorldSettingsWindow.Window != null ? WorldSettingsWindow.Window.GetComponentsInChildren<RectTransform>(true).FirstOrDefault(r => r.name == NewWorldRulesBox.PanelName) : null;
 			Check(ref ok, panel != null && panel.gameObject.activeInHierarchy, "the World settings window has the world rules");
-			if (panel == null) { Fail("world rules in the New Game box"); yield break; }
+			if (panel == null) { GameModeValueManager.SelectCurrentGameMode(modeBefore); Fail("world rules in the New Game box"); yield break; }
 
 			// The monster difficulty: five steps named under it, each level as a player drags the slider to it
 			Slider s = NewWorldRulesBox.MonsterSlider;
@@ -498,11 +498,11 @@ namespace DynamicIslands
 			string error;
 			if (!MakeCreatureIsland(out error)) { Application.logMessageReceived -= counter; Fail(error); yield break; }
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius(CreatureIsland), 390f);
-			if (!spot.HasValue) { Application.logMessageReceived -= counter; Fail("no open sea near the raft for the test island"); yield break; }
+			if (!spot.HasValue) { Application.logMessageReceived -= counter; File.Delete(IslandSpawner.PathFor(CreatureIsland)); Fail("no open sea near the raft for the test island"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(CreatureIsland, spot.Value, true);
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; Fail("the creature island did not spawn"); yield break; }
+			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; File.Delete(IslandSpawner.PathFor(CreatureIsland)); Fail("the creature island did not spawn"); yield break; }
 			List<CreatureSpawnPoint> points = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
 			float t0 = Time.realtimeSinceStartup;
 			while (points.Sum(p => p.Spawned.Count(a => a != null)) < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
@@ -673,9 +673,10 @@ namespace DynamicIslands
 				}
 			}
 			player.Stats.OnDamageTakenEvent -= seen;
-			float wantTaken = armour != 0f ? Mathf.FloorToInt(sentIn * 1.5f * GameModeValueManager.GetCurrentGameModeValue().playerSpecificVariables.damageTakenMultiplier * (1f - armour))
-				: sentIn * 1.5f * GameModeValueManager.GetCurrentGameModeValue().playerSpecificVariables.damageTakenMultiplier;
-			Check(ref ok, taken > 0f && Mathf.Abs(sentOut - sentIn * 1.5f) < 0.01f && Mathf.Abs(taken - wantTaken) < 0.01f,
+			float savage = MonsterDifficulty.Factors[MonsterDifficulty.Savage];
+			float wantTaken = armour != 0f ? Mathf.FloorToInt(sentIn * savage * GameModeValueManager.GetCurrentGameModeValue().playerSpecificVariables.damageTakenMultiplier * (1f - armour))
+				: sentIn * savage * GameModeValueManager.GetCurrentGameModeValue().playerSpecificVariables.damageTakenMultiplier;
+			Check(ref ok, taken > 0f && Mathf.Abs(sentOut - sentIn * savage) < 0.01f && Mathf.Abs(taken - wantTaken) < 0.01f,
 				"a real bite by " + (by ?? "nothing") + " at Savage: " + (taken > 0f ? "its " + sentIn.ToString("0.##") + " became " + sentOut.ToString("0.##") + ", the player lost " + taken.ToString("0.##") + " (want " + wantTaken.ToString("0.##") + ")" : "no bite came"));
 			OnRaftCommand();
 			yield return new WaitForSeconds(1f);

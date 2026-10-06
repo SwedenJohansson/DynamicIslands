@@ -263,12 +263,12 @@ namespace DynamicIslands
 
 			// Clear of Raft's own islands (on top of one, players fall through the ground)
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius(CreatureIsland), 390f);
-			if (!spot.HasValue) { Application.logMessageReceived -= counter; Fail("no open sea near the raft for the test island"); yield break; }
+			if (!spot.HasValue) { Application.logMessageReceived -= counter; File.Delete(IslandSpawner.PathFor(CreatureIsland)); Fail("no open sea near the raft for the test island"); yield break; }
 			Vector3 pos = spot.Value;
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile(CreatureIsland, pos, true);
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; Fail("the creature island did not spawn"); yield break; }
+			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; File.Delete(IslandSpawner.PathFor(CreatureIsland)); Fail("the creature island did not spawn"); yield break; }
 			List<CreatureSpawnPoint> points = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
 			Check(ref ok, points.Count == 4, points.Count + " creature spawn points (no markers in the world: " + (entry.Root.GetComponentsInChildren<Transform>(true).All(t => t.name != "Marker")) + ")");
 			// (Raft's angler fish found no rounds to swim on a built island: it said so and its state threw every frame)
@@ -297,7 +297,7 @@ namespace DynamicIslands
 				List<Waypoint> ring = CreatureSpawner.PointsOf(rounds);
 				float sea = entry.Position.y + (entry.Root.GetComponent<IslandSettings>() != null ? entry.Root.GetComponent<IslandSettings>().WaterLevel : 0f);
 				int clear = ring.Count(w => w != null && w.transform.position.y < sea - 1f && !Physics.CheckSphere(w.transform.position, 0.5f, 1 << IslandSpawner.TerrainLayer, QueryTriggerInteraction.Ignore));
-				Check(ref ok, rounds != null && ring.Count == 6 && clear == 6, "the angler fish's rounds: " + ring.Count + " waypoints around its spot, " + clear + " of them in open water");
+				Check(ref ok, rounds != null && ring.Count == CreatureSpawner.RoundPoints && clear == CreatureSpawner.RoundPoints, "the angler fish's rounds: " + ring.Count + " waypoints around its spot, " + clear + " of them in open water");
 				Vector3 was = angler.transform.position;
 				yield return new WaitForSeconds(4f);
 				float moved = angler != null ? Vector3.Distance(was, angler.transform.position) : 0f;
@@ -349,7 +349,7 @@ namespace DynamicIslands
 
 			// Walk up to the island: its banner shows
 			yield return StandRoutine(entry.Root);
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => IslandInfo.LastShown != null && IslandInfo.LastShown.StartsWith("Warthog Hill"), 15f);
 			Check(ref ok, IslandInfo.LastShown != null && IslandInfo.LastShown.StartsWith("Warthog Hill"), "arriving shows the banner: " + IslandInfo.LastShown);
 			Screenshot(new[] { "creatures" });
 			yield return new WaitForSeconds(1f);
@@ -358,7 +358,7 @@ namespace DynamicIslands
 			if (boar != null)
 			{
 				boar.networkEntity.Damage(100000f, boar.transform.position, Vector3.up, EntityType.Player, true);
-				yield return new WaitForSeconds(2.5f);
+				yield return WaitFor(() => { ObjectState killed; return entry.State.TryGetValue(boars.StateKey, out killed) && killed.Yield == 1; }, 15f);
 				ObjectState s;
 				Check(ref ok, entry.State.TryGetValue(boars.StateKey, out s) && s.Yield == 1, "a killed warthog is remembered (" + (entry.State.ContainsKey(boars.StateKey) ? IslandObjectState.Encode(new Dictionary<int, ObjectState> { { boars.StateKey, entry.State[boars.StateKey] } }) : "no state") + ")");
 			}
@@ -508,14 +508,14 @@ namespace DynamicIslands
 			f.Save(IslandSpawner.PathFor("ciloot"));
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciloot"), 390f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { File.Delete(IslandSpawner.PathFor("ciloot")); Fail("no open sea near the raft"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile("ciloot", spot.Value, true);
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (entry == null || entry.Root == null) { Fail("the loot island did not spawn"); yield break; }
+			if (entry == null || entry.Root == null) { File.Delete(IslandSpawner.PathFor("ciloot")); Fail("the loot island did not spawn"); yield break; }
 			List<LootCrate> crates = entry.Root.GetComponentsInChildren<LootCrate>().OrderBy(x => x.Ordinal).ToList();
 			Check(ref ok, crates.Count == 2 && crates[0].GetComponent<RaycastInteractable>() != null && crates[1].GetComponent<CustomNote>() != null, crates.Count + " chests, interactable; the barrel also has a note");
-			if (crates.Count < 2) yield break;
+			if (crates.Count < 2) { IslandWorldState.RemoveIds(new[] { entry.Id }, true); File.Delete(IslandSpawner.PathFor("ciloot")); Fail("loot in a world"); yield break; }
 
 			// Open the chest: the items arrive in the inventory
 			PlayerInventory inv = RAPI.GetLocalPlayer().Inventory;
@@ -1464,7 +1464,7 @@ namespace DynamicIslands
 			Check(ref ok, signText != null && signText.text.Contains("Misty"), "the sign shows its title: " + (signText != null ? signText.text.Replace("\n", " ") : "none"));
 			Check(ref ok, sz != null && !sz.Playing, "the sound is off while the player is away");
 			yield return StandRoutine(entry.Root);
-			yield return new WaitForSeconds(1f);
+			yield return WaitFor(() => sz == null || sz.Playing, 10f);
 			float w;
 			AtmosphereZone.Strongest(Camera.main.transform.position, out w);
 			Check(ref ok, sz != null && sz.Playing, "standing in the sound zone plays " + loop);
@@ -1577,6 +1577,7 @@ namespace DynamicIslands
 			TestQuest().To(f.Props);
 			f.Props[IslandProps.Title] = "Quest Isle";
 			f.Save(IslandSpawner.PathFor("ciquest"));
+			ForgetReward("ciquest"); // (a run before in this world got it: this world's record)
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciquest"), 390f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
@@ -1585,7 +1586,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (entry == null || entry.Root == null) { Fail("the quest island did not spawn"); yield break; }
 			yield return StandRoutine(entry.Root); // near the island: the quest shows
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => GameObject.Find("CustomIslands_Quest") != null, 10f);
 			Check(ref ok, QuestTracker.QuestOf(entry).Steps.Count == 4 && QuestTracker.StepOf(entry) == 0, "the island has its quest, at step 1");
 			Check(ref ok, GameObject.Find("CustomIslands_Quest") != null && GameObject.Find("CustomIslands_Quest").GetComponentInChildren<Text>() != null, "the quest panel shows near the island");
 			Screenshot(new[] { "quest_panel" });
@@ -1620,7 +1621,7 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1.5f);
 				if (QuestTracker.StepOf(entry) == 3) Log("  defeated one: " + QuestTracker.QuestOf(entry).Steps[3].Describe());
 			}
-			yield return new WaitForSeconds(1.5f);
+			yield return WaitFor(() => QuestTracker.StepOf(entry) == 4, 15f);
 			Check(ref ok, QuestTracker.StepOf(entry) == 4, "defeating both warthogs finishes the quest (step " + QuestTracker.StepOf(entry) + ")");
 			Check(ref ok, QuestTracker.LastMessage != null && QuestTracker.LastMessage.StartsWith("Quest complete: The lost camp"), "\"" + QuestTracker.LastMessage + "\"");
 			Check(ref ok, inv.GetItemCount("Plank") - planks == 5, "the reward arrives (planks +" + (inv.GetItemCount("Plank") - planks) + ")");

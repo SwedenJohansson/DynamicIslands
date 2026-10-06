@@ -141,11 +141,11 @@ namespace DynamicIslands
 			RuleIsland("ciqsrc", "Source Isle", questRule, zoneRule).Save(IslandSpawner.PathFor("ciqsrc"));
 
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("ciqsrc"), 390f);
-			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			if (!spot.HasValue) { foreach (string n in created) File.Delete(IslandSpawner.PathFor(n)); Fail("no open sea near the raft"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			yield return DynamicIslands.instance.SpawnIslandFile("ciqsrc", spot.Value, true);
 			IslandWorldState.Entry src = IslandWorldState.Islands.Skip(before).FirstOrDefault();
-			if (src == null || src.Root == null) { Fail("the first island did not spawn"); yield break; }
+			if (src == null || src.Root == null) { IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(x => x.Id).ToList(), true); foreach (string n in created) File.Delete(IslandSpawner.PathFor(n)); Fail("the first island did not spawn"); yield break; }
 			yield return StandRoutine(src.Root);
 			yield return new WaitForSeconds(1f);
 			Check(ref ok, WorldDirector.RulesOf(src).Count == 2, "the island carries its 2 rules");
@@ -311,6 +311,7 @@ namespace DynamicIslands
 			if (planBefore.Equals(TestPlan, StringComparison.OrdinalIgnoreCase)) planBefore = WorldPlan.RandomName;
 			foreach (string id in ownRules) WorldDirector.Done.Remove(id);
 			var doneBefore = WorldDirector.Done.ToList();
+			WorldDirector.Done.Clear(); // (the world's own done rules would spoil "all 4 done" below: put back at the end)
 			int before = IslandWorldState.Islands.Count;
 			var created = new List<string> { "ciplan1" };
 
@@ -329,12 +330,12 @@ namespace DynamicIslands
 				WorldDirector.Evaluate();
 				IslandWorldState.Entry start = WorldDirector.Refs("start", null).FirstOrDefault();
 				Check(ref ok, start != null && start.HostName == "ciplan1" && WorldDirector.Done.Contains("start") && IslandWorldState.Islands.Count == before + 1, "'start' brings ciplan1 at once, and only it");
-				if (start == null) yield break;
+				if (start == null) { PlanWorldUndo(before, created, planBefore, autoBefore, sailedBefore, doneBefore); Fail("a world plan in a world: 'start' brought nothing"); yield break; }
 				// (300 m asked; Raft's own islands nearby push it further out to the first clear spot)
 				Check(ref ok, FlatDistance(start.Position, raftPos.Value) > 250f && FlatDistance(start.Position, raftPos.Value) < 1000f, "ahead of the raft ("+ FlatDistance(start.Position, raftPos.Value).ToString("F0") + " m)");
 				float t0 = Time.realtimeSinceStartup;
 				while (start.Root == null && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
-				if (start.Root == null) { Fail("the start island did not load"); yield break; }
+				if (start.Root == null) { PlanWorldUndo(before, created, planBefore, autoBefore, sailedBefore, doneBefore); Fail("the start island did not load"); yield break; }
 				yield return StandRoutine(start.Root);
 
 				start.Root.GetComponentInChildren<TriggerZone>().Enter();
@@ -387,6 +388,12 @@ namespace DynamicIslands
 
 			// Clean up: the world's own plan and state come back
 			yield return new WaitForSeconds(1f);
+			PlanWorldUndo(before, created, planBefore, autoBefore, sailedBefore, doneBefore);
+			if (ok) Log("PASS: a world plan in a world"); else Fail("a world plan in a world");
+		}
+
+		static void PlanWorldUndo(int before, List<string> created, string planBefore, bool autoBefore, float sailedBefore, List<string> doneBefore)
+		{
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
 			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
 			File.Delete(WorldPlan.PathFor(TestPlan));
@@ -396,7 +403,6 @@ namespace DynamicIslands
 			WorldDirector.Done.Clear();
 			foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 			IslandWorldState.Save();
-			if (ok) Log("PASS: a world plan in a world"); else Fail("a world plan in a world");
 		}
 
 		#region Map types
@@ -504,7 +510,9 @@ namespace DynamicIslands
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
 			bool autoBefore = CustomIslandSpawner.Enabled;
+			if (planBefore.Equals(TestPlan, StringComparison.OrdinalIgnoreCase)) planBefore = WorldPlan.RandomName; // (a run that stopped half way)
 			var doneBefore = WorldDirector.Done.ToList();
+			WorldDirector.Done.Clear(); // (a world's own done 'treasure' - the story plan's - would keep this test's rule from firing: put back at the end)
 			int before = IslandWorldState.Islands.Count;
 			float unloadBefore = CustomIslandSpawner.UnloadDistance;
 			CustomIslandSpawner.UnloadDistance = 2500f; // near Raft's own islands the four may end up 1 km away: keep them loaded
