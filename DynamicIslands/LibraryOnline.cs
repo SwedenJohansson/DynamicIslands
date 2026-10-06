@@ -207,7 +207,7 @@ namespace DynamicIslands.Editor
 			LibraryInstalled i = LibraryPack.Installed().FirstOrDefault(x => x.id.Equals(e.Info.id, StringComparison.OrdinalIgnoreCase));
 			if (i == null) return State.NotInstalled;
 			// (a file it installed was deleted since - in the editor, or by hand: it showed as Installed with Download off)
-			if (i.files.Any(f => !File.Exists(f.kind == LibraryPack.KindPlan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name)))) return State.NotInstalled;
+			if (i.files.Any(f => !File.Exists(LibraryPack.PathOf(f)))) return State.NotInstalled;
 			return e.Info.version > i.version ? State.Update : State.Installed;
 		}
 

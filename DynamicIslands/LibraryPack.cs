@@ -143,9 +143,30 @@ namespace DynamicIslands.Editor
 	public static class LibraryPack
 	{
 		public const string KindIsland = "island", KindPlan = "plan", SourceImport = "import", SourceLibrary = "library";
+		/// <summary>A file's kind in installed.json: a map type file (ROADMAP T7) a pack brought along with its islands or plan.</summary>
+		public const string KindMapType = "maptype";
 		public const long MaxTotalBytes = 50L * 1024 * 1024;
 		public const int MaxFiles = 64;
-		static readonly string[] AllowedExtensions = { IslandFile.Extension, WorldPlan.Extension, ".json", ".jpg", ".jpeg", ".png" };
+		static readonly string[] AllowedExtensions = { IslandFile.Extension, WorldPlan.Extension, MapTypeFiles.Extension, ".json", ".jpg", ".jpeg", ".png" };
+
+		/// <summary>Where an installed entry's file is: an island, the plan or a map type file.</summary>
+		public static string PathOf(LibraryInstalledFile f) { return f.kind == KindPlan ? WorldPlan.PathFor(f.name) : f.kind == KindMapType ? MapTypeFiles.PathFor(f.name) : IslandSpawner.PathFor(f.name); }
+
+		static string ExtensionOf(string kind) { return kind == KindPlan ? WorldPlan.Extension : kind == KindMapType ? MapTypeFiles.Extension : IslandFile.Extension; }
+
+		/// <summary>
+		/// The map types of files (MapTypeFiles) the plan's rules and the islands' own rules bring ("type:&lt;name&gt;"): they go
+		/// into the pack with them, so the entry works where those types aren't. Built-in types need nothing.
+		/// </summary>
+		static List<string> MapTypesUsed(IEnumerable<string> islands, WorldPlan plan)
+		{
+			var rules = new List<IntroRule>();
+			if (plan != null) rules.AddRange(plan.Rules);
+			foreach (string n in islands)
+				try { rules.AddRange(WorldDirector.RulesFromProps(IslandCache.Props(n))); } catch { }
+			return rules.Where(r => r.What == "type").Select(r => MapTypes.Get(r.WhatArg)).Where(t => t != null && t.FromFile != null && File.Exists(t.FromFile))
+				.Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
 
 		public static string LibraryFolder { get { return Path.Combine(DynamicIslands.assetpath, "library"); } }
 		public static string ExportFolder { get { return Path.Combine(DynamicIslands.assetpath, "exports"); } }
@@ -390,6 +411,8 @@ namespace DynamicIslands.Editor
 					files.Add(new KeyValuePair<string, byte[]>(info.plan, Encoding.UTF8.GetBytes(plan.ToText())));
 				}
 				else info.plan = "";
+				foreach (string t in MapTypesUsed(islands, plan))
+					files.Add(new KeyValuePair<string, byte[]>(t + MapTypeFiles.Extension, File.ReadAllBytes(MapTypeFiles.PathFor(t))));
 				info.icon = icon != null ? "icon.jpg" : "";
 				pictures = (pictures ?? new byte[0][]).Where(p => p != null).Take(4).ToList();
 				info.pictures = Enumerable.Range(1, pictures.Count).Select(i => "picture" + i + ".jpg").ToArray();
@@ -527,6 +550,15 @@ namespace DynamicIslands.Editor
 				string bodyProblem = IslandBodyProblem(pack.Files[n], n);
 				if (bodyProblem != null) { error = "'" + n + "' " + bodyProblem; return false; }
 			}
+			// Map type files: names this version takes, and files it reads (a broken one would only be left out at the next start)
+			foreach (string n in pack.Files.Keys.Where(f => f.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				string typeName = n.Substring(0, n.Length - MapTypeFiles.Extension.Length);
+				string typeProblem = MapTypeFiles.NameProblem(typeName);
+				if (typeProblem != null) { error = "Its map type '" + n + "' can't be used: " + typeProblem + "."; return false; }
+				string typeError;
+				if (MapTypeFiles.Parse(typeName, Encoding.UTF8.GetString(pack.Files[n]), out typeError) == null) { error = "Its map type '" + n + "' can't be read (" + typeError + ") - it may need a newer Custom Islands."; return false; }
+			}
 			// (a plan may bring only new islands of a map type: no island file in it)
 			if (!pack.IslandNames.Any() && !info.IsPlan) { error = "It holds no island."; return false; }
 			if (info.IsPlan)
@@ -567,7 +599,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The entry that wrote this file (an island "Name.island" or a plan "Name.plan"), if one did.</summary>
 		public static LibraryInstalled OwnerOf(string fileName)
 		{
-			return Installed().FirstOrDefault(e => e.files.Any(f => !f.shared && (f.name + (f.kind == KindPlan ? WorldPlan.Extension : IslandFile.Extension)).Equals(fileName, StringComparison.OrdinalIgnoreCase)));
+			return Installed().FirstOrDefault(e => e.files.Any(f => !f.shared && (f.name + ExtensionOf(f.kind)).Equals(fileName, StringComparison.OrdinalIgnoreCase)));
 		}
 
 		/// <summary>An installed entry's islands and plan the player has changed since (saved over in the editor or World Plans).</summary>
@@ -578,7 +610,7 @@ namespace DynamicIslands.Editor
 			if (e == null) return result;
 			foreach (LibraryInstalledFile f in e.files.Where(f => !f.shared))
 			{
-				string path = f.kind == KindPlan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
+				string path = PathOf(f);
 				try { if (File.Exists(path) && ShaOfFile(path) != f.sha256) result.Add(f.name); } catch { }
 			}
 			return result;
@@ -823,6 +855,35 @@ namespace DynamicIslands.Editor
 				report.PlanName = name;
 			}
 
+			// Map type files (ROADMAP T7): under their own names - a different file of that name here is the player's (or another
+			// entry's), kept, and said; the pack's islands made from that type are files already, only new ones would differ
+			bool types = false;
+			foreach (string fileName in pack.Files.Keys.Where(f => f.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				string t = fileName.Substring(0, fileName.Length - MapTypeFiles.Extension.Length);
+				byte[] bytes = pack.Files[fileName];
+				string sha = Sha256(bytes), path = MapTypeFiles.PathFor(t);
+				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindMapType && !f.shared && f.name.Equals(t, StringComparison.OrdinalIgnoreCase)) : null;
+				if (File.Exists(path) && ShaOfFile(path) == sha)
+				{
+					entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = sha, kind = KindMapType, shared = before == null });
+					report.Add(before != null ? "The map type '" + t + "' is unchanged" : "The map type '" + t + "' is already here (the same file) - shared");
+					continue;
+				}
+				if (File.Exists(path) && (before == null || (ShaOfFile(path) != before.sha256 && !replaceChanged)))
+				{
+					if (before != null) entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = ShaOfFile(path), kind = KindMapType });
+					report.Add("Kept your map type '" + t + "' (the pack's is different and is not installed: new islands of that type are made from yours)");
+					continue;
+				}
+				Directory.CreateDirectory(MapTypeFiles.Folder);
+				undo.Remember(path);
+				SafeFile.WriteAllBytes(path, bytes);
+				entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = sha, kind = KindMapType });
+				report.Add((before != null ? "Updated" : "Installed") + " the map type '" + t + "'");
+				types = true;
+			}
+
 			// An earlier version's files the new one doesn't have any more
 			if (old != null)
 				foreach (LibraryInstalledFile f in old.files.Where(f => !f.shared && !entry.files.Any(x => x.name.Equals(f.name, StringComparison.OrdinalIgnoreCase) && x.kind == f.kind)))
@@ -831,6 +892,8 @@ namespace DynamicIslands.Editor
 			all.RemoveAll(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
 			all.Add(entry);
 			SaveInstalled(all);
+
+			if (types || (old != null && old.files.Any(f => f.kind == KindMapType))) MapTypeFiles.LoadAll();
 
 			// Random islands while sailing: a plan's islands never, an island entry's as the player chose (their own islands
 			// untouched). (After installed.json: an install that fails before it leaves spawnpool.txt as it was)
@@ -1027,18 +1090,20 @@ namespace DynamicIslands.Editor
 		/// <summary>undo: an install's removal of an earlier version's file, put back if the install then fails.</summary>
 		static void RemoveFile(LibraryInstalledFile f, string id, List<LibraryInstalled> all, Report report, InstallUndo undo = null)
 		{
-			bool plan = f.kind == KindPlan;
-			string path = plan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
+			bool plan = f.kind == KindPlan, type = f.kind == KindMapType;
+			string path = PathOf(f);
 			if (!File.Exists(path)) return;
 			if (all.Any(e => !e.id.Equals(id, StringComparison.OrdinalIgnoreCase) && e.files.Any(x => x.kind == f.kind && x.name.Equals(f.name, StringComparison.OrdinalIgnoreCase))))
 			{ report.Add("Kept '" + f.name + "': another installed entry uses it too"); return; }
-			List<string> worlds = plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
+			// (a map type: worlds keep the islands made from it as files - none needs the type itself)
+			List<string> worlds = type ? new List<string>() : plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
 			if (worlds.Count > 0) { report.Add("Kept '" + f.name + "': " + (worlds.Count == 1 ? "the world " : "the worlds ") + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + (worlds.Count == 1 ? " uses it" : " use it")); return; }
 			if (undo != null) undo.Remember(path);
 			try { File.Delete(path); }
 			catch (Exception e) when (SafeFile.InUse(e)) { report.Add("Kept '" + f.name + "': it is in use by another program (close it there and Remove again)"); return; }
-			if (!plan) RemovePoolLine(f.name);
-			report.Add("Removed " + (plan ? "the plan '" : "'") + f.name + "'");
+			if (!plan && !type) RemovePoolLine(f.name);
+			if (type) MapTypeFiles.LoadAll();
+			report.Add("Removed " + (plan ? "the plan '" : type ? "the map type '" : "'") + f.name + "'");
 		}
 
 		/// <summary>The copies of islands downloaded from multiplayer hosts (&lt;name&gt;_&lt;hash&gt;), with the saved worlds that use each

@@ -16,8 +16,17 @@ namespace DynamicIslands.Editor
 		public string Name, Label, Description;
 		/// <summary>Shown to players on arrival (the island's info.title), or "" for none.</summary>
 		public string Title = "";
-		/// <summary>Settings for one island of this type (the seed comes from rnd too).</summary>
+		/// <summary>Settings for one island of this type (the seed comes from rnd too); null: rolled from Ranges.</summary>
 		public Func<System.Random, IslandGenSettings> Settings;
+		/// <summary>The ranges its settings are rolled from, when they can be said as data (a .maptype file can hold them); null: Settings is code.</summary>
+		public MapTypeRanges Ranges;
+		/// <summary>The .maptype file it was read from (MapTypeFiles), or null for a built-in type.</summary>
+		public string FromFile;
+		/// <summary>A file's type: the built-in types whose settings code and content code it uses ("" = none), and its own content lines.</summary>
+		public string SettingsFrom = "", ContentFrom = "";
+		public List<string> Rules = new List<string>();
+		/// <summary>Generator settings set after rolling ("Field value", a file's "set" lines - MapTypeFiles.ApplySets).</summary>
+		public List<string> Sets = new List<string>();
 		/// <summary>Chance of floating in the air, and how high then (m above sea level).</summary>
 		public float FlyingChance;
 		public float FlyingMin = 40f, FlyingMax = 90f;
@@ -265,28 +274,29 @@ namespace DynamicIslands.Editor
 		public static bool Beach(float above, float slope) { return above > 0.6f && above < 3.5f && slope < 15f; }
 	}
 
-	/// <summary>The map types (built in). Plans and the spawner refer to them by name.</summary>
+	/// <summary>The map types: the built-in ones, then those of .maptype files (MapTypeFiles). Plans and the spawner refer to them by name.</summary>
 	public static class MapTypes
 	{
 		static readonly int[] AllStyles = { TerrainPainter.Tropical, TerrainPainter.Snowy, TerrainPainter.Desert, TerrainPainter.Forest, TerrainPainter.Volcanic };
 
-		static float R(System.Random rnd, float min, float max) { return min + (float)rnd.NextDouble() * (max - min); }
-
-		static IslandGenSettings Gen(System.Random rnd, int style, int shape, float rMin, float rMax, float hMin, float hMax, float rough, float density, int peaksMax = 3)
+		/// <summary>
+		/// Ranges for a type's settings (rolled as the map types always were: one of the styles, then the seed, radius,
+		/// height, roughness around rough and 1 to peaksMax peaks). Kept as data so ExportMapType can write them to a file.
+		/// </summary>
+		static MapTypeRanges Gen(int[] styles, int shape, float rMin, float rMax, float hMin, float hMax, float rough, float density, int peaksMax = 3, string likeRaft = "")
 		{
-			return new IslandGenSettings
-			{
-				Seed = rnd.Next(1, 999999), Style = style, Shape = shape, Radius = R(rnd, rMin, rMax), Height = R(rnd, hMin, hMax),
-				Roughness = Mathf.Clamp01(rough + R(rnd, -0.15f, 0.15f)), Peaks = 1 + rnd.Next(peaksMax), ObjectDensity = density,
-			};
+			return new MapTypeRanges { Styles = styles, Shape = shape, RadiusMin = rMin, RadiusMax = rMax, HeightMin = hMin, HeightMax = hMax, Roughness = rough, Density = density, Peaks = peaksMax, LikeRaft = likeRaft };
 		}
 
-		static int Pick(System.Random rnd, params int[] styles) { return styles[rnd.Next(styles.Length)]; }
+		static int[] Of(params int[] styles) { return styles; }
+
+		// (land objects as dense as on Raft's own small islands; before All, which uses it - static fields start in order)
+		static readonly MapTypeRanges OddityRanges = Gen(Of(TerrainPainter.Tropical, TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Forest), IslandShapes.Round, 24f, 32f, 3f, 6f, 0.3f, 0.5f, 1, MapTypeRanges.LikeRaftSmall);
 
 		public static readonly List<MapType> All = new List<MapType>
 		{
 			new MapType { Name = "random", Label = "Random island", Description = "Any style and size; now and then a flying one", FlyingChance = 0.1f,
-				Settings = rnd => IslandGenerator.RandomSettings(rnd, AllStyles) },
+				Ranges = new MapTypeRanges { Random = true, Styles = AllStyles } },
 			Styled("tropical", "Tropical island", "Palms, bushes and fruit trees", TerrainPainter.Tropical),
 			Styled("snowy", "Snowy island", "Pines and snow drifts (Temperance)", TerrainPainter.Snowy),
 			Styled("desert", "Desert island", "Cacti and dry grass (Caravan)", TerrainPainter.Desert),
@@ -294,11 +304,11 @@ namespace DynamicIslands.Editor
 			Styled("volcanic", "Volcanic island", "A cone with a crater", TerrainPainter.Volcanic),
 
 			new MapType { Name = "sandbar", Label = "Sandbar", Description = "A tiny island with a few palms and a small chest: a rest stop between islands",
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 12f, 23f, 3f, 4f, 0.25f, 0.9f, 1),
+				Ranges = Gen(Of(TerrainPainter.Tropical), IslandShapes.Round, 12f, 23f, 3f, 4f, 0.25f, 0.9f, 1),
 				Content = (k, s) => k.Chest("Loot_ChestSmall", k.Highest(k.Mid, s.Radius), "Driftwood cache", MapKit.Loot("Basics")) },
 
 			new MapType { Name = "atoll", Label = "Atoll", Title = "Atoll", Description = "A ring of low land around a shallow lagoon, with turtles and a sunken barrel",
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Atoll, 110f, 170f, 4f, 8f, 0.6f, 0.6f),
+				Ranges = Gen(Of(TerrainPainter.Tropical), IslandShapes.Atoll, 110f, 170f, 4f, 8f, 0.6f, 0.6f),
 				Content = (k, s) =>
 				{
 					k.Chest("Loot_SunkenBarrel", k.Mid, "Sunken barrel", MapKit.Loot("Metal"));
@@ -307,27 +317,27 @@ namespace DynamicIslands.Editor
 				} },
 
 			new MapType { Name = "archipelago", Label = "Archipelago", Title = "Archipelago", Description = "Several islets on a shallow shelf; a castaway hid three caches on them (quest)",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Archipelago, 130f, 200f, 12f, 30f, 0.5f, 0.55f),
+				Ranges = Gen(Of(TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Archipelago, 130f, 200f, 12f, 30f, 0.5f, 0.55f),
 				Content = Archipelago },
 
 			new MapType { Name = "stacks", Label = "Sea stacks", Title = "Sea stacks", Description = "Steep rock pillars; a chest waits on top of the tallest (quest: build your way up)",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Snowy), IslandShapes.Stacks, 90f, 150f, 25f, 55f, 0.6f, 0.45f),
+				Ranges = Gen(Of(TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Snowy), IslandShapes.Stacks, 90f, 150f, 25f, 55f, 0.6f, 0.45f),
 				Content = Stacks },
 
 			new MapType { Name = "boss", Label = "Boss island", Title = "The plateau", Description = "A flat-topped mesa with a ramp; walking into the arena wakes a huge beast (quest, big reward)",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy), IslandShapes.Plateau, 78f, 113f, 12f, 20f, 0.45f, 0.35f),
+				Ranges = Gen(Of(TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy), IslandShapes.Plateau, 78f, 113f, 12f, 20f, 0.45f, 0.35f),
 				Content = Boss },
 
 			new MapType { Name = "volcano", Label = "Volcano", Title = "Volcano", Description = "A tall volcano; embers, red light and dark smoke near the crater",
-				Settings = rnd => Gen(rnd, TerrainPainter.Volcanic, IslandShapes.Round, 95f, 148f, 60f, 100f, 0.65f, 0.5f, 2),
+				Ranges = Gen(Of(TerrainPainter.Volcanic), IslandShapes.Round, 95f, 148f, 60f, 100f, 0.65f, 0.5f, 2),
 				Content = (k, s) => k.Atmosphere(k.Highest(k.Mid, s.Radius * 0.45f), 50f, "#3A1E14", 0.45f, "#FF7043", 0.5f, "embers") },
 
 			new MapType { Name = "swamp", Label = "Swamp", Title = "Swamp", Description = "Low land with pools, green mist and fireflies; rats guard a stash (quest)",
-				Settings = rnd => Gen(rnd, TerrainPainter.Forest, IslandShapes.Marsh, 87f, 139f, 5f, 9f, 0.9f, 0.9f),
+				Ranges = Gen(Of(TerrainPainter.Forest), IslandShapes.Marsh, 87f, 139f, 5f, 9f, 0.9f, 0.9f),
 				Content = Swamp },
 
 			new MapType { Name = "spire", Label = "Frozen spire", Title = "Frozen spire", Description = "A snowy island with one very tall peak, falling snow and a polar bear",
-				Settings = rnd => { var s = Gen(rnd, TerrainPainter.Snowy, IslandShapes.Round, 78f, 104f, 95f, 120f, 0.5f, 0.5f, 1); s.Peaks = 1; return s; },
+				Ranges = Gen(Of(TerrainPainter.Snowy), IslandShapes.Round, 78f, 104f, 95f, 120f, 0.5f, 0.5f, 1), // (one peak)
 				Content = (k, s) =>
 				{
 					k.Atmosphere(k.Mid, 50f, "#DDE6F0", 0.35f, "#CFE0FF", 0.25f, "snow");
@@ -337,19 +347,19 @@ namespace DynamicIslands.Editor
 				} },
 
 			new MapType { Name = "treasure", Label = "Treasure island", Title = "Treasure island", Description = "A map in a bottle on the beach leads to a buried treasure (quest)",
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 78f, 122f, 20f, 40f, 0.5f, 0.55f),
+				Ranges = Gen(Of(TerrainPainter.Tropical), IslandShapes.Round, 78f, 122f, 20f, 40f, 0.5f, 0.55f),
 				Content = Treasure },
 
 			new MapType { Name = "camp", Label = "Old camp", Title = "Old camp", Description = "An abandoned camp with a notice board and supplies (quest); good as the start of a story",
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 78f, 113f, 15f, 30f, 0.45f, 0.5f),
+				Ranges = Gen(Of(TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 78f, 113f, 15f, 30f, 0.45f, 0.5f),
 				Content = Camp },
 
 			new MapType { Name = "sunken", Label = "Sunken island", Title = "Sunken island", Description = "An island under water: corals, sunken barrels and puffer fish, for divers", SunkenDepth = 12f,
-				Settings = rnd => Gen(rnd, TerrainPainter.Tropical, IslandShapes.Round, 52f, 87f, 9f, 13f, 0.6f, 0f),
+				Ranges = Gen(Of(TerrainPainter.Tropical), IslandShapes.Round, 52f, 87f, 9f, 13f, 0.6f, 0f),
 				Content = Sunken },
 
 			new MapType { Name = "sky", Label = "Sky island", Title = "Sky island", Description = "A small island floating high in the air, with a cache", FlyingChance = 1f, FlyingMin = 45f, FlyingMax = 90f,
-				Settings = rnd => Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 39f, 70f, 12f, 25f, 0.5f, 0.6f, 2),
+				Ranges = Gen(Of(TerrainPainter.Tropical, TerrainPainter.Forest), IslandShapes.Round, 39f, 70f, 12f, 25f, 0.5f, 0.6f, 2),
 				Content = (k, s) => k.Chest("Loot_ChestSmall", k.Highest(k.Mid, s.Radius * 0.6f), "Sky cache", MapKit.Loot("Metal")) },
 
 			new MapType { Name = "wreck", Label = "Wreck", Title = "Wreck", Description = "No land: an abandoned raft of Raft's blocks with barrels to loot",
@@ -361,32 +371,24 @@ namespace DynamicIslands.Editor
 
 			// The world randomizer's islands (RandomizerContent): oddities and boss lairs
 			new MapType { Name = "oddity", Label = "Oddity island", Description = "A small island with something odd on it: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris or a hut",
-				Settings = OdditySettings, Content = (k, s) => { RandomizerContent.Oddity(k, s, null); RandomizerIslands.TreesToCut(k, s, true); } },
+				Ranges = OddityRanges, Content = (k, s) => { RandomizerContent.Oddity(k, s, null); RandomizerIslands.TreesToCut(k, s, true); } },
 			Oddity(0), Oddity(1), Oddity(2), Oddity(3), Oddity(4), Oddity(5), Oddity(6), Oddity(7),
 			new MapType { Name = "large", Label = "Large island", Description = "A large island made like Raft's big ones (as big, trees and plants as dense, warthogs, animals to catch, puffer fish, loot boxes), with scenes from the quest islands and a cave with a guard and a hoard",
 				Settings = RandomizerIslands.LargeSettings, Content = (k, s) => { RandomizerIslands.Large(k, s); RandomizerIslands.TreesToCut(k, s, false); } },
 			new MapType { Name = "lair", Label = "Boss lair", Title = "Lair", Description = "A plateau where a huge, very tough beast and its guards keep a big hoard and a trophy (quest; much harder than a boss island)",
-				Settings = rnd => { IslandGenSettings s = Gen(rnd, Pick(rnd, TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy, TerrainPainter.Tropical, TerrainPainter.Desert), IslandShapes.Plateau, 85f, 120f, 14f, 22f, 0.45f, 0.35f); RandomizerIslands.LikeRaft(s); return s; },
+				Ranges = Gen(Of(TerrainPainter.Forest, TerrainPainter.Volcanic, TerrainPainter.Snowy, TerrainPainter.Tropical, TerrainPainter.Desert), IslandShapes.Plateau, 85f, 120f, 14f, 22f, 0.45f, 0.35f, 3, MapTypeRanges.LikeRaftLarge),
 				Content = (k, s) => { RandomizerContent.Lair(k, s); RandomizerIslands.TreesToCut(k, s, false); } },
 		};
-
-		static IslandGenSettings OdditySettings(System.Random rnd)
-		{
-			// (land objects as dense as on Raft's own small islands)
-			IslandGenSettings s = Gen(rnd, Pick(rnd, TerrainPainter.Tropical, TerrainPainter.Tropical, TerrainPainter.Desert, TerrainPainter.Forest), IslandShapes.Round, 24f, 32f, 3f, 6f, 0.3f, 0.5f, 1);
-			RandomizerIslands.LikeRaftSmall(s);
-			return s;
-		}
 
 		static MapType Oddity(int i)
 		{
 			string[] o = RandomizerContent.Oddities[i];
-			return new MapType { Name = o[0], Label = o[1], Description = o[2], Settings = OdditySettings, Content = (k, s) => { RandomizerContent.Oddity(k, s, o[0]); RandomizerIslands.TreesToCut(k, s, true); } };
+			return new MapType { Name = o[0], Label = o[1], Description = o[2], Ranges = OddityRanges, Content = (k, s) => { RandomizerContent.Oddity(k, s, o[0]); RandomizerIslands.TreesToCut(k, s, true); } };
 		}
 
 		static MapType Styled(string name, string label, string description, int style)
 		{
-			return new MapType { Name = name, Label = label, Description = description, Settings = rnd => IslandGenerator.RandomSettings(rnd, new[] { style }) };
+			return new MapType { Name = name, Label = label, Description = description, Ranges = new MapTypeRanges { Random = true, Styles = new[] { style } } };
 		}
 
 		#region Content
@@ -538,10 +540,17 @@ namespace DynamicIslands.Editor
 			return All.FirstOrDefault(t => t.Name.Equals((name ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
 		}
 
+		/// <summary>A built-in type by name (not one of a .maptype file), or null.</summary>
+		public static MapType BuiltIn(string name)
+		{
+			return All.FirstOrDefault(t => t.FromFile == null && t.Name.Equals((name ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>Settings and elevation for a new island of this type.</summary>
 		public static IslandGenSettings Roll(MapType type, System.Random rnd, out float elevation)
 		{
-			IslandGenSettings s = type.Settings(rnd);
+			IslandGenSettings s = type.Settings != null ? type.Settings(rnd) : type.Ranges != null ? type.Ranges.Roll(rnd) : IslandGenerator.RandomSettings(rnd, AllStyles);
+			if (type.Sets.Count > 0) MapTypeFiles.ApplySets(s, type.Sets);
 			s.Clamp();
 			elevation = 0f;
 			if (type.SunkenDepth > 0f) elevation = -(s.Height + type.SunkenDepth + (float)rnd.NextDouble() * 4f);
