@@ -145,7 +145,12 @@ namespace DynamicIslands.Editor
 			UIKit.Size(brand.gameObject, 190);
 			UIKit.Size(UIKit.Label(brand, "CUSTOM ISLANDS", 12, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold).gameObject, -1, 14);
 			islandNameText = UIKit.Label(brand, "", 16, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "IslandName");
-			islandNameText.horizontalOverflow = HorizontalWrapMode.Overflow;
+			// (a long name - up to 64 letters - ran over the New / Open / Save buttons: it shrinks to fit the 190 px instead)
+			islandNameText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			islandNameText.verticalOverflow = VerticalWrapMode.Truncate;
+			islandNameText.resizeTextForBestFit = true;
+			islandNameText.resizeTextMinSize = 8;
+			islandNameText.resizeTextMaxSize = 16;
 			UIKit.Size(islandNameText.gameObject, -1, 20);
 
 			RectTransform file = ToolbarGroup(bar, "File");
@@ -831,7 +836,7 @@ namespace DynamicIslands.Editor
 				elevationTyping = typing;
 			}
 
-			if (!EditorInput.IsTyping)
+			if (!EditorInput.IsTyping && !EditorInput.WindowOpen)
 			{
 				if (Input.GetKeyDown(KeyCode.F1)) SetTab(TAB.TerrainEdit);
 				else if (Input.GetKeyDown(KeyCode.F2)) SetTab(TAB.ObjectPlace);

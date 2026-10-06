@@ -73,6 +73,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			if (instance.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			instance.gameObject.SetActive(false);
 			instance.onPick = null;
 			EditorInput.IsTyping = false;

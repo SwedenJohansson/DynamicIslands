@@ -170,7 +170,8 @@ namespace DynamicIslands.Editor
 			Vector3 at = StorySets.ViewCentre();
 			List<GameObject> placed = set(defs, at);
 			if (placed.Count == 0) { DynamicIslands.Notify("Could not place the story set here", true); return; }
-			SaveDefs();
+			// (its story items in the same undo step as its objects: the first Ctrl+Z took only the key away and left the door)
+			SaveDefs(true);
 			Close();
 			DynamicIslands.Notify("Story set placed: " + placed.Count + " objects (Ctrl+Z removes them)");
 		}
@@ -193,14 +194,17 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		void SaveDefs()
+		void SaveDefs(bool withLastStep = false)
 		{
 			string text = StoryItems.Text(defs);
-			IslandSettingsUndo.Change(() =>
+			Action change = () =>
 			{
 				if (text.Length == 0) DynamicIslands.currentIslandProps.Remove(StoryItems.Key);
 				else DynamicIslands.currentIslandProps[StoryItems.Key] = text;
-			});
+			};
+			if (!withLastStep) { IslandSettingsUndo.Change(change); return; }
+			CommandUndoRedo.ICommand step = IslandSettingsUndo.Record(change);
+			if (step != null) CommandUndoRedo.UndoRedoManager.AppendToLast(step);
 		}
 
 		void Save()

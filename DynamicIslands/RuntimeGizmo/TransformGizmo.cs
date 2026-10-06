@@ -212,7 +212,7 @@ namespace RuntimeGizmos
 				SetLines();
 			}
 
-			if (Input.GetKeyDown(DeleteSelected) && !EditorInput.IsTyping)
+			if (Input.GetKeyDown(DeleteSelected) && !EditorInput.IsTyping && !EditorInput.WindowOpen)
 			{
 				DeleteSelection();
 			}
@@ -616,9 +616,13 @@ namespace RuntimeGizmos
 			{
 				((TransformCommand)transformCommands[i]).StoreNewTransformValues();
 			}
-			CommandGroup commandGroup = new CommandGroup();
-			commandGroup.Set(transformCommands);
-			UndoRedoManager.Insert(commandGroup);
+			// (a click on a handle without a drag: no step - it emptied the redo steps and counted as an unsaved change)
+			if (transformCommands.Any(c => ((TransformCommand)c).Changed))
+			{
+				CommandGroup commandGroup = new CommandGroup();
+				commandGroup.Set(transformCommands);
+				UndoRedoManager.Insert(commandGroup);
+			}
 
 			totalRotationAmount = Quaternion.identity;
 			totalScaleAmount = 0;

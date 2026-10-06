@@ -32,6 +32,10 @@ namespace DynamicIslands.Editor
 		RectTransform body;
 		readonly List<InputField> fields = new List<InputField>();
 		bool previewing;
+		// (where the previewed object stood: put back when the window closes mid-preview - the coroutine stops with it)
+		Transform previewObject;
+		Vector3 previewPos;
+		Quaternion previewRot;
 
 		static readonly Dictionary<string, string> VerbLabels = new Dictionary<string, string>
 		{
@@ -138,12 +142,17 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy) return;
+			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
 
-		void OnDisable() { EditorInput.IsTyping = false; }
+		void OnDisable()
+		{
+			EditorInput.IsTyping = false;
+			if (previewing && previewObject != null) { previewObject.position = previewPos; previewObject.rotation = previewRot; }
+			previewing = false;
+		}
 
 		#region Building
 
@@ -546,6 +555,7 @@ namespace DynamicIslands.Editor
 			Transform t = target.transform;
 			Vector3 pos = t.position;
 			Quaternion rot = t.rotation;
+			previewObject = t; previewPos = pos; previewRot = rot;
 			Vector3 off = BehaviourProps.Offset(props);
 			float turn = ObjectProps.GetFloat(props, BehaviourProps.Turn, 0f), time = Mathf.Max(0.1f, ObjectProps.GetFloat(props, BehaviourProps.MoveTime, 2f));
 			for (float phase = 0f; phase < 2f && t != null; phase += Time.unscaledDeltaTime / time)

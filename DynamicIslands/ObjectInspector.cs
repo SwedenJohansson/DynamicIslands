@@ -137,6 +137,7 @@ namespace DynamicIslands.Editor
 				InputField code = UIKit.Field(g, "Keypad code (none)", ObjectProps.Get(target.Props, CodeLock.Code), 26f, "Digits a player types on a keypad before using it (Tangaroa's launch keypad, Vasagatan's code): put the code on a note somewhere. Empty: no keypad");
 				code.contentType = InputField.ContentType.IntegerNumber;
 				code.onEndEdit.AddListener(v => Set(target, CodeLock.Code, v.Trim().Length > 0 ? v.Trim() : null, null));
+				amountFields.Add(code); // (typing the code: Delete hid the object, 1-4 changed the gizmo, WASD flew)
 			}
 		}
 

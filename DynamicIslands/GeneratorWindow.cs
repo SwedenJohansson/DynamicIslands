@@ -87,7 +87,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = seedField != null && seedField.isFocused;
-			if (TextPromptWindow.IsOpen || DropList.Busy) return; // (its own Enter and Esc; an open list closes on Esc by itself)
+			if (TextPromptWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return; // (its own Enter and Esc; an open list closes on Esc by itself)
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 			else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) OnGenerate();
 			if (previewDue > 0f && Time.unscaledTime >= previewDue) { previewDue = -1f; UpdatePreview(); }

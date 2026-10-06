@@ -119,6 +119,7 @@ namespace DynamicIslands.Editor
 
 		public static void Close()
 		{
+			if (canvas != null && canvas.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			if (canvas != null) canvas.gameObject.SetActive(false);
 		}
 

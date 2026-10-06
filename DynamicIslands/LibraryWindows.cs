@@ -87,6 +87,9 @@ namespace DynamicIslands.Editor
 			shareButton = UIKit.Button(buttons, "Share...", Share, "Open the island library's page in your browser to send the pack in (attach the .zip)", 130, 34f, 13);
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(buttons, "Close", Close, "Close", 110, 34f, 13);
+			WindowKeys keys = window.gameObject.AddComponent<WindowKeys>();
+			keys.Typing = () => new[] { titleField, authorField, summaryField, descriptionField, tagsField, playersField, lengthField }.Any(f => f != null && f.isFocused);
+			keys.Close = Close;
 			window.gameObject.SetActive(false);
 		}
 
@@ -455,5 +458,27 @@ namespace DynamicIslands.Editor
 		}
 
 		static void SetStatus(string text, bool error) { status.text = text; status.color = error ? UIKit.Danger : UIKit.TextColor; }
+	}
+
+	/// <summary>
+	/// A window without an Update of its own (Share, the island library): its text fields count as typing - the editor's
+	/// camera flew, Delete hid the selection and 1-4 changed the gizmo while a title was typed - and Esc closes it (when given).
+	/// </summary>
+	class WindowKeys : MonoBehaviour
+	{
+		public Func<bool> Typing;
+		public Action Close;
+		bool typing;
+
+		void Update()
+		{
+			bool now = Typing != null && Typing();
+			if (now) EditorInput.IsTyping = true;
+			else if (typing) EditorInput.IsTyping = false;
+			typing = now;
+			if (Close != null && !DropList.Busy && !InfoWindow.IsOpen && !EditorInput.SubWindowJustClosed && Input.GetKeyDown(KeyCode.Escape)) Close();
+		}
+
+		void OnDisable() { if (typing) EditorInput.IsTyping = false; typing = false; }
 	}
 }

@@ -65,6 +65,7 @@ namespace DynamicIslands.Editor
 		{
 			if (instance == null) return;
 			SoundLibrary.StopPreview();
+			if (instance.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			instance.gameObject.SetActive(false);
 			instance.target = null;
 			EditorInput.IsTyping = false;

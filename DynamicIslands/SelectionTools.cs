@@ -24,12 +24,16 @@ namespace DynamicIslands.Editor
 		/// <summary>Can be clicked, boxed or selected by Select all: neither hidden nor locked.</summary>
 		public static bool Pickable(EditorGameObject o) { return o != null && o.gameObject.activeInHierarchy && !IsHidden(o) && !IsLocked(o); }
 
-		/// <summary>Every placed object (the deleted ones, kept for undo, are inactive: left out).</summary>
+		/// <summary>
+		/// Every placed object (the deleted ones, kept for undo, are inactive: left out) - also those of an opened or generated
+		/// island, which stand one level down in a holder ("LoadedObjects", "GeneratedObjects"): only the root's own children
+		/// were looked at, so Select all, box select and the list found none of them. (Objects inside a placed one are part of it.)
+		/// </summary>
 		public static List<EditorGameObject> Placed()
 		{
 			GameObject root = GameObject.Find("PlacedObjects");
 			if (root == null) return new List<EditorGameObject>();
-			return root.transform.Cast<Transform>().Where(t => t.gameObject.activeSelf).Select(t => t.GetComponent<EditorGameObject>()).Where(e => e != null).ToList();
+			return root.GetComponentsInChildren<EditorGameObject>(false).Where(e => e.transform.parent == null || e.transform.parent.GetComponentInParent<EditorGameObject>() == null).ToList();
 		}
 
 		/// <summary>Hides (or shows) objects: their renderers and colliders off, so they can't be seen or picked.</summary>
