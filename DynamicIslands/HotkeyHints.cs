@@ -7,12 +7,6 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// The mod's own keys at the hotbar, like Raft's: Raft shows its inventory and notebook keys as small tabs at the ends
-	/// of the hotbar (_CanvasGame_New/.../Hotbar/KeyboardLayout: an icon on a brown tab with the key under it). The
-	/// journal (J) and, while the level up system is on, the stats page (K) get the same tabs beside the notebook's -
-	/// copies of Raft's tab, so they look and hide exactly as Raft's do (with the keyboard layout).
-	/// </summary>
-	/// <summary>
 	/// L2: the mod's own keys in a world - the journal (J) and the stats page (K) - which the player can change in Defaults
 	/// (Keys): kept in Mods\DynamicIslands\world_rules.txt as journalkey= and statskey= (Unity KeyCode names). This PC's
 	/// alone; nothing is sent to other players.
@@ -39,7 +33,8 @@ namespace DynamicIslands.Editor
 			try
 			{
 				var k = (KeyCode)Enum.Parse(typeof(KeyCode), v.Trim(), true);
-				if (Problem(k) == null) return k;
+				// (a number, "7", parses as KeyCode 7, which no key has: Alpha7 is meant)
+				if (Enum.IsDefined(typeof(KeyCode), k) && Problem(k) == null) return k;
 			}
 			catch { }
 			Debug.LogWarning("[CUSTOM ISLANDS] " + WorldRules.DefaultFileName + ": " + setting + "=" + v + " is not a key that can be used - " + fallback + " instead");
@@ -101,6 +96,12 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	/// <summary>
+	/// The mod's own keys at the hotbar, like Raft's: Raft shows its inventory and notebook keys as small tabs at the ends
+	/// of the hotbar (_CanvasGame_New/.../Hotbar/KeyboardLayout: an icon on a brown tab with the key under it). The
+	/// journal (J) and, while the level up system is on, the stats page (K) get the same tabs beside the notebook's -
+	/// copies of Raft's tab, so they look and hide exactly as Raft's do (with the keyboard layout).
+	/// </summary>
 	public static class HotkeyHints
 	{
 		public const string JournalName = "CustomIslands_Hotkey_Journal", StatsName = "CustomIslands_Hotkey_Stats";

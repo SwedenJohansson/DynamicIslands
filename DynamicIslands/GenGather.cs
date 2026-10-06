@@ -117,20 +117,23 @@ namespace DynamicIslands.Editor
 		static bool HivesFor(int style) { return style != TerrainPainter.Snowy && style != TerrainPainter.Desert; }
 
 		/// <summary>Whether a kind is switched on in a GatherOff list (comma separated keys; "" = all on).</summary>
-		public static bool IsOn(string off, string key) { return !(off ?? "").Split(',').Any(k => k.Trim().Equals(key, StringComparison.OrdinalIgnoreCase)); }
+		public static bool IsOn(string off, string key) { return !(off ?? "").Split(ListSeparators, StringSplitOptions.RemoveEmptyEntries).Any(k => k.Trim().Equals(key, StringComparison.OrdinalIgnoreCase)); }
 
 		/// <summary>The GatherOff list with a kind switched the other way (keys kept in LandKeys/SeaKeys order).</summary>
 		public static string Toggle(string off, string key)
 		{
-			var list = (off ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).Where(k => k.Length > 0).ToList();
+			var list = (off ?? "").Split(ListSeparators).Select(k => k.Trim().ToLowerInvariant()).Where(k => k.Length > 0).ToList();
 			if (list.Contains(key)) list.Remove(key); else list.Add(key);
 			return string.Join(",", LandKeys.Concat(SeaKeys).Where(list.Contains).ToArray());
 		}
 
+		/// <summary>What a GatherOff list may be separated by: spawnpool.txt by hand ("palm mango") as the Defaults window takes it.</summary>
+		static readonly char[] ListSeparators = { ',', ' ' };
+
 		/// <summary>A GatherOff list with only known keys, in order ("" = all on).</summary>
 		public static string Clean(string off)
 		{
-			var list = (off ?? "").Split(',').Select(k => k.Trim().ToLowerInvariant()).ToList();
+			var list = (off ?? "").Split(ListSeparators).Select(k => k.Trim().ToLowerInvariant()).ToList();
 			return string.Join(",", LandKeys.Concat(SeaKeys).Where(list.Contains).ToArray());
 		}
 

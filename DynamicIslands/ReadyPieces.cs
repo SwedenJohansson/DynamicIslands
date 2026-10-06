@@ -14,7 +14,7 @@ namespace DynamicIslands.Editor
 	/// elevator, Varuna Point's skylifts), cages cut open with Raft's bolt cutters, security cameras that sweep, generators
 	/// that start with Raft's generator part and send "power", radios that work with power (a started generator or Raft's
 	/// battery charger part) and send "radio", Vasagatan's engine that starts with Raft's gas tank and sends "engine", and
-	/// Temperance's turning mirrors (a puzzle piece: each use turns it, sending "mirror").
+	/// Temperance's turning mirrors (a puzzle piece: each use turns it a quarter, the next one back, sending "mirror").
 	/// </summary>
 	public static class ReadyPieces
 	{

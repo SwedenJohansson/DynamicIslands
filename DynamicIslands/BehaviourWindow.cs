@@ -215,7 +215,7 @@ namespace DynamicIslands.Editor
 			string mode = !BehaviourProps.Moves(props) ? "none" : ObjectProps.Get(props, BehaviourProps.MoveMode) == "loop" ? "loop" : "switch";
 			RectTransform m = UIKit.Row(g, 28f, 6f, "Mode");
 			UIKit.Size(UIKit.Label(m, "Moves", 13, UIKit.TextMuted).gameObject, 60);
-			Button none = UIKit.Button(m, "No", () => { props.Remove(BehaviourProps.Move); props.Remove(BehaviourProps.Turn); props.Remove(BehaviourProps.MoveMode); Rebuild(); }, "It stays where it is", 60, 26f, 12);
+			Button none = UIKit.Button(m, "No", () => { props.Remove(BehaviourProps.Move); props.Remove(BehaviourProps.Turn); props.Remove(BehaviourProps.MoveMode); props.Remove(BehaviourProps.Carry); Rebuild(); }, "It stays where it is", 60, 26f, 12);
 			Button sw = UIKit.Button(m, "Opens and closes", () => { EnsureMove(); props.Remove(BehaviourProps.MoveMode); Rebuild(); }, "A door, gate, bridge or lift: actions (or using it) open and close it", 150, 26f, 12);
 			Button loop = UIKit.Button(m, "Back and forth", () => { EnsureMove(); props[BehaviourProps.MoveMode] = "loop"; Rebuild(); }, "Moves to the other pose and back, for ever (a platform, a swinging sign)", 130, 26f, 12);
 			UIKit.SetActive(none, mode == "none");

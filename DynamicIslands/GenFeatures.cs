@@ -186,7 +186,7 @@ namespace DynamicIslands.Editor
 							Dictionary<string, string> lp = ObjectProps.Defaults(LiftPiece);
 							lp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, rise + 0.3f, 0f));
 							lp[BehaviourProps.MoveTime] = Mathf.Clamp(rise * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-							k.Add(LiftPiece, k.At(foot), a * Mathf.Rad2Deg, lp, 2f);
+							k.Add(LiftPiece, k.At(foot), Mathf.Atan2(dir.x, dir.y) * Mathf.Rad2Deg, lp, 2f); // (facing the high ground: a yaw faces (sin, cos), as the jetty's)
 							return "a lift up a cliff (" + rise.ToString("F0") + " m)";
 						}
 					}
@@ -211,7 +211,7 @@ namespace DynamicIslands.Editor
 					Dictionary<string, string> fp = ObjectProps.Defaults(LiftPiece);
 					fp[BehaviourProps.Move] = BehaviourProps.OffsetText(new Vector3(0f, best + 0.3f, 0f));
 					fp[BehaviourProps.MoveTime] = Mathf.Clamp(best * 0.6f, 3f, 9f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-					k.Add(LiftPiece, k.At(bestFoot), bestAngle * Mathf.Rad2Deg, fp, 2f);
+					k.Add(LiftPiece, k.At(bestFoot), 90f - bestAngle * Mathf.Rad2Deg, fp, 2f); // (facing the rise: bestAngle is from x towards z)
 					return "a lift up a slope (" + best.ToString("F0") + " m)";
 				}
 				case "hives":
