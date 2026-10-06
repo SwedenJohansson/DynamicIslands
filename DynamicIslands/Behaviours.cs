@@ -493,7 +493,9 @@ namespace DynamicIslands.Editor
 		{
 			IslandObjectRef def = RefsOf(e).FirstOrDefault(r => r.Index == index);
 			bool defaultVisible = def == null || !BehaviourProps.StartsHidden(def.Props);
-			if (visible == defaultVisible && !open) e.State.Remove(StateBase + index);
+			// (a copy not loaded here can't say how the object was placed: its state is kept as it is, not dropped as "as placed"
+			// - a bridge shown while a player's copy was away came back hidden when it loaded - AU63)
+			if (def != null && visible == defaultVisible && !open) e.State.Remove(StateBase + index);
 			else e.State[StateBase + index] = new ObjectState { Active = visible, Yield = open ? 1 : 0, Day = Today };
 			if (def == null) return;
 			if (def.gameObject.activeSelf != visible) def.gameObject.SetActive(visible);
@@ -765,14 +767,61 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>From the network: a client's event (host: do the shared part), or the host's (client: the personal part if near).</summary>
-		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost)
+		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost) { OnEventMessage(islandId, index, ev, fromHost, null); }
+
+		/// <summary>OnEventMessage, with the player who sent it (the host tells them when their event is refused).</summary>
+		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
-			// (the client made the checks already)
-			if (Raft_Network.IsHost && !fromHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev); }
+			// (the client made the checks already - except the crew's story items, made again here: AU18)
+			if (Raft_Network.IsHost && !fromHost)
+			{
+				string failed;
+				if (!StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed))
+				{
+					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' is refused: " + failed + " no longer holds for the crew (another player used it at the same moment)");
+					// (the player who tried gets the event's "otherwise" part, as when their own check fails)
+					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					return;
+				}
+				if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
+			}
 			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false, ev);
+		}
+
+		/// <summary>
+		/// Host, a player's event: its checks of the crew's story items made again against the crew's StoryBook (the
+		/// host's is the one that counts). Two players using the last story key within the network's delay both passed
+		/// their own check; the host took the key for the first one only (StoryBook.TakeRefused), and a "has" check sees
+		/// what is left now. Other checks (a player's own items, states, signals) stay the player's. An event's "otherwise"
+		/// part ("use!") has nothing to make again.
+		/// </summary>
+		static bool StoryChecksHold(IslandWorldState.Entry e, int index, string ev, ulong player, out string failed)
+		{
+			failed = null;
+			if (ev.EndsWith("!")) return true;
+			List<ObjCheck> checks = ChecksOf(e, index, ev);
+			List<ObjCheck> story = checks.Where(c => (c.Kind == "has" || c.Kind == "take") && StoryItems.IsStory(c.Target)).ToList();
+			if (story.Count == 0) return true;
+			bool any = AnyOf(e, index, ev);
+			if (any && story.Count < checks.Count) return true; // (another kind of check may be the one that passed: not known here)
+			var taken = new HashSet<string>(story.Where(c => c.Kind == "take" && !c.Not).Select(c => StoryItems.IdOf(c.Target)), StringComparer.OrdinalIgnoreCase);
+			var refused = new HashSet<string>(taken.Where(id => StoryBook.TakeRefused(player, id)).ToList(), StringComparer.OrdinalIgnoreCase);
+			bool passed = false;
+			foreach (ObjCheck c in story)
+			{
+				string id = StoryItems.IdOf(c.Target);
+				bool ok;
+				if (c.Kind == "take" && !c.Not) ok = !refused.Contains(id);
+				else if (!c.Not && taken.Contains(id)) ok = !refused.Contains(id); // (its own take used it up here already)
+				else ok = (StoryBook.Count(id) >= c.Count) != c.Not;
+				if (ok) passed = true;
+				else if (!any) { failed = c.Describe(); return false; }
+			}
+			if (!passed) { failed = string.Join(" / ", story.Select(c => c.Describe()).ToArray()); return false; }
+			return true;
 		}
 
 		/// <summary>

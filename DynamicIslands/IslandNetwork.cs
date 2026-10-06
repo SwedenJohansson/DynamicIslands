@@ -59,6 +59,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> players: which island spot animals belong to (AU32/AU62) - Data = "objectIndex:islandId:spot;..."
 		/// for one animal when it is made, for all of them to a player who joins.</summary>
 		public const int CreatureSpots = 21;
+		/// <summary>A tree chopped or an item picked up on a custom island (IslandObjectState, AU63): Ids = island, active (1/0),
+		/// harvests left (-1 = none), Index = its ordinal, Count = in-game day. Client -> host, host -> everyone; an older
+		/// version ignores it.</summary>
+		public const int ObjectHarvest = 22;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -328,6 +332,14 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>A tree or pickup was used on this machine's copy (host: to all clients; client: to the host, who passes it on).</summary>
+		public static void SendHarvest(int islandId, int ord, bool active, int yield, int day)
+		{
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { islandId, active ? 1 : 0, yield }, Index = ord, Count = day };
+			if (Raft_Network.IsHost) SendToClients(msg);
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
 		/// total, as before).</summary>
 		public static void SendQuestAdd(int islandId, int step, int amount) { SendQuestAdd(islandId, 0, step, amount); }
@@ -371,6 +383,12 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host -> one player: an object event's personal part for them (the "otherwise" part of an event the host refused - AU18).</summary>
+		public static void SendEventTo(Network_UserId player, int islandId, int index, string ev)
+		{
+			if (!Raft_Network.IsHost) return;
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = true }, player);
+		}
 
 		/// <summary>Client: asks the host for a thing only one player can have (Claims).</summary>
 		public static void SendClaim(int islandId, int key)
@@ -462,10 +480,10 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
 						break;
 					case IslandNetMessage.EventFired:
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList);
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from);
 						break;
 					case IslandNetMessage.Story:
-						StoryBook.OnMessage(msg);
+						StoryBook.OnMessage(msg, from.Id);
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
@@ -494,6 +512,13 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.Claim:
 						Claims.OnMessage(msg, from.Id, answer => SendToPlayer(answer, from));
+						break;
+					case IslandNetMessage.ObjectHarvest:
+						if (msg.Ids != null && msg.Ids.Length >= 3)
+						{
+							if (Raft_Network.IsHost) msg.Count = ContentState.Today; // (the host's day, as for ObjectUsed - AU60)
+							if (IslandObjectState.OnHarvest(msg.Ids[0], msg.Index, msg.Ids[1] != 0, msg.Ids[2], msg.Count) && Raft_Network.IsHost) SendToClients(msg);
+						}
 						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)

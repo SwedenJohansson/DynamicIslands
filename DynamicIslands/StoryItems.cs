@@ -307,7 +307,28 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>From the network.</summary>
-		public static void OnMessage(IslandNetMessage msg)
+		public static void OnMessage(IslandNetMessage msg) { OnMessage(msg, 0UL); }
+
+		/// <summary>Host: a player's "take" the crew no longer had enough for, by player and item, and when (TakeRefused).</summary>
+		static readonly Dictionary<string, float> refusedTakes = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+		const float RefusedTakeSeconds = 10f;
+
+		/// <summary>
+		/// Host: whether this player's last take of the item was refused in the last few seconds (forgotten once asked). Two
+		/// players using the last story key within the network's delay both passed their own check; the host took it for the
+		/// first one only, and the second one's event must not run its shared part too (AU18).
+		/// </summary>
+		internal static bool TakeRefused(ulong player, string id)
+		{
+			string k = player + "/" + StoryItems.IdOf(id);
+			float t;
+			if (!refusedTakes.TryGetValue(k, out t)) return false;
+			refusedTakes.Remove(k);
+			return Time.unscaledTime - t < RefusedTakeSeconds && Time.unscaledTime >= t;
+		}
+
+		/// <summary>From the network (from: the player who sent it, for a client's take the host refuses).</summary>
+		public static void OnMessage(IslandNetMessage msg, ulong from)
 		{
 			if (msg.Name == "all")
 			{
@@ -323,6 +344,20 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			if (!Raft_Network.IsHost) return;
+			// (a take the crew no longer has enough for - another player used the item up at the same moment: refused, not
+			// partly taken, and remembered for that player's event; everyone gets the state again, so their count is right)
+			if (msg.Name == "take")
+			{
+				string[] f = Split(msg.Data);
+				int n;
+				if (f.Length >= 2 && int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) && n > 0 && Count(f[0]) < n)
+				{
+					refusedTakes[from + "/" + StoryItems.IdOf(f[0])] = Time.unscaledTime;
+					Debug.Log("[CUSTOM ISLANDS] A player's use of story item '" + f[0] + "' x" + n + " is refused: the crew has " + Count(f[0]) + " (another player used it at the same moment)");
+					IslandNetwork.SendStory(StateMessage());
+					return;
+				}
+			}
 			// The host: a client's change; everyone gets the new state
 			if (Apply(msg.Name ?? "", msg.Data ?? "")) { IslandNetwork.SendStory(StateMessage()); Raise(); }
 		}
