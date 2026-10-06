@@ -502,7 +502,10 @@ namespace DynamicIslands.Editor
 				if (rules.TryGetValue(name, out had) && had.Key == t) text = had.Value;
 				else
 				{
-					text = ObjectProps.Get(Props(name), WorldDirector.IslandRulesKey);
+					// (a file that couldn't be read - locked, broken - isn't kept as "no rules" until it changes - review 2026-10-06)
+					Info read = Get(name);
+					if (read == null) return new List<IntroRule>();
+					text = ObjectProps.Get(read.Props, WorldDirector.IslandRulesKey);
 					rules[name] = new KeyValuePair<long, string>(t, text);
 					rulesDirty = true;
 				}

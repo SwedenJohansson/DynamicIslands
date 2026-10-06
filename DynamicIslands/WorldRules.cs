@@ -122,7 +122,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState; } }
+		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 

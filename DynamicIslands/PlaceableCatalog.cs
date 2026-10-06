@@ -1036,7 +1036,7 @@ namespace DynamicIslands.Editor
 			while (loadingScenes.Contains(sceneName)) yield return null;
 			if (loadedScenes.Contains(sceneName)) yield break;
 			loadingScenes.Add(sceneName);
-			try { yield return Guarded(LoadSceneObjects(ResolveScene(sceneName)), "Loading objects from " + sceneName); }
+			try { yield return Guarded(LoadSceneObjects(sceneName, ResolveScene(sceneName)), "Loading objects from " + sceneName); }
 			finally
 			{
 				loadingScenes.Remove(sceneName);
@@ -1045,9 +1045,10 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static IEnumerator LoadSceneObjects(string sceneName)
+		/// <summary>The objects the index has under indexScene, taken from Raft's scene openScene (renamed by a Raft update - R11).</summary>
+		static IEnumerator LoadSceneObjects(string indexScene, string sceneName)
 		{
-			var wanted = new HashSet<string>(index.Values.Where(e => e.Scene == sceneName && !prototypes.ContainsKey(e.Name)).Select(e => e.Name));
+			var wanted = new HashSet<string>(index.Values.Where(e => e.Scene == indexScene && !prototypes.ContainsKey(e.Name)).Select(e => e.Name));
 			if (wanted.Count == 0) yield break;
 			if (LoadSceneManager.IsGameSceneLoaded)
 				Debug.Log("[CUSTOM ISLANDS] Loading Raft's " + sceneName + " scene for a moment to take " + wanted.Count + " objects an island uses");

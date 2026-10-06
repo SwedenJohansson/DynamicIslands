@@ -72,20 +72,25 @@ namespace DynamicIslands.Editor
 
 		public static IslandQuest From(IDictionary<string, string> props) { return From(props, 0); }
 
-		public static IslandQuest From(IDictionary<string, string> props, int n)
+		/// <summary>
+		/// Quest n of the island's settings. Its texts are made plain for showing (an island's "&lt;size=300&gt;" title covered
+		/// the quest panel - ROADMAP X6); raw keeps them as written, for the quest editor, which writes them back (review
+		/// 2026-10-06: saving in the editor stripped every quest's formatting and cut long texts).
+		/// </summary>
+		public static IslandQuest From(IDictionary<string, string> props, int n, bool raw = false)
 		{
+			Func<string, int, string> text = (s, max) => raw ? s : LibraryInfo.Plain(s, max);
 			var q = new IslandQuest
 			{
-				// (plain text: an island's "<size=300>" title covered the quest panel - ROADMAP X6)
-				Title = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyTitle, n)), 200), Intro = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyIntro, n)), 4000),
-				Reward = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyReward, n)), 4000), Done = LibraryInfo.Plain(ObjectProps.Get(props, Key(KeyDone, n)), 4000)
+				Title = text(ObjectProps.Get(props, Key(KeyTitle, n)), 200), Intro = text(ObjectProps.Get(props, Key(KeyIntro, n)), 4000),
+				Reward = text(ObjectProps.Get(props, Key(KeyReward, n)), 4000), Done = text(ObjectProps.Get(props, Key(KeyDone, n)), 4000)
 			};
 			foreach (string line in ObjectProps.Get(props, Key(KeySteps, n)).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				string[] p = line.Split('|');
 				if (p.Length < 1 || !Types.Contains(p[0])) continue;
 				int count;
-				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? LibraryInfo.Plain(p[3], 400) : "" });
+				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? text(p[3], 400) : "" });
 			}
 			return q;
 		}

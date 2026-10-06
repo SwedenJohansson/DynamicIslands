@@ -177,6 +177,16 @@ namespace DynamicIslands.Editor
 			using (var file = File.OpenRead(path)) return Read(file, path);
 		}
 
+		/// <summary>
+		/// For a worker thread: the file read at once (its handle closed before unpacking, so a save on the main thread isn't
+		/// held up) and nothing deleted - SafeFile.Recover is the caller's, on the main thread (review 2026-10-06).
+		/// </summary>
+		public static IslandFile LoadOffThread(string path)
+		{
+			byte[] bytes = File.ReadAllBytes(path);
+			using (var m = new MemoryStream(bytes)) return Read(m, path);
+		}
+
 		/// <summary>An island file's bytes (a library update compares it with the one here before writing it).</summary>
 		public static IslandFile FromBytes(byte[] bytes, string label)
 		{

@@ -285,6 +285,20 @@ namespace DynamicIslands.Editor
 		{
 				int missing = 0, creature = c.creature, loot = c.loot, zone = c.zone, treasure = c.treasure;
 				try { SpawnBody(island, index, parent, editable, skipUnderwater, ref missing, ref creature, ref loot, ref zone, ref treasure); }
+				catch
+				{
+					// (an object that failed still takes its number: the later chests, animals, zones and treasure keep theirs,
+					// the same as on the other machines and in the saved state - review 2026-10-06)
+					if (!editable)
+					{
+						IslandObject o = island.Objects[index];
+						if (ContentCatalog.IsCreature(o.Name)) { if (creature == c.creature) creature++; }
+						else if (ContentCatalog.IsZone(o.Name)) { if (o.Name == ContentCatalog.TriggerZone && zone == c.zone) zone++; }
+						else if (ContentCatalog.IsTreasure(o.Name)) { if (treasure == c.treasure) treasure++; }
+						else if (ObjectProps.IsLoot(o.Name, o.Props) && loot == c.loot) loot++;
+					}
+					throw;
+				}
 				finally { c.missing += missing; c.creature = creature; c.loot = loot; c.zone = zone; c.treasure = treasure; }
 		}
 
@@ -365,7 +379,7 @@ namespace DynamicIslands.Editor
 				// (the randomizer's set pieces stand at the size of Raft's own - some of Raft's are scaled in their scene, like
 				// Balboa's caves: one made before its piece was loaded was saved at scale 1; the copy has Raft's scale)
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
-				foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
+				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
 
 				if (editable)
@@ -525,6 +539,21 @@ namespace DynamicIslands.Editor
 			return root;
 		}
 
+		/// <summary>
+		/// The colliders of an object's active parts switched on. Its parent may be inactive (the sliced spawn): the parts are
+		/// looked at by their own switch, as GetComponentsInChildren without inactive ones found none there (review 2026-10-06).
+		/// </summary>
+		static void EnableColliders(GameObject go)
+		{
+			foreach (Collider c in go.GetComponentsInChildren<Collider>(true))
+			{
+				Transform t = c.transform;
+				bool on = true;
+				for (; t != null && on; t = t == go.transform ? null : t.parent) on = t.gameObject.activeSelf;
+				if (on) c.enabled = true;
+			}
+		}
+
 		/// <summary>Tests (CIPerfChecks): how many frames the last sliced spawn took.</summary>
 		internal static int LastSpawnFrames;
 		internal static string LastSpawnTiming = "";
@@ -538,7 +567,18 @@ namespace DynamicIslands.Editor
 		{
 			bool flying;
 			var clock = System.Diagnostics.Stopwatch.StartNew();
-			GameObject root = MakeRoot(island, worldPosition, out flying);
+			GameObject root = null;
+			int rootsBefore = SpawnedRoots.Count;
+			// (an error making the land - a broken heightmap - ends here with null: the caller marks the island failed instead of
+			// waiting for it for good - review 2026-10-06)
+			try { root = MakeRoot(island, worldPosition, out flying); }
+			catch (System.Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Making the land of '" + island.Name + "' failed: " + e);
+				while (SpawnedRoots.Count > rootsBefore) { GameObject half = SpawnedRoots[SpawnedRoots.Count - 1]; SpawnedRoots.RemoveAt(SpawnedRoots.Count - 1); if (half != null) UnityEngine.Object.Destroy(half); }
+				result(null);
+				yield break;
+			}
 			long land = clock.ElapsedMilliseconds;
 			var objects = new GameObject("Objects");
 			objects.SetActive(false);

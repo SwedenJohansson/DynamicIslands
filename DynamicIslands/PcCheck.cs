@@ -33,7 +33,8 @@ namespace DynamicIslands.Editor
 				found.Add("The mod can't save in " + folder + " (" + e.GetType().Name + "): islands, plans and the worlds' islands can't be kept. Move Raft out of Program Files, or let Raft write there in your antivirus (\"controlled folder access\").");
 			}
 			string lower = folder.ToLowerInvariant();
-			if (lower.Contains("program files"))
+			// (only when saving failed: Steam's own default folder is under Program Files and works - review 2026-10-06)
+			if (found.Count > 0 && lower.Contains("program files"))
 				found.Add("Raft is installed under Program Files (" + folder + "). Windows may stop the mod from saving there: in Steam, move Raft to another library folder (Steam > Settings > Storage).");
 			foreach (string sync in new[] { "onedrive", "dropbox", "google drive", "icloud" })
 				if (lower.Contains(sync)) { found.Add("Raft is in a synced folder (" + sync + "): the sync can lock a file while the mod saves it. Move Raft out of it, or pause the sync while you play."); break; }

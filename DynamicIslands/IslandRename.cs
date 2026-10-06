@@ -57,12 +57,15 @@ namespace DynamicIslands.Editor
 			// The file first (a change of case only goes by a temporary name: Windows sees the same file)
 			MoveFile(IslandSpawner.PathFor(from), IslandSpawner.PathFor(to));
 			int copies = 0;
+			// (a copy is name_<its content's hash>: a player's own island "camp_202609281530" only looks like one - review 2026-10-06)
+			var movedCopies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			try
 			{
 				foreach (string file in Directory.GetFiles(DynamicIslands.assetpath, from + "_*" + IslandFile.Extension))
 				{
 					string n = Path.GetFileNameWithoutExtension(file);
-					if (n.Length != from.Length + 13 || !n.StartsWith(from + "_", StringComparison.OrdinalIgnoreCase) || !IsCopyName(n)) continue;
+					if (n.Length != from.Length + 13 || !n.StartsWith(from + "_", StringComparison.OrdinalIgnoreCase) || !IsCopyName(n) || !IslandNetwork.IsDownloadName(n)) continue;
+					movedCopies.Add(n);
 					MoveFile(file, IslandSpawner.PathFor(to + n.Substring(from.Length)));
 					copies++;
 				}
@@ -141,6 +144,12 @@ namespace DynamicIslands.Editor
 							IntroRule r = IntroRule.Parse(l.Substring(ruleKey.Length));
 							if (r != null && RenameIn(new List<IntroRule> { r }, from, to, false)) { lines[i] = ruleKey + r.ToLine(); changed = true; }
 						}
+						else if (l.StartsWith("@islandsoff="))
+						{
+							// (the pool's islands left out of this world: the island stays left out - review 2026-10-06)
+							HashSet<string> off = WorldIslands.Parse(l.Substring("@islandsoff=".Length));
+							if (off.Remove(from)) { off.Add(to); lines[i] = "@islandsoff=" + WorldIslands.Join(off); changed = true; }
+						}
 						else if (!l.StartsWith("@") && !l.StartsWith("#") && l.Split('|')[0].Trim().Equals(from, StringComparison.OrdinalIgnoreCase))
 						{
 							lines[i] = to + l.Substring(l.IndexOf('|') < 0 ? l.Length : l.IndexOf('|'));
@@ -162,7 +171,13 @@ namespace DynamicIslands.Editor
 						bool changed = false;
 						for (int i = 0; i < lines.Length; i++)
 							foreach (string k in new[] { "rewarded ", "owed " })
-								if (lines[i].StartsWith(k) && lines[i].Substring(k.Length).Trim().Equals(from, StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to; changed = true; }
+							{
+								if (!lines[i].StartsWith(k)) continue;
+								string key = lines[i].Substring(k.Length).Trim();
+								// (the island's second and later quests are "<name>#quest2"... - review 2026-10-06)
+								if (key.Equals(from, StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to; changed = true; }
+								else if (key.StartsWith(from + "#quest", StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to + key.Substring(from.Length); changed = true; }
+							}
 						if (changed) SafeFile.WriteAllLines(file, lines);
 					}
 			}
@@ -172,11 +187,12 @@ namespace DynamicIslands.Editor
 			if (worlds.Count > 0) report.Add("the saved world" + (worlds.Count == 1 ? " " : "s ") + string.Join(", ", worlds.Take(6).Select(x => "'" + x + "'").ToArray()) + (worlds.Count > 6 ? " and " + (worlds.Count - 6) + " more" : ""));
 
 			// The world loaded now (the editor's): its list in memory, or its next save would write the old name again
+			if (WorldIslands.Off.Remove(from)) WorldIslands.Off.Add(to);
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (e.HostName.Equals(from, StringComparison.OrdinalIgnoreCase)) e.HostName = to;
 				if (e.Name.Equals(from, StringComparison.OrdinalIgnoreCase)) e.Name = to;
-				else if (e.Name.StartsWith(from + "_", StringComparison.OrdinalIgnoreCase) && e.Name.Length == from.Length + 13 && IsCopyName(e.Name)) e.Name = to + e.Name.Substring(from.Length);
+				else if (e.Name.StartsWith(from + "_", StringComparison.OrdinalIgnoreCase) && movedCopies.Contains(e.Name)) e.Name = to + e.Name.Substring(from.Length);
 			}
 			if (DynamicIslands.currentIslandName.Equals(from, StringComparison.OrdinalIgnoreCase))
 			{

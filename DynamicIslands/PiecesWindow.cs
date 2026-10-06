@@ -181,7 +181,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				if (stamps) { TerrainStamps.Rename(from, to); EditorUI.RefreshStamps(); }
-				else DynamicIslands.instance.StartCoroutine(GroupLibrary.Rename(from, to));
+				else { GroupLibrary.RenameFile(from, to); DynamicIslands.instance.StartCoroutine(GroupLibrary.Register(to)); }
 			}
 			catch (Exception e) { SetStatus(SafeFile.InUse(e) ? "'" + from + "' is in use by another program - close it there and try again." : "Could not rename: " + e.Message, true); return; }
 			picked = to;

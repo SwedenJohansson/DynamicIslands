@@ -14,7 +14,8 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class QuestRewards
 	{
-		static Guid loadedFor;
+		// (the world and the player it was read for: before the local player is there the id is "local" - review 2026-10-06)
+		static string loadedFor;
 		static readonly HashSet<string> rewarded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> owed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -35,31 +36,37 @@ namespace DynamicIslands.Editor
 
 		static void Load()
 		{
-			if (loadedFor == SaveAndLoad.WorldGuid) return;
-			loadedFor = SaveAndLoad.WorldGuid;
-			rewarded.Clear(); owed.Clear();
+			string key = SaveAndLoad.WorldGuid + "-" + PlayerId;
+			if (loadedFor == key) return;
+			// (what happened while the player wasn't known yet is kept, and saved with the player's own record)
+			bool merge = loadedFor == SaveAndLoad.WorldGuid + "-local";
+			loadedFor = key;
+			if (!merge) { rewarded.Clear(); owed.Clear(); }
 			try
 			{
 				string path = FilePath;
 				if (!File.Exists(path) && Raft_Network.IsHost && File.Exists(OldFilePath)) path = OldFilePath;
-				if (!File.Exists(path)) return;
-				foreach (string line in File.ReadAllLines(path))
-				{
-					if (line.StartsWith("rewarded ")) rewarded.Add(line.Substring(9).Trim());
-					else if (line.StartsWith("owed ")) owed.Add(line.Substring(5).Trim());
-				}
+				if (File.Exists(path))
+					foreach (string line in File.ReadAllLines(path))
+					{
+						if (line.StartsWith("rewarded ")) rewarded.Add(line.Substring(9).Trim());
+						else if (line.StartsWith("owed ")) owed.Add(line.Substring(5).Trim());
+					}
+				if (merge && (rewarded.Count > 0 || owed.Count > 0)) Save();
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards file: " + e.Message); }
 		}
 
 		/// <summary>Read the file again when next asked (an island was renamed in it).</summary>
-		internal static void Forget() { loadedFor = Guid.Empty; }
+		internal static void Forget() { loadedFor = null; }
 
 		/// <summary>The file this player's rewards of the world are kept in (logs).</summary>
 		internal static string WhereKept { get { return Path.GetFileName(FilePath); } }
 
 		static void Save()
 		{
+			// (not before the player is known: "local"'s small record would be written over the player's own later)
+			if (PlayerId == "local") { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards: not saved yet - the player isn't there yet"); return; }
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));

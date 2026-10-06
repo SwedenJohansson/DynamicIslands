@@ -85,16 +85,31 @@ namespace DynamicIslands.Editor
 		/// <summary>The last copy's source when a world was read (tests): "mod folder", "Raft's world folder", or "none".</summary>
 		public static string LastSource { get; private set; }
 
+		/// <summary>A file's lines (null when it isn't there); tried a few times while it is in use, then the error is thrown.</summary>
+		static string[] ReadThere(string file)
+		{
+			for (int i = 0; ; i++)
+			{
+				try { return File.Exists(file) ? File.ReadAllLines(file) : null; }
+				catch (IOException e)
+				{
+					if (i >= 4) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + file + ": " + e.Message); throw; }
+					System.Threading.Thread.Sleep(100);
+				}
+			}
+		}
+
 		/// <summary>
 		/// Host, loading a world: the newest of the mod's own file and the copy in Raft's world folder (null if neither).
 		/// </summary>
 		public static string[] Choose(string modFile)
 		{
-			string[] mine = null, travelled = null;
-			try { if (File.Exists(modFile)) mine = File.ReadAllLines(modFile); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + modFile + ": " + e.Message); }
+			// (a file that is there but can't be read - locked by an antivirus or a sync - throws: the world then loads as
+			// "couldn't be read" and isn't saved, instead of as "no file", which the next save deleted - review 2026-10-06)
+			string[] mine = ReadThere(modFile);
 			string folder = RaftWorldFolder;
 			string copy = folder != null ? Path.Combine(folder, FileName) : null;
-			try { if (copy != null && File.Exists(copy)) travelled = File.ReadAllLines(copy); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + copy + ": " + e.Message); }
+			string[] travelled = copy != null ? ReadThere(copy) : null;
 			LastOlderSave = "";
 			long loading = LoadingStamp;
 			LoadingStamp = 0; // (used once: a new world made afterwards has no save of its own yet)

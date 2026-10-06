@@ -871,17 +871,21 @@ namespace DynamicIslands
 			// The file read and unpacked on a worker thread (ROADMAP P1: 150-170 ms on the main thread for a big island, a
 			// stutter each time one streamed in)
 			System.Threading.Tasks.Task<IslandFile> reading = null;
+			bool remake = false;
+			// (world shifts while the file is read count too - review 2026-10-06)
+			Vector3 shiftedBefore = IslandWorldState.ShiftedBy;
 			var lc = System.Diagnostics.Stopwatch.StartNew();
 			if (File.Exists(path))
 			{
-				reading = System.Threading.Tasks.Task.Run(() => IslandFile.Load(path));
+				SafeFile.Recover(path); // (a save that Raft stopped half way: here, not on the worker)
+				reading = System.Threading.Tasks.Task.Run(() => IslandFile.LoadOffThread(path));
 				while (!reading.IsCompleted) yield return null;
 			}
 			try
 			{
 				if (reading != null) { island = reading.Result; LastLoadTiming = "reading the file " + lc.ElapsedMilliseconds + " ms (on a worker thread)"; }
 				// (a generated island of the world whose file was deleted: made again from its name - ROADMAP R15)
-				else if (entry != null && Raft_Network.IsHost && CustomIslandSpawner.RemakeOf(name) != null && !remaking.Contains(name)) { remaking.Add(name); }
+				else if (entry != null && Raft_Network.IsHost && CustomIslandSpawner.RemakeOf(name) != null && !remaking.Contains(name)) { remaking.Add(name); remake = true; }
 				// (one of the world's islands: said which, and that the rest plays - a player hosting a world they got as a
 				// folder, without ever joining it, has none of the islands made on the other PC)
 				else if (entry != null) Notify("This world's island '" + entry.HostName + "' isn't on this PC, so it is left out - the rest of the world plays. " +
@@ -893,7 +897,8 @@ namespace DynamicIslands
 				Debug.LogError("[CUSTOM ISLANDS] Could not read " + path + ": " + e);
 				Notify("Could not read island '" + name + "' - see console (F10)", true);
 			}
-			if (island == null && remaking.Contains(name))
+			// (this spawn's remake only: a second spawn of the name while it is remade doesn't start another - review 2026-10-06)
+			if (island == null && remake)
 			{
 				yield return CustomIslandSpawner.RemakeAndSpawn(CustomIslandSpawner.RemakeOf(name), entry);
 				remaking.Remove(name);
@@ -906,7 +911,6 @@ namespace DynamicIslands
 			}
 
 			// The core objects, plus any from Raft's other islands this island uses
-			Vector3 shiftedBefore = IslandWorldState.ShiftedBy;
 			yield return PlaceableCatalog.EnsureLoaded(island.Objects.Select(o => o.Name).ToList());
 
 			if (entry != null)
@@ -923,18 +927,18 @@ namespace DynamicIslands
 
 			// The objects over several frames (ROADMAP P1); the entry stays "loading" meanwhile, so nothing spawns it twice
 			GameObject made = null;
-			bool spawnFailed = false;
-			System.Collections.IEnumerator slices = null;
-			try { slices = IslandSpawner.SpawnInWorldSliced(island, position, r => made = r); }
-			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Spawning '" + name + "' failed: " + e); spawnFailed = true; }
-			if (slices != null) yield return slices;
+			// (SpawnInWorldSliced catches its own errors and gives null: a coroutine's call never throws)
+			Vector3 shiftedSlicing = IslandWorldState.ShiftedBy;
+			yield return IslandSpawner.SpawnInWorldSliced(island, position, r => made = r);
+			// (no entry: the root follows shifts while its objects are made - SpawnedRoots - the position kept for it too)
+			if (entry == null) position -= IslandWorldState.ShiftedBy - shiftedSlicing;
 			if (entry != null)
 			{
 				entry.Loading = false;
 				// (removed, or made by another spawn, while its objects were being made)
 				if (!IslandWorldState.Contains(entry) || entry.Root != null) { IslandSpawner.Despawn(made); yield break; }
 			}
-			if (made == null || spawnFailed)
+			if (made == null)
 			{
 				if (entry != null) entry.Failed = true;
 				Notify("Spawning '" + name + "' failed - see console (F10)", true);
@@ -1262,8 +1266,10 @@ namespace DynamicIslands
 						string name = m.shader != null ? m.shader.name : null;
 						if (string.IsNullOrEmpty(name)) continue;
 						Shader s;
-						if (!found.TryGetValue(name, out s)) { s = Shader.Find(name); found[name] = s; Finds++; }
+						// (a shader not found isn't kept as missing: it may come later, the material looked at again - review 2026-10-06)
+						if (!found.TryGetValue(name, out s)) { s = Shader.Find(name); Finds++; if (s != null) found[name] = s; }
 						if (s != null) { m.shader = s; Fixed++; }
+						else done.Remove(m.GetInstanceID());
 					}
 					catch { }
 				}

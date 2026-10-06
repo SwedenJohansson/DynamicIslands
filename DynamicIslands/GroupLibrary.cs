@@ -133,10 +133,19 @@ namespace DynamicIslands.Editor
 		/// <summary>Renames a group (its file and its entry in "My groups"). Placed copies on islands are separate objects: untouched.</summary>
 		public static IEnumerator Rename(string from, string to)
 		{
+			RenameFile(from, to);
+			yield return Register(to);
+		}
+
+		/// <summary>
+		/// The file's part of Rename, at once: an error (the file in use) reaches the caller, not a coroutine nobody watches
+		/// (review 2026-10-06: the window said "Renamed" while the file kept its name). Register(to) follows.
+		/// </summary>
+		public static void RenameFile(string from, string to)
+		{
 			PiecesFiles.Move(PathFor(from), PathFor(to));
 			PlaceableCatalog.RemoveCustom(Prefix + from);
 			ObjectThumbnails.Forget(Prefix + from);
-			yield return Register(to);
 		}
 
 		/// <summary>Puts every saved group in the object catalog (loading the Raft scenes their objects come from first).</summary>

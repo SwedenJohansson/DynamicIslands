@@ -719,12 +719,24 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
+		static readonly HashSet<string> toldPersonal = new HashSet<string>();
+
 		public static void FireFromHost(IslandWorldState.Entry e, int index, string ev)
 		{
 			if (e == null || !Raft_Network.IsHost) return;
 			List<ObjAction> actions = ActionsOf(e, index, ev);
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			if (actions.Count == 0 && checks.Count == 0) return;
+			// (no player does these - the quest done, a spot's animals defeated: a check of a player's own items looked in the
+			// host's inventory and took from it. Only the crew's checks count here - story items, states, signals, the
+			// quest - AU17)
+			List<ObjCheck> personal = checks.Where(c => (c.Kind == "has" || c.Kind == "take") && !StoryItems.IsStory(c.Target)).ToList();
+			if (personal.Count > 0)
+			{
+				checks = checks.Except(personal).ToList();
+				if (toldPersonal.Add(e.HostName + "/" + index + "/" + ev))
+					Debug.LogWarning("[CUSTOM ISLANDS] '" + e.HostName + "': the " + ev + " event's check of a player's items (" + string.Join(", ", personal.Select(c => c.Target).ToArray()) + ") is left out - no player does it; use a story item (the crew's) instead");
+			}
 			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
 			if (Near(e)) Schedule(e, index, actions, false, false, ev);

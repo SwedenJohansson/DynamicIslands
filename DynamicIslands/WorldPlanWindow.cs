@@ -104,7 +104,8 @@ namespace DynamicIslands.Editor
 			var rnd = new System.Random();
 			for (int tries = 0; tries < 100; tries++)
 			{
-				string id = "rule" + (p.Rules.Count + 1) + letters[rnd.Next(letters.Length)];
+				// (three letters: a deleted rule's name comes back about once in 12 000, not once in 23 - review 2026-10-06)
+				string id = "rule" + (p.Rules.Count + 1) + letters[rnd.Next(letters.Length)] + letters[rnd.Next(letters.Length)] + letters[rnd.Next(letters.Length)];
 				if (!used.Contains(id)) return id;
 			}
 			return "rule" + DateTime.Now.Ticks.ToString("x");

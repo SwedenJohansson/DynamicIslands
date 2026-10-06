@@ -672,9 +672,9 @@ namespace DynamicIslands
 		/// <summary>The recipe's quest n (0 = the main one), kept until it has steps.</summary>
 		static IslandQuest PendingQuest(int n)
 		{
-			if (n == 0) { if (pendingQuest == null) pendingQuest = IslandQuest.From(DynamicIslands.currentIslandProps); return pendingQuest; }
+			if (n == 0) { if (pendingQuest == null) pendingQuest = IslandQuest.From(DynamicIslands.currentIslandProps, 0, true); return pendingQuest; }
 			IslandQuest q;
-			if (!pendingMore.TryGetValue(n, out q)) pendingMore[n] = q = IslandQuest.From(DynamicIslands.currentIslandProps, n);
+			if (!pendingMore.TryGetValue(n, out q)) pendingMore[n] = q = IslandQuest.From(DynamicIslands.currentIslandProps, n, true);
 			return q;
 		}
 

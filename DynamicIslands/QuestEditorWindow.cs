@@ -53,7 +53,7 @@ namespace DynamicIslands.Editor
 			if (instance == null) return;
 			instance.working.Clear();
 			int count = IslandQuest.CountIn(DynamicIslands.currentIslandProps);
-			for (int i = 0; i < count; i++) instance.working[i] = IslandQuest.From(DynamicIslands.currentIslandProps, i);
+			for (int i = 0; i < count; i++) instance.working[i] = IslandQuest.From(DynamicIslands.currentIslandProps, i, true);
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.Show(0);

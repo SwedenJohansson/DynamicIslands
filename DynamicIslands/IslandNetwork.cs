@@ -560,6 +560,20 @@ namespace DynamicIslands.Editor
 			if (HashOf(entry.HostName) == hash) { entry.Name = entry.HostName; return; }
 			string downloaded = DownloadName(entry.HostName, hash);
 			if (File.Exists(IslandSpawner.PathFor(downloaded))) { entry.Name = downloaded; return; }
+			// (the same content downloaded for another island name - the request already answered: a copy of it, not a wait
+			// of 30 s for a second download - review 2026-10-06)
+			try
+			{
+				string same = Directory.GetFiles(DynamicIslands.assetpath, "*_" + hash + IslandFile.Extension).FirstOrDefault();
+				if (same != null)
+				{
+					File.Copy(same, IslandSpawner.PathFor(downloaded), true);
+					entry.Name = downloaded;
+					Log("Island file '" + entry.HostName + "' is the same as " + Path.GetFileName(same) + ": copied (" + hash + ")");
+					return;
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Copying an island file with the same content: " + e.Message); }
 
 			entry.Name = downloaded;
 			entry.WaitingForFile = true;
