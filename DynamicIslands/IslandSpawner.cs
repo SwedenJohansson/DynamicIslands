@@ -637,7 +637,8 @@ namespace DynamicIslands.Editor
 				// Object positions in the file are relative to the full terrain's corner, which the root still represents
 				terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
 				Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
-				TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style));
+				// (a second style mixed in: its textures are layers 5-8 of the saved paint)
+				TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style), island.HasMix ? TerrainPainter.StyleIndex(island.MixStyle) : -1);
 				// Saved paint covers the full terrain; take the block matching the heightmap crop
 				// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
 				int cells = island.HeightmapResolution - 1;

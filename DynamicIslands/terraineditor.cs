@@ -9,8 +9,9 @@ using UnityEngine.UI;
 namespace DynamicIslands
 {
 	/// <summary>
-	/// Editor terrain: creates the 1000 x 600 x 1000 terrain and sculpts it with a round, soft-edged brush
-	/// while the Terrain tab is selected. Textures are repainted automatically when a stroke ends.
+	/// Editor terrain: creates the 1000 x 600 x 1000 terrain and sculpts it with a round brush (its edge: smooth, linear or
+	/// hard, TerrainBrushes.BrushFalloff) while the Terrain tab is selected. Textures are repainted automatically when a
+	/// stroke ends.
 	/// </summary>
 	public class terraineditor : MonoBehaviour
 	{
@@ -31,7 +32,13 @@ namespace DynamicIslands
 			PaintLayer, // paint terraineditor.paintLayer by hand
 			AutoPaint,  // brush back to automatic texturing
 			Stamp,      // one click puts down TerrainStamps.Current, as big as the brush
+			Noise,      // adds bumps of TerrainBrushes.NoiseScale (Shift: takes them away)
+			Erode,      // thermal erosion: ground steeper than TerrainBrushes.TalusAngle slides down
 		}
+
+		/// <summary>Tests: the next strokes take the noise away, as Shift does.</summary>
+		public static bool SubtractNoise;
+		float noiseSign = 1f; // -1: this stroke takes the noise away (Shift held when it started)
 
 		/// <summary>Where the brush last was over the terrain (Save stamp captures around it).</summary>
 		public static Vector3? LastPoint;
@@ -140,6 +147,7 @@ namespace DynamicIslands
 			stamped = false;
 			dirtyMin = point; dirtyMax = point;
 			flattenTarget = SampleNormalizedHeight(point);
+			noiseSign = EditorInput.Shift || SubtractNoise ? -1f : 1f;
 			// Full snapshot for undo; only the part the stroke touches is kept when it ends
 			int hres = terrainData.heightmapResolution, ares = terrainData.alphamapResolution;
 			strokeHeights = terrainData.GetHeights(0, 0, hres, hres);
@@ -156,6 +164,8 @@ namespace DynamicIslands
 				case TerrainModificationAction.Lower: ApplyBrush(point, -1f); break;
 				case TerrainModificationAction.Flatten: ApplyFlatten(point); break;
 				case TerrainModificationAction.Smooth: ApplySmooth(point); break;
+				case TerrainModificationAction.Noise: ApplyNoise(point); break;
+				case TerrainModificationAction.Erode: ApplyErode(point); break;
 				case TerrainModificationAction.PaintLayer: ApplyPaint(point, false); break;
 				case TerrainModificationAction.AutoPaint: ApplyPaint(point, true); break;
 				case TerrainModificationAction.Stamp:
@@ -284,6 +294,7 @@ namespace DynamicIslands
 
 			float[,,] maps = terrainData.GetAlphamaps(x0, z0, cols, rows);
 			int layers = maps.GetLength(2);
+			if (!auto && paintLayer >= layers) return; // (a mixed style's texture, and the mix was taken out)
 			float rate = Mathf.Clamp01(strength * 0.25f * dt);
 			var target = new float[layers];
 
@@ -292,7 +303,7 @@ namespace DynamicIslands
 				{
 					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs, d2 = dx * dx + dz * dz;
 					if (d2 >= 1f) continue;
-					float w = (1f - d2) * (1f - d2);
+					float w = TerrainBrushes.Weight(d2);
 
 					if (auto) TerrainPainter.AutoWeights(terrain, DynamicIslands.EditorWaterLevel, x0 + x, z0 + z, target);
 					else for (int l = 0; l < layers; l++) target[l] = l == paintLayer ? 1f : 0f;
@@ -311,7 +322,7 @@ namespace DynamicIslands
 			return (terrain.SampleHeight(world)) / terrainData.size.y;
 		}
 
-		/// <summary>Heightmap block under the brush plus per-sample weights (1 at the centre, smoothly 0 at the rim).</summary>
+		/// <summary>Heightmap block under the brush plus per-sample weights (1 at the centre, 0 at the rim, by the brush's falloff).</summary>
 		bool GetBrushArea(Vector3 world, out int x0, out int z0, out float[,] weights)
 		{
 			int res = terrainData.heightmapResolution;
@@ -331,7 +342,7 @@ namespace DynamicIslands
 				{
 					float dx = (x0 + x - cx) / rs, dz = (z0 + z - cz) / rs;
 					float d2 = dx * dx + dz * dz;
-					if (d2 < 1f) { float f = 1f - d2; weights[z, x] = f * f; } // smooth falloff
+					weights[z, x] = TerrainBrushes.Weight(d2); // (the brush edge: smooth, linear or hard)
 				}
 			return true;
 		}
@@ -375,6 +386,38 @@ namespace DynamicIslands
 					result[z, x] = Mathf.Lerp(h[z, x], avg, rate * w[z, x] * 4f);
 				}
 			terrainData.SetHeights(x0, z0, result);
+		}
+
+		/// <summary>Noise brush: adds the noise field (TerrainBrushes.Noise, bumps NoiseScale metres across) under the brush,
+		/// Strength metres a second at the middle; a stroke started with Shift takes it away.</summary>
+		void ApplyNoise(Vector3 world)
+		{
+			int x0, z0; float[,] w;
+			if (!GetBrushArea(world, out x0, out z0, out w)) return;
+			float[,] h = terrainData.GetHeights(x0, z0, w.GetLength(1), w.GetLength(0));
+			float spacing = terrainData.size.x / (terrainData.heightmapResolution - 1);
+			TerrainBrushes.AddNoise(h, w, x0, z0, spacing, terrainData.size.y, TerrainBrushes.NoiseScale, noiseSign * strength * dt);
+			terrainData.SetHeights(x0, z0, h);
+		}
+
+		/// <summary>Erosion brush: a few iterations of thermal erosion under the brush (one sample more all round, where
+		/// the material may land); Strength sets how fast.</summary>
+		void ApplyErode(Vector3 world)
+		{
+			int x0, z0; float[,] w;
+			if (!GetBrushArea(world, out x0, out z0, out w)) return;
+			int res = terrainData.heightmapResolution;
+			int bx0 = Mathf.Max(0, x0 - 1), bz0 = Mathf.Max(0, z0 - 1);
+			int bx1 = Mathf.Min(res - 1, x0 + w.GetLength(1)), bz1 = Mathf.Min(res - 1, z0 + w.GetLength(0));
+			int cols = bx1 - bx0 + 1, rows = bz1 - bz0 + 1;
+			var weights = new float[rows, cols];
+			for (int z = 0; z < w.GetLength(0); z++)
+				for (int x = 0; x < w.GetLength(1); x++)
+					weights[z0 - bz0 + z, x0 - bx0 + x] = w[z, x];
+			float[,] h = terrainData.GetHeights(bx0, bz0, cols, rows);
+			float spacing = terrainData.size.x / (res - 1);
+			TerrainBrushes.Erode(h, weights, TerrainBrushes.TalusRise(spacing, terrainData.size.y), Mathf.Min(0.5f, strength * dt * 1.5f), 4);
+			terrainData.SetHeights(bx0, bz0, h);
 		}
 	}
 }

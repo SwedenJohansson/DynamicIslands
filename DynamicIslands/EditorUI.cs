@@ -34,7 +34,12 @@ namespace DynamicIslands.Editor
 		static TabSelector tabs;
 
 		static Button[] tabButtons;
-		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto
+		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto, Noise, Erode, 4 mixed-style paint slots
+		static Button[] falloffButtons; // Smooth, Linear, Hard
+		static Image[] mixSwatches;
+		static Button mixDrop, seaDeepButton, seaShallowButton;
+		static RectTransform mixRow1, mixRow2;
+		static UIKit.SliderRow noiseSlider, talusSlider;
 		static Image[] paintSwatches;
 		static Button[] gizmoButtons; // Move, Rotate, Scale, All
 		static Button randomButton, slopeButton, gridButton;
@@ -71,7 +76,11 @@ namespace DynamicIslands.Editor
 		{
 			if (sizeSlider != null && sizeSlider.Slider != null) { sizeSlider.Slider.SetValueWithoutNotify(terraineditor.brushRadius); sizeSlider.Value.text = SizeText(terraineditor.brushRadius); }
 			if (strengthSlider != null && strengthSlider.Slider != null) { strengthSlider.Slider.SetValueWithoutNotify(terraineditor.strength); strengthSlider.Value.text = StrengthText(terraineditor.strength); }
+			if (noiseSlider != null && noiseSlider.Slider != null) { noiseSlider.Slider.SetValueWithoutNotify(TerrainBrushes.NoiseScale); noiseSlider.Value.text = SizeText(TerrainBrushes.NoiseScale / 2f); }
+			if (talusSlider != null && talusSlider.Slider != null) { talusSlider.Slider.SetValueWithoutNotify(TerrainBrushes.TalusAngle); talusSlider.Value.text = TalusText(TerrainBrushes.TalusAngle); }
 		}
+
+		static string TalusText(float a) { return a.ToString("F0") + "°"; }
 
 		static string SizeText(float radius) { return (radius * 2f).ToString("F0") + " m"; }
 		static string StrengthText(float s) { return s.ToString("F1") + " m/s"; }
@@ -88,6 +97,7 @@ namespace DynamicIslands.Editor
 			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; hintHooked = true; }
 			hoverHint = null;
 			lastSelectionCount = -1; shownPaintLayer = -1; elevationTyping = false;
+			shownFalloff = (TerrainBrushes.Falloff)(-1); shownSeaLevel = float.NaN; // (the new buttons get lit)
 
 			BuildTopBar(root);
 			BuildStatusBar(root);
@@ -228,12 +238,14 @@ namespace DynamicIslands.Editor
 			RectTransform s = ToolSection(panel, "TerrainTools");
 
 			RectTransform sculpt = UIKit.Group(s, "Sculpt");
-			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt);
-			brushButtons = new Button[9];
+			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt), r3 = UIKit.Row(sculpt);
+			brushButtons = new Button[15];
 			brushButtons[0] = UIKit.Button(r1, "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise), "Raise: hold the left mouse button to build up land");
 			brushButtons[1] = UIKit.Button(r1, "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower), "Lower: dig down, make bays and lagoons");
 			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts");
 			brushButtons[3] = UIKit.Button(r2, "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth), "Smooth: softens bumps and sharp edges");
+			brushButtons[9] = UIKit.Button(r3, "Noise", () => SetBrush(terraineditor.TerrainModificationAction.Noise), "Noise: roughens the ground with bumps (their size: Noise size below) - hold Shift to take them away again");
+			brushButtons[10] = UIKit.Button(r3, "Erode", () => SetBrush(terraineditor.TerrainModificationAction.Erode), "Erode: ground steeper than the Talus angle below slides down, like loose earth - wears cliffs and spikes into slopes");
 
 			RectTransform paint = UIKit.Group(s, "Paint ground");
 			RectTransform p1 = UIKit.Row(paint), p2 = UIKit.Row(paint), p3 = UIKit.Row(paint);
@@ -247,11 +259,43 @@ namespace DynamicIslands.Editor
 			}
 			brushButtons[8] = UIKit.Button(p3, "Auto", () => SetBrush(terraineditor.TerrainModificationAction.AutoPaint), "Auto: the ground textures itself again by height and slope");
 
+			// A second style mixed in: its four textures to paint with too (layers 5-8)
+			RectTransform mixRow = UIKit.Row(paint, UIKit.RowHeight, 4f, "MixStyle");
+			UIKit.Size(UIKit.Label(mixRow, "Mix", 14, UIKit.TextMuted).gameObject, 40);
+			var mixOptions = new List<DropList.Option> { new DropList.Option("-1", "No second style", "Only the island style's four textures") };
+			mixOptions.AddRange(Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i), "Paint with " + TerrainPainter.StyleName(i) + "'s four textures too")));
+			mixDrop = DropList.Make(mixRow, "Drop_MixStyle", mixOptions, "-1", v => TerrainBrushes.SetEditorMix(int.Parse(v)),
+				-1, "A second style's ground textures to paint with as well (saved with the island; Ctrl+Z undoes)", UIKit.RowHeight, 13);
+			UIKit.Size(mixDrop.gameObject, -1, -1, 1);
+			mixRow1 = UIKit.Row(paint, UIKit.RowHeight, 6f, "MixPaint1");
+			mixRow2 = UIKit.Row(paint, UIKit.RowHeight, 6f, "MixPaint2");
+			mixSwatches = new Image[4];
+			for (int i = 0; i < 4; i++)
+			{
+				int slot = PaintSlots[i];
+				Button b = UIKit.Button(i < 2 ? mixRow1 : mixRow2, TerrainPainter.LayerNames[slot], () => SetPaint(TerrainPainter.LayerCount + slot), "Paint the second style's texture by hand");
+				b.name = "Button_MixPaint" + i;
+				mixSwatches[i] = UIKit.Swatch(b, SlotColors[slot]);
+				brushButtons[11 + i] = b;
+			}
+
 			RectTransform brush = UIKit.Group(s, "Brush");
 			sizeSlider = UIKit.Slider(brush, "Size", terraineditor.MinRadius, terraineditor.MaxRadius, terraineditor.brushRadius, SizeText,
 				v => terraineditor.brushRadius = v, "Brush diameter in metres (console: ChangeWidth)");
 			strengthSlider = UIKit.Slider(brush, "Strength", terraineditor.MinStrength, terraineditor.MaxStrength, terraineditor.strength, StrengthText,
 				v => terraineditor.strength = v, "How fast the brush works (console: ChangeStrength)");
+			RectTransform edge = UIKit.Row(brush, 26f, 4f, "Falloff");
+			UIKit.Size(UIKit.Label(edge, "Edge", 14, UIKit.TextMuted).gameObject, 40);
+			falloffButtons = new[]
+			{
+				UIKit.Button(edge, "Smooth", () => SetFalloff(TerrainBrushes.Falloff.Smooth), "Brush edge: strong in the middle, fading softly to the rim", -1, 26f, 12),
+				UIKit.Button(edge, "Linear", () => SetFalloff(TerrainBrushes.Falloff.Linear), "Brush edge: fading evenly from the middle to the rim", -1, 26f, 12),
+				UIKit.Button(edge, "Hard", () => SetFalloff(TerrainBrushes.Falloff.Hard), "Brush edge: full strength right to the rim (terraces, sharp paint edges)", -1, 26f, 12),
+			};
+			noiseSlider = UIKit.Slider(brush, "Noise size", TerrainBrushes.MinNoiseScale, TerrainBrushes.MaxNoiseScale, TerrainBrushes.NoiseScale, v => SizeText(v / 2f),
+				v => TerrainBrushes.NoiseScale = v, "Noise brush: how big its bumps are, in metres");
+			talusSlider = UIKit.Slider(brush, "Talus", TerrainBrushes.MinTalus, TerrainBrushes.MaxTalus, TerrainBrushes.TalusAngle, TalusText,
+				v => TerrainBrushes.TalusAngle = v, "Erode brush: the steepest slope that stays (loose earth about 30-35°)");
 
 			RectTransform stamps = UIKit.Group(s, "Stamps");
 			stampButtonsRoot = UIKit.Rect("StampButtons", stamps);
@@ -354,6 +398,10 @@ namespace DynamicIslands.Editor
 			presetSea = UIKit.Button(presets, "At sea", () => SetElevation("0"), "A normal island (height 0)", -1, 26, 12);
 			presetFlying = UIKit.Button(presets, "Flying", () => SetElevation("60"), "Floats above the sea (60 m; type another height above)", -1, 26, 12);
 			presetSunken = UIKit.Button(presets, "Sunken", () => SetElevation("-30"), "Lies under water (-30 m; type another depth above)", -1, 26, 12);
+			RectTransform floorRow = UIKit.Row(island, 26f, 4f, "SeaFloor");
+			UIKit.Size(UIKit.Label(floorRow, "Sea floor", 14, UIKit.TextMuted).gameObject, 62);
+			seaDeepButton = UIKit.Button(floorRow, "Deep", () => SwitchSeaFloor(true), "Put the island on a deep sea floor like Raft's (160 m down): the land and shallows stay as they are, only the flat floor drops (Ctrl+Z undoes)", -1, 26, 12);
+			seaShallowButton = UIKit.Button(floorRow, "Shallow", () => SwitchSeaFloor(false), "Put the island on a shallow sea floor (20 m down): the land and shallows stay as they are, deeper water becomes flat floor (Ctrl+Z undoes)", -1, 26, 12);
 
 			RectTransform gen = UIKit.Group(s, "Generate");
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
@@ -585,6 +633,26 @@ namespace DynamicIslands.Editor
 			if (brushButtons != null)
 				for (int i = 0; i < PaintSlots.Length; i++)
 					if (brushButtons[4 + i] != null) UIKit.LabelOf(brushButtons[4 + i]).text = TerrainPainter.SlotLabel(style, PaintSlots[i]);
+			// The second style mixed in: its paint buttons only while there is one
+			int mix = DynamicIslands.currentMixStyle;
+			if (mixDrop != null)
+			{
+				DropdownButton d = mixDrop.GetComponent<DropdownButton>();
+				if (d != null) d.Value = mix.ToString();
+				UIKit.LabelOf(mixDrop).text = mix >= 0 ? TerrainPainter.StyleName(mix) : "No second style";
+			}
+			if (mixRow1 != null) { mixRow1.gameObject.SetActive(mix >= 0); mixRow2.gameObject.SetActive(mix >= 0); }
+			if (mix >= 0 && brushButtons != null && mixSwatches != null)
+			{
+				TerrainPainter.Style ms = TerrainPainter.Styles[mix];
+				for (int i = 0; i < PaintSlots.Length; i++)
+				{
+					if (brushButtons[11 + i] != null) UIKit.LabelOf(brushButtons[11 + i]).text = TerrainPainter.SlotLabel(mix, PaintSlots[i]);
+					Color c = SlotColors[PaintSlots[i]];
+					if (ms.Tints != null && PaintSlots[i] < ms.Tints.Length) c *= ms.Tints[PaintSlots[i]];
+					if (mixSwatches[i] != null) mixSwatches[i].color = new Color(c.r, c.g, c.b, 1f);
+				}
+			}
 			if (paintSwatches != null)
 			{
 				TerrainPainter.Style st = TerrainPainter.Styles[Mathf.Clamp(style, 0, TerrainPainter.Styles.Length - 1)];
@@ -625,6 +693,35 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(presetSea, Mathf.Approximately(h, 0f));
 			UIKit.SetActive(presetFlying, h > 0.01f);
 			UIKit.SetActive(presetSunken, h < -0.01f);
+		}
+
+		static float shownSeaLevel = float.NaN;
+
+		/// <summary>The sea floor buttons: the island's floor lit (again when its sea level changed: opening, generating, undo).</summary>
+		static void RefreshSeaFloor()
+		{
+			if (seaDeepButton == null || DynamicIslands.EditorWaterLevel == shownSeaLevel) return;
+			shownSeaLevel = DynamicIslands.EditorWaterLevel;
+			UIKit.SetActive(seaDeepButton, TerrainBrushes.EditorDeep);
+			UIKit.SetActive(seaShallowButton, !TerrainBrushes.EditorDeep);
+		}
+
+		static void SwitchSeaFloor(bool deep)
+		{
+			string problem = TerrainBrushes.SwitchSeaFloor(deep);
+			if (problem != null) { DynamicIslands.Notify(problem, true); return; }
+			RefreshSeaFloor();
+			RefreshStats();
+			DynamicIslands.Notify(deep ? "The island stands on a deep sea floor now, like Raft's (160 m down)" : "The island stands on a shallow sea floor now (20 m down)");
+		}
+
+		static TerrainBrushes.Falloff shownFalloff = (TerrainBrushes.Falloff)(-1);
+
+		static void SetFalloff(TerrainBrushes.Falloff falloff)
+		{
+			TerrainBrushes.BrushFalloff = falloff;
+			shownFalloff = falloff;
+			Highlight(falloffButtons, (int)falloff);
 		}
 
 		static void StepStyle(int step)
@@ -677,7 +774,11 @@ namespace DynamicIslands.Editor
 				case terraineditor.TerrainModificationAction.Flatten: active = 2; break;
 				case terraineditor.TerrainModificationAction.Smooth: active = 3; break;
 				case terraineditor.TerrainModificationAction.AutoPaint: active = 8; break;
-				case terraineditor.TerrainModificationAction.PaintLayer: active = 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer); break;
+				case terraineditor.TerrainModificationAction.Noise: active = 9; break;
+				case terraineditor.TerrainModificationAction.Erode: active = 10; break;
+				case terraineditor.TerrainModificationAction.PaintLayer:
+					active = terraineditor.paintLayer >= TerrainPainter.LayerCount ? 11 + Array.IndexOf(PaintSlots, terraineditor.paintLayer - TerrainPainter.LayerCount) : 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer);
+					break;
 				default: active = -1; break;
 			}
 			Highlight(brushButtons, active);
@@ -702,6 +803,8 @@ namespace DynamicIslands.Editor
 				shownAction = terraineditor.modificationAction; shownPaintLayer = terraineditor.paintLayer;
 				SetBrush(shownAction);
 			}
+			if (TerrainBrushes.BrushFalloff != shownFalloff) SetFalloff(TerrainBrushes.BrushFalloff);
+			RefreshSeaFloor();
 
 			// Typing a height must not fly the camera (WASD) or trigger shortcuts
 			ObjectInspector.Tick();
@@ -758,8 +861,15 @@ namespace DynamicIslands.Editor
 			switch (tabs.SelectedTab)
 			{
 				case TAB.TerrainEdit:
-					string tool = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? "Painting " + TerrainPainter.SlotLabel(DynamicIslands.currentStyle, terraineditor.paintLayer)
+					int layer = terraineditor.paintLayer;
+					string tool = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer
+						? "Painting " + (layer >= TerrainPainter.LayerCount && DynamicIslands.currentMixStyle >= 0 ? TerrainPainter.StyleName(DynamicIslands.currentMixStyle) + " " + TerrainPainter.SlotLabel(DynamicIslands.currentMixStyle, layer % TerrainPainter.LayerCount)
+							: TerrainPainter.SlotLabel(DynamicIslands.currentStyle, layer % TerrainPainter.LayerCount))
 						: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? "Auto texturing" : terraineditor.modificationAction.ToString();
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Noise)
+						return "Noise: hold the left mouse button to roughen the ground · Shift: take the bumps away · Noise size sets how big · Ctrl+Z undoes a stroke";
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Erode)
+						return "Erode: hold the left mouse button - ground steeper than " + TalusText(TerrainBrushes.TalusAngle) + " slides down · Ctrl+Z undoes a stroke";
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp && TerrainStamps.Current != null)
 						return "Stamp " + TerrainStamps.Current.Name + ": click the ground \u00B7 Size = how big (" + (terraineditor.brushRadius * 2f).ToString("F0") + " m) \u00B7 Q/E turn it (" + TerrainStamps.Rotation.ToString("F0") + "\u00B0) \u00B7 Ctrl+Z undoes";
 					return tool + ": hold the left mouse button on the ground \u00B7 Ctrl+Z undoes a stroke";

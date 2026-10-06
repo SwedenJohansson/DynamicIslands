@@ -56,7 +56,8 @@ namespace DynamicIslands.Editor
 		{
 			if (data == null) return;
 			data.SetHeights(heightRect.x, heightRect.y, heights);
-			data.SetAlphamaps(alphaRect.x, alphaRect.y, alpha);
+			// (a second style mixed in or taken out since: eight layers or four)
+			data.SetAlphamaps(alphaRect.x, alphaRect.y, TerrainPainter.FitLayers(alpha, data.alphamapLayers));
 			float[,] target = terraineditor.paintMask;
 			if (mask != null && target != null && target.GetLength(0) >= alphaRect.yMax && target.GetLength(1) >= alphaRect.xMax)
 				for (int z = 0; z < alphaRect.height; z++)
@@ -142,7 +143,7 @@ namespace DynamicIslands.Editor
 			ring.enabled = visible;
 			if (!visible) return;
 
-			Color c = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? LayerColors[Mathf.Clamp(terraineditor.paintLayer, 0, LayerColors.Length - 1)]
+			Color c = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? LayerColors[Mathf.Clamp(terraineditor.paintLayer % TerrainPainter.LayerCount, 0, LayerColors.Length - 1)]
 				: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? AutoColor : SculptColor;
 			ring.startColor = ring.endColor = c;
 			if (ring.material != null) ring.material.color = c;

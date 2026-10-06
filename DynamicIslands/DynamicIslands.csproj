@@ -64,6 +64,7 @@
     <Compile Include="DevTestsCamera.cs" />
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsStory.cs" />
+    <Compile Include="DevTestsTerrainBrushes.cs" />
     <Compile Include="DevTestsMultiplayer.cs" />
     <Compile Include="DevTestsMultiplayerFull.cs" />
     <Compile Include="DevTestsAll.cs" />
@@ -232,6 +233,7 @@
     <Compile Include="TerrainStamps.cs" />
     <Compile Include="TextPromptWindow.cs" />
     <Compile Include="GroupLibrary.cs" />
+    <Compile Include="TerrainBrushes.cs" />
     <Compile Include="TerrainPainter.cs" />
     <Compile Include="UnityScripts\TabSelector.cs" />
   </ItemGroup>
