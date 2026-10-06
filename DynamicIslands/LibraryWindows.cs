@@ -291,7 +291,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch((RectTransform)s2.transform, 4, 4, 4, 4);
 			RectTransform hostRow = UIKit.Row(inst, 28f, 6f, "HostCopies");
 			hostCopies = UIKit.Label(hostRow, "", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "HostCopiesText");
-			tidyButton = UIKit.Button(hostRow, "Tidy up", TidyUp, "Click twice: delete island copies from hosts no saved world uses, move generated islands (gen-...) nothing uses to the deleted folder, and move the files of worlds you deleted (Raft's own world is gone) to worlds\\removed", 150, 28f, 12);
+			tidyButton = UIKit.Button(hostRow, "Tidy up", TidyUp, "Click twice: move island copies from hosts no saved world uses to the deleted folder, move generated islands (gen-...) nothing uses to the deleted folder, and move the files of worlds you deleted (Raft's own world is gone) to worlds\\removed", 150, 28f, 12);
 
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -434,7 +434,7 @@ namespace DynamicIslands.Editor
 			}
 			Housekeeping.Scan found = tidyPending;
 			tidyPending = null;
-			SetStatus(Housekeeping.TidyUp(found) + " (Generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
+			SetStatus(Housekeeping.TidyUp(found) + " (Island copies and generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
 			ShowInstalled();
 		}
 

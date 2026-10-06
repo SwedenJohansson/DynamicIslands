@@ -11,7 +11,7 @@ namespace DynamicIslands.Editor
 	/// Tidy up (the island library window's Installed tab): files the mod made that nothing uses any more pile up in
 	/// Mods\DynamicIslands otherwise -
 	///  - island copies downloaded from hosts or kept for a saved world (&lt;name&gt;_&lt;hash&gt;) that no saved world uses
-	///    (deleted: a host sends them again);
+	///    (moved to the deleted folder: a copy kept for a saved world can be the only one of that version);
 	///  - generated islands (gen-...: made while sailing, or with the generator's Make and never given a name) that no
 	///    saved world, plan, island rule, library entry or the editor uses (moved to the deleted folder: they can be
 	///    got back);
@@ -51,11 +51,16 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>Copies of worlds' state the last AllWorldCopies couldn't read (locked, a folder that can't be listed): what
+		/// they use isn't known, so Tidy up takes nothing away then.</summary>
+		static int unreadable;
+
 		/// <summary>Every copy of every world's state on this PC: (world name, lines).</summary>
 		public static IEnumerable<KeyValuePair<string, string[]>> AllWorldCopies()
 		{
+			unreadable = 0;
 			var files = new List<string>();
-			try { if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt")); } catch { }
+			try { if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt")); } catch { unreadable++; }
 			try
 			{
 				string raft = SaveAndLoad.WorldPath;
@@ -66,11 +71,11 @@ namespace DynamicIslands.Editor
 						foreach (string save in Directory.GetDirectories(world)) files.AddRange(Directory.GetFiles(save, WorldCopy.FileName));
 					}
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
+			catch (Exception e) { unreadable++; Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
 			foreach (string f in files)
 			{
 				string[] lines;
-				try { lines = File.ReadAllLines(f); } catch { continue; }
+				try { lines = File.ReadAllLines(f); } catch (Exception e) { unreadable++; Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + f + ": " + e.Message); continue; }
 				yield return new KeyValuePair<string, string[]>(WorldName(lines, f), lines);
 			}
 		}
@@ -158,6 +163,14 @@ namespace DynamicIslands.Editor
 					if (!w.Key.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) set.Add(w.Key);
 				}
 			tWorlds = clock.ElapsedMilliseconds;
+			// (a world's copy that couldn't be read - an antivirus, a sync: the islands it uses looked unused and were taken
+			// away from it)
+			if (unreadable > 0)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] Tidy up: " + unreadable + " world file(s) couldn't be read - no island is tidied away this time");
+				scan.DeletedWorlds = DeletedWorldFiles();
+				return scan;
+			}
 			// (plans, islands' own rules, library entries, the pool and the editor count too - for generated islands; only
 			// looked at when there is a generated island no world uses: reading every island's rules takes a while)
 			var named = new HashSet<string>(used, StringComparer.OrdinalIgnoreCase);
@@ -222,7 +235,8 @@ namespace DynamicIslands.Editor
 			var done = new List<string>();
 			int copies = 0, generated = 0, worlds = 0;
 			foreach (var c in scan.Copies.Where(c => c.Value.Count == 0))
-				try { File.Delete(IslandSpawner.PathFor(c.Key)); copies++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
+				// (to the deleted folder, as every island: a copy kept for a saved world can be the only one of that version)
+				try { IslandFilesWindow.MoveToDeleted(c.Key); copies++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
 			foreach (string g in scan.UnusedGenerated)
 				try { IslandFilesWindow.MoveToDeleted(g); generated++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move " + g + ": " + e.Message); }
 			string removed = Path.Combine(WorldsFolder, RemovedWorldsFolder);
@@ -231,12 +245,13 @@ namespace DynamicIslands.Editor
 				{
 					Directory.CreateDirectory(removed);
 					string to = Path.Combine(removed, Path.GetFileName(w.Key));
-					if (File.Exists(to)) File.Delete(to);
+					// (one moved there before - the world's folder brought back and deleted again - is kept beside it)
+					if (File.Exists(to)) to = Path.Combine(removed, Path.GetFileNameWithoutExtension(w.Key) + " " + DateTime.Now.ToString("yyyy-MM-dd HHmmss", CultureInfo.InvariantCulture) + ".txt");
 					File.Move(w.Key, to);
 					worlds++;
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move " + w.Key + ": " + e.Message); }
-			if (copies > 0) done.Add("removed " + copies + " unused island copies from hosts");
+			if (copies > 0) done.Add("moved " + copies + " unused island copies from hosts to Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName);
 			if (generated > 0) done.Add("moved " + generated + " unused generated islands to Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName);
 			if (worlds > 0) done.Add("moved the files of " + worlds + " deleted world(s) (" + string.Join(", ", scan.DeletedWorlds.Take(3).Select(w => "'" + w.Value + "'").ToArray()) + (worlds > 3 ? "..." : "") + ") to worlds\\" + RemovedWorldsFolder);
 			if (copies + generated > 0) IslandCache.Forget();

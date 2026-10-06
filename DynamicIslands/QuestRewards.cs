@@ -16,6 +16,8 @@ namespace DynamicIslands.Editor
 	{
 		// (the world and the player it was read for: before the local player is there the id is "local" - review 2026-10-06)
 		static string loadedFor;
+		/// <summary>The record is there but couldn't be read (locked by an antivirus or a sync): not saved over until it is.</summary>
+		static bool readFailed;
 		static readonly HashSet<string> rewarded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<string> owed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -41,6 +43,7 @@ namespace DynamicIslands.Editor
 			// (what happened while the player wasn't known yet is kept, and saved with the player's own record)
 			bool merge = loadedFor == SaveAndLoad.WorldGuid + "-local";
 			loadedFor = key;
+			readFailed = false;
 			if (!merge) { rewarded.Clear(); owed.Clear(); }
 			try
 			{
@@ -54,7 +57,9 @@ namespace DynamicIslands.Editor
 					}
 				if (merge && (rewarded.Count > 0 || owed.Count > 0)) Save();
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards file: " + e.Message); }
+			// (what this session gives is still remembered; the file isn't written over with only that - every reward given
+			// before came again)
+			catch (Exception e) { readFailed = true; Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards file: " + e.Message); }
 		}
 
 		/// <summary>Read the file again when next asked (an island was renamed in it).</summary>
@@ -67,6 +72,7 @@ namespace DynamicIslands.Editor
 		{
 			// (not before the player is known: "local"'s small record would be written over the player's own later)
 			if (PlayerId == "local") { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards: not saved yet - the player isn't there yet"); return; }
+			if (readFailed) { Debug.LogWarning("[CUSTOM ISLANDS] Quest rewards: not saved - the file couldn't be read, so it stays as it was"); return; }
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));

@@ -129,7 +129,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "Rename", OnRename, "Give the picked island the name typed above", -1, 32, 14);
 			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island (asks first, says who uses it; moved to Mods\\DynamicIslands\\deleted)", -1, 32, 14);
 			UIKit.DangerButton(del);
-			UIKit.Button(buttons, "Tidy up", OnTidy, "Remove copies from hosts no saved world uses and move generated islands nothing uses to the deleted folder", -1, 32, 14).name = "Button_TidyUp";
+			UIKit.Button(buttons, "Tidy up", OnTidy, "Move copies from hosts no saved world uses and generated islands nothing uses to the deleted folder", -1, 32, 14).name = "Button_TidyUp";
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 32, 14);
 		}
 

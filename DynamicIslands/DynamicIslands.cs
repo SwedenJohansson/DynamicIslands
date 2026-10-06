@@ -761,7 +761,8 @@ namespace DynamicIslands
 				string hash = IslandNetwork.HashOf(name);
 				if (hash == null) return false;
 				string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
-				if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(name), copy);
+				// (whole or not at all: a copy Raft stopped in was never written again, and the worlds were pointed at it)
+				if (!File.Exists(copy)) SafeFile.WriteAllBytes(copy, File.ReadAllBytes(IslandSpawner.PathFor(name)));
 				LibraryPack.RepointWorlds(name, hash);
 				string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
 				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects were removed or their order changed, which would mix up what was " +

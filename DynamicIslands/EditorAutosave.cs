@@ -31,6 +31,10 @@ namespace DynamicIslands.Editor
 		static bool restored;        // opened from its autosave: unsaved until the player saves it
 		static float lastWrite, nextCheck;
 		static bool quitHooked;
+		/// <summary>Autosaves this Raft session wrote or opened: only those are written over or removed. One from an earlier
+		/// session ("Not now" in the offer) is moved to deleted\autosave first - the next autosave or Ctrl+S of that island
+		/// wrote over the work Raft crashed with, or removed it.</summary>
+		static readonly HashSet<string> ours = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>The island in the editor has changes that aren't in its file.</summary>
 		public static bool Unsaved { get { return restored || UndoRedoManager.Changes != savedAt; } }
@@ -47,6 +51,17 @@ namespace DynamicIslands.Editor
 			savedAt = UndoRedoManager.Changes;
 			restored = fromAutosave;
 			lastWrite = Time.unscaledTime;
+			if (fromAutosave && !string.IsNullOrEmpty(name)) ours.Add(name);
+		}
+
+		/// <summary>Before this session writes over or removes the autosave of name: one from an earlier session goes to
+		/// deleted\autosave (throws when it can't: then it is left as it is).</summary>
+		static void SetAsideEarlier(string name)
+		{
+			if (ours.Contains(name)) return;
+			string p = PathFor(name);
+			if (File.Exists(p)) { PiecesFiles.MoveToDeleted(p, "autosave"); Log("The autosave of '" + name + "' from an earlier session is kept in the deleted folder"); }
+			ours.Add(name);
 		}
 
 		/// <summary>The island was saved: its autosave (and the one under its old name, after Save as) isn't needed any more.</summary>
@@ -69,7 +84,7 @@ namespace DynamicIslands.Editor
 		{
 			// (the island was just saved: its autosave holds nothing more and goes - moving each one to the deleted folder
 			// filled it up with a copy per save. A discarded or older autosave is moved there instead - AU41.)
-			try { string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
+			try { SetAsideEarlier(name); string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove the autosave of '" + name + "': " + e.Message); }
 		}
 
@@ -100,6 +115,7 @@ namespace DynamicIslands.Editor
 			{
 				Directory.CreateDirectory(Folder);
 				string path = PathFor(name);
+				SetAsideEarlier(name);
 				// (IslandFile.Save writes aside first and replaces in one step: a crash never leaves a broken autosave behind)
 				DynamicIslands.CaptureIsland(name).Save(path);
 				LastWritten = path;

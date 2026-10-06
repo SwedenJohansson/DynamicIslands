@@ -114,9 +114,9 @@ namespace DynamicIslands.Editor
 
 		public static bool Delete(string name)
 		{
-			if (!File.Exists(PathFor(name))) return false;
-			File.Delete(PathFor(name));
-			PlaceableCatalog.RemoveCustom(Prefix + name);
+			// (a typed name: no folders in it; and to the deleted folder like the groups window's Delete, not for good)
+			if (FileNames.Problem(name) != null || !File.Exists(PathFor(name))) return false;
+			MoveToDeleted(name);
 			return true;
 		}
 
