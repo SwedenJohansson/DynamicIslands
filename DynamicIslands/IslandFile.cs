@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using UnityEngine;
 
@@ -63,6 +64,13 @@ namespace DynamicIslands.Editor
 		public const int FormatVersion = 4;
 		/// <summary>At most this many objects in one island: more is a broken or harmful file (the densest generated islands have about 11,000).</summary>
 		public const int MaxObjects = 100000;
+		/// <summary>At most this many bytes in one string of an island file, and in all of them together (names, notes...): more
+		/// is a broken or harmful file - a length of 2 GB in a few bytes made Mono allocate it all before reading (audit 2026-10-06).</summary>
+		const int MaxStringBytes = 1 << 20, MaxStringTotal = 64 << 20;
+		/// <summary>At most this many properties in one island file, its objects' together.</summary>
+		const int MaxPropsTotal = 1000000;
+		/// <summary>At most this many bytes in the tagged tail altogether (each block had the limit, 4096 of them did not).</summary>
+		const int MaxTailBytes = 256 * 1024 * 1024;
 
 		/// <summary>Editor Y coordinate that is treated as sea level when spawned in game.</summary>
 		public const float DefaultWaterLevel = 20f;
@@ -232,14 +240,16 @@ namespace DynamicIslands.Editor
 					throw new InvalidDataException(path + " was saved by a newer version of Custom Islands (format " + version + ")");
 
 				using (var inflate = new InflaterInputStream(file) { IsStreamOwner = false })
-				using (var r = new BinaryReader(inflate))
+				using (var r = new BoundedReader(inflate))
 				{
 					var island = new IslandFile();
+					int propsLeft = MaxPropsTotal;
 					island.Name = r.ReadString();
 					island.WaterLevel = r.ReadSingle();
 					island.TerrainSize = ReadVector(r);
 					int res = r.ReadInt32();
-					if (res <= 0 || res > 4097)
+					// (one sample: no terrain spacing - a division by zero spawning it)
+					if (res < 2 || res > 4097)
 						throw new InvalidDataException("Invalid heightmap resolution " + res);
 					island.HeightmapResolution = res;
 					island.Heights = new float[res, res];
@@ -278,24 +288,26 @@ namespace DynamicIslands.Editor
 					}
 					if (version >= 4)
 					{
-						island.Props = ReadProps(r);
+						island.Props = ReadProps(r, ref propsLeft);
 						int withProps = r.ReadInt32();
 						if (withProps < 0 || withProps > island.Objects.Count) throw new InvalidDataException("Invalid object property count " + withProps);
 						for (int n = 0; n < withProps; n++)
 						{
 							int i = r.ReadInt32();
-							Dictionary<string, string> props = ReadProps(r);
+							Dictionary<string, string> props = ReadProps(r, ref propsLeft);
 							if (i >= 0 && i < island.Objects.Count) island.Objects[i].Props = props;
 						}
 						// The tagged tail, if any (files without one end here)
 						try
 						{
+							long tailBytes = 0;
 							for (int n = 0; n < 4096; n++)
 							{
 								string tag = r.ReadString();
 								if (tag.Length == 0) break;
 								int len = r.ReadInt32();
-								if (len < 0 || len > 256 * 1024 * 1024) throw new InvalidDataException("Invalid tail block '" + tag + "' (" + len + " bytes)");
+								tailBytes += len;
+								if (len < 0 || tailBytes > MaxTailBytes) throw new InvalidDataException("Invalid tail block '" + tag + "' (" + len + " bytes)");
 								island.Tail[tag] = ReadExactly(r, len);
 							}
 						}
@@ -451,9 +463,36 @@ namespace DynamicIslands.Editor
 
 		static byte[] ReadExactly(BinaryReader r, int count)
 		{
-			byte[] b = r.ReadBytes(count);
-			if (b.Length != count) throw new InvalidDataException("Island file is truncated");
+			// (grown as the bytes come: a short file that claims a big block no longer has it all allocated first - ReadBytes did)
+			var b = new byte[Math.Min(count, 1 << 20)];
+			int got = 0;
+			while (got < count)
+			{
+				if (got == b.Length) Array.Resize(ref b, (int)Math.Min(count, b.Length * 2L));
+				int n = r.Read(b, got, b.Length - got);
+				if (n <= 0) throw new InvalidDataException("Island file is truncated");
+				got += n;
+			}
 			return b;
+		}
+
+		/// <summary>A BinaryReader whose strings are at most MaxStringBytes long, MaxStringTotal together (audit 2026-10-06).</summary>
+		sealed class BoundedReader : BinaryReader
+		{
+			long total;
+
+			public BoundedReader(Stream input) : base(input) { }
+
+			public override string ReadString()
+			{
+				int len = Read7BitEncodedInt();
+				total += len;
+				if (len < 0 || len > MaxStringBytes || total > MaxStringTotal) throw new InvalidDataException("Invalid string length " + len);
+				if (len == 0) return "";
+				byte[] b = ReadBytes(len);
+				if (b.Length != len) throw new EndOfStreamException();
+				return Encoding.UTF8.GetString(b);
+			}
 		}
 
 		static void WriteProps(BinaryWriter w, Dictionary<string, string> props)
@@ -462,10 +501,11 @@ namespace DynamicIslands.Editor
 			foreach (var kv in props.OrderBy(k => k.Key, StringComparer.Ordinal)) { w.Write(kv.Key ?? ""); w.Write(kv.Value ?? ""); }
 		}
 
-		static Dictionary<string, string> ReadProps(BinaryReader r)
+		static Dictionary<string, string> ReadProps(BinaryReader r, ref int left)
 		{
 			int n = r.ReadInt32();
-			if (n < 0 || n > 10000) throw new InvalidDataException("Invalid property count " + n);
+			if (n < 0 || n > 10000 || n > left) throw new InvalidDataException("Invalid property count " + n);
+			left -= n;
 			var props = new Dictionary<string, string>();
 			for (int i = 0; i < n; i++) { string k = r.ReadString(); props[k] = r.ReadString(); }
 			return props;

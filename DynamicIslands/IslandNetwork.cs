@@ -106,6 +106,9 @@ namespace DynamicIslands.Editor
 	{
 		/// <summary>Raw bytes per file chunk (base64 makes it about a third bigger).</summary>
 		const int ChunkBytes = 3000;
+		/// <summary>At most this many chunks in one file (64 MB): a chunk's Count is the size of what the receiver allocates
+		/// for the file's parts (audit 2026-10-06).</summary>
+		const int MaxChunks = 64 * 1024 * 1024 / ChunkBytes;
 		const float SyncRetrySeconds = 5f;
 		const int SyncMaxTries = 12;
 
@@ -431,6 +434,10 @@ namespace DynamicIslands.Editor
 		{
 			var msg = message as IslandNetMessage;
 			if (msg == null) return false;
+			// (a player takes the mod's messages from the host only: everything a player is sent comes from the host, and another
+			// player could otherwise send them what only the host decides - an island list, removals, the world's rules,
+			// options or copy - audit 2026-10-06)
+			if (!Raft_Network.IsHost && !SentByHost(from)) { Log("A message (" + msg.Kind + ") from " + from + ", not the host: ignored"); return true; }
 			try
 			{
 				switch (msg.Kind)
@@ -572,6 +579,12 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] [net] Handling message " + msg.Kind + " failed: " + e); }
 			return true;
+		}
+
+		static bool SentByHost(Network_UserId from)
+		{
+			Raft_Network network = ComponentManager<Raft_Network>.Value;
+			return network != null && from.Id == network.HostID.Id;
 		}
 
 		/// <summary>Host: one part of the reply to a player who joined, made and sent on its own (nothing when it makes none).</summary>
@@ -755,7 +768,8 @@ namespace DynamicIslands.Editor
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
-			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Count > MaxChunks || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (msg.Data != null && msg.Data.Length > ChunkBytes * 2) return; // (base64 of a chunk is 4000 characters)
 			// (the name the host sends with it is the saved file's - AU41)
 			string problem = ReceivedProblem(msg.Name, msg.Hash);
 			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] An island file from the host isn't saved: " + problem); return; }
