@@ -690,6 +690,11 @@ namespace DynamicIslands.Editor
 			// (read again - by anyone: its messages and sounds only - its items and teleports came again at every read, and
 			// its checks were skipped: "uses up 5 scrap, gives titanium" was free from the second read)
 			if (once && e.State.ContainsKey(key)) { if (localPlayer) Schedule(e, index, actions, false, true, ev); return; }
+			// (with the player's own items, a move or a price: the host's word first, as for a chest - two players arriving or
+			// reading a note within a message's time each got its items, before either heard the other had)
+			if (once && localPlayer && (checks.Any(c => c.Kind == "take") || actions.Any(a => a.Verb == "give" || a.Verb == "teleport")) &&
+				!Claims.May(e, key, yes => { if (yes) Fire(e, index, ev, true, skipChecks); else Schedule(e, index, actions, false, true, ev); }))
+				return;
 			if (!skipChecks && checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev)))
 			{
 				Otherwise(e, index, ev, localPlayer);

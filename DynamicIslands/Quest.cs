@@ -289,8 +289,15 @@ namespace DynamicIslands.Editor
 			if (e != null) Set(e, n, step, progress, false);
 		}
 
-		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards).</summary>
-		static string RewardKey(IslandWorldState.Entry e, int n) { return n == 0 ? e.HostName : e.HostName + "#quest" + (n + 1); }
+		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards). By the island's copy (PageIsland: the
+		/// first is its plain name, as before): a second copy of an island never paid its quest's reward, the first had it.</summary>
+		static string RewardKey(IslandWorldState.Entry e, int n) { string island = StoryBook.PageIsland(e); return n == 0 ? island : island + "#quest" + (n + 1); }
+
+		/// <summary>Whether the quest's reward has Raft's items (each player's share; story items are the crew's).</summary>
+		static bool HasRaftReward(IslandQuest q)
+		{
+			return q.Reward.Length > 0 && ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } }).Any(l => !StoryItems.IsStory(l.Key));
+		}
 
 		static void Completed(IslandWorldState.Entry e, IslandQuest q, int n)
 		{
@@ -357,15 +364,17 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => QuestOf(e, n).Exists));
 			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			int quests = QuestsOf(at);
-			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8)
+			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined
+			// after it was done: the step came with the island list, no "done" ran here, and nothing was ever owed to them)
 			for (int n = 0; n < quests; n++)
 			{
 				IslandQuest qn = QuestOf(at, n);
-				if (qn.Exists && StepOf(at, n) >= qn.Steps.Count && QuestRewards.Owed(RewardKey(at, n)))
-				{
-					QuestRewards.Collect(RewardKey(at, n), () => GiveItems(qn));
-					Show("Your share of the reward: " + qn.ShownTitle, "");
-				}
+				if (!qn.Exists || StepOf(at, n) < qn.Steps.Count) continue;
+				string key = RewardKey(at, n);
+				if (QuestRewards.Owed(key)) QuestRewards.Collect(key, () => GiveItems(qn));
+				else if (!QuestRewards.Rewarded(key) && HasRaftReward(qn)) QuestRewards.OnCompleted(key, true, () => GiveItems(qn));
+				else continue;
+				Show("Your share of the reward: " + qn.ShownTitle, "");
 			}
 			// (the panel: the first quest not done yet, the main one first - LM4; all done: the main quest, ticked)
 			int shown = Enumerable.Range(0, quests).FirstOrDefault(n => QuestOf(at, n).Exists && StepOf(at, n) < QuestOf(at, n).Steps.Count);

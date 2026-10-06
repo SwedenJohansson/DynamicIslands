@@ -69,6 +69,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Player -> host, as the host's copy of the world arrives on joining: the player's kept copy of this world is
 		/// newer (AU26) - Name = world id, Data = "savecount;savedat ticks"; the host is warned.</summary>
 		public const int WorldCopyNewer = 24;
+		/// <summary>QuestStep for an island's further quests (n &gt; 0, LM4): Ids = island, quest number. Its own kind, so a version
+		/// before LM4 ignores it - it read every QuestStep as the main quest's (a second quest's step moved the main one on).</summary>
+		public const int QuestStepMore = 25;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -199,7 +202,7 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; } // (a new host: known again from its answer)
+			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
 		}
 
@@ -368,14 +371,17 @@ namespace DynamicIslands.Editor
 		public static void SendQuestAdd(int islandId, int n, int step, int amount)
 		{
 			if (Raft_Network.IsHost) return;
-			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = amount, Name = "add" });
+			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = amount, Name = "add" });
 		}
 
 		public static void SendQuest(int islandId, int step, int progress) { SendQuest(islandId, 0, step, progress); }
 
+		/// <summary>The message kind for quest n: QuestStep for the main quest, QuestStepMore for the others.</summary>
+		static int QuestKind(int n) { return n == 0 ? IslandNetMessage.QuestStep : IslandNetMessage.QuestStepMore; }
+
 		public static void SendQuest(int islandId, int n, int step, int progress)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = progress };
+			var msg = new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = progress };
 			if (Raft_Network.IsHost) SendToClients(msg);
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
@@ -410,10 +416,11 @@ namespace DynamicIslands.Editor
 			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = true }, player);
 		}
 
-		/// <summary>Client: asks the host for a thing only one player can have (Claims).</summary>
-		public static void SendClaim(int islandId, int key)
+		/// <summary>Client: asks the host for a thing only one player can have (Claims). The question's number goes as Ids[1]:
+		/// the host sends Ids back with its answer (every version that answers claims does).</summary>
+		public static void SendClaim(int islandId, int key, int ask)
 		{
-			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId }, Index = key });
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId, ask }, Index = key });
 		}
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
@@ -453,11 +460,13 @@ namespace DynamicIslands.Editor
 							JoinPart("world rules", () => WorldRules.Message(), to);
 							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to);
 							JoinPart("story", () => StoryBook.StateMessage(), to);
-							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
 							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
 							JoinPart("animal spots", () => CreatureSpawner.SpotsMessage(null), to);
+							// (after the animal spots: the randomizer looks at every animal once it comes, and took an island's
+							// animals for Raft's while their spots hadn't come yet)
+							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
 							// (after the list: the island it names is in the player's list then)
 							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
 							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
@@ -500,6 +509,7 @@ namespace DynamicIslands.Editor
 						ReceiveChunk(msg);
 						break;
 					case IslandNetMessage.QuestStep:
+					case IslandNetMessage.QuestStepMore:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
 							// (a player's amount: the host adds it up and tells everyone the total)

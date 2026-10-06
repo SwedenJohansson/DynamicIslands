@@ -394,6 +394,17 @@ namespace DynamicIslands.Editor
 			bool kill = kills && before < 1f;
 			if (player != LocalId)
 			{
+				// (the host's record of them grows with it: only their own "mine" moved it before, and what a player earned in
+				// the second before leaving was never saved; a "mine" sent before this gain reached them is older and left out,
+				// the next one has it)
+				LevelRecord rec;
+				if ((gain > 0 || kill) && records.TryGetValue(player, out rec))
+				{
+					int levelBefore = rec.Level;
+					rec.Xp += Mathf.Max(0, gain);
+					if (kill) rec.Kills++;
+					if (rec.Level != levelBefore) levelsDirty = true;
+				}
 				if (gain > 0 || kill)
 					IslandNetwork.SendLevels(new IslandNetMessage { Name = "gain", Count = Mathf.Max(0, gain), Index = unchecked((int)entity.ObjectIndex), FullList = kill }, new Network_UserId(player));
 				LastRemote = player + " +" + Mathf.Max(0, gain) + (kill ? " kill" : "");

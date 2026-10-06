@@ -50,6 +50,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world's save counter: the highest of its copies when it loaded, one more on every write (AU4).</summary>
 		public static long SaveCount;
+		/// <summary>The save time of the copy SaveCount was counted from (the highest's): a player's copy with the same counter is
+		/// only newer than it, not than the one the world loaded (an older save, or the state of a save after a crash).</summary>
+		static long newestStamp;
 		/// <summary>Raft's save the world's state follows: the one loaded, then each one Raft writes (0 = not known).</summary>
 		static long followsSave;
 
@@ -211,6 +214,7 @@ namespace DynamicIslands.Editor
 			List<string[]> all = new[] { mine, travelled }.Concat(saves.Select(s => s.Value)).Where(l => l != null).ToList();
 			// (the counter goes on from the highest of every copy: the next write is the newest, whatever the clocks say - AU4)
 			SaveCount = all.Select(CountOf).DefaultIfEmpty(0L).Max();
+			newestStamp = all.Where(l => CountOf(l) == SaveCount).Select(StampOf).DefaultIfEmpty(0L).Max();
 			WarnFuture(mine, "in the mod's folder");
 			WarnFuture(travelled, "in Raft's world folder");
 			// (Raft is loading an OLDER save than the world's newest - one the player picked in Raft's Load Game box: the
@@ -300,6 +304,7 @@ namespace DynamicIslands.Editor
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the world's copy into Raft's world folder: " + e.Message); }
 			WriteIntoSave(folder, lines);
 			last = lines;
+			newestStamp = StampOf(lines);
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
 		}
@@ -313,6 +318,7 @@ namespace DynamicIslands.Editor
 			last = new[] { "# (nothing of Custom Islands in this world)" }.Concat(StampLines()).ToArray();
 			// (the save still gets its note: loading it later means "nothing of the mod", not an older save's state)
 			if (RaftSaveLine() != null) WriteIntoSave(folder, last);
+			newestStamp = StampOf(last);
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
 		}
@@ -344,10 +350,20 @@ namespace DynamicIslands.Editor
 			if (last == null || SaveAndLoad.WorldGuid == Guid.Empty) return;
 			string text = string.Join("\n", last);
 			string id = StampOf(last).ToString(CultureInfo.InvariantCulture);
-			int count = Mathf.Max(1, (text.Length + ChunkChars - 1) / ChunkChars);
+			// (never between the two halves of a character outside the basic plane - an emoji in a page or a label: each half
+			// went over the network on its own as a broken character, and the player's copy kept "?" there)
+			var chunks = new List<string>();
+			for (int at = 0; at < text.Length || chunks.Count == 0;)
+			{
+				int len = Mathf.Min(ChunkChars, text.Length - at);
+				if (len > 1 && at + len < text.Length && char.IsHighSurrogate(text[at + len - 1])) len--;
+				chunks.Add(text.Substring(at, len));
+				at += len;
+			}
+			int count = chunks.Count;
 			for (int i = 0; i < count; i++)
 			{
-				var msg = new IslandNetMessage { Name = key, Hash = id, Index = i, Count = count, Data = text.Substring(i * ChunkChars, Mathf.Min(ChunkChars, text.Length - i * ChunkChars)) };
+				var msg = new IslandNetMessage { Name = key, Hash = id, Index = i, Count = count, Data = chunks[i] };
 				IslandNetwork.SendWorldCopy(msg, to);
 			}
 			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + text.Length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
@@ -385,6 +401,10 @@ namespace DynamicIslands.Editor
 			if (!Newer(mine, hosts)) return false;
 			long count = CountOf(mine), at = StampOf(mine);
 			string aside = Path.Combine(Path.GetDirectoryName(path), guid + ".kept-" + count.ToString(CultureInfo.InvariantCulture) + ".txt");
+			// (one already kept with this counter but other content - another branch of the world that reached the same count:
+			// kept beside it by its save time, not lost under the host's copy)
+			if (File.Exists(aside) && !File.ReadAllLines(aside).SequenceEqual(mine))
+				aside = Path.Combine(Path.GetDirectoryName(path), guid + ".kept-" + count.ToString(CultureInfo.InvariantCulture) + "-" + at.ToString(CultureInfo.InvariantCulture) + ".txt");
 			try { if (!File.Exists(aside)) File.Copy(path, aside); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not keep this PC's newer copy of the world (" + aside + "): " + e.Message + " - the host's isn't kept over it"); return false; }
 			LastSetAside = aside;
@@ -418,7 +438,9 @@ namespace DynamicIslands.Editor
 			if (p.Length > 1) long.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out at);
 			string who = PrivateStorage.NameOf(from.Id);
 			if (string.IsNullOrEmpty(who) || who == "another player") who = "A player"; else who = "'" + who + "'";
-			bool newer = count > SaveCount || (count == SaveCount && last != null && at > StampOf(last));
+			// (the same counter: newer than the highest copy this host had, not than the one it loaded - an older save picked in
+			// Raft's Load Game box, or a save's state after a crash, warned of progress the host had all along)
+			bool newer = count > SaveCount || (count == SaveCount && at > newestStamp);
 			Debug.LogWarning("[CUSTOM ISLANDS] " + who + " has a copy of this world from " + When(at) + " (save " + count + ", this world's " + SaveCount + ")" +
 				(newer ? ": newer than this host's - the world may be missing their progress" : ": newer than the copy sent only (an older save loaded?)"));
 			if (!newer) return;

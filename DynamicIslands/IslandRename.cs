@@ -176,7 +176,7 @@ namespace DynamicIslands.Editor
 								string key = lines[i].Substring(k.Length).Trim();
 								// (the island's second and later quests are "<name>#quest2"... - review 2026-10-06)
 								if (key.Equals(from, StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to; changed = true; }
-								else if (key.StartsWith(from + "#quest", StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to + key.Substring(from.Length); changed = true; }
+								else if (key.StartsWith(from + "#quest", StringComparison.OrdinalIgnoreCase) || key.StartsWith(from + "|", StringComparison.OrdinalIgnoreCase)) { lines[i] = k + to + key.Substring(from.Length); changed = true; }
 							}
 						if (changed) SafeFile.WriteAllLines(file, lines);
 					}
