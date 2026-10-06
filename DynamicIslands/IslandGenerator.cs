@@ -1572,7 +1572,9 @@ namespace DynamicIslands.Editor
 				ICommand levels = IslandSettingsUndo.Record(() => DynamicIslands.currentIslandProps[IslandProps.Levels] = "on");
 				if (levels != null) group.Add(levels);
 			}
-			UndoRedoManager.Insert(group);
+			// (not after a resize: the before-heights were taken from the resized terrain, so undo put the old island back
+			// stretched over the new size, without its objects - the history starts after this island, as the notice says)
+			if (!resized) UndoRedoManager.Insert(group);
 			MeasureLand(metres, data.size.x / (hres - 1), report);
 			report.Seconds = Time.realtimeSinceStartup - t0;
 			LastReport = report;
@@ -3697,7 +3699,8 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, float> sourceReach = new Dictionary<string, float>();
 
-		/// <summary>How far a Raft island's land and shallow water (down to 8 m) reach from its middle along x or z (m, as measured).</summary>
+		/// <summary>How far a Raft island's land and shallow water (down to 8 m) reach from its middle in any direction (m, as
+		/// measured): the variation is turned by its Direction (StretchAngle), so a corner of the land can end up along x or z.</summary>
 		static float SourceReach(string scene, HeightField f)
 		{
 			float r;
@@ -3705,7 +3708,11 @@ namespace DynamicIslands.Editor
 			r = 0f;
 			for (int z = 0; z < f.Nz; z++)
 				for (int x = 0; x < f.Nx; x++)
-					if (f.H[z, x] > -8f) r = Mathf.Max(r, Mathf.Max(Mathf.Abs(x - (f.Nx - 1) / 2f), Mathf.Abs(z - (f.Nz - 1) / 2f)) * f.Cell);
+					if (f.H[z, x] > -8f)
+					{
+						float dx = x - (f.Nx - 1) / 2f, dz = z - (f.Nz - 1) / 2f;
+						r = Mathf.Max(r, Mathf.Sqrt(dx * dx + dz * dz) * f.Cell);
+					}
 			sourceReach[scene] = r;
 			return r;
 		}
