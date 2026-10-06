@@ -124,7 +124,7 @@ This README is the full reference, in the same order: island creation first, the
 - **Optional world systems**, separate from island building and off in a plain world (see the sections from [World settings](#world-settings-more-ways-to-play-raft-again) on):
   - **World settings window** (New Game box, **WORLD SETTINGS...**): Raft's New Game box stays as Raft made it; one window holds everything below that is chosen per world, with **Raft's own** to put it all back.
   - **Monster difficulty:** **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
-  - **Build cost:** everything in the build menu costs 0-100% more materials, always rounded up.
+  - **Build cost:** everything in the build menu costs 0-100% more materials, rounded to the nearest (never below Raft's own).
   - **World randomizer:** a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands, large islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
   - **Extra options:** scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder - and for the host when the builder isn't in the game).
   - **Islands while sailing:** which of your islands (and which map types and generated islands) turn up by chance in that world, from a list with tick boxes.
@@ -434,7 +434,7 @@ These are the Easy / Normal / Moderate / Hard / Impossible levels, named so they
 
 How many more materials everything in the **build menu** costs: the hammer's foundations, floors, walls, roofs, stairs, pillars and the rest. The slider goes from **0%** (Raft's own cost, the default) to **100%** (twice as much) in steps of 5.
 
-- **Always rounded up:** at 50% one plank becomes two, two become three, three become five.
+- **Rounded to the nearest, never below Raft's own:** one plank stays one up to +45%; at 50% one plank becomes two, two become three, three become five.
 - **Removing a block** with the hammer gives back half of what it cost when it was placed, as Raft does (changing the cost later doesn't change that). At 50% a block that cost 3 planks gives 2 back.
 - **Repairing and reinforcing** blocks cost more too, since they use the same cost list. What you make in the crafting menu (Tab) costs the same as in Raft.
 - **For every player:** each player pays from their own inventory on their own machine, so every player who joins gets the host's percent.

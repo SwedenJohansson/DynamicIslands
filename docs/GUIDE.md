@@ -1967,7 +1967,7 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Done** c
 | Group | What it does |
 |---|---|
 | **World rules: monster difficulty** | How tough monsters are in this world: Timid, Normal, Fierce, Savage or Nightmare (see [section 9.2](#92-world-rules-monster-difficulty-and-build-cost)) |
-| **World rules: build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded up |
+| **World rules: build cost** | How many more materials the build menu costs: Raft's own up to +100 %, rounded (never below Raft's own) |
 | **World randomizer** | A normal Raft world made different: a ▼ list with Off, Light, Normal or Wild (each says what it means), and which parts take part (lit parts are on: click a part to switch it off; see [section 9.3](#93-the-world-randomizer)) |
 | **Extra options** | More ways to play Raft again, for players who know it by heart: each switched **ON** or off with its own button (below) |
 | **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
@@ -2017,7 +2017,7 @@ In Peaceful and Creative monsters can't hurt you, so only their health changes.
 #### Build cost
 
 Everything in the **build menu** (the hammer's foundations, floors, walls, roofs, stairs...) costs **0-100 % more**,
-always rounded up: at +50 % one plank becomes two, two become three, three become five. Removing a block gives back
+rounded to the nearest, never below Raft's own: up to +45 % one plank stays one; at +50 % one plank becomes two, two become three, three become five. Removing a block gives back
 half of what it cost when it was placed (as in Raft; a later change of the cost doesn't change it), and repairing and reinforcing cost more too. The crafting menu (Tab) costs the same
 as in Raft.
 
