@@ -151,6 +151,9 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<LandmarkItem, KeyValuePair<Vector3, Quaternion>> original = new Dictionary<LandmarkItem, KeyValuePair<Vector3, Quaternion>>();
 		/// <summary>Animals already looked at (instance id -> network id: Raft may reuse an object).</summary>
 		static readonly Dictionary<int, uint> animalsSeen = new Dictionary<int, uint>();
+		/// <summary>A player: when each animal not yet known to be an island's was first seen (HandleAnimals waits for its spot).</summary>
+		static readonly Dictionary<int, float> animalFirstSeen = new Dictionary<int, float>();
+		const float SpotsGraceSeconds = 3f;
 		/// <summary>Host: alpha animals still alive, and what they are.</summary>
 		static readonly Dictionary<AI_NetworkBehaviour, string> alphas = new Dictionary<AI_NetworkBehaviour, string>();
 		static readonly HashSet<string> typesLogged = new HashSet<string>();
@@ -711,9 +714,19 @@ namespace DynamicIslands.Editor
 				uint was;
 				if (animalsSeen.TryGetValue(id, out was) && was == ai.ObjectIndex) continue;
 				if (ai.ObjectIndex == 0) continue; // (not set up yet)
-				animalsSeen[id] = ai.ObjectIndex;
 				// Animals of custom islands have the builder's looks (and the extras' animals their own colours)
-				if (CreatureSpawner.IsOnCustomIsland(ai)) continue;
+				bool custom = CreatureSpawner.IsOnCustomIsland(ai);
+				// (a player: the host's word on an island's animal goes on another channel than the animal itself and may come
+				// a moment later - an animal without a spawner is looked at once it has been here a few seconds)
+				if (!custom && !Raft_Network.IsHost && CreatureSpawner.HostSendsSpots && ai.connectedSpawner == null)
+				{
+					float first;
+					if (!animalFirstSeen.TryGetValue(id, out first)) animalFirstSeen[id] = first = Time.unscaledTime;
+					if (Time.unscaledTime - first < SpotsGraceSeconds) continue;
+				}
+				animalFirstSeen.Remove(id);
+				animalsSeen[id] = ai.ObjectIndex;
+				if (custom) continue;
 				Variant v = VariantOf(ai.behaviourType, ai.ObjectIndex);
 				if (v == null) continue;
 				Apply(ai, v);
@@ -723,6 +736,7 @@ namespace DynamicIslands.Editor
 				var alive = new HashSet<int>(all.Where(a => a != null).Select(a => a.GetInstanceID()));
 				foreach (int dead in animalsSeen.Keys.Where(k => !alive.Contains(k)).ToList()) animalsSeen.Remove(dead);
 			}
+			if (animalFirstSeen.Count > all.Length + 64) animalFirstSeen.Clear();
 		}
 
 		static readonly FieldInfo SharkRendererField = typeof(AI_StateMachine_Shark).GetField("sharkRenderer", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);

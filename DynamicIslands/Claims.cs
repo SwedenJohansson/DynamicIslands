@@ -28,6 +28,13 @@ namespace DynamicIslands.Editor
 		// Client: granted and not used yet; waiting for the host's answer
 		static readonly HashSet<long> granted = new HashSet<long>();
 		static readonly Dictionary<long, Action<bool>> waiting = new Dictionary<long, Action<bool>>();
+		// Client: each question's number (sent as Ids[1], which the host sends back) and when it went out
+		static readonly Dictionary<int, float> askedAt = new Dictionary<int, float>();
+		static int lastAsk;
+		/// <summary>A grant that comes later than this after its question isn't acted on (asked again instead): the host holds
+		/// it HoldSeconds from when the question came, and this player's "used" has to reach the host before that ends - a
+		/// grant delivered 10 s late, behind island files, let a second player be granted meanwhile, and both looted the chest.</summary>
+		const float FreshAnswerSeconds = HoldSeconds - 2f;
 
 		/// <summary>Tests: the last answer this machine got or gave ("granted" / "refused").</summary>
 		public static string LastAnswer { get; private set; }
@@ -37,7 +44,15 @@ namespace DynamicIslands.Editor
 		static ulong LocalId { get { Network_Player p = RAPI.GetLocalPlayer(); return p != null ? p.steamID.Id : 0UL; } }
 
 		/// <summary>Leaving the world: nothing held or asked any more.</summary>
-		public static void Reset() { held.Clear(); granted.Clear(); waiting.Clear(); }
+		public static void Reset() { held.Clear(); granted.Clear(); waiting.Clear(); askedAt.Clear(); }
+
+		/// <summary>Client: asks the host (again) for this, numbered so its answer is known to be to this question.</summary>
+		static void Ask(long k)
+		{
+			if (askedAt.Count > 256) askedAt.Clear();
+			askedAt[++lastAsk] = Time.unscaledTime;
+			IslandNetwork.SendClaim((int)(k >> 32), (int)(uint)k, lastAsk);
+		}
 
 		/// <summary>
 		/// An island is unloaded or removed on this machine: this player's grants and questions for its things are
@@ -65,7 +80,7 @@ namespace DynamicIslands.Editor
 			if (waiting.ContainsKey(k)) { Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + key.ToString("X") + " on island " + e.Id + ": asked already, waiting for the host"); return false; } // (the answer is on its way)
 			waiting[k] = then;
 			Debug.Log("[CUSTOM ISLANDS] [net] Asking the host for " + key.ToString("X") + " on island " + e.Id);
-			IslandNetwork.SendClaim(e.Id, key);
+			Ask(k);
 			DynamicIslands.instance.StartCoroutine(NoAnswer(k));
 			return false;
 		}
@@ -88,7 +103,7 @@ namespace DynamicIslands.Editor
 					yield return new WaitForSeconds(AskAgainSeconds);
 					if (!waiting.ContainsKey(k)) yield break;
 					Debug.Log("[CUSTOM ISLANDS] [net] Asking the host again for " + ((int)(uint)k).ToString("X") + " on island " + (int)(k >> 32));
-					IslandNetwork.SendClaim((int)(k >> 32), (int)(uint)k);
+					Ask(k);
 				}
 				// (no answer at all: the next try asks again)
 				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again"); }
@@ -145,8 +160,16 @@ namespace DynamicIslands.Editor
 			long k = K(msg.Ids[0], msg.Index);
 			Action<bool> then;
 			if (!waiting.TryGetValue(k, out then)) return;
-			waiting.Remove(k);
 			bool yes = msg.Count == 1;
+			// (a grant to a question asked too long ago: the host's hold may have ended and another player have it - asked again)
+			float asked;
+			if (yes && msg.Ids.Length > 1 && askedAt.TryGetValue(msg.Ids[1], out asked) && Time.unscaledTime - asked > FreshAnswerSeconds)
+			{
+				Debug.Log("[CUSTOM ISLANDS] [net] The host's grant of " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " came " + (Time.unscaledTime - asked).ToString("F0") + " s late: asking again");
+				Ask(k);
+				return;
+			}
+			waiting.Remove(k);
 			Debug.Log("[CUSTOM ISLANDS] [net] The host " + (yes ? "granted" : "refused") + " " + msg.Index.ToString("X") + " on island " + msg.Ids[0]);
 			LastAnswer = yes ? "granted" : "refused";
 			if (yes) granted.Add(k);

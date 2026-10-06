@@ -366,11 +366,12 @@ namespace DynamicIslands.Editor
 				Raft_Network network = ComponentManager<Raft_Network>.Value;
 				if (network != null)
 				{
-					var msg = new Message_CreateAINetworkBehaviour(Messages.CreateAINetworkBehaviour, network.NetworkIDManager, host.ObjectIndex, pos, ai, null);
-					network.RPC(msg, Target.Other, Steamworks.EP2PSend.k_EP2PSendReliable, NetworkChannel.Channel_Game);
-					// (and which island spot it is - AU32/AU62)
+					// (which island spot it is first - AU32/AU62: the two go on different channels, and an animal whose spot hadn't
+					// come yet was taken for one of Raft's by the players' randomizer)
 					IslandNetMessage spots = SpotsMessage(ai);
 					if (spots != null) IslandNetwork.SendToEveryone(spots);
+					var msg = new Message_CreateAINetworkBehaviour(Messages.CreateAINetworkBehaviour, network.NetworkIDManager, host.ObjectIndex, pos, ai, null);
+					network.RPC(msg, Target.Other, Steamworks.EP2PSend.k_EP2PSendReliable, NetworkChannel.Channel_Game);
 				}
 				return ai;
 			}
@@ -910,8 +911,9 @@ namespace DynamicIslands.Editor
 			bool known = sentHealth.TryGetValue(ai.ObjectIndex, out sent) && Time.realtimeSinceStartup - sent.Value < SentHealthSeconds;
 			// (an animal made while players were here - an alpha appearing - was sent with Raft's plain health, before the
 			// host gave it its multiplier: taken as the host's, it had a third of its health on their screens. A sent health
-			// below the plain one times the multiplier isn't the host's final one - AU31)
-			if (known && multiplier > 1f && sent.Key < plain * multiplier * 0.99f && sent.Key >= plain * 0.99f) known = false;
+			// below the plain one times the multiplier isn't the host's final one - AU31. Only Raft's plain health itself: a tough
+			// animal already hurt on the host, sent to a player who joined, came between the two and got full health there)
+			if (known && multiplier > 1f && Mathf.Abs(sent.Key - plain) <= plain * 0.01f) known = false;
 			float target = known ? value + Mathf.Max(0f, sent.Key - plain) : value * multiplier;
 			HealthBefore[ai] = plain;
 			h.SetMaxValue(plain * multiplier);
