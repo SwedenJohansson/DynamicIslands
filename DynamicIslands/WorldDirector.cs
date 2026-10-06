@@ -282,6 +282,11 @@ namespace DynamicIslands.Editor
 		public HashSet<string> LeaveOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>The last page of the main story in Raft's notebook, shown (with a banner) when the last main story island is done ("" = none).</summary>
 		public string StoryEnding = "";
+		/// <summary>Lines this version can't read (a newer one's settings or rules): written back as they are (AU5).</summary>
+		public List<string> Kept = new List<string>();
+		/// <summary>The mod version that saved the plan ("" before 2026-10-06).</summary>
+		public string ModVersion = "";
+		static readonly HashSet<string> toldNewer = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>The plan changes Raft's story chain (StoryChain takes it over in its worlds).</summary>
 		public bool ChangesStory { get { return !RaftStory || LeaveOut.Count > 0 || Rules.Any(r => r.InStory); } }
@@ -342,12 +347,19 @@ namespace DynamicIslands.Editor
 						}
 						break;
 					case "storyending": plan.StoryEnding = IntroRule.UnMulti(value); break;
+					case "modversion": plan.ModVersion = value; break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
 						if (r != null) plan.Rules.Add(r);
-						else Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': ignoring a bad rule: " + value);
+						else { plan.Kept.Add(line); Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': a rule this version can't read is kept as it is: " + value); }
 						break;
+					default: plan.Kept.Add(line); break;
 				}
+			}
+			if (plan.ModVersion.Length > 0 && LibraryPack.CompareVersions(plan.ModVersion, LibraryPack.ModVersion) > 0 && toldNewer.Add(name))
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "' was saved by Custom Islands " + plan.ModVersion + ", newer than this " + LibraryPack.ModVersion);
+				if (plan.Kept.Count > 0) DynamicIslands.Notify("The plan '" + name + "' was made with a newer Custom Islands (" + plan.ModVersion + "): " + plan.Kept.Count + " line(s) this version can't use are kept as they are. Please update the mod.", true);
 			}
 			// Rules need distinct ids (other rules and the world's state refer to them)
 			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -395,6 +407,8 @@ namespace DynamicIslands.Editor
 			if ((StoryEnding ?? "").Trim().Length > 0) lines.Add("storyending = " + IntroRule.Multi(StoryEnding));
 			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
+			lines.AddRange(Kept);
+			lines.Add("modversion = " + LibraryPack.ModVersion);
 			return string.Join("\r\n", lines.ToArray()) + "\r\n";
 		}
 
@@ -704,9 +718,10 @@ namespace DynamicIslands.Editor
 				case "plandesc": Stored().Description = value.Trim(); return true;
 				case "planrule":
 					IntroRule r = IntroRule.Parse(value);
-					if (r != null) Stored().Rules.Add(r);
-					else Debug.LogWarning("[CUSTOM ISLANDS] The world's copy of its plan: ignoring a bad rule: " + value);
-					return true;
+					if (r != null) { Stored().Rules.Add(r); return true; }
+					// (a rule this version can't read - a newer one's: the line is kept as it is in the world file - AU5)
+					Debug.LogWarning("[CUSTOM ISLANDS] The world's copy of its plan: a rule this version can't read is kept as it is: " + value);
+					return false;
 			}
 			return false;
 		}
