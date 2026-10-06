@@ -1802,6 +1802,7 @@ What Check looks for:
 | **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 | **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
+| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
 | **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island of a later rule: players reach the lock without the key |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
@@ -1822,8 +1823,8 @@ names are the same every time, its exact places aren't.
   ([section 8](#8-playing-together)).
 - **The plan decides islands only.** Monster difficulty, build cost, the level up system, the randomizer and the extra
   options are chosen in World settings for each world, whatever plan it has ([section 9](#9-world-settings-rules-and-extra-systems)).
-- **Copy...** saves the plan under another name. **Delete** removes the plan file straight away (it doesn't ask); worlds
-  that use it keep their own copy.
+- **Copy...** saves the plan under another name. **Delete** moves the plan file to `Mods\DynamicIslands\deleted\plans` (it doesn't ask - move it
+  back from there to undo); worlds that use it keep their own copy.
 - **Share it:** **Export...** makes a pack (`.zip`) with the plan and every saved island it needs, to send to a friend
   or to put in the island library; **Import...** installs a pack someone sent you ([4.7](#47-saving-and-sharing)).
   Map type islands need no file, so a plan made only of map types always works for everyone.
@@ -2328,16 +2329,19 @@ done in the sessions you missed is lost, without a warning.
 
 #### Everyone runs the same version of the mod
 
-**Why:** joining with another version only shows a warning ("things may not match"), and then the game goes on. But an
-older version doesn't know the newer parts of a world - the story chain, levels, the plan's own copy, private storages -
-and **drops them**. When the player with the older version hosts and saves, the world loses those parts for good, for
-everyone.
+**Why:** joining with another version shows a warning naming both versions and which one to install, and then the game
+goes on. An older version doesn't know the newer parts of a world - the story chain, levels, the plan's own copy, private
+storages. Since 2026-10-06 it keeps the lines it doesn't know as they are and warns ("saved by a newer Custom Islands"),
+but versions older than that **drop them**: when a player with such a version hosts and saves, the world loses those
+parts for good, for everyone.
 
 **What to do:**
 1. Each player looks at the **EXPERIMENTAL ALPHA RELEASE** box on Raft's main menu: it says "(version 3.0)" or similar.
    The versions must be the same.
 2. To update: close Raft, replace `DynamicIslands.rmod` in Raft's `mods` folder with the new one (don't unzip it -
    see [12.5](#125-names-files-and-your-pc)), start Raft again and check the box.
+3. On the main menu the mod says once per start when a newer version is out on GitHub. To turn that off, add the line
+   `updatecheck=off` to `world_rules.txt` (or set `online = off` in `library.txt`).
 3. Update everyone **before** the next session, not in the middle of an adventure.
 
 #### Everyone's PC clock and date are right
@@ -2421,16 +2425,13 @@ at the same moment: each player's game checks the key before the host has heard 
 (Fixed since 2026-10-01: a chest gives its loot once and a once-zone fires once even when the host is busy and answers
 late; a lever pulled by several players in the same second moves once; quest steps that count add up everyone's.)
 
-#### Don't switch these in a running world
+#### Changing settings in a running world
 
-**Why:** one setting in **Esc > Custom Islands** (and the F10 commands) doesn't handle being changed while the game runs:
-- **Story islands in a new order:** Raft's Receiver list is rebuilt; the island you were sailing to may be gone from it.
+The world settings can be changed while you play (**Esc > Custom Islands**, or the F10 commands). Best when nobody else is
+connected; then let Raft save (leave to the main menu once).
 
-**What to do:**
-1. Choose these in **World settings** when you **create** the world, and leave them.
-2. If you must change one: do it when nobody else is connected, then let Raft save (leave to the main menu once).
-
-(Fixed since 2026-10-06: changing the build cost later is fine - every block gives back by the cost it was placed at.
+(Fixed since 2026-10-06: changing the build cost later is fine - every block gives back by the cost it was placed at;
+switching **Story islands in a new order** keeps the Receiver's list in place - an island still unlocked keeps its spot.
 Fixed since 2026-10-01: switching the level up system off and on keeps everyone's levels, and changing the world
 randomizer no longer makes alphas tougher again or heals them.)
 
@@ -2653,7 +2654,15 @@ story items are in Raft's notebook (**T**: its tab, and Found items); a **side q
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 
 **"The host has Custom Islands 3.x - you have 3.y".** You and the host have different versions of the mod: islands,
-quests and settings may not match between you. Both of you update to the same version (raftmodding.com).
+quests and settings may not match between you. The message says which version to install; both of you update to the same
+version (raftmodding.com or GitHub).
+
+**"This older save has no record of its custom islands".** You loaded one of Raft's older saves (Load Game > a backup)
+that was made before the mod kept a copy with each save, or the very first save of a new world. Its custom islands'
+chests, quests and story are as in the world's newest save.
+
+**"This world was saved by a newer Custom Islands".** Someone with a newer version of the mod hosted this world. What
+this version doesn't know is kept as it is; update the mod before playing on.
 
 **My island can't be saved under that name.** Windows keeps some names for itself (CON, PRN, AUX, NUL, COM1-9, LPT1-9 -
 also with anything after a dot) and doesn't allow a name ending with a dot or a space, or `\ / : * ? " < > |`. Names can
