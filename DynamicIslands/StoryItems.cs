@@ -164,6 +164,43 @@ namespace DynamicIslands.Editor
 		public static IList<Page> Pages { get { return pages; } }
 		public static bool HasState { get { return held.Count > 0 || pages.Count > 0; } }
 
+		/// <summary>
+		/// The island's part of its page keys ("note:&lt;island&gt;:n", "act:&lt;island&gt;:..."): its name, and for a second
+		/// copy of the same island in the world its name and "|2" (and so on: no file name has a "|"). Two copies shared their
+		/// pages - a note read on one was found on the other, and its own reading added nothing (AU41). The first copy keeps
+		/// the plain name, as in worlds saved before. Copies count in the world's list order (kept in saves, and the host's
+		/// order on every machine).
+		/// </summary>
+		public static string PageIsland(IslandWorldState.Entry e)
+		{
+			if (e == null) return "";
+			int copy = 1;
+			foreach (IslandWorldState.Entry x in IslandWorldState.Islands)
+			{
+				if (x == e) break;
+				if (x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)) copy++;
+			}
+			return copy == 1 ? e.HostName : e.HostName + "|" + copy.ToString(CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>The island a page key's island part names (PageIsland): that copy, else the first island of the name; null if none.</summary>
+		public static IslandWorldState.Entry EntryOfPageIsland(string pageIsland)
+		{
+			string name = pageIsland ?? "";
+			int copy = 1, bar = name.IndexOf('|');
+			if (bar >= 0) { if (!int.TryParse(name.Substring(bar + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out copy)) copy = 1; name = name.Substring(0, bar); }
+			List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+			return copy >= 1 && copy <= same.Count ? same[copy - 1] : same.FirstOrDefault();
+		}
+
+		/// <summary>A page key with the copy number taken out ("note:Cove|2:5" -> "note:Cove:5"): for counts by island name.</summary>
+		public static string PlainKey(string key)
+		{
+			key = key ?? "";
+			int a = key.IndexOf(':'), b = a >= 0 ? key.IndexOf(':', a + 1) : -1, bar = a >= 0 ? key.IndexOf('|', a + 1) : -1;
+			return bar > a && bar < b ? key.Substring(0, bar) + key.Substring(b) : key;
+		}
+
 		public static int Count(string id)
 		{
 			Held h;
@@ -533,7 +570,8 @@ namespace DynamicIslands.Editor
 			IEnumerable<IntroRule> rules = (WorldDirector.Plan != null ? WorldDirector.Plan.Rules : new List<IntroRule>()).Concat(StoryChain.Rules);
 			foreach (IntroRule r in rules)
 				if (r.What == "island" && r.WhatArg.Length > 0 && !islands.ContainsKey(r.WhatArg)) islands[r.WhatArg] = r.WhatArg;
-			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			// (by island name: a note found on any copy of the island - AU41 page keys)
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => StoryBook.PlainKey(p.Key)), StringComparer.OrdinalIgnoreCase);
 			foreach (KeyValuePair<string, string> island in islands)
 				foreach (int n in IslandCache.NotesOf(island.Value))
 				{
@@ -548,9 +586,11 @@ namespace DynamicIslands.Editor
 		public static bool OfIsland(string hostName, out int found, out int total)
 		{
 			found = total = 0;
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => !x.Failed && x.HostName.Equals(hostName ?? "", StringComparison.OrdinalIgnoreCase));
+			// (a page key's island part may name a copy, "Cove|2": by the island's name, found on any copy - AU41)
+			hostName = (hostName ?? "").Split('|')[0];
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => !x.Failed && x.HostName.Equals(hostName, StringComparison.OrdinalIgnoreCase));
 			if (e == null) return false;
-			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => StoryBook.PlainKey(p.Key)), StringComparer.OrdinalIgnoreCase);
 			foreach (int n in IslandCache.NotesOf(e.Name))
 			{
 				total++;
@@ -616,8 +656,8 @@ namespace DynamicIslands.Editor
 				foreach (StoryItemDef d in StoryItems.Of(e != null ? IslandCache.PropsOf(e) : IslandCache.Props(island.Value))) if (d.Id.Length > 0) items.Add(d.Id);
 			}
 			rows.Add(new Row { Name = "Story items found", Done = items.Count(found.Contains), Total = items.Count, Help = "Story items found (keys, map pieces, logs...) of those the islands have - one used up since (a key a door took) still counts as found." });
-			// Journal pages: the islands' notes and the pages their events write
-			var pages = new HashSet<string>(StoryBook.Pages.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			// Journal pages: the islands' notes and the pages their events write (by island name: found on any copy - AU41)
+			var pages = new HashSet<string>(StoryBook.Pages.Select(p => StoryBook.PlainKey(p.Key)), StringComparer.OrdinalIgnoreCase);
 			int pt = 0, pf = 0;
 			foreach (KeyValuePair<string, string> island in islands)
 			{
@@ -940,7 +980,7 @@ namespace DynamicIslands.Editor
 			done = false;
 			string[] k = (p != null ? p.Key ?? "" : "").Split(':');
 			if (k.Length < 3 || (k[0] != "note" && k[0] != "act")) return "";
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.Equals(k[1], StringComparison.OrdinalIgnoreCase));
+			IslandWorldState.Entry e = StoryBook.EntryOfPageIsland(k[1]);
 			if (e == null) return "";
 			IslandQuest q = IslandQuest.From(IslandCache.PropsOf(e));
 			if (q.Steps.Count == 0) return "";

@@ -800,11 +800,21 @@ namespace DynamicIslands.Editor
 			var s = new Saved();
 			if (!IsLocal(pc)) return s;
 			s = new Saved { Walk = pc.normalSpeed, Run = pc.sprintSpeed, Swim = pc.swimSpeed, Jump = pc.jumpSpeed, Set = true };
-			pc.normalSpeed *= PlayerLevels.Factor(LevelRules.Walk);
-			pc.sprintSpeed *= PlayerLevels.Factor(LevelRules.Run);
-			pc.swimSpeed *= PlayerLevels.Factor(LevelRules.Swim);
-			// (a jump this much higher: the height goes with the take-off speed squared)
-			pc.jumpSpeed *= Mathf.Sqrt(PlayerLevels.Factor(LevelRules.Jump));
+			try
+			{
+				pc.normalSpeed *= PlayerLevels.Factor(LevelRules.Walk);
+				pc.sprintSpeed *= PlayerLevels.Factor(LevelRules.Run);
+				pc.swimSpeed *= PlayerLevels.Factor(LevelRules.Swim);
+				// (a jump this much higher: the height goes with the take-off speed squared)
+				pc.jumpSpeed *= Mathf.Sqrt(PlayerLevels.Factor(LevelRules.Jump));
+			}
+			catch (Exception e)
+			{
+				// (part way through: the speeds as they were - AU41)
+				Restore(pc, s);
+				Debug.LogWarning("[CUSTOM ISLANDS] Levels: speed boost: " + e.Message);
+				return new Saved();
+			}
 			return s;
 		}
 
@@ -834,18 +844,20 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	// (the speeds go back in a Finalizer, not a Postfix: it runs also when Raft's method throws - a Postfix was skipped then,
+	// and the boost stayed on and grew at every frame - AU41)
 	[HarmonyPatch(typeof(PersonController), "GroundControll")]
 	static class LevelGroundPatch
 	{
 		static void Prefix(PersonController __instance, out StatApply.Saved __state) { __state = StatApply.Boost(__instance); }
-		static void Postfix(PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); }
+		static Exception Finalizer(Exception __exception, PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); return __exception; }
 	}
 
 	[HarmonyPatch(typeof(PersonController), "WaterControll")]
 	static class LevelWaterPatch
 	{
 		static void Prefix(PersonController __instance, out StatApply.Saved __state) { __state = StatApply.Boost(__instance); }
-		static void Postfix(PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); }
+		static Exception Finalizer(Exception __exception, PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); return __exception; }
 	}
 
 	/// <summary>Hunger and thirst drain slower with the Hunger and Thirst stats (each of Raft's is two consumables: normal and bonus).</summary>
@@ -873,9 +885,12 @@ namespace DynamicIslands.Editor
 			LostPerSecond.SetValue(__instance, __state / PlayerLevels.Factor(LevelRules.Oxygen));
 		}
 
-		static void Postfix(Stat_Oxygen __instance, float __state)
+		// (a Finalizer: put back also when Raft's Update throws - AU41)
+		static Exception Finalizer(Exception __exception, Stat_Oxygen __instance, float __state)
 		{
-			if (__state >= 0f && LostPerSecond != null) LostPerSecond.SetValue(__instance, __state);
+			try { if (__state >= 0f && LostPerSecond != null) LostPerSecond.SetValue(__instance, __state); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); }
+			return __exception;
 		}
 	}
 

@@ -41,7 +41,12 @@ namespace DynamicIslands.Editor
 		/// <summary>The line naming Raft's save this state belongs to (null outside Raft's own save).</summary>
 		public static string RaftSaveLine() { return InRaftSave && SavingStamp != 0 ? "@raftsave=" + SavingStamp.ToString(CultureInfo.InvariantCulture) : null; }
 
-		public static bool ReadLine(string key, string value) { return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase) || key.Equals("savedby", StringComparison.OrdinalIgnoreCase); }
+		public static bool ReadLine(string key, string value)
+		{
+			// (which PC saved the world: the plan's owner for a world that names none - AU25)
+			if (key.Equals("savedby", StringComparison.OrdinalIgnoreCase)) { WorldDirector.ReadSavedBy(value); return true; }
+			return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase);
+		}
 
 		static long StampOf(string[] lines) { return LongLine(lines, "@savedat="); }
 		static long RaftSaveOf(string[] lines) { return LongLine(lines, "@raftsave="); }

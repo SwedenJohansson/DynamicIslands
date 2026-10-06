@@ -85,7 +85,30 @@ namespace DynamicIslands.Editor
 
 		internal static IEnumerable<string> WriteLines()
 		{
+			Prune();
 			if (builders.Count > 0) yield return "@storages=" + Encode();
+		}
+
+		/// <summary>
+		/// Host, while Raft saves the world: forgets the builders of storages that are gone (taken down, sunk with their
+		/// foundation) - the list only grew before (AU41). Careful not to forget a storage that is there: only in Raft's own
+		/// save (the world is loaded then, never part way through loading), with the game scene and the raft there and at
+		/// least one block on it, and a storage counts as there if any object of the scene has its number (inactive ones too).
+		/// </summary>
+		static void Prune()
+		{
+			if (builders.Count == 0) return;
+			try
+			{
+				if (!Raft_Network.IsHost || !WorldCopy.InRaftSave || !LoadSceneManager.IsGameSceneLoaded || !CustomIslandSpawner.RaftPosition.HasValue) return;
+				if (UnityEngine.Object.FindObjectsOfType<Block>().Length == 0) return; // (the raft's blocks aren't known yet)
+				var there = new HashSet<uint>(Resources.FindObjectsOfTypeAll<Storage_Small>().Where(s => s != null).Select(s => s.ObjectIndex));
+				List<uint> gone = builders.Keys.Where(k => !there.Contains(k)).ToList();
+				if (gone.Count == 0) return;
+				foreach (uint k in gone) builders.Remove(k);
+				Log("Forgot the builders of " + gone.Count + " storage(s) no longer in the world (" + builders.Count + " left)");
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] Looking for storages that are gone: " + e.Message); }
 		}
 
 		internal static bool HasState { get { return builders.Count > 0; } }

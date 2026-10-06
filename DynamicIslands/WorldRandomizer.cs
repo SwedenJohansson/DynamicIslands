@@ -333,10 +333,15 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
-			if (!LoadSceneManager.IsGameSceneLoaded || !Current.On) return;
+			if (!LoadSceneManager.IsGameSceneLoaded) return;
+			// (alphas it made keep their spoils when the randomizer or its alphas are switched off: they stay as they are - big,
+			// dark and tough, like everything it already changed ("islands already looked at keep what they got") - so they
+			// are worth the fight to the end. They were watched only while it was on: a tough alpha died for nothing - AU41.
+			// From the next load nothing rolls new ones.)
+			if (Raft_Network.IsHost && alphas.Count > 0) try { WatchAlphas(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Alphas: " + e); }
+			if (!Current.On) return;
 			try { HandleIslands(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Raft's islands: " + e); }
 			try { HandleAnimals(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Animals: " + e); }
-			if (Raft_Network.IsHost) try { WatchAlphas(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Alphas: " + e); }
 		}
 
 		/// <summary>Host: the raft sailed this far; now and then an oddity island or a boss lair appears ahead.</summary>

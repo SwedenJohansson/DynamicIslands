@@ -596,6 +596,7 @@ namespace DynamicIslands.Editor
 				if (same != null)
 				{
 					File.Copy(same, IslandSpawner.PathFor(downloaded), true);
+					IslandCache.ForgetFile(IslandSpawner.PathFor(downloaded)); // (not "missing" for 2 s more - AU41)
 					entry.Name = downloaded;
 					Log("Island file '" + entry.HostName + "' is the same as " + Path.GetFileName(same) + ": copied (" + hash + ")");
 					return;
@@ -671,13 +672,14 @@ namespace DynamicIslands.Editor
 			string name = DownloadName(msg.Name, msg.Hash);
 			Directory.CreateDirectory(DynamicIslands.assetpath);
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
+			IslandCache.ForgetFile(IslandSpawner.PathFor(name)); // (not "missing" for 2 s more - AU41)
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash))
 			{
 				// (two of the host's islands with the same content but other names: each entry waits for its own name's copy
 				// - only the first was saved and the other never loaded, AU15)
 				string want = DownloadName(e.HostName, msg.Hash);
-				try { if (want != name && !File.Exists(IslandSpawner.PathFor(want))) File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(want)); }
+				try { if (want != name && !File.Exists(IslandSpawner.PathFor(want))) { File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(want)); IslandCache.ForgetFile(IslandSpawner.PathFor(want)); } }
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Copying '" + name + "' for '" + e.HostName + "': " + ex.Message); }
 				e.WaitingForFile = false;
 			}
