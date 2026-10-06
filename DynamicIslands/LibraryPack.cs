@@ -1059,7 +1059,9 @@ namespace DynamicIslands.Editor
 				foreach (string file in WorldStateFiles())
 				{
 					string[] lines = File.ReadAllLines(file);
-					if (!lines.Any(l => OlderHash(l, island, now).Length > 0)) continue;
+					// (only a hash with its kept copy here: a world whose hash has no copy plays the island's file now - an
+					// ordinary save that added objects changed the hash, and the world's line names the new one at its next save)
+					if (!lines.Any(l => { string had = OlderHash(l, island, now); return had.Length > 0 && File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had))); })) continue;
 					string world = Housekeeping.WorldName(lines, file);
 					if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) result.Add(world);
 				}

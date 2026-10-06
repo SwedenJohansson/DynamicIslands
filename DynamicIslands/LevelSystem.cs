@@ -11,7 +11,7 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// The level up system's numbers: what a level costs, what a monster is worth, and the nine stats a player puts
 	/// points into. Each point is +1% (Hunger, Thirst and Oxygen: the stat lasts 1% longer), at most 15 points per
-	/// stat, 2 points per level. Once every stat is full (90 points, level 46) players still level up, without points.
+	/// stat, 2 points per level. Once every stat is full (135 points, level 69) players still level up, without points.
 	/// </summary>
 	public static class LevelRules
 	{
