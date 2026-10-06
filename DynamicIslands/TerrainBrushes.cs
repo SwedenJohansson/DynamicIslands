@@ -17,7 +17,6 @@ namespace DynamicIslands.Editor
 		/// <summary>How a brush fades towards its rim: Smooth (soft, the old brush), Linear (evenly) or Hard (full strength to the rim).</summary>
 		public enum Falloff { Smooth, Linear, Hard }
 
-		public static readonly string[] FalloffNames = { "Smooth", "Linear", "Hard" };
 
 		/// <summary>The brush edge every sculpt and paint brush uses.</summary>
 		public static Falloff BrushFalloff = Falloff.Smooth;

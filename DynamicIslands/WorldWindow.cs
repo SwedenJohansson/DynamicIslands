@@ -181,11 +181,8 @@ namespace DynamicIslands.Editor
 			f.contentType = whole ? InputField.ContentType.IntegerNumber : InputField.ContentType.DecimalNumber;
 			f.characterLimit = 7;
 			f.onEndEdit.AddListener(v => onDone(v));
-			fields[name] = f;
 		}
 
-		/// <summary>Tests: a number field of the window by its name ("RegrowDays", "UnloadDistance", "ReceiverDistance").</summary>
-		public static InputField FieldNamed(string name) { InputField f; return fields.TryGetValue(name, out f) ? f : null; }
 
 		/// <summary>Host: the world's own regrow days (WorldRules.SetRegrow: kept with the world, sent to every player).</summary>
 		static void SetRegrow(string text)

@@ -785,7 +785,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A text field (chat, console) has the keyboard.</summary>
-		static bool Typing()
+		internal static bool Typing()
 		{
 			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
 			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
@@ -1110,8 +1110,6 @@ namespace DynamicIslands.Editor
 		/// <summary>The Progress panel's lines now (tests).</summary>
 		public static List<string> ProgressShown { get { return IsOpen ? instance.progressText.Select(t => System.Text.RegularExpressions.Regex.Replace(t.text, "<[^>]+>", "")).ToList() : new List<string>(); } }
 
-		/// <summary>The top right's text now (tests).</summary>
-		public static string CountsShown { get { return IsOpen ? instance.countText.text : null; } }
 
 		/// <summary>The world's quests on the paper: done and still to do, by kind.</summary>
 		void ShowQuests()

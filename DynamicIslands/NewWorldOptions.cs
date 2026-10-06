@@ -102,31 +102,6 @@ namespace DynamicIslands.Editor
 		/// <summary>The box and the window show the current choice again.</summary>
 		internal static void Refresh() { Show(); }
 
-		/// <summary>
-		/// Raft shows "name can't be empty" and the like right of the name field, where the randomizer now is: it goes on
-		/// the line of the "World name" heading instead, right-aligned above the field.
-		/// </summary>
-		static void MoveNameFeedback(NewGameBox box)
-		{
-			Text feedback = Traverse.Create(box).Field("text_nameFeedback").GetValue<Text>();
-			InputField name = Traverse.Create(box).Field("inputfield_GameName").GetValue<InputField>();
-			if (feedback == null || name == null) return;
-			RectTransform f = feedback.rectTransform, n = (RectTransform)name.transform;
-			var corners = new Vector3[4];
-			n.GetWorldCorners(corners);
-			f.SetParent(n.parent, true);
-			f.pivot = new Vector2(1f, 0f);
-			f.anchorMin = f.anchorMax = n.anchorMin;
-			f.position = corners[2] + n.up * 4f * n.lossyScale.y;
-			f.sizeDelta = new Vector2(n.rect.width * 0.62f, 22f);
-			feedback.alignment = TextAnchor.LowerRight;
-			feedback.horizontalOverflow = HorizontalWrapMode.Wrap;
-			feedback.resizeTextMaxSize = feedback.fontSize;
-			feedback.resizeTextMinSize = 9;
-			feedback.resizeTextForBestFit = true;
-			f.SetAsLastSibling();
-		}
-
 		/// <summary>The plan's own description, its story and each of its rules in words (ROADMAP T6).</summary>
 		internal static string PlanText(WorldPlan p)
 		{

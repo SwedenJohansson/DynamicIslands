@@ -92,9 +92,6 @@ namespace DynamicIslands.Editor
 			return Themes.Where(t => t.Styles.Contains(style) && t.Anchors.Any(RaftProps.Standable)).ToList();
 		}
 
-		static T One<T>(System.Random r, IList<T> list) { return list[r.Next(list.Count)]; }
-		static float Yaw(System.Random r) { return (float)r.NextDouble() * 360f; }
-		static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
 
 		/// <summary>
 		/// The lowest ground under a prop's footprint (its middle and near its corners, turned by yaw) with its pivot at p:
@@ -142,8 +139,8 @@ namespace DynamicIslands.Editor
 			System.Random r = k.Rnd;
 			string[] anchors = t.Anchors.Where(RaftProps.Standable).ToArray(), medium = t.Medium.Where(RaftProps.Standable).ToArray(), small = t.Small.Where(RaftProps.Standable).ToArray();
 			if (anchors.Length == 0) return false;
-			float yaw = Yaw(r);
-			string anchor = One(r, anchors);
+			float yaw = RandomizerContent.Yaw(r);
+			string anchor = RandomizerContent.One(r, anchors);
 			float anchorSize = Mathf.Max(2f, RaftProps.Get(anchor).Size.x * 0.5f, RaftProps.Get(anchor).Size.z * 0.5f);
 			// (a big centrepiece - an igloo, a shed - gets its own room plus the scene's around it)
 			radius = Mathf.Max(radius, anchorSize + 5f);
@@ -156,11 +153,11 @@ namespace DynamicIslands.Editor
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
-				string name = One(r, medium);
+				string name = RandomizerContent.One(r, medium);
 				for (int attempt = 0; attempt < 4; attempt++)
 				{
 					float a = yaw + 60f + i * (240f / Mathf.Max(1, nm)) + (float)r.NextDouble() * 30f;
-					Vector2 p = Around(c, a, 0f, anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
+					Vector2 p = RandomizerContent.Around(c, a, 0f, anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
 					if (k.Slope(p) > 22f || !free(name, p)) continue;
 					Vector2 toC = c - p;
 					Prop(k, name, p, Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f);
@@ -171,19 +168,19 @@ namespace DynamicIslands.Editor
 			int ns = small.Length == 0 ? 0 : 3 + r.Next(4);
 			for (int i = 0; i < ns; i++)
 			{
-				string name = One(r, small);
+				string name = RandomizerContent.One(r, small);
 				for (int attempt = 0; attempt < 4; attempt++)
 				{
-					Vector2 p = Around(c, Yaw(r), 0f, anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
+					Vector2 p = RandomizerContent.Around(c, RandomizerContent.Yaw(r), 0f, anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
 					if (k.Slope(p) > 25f || !free(name, p)) continue;
-					Prop(k, name, p, Yaw(r));
+					Prop(k, name, p, RandomizerContent.Yaw(r));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
 			}
-			Vector2 box = Around(c, yaw + 180f, 0f, anchorSize + 1.5f);
+			Vector2 box = RandomizerContent.Around(c, yaw + 180f, 0f, anchorSize + 1.5f);
 			k.Chest(t.Container, box, t.Label, MapKit.Loot(t.Loot));
-			if (withNote) k.Note(t.NoteKind, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), t.NoteTitle, One(r, t.Notes));
+			if (withNote) k.Note(t.NoteKind, RandomizerContent.Around(c, yaw + 150f, 0f, anchorSize + 2.5f), t.NoteTitle, RandomizerContent.One(r, t.Notes));
 			if (t.Creature != null && r.NextDouble() < 0.5)
 			{
 				Vector2? den = k.Find(c, radius * 2.5f, MapKit.Dry, 6f);
@@ -203,12 +200,12 @@ namespace DynamicIslands.Editor
 				.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Footprint(o.Name))).ToList();
 			for (int i = 0; i < count * 4 && placed < count && props.Length > 0; i++)
 			{
-				Vector2 p = Around(c, Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));
+				Vector2 p = RandomizerContent.Around(c, RandomizerContent.Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));
 				if (k.Ground(p) - k.Sea < 0.8f || k.Slope(p) > 22f) continue;
-				string name = One(r, props);
+				string name = RandomizerContent.One(r, props);
 				if (taken.Any(q => (q.Key - p).magnitude < q.Value + Footprint(name))) continue;
 				k.Clear(p, 1.5f);
-				Prop(k, name, p, Yaw(r));
+				Prop(k, name, p, RandomizerContent.Yaw(r));
 				taken.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 				placed++;
 			}
@@ -239,8 +236,8 @@ namespace DynamicIslands.Editor
 				if (float.IsNaN(low) || low < 0.6f) return null;
 				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
 			};
-			float y0 = Yaw(r);
-			string anchor = One(r, anchors);
+			float y0 = RandomizerContent.Yaw(r);
+			string anchor = RandomizerContent.One(r, anchors);
 			if (put(c, y0, 0.05f, anchor) == null) return false;
 			float anchorSize = Mathf.Max(2f, RaftProps.Get(anchor).Size.x * 0.5f, RaftProps.Get(anchor).Size.z * 0.5f);
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
@@ -248,18 +245,18 @@ namespace DynamicIslands.Editor
 			{
 				float a = y0 + 60f + i * (240f / Mathf.Max(1, nm));
 				Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
-				put(p, a + 180f, 0.05f, One(r, medium));
+				put(p, a + 180f, 0.05f, RandomizerContent.One(r, medium));
 			}
 			int ns = small.Length == 0 ? 0 : 3 + r.Next(3);
 			for (int i = 0; i < ns; i++)
 			{
-				Vector3 p = c + Quaternion.Euler(0f, Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
-				put(p, Yaw(r), 0.05f, One(r, small));
+				Vector3 p = c + Quaternion.Euler(0f, RandomizerContent.Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
+				put(p, RandomizerContent.Yaw(r), 0.05f, RandomizerContent.One(r, small));
 			}
 			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
-			if (g.Hit(box.x, box.z, out bh, out bn)) k.Chest(t.Container, bh, Yaw(r), t.Label, MapKit.Loot(t.Loot));
+			if (g.Hit(box.x, box.z, out bh, out bn)) k.Chest(t.Container, bh, RandomizerContent.Yaw(r), t.Label, MapKit.Loot(t.Loot));
 			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
-			if (g.Hit(note.x, note.z, out nh, out nn)) k.Note(t.NoteKind, nh, Yaw(r), t.NoteTitle, One(r, t.Notes));
+			if (g.Hit(note.x, note.z, out nh, out nn)) k.Note(t.NoteKind, nh, RandomizerContent.Yaw(r), t.NoteTitle, RandomizerContent.One(r, t.Notes));
 			return true;
 		}
 
@@ -527,7 +524,7 @@ namespace DynamicIslands.Editor
 		static readonly string[] NameLast = { "Isle", "Rock", "Key", "Haven", "Reach", "Point", "Island", "Hollow", "Bluff", "Cay" };
 
 		/// <summary>A name for a large island, from its seed.</summary>
-		public static string IslandName(System.Random r) { return One(r, NameFirst) + " " + One(r, NameLast); }
+		public static string IslandName(System.Random r) { return RandomizerContent.One(r, NameFirst) + " " + RandomizerContent.One(r, NameLast); }
 
 		/// <summary>Settings of a large island: as big and tall as Raft's big islands, objects as dense as theirs.</summary>
 		public static IslandGenSettings LargeSettings(System.Random rnd)

@@ -1452,8 +1452,6 @@ namespace DynamicIslands.Editor
 		/// <summary>The Life under water quick button Like Raft: as dense as around Raft's own islands.</summary>
 		public static void SeaLikeRaft(IslandGenSettings s) { s.Water = s.SeaRocks = s.SeaFinds = s.Sunken = 0.5f; }
 
-		/// <summary>The slider value that gives this many objects per 1000 m² (the inverse of the density curve).</summary>
-		public static float AmountFor(string cat, float perThousand) { return Mathf.Clamp01(Mathf.Sqrt(Mathf.Max(0f, perThousand) / MaxDensity(cat))); }
 
 		#endregion
 
@@ -3358,7 +3356,7 @@ namespace DynamicIslands.Editor
 				if (f <= 0f) continue;
 				f *= SeaCap(s, sea, cat, f);
 				var rnd = new System.Random(s.Seed * 4099 + 71 + ci * 577);
-				Vector2 reefOff = RandomOffset(rnd);
+				RandomOffset(rnd); // (no longer used, still drawn: the draws after it, and so the islands a seed makes, stay the same)
 				int placed = 0;
 				ReefMask reefs = null;
 				if (cat == CatWater)
@@ -3474,12 +3472,12 @@ namespace DynamicIslands.Editor
 		#region Content: creatures and loot
 
 		/// <summary>A hash of a name that is the same in every run (string.GetHashCode needn't be).</summary>
-		static int StableHash(string s)
+		internal static int StableHash(string s)
 		{
 			unchecked
 			{
 				int h = 23;
-				foreach (char c in s) h = h * 31 + c;
+				foreach (char c in s ?? "") h = h * 31 + c;
 				return h & 0x7fffffff;
 			}
 		}

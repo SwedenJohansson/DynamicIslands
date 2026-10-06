@@ -529,21 +529,6 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
-		/// Builds the island in the current (game) scene with its sea level at worldPosition.y and the
-		/// centre of its land at worldPosition horizontally. The catalog must already be built.
-		/// </summary>
-		public static GameObject SpawnInWorld(IslandFile island, Vector3 worldPosition)
-		{
-			bool flying;
-			GameObject root = MakeRoot(island, worldPosition, out flying);
-			var objects = new GameObject("Objects");
-			objects.transform.SetParent(root.transform, false);
-			int missing = SpawnObjects(island, objects.transform, false, flying);
-			Spawned(island, worldPosition, flying, missing);
-			return root;
-		}
-
-		/// <summary>
 		/// The colliders of an object's active parts switched on. Its parent may be inactive (the sliced spawn): the parts are
 		/// looked at by their own switch, as GetComponentsInChildren without inactive ones found none there (review 2026-10-06).
 		/// </summary>
@@ -563,9 +548,10 @@ namespace DynamicIslands.Editor
 		internal static string LastSpawnTiming = "";
 
 		/// <summary>
-		/// SpawnInWorld over several frames (ROADMAP P1): the land at once, then the objects a few milliseconds a frame under
-		/// a parent kept inactive until all are there (nothing of the island runs half made). result gets the root, or null
-		/// when it was removed meanwhile.
+		/// Builds the island in the current (game) scene with its sea level at worldPosition.y and the centre of its land at
+		/// worldPosition horizontally (the catalog must already be built), over several frames (ROADMAP P1): the land at once,
+		/// then the objects a few milliseconds a frame under a parent kept inactive until all are there (nothing of the island
+		/// runs half made). result gets the root, or null when it was removed meanwhile.
 		/// </summary>
 		public static System.Collections.IEnumerator SpawnInWorldSliced(IslandFile island, Vector3 worldPosition, System.Action<GameObject> result, float budgetMs = 6f)
 		{

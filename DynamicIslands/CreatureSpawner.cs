@@ -887,8 +887,6 @@ namespace DynamicIslands.Editor
 		/// <summary>How long a health the host sent is trusted (an island's spots may load a while after its animals came).</summary>
 		const float SentHealthSeconds = 600f;
 
-		/// <summary>Client: the multiplier this animal's health got here to match the host's (1 = none).</summary>
-		public static float ClientHealthOf(AI_NetworkBehaviour ai) { float m; return ai != null && clientHealth.TryGetValue(ai, out m) ? m : 1f; }
 
 		/// <summary>
 		/// Client: gives an animal's copy the maximum health the host gave it (a built creature's toughness, a randomizer

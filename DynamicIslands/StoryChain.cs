@@ -191,22 +191,12 @@ namespace DynamicIslands.Editor
 				int[] digits;
 				if (!kept.TryGetValue(r.Id, out digits) || digits == null || digits.Length != 4 || taken.Any(t => t.SequenceEqual(digits)))
 				{
-					var rnd = new System.Random(StableHash(SaveAndLoad.WorldGuid.ToString() + "/" + r.Id));
+					var rnd = new System.Random(IslandGenerator.StableHash(SaveAndLoad.WorldGuid.ToString() + "/" + r.Id));
 					do digits = new[] { rnd.Next(10), rnd.Next(10), rnd.Next(10), rnd.Next(10) };
 					while (taken.Any(t => t.SequenceEqual(digits)));
 				}
 				taken.Add(digits);
 				Frequencies.Add(new KeyValuePair<string, int[]>(r.Id, digits));
-			}
-		}
-
-		static int StableHash(string s)
-		{
-			unchecked
-			{
-				int h = 23;
-				foreach (char c in s ?? "") h = h * 31 + c;
-				return h & 0x7fffffff;
 			}
 		}
 
@@ -374,7 +364,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A rule by chance comes up 0.3 to 1.8 km of sailing from now (the same distance for the rule in this world).</summary>
 		static void DueFromNow(IntroRule r)
 		{
-			due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(StableHash(r.Id + SaveAndLoad.WorldGuid)).NextDouble() * 1500f;
+			due[r.Id] = WorldDirector.Sailed + 300f + (float)new System.Random(IslandGenerator.StableHash(r.Id + SaveAndLoad.WorldGuid)).NextDouble() * 1500f;
 		}
 
 		/// <summary>

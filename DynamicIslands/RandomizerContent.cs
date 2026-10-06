@@ -65,8 +65,8 @@ namespace DynamicIslands.Editor
 	/// <summary>What the world randomizer puts on Raft's islands, and the oddity islands and boss lairs it brings.</summary>
 	public static class RandomizerContent
 	{
-		static float Yaw(System.Random r) { return (float)r.NextDouble() * 360f; }
-		static T One<T>(System.Random r, IList<T> list) { return list[r.Next(list.Count)]; }
+		internal static float Yaw(System.Random r) { return (float)r.NextDouble() * 360f; }
+		internal static T One<T>(System.Random r, IList<T> list) { return list[r.Next(list.Count)]; }
 
 		#region Extras on Raft's islands
 
@@ -354,7 +354,7 @@ namespace DynamicIslands.Editor
 			return o;
 		}
 
-		static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
+		internal static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
 
 		internal static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
 

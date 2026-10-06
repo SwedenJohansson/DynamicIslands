@@ -51,7 +51,6 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The last hit that was changed (the tests read it).</summary>
 		public static float LastIn, LastOut;
-		public static string LastTarget = "";
 		public static int ChangedHits;
 
 		static readonly Dictionary<int, bool> monsterCache = new Dictionary<int, bool>();
@@ -232,7 +231,6 @@ namespace DynamicIslands.Editor
 			else return damage;
 			LastIn = damage;
 			LastOut = result;
-			LastTarget = target.name;
 			ChangedHits++;
 			return result;
 		}

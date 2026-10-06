@@ -83,7 +83,7 @@ namespace DynamicIslands.Editor
 				foreach (EditorGameObject o in list)
 				{
 					w.Write(o.GameObjectName);
-					Vec(w, o.transform.position - pivot); Vec(w, o.transform.rotation.eulerAngles); Vec(w, o.transform.lossyScale);
+					IslandFile.WriteVector(w, o.transform.position - pivot); IslandFile.WriteVector(w, o.transform.rotation.eulerAngles); IslandFile.WriteVector(w, o.transform.lossyScale);
 					Dictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
 					w.Write(p.Count);
 					foreach (var kv in p) { w.Write(kv.Key); w.Write(kv.Value ?? ""); }
@@ -103,7 +103,7 @@ namespace DynamicIslands.Editor
 				int n = r.ReadInt32();
 				for (int i = 0; i < n; i++)
 				{
-					var m = new Member { Name = r.ReadString(), Position = Vec(r), Euler = Vec(r), Scale = Vec(r) };
+					var m = new Member { Name = r.ReadString(), Position = IslandFile.ReadVector(r), Euler = IslandFile.ReadVector(r), Scale = IslandFile.ReadVector(r) };
 					int props = r.ReadInt32();
 					for (int k = 0; k < props; k++) { string key = r.ReadString(); m.Props[key] = r.ReadString(); }
 					list.Add(m);
@@ -211,8 +211,5 @@ namespace DynamicIslands.Editor
 			UnityEngine.Object.Destroy(preview);
 			return created;
 		}
-
-		static void Vec(BinaryWriter w, Vector3 v) { w.Write(v.x); w.Write(v.y); w.Write(v.z); }
-		static Vector3 Vec(BinaryReader r) { return new Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle()); }
 	}
 }

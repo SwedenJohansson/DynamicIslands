@@ -55,14 +55,6 @@ namespace DynamicIslands.Editor
 
 		public static void Unbin(int bin, out int inland, out int slope, out int height) { height = bin % Bins1; slope = bin / Bins1 % Bins1; inland = bin / (Bins1 * Bins1); }
 
-		public static string DescribeBin(int bin)
-		{
-			int i, s, h;
-			Unbin(bin, out i, out s, out h);
-			Func<float[], int, string> r = (e, k) => e[k].ToString("0.#", CultureInfo.InvariantCulture) + (e[k + 1] > 1e5f ? "+" : "-" + e[k + 1].ToString("0.#", CultureInfo.InvariantCulture));
-			return "inland " + r(InlandBins, i) + " m, slope " + r(SlopeBins, s) + "°, height " + r(HeightBins, h) + " m";
-		}
-
 		/// <summary>The islands that count (as RaftUnderwater): Raft's natural islands.</summary>
 		static readonly System.Text.RegularExpressions.Regex Natural = new System.Text.RegularExpressions.Regex(@"^(Big island .+|Big|Small island \d+|Pilot|Boat|Balboa .+|Caravan .+|Temperance Small \d+)$");
 
@@ -122,8 +114,8 @@ namespace DynamicIslands.Editor
 			return s != null && s.Things.Sum(t => t.Count) >= MinPooled ? s : For(style);
 		}
 
-		static float Num(string s) { float v; return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0f; }
-		static float[] Triple(string s) { string[] p = s.Split('/'); return p.Length == 3 ? new[] { Num(p[0]), Num(p[1]), Num(p[2]) } : new float[3]; }
+		internal static float Num(string s) { float v; return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0f; }
+		internal static float[] Triple(string s) { string[] p = s.Split('/'); return p.Length == 3 ? new[] { Num(p[0]), Num(p[1]), Num(p[2]) } : new float[3]; }
 
 		class Acc
 		{

@@ -42,7 +42,7 @@ namespace DynamicIslands.Editor
 		static Notebook_ThumbnailShortcut firstTab;
 		static RectTransform strip;
 		static NoteBookPage tplLeft, tplRight;
-		static NoteBookNote tplLetter, tplPad, tplPostit;
+		static NoteBookNote tplLetter, tplPad;
 		static NoteBook_QuestItem slotTpl;
 		static TMP_Text itemText;
 		static readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
@@ -78,7 +78,6 @@ namespace DynamicIslands.Editor
 			public int Colour;
 			/// <summary>The checklist's lines: done steps (struck through), the current one; empty without a quest.</summary>
 			public List<string> Checklist = new List<string>();
-			public bool HasQuest, QuestDone;
 			/// <summary>Notes read on it: title and text, in their order on the island.</summary>
 			public List<KeyValuePair<string, string>> Notes = new List<KeyValuePair<string, string>>();
 		}
@@ -144,9 +143,7 @@ namespace DynamicIslands.Editor
 
 		static void Checklist(Island i, IslandQuest q, int at)
 		{
-			i.HasQuest = true;
 			at = Mathf.Clamp(at, 0, q.Steps.Count);
-			i.QuestDone = at >= q.Steps.Count;
 			i.Checklist.Add("<b>" + q.ShownTitle + "</b>");
 			for (int k = 0; k < at; k++) i.Checklist.Add("<s>" + q.Steps[k].Describe() + "</s>");
 			if (at < q.Steps.Count) i.Checklist.Add("> " + q.Steps[at].Describe());
@@ -341,7 +338,6 @@ namespace DynamicIslands.Editor
 			NoteBookNote[] notes = tr.Field("notes").GetValue<NoteBookNote[]>() ?? new NoteBookNote[0];
 			tplLetter = notes.FirstOrDefault(n => n != null && n.noteIndex == 12);
 			tplPad = notes.FirstOrDefault(n => n != null && n.noteIndex == 1);
-			tplPostit = notes.FirstOrDefault(n => n != null && n.noteIndex == 2 && !n.isFrequencyThumbnail);
 			raftTabs.Clear();
 			raftTabOrder.Clear();
 			foreach (Notebook_ThumbnailShortcut t in ui.GetComponentsInChildren<Notebook_ThumbnailShortcut>(true))

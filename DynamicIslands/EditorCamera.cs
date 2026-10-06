@@ -47,8 +47,6 @@ namespace DynamicIslands.Editor
 		Vector3 flyPosition;
 		float flyYaw, flyPitch;
 
-		/// <summary>Where the camera is heading (the tests): the place after the smoothing of zooming and framing.</summary>
-		public Vector3 Destination { get { return flying ? flyPosition : position + pendingZoom; } }
 		public bool Settled { get { return !flying && pendingZoom.sqrMagnitude < 0.0001f && velocity.sqrMagnitude < 0.0001f; } }
 		public Vector3 OrbitPivot { get { return orbitPivot; } }
 

@@ -125,7 +125,6 @@ namespace DynamicIslands
 			if (terraineditor.terrain != null) TerrainPainter.SetStyle(terraineditor.terrain, currentStyle, currentMixStyle);
 			EditorUI.RefreshStyle();
 		}
-		public static LoadSceneManager loadSceneManagerinstance;
 
 		public AssetBundle mainbundle;
 		public AssetBundle helperbundle;
@@ -188,7 +187,6 @@ namespace DynamicIslands
 				Redcode.Awaiting.Engine.ContextHelper.SaveContext();
 				Redcode.Awaiting.Engine.RoutineHelper.CreateInstance();
 			});
-			StartStep("the scene loader", () => loadSceneManagerinstance = FindObjectOfType<LoadSceneManager>());
 			StartStep("the patches", () =>
 			{
 				var harmony = harmonyInstance = new Harmony(HarmonyId);
@@ -253,9 +251,6 @@ namespace DynamicIslands
 			if (existing != null) return;
 
 			GameObject MenuButtonsParent = MainMenuParent.transform.Find("MenuButtons").gameObject;
-
-			GameObject NewGamePanelParent = MainMenuParent.transform.Find("New Game Box").gameObject;
-			GameObject LoadGamePanelParent = MainMenuParent.transform.Find("Load Game Box").gameObject;
 
 			GameObject CreateGameButton = MainMenuParent.transform.Find("New Game Box").transform.Find("CreateGameButton").gameObject;
 
@@ -1422,8 +1417,8 @@ namespace DynamicIslands
 	{
 		static readonly HashSet<int> done = new HashSet<int>();
 		static readonly Dictionary<string, Shader> found = new Dictionary<string, Shader>();
-		/// <summary>Tests (CIPerfChecks): how many materials were fixed, and Shader.Find calls made, this session.</summary>
-		internal static int Fixed, Finds;
+		/// <summary>Tests (CIPerfChecks): how many Shader.Find calls were made this session.</summary>
+		internal static int Finds;
 
 		void Start()
 		{
@@ -1441,7 +1436,7 @@ namespace DynamicIslands
 						Shader s;
 						// (a shader not found isn't kept as missing: it may come later, the material looked at again - review 2026-10-06)
 						if (!found.TryGetValue(name, out s)) { s = Shader.Find(name); Finds++; if (s != null) found[name] = s; }
-						if (s != null) { m.shader = s; Fixed++; }
+						if (s != null) m.shader = s;
 						else done.Remove(m.GetInstanceID());
 					}
 					catch { }

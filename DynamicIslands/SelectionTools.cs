@@ -115,8 +115,6 @@ namespace DynamicIslands.Editor
 		static bool pressed, boxing;
 		static RectTransform box;
 
-		/// <summary>Box select is being dragged (tests, and the camera leaves the mouse alone).</summary>
-		public static bool Boxing { get { return boxing; } }
 
 		/// <summary>Every frame in the Objects tab: a left-drag that starts on empty ground draws a box; releasing it selects what is inside.</summary>
 		public static void Tick()

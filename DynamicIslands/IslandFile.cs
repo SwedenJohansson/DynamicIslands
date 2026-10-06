@@ -471,12 +471,12 @@ namespace DynamicIslands.Editor
 			return props;
 		}
 
-		static void WriteVector(BinaryWriter w, Vector3 v)
+		internal static void WriteVector(BinaryWriter w, Vector3 v)
 		{
 			w.Write(v.x); w.Write(v.y); w.Write(v.z);
 		}
 
-		static Vector3 ReadVector(BinaryReader r)
+		internal static Vector3 ReadVector(BinaryReader r)
 		{
 			return new Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
 		}

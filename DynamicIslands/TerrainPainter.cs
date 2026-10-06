@@ -323,8 +323,6 @@ namespace DynamicIslands.Editor
 			terrain.materialTemplate = terrainMaterial;
 		}
 
-		/// <summary>The tropical layers (or procedural ones when Raft's textures aren't available).</summary>
-		public static TerrainLayer[] Layers { get { return LayersFor(Tropical); } }
 
 		/// <summary>The layers for a style: Raft's textures, else tropical, else procedural ones.</summary>
 		public static TerrainLayer[] LayersFor(int style)

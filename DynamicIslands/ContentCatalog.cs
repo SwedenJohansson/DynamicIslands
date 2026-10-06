@@ -407,7 +407,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		public static bool HasModel(AI_NetworkBehaviourType type) { return models.ContainsKey(type); }
 
 		#endregion
 

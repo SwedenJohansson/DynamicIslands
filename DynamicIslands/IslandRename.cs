@@ -158,7 +158,7 @@ namespace DynamicIslands.Editor
 					}
 					if (!changed) continue;
 					SafeFile.WriteAllLines(file, lines);
-					worlds.Add(WorldName(lines, file));
+					worlds.Add(Housekeeping.WorldName(lines, file));
 				}
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Renaming '" + from + "' in " + file + ": " + e.Message); }
 			}
@@ -258,11 +258,6 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
 			return files;
-		}
-
-		static string WorldName(string[] lines, string file)
-		{
-			return Housekeeping.WorldName(lines, file);
 		}
 
 		static bool RenamePoolLine(string from, string to)

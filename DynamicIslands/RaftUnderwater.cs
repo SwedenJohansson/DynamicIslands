@@ -143,13 +143,8 @@ namespace DynamicIslands.Editor
 			public double W, DepthLow, Depth, DepthHigh, Coast, CoastHigh, Slope, Size, Above, AboveW;
 		}
 
-		static float Num(string s) { float v; return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0f; }
-
-		static float[] Triple(string s)
-		{
-			string[] p = s.Split('/');
-			return p.Length == 3 ? new[] { Num(p[0]), Num(p[1]), Num(p[2]) } : new[] { 0f, 0f, 0f };
-		}
+		static float Num(string s) { return RaftLand.Num(s); }
+		static float[] Triple(string s) { return RaftLand.Triple(s); }
 
 		static void Load()
 		{

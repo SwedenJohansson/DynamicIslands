@@ -564,27 +564,6 @@ namespace DynamicIslands.Editor
 			Refresh();
 		}
 
-		internal static IEnumerable<RectTransform> Children(Transform parent)
-		{
-			foreach (Transform t in parent) { var r = t as RectTransform; if (r != null) yield return r; }
-		}
-
-		/// <summary>A corner in the world: 0 bottom left, 1 top left, 2 top right, 3 bottom right.</summary>
-		static Vector3 Corner(RectTransform r, int i)
-		{
-			var c = new Vector3[4];
-			r.GetWorldCorners(c);
-			return c[i];
-		}
-
-		/// <summary>Makes a rectangle this tall (in its own units) with its top left corner here (in the world).</summary>
-		static void SetHeight(RectTransform r, Vector3 topLeft, float height)
-		{
-			float missing = height - r.rect.height;
-			if (Mathf.Abs(missing) > 0.5f) r.sizeDelta += new Vector2(0f, missing);
-			r.position += topLeft - Corner(r, 1);
-		}
-
 		/// <summary>A child's rectangle in the box's own coordinates.</summary>
 		internal static Rect LocalRect(RectTransform box, RectTransform r)
 		{
@@ -592,22 +571,6 @@ namespace DynamicIslands.Editor
 			r.GetWorldCorners(c);
 			Vector3 a = box.InverseTransformPoint(c[0]), b = box.InverseTransformPoint(c[2]);
 			return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
-		}
-
-		/// <summary>The line under Raft's game mode tabs and their description (the panel goes right below it), and the tabs' divider's ends, in the box's coordinates.</summary>
-		static bool FindLine(RectTransform box, RectTransform background, out float cut, out float left, out float right)
-		{
-			cut = float.MaxValue; left = float.MaxValue; right = float.MinValue;
-			foreach (RectTransform c in Children(box))
-			{
-				if (!(c.name.EndsWith("_ModeDescription") || c.name == "TabsDivider")) continue;
-				Rect r = LocalRect(box, c);
-				cut = Mathf.Min(cut, r.yMin);
-				if (c.name == "TabsDivider") { left = r.xMin; right = r.xMax; }
-			}
-			if (cut == float.MaxValue || background == null) return false;
-			if (left == float.MaxValue) { Rect bg = LocalRect(box, background); left = bg.xMin + 14f; right = bg.xMax - 14f; }
-			return true;
 		}
 
 		/// <summary>

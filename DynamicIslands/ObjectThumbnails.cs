@@ -23,9 +23,6 @@ namespace DynamicIslands.Editor
 		// 128 px render texture with 4x MSAA and depth, about 400 KB, kept all session: hundreds of MB after browsing the list)
 		static readonly Dictionary<string, Texture2D> done = new Dictionary<string, Texture2D>();
 		static RenderTexture work;
-		/// <summary>Tests (CIThumbMemory): the pictures kept and their bytes.</summary>
-		internal static int Count { get { return done.Count; } }
-		internal static long Bytes { get { long n = 0; foreach (Texture2D t in done.Values) if (t != null) n += UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t); return n; } }
 		readonly List<KeyValuePair<string, RawImage>> queue = new List<KeyValuePair<string, RawImage>>();
 		readonly Dictionary<string, int> attempts = new Dictionary<string, int>();
 		Texture2D probe;

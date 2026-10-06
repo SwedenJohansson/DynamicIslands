@@ -576,15 +576,8 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor() || !PlayerLevels.On) { if (IsOpen) instance.Hide(); return; }
-			if (!Input.GetKeyDown(PlayerLevels.Key) || Typing() || NoteReader.IsOpen || JournalWindow.IsOpen || ModKeys.Listening) return;
+			if (!Input.GetKeyDown(PlayerLevels.Key) || JournalWindow.Typing() || NoteReader.IsOpen || JournalWindow.IsOpen || ModKeys.Listening) return;
 			if (IsOpen) instance.Hide(); else Open();
-		}
-
-		static bool Typing()
-		{
-			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
-			return f != null && f.isFocused;
 		}
 
 		public static void Open()

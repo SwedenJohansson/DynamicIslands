@@ -60,8 +60,6 @@ namespace DynamicIslands.Editor
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>L2: which key waits for a press (null: none; true: the journal's, false: the stats page's).</summary>
 		static bool? listenFor;
-		/// <summary>Tests: a key pressed while a Keys button waits, as a real press does.</summary>
-		internal static void PressKey(bool forJournal, KeyCode k) { ListenFor(forJournal); TakeKey(k); }
 		/// <summary>Tests: the window's root.</summary>
 		internal static GameObject Root { get { return canvas != null ? canvas.gameObject : null; } }
 		/// <summary>Tests: a setting's field by its key in spawnpool.txt ("minSpacing").</summary>

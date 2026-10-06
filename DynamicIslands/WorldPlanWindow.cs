@@ -471,7 +471,7 @@ namespace DynamicIslands.Editor
 
 			// WHEN
 			RectTransform when = Section(card, "WHEN", ref height);
-			Button whenDrop = DropList.Make(when, "Drop_When", WhenOptions.Select(o => new DropList.Option(o.Value, o.Label, WhenHint(o.Value))).ToList(), r.When, v =>
+			DropList.Make(when, "Drop_When", WhenOptions.Select(o => new DropList.Option(o.Value, o.Label, WhenHint(o.Value))).ToList(), r.When, v =>
 			{
 				Keep();
 				r.When = v;

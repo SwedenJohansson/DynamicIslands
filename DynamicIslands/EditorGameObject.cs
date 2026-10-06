@@ -14,7 +14,6 @@ namespace DynamicIslands.Editor
 	public class EditorGameObject : MonoBehaviour
 	{
 		public string GameObjectName;
-		public float arrowLength = 5;
 		/// <summary>The object's extra data (creature settings, note text, tint...), saved with the island; see ObjectProps.</summary>
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
 
@@ -30,37 +29,6 @@ namespace DynamicIslands.Editor
 			ObjectProps.ApplyInEditor(go, ego.Props);
 			return ego;
 		}
-
-		void Start()
-		{
-
-
-		}
-
-
-		public void ShowGizmos(GizmosType GizmoType)
-		{
-			switch (GizmoType)
-			{
-				case GizmosType.Position:
-					break;
-
-				case GizmosType.Rotation:
-					break;
-
-				case GizmosType.Scale:
-					break;
-			}
-		}
-
-		public enum GizmosType
-		{
-			Position = 0,
-			Rotation =1,
-			Scale = 2
-		}
-
-
 	}
 
 	/// <summary>
