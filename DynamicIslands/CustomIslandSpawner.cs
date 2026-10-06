@@ -512,12 +512,13 @@ namespace DynamicIslands.Editor
 		internal static string Rejects(Vector3 candidate, float radius, Vector3 raftPos, bool checkPath = true, float minSpacing = -1f, IslandWorldState.Entry ignore = null)
 		{
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft (it reaches " + RaftRadius.ToString("F0") + " m)";
+			// (tests of join timing - CISpawnGenerated: any spot clear of the raft; the sea's layout isn't what they test)
+			if (TestAllRound) return null;
 			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (WorldRandomizer.IsExtras(e)) continue; // (on one of Raft's islands: its chunk point below keeps the room)
 				if (e == ignore) continue; // (the island moving there itself)
-				if (TestAllRound) continue; // (tests of join timing: room from the other test islands doesn't matter there)
 				float d = Flat(candidate - e.Position).magnitude;
 				if (d < Mathf.Max(spacing, radius + LandRadius(e.Name) + Clearance)) return "custom island '" + e.Name + "' " + d.ToString("F0") + " m away";
 			}
