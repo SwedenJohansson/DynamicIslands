@@ -2,8 +2,10 @@
 # A snowy island at the edge of a glacier: a research station dark since its reactor failed. The station village of
 # glowing Moontown domes on the east shore, a radio mast; Temperance's weather station as the observatory on the glacier
 # peak, its cabin up a ladder; the glacier's crevasse, where the Polar Bear Queen has her den;
-# and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night": the village, the
-# station log, the observatory, three reactor fuses, the Queen, the reactor basin, the reactor restarted and its vault.
+# and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night" (20 steps): the village,
+# the station log, the tool crate and its fuse, the observatory, its sign and locker (the second fuse), the station's
+# papers, the reactor basin, the crevasse, the Queen, Petrov's frozen crate (the third fuse), the reactor restarted and
+# its vault, every page of the station.
 # (Temperance's ice ravine piece is a slab of its snowfield - it only works sunk into ground as high as its top, so the
 # crevasse is cut into the plateau instead.)
 #
@@ -187,12 +189,25 @@ prop queen tint.amount=0.3
 quest title=The Long Night
 quest intro=A research station at the edge of a glacier, dark since its reactor failed. Its igloo village stands on the east shore - and something big has been taking the station's dogs.
 step reach|village|1|Land at the station's igloo village
-step read|Station log|1|Read the station log
+step read|Station log|1|Read the station log on the board by the lantern
+step open|Tool crate|1|Open the station's tool crate beside the log
+step collect|story:fuse|1|Take the first spare reactor fuse from its padded case
+step pages||2|Keep the log and the tool crate's tag for the notebook (2 pages)
 step reach|observatory|1|Climb the glacier peak to the observatory
-step collect|story:fuse|3|Find three reactor fuses
-step kill|Polar bear|1|Defeat the Polar Bear Queen in the glacier's crevasse
-step reach|reactor|1|Go down into the reactor basin
+step read|Observatory|1|Read the sign at the foot of the observatory's ladder
+step open|Observatory locker|1|Dig the observatory's spare-parts locker out of the snow
+step collect|story:fuse|2|Pocket the second fuse - the third went into the crevasse with Petrov
+step read|Observatory locker|1|Read the locker's tag before the snow buries it again
+step pages||4|Keep the observatory's papers too (4 pages)
+step reach|reactor|1|Go down into the reactor basin and look at its dead control column
+step reach|ravine|1|Follow Petrov's trail down into the glacier's crevasse
+step kill|Polar bear|1|Defeat the Polar Bear Queen in her den of bones
+step open|Frozen crate|1|Break open Petrov's crate, frozen into the crevasse floor
+step read|Frozen crate|1|Read what Petrov left with the third fuse
+step collect|story:fuse|3|Carry all three reactor fuses out of the crevasse
 step open|Reactor vault|1|Restart the reactor and open its vault
+step read|Reactor vault|1|Read the seal on the station's emergency stores
+step pages||6|Every page of Glacier Station in the notebook (6 pages)
 quest done=The reactor hums, the pool glows and the domes are lit: the long night at Glacier Station is over.
 quest reward=CircuitBoard*3;Battery*2;Wool*6
 

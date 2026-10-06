@@ -3,8 +3,10 @@
 # mountain's flanks: the Iron Gate (the mine, high on the south flank, warthogs in the dark), the Vine Crawl (a low
 # cave choked with vines and bees), the Drowned Shaft (the mine's sea adit on the west coast, flooded - dive for what
 # is down there) and the Bear Hall (north), its mouth shut by a rockfall - and behind it Ironhide, the beast that drove
-# the miners out. Quest "The Heart of Ironreef": the camp, the company's notice, the mine and the foreman's log, two
-# blasting charges, the rockfall blown, Ironhide, the company's strongbox.
+# the miners out. Quest "The Heart of Ironreef" (21 steps): the camp, the company's notice, the supply
+# barrel, the mine and its warthogs, the foreman's log and locker, the papers so far, the Vine Crawl's powder crate (one
+# charge), the rockfall's warning, the Drowned Shaft's sunken box (the second), the rockfall blown, Ironhide, the
+# company's strongbox and its tag, every page of the company.
 #
 # Built by the recipe player (CIRecipe ironreef_caverns) through the editor's own operations. Each cave is placed
 # from a frame at its mouth: the ground there is the frame's floor, and the ground is levelled from the mouth into the
@@ -270,12 +272,25 @@ quest title=The Heart of Ironreef
 quest intro=A ruined mining camp on a jungle mountain. The Ironreef Mining Company struck rich iron here - then left in a hurry. Their notice board still stands on the beach.
 step reach|camp|1|Land at the abandoned mining camp
 step read|Company notice|1|Read the company's notice board
+step open|Supply barrel|1|Raid the company's supply barrel by the campfire
 step reach|irongate|1|Climb the plank road to the Iron Gate mine
+step kill|Warthog|2|Drive the two warthogs out of the dark along the rails
 step read|Foreman's log|1|Read the foreman's log at the back of the mine
-step collect|story:charges|2|Find the two hidden blasting charges
+step open|Foreman's locker|1|Take the foreman's spare lamp from his locker
+step read|Foreman's locker|1|Look over the foreman's map of the caves
+step pages||4|Keep the company's papers so far in the notebook (4 pages)
+step reach|vines|1|Crawl into the Vine Crawl on the east flank
+step open|Powder crate|1|Find the powder crate wedged behind the vines
+step collect|story:charges|1|Take the first bundle of charges - the other is down the sea adit
+step read|Rockfall|1|Read the foreman's warning on the rockfall over the Bear Hall
+step reach|drowned|1|Take a deep breath and dive into the Drowned Shaft
+step open|Sunken powder box|1|Find the sunken powder box on the flooded floor of the adit
+step collect|story:charges|2|Bring both blasting charges back to the rockfall
 step reach|bearhall|1|Blast the rockfall and enter the Bear Hall
 step kill|Bear|1|Defeat Ironhide
 step open|Company strongbox|1|Open the company's strongbox
+step read|Company strongbox|1|Read what the company kept in its strongbox
+step pages||8|Every page of the Ironreef Mining Company in the notebook (8 pages)
 quest done=Ironhide is dead and the strongbox is open: the Heart of Ironreef - a fist-sized lump of pure iron - and the blueprint the company kept from its miners are yours.
 quest reward=MetalIngot*8;Nail*20;Bolt*6
 
