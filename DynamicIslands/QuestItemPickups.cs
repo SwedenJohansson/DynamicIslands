@@ -18,6 +18,8 @@ namespace DynamicIslands.Editor
 	public static class QuestItemPickups
 	{
 		public const string IdPrefix = "raft-";
+		/// <summary>A pickup picked up (one player's - Claims): KeyBase + object, after CodeLock.LockKeyBase 0xA0000 + 0xFFFF.</summary>
+		public const int KeyBase = 0xB0000;
 		static readonly Regex Model = new Regex(@"^QuestItemPickup_", RegexOptions.IgnoreCase);
 		/// <summary>Model name -> Raft's quest item type (read from the scene's pickup before its scripts were taken off).</summary>
 		static readonly Dictionary<string, string> types = new Dictionary<string, string>();

@@ -198,7 +198,8 @@ namespace DynamicIslands.Editor
 			LoadingStamp = 0; // (used once: a new world made afterwards has no save of its own yet)
 			followsSave = loading;
 			var saves = new List<KeyValuePair<string, string[]>>();
-			if (loading != 0 && folder != null)
+			// (also with no stamp when both main copies are gone: a save's copy is then all there is)
+			if (folder != null && (loading != 0 || (mine == null && travelled == null)))
 				try
 				{
 					foreach (string dir in Directory.GetDirectories(folder))
@@ -238,7 +239,18 @@ namespace DynamicIslands.Editor
 					return match.Value;
 				}
 			}
-			if (mine == null && travelled == null) { LastSource = "none"; return null; }
+			if (mine == null && travelled == null)
+			{
+				// (both main copies gone - deleted, or lost by a sync - but a Raft save has one: that save's (the one being
+				// loaded, else the newest). Loaded empty, the world was saved empty and sent to players, over their good copies)
+				Func<IEnumerable<KeyValuePair<string, string[]>>, KeyValuePair<string, string[]>> newestOf = list => list.Aggregate(default(KeyValuePair<string, string[]>), (n, s) => n.Value == null || Newer(s.Value, n.Value) ? s : n);
+				KeyValuePair<string, string[]> best = newestOf(saves.Where(s => RaftSaveOf(s.Value) == loading));
+				if (best.Value == null) best = newestOf(saves);
+				if (best.Value == null) { LastSource = "none"; return null; }
+				LastSource = "Raft's save " + Path.GetFileName(best.Key);
+				Debug.LogWarning("[CUSTOM ISLANDS] The world's copies of its custom islands are missing: the copy in Raft's save is used (" + best.Key + ")");
+				return best.Value;
+			}
 			string[] chosen = mine;
 			LastSource = "mod folder";
 			if (travelled != null && (mine == null || Newer(travelled, mine)))
