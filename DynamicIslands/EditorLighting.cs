@@ -64,13 +64,15 @@ namespace DynamicIslands.Editor
 		public static void Apply(int index, bool keep)
 		{
 			Current = Mathf.Clamp(index, 0, Names.Length - 1);
+			// (Raft's sky shown - RaftSkySea: its own sun, sky light and fog at the hour for this time of day)
+			if (RaftSkySea.SetTimeOfDay(Current)) { Keep(keep); return; }
 			Preset p = presets[Current];
 			if (sun == null)
 			{
 				// (the editor scene's own sun if it has one; else one of the mod's)
 				// (not one of the object pictures' own lights - they are off between pictures and only light their layer)
 				sun = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(l => l.type == LightType.Directional && l.gameObject.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene()
-					&& l.GetComponentInParent<ObjectThumbnails>() == null);
+					&& l.GetComponentInParent<ObjectThumbnails>() == null && l.GetComponentInParent<UnityEngine.AzureSky.AzureSkyController>() == null); // (nor Raft's sky's - RaftSkySea)
 				if (sun == null)
 				{
 					var go = new GameObject("CustomIslands_EditorSun");
@@ -96,11 +98,15 @@ namespace DynamicIslands.Editor
 			RenderSettings.fogEndDistance = p.Fog * 4f;
 			Camera cam = Camera.main;
 			if (cam != null && cam.clearFlags != CameraClearFlags.Skybox) cam.backgroundColor = p.Haze;
-			if (keep)
-			{
-				try { SafeFile.WriteAllText(FilePath, Names[Current]); } catch { } // (in one step - AU41)
-				DynamicIslands.Notify("Light: " + Names[Current] + " (how the island looks at that time of day; only in the editor)");
-			}
+			Keep(keep);
+		}
+
+		/// <summary>The time of day picked in the Light list: kept for the next time, and said.</summary>
+		static void Keep(bool keep)
+		{
+			if (!keep) return;
+			try { SafeFile.WriteAllText(FilePath, Names[Current]); } catch { } // (in one step - AU41)
+			DynamicIslands.Notify("Light: " + Names[Current] + " (how the island looks at that time of day; only in the editor)");
 		}
 	}
 }

@@ -396,6 +396,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Autosave", e); }
 			try { TickWaterPlane(); }
 			catch (Exception e) { TickError("Sea plane", e); }
+			try { Editor.RaftSkySea.Tick(); }
+			catch (Exception e) { TickError("Raft's sky and sea", e); }
 		}
 
 		/// <summary>Messages sent with SendNetworkMessage arrive here (RML subscribes the mod to its own channel).</summary>
@@ -477,7 +479,12 @@ namespace DynamicIslands
 			{
 				await OpenEditor(editorScene);
 			}
-			finally { EditorLoadingBox.Hide(); }
+			finally
+			{
+				EditorLoadingBox.Hide();
+				// (Raft's sky and sea kept from the menu but not taken into the editor - it didn't open: not left running)
+				Editor.RaftSkySea.ReleaseHeld();
+			}
 		}
 
 		/// <summary>The bundle scene's own canvases (its old screen of 2023): not drawn from the moment the scene is there,
@@ -500,11 +507,15 @@ namespace DynamicIslands
 			UnityEngine.Events.UnityAction<Scene, LoadSceneMode> quiet = null;
 			quiet = (s, m) => { if (s.name != sceneName) return; SceneManager.sceneLoaded -= quiet; HideOldCanvases(s, false); };
 			SceneManager.sceneLoaded += quiet;
+			// (the option "Raft's sky and sea": the menu's sky, ocean and their camera kept through the scene change - ROADMAP E1b)
+			try { Editor.RaftSkySea.HoldFromMenu(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Raft's sky and sea: " + e.Message); }
 			SceneManager.LoadScene(editorScene, LoadSceneMode.Single);
 			Scene scene = SceneManager.GetSceneByName(sceneName);
 			while (!scene.isLoaded) await new WaitForSeconds(.1f);
 			SceneManager.sceneLoaded -= quiet;
 			HideOldCanvases(scene, false);
+			// (before the editor's tools go on Camera.main: with Raft's sky and sea the menu's camera is the editor's camera)
+			Editor.RaftSkySea.Adopt(scene);
 			EditorLoadingBox.Status("Setting up the editor", 0.2f);
 			await new WaitForSeconds(0.5f);
 
@@ -577,6 +588,7 @@ namespace DynamicIslands
 			SetEditorMixStyle(-1);
 			EditorUI.RefreshIsland();
 
+			try { Editor.RaftSkySea.OnEditorReady(); EditorUI.RefreshSkySea(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Raft's sky and sea: " + e.Message); }
 			try { EditorLighting.OnEditorOpened(); EditorUI.RefreshLight(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Editor light: " + e.Message); }
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 			// (work Raft closed on before it was saved: offered back)

@@ -84,6 +84,7 @@
     <Compile Include="MainStoryHelper.cs" />
     <Compile Include="DevTestsSafety.cs" />
     <Compile Include="DevTestsPolish.cs" />
+    <Compile Include="DevTestsSkySea.cs" />
     <Compile Include="DevTestsRename.cs" />
     <Compile Include="DevTestsReadyPieces.cs" />
     <Compile Include="DevTestsLibrary.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="PlanCheckWindow.cs" />
     <Compile Include="DevTestsLeftovers.cs" />
     <Compile Include="EditorLighting.cs" />
+    <Compile Include="RaftSkySea.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />
     <Compile Include="ExperimentalNotice.cs" />

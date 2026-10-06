@@ -37,7 +37,7 @@ namespace DynamicIslands.Editor
 		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto, Noise, Erode, 4 mixed-style paint slots
 		static Button[] falloffButtons; // Smooth, Linear, Hard
 		static Image[] mixSwatches;
-		static Button mixDrop, seaDeepButton, seaShallowButton;
+		static Button mixDrop, seaDeepButton, seaShallowButton, skySeaButton;
 		static RectTransform mixRow1, mixRow2;
 		static UIKit.SliderRow noiseSlider, talusSlider;
 		static Image[] paintSwatches;
@@ -186,6 +186,12 @@ namespace DynamicIslands.Editor
 		}
 
 		static Button lightButton;
+
+		/// <summary>The "Raft's sky and sea" button shows whether the option is on.</summary>
+		public static void RefreshSkySea()
+		{
+			if (skySeaButton != null) UIKit.SetActive(skySeaButton, RaftSkySea.Enabled);
+		}
 
 		/// <summary>The Light button says the time of day shown.</summary>
 		public static void RefreshLight()
@@ -402,6 +408,11 @@ namespace DynamicIslands.Editor
 			UIKit.Size(UIKit.Label(floorRow, "Sea floor", 14, UIKit.TextMuted).gameObject, 62);
 			seaDeepButton = UIKit.Button(floorRow, "Deep", () => SwitchSeaFloor(true), "Put the island on a deep sea floor like Raft's (160 m down): the land and shallows stay as they are, only the flat floor drops (Ctrl+Z undoes)", -1, 26, 12);
 			seaShallowButton = UIKit.Button(floorRow, "Shallow", () => SwitchSeaFloor(false), "Put the island on a shallow sea floor (20 m down): the land and shallows stay as they are, deeper water becomes flat floor (Ctrl+Z undoes)", -1, 26, 12);
+			// (ROADMAP E1b: Raft's own sky and ocean, taken from the main menu as the editor opens - RaftSkySea)
+			RectTransform skyRow = UIKit.Row(island, 26f, 4f, "SkySea");
+			UIKit.Size(UIKit.Label(skyRow, "View", 14, UIKit.TextMuted).gameObject, 62);
+			skySeaButton = UIKit.Button(skyRow, "Raft's sky and sea", () => { RaftSkySea.Toggle(); RefreshSkySea(); },
+				"On: Raft's own sky, sun and ocean (with its waves) instead of the editor's plain sky and blue sea plane - the Light list still sets the time of day. Taken from the main menu as the editor opens (kept; only in the editor)", -1, 26, 12);
 
 			RectTransform gen = UIKit.Group(s, "Generate");
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
