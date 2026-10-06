@@ -154,10 +154,10 @@ namespace DynamicIslands.Editor
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label|island file hash",
-					WorldCopy.StampLine(),
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
-				if (WorldCopy.RaftSaveLine() != null) lines.Add(WorldCopy.RaftSaveLine());
+				// (the clock, the save counter, and Raft's save it goes with - or, between saves, the one it follows - WorldCopy)
+				lines.InsertRange(1, WorldCopy.StampLines());
 				// (which PC hosted it: Tidy up moves a world's file only when this PC hosted it and its Raft world is gone -
 				// a player's copy of a world they joined names the host)
 				if (Housekeeping.SavedByLine() != null) lines.Add(Housekeeping.SavedByLine());

@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	///  - the host writes the world file into Raft's world folder too (CustomIslands.txt), so it moves with the folder;
 	///  - the host sends it to every player each time Raft saves (and to a player who joins), and they keep it as their
 	///    own worlds\&lt;world id&gt;.txt, so the world can be hosted by any of them with its latest state.
-	/// When a world loads, the newest of the copies (by the "@savedat" stamp in it) is read. Island files come along with
+	/// When a world loads, the newest of the copies (by the "@savecount" counter in it) is read. Island files come along with
 	/// joining already (a player keeps them as &lt;name&gt;_&lt;hash&gt;.island); the list says each island's hash, so a new host
 	/// finds its copy and the island keeps its name (rules, quests, journal pages refer to it).
 	///
@@ -24,6 +24,13 @@ namespace DynamicIslands.Editor
 	/// Load Game box can load any of them. So that the mod's state goes back with Raft's (a chest looted after that save
 	/// is full again, a quest is where it was), the copy is also written into the save's own folder with Raft's stamp of
 	/// that save ("@raftsave=", RGD_Game.lastPlayedDateTicks); loading a save reads the copy with the same stamp.
+	///
+	/// Writes between Raft's saves (a story step, a Receiver unlock, a setting changed) say so ("@between=" the stamp of
+	/// Raft's save they follow, instead of "@raftsave="). After a crash or Alt+F4 such a copy is newer than Raft's save
+	/// (the players' inventories): loading that save then takes the islands' state - chests, quests, story - from the
+	/// copy written with it, and only the settings (SettingKeys) from the newer copy, so no loot or reward is lost - AU3.
+	/// "Newest" goes by the world's save counter ("@savecount=", one more on every write, carried in every copy and sent
+	/// with it), the PC's clock ("@savedat=") only breaks a tie: two PCs' clocks needn't agree - AU4.
 	/// </summary>
 	public static class WorldCopy
 	{
@@ -41,15 +48,76 @@ namespace DynamicIslands.Editor
 		/// <summary>The line naming Raft's save this state belongs to (null outside Raft's own save).</summary>
 		public static string RaftSaveLine() { return InRaftSave && SavingStamp != 0 ? "@raftsave=" + SavingStamp.ToString(CultureInfo.InvariantCulture) : null; }
 
+		/// <summary>The world's save counter: the highest of its copies when it loaded, one more on every write (AU4).</summary>
+		public static long SaveCount;
+		/// <summary>Raft's save the world's state follows: the one loaded, then each one Raft writes (0 = not known).</summary>
+		static long followsSave;
+
+		/// <summary>The stamp lines of a write of the world file: the clock, the counter (one more), and Raft's save it is
+		/// written with ("@raftsave=") or, between Raft's saves, the one it follows ("@between=" - AU3).</summary>
+		public static string[] StampLines()
+		{
+			SaveCount++;
+			string raft = RaftSaveLine();
+			if (raft != null) followsSave = SavingStamp;
+			return new[] { StampLine(), "@savecount=" + SaveCount.ToString(CultureInfo.InvariantCulture), raft ?? "@between=" + followsSave.ToString(CultureInfo.InvariantCulture) };
+		}
+
 		public static bool ReadLine(string key, string value)
 		{
 			// (which PC saved the world: the plan's owner for a world that names none - AU25)
 			if (key.Equals("savedby", StringComparison.OrdinalIgnoreCase)) { WorldDirector.ReadSavedBy(value); return true; }
-			return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase);
+			return key.Equals("savedat", StringComparison.OrdinalIgnoreCase) || key.Equals("raftsave", StringComparison.OrdinalIgnoreCase) ||
+				key.Equals("savecount", StringComparison.OrdinalIgnoreCase) || key.Equals("between", StringComparison.OrdinalIgnoreCase);
 		}
 
 		static long StampOf(string[] lines) { return LongLine(lines, "@savedat="); }
 		static long RaftSaveOf(string[] lines) { return LongLine(lines, "@raftsave="); }
+		static long CountOf(string[] lines) { return LongLine(lines, "@savecount="); }
+
+		/// <summary>Copy a is newer than b: by the save counter, the clock only when the counters are equal (AU4).</summary>
+		static bool Newer(string[] a, string[] b)
+		{
+			long ca = CountOf(a), cb = CountOf(b);
+			return ca != cb ? ca > cb : StampOf(a) > StampOf(b);
+		}
+
+		/// <summary>Written between Raft's saves: no "@raftsave=" line (older versions wrote none there either - AU3).</summary>
+		static bool IsBetween(string[] lines) { return RaftSaveOf(lines) == 0; }
+
+		/// <summary>The world's settings (the rules, options, levels on/off, randomizer, islands left out...): a crash doesn't
+		/// take them back to Raft's save - they aren't loot or progress (AU3).</summary>
+		static readonly string[] SettingKeys = { "auto", "monsters", "buildcost", "regrow", "options", "optionsused", "levels", "randomizer", "islandsoff", "raftgap" };
+
+		static bool IsSetting(string line)
+		{
+			int eq = line.IndexOf('=');
+			return line.StartsWith("@") && eq > 1 && SettingKeys.Contains(line.Substring(1, eq - 1).Trim().ToLowerInvariant());
+		}
+
+		/// <summary>The state of one copy with the settings of another (AU3).</summary>
+		static string[] Merge(string[] state, string[] settings)
+		{
+			return state.TakeWhile(l => l.StartsWith("#")).Concat(settings.Where(IsSetting)).Concat(state.SkipWhile(l => l.StartsWith("#")).Where(l => !IsSetting(l))).ToArray();
+		}
+
+		static bool futureTold;
+
+		/// <summary>A copy stamped more than a day ahead of this PC's clock (a PC's clock set wrong): logged, and the host is
+		/// told once - the save counter decides which copy is newest, but the clock still breaks ties (AU4).</summary>
+		static void WarnFuture(string[] lines, string where)
+		{
+			if (lines == null) return;
+			bool ahead = StampOf(lines) > DateTime.UtcNow.Ticks + TimeSpan.TicksPerDay ||
+				Math.Max(RaftSaveOf(lines), LongLine(lines, "@between=")) > DateTime.Now.Ticks + TimeSpan.TicksPerDay;
+			if (!ahead) return;
+			Debug.LogWarning("[CUSTOM ISLANDS] The world's copy " + where + " is stamped more than a day in the future: a PC's clock is set wrong?");
+			if (Raft_Network.IsHost && !futureTold)
+			{
+				futureTold = true;
+				DynamicIslands.Notify("A copy of this world's custom islands is dated more than a day in the future: is a PC's clock set wrong? (see the log, F10)", true);
+			}
+		}
 
 		static long LongLine(string[] lines, string prefix)
 		{
@@ -118,32 +186,40 @@ namespace DynamicIslands.Editor
 			LastOlderSave = "";
 			long loading = LoadingStamp;
 			LoadingStamp = 0; // (used once: a new world made afterwards has no save of its own yet)
+			followsSave = loading;
+			var saves = new List<KeyValuePair<string, string[]>>();
+			if (loading != 0 && folder != null)
+				try
+				{
+					foreach (string dir in Directory.GetDirectories(folder))
+					{
+						string f = Path.Combine(dir, FileName);
+						if (File.Exists(f)) saves.Add(new KeyValuePair<string, string[]>(dir, File.ReadAllLines(f)));
+					}
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the world's saves: " + e.Message); }
+			List<string[]> all = new[] { mine, travelled }.Concat(saves.Select(s => s.Value)).Where(l => l != null).ToList();
+			// (the counter goes on from the highest of every copy: the next write is the newest, whatever the clocks say - AU4)
+			SaveCount = all.Select(CountOf).DefaultIfEmpty(0L).Max();
+			WarnFuture(mine, "in the mod's folder");
+			WarnFuture(travelled, "in Raft's world folder");
 			// (Raft is loading an OLDER save than the world's newest - one the player picked in Raft's Load Game box: the
 			// state written with that save, so the world fits together. The newest save is read as always: the newest
 			// copy, which also has what changed after it - a setting, or the copy another host sent.)
 			if (loading != 0)
 			{
-				var saves = new List<KeyValuePair<string, string[]>>();
-				if (folder != null)
-					try
-					{
-						foreach (string dir in Directory.GetDirectories(folder))
-						{
-							string f = Path.Combine(dir, FileName);
-							if (File.Exists(f)) saves.Add(new KeyValuePair<string, string[]>(dir, File.ReadAllLines(f)));
-						}
-					}
-					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through the world's saves: " + e.Message); }
-				long newest = new[] { mine, travelled }.Concat(saves.Select(s => s.Value)).Where(l => l != null).Select(RaftSaveOf).DefaultIfEmpty(0L).Max();
-				KeyValuePair<string, string[]> match = saves.FirstOrDefault(s => RaftSaveOf(s.Value) == loading);
+				long newest = all.Select(RaftSaveOf).DefaultIfEmpty(0L).Max();
+				KeyValuePair<string, string[]> match = saves.Where(s => RaftSaveOf(s.Value) == loading).Aggregate(default(KeyValuePair<string, string[]>), (b, s) => b.Value == null || Newer(s.Value, b.Value) ? s : b);
+				// (older: another Raft save's copy was written after this one's - by the counter, not the clock - AU4)
+				bool older = match.Value != null ? all.Any(l => RaftSaveOf(l) != 0 && RaftSaveOf(l) != loading && Newer(l, match.Value)) : loading < newest;
 				// (an older save without a copy of its own - the first save of a new world, or one made before saves had
 				// copies: its state isn't known; the newest is used, and the player is told - AU27)
-				if (loading < newest && match.Value == null)
+				if (older && match.Value == null)
 				{
 					Debug.LogWarning("[CUSTOM ISLANDS] The save being loaded is older than the world's newest and has no copy of the custom islands' state: the newest is used");
 					DynamicIslands.Notify("This older save has no record of its custom islands: their chests, quests and story are as in the world's newest save.", true);
 				}
-				if (loading < newest && match.Value != null)
+				if (older && match.Value != null)
 				{
 					LastSource = "Raft's save " + Path.GetFileName(match.Key);
 					LastOlderSave = Path.GetFileName(match.Key);
@@ -153,14 +229,28 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (mine == null && travelled == null) { LastSource = "none"; return null; }
-			if (travelled != null && (mine == null || StampOf(travelled) > StampOf(mine)))
+			string[] chosen = mine;
+			LastSource = "mod folder";
+			if (travelled != null && (mine == null || Newer(travelled, mine)))
 			{
+				chosen = travelled;
 				LastSource = "Raft's world folder";
 				Debug.Log("[CUSTOM ISLANDS] The world's custom islands come from the copy in Raft's world folder" + (mine != null ? " (newer than the mod's own)" : "") + ": " + copy);
-				return travelled;
 			}
-			LastSource = "mod folder";
-			return mine;
+			// (the newest copy was written after Raft's save being loaded - a story step, a chest, a setting, then a crash or
+			// Alt+F4 before Raft saved again: the players' inventories are Raft's save's, so the islands' state is the copy
+			// written with that save, and only the settings come from the newer copy - AU3)
+			if (loading != 0 && IsBetween(chosen))
+			{
+				string[] saved = all.Where(l => !IsBetween(l) && RaftSaveOf(l) == loading).Aggregate((string[])null, (b, l) => b == null || Newer(l, b) ? l : b);
+				if (saved != null && Newer(chosen, saved))
+				{
+					LastSource += ", islands' state from Raft's save";
+					Debug.LogWarning("[CUSTOM ISLANDS] The world's newest copy was written after the Raft save being loaded (a crash?): its islands, chests and quests are as in that save, its settings as in the newest copy");
+					return Merge(saved, chosen);
+				}
+			}
+			return chosen;
 		}
 
 		/// <summary>Host, after writing the world file: the copy in Raft's world folder, and the copy for every player.</summary>
@@ -182,9 +272,9 @@ namespace DynamicIslands.Editor
 			string folder = RaftWorldFolder;
 			if (folder != null)
 				try { string f = Path.Combine(folder, FileName); if (File.Exists(f)) File.Delete(f); } catch { }
-			last = new[] { "# (nothing of Custom Islands in this world)", StampLine() };
+			last = new[] { "# (nothing of Custom Islands in this world)" }.Concat(StampLines()).ToArray();
 			// (the save still gets its note: loading it later means "nothing of the mod", not an older save's state)
-			if (RaftSaveLine() != null) WriteIntoSave(folder, last.Concat(new[] { RaftSaveLine() }).ToArray());
+			if (RaftSaveLine() != null) WriteIntoSave(folder, last);
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
 		}
@@ -258,12 +348,14 @@ namespace DynamicIslands.Editor
 			if (parts.Any(p => p == null)) return;
 			incoming.Remove(key);
 			string[] lines = string.Concat(parts).Split('\n');
-			if (HostLines == null || StampOf(lines) >= StampOf(HostLines)) HostLines = lines;
+			WarnFuture(lines, "the host sent");
+			// (newer by the world's save counter, not the PCs' clocks - AU4)
+			if (HostLines == null || !Newer(HostLines, lines)) HostLines = lines;
 			string path = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), guid + ".txt");
 			try
 			{
 				// (never over a newer copy: a late message from an older save)
-				if (File.Exists(path) && StampOf(File.ReadAllLines(path)) > StampOf(lines)) return;
+				if (File.Exists(path) && Newer(File.ReadAllLines(path), lines)) return;
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 				SafeFile.WriteAllLines(path, lines);
 				LastKept = guid + " " + lines.Length + " lines";
