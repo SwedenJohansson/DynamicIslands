@@ -269,7 +269,13 @@ namespace DynamicIslands.Editor
 				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
 					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" };
 				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
-				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash)) read.WaitingForFile = true;
+				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash))
+				{
+					read.WaitingForFile = true;
+					// (the host is told, as when it failed: the rest plays, and this one comes with a player who has it)
+					DynamicIslands.Notify("This world's island '" + read.HostName + "' isn't on this PC, so it is left out for now - the rest of the world plays. " +
+						"It comes when a player who has it joins (or import it).", true);
+				}
 				islands.Add(read);
 			}
 			// (one line that can't be read is left out - the rest of the world still loads; before, it stopped the reading
