@@ -1,5 +1,7 @@
 # Play test of Saltmarsh Ferry (CIPlay saltmarsh_ferry, in a test world 'CI ...'). Points as in its recipe: the bank at the
 # channel's end (1.4 m) by the ferry's stern, the Corps' office and its notice post, the reed cutter's camp (2.2 m) out in the marsh.
+# Quest "Down the Marsh", 10 steps: ferry, notice, reed cutter's chest, the hold, the rats, the locker and the safe opened and
+# read, the four papers (the reed cutter's read at his chest).
 island Saltmarsh Ferry
 expect step 0
 expect title Down the Marsh
@@ -20,6 +22,7 @@ reach Reed cutter's chest
 open Reed cutter's chest
 expect story pumphandle 1
 expect step 3
+read Reed cutter's chest
 
 # Back at the ferry: the bilge pump, then the rats boiling out of the hold
 walk -30 -10 to -20 2 to -6 13 to 2 15 to 5 18 h=1.4
@@ -27,19 +30,24 @@ use bilgepump
 expect message gushes
 expect story pumphandle 0
 zone hold
-kill Rat
 expect step 4
+kill Rat
+expect step 5
 
 # The engineer's locker, clear of the mud now
 walk 2 15 to -1 17 h=1.4
 reach Engineer's locker
 open Engineer's locker
 expect item Blueprint_MotorWheel 1
-expect step 5
+expect step 6
+read Engineer's locker
+expect step 7
 
 # The captain's safe on the bank by the ferry
 walk 2 15 to 0.5 20 to 0.2 23 h=1.4
 reach Captain's safe
 open Captain's safe
 expect item Blueprint_SteeringWheel 1
+expect step 8
+read Captain's safe
 expect done
