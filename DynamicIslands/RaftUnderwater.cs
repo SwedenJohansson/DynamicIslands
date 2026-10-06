@@ -21,6 +21,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Median slope of the ground under it (degrees), its size (m) and how far above the ground it sits (negative: sunk in).</summary>
 		public float Slope, Size, Above;
 		public int Count;
+		/// <summary>LM7: one of the other kinds Raft's islands have under water (RaftUnderwater.ExtraCategoryOf) - placed only
+		/// for "Randomize existing" (IslandGenSettings.RaftSeaKinds), so the other generated islands stay as their seeds made them.</summary>
+		public bool Extra;
 	}
 
 	/// <summary>What lies under water around Raft's islands of one style.</summary>
@@ -30,7 +33,10 @@ namespace DynamicIslands.Editor
 		public List<SeaThing> Things = new List<SeaThing>();
 		/// <summary>Under-water ground measured (m²) per depth band.</summary>
 		public float[] Area = new float[RaftUnderwater.BandCount];
-		public IEnumerable<SeaThing> Of(string category) { return Things.Where(t => t.Category == category); }
+		/// <summary>The core kinds of a category (without the extra ones, LM7).</summary>
+		public IEnumerable<SeaThing> Of(string category) { return Things.Where(t => t.Category == category && !t.Extra); }
+		/// <summary>A category's kinds, the extra ones too when <paramref name="extra"/> is set.</summary>
+		public IEnumerable<SeaThing> Of(string category, bool extra) { return Things.Where(t => t.Category == category && (extra || !t.Extra)); }
 	}
 
 	/// <summary>
@@ -65,6 +71,22 @@ namespace DynamicIslands.Editor
 			if (Regex.IsMatch(name, @"^(BigBoulder\d+_Low|SmallBoulder\d+|BigRock_Low\d+_Sand|BigRock_\d+|SmallRock_\d+|TP_BigRock0\d|TP_SmallRock0\d|BigSharpRock_\d+|CaravanIsland_SmallRock_\d+)$")) return IslandGenerator.CatSeaRocks;
 			if (Regex.IsMatch(name, @"^Pickup_Landmark_(Rock \d+|Clay \d+|Sand|Sand_Caravan|Scrap \d+_OceanBottom|Iron \d+|Copper \d+|GiantClam|SilverAlgae)$")) return IslandGenerator.CatSeaFinds;
 			if (Regex.IsMatch(name, @"^(Reef_Barrel\d+|Reef_Container|Reef_Buoy|FL_Plank\d*|FL_Plywood|FL_Pillar|FL_Crate)$")) return IslandGenerator.CatSunken;
+			return null;
+		}
+
+		/// <summary>
+		/// LM7: the other kinds Raft's natural islands have under water that the object catalog has (core or in its index,
+		/// raft_underwater.txt's last column) - tiny corals, Caravan Island's big round rocks, sunken logs, an abandoned
+		/// raft's roof and cloth, Balboa's wheelbarrow. Only "Randomize existing" places them (IslandGenSettings.RaftSeaKinds).
+		/// Left out: the reef huts' walls and pillars (pieces of a building, not things that lie about), bamboo (it grows on
+		/// the shore), the air pockets and the dive puzzle (Caravan Town's diving), and what the catalog hasn't (sea vine
+		/// clumps, crates).
+		/// </summary>
+		public static string ExtraCategoryOf(string name)
+		{
+			if (Regex.IsMatch(name, @"^TinyCoral$")) return IslandGenerator.CatWater;
+			if (Regex.IsMatch(name, @"^CaravanIsland_BigRoundRock_\d+$")) return IslandGenerator.CatSeaRocks;
+			if (Regex.IsMatch(name, @"^(TreeLog_\d+|Log|FL_Roof\d|FL_Cloth|Reef_Wheelbarrow)$")) return IslandGenerator.CatSunken;
 			return null;
 		}
 
@@ -166,7 +188,7 @@ namespace DynamicIslands.Editor
 					else if (f[0] == "obj" && f.Length >= 11 && islandStyle.ContainsKey(f[1]))
 					{
 						string name = f[2];
-						if (CategoryOf(name) == null) continue;
+						if (CategoryOf(name) == null && ExtraCategoryOf(name) == null) continue;
 						int st = islandStyle[f[1]];
 						float n = Num(f[3]);
 						float[] depth = Triple(f[4]), coast = Triple(f[5]);
@@ -194,7 +216,7 @@ namespace DynamicIslands.Editor
 				{
 					var t = new SeaThing
 					{
-						Name = a.Name, Category = CategoryOf(a.Name), Count = (int)a.W,
+						Name = a.Name, Category = CategoryOf(a.Name) ?? ExtraCategoryOf(a.Name), Extra = CategoryOf(a.Name) == null, Count = (int)a.W,
 						DepthLow = (float)(a.DepthLow / a.W), Depth = (float)(a.Depth / a.W), DepthHigh = (float)(a.DepthHigh / a.W),
 						Coast = (float)(a.Coast / a.W), CoastHigh = (float)(a.CoastHigh / a.W), Slope = (float)(a.Slope / a.W), Size = (float)(a.Size / a.W), Above = a.AboveW > 0 ? (float)(a.Above / a.AboveW) : 0f,
 					};
@@ -212,11 +234,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Objects per 1000 m² of under-water ground from 0 to 40 m deep, by kind, for a style (the help texts and tests).</summary>
-		public static float DensityOf(int style, string category)
+		public static float DensityOf(int style, string category) { return DensityOf(style, category, false); }
+
+		/// <summary>(extra: the extra kinds counted too, LM7)</summary>
+		public static float DensityOf(int style, string category, bool extra)
 		{
 			SeaStyle s = For(style);
 			float area = 0f, count = 0f;
-			for (int b = 0; b < 5; b++) { area += s.Area[b]; count += s.Of(category).Sum(t => t.Density[b]) * s.Area[b]; }
+			for (int b = 0; b < 5; b++) { area += s.Area[b]; count += s.Of(category, extra).Sum(t => t.Density[b]) * s.Area[b]; }
 			return area > 0f ? count * 1000f / area : 0f;
 		}
 	}

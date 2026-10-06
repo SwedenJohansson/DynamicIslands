@@ -288,7 +288,8 @@ namespace DynamicIslands.Editor
 			IslandGenSettings s = from.Copy();
 			s.Source = i.Scene;
 			s.Style = i.StyleIndex;
-			s.Radius = Mathf.Clamp(i.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius);
+			// (its real size: Temperance was scaled down to the build area, LM7 - the terrain grows instead, IslandGenerator.AreaFor)
+			s.Radius = Mathf.Clamp(i.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxSourceRadius);
 			s.Height = Mathf.Clamp(i.Top, IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight);
 			s.Stretch = 1f; s.StretchAngle = 0f; s.Mirror = false; s.SourceRoughen = 0f; s.SourceWobble = 0f;
 			s.PeakShape = 0.3f; s.Terraces = 0f; s.Lakes = 0f; s.Valleys = 0f; s.Erosion = 0f; s.Seabed = IslandGenSettings.SeabedSand;

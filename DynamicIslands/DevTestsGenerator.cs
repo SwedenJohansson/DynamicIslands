@@ -37,6 +37,14 @@ namespace DynamicIslands
 		static readonly Regex RockWord = new Regex(@"(?i)(rock|boulder|stone|cliff|stalag|pebble)");
 		static readonly Regex SeaWord = new Regex(@"(?i)(coral|seavine|kelp|seaweed|anemone|urchin|sea_?grass)");
 		static readonly Regex LootWord = new Regex(@"(?i)(chest|crate|barrel|storage|loot|locker)");
+		/// <summary>
+		/// LM7: colliders of buildings and other built things (walls, roofs, stairs, decks, towers, huts, pipes, tunnels...):
+		/// on the built places (Radio Tower, Caravan Town, Tangaroa, Varuna Point, Utopia, Temperance) they were read as
+		/// ground, so a variation had rocky towers where the buildings stood. A sea or ocean floor is still ground.
+		/// </summary>
+		static readonly Regex BuildingWord = new Regex(@"(?i)(wall|roof|(?<!sea|ocean|sea_|ocean_)floor|stair|door|window|beam|girder|truss|fence|railing|balcon|deck|scaffold|platform|tower|building|house|(^|_)hut|igloo|cabin|container|pipe|tunnel|crane|antenna|bridge|dome|tank|apartment|skyscraper|ladder|plank|pier|dock|walkway|chimney|elevator|ramp|(^|_)kit_|_set_|^RT_|^Relay_|^VP_|^UT_|^TP_Selene|^TP_Moontown|^Tangaroa|^Caravan(Hub|Base|Barebones))");
+		/// <summary>(a name with one of these words is ground even with a place's prefix: VP_Cliff, TP_IcePillar, UT_Rock...)</summary>
+		static readonly Regex NaturalWord = new Regex(@"(?i)(rock(?!et)|cliff|mountain|terrain|sand|stone|boulder|stalag|(^|_)ice|snow|coral|landmass|ground(?!pillar))");
 		/// <summary>Colliders that aren't ground: plants (tree trunks, bushes), water, and harvestable pickups.</summary>
 		static readonly Regex NotGroundWord = new Regex(@"(?i)(tree|palm|pine|birch|bamboo|bush|fern|monstera|grass|flower|plant|banana|leaf|leaves|coral|seavine|kelp|seaweed|water|ocean|^Pickup_|QuestItem)");
 
@@ -157,10 +165,12 @@ namespace DynamicIslands
 					if (c != null) UnityEngine.Object.DestroyImmediate(c);
 
 				var ground = new HashSet<Collider>();
-				int terrains = 0, meshes = 0;
+				int terrains = 0, meshes = 0, built = 0;
 				foreach (Collider c in holder.GetComponentsInChildren<Collider>(true))
 				{
-					if (c.isTrigger || !c.enabled || !IsGround(c.transform, holder.transform)) continue;
+					if (c.isTrigger || !c.enabled) continue;
+					if (IsBuilt(c.transform, holder.transform)) { built++; continue; }
+					if (!IsGround(c.transform, holder.transform)) continue;
 					if (LayerMask.LayerToName(c.gameObject.layer).IndexOf("Water", StringComparison.OrdinalIgnoreCase) >= 0) continue;
 					ground.Add(c);
 					if (c is TerrainCollider) terrains++; else meshes++;
@@ -207,7 +217,7 @@ namespace DynamicIslands
 				// (no ground below: deep water)
 				float deep = Mathf.Min(lowest, -30f);
 				for (int z = 0; z < n; z++) for (int x = 0; x < n; x++) if (float.IsNaN(h[z, x])) h[z, x] = deep;
-				Log("    " + src.name + ": " + ground.Count + " ground colliders (" + terrains + " terrain), bounds " + b.min.ToString("F0") + " - " + b.max.ToString("F0") + ", grid " + n + "x" + n + " of " + cell.ToString("F1") + " m, heights " + lowest.ToString("F1") + " to " + h.Cast<float>().Max().ToString("F1"));
+				Log("    " + src.name + ": " + ground.Count + " ground colliders (" + terrains + " terrain; " + built + " of buildings left out), bounds " + b.min.ToString("F0") + " - " + b.max.ToString("F0") + ", grid " + n + "x" + n + " of " + cell.ToString("F1") + " m, heights " + lowest.ToString("F1") + " to " + h.Cast<float>().Max().ToString("F1"));
 
 				if (!Analyse(island, h, n, cell, origin)) { noLand("nothing above the sea"); yield break; }
 				if (underwater != null) { underwater(island, h, n, cell, origin); done(island); yield break; }
@@ -233,7 +243,19 @@ namespace DynamicIslands
 		{
 			for (Transform p = t; p != null && p != stop; p = p.parent)
 				if (NotGroundWord.IsMatch(PlaceableCatalog.CleanName(p.name))) return false;
-			return true;
+			return !IsBuilt(t, stop);
+		}
+
+		/// <summary>LM7: a collider of something built (BuildingWord on it or a parent) - never a terrain.</summary>
+		static bool IsBuilt(Transform t, Transform stop)
+		{
+			if (t.GetComponent<TerrainCollider>() != null) return false;
+			for (Transform p = t; p != null && p != stop; p = p.parent)
+			{
+				string n = PlaceableCatalog.CleanName(p.name);
+				if (BuildingWord.IsMatch(n) && !NaturalWord.IsMatch(n)) return true;
+			}
+			return false;
 		}
 
 		/// <summary>The generator style whose ground textures the scene's terrains (or ground materials) use most; by the scene's name if none match.</summary>
@@ -1620,10 +1642,13 @@ namespace DynamicIslands
 				IslandGenSettings like = RaftIslands.LikeIt(isl, new IslandGenSettings { Seed = 99 });
 				bool likeOk = Mathf.Abs(like.Radius - Mathf.Clamp(isl.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius)) < 0.01f && Mathf.Abs(like.Height - Mathf.Clamp(isl.Top, IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight)) < 0.01f && like.Style == isl.StyleIndex;
 				IslandGenSettings vari = RaftIslands.VariationOf(isl, new IslandGenSettings { Seed = 99 });
-				float[,] m = IslandGenerator.HeightsMetres(vari, size, Res);
+				// (LM7: in the terrain it gets - Temperance's is bigger than the build area)
+				Vector3 varSize = IslandGenerator.AreaFor(vari);
+				float varStep = varSize.x / (Res - 1);
+				float[,] m = IslandGenerator.HeightsMetres(vari, varSize, Res);
 				int land = m.Cast<float>().Count(v => v > vari.WaterLevel);
-				float area = land * step * step, peak = m.Cast<float>().Max() - vari.WaterLevel;
-				// (a variation at its own size: about as much land as the real one, and exactly its height; islands bigger than the build area, like Temperance, are scaled down to fit)
+				float area = land * varStep * varStep, peak = m.Cast<float>().Max() - vari.WaterLevel;
+				// (a variation at its own size: about as much land as the real one, and exactly its height - Temperance too, LM7)
 				float expect = isl.Area * Mathf.Pow(vari.Radius / Mathf.Max(1f, isl.Radius), 2f);
 				bool variOk = Mathf.Abs(peak - vari.Height) < Mathf.Max(1f, vari.Height * 0.05f) && area > expect * 0.5f && area < expect * 1.6f;
 				if (likeOk && variOk) fits++;

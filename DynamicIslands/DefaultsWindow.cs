@@ -58,6 +58,10 @@ namespace DynamicIslands.Editor
 		};
 
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
+		/// <summary>L2: which key waits for a press (null: none; true: the journal's, false: the stats page's).</summary>
+		static bool? listenFor;
+		/// <summary>Tests: a key pressed while a Keys button waits, as a real press does.</summary>
+		internal static void PressKey(bool forJournal, KeyCode k) { ListenFor(forJournal); TakeKey(k); }
 		/// <summary>Tests: the window's root.</summary>
 		internal static GameObject Root { get { return canvas != null ? canvas.gameObject : null; } }
 		/// <summary>Tests: a setting's field by its key in spawnpool.txt ("minSpacing").</summary>
@@ -98,6 +102,14 @@ namespace DynamicIslands.Editor
 			RectTransform sailing = UIKit.Group(left, "Random islands while sailing", "Sailing");
 			foreach (Setting s in Sailing) NumberRow(sailing, s);
 
+			// The mod's keys in a world (L2: world_rules.txt, this PC's own)
+			RectTransform keys = UIKit.Group(left, "Keys (this PC)", "Keys");
+			RectTransform keyRow = UIKit.Row(keys, 28f, 6f, "Row_Keys");
+			UIKit.Label(keyRow, "Journal", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "JournalLabel");
+			Add("Key_Journal", UIKit.Button(keyRow, "", () => ListenFor(true), "The key that opens the crew's journal in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
+			UIKit.Label(keyRow, "Stats", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "StatsLabel");
+			Add("Key_Stats", UIKit.Button(keyRow, "", () => ListenFor(false), "The key that opens the stats page (level up system) in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
+
 			// What every player of a hosted world shares (WorldRules.HostSettingsData)
 			RectTransform shared = UIKit.Group(right, "Shared with every player", "Shared");
 			Add("showOnReceiver", UIKit.Button(shared, "", () => Apply("showOnReceiver", CustomIslandSpawner.ShowOnReceiver ? "0" : "1"), "Show custom islands as green dots on Raft's Receiver", -1, 28f, 13));
@@ -127,7 +139,7 @@ namespace DynamicIslands.Editor
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(status.gameObject, -1, 30);
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has (the island list stays as it is)", 150, 34f, 14);
+			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K too (the island list stays as it is)", 150, 34f, 14);
 			UIKit.Label(buttonsRow, "", 12);
 			Button close = UIKit.Button(buttonsRow, "Close", Close, "Close (Esc)", 140, 34f, 15);
 			UIKit.Primary(close);
@@ -172,11 +184,42 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			EditorInput.IsTyping = fields.Values.Any(f => f != null && f.isFocused);
+			EditorInput.IsTyping = listenFor != null || fields.Values.Any(f => f != null && f.isFocused);
+			if (listenFor != null)
+			{
+				KeyCode k = ModKeys.Pressed();
+				if (k != KeyCode.None) TakeKey(k);
+				return;
+			}
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
 
-		void OnDisable() { EditorInput.IsTyping = false; }
+		void OnDisable()
+		{
+			EditorInput.IsTyping = false;
+			if (listenFor != null) { listenFor = null; ModKeys.Listen(false); }
+		}
+
+		/// <summary>A Keys button: the next key pressed becomes that key.</summary>
+		static void ListenFor(bool forJournal)
+		{
+			listenFor = forJournal;
+			ModKeys.Listen(true);
+			SetStatus("Press the new key for the " + (forJournal ? "journal" : "stats page") + " (Esc: keep " + ModKeys.Name(forJournal ? ModKeys.Journal : ModKeys.Stats) + ").", false);
+			Refresh();
+		}
+
+		static void TakeKey(KeyCode k)
+		{
+			bool forJournal = listenFor == true;
+			listenFor = null;
+			ModKeys.Listen(false);
+			if (k == KeyCode.Escape) { ClosedFrame = Time.frameCount; SetStatus("The keys stay as they were.", false); Refresh(); return; }
+			string problem = ModKeys.Set(forJournal, k);
+			if (problem != null) SetStatus(problem, true);
+			else SetStatus("The " + (forJournal ? "journal" : "stats page") + " opens with " + ModKeys.Name(k) + " now (saved in " + WorldRules.DefaultFileName + ").", false);
+			Refresh();
+		}
 
 		/// <summary>One setting typed (or switched): written to spawnpool.txt within its range, or why not.</summary>
 		static void Apply(string key, string text)
@@ -207,6 +250,7 @@ namespace DynamicIslands.Editor
 			}
 			values["generatedStyles"] = string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).ToArray());
 			values["generatedGatherOff"] = "";
+			ModKeys.Reset();
 			Write(values, null);
 		}
 
@@ -232,6 +276,10 @@ namespace DynamicIslands.Editor
 			if (canvas == null || !canvas.gameObject.activeSelf) return;
 			foreach (var kv in fields)
 				if (kv.Value != null && !kv.Value.isFocused) kv.Value.text = CustomIslandSpawner.FormatValue(CustomIslandSpawner.ValueOf(kv.Key));
+			UIKit.LabelOf(buttons["Key_Journal"]).text = listenFor == true ? "press..." : ModKeys.Name(ModKeys.Journal);
+			UIKit.LabelOf(buttons["Key_Stats"]).text = listenFor == false ? "press..." : ModKeys.Name(ModKeys.Stats);
+			UIKit.SetActive(buttons["Key_Journal"], listenFor == true);
+			UIKit.SetActive(buttons["Key_Stats"], listenFor == false);
 			Button receiver = buttons["showOnReceiver"];
 			UIKit.LabelOf(receiver).text = "Receiver dots:  " + (CustomIslandSpawner.ShowOnReceiver ? "ON" : "off");
 			UIKit.SetActive(receiver, CustomIslandSpawner.ShowOnReceiver);

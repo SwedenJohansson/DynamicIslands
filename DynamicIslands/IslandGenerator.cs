@@ -111,17 +111,24 @@ namespace DynamicIslands.Editor
 		/// <summary>Bumps added to the Raft island's land, and wobble of its coast (0..1).</summary>
 		public float SourceRoughen, SourceWobble;
 		public bool Mirror;
+		/// <summary>LM7: under water also the other kinds Raft's islands have there (RaftUnderwater.ExtraCategoryOf), loaded
+		/// from their scenes first (SeaNamesNeeded) - the Randomize existing tab. A property: not in the saved presets.</summary>
+		public bool RaftSeaKinds { get; set; }
 
 		// The land can reach well past Radius with a ragged coast and stretch; the edge of the 1000 m build area is always flat seabed
 		public const float MinRadius = 8f, MaxRadius = 280f, MinHeight = 3f, MaxHeight = 160f, MaxStretch = 3f;
+		/// <summary>LM7: a variation of one of Raft's islands may be as big as the biggest (Temperance, 457 m): its terrain
+		/// grows past the 1000 m build area to hold it (IslandGenerator.AreaFor) instead of the island being scaled down.</summary>
+		public const float MaxSourceRadius = 480f;
 		public const int MaxPeaks = 5, MaxCreatureSpots = 24, MaxLoot = 40;
 
 		public float CoastAmount { get { return Coast < 0f ? Roughness : Coast; } }
 
 		public void Clamp()
 		{
-			// (map types may go smaller than the editor's sliders: a sandbar, a low atoll)
-			Radius = Mathf.Clamp(Radius, MinRadius, MaxRadius);
+			if (Source == null) Source = "";
+			// (map types may go smaller than the editor's sliders: a sandbar, a low atoll; a Raft island's variation as big as it is, LM7)
+			Radius = Mathf.Clamp(Radius, MinRadius, Source.Length > 0 ? MaxSourceRadius : MaxRadius);
 			Height = Mathf.Clamp(Height, 2f, MaxHeight);
 			Shape = Mathf.Clamp(Shape, 0, IslandShapes.Names.Length - 1);
 			Roughness = Mathf.Clamp01(Roughness);
@@ -1464,12 +1471,17 @@ namespace DynamicIslands.Editor
 			// smaller ground back - it came back flat, with the old objects floating over it: that island stays in its file,
 			// its unsaved changes go to its autosave, and the undo history starts here)
 			bool resized = DynamicIslands.ResetBuildArea();
+			// (LM7: a variation of a Raft island bigger than the build area - Temperance - gets a terrain its real size)
+			Vector3 area = AreaFor(s);
+			bool bigger = area.x > terrain.terrainData.size.x + 0.5f;
+			if (bigger) { terrain.terrainData.size = area; resized = true; }
 			if (resized)
 			{
 				terraineditor.paintMask = null;
 				DynamicIslands.KeepUnsaved();
 				UndoRedoManager.Clear();
-				DynamicIslands.Notify("The new island uses the editor's full build area: Undo can't bring the smaller island back (it is still in its file)");
+				DynamicIslands.Notify(bigger ? "The new island is " + area.x.ToString("F0") + " m across, as big as the Raft island it comes from: Undo can't bring the island before back (it is still in its file)"
+					: "The new island uses the editor's full build area: Undo can't bring the smaller island back (it is still in its file)");
 			}
 			TerrainData data = terrain.terrainData;
 			int hres = data.heightmapResolution, ares = data.alphamapResolution;
@@ -1849,7 +1861,7 @@ namespace DynamicIslands.Editor
 					case IslandShapes.Atoll: case IslandShapes.Archipelago: case IslandShapes.Stacks: case IslandShapes.Crescent: r = s.Radius * 1.45f + 10f; break;
 					default: r = s.Radius * (1f + 0.3f * s.CoastAmount) + ShelfMetres(s) + (s.Deep ? 0.15f * DropWidthOf(s) : DropMetres(s)); break; // (the noise seldom reaches its full range)
 				}
-			return Mathf.Min(r * Mathf.Sqrt(Mathf.Max(1f, s.Stretch)), 500f);
+			return Mathf.Min(r * Mathf.Sqrt(Mathf.Max(1f, s.Stretch)), AreaFor(s).x / 2f);
 		}
 
 		/// <summary>The peaks of the round layouts: x, z (from the middle), radius, relative height (the first is the highest).</summary>
@@ -3187,7 +3199,7 @@ namespace DynamicIslands.Editor
 				float f = SeaFactor(AmountOf(s, cat));
 				if (f <= 0f) continue;
 				f *= SeaCap(s, sea, cat, f);
-				foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+				foreach (SeaThing t in SeaThingsOf(s, cat))
 					for (int b = 0; b < RaftUnderwater.BandCount; b++) wanted[cat] += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * sea.Step * sea.Step * f;
 			}
 			return wanted;
@@ -3206,11 +3218,11 @@ namespace DynamicIslands.Editor
 			// as Raft's per m² - "way too much", the user, 2026-10-03)
 			float times = cat == CatSeaRocks ? 1.5f : cat == CatWater ? 1f : 0f;
 			if (times <= 0f || f <= 0f) return 1f;
-			float raft = RaftUnderwater.DensityOf(s.Style, cat);
+			float raft = RaftUnderwater.DensityOf(s.Style, cat, s.RaftSeaKinds);
 			if (raft <= 0f) return 1f;
 			float zone = 0f, total = 0f, cell = sea.Step * sea.Step;
 			for (int b = 0; b < 5; b++) zone += sea.Within(b, 60f) * cell;
-			foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+			foreach (SeaThing t in SeaThingsOf(s, cat))
 				for (int b = 0; b < RaftUnderwater.BandCount; b++) total += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * cell * f;
 			float most = times * raft / 1000f * zone * f;
 			return total > most ? most / total : 1f;
@@ -3220,15 +3232,27 @@ namespace DynamicIslands.Editor
 		static int coreNamesCount = -1;
 
 		/// <summary>The measured kinds of a style that this editor has (the catalog's core objects, so a seed always gives the same island).</summary>
-		static List<SeaThing> SeaThingsOf(int style, string cat)
+		static List<SeaThing> SeaThingsOf(IslandGenSettings s, string cat) { return SeaThingsOf(s.Style, cat, s.RaftSeaKinds); }
+
+		/// <summary>(extra, LM7: also the other kinds Raft's islands have under water that the catalog has, core or in its index -
+		/// the index is the same on every PC, so a seed still gives the same island once they are loaded)</summary>
+		static List<SeaThing> SeaThingsOf(int style, string cat, bool extra)
 		{
 			if (!PlaceableCatalog.IsBuilt) return new List<SeaThing>();
 			List<string> core = PlaceableCatalog.CoreNames.ToList();
 			if (coreNames == null || core.Count != coreNamesCount) { coreNames = new HashSet<string>(core); coreNamesCount = core.Count; }
-			List<SeaThing> list = RaftUnderwater.For(style).Of(cat).Where(t => coreNames.Contains(t.Name)).ToList();
+			Func<SeaThing, bool> has = t => coreNames.Contains(t.Name) || (t.Extra && PlaceableCatalog.SceneOf(t.Name) != null);
+			List<SeaThing> list = RaftUnderwater.For(style).Of(cat, extra).Where(has).ToList();
 			// (every sea has something to collect: Temperance's bare, icy rock borrows the tropical islands' finds)
-			if (list.Count == 0 && cat == CatSeaFinds) list = RaftUnderwater.For(TerrainPainter.Tropical).Of(cat).Where(t => coreNames.Contains(t.Name)).ToList();
+			if (list.Count == 0 && cat == CatSeaFinds) list = RaftUnderwater.For(TerrainPainter.Tropical).Of(cat, extra).Where(has).ToList();
 			return list;
+		}
+
+		/// <summary>LM7: the extra under-water kinds these settings place that must be loaded from Raft's scenes first (empty without RaftSeaKinds).</summary>
+		public static List<string> SeaNamesNeeded(IslandGenSettings s)
+		{
+			if (s == null || !s.RaftSeaKinds) return new List<string>();
+			return SeaCategories.Where(c => SeaFactor(AmountOf(s, c)) > 0f).SelectMany(c => SeaThingsOf(s.Style, c, true)).Where(t => t.Extra).Select(t => t.Name).Distinct().ToList();
 		}
 
 		/// <summary>
@@ -3340,11 +3364,11 @@ namespace DynamicIslands.Editor
 				if (cat == CatWater)
 				{
 					float corals = 0f;
-					foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+					foreach (SeaThing t in SeaThingsOf(s, cat))
 						for (int b = 0; b < RaftUnderwater.BandCount; b++) corals += t.Density[b] * sea.Within(b, SeaGround.Reach(t)) * sea.Step * sea.Step * f;
 					reefs = PlanReefs(s, ground, sea, corals);
 				}
-				foreach (SeaThing t in SeaThingsOf(s.Style, cat))
+				foreach (SeaThing t in SeaThingsOf(s, cat))
 				{
 					GameObject proto = PlaceableCatalog.Get(t.Name);
 					if (proto == null) continue;
@@ -3653,6 +3677,38 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The editor's build area, which generated island files use too.</summary>
 		internal static readonly Vector3 BuildArea = new Vector3(1000f, 600f, 1000f);
+
+		/// <summary>
+		/// LM7: the terrain an island of these settings needs - the build area, or for a variation of one of Raft's islands
+		/// bigger than it (Temperance: 1074 x 926 m of land) a square that holds its real land and shallow water, at the size
+		/// asked for, with room for the flat seabed at the edge (FlattenEdges). Before, Temperance was scaled down to fit.
+		/// </summary>
+		public static Vector3 AreaFor(IslandGenSettings s)
+		{
+			if (s == null || string.IsNullOrEmpty(s.Source)) return BuildArea;
+			RaftIsland i = RaftIslands.Get(s.Source);
+			HeightField f = i != null ? RaftIslands.Heights(i) : null;
+			if (f == null) return BuildArea;
+			float scale = Mathf.Clamp(s.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxSourceRadius) / Mathf.Max(1f, i.Radius);
+			float half = SourceReach(i.Scene, f) * scale * Mathf.Sqrt(Mathf.Max(1f, s.Stretch)) + Mathf.Clamp01(s.SourceWobble) * 0.2f * i.Radius * scale + 90f;
+			float size = Mathf.Clamp(Mathf.Ceil(half * 2f / 50f) * 50f, BuildArea.x, 2000f);
+			return new Vector3(size, BuildArea.y, size);
+		}
+
+		static readonly Dictionary<string, float> sourceReach = new Dictionary<string, float>();
+
+		/// <summary>How far a Raft island's land and shallow water (down to 8 m) reach from its middle along x or z (m, as measured).</summary>
+		static float SourceReach(string scene, HeightField f)
+		{
+			float r;
+			if (sourceReach.TryGetValue(scene, out r)) return r;
+			r = 0f;
+			for (int z = 0; z < f.Nz; z++)
+				for (int x = 0; x < f.Nx; x++)
+					if (f.H[z, x] > -8f) r = Mathf.Max(r, Mathf.Max(Mathf.Abs(x - (f.Nx - 1) / 2f), Mathf.Abs(z - (f.Nz - 1) / 2f)) * f.Cell);
+			sourceReach[scene] = r;
+			return r;
+		}
 		internal const int BuildResolution = 513;
 
 		/// <summary>
@@ -3663,18 +3719,19 @@ namespace DynamicIslands.Editor
 		{
 			IslandGenSettings s = settings.Copy();
 			s.Clamp();
-			float[,] metres = HeightsMetres(s, BuildArea, BuildResolution);
+			Vector3 area = AreaFor(s);
+			float[,] metres = HeightsMetres(s, area, BuildResolution);
 			UseSea(s);
 			var file = new IslandFile
 			{
 				Name = name,
 				WaterLevel = s.WaterLevel,
-				TerrainSize = BuildArea,
+				TerrainSize = area,
 				HeightmapResolution = BuildResolution,
-				Heights = Normalised(metres, BuildArea.y),
+				Heights = Normalised(metres, area.y),
 				Style = s.Style == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(s.Style),
 			};
-			file.Objects = PlanAll(s, metres, BuildArea);
+			file.Objects = PlanAll(s, metres, area);
 			List<string> built = GenBuildings.Apply(file, s);
 			KeyValuePair<int, int> gathered = GenGather.Apply(file, s, s.Seed);
 			if (gathered.Key + gathered.Value > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + gathered.Key + " things to gather on the land, " + gathered.Value + " in the shallows");

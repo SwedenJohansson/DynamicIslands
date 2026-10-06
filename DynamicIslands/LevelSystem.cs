@@ -154,7 +154,8 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class PlayerLevels
 	{
-		public const KeyCode Key = KeyCode.K;
+		/// <summary>K unless changed in Defaults (Keys, ModKeys).</summary>
+		public static KeyCode Key { get { return ModKeys.Stats; } }
 
 		static readonly Dictionary<ulong, LevelRecord> records = new Dictionary<ulong, LevelRecord>();
 		static LevelRecord mine;

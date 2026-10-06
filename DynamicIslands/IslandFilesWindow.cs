@@ -69,7 +69,7 @@ namespace DynamicIslands.Editor
 		public static void QuickSave()
 		{
 			// (a new island is "myisland" until it has its own name: it saved over a 'myisland' saved before)
-			if (!DynamicIslands.IsUnnamed && File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName))) DynamicIslands.SaveIsland(DynamicIslands.currentIslandName);
+			if (!DynamicIslands.IsUnnamed && File.Exists(IslandSpawner.PathFor(DynamicIslands.currentIslandName))) DynamicIslands.SaveIsland(DynamicIslands.currentIslandName, true);
 			else Open();
 		}
 
@@ -206,7 +206,7 @@ namespace DynamicIslands.Editor
 				SetStatus("'" + n + "' already exists. Press Save again to overwrite it.", true);
 				return;
 			}
-			if (DynamicIslands.SaveIsland(n)) Close();
+			if (DynamicIslands.SaveIsland(n, true)) Close();
 			else SetStatus("Saving failed - see the console (F10).", true);
 		}
 

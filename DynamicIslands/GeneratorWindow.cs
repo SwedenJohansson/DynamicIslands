@@ -511,7 +511,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(likeGroup, "Change these settings in the Normal tab", () => SetTab(TabNormal), "All of the generator's settings, filled in from the island", -1, 26f, 12);
 
 			variationGroup = UIKit.Group(root, "Change its shape");
-			Slider(variationGroup, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
+			Slider(variationGroup, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxSourceRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
 				"Scales the island", "Scales the island's ground to this size (the heights follow Highest point). Its own size is the starting value.");
 			Slider(variationGroup, "Highest point", IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight, () => s.Height, v => s.Height = v, v => v.ToString("F0") + " m above the sea",
 				"Raises or lowers its hills", "Raises or lowers the land so its top is this high; the coast stays where it is.");
@@ -767,9 +767,10 @@ namespace DynamicIslands.Editor
 					ps = MapTypes.Roll(type, new System.Random(s.Seed), out elevation);
 				}
 				else ps = s;
-				float span = Mathf.Clamp(IslandGenerator.Reach(ps) * 2.1f, 60f, IslandGenerator.BuildArea.x);
+				Vector3 terrainSize = IslandGenerator.AreaFor(ps); // (LM7: a variation of Temperance is bigger than the build area)
+				float span = Mathf.Clamp(IslandGenerator.Reach(ps) * 2.1f, 60f, terrainSize.x);
 				float step = span / (Res - 1);
-				float[,] m = type != null && type.Build != null ? new float[Res, Res] : IslandGenerator.HeightsMetres(ps, IslandGenerator.BuildArea, Res, span);
+				float[,] m = type != null && type.Build != null ? new float[Res, Res] : IslandGenerator.HeightsMetres(ps, terrainSize, Res, span);
 				previewTex = IslandGenerator.Preview(m, step, ps.Style, previewTex, ps.WaterLevel);
 				preview.texture = previewTex;
 				// What it shows
@@ -926,13 +927,14 @@ namespace DynamicIslands.Editor
 			else { s.Seed = UnityEngine.Random.Range(1, 999999); seedField.text = s.Seed.ToString(CultureInfo.InvariantCulture); }
 			if (tab == TabReady) { OnMakeType(); return; }
 			if (tab == TabRandomize && chosen == null) { SetStatus("Pick one of Raft's islands first."); return; }
-			// (buildings and caves use objects of Raft's own islands: their scenes load first, then it generates)
-			List<string> scenes = PlaceableCatalog.ScenesNeededFor(GenBuildings.NeededNames(Effective()));
+			// (buildings and caves, and on Randomize existing the other kinds under water (LM7), use objects of Raft's own
+			// islands: their scenes load first, then it generates)
+			List<string> scenes = PlaceableCatalog.ScenesNeededFor(NeededNames());
 			if (scenes.Count > 0)
 			{
 				if (loadingBuildings) return;
 				loadingBuildings = true;
-				SetStatus("Loading Raft's islands for the buildings and caves (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in.");
+				SetStatus("Loading Raft's islands for " + (tab == TabRandomize ? "what lies under water" : "the buildings and caves") + " (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in.");
 				DynamicIslands.instance.StartCoroutine(LoadThenGenerate());
 				return;
 			}
@@ -991,7 +993,15 @@ namespace DynamicIslands.Editor
 			if (chosen == null || Remakes.For(chosen.Scene).Count == 0) run.Remake = "";
 			run.Buildings = false;
 			run.Caves = false;
+			run.RaftSeaKinds = true; // (LM7: every kind Raft's islands have under water that the catalog has)
 			return run;
+		}
+
+		/// <summary>Objects of Raft's scenes that Generate needs loaded first: the buildings' and caves', and the extra kinds under water.</summary>
+		List<string> NeededNames()
+		{
+			IslandGenSettings run = Effective();
+			return GenBuildings.NeededNames(run).Concat(IslandGenerator.SeaNamesNeeded(run)).Distinct().ToList();
 		}
 
 		/// <summary>What the last Generate made (the window closes after it; tests read it).</summary>
@@ -999,7 +1009,7 @@ namespace DynamicIslands.Editor
 
 		System.Collections.IEnumerator LoadThenGenerate()
 		{
-			yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(Effective()));
+			yield return PlaceableCatalog.EnsureLoaded(NeededNames());
 			loadingBuildings = false;
 			if (this != null && gameObject.activeInHierarchy) Generate();
 		}

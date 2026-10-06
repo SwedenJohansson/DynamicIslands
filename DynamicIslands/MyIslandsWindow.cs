@@ -30,7 +30,14 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: the names listed now.</summary>
 		internal static List<string> Listed { get { return instance != null ? instance.listed : new List<string>(); } }
 
-		string filter = All, picked, pendingDelete;
+		string filter = All, picked, pendingDelete, pendingGive;
+		/// <summary>R1c: "Give my worlds this version", shown for a picked island that saved worlds play from an older copy.</summary>
+		RectTransform giveRow;
+		Text giveText;
+		List<string> olderWorlds = new List<string>();
+		/// <summary>Tests: whether the Give row is shown now, and a press of its button.</summary>
+		internal static bool GiveShown { get { return instance != null && instance.giveRow.gameObject.activeSelf; } }
+		internal static void Give() { if (instance != null) instance.OnGive(); }
 		InputField search, nameField;
 		RectTransform listContent;
 		Text status, summary;
@@ -56,7 +63,8 @@ namespace DynamicIslands.Editor
 			if (instance == null) return;
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
-			instance.picked = instance.pendingDelete = null;
+			instance.picked = instance.pendingDelete = instance.pendingGive = null;
+			instance.ShowGive();
 			instance.nameField.text = "";
 			instance.search.text = "";
 			instance.Look();
@@ -109,6 +117,12 @@ namespace DynamicIslands.Editor
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(status.gameObject, -1, 34);
+
+			giveRow = UIKit.Row(panel, 28f, 6f, "GiveRow");
+			giveText = UIKit.Label(giveRow, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "GiveText");
+			giveText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Button(giveRow, "Give my worlds this version", OnGive, "Saved worlds that play an older copy of the picked island (kept for them when it changed) play it as it is now; the old copies go to the deleted folder (asks first)", 230, 28f, 13).name = "Button_GiveVersion";
+			giveRow.gameObject.SetActive(false);
 
 			RectTransform buttons = UIKit.Row(panel, 32f, 6f, "Buttons");
 			UIKit.Button(buttons, "Open", OnOpen, "Open the picked island in the editor", -1, 32, 14);
@@ -199,8 +213,9 @@ namespace DynamicIslands.Editor
 		void OnPick(string n)
 		{
 			picked = n;
-			pendingDelete = null;
+			pendingDelete = pendingGive = null;
 			nameField.text = n;
+			ShowGive();
 			HashSet<string> by;
 			int used = worlds.TryGetValue(n, out by) ? by.Count : 0;
 			SetStatus("'" + n + "' (" + SourceOf(n, library).ToLowerInvariant() + "): " + (used > 0 ? "used in " + string.Join(", ", by.Take(4).Select(x => "'" + x + "'").ToArray()) + (used > 4 ? " and " + (used - 4) + " more" : "") : "no saved world uses it") + ".", false);
@@ -263,6 +278,41 @@ namespace DynamicIslands.Editor
 				DynamicIslands.Notify("Deleted island '" + n + "' (kept in " + IslandFilesWindow.DeletedFolderName + " until you remove it there)");
 			}
 			catch (Exception e) { SetStatus(SafeFile.InUse(e) ? "'" + n + "' is in use by another program - close it there and delete again (nothing was moved)." : "Could not delete: " + e.Message, true); }
+		}
+
+		/// <summary>The Give row: shown when saved worlds play an older copy of the picked island.</summary>
+		void ShowGive()
+		{
+			olderWorlds = picked != null && File.Exists(IslandSpawner.PathFor(picked)) ? LibraryPack.WorldsOnOlderVersion(picked) : new List<string>();
+			giveRow.gameObject.SetActive(olderWorlds.Count > 0);
+			if (olderWorlds.Count > 0)
+				giveText.text = olderWorlds.Count + " saved world" + (olderWorlds.Count == 1 ? " plays" : "s play") + " an older copy: " + string.Join(", ", olderWorlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (olderWorlds.Count > 3 ? " and " + (olderWorlds.Count - 3) + " more" : "");
+		}
+
+		void OnGive()
+		{
+			if (!HasPick() || olderWorlds.Count == 0) { SetStatus("Pick an island that saved worlds play from an older copy.", true); return; }
+			string n = picked;
+			if (pendingGive != n)
+			{
+				pendingGive = n;
+				SetStatus("Give " + string.Join(", ", olderWorlds.Take(4).Select(w => "'" + w + "'").ToArray()) + (olderWorlds.Count > 4 ? " and " + (olderWorlds.Count - 4) + " more" : "") +
+					" this '" + n + "'? What was picked, looted or opened there may land on other objects. Press the button again.", true);
+				return;
+			}
+			pendingGive = null;
+			try
+			{
+				List<string> moved;
+				List<string> changed = LibraryPack.GiveWorldsThisVersion(n, out moved);
+				string text = LibraryPack.GaveText(n, changed, moved);
+				Look();
+				Refresh();
+				OnPick(n);
+				SetStatus(text, false);
+				DynamicIslands.Notify(text, false, 8);
+			}
+			catch (Exception e) { SetStatus(SafeFile.InUse(e) ? "A world file is in use by another program - close it there and try again." : "Could not change them: " + e.Message, true); }
 		}
 
 		void OnTidy()
