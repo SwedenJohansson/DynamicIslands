@@ -442,8 +442,9 @@ namespace DynamicIslands
 			if (raftObj != null) yield return PutPlayer(RAPI.GetLocalPlayer(), raftObj.transform.position + Vector3.up * 2f, false);
 			int before = IslandWorldState.Islands.Count;
 			yield return SailRoutine(100f, 25f);
-			yield return new WaitForSeconds(5f);
-			bool far = IslandWorldState.Islands.Count > before && IslandWorldState.Islands.Skip(before).Any(e => (e.Name ?? "").StartsWith("gen-"));
+			// (by the rule's id: the plan keeps random islands on, so any 'gen-' island could be one of those)
+			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "far"), 30f);
+			bool far = IslandWorldState.Islands.Any(e => e.Rule == "far");
 			Check(ref ok, far, "2.5 km sailed: the 'far' rule brought an island (" + string.Join(", ", IslandWorldState.Islands.Skip(before).Select(e => e.Name).ToArray()) + ")");
 			// Each rule once
 			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();
@@ -465,6 +466,8 @@ namespace DynamicIslands
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("story check: in a world"); yield break; }
 			yield return new WaitForSeconds(8f);
+			// (player 2: the host's list may still be on its way)
+			yield return WaitFor(() => StoryIslands.All(n => IslandWorldState.Islands.Any(e => (e.HostName ?? e.Name) == n)), 60f);
 			bool ok = true;
 			bool host = Raft_Network.IsHost;
 			if (host) Check(ref ok, WorldDirector.Plan != null && WorldDirector.Plan.Name == StoryPlan, "loaded again: the world's plan '" + (WorldDirector.Plan != null ? WorldDirector.Plan.Name : "none") + "'");
@@ -497,7 +500,7 @@ namespace DynamicIslands
 			// (the plan's drop-down list, not the head's "Get more..." - the island library)
 			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Drop_Plan") : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
-			if (plan == null) { Fail("New Game box clicks: no plan list"); yield break; }
+			if (plan == null) { box.gameObject.SetActive(false); Fail("New Game box clicks: no plan list"); yield break; }
 			// The plan list: every plan picked in turn from the list clicked open
 			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
@@ -714,6 +717,7 @@ namespace DynamicIslands
 					string pool = CustomIslandSpawner.PickFromPool();
 					Check(ref ok, WorldDirector.Done.Contains("pooled") == (pool != null), "'from the spawn pool' after 'chained': " + (pool != null ? "brought " + string.Join(", ", WorldDirector.Refs("pooled", null).Select(e => e.HostName).ToArray()) : "the pool is empty - it waits"));
 				}
+				else Check(ref ok, false, "the start island loaded in 40 s ('quest step done', 'after rule' and 'from the spawn pool' not checked)");
 				// A saved island that isn't there: the rule waits, says why once, nothing breaks
 				for (int i = 0; i < 5; i++) WorldDirector.Evaluate();
 				Check(ref ok, !WorldDirector.Done.Contains("gone") && WorldDirector.Refs("gone", null).Count == 0, "a rule whose island is missing waits (" + warnings.Count + " log line(s) about it over 6 checks)");
@@ -737,6 +741,7 @@ namespace DynamicIslands
 				Application.logMessageReceived -= watch;
 				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
 				if (System.IO.File.Exists(WorldPlan.PathFor(plan))) System.IO.File.Delete(WorldPlan.PathFor(plan));
+				if (System.IO.File.Exists(IslandSpawner.PathFor("ciplanr"))) System.IO.File.Delete(IslandSpawner.PathFor("ciplanr"));
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 				WorldDirector.Sailed = sailedBefore;
@@ -775,7 +780,12 @@ namespace DynamicIslands
 				IslandFilesWindow.Open();
 				yield return null;
 				GameObject w = WindowObject(t);
-				if (w == null) { Fail("files window: it didn't open"); yield break; }
+				if (w == null)
+				{
+					foreach (string n in new[] { a, keep }) if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n));
+					DynamicIslands.currentIslandName = nameBefore;
+					Fail("files window: it didn't open"); yield break;
+				}
 				IslandFilesWindow win = w.GetComponent<IslandFilesWindow>();
 				InputField name = Private<InputField>(win, "nameField"), height = Private<InputField>(win, "elevationField");
 				Text status = Private<Text>(win, "status");
@@ -833,7 +843,7 @@ namespace DynamicIslands
 			confirmNew.Invoke(null, null); yield return null;
 			Check(ref ok, DynamicIslands.currentIslandName == keep && GameObject.Find("PlacedObjects").transform.childCount == objects, "New once: nothing happens yet (" + objects + " objects)");
 			confirmNew.Invoke(null, null); yield return null; yield return null;
-			Check(ref ok, DynamicIslands.currentIslandName == "myisland" && GameObject.Find("PlacedObjects").transform.childCount == 0, "New twice: an empty island");
+			Check(ref ok, DynamicIslands.currentIslandName == DynamicIslands.UnnamedIsland && GameObject.Find("PlacedObjects").transform.childCount == 0, "New twice: an empty island");
 			// A generator preset's ×
 			System.IO.Directory.CreateDirectory(GeneratorWindow.PresetFolder);
 			string preset = System.IO.Path.Combine(GeneratorWindow.PresetFolder, "cipreset-del.txt");

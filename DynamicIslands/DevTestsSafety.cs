@@ -154,7 +154,7 @@ namespace DynamicIslands
 				IslandFilesWindow.MoveToDeleted(name);
 				Check(ref ok, !File.Exists(path) && File.Exists(deleted), "a deleted island is moved to '" + IslandFilesWindow.DeletedFolderName + "'");
 				TerrainData td = terraineditor.terrain.terrainData;
-				Check(ref ok, td.heightmapResolution == 513 && Mathf.Approximately(td.size.x, 1000f), "New after a small island: the full build area again (" + td.size.x + " m, " + td.heightmapResolution + " heights)");
+				Check(ref ok, td.heightmapResolution == IslandGenerator.BuildResolution && Mathf.Approximately(td.size.x, IslandGenerator.BuildArea.x), "New after a small island: the full build area again (" + td.size.x + " m, " + td.heightmapResolution + " heights)");
 			}
 			finally
 			{
@@ -174,7 +174,7 @@ namespace DynamicIslands
 			DynamicIslands.LoadEditor(new string[0]);
 			yield return new WaitForSeconds(3f);
 			Check(ref ok, LoadSceneManager.IsGameSceneLoaded && !DynamicIslands.InEditor(), "LoadEditor inside a world is refused: still in the world");
-			if (!Raft_Network.IsHost) { IslandNetwork.Resync(); yield return new WaitForSeconds(8f); Check(ref ok, IslandNetwork.HasList, "Resync: the host's list came again"); }
+			if (!Raft_Network.IsHost) { IslandNetwork.Resync(); yield return WaitFor(() => IslandNetwork.HasList, 30f); Check(ref ok, IslandNetwork.HasList, "Resync: the host's list came again"); }
 			if (ok) Log("PASS: safety world"); else Fail("safety world");
 		}
 	}

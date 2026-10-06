@@ -128,7 +128,8 @@ namespace DynamicIslands
 			Check(ref ok, PiecesWindow.StatusText.Contains("already") && GroupLibrary.Exists("cigrp-a"), "a group name in use is refused (" + PiecesWindow.StatusText + ")");
 			PiecesWindow.NameField.text = "cigrp-b";
 			Click(root, "Rename");
-			for (int i = 0; i < 30 && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") == null; i++) yield return null;
+			// (GroupLibrary.Rename re-registers it in a coroutine: up to 10 s, not a number of frames)
+			for (float end = Time.realtimeSinceStartup + 10f; PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") == null && Time.realtimeSinceStartup < end; ) yield return null;
 			Check(ref ok, !GroupLibrary.Exists("cigrp-a") && GroupLibrary.Exists("cigrp-b") && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-a") == null && PlaceableCatalog.Get(GroupLibrary.Prefix + "cigrp-b") != null,
 				"the group is renamed: its file and its entry in My groups (" + PiecesWindow.StatusText + ")");
 			Click(root, "Delete");
@@ -150,8 +151,10 @@ namespace DynamicIslands
 			Check(ref ok, !TerrainStamps.Exists("cistamp-b") && File.Exists(Path.Combine(Path.Combine(deleted, "stamps"), "cistamp-b.stamp")) && !TerrainStamps.All.Any(s => s.Name == "cistamp-b"), "the stamp is deleted: moved to deleted/stamps");
 			Check(ref ok, !Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().Any(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("cistamp")), "the Terrain tab's stamp buttons follow");
 			PiecesWindow.Close();
-			PlaceableCatalog.RemoveCustom(GroupLibrary.Prefix + "cigrp-used");
+			foreach (string g in new[] { "cigrp-used", "cigrp-a", "cigrp-b" }) PlaceableCatalog.RemoveCustom(GroupLibrary.Prefix + g);
 			foreach (string f in cleanup) try { if (File.Exists(f)) File.Delete(f); } catch { }
+			TerrainStamps.Load(); // (a rename or delete that failed left a test stamp in the list)
+			EditorUI.RefreshStamps();
 			if (ok) Log("PASS: groups and stamps"); else Fail("groups and stamps");
 		}
 			[ConsoleCommand(name: "CIElevationPreview", docs: "Dev, editor: ROADMAP E2 - the blue sea plane follows the island's height: a saved island opened, Sunken (-30) puts the sea 30 m above its water line, Flying (60) 60 m below, 0 back; pictures shot_elev_sunken.png and shot_elev_flying.png; the island left as it was")]
@@ -433,7 +436,7 @@ namespace DynamicIslands
 				foreach (string n in made) try { if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n)); } catch { }
 				try { if (File.Exists(worldFile)) File.Delete(worldFile); } catch { }
 				try { LibraryPack.SaveInstalled(installedBefore); } catch { }
-				try { if (poolBefore != null) File.WriteAllText(pool, poolBefore); CustomIslandSpawner.LoadPool(true); } catch { }
+				try { if (poolBefore != null) File.WriteAllText(pool, poolBefore); else if (File.Exists(pool)) File.Delete(pool); CustomIslandSpawner.LoadPool(true); } catch { }
 				IslandCache.Forget();
 			}
 			if (ok) Log("PASS: my islands"); else Fail("my islands");

@@ -218,6 +218,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled; // (ScSetPlan(.., true) applies the test plan's 'random = off')
 			var doneBefore = WorldDirector.Done.ToList();
 			List<string> chainBefore = StoryChain.WriteLines().ToList();
 			var made = new List<IslandWorldState.Entry>();
@@ -230,7 +231,7 @@ namespace DynamicIslands
 				ScSetPlan(plan, true);
 				yield return TuneTo("radio");
 				bool radio = IslandWorldState.Islands.Any(x => x.Rule == "radio");
-				for (int i = 0; i < 4; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				for (int i = 0; i < 20 && !IslandWorldState.Islands.Any(x => x.Rule == "after"); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 				Check(ref ok, radio, "the Receiver rule's island came when tuned");
 				Check(ref ok, IslandWorldState.Islands.Any(x => x.Rule == "after"), "'after rule radio' fires once the Receiver rule's island came - AU52");
 				made.AddRange(IslandWorldState.Islands.Where(x => x.Rule == "radio" || x.Rule == "after"));
@@ -258,9 +259,9 @@ namespace DynamicIslands
 						PutPlayerNear(second.transform, 0.3f);
 						second.Enter();
 						yield return new WaitForSeconds(1.5f);
-						for (int i = 0; i < 3; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+						for (int i = 0; i < 20 && !IslandWorldState.Islands.Any(x => x.Rule == "g"); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 						bool quest = QuestTracker.StepOf(e) >= 1, rule = IslandWorldState.Islands.Any(x => x.Rule == "g");
-						Check(ref ok, quest == rule, "two zones called 'gate', the second entered: the quest (" + (quest ? "counted" : "not") + ") and the island's rule (" + (rule ? "fired" : "waits") + ") agree - AU54");
+						Check(ref ok, quest && rule, "two zones called 'gate', the second entered: the quest (" + (quest ? "counted" : "not") + ") and the island's rule (" + (rule ? "fired" : "waits") + ") agree - AU54");
 						made.AddRange(IslandWorldState.Islands.Where(x => x.Rule == "g"));
 					}
 					else Check(ref ok, false, "the island with two gates came");
@@ -286,6 +287,7 @@ namespace DynamicIslands
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
 				StoryChain.OnWorldRead();
 			}
 			OnRaftCommand();
@@ -306,6 +308,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled; // (ScSetPlan(.., true) applies the test plan's 'random = off')
 			var doneBefore = WorldDirector.Done.ToList();
 			int islandsBefore = IslandWorldState.Islands.Count;
 			const string p1 = "CI Plan Edit", p2 = "CI Plan Other";
@@ -344,6 +347,7 @@ namespace DynamicIslands
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
 			}
 			if (ok) Log("PASS: scenario plan edit"); else Fail("scenario plan edit");
 		}
@@ -361,6 +365,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled; // (ScSetPlan(.., true) applies the test plan's 'random = off')
 			var doneBefore = WorldDirector.Done.ToList();
 			int islandsBefore = IslandWorldState.Islands.Count;
 			const string plan = "CI Missing", gone = "ciscvanish";
@@ -391,6 +396,7 @@ namespace DynamicIslands
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
 			}
 			if (ok) Log("PASS: scenario missing"); else Fail("scenario missing");
 		}
@@ -405,6 +411,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string planBefore = WorldDirector.PlanName;
+			bool autoBefore = CustomIslandSpawner.Enabled; // (ScSetPlan(.., true) applies the test plan's 'random = off')
 			var doneBefore = WorldDirector.Done.ToList();
 			int islandsBefore = IslandWorldState.Islands.Count;
 			const string plan = "CI Upd Plan", a = "ciupd-a", id = "ci-upd-plan";
@@ -424,7 +431,7 @@ namespace DynamicIslands
 				string zip1 = LibraryPack.Export(new LibraryInfo { title = plan, id = id, author = "CI Tester", summary = "v1", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
 				LibraryPackContents v1 = zip1 != null ? LibraryPack.Read(zip1, out error) : null;
 				Check(ref ok, v1 != null, "v1 exported (" + (zip1 ?? error) + ")");
-				if (v1 == null) yield break;
+				if (v1 == null) { Fail("scenario lib update"); yield break; }
 				// v2: island a without its second chest (an edit that shifts saved worlds' state), and a second rule
 				f.Objects.RemoveAll(o => o.Props != null && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Chest two");
 				f.Save(IslandSpawner.PathFor(a));
@@ -432,7 +439,7 @@ namespace DynamicIslands
 				string zip2 = LibraryPack.Export(new LibraryInfo { title = plan, id = id, author = "CI Tester", summary = "v2", remix = true, version = 2 }, null, WorldPlan.Load(plan), null, null, out error);
 				LibraryPackContents v2 = zip2 != null ? LibraryPack.Read(zip2, out error) : null;
 				Check(ref ok, v2 != null, "v2 exported (" + (zip2 ?? error) + ")");
-				if (v2 == null) yield break;
+				if (v2 == null) { Fail("scenario lib update"); yield break; }
 				// The player installs v1 and plays it
 				ScDeleteIslands(mine);
 				ScDeletePlan(plan);
@@ -444,7 +451,7 @@ namespace DynamicIslands
 				yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.HostName == a && x.Root != null), 30f);
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == a);
 				Check(ref ok, e != null && e.Root != null, "v1's first island comes in the world");
-				if (e == null) yield break;
+				if (e == null) { Fail("scenario lib update"); yield break; }
 				string hash1 = IslandNetwork.HashOf(a);
 				ScOpenChest(e, "Chest one");
 				IslandWorldState.Save();
@@ -466,6 +473,7 @@ namespace DynamicIslands
 				WorldDirector.Done.Clear();
 				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
 				if (!WorldDirector.SetPlan(planBefore, false)) WorldDirector.SetPlan(WorldPlan.RandomName, false);
+				CustomIslandSpawner.Enabled = autoBefore;
 			}
 			if (ok) Log("PASS: scenario lib update"); else Fail("scenario lib update");
 		}
@@ -513,6 +521,10 @@ namespace DynamicIslands
 			{
 				if (!DynamicIslands.InEditor()) { Fail("scenario edit used " + part + ": " + part + " in the editor"); yield break; }
 				Check(ref ok, DynamicIslands.LoadIsland(EditIsland), "the island opened in the editor");
+				// (opening may first load Raft scenes its objects come from: wait until its boxes are placed - saved before, an
+				// unfinished open would be saved over the island)
+				for (float end = Time.realtimeSinceStartup + 90f; Time.realtimeSinceStartup < end && !(DynamicIslands.currentIslandName == EditIsland &&
+					GameObject.Find("PlacedObjects").GetComponentsInChildren<EditorGameObject>().Any(o => o.Props != null && ObjectProps.Get(o.Props, ObjectProps.NoteTitle) == "Box 1")); ) yield return new WaitForSecondsRealtime(0.5f);
 				yield return new WaitForSeconds(2f);
 				Transform placed = GameObject.Find("PlacedObjects").transform;
 				EditorGameObject[] objs = placed.GetComponentsInChildren<EditorGameObject>();
@@ -588,6 +600,7 @@ namespace DynamicIslands
 				IslandTest.Start();
 				for (float t = 0; t < 300f && !IslandTest.Testing; t += 1f) yield return new WaitForSeconds(1f);
 				yield return new WaitForSeconds(6f);
+				yield return WaitFor(() => IslandWorldState.Islands.Any(x => x.HostName == name && x.Root != null), 60f);
 				IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.HostName == name);
 				Check(ref ok, IslandTest.Testing && e != null && e.Root != null, "round " + round + ": Test in a world brought the island");
 				if (round == 2)
@@ -600,6 +613,7 @@ namespace DynamicIslands
 					ScOpenChest(e, "Shell chest");
 					ScReadNote(e, "Clean note");
 					yield return new WaitForSeconds(2f);
+					yield return WaitFor(() => StoryBook.Count("ciscclean") >= 1, 20f);
 					Check(ref ok, StoryBook.Count("ciscclean") == 1, "round 1: the story item and the page came");
 				}
 				IslandTest.Back();
