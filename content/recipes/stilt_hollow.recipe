@@ -136,7 +136,7 @@ prop whitescreecher tint.amount=0.85
 
 quest title=Water for Stilt Hollow
 quest intro=A trailer town on sea stacks, dry and silent. Get its water running again.
-step reach|town|1|Climb up to the trailer town
+step kill|Hyena|2|Climb to the trailer town and drive the hyenas out of the dock trailer
 step read|Water warden's notice|1|Read the notice at the pump
 step collect|story:valve|1|Follow the red pipe down to the valve
 step reach|mayor|1|Start the pump and cross to the mayor's rock

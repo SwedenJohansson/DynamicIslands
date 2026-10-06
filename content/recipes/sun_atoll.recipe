@@ -6,8 +6,9 @@
 # lagoon's middle the tower's four concrete stumps on the crater's rim; measuring posts behind wire on the north and south
 # islets. The last test, shot Juniper, burned the atoll bare. Dr. Varga stayed behind to film it from the blockhouse - she
 # sealed three film canisters in lead (two on the measuring posts, one on the tower itself), wired the blockhouse safe to
-# her projector and left. Quest "Shot Juniper" (7 steps): the blockhouse, her notebook, the roaches in the instrument
-# bunker, her dosimeter, ground zero, three film canisters (two posts and the crater - a dive), the films run and the safe
+# her projector and left. Quest "Shot Juniper" (7 steps): her notebook in the blockhouse, the roaches in the
+# instrument bunker, her dosimeter, ground zero, the dive for the tower camera's lead case in the crater, the three film
+# canisters (the crater's and the two posts'), the films run and the safe
 # (the recycler blueprint, circuit boards, batteries).
 #
 # Built by the recipe player (CIRecipe sun_atoll) through the editor's own operations.
@@ -329,12 +330,12 @@ prop glare zone.radius=45
 
 quest title=Shot Juniper
 quest intro=An atoll burned bare by a test that nobody watched - nearly nobody. Start at the blockhouse on the west islet.
-step reach|blockhouse|1|Land at the observation blockhouse on the west islet
-step read|Dr. Varga's notebook|1|Read the scientist's notebook on the blockhouse's desk
+step read|Dr. Varga's notebook|1|Find the blockhouse on the west islet and read the notebook on its desk
 step kill|Roach|4|Clear the roaches out of the instrument bunker behind the blockhouse
 step collect|story:dosimeter|1|Take her dosimeter from the instrument locker
 step reach|groundzero|1|Wade out to the test tower's stumps at ground zero
-step collect|story:film|3|Recover the three film canisters: the north post, the south post, the bottom of the crater
+step open|Tower camera's lead case|1|Dive into the crater for the tower camera's lead case - don't stay
+step collect|story:film|3|Recover the other two canisters from the north and south measuring posts
 step open|Blockhouse safe|1|Run the films on the projector and open the blockhouse safe
 quest done=The films have been seen. Whatever the world does with them, the atoll has its witness - and you have hers.
 quest reward=Scrap*8;Plastic*6;Nail*12

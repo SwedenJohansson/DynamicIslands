@@ -8,9 +8,9 @@ expect title The Lights of Tangaroa
 # Onto the floating harbour's deck: the council's notice at the pier's end
 at 60 -4
 zone harbour
-expect step 1
+expect step 0
 read Council notice
-expect step 2
+expect step 1
 
 # The harbour master's key card: into his office (its door faces the pier), his locker in the corner
 walk 62 2 to 70 2 to 73 2 to 76 2 to 75.6 4.2 h=2
@@ -22,15 +22,18 @@ expect story keycard 1
 at 53 12 h=-5
 open Founder's strongbox
 expect story keycard 2
+expect step 2
 
 # The harbour front: into the pump house - its rats - and the generator's part in its locker
 walk 50 -4 to 40 -4 to 30 -4 to 25.5 -1 to 21 -1 h=2.2
 zone pumphouse
 kill Tangaroa rat
+expect step 3
 walk 22.5 -1 to 20 1.2 h=2.2 below=4
 reach Pump house locker
 open Pump house locker
 expect story genpart 1
+expect step 4
 
 # Up the road to the square; the caretaker's flat in the apartment block - its roaches - and his locker
 walk 25 -1 to 27 2.5 to 27.5 6 to 26.5 8 to 19.7 10 to 12.9 12 to 6.1 14 to -2 14 h=12.5

@@ -8,15 +8,16 @@ expect title Floodlight Down
 # From the landing up the ramp to the construction site: the foreman's log on his desk by the office steps
 walk 44 20 to 40 16 to 38 14 to 32.8 10 to 25 4 to 16 -1 h=10
 zone site
-expect step 1
+expect step 0
 read Foreman's log
-expect step 2
+expect step 1
 
 # The floodlight's four parts from the crates round the point
 at 40 28.5 h=-2
 open Lens crate
 at 24 28.5 h=-2
 open Bulb crate
+expect step 2
 at 71 -10.5 h=-2
 open Reflector crate
 at 16 -28.5 h=-3

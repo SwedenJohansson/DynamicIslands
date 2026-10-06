@@ -6,10 +6,11 @@ expect title Water for Stilt Hollow
 # Up the ladder from the reef onto the landing stack: hyenas burst out of the dock trailer
 climb 7.5 -16.9 h=0.3
 zone town
-expect step 1
+expect step 0
 expect message Hyenas burst out
 kill Hyena
 expect animals Hyena 0
+expect step 1
 
 # Up the walkway to the pump stack: the notice, the dead pump, the gate shut
 walk 9.5 -12.5 to 15.5 -0.8 h=7.1

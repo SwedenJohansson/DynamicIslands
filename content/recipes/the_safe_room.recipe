@@ -6,8 +6,8 @@
 # A modern concrete villa on a desert bluff over the sea, broken into one night by three men in a speedboat. The owner and her
 # daughter locked themselves in the safe room behind the study's bookshelf; the men gave up, their boat sank on the rocks
 # below and their dogs still guard the garden. The safe room's code changes every month and is kept in three parts.
-# Quest "Behind the Bookshelf" (6 steps): the driveway, the dogs, the night guard's log, three parts of the code, the
-# hidden door (and the dogs that come back), the safe room's log, down the escape shaft to the boathouse safe (battery
+# Quest "Behind the Bookshelf" (6 steps): the night guard's log, the dogs in the garden, three parts of the code, the
+# hidden door and the dogs that come back, the safe room's log, down the escape shaft to the boathouse safe (battery
 # charger blueprint, binoculars, salves).
 #
 # Built by the recipe player (CIRecipe the_safe_room) through the editor's own operations.
@@ -314,10 +314,10 @@ prop saferoomhum zone.radius=5
 
 quest title=Behind the Bookshelf
 quest intro=A villa on a desert bluff, broken into one night. Somebody hid in it - and somebody else's dogs are still here. Start up the driveway.
-step reach|driveway|1|Climb the driveway to the villa on the bluff
-step read|Security log|1|Read the night guard's log in the gatehouse at the top of the driveway
+step read|Security log|1|Climb the driveway and read the night guard's log in the gatehouse
 step kill|Hyena|2|Deal with the dogs the intruders left in the garden behind the villa
-step collect|story:codepart|3|Find the three parts of the safe room's code: the gatehouse locker, the kitchen drawer, Lia's treasure box
+step collect|story:codepart|3|Find the code's three parts: the gatehouse locker, the kitchen drawer, Lia's treasure box
+step kill|Hyena|2|Enter the code at the study's keypad - and fight off the dogs that come back
 step read|Safe room log|1|Open the door behind the study's bookshelf and read the log inside
 step open|Boathouse safe|1|Take the escape shaft down to the boathouse and open its safe
 quest done=Mother and daughter got away in the little boat - and the intruders' boat is at the bottom of the bay. What they left in the boathouse is yours.

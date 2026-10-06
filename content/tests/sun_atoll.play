@@ -13,15 +13,15 @@ wait 5
 # desk. The projector has no films yet and the safe stays shut
 walk -42.5 14.5 to -38 14.5 to -31.8 14.5 h=0.9
 zone blockhouse
-expect step 1
+expect step 0
 walk -31.8 14.5 to -31.8 12 to -33 10 h=0.9 below=3.5
 read Dr. Varga's notebook
-expect step 2
+expect step 1
 use projector
 expect message threaded with nothing
 open Blockhouse safe
 expect message wired to the projector
-expect step 2
+expect step 1
 walk -33 10 to -32.5 6.5 to -31.5 5.6 h=0.9 below=3.5
 reach Blockhouse supply crate
 open Blockhouse supply crate
@@ -32,19 +32,20 @@ expect item Bolt 4
 walk -31.5 5.6 to -32.5 6.5 to -33 10 to -31.8 12 to -31.8 14.5 to -29 14.5 to -29 18 h=0.9 below=3.5
 zone bunker
 kill Roach
-expect step 3
+expect step 2
 walk -29 18 to -27 19 h=0.9 below=3.5
 reach Instrument locker
 open Instrument locker
 expect story dosimeter 1
-expect step 4
+expect step 3
 expect shown geiger
 
 # Out to ground zero in the lagoon: the stumps; down in the crater the tower camera's lead case (film 1); the sunken barrel
 zone groundzero
-expect step 5
+expect step 4
 open Tower camera's lead case
 expect story film 1
+expect step 5
 open Sunken barrel
 
 # The north post: out of the water up its ramp, in at the gate - the camera box (film 2)

@@ -3,7 +3,8 @@
 # cap on the summit (20 m) with Dr. Varga's sample case still on it, yellow crust on the rocks, and down on the north-east
 # beach the boathouse whose shutter is wired to the cap. Lift the case and the vent breathes out: forty seconds to reach
 # the boathouse before its shutter drops (a reset lever by the vent gives another forty).
-# Quest "Forty Seconds" (5 steps): a timed escape.
+# Quest "Forty Seconds" (5 steps): a timed escape - the manager's note, the gas mask in the store box, the sample case,
+# the run to the boathouse, the works' safe.
 #
 # Built by the recipe player (CIRecipe sulphur_vent) through the editor's own operations.
 include lib_rt
@@ -148,8 +149,8 @@ prop yellow tint.amount=0.7
 
 quest title=Forty Seconds
 quest intro=A sulphur works on a breathing volcano. The manager left a note on the works' board.
-step reach|works|1|Land and climb to the sulphur works
-step read|Works manager's note|1|Read the manager's note on the works' board
+step read|Works manager's note|1|Climb to the sulphur works and read the manager's note on its board
+step open|Works store box|1|Grab the gas mask from the works' store box before you go up
 step collect|story:sample|1|Lift Dr. Varga's sample case off the vent's cap
 step reach|boathouse|1|Run for the boathouse before its shutter drops
 step open|Works safe|1|Open the works' safe in the boathouse

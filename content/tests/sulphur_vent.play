@@ -10,10 +10,11 @@ expect animals Dolphin 2
 at -1 20.5 h=11.5
 walk -1 20 to -2 16 h=10.3
 zone works
-expect step 1
+expect step 0
 read Works manager's note
-expect step 2
+expect step 1
 open Works store box
+expect step 2
 open Bunkhouse locker
 open Sulphur barrel
 use ventlever
