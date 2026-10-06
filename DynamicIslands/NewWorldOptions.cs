@@ -52,6 +52,9 @@ namespace DynamicIslands.Editor
 				UIKit.Size(title.gameObject, -1, 18);
 				moreButton = UIKit.Button(head, "Get more...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 96, 20f, 11);
 				moreButton.name = "Button_GetMorePlans";
+				// (ROADMAP T6: look inside the plan before choosing it - its rules, what it does to Raft's story)
+				Button view = UIKit.Button(head, "View...", () => ShowPlan(Selected), "What the chosen plan does: its islands, when and where each comes, and Raft's story", 64, 20f, 11);
+				view.name = "Button_ViewPlan";
 				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
 					"Which islands the new world gets: pick a plan - each says what it does", 32f, 14);
 				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
@@ -125,6 +128,25 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
+		/// <summary>The plan's own description, its story and each of its rules in words (ROADMAP T6).</summary>
+		internal static string PlanText(WorldPlan p)
+		{
+			if (p == null) return "This plan isn't on this PC.";
+			var lines = new List<string>();
+			if (p.Description.Trim().Length > 0) lines.Add(p.Description.Trim());
+			lines.Add("Random islands while sailing: " + (p.Random ? "yes" : "no") + ".  Raft's story islands: " + (!p.RaftStory ? "off - the plan's own story" : p.LeaveOut.Count > 0 ? "on, without " + string.Join(", ", p.LeaveOut.ToArray()) : "on") + ".");
+			if (p.Rules.Count > 0) lines.Add("");
+			foreach (IntroRule r in p.Rules.Take(24)) lines.Add("• " + r.Describe());
+			if (p.Rules.Count > 24) lines.Add("... and " + (p.Rules.Count - 24) + " more rules");
+			return string.Join("\n", lines.ToArray());
+		}
+
+		static void ShowPlan(string name)
+		{
+			WorldPlan p = WorldPlan.Load(name);
+			InfoWindow.Open("Plan: " + name, PlanText(p), new InfoWindow.Choice("Close", null));
+		}
+
 		internal static List<DropList.Option> PlanOptions()
 		{
 			return WorldPlan.All().Select(n => WorldPlan.Load(n)).Where(p => p != null).Select(p => new DropList.Option(p.Name, p.Name, Describe(p))).ToList();

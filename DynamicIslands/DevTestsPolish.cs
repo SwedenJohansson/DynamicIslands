@@ -188,6 +188,36 @@ namespace DynamicIslands
 			if (ok) Log("PASS: editor light"); else Fail("editor light");
 		}
 
+		[ConsoleCommand(name: "CIViewPlan", docs: "Dev, main menu (the New Game box open, e.g. after CINewGameBoxShot): ROADMAP T6 - the plan box's View... shows what the chosen plan does; picture shot_view_plan.png")]
+		public static void ViewPlanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ViewPlanRoutine()); }
+
+		static IEnumerator ViewPlanRoutine()
+		{
+			bool ok = true;
+			string name = WorldPlan.All().FirstOrDefault(n => n == "The Long Voyage") ?? WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n));
+			WorldPlan p = name != null ? WorldPlan.Load(name) : null;
+			string text = NewWorldOptions.PlanText(p);
+			Check(ref ok, p != null && p.Rules.Count > 0 && text.Split('\n').Count(l => l.StartsWith("• ")) == Mathf.Min(24, p.Rules.Count), "the plan's text lists its rules (" + (p != null ? p.Rules.Count : 0) + ")");
+			string keep = WorldDirector.PendingPlan;
+			WorldDirector.PendingPlan = name;
+			// (Raft's New Game box opened, as a player clicks New Game)
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid() && b.gameObject.scene.isLoaded);
+			if (box != null && !box.gameObject.activeInHierarchy) { box.gameObject.SetActive(true); try { box.Close(); } catch { } box.Open(); yield return new WaitForSecondsRealtime(1.5f); }
+			UnityEngine.UI.Button view = Resources.FindObjectsOfTypeAll<UnityEngine.UI.Button>().FirstOrDefault(b => b.name == "Button_ViewPlan" && b.gameObject.activeInHierarchy);
+			Check(ref ok, view != null, "the New Game box's plan has a View... button");
+			if (view != null)
+			{
+				view.onClick.Invoke();
+				yield return new WaitForSecondsRealtime(0.6f);
+				Screenshot(new[] { "view_plan" });
+				yield return new WaitForSecondsRealtime(0.6f);
+			}
+			WorldDirector.PendingPlan = keep;
+			InfoWindow.Close();
+			if (box != null) try { box.Close(); } catch { }
+			if (ok) Log("PASS: view plan"); else Fail("view plan");
+		}
+
 		[ConsoleCommand(name: "CITestThisPlan", docs: "Dev, editor: ROADMAP T2b - World Plans' Test this plan: a small plan saved, a new world 'Plan test <time>' made with it, its island comes, Back to the editor in the world window, World Plans open again on the plan")]
 		public static void TestThisPlanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TestThisPlanRoutine()); }
 

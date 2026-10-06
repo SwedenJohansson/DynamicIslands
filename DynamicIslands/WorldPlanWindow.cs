@@ -301,7 +301,7 @@ namespace DynamicIslands.Editor
 			HelpMark(storyRow, HelpStory);
 			RectTransform descriptionRow = UIKit.Row(panel, 28f, 6f, "Description");
 			descriptionField = UIKit.Field(descriptionRow, "Description, shown when choosing the plan (e.g. A story across five islands)", "", 28f, "Shown in the New Game box");
-			descriptionField.characterLimit = 120;
+			descriptionField.characterLimit = 400; // (120 cut the library plans' descriptions short)
 			fields.Add(descriptionField);
 			HelpMark(descriptionRow, HelpDescription);
 			// (how to read a card, once, above them)
