@@ -144,6 +144,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The highest ground within radius of a point.</summary>
 		public Vector2 Highest(Vector2 around, float radius)
 		{
+			radius = Mathf.Min(radius, IslandGenerator.BuildArea.x / 2f); // (a .maptype's top:<n> can be any number: no further than the island's area)
 			Vector2 best = around;
 			float h = float.MinValue;
 			for (float x = -radius; x <= radius; x += 2f)
@@ -169,6 +170,9 @@ namespace DynamicIslands.Editor
 			}
 			return null;
 		}
+
+		/// <summary>Nothing this kit put is within apart of p (what Find keeps clear of).</summary>
+		public bool IsFree(Vector2 p, float apart) { return !placed.Any(q => (q - p).sqrMagnitude < apart * apart); }
 
 		/// <summary>Removes scattered nature (objects without settings) around a spot, so content isn't inside a tree.</summary>
 		public void Clear(Vector2 p, float radius)
@@ -512,7 +516,8 @@ namespace DynamicIslands.Editor
 			bool second = true;
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
-					if (rnd.NextDouble() > 0.12 || (x == 0 && z == 0)) // a few foundations are gone
+					// a few foundations are gone (not those under the pillars, the loot and the ladder: they'd hang in the air)
+					if (rnd.NextDouble() > 0.12 || (z == 0 && (x <= 1 || x == w - 1)) || (x == 1 && z == d - 1) || (x == w - 1 && z == 1))
 						k.Add("Block_Foundation", o + new Vector3(x * g, floatY, z * g), 0f, null, 0f);
 					else if (x == 1 && z == 0) second = false;
 			k.Add("Block_Pillar_Wood", o + new Vector3(-g / 2, deck, -g / 2), 0f, null, 0f);

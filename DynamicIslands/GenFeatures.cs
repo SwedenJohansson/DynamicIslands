@@ -52,6 +52,8 @@ namespace DynamicIslands.Editor
 			if (tools.Count > 0)
 			{
 				Vector2? p = k.Find(k.Mid, s.Radius * 0.9f, (above, slope) => above > 0.6f && above < 4f && slope < 15f, 6f);
+				// (no gentle shore - a steep island: anywhere dry, else its top; the tools open what was placed - the cage's bolt cutters are nowhere else)
+				if (!p.HasValue) p = k.Find(k.Mid, s.Radius, MapKit.Dry, 0f) ?? k.Highest(k.Mid, s.Radius * 0.5f);
 				if (p.HasValue) k.Chest("Loot_Chest", p.Value, "Explorer's chest", string.Join(";", tools.Distinct().Select(t => t + "*1").ToArray()) + ";Rope*3",
 					"", 0f);
 			}
