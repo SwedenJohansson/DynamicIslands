@@ -33,6 +33,8 @@ namespace DynamicIslands
 		public static int currentStyle = TerrainPainter.Tropical;
 		/// <summary>Island-wide settings of the island being edited (IslandProps: name shown to players, author, description); saved with it.</summary>
 		public static Dictionary<string, string> currentIslandProps = new Dictionary<string, string>();
+		/// <summary>The open island file's tagged tail (IslandFile.Tail: what a newer version wrote), saved with it again.</summary>
+		public static Dictionary<string, byte[]> currentIslandTail = new Dictionary<string, byte[]>();
 
 		/// <summary>
 		/// Editor Y of the sea for the island being edited: IslandFile.DefaultWaterLevel (20 m above the terrain's base)
@@ -438,6 +440,7 @@ namespace DynamicIslands
 			// The builder's saved object groups ("My groups")
 			instance.StartCoroutine(GroupLibrary.RegisterAll());
 			currentIslandProps = new Dictionary<string, string>();
+			currentIslandTail = new Dictionary<string, byte[]>();
 			// Raft's own ground textures are borrowed while the catalog loads its islands; a new island starts tropical,
 			// at sea level
 			currentElevation = 0f;
@@ -485,6 +488,7 @@ namespace DynamicIslands
 			currentIslandName = UnnamedIsland;
 			currentElevation = 0f;
 			currentIslandProps = new Dictionary<string, string>();
+			currentIslandTail = new Dictionary<string, byte[]>();
 			SetEditorStyle(TerrainPainter.Tropical);
 			terraineditor.paintMask = new float[data.alphamapResolution, data.alphamapResolution];
 			SetEditorWaterLevel(IslandFile.DefaultWaterLevel);
@@ -549,6 +553,7 @@ namespace DynamicIslands
 		{
 			IslandFile island = IslandFile.Capture(name, terraineditor.terrain, GameObject.Find("PlacedObjects").transform, terraineditor.paintMask);
 			island.Elevation = currentElevation;
+			island.Tail = new Dictionary<string, byte[]>(currentIslandTail);
 			island.Style = currentStyle == TerrainPainter.Tropical ? "" : TerrainPainter.StyleName(currentStyle);
 			island.Props = new Dictionary<string, string>(currentIslandProps);
 			return island;
@@ -703,6 +708,7 @@ namespace DynamicIslands
 
 				currentIslandName = name;
 				currentElevation = island.Elevation;
+				currentIslandTail = new Dictionary<string, byte[]>(island.Tail ?? new Dictionary<string, byte[]>());
 				currentIslandProps = new Dictionary<string, string>(island.Props);
 				// Undo steps refer to the terrain/objects that were just replaced
 				CommandUndoRedo.UndoRedoManager.Clear();
@@ -811,6 +817,8 @@ namespace DynamicIslands
 		/// <param name="broadcast">host spawning a new island: tell clients and remember it in the world's island list</param>
 		/// <param name="entry">host (re)loading an island that is already in the world's island list (automatic
 		/// spawns and streaming): its Root is set once spawned, and nothing is shown to the player</param>
+		static readonly HashSet<string> remaking = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
 		public IEnumerator SpawnIslandFile(string name, Vector3 position, bool broadcast, IslandWorldState.Entry entry = null)
 		{
 			bool quiet = entry != null;
@@ -819,6 +827,8 @@ namespace DynamicIslands
 			try
 			{
 				if (File.Exists(path)) island = IslandFile.Load(path);
+				// (a generated island of the world whose file was deleted: made again from its name - ROADMAP R15)
+				else if (entry != null && Raft_Network.IsHost && CustomIslandSpawner.RemakeOf(name) != null && !remaking.Contains(name)) { remaking.Add(name); }
 				// (one of the world's islands: said which, and that the rest plays - a player hosting a world they got as a
 				// folder, without ever joining it, has none of the islands made on the other PC)
 				else if (entry != null) Notify("This world's island '" + entry.HostName + "' isn't on this PC, so it is left out - the rest of the world plays. " +
@@ -829,6 +839,12 @@ namespace DynamicIslands
 			{
 				Debug.LogError("[CUSTOM ISLANDS] Could not read " + path + ": " + e);
 				Notify("Could not read island '" + name + "' - see console (F10)", true);
+			}
+			if (island == null && remaking.Contains(name))
+			{
+				yield return CustomIslandSpawner.RemakeAndSpawn(CustomIslandSpawner.RemakeOf(name), entry);
+				remaking.Remove(name);
+				yield break;
 			}
 			if (island == null)
 			{

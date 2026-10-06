@@ -95,6 +95,14 @@ namespace DynamicIslands.Editor
 
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
 
+		/// <summary>
+		/// The tagged tail (ROADMAP R12: forward compatibility): after format 4's data, any number of "tag, length, bytes"
+		/// blocks, ended by an empty tag. What a later version of the mod adds goes here under a tag of its own instead of a
+		/// new format number, so this version still opens the file: tags it doesn't know are skipped, and kept as they are
+		/// when the island is saved again (nothing a newer version wrote is lost). Empty: nothing is written (files as before).
+		/// </summary>
+		public Dictionary<string, byte[]> Tail = new Dictionary<string, byte[]>();
+
 		public void Save(string path)
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
@@ -104,7 +112,7 @@ namespace DynamicIslands.Editor
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
 				// Each file uses the oldest format that holds what it needs, so simple islands stay readable by older versions of the mod
-				bool v4 = NeedsFormat4, v3 = v4 || NeedsFormat3;
+				bool v4 = NeedsFormat4 || (Tail != null && Tail.Count > 0), v3 = v4 || NeedsFormat3;
 				header.Write(v4 ? 4 : v3 ? 3 : 2);
 				header.Flush();
 
@@ -144,6 +152,15 @@ namespace DynamicIslands.Editor
 						List<int> withProps = Enumerable.Range(0, Objects.Count).Where(i => Objects[i].Props != null && Objects[i].Props.Count > 0).ToList();
 						w.Write(withProps.Count);
 						foreach (int i in withProps) { w.Write(i); WriteProps(w, Objects[i].Props); }
+						if (Tail != null && Tail.Count > 0)
+						{
+							foreach (var kv in Tail.Where(kv => !string.IsNullOrEmpty(kv.Key)))
+							{
+								byte[] data = kv.Value ?? new byte[0];
+								w.Write(kv.Key); w.Write(data.Length); w.Write(data);
+							}
+							w.Write("");
+						}
 					}
 					w.Flush();
 					deflate.Finish();
@@ -231,6 +248,19 @@ namespace DynamicIslands.Editor
 							Dictionary<string, string> props = ReadProps(r);
 							if (i >= 0 && i < island.Objects.Count) island.Objects[i].Props = props;
 						}
+						// The tagged tail, if any (files without one end here)
+						try
+						{
+							for (int n = 0; n < 4096; n++)
+							{
+								string tag = r.ReadString();
+								if (tag.Length == 0) break;
+								int len = r.ReadInt32();
+								if (len < 0 || len > 256 * 1024 * 1024) throw new InvalidDataException("Invalid tail block '" + tag + "' (" + len + " bytes)");
+								island.Tail[tag] = ReadExactly(r, len);
+							}
+						}
+						catch (EndOfStreamException) { }
 					}
 					return island;
 				}

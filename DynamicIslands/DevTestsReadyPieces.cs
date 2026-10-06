@@ -168,5 +168,68 @@ namespace DynamicIslands
 			Check(ref ok, IslandGenSettings.FromText(new IslandGenSettings { Features = 4 }.ToText()).Features == 4, "a preset keeps the number");
 			if (ok) Log("PASS: generator features"); else Fail("generator features");
 		}
+			[ConsoleCommand(name: "CIFormatTail", docs: "Dev, anywhere: ROADMAP R12 - the island file's tagged tail: a file with tags saves and loads them (unknown ones kept when saved again), a file without stays as before (format and bytes), and Raft's renumbered scenes are found by their island's name (R11)")]
+		public static void FormatTailCommand(string[] args)
+		{
+			bool ok = true;
+			const string isl = "citest-tail";
+			string path = IslandSpawner.PathFor(isl);
+			try
+			{
+				string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().First(n => !n.StartsWith("ci") && !IslandNetwork.IsDownloadName(n));
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+				Check(ref ok, f.Tail.Count == 0, "a file of today has no tail");
+				// (without a tail the bytes are what they were: hashes of saved worlds' islands don't change)
+				f.Save(path);
+				byte[] plain = System.IO.File.ReadAllBytes(path);
+				IslandFile again = IslandFile.Load(path);
+				again.Save(path);
+				Check(ref ok, System.IO.File.ReadAllBytes(path).SequenceEqual(plain), "saved again without a tail: the same bytes");
+				f.Tail["future.weather"] = new byte[] { 1, 2, 3, 4, 5 };
+				f.Tail["future.empty"] = new byte[0];
+				f.Save(path);
+				IslandFile back = IslandFile.Load(path);
+				Check(ref ok, back.Tail.Count == 2 && back.Tail["future.weather"].SequenceEqual(new byte[] { 1, 2, 3, 4, 5 }) && back.Tail["future.empty"].Length == 0 && back.Objects.Count == f.Objects.Count,
+					"tags saved and read: " + string.Join(", ", back.Tail.Select(kv => kv.Key + " (" + kv.Value.Length + " bytes)").ToArray()));
+				back.Save(path);
+				Check(ref ok, IslandFile.Load(path).Tail.ContainsKey("future.weather"), "a tag this version doesn't know is kept when the island is saved again");
+				IslandFile fromBytes = IslandFile.FromBytes(System.IO.File.ReadAllBytes(path), isl);
+				Check(ref ok, fromBytes.Objects.Count == f.Objects.Count && fromBytes.Props.Count == f.Props.Count, "the island itself reads as before");
+			}
+			catch (Exception ex) { Check(ref ok, false, "no errors: " + ex); }
+			finally { try { if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch { } }
+			// R11: Raft's scenes renumbered by an update
+			string vasa = PlaceableCatalog.ResolveScene("44#Landmark_Vasagatan");
+			Check(ref ok, PlaceableCatalog.ResolveScene("99#Landmark_Vasagatan") == vasa && vasa.Contains("Landmark_Vasagatan"), "a renumbered scene is found by its island's name (99#Landmark_Vasagatan -> " + vasa + ")");
+			Check(ref ok, PlaceableCatalog.ResolveScene("98#Landmark_Nowhere") == "98#Landmark_Nowhere", "an unknown one stays as it was");
+			if (ok) Log("PASS: format tail"); else Fail("format tail");
+		}
+
+		[ConsoleCommand(name: "CIRemakeMissing", docs: "Dev, in game (host): ROADMAP R15 - generated island names read back (gen-tropical-1234, -2, a map type, not a player's island); a world's generated island whose file is gone is made again in its place and spawns")]
+		public static void RemakeMissingCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RemakeMissingRoutine()); }
+
+		static IEnumerator RemakeMissingRoutine()
+		{
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			bool ok = true;
+			Check(ref ok, CustomIslandSpawner.RemakeOf("gen-tropical-1234") != null && CustomIslandSpawner.RemakeOf("gen-snowy-1234-2") != null && CustomIslandSpawner.RemakeOf("gen-" + GhostRafts.TypeName + "-55") != null && CustomIslandSpawner.RemakeOf("gen-wreck-77") != null,
+				"generated names read back (random style, a -2 copy, map types)");
+			Check(ref ok, CustomIslandSpawner.RemakeOf("myisland") == null && CustomIslandSpawner.RemakeOf("gen-nosuchkind-12") == null, "a player's island or an unknown kind: not made again");
+			string name = "gen-tropical-4242";
+			if (System.IO.File.Exists(IslandSpawner.PathFor(name))) System.IO.File.Delete(IslandSpawner.PathFor(name));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, 120f, 600f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			IslandWorldState.Entry e = IslandWorldState.Add(name, spot.Value, null, false);
+			e.Loading = true;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true, e);
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, System.IO.File.Exists(IslandSpawner.PathFor(name)) && e.Root != null && !e.Failed, "the missing '" + name + "' is made again and spawns (" + (e.Root != null ? "spawned" : "not spawned") + ")");
+			IslandFile f = System.IO.File.Exists(IslandSpawner.PathFor(name)) ? IslandFile.Load(IslandSpawner.PathFor(name)) : null;
+			Check(ref ok, f != null && (string.IsNullOrEmpty(f.Style) || f.Style.Equals("Tropical", StringComparison.OrdinalIgnoreCase)), "of the same kind: " + (f != null ? (string.IsNullOrEmpty(f.Style) ? "Tropical" : f.Style) : "-"));
+			IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			try { System.IO.File.Delete(IslandSpawner.PathFor(name)); } catch { }
+			if (ok) Log("PASS: remake missing"); else Fail("remake missing");
+		}
 	}
 }

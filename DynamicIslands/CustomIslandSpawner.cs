@@ -344,6 +344,66 @@ namespace DynamicIslands.Editor
 			yield return DynamicIslands.instance.SpawnIslandFile(name, entry.Position, true, entry);
 		}
 
+		/// <summary>
+		/// A generated island's file made again from its name (ROADMAP R15: a world whose gen-&lt;kind&gt;-&lt;seed&gt;[-n] file was
+		/// deleted): a new island of the same kind and seed - the same style and seed for a random one, the map type's
+		/// settings rolled from the seed for the others. Not the very same island (its size was rolled too), but one of its
+		/// kind in its place. Null when the name isn't one of those.
+		/// </summary>
+		internal static Func<IslandFile> RemakeOf(string name)
+		{
+			if (name == null || !name.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase) || IslandNetwork.IsDownloadName(name)) return null;
+			List<string> parts = name.Substring(GeneratedPrefix.Length).Split('-').ToList();
+			int seed, extra;
+			// (a name made free with -2, -3...: the seed is the number before it)
+			if (parts.Count >= 3 && int.TryParse(parts[parts.Count - 1], out extra) && int.TryParse(parts[parts.Count - 2], out seed)) parts.RemoveAt(parts.Count - 1);
+			if (parts.Count < 2 || !int.TryParse(parts[parts.Count - 1], out seed)) return null;
+			string kind = string.Join("-", parts.Take(parts.Count - 1).ToArray());
+			int style = Array.FindIndex(TerrainPainter.Styles, st => st.Name.Equals(kind, StringComparison.OrdinalIgnoreCase));
+			if (style >= 0)
+			{
+				return () =>
+				{
+					IslandGenSettings s = IslandGenerator.RandomSettings(new System.Random(seed), new[] { style });
+					s.Seed = seed; s.Style = style;
+					return IslandGenerator.CreateFile(s, name);
+				};
+			}
+			MapType type = MapTypes.Get(kind);
+			if (type == null) return null;
+			return () =>
+			{
+				float elevation;
+				IslandGenSettings s = MapTypes.Roll(type, new System.Random(seed), out elevation);
+				s.Seed = seed;
+				return MapTypes.Create(type, s, elevation, name);
+			};
+		}
+
+		/// <summary>Host: the world's generated island whose file is gone, made again in its place (its old state cleared) and spawned.</summary>
+		internal static System.Collections.IEnumerator RemakeAndSpawn(Func<IslandFile> create, IslandWorldState.Entry entry)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			string name = entry.HostName;
+			try
+			{
+				IslandFile file = create();
+				file.Save(IslandSpawner.PathFor(name));
+				radiusCache.Remove(name); elevationCache.Remove(name);
+			}
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Making '" + name + "' again failed: " + e);
+				entry.Loading = false; entry.Failed = true;
+				yield break;
+			}
+			entry.State.Clear();
+			entry.Hash = null;
+			DynamicIslands.Notify("This world's island '" + name + "' was missing from Mods\\DynamicIslands: a new island of the same kind was made in its place", true);
+			Debug.Log("[CUSTOM ISLANDS] Made '" + name + "' again (its file was gone)");
+			yield return DynamicIslands.instance.SpawnIslandFile(name, entry.Position, true, entry);
+		}
+
 		static string Skip(string why)
 		{
 			Debug.Log("[CUSTOM ISLANDS] Auto spawn skipped: " + why);

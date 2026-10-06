@@ -994,12 +994,49 @@ namespace DynamicIslands.Editor
 			return index.Values.Where(e => e.Category == category).All(e => prototypes.ContainsKey(e.Name) || loadedScenes.Contains(e.Scene));
 		}
 
+		static readonly Dictionary<string, string> resolved = new Dictionary<string, string>();
+		static bool staleTold;
+
+		/// <summary>
+		/// The scene to load for an index entry's scene (ROADMAP R11): the same when Raft still has it; after a Raft update
+		/// that renumbered or renamed its island scenes ("44#Landmark_Vasagatan" became "45#Landmark_Vasagatan"), the scene
+		/// of the same island ("Landmark_Vasagatan", and its variant after the second #) - so worlds keep finding objects
+		/// before the editor scans again.
+		/// </summary>
+		internal static string ResolveScene(string sceneName)
+		{
+			string got;
+			if (resolved.TryGetValue(sceneName ?? "", out got)) return got;
+			List<string> scenes = LandmarkScenes();
+			got = sceneName;
+			if (!scenes.Contains(sceneName) && sceneName != null && sceneName.Contains("#"))
+			{
+				string[] parts = sceneName.Split('#');
+				string island = parts.Length > 1 ? parts[1] : "", variant = parts.Length > 2 ? parts[2] : "";
+				string match = scenes.FirstOrDefault(s => { string[] p = s.Split('#'); return p.Length > 1 && p[1] == island && (p.Length > 2 ? p[2] : "") == variant; })
+					?? scenes.FirstOrDefault(s => { string[] p = s.Split('#'); return p.Length > 1 && p[1] == island; });
+				if (match != null)
+				{
+					got = match;
+					Debug.Log("[CUSTOM ISLANDS] Raft's scene '" + sceneName + "' is now '" + match + "' (the object index is from an older Raft)");
+				}
+			}
+			resolved[sceneName ?? ""] = got;
+			// (in a world, once: the editor scans Raft's islands again)
+			if (!IndexIsCurrent && !staleTold && !DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded)
+			{
+				staleTold = true;
+				DynamicIslands.Notify("Raft was updated since the mod's object index was made: open the island editor once to scan Raft's islands again (until then an object of a custom island may be missing)", true);
+			}
+			return got;
+		}
+
 		static IEnumerator LoadScene(string sceneName)
 		{
 			while (loadingScenes.Contains(sceneName)) yield return null;
 			if (loadedScenes.Contains(sceneName)) yield break;
 			loadingScenes.Add(sceneName);
-			try { yield return Guarded(LoadSceneObjects(sceneName), "Loading objects from " + sceneName); }
+			try { yield return Guarded(LoadSceneObjects(ResolveScene(sceneName)), "Loading objects from " + sceneName); }
 			finally
 			{
 				loadingScenes.Remove(sceneName);

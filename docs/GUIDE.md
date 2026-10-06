@@ -2529,6 +2529,22 @@ save). Changes made while Raft runs can be lost or mixed in half-way.
 2. Write decimals with a dot (`0.5`, not `0,5`), even on a PC set to another language.
 3. Don't edit the files in `worlds\` at all - and leave their first lines alone: Tidy up and host swap read them.
 
+#### After a Raft update: open the editor once
+
+**Why:** the mod keeps an index of where each of Raft's island objects comes from (`catalog_index.txt`). After a Raft
+update it is made again the next time the editor opens. Until then, in a world, the mod still finds Raft's island
+scenes by their names when Raft has renumbered them, and says once that the index is old - but an object Raft renamed or
+removed can be missing on a custom island.
+
+**What to do:** open the island editor once after Raft updates (the scan takes a minute or two, in the background).
+
+#### A generated island's file was deleted
+
+A world's islands made by the generator while sailing (`gen-<kind>-<seed>` in `Mods\DynamicIslands`) are made again
+from their names when their file is gone: an island of the same kind and seed takes its place (not the very same one -
+its size was chosen by chance too), and the host is told. Islands you made yourself can't be made again: keep them (My
+islands... shows which worlds use each).
+
 #### Keep Raft out of OneDrive and Program Files
 
 **Why:** the mod writes its files next to Raft (`<Raft>\Mods\DynamicIslands`): islands, plans, the world lists. In
