@@ -213,6 +213,7 @@
     <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
+    <Compile Include="DevTestsX5.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
