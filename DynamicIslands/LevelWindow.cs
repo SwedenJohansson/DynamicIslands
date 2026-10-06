@@ -551,10 +551,13 @@ namespace DynamicIslands.Editor
 
 	/// <summary>
 	/// The stats page (K) in a world with the level up system on: the level and EXP, the monsters defeated, and the nine stats to put the
-	/// level's points into (+1% a point, at most 10 each). Points put in can be taken back until the page is closed.
+	/// level's points into (+1% a point, at most 15 each). Points put in can be taken back until the page is closed.
 	/// </summary>
 	public class LevelWindow : MonoBehaviour
 	{
+		/// <summary>A point's box: 15 of them fit where 10 boxes of 17 px were (15 points since 2026-10-06).</summary>
+		const int PipWidth = 11;
+
 		static LevelWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
@@ -659,12 +662,12 @@ namespace DynamicIslands.Editor
 				UIKit.Size(name.gameObject, 118, -1, 0);
 				RectTransform pipRow = UIKit.Rect("Pips", row);
 				UIKit.Horizontal(pipRow.gameObject, 3f);
-				UIKit.Size(pipRow.gameObject, 10 * 17 + 9 * 3, 16, 0);
+				UIKit.Size(pipRow.gameObject, LevelRules.MaxPoints * PipWidth + (LevelRules.MaxPoints - 1) * 3, 16, 0);
 				instance.pips[i] = new Image[LevelRules.MaxPoints];
 				for (int p = 0; p < LevelRules.MaxPoints; p++)
 				{
 					RectTransform pip = UIKit.Rect("Pip" + p, pipRow);
-					UIKit.Size(pip.gameObject, 17, 16, 0);
+					UIKit.Size(pip.gameObject, PipWidth, 16, 0);
 					instance.pips[i][p] = UIKit.Background(pip.gameObject, PipOff, 3);
 				}
 				instance.values[i] = UIKit.Label(row, "", 14, UIKit.Accent, TextAnchor.MiddleRight, FontStyle.Normal, "Value");

@@ -498,7 +498,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
   | 5 | 6 | 800 | 20 | 2100 |
   | *n* | *n*+1 | 200 × (*n* − 1) | 5 × (*n* − 1) | |
 
-- **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with ten pips each. **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**, and a stat takes at most **10 points** (+10%). All 90 points are there at level 46. **The levels go on after that**, without points: the level up box says every stat is full.
+- **Stat points:** every level gives **2 points**. Spend them on the **stats page**. The page shows the level, the EXP bar, the monsters defeated and nine stats with fifteen pips each (at most 15 points, +15%, in a stat). **+** puts a point in, and **−** takes one back as long as the page is open. Each point is **+1%**, and a stat takes at most **10 points** (+10%). All 90 points are there at level 46. **The levels go on after that**, without points: the level up box says every stat is full.
 
   | Stat | What a point does |
   |---|---|

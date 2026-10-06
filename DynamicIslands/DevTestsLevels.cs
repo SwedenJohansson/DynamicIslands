@@ -41,8 +41,8 @@ namespace DynamicIslands
 				"EXP at which levels 2-5 start: " + string.Join(", ", Enumerable.Range(2, 4).Select(l => LevelRules.TotalFor(l).ToString()).ToArray()));
 			Check(ref ok, LevelRules.LevelOf(0) == 1 && LevelRules.LevelOf(99) == 1 && LevelRules.LevelOf(100) == 2 && LevelRules.LevelOf(299) == 2 && LevelRules.LevelOf(300) == 3 && LevelRules.LevelOf(1300) == 5,
 				"levels from EXP at the edges (99 -> 1, 100 -> 2, 299 -> 2, 300 -> 3, 1300 -> 5)");
-			Check(ref ok, Mathf.Approximately(LevelRules.Factor(0), 1f) && Mathf.Approximately(LevelRules.Factor(4), 1.04f) && Mathf.Approximately(LevelRules.Factor(10), 1.1f) && Mathf.Approximately(LevelRules.Factor(15), 1.1f),
-				"a point is +1%, 10 points at most (+10%)");
+			Check(ref ok, Mathf.Approximately(LevelRules.Factor(0), 1f) && Mathf.Approximately(LevelRules.Factor(4), 1.04f) && Mathf.Approximately(LevelRules.Factor(15), 1.15f) && Mathf.Approximately(LevelRules.Factor(20), 1.15f),
+				"a point is +1%, 15 points at most (+15%)");
 			// A monster's EXP: from its health and its damage, both count
 			int weak = LevelRules.XpOf(50f, 5f), tough = LevelRules.XpOf(800f, 5f), biting = LevelRules.XpOf(50f, 40f);
 			Check(ref ok, weak >= 1 && tough > weak && biting > weak && LevelRules.XpOf(0f, 0f) == 1, "EXP grows with health and with damage (" + weak + " / tougher " + tough + " / biting harder " + biting + "), at least 1");
@@ -57,11 +57,13 @@ namespace DynamicIslands
 			Check(ref ok, LevelRules.StatCount == 9 && LevelRules.StatNames[LevelRules.Thirst] == "Thirst" && LevelRecord.Decode("300|0,0,0,0,0,0,0,1,0").Points[LevelRules.Thirst] == 1, "nine stats, Thirst among them");
 			Check(ref ok, LevelRecord.Decode("300|1,0,0,0,0,0,0,0").Kills == 0 && LevelRecord.Decode("300|1,0,0,0,0,0,0,0").Points[0] == 1, "an older record (eight stats, no kills) still reads");
 			// All stats full: the levels go on, without points
-			Check(ref ok, LevelRules.AllPoints == 90 && LevelRules.PointsAt(46) == 90 && LevelRules.PointsAt(47) == 90 && LevelRules.PointsAt(80) == 90 && LevelRules.PointsAt(45) == 88, "every stat full takes 90 points, at level 46; later levels give none");
-			var full = new LevelRecord { Xp = LevelRules.TotalFor(60), Points = Enumerable.Repeat(10, LevelRules.StatCount).ToArray() };
-			Check(ref ok, full.Level == 60 && full.Unspent == 0 && full.AllFull, "level 60 with every stat full: nothing to spend");
-			var nearly = new LevelRecord { Xp = LevelRules.TotalFor(60), Points = new[] { 10, 10, 10, 10, 10, 10, 10, 10, 0 } };
-			Check(ref ok, nearly.Unspent == 10 && !nearly.AllFull, "level 60 with 80 spent: the last 10 points are still there");
+			Check(ref ok, LevelRules.AllPoints == 135 && LevelRules.PointsAt(69) == 135 && LevelRules.PointsAt(70) == 135 && LevelRules.PointsAt(100) == 135 && LevelRules.PointsAt(68) == 134, "every stat full takes 135 points, at level 69; later levels give none");
+			var full = new LevelRecord { Xp = LevelRules.TotalFor(80), Points = Enumerable.Repeat(15, LevelRules.StatCount).ToArray() };
+			Check(ref ok, full.Level == 80 && full.Unspent == 0 && full.AllFull, "level 80 with every stat full: nothing to spend");
+			var nearly = new LevelRecord { Xp = LevelRules.TotalFor(80), Points = new[] { 15, 15, 15, 15, 15, 15, 15, 15, 0 } };
+			Check(ref ok, nearly.Unspent == 15 && !nearly.AllFull, "level 80 with 120 spent: the last 15 points are still there");
+			var old = LevelRecord.Decode(LevelRules.TotalFor(60) + "|10,10,10,10,10,10,10,10,10");
+			Check(ref ok, old.Spent == 90 && !old.AllFull, "a record from the 10-point cap reads as it was, with room for 5 more in each stat");
 			LevelRecord cheat = LevelRecord.Decode("150|10,10,10,0,0,0,0,0");
 			Check(ref ok, cheat.Level == 2 && cheat.Spent == 2, "no more points than the level gives (level 2 of a hand-edited file keeps " + cheat.Spent + ")");
 			Check(ref ok, LevelRecord.Decode("").Xp == 0 && LevelRecord.Decode("x|y").Xp == 0 && LevelRecord.Decode("-5").Xp == 0, "broken records read as nothing");
@@ -91,7 +93,7 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.3f);
 			GameObject gw = GameObject.Find("GeneratorWindow");
 			Transform[] rows = gw != null ? gw.GetComponentsInChildren<Transform>(true).Where(t => t.name == "Level up").ToArray() : new Transform[0];
-			Check(ref ok, rows.Length == 3, "the generator has a Level up choice on its three tabs (" + rows.Length + ")");
+			Check(ref ok, rows.Length == 2, "the generator has a Level up choice on the Normal and Ready-made tabs - Randomize existing uses the Normal tab's (" + rows.Length + ")");
 			Transform shown = rows.FirstOrDefault(t => t.gameObject.activeInHierarchy);
 			Button genOn = shown != null ? shown.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name.StartsWith("Button_On")) : null;
 			if (genOn != null) genOn.onClick.Invoke();
@@ -342,48 +344,48 @@ namespace DynamicIslands
 			LevelWindow.Close();
 			Check(ref ok, !LevelWindow.IsOpen, "the page closes");
 
-			// At most 10 points in a stat
-			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(12) });
-			for (int i = 0; i < 10; i++) PlayerLevels.Spend(LevelRules.Jump);
-			Check(ref ok, PlayerLevels.Mine.Points[LevelRules.Jump] == 10 && !PlayerLevels.Spend(LevelRules.Jump) && PlayerLevels.Mine.Unspent == 12, "10 points in Jump height, not 11 (" + PlayerLevels.Mine.Unspent + " left for the others)");
+			// At most 15 points in a stat
+			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(15) });
+			for (int i = 0; i < 15; i++) PlayerLevels.Spend(LevelRules.Jump);
+			Check(ref ok, PlayerLevels.Mine.Points[LevelRules.Jump] == 15 && !PlayerLevels.Spend(LevelRules.Jump) && PlayerLevels.Mine.Unspent == 13, "15 points in Jump height, not 16 (" + PlayerLevels.Mine.Unspent + " left for the others)");
 
 			// Every stat full: still levelling up, without points
-			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(47) - 1, Points = Enumerable.Repeat(10, LevelRules.StatCount).ToArray(), Kills = 900 });
-			Check(ref ok, PlayerLevels.Mine.Level == 46 && PlayerLevels.Mine.Unspent == 0 && PlayerLevels.Mine.AllFull, "level 46 with every stat full");
+			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(70) - 1, Points = Enumerable.Repeat(LevelRules.MaxPoints, LevelRules.StatCount).ToArray(), Kills = 900 });
+			Check(ref ok, PlayerLevels.Mine.Level == 69 && PlayerLevels.Mine.Unspent == 0 && PlayerLevels.Mine.AllFull, "level 69 with every stat full");
 			PlayerLevels.GiveXp(1, null);
-			Check(ref ok, PlayerLevels.Mine.Level == 47 && PlayerLevels.Mine.Unspent == 0 && LevelHud.LastAnnounce.StartsWith("LEVEL 47!") && LevelHud.LastAnnounce.Contains("no more points"),
-				"level 47 still comes, with no points: " + LevelHud.LastAnnounce);
+			Check(ref ok, PlayerLevels.Mine.Level == 70 && PlayerLevels.Mine.Unspent == 0 && LevelHud.LastAnnounce.StartsWith("LEVEL 70!") && LevelHud.LastAnnounce.Contains("no more points"),
+				"level 70 still comes, with no points: " + LevelHud.LastAnnounce);
 			LevelWindow.Open();
 			yield return null;
-			Check(ref ok, LevelWindow.Shown.StartsWith("LEVEL 47 | Every stat is full") && LevelWindow.Shown.Contains("Monsters defeated: 900") && LevelWindow.Shown.Contains("Thirst +10% max"), "the page says so, with the monsters defeated: " + LevelWindow.Shown);
+			Check(ref ok, LevelWindow.Shown.StartsWith("LEVEL 70 | Every stat is full") && LevelWindow.Shown.Contains("Monsters defeated: 900") && LevelWindow.Shown.Contains("Thirst +15% max"), "the page says so, with the monsters defeated: " + LevelWindow.Shown);
 			Screenshot(new[] { "levels_page_full" });
 			yield return new WaitForSeconds(0.5f);
 			LevelWindow.Close();
 
 			// Every stat on Raft's player
-			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(46), Points = Enumerable.Repeat(10, LevelRules.StatCount).ToArray() });
+			PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(69), Points = Enumerable.Repeat(LevelRules.MaxPoints, LevelRules.StatCount).ToArray() });
 			PersonController pc = player.PersonController;
 			float walk = pc.normalSpeed, run = pc.sprintSpeed, swim = pc.swimSpeed, jump = pc.jumpSpeed;
 			StatApply.Saved sv = StatApply.Boost(pc);
-			Check(ref ok, Near(pc.normalSpeed, walk * 1.1f) && Near(pc.sprintSpeed, run * 1.1f) && Near(pc.swimSpeed, swim * 1.1f) && Near(pc.jumpSpeed * pc.jumpSpeed, jump * jump * 1.1f),
+			Check(ref ok, Near(pc.normalSpeed, walk * 1.15f) && Near(pc.sprintSpeed, run * 1.15f) && Near(pc.swimSpeed, swim * 1.15f) && Near(pc.jumpSpeed * pc.jumpSpeed, jump * jump * 1.15f),
 				"while Raft moves the player: walk " + walk.ToString("F2") + " -> " + pc.normalSpeed.ToString("F2") + ", run " + run.ToString("F2") + " -> " + pc.sprintSpeed.ToString("F2") + ", swim " + swim.ToString("F2") + " -> " + pc.swimSpeed.ToString("F2") +
-				", jump " + jump.ToString("F2") + " -> " + pc.jumpSpeed.ToString("F2") + " m/s (10% higher)");
+				", jump " + jump.ToString("F2") + " -> " + pc.jumpSpeed.ToString("F2") + " m/s (15% higher)");
 			StatApply.Restore(pc, sv);
 			Check(ref ok, pc.normalSpeed == walk && pc.sprintSpeed == run && pc.swimSpeed == swim && pc.jumpSpeed == jump, "and Raft's own numbers after (Raft's flippers still change them as usual)");
 			yield return new WaitForSeconds(0.6f);
 			Stat_Health health = player.Stats.stat_health;
 			float baseMax = StatApply.HealthBase;
-			Check(ref ok, baseMax > 0f && Near(health.Max, baseMax * 1.1f), "maximum health " + baseMax.ToString("F0") + " -> " + health.Max.ToString("F1"));
+			Check(ref ok, baseMax > 0f && Near(health.Max, baseMax * 1.15f), "maximum health " + baseMax.ToString("F0") + " -> " + health.Max.ToString("F1"));
 			Stat_Consumable hunger = player.Stats.stat_hunger.normalConsumable;
 			float hungerLost = hunger.LostPerSecond;
 			PlayerLevels.Mine.Points[LevelRules.Hunger] = 0;
 			float hungerRaft = hunger.LostPerSecond;
-			Check(ref ok, hungerRaft > 0f && Near(hungerLost, hungerRaft / 1.1f), "hunger drains " + hungerRaft.ToString("F4") + " -> " + hungerLost.ToString("F4") + " a second (lasts 10% longer)");
+			Check(ref ok, hungerRaft > 0f && Near(hungerLost, hungerRaft / 1.15f), "hunger drains " + hungerRaft.ToString("F4") + " -> " + hungerLost.ToString("F4") + " a second (lasts 15% longer)");
 			Stat_Consumable thirst = player.Stats.stat_thirst.normalConsumable;
 			float thirstLost = thirst.LostPerSecond;
 			PlayerLevels.Mine.Points[LevelRules.Thirst] = 0;
 			float thirstRaft = thirst.LostPerSecond;
-			Check(ref ok, thirstRaft > 0f && Near(thirstLost, thirstRaft / 1.1f), "thirst drains " + thirstRaft.ToString("F4") + " -> " + thirstLost.ToString("F4") + " a second (lasts 10% longer)");
+			Check(ref ok, thirstRaft > 0f && Near(thirstLost, thirstRaft / 1.15f), "thirst drains " + thirstRaft.ToString("F4") + " -> " + thirstLost.ToString("F4") + " a second (lasts 15% longer)");
 			PlayerLevels.SetMine(new LevelRecord());
 			yield return new WaitForSeconds(0.6f);
 			Check(ref ok, Near(health.Max, baseMax) && health.Value <= baseMax, "no points: Raft's health again (" + health.Max.ToString("F0") + ")");

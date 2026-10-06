@@ -2216,7 +2216,7 @@ button sits next to the bar.
 ![The level bar and the Stats button](images/levels-bar.jpg)
 *The EXP bar with its star, styled like Raft's thirst, hunger and health bars, and the Stats button while the inventory is open.*
 
-Every level gives **2 stat points**. Each point makes a stat **1% better**, and a stat takes at most 10 points (+10%):
+Every level gives **2 stat points**. Each point makes a stat **1% better**, and a stat takes at most 15 points (+15%):
 
 | Stat | A point makes it |
 |---|---|
@@ -2231,7 +2231,7 @@ Every level gives **2 stat points**. Each point makes a stat **1% better**, and 
 *The stats page (K): the level, the EXP, the monsters you defeated, and the nine stats. **+** puts a point in, **−**
 takes it back while the page is open.*
 
-All 90 points are there at level 46. After that the levels go on, without points.
+All 135 points are there at level 69 (a stat could take 10 points before 2026-10-06; points already spent stay). After that the levels go on, without points.
 
 **Playing together:** each player has their own level, and the host keeps it with the world. A player who joins again
 gets theirs back. The host works out everyone's EXP, so a monster is worth the same to everybody. Other players see a
