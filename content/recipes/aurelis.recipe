@@ -9,7 +9,8 @@
 # An archaeologist's expedition camps on the west rim. The tablet in the watch temple on the rim's highest point (south)
 # tells how the last sea-priests locked the city's heart behind a gate of three crystals hidden in three shrines - and
 # promises that whoever brings the drowned throne's crown back to the altar will see Aurelis rise to meet it.
-# Quest "Aurelis Rising" (16 steps, 4 chapters): the rim (4), the drowned streets and three crystals (5), the gate, its
+# Quest "Aurelis Rising" (21 steps, 4 chapters): the rim - camp, journal, dive locker, temple, tablet, ruins box (6), the
+# drowned streets - agora, basket, urn, three crystals, the expedition's lost barrel, the sluice (8), the gate, its
 # guardian and the throne hall (4), the crown returned and the city rising (3) - head light and canteen blueprints, a
 # bronze diving helmet, titanium.
 #
@@ -197,7 +198,7 @@ scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=70.0 seed=4382 free=3
 # --- Raft's finds in the shallows round the rim and over the lagoon (lib_sea) ---------------------------------------------
 call shallows r=118 deep=5 n=1
 
-# ===== Settings, story items, notes, behaviours, quest (16 steps, 4 chapters) =============================================
+# ===== Settings, story items, notes, behaviours, quest (21 steps, 4 chapters) =============================================
 info title=Aurelis
 info author=Custom Islands
 info description=A ring of black islets round a deep lagoon - the rim of a fallen volcano - and on the lagoon's floor the drowned city of Aurelis: temples, canals, a great tower, a gate of three crystals and a guardian before it. Bring the drowned throne's crown back to the altar on the rim, and the city will rise to meet it.
@@ -260,14 +261,14 @@ prop crystalgate beh.use=Set the three crystals in the gate
 prop crystalgate beh.move=0,-5.6,0
 prop crystalgate beh.moveTime=4
 prop crystalgate beh.moveMode=switch
-prop crystalgate if.use=quest|11\ntake|story:crystal|3
+prop crystalgate if.use=quest|16\ntake|story:crystal|3
 prop crystalgate on.use=message||One, two, three: the crystals lock into their sockets and blaze blue. The gate shudders and sinks into the floor.\nshow|socketlights\nopen|crystalgate\nsound||event:/exploring/temperence/selene/gate_open
 prop crystalgate else.use=message||A bronze gate with three empty sockets, each the shape of a crystal.
 prop socketlights obj.name=socketlights
 prop socketlights beh.hidden=1
 prop altar obj.name=altar
 prop altar beh.use=Lay the crown of Aurelis on the altar
-prop altar if.use=quest|14\ntake|story:crown|1
+prop altar if.use=quest|19\ntake|story:crown|1
 prop altar on.use=message||You set the crown on the altar. The ground shivers under the temple - and out in the lagoon the water heaves and boils white around the tower. When it clears, the tower's crown stands above the waves, a platform on its top - and on the altar, where the crown was, lies a key shaped like a wave.\nshow|risen\nsignal||risen\ngive||story:priestkey*1\nsound||event:/exploring/temperence/ravine_collapse
 prop altar else.use=message||An altar on the rim, a hollow in its top the size of a crown.
 prop risenpipe obj.name=risen
@@ -360,12 +361,17 @@ quest intro=A drowned city in a volcano's caldera, an expedition camp on the rim
 # Chapter 1 - the rim
 step reach|camp|1|Land at the expedition camp on the caldera's rim
 step read|Archaeologist's journal|1|Read the archaeologist's journal
+step open|Expedition dive locker|1|Gear up from the expedition's dive locker
 step reach|watchtemple|1|Climb to the watch temple on the rim's highest islet
 step read|Tablet of the sea-priests|1|Read the sea-priests' tablet by the altar
+step open|Rim ruins box|1|Search the temple ruins for a pilgrim's offering box
 # Chapter 2 - the drowned streets
 step reach|agora|1|Dive into the caldera to the drowned agora
+step open|Agora market basket|1|Sift a stone market basket on the agora's paving
+step open|Agora urn|1|Break the pitch seal on an agora urn
 step collect|story:crystal|1|Take the first crystal from the harbour temple's shrine
 step collect|story:crystal|2|Find the second crystal under the canal bridge
+step open|Expedition's lost barrel|1|Recover the barrel the expedition lost on its first dive
 step reach|sluice|1|Find the tide sluice and turn its wheel to open the inner basin
 step collect|story:crystal|3|Take the third crystal from the inner basin's shrine
 # Chapter 3 - the gate

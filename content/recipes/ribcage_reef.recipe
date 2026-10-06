@@ -3,8 +3,8 @@
 # creature: its tail on the west, a village of huts on stilts inside its ribs, a stage under its jaw, its great skull
 # half drowned in the bay - and a bone altar on the east horn. The bone-singers who lived here played the ribs like chimes
 # at their festival; this year they missed it.
-# Quest "The Bone-Singers' Festival" (18 steps in 4 chapters): the village (crabs, four song shells - houses, the highest
-# rib, a tide pool), the song (four ribs struck in order inside thirty breaths), the skull (a dive, the eye's pearl in an
+# Quest "The Bone-Singers' Festival" (22 steps in 4 chapters): the village (the tail's offering box, crabs, four song
+# shells one by one - two houses, the top of the highest rib, the tide pool), the song (four ribs struck in order inside thirty breaths), the skull (a dive, the eye's pearl in an
 # air pocket, the guardian), the festival.
 #
 # Built by the recipe player (CIRecipe ribcage_reef) through the editor's own operations.
@@ -185,7 +185,7 @@ scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=83.3 seed=4171 free=3
 # --- Raft's finds in the shallows round the crescent and in the bay (lib_sea) ------------------------------------------------
 call shallows r=139 deep=5 n=2
 
-# ===== Settings, story items, notes, behaviours, quest (18 steps, 4 chapters) =============================================
+# ===== Settings, story items, notes, behaviours, quest (22 steps, 4 chapters) =============================================
 info title=Ribcage Reef
 info author=Custom Islands
 info description=A village built inside the bleached ribs of a giant sea creature on a black-sand crescent, its skull half drowned in the bay. The bone-singers missed their own festival this year. Gather the song shells, sing the ribs before the jaw closes, take the heartbone from the skull's guardian - and the festival happens anyway.
@@ -273,7 +273,7 @@ prop guardian creature.zone=skull
 prop guardian on.defeat=show|braincase\nmessage||The lamp-fish's light goes out. In the brain-case's hollow, a chest you couldn't see in its glare.
 prop altar obj.name=altar
 prop altar beh.use=Lay the heartbone on the altar
-prop altar if.use=quest|15\ntake|story:heartbone|1
+prop altar if.use=quest|19\ntake|story:heartbone|1
 prop altar on.use=message||You lay the heartbone on the bone slab. A hum runs up the vertebrae, along the crescent, into the ribs - and the old one SINGS, every rib at once, a sound like a whale and a choir. Lanterns flicker alight along the ribs, garlands lift in a wind that isn't there, and in the bay, dolphins come leaping.\nsignal||festival\nshow|festival\nshow|festivalglow\nshow|festivalmusic\nshow|festivaldolphins\nshow|blessing\ngive||story:garland*1\nsound||event:/wildlife/whale/whale_call
 prop altar else.use=message||The bone altar on the horn. The eldest's tablet says what lies here.
 prop festival obj.name=festival
@@ -344,9 +344,13 @@ quest intro=A village inside a giant skeleton, its singers away on the long voya
 # Chapter 1 - the village
 step reach|ribvillage|1|Walk in through the ribs to the singers' village
 step read|The festival invitation|1|Read the festival invitation at the gate
+step open|Tail box|1|Follow the tail's vertebrae west to the singers' offering box
 step kill|Roach|4|Drive the bone crabs out of the village
-step collect|story:songshell|2|Find the song shells in the singers' houses
-step collect|story:songshell|4|Climb the highest rib and dive the tide pool for the last two shells
+step open|First song shell|1|Search the singers' stilt houses for the first song shell
+step collect|story:songshell|2|Find the second shell in another singer's house
+step reach|ribtop|1|Climb the post tower to the top of the highest rib
+step collect|story:songshell|3|Take the third shell from the rib's top
+step open|Fourth song shell|1|Dive the tide pool by the bay for the fourth shell
 # Chapter 2 - the song
 step reach|jawstage|1|Go to the stage at the jaw
 step read|The song's rule|1|Read the rule carved on the jawbone
