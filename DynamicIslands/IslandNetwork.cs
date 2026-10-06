@@ -202,7 +202,7 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
+			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
 		}
 
@@ -212,8 +212,13 @@ namespace DynamicIslands.Editor
 		public static bool HostAnswersClaims { get; internal set; }
 
 		/// <summary>What this host does that older ones don't, told to players with its version ("counts": a player's quest
-		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total).</summary>
-		const string HostCapabilities = "counts,spots";
+		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total;
+		/// "events": a player's event it checks again is answered, yes or no).</summary>
+		const string HostCapabilities = "counts,spots,events";
+
+		/// <summary>A player: the host answers an event whose crew checks it makes again (yes: the event back, no: its
+		/// "otherwise" part), so the player's own part waits for that answer; else it runs at once, as before.</summary>
+		public static bool HostAnswersEvents { get; internal set; }
 
 		/// <summary>A player: the host adds quest counts up (since 2026-10-01); else the player sends its total, as before.</summary>
 		public static bool HostAddsCounts { get; internal set; }
@@ -402,18 +407,22 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An object event: a client tells the host; the host tells clients (fromHost: they do the personal part).</summary>
-		public static void SendEvent(int islandId, int index, string ev, bool fromHost)
+		public static void SendEvent(int islandId, int index, string ev, bool fromHost) { SendEvent(islandId, index, ev, fromHost, false); }
+
+		/// <summary>SendEvent; waits: a player whose own part waits for the host's answer (Count 1 - an older host leaves it).</summary>
+		public static void SendEvent(int islandId, int index, string ev, bool fromHost, bool waits)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = fromHost };
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = fromHost, Count = waits ? 1 : 0 };
 			if (Raft_Network.IsHost) { if (fromHost) SendToClients(msg); }
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
-		/// <summary>Host -> one player: an object event's personal part for them (the "otherwise" part of an event the host refused - AU18).</summary>
+		/// <summary>Host -> one player: an object event's personal part for them (the "otherwise" part of an event the host
+		/// refused - AU18 - or the event itself, the answer a waiting player's part waits for). Count 1: the answer to them.</summary>
 		public static void SendEventTo(Network_UserId player, int islandId, int index, string ev)
 		{
 			if (!Raft_Network.IsHost) return;
-			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = true }, player);
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = true, Count = 1 }, player);
 		}
 
 		/// <summary>Client: asks the host for a thing only one player can have (Claims). The question's number goes as Ids[1]:
@@ -444,7 +453,7 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); HostAnswersEvents = (msg.Data ?? "").Split(',').Contains("events"); CompareVersions(msg.Name, "The host"); break; }
 						if (Raft_Network.IsHost)
 						{
 							// (a player older than the version handshake sends no version; a name for who joined, if Raft shows one)
@@ -515,15 +524,15 @@ namespace DynamicIslands.Editor
 							// (a player's amount: the host adds it up and tells everyone the total)
 							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
 							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
-							QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count);
-							if (Raft_Network.IsHost) SendToClients(msg);
+							// (one it ignored - stale, or older than what it has - isn't passed on: it lowered the others' count)
+							if (QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count) && Raft_Network.IsHost) SendToClients(msg);
 						}
 						break;
 					case IslandNetMessage.ObjectSet:
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
 						break;
 					case IslandNetMessage.EventFired:
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from);
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
 						break;
 					case IslandNetMessage.Story:
 						StoryBook.OnMessage(msg, from.Id);

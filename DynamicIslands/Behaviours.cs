@@ -383,9 +383,26 @@ namespace DynamicIslands.Editor
 				if (hints != null) hints.HideDisplayTexts();
 				// (a keypad code lock: the keypad first - CodeLock)
 				if (Ref != null && CodeLock.HasCode(Ref.Props)) CodeLock.Use(ContentState.EntryOf(transform), Ref.Index, ObjectProps.Get(Ref.Props, CodeLock.Code), transform);
-				else Behaviours.Fire(ContentState.EntryOf(transform), Ref != null ? Ref.Index : -1, "use", true);
+				else Use();
 			}
 		}
+
+		/// <summary>The use event. One of Raft's quest items is one player's: claimed from the host as a chest's loot is, and
+		/// marked picked up (two players more than a second apart both got it - the host's same-moment check was all).</summary>
+		void Use()
+		{
+			IslandWorldState.Entry e = ContentState.EntryOf(transform);
+			if (Ref != null && e != null && QuestItemPickups.IsModel(Ref.ObjectName) && Behaviours.WouldAllow(e, Ref.Index, "use"))
+			{
+				int key = QuestItemPickups.KeyBase + Ref.Index;
+				if (ContentState.IsUsed(e, key)) { Beaten(); return; }
+				if (!Claims.May(e, key, yes => { if (this == null) return; if (yes) Use(); else Beaten(); })) { if (Raft_Network.IsHost) Beaten(); return; }
+				ContentState.MarkUsed(transform, key);
+			}
+			Behaviours.Fire(e, Ref != null ? Ref.Index : -1, "use", true);
+		}
+
+		static void Beaten() { IslandInfo.ShowMessage("Someone else picked it up first"); }
 
 		void IRaycastable.OnRayEnter() { }
 
@@ -721,16 +738,29 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(e.Id, index, otherwise); } catch { }
 		}
 
-		/// <summary>The personal part here (for this machine's player), the shared part on the host.</summary>
+		/// <summary>The personal part here (for this machine's player), the shared part on the host. A player's event whose
+		/// crew checks the host makes again waits for its answer: the personal part (items, a teleport) came at once, also
+		/// when the host then refused it (another player used the crew's last key at the same moment).</summary>
 		static void Run(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions, bool localPlayer)
 		{
 			if (actions.Count == 0) return;
+			if (localPlayer && !Raft_Network.IsHost && IslandNetwork.HostAnswersEvents && HostRechecks(e, index, ev))
+			{
+				IslandNetwork.SendEvent(e.Id, index, ev, false, true);
+				return;
+			}
 			if (localPlayer) Schedule(e, index, actions, false, false, ev);
 			if (HasSharedPart(actions))
 			{
 				if (Raft_Network.IsHost) { if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev); }
 				else IslandNetwork.SendEvent(e.Id, index, ev, false);
 			}
+		}
+
+		/// <summary>Whether the host makes the event's checks again (the crew's story items: StoryChecksHold) and may refuse it.</summary>
+		static bool HostRechecks(IslandWorldState.Entry e, int index, string ev)
+		{
+			return !ev.EndsWith("!") && ChecksOf(e, index, ev).Any(c => (c.Kind == "has" || c.Kind == "take") && StoryItems.IsStory(c.Target));
 		}
 
 		/// <summary>Whether the host has something to do: shared actions, or story items given (the crew's, given once by the host).</summary>
@@ -806,7 +836,11 @@ namespace DynamicIslands.Editor
 		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost) { OnEventMessage(islandId, index, ev, fromHost, null); }
 
 		/// <summary>OnEventMessage, with the player who sent it (the host tells them when their event is refused).</summary>
-		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from)
+		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from) { OnEventMessage(islandId, index, ev, fromHost, from, false); }
+
+		/// <summary>OnEventMessage; answer: a player who waits for the host's yes or no (host), or that answer (player: their
+		/// own part, wherever they are now).</summary>
+		public static void OnEventMessage(int islandId, int index, string ev, bool fromHost, Network_UserId? from, bool answer)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null) return;
@@ -822,9 +856,11 @@ namespace DynamicIslands.Editor
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
 					return;
 				}
-				if (SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
+				if (HasSharedPart(actions) && SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
+				// (yes: the player's own part runs now)
+				if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev);
 			}
-			else if (fromHost && Near(e)) Schedule(e, index, actions, false, false, ev);
+			else if (fromHost && (answer || Near(e))) Schedule(e, index, actions, false, false, ev);
 		}
 
 		/// <summary>

@@ -155,6 +155,7 @@ namespace DynamicIslands.Editor
 			clientTinted.Clear();
 			spotOf.Clear();
 			clientHealth.Clear();
+			spawning.Clear();
 			// (not sentHealth: a player who joins gets the host's animals before this runs - its entries go by age)
 			Network_Host_Entities h = HostEntities;
 			if (h != null) ContentCatalog.CacheModels(h.AINetworkBehaviourPrefabs);
@@ -167,7 +168,23 @@ namespace DynamicIslands.Editor
 		{
 			if (entry == null || entry.Root == null || !Raft_Network.IsHost) return;
 			if (entry.Root.GetComponentInChildren<CreatureSpawnPoint>(true) == null) return;
-			DynamicIslands.instance.StartCoroutine(SpawnRoutine(entry, entry.Root));
+			DynamicIslands.instance.StartCoroutine(OneAtATime(entry, entry.Root));
+		}
+
+		/// <summary>Islands with a spawn run going (host).</summary>
+		static readonly HashSet<GameObject> spawning = new HashSet<GameObject>();
+
+		/// <summary>One spawn run per island at a time: a second one (a zone fired while the first built the NavMesh) saw the
+		/// NavMesh's surface there already and spawned its land animals before the NavMesh was built. (Not waited for longer
+		/// than a run can take: a run that stopped half way doesn't hold the island for ever.)</summary>
+		static IEnumerator OneAtATime(IslandWorldState.Entry entry, GameObject root)
+		{
+			for (float until = Time.realtimeSinceStartup + 180f; root != null && spawning.Contains(root) && Time.realtimeSinceStartup < until; ) yield return null;
+			if (root == null) yield break;
+			spawning.RemoveWhere(r => r == null);
+			spawning.Add(root);
+			try { yield return SpawnRoutine(entry, root); }
+			finally { spawning.Remove(root); }
 		}
 
 		static IEnumerator SpawnRoutine(IslandWorldState.Entry entry, GameObject root)

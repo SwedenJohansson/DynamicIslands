@@ -256,18 +256,20 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Records the quest's state here, tells the others (unless it came from them), and shows what changed.</summary>
-		public static void Set(IslandWorldState.Entry e, int step, int progress, bool send) { Set(e, 0, step, progress, send); }
+		public static bool Set(IslandWorldState.Entry e, int step, int progress, bool send) { return Set(e, 0, step, progress, send); }
 
-		/// <summary>Quest n: records its state here, tells the others (unless it came from them), and shows what changed.</summary>
-		public static void Set(IslandWorldState.Entry e, int n, int step, int progress, bool send)
+		/// <summary>Quest n: records its state here, tells the others (unless it came from them), and shows what changed.
+		/// False when nothing changed: an older step, or the same step with no more progress (an older player's stale total,
+		/// a message that crossed a Resync) - progress never goes down.</summary>
+		public static bool Set(IslandWorldState.Entry e, int n, int step, int progress, bool send)
 		{
 			int before = StepOf(e, n);
-			if (step < before) return;
+			if (step < before || (step == before && progress <= ProgressOf(e, n))) return false;
 			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
 			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
 			else e.State.Remove(ProgressKeyOf(n));
 			if (send) IslandNetwork.SendQuest(e.Id, n, step, progress);
-			if (step == before) return;
+			if (step == before) return true;
 			IslandQuest q = QuestOf(e, n);
 			if (step >= q.Steps.Count) Completed(e, q, n);
 			else Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
@@ -275,18 +277,19 @@ namespace DynamicIslands.Editor
 			if (n == 0 && Advanced != null) try { Advanced(e.Id, step); } catch { }
 			if (AdvancedAny != null) try { AdvancedAny(e.Id, n, step); } catch { }
 			CreditEarly(e, n, q, step);
+			return true;
 		}
 
 		/// <summary>Raised on every machine when any quest of an island moves on: island id, quest number (0 = main), new step.</summary>
 		public static event Action<int, int, int> AdvancedAny;
 
-		/// <summary>From the network (another player moved the quest on).</summary>
-		public static void Apply(int islandId, int step, int progress) { Apply(islandId, 0, step, progress); }
+		/// <summary>From the network (another player moved the quest on). False when it was ignored (nothing to pass on).</summary>
+		public static bool Apply(int islandId, int step, int progress) { return Apply(islandId, 0, step, progress); }
 
-		public static void Apply(int islandId, int n, int step, int progress)
+		public static bool Apply(int islandId, int n, int step, int progress)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
-			if (e != null) Set(e, n, step, progress, false);
+			return e != null && Set(e, n, step, progress, false);
 		}
 
 		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards). By the island's copy (PageIsland: the
