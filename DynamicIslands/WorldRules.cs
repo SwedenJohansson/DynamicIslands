@@ -56,7 +56,8 @@ namespace DynamicIslands.Editor
 					}
 				values.Add(new KeyValuePair<string, string>(key, value));
 				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)",
-					"# updatecheck=off: the main menu doesn't ask GitHub whether a newer Custom Islands is out" }
+					"# updatecheck=off: the main menu doesn't ask GitHub whether a newer Custom Islands is out",
+					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)" }
 					.Concat(values.Select(kv => kv.Key + "=" + kv.Value)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultPath + ": " + e.Message); }

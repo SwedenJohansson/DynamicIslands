@@ -756,7 +756,8 @@ namespace DynamicIslands.Editor
 	{
 		static JournalWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
-		public const KeyCode Key = KeyCode.J;
+		/// <summary>J unless changed in Defaults (Keys, ModKeys).</summary>
+		public static KeyCode Key { get { return ModKeys.Journal; } }
 
 		static readonly Color Ink = UIKit.ParchmentInk;
 
@@ -779,7 +780,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { if (IsOpen) instance.Hide(); return; }
-			if (!Input.GetKeyDown(Key) || Typing() || NoteReader.IsOpen) return;
+			if (!Input.GetKeyDown(Key) || Typing() || NoteReader.IsOpen || ModKeys.Listening) return;
 			if (IsOpen) instance.Hide(); else Open();
 		}
 

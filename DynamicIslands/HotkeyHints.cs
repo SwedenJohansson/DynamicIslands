@@ -12,6 +12,95 @@ namespace DynamicIslands.Editor
 	/// journal (J) and, while the level up system is on, the stats page (K) get the same tabs beside the notebook's -
 	/// copies of Raft's tab, so they look and hide exactly as Raft's do (with the keyboard layout).
 	/// </summary>
+	/// <summary>
+	/// L2: the mod's own keys in a world - the journal (J) and the stats page (K) - which the player can change in Defaults
+	/// (Keys): kept in Mods\DynamicIslands\world_rules.txt as journalkey= and statskey= (Unity KeyCode names). This PC's
+	/// alone; nothing is sent to other players.
+	/// </summary>
+	public static class ModKeys
+	{
+		public const string JournalSetting = "journalkey", StatsSetting = "statskey";
+		public const KeyCode JournalDefault = KeyCode.J, StatsDefault = KeyCode.K;
+		static KeyCode? journal, stats;
+
+		public static KeyCode Journal { get { if (journal == null) journal = Read(JournalSetting, JournalDefault); return journal.Value; } }
+		public static KeyCode Stats { get { if (stats == null) stats = Read(StatsSetting, StatsDefault); return stats.Value; } }
+
+		/// <summary>While Defaults waits for a key to be pressed (and in the frame it got one): the journal and stats keys do nothing.</summary>
+		public static bool Listening { get { return listening || Time.frameCount == setFrame; } }
+		static bool listening;
+		static int setFrame = -1;
+		internal static void Listen(bool on) { listening = on; if (!on) setFrame = Time.frameCount; }
+
+		static KeyCode Read(string setting, KeyCode fallback)
+		{
+			string v = WorldRules.ReadDefault(setting);
+			if (string.IsNullOrEmpty(v)) return fallback;
+			try
+			{
+				var k = (KeyCode)Enum.Parse(typeof(KeyCode), v.Trim(), true);
+				if (Problem(k) == null) return k;
+			}
+			catch { }
+			Debug.LogWarning("[CUSTOM ISLANDS] " + WorldRules.DefaultFileName + ": " + setting + "=" + v + " is not a key that can be used - " + fallback + " instead");
+			return fallback;
+		}
+
+		/// <summary>Why a key can't be one of the mod's keys, or null.</summary>
+		public static string Problem(KeyCode k)
+		{
+			if (k == KeyCode.None) return "no key";
+			if (k == KeyCode.Escape) return "Esc closes windows";
+			if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) return "a mouse button";
+			if (k >= KeyCode.JoystickButton0) return "a controller button";
+			if (k == KeyCode.Return || k == KeyCode.KeypadEnter || k == KeyCode.Tab || k == KeyCode.Space || k == KeyCode.Backspace) return "it is used to type and to play";
+			return null;
+		}
+
+		/// <summary>Sets one of the keys (forJournal: the journal's, else the stats page's); the reason when it can't be, or null.</summary>
+		public static string Set(bool forJournal, KeyCode k)
+		{
+			string problem = Problem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			if (k == (forJournal ? Stats : Journal)) return Name(k) + " already opens the " + (forJournal ? "stats page" : "journal") + ".";
+			WorldRules.SaveDefault(forJournal ? JournalSetting : StatsSetting, k.ToString());
+			if (forJournal) journal = k; else stats = k;
+			HotkeyHints.KeysChanged();
+			return null;
+		}
+
+		/// <summary>Both keys back to J and K.</summary>
+		public static void Reset()
+		{
+			WorldRules.SaveDefault(JournalSetting, JournalDefault.ToString());
+			WorldRules.SaveDefault(StatsSetting, StatsDefault.ToString());
+			journal = JournalDefault;
+			stats = StatsDefault;
+			HotkeyHints.KeysChanged();
+		}
+
+		/// <summary>A key as the player knows it: "7" for Alpha7, "Num 7" for Keypad7.</summary>
+		public static string Name(KeyCode k)
+		{
+			string s = k.ToString();
+			if (s.StartsWith("Alpha") && s.Length == 6) return s.Substring(5);
+			if (s.StartsWith("Keypad")) return "Num " + s.Substring(6);
+			return s;
+		}
+
+		/// <summary>The keyboard key pressed in this frame (Escape too, to cancel), or None.</summary>
+		public static KeyCode Pressed()
+		{
+			if (!Input.anyKeyDown) return KeyCode.None;
+			foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
+			{
+				if (k == KeyCode.None || (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) || k >= KeyCode.JoystickButton0) continue;
+				if (Input.GetKeyDown(k)) return k;
+			}
+			return KeyCode.None;
+		}
+	}
+
 	public static class HotkeyHints
 	{
 		public const string JournalName = "CustomIslands_Hotkey_Journal", StatsName = "CustomIslands_Hotkey_Stats";
@@ -43,8 +132,8 @@ namespace DynamicIslands.Editor
 			// (one tab width and a gap further along, away from the inventory's tab: the notebook's is at the hotbar's right end)
 			float dir = inv != null && ((RectTransform)inv).anchoredPosition.x > noteRect.anchoredPosition.x ? -1f : 1f;
 			float step = (noteRect.rect.width + 6f) * dir;
-			if (journal == null) journal = Make(layout.transform, noteRect, JournalName, BookIcon(), JournalWindow.Key.ToString(), step);
-			if (stats == null) stats = Make(layout.transform, noteRect, StatsName, StarTabIcon(), PlayerLevels.Key.ToString(), step * 2f);
+			if (journal == null) journal = Make(layout.transform, noteRect, JournalName, BookIcon(), ModKeys.Name(JournalWindow.Key), step);
+			if (stats == null) stats = Make(layout.transform, noteRect, StatsName, StarTabIcon(), ModKeys.Name(PlayerLevels.Key), step * 2f);
 			Debug.Log("[CUSTOM ISLANDS] Hotbar key tabs: journal (" + JournalWindow.Key + ") and stats (" + PlayerLevels.Key + ") beside Raft's notebook tab");
 		}
 
@@ -60,10 +149,26 @@ namespace DynamicIslands.Editor
 				if (!(b is Graphic) && !(b is LayoutElement) && !(b is Shadow) && !b.GetType().Name.StartsWith("TextMeshPro")) UnityEngine.Object.Destroy(b);
 			Image img = copy.GetComponentsInChildren<Image>(true).FirstOrDefault(i => i.transform != copy);
 			if (img != null && icon != null) { img.sprite = icon; img.preserveAspect = true; }
-			Component tmp = copy.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
-			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(key);
-			else { Text t = copy.GetComponentInChildren<Text>(true); if (t != null) t.text = key; }
+			SetKey(copy, key);
 			return copy;
+		}
+
+		static void SetKey(RectTransform tab, string key)
+		{
+			Component tmp = tab.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
+			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(key);
+			else { Text t = tab.GetComponentInChildren<Text>(true); if (t != null) t.text = key; }
+		}
+
+		/// <summary>The journal's or stats page's key was changed (ModKeys): the tabs say the new ones.</summary>
+		public static void KeysChanged()
+		{
+			try
+			{
+				if (journal != null) SetKey(journal, ModKeys.Name(JournalWindow.Key));
+				if (stats != null) SetKey(stats, ModKeys.Name(PlayerLevels.Key));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The hotbar's key tabs: " + e.Message); }
 		}
 
 		static Sprite starTab;

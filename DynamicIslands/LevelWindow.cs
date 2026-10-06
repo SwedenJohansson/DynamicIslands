@@ -564,6 +564,7 @@ namespace DynamicIslands.Editor
 		readonly Text[] values = new Text[LevelRules.StatCount];
 		readonly Button[] plus = new Button[LevelRules.StatCount], minus = new Button[LevelRules.StatCount];
 		int[] openedWith = new int[LevelRules.StatCount];
+		static Text keyHint;
 		bool cursorWasFree;
 
 		static readonly Color PipOn = new Color(0.97f, 0.8f, 0.42f, 1f), PipOff = new Color(0.16f, 0.09f, 0.04f, 0.85f);
@@ -572,7 +573,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor() || !PlayerLevels.On) { if (IsOpen) instance.Hide(); return; }
-			if (!Input.GetKeyDown(PlayerLevels.Key) || Typing() || NoteReader.IsOpen || JournalWindow.IsOpen) return;
+			if (!Input.GetKeyDown(PlayerLevels.Key) || Typing() || NoteReader.IsOpen || JournalWindow.IsOpen || ModKeys.Listening) return;
 			if (IsOpen) instance.Hide(); else Open();
 		}
 
@@ -679,7 +680,7 @@ namespace DynamicIslands.Editor
 				" stat points; each point is +1% (Hunger, Thirst and Oxygen last 1% longer), at most " + LevelRules.MaxPoints + " points in a stat. With every stat full the levels go on, without points.", 12, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "About");
 			about.lineSpacing = 1.05f;
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
-			UIKit.Label(bottom, PlayerLevels.Key + " or Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			keyHint = UIKit.Label(bottom, ModKeys.Name(PlayerLevels.Key) + " or Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "KeyHint");
 			UIKit.Button(bottom, "Close", Close, null, 120, 34);
 			canvas.gameObject.SetActive(false);
 		}
@@ -687,6 +688,7 @@ namespace DynamicIslands.Editor
 		void Show()
 		{
 			gameObject.SetActive(true);
+			if (keyHint != null) keyHint.text = ModKeys.Name(PlayerLevels.Key) + " or Esc to close";
 			cursorWasFree = Cursor.visible;
 			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
 			LevelRecord r = PlayerLevels.Mine;
