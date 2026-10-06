@@ -65,7 +65,13 @@ namespace DynamicIslands.Editor
 			string[] v = ObjectProps.Get(p, Move).Split(',');
 			float x, y, z;
 			if (v.Length == 3 && float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out x) && float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out y) &&
-				float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z)) return new Vector3(x, y, z);
+				float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
+			{
+				// (finite and at most 1 km: "NaN" or "3e38" moved a carried player there - audit 2026-10-06)
+				var o = new Vector3(x, y, z);
+				if (float.IsNaN(o.x) || float.IsNaN(o.y) || float.IsNaN(o.z) || float.IsInfinity(o.x) || float.IsInfinity(o.y) || float.IsInfinity(o.z)) return Vector3.zero;
+				return Vector3.ClampMagnitude(o, 1000f);
+			}
 			return Vector3.zero;
 		}
 
@@ -602,7 +608,8 @@ namespace DynamicIslands.Editor
 				foreach (IGrouping<string, ObjCheck> g in passed.Where(x => x.IsItem && !x.Not && x.Target.Length > 0).GroupBy(x => x.Target, StringComparer.OrdinalIgnoreCase))
 				{
 					if (g.Count() < 2) continue;
-					int need = Math.Max(g.Where(x => x.Kind == "take").Sum(x => x.Count), g.Max(x => x.Count));
+					// (added up as long: two "take|Plank|2000000000" overflowed, and the event broke - audit 2026-10-06)
+					int need = (int)Math.Min(int.MaxValue, Math.Max(g.Where(x => x.Kind == "take").Sum(x => (long)x.Count), g.Max(x => x.Count)));
 					int have = StoryItems.IsStory(g.Key) ? StoryBook.Count(StoryItems.IdOf(g.Key)) : inv != null ? inv.GetItemCount(g.Key) : 0;
 					if (have < need) { LastFailedCheck = "the player has " + need + " × " + (StoryItems.IsStory(g.Key) ? StoryItems.Label(g.Key) : ContentCatalog.ItemLabel(g.Key)); return false; }
 				}

@@ -146,9 +146,15 @@ namespace DynamicIslands.Editor
 		{
 			Vector2 best = around;
 			float h = float.MinValue;
-			for (float x = -radius; x <= radius; x += 2f)
-				for (float z = -radius; z <= radius; z += 2f)
+			// (whole steps, at most 500 m around: a map type's "top:1e6" went past where adding 2 changes a float and never
+			// ended - audit 2026-10-06)
+			if (float.IsNaN(radius)) return best;
+			radius = Mathf.Min(radius, 500f);
+			int steps = Mathf.FloorToInt(radius);
+			for (int i = 0; i <= steps; i++)
+				for (int j = 0; j <= steps; j++)
 				{
+					float x = -radius + 2f * i, z = -radius + 2f * j;
 					if (x * x + z * z > radius * radius) continue;
 					Vector2 p = around + new Vector2(x, z);
 					float g = Ground(p);

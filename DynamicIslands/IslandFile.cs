@@ -247,6 +247,7 @@ namespace DynamicIslands.Editor
 					island.Name = r.ReadString();
 					island.WaterLevel = r.ReadSingle();
 					island.TerrainSize = ReadVector(r);
+					if (!Finite(island.WaterLevel)) throw new InvalidDataException("Invalid water level");
 					int res = r.ReadInt32();
 					// (one sample: no terrain spacing - a division by zero spawning it)
 					if (res < 2 || res > 4097)
@@ -273,7 +274,9 @@ namespace DynamicIslands.Editor
 					if (version >= 2 && r.ReadBoolean())
 					{
 						int ares = r.ReadInt32(), layers = r.ReadInt32();
-						if (ares < 16 || ares > 4096 || layers < 1 || layers > 16)
+						// (at most 4 pixels per heightmap cell, or 512, and 8 layers: a 2-sample heightmap with 4096 px of paint made
+						// a 1 GB block spawning it - audit 2026-10-06)
+						if (ares < 16 || ares > 4096 || ares > Math.Max(512, 4 * (res - 1)) || layers < 1 || layers > TerrainPainter.MixLayerCount)
 							throw new InvalidDataException("Invalid texture paint data (" + ares + " px, " + layers + " layers)");
 						island.AlphamapResolution = ares;
 						island.AlphamapLayers = layers;
@@ -283,6 +286,7 @@ namespace DynamicIslands.Editor
 					if (version >= 3)
 					{
 						island.Elevation = r.ReadSingle();
+						if (!Finite(island.Elevation)) throw new InvalidDataException("Invalid elevation");
 						// The first format 3 files (flying islands, before styles) end after the elevation
 						try { island.Style = r.ReadString(); } catch (EndOfStreamException) { }
 					}
@@ -518,7 +522,12 @@ namespace DynamicIslands.Editor
 
 		static Vector3 ReadVector(BinaryReader r)
 		{
-			return new Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
+			var v = new Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
+			// (NaN or infinite: an island or a player placed nowhere - audit 2026-10-06)
+			if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) throw new InvalidDataException("Invalid number in island file");
+			return v;
 		}
+
+		static bool Finite(float f) { return !float.IsNaN(f) && !float.IsInfinity(f); }
 	}
 }

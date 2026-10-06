@@ -26,6 +26,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
 		public const string TreasureKind = "treasure.kind";
 		public const int MaxLootStacks = 12, MaxLootAmount = 999;
+		/// <summary>At most this many entries read from a loot list (the editor makes at most MaxLootStacks).</summary>
+		public const int MaxLootEntries = 64;
 		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
 		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>
 		public const string ZoneId = "zone.id", ZoneRadius = "zone.radius", ZoneMessage = "zone.message", ZoneRepeat = "zone.repeat", CreatureZone = "creature.zone";
@@ -167,6 +169,8 @@ namespace DynamicIslands.Editor
 				int amount = 1;
 				if (star > 0 && !int.TryParse(part.Substring(star + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out amount)) continue;
 				if (item.Length > 0 && amount > 0) list.Add(new KeyValuePair<string, int>(item, Mathf.Min(amount, MaxLootAmount)));
+				// (50,000 entries on a repeating zone froze Raft and dropped thousands of items - audit 2026-10-06)
+				if (list.Count >= MaxLootEntries) break;
 			}
 			return list;
 		}
