@@ -414,6 +414,9 @@ the editor (Noon the first time).
 real ocean (with waves) instead of the editor's plain sky and blue plane - the Light list then sets the hour of Raft's
 sky. It takes effect the next time you open the editor from the main menu; off again works at once.
 
+![Raft's sky and sea in the editor](images/editor-skysea.jpg)
+*An island in the editor under Raft's own sky, on Raft's ocean (Noon).*
+
 ![The editor light](images/editor-light.jpg)
 *The same island at Morning, Noon, Evening and Night.*
 
