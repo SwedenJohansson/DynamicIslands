@@ -2,9 +2,10 @@
 # Meridian, a city the sea took: skyscraper crowns rising out of a shallow green sea, sandbar islets with palms, a
 # wrecked ferry. The Harbour Tower's sloping roof with the mayor's glass penthouse on its ridge; the Meridian Tower's
 # pool deck with the city vault; the council offices sunk on the sea floor; the Spire's foundations, a dark pit where
-# the Lantern Lord - a giant angler fish - waits. Quest "The Keys of Meridian": the ferry, the evacuation notice, the
-# Harbour Tower, three council keycards (penthouse, sunken offices, foundations), the Lantern Lord, the Meridian Tower,
-# the vault.
+# the Lantern Lord - a giant angler fish - waits. Quest "The Keys of Meridian" (20 steps): the ferry, the evacuation
+# notice, the Harbour Tower, the mayor's memo and safe (keycard 1), the sunken offices, their puffer fish and filing
+# cabinet (keycard 2), the foundations, the Lantern Lord and the strongbox (keycard 3), the Meridian Tower, the vault -
+# with the city's papers kept in the journal along the way (pages 3, 4, 5, 6).
 #
 # Built by the recipe player (CIRecipe drowned_metropolis) through the editor's own operations (macros from lib_rt).
 # The towers are Utopia's skyline towers, 400 m tall: placed so that only their crowns stand out of the sea.
@@ -199,13 +200,26 @@ prop pitdark zone.radius=14
 
 quest title=The Keys of Meridian
 quest intro=Skyscraper crowns in a ring, a wrecked ferry on a sandbar. The drowned city of Meridian left its last notice on the ferry's islet.
-step reach|ferry|1|Land at the wrecked ferry
-step read|Evacuation notice|1|Read the evacuation notice
-step reach|harbourroof|1|Climb the Harbour Tower
-step collect|story:keycard|3|Find the three council keycards
+step reach|ferry|1|Land at the wrecked ferry on the sandbar
+step read|Evacuation notice|1|Read the evacuation notice on the ferry's islet
+step reach|harbourroof|1|Climb the Harbour Tower's ladders to its sloping roof
+step read|Mayor's memo|1|Cross the plank ramp to the penthouse and read the mayor's memo
+step open|Penthouse safe|1|Open the mayor's wall safe
+step collect|story:keycard|1|Pocket the mayor's keycard - the first of three
+step pages||3|Keep the notice, the memo and the safe's tag in your journal
+step reach|offices|1|Dive down to the council offices on the sea floor
+step kill|Puffer fish|2|Drive the two puffer fish out from between the desks
+step open|Council filing cabinet|1|Search the bottom drawer of the council's filing cabinet
+step collect|story:keycard|2|Take the council's keycard - two of three
+step pages||4|Copy the council's filing note into your journal
+step reach|foundations|1|Swim down into the dark of the Spire's foundations
 step kill|Angler fish|1|Defeat the Lantern Lord in the Spire's foundations
-step reach|meridianroof|1|Climb the Meridian Tower
-step open|Meridian Vault|1|Open the Meridian Vault
+step open|Foundation strongbox|1|Dig the treasurer's strongbox out of the rubble
+step collect|story:keycard|3|Hold all three council keycards
+step pages||5|Write the treasurer's strongbox tag into your journal
+step reach|meridianroof|1|Climb the Meridian Tower to its pool deck
+step open|Meridian Vault|1|Fill the vault's three card slots and open the Meridian Vault
+step pages||6|Close your journal on Meridian: six pages of the drowned city
 quest done=The vault of Meridian is open. The council saved batteries, titanium and a blueprint - and now they're yours.
 quest reward=Battery*2;CircuitBoard*2;Scrap*8
 
