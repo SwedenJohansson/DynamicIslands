@@ -67,8 +67,9 @@ namespace DynamicIslands.Editor
 
 		static void Delete(string name)
 		{
-			// (moved to deleted\autosave, not deleted for good, like the rest of the mod's files - AU41)
-			try { string p = PathFor(name); if (File.Exists(p)) { PiecesFiles.MoveToDeleted(p, "autosave"); Log("'" + name + "' is saved: its autosave is moved to the deleted folder"); } }
+			// (the island was just saved: its autosave holds nothing more and goes - moving each one to the deleted folder
+			// filled it up with a copy per save. A discarded or older autosave is moved there instead - AU41.)
+			try { string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove the autosave of '" + name + "': " + e.Message); }
 		}
 
