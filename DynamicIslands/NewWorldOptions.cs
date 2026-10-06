@@ -159,10 +159,17 @@ namespace DynamicIslands.Editor
 
 		static List<DropList.Option> LevelOptions()
 		{
-			return Enumerable.Range(0, RandomizerSettings.LevelNames.Length).Select(i => new DropList.Option(i.ToString(), RandomizerSettings.LevelNames[i], LevelText(i))).ToList();
+			return Enumerable.Range(0, RandomizerSettings.LevelNames.Length).Select(i => new DropList.Option(i.ToString(), RandomizerSettings.LevelNames[i], RandomizerSettings.LevelHint(i))).ToList();
 		}
 
-		static string LevelText(int level) { return RandomizerSettings.LevelHint(level); }
+		/// <summary>The short line under the level (two lines of 11 px fit there); the exact numbers are the options' hover hints (LevelHint).</summary>
+		static string LevelText(int level)
+		{
+			return level == RandomizerSettings.Off ? "A normal Raft world. Pick Light, Normal or Wild to make this one different." :
+				level == RandomizerSettings.Light ? "Now and then something is different." :
+				level == RandomizerSettings.Normal ? "A good share of the world is different: colours, animals, loot and odd islands." :
+				"Lots of surprises: many colours, alphas, loot and odd islands.";
+		}
 
 		static void TogglePart(int i)
 		{
