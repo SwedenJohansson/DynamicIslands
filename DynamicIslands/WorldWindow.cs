@@ -421,6 +421,36 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	/// <summary>
+	/// One Esc press closes only our window: Raft's pause menu skips the press while one of our in-world windows is open, or was open
+	/// last frame (the window may have closed on this same press before the pause menu's Update ran).
+	/// </summary>
+	[HarmonyPatch(typeof(PauseMenu), "Update")]
+	public static class EscGuard
+	{
+		static int openFrame = -10;
+
+		/// <summary>Our windows a player sees in a world (each closes itself on Esc).</summary>
+		public static bool AnyOpen()
+		{
+			return JournalWindow.IsOpen || NoteReader.IsOpen || CodeLock.IsOpen || ChoiceWindow.IsOpen || InfoWindow.IsOpen
+				|| LevelWindow.IsOpen || BehaviourWindow.IsOpen;
+		}
+
+		/// <summary>True when an Esc this frame belongs to one of our windows (tests).</summary>
+		public static bool Blocks()
+		{
+			if (AnyOpen()) openFrame = Time.frameCount;
+			return openFrame >= Time.frameCount - 1;
+		}
+
+		static bool Prefix()
+		{
+			try { return !(Blocks() && Input.GetKeyDown(KeyCode.Escape)); }
+			catch { return true; }
+		}
+	}
+
 	/// <summary>Raft's pause menu (Esc in a world) gets a CUSTOM ISLANDS button, a copy of its own buttons, before Exit.</summary>
 	[HarmonyPatch(typeof(PauseMenu), "Start")]
 	static class WorldWindowButton

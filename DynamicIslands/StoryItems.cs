@@ -570,7 +570,7 @@ namespace DynamicIslands.Editor
 		static float toComeAt = -100f;
 
 		/// <summary>The saved islands of this world's random pool (looked at again every 10 s at most: Pool reads the folder).</summary>
-		static List<string> StillToCome()
+		internal static List<string> StillToCome()
 		{
 			if (Time.unscaledTime - toComeAt < 10f) return toCome;
 			toComeAt = Time.unscaledTime;

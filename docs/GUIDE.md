@@ -276,7 +276,7 @@ finished step.*
 ### The journal (J)
 
 The **journal** is the crew's book of the custom islands' story: what you found on them and what you carry for them.
-Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
+Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (Esc closes only the window: Raft's pause menu doesn't open on the same press. The same goes for a note, the code lock, the stats page, a choice and the info windows.) (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
 or console, while a note is open, or in the editor.) Its key is also shown at the hotbar: after Raft's notebook tab
 (**T**) come the journal's tab (**J**, an open book) and, while the level up system is on in the world, the stats
 page's (**K**, a star).

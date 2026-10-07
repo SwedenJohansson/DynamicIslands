@@ -230,11 +230,36 @@ namespace DynamicIslands
 				Log("  pool " + CustomIslandSpawner.Pool(true).Count + ", with a quest not come " + expected.Count + "; counted to come " + toCome + "; QUESTS " + done + "/" + total);
 				if (plan != null && !plan.Random) Check(ref ok, toCome == 0, "the plan has random islands off: none to come counted");
 				else Check(ref ok, toCome > 0 && toCome <= expected.Count && quests.Where(q => q.Group == QuestCount.ToCome).All(q => !q.Done), "the pool's quest islands still to come count, not done (" + toCome + " of " + expected.Count + " - those another rule already counts aren't twice)");
+				HashSet<string> plans = CustomIslandSpawner.AllPlansIslandNames();
+				List<string> inPlan = QuestCount.StillToCome().Where(n => plans.Contains(n) || CustomIslandSpawner.PlanIslandNames().Contains(n)).ToList();
+				Log("  plan islands " + plans.Count + ", among those to come " + inPlan.Count + (inPlan.Count > 0 ? " (" + string.Join(", ", inPlan.ToArray()) + ")" : ""));
+				Check(ref ok, inPlan.Count == 0, "no island of a world plan (story plans too) is among those to come");
 				CustomIslandSpawner.Enabled = false;
 				Check(ref ok, !QuestCount.All().Any(q => q.Group == QuestCount.ToCome), "random islands off: none to come");
 			}
 			finally { CustomIslandSpawner.Enabled = was; }
 			if (ok) Log("PASS: quest count to come"); else Fail("quest count to come");
+		}
+
+		[ConsoleCommand(name: "CIEscGuard", docs: "Dev, in game: one Esc closes only our window - Raft's pause menu skips the press while the journal is open and the frame after it closed, then takes Esc again")]
+		public static void EscGuardCommand(string[] args) { DynamicIslands.instance.StartCoroutine(EscGuardRoutine()); }
+
+		static IEnumerator EscGuardRoutine()
+		{
+			bool ok = true;
+			yield return null;
+			var info = HarmonyLib.Harmony.GetPatchInfo(HarmonyLib.AccessTools.Method(typeof(PauseMenu), "Update"));
+			Check(ref ok, info != null && info.Prefixes.Any(x => x.PatchMethod.DeclaringType == typeof(EscGuard)), "Raft's pause menu Update has the guard");
+			Check(ref ok, !EscGuard.Blocks(), "no window of ours: the pause menu takes Esc");
+			JournalWindow.Open();
+			yield return null;
+			Check(ref ok, JournalWindow.IsOpen && EscGuard.Blocks(), "journal open: the pause menu skips Esc");
+			JournalWindow.Close();
+			Check(ref ok, !JournalWindow.IsOpen && EscGuard.Blocks(), "journal closed on this press: still skipped (the same Esc)");
+			yield return null;
+			yield return null;
+			Check(ref ok, !EscGuard.Blocks(), "two frames later: the pause menu takes Esc again");
+			if (ok) Log("PASS: esc guard"); else Fail("esc guard");
 		}
 
 		[ConsoleCommand(name: "CIQuestCountCheck", docs: "Dev, in game (either player): ROADMAP CW3 - this machine's quest count as the journal shows it: QCOUNT <done>/<total> <fingerprint> (two players compare)")]
