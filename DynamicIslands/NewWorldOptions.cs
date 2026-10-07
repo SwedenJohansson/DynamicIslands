@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// "Custom Islands plan" in Raft's New Game box: a drop-down list of the world plans (Random islands, No custom
+	/// "Custom Islands plan" in Raft's New Game box: the chosen world plan and "Choose plan..." (PlanPickerWindow, ROADMAP CT5) over a list of the world plans (Random islands, No custom
 	/// islands, the saved and downloaded plans), each with its description, and the chosen plan's description under it. Pressing Create keeps the
 	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded.
 	/// "World randomizer" (in the World settings window): how much the world is randomized (a drop-down: off, light,
@@ -19,7 +19,7 @@ namespace DynamicIslands.Editor
 	{
 		static RectTransform row, randRow;
 		static Button planButton, levelButton, moreButton;
-		static Text detailText, randText;
+		static Text detailText, randText, chosenText;
 		static readonly List<Button> partButtons = new List<Button>();
 
 		/// <summary>The plan shown in the box.</summary>
@@ -52,8 +52,16 @@ namespace DynamicIslands.Editor
 				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 				title.horizontalOverflow = HorizontalWrapMode.Overflow;
 				UIKit.Size(title.gameObject, -1, 18);
-				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
-					"Which islands the new world gets: pick a plan - each says what it does", 30f, 14);
+				// (ROADMAP CT5: the chosen plan's name and "Choose plan...", which opens the plan picker window - a list with
+				// each plan's picture, description and islands - instead of a drop-down list)
+				RectTransform choice = UIKit.Row(row, 30f, 6f, "Choice");
+				chosenText = UIKit.Label(choice, "", 14, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "Chosen");
+				chosenText.horizontalOverflow = HorizontalWrapMode.Wrap;
+				chosenText.resizeTextForBestFit = true; chosenText.resizeTextMinSize = 10; chosenText.resizeTextMaxSize = 14;
+				chosenText.raycastTarget = true;
+				planButton = UIKit.Button(choice, "Choose plan...", PlanPickerWindow.Open, "Which islands the new world gets: a window with every plan, its picture, what it does and the islands it brings", 116, 28f, 12);
+				planButton.name = "Button_ChoosePlan";
+				UIKit.Primary(planButton);
 				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				UIKit.Size(detailText.gameObject, -1, 44);
 				detailText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -189,9 +197,8 @@ namespace DynamicIslands.Editor
 			{
 				WorldPlan p = WorldPlan.Load(Selected);
 				if (p == null) { WorldDirector.PendingPlan = WorldPlan.RandomName; p = WorldPlan.Load(WorldPlan.RandomName); }
-				DropdownButton d = planButton.GetComponent<DropdownButton>();
-				if (d != null) { d.Options = PlanOptions(); d.Value = p.Name; }
-				UIKit.LabelOf(planButton).text = p.Name;
+				chosenText.text = p.Name;
+				UIKit.Hint(chosenText.gameObject, "The plan the new world gets: " + p.Name);
 				detailText.text = Describe(p);
 				UIKit.Hint(detailText.gameObject, Describe(p));
 			}

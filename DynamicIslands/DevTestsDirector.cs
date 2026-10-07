@@ -563,6 +563,27 @@ namespace DynamicIslands
 
 		#endregion
 
+		/// <summary>CT5: chooses a plan as a player does - "Choose plan...", the plan's row in the picker, Select.</summary>
+		internal static bool ChoosePlanInPicker(Button choose, string name)
+		{
+			if (choose == null) return false;
+			choose.onClick.Invoke();
+			if (!PlanPickerWindow.IsOpen) return false;
+			Button row = PlanPickerWindow.Root.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + name);
+			Button select = PlanPickerWindow.Root.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Button_Select");
+			if (row == null || select == null) { PlanPickerWindow.Close(); return false; }
+			row.onClick.Invoke();
+			select.onClick.Invoke();
+			return !PlanPickerWindow.IsOpen && NewWorldOptions.Selected.Equals(name, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>The chosen plan's name as the New Game box shows it.</summary>
+		internal static string ChosenPlanText(Transform planRow)
+		{
+			Text t = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(x => x.name == "Chosen") : null;
+			return t != null ? t.text.Trim() : "";
+		}
+
 		[ConsoleCommand(name: "CIPlanBox", docs: "Dev, main menu: opens Raft's New Game box, checks the Custom Islands plan choice and cycles it; screenshot; CIPlanBox <plan> leaves that plan chosen")]
 		public static void PlanBox(string[] args)
 		{
@@ -579,21 +600,23 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.5f);
 			Transform row = box.transform.Find("CustomIslands_Plan");
 			Check(ref ok, row != null && row.gameObject.activeInHierarchy, "the box has the plan choice");
-			// (the plan's drop-down list - the row's head also has "Get more...", which opens the island library)
-			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Drop_Plan") : null;
+			// ("Choose plan...", which opens the plan picker window (CT5) - the row's head also has "Get more...", the island library)
+			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
 			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
-			List<KeyValuePair<string, string>> listed = DropList.Shown(b);
-			Check(ref ok, listed.Count == plans.Count && listed.All(o => o.Value.Length > 0), "clicked open, its list has every plan (" + listed.Count + " of " + plans.Count + "), each with what it does");
+			if (b != null) b.onClick.Invoke();
+			List<string> listed = PlanPickerWindow.Shown();
+			Check(ref ok, PlanPickerWindow.IsOpen && listed.Count == plans.Count && plans.All(listed.Contains), "Choose plan... opens the picker with every plan (" + listed.Count + " of " + plans.Count + ")");
+			PlanPickerWindow.Close();
 			string next = plans[(plans.FindIndex(p => p.Equals(first, StringComparison.OrdinalIgnoreCase)) + 1) % plans.Count];
-			bool picked = DropList.Click(b, next);
+			bool picked = ChoosePlanInPicker(b, next);
 			string second = NewWorldOptions.Selected;
-			Check(ref ok, picked && second == next && UIKit.LabelOf(b).text == next, "picking one in the list chooses it (" + first + " -> " + second + ")");
-			// (the picture with the list open)
+			Check(ref ok, picked && second == next && ChosenPlanText(row) == next, "picking one in the picker chooses it (" + first + " -> " + second + ")");
+			// (the picture with the picker open)
 			if (b != null) b.onClick.Invoke();
 			Screenshot(new[] { "new_game_plan" });
 			yield return new WaitForSecondsRealtime(0.5f);
-			DropList.Close();
+			PlanPickerWindow.Close();
 			WorldDirector.PendingPlan = choose;
 			if (choose == null) box.Button_Close();
 			else Log("Plan for the next new world: " + NewWorldOptions.Selected);

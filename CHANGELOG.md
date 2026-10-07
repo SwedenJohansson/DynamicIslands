@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Plan picker:** **Choose plan...** in the New Game box opens a window with every world plan - a search, its
+  picture (or a map of its first island), description, random/story and the islands it brings - instead of a list.
 - **Terrain brushes:** brush edge (falloff), Noise and Erode brushes, a sea floor switch, and a second style mixed
   into the island (8 ground textures).
 - **Selection tools:** box select, select all, select the same kind, and a list of placed objects with hide and lock.

@@ -6,7 +6,8 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 | File | Role |
 |---|---|
 | `WorldSettingsWindow.cs` | `WorldSettingsWindow`: the New Game box's WORLD SETTINGS... window (all groups, "Raft's own", "Defaults..."). `WorldSettingsChoice`: Create prefix |
-| `NewWorldOptions.cs` | `NewWorldOptions`: the plan drop-down, "Get more...", `BuildRandomizer` (randomizer controls). `NewWorldPlanChoice`: Create prefix |
+| `NewWorldOptions.cs` | `NewWorldOptions`: the chosen plan + "Choose plan...", "Get more...", `BuildRandomizer` (randomizer controls). `NewWorldPlanChoice`: Create prefix |
+| `PlanPickerWindow.cs` | The plan picker (CT5) opened by "Choose plan...": list (search, Up/Down, double-click), picture (library picture or `IslandMap` of the first island), Select sets `WorldDirector.PendingPlan` |
 | `WorldRules.cs` | `WorldRules` (kind 15, the host's shared `spawnpool.txt` values, `world_rules.txt`), `BuildCost` (+ the `BuildCost` command), `BuildCostKeeper`, `NewWorldRulesBox` (the two sliders, `BuildInto`), `NewWorldRulesChoice` |
 | `MonsterDifficulty.cs` | `MonsterDifficulty` (levels, `Factors`, `Scale`, `Monsters` command), `MonsterDamagePatch`, `PufferFishDamagePatch` |
 | `BuildCostRefund.cs` | `BuildCostRefund`: the cost each block was placed at; `BuildCostPlaced`, `BuildCostRefundPatch` |

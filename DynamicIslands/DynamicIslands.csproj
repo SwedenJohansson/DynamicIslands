@@ -125,6 +125,7 @@
     <Compile Include="IslandSpawner.cs" />
     <Compile Include="IslandWorldState.cs" />
     <Compile Include="PlacementTools.cs" />
+    <Compile Include="PlanPickerWindow.cs" />
     <Compile Include="PlayerHold.cs" />
     <Compile Include="PlayerMove.cs" />
     <Compile Include="Quest.cs" />

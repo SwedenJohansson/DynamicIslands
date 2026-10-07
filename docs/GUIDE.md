@@ -133,8 +133,19 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The list shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
+| **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
+
+**Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, sample, library plan,
+your plan; *big plan* when it brings ten islands or more) and how many islands it brings - and the selected one on the
+right: a picture (the library's picture, or a map of its first island), whether random islands come while sailing,
+whether Raft's story is on, its whole description and the islands it brings. Click a plan to look at it; **Select**,
+a double-click or Enter chooses it, **Cancel** or Esc keeps the one before. **Up/Down** move through the list, and the
+search box at the top shows only the plans whose name, description or islands hold what you type. **View rules...**
+lists every rule of the plan in words.
+
+![The plan picker](images/plan-picker.jpg)
+*The plan picker: Far Horizons selected, with a map of its first island and the four islands it brings.*
 
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world; the plan goes back to
 **Random islands** (or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
@@ -1431,7 +1442,7 @@ island a *main* quest island is that a plan's story waits for its quest.
 
 #### Random islands, in detail
 
-**How a world gets them.** In Raft's **New Game** box, the **Custom Islands plan** list ([2](#2-starting-a-new-world)):
+**How a world gets them.** In Raft's **New Game** box, **Custom Islands plan** → **Choose plan...** ([2](#2-starting-a-new-world)):
 
 - **Random islands** (the default): *only* random islands, no story of the mod's.
 - **No custom islands**: none at all.
@@ -1716,7 +1727,7 @@ use **When players reach an island** for those (next step).
 you click **Close**: Close throws away changes since the last save.
 
 **11. Play it.** Go back to the main menu (**MAIN MENU**, top right) → **NEW WORLD**. At the bottom right, click the
-**Custom Islands plan** list and choose **Castaway trail**, then click Raft's **Create**. In the world:
+**Choose plan...** under Custom Islands plan, pick **Castaway trail** and **Select**, then click Raft's **Create**. In the world:
 - the old camp is 350 m ahead of the raft right away, with the message on screen and "Old camp" on your Receiver;
 - finish the camp's quest (the quest panel shows its steps) and the cove comes 800 m to the north-east;
 - sail to the cove: when you reach it, the treasure island appears near it;
@@ -1866,7 +1877,7 @@ names are the same every time, its exact places aren't.
 - **Test this plan** (World plans, next to Preview notebook) saves the plan and makes a new world with it, a test world
   "Plan test <time>": its islands come as in any world. **Esc → Custom Islands → Back to the editor** brings you
   back to World plans on the plan (the test world stays under Load; delete old ones there).
-- **Choose it** in the New Game box: click the **Custom Islands plan** list and choose your plan (**View the plan...** under
+- **Choose it** in the New Game box: **Choose plan...**, pick your plan and **Select** (**View the plan...** under
   it shows what the plan does: its description, Raft's story, each island and when it comes), then **Create**. The
   next new world starts on **Random islands** again (or the `defaultPlan` of `spawnpool.txt`). In a running world, the host can give it another plan: **Esc → CUSTOM
   ISLANDS → Plan** (a list of the plans; its islands come from now on, what is done or unlocked stays), or F10 →
@@ -2893,6 +2904,8 @@ Raft's sea finds: sand, clay, stones, metal and copper ore, scrap, giant clams a
    and **Behaviour & events...** for doors, winches, valves and levers (what happens on use, the checks, the signals).
 4. **Edit quest...** shows the quest's steps and reward; **Story items...** the keys and logs it uses.
 5. A plan: **World plans** → **Plan ▼** → pick it: one rule card per island, and **Check** explains the whole story.
+6. To play a plan: **NEW WORLD** → **Choose plan...**: a downloaded plan says *library plan* in the list, with a map of
+   its first island and the islands it brings.
 
 Change anything and **Save as** a new name: the original stays as downloaded.
 

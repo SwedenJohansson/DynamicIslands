@@ -944,6 +944,96 @@ namespace DynamicIslands
 			Log("PASS: probed ground");
 		}
 
+		[ConsoleCommand(name: "CIPlanPickerWindow", docs: "Dev, main menu: the New Game box's plan picker (CT5) - every plan listed, pictures, select / double-click / keys / search / cancel; shot_planpicker.png")]
+		public static void PlanPickerWindowCommand() { DynamicIslands.instance.StartCoroutine(PlanPickerWindowTest()); }
+
+		static IEnumerator PlanPickerWindowTest()
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("plan picker: no New Game box (main menu?)"); yield break; }
+			string before = WorldDirector.PendingPlan;
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
+			yield return new WaitForSecondsRealtime(1f);
+			bool ok = true;
+			Transform row = box.transform.Find("CustomIslands_Plan");
+			UnityEngine.UI.Button choose = row != null ? row.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
+			Check(ref ok, choose != null && row.GetComponentsInChildren<UnityEngine.UI.Button>(true).All(x => x.name != "Drop_Plan"), "the box has Choose plan... and no drop-down list");
+			Check(ref ok, ChosenPlanText(row) == NewWorldOptions.Selected, "the box shows the chosen plan (" + ChosenPlanText(row) + ")");
+			if (choose == null) { Fail("plan picker"); yield break; }
+			string start = NewWorldOptions.Selected;
+			choose.onClick.Invoke();
+			yield return null;
+			List<string> plans = WorldPlan.All(), shown = PlanPickerWindow.Shown();
+			Check(ref ok, PlanPickerWindow.IsOpen, "Choose plan... opens the window");
+			Check(ref ok, shown.Count == plans.Count && plans.All(shown.Contains), "every plan is listed (" + shown.Count + " of " + plans.Count + ")");
+			Check(ref ok, PlanPickerWindow.Highlighted == start, "the box's plan is selected when it opens (" + PlanPickerWindow.Highlighted + ")");
+			// (fits the screen: the panel's corners inside it)
+			RectTransform panel = PlanPickerWindow.Root.Find("Panel") as RectTransform;
+			var pc = new Vector3[4]; if (panel != null) panel.GetWorldCorners(pc);
+			Canvas cv = PlanPickerWindow.Root.GetComponent<Canvas>();
+			Vector2 lo = RectTransformUtility.WorldToScreenPoint(cv.renderMode == RenderMode.ScreenSpaceOverlay ? null : cv.worldCamera, pc[0]), hi = RectTransformUtility.WorldToScreenPoint(cv.renderMode == RenderMode.ScreenSpaceOverlay ? null : cv.worldCamera, pc[2]);
+			Check(ref ok, panel != null && lo.x >= -1 && lo.y >= -1 && hi.x <= Screen.width + 1 && hi.y <= Screen.height + 1, "the window fits the screen (" + Screen.width + "x" + Screen.height + ": " + lo + "-" + hi + ")");
+			// every plan: its row selects it, the title and a picture follow
+			var noPicture = new List<string>(); var maps = new List<string>(); var wrong = new List<string>();
+			UnityEngine.UI.Text title = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "PlanTitle");
+			foreach (string n in plans)
+			{
+				UnityEngine.UI.Button r = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + n);
+				if (r == null) { wrong.Add(n + " (no row)"); continue; }
+				r.onClick.Invoke();
+				yield return null;
+				if (PlanPickerWindow.Highlighted != n || title == null || title.text != n) wrong.Add(n);
+				if (PlanPickerWindow.Picture == null) noPicture.Add(n);
+				else if (!PlanPickerWindow.PictureIsPlaceholder) maps.Add(n);
+				yield return new WaitForSecondsRealtime(0.35f); // (no double-click)
+			}
+			Check(ref ok, wrong.Count == 0, "clicking each plan shows it" + (wrong.Count > 0 ? " - not: " + string.Join(", ", wrong.ToArray()) : ""));
+			Check(ref ok, noPicture.Count == 0 && maps.Count > 0, "each plan has a picture or the placeholder; " + maps.Count + " with a picture (" + string.Join(", ", maps.Take(8).ToArray()) + ")");
+			Check(ref ok, NewWorldOptions.Selected == start, "clicking alone doesn't choose (" + NewWorldOptions.Selected + ")");
+			// keys
+			string h0 = PlanPickerWindow.Highlighted;
+			PlanPickerWindow.Move(-1);
+			string h1 = PlanPickerWindow.Highlighted;
+			PlanPickerWindow.Move(1);
+			Check(ref ok, h1 != h0 && PlanPickerWindow.Highlighted == h0, "up/down move the selection (" + h0 + " > " + h1 + " > " + PlanPickerWindow.Highlighted + ")");
+			// search
+			string pick = maps.FirstOrDefault(m => m != start) ?? plans.First(m => m != start);
+			PlanPickerWindow.Search.text = pick;
+			yield return null;
+			List<string> found = PlanPickerWindow.Shown();
+			Check(ref ok, found.Contains(pick) && found.Count < plans.Count, "search '" + pick + "' shows " + found.Count + " plan(s), with it");
+			PlanPickerWindow.Search.text = "zzz-no-such-plan";
+			yield return null;
+			Check(ref ok, PlanPickerWindow.Shown().Count == 0, "a search with no match lists none");
+			PlanPickerWindow.Search.text = "";
+			yield return null;
+			// picture of a plan with a picture
+			PlanPickerWindow.Select(pick);
+			yield return new WaitForSecondsRealtime(0.5f);
+			string file = System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_planpicker.png"));
+			ScreenCapture.CaptureScreenshot(file);
+			Log("Screenshot " + file);
+			yield return new WaitForSecondsRealtime(0.5f);
+			// cancel keeps the choice
+			UnityEngine.UI.Button cancel = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == "Button_Cancel");
+			if (cancel != null) cancel.onClick.Invoke();
+			Check(ref ok, cancel != null && !PlanPickerWindow.IsOpen && NewWorldOptions.Selected == start, "Cancel closes it and keeps " + start);
+			// double-click chooses
+			choose.onClick.Invoke();
+			yield return null;
+			UnityEngine.UI.Button pr = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + pick);
+			if (pr != null) { pr.onClick.Invoke(); pr.onClick.Invoke(); }
+			yield return null;
+			Check(ref ok, !PlanPickerWindow.IsOpen && NewWorldOptions.Selected == pick && ChosenPlanText(row) == pick, "a double-click chooses '" + pick + "' (" + NewWorldOptions.Selected + ", the box shows " + ChosenPlanText(row) + ")");
+			// Select chooses
+			Check(ref ok, ChoosePlanInPicker(choose, start) && ChosenPlanText(row) == start, "Select chooses '" + start + "' again");
+			WorldDirector.PendingPlan = before;
+			NewWorldOptions.Refresh();
+			box.Button_Close();
+			if (ok) Log("PASS: plan picker window"); else Fail("plan picker window");
+		}
+
 		[ConsoleCommand(name: "CINewGameBoxShot", docs: "Dev, main menu: opens Raft's New Game box with the plan and randomizer panels, checks they fit inside it, takes shot_newgame.png and closes it")]
 		public static void NewGameBoxShotCommand() { DynamicIslands.instance.StartCoroutine(NewGameBoxShot()); }
 

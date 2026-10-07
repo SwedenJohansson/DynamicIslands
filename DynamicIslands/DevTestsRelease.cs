@@ -188,6 +188,14 @@ namespace DynamicIslands
 					Check(ref ok, lOff.Count == 0, w + "x" + h + " island library window: " + (lOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", lOff.Take(5).ToArray())));
 					if (size.x == 1024 || lOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_library" }); yield return new WaitForSecondsRealtime(0.6f); }
 					LibraryWindow.Close();
+					// (and the plan picker, CT5)
+					PlanPickerWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					var ppOff = PlanPickerWindow.Root != null ? OffScreen(PlanPickerWindow.Root.gameObject, w, h) : new List<string> { "no window" };
+					Check(ref ok, ppOff.Count == 0, w + "x" + h + " plan picker window: " + (ppOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", ppOff.Take(5).ToArray())));
+					if (size.x == 1280 || ppOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_planpicker" }); yield return new WaitForSecondsRealtime(0.6f); }
+					PlanPickerWindow.Close();
 					box.gameObject.SetActive(false);
 					yield return null;
 				}
@@ -494,32 +502,32 @@ namespace DynamicIslands
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
-			// (the plan's drop-down list, not the head's "Get more..." - the island library)
-			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Drop_Plan") : null;
+			// ("Choose plan...", the plan picker window (CT5), not the head's "Get more..." - the island library)
+			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
 			if (plan == null) { Fail("New Game box clicks: no plan list"); yield break; }
-			// The plan list: every plan picked in turn from the list clicked open
+			// The plan list: every plan picked in turn in the picker
 			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
 			var seen = new List<string>();
 			var wrongDetail = new List<string>();
 			foreach (string name in plans)
 			{
-				bool picked = DropList.Click(plan, name);
+				bool picked = ChoosePlanInPicker(plan, name);
 				yield return null;
-				string label = UIKit.LabelOf(plan).text.Trim();
+				string label = ChosenPlanText(planRow);
 				if (picked) seen.Add(label);
 				WorldPlan p = WorldPlan.Load(label);
 				if (p == null || detail == null || !detail.text.StartsWith(p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)")) wrongDetail.Add(label);
 			}
-			DropList.Click(plan, first);
+			ChoosePlanInPicker(plan, first);
 			yield return null;
 			Check(ref ok, seen.Distinct().Count() == plans.Count && NewWorldOptions.Selected == first, "the plan list has all " + plans.Count + " plans, each picked from it (" + string.Join(", ", seen.ToArray()) + "), and back to '" + first + "'");
 			Check(ref ok, wrongDetail.Count == 0, "each plan shows its description" + (wrongDetail.Count > 0 ? " - not: " + string.Join(", ", wrongDetail.ToArray()) : ""));
 			Check(ref ok, plans.Contains(wantPlan), "the player's plan '" + wantPlan + "' is among them");
-			DropList.Click(plan, wantPlan);
+			ChoosePlanInPicker(plan, wantPlan);
 			yield return null;
-			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "picked '" + wantPlan + "' from the list: chosen (" + NewWorldOptions.Selected + ")");
+			Check(ref ok, NewWorldOptions.Selected == wantPlan && ChosenPlanText(planRow).StartsWith(wantPlan), "picked '" + wantPlan + "' from the list: chosen (" + NewWorldOptions.Selected + ")");
 			// The randomizer: level round, then each part
 			// (the randomizer is in the World settings window now: opened from the box's button, as a player does)
 			if (WorldSettingsWindow.OpenButton != null) WorldSettingsWindow.OpenButton.onClick.Invoke();
