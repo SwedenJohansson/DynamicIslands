@@ -123,6 +123,11 @@ namespace DynamicIslands.Editor
 		/// <summary>State keys: the step reached (Yield), and progress on counted steps (Yield).</summary>
 		public const int StepKey = 0x40000, ProgressKey = 0x40001;
 		const float NearDistance = 150f;
+		/// <summary>How close (beyond the land) the quest panel and introduction first show; they stay until NearDistance
+		/// (the user, 2026-10-07: at 150 m "you always get notified", islands should need looking around for).</summary>
+		const float ShowDistance = 70f;
+		/// <summary>The island whose panel is up (kept until the player is NearDistance away), or -1.</summary>
+		static int panelIsland = -1;
 
 		/// <summary>Raised on every machine when a quest moves on (tests listen): island id, new step (== steps count when done).</summary>
 		public static event Action<int, int> Advanced;
@@ -332,7 +337,9 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] " + LastMessage);
 		}
 
-		static bool Near(IslandWorldState.Entry e)
+		static bool Near(IslandWorldState.Entry e) { return Near(e, NearDistance); }
+
+		static bool Near(IslandWorldState.Entry e, float distance)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || e.Root == null) return false;
@@ -341,7 +348,7 @@ namespace DynamicIslands.Editor
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
 			Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
 			float r = tag != null ? tag.Radius : Mathf.Max(30f, CustomIslandSpawner.LandRadius(e.Name));
-			return new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude < r + NearDistance;
+			return new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude < r + distance;
 		}
 
 		#region The quest panel
@@ -385,9 +392,11 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
-			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			if (Raft_Network.IsHost) CheckCounted();
-			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
+			// (shows within ShowDistance, stays up out to NearDistance)
+			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e, e.Id == panelIsland ? NearDistance : ShowDistance) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
+			panelIsland = at != null ? at.Id : -1;
 			if (at == null) { closedKey = -1; if (panel != null) panel.gameObject.SetActive(false); return; }
 			int quests = QuestsOf(at);
 			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined

@@ -260,7 +260,8 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
 
 ### Quests
 
-An island with a quest shows a **quest panel** on the right when you arrive, with its steps: go somewhere, read a
+An island with a quest shows a **quest panel** on the right when you come within about 70 m of its shore (it stays up
+until you are 150 m away, so islands still need looking for), with its steps: go somewhere, read a
 note, open a chest, defeat or catch animals, collect story items, find journal pages. Each step done shows what's
 next; the last one gives the reward to every player near the island - and a crew member who was elsewhere (or joins
 later) gets their share when they come to the island, once. The panel shows **five steps at a time**: the one

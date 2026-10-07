@@ -1584,7 +1584,23 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile("ciquest", spot.Value, true);
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (entry == null || entry.Root == null) { Fail("the quest island did not spawn"); yield break; }
-			yield return StandRoutine(entry.Root); // near the island: the quest shows
+			// (the panel shows only close by - within 70 m of the land - and stays up out to 150 m; the user, 2026-10-07)
+			IslandInfoTag tag = entry.Root.GetComponent<IslandInfoTag>();
+			Vector3 mid = entry.Root.transform.position + tag.LocalCentre;
+			Vector3 away = (RAPI.GetLocalPlayer().transform.position - mid).normalized;
+			away.y = 0f;
+			if (away.sqrMagnitude < 0.01f) away = Vector3.forward;
+			away.Normalize();
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 110f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, !QuestTracker.PanelShown, "no quest panel 110 m off the land");
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 50f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "the quest panel shows 50 m off the land");
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 110f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "and stays up when the player moves back out to 110 m");
+			yield return StandRoutine(entry.Root); // on the island: the quest shows
 			yield return new WaitForSeconds(1.5f);
 			Check(ref ok, QuestTracker.QuestOf(entry).Steps.Count == 4 && QuestTracker.StepOf(entry) == 0, "the island has its quest, at step 1");
 			Check(ref ok, GameObject.Find("CustomIslands_Quest") != null && GameObject.Find("CustomIslands_Quest").GetComponentInChildren<Text>() != null, "the quest panel shows near the island");
