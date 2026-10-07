@@ -1,0 +1,68 @@
+# World settings
+
+The optional systems of a world: world rules (monster difficulty, build cost), the world randomizer, the extra options and the level up system. A player picks them in the New Game box. The host's choice is saved with the world and sent to every player; only the host can change it later.
+
+## Files
+| File | Role |
+|---|---|
+| `WorldSettingsWindow.cs` | `WorldSettingsWindow`: the New Game box's WORLD SETTINGS... window (all groups, "Raft's own", "Defaults..."). `WorldSettingsChoice`: Create prefix |
+| `NewWorldOptions.cs` | `NewWorldOptions`: the plan drop-down, "Get more...", `BuildRandomizer` (randomizer controls). `NewWorldPlanChoice`: Create prefix |
+| `WorldRules.cs` | `WorldRules` (kind 15, the host's shared `spawnpool.txt` values, `world_rules.txt`), `BuildCost` (+ the `BuildCost` command), `BuildCostKeeper`, `NewWorldRulesBox` (the two sliders, `BuildInto`), `NewWorldRulesChoice` |
+| `MonsterDifficulty.cs` | `MonsterDifficulty` (levels, `Factors`, `Scale`, `Monsters` command), `MonsterDamagePatch`, `PufferFishDamagePatch` |
+| `BuildCostRefund.cs` | `BuildCostRefund`: the cost each block was placed at; `BuildCostPlaced`, `BuildCostRefundPatch` |
+| `WorldRandomizer.cs` | `RandomizerSettings` (level, seed, parts), `WorldRandomizer` (kind 13, `Tick`, `OnSailed`, colours, alphas, loot, extras), `LandGround` |
+| `RandomizerContent.cs`, `RandomizerIslands.cs`, `RaftProps.cs` | Content: `RandomizerContent.Extras`, `Oddity`, `Lair`; `RandomizerIslands.Themes`, `Dens`, `Large`. `RaftProps` reads `raft_props.txt` |
+| `WorldOptions.cs` | `WorldOptions`: the four extra options, their seed, kind 17, the `WorldOptions` command |
+| `ScrambledBlueprints.cs`, `StoryOrder.cs`, `GhostRafts.cs`, `PrivateStorage.cs` | The options `blueprints`, `storyorder`, `ghostrafts`, `privatestorage` |
+| `LevelSystem.cs` | `LevelRules` (the numbers), `LevelRecord`, `PlayerLevels` (on/off, EXP, kind 14), `StatApply` and the `Level*Patch` classes |
+| `LevelWindow.cs` | `LevelHud` (EXP floaters, bar, level-up box), `LevelTags` ("Lv n"), `LevelWindow` (the stats page) |
+| `WorldWindow.cs` | `WorldWindow`: Esc > CUSTOM ISLANDS in a running world. `WorldWindowButton`: postfix on `PauseMenu.Start` |
+| `DefaultsWindow.cs` | `DefaultsWindow`: this PC's `spawnpool.txt` values and the journal/stats keys |
+
+## Main flow
+1. The box: `NewWorldOptions`, `WorldSettingsWindow` and `NewWorldRulesBox` are postfixes on `NewGameBox.Open`. Shown values: `NewWorldRulesBox.MonsterLevel` / `BuildPercent` (start from `MonsterDifficulty.Default` / `BuildCost.Default`), `WorldOptions.Pending`, `WorldRandomizer.Pending` (via `NewWorldOptions.Randomizer`), `PlayerLevels.Chosen`, `WorldIslands.Chosen`. A null `Pending` is filled from the last choice.
+2. Create (prefixes on `NewGameBox.Button_CreateNewGame`): `NewWorldRulesChoice` sets `MonsterDifficulty.Pending` / `BuildCost.Pending`; `NewWorldPlanChoice` sets `WorldDirector.PendingPlan`; all three save the last choices.
+3. A new world: Raft raises no load event, so `WorldDirector.CheckNewWorld` calls `IslandWorldState.OnWorldLoaded`. It calls `WorldRules.Reset`, `WorldRandomizer.Reset`, `PlayerLevels.Reset`, `WorldOptions.Reset` (and others). On the host with `GameManager.IsInNewGame`, the rules and options take `Pending`, and `WorldOptions.Reset` calls `PlayerLevels.OnNewWorld`. Then `WorldDirector.OnWorldLoaded` calls `WorldRandomizer.OnNewWorld`.
+4. A saved world: each `@key=value` line goes through the `ReadLine` chain in `IslandWorldState.OnWorldLoaded`; then `WorldRules.OnWorldRead` broadcasts. `IslandWorldState.Save` writes each system's `WriteLines()`.
+5. A player joins: the client's `IslandNetwork.OnWorldReceived` calls `WorldRules.OnWorldReceived` and `WorldOptions.OnWorldReceived` (Raft's own until the host's come). The host answers `SyncRequest` with `JoinPart`s: `WorldRules.Message`, island list, story, `WorldOptions.Message`, ..., `WorldRandomizer.Message`, player's place; then `PlayerLevels.StateFor` through `SendLevels`.
+6. The client applies them in `WorldRules.OnMessage`, `WorldOptions.OnMessage`, `WorldRandomizer.OnMessage`, `PlayerLevels.OnMessage`.
+7. Host changes: `MonsterDifficulty.Set`, `BuildCost.Set`, `WorldRules.SetRegrow`, `WorldOptions.Set`, `WorldRandomizer.Set`, `PlayerLevels.SetEnabled` broadcast and call `IslandWorldState.Save()`. `WorldWindow` and the console commands call them.
+8. In play: `MonsterDamagePatch` calls `MonsterDifficulty.Scale`; `BuildCostKeeper` calls `BuildCost.Refresh`; the mod's tick (`DynamicIslands.cs`) calls `WorldRandomizer.Tick`, `ScrambledBlueprints.Tick`, `PlayerLevels.Tick`; `CustomIslandSpawner` calls `WorldRandomizer.OnSailed` and `GhostRafts.OnSailed`.
+
+## Data and keys
+- World file `worlds\<WorldGuid>.txt` (`IslandWorldState.WorldFilePath`): `@monsters=`, `@buildcost=`, `@builtat=`, `@regrow=`, `@options=`, `@optionseed=`, `@optionsused=`, `@storages=`, `@ghostsailed=`, `@randomizer=`, `@rndsailed=`, `@rndcount=`, `@rndseen=`, `@levels=`, `@level=<steamid>|...`; `WorldIslands`: `@islandsoff=`, `@raftgap=`, `@raftgapcount=`, `@playtime=`.
+- Last choices: `world_rules.txt` (`WorldRules.DefaultFileName`, read with `WorldRules.ReadDefault`): `monsters`, `buildcost`, `options`, `levels`, `islandsoff`, `raftgap`; also `updatecheck`, `journalkey`, `statskey`. Randomizer: `randomizer.txt` (`WorldRandomizer.DefaultsFileName`), seed written as 0.
+- Network kinds (`IslandNetMessage`):
+  - `WorldRules` (15): Index = monster level, Count = build %, Data = `receiver=;unload=;regrow=;rdist=`, Name = `BuildCostRefund.Encode()`.
+  - `WorldOptions` (17): Data = `on=a,b;seed=n`, Name = `PrivateStorage.Encode()`.
+  - `Randomizer` (13): Data = `RandomizerSettings.Encode()` (`level=;seed=;off=`).
+  - `Levels` (14): Name = `on`, `off`, `state`, `mine` (client -> host), `levels` or `gain`.
+- Shipped: `raft_props.txt`, `raft_blueprints.txt`. Extras are custom islands named `rnd-<seed>-<key>` (`WorldRandomizer.ExtrasPrefix`). Sailing islands: map types `oddity`, `lair`, `large`; ghost rafts: `ghostraft` (`MapTypes.cs`).
+- Commands: `Monsters` (MonsterDifficulty.cs), `BuildCost` (WorldRules.cs), `WorldOptions` (WorldOptions.cs); `Levels`, `RegrowDays`, `Randomizer` (DynamicIslands.cs).
+
+## Where to change X
+| Task | Edit |
+|---|---|
+| Monster levels or factors | `MonsterDifficulty.Names`, `Factors`, `Descriptions`, `Aliases` (parallel), `HelpText`, the `Monsters` docs string |
+| Build cost rounding | `BuildCost.Cost`, texts in `DescriptionFor` and `HelpText` |
+| A new extra option | `WorldOptions` constant + `All`, `Labels`, `Hints` (parallel); hook its `Reset`/`ReadLine`/`WriteLines` into `WorldOptions.Reset`/`ReadLine`/`WriteLines` (live state: `Notify`). The windows build buttons from `All` |
+| A new randomizer part | `RandomizerSettings.Features`, `FeatureLabels`, `FeatureHints` (parallel); test with `Current.Has(...)`; the `Randomizer` docs string |
+| Randomizer rates | `Pick(light, normal, wild)` calls in `WorldRandomizer` (`VariantOf`, `OnSailed`) and `RandomizerContent`, plus the numbers in `FeatureHints` and `LevelHint` |
+| Level numbers and stats | `LevelRules` constants, `StatApply`; page `LevelWindow`, HUD `LevelHud` |
+| A new setting saved with the world | `ReadLine`/`WriteLines` in the chains of `IslandWorldState.OnWorldLoaded` and `Save`, `HasState` in the delete check in `Save`, a `JoinPart` and an `OnMessage` case; a setting key also in `WorldCopy.SettingKeys` |
+| A host `spawnpool.txt` value every player shares | `WorldRules.HostSettingsData` and `HostSettingsFrom`, plus a getter like `WorldRules.UnloadDistance` |
+| Defaults window fields | `DefaultsWindow.Sailing`, `Shared`, `Generated`; written through `CustomIslandSpawner.SetPoolValues` |
+
+## Traps
+- Host/client: `WorldRules`, `WorldOptions` and `WorldRandomizer` `OnMessage` return at once on the host; `PlayerLevels.OnMessage` handles `mine` only on the host. Commands and `WorldWindow` refuse non-hosts (`Raft_Network.IsHost`); of the `Set` methods only `PlayerLevels.SetEnabled` checks itself.
+- `WorldRules.Reset` and `WorldOptions.Reset` do nothing to the rules/options on a client. Loading a saved world (host) clears `PlayerLevels.Pending`, `WorldRandomizer.Pending` and calls `NewWorldRulesBox.Forget()` (in `WorldOptions.Reset`).
+- New world test: `Reset` uses `GameManager.IsInNewGame`; `WorldDirector.OnWorldLoaded` also needs `Sailed <= 0`, no islands and `Done.Count == 0` before `WorldRandomizer.OnNewWorld`.
+- `IslandWorldState.Save` deletes the world file when no `HasState` is true; a new setting missing there is lost.
+- The `ReadLine` chain lower-cases the key for `WorldRandomizer`, `WorldOptions`, `WorldIslands`, but not for `WorldRules` or `PlayerLevels` (they compare ignoring case). Unknown `@` lines are kept (`keptLines`). `PrivateStorage`/`GhostRafts` lines go through `WorldOptions.ReadLine`/`WriteLines`.
+- `BuildCost` changes Raft's shared `CostMultiple.amount`: always from the originals (`OriginalOf`, `ApplyTo`); `RestoreAll` outside a world. `BuildCostRefundPatch` changes amounts for one call and restores them in its `Finalizer`.
+- `MonsterDamagePatch` and `LevelDamagePatch` are both prefixes on `Network_Host.DamageEntity`; `LevelDamagePatch` has `Priority.Last` so EXP follows the scaled damage. Hits of `MonsterDifficulty.KillDamage` or more and puffer fish hits (`PufferFishHurting`) are not scaled.
+- Colours, alphas and moved loot are worked out on every machine from `Current.Seed` and network ids (`WorldRandomizer.Hash`, `Unit`), with no messages: keep them deterministic. Extras and sailing islands are host only. `WorldRandomizer.IsNatural` (its `StoryParts` types) keeps the randomizer off story islands.
+- `ScrambledBlueprints.Keep` must list every blueprint the story needs. `ScrambledBlueprintsPickup` finds Raft's `Pickup.PickupItem` by reflection.
+- `PrivateStorage` builders are noted on every machine in a `BlockCreator.CreateBlock` postfix (not when `replicating`, only while the option is on). `MayOpen` lets the host open a storage whose builder is not in the game.
+- C# 7.3 only: RML compiles the mod in game.
+- Docs: README "World settings: more ways to play Raft again", "World rules: monster difficulty and build cost", "World randomizer", "The level up system", "Console commands (F10)", "Source overview"; `docs/GUIDE.md` chapters 9, 10 (settings files) and 11 (console commands).
