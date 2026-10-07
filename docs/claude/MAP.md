@@ -10,7 +10,7 @@ FranzFischer78/Custom-Islands-UI; the panels are built in code.
 |---|---|
 | Writing or fixing a `.recipe` | `RECIPE_FORMAT.md` |
 | Writing or fixing a `.play` test | `PLAY_FORMAT.md` |
-| Running tests, CI commands, test logs | `areas/testing.md` |
+| Running tests (`ci.ps1`), CI commands, test logs | `areas/testing.md` |
 | Island generator, map types, Raft's measured islands | `areas/generator.md` |
 | The editor: tools, windows, objects, undo, Test | `areas/editor.md` |
 | World plans, Raft's story, islands while sailing, the notebook | `areas/world-plans.md` |
@@ -19,6 +19,8 @@ FranzFischer78/Custom-Islands-UI; the panels are built in code.
 | Host and clients, network messages | `areas/multiplayer.md` |
 | World settings: rules, randomizer, options, levels | `areas/world-settings.md` |
 | Packs and the online library | `areas/library.md` |
+| Updating GUIDE, README, CHANGELOG for a feature | `areas/docs.md` |
+| Adding a feature: every place it touches | `CHANGE_CHECKLISTS.md` (your kind's section only) |
 
 Anything else: grep README.md's "### Source overview" table, which has one
 line per source file.
@@ -32,7 +34,7 @@ line per source file.
 | `content/tests/` | `.play` play-tests |
 | `content/objects/` | Object catalogue lists by category |
 | `docs/` | `GUIDE.md` (players' guide), the guide PDF, `images/`, `release/` (mod page and merge-request text), `claude/` (these docs) |
-| root | `compile.ps1`, `pack.ps1`, `build.bat`, README, CHANGELOG, `.sln` |
+| root | `compile.ps1`, `ci.ps1` (run dev tests), `pack.ps1`, `build.bat`, README, CHANGELOG, `.sln` |
 
 ## Build and pack
 

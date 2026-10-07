@@ -78,3 +78,17 @@ Prefix families (`CIGen*`, `CIRandomizer*`, `CIStory*`, `CIPlan*`, `CIQuestBook*
   line starts before it finishes. Send one long command, wait for its PASS/FAIL line, then send the next.
 - A test that stops with `Fail` and `yield break` prints no PASS line and may leave islands or state behind.
 - A command run from the file sets `HelpLinks.Automated` (no browser or Explorer windows).
+
+## Running dev commands: ci.ps1
+
+Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test commands and the others) in a running Raft. It prints only that run's `[CITEST]` lines, so do not read `Player.log` yourself.
+
+- Needs Raft running with a dev build of the mod (`pack.ps1 -Install`, not `-Release`; `-Release` leaves out `DevTests*.cs`). At startup the mod calls `DevTests.Init` through reflection. It logs `[CITEST] Command file: <path>` and starts `PollCommandFile`.
+- `PollCommandFile` reads `dev_commands.txt` in `DynamicIslands.assetpath` (`Mods\DynamicIslands\` beside `Raft_Data`) every second, deletes it and runs each line. Blank lines and `#` lines are skipped. Each line is logged as `[CITEST] > <line>`, then `RunCommand` runs the `ConsoleCommand` method with that name. Words after the name are its arguments. An unknown name logs `FAIL: no console command called <name>`.
+- Run: `powershell -ExecutionPolicy Bypass -File ci.ps1 -Command "CIEditor" -Until '^Editor ready:'`. Separate several commands with `;`.
+- All lines of one run start in the same frame. A command that needs an earlier one finished goes in its own run: `CIEditor`, then `CIDemo`.
+- There is no common end line: `Check` logs `PASS:`/`FAIL:` for every sub-check too. `-Until` is a regex matched against the text after `[CITEST] `, on lines after the last command's echo. Use the test's final verdict text, e.g. `'editor save/load round trip'` for `CITest`. Without `-Until`, the run ends after `-Quiet` (20) s with no new `[CITEST]` line. With `-Until`, that quiet rule applies only once a `FAIL:` line has come. Long tests: raise `-Timeout` (300).
+- The script writes to the command file path from the log's last `Command file:` line (else `<RaftDir>\Mods\DynamicIslands\`). It stops at once (exit 2) when the log shows the mod loaded without that line, which means a release build. A file the mod does not read in 60 s is deleted again (exit 3).
+- Output: `FAIL:` lines, then at most 40 more lines: mod exceptions (`EXC`) first, then the last other `[CITEST]` lines. Lines are cut at 300 characters. `-Full` shows everything. The last line is `PASS n, FAIL n, <seconds> s`.
+- Exit 0 no FAIL, 1 FAIL, 2 setup problem (one line says which), 3 timeout.
+- Second Raft under Sandboxie: `-Player 2 -LogPath <its Player.log>` uses `dev_commands_2.txt`. The box must open that file to the real folder (`OpenFilePath`).
