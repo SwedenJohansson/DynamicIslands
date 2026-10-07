@@ -428,7 +428,8 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class QuestCount
 	{
-		public const string PlanStory = "The plan's story", PlanIslands = "The plan's other islands", Met = "Other islands with a quest";
+		public const string PlanStory = "The plan's story", PlanIslands = "The plan's other islands", Met = "Other islands with a quest",
+			ToCome = "Islands with a quest still to come";
 
 		public class Quest
 		{
@@ -534,6 +535,19 @@ namespace DynamicIslands.Editor
 				List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)).ToList();
 				list.Add(new Quest { Name = Behaviours.IslandTitle(e) + (q.Title.Length > 0 ? " \u2013 " + q.Title : ""), Group = Met, Done = same.Any(x => QuestTracker.StepOf(x) >= q.Steps.Count) });
 			}
+			// The islands this world takes part with while sailing that have a quest and haven't come yet (ROADMAP CT9 - the user,
+			// 2026-10-06: 47 islands ticked, the journal said 1/12: only the plan's and the islands that had come were counted)
+			if (CustomIslandSpawner.Enabled && (plan == null || plan.Random))
+				foreach (string name in StillToCome())
+				{
+					if (counted.Contains(name) || IslandWorldState.Islands.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
+					IslandQuest q = IslandQuest.From(IslandCache.Props(name));
+					if (q.Steps.Count == 0) continue;
+					counted.Add(name);
+					string title;
+					IslandCache.Props(name).TryGetValue(IslandProps.Title, out title);
+					list.Add(new Quest { Name = (string.IsNullOrEmpty(title) ? name : title) + (q.Title.Length > 0 ? " – " + q.Title : ""), Group = ToCome });
+				}
 			// The islands' further quests (ROADMAP LM4), each on its own line
 			var further = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
@@ -550,6 +564,17 @@ namespace DynamicIslands.Editor
 				}
 			}
 			return list;
+		}
+
+		static List<string> toCome = new List<string>();
+		static float toComeAt = -100f;
+
+		/// <summary>The saved islands of this world's random pool (looked at again every 10 s at most: Pool reads the folder).</summary>
+		static List<string> StillToCome()
+		{
+			if (Time.unscaledTime - toComeAt < 10f) return toCome;
+			toComeAt = Time.unscaledTime;
+			return toCome = CustomIslandSpawner.Pool(true).Select(p => p.Key).Where(n => n != CustomIslandSpawner.GeneratedEntry && !n.StartsWith(CustomIslandSpawner.TypePrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 		}
 
 		/// <summary>"Wreckers' Cove - The False Light": the island (as it came, or as the rule names it) and its quest.</summary>

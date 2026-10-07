@@ -306,6 +306,10 @@ page's (**K**, a star).
     map type or from a list counts once it has come (until then nobody knows what it is);
   - **every other island with a quest** that has come to the world: by chance while sailing, brought by another
     island's rule, the world randomizer's treasure hunts. These add to the total as you meet them.
+  - **the islands ticked for this world that have a quest and haven't come yet** (while random islands are on - the
+    "Islands while sailing" list, [9.5](#95-islands-while-sailing)): counted **from the start**, so 47 ticked islands
+    with 44 quests make the total at least 44. One that comes moves to the line above; one that is unticked or an
+    island without a quest isn't counted.
 
   An island's quest counts once, however many rules name it; an island with several quests counts each of them. **Click the count** for the whole list on the paper, by kind:
   √ done, – still to do. The count is the same for every player and is worked out again every 2 seconds while the

@@ -212,6 +212,31 @@ namespace DynamicIslands
 			if (ok) Log("PASS: pool without plan islands"); else Fail("pool without plan islands");
 		}
 
+		[ConsoleCommand(name: "CIQuestCountToCome", docs: "Dev, in game (host): ROADMAP CT9 - the journal's quest count has every island of this world's random pool that has a quest and hasn't come (random islands on); with them off, none")]
+		public static void QuestCountToComeCommand(string[] args)
+		{
+			bool ok = true, was = CustomIslandSpawner.Enabled;
+			try
+			{
+				CustomIslandSpawner.Enabled = true;
+				WorldPlan plan = WorldDirector.Plan;
+				List<string> expected = CustomIslandSpawner.Pool(true).Select(p => p.Key)
+					.Where(n => IslandSpawner.ListSavedIslands().Contains(n) && IslandQuest.From(IslandCache.Props(n)).Steps.Count > 0
+						&& !IslandWorldState.Islands.Any(e => e.Name.Equals(n, StringComparison.OrdinalIgnoreCase) || e.HostName.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
+				List<QuestCount.Quest> quests = QuestCount.All();
+				int toCome = quests.Count(q => q.Group == QuestCount.ToCome);
+				int done, total;
+				QuestCount.Count(quests, out done, out total);
+				Log("  pool " + CustomIslandSpawner.Pool(true).Count + ", with a quest not come " + expected.Count + "; counted to come " + toCome + "; QUESTS " + done + "/" + total);
+				if (plan != null && !plan.Random) Check(ref ok, toCome == 0, "the plan has random islands off: none to come counted");
+				else Check(ref ok, toCome > 0 && toCome <= expected.Count && quests.Where(q => q.Group == QuestCount.ToCome).All(q => !q.Done), "the pool's quest islands still to come count, not done (" + toCome + " of " + expected.Count + " - those another rule already counts aren't twice)");
+				CustomIslandSpawner.Enabled = false;
+				Check(ref ok, !QuestCount.All().Any(q => q.Group == QuestCount.ToCome), "random islands off: none to come");
+			}
+			finally { CustomIslandSpawner.Enabled = was; }
+			if (ok) Log("PASS: quest count to come"); else Fail("quest count to come");
+		}
+
 		[ConsoleCommand(name: "CIQuestCountCheck", docs: "Dev, in game (either player): ROADMAP CW3 - this machine's quest count as the journal shows it: QCOUNT <done>/<total> <fingerprint> (two players compare)")]
 		public static void QuestCountCheckCommand(string[] args)
 		{
