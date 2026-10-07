@@ -1006,6 +1006,8 @@ namespace DynamicIslands.Editor
 			int found, total;
 			string notes = host != null && NoteCount.OfIsland(host, out found, out total) ? "  (" + found + "/" + total + " notes)" : "";
 			Text t = UIKit.Label(pageList, (island.Length > 0 ? island : "Other pages") + (quest.Length > 0 ? "  \u00B7  " + quest + (done ? "  \u221a done" : "") : "") + notes, 13, UIKit.Accent, TextAnchor.LowerLeft, FontStyle.Bold, "Island");
+			// a finished quest's line in light green (the user, 2026-10-07)
+			if (done) t.color = new Color(0.62f, 0.9f, 0.5f);
 			UIKit.Size(t.gameObject, -1, 24);
 		}
 

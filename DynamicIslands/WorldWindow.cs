@@ -108,11 +108,11 @@ namespace DynamicIslands.Editor
 			UIKit.Label(srow, "Regrow days", 12, UIKit.TextMuted);
 			AddField("RegrowDays", srow, true, "Days until chopped trees, picked items, animals and looted chests come back in this world (0 = never; an island's own rule wins). Kept with the world, the same as the F10 command RegrowDays", SetRegrow);
 			UIKit.Label(srow, "Unload beyond (m)", 12, UIKit.TextMuted);
-			AddField("UnloadDistance", srow, false, "Custom islands further than this from the raft are unloaded, and come back when it returns (300 or more). Saved in your spawnpool.txt for every world you host", v => SetPool("unloadDistance", v));
+			AddField("UnloadDistance", srow, false, "Custom islands further than this from the raft are unloaded, and come back when it returns (300 or more). Kept as this PC's setting for every world you host", v => SetPool("unloadDistance", v));
 			RectTransform rrow2 = UIKit.Row(shared, 28f, 6f, "Receiver");
-			Add("Receiver", UIKit.Button(rrow2, "", () => SetPool("showOnReceiver", WorldRules.ShowOnReceiver ? "0" : "1"), "Custom islands as green dots on Raft's Receiver. Saved in your spawnpool.txt for every world you host", 150, 28f, 12));
+			Add("Receiver", UIKit.Button(rrow2, "", () => SetPool("showOnReceiver", WorldRules.ShowOnReceiver ? "0" : "1"), "Custom islands as green dots on Raft's Receiver. Kept as this PC's setting for every world you host", 150, 28f, 12));
 			UIKit.Label(rrow2, "Range (m, 0 = all)", 12, UIKit.TextMuted);
-			AddField("ReceiverDistance", rrow2, false, "Receiver dots only for islands this close (0 = all); an island the players still need shows however far it is. Saved in your spawnpool.txt for every world you host", v => SetPool("receiverDistance", v));
+			AddField("ReceiverDistance", rrow2, false, "Receiver dots only for islands this close (0 = all); an island the players still need shows however far it is. Kept as this PC's setting for every world you host", v => SetPool("receiverDistance", v));
 			Add("Defaults", UIKit.Button(rrow2, "Defaults...", DefaultsWindow.Open, "Every setting of your spawnpool.txt: random islands, spacing, distances, the Receiver, regrow days for new worlds, generated islands", 100, 28f, 12));
 
 			// Islands while sailing

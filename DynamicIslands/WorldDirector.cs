@@ -316,7 +316,7 @@ namespace DynamicIslands.Editor
 		public static WorldPlan Load(string name)
 		{
 			name = (name ?? "").Trim();
-			if (name.Equals(RandomName, StringComparison.OrdinalIgnoreCase)) return new WorldPlan { Name = RandomName, Description = "Islands appear by chance while you sail (spawnpool.txt)", Random = true };
+			if (name.Equals(RandomName, StringComparison.OrdinalIgnoreCase)) return new WorldPlan { Name = RandomName, Description = "Islands appear by chance while you sail", Random = true };
 			if (name.Equals(NoneName, StringComparison.OrdinalIgnoreCase)) return new WorldPlan { Name = NoneName, Description = "Only islands you spawn yourself", Random = false };
 			string path = PathFor(name);
 			if (name.Length == 0 || !File.Exists(path)) return null;

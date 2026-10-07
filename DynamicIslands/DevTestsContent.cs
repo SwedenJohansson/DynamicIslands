@@ -1589,6 +1589,10 @@ namespace DynamicIslands
 			Check(ref ok, QuestTracker.QuestOf(entry).Steps.Count == 4 && QuestTracker.StepOf(entry) == 0, "the island has its quest, at step 1");
 			Check(ref ok, GameObject.Find("CustomIslands_Quest") != null && GameObject.Find("CustomIslands_Quest").GetComponentInChildren<Text>() != null, "the quest panel shows near the island");
 			Screenshot(new[] { "quest_panel" });
+			// (its X closes it until the step changes - ROADMAP CT10)
+			GameObject.Find("CustomIslands_Quest").GetComponentsInChildren<Button>(true).First(b => b.name == "Close").onClick.Invoke();
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, !QuestTracker.PanelShown, "the panel's X closes it");
 
 			IslandNetMessage sent = null;
 			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.QuestStep) sent = m; };
@@ -1621,11 +1625,26 @@ namespace DynamicIslands
 				if (QuestTracker.StepOf(entry) == 3) Log("  defeated one: " + QuestTracker.QuestOf(entry).Steps[3].Describe());
 			}
 			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "the panel is back once the next step came");
 			Check(ref ok, QuestTracker.StepOf(entry) == 4, "defeating both warthogs finishes the quest (step " + QuestTracker.StepOf(entry) + ")");
 			Check(ref ok, QuestTracker.LastMessage != null && QuestTracker.LastMessage.StartsWith("Quest complete: The lost camp"), "\"" + QuestTracker.LastMessage + "\"");
 			Check(ref ok, inv.GetItemCount("Plank") - planks == 5, "the reward arrives (planks +" + (inv.GetItemCount("Plank") - planks) + ")");
 			Screenshot(new[] { "quest_done" });
 			yield return new WaitForSeconds(1f);
+			// (a finished quest's panel goes by itself after DoneHideSeconds (30 s; 3 s here) - ROADMAP CT10)
+			Check(ref ok, QuestTracker.PanelShown, "the panel stays up a while after the quest is done");
+			QuestTracker.DoneHideSeconds = 3f;
+			yield return new WaitForSeconds(3f);
+			Check(ref ok, !QuestTracker.PanelShown, "the finished quest's panel hides by itself");
+			// (the journal: the island's line with its finished quest in light green - ROADMAP CT8)
+			JournalWindow.Open();
+			yield return new WaitForSeconds(1f);
+			Text line = UnityEngine.Object.FindObjectsOfType<Text>().FirstOrDefault(t => t.name == "Island" && t.text.Contains("The lost camp"));
+			Check(ref ok, line != null && line.text.Contains("√ done") && line.color.g > 0.8f && line.color.r < 0.7f, "the journal's line of the finished quest is light green" + (line != null ? " (" + line.color + ")" : " (no line)"));
+			Screenshot(new[] { "journal_quest_done" });
+			yield return new WaitForSeconds(0.6f);
+			JournalWindow.Close();
+			QuestTracker.DoneHideSeconds = 30f;
 
 			// Saved with the world's state; a message from another player sets it too
 			ObjectState s;

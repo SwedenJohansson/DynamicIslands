@@ -353,6 +353,15 @@ namespace DynamicIslands.Editor
 		static float nextHud;
 		static int followedIsland = -1, followedStep = -1;
 		static readonly HashSet<int> introduced = new HashSet<int>();
+		static Button closeButton;
+		/// <summary>The panel closed with its X: hidden for this quest and step while the player stays at the island.</summary>
+		static int closedKey = -1, closedStep = -1;
+		/// <summary>When each finished quest was first seen done (island * 16 + quest): its panel goes 30 s later (ROADMAP CT10).</summary>
+		static readonly Dictionary<int, float> doneSince = new Dictionary<int, float>();
+		/// <summary>How long a finished quest's panel stays up (the user, 2026-10-07: "after finished, hide it after 30sec").</summary>
+		public static float DoneHideSeconds = 30f;
+		/// <summary>Whether the quest panel is on screen (for the tests).</summary>
+		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
 		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
 		/// covered the right side of the screen).</summary>
 		public const int VisibleSteps = 5;
@@ -376,10 +385,10 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
-			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); if (panel != null) panel.gameObject.SetActive(false); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			if (Raft_Network.IsHost) CheckCounted();
 			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
-			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
+			if (at == null) { closedKey = -1; if (panel != null) panel.gameObject.SetActive(false); return; }
 			int quests = QuestsOf(at);
 			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined
 			// after it was done: the step came with the island list, no "done" ran here, and nothing was ever owed to them)
@@ -400,8 +409,20 @@ namespace DynamicIslands.Editor
 			int step = StepOf(at, shown);
 			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
 			if (panel == null) Build();
-			panel.gameObject.SetActive(true);
 			int open = Enumerable.Range(0, quests).Count(n => n != shown && TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
+			// (every quest here done: the panel goes after DoneHideSeconds; closed with its X: gone until the step changes)
+			int shownKey = at.Id * 16 + shown;
+			bool hide = shownKey == closedKey && step == closedStep;
+			if (step >= q.Steps.Count && open == 0)
+			{
+				float since;
+				if (!doneSince.TryGetValue(shownKey, out since)) doneSince[shownKey] = since = Time.unscaledTime;
+				if (Time.unscaledTime - since >= DoneHideSeconds) hide = true;
+			}
+			panel.gameObject.SetActive(!hide);
+			if (hide) return;
+			closeButton.onClick.RemoveAllListeners();
+			closeButton.onClick.AddListener(() => { closedKey = shownKey; closedStep = step; panel.gameObject.SetActive(false); });
 			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
 			var lines = new List<string>();
 			for (int i = 0; i < q.Steps.Count; i++)
@@ -515,7 +536,13 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, -160), new Vector2(300, 0));
 			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(12, 12, 8, 10), true);
-			titleText = UIKit.Label(panel, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			// (the title and an X to close the panel - ROADMAP CT10; the X takes the mouse while the cursor is free)
+			RectTransform top = UIKit.Rect("Top", panel);
+			UIKit.Horizontal(top.gameObject, 6f).childForceExpandWidth = false;
+			titleText = UIKit.Label(top, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			UIKit.Size(titleText.gameObject);
+			closeButton = UIKit.Button(top, "×", () => { }, "Close the quest panel", 24, 24f, 14);
+			closeButton.name = "Close";
 			stepsContent = UIKit.ScrollList(panel, out stepsScroll, 3f);
 			stepsView = (RectTransform)stepsScroll.transform;
 			stepsView.name = "Steps";
@@ -524,6 +551,7 @@ namespace DynamicIslands.Editor
 			stepLines.Clear();
 			followedIsland = followedStep = -1;
 			foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
+			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
 			stepsScroll.GetComponent<Image>().raycastTarget = true;
 			if (stepsScroll.verticalScrollbar != null)

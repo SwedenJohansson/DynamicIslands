@@ -255,6 +255,8 @@ next; the last one gives the reward to every player near the island - and a crew
 later) gets their share when they come to the island, once. The panel shows **five steps at a time**: the one
 just done, the one you're on and what comes after. A longer quest scrolls - to your step by itself whenever it changes,
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
+Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
+cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
 
 ![The quest panel](images/world-quest-panel.jpg)
 *The quest panel of "The lost camp" on the right: the first step is "Go to camp".*
@@ -289,7 +291,7 @@ page's (**K**, a star).
   paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
 - **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the
-  quest is done) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
+  quest is done, the whole line in light green) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
   pages an island writes when something happens (an island event "write a journal page"), and, under **Other pages**,
   the frequencies a world plan gives out ("Tune the Receiver to #4821"). Click a page to read it on the paper, signed

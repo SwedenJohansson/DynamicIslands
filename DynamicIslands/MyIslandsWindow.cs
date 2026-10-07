@@ -189,7 +189,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(UIKit.Label(row, used == 0 ? "-" : used.ToString(), 12, used > 0 ? UIKit.TextColor : UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 64, 26);
 			bool listedInPool;
 			float w = CustomIslandSpawner.PoolWeight(n, out listedInPool);
-			InputField wf = UIKit.Field(row, "0", w.ToString("0.##", CultureInfo.InvariantCulture), 26f, src == Hosts ? "A copy from a host never comes by chance" : listedInPool ? "Its own weight in spawnpool.txt (0 = never by chance)" : "The weight every island not listed gets (\"*\" in spawnpool.txt): type one of its own");
+			InputField wf = UIKit.Field(row, "0", w.ToString("0.##", CultureInfo.InvariantCulture), 26f, src == Hosts ? "A copy from a host never comes by chance" : listedInPool ? "Its own weight: how often it turns up by chance (0 = never)" : "The weight every island without its own gets: type one of its own");
 			wf.name = "Weight_" + n;
 			UIKit.Size(wf.gameObject, 66, 26);
 			wf.contentType = InputField.ContentType.DecimalNumber;

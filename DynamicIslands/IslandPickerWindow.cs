@@ -144,7 +144,7 @@ namespace DynamicIslands.Editor
 			List<string> all = WorldIslands.Candidates();
 			List<string> kinds = all.Where(e => !WorldIslands.IsIsland(e)).ToList();
 			List<string> islands = all.Where(WorldIslands.IsIsland).OrderBy(e => e, StringComparer.OrdinalIgnoreCase).ToList();
-			if (all.Count == 0) Header("Nothing can turn up while sailing: spawnpool.txt leaves everything out.");
+			if (all.Count == 0) Header("Nothing can turn up while sailing: every island is left out (Defaults... in World settings).");
 			if (kinds.Count > 0) { Header("NEW EACH TIME"); foreach (string e in kinds) AddRow(e); }
 			if (islands.Count > 0) { Header("YOUR ISLANDS (" + islands.Count + ")"); foreach (string e in islands) AddRow(e); }
 			ShowEntry();
