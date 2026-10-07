@@ -133,7 +133,7 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). **Get more...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View...** beside the list shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
+| **Custom Islands plan** | A **▼ list**: click it to see every plan with a line on what it does, and click one to choose it. Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The list shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world; the plan goes back to
@@ -957,7 +957,7 @@ entry is looked at before it goes in.
 *The island library: the islands tab with three installed and Palm Cove picked; its picture, description and Download.*
 
 - Every downloaded file is checked against the library's list (its size and a fingerprint); if one doesn't match,
-  nothing is installed. A plan downloaded from the New Game box's **Get more...** is chosen there right away.
+  nothing is installed. A plan downloaded from the New Game box's **Get more plans...** is chosen there right away.
 - The library goes online only while this window is open, and sends nothing but the downloads - no account, no Steam id.
   Without internet it says it can't read or reach the island library; packs someone sent you still install with **Import...**.
   `Mods\DynamicIslands\library.txt` can switch it off (`online = off` - this also stops the main menu's check for a newer Custom Islands).
@@ -1866,7 +1866,7 @@ names are the same every time, its exact places aren't.
 - **Test this plan** (World plans, next to Preview notebook) saves the plan and makes a new world with it, a test world
   "Plan test <time>": its islands come as in any world. **Esc → Custom Islands → Back to the editor** brings you
   back to World plans on the plan (the test world stays under Load; delete old ones there).
-- **Choose it** in the New Game box: click the **Custom Islands plan** list and choose your plan (**View...** beside
+- **Choose it** in the New Game box: click the **Custom Islands plan** list and choose your plan (**View the plan...** under
   it shows what the plan does: its description, Raft's story, each island and when it comes), then **Create**. The
   next new world starts on **Random islands** again (or the `defaultPlan` of `spawnpool.txt`). In a running world, the host can give it another plan: **Esc → CUSTOM
   ISLANDS → Plan** (a list of the plans; its islands come from now on, what is done or unlocked stays), or F10 →
@@ -2171,7 +2171,7 @@ opens the list:
 - **Islands of world plans are never in the list**: the islands a world plan brings - each plan's own story islands,
   and the islands those bring - only come in their own plan, so you never meet another plan's island out of its story.
   The list holds the single islands: islands made or downloaded to be found while sailing. The world randomizer's own
-  extras (`rnd-...` files) are never in it either.
+  extras (`rnd-...` files) are never in it either. In the journal and other lists an extra is called by what it holds (**A castaway's stash**, **An abandoned camp**, **A treasure hunt**) or **Randomizer finds**, never by its file name.
 
 Only what you untick is kept, so islands you make or download later join older worlds too, unless you untick them when
 you make a new world. The choice belongs to the world (saved with it, so it stays when another player hosts the world

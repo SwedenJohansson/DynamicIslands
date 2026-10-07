@@ -135,6 +135,25 @@ namespace DynamicIslands.Editor
 		public const string ExtrasPrefix = "rnd-";
 		public const string DefaultsFileName = "randomizer.txt";
 
+		/// <summary>The name players read for an extras file: its find ("A castaway's stash"), else "Randomizer finds".</summary>
+		public static string TitleFor(IEnumerable<string> parts)
+		{
+			string find = parts.FirstOrDefault(p => p == "a treasure hunt" || p == "an abandoned camp" || p == "a castaway's stash");
+			return find != null ? char.ToUpperInvariant(find[0]) + find.Substring(1) : "Randomizer finds";
+		}
+
+		/// <summary>
+		/// A readable name for an island name that may be an extras file name (rnd-...): its title, else "Randomizer finds".
+		/// Pages and lists saved before extras had titles still hold the file name.
+		/// </summary>
+		public static string Readable(string name)
+		{
+			if (string.IsNullOrEmpty(name) || !name.StartsWith(ExtrasPrefix, StringComparison.OrdinalIgnoreCase)) return name ?? "";
+			string t = "";
+			try { t = ObjectProps.Get(IslandCache.Props(name), IslandProps.Title); } catch { }
+			return t.Length > 0 && !t.StartsWith(ExtrasPrefix, StringComparison.OrdinalIgnoreCase) ? t : "Randomizer finds";
+		}
+
 		/// <summary>The current world's settings (clients get the host's).</summary>
 		public static RandomizerSettings Current = new RandomizerSettings();
 		/// <summary>Chosen in the New Game box for the world being created (null = the last choice, Defaults).</summary>

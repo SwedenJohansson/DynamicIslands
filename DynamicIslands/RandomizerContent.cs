@@ -125,6 +125,9 @@ namespace DynamicIslands.Editor
 			}
 
 			what = string.Join(", ", parts.ToArray());
+			// (a name players read in the journal and lists, never the file name rnd-<seed>-<id> - the user, 2026-10-06)
+			if (!k.File.Props.ContainsKey(IslandProps.Title) || k.File.Props[IslandProps.Title].Length == 0)
+				k.File.Props[IslandProps.Title] = WorldRandomizer.TitleFor(parts);
 			return k.File.Objects.Count > 0 ? k.File : null;
 		}
 

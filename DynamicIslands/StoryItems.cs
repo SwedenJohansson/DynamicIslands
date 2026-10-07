@@ -970,7 +970,7 @@ namespace DynamicIslands.Editor
 			pageKeys.Clear();
 			foreach (IGrouping<string, StoryBook.Page> island in Enumerable.Reverse(pages).GroupBy(p => p.Island ?? ""))
 			{
-				IslandHeader(island.Key, island.First(), island);
+				IslandHeader(WorldRandomizer.Readable(island.Key), island.First(), island);
 				foreach (StoryBook.Page p in island) PageButton(p);
 			}
 			emptyPages.gameObject.SetActive(pages.Count == 0);
@@ -1014,7 +1014,7 @@ namespace DynamicIslands.Editor
 
 		void PageButton(StoryBook.Page p)
 		{
-			Button b = UIKit.Button(pageList, p.Title.Length > 0 ? p.Title : "(a page)", () => ShowPage(p), p.Island.Length > 0 ? "Found on " + p.Island : null, -1, 30f, 13);
+			Button b = UIKit.Button(pageList, p.Title.Length > 0 ? p.Title : "(a page)", () => ShowPage(p), p.Island.Length > 0 ? "Found on " + WorldRandomizer.Readable(p.Island) : null, -1, 30f, 13);
 			pageKeys[b] = p.Key;
 			if (p.Key == shownKey) UIKit.SetActive(b, true); else UIKit.Flat(b);
 			Text t = UIKit.LabelOf(b);
@@ -1058,7 +1058,7 @@ namespace DynamicIslands.Editor
 			readTitle.text = p.Title.Length > 0 ? p.Title : "A page";
 			bool done;
 			string quest = QuestOf(p, out done);
-			readText.text = (p.Text.Length > 0 ? p.Text : "(The page is empty.)") + (p.Island.Length > 0 ? "\n\n\u2014 " + p.Island + (quest.Length > 0 ? " (" + quest + ")" : "") + ", day " + p.Day : "");
+			readText.text = (p.Text.Length > 0 ? p.Text : "(The page is empty.)") + (p.Island.Length > 0 ? "\n\n\u2014 " + WorldRandomizer.Readable(p.Island) + (quest.Length > 0 ? " (" + quest + ")" : "") + ", day " + p.Day : "");
 			RefreshSelection();
 		}
 

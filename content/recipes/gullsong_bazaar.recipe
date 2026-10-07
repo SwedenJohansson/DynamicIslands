@@ -2,7 +2,7 @@
 # A low tropical marsh, and in its middle a lagoon dug down to the sea's level with a boardwalk out over it from the north
 # landing: five stall pontoons along it (the net-maker, the spice-seller, the potter, the lamp-maker, and the merchant's
 # at its south end with his strongbox), awnings, tables with the keepers' last goods, chalk prices. Closed for the season.
-# Quest "A Fair Trade" (6 steps): the notice, the shell bucket, a barter chain - a pink shell traded up, stall by stall, to the merchant's key.
+# Quest "A Fair Trade" (6 steps): the notice, the shell crate, a barter chain - a pink shell traded up, stall by stall, to the merchant's key.
 #
 # Built by the recipe player (CIRecipe gullsong_bazaar) through the editor's own operations.
 include lib_huts
@@ -54,7 +54,7 @@ pop
 place Note_Board closing at 2.6 28 ground yaw=90
 place Zone_Trigger bazaar at 0 18 y=2
 
-# --- The south bank's shell bucket; mangrove bamboo round the lagoon; the gulls' song --------------------------------------
+# --- The south bank's shell crate (a small wooden crate beside a bucket); mangrove bamboo round the lagoon; the gulls' song --------------------------------------
 place TangaroaBucket - at -11.8 -7 ground sit
 place "Box Small" shellbucket at -11 -7.6 ground sit yaw=20
 scatter Bamboo_2 6 at 0 10 r=19 seed=501
@@ -90,8 +90,8 @@ story jar|Glazed jar|quest:Utopia_KeyPhase1|A blue glazed jar with a lid, from t
 story lamp|Brass lamp|Placeable_Lantern_Metal|A brass lamp that burns fish oil.
 story merchantkey|Merchant's key|quest:Caravan_KeyMayor|The merchant's strongbox key.
 
-note closing Notice of the closing bazaar | GULLSONG BAZAAR - CLOSED FOR THE SEASON\n\nThe keepers have left one thing at every stall, each with a price on the board. No coin: trade only.\n\nThe net-maker takes a pink shell (they wash up on the south bank).\nThe spice-seller takes rope.\nThe potter takes pepper.\nThe lamp-maker takes a jar.\nThe merchant takes a lamp - and gives the key to his strongbox, the best thing in the bazaar.\n\nGood trading!
-note shellbucket Shell bucket | A bucket on the south bank, full of shells - and one pink one, polished, the kind the net-maker wants.
+note closing Notice of the closing bazaar | GULLSONG BAZAAR - CLOSED FOR THE SEASON\n\nThe keepers have left one thing at every stall, each with a price on the board. No coin: trade only.\n\nThe net-maker takes a pink shell (you will find one in the small wooden crate by the bucket on the south bank).\nThe spice-seller takes rope.\nThe potter takes pepper.\nThe lamp-maker takes a jar.\nThe merchant takes a lamp - and gives the key to his strongbox, the best thing in the bazaar.\n\nGood trading!
+note shellbucket Shell crate | A small wooden crate beside a bucket on the south bank, full of shells - and one pink one, polished, the kind the net-maker wants.
 loot shellbucket story:shell*1;Clay*2
 prop shellbucket loot.refill=0
 note strongbox Merchant's strongbox | The merchant's strongbox: a season's takings in trade coin, a spyglass, the plans for a recycler.
@@ -110,7 +110,7 @@ prop netstall obj.name=netstall
 prop netstall beh.use=Trade the pink shell for the net-maker's rope
 prop netstall if.use=take|story:shell|1
 prop netstall on.use=message||You leave the shell on the net-maker's board and take the coil of rope.\ngive||story:rope*1\nsound||event:/ui/pickup
-prop netstall else.use=message||NET-MAKER: rope for a pink shell. (They wash up on the south bank.)
+prop netstall else.use=message||NET-MAKER: rope for a pink shell. (Look in the small wooden crate by the bucket on the south bank.)
 prop spicestall obj.name=spicestall
 prop spicestall beh.use=Trade the rope for the pepper pouch
 prop spicestall if.use=take|story:rope|1
@@ -141,7 +141,7 @@ prop gulls zone.radius=25
 quest title=A Fair Trade
 quest intro=A floating bazaar, closed for the season. The keepers left a notice on the landing.
 step read|Notice of the closing bazaar|1|Tie up at the bazaar and read the notice on the landing
-step open|Shell bucket|1|Find the pink shell in the bucket on the south bank
+step open|Shell crate|1|Open the small wooden crate by the bucket on the south bank for the pink shell
 step collect|story:rope|1|Trade the pink shell for the net-maker's rope
 step collect|story:lamp|1|Trade down the boardwalk: rope for pepper, pepper for a jar, a jar for a lamp
 step collect|story:merchantkey|1|Trade the lamp for the merchant's key

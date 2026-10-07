@@ -241,6 +241,29 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest count to come"); else Fail("quest count to come");
 		}
 
+		[ConsoleCommand(name: "CIRandomizerNames", docs: "Dev, in game: ROADMAP CT11 - the randomizer's extras (rnd-...) show a readable name in the journal, never the file name")]
+		public static void RandomizerNamesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerNamesRoutine()); }
+
+		static IEnumerator RandomizerNamesRoutine()
+		{
+			bool ok = true;
+			Check(ref ok, WorldRandomizer.TitleFor(new[] { "a few animals", "a castaway's stash" }) == "A castaway's stash", "a stash's extras are called A castaway's stash");
+			Check(ref ok, WorldRandomizer.TitleFor(new[] { "loot" }) == "Randomizer finds", "extras without a find: Randomizer finds");
+			Check(ref ok, WorldRandomizer.Readable("rnd-782549770-8803") == "Randomizer finds", "an old page's file name reads Randomizer finds");
+			Check(ref ok, WorldRandomizer.Readable("Gullsong Bazaar") == "Gullsong Bazaar", "other names stay");
+			// (a page saved with the file name, as before - the journal's line and the page's foot read the readable name)
+			StoryBook.AddPage("note:rnd-782549770-8803:0:ci", "Castaway's diary", "Day 3. Still no ship.", "rnd-782549770-8803");
+			JournalWindow.Open();
+			yield return null; yield return null;
+			string[] texts = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Text>().Where(t => t.gameObject.activeInHierarchy && t.GetComponentInParent<JournalWindow>() != null).Select(t => t.text).ToArray();
+			Check(ref ok, texts.Any(t => t.StartsWith("Randomizer finds")), "the journal has a line Randomizer finds");
+			foreach (string t in texts.Where(x => x.Contains("rnd-") || x.StartsWith("Randomizer"))) Log("  text: " + t);
+			Check(ref ok, !texts.Any(t => t.Contains("rnd-")), "no rnd- file name in the journal");
+			JournalWindow.Close();
+			StoryBook.Page added = StoryBook.Pages.FirstOrDefault(x => x.Key == "note:rnd-782549770-8803:0:ci"); if (added != null) StoryBook.Pages.Remove(added);
+			if (ok) Log("PASS: randomizer names"); else Fail("randomizer names");
+		}
+
 		[ConsoleCommand(name: "CIEscGuard", docs: "Dev, in game: one Esc closes only our window - Raft's pause menu skips the press while the journal is open and the frame after it closed, then takes Esc again")]
 		public static void EscGuardCommand(string[] args) { DynamicIslands.instance.StartCoroutine(EscGuardRoutine()); }
 

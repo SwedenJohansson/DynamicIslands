@@ -969,6 +969,28 @@ namespace DynamicIslands
 				bool inside = r != null && c[0].x >= b[0].x - 1f && c[0].y >= b[0].y - 1f && c[2].x <= b[2].x + 1f && c[2].y <= b[2].y + 1f;
 				Check(ref ok, r != null && r.gameObject.activeInHierarchy && inside, n + (r == null ? " missing" : inside ? " inside the box" : " sticks out of the box"));
 			}
+			// (CT2: the heading on one line, the description in full or with its hint, nothing of Raft's over the panel)
+			RectTransform plan = box.transform.Find("CustomIslands_Plan") as RectTransform;
+			if (plan != null)
+			{
+				UnityEngine.UI.Text title = plan.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "Title");
+				UnityEngine.UI.Text detail = plan.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "Detail");
+				Check(ref ok, title != null && title.cachedTextGenerator.lineCount == 1, "the plan heading is on one line");
+				Check(ref ok, detail != null && detail.raycastTarget, "the plan description has its whole text as a hover hint");
+				var pc = new Vector3[4]; plan.GetWorldCorners(pc);
+				foreach (UnityEngine.UI.Text t in box.GetComponentsInChildren<UnityEngine.UI.Text>(true).Where(t => !t.transform.IsChildOf(plan) && t.text.Length > 0))
+				{
+					var tc = new Vector3[4]; t.rectTransform.GetWorldCorners(tc);
+					// (where the letters are, not the label's whole rect)
+					float pw = Mathf.Min(t.preferredWidth * t.rectTransform.lossyScale.x, tc[2].x - tc[0].x), mid = (tc[0].x + tc[2].x) / 2f;
+					int col = (int)t.alignment % 3;
+					float x0 = col == 0 ? tc[0].x : col == 1 ? mid - pw / 2f : tc[2].x - pw, x1 = x0 + pw;
+					bool over = x0 < pc[2].x && x1 > pc[0].x && tc[0].y < pc[2].y && tc[2].y > pc[0].y;
+					if (over || t.text.IndexOf("offline", StringComparison.OrdinalIgnoreCase) >= 0)
+						Log("  text \"" + t.text.Replace("\n", " ") + "\" (" + t.name + ", active " + t.gameObject.activeInHierarchy + ") at " + tc[0] + "-" + tc[2] + (over ? " OVER the plan panel " + pc[0] + "-" + pc[2] : ""));
+					if (over && t.gameObject.activeInHierarchy) Check(ref ok, false, "Raft's text \"" + t.text + "\" lies over the plan panel");
+				}
+			}
 			Check(ref ok, box.transform.Find("CustomIslands_Randomizer") == null && box.transform.Find(NewWorldRulesBox.PanelName) == null, "the box is Raft's own: no randomizer and no world rules in it");
 			int buttons = (NewWorldOptions.LevelButton != null ? 1 : 0) + NewWorldOptions.PartButtons.Count;
 			bool inWindow = NewWorldOptions.LevelButton != null && WorldSettingsWindow.Window != null && NewWorldOptions.LevelButton.transform.IsChildOf(WorldSettingsWindow.Window);

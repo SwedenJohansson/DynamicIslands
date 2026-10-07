@@ -1063,7 +1063,7 @@ namespace DynamicIslands.Editor
 		public static string IslandTitle(IslandWorldState.Entry e)
 		{
 			string t = ObjectProps.Get(IslandCache.PropsOf(e), IslandProps.Title);
-			return t.Length > 0 ? t : e.Label.Length > 0 ? e.Label : e.HostName;
+			return t.Length > 0 ? t : e.Label.Length > 0 ? e.Label : WorldRandomizer.Readable(e.HostName);
 		}
 
 		static void RunPersonal(IslandWorldState.Entry e, int index, List<ObjAction> actions, bool messagesOnly)

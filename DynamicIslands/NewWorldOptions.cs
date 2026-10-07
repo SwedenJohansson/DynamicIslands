@@ -43,23 +43,27 @@ namespace DynamicIslands.Editor
 				row = UIKit.Rect("CustomIslands_Plan", box.transform);
 				row.anchorMin = row.anchorMax = new Vector2(1f, 0f);
 				row.pivot = new Vector2(1f, 0f);
-				row.anchoredPosition = new Vector2(-16f, 84f);
-				row.sizeDelta = new Vector2(292f, 120f);
+				row.anchoredPosition = new Vector2(-16f, 104f); // (above Raft's "Online features not available in offline mode" line)
+				// (CT2, the user 2026-10-06: the heading wrapped into the buttons and the description was cut off - the heading
+				// has its own line, the buttons theirs under the description, which gets three lines and its whole text as a hint)
+				row.sizeDelta = new Vector2(292f, 150f);
 				UIKit.Background(row.gameObject, UIKit.GroupBg, 6);
-				UIKit.Vertical(row.gameObject, 5f, new RectOffset(10, 10, 8, 8));
-				RectTransform head = UIKit.Row(row, 20f, 4f, "Head");
-				Text title = UIKit.Label(head, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+				UIKit.Vertical(row.gameObject, 4f, new RectOffset(10, 10, 6, 8));
+				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+				title.horizontalOverflow = HorizontalWrapMode.Overflow;
 				UIKit.Size(title.gameObject, -1, 18);
-				moreButton = UIKit.Button(head, "Get more...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 96, 20f, 11);
+				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
+					"Which islands the new world gets: pick a plan - each says what it does", 30f, 14);
+				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				UIKit.Size(detailText.gameObject, -1, 44);
+				detailText.verticalOverflow = VerticalWrapMode.Truncate;
+				detailText.raycastTarget = true;
+				RectTransform head = UIKit.Row(row, 22f, 6f, "Head");
+				moreButton = UIKit.Button(head, "Get more plans...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 133, 22f, 11);
 				moreButton.name = "Button_GetMorePlans";
 				// (ROADMAP T6: look inside the plan before choosing it - its rules, what it does to Raft's story)
-				Button view = UIKit.Button(head, "View...", () => ShowPlan(Selected), "What the chosen plan does: its islands, when and where each comes, and Raft's story", 64, 20f, 11);
+				Button view = UIKit.Button(head, "View the plan...", () => ShowPlan(Selected), "What the chosen plan does: its islands, when and where each comes, and Raft's story", 133, 22f, 11);
 				view.name = "Button_ViewPlan";
-				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
-					"Which islands the new world gets: pick a plan - each says what it does", 32f, 14);
-				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
-				UIKit.Size(detailText.gameObject, -1, 42);
-				detailText.verticalOverflow = VerticalWrapMode.Truncate;
 			}
 			Show();
 		}
@@ -189,6 +193,7 @@ namespace DynamicIslands.Editor
 				if (d != null) { d.Options = PlanOptions(); d.Value = p.Name; }
 				UIKit.LabelOf(planButton).text = p.Name;
 				detailText.text = Describe(p);
+				UIKit.Hint(detailText.gameObject, Describe(p));
 			}
 			if (levelButton != null)
 			{
