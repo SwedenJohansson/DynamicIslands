@@ -57,7 +57,7 @@ namespace DynamicIslands.Editor
 		public static bool Repeats(IDictionary<string, string> p) { return GetBool(p, ZoneRepeat, false); }
 
 		public const int MaxCount = 8;
-		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MinSize = 0.5f, MaxSize = 2.5f;
+		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MaxHealth = 12f, MinSize = 0.5f, MaxSize = 2.5f;
 
 		/// <summary>What an object starts with when it is placed from the list (a note gets a title to edit).</summary>
 		public static Dictionary<string, string> Defaults(string name)
@@ -131,7 +131,7 @@ namespace DynamicIslands.Editor
 		#region Creature settings (with their limits)
 
 		public static int Count(IDictionary<string, string> p) { return Mathf.Clamp(GetInt(p, CreatureCount, 1), 1, MaxCount); }
-		public static float Health(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureHealth, 1f), MinMultiplier, MaxMultiplier); }
+		public static float Health(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureHealth, 1f), MinMultiplier, MaxHealth); }
 		public static float Damage(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureDamage, 1f), 0f, MaxMultiplier); }
 		public static float Speed(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureSpeed, 1f), MinMultiplier, 2.5f); }
 		public static float Size(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureSize, 1f), MinSize, MaxSize); }

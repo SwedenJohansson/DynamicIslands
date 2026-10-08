@@ -51,6 +51,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Boss health:** an animal's health can be set up to ×12 (was capped at ×4), so the lair bosses set to ×5-×12
+  are as tough as written. Damage stays at most ×4.
 - A large audit (about 70 items) of saves, files and multiplayer: world copies written between Raft's saves no longer
   win after a crash; unloaded islands keep what happened on them; library installs check their files and roll back;
   half-written first saves are set aside; host file names are checked before use; deleted autosaves and plans go to

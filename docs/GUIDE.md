@@ -1048,7 +1048,7 @@ turtle, stingray, dolphin, whale.
 *A warthog spot: a herd of 3, health ×2, damage ×1.5, comes back after 3 days, appears at once.*
 
 - **Animals here:** 1 to 8 (a herd).
-- **Easy / Normal / Hard / Boss**, or set **health**, **damage**, **speed** and **size** yourself.
+- **Easy / Normal / Hard / Boss**, or set **health** (up to ×12, for bosses), **damage** (up to ×4), **speed** and **size** yourself.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Colour** (every object): a swatch, the strength, or your own mix.

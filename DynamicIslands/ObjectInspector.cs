@@ -189,7 +189,7 @@ namespace DynamicIslands.Editor
 				UIKit.SetActive(b, preset.Key == current || (preset.Key == "Normal" && current.Length == 0));
 			}
 
-			Multiplier(g, target, "Health", ObjectProps.CreatureHealth, ObjectProps.MinMultiplier, ObjectProps.MaxMultiplier, ObjectProps.Health(p), "How much damage it takes to kill (Raft's own health times this)");
+			Multiplier(g, target, "Health", ObjectProps.CreatureHealth, ObjectProps.MinMultiplier, ObjectProps.MaxHealth, ObjectProps.Health(p), "How much damage it takes to kill (Raft's own health times this)");
 			Multiplier(g, target, "Damage", ObjectProps.CreatureDamage, 0f, ObjectProps.MaxMultiplier, ObjectProps.Damage(p), "How hard it hits players (0 = harmless)");
 			Multiplier(g, target, "Speed", ObjectProps.CreatureSpeed, ObjectProps.MinMultiplier, 2.5f, ObjectProps.Speed(p), "How fast it walks, runs and swims");
 			Multiplier(g, target, "Size", ObjectProps.CreatureSize, ObjectProps.MinSize, ObjectProps.MaxSize, ObjectProps.Size(p), "How big it is (also shown on the marker)");
