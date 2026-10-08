@@ -706,12 +706,13 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			// (only in a world: after a disconnect it locked the cursor on the main menu - CA17)
+			if (!cursorWasFree && LoadSceneManager.IsGameSceneLoaded) try { RAPI.ToggleCursor(false); } catch { }
 		}
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+			if (Input.GetKeyDown(KeyCode.Escape) || !LoadSceneManager.IsGameSceneLoaded) Hide();
 		}
 
 		void Fill()
