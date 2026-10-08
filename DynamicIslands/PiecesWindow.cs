@@ -27,7 +27,14 @@ namespace DynamicIslands.Editor
 			string folder = Path.Combine(Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), kind);
 			Directory.CreateDirectory(folder);
 			string to = Path.Combine(folder, Path.GetFileName(path));
-			if (File.Exists(to)) File.Move(to, Path.Combine(folder, Path.GetFileNameWithoutExtension(path) + " " + File.GetLastWriteTime(to).ToString("yyyy-MM-dd HHmmss") + Path.GetExtension(path)));
+			if (File.Exists(to))
+			{
+				// (a dated one of the same second can be there too - the same file removed twice: it stopped the Remove)
+				string dated = Path.GetFileNameWithoutExtension(path) + " " + File.GetLastWriteTime(to).ToString("yyyy-MM-dd HHmmss");
+				string older = Path.Combine(folder, dated + Path.GetExtension(path));
+				for (int i = 2; File.Exists(older); i++) older = Path.Combine(folder, dated + " " + i + Path.GetExtension(path));
+				File.Move(to, older);
+			}
 			File.Move(path, to);
 		}
 	}

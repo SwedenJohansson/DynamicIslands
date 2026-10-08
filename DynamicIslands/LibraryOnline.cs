@@ -208,7 +208,20 @@ namespace DynamicIslands.Editor
 			if (i == null) return State.NotInstalled;
 			// (a file it installed was deleted since - in the editor, or by hand: it showed as Installed with Download off)
 			if (i.files.Any(f => !File.Exists(LibraryPack.PathOf(f)))) return State.NotInstalled;
-			return e.Info.version > i.version ? State.Update : State.Installed;
+			if (e.Info.version > i.version) return State.Update;
+			// (T10: a file changed in the library without a new version number - only for installs that recorded their files)
+			return Changed(e, i) ? State.Update : State.Installed;
+		}
+
+		/// <summary>Whether the library's files differ from the ones this install came from (a file changed, added or gone).</summary>
+		public static bool Changed(LibraryEntry e, LibraryInstalled i)
+		{
+			if (i.packed.Count == 0) return false;
+			List<LibraryFileRef> now = e.InstallFiles.ToList();
+			if (now.Count == 0) return false;
+			if (now.Count != i.packed.Count) return true;
+			string sha;
+			return now.Any(f => !i.packed.TryGetValue(f.Name, out sha) || !sha.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase));
 		}
 
 		#endregion

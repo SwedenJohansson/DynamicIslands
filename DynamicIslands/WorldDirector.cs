@@ -674,6 +674,8 @@ namespace DynamicIslands.Editor
 		public static readonly HashSet<string> Done = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>Metres the raft has sailed in this world (for "km" rules).</summary>
 		public static float Sailed;
+		/// <summary>When this world was last told about library updates of its islands (UTC ticks, "@libseen="; T10).</summary>
+		public static long LibSeen;
 		/// <summary>Chosen in Raft's New Game box for the world being created (null = DefaultPlan).</summary>
 		public static string PendingPlan;
 		/// <summary>The plan new worlds get when none was chosen (defaultPlan in spawnpool.txt).</summary>
@@ -708,6 +710,7 @@ namespace DynamicIslands.Editor
 			PlanHashes.Clear();
 			Done.Clear();
 			Sailed = 0f;
+			LibSeen = 0;
 			retryAt.Clear(); noRoom.Clear();
 			warned.Clear();
 		}
@@ -718,6 +721,7 @@ namespace DynamicIslands.Editor
 			switch (key)
 			{
 				case "plan": PlanName = value.Trim(); return true;
+				case "libseen": long ls; if (long.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out ls)) LibSeen = ls; return true;
 				case "sailed": float s; if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out s)) Sailed = s; return true;
 				case "done": foreach (string id in value.Split(',')) if (id.Trim().Length > 0) Done.Add(id.Trim()); return true;
 				// The world's own copy of its plan (written since worlds keep one)
@@ -772,6 +776,7 @@ namespace DynamicIslands.Editor
 			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
 			if (PlanOwner != 0) yield return "@planowner=" + PlanOwner.ToString(CultureInfo.InvariantCulture);
 			yield return "@sailed=" + Sailed.ToString("F0", CultureInfo.InvariantCulture);
+			if (LibSeen > 0) yield return "@libseen=" + LibSeen.ToString(CultureInfo.InvariantCulture);
 			if (Done.Count > 0) yield return "@done=" + string.Join(",", Done.ToArray());
 		}
 
@@ -799,6 +804,28 @@ namespace DynamicIslands.Editor
 			worldHandled = true;
 		}
 
+		/// <summary>Once per update: the world's islands the library updated since it was last played (it has the new version -
+		/// a world that kept the old one plays a copy under another name, so it isn't named here).</summary>
+		internal static string TellLibraryUpdates()
+		{
+			string text = null;
+			try
+			{
+				Dictionary<string, string> updated = LibraryPack.UpdatedSince(LibSeen);
+				List<string> here = IslandWorldState.Islands.Select(x => x.Name).Where(n => n != null && updated.ContainsKey(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+				if (here.Count > 0)
+				{
+					text = (here.Count == 1 ? "'" + here[0] + "' was" : string.Join(", ", here.Take(4).Select(n => "'" + n + "'").ToArray()) + (here.Count > 4 ? " and " + (here.Count - 4) + " more were" : " were")) +
+						" updated from the library since this world was last played: it has the new version now";
+					DynamicIslands.Notify(text, false, 8);
+					Log(text);
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Library updates for this world: " + e.Message); }
+			LibSeen = DateTime.UtcNow.Ticks;
+			return text;
+		}
+
 		/// <summary>After a world's island list was read (host): a brand-new world gets the plan chosen for it.</summary>
 		internal static void OnWorldLoaded()
 		{
@@ -816,8 +843,10 @@ namespace DynamicIslands.Editor
 				StoryChain.FromPlan(Plan);
 				Log("New world '" + SaveAndLoad.CurrentGameFileName + "': plan '" + PlanName + "'");
 				WorldRandomizer.OnNewWorld();
+				LibSeen = DateTime.UtcNow.Ticks;
 				return;
 			}
+			TellLibraryUpdates();
 			// (a world that names no owner of its plan - saved before it did: the PC that saved it is the owner. Before, a world
 			// without an owner took the plan file of whoever hosted it, another player's plan of the same name too - AU25)
 			if (PlanOwner == 0 && savedBy != 0) PlanOwner = savedBy;

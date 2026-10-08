@@ -969,10 +969,16 @@ entry is looked at before it goes in.
   and length, and one button:
   - **Download** - downloads it and installs it the same way as Import (your own files are never overwritten, a plan's
     islands never turn up at random, an island only if you tick **Also turn up while sailing**);
-  - **Update** - the library has a newer version than the one you have: installs it (worlds you've already started
-    get it when its objects keep their order, else keep the version they started with). It replaces the entry's files, also ones you changed in the editor or World
-    plans since: then the first click names them and **Sure? Update** goes ahead. To keep your changes, open the
-    island (or plan) and **Save as** a new name first;
+  - **Update** - the library has a newer version than the one you have, or one of its files changed there since you
+    downloaded it (even without a new version number): installs it (worlds you've already started get it when its
+    objects keep their order, else keep the version they started with). If you changed some of its files in the editor
+    or World plans since, the first click names them (and the saved worlds that use them) and offers three choices:
+    - **Update, keep a copy** - the new version replaces them, and yours stay as **"name (yours)"** (an island copy
+      never turns up at random; open it in the editor like any island);
+    - **Keep my changes** - the rest is updated, your changed files stay as they are;
+    - **Cancel** - nothing changes.
+
+    When you load a world that has an island an update replaced, a message says so once;
   - **Installed** - you have the newest version. **Remove** (click twice) takes it away again, keeping what a saved
     world uses.
   - An entry made with a newer version of the mod says **Download anyway**, with the warning.

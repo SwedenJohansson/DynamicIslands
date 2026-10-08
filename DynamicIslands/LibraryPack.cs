@@ -88,6 +88,9 @@ namespace DynamicIslands.Editor
 		public int version = 1;
 		public bool remix = true;
 		public List<LibraryInstalledFile> files = new List<LibraryInstalledFile>();
+		/// <summary>The pack's own files as they came (name, SHA-256) - the library lists the same, so a file changed there
+		/// without a new version number still shows as an update (T10). Empty for installs made before.</summary>
+		public Dictionary<string, string> packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 		public string Source { get { return source + ":" + id + "@" + version.ToString(CultureInfo.InvariantCulture); } }
 
@@ -97,17 +100,20 @@ namespace DynamicIslands.Editor
 			{
 				{ "id", id }, { "source", source }, { "title", title }, { "author", author }, { "kind", kind }, { "version", version }, { "remix", remix }, { "date", date }, { "plan", plan },
 				{ "files", files.Select(f => (object)new Dictionary<string, object> { { "name", f.name }, { "original", f.original }, { "kind", f.kind }, { "sha256", f.sha256 }, { "shared", f.shared } }).ToList() },
+				{ "packed", packed.Select(k => (object)new Dictionary<string, object> { { "name", k.Key }, { "sha256", k.Value } }).ToList() },
 			};
 		}
 
 		public static LibraryInstalled From(Dictionary<string, object> o)
 		{
-			return new LibraryInstalled
+			var r = new LibraryInstalled
 			{
 				id = LibraryJson.Str(o, "id"), source = LibraryJson.Str(o, "source", LibraryPack.SourceImport), title = LibraryJson.Str(o, "title"), author = LibraryJson.Str(o, "author"),
 				kind = LibraryJson.Str(o, "kind", LibraryPack.KindIsland), version = LibraryJson.Int(o, "version", 1), remix = LibraryJson.Bool(o, "remix", true), date = LibraryJson.Str(o, "date"), plan = LibraryJson.Str(o, "plan"),
 				files = LibraryJson.Objects(o, "files").Select(f => new LibraryInstalledFile { name = LibraryJson.Str(f, "name"), original = LibraryJson.Str(f, "original"), kind = LibraryJson.Str(f, "kind", LibraryPack.KindIsland), sha256 = LibraryJson.Str(f, "sha256"), shared = LibraryJson.Bool(f, "shared") }).ToList(),
 			};
+			foreach (Dictionary<string, object> f in LibraryJson.Objects(o, "packed")) r.packed[LibraryJson.Str(f, "name")] = LibraryJson.Str(f, "sha256");
+			return r;
 		}
 	}
 
@@ -760,6 +766,8 @@ namespace DynamicIslands.Editor
 			List<LibraryInstalled> all = Installed();
 			LibraryInstalled old = all.FirstOrDefault(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
 			var entry = new LibraryInstalled { id = info.id, source = source, title = info.title, author = info.author, kind = info.kind, version = info.version, remix = info.remix, date = DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) };
+			foreach (var f in pack.Files) if (f.Key.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase))
+				entry.packed[f.Key] = Sha256(f.Value);
 			report.Add((old != null ? "Updating '" : "Installing '") + info.title + "' by " + info.author + " (version " + info.version + (old != null ? ", was " + old.version : "") + ")");
 
 			// Where each island goes: its own name if free or the same file is here, the name it had in the earlier version,
@@ -775,6 +783,8 @@ namespace DynamicIslands.Editor
 				target[n] = before != null && !before.shared ? before.name : n;
 			}
 			var content = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+			var copies = new List<string>();
+			var updated = new List<string>();
 			for (int round = 0; round < 8; round++)
 			{
 				bool changed = false;
@@ -821,9 +831,19 @@ namespace DynamicIslands.Editor
 							report.Add("Kept your changed '" + t + "' (the new version's is not installed)");
 							continue;
 						}
+						// (T10: replaced - the player's version stays as a copy of its own, out of the random pool, so nothing is lost)
+						if (current != before.sha256)
+						{
+							string copy = YoursName(t, false);
+							undo.Remember(IslandSpawner.PathFor(copy));
+							SafeFile.WriteAllBytes(IslandSpawner.PathFor(copy), File.ReadAllBytes(path));
+							copies.Add(copy);
+							report.Add("Your changed '" + t + "' is kept as '" + copy + "'");
+						}
 						// (saved worlds: the same rule as an editor save - an update that keeps the objects' order reaches them, one
 						// that would shift what was used there keeps them on the version they started with)
 						KeepForWorlds(t, bytes, report);
+						updated.Add(t);
 					}
 					undo.Remember(path);
 					SafeFile.WriteAllBytes(path, bytes);
@@ -882,6 +902,14 @@ namespace DynamicIslands.Editor
 				if (keep) report.Add("Kept your changed plan '" + name + "' (the new version's is not installed)");
 				else
 				{
+					string planPath = WorldPlan.PathFor(name);
+					if (before != null && File.Exists(planPath) && ShaOfFile(planPath) != before.sha256 && ShaOfFile(planPath) != Sha256(Encoding.UTF8.GetBytes(text)))
+					{
+						string copy = YoursName(name, true);
+						undo.Remember(WorldPlan.PathFor(copy));
+						SafeFile.WriteAllBytes(WorldPlan.PathFor(copy), File.ReadAllBytes(planPath));
+						report.Add("Your changed plan '" + name + "' is kept as '" + copy + "'");
+					}
 					Directory.CreateDirectory(WorldPlan.Folder);
 					undo.Remember(WorldPlan.PathFor(name));
 					SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
@@ -928,6 +956,7 @@ namespace DynamicIslands.Editor
 			all.RemoveAll(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
 			all.Add(entry);
 			SaveInstalled(all);
+			NoteUpdated(updated, info.title);
 
 			if (types || (old != null && old.files.Any(f => f.kind == KindMapType))) MapTypeFiles.LoadAll();
 
@@ -935,6 +964,7 @@ namespace DynamicIslands.Editor
 			// untouched). (After installed.json: an install that fails before it leaves spawnpool.txt as it was)
 			foreach (LibraryInstalledFile f in entry.files.Where(f => f.kind == KindIsland && !f.shared))
 				SetPoolWeight(f.name, !info.IsPlan && appearWhileSailing ? 1f : 0f);
+			foreach (string c in copies) SetPoolWeight(c, 0f);
 			IslandCache.Forget();
 			return report;
 		}
@@ -995,6 +1025,51 @@ namespace DynamicIslands.Editor
 		{
 			if (name.Length + tail.Length <= FileNames.MaxLength) return name + tail;
 			return name.Substring(0, Math.Max(1, FileNames.MaxLength - tail.Length)).TrimEnd('.', ' ') + tail;
+		}
+
+		/// <summary>The islands updates replaced, for the worlds that have them (T10: told once when such a world loads):
+		/// "island|title|UTC ticks" lines in library/updated.txt.</summary>
+		public static string UpdatedLog { get { return Path.Combine(LibraryFolder, "updated.txt"); } }
+
+		static void NoteUpdated(List<string> islands, string title)
+		{
+			if (islands.Count == 0) return;
+			try
+			{
+				Directory.CreateDirectory(LibraryFolder);
+				string now = DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture);
+				File.AppendAllText(UpdatedLog, string.Concat(islands.Select(n => n + "|" + (title ?? "").Replace("|", " ") + "|" + now + Environment.NewLine).ToArray()));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Noting the updated islands: " + e.Message); }
+		}
+
+		/// <summary>Islands an update replaced after the given time (UTC ticks), with the entry's title: island -> title.</summary>
+		public static Dictionary<string, string> UpdatedSince(long ticks)
+		{
+			var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				if (!File.Exists(UpdatedLog)) return result;
+				foreach (string line in File.ReadAllLines(UpdatedLog))
+				{
+					string[] p = line.Split('|');
+					long t;
+					if (p.Length < 3 || !long.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out t) || t <= ticks) continue;
+					result[p[0]] = p[1];
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Reading the updated islands: " + e.Message); }
+			return result;
+		}
+
+		/// <summary>A free name for the player's own version of a file an update replaces: "name (yours)", "name (yours) 2"...</summary>
+		static string YoursName(string name, bool plan)
+		{
+			for (int i = 1; ; i++)
+			{
+				string candidate = Fit(name, " (yours)" + (i > 1 ? " " + i : ""));
+				if (!File.Exists(plan ? WorldPlan.PathFor(candidate) : IslandSpawner.PathFor(candidate)) && !(plan && WorldPlan.IsBuiltIn(candidate))) return candidate;
+			}
 		}
 
 		static string FreePlanName(string name, string author)

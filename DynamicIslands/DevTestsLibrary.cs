@@ -52,6 +52,7 @@ namespace DynamicIslands
 			foreach (string z in new[] { Path.Combine(LibraryPack.ExportFolder, "ci-lib-pack.zip"), Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip") }) if (File.Exists(z)) File.Delete(z);
 			string last = Path.Combine(LibraryPack.ExportFolder, "exports.json");
 			if (File.Exists(last) && File.ReadAllText(last).Contains("ci-lib")) File.Delete(last);
+			if (File.Exists(LibraryPack.UpdatedLog)) File.WriteAllLines(LibraryPack.UpdatedLog, File.ReadAllLines(LibraryPack.UpdatedLog).Where(l => !l.StartsWith("cilib-")).ToArray());
 			IslandCache.Forget();
 		}
 
@@ -267,6 +268,86 @@ namespace DynamicIslands
 			if (ok) Log("PASS: library round trip"); else Fail("library round trip");
 		}
 
+
+		[ConsoleCommand(name: "CILibUpdateChoice", docs: "Dev, main menu or editor: T10 - an install records its files' SHA-256, so a library file changed without a new version shows as Update; an update over the player's changed island keeps theirs as '<name> (yours)' (out of the random pool), Keep my changes leaves it; updated islands are noted for the worlds that have them")]
+		public static void LibUpdateChoiceCommand()
+		{
+			bool ok = true;
+			CleanLibTests();
+			const string id = "ci-lib-upd", u = "cilib-u", yours = "cilib-u (yours)";
+			string tmp = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-upd.tmp.zip");
+			try
+			{
+				Directory.CreateDirectory(LibraryPack.LibraryFolder);
+				Func<int, int, LibraryPackContents> packOf = (version, seed) =>
+				{
+					MakeLibIsland(u, seed);
+					byte[] b = File.ReadAllBytes(IslandSpawner.PathFor(u));
+					DeleteLib(u);
+					WriteTestZip(tmp, new[] { Entry(id + "/info.json", new LibraryInfo { id = id, kind = "island", title = "CI Lib Upd", author = "CI Tester", version = version }.ToJson()), Entry(id + "/" + u + ".island", b) });
+					string err;
+					LibraryPackContents pc = LibraryPack.Read(tmp, out err);
+					File.Delete(tmp);
+					if (pc == null) throw new Exception("pack: " + err);
+					return pc;
+				};
+				Func<int, string, LibraryEntry> entryOf = (version, sha) =>
+				{
+					var e = new LibraryEntry { Info = new LibraryInfo { id = id, kind = "island", title = "CI Lib Upd", version = version } };
+					e.Files.Add(new LibraryFileRef { Name = u + ".island", Sha256 = sha });
+					e.Files.Add(new LibraryFileRef { Name = "icon.jpg", Sha256 = "00" });
+					return e;
+				};
+
+				// Version 1 installed: the pack's files are recorded
+				LibraryPackContents p1 = packOf(1, 11);
+				string sha1 = LibraryPack.Sha256(p1.Files[u + ".island"]);
+				long before = DateTime.UtcNow.Ticks;
+				LibraryPack.Install(p1, false, false, LibraryPack.SourceLibrary);
+				LibraryInstalled inst = LibraryPack.Installed().FirstOrDefault(x => x.id == id);
+				string rec;
+				Check(ref ok, inst != null && inst.packed.TryGetValue(u + ".island", out rec) && rec == sha1, "installed.json records the pack's island file and its SHA-256");
+				Check(ref ok, LibraryClient.StateOf(entryOf(1, sha1)) == LibraryClient.State.Installed, "the library lists the same file: Installed (a picture's change doesn't count)");
+				Check(ref ok, LibraryClient.StateOf(entryOf(1, "ab" + sha1.Substring(2))) == LibraryClient.State.Update, "the library's file changed, same version number: Update");
+				Check(ref ok, LibraryClient.StateOf(entryOf(2, sha1)) == LibraryClient.State.Update, "a higher version: Update");
+
+				// The player changes the island; version 2 replaces it - theirs is kept as a copy, out of the random pool
+				MakeLibIsland(u, 99);
+				string mine = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u)));
+				LibraryPackContents p2 = packOf(2, 22);
+				string sha2 = LibraryPack.Sha256(p2.Files[u + ".island"]);
+				MakeLibIsland(u, 99);
+				LibraryPack.Report r = LibraryPack.Install(p2, true, true, LibraryPack.SourceLibrary);
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u))) == sha2, "Update, keep a copy: the new version is installed");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(yours)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(yours))) == mine && r.ToString().Contains("kept as '" + yours + "'"),
+					"the player's version is kept as '" + yours + "', and the report says so");
+				CustomIslandSpawner.LoadPool(true);
+				Check(ref ok, !WorldIslands.Candidates().Contains(yours), "the copy never turns up by chance while sailing");
+				Check(ref ok, LibraryPack.UpdatedSince(before).ContainsKey(u), "the update is noted for the worlds that have the island");
+				Check(ref ok, LibraryClient.StateOf(entryOf(2, sha2)) == LibraryClient.State.Installed, "after the update the same listing is Installed");
+
+				// Changed again; version 3 with Keep my changes: theirs stays, no copy
+				DeleteLib(yours);
+				MakeLibIsland(u, 98);
+				mine = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u)));
+				LibraryPackContents p3 = packOf(3, 33);
+				MakeLibIsland(u, 98);
+				r = LibraryPack.Install(p3, true, false, LibraryPack.SourceLibrary);
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u))) == mine && !File.Exists(IslandSpawner.PathFor(yours)) && r.ToString().Contains("Kept your changed"),
+					"Keep my changes: the player's island stays as it is, no copy");
+			}
+			catch (Exception e) { Check(ref ok, false, "no exception: " + e); }
+			finally
+			{
+				if (File.Exists(tmp)) File.Delete(tmp);
+				try { LibraryPack.Remove(id); } catch { }
+				CleanLibTests();
+				RemovePoolTestLines();
+			}
+			if (ok) Log("PASS: library update choice"); else Fail("library update choice");
+		}
 
 		static void RemovePoolTestLines()
 		{

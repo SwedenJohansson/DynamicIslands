@@ -148,14 +148,15 @@ namespace DynamicIslands
 				string changedSha = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB)));
 				LibraryWindow.MainButton.onClick.Invoke();
 				yield return null;
-				Check(ref ok, UIKit.LabelOf(LibraryWindow.MainButton).text == "Sure? Update" && LibraryWindow.Progress.Contains("'" + LibB + "'") && LibraryWindow.Progress.Contains("Save as") &&
+				Check(ref ok, UIKit.LabelOf(LibraryWindow.MainButton).text == "Update, keep a copy" && LibraryWindow.Progress.Contains("'" + LibB + "'") && LibraryWindow.Progress.Contains("(yours)") && LibraryWindow.KeepButton.gameObject.activeSelf &&
 					LibraryPack.Installed().Any(e => e.id == "ci-lib-pack" && e.version == 2) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == changedSha,
-					"Update on a changed island asks first, names it and says how to keep it (nothing changed yet): " + LibraryWindow.Progress);
+					"Update on a changed island asks first, names it and offers Update, keep a copy / Keep my changes / Cancel (nothing changed yet): " + LibraryWindow.Progress);
 				LibraryWindow.MainButton.onClick.Invoke();
 				yield return WaitNotBusy(30f);
 				Check(ref ok, LibraryPack.Installed().Any(e => e.id == "ci-lib-pack" && e.version == 3) && LibraryPack.ChangedFiles("ci-lib-pack").Count == 0 &&
-					LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == LibraryPack.Sha256(pp.Files[LibB + IslandFile.Extension]),
-					"the second click updates to version 3 and replaces the changed island with the library's: " + LibraryWindow.Progress);
+					LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == LibraryPack.Sha256(pp.Files[LibB + IslandFile.Extension]) &&
+					File.Exists(IslandSpawner.PathFor(LibB + " (yours)")) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB + " (yours)"))) == changedSha,
+					"the second click updates to version 3, replaces the changed island with the library's and keeps the player's as '" + LibB + " (yours)': " + LibraryWindow.Progress);
 
 				// A damaged file: refused, nothing installed
 				var files = LibraryJson.Objects(soloEntry, "files");

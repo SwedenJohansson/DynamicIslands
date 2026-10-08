@@ -43,6 +43,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Library updates (T10).** An entry shows **Update** also when one of its files changed in the library without a new
+  version number (installs now record each file's SHA-256). Updating over files you changed offers **Update, keep a
+  copy** (yours stay as "name (yours)", never at random while sailing), **Keep my changes** or **Cancel**, and names the
+  saved worlds that use them. A world with an island an update replaced says so once when it loads.
 - **Removing an island's rule or quest step keeps saved worlds safe:** like removing objects, it now keeps the old
   version for the worlds that have the island, so a fired rule doesn't fire again and a quest doesn't jump a step.
 - **Single islands and plan islands written down:** the guide (7, 9.5, 16) and README now say that islands a world plan
@@ -72,6 +76,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Remove stopped with "Cannot create a file"** when the deleted folder already had a dated copy of the same file
+  from the same second (an island removed twice); the older copy now gets a number.
 - **Limits against runaway growth:** journal pages (2000, titles 200 and texts 8000 letters) and story item kinds
   (500) are capped, the host drops claims that ran out once it holds many, and a file already on its way to a
   player isn't sent again when they ask twice.
