@@ -340,7 +340,7 @@ page's (**K**, a star).
 - **Progress** (top right, over the page): how far the crew has come in this world, each as found / total - hover a
   line to see what it counts:
   - **Quests** - quests done, and the per cent (the same as the bar at the top);
-  - **Islands reached** - custom islands someone has set foot on, of those in the world and those its plan will bring;
+  - **Islands reached** - custom islands someone has set foot on, of those in the world, those its plan will bring and the saved islands ticked for the world (World settings, Islands while sailing) that can still come;
   - **Notes found** - notes read of the notes with a text on those islands (each island's line under Quest Pages has
     its own, "(5/7 notes)");
   - **Story items found** - of those the islands have; one used up since (a key a door took) still counts;

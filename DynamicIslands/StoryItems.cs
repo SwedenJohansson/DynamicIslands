@@ -577,6 +577,19 @@ namespace DynamicIslands.Editor
 			return toCome = CustomIslandSpawner.Pool(true).Select(p => p.Key).Where(n => n != CustomIslandSpawner.GeneratedEntry && !n.StartsWith(CustomIslandSpawner.TypePrefix, StringComparison.OrdinalIgnoreCase)).ToList();
 		}
 
+		/// <summary>The saved islands ticked for this world's sailing that can still come, when the world brings islands by
+		/// chance (no plan, or a plan with random islands) - what the Quests count adds (CT9), also for the journal's islands,
+		/// notes, story items and pages (CA31). Host only: the choice is the host's, a player's own pool isn't this world's.</summary>
+		internal static List<string> TickedToCome()
+		{
+			WorldPlan plan = WorldDirector.Plan;
+			if (!Raft_Network.IsHost || !CustomIslandSpawner.Enabled || (plan != null && !plan.Random)) return new List<string>();
+			return StillToCome().Where(n => !IslandWorldState.Islands.Any(x => x.Name.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
+		}
+
+		/// <summary>Dev tests: the next StillToCome reads the pool again.</summary>
+		internal static void Recount() { toComeAt = -100f; }
+
 		/// <summary>"Wreckers' Cove - The False Light": the island (as it came, or as the rule names it) and its quest.</summary>
 		static string NameOf(List<IslandWorldState.Entry> at, IntroRule r, string id)
 		{
@@ -630,6 +643,8 @@ namespace DynamicIslands.Editor
 			IEnumerable<IntroRule> rules = (WorldDirector.Plan != null ? WorldDirector.Plan.Rules : new List<IntroRule>()).Concat(StoryChain.Rules);
 			foreach (IntroRule r in rules)
 				if (r.What == "island" && r.WhatArg.Length > 0 && !islands.ContainsKey(r.WhatArg)) islands[r.WhatArg] = r.WhatArg;
+			foreach (string name in QuestCount.TickedToCome())   // (CA31)
+				if (!islands.ContainsKey(name)) islands[name] = name;
 			// (by island name: a note found on any copy of the island - AU41 page keys)
 			var pages = new HashSet<string>(StoryBook.Pages.Select(p => StoryBook.PlainKey(p.Key)), StringComparer.OrdinalIgnoreCase);
 			foreach (KeyValuePair<string, string> island in islands)
@@ -703,7 +718,10 @@ namespace DynamicIslands.Editor
 			WorldPlan plan = WorldDirector.Plan;
 			foreach (IntroRule r in (plan != null ? plan.Rules : new List<IntroRule>()).Concat(StoryChain.Rules))
 				if (r.What == "island" && r.WhatArg.Length > 0 && !islands.ContainsKey(r.WhatArg)) islands[r.WhatArg] = r.WhatArg;
-			rows.Add(new Row { Name = "Islands reached", Done = reached, Total = islands.Count, Help = "Custom islands someone of the crew has set foot on, of the custom islands in this world and the ones its plan will still bring. Islands that turn up by chance while sailing add to it as they come. Raft's own islands aren't counted." });
+			// (and the saved islands ticked for this world's sailing still to come - CA31: a world with ~50 ticked showed 3/19)
+			foreach (string name in QuestCount.TickedToCome())
+				if (!islands.ContainsKey(name)) islands[name] = name;
+			rows.Add(new Row { Name = "Islands reached", Done = reached, Total = islands.Count, Help = "Custom islands someone of the crew has set foot on, of the custom islands in this world, the ones its plan will still bring and the saved islands ticked for this world that can still turn up while sailing. Brand-new generated islands add to it as they come. Raft's own islands aren't counted." });
 			int nf, nt;
 			NoteCount.Count(out nf, out nt);
 			rows.Add(new Row { Name = "Notes found", Done = nf, Total = nt, Help = "Notes read (by anyone of the crew) of the notes with a text on those islands. Each island's line under Quest Pages says how many of its own you have found." });

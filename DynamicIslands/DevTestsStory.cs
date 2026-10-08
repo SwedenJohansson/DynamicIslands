@@ -325,6 +325,19 @@ namespace DynamicIslands
 			// (the Progress panel: every category as found / total - the user, 2026-10-03)
 			List<string> progress = JournalWindow.ProgressShown;
 			List<WorldProgress.Row> rowsNow = WorldProgress.Rows();
+			// (CA31: the saved islands ticked for the world's sailing count before they come - a world with ~50 ticked showed 3/19)
+			string ticked = QuestCount.TickedToCome().FirstOrDefault();
+			int islandsTotal = rowsNow.First(r => r.Name == "Islands reached").Total;
+			if (ticked != null)
+			{
+				WorldIslands.Off.Add(ticked);
+				QuestCount.Recount();
+				int without = WorldProgress.Rows().First(r => r.Name == "Islands reached").Total;
+				WorldIslands.Off.Remove(ticked);
+				QuestCount.Recount();
+				Check(ref ok, without == islandsTotal - 1, "Islands reached counts the ticked saved islands still to come: " + islandsTotal + ", " + without + " with '" + ticked + "' left out");
+			}
+			else Log("(no saved island ticked for sailing here: the count of ticked islands isn't checked)");
 			Check(ref ok, progress.Count == 6 && progress[0].StartsWith("Quests  " + rowsNow[0].Done + "/" + rowsNow[0].Total) && progress.Any(l => l == "Notes found  " + notesFound1 + "/" + notesTotal1)
 				&& progress.Any(l => l.StartsWith("Story items found  ")) && progress.Any(l => l.StartsWith("Islands reached  ")) && progress.Any(l => l.StartsWith("Journal pages  ")) && progress.Last().StartsWith("Overall  ") && progress.Last().EndsWith("%"),
 				"the journal's Progress panel: " + string.Join(" | ", progress.ToArray()));

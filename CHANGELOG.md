@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Journal island count:** *Islands reached* now also counts the saved islands ticked for the world in World
+  settings (Islands while sailing) that haven't come yet - a world with about 50 ticked showed 3/19.
 - **Quest islands need finding:** the quest panel and introduction now show within about 70 m of an island's
   shore (was 150 m), and stay up out to 150 m.
 - **Plan picker:** **Choose plan...** in the New Game box opens a window with every world plan - a search, its
