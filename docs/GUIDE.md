@@ -173,7 +173,8 @@ part, they never crowd the sea. It can be:
 
 - one of **your own islands** (every saved island takes part unless `spawnpool.txt` says otherwise; islands your world plan brings, and islands generated while sailing, don't come by chance),
 - a **brand-new generated island**: a random size and style (tropical, snowy, desert, forest or volcanic), sometimes
-  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world,
+  flying; it is saved as `gen-<style>-<seed>.island`, so it stays in that world. In World settings > Islands while sailing it is the row
+  **Brand-new generated islands**; untick it and only made or downloaded islands and map types come (see [9.5](#95-islands-while-sailing)),
 - a **map type**: a sandbar, a wreck of raft blocks, an atoll or a sunken island (more in [4.6](#46-ready-made-islands-map-types)).
 
 Which of these a world may meet can be chosen when it is created ([9.5](#95-islands-while-sailing)). The optional world
@@ -1457,7 +1458,7 @@ of the plan (step 4 of [7.2](#72-your-first-world-plan-step-by-step)); in the pl
 
 **Which islands can come.** The **spawn pool**: every island you have saved or downloaded (unless `spawnpool.txt`
 gives it weight 0), brand-new generated islands (`generated` in `spawnpool.txt`), and the map types listed there. For
-each new world you can untick islands in **World settings > Islands while sailing > CHOOSE ISLANDS...**
+each new world you can untick islands in **World settings > Islands while sailing > CHOOSE ISLANDS...** (its row **Brand-new generated islands** is the made-up gen-... islands: untick it for none)
 ([9.5](#95-islands-while-sailing)). A **plan's own islands never come by chance**: when you install a plan from the
 island library, its islands get weight 0 in `spawnpool.txt`, so Signal Rock can't turn up early as a random island and
 then again at 4 km. (Islands you built or saved yourself are in the pool unless you give them 0 - if a plan of yours
@@ -2177,6 +2178,11 @@ opens the list:
 
 - one row per island or kind of island, each with a **tick box**: your own islands by name (with their size and date),
   **New ... islands** for each map type (a new sandbar, wreck, atoll... each time) and **Brand-new generated islands**;
+- **Brand-new generated islands** is the mod making up a new random island now and then while you sail: random size
+  and style (tropical, snowy, desert, forest or volcanic), sometimes flying. Each one is saved as a `gen-<style>-<seed>.island`
+  file and stays in that world (Tidy up moves unused ones away). Ticked, they join the pool next to your single islands and the
+  map-type rows; unticked, only islands you made or downloaded and the map-type kinds come. How often they are picked is
+  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)). Hover the row for this text in the game;
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
   shown, for example all your test islands at once.

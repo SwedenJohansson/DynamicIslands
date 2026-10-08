@@ -91,7 +91,7 @@ namespace DynamicIslands.Editor
 			Text title = UIKit.Label(head, "ISLANDS WHILE SAILING", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
 			UIKit.Label(head, "for the world you create", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
-			Text intro = UIKit.Label(panel, "These turn up by chance while you sail. Untick the ones this world shouldn't have. Islands you make or download later join in, unless you untick them for a later world. (In a world, the host can change it with the console command WorldIslands.)",
+			Text intro = UIKit.Label(panel, "These turn up by chance while you sail. Untick the ones this world shouldn't have. Islands you make or download later join in, unless you untick them for a later world. \"Brand-new generated islands\": the mod makes up a random island now and then (saved as gen-... in this world); unticked, only made or downloaded islands and map types come. (In a world, the host can change it with the console command WorldIslands.)",
 				12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Intro");
 			intro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(intro.gameObject, -1, 46);
@@ -158,7 +158,7 @@ namespace DynamicIslands.Editor
 
 		static void AddRow(string entry)
 		{
-			Button b = UIKit.Button(list, WorldIslands.Label(entry), () => Flip(entry), null, -1, 28f, 13);
+			Button b = UIKit.Button(list, WorldIslands.Label(entry), () => Flip(entry), WorldIslands.Hint(entry), -1, 28f, 13);
 			b.name = RowPrefix + entry;
 			UIKit.Flat(b);
 			Text label = UIKit.LabelOf(b);
@@ -235,7 +235,7 @@ namespace DynamicIslands.Editor
 			WorldPlan plan = WorldPlan.Load(NewWorldOptions.Selected);
 			bool random = plan == null || plan.Random;
 			string note = random ? "" : "The plan '" + plan.Name + "' has no random islands, so this list only counts with a plan that has them (like Random islands).";
-			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : (all.Count - taking) + " left out of this world.") : note;
+			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : (all.Count - taking) + " left out of this world.") + (off.Contains(CustomIslandSpawner.GeneratedEntry) ? " No made-up islands." : "") : note;
 			if (planNote != null) planNote.text = random ? "Plan: '" + (plan != null ? plan.Name : WorldPlan.RandomName) + "' - islands from this list turn up by chance while sailing (a world plan's own islands only come in their plan)." : note;
 			if (countText != null) countText.text = taking + " of " + all.Count + " take part" + (taking < all.Count ? ",  " + (all.Count - taking) + " left out" : "");
 			int[] gap = WorldIslands.ChosenGap;

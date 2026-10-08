@@ -41,6 +41,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Islands while sailing:** the row *Brand-new generated islands* now says what it does (hover it, and the list's
+  intro): the mod makes up a random island now and then, saved as a gen-... file in that world; unticked, only made or
+  downloaded islands and map types come. The New Game summary notes when it is off.
 - Plan islands are matched by their content, so the host can ask players for exactly the right file; newer kept
   copies are set aside instead of overwritten.
 - Build cost is rounded to the nearest whole amount and never goes below Raft's own; blocks give back what they cost

@@ -128,10 +128,18 @@ namespace DynamicIslands.Editor
 			return entry;
 		}
 
+		/// <summary>What the "Brand-new generated islands" row does (its tooltip), or the Detail of any other entry.</summary>
+		public const string GeneratedHint = "The mod makes up a new random island now and then while you sail (random size and style, sometimes flying). Each one is saved as a gen-... file and stays in this world. Unticked: only islands you made or downloaded, and the map-type kinds, come.";
+
+		public static string Hint(string entry)
+		{
+			return entry == CustomIslandSpawner.GeneratedEntry ? GeneratedHint : Detail(entry);
+		}
+
 		/// <summary>A few words on an entry (right of it in the list).</summary>
 		public static string Detail(string entry)
 		{
-			if (entry == CustomIslandSpawner.GeneratedEntry) return "a new random island each time";
+			if (entry == CustomIslandSpawner.GeneratedEntry) return "made up as you sail, kept in this world";
 			if (!IsIsland(entry)) return "map type - a new one each time";
 			try
 			{

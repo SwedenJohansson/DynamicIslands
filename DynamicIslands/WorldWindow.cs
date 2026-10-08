@@ -304,7 +304,7 @@ namespace DynamicIslands.Editor
 			foreach (string entry in filledFrom)
 			{
 				string e = entry;
-				Button b = UIKit.Button(islandList, "", () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); }, WorldIslands.Detail(e), -1, 24f, 12);
+				Button b = UIKit.Button(islandList, "", () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); }, WorldIslands.Hint(e), -1, 24f, 12);
 				Add("Island_" + e, b);
 			}
 		}
