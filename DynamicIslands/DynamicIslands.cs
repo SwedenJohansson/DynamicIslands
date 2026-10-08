@@ -793,8 +793,8 @@ namespace DynamicIslands
 				if (!File.Exists(copy)) SafeFile.WriteAllBytes(copy, File.ReadAllBytes(IslandSpawner.PathFor(name)));
 				LibraryPack.RepointWorlds(name, hash);
 				string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
-				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects were removed or their order changed, which would mix up what was " +
-					"picked, looted and opened there. New worlds get this version.");
+				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects, rules or quest steps were removed or their order changed, which would mix up what was " +
+					"picked, looted, opened or done there. New worlds get this version.");
 				Debug.Log("[CUSTOM ISLANDS] Kept '" + name + "' " + hash + " for " + worlds.Count + " saved world(s)");
 				return true;
 			}
@@ -820,7 +820,7 @@ namespace DynamicIslands
 				string list = string.Join(", ", worlds.Take(6).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 6 ? " and " + (worlds.Count - 6) + " more" : "");
 				InfoWindow.Open("Saved worlds keep an older '" + name + "'",
 					"These saved worlds play an older version of '" + name + "' (a copy kept for them, " + name + "_<hash>): " + list + ".\n\n" +
-					(justKept ? "This save removed objects or changed their order, so they were kept on the version they started with. " : "") +
+					(justKept ? "This save removed objects, rules or quest steps or changed their order, so they were kept on the version they started with. " : "") +
 					"<b>Give my worlds this version</b> makes them play the island as it is now and moves the old copies to Mods\\DynamicIslands\\" +
 					IslandFilesWindow.DeletedFolderName + "\\" + LibraryPack.KeptVersionsFolder + ". What was picked, looted or opened there is remembered by the objects' order, " +
 					"so it may land on other objects. <b>Keep their version</b> changes nothing (also later in My islands).",
@@ -842,12 +842,22 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Offering this version of '" + name + "' to saved worlds: " + e.Message); }
 		}
 
-		/// <summary>Whether saved state would land on other objects: the old objects aren't an unchanged beginning of the new ones.</summary>
+		/// <summary>Whether saved state would land on other objects, rules or quest steps: the old objects aren't an unchanged
+		/// beginning of the new ones - nor the island's rules, nor each quest's steps, which a world also keeps by their place
+		/// (a fired rule, the step reached - AU23: a removed rule made the next one count as fired, a removed step moved the quest).</summary>
 		public static bool ShiftsState(IslandFile before, IslandFile after)
 		{
 			Func<IslandObject, string> sig = o => o.Name + (ObjectProps.IsLoot(o.Name, o.Props) ? "|loot" : "");
 			if (after.Objects.Count < before.Objects.Count) return true;
 			for (int i = 0; i < before.Objects.Count; i++) if (sig(before.Objects[i]) != sig(after.Objects[i])) return true;
+			Func<List<string>, List<string>, bool> notPrefix = (was, now) => now.Count < was.Count || Enumerable.Range(0, was.Count).Any(i => was[i] != now[i]);
+			Func<IslandFile, List<string>> rules = f => WorldDirector.RulesFromProps(f.Props).Select(r => r.When + "|" + r.What).ToList();
+			if (notPrefix(rules(before), rules(after))) return true;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				Func<IslandFile, List<string>> steps = f => IslandQuest.From(f.Props, n, true).Steps.Select(st => st.Type + "|" + st.Target).ToList();
+				if (notPrefix(steps(before), steps(after))) return true;
+			}
 			return false;
 		}
 

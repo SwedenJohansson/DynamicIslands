@@ -58,6 +58,20 @@ namespace DynamicIslands
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("A"), Obj("C") })), "an object removed: a shift");
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("B"), Obj("A"), Obj("C") })), "the order changed: a shift");
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("A"), Obj("B", loot), Obj("C") })), "an object made a chest (the chests' numbering): a shift");
+				// (AU23: the island's rules and quest steps are kept by their place too)
+				Func<string, string, IslandFile> withProps = (rules, steps) =>
+				{
+					IslandFile pf = file(new[] { Obj("A") });
+					WorldDirector.SetRulesInProps(pf.Props, rules.Split(',').Where(w => w.Length > 0).Select(w => new IntroRule { When = w, What = "island", WhatArg = "X" }));
+					if (steps.Length > 0) pf.Props[IslandQuest.KeySteps] = steps;
+					return pf;
+				};
+				IslandFile ruled = withProps("start,quest", "reach|z|1|\nread|N|1|");
+				Check(ref ok, !DynamicIslands.ShiftsState(ruled, withProps("start,quest,day", "reach|z|1|\nread|N|1|\nopen|C|1|")), "a rule and a step added at the end: no shift");
+				Check(ref ok, !DynamicIslands.ShiftsState(ruled, withProps("start,quest", "reach|z|2|Go there\nread|N|1|")), "a step's count or text changed: no shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("quest", "reach|z|1|\nread|N|1|")), "a rule removed: a shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("start,quest", "read|N|1|")), "a quest step removed: a shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("start,quest", "reach|z|1|\nread|Other note|1|")), "a step's note renamed: a shift");
 
 				// Patches
 				Check(ref ok, PatchHealth.FailedPatches.Count == 0 && PatchHealth.Applied >= 30, PatchHealth.Applied + " patches applied, " + PatchHealth.FailedPatches.Count + " failed");

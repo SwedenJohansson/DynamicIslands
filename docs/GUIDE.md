@@ -888,7 +888,8 @@ things picked up, chests looted, zones fired, doors opened - by the order of the
   the ground, the island's settings, and **new objects** (they come after the others). The first time you save over
   such an island, the editor says which worlds have it. If you moved its ground, anything built on it there may no
   longer fit;
-- changes that would mix it up - **deleting objects**, changing their order, or making an object a chest - don't reach
+- changes that would mix it up - **deleting objects**, changing their order, making an object a chest, or **removing
+  or reordering the island's rules or a quest's steps** (or changing what a step asks for) - don't reach
   them: those worlds keep playing the version they started with (the editor says so; a copy `<name>_<code>.island` is
   kept for them), and new worlds get your new version. To give a world the new version anyway, save your changes under a
   new name (**Save as**) and bring that island into the world.

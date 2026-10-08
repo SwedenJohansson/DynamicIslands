@@ -43,6 +43,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Removing an island's rule or quest step keeps saved worlds safe:** like removing objects, it now keeps the old
+  version for the worlds that have the island, so a fired rule doesn't fire again and a quest doesn't jump a step.
 - **Single islands and plan islands written down:** the guide (7, 9.5, 16) and README now say that islands a world plan
   brings (and the islands their rules bring) never come by chance, which files are never in the sailing list, and how
   to make an island a single island.
