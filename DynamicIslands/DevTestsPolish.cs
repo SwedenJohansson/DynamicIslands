@@ -16,7 +16,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CILevelsSwitch", docs: "Dev, world (host, a test world 'CI ...'): the level up system switched on and off by the host - off keeps everyone's levels (world file @levels=off with the records), an island made with levels doesn't switch it back on, on brings the levels back. What the world had is put back after")]
-		public static void LevelsSwitchCommand() { DynamicIslands.instance.StartCoroutine(LevelsSwitchRoutine()); }
+		public static void LevelsSwitchCommand() { StartTest(LevelsSwitchRoutine()); }
 
 		static IEnumerator LevelsSwitchRoutine()
 		{
@@ -54,7 +54,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILevelsChoice", docs: "Dev, main menu: the World settings window's Level up system switch - clicked on and off (its label, the box's count of changed settings), Raft's own switches it off; the choice is put back after")]
-		public static void LevelsChoiceCommand() { DynamicIslands.instance.StartCoroutine(LevelsChoiceRoutine()); }
+		public static void LevelsChoiceCommand() { StartTest(LevelsChoiceRoutine()); }
 
 		static IEnumerator LevelsChoiceRoutine()
 		{
@@ -92,7 +92,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIWorldWindow", docs: "Dev, world (either player; host: a test world 'CI ...'): the pause menu's CUSTOM ISLANDS button is there; the world window opens - the host clicks Savage, build cost +5 %, the randomizer Light and one part off, an extra option, the level up system and one island of the list, and the world's settings follow (put back after); a player who joined sees the host's settings and can't change them. Picture shot_world_window.png")]
-		public static void WorldWindowCommand() { DynamicIslands.instance.StartCoroutine(WorldWindowRoutine()); }
+		public static void WorldWindowCommand() { StartTest(WorldWindowRoutine()); }
 
 		static IEnumerator WorldWindowRoutine()
 		{
@@ -159,7 +159,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIEditorLight", docs: "Dev, editor: the Light list: Morning, Noon, Evening, Night, Overcast - a directional sun in the scene, Raft's sun setting and the sky's light follow; pictures shot_light_<time>.png; the player's choice is put back")]
-		public static void EditorLightCommand() { DynamicIslands.instance.StartCoroutine(EditorLightRoutine()); }
+		public static void EditorLightCommand() { StartTest(EditorLightRoutine()); }
 
 		static IEnumerator EditorLightRoutine()
 		{
@@ -189,7 +189,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIViewPlan", docs: "Dev, main menu (the New Game box open, e.g. after CINewGameBoxShot): ROADMAP T6 - the plan box's View... shows what the chosen plan does; picture shot_view_plan.png")]
-		public static void ViewPlanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ViewPlanRoutine()); }
+		public static void ViewPlanCommand(string[] args) { StartTest(ViewPlanRoutine()); }
 
 		static IEnumerator ViewPlanRoutine()
 		{
@@ -219,7 +219,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CITestThisPlan", docs: "Dev, editor: ROADMAP T2b - World Plans' Test this plan: a small plan saved, a new world 'Plan test <time>' made with it, its island comes, Back to the editor in the world window, World Plans open again on the plan")]
-		public static void TestThisPlanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TestThisPlanRoutine()); }
+		public static void TestThisPlanCommand(string[] args) { StartTest(TestThisPlanRoutine()); }
 
 		static IEnumerator TestThisPlanRoutine()
 		{
@@ -252,7 +252,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
-		public static void IslandTestCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
+		public static void IslandTestCommand(string[] args) { StartTest(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
 
 		static IEnumerator IslandTestRoutine(bool big)
 		{

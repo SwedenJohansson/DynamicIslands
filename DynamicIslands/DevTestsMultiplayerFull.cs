@@ -28,7 +28,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMPFull", docs: "Dev, in game (host): spawns and keeps 'cimpfull', an island with every in-world feature for the two-player test (tools\\mpfull.ps1)")]
 		public static void MPFullCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(MPFullRoutine());
+			StartTest(MPFullRoutine());
 		}
 
 		static IEnumerator MPFullRoutine()
@@ -111,7 +111,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMPVisit", docs: "Dev, in game (host): spawns 'cimpvisit' 600 m ahead with an island rule 'when players first get here: bring a sandbar'")]
 		public static void MPVisitCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(MPVisitRoutine());
+			StartTest(MPVisitRoutine());
 		}
 
 		static IEnumerator MPVisitRoutine()
@@ -172,7 +172,7 @@ namespace DynamicIslands
 		public static void GotoIslandCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(StandRoutine(e.Root));
+			if (e != null) StartTest(StandRoutine(e.Root));
 		}
 
 		/// <summary>The animals near an island's creature spots of a kind (every machine: Raft shows the host's animals to everyone).</summary>
@@ -229,7 +229,7 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
 			string kind = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
-			DynamicIslands.instance.StartCoroutine(HitRoutine(e, kind));
+			StartTest(HitRoutine(e, kind));
 		}
 
 		static IEnumerator HitRoutine(IslandWorldState.Entry e, string kind)
@@ -272,7 +272,7 @@ namespace DynamicIslands
 		public static void CatchCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(CatchRoutine(e));
+			if (e != null) StartTest(CatchRoutine(e));
 		}
 
 		static IEnumerator CatchRoutine(IslandWorldState.Entry e)
@@ -349,7 +349,7 @@ namespace DynamicIslands
 		public static void ReloadIslandCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(ReloadIslandRoutine(e));
+			if (e != null) StartTest(ReloadIslandRoutine(e));
 		}
 
 		static IEnumerator ReloadIslandRoutine(IslandWorldState.Entry e)

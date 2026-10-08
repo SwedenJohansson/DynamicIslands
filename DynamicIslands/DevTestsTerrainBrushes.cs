@@ -15,7 +15,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CITerrainBrushes", docs: "Dev, editor: the terrain brushes of E6 on a generated test island - the brush edge (smooth, linear, hard) shapes a Raise stroke, the noise brush adds bumps and Shift takes them away, the erosion brush wears a spike down without losing ground, the sea floor goes deep and shallow again keeping the land, a second style mixed in is painted and saved - and undo restores the heights every time")]
 		public static void TerrainBrushesCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(TerrainBrushesRoutine());
+			StartTest(TerrainBrushesRoutine());
 		}
 
 		/// <summary>Largest difference (metres) between two heightmaps (normalised, terrain height sizeY), inside a block or everywhere.</summary>

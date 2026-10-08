@@ -14,7 +14,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIEditorSkySea", docs: "Dev, main menu or editor: the editor option \"Raft's sky and sea\" (ROADMAP E1b) - opens the editor with it on (from the main menu), checks Raft's sky, ocean and their camera are in the editor (the camera is the editor's, the blue plane hidden, the sea at the editor's sea level, the Light list sets the sky's hour, off/on in the editor), leaves for the main menu and checks they went with the editor, then opens the editor with it off (the editor's own sky and plane). Puts the option back as it was; shot_skysea_<time>.png")]
 		public static void EditorSkySeaCheck()
 		{
-			DynamicIslands.instance.StartCoroutine(EditorSkySeaRoutine());
+			StartTest(EditorSkySeaRoutine());
 		}
 
 		/// <summary>To Raft's main menu (as the editor's Main menu button goes) and a moment for it to settle.</summary>

@@ -178,7 +178,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIQuestBookWorld", docs: "Dev, world (host, test world 'CI ...'): the main story in Raft's notebook - a plan with two main story islands (a camp first, a sandbar on the Receiver after it) and a side quest on the Receiver: the first tab with its intro, Raft's islands at the back with their tabs hidden, a note read on its pages, the side quest only in the journal, the next tab with its #digits when the first is done, its tab pressed, the ending page when the story is over, the same book after the world file is read back, nothing of ours in Raft's save (TEST_CATALOGUE QB3, QB8-QB14, QB17)")]
-		public static void QuestBookWorldCommand() { DynamicIslands.instance.StartCoroutine(QuestBookWorldRoutine()); }
+		public static void QuestBookWorldCommand() { StartTest(QuestBookWorldRoutine()); }
 
 		static IEnumerator QuestBookWorldRoutine()
 		{
@@ -299,7 +299,7 @@ namespace DynamicIslands
 			bool stay = args != null && args.Contains("stay");
 			string[] words = args != null ? args.Where(a => a != "stay").ToArray() : new string[0];
 			string name = words.Length > 0 ? string.Join(" ", words) : "Raft 2 - The Drowned Frontier";
-			DynamicIslands.instance.StartCoroutine(QuestBookPreviewRoutine(name, stay));
+			StartTest(QuestBookPreviewRoutine(name, stay));
 		}
 
 		static IEnumerator QuestBookPreviewRoutine(string name, bool stay)
@@ -363,7 +363,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIQuestBookEditor", docs: "Dev, editor: the quest book in World Plans - New main story... makes the cards (Raft's story off: the first island ahead, the others on the Receiver each after the one before; on: after the Raft island chosen), the NOTEBOOK row on a main story card, Check's notebook warnings (a next-coordinates note that isn't there, colour 3, a long tab title, an island without notes); nothing saved (TEST_CATALOGUE QB4-QB6)")]
-		public static void QuestBookEditorCommand() { DynamicIslands.instance.StartCoroutine(QuestBookEditorRoutine()); }
+		public static void QuestBookEditorCommand() { StartTest(QuestBookEditorRoutine()); }
 
 		static IEnumerator QuestBookEditorRoutine()
 		{
@@ -451,7 +451,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIQuestBookTabs", docs: "Dev, world (host, test world 'CI ...'): Raft's story on with Balboa left out and a plan island after Vasagatan - its tab between Vasagatan's and Caravan Town's, Balboa's tab hidden; then 14 main story islands open: the tabs scroll, every tab in the strip (TEST_CATALOGUE QB3, QB15, QB16)")]
-		public static void QuestBookTabsCommand() { DynamicIslands.instance.StartCoroutine(QuestBookTabsRoutine()); }
+		public static void QuestBookTabsCommand() { StartTest(QuestBookTabsRoutine()); }
 
 		static IEnumerator QuestBookTabsRoutine()
 		{
@@ -534,7 +534,7 @@ namespace DynamicIslands
 					if (!Raft_Network.IsHost) { Fail("quest book mp start: the host"); return; }
 					StoryChain.Reset();
 					StoryChain.FromPlan(WorldPlan.Parse("CI quest book", MpPlan));
-					DynamicIslands.instance.StartCoroutine(MpBrought());
+					StartTest(MpBrought());
 					return;
 				case "done":
 					if (!Raft_Network.IsHost) { Fail("quest book mp done: the host"); return; }

@@ -120,7 +120,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIAdventureBuild", docs: "Dev, editor: SC60 - the voyage 'CI Voyage' built from nothing: four islands made with the generator and given their content (chests, notes, zones, creatures, a door and a lever, story items, a quest with every step type, island events, an island rule); the plan with every When and Where; Check; Test in a world for each island; exported as a pack. CIAdventureBuild notest = without the Tests (minutes)")]
-		public static void AdventureBuildCommand(string[] args) { DynamicIslands.instance.StartCoroutine(AdventureBuildRoutine(args == null || !args.Contains("notest"))); }
+		public static void AdventureBuildCommand(string[] args) { StartTest(AdventureBuildRoutine(args == null || !args.Contains("notest"))); }
 
 		static IEnumerator AdventureBuildRoutine(bool test)
 		{
@@ -230,7 +230,7 @@ namespace DynamicIslands
 		public static void AdventurePlayCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "landing";
-			DynamicIslands.instance.StartCoroutine(AdventurePlayRoutine(part));
+			StartTest(AdventurePlayRoutine(part));
 		}
 
 		static IEnumerator AdventurePlayRoutine(string part)

@@ -13,7 +13,7 @@ namespace DynamicIslands
 		const string GatherAllIsland = "cigatherall";
 
 		[ConsoleCommand(name: "CIGatherAll", docs: "Dev, in game (host): every thing to gather of the editor (ROADMAP LM11: also the snowy pine, seaweed, and those of Raft's story islands) on one island - each picked up (or a tree chopped down) gives Raft's items, stays used after a reload, and is back after the regrow days")]
-		public static void GatherAllCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GatherAllRoutine()); }
+		public static void GatherAllCommand(string[] args) { StartTest(GatherAllRoutine()); }
 
 		static IEnumerator GatherAllRoutine()
 		{

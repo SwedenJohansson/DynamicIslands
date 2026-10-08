@@ -42,7 +42,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIButtons", docs: "Dev, main menu or editor: presses every button of the editor (each tab, each kind of selected object) and of every window they open, and reports errors, windows that don't close, and buttons never reached")]
 		public static void ButtonsCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(ButtonsRoutine());
+			StartTest(ButtonsRoutine());
 		}
 
 		static IEnumerator ButtonsRoutine()
@@ -389,7 +389,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIWorldButtons", docs: "Dev, in game: presses every button of the journal and the note reader")]
 		public static void WorldButtonsCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(WorldButtonsRoutine());
+			StartTest(WorldButtonsRoutine());
 		}
 
 		static IEnumerator WorldButtonsRoutine()
@@ -501,7 +501,7 @@ namespace DynamicIslands
 		public static void JournalShotCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(JournalShotRoutine(part));
+			StartTest(JournalShotRoutine(part));
 		}
 
 		static IEnumerator JournalShotRoutine(string part)
@@ -522,7 +522,7 @@ namespace DynamicIslands
 		public static void JournalTourCommand(string[] args)
 		{
 			int most = args != null && args.Length > 0 ? Mathf.Max(1, (int)F(args[0])) : 30;
-			DynamicIslands.instance.StartCoroutine(JournalTourRoutine(most));
+			StartTest(JournalTourRoutine(most));
 		}
 
 		static IEnumerator JournalTourRoutine(int most)
@@ -571,7 +571,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRoundTrip", docs: "Dev, editor: loads every saved island (or the one named), saves it again under a test name and compares: nothing may change")]
 		public static void RoundTripCommand(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(RoundTripRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(RoundTripRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		const string RoundTripName = "ci_roundtrip";

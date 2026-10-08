@@ -13,7 +13,7 @@ namespace DynamicIslands
 		const string QuestItemsIsland = "ciquestitems";
 
 		[ConsoleCommand(name: "CIIndexScan", docs: "Dev, editor: scans Raft's island scenes for the object index now if it is out of date (after a Raft update or a new index version) and waits for it")]
-		public static void IndexScanCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IndexScanRoutine()); }
+		public static void IndexScanCommand(string[] args) { StartTest(IndexScanRoutine()); }
 
 		static IEnumerator IndexScanRoutine()
 		{
@@ -24,7 +24,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIQuestItemPickups", docs: "Dev, in game (host): ROADMAP LM12 - Raft's quest item pickups as editor objects (each knows its quest item), placed on an island: used, each gives the crew Raft's quest item as a story item (name, picture) and goes; Raft's wild beehive is a thing to gather (honeycomb)")]
-		public static void QuestItemPickupsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(QuestItemPickupsRoutine()); }
+		public static void QuestItemPickupsCommand(string[] args) { StartTest(QuestItemPickupsRoutine()); }
 
 		static IEnumerator QuestItemPickupsRoutine()
 		{

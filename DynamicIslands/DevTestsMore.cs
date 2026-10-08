@@ -29,7 +29,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenMatrix", docs: "Dev, editor: every layout x style x sea floor (8 x 5 x 2) with its own seed: no exceptions, the top as asked, flat edges, no NaN, every object on the ground (or sunk as Raft's are), inside the build area, nothing above the sea offshore, under the object cap, the same twice, and the reach line in time")]
 		public static void GenMatrixCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenMatrixRoutine());
+			StartTest(GenMatrixRoutine());
 		}
 
 		static IEnumerator GenMatrixRoutine()
@@ -131,7 +131,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenParity", docs: "Dev, editor: generating in the editor and IslandGenerator.CreateFile (islands made while sailing, map types) give the same heights and the same objects for the same settings")]
 		public static void GenParityCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenParityRoutine());
+			StartTest(GenParityRoutine());
 		}
 
 		static IEnumerator GenParityRoutine()
@@ -181,7 +181,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPresetTest", docs: "Dev, editor: the generator window's presets with the newer settings (sea floor, drop-off, the four sea sliders): Save these settings -> file -> use it again; an old preset file without them loads with the defaults (deep, 0.5, like Raft)")]
 		public static void PresetTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PresetTestRoutine());
+			StartTest(PresetTestRoutine());
 		}
 
 		static IEnumerator PresetTestRoutine()
@@ -257,7 +257,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRandomizeDeep", docs: "Dev, editor: a variation of each measured Raft island keeps its real depths under water (the generated profile against the measured one in raft_underwater.txt); \"something new like it\" gets the island's drop-off")]
 		public static void RandomizeDeepCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(RandomizeDeepRoutine());
+			StartTest(RandomizeDeepRoutine());
 		}
 
 		/// <summary>
@@ -361,7 +361,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenWindowTest", docs: "Dev, editor: every slider and choice of the generator window's Normal tab changes the preview (a pixel hash) or the estimate - or, for those that only matter when generating, the setting; the reach line's colour follows its level; the window fits a 1280 x 720 screen")]
 		public static void GenWindowTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenWindowTestRoutine());
+			StartTest(GenWindowTestRoutine());
 		}
 
 		static int PixelHash(Texture t)
@@ -500,7 +500,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIUnderwaterPick", docs: "Dev, in game (either player; the host spawns): on a deep island with each kind of pickup under water (giant clam, silver algae, ore, scrap, stone, the seaweed in a sea vine), dives for each the way CIPick does: the items arrive, each stays gone after unloading and loading the island, and comes back after the regrow days. CIUnderwaterPick [keep]")]
 		public static void UnderwaterPickCommand(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(UnderwaterPickRoutine(args != null && args.Contains("keep")));
+			StartTest(UnderwaterPickRoutine(args != null && args.Contains("keep")));
 		}
 
 		/// <summary>Every item the local player has (unique name -> count).</summary>
@@ -599,7 +599,7 @@ namespace DynamicIslands
 		{
 			var ledges = new List<float>();
 			foreach (string a in args ?? new string[0]) { float v; if (float.TryParse(a, System.Globalization.NumberStyles.Float, Inv, out v)) ledges.Add(v); }
-			DynamicIslands.instance.StartCoroutine(ReachWorldRoutine(ledges.Count > 0 ? ledges.ToArray() : new[] { 0.8f, 1.8f, 3f }));
+			StartTest(ReachWorldRoutine(ledges.Count > 0 ? ledges.ToArray() : new[] { 0.8f, 1.8f, 3f }));
 		}
 
 		/// <summary>A flat round island, radius r, its edge a ledge this high above the water as steep as the generator's grid (1.95 m) allows, in water 3 m deep.</summary>
@@ -780,7 +780,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIDeepWorld", docs: "Dev, in game (host): a generated island on the deep sea floor in a world - its ground kept to 110 m with no edge above 100 m, its land radius (spacing) as a shallow one's; flying (holes, the underside, no foot hanging under it, no underwater objects) and sunken (its top at the depth asked); the creatures' NavMesh only over land and shallows, every hostile spot on it; several deep islands at once (frame time)")]
 		public static void DeepWorldCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(DeepWorldRoutine());
+			StartTest(DeepWorldRoutine());
 		}
 
 		static IEnumerator DeepWorldRoutine()
@@ -905,7 +905,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIDeepMP", docs: "Dev, in game (host): spawns and keeps a generated deep island 'cideepmp' (with pickups under water) and a ready-made atoll made from a seed, for the two-player test (mpfull.ps1 phase deep); each is logged with CIIslandHash")]
 		public static void DeepMPCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(DeepMPRoutine());
+			StartTest(DeepMPRoutine());
 		}
 
 		static IEnumerator DeepMPRoutine()
@@ -966,7 +966,7 @@ namespace DynamicIslands
 			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, Inv, out km);
 			if (args != null && args.Length > 1) float.TryParse(args[1], System.Globalization.NumberStyles.Float, Inv, out speed);
 			RunInBackground();
-			DynamicIslands.instance.StartCoroutine(LongSailRoutine(km, speed));
+			StartTest(LongSailRoutine(km, speed));
 		}
 
 		static IEnumerator LongSailRoutine(float km, float speed)
@@ -1179,7 +1179,7 @@ namespace DynamicIslands
 		public static void FaceCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(FaceRoutine(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : ""));
+			if (e != null) StartTest(FaceRoutine(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : ""));
 		}
 
 		static IEnumerator FaceRoutine(IslandWorldState.Entry e, string what)

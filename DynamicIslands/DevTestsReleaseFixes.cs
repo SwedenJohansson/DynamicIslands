@@ -23,7 +23,7 @@ namespace DynamicIslands
 		class NoopCommand : ICommand { public void Execute() { } public void UnExecute() { } }
 
 		[ConsoleCommand(name: "CIAutosave", docs: "Dev, editor: the autosave - nothing unsaved after Save; a change is autosaved after the interval (whole, with the change); it is offered (newer than the island), the offer window opens, picking it opens the unsaved work; Save removes it; leaving writes it at once; Throw away deletes it; saving an island saved worlds have says so once. Cleans up")]
-		public static void AutosaveCommand() { DynamicIslands.instance.StartCoroutine(AutosaveRoutine()); }
+		public static void AutosaveCommand() { StartTest(AutosaveRoutine()); }
 
 		static IEnumerator AutosaveRoutine()
 		{

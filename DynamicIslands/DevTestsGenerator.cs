@@ -29,7 +29,7 @@ namespace DynamicIslands
 		public static void MeasureIslandsCommand(string[] args)
 		{
 			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(MeasureIslandsRoutine(filter));
+			StartTest(MeasureIslandsRoutine(filter));
 		}
 
 		static readonly Regex TreeWord = new Regex(@"(?i)(tree|palm|pine|birch|bamboo)"), NotTreeWord = new Regex(@"(?i)(log|stump|leaf|leaves|branch|root)");
@@ -497,7 +497,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIReachTest", docs: "Dev, editor: the generator's \"can players reach it\" line - a beach island is easy, cliffs all around need building, a low ledge is tricky, the plateau's ramp, sea stacks, flying and sunken ready-made islands; the same answer from the settings and from the generated terrain; the window shows it above the seed")]
 		public static void ReachTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(ReachTestRoutine());
+			StartTest(ReachTestRoutine());
 		}
 
 		static IEnumerator ReachTestRoutine()
@@ -589,7 +589,7 @@ namespace DynamicIslands
 		static IslandGenSettings Tweak(IslandGenSettings s, Action<IslandGenSettings> change) { IslandGenSettings c = s.Copy(); change(c); return c; }
 
 		[ConsoleCommand(name: "CIGenBuildings", docs: "Dev, editor: the generator's Buildings and caves - huts with a cave, cabins, a themed scene, a mix, and neither: what each puts on the island (foundations, walls, pillars, a roof on them, a bed and a chest; the scene's props; Raft's cave piece with its guard), the ground levelled under a hut, the settings kept by a preset; pictures shot_genbuild_*.png")]
-		public static void GenBuildingsCommand() { DynamicIslands.instance.StartCoroutine(GenBuildingsRoutine()); }
+		public static void GenBuildingsCommand() { StartTest(GenBuildingsRoutine()); }
 
 		static IEnumerator GenBuildingsRoutine()
 		{
@@ -759,7 +759,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIGenQuest", docs: "Dev, editor: the generator's Quest steps - islands with quests of 1, 3, 5 and 8 steps: the island's quest has them, every step has what it needs on the island (the note, chest, zone, creatures, map pieces in chests, animals), the hoard last; 0 steps leaves the quest alone; Ctrl+Z brings the old quest back; the window steps aside after Generate")]
-		public static void GenQuestCommand() { DynamicIslands.instance.StartCoroutine(GenQuestRoutine()); }
+		public static void GenQuestCommand() { StartTest(GenQuestRoutine()); }
 
 		static IEnumerator GenQuestRoutine()
 		{
@@ -836,7 +836,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRemake", docs: "Dev, editor: Randomize existing's Rebuild it - the Radio Tower remade as a radio tower, an oil rig and a lighthouse under construction (each with two seeds): built of the tower's own pieces, all of them loaded (no missing-object blocks), nothing of it in the air (CIFloating), the report says what it built; pictures shot_remake_*.png. CIRemake [design id]")]
-		public static void RemakeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RemakeRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+		public static void RemakeCommand(string[] args) { StartTest(RemakeRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator RemakeRoutine(string only)
 		{
@@ -889,7 +889,7 @@ namespace DynamicIslands
 			// (a part and/or a seed, in any order: "CIStoryRemake 12" is seed 12 for all of them)
 			string part = ""; int seed = 11, n;
 			foreach (string a in args ?? new string[0]) { if (int.TryParse(a, out n)) seed = n; else if (a.Trim().Length > 0) part = a.Trim(); }
-			DynamicIslands.instance.StartCoroutine(StoryRemakeRoutine(part, seed));
+			StartTest(StoryRemakeRoutine(part, seed));
 		}
 
 		static IEnumerator StoryRemakeRoutine(string part, int seed)
@@ -963,7 +963,7 @@ namespace DynamicIslands
 		public static void UnderwaterShotsCommand(string[] args)
 		{
 			int style = args != null && args.Length > 0 ? TerrainPainter.StyleIndex(args[0]) : TerrainPainter.Tropical;
-			DynamicIslands.instance.StartCoroutine(UnderwaterShotsRoutine(style));
+			StartTest(UnderwaterShotsRoutine(style));
 		}
 
 		static IEnumerator UnderwaterShotsRoutine(int style)
@@ -1027,7 +1027,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlayerJump", docs: "Dev, in game (standing on the raft): measures Raft's player - walkable slope, step, jump speed and gravity, how high a jump from the ground lifts the feet, how deep a swimmer floats and how high a jump out of the water gets (the numbers behind the generator's reachability line)")]
 		public static void PlayerJumpCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PlayerJumpRoutine());
+			StartTest(PlayerJumpRoutine());
 		}
 
 		static IEnumerator PlayerJumpRoutine()
@@ -1083,7 +1083,7 @@ namespace DynamicIslands
 		public static void MeasureUnderwaterCommand(string[] args)
 		{
 			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(MeasureUnderwaterRoutine(filter));
+			StartTest(MeasureUnderwaterRoutine(filter));
 		}
 
 		[ConsoleCommand(name: "CIDumpObject", docs: "Dev, editor: logs the parents, children and components of the first object with a name in one of Raft's island scenes. CIDumpObject <part of a scene name> <object name>")]
@@ -1093,7 +1093,7 @@ namespace DynamicIslands
 			string scene = PlaceableCatalog.LandmarkSceneNames().FirstOrDefault(s => s.IndexOf(args[0], StringComparison.OrdinalIgnoreCase) >= 0);
 			string name = string.Join(" ", args.Skip(1).ToArray());
 			if (scene == null) { Fail("no scene matching " + args[0]); return; }
-			DynamicIslands.instance.StartCoroutine(PlaceableCatalog.VisitScene(scene, s => DumpObject(s, name)));
+			StartTest(PlaceableCatalog.VisitScene(scene, s => DumpObject(s, name)));
 		}
 
 		static IEnumerator DumpObject(Scene s, string name)
@@ -1340,7 +1340,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenFeatures", docs: "Dev, editor: every setting of the generator - deterministic, has an effect, keeps the edge flat; the top is the height asked for; size and height presets; stretch; object sliders (none, the water slider alone, a jungle); creatures and loot tiers; generating with content, undo/redo, save and load")]
 		public static void GenFeaturesCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenFeaturesRoutine());
+			StartTest(GenFeaturesRoutine());
 		}
 
 		static IEnumerator GenFeaturesRoutine()
@@ -1617,7 +1617,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRandomizeTest", docs: "Dev, editor: every measured Raft island can be picked (picture and ground heights exist); \"something new like it\" gives settings from its measurements; \"a variation of it\" keeps its size and height; the window picks and previews them")]
 		public static void RandomizeTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(RandomizeTestRoutine());
+			StartTest(RandomizeTestRoutine());
 		}
 
 		static IEnumerator RandomizeTestRoutine()
@@ -1695,7 +1695,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenBench", docs: "Dev, editor: generates islands with about 1000, 3000, 6000 and 9000 objects and measures the cost: generating, the editor's frame time, the file's size, saving and loading. Writes the table to the log (README: generator costs)")]
 		public static void GenBenchCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenBenchRoutine());
+			StartTest(GenBenchRoutine());
 		}
 
 		static IEnumerator GenBenchRoutine()
@@ -1790,7 +1790,7 @@ namespace DynamicIslands
 		{
 			string name = args != null ? string.Join(" ", args.Where(a => a != "keep").ToArray()) : "";
 			if (name.Length == 0) { Fail("usage: CIGenWorld <island> [keep]"); return; }
-			DynamicIslands.instance.StartCoroutine(GenWorldRoutine(name, args.Contains("keep")));
+			StartTest(GenWorldRoutine(name, args.Contains("keep")));
 		}
 
 		static IEnumerator GenWorldRoutine(string name, bool keep)
@@ -1841,7 +1841,7 @@ namespace DynamicIslands
 		{
 			if (args == null || args.Length == 0) { Log("Usage: CIDiveShots <island> [keep]"); return; }
 			bool keep = args.Length > 1 && args[args.Length - 1] == "keep";
-			DynamicIslands.instance.StartCoroutine(DiveShotsRoutine(string.Join(" ", args.Take(keep ? args.Length - 1 : args.Length).ToArray()), keep));
+			StartTest(DiveShotsRoutine(string.Join(" ", args.Take(keep ? args.Length - 1 : args.Length).ToArray()), keep));
 		}
 
 		/// <summary>Turns the player's view (Raft's MouseLook keeps its own angles, so they are set too).</summary>
@@ -1958,7 +1958,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPanelFit", docs: "Dev, editor: the left tool panel with the tallest and widest inspectors (a creature with custom colours, a chest with many items, each zone): nothing wider than the panel, never below the status bar, scrolls when too tall")]
 		public static void PanelFitCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PanelFitRoutine());
+			StartTest(PanelFitRoutine());
 		}
 
 		static IEnumerator PanelFitRoutine()
@@ -2020,7 +2020,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenShots", docs: "Dev, editor: screenshots of the generator window, each tab (shot_gen_normal / _randomize / _ready, and the Normal tab scrolled down), and a help popup")]
 		public static void GenShotsCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenShotsRoutine());
+			StartTest(GenShotsRoutine());
 		}
 
 		static IEnumerator GenShotsRoutine()

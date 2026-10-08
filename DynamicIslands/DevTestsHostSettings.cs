@@ -79,7 +79,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIHostOnlyCheck", docs: "Dev, in game (a player who joined): tries every command that changes the host's settings or islands (Monsters, BuildCost, Randomizer, WorldPlan, CustomIslandsAuto, SpawnIsland, RemoveIsland); each must be refused and change nothing here")]
 		public static void HostOnlyCheck()
 		{
-			DynamicIslands.instance.StartCoroutine(HostOnlyRoutine());
+			StartTest(HostOnlyRoutine());
 		}
 
 		static IEnumerator HostOnlyRoutine()

@@ -68,7 +68,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CISafetyEditor", docs: "Dev, editor: the safety fixes in the editor - an island setting is an undo step and an unsaved change (undo brings it back); selecting objects isn't an undo step; an object Raft doesn't have loads as a red placeholder and is saved back unchanged; saving over an island a saved world uses keeps that world on its version when objects were removed, not when one was added at the end; a deleted island is moved to 'deleted'. Test files are removed after")]
-		public static void SafetyEditorCommand() { DynamicIslands.instance.StartCoroutine(SafetyEditorRoutine()); }
+		public static void SafetyEditorCommand() { StartTest(SafetyEditorRoutine()); }
 
 		static IEnumerator SafetyEditorRoutine()
 		{
@@ -165,7 +165,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CISafetyWorld", docs: "Dev, world: LoadEditor inside a world is refused (the world stays, the player is told); Resync asks the host again without harm")]
-		public static void SafetyWorldCommand() { DynamicIslands.instance.StartCoroutine(SafetyWorldRoutine()); }
+		public static void SafetyWorldCommand() { StartTest(SafetyWorldRoutine()); }
 
 		static IEnumerator SafetyWorldRoutine()
 		{

@@ -66,7 +66,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryBrowse", docs: "Dev, main menu: the ISLAND LIBRARY window against a library written to disk (file://): the main menu's button opens it, the plans and islands tabs, icons and pictures, Download installs, the button says Installed; a newer version in the list says Update and updates; a damaged file is refused and nothing installed; an entry from a newer mod says Download anyway; Remove asks first; no connection says so; the window fits the screen. Cleans up")]
-		public static void LibraryBrowseCommand() { DynamicIslands.instance.StartCoroutine(LibraryBrowseRoutine()); }
+		public static void LibraryBrowseCommand() { StartTest(LibraryBrowseRoutine()); }
 
 		static IEnumerator LibraryBrowseRoutine()
 		{
@@ -215,7 +215,7 @@ namespace DynamicIslands
 			if (p.Length < 4 || !int.TryParse(p[1], out seed)) { Fail("CIMakeMapIsland <map type>|<seed>|<name>|<title>"); return; }
 			MapType type = MapTypes.Get(p[0]);
 			if (type == null) { Fail("no map type '" + p[0] + "'"); return; }
-			DynamicIslands.instance.StartCoroutine(MakeMapIslandRoutine(type, seed, p[2], p[3]));
+			StartTest(MakeMapIslandRoutine(type, seed, p[2], p[3]));
 		}
 
 		static IEnumerator MakeMapIslandRoutine(MapType type, int seed, string name, string title)
@@ -240,7 +240,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryDownload", docs: "Dev, main menu: downloads entries from the real island library as the window's Download does (each file checked, installed like Import) and checks their files are there: CILibraryDownload <id,id,...>")]
-		public static void LibraryDownloadCommand(string[] args) { DynamicIslands.instance.StartCoroutine(LibraryDownloadRoutine(string.Join(" ", args ?? new string[0]).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList())); }
+		public static void LibraryDownloadCommand(string[] args) { StartTest(LibraryDownloadRoutine(string.Join(" ", args ?? new string[0]).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList())); }
 
 		static IEnumerator LibraryDownloadRoutine(List<string> ids)
 		{
@@ -264,7 +264,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIIslandPicture", docs: "Dev, in a world: a picture of a spawned island with Raft's own camera from out at sea (Raft's water, no HUD, no held tool): <file>-pic.jpg 1280x720 and <file>-icon.jpg 256x256 in Mods\\DynamicIslands. CIIslandPicture <island>|<file>|<angle 0-360 from north>|<distance x land radius, default 2.2>|<height x land radius, default 0.45>|<aim above the sea x height of the top, default 0.35>")]
-		public static void IslandPictureCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandPictureRoutine(string.Join(" ", args ?? new string[0]).Split('|').Select(x => x.Trim()).ToArray())); }
+		public static void IslandPictureCommand(string[] args) { StartTest(IslandPictureRoutine(string.Join(" ", args ?? new string[0]).Split('|').Select(x => x.Trim()).ToArray())); }
 
 		static IEnumerator IslandPictureRoutine(string[] p)
 		{
@@ -358,7 +358,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryOnline", docs: "Dev, main menu: the real island library on GitHub: its list reads (at least the sample plan and island), icons and pictures download, and the sample island downloads and installs (the same file is already here, so it's shared) and is removed again (the file stays)")]
-		public static void LibraryOnlineCommand() { DynamicIslands.instance.StartCoroutine(LibraryOnlineRoutine()); }
+		public static void LibraryOnlineCommand() { StartTest(LibraryOnlineRoutine()); }
 
 		static IEnumerator LibraryOnlineRoutine()
 		{
@@ -395,7 +395,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryDriveUnit", docs: "Dev, anywhere: the library in a Google Drive folder (LibraryDrive) without the network: folder links read, a folder's public listing parsed (files, folders, names with & and '), a path found folder by folder in a made-up folder tree (names in any case, a missing one named), download addresses with and without an API key")]
-		public static void LibraryDriveUnitCommand() { DynamicIslands.instance.StartCoroutine(LibraryDriveUnitRoutine()); }
+		public static void LibraryDriveUnitCommand() { StartTest(LibraryDriveUnitRoutine()); }
 
 		static IEnumerator LibraryDriveUnitRoutine()
 		{
@@ -441,7 +441,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryDriveLive", docs: "Dev, anywhere (online): reads the real library's Google Drive folder (library.txt's address or the default): its listing, and index.json with its entries when it is there - or says the list isn't in the folder yet")]
-		public static void LibraryDriveLiveCommand() { DynamicIslands.instance.StartCoroutine(LibraryDriveLiveRoutine()); }
+		public static void LibraryDriveLiveCommand() { StartTest(LibraryDriveLiveRoutine()); }
 
 		static IEnumerator LibraryDriveLiveRoutine()
 		{

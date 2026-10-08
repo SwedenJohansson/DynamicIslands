@@ -20,7 +20,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRuleTest", docs: "Dev: world director rules - reading and writing rule lines and plans, directions, the quest editor's 'bring an island' (in the editor also opens it)")]
 		public static void RuleTest()
 		{
-			DynamicIslands.instance.StartCoroutine(RuleTestRoutine());
+			StartTest(RuleTestRoutine());
 		}
 
 		static IEnumerator RuleTestRoutine()
@@ -121,7 +121,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestSpawnTest", docs: "Dev, in game (host): an island's quest is done -> the next island appears 600 m north of it, a zone brings a generated one; announcements, Receiver labels, saved state, Raft keeps its islands clear")]
 		public static void QuestSpawnTest()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestSpawnTestRoutine());
+			StartTest(QuestSpawnTestRoutine());
 		}
 
 		static IEnumerator QuestSpawnTestRoutine()
@@ -236,7 +236,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - samples, a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
 		public static void PlanTest()
 		{
-			DynamicIslands.instance.StartCoroutine(PlanTestRoutine());
+			StartTest(PlanTestRoutine());
 		}
 
 		static IEnumerator PlanTestRoutine()
@@ -292,7 +292,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlanWorld", docs: "Dev, in game (host): plays a test world plan - start island, a quest brings a snowy island east of it, km sailed, a visit, one-of; saved state; multiplayer messages")]
 		public static void PlanWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(PlanWorldRoutine());
+			StartTest(PlanWorldRoutine());
 		}
 
 		static IEnumerator PlanWorldRoutine()
@@ -404,7 +404,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMapTypeTest", docs: "Dev, editor: every map type from a fixed seed - land inside the build area (above or under the sea as it should be), same seed = same island, content and quest targets present; opens a few and takes screenshots")]
 		public static void MapTypeTest()
 		{
-			DynamicIslands.instance.StartCoroutine(MapTypeTestRoutine());
+			StartTest(MapTypeTestRoutine());
 		}
 
 		static string Fingerprint(IslandFile f)
@@ -493,7 +493,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMapTypeWorld", docs: "Dev, in game (host): brings a treasure island, a wreck, a sunken island and a sky island by rules; checks their content in the world and plays the treasure hunt")]
 		public static void MapTypeWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(MapTypeWorldRoutine());
+			StartTest(MapTypeWorldRoutine());
 		}
 
 		static IEnumerator MapTypeWorldRoutine()
@@ -587,7 +587,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlanBox", docs: "Dev, main menu: opens Raft's New Game box, checks the Custom Islands plan choice and cycles it; screenshot; CIPlanBox <plan> leaves that plan chosen")]
 		public static void PlanBox(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(PlanBoxRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(PlanBoxRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		static IEnumerator PlanBoxRoutine(string choose)
@@ -626,7 +626,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlanCheck", docs: "Dev, in game: the world's plan and its islands, after creating a world with a plan: CIPlanCheck <expected plan>")]
 		public static void PlanCheck(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(PlanCheckRoutine(args != null ? string.Join(" ", args) : ""));
+			StartTest(PlanCheckRoutine(args != null ? string.Join(" ", args) : ""));
 		}
 
 		static IEnumerator PlanCheckRoutine(string expected)

@@ -15,7 +15,7 @@ namespace DynamicIslands
 		const string ReadyIsland = "cireadypieces";
 
 		[ConsoleCommand(name: "CIReadyPieces", docs: "Dev, in game (host): Raft's ready pieces on a custom island - a Tangaroa keycard door (stays shut without the keycard, goes with it, the keycard kept), a hatch (opens), a crank wheel and a lever (send the signals crank and lever)")]
-		public static void ReadyPiecesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ReadyPiecesRoutine()); }
+		public static void ReadyPiecesCommand(string[] args) { StartTest(ReadyPiecesRoutine()); }
 
 		static IEnumerator ReadyPiecesRoutine()
 		{
@@ -120,7 +120,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: story item order check"); else Fail("story item order check");
 		}
 			[ConsoleCommand(name: "CIGenRaftFeatures", docs: "Dev, editor: ROADMAP LM12 - the generator's Raft's features: 6 on a tropical island (with buildings, and without) - vines in front of a hidden cache, buried treasure, a zipline with its far end at the beach, a code panel showing a hidden strongbox with its code on a note, wild beehives, dirt spots, and an explorer's chest with the tools; 0 puts none; a preset keeps the number")]
-		public static void GenRaftFeaturesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GenRaftFeaturesRoutine()); }
+		public static void GenRaftFeaturesCommand(string[] args) { StartTest(GenRaftFeaturesRoutine()); }
 
 		static IEnumerator GenRaftFeaturesRoutine()
 		{
@@ -206,7 +206,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRemakeMissing", docs: "Dev, in game (host): ROADMAP R15 - generated island names read back (gen-tropical-1234, -2, a map type, not a player's island); a world's generated island whose file is gone is made again in its place and spawns")]
-		public static void RemakeMissingCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RemakeMissingRoutine()); }
+		public static void RemakeMissingCommand(string[] args) { StartTest(RemakeMissingRoutine()); }
 
 		static IEnumerator RemakeMissingRoutine()
 		{
@@ -232,7 +232,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: remake missing"); else Fail("remake missing");
 		}
 			[ConsoleCommand(name: "CIPerfChecks", docs: "Dev, in game (host): ROADMAP P1-P3 - a big island spawns over several frames, its longest frame measured; spawned again, no shader is looked up again; the object root and the placing object are cached")]
-		public static void PerfChecksCommand(string[] args) { DynamicIslands.instance.StartCoroutine(PerfChecksRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
+		public static void PerfChecksCommand(string[] args) { StartTest(PerfChecksRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
 
 		static IEnumerator PerfChecksRoutine(string island)
 		{
@@ -249,7 +249,7 @@ namespace DynamicIslands
 				int findsBefore = ReApplyShaders.Finds;
 				float longest = 0f;
 				bool done = false;
-				DynamicIslands.instance.StartCoroutine(Watch(() => done, ms => longest = ms));
+				StartTest(Watch(() => done, ms => longest = ms));
 				yield return DynamicIslands.instance.SpawnIslandFile(island, spot.Value, false);
 				done = true;
 				yield return null; yield return null;
@@ -318,7 +318,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: start checks"); else Fail("start checks");
 		}
 			[ConsoleCommand(name: "CIAuBatch2", docs: "Dev, in game (host): AU15/20/24/29 - world names with an apostrophe read whole; new plan rules get names no rule had; the world keeps its own regrow days in its file; a downloaded island file is saved for every island with that content (two names, one file)")]
-		public static void AuBatch2Command(string[] args) { DynamicIslands.instance.StartCoroutine(AuBatch2Routine()); }
+		public static void AuBatch2Command(string[] args) { StartTest(AuBatch2Routine()); }
 
 		static IEnumerator AuBatch2Routine()
 		{

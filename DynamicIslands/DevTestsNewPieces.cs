@@ -23,7 +23,7 @@ namespace DynamicIslands
 		};
 
 		[ConsoleCommand(name: "CINewPieces", docs: "Dev, editor with an island open: ROADMAP LM11/LM12 - one of each new thing to gather (snowy pine, seaweed, banana tree, small palms, acacias, Tangaroa's tree, strawberries, mushrooms, finds on land) and each new ready piece (lifts, cages, camera, generators, radios, engine, mirrors) placed in the editor: each listed and placed; each thing to gather under a style in Things to gather, its world copy with Raft's pickup (the snowy pine also Raft's tree script); each piece with its settings and, as in a world, its working parts (use, mover, the lift carrying a player standing on it). One undo takes them back")]
-		public static void NewPiecesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(NewPiecesRoutine()); }
+		public static void NewPiecesCommand(string[] args) { StartTest(NewPiecesRoutine()); }
 
 		static IEnumerator NewPiecesRoutine()
 		{
@@ -145,7 +145,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIGenMachinery", docs: "Dev, editor: ROADMAP LM12 - the generator's Raft's features past six (10 on a hilly tropical island): a generator with its part in a toolbox, a radio that shows a cache, an engine with fuel in a crate, a chest in a cage with the bolt cutters in the explorer's chest, a lift up a cliff; 6 features give none of them")]
-		public static void GenMachineryCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GenMachineryRoutine()); }
+		public static void GenMachineryCommand(string[] args) { StartTest(GenMachineryRoutine()); }
 
 		static IEnumerator GenMachineryRoutine()
 		{

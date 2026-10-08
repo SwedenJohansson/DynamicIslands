@@ -53,7 +53,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScreens", docs: "Dev, editor: every window of the editor at 8 screen sizes (1024x768 to 3440x1440 ultra-wide): the editor's bars, the generator (each tab), world plans, island files, quests, story items, behaviours, the item, sound and note pickers, a text prompt and a choice - each panel and every control on the screen; pictures shot_screen_<w>x<h>_*. The screen size is put back after")]
-		public static void ScreensCommand() { DynamicIslands.instance.StartCoroutine(ScreensRoutine()); }
+		public static void ScreensCommand() { StartTest(ScreensRoutine()); }
 
 		static IEnumerator ScreensRoutine()
 		{
@@ -128,7 +128,7 @@ namespace DynamicIslands
 		static KeyValuePair<string, KeyValuePair<Action, Type>> Win(string name, Action open, Type t) { return new KeyValuePair<string, KeyValuePair<Action, Type>>(name, new KeyValuePair<Action, Type>(open, t)); }
 
 		[ConsoleCommand(name: "CIScreensMenu", docs: "Dev, main menu: Raft's New Game box with the mod's panels (world plan, randomizer, world rules) at 8 screen sizes: the box, every one of its buttons, sliders and fields - Raft's Create too - on the screen, and each of the mod's panels inside the box; pictures shot_screen_<w>x<h>_newgame. The screen size is put back after")]
-		public static void ScreensMenuCommand() { DynamicIslands.instance.StartCoroutine(ScreensMenuRoutine()); }
+		public static void ScreensMenuCommand() { StartTest(ScreensMenuRoutine()); }
 
 		static IEnumerator ScreensMenuRoutine()
 		{
@@ -233,7 +233,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryPlanMake", docs: "Dev, editor: a player's story plan made in the World Plans window from their own islands: two islands saved (a home island with a gate zone and a quest, a bay with a chest and a quest); a new plan 'CI Story' through New... and its name prompt; four rules added with + Add a rule and filled in through each card's fields and drop-down lists (start: home ahead; home's gate zone fires: the bay north of home; the bay's quest done: a treasure island east of the bay; after 2 km: an oddity ahead); a description; Check finds no problem; Save; closed, opened again: the same plan. Then Copy..., Delete, Templates..., the rule arrows and remove, the random islands switch on a scratch plan")]
-		public static void StoryPlanMakeCommand() { DynamicIslands.instance.StartCoroutine(StoryPlanMakeRoutine()); }
+		public static void StoryPlanMakeCommand() { StartTest(StoryPlanMakeRoutine()); }
 
 		static IEnumerator StoryPlanMakeRoutine()
 		{
@@ -381,7 +381,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryPlay", docs: "Dev, in game (host, a new world made with the plan 'CI Story': CIPlanBox \"CI Story\" then CINewWorld): the plan played through. The home island comes ahead of the raft with its Receiver name and message, loaded exactly as saved (the same ground and every object of its file); its gate zone brings the bay 600 m north of it; the bay's quest (open its chest) brings a treasure island east of the bay; 2 km sailed bring an oddity. Each once, never twice. Logs STORY lines for CIStoryCheck")]
-		public static void StoryPlayCommand() { DynamicIslands.instance.StartCoroutine(StoryPlayRoutine()); }
+		public static void StoryPlayCommand() { StartTest(StoryPlayRoutine()); }
 
 		/// <summary>An island in the world against its file: the same ground heights and every object of the file there.</summary>
 		static string LoadedAsSaved(IslandWorldState.Entry e)
@@ -467,7 +467,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryCheck", docs: "Dev, in game (host): after the story world was saved and loaded again: the plan still the world's, its islands the same (each once), the rules that fired don't fire again; logs STORY lines to compare with CIStoryPlay's. On player 2 (joined): home and the bay once each, with their Receiver names, and the same STORY island lines as the host's")]
-		public static void StoryCheckCommand() { DynamicIslands.instance.StartCoroutine(StoryCheckRoutine()); }
+		public static void StoryCheckCommand() { StartTest(StoryCheckRoutine()); }
 
 		static IEnumerator StoryCheckRoutine()
 		{
@@ -491,7 +491,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIBoxClicks", docs: "Dev, main menu: Raft's New Game box clicked as a player does: the plan button goes round every plan (built-in and the player's own) and back to the first, each shows its name and description; the randomizer level button goes Off, Light, Normal, Wild and round; each part button switches its part off and on (greyed when Off). Leaves the plan <plan> (default CI Story) chosen and the randomizer Off: CIBoxClicks [plan]")]
-		public static void BoxClicksCommand(string[] args) { DynamicIslands.instance.StartCoroutine(BoxClicksRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : StoryPlan)); }
+		public static void BoxClicksCommand(string[] args) { StartTest(BoxClicksRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : StoryPlan)); }
 
 		static IEnumerator BoxClicksRoutine(string wantPlan)
 		{
@@ -569,7 +569,7 @@ namespace DynamicIslands
 		#region Broken and odd files
 
 		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. Every real file is put back after")]
-		public static void BadFilesCommand() { DynamicIslands.instance.StartCoroutine(BadFilesRoutine()); }
+		public static void BadFilesCommand() { StartTest(BadFilesRoutine()); }
 
 		static IEnumerator BadFilesRoutine()
 		{
@@ -671,7 +671,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIPlanRules", docs: "Dev, in game (host): the plan rules no other test plays in a world - 'on day' (today: brought; day 999: waits), 'quest step done' (the start island's first step), 'after rule' (a chain), 'from the spawn pool'; a rule whose saved island is missing waits, says why once, and breaks nothing; a plan edited while the world plays (a new rule fires); a plan deleted (its rules stop, the islands stay, nothing breaks). The world's plan, its islands and km are put back after")]
-		public static void PlanRulesCommand() { DynamicIslands.instance.StartCoroutine(PlanRulesRoutine()); }
+		public static void PlanRulesCommand() { StartTest(PlanRulesRoutine()); }
 
 		static IEnumerator PlanRulesRoutine()
 		{
@@ -763,7 +763,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIFilesWindow", docs: "Dev, editor: the Islands window (Open / Save as) clicked as a player does: Save with no name and with a name holding : * ? is refused with a message; a new name saves and closes; the name of another saved island asks first and overwrites on the second Save; the height field clamps 9999 to 250, reads nonsense as 0; Open with a missing name says so; clicking an island fills its name, a double-click opens it; Delete asks first, typing in between cancels the question, the second Delete removes the file and its row; Close. Then the other click-twice buttons: the top bar's New (once: nothing happens; twice: an empty island) and a generator preset's ×. The island open before is opened again after")]
-		public static void FilesWindowCommand() { DynamicIslands.instance.StartCoroutine(FilesWindowRoutine()); }
+		public static void FilesWindowCommand() { StartTest(FilesWindowRoutine()); }
 
 		static IEnumerator FilesWindowRoutine()
 		{
@@ -877,7 +877,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIPlanWindowEdits", docs: "Dev, editor: the World Plans window's rule buttons and Close: ▼ moves a rule down, ▲ on the first and ▼ on the last do nothing; the first template added twice gets new ids for the second copy and its references follow them (never pointing at the first copy); Close throws unsaved changes away (the file and a reopened plan as before); Save keeps a new order")]
-		public static void PlanWindowEditsCommand() { DynamicIslands.instance.StartCoroutine(PlanWindowEditsRoutine()); }
+		public static void PlanWindowEditsCommand() { StartTest(PlanWindowEditsRoutine()); }
 
 		static IEnumerator PlanWindowEditsRoutine()
 		{
@@ -967,7 +967,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRaftSettings", docs: "Dev, world (host, a custom island loaded near the raft): Raft's own settings as a player sets them (the settings screen's dropdowns, toggles and sliders, so Raft applies them): every graphics quality, water, texture, shadow, reflection and FPS option, ambient occlusion and anti-aliasing, FOV at its ends; then every language of Raft's. After each: no error of the mod, the island still there with its ground drawn, the mod's item names, journal and quest panel still work. Everything put back after; pictures shot_settings_*")]
-		public static void RaftSettingsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RaftSettingsRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+		public static void RaftSettingsCommand(string[] args) { StartTest(RaftSettingsRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator RaftSettingsRoutine(string only = null)
 		{

@@ -278,7 +278,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILibraryWindows", docs: "Dev, editor: the Share and Import windows clicked as a player does - the Islands window's Export... opens Share for the picked island (what goes along, the picture of the editor's view, the author), Export writes the pack; the pack in the import folder is picked, shows what it holds, installs; the Installed list has it, Remove asks first and removes it; both windows fit the screen. Cleans up")]
-		public static void LibraryWindowsCommand() { DynamicIslands.instance.StartCoroutine(LibraryWindowsRoutine()); }
+		public static void LibraryWindowsCommand() { StartTest(LibraryWindowsRoutine()); }
 
 		static IEnumerator LibraryWindowsRoutine()
 		{

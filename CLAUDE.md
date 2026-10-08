@@ -11,6 +11,14 @@ read your kind's section of `docs/claude/CHANGE_CHECKLISTS.md`.
   `[CITEST]` lines); don't read `Player.log` yourself. If `ci.ps1` fails
   for a reason of its own, grep `Player.log` for `[CITEST]` lines from the
   run's start instead, and say what went wrong with the script.
+- Run commands (tools in `..\_ProjectDocs\tools\`, outside git):
+  - rebuild + relaunch Raft minimised and muted: `tools\rebuild.ps1` (prints
+    `rebuilt and launched`; first start takes ~1 min while RML compiles).
+  - test loop: `ci.ps1 -Command "CIMainMenu"`, `ci.ps1 -Command "CINewWorld CI <name>"`,
+    `ci.ps1 -Command "<CITest>"`. Without `-Until` a run ends at `[CITEST] IDLE`.
+  - quit: `ci.ps1 -Command "CIQuit" -Until Quitting -Timeout 30`.
+  - mod loader: `..\RMLauncher\RMLLauncher.exe`; Raft windows: `tools\quiet.ps1` /
+    `tools\minimize.ps1`.
 - Leave `DevTests*.cs` out of searches unless the task is about tests
   (Grep glob `!DevTests*`).
 - Never read these whole; grep them and read small ranges:

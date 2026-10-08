@@ -15,7 +15,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAlive", docs: "Dev: fills up the local player's hunger, thirst, health and oxygen, and respawns them if they are down")]
 		public static void AliveCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(AliveRoutine());
+			StartTest(AliveRoutine());
 		}
 
 		static System.Collections.IEnumerator AliveRoutine()
@@ -81,7 +81,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMPIsland", docs: "Dev, in game (host): spawns and keeps 'cimpworld', an island for the two-player test (door + lever, key chest + vault, a note, trees and pickups)")]
 		public static void MPIslandCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(MPIslandRoutine());
+			StartTest(MPIslandRoutine());
 		}
 
 		static System.Collections.IEnumerator MPIslandRoutine()
@@ -196,7 +196,7 @@ namespace DynamicIslands
 			if (r == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); return; }
 			PutPlayerNear(r.transform);
 			Behaviours.Fire(e, r.Index, "use", true);
-			DynamicIslands.instance.StartCoroutine(AfterAction("Used '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
+			StartTest(AfterAction("Used '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
 		}
 
 		[ConsoleCommand(name: "CIGoto", docs: "Dev, in game (either player): puts the local player next to an object of the island (its name, or a trigger zone's id): CIGoto <island> <name>")]
@@ -209,8 +209,8 @@ namespace DynamicIslands
 				string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.ZoneId), what, StringComparison.OrdinalIgnoreCase));
 			if (r == null) { Fail("no object or zone '" + what + "' on '" + e.HostName + "'"); return; }
 			PutPlayerNear(r.transform, 0.3f); // (near the middle: a zone measures the distance in 3D, a slope adds to it)
-			DynamicIslands.instance.StartCoroutine(StayThere(r.transform));
-			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
+			StartTest(StayThere(r.transform));
+			StartTest(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
 		}
 
 
@@ -258,7 +258,7 @@ namespace DynamicIslands
 				: chests.FirstOrDefault(c => titleOf(c).Equals(title, StringComparison.OrdinalIgnoreCase));
 			if (chest == null) { Fail("no such chest on '" + e.HostName + "' (" + chests.Length + " chests)"); return; }
 			PutPlayerNear(chest.transform);
-			DynamicIslands.instance.StartCoroutine(OpenChestRoutine(e, chest));
+			StartTest(OpenChestRoutine(e, chest));
 		}
 
 		static IEnumerator OpenChestRoutine(IslandWorldState.Entry e, LootCrate chest)
@@ -274,7 +274,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIManyPlayers", docs: "Dev, anywhere: what the host decides for many players at once (up to Raft's 8), without them: a chest or a fire-once zone goes to the first of seven players asking (Claims) and is held for them, then used; an event that happens once (arrive, read) runs its shared part once however many ask; story items given by an action are the crew's (the host's, once)")]
-		public static void ManyPlayersCommand() { DynamicIslands.instance.StartCoroutine(ManyPlayersRoutine()); }
+		public static void ManyPlayersCommand() { StartTest(ManyPlayersRoutine()); }
 
 		static IEnumerator ManyPlayersRoutine()
 		{
@@ -324,7 +324,7 @@ namespace DynamicIslands
 			PutPlayerNear(note.transform);
 			NoteReader.Open(note);
 			NoteReader.Close();
-			DynamicIslands.instance.StartCoroutine(AfterAction("Read '" + note.Title + "' on '" + e.HostName + "'"));
+			StartTest(AfterAction("Read '" + note.Title + "' on '" + e.HostName + "'"));
 		}
 
 		/// <summary>One axe hit on a tree, as Raft's Axe.OnAxeHit does it: the host chops; a client sends Message_AxeHit to the host.</summary>

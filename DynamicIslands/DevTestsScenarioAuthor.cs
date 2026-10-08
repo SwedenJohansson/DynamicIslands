@@ -209,7 +209,7 @@ namespace DynamicIslands
 		#region SC76, SC35 - rule waits the game never meets
 
 		[ConsoleCommand(name: "CIScRuleWaits", docs: "Dev, world (host, 'CI ...'): SC76/SC35 - 'after rule' on a Receiver rule fires (AU52); a zone id with ':' survives saving (AU54); two zones with one id: the rule and the quest agree (AU54); a comma in a story rule id survives saving (AU54)")]
-		public static void ScRuleWaitsCommand() { DynamicIslands.instance.StartCoroutine(ScRuleWaitsRoutine()); }
+		public static void ScRuleWaitsCommand() { StartTest(ScRuleWaitsRoutine()); }
 
 		static IEnumerator ScRuleWaitsRoutine()
 		{
@@ -297,7 +297,7 @@ namespace DynamicIslands
 		#region SC71, SC79 - the plan edited while a world plays it; switching plans
 
 		[ConsoleCommand(name: "CIScPlanEdit", docs: "Dev, world (host, 'CI ...'): SC71/SC79 - a rule added to a running plan fires; a fired rule deleted and a new one under its id (as World Plans numbers them) fires too (AU24); switching to a plan whose first rule has a done id fires it (AU71)")]
-		public static void ScPlanEditCommand() { DynamicIslands.instance.StartCoroutine(ScPlanEditRoutine()); }
+		public static void ScPlanEditCommand() { StartTest(ScPlanEditRoutine()); }
 
 		static IEnumerator ScPlanEditRoutine()
 		{
@@ -353,7 +353,7 @@ namespace DynamicIslands
 		#region SC73 - a plan whose island was deleted; SC72 - a library update mid-adventure
 
 		[ConsoleCommand(name: "CIScMissing", docs: "Dev, world (host, 'CI ...'): SC73 - a plan rule's island file deleted: the rule waits, the host is told once which island is missing, the rest plays; the file put back, it comes")]
-		public static void ScMissingCommand() { DynamicIslands.instance.StartCoroutine(ScMissingRoutine()); }
+		public static void ScMissingCommand() { StartTest(ScMissingRoutine()); }
 
 		static IEnumerator ScMissingRoutine()
 		{
@@ -396,7 +396,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScLibUpdate", docs: "Dev, world (host, 'CI ...'): SC72 - a plan installed from a pack (v1) plays in a world; v2 (its first island changed, a rule added) installed over it: the world keeps v1's island by its hash and the plan's v1 rules, a new world would get v2")]
-		public static void ScLibUpdateCommand() { DynamicIslands.instance.StartCoroutine(ScLibUpdateRoutine()); }
+		public static void ScLibUpdateCommand() { StartTest(ScLibUpdateRoutine()); }
 
 		static IEnumerator ScLibUpdateRoutine()
 		{
@@ -481,7 +481,7 @@ namespace DynamicIslands
 		public static void ScEditUsedCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "prep";
-			DynamicIslands.instance.StartCoroutine(ScEditUsedRoutine(part));
+			StartTest(ScEditUsedRoutine(part));
 		}
 
 		static IEnumerator ScEditUsedRoutine(string part)
@@ -569,7 +569,7 @@ namespace DynamicIslands
 		#region SC78 - Test in a world starts clean
 
 		[ConsoleCommand(name: "CIScTestClean", docs: "Dev, editor: SC78 - an island with a journal note and a story item chest tried twice with Test in a world: the second time starts without the first's journal page and story item (AU71). Several minutes")]
-		public static void ScTestCleanCommand() { DynamicIslands.instance.StartCoroutine(ScTestCleanRoutine()); }
+		public static void ScTestCleanCommand() { StartTest(ScTestCleanRoutine()); }
 
 		static IEnumerator ScTestCleanRoutine()
 		{
@@ -615,7 +615,7 @@ namespace DynamicIslands
 		#region SC40 - eight players' decisions at once
 
 		[ConsoleCommand(name: "CIScManyPlayers", docs: "Dev, world (host, 'CI ...'): SC40 - with seven made-up players beside the host, through the host's own handlers: five count one quest step (AU8), four pull one lever in a second (AU18), eight hit one warthog (EXP shares, one kill), eight builders' storages, a claim held after failed checks (AU41)")]
-		public static void ScManyPlayersCommand() { DynamicIslands.instance.StartCoroutine(ScManyPlayersRoutine()); }
+		public static void ScManyPlayersCommand() { StartTest(ScManyPlayersRoutine()); }
 
 		static IEnumerator ScManyPlayersRoutine()
 		{

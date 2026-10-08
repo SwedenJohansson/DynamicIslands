@@ -116,7 +116,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainWorld", docs: "Dev, world (host): a plan's story chain in a world, through Raft's own calls - Balboa left out and a sandbar on its own Receiver frequency after Vasagatan: the Receiver's note unlocks the Radio Tower, its note Vasagatan, Vasagatan's the sandbar (not Balboa: its frequency leads nowhere) with a banner, a journal page and the number on the note; Raft's frequency list keeps the mod's through a save's restore; the Receiver tuned to it (ChunkManager.AddChunkPointForcibly) brings the island once; players reaching it unlock Caravan Town with a banner; Caravan's note Tangaroa; the world file's lines give the same chain back. What the world had is put back after")]
-		public static void StoryChainWorldCommand() { DynamicIslands.instance.StartCoroutine(StoryChainWorldRoutine()); }
+		public static void StoryChainWorldCommand() { StartTest(StoryChainWorldRoutine()); }
 
 		static List<ChunkPointType> ChainTypes() { return NoteBook.unlockedChunkPointType.Where(t => Chain.Contains(t) || (int)t >= StoryChain.ModTypeBase).ToList(); }
 
@@ -225,7 +225,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainAdventure", docs: "Dev, world (host): a new adventure instead of Raft's story - Raft's story off, an island first in the chain that comes by chance while sailing, one after it that comes ahead, and a Receiver island outside the story: the Receiver's note unlocks none of Raft's islands; the first is unlocked from the start but comes only after some sailing; players reaching it bring the second; the island outside the story has its frequency from the start. What the world had is put back after")]
-		public static void StoryChainAdventureCommand() { DynamicIslands.instance.StartCoroutine(StoryChainAdventureRoutine()); }
+		public static void StoryChainAdventureCommand() { StartTest(StoryChainAdventureRoutine()); }
 
 		static IEnumerator StoryChainAdventureRoutine()
 		{
@@ -288,7 +288,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainEdited", docs: "Dev, world (host, a new test world 'CI ...' without custom islands): the player edits the world's plan in World Plans and the world is read again as when loading it: leaving one more story island out (no rule changed) counts as an edit and the chain follows it, what was unlocked stays; a story island added to the plan comes into the chain after its place, the Receiver island keeps its frequency. The plan file is deleted after")]
-		public static void StoryChainEditedCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditedRoutine()); }
+		public static void StoryChainEditedCommand() { StartTest(StoryChainEditedRoutine()); }
 
 		static IEnumerator StoryChainEditedRoutine()
 		{
@@ -348,7 +348,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainEditor", docs: "Dev, editor: the World plans window's story controls clicked as a builder does, on a test plan 'CI story plan' (deleted after): Raft's story off and on, Balboa left out and back, a rule put in Balboa's place from the list, the Receiver chosen for it; Check shows the chain and the tips (the Radio Tower first, Utopia last, Balboa's blueprints); saved and read back")]
-		public static void StoryChainEditorCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditorRoutine()); }
+		public static void StoryChainEditorCommand() { StartTest(StoryChainEditorRoutine()); }
 
 		static IEnumerator StoryChainEditorRoutine()
 		{
@@ -402,7 +402,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainShot", docs: "Dev, editor: the World plans window on a plan (a template written as 'CI story shot', deleted after), Check clicked, a screenshot shot_story_chain.png for the guide: CIStoryChainShot <template name>")]
-		public static void StoryChainShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryChainShotRoutine(args != null ? string.Join(" ", args) : "Balboa replaced")); }
+		public static void StoryChainShotCommand(string[] args) { StartTest(StoryChainShotRoutine(args != null ? string.Join(" ", args) : "Balboa replaced")); }
 
 		static IEnumerator StoryChainShotRoutine(string template)
 		{

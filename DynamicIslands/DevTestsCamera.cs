@@ -14,7 +14,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICameraTest", docs: "Dev, editor: the editor camera - framing the island and a selection (F), high above a deep island and under its sea, never under the ground, zooming to the cursor (never through what is there), looking, orbiting around the selection, panning, moving with the keys, and carrying on after something else moved it")]
 		public static void CameraTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(CameraTestRoutine());
+			StartTest(CameraTestRoutine());
 		}
 
 		[ConsoleCommand(name: "CICamera", docs: "Dev, editor: puts the editor camera somewhere: CICamera <x> <y above the sea> <z> <yaw> <pitch>")]

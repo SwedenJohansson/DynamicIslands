@@ -56,7 +56,7 @@ namespace DynamicIslands
 		{
 			int n;
 			if (args == null || args.Length == 0 || !int.TryParse(args[0], out n)) { Fail("CIConfigSpawn <n>"); return; }
-			DynamicIslands.instance.StartCoroutine(ConfigSpawnRoutine(n));
+			StartTest(ConfigSpawnRoutine(n));
 		}
 
 		static IEnumerator ConfigSpawnRoutine(int n)

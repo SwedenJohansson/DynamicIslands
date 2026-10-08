@@ -14,7 +14,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CIRenameIsland", docs: "Dev, editor: ROADMAP E9 - the Islands window's Rename: test islands, a plan, a world file, quest rewards and a spawnpool line naming 'citest-rn-a'; Rename to an existing name and a bad name refused; Rename to 'citest-rn-c' moves the file and its kept copy and changes every place that names it (island:, oneof:, quest of, near), others left alone")]
-		public static void RenameIslandCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RenameIslandRoutine()); }
+		public static void RenameIslandCommand(string[] args) { StartTest(RenameIslandRoutine()); }
 
 		static IEnumerator RenameIslandRoutine()
 		{
@@ -96,7 +96,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: rename island"); else Fail("rename island");
 		}
 			[ConsoleCommand(name: "CIPieces", docs: "Dev, editor: ROADMAP T4 - My groups and stamps: a test group and stamp renamed (a used name refused) and deleted (moved to deleted/groups / deleted/stamps), the object list and the stamp buttons follow; Manage... buttons in both tabs")]
-		public static void PiecesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(PiecesRoutine()); }
+		public static void PiecesCommand(string[] args) { StartTest(PiecesRoutine()); }
 
 		static IEnumerator PiecesRoutine()
 		{
@@ -155,7 +155,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: groups and stamps"); else Fail("groups and stamps");
 		}
 			[ConsoleCommand(name: "CIElevationPreview", docs: "Dev, editor: ROADMAP E2 - the blue sea plane follows the island's height: a saved island opened, Sunken (-30) puts the sea 30 m above its water line, Flying (60) 60 m below, 0 back; pictures shot_elev_sunken.png and shot_elev_flying.png; the island left as it was")]
-		public static void ElevationPreviewCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ElevationPreviewRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
+		public static void ElevationPreviewCommand(string[] args) { StartTest(ElevationPreviewRoutine(args.Length > 0 ? string.Join(" ", args) : null)); }
 
 		static IEnumerator ElevationPreviewRoutine(string island)
 		{
@@ -192,7 +192,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: elevation preview"); else Fail("elevation preview");
 		}
 			[ConsoleCommand(name: "CIClipboard", docs: "Dev, editor: ROADMAP E4 - Copy a sign and a warthog herd, New island, Paste: both come back with their spacing and settings, selected, one undo step; the inspector's Place exactly fields move, turn and size an object (one undo step) and follow the gizmo; picture shot_place_exactly.png")]
-		public static void ClipboardCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ClipboardRoutine()); }
+		public static void ClipboardCommand(string[] args) { StartTest(ClipboardRoutine()); }
 
 		static IEnumerator ClipboardRoutine()
 		{
@@ -278,7 +278,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: clipboard and place exactly"); else Fail("clipboard and place exactly");
 		}
 			[ConsoleCommand(name: "CISelectionTools", docs: "Dev, editor: ROADMAP E3 - Same kind, All, box select (a box around the herds), the Placed objects list (Hide signs, Lock herds: clicks, boxes and All pass them by; Show all / Unlock all), hidden objects still saved; pictures shot_box_select.png and shot_placed_list.png")]
-		public static void SelectionToolsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(SelectionToolsRoutine()); }
+		public static void SelectionToolsCommand(string[] args) { StartTest(SelectionToolsRoutine()); }
 
 		static IEnumerator SelectionToolsRoutine()
 		{
@@ -351,7 +351,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: selection tools"); else Fail("selection tools");
 		}
 			[ConsoleCommand(name: "CIMyIslands", docs: "Dev, editor: ROADMAP T3 - My islands: a test island of mine (used by a test world), one from the library, a generated one and a host copy, each under its filter; its world shown; a pool weight typed (spawnpool.txt); Rename and Delete from the list; the unused generated one is what Tidy up would move (not pressed: the player's own islands stay); picture shot_my_islands.png")]
-		public static void MyIslandsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MyIslandsRoutine()); }
+		public static void MyIslandsCommand(string[] args) { StartTest(MyIslandsRoutine()); }
 
 		static IEnumerator MyIslandsRoutine()
 		{
@@ -439,7 +439,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: my islands"); else Fail("my islands");
 		}
 			[ConsoleCommand(name: "CIKitInfo", docs: "Dev, editor: ROADMAP CW1 - every indexed object of the story scenes whose name has <part> (e.g. Balboa), loaded and measured: its mesh box from its pivot (min and max, metres) and its colliders; written to Mods/DynamicIslands/kitinfo_<part>.txt")]
-		public static void KitInfoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(KitInfoRoutine(args.Length > 0 ? args[0] : "")); }
+		public static void KitInfoCommand(string[] args) { StartTest(KitInfoRoutine(args.Length > 0 ? args[0] : "")); }
 
 		static IEnumerator KitInfoRoutine(string part)
 		{
@@ -471,7 +471,7 @@ namespace DynamicIslands
 
 		static string args0(string s) { return s; }
 			[ConsoleCommand(name: "CIKitShow", docs: "Dev, editor: ROADMAP CW1 - a new island with flat land 2 m over the sea, the named pieces (separated by +) in a row from west to east, pivots on a line, each turned yaw (CIKitShow <yaw> <a+b+c> [camera height]); picture shot_kit.png. Leaves them placed for a look")]
-		public static void KitShowCommand(string[] args) { DynamicIslands.instance.StartCoroutine(KitShowRoutine(args)); }
+		public static void KitShowCommand(string[] args) { StartTest(KitShowRoutine(args)); }
 
 		static IEnumerator KitShowRoutine(string[] args)
 		{

@@ -239,7 +239,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIWorldRulesBox", docs: "Dev, main menu: the world rules in Raft's New Game box - the monster difficulty's five levels and texts, the build cost's 0-100 % in steps of 5 and its text, both ? helps, the layout (in the box, nothing on top, on the screen); screenshot. CIWorldRulesBox <level> <percent> leaves them chosen (for CINewWorld)")]
 		public static void WorldRulesBox(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(WorldRulesBoxRoutine(args != null && args.Length > 0 ? args[0] : null, args != null && args.Length > 1 ? args[1] : null));
+			StartTest(WorldRulesBoxRoutine(args != null && args.Length > 0 ? args[0] : null, args != null && args.Length > 1 ? args[1] : null));
 		}
 
 		static IEnumerator WorldRulesBoxRoutine(string chooseLevel, string choosePercent)
@@ -467,7 +467,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMonsterWorld", docs: "Dev, in game (host): the monster difficulty in a world - which of Raft's animals are monsters, at every level a spear on warthogs, Bruce, a puffer fish and a chicken, a bite and a fall on the player, Bruce's raft bites and search time (Raft's), a poison tick (Raft's); a puffer fish explosion (Raft's); a real warthog (or shark) bite at Savage. CIMonsterWorld [keep]")]
 		public static void MonsterWorld(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(MonsterWorldRoutine(args != null && args.Contains("keep")));
+			StartTest(MonsterWorldRoutine(args != null && args.Contains("keep")));
 		}
 
 		static IEnumerator MonsterWorldRoutine(bool keep)
@@ -718,7 +718,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIBuildCostWorld", docs: "Dev, in game (host): the build cost in a world - Raft's build menu items, every amount at 0 / 50 / 100 / 35 %, never on top of an earlier change; a real block placed through Raft's BlockCreator takes that many % more materials, rounded, and removing it gives half of that back as Raft does; Raft's numbers again at 0")]
 		public static void BuildCostWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(BuildCostWorldRoutine());
+			StartTest(BuildCostWorldRoutine());
 		}
 
 		static IEnumerator BuildCostWorldRoutine()

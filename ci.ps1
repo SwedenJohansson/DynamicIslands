@@ -8,7 +8,7 @@
 #   The lines of one run all start in the same frame, side by side: a command that needs an earlier one finished goes in
 #   its own run (CIEditor, then CIDemo).
 #   The run ends at a [CITEST] line after the last command's "> " echo that matches -Until (e.g. '^Editor ready:' for
-#   CIEditor), else after -Quiet seconds without a new [CITEST] line (with -Until: only once a FAIL line came). A single
+#   CIEditor), without -Until at "[CITEST] IDLE (all tests done)" (every test coroutine has ended), else after -Quiet seconds without a new [CITEST] line (with -Until: only once a FAIL line came). A single
 #   command that is unknown or throws ends it at once. Raft exiting ends it too.
 #   A command file the mod does not read within 60 s (-Timeout while the mod has not logged its command file yet) is
 #   deleted again, so a later Raft start does not run it.
@@ -101,8 +101,8 @@ $last = $cmds[$cmds.Count - 1]
 $echo = "> " + $last   # (PollCommandFile logs each line as "[CITEST] > <line>" before running it)
 $need = @($cmds | Where-Object { $_ -ceq $last }).Count; $echoes = 0   # (the same command earlier in the run echoes too)
 # (a command RunCommand can't find, or one that throws when started, logs one of these at once)
-$ends = @()
-if ($cmds.Count -eq 1) { $ends = @(("FAIL: no console command called " + ($last -split ' ')[0]), ("FAIL: command '" + $last + "': ")) }
+$ends = @(); if (-not $Until) { $ends = @("IDLE (all tests done)") }   # (DevTests.StartTest logs it when the last test coroutine ends; a load command ends before the world is in, so -Until wins)
+if ($cmds.Count -eq 1) { $ends += @(("FAIL: no console command called " + ($last -split ' ')[0]), ("FAIL: command '" + $last + "': ")) }
 $seen = $false; $done = $false; $timedOut = $false; $exited = $false; $stopAt = -1
 $pending = $null; $pendingN = 0
 $lastNew = $clock.Elapsed.TotalSeconds

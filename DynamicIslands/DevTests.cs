@@ -25,22 +25,40 @@ namespace DynamicIslands
 		static void Log(string msg) { Debug.Log("[CITEST] " + msg); }
 		static void Fail(string msg) { Debug.LogError("[CITEST] FAIL: " + msg); }
 
+		// Every test coroutine runs through this, so ci.ps1 can end a run at "[CITEST] IDLE"
+		// (logged when the last running test ends) instead of guessing from PASS/FAIL lines.
+		static int runningTests;
+		static Coroutine StartTest(IEnumerator e) { runningTests++; return DynamicIslands.instance.StartCoroutine(Track(e)); }
+
+		static IEnumerator Track(IEnumerator e)
+		{
+			while (true)
+			{
+				bool more;
+				try { more = e.MoveNext(); }
+				catch (Exception ex) { Fail("exception: " + ex.Message); Debug.LogException(ex); more = false; }
+				if (!more) break;
+				yield return e.Current;
+			}
+			if (--runningTests <= 0) { runningTests = 0; Log("IDLE (all tests done)"); }
+		}
+
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
 		public static void RunEditorTest()
 		{
-			DynamicIslands.instance.StartCoroutine(EditorTest());
+			StartTest(EditorTest());
 		}
 
 		[ConsoleCommand(name: "CITestWorld", docs: "Dev: spawns the island saved by CITest in front of the raft and verifies it")]
 		public static void RunWorldTest()
 		{
-			DynamicIslands.instance.StartCoroutine(WorldTest());
+			StartTest(WorldTest());
 		}
 
 		[ConsoleCommand(name: "CILook", docs: "Dev: renders spawned custom islands from a temporary camera to Mods\\DynamicIslands\\view_<island>.png")]
 		public static void RenderIslandViews(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(RenderViews(args != null && args.Contains("low")));
+			StartTest(RenderViews(args != null && args.Contains("low")));
 		}
 
 		/// <param name="low">film from below the hilltop (to see flying islands' undersides); files get a number per island</param>
@@ -119,7 +137,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIUndo", docs: "Dev: tests undo/redo for sculpt, paint, placing and deleting, and the islands window (run in the editor)")]
 		public static void RunUndoTest()
 		{
-			DynamicIslands.instance.StartCoroutine(UndoTest());
+			StartTest(UndoTest());
 		}
 
 		static float MaxDiff(float[,] a, float[,] b)
@@ -236,7 +254,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CISpawnGenerated", docs: "Dev, in game (host): the automatic spawner generates a brand-new island ahead of the raft now; checks its file, style and objects. CISpawnGenerated [keep]")]
 		public static void SpawnGenerated(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(SpawnGeneratedRoutine(args != null && args.Contains("keep")));
+			StartTest(SpawnGeneratedRoutine(args != null && args.Contains("keep")));
 		}
 
 		static IEnumerator SpawnGeneratedRoutine(bool keep)
@@ -272,7 +290,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRadarTest", docs: "Dev, in game (host): places a Receiver next to the raft with its radar on and checks there is a dot per custom island, pointing the right way")]
 		public static void RadarTest()
 		{
-			DynamicIslands.instance.StartCoroutine(RadarTestRoutine());
+			StartTest(RadarTestRoutine());
 		}
 
 		static IEnumerator RadarTestRoutine()
@@ -441,7 +459,7 @@ namespace DynamicIslands
 		public static void PlaceTest()
 		{
 			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
-			DynamicIslands.instance.StartCoroutine(PlaceTestRoutine());
+			StartTest(PlaceTestRoutine());
 		}
 
 		static IEnumerator PlaceTestRoutine()
@@ -534,7 +552,7 @@ namespace DynamicIslands
 		public static void StyleTest()
 		{
 			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
-			DynamicIslands.instance.StartCoroutine(StyleTestRoutine());
+			StartTest(StyleTestRoutine());
 		}
 
 		static IEnumerator StyleTestRoutine()
@@ -631,7 +649,7 @@ namespace DynamicIslands
 				Check(ref ok, file.Objects.Count == n && size <= res,
 					"saved as cigen.island with " + file.Objects.Count + " objects; spawns as a " + (size - 1) * data.size.x / (res - 1) + " m terrain block, land radius " + radius.ToString("F0") + " m");
 				DynamicIslands.LoadIsland("cigen");
-				DynamicIslands.instance.StartCoroutine(GenTestLoaded(ok, a, n, s));
+				StartTest(GenTestLoaded(ok, a, n, s));
 			}
 			catch (Exception e) { Fail("exception: " + e); Fail("island generator test"); }
 		}
@@ -713,7 +731,7 @@ namespace DynamicIslands
 		public static void Inspect(string[] args)
 		{
 			if (args == null || args.Length < 2) { Log("Usage: CIInspect <scene> <name>[,<name>...]"); return; }
-			DynamicIslands.instance.StartCoroutine(InspectRoutine(args[0], string.Join(" ", args.Skip(1).ToArray()).Split(',')));
+			StartTest(InspectRoutine(args[0], string.Join(" ", args.Skip(1).ToArray()).Split(',')));
 		}
 
 		static IEnumerator InspectRoutine(string sceneName, string[] names)
@@ -778,7 +796,7 @@ namespace DynamicIslands
 			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : (IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault());
 			bool keep = args != null && args.Contains("keep");
 			if (name == null) { Fail("no saved island to test with"); return; }
-			DynamicIslands.instance.StartCoroutine(FlyTestRoutine(name, keep));
+			StartTest(FlyTestRoutine(name, keep));
 		}
 
 		static IEnumerator FlyTestRoutine(string name, bool keep)
@@ -843,7 +861,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStand", docs: "Dev, in game: puts the local player on the highest point of the nearest custom island and logs whether they stay standing")]
 		public static void Stand()
 		{
-			DynamicIslands.instance.StartCoroutine(StandRoutine());
+			StartTest(StandRoutine());
 		}
 
 		static IEnumerator StandRoutine(GameObject on = null)
@@ -964,7 +982,7 @@ namespace DynamicIslands
 		{
 			float seconds = 60f; float s;
 			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
-			DynamicIslands.instance.StartCoroutine(RaftWatchRoutine(seconds));
+			StartTest(RaftWatchRoutine(seconds));
 		}
 
 		static IEnumerator RaftWatchRoutine(float seconds)
@@ -991,7 +1009,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIWorldWatch", docs: "Dev, in game: logs how floating items, landmarks and chunk points move over 10 s (does the world move, or the raft?)")]
 		public static void WorldWatch()
 		{
-			DynamicIslands.instance.StartCoroutine(WorldWatchRoutine());
+			StartTest(WorldWatchRoutine());
 		}
 
 		static IEnumerator WorldWatchRoutine()
@@ -1033,7 +1051,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIShiftTest", docs: "Dev, in game (host): performs a world shift through Raft's WorldShiftManager and checks custom islands move with the world")]
 		public static void ShiftTest()
 		{
-			DynamicIslands.instance.StartCoroutine(ShiftTestRoutine());
+			StartTest(ShiftTestRoutine());
 		}
 
 		static IEnumerator ShiftTestRoutine()
@@ -1064,7 +1082,7 @@ namespace DynamicIslands
 		{
 			float seconds = 60f; float s;
 			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
-			DynamicIslands.instance.StartCoroutine(PushRaftRoutine(seconds));
+			StartTest(PushRaftRoutine(seconds));
 		}
 
 		static IEnumerator PushRaftRoutine(float seconds)
@@ -1080,7 +1098,7 @@ namespace DynamicIslands
 		{
 			float x = float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture), z = float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture);
 			float seconds = args.Length > 2 ? float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : 60f;
-			DynamicIslands.instance.StartCoroutine(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
+			StartTest(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
 		}
 
 		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading")]
@@ -1089,7 +1107,7 @@ namespace DynamicIslands
 			float seconds = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 120f;
 			float speed = args != null && args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 15f;
 			RunInBackground();
-			DynamicIslands.instance.StartCoroutine(SailRoutine(seconds, speed));
+			StartTest(SailRoutine(seconds, speed));
 		}
 
 		[ConsoleCommand(name: "CICloseRmlMenu", docs: "Dev: closes RML's own menu (the one F9 opens, open when Raft starts) without a key press - tests with Raft minimised (tools\\quiet.ps1)")]
@@ -1343,7 +1361,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStateTest", docs: "Dev, in game (host): chops a tree and picks up an item on the nearest loaded custom island, reloads the island and checks they stay used; also checks regrowing")]
 		public static void StateTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StateTestRoutine());
+			StartTest(StateTestRoutine());
 		}
 
 		static IEnumerator StateTestRoutine()
@@ -1411,7 +1429,7 @@ namespace DynamicIslands
 		{
 			float d = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 200f;
 			ComponentManager<ChunkManager>.Value.AddChunkPointCheat(ChunkPointType.Landmark_Small, new Vector3(d, 0, 0));
-			DynamicIslands.instance.StartCoroutine(ReportLandmarks());
+			StartTest(ReportLandmarks());
 		}
 
 		static IEnumerator ReportLandmarks()
@@ -1456,7 +1474,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIHarvestProbe", docs: "Dev, in game: places a harvestable Raft palm next to the player (outside any landmark) and tries to harvest it")]
 		public static void HarvestProbe()
 		{
-			DynamicIslands.instance.StartCoroutine(HarvestProbeRoutine());
+			StartTest(HarvestProbeRoutine());
 		}
 
 		static IEnumerator HarvestProbeRoutine()
@@ -1515,7 +1533,7 @@ namespace DynamicIslands
 		public static void ScanScene(string[] args)
 		{
 			if (args == null || args.Length == 0) { Log("Usage: CIScan <scene name>"); return; }
-			DynamicIslands.instance.StartCoroutine(Scan(string.Join(" ", args)));
+			StartTest(Scan(string.Join(" ", args)));
 		}
 
 		static IEnumerator Scan(string sceneName)
@@ -1884,7 +1902,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIEditor", docs: "Dev: opens the editor (from the main menu) and waits until it is ready")]
 		public static void OpenEditor()
 		{
-			DynamicIslands.instance.StartCoroutine(WaitForEditor(true));
+			StartTest(WaitForEditor(true));
 		}
 
 		static IEnumerator WaitForEditor(bool report)
@@ -1920,7 +1938,7 @@ namespace DynamicIslands
 			var words = (args ?? new string[0]).ToList();
 			string last = words.LastOrDefault();
 			if (last != null && last.StartsWith("backup:") && int.TryParse(last.Substring(7), out backup)) words.RemoveAt(words.Count - 1);
-			DynamicIslands.instance.StartCoroutine(LoadWorldRoutine(words.Count > 0 ? string.Join(" ", words.ToArray()) : null, backup));
+			StartTest(LoadWorldRoutine(words.Count > 0 ? string.Join(" ", words.ToArray()) : null, backup));
 		}
 
 		static IEnumerator LoadWorldRoutine(string name, int backup = 0)
@@ -1971,6 +1989,21 @@ namespace DynamicIslands
 			for (float until = Time.realtimeSinceStartup + 10f; box.loadButton != null && !box.loadButton.interactable && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.5f);
 			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
 			box.Button_LoadGame();
+			yield return WaitForWorld();
+		}
+
+		/// <summary>
+		/// Until the started world is in (with its player), so the command's "[CITEST] IDLE" (ci.ps1 ends a run there) means
+		/// the next test can run.
+		/// </summary>
+		static IEnumerator WaitForWorld()
+		{
+			float timeout = Time.realtimeSinceStartup + 180f;
+			System.Func<bool> isIn = () => { try { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null; } catch { return false; } };
+			while (Time.realtimeSinceStartup < timeout && !isIn()) yield return new WaitForSecondsRealtime(1f);
+			if (!isIn()) { Fail("the world was not in after 180 s"); yield break; }
+			yield return new WaitForSecondsRealtime(3f); // (islands near the raft come in the first seconds)
+			Log("World ready");
 		}
 
 		[ConsoleCommand(name: "CIClick", docs: "Dev, editor: presses an editor button by its label, e.g. CIClick Main menu / CIClick New / CIClick Duplicate")]
@@ -1993,7 +2026,7 @@ namespace DynamicIslands
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
 			box.gameObject.SetActive(true);
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
-			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
+			StartTest(NewWorldCreate(box, name));
 		}
 
 		/// <summary>
@@ -2009,12 +2042,13 @@ namespace DynamicIslands
 			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); yield break; }
 			Log("Creating world '" + name + "'");
 			box.Button_CreateNewGame();
+			yield return WaitForWorld();
 		}
 
 		[ConsoleCommand(name: "CIUITest", docs: "Dev, editor: the editor screen - panels per tab, buttons in their groups, windows, object browser; screenshots ui_<tab>.png")]
 		public static void UITest()
 		{
-			DynamicIslands.instance.StartCoroutine(UITestRoutine());
+			StartTest(UITestRoutine());
 		}
 
 		static IEnumerator UITestRoutine()
@@ -2082,7 +2116,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICatalogTest", docs: "Dev, editor: all of Raft's objects - index of every island scene, buildables, loading a category on demand, placing, saving and loading an island with such objects (cicatalog.island). CICatalogTest [category]")]
 		public static void CatalogTest(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(CatalogTestRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(CatalogTestRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		static IEnumerator CatalogTestRoutine(string category)

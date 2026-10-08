@@ -19,7 +19,7 @@ namespace DynamicIslands
 		public const string ScMpIsland = "ciscmp";
 
 		[ConsoleCommand(name: "CIScMpIsland", docs: "Dev, world (host): spawns and keeps 'ciscmp' for the two-player scenarios: a lever showing a hidden bridge, a once-zone 'gift' giving 3 ropes, a chest 'Box' (2 planks, never refilling), a sign, trees")]
-		public static void ScMpIslandCommand() { DynamicIslands.instance.StartCoroutine(ScMpIslandRoutine()); }
+		public static void ScMpIslandCommand() { StartTest(ScMpIslandRoutine()); }
 
 		static IEnumerator ScMpIslandRoutine()
 		{
@@ -46,7 +46,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScLair", docs: "Dev, world (host): spawns and keeps 'cisclair' for the two-player lair scenario (SC25): an arena zone that wakes a Boss warthog (x4 health, never coming back), a hoard chest; the level up system on")]
-		public static void ScLairCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("cisclair", "Boar's Lair", f =>
+		public static void ScLairCommand() { StartTest(ScMpSpawn("cisclair", "Boar's Lair", f =>
 		{
 			f.Props[IslandProps.Levels] = "on";
 			Vector3 arena = ScDry(f, new Vector2(0, 0), 1);
@@ -57,7 +57,7 @@ namespace DynamicIslands
 		})); }
 
 		[ConsoleCommand(name: "CIScSpots", docs: "Dev, world (host): spawns and keeps 'ciscspots' for SC26: a plain warthog spot and a Boss warthog spot (x4 health, red) 20 m apart, the same size")]
-		public static void ScSpotsCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscspots", "Two Spots", f =>
+		public static void ScSpotsCommand() { StartTest(ScMpSpawn("ciscspots", "Two Spots", f =>
 		{
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(-10, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureDamage, "0.1"));
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(10, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureHealth, "4", ObjectProps.CreatureDamage, "0.1",
@@ -65,7 +65,7 @@ namespace DynamicIslands
 		})); }
 
 		[ConsoleCommand(name: "CIScChickens", docs: "Dev, world (host): spawns and keeps 'ciscchick' for SC28/SC45: one chicken that both players try to net in the same second")]
-		public static void ScChickensCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscchick", "Chicken Run", f =>
+		public static void ScChickensCommand() { StartTest(ScMpSpawn("ciscchick", "Chicken Run", f =>
 		{
 			f.Objects.Add(ScObj("Creature_Chicken", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
 		})); }

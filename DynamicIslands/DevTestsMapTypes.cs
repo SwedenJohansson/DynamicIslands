@@ -15,7 +15,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CIMapTypeFiles", docs: "Dev, editor: ROADMAP T7 - every built-in map type written as a .maptype text and read back has the same key settings and rolls the same islands (3 seeds); ExportMapType boss -> citest-mt-boss.maptype makes the same island as the built-in boss; a file of content lines (chest, note, creature, zone, atmosphere, quest) rolls an island with them; bad files (a bad number, a bad spot, a bad name, a built-in's name) are left out, never crash, and a file with an unknown key is read with that line kept and warned about; ReRollMapType puts content on the open island as one undo step. The test files are deleted again")]
-		public static void MapTypeFilesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MapTypeFilesRoutine()); }
+		public static void MapTypeFilesCommand(string[] args) { StartTest(MapTypeFilesRoutine()); }
 
 		const string MtRules =
 @"label = CI rules island

@@ -42,7 +42,7 @@ namespace DynamicIslands
 		public static void FeatureCheckCommand(string[] args)
 		{
 			string[] names = string.Join(" ", args ?? new string[0]).Split(',').Select(n => n.Trim()).Where(n => n.Length > 0).ToArray();
-			DynamicIslands.instance.StartCoroutine(FeatureCheckRoutine(names));
+			StartTest(FeatureCheckRoutine(names));
 		}
 
 		static IEnumerator FeatureCheckRoutine(string[] names)

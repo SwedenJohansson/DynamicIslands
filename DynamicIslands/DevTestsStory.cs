@@ -18,7 +18,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStoryTest", docs: "Dev, editor: checks and waits read and written, the story items window, story sets (locked door, trail of notes) and their undo, the item picker's story items, the checks in the Behaviour window, save and load")]
 		public static void StoryTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StoryTestRoutine());
+			StartTest(StoryTestRoutine());
 		}
 
 		static IEnumerator StoryTestRoutine()
@@ -168,7 +168,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps")]
 		public static void StoryWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(StoryWorldRoutine());
+			StartTest(StoryWorldRoutine());
 		}
 
 		static IEnumerator StoryWorldRoutine()

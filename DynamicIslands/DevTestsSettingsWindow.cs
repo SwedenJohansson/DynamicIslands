@@ -16,7 +16,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CISettingsWindow", docs: "Dev, anywhere: ROADMAP AU46 - the Defaults window (spawnpool.txt's settings): opened, minSpacing and unloadDistance typed into its fields as a player does; spawnpool.txt has the two new values with every other line (notes, settings, island list) as it was, and the mod uses them; an unload distance below its range is kept within it (300); the New Game box's World settings has a Defaults... button; the file is put back as it was")]
-		public static void SettingsWindowCommand() { DynamicIslands.instance.StartCoroutine(SettingsWindowRoutine()); }
+		public static void SettingsWindowCommand() { StartTest(SettingsWindowRoutine()); }
 
 		/// <summary>Whether a line of spawnpool.txt is this setting's ("key = value").</summary>
 		static bool IsSettingLine(string line, string key)

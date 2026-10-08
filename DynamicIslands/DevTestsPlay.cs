@@ -43,7 +43,7 @@ namespace DynamicIslands
 		public static void PlayCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("CIPlay <name>"); return; }
-			DynamicIslands.instance.StartCoroutine(PlayRoutine(string.Join(" ", args)));
+			StartTest(PlayRoutine(string.Join(" ", args)));
 		}
 
 		static IslandWorldState.Entry playEntry;

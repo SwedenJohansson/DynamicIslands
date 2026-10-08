@@ -20,7 +20,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CILockFile", docs: "Dev, editor (TEST_CATALOGUE UP7): an island file another program holds open (a FileShare.None stream) - saving over it says 'in use by another program' and leaves the file as it was with no .tmp beside it, Delete says so and moves nothing, a settings write the same; once let go, saving works. Cleans up")]
-		public static void LockFileCommand() { DynamicIslands.instance.StartCoroutine(LockFileRoutine()); }
+		public static void LockFileCommand() { StartTest(LockFileRoutine()); }
 
 		static IEnumerator LockFileRoutine()
 		{
@@ -116,7 +116,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIHotkeyTabs", docs: "Dev, world (host, a test world 'CI ...'): the hotbar's key tabs - the journal's (J) beside Raft's notebook tab, the stats page's (K) only while the level up system is on (switched on and back); picture shot_hotkey_tabs.png")]
-		public static void HotkeyTabsCommand() { DynamicIslands.instance.StartCoroutine(HotkeyTabsRoutine()); }
+		public static void HotkeyTabsCommand() { StartTest(HotkeyTabsRoutine()); }
 
 		static IEnumerator HotkeyTabsRoutine()
 		{
@@ -152,7 +152,7 @@ namespace DynamicIslands
 			if (d == null) { Fail("no visible drop-down '" + name + "'"); return; }
 			DropList.Open(d.GetComponent<UnityEngine.UI.Button>(), d);
 			Log("Opened the drop-down " + name + " (" + d.Options.Count + " options)");
-			DynamicIslands.instance.StartCoroutine(DropReport());
+			StartTest(DropReport());
 		}
 
 		static IEnumerator DropReport()
@@ -167,7 +167,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CICheckReport", docs: "Dev, editor: the World Plans window's Check on a plan full of mistakes - two test islands (one with a zone 'gate', a note 'Diary' and a quest whose steps need a note and creatures it hasn't, one without a quest) and rules that wait for a quest that can't be finished, for an island without a quest, for a zone it hasn't, for each other in a circle, near an island nobody has, with no number, and after a broken rule: each found at its level, with why and how to fix it; the report window opens (shot_plan_check.png) and each card shows its findings. Cleans up")]
-		public static void PlanCheckCommand() { DynamicIslands.instance.StartCoroutine(PlanCheckRoutine()); }
+		public static void PlanCheckCommand() { StartTest(PlanCheckRoutine()); }
 
 		static IEnumerator PlanCheckRoutine()
 		{
@@ -267,7 +267,7 @@ namespace DynamicIslands
 		const string CrateIsland = "cicrate";
 
 		[ConsoleCommand(name: "CIRaftCrateEditor", docs: "Dev, editor: the abandoned rafts' crate (Pickup_Landmark_LandmarkCrateRaft) is in the object list under Loot & chests as 'Abandoned raft crate'; placed on a small generated island saved as 'cicrate' (for CIRaftCrateWorld)")]
-		public static void RaftCrateEditorCommand() { DynamicIslands.instance.StartCoroutine(RaftCrateEditorRoutine()); }
+		public static void RaftCrateEditorCommand() { StartTest(RaftCrateEditorRoutine()); }
 
 		static IEnumerator RaftCrateEditorRoutine()
 		{
@@ -329,7 +329,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRaftCrateWorld", docs: "Dev, world (host, a test world 'CI ...'; after CIRaftCrateEditor): the island 'cicrate' comes beside the raft; its crate is Raft's own (a pickup with Raft's random loot); picked up as a player does, it gives items and is gone, and the island remembers it was taken. The island and its file are removed after")]
-		public static void RaftCrateWorldCommand() { DynamicIslands.instance.StartCoroutine(RaftCrateWorldRoutine()); }
+		public static void RaftCrateWorldCommand() { StartTest(RaftCrateWorldRoutine()); }
 
 		static IEnumerator RaftCrateWorldRoutine()
 		{
@@ -399,7 +399,7 @@ namespace DynamicIslands
 			if (a == "clean") { Log("Removed " + BulkClean() + " bulk islands"); return; }
 			int n;
 			if (!int.TryParse(a, out n)) n = 1000;
-			DynamicIslands.instance.StartCoroutine(BulkRoutine(Mathf.Clamp(n, 1, 5000), args != null && args.Contains("keep")));
+			StartTest(BulkRoutine(Mathf.Clamp(n, 1, 5000), args != null && args.Contains("keep")));
 		}
 
 		static int BulkClean()

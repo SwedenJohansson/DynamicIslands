@@ -61,7 +61,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIProbeWorking", docs: "Dev, in game (host): spawns an island with Raft's vines and zipline lines and lists their scripts and the scripts' methods - to make Raft's quest items work on custom islands")]
-		public static void ProbeWorking(string[] args) { DynamicIslands.instance.StartCoroutine(ProbeWorkingRoutine()); }
+		public static void ProbeWorking(string[] args) { StartTest(ProbeWorkingRoutine()); }
 
 		static System.Collections.IEnumerator ProbeWorkingRoutine()
 		{

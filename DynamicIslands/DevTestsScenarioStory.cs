@@ -56,7 +56,7 @@ namespace DynamicIslands
 		public static void StoryWeaveCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "part1";
-			DynamicIslands.instance.StartCoroutine(part == "clean" ? StoryWeaveClean() : part == "part2" ? StoryWeavePart2() : StoryWeavePart1());
+			StartTest(part == "clean" ? StoryWeaveClean() : part == "part2" ? StoryWeavePart2() : StoryWeavePart1());
 		}
 
 		static IEnumerator StoryWeavePart1()
@@ -180,7 +180,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIScChainCarry", docs: "Dev, world (host, 'CI ...'): SC29 - CIScChainCarry prep = this world gets a story chain (Balboa left out, a Receiver island) and the first notes; then the runner goes to the menu and loads a plain world: CIScChainCarry check = its Receiver has only Raft's own frequencies and its notes unlock as Raft's (AU48)")]
 		public static void ScChainCarryCommand(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScChainCarryCheck() : ScChainCarryPrep());
+			StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScChainCarryCheck() : ScChainCarryPrep());
 		}
 
 		static IEnumerator ScChainCarryPrep()
@@ -232,7 +232,7 @@ namespace DynamicIslands
 		#region SC30-SC32 - the chain changed mid-game; after Utopia; a missing replacing island
 
 		[ConsoleCommand(name: "CIScChainEdit", docs: "Dev, world (host, 'CI ...'): SC30-SC32 - a step added after a done one unlocks (AU49); a rule after Utopia: Check says it can't come (AU51); the replacing island's file missing: the host is told and the chain goes on (AU50)")]
-		public static void ScChainEditCommand() { DynamicIslands.instance.StartCoroutine(ScChainEditRoutine()); }
+		public static void ScChainEditCommand() { StartTest(ScChainEditRoutine()); }
 
 		static IEnumerator ScChainEditRoutine()
 		{

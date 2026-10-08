@@ -14,7 +14,7 @@ namespace DynamicIslands
 		const string StoryPiecesIsland = "cistorypieces";
 
 		[ConsoleCommand(name: "CIStoryPieces", docs: "Dev, in game (host): Raft's quest tools on a custom island - machete vines (not cut by hand, cut with the machete, which the player keeps; still cut after a reload) and Raft's zipline line (the zipline tool rides it)")]
-		public static void StoryPiecesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryPiecesRoutine()); }
+		public static void StoryPiecesCommand(string[] args) { StartTest(StoryPiecesRoutine()); }
 
 		static IEnumerator StoryPiecesRoutine()
 		{

@@ -33,7 +33,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIDirtHoney", docs: "Dev, in game (host): dirt and honey on islands - Raft's dirt spots (dug with the shovel: tag and layer kept) give dirt, stay gone after a reload and come back after the regrow days; a wild beehive gives honeycomb and refills")]
-		public static void DirtHoneyCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DirtHoneyRoutine()); }
+		public static void DirtHoneyCommand(string[] args) { StartTest(DirtHoneyRoutine()); }
 
 		static IEnumerator DirtHoneyRoutine()
 		{

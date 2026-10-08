@@ -22,7 +22,7 @@ namespace DynamicIslands
 			string scene = scenes.FirstOrDefault(s => string.Equals(RaftIslands.LabelOf(s), want, StringComparison.OrdinalIgnoreCase))
 				?? scenes.FirstOrDefault(s => RaftIslands.LabelOf(s).IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0 || s.IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0);
 			if (scene == null) { Fail("no Raft island scene like '" + want + "' (" + string.Join(", ", scenes.Select(RaftIslands.LabelOf).ToArray()) + ")"); return; }
-			DynamicIslands.instance.StartCoroutine(PlaceableCatalog.VisitScene(scene, s => RaftViewShot(s, args)));
+			StartTest(PlaceableCatalog.VisitScene(scene, s => RaftViewShot(s, args)));
 		}
 
 		static IEnumerator RaftViewShot(Scene src, string[] args)

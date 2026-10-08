@@ -23,7 +23,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIIslandPickerBox", docs: "Dev, main menu: the World settings' 'Choose islands' list clicked as a player does - every entry of the spawn pool has a row with a tick box, a click unticks and ticks it again, the search narrows the rows, Untick shown / Tick shown do the rows shown, the counts follow, Done closes it. Leaves the entries named unticked for the next world: CIIslandPickerBox [entry|entry...] (default none)")]
-		public static void IslandPickerBoxCommand(string[] args) { DynamicIslands.instance.StartCoroutine(IslandPickerBoxRoutine(EntriesArg(args))); }
+		public static void IslandPickerBoxCommand(string[] args) { StartTest(IslandPickerBoxRoutine(EntriesArg(args))); }
 
 		static IEnumerator IslandPickerBoxRoutine(HashSet<string> want)
 		{

@@ -104,7 +104,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIOddities", docs: "Dev, anywhere: every oddity island and the boss lair can be made: set piece, loot, note, title; lair with a much tougher named beast, guards, hoard and quest; every object exists in this Raft")]
-		public static void OdditiesCommand() { DynamicIslands.instance.StartCoroutine(OdditiesRoutine()); }
+		public static void OdditiesCommand() { StartTest(OdditiesRoutine()); }
 
 		static IEnumerator OdditiesRoutine()
 		{
@@ -170,7 +170,7 @@ namespace DynamicIslands
 		{
 			bool keep = args != null && args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase));
 			bool shots = args != null && args.Any(a => a.Equals("shots", StringComparison.OrdinalIgnoreCase));
-			DynamicIslands.instance.StartCoroutine(RandomizerWorldRoutine(keep, shots));
+			StartTest(RandomizerWorldRoutine(keep, shots));
 		}
 
 		static IEnumerator RandomizerWorldRoutine(bool keep, bool shots)
@@ -305,7 +305,7 @@ namespace DynamicIslands
 			CustomIslandSpawner.CacheSize(name, radius, el);
 			IslandWorldState.Entry e = IslandWorldState.Add(name, spot.Value, null, false);
 			e.Loading = true;
-			DynamicIslands.instance.StartCoroutine(CustomIslandSpawner.GenerateAndSpawn(() => MapTypes.Create(type, s, el, name), name, e));
+			StartTest(CustomIslandSpawner.GenerateAndSpawn(() => MapTypes.Create(type, s, el, name), name, e));
 			return e;
 		}
 
@@ -451,7 +451,7 @@ namespace DynamicIslands
 
 
 		[ConsoleCommand(name: "CIRandomizerOff", docs: "Dev, world (host): with the randomizer Off, Raft's islands are Raft's (catalogue IR16): handled again and sailed 6 km, nothing is coloured, made an alpha, moved or added, every crate and clam lies where Raft put it, no oddity, lair or large island is due. Run CIRandomizerClean first")]
-		public static void RandomizerOffCommand() { DynamicIslands.instance.StartCoroutine(RandomizerOffRoutine()); }
+		public static void RandomizerOffCommand() { StartTest(RandomizerOffRoutine()); }
 
 		static IEnumerator RandomizerOffRoutine()
 		{
@@ -485,7 +485,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerStream", docs: "Dev, world (host): Raft's island and its extras stream out and in (catalogue IR6, IR7): the nearest of Raft's plain islands gets its extras, one of their chests is opened; the raft sails 1.5 km away (Raft's island and the extras go) and back: the chest is still opened, every moved crate and clam lies where it lay before, the island has the same extras")]
-		public static void RandomizerStreamCommand() { DynamicIslands.instance.StartCoroutine(RandomizerStreamRoutine()); }
+		public static void RandomizerStreamCommand() { StartTest(RandomizerStreamRoutine()); }
 
 		static IEnumerator RandomizerStreamRoutine()
 		{
@@ -573,7 +573,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIColourHit", docs: "Dev, world (host, the randomizer on): a coloured animal near the raft hit by a player (Raft's DamageEntity, 1 health): Raft's damage flash plays and its colour is still there 2 s later (catalogue IR13)")]
-		public static void ColourHitCommand() { DynamicIslands.instance.StartCoroutine(ColourHitRoutine()); }
+		public static void ColourHitCommand() { StartTest(ColourHitRoutine()); }
 
 		static string LookOf(AI_NetworkBehaviour a)
 		{
@@ -632,7 +632,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerTypes", docs: "Dev, world (host): every oddity kind, the boss lair and a large island loaded in a world in turn (catalogue IR12): each loads, its set pieces from other scenes load on demand, nothing is missing from the catalog, no error; pictures shot_type_*")]
-		public static void RandomizerTypesCommand() { DynamicIslands.instance.StartCoroutine(RandomizerTypesRoutine()); }
+		public static void RandomizerTypesCommand() { StartTest(RandomizerTypesRoutine()); }
 
 		static IEnumerator RandomizerTypesRoutine()
 		{
@@ -673,7 +673,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerSail", docs: "Dev, world (host): sailing brings the randomizer's islands by itself (catalogue IR3): Wild, 40 km sailed in steps of 250 m (OnSailed, with its retry every 200 m) - an oddity, a boss lair and a large island come, none on top of Raft's islands")]
-		public static void RandomizerSailCommand() { DynamicIslands.instance.StartCoroutine(RandomizerSailRoutine()); }
+		public static void RandomizerSailCommand() { StartTest(RandomizerSailRoutine()); }
 
 		static IEnumerator RandomizerSailRoutine()
 		{
@@ -718,7 +718,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIForceAlpha", docs: "Dev, world (host): makes the nearest live warthog (or <kind>) of Raft's own an alpha the way a world does - a seed whose roll makes it one (every player works it out from the seed): CIForceAlpha [kind]. Logs ALPHA <index>")]
-		public static void ForceAlphaCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ForceAlphaRoutine(args != null && args.Length > 0 ? args[0] : "Boar")); }
+		public static void ForceAlphaCommand(string[] args) { StartTest(ForceAlphaRoutine(args != null && args.Length > 0 ? args[0] : "Boar")); }
 
 		static IEnumerator ForceAlphaRoutine(string kind)
 		{
@@ -775,7 +775,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIModeWorld", docs: "Dev, world (host): the randomizer's animals follow Raft's game mode in a world (catalogue IR15): a large island loaded in Creative has no puffer fish or screechers (Raft's own islands in Creative have none), its warthogs and animals to catch are there; in Peaceful the puffer fish are there too (as on Raft's islands). The world's mode is put back after")]
-		public static void ModeWorldCommand() { DynamicIslands.instance.StartCoroutine(ModeWorldRoutine()); }
+		public static void ModeWorldCommand() { StartTest(ModeWorldRoutine()); }
 
 		static IEnumerator ModeWorldRoutine()
 		{
@@ -812,7 +812,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; logs Treasure extras: '<name>'")]
-		public static void TreasureHuntCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TreasureHuntRoutine(args != null && args.Any(a => a == "keep"))); }
+		public static void TreasureHuntCommand(string[] args) { StartTest(TreasureHuntRoutine(args != null && args.Any(a => a == "keep"))); }
 
 		static IEnumerator TreasureHuntRoutine(bool keep)
 		{
@@ -847,7 +847,7 @@ namespace DynamicIslands
 				string forcedName = WorldRandomizer.ExtrasPrefix + WorldRandomizer.Current.Seed + "-" + (WorldRandomizer.SpawnKey(l) ^ 4711u);
 				Func<IslandWorldState.Entry> mine = () => IslandWorldState.Islands.LastOrDefault(i => WorldRandomizer.IsExtras(i) && !extrasBefore.Contains(i.Id) && i.Name == forcedName);
 				RandomizerContent.ForceFind = "treasure";
-				DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(l, 4711));
+				StartTest(WorldRandomizer.ForceExtras(l, 4711));
 				for (float t = 0; t < 30f && mine() == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
 				RandomizerContent.ForceFind = null;
 				e = mine();
@@ -945,7 +945,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIPlanPickerWindow", docs: "Dev, main menu: the New Game box's plan picker (CT5) - every plan listed, pictures, select / double-click / keys / search / cancel; shot_planpicker.png")]
-		public static void PlanPickerWindowCommand() { DynamicIslands.instance.StartCoroutine(PlanPickerWindowTest()); }
+		public static void PlanPickerWindowCommand() { StartTest(PlanPickerWindowTest()); }
 
 		static IEnumerator PlanPickerWindowTest()
 		{
@@ -1035,7 +1035,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CINewGameBoxShot", docs: "Dev, main menu: opens Raft's New Game box with the plan and randomizer panels, checks they fit inside it, takes shot_newgame.png and closes it")]
-		public static void NewGameBoxShotCommand() { DynamicIslands.instance.StartCoroutine(NewGameBoxShot()); }
+		public static void NewGameBoxShotCommand() { StartTest(NewGameBoxShot()); }
 
 		static IEnumerator NewGameBoxShot()
 		{
@@ -1173,7 +1173,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIIslandsLikeRaft", docs: "Dev, anywhere: the randomizer's islands fit in Raft's world: land objects per 1000 m² and trees to cut compared with Raft's own small and big islands (raft_land.txt); large islands have puffer fish, warthogs, animals to catch, scenes and a cave")]
-		public static void IslandsLikeRaftCommand() { DynamicIslands.instance.StartCoroutine(IslandsLikeRaftRoutine()); }
+		public static void IslandsLikeRaftCommand() { StartTest(IslandsLikeRaftRoutine()); }
 
 		static IEnumerator IslandsLikeRaftRoutine()
 		{
@@ -1245,7 +1245,7 @@ namespace DynamicIslands
 
 
 		[ConsoleCommand(name: "CIIslandsSound", docs: "Dev, anywhere: the randomizer's islands are sound: nothing of the land floats or is buried (also where a den levelled the ground), no scene prop, set piece or den stands over the sea, scene props don't stand inside each other, a den's floor is on its levelled ground (8 oddities, the lair, 6 large islands)")]
-		public static void IslandsSoundCommand() { DynamicIslands.instance.StartCoroutine(IslandsSoundRoutine()); }
+		public static void IslandsSoundCommand() { StartTest(IslandsSoundRoutine()); }
 
 		static IEnumerator IslandsSoundRoutine()
 		{
@@ -1303,7 +1303,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands are sound"); else Fail("islands are sound");
 		}
 		[ConsoleCommand(name: "CIRandomizerLarge", docs: "Dev, world (host): a large island near the raft - loads, its animals (warthogs, animals to catch, puffer fish), scenes, and its cave: players walk in, the guard wakes inside it; pictures shot_large_*. CIRandomizerLarge [keep]")]
-		public static void RandomizerLargeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
+		public static void RandomizerLargeCommand(string[] args) { StartTest(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
 
 		static IEnumerator RandomizerLargeRoutine(bool keep)
 		{
@@ -1506,7 +1506,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
-		public static void GrottoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
+		public static void GrottoCommand(string[] args) { StartTest(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
 
 		static IEnumerator GrottoRoutine(bool keep)
 		{
@@ -1535,7 +1535,7 @@ namespace DynamicIslands
 			foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
 			{
 				RandomizerContent.ForceBigFinds = true;
-				try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(big, salt)); }
+				try { StartTest(WorldRandomizer.ForceExtras(big, salt)); }
 				finally { }
 				yield return new WaitForSeconds(3f);
 				RandomizerContent.ForceBigFinds = false;
@@ -1643,7 +1643,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStorySafe", docs: "Dev, main menu or editor: opens each of Raft's island scenes and checks the randomizer changes only its plain islands (big and small), never a story island, the stranded boat, the pilot's island or a floating raft")]
-		public static void StorySafeCommand() { DynamicIslands.instance.StartCoroutine(StorySafeRoutine()); }
+		public static void StorySafeCommand() { StartTest(StorySafeRoutine()); }
 
 		static IEnumerator StorySafeRoutine()
 		{
@@ -1688,7 +1688,7 @@ namespace DynamicIslands
 			string name = args != null ? string.Join(" ", args) : "";
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => string.Equals(i.HostName, name, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
 			if (e == null) { Fail("no island called '" + name + "' in the list"); return; }
-			DynamicIslands.instance.StartCoroutine(GoToIslandRoutine(e));
+			StartTest(GoToIslandRoutine(e));
 		}
 
 		static IEnumerator GoToIslandRoutine(IslandWorldState.Entry e)
@@ -1777,7 +1777,7 @@ namespace DynamicIslands
 		public static void MeasurePropsCommand(string[] args)
 		{
 			string[] names = args != null && args.Length > 0 ? string.Join(" ", args).Split(',').Select(s => s.Trim()).ToArray() : MeasuredProps;
-			DynamicIslands.instance.StartCoroutine(MeasureProps(names));
+			StartTest(MeasureProps(names));
 		}
 
 		/// <summary>Measures objects into raft_props.txt (the randomizer's list), or into another file (fileName: a path; the
@@ -1881,7 +1881,7 @@ namespace DynamicIslands
 					"Balboa_Shack", "Balboa_DecorationPrefabBase_SimpleTent", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Body2", "CaravanRocketDebris_Top1", "CaravanRocketDebris_Exhaust",
 					"CaravanRocketDebris_Leg1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister", "TangaroaFounderStatue", "RaftMonument", "Well", "RT_PlasticBoat", "RT_SharkCage", "Tire_02", "Pallet",
 					"ReefHuts_Wall2", "ReefHuts_Tarpaulin", "Crate_Big_01", "Scarecrow", "RT_WindMill", "Scaffolding_2x2m" };
-			DynamicIslands.instance.StartCoroutine(ProbeSetPieces(names));
+			StartTest(ProbeSetPieces(names));
 		}
 
 		static IEnumerator ProbeSetPieces(string[] names)

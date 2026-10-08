@@ -23,7 +23,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILevelTest", docs: "Dev, editor: the level up system's numbers (EXP per level, a monster's EXP, 2 points a level, +1% a point, 10 at most), records written and read, the Island tab's Level up system switch, the generator's Level up choice and the island files it makes")]
 		public static void LevelTest()
 		{
-			DynamicIslands.instance.StartCoroutine(LevelTestRoutine());
+			StartTest(LevelTestRoutine());
 		}
 
 		static IEnumerator LevelTestRoutine()
@@ -132,7 +132,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILevelWorld", docs: "Dev, in game (host): an island with the level up system and warthogs - it turns the system on, hits give their share of the monster's EXP (floating over it), a kill all of it, level up, the stats page (K), every stat on Raft's player, saving with the world, the host keeping other players' records")]
 		public static void LevelWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(LevelWorldRoutine());
+			StartTest(LevelWorldRoutine());
 		}
 
 		static IEnumerator LevelWorldRoutine()
@@ -479,7 +479,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILevelMP", docs: "Dev, in game (host): spawns and keeps 'cilevelmp' 150 m ahead, an island with the level up system and harmless warthogs, for the two-player test (either player then CIHit cilevelmp Warthog, CILevelInfo)")]
 		public static void LevelMP()
 		{
-			DynamicIslands.instance.StartCoroutine(LevelMPRoutine());
+			StartTest(LevelMPRoutine());
 		}
 
 		static IEnumerator LevelMPRoutine()

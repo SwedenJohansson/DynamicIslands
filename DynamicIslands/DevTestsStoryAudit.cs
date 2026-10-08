@@ -18,7 +18,7 @@ namespace DynamicIslands
 		static readonly Regex Plumbing = new Regex(@"^(RaycastInteractable(_Redirect)?|LODGroup|PickupItem_Networked|YieldHandler|RandomDropper|LandmarkItem.*|NetworkIDTag|SO_.*)$");
 
 		[ConsoleCommand(name: "CIStoryAudit", docs: "Dev, anywhere (the main menu is quickest): ROADMAP LM12's audit - every piece of Raft's story islands (Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance, Utopia) with a script that makes it do something, and whether the editor has it (and keeps it working). Writes Mods\\DynamicIslands\\story_audit.txt")]
-		public static void StoryAuditCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryAuditRoutine()); }
+		public static void StoryAuditCommand(string[] args) { StartTest(StoryAuditRoutine()); }
 
 		static IEnumerator StoryAuditRoutine()
 		{

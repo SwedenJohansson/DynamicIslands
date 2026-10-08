@@ -25,7 +25,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIBehaviourTest", docs: "Dev, editor: behaviours and events - actions read and written, the inspector group, the Behaviour & events window (screenshot), island events, invisible wall and ramp, undo, save and load")]
 		public static void BehaviourTest()
 		{
-			DynamicIslands.instance.StartCoroutine(BehaviourTestRoutine());
+			StartTest(BehaviourTestRoutine());
 		}
 
 		static IEnumerator BehaviourTestRoutine()
@@ -115,7 +115,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIBehaviourWorld", docs: "Dev, in game (host): a lever opens a door, a zone wakes a hidden warthog and sends a signal a rule waits for, a chest teleports, hiding and showing the ambush spot, island arrival message, invisible wall and ramp, spinning, saved state")]
 		public static void BehaviourWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(BehaviourWorldRoutine());
+			StartTest(BehaviourWorldRoutine());
 		}
 
 		static IEnumerator BehaviourWorldRoutine()

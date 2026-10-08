@@ -24,7 +24,7 @@ namespace DynamicIslands
 		public static void MeasureLandCommand(string[] args)
 		{
 			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(MeasureLandRoutine(filter));
+			StartTest(MeasureLandRoutine(filter));
 		}
 
 		/// <summary>The generator's kind of a Raft object on land (trees, bushes, rocks, harvest, beach), or props / sea.</summary>
@@ -85,7 +85,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILandLikeRaft", docs: "Dev, editor: the generator puts trees, bushes, rocks and harvestables where Raft's islands of the style have them (raft_land.txt): per kind, how much of its spread over the habitats overlaps Raft's; no more trees on the beach or on cliffs than Raft has; big rocks sunk; pictures of each style (shot_land_*)")]
 		public static void LandLikeRaftCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(LandLikeRaftRoutine());
+			StartTest(LandLikeRaftRoutine());
 		}
 
 		static IEnumerator LandLikeRaftRoutine()
@@ -589,7 +589,7 @@ namespace DynamicIslands
 		public static void GenLikeRaftCommand(string[] args)
 		{
 			float[] values = args != null && args.Length == 5 ? args.Select(a => float.Parse(a, System.Globalization.CultureInfo.InvariantCulture)).ToArray() : null;
-			DynamicIslands.instance.StartCoroutine(GenLikeRaftRoutine(values));
+			StartTest(GenLikeRaftRoutine(values));
 		}
 
 		static IEnumerator GenLikeRaftRoutine(float[] values)

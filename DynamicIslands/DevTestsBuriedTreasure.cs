@@ -14,7 +14,7 @@ namespace DynamicIslands
 		const string TreasureIsland = "citreasure";
 
 		[ConsoleCommand(name: "CIBuriedTreasure", docs: "Dev, in game (host): buried treasure - Raft's own treasure point on a custom island: found by the detector's search, dug up with three digs, the chest gives Raft's treasure loot; stays dug after a reload and a Raft save, back after the regrow days")]
-		public static void BuriedTreasureCommand(string[] args) { DynamicIslands.instance.StartCoroutine(BuriedTreasureRoutine(args != null && args.Contains("keep"))); }
+		public static void BuriedTreasureCommand(string[] args) { StartTest(BuriedTreasureRoutine(args != null && args.Contains("keep"))); }
 
 		[ConsoleCommand(name: "CITreasureCount", docs: "Dev, in game: Raft's treasure points - how many under each custom island and how many loose (after loading a world: none of ours may come back loose)")]
 		public static void TreasureCountCommand(string[] args)

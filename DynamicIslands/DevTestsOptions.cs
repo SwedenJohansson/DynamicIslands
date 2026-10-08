@@ -24,7 +24,7 @@ namespace DynamicIslands
 		static readonly string[] StoryScenes = { "RadioTower", "Vasagatan", "Balboa", "Caravan", "Tangaroa", "Varuna", "Temperance", "Utopia" };
 
 		[ConsoleCommand(name: "CIMeasureBlueprints", docs: "Dev, main menu or editor: loads each of Raft's story island scenes (switched off) and lists the blueprints lying on them (pickups that give a Blueprint_ item; quest items and notes left out) into Mods\\DynamicIslands\\raft_blueprints.txt - shipped with the mod for the world option Scrambled blueprints")]
-		public static void MeasureBlueprintsCommand() { DynamicIslands.instance.StartCoroutine(MeasureBlueprintsRoutine()); }
+		public static void MeasureBlueprintsCommand() { StartTest(MeasureBlueprintsRoutine()); }
 
 		static IEnumerator MeasureBlueprintsRoutine()
 		{
@@ -73,7 +73,7 @@ namespace DynamicIslands
 		#region Units
 
 		[ConsoleCommand(name: "CIWorldOptionsUnit", docs: "Dev, anywhere: the world options' rules without a world - the options' text both ways; the story order for 300 seeds (all eight islands once, Utopia last, never Raft's own order, the same for the same seed, a mapping both ways); the blueprints' pairs for 100 seeds (every movable blueprint given once, none keeps its own, what the story needs never in them, the same for the same seed); 300 ghost rafts (small, medium and large about as often as meant, a large one with rats, screechers, a hoard and a note, every object one the mod knows); the last choice kept in world_rules.txt")]
-		public static void WorldOptionsUnitCommand() { DynamicIslands.instance.StartCoroutine(WorldOptionsUnitRoutine()); }
+		public static void WorldOptionsUnitCommand() { StartTest(WorldOptionsUnitRoutine()); }
 
 		static IEnumerator WorldOptionsUnitRoutine()
 		{
@@ -165,7 +165,7 @@ namespace DynamicIslands
 		#region The New Game box
 
 		[ConsoleCommand(name: "CIWorldSettingsBox", docs: "Dev, main menu: Raft's New Game box's World settings clicked as a player does: the button opens the window over the box, each option's button switches it on and off (its label says so, the box's button counts them), All off, Done closes it and keeps the choice. Leaves the options named chosen for the next world: CIWorldSettingsBox [option ...] (default none)")]
-		public static void WorldSettingsBoxCommand(string[] args) { DynamicIslands.instance.StartCoroutine(WorldSettingsBoxRoutine(WorldOptions.Parse(string.Join(",", args ?? new string[0])))); }
+		public static void WorldSettingsBoxCommand(string[] args) { StartTest(WorldSettingsBoxRoutine(WorldOptions.Parse(string.Join(",", args ?? new string[0])))); }
 
 		static IEnumerator WorldSettingsBoxRoutine(HashSet<string> want)
 		{
@@ -244,7 +244,7 @@ namespace DynamicIslands
 		#region Ghost rafts
 
 		[ConsoleCommand(name: "CIGhostRafts", docs: "Dev, world (host): ghost rafts come while sailing only with the option on (40 km simulated, as CIRandomizerSail: none with it off, several with it on, none within the first 1.5 km); then a large one brought ahead: loaded, its hoard, barrels and note there, its rats on its deck and its screechers in the air, the player standing on its deck. CIGhostRafts [keep] (keep: the large one stays, 'Ghost raft' extras file logged as GHOST <name>)")]
-		public static void GhostRaftsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GhostRaftsRoutine(args != null && args.Contains("keep"))); }
+		public static void GhostRaftsCommand(string[] args) { StartTest(GhostRaftsRoutine(args != null && args.Contains("keep"))); }
 
 		static IEnumerator GhostRaftsRoutine(bool keep)
 		{
@@ -439,7 +439,7 @@ namespace DynamicIslands
 			if (args.Length > 1) float.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x);
 			if (args.Length > 2) float.TryParse(args[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z);
 			if (args.Length > 3) float.TryParse(args[3], NumberStyles.Float, CultureInfo.InvariantCulture, out h);
-			DynamicIslands.instance.StartCoroutine(StandAtRoutine(new Vector3(e.Position.x + x, h, e.Position.z + z)));
+			StartTest(StandAtRoutine(new Vector3(e.Position.x + x, h, e.Position.z + z)));
 		}
 
 		static IEnumerator StandAtRoutine(Vector3 at)
@@ -460,7 +460,7 @@ namespace DynamicIslands
 		#region Story order
 
 		[ConsoleCommand(name: "CIStoryOrderWorld", docs: "Dev, world (host): the story order in a world - with the option on, Raft unlocking the first frequency (the Receiver's note) unlocks the order's first island, the next note its second, and so on; the notebook's list rebuilt from the notes found when the option changes (off: Raft's islands again, on: the order's); the frequency numbers on notes follow. What the world had unlocked is put back after")]
-		public static void StoryOrderWorldCommand() { DynamicIslands.instance.StartCoroutine(StoryOrderWorldRoutine()); }
+		public static void StoryOrderWorldCommand() { StartTest(StoryOrderWorldRoutine()); }
 
 		static IEnumerator StoryOrderWorldRoutine()
 		{
@@ -633,7 +633,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIPrivateStorage", docs: "Dev, world (host, single player): the option Private storages alone - a storage built with the option on is the builder's (noted, saved in the world file's line); the builder opens it; one noted for another player (as if they built it) is refused for this player, looking at it says whose it is; with the option off both open; a storage built with it off has no builder; storages removed after")]
-		public static void PrivateStorageCommand() { DynamicIslands.instance.StartCoroutine(PrivateStorageRoutine()); }
+		public static void PrivateStorageCommand() { StartTest(PrivateStorageRoutine()); }
 
 		static IEnumerator PrivateStorageRoutine()
 		{
@@ -690,7 +690,7 @@ namespace DynamicIslands
 		#region Scrambled blueprints
 
 		[ConsoleCommand(name: "CIBlueprintsWorld", docs: "Dev, world (host, a test world 'CI Options ...' only - it brings one of Raft's story islands): with the option on, the story island with the most movable blueprints is brought near the raft (Raft's own ChunkManager.AddChunkPointForcibly) and sailed to; each of its blueprint pickups gives its partner (item and name), none of what the story needs changes; the option off: Raft's own again, on: the partners again")]
-		public static void BlueprintsWorldCommand() { DynamicIslands.instance.StartCoroutine(BlueprintsWorldRoutine()); }
+		public static void BlueprintsWorldCommand() { StartTest(BlueprintsWorldRoutine()); }
 
 		static readonly Dictionary<string, ChunkPointType> StoryTypes = new Dictionary<string, ChunkPointType>
 		{
@@ -772,7 +772,7 @@ namespace DynamicIslands
 		#region The experimental release box
 
 		[ConsoleCommand(name: "CIExperimentalNotice", docs: "Dev, main menu: the alpha notice (EXPERIMENTAL ALPHA RELEASE) - there with its header, the mod's version and its three points; at 8 screen sizes on the screen and clear of Raft's menu buttons and of the New Game box (opened); Got it folds it and remembers it for this version, Show opens it again and forgets it; its help buttons (Discord, Guide (PDF), Report a problem and its box), dragging it (kept on the screen, remembered, reset); its state before is put back; pictures shot_notice_*")]
-		public static void ExperimentalNoticeCommand() { DynamicIslands.instance.StartCoroutine(ExperimentalNoticeRoutine()); }
+		public static void ExperimentalNoticeCommand() { StartTest(ExperimentalNoticeRoutine()); }
 
 		static Rect ScreenRect(RectTransform r)
 		{
@@ -846,7 +846,7 @@ namespace DynamicIslands
 		#region Every combination
 
 		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): all 16 combinations of the world options switched on in turn: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
-		public static void OptionsMatrixCommand() { DynamicIslands.instance.StartCoroutine(OptionsMatrixRoutine()); }
+		public static void OptionsMatrixCommand() { StartTest(OptionsMatrixRoutine()); }
 
 		static IEnumerator OptionsMatrixRoutine()
 		{

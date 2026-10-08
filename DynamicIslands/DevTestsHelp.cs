@@ -15,7 +15,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CIPlanHelp", docs: "Dev, editor: the World plans window's help - a ? on every part (the plan row, templates, random islands, Raft's story, description, map, Check, Export/Import, and 6 on each rule card), each inside the window with its text; hovering shows the popup; Help opens the steps with the guide's buttons (online section, PDF); the island's rules have their own help and no Export ?. Pictures shot_planhelp_*")]
-		public static void PlanHelpCommand() { DynamicIslands.instance.StartCoroutine(PlanHelpRoutine()); }
+		public static void PlanHelpCommand() { StartTest(PlanHelpRoutine()); }
 
 		static IEnumerator PlanHelpRoutine()
 		{
@@ -117,7 +117,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIMenuLibrary", docs: "Dev, main menu: the ISLAND LIBRARY button shows its words (all of them drawn, on the screen) and opens the library; the library's Submit yours... shows how to submit (export, post on the Discord, approved first) with its buttons (Discord, exports folder, the guide's section); pictures shot_menu_library, shot_library_submit")]
-		public static void MenuLibraryCommand() { DynamicIslands.instance.StartCoroutine(MenuLibraryRoutine()); }
+		public static void MenuLibraryCommand() { StartTest(MenuLibraryRoutine()); }
 
 		static IEnumerator MenuLibraryRoutine()
 		{
@@ -178,7 +178,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIEditorUpDown", docs: "Dev, editor: the camera goes straight up and down (Space / C) without turning or sliding sideways, whichever way it looks; the keys are written in the camera help and the Terrain tab's tips")]
-		public static void EditorUpDownCommand() { DynamicIslands.instance.StartCoroutine(EditorUpDownRoutine()); }
+		public static void EditorUpDownCommand() { StartTest(EditorUpDownRoutine()); }
 
 		static IEnumerator EditorUpDownRoutine()
 		{
@@ -210,7 +210,7 @@ namespace DynamicIslands
 		const string PickShrine = "cipick-shrine", PickPlain = "cipick-plain", PickPlan = "CI Picks";
 
 		[ConsoleCommand(name: "CIPlanPicks", docs: "Dev, editor: the World plans window's lists (the ▾ after a field): the island a rule waits for (the plan's rules and saved islands, with their quests), after rule (rules only), an island's zones, signals and quest steps, near which island (and 'where it happened'), the story's done-when zone; picking fills the field and the plan; a map-type island's list is empty and says why; the island's own rules offer self. Makes and removes cipick-* islands and the plan 'CI Picks'. Pictures shot_planpicks_*")]
-		public static void PlanPicksCommand() { DynamicIslands.instance.StartCoroutine(PlanPicksRoutine()); }
+		public static void PlanPicksCommand() { StartTest(PlanPicksRoutine()); }
 
 		static void MakePickIslands()
 		{
@@ -334,7 +334,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the Adventure plan), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
-		public static void WindowShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
+		public static void WindowShotCommand(string[] args) { StartTest(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
 
 		static IEnumerator WindowShotRoutine(string name)
 		{
@@ -369,7 +369,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CINoticeShot", docs: "Dev, main menu: the guide's picture of the main menu with the alpha box open (shot_main_menu.png); a folded box is opened for the picture and folded again after, the player's choice (notice.txt) untouched")]
-		public static void NoticeShotCommand() { DynamicIslands.instance.StartCoroutine(NoticeShotRoutine()); }
+		public static void NoticeShotCommand() { StartTest(NoticeShotRoutine()); }
 
 		static IEnumerator NoticeShotRoutine()
 		{

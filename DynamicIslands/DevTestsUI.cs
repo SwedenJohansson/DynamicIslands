@@ -90,7 +90,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIJoinHost", docs: "Dev, main menu (second player): joins a Steam friend's Raft game, as Steam's \"Join Game\" does: CIJoinHost [part of the friend's name, or their SteamID64] (default: the first friend hosting)")]
 		public static void JoinHost(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(JoinFriendRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(JoinFriendRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		/// <summary>
@@ -154,7 +154,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIJoinHostMenu", docs: "Dev, main menu: joins through Raft's own Join World box (empty in this Raft version: kept to show that)")]
 		public static void JoinHostMenu(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(JoinHostRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(JoinHostRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		static System.Collections.IEnumerator JoinHostRoutine(string name)
@@ -258,7 +258,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIEditorOpenCheck", docs: "Dev, main menu: opens the editor and watches every frame until it is ready - the loading box covers the screen from the click, the bundle's old screen of 2023 is never drawn, the box goes when the editor is ready (shot_editor_loading.png)")]
 		public static void EditorOpenCheck()
 		{
-			DynamicIslands.instance.StartCoroutine(EditorOpenCheckRoutine());
+			StartTest(EditorOpenCheckRoutine());
 		}
 
 		static IEnumerator EditorOpenCheckRoutine()

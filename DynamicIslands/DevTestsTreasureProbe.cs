@@ -12,7 +12,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CITreasureProbe", docs: "Dev, in game (host): puts Raft's own buried treasure (TreasurePointManager) on a small custom island and looks at it - for metal detector treasure on custom islands")]
-		public static void TreasureProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TreasureProbeRoutine()); }
+		public static void TreasureProbeCommand(string[] args) { StartTest(TreasureProbeRoutine()); }
 
 		static IEnumerator TreasureProbeRoutine()
 		{

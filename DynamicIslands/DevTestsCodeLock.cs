@@ -11,7 +11,7 @@ namespace DynamicIslands
 	public static partial class DevTests
 	{
 		[ConsoleCommand(name: "CIMapReach", docs: "Dev, anywhere: ROADMAP LM3 - every map type's islands (3 seeds each): no chest or note left where players can't get without building (the reach check moves them)")]
-		public static void MapReachCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MapReachRoutine()); }
+		public static void MapReachCommand(string[] args) { StartTest(MapReachRoutine()); }
 
 		static IEnumerator MapReachRoutine()
 		{
@@ -37,7 +37,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRewardLater", docs: "Dev, in game (host): ROADMAP LM8 - a quest done while this player is far away: no reward then; coming to the island gives it, once (done again or coming again gives nothing)")]
-		public static void RewardLaterCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RewardLaterRoutine()); }
+		public static void RewardLaterCommand(string[] args) { StartTest(RewardLaterRoutine()); }
 
 		static IEnumerator RewardLaterRoutine()
 		{
@@ -87,7 +87,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILightColours", docs: "Dev, in game (host): ROADMAP LM5 - four real warthogs: as they are, the randomizer's light snow and cream (brightened textures) and its charcoal; a picture shot_light_colours.png")]
-		public static void LightColoursCommand(string[] args) { DynamicIslands.instance.StartCoroutine(LightColoursRoutine()); }
+		public static void LightColoursCommand(string[] args) { StartTest(LightColoursRoutine()); }
 
 		static IEnumerator LightColoursRoutine()
 		{
@@ -144,7 +144,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIMoreQuests", docs: "Dev, in game (host): ROADMAP LM4 - an island with a main quest and a second one: each counts its own steps, the second done first gives its reward and leaves the main quest open, the panel shows the one not done; both stay done after a reload; a plan rule waits for 'quest 2'")]
-		public static void MoreQuestsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(MoreQuestsRoutine()); }
+		public static void MoreQuestsCommand(string[] args) { StartTest(MoreQuestsRoutine()); }
 
 		static IEnumerator MoreQuestsRoutine()
 		{
@@ -242,7 +242,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerNames", docs: "Dev, in game: ROADMAP CT11 - the randomizer's extras (rnd-...) show a readable name in the journal, never the file name")]
-		public static void RandomizerNamesCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerNamesRoutine()); }
+		public static void RandomizerNamesCommand(string[] args) { StartTest(RandomizerNamesRoutine()); }
 
 		static IEnumerator RandomizerNamesRoutine()
 		{
@@ -265,7 +265,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIEscGuard", docs: "Dev, in game: one Esc closes only our window - Raft's pause menu skips the press while the journal is open and the frame after it closed, then takes Esc again")]
-		public static void EscGuardCommand(string[] args) { DynamicIslands.instance.StartCoroutine(EscGuardRoutine()); }
+		public static void EscGuardCommand(string[] args) { StartTest(EscGuardRoutine()); }
 
 		static IEnumerator EscGuardRoutine()
 		{
@@ -297,7 +297,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIQuestCountMP", docs: "Dev, in game (host): ROADMAP CW3 for two players - start: an island with two quests next to the raft (kept); done: its second quest done")]
-		public static void QuestCountMPCommand(string[] args) { DynamicIslands.instance.StartCoroutine(QuestCountMPRoutine(args != null && args.Length > 0 ? args[0] : "start")); }
+		public static void QuestCountMPCommand(string[] args) { StartTest(QuestCountMPRoutine(args != null && args.Length > 0 ? args[0] : "start")); }
 
 		static IEnumerator QuestCountMPRoutine(string what)
 		{
@@ -327,7 +327,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CISpotlightProbe", docs: "Dev, in game (host): ROADMAP E13 - Varuna Point's spotlight on an island next to the player: what it is made of, and whether the player is hurt in 12 s")]
-		public static void SpotlightProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(SpotlightProbeRoutine(args != null && args.Length > 0 ? args[0] : "VP_Spotlight")); }
+		public static void SpotlightProbeCommand(string[] args) { StartTest(SpotlightProbeRoutine(args != null && args.Length > 0 ? args[0] : "VP_Spotlight")); }
 
 		static IEnumerator SpotlightProbeRoutine(string what)
 		{
@@ -394,7 +394,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIDoorway", docs: "Dev, in game (host): ROADMAP E11 - Raft's door walls on an island: the doorway lets a player through (nothing at chest height), the lintel over it still blocks; a picture shot_doorway.png")]
-		public static void DoorwayCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DoorwayRoutine()); }
+		public static void DoorwayCommand(string[] args) { StartTest(DoorwayRoutine()); }
 
 		static IEnumerator DoorwayRoutine()
 		{
@@ -449,7 +449,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CILockFirst", docs: "Dev, in game (host): ROADMAP E12 - a 'find 2 gems' step whose gems a lock used up before the step came: it is done when it comes (found in all counts), and the count is saved with the world")]
-		public static void LockFirstCommand(string[] args) { DynamicIslands.instance.StartCoroutine(LockFirstRoutine()); }
+		public static void LockFirstCommand(string[] args) { StartTest(LockFirstRoutine()); }
 
 		static IEnumerator LockFirstRoutine()
 		{
@@ -527,7 +527,7 @@ namespace DynamicIslands
 		const string CodeLockIsland = "cicodelock";
 
 		[ConsoleCommand(name: "CICodeLock", docs: "Dev, in game (host): a keypad code lock (lock.code) - used, the keypad opens; a wrong code keeps it shut, the right one runs the use (shows a hidden chest); unlocked it stays so after a reload")]
-		public static void CodeLockCommand(string[] args) { DynamicIslands.instance.StartCoroutine(CodeLockRoutine()); }
+		public static void CodeLockCommand(string[] args) { StartTest(CodeLockRoutine()); }
 
 		static IEnumerator CodeLockRoutine()
 		{

@@ -38,7 +38,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPropsTest", docs: "Dev, editor: creatures, notes and tints - placing, the inspector, undo/redo, duplicate, save and load (format 4)")]
 		public static void PropsTest()
 		{
-			DynamicIslands.instance.StartCoroutine(PropsTestRoutine());
+			StartTest(PropsTestRoutine());
 		}
 
 		static EditorGameObject PlaceForTest(string name, Vector3 pos, Transform placed)
@@ -206,7 +206,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
 		public static void CreatureTest(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(CreatureTestRoutine(args != null && args.Contains("keep")));
+			StartTest(CreatureTestRoutine(args != null && args.Contains("keep")));
 		}
 
 		/// <summary>Writes cicreature.island: the sample island with a herd of warthogs, a chicken, a puffer fish, an angler fish
@@ -409,7 +409,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILootTest", docs: "Dev, editor: chests - the Loot & chests category, default loot, the item picker, amounts, undo, making any object a chest, save and load")]
 		public static void LootTest()
 		{
-			DynamicIslands.instance.StartCoroutine(LootTestRoutine());
+			StartTest(LootTestRoutine());
 		}
 
 		static IEnumerator LootTestRoutine()
@@ -484,7 +484,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILootWorld", docs: "Dev, in game (host): an island with two chests - opening gives the items, it stays empty (also after reloading), other players are told, refilling")]
 		public static void LootWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(LootWorldRoutine());
+			StartTest(LootWorldRoutine());
 		}
 
 		static IEnumerator LootWorldRoutine()
@@ -575,7 +575,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIZoneTest", docs: "Dev, editor: trigger zones - placing, the zone editor, linking a creature (ambush), renaming, the island rule, save and load")]
 		public static void ZoneTest()
 		{
-			DynamicIslands.instance.StartCoroutine(ZoneTestRoutine());
+			StartTest(ZoneTestRoutine());
 		}
 
 		static IEnumerator ZoneTestRoutine()
@@ -644,7 +644,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIBannerQueue", docs: "Dev (anywhere): banners and messages come one after another - a second one waits until the first has shown 3 s; the same one again while it is up shows once")]
-		public static void BannerQueue() { DynamicIslands.instance.StartCoroutine(BannerQueueRoutine()); }
+		public static void BannerQueue() { StartTest(BannerQueueRoutine()); }
 
 		static IEnumerator BannerQueueRoutine()
 		{
@@ -687,7 +687,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIDrawnInPlace", docs: "Dev, editor: every object of the catalog is drawn where it stands - copies placed, then moved 100 m: each of their meshes moves with them (Raft's statically batched scenery drew where it stands in Raft's own scene: the Stranded Gull's boat was invisible, its locker floating). Lists the batched objects and any still drawn elsewhere. CIDrawnInPlace [all: every one of Raft's island scenes loaded first]")]
-		public static void DrawnInPlace(string[] args) { DynamicIslands.instance.StartCoroutine(DrawnInPlaceRoutine(args != null && args.Contains("all"))); }
+		public static void DrawnInPlace(string[] args) { StartTest(DrawnInPlaceRoutine(args != null && args.Contains("all"))); }
 
 		static IEnumerator DrawnInPlaceRoutine(bool all)
 		{
@@ -778,7 +778,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIReturningIslands", docs: "Dev, in game (host, a test world 'CI ...'): islands the players still need come back ahead of the raft (ReturningIslands) - one with its quest begun and one a plan's rule waits for (never reached), left 1.3 km behind: after the return time (3 s here) both are ahead of the raft, load there, the quest where it was, a banner; one with its quest done, one never reached that nothing waits for, and one that came back 3 times stay; one a Receiver frequency brought doesn't count")]
-		public static void ReturningIslandsTest() { DynamicIslands.instance.StartCoroutine(ReturningIslandsRoutine()); }
+		public static void ReturningIslandsTest() { StartTest(ReturningIslandsRoutine()); }
 
 		static IEnumerator ReturningIslandsRoutine()
 		{
@@ -861,7 +861,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done; or without a quest, reached) is never picked again; an unfinished one (quest begun, or never reached) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy")]
-		public static void PoolAgainTest() { DynamicIslands.instance.StartCoroutine(PoolAgainRoutine()); }
+		public static void PoolAgainTest() { StartTest(PoolAgainRoutine()); }
 
 		static IEnumerator PoolAgainRoutine()
 		{
@@ -932,7 +932,7 @@ namespace DynamicIslands
 		{
 			float km = 8f;
 			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out km);
-			DynamicIslands.instance.StartCoroutine(RaftGapRoutine(km));
+			StartTest(RaftGapRoutine(km));
 		}
 
 		static IEnumerator RaftGapRoutine(float km)
@@ -1038,7 +1038,7 @@ namespace DynamicIslands
 		public static void ReturnState() { foreach (string l in ReturningIslands.Describe()) Log("  " + l); Log("PASS: return state"); }
 
 		[ConsoleCommand(name: "CIWreckDeck", docs: "Dev, in game (host): a wreck (the map type: Raft's foundations on open water) ahead of the raft - a player put on its deck stands on it; dropped onto it from 5 m lands on it, also when a frame takes 0.6 s on the way down (a big island loading: The Abyss Expedition's test fell through); dropped onto its roof, they end on the roof or the deck. CIWreckDeck [keep]")]
-		public static void WreckDeck(string[] args) { DynamicIslands.instance.StartCoroutine(WreckDeckRoutine(args != null && args.Contains("keep"))); }
+		public static void WreckDeck(string[] args) { StartTest(WreckDeckRoutine(args != null && args.Contains("keep"))); }
 
 		static IEnumerator WreckDeckRoutine(bool keep)
 		{
@@ -1081,7 +1081,7 @@ namespace DynamicIslands
 					if (k == 3 && IslandSpawner.ListSavedIslands().Contains("The Drowned Metropolis"))
 					{
 						int n0 = IslandWorldState.Islands.Count;
-						DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile("The Drowned Metropolis", spot.Value + new Vector3(800f, 0f, 0f), false));
+						StartTest(DynamicIslands.instance.SpawnIslandFile("The Drowned Metropolis", spot.Value + new Vector3(800f, 0f, 0f), false));
 						yield return null;
 						big = IslandWorldState.Islands.Skip(n0).FirstOrDefault();
 					}
@@ -1122,7 +1122,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIZoneWorld", docs: "Dev, in game (host): a trigger zone with a message, items and an ambush warthog; the island rule for regrowing")]
 		public static void ZoneWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(ZoneWorldRoutine());
+			StartTest(ZoneWorldRoutine());
 		}
 
 		static IEnumerator ZoneWorldRoutine()
@@ -1207,7 +1207,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGroupTest", docs: "Dev, editor: object groups - save a selection (with settings) as a group, it appears in My groups, placing it gives the separate objects (one undo step)")]
 		public static void GroupTest()
 		{
-			DynamicIslands.instance.StartCoroutine(GroupTestRoutine());
+			StartTest(GroupTestRoutine());
 		}
 
 		static IEnumerator GroupTestRoutine()
@@ -1265,7 +1265,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStampTest", docs: "Dev, editor: terrain stamps - built-in shapes (hill, crater), one per click, undo, saving your own and stamping it")]
 		public static void StampTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StampTestRoutine());
+			StartTest(StampTestRoutine());
 		}
 
 		static IEnumerator StampTestRoutine()
@@ -1327,7 +1327,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAmbienceTest", docs: "Dev, editor: atmosphere zones (fog, light, particles, seen from inside and outside) and sound zones (Raft's sounds, choosing one, listening)")]
 		public static void AmbienceTest()
 		{
-			DynamicIslands.instance.StartCoroutine(AmbienceTestRoutine());
+			StartTest(AmbienceTestRoutine());
 		}
 
 		static IEnumerator AmbienceTestRoutine()
@@ -1427,7 +1427,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAmbienceWorld", docs: "Dev, in game (host): an island with an atmosphere zone and a sound zone; standing in them")]
 		public static void AmbienceWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(AmbienceWorldRoutine());
+			StartTest(AmbienceWorldRoutine());
 		}
 
 		static IEnumerator AmbienceWorldRoutine()
@@ -1494,7 +1494,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestTest", docs: "Dev, editor: the quest editor - a quest with four steps, the window, save and load")]
 		public static void QuestTest()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestTestRoutine());
+			StartTest(QuestTestRoutine());
 		}
 
 		static IEnumerator QuestTestRoutine()
@@ -1553,7 +1553,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestWorld", docs: "Dev, in game (host): plays a quest - go to a zone, read a note, open a chest, defeat two warthogs - and gets the reward")]
 		public static void QuestWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestWorldRoutine());
+			StartTest(QuestWorldRoutine());
 		}
 
 		static IEnumerator QuestWorldRoutine()
@@ -1693,7 +1693,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CINoteLook", docs: "Dev, in game: stands the player in front of the nearest readable note and checks Raft's own interaction ray finds it")]
 		public static void NoteLook()
 		{
-			DynamicIslands.instance.StartCoroutine(NoteLookRoutine());
+			StartTest(NoteLookRoutine());
 		}
 
 		static IEnumerator NoteLookRoutine()
@@ -1741,7 +1741,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]
 		public static void ModelCheck()
 		{
-			DynamicIslands.instance.StartCoroutine(ModelCheckRoutine());
+			StartTest(ModelCheckRoutine());
 		}
 
 		static IEnumerator ModelCheckRoutine()

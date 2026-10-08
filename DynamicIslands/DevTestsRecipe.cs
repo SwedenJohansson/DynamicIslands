@@ -37,7 +37,7 @@ namespace DynamicIslands
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
-			DynamicIslands.instance.StartCoroutine(RecipeRoutine(string.Join(" ", args)));
+			StartTest(RecipeRoutine(string.Join(" ", args)));
 		}
 
 		public static string RecipeFolder { get { return Path.Combine(DynamicIslands.assetpath, "recipes"); } }
@@ -46,7 +46,7 @@ namespace DynamicIslands
 		public static void MeasureObjectsCommand(string[] args)
 		{
 			string want = args != null && args.Length > 0 ? string.Join(" ", args) : "all";
-			DynamicIslands.instance.StartCoroutine(MeasureObjects(want));
+			StartTest(MeasureObjects(want));
 		}
 
 		static IEnumerator MeasureObjects(string want)
@@ -75,7 +75,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]
 		public static void GroundingTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GroundingTestRoutine());
+			StartTest(GroundingTestRoutine());
 		}
 
 		static IEnumerator GroundingTestRoutine()
@@ -526,7 +526,7 @@ namespace DynamicIslands
 			EditorCamera ec = Camera.main.GetComponent<EditorCamera>();
 			if (ec != null) ec.enabled = false; // (it would move the camera back to where it was steering)
 			Camera.main.transform.SetPositionAndRotation(at - look * Vector3.forward * F(args[5]), look);
-			DynamicIslands.instance.StartCoroutine(ViewAtShot(args[6], ec));
+			StartTest(ViewAtShot(args[6], ec));
 		}
 
 		static IEnumerator ViewAtShot(string name, EditorCamera ec)
@@ -586,7 +586,7 @@ namespace DynamicIslands
 		public static void ProtoInfoCommand(string[] args)
 		{
 			string[] names = string.Join(" ", args ?? new string[0]).Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
-			DynamicIslands.instance.StartCoroutine(ProtoInfoRoutine(names));
+			StartTest(ProtoInfoRoutine(names));
 		}
 
 		static IEnumerator ProtoInfoRoutine(string[] names)
@@ -1508,7 +1508,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIView", docs: "Dev, editor: pictures of the editor's island without the editor's panels (Mods\\DynamicIslands\\recipes\\view_<name>_<n>.jpg, 1280x720): from four sides and from above, framed on the land - or one view from a point to a point (metres from the island's middle, heights above the sea): CIView <name> [x y z lookx looky lookz]")]
-		public static void ViewCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ViewRoutine(args ?? new string[0])); }
+		public static void ViewCommand(string[] args) { StartTest(ViewRoutine(args ?? new string[0])); }
 
 		static IEnumerator ViewRoutine(string[] args)
 		{
