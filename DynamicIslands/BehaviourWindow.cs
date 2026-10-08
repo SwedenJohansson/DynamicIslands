@@ -162,6 +162,7 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000, 0));
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
 			titleText = UIKit.Label(head, "BEHAVIOUR & EVENTS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Fit(titleText, 12);
 			UIKit.Label(head, "What it does in a world, and what happens when players use it", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			RectTransform box = UIKit.Rect("Body", panel);
 			UIKit.Size(box.gameObject, -1, 600);
@@ -388,6 +389,7 @@ namespace DynamicIslands.Editor
 			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
 			Text d = UIKit.Label(row, c.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);
+			UIKit.Fit(d, 8);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this check", 26, 28f, 12);
 			UIKit.DangerButton(del);
 		}
@@ -426,6 +428,7 @@ namespace DynamicIslands.Editor
 			else UIKit.Label(row, "", 12);
 			Text d = UIKit.Label(row, a.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);
+			UIKit.Fit(d, 8);
 			UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); list.Reverse(index - 1, 2); Rebuild(); } }, "Earlier", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this action", 26, 28f, 12);
 			UIKit.DangerButton(del);

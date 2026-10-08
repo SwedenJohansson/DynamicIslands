@@ -464,7 +464,7 @@ namespace DynamicIslands.Editor
 				icon.sprite = ContentCatalog.ItemSprite(item); icon.preserveAspect = true; icon.raycastTarget = false;
 				if (icon.sprite == null) icon.color = new Color(1, 1, 1, 0.1f);
 				Text label = UIKit.Label(row, ContentCatalog.ItemLabel(item), 12, ContentCatalog.ItemExists(item) ? UIKit.TextColor : UIKit.Danger);
-				label.horizontalOverflow = HorizontalWrapMode.Overflow;
+				UIKit.Fit(label, 8);
 				InputField amount = UIKit.Field(row, "1", loot[i].Value.ToString(), 24f, "How many");
 				UIKit.Size(amount.gameObject, 46, 24);
 				amount.contentType = InputField.ContentType.IntegerNumber;

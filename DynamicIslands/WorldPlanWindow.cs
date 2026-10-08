@@ -592,7 +592,7 @@ namespace DynamicIslands.Editor
 			RectTransform row = UIKit.Row(card, 16f, 6f, "Explain");
 			UIKit.Size(UIKit.Label(row, "", 11).gameObject, SectionLabel);
 			Text t = UIKit.Label(row, text, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Explanation");
-			t.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Fit(t, 8);
 			height += 16f + 6f;
 		}
 
@@ -1193,6 +1193,7 @@ namespace DynamicIslands.Editor
 		void DrawMap()
 		{
 			foreach (Transform child in map) Destroy(child.gameObject);
+			labelled.Clear();
 			var spots = new Dictionary<string, Vector2>(StringComparer.OrdinalIgnoreCase);
 			var dots = new List<KeyValuePair<string, Vector2>>();
 			Vector2 raft = Vector2.zero, sail = Vector2.up; // the raft sails north in the sketch
@@ -1230,6 +1231,9 @@ namespace DynamicIslands.Editor
 			return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? f * 1000f : 0f;
 		}
 
+		// Map spots that have a name beside them: a dot close to one of them goes without (names written over each other)
+		readonly List<Vector2> labelled = new List<Vector2>();
+
 		void Dot(string label, Vector2 world, Color color, float half, float extent)
 		{
 			Vector2 p = world / extent * half;
@@ -1237,9 +1241,12 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(r, new Vector2(0.5f, 0.5f), p, new Vector2(10, 10));
 			Image img = r.gameObject.AddComponent<Image>();
 			img.sprite = UIKit.Rounded(5); img.type = Image.Type.Sliced; img.color = color; img.raycastTarget = false;
+			r.SetAsFirstSibling(); // dots under every name
+			if (labelled.Any(q => Mathf.Abs(q.x - p.x) < 80f && Mathf.Abs(q.y - p.y) < 13f)) return;
+			labelled.Add(p);
 			Text t = UIKit.Label(map, label, 10, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Name");
 			UIKit.Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), p + new Vector2(52f, 0f), new Vector2(90, 14));
-			t.horizontalOverflow = HorizontalWrapMode.Overflow;
+			UIKit.Fit(t, 7);
 		}
 
 		#endregion

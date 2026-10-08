@@ -229,7 +229,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform reward = UIKit.Group(panel, "Reward and ending");
 			RectTransform rewardRow = UIKit.Row(reward, 26f, 6f, "Reward");
-			rewardText = UIKit.Label(rewardRow, "", 12, UIKit.TextColor);
+			rewardText = UIKit.Fit(UIKit.Label(rewardRow, "", 12, UIKit.TextColor), 8);
 			UIKit.Button(rewardRow, "Choose reward...", () =>
 			{
 				pickingReward = true;

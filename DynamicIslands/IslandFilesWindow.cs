@@ -138,6 +138,7 @@ namespace DynamicIslands.Editor
 
 			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			UIKit.Size(status.gameObject, -1, 34);
+			UIKit.Fit(status);
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			Button save = UIKit.Button(buttons, "Save", OnSave, "Save the island under this name (Enter)", -1, 34, 15);
@@ -170,6 +171,8 @@ namespace DynamicIslands.Editor
 				Text label = UIKit.LabelOf(entry);
 				label.alignment = TextAnchor.MiddleLeft;
 				label.rectTransform.offsetMin = new Vector2(10, 0);
+				label.rectTransform.offsetMax = new Vector2(-150, 0); // clear of the date and size on the right
+				UIKit.Fit(label, 9);
 				Text meta = UIKit.Label(entry.transform, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm") + "   " + Math.Max(1, info.Length / 1024) + " KB", 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Meta");
 				UIKit.Stretch(meta.rectTransform, 10, 10, 0, 0);
 			}

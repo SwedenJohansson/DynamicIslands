@@ -138,6 +138,7 @@ namespace DynamicIslands.Editor
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(status.gameObject, -1, 30);
+			UIKit.Fit(status);
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K too (the island list stays as it is) - click twice", 150, 34f, 14);
 			UIKit.Label(buttonsRow, "", 12);

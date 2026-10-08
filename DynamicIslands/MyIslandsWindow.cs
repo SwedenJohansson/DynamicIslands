@@ -118,6 +118,7 @@ namespace DynamicIslands.Editor
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(status.gameObject, -1, 34);
+			UIKit.Fit(status);
 
 			giveRow = UIKit.Row(panel, 28f, 6f, "GiveRow");
 			giveText = UIKit.Label(giveRow, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "GiveText");
@@ -184,6 +185,7 @@ namespace DynamicIslands.Editor
 			Text label = UIKit.LabelOf(pick);
 			label.alignment = TextAnchor.MiddleLeft;
 			label.rectTransform.offsetMin = new Vector2(8, 0);
+			UIKit.Fit(label, 9);
 			UIKit.SetActive(pick, n == picked);
 			UIKit.Size(UIKit.Label(row, src, 11, src == Mine ? UIKit.TextColor : UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 84, 26);
 			UIKit.Size(UIKit.Label(row, used == 0 ? "-" : used.ToString(), 12, used > 0 ? UIKit.TextColor : UIKit.TextMuted, TextAnchor.MiddleCenter).gameObject, 64, 26);

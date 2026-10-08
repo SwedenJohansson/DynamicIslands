@@ -548,6 +548,7 @@ namespace DynamicIslands.Editor
 			bool note = ObjectProps.IsNote(name, props), loot = ObjectProps.IsLoot(name, props);
 			TextMesh tag = Label(go);
 			ShowSignText(go, note ? ObjectProps.Get(props, ObjectProps.NoteTitle) : "");
+			ShowScribble(go, name, note, ObjectProps.Get(props, ObjectProps.NoteTitle));
 			bool behaves = BehaviourProps.Any(props);
 			if (!note && !loot && !behaves) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
 			if (tag == null)
@@ -613,6 +614,77 @@ namespace DynamicIslands.Editor
 			float fit = Mathf.Min(1f, 0.62f / Mathf.Max(0.001f, w), 0.36f / Mathf.Max(0.001f, h));
 			tm.transform.localScale = Vector3.one * fit;
 			return true;
+		}
+
+		public const string ScribbleName = "CI_Scribble";
+
+		/// <summary>
+		/// A readable notice board shows writing: Raft's board is a plain grey slab, so players couldn't tell it holds a
+		/// note (the user, 2026-10-08). Both faces get lines of made-up words - not the note itself, which is read with E.
+		/// The words come from the title, so a board looks the same every time and on every machine.
+		/// </summary>
+		public static void ShowScribble(GameObject go, string name, bool note, string title)
+		{
+			foreach (Transform old in go.transform.Cast<Transform>().Where(t => t.name == ScribbleName).ToList()) { old.SetParent(null, false); UnityEngine.Object.Destroy(old.gameObject); } // (off the board first: its bounds are measured next)
+			Bounds b;
+			if (!note || name != NotePrefix + "Board" || !CustomNote.LocalBounds(go, out b)) return;
+			// The thinnest side is the board's face
+			int axis = b.size.x <= b.size.y && b.size.x <= b.size.z ? 0 : b.size.y <= b.size.z ? 1 : 2;
+			Vector3 normal = axis == 0 ? Vector3.right : axis == 1 ? Vector3.up : Vector3.forward;
+			Vector3 up = axis == 1 ? Vector3.forward : Vector3.up;
+			Vector3 across = Vector3.Cross(up, normal);
+			float faceW = Mathf.Abs(Vector3.Dot(b.size, across)), faceH = Mathf.Abs(Vector3.Dot(b.size, up));
+			string text = Gibberish((title ?? "").Aggregate(17, (h, c) => h * 31 + c), 7, 30);
+			foreach (float side in new[] { 1f, -1f })
+			{
+				var t = new GameObject(ScribbleName);
+				t.transform.SetParent(go.transform, false);
+				TextMesh tm = t.AddComponent<TextMesh>();
+				tm.font = UIKit.Font;
+				tm.fontSize = 48;
+				tm.characterSize = 0.01f;
+				tm.anchor = TextAnchor.MiddleCenter;
+				tm.alignment = TextAlignment.Left;
+				tm.color = new Color(0.12f, 0.1f, 0.08f, 0.85f);
+				tm.text = text;
+				MeshRenderer mr = t.GetComponent<MeshRenderer>();
+				mr.sharedMaterial = UIKit.Font.material;
+				mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+				// Measured flat, then turned to face out of this side (a text mesh is read looking along its +z)
+				t.transform.rotation = Quaternion.identity;
+				t.transform.localScale = Vector3.one;
+				Vector3 s = t.transform.lossyScale, ws = go.transform.lossyScale;
+				Bounds tb = mr.bounds;
+				float w = tb.size.x / Mathf.Max(0.0001f, s.x), h = tb.size.y / Mathf.Max(0.0001f, s.y);
+				float fit = Mathf.Min(faceW * 0.8f / Mathf.Max(0.001f, w), faceH * 0.75f / Mathf.Max(0.001f, h));
+				t.transform.localRotation = Quaternion.LookRotation(-normal * side, up);
+				t.transform.localScale = Vector3.one * fit;
+				t.transform.localPosition = b.center + normal * side * (Vector3.Dot(b.extents, normal) + 0.004f / Mathf.Max(0.01f, Mathf.Abs(Vector3.Dot(ws, normal))));
+			}
+		}
+
+		static readonly string[] Syllables = { "ka", "lo", "mi", "ren", "tu", "sa", "vel", "or", "en", "di", "mar", "is", "qua", "ne", "tor", "al", "um", "be", "ris", "o" };
+
+		/// <summary>Lines of made-up words in a language nobody speaks (the same for the same seed).</summary>
+		static string Gibberish(int seed, int lines, int width)
+		{
+			var rnd = new System.Random(seed);
+			var rows = new List<string>();
+			for (int l = 0; l < lines; l++)
+			{
+				string row = "";
+				int len = l == 0 ? width / 2 : l == lines - 1 ? width * 2 / 3 : width;
+				while (row.Length < len)
+				{
+					string word = "";
+					for (int n = rnd.Next(1, 4); n > 0; n--) word += Syllables[rnd.Next(Syllables.Length)];
+					if (row.Length == 0 && l < 2) word = char.ToUpper(word[0]) + word.Substring(1);
+					row = row.Length > 0 ? row + " " + word : word;
+				}
+				rows.Add(l == 0 ? row : row + (rnd.Next(3) == 0 ? "." : ""));
+				if (l == 0) rows.Add("");
+			}
+			return string.Join("\n", rows.ToArray());
 		}
 
 		/// <summary>Breaks text into lines of at most about <paramref name="width"/> characters, at spaces.</summary>

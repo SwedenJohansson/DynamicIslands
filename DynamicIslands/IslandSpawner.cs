@@ -396,6 +396,7 @@ namespace DynamicIslands.Editor
 					{
 						CustomNote.Attach(go, o.Props);
 						ContentCatalog.ShowSignText(go, ObjectProps.Get(o.Props, ObjectProps.NoteTitle)); // a sign shows its title
+							ContentCatalog.ShowScribble(go, o.Name, true, ObjectProps.Get(o.Props, ObjectProps.NoteTitle)); // a board shows writing
 					}
 					// Numbered in file order like the creatures (the same on every machine)
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);

@@ -43,6 +43,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Notice boards look written on:** a readable notice board shows lines of made-up writing on both faces, so
+  players can see it holds a note.
+- **Text that didn't fit:** status lines, island names in the lists, behaviour rows and titles, World plans hints,
+  the quest reward line and inspector loot names wrap and shrink to stay in their boxes; names on the World plans map
+  no longer write over each other.
 - **Islands while sailing:** the row *Brand-new generated islands* now says what it does (hover it, and the list's
   intro): the mod makes up a random island now and then, saved as a gen-... file in that world; unticked, only made or
   downloaded islands and map types come. The New Game summary notes when it is off.

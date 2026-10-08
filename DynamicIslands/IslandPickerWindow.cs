@@ -165,7 +165,7 @@ namespace DynamicIslands.Editor
 			label.alignment = TextAnchor.MiddleLeft;
 			label.rectTransform.offsetMin = new Vector2(38, 0);
 			label.rectTransform.offsetMax = new Vector2(-230, 0);
-			label.horizontalOverflow = HorizontalWrapMode.Overflow;
+			UIKit.Fit(label, 9);
 			// The tick box: a frame with a golden square in it while the island takes part
 			RectTransform box = UIKit.Rect("Box", b.transform);
 			box.anchorMin = box.anchorMax = new Vector2(0f, 0.5f);

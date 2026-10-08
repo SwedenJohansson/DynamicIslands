@@ -356,6 +356,16 @@ namespace DynamicIslands.Editor
 			return t;
 		}
 
+		/// <summary>Keeps a long text inside its box: it wraps, then shrinks down to minSize (default two thirds of its size) instead of spilling out.</summary>
+		public static Text Fit(Text t, int minSize = 0)
+		{
+			int max = t.fontSize;
+			if (minSize <= 0) minSize = Mathf.Max(8, Mathf.RoundToInt(max * 0.65f));
+			t.resizeTextForBestFit = true; t.resizeTextMaxSize = max; t.resizeTextMinSize = Mathf.Min(minSize, max);
+			t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
+			return t;
+		}
+
 		/// <summary>Makes a text a heading in Raft's style (the title font a third larger, tan, dark shadow).</summary>
 		public static Text Heading(Text t, int size)
 		{

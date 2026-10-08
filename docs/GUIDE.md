@@ -1067,7 +1067,7 @@ starting Raft:
 ### 5.2 Notes and signs
 
 "Notes & signs" has a paper, a bundle of papers, an open book, a sign, a notice board and a message in a bottle, and
-**any object can be made readable** (**Readable...**). A sign shows its note's title on its board. The title can be 60 characters long, the text 4000. **Ctrl+Enter** saves, **Esc** cancels. **Remove** makes the object unreadable again.
+**any object can be made readable** (**Readable...**). A sign shows its note's title on its board, and a notice board shows lines of made-up writing on both faces, so players can tell there is something to read (the note itself opens with E). The title can be 60 characters long, the text 4000. **Ctrl+Enter** saves, **Esc** cancels. **Remove** makes the object unreadable again.
 
 ![A note on an object](images/editor-note.jpg)
 *An object with a note: its title "Hidden treasure" and the start of the text.*
