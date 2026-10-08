@@ -65,6 +65,15 @@ namespace DynamicIslands.Editor
 		/// <summary>Read the file again when next asked (an island was renamed in it).</summary>
 		internal static void Forget() { loadedFor = null; }
 
+		/// <summary>Tests: this player's rewards of an island's quests (key, key#questN) are forgotten, so a test island run again
+		/// in the same world pays again.</summary>
+		internal static void ForgetIsland(string island)
+		{
+			Load();
+			Predicate<string> his = k => k.Equals(island, StringComparison.OrdinalIgnoreCase) || k.StartsWith(island + "#", StringComparison.OrdinalIgnoreCase);
+			if (rewarded.RemoveWhere(his) + owed.RemoveWhere(his) > 0) Save();
+		}
+
 		/// <summary>The file this player's rewards of the world are kept in (logs).</summary>
 		internal static string WhereKept { get { return Path.GetFileName(FilePath); } }
 

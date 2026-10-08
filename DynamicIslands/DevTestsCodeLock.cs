@@ -154,6 +154,7 @@ namespace DynamicIslands
 			bool ok = true;
 			yield return EnsureAlive();
 			const string name = "cimorequests";
+			QuestRewards.ForgetIsland(name); // (an earlier run in this world was paid already)
 			var s = new IslandGenSettings { Seed = 8989, Radius = 30f, Height = 6f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
 			IslandFile f = IslandGenerator.CreateFile(s, name);
 			new IslandQuest { Title = "Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" }, new IslandQuest.Step { Type = "reach", Target = "tower" } }, Reward = "Rope*2" }.To(f.Props, 0);
@@ -161,7 +162,9 @@ namespace DynamicIslands
 			// (CB11: two steps asking for the same kill, both animals defeated before the first came)
 			new IslandQuest { Title = "Two bears", Steps = { new IslandQuest.Step { Type = "reach", Target = "den" }, new IslandQuest.Step { Type = "kill", Target = "Polar Bear" },
 				new IslandQuest.Step { Type = "reach", Target = "cave" }, new IslandQuest.Step { Type = "kill", Target = "Polar Bear" } } }.To(f.Props, 2);
-			Check(ref ok, IslandQuest.CountIn(f.Props) == 3 && f.Props.ContainsKey("quest2.steps"), "three quests in the island's settings (quest2.steps)");
+			// (CB11: a collect step the crew already has enough for moves on with the step before it, not half a second later)
+			new IslandQuest { Title = "Held already", Steps = { new IslandQuest.Step { Type = "reach", Target = "dock" }, new IslandQuest.Step { Type = "collect", Target = "story:cimqheld", Count = 1 } } }.To(f.Props, 3);
+			Check(ref ok, IslandQuest.CountIn(f.Props) == 4 && f.Props.ContainsKey("quest2.steps"), "four quests in the island's settings (quest2.steps)");
 			IslandWorldState.Remove(name);
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
@@ -188,6 +191,10 @@ namespace DynamicIslands
 			int bearStep = QuestTracker.StepOf(e, 2);
 			QuestTracker.Event(e, "reach", "cave");
 			Check(ref ok, bearStep == 2 && QuestTracker.IsDone(e, 2), "two bears defeated early count once each: both kill steps done (step after the den " + (bearStep + 1) + ", done " + QuestTracker.IsDone(e, 2) + ")");
+			StoryBook.Give("cimqheld", 1);
+			QuestTracker.Event(e, "reach", "dock");
+			Check(ref ok, QuestTracker.IsDone(e, 3), "an item held already: its collect step is done with the reach before it, at once (step " + QuestTracker.StepOf(e, 3) + ")");
+			StoryBook.Take("cimqheld", 1);
 			OnRaftCommand();
 			yield return new WaitForSeconds(0.5f);
 			yield return ReloadIslandRoutine(e);

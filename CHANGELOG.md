@@ -56,6 +56,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Quest steps already met move on at once:** a collect or pages step the crew already has enough for is ticked
+  together with the step before it, not half a second later.
 - **Stats page:** open when the world is left (a disconnect), it closes and no longer locks the cursor on the main menu.
 - **Island music:** music zones on an island switched on while a world was still loading now work (the fix for their
   red error in the editor skipped them).

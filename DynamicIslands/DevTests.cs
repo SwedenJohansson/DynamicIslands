@@ -324,16 +324,22 @@ namespace DynamicIslands
 			if (r.radarSection != null) r.radarSection.SetActive(true);
 			IslandRadar.Draw(r);
 			var list = IslandRadar.DotsOf(r).Where(d => d != null && d.gameObject.activeSelf).ToList();
-			bool ok = list.Count == IslandWorldState.Islands.Count;
-			// The first island: its dot must point towards it (receiver faces world forward)
-			if (ok && list.Count > 0)
+			// (LM2: far islands nobody needs any more are left off - one dot per island the radar shows)
+			List<IslandWorldState.Entry> shown = IslandRadar.Shown;
+			bool ok = list.Count == shown.Count && shown.Count > 0;
+			// Each dot points towards its island, seen from the way the receiver faces (dot i is shown island i - CB13)
+			float worst = 0f;
+			for (int i = 0; ok && i < list.Count; i++)
 			{
-				Vector3 toIsland = IslandWorldState.Islands[0].Position - r.transform.position;
-				Vector2 dotDir = ((RectTransform)list[0].transform).anchoredPosition;
-				float angle = Vector2.Angle(new Vector2(toIsland.x, toIsland.z), -dotDir); // Raft's dot maths mirrors the vector
-				Log("Island 0 is at " + new Vector2(toIsland.x, toIsland.z) + ", its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
+				Vector3 toIsland = shown[i].Position - r.transform.position;
+				Vector3 seen = Quaternion.Euler(0f, -r.transform.eulerAngles.y, 0f) * new Vector3(toIsland.x, 0f, toIsland.z);
+				Vector2 dotDir = ((RectTransform)list[i].transform).anchoredPosition;
+				float angle = Vector2.Angle(new Vector2(seen.x, seen.z), -dotDir); // Raft's dot maths mirrors the vector
+				if (i == 0) Log("Island 0 is at " + new Vector2(seen.x, seen.z) + " from the receiver, its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
+				if (dotDir.sqrMagnitude > 0.01f) worst = Mathf.Max(worst, angle);
 			}
-			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for " + IslandWorldState.Islands.Count + " island(s)");
+			Log((ok && worst < 3f ? "PASS" : "FAIL") + ": every dot points towards its island (worst " + worst.ToString("F1") + " degrees off)");
+			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for the " + shown.Count + " island(s) within reach or still needed (" + IslandWorldState.Islands.Count + " in the world)");
 			// (ROADMAP LM2: with a short receiverDistance only the islands within it, and those still needed, show)
 			float keep = CustomIslandSpawner.ReceiverDistance;
 			CustomIslandSpawner.ReceiverDistance = 1f;
@@ -1771,6 +1777,8 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("not in a game world"); yield break; }
 			if (!File.Exists(IslandSpawner.PathFor(TestIsland))) { Fail("run CITest in the editor first (no " + TestIsland + IslandFile.Extension + ")"); yield break; }
 
+			// (the island this spawn adds, not one of that name already in the world: by its entry, not the object's name - CB13)
+			var before = new HashSet<int>(IslandWorldState.Islands.Select(e => e.Id));
 			DynamicIslands.SpawnIslandCommand(new[] { TestIsland });
 
 			GameObject root = null;
@@ -1778,7 +1786,8 @@ namespace DynamicIslands
 			while (root == null && Time.realtimeSinceStartup < timeout)
 			{
 				yield return new WaitForSeconds(0.5f);
-				root = GameObject.Find("CustomIsland_" + TestIsland);
+				IslandWorldState.Entry added = IslandWorldState.Islands.FirstOrDefault(e => !before.Contains(e.Id) && e.Name == TestIsland);
+				root = added != null && !added.Loading ? added.Root : null;
 			}
 			if (root == null) { Fail("island root did not appear within 90s"); yield break; }
 

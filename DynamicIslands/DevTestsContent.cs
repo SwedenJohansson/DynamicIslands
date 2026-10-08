@@ -203,6 +203,27 @@ namespace DynamicIslands
 			Log("Interactable layers: " + LayerList(mask) + "; rays hit triggers: " + Physics.queriesHitTriggers + "; NavMesh agent types: " + NavMesh.GetSettingsCount());
 		}
 
+		/// <summary>The sum of a damage field ("AI_State_X.field", as CreatureSpawner.ScaleDamage lists it) over root's components.</summary>
+		static float DamageSum(GameObject root, string field)
+		{
+			int dot = field.IndexOf('.');
+			string type = field.Substring(0, dot), name = field.Substring(dot + 1);
+			float sum = 0f;
+			foreach (MonoBehaviour mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+			{
+				if (mb == null || mb.GetType().Name != type) continue;
+				for (Type c = mb.GetType(); c != null && c != typeof(MonoBehaviour); c = c.BaseType)
+				{
+					var f = c.GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly);
+					if (f == null) continue;
+					object v = f.GetValue(mb);
+					sum += v is int ? (int)v : (float)v;
+					break;
+				}
+			}
+			return sum;
+		}
+
 		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
 		public static void CreatureTest(string[] args)
 		{
@@ -320,7 +341,15 @@ namespace DynamicIslands
 				AI_Movement move = boar.GetComponentInChildren<AI_Movement>(true);
 				Check(ref ok, move != null && Mathf.Approximately(CreatureSpawner.SpeedOf(move), 1.5f), "speed \u00D71.5 registered (moving at " + (move != null ? move.MovementSpeed.ToString("F2") : "?") + ")");
 				List<string> fields = CreatureSpawner.ScaleDamage(prefab.gameObject, 1f); // only lists the fields (x1)
-				Check(ref ok, fields.Count > 0, "damage fields scaled \u00D71.5: " + string.Join(", ", fields.ToArray()));
+				// (the spawned warthog's values against the prefab's: each field x1.5, an int rounded - CB13)
+				var off = new List<string>();
+				foreach (string fld in fields.Distinct())
+				{
+					float raftV = DamageSum(prefab.gameObject, fld), ours = DamageSum(boar.gameObject, fld);
+					// (a field Raft fills in at run time, e.g. DamageBox.actualDamage, is 0 on the prefab: nothing to compare)
+					if (raftV != 0f && Mathf.Abs(ours - raftV * 1.5f) > 0.51f * fields.Count(x => x == fld)) off.Add(fld + " " + raftV + "->" + ours);
+				}
+				Check(ref ok, fields.Count > 0 && off.Count == 0, "damage fields scaled \u00D71.5: " + string.Join(", ", fields.ToArray()) + (off.Count > 0 ? " - not \u00D71.5: " + string.Join(", ", off.ToArray()) : ""));
 				Renderer r = boar.GetComponentsInChildren<Renderer>().FirstOrDefault(x => x is SkinnedMeshRenderer);
 				var block = new MaterialPropertyBlock();
 				if (r != null) r.GetPropertyBlock(block);

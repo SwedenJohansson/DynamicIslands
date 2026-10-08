@@ -303,6 +303,9 @@ namespace DynamicIslands.Editor
 			if (n == 0 && Advanced != null) try { Advanced(e.Id, step); } catch { }
 			if (AdvancedAny != null) try { AdvancedAny(e.Id, n, step); } catch { }
 			CreditEarly(e, n, q, step);
+			// (host: a counted step the crew already has enough for moves on now, not at the next half-second check - CB11)
+			if (Raft_Network.IsHost && step < q.Steps.Count && IslandQuest.Counted(q.Steps[step].Type) && Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e))
+				Set(e, n, step + 1, 0, true);
 			return true;
 		}
 

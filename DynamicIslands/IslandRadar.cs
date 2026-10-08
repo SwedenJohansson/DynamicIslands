@@ -54,6 +54,8 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<int, bool> needed = new Dictionary<int, bool>();
 		/// <summary>The islands shown this frame (one list kept: HandleUI runs every frame).</summary>
 		static readonly List<IslandWorldState.Entry> islands = new List<IslandWorldState.Entry>();
+		/// <summary>The islands the last Draw showed, dot i for island i (tests).</summary>
+		internal static List<IslandWorldState.Entry> Shown { get { return islands.ToList(); } }
 		/// <summary>Each dot's text and what it was made from (label, metres): made again only when they change.</summary>
 		sealed class DotText { public string Label, Text; public int Metres; }
 		static readonly Dictionary<Reciever_Dot, DotText> dotText = new Dictionary<Reciever_Dot, DotText>();
