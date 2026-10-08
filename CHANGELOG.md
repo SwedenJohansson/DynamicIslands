@@ -43,6 +43,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Single islands and plan islands written down:** the guide (7, 9.5, 16) and README now say that islands a world plan
+  brings (and the islands their rules bring) never come by chance, which files are never in the sailing list, and how
+  to make an island a single island.
 - **New islands come first:** a random pick counts an island the world already has (left behind, not finished) at a
   quarter of its weight, so the same island no longer comes back so often early on.
 - **"Comes by chance after ... km sailed"** (island editor, Island tab, Rules): the earliest an island may come by

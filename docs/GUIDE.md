@@ -1452,6 +1452,30 @@ island a *main* quest island is that a plan's story waits for its quest.
 | **Where you set it** | The plan's switch **Random islands while sailing** (World plans window); *which* islands: **World settings > Islands while sailing** ([9.5](#95-islands-while-sailing)) and `spawnpool.txt` ([10](#10-settings-files)) | A **rule** in the World plans window: WHEN **After sailing a distance**, BRING **One of my saved islands**, WHERE **Ahead of the raft**, TELL a message and a Receiver name, STORY **Side quest (not in the story)** | A **rule** in the World plans window: WHEN **When the world starts**, BRING **One of my saved islands**, WHERE **On the Receiver**, STORY **After** a story island, **next coordinates when** its quest is done |
 | **In the plan file** ([7.7](#77-the-plan-file)) | `random = on` | `rule = signal \| island:Signal Rock \| km:4 \| ahead:450 \| A mast on a rock ahead - its light is dead. \| Signal Rock` | `rule = cove \| island:Wreckers' Cove \| start \| receiver:700 \| Under the Radio Tower's signal hides another... \| Wreckers' Cove \| after:RadioTower \| quest` |
 
+#### Single islands and plan islands
+
+Seen from your island files there are only **two groups**:
+
+- **Single islands** are made, or downloaded, to be **found by chance while you sail**. They are the islands of the
+  spawn pool and of the list in World settings ([9.5](#95-islands-while-sailing)).
+- **Plan islands** come **only in their own world plan**, with their story: the islands a plan names in a rule
+  (`island:` or `oneof:` in [the plan file](#77-the-plan-file)) and the islands *those* islands' own rules bring
+  ([6.4](#64-islands-that-bring-islands)). A plan island **never turns up by chance**, not even when it is listed by
+  name in `spawnpool.txt`: one that came by chance in another world would be out of its story (or twice in the same
+  world, with its quest mixed up).
+
+The mod looks at every saved plan to tell them apart, so you do nothing: use an island in a plan and it is a plan
+island. Three kinds of files are never in the pool or the list at all: `rnd-...` (the [world randomizer's](#93-the-world-randomizer)
+extras), `gen-...` (made up while sailing, kept in their world) and `Name_<hash>` (copies kept for a multiplayer world).
+When you install a plan from the island library, its islands also get a `<island> 0` line in `spawnpool.txt` (weight 0
+= left out). Islands the plan shares with another library pack keep their line.
+
+**To make an island a single island**, use it in no plan - or save a copy under another name and use the copy in the
+plan. **Plans that come with the mod:** the samples Adventure, Growing sea, Island hopping and Receiver adventure
+([7.1](#71-the-plans-that-come-with-the-mod)); from the library First Voyage, Far Horizons and The Castaway's Trail;
+and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
+Seas ([16.4](#164-the-world-plans)).
+
 #### Random islands, in detail
 
 **How a world gets them.** In Raft's **New Game** box, **Custom Islands plan** → **Choose plan...** ([2](#2-starting-a-new-world)):
@@ -1469,10 +1493,8 @@ of the plan (step 4 of [7.2](#72-your-first-world-plan-step-by-step)); in the pl
 **Which islands can come.** The **spawn pool**: every island you have saved or downloaded (unless `spawnpool.txt`
 gives it weight 0), brand-new generated islands (`generated` in `spawnpool.txt`), and the map types listed there. For
 each new world you can untick islands in **World settings > Islands while sailing > CHOOSE ISLANDS...** (its row **Brand-new generated islands** is the made-up gen-... islands: untick it for none)
-([9.5](#95-islands-while-sailing)). A **plan's own islands never come by chance**: when you install a plan from the
-island library, its islands get weight 0 in `spawnpool.txt`, so Signal Rock can't turn up early as a random island and
-then again at 4 km. (Islands you built or saved yourself are in the pool unless you give them 0 - if a plan of yours
-uses one of your islands as a side trip or quest island, set it to 0 there, or untick it in the world's list.)
+([9.5](#95-islands-while-sailing)). A **plan's own islands never come by chance**, so Signal Rock can't turn up early
+as a random island and then again at 4 km ([plan islands](#single-islands-and-plan-islands)).
 
 **How often and where.** One after every **3-6 of Raft's own islands** met (Raft's plain islands - not its story
 islands - counted as the raft comes within about a kilometre of them; a new number in the span after each custom
@@ -1630,9 +1652,8 @@ by then. [16.4](#164-the-world-plans) lists every island of the plan.
 - **"Can I have only the plan's islands, no random ones?"** Yes: in your own plan, set **Random islands while sailing**
   to off. For a plan someone else made, make a copy (**Copy...** in World plans) and switch it off there, or untick
   every island in **World settings > Islands while sailing** for that world.
-- **"Can a random island be one of the plan's islands?"** Not for a plan installed from the library (its islands have
-  weight 0 in `spawnpool.txt`). For your own plan with your own islands, give them 0 in `spawnpool.txt` or untick them
-  in the world's list, or they can turn up by chance too.
+- **"Can a random island be one of the plan's islands?"** No: an island any saved plan names never comes by chance
+  ([plan islands](#single-islands-and-plan-islands)). To use it by chance too, save a copy under another name.
 - **"Where do I change the km, the message, or which island?"** In the editor: **World plans**, open the plan, change
   the rule's card, **Save**. A world already playing that plan gets the change the next time it loads; rules that have
   already fired stay done.
@@ -2198,7 +2219,8 @@ opens the list:
   shown, for example all your test islands at once.
 - **Islands of world plans are never in the list**: the islands a world plan brings - each plan's own story islands,
   and the islands those bring - only come in their own plan, so you never meet another plan's island out of its story.
-  The list holds the single islands: islands made or downloaded to be found while sailing. The world randomizer's own
+  The list holds the single islands: islands made or downloaded to be found while sailing
+  ([the two groups](#single-islands-and-plan-islands)). The world randomizer's own
   extras (`rnd-...` files) are never in it either. In the journal and other lists an extra is called by what it holds (**A castaway's stash**, **An abandoned camp**, **A treasure hunt**) or **Randomizer finds**, never by its file name.
 
 Only what you untick is kept, so islands you make or download later join older worlds too, unless you untick them when
@@ -2906,6 +2928,10 @@ The **island library** (ISLAND LIBRARY in the main menu) has islands and world p
 every hill, door, quest and rule in them was made with the buttons this guide shows. Play them, then **open them in
 the editor** and take them apart: they are the quickest way to learn how a quest island or a whole adventure is put
 together.
+
+A plan from the library brings its own islands, and they come only in that plan: they get weight 0 in `spawnpool.txt`
+and are never in the sailing list ([single and plan islands](#single-islands-and-plan-islands)). Islands you download
+on their own are single islands: they join the pool, unless you set **Also let it turn up while sailing** to no in the installer.
 
 Every island of the library also has **things to gather**, as Raft's own islands do: on land what suits the island -
 palms, mangoes, pineapples, melons and bananas on the tropical ones, pines, berries and flowers on the snowy and forest
