@@ -2893,7 +2893,7 @@ together.
 
 Every island of the library also has **things to gather**, as Raft's own islands do: on land what suits the island -
 palms, mangoes, pineapples, melons and bananas on the tropical ones, pines, berries and flowers on the snowy and forest
-ones, date palms and melons in the desert, black and red flowers on the volcanic ones - and in the shallows round it
+ones, palms and melons in the desert, black and red flowers on the volcanic ones - and in the shallows round it
 Raft's sea finds: sand, clay, stones, metal and copper ore, scrap, giant clams and seaweed.
 
 ### 16.1 Opening an example in the editor

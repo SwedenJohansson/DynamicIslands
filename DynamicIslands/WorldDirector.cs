@@ -380,7 +380,7 @@ namespace DynamicIslands.Editor
 # rule = id | what | when | where | message | receiver label
 #   what:  island:<saved island>   type:<map type>   pool   oneof:<island>, <island>, ...
 #   when:  start   km:<km sailed>   day:<day>   quest:<ref>   step:<ref>:<steps done>
-#          zone:<ref>:<zone name>   visit:<ref>   rule:<rule id>
+#          zone:<ref>:<zone name>   signal:<ref>:<signal name>   visit:<ref>   rule:<rule id>
 #   where: ahead:<metres>   near:<ref>:<metres>:<direction>   (any, north, north-east, east, ... or degrees)
 #          receiver:<metres>   (its own frequency on Raft's Receiver: it comes when a player tunes to it)
 #          sailing:<metres>    (it comes up ahead by chance while sailing)
@@ -393,7 +393,7 @@ namespace DynamicIslands.Editor
 #          or reaching it) - then the next island's coordinates are found
 #   An island in the story is MAIN STORY: it gets a tab in Raft's notebook (its quest steps, intro and notes there);
 #   every other island is a side quest (the journal). Three more parts style the tab:
-#   rule = ... | place | done when | tab title | tab colour 1-10 | tab intro (\n = a new line)
+#   rule = ... | place | done when | tab title | tab colour 1-10 (not 3) | tab intro (\n = a new line)
 # storyending = the last page of the main story in Raft's notebook (\n = a new line)
 # story = on|off        (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
 #                         Varuna Point, Temperance, Utopia. off = only the plan's own islands: a new adventure)

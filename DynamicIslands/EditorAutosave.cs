@@ -174,7 +174,7 @@ namespace DynamicIslands.Editor
 			var choices = waiting.Take(8).Select(n => new ChoiceWindow.Choice(n, "Open '" + n + "'",
 				"autosaved " + File.GetLastWriteTime(PathFor(n)).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) +
 				(File.Exists(IslandSpawner.PathFor(n)) ? " - newer than its saved island" : " - never saved"))).ToList();
-			choices.Add(new ChoiceWindow.Choice(DiscardChoice, "Throw them away", "the unsaved changes are deleted"));
+			choices.Add(new ChoiceWindow.Choice(DiscardChoice, "Throw them away", "the unsaved changes are moved to the deleted\\autosave folder"));
 			choices.Add(new ChoiceWindow.Choice(LaterChoice, "Not now", "asked again the next time the editor opens"));
 			Log("Unsaved work from last time: " + string.Join(", ", waiting.ToArray()));
 			ChoiceWindow.Open("Unsaved work from last time", choices, Pick);

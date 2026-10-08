@@ -1258,7 +1258,7 @@ namespace DynamicIslands
 			foreach (string line in (Raft_Network.IsHost ? WorldDirector.Describe() : WorldDirector.DescribeForPlayer()).Split('\n')) Debug.Log("[CUSTOM ISLANDS] " + line);
 		}
 
-		[ConsoleCommand(name: "Randomizer", docs: "The world randomizer (chosen in the New Game box): Randomizer = what it does in this world; Randomizer off|light|normal|wild, Randomizer -part / +part (colours, animals, alphas, loot, finds, oddities, bosses) = change it for this world (host)")]
+		[ConsoleCommand(name: "Randomizer", docs: "The world randomizer (chosen in the New Game box): Randomizer = what it does in this world; Randomizer off|light|normal|wild, Randomizer -part / +part (colours, animals, alphas, loot, finds, oddities, bosses, large) = change it for this world (host)")]
 		public static void RandomizerCommand(string[] args)
 		{
 			if (args != null && args.Length > 0)

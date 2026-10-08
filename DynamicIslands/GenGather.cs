@@ -75,7 +75,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The kinds the builder can switch off (GatherOff's keys), with what they are called: on the land, then in the shallows.</summary>
 		public static readonly string[] LandKeys = { "palm", "datepalm", "mango", "pineapple", "watermelon", "banana", "pine", "birch", "berry", "flower", "dirt", "hive" };
-		public static readonly string[] LandLabels = { "Palms", "Date palms", "Mangoes", "Pineapples", "Watermelons", "Bananas", "Pines", "Birches", "Berries", "Flowers", "Dirt", "Beehives" };
+		public static readonly string[] LandLabels = { "Palms", "Desert palms", "Mangoes", "Pineapples", "Watermelons", "Bananas", "Pines", "Birches", "Berries", "Flowers", "Dirt", "Beehives" };
 		public static readonly string[] SeaKeys = { "sand", "clay", "stone", "iron", "copper", "scrap", "clam", "seaweed" };
 		public static readonly string[] SeaLabels = { "Sand", "Clay", "Stone", "Iron ore", "Copper ore", "Scrap", "Giant clams", "Seaweed" };
 

@@ -299,7 +299,7 @@ namespace DynamicIslands.Editor
 			new Design { Id = "rt.rig", Scene = "Landmark_Radar", Label = "An oil rig", Build = Rig,
 				Hint = "An oil rig over the shallow sea off the island: four of the tower's floors on legs down to the sea floor, railings, a control room with the dish, a flare stack, ladders down to a boat" },
 			new Design { Id = "rt.lighthouse", Scene = "Landmark_Radar", Label = "A lighthouse under construction", Build = Lighthouse,
-				Hint = "A lighthouse being built on a headland: 3 to 5 storeys of the tower's walls and floors, the top ones unfinished, poles around it, the lamp still waiting by the door (or up, when it's finished)" },
+				Hint = "A lighthouse being built on a headland: 4 to 6 storeys of the tower's walls and floors, the top ones unfinished, poles around it, the lamp still waiting by the door (or up, when it's finished)" },
 		};
 
 		/// <summary>The designs for one of Raft's islands (its scene name).</summary>

@@ -293,7 +293,7 @@ namespace DynamicIslands.Editor
 			planButton = UIKit.Button(planRow, "Plan", PickPlan, "Choose the plan to edit", 320, 30f, 13);
 			newButton = UIKit.Button(planRow, "New...", () => AskName("New plan", "A new, empty plan", "", n => Show(NewPlan(n))), "Start a new plan", 90, 30f, 12);
 			copyButton = UIKit.Button(planRow, "Copy...", () => AskName("Copy plan", "A copy of '" + plan.Name + "'", plan.Name + " copy", n => { Keep(); var c = WorldPlan.Parse(n, plan.ToText()); c.Save(); Show(c); }), "Save a copy under another name", 90, 30f, 12);
-			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Delete this plan (worlds that use it keep their islands; their rules stop)", 90, 30f, 12);
+			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Move this plan to the deleted\\plans folder (worlds that use it keep their own copy)", 90, 30f, 12);
 			UIKit.DangerButton(deleteButton);
 			HelpMark(planRow, HelpPlans);
 			UIKit.Size(UIKit.Label(planRow, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
@@ -706,7 +706,7 @@ namespace DynamicIslands.Editor
 			Tag(c, "tab title");
 			SmallField(c, r.TabName, r.TabTitle, 150, "The tab's title in Raft's notebook (empty: the Receiver name, else the island's name)", v => r.TabTitle = v.Replace("|", "/").Trim()).characterLimit = 24;
 			DropList.Make(c, "Drop_TabColour", TabColourOptions, r.TabColour.ToString(CultureInfo.InvariantCulture), v => { Keep(); int n; r.TabColour = int.TryParse(v, out n) ? n : 0; ShowRules(); }, 170,
-				"The tab's colour: one of Raft's ten notebook tab colours");
+				"The tab's colour: one of Raft's nine notebook tab colours");
 			Fill(c);
 			HelpMark(c, HelpNotebook);
 			RectTransform intro = Section(card, "", ref height);
@@ -898,10 +898,10 @@ namespace DynamicIslands.Editor
 			"Off: the world gets only the islands its rules bring. Best for a story.";
 		const string HelpStory = "Raft's own story: Radio Tower, Vasagatan ... Utopia, each found by tuning the Receiver to the frequency on the island before.\n\n" +
 			"On: it stays in worlds with this plan, next to your islands. Off: only your plan's islands - a new adventure.\n\n" +
-			"Click a story island's name to leave it out: the note before it then leads to the one after. A rule's \"In Raft's story\" can put one of your islands into this chain.";
+			"Click a story island's name to leave it out: the note before it then leads to the one after. A rule's STORY part can put one of your islands into this chain.";
 		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Custom Islands plan).";
 		const string HelpMap = "A rough sketch from above of where the rules put their islands: the raft starts in the middle and sails up (north). " +
-			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (yellow).";
+			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (blue).";
 		const string HelpCheck = "Check goes through the plan the way a world will play it, and looks inside the islands: can each island's quest be finished " +
 			"(is there a zone, note, chest or creatures for every step)? Do the zones and signals the rules wait for exist? Do rules wait for each other in a circle, " +
 			"or for an island no rule brings? A report opens: problems (the rule can't work), warnings (it may not work as you mean) and tips, each with how to fix it. " +
@@ -920,7 +920,7 @@ namespace DynamicIslands.Editor
 			"\"island\": the id of the rule that brought it, or the island's name. The ▾ after a field lists them: the plan's rules, your saved islands (with their quests), and an island's zones, signals or quest steps.";
 		const string HelpWhenIsland = "WHEN the island comes - choose from the list: when this island's quest is done, when some of its quest steps are done, when one of its zones fires, " +
 			"when players first reach it, when it sends a signal... \"self\" means this island.";
-		const string HelpWhat = "WHAT island comes - choose from the list:\n" +
+		const string HelpWhat = "BRING: which island comes - choose from the list:\n" +
 			"• A new island of a map type: the mod makes it new for each world - a camp, volcano, wreck, sky island... (▾ lists them). No file needed, so it always works when shared\n" +
 			"• One of my saved islands: an island you built (▾ lists them)\n" +
 			"• One island from a list: island names with commas between them; one is picked (▾ adds one)\n• A random island (spawn pool): any island of your spawn pool";
@@ -932,8 +932,8 @@ namespace DynamicIslands.Editor
 		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - Any way means wherever there's room.";
 		const string HelpTell = "Message: shown to every player when the island appears, with how far and which way it is (e.g. \"Smoke rises from a small island ahead.\").\n\n" +
 			"Receiver name: the island's name on its dot on Raft's Receiver. Both are optional.";
-		const string HelpStoryPlace = "Optional: puts this island into Raft's story chain (found with the Receiver): first, after a story island (or one of your story islands), or in place of one.\n\n" +
-			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"Not in Raft's story\" for an ordinary rule. The ▾ after its field lists the zones, signals or quest steps of the island it brings.";
+		const string HelpStoryPlace = "Optional: makes this island part of the main story (Raft's notebook): first, beside Raft's story, after a story island (or one of your story islands), or in place of one. A side quest goes in the journal (J) instead.\n\n" +
+			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"Side quest (not in the story)\" for an ordinary rule. The ▾ after its field lists the zones, signals or quest steps of the island it brings.";
 
 		/// <summary>The Help button: how to approach the window, step by step, and the guide.</summary>
 		void ShowHelp()

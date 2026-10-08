@@ -95,7 +95,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The versions a report needs: the mod's and Raft's.</summary>
 		public static string Versions { get { return "Custom Islands " + ExperimentalNotice.Version + ", Raft " + Application.version; } }
 
-		/// <summary>The form to fill in (the guide's section 13), with the versions filled in.</summary>
+		/// <summary>The form to fill in (the guide's section 15), with the versions filled in.</summary>
 		public static string ReportTemplate
 		{
 			get
@@ -104,9 +104,9 @@ namespace DynamicIslands.Editor
 					"Steps to make it happen:\n  1.\n  2.\n  3.\n" +
 					"What I expected:\n" +
 					"How often: every time / now and then / once\n" +
-					"Versions: " + Versions + ", mod loader:          other mods:\n" +
+					"Versions: " + Versions + ", mod loader:, other mods:\n" +
 					"Single player or together: (host / joined, how many players)\n" +
-					"World plan and World settings: (what WorldPlan, WorldOptions, Monsters, BuildCost, Randomizer, WorldIslands print in the F10 console)\n" +
+					"World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, WorldIslands, SpawnPool print)\n" +
 					"Islands and world plans used: (names, files or download links)\n" +
 					"Attached: Player.log, Player-prev.log, screenshots, ...\n";
 			}

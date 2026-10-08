@@ -142,7 +142,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			Button save = UIKit.Button(buttons, "Save", OnSave, "Save the island under this name (Enter)", -1, 34, 15);
 			UIKit.Primary(save);
-			UIKit.Button(buttons, "Open", OnLoad, "Open the picked island (unsaved changes are lost)", -1, 34, 15);
+			UIKit.Button(buttons, "Open", OnLoad, "Open the picked island (unsaved changes are kept as an autosave)", -1, 34, 15);
 			Button ren = UIKit.Button(buttons, "Rename", OnRename, "Rename the picked island: press Rename, type the new name, press Rename again (worlds, plans and rules that name it follow)", -1, 34, 15);
 			ren.name = "Button_Rename";
 			Button del = UIKit.Button(buttons, "Delete", OnDelete, "Delete the picked island's file (asks first)", -1, 34, 15);

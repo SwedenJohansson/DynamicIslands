@@ -198,7 +198,7 @@ namespace DynamicIslands.Editor
 			UIKit.Label(rrow, "Comes back after", 13, UIKit.TextMuted);
 			bool respawns = ObjectProps.Respawns(p);
 			Button on = UIKit.Button(rrow, (EditorRegrowDays > 0 ? EditorRegrowDays + " days" : "never (island rule)"), () => { Set(target, ObjectProps.CreatureRespawn, null); Refresh(); },
-				"Killed or caught animals come back after the world's regrow time (spawnpool.txt: regrowDays), like trees", 110, 26f, 12);
+				"Killed or caught animals come back after the island's regrow days (its Island tab rule, else the world's setting), like trees", 110, 26f, 12);
 			Button off = UIKit.Button(rrow, "Never", () => { Set(target, ObjectProps.CreatureRespawn, "0"); Refresh(); }, "Once killed or caught, gone for good in that world", 64, 26f, 12);
 			UIKit.SetActive(on, respawns);
 			UIKit.SetActive(off, !respawns);
@@ -498,7 +498,7 @@ namespace DynamicIslands.Editor
 			UIKit.Label(refill, "Fills up again", 12, UIKit.TextMuted);
 			bool refills = ObjectProps.LootRefills(target.Props);
 			Button on = UIKit.Button(refill, EditorRegrowDays > 0 ? "after " + EditorRegrowDays + " days" : "never (rule)", () => { Set(target, ObjectProps.LootRefill, null); Refresh(); },
-				"Once looted, it fills up again after the world's regrow time (spawnpool.txt: regrowDays)", 96, 24f, 11);
+				"Once looted, it fills up again after the island's regrow days (its Island tab rule, else the world's setting)", 96, 24f, 11);
 			Button off = UIKit.Button(refill, "Never", () => { Set(target, ObjectProps.LootRefill, "0"); Refresh(); }, "Once looted, it stays empty in that world", 56, 24f, 11);
 			UIKit.SetActive(on, refills);
 			UIKit.SetActive(off, !refills);

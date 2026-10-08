@@ -84,7 +84,7 @@ namespace DynamicIslands.Editor
 			Button export = UIKit.Button(buttons, "Export", Export, "Write the pack (.zip) to Mods\\DynamicIslands\\exports", 130, 34f, 15);
 			UIKit.Primary(export);
 			openButton = UIKit.Button(buttons, "Open folder", OpenFolder, "Show the exported pack in Windows' file explorer", 130, 34f, 13);
-			shareButton = UIKit.Button(buttons, "Share...", Share, "Open the island library's page in your browser to send the pack in (attach the .zip)", 130, 34f, 13);
+			shareButton = UIKit.Button(buttons, "Share...", Share, "Open the library's GitHub submit form in your browser to send the pack in (attach the .zip). Or post it on the Discord", 130, 34f, 13);
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(buttons, "Close", Close, "Close", 110, 34f, 13);
 			WindowKeys keys = window.gameObject.AddComponent<WindowKeys>();
@@ -267,7 +267,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform packs = UIKit.Group(panel, "Packs to import (Mods\\DynamicIslands\\import)", "Packs");
 			RectTransform packTools = UIKit.Row(packs, 28f, 6f, "PackTools");
-			UIKit.Label(packTools, "Put a pack you got into the import folder, then pick it here.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Label(packTools, "Put a pack you got into the import folder, then pick it here. Worlds you have started keep their version.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Button(packTools, "Open import folder", OpenImportFolder, "Show the import folder in Windows' file explorer", 160, 28f, 12);
 			UIKit.Button(packTools, "Refresh", Refresh, "Look for packs again", 90, 28f, 12);
 			RectTransform packBox = UIKit.Rect("PackBox", packs);
