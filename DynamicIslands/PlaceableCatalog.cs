@@ -292,6 +292,10 @@ namespace DynamicIslands.Editor
 		}
 
 		public static bool IsLoaded(string name) { return prototypes.ContainsKey(name); }
+		/// <summary>The objects loaded now (tests).</summary>
+		internal static IEnumerable<string> LoadedNames { get { return prototypes.Keys; } }
+		/// <summary>Whether the index knows the object (loaded or not).</summary>
+		public static bool IsIndexed(string name) { return name != null && index.ContainsKey(name); }
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
 
 		/// <summary>

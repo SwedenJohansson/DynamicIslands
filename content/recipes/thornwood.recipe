@@ -2,7 +2,7 @@
 # Quest "The Boar King of Thornwood" (21 steps): the explorer's camp, his diary and map; the Shrine of the Roots and its
 # tusk; the gorge's rim, the carved post and the rope bridge; the trail to the falls, the Shrine of the Falls and its
 # tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail up the hill, the stone temple, the
-# Warthog King and his guards, the boar idol, the offering on the altar (the machete); the explorer's two vine caches.
+# Boar King and his guards, the boar idol, the offering on the altar (the machete); the explorer's two vine caches.
 include lib_sea
 include lib_features
 new
@@ -152,7 +152,7 @@ call shallows r=135 deep=5 n=3
 
 info title=Thornwood
 info author=Custom Islands
-info description=A jungle island split by a river gorge. An explorer's camp on the beach, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Warthog King guards the boar idol. Inspired by Raft's Balboa.
+info description=A jungle island split by a river gorge. An explorer's camp on the beach, an old rope bridge, three shrines in the jungle - and on the hill, a ring of standing stones where the Boar King guards the boar idol. Inspired by Raft's Balboa.
 island on.arrive=message||Dense jungle, a gorge cut through it - and on the hill, a ring of standing stones.
 
 story tusk|Carved tusk|Placeable_HonkHorn_3|A boar's tusk carved with spirals - an offering from one of Thornwood's shrines.
@@ -198,7 +198,7 @@ prop hilltrail zone.radius=3
 prop hilltrail zone.message=The trail steepens. Boar tracks in the mud, big ones - all heading up the hill.
 prop temple zone.id=temple
 prop temple zone.radius=12
-prop temple zone.message=The stone ring of Thornwood. Something huge snorts behind the idol - the Warthog King!
+prop temple zone.message=The stone ring of Thornwood. Something huge snorts behind the idol - the Boar King!
 prop king creature.count=1
 prop king creature.size=2.6
 prop king creature.health=8
@@ -248,12 +248,12 @@ step open|Shrine of the Hill|1|Find the Shrine of the Hill on the temple hill's 
 step collect|story:tusk|3|Carry all three carved tusks up the hill
 step reach|hilltrail|1|Follow the boar trail up the temple hill
 step reach|temple|1|Climb to the stone temple on the hill
-step kill|Warthog|3|Defeat the Warthog King and his guards
+step kill|Warthog|3|Defeat the Boar King and his guards
 step read|The boar idol|1|Read the spirals carved down the boar idol's flanks
 step open|Temple offering|1|Lay the three tusks on the altar
 step open|Vine cache by the temple|1|Cut through the vines near the temple with the new machete
 step open|Vine cache by the camp|1|Back towards the beach: cut open the second cache behind the vines
-quest done=The Warthog King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.
+quest done=The Boar King is dead, the tusks lie on the altar and the explorer's caches are found. The temple's offering - and a machete blueprint the explorer left - are yours.
 quest reward=Leather*6;Feather*6;Rope*4
 
 save Thornwood

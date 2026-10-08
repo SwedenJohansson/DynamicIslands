@@ -58,7 +58,7 @@ pop
 place Placeable_Juicer press at -0.8 37.6 h=2.75 sit yaw=90
 place TP_Moontown_Barrel02 casks at -1.6 31 h=2.75 sit
 place TP_Moontown_Barrel02 casks at -0.8 31 h=2.75 sit yaw=40
-place TP_Moontown_Barrel02 casks at -1.2 31.7 h=3.87 sit yaw=10
+place TP_Moontown_Barrel02 casks at -1.2 31 h=3.87 sit yaw=10
 place Table_Common_01 - at 0.8 31.6 h=2.75 sit yaw=0
 place Note_Book bramsnote at 0.8 31.6 h=4 drop yaw=20
 place "Box Small" shedbox at 3.6 30.4 h=2.75 sit yaw=15

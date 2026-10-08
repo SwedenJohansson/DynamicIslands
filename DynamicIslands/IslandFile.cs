@@ -21,6 +21,11 @@ namespace DynamicIslands.Editor
 		/// tint... Keys and values are plain strings, see ObjectProps.
 		/// </summary>
 		public Dictionary<string, string> Props;
+		/// <summary>
+		/// The object's own number in its island (ROADMAP R1b): kept through edits, so a saved world finds what was used
+		/// on it after objects before it were removed or added. 0 = not given yet (a new object: the save gives one). See StableIds.
+		/// </summary>
+		public int Uid;
 	}
 
 	/// <summary>
@@ -55,6 +60,9 @@ namespace DynamicIslands.Editor
 	///              resolution (R), byte[4*R*R] weights of layers 5-8, layer-major then row-major. The paint above then
 	///              holds layers 1-4 with layers 5-8 added onto them (5 onto 1, 6 onto 2...), so a version without mixed
 	///              styles shows the first style's matching texture there; this version takes layers 5-8 back out.
+	///     "uid"    stable object ids (ROADMAP R1b, StableIds): int32 version, int32 count, int32 next id, int32 hash of
+	///              the object names, int32 id per object. Written only when the ids are not 1..n; a file without it
+	///              (or with a wrong count or hash) numbers its objects by place.
 	/// </summary>
 	public class IslandFile
 	{
@@ -119,6 +127,9 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public Dictionary<string, byte[]> Tail = new Dictionary<string, byte[]>();
 
+		/// <summary>The number the next new object gets (R1b, StableIds): never one a removed object had.</summary>
+		public int NextUid = 1;
+
 		public void Save(string path)
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
@@ -132,6 +143,8 @@ namespace DynamicIslands.Editor
 				int paintLayers = AlphamapLayers;
 				var tail = new Dictionary<string, byte[]>(Tail ?? new Dictionary<string, byte[]>());
 				tail.Remove(MixTag);
+				// (the objects' own numbers: only when they aren't simply 1, 2, 3... - such files stay as before)
+				StableIds.WriteTail(this, tail);
 				if (HasPaint && AlphamapLayers > TerrainPainter.LayerCount)
 				{
 					byte[] extra;
@@ -302,6 +315,7 @@ namespace DynamicIslands.Editor
 						catch (EndOfStreamException) { }
 						island.ReadMix();
 					}
+					StableIds.ReadTail(island);
 					return island;
 				}
 			}
@@ -413,6 +427,7 @@ namespace DynamicIslands.Editor
 					Position = t.position - terrain.transform.position,
 					EulerRotation = t.rotation.eulerAngles,
 					Scale = t.lossyScale,
+					Uid = ego.Uid,
 				});
 			}
 			return island;

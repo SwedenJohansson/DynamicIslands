@@ -114,25 +114,25 @@ namespace DynamicIslands
 			bool ok = true;
 			Func<string, bool> mine = n => n.StartsWith("cipk-twin", StringComparison.OrdinalIgnoreCase);
 			ScDeleteIslands(mine);
-			ScDeletePlan("CI Pack A", "CI Pack B");
-			foreach (string id in new[] { "ci-pack-a", "ci-pack-b" }) try { LibraryPack.Remove(id); } catch { }
+			ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack C");
+			foreach (string id in new[] { "ci-pack-a", "ci-pack-b", "ci-pack-a-ci-other" }) try { LibraryPack.Remove(id); } catch { }
 			string error;
 			try
 			{
-				Func<string, int, string, LibraryPackContents> make = (plan, seed, keyName) =>
+				Func<string, int, string, string, string, LibraryPackContents> make = (plan, seed, keyName, packId, author) =>
 				{
 					MakeLibIsland("cipk-twin", seed);
 					IslandFile f = IslandFile.Load(IslandSpawner.PathFor("cipk-twin"));
 					f.Props[StoryItems.Key] = "cipkkey|" + keyName + "||A key from " + plan;
 					f.Save(IslandSpawner.PathFor("cipk-twin"));
 					WorldPlan.Parse(plan, "random = off\nrule = start | island:cipk-twin | start | ahead:300 | | Twin\n").Save();
-					string z = LibraryPack.Export(new LibraryInfo { title = plan, id = plan.ToLowerInvariant().Replace(' ', '-'), author = "CI Tester", summary = "test", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
+					string z = LibraryPack.Export(new LibraryInfo { title = plan, id = packId ?? plan.ToLowerInvariant().Replace(' ', '-'), author = author ?? "CI Tester", summary = "test", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
 					LibraryPackContents p = z != null ? LibraryPack.Read(z, out error) : null;
 					File.Delete(IslandSpawner.PathFor("cipk-twin"));
 					ScDeletePlan(plan);
 					return p;
 				};
-				LibraryPackContents a = make("CI Pack A", 31, "Red key"), b = make("CI Pack B", 32, "Blue key");
+				LibraryPackContents a = make("CI Pack A", 31, "Red key", null, null), b = make("CI Pack B", 32, "Blue key", null, null);
 				Check(ref ok, a != null && b != null, "two packs exported, each with its 'cipk-twin' and a story item 'cipkkey'");
 				if (a != null && b != null)
 				{
@@ -146,14 +146,21 @@ namespace DynamicIslands
 					string text = rb.ToString();
 					Check(ref ok, text.IndexOf("cipkkey", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("story item", StringComparison.OrdinalIgnoreCase) >= 0,
 						"importing B warns that its story item 'cipkkey' has the same id as A's (one store: A's key would open B's door) - T8");
+					// (another author's pack with A's id: an entry of its own, A's files untouched - CB4)
+					LibraryPackContents c = make("CI Pack C", 33, "Green key", "ci-pack-a", "CI Other");
+					LibraryPack.Report rc = c != null ? LibraryPack.Install(c, false, false, LibraryPack.SourceImport) : null;
+					List<LibraryInstalled> inst = LibraryPack.Installed();
+					LibraryInstalled ea = inst.FirstOrDefault(e => e.id == "ci-pack-a"), ec = inst.FirstOrDefault(e => e.id == "ci-pack-a-ci-other");
+					Check(ref ok, rc != null && ea != null && ea.author == "CI Tester" && ea.title == "CI Pack A" && ec != null && ec.author == "CI Other" && File.Exists(IslandSpawner.PathFor("cipk-twin"))
+						&& WorldPlan.Load("CI Pack A") != null, "another author's pack with A's id is an entry of its own ('" + (ec != null ? ec.id : "none") + "'), A's kept (" + (rc != null ? rc.ToString().Replace("\n", " / ") : "no report") + ")");
 				}
 			}
 			catch (Exception ex) { Check(ref ok, false, "no errors: " + ex.Message); }
 			finally
 			{
-				foreach (string id in new[] { "ci-pack-a", "ci-pack-b" }) try { LibraryPack.Remove(id); } catch { }
+				foreach (string id in new[] { "ci-pack-a", "ci-pack-b", "ci-pack-a-ci-other" }) try { LibraryPack.Remove(id); } catch { }
 				ScDeleteIslands(mine);
-				ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack A (CI Tester)", "CI Pack B (CI Tester)");
+				ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack C", "CI Pack A (CI Tester)", "CI Pack B (CI Tester)", "CI Pack C (CI Other)");
 			}
 			if (ok) Log("PASS: scenario two packs"); else Fail("scenario two packs");
 		}

@@ -461,7 +461,7 @@ story fenmint|Fen-mint|Placeable_Utopia_Herb_6|A bunch of fen-mint from the herm
 story townseal|Sevenbridge's seal|quest:Tangaroa_Token|The town seal, dropped from the town bell's rope when it rings for seven bridges.
 
 note wardenmap The fen-warden's map | THE GREAT FEN - WARDEN'S MAP\n\nSevenbridge raised its seven bridges in the fever year. Each windlass is held by a village:\nREEDCUT (north) - the Reed Bridge. EELMARSH (north-east) - the Eel Bridge. MOTHWICK (east) - the Wisp Bridge. TURFHOLM (south-east) - the Turf Bridge. HERONSBY (south) - the Heron Bridge. WILLOWBEND (west) - the Mill Bridge. STILLWATER (north-west) - the Still Bridge.\nEach village will lower its bridge for whoever helps it. When all seven are down, ring the town bell: the hall's vault opens.\nNet launcher in my chest - Reedcut's geese are loose again.
-note wardenchest Warden's chest | The fen-warden's chest: a net launcher, waders, a bag of dried eel.
+note wardenchest Warden's chest | The fen-warden's chest: a net launcher, a bundle of net canisters, a bag of smoked herring.
 loot wardenchest NetGun*1;NetCanister*8;Cooked_Herring*2
 prop wardenchest loot.refill=0
 note reedelder Reedcut's elder | REEDCUT - TO WHOEVER COMES\n\nOur geese are loose in the reeds, three of them, and we're too old to run. Net them and they'll go home. Then turn our windlass - the Reed Bridge is yours.
@@ -472,7 +472,7 @@ note healernote The healer's request | HERONSBY - THE HEALER\n\nI need fen-mint 
 note locknote The lock-keeper's note | WILLOWBEND LOCK\n\nThe mill isle is only reached through the lock. Pull the lever: the near gate opens for a minute, then shuts. Swim or punt through quick.\nThe miller holds the Mill Bridge's windlass on the isle.
 note stillnote The last villager's warning | STILLWATER\n\nThe Bog Beast came out of the mere the night the bridges went up and sleeps on our causeway. Everyone else has gone to Heronsby. The Still Bridge's windlass is at the causeway's end - past it.
 note charter The Sevenbridge charter | SEVENBRIDGE - CHARTER OF THE TOWN\n\nThe town stands on seven bridges and is ruled by none.\nIn time of danger the bridges are raised; when all seven are down again, the town bell is rung, and the town's hoard is opened for whoever brought the town back to the fen.
-note hoard Sevenbridge's hoard | The town's hoard: seven villages' worth of savings, the plans for the town's great planting beds and for the recycler that made rope from reeds, eel-skin leather, and a silver eel on a chain.
+note hoard Sevenbridge's hoard | The town's hoard: seven villages' worth of savings, the plans for the town's great planting beds and for the recycler that made rope from reeds, eel-skin leather, and bars of titanium.
 loot hoard TradeToken*25;Blueprint_Cropplot_Large_Tier3*1;Blueprint_Recycler*1;Leather*6;TitaniumIngot*3;Rope*6
 prop hoard loot.refill=0
 prop hoard if.open=has|story:townseal|1
@@ -486,10 +486,10 @@ prop reedbox loot.refill=0
 note eelbox Eelmarsh box | A box in Eelmarsh: smoked eel and line.
 loot eelbox Cooked_Herring*3;FishingBait_Simple*2
 prop eelbox loot.refill=0
-note turfbox Turfholm box | A box in Turfholm: a turf spade's iron and dry peat for a fire.
+note turfbox Turfholm box | A box in Turfholm: ore from a turf spade's iron, dry peat for a fire and a few planks.
 loot turfbox MetalOre*2;BioFuel*1;Plank*3
 prop turfbox loot.refill=0
-note willowbox Willowbend box | A box in Willowbend: willow withies and a miller's bag of flour gone hard.
+note willowbox Willowbend box | A box in Willowbend: willow withies, a few planks and potatoes from the miller's sack.
 loot willowbox Plank*4;Raw_Potato*3;Rope*2
 prop willowbox loot.refill=0
 note sunkpunt1 Sunk punt | A punt sunk in a channel with its load: crates of scrap.

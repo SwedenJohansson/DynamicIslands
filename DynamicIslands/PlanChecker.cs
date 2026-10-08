@@ -33,6 +33,8 @@ namespace DynamicIslands.Editor
 			/// <summary>A sample of a map type (a new island made in each world), not a saved file.</summary>
 			public bool Sample;
 			public IslandQuest Quest = new IslandQuest();
+			/// <summary>The island's other quests (Quest 2 is [0]): a rule may wait for one of them (ROADMAP CB6).</summary>
+			public List<IslandQuest> MoreQuests = new List<IslandQuest>();
 			public readonly HashSet<string> Zones = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Signals = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 				Notes = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Chests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public readonly Dictionary<string, int> Creatures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -59,6 +61,7 @@ namespace DynamicIslands.Editor
 		public static Facts FromFile(IslandFile f, string name, bool sample)
 		{
 			var x = new Facts { Name = name, Sample = sample, Quest = IslandQuest.From(f.Props), Objects = f.Objects.Count, Rules = WorldDirector.RulesFromProps(f.Props) };
+			for (int q = 1; q < IslandQuest.CountIn(f.Props); q++) x.MoreQuests.Add(IslandQuest.From(f.Props, q));
 			var text = new System.Text.StringBuilder();
 			foreach (var kv in f.Props) if (kv.Key != StoryItems.Key) text.Append(kv.Value).Append('\n');
 			// (creatures come back by default, after the island's regrow days - unless the island says never)
@@ -403,6 +406,14 @@ namespace DynamicIslands.Editor
 		static void CheckIslandFor(Ctx c, int i, string kind, string arg, Facts f, string part)
 		{
 			string who = R(c, i) + (part == "STORY" ? " (its STORY \"done when\")" : "");
+			int questNo;
+			if (kind == "quest" && part != "STORY" && int.TryParse(arg.Trim(), out questNo) && questNo > 1)
+			{
+				// (a rule waiting for Quest 2 or later of the island)
+				if (questNo - 2 >= f.MoreQuests.Count || f.MoreQuests[questNo - 2].Steps.Count == 0)
+					c.Add(i, Level.Problem, who + " waits for quest " + questNo + " of " + f.Describe + ", which has " + (f.MoreQuests.Count == 0 ? "only its main quest" : "quests up to " + (f.MoreQuests.Count + 1)) + ": it never comes.", "Use a quest number the island has (empty = its main quest).");
+				return;
+			}
 			if (kind == "quest" || kind == "step")
 			{
 				if (!f.Quest.Exists) { c.Add(i, Level.Problem, who + " waits for the quest of " + f.Describe + ", which has no quest: it never " + (part == "STORY" ? "counts as done" : "comes") + ".", f.Sample ? "Use \"When players reach an island\" for this map type, or a map type with a quest (camp, treasure, stacks, swamp...)." : "Use \"When players reach an island\", or give '" + f.Name + "' a quest (open it in the editor: Island tab > Edit quest...)."); return; }

@@ -105,7 +105,7 @@ place BearBait_Berries - at -9 -28.5 h=3.0 sit
 place Loot_ChestLarge stash at -19 -27 h=3.0 sit yaw=90
 place "Balboa_DecorationPrefabBase_Trash Bag 1" - at -17.5 -25 h=3.0 sit
 place "Balboa_DecorationPrefabBase_Trash Bag 3" - at -18 -29 h=3.0 sit
-place Obstacle_PoisonLake_WoodBox - at -16 -29.3 h=3.0 sit tilt=12 yaw=30
+place Obstacle_PoisonLake_WoodBox - at -16 -29.3 h=2.6 sit tilt=12 yaw=30
 place Zone_Trigger den at 5 -27 h=4.5
 place Zone_Atmosphere gloom at -8 -27 h=5
 place Zone_Sound drips at -8 -27 h=5

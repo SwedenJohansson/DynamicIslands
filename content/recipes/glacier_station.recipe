@@ -1,6 +1,6 @@
 # Glacier Station - a very large island of the library (ice)
 # A snowy island at the edge of a glacier: a research station dark since its reactor failed. The station village of
-# glowing Moontown domes on the east shore, a radio mast; Temperance's weather station as the observatory on the glacier
+# Moontown domes on the east shore, a radio mast; Temperance's weather station as the observatory on the glacier
 # peak, its cabin up a ladder; the glacier's crevasse, where the Polar Bear Queen has her den;
 # and in a basin in the north, the reactor's twin chimneys over a dead core. Quest "The Long Night" (20 steps): the village,
 # the station log, the tool crate and its fuse, the domes, the radio mast, the reactor basin and its dead controls, the
@@ -77,7 +77,7 @@ place Zone_Trigger observatory at -10 -12 y=1.5
 place TP_SnowDrift01 - at -18 -14 ground sit yaw=40
 place TP_SnowDrift02 - at -2 -4 ground sit
 
-# --- The station village on the east shore: glowing domes, crates and barrels, the radio mast, the station log -------
+# --- The station village on the east shore: domes (dark until the reactor runs), crates and barrels, the radio mast, the station log -------
 clear at 75 -10 r=22
 place TP_Igloo_Large_1 dome at 81 -1 centred sit yaw=200
 place TP_Igloo_Medium_1 - at 90 14 centred sit yaw=150
@@ -139,8 +139,8 @@ call shallows r=135 deep=5 n=3
 
 info title=Glacier Station
 info author=Custom Islands
-info description=A research station at the edge of a glacier, dark since its reactor failed: glowing domes on the shore, an observatory on the peak, a crevasse where the Polar Bear Queen dens, and the reactor's twin chimneys in a basin of snow. Inspired by Raft's Temperance.
-island on.arrive=message||A glacier island: domes glowing on the shore, a mast on the peak, two chimneys cold in the snow.
+info description=A research station at the edge of a glacier, dark since its reactor failed: cold domes on the shore (they light up when the power is back), an observatory on the peak, a crevasse where the Polar Bear Queen dens, and the reactor's twin chimneys in a basin of snow. Inspired by Raft's Temperance.
+island on.arrive=message||A glacier island: dark domes on the shore, a mast on the peak, two chimneys cold in the snow.
 
 story fuse|Reactor fuse|quest:Tangaroa_GeneratorPart|A heavy ceramic reactor fuse. The station's reactor takes three.
 note stationlog Station log | GLACIER STATION - LOG\n\nDay 210: The reactor tripped in the storm. Three fuses blew; the spares are scattered - one in the tool crate here, one at the observatory, and Petrov took one into the glacier's crevasse when he went after the dogs.\nDay 214: Petrov hasn't come back. Something huge lives at the bottom of the crevasse - the men call her the Queen.\nDay 220: The long night has started. We're leaving on the supply boat.\n\nTo restart the reactor: three fuses in the control column, in the basin north of the village.
@@ -175,7 +175,7 @@ prop reactorhum zone.radius=25
 
 prop village zone.id=village
 prop village zone.radius=12
-prop village zone.message=The station village: domes glowing in the snow, a radio mast - and nobody about.
+prop village zone.message=The station village: dark domes in the snow, a radio mast - and nobody about.
 prop observatory zone.id=observatory
 prop observatory zone.radius=9
 prop observatory zone.message=The observatory on the glacier peak. The whole island lies below - and the reactor's chimneys, cold.
@@ -187,7 +187,7 @@ prop reactor zone.radius=12
 prop reactor zone.message=The reactor basin: two chimneys, a dead pool, a control column with three empty sockets.
 prop domes zone.id=domes
 prop domes zone.radius=5
-prop domes zone.message=Between the domes: doors drifted shut, a dog's bowl frozen to a step. The lights inside burn for nobody.
+prop domes zone.message=Between the domes: doors drifted shut, a dog's bowl frozen to a step. The windows are dark; nobody is home.
 prop mast zone.id=mast
 prop mast zone.radius=5
 prop mast zone.message=The radio mast, furred with rime. Its set hums faintly - not enough power to call anyone.

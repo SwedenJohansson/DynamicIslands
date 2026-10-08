@@ -59,6 +59,7 @@
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsContent.cs" />
+    <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DevTestsCamera.cs" />
@@ -216,6 +217,7 @@
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="ScatterTool.cs" />
+    <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
     <Compile Include="EditorCamera.cs" />

@@ -478,6 +478,7 @@ namespace DynamicIslands.Editor
 				if ((v == "km" || v == "day") && !float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out float _)) r.WhenArg = v == "km" ? "1" : "2";
 				if (v == "step" && !int.TryParse(r.WhenArg, out int _)) r.WhenArg = "1";
 				if (v == "zone" || v == "signal") r.WhenArg = "";
+				if (v == "quest" && !int.TryParse(r.WhenArg, out int _)) r.WhenArg = "";
 				if (islandMode && r.WhenRef.Length == 0 && v != "rule") r.WhenRef = IntroRule.Self;
 				ShowRules();
 			}, 230, "What the rule waits for: choose from the list");
@@ -501,6 +502,13 @@ namespace DynamicIslands.Editor
 					Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
 						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
 				if (r.When == "km") Tag(when, "km sailed", false);
+			}
+			if (r.When == "quest")
+			{
+				// (which of the island's quests: empty = the main quest; ROADMAP CB6)
+				Tag(when, "quest no.");
+				SmallField(when, "main", r.WhenArg, 56, "Which of the island's quests: empty or 1 = the main quest, 2 = its Quest 2, and so on",
+					v => { v = v.Trim(); r.WhenArg = v == "1" ? "" : v; });
 			}
 			Fill(when);
 			HelpMark(when, islandMode ? HelpWhenIsland : HelpWhen);

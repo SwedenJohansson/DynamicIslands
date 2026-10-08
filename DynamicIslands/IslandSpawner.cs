@@ -387,7 +387,7 @@ namespace DynamicIslands.Editor
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
 
 				if (editable)
-					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>());
+					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>()).Uid = o.Uid;
 				else
 				{
 					ObjectProps.ApplyTint(go, o.Props);
@@ -425,7 +425,7 @@ namespace DynamicIslands.Editor
 			Renderer r = go.GetComponent<Renderer>();
 			Shader shader = Shader.Find("Standard") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Sprites/Default");
 			if (r != null && shader != null) r.material = new Material(shader) { color = new Color(0.9f, 0.15f, 0.1f, 1f) };
-			EditorGameObject.Attach(go, o.Name, o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>());
+			EditorGameObject.Attach(go, o.Name, o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>()).Uid = o.Uid;
 		}
 
 		/// <summary>

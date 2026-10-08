@@ -244,7 +244,7 @@ prop footlocker loot.refill=0
 note supply Supply crate | Shelter supplies: nails, bolts and spare parts.
 loot supply Nail*10;Bolt*4;Hinge*2;Scrap*4
 prop supply loot.refill=0
-note safe Commander's safe | The commander's safe: his charts of the islands to the east, a blueprint and his emergency supplies.
+note safe Commander's safe | The commander's safe: his charts of the islands to the east, a blueprint, metal ingots and good healing salve.
 loot safe Blueprint_Fueltank*1;MetalIngot*4;CopperIngot*3;HealingSalve_Good*2
 prop safe loot.refill=0
 prop safe tint.color=#3a4048

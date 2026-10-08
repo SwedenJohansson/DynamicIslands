@@ -70,6 +70,77 @@ namespace DynamicIslands
 		static readonly Regex NotABase = new Regex("^(?!Placeable_).*(Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift)", RegexOptions.IgnoreCase);
 		/// <summary>What hangs or lies on purpose: a buoy's chain, pipes, cables, lamps, flags; decks, floors and ramps on their
 		/// posts; a crane's jib reaching out over the water.</summary>
+		static readonly Regex FloorLike = new Regex("Floor|Deck|Foundation|Platform", RegexOptions.IgnoreCase);
+		static readonly Regex Container = new Regex("^Loot_|Chest|Crate|Locker|Box|Barrel|Storage", RegexOptions.IgnoreCase);
+
+		/// <summary>A floor or deck over nothing (CA30): its box and the corners of its underside nothing holds.</summary>
+		class FloorGap { public EditorGameObject Floor; public Bounds Box; public List<Vector3> Corners; public bool Big; }
+
+		/// <summary>
+		/// Floors and decks over nothing (ROADMAP CA30, the user 2026-10-08: Saltpan Delta's pump house stood out over the
+		/// water's edge on no posts): each corner of a floor's underside looks down for what holds it - the ground, a post, a
+		/// wall or the floor under it - within gap + 0.2 m (not a floor beside it, nor a wall standing on it). A big deck
+		/// (3 m and more) needs every corner held; a small floor one corner, or a held floor beside it (Raft's one-tile reach:
+		/// a jetty's planks between its posts). A raft's foundation on the sea floats: one at the waterline is left out.
+		/// CIFloating names them; a recipe's save stands posts under them (StandPosts).
+		/// </summary>
+		static List<FloorGap> FloorsOverNothing(IEnumerable<EditorGameObject> placed, float gap, Terrain ground, float sea, out int floors)
+		{
+			var decks = new List<FloorGap>();
+			var held = new HashSet<EditorGameObject>();
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (!FloorLike.IsMatch(n) || ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || ground == null || !e.gameObject.activeInHierarchy) continue;
+				// (one hidden at first - a drawbridge's span, shown when it is lowered - rests on its ends then: posts under it
+				// stood in the water with no deck on them while it was up, The Great Fen)
+				if (BehaviourProps.StartsHidden(e.Props)) continue;
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+				if (parts.Length == 0) continue;
+				Bounds whole = parts[0].bounds;
+				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+				if (Mathf.Min(whole.size.x, whole.size.z) < 0.8f || Mathf.Abs(whole.min.y - sea) < 0.6f || whole.max.y < sea) continue;
+				var d = new FloorGap { Floor = e, Box = whole, Corners = new List<Vector3>(), Big = Mathf.Max(whole.size.x, whole.size.z) >= 3f };
+				decks.Add(d);
+				// (turned off the grid, its box's corners are outside it: the corners of a box 30 % in. A post beside the corner
+				// holds it too - 0.45 m round: a jetty's and a drawbridge's posts stand along its edges, The Great Fen)
+				float turn = e.transform.eulerAngles.y % 90f;
+				bool square = turn < 3f || turn > 87f;
+				float inX = square ? 0.1f : whole.size.x * 0.3f, inZ = square ? 0.1f : whole.size.z * 0.3f;
+				for (int c = 0; c < 4; c++)
+				{
+					var p = new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
+					float land = ground.SampleHeight(p) + ground.transform.position.y;
+					bool ok = p.y - land <= gap + 0.2f;
+					if (!ok)
+						foreach (RaycastHit h in Physics.SphereCastAll(p + Vector3.up * 0.5f, 0.45f, Vector3.down, gap + 0.7f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							EditorGameObject o = h.collider.GetComponentInParent<EditorGameObject>();
+							if (o == e || h.collider.bounds.min.y > p.y - 0.1f) continue;
+							if (o != null && FloorLike.IsMatch(o.GameObjectName ?? "") && Mathf.Abs(h.collider.bounds.max.y - whole.max.y) < 0.3f) continue;
+							ok = true;
+							break;
+						}
+					if (ok) held.Add(e);
+					else d.Corners.Add(p);
+				}
+			}
+			floors = decks.Count;
+			var over = new List<FloorGap>();
+			foreach (FloorGap d in decks)
+			{
+				if (d.Corners.Count == 0) continue;
+				if (!d.Big)
+				{
+					if (held.Contains(d.Floor)) continue;
+					Bounds near = d.Box;
+					near.Expand(0.2f);
+					if (decks.Any(o => o != d && held.Contains(o.Floor) && Mathf.Abs(o.Box.max.y - d.Box.max.y) < 0.3f && o.Box.Intersects(near))) continue;
+				}
+				over.Add(d);
+			}
+			return over;
+		}
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
 		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]
@@ -163,10 +234,62 @@ namespace DynamicIslands
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
-		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air): CIFloating [gap] [name part]")]
+		/// <summary>CIFloating's lines of detail per kind (the sweep logs fewer), and its last run's count of problems.</summary>
+		static int floatDetail = 30, floatProblems;
+		/// <summary>The sweep: CIFloating's lines are kept here instead of logged.</summary>
+		static List<string> floatLines;
+
+		static void FLog(string line) { if (floatLines != null) floatLines.Add(line); else Log(line); }
+
+		[ConsoleCommand(name: "CIFloatingSweep", docs: "Dev, editor: CIFloating on every saved island (ROADMAP CA30) - each opened in the editor and measured; the islands with problems are named with their first <details> (3) lines; all of them in Mods\\DynamicIslands\\floating_sweep.txt. Leaves out the test islands (ci...), the world-kept copies and the randomizer's extras (rnd-...). CIFloatingSweep [part of the name|*] [details]")]
+		public static void FloatingSweepCommand(string[] args)
+		{
+			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
+			int details = args != null && args.Length > 1 ? (int)F(args[1]) : 3;
+			StartTest(FloatingSweepRoutine(only, details));
+		}
+
+		static IEnumerator FloatingSweepRoutine(string only, int details)
+		{
+			yield return WaitForEditor(false);
+			var kept = new Regex("_[0-9a-f]{12}$");
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.OrdinalIgnoreCase) && !kept.IsMatch(n) &&
+				// (the randomizer's extras lie over Raft's own islands, whose land is not in the file: their finds stand on it)
+				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) &&
+				(only.Length == 0 || n.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).OrderBy(n => n).ToList();
+			var report = new StringBuilder();
+			int bad = 0, problems = 0;
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				bool loaded = false;
+				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); continue; }
+				if (!loaded) { Log("  " + name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				var lines = new List<string>();
+				floatLines = lines;
+				floatDetail = 1000;
+				try { FloatingCommand(null); }
+				catch (Exception e) { lines.Add("FAIL: " + e.Message); floatProblems = 1; }
+				finally { floatLines = null; floatDetail = 30; }
+				report.AppendLine(name + ": " + floatProblems);
+				foreach (string l in lines) report.AppendLine("  " + l);
+				if (floatProblems == 0) continue;
+				bad++;
+				problems += floatProblems;
+				Log("  " + name + ": " + floatProblems);
+				foreach (string l in lines.Where(l => l.StartsWith("  ")).Take(details)) Log("  " + l);
+			}
+			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "floating_sweep.txt"), report.ToString());
+			Log((bad == 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)");
+		}
+
+		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
 		public static void FloatingCommand(string[] args)
 		{
-			if (!DynamicIslands.InEditor()) { Fail("CIFloating [gap] (in the editor)"); return; }
+			if (!DynamicIslands.InEditor()) { floatProblems = 1; Fail("CIFloating [gap] (in the editor)"); return; }
 			float gap = args != null && args.Length > 0 ? F(args[0]) : 0.3f;
 			string only = args != null && args.Length > 1 ? args[1] : "";
 			Vector2 mid = EditorLandCentre();
@@ -198,7 +321,7 @@ namespace DynamicIslands
 					// (above another part of the same object - a chimney on its roof - it is attached, not standing)
 					if (under && hit.point.y >= land && hit.collider.GetComponentInParent<EditorGameObject>() == e) continue;
 					found++;
-					Log("  floating: " + n + " (" + r.name + ") at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its foot h=" + Num(foot.y - sea) + " is " + Num(foot.y - support) + " m above " +
+					FLog("  floating: " + n + " (" + r.name + ") at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its foot h=" + Num(foot.y - sea) + " is " + Num(foot.y - support) + " m above " +
 						(under && hit.point.y >= land && hit.collider != null ? hit.collider.name : "the ground"));
 				}
 			}
@@ -242,7 +365,7 @@ namespace DynamicIslands
 				bases++;
 				if (highest <= 0.6f) continue;
 				partly++;
-				Log("  partly in the air: " + n + " at " + Num(b.center.x - mid.x) + " " + Num(b.center.z - mid.y) + ": its base h=" + Num(b.min.y - sea) + " is up to " + Num(highest) + " m above the ground (at " + Num(at.x - mid.x) + " " + Num(at.z - mid.y) + ")");
+				FLog("  partly in the air: " + n + " at " + Num(b.center.x - mid.x) + " " + Num(b.center.z - mid.y) + ": its base h=" + Num(b.min.y - sea) + " is up to " + Num(highest) + " m above the ground (at " + Num(at.x - mid.x) + " " + Num(at.z - mid.y) + ")");
 			}
 			// The land's and the sea's plants, rocks and corals (the generator's): their pivot is their foot - none above the
 			// ground under it (a stroke that lowered the ground under them, or a slope they were set on by their middle)
@@ -269,7 +392,7 @@ namespace DynamicIslands
 						on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
-				if (lifted <= 30) Log("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
 			}
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
@@ -295,7 +418,7 @@ namespace DynamicIslands
 					if (!touching.Any(c => !c.transform.IsChildOf(e.transform)))
 					{
 						alone++;
-						if (alone <= 30) Log("  in the air, touching nothing: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground");
+						if (alone <= floatDetail) FLog("  in the air, touching nothing: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its bottom h=" + Num(whole.min.y - sea) + " is " + Num(whole.min.y - land) + " m above the ground");
 					}
 				}
 				// (buried whole: its top under the ground everywhere over its footprint - a rock sunk into a slope shows on its low
@@ -304,7 +427,7 @@ namespace DynamicIslands
 					!placed.Any(o => o != e && o.GetComponentsInChildren<Collider>(false).Any(c => !c.isTrigger && c.bounds.Contains(whole.center))))
 				{
 					buried++;
-					if (buried <= 30) Log("  buried under the ground: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its top h=" + Num(whole.max.y - sea) + " is " + Num(land - whole.max.y) + " m under the ground");
+					if (buried <= floatDetail) FLog("  buried under the ground: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ": its top h=" + Num(whole.max.y - sea) + " is " + Num(land - whole.max.y) + " m under the ground");
 				}
 			}
 			// Things on the sea floor under a deck that stands above the sea - more than 4 m under it, so not a flooded room:
@@ -326,11 +449,48 @@ namespace DynamicIslands
 				EditorGameObject over = up.collider.GetComponentInParent<EditorGameObject>();
 				if (over == null || over == e || up.point.y < sea - 0.3f || up.point.y - whole.max.y < 4f) continue;
 				underDeck++;
-				if (underDeck <= 20) Log("  on the sea floor under a deck: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ", top h=" + Num(whole.max.y - sea) + " - " + over.GameObjectName + " over it at h=" + Num(up.point.y - sea));
+				if (underDeck <= floatDetail) FLog("  on the sea floor under a deck: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ", top h=" + Num(whole.max.y - sea) + " - " + over.GameObjectName + " over it at h=" + Num(up.point.y - sea));
 			}
-			if (underDeck > 0) Log("  (" + underDeck + " on the sea floor under a deck - meant for the deck? set them down in a frame with its floor)");
-			Log((found + partly + lifted + alone + buried == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature +
-				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all + "; under a deck: " + underDeck);
+			if (underDeck > 0) FLog("  (" + underDeck + " on the sea floor under a deck - meant for the deck? set them down in a frame with its floor)");
+			// Floors and decks over nothing (CA30): FloorsOverNothing
+			int floors;
+			List<FloorGap> gapsOf = FloorsOverNothing(placed, gap, ground, sea, out floors);
+			if (only.Length > 0) floors = placed.Count(e => FloorLike.IsMatch(e.GameObjectName ?? "") && (e.GameObjectName ?? "").IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0);
+			int corners = 0;
+			foreach (FloorGap d in gapsOf)
+			{
+				string n = d.Floor.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				corners++;
+				string where = string.Join(", ", d.Corners.Select(p => { float land = ground.SampleHeight(p) + ground.transform.position.y; return Num(p.x - mid.x) + " " + Num(p.z - mid.y) + " (" + Num(p.y - Mathf.Max(land, sea)) + " m over the " + (land < sea ? "water" : "ground") + ")"; }).ToArray());
+				if (corners <= floatDetail) FLog("  floor over nothing: " + n + " at " + Num(d.Box.center.x - mid.x) + " " + Num(d.Box.center.z - mid.y) + ", floor h=" + Num(d.Box.min.y - sea) + (d.Big ? ": " + d.Corners.Count + " of its corners - " : ", held nowhere and by no floor beside it - corners ") + where);
+			}
+			// Chests, crates, lockers and boxes with nothing under them (CA30: Ghost Raft's chest sat in the sea between two
+			// foundations - "on the water" it was left out above): the middle of its underside looks down 0.3 m
+			int loose = 0, boxes = 0;
+			foreach (EditorGameObject e in placed)
+			{
+				string n = e.GameObjectName ?? "";
+				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				if (!Container.IsMatch(n) || Hangs.IsMatch(n) || ground == null) continue;
+				if (n.IndexOf("PowerBox", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Ventilation", StringComparison.OrdinalIgnoreCase) >= 0) continue;   // a wall-mounted box (a reader, a fuse box, a vent)
+				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+				if (parts.Length == 0) continue;
+				Bounds whole = parts[0].bounds;
+				foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+				boxes++;
+				var foot = new Vector3(whole.center.x, whole.min.y, whole.center.z);
+				float land = ground.SampleHeight(foot) + ground.transform.position.y;
+				if (foot.y - land <= 0.3f) continue;
+				float r0 = Mathf.Clamp(Mathf.Min(whole.size.x, whole.size.z) * 0.3f, 0.1f, 0.3f);
+				RaycastHit[] hits = Physics.SphereCastAll(foot + Vector3.up * (r0 + 0.1f), r0, Vector3.down, 0.4f, ~0, QueryTriggerInteraction.Ignore);
+				if (hits.Any(h => h.collider.GetComponentInParent<EditorGameObject>() != e)) continue;
+				loose++;
+				if (loose <= floatDetail) FLog("  nothing under it: " + n + " at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.y) + ": its bottom h=" + Num(foot.y - sea) + (land < sea && foot.y < sea + 0.3f ? ", in the sea " + Num(sea - land) + " m deep" : ", " + Num(foot.y - land) + " m above the ground"));
+			}
+			floatProblems = found + partly + lifted + alone + buried + corners + loose;
+			FLog((floatProblems == 0 ? "PASS" : "FAIL") + ": floating legs and posts: " + found + " of " + legs + "; standing on part of their base: " + partly + " of " + bases + "; plants and rocks above the ground: " + lifted + " of " + nature +
+				"; in the air touching nothing: " + alone + " of " + all + "; buried under the ground: " + buried + " of " + all + "; under a deck: " + underDeck + "; floors over nothing: " + corners + " of " + floors + "; chests and crates with nothing under them: " + loose + " of " + boxes);
 		}
 
 		[ConsoleCommand(name: "CIHeightMap", docs: "Dev, editor: the island's ground as text, to place a recipe's pieces on - a character every <step> m (8) out to <half> m (120) from the land's middle in recipe coordinates (x left to right, z top to bottom): ~ sea, . under 2 m, : 2-5, - 5-10, = 10-20, + 20-35, # 35-60, @ higher; then its highest points and level spots by height. CIHeightMap [step] [half]")]
@@ -952,6 +1112,7 @@ namespace DynamicIslands
 			RecipeObjects.Clear();
 			recipeGroups.Clear();
 			recipePlaced.Clear();
+			recipeNoPosts = false;
 			leftOutBuried = 0;
 			pendingQuest = null;
 			pendingMore.Clear();
@@ -1394,6 +1555,14 @@ namespace DynamicIslands
 							});
 							break;
 						}
+						case "posts":
+						{
+							// posts [off] - posts under the floors and decks over nothing now (StandPosts; a save does it too), or
+							// "off": not at the save either (a deck meant to hang - a cable car's, a crane's)
+							if (t.Length > 1 && t[1].ToLowerInvariant() == "off") recipeNoPosts = true;
+							else StandPosts();
+							break;
+						}
 						case "save":
 						{
 							if (pendingQuest != null && !pendingQuest.Exists && pendingQuest.Title.Length > 0) { error = "the quest '" + pendingQuest.Title + "' has no steps"; break; }
@@ -1422,6 +1591,9 @@ namespace DynamicIslands
 								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(covered, false));
 								Log("  " + covered.Count + " plants, rocks, corals or finds under the ground (buried by the recipe's strokes) left out");
 							}
+							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
+							// the sea floor; "posts off" in the recipe leaves them out)
+							if (!recipeNoPosts) StandPosts();
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							Log("  saved '" + island + "'");
@@ -1678,6 +1850,49 @@ namespace DynamicIslands
 
 		/// <summary>Pieces the recipe left out because they were under the ground whole (this run).</summary>
 		static int leftOutBuried;
+		static bool recipeNoPosts;
+
+		/// <summary>
+		/// Posts under the floors and decks over nothing (ROADMAP CA30, FloorsOverNothing): at each corner nothing holds, one
+		/// of Raft's posts (RT_Pillar) stretched from 0.3 m into the ground or sea floor up to the floor's underside, as Raft's
+		/// stilt houses stand. A corner with a post within 0.4 m already (the check's reach) is left as it is. Returns how many were stood.
+		/// </summary>
+		static int StandPosts()
+		{
+			Terrain ground = terraineditor.terrain;
+			if (ground == null) return 0;
+			Physics.SyncTransforms();
+			Transform placedRoot = GameObject.Find("PlacedObjects").transform;
+			int floors;
+			List<FloorGap> gaps = FloorsOverNothing(placedRoot.GetComponentsInChildren<EditorGameObject>(), 0.3f, ground, DynamicIslands.EditorWaterLevel, out floors);
+			var stood = new List<Vector3>();
+			foreach (FloorGap d in gaps)
+				foreach (Vector3 p in d.Corners)
+				{
+					if (stood.Any(s => new Vector2(s.x - p.x, s.z - p.z).magnitude < 0.4f && Mathf.Abs(s.y - p.y) < 0.5f)) continue;
+					float foot = GroundY(p.x, p.z) - 0.3f;
+					if (p.y - foot < 0.5f || !ObjectLimit.Allow(1)) continue;
+					GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
+					if (go == null) return stood.Count;
+					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+					Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+					if (rs.Length == 0) { UnityEngine.Object.Destroy(go); continue; }
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					go.transform.localScale = new Vector3(go.transform.localScale.x, go.transform.localScale.y * (p.y - foot) / Mathf.Max(0.1f, b.size.y), go.transform.localScale.z);
+					b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					go.transform.position += new Vector3(p.x - b.center.x, foot - b.min.y, p.z - b.center.z);
+					Collider ownCollider = go.GetComponent<Collider>();
+					if (ownCollider != null) ownCollider.enabled = true;
+					EditorGameObject.Attach(go, "RT_Pillar");
+					recipePlaced.Add(go);
+					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					stood.Add(p);
+				}
+			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing");
+			return stood.Count;
+		}
 
 		/// <summary>Whether an object is under the ground whole (ShowsAboveGround).</summary>
 		static bool BuriedWhole(GameObject go)

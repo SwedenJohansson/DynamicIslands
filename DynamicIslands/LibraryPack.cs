@@ -765,6 +765,15 @@ namespace DynamicIslands.Editor
 			LibraryInfo info = pack.Info;
 			List<LibraryInstalled> all = Installed();
 			LibraryInstalled old = all.FirstOrDefault(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
+			// (another author's pack with the same id isn't its update: it overwrote that entry's files - ROADMAP CB4. It is an
+			// entry of its own, "<id>-<author>", which its own next version finds again)
+			if (old != null && old.author.Trim().Length > 0 && info.author.Trim().Length > 0 && !old.author.Trim().Equals(info.author.Trim(), StringComparison.OrdinalIgnoreCase))
+			{
+				string own = IdFrom(info.id + "-" + info.author);
+				report.Add("'" + info.title + "' by " + info.author + " has the id of '" + old.title + "' by " + old.author + " ('" + info.id + "'): installed as an entry of its own ('" + own + "'), not as its update");
+				info.id = own;
+				old = all.FirstOrDefault(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
+			}
 			var entry = new LibraryInstalled { id = info.id, source = source, title = info.title, author = info.author, kind = info.kind, version = info.version, remix = info.remix, date = DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) };
 			foreach (var f in pack.Files) if (f.Key.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase))
 				entry.packed[f.Key] = Sha256(f.Value);
@@ -1195,11 +1204,19 @@ namespace DynamicIslands.Editor
 		/// files and the copies in Raft's world folders) is pointed at the island's file now, and the old copies no world
 		/// names any more go to deleted\kept versions (never erased; the worlds' lines name the new hash now, so a copy put
 		/// back is only another island file).
+		/// R1b: what was used there is carried to the same objects in the new file (StableIds.Carry) when the old copy is
+		/// here and its rules and quest steps keep their places; otherwise the world's state stays as it was.
+		/// carriedOnly: only the worlds whose state can be carried (the automatic step after a save) - the others keep their copy.
 		/// Returns the worlds that changed; moved gets the copies that were moved aside.
 		/// </summary>
-		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved)
+		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved) { int carried; return GiveWorldsThisVersion(island, out moved, false, out carried); }
+
+		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved, bool carriedOnly, out int carried)
 		{
 			moved = new List<string>();
+			carried = 0;
+			IslandFile current = null;
+			var copies = new Dictionary<string, IslandFile>(StringComparer.OrdinalIgnoreCase);
 			var worlds = new List<string>();
 			string now = IslandNetwork.HashOf(island);
 			if (now == null) throw new FileNotFoundException("'" + island + "' has no file");
@@ -1214,6 +1231,9 @@ namespace DynamicIslands.Editor
 					string had = OlderHash(lines[i], island, now);
 					if (had.Length == 0) continue;
 					string[] p = lines[i].Split('|');
+					string state = CarryState(island, had, p, ref current, copies);
+					if (state == null && carriedOnly) continue;
+					if (state != null) { p[4] = state; carried++; }
 					p[7] = now;
 					lines[i] = string.Join("|", p);
 					olds.Add(had);
@@ -1248,6 +1268,30 @@ namespace DynamicIslands.Editor
 			if (moved.Count > 0) IslandCache.Forget();
 			Debug.Log("[CUSTOM ISLANDS] Gave " + worlds.Count + " world(s) the version " + now + " of '" + island + "', moved " + moved.Count + " old cop" + (moved.Count == 1 ? "y" : "ies") + " aside");
 			return worlds.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>A world line's state of the island carried from its old copy (hash had) to the island's file now; null when it can't be.</summary>
+		static string CarryState(string island, string had, string[] p, ref IslandFile current, Dictionary<string, IslandFile> copies)
+		{
+			try
+			{
+				if (p.Length < 8) return null;
+				IslandFile was;
+				if (!copies.TryGetValue(had, out was))
+				{
+					string path = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had));
+					copies[had] = was = File.Exists(path) ? IslandFile.Load(path) : null;
+				}
+				if (was == null) return null;
+				if (current == null) current = IslandFile.Load(IslandSpawner.PathFor(island));
+				if (!StableIds.ListsKept(was, current)) return null;
+				int dropped;
+				string unsure, state = StableIds.Carry(was, current, p[4], StableIds.FlyingAt(p[2]), out dropped, out unsure);
+				if (state == null) Debug.Log("[CUSTOM ISLANDS] '" + island + "': a world's state can't be carried to the new version now - " + unsure);
+				else if (dropped > 0) Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + dropped + " saved thing(s) of removed objects left out");
+				return state;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Carrying a world's state of '" + island + "': " + e.Message); return null; }
 		}
 
 		/// <summary>Where "Give my worlds this version" moves the old copies: Mods\DynamicIslands\deleted\&lt;this&gt;.</summary>

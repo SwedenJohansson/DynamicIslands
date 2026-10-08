@@ -152,15 +152,27 @@ namespace DynamicIslands
 				yield return null;
 				DynamicIslands.SaveIsland(name);
 				Check(ref ok, added != null && !File.Exists(copy), "an object added at the end: no copy kept, the world gets this version");
-				// ... an object removed: the world keeps its version
+				// ... an object removed: the world gets this version, what was used there carried to the same objects (R1b)
 				hash = IslandNetwork.HashOf(name);
 				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Safety': name|x|y|z", "@auto=on", name + "|0|0|0||||" + hash });
 				copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
 				cleanup.Add(copy);
+				cleanup.Add(Path.Combine(Path.Combine(Path.GetDirectoryName(deleted), LibraryPack.KeptVersionsFolder), Path.GetFileName(copy)));
 				if (first != null) first.gameObject.SetActive(false); // (deleted in the editor = hidden, not saved)
 				yield return null;
 				DynamicIslands.SaveIsland(name);
-				Check(ref ok, File.Exists(copy) && IslandNetwork.HashOf(IslandNetwork.DownloadName(name, hash)) == hash, "an object removed: the world keeps the version it started with (" + Path.GetFileName(copy) + ")");
+				string[] line = File.ReadAllLines(worldFile).First(l => l.StartsWith(name + "|")).Split('|');
+				Check(ref ok, !File.Exists(copy) && line[7] == IslandNetwork.HashOf(name), "an object removed: the world gets this version (its state carried), no copy kept");
+				// ... a quest step removed: the world keeps its version
+				DynamicIslands.currentIslandProps[IslandQuest.KeySteps] = "reach|z|1|\nread|N|1|";
+				DynamicIslands.SaveIsland(name);
+				hash = IslandNetwork.HashOf(name);
+				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Safety': name|x|y|z", "@auto=on", name + "|0|0|0||||" + hash });
+				copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
+				cleanup.Add(copy);
+				DynamicIslands.currentIslandProps[IslandQuest.KeySteps] = "read|N|1|";
+				DynamicIslands.SaveIsland(name);
+				Check(ref ok, File.Exists(copy) && IslandNetwork.HashOf(IslandNetwork.DownloadName(name, hash)) == hash, "a quest step removed: the world keeps the version it started with (" + Path.GetFileName(copy) + ")");
 				Check(ref ok, WorldCopy.LocalFileFor(name, hash) == IslandNetwork.DownloadName(name, hash), "... and loads that one by its hash");
 
 				// Deleting moves it aside

@@ -142,7 +142,7 @@ prop magazine loot.refill=0
 prop magazine if.open=has|story:magazinekey|1
 prop magazine else.open=message||The magazine's chest is padlocked. DANGER - EXPLOSIVES. The key is with the captain.
 note thanks The captain's thanks | (on the command tent's table, weighed down with a mug - it wasn't there before)\n\nIf the Nordlys is floating, you did it. She's yours to keep, if you can sail her - or at least the crew's pay chest here is. Nobody ever collected it.\n\nThank you.\n- A. Halvorsen
-note strongroom Crew's pay chest | The Nordlys's pay chest, carried ashore: the crew's unpaid wages, the plans for the miners' head lamps they wore in the engine room, the ship's flare gun shells, wool.
+note strongroom Crew's pay chest | The Nordlys's pay chest, carried ashore: the crew's unpaid wages, the plans for the miners' head lamps they wore in the engine room, wool, metal ingots and a few cooked meals.
 loot strongroom TradeToken*12;Blueprint_HeadLight*1;Wool*4;MetalIngot*3;Cooked_GenericMeat*3
 prop strongroom loot.refill=0
 prop strongroom if.open=signal|free
@@ -150,7 +150,7 @@ prop strongroom else.open=message||The crew's pay chest, chained to the tent pol
 note campbox Camp supply box | The camp's supply box: tins, a primus, rope.
 loot campbox Cooked_GenericMeat*2;Rope*3;BioFuel*1
 prop campbox loot.refill=0
-note sunksledge Sunk sledge | A sledge that went through the ice by the camp: its load of tools and ore.
+note sunksledge Sunk sledge | A sledge that went through the ice by the camp: its load of ore, scrap and nails.
 loot sunksledge MetalOre*2;Scrap*3;Nail*6
 prop sunksledge loot.refill=0
 

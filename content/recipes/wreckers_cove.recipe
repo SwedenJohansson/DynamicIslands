@@ -86,7 +86,7 @@ place RT_PlasticBoat - at -6 -26 h=0.3 yaw=10
 place BoatStranded marigold at -8 -50 ground sit yaw=30 roll=10
 place Zone_Trigger aboard at -8 -50 h=1.5
 place Note_Paper marigoldlog at -8 -50 h=1.2 drop
-place Loot_Chest captainchest at -7 -48 h=0.5 sit yaw=30
+place Loot_Chest captainchest at -7 -48 h=2 sit drop yaw=30
 
 # --- The smugglers' den: crates, lanterns, the strongbox at the back - and the rats ----------------------------------
 push at 8 -5 yaw=225
@@ -155,16 +155,18 @@ info author=Custom Islands
 info description=A green crescent around a shallow cove: a wreckers' hamlet on the shore, the schooner Marigold wrecked on the reef at the mouth, a smugglers' den in a sea cave - and on the south point the false lantern that lured her there. Inspired by Raft's Vasagatan and Radio Tower.
 island on.arrive=message||A green crescent of hills around a quiet cove - a wreck on the reef at its mouth, and a lantern still burning on the point.
 
-story denkey|Den key|quest:Vasagatan_RedKey|A heavy iron key on a tarred cord, from the Marigold's captain's chest.
+story denkey|Smugglers' tally key|quest:Vasagatan_RedKey|A heavy iron key on a tarred cord, stamped with the smugglers' mark - from the Marigold's captain's chest. It fits the den's strongbox.
 story lanternkey|Lantern key|quest:Varuna_CraneKey|The key to the false lantern's fuel cock, from the smugglers' strongbox.
 note notice Hamlet notice | WRECKERS' COVE\n\nNO SHIPS PAST THE LANTERN AFTER DARK.\nWhat the sea brings in is shared out at the longhouse.\nThe den is for the crates. Keep the rats out of it.
-note marigoldlog Marigold's log | LOG OF THE SCHOONER MARIGOLD\n\nDay 9: A light to the south-east, steady and red: the harbour light of a channel the chart doesn't show. Captain says follow it.\nDay 10: We struck at the cove's mouth. The light didn't move. It isn't a harbour - it's a lantern on a pole.\nDay 11: Men came from the shore and took everything. The captain hid the den key in his chest - they keep our cargo in a sea cave on the east side.
-note captainchest Captain's chest | The Marigold's captain's chest, wedged under his bunk: a key on a tarred cord, his pistol (rusted), a little dry food.
+note marigoldlog Marigold's log | LOG OF THE SCHOONER MARIGOLD\n\nDay 9: A light to the south-east, steady and red: the harbour light of a channel the chart doesn't show. Captain says follow it.\nDay 10: We struck at the cove's mouth. The light didn't move. It isn't a harbour - it's a lantern on a pole.\nDay 11: Men came from the shore and took everything. The captain hid the smugglers' tally key in his chest, the one thing that proves what they took - they keep our cargo in a sea cave on the east side.
+note captainchest Captain's chest | The Marigold's captain's chest, wedged under his bunk: the smugglers' tally key on a tarred cord, his pistol (rusted), a little dry food.
 loot captainchest story:denkey*1;Rope*2;Plank*6
 prop captainchest loot.refill=0
 note strongbox Smugglers' strongbox | The smugglers' strongbox at the back of the den: the lantern key, a list of ships, a purse of bolts.
 loot strongbox story:lanternkey*1;Bolt*8;Nail*12
 prop strongbox loot.refill=0
+prop strongbox if.open=has|story:denkey|1
+prop strongbox else.open=message||The strongbox is locked with the smugglers' mark. The Marigold's captain had a key like that.
 note keeperlog Keeper's log | The lantern burns all night. The red one by the door shows the "channel". When a hull strikes the reef, ring for the boats.\n\nThe fuel cock is locked - the key is with the cargo in the den.
 note hoard Wreckers' hoard | Everything worth keeping from every ship the lantern ever lured: shared out at the longhouse no more.
 loot hoard Blueprint_HeadLight*1;Blueprint_BatteryCharger*1;MetalIngot*4;Scrap*8;CopperIngot*3;Battery*1
@@ -206,7 +208,7 @@ step read|Hamlet notice|1|Read the notice board by the longhouse - the wreckers'
 step reach|aboard|1|Wade out to the wrecked Marigold on the reef at the cove's mouth
 step read|Marigold's log|1|Read her log in the wheelhouse
 step open|Captain's chest|1|Open the captain's chest wedged under his bunk
-step collect|story:denkey|1|Take the den key on its tarred cord
+step collect|story:denkey|1|Take the smugglers' tally key on its tarred cord
 step reach|den|1|Find the smugglers' den in the east cliff
 step kill|Rat|4|Drive the rats out of the den
 step open|Smugglers' strongbox|1|Open the smugglers' strongbox for the lantern key

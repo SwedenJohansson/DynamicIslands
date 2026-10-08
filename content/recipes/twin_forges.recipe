@@ -126,7 +126,7 @@ place Creature_Boar boars at -5 -45 ground
 push at -0.75 76 h=-2 yaw=-90
 call boardwalk n=6 wide=1 y=3.6
 pop
-place "Box Small" jettybox at 0 79 h=1.6 sit yaw=15
+place "Box Small" jettybox at 0 79 h=3 sit drop yaw=15
 scatter "Pickup_Landmark_Tree_Palm 3" 2 at 8 70 r=5 seed=1901
 scatter Pickup_Landmark_Tree_Pine 1 at -25 55 r=6 seed=1902
 scatter Pickup_Landmark_Tree_Birch 1 at 25 55 r=6 seed=1903

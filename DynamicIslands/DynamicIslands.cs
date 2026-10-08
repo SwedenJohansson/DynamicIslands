@@ -750,9 +750,15 @@ namespace DynamicIslands
 				// (a file with more objects couldn't be opened again)
 				if (island.Objects.Count > IslandFile.MaxObjects) { Notify("Can't save: " + island.Objects.Count + " objects, at most " + IslandFile.MaxObjects + " fit in an island file - delete some first", true); return false; }
 				bool overwrote = File.Exists(IslandSpawner.PathFor(name));
+				IslandFile before = null;
+				if (overwrote) try { before = IslandFile.Load(IslandSpawner.PathFor(name)); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading the saved '" + name + "' before saving over it: " + e.Message); }
+				// (every object keeps its number - R1b; one made again where the same object stood gets that one's)
+				StableIds.Prepare(island, before);
 				// (saved worlds with this island: a change that would mix up what was used there keeps them on their version)
-				bool kept = overwrote && KeepForWorldsIfShifted(name, island);
+				bool carry = false;
+				bool kept = before != null && KeepForWorldsIfShifted(name, island, before, out carry);
 				island.Save(IslandSpawner.PathFor(name));
+				if (kept && carry) kept = !CarryWorlds(name);
 				currentIslandName = name;
 				EditorUI.RefreshIsland();
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
@@ -780,11 +786,18 @@ namespace DynamicIslands
 		/// </summary>
 		internal static bool KeepForWorldsIfShifted(string name, IslandFile next)
 		{
+			bool carry;
+			return KeepForWorldsIfShifted(name, next, IslandFile.Load(IslandSpawner.PathFor(name)), out carry);
+		}
+
+		/// <summary>carry: only objects moved (R1b) - the copy is kept, and CarryWorlds gives the worlds the new file once saved.</summary>
+		internal static bool KeepForWorldsIfShifted(string name, IslandFile next, IslandFile before, out bool carry)
+		{
+			carry = false;
 			try
 			{
 				List<string> worlds = LibraryPack.WorldsUsing(name);
 				if (worlds.Count == 0) return false;
-				IslandFile before = IslandFile.Load(IslandSpawner.PathFor(name));
 				if (!ShiftsState(before, next)) return false;
 				string hash = IslandNetwork.HashOf(name);
 				if (hash == null) return false;
@@ -792,6 +805,8 @@ namespace DynamicIslands
 				// (whole or not at all: a copy Raft stopped in was never written again, and the worlds were pointed at it)
 				if (!File.Exists(copy)) SafeFile.WriteAllBytes(copy, File.ReadAllBytes(IslandSpawner.PathFor(name)));
 				LibraryPack.RepointWorlds(name, hash);
+				carry = !ListsShift(before, next);
+				if (carry) { Debug.Log("[CUSTOM ISLANDS] Kept '" + name + "' " + hash + " for " + worlds.Count + " saved world(s) until their state is carried"); return true; }
 				string list = string.Join(", ", worlds.Take(3).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 3 ? " and " + (worlds.Count - 3) + " more" : "");
 				Notify("Saved worlds with '" + name + "' (" + list + ") keep the version they started with: objects, rules or quest steps were removed or their order changed, which would mix up what was " +
 					"picked, looted, opened or done there. New worlds get this version.");
@@ -799,6 +814,31 @@ namespace DynamicIslands
 				return true;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Keeping the old version of '" + name + "' for saved worlds: " + e.Message); return false; }
+		}
+
+		/// <summary>
+		/// R1b: after a save that removed objects or changed their order (but kept the rules and quest steps): the saved
+		/// worlds get the new file, with what was picked, looted, opened or done there carried to the same objects (what
+		/// belonged to removed objects is left out). Worlds whose state can't be carried now (an object of Raft's other
+		/// islands not loaded) keep the copy. True when none kept it.
+		/// </summary>
+		static bool CarryWorlds(string name)
+		{
+			try
+			{
+				List<string> moved;
+				int carried;
+				List<string> changed = LibraryPack.GiveWorldsThisVersion(name, out moved, true, out carried);
+				List<string> left = LibraryPack.WorldsOnOlderVersion(name);
+				Func<List<string>, string> names = w => string.Join(", ", w.Take(3).Select(x => "'" + x + "'").ToArray()) + (w.Count > 3 ? " and " + (w.Count - 3) + " more" : "");
+				if (changed.Count > 0)
+					Notify("Saved worlds with '" + name + "' (" + names(changed) + ") play this version: what was picked, looted, opened or done there stays with the same objects " +
+						"(objects removed take theirs with them).");
+				if (left.Count > 0)
+					Notify("Saved worlds with '" + name + "' (" + names(left) + ") keep the version they started with: what was used there can't be moved to the new objects now. New worlds get this version.");
+				return left.Count == 0;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Giving saved worlds the new '" + name + "': " + e.Message); return false; }
 		}
 
 		/// <summary>Islands whose "Give my worlds this version" box was shown in this Raft session without a copy just kept (once each).</summary>
@@ -822,8 +862,8 @@ namespace DynamicIslands
 					"These saved worlds play an older version of '" + name + "' (a copy kept for them, " + name + "_<hash>): " + list + ".\n\n" +
 					(justKept ? "This save removed objects, rules or quest steps or changed their order, so they were kept on the version they started with. " : "") +
 					"<b>Give my worlds this version</b> makes them play the island as it is now and moves the old copies to Mods\\DynamicIslands\\" +
-					IslandFilesWindow.DeletedFolderName + "\\" + LibraryPack.KeptVersionsFolder + ". What was picked, looted or opened there is remembered by the objects' order, " +
-					"so it may land on other objects. <b>Keep their version</b> changes nothing (also later in My islands).",
+					IslandFilesWindow.DeletedFolderName + "\\" + LibraryPack.KeptVersionsFolder + ". What was picked, looted or opened there stays with the same objects " +
+					"(what belonged to removed objects is left out) - but if the rules or a quest's steps were removed or reordered, the fired rules and quest steps reached may land on other ones. <b>Keep their version</b> changes nothing (also later in My islands).",
 					new InfoWindow.Choice("Give my worlds this version", () =>
 					{
 						try
@@ -845,11 +885,20 @@ namespace DynamicIslands
 		/// <summary>Whether saved state would land on other objects, rules or quest steps: the old objects aren't an unchanged
 		/// beginning of the new ones - nor the island's rules, nor each quest's steps, which a world also keeps by their place
 		/// (a fired rule, the step reached - AU23: a removed rule made the next one count as fired, a removed step moved the quest).</summary>
-		public static bool ShiftsState(IslandFile before, IslandFile after)
+		public static bool ShiftsState(IslandFile before, IslandFile after) { return ObjectsShift(before, after) || ListsShift(before, after); }
+
+		/// <summary>Whether the objects of the old file aren't all at the beginning of the new one, in order (ShiftsState).</summary>
+		public static bool ObjectsShift(IslandFile before, IslandFile after)
 		{
 			Func<IslandObject, string> sig = o => o.Name + (ObjectProps.IsLoot(o.Name, o.Props) ? "|loot" : "");
 			if (after.Objects.Count < before.Objects.Count) return true;
 			for (int i = 0; i < before.Objects.Count; i++) if (sig(before.Objects[i]) != sig(after.Objects[i])) return true;
+			return false;
+		}
+
+		/// <summary>Whether the island's rules or a quest's steps aren't all kept at their places (ShiftsState).</summary>
+		public static bool ListsShift(IslandFile before, IslandFile after)
+		{
 			Func<List<string>, List<string>, bool> notPrefix = (was, now) => now.Count < was.Count || Enumerable.Range(0, was.Count).Any(i => was[i] != now[i]);
 			Func<IslandFile, List<string>> rules = f => WorldDirector.RulesFromProps(f.Props).Select(r => r.When + "|" + r.What).ToList();
 			if (notPrefix(rules(before), rules(after))) return true;
@@ -1171,6 +1220,7 @@ namespace DynamicIslands
 					// saved kept its old hash there until the next save)
 					if (Raft_Network.IsHost) entry.Hash = IslandNetwork.HashOf(entry.Name) ?? entry.Hash;
 					IslandSpawner.RegisterNetworkIds(root, entry.Id);
+					StableIds.CheckPickups(island, root, position.y > IslandSpawner.FlyingThreshold);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
 					BuriedTreasure.OnIslandReady(entry);
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved

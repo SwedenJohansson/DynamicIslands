@@ -173,7 +173,7 @@ note divelocker Dive locker | The expedition's dive locker: two reels of guideli
 loot divelocker story:reel*1;OxygenBottle*2;Flipper*1
 prop divelocker loot.refill=0
 note fork1slate First fork slate | (scratched into a dive slate)\n\nFORK 1. LEFT = DEAD END, silt, no way through.\nRIGHT - follow the lamps.\nPuffers here. Slow and wide.\n- N.
-note leaderslate Leader's last slate | (a dive slate on the ledge by the strongbox, the writing shaky)\n\nFound it.\nSomething with a light on its head found me.\nGate lever by the far column. Forty breaths, no more.\nIf you read this, I made it out.\n- N.
+note leaderslate Noor's last slate | (a dive slate on the ledge by the strongbox, the writing shaky)\n\nFound it.\nSomething with a light on its head found me.\nGate lever by the far column. Forty breaths, no more.\nIf you read this, I made it out.\n- N.
 note cache Trader's strongbox | The trader's strongbox, its lock long rotted: coins, a bag of silver-green weed dried to dust, rough ore - and a waxed packet of plans for a water flask that never runs dry, or so the trader wrote.
 loot cache Blueprint_Canteen*1;TradeToken*8;SilverAlgae*3;TitaniumOre*2;Glass*4
 prop cache loot.refill=0
@@ -256,7 +256,7 @@ step reach|airbell|1|Find the air bell halfway and breathe
 step kill|Angler fish|1|Face the light that waits in the Hall of Columns
 step open|Trader's strongbox|1|Open the old trader's strongbox in the hall
 step reach|exit|1|Pull the tide gate's lever and swim out before it shuts
-quest done=Out through the tide gate into the sun. The trader's strongbox is yours - and on the far side of the gate, tied to the grate, a second reel: NOOR. She made it out.
+quest done=Out through the tide gate into the sun. The trader's strongbox is yours - and Noor's reel is still in the dive locker back at camp. Her last slate says she made it out.
 quest reward=OxygenBottle*2;Rope*4;CopperIngot*3
 
 save The Drowned Labyrinth

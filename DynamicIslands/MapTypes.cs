@@ -228,8 +228,9 @@ namespace DynamicIslands.Editor
 			return Add(ContentCatalog.TriggerZone, At(p), 0f, props, 0f);
 		}
 
-		/// <summary>Creatures at a spot (type as in Creature_&lt;type&gt;), with a difficulty preset (ObjectProps.Presets).</summary>
-		public IslandObject Creature(string type, Vector2 p, int count, string preset = "Normal", float size = 1f, string zone = null, bool respawn = true, float lift = 0f)
+		/// <summary>Creatures at a spot (type as in Creature_&lt;type&gt;), with a difficulty preset (ObjectProps.Presets); scattered nature
+		/// within <paramref name="clear"/> m is taken away (0 on a build of objects without settings: a ghost raft's foundations).</summary>
+		public IslandObject Creature(string type, Vector2 p, int count, string preset = "Normal", float size = 1f, string zone = null, bool respawn = true, float lift = 0f, float clear = 2f)
 		{
 			var props = new Dictionary<string, string> { { ObjectProps.CreatureCount, Mathf.Clamp(count, 1, ObjectProps.MaxCount).ToString() } };
 			float[] m = ObjectProps.Presets.FirstOrDefault(x => x.Key == preset).Value;
@@ -242,7 +243,7 @@ namespace DynamicIslands.Editor
 			if (size != 1f) props[ObjectProps.CreatureSize] = size.ToString("0.##", CultureInfo.InvariantCulture);
 			if (zone != null) props[ObjectProps.CreatureZone] = zone;
 			if (!respawn) props[ObjectProps.CreatureRespawn] = "0";
-			return Add("Creature_" + type, At(p, lift), Yaw(), props, 2f);
+			return Add("Creature_" + type, At(p, lift), Yaw(), props, clear);
 		}
 
 		/// <summary>An atmosphere zone: fog and light colours (#RRGGBB) and amounts, particles (AtmosphereZone.ParticleKinds).</summary>

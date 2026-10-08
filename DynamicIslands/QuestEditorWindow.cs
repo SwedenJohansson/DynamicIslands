@@ -116,11 +116,13 @@ namespace DynamicIslands.Editor
 				}, "Takes this quest off the island (Save to keep it so)", 140, 26f, 12);
 		}
 
-		/// <summary>The island's rule that fires when its own quest is done, or null.</summary>
+		/// <summary>The island's rule that fires when its own main quest is done, or null (a rule waiting for Quest 2 or
+		/// later is left alone: ROADMAP CB6).</summary>
 		public static IntroRule QuestBringRule(IDictionary<string, string> props)
 		{
 			return IntroRule.ParseLines(ObjectProps.Get(props, WorldDirector.IslandRulesKey))
-				.FirstOrDefault(r => r.When == "quest" && (r.WhenRef.Length == 0 || r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)));
+				.FirstOrDefault(r => r.When == "quest" && (r.WhenRef.Length == 0 || r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase))
+					&& (r.WhenArg.Trim().Length == 0 || r.WhenArg.Trim() == "1"));
 		}
 
 		/// <summary>Sets (or with null removes) the island's "when the quest is done, bring ..." rule, keeping its other rules.</summary>

@@ -248,7 +248,7 @@ prop kitchendrawer loot.refill=0
 note liabox Lia's treasure box | A tin treasure box at the foot of her bed: shells, a drawing of the house with a secret door in it - and a slip of paper: "MY PART OF THE CODE. TOP SECRET."
 loot liabox story:codepart*1;Feather*3;Placeable_ToyRobot*1
 prop liabox loot.refill=0
-note panicnote Safe room log | SAFE ROOM - HOUR BY HOUR\n\nHour 2. They found the bookshelf. Crowbars on the steel. It held.\nHour 6. Lia watched them on the screens and counted: three men, four dogs.\nHour 9. Their boat is gone - it hit the rocks under the cliff and sank, the fools. They left on foot round the point. The dogs stayed.\nHour 11. We're going down the escape shaft to the boathouse. Our little boat is still there.\n\nThe boathouse safe opens with this month's code. Take what you need - and don't let the dogs follow you down. - Mira Solberg
+note panicnote Safe room log | SAFE ROOM - HOUR BY HOUR\n\nHour 2. They found the bookshelf. Crowbars on the steel. It held.\nHour 6. Lia watched them on the screens and counted: three men, four dogs.\nHour 9. Their boat is gone - it hit the rocks under the cliff and sank, the fools. They left on foot round the point, two of the dogs with them. The other two stayed.\nHour 11. We're going down the escape shaft to the boathouse. Our little boat is still there.\n\nThe boathouse safe opens with this month's code. Take what you need - and don't let the dogs follow you down. - Mira Solberg
 note boatsafe Boathouse safe | The boathouse safe, behind the oars: the family's spare things - a charger for the house's batteries, binoculars, the first-aid box.
 loot boatsafe Blueprint_BatteryCharger*1;Battery*2;Binoculars*1;HealingSalve_Good*2;CircuitBoard*2
 prop boatsafe loot.refill=0

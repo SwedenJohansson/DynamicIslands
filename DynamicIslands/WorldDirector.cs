@@ -213,7 +213,7 @@ namespace DynamicIslands.Editor
 				case "start": return "When the world starts";
 				case "km": return "After sailing " + WhenArg + " km";
 				case "day": return "On day " + WhenArg;
-				case "quest": return "When the quest of " + RefName(WhenRef) + " is done";
+				case "quest": return "When " + (WhenArg.Trim().Length > 0 && WhenArg.Trim() != "1" ? "quest " + WhenArg.Trim() : "the quest") + " of " + RefName(WhenRef) + " is done";
 				case "step": return "When " + WhenArg + " step(s) of the quest of " + RefName(WhenRef) + " are done";
 				case "zone": return "When zone '" + WhenArg + "' of " + RefName(WhenRef) + " fires";
 				case "visit": return "When players first reach " + RefName(WhenRef);
@@ -1069,10 +1069,29 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, int> noRoom = new Dictionary<string, int>();
 		static bool wideSearch;
 
+		/// <summary>Copies of an island its own rules may bring into a world (ROADMAP CB3: a rule bringing its own island
+		/// fired again on each copy - with "on day 2" every second, without end).</summary>
+		public const int MaxSelfCopies = 10;
+
+		/// <summary>An island rule that brings the island it is on, when the world has MaxSelfCopies of it already.</summary>
+		internal static bool TooManyCopies(IntroRule r, IslandWorldState.Entry owner)
+		{
+			if (owner == null || owner.HostName == null) return false;
+			bool self = r.What == "island" ? r.WhatArg.Trim().Equals(owner.HostName, StringComparison.OrdinalIgnoreCase)
+				: r.What == "oneof" && r.WhatArg.Split(',').All(n => n.Trim().Length == 0 || n.Trim().Equals(owner.HostName, StringComparison.OrdinalIgnoreCase));
+			return self && IslandWorldState.Islands.Count(e => owner.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)) >= MaxSelfCopies;
+		}
+
 		static void TryRule(IntroRule r, IslandWorldState.Entry owner, string key, Action markDone)
 		{
 			IslandWorldState.Entry at;
 			if (!Met(r, owner, out at)) return;
+			if (TooManyCopies(r, owner))
+			{
+				markDone();
+				Log("Rule '" + r.Id + "' of '" + owner.HostName + "' brings its own island: the world has " + MaxSelfCopies + " of it already, so it is done without one");
+				return;
+			}
 			float t;
 			if (retryAt.TryGetValue(key, out t) && Time.unscaledTime < t) return;
 			// (no room after a few tries: looked for further out and all round - AU28)

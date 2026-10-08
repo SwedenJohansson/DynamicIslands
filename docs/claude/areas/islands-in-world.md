@@ -32,7 +32,7 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 
 ## Data and keys
 - Folder `DynamicIslands.assetpath` (`<Raft>\Mods\DynamicIslands\`); `IslandSpawner.PathFor(name)` = `<name>` + `IslandFile.Extension` (`.island`).
-- `.island`: magic "CISL", int32 format, deflate body: name, water level, size, uint16 heights, objects (name, pos, euler, scale). v2 paint and mask; v3 `Elevation`, `Style`; v4 `Props`, per-object props, then `Tail` blocks (tag, length, bytes, ended by an empty tag; `MixTag` "mix"). `FormatVersion` 4, `MaxObjects` 100000.
+- `.island`: magic "CISL", int32 format, deflate body: name, water level, size, uint16 heights, objects (name, pos, euler, scale). v2 paint and mask; v3 `Elevation`, `Style`; v4 `Props`, per-object props, then `Tail` blocks (tag, length, bytes, ended by an empty tag; `MixTag` "mix", "uid" stable object ids from `StableIds`). `FormatVersion` 4, `MaxObjects` 100000.
 - `<name>_<12 hex>.island`: a copy from a host or kept for a saved world (`IslandNetwork.DownloadName`, `IsDownloadName`). `gen-<style>-<seed>`: generated (`GeneratedPrefix`, `FreeName`).
 - World file `worlds\<world guid>.txt` (`IslandWorldState.WorldFilePath`). Island line `name|x|y|z|state|rule|label|hash`. `@auto=`, `@modversion=`; `WorldCopy.StampLines`: `@savedat=`, `@savecount=`, `@raftsave=` or `@between=`; `@savedby=` (`Housekeeping.SavedByLine`); `@place=` (`PlayerPlaces`); other classes add their own `@key=` lines.
 - `CustomIslands.txt` (`WorldCopy.FileName`) in Raft's `World\<name>` folder and, on a Raft save, in its newest save folder.

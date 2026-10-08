@@ -85,12 +85,12 @@ story hermitkey|Hermit's key|quest:Caravan_KeyMayor|A key on a leather thong, fr
 
 note climbnote Climber's note | (nailed to the post at the foot of the cliff)\n\nThe hermit's scaffold: five ladders, one ledge. Don't look down after the ledge.\n\nHe doesn't come down any more. He says whoever climbs up and answers his riddles can have what's in his chest. I got two out of three. The birds came.\n- a climber who won't try again
 note riddles The hermit's riddles | Three riddles, three levers. The answer to all three is the same.\n\nI. The more of me you take, the more you leave behind.\nII. I have a bed but never sleep, a mouth but never speak.\nIII. ...no, that one is about the sea too. They all are.\n\nThe levers: STONES - FOOTSTEPS - TIDES.\nPull the one that answers the first riddle. (The others call my birds.)
-note hermitchest Hermit's chest | The hermit's chest: a warm coat he never wears, a telescope, a sack of sea salt, his savings.
+note hermitchest Hermit's chest | The hermit's chest: a leather jerkin he never wears, a carpenter's plan for detail planks, a few stones from his path, his savings.
 loot hermitchest Equipment_LeatherChest*1;Blueprint_DetailPlank*1;TradeToken*8;Stone*4
 prop hermitchest loot.refill=0
 prop hermitchest if.open=has|story:hermitkey|1
 prop hermitchest else.open=message||The hermit's chest is locked. The key is in one of the levers' boxes.
-note footbox Climbers' box | A box at the cliff's foot: chalk, rope, a dented flask.
+note footbox Climbers' box | A box at the cliff's foot: planks, rope, two flasks of water.
 loot footbox Rope*3;PlasticBottle_Water*2;Plank*3
 prop footbox loot.refill=0
 note ledgebox Ledge box | A box wedged on the ledge: someone gave up here.

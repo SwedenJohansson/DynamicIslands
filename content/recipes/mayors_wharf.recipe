@@ -121,7 +121,7 @@ note memo Mayor's memo | MEMO - from the desk of Mayor A. Osei\n\nTo Security: t
 note locker Security locker | Locker 7 - D. Kim, Security. A spare vault keycard on a lanyard, two ration bars and a photo of a very fat dog.
 loot locker story:keycard*1;Cooked_GenericMeat*2
 prop locker loot.refill=0
-note safe Mayor's safe | The founders' charter, sealed in plastic: "Tangaroa will float when the old world sinks." Under it, a hand-drawn chart of the sea routes between the floating towns.
+note safe Mayor's safe | The founders' charter, sealed in plastic: "Tangaroa will float when the old world sinks." Under it, a hand-drawn chart of the sea routes between the floating towns, a painting of the sea-god, two bars of titanium and two circuit boards.
 loot safe Placeable_Painting_Tangaroa_2*1;TitaniumIngot*2;CircuitBoard*2
 prop safe loot.refill=0
 loot barrel Plastic*6;Glass*2;Scrap*3

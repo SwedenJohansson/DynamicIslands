@@ -43,6 +43,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Editing islands your saved worlds have (R1b).** Every object of an island now has its own number, kept through
+  edits (copies get new ones; files saved before keep working, numbered by place). Deleting objects, changing their
+  order or making one a chest no longer keeps those worlds on the old version: they get the new one, with what was
+  picked, looted, opened or done there kept on the same objects (what belonged to a deleted object goes with it).
+  Only removing or reordering rules or quest steps still keeps the old version for them. **Give my worlds this
+  version** carries what was used the same way.
 - **Library updates (T10).** An entry shows **Update** also when one of its files changed in the library without a new
   version number (installs now record each file's SHA-256). Updating over files you changed offers **Update, keep a
   copy** (yours stay as "name (yours)", never at random while sailing), **Keep my changes** or **Cancel**, and names the
@@ -76,6 +82,22 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Another author's pack with the same id** was installed as that entry's update, over its files; it is an entry of its
+  own now (`<id>-<author>`), and the import says so.
+- **Story texts that disagreed with their islands** (Heart of Fire, Drowned Labyrinth, The Safe Room, Hightide Harbor,
+  Glacier Station, The Rock Pen, Thornwood, Wreckers' Cove) and notes naming things their chests don't give (Floe Reach,
+  Hermit's Table, The Great Fen, Mayor's Wharf, Shelter Atoll, Rookery Cliffs, Keel and Mast). The Abyss's last chapter
+  no longer sends you back through every air pocket.
+- **An island rule bringing its own island** brought a new copy each time a copy's rule fired (with "on day 2", one
+  every second); a world now takes at most 10 copies that way.
+- **A plan rule waiting for an island's Quest 2** (or later) was taken by the quest editor as the main quest's and could be
+  overwritten on Save; it is left alone now, and World plans have a **quest no.** field for "When a quest is done" (the
+  plan check says when the island has no such quest).
+- **The New Game box forgot the plan** chosen for the last world: it now offers it again, like World settings (`newworld_plan.txt`).
+- **Library buildings no longer float:** floors and decks over the water or a slope on the library islands now
+  stand on posts down to the ground or sea floor (recipes stand them at the save; `posts off` leaves a deck
+  meant to hang). `CIFloating` also names floors over nothing and chests with nothing under them, and
+  `CIFloatingSweep` checks every saved island (the randomizer's extras left out).
 - **Remove stopped with "Cannot create a file"** when the deleted folder already had a dated copy of the same file
   from the same second (an island removed twice); the older copy now gets a number.
 - **Limits against runaway growth:** journal pages (2000, titles 200 and texts 8000 letters) and story item kinds

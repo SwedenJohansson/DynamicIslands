@@ -1,6 +1,6 @@
 # Heart of Fire - a themed island, ten times the size (x10)
 # Inspiration: the island-goddess animated film (a stolen green heart, a burning mountain and its fire demon, the heart
-#   carried home and the island turning green again) merged with volcano-adventure films (lava tubes, an pale temple)
+#   carried home and the island turning green again) merged with volcano-adventure films (lava tubes, a black temple)
 #   - the mood only, never named; the people and their customs are invented, no real culture is pictured.
 # Island type: Shape 7 (Twin peaks), Style 4 (volcanic). Two great peaks: the Ember, a live volcano (south-west, 59 m),
 #   and the Green Mother, a sleeping one (north-east, 63 m), a low pass between them; the burnt village on the broad
@@ -23,7 +23,7 @@ gen Water=0.5 SeaRocks=0.25 SeaFinds=0.3 Sunken=0.4 Hostiles=0
 generate
 
 # --- Terrain: the wreck's hollow in the bay (9 m down); the lava tube's ledge on the Ember's south flank (16.5 m); the
-# pale temple's terrace on its east shoulder (12 m); the Mother's spring (7.5 m) with its dry basin; the pass between
+# black temple's terrace on its east shoulder (12 m); the Mother's spring (7.5 m) with its dry basin; the pass between
 # the peaks; the Green Mother's summit (60 m) and the trail up to it from the spring ----------------------------------------
 brush flatten at -110 100 r=9 s=20 frames=150 h=-9
 brush flatten at -35 -70 r=5 s=20 frames=120 h=16.5
@@ -121,7 +121,7 @@ place Zone_Sound tubesound at -35 -50 h=18
 place Creature_Roach beetles at -35 -66 h=17
 place Zone_Trigger lavatubes at -35 -68 h=17.5
 
-# --- The pale temple on the Ember's east shoulder: a court walled with pale stone blocks, the sanctum in its back
+# --- The black temple on the Ember's east shoulder: a court walled with black stone blocks, the sanctum in its back
 # wall behind a slab door that sinks, three brazier stands of the same stone (east, high, west) with fires that show when lit, the carving
 # over them, an offering box ---------------------------------------------------------------------------------------------
 for bz -37.2 -22.8 2.4
@@ -303,7 +303,7 @@ story seedpod|The Mother's seed pod|Seed_Palm|A seed pod left on the shrine wher
 
 note eldercarving The elders' carving | (carved round the great post)\n\nWhen the island was young the Green Mother slept on the eastern peak and the Ember slept on the western one. In the Mother's shrine lay the Bloomstone, her heart, and while it lay there the island was green.\n\nA navigator came, Corvan, who wanted a ship that never lacked a wind. He took the Bloomstone.\n\nThe Ember woke. Fire came down the mountain and the green went grey, and the Cinderwraith rose out of the Ember's mouth and has not slept since. Corvan's ship burned in the bay as he ran.\n\nWe took the canoes and went over the sea. If the Bloomstone ever comes home to the Mother, we will come home too.
 note navlog Navigator's log | CORVAN LISLE - LOG\n\nI have it. The Bloomstone, green as a leaf with the sun in it. Already the sails fill with no wind.\n\n...\n\nThe mountain is burning. The bird of fire is over the bay. The stone CRACKED in my hands when the mast came down - three pieces. One is in the hold with me; the hatch is jammed. The bird took one in its claws and dropped it in its black temple on the burning mountain's shoulder. The third fell into the river of fire, and the beetles dragged it into the tubes.\n\nIf anyone reads this: put it back. Put it back.
-note templecarving The temple's carving | (cut into the pale stone over the braziers)\n\nLight the three fires as the sun lights them -\ndawn, noon, dusk:\nthe east, the high one, the west -\nand the stone door will open.
+note templecarving The temple's carving | (cut into the black stone over the braziers)\n\nLight the three fires as the sun lights them -\ndawn, noon, dusk:\nthe east, the high one, the west -\nand the stone door will open.
 note mothersong The Mother's song | (carved on a stone by the dry basin)\n\nThree that were one, lay them in my bowl.\nCarry my heart over the saddle where the Ember watches.\nLay it on my stone at the top of the world,\nand I will wake.
 note welcomepost The elders' welcome | (freshly carved, the wood still pale)\n\nThe Mother is awake and the island is green. We came home on the morning tide and found her heart in the shrine and the Ember asleep.\n\nWhoever you are - you are one of us now. Our gift is in the canoe house.
 note canoebox Canoe house box | The canoe builders' box: adzes, cord - and a long iron pry bar, for planks that won't come apart.
@@ -320,7 +320,7 @@ prop tubechest loot.refill=0
 note emberpot Ember pot | A clay pot in the lava's glow, a coal burning in it that never goes out.
 loot emberpot story:livecoal*1;Clay*2
 prop emberpot loot.refill=0
-note sanctumchest Sanctum chest | In the pale sanctum, where the Cinderwraith dropped it: the third shard of the Bloomstone.
+note sanctumchest Sanctum chest | In the black sanctum, where the Cinderwraith dropped it: the third shard of the Bloomstone.
 loot sanctumchest story:shard*1;TradeToken*3
 prop sanctumchest loot.refill=0
 note eldersgift Elders' gift | The elders' gift, in the canoe house: seeds of every tree that grows here, the gardeners' plans for terraced beds, a water gourd that never turns sour - and titanium and coin from Corvan's ship, which the sea gave back.
@@ -451,7 +451,7 @@ prop lavatubes zone.radius=10
 prop lavatubes zone.message=The lava tubes: round black tunnels lit red from deep inside - and the clicking of beetles, big ones.
 prop obsidiantemple zone.id=obsidiantemple
 prop obsidiantemple zone.radius=10
-prop obsidiantemple zone.message=The pale temple: black pillars, three cold brazier stands and a door of grey stone.
+prop obsidiantemple zone.message=The black temple: black pillars, three cold brazier stands and a door of grey stone.
 prop motherspring zone.id=motherspring
 prop motherspring zone.radius=8
 prop motherspring zone.message=The Green Mother's spring: a dry basin, a stone bowl with three hollows, words carved on a stone.
@@ -510,7 +510,7 @@ step reach|lavatubes|1|Find the lava tubes in the Ember's south flank
 step kill|Roach|4|Clear the ember beetles out of the tubes
 step collect|story:shard|2|Take the second shard from the glowing chamber at the tubes' end
 step collect|story:livecoal|1|Take a live coal from the ember pot by the lava glow
-step reach|obsidiantemple|1|Climb to the pale temple on the Ember's shoulder
+step reach|obsidiantemple|1|Climb to the black temple on the Ember's shoulder
 step read|The temple's carving|1|Read the carving over the temple's braziers
 step collect|story:shard|3|Light the braziers in the carving's order and take the third shard from the sanctum
 # Chapter 3 - the mending

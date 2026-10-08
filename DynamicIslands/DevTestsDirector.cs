@@ -73,6 +73,14 @@ namespace DynamicIslands
 			Check(ref ok, IntroRule.ParseLines(props[WorldDirector.IslandRulesKey]).Count == 2 && QuestEditorWindow.QuestBringRule(props).Direction == "west", "changing it replaces it");
 			QuestEditorWindow.SetQuestBringRule(props, null);
 			Check(ref ok, QuestEditorWindow.QuestBringRule(props) == null && props[WorldDirector.IslandRulesKey] == IntroRule.Parse(lines[3]).ToLine(), "removing it keeps the other rule");
+			// (a rule waiting for the island's Quest 2 isn't the quest editor's: Save leaves it alone, ROADMAP CB6)
+			var quest2 = new IntroRule { Id = "q2", What = "island", WhatArg = "Old camp", When = "quest", WhenRef = IntroRule.Self, WhenArg = "2", Where = "near", WhereRef = IntroRule.Self, Distance = 600f, Direction = "any" };
+			props[WorldDirector.IslandRulesKey] = IntroRule.ToLines(new List<IntroRule> { quest2 });
+			QuestEditorWindow.SetQuestBringRule(props, bring);
+			List<IntroRule> both = IntroRule.ParseLines(props[WorldDirector.IslandRulesKey]);
+			Check(ref ok, both.Count == 2 && both.Any(r => r.Id == "q2" && r.WhenArg == "2") && QuestEditorWindow.QuestBringRule(props).Id == bring.Id && IntroRule.Parse(quest2.ToLine()).WhenArg == "2"
+				&& quest2.DescribeWhen().Contains("quest 2"), "a rule for Quest 2 is kept beside the main quest's (" + quest2.DescribeWhen() + ")");
+			props[WorldDirector.IslandRulesKey] = lines[3];
 
 			if (DynamicIslands.InEditor())
 			{
@@ -617,6 +625,16 @@ namespace DynamicIslands
 			Screenshot(new[] { "new_game_plan" });
 			yield return new WaitForSecondsRealtime(0.5f);
 			PlanPickerWindow.Close();
+			// (the plan the last world was made with is offered for the next one, ROADMAP CB5; one removed since is not)
+			string lastFile = System.IO.Path.Combine(DynamicIslands.assetpath, NewWorldOptions.LastPlanFileName);
+			string lastBefore = System.IO.File.Exists(lastFile) ? System.IO.File.ReadAllText(lastFile) : null;
+			WorldDirector.PendingPlan = null;
+			NewWorldOptions.SaveLastPlan(next);
+			string offered = NewWorldOptions.Selected;
+			NewWorldOptions.SaveLastPlan("CI no such plan");
+			string offeredGone = NewWorldOptions.Selected;
+			if (lastBefore != null) System.IO.File.WriteAllText(lastFile, lastBefore); else System.IO.File.Delete(lastFile);
+			Check(ref ok, offered == next && offeredGone == WorldDirector.DefaultPlan, "the last world's plan is offered for the next (" + offered + "); a removed one is not (" + offeredGone + ")");
 			WorldDirector.PendingPlan = choose;
 			if (choose == null) box.Button_Close();
 			else Log("Plan for the next new world: " + NewWorldOptions.Selected);

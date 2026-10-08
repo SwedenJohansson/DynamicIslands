@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -10,7 +11,8 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// "Custom Islands plan" in Raft's New Game box: the chosen world plan and "Choose plan..." (PlanPickerWindow, ROADMAP CT5) over a list of the world plans (Random islands, No custom
 	/// islands, the saved and downloaded plans), each with its description, and the chosen plan's description under it. Pressing Create keeps the
-	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded.
+	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded; it is remembered for
+	/// the next world (LastPlanFileName, ROADMAP CB5).
 	/// "World randomizer" (in the World settings window): how much the world is randomized (a drop-down: off, light,
 	/// normal, wild) and which parts (WorldRandomizer.Pending; the last choice is remembered for the next world).
 	/// </summary>
@@ -22,8 +24,33 @@ namespace DynamicIslands.Editor
 		static Text detailText, randText, chosenText;
 		static readonly List<Button> partButtons = new List<Button>();
 
-		/// <summary>The plan shown in the box.</summary>
-		public static string Selected { get { return WorldDirector.PendingPlan ?? WorldDirector.DefaultPlan; } }
+		/// <summary>The plan shown in the box: the one picked, else the one the last world was made with, else defaultPlan.</summary>
+		public static string Selected { get { return WorldDirector.PendingPlan ?? LastPlan ?? WorldDirector.DefaultPlan; } }
+
+		/// <summary>The plan chosen for the last world made in the New Game box (ROADMAP CB5).</summary>
+		public const string LastPlanFileName = "newworld_plan.txt";
+		static string LastPlanPath { get { return Path.Combine(DynamicIslands.assetpath, LastPlanFileName); } }
+
+		/// <summary>The plan the last world was made with, if it is still there (null when none was or it was removed).</summary>
+		public static string LastPlan
+		{
+			get
+			{
+				try
+				{
+					if (!File.Exists(LastPlanPath)) return null;
+					string name = (File.ReadAllLines(LastPlanPath).FirstOrDefault(l => !l.StartsWith("#")) ?? "").Trim();
+					return name.Length > 0 && WorldPlan.Load(name) != null ? name : null;
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + LastPlanPath + ": " + e.Message); return null; }
+			}
+		}
+
+		internal static void SaveLastPlan(string name)
+		{
+			try { SafeFile.WriteAllText(LastPlanPath, "# The plan chosen in the New Game box for the last world (offered first for the next one)\n" + name + "\n"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + LastPlanPath + ": " + e.Message); }
+		}
 
 		/// <summary>The randomizer settings shown in the box.</summary>
 		public static RandomizerSettings Randomizer { get { if (WorldRandomizer.Pending == null) WorldRandomizer.Pending = WorldRandomizer.Defaults; return WorldRandomizer.Pending; } }
@@ -229,6 +256,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				WorldDirector.PendingPlan = NewWorldOptions.Selected;
+				NewWorldOptions.SaveLastPlan(WorldDirector.PendingPlan);
 				RandomizerSettings r = NewWorldOptions.Randomizer;
 				WorldRandomizer.SaveDefaults(r);
 				Debug.Log("[CUSTOM ISLANDS] Creating a world with the plan '" + WorldDirector.PendingPlan + "', world randomizer " + r.Describe());

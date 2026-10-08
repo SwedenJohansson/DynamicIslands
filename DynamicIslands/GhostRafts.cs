@@ -142,7 +142,7 @@ namespace DynamicIslands.Editor
 				k.Add("Note_Paper", at(hx, hz) + new Vector3(0.3f, 0f, 0.3f), 0f, Note("Captain's log", CaptainTexts, rnd), 0f);
 				k.Add("Block_Ladder", at(w, d / 2) + new Vector3(-g / 2, 0f, 0f), 90f, null, 0f);
 				if (size == Medium && rnd.NextDouble() < 0.45)
-					k.Creature("Rat", flat(w - 2, 1), 1 + rnd.Next(2), "Normal", 1f, null, false, deck);
+					k.Creature("Rat", flat(w - 2, 1), 1 + rnd.Next(2), "Normal", 1f, null, false, deck, 0f);
 			}
 			if (size == Large)
 			{
@@ -159,9 +159,11 @@ namespace DynamicIslands.Editor
 				k.Add("Loot_Chest", at(w / 2, d / 2), 180f, hoard, 0f);
 				k.Add("Loot_Barrel", at(2, d - 2), 0f, loot("Food"), 0f);
 				k.Add("Loot_Barrel", at(w - 3, 1), 0f, loot("Metal"), 0f);
-				k.Creature("Rat", flat(2, 2), 3 + rnd.Next(3), "Hard", 1f, null, false, deck);
-				k.Creature("Rat", flat(w - 3, d - 3), 2 + rnd.Next(2), "Normal", 1f, null, false, deck);
-				k.Creature("StoneBird", flat(w / 2, d / 2), 1 + rnd.Next(2), "Normal", 1f, null, false, deck + 10f);
+				// (not clearing around them: that takes away whatever has no settings - the raft's foundations, walls and pillars;
+				// the hoard chest stood on the sea where the screechers' foundation had been, CA30)
+				k.Creature("Rat", flat(2, 2), 3 + rnd.Next(3), "Hard", 1f, null, false, deck, 0f);
+				k.Creature("Rat", flat(w - 3, d - 3), 2 + rnd.Next(2), "Normal", 1f, null, false, deck, 0f);
+				k.Creature("StoneBird", flat(w / 2, d / 2), 1 + rnd.Next(2), "Normal", 1f, null, false, deck + 10f, 0f);
 			}
 			f.Props[IslandProps.Title] = size == Large ? "Ghost raft (large)" : "Ghost raft";
 			return f;

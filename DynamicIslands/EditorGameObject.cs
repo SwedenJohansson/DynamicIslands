@@ -17,6 +17,8 @@ namespace DynamicIslands.Editor
 		public float arrowLength = 5;
 		/// <summary>The object's extra data (creature settings, note text, tint...), saved with the island; see ObjectProps.</summary>
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
+		/// <summary>The object's own number in the island it was opened from (R1b, IslandObject.Uid); 0 for a new one or a copy.</summary>
+		[NonSerialized] public int Uid;
 
 		/// <summary>
 		/// Marks a spawned catalog object as placed in the editor. Props are copied (null = the object's defaults: a

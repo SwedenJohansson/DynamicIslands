@@ -121,7 +121,8 @@ plan save
 | `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages`. `step2`..`step9` for further quests. |
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
-| `save` | `<island name>` | Saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. |
+| `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |
+| `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. |
 | `plan` | see below | World plans window. |
 | `log` | `<text>` | Writes the text to the log. |
 | `where` | `<alias>` | Logs where the alias's objects ended up (x z from the first origin, `h=` above the sea, turn). |

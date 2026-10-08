@@ -194,12 +194,12 @@ loot loftchest story:sailcloth*1;Rope*3
 prop loftchest loot.refill=0
 prop loftchest if.open=has|story:loftkey|1
 prop loftchest else.open=message||The sail loft's chest is locked. Brandvold's letter says where the key is.
-note gift The shipwright's gift | Brandvold's gift for whoever launched her: his plans for the yard's big planting beds, his best tools, a ship's lantern, seed for the next oaks.
+note gift The shipwright's gift | Brandvold's gift for whoever launched her: his plans for the yard's big planting beds, his best hammer, a ship's lantern, birch seed for the next trees, a purse of tokens.
 loot gift Blueprint_Cropplot_Large_Tier3*1;Hammer*1;Placeable_Lantern_Metal*1;Seed_Birch*4;TradeToken*8
 prop gift loot.refill=0
 prop gift if.open=signal|launched
 prop gift else.open=message||A chest with a ribbon round it and a tag: FOR WHOEVER LAUNCHES HER.
-note nailbarrel Nail barrel | The yard's nail barrel: clenched nails, copper nails, a few bolts.
+note nailbarrel Nail barrel | The yard's nail barrel: clenched nails, a few bolts, a lump of copper.
 loot nailbarrel Nail*12;Bolt*2;CopperOre*1
 prop nailbarrel loot.refill=0
 note toolbarrel Sunk tool chest | A tool chest that went into the bay with the mast: chisels gone to rust, and good iron.

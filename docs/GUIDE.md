@@ -147,8 +147,8 @@ lists every rule of the plan in words.
 ![The plan picker](images/plan-picker.jpg)
 *The plan picker: Far Horizons selected, with a map of its first island and the four islands it brings.*
 
-Then click Raft's **Create** as usual. Your World settings are remembered for the next new world; the plan goes back to
-**Random islands** (or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
+Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
+(in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
 saved with it, the same for every player, and every new world gets its own.
 
 **Just want new islands?** Leave the plan on **Random islands**, leave World settings as they are (`Raft's own`) and
@@ -847,8 +847,9 @@ in the list: **Tidy up** (in **My islands** or the Import window) clears the one
 
 **Give my worlds this version.** A saved world keeps playing the version of an island it was saved with. When you save
 an island that worlds play in an older version, the editor offers **Give my worlds this version** (also in **My islands**
-for the picked island): those worlds then play the island as you saved it now, and the old copies go to
-`deleted\kept versions`. **Keep their version** leaves them as they are.
+for the picked island): those worlds then play the island as you saved it now, with what was used there kept on the
+same objects (unless rules or quest steps were removed or reordered: then fired rules and reached steps may land on
+other ones), and the old copies go to `deleted\kept versions`. **Keep their version** leaves them as they are.
 
 **My islands...** (in the Islands window) lists every island file at once: where it came from (**Mine**, the island
 **Library**, **Generated** while sailing, copies **From hosts**), how many saved worlds use it (hover for their names)
@@ -883,16 +884,18 @@ and settings, and saving writes it back unchanged, so a later version of Raft or
 box if you don't want it. In a world such an object is left out, and the player is told once.
 
 **Saving an island your saved worlds have.** A saved world remembers what was used on the island - trees chopped,
-things picked up, chests looted, zones fired, doors opened - by the order of the island's objects. So:
-- changes that keep that order reach those worlds the next time they load: moving objects, changing their settings,
-  the ground, the island's settings, and **new objects** (they come after the others). The first time you save over
-  such an island, the editor says which worlds have it. If you moved its ground, anything built on it there may no
-  longer fit;
-- changes that would mix it up - **deleting objects**, changing their order, making an object a chest, or **removing
-  or reordering the island's rules or a quest's steps** (or changing what a step asks for) - don't reach
-  them: those worlds keep playing the version they started with (the editor says so; a copy `<name>_<code>.island` is
-  kept for them), and new worlds get your new version. To give a world the new version anyway, save your changes under a
-  new name (**Save as**) and bring that island into the world.
+things picked up, chests looted, zones fired, doors opened. Every object of an island has its own number, kept through
+your edits (a copy gets a new one), so the world knows which object each thing belongs to. So:
+- changes to the **objects** reach those worlds the next time they load: moving them, changing their settings, the
+  ground, the island's settings, **new objects**, and also **deleting objects**, changing their order or making one a
+  chest - what was used stays with the same objects, and what belonged to a deleted object goes with it (the editor
+  says which worlds got the new version). If you moved its ground, anything built on it there may no longer fit;
+- **removing or reordering the island's rules or a quest's steps** (or changing what a step asks for) doesn't reach
+  them, because a world keeps those by their place: those worlds keep playing the version they started with (the editor
+  says so; a copy `<name>_<code>.island` is kept for them), and new worlds get your new version. The same happens, rarely,
+  when the editor can't count an object's pickups yet (an object of Raft's other islands not loaded). To give a world
+  the new version anyway, use **Give my worlds this version** (below), or save your changes under a new name
+  (**Save as**) and bring that island into the world.
 
 **Sharing an island or a plan: Export.** In the Islands window, pick an island and click **Export...**; in the World
 plan window (a plan open) click **Export...**. The **Share** window says what goes along:
@@ -938,7 +941,8 @@ holds, who made it and its version. **Install** puts it in place:
 - Installing a newer version of something you installed **updates** it. Worlds you've already started get the new
   version when its objects keep their order (a fixed quest, new ground, objects added), as with your own saves (4.7);
   when objects were removed or reordered they keep the version they started with (the old file stays for them, and
-  the install says which). If you changed one of its islands in the editor, yours is
+  the install says which) - **Give my worlds this version** in **My islands** moves them over with what was used kept
+  on the same objects. If you changed one of its islands in the editor, yours is
   kept unless you tick **Replace files I changed**.
 
 **Installed from packs** lists everything you installed, with **Remove** (click twice). Remove deletes what the entry
@@ -1259,7 +1263,7 @@ only for someone who has it), or **a locked chest** whose key is hidden in drift
 "when zone X fires" or "when players first get here" → bring a saved island or a new island of a map type, how far
 and which way, with a message and a name on the Receiver. The cards work like a world plan's rules ([7.3](#73-a-rule-card-part-by-part)),
 but they travel with the island: a chain of shared island files is a story on its own, in any world where the first
-island turns up. A world plan is the better choice when you want to decide the whole world's story in one place.
+island turns up. A world plan is the better choice when you want to decide the whole world's story in one place. A rule that brings **its own island** (a new copy of it, which has the same rule) stops at 10 copies in a world.
 
 ![The island's rules](images/editor-island-rules.jpg)
 *An island rule: when this island's quest is done, bring a new island of a random type 600 m north, with the
@@ -1841,7 +1845,7 @@ signals can't be listed: its list is empty and says so - type the name.
 | **When the world starts** | - | as soon as the world starts |
 | **After sailing a distance** | km | when the raft has sailed that far in this world |
 | **On a day** | a day | on that in-game day |
-| **When a quest is done** | an island | when that island's quest is done. The island must have a quest ([6.1](#61-quests)) |
+| **When a quest is done** | an island, and **quest no.** (empty = its main quest) | when that island's quest is done (or its Quest 2, 3 ... when a number is set). The island must have that quest ([6.1](#61-quests)) |
 | **When quest steps are done** | an island, steps | when that many steps of its quest are done |
 | **When a trigger zone fires** | an island, a zone name | when a player walks into that trigger zone on it ([5.4](#54-trigger-zones-and-ambushes)) |
 | **When players reach an island** | an island | when a player first comes to that island |

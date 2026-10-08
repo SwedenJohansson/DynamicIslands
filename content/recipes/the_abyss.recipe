@@ -2,9 +2,9 @@
 # A ring of black sea stacks around a trench that falls away 42 m into the dark: the expedition's raft moored over its
 # edge, its air line running down to three air pockets (Raft's own, from under Caravan Town) - a container on a shelf,
 # a gas tank on a ledge, a shack on the floor - and on the floor the lair of the Abyssal Angler. Quest "The Bottom of
-# the Abyss" (20 steps, in four chapters): the raft - the leader's log, the camp chest, the valve wrench, the air valve
+# the Abyss" (17 steps, in four chapters): the raft - the leader's log, the camp chest, the valve wrench, the air valve
 # (a journal page); the dive - the container, the gas tank, the shack; the lair - the Abyssal Angler (a journal page when
-# it dies), its brood, the hoard; the way up - the shack, the tank, the container, the raft, the log read once more.
+# it dies), its brood, the hoard; the way up - the raft, the log read once more.
 # The journal's pages (the log, the chest's and the hoard's tags, the valve, the angler) are steps of their own.
 #
 # Built by the recipe player (CIRecipe the_abyss) through the editor's own operations. Its play test:
@@ -185,10 +185,7 @@ step pages||4|Kill the Abyssal Angler and write its end into your journal
 step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
 step open|Lair hoard|1|Open what the lair kept
 step pages||5|Write the hoard into your journal - the expedition's answer
-step reach|pocket3|1|Catch your breath in the shack before the long climb
-step reach|pocket2|1|Climb the air line to the gas tank on the ledge
-step reach|pocket1|1|On up to the container on the shelf
-step reach|camp|1|Surface and haul yourself back aboard the expedition's raft
+step reach|camp|1|Climb the air line back up - the pockets still breathe on the way - and haul yourself aboard the expedition's raft
 step read|Expedition leader's log|1|Read the leader's log once more - its question has an answer now
 quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
 quest reward=MetalIngot*8;Nail*30;OxygenBottle*2

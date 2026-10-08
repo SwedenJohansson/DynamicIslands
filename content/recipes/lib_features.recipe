@@ -67,11 +67,13 @@ prop $chest beh.hidden=1
 loot $chest $items
 end
 #
-# crankcache: Raft's crank wheel (Temperance's) on the side of a post at x z, facing yaw; turned once, it sends its signal (sig) and
+# crankcache: Raft's crank wheel (Temperance's) on the side of a post at x z, its shaft in the post's face, facing yaw; turned once, it sends its signal (sig) and
 # shows a chest (chest, at cx cz) - a crate a shutter let go, a box a sluice uncovered
 macro crankcache x=0 z=0 yaw=0 crank=TP_Selene_DoorCrankWheel alias=crank sig=crank chest=crankchest cx=0 cz=0 cyaw=0 items=Rope*2;Bolt*2 title="Crank wheel crate"
-place RT_Pillar - at $x $z ground sy=0.4
-place "$crank" $alias at $x $z ground y=1.05 rot=0,0,0 yaw=$yaw
+place RT_Pillar - at $x $z ground sy=0.6
+push at $x $z yaw=$yaw
+place "$crank" $alias at 0 -0.09 ground y=1.2 rot=0,0,0
+pop
 prop $alias obj.name=$alias
 prop $alias if.use=!signal|$sig
 prop $alias on.use=message||The wheel turns with a long groan - and somewhere close a shutter rattles up.\nsignal||$sig\nshow|$chest

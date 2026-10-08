@@ -131,16 +131,16 @@ island on.arrive=message||Two white crags and a noise like a market: thousands o
 note collectorlog The egg collector's log | ROOKERY CLIFFS - COLLECTOR'S LOG\n\nMay 2. Up the ladders at first light. 60 eggs. The guillemots don't mind me. The big grey things on the top ledges DO.\nMay 9. Winch cable frayed. Spliced it. The basket still goes up the south crag if you pull the lever slow.\nMay 20. 140 eggs. Took the boat round to the trading post.\nJune 3. The grey ones took my hat.\nJune 4. The grey ones took my basket. It's on the north crag's top ledge. They can keep it.\nJune 30. Season's end. Leaving the cabin open for whoever comes. Take what eggs you like - the birds lay more.\n- Eskil
 note tally Tally of the seasons | (chalked on a board, one line a year)\n\n11 seasons. Best year 1,200 eggs. Worst year: the year of the grey ones (210, and a hat).
 note cliffsign Warning sign | LADDERS ARE OLD. LEDGES ARE SLIPPERY. THE GREY BIRDS ON TOP ARE NOT BIRDS YOU WANT TO MEET.\n- E.
-note cabinchest Collector's chest | Eskil's chest: a wool jumper, egg wax, a tin of biscuits, rope for the ladders.
+note cabinchest Collector's chest | Eskil's chest: a wool jumper, a tin of dried meat, rope for the ladders.
 loot cabinchest Wool*2;Rope*3;Cooked_GenericMeat*2
 prop cabinchest loot.refill=0
-note winchbox Winch box | A box by the winch: grease, a splice, a spare cable clamp.
+note winchbox Winch box | A box by the winch: rope, scrap, a lump of ore.
 loot winchbox Rope*2;Scrap*2;MetalOre*1
 prop winchbox loot.refill=0
-note ledgebox Eskil's lost basket | Eskil's basket, where the grey birds dropped it: a dozen eggs, still whole, and his hat.
+note ledgebox Eskil's lost basket | Eskil's basket, where the grey birds dropped it: a few eggs still whole, grey feathers and his leather hat.
 loot ledgebox Egg*4;Feather*3;Leather*1
 prop ledgebox loot.refill=0
-note dinghybox Box under the dinghy | A box under the upturned dinghy: oars' leathers, nails, a fishing line.
+note dinghybox Box under the dinghy | A box under the upturned dinghy: planks, nails, bait for a fishing line.
 loot dinghybox Nail*6;FishingBait_Simple*2;Plank*3
 prop dinghybox loot.refill=0
 note beachbarrel Barrel in the shallows | A barrel in the shallows: ore, scrap.
