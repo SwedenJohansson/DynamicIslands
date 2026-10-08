@@ -942,15 +942,28 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			if (quiet) Log("The host lacks island file '" + name + "' (" + hash + "): sending this PC's " + file);
+			// (a player asking again while the file is still going out to them gets the one being sent, not another copy
+			// alongside it - CB12; after SendingSeconds a stalled send counts as gone)
+			string key = hash + "|" + to;
+			float since;
+			if (sending.TryGetValue(key, out since) && Time.realtimeSinceStartup - since < SendingSeconds) { Log("Island file '" + name + "' is still being sent to " + to + ": not sent twice"); return; }
+			if (sending.Count >= 64) sending.Clear();
+			sending[key] = Time.realtimeSinceStartup;
 			byte[] bytes = File.ReadAllBytes(path);
-			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(SendChunks(name, hash, bytes, to));
+			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(SendChunks(name, hash, bytes, to, key));
 		}
+
+		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>
+		static readonly Dictionary<string, float> sending = new Dictionary<string, float>();
+		const float SendingSeconds = 60f;
+		/// <summary>Tests: how many files are going out now.</summary>
+		internal static int SendingCount { get { return sending.Count; } }
 
 		/// <summary>Chunks sent a frame (ROADMAP M3: all ~300 chunks of a 900 KB island went out in one loop, a burst that
 		/// a slow connection dropped messages of).</summary>
 		internal const int ChunksPerFrame = 6;
 
-		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to)
+		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to, string key)
 		{
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
 			float started = Time.realtimeSinceStartup;
@@ -961,6 +974,7 @@ namespace DynamicIslands.Editor
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending '" + name + "' chunk " + i + ": " + e.Message); }
 				if ((i + 1) % ChunksPerFrame == 0) yield return null;
 			}
+			sending.Remove(key);
 			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + to);
 		}
 

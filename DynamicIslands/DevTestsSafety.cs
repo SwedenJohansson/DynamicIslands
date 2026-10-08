@@ -174,6 +174,19 @@ namespace DynamicIslands
 			DynamicIslands.LoadEditor(new string[0]);
 			yield return new WaitForSeconds(3f);
 			Check(ref ok, LoadSceneManager.IsGameSceneLoaded && !DynamicIslands.InEditor(), "LoadEditor inside a world is refused: still in the world");
+			if (Raft_Network.IsHost)
+			{
+				// (CB12: what players send can't grow without end - a long journal page is cut, holds that ran out are dropped)
+				StoryBook.AddPage("ci-cb12-long", new string('T', 500), new string('x', StoryBook.MaxPageText + 5000), "ci");
+				StoryBook.Page page = StoryBook.Pages.FirstOrDefault(p => p.Key == "ci-cb12-long");
+				Check(ref ok, page != null && page.Text.Length == StoryBook.MaxPageText && page.Title.Length == StoryBook.MaxTitle, "a journal page too long is cut to " + StoryBook.MaxPageText + " letters (" + (page != null ? page.Text.Length.ToString() : "none") + ")");
+				var fake = new IslandWorldState.Entry { Id = -77 };
+				for (int i = 0; i < Claims.MaxHeld + 50; i++) Claims.HostGrant(fake, 1000 + i, 1UL);
+				int full = Claims.HeldCount;
+				yield return new WaitForSecondsRealtime(6.5f);
+				Claims.HostGrant(fake, 5, 1UL);
+				Check(ref ok, full >= Claims.MaxHeld + 50 && Claims.HeldCount < 50, "the host's claim holds: " + full + " fresh ones kept, those run out dropped (" + Claims.HeldCount + " left)");
+			}
 			if (!Raft_Network.IsHost) { IslandNetwork.Resync(); yield return new WaitForSeconds(8f); Check(ref ok, IslandNetwork.HasList, "Resync: the host's list came again"); }
 			if (ok) Log("PASS: safety world"); else Fail("safety world");
 		}

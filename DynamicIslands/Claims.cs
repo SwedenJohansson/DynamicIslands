@@ -20,6 +20,9 @@ namespace DynamicIslands.Editor
 	{
 		/// <summary>How long the host keeps a granted thing for its player (their "used" comes well before).</summary>
 		const float HoldSeconds = 6f;
+		/// <summary>Holds kept before those that ran out are dropped (tests look at HeldCount).</summary>
+		internal const int MaxHeld = 512;
+		internal static int HeldCount { get { return held.Count; } }
 		/// <summary>A client with no answer by then goes ahead (an older host).</summary>
 		const float NoAnswerSeconds = 3f;
 
@@ -137,7 +140,12 @@ namespace DynamicIslands.Editor
 			KeyValuePair<ulong, float> h;
 			bool heldByOther = held.TryGetValue(k, out h) && h.Key != who && Time.unscaledTime < h.Value;
 			bool ok = !ContentState.IsUsed(e, key) && !heldByOther;
-			if (ok) held[k] = new KeyValuePair<ulong, float>(who, Time.unscaledTime + HoldSeconds);
+			if (ok)
+			{
+				// (holds that ran out are only looked at again by their key: dropped once there are many - CB12)
+				if (held.Count >= MaxHeld) foreach (long old in held.Where(x => Time.unscaledTime >= x.Value.Value).Select(x => x.Key).ToList()) held.Remove(old);
+				held[k] = new KeyValuePair<ulong, float>(who, Time.unscaledTime + HoldSeconds);
+			}
 			LastAnswer = ok ? "granted" : "refused";
 			return ok;
 		}

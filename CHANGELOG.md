@@ -56,6 +56,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Limits against runaway growth:** journal pages (2000, titles 200 and texts 8000 letters) and story item kinds
+  (500) are capped, the host drops claims that ran out once it holds many, and a file already on its way to a
+  player isn't sent again when they ask twice.
 - **Quest steps already met move on at once:** a collect or pages step the crew already has enough for is ticked
   together with the step before it, not half a second later.
 - **Stats page:** open when the world is left (a disconnect), it closes and no longer locks the cursor on the main menu.

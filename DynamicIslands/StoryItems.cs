@@ -268,6 +268,9 @@ namespace DynamicIslands.Editor
 			if (changed) Raise();
 		}
 
+		/// <summary>The most journal pages and story item kinds a world keeps, and the longest page (CB12).</summary>
+		internal const int MaxPages = 2000, MaxItems = 500, MaxTitle = 200, MaxPageText = 8000;
+
 		static bool Apply(string op, string data)
 		{
 			string[] f = Split(data);
@@ -277,7 +280,11 @@ namespace DynamicIslands.Editor
 				case "give":
 					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) return false;
 					Held h;
-					if (!held.TryGetValue(f[0], out h)) held[f[0]] = h = new Held { Def = new StoryItemDef { Id = f[0] } };
+					if (!held.TryGetValue(f[0], out h))
+					{
+						if (held.Count >= MaxItems) { Debug.LogWarning("[CUSTOM ISLANDS] Story item '" + f[0] + "' left out: the crew holds " + MaxItems + " kinds already"); return false; }
+						held[f[0]] = h = new Held { Def = new StoryItemDef { Id = f[0] } };
+					}
 					if (f.Length >= 5)
 					{
 						// (what the giver knew about it; empty fields keep what is known)
@@ -297,6 +304,10 @@ namespace DynamicIslands.Editor
 					return true;
 				case "page":
 					if (f.Length < 5 || pages.Any(p => p.Key == f[0])) return false;
+					// (CB12: a world's journal stays readable and its state message small, whatever a player sends)
+					if (pages.Count >= MaxPages) { Debug.LogWarning("[CUSTOM ISLANDS] Journal page '" + f[2] + "' left out: the journal holds " + MaxPages + " pages already"); return false; }
+					if (f[2].Length > MaxTitle) f[2] = f[2].Substring(0, MaxTitle);
+					if (f[4].Length > MaxPageText) f[4] = f[4].Substring(0, MaxPageText);
 					int day;
 					int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out day);
 					pages.Add(new Page { Key = f[0], Day = day, Title = f[2], Island = f[3], Text = f[4] });
