@@ -157,7 +157,7 @@ namespace DynamicIslands.Editor
 		public static int StepOf(IslandWorldState.Entry e, int n)
 		{
 			ObjectState s;
-			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? s.Yield : 0;
+			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? Mathf.Max(0, s.Yield) : 0; // (a hand-edited world file may hold a negative step - CB12)
 		}
 
 		static int ProgressOf(IslandWorldState.Entry e, int n = 0)

@@ -51,6 +51,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **World plan list:** Receiver, by-chance and story rules now show [done] once their island is in the world.
+- **Edited plans:** a saved world now follows the plan's *random islands while sailing* switch when you changed it in
+  World Plans (it kept its old switch).
+- **WorldIslandsGap** with words it can't read now says how to write it and changes nothing (it reset to 3-6).
+- **Hardening:** library pictures claiming more than 4096 pixels a side aren't unpacked; NaN numbers in a hand-edited
+  spawnpool.txt or generator preset are ignored; a negative quest step in a hand-edited world file counts as 0.
+- **In-game texts** brought up to date: import window, Open, Throw them away, Share..., World Plans help and Delete,
+  tab colours (nine), the Randomizer and plan file help, the report form, lighthouse storeys, desert palms, regrow
+  tooltips.
 - **Boss health:** an animal's health can be set up to ×12 (was capped at ×4), so the lair bosses set to ×5-×12
   are as tough as written. Damage stays at most ×4.
 - A large audit (about 70 items) of saves, files and multiplayer: world copies written between Raft's saves no longer

@@ -224,7 +224,15 @@ namespace DynamicIslands.Editor
 			if (arg.Length > 0)
 			{
 				if (inWorld && !Raft_Network.IsHost) { Debug.Log("[CUSTOM ISLANDS] Only the host chooses how often islands come"); return; }
-				int[] g = ParseGap(arg);
+				string[] parts = arg.Split('-');
+				int a, b;
+				if (parts.Length != 2 || !int.TryParse(parts[0].Trim(), out a) || !int.TryParse(parts[1].Trim(), out b))
+				{
+					// (CB10: unreadable words used to reset the gap to 3-6 and save it)
+					Debug.Log("[CUSTOM ISLANDS] WorldIslandsGap: write it as <min>-<max>, for example WorldIslandsGap 5-12 (nothing changed)");
+					return;
+				}
+				int[] g = ClampGap(a, b);
 				if (inWorld) { GapMin = g[0]; GapMax = g[1]; if (Target < GapMin || Target > GapMax) Target = UnityEngine.Random.Range(GapMin, GapMax + 1); IslandWorldState.Save(); }
 				else { SetChosenGap(g[0], g[1]); try { WorldSettingsWindow.Show(); } catch { } }
 			}

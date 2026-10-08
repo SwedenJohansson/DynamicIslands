@@ -216,6 +216,31 @@ namespace DynamicIslands.Editor
 		#region Pictures
 
 		/// <summary>An entry's picture (the icon, or picture n), from the cache or downloaded. done(texture or null).</summary>
+		/// <summary>The largest side of a library picture in pixels: a small file can claim a huge picture (CB12).</summary>
+		public const int MaxPictureSide = 4096;
+
+		/// <summary>Whether a PNG or JPEG says it is larger than MaxPictureSide, read from its header before Unity unpacks it.</summary>
+		public static bool TooLarge(byte[] b)
+		{
+			if (b == null || b.Length < 24) return false;
+			if (b[0] == 0x89 && b[1] == (byte)'P' && b[2] == (byte)'N' && b[3] == (byte)'G')
+				return Big(b[16] << 24 | b[17] << 16 | b[18] << 8 | b[19]) || Big(b[20] << 24 | b[21] << 16 | b[22] << 8 | b[23]);
+			if (b[0] != 0xFF || b[1] != 0xD8) return false;
+			// (JPEG: the frame header SOF0-SOF15, but not DHT C4, JPG C8 or DAC CC, holds height and width)
+			int i = 2;
+			while (i + 9 < b.Length)
+			{
+				if (b[i] != 0xFF) return false;
+				int m = b[i + 1];
+				if (m == 0xD8 || m == 0x01 || (m >= 0xD0 && m <= 0xD7)) { i += 2; continue; }
+				if (m >= 0xC0 && m <= 0xCF && m != 0xC4 && m != 0xC8 && m != 0xCC) return Big(b[i + 5] << 8 | b[i + 6]) || Big(b[i + 7] << 8 | b[i + 8]);
+				i += 2 + (b[i + 2] << 8 | b[i + 3]);
+			}
+			return false;
+		}
+
+		static bool Big(int side) { return side <= 0 || side > MaxPictureSide; }
+
 		public static IEnumerator Picture(LibraryEntry e, string name, Action<Texture2D> done)
 		{
 			LibraryFileRef f = e.Files.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
@@ -242,6 +267,7 @@ namespace DynamicIslands.Editor
 				// (in one step: a half-written picture in the cache was read as the whole one next time - AU41)
 				try { Directory.CreateDirectory(CacheFolder); SafeFile.WriteAllBytes(cached, bytes); } catch { }
 			}
+			if (TooLarge(bytes)) { Debug.LogWarning("[CUSTOM ISLANDS] A library picture of " + e.Path + " is larger than " + MaxPictureSide + " pixels a side: not shown"); done(null); yield break; }
 			tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
 			if (!tex.LoadImage(bytes)) { UnityEngine.Object.Destroy(tex); done(null); yield break; }
 			textures[key] = tex;

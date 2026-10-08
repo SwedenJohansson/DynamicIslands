@@ -1725,6 +1725,8 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMainMenu", docs: "Dev, in game or the editor: leaves the world (saving) for the main menu, as Raft's pause menu does (in the editor: as its Main menu button does)")]
 		public static void MainMenu()
 		{
+			// (test delays end with the test world: they stayed set for the session - CB13)
+			Claims.TestAnswerDelay = 0f; CustomIslandSpawner.TestGenerateDelay = 0f;
 			// (the editor isn't a game: leave it as its Main menu button does)
 			if (DynamicIslands.InEditor())
 			{

@@ -830,6 +830,8 @@ namespace DynamicIslands.Editor
 					// The player changed their plan since the world was saved: the changed plan plays (rules that fired
 					// stay fired; new ones come; the world keeps a copy of the new plan from its next save)
 					ForgetChangedRules(stored, edited);
+					// (random islands on/off changed in the plan: the world follows it - it kept its old switch, CB10)
+					if (edited.Random != stored.Random) CustomIslandSpawner.Enabled = edited.Random;
 					Plan = edited;
 					PlanWasEdited = true;
 					// (its story chain too: what is unlocked and done stays, the islands keep their frequencies)
@@ -997,6 +999,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Checks every rule that hasn't fired yet (host; tests call it directly).</summary>
 		public static void Evaluate()
 		{
+			// (Receiver, by-chance and story rules are brought by the story chain: done once their island is in the world - CB10)
 			if (Plan != null)
 				foreach (IntroRule r in Plan.Rules)
 				{
@@ -1416,7 +1419,9 @@ namespace DynamicIslands.Editor
 			// (no plan line: the host's world has nothing of its own stored - the Random islands plan, nothing done yet)
 			string plan = WorldCopy.HostValue("plan") ?? WorldPlan.RandomName;
 			var done = new HashSet<string>((WorldCopy.HostValue("done") ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
+			var brought = new HashSet<string>((WorldCopy.HostValue("storybrought") ?? "").Split(',').Select(x => x.Trim()).Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
 			List<IntroRule> rules = WorldCopy.HostLines.Where(l => l.StartsWith("@planrule=")).Select(l => IntroRule.Parse(l.Substring(10))).Where(r => r != null).ToList();
+			foreach (IntroRule r in rules) if (r.Special && brought.Contains(r.Id)) done.Add(r.Id);
 			string auto = WorldCopy.HostValue("auto");
 			var lines = new List<string> { "World plan (the host's): " + plan + "; random islands while sailing " + (auto != null && auto.Equals("off", StringComparison.OrdinalIgnoreCase) ? "off" : "on") +
 				(rules.Count > 0 ? "; " + rules.Count(r => done.Contains(r.Id)) + " of " + rules.Count + " island(s) of the plan brought" : "") };
@@ -1432,7 +1437,7 @@ namespace DynamicIslands.Editor
 				"; sailed " + (Sailed / 1000f).ToString("F1", CultureInfo.InvariantCulture) + " km, day " + Today };
 			if (Plan != null)
 				foreach (IntroRule r in Plan.Rules)
-					lines.Add("  [" + (Done.Contains(r.Id) ? "done" : "    ") + "] " + r.Id + ": " + r.Describe());
+					lines.Add("  [" + (Done.Contains(r.Id) || (r.Special && StoryChain.Brought.Contains(r.Id)) ? "done" : "    ") + "] " + r.Id + ": " + r.Describe());
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				List<IntroRule> rules = RulesOf(e);

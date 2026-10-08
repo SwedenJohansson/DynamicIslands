@@ -642,71 +642,76 @@ namespace DynamicIslands
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
 			if (e.Root == null) { ScRemove(made, isl); Fail("scenario many players: the island didn't come"); yield break; }
-			try { }
-			finally { }
-			// (a) five players each open a different crate at the same moment: each machine sends the host its amount at step 0 (as players now do)
-			for (int i = 0; i < 5; i++) QuestTracker.AddFromPlayer(e.Id, 0, 1);
-			ObjectState prog;
-			int progress = e.State.TryGetValue(QuestTracker.ProgressKey, out prog) ? prog.Yield : 0;
-			Check(ref ok, QuestTracker.StepOf(e) >= 1 || progress == 5, "five players open five crates at once: the quest counts five (step " + QuestTracker.StepOf(e) + ", progress " + progress + ") - AU8");
-			// (b) four players pull one lever in the same second: the gate should end open (one toggle wins), not toggled four times
-			IslandObjectRef lever = ScObjOf(e, "lever");
-			if (lever != null)
+			// (the cleanup runs when a part throws too - CB13)
+			try
 			{
-				for (int i = 0; i < 4; i++) Behaviours.OnEventMessage(e.Id, lever.Index, "use", false);
-				yield return new WaitForSeconds(1.5f);
-				IslandObjectRef gate = ScObjOf(e, "gate");
-				string state = (CIObjState(e, "gate") ?? "?");
-				Check(ref ok, state.Contains("open"), "four players pull one lever in the same second: the gate is open (" + state + ") - AU18");
-			}
-			// (c) eight players hit one warthog: each gets their share, the shares add up to its EXP, one kill
-			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
-			AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
-			if (boar != null && PlayerLevels.On)
-			{
-				int worth = PlayerLevels.MonsterXp(boar);
-				float max = boar.networkEntity.stat_health.Max;
-				// (the host works out each player's share as their hit arrives and sends it to that player's machine, which
-				// keeps their record: what the host hands out is what is counted here)
-				int sum = 0, kills = 0;
-				foreach (ulong p in players)
+				// (a) five players each open a different crate at the same moment: each machine sends the host its amount at step 0 (as players now do)
+				for (int i = 0; i < 5; i++) QuestTracker.AddFromPlayer(e.Id, 0, 1);
+				ObjectState prog;
+				int progress = e.State.TryGetValue(QuestTracker.ProgressKey, out prog) ? prog.Yield : 0;
+				Check(ref ok, QuestTracker.StepOf(e) >= 1 || progress == 5, "five players open five crates at once: the quest counts five (step " + QuestTracker.StepOf(e) + ", progress " + progress + ") - AU8");
+				// (b) four players pull one lever in the same second: the gate should end open (one toggle wins), not toggled four times
+				IslandObjectRef lever = ScObjOf(e, "lever");
+				if (lever != null)
 				{
-					sum += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p);
-					if ((PlayerLevels.LastRemote ?? "").StartsWith(p + " ") && PlayerLevels.LastRemote.EndsWith(" kill")) kills++;
-					// (the hit itself, as Raft applies it after the message - through the host's DamageEntity, which a player's hit is)
-					Network_Host host = ComponentManager<Network_Host>.Value;
-					if (host != null && boar != null && boar.networkEntity != null && !boar.networkEntity.IsDead)
-						boar.networkEntity.stat_health.Value = Mathf.Max(0f, boar.networkEntity.stat_health.Value - (max / 7f + 0.01f));
-					yield return null;
+					for (int i = 0; i < 4; i++) Behaviours.OnEventMessage(e.Id, lever.Index, "use", false);
+					yield return new WaitForSeconds(1.5f);
+					IslandObjectRef gate = ScObjOf(e, "gate");
+					string state = (CIObjState(e, "gate") ?? "?");
+					Check(ref ok, state.Contains("open"), "four players pull one lever in the same second: the gate is open (" + state + ") - AU18");
 				}
-				Check(ref ok, sum >= worth - players.Length && sum <= worth + players.Length, "seven players hit one warthog: their EXP adds up to its " + worth + " (" + sum + ")");
-				Check(ref ok, kills == 1, "... and only one of them gets the kill (" + kills + ")");
+				// (c) eight players hit one warthog: each gets their share, the shares add up to its EXP, one kill
+				yield return ScWaitAnimals(e, "Warthog", 1, 20f);
+				AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
+				if (boar != null && PlayerLevels.On)
+				{
+					int worth = PlayerLevels.MonsterXp(boar);
+					float max = boar.networkEntity.stat_health.Max;
+					// (the host works out each player's share as their hit arrives and sends it to that player's machine, which
+					// keeps their record: what the host hands out is what is counted here)
+					int sum = 0, kills = 0;
+					foreach (ulong p in players)
+					{
+						sum += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p);
+						if ((PlayerLevels.LastRemote ?? "").StartsWith(p + " ") && PlayerLevels.LastRemote.EndsWith(" kill")) kills++;
+						// (the hit itself, as Raft applies it after the message - through the host's DamageEntity, which a player's hit is)
+						Network_Host host = ComponentManager<Network_Host>.Value;
+						if (host != null && boar != null && boar.networkEntity != null && !boar.networkEntity.IsDead)
+							boar.networkEntity.stat_health.Value = Mathf.Max(0f, boar.networkEntity.stat_health.Value - (max / 7f + 0.01f));
+						yield return null;
+					}
+					Check(ref ok, sum >= worth - players.Length && sum <= worth + players.Length, "seven players hit one warthog: their EXP adds up to its " + worth + " (" + sum + ")");
+					Check(ref ok, kills == 1, "... and only one of them gets the kill (" + kills + ")");
+				}
+				else Log("  (no warthog or the level up system is off: EXP part skipped)");
+				// (d) eight builders' storages: each opened by its builder only
+				var builders = new List<KeyValuePair<uint, ulong>>();
+				for (int i = 0; i < players.Length; i++) builders.Add(new KeyValuePair<uint, ulong>((uint)(990100 + i), players[i]));
+				string before2 = PrivateStorage.Encode();
+				PrivateStorage.Decode(string.Join(";", builders.Select(b => b.Key + ":" + b.Value).ToArray()));
+				bool optionsOn = WorldOptions.On(WorldOptions.PrivateStorage);
+				if (!optionsOn) Log("  (Private storages is off in this world: every storage opens for everyone - checked as such)");
+				int right = builders.Sum(b => players.Count(p => PrivateStorage.MayOpen(b.Key, p) == (!optionsOn || p == b.Value)));
+				Check(ref ok, right == builders.Count * players.Length, "seven builders' storages: each opens only for its builder (" + right + " of " + builders.Count * players.Length + " right)");
+				PrivateStorage.Decode(before2);
+				// (e) a locked chest tried without the key (the host's own player, as anyone's machine does): it isn't claimed, so
+				// the next player who comes with the key isn't told someone else got it first
+				LootCrate lockedChest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(l => l.GetComponent<CustomNote>() != null && l.GetComponent<CustomNote>().Title == "Locked crate");
+				if (lockedChest != null)
+				{
+					StoryBook.Take("ciscmanykey", 99);
+					List<string> got = lockedChest.Open();
+					int key = lockedChest.StateKey;
+					bool nextGot = Claims.HostGrant(e, key, players[1]);
+					Check(ref ok, got.Count == 0 && !lockedChest.Looted && nextGot, "a locked chest tried without the key isn't claimed: the next player with the key gets it (given " + got.Count + ", the next player " + (nextGot ? "granted" : "refused") + ") - AU41");
+				}
+				else Check(ref ok, false, "the locked crate is on the island");
 			}
-			else Log("  (no warthog or the level up system is off: EXP part skipped)");
-			// (d) eight builders' storages: each opened by its builder only
-			var builders = new List<KeyValuePair<uint, ulong>>();
-			for (int i = 0; i < players.Length; i++) builders.Add(new KeyValuePair<uint, ulong>((uint)(990100 + i), players[i]));
-			string before2 = PrivateStorage.Encode();
-			PrivateStorage.Decode(string.Join(";", builders.Select(b => b.Key + ":" + b.Value).ToArray()));
-			bool optionsOn = WorldOptions.On(WorldOptions.PrivateStorage);
-			if (!optionsOn) Log("  (Private storages is off in this world: every storage opens for everyone - checked as such)");
-			int right = builders.Sum(b => players.Count(p => PrivateStorage.MayOpen(b.Key, p) == (!optionsOn || p == b.Value)));
-			Check(ref ok, right == builders.Count * players.Length, "seven builders' storages: each opens only for its builder (" + right + " of " + builders.Count * players.Length + " right)");
-			PrivateStorage.Decode(before2);
-			// (e) a locked chest tried without the key (the host's own player, as anyone's machine does): it isn't claimed, so
-			// the next player who comes with the key isn't told someone else got it first
-			LootCrate lockedChest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(l => l.GetComponent<CustomNote>() != null && l.GetComponent<CustomNote>().Title == "Locked crate");
-			if (lockedChest != null)
+			finally
 			{
-				StoryBook.Take("ciscmanykey", 99);
-				List<string> got = lockedChest.Open();
-				int key = lockedChest.StateKey;
-				bool nextGot = Claims.HostGrant(e, key, players[1]);
-				Check(ref ok, got.Count == 0 && !lockedChest.Looted && nextGot, "a locked chest tried without the key isn't claimed: the next player with the key gets it (given " + got.Count + ", the next player " + (nextGot ? "granted" : "refused") + ") - AU41");
+				ScRemove(made, isl);
+				if (!levelsBefore && PlayerLevels.On) PlayerLevels.TurnOff();
 			}
-			else Check(ref ok, false, "the locked crate is on the island");
-			ScRemove(made, isl);
-			if (!levelsBefore && PlayerLevels.On) PlayerLevels.TurnOff();
 			if (ok) Log("PASS: scenario many players"); else Fail("scenario many players");
 		}
 

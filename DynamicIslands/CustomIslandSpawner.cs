@@ -904,14 +904,14 @@ type:sunken 0.2
 						if (key == "generatedgatheroff") { GeneratedGatherOff = GenGather.Clean(value); continue; }
 						if (key == "defaultplan") { WorldDirector.DefaultPlan = value.Length > 0 ? value : WorldPlan.RandomName; continue; }
 						float v;
-						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) { BadLine(line); continue; }
+						if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) || float.IsNaN(v) || float.IsInfinity(v)) { BadLine(line); continue; }
 						if (!SetValue(key, v)) BadLine(line);
 						continue;
 					}
 					// "<name> <weight>" (names may contain spaces), or just "<name>" for weight 1
 					int sp = line.LastIndexOf(' ');
 					float w;
-					if (sp > 0 && float.TryParse(line.Substring(sp + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out w))
+					if (sp > 0 && float.TryParse(line.Substring(sp + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out w) && !float.IsNaN(w) && !float.IsInfinity(w))
 						poolLines.Add(new KeyValuePair<string, float>(line.Substring(0, sp).Trim(), w));
 					else
 						poolLines.Add(new KeyValuePair<string, float>(line, 1f));

@@ -1027,6 +1027,7 @@ namespace DynamicIslands.Editor
 
 		void Generate()
 		{
+			LastResult = null; // (a test reading it saw the last run's result - CB13)
 			try
 			{
 				IslandGenSettings run = Effective();

@@ -192,7 +192,7 @@ namespace DynamicIslands.Editor
 				string v = line.Substring(eq + 1);
 				try
 				{
-					if (f.FieldType == typeof(float)) f.SetValue(s, float.Parse(v, NumberStyles.Float, CultureInfo.InvariantCulture));
+					if (f.FieldType == typeof(float)) { float n = float.Parse(v, NumberStyles.Float, CultureInfo.InvariantCulture); if (!float.IsNaN(n) && !float.IsInfinity(n)) f.SetValue(s, n); } // (NaN slips past Clamp - CB12)
 					else if (f.FieldType == typeof(int)) f.SetValue(s, int.Parse(v, NumberStyles.Integer, CultureInfo.InvariantCulture));
 					else if (f.FieldType == typeof(bool)) f.SetValue(s, bool.Parse(v));
 					else if (f.FieldType == typeof(string)) f.SetValue(s, v);

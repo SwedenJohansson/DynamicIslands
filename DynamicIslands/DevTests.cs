@@ -852,7 +852,11 @@ namespace DynamicIslands
 				"underwater island: highest point " + top2.y.ToString("F1") + " m (below the surface), no holes, no underside");
 
 			// Saved with the world like any other island (the position's y is the elevation)
-			Check(ref ok, Mathf.Abs(fly.Position.y - Flying) < 0.01f && Mathf.Abs(sunk.Position.y - Sunken) < 0.01f, "the world's island list keeps both heights");
+			// (read back from the saved file: the entries in memory always had them - CB13)
+			IslandWorldState.Save();
+			string[] saved = File.Exists(IslandWorldState.WorldFilePath) ? File.ReadAllLines(IslandWorldState.WorldFilePath) : new string[0];
+			Func<IslandWorldState.Entry, float, bool> keeps = (e, y) => saved.Any(l => { string[] p = l.Split('|'); float v; return p.Length > 3 && p[0] == e.HostName && float.TryParse(p[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v) && Mathf.Abs(v - y) < 0.01f; });
+			Check(ref ok, keeps(fly, Flying) && keeps(sunk, Sunken), "the world's saved island list keeps both heights");
 
 			if (!keep) IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true);
 			if (ok) Log("PASS: flying and underwater islands test" + (keep ? " (islands kept)" : "")); else Fail("flying and underwater islands test");
