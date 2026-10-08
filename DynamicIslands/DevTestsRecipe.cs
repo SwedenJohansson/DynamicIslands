@@ -286,6 +286,122 @@ namespace DynamicIslands
 			Log((bad == 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)");
 		}
 
+		[ConsoleCommand(name: "CIRemoveBuried", docs: "Dev, editor: takes out the objects buried whole under the ground (CIFloating's \"buried\" ones: nobody sees them) of the named islands and saves each; the old file goes to Mods\\DynamicIslands\\deleted\\ first (ROADMAP CA30): CIRemoveBuried <island>[,<island>...]")]
+		public static void RemoveBuriedCommand(string[] args)
+		{
+			string all = args != null ? string.Join(" ", args) : "";
+			StartTest(RemoveBuriedRoutine(all.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList()));
+		}
+
+		static IEnumerator RemoveBuriedRoutine(List<string> names)
+		{
+			yield return WaitForEditor(false);
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				Terrain ground = terraineditor.terrain;
+				Physics.SyncTransforms();
+				List<EditorGameObject> placed = PlacedEditorObjects().ToList();
+				var buried = new List<EditorGameObject>();
+				foreach (EditorGameObject e in placed)
+				{
+					string n = e.GameObjectName ?? "";
+					if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null || n.Contains("Cave") || n.Contains("Tunnel")) continue;
+					Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+					if (parts.Length == 0) continue;
+					Bounds whole = parts[0].bounds;
+					foreach (Renderer r in parts) whole.Encapsulate(r.bounds);
+					if (!ShowsAboveGround(whole, ground) && !placed.Any(o => o != e && o.GetComponentsInChildren<Collider>(false).Any(c => !c.isTrigger && c.bounds.Contains(whole.center))))
+						buried.Add(e);
+				}
+				if (buried.Count == 0) { Log("  " + name + ": nothing buried"); continue; }
+				string file = IslandSpawner.PathFor(name);
+				File.Copy(file, Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-buried-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), true);
+				foreach (EditorGameObject e in buried) e.gameObject.SetActive(false);
+				bool saved = DynamicIslands.SaveIsland(name);
+				Log((saved ? "PASS: " : "FAIL: ") + name + ": " + buried.Count + " buried objects taken out (" + string.Join(", ", buried.GroupBy(e => e.GameObjectName).Select(g => g.Key + " x" + g.Count()).ToArray()) + ")");
+			}
+		}
+
+		[ConsoleCommand(name: "CISettle", docs: "Dev, editor: lowers the rocks, ice spikes and corals of the named islands that hang over the ground (on a slope: their base up to more than 0.6 m above it; a plant or coral whose foot is above it) down onto it - by at most half their height - and saves each; the old file goes to Mods\\DynamicIslands\\deleted\\ first (ROADMAP CA30): CISettle <island>[,<island>...]")]
+		public static void SettleCommand(string[] args)
+		{
+			string all = args != null ? string.Join(" ", args) : "";
+			StartTest(SettleRoutine(all.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList()));
+		}
+
+		static readonly Regex Settles = new Regex("Stalagmite|Rock|Boulder|Coral|Stone", RegexOptions.IgnoreCase);
+
+		static IEnumerator SettleRoutine(List<string> names)
+		{
+			yield return WaitForEditor(false);
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				Terrain ground = terraineditor.terrain;
+				if (ground == null) { Fail(name + ": no ground"); continue; }
+				float sea = DynamicIslands.EditorWaterLevel;
+				Physics.SyncTransforms();
+				var moves = new List<KeyValuePair<EditorGameObject, float>>();
+				foreach (EditorGameObject e in PlacedEditorObjects())
+				{
+					string n = e.GameObjectName ?? "";
+					if (!Settles.IsMatch(n) || n.StartsWith("Pickup_") || n.Contains("Cave") || n.Contains("Tunnel")) continue;
+					Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					// (as CIFloating: its foot above the ground under it, or its base above the ground somewhere 20 % in from its box)
+					float drop = e.transform.position.y - (ground.SampleHeight(e.transform.position) + ground.transform.position.y);
+					if (!NotABase.IsMatch(n) || drop <= 0.5f || b.min.y - (ground.SampleHeight(b.center) + ground.transform.position.y) <= 0.5f) drop = 0f;
+					RaycastHit under;
+					if (drop > 0f && Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out under, 0.8f, ~0, QueryTriggerInteraction.Ignore) && under.collider.GetComponent<Terrain>() == null &&
+						under.collider.GetComponentInParent<EditorGameObject>() != null && under.collider.GetComponentInParent<EditorGameObject>() != e) drop = 0f;
+					else if (drop > 0f) drop = b.min.y - (ground.SampleHeight(b.center) + ground.transform.position.y);
+					// (the base check's own limits: its base parts only; not small, flat or under the sea; not on another object)
+					float bottom = rs.Min(r => r.bounds.min.y);
+					rs = rs.Where(r => r.bounds.min.y < bottom + 0.6f).ToArray();
+					b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					RaycastHit on;
+					bool baseChecked = !NotABase.IsMatch(n) && !Hangs.IsMatch(n) && Mathf.Max(b.size.x, b.size.z) >= 1.5f && b.size.y >= 0.6f && b.min.y >= sea - 0.5f &&
+						!(Physics.Raycast(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z), Vector3.down, out on, 0.6f, ~0, QueryTriggerInteraction.Ignore) && on.collider.GetComponent<Terrain>() == null &&
+						on.collider.GetComponentInParent<EditorGameObject>() != null && on.collider.GetComponentInParent<EditorGameObject>() != e);
+					if (!baseChecked) { if (drop > 0f) moves.Add(new KeyValuePair<EditorGameObject, float>(e, Mathf.Min(drop, 0.5f * b.size.y))); continue; }
+					int steps = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(b.size.x, b.size.z)), 3, 30);
+					float lowest = float.MaxValue, highest = float.MinValue;
+					for (int i = 0; i <= steps; i++)
+						for (int j = 0; j <= steps; j++)
+						{
+							var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.2f, b.max.x - b.size.x * 0.2f, i / (float)steps), 0f, Mathf.Lerp(b.min.z + b.size.z * 0.2f, b.max.z - b.size.z * 0.2f, j / (float)steps));
+							float g = b.min.y - (ground.SampleHeight(p) + ground.transform.position.y);
+							lowest = Mathf.Min(lowest, g); highest = Mathf.Max(highest, g);
+						}
+					if (lowest <= 0.4f && highest > 0.6f) drop = Mathf.Max(drop, highest - 0.3f);
+					drop = Mathf.Min(drop, 0.5f * b.size.y);
+					if (drop > 0.05f) moves.Add(new KeyValuePair<EditorGameObject, float>(e, drop));
+				}
+				if (moves.Count == 0) { Log("  " + name + ": nothing to settle"); continue; }
+				string file = IslandSpawner.PathFor(name);
+				File.Copy(file, Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-settle-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), true);
+				foreach (var m in moves) m.Key.transform.position += Vector3.down * m.Value;
+				bool saved = DynamicIslands.SaveIsland(name);
+				Log((saved ? "PASS: " : "FAIL: ") + name + ": " + moves.Count + " lowered (" + string.Join(", ", moves.Select(m => m.Key.GameObjectName + " " + Num(m.Value) + " m").ToArray()) + ")");
+			}
+		}
+
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
 		public static void FloatingCommand(string[] args)
 		{
