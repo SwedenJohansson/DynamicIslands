@@ -73,6 +73,19 @@ namespace DynamicIslands
 				EditorAutosave.Pick(EditorAutosave.DiscardChoice);
 				Check(ref ok, !File.Exists(autosave), "Throw them away deletes it");
 
+				// The X on one island's row (TODO 4e): only that autosave goes; the window closes when none are left
+				UndoRedoManager.Execute(new NoopCommand());
+				EditorAutosave.WriteNow();
+				int others = EditorAutosave.Waiting().Count(n => n != AutosaveIsland);
+				yield return EditorAutosave.Offer();
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Shown.Any(c => c.Value == AutosaveIsland && c.OnDelete != null)
+					&& ChoiceWindow.Shown.All(c => c.Value != EditorAutosave.DiscardChoice || c.OnDelete == null), "each island's row has an X, Throw them away / Not now don't");
+				Check(ref ok, ChoiceWindow.DeleteValue(AutosaveIsland) && !File.Exists(autosave) && !ChoiceWindow.Values.Contains(AutosaveIsland),
+					"the X throws away only that island's autosave and takes its row away");
+				Check(ref ok, ChoiceWindow.IsOpen == (others > 0), "the window closes when no unsaved work is left (others waiting: " + others + ")");
+				ChoiceWindow.Close();
+				EditorAutosave.Opened(AutosaveIsland, false);
+
 				// Saving an island that saved worlds have: said once (not at every save)
 				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Told': name|x|y|z", "@auto=on", AutosaveIsland + "|0|0|0|" });
 				int told = DynamicIslands.WorldsNoticeCount;

@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Unsaved work, one at a time:** in *Unsaved work from last time* each island's row has an **X** that throws away
+  only that island's unsaved changes (to `deleted\autosave`); the window closes when none are left.
 - **Journal island count:** *Islands reached* now also counts the saved islands ticked for the world in World
   settings (Islands while sailing) that haven't come yet - a world with about 50 ticked showed 3/19.
 - **Quest islands need finding:** the quest panel and introduction now show within about 70 m of an island's

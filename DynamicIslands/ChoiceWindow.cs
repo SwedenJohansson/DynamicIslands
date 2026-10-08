@@ -15,6 +15,9 @@ namespace DynamicIslands.Editor
 		public class Choice
 		{
 			public string Value, Label, Detail;
+			/// <summary>Optional: the row gets a delete (X) button that calls this; the row goes, the window stays open.</summary>
+			public Action OnDelete;
+			public string DeleteHint = "Delete this one";
 			public Choice(string value, string label, string detail = "") { Value = value; Label = label; Detail = detail ?? ""; }
 		}
 
@@ -43,6 +46,23 @@ namespace DynamicIslands.Editor
 			Close();
 			if (pick != null) pick(value);
 			return true;
+		}
+
+		/// <summary>Tests: clicks a row's delete (X) button (false if it isn't listed or has none).</summary>
+		public static bool DeleteValue(string value)
+		{
+			Choice c = IsOpen ? instance.shown.FirstOrDefault(x => x.Value == value && x.OnDelete != null) : null;
+			if (c == null) return false;
+			instance.Delete(c);
+			return true;
+		}
+
+		void Delete(Choice c)
+		{
+			try { c.OnDelete(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Deleting '" + c.Value + "': " + e.Message); }
+			if (!IsOpen) return; // (the delete closed the window: nothing left to show)
+			Fill(shown.Where(x => x != c).ToList());
 		}
 
 		public static void Create(Transform canvas)
@@ -114,11 +134,17 @@ namespace DynamicIslands.Editor
 			foreach (Choice c in choices)
 			{
 				Choice choice = c;
-				Button b = UIKit.Button(list, "", () => { Action<string> pick = onPick; Close(); if (pick != null) pick(choice.Value); }, choice.Detail.Length > 0 ? choice.Detail : null, -1, 34f, 13);
+				RectTransform row = choice.OnDelete != null ? UIKit.Row(list, 34f, 4f, "Row") : null;
+				Button b = UIKit.Button(row != null ? row : list, "", () => { Action<string> pick = onPick; Close(); if (pick != null) pick(choice.Value); }, choice.Detail.Length > 0 ? choice.Detail : null, -1, 34f, 13);
+				if (row != null)
+				{
+					UIKit.Size(b.gameObject, -1, -1, 1);
+					UIKit.Button(row, "X", () => Delete(choice), choice.DeleteHint, 34, 34f, 13);
+				}
 				Text t = UIKit.LabelOf(b);
 				t.alignment = TextAnchor.MiddleLeft;
 				t.text = choice.Label + (choice.Detail.Length > 0 ? "   <color=#b89e70><size=11>" + choice.Detail + "</size></color>" : "");
-				rows.Add(new KeyValuePair<string, GameObject>((choice.Label + " " + choice.Value + " " + choice.Detail).ToLowerInvariant(), b.gameObject));
+				rows.Add(new KeyValuePair<string, GameObject>((choice.Label + " " + choice.Value + " " + choice.Detail).ToLowerInvariant(), row != null ? row.gameObject : b.gameObject));
 			}
 			if (choices.Count == 0)
 			{

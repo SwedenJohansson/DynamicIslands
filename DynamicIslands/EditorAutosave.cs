@@ -173,7 +173,8 @@ namespace DynamicIslands.Editor
 			if (waiting.Count == 0 || !DynamicIslands.InEditor()) yield break;
 			var choices = waiting.Take(8).Select(n => new ChoiceWindow.Choice(n, "Open '" + n + "'",
 				"autosaved " + File.GetLastWriteTime(PathFor(n)).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) +
-				(File.Exists(IslandSpawner.PathFor(n)) ? " - newer than its saved island" : " - never saved"))).ToList();
+				(File.Exists(IslandSpawner.PathFor(n)) ? " - newer than its saved island" : " - never saved"))
+				{ OnDelete = () => ThrowAway(n), DeleteHint = "Throw away only this island's unsaved changes (moved to the deleted\\autosave folder)" }).ToList();
 			choices.Add(new ChoiceWindow.Choice(DiscardChoice, "Throw them away", "the unsaved changes are moved to the deleted\\autosave folder"));
 			choices.Add(new ChoiceWindow.Choice(LaterChoice, "Not now", "asked again the next time the editor opens"));
 			Log("Unsaved work from last time: " + string.Join(", ", waiting.ToArray()));
@@ -181,6 +182,14 @@ namespace DynamicIslands.Editor
 		}
 
 		public const string DiscardChoice = "*discard*", LaterChoice = "*later*";
+
+		/// <summary>The X on one island's row: only its autosave goes (to deleted\autosave); the window closes when none are left.</summary>
+		static void ThrowAway(string name)
+		{
+			try { PiecesFiles.MoveToDeleted(PathFor(name), "autosave"); Log("The autosave of '" + name + "' was thrown away (moved to the deleted folder)"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + name + "' aside: " + e.Message); }
+			if (Waiting().Count == 0) ChoiceWindow.Close();
+		}
 
 		/// <summary>What the player picked in the offer (public for tests).</summary>
 		public static void Pick(string value)

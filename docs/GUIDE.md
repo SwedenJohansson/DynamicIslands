@@ -863,7 +863,7 @@ to players who don't have them, so nobody needs to share files just to play toge
 leave to the main menu or quit Raft (`Mods\DynamicIslands\autosave\<name>.island` - not an island of yours, it never
 turns up anywhere). If Raft closes before you saved (a crash, the power going), the next time the editor opens it
 offers the unsaved work: **Open** it (then **Save** to keep it), **Throw them away**, or **Not now** (asked again next
-time; **Throw them away** moves them to `Mods\DynamicIslands\deleted\autosave`, so they can still be got back). Saving the island removes its autosave. Every change counts - the land, objects, their settings, and the
+time; **Throw them away** moves them to `Mods\DynamicIslands\deleted\autosave`, so they can still be got back; the **X** at the end of an island's row throws away only that island's work, the same way). Saving the island removes its autosave. Every change counts - the land, objects, their settings, and the
 island's own settings on the Island tab (name, texts, style, height, rules, quest, events, story items), which Undo and
 Redo also take back and forth; save before you close Raft all the same. Selecting objects isn't a change.
 
