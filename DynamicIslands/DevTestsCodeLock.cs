@@ -158,7 +158,10 @@ namespace DynamicIslands
 			IslandFile f = IslandGenerator.CreateFile(s, name);
 			new IslandQuest { Title = "Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "gate" }, new IslandQuest.Step { Type = "reach", Target = "tower" } }, Reward = "Rope*2" }.To(f.Props, 0);
 			new IslandQuest { Title = "The lost goat", Steps = { new IslandQuest.Step { Type = "reach", Target = "pen" } }, Reward = "Plank*5" }.To(f.Props, 1);
-			Check(ref ok, IslandQuest.CountIn(f.Props) == 2 && f.Props.ContainsKey("quest2.steps"), "two quests in the island's settings (quest2.steps)");
+			// (CB11: two steps asking for the same kill, both animals defeated before the first came)
+			new IslandQuest { Title = "Two bears", Steps = { new IslandQuest.Step { Type = "reach", Target = "den" }, new IslandQuest.Step { Type = "kill", Target = "Polar Bear" },
+				new IslandQuest.Step { Type = "reach", Target = "cave" }, new IslandQuest.Step { Type = "kill", Target = "Polar Bear" } } }.To(f.Props, 2);
+			Check(ref ok, IslandQuest.CountIn(f.Props) == 3 && f.Props.ContainsKey("quest2.steps"), "three quests in the island's settings (quest2.steps)");
 			IslandWorldState.Remove(name);
 			f.Save(IslandSpawner.PathFor(name));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raft.Value, CustomIslandSpawner.LandRadius(name), 450f);
@@ -179,6 +182,12 @@ namespace DynamicIslands
 			QuestTracker.Event(e, "reach", "tower");
 			yield return new WaitForSeconds(1f);
 			Check(ref ok, QuestTracker.IsDone(e, 0), "the main quest done with its own steps");
+			QuestTracker.Event(e, "kill", "Polar Bear");
+			QuestTracker.Event(e, "kill", "Polar Bear");
+			QuestTracker.Event(e, "reach", "den");
+			int bearStep = QuestTracker.StepOf(e, 2);
+			QuestTracker.Event(e, "reach", "cave");
+			Check(ref ok, bearStep == 2 && QuestTracker.IsDone(e, 2), "two bears defeated early count once each: both kill steps done (step after the den " + (bearStep + 1) + ", done " + QuestTracker.IsDone(e, 2) + ")");
 			OnRaftCommand();
 			yield return new WaitForSeconds(0.5f);
 			yield return ReloadIslandRoutine(e);

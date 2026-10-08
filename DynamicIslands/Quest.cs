@@ -208,6 +208,10 @@ namespace DynamicIslands.Editor
 			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
 			// (an older host takes what it gets for the total: it gets the total, as before)
 			bool adds = !Raft_Network.IsHost && IslandNetwork.HostAddsCounts;
+			// (more than the step needs: the rest for the next step asking for the same, kept before the quest moves there)
+			if (progress > s.Count && Raft_Network.IsHost)
+				for (int later = step + 1; later < q.Steps.Count; later++)
+					if (!IslandQuest.Counted(q.Steps[later].Type) && Matches(q.Steps[later], type, target)) { Remember(e, n, later, progress - s.Count); break; }
 			if (progress >= s.Count) Set(e, n, step + 1, 0, !adds);
 			else Set(e, n, step, progress, !adds);
 			if (adds) IslandNetwork.SendQuestAdd(e.Id, n, step, amount);
@@ -221,13 +225,30 @@ namespace DynamicIslands.Editor
 		/// <summary>Where a later step's early work is kept in the island's state (its count in Yield).</summary>
 		public const int EarlyKeyBase = 0x40100;
 
-		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step.</summary>
+		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step. More than the step
+		/// needs goes on to the next later step asking for the same (two "defeat a polar bear" steps with both bears dead
+		/// early: both went to the first, and the second step could never be done - CB11).</summary>
 		static void Remember(IslandWorldState.Entry e, int quest, int step, int amount)
 		{
-			ObjectState had;
-			int n = (e.State.TryGetValue(EarlyKeyOf(quest, step), out had) ? had.Yield : 0) + amount;
-			e.State[EarlyKeyOf(quest, step)] = new ObjectState { Active = true, Yield = n, Day = Today };
-			Debug.Log("[CUSTOM ISLANDS] Quest " + (quest + 1) + " of '" + e.HostName + "': step " + (step + 1) + " done early (" + n + "), counted when it comes");
+			IslandQuest q = QuestOf(e, quest);
+			while (amount > 0)
+			{
+				ObjectState had;
+				int before = e.State.TryGetValue(EarlyKeyOf(quest, step), out had) ? had.Yield : 0;
+				int next = -1;
+				if (q.Exists && step < q.Steps.Count)
+					for (int k = step + 1; k < q.Steps.Count && next < 0; k++)
+						if (q.Steps[k].Type == q.Steps[step].Type && string.Equals(q.Steps[k].Target.Trim(), q.Steps[step].Target.Trim(), StringComparison.OrdinalIgnoreCase)) next = k;
+				int take = next < 0 || !q.Exists ? amount : Mathf.Min(amount, Mathf.Max(0, q.Steps[step].Count - before));
+				if (take > 0)
+				{
+					e.State[EarlyKeyOf(quest, step)] = new ObjectState { Active = true, Yield = before + take, Day = Today };
+					Debug.Log("[CUSTOM ISLANDS] Quest " + (quest + 1) + " of '" + e.HostName + "': step " + (step + 1) + " done early (" + (before + take) + "), counted when it comes");
+				}
+				amount -= take;
+				if (next < 0) break;
+				step = next;
+			}
 		}
 
 		/// <summary>Host: the quest reached this step - what was done for it early counts now (it may finish it at once).</summary>
