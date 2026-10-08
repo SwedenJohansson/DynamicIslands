@@ -6,12 +6,13 @@ namespace DynamicIslands.Editor
 	/// Raft's own objects that throw when they are used outside a world. The editor loads Raft's island scenes to offer
 	/// their objects; a music zone in them (AreaZone_MusicActivation) looks up its quest when it is switched on - there is
 	/// no quest tracker outside a world, so it threw a NullReferenceException, red in the console of every player who
-	/// opened the editor with such objects. Outside a world it now does nothing; in a world it works as Raft's.
+	/// opened the editor with such objects. Raft's code always runs; only its error outside a world is dropped (it was
+	/// skipped outside a world, and an island switched on while a world was still loading lost its music - CA25).
 	/// </summary>
 	[HarmonyPatch(typeof(AreaZone_MusicActivation), "OnEnable")]
 	static class MusicZoneOutsideWorld
 	{
-		static bool Prefix() { return LoadSceneManager.IsGameSceneLoaded; }
+		static System.Exception Finalizer(System.Exception __exception) { return LoadSceneManager.IsGameSceneLoaded ? __exception : null; }
 	}
 
 	/// <summary>

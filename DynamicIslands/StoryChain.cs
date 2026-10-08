@@ -768,7 +768,8 @@ namespace DynamicIslands.Editor
 		}
 	}
 
-	/// <summary>The host's Receiver, tuned to one of the mod's frequencies, asks Raft for its island: the mod brings the plan's.</summary>
+	/// <summary>The host's Receiver, tuned to one of the mod's frequencies, asks Raft for its island: the mod brings the plan's.
+	/// (Raft's only caller, Reciever.Update, drops the returned point - checked in its IL, CA25 - so null is safe.)</summary>
 	[HarmonyPatch(typeof(ChunkManager), "AddChunkPointForcibly")]
 	static class StoryChainReceiver
 	{

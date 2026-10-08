@@ -54,6 +54,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Island music:** music zones on an island switched on while a world was still loading now work (the fix for their
+  red error in the editor skipped them).
 - **Quests:** two steps asking for the same kill (Whiteout Reach's two polar bears) no longer lock when both animals
   are defeated before the first step comes: each counts for one step. More than a step needs carries on to the next same step.
 - **Arrival texts:** an island's name and description, its quest's intro and other messages now come strictly one
