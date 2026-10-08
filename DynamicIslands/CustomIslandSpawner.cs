@@ -287,7 +287,8 @@ namespace DynamicIslands.Editor
 			}
 			else if (name == GeneratedEntry)
 			{
-				var rnd = new System.Random();
+				// (seeded like the map-type islands when the world gives a seed - CB14)
+				var rnd = seed.HasValue ? new System.Random(WorldRandomizer.Hash(seed.Value, 41)) : new System.Random();
 				generate = IslandGenerator.RandomSettings(rnd, GeneratedStyles);
 				GatherFor(generate);
 				if (rnd.NextDouble() < GeneratedFlyingChance) elevation = 40f + (float)rnd.NextDouble() * 50f;

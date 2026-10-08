@@ -1554,10 +1554,13 @@ namespace DynamicIslands.Editor
 			}
 			if (made.Count > 0) group.Add(new ObjectVisibilityCommand(made, true));
 
-			// (a generated quest becomes the island's quest - with its story item - in the same undo step)
-			if (s.QuestSteps > 0 && planned != null && planned.Props.ContainsKey(IslandQuest.KeySteps))
+			// (a generated quest becomes the island's quest - with its story item - in the same undo step. With no quest
+			// steps the old quest goes too: its objects just went - CA22)
+			bool dropQuest = s.QuestSteps <= 0 && placed != null && DynamicIslands.currentIslandProps.ContainsKey(IslandQuest.KeySteps);
+			if ((s.QuestSteps > 0 && planned != null && planned.Props.ContainsKey(IslandQuest.KeySteps)) || dropQuest)
 			{
-				IslandFile q = planned;
+				IslandFile q = dropQuest ? new IslandFile() : planned;
+				if (dropQuest) Debug.Log("[CUSTOM ISLANDS] Generated with no quest steps: the island's old quest went with its objects (undo brings both back)");
 				ICommand quest = IslandSettingsUndo.Record(() =>
 				{
 					foreach (string key in new[] { IslandQuest.KeyTitle, IslandQuest.KeyIntro, IslandQuest.KeySteps, IslandQuest.KeyReward, IslandQuest.KeyDone, StoryItems.Key })

@@ -54,6 +54,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Arrival texts:** an island's name and description, its quest's intro and other messages now come strictly one
+  after another, each up long enough to read (5-16 s by length); the next one used to replace it after 3 s.
+- **Generator:** regenerating an island with 0 quest steps also takes away its old quest (its objects were gone);
+  undo brings both back. Brand-new islands made while sailing follow the world's seed when it has one.
 - **Generator:** closing it while Raft's islands still load no longer generates later on its own; a second click while
   loading says it is still loading. The preview's count now includes the under-water kinds *Randomize* adds.
 - **Editor keys:** a key Raft already uses, or a number key (hotbar slots), can't be picked for an editor action.

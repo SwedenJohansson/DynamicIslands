@@ -643,7 +643,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: trigger zones in the editor"); else Fail("trigger zones in the editor");
 		}
 
-		[ConsoleCommand(name: "CIBannerQueue", docs: "Dev (anywhere): banners and messages come one after another - a second one waits until the first has shown 3 s; the same one again while it is up shows once")]
+		[ConsoleCommand(name: "CIBannerQueue", docs: "Dev (anywhere): banners and messages come one after another - a second one waits until the first has been up long enough to read (IslandInfo.ReadSeconds) and gone; the same one again while it is up shows once; a long text stays longer")]
 		public static void BannerQueue() { StartTest(BannerQueueRoutine()); }
 
 		static IEnumerator BannerQueueRoutine()
@@ -656,12 +656,15 @@ namespace DynamicIslands
 			IslandInfo.ShowMessage("CI first message");
 			yield return null;
 			Check(ref ok, IslandInfo.OnScreen == "CI first message", "the first message shows at once (" + IslandInfo.OnScreen + ")");
-			yield return new WaitForSecondsRealtime(2f);
-			Check(ref ok, IslandInfo.OnScreen == "CI first message", "2 s later it is still up: the second one waits (" + IslandInfo.OnScreen + ")");
-			yield return new WaitForSecondsRealtime(1.6f);
-			Check(ref ok, IslandInfo.OnScreen == "CI second message", "after 3 s the second one takes its place (" + IslandInfo.OnScreen + ")");
-			yield return new WaitForSecondsRealtime(3.5f);
+			float read = IslandInfo.ReadSeconds("", "CI first message");
+			yield return new WaitForSecondsRealtime(read - 0.6f);
+			Check(ref ok, IslandInfo.OnScreen == "CI first message", read.ToString("0.0") + " s to read it: still up just before, the second one waits (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, IslandInfo.OnScreen == "CI second message", "then the second one comes, after the first has gone (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(IslandInfo.ReadSeconds("", "CI second message") + 0.5f);
 			Check(ref ok, IslandInfo.OnScreen != "CI first message", "the first one, asked for twice, doesn't come again (" + (IslandInfo.OnScreen ?? "none up") + ")");
+			float shortRead = IslandInfo.ReadSeconds("Island", "A short line."), longRead = IslandInfo.ReadSeconds("Island", new string('a', 200));
+			Check(ref ok, shortRead >= 5f && longRead > shortRead + 5f && longRead <= 16f, "a long description stays longer (" + shortRead.ToString("0.0") + " s vs " + longRead.ToString("0.0") + " s)");
 			IslandInfo.ForgetShown();
 			if (ok) Log("PASS: banners one after another"); else Fail("banners one after another");
 		}

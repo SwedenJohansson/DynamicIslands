@@ -54,7 +54,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class IslandInfo
 	{
-		const float ShowDistance = 30f, ShowSeconds = 8f;
+		const float ShowDistance = 30f;
 		static readonly HashSet<string> shown = new HashSet<string>();
 		static float nextCheck;
 		static CanvasGroup banner;
@@ -93,8 +93,18 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Banners waiting their turn: a message that comes while another is still being read (title, author, text).</summary>
 		static readonly Queue<string[]> waiting = new Queue<string[]>();
-		/// <summary>A banner shows at least this long before the next one takes its place.</summary>
-		const float MinSeconds = 3f;
+		/// <summary>How long the banner up now stays (ReadSeconds of its text).</summary>
+		static float showFor = 5f;
+
+		/// <summary>
+		/// How long a banner stays up: long enough to read it - about 15 letters a second on top of 3 s, 5 s at least,
+		/// 16 at most. The next one waits until it has gone (an island's description was replaced by its quest's intro
+		/// after 3 s, before it could be read - CB17).
+		/// </summary>
+		public static float ReadSeconds(string title, string description)
+		{
+			return Mathf.Clamp(3f + (title.Length + description.Length) / 15f, 5f, 16f);
+		}
 
 		/// <summary>The world was left: its banners still waiting aren't shown in the next one.</summary>
 		internal static void Forget() { waiting.Clear(); }
@@ -104,14 +114,11 @@ namespace DynamicIslands.Editor
 			if (banner != null && banner.gameObject.activeSelf)
 			{
 				float t = Time.unscaledTime - shownAt;
-				if (waiting.Count > 0 && t >= MinSeconds) { string[] next = waiting.Dequeue(); Display(next[0], next[1], next[2]); }
-				else
-				{
-					banner.alpha = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((ShowSeconds - t) / 1.2f);
-					if (t > ShowSeconds) banner.gameObject.SetActive(false);
-				}
+				banner.alpha = Mathf.Clamp01(t / 0.6f) * Mathf.Clamp01((showFor - t) / 1.2f);
+				if (t > showFor) banner.gameObject.SetActive(false);
 			}
-			else if (waiting.Count > 0) { string[] next = waiting.Dequeue(); Display(next[0], next[1], next[2]); }
+			// (the next one only once this one has faded out: one after the other, never on top of each other)
+			if ((banner == null || !banner.gameObject.activeSelf) && waiting.Count > 0) { string[] next = waiting.Dequeue(); Display(next[0], next[1], next[2]); }
 			if (Time.unscaledTime < nextCheck) return;
 			nextCheck = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { shown.Clear(); return; }
@@ -141,8 +148,8 @@ namespace DynamicIslands.Editor
 		public static string LastMessage { get; private set; }
 
 		/// <summary>
-		/// A banner at the top of the screen. One that comes while another has been up for less than MinSeconds waits its
-		/// turn: two messages at once (a zone's warning and the quest's step, a story item and the beacon) both get read -
+		/// A banner at the top of the screen. One that comes while another is up waits its turn (ReadSeconds): two
+		/// messages at once (a zone's warning and the quest's step, a story item and the beacon) both get read -
 		/// the second one used to replace the first at once (found building the library's Signal Rock).
 		/// </summary>
 		public static void Show(string title, string author, string description)
@@ -154,7 +161,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] " + (message ? "Message: " : "Arriving at: ") + LastShown);
 			Recent.Add(LastShown);
 			if (Recent.Count > 20) Recent.RemoveAt(0);
-			bool busy = banner.gameObject.activeSelf && Time.unscaledTime - shownAt < MinSeconds;
+			bool busy = banner.gameObject.activeSelf;
 			if (busy || waiting.Count > 0)
 			{
 				string[] next = { title, author, description };
@@ -178,6 +185,7 @@ namespace DynamicIslands.Editor
 			banner.gameObject.SetActive(true);
 			banner.alpha = 0f;
 			shownAt = Time.unscaledTime;
+			showFor = ReadSeconds(title, author.Length > 0 ? "by " + author + " " + description : description);
 		}
 
 		static void Build()

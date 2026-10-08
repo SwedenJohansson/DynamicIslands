@@ -213,7 +213,7 @@ if they are within 2 km - an island the players still need shows however far it 
 
 An island with a name shows it as a **banner** when you come near (once per island per session), with its author and
 a short welcome if the builder wrote them. Banners and messages (an island's, a zone's, a lever's) come **one after
-another**: one that arrives while another is on screen waits until that one has shown for at least 3 seconds.
+another**: one that arrives while another is on screen waits until that one has gone. Each stays long enough to read: 5 seconds for a short one, longer for a long description (up to 16).
 
 ![Arriving at an oddity island](images/world-arrival-banner.jpg)
 *Arriving at "Van Island", one of the world randomizer's oddity islands.*
