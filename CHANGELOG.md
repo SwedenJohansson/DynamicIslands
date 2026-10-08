@@ -43,6 +43,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Missed notes bring the island back:** an island whose quest is done but with a note not found yet can come
+  again by chance, as you left it; only once every note on it is found is it finished for good.
 - **Notice boards look written on:** a readable notice board shows lines of made-up writing on both faces, so
   players can see it holds a note.
 - **Text that didn't fit:** status lines, island names in the lists, behaviour rows and titles, World plans hints,

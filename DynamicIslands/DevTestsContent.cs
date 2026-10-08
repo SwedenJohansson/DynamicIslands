@@ -892,7 +892,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
-		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done; or without a quest, reached) is never picked again; an unfinished one (quest begun, or never reached) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy")]
+		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done; or without a quest, reached) is never picked again; an unfinished one (quest begun, or never reached, or a note not found) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy")]
 		public static void PoolAgainTest() { StartTest(PoolAgainRoutine()); }
 
 		static IEnumerator PoolAgainRoutine()
@@ -907,6 +907,7 @@ namespace DynamicIslands
 			// Two islands with a two-step quest, two without a quest
 			string[] names = { "ciagain-done", "ciagain-begun", "ciagain-seen", "ciagain-unseen" };
 			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			foreach (var o in f.Objects) if (o.Props != null) o.Props.Remove(ObjectProps.NoteText); // (no notes: they'd keep a finished island in the pool)
 			f.Props[IslandQuest.KeyTitle] = "Again";
 			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
 			for (int i = 0; i < 2; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
@@ -935,6 +936,18 @@ namespace DynamicIslands
 				Func<string, bool> inPool = n => pool.Contains(n, StringComparer.OrdinalIgnoreCase);
 				Check(ref ok, !inPool(names[0]) && !inPool(names[2]), "the finished ones are not in the pool: done " + inPool(names[0]) + ", reached " + inPool(names[2]));
 				Check(ref ok, inPool(names[1]) && inPool(names[3]), "the unfinished ones are: begun " + inPool(names[1]) + ", never reached " + inPool(names[3]));
+				// A finished island with a note not found yet comes back, until every note is found
+				IslandFile noted = IslandFile.Load(IslandSpawner.PathFor(names[0]));
+				if (noted.Objects[0].Props == null) noted.Objects[0].Props = new Dictionary<string, string>();
+				noted.Objects[0].Props[ObjectProps.NoteText] = "A note the players missed.";
+				noted.Save(IslandSpawner.PathFor(names[0]));
+				CustomIslandSpawner.LoadPool(true);
+				bool missed = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[0], StringComparison.OrdinalIgnoreCase));
+				string noteKey = "note:" + done.HostName + ":0";
+				StoryBook.AddPage(noteKey, "Missed", "A note the players missed.", "Again");
+				bool allFound = !CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[0], StringComparison.OrdinalIgnoreCase));
+				foreach (StoryBook.Page added in StoryBook.Pages.Where(x => x.Key == noteKey).ToList()) StoryBook.Pages.Remove(added);
+				Check(ref ok, missed && allFound, "a finished island with a note not found comes back (" + missed + "), not once every note is found (" + allFound + ")");
 				// Picked again: the island the world has comes back, no second copy
 				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
 				foreach (IslandWorldState.Entry e in new[] { begun, unseen })

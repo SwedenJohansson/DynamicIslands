@@ -200,8 +200,10 @@ needs. With several players the host decides, and the island moves for everyone.
 
 **A finished island never comes again by chance.** When the spawn pool picks an island this world already has:
 
-- **finished** - its quest done, or, for an island without a quest, reached by a player - it isn't picked; another
-  island comes instead;
+- **finished** - its quest done, or, for an island without a quest, reached by a player, and every note on it found
+  - it isn't picked; another island comes instead;
+- **notes left** - its quest done but a note on it not found yet (the journal shows "(6/7 notes)") - it may come
+  back as you left it, so a missed note isn't lost for good;
 - **not finished** - its quest begun and not done, or never reached - it comes back ahead of the raft **as you left
   it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy;
 - already near the players (loaded) - not picked.
@@ -1470,7 +1472,7 @@ island). The span is the world's: chosen in **World settings > Islands while sai
 `WorldIslandsGap` in a world. None in a new world's first **10 minutes** of play (`quietMinutes`; game time, kept with
 the world - worlds made before this don't wait). `chancePerKm` only switches them on (above 0) or off (0).
 `spawnDistanceMin` / `spawnDistanceMax` (250-350 m ahead), `minSpacing` (800 m between custom islands) - all in
-`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one comes back as it was
+`spawnpool.txt` ([10](#10-settings-files)). A finished island isn't picked again; an unfinished one (or one with notes not found) comes back as it was
 ([3](#islands-appear-while-you-sail)). None appears while the raft is at one of Raft's own islands, and Raft won't put one of its
 islands on top of a custom one later.
 

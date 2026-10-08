@@ -735,8 +735,16 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An island the pool must not pick now: this world has it and it is finished (its quest done, or reached when
-		/// it has no quest - it never comes again), or it is here already (loaded or loading near the players). An island the
-		/// world has that isn't finished and was left behind may be picked: it comes back as it was (TrySpawn).</summary>
+		/// it has no quest, and none of its notes left unread - it never comes again), or it is here already (loaded or loading
+		/// near the players). An island the world has that isn't finished and was left behind may be picked: it comes back as
+		/// it was (TrySpawn) - also one whose quest is done but with a note missed (the user, 2026-10-08).</summary>
+		/// <summary>Whether players haven't read all the notes on this island yet.</summary>
+		internal static bool NotesLeft(IslandWorldState.Entry e)
+		{
+			int found, total;
+			return NoteCount.OfIsland(e.HostName, out found, out total) && found < total;
+		}
+
 		internal static bool NotAgain(string name)
 		{
 			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
@@ -744,7 +752,7 @@ namespace DynamicIslands.Editor
 			{
 				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 				if (e.Failed) continue;
-				if (ReturningIslands.Finished(e) || e.Root != null || e.Loading || e.WaitingForFile) return true;
+				if ((ReturningIslands.Finished(e) && !NotesLeft(e)) || e.Root != null || e.Loading || e.WaitingForFile) return true;
 			}
 			return false;
 		}
