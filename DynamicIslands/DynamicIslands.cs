@@ -77,7 +77,7 @@ namespace DynamicIslands
 			PlaceWaterPlane();
 		}
 
-		static float planeFor = float.NaN;
+		static float planeFor = float.NaN, planeSize;
 		/// <summary>Tests: the blue sea plane.</summary>
 		internal static GameObject WaterPlane { get { return waterPlane; } }
 
@@ -92,6 +92,15 @@ namespace DynamicIslands
 		{
 			if (waterPlane == null) return;
 			Vector3 p = waterPlane.transform.position;
+			// (as big as the terrain: a variation of Temperance gets a 2000 m terrain, the plane stayed 1000 m - CA29)
+			Terrain t = terraineditor.terrain;
+			if (t != null && t.terrainData != null)
+			{
+				Vector3 size = t.terrainData.size, at = t.transform.position;
+				p = new Vector3(at.x + size.x / 2f, p.y, at.z + size.z / 2f);
+				waterPlane.transform.localScale = new Vector3(size.x / 10f, 1, size.z / 10f);
+				planeSize = size.x;
+			}
 			waterPlane.transform.position = new Vector3(p.x, EditorSeaInWorld, p.z);
 			planeFor = currentElevation;
 		}
@@ -99,7 +108,13 @@ namespace DynamicIslands
 		/// <summary>Every frame in the editor: the island's height changed (the Island tab, undo, opening an island) - the plane follows.</summary>
 		static void TickWaterPlane()
 		{
-			if (waterPlane == null || currentElevation == planeFor) return;
+			if (waterPlane == null) return;
+			if (currentElevation == planeFor)
+			{
+				Terrain t = terraineditor.terrain;
+				if (t != null && t.terrainData != null && t.terrainData.size.x != planeSize) PlaceWaterPlane();
+				return;
+			}
 			bool first = float.IsNaN(planeFor);
 			PlaceWaterPlane();
 			if (!first && InEditor() && !IslandTest.Busy)

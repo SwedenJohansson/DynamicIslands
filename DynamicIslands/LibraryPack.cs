@@ -1145,9 +1145,11 @@ namespace DynamicIslands.Editor
 					changed = true;
 				}
 				if (!changed) continue;
-				SafeFile.WriteAllLines(file, lines);
+				// (not the editor's test world: it is made again for each test, and its next save wrote the old hash back - CA29)
 				string world = Housekeeping.WorldName(lines, file);
-				if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) worlds.Add(world);
+				if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
+				SafeFile.WriteAllLines(file, lines);
+				worlds.Add(world);
 				Debug.Log("[CUSTOM ISLANDS] " + file + ": '" + island + "' is played from its file now (" + now + ")");
 			}
 			// (the old copies: only those no world line names any more, as its own island or by a hash of this one)

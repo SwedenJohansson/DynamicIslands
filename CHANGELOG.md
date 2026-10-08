@@ -54,6 +54,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Generator:** closing it while Raft's islands still load no longer generates later on its own; a second click while
+  loading says it is still loading. The preview's count now includes the under-water kinds *Randomize* adds.
+- **Editor keys:** a key Raft already uses, or a number key (hotbar slots), can't be picked for an editor action.
+- **Sea plane** in the editor now fits the island's ground size, also after it grows.
+- **Give my worlds this version** leaves the editor's test world alone (its next save wrote the old version back).
 - **World plan list:** Receiver, by-chance and story rules now show [done] once their island is in the world.
 - **Edited plans:** a saved world now follows the plan's *random islands while sailing* switch when you changed it in
   World Plans (it kept its old switch).

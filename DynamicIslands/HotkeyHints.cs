@@ -49,6 +49,15 @@ namespace DynamicIslands.Editor
 			if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) return "a mouse button";
 			if (k >= KeyCode.JoystickButton0) return "a controller button";
 			if (k == KeyCode.Return || k == KeyCode.KeypadEnter || k == KeyCode.Tab || k == KeyCode.Space || k == KeyCode.Backspace) return "it is used to type and to play";
+			// (a key Raft's own controls use - movement, interact, hotbar numbers - would do both: CA29)
+			try
+			{
+				if (MyInput.Keybinds != null)
+					foreach (var kb in MyInput.Keybinds)
+						if (kb.Value != null && kb.Value.MainKey == k) return "Raft uses it (" + kb.Key + ")";
+			}
+			catch { }
+			if (k >= KeyCode.Alpha0 && k <= KeyCode.Alpha9) return "the number keys pick hotbar slots";
 			return null;
 		}
 

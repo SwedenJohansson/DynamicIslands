@@ -94,7 +94,10 @@ namespace DynamicIslands.Editor
 			if (reachDue > 0f && Time.unscaledTime >= reachDue) { reachDue = -1f; UpdateReach(); }
 		}
 
-		void OnDisable() { EditorInput.IsTyping = false; }
+		// (closing the window drops a Generate still waiting for Raft's scenes: reopened, it generated anyway - CA14)
+		void OnDisable() { EditorInput.IsTyping = false; loadingBuildings = false; waitingRun++; }
+
+		int waitingRun;
 
 		#region Building
 
@@ -766,7 +769,7 @@ namespace DynamicIslands.Editor
 					type = MapTypes.All[Mathf.Clamp(mapType, 0, MapTypes.All.Count - 1)];
 					ps = MapTypes.Roll(type, new System.Random(s.Seed), out elevation);
 				}
-				else ps = s;
+				else ps = tab == TabRandomize ? Effective() : s; // (Randomize: its extra under-water kinds count in the estimate too - CA29)
 				Vector3 terrainSize = IslandGenerator.AreaFor(ps); // (LM7: a variation of Temperance is bigger than the build area)
 				float span = Mathf.Clamp(IslandGenerator.Reach(ps) * 2.1f, 60f, terrainSize.x);
 				float step = span / (Res - 1);
@@ -943,7 +946,7 @@ namespace DynamicIslands.Editor
 			List<string> scenes = PlaceableCatalog.ScenesNeededFor(NeededNames());
 			if (scenes.Count > 0)
 			{
-				if (loadingBuildings) return;
+				if (loadingBuildings) { SetStatus("Still loading Raft's islands (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in."); return; }
 				loadingBuildings = true;
 				SetStatus("Loading Raft's islands for " + (tab == TabRandomize ? "what lies under water" : "the buildings and caves") + " (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in.");
 				DynamicIslands.instance.StartCoroutine(LoadThenGenerate());
@@ -1020,9 +1023,11 @@ namespace DynamicIslands.Editor
 
 		System.Collections.IEnumerator LoadThenGenerate()
 		{
+			int run = waitingRun;
 			yield return PlaceableCatalog.EnsureLoaded(NeededNames());
+			if (this == null || run != waitingRun) yield break;
 			loadingBuildings = false;
-			if (this != null && gameObject.activeInHierarchy) Generate();
+			if (gameObject.activeInHierarchy) Generate();
 		}
 
 		void Generate()
