@@ -208,6 +208,11 @@ needs. With several players the host decides, and the island moves for everyone.
   it** (quest steps, opened chests, harvest), with a banner "Back in sight", instead of a second, fresh copy;
 - already near the players (loaded) - not picked.
 
+Each pick is a fresh random draw by the islands' weights, so the same island can come twice - but one this world
+already has (left behind, not finished) counts only **a quarter** of its weight, so islands you haven't seen come
+first. An island whose builder set **"Comes by chance after ... km sailed"** isn't picked before the world has sailed
+that far.
+
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
 if they are within 2 km - an island the players still need shows however far it is (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot.
 
@@ -580,6 +585,9 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 - **Shown to players:** the island's **name**, your name and a short welcome. Players see them as a banner.
 - **Rules:** how many in-game days until chopped trees, picked items, killed animals, looted chests and fired zones
   come back on this island (empty = the world's setting, 0 = never, at most 999).
+  **Comes by chance after ... km sailed:** the earliest the spawn pool may bring this island while sailing, in km the
+  world has sailed, with the sailing time it means under it ("40 km: about 5 h of sailing", at 8 km/h). Empty = any
+  time, at most 192 km (about 24 h). A world plan still brings its islands when its rules say.
   **Level up system** Off / On: see [section 9.6](#96-the-level-up-system).
 - **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 6](#6-stories-quests-behaviours-story-items).
 

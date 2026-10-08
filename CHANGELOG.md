@@ -43,6 +43,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **New islands come first:** a random pick counts an island the world already has (left behind, not finished) at a
+  quarter of its weight, so the same island no longer comes back so often early on.
+- **"Comes by chance after ... km sailed"** (island editor, Island tab, Rules): the earliest an island may come by
+  chance, with the sailing time it means (e.g. 40 km, about 5 h); at most 192 km.
 - **Missed notes bring the island back:** an island whose quest is done but with a note not found yet can come
   again by chance, as you left it; only once every note on it is found is it finished for good.
 - **Notice boards look written on:** a readable notice board shows lines of made-up writing on both faces, so

@@ -542,7 +542,8 @@ namespace DynamicIslands.Editor
 
 		static RectTransform placingGroup;
 		static GameObject objectTips;
-		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField;
+		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField, infoNotBeforeField;
+		static Text infoNotBeforeText;
 		static Text questText;
 		static Button infoLevelsOff, infoLevelsOn;
 
@@ -568,6 +569,16 @@ namespace DynamicIslands.Editor
 			// (what the number means, under it: the empty field read "Things come back after world days")
 			infoRegrowText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "RegrowMeaning");
 			infoRegrowText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			RectTransform notBefore = UIKit.Row(rules, 28f, 4f, "NotBefore");
+			UIKit.Label(notBefore, "Comes by chance after", 13, UIKit.TextMuted);
+			infoNotBeforeField = UIKit.Field(notBefore, "any", "", 28f, "The earliest this island may come by chance while sailing: the km the world has sailed. Empty = any time. At most " + IslandProps.MaxNotBeforeKm + " km (about 24 h of sailing). World plans bring their islands when their rules say");
+			UIKit.Size(infoNotBeforeField.gameObject, 58, 28);
+			infoNotBeforeField.contentType = InputField.ContentType.IntegerNumber;
+			infoNotBeforeField.characterLimit = 3;
+			UIKit.Size(UIKit.Label(notBefore, "km sailed", 13, UIKit.TextMuted).gameObject, 70);
+			infoNotBeforeField.onEndEdit.AddListener(v => { int k; SetInfo(IslandProps.NotBeforeKm, int.TryParse(v, out k) && k > 0 ? Mathf.Min(k, IslandProps.MaxNotBeforeKm).ToString() : ""); RefreshInfo(); });
+			infoNotBeforeText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "NotBeforeMeaning");
+			infoNotBeforeText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			RectTransform levels = UIKit.Row(rules, 26f, 4f, "LevelUp");
 			UIKit.Label(levels, "Level up system", 13, UIKit.TextMuted);
 			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
@@ -610,6 +621,15 @@ namespace DynamicIslands.Editor
 				infoRegrowText.text = r.Length == 0 ? "Empty: as the world decides (" + CustomIslandSpawner.RegrowDays + " days unless its host changed it). Chopped trees, picked items, animals and looted chests come back." :
 					r == "0" ? "0: never - what players take or kill here stays gone." :
 					"Chopped trees, picked items, animals and looted chests come back after " + r + " in-game day" + (r == "1" ? "" : "s") + ". Empty = the world's setting, 0 = never.";
+			}
+			if (infoNotBeforeField != null)
+			{
+				string k = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.NotBeforeKm);
+				infoNotBeforeField.text = k;
+				float km;
+				infoNotBeforeText.text = float.TryParse(k, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out km) && km > 0f ?
+					"Not before the world has sailed " + k + " km: " + IslandProps.SailTime(km) + " (at " + IslandProps.SailKmPerHour.ToString("0") + " km/h)." :
+					"Empty: it may come by chance any time.";
 			}
 			bool levelsOn = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
 			if (infoLevelsOn != null) { UIKit.SetActive(infoLevelsOn, levelsOn); UIKit.SetActive(infoLevelsOff, !levelsOn); }

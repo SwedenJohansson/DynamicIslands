@@ -892,6 +892,66 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
+		[ConsoleCommand(name: "CISpawnSpread", docs: "Dev, in game (host, a test world 'CI ...'): the spread of random picks from the spawn pool - 8000 picks: every island in the pool comes, each about as often as its weight says, and one this world has already (left behind, not finished) a quarter as often; an island 'not before 5 km' only once the world has sailed 5 km")]
+		public static void SpawnSpreadTest(string[] args)
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); return; }
+			bool ok = true;
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
+			if (source == null) { Fail("no generated_sample or citest island to build on"); return; }
+			string[] names = { "cispread-a", "cispread-b", "cispread-c", "cispread-here" };
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			foreach (string n in names) { f.Name = n; f.Save(IslandSpawner.PathFor(n)); }
+			const string late = "cispread-late";
+			f.Name = late; f.Props[IslandProps.NotBeforeKm] = "5"; f.Save(IslandSpawner.PathFor(late));
+			CustomIslandSpawner.LoadPool(true);
+			IslandWorldState.Entry here = null;
+			float sailedWas = WorldDirector.Sailed;
+			try
+			{
+				Vector3 at = raftAt.Value - CustomIslandSpawner.SailDirection() * (WorldRules.UnloadDistance + 2000f); at.y = 0f;
+				here = IslandWorldState.Add(names[3], at, null, false);
+				var pool = CustomIslandSpawner.Pool().Where(p => !p.Key.Equals(late, StringComparison.OrdinalIgnoreCase)).ToList();
+				var missing = names.Where(n => !pool.Any(p => p.Key.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
+				if (missing.Count > 0) { Fail("not in the pool (this world's island list leaves them out?): " + string.Join(", ", missing.ToArray())); return; }
+				var weights = pool.Select(p => p.Value * (p.Key != CustomIslandSpawner.GeneratedEntry && CustomIslandSpawner.InWorld(p.Key) != null ? CustomIslandSpawner.InWorldWeight : 1f)).ToList();
+				float total = weights.Sum();
+				const int picks = 8000;
+				var counts = pool.ToDictionary(p => p.Key, p => 0, StringComparer.OrdinalIgnoreCase);
+				var rnd = new System.Random(4711);
+				for (int i = 0; i < picks; i++) { string k = CustomIslandSpawner.PickFrom(pool, (float)rnd.NextDouble()); if (k != null) counts[k]++; }
+				var never = pool.Where((p, i) => counts[p.Key] == 0 && weights[i] / total * picks >= 20f).Select(p => p.Key).ToList();
+				Check(ref ok, never.Count == 0, "every island in the pool (" + pool.Count + ") came in " + picks + " picks" + (never.Count > 0 ? " - never: " + string.Join(", ", never.ToArray()) : ""));
+				for (int i = 0; i < pool.Count; i++)
+				{
+					if (!names.Contains(pool[i].Key, StringComparer.OrdinalIgnoreCase)) continue;
+					float expected = weights[i] / total * picks;
+					int got = counts[pool[i].Key];
+					Check(ref ok, Mathf.Abs(got - expected) <= Mathf.Max(4f * Mathf.Sqrt(expected), expected * 0.3f), "'" + pool[i].Key + "' as often as its weight says: " + got + " picks, about " + expected.ToString("F0") + " expected");
+				}
+				float ratio = counts[names[3]] / (float)Mathf.Max(1, counts[names[0]]);
+				// "Not before 5 km": out of the pool until the world has sailed 5 km
+				WorldDirector.Sailed = 4000f;
+				bool early = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(late, StringComparison.OrdinalIgnoreCase));
+				WorldDirector.Sailed = 5100f;
+				bool after = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(late, StringComparison.OrdinalIgnoreCase));
+				WorldDirector.Sailed = sailedWas;
+				Check(ref ok, !early && after, "an island 'not before 5 km' is out of the pool at 4 km (" + !early + "), in at 5.1 km (" + after + ")");
+				Check(ref ok, ratio > 0.12f && ratio < 0.45f, "the one this world has already comes about a quarter as often: " + counts[names[3]] + " vs " + counts[names[0]] + " (" + ratio.ToString("F2") + ")");
+			}
+			finally
+			{
+				if (here != null) IslandWorldState.RemoveIds(new List<IslandWorldState.Entry> { here }.Select(e => e.Id).ToList(), false);
+				WorldDirector.Sailed = sailedWas;
+				foreach (string n in names.Concat(new[] { late })) File.Delete(IslandSpawner.PathFor(n));
+				CustomIslandSpawner.LoadPool(true);
+			}
+			if (ok) Log("PASS: random picks spread by weight, every island comes, ones the world has less often"); else Fail("random picks spread by weight, every island comes, ones the world has less often");
+		}
+
 		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - a finished one (quest done; or without a quest, reached) is never picked again; an unfinished one (quest begun, or never reached, or a note not found) may be: picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy")]
 		public static void PoolAgainTest() { StartTest(PoolAgainRoutine()); }
 

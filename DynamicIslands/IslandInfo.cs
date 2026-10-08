@@ -15,6 +15,19 @@ namespace DynamicIslands.Editor
 		public const string RegrowDays = "rules.regrow";
 		/// <summary>Rules: "on" = the level up system (PlayerLevels): once this island is in a world, players there earn EXP from monsters and level up.</summary>
 		public const string Levels = "rules.levels";
+		/// <summary>Rules: the earliest the spawn pool may bring this island by chance, in km the world has sailed ("" = any time).</summary>
+		public const string NotBeforeKm = "rules.notbefore";
+		/// <summary>The sailing speed the editor's "about N h" uses (the user's example: 40 km, about 5 h).</summary>
+		public const float SailKmPerHour = 8f;
+		/// <summary>The highest "not before": 24 h of sailing.</summary>
+		public const int MaxNotBeforeKm = 192;
+
+		/// <summary>"about 5 h of sailing" for a distance in km.</summary>
+		public static string SailTime(float km)
+		{
+			float h = km / SailKmPerHour;
+			return h < 1f ? "about " + Mathf.Max(1, Mathf.RoundToInt(h * 60f)) + " min of sailing" : "about " + h.ToString(h < 10f ? "0.#" : "0", System.Globalization.CultureInfo.InvariantCulture) + " h of sailing";
+		}
 	}
 
 	/// <summary>A spawned island's own settings (IslandFile.Props), for the parts of the mod that act on it in a world.</summary>

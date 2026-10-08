@@ -663,7 +663,16 @@ namespace DynamicIslands.Editor
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
 			HashSet<string> planned = forWorld ? PlanIslandNames() : new HashSet<string>();
-			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key)))).ToList();
+			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key) && !TooEarly(p.Key)))).ToList();
+		}
+
+		/// <summary>An island whose "not before" (IslandProps.NotBeforeKm) this world hasn't sailed yet: not picked by chance until then.</summary>
+		internal static bool TooEarly(string name)
+		{
+			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
+			float km;
+			return float.TryParse(ObjectProps.Get(IslandCache.Props(name), IslandProps.NotBeforeKm), NumberStyles.Float, CultureInfo.InvariantCulture, out km) &&
+				WorldDirector.Sailed < km * 1000f;
 		}
 
 		static HashSet<string> allPlans;
@@ -734,10 +743,6 @@ namespace DynamicIslands.Editor
 				string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase));
 		}
 
-		/// <summary>An island the pool must not pick now: this world has it and it is finished (its quest done, or reached when
-		/// it has no quest, and none of its notes left unread - it never comes again), or it is here already (loaded or loading
-		/// near the players). An island the world has that isn't finished and was left behind may be picked: it comes back as
-		/// it was (TrySpawn) - also one whose quest is done but with a note missed (the user, 2026-10-08).</summary>
 		/// <summary>Whether players haven't read all the notes on this island yet.</summary>
 		internal static bool NotesLeft(IslandWorldState.Entry e)
 		{
@@ -745,6 +750,10 @@ namespace DynamicIslands.Editor
 			return NoteCount.OfIsland(e.HostName, out found, out total) && found < total;
 		}
 
+		/// <summary>An island the pool must not pick now: this world has it and it is finished (its quest done, or reached when
+		/// it has no quest, and none of its notes left unread - it never comes again), or it is here already (loaded or loading
+		/// near the players). An island the world has that isn't finished and was left behind may be picked: it comes back as
+		/// it was (TrySpawn) - also one whose quest is done but with a note missed (the user, 2026-10-08).</summary>
 		internal static bool NotAgain(string name)
 		{
 			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
@@ -763,14 +772,25 @@ namespace DynamicIslands.Editor
 		internal static string PickFromPool()
 		{
 			if (ForceNextPick != null) { string forced = ForceNextPick; ForceNextPick = null; return forced; }
-			var pool = Pool();
-			float total = pool.Sum(p => p.Value);
+			return PickFrom(Pool(), UnityEngine.Random.value);
+		}
+
+		/// <summary>An island this world already has (left behind, not finished) counts this much of its weight: it may come
+		/// back, but islands not seen yet come first (the user, 2026-10-08: the same island came several times early on).</summary>
+		public const float InWorldWeight = 0.25f;
+
+		/// <summary>A weighted pick from the pool, roll 0-1 (islands this world has count InWorldWeight of their weight).</summary>
+		internal static string PickFrom(List<KeyValuePair<string, float>> pool, float roll01)
+		{
+			if (pool.Count == 0) return null;
+			var weights = pool.Select(p => p.Value * (p.Key != GeneratedEntry && InWorld(p.Key) != null ? InWorldWeight : 1f)).ToList();
+			float total = weights.Sum();
 			if (total <= 0f) return null;
-			float roll = UnityEngine.Random.value * total;
-			foreach (var p in pool)
+			float roll = roll01 * total;
+			for (int i = 0; i < pool.Count; i++)
 			{
-				roll -= p.Value;
-				if (roll <= 0f) return p.Key;
+				roll -= weights[i];
+				if (roll <= 0f) return pool[i].Key;
 			}
 			return pool[pool.Count - 1].Key;
 		}
@@ -1135,7 +1155,8 @@ type:sunken 0.2
 				"Pool (" + PoolPath + "): " + (pool.Count == 0 ? "empty" : "")
 			};
 			foreach (var p in pool)
-				lines.Add(string.Format(CultureInfo.InvariantCulture, "  {0}: weight {1}, {2:P0} of spawns", p.Key == GeneratedEntry ? "a new generated island" : p.Key, p.Value, p.Value / total));
+				lines.Add(string.Format(CultureInfo.InvariantCulture, "  {0}: weight {1}, {2:P0} of spawns{3}", p.Key == GeneratedEntry ? "a new generated island" : p.Key, p.Value, p.Value / total,
+					p.Key != GeneratedEntry && InWorld(p.Key) != null ? " (in this world already: a quarter of that)" : ""));
 			if (GeneratedWeight > 0f)
 				lines.Add("Generated islands: " + string.Join(", ", GeneratedStyles.Select(TerrainPainter.StyleName).ToArray()) + ", " +
 					GeneratedFlyingChance.ToString("P0", CultureInfo.InvariantCulture) + " of them flying" +
