@@ -58,6 +58,11 @@ place Placeable_Lantern_Metal - at -13.5 -1.4 h=3 sit drop
 place Placeable_Flag_03 - at -4.6 -1.8 h=1.4
 place Zone_Trigger quay at -10 0 h=2.4
 
+# --- The harbour master's stores (T-4c2): a chest chained in a cage at the street's north end - the bolt cutters that
+# open it came from the Saltmarsh ferry (rule 2); nothing in the quest needs it
+place UT_DogCage_Medium02 storescage at -1.5 11.8 ground sit yaw=180
+place Loot_ChestSmall storeschest at -1.5 11.8 ground sit yaw=180
+
 # --- The north pier and its two stilt houses (the netmaker's, the skipper's), fronts onto the pier ----------------------
 push at -16 9 h=-1.2
 call boardwalk n=8 wide=1 y=2.6 rn=none
@@ -285,6 +290,16 @@ prop heronhold loot.refill=0
 note masterssafe Harbour master's safe | The harbour master's safe: the Corps' water plans - pipes, purifiers, tanks and stores - and a chart with the Iron Graveyard marked on it.
 loot masterssafe Blueprint_Pipe_Water*1;Blueprint_ElectricPurifier*1;Blueprint_WaterTank*1;Blueprint_Storage_Large*1;Battery*1
 prop masterssafe loot.refill=0
+# the stores cage (T-4c2): Raft's own check (the bolt cutters, kept); the chest opens on its signal
+prop storescage obj.name=storescage
+prop storescage else.use=message||The harbour master's stores, chained in a cage. A tag on the chain: "Cutters with the Saltmarsh ferry's crew - next run." The ferry never came back.
+prop storescage on.use=message||The bolt cutters bite through the chain and the cage door swings open.\nhide|\nsignal||storescage
+prop storeschest obj.name=storeschest
+prop storeschest note.title=Harbour master's stores
+prop storeschest if.open=signal|storescage
+prop storeschest else.open=message||The chest is inside the cage, and the cage is chained shut. The tag says the Saltmarsh ferry's crew had the bolt cutters.
+loot storeschest Cooked_Mackerel*3;Rope*4;Nail*12;MetalIngot*2;Battery*1
+prop storeschest loot.refill=0
 prop masterssafe if.open=has|story:safecode|1
 prop masterssafe else.open=message||The safe's dial won't move. The harbour master's log said the code is inside the lamp's oil tank.
 

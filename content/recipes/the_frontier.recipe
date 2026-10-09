@@ -166,6 +166,8 @@ place Locker harbouroffice at 0.5 3.8 y=0.1 sit yaw=90
 place "Table Office" - at 3 3.7 y=0.1 sit yaw=180
 place "Chair Office" - at 3 3 y=0.1 sit
 place Placeable_Lantern_Metal - at 3.4 3.7 y=0.9 sit drop
+place RT_CommRadio officeradio at 2.5 3.7 y=1 sit drop yaw=180
+place Loot_Chest officecache at 4.8 0.6 y=0.1 sit yaw=0
 place Crate_Big_02 - at 1 0.9 y=0.1 sit yaw=8
 place Pickup_Landmark_Plank_Land - at 2.0 2.0 y=0.4 drop yaw=29
 pop
@@ -571,6 +573,16 @@ note welcomeboard Welcome board | FRONTIER CORPS - THE FRONTIER\n\nIf you are re
 note harbouroffice Harbour office locker | The harbour office's locker: the town map - the harbour and the lower town, the farm terraces up the mesa's face, the reservoir on the rim, the upper town, the Corps' hall on the east rim - and a ration tin.
 loot harbouroffice Plank*6;Rope*3;Nail*10;Cooked_Mackerel*2
 prop harbouroffice loot.refill=0
+# the harbour office radio (T-4c2): Raft's own check (no "power" signal on this island, so the battery charger part from
+# the Drowned Gate's pump room, rule 9; kept) - it shows the Corps' last crate; nothing in the quest needs it
+prop officeradio obj.name=officeradio
+prop officeradio else.use=message||The harbour office's radio is dead - its battery charger has burnt out. A tag on the set: "Spare charger part ordered from the Drowned Gate's pump room."
+prop officeradio on.use=message||The charger part clicks home and the set warms up. A recorded voice, on a loop: "Harbour office - the Corps' last crate is under the boards by the door. For whoever gets here."\nsignal||officeradio\nshow|officecache
+prop officecache obj.name=officecache
+prop officecache note.title=The Corps' last crate
+prop officecache beh.hidden=1
+loot officecache TitaniumIngot*3;MetalIngot*4;CopperIngot*4;Battery_Advanced*1;Cooked_Salmon*3
+prop officecache loot.refill=0
 # chapter 2 - the lower town
 note smithnote Smith's note | THE SMITHS' QUARTER\nThe forge's chest has the signal horn's reed - the horn on its tower by the hall won't sound without it. The chest's key went to the netmaker on the quay: she keeps everything.\nThe dogs got into the yard after we left. Mind them.
 note fishernote Netmaker's note | THE FISHERS' QUARTER\nThe smiths' key was in our net store at the quay's end - and the net store went into the harbour in the last blow. Dive off the quay's end: the crate is down there with the nets.

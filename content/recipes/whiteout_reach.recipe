@@ -30,6 +30,9 @@ origin
 clear from 0 34 to 30 34 r=15
 clear at 2 -2 r=8
 clear from -42 5 to -16 5 r=6
+# the Corps strongroom's pad east of the commander's dome (T-4c2), after origin so the land centre stays put
+brush flatten at 37 31 r=7 s=20 frames=60 h=11.5
+clear at 37 31 r=8
 
 # --- The camp: the mess dome, the commander's dome, the boiler house between them, the snowmobile shed with its
 # snow vehicles, the store (Raft's wooden walls under a wooden roof) ---------------------------------------------------
@@ -68,6 +71,17 @@ roof 2 2 at 0 0 y=0.2 wood
 place "Box Big" storecrate at 0.9 0.9 y=0.2 sit yaw=10
 pop
 place Zone_Trigger camp at 15 34 h=13
+
+# --- The Corps strongroom (T-4c2): a radio tower room east of the commander's dome, its keycard door to the west (to
+# the camp). Raft's own check: the Corps keycard from the beacon keeper's strongbox (Frontier Beacon, rule 1), kept.
+# The room x 34..40, z 26.5..35.5; nothing in the quest needs it
+push at 34 31 h=11.55 yaw=180
+call rt_storey r2=RT_WallDoor1
+place RT_Floor - at 0 4.5 y=3.05
+place PlantationDoor strongdoor at 0 0 sit yaw=90
+place Loot_Chest strongvault at -2 -1.8 sit yaw=270
+place "Box Big" - at -5.3 3.6 sit yaw=10
+pop
 
 # --- The radio hut on the summit: a radio tower room, its door to the camp, the radio and its last log ----------------
 push at 5 -2 h=21.05
@@ -135,6 +149,15 @@ prop storecrate else.open=message||The camp store is locked. The commander's ord
 note shedcrate Shed box | A box in the snowmobile shed, gnawed: the store key on a nail above it.
 loot shedcrate story:storekey*1;Scrap*3
 prop shedcrate loot.refill=0
+# the Corps strongroom (T-4c2): the door keeps Raft's check (the Corps keycard) and says where the card is
+prop strongdoor obj.name=strongdoor
+prop strongdoor else.use=message||The strongroom's reader glows red: CORPS KEYCARD ONLY. Every station keeper carried one - the beacon keeper at Station One locked his in a strongbox in his hut.
+prop strongdoor on.use=hide|\nshow|strongvault\nmessage||The reader blinks green and the door swings away. Behind it: the camp's strongroom chest, stocked for the crossing.
+prop strongvault obj.name=strongvault
+prop strongvault note.title=Corps strongroom chest
+prop strongvault beh.hidden=1
+loot strongvault TitaniumIngot*3;MetalIngot*4;Bolt*6;Battery*2;Cooked_Salmon*3
+prop strongvault loot.refill=0
 note holdcrate Kestrel's hold crate | A crate broken out of the Kestrel's hold, on the sea floor by her stern: a boiler part, sealed in wax.
 loot holdcrate story:heatpart*1;Plastic*3
 prop holdcrate loot.refill=0

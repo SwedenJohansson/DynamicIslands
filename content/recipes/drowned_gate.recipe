@@ -180,6 +180,7 @@ place RT_RadarScreen - at -0.9 -1.5 y=1.08 sit yaw=-90
 place "Chair Office" - at -2.1 -1.5 sit yaw=90
 place Cableroll_01 - at -0.7 2.6 sit
 place Placeable_Lantern_Metal - at -1.2 -0.6 y=1.2 sit drop
+place Loot_ChestSmall relayspares at -0.9 0.8 sit yaw=-90
 pop
 
 # --- The gate office on the walk's south half: its door to the lock's deck bolted to the inner lock's gear; the vault ---
@@ -299,6 +300,11 @@ prop keeperslocker loot.refill=0
 note pumpchest Pump hall chest | A chest on the flooded pump hall's floor: the inner lock's key on a float, tangled in its chain.
 loot pumpchest story:lockkey*1;Scrap*4;Bolt*3
 prop pumpchest loot.refill=0
+# the relay's spare battery charger part (T-4c2): it brings up the harbour office's radio on The Frontier (rule 10)
+prop relayspares obj.name=relayspares
+note relayspares Relay spares box | The pump room's spares box: a battery charger part for a Corps radio, wrapped in oilcloth, with a label: "For the Frontier harbour office set - its charger burnt out. Next boat." No boat went.
+loot relayspares story:raft-Caravan_BatteryChargerPart*1;CopperIngot*2;Scrap*3
+prop relayspares loot.refill=0
 note officevault Gate office vault | The gate office's vault: titanium tools, a big backpack, an electric zipline - and the Frontier's frequency on a brass plate.
 loot officevault Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;TitaniumIngot*2
 prop officevault loot.refill=0
