@@ -115,6 +115,7 @@
     <Compile Include="StoryRemakes.cs" />
     <Compile Include="ReadyPieces.cs" />
     <Compile Include="LaserBeam.cs" />
+    <Compile Include="UpgradeTable.cs" />
     <Compile Include="GenFeatures.cs" />
     <Compile Include="PcCheck.cs" />
     <Compile Include="UpdateCheck.cs" />

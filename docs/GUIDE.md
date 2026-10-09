@@ -2294,7 +2294,7 @@ again. Every player sees the same trader with the same offers: the host brings i
 #### Extra upgrades
 
 Better versions of Raft's own things to craft. Each one has a tint of its own and sits in the crafting menu next to
-the thing it improves (the **base**), once the base is learned:
+the thing it improves (the **base**), once it is learned at the **upgrade research table** (below):
 
 | Upgrade | What it is | Cost | Base |
 |---|---|---|---|
@@ -2338,10 +2338,28 @@ gives back what it holds, as the base does.
 
 The large battery fits **every machine that takes a battery** (electric grill, electric smelter, electric purifier,
 juicer, recycler, sprinkler, the Receiver) and charges in the **battery charger** like a battery: twice as long, for
-twice the fuel. In a machine it shows as a blue battery. It has no entry of its own in the research table: when the
-world has the option on and the battery is learned, the large battery is in the crafting menu too; switch the option
-off and it is gone from the menu again (large batteries already made keep working). The same goes for every upgrade
-and its base: none has a research table entry, and switching the option off hides them all; what is built stays.
+twice the fuel. In a machine it shows as a blue battery. Switch the option off and the upgrades are gone from the
+crafting menu again (large batteries already made keep working, what is built stays); switch it back on and the ones
+learned are back.
+
+##### The upgrade research table
+
+The upgrades are learned at a research table of their own, not with their base: learning the battery doesn't teach
+the large battery. With the option on, the **upgrade research table** is in the crafting menu from the start, next to
+Raft's research table. It is Raft's research table in **violet** and costs **twice** as much.
+
+It works like Raft's table. Put an item in its slot and press **Research**. The menu lists only the upgrades, with the
+items each one needs; an upgrade can be learned once **every item it costs** is researched there (one of each - a
+titanium grill needs the advanced grill's items and titanium). Press **Learn** and every player can craft it. Raft's
+own things are not in this menu, and the upgrades are not in Raft's.
+
+The two tables keep **separate** research: what you research at Raft's table doesn't count at the upgrade table, and
+the other way round: an item researched at Raft's table has to be researched again here for an upgrade that
+needs it. An item that only upgrades need (none of Raft's recipes) can only be researched at the upgrade table.
+
+What is researched and learned there is the world's, for every player, and is saved with it. A world made **before**
+the upgrade table keeps what it had: the upgrades whose base was learned stay learned. The console command
+`UpgradeTable` lists what a world has researched and learned there.
 
 Every player needs the mod, as for any world with custom islands. The upgrades are saved with the world; a world
 loaded **without** the mod loses them (a machine's slot comes back empty, a built upgrade is gone).

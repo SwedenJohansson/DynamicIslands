@@ -18,8 +18,9 @@ namespace DynamicIslands.Editor
 	/// How: each is a copy of one of Raft's items (Item_Base) with its own fixed index (Upgrade.Index - saves and messages
 	/// name items by index, so it must never change), registered with RAPI.RegisterItem when the mod starts, before a world
 	/// builds its crafting menu (CraftingMenu.InitializeRecipes reads ItemManager.GetAllItems once). Its recipe costs the
-	/// base item's recipe times CostFactor (plus an optional extra), has no entry of its own in the research table and is
-	/// learned while the world has the option on and the base item is learned (Tick), so it appears next to the base item.
+	/// base item's recipe times CostFactor (plus an optional extra), has no entry in Raft's research tables and is
+	/// craftable while the world has the option on and it is learned at the upgrade research table (UpgradeTable, an
+	/// upgrade itself, learned from the start - Tick), so it appears next to the base item.
 	/// A buildable one gets copies of the base item's block prefabs (kept inactive under one holder, so they don't wake),
 	/// each pointing back at the new item (Block.buildableItem / itemToReturnOnDestroy, so saves store the new index) and
 	/// carrying an UpgradeBlock: when a block of it is placed or loaded, UpgradeBlock tints it and sets its better stats
@@ -57,10 +58,16 @@ namespace DynamicIslands.Editor
 			/// <summary>Runs when a worn upgrade is put on (true) or taken off (false), or null: for stats on the shared model.</summary>
 			public Action<Equipment, bool> Wearing;
 			public Item_Base Base, Item;
+			/// <summary>The upgrade research table itself (UpgradeTable): learned from the start while the option is on.</summary>
+			public bool Table;
 			public override string ToString() { return Display + " (" + Name + ", " + Index + ")"; }
 		}
 
 		public const int LargeBatteryIndex = 29411;
+		/// <summary>The upgrade research table (UpgradeTable): a tinted copy of Raft's research table at twice its cost.</summary>
+		public const int TableIndex = 29443;
+		public const string TableName = "DI_UpgradeResearchTable";
+		public static readonly Color TableTint = new Color(0.75f, 0.55f, 1f);
 		public const string LargeBatteryName = "DI_LargeBattery";
 		/// <summary>How many times Raft's battery the large one holds and costs.</summary>
 		public const int LargeBatteryFactor = 2;
@@ -108,6 +115,8 @@ namespace DynamicIslands.Editor
 		public static Upgrade Find(int index) { return all == null ? null : all.FirstOrDefault(u => u.Item != null && u.Index == index); }
 		public static Upgrade Find(string name) { return All.FirstOrDefault(u => u.Name == name); }
 
+		public static Upgrade TableUpgrade { get { return Find(TableName); } }
+		public static Item_Base TableItem { get { Upgrade u = Find(TableName); return u != null ? u.Item : null; } }
 		public static Item_Base LargeBattery { get { Upgrade u = Find(LargeBatteryName); return u != null ? u.Item : null; } }
 
 		static GameObject holder;
@@ -214,6 +223,8 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29442, Name = "DI_LumberAxe", BaseName = "Axe_Titanium", Display = "Lumber axe", Tint = new Color(0.9f, 0.45f, 0.4f), UsesFactor = 2,
 					Held = LumberAxe,
 					Description = "A titanium axe that takes building pieces apart twice as fast and lasts twice as long." },
+				new Upgrade { Index = TableIndex, Name = TableName, BaseName = "Placeable_ResearchTable", Display = "Upgrade research table", Tint = TableTint, Table = true,
+					Description = "A research table of its own for the upgrades: research items here to learn better versions of Raft's things. What is researched at Raft's table doesn't count here." },
 			};
 		}
 
@@ -268,6 +279,7 @@ namespace DynamicIslands.Editor
 			}
 			recipe.NewCost = cost.ToArray();
 			Traverse t = Traverse.Create(recipe);
+			// (the table is learned from the start - Tick, while the option is on; the rest at the table: Raft's never shows them)
 			t.Field("_hiddenInResearchTable").SetValue(true);
 			t.Field("learnedFromBeginning").SetValue(false);
 			t.Field("blueprintItem").SetValue(null);
@@ -321,10 +333,11 @@ namespace DynamicIslands.Editor
 			return cost == null ? "-" : string.Join(", ", cost.Select(c => c.amount + " " + string.Join("/", (c.items ?? new Item_Base[0]).Where(i => i != null).Select(i => i.UniqueName).ToArray())).ToArray());
 		}
 
-		/// <summary>Whether an upgrade can be crafted in this world now: the option on and its base item learned.</summary>
+		/// <summary>Whether an upgrade can be crafted in this world now: the option on and the upgrade learned at the upgrade
+		/// research table (the table itself: from the start).</summary>
 		public static bool Craftable(Upgrade u)
 		{
-			return u != null && u.Item != null && u.Base != null && WorldOptions.On(WorldOptions.Upgrades) && u.Base.settings_recipe.Learned;
+			return u != null && u.Item != null && u.Base != null && WorldOptions.On(WorldOptions.Upgrades) && (u.Table || UpgradeTable.IsLearned(u));
 		}
 
 		public static bool LargeBatteryCraftable { get { return Craftable(Find(LargeBatteryName)); } }
@@ -343,6 +356,7 @@ namespace DynamicIslands.Editor
 				bool on = Craftable(u);
 				if (u.Item.settings_recipe.Learned != on) { u.Item.settings_recipe.Learned = on; Log(u.Display + (on ? " craftable" : " hidden")); }
 			}
+			UpgradeTable.Tick();
 			TurboTopSpeed();
 		}
 

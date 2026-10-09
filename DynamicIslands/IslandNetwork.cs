@@ -81,6 +81,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (after each of Raft's saves) and each player who joins: Raft's newest save of the world
 		/// (AU43, WorldSaveShare): Name = world id, Hash = save folder name, Index/Count = part, Data = base64 part of the pack.</summary>
 		public const int WorldSave = 28;
+		/// <summary>The upgrade research table (UpgradeTable): host -> everyone "state" (Data = researched|learned item indexes)
+		/// and "learned" (Index = upgrade, Data = by whom); a player -> host "research" (Index = item, Count = table's object
+		/// index) and "learn" (Index = upgrade).</summary>
+		public const int UpgradeTable = 29;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -310,6 +314,14 @@ namespace DynamicIslands.Editor
 			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
 		}
 
+		/// <summary>The upgrade research table: the host to one player or everyone; a player to the host.</summary>
+		public static void SendUpgradeTable(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.UpgradeTable;
+			if (Raft_Network.IsHost) { if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		/// <summary>Raft's save of the world: the host to one player (who joined) or everyone (AU43).</summary>
 		public static void SendWorldSave(IslandNetMessage msg, Network_UserId? to)
 		{
@@ -496,6 +508,7 @@ namespace DynamicIslands.Editor
 							JoinPart("story", () => StoryBook.StateMessage(), to);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
+							JoinPart("upgrade table", () => global::DynamicIslands.Editor.UpgradeTable.Message(), to);
 							JoinPart("rogue shark", () => global::DynamicIslands.Editor.RogueShark.Message("state"), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
 							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
@@ -586,6 +599,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldSave:
 						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
+						break;
+					case IslandNetMessage.UpgradeTable:
+						global::DynamicIslands.Editor.UpgradeTable.OnMessage(msg, from);
 						break;
 					case IslandNetMessage.StoryChain:
 						global::DynamicIslands.Editor.StoryChain.OnMessage(msg);

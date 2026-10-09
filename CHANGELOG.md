@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Upgrade research table:** the extra upgrades are learned at a research table of their own (violet, twice the cost
+  of Raft's, there from the start with the option on) instead of with their base item. Its research is separate from
+  Raft's table; a world from before keeps the upgrades it had.
 - **Laser beams:** Temperance's laser emitter shoots a beam the mirrors send on (turn a mirror, the beam turns); what
   it reaches gets the new event "a laser beam reaches it" - the laser door panel answers with the signal `laser`.
 - **Unlock a character:** a new action gives the player one of Raft's characters (by name or number), as Raft's story does.

@@ -468,7 +468,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: trader raft"); else Fail("trader raft");
 		}
 
-		[ConsoleCommand(name: "CILargeBattery", docs: "Dev, world (host): the world option Extra upgrades' large battery - registered (its own index, twice Raft's battery's charge, twice its cost, named, out of the research table); its recipe learned only with the option on and the battery learned; a machine with a battery slot placed (floating, as a cheat): its slot takes the large battery, shows the blue model instead of Raft's, keeps its charge, gives it back to the player; the machine removed after. CILargeBattery [keep] (keep: the machine stays, with the large battery in)")]
+		[ConsoleCommand(name: "CILargeBattery", docs: "Dev, world (host): the world option Extra upgrades' large battery - registered (its own index, twice Raft's battery's charge, twice its cost, named, out of the research table); its recipe learned only with the option on and the large battery learned at the upgrade research table (the battery learned or not); a machine with a battery slot placed (floating, as a cheat): its slot takes the large battery, shows the blue model instead of Raft's, keeps its charge, gives it back to the player; the machine removed after. CILargeBattery [keep] (keep: the machine stays, with the large battery in)")]
 		public static void LargeBatteryCommand(string[] args) { StartTest(LargeBatteryRoutine(args != null && args.Contains("keep"))); }
 
 		static IEnumerator LargeBatteryRoutine(bool keep)
@@ -489,22 +489,24 @@ namespace DynamicIslands
 				"shown as '" + large.settings_Inventory.DisplayName + "' with its own (blue) icon");
 			Check(ref ok, HarmonyLib.Traverse.Create(large.settings_recipe).Field("_hiddenInResearchTable").GetValue<bool>() && large.settings_recipe.CraftingCategory == battery.settings_recipe.CraftingCategory,
 				"out of the research table, in the battery's crafting category (" + large.settings_recipe.CraftingCategory + ")");
-			// Learned with the option and the battery
+			// Learned with the option and at the upgrade research table (the battery itself learned or not)
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			bool batteryLearned = battery.settings_recipe.Learned;
+			string tableBefore = UpgradeTable.State();
 			Block made = null;
 			try
 			{
-				var cases = new[] { new[] { false, true }, new[] { true, false }, new[] { true, true } };
+				var cases = new[] { new[] { false, true, true }, new[] { true, false, true }, new[] { true, true, true }, new[] { true, true, false } };
 				foreach (bool[] c in cases)
 				{
 					var set = new HashSet<string>(optionsBefore);
 					if (c[0]) set.Add(WorldOptions.Upgrades); else set.Remove(WorldOptions.Upgrades);
 					WorldOptions.Set(set);
-					battery.settings_recipe.Learned = c[1];
+					UpgradeTable.SetLearned(ExtraUpgrades.Find(ExtraUpgrades.LargeBatteryIndex), c[1]);
+					battery.settings_recipe.Learned = c[2];
 					yield return null; yield return null;
 					bool want = c[0] && c[1];
-					Check(ref ok, large.settings_recipe.Learned == want, "option " + (c[0] ? "on" : "off") + ", battery " + (c[1] ? "learned" : "not learned") + (want ? ": craftable" : ": not craftable"));
+					Check(ref ok, large.settings_recipe.Learned == want, "option " + (c[0] ? "on" : "off") + ", " + (c[1] ? "learned" : "not learned") + " at the table, battery " + (c[2] ? "learned" : "not learned") + (want ? ": craftable" : ": not craftable"));
 				}
 				// A machine's slot
 				Item_Base machine = ItemManager.GetAllItems().Where(i => i != null && i.settings_buildable != null).FirstOrDefault(i =>
@@ -541,12 +543,136 @@ namespace DynamicIslands
 			{
 				WorldOptions.Set(optionsBefore);
 				battery.settings_recipe.Learned = batteryLearned;
+				UpgradeTable.SetState(tableBefore);
 				if (made != null && !keep) BlockCreator.RemoveBlockNetwork(made, null, true);
 			}
 			if (ok) Log("PASS: large battery" + (keep ? " (machine kept)" : "")); else Fail("large battery");
 		}
 
-		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. Hand-held and worn ones (magnet hook, titanium rod, swift flippers, large air tank): twice the uses, and the player has a model or equipment of their own with the better stat (hook pull and gather, rod bite wait, swim speed, air loss, zoom, weapon damage, paddle push; the floodlight's lamp brighter and its model tinted only while worn); rapid charger, fast recycler and bright lantern placed with their better stat. CIUpgrades [name] (only the upgrade whose name contains it)")]
+		[ConsoleCommand(name: "CIUpgradeTable", docs: "Dev, world (host): the upgrade research table of the world option Extra upgrades - registered (tinted copy of Raft's research table, twice its cost), craftable from the start with the option on, not with it off; no upgrade craftable from its base item alone; one placed (floating, as a cheat): an item of an upgrade's cost put in its slot and researched there (the slot loses it) is in the table's pool, not Raft's; one researched at Raft's table is not in the table's pool; an item only upgrades cost can't be researched at Raft's table; the menu shows the upgrades' entries for the table and Raft's for Raft's; every item of an upgrade's cost researched: it can be learned, learned it is craftable; the world file's lines read back the same; a world from before the table keeps the upgrades whose base item is learned; everything put back after")]
+		public static void UpgradeTableCommand(string[] args) { StartTest(UpgradeTableRoutine()); }
+
+		static IEnumerator UpgradeTableRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			var inv = ComponentManager<Inventory_ResearchTable>.Value;
+			if (player == null || inv == null || !CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("upgrade table: host, in a world"); yield break; }
+			bool ok = true;
+			ExtraUpgrades.Upgrade tu = ExtraUpgrades.TableUpgrade;
+			Item_Base table = ExtraUpgrades.TableItem, raftTable = ItemManager.GetItemByName("Placeable_ResearchTable");
+			if (table == null || raftTable == null) { Fail("upgrade table: not registered (" + (raftTable == null ? "no Placeable_ResearchTable" : "no upgrade table") + ")"); yield break; }
+			CostMultiple[] cost = raftTable.settings_recipe.NewCost, cost2 = table.settings_recipe.NewCost;
+			bool costOk = cost != null && cost2 != null && cost.Length > 0 && cost.Length == cost2.Length && cost.Zip(cost2, (a, b) => a.amount * 2 == b.amount && a.items.SequenceEqual(b.items)).All(x => x);
+			Check(ref ok, table.UniqueIndex == ExtraUpgrades.TableIndex && table.UniqueName == ExtraUpgrades.TableName && tu.Table && tu.Tint == ExtraUpgrades.TableTint, "registered: index " + table.UniqueIndex + ", tinted");
+			Check(ref ok, costOk, "cost " + ExtraUpgrades.CostText(cost2) + " = 2 x Raft's table's " + ExtraUpgrades.CostText(cost));
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			string stateBefore = UpgradeTable.State();
+			List<Item_Base> raftResearched = inv.GetResearchedItems();
+			var raftBefore = new List<Item_Base>(raftResearched);
+			var learnedBefore = ExtraUpgrades.Registered.ToDictionary(u => u, u => u.Base.settings_recipe.Learned);
+			Block made = null;
+			try
+			{
+				// The table from the start, the upgrades not from their base item
+				var set = new HashSet<string>(optionsBefore); set.Remove(WorldOptions.Upgrades); WorldOptions.Set(set);
+				yield return null; yield return null;
+				Check(ref ok, !table.settings_recipe.Learned, "option off: the table not craftable");
+				set.Add(WorldOptions.Upgrades); WorldOptions.Set(set);
+				UpgradeTable.SetState("|");
+				foreach (ExtraUpgrades.Upgrade u in ExtraUpgrades.Registered) u.Base.settings_recipe.Learned = true;
+				yield return null; yield return null;
+				List<ExtraUpgrades.Upgrade> craftable = UpgradeTable.Teaches.Where(u => u.Item.settings_recipe.Learned).ToList();
+				Check(ref ok, table.settings_recipe.Learned && craftable.Count == 0, "option on: the table craftable from the start; with every base item learned, upgrades craftable: " + craftable.Count + (craftable.Count > 0 ? " (" + string.Join(", ", craftable.Select(u => u.Display).ToArray()) + ")" : ""));
+				// An item only the upgrades cost (Raft's table must not take it), and one both use
+				HashSet<Item_Base> ours = UpgradeTable.Researchable();
+				var raftEntries = inv.GetMenuItems().Where(m => m != null && !UpgradeTableMenu.IsModEntry(m)).ToList();
+				Item_Base onlyOurs = ours.FirstOrDefault(i => !raftEntries.Any(m => m.ContainsItem(i)) && !i.settings_recipe.IsBlueprint);
+				Item_Base both = ours.FirstOrDefault(i => raftEntries.Any(m => m.ContainsItem(i)) && !raftResearched.Contains(i));
+				Check(ref ok, onlyOurs == null || !inv.CanResearchItem(onlyOurs), "an item only upgrades cost (" + (onlyOurs != null ? onlyOurs.UniqueName : "none") + ") can't be researched at Raft's table");
+				// Research at the upgrade table: placed, the item in its slot, the Research button
+				made = player.BlockCreator.CreateBlockCheat(table, new Vector3(0f, 30f, 0f), Vector3.zero, DPS.Default, 0);
+				yield return new WaitForSeconds(0.5f);
+				ResearchTable rt = made != null ? made.GetComponentInChildren<ResearchTable>(true) : null;
+				Check(ref ok, rt != null && UpgradeTableMenu.IsUpgradeTable(rt) && rt.slot != null, "placed: a research table, the upgrade table's");
+				if (rt == null || rt.slot == null || both == null) { Check(ref ok, both != null, "an item both tables research, not researched at Raft's"); yield break; }
+				rt.slot.SetItem(new ItemInstance(both, 2, both.MaxUses));
+				bool did = UpgradeTable.AskResearch(rt.slot);
+				yield return null;
+				Check(ref ok, did && UpgradeTable.IsResearched(both) && !raftResearched.Contains(both) && inv.CanResearchItem(both),
+					"researched " + both.UniqueName + " at the upgrade table: in its pool " + UpgradeTable.IsResearched(both) + ", in Raft's " + raftResearched.Contains(both));
+				Check(ref ok, !rt.slot.IsEmpty && rt.slot.itemInstance.Amount == 1, "the slot lost one (" + (rt.slot.IsEmpty ? 0 : rt.slot.itemInstance.Amount) + " left)");
+				Check(ref ok, !UpgradeTable.AskResearch(rt.slot), "the same item again: refused");
+				rt.slot.RemoveItem(rt.slot.IsEmpty ? 0 : rt.slot.itemInstance.Amount);
+				// Raft's research doesn't reach the upgrade table's pool or entries
+				Item_Base raftOne = ours.FirstOrDefault(i => i != both && raftEntries.Any(m => m.ContainsItem(i)) && !raftResearched.Contains(i) && !UpgradeTable.IsResearched(i));
+				if (raftOne != null)
+				{
+					inv.Research(raftOne, false);
+					yield return null;
+					bool ticked = inv.GetMenuItems().Where(m => UpgradeTableMenu.UpgradeOf(m) != null).Any(m => UpgradeTableMenu.Ticks(m).Any(b => b != null && b.BingoItem == raftOne && b.BingoState));
+					Check(ref ok, raftResearched.Contains(raftOne) && !UpgradeTable.IsResearched(raftOne) && !ticked, "researched " + raftOne.UniqueName + " at Raft's table: not in the upgrade table's pool, no upgrade entry ticked");
+				}
+				else Check(ref ok, false, "an item for Raft's research");
+				// The menu: the upgrades' entries for the table, Raft's for Raft's
+				UpgradeTableMenu.Show(true);
+				Transform content = HarmonyLib.Traverse.Create(inv).Field("content").GetValue<RectTransform>();
+				Transform icons = HarmonyLib.Traverse.Create(inv).Field("researchItemContent").GetValue<RectTransform>();
+				var shown = content.GetComponentsInChildren<ResearchMenuItem>(false).Where(m => m.transform.parent == content).ToList();
+				var shownIcons = icons.GetComponentsInChildren<AvaialableResearchItem>(false).Where(a => a.transform.parent == icons).ToList();
+				int teaches = UpgradeTable.Teaches.Count();
+				Check(ref ok, shown.Count == teaches && shown.All(m => UpgradeTableMenu.UpgradeOf(m) != null), "the upgrade table's menu: " + shown.Count + " entries, all upgrades (" + teaches + ")");
+				Check(ref ok, shownIcons.Count > 0 && shownIcons.All(a => ours.Contains(a.Item)) && shownIcons.First(a => a.Item == both).Researched && (raftOne == null || !shownIcons.Any(a => a.Item == raftOne && a.Researched)),
+					"its research items: " + shownIcons.Count + ", only the upgrades' costs, " + both.UniqueName + " researched, " + (raftOne != null ? raftOne.UniqueName : "-") + " not");
+				UpgradeTableMenu.Show(false);
+				shown = content.GetComponentsInChildren<ResearchMenuItem>(false).Where(m => m.transform.parent == content).ToList();
+				Check(ref ok, shown.Count > 0 && !shown.Any(m => UpgradeTableMenu.IsModEntry(m)) && icons.GetComponentsInChildren<AvaialableResearchItem>(false).Any(a => a.Item == both && !a.Researched),
+					"Raft's menu: " + shown.Count + " entries, none an upgrade; " + both.UniqueName + " not researched there");
+				// Learning: every item of one upgrade's cost researched
+				ExtraUpgrades.Upgrade lu = UpgradeTable.Teaches.FirstOrDefault(u => UpgradeTable.ResearchItems(u).Contains(both)) ?? UpgradeTable.Teaches.First();
+				Check(ref ok, !UpgradeTable.CanLearn(lu) || UpgradeTable.ResearchItems(lu).All(UpgradeTable.IsResearched), lu.Display + ": not learnable before its items are researched");
+				foreach (Item_Base i in UpgradeTable.ResearchItems(lu)) UpgradeTable.ResearchOnHost(i.UniqueIndex);
+				UpgradeTableMenu.Show(true);
+				ResearchMenuItem entry = inv.GetMenuItems().FirstOrDefault(m => UpgradeTableMenu.UpgradeOf(m) == lu);
+				var learnButton = entry != null ? HarmonyLib.Traverse.Create(entry).Field("learnButton").GetValue<UnityEngine.UI.Button>() : null;
+				Check(ref ok, UpgradeTable.CanLearn(lu) && !UpgradeTable.IsLearned(lu) && learnButton != null && learnButton.interactable, lu.Display + ": its items researched (" + string.Join(", ", UpgradeTable.ResearchItems(lu).Select(i => i.UniqueName).ToArray()) + "), its Learn button up");
+				entry.LearnButton();
+				yield return null; yield return null;
+				Check(ref ok, UpgradeTable.IsLearned(lu) && entry.Learned && lu.Item.settings_recipe.Learned, lu.Display + ": learned (Learn button), its entry learned, craftable");
+				UpgradeTableMenu.Show(false);
+				// The world file's lines
+				List<string> lines = UpgradeTable.WriteLines().ToList();
+				string kept = UpgradeTable.State();
+				UpgradeTable.SetState("|");
+				foreach (string l in lines) { int eq = l.IndexOf('='); UpgradeTable.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				Check(ref ok, lines.Count == 2 && UpgradeTable.State() == kept, "the world file's lines (" + string.Join(" ", lines.ToArray()) + ") read back the same");
+				// A world from before the table: what its base items had stays learned
+				ExtraUpgrades.Upgrade ua = UpgradeTable.Teaches.First(), ub = UpgradeTable.Teaches.Last();
+				foreach (ExtraUpgrades.Upgrade u in UpgradeTable.Teaches) u.Base.settings_recipe.Learned = u == ua;
+				UpgradeTable.SetState("|");
+				UpgradeTable.MigrateForTest();
+				yield return new WaitForSeconds(6.5f);
+				Check(ref ok, UpgradeTable.IsLearned(ua) && (ua.Base == ub.Base || !UpgradeTable.IsLearned(ub)), "a world from before the table: " + ua.Display + " kept (base learned), " + ub.Display + " not (base not learned)");
+			}
+			finally
+			{
+				foreach (var kv in learnedBefore) kv.Key.Base.settings_recipe.Learned = kv.Value;
+				WorldOptions.Set(optionsBefore);
+				UpgradeTable.SetState(stateBefore);
+				foreach (Item_Base i in raftResearched.Where(i => !raftBefore.Contains(i)).ToList())
+				{
+					raftResearched.Remove(i);
+					AvaialableResearchItem icon;
+					if (UpgradeTableMenu.Icons(inv).TryGetValue(i, out icon) && icon != null) icon.SetResearchedState(false);
+					foreach (ResearchMenuItem m in inv.GetMenuItems().Where(m => m != null && !UpgradeTableMenu.IsModEntry(m)))
+						foreach (BingoMenuItem t in UpgradeTableMenu.Ticks(m)) if (t != null && t.BingoItem == i && t.BingoState) t.SetBingoState(false);
+				}
+				UpgradeTableMenu.Show(false);
+				if (made != null) BlockCreator.RemoveBlockNetwork(made, null, true);
+			}
+			if (ok) Log("PASS: upgrade table"); else Fail("upgrade table");
+		}
+
+		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and it learned at the upgrade research table (the table itself: with the option on; its base item learned or not); placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. Hand-held and worn ones (magnet hook, titanium rod, swift flippers, large air tank): twice the uses, and the player has a model or equipment of their own with the better stat (hook pull and gather, rod bite wait, swim speed, air loss, zoom, weapon damage, paddle push; the floodlight's lamp brighter and its model tinted only while worn); rapid charger, fast recycler and bright lantern placed with their better stat. CIUpgrades [name] (only the upgrade whose name contains it)")]
 		public static void UpgradesCommand(string[] args) { StartTest(UpgradesRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator UpgradesRoutine(string only)
@@ -570,17 +696,20 @@ namespace DynamicIslands
 				Check(ref ok, item.settings_Inventory.DisplayName == u.Display && item.settings_Inventory.Sprite != null && item.settings_Inventory.Sprite != baseItem.settings_Inventory.Sprite
 					&& HarmonyLib.Traverse.Create(item.settings_recipe).Field("_hiddenInResearchTable").GetValue<bool>(), u.Display + ": named, own icon, out of the research table");
 				bool learned = baseItem.settings_recipe.Learned;
+				string tableBefore = UpgradeTable.State();
 				Block made = null;
 				try
 				{
-					foreach (bool[] c in new[] { new[] { false, true }, new[] { true, false }, new[] { true, true } })
+					foreach (bool[] c in new[] { new[] { false, true, true }, new[] { true, false, true }, new[] { true, true, true }, new[] { true, true, false } })
 					{
 						var set = new HashSet<string>(optionsBefore);
 						if (c[0]) set.Add(WorldOptions.Upgrades); else set.Remove(WorldOptions.Upgrades);
 						WorldOptions.Set(set);
-						baseItem.settings_recipe.Learned = c[1];
+						UpgradeTable.SetLearned(u, c[1]);
+						baseItem.settings_recipe.Learned = c[2];
 						yield return null; yield return null;
-						Check(ref ok, item.settings_recipe.Learned == (c[0] && c[1]), u.Display + ": option " + (c[0] ? "on" : "off") + ", base " + (c[1] ? "learned" : "not learned") + " -> " + (item.settings_recipe.Learned ? "craftable" : "not craftable"));
+						bool want = c[0] && (c[1] || u.Table);
+						Check(ref ok, item.settings_recipe.Learned == want, u.Display + ": option " + (c[0] ? "on" : "off") + ", " + (c[1] ? "learned" : "not learned") + " at the table, base " + (c[2] ? "learned" : "not learned") + " -> " + (item.settings_recipe.Learned ? "craftable" : "not craftable"));
 					}
 					if (u.Held != null || u.Worn != null || u.Wearing != null)
 					{
@@ -618,6 +747,7 @@ namespace DynamicIslands
 				{
 					WorldOptions.Set(optionsBefore);
 					baseItem.settings_recipe.Learned = learned;
+					UpgradeTable.SetState(tableBefore);
 					if (made != null) BlockCreator.RemoveBlockNetwork(made, null, true);
 				}
 				yield return new WaitForSeconds(0.3f);
@@ -632,6 +762,12 @@ namespace DynamicIslands
 			Func<float, float, string, string> nums = (a, b, what) => what + " " + a + " vs " + b;
 			switch (u.Name)
 			{
+				case ExtraUpgrades.TableName:
+				{
+					ResearchTable t = made.GetComponentInChildren<ResearchTable>(true);
+					stat = "a research table (" + (t != null) + "), the upgrade table's (" + UpgradeTableMenu.IsUpgradeTable(t) + "), Raft's prefab not (" + !UpgradeTableMenu.IsUpgradeTable(prefab.GetComponentInChildren<ResearchTable>(true)) + ")";
+					return t != null && UpgradeTableMenu.IsUpgradeTable(t) && !UpgradeTableMenu.IsUpgradeTable(prefab.GetComponentInChildren<ResearchTable>(true));
+				}
 				case "DI_TitaniumGrill":
 				case "DI_BlastFurnace":
 				{

@@ -163,6 +163,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.GoldenBarrels.Reset();
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();
+			global::DynamicIslands.Editor.UpgradeTable.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
 			Notify();
@@ -173,11 +174,11 @@ namespace DynamicIslands.Editor
 		{
 			switch (key)
 			{
-				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); if (Current.Count > 0) used = true; Notify(); return true;
+				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); if (Current.Count > 0) used = true; global::DynamicIslands.Editor.UpgradeTable.OptionsRead(On(Upgrades)); Notify(); return true;
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value);
+			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -191,6 +192,7 @@ namespace DynamicIslands.Editor
 			foreach (string l in global::DynamicIslands.Editor.DailyQuest.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.RogueShark.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.TraderRaft.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.UpgradeTable.WriteLines()) yield return l;
 		}
 
 		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
@@ -239,6 +241,7 @@ namespace DynamicIslands.Editor
 			Seed = 0;
 			used = false;
 			ScrambledBlueprints.Reset();
+			global::DynamicIslands.Editor.UpgradeTable.Reset();
 		}
 
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>
@@ -255,6 +258,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.StormDays.Reset();
 			global::DynamicIslands.Editor.TraderRaft.Reset();
 			ScrambledBlueprints.Reset();
+			global::DynamicIslands.Editor.UpgradeTable.Reset();
 			Notify();
 		}
 

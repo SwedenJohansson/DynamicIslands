@@ -426,8 +426,8 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   comes for the raft more often; a warning at nightfall the evening before.
 - **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
   scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
-- **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once it is
-  learned: large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
+- **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once they are
+  learned at the **upgrade research table** (a violet research table of their own, twice the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
   strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls
   1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming), large air tank
@@ -583,6 +583,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses, large) |
 | `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades) |
 | `DailyQuest` | Game | Today's daily quest (world option Daily quest): the task, how far, the reward |
+| `UpgradeTable` | Game | The upgrade research table (world option Extra upgrades): what the world has researched and learned there |
 | `RogueShark` | Game | The rogue shark (world option Rogue shark): alive or not, and the day before which none comes |
 | `Barrels` / `Barrels roll <index> [<to>]` | Game | The barrels in the sea and which are silver or golden (world option Silver & golden barrels); `roll`: what a barrel index is in this world |
 | `StormDays` / `StormDays roll <from> <to>` | Game | Whether today is a storm day, the next one, the weather and the shark's factor (world option Storm days); `roll`: the storm days in a range |
@@ -715,6 +716,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |
 | `GhostRafts.cs`, `PrivateStorage.cs` | Extra options: ghost rafts while sailing, storages only their builder opens |
 | `ExtraUpgrades.cs` | Extra option Extra upgrades: the upgrade items (copies of Raft's items and blocks with better stats), their recipes, every machine's battery slot taking the large battery, hand models and equipment for the hand-held and worn ones |
+| `UpgradeTable.cs` | Extra option Extra upgrades: the upgrade research table - its own research and learned upgrades (saved, shared with every player), Raft's research menu switched to the upgrades while it is open |
 | `Housekeeping.cs` | Tidy up: what nothing uses any more (host copies, generated islands, the files of deleted worlds), looking through every copy of every world's state, Raft's older saves too |
 | `DropList.cs` | A drop-down list (combo box) in Raft's look: the choices open under the button, each with a line saying what it does (the World Plans window's rule cards) |
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | World Plans' Check: the rules and the islands they name (quests step by step, zones, signals, a sample of each map type), rules waiting in a circle or for islands no rule brings; the report window |
