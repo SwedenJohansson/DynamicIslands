@@ -82,6 +82,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Build cost refunds after raising the cost:** in a world whose blocks were all built at Raft's own cost, raising
+  the build cost and loading the world again made the earlier blocks count as built at the new cost, so taking them
+  down gave back more than was paid. The world file now notes the cost they were built at.
+- **Worlds from a newer version:** an island line with more fields than this version knows was dropped and then
+  erased at the next save; the island now loads and its extra fields are written back as they were.
+- **Older worlds save the same twice:** a world without a plan owner got one only at its next load, so each save of
+  an older world changed the file once more; the owner is now written at the first save.
 - **Another author's pack with the same id** was installed as that entry's update, over its files; it is an entry of its
   own now (`<id>-<author>`), and the import says so.
 - **Story texts that disagreed with their islands** (Heart of Fire, Drowned Labyrinth, The Safe Room, Hightide Harbor,

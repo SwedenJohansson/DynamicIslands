@@ -774,7 +774,10 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
-			if (PlanOwner != 0) yield return "@planowner=" + PlanOwner.ToString(CultureInfo.InvariantCulture);
+			// (a world without an owner gets the saving PC's id at its next load - "@savedby=", AU25: written now, so the file
+			// reads back the same and saves the same again)
+			ulong owner = PlanOwner != 0 ? PlanOwner : LocalSteamId;
+			if (owner != 0) yield return "@planowner=" + owner.ToString(CultureInfo.InvariantCulture);
 			yield return "@sailed=" + Sailed.ToString("F0", CultureInfo.InvariantCulture);
 			if (LibSeen > 0) yield return "@libseen=" + LibSeen.ToString(CultureInfo.InvariantCulture);
 			if (Done.Count > 0) yield return "@done=" + string.Join(",", Done.ToArray());

@@ -21,13 +21,15 @@ namespace DynamicIslands
 	{
 		/// <summary>The world file's lines that belong to one of the world's settings (not the stamps a save adds).</summary>
 		static readonly string[] X5SettingKeys = { "monsters", "buildcost", "builtat", "regrow", "levels", "level", "randomizer", "rndsailed", "rndseen", "options", "optionseed", "optionsused", "islandsoff", "raftgap", "raftgapcount", "playtime" };
-		static readonly string[] X5StampKeys = { "savedat", "savecount", "between", "raftsave", "savedby", "modversion" };
+		// (@libseen: when the world last looked for library updates of its islands - each load sets it)
+		static readonly string[] X5StampKeys = { "savedat", "savecount", "between", "raftsave", "savedby", "modversion", "libseen" };
 
 		/// <summary>Null when the test can run here: host, in a saved test world 'CI ...' (loaded, not created this session) without custom islands.</summary>
 		static string X5Where(string what)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") || IslandWorldState.Islands.Count > 0)
-				return what + ": host, in a test world 'CI ...' without custom islands";
+				return what + ": host, in a test world 'CI ...' without custom islands (here: " + (!LoadSceneManager.IsGameSceneLoaded ? "no world" : !Raft_Network.IsHost ? "not the host"
+					: "world '" + SaveAndLoad.CurrentGameFileName + "', " + IslandWorldState.Islands.Count + " custom islands: " + string.Join(", ", IslandWorldState.Islands.Take(5).Select(e => e.Name).ToArray())) + ")";
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			// (a world created this session reads its file as a new world's: the rules, options and islands chosen for it)
@@ -75,6 +77,13 @@ namespace DynamicIslands
 		/// <summary>The same lines, in any order (players' records follow a dictionary's order).</summary>
 		static bool X5Same(string[] a, string[] b) { return a.Length == b.Length && !a.Except(b).Any() && !b.Except(a).Any(); }
 
+		/// <summary>What changed from the first save to the second (empty when nothing did).</summary>
+		static string X5Diff(string[] first, string[] again)
+		{
+			string[] lost = first.Except(again).ToArray(), added = again.Except(first).ToArray();
+			return lost.Length + added.Length == 0 ? "" : " - lost " + string.Join("  ", lost) + "; new " + string.Join("  ", added);
+		}
+
 		static IslandWorldState.Entry X5Island(string name) { return IslandWorldState.Islands.FirstOrDefault(e => e.HostName == name); }
 
 		#region A world saved by an older version
@@ -118,7 +127,8 @@ namespace DynamicIslands
 				// This version's save
 				IslandWorldState.Save();
 				string[] saved = X5Saved();
-				string[] invented = X5Settings(saved);
+				// (but the regrow days: a world without its own takes this PC's and keeps them from then on - WorldRules.OnWorldRead)
+				string[] invented = X5Settings(saved).Where(l => l != "@regrow=" + CustomIslandSpawner.RegrowDays.ToString(CultureInfo.InvariantCulture)).ToArray();
 				Check(ref ok, invented.Length == 0, "the save invents no setting" + (invented.Length > 0 ? ": " + string.Join("  ", invented) : ""));
 				Check(ref ok, saved.Contains("@modversion=" + LibraryPack.ModVersion) && saved.Contains("@auto=on"), "it writes @auto=on and this version (" + LibraryPack.ModVersion + ")");
 				string la = saved.FirstOrDefault(l => l.StartsWith("ciold_a|")), lb = saved.FirstOrDefault(l => l.StartsWith("ciold_b|"));
@@ -132,7 +142,7 @@ namespace DynamicIslands
 					MonsterDifficulty.Current == MonsterDifficulty.Normal && BuildCost.Current == 0, "read back: the same islands, everything still off");
 				IslandWorldState.Save();
 				string[] again = X5Content(X5Saved());
-				Check(ref ok, X5Same(again, content), "saved again: the same lines (" + content.Length + ")");
+				Check(ref ok, X5Same(again, content), "saved again: the same lines (" + content.Length + ")" + X5Diff(content, again));
 
 				// @auto=off of an old file
 				X5Load(new[] { "@auto=off", "ciold_a|50000|0|50000" });
@@ -201,7 +211,8 @@ namespace DynamicIslands
 					WorldRandomizer.Current.Level == RandomizerSettings.Normal && WorldRandomizer.Current.Seed == 77 && WorldOptions.Current.Count == 2 && WorldOptions.Seed == 31337 && WorldIslands.Off.Count == 2,
 					"read back: the same settings");
 				IslandWorldState.Save();
-				Check(ref ok, X5Same(X5Content(X5Saved()), content), "saved again: the same lines");
+				string[] again = X5Content(X5Saved());
+				Check(ref ok, X5Same(again, content), "saved again: the same lines" + X5Diff(content, again));
 			}
 			catch (Exception e) { Fail("old world lines: " + e); ok = false; }
 			finally { X5Restore(before); }
@@ -283,9 +294,10 @@ namespace DynamicIslands
 				{
 					"@monsters=nightmare", "@buildcost=35", "@regrow=7", "@levels=on", "@level=4242|" + guest,
 					"@randomizer=level=wild;seed=4711", "@options=" + string.Join(",", WorldOptions.All), "@optionseed=" + optionSeed.ToString(CultureInfo.InvariantCulture),
-					"@islandsoff=cix5_none", "@raftgap=5-12", "@auto=on", "@modversion=" + LibraryPack.ModVersion,
+					"@raftgap=5-12", "@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off"), "@modversion=" + LibraryPack.ModVersion,
 				};
-				string[] missing = want.Where(w => !first.Contains(w)).ToArray();
+				// (the world may leave out more: a new world takes the New Game box's last choice)
+				string[] missing = want.Where(w => !first.Contains(w)).Concat(first.Any(l => l.StartsWith("@islandsoff=") && WorldIslands.Parse(l.Substring(12)).Contains("cix5_none")) ? new string[0] : new[] { "@islandsoff=...cix5_none" }).ToArray();
 				Check(ref ok, missing.Length == 0, "one file with every setting's line" + (missing.Length > 0 ? " - missing " + string.Join("  ", missing) : ""));
 				Check(ref ok, first.Any(l => l.StartsWith("@rndsailed=")) && mine != null && first.Contains("@level=" + RAPI.GetLocalPlayer().steamID.Id.ToString(CultureInfo.InvariantCulture) + "|" + mine.Encode()),
 					"with the randomizer's distances and the host's own level record");

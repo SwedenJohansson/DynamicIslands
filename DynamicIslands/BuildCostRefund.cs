@@ -65,7 +65,9 @@ namespace DynamicIslands.Editor
 			if (HasState) yield return "@builtat=" + Encode();
 		}
 
-		internal static bool HasState { get { return basePercent > 0 || placedAt.Count > 0; } }
+		// (also when the cost is not the base: a world whose blocks were built at 0% and whose cost was then raised would
+		// otherwise read back as an older world's - every block built at the cost - and refund more than was paid)
+		internal static bool HasState { get { return basePercent > 0 || placedAt.Count > 0 || BuildCost.Current != basePercent; } }
 
 		public static string Encode()
 		{

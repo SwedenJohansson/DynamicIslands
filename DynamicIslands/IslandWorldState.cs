@@ -28,6 +28,8 @@ namespace DynamicIslands.Editor
 			public string Hash;
 			/// <summary>Client: the island file is still coming from the host.</summary>
 			public bool WaitingForFile;
+			/// <summary>Host: the fields after the eighth of its world file line (a newer version's), written back as they were (AU5).</summary>
+			public string Extra;
 			public Vector3 Position;
 			/// <summary>The spawned island, or null while it is unloaded (far away) or still loading.</summary>
 			public GameObject Root;
@@ -176,7 +178,7 @@ namespace DynamicIslands.Editor
 					IslandObjectState.Capture(e);
 					// (the island file's hash: another player hosting the world later finds their copy of it - WorldCopy)
 					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
-						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
+						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? "") + (e.Extra != null ? "|" + e.Extra : ""));
 				}
 				lines.AddRange(keptLines);
 				// (the version that wrote it: an older one reading it warns - AU5)
@@ -260,7 +262,7 @@ namespace DynamicIslands.Editor
 				if (line.StartsWith("@")) { keptLines.Add(line); Debug.LogWarning("[CUSTOM ISLANDS] A setting this version doesn't know is kept as it is: " + line); continue; }
 				string[] p = line.Split('|');
 				float x, y, z;
-				if (p.Length < 4 || p.Length > 8 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+				if (p.Length < 4 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
 					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
@@ -272,7 +274,9 @@ namespace DynamicIslands.Editor
 				if (bad != null) { Debug.LogWarning("[CUSTOM ISLANDS] An island of " + FilePath + " is left out (kept in the file): its name " + bad); keptLines.Add(line); continue; }
 				string hash = p.Length > 7 ? p[7].Trim() : "";
 				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
-					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" };
+					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "",
+						// (fields a newer version added: read past, and written back as they were - AU5)
+						Extra = p.Length > 8 ? string.Join("|", p, 8, p.Length - 8) : null };
 				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
 				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash))
 				{
