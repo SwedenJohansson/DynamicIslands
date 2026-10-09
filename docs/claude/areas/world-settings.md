@@ -13,8 +13,9 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 | `BuildCostRefund.cs` | `BuildCostRefund`: the cost each block was placed at; `BuildCostPlaced`, `BuildCostRefundPatch` |
 | `WorldRandomizer.cs` | `RandomizerSettings` (level, seed, parts), `WorldRandomizer` (kind 13, `Tick`, `OnSailed`, colours, alphas, loot, extras), `LandGround` |
 | `RandomizerContent.cs`, `RandomizerIslands.cs`, `RaftProps.cs` | Content: `RandomizerContent.Extras`, `Oddity`, `Lair`; `RandomizerIslands.Themes`, `Dens`, `Large`. `RaftProps` reads `raft_props.txt` |
-| `WorldOptions.cs` | `WorldOptions`: the four extra options, their seed, kind 17, the `WorldOptions` command |
+| `WorldOptions.cs` | `WorldOptions`: the extra options, their seed, kind 17, the `WorldOptions` command |
 | `ScrambledBlueprints.cs`, `StoryOrder.cs`, `GhostRafts.cs`, `PrivateStorage.cs` | The options `blueprints`, `storyorder`, `ghostrafts`, `privatestorage` |
+| `ExtraUpgrades.cs` | The option `upgrades`: `ExtraUpgrades` (the large battery item, index 29411 fixed for ever - saves name it; registered in Start, recipe `Learned` synced in `Tick`), `UpgradeBatterySlotPatch` (Battery.Awake: every slot takes it, blue model copy) |
 | `LevelSystem.cs` | `LevelRules` (the numbers), `LevelRecord`, `PlayerLevels` (on/off, EXP, kind 14), `StatApply` and the `Level*Patch` classes |
 | `LevelWindow.cs` | `LevelHud` (EXP floaters, bar, level-up box), `LevelTags` ("Lv n"), `LevelWindow` (the stats page) |
 | `WorldWindow.cs` | `WorldWindow`: Esc > CUSTOM ISLANDS in a running world. `WorldWindowButton`: postfix on `PauseMenu.Start` |

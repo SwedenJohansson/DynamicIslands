@@ -423,8 +423,11 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   comes for the raft more often; a warning at nightfall the evening before.
 - **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
   scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
+- **Extra upgrades:** better versions of Raft's things to craft. So far a **large battery**: blue, twice the charge
+  of a battery at twice its cost, crafted next to the battery once the battery is learned; fits every machine that
+  takes a battery and charges in the battery charger.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -569,7 +572,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses, large) |
-| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft) |
+| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades) |
 | `DailyQuest` | Game | Today's daily quest (world option Daily quest): the task, how far, the reward |
 | `RogueShark` | Game | The rogue shark (world option Rogue shark): alive or not, and the day before which none comes |
 | `Barrels` / `Barrels roll <index> [<to>]` | Game | The barrels in the sea and which are silver or golden (world option Silver & golden barrels); `roll`: what a barrel index is in this world |
@@ -700,6 +703,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `WorldOptions.cs` | The extra options of a world (kind 17): which are on, their seed, saved with the world |
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |
 | `GhostRafts.cs`, `PrivateStorage.cs` | Extra options: ghost rafts while sailing, storages only their builder opens |
+| `ExtraUpgrades.cs` | Extra option Extra upgrades: the large battery (its item, recipe, and every machine's battery slot taking it) |
 | `Housekeeping.cs` | Tidy up: what nothing uses any more (host copies, generated islands, the files of deleted worlds), looking through every copy of every world's state, Raft's older saves too |
 | `DropList.cs` | A drop-down list (combo box) in Raft's look: the choices open under the button, each with a line saying what it does (the World Plans window's rule cards) |
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | World Plans' Check: the rules and the islands they name (quests step by step, zones, signals, a sample of each map type), rules waiting in a circle or for islands no rule brings; the report window |

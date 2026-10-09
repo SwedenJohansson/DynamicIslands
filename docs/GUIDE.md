@@ -2289,6 +2289,23 @@ The stock is **shared**: what one player buys is gone for everyone, it is saved 
 again. Every player sees the same trader with the same offers: the host brings it as an island of the map type
 `traderraft`, and its offers come from the raft's seed. `Traders` lists the stalls loaded now and their stock.
 
+#### Extra upgrades
+
+Better versions of Raft's own things to craft. So far there is one:
+
+| Upgrade | What it is | Cost | Crafted |
+|---|---|---|---|
+| **Large battery** | A blue battery that holds **twice the charge** of Raft's battery: a machine runs twice as long on it | Twice the battery's cost | In the crafting menu next to the battery, once the battery is learned |
+
+The large battery fits **every machine that takes a battery** (electric grill, electric smelter, electric purifier,
+juicer, recycler, sprinkler, the Receiver) and charges in the **battery charger** like a battery: twice as long, for
+twice the fuel. In a machine it shows as a blue battery. It has no entry of its own in the research table: when the
+world has the option on and the battery is learned, the large battery is in the crafting menu too; switch the option
+off and it is gone from the menu again (large batteries already made keep working).
+
+Every player needs the mod, as for any world with custom islands. A large battery is saved with the world; a world
+loaded **without** the mod loses the large batteries (a machine's slot comes back empty).
+
 #### For every player
 
 Every player in the world gets the host's options, also when joining later. The host can change them in a world:

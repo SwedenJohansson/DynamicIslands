@@ -82,7 +82,7 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft,upgrades;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
 			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
 			{
 				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
@@ -466,6 +466,84 @@ namespace DynamicIslands
 			}
 			finally { WorldOptions.Set(optionsBefore); TraderRaft.Reset(); }
 			if (ok) Log("PASS: trader raft"); else Fail("trader raft");
+		}
+
+		[ConsoleCommand(name: "CILargeBattery", docs: "Dev, world (host): the world option Extra upgrades' large battery - registered (its own index, twice Raft's battery's charge, twice its cost, named, out of the research table); its recipe learned only with the option on and the battery learned; a machine with a battery slot placed (floating, as a cheat): its slot takes the large battery, shows the blue model instead of Raft's, keeps its charge, gives it back to the player; the machine removed after. CILargeBattery [keep] (keep: the machine stays, with the large battery in)")]
+		public static void LargeBatteryCommand(string[] args) { StartTest(LargeBatteryRoutine(args != null && args.Contains("keep"))); }
+
+		static IEnumerator LargeBatteryRoutine(bool keep)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || !CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("large battery: host, in a world"); yield break; }
+			bool ok = true;
+			Item_Base large = ExtraUpgrades.LargeBattery, battery = ItemManager.GetItemByName("Battery");
+			if (large == null || battery == null) { Fail("large battery: not registered (" + (battery == null ? "no Battery" : "no large battery") + ")"); yield break; }
+			// The item
+			CostMultiple[] cost = battery.settings_recipe.NewCost, cost2 = large.settings_recipe.NewCost;
+			bool costOk = cost != null && cost2 != null && cost.Length == cost2.Length && cost.Length > 0 && cost.Zip(cost2, (a, b) => a.amount * 2 == b.amount && a.items.SequenceEqual(b.items)).All(x => x);
+			Check(ref ok, large.UniqueIndex == ExtraUpgrades.LargeBatteryIndex && ItemManager.GetItemByIndex(ExtraUpgrades.LargeBatteryIndex) == large && large.UniqueName == ExtraUpgrades.LargeBatteryName,
+				"registered: index " + large.UniqueIndex + ", name " + large.UniqueName);
+			Check(ref ok, large.MaxUses == battery.MaxUses * 2 && battery.MaxUses > 0, "charge " + large.MaxUses + " = 2 x the battery's " + battery.MaxUses);
+			Check(ref ok, costOk, "cost " + ExtraUpgrades.CostText(cost2) + " = 2 x the battery's " + ExtraUpgrades.CostText(cost));
+			Check(ref ok, large.settings_Inventory.DisplayName == "Large battery" && large.settings_Inventory.Sprite != null && large.settings_Inventory.Sprite != battery.settings_Inventory.Sprite,
+				"shown as '" + large.settings_Inventory.DisplayName + "' with its own (blue) icon");
+			Check(ref ok, HarmonyLib.Traverse.Create(large.settings_recipe).Field("_hiddenInResearchTable").GetValue<bool>() && large.settings_recipe.CraftingCategory == battery.settings_recipe.CraftingCategory,
+				"out of the research table, in the battery's crafting category (" + large.settings_recipe.CraftingCategory + ")");
+			// Learned with the option and the battery
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			bool batteryLearned = battery.settings_recipe.Learned;
+			Block made = null;
+			try
+			{
+				var cases = new[] { new[] { false, true }, new[] { true, false }, new[] { true, true } };
+				foreach (bool[] c in cases)
+				{
+					var set = new HashSet<string>(optionsBefore);
+					if (c[0]) set.Add(WorldOptions.Upgrades); else set.Remove(WorldOptions.Upgrades);
+					WorldOptions.Set(set);
+					battery.settings_recipe.Learned = c[1];
+					yield return null; yield return null;
+					bool want = c[0] && c[1];
+					Check(ref ok, large.settings_recipe.Learned == want, "option " + (c[0] ? "on" : "off") + ", battery " + (c[1] ? "learned" : "not learned") + (want ? ": craftable" : ": not craftable"));
+				}
+				// A machine's slot
+				Item_Base machine = ItemManager.GetAllItems().Where(i => i != null && i.settings_buildable != null).FirstOrDefault(i =>
+				{
+					try { Block[] p = i.settings_buildable.GetBlockPrefabs(); return p != null && p.Any(b => b != null && b.GetComponentInChildren<Battery>(true) != null && b.GetComponentInChildren<BatteryCharger>(true) == null); }
+					catch { return false; }
+				});
+				if (machine == null) { Check(ref ok, false, "a machine with a battery slot among Raft's items"); yield break; }
+				made = player.BlockCreator.CreateBlockCheat(machine, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0);
+				Battery slot = made != null ? made.GetComponentInChildren<Battery>(true) : null;
+				Check(ref ok, slot != null, "a " + machine.UniqueName + " placed with its battery slot");
+				if (slot == null) yield break;
+				ItemModelConnection[] cons = slot.itemEnabler.GetObjectConnections();
+				ItemModelConnection mine = cons.FirstOrDefault(x => x.item == large), basic = cons.FirstOrDefault(x => x.item == battery);
+				Check(ref ok, mine != null && mine.model != null && basic != null && slot.itemEnabler.DoesAcceptItem(large), "its slot takes the large battery (" + cons.Length + " connections)");
+				if (mine == null) yield break;
+				int uses = large.MaxUses - 3;
+				bool put = slot.Insert(player, uses, large.UniqueIndex);
+				yield return new WaitForSeconds(0.5f);
+				ItemInstance inside = slot.GetBatteryInstance();
+				Check(ref ok, put && inside != null && inside.UniqueIndex == large.UniqueIndex && Math.Abs(slot.BatteryUses - uses) <= 1, "put in with charge " + uses + ": the slot holds " + (inside != null ? inside.UniqueName : "nothing") + " at " + slot.BatteryUses);
+				Check(ref ok, mine.model.activeInHierarchy && !basic.model.activeInHierarchy, "the blue model shows, Raft's battery model doesn't");
+				if (!keep)
+				{
+					int before = player.Inventory.GetItemCount(large.UniqueName);
+					bool took = slot.Take(player, slot.BatteryUses);
+					yield return new WaitForSeconds(0.5f);
+					int after = player.Inventory.GetItemCount(large.UniqueName);
+					Check(ref ok, took && after == before + 1 && slot.BatterySlotIsEmpty && !mine.model.activeInHierarchy, "taken out: the player has " + (after - before) + " more large battery, the slot is empty");
+					if (after > before) player.Inventory.RemoveItem(large.UniqueName, after - before);
+				}
+			}
+			finally
+			{
+				WorldOptions.Set(optionsBefore);
+				battery.settings_recipe.Learned = batteryLearned;
+				if (made != null && !keep) BlockCreator.RemoveBlockNetwork(made, null, true);
+			}
+			if (ok) Log("PASS: large battery" + (keep ? " (machine kept)" : "")); else Fail("large battery");
 		}
 
 		[ConsoleCommand(name: "CITrade", docs: "Dev, world (any player): this player gets the price of the trader stall number <n> (0 = the first loaded, by object index) and trades once there; a client waits for the host's yes. Logs what it got and the stock left. CITrade <n>")]

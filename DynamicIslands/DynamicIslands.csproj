@@ -151,6 +151,7 @@
     <Compile Include="RogueShark.cs" />
     <Compile Include="GoldenBarrels.cs" />
     <Compile Include="StormDays.cs" />
+    <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />

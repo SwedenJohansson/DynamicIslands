@@ -233,6 +233,8 @@ namespace DynamicIslands
 			// Raft's world shifts and "world received" (for clients): hooked every frame by HookRaftEvents, since
 			// Raft empties these events when a game is left
 			StartStep("Raft's world events", HookRaftEvents);
+			// The extra upgrades' items (the large battery): before a world builds its crafting menu
+			StartStep("the extra upgrades", () => Editor.ExtraUpgrades.Register());
 
 			// Dev builds: the test commands can also be run from a file (release builds leave DevTests out)
 			try
@@ -418,6 +420,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Hotbar key tabs", e); }
 			try { WorldRandomizer.Tick(); ScrambledBlueprints.Tick(); }
 			catch (Exception e) { TickError("World randomizer", e); }
+			try { Editor.ExtraUpgrades.Tick(); }
+			catch (Exception e) { TickError("Extra upgrades", e); }
 			try { PlayerLevels.Tick(); LevelWindow.Tick(); }
 			catch (Exception e) { TickError("Levels", e); }
 			try { EditorAutosave.Tick(); }
@@ -449,6 +453,7 @@ namespace DynamicIslands
 		public void OnModUnload()
 		{
 			UnloadStep("Raft's build costs", () => Editor.BuildCost.RestoreAll());
+			UnloadStep("the extra upgrades", () => Editor.ExtraUpgrades.Unregister());
 			UnloadStep("the patches", () =>
 			{
 				if (harmonyInstance == null) return;

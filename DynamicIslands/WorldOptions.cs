@@ -23,15 +23,16 @@ namespace DynamicIslands.Editor
 	///   - rogueshark: now and then a second, rust-red shark that stays until killed (RogueShark);
 	///   - barrels: now and then a silver or golden barrel in the sea, with a little extra loot (GoldenBarrels);
 	///   - stormdays: now and then a day of rough sea and rain, the shark keener (StormDays);
-	///   - traderraft: very rarely a merchant's raft comes by: basic resources for seeds, trees or a blueprint (TraderRaft).
+	///   - traderraft: very rarely a merchant's raft comes by: basic resources for seeds, trees or a blueprint (TraderRaft);
+	///   - upgrades: better versions of Raft's things to craft - so far a large battery (ExtraUpgrades).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -39,7 +40,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -55,6 +56,7 @@ namespace DynamicIslands.Editor
 			"Now and then a barrel drifting in the sea is silver (about 1 in 40) or golden (about 1 in 150). Besides the usual loot, a silver one holds a few extra nails, rope and scrap; a golden one more of them, and sometimes a battery or bolts.",
 			"On about one day in ten the sea is rough and it rains from morning to morning: the shark comes for the raft more often, and the rain waters the crops. Everyone is warned at nightfall the evening before. Never before day 3.",
 			"Very rarely (about once in 7 km of sailing, never in the first 3 km) a trader's raft comes up ahead. Its stalls swap basic resources - planks, plastic, rope, scrap - for fruit and flower seeds, a tree seed, and now and then a blueprint. Each stall has a little stock, shared by all players.",
+			"Better versions of Raft's machines to craft. So far a large battery: twice the charge of a battery at twice its cost, crafted next to the battery once the battery is learned. It fits every machine that takes a battery.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -281,7 +283,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)
