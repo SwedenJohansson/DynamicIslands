@@ -70,6 +70,30 @@ place Creature_Dolphin dolphins at 0 60 h=-3
 prop dolphins creature.count=2
 call shallows r=58 deep=5 n=1
 
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
+# spice stall's scales; its two weighing pails borrowed by the net stall and the potter - put back, they open the
+# scale-keeper's strongbox (hidden)
+place TangaroaBucket gbweight1 at -3.25 18.5 h=1 sit
+prop gbweight1 obj.name=gbweight1
+prop gbweight1 beh.use=Take the weighing pail
+prop gbweight1 on.use=hide|\nsignal||gbw1\nmessage||A brass-bottomed weighing pail - the spice stall's, by the stamp.
+place TangaroaBucket gbweight2 at -3.25 9.5 h=1 sit
+prop gbweight2 obj.name=gbweight2
+prop gbweight2 beh.use=Take the weighing pail
+prop gbweight2 on.use=hide|\nsignal||gbw2\nmessage||The potter was using it for slip. It is the spice stall's second weighing pail.
+place TangaroaScaleModel gbscales at 3.15 14.6 h=1 sit yaw=270
+prop gbscales obj.name=gbscales
+prop gbscales if.use=signal|gbw1\nsignal|gbw2
+prop gbscales on.use=message||Both pails on the scales, and they settle level. A drawer clicks open under the stall.\nsignal||gbscale\nshow|gbweighchest
+prop gbscales else.use=message||The scales swing empty. Both weighing pails are missing - see the keeper's note.
+place Loot_ChestSmall gbweighchest at 3.35 16.5 h=1 sit yaw=270
+prop gbweighchest obj.name=gbweighchest
+prop gbweighchest note.title=Scale-keeper's strongbox
+prop gbweighchest beh.hidden=1
+loot gbweighchest TradeToken*5;Glass*2
+place Note_Paper gbweighnote at 2.25 16.1 h=1.9 drop yaw=270
+note gbweighnote Scale-keeper's note | Who has my weighing pails AGAIN? One went to the net stall for bait, one to the potter. Both back on the scales by morning, or the strongbox stays shut. - Odile
+
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, palms, flowers ----------
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4559 free=5
 scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=31.5 seed=4569 free=5

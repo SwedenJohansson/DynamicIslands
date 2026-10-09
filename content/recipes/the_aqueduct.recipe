@@ -237,6 +237,30 @@ place RT_Wall1 castellumdoor at 15.2 20.5 h=16.05 yaw=90
 place RT_Pillar - at 9.7 22 h=16 sy=0.4
 place TP_Selene_DoorCrankWheel valve5 at 9.95 22 h=17.1 yaw=90
 
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
+# cistern under the square's south side: three of Utopia's challenge wheels on posts, turned in the order the tablet
+# gives (middle, west, east), uncover the cistern's chest (hidden)
+place RT_Pillar - at 19.5 10.5 ground sy=0.35
+place RT_Pillar - at 22 10.5 ground sy=0.35
+place RT_Pillar - at 24.5 10.5 ground sy=0.35
+place UT_WaterChallengeWheel1 aqwheelA at 19.5 10.5 ground y=1.05 scale=0.15
+place UT_WaterChallengeWheel2 aqwheelB at 22 10.5 ground y=1.05 scale=0.15
+place UT_WaterChallengeWheel3 aqwheelC at 24.5 10.5 ground y=1.05 scale=0.15
+prop aqwheelB on.use=switch|\nsignal||aqw1\nmessage||The middle wheel turns. Under the square, water starts to talk.
+prop aqwheelA if.use=signal|aqw1
+prop aqwheelA on.use=switch|\nsignal||aqw2\nmessage||The setting-sun wheel turns. The water under your feet runs faster.
+prop aqwheelA else.use=message||It turns a little and stops. The tablet says which wheel comes first.
+prop aqwheelC if.use=signal|aqw2
+prop aqwheelC on.use=switch|\nshow|aqcistern\nmessage||The rising-sun wheel turns - and a slab slides back on a cistern chest.
+prop aqwheelC else.use=message||It will not budge yet. The tablet gives the wheels' order.
+place Note_Sign aqtablet at 22 12.3 ground sit yaw=180
+note aqtablet The cistern tablet | THE CISTERN OF THE SQUARE\n\nAs the water runs, so turn the wheels:\nthe MIDDLE wheel, where it enters;\nthe wheel of the SETTING sun;\nthe wheel of the RISING sun, where it rests.
+place Loot_Chest aqcistern at 22 8.5 ground sit yaw=0
+prop aqcistern obj.name=aqcistern
+prop aqcistern note.title=Cistern chest
+prop aqcistern beh.hidden=1
+loot aqcistern Stone*4;Glass*2;TradeToken*3
+
 # --- The harbour on the east coast: the quay, a barrel on it, the city gate of two stone columns and a beam; palms; dolphins
 push at 86 21.25 h=-13
 call boardwalk n=6 wide=1 y=14.6

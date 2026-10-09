@@ -10,6 +10,7 @@
 #
 # Built by the recipe player (CIRecipe scrapyard_haven) through the editor's own operations.
 include lib_sea
+include lib_features
 new
 # (nature: desert, Like Raft but built up: a third of the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.35 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -113,6 +114,16 @@ place Zone_Trigger pit at -10 -42 y=1.5
 # (the trail's end above the pit, and the foot of the fortress's stilts)
 place Zone_Trigger pitedge at -9 -28 y=1.5
 place Zone_Trigger stilts at -13 -10 y=1.5
+
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
+# market's dead generator and the radio on its pallet (it calls out a supply drop on the trail once the power is on;
+# the generator part in a mechanic's toolbox in the scrap pit); a lever at the foot of the fortress stilts that draws
+# the bolt of the guards' chest
+call powerradio x=16 z=26.5 yaw=15 alias=scrapgen ralias=scrapradio rx=14 rz=26 rh=8 cache=scrapdrop cx=-5 cz=-20 cr=10 cseed=371 items=Battery*2;CopperIngot*2 kx=-9 kz=-44 kr=10 seed=372 toolbox=scraptoolbox
+prop scrapgen else.use=message||The market generator is missing a part. The town mechanic worked out of the scrap pit - his toolbox should still be there.
+prop scrapradio else.use=message||The radio is dead. No power - the market generator first.
+call leverchest x=-11.5 z=-13.5 yaw=90 alias=stiltlever sig=shlever chest=guardchest cx=-11.5 cz=-6.5 cyaw=90 items=Nail*10;Scrap*4;MetalIngot*1 title="Guards' chest"
+prop stiltlever on.use=message||Clunk. Under the stilts a bolt slides back - the guards' chest is open.\nsignal||shlever
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): date palms, flowers, pineapples ----------

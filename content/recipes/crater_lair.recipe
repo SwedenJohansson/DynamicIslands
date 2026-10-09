@@ -13,6 +13,7 @@
 include lib_rt
 include lib_relay
 include lib_sea
+include lib_features
 new
 # (nature: volcanic - few trees, scrub on the ash, black beaches; as Raft 2's volcanic islands have it)
 gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.25 BeachThings=0.3
@@ -170,6 +171,29 @@ place UT_Generator01 - at 2.8 -3.5 ground scale=0.35 yaw=200
 place RT_Floodlight dishlights at -7.4 -5 sit yaw=60
 place RT_Floodlight dishlights at 1.4 0.8 sit yaw=220
 place Zone_Sound enginehum at -3 -3 h=23
+
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the roof
+# laser - the emitter's beam runs north along the roof, the turning mirror sends it east onto a door panel on a post,
+# and the panel lets go the roof safe (hidden); a security camera on the west facade, watching the jetty
+place TP_LaserEmitter lairemitter at -38.53 -9 h=8.5 drop yaw=0
+prop lairemitter obj.name=lairemitter
+place TP_MirrorHousing_Rotating lairmirror at -39 0 h=8.5 drop yaw=0
+prop lairmirror obj.name=lairmirror
+prop lairmirror on.use=switch|\nmessage||The mirror grinds round a quarter turn and the red beam jumps off it at a new angle.
+place RT_Pillar - at -30.5 -0.55 h=7.5 sy=0.45
+place TP_LaserDoorPanel lairpanel at -31 -0.55 h=4.9 scale=2 yaw=-90
+prop lairpanel obj.name=lairpanel
+prop lairpanel on.laser=message||The panel drinks the beam and hums. A plate in the roof slides back - the roof safe.\nsignal||lairlaser\nshow|lairvault
+place Loot_Chest lairvault at -33 -6 h=8.5 drop yaw=90
+prop lairvault obj.name=lairvault
+prop lairvault note.title=Roof safe
+prop lairvault beh.hidden=1
+loot lairvault Battery*2;CopperIngot*3;TradeToken*4
+place Note_Paper lairmemo at -37.5 -8 h=8.5 drop yaw=20
+note lairmemo Roof crew memo | ROOF - SAFE ACCESS\n\nThe roof safe opens on the beam only. Emitter stays ON.\nMirror turned a quarter for access, turned back after.\nAnyone leaving it pointed at the sky again cleans the dish.
+call camera x=-43.0 z=-4.5 h=6.9 yaw=-120 alias=bluffcam
+prop bluffcam beh.use=Look into the camera
+prop bluffcam on.use=message||The lens follows you, whirring. Somewhere inside the cone, a screen shows your face to nobody.
 
 # --- Nature like Raft's volcanic islands where the generator left it thin: mango and bushy trees on the north plain and
 # the south plateau, stones on the plateau and the plain, a few of Raft's sunken barrels off the shore ---------------

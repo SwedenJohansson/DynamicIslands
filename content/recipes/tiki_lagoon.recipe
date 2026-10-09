@@ -147,6 +147,26 @@ roof 2 1 at 0 0 y=0.1 wood
 place Balboa_DecorationPrefabBase_Generator generator at 1.1 0.9 y=0.1 sit
 place Placeable_FuelTank - at 2.4 0.85 y=0.1 sit scale=0.6
 pop
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): two
+# cable hubs on the generator shed's south wall: cabled in turn (the cable in the electrician's box on the beach),
+# they wake the bar's old cold box (hidden)
+place UT_ElectricCableHub01 tlhubA at 23.4 11.35 h=3.0 yaw=180
+prop tlhubA obj.name=tlhubA
+prop tlhubA on.use=open|\nsignal||tlwire1\nmessage||The cable snaps into the first hub. A relay clicks inside the shed.
+prop tlhubA else.use=message||No cable runs to this hub. The electrician's box on the beach had spare cable.
+place UT_ElectricCableHub02 tlhubB at 24.1 11.35 h=3.0 yaw=180
+prop tlhubB obj.name=tlhubB
+prop tlhubB if.use=state|tlhubA|open\n!state||open\ntake|story:raft-Temperance_ElectricalCable|1
+prop tlhubB on.use=open|\nsignal||tlwire2\nshow|tlcoldbox\nmessage||The second cable goes in, the generator hums - and the bar's old cold box lights up beside the shed.
+prop tlhubB else.use=message||This hub wants a cable too - and the first hub cabled before it.
+place Loot_ChestSmall tlcoldbox at 23.7 10.2 ground sit yaw=180
+prop tlcoldbox obj.name=tlcoldbox
+prop tlcoldbox note.title=The bar's cold box
+prop tlcoldbox beh.hidden=1
+loot tlcoldbox Battery*2;CopperIngot*2;Rope*2
+scatter Loot_ChestSmall 1 at 21 6 r=6 seed=391 free=4 as=tlcablebox
+note tlcablebox Electrician's box | Two lengths for the shed hubs. Do the left one first or the relay trips. - Kai
+loot tlcablebox story:raft-Temperance_ElectricalCable*2;Nail*4
 
 # --- The manager's office: a hut on stilts on the main key with its ladder; his desk, his chair, the safe, the staff room's
 # chest --------------------------------------------------------------------------------------------------------------------

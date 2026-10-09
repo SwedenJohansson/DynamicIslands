@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **More islands with Raft's special features:** every feature that was on one library island is on a second one
+  now, and the mod's puzzle pieces (laser, water wheels, pipes, wires, claw, scales) are on six islands. In Raft 2,
+  three locks want an item another island of the plan gives earlier (a keycard, bolt cutters, a radio part).
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
