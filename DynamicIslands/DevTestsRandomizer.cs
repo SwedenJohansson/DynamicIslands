@@ -1267,11 +1267,17 @@ namespace DynamicIslands
 				Func<IslandObject, float> above = o => o.Position.y - k.Ground(new Vector2(o.Position.x, o.Position.z));
 				// Nature on the land (objects without settings): on the ground, big rocks sunk up to a third of their size
 				var nature = f.Objects.Where(o => (o.Props == null || o.Props.Count == 0) && k.Ground(new Vector2(o.Position.x, o.Position.z)) > k.Sea + 0.2f).ToList();
-				var floating = nature.Where(o => above(o) > 0.5f && !System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Block_(Roof|Wall|Pillar|Stair)|Placeable_)")).ToList(); // (a hut's walls and roof stand on it)
-				var buried = nature.Where(o => above(o) < (rock.IsMatch(o.Name) ? -6f : -1.2f)).ToList();
+				// (by the mesh where it's known: its bottom in the air floats - ice at the shore hangs below its pivot - and a plant
+				// sunk deeper than its pivot rule is still sound while a quarter of it shows)
+				Func<IslandObject, float> bottom = o => { Bounds b; return PlaceableCatalog.LocalBounds(o.Name, out b) ? above(o) + b.min.y * Mathf.Abs(o.Scale.y) : above(o); };
+				Func<IslandObject, bool> shows = o => { Bounds b; return PlaceableCatalog.LocalBounds(o.Name, out b) && above(o) + b.max.y * Mathf.Abs(o.Scale.y) > 0.25f * b.size.y * Mathf.Abs(o.Scale.y); };
+				var floating = nature.Where(o => bottom(o) > 0.5f && !System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Block_(Roof|Wall|Pillar|Stair)|Placeable_)")).ToList(); // (a hut's walls and roof stand on it)
+				var buried = nature.Where(o => above(o) < (rock.IsMatch(o.Name) ? -6f : -1.2f) && (rock.IsMatch(o.Name) || !shows(o))).ToList();
 				// Set pieces and dens: over land, not the sea
 				var pieces = f.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece")).ToList();
-				var overSea = pieces.Where(o => k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea + 0.3f).ToList();
+				// (a plane or boat sunk on purpose lies 4 m or more under the sea - IslandGenerator.Landmark)
+				var overSea = pieces.Where(o => k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea + 0.3f
+					&& !(System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Airplane|BoatStranded)$") && k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea - 3f)).ToList();
 				// Scene props inside each other: the inner part of their footprints (a third of the smaller side) apart
 				var props = pieces.Where(o => !o.Props.ContainsKey("cave") && RaftProps.Get(o.Name) != null).ToList();
 				var inside = new List<string>();
@@ -1296,8 +1302,8 @@ namespace DynamicIslands
 				bool good = floating.Count == 0 && buried.Count == 0 && overSea.Count == 0 && inside.Count == 0;
 				Check(ref ok, good, types[i] + " '" + ObjectProps.Get(f.Props, IslandProps.Title) + "': " + nature.Count + " land objects, floating " + floating.Count + ", buried " + buried.Count + "; " + pieces.Count + " set pieces, over the sea " + overSea.Count + ", inside each other " + inside.Count + den);
 				if (!good)
-					Log("  " + string.Join("; ", floating.Take(4).Select(o => "floats " + o.Name + " " + above(o).ToString("F1", inv)).Concat(buried.Take(4).Select(o => "buried " + o.Name + " " + above(o).ToString("F1", inv)))
-						.Concat(overSea.Take(4).Select(o => "over the sea " + o.Name)).Concat(inside.Take(6).Select(x => "inside " + x)).ToArray()));
+					Log("  " + string.Join("; ", floating.Take(4).Select(o => "floats " + o.Name + " " + bottom(o).ToString("F1", inv)).Concat(buried.Take(4).Select(o => "buried " + o.Name + " " + above(o).ToString("F1", inv)))
+						.Concat(overSea.Take(4).Select(o => "over the sea " + o.Name + " (ground " + (k.Ground(new Vector2(o.Position.x, o.Position.z)) - k.Sea).ToString("F1", inv) + " m)")).Concat(inside.Take(6).Select(x => "inside " + x)).ToArray()));
 				yield return null;
 			}
 			if (ok) Log("PASS: islands are sound"); else Fail("islands are sound");
