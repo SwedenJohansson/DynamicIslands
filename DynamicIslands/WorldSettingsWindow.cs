@@ -115,6 +115,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < WorldOptions.All.Length; i++)
 			{
 				string option = WorldOptions.All[i];
+				if (WorldOptions.IsRetired(option)) continue;
 				RectTransform group = UIKit.Group(right, null, "Option_" + option);
 				Button b = UIKit.Button(group, "", () => Flip(option), WorldOptions.Hints[i], -1, 28f, 14);
 				b.name = "Toggle_" + option;

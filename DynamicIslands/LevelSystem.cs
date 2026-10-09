@@ -42,10 +42,10 @@ namespace DynamicIslands.Editor
 		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark (before GainMultiplier).</summary>
 		public const int ReferenceXp = 20;
 
-		/// <summary>EXP gained is six times what the levels are measured in (the user: doubled 2026-10-02, tripled again
-		/// 2026-10-04) - Bruce gives 120 - so a level takes a sixth of the kills; the EXP each level needs stays as it was
-		/// (100, 200, 400...).</summary>
-		public const float GainMultiplier = 6f;
+		/// <summary>EXP gained is nine times what the levels are measured in (the user: doubled 2026-10-02, tripled again
+		/// 2026-10-04, +50 % 2026-10-09) - Bruce gives 180 - so a level takes a ninth of the kills; the EXP each level needs
+		/// stays as it was (100, 200, 400...).</summary>
+		public const float GainMultiplier = 9f;
 
 		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
 		public static int BruceXp { get { return Mathf.RoundToInt(ReferenceXp * GainMultiplier); } }
@@ -392,6 +392,7 @@ namespace DynamicIslands.Editor
 			// (forget monsters that are gone)
 			if (Fraction.Count > 64) foreach (Network_Entity gone in Fraction.Keys.Where(k => k == null || k.IsDead).ToList()) Fraction.Remove(gone);
 			bool kill = kills && before < 1f;
+			if (kill) ShareKill(entity, ai, worth, player, byPlayer);
 			if (player != LocalId)
 			{
 				// (the host's record of them grows with it: only their own "mine" moved it before, and what a player earned in
@@ -412,6 +413,41 @@ namespace DynamicIslands.Editor
 			}
 			return Gained(ai, Mathf.Max(0, gain), kill);
 		}
+
+		/// <summary>The world option Shared EXP: players this near a kill share in it, each this much of the monster's EXP.</summary>
+		public const float SharedXpRange = 50f, SharedXpShare = 0.6f;
+
+		/// <summary>
+		/// Host, a monster killed with Shared EXP on: every other player within SharedXpRange of it gets SharedXpShare of its EXP,
+		/// less what their own hits on it already earned (a helper never ends up with less than the share, nor gets it twice).
+		/// Not a kill for them. The same message as a hit's EXP.
+		/// </summary>
+		static void ShareKill(Network_Entity entity, AI_NetworkBehaviour ai, int worth, ulong killer, Dictionary<ulong, float> byPlayer)
+		{
+			if (!WorldOptions.On(WorldOptions.SharedXp) || worth <= 0) return;
+			Vector3 at = entity.transform.position;
+			foreach (Network_Player p in Players.All)
+			{
+				if (p == null || p.steamID.Id == killer || p.steamID.Id == 0UL) continue;
+				Vector3 d = p.transform.position - at;
+				if (d.magnitude > SharedXpRange) continue;
+				ulong id = p.steamID.Id;
+				float had;
+				byPlayer.TryGetValue(id, out had);
+				int give = Mathf.RoundToInt(SharedXpShare * worth) - Mathf.RoundToInt(had * worth);
+				if (give <= 0) continue;
+				byPlayer[id] = Mathf.Max(had, SharedXpShare);
+				LastShared = id + " +" + give;
+				Debug.Log("[CUSTOM ISLANDS] Shared EXP: +" + give + " to " + id + " (" + d.magnitude.ToString("F0") + " m from the kill)");
+				if (id == LocalId) { Gained(ai, give, false); continue; }
+				LevelRecord rec;
+				if (records.TryGetValue(id, out rec)) { int levelBefore = rec.Level; rec.Xp += give; if (rec.Level != levelBefore) levelsDirty = true; }
+				IslandNetwork.SendLevels(new IslandNetMessage { Name = "gain", Count = give, Index = unchecked((int)entity.ObjectIndex), FullList = false }, new Network_UserId(id));
+			}
+		}
+
+		/// <summary>The host's last shared EXP ("id +n", tests).</summary>
+		public static string LastShared { get; internal set; }
 
 		/// <summary>The host's last EXP for another player's hit ("id +n [kill]", tests).</summary>
 		public static string LastRemote { get; private set; }

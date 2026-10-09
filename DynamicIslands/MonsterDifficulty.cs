@@ -221,8 +221,9 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static float Scale(Network_Entity target, float damage, EntityType inflictor)
 		{
-			if (Current == Normal || target == null || damage <= 0f || damage >= KillDamage) return damage;
-			float f = Factor, result;
+			// (with Night is dangerous on top: NightDanger)
+			float f = Factor * NightDanger.MonsterFactor, result;
+			if (Mathf.Approximately(f, 1f) || target == null || damage <= 0f || damage >= KillDamage) return damage;
 			if (target.entityType == EntityType.Player)
 			{
 				if (inflictor != EntityType.Enemy || PufferFishHurting) return damage;

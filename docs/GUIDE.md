@@ -2038,7 +2038,8 @@ a world where they are all left alone plays as plain Raft plus your islands.
 
 - **World rules** (9.2): tougher or softer monsters, a dearer build menu.
 - **World randomizer** (9.3): a normal Raft world made different every time: colours, alphas, finds, odd islands, bosses.
-- **Extra options** (9.4): scrambled blueprints, the story islands in a new order, ghost rafts, private storages.
+- **Extra options** (9.4): ghost rafts, private storages (older worlds may still have scrambled blueprints or the
+  story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
 - **The level up system** (9.6): EXP and stat points - a switch in the window, or an island made with it.
 
@@ -2164,7 +2165,11 @@ colours, alphas and crates.
 More ways to play Raft again. Each option has its own button in the window's right column, switched **ON** or off, with
 an explanation under it. They can be combined freely.
 
-#### Scrambled blueprints
+**Scrambled blueprints** and **Story islands in a new order** are no longer offered for new worlds (since 9 October
+2026). A world that already has one on keeps it; World settings shows it only while it is on, so the host can switch it
+off (or `WorldOptions -blueprints -storyorder`).
+
+#### Scrambled blueprints (older worlds only)
 
 The blueprints lying on Raft's story islands (Vasagatan, Balboa, Caravan Town, Tangaroa...) are swapped with each
 other, so each is found on another story island than usual. The pickup's name tells you which blueprint you'll get. The
@@ -2174,7 +2179,7 @@ fuel, the machete, the zipline, the headlight and the battery charger, so the st
 which pickups there are, and which were taken, stays Raft's. Switching the option off (`WorldOptions -blueprints`) puts
 what is left in the pickups back to Raft's own.
 
-#### Story islands in a new order
+#### Story islands in a new order (older worlds only)
 
 Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance come in a shuffled order. Raft has
 no fixed places for them: each appears near the raft when the Receiver is tuned to a frequency a note unlocked. With the
@@ -2200,10 +2205,37 @@ Every player sees the same ghost raft: the host brings it, as an island of the m
 #### Private storages
 
 A storage opens only for the player who built it. Looking at someone else's shows whose it is instead of "Open", and
-**E** does nothing. Storages built while the option was off (or before this version of the mod) have no builder and
+**E** does nothing; the hammer doesn't take it down either. Storages built while the option was off (or before this version of the mod) have no builder and
 open for everyone. The host keeps who built which with the world, so it stays after saving, loading and joining again.
 The **host** may open the storage of a builder who isn't in the game (one who left and doesn't come back), so
 nothing stays locked for good; other players still can't.
+
+#### Long voyage
+
+Random custom islands come half as often and lie further apart, so food, water and the raft matter more between
+stops: one after every **6-12** of Raft's own islands instead of 3-6 (twice the world's span, [section 9.5](#95-islands-while-sailing)),
+and at least **1.6 km** from each other instead of 800 m. Raft's own islands, and the islands of quests and plans,
+keep their places. `WorldIslands` shows the span in use. Switched on in a running world, it counts from the next
+random island.
+
+#### Iron raft
+
+The raft's blocks take **half damage** from shark bites, so there is less to repair. Taking pieces down with the
+hammer or the axe works exactly as before, and shark bait is eaten as fast as ever.
+
+#### Shared EXP
+
+When a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
+their own hits on it already earned, so a helper ends up with at least 60 %). It doesn't count as a defeated monster
+for them. Only defeated monsters are shared; playing alone nothing changes. See [Earning EXP](#earning-exp) for what each
+monster is worth.
+
+#### Night is dangerous
+
+After dark the sea and the islands turn harsher: monsters have **x1.3** health and damage (on top of the world's
+monster difficulty) and the shark comes for the raft more often (it looks for a block to bite in 0.6 of the usual
+time). By day both are calmer: monsters x0.85, the shark less often (x1.25 the time). Day and night are Raft's own sky's.
+How many monsters live at each spot stays as the island's builder made it.
 
 #### For every player
 
@@ -2274,16 +2306,17 @@ Chickens, goats, llamas, turtles, stingrays, dolphins, whales, puffins, Utopia's
 ![EXP floating over a warthog](images/levels-hit.jpg)
 *A hit on a warthog: its EXP floats up (this picture is from before EXP was tripled).*
 
-Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **120 EXP** (EXP
-gained was doubled on 2026-10-02 and tripled on 2026-10-04: six times what the levels are measured in):
+Tougher monsters that bite harder are worth more, measured against Bruce the shark, who is worth **180 EXP** (EXP
+gained was doubled on 2026-10-02, tripled on 2026-10-04 and raised by half on 2026-10-09: nine times what the levels
+are measured in):
 
 | Monster | EXP | Monster | EXP |
 |---|---|---|---|
-| Bruce (shark) | 120 | Bear | 80 |
-| Warthog | 76 | Polar bear | 88 |
-| Screecher | 70 | Hyena | 40 |
-| Puffer fish | 56 | Rat | 40 |
-| Mama bear (Balboa) | 400 | Hyena boss | 240 |
+| Bruce (shark) | 180 | Bear | 120 |
+| Warthog | 114 | Polar bear | 132 |
+| Screecher | 105 | Hyena | 60 |
+| Puffer fish | 84 | Rat | 60 |
+| Mama bear (Balboa) | 600 | Hyena boss | 360 |
 
 An island's own Hard or Boss animals are worth more than Raft's plain ones.
 
@@ -2291,9 +2324,9 @@ An island's own Hard or Boss animals are worth more than Raft's plain ones.
 |---|---|---|
 | 1 → 2 | 100 | 1 shark |
 | 2 → 3 | 200 | 2 sharks |
-| 3 → 4 | 400 | 4 sharks |
-| 4 → 5 | 600 | 5 sharks |
-| then | 200 more each level | about 2 more sharks each level |
+| 3 → 4 | 400 | 3 sharks |
+| 4 → 5 | 600 | 4 sharks |
+| then | 200 more each level | 1 or 2 more sharks each level |
 
 #### Levelling up and spending points
 

@@ -146,17 +146,19 @@ namespace DynamicIslands
 			Log("ITEMS " + name + " " + (p != null && p.Inventory != null ? p.Inventory.GetItemCount(name) : -1));
 		}
 
-		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft (their copies of the islands there unload), or back on the raft: CIScFarAway [back]")]
+		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft and streams this machine's islands as if the raft were far away too (their copies of the islands there unload), or back on the raft: CIScFarAway [back]")]
 		public static void ScFarAwayCommand(string[] args)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (p == null || !raft.HasValue) { Fail("far away: in a world"); return; }
-			if (args != null && args.Length > 0 && args[0] == "back") { OnRaftCommand(); Log("Back on the raft"); return; }
+			if (args != null && args.Length > 0 && args[0] == "back") { CustomIslandSpawner.TestRaftFarAway = false; OnRaftCommand(); Log("Back on the raft"); return; }
 			Vector3 far = raft.Value + new Vector3(-1500f, 0f, -300f);
 			far.y = 0.5f;
 			PlayerMove.To(p, far, ControllerType.Water);
 			KeepAlive(p);
+			// (the raft stays at the island the host is on: without this the copy near the raft stays loaded)
+			CustomIslandSpawner.TestRaftFarAway = true;
 			Log("Far away: " + ScFlat(p.transform.position, raft.Value).ToString("F0") + " m from the raft");
 		}
 

@@ -31,12 +31,12 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			bool ok = true;
 
-			// The curve: level 2 after 1 kill of Bruce (EXP gained is six times the measure), level 3 about 2 more, level 4 about 4
-			// more, level 5 about 5 more
+			// The curve: level 2 after 1 kill of Bruce (EXP gained is nine times the measure), level 3 about 2 more, level 4 about 3
+			// more, level 5 about 4 more
 			int bruce = LevelRules.XpOf(LevelRules.SharkHealth, LevelRules.SharkDamage);
-			Check(ref ok, bruce == LevelRules.BruceXp && bruce == 6 * LevelRules.ReferenceXp, "Bruce is worth " + bruce + " EXP (six times what the levels are measured in)");
+			Check(ref ok, bruce == LevelRules.BruceXp && bruce == 9 * LevelRules.ReferenceXp, "Bruce is worth " + bruce + " EXP (nine times what the levels are measured in)");
 			int[] kills = Enumerable.Range(1, 5).Select(l => Mathf.CeilToInt(LevelRules.XpFor(l) / (float)bruce)).ToArray();
-			Check(ref ok, kills.SequenceEqual(new[] { 1, 2, 4, 5, 7 }), "kills of Bruce from each level to the next: " + string.Join(", ", kills.Select(k => k.ToString()).ToArray()));
+			Check(ref ok, kills.SequenceEqual(new[] { 1, 2, 3, 4, 5 }), "kills of Bruce from each level to the next: " + string.Join(", ", kills.Select(k => k.ToString()).ToArray()));
 			Check(ref ok, LevelRules.TotalFor(1) == 0 && LevelRules.TotalFor(2) == 100 && LevelRules.TotalFor(3) == 300 && LevelRules.TotalFor(4) == 700 && LevelRules.TotalFor(5) == 1300,
 				"EXP at which levels 2-5 start: " + string.Join(", ", Enumerable.Range(2, 4).Select(l => LevelRules.TotalFor(l).ToString()).ToArray()));
 			Check(ref ok, LevelRules.LevelOf(0) == 1 && LevelRules.LevelOf(99) == 1 && LevelRules.LevelOf(100) == 2 && LevelRules.LevelOf(299) == 2 && LevelRules.LevelOf(300) == 3 && LevelRules.LevelOf(1300) == 5,

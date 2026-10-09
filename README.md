@@ -128,7 +128,7 @@ This README is the full reference, in the same order: island creation first, the
   - **Monster difficulty:** **Timid, Normal, Fierce, Savage or Nightmare**. Sharks and every other animal that fights players get ×0.75 to ×2 health and damage (see [World rules](#world-rules-monster-difficulty-and-build-cost)).
   - **Build cost:** everything in the build menu costs 0-100% more materials, rounded to the nearest (never below Raft's own).
   - **World randomizer:** a normal Raft world that is different every time - animal and shark colours, rare alphas and a Big Bruce with trophy spoils, more animals, moved and extra loot, treasure hunts and camps on Raft's islands, oddity islands, large islands and boss lairs while sailing - without touching Raft's story (see [World randomizer](#world-randomizer)).
-  - **Extra options:** scrambled blueprints (Raft's story blueprints on other story islands, never what the story needs), story islands in a new order (Utopia last), ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder - and for the host when the builder isn't in the game).
+  - **Extra options:** ghost rafts (abandoned rafts while sailing, large ones guarded by rats and screechers), private storages (a storage opens only for its builder - and for the host when the builder isn't in the game).
   - **Islands while sailing:** which of your islands (and which map types and generated islands) turn up by chance in that world, from a list with tick boxes.
   - **Single islands and plan islands:** a single island is made or downloaded to be found by chance while sailing; a plan island (one a saved world plan names, or an island that island's rules bring) comes only in its own plan, never by chance, even when `spawnpool.txt` lists it. `rnd-...`, `gen-...` and `Name_<hash>` files are never in the list; a library plan's islands get weight 0 in `spawnpool.txt`. To make an island single, use it in no plan or save a copy under another name (guide ch. 7).
   - **The level up system** (its switch in the window, or an island made with it): hitting a monster floats the EXP it gave over it (**+5 EXP**). An EXP bar styled like Raft's own sits above its thirst, hunger and health bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 15. Other players see your level as a small **Lv 5** under your name (see [The level up system](#the-level-up-system)).
@@ -390,11 +390,12 @@ islands** (- and + by each number; the lower 2-20, the higher 4-50; the world fi
 in a world): how often they come. None comes in a new world's first 10 minutes of play (`@playtime=`, `quietMinutes`).
 It counts with plans that use random islands (Random islands, or a plan with random islands on).
 
-- **Scrambled blueprints:** the blueprints lying on Raft's story islands are found on other story islands than usual.
+- *Scrambled blueprints* and *Story islands in a new order* are no longer offered for new worlds (2026-10-09); a world that has one on keeps it, and World settings shows it while it is on so the host can switch it off.
+- **Scrambled blueprints** (older worlds only)**:** the blueprints lying on Raft's story islands are found on other story islands than usual.
   Each one is paired with another from the world's seed, never with itself. What the story needs is never moved - the
   Receiver and antenna, the steering wheel, the engine and its fuel, the machete, the zipline and the headlight - so the
   story can always be finished. Only what a pickup gives changes: its name says what you'll get.
-- **Story islands in a new order:** Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance
+- **Story islands in a new order** (older worlds only)**:** Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point and Temperance
   come in a shuffled order (from the world's seed; Utopia, the ending, stays last). Raft unlocks each frequency with a note
   - the Receiver's first, then the one found on each island for the next - and with this option each note unlocks the
   island in the new order's place. The frequency numbers written on the notes follow. Each story island carries what it
@@ -403,10 +404,16 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   1.5 km, then about one per 3 km). Small ones (a few foundations, a barrel, a message in a bottle), medium ones (a hut, a
   barrel and a box, a captain's log, sometimes a rat or two) and now and then a large one: a wide raft with huts and a
   lookout, a hoard chest and barrels, guarded by rats on its deck and screechers circling above.
-- **Private storages:** a storage opens only for the player who built it; looking at someone else's shows whose it is.
+- **Private storages:** a storage opens only for the player who built it; looking at someone else's shows whose it is, and only its builder can take it down with the hammer.
   Storages built while the option was off open for everyone.
+- **Long voyage:** random custom islands come half as often (after every 6-12 of Raft's own islands instead of 3-6)
+  and at least 1.6 km apart, so food, water and the raft matter more between stops.
+- **Iron raft:** the raft's blocks take half damage from shark bites; the hammer and the axe take pieces down as before.
+- **Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too.
+- **Night is dangerous:** at night monsters have x1.3 health and damage and the shark comes for the raft more often;
+  by day both are calmer.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -494,7 +501,7 @@ story comes along. Every prop's size and footprint is measured
 The level up system comes on in a world by the **Level up system** switch in World settings (New Game box; remembered for the next world), or when an island made with **Level up system: On** (Island tab, Rules; or the generator's **Level up** choice, on all three tabs) comes to the world - a banner says so. The host switches it with `Levels on` / `Levels off`: off keeps everyone's records (`@levels=off` with the `@level=` lines) and takes the stat bonuses away until it is on again; an island made with levels doesn't switch it back on after the host switched it off.
 
 - **EXP:** every hit a player makes on a monster gives EXP, anywhere in that world: the island's animals, Bruce and Raft's own animals. The number floats up over the monster for a moment (**+5 EXP**), and the level bar lights up. A hit gives the monster's EXP times the share of its health it took, so a kill gives exactly the monster's EXP. If two players fight it together, each gets their share. Animals that aren't monsters give nothing: chickens, goats, llamas, turtles, stingrays, dolphins, whales and people. The stats page counts the monsters each player has defeated (the killing hit counts).
-- **What a monster is worth:** half from how tough it is, half from how hard it hits, both compared with Bruce (Raft's shark), who is worth **120 EXP**: `EXP = 120 × (0.5 × health / Bruce's health + 0.5 × damage / Bruce's damage)`, at least 1. (EXP gained was doubled on 2026-10-02 and tripled on 2026-10-04: the levels are measured in kills of a Bruce worth 20, `LevelRules.ReferenceXp`, and every monster gives `GainMultiplier` = 6 times that - one shark for level 2.) Health and damage are the animal's own, so the editor's Easy / Hard / Boss settings count too (a Boss warthog is worth more). `CILevelTable` lists every monster's numbers.
+- **What a monster is worth:** half from how tough it is, half from how hard it hits, both compared with Bruce (Raft's shark), who is worth **180 EXP**: `EXP = 180 × (0.5 × health / Bruce's health + 0.5 × damage / Bruce's damage)`, at least 1. (EXP gained was doubled on 2026-10-02, tripled on 2026-10-04 and raised by half on 2026-10-09: the levels are measured in kills of a Bruce worth 20, `LevelRules.ReferenceXp`, and every monster gives `GainMultiplier` = 9 times that - one shark for level 2.) Health and damage are the animal's own, so the editor's Easy / Hard / Boss settings count too (a Boss warthog is worth more). `CILevelTable` lists every monster's numbers.
 - **Levels:**
 
   | From level | To level | EXP needed | About (kills of Bruce) | EXP in all |

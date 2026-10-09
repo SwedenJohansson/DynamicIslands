@@ -339,6 +339,8 @@ namespace DynamicIslands.Editor
 				Button b = buttons["Option_" + o];
 				UIKit.LabelOf(b).text = WorldOptions.Label(o) + ":  " + (WorldOptions.On(o) ? "ON" : "off");
 				UIKit.SetActive(b, WorldOptions.On(o));
+				// (an option no longer offered shows only while the world has it on, to switch it off)
+				b.gameObject.SetActive(!WorldOptions.IsRetired(o) || WorldOptions.On(o));
 			}
 			UIKit.LabelOf(buttons["Levels"]).text = "Level up system:  " + (PlayerLevels.On ? "ON" : "off");
 			Button planPick = buttons["WorldPlan"];

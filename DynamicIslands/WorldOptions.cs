@@ -14,22 +14,37 @@ namespace DynamicIslands.Editor
 	///   - blueprints: Raft's blueprints on its story islands are found on other islands than usual (ScrambledBlueprints);
 	///   - storyorder: Raft's story islands come in another order (StoryOrder);
 	///   - ghostrafts: abandoned rafts drift by while sailing, some large and guarded (GhostRafts);
-	///   - privatestorage: a storage opens only for the player who built it (PrivateStorage).
+	///   - privatestorage: a storage opens only for the player who built it (PrivateStorage);
+	///   - longvoyage: random custom islands come half as often and further apart (WorldIslands.NewTarget, CustomIslandSpawner);
+	///   - ironraft: the raft's blocks take half damage from the shark (IronRaft);
+	///   - sharedxp: players near a kill get 60 % of its EXP too (LevelSystem.ShareKill);
+	///   - nightdanger: monsters tougher and the shark keener at night, both calmer by day (NightDanger).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage };
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages" };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger };
+		/// <summary>
+		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
+		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
+		/// </summary>
+		public static readonly string[] Retired = { Blueprints, StoryOrder };
+		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
+		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
 			"Raft's story islands come in another order: the Receiver's frequencies and the notes that lead on follow the new order. The ending stays last. For players who know the way by heart.",
 			"Abandoned rafts drift by while sailing: small ones with a little loot and a note, and now and then a large one guarded by rats and screechers, with a better hoard.",
 			"A storage opens only for the player who built it: each player keeps their own things. Storages built before the option was on (or by nobody) open for everyone.",
+			"Random custom islands come half as often and lie further apart, so food, water and the raft matter more between stops. Raft's own islands, and quest and plan islands, keep their places.",
+			"The raft's blocks take half damage from shark bites: fewer repairs. Taking pieces down with the hammer or the axe works as always, and shark bait is eaten as fast as ever.",
+			"When a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
+			"After dark monsters are tougher (x1.3 health and damage on top of the monster difficulty) and the shark comes for the raft more often; by day both are calmer (x0.85, the shark less often).",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -75,7 +90,7 @@ namespace DynamicIslands.Editor
 
 		#region The last choice (world_rules.txt)
 
-		public static HashSet<string> Defaults { get { return Parse(WorldRules.ReadDefault("options")); } }
+		public static HashSet<string> Defaults { get { var d = Parse(WorldRules.ReadDefault("options")); d.RemoveWhere(IsRetired); return d; } }
 
 		public static void SaveDefaults(IEnumerable<string> on) { WorldRules.SaveDefault("options", string.Join(",", All.Where(o => on.Contains(o)).ToArray())); }
 
@@ -112,6 +127,8 @@ namespace DynamicIslands.Editor
 			// islands' did - the level up system, the randomizer and the rules box kept theirs)
 			if (!isNew) { PlayerLevels.Pending = null; WorldRandomizer.Pending = null; NewWorldRulesBox.Forget(); }
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
+			global::DynamicIslands.Editor.IronRaft.Reset();
+			global::DynamicIslands.Editor.NightDanger.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
 			Notify();
@@ -193,6 +210,8 @@ namespace DynamicIslands.Editor
 			Current.Clear();
 			Seed = 0;
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
+			global::DynamicIslands.Editor.IronRaft.Reset();
+			global::DynamicIslands.Editor.NightDanger.Reset();
 			ScrambledBlueprints.Reset();
 			Notify();
 		}

@@ -105,6 +105,7 @@ namespace DynamicIslands.Editor
 		{
 			raft = null;
 			lastRaftPosition = null;
+			TestRaftFarAway = false;
 			sailedSinceSpawn = 0f;
 			nextTick = 0f; // (stream the islands in at once: a player may be standing on one - PlayerHold)
 			// (Raft's islands counted afresh: the same world loaded again kept its GUID, so the old set stayed - its keys are
@@ -205,6 +206,9 @@ namespace DynamicIslands.Editor
 		#region Streaming
 
 		/// <summary>Unloads far-away islands (keeping their entry) and loads them again when the raft comes back.</summary>
+		/// <summary>Tests (SC46/SC47, player 2): stream as if the raft were far away too - only this player's position counts.</summary>
+		internal static bool TestRaftFarAway;
+
 		static void StreamIslands(Vector3 raftPos)
 		{
 			// (by the raft, and by the players: an island someone stands on stays, however far the raft drifts, and loads
@@ -219,7 +223,7 @@ namespace DynamicIslands.Editor
 				// (to the land's edge, not its centre: a player at the edge of a big island dropped into the sea when the
 				// centre was further away than the unload distance)
 				float edge = e.WaitingForFile ? 0f : Mathf.Max(0f, LandRadius(e.Name));
-				float d = Mathf.Max(0f, Flat(e.Position - raftPos).magnitude - edge);
+				float d = TestRaftFarAway ? float.PositiveInfinity : Mathf.Max(0f, Flat(e.Position - raftPos).magnitude - edge);
 				foreach (Vector3 pp in players) d = Mathf.Min(d, Mathf.Max(0f, Flat(e.Position - pp).magnitude - edge));
 				// The randomizer's extras on one of Raft's islands are there only while Raft's island is
 				if (WorldRandomizer.IsExtras(e) && !WorldRandomizer.HasIslandUnder(e)) d = float.PositiveInfinity;
@@ -556,7 +560,7 @@ namespace DynamicIslands.Editor
 			if (Flat(candidate - raftPos).magnitude < radius + Clearance + RaftRadius) return "too close to the raft (it reaches " + RaftRadius.ToString("F0") + " m)";
 			// (tests of join timing - CISpawnGenerated: any spot clear of the raft; the sea's layout isn't what they test)
 			if (TestAllRound) return null;
-			float spacing = minSpacing < 0f ? MinSpacing : minSpacing;
+			float spacing = minSpacing < 0f ? MinSpacing * WorldIslands.VoyageFactor : minSpacing;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
 				if (WorldRandomizer.IsExtras(e)) continue; // (on one of Raft's islands: its chunk point below keeps the room)

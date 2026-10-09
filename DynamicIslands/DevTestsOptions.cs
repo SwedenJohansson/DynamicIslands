@@ -82,7 +82,22 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
+			{
+				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
+				int since = WorldIslands.RaftIslandsSince, target = WorldIslands.Target;
+				var plain = new List<int>(); var longer = new List<int>();
+				WorldOptions.Current.Remove(WorldOptions.LongVoyage);
+				for (int i = 0; i < 200; i++) { WorldIslands.NewTarget(); plain.Add(WorldIslands.Target); }
+				WorldOptions.Current.Add(WorldOptions.LongVoyage);
+				for (int i = 0; i < 200; i++) { WorldIslands.NewTarget(); longer.Add(WorldIslands.Target); }
+				string gap = WorldIslands.DescribeGap();
+				if (!was) WorldOptions.Current.Remove(WorldOptions.LongVoyage);
+				WorldIslands.RaftIslandsSince = since; WorldIslands.Target = target;
+				Check(ref ok, longer.Min() == plain.Min() * 2 && longer.Max() == plain.Max() * 2 && longer.Average() > plain.Average() * 1.8f, "Long voyage: random custom islands after twice as many of Raft's islands (" + plain.Min() + "-" + plain.Max() + " -> " + longer.Min() + "-" + longer.Max() + ")");
+				Check(ref ok, gap.Contains("Long voyage") && WorldOptions.Label(WorldOptions.LongVoyage) == "Long voyage" && !WorldOptions.IsRetired(WorldOptions.LongVoyage), "Long voyage: offered, and the gap says so (" + gap + ")");
+			}
 			// The story order
 			var badOrders = new List<string>();
 			var firsts = new HashSet<ChunkPointType>();
@@ -150,9 +165,9 @@ namespace DynamicIslands
 			string before = File.Exists(rules) ? File.ReadAllText(rules) : null;
 			try
 			{
-				WorldOptions.SaveDefaults(new[] { WorldOptions.GhostRafts, WorldOptions.Blueprints });
+				WorldOptions.SaveDefaults(new[] { WorldOptions.GhostRafts, WorldOptions.LongVoyage });
 				HashSet<string> d = WorldOptions.Defaults;
-				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.Blueprints) && WorldRules.ReadDefault("monsters") == (before != null ? WorldRules.ReadDefault("monsters") : null), "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
+				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.LongVoyage) && WorldRules.ReadDefault("monsters") == (before != null ? WorldRules.ReadDefault("monsters") : null), "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
 				WorldOptions.SaveDefaults(new string[0]);
 				Check(ref ok, WorldOptions.Defaults.Count == 0, "... and none");
 			}
@@ -183,13 +198,13 @@ namespace DynamicIslands
 			Check(ref ok, WorldSettingsWindow.IsOpen, "the button opens the window");
 			// (its three groups: the world rules, the randomizer, the extra options)
 			var names = WorldSettingsWindow.Window.GetComponentsInChildren<RectTransform>(false).Select(r => r.name).ToList();
-			Check(ref ok, names.Contains(NewWorldRulesBox.PanelName) && names.Contains("CustomIslands_Randomizer") && WorldOptions.All.All(o => names.Contains("Option_" + o)), "the window has the world rules, the world randomizer and the " + WorldOptions.All.Length + " extra options");
+			Check(ref ok, names.Contains(NewWorldRulesBox.PanelName) && names.Contains("CustomIslands_Randomizer") && WorldOptions.Offered.All(o => names.Contains("Option_" + o)) && !WorldOptions.Retired.Any(o => names.Contains("Option_" + o)), "the window has the world rules, the world randomizer and the " + WorldOptions.Offered.Length + " extra options");
 			int levelBefore = NewWorldRulesBox.MonsterLevel, percentBefore = NewWorldRulesBox.BuildPercent;
 			RandomizerSettings randBefore = NewWorldOptions.Randomizer.Copy();
 			Screenshot(new[] { "worldsettings" });
 			yield return new WaitForSecondsRealtime(0.6f);
 			var wrong = new List<string>();
-			foreach (string o in WorldOptions.All)
+			foreach (string o in WorldOptions.Offered)
 			{
 				Button t = WorldSettingsWindow.Toggle(o);
 				if (t == null) { wrong.Add(o + ": no button"); continue; }
@@ -202,11 +217,11 @@ namespace DynamicIslands
 				if (WorldSettingsWindow.Chosen.Contains(o) != was) wrong.Add(o + " back");
 			}
 			Check(ref ok, wrong.Count == 0, "each option's button switches it on and off, its label says which" + (wrong.Count > 0 ? " - not: " + string.Join(", ", wrong.ToArray()) : ""));
-			foreach (string o in WorldOptions.All) if (!WorldSettingsWindow.Chosen.Contains(o)) { WorldSettingsWindow.Toggle(o).onClick.Invoke(); yield return null; }
-			Check(ref ok, WorldSettingsWindow.Chosen.Count == WorldOptions.All.Length && UIKit.LabelOf(open).text.Contains(WorldSettingsWindow.Changed + " changed"), "all on: the box's button says '" + UIKit.LabelOf(open).text + "'");
+			foreach (string o in WorldOptions.Offered) if (!WorldSettingsWindow.Chosen.Contains(o)) { WorldSettingsWindow.Toggle(o).onClick.Invoke(); yield return null; }
+			Check(ref ok, WorldSettingsWindow.Chosen.Count == WorldOptions.Offered.Length && UIKit.LabelOf(open).text.Contains(WorldSettingsWindow.Changed + " changed"), "all on: the box's button says '" + UIKit.LabelOf(open).text + "'");
 			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "Raft's own"), "Raft's own clicked");
 			yield return null;
-			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && !NewWorldOptions.Randomizer.On && NewWorldRulesBox.MonsterLevel == MonsterDifficulty.Normal && NewWorldRulesBox.BuildPercent == 0 && UIKit.LabelOf(open).text.Contains("Raft's own"),
+			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && !NewWorldOptions.Randomizer.On && NewWorldRulesBox.MonsterLevel == MonsterDifficulty.Normal && NewWorldRulesBox.BuildPercent == 0 && UIKit.LabelOf(open).text.Contains(WorldIslands.Chosen.Count > 0 ? "1 changed" : "Raft's own"), // (islands left out are this PC's list: kept)
 				"Raft's own: no options, no randomizer, Normal monsters, Raft's build cost ('" + UIKit.LabelOf(open).text + "')");
 			// (the rules and the randomizer as they were: only the options are this test's choice)
 			NewWorldRulesBox.MonsterLevel = levelBefore; NewWorldRulesBox.BuildPercent = percentBefore;
@@ -418,7 +433,7 @@ namespace DynamicIslands
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raft == null) { Fail("raft deck probe: no raft"); return; }
-			foreach (Block b in raft.GetComponentsInChildren<Block>().Where(x => x.name.Contains("Foundation") || x.name.Contains("Floor")).Take(6))
+			foreach (Block b in raft.GetComponentsInChildren<Block>().Where(x => (x.name.Contains("Foundation") || (x.buildableItem != null && x.buildableItem.UniqueName.Contains("Foundation"))) || x.name.Contains("Floor")).Take(6))
 			{
 				Vector3 p = b.transform.position;
 				RaycastHit hit;
@@ -586,9 +601,12 @@ namespace DynamicIslands
 				Log("STORED " + s.ObjectIndex + " builder " + PrivateStorage.BuilderOf(s.ObjectIndex) + " local y " + s.transform.localPosition.y.ToString("F2"));
 			Log("PASS: storages listed");
 		}
+		/// <summary>The storage CIPlaceStorage placed last (null when it failed).</summary>
+		internal static Block LastPlacedStorage;
 		[ConsoleCommand(name: "CIPlaceStorage", docs: "Dev, in game (host): places a small storage on the raft as a player builds one (through that player's BlockCreator, sent to every player): CIPlaceStorage [host|other] [height above the foundation] - logs STORAGE <index> by <player id>")]
 		public static void PlaceStorageCommand(string[] args)
 		{
+			LastPlacedStorage = null;
 			if (!Raft_Network.IsHost) { Fail("place storage: host only"); return; }
 			Network_Player who = args != null && args.Length > 0 && args[0] == "other" ? OtherPlayer() : RAPI.GetLocalPlayer();
 			float up = StorageHeight;
@@ -596,12 +614,13 @@ namespace DynamicIslands
 			if (who == null) { Fail("place storage: no such player"); return; }
 			Item_Base item = ItemManager.GetItemByName("Placeable_Storage_Small");
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			List<Block> floors = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => x.name.Contains("Foundation")).OrderBy(x => x.transform.localPosition.sqrMagnitude).ToList() : new List<Block>();
+			List<Block> floors = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => (x.name.Contains("Foundation") || (x.buildableItem != null && x.buildableItem.UniqueName.Contains("Foundation")))).OrderBy(x => x.transform.localPosition.sqrMagnitude).ToList() : new List<Block>();
 			// (the next foundation for each storage, round again on a small raft)
 			Block floor = floors.Count > 0 ? floors[UnityEngine.Object.FindObjectsOfType<Storage_Small>().Length % floors.Count] : null;
-			if (item == null || floor == null) { Fail("place storage: no storage item or no foundation"); return; }
+			if (item == null || floor == null) { Fail("place storage: " + (item == null ? "no storage item" : "no foundation on the raft (" + (raft != null ? raft.GetComponentsInChildren<Block>().Length : 0) + " blocks)")); return; }
 			Block b = who.BlockCreator.CreateBlockCheat(item, floor.transform.localPosition + new Vector3(0f, up, 0f), Vector3.zero, DPS.Default, 0);
 			if (b == null) { Fail("place storage: Raft didn't place it"); return; }
+			LastPlacedStorage = b;
 			Log("STORAGE " + b.ObjectIndex + " by " + who.steamID.Id + " (builder noted: " + PrivateStorage.BuilderOf(b.ObjectIndex) + ")");
 			Log("PASS: storage placed");
 		}
@@ -632,7 +651,7 @@ namespace DynamicIslands
 			Log("PASS: open storage as");
 		}
 
-		[ConsoleCommand(name: "CIPrivateStorage", docs: "Dev, world (host, single player): the option Private storages alone - a storage built with the option on is the builder's (noted, saved in the world file's line); the builder opens it; one noted for another player (as if they built it) is refused for this player, looking at it says whose it is; with the option off both open; a storage built with it off has no builder; storages removed after")]
+		[ConsoleCommand(name: "CIPrivateStorage", docs: "Dev, world (host, single player): the option Private storages alone - a storage built with the option on is the builder's (noted, saved in the world file's line); the builder opens it; one noted for another player (as if they built it) is refused for a third player, and the host may open it while that builder is not in the game (T9); the hammer does not take it down; with the option off both open; a storage built with it off has no builder; storages removed after")]
 		public static void PrivateStorageCommand() { StartTest(PrivateStorageRoutine()); }
 
 		static IEnumerator PrivateStorageRoutine()
@@ -646,35 +665,48 @@ namespace DynamicIslands
 			{
 				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.PrivateStorage });
 				Network_Player me = RAPI.GetLocalPlayer();
-				Func<Block> place = () =>
-				{
-					int before = StorageManager.allStorages.Count;
-					PlaceStorageCommand(new string[0]);
-					Storage_Small s = StorageManager.allStorages.LastOrDefault();
-					if (s != null && StorageManager.allStorages.Count > before) made.Add(s);
-					return s;
-				};
-				Block mine = place();
-				yield return null;
+				// (placed through the network: the new storage shows up a frame or two later)
+				HashSet<Storage_Small> had = new HashSet<Storage_Small>(UnityEngine.Object.FindObjectsOfType<Storage_Small>());
+				Storage_Small last = null;
+				Func<Storage_Small> newest = () => UnityEngine.Object.FindObjectsOfType<Storage_Small>().FirstOrDefault(x => !had.Contains(x));
+				Action place = () => { PlaceStorageCommand(new string[0]); last = LastPlacedStorage as Storage_Small ?? newest(); };
+				Action took = () => { if (last != null) { made.Add(last); had.Add(last); } };
+				place();
+				for (int f = 0; f < 60 && last == null; f++) { yield return null; last = newest(); }
+				took();
+				Block mine = last;
 				Check(ref ok, mine != null && PrivateStorage.BuilderOf(mine.ObjectIndex) == me.steamID.Id, "a storage built with the option on is the builder's (" + (mine != null ? mine.ObjectIndex.ToString() : "none") + ")");
 				Check(ref ok, WorldOptions.WriteLines().Any(l => l.StartsWith("@storages=") && mine != null && l.Contains(mine.ObjectIndex + ":" + me.steamID.Id)), "... kept in the world file's line");
 				Storage_Small ms = mine as Storage_Small;
 				bool opened = ms != null && me.StorageManager.OpenStorage(ms);
 				if (opened) me.StorageManager.CloseStorage(ms);
 				Check(ref ok, opened, "its builder opens it");
-				Block theirs = place();
-				yield return null;
+				place();
+				for (int f = 0; f < 60 && last == null; f++) { yield return null; last = newest(); }
+				took();
+				Block theirs = last;
 				Storage_Small ts = theirs as Storage_Small;
 				if (ts != null) PrivateStorage.Decode(PrivateStorage.Encode() + ";" + ts.ObjectIndex + ":12345");
-				bool refused = ts != null && !me.StorageManager.OpenStorage(ts);
-				Check(ref ok, refused && PrivateStorage.Refuses(ts, me) && PrivateStorage.LastRefusal.Contains("12345"), "one built by another player is refused for this one (" + PrivateStorage.LastRefusal + ")");
+				// (another player in the game is refused; the host may open one whose builder isn't in the game - ROADMAP T9)
+				bool refused = ts != null && !PrivateStorage.MayOpen(ts.ObjectIndex, 999UL);
+				Check(ref ok, refused, "one built by another player is refused for a third player");
+				bool hostOpens = ts != null && me.StorageManager.OpenStorage(ts);
+				if (hostOpens) me.StorageManager.CloseStorage(ts);
+				Check(ref ok, hostOpens && !PrivateStorage.Refuses(ts, me), "... and the host opens it while its builder isn't in the game (T9)");
+				// (AU42: the hammer - Raft's RemovePlaceables.PickupBlock - doesn't take it down either)
+				RemovePlaceables hammer = me.GetComponentInChildren<RemovePlaceables>(true);
+				if (hammer != null && ts != null) HarmonyLib.Traverse.Create(hammer).Method("PickupBlock", new[] { typeof(Block) }).GetValue(ts);
+				yield return null;
+				Check(ref ok, hammer != null && ts != null && StorageManager.allStorages.Contains(ts), "the hammer doesn't take it down (" + (hammer == null ? "no hammer" : "") + ")");
 				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.PrivateStorage)));
 				bool both = ms != null && ts != null && me.StorageManager.OpenStorage(ts);
 				if (both) me.StorageManager.CloseStorage(ts);
 				Check(ref ok, both, "the option off: it opens");
-				Block free = place();
-				yield return null;
-				Check(ref ok, free != null && PrivateStorage.BuilderOf(free.ObjectIndex) == 0UL, "a storage built with the option off has no builder");
+				place();
+				for (int f = 0; f < 60 && last == null; f++) { yield return null; last = newest(); }
+				took();
+				Block free = last;
+				Check(ref ok, free != null && PrivateStorage.BuilderOf(free.ObjectIndex) == 0UL, "a storage built with the option off has no builder (" + (free == null ? "none placed" : free.ObjectIndex + ": " + PrivateStorage.BuilderOf(free.ObjectIndex)) + ")");
 			}
 			finally
 			{
@@ -683,6 +715,114 @@ namespace DynamicIslands
 				WorldOptions.Set(optionsBefore);
 			}
 			if (ok) Log("PASS: private storage"); else Fail("private storage");
+		}
+
+		[ConsoleCommand(name: "CIIronRaft", docs: "Dev, world (host, single player): the option Iron raft - a shark's bite (Raft's Block.Damage) takes half from a foundation with the option on (bites of 6, 5, 5 take 3, 2, 3), the whole bite with it off; the hammer still takes a block down with it on; health and options put back after")]
+		public static void IronRaftCommand() { StartTest(IronRaftRoutine()); }
+
+		static IEnumerator IronRaftRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("iron raft: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			var made = new List<Block>();
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			Block floor = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => (x.name.Contains("Foundation") || (x.buildableItem != null && x.buildableItem.UniqueName.Contains("Foundation")))).OrderByDescending(x => HarmonyLib.Traverse.Create(x).Field("health").GetValue<int>()).FirstOrDefault() : null;
+			if (floor == null) { Fail("iron raft: no foundation on the raft"); yield break; }
+			var health = HarmonyLib.Traverse.Create(floor).Field("health");
+			int start = health.GetValue<int>();
+			try
+			{
+				if (start < 30) health.SetValue(30);
+				int h0 = health.GetValue<int>();
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.IronRaft });
+				IronRaft.Reset();
+				var took = new List<int>();
+				foreach (int bite in new[] { 6, 5, 5 }) { int before = health.GetValue<int>(); floor.Damage(bite); took.Add(before - health.GetValue<int>()); }
+				Check(ref ok, took.SequenceEqual(new[] { 3, 2, 3 }), "the option on: bites of 6, 5, 5 take " + string.Join(", ", took.Select(x => x.ToString()).ToArray()) + " (half, the odd half carried)");
+				health.SetValue(h0);
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.IronRaft)));
+				floor.Damage(6);
+				int offTook = h0 - health.GetValue<int>();
+				Check(ref ok, offTook == 6, "the option off: a bite of 6 takes " + offTook);
+				health.SetValue(h0);
+				// (the user: taking pieces down with the hammer or the axe must stay as it was)
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.IronRaft });
+				Network_Player me = RAPI.GetLocalPlayer();
+				HashSet<Storage_Small> had = new HashSet<Storage_Small>(UnityEngine.Object.FindObjectsOfType<Storage_Small>());
+				PlaceStorageCommand(new string[0]);
+				Storage_Small s = LastPlacedStorage as Storage_Small;
+				// (placed through the network: it shows up a frame or two later)
+				for (int f = 0; f < 60 && s == null; f++) { yield return null; s = UnityEngine.Object.FindObjectsOfType<Storage_Small>().FirstOrDefault(x => !had.Contains(x)); }
+				bool placed = s != null;
+				if (placed) made.Add(s);
+				RemovePlaceables hammer = me != null ? me.GetComponentInChildren<RemovePlaceables>(true) : null;
+				if (hammer != null && s != null) HarmonyLib.Traverse.Create(hammer).Method("PickupBlock", new[] { typeof(Block) }).GetValue(s);
+				yield return null;
+				yield return null;
+				Check(ref ok, hammer != null && placed && s == null, "the option on: the hammer still takes a block down (" + (hammer == null ? "no hammer" : !placed ? "nothing placed" : s != null ? "still there" : "gone") + ")");
+			}
+			finally
+			{
+				foreach (Block b in made) if (b != null) UnityEngine.Object.Destroy(b.gameObject);
+				if (floor != null) health.SetValue(start);
+				IronRaft.Reset();
+				WorldOptions.Set(optionsBefore);
+			}
+			if (ok) Log("PASS: iron raft"); else Fail("iron raft");
+		}
+
+		[ConsoleCommand(name: "CINightDanger", docs: "Dev, world (host): the option Night is dangerous - at night a monster's bite on a player x1.3 and a hit on a monster /1.3 on top of the difficulty, by day x0.85; the shark's search interval x0.6 at night, x1.25 by day; the option off: as before; options and difficulty put back after")]
+		public static void NightDangerCommand() { StartTest(NightDangerRoutine()); }
+
+		static IEnumerator NightDangerRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("night danger: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			int difficultyBefore = MonsterDifficulty.Current;
+			var holder = new GameObject("CINightDanger");
+			try
+			{
+				Func<string, EntityType, Network_Entity> make = (n, type) =>
+				{
+					var go = new GameObject(n);
+					go.transform.SetParent(holder.transform, false);
+					Network_Entity ne = go.AddComponent<Network_Entity>();
+					ne.entityType = type;
+					return ne;
+				};
+				Network_Entity player = make("player", EntityType.Player), enemy = make("enemy", EntityType.Enemy);
+				AI_StateMachine_Shark shark = UnityEngine.Object.FindObjectOfType<AI_StateMachine_Shark>();
+				Func<float> interval = () => shark != null ? shark.SearchBlockInterval : -1f;
+				MonsterDifficulty.Current = MonsterDifficulty.Normal;
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.NightDanger)));
+				NightDanger.TestNight = true;
+				float plainBite = MonsterDifficulty.Scale(player, 20f, EntityType.Enemy), plainShark = interval();
+				Check(ref ok, Mathf.Abs(plainBite - 20f) < 0.001f, "the option off: a bite at night as before (" + plainBite + ")");
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.NightDanger });
+				float nightBite = MonsterDifficulty.Scale(player, 20f, EntityType.Enemy), nightHit = MonsterDifficulty.Scale(enemy, 26f, EntityType.Player), nightShark = interval();
+				NightDanger.TestNight = false;
+				float dayBite = MonsterDifficulty.Scale(player, 20f, EntityType.Enemy), dayShark = interval();
+				Check(ref ok, Mathf.Abs(nightBite - 26f) < 0.01f && Mathf.Abs(nightHit - 20f) < 0.01f && Mathf.Abs(dayBite - 17f) < 0.01f, "monsters: a bite of 20 at night " + nightBite + ", a hit of 26 on one at night " + nightHit + ", a bite by day " + dayBite);
+				MonsterDifficulty.Current = MonsterDifficulty.Normal + 1;
+				NightDanger.TestNight = true;
+				float fierce = MonsterDifficulty.Scale(player, 20f, EntityType.Enemy);
+				Check(ref ok, Mathf.Abs(fierce - 20f * MonsterDifficulty.Factor * NightDanger.MonsterNight) < 0.01f, "on top of the difficulty (" + MonsterDifficulty.Name(MonsterDifficulty.Current) + " at night: " + fierce + ")");
+				Check(ref ok, shark != null && Mathf.Abs(nightShark - plainShark * NightDanger.SharkNight) < 0.01f && Mathf.Abs(dayShark - plainShark * NightDanger.SharkDay) < 0.01f,
+					"the shark looks for the raft every " + plainShark.ToString("F1") + " s -> " + nightShark.ToString("F1") + " s at night, " + dayShark.ToString("F1") + " s by day" + (shark == null ? " (no shark)" : ""));
+				NightDanger.TestNight = null;
+				Log("Now: " + (NightDanger.IsNight ? "night" : "day") + " by Raft's sky");
+			}
+			finally
+			{
+				NightDanger.TestNight = null;
+				MonsterDifficulty.Current = difficultyBefore;
+				WorldOptions.Set(optionsBefore);
+				UnityEngine.Object.Destroy(holder);
+			}
+			yield return null;
+			if (ok) Log("PASS: night danger"); else Fail("night danger");
 		}
 
 		#endregion
@@ -845,7 +985,7 @@ namespace DynamicIslands
 		#endregion
 		#region Every combination
 
-		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): all 16 combinations of the world options switched on in turn: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
+		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (256) of the world options switched on in turn: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
 		public static void OptionsMatrixCommand() { StartTest(OptionsMatrixRoutine()); }
 
 		static IEnumerator OptionsMatrixRoutine()
@@ -862,11 +1002,13 @@ namespace DynamicIslands
 			PrivateStorage.Decode(storagesBefore + ";999999:12345");
 			try
 			{
-				for (int mask = 0; mask < 16; mask++)
+				for (int mask = 0; mask < (1 << WorldOptions.All.Length); mask++)
 				{
 					var on = new HashSet<string>(WorldOptions.All.Where((o, i) => (mask & (1 << i)) != 0));
 					WorldOptions.Set(on);
 					yield return new WaitForSeconds(2.5f);
+					// (Raft's autosave prunes builders of storages not in the world - the made-up one too: noted again)
+					if (PrivateStorage.BuilderOf(999999u) == 0UL) PrivateStorage.Decode(PrivateStorage.Encode() + ";999999:12345");
 					string sig = string.Join("|", ServerSig().ToArray());
 					var why = new List<string>();
 					if (!WorldOptions.Current.SetEquals(on)) why.Add("options");
@@ -887,7 +1029,7 @@ namespace DynamicIslands
 				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
 			}
-			Check(ref ok, bad.Count == 0, "16 combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
+			Check(ref ok, bad.Count == 0, (1 << WorldOptions.All.Length) + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
 			Check(ref ok, errors.Count == 0, "no errors while they ran" + (errors.Count > 0 ? " - " + errors[0] : ""));
 			if (ok) Log("PASS: options matrix"); else Fail("options matrix");
 		}

@@ -12,6 +12,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **World option Long voyage:** random custom islands come half as often (after every 6-12 of Raft's own
+  islands) and at least 1.6 km apart, so food, water and the raft matter more between stops.
+- **World option Iron raft:** the raft's blocks take half damage from shark bites; taking pieces down with the
+  hammer or the axe is unchanged.
+- **World option Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its
+  EXP too.
+- **World option Night is dangerous:** at night monsters have x1.3 health and damage and the shark comes for the
+  raft more often; by day both are calmer.
 - **Unsaved work, one at a time:** in *Unsaved work from last time* each island's row has an **X** that throws away
   only that island's unsaved changes (to `deleted\autosave`); the window closes when none are left.
 - **Journal island count:** *Islands reached* now also counts the saved islands ticked for the world in World
@@ -43,6 +51,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Two world options retired:** *Scrambled blueprints* and *Story islands in a new order* are no longer in
+  World settings for new worlds. A world that has one on keeps it, and the host can still switch it off there.
+- **EXP +50 %:** every monster is worth half as much EXP again (Bruce the shark 180, was 120); the EXP each
+  level needs is the same, so levels come faster.
 - **Editing islands your saved worlds have (R1b).** Every object of an island now has its own number, kept through
   edits (copies get new ones; files saved before keep working, numbered by place). Deleting objects, changing their
   order or making one a chest no longer keeps those worlds on the old version: they get the new one, with what was
@@ -82,6 +94,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Private storages and the hammer:** another player could take someone's private storage down with the
+  hammer (and get what was inside). Only its builder can now (or the host, when the builder isn't in the game).
 - **Build cost refunds after raising the cost:** in a world whose blocks were all built at Raft's own cost, raising
   the build cost and loading the world again made the earlier blocks count as built at the new cost, so taking them
   down gave back more than was paid. The world file now notes the cost they were built at.

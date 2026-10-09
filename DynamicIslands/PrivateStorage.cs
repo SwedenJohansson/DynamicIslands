@@ -187,6 +187,30 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	/// <summary>
+	/// The remover's machine: the hammer takes a storage down (RemovePlaceables.PickupBlock - it gives the cost back and asks
+	/// the host to remove it): not someone else's private one (AU42 - it dropped what was inside for the taker).
+	/// </summary>
+	[HarmonyPatch(typeof(RemovePlaceables), "PickupBlock")]
+	static class PrivateStorageRemove
+	{
+		static bool Prefix(RemovePlaceables __instance, Block block)
+		{
+			try
+			{
+				Storage_Small storage = block as Storage_Small;
+				if (storage == null || !WorldOptions.On(WorldOptions.PrivateStorage)) return true;
+				Network_Player player = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+				if (!PrivateStorage.Refuses(storage, player)) return true;
+				Debug.Log("[CUSTOM ISLANDS] [storage] Not taken down: " + PrivateStorage.LastRefusal);
+				DisplayTextManager hints = CustomNote.Hints;
+				if (hints != null && player != null && player.IsLocalPlayer) hints.ShowText(PrivateStorage.NameOf(PrivateStorage.BuilderOf(storage.ObjectIndex)) + "'s storage (private): only they can take it down", KeyCode.None, 0, 0, false);
+				return false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] " + e.Message); return true; }
+		}
+	}
+
 	/// <summary>The local player looks at someone else's storage: whose it is, instead of "Open" (and E does nothing).</summary>
 	[HarmonyPatch(typeof(Storage_Small), "OnIsRayed")]
 	static class PrivateStorageLook

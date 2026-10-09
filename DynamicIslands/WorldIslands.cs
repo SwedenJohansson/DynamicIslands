@@ -83,7 +83,9 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A new number of Raft's islands to wait for, inside this world's span.</summary>
-		public static void NewTarget() { Target = UnityEngine.Random.Range(GapMin, GapMax + 1); RaftIslandsSince = 0; }
+		public static void NewTarget() { Target = UnityEngine.Random.Range(GapMin, GapMax + 1) * VoyageFactor; RaftIslandsSince = 0; }
+		/// <summary>The world option Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing).</summary>
+		public static int VoyageFactor { get { return WorldOptions.On(WorldOptions.LongVoyage) ? 2 : 1; } }
 
 		#endregion
 
@@ -221,7 +223,7 @@ namespace DynamicIslands.Editor
 
 		public static string DescribeGap()
 		{
-			return "a random custom island after every " + GapText(GapMin, GapMax) + " of Raft's own islands (" + RaftIslandsSince + " met since the last" + (Target > 0 ? ", this time " + Target : "") + ")";
+			return "a random custom island after every " + GapText(GapMin * VoyageFactor, GapMax * VoyageFactor) + " of Raft's own islands" + (VoyageFactor > 1 ? " (Long voyage: twice " + GapText(GapMin, GapMax) + ")" : "") + " (" + RaftIslandsSince + " met since the last" + (Target > 0 ? ", this time " + Target : "") + ")";
 		}
 
 		[ConsoleCommand(name: "WorldIslandsGap", docs: "How often random custom islands come: one after every <min>-<max> of Raft's own islands met (default 3-6; min 2-20, max 4-50). WorldIslandsGap = this world's (or, in the main menu, the next new world's); WorldIslandsGap 5-12 = change it (host in a world)")]
@@ -241,7 +243,7 @@ namespace DynamicIslands.Editor
 					return;
 				}
 				int[] g = ClampGap(a, b);
-				if (inWorld) { GapMin = g[0]; GapMax = g[1]; if (Target < GapMin || Target > GapMax) Target = UnityEngine.Random.Range(GapMin, GapMax + 1); IslandWorldState.Save(); }
+				if (inWorld) { GapMin = g[0]; GapMax = g[1]; if (Target < GapMin * VoyageFactor || Target > GapMax * VoyageFactor) Target = UnityEngine.Random.Range(GapMin, GapMax + 1) * VoyageFactor; IslandWorldState.Save(); }
 				else { SetChosenGap(g[0], g[1]); try { WorldSettingsWindow.Show(); } catch { } }
 			}
 			if (inWorld) Debug.Log("[CUSTOM ISLANDS] This world: " + DescribeGap());
