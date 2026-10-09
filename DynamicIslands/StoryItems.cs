@@ -1182,8 +1182,9 @@ namespace DynamicIslands.Editor
 
 		static string QuestList(List<QuestCount.Quest> quests)
 		{
-			if (quests.Count == 0) return "No custom quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
-			var sb = new System.Text.StringBuilder();
+			string daily = DailyQuest.JournalText() ?? "";
+			if (quests.Count == 0) return daily + "No custom quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
+			var sb = new System.Text.StringBuilder(daily);
 			foreach (IGrouping<string, QuestCount.Quest> g in quests.GroupBy(q => q.Group))
 			{
 				// (the main story's steps are in Raft's notebook: only how far it is, here)

@@ -18,15 +18,16 @@ namespace DynamicIslands.Editor
 	///   - longvoyage: random custom islands come half as often and further apart (WorldIslands.NewTarget, CustomIslandSpawner);
 	///   - ironraft: the raft's blocks take half damage from the shark (IronRaft);
 	///   - sharedxp: players near a kill get 60 % of its EXP too (LevelSystem.ShareKill);
-	///   - nightdanger: monsters tougher and the shark keener at night, both calmer by day (NightDanger).
+	///   - nightdanger: monsters tougher and the shark keener at night, both calmer by day (NightDanger);
+	///   - dailyquest: a small task each day, a small reward when done before dark (DailyQuest).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -34,7 +35,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -45,6 +46,7 @@ namespace DynamicIslands.Editor
 			"The raft's blocks take half damage from shark bites: fewer repairs. Taking pieces down with the hammer or the axe works as always, and shark bait is eaten as fast as ever.",
 			"When a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
 			"After dark monsters are tougher (x1.3 health and damage on top of the monster difficulty) and the shark comes for the raft more often; by day both are calmer (x0.85, the shark less often).",
+			"Each morning the crew gets a small task for the day: gather some planks, plastic, palm leaves or scrap, catch a few fish or defeat a few monsters. Done before dark, everyone gets a small reward (basic resources or food); not done, it runs out.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -129,6 +131,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
 			global::DynamicIslands.Editor.IronRaft.Reset();
 			global::DynamicIslands.Editor.NightDanger.Reset();
+			global::DynamicIslands.Editor.DailyQuest.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
 			Notify();
@@ -143,7 +146,7 @@ namespace DynamicIslands.Editor
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value);
+			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -154,6 +157,7 @@ namespace DynamicIslands.Editor
 			if (used) yield return "@optionsused=1";
 			foreach (string l in global::DynamicIslands.Editor.PrivateStorage.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.GhostRafts.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.DailyQuest.WriteLines()) yield return l;
 		}
 
 		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
@@ -212,6 +216,7 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.PrivateStorage.Reset();
 			global::DynamicIslands.Editor.IronRaft.Reset();
 			global::DynamicIslands.Editor.NightDanger.Reset();
+			global::DynamicIslands.Editor.DailyQuest.Reset();
 			ScrambledBlueprints.Reset();
 			Notify();
 		}
@@ -241,7 +246,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (blueprints, storyorder, ghostrafts, privatestorage) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)

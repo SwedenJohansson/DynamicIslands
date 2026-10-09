@@ -82,7 +82,7 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
 			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
 			{
 				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
@@ -827,6 +827,126 @@ namespace DynamicIslands
 
 		#endregion
 
+		#region Daily quest
+
+		[ConsoleCommand(name: "CIDailyQuest", docs: "Dev, world (host): the option Daily quest - a day's task comes from the seed and the day (the same twice; all three kinds, small rewards, never what was asked for); written and read back; the option on: a new day's task starts once it's light (banner, journal), only its own kind counts, picked-up items count (inventory before/after), done gives the reward once (inventory, Rewarded), at dark an open one runs out; the option off: nothing; options and the day's task put back after")]
+		public static void DailyQuestCommand() { StartTest(DailyQuestRoutine()); }
+
+		static IEnumerator DailyQuestRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("daily quest: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			string taskBefore = DailyQuest.Current.Encode();
+			Network_Player me = RAPI.GetLocalPlayer();
+			PlayerInventory inv = me != null ? me.Inventory : null;
+			try
+			{
+				// What a day asks for
+				var kinds = new HashSet<string>();
+				bool same = true, small = true, notAsked = true, sane = true;
+				for (int day = 1; day <= 120; day++)
+				{
+					DailyQuest.Task t = DailyQuest.Make(42, day);
+					same &= t.Encode() == DailyQuest.Make(42, day).Encode();
+					kinds.Add(t.Kind);
+					sane &= t.Need > 0 && t.Need <= 20 && t.Day == day && DailyQuest.Describe(t).Length > 0;
+					List<KeyValuePair<string, int>> r = DailyQuest.RewardList(t);
+					small &= r.Count >= 1 && r.Count <= 2 && r.All(x => x.Value >= 1 && x.Value <= 10 && ItemManager.GetItemByName(x.Key) != null);
+					notAsked &= r.All(x => x.Key != t.Target);
+				}
+				Check(ref ok, same && sane && kinds.SetEquals(new[] { DailyQuest.Gather, DailyQuest.Fish, DailyQuest.Monsters }), "120 days: the same task twice from seed + day, all three kinds (" + string.Join(", ", kinds.ToArray()) + ")");
+				Check(ref ok, small && notAsked, "rewards: one or two of Raft's items, at most 10 each, never what was asked for (day 1: " + DailyQuest.Make(42, 1).Reward + ")");
+				DailyQuest.Task w = DailyQuest.Make(7, 3);
+				w.Have = 2; w.State = "done"; w.Rewarded.Add(76561198000000001UL); w.Rewarded.Add(5UL);
+				DailyQuest.Task back = DailyQuest.Task.Decode(w.Encode());
+				Check(ref ok, back.Encode() == w.Encode() && back.Rewarded.Count == 2, "written and read back: " + w.Encode());
+
+				// The option off: nothing
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.DailyQuest)));
+				DailyQuest.Reset();
+				NightDanger.TestNight = false; DailyQuest.TestDay = 500;
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, DailyQuest.Current.Day < 0 && DailyQuest.JournalText() == null, "the option off: no task (day " + DailyQuest.Current.Day + ")");
+
+				// On: the day's task once it's light
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.DailyQuest });
+				IslandInfo.ForgetShown();
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, DailyQuest.Current.Day == 500 && DailyQuest.Current.Open && (IslandInfo.LastShown ?? "").Contains("Today's quest") && (DailyQuest.JournalText() ?? "").Contains(DailyQuest.Describe(DailyQuest.Current)),
+					"a new day: " + DailyQuest.JournalText() + " (banner: " + IslandInfo.LastShown + ")");
+				Check(ref ok, WorldOptions.WriteLines().Contains("@daily=" + DailyQuest.Current.Encode()), "kept in the world file");
+
+				// Progress: only its own kind; picked-up items by the inventory before and after
+				DailyQuest.Task c = DailyQuest.Current;
+				c.Kind = DailyQuest.Gather; c.Target = "Plank"; c.Need = 5; c.Have = 0; c.Reward = "Rope:3,Nail:4";
+				DailyQuest.Add(DailyQuest.Fish, "", 2);
+				DailyQuest.Add(DailyQuest.Gather, "Plastic", 2);
+				Check(ref ok, c.Have == 0, "other kinds and items don't count (" + c.Have + ")");
+				if (inv != null)
+				{
+					DailyQuestGather.Before(me); DailyQuestGather.Before(me);
+					inv.AddItem("Plank", 2);
+					DailyQuestGather.After(me); DailyQuestGather.After(me);
+				}
+				Check(ref ok, c.Have == 2, "two planks picked up count once (" + c.Have + " of " + c.Need + ")");
+				// (Raft's own pickup: a plank drifting near the raft, picked up through Pickup)
+				Pickup hands = me != null ? me.GetComponentInChildren<Pickup>(true) : null;
+				Vector3 at = me != null ? me.transform.position : Vector3.zero;
+				PickupItem_Networked plank = UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Where(p => p != null && p.gameObject.activeInHierarchy && p.name.IndexOf("Plank", StringComparison.OrdinalIgnoreCase) >= 0 && (p.transform.position - at).magnitude < 120f && p.GetComponent<PickupItem>() != null)
+					.OrderBy(p => (p.transform.position - at).sqrMagnitude).FirstOrDefault();
+				if (hands != null && plank != null)
+				{
+					int planks = inv.GetItemCount("Plank"), had = c.Have;
+					c.Need = 99;
+					hands.PickupItemByType(plank.GetComponent<PickupItem>(), true);
+					yield return new WaitForSeconds(0.6f);
+					int got = inv.GetItemCount("Plank") - planks;
+					Check(ref ok, got > 0 && c.Have - had == got, "a drifting " + plank.name + " picked up with Raft's own pickup counts (+" + got + " planks, the task +" + (c.Have - had) + ")");
+					c.Have = had; c.Need = 5;
+					if (got > 0) inv.RemoveItem("Plank", got);
+				}
+				else Log("(no drifting plank within 120 m: Raft's own pickup not tried)");
+
+				// Done: the reward once
+				Log("Now: " + DailyQuest.Current.Encode() + (ReferenceEquals(c, DailyQuest.Current) ? "" : " (another task than the test's: " + c.Encode() + ")"));
+				c = DailyQuest.Current;
+				int rope = inv != null ? inv.GetItemCount("Rope") : 0, nail = inv != null ? inv.GetItemCount("Nail") : 0;
+				IslandInfo.ForgetShown();
+				DailyQuest.Add(DailyQuest.Gather, "Plank", 4);
+				yield return new WaitForSeconds(1.2f);
+				DailyQuest.Add(DailyQuest.Gather, "Plank", 4);
+				yield return new WaitForSeconds(1.2f);
+				int ropeGot = inv != null ? inv.GetItemCount("Rope") - rope : 0, nailGot = inv != null ? inv.GetItemCount("Nail") - nail : 0;
+				ulong myId = me != null ? me.steamID.Id : 0UL;
+				Check(ref ok, c.State == "done" && c.Have == c.Need && ropeGot == 3 && nailGot == 4 && c.Rewarded.Contains(myId) && (DailyQuest.JournalText() ?? "").Contains("done"),
+					"done: the reward once (rope +" + ropeGot + ", nails +" + nailGot + ", " + c.Have + " of " + c.Need + ", " + c.State + ")");
+				if (inv != null) { inv.RemoveItem("Plank", 2); if (ropeGot > 0) inv.RemoveItem("Rope", ropeGot); if (nailGot > 0) inv.RemoveItem("Nail", nailGot); }
+
+				// The next day runs out at dark
+				DailyQuest.TestDay = 501;
+				yield return new WaitForSeconds(1.5f);
+				bool started = DailyQuest.Current.Day == 501 && DailyQuest.Current.Open;
+				NightDanger.TestNight = true;
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, started && DailyQuest.Current.State == "out" && (DailyQuest.JournalText() ?? "").Contains("ran out"), "at dark an open task runs out (" + DailyQuest.Current.Day + " " + DailyQuest.Current.State + ")");
+				DailyQuest.TestDay = 502;
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, DailyQuest.Current.Day == 501, "no new task while it's dark (day " + DailyQuest.Current.Day + ")");
+			}
+			finally
+			{
+				NightDanger.TestNight = null;
+				DailyQuest.TestDay = null;
+				WorldOptions.Set(optionsBefore);
+				DailyQuest.ReadLine("daily", taskBefore);
+				IslandWorldState.Save();
+			}
+			if (ok) Log("PASS: daily quest"); else Fail("daily quest");
+		}
+
+		#endregion
+
 		#region Scrambled blueprints
 
 		[ConsoleCommand(name: "CIBlueprintsWorld", docs: "Dev, world (host, a test world 'CI Options ...' only - it brings one of Raft's story islands): with the option on, the story island with the most movable blueprints is brought near the raft (Raft's own ChunkManager.AddChunkPointForcibly) and sailed to; each of its blueprint pickups gives its partner (item and name), none of what the story needs changes; the option off: Raft's own again, on: the partners again")]
@@ -998,7 +1118,7 @@ namespace DynamicIslands
 			Application.logMessageReceived += watch;
 			var bad = new List<string>();
 			// (a storage noted for another player, one for nobody: the refusal only with the option)
-			string storagesBefore = PrivateStorage.Encode();
+			string storagesBefore = PrivateStorage.Encode(), dailyBefore = DailyQuest.Current.Encode();
 			PrivateStorage.Decode(storagesBefore + ";999999:12345");
 			try
 			{
@@ -1020,6 +1140,7 @@ namespace DynamicIslands
 					if (!PrivateStorage.MayOpen(999998u, 1UL)) why.Add("a storage without a builder refused");
 					if (PrivateStorage.MayOpen(999999u, 1UL) == on.Contains(WorldOptions.PrivateStorage)) why.Add("another's storage " + (on.Contains(WorldOptions.PrivateStorage) ? "opens" : "refused"));
 					if (!sig.Contains("options " + WorldOptions.Encode(on, WorldOptions.Seed))) why.Add("CIServerSig");
+					if ((DailyQuest.JournalText() != null) && !on.Contains(WorldOptions.DailyQuest)) why.Add("daily quest shown with the option off");
 					if (why.Count > 0) bad.Add(WorldOptions.Describe(on) + ": " + string.Join(", ", why.ToArray()));
 				}
 			}
@@ -1028,6 +1149,7 @@ namespace DynamicIslands
 				Application.logMessageReceived -= watch;
 				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
+				DailyQuest.ReadLine("daily", dailyBefore);
 			}
 			Check(ref ok, bad.Count == 0, (1 << WorldOptions.All.Length) + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
 			Check(ref ok, errors.Count == 0, "no errors while they ran" + (errors.Count > 0 ? " - " + errors[0] : ""));

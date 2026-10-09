@@ -18,6 +18,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   hammer or the axe is unchanged.
 - **World option Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its
   EXP too.
+- **World option Daily quest:** each morning a small task for the crew - gather some of a basic resource, catch a
+  few fish or defeat a few monsters; done before dark, each player gets a small reward (basic resources or food, 40 EXP
+  with levels) once; otherwise it runs out at dark. Shown as a banner and at the top of the journal's quest list.
 - **World option Night is dangerous:** at night monsters have x1.3 health and damage and the shark comes for the
   raft more often; by day both are calmer.
 - **Unsaved work, one at a time:** in *Unsaved work from last time* each island's row has an **X** that throws away

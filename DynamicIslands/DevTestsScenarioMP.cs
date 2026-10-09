@@ -77,7 +77,14 @@ namespace DynamicIslands
 			IslandFile f;
 			try { f = ScIsland(name, title); fill(f); f.Save(IslandSpawner.PathFor(name)); } catch (Exception ex) { Fail(name + ": " + ex.Message); yield break; }
 			var made = new List<IslandWorldState.Entry>();
-			Vector3? spot = ScSpot(name, 400f);
+			// (open sea further out rather than ScSpot's raft jump: islands go to player 2 relative to the host's raft, and a
+			// jumped raft reaches player 2 late - the island would land 600 m off there)
+			Vector3? spot = null;
+			for (float d = 400f; !spot.HasValue && d <= 1600f; d += 300f)
+			{
+				Vector3? s = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, CustomIslandSpawner.LandRadius(name), d);
+				if (s.HasValue) spot = new Vector3(s.Value.x, 0f, s.Value.z);
+			}
 			if (!spot.HasValue) { Fail(name + ": no open sea near the raft"); yield break; }
 			yield return ScBring(name, spot.Value, made);
 			IslandWorldState.Entry e = made.FirstOrDefault();

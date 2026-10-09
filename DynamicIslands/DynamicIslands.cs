@@ -398,7 +398,7 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Creatures", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
-			try { QuestTracker.Tick(); QuestCount.Tick(); }
+			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
 			try { IslandInfo.Tick(); }
 			catch (Exception e) { TickError("Island banner", e); }

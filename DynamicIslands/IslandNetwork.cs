@@ -72,6 +72,9 @@ namespace DynamicIslands.Editor
 		/// <summary>QuestStep for an island's further quests (n &gt; 0, LM4): Ids = island, quest number. Its own kind, so a version
 		/// before LM4 ignores it - it read every QuestStep as the main quest's (a second quest's step moved the main one on).</summary>
 		public const int QuestStepMore = 25;
+		/// <summary>The world option Daily quest: the host's task ("state", Data = DailyQuest.Task), a player's part ("add":
+		/// Index = day, Count) or reward taken ("got").</summary>
+		public const int DailyQuest = 26;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -308,6 +311,14 @@ namespace DynamicIslands.Editor
 			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(msg);
 		}
 
+		/// <summary>Daily quest: the host to one player or everyone; a player to the host.</summary>
+		public static void SendDaily(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.DailyQuest;
+			if (Raft_Network.IsHost) { if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
 		{
 			msg.Kind = IslandNetMessage.Levels;
@@ -470,6 +481,7 @@ namespace DynamicIslands.Editor
 							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to);
 							JoinPart("story", () => StoryBook.StateMessage(), to);
 							JoinPart("world options", () => WorldOptions.Message(), to);
+							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
 							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
 							JoinPart("animal spots", () => CreatureSpawner.SpotsMessage(null), to);
@@ -542,6 +554,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldOptions:
 						WorldOptions.OnMessage(msg);
+						break;
+					case IslandNetMessage.DailyQuest:
+						global::DynamicIslands.Editor.DailyQuest.OnMessage(msg, from);
 						break;
 					case IslandNetMessage.Levels:
 						PlayerLevels.OnMessage(msg, from);

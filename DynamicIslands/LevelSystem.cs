@@ -358,6 +358,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static int OnHit(Network_Entity entity, float damage)
 		{
+			if (Raft_Network.IsHost) CountDailyKill(entity, damage);
 			if (!On || !Raft_Network.IsHost) return 0;
 			return HostHit(entity, damage, LocalId);
 		}
@@ -365,8 +366,23 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: another player's hit, as Raft's damage message from them arrives (before it is applied).</summary>
 		public static int OnRemoteHit(Network_Entity entity, float damage, ulong player)
 		{
+			if (Raft_Network.IsHost && player != LocalId) CountDailyKill(entity, damage);
 			if (!On || !Raft_Network.IsHost || player == LocalId) return 0;
 			return HostHit(entity, damage, player);
+		}
+
+		/// <summary>Host: a hit that defeats a monster counts for the Daily quest (also with the level up system off).</summary>
+		static void CountDailyKill(Network_Entity entity, float damage)
+		{
+			try
+			{
+				if (!DailyQuest.On || entity == null || damage <= 0f) return;
+				AI_NetworkBehaviour ai = AiOf(entity);
+				Stat_Health h = entity.stat_health;
+				if (ai == null || !LevelRules.IsMonster(ai.behaviourType) || h == null || h.Value <= 0f) return;
+				if (damage >= h.Value - 0.001f) DailyQuest.Add(DailyQuest.Monsters, "", 1);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [daily] " + e.Message); }
 		}
 
 		/// <summary>Host: the EXP a hit on a monster is worth to a player, from the monster's health before the hit.</summary>

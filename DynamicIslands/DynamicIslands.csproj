@@ -147,6 +147,7 @@
     <Compile Include="PrivateStorage.cs" />
     <Compile Include="IronRaft.cs" />
     <Compile Include="NightDanger.cs" />
+    <Compile Include="DailyQuest.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
     <Compile Include="PatchHealth.cs" />

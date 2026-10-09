@@ -412,8 +412,10 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too.
 - **Night is dangerous:** at night monsters have x1.3 health and damage and the shark comes for the raft more often;
   by day both are calmer.
+- **Daily quest:** each morning a small task for the crew (gather some planks, plastic, palm leaves or scrap, catch a few
+  fish, or defeat a few monsters); done before dark, each player gets a small reward of basic resources or food once.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -558,7 +560,8 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses, large) |
-| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: blueprints, storyorder, ghostrafts, privatestorage) |
+| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest) |
+| `DailyQuest` | Game | Today's daily quest (world option Daily quest): the task, how far, the reward |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Levels` / `Levels on` / `Levels off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
 | `Resync` | Game, a player who joined | Ask the host for its custom islands again: the list, and any island file that hasn't come (the mod also keeps asking by itself) |

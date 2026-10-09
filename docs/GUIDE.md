@@ -2237,6 +2237,15 @@ monster difficulty) and the shark comes for the raft more often (it looks for a 
 time). By day both are calmer: monsters x0.85, the shark less often (x1.25 the time). Day and night are Raft's own sky's.
 How many monsters live at each spot stays as the island's builder made it.
 
+#### Daily quest
+
+Each morning the crew gets a small task for the day: **gather** some of a basic resource (12-20 planks, 10-16 plastic
+or palm leaves, 4-8 scrap: what the players pick up by hand or with the hook), **catch 3-6 fish** with the rod, or
+**defeat 2-4 monsters**. Every player's part counts towards it. Done before dark, each player gets a small reward once:
+one or two of planks, rope, nails, scrap, raw fish, a watermelon or clay (and 40 EXP with the level up system on).
+Not done by dark, it runs out; the next morning brings a new one. The task shows as a banner when it comes and as it
+moves on, and at the top of the journal's quest list. `DailyQuest` shows today's task.
+
 #### For every player
 
 Every player in the world gets the host's options, also when joining later. The host can change them in a world:
