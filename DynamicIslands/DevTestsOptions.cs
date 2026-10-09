@@ -686,9 +686,21 @@ namespace DynamicIslands
 					stat = nums(a, b, "time per cycle"); return b > 0f && Mathf.Abs(a - b * ExtraUpgrades.RecyclerTimeFactor) < 0.001f;
 				}
 				case "DI_BrightLantern":
+				case "DI_BrightLamp":
 				{
 					Light a = made.GetComponentInChildren<Light>(true), b = prefab.GetComponentInChildren<Light>(true);
 					stat = nums(a != null ? a.range : -1f, b != null ? b.range : -1f, "light range"); return a != null && b != null && b.range > 0f && a.range >= b.range * ExtraUpgrades.LightRangeFactor - 0.001f;
+				}
+				case "DI_SteelPot":
+				case "DI_FastJuicer":
+				{
+					bool a = made.GetComponentInChildren<QuickCooking>(true) != null, b = prefab.GetComponentInChildren<QuickCooking>(true) != null;
+					stat = "quick cooking " + a + " vs " + b; return a && !b && made.GetComponentInChildren<CookingTable>(true) != null;
+				}
+				case "DI_SturdyScarecrow":
+				{
+					Scarecrow a = made.GetComponentInChildren<Scarecrow>(true), b = prefab.GetComponentInChildren<Scarecrow>(true);
+					stat = "invulnerable " + (a != null && a.invurnerable) + " vs " + (b != null && b.invurnerable); return a != null && a.invurnerable;
 				}
 				case "DI_ComfyBed":
 				{
@@ -724,14 +736,24 @@ namespace DynamicIslands
 				stat = "bite wait " + wa.minValue + "-" + wa.maxValue + " vs " + wb.minValue + "-" + wb.maxValue;
 				return wb.maxValue > 0f && Mathf.Abs(wa.maxValue - wb.maxValue * ExtraUpgrades.RodBiteFactor) < 0.001f && Mathf.Abs(wa.minValue - wb.minValue * ExtraUpgrades.RodBiteFactor) < 0.001f;
 			}
-			string hf = u.Name == "DI_Telescope" ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_TitaniumGreatsword" || u.Name == "DI_TitaniumSpear" ? "damage" : null;
+			if (u.Name == "DI_Longbow")
+			{
+				Throwable ta = a.obj.GetComponentInChildren<Throwable>(true), tb = b.obj.GetComponentInChildren<Throwable>(true);
+				if (ta == null || tb == null) { stat = "no throwable in the hand model"; return false; }
+				stat = "throw force " + ta.throwForceMultiplier + " vs " + tb.throwForceMultiplier;
+				return tb.throwForceMultiplier.sqrMagnitude > 0f && (ta.throwForceMultiplier - tb.throwForceMultiplier * ExtraUpgrades.BowFactor).sqrMagnitude < 0.0001f;
+			}
+			bool weapon = u.Name == "DI_TitaniumGreatsword" || u.Name == "DI_TitaniumSpear" || u.Name == "DI_TitaniumMachete";
+			string hf = u.Name == "DI_Telescope" ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_MasterHammer" ? "blockRepairAmount" : u.Name == "DI_LumberAxe" ? "chopBlockTime" : weapon ? "damage" : null;
 			if (hf != null)
 			{
-				Component ca = u.Name == "DI_Telescope" ? (Component)a.obj.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)a.obj.GetComponentInChildren<Paddle>(true) : a.obj.GetComponentInChildren<MeleeWeapon>(true);
-				Component cb = u.Name == "DI_Telescope" ? (Component)b.obj.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)b.obj.GetComponentInChildren<Paddle>(true) : b.obj.GetComponentInChildren<MeleeWeapon>(true);
+				Func<GameObject, Component> holder = o => u.Name == "DI_Telescope" ? (Component)o.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)o.GetComponentInChildren<Paddle>(true)
+					: u.Name == "DI_MasterHammer" ? (Component)o.GetComponentInChildren<Hammer>(true) : u.Name == "DI_LumberAxe" ? (Component)o.GetComponentInChildren<Axe>(true) : o.GetComponentInChildren<MeleeWeapon>(true);
+				Component ca = holder(a.obj), cb = holder(b.obj);
 				if (ca == null || cb == null) { stat = "no " + hf + " holder in the hand model"; return false; }
 				float va = Convert.ToSingle(HarmonyLib.Traverse.Create(ca).Field(hf).GetValue()), vb = Convert.ToSingle(HarmonyLib.Traverse.Create(cb).Field(hf).GetValue());
-				float want = u.Name == "DI_Telescope" ? vb * ExtraUpgrades.TelescopeFovFactor : u.Name == "DI_LongPaddle" ? vb * ExtraUpgrades.PaddleFactor : Mathf.RoundToInt(vb * ExtraUpgrades.WeaponDamageFactor);
+				float want = u.Name == "DI_Telescope" ? vb * ExtraUpgrades.TelescopeFovFactor : u.Name == "DI_LongPaddle" ? vb * ExtraUpgrades.PaddleFactor
+					: u.Name == "DI_MasterHammer" ? vb * ExtraUpgrades.HammerRepairFactor : u.Name == "DI_LumberAxe" ? vb * ExtraUpgrades.AxeTimeFactor : Mathf.RoundToInt(vb * ExtraUpgrades.WeaponDamageFactor);
 				stat = hf + " " + va + " vs " + vb;
 				return vb > 0f && Mathf.Abs(va - want) < 0.001f;
 			}
@@ -759,7 +781,7 @@ namespace DynamicIslands
 			Equipment b = eq != null ? eq.FirstOrDefault(e => e != null && e.equipableItem == u.Base) : null;
 			if (a == null || b == null || a == b) { stat = "no equipment of its own"; return false; }
 			string field = u.Name == "DI_SwiftFlippers" ? "swimSpeedMultiplier" : u.Name == "DI_LargeAirTank" ? "oxygenLostMultiplier" : null;
-			if (u.Name == "DI_Floodlight")
+			if (u.Name == "DI_Floodlight" || u.Name == "DI_BrightHeadLight")
 			{
 				Light l = HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>();
 				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>();

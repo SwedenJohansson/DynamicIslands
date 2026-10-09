@@ -92,6 +92,14 @@ namespace DynamicIslands.Editor
 		public const float TelescopeFovFactor = 0.5f;
 		/// <summary>Titanium greatsword and spear: damage times their base's. Long paddle: push times the paddle's.</summary>
 		public const float WeaponDamageFactor = 1.5f, PaddleFactor = 2f;
+		/// <summary>Steel pot and fast juicer: cooking time is this many times shorter.</summary>
+		public const float TableSpeedFactor = 2f;
+		/// <summary>Master hammer: repairs this many times as much per swing.</summary>
+		public const int HammerRepairFactor = 2;
+		/// <summary>Longbow: draws and shoots this many times as hard and fast.</summary>
+		public const float BowFactor = 1.5f;
+		/// <summary>Lumber axe: takes building pieces apart in this part of the time.</summary>
+		public const float AxeTimeFactor = 0.5f;
 
 		static List<Upgrade> all;
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
@@ -179,6 +187,33 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29433, Name = "DI_Floodlight", BaseName = "HeadLight_Advanced", Display = "Floodlight", Tint = new Color(1f, 0.95f, 0.55f), UsesFactor = 2,
 					Wearing = Floodlight,
 					Description = "An advanced head light that lights twice as far and half again as bright, and lasts twice as long." },
+				new Upgrade { Index = 29434, Name = "DI_SteelPot", BaseName = "Placeable_CookingPot", Display = "Steel pot", Tint = new Color(0.7f, 0.75f, 0.8f),
+					Setup = QuickTable,
+					Description = "A cooking pot that cooks twice as fast." },
+				new Upgrade { Index = 29435, Name = "DI_FastJuicer", BaseName = "Placeable_Juicer", Display = "Fast juicer", Tint = new Color(1f, 0.7f, 0.35f),
+					Setup = QuickTable,
+					Description = "A juicer that makes juice twice as fast." },
+				new Upgrade { Index = 29436, Name = "DI_TitaniumMachete", BaseName = "Machete", Display = "Titanium machete", Tint = new Color(0.75f, 0.82f, 0.95f), UsesFactor = 2,
+					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Held = StrongWeapon,
+					Description = "A machete with a titanium blade: hits half again as hard and lasts twice as long." },
+				new Upgrade { Index = 29437, Name = "DI_SturdyScarecrow", BaseName = "Placeable_Scarecrow_Advanced", Display = "Sturdy scarecrow", Tint = new Color(0.95f, 0.8f, 0.4f),
+					Setup = SturdyScarecrow,
+					Description = "An advanced scarecrow that never wears out." },
+				new Upgrade { Index = 29438, Name = "DI_MasterHammer", BaseName = "Hammer", Display = "Master hammer", Tint = new Color(0.85f, 0.55f, 0.35f), UsesFactor = 2,
+					Held = MasterHammer,
+					Description = "A building hammer that repairs twice as much per swing and lasts twice as long." },
+				new Upgrade { Index = 29439, Name = "DI_Longbow", BaseName = "Bow", Display = "Longbow", Tint = new Color(0.55f, 0.8f, 0.45f), UsesFactor = 2,
+					Held = Longbow,
+					Description = "A bow that draws half again as fast, shoots half again as far and lasts twice as long." },
+				new Upgrade { Index = 29440, Name = "DI_BrightHeadLight", BaseName = "HeadLight", Display = "Bright head light", Tint = new Color(1f, 0.85f, 0.6f), UsesFactor = 2,
+					Wearing = Floodlight,
+					Description = "A head light that lights twice as far and half again as bright, and lasts twice as long." },
+				new Upgrade { Index = 29441, Name = "DI_BrightLamp", BaseName = "Placeable_Lantern_Basic", Display = "Bright lamp", Tint = new Color(1f, 0.7f, 0.7f),
+					Setup = BrightLight,
+					Description = "A lantern that lights twice as far and half again as bright." },
+				new Upgrade { Index = 29442, Name = "DI_LumberAxe", BaseName = "Axe_Titanium", Display = "Lumber axe", Tint = new Color(0.9f, 0.45f, 0.4f), UsesFactor = 2,
+					Held = LumberAxe,
+					Description = "A titanium axe that takes building pieces apart twice as fast and lasts twice as long." },
 			};
 		}
 
@@ -578,6 +613,44 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		static void QuickTable(GameObject go)
+		{
+			foreach (CookingTable t in go.GetComponentsInChildren<CookingTable>(true))
+				if (t.GetComponent<QuickCooking>() == null) t.gameObject.AddComponent<QuickCooking>();
+		}
+
+		static void SturdyScarecrow(GameObject go)
+		{
+			foreach (Scarecrow s in go.GetComponentsInChildren<Scarecrow>(true))
+				s.invurnerable = true;
+		}
+
+		static void MasterHammer(GameObject go)
+		{
+			foreach (Hammer h in go.GetComponentsInChildren<Hammer>(true))
+			{
+				Traverse f = Traverse.Create(h).Field("blockRepairAmount");
+				f.SetValue(f.GetValue<int>() * HammerRepairFactor);
+			}
+		}
+
+		static void Longbow(GameObject go)
+		{
+			foreach (Throwable t in go.GetComponentsInChildren<Throwable>(true))
+				t.throwForceMultiplier *= BowFactor;
+			foreach (ChargeMeter c in go.GetComponentsInChildren<ChargeMeter>(true))
+			{
+				Traverse f = Traverse.Create(c).Field("chargeSpeed");
+				f.SetValue(f.GetValue<float>() * BowFactor);
+			}
+		}
+
+		static void LumberAxe(GameObject go)
+		{
+			foreach (Axe a in go.GetComponentsInChildren<Axe>(true))
+				a.chopBlockTime *= AxeTimeFactor;
+		}
+
 		/// <summary>The head light's lamp sits on the model it shares with the advanced head light: brighter only while worn.</summary>
 		static readonly Dictionary<Light, Vector2> lightBase = new Dictionary<Light, Vector2>();
 
@@ -687,6 +760,27 @@ namespace DynamicIslands.Editor
 	/// <summary>On every placed or loaded block of an upgrade (its prefab copies carry it): tints it and sets its better
 	/// stats in Awake, before Raft's own Start code reads them, then runs the upgrade's Every every 2 s. The upgrade is found
 	/// by the block's item, so the component needs no saved fields.</summary>
+	/// <summary>On a steel pot or fast juicer: while it cooks, the host adds the extra time to its cook timer
+	/// (the recipe asset is shared, so its cook time stays as it is).</summary>
+	public class QuickCooking : MonoBehaviour
+	{
+		static readonly MethodInfo isCooking = AccessTools.Method(typeof(CookingTable), "IsCooking");
+		CookingTable table;
+		Traverse timer;
+
+		void Awake()
+		{
+			table = GetComponent<CookingTable>();
+			timer = Traverse.Create(table).Field("cookTimer");
+		}
+
+		void Update()
+		{
+			if (table == null || !Raft_Network.IsHost || isCooking == null || !(bool)isCooking.Invoke(table, null)) return;
+			timer.SetValue(timer.GetValue<float>() + Time.deltaTime * (ExtraUpgrades.TableSpeedFactor - 1f));
+		}
+	}
+
 	public class UpgradeBlock : MonoBehaviour
 	{
 		ExtraUpgrades.Upgrade upgrade;

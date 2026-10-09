@@ -2319,6 +2319,15 @@ the thing it improves (the **base**), once the base is learned:
 | **Titanium spear** | A metal spear that **hits half again as hard**; it lasts twice as long | 2x the metal spear + 2 titanium ingots | Metal spear |
 | **Long paddle** | A paddle that **pushes the raft twice as hard**; it lasts twice as long | 2x the paddle | Paddle |
 | **Floodlight** | An advanced head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the advanced head light | Advanced head light |
+| **Steel pot** | A cooking pot that **cooks twice as fast** | 2x the cooking pot | Cooking pot |
+| **Fast juicer** | A juicer that **makes juice twice as fast** | 2x the juicer | Juicer |
+| **Titanium machete** | A machete that **hits half again as hard**; it lasts twice as long | 2x the machete + 2 titanium ingots | Machete |
+| **Sturdy scarecrow** | An advanced scarecrow that **never wears out** | 2x the advanced scarecrow | Advanced scarecrow |
+| **Master hammer** | A building hammer that **repairs twice as much per swing**; it lasts twice as long | 2x the building hammer | Building hammer |
+| **Longbow** | A bow that **draws half again as fast and shoots half again as far**; it lasts twice as long | 2x the bow | Bow |
+| **Bright head light** | A head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the head light | Head light |
+| **Bright lamp** | A lantern that lights **twice as far** and half again as bright | 2x the lantern | Lantern |
+| **Lumber axe** | A titanium axe that **takes building pieces apart twice as fast**; it lasts twice as long | 2x the titanium axe | Titanium axe |
 
 None of them needs a new model: they are Raft's own machines and tools, each in a colour of its own (worn ones are tinted
 while they are worn). Raft's purifiers, biofuel refiner and beehive have

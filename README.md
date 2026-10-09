@@ -429,7 +429,9 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls
   1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming), large air tank
   (loses air half as fast), rapid charger (2x per fuel), fast recycler (2x as fast), bright lantern (2x as far),
-  telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push) and floodlight (2x as far).
+  telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push), floodlight (2x as far),
+  steel pot and fast juicer (2x as fast), titanium machete (1.5x damage), sturdy scarecrow (never wears out), master hammer
+  (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far) and lumber axe (2x as fast).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
   option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
