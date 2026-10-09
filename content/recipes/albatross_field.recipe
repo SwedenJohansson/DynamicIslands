@@ -80,6 +80,8 @@ place Zone_Trigger hangars at -27 -48 h=6
 # commander's order on it, the flight board on the north wall, his footlocker. Varuna's site office has no inside)
 push at -20.5 53 h=4.4 yaw=0
 call relay_house
+place Pickup_Landmark_Plastic3_Land - at -5 -8.2 y=0.3 drop yaw=158
+place "Pickup_Landmark_Scrap 4_Land" - at -9.5 -6.3 y=0.3 drop yaw=12
 pop
 # (the chart table's mesh lies 12.6 m south of its pivot (x0.45: 5.7 m): the pivot north of the table)
 place MapTable maptable at -27.6 53.2 h=4.3 scale=0.45
@@ -90,6 +92,7 @@ place Loot_Chest footlocker at -30.0 44.0 h=5 drop yaw=90
 # cab's east door; in the cab the radio set, a microphone, a chair, its lamps lit when there's power)
 push at -10 50 h=4.35 yaw=0
 call rt_storey f1=RT_WallDoor1
+place "Pickup_Landmark_Scrap 1_Land" - at -3 1.8 y=0.3 drop yaw=244
 pop
 push at -10 50 h=7.35 yaw=0
 call rt_storey b1=RT_WallWindow1 b2=RT_WallWindow1 f1=RT_WallWindow1 f2=RT_WallWindow1 l1=RT_WallWindow1 l2=RT_WallWindow1 l3=RT_WallWindow1 r1=RT_WallWindow1 r2=RT_WallDoor1 r3=RT_WallWindow1
@@ -127,6 +130,8 @@ place Zone_Trigger powerbunker at -40.5 57 h=5.8
 # ===== The barracks and the mess tent on the north shore ===============================================================
 push at 12 62 h=4.4 yaw=0
 call relay_house
+place Pickup_Landmark_Plastic3_Land - at -5.6 -8.2 y=0.3 drop yaw=93
+place Pickup_Landmark_Plank_Land - at -6.2 -3.4 y=0.3 drop yaw=301
 pop
 place "VG_DecorationPrefabBase_BunkBed Variant" - at 3.4 60 h=4.32 yaw=90
 place "VG_DecorationPrefabBase_BunkBed Variant" - at 3.4 56.8 h=4.32 yaw=90

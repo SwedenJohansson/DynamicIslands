@@ -117,6 +117,7 @@ place Note_Paper fishernote at 2.25 3.6 y=5.9 drop yaw=20
 place FishingNets_02 - at 0.8 3.7 y=5.1 sit yaw=80
 place FishingNets_02 - at 3.8 1 y=5.1 sit yaw=10
 place Placeable_Lantern_Metal - at 3.9 3.8 y=5.1 sit
+place Pickup_Landmark_Plastic3_Land - at 1.4 1.5 y=5.4 drop yaw=77
 pop
 push at 2.25 109.75 h=-2.5 yaw=90
 call stilt_hut y=5.1 ladder=none w2=ReefHuts_PlasticWall1 w5=ReefHuts_PlasticWall4
@@ -124,6 +125,7 @@ place Reef_Barrel2 - at 0.9 3.6 y=5.1 sit
 place Reef_Barrel4 - at 1.9 3.7 y=5.1 sit yaw=40
 place "Box Small" smokebox at 3.6 3.5 y=5.1 sit yaw=-10
 place Firewood_1 - at 2.4 2 y=5.1 sit
+place "Pickup_Landmark_Scrap 2_Land" - at 1.2 1.3 y=5.4 drop yaw=200
 pop
 place Note_Board welcomeboard at 6.5 92.5 h=2.5 yaw=180
 place Crate_Big_01 - at -4.2 92.6 h=2.5 sit yaw=12
@@ -165,6 +167,7 @@ place "Table Office" - at 3 3.7 y=0.1 sit yaw=180
 place "Chair Office" - at 3 3 y=0.1 sit
 place Placeable_Lantern_Metal - at 3.4 3.7 y=0.9 sit drop
 place Crate_Big_02 - at 1 0.9 y=0.1 sit yaw=8
+place Pickup_Landmark_Plank_Land - at 2.0 2.0 y=0.4 drop yaw=29
 pop
 place Placeable_Flag_03 - at -15 83.6 h=2.5
 
@@ -208,6 +211,8 @@ place Note_Paper smithnote at 3.6 0.5 y=1.2 drop yaw=15
 place Reef_Barrel1 - at 0.7 5.2 y=0.1 sit
 place MetalSheet_2 - at 1.6 5.4 y=0.1 sit yaw=10
 place Placeable_Lantern_Metal - at 2.6 0.6 y=1.2 drop
+place "Pickup_Landmark_Scrap 1_Land" - at 2.4 2.8 y=0.4 drop yaw=118
+place "Pickup_Landmark_Scrap 4_Land" - at 4.4 2.4 y=0.4 drop yaw=301
 pop
 line Relay_Fence_wood from 66 52 to 66 57.5 step=1.825
 line Relay_Fence_wood from 66 64.5 to 66 66 step=1.825
@@ -274,6 +279,7 @@ place "Box Big" farmstore at 2.25 0.8 y=0.1 sit yaw=180
 place Crate_Big_01 - at 0.9 0.9 y=0.1 sit yaw=10
 place Crate_Small_02 - at 3.7 0.8 y=0.1 sit yaw=-20
 place Reef_Barrel5 - at 3.8 3.6 y=0.1 sit
+place Pickup_Landmark_Plank_Land - at 1.2 2.7 y=0.4 drop yaw=145
 pop
 
 # --- The growers' quarter: the grower's house (Raft's wooden walls, its door to the pen, a thatch roof) with the chest
@@ -298,6 +304,7 @@ place Table_Common_01 - at 1.2 3.4 y=0.1 sit yaw=90
 place Note_Paper growernote at 1.2 3.4 y=0.9 drop yaw=30
 place Placeable_Chair_Stool - at 1.9 2.5 y=0.1 sit
 place Placeable_Lantern_Metal - at 0.9 3.9 y=0.9 drop
+place Pickup_Landmark_Plastic3_Land - at 3.1 2.2 y=0.4 drop yaw=12
 pop
 line Relay_Fence_wood from -44 8 to -28 8 step=1.825
 line Relay_Fence_wood from -28 8 to -28 22 step=1.825
@@ -445,6 +452,7 @@ place Placeable_Flag_01 - at 8.3 5.3 y=0.1
 place Placeable_Lantern_Basic - at 0.7 0.7 y=0.1 sit
 place Placeable_Lantern_Basic - at 0.7 5.3 y=0.1 sit
 place Zone_Trigger hallinside at 4.5 3 y=1.4
+place Pickup_Landmark_Plastic3_Land - at 2.5 1.5 y=0.4 drop yaw=226
 pop
 place Note_Sign hallplaque at 49.2 9.4 h=34.7 yaw=270
 place Zone_Trigger hall at 46 7 h=36

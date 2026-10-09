@@ -64,6 +64,8 @@ place "Box Small" saloonbox at 4 -40 h=3.2 drop yaw=20
 # (the assay office: a relay house, its veranda onto the street; the notice by its door, the scales on the table inside)
 push at 26 -38 h=2.9 yaw=90
 call relay_house
+place "Pickup_Landmark_Scrap 2_Land" - at -6 -2 y=0.3 drop yaw=64
+place Pickup_Landmark_Plastic3_Land - at -9 -8.8 y=0.3 drop yaw=215
 pop
 place Note_Sign assaynotice at 18.2 -35 h=2.9 yaw=180
 place Table - at 20 -31 h=3.8 drop yaw=90
@@ -91,6 +93,8 @@ call corners w=4 d=3
 roof 4 3 at 0 0 y=0.1 wood
 place Sign_02 - at 3 -0.05 y=3.3 yaw=180
 place Loot_Crate storecrate at 4.5 3.5 y=0.1 sit yaw=10
+place Pickup_Landmark_Plank_Land - at 1.4 2.0 y=0.4 drop yaw=349
+place "Pickup_Landmark_Scrap 1_Land" - at 3.0 3.4 y=0.4 drop yaw=120
 pop
 # --- The street's south side: tents, ore carts, barrels, lamps, a snow shovel; the hens -------------------------------
 place Balboa_DecorationPrefabBase_SimpleTent - at 7 -50 ground yaw=170

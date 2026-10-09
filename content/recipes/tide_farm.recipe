@@ -42,6 +42,8 @@ place Block_Wall_Wood - at 2.25 3 yaw=90
 place Block_Wall_Wood - at 1.5 -0.75
 place Loot_Chest toolchest at 1.6 3.1 sit yaw=180
 place "VG_DecorationPrefabBase_Workbench Variant" - at -0.2 2.4 sit yaw=90
+place "Pickup_Landmark_Scrap 2_Land" - at 0.7 0.8 y=0.4 drop yaw=205
+place Pickup_Landmark_Plank_Land - at 1.4 2.0 y=0.4 drop yaw=44
 pop
 place Creature_Chicken chickens at 2 -3
 
@@ -130,6 +132,7 @@ place Placeable_Flower_Sunflower - at 3.6 5.2 sit
 place Placeable_Flower_Rose - at 1 5.2 sit
 place Placeable_Sprinkler - at 2.2 3 sit
 place Loot_ChestLarge harvest at 3.6 3 sit yaw=270
+place Pickup_Landmark_Plastic3_Land - at 2.3 4.5 y=0.3 drop yaw=127
 pop
 
 # --- The water wheel on the north side, half in the sea: jammed by a crate; its turning twin hidden ---------------

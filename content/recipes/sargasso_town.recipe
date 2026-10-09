@@ -101,6 +101,7 @@ place Placeable_Chair_Wood - at 2.25 1.6 y=0.25 sit
 place Placeable_Storage_Small ballotbox at 2.25 2.6 y=1.02 sit
 place Note_Board charter at 2.25 4.25 y=0.25 yaw=180
 place Loot_ChestLarge townchest at 3.9 1 y=0.25 sit yaw=270
+place Pickup_Landmark_Plastic3_Land - at 0.9 1.0 y=0.45 drop yaw=58
 pop
 place Zone_Trigger council at 0 -0.5 h=1.5
 place BoatStranded - at -8.5 -6 ground sit yaw=35 scale=1.4
@@ -131,6 +132,8 @@ place Block_Wall_Wood - at 4.5 3.75 y=0.2 yaw=90
 roof 3 3 at 0 0 y=0.2 wood
 place "Balboa_DecorationPrefabBase_Old Stove" - at 3.7 3.6 y=0.25 sit yaw=270
 place Loot_ChestSmall rourkechest at 3.6 2.2 y=0.25 sit yaw=270
+place "Pickup_Landmark_Scrap 1_Land" - at 1.8 3.2 y=0.45 drop yaw=287
+place Pickup_Landmark_Plank_Land - at 2.4 1.0 y=0.45 drop yaw=101
 pop
 place Note_Paper rourkenote at 13.3 3.6 ground sit yaw=80
 place Zone_Trigger galley at 16 2 h=1.5
@@ -194,6 +197,7 @@ place Block_Wall_Fence_Plank - at 0 2.25 y=0 yaw=90
 place Block_Wall_Fence_Plank - at 3 0.75 y=0 yaw=90
 place Block_Wall_Fence_Plank - at 3 2.25 y=0 yaw=90
 place "Box Small" lookoutbox at 0.8 2.3 y=0.1 sit yaw=30
+place Pickup_Landmark_Plastic3_Land - at 2.2 1.6 y=0.3 drop yaw=164
 pop
 place Zone_Trigger lookout at 51 -4 h=13
 place Creature_Goat goats at -52 42 ground

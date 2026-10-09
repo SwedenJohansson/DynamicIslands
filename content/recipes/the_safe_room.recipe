@@ -136,6 +136,10 @@ place TP_RotatingRedLight redlight at 3 9 y=2.85
 place Zone_Atmosphere saferoomair at 3 9 y=1.5
 place Zone_Sound saferoomhum at 3 9 y=1.5
 place Zone_Trigger saferoomtop at 2.2 9.6 y=0.2
+place Pickup_Landmark_Plastic3_Land - at -2 -2.5 y=0.3 drop yaw=18
+place Pickup_Landmark_Plank_Land - at 4.9 -1.8 y=0.3 drop yaw=222
+place Pickup_Landmark_Plastic3_Land - at -8.8 -2.2 y=0.3 drop yaw=140
+place Pickup_Landmark_Plastic3_Land - at -4.5 7.2 y=0.3 drop yaw=275
 pop
 
 # --- The gatehouse at the driveway's top: two by two of Raft's floor, solid wooden walls with a window, a gap for its
@@ -156,6 +160,7 @@ place Balboa_DecorationPrefabBase_CRTScreen - at 2.4 2.4 y=0.85 sit yaw=180
 place Note_Book securitylog at 1.9 2.1 y=0.85 drop yaw=-15 rot=0,0,0
 place Balboa_DecorationPrefabBase_SmallLocker gatelocker at 0.4 2.4 y=0.1 sit yaw=90
 place Zone_Trigger driveway at 1.5 -3 y=1
+place "Pickup_Landmark_Scrap 4_Land" - at 1.5 1.0 y=0.4 drop yaw=96
 pop
 # (outside: the gate standing open by the road, the family's van, the carport's tool crate)
 place Block_Wall_Gate_Tier3 - at 16.6 -22.4 ground yaw=60
@@ -194,6 +199,8 @@ call stilt_hut y=1.4 ladder=none w1=none
 place VG_Safe boatsafe at 3.4 3.7 y=1.4 sit
 place Reef_Barrel1 - at 3.9 1 y=1.4 sit
 place Reef_Barrel1 - at 0.6 3.9 y=1.4 sit yaw=40
+place Pickup_Landmark_Plank_Land - at 1.4 1.8 y=1.7 drop yaw=333
+place "Pickup_Landmark_Scrap 2_Land" - at 2.4 2.6 y=1.7 drop yaw=58
 pop
 place TangaroaHatchRoom_Hatch boathatch at 0 32.8 ground
 place Zone_Trigger shaftfoot at 1.5 34 y=0.3

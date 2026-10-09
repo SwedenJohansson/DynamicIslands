@@ -93,6 +93,7 @@ push at 36 -186 h=1
 call stilt_hut y=1.2
 place Note_Board wardenmap at 2.25 4.1 y=1.2 yaw=180
 place Loot_Chest wardenchest at 3.6 2.6 y=1.2 drop yaw=270
+place Pickup_Landmark_Plastic3_Land - at 1.1 1.9 y=1.5 drop yaw=37
 pop
 place Zone_Trigger fenlanding at 40 -189 y=1.5
 place Balboa_DirectionSign - at 44.5 -183 ground yaw=20
@@ -203,6 +204,8 @@ pop
 # ===== CHAPTER 2 - REEDCUT (north) ========================================================================================
 push at -19 98 h=1.5
 call stilt_hut
+place Pickup_Landmark_Plastic3_Land - at 1.2 1.5 y=2.9 drop yaw=112
+place Pickup_Landmark_Plank_Land - at 3.2 3.0 y=2.9 drop yaw=64
 pop
 push at -6 98 h=1.5
 call stilt_hut w1=ReefHuts_PlasticWall4
@@ -229,6 +232,7 @@ call stilt_hut w1=ReefHuts_PlasticWall4
 pop
 push at 60 70 h=1.5
 call stilt_hut w3=ReefHuts_Wall3
+place "Pickup_Landmark_Scrap 1_Land" - at 3.0 1.4 y=2.9 drop yaw=205
 pop
 place Zone_Trigger eelmarsh at 64 64 y=1.5
 place Note_Sign eelelder at 66 65 ground yaw=225
@@ -266,6 +270,7 @@ place Zone_Trigger wisp at 75 6 y=1
 # ===== CHAPTER 5 - TURFHOLM (south-east) ==================================================================================
 push at 52 -88 h=1.5
 call stilt_hut
+place Pickup_Landmark_Plank_Land - at 3.3 2.2 y=2.9 drop yaw=151
 pop
 push at 68 -96 h=1.5
 call stilt_hut w1=ReefHuts_PlasticWall4
@@ -312,6 +317,7 @@ place Zone_Trigger hermitisle at -73 -127 y=1.5
 # ===== CHAPTER 7 - WILLOWBEND (west) and the mill isle =====================================================================
 push at -127 -7 h=1.5
 call stilt_hut
+place Pickup_Landmark_Plastic6_Land - at 2.8 2.9 y=2.9 drop yaw=20
 pop
 push at -119 -6 h=1.5
 call stilt_hut w1=ReefHuts_PlasticWall4
@@ -364,6 +370,7 @@ place Zone_Sound beastmusic at -61.98 45.44 y=3
 # south, the vault south-west (a closed storey, its door a hinged wall), five houses round the ring --------------------------
 push at -4.8 -4.8 h=1.55
 call relay_house
+place Pickup_Landmark_Plank_Land - at -8 -3 y=0.3 drop yaw=88
 pop
 place Note_Board charter at -3.5 -12 ground yaw=270
 place Zone_Trigger hallcellar at -11.5 -10 h=3
@@ -386,6 +393,7 @@ pop
 push at -13.37 5.76 h=1.55
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3
+place Pickup_Landmark_Plastic3_Land - at -4.5 1.5 y=0.3 drop yaw=296
 pop
 push at -22.65 -3.36 h=1.55
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow2

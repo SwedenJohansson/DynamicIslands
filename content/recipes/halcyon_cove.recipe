@@ -81,26 +81,31 @@ call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWin
 place RT_Floor pinkhouse at 0 4.5 y=3
 place Placeable_Cupboard_Medium housecupboard at -5.4 2 y=0 sit yaw=90
 place "VG_DecorationPrefabBase_Sofa Variant" - at -2.5 3.5 y=0 sit yaw=180
+place Pickup_Landmark_Plastic3_Land - at -3.0 -1.2 y=0.3 drop yaw=64
 pop
 push at 26 59.7 h=3.35
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b2=RT_WallWindow1 a=minthouse
 place RT_Floor minthouse at 0 4.5 y=3
 place Placeable_Table_Basic - at -1.5 -6.5 y=0 sit
 place Note_Paper script at -1.5 -6.5 y=2 drop yaw=15
+place Pickup_Landmark_Plastic3_Land - at -4.2 1.8 y=0.3 drop yaw=130
 pop
 push at -14 40.3 h=3.35 yaw=180
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow1 a=skyhouse
 place RT_Floor skyhouse at 0 4.5 y=3
+place Pickup_Landmark_Plastic6_Land - at -2.5 -1.0 y=0.3 drop yaw=-35
 pop
 push at 32 40.3 h=3.35 yaw=180
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b2=RT_WallWindow1 a=lemonhouse
 place RT_Floor lemonhouse at 0 4.5 y=3
 place TangaroaStoreSign_FloatingFashion - at -3 -4.65 y=3.6 yaw=180
+place Pickup_Landmark_Plastic3_Land - at -4.0 1.5 y=0.3 drop yaw=252
 pop
 push at 15 63 h=3.35
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow1 b2=RT_WallWindow1 a=townhall
 place RT_Floor townhall at 0 4.5 y=3
 place Placeable_Flag_03 - at -3 0 y=3 sit
+place Pickup_Landmark_Plank_Land - at -1.5 2.5 y=0.3 drop yaw=18
 pop
 push at -26 59.7 h=3.35
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 a=barbershop
@@ -174,6 +179,7 @@ push at 3 23.5 h=9.6
 call stilt_hut y=0.5 ladder=none
 place Placeable_Table_Basic - at 2.25 3.6 y=0.5 sit
 place Note_Book weatherlog at 2.25 3.6 y=1.6 drop yaw=10
+place "Pickup_Landmark_Scrap 3_Land" - at 1.1 1.6 y=0.8 drop yaw=95
 pop
 
 # --- The moon on the hilltop: Temperance's dome house tinted pale silver, the booth inside (the console, screens, the

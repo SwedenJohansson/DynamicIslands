@@ -45,11 +45,13 @@ push at -5.5 0.5 h=2.05
 call stilt_hut y=0.1 ladder=none
 place Placeable_OpenBook - at 2.25 3.6 y=0.1 sit
 place Note_Book almanac at 2.25 3.6 y=1.2 drop yaw=10
+place Pickup_Landmark_Plastic3_Land - at 1.1 1.8 y=0.4 drop yaw=65
 pop
 push at 1 0.5 h=2.05
 call stilt_hut y=0.1 ladder=none
 place Locker - at 3.6 3.6 y=0.1 sit yaw=180
 place Loot_ChestSmall keeperlocker at 1.2 3.6 y=0.1 sit yaw=180
+place "Pickup_Landmark_Scrap 1_Land" - at 2.8 1.6 y=0.4 drop yaw=190
 pop
 place UT_WaterChallengeWheel1 wheel at 0 8.6 h=2.05 sit scale=0.35 rot=90,0,0
 place UT_WaterChallengeWheel1 wheelturning at 0 8.6 h=2.05 sit scale=0.35 rot=90,0,0
@@ -104,6 +106,7 @@ place Zone_Atmosphere winterturned at 30 88 y=10
 push at 77.75 4.75 h=6.05
 call stilt_hut y=0.6
 place Loot_ChestSmall springtoken at 3.4 3.5 y=0.6 sit yaw=180
+place Pickup_Landmark_Plastic3_Land - at 1.4 1.7 y=0.9 drop yaw=310
 pop
 line Balboa_DecorationPrefabBase_Fence_Mid from 84 2 to 84 14 step=2.98
 line Balboa_DecorationPrefabBase_Fence_Mid from 84 14 to 92 14 step=2.98
@@ -129,6 +132,8 @@ place Zone_Atmosphere springturned at 80 -35 y=10
 # on its stone with the summer token's chest by it, two pockets of air under the coral, turtles ----------------------------
 push at -42.25 -82.25 h=4.05
 call stilt_hut y=1.2
+place Pickup_Landmark_Plank_Land - at 1.3 3.0 y=1.5 drop yaw=15
+place Pickup_Landmark_Plastic3_Land - at 3.0 1.5 y=1.5 drop yaw=228
 pop
 place RT_Pillar - at -37 -79 ground sit sy=0.6
 place Note_Board diverlog at -37 -79.3 y=0.6 yaw=180
@@ -160,6 +165,7 @@ place Creature_Turtle turtles at -25 -50 h=-3
 push at -88.25 -2.25 h=5.05
 call stilt_hut y=0.4
 place Loot_ChestSmall autumntoken at 2.25 3.5 y=0.4 sit yaw=180
+place "Pickup_Landmark_Scrap 3_Land" - at 1.2 1.5 y=0.7 drop yaw=101
 pop
 place Note_Sign rhyme at -85.8 -2.6 y=0 sit yaw=180
 place Zone_Trigger autumn at -86 -4 y=1.5

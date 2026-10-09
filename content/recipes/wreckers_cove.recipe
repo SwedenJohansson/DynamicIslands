@@ -102,6 +102,8 @@ place Placeable_Lantern_Metal - at -3.4 -21.5 y=0.45 sit
 place Loot_ChestLarge strongbox at 0 -24 sit yaw=0
 place Creature_Rat rats at 0 -18 sit
 place Zone_Trigger den at 0 -10 y=1.5
+place "Pickup_Landmark_Scrap 2_Land" - at 1.2 -8 ground drop yaw=96
+place Pickup_Landmark_Plank_Land - at -1.4 -14.5 ground drop yaw=210
 pop
 
 # --- A boardwalk along the cove's east shore, from the den's mouth to the south point (planks on posts) -------------
@@ -139,6 +141,8 @@ place Loot_ChestLarge hoard at -5 -1 y=6 sit yaw=90
 place Zone_Trigger lanterntop at -3 0 y=7
 place Bed_Simple - at -5 2 sit yaw=90
 place Note_Paper keeperlog at -1.5 3 y=0.05 sit
+place Pickup_Landmark_Plank_Land - at -2.5 -1.2 y=0.6 drop yaw=33
+place Pickup_Landmark_Plastic3_Land - at -3.2 2.0 y=0.6 drop yaw=172
 pop
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------

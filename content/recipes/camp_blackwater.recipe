@@ -90,6 +90,7 @@ place Placeable_Bed_Wood - at -9.2 -2.2 y=0 sit yaw=90
 place "VG_DecorationPrefabBase_BunkBed Variant" - at -9 -6.5 y=0 sit
 place "VG_DecorationPrefabBase_BunkBed Variant" - at -6.5 -9.3 y=0 sit yaw=90
 place Loot_Chest footlocker at -5.4 -1.4 y=0 sit
+place Pickup_Landmark_Plastic3_Land - at -7 -4 y=0.3 drop yaw=41
 pop
 push at -27 32.5 h=3.55 yaw=270
 call relay_house
@@ -98,6 +99,7 @@ place "VG_DecorationPrefabBase_BunkBed Variant" - at -9 -6.5 y=0 sit
 place "VG_DecorationPrefabBase_BunkBed Variant" - at -6.5 -9.3 y=0 sit yaw=90
 place "Box Small" cabinbox at -5.5 -9.4 y=0 sit
 place Balboa_DecorationPrefabBase_Doll_R - at -1.6 -5.3 y=0 sit yaw=90
+place Pickup_Landmark_Plastic3_Land - at -6.8 -4.8 y=0.3 drop yaw=263
 pop
 
 # --- The campfire circle by the lake, log benches round it; the flagpole --------------------------------------------------
@@ -138,6 +140,7 @@ place Block_Wall_Wood - at 0.75 1.5 y=0.1
 call corners w=2 d=1
 roof 2 1 at 0 0 y=0.1 wood
 place "Box Small" archeryshed at 0.75 0.75 y=0.1 sit yaw=90
+place "Pickup_Landmark_Scrap 2_Land" - at 1.9 0.75 y=0.4 drop yaw=118
 pop
 
 # --- The old boathouse on the lake's east shore, its open front to the water, one wall smashed in; her last note inside;
@@ -145,6 +148,8 @@ pop
 push at 30.25 41.5 h=-2.5 yaw=90
 call stilt_hut y=6 ladder=none w4=none
 place Note_Paper lastnote at 2.25 3.9 y=6 drop rot=0,0,0 yaw=10
+place Pickup_Landmark_Plank_Land - at 1.2 2.6 y=6.3 drop yaw=77
+place "Pickup_Landmark_Scrap 3_Land" - at 3.3 1.6 y=6.3 drop yaw=330
 pop
 place BearBait baitpost at 31 33 ground
 place Creature_Bear ridgebear at 39 31 ground
