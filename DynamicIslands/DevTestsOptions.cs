@@ -787,8 +787,9 @@ namespace DynamicIslands
 			string field = u.Name == "DI_SwiftFlippers" ? "swimSpeedMultiplier" : u.Name == "DI_LargeAirTank" ? "oxygenLostMultiplier" : null;
 			if (u.Name == "DI_Floodlight" || u.Name == "DI_BrightHeadLight")
 			{
-				// (an equipment never worn yet finds its lamp and models on its first Equip: done here as Equip would)
-				if (!HarmonyLib.Traverse.Create(a).Field("isInitialized").GetValue<bool>())
+				// (an equipment never worn yet finds its lamp and models in Initialize - Equipment_HeadLight keeps its own
+				// "initialized": done here when the lamp or model isn't found yet)
+				if (HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>() == null || HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>() == null)
 					HarmonyLib.AccessTools.Method(a.GetType(), "Initialize").Invoke(a, new object[] { player });
 				Light l = HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>();
 				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>();

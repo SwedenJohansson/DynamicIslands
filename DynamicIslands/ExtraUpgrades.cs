@@ -669,6 +669,12 @@ namespace DynamicIslands.Editor
 		static void Floodlight(Equipment e, bool on)
 		{
 			Light l = Traverse.Create(e).Field("lightSourceLight").GetValue<Light>();
+			if (l == null)
+			{
+				// (the upgrade's own copy may not have found its lamp yet: it is under the model it shares with its base)
+				Transform m = Traverse.Create(e).Field("localModel").GetValue<Transform>() ?? Traverse.Create(e).Field("remoteModel").GetValue<Transform>();
+				l = m != null ? m.GetComponentInChildren<Light>(true) : null;
+			}
 			if (l == null) return;
 			Vector2 b;
 			if (!lightBase.TryGetValue(l, out b)) lightBase[l] = b = new Vector2(l.range, l.intensity);
