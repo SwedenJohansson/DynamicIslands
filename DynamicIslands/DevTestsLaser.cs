@@ -26,6 +26,11 @@ namespace DynamicIslands
 			return b.center;
 		}
 
+		static string LaserPath(LaserBeam b)
+		{
+			return b.Points.Count + " points " + string.Join(" -> ", b.Points.Select(p => p.ToString("F1")).ToArray()) + ", mirrors " + b.Mirrors.Count + ", ends on " + (b.Hit != null ? b.Hit.Name : "nothing");
+		}
+
 		static void LaserMoveTo(Transform t, Vector3 centre)
 		{
 			t.position += centre - LaserCentre(t);
@@ -89,8 +94,14 @@ namespace DynamicIslands
 			Physics.SyncTransforms();
 			Vector3 o = beam.Origin, dir = emitter.transform.forward;
 			target.transform.position += Vector3.up * 40f;
+			// (the mirror stood as the emitter does, sending the beam straight on: a quarter round, it sends it aside - so a
+			// beam that misses the turned mirror can't reach the panel by going straight on)
+			mirror.transform.rotation = Quaternion.AngleAxis(90f, Vector3.up) * mirror.transform.rotation;
+			IslandBehaviour mb = mirror.GetComponent<IslandBehaviour>();
+			if (mb != null) HarmonyLib.Traverse.Create(mb).Field("startRot").SetValue(mirror.transform.localRotation);
 			LaserMoveTo(mirror.transform, o + dir * 6f);
 			beam.Trace();
+			Log("  beam before the turn: mirror yaw " + mirror.transform.eulerAngles.y.ToString("0") + ", " + LaserPath(beam));
 			Check(ref ok, beam.Mirrors.Contains(mirror) && beam.Points.Count >= 3, "the beam reaches the mirror and goes on (" + beam.Points.Count + " points, " + beam.Mirrors.Count + " mirrors)");
 			if (beam.Points.Count >= 3)
 			{
@@ -102,6 +113,7 @@ namespace DynamicIslands
 				ScUse(e, "mirror");
 				yield return new WaitForSeconds(1.5f);
 				beam.Trace();
+				Log("  beam after the turn: mirror yaw " + mirror.transform.eulerAngles.y.ToString("0") + " (open " + (mb != null ? mb.Current.ToString("0.##") : "-") + "), " + LaserPath(beam));
 				Check(ref ok, beam.Hit != target, "the mirror turned a quarter, the beam misses the panel (" + (beam.Hit != null ? beam.Hit.Name : "nothing") + ")");
 			}
 			Check(ref ok, beam.GetComponentInChildren<LineRenderer>() != null, "the beam is drawn");
