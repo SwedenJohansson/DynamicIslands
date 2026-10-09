@@ -29,6 +29,9 @@ namespace DynamicIslands
 		static void LaserMoveTo(Transform t, Vector3 centre)
 		{
 			t.position += centre - LaserCentre(t);
+			// (a mover poses itself from where it was placed: moved here, it has to start from here too)
+			IslandBehaviour mover = t.GetComponent<IslandBehaviour>();
+			if (mover != null) HarmonyLib.Traverse.Create(mover).Field("startPos").SetValue(t.localPosition);
 			Physics.SyncTransforms();
 		}
 
