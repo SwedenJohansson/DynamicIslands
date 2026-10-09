@@ -28,7 +28,7 @@ namespace DynamicIslands
 
 		static string LaserPath(LaserBeam b)
 		{
-			return b.Points.Count + " points " + string.Join(" -> ", b.Points.Select(p => p.ToString("F1")).ToArray()) + ", mirrors " + b.Mirrors.Count + ", ends on " + (b.Hit != null ? b.Hit.Name : "nothing");
+			return b.Points.Count + " points " + string.Join(" -> ", b.Points.Select(p => p.ToString("F1")).ToArray()) + ", mirrors " + b.Mirrors.Count + ", ends on " + (b.Hit != null ? b.Hit.Name : "nothing") + (b.HitCollider != null ? " (collider " + b.HitCollider.name + ")" : "");
 		}
 
 		static void LaserMoveTo(Transform t, Vector3 centre)
@@ -89,8 +89,9 @@ namespace DynamicIslands
 			Check(ref ok, beam != null && mirror != null && target != null && LaserBeam.IsMirror(mirror), "an emitter with a beam, a mirror and a target panel");
 			if (beam == null || mirror == null || target == null) { Fail("laser beam"); yield break; }
 
-			// Lined up at run time along the emitter's beam (off the ground): emitter -> 6 m -> mirror -> 5 m -> target
-			emitter.transform.position += Vector3.up * 3f;
+			// Lined up at run time along the emitter's beam, high above the ground (the island is up to 14 m high; 3 m up, the
+			// beam aside from the mirror ran into the slope towards the middle): emitter -> 6 m -> mirror -> 5 m -> target
+			emitter.transform.position += Vector3.up * 20f;
 			Physics.SyncTransforms();
 			Vector3 o = beam.Origin, dir = emitter.transform.forward;
 			target.transform.position += Vector3.up * 40f;

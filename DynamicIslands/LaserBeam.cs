@@ -22,6 +22,8 @@ namespace DynamicIslands
 
 		/// <summary>The object the beam ends on now (null: it ends in the air), and the mirrors it went by.</summary>
 		public IslandObjectRef Hit { get; private set; }
+		/// <summary>The collider the beam stopped on (null: it went its full range) - for the tests' log.</summary>
+		public Collider HitCollider { get; private set; }
 		public readonly List<IslandObjectRef> Mirrors = new List<IslandObjectRef>();
 		public readonly List<Vector3> Points = new List<Vector3>();
 
@@ -75,6 +77,7 @@ namespace DynamicIslands
 			Transform skip = transform;
 			Points.Add(pos);
 			IslandObjectRef hit = null;
+			HitCollider = null;
 			for (int bounce = 0; ; bounce++)
 			{
 				RaycastHit? first = null;
@@ -86,6 +89,7 @@ namespace DynamicIslands
 				}
 				if (!first.HasValue) { Points.Add(pos + dir * Range); break; }
 				Points.Add(first.Value.point);
+				HitCollider = first.Value.collider;
 				IslandObjectRef r = first.Value.collider.GetComponentInParent<IslandObjectRef>();
 				if (IsMirror(r) && bounce < MaxMirrors && !Mirrors.Contains(r))
 				{

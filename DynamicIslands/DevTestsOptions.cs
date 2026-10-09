@@ -621,8 +621,13 @@ namespace DynamicIslands
 				var shownIcons = icons.GetComponentsInChildren<AvaialableResearchItem>(false).Where(a => a.transform.parent == icons).ToList();
 				int teaches = UpgradeTable.Teaches.Count();
 				Check(ref ok, shown.Count == teaches && shown.All(m => UpgradeTableMenu.UpgradeOf(m) != null), "the upgrade table's menu: " + shown.Count + " entries, all upgrades (" + teaches + ")");
-				Check(ref ok, shownIcons.Count > 0 && shownIcons.All(a => ours.Contains(a.Item)) && shownIcons.First(a => a.Item == both).Researched && (raftOne == null || !shownIcons.Any(a => a.Item == raftOne && a.Researched)),
-					"its research items: " + shownIcons.Count + ", only the upgrades' costs, " + both.UniqueName + " researched, " + (raftOne != null ? raftOne.UniqueName : "-") + " not");
+				var notOurs = shownIcons.Where(a => !ours.Contains(a.Item)).Select(a => a.Item != null ? a.Item.UniqueName : "?").ToList();
+				AvaialableResearchItem bothIcon = shownIcons.FirstOrDefault(a => a.Item == both);
+				AvaialableResearchItem raftIcon = raftOne != null ? shownIcons.FirstOrDefault(a => a.Item == raftOne) : null;
+				Check(ref ok, shownIcons.Count > 0 && notOurs.Count == 0 && bothIcon != null && bothIcon.Researched && (raftIcon == null || !raftIcon.Researched),
+					"its research items: " + shownIcons.Count + " of " + ours.Count + ", not the upgrades' costs: " + notOurs.Count + (notOurs.Count > 0 ? " (" + string.Join(", ", notOurs.Take(8).ToArray()) + ")" : "") +
+					"; " + both.UniqueName + " " + (bothIcon == null ? "not shown" : bothIcon.Researched ? "researched" : "NOT researched") +
+					", " + (raftOne != null ? raftOne.UniqueName + " " + (raftIcon == null ? "not shown" : raftIcon.Researched ? "RESEARCHED" : "not researched") : "-"));
 				UpgradeTableMenu.Show(false);
 				shown = content.GetComponentsInChildren<ResearchMenuItem>(false).Where(m => m.transform.parent == content).ToList();
 				Check(ref ok, shown.Count > 0 && !shown.Any(m => UpgradeTableMenu.IsModEntry(m)) && icons.GetComponentsInChildren<AvaialableResearchItem>(false).Any(a => a.Item == both && !a.Researched),
