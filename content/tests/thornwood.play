@@ -2,7 +2,7 @@
 # of the finished land): the camp on the south beach, the rope bridge over the gorge at x -20, the shrines, the temple
 # on the hill at 15 25 (23.4 m). The quest's 21 steps: the camp, the diary, the map; the Shrine of the Roots and its
 # tusk; the gorge's rim, the bridge's carved post, the bridge; the trail to the falls, the Shrine of the Falls and its
-# tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail, the temple, the Warthog King and his
+# tusk, a wild beehive, the Shrine of the Hill and the third tusk; the boar trail, the temple, the Boar King and his
 # guards, the boar idol, the offering (the machete); the two vine caches.
 island Thornwood
 expect step 0
@@ -51,12 +51,12 @@ expect story tusk 3
 expect step 14
 
 # Up the boar trail into the stone ring (the walk passes the trail's zone; opening the temple's chest above took the
-# player into the ring, so that step is credited with it): the Warthog King and his guards
+# player into the ring, so that step is credited with it): the Boar King and his guards
 walk -20 -12 to -10 0 to 0 10 to 10 18 to 15 21 h=23.4
 zone hilltrail
 expect step 16
 zone temple
-expect message Warthog King
+expect message Boar King
 kill Warthog
 expect step 17
 expect animals Warthog 0

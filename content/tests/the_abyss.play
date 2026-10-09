@@ -51,15 +51,12 @@ open Lair hoard
 expect item Blueprint_HeadLight_Advanced 1
 wait 1
 
-# The way back up: the shack, the gas tank, the container, the raft - and the leader's log once more. (Arrivals
-# before their step count when it comes: the shack may be counted already from the fight beside it, and the raft from
-# boarding it twice at the start - so no exact step after the hoard or the container.)
+# The way back up through the pockets to the raft (one step since R1b) - and the leader's log once more. (The raft may
+# be counted already from boarding it twice at the start, so no exact step before it.)
 zone pocket3
-expect step 16
 zone pocket2
-expect step 17
 zone pocket1
 zone camp
-expect step 19
+expect step 16
 read Expedition leader's log
 expect done

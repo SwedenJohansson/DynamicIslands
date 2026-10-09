@@ -46,7 +46,7 @@ expect step 5
 open Trader's strongbox
 expect item Blueprint_Canteen 1
 expect step 6
-read Leader's last slate
+read Noor's last slate
 air airbell2
 
 # The tide gate's lever: the grate sinks, out through the gate before it shuts - and forty breaths later it shuts

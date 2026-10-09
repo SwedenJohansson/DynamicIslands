@@ -31,7 +31,7 @@ zone stern
 expect step 5
 open Captain's cabin locker
 expect story capkey 1
-expect step 7
+# (no exact step here: the bow's rats may be gone already - a shark or the fall - and their step counted with it)
 
 # The rats in the bow's sand, their king among them
 zone bow

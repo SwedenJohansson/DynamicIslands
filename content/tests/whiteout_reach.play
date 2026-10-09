@@ -40,7 +40,7 @@ expect step 8
 walk -0.25 29 to -0.25 26.2 to -1.4 24.6 h=11.7 below=14
 open Camp store
 expect story heatpart 1
-expect step 10
+# (no exact step here: the Kestrel's step may be counted already from the first visit)
 
 # Back to the Kestrel (a step), down by her stern: her hold's crate
 at 25 87.5 h=2.4
