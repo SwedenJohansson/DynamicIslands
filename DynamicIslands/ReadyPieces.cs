@@ -26,8 +26,10 @@ namespace DynamicIslands.Editor
 		public const string Door = "door", Hatch = "hatch", Crank = "crank", Lever = "lever";
 		public const string Lift = "lift", Cage = "cage", Camera = "camera", Generator = "generator", Radio = "radio", Engine = "engine", Mirror = "mirror";
 		public const string Wheel = "wheel", Pipe = "pipe", Wire = "wire", Claw = "claw", Scales = "scales";
+		public const string Laser = "laser", FixedMirror = "fixed mirror", LaserTarget = "laser target";
 		/// <summary>The signals the new kinds send (a quest, the world plan or other objects can wait for them).</summary>
 		public const string PowerSignal = "power", RadioSignal = "radio", EngineSignal = "engine", MirrorSignal = "mirror", CageSignal = "cage";
+		public const string LaserSignal = "laser";
 		public const string WheelSignal = "wheel", PipeSignal = "pipe", WireSignal = "wire", ClawSignal = "claw", ScalesSignal = "scales";
 
 		public static readonly Piece[] All =
@@ -78,6 +80,10 @@ namespace DynamicIslands.Editor
 			new Piece { Name = "UT_ElectricCableHub03", Kind = Wire, Item = "Temperance_ElectricalCable", Use = "Connect the cable", Locked = "No cable runs to this connector. It needs an electrical cable." },
 			new Piece { Name = "Claw_ControlBoard", Kind = Claw, Use = "Work the claw" },
 			new Piece { Name = "TangaroaScaleModel", Kind = Scales, Use = "Tip the scales" },
+			// (Temperance's laser puzzle: the beam is the mod's own, LaserBeam.cs)
+			new Piece { Name = "TP_LaserEmitter", Kind = Laser },
+			new Piece { Name = "TP_MirrorHousing_StaticMirror", Kind = FixedMirror },
+			new Piece { Name = "TP_LaserDoorPanel", Kind = LaserTarget },
 		};
 
 		/// <summary>The pieces added for LM12's rest (2026-10-06): lifts, cages, cameras, generators, radios, the engine, mirrors;
@@ -129,9 +135,27 @@ namespace DynamicIslands.Editor
 					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
 					props[BehaviourProps.EventKey("use")] = "message||Static crackles... then a voice, far away, repeating a frequency." + "\n" + "signal||" + RadioSignal;
 					break;
+				case Laser:
+					props[LaserBeam.Prop] = LaserBeam.Beam;
+					break;
+				case FixedMirror:
+					props[LaserBeam.Prop] = LaserBeam.Mirror;
+					props[BehaviourProps.Collision] = "solid";
+					break;
+				case LaserTarget:
+					// (the beam has to stop on it: a box if it has no collider)
+					props[BehaviourProps.Collision] = "solid";
+					props[BehaviourProps.EventKey(LaserBeam.Event)] = "message||The panel flashes green. Something unlocks." + "\n" + "signal||" + LaserSignal;
+					break;
 				case Mirror:
 				case Wheel:
 				case Pipe:
+					if (p.Kind == Mirror)
+					{
+						// (Temperance's mirrors send a laser beam on, along their front: turned, the beam turns)
+						props[LaserBeam.Prop] = LaserBeam.Mirror;
+						props[BehaviourProps.Collision] = "solid";
+					}
 					props[BehaviourProps.Turn] = "90";
 					props[BehaviourProps.MoveTime] = p.Kind == Wheel ? "1.5" : "0.8";
 					props[BehaviourProps.EventKey("use")] = "switch|" + "\n" + "signal||" + p.Kind;

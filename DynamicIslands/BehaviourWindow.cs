@@ -41,7 +41,7 @@ namespace DynamicIslands.Editor
 		{
 			{ "show", "show" }, { "hide", "hide" }, { "toggle", "show/hide" }, { "open", "open" }, { "close", "close" }, { "switch", "open/close" },
 			{ "message", "say" }, { "give", "give items" }, { "sound", "play sound" }, { "teleport", "teleport to" }, { "signal", "send signal" },
-			{ "journal", "journal page" }, { "wait", "wait" },
+			{ "journal", "journal page" }, { "wait", "wait" }, { "character", "unlock character" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -52,6 +52,7 @@ namespace DynamicIslands.Editor
 			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays" },
 			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
 			{ "journal", "A page is written into the crew's journal (J) - or, on a main story island, onto its tab in Raft's notebook (T)" }, { "wait", "Waits some seconds before the actions below" },
+			{ "character", "Unlocks one of Raft's characters for the player (its name or number, e.g. Rouhi or 3) - kept in the player's Raft profile" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>

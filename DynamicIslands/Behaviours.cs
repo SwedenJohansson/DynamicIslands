@@ -24,7 +24,8 @@ namespace DynamicIslands.Editor
 	///                                   "solid" = a box only if it has no collider of its own
 	///   on.&lt;event&gt;                     actions, one per line "verb|target|argument", when: use (it is used), enter (a trigger
 	///                                   zone fires), read (a note is read the first time), open (a chest is opened),
-	///                                   defeat (all the animals of a creature spot are defeated). The island has
+	///                                   defeat (all the animals of a creature spot are defeated), laser (a laser beam
+	///                                   reaches it - LaserBeam.cs; beh.laser = beam / mirror). The island has
 	///                                   on.arrive (players first come to it) and on.quest (its quest is done).
 	///   if.&lt;event&gt;                     checks that must all pass before the actions run, one per line "kind|target|argument":
 	///                                   has (the player has items; "story:&lt;id&gt;" = a story item of the crew), take (has
@@ -36,7 +37,7 @@ namespace DynamicIslands.Editor
 	/// Verbs: show, hide, toggle (whether objects are there), open, close, switch (movers), message, give (items, story
 	/// items too), sound (one of Raft's sounds), teleport (the player to an object), signal (world plan and island rules can
 	/// wait for it: "signal:&lt;island&gt;:&lt;name&gt;"), journal (a page in the crew's journal), wait (the actions after it
-	/// run that many seconds later).
+	/// run that many seconds later), character (unlocks one of Raft's characters for the player, by name or number).
 	/// </summary>
 	public static class BehaviourProps
 	{
@@ -46,9 +47,9 @@ namespace DynamicIslands.Editor
 		public const string Name = "obj.name", Spin = "beh.spin", Bob = "beh.bob", BobTime = "beh.bobTime", Move = "beh.move", Turn = "beh.turn",
 			MoveTime = "beh.moveTime", MoveMode = "beh.moveMode", Hidden = "beh.hidden", Use = "beh.use", Collision = "col.mode";
 		public const string EventPrefix = "on.";
-		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat" };
+		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser" };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character" };
 		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
 		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest" };
@@ -96,6 +97,7 @@ namespace DynamicIslands.Editor
 				if (ObjectProps.IsNote(objectName, p)) list.Add(new KeyValuePair<string, string>("read", "it is read (the first time)"));
 				if (ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("open", "it is opened (with checks: its loot stays locked until they pass)"));
 				if (!ObjectProps.IsNote(objectName, p) && !ObjectProps.IsLoot(objectName, p)) list.Add(new KeyValuePair<string, string>("use", "a player uses it (" + ObjectProps.Get(p, Use, "needs \"Players can use it\"") + ")"));
+				if (ObjectProps.Get(p, LaserBeam.Prop).Length == 0) list.Add(new KeyValuePair<string, string>(LaserBeam.Event, "a laser beam reaches it (a laser emitter's beam, maybe by way of mirrors)"));
 			}
 			return list;
 		}
@@ -128,7 +130,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Needs a target object (by name).</summary>
 		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport"; }
-		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait"; }
+		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character"; }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -158,6 +160,9 @@ namespace DynamicIslands.Editor
 				case "signal": return "send the signal '" + Arg + "' (world plans can wait for it)";
 				case "journal": return "write \"" + (Target.Length > 0 ? Target : "a page") + "\" in the journal";
 				case "wait": return "wait " + Seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s, then...";
+				case "character":
+					SO_Character c = Behaviours.CharacterOf(Arg);
+					return "unlock the character " + (c != null ? c.displayName : "'" + Arg + "' (no such character)") + " for the player";
 			}
 			return Verb;
 		}
@@ -475,6 +480,7 @@ namespace DynamicIslands.Editor
 			if (!BehaviourProps.Any(props)) return;
 			if (ObjectProps.GetFloat(props, BehaviourProps.Spin, 0f) != 0f || ObjectProps.GetFloat(props, BehaviourProps.Bob, 0f) != 0f || BehaviourProps.Moves(props))
 				go.AddComponent<IslandBehaviour>().Configure(props, index);
+			if (ObjectProps.Get(props, LaserBeam.Prop) == LaserBeam.Beam) go.AddComponent<LaserBeam>();
 			if (ObjectProps.Get(props, BehaviourProps.Use).Length > 0 && !ObjectProps.IsNote(objectName, props) && !ObjectProps.IsLoot(objectName, props) && !ContentCatalog.IsZone(objectName) && !ContentCatalog.IsCreature(objectName))
 			{
 				UseInteract u = CustomNote.InteractHolder(go).AddComponent<UseInteract>();
@@ -805,6 +811,23 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Raft's characters (the ones a player can be), in order.</summary>
+		public static List<SO_Character> Characters()
+		{
+			if (CharacterManager.SO_Characters != null && CharacterManager.SO_Characters.Count > 0) return CharacterManager.SO_Characters;
+			return Resources.LoadAll<SO_Character>("SO_Character").Where(c => c != null).OrderBy(c => c.index).ToList();
+		}
+
+		/// <summary>One of Raft's characters by its number or name (the action "character"), or null.</summary>
+		public static SO_Character CharacterOf(string arg)
+		{
+			arg = (arg ?? "").Trim();
+			if (arg.Length == 0) return null;
+			int i;
+			if (int.TryParse(arg, NumberStyles.Integer, CultureInfo.InvariantCulture, out i)) return Characters().FirstOrDefault(c => c.index == i);
+			return Characters().FirstOrDefault(c => string.Equals(c.displayName, arg, StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
 		static readonly HashSet<string> toldPersonal = new HashSet<string>();
 
@@ -1091,6 +1114,12 @@ namespace DynamicIslands.Editor
 							if (messagesOnly) break;
 							IslandObjectRef to = Targets(e, index, a.Target).FirstOrDefault(r => r.gameObject.activeInHierarchy);
 							if (to != null) Teleport(to.transform.position + Vector3.up * 1.2f);
+							break;
+						case "character":
+							if (messagesOnly) break;
+							SO_Character c = CharacterOf(a.Arg);
+							if (c == null) Debug.LogWarning("[CUSTOM ISLANDS] No character '" + a.Arg + "' (Raft's: " + string.Join(", ", Characters().Select(x => x.index + " " + x.displayName).ToArray()) + ")");
+							else CharacterManager.UnlockCharacterByIndex(c.index);
 							break;
 					}
 				}

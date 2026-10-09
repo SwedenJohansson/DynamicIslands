@@ -103,6 +103,9 @@ namespace DynamicIslands
 					case ReadyPieces.Wire: if (!checks.Contains("state||open") || !checks.Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(p.Name))) || !use.Contains("open|") || !use.Contains("signal||" + ReadyPieces.WireSignal)) why = "no wire settings"; break;
 					case ReadyPieces.Claw:
 					case ReadyPieces.Scales: if (!use.Contains("signal||" + p.Kind)) why = "sends no signal"; break;
+					case ReadyPieces.Laser: if (ObjectProps.Get(props, LaserBeam.Prop) != LaserBeam.Beam) why = "no beam"; break;
+					case ReadyPieces.FixedMirror: if (ObjectProps.Get(props, LaserBeam.Prop) != LaserBeam.Mirror) why = "doesn't send the beam on"; break;
+					case ReadyPieces.LaserTarget: if (!ObjectProps.Get(props, BehaviourProps.EventKey(LaserBeam.Event)).Contains("signal||" + ReadyPieces.LaserSignal)) why = "doesn't answer the beam"; break;
 				}
 				// (a copy as an island in a world makes it: the settings give it its parts)
 				GameObject live = PlaceableCatalog.Spawn(p.Name, null);

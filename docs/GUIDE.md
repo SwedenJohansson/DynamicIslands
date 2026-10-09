@@ -816,7 +816,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Atoll | A ring of land around a shallow lagoon |
 | Archipelago | Several islets; a castaway's note and three caches |
 | Sea stacks | Steep rock pillars; a chest on top of the tallest (build your way up) |
-| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one) |
+| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back); the beast defeated, they sink and the spoils chest shows |
 | Volcano, swamp, frozen spire | A tall volcano with embers; low land with pools and mist; a snowy peak with a cache on top |
 | Treasure island | A map in a bottle on the beach leads to the X and a treasure chest |
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
@@ -1210,9 +1210,11 @@ Select any object → **Behaviour & events...**. No code needed:
   the right digits run the object's use (its checks and actions), a wrong code says so, and once opened it stays open
   for everyone. Put the code on a note somewhere on the island.
 - **Collision:** Raft's own, walk through, one box, or solid.
-- **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, or all the animals of a
-  spot are defeated → show / hide objects, open / close doors, say a message, give items, play a sound, teleport the
-  player, send a signal, write a journal page, or **wait** some seconds first. Each action is chosen from a **▼ list**
+- **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, all the animals of a
+  spot are defeated, or a **laser beam** reaches it → show / hide objects, open / close doors, say a message, give
+  items, play a sound, teleport the player, send a signal, write a journal page, **unlock one of Raft's characters**
+  for the player (its name or number; it is kept in the player's Raft profile, like Raft's own unlocks), or **wait**
+  some seconds first. Each action is chosen from a **▼ list**
   that says what it does; **…** beside a name lists the names on this island. A note's "read" and the island's "first
   come" happen **once per world**: whoever reads the note again (anyone) gets its messages and sounds, not its items or
   teleports again. After a **wait**, what changes the island (show, open, a signal, a journal page) happens even when the
@@ -3438,8 +3440,9 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | Zipline lines (7) | Raft's **zipline lines**, ridden with the zipline tool, their far end set in the object panel |
 | The machete's vines (Balboa) | Raft's **choppable vines**, cut with the machete (kept for the next vines) |
 | Treasure for the metal detector and the shovel (Caravan Town, 175 dig piles) | **Buried treasure** (Raft's own treasure points) |
-| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music; Utopia's boss room doors as scenery a defeat event can hide. Raft's own arenas (Olof's phases, the hyena boss) run on its story characters and are not on custom islands |
+| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music; Utopia's boss room doors as scenery a defeat event can hide. A **boss arena** as the boss map type builds it: a zone whose "walk in" shows a ring of hidden stakes (only if the signal `boss` wasn't sent; a **wait** of 120 s then hides them again), the boss spot's "defeated" hides them, shows the hidden spoils chest and sends `boss`. Raft's own arenas (Olof's phases, the hyena boss) run on its story characters and are not on custom islands |
 | The Receiver's frequencies and the story chain | World plans and Raft's story chain ([7](#7-world-plans-which-islands-a-world-gets), [6.5](#65-your-islands-in-rafts-story-the-receiver)) |
-| Character unlocks, cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
+| Character unlocks | The action **unlock character** (a name such as Rouhi, or a number): the player gets that character as Raft's own story does - kept in their Raft profile, for every world |
+| Cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
 | Keypads with a code (Tangaroa, Vasagatan) | A **keypad code** on any usable object ([6.2](#62-behaviour-and-events)) |
-| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Ready puzzle pieces, rebuilt as the mod's own (Raft's puzzle scripts belong to its story scenes): **turning mirrors** (Temperance's), Utopia's **water wheels** and **pipes** (a straight, a big curve, the radio tower's bend) turn a quarter each use and send `mirror`, `wheel` or `pipe` - checks on their state (open = turned) make the puzzle (a chest that opens once the right ones are turned); Utopia's **wire connectors** take Raft's electrical cable (used up, once - after that they stay connected) and send `wire`; Tangaroa's **claw crane console** sends `claw`; the **justice scales** send `scales`. Or build a puzzle as a **sequence**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). Raft's laser beam itself is not rebuilt: a laser puzzle is mirrors and their states |
+| Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Ready puzzle pieces, rebuilt as the mod's own (Raft's puzzle scripts belong to its story scenes): **turning mirrors** (Temperance's), Utopia's **water wheels** and **pipes** (a straight, a big curve, the radio tower's bend) turn a quarter each use and send `mirror`, `wheel` or `pipe` - checks on their state (open = turned) make the puzzle (a chest that opens once the right ones are turned); Utopia's **wire connectors** take Raft's electrical cable (used up, once - after that they stay connected) and send `wire`; Tangaroa's **claw crane console** sends `claw`; the **justice scales** send `scales`. Or build a puzzle as a **sequence**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). **Laser beams**, the mod's own: Temperance's **laser emitter** shoots a red beam along its front; the turning mirrors and the **fixed mirror** send it on along their own front (turn a mirror, the beam turns); the first other object it reaches gets the event "a laser beam reaches it" - the **laser door panel** says so and sends `laser`. Any object can answer the beam (Behaviours, "When"): a door that opens when the beam is lined up |

@@ -433,14 +433,30 @@ namespace DynamicIslands.Editor
 			k.Quest("The eagle's nest", "", "Nobody has been up here for a long time.", "", "read|Warning|1|", "open|Eagle's nest|1|Reach the top of the tallest rock");
 		}
 
+		/// <summary>The boss arena's stakes (shown while the players fight), their name, and the signal of the beast defeated.</summary>
+		public const string ArenaStake = "Balboa_DecorationPrefabBase_Wooden Spikes", ArenaGate = "Arena gate", BossSignal = "boss";
+
 		static void Boss(MapKit k, IslandGenSettings s)
 		{
 			Vector2 c = k.Mid;
 			k.Clear(c, 24f);
-			k.Zone(c, "arena", 18f, "The ground shakes... something big is coming!");
+			// A boss arena (LM12, 2026-10-09): stepping in, stakes burst up round the arena and shut the players in with the
+			// beast (for two minutes at most: a player who dies can come back); the beast defeated, they sink and the spoils show
+			IslandObject zone = k.Zone(c, "arena", 18f);
+			zone.Props[BehaviourProps.CheckKey("enter")] = "!signal|" + BossSignal;
+			zone.Props[BehaviourProps.EventKey("enter")] = "show|" + ArenaGate + "\n" + "message||The ground shakes... stakes burst up all round - there is no way out!" + "\n" + "wait||120" + "\n" + "hide|" + ArenaGate;
+			for (int i = 0; i < 14; i++)
+			{
+				float a = i * Mathf.PI * 2f / 14f;
+				Vector2 at = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 20f;
+				k.Add(ArenaStake, k.At(at), -a * Mathf.Rad2Deg + 90f, new Dictionary<string, string> { { BehaviourProps.Name, ArenaGate }, { BehaviourProps.Hidden, "1" }, { BehaviourProps.Collision, "solid" } }, 0f);
+			}
 			string beast = s.Style == TerrainPainter.Snowy ? "PolarBear" : "Bear";
-			k.Creature(beast, c + new Vector2(8f, 0f), 1, "Boss", 1.6f, "arena", false);
-			k.Chest("Loot_ChestLarge", c - new Vector2(4f, 0f), "Spoils", MapKit.Loot("Treasure"));
+			IslandObject boss = k.Creature(beast, c + new Vector2(8f, 0f), 1, "Boss", 1.6f, "arena", false);
+			boss.Props[BehaviourProps.EventKey("defeat")] = "hide|" + ArenaGate + "\n" + "show|Spoils" + "\n" + "signal||" + BossSignal + "\n" + "message||The beast falls. The stakes sink back into the ground.";
+			IslandObject spoils = k.Chest("Loot_ChestLarge", c - new Vector2(4f, 0f), "Spoils", MapKit.Loot("Treasure"));
+			spoils.Props[BehaviourProps.Name] = "Spoils";
+			spoils.Props[BehaviourProps.Hidden] = "1";
 			k.Quest("The beast of the plateau", "Climb the ramp to the top of the plateau.", "The beast is defeated. Its spoils are yours.", "",
 				"reach|arena|1|Climb to the top of the plateau", "kill|" + (beast == "Bear" ? "Bear" : "Polar bear") + "|1|Defeat the beast", "open|Spoils|1|");
 		}

@@ -114,6 +114,7 @@
     <Compile Include="MyIslandsWindow.cs" />
     <Compile Include="StoryRemakes.cs" />
     <Compile Include="ReadyPieces.cs" />
+    <Compile Include="LaserBeam.cs" />
     <Compile Include="GenFeatures.cs" />
     <Compile Include="PcCheck.cs" />
     <Compile Include="UpdateCheck.cs" />
@@ -188,6 +189,7 @@
     <Compile Include="WorldSaveShare.cs" />
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
+    <Compile Include="DevTestsLaser.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="ChoiceWindow.cs" />

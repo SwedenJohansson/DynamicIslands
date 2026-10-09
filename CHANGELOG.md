@@ -12,6 +12,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Laser beams:** Temperance's laser emitter shoots a beam the mirrors send on (turn a mirror, the beam turns); what
+  it reaches gets the new event "a laser beam reaches it" - the laser door panel answers with the signal `laser`.
+- **Unlock a character:** a new action gives the player one of Raft's characters (by name or number), as Raft's story does.
+- **Boss arenas:** on a boss island, stakes burst up round the arena when the crew steps in and sink when the beast is
+  defeated (two minutes at most); the spoils chest shows only then.
 - **Ready puzzle pieces:** Utopia's water wheels and pipes (and the radio tower's pipe bend) turn a quarter each use
   like Temperance's mirrors; Utopia's wire connectors take Raft's electrical cable once and stay connected; Tangaroa's
   claw crane console and the justice scales send a signal. Each sends its own signal (`wheel`, `pipe`, `wire`, `claw`,
