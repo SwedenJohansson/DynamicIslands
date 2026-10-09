@@ -119,7 +119,7 @@ place Zone_Trigger stilts at -13 -10 y=1.5
 # market's dead generator and the radio on its pallet (it calls out a supply drop on the trail once the power is on;
 # the generator part in a mechanic's toolbox in the scrap pit); a lever at the foot of the fortress stilts that draws
 # the bolt of the guards' chest
-call powerradio x=16 z=26.5 yaw=15 alias=scrapgen ralias=scrapradio rx=14 rz=26 rh=8 cache=scrapdrop cx=0 cz=0 cr=70 cseed=371 items=Battery*2;CopperIngot*2 kx=-9 kz=-44 kr=10 seed=372 toolbox=scraptoolbox
+call powerradio x=16 z=26.5 yaw=15 alias=scrapgen ralias=scrapradio rx=14 rz=26 rh=8 cache=scrapdrop cx=0 cz=0 cr=70 cseed=371 items=Battery*2;CopperIngot*2 kx=0 kz=0 kr=70 seed=372 toolbox=scraptoolbox
 prop scrapgen else.use=message||The market generator is missing a part. The town mechanic worked out of the scrap pit - his toolbox should still be there.
 prop scrapradio else.use=message||The radio is dead. No power - the market generator first.
 call leverchest x=-11.5 z=-13.5 yaw=90 alias=stiltlever sig=shlever chest=guardchest cx=-11.5 cz=-6.5 cyaw=90 items=Nail*10;Scrap*4;MetalIngot*1 title="Guards' chest"
