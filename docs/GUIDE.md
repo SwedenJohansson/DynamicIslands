@@ -2571,6 +2571,20 @@ can't be changed (Raft's own limits) is in [chapter 13](#13-limitations-what-can
 The world lives on the host's PC. When someone else hosts the next day, the mod works out which copy of the world is
 the newest, and every player who joined keeps a copy too. These rules make sure the right copy is played.
 
+#### The world's save comes to every player
+
+Since 2026-10-09 the host sends Raft's newest save of the world to every player after each save (Raft saves on its own
+every few minutes, and at **Esc > Main menu**) and to each player who joins. Each player gets it in their own Raft
+`World` folder, under the world's name, with Raft's older saves of it kept as backups. So the player who hosts next
+just picks the world in **Load Game** - no copying of folders.
+
+- If you have a world of your own with the same name, it is left alone: the host's goes beside it as
+  `<name> (<8 letters of the world id>)`.
+- Only the last 3 saves you received of a world are kept; Raft's own saves and your own are never removed.
+- Everyone needs this version (the host and the players). A player who wasn't there for the last save doesn't have it:
+  then copy the folder by hand, below.
+- A save over 64 MB packed isn't sent (the host's log says so).
+
 #### Host from the folder of whoever hosted last
 
 **Why:** the mod can't tell "an older copy on purpose" from "an older copy by mistake". If you host from your own older
@@ -2578,7 +2592,7 @@ copy, it simply continues that one. Since 2026-10-06 a player who joins with a n
 (`worlds\<world id>.kept-<n>.txt` in their `Mods\DynamicIslands`) and the host is told "<player>'s copy ... is newer -
 your world may be missing their progress" - but the world you host still goes on from your older copy.
 
-**What to do:**
+**What to do** (when the save didn't come by itself - see above):
 1. The player who hosted last session presses **Esc** and chooses Raft's **Main menu** (this saves the world), then
    waits for the main menu. Only then is the folder complete.
 2. They open the world's folder: paste `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User` into the address

@@ -319,6 +319,7 @@ namespace DynamicIslands.Editor
 			newestStamp = StampOf(lines);
 			lastKey = SaveAndLoad.WorldGuid.ToString();
 			Send(null);
+			if (RaftSaveLine() != null) WorldSaveShare.AfterRaftSave(folder);
 		}
 
 		/// <summary>Host: the world file forgotten (a world without anything of the mod): the copies go too.</summary>

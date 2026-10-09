@@ -8,13 +8,14 @@ The host owns the world: its island list, world file and settings. Clients copy 
 | `DynamicIslands.cs` | `OnNetworkMessage` (RML) -> `IslandNetwork.OnMessage`; `HookRaftEvents` re-hooks `Raft_Network.OnWorldReceivedLate`; `Update` -> `IslandNetwork.Tick`; console command `Resync` (`ResyncCommand`) |
 | `Claims.cs` | Things only one player can have (a chest's loot, a once-zone) |
 | `WorldCopy.cs` | The world file sent to every player, so any of them can host later |
+| `WorldSaveShare.cs` | Raft's newest save folder (`<date>-Latest`) packed+deflated, sent after each Raft save (`WorldCopy.AfterSave` -> `AfterRaftSave`, a frame later) and at a join; the player files it under `SaveAndLoad.WorldPath` (marker `CustomIslands-world.txt` = world guid; another world of that name -> `<name> (<guid8>)`; `.part` then move; old `-Latest` renamed; received folders pruned to 3) |
 | `WorldRules.cs` | Kind 15, and the host's spawnpool.txt settings every player shares |
 | `UpdateCheck.cs` | GitHub release check on the main menu; `MismatchText` for a version difference |
 
 ## Main flow
 1. Client: `Raft_Network.OnWorldReceivedLate` -> `IslandNetwork.OnWorldReceived`: resets `WorldRules`, `WorldOptions`, `StoryChain`, `WorldCopy`; empties the island list.
 2. `IslandNetwork.Tick` sends `SyncRequest` (`Name` = `"version:"` + `LibraryPack.ModVersion`) every `SyncRetrySeconds` (5 s); after `SyncMaxTries` (12) every 30 s, with a notice.
-3. Host, `OnMessage` case `SyncRequest`: `CompareVersions`; replies `SyncRequest` with its version and `HostCapabilities` (`"counts,spots,events"`); then `JoinPart` each, in order: `WorldRules.Message`, `IslandsMessage(..., true)`, `StoryBook.StateMessage`, `WorldOptions.Message`, `StoryChain.Message`, `QuestCount.Message`, `CreatureSpawner.SpotsMessage(null)`, `WorldRandomizer.Message`, `PlayerPlaces.PlaceMessage`; then `PlayerLevels.StateFor` -> `SendLevels`, `WorldCopy.Send(to)`, `AskPlayers(to)` when files are wanted.
+3. Host, `OnMessage` case `SyncRequest`: `CompareVersions`; replies `SyncRequest` with its version and `HostCapabilities` (`"counts,spots,events"`); then `JoinPart` each, in order: `WorldRules.Message`, `IslandsMessage(..., true)`, `StoryBook.StateMessage`, `WorldOptions.Message`, `StoryChain.Message`, `QuestCount.Message`, `CreatureSpawner.SpotsMessage(null)`, `WorldRandomizer.Message`, `PlayerPlaces.PlaceMessage`; then `PlayerLevels.StateFor` -> `SendLevels`, `WorldCopy.Send(to)`, `WorldSaveShare.Send(to)`, `AskPlayers(to)` when files are wanted.
 4. Client `ReceiveIslands`: each island at `FromHost` (x,z from its own raft, the host's y); a known island more than 5 m off is moved. A `FullList` drops islands not in it and sets `synced`. New entries -> `ResolveFile`.
 5. `ResolveFile`: the same-name file if its hash matches; else `<name>_<hash>.island`; else a copy of any `*_<hash>.island`; else `FileRequest` and `Entry.WaitingForFile`.
 6. Host `SendFile` -> `SendChunks`: `FileChunk`s of `ChunkBytes` (3000) in base64, `ChunksPerFrame` (6) a frame. `ReceiveChunk`: only hashes in `requested`; checks `Hash`; saves `<name>_<hash>.island`; clears `WaitingForFile`, so streaming spawns it.
@@ -42,10 +43,11 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 15 `WorldRules` | host -> clients | `Index` monsters, `Count` build cost %, `Data` `receiver=;unload=;regrow=;rdist=`, `Name` refunds |
 | 16 `Claim` | both | `Ids` island and question number, `Index` key, `Count` 1/0 |
 | 18 `WorldCopy`, 24 `WorldCopyNewer` | host -> clients; client -> host | `Name` world guid, `Hash` stamp, parts `Index`/`Count`/`Data`; newer: `Data` `savecount;savedat` |
+| 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
 | 21 `CreatureSpots`, 22 `ObjectHarvest` | host -> clients; via host | `Data` `objectIndex:islandId:spot;...`; `Ids` island, active, yield, `Index` ordinal, `Count` day (host sets its own) |
 
 ## Where to change X
-- New kind: a const in `IslandNetMessage` (next free: 26), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
+- New kind: a const in `IslandNetMessage` (next free: 29), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
 - State a joining player needs: the `JoinPart` list in `OnMessage` case `SyncRequest`, plus a broadcast on change.
 - Island list fields: `IslandsMessage` and `ReceiveIslands`. Files: `ResolveFile`, `SendFile`, `ReceiveChunk`.
 - One-player-only things: `Claims.May`, `Claims.HostGrant`. Shared settings: `WorldRules.HostSettingsData`, `HostSettingsFrom`.

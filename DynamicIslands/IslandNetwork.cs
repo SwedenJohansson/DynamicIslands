@@ -78,6 +78,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The world option Rogue shark, host to players: Index = the rogue's object index (0 = none), Count = no new one
 		/// before this day; Name = "spawn", "dead" or "state" (a player who joins).</summary>
 		public const int RogueShark = 27;
+		/// <summary>Host -> everyone (after each of Raft's saves) and each player who joins: Raft's newest save of the world
+		/// (AU43, WorldSaveShare): Name = world id, Hash = save folder name, Index/Count = part, Data = base64 part of the pack.</summary>
+		public const int WorldSave = 28;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -307,6 +310,14 @@ namespace DynamicIslands.Editor
 			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
 		}
 
+		/// <summary>Raft's save of the world: the host to one player (who joined) or everyone (AU43).</summary>
+		public static void SendWorldSave(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.WorldSave;
+			if (!Raft_Network.IsHost) return;
+			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+		}
+
 		/// <summary>A player -> the host: their kept copy of the world is newer than the host's (AU26).</summary>
 		public static void SendWorldCopyNewer(IslandNetMessage msg)
 		{
@@ -499,6 +510,8 @@ namespace DynamicIslands.Editor
 							// (their own copy of the world, to host it later)
 							try { global::DynamicIslands.Editor.WorldCopy.Send(to); }
 							catch (Exception e) { JoinPartFailed("world copy", e); }
+							try { global::DynamicIslands.Editor.WorldSaveShare.Send(to); }
+							catch (Exception e) { JoinPartFailed("world save", e); }
 							// (island files the host lacks: the player who joined may have them - AU6)
 							if (wanted.Count > 0) AskPlayers(to);
 						}
@@ -570,6 +583,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.WorldCopy:
 						global::DynamicIslands.Editor.WorldCopy.OnMessage(msg);
+						break;
+					case IslandNetMessage.WorldSave:
+						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
 						break;
 					case IslandNetMessage.StoryChain:
 						global::DynamicIslands.Editor.StoryChain.OnMessage(msg);
