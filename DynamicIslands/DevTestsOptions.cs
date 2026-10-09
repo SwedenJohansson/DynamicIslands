@@ -792,9 +792,11 @@ namespace DynamicIslands
 				if (HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>() == null || HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>() == null)
 					HarmonyLib.AccessTools.Method(a.GetType(), "Initialize").Invoke(a, new object[] { player });
 				Light l = HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>();
-				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>();
+				// (the head light's first-person model may be only its lamp: the mesh can be on the third-person model)
+				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>(), m3 = HarmonyLib.Traverse.Create(a).Field("remoteModel").GetValue<Transform>();
 				Renderer r = m != null ? m.GetComponentInChildren<Renderer>(true) : null;
-				if (l == null || r == null) { stat = "no lamp or model on its equipment"; return false; }
+				if (r == null && m3 != null) r = m3.GetComponentInChildren<Renderer>(true);
+				if (l == null || r == null) { stat = "no lamp or model on its equipment (lamp " + (l != null) + ", first-person model " + (m != null) + ", third-person model " + (m3 != null) + ", mesh " + (r != null) + ")"; return false; }
 				float r0 = l.range;
 				ExtraUpgrades.WornChanged(a, true);
 				float r1 = l.range; bool tinted = HasTint(r);
