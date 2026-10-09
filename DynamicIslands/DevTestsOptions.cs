@@ -522,7 +522,7 @@ namespace DynamicIslands
 				Check(ref ok, mine != null && mine.model != null && basic != null && slot.itemEnabler.DoesAcceptItem(large), "its slot takes the large battery (" + cons.Length + " connections)");
 				if (mine == null) yield break;
 				int uses = large.MaxUses - 3;
-				bool put = slot.Insert(player, uses, large.UniqueIndex);
+				bool put = slot.Insert(null, uses, large.UniqueIndex); // no player: it would take the item from a hand that never held it
 				yield return new WaitForSeconds(0.5f);
 				ItemInstance inside = slot.GetBatteryInstance();
 				Check(ref ok, put && inside != null && inside.UniqueIndex == large.UniqueIndex && Math.Abs(slot.BatteryUses - uses) <= 1, "put in with charge " + uses + ": the slot holds " + (inside != null ? inside.UniqueName : "nothing") + " at " + slot.BatteryUses);
@@ -582,7 +582,7 @@ namespace DynamicIslands
 						yield return null; yield return null;
 						Check(ref ok, item.settings_recipe.Learned == (c[0] && c[1]), u.Display + ": option " + (c[0] ? "on" : "off") + ", base " + (c[1] ? "learned" : "not learned") + " -> " + (item.settings_recipe.Learned ? "craftable" : "not craftable"));
 					}
-					if (u.Held != null || u.Worn != null)
+					if (u.Held != null || u.Worn != null || u.Wearing != null)
 					{
 						string what; bool good = u.Held != null ? HeldStat(u, player, out what) : WornStat(u, player, out what);
 						Check(ref ok, good && item.MaxUses == baseItem.MaxUses * u.UsesFactor, u.Display + ": " + what + ", uses " + item.MaxUses + " vs " + baseItem.MaxUses);
@@ -601,13 +601,14 @@ namespace DynamicIslands
 						var storage = made.GetComponentInChildren<Storage_Small>(true);
 						Inventory inv = storage != null ? HarmonyLib.Traverse.Create(storage).Field("inventoryReference").GetValue<Inventory>() : null;
 						int before = player.Inventory.GetItemCount("Plank");
-						if (inv != null) inv.AddItem("Plank", 7);
+						bool filled = inv != null;
+						if (filled) inv.AddItem("Plank", 7);
 						yield return null;
 						BlockCreator.RemoveBlockNetwork(made, player, true);
 						made = null;
 						yield return new WaitForSeconds(0.5f);
 						int got = player.Inventory.GetItemCount("Plank") - before;
-						Check(ref ok, inv != null && got == 7, u.Display + ": removed, its 7 planks come back to the player (" + got + ")");
+						Check(ref ok, filled && got == 7, u.Display + ": removed, its 7 planks come back to the player (" + got + ")");
 						if (got > 0) player.Inventory.RemoveItem("Plank", got);
 						int back = player.Inventory.GetItemCount(item.UniqueName);
 						if (back > 0) player.Inventory.RemoveItem(item.UniqueName, back);
