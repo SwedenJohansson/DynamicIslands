@@ -254,7 +254,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// Tries to place an island from the pool ahead of the raft. Returns a message saying what happened.
-		/// force: ignore "raft is inside one of Raft's islands" (dev/testing).
+		/// force: ignore "raft is inside one of Raft's islands" and, with nothing free ahead, look all round the raft (dev/testing, Traders bring).
 		/// seed: what a new map type island is and where it goes ahead come from it instead of unseeded randoms (the world
 		/// randomizer's islands follow the world seed - CA18); retry: this try's number for the same island (another spot,
 		/// the same island).
@@ -320,19 +320,21 @@ namespace DynamicIslands.Editor
 
 			Vector3 dir = SailDirection();
 			var reasons = new List<string>();
-			for (int attempt = 0; attempt < (TestAllRound ? 24 : 8); attempt++)
+			for (int attempt = 0; attempt < (TestAllRound || force ? 24 : 8); attempt++)
 			{
 				// Off-centre so it's reachable but not always dead ahead; later attempts spread wider
 				float side = range(0f, 1f) < 0.5f ? -1f : 1f;
-				float angle = TestAllRound ? range(0f, 360f) : side * range(10f, 35f + attempt * 10f);
+				// (forced, with nothing free ahead: all round the raft, the way there may pass one of Raft's islands)
+				bool round = TestAllRound || (force && attempt >= 8);
+				float angle = round ? range(0f, 360f) : side * range(10f, 35f + attempt * 10f);
 				// Later attempts also look a little further out
-				float distance = Mathf.Max(range(SpawnDistanceMin, SpawnDistanceMax + attempt * (TestAllRound ? 40f : 20f)), radius + Clearance + RaftRadius);
+				float distance = Mathf.Max(range(SpawnDistanceMin, SpawnDistanceMax + attempt * (round ? 40f : 20f)), radius + Clearance + RaftRadius);
 				// (its land not beyond where islands load: the later, further tries of a far spawn distance unloaded it at once)
 				distance = Mathf.Min(distance, Mathf.Max(radius + Clearance + RaftRadius, WorldRules.UnloadDistance - 100f + radius));
 				Vector3 candidate = raftPos + Quaternion.Euler(0, angle, 0) * dir * distance;
 				candidate.y = Elevation(name); // 0 = sea level; flying / underwater islands keep their height
 
-				string why = Rejects(candidate, radius, raftPos);
+				string why = Rejects(candidate, radius, raftPos, !round);
 				if (why != null) { reasons.Add(why); continue; }
 
 				sailedSinceSpawn = 0f;
