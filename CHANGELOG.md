@@ -15,6 +15,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Head start raft:** a new World setting (levels 1-3) starts the world on a bigger raft that is already set up: 6 x 12
   foundations with a grill, a purifier, the research table, a bed and first supplies; level 2 (8 x 14) adds smelters, a sail,
   10 item nets and island resources; level 3 (10 x 20) the Receiver with its antennas. Built once by the host.
+- **More islands with Raft's special features:** every feature that was on one library island is on a second one
+  now, and the mod's puzzle pieces (laser, water wheels, pipes, wires, claw, scales) are on six islands. In Raft 2,
+  three locks want an item another island of the plan gives earlier (a keycard, bolt cutters, a radio part).
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
@@ -207,8 +210,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **In-game texts** brought up to date: import window, Open, Throw them away, Share..., World Plans help and Delete,
   tab colours (nine), the Randomizer and plan file help, the report form, lighthouse storeys, desert palms, regrow
   tooltips.
-- **Boss health:** an animal's health can be set up to ×12 (was capped at ×4), so the lair bosses set to ×5-×12
-  are as tough as written. Damage stays at most ×4.
+- **Boss health:** an animal's health can be set up to Ã—12 (was capped at Ã—4), so the lair bosses set to Ã—5-Ã—12
+  are as tough as written. Damage stays at most Ã—4.
 - A large audit (about 70 items) of saves, files and multiplayer: world copies written between Raft's saves no longer
   win after a crash; unloaded islands keep what happened on them; library installs check their files and roll back;
   half-written first saves are set aside; host file names are checked before use; deleted autosaves and plans go to

@@ -240,6 +240,12 @@ prop dolphins creature.count=2
 call dirt x=0 z=0 r=40 n=5 seed=81
 call hives x=0 z=10 r=30 n=1 seed=82
 call vinecache x=-30 z=30 r=15 seed=83 chest=vintnercache vines=vintnervines items=Shovel*1;Plank*4;Nail*8
+# (2026-10-10, more islands per feature) the pickers' grape hoist at the east end of Stony terrace, up to the Old Wall
+# terrace five metres above; the pickers' crate up there
+call lift x=-5.6 z=-31.9 yaw=90 alias=grapehoist upalias=grapehoistup chest=hoistcrate tx=-5.6 tz=-27 items=Glass*2;Plank*3;Seed_Strawberry*2 title="Pickers' crate"
+prop grapehoist beh.use=Ride the grape hoist up
+prop grapehoistup beh.use=Ride the grape hoist down
+note hoistcrate Pickers' crate | Old Wall pickers - fill the baskets, send them down on the hoist. Ride it yourself only when the baskets are down. - T.
 
 quest title=The Founding Vintage
 quest intro=A vineyard on two sunny peaks, abandoned with the grapes still on the vines. The vintner left a letter in the press house.

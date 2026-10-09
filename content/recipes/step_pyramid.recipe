@@ -12,6 +12,7 @@
 #
 # Built by the recipe player (CIRecipe step_pyramid) through the editor's own operations.
 include lib_sea
+include lib_features
 
 # tierwall: the face of one of the pyramid's tiers - the radio tower's stone blocks (2.4 m square, 3 m tall, their tops
 # level with the tier) all round a square of half-size a (a = 1.2 + 1.2 x n), so each tier ends in a straight wall and not
@@ -189,6 +190,11 @@ place Creature_Turtle turtles at 10 62 h=-1
 prop turtles creature.count=2
 place Creature_Dolphin dolphins at 0 -78 h=-3
 prop dolphins creature.count=2
+
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): two sun
+# mirrors on the plaza (east and south of the pyramid) and the king's sun-locked chest between them
+call mirrors x1=19.5 z1=-8 yaw1=0 x2=6 z2=-19.5 yaw2=90 a1=sunglass1 a2=sunglass2 chest=kingschest cx=16.8 cz=-17.2 cyaw=315 items=Glass*3;TradeToken*4;Seed_Flower_Red*2 title="The king's sun chest"
+prop kingschest else.open=message||A gold eye in the lid, dark. The glyph around it: two suns. Both plaza mirrors must face it.
 
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, bananas, melons ----------
 scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=44.1 seed=4310 free=5

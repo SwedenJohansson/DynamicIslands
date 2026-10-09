@@ -13,6 +13,7 @@
 include lib_relay
 include lib_huts
 include lib_sea
+include lib_features
 new
 gen Trees=0.08 Bushes=0.15 Rocks=0.15 Harvest=0.05 BeachThings=0.3
 gen Seed=9019 Radius=78 Height=30 Roughness=0.45 Peaks=2 Shape=6 Style=1 BeachWidth=0.5 Cliffs=0.4 PeakShape=0.4
@@ -148,6 +149,12 @@ roof 3 2 at 0 0 y=0.1 wood
 place Workbench - at 2.25 0.6 y=0.1 sit yaw=180
 place "Box Small" workshopbox at 0.6 2.2 y=0.1 sit yaw=15
 pop
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
+# cooper's workshop padlocked (Vasagatan's padlock door in its doorway), his strongbox behind it; the bolt cutters in a
+# tool chest on the shelf south of the flensing plan
+call keydoor x=14.751 z=-0.5 h=2.4 yaw=0 door=UT_Skyscraber01PadlockDoor key=Vasagatan_BoltCutter alias=workshopdoor vault=workshopvault vx=15.8 vz=-1.3 vh=2.4 vyaw=270 items=MetalIngot*3;Bolt*4;Rope*2 kx=27 kz=-8 kr=4 seed=611 keychest=cutterchest keytitle="Flenser's tool chest" keyitems=Rope*2;Nail*6
+prop workshopdoor on.use=hide|\nshow|workshopvault\nmessage||The cutters bite, the padlock drops into the snow of wood shavings. The cooper kept his strongbox in here.
+prop workshopdoor else.use=message||A company padlock, rusted shut. The flensers kept bolt cutters in their tool chest on the shelf past the flensing plan.
 
 # ===== The flensing plan, the harpoon cannon, the rendering tanks ======================================================
 # (a broad deck on the shelf, plank edges, a slipway down into the bay; the cannon at its seaward edge, aimed at the bay)

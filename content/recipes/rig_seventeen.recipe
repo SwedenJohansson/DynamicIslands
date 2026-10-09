@@ -185,6 +185,29 @@ place Creature_Goat goats at -15 -36 ground
 place Creature_Dolphin dolphins at 58 12 h=-1.6
 call shallows r=110 deep=5 n=1
 
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): a flow
+# test on the tank stack: three pipe valves on the deck, set as the test card says (first and last open, the bend
+# shut), then the test lever lets go the crew's hidden stash
+place WaterPipe_Short_1 rigpipeA at 18 -17 ground y=0.1 scale=2.5
+place WaterPipe_BigCurve_1 rigpipeB at 20.5 -17 ground y=0.1 scale=2.5
+place WaterPipe_Short_1 rigpipeC at 23 -17 ground y=0.1 scale=2.5
+prop rigpipeA on.use=switch|\nmessage||The valve squeals a quarter turn.
+prop rigpipeB on.use=switch|\nmessage||The bend's valve squeals a quarter turn.
+prop rigpipeC on.use=switch|\nmessage||The valve squeals a quarter turn.
+place RT_Pillar - at 25.5 -17 ground sy=0.4
+place TP_LaserControlPanel_lever riglever at 25.5 -17 ground y=1.25 scale=3 yaw=270
+prop riglever obj.name=riglever
+prop riglever if.use=state|rigpipeA|open\nstate|rigpipeB|closed\nstate|rigpipeC|open
+prop riglever on.use=message||The pipes thump, the line holds - and the stash locker by the lever drops open.\nsignal||rigflow\nshow|rigstash
+prop riglever else.use=message||The line coughs and the lever springs back. The valves are not set as the test card says.
+place Loot_Chest rigstash at 27.5 -16 ground sit yaw=270
+prop rigstash obj.name=rigstash
+prop rigstash note.title=Crew stash
+prop rigstash beh.hidden=1
+loot rigstash Battery*1;MetalIngot*2;Bolt*3
+place Note_Sign rigtestcard at 25.5 -18.6 ground sit yaw=180
+note rigtestcard Flow test card | LINE 3 FLOW TEST\n\nFirst valve OPEN. Bend SHUT. Last valve OPEN.\nThen pull the test lever. If she holds, the crew's beer money is in the locker.
+
 # --- Things to gather, as suits the island (the user, 2026-10-05): flowers, melons, pineapples ----------
 scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=63.0 seed=4337 free=3
 scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=63.0 seed=4338 free=3

@@ -39,6 +39,7 @@ call rt_storey l2=RT_WallDoor1 f1=RT_WallWindow1 b2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3.05
 place "Box Big" - at -5.3 3.6 sit yaw=10
 place "Chair Office" - at -3 3.2 sit yaw=170
+place Loot_ChestSmall keepersstrongbox at -1 -3.5 sit yaw=0
 pop
 place "Table Office" keepertable at -31 1.5 ground yaw=90
 place Note_Paper keeperslog at -31 1.5 h=6 sit drop yaw=80
@@ -91,6 +92,11 @@ prop supplycrate loot.refill=0
 note keeperslocker Keeper's locker | The keeper's locker on the beacon terrace: the Corps' plans for a Receiver and its antenna - and the next station's frequency, scratched inside the door.
 loot keeperslocker Blueprint_Reciever*1;Blueprint_Antenna*1;Battery*1;Scrap*4
 prop keeperslocker loot.refill=0
+# the keeper's Corps keycard (T-4c2): it opens the Corps strongroom at the winter camp (Whiteout Reach, rule 8)
+prop keepersstrongbox obj.name=keepersstrongbox
+note keepersstrongbox Keeper's strongbox | The keeper's strongbox under the window: his Corps keycard on a lanyard, tagged STATION KEYCARD - OPENS EVERY CORPS STRONGROOM ON THE LINE. Under it, a slip in his hand: "Winter camp strongroom - stocked for the crossing. Take the card."
+loot keepersstrongbox story:raft-Tangaroa_KeyCard*1;Rope*2;Nail*6
+prop keepersstrongbox loot.refill=0
 prop keeperslocker if.open=signal|beacon
 prop keeperslocker else.open=message||The locker's lock is wired to the beacon - it stays shut while the light is dark.
 
