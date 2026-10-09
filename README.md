@@ -304,6 +304,7 @@ Islands the generator makes by itself, with content. Plans use them (`type:<name
 | `sky` | A small island floating 45–90 m up, with a cache |
 | `wreck` | No land: an abandoned raft of Raft's blocks with barrels to loot |
 | `ghostraft` | No land: an abandoned raft of Raft's blocks with loot and a note - small, medium, or large with huts and a lookout, guarded by rats and screechers (the extra option Ghost rafts brings them while sailing) |
+| `traderraft` | No land: a trader's raft with a hut and three or four stalls that swap basic resources for seeds, a tree seed or a blueprint (the world option Trader raft brings them while sailing) |
 | `tropical`, `snowy`, `desert`, `forest`, `volcanic`, `random` | A plain generated island of that style |
 | `oddity` | A small island with something odd on it: one of the eight below, picked at random |
 | `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut` | A small island with a van, a caravan and tent, a crashed plane, a boat run aground, a hermit's shack (and hens), a statue with an offering chest, smoking rocket debris, or a hut of raft blocks; each with loot and a note (set pieces from Raft's other islands) |
@@ -414,8 +415,16 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   by day both are calmer.
 - **Daily quest:** each morning a small task for the crew (gather some planks, plastic, palm leaves or scrap, catch a few
   fish, or defeat a few monsters); done before dark, each player gets a small reward of basic resources or food once.
+- **Rogue shark:** now and then a second, rust-red shark comes beside the usual one and stays until it is killed;
+  after that none comes for 5-8 days.
+- **Silver & golden barrels:** now and then a barrel in the sea is silver (1 in 40) or golden (1 in 150), with a few
+  extra nails, rope and scrap (gold: more, and sometimes a battery or bolts).
+- **Storm days:** on about one day in ten the sea is rough and it rains all day (Raft's own storm weather); the shark
+  comes for the raft more often; a warning at nightfall the evening before.
+- **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
+  scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
-  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest).
+  option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
   (network kind 17). The story order and the blueprints' pairs are worked out from the seed on every machine, and each
   machine notes who built a storage as Raft places it there.
@@ -560,8 +569,12 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `CustomIslandsAuto on` / `off` | Game, host | Turns automatic islands on or off for this world |
 | `WorldPlan` / `WorldPlan <name>` | Game (changing: host) | Shows the world's plan and its rules (done or not), or gives the world another plan |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | Game (changing: host) | Shows what the world randomizer does in this world, or changes it (parts: colours, animals, alphas, loot, finds, oddities, bosses, large) |
-| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest) |
+| `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft) |
 | `DailyQuest` | Game | Today's daily quest (world option Daily quest): the task, how far, the reward |
+| `RogueShark` | Game | The rogue shark (world option Rogue shark): alive or not, and the day before which none comes |
+| `Barrels` / `Barrels roll <index> [<to>]` | Game | The barrels in the sea and which are silver or golden (world option Silver & golden barrels); `roll`: what a barrel index is in this world |
+| `StormDays` / `StormDays roll <from> <to>` | Game | Whether today is a storm day, the next one, the weather and the shark's factor (world option Storm days); `roll`: the storm days in a range |
+| `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Levels` / `Levels on` / `Levels off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
 | `Resync` | Game, a player who joined | Ask the host for its custom islands again: the list, and any island file that hasn't come (the mod also keeps asking by itself) |

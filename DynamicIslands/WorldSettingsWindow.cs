@@ -24,6 +24,8 @@ namespace DynamicIslands.Editor
 	public static class WorldSettingsWindow
 	{
 		public const string ButtonName = "CustomIslands_WorldSettings", WindowName = "CustomIslands_WorldSettingsWindow";
+		/// <summary>The extra options' list: five in view (each 91 high, 6 apart), the rest scrolled to.</summary>
+		const float ListHeight = 5 * 91f + 4 * 6f + 4f;
 
 		static Button openButton;
 		static RectTransform window;
@@ -112,11 +114,16 @@ namespace DynamicIslands.Editor
 			Text optionsTitle = UIKit.Label(right, "EXTRA OPTIONS", 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "OptionsTitle");
 			UIKit.Size(optionsTitle.gameObject, -1, 18);
 			toggles.Clear();
+			// (one list, about five options in view and the rest scrolled to: all of them would make the window taller than the screen)
+			ScrollRect scroll;
+			RectTransform list = UIKit.ScrollList(right, out scroll, 6f);
+			scroll.name = "OptionsScroll";
+			UIKit.Size(scroll.gameObject, -1, ListHeight);
 			for (int i = 0; i < WorldOptions.All.Length; i++)
 			{
 				string option = WorldOptions.All[i];
 				if (WorldOptions.IsRetired(option)) continue;
-				RectTransform group = UIKit.Group(right, null, "Option_" + option);
+				RectTransform group = UIKit.Group(list, null, "Option_" + option);
 				Button b = UIKit.Button(group, "", () => Flip(option), WorldOptions.Hints[i], -1, 28f, 14);
 				b.name = "Toggle_" + option;
 				toggles[option] = b;
@@ -127,7 +134,7 @@ namespace DynamicIslands.Editor
 			// The level up system (also switched on by an island made with it, unless switched off here or with Levels off)
 			{
 				const string hint = "Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more. Off: only an island made with the level up system switches it on. The host can change it in a world: Levels on / off.";
-				RectTransform group = UIKit.Group(right, null, "Option_levels");
+				RectTransform group = UIKit.Group(list, null, "Option_levels");
 				levelsToggle = UIKit.Button(group, "", () => { PlayerLevels.Chosen = !PlayerLevels.Chosen; Show(); }, hint, -1, 28f, 14);
 				levelsToggle.name = "Toggle_levels";
 				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");

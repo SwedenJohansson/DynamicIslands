@@ -75,6 +75,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The world option Daily quest: the host's task ("state", Data = DailyQuest.Task), a player's part ("add":
 		/// Index = day, Count) or reward taken ("got").</summary>
 		public const int DailyQuest = 26;
+		/// <summary>The world option Rogue shark, host to players: Index = the rogue's object index (0 = none), Count = no new one
+		/// before this day; Name = "spawn", "dead" or "state" (a player who joins).</summary>
+		public const int RogueShark = 27;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -482,6 +485,7 @@ namespace DynamicIslands.Editor
 							JoinPart("story", () => StoryBook.StateMessage(), to);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
+							JoinPart("rogue shark", () => global::DynamicIslands.Editor.RogueShark.Message("state"), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
 							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
 							JoinPart("animal spots", () => CreatureSpawner.SpotsMessage(null), to);
@@ -557,6 +561,9 @@ namespace DynamicIslands.Editor
 						break;
 					case IslandNetMessage.DailyQuest:
 						global::DynamicIslands.Editor.DailyQuest.OnMessage(msg, from);
+						break;
+					case IslandNetMessage.RogueShark:
+						global::DynamicIslands.Editor.RogueShark.OnMessage(msg);
 						break;
 					case IslandNetMessage.Levels:
 						PlayerLevels.OnMessage(msg, from);

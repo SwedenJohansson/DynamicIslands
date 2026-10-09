@@ -400,6 +400,8 @@ namespace DynamicIslands.Editor
 					}
 					// Numbered in file order like the creatures (the same on every machine)
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
+					// A trader's stall (its stock under the object's index)
+					else if (TradeStand.IsTrade(o.Props)) TradeStand.Attach(go, o.Props, index);
 					// Names, movement, "players can use it", collision, events (Behaviours)
 					Behaviours.Attach(go, o.Name, o.Props, index);
 				}

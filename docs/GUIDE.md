@@ -1857,7 +1857,7 @@ signals can't be listed: its list is empty and says so - type the name.
 | Bring | Which one | Good to know |
 |---|---|---|
 | **One of my saved islands** | one of your islands (`.island` files) | Every player gets it from the host; only the host needs the file |
-| **A new island of a map type** | a map type: `random`, `sandbar`, `atoll`, `archipelago`, `stacks`, `boss`, `volcano`, `swamp`, `spire`, `treasure`, `camp`, `sunken`, `sky`, `wreck`, `ghostraft`, the styles `tropical`, `snowy`, `desert`, `forest`, `volcanic`, and the randomizer's `oddity` (or one kind: `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut`), `large`, `lair` | A new island is made for the world, different in every world. No file needed, so it always works when shared |
+| **A new island of a map type** | a map type: `random`, `sandbar`, `atoll`, `archipelago`, `stacks`, `boss`, `volcano`, `swamp`, `spire`, `treasure`, `camp`, `sunken`, `sky`, `wreck`, `ghostraft`, `traderraft`, the styles `tropical`, `snowy`, `desert`, `forest`, `volcanic`, and the randomizer's `oddity` (or one kind: `van`, `caravan`, `planecrash`, `boatwreck`, `shack`, `statue`, `rocket`, `hut`), `large`, `lair` | A new island is made for the world, different in every world. No file needed, so it always works when shared |
 | **A random island (spawn pool)** | - | A random island of the spawn pool, as random islands are: one of your islands, a new generated island or a map type listed there (`spawnpool.txt`, [10](#10-settings-files)) |
 | **One island from a list** | island names, separated by commas | One of them is picked, ones not in the world yet first |
 
@@ -2162,8 +2162,8 @@ colours, alphas and crates.
 
 ### 9.4 Extra options
 
-More ways to play Raft again. Each option has its own button in the window's right column, switched **ON** or off, with
-an explanation under it. They can be combined freely.
+More ways to play Raft again. Each option has its own button, switched **ON** or off, with an explanation under it, in one
+list in the window's right column: about five are in view, scroll (mouse wheel or the bar) for the rest. They can be combined freely.
 
 **Scrambled blueprints** and **Story islands in a new order** are no longer offered for new worlds (since 9 October
 2026). A world that already has one on keeps it; World settings shows it only while it is on, so the host can switch it
@@ -2245,6 +2245,49 @@ or palm leaves, 4-8 scrap: what the players pick up by hand or with the hook), *
 one or two of planks, rope, nails, scrap, raw fish, a watermelon or clay (and 40 EXP with the level up system on).
 Not done by dark, it runs out; the next morning brings a new one. The task shows as a banner when it comes and as it
 moves on, and at the top of the journal's quest list. `DailyQuest` shows today's task.
+
+#### Rogue shark
+
+Now and then (on about one day in eight, never before day 3) a **second shark** comes beside the usual one. It is
+**rust-red**, and it doesn't leave on its own: it stays until it is killed. Once it is, no other comes for **5-8 days**.
+A banner says when it comes and when it dies. While it lives, the usual shark still comes back when killed; the rogue's
+body brings no new shark. It is saved with the world, keeps its colour after a load, and every player sees the same one.
+Switching the option off leaves a living rogue until it is killed. `RogueShark` shows where it is.
+
+#### Silver & golden barrels
+
+Now and then a barrel drifting in the sea is **silver** (about 1 in 40) or **golden** (about 1 in 150). Pick it up by
+hand or with the hook: besides Raft's usual barrel loot, a silver one holds **3-6 nails, 1-2 rope and 1-2 scrap**; a
+golden one **6-10 nails, 2-4 rope and 2-3 scrap**, and one in three also a battery or bolts. A banner says what was
+inside. Every player sees the same barrels shine; the extra goes to whoever picks it up. Switching the option off makes
+new barrels plain again.
+
+#### Storm days
+
+On about one day in ten (never before day 3) the sea is **rough and it rains** from morning to the next morning
+(in the snow region: Raft's rough snow). The shark comes for the raft **more often** (it looks for a block to bite
+in 0.6 of the usual time, on top of Night is dangerous), and the rain waters the crops as Raft's rain always does.
+At **nightfall the evening before**, every player is warned; a banner says when the storm day begins. Raft has no
+rain collector of its own, so the rain helps the crops only. Which days are stormy comes from the world's seed: a
+loaded world has the same storm days, and every player has the same weather. `StormDays` shows the next one.
+
+#### Trader raft
+
+Very rarely - about once in 7 km of sailing, never in the first 3 km - a **trader's raft** comes up ahead: a small
+raft with the trader's hut, a lantern, a note, and **a stall for each offer** (three or four). Look at a stall:
+**[E] Trade 12 Plank for 1 Watermelon seed (3 left)**. Trading takes the price from your inventory and gives the goods;
+without the price the stall says what you are short of.
+
+| Stall | Price | Goods | Stock |
+|---|---|---|---|
+| Fruit | 10-14 planks | 1 fruit seed (mango, pineapple, banana, watermelon or strawberry) | 2-3 |
+| Flowers | 6-9 plastic | 2 flower seeds of one colour | 2-3 |
+| Tree | 8-12 planks and 2-3 rope | 1 birch, pine or palm seed | 1-2 |
+| Blueprint (on about 4 traders in 10) | 16-21 planks, 8-12 plastic, 4-6 scrap | 1 handy blueprint (canteen, decorative plank, firework, machete, head light, large storage or metal detector; never the story's) | 1 |
+
+The stock is **shared**: what one player buys is gone for everyone, it is saved with the world, and it doesn't fill up
+again. Every player sees the same trader with the same offers: the host brings it as an island of the map type
+`traderraft`, and its offers come from the raft's seed. `Traders` lists the stalls loaded now and their stock.
 
 #### For every player
 

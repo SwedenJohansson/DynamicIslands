@@ -149,6 +149,7 @@ namespace DynamicIslands.Editor
 			WorldDirector.Sailed += sailed;
 			WorldRandomizer.OnSailed(sailed, pos.Value); // (its own islands, also in worlds without random custom islands)
 			GhostRafts.OnSailed(sailed, pos.Value); // (the world option Ghost rafts)
+			TraderRaft.OnSailed(sailed, pos.Value); // (the world option Trader raft)
 			if (!Enabled || ChancePerKm <= 0f) return;
 			// One random custom island after every few of Raft's own islands met (the world's span, WorldIslands.GapMin -
 			// GapMax: 3-6 by default) - not by distance: however many islands are ticked, they never crowd the sea

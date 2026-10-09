@@ -18,6 +18,20 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   hammer or the axe is unchanged.
 - **World option Shared EXP:** when a player defeats a monster, every other player within 50 m gets 60 % of its
   EXP too.
+- **Fix:** the daily quest's task, the rogue shark's days and the storm days are rolled from a well-mixed number of
+  the world's seed and the day: with nearby seeds Raft's random numbers came out nearly the same, so days rolled alike
+  (storm days came in runs, and the daily task changed little from day to day).
+- **World option Trader raft:** very rarely (about once in 7 km of sailing) a trader's raft comes by, with a stall
+  per offer: planks, plastic, rope and scrap for fruit, flower and tree seeds, and now and then a blueprint. The stock
+  is shared by all players and saved with the world. Console: `Traders`; the host's `Traders bring` puts one ahead now.
+- **World settings window:** the extra options are one list in the right column, about five in view; scroll for
+  the rest, so the window stays the same size however many options there are.
+- **World option Storm days:** on about one day in ten the sea is rough and it rains all day; the shark comes for
+  the raft more often; everyone is warned at nightfall the evening before.
+- **World option Silver & golden barrels:** now and then a barrel in the sea is silver (about 1 in 40) or golden
+  (about 1 in 150), with a few extra nails, rope and scrap (gold: more, and sometimes a battery or bolts).
+- **World option Rogue shark:** now and then a second, rust-red shark comes beside the usual one; it stays until
+  it is killed, and then none comes for 5-8 days. Saved with the world; every player sees the same one.
 - **World option Daily quest:** each morning a small task for the crew - gather some of a basic resource, catch a
   few fish or defeat a few monsters; done before dark, each player gets a small reward (basic resources or food, 40 EXP
   with levels) once; otherwise it runs out at dark. Shown as a banner and at the top of the journal's quest list.

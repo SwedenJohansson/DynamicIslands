@@ -19,15 +19,19 @@ namespace DynamicIslands.Editor
 	///   - ironraft: the raft's blocks take half damage from the shark (IronRaft);
 	///   - sharedxp: players near a kill get 60 % of its EXP too (LevelSystem.ShareKill);
 	///   - nightdanger: monsters tougher and the shark keener at night, both calmer by day (NightDanger);
-	///   - dailyquest: a small task each day, a small reward when done before dark (DailyQuest).
+	///   - dailyquest: a small task each day, a small reward when done before dark (DailyQuest);
+	///   - rogueshark: now and then a second, rust-red shark that stays until killed (RogueShark);
+	///   - barrels: now and then a silver or golden barrel in the sea, with a little extra loot (GoldenBarrels);
+	///   - stormdays: now and then a day of rough sea and rain, the shark keener (StormDays);
+	///   - traderraft: very rarely a merchant's raft comes by: basic resources for seeds, trees or a blueprint (TraderRaft).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft };
 		/// <summary>
 		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
 		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
@@ -35,7 +39,7 @@ namespace DynamicIslands.Editor
 		public static readonly string[] Retired = { Blueprints, StoryOrder };
 		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
 		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest" };
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
@@ -47,6 +51,10 @@ namespace DynamicIslands.Editor
 			"When a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
 			"After dark monsters are tougher (x1.3 health and damage on top of the monster difficulty) and the shark comes for the raft more often; by day both are calmer (x0.85, the shark less often).",
 			"Each morning the crew gets a small task for the day: gather some planks, plastic, palm leaves or scrap, catch a few fish or defeat a few monsters. Done before dark, everyone gets a small reward (basic resources or food); not done, it runs out.",
+			"Now and then a second shark comes beside the usual one: rust-red, and it doesn't leave on its own - only when it's killed. Once it is, no other comes for several days. Never before day 3.",
+			"Now and then a barrel drifting in the sea is silver (about 1 in 40) or golden (about 1 in 150). Besides the usual loot, a silver one holds a few extra nails, rope and scrap; a golden one more of them, and sometimes a battery or bolts.",
+			"On about one day in ten the sea is rough and it rains from morning to morning: the shark comes for the raft more often, and the rain waters the crops. Everyone is warned at nightfall the evening before. Never before day 3.",
+			"Very rarely (about once in 7 km of sailing, never in the first 3 km) a trader's raft comes up ahead. Its stalls swap basic resources - planks, plastic, rope, scrap - for fruit and flower seeds, a tree seed, and now and then a blueprint. Each stall has a little stock, shared by all players.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -61,6 +69,23 @@ namespace DynamicIslands.Editor
 		public static bool On(string option) { return Current.Contains(option); }
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [options] " + msg); }
+
+		/// <summary>
+		/// A well-mixed number from a world's seed, a day (or index) and a salt, the same on every machine. Not System.Random
+		/// seeded with a sum: the first value of nearby seeds is nearly the same, so day after day rolled alike.
+		/// </summary>
+		public static int Mix(int seed, int day, int salt)
+		{
+			unchecked
+			{
+				uint h = (uint)seed * 2654435761u ^ (uint)day * 2246822519u ^ (uint)salt * 3266489917u;
+				h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; h *= 3266489917u; h ^= h >> 16;
+				return (int)h;
+			}
+		}
+
+		/// <summary>Mix as a number in [0, 1).</summary>
+		public static double Unit(int seed, int day, int salt) { return (uint)Mix(seed, day, salt) / 4294967296.0; }
 
 		public static string Label(string option) { int i = Array.IndexOf(All, option); return i >= 0 ? Labels[i] : option; }
 
@@ -132,6 +157,10 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.IronRaft.Reset();
 			global::DynamicIslands.Editor.NightDanger.Reset();
 			global::DynamicIslands.Editor.DailyQuest.Reset();
+			global::DynamicIslands.Editor.RogueShark.Reset();
+			global::DynamicIslands.Editor.GoldenBarrels.Reset();
+			global::DynamicIslands.Editor.StormDays.Reset();
+			global::DynamicIslands.Editor.TraderRaft.Reset();
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.GhostRafts.Reset();
 			Notify();
@@ -146,7 +175,7 @@ namespace DynamicIslands.Editor
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value);
+			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -158,6 +187,8 @@ namespace DynamicIslands.Editor
 			foreach (string l in global::DynamicIslands.Editor.PrivateStorage.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.GhostRafts.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.DailyQuest.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.RogueShark.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.TraderRaft.WriteLines()) yield return l;
 		}
 
 		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
@@ -217,6 +248,10 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.IronRaft.Reset();
 			global::DynamicIslands.Editor.NightDanger.Reset();
 			global::DynamicIslands.Editor.DailyQuest.Reset();
+			global::DynamicIslands.Editor.RogueShark.Reset();
+			global::DynamicIslands.Editor.GoldenBarrels.Reset();
+			global::DynamicIslands.Editor.StormDays.Reset();
+			global::DynamicIslands.Editor.TraderRaft.Reset();
 			ScrambledBlueprints.Reset();
 			Notify();
 		}
@@ -246,7 +281,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft) = change them for this world (host)")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)

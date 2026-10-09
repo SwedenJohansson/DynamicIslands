@@ -82,7 +82,7 @@ namespace DynamicIslands
 			// The options' text
 			HashSet<string> parsed = WorldOptions.Parse("storyorder, nonsense,GHOSTRAFTS;;privatestorage");
 			Check(ref ok, parsed.Count == 3 && parsed.Contains(WorldOptions.StoryOrder) && parsed.Contains(WorldOptions.GhostRafts) && parsed.Contains(WorldOptions.PrivateStorage), "options read from text, unknown ones left out: " + WorldOptions.Describe(parsed));
-			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
+			Check(ref ok, WorldOptions.Encode(WorldOptions.All, 42) == "on=blueprints,storyorder,ghostrafts,privatestorage,longvoyage,ironraft,sharedxp,nightdanger,dailyquest,rogueshark,barrels,stormdays,traderraft;seed=42" && WorldOptions.Encode(new string[0], 7) == "on=;seed=7", "options written as text: " + WorldOptions.Encode(WorldOptions.All, 42));
 			// Long voyage: twice as many of Raft's islands between random custom islands (and twice the spacing)
 			{
 				bool was = WorldOptions.Current.Contains(WorldOptions.LongVoyage);
@@ -235,6 +235,11 @@ namespace DynamicIslands
 			open.onClick.Invoke(); yield return null; yield return null;
 			var off = OffScreen(WorldSettingsWindow.Window.gameObject, Screen.width, Screen.height);
 			Check(ref ok, off.Count == 0, "the window fits the screen (" + Screen.width + "x" + Screen.height + ")" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+			ScrollRect optionsScroll = WorldSettingsWindow.Window.GetComponentsInChildren<ScrollRect>(true).FirstOrDefault(s => s.name == "OptionsScroll");
+			float viewH = optionsScroll != null ? optionsScroll.viewport.rect.height : 0f, contentH = optionsScroll != null ? optionsScroll.content.rect.height : 0f;
+			int inList = optionsScroll != null ? optionsScroll.content.GetComponentsInChildren<Button>(true).Count(b => b.name.StartsWith("Toggle_")) : 0;
+			Check(ref ok, optionsScroll != null && inList == WorldOptions.Offered.Length + 1 && viewH > 400f && viewH < 560f && contentH > viewH * 1.5f,
+				"the extra options in one scrolled list: " + inList + " in it, about five in view (" + viewH.ToString("F0") + " of " + contentH.ToString("F0") + " high)");
 			WorldSettingsWindow.Close();
 			box.gameObject.SetActive(false);
 			if (ok) Log("PASS: world settings box"); else Fail("world settings box");
@@ -364,6 +369,151 @@ namespace DynamicIslands
 				if (i % 8 == 0) yield return null;
 			}
 			if (early > 0) Fail("ghost rafts: " + early + " within the first 1.5 km");
+			result(n);
+		}
+
+		#endregion
+
+		#region Trader raft
+
+		[ConsoleCommand(name: "CITraderRaft", docs: "Dev, world (host): the trader's offers (500 seeds: 3 or 4, real items, fair prices, a blueprint on some); trader rafts come while sailing only with the option on (80 km simulated: none with it off, a few with it on, none within the first 3 km); then one brought ahead: its stalls (one per offer) and note there; a trade takes the price and gives the goods, the stock runs out, a player short of the price gets nothing. CITraderRaft [keep]")]
+		public static void TraderRaftCommand(string[] args) { StartTest(TraderRaftRoutine(args != null && args.Contains("keep"))); }
+
+		static IEnumerator TraderRaftRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("trader raft: host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			// The offers
+			int blueprints = 0, bad = 0;
+			string badText = "";
+			for (int seed = 1; seed <= 500; seed++)
+			{
+				List<TraderRaft.Offer> offers = TraderRaft.OffersOf(seed);
+				if (offers.Any(o => o.Kind == "blueprint")) blueprints++;
+				foreach (TraderRaft.Offer o in offers)
+				{
+					int price = o.Give.Sum(l => l.Value);
+					bool fine = offers.Count >= 3 && offers.Count <= 4 && o.Stock >= 1 && o.Stock <= 3 && o.Get.Count == 1 && o.Get[0].Value <= 2 && price >= 6 && price <= 40 &&
+						o.Give.Concat(o.Get).All(l => ItemManager.GetItemByName(l.Key) != null);
+					if (!fine) { bad++; if (badText.Length == 0) badText = "seed " + seed + ": " + TraderRaft.Text(o.Give) + " -> " + TraderRaft.Text(o.Get) + " x" + o.Stock; }
+				}
+			}
+			Check(ref ok, bad == 0, "500 traders' offers: 3 or 4, real items, fair prices" + (bad == 0 ? "" : " - " + bad + " wrong, e.g. " + badText));
+			Check(ref ok, blueprints >= 150 && blueprints <= 250, "a blueprint on " + blueprints + " of 500 (about 40 %)");
+			Check(ref ok, string.Join("|", TraderRaft.OffersOf(77).Select(o => TraderRaft.Text(o.Give) + TraderRaft.Text(o.Get) + o.Stock).ToArray()) ==
+				string.Join("|", TraderRaft.OffersOf(77).Select(o => TraderRaft.Text(o.Give) + TraderRaft.Text(o.Get) + o.Stock).ToArray()), "the same seed, the same offers");
+			for (int i = 0; i < 6 && ChunkManager.RaftIsInsideChunkPoint; i++) yield return SailRoutine(20f, 20f);
+			Vector3 raft = CustomIslandSpawner.RaftPosition.Value;
+			int brought = 0;
+			try
+			{
+				yield return SailTraders(false, raft, n => brought = n);
+				Check(ref ok, brought == 0, "the option off: 80 km, no trader raft");
+				yield return SailTraders(true, raft, n => brought = n);
+				Check(ref ok, brought >= 3 && brought <= 25, "the option on: 80 km, " + brought + " trader rafts");
+				// One with a blueprint, ahead of the raft
+				int seed = 1;
+				while (!TraderRaft.OffersOf(seed).Any(o => o.Kind == "blueprint")) seed++;
+				List<TraderRaft.Offer> offers = TraderRaft.OffersOf(seed);
+				var s = new IslandGenSettings { Height = 2f, Seed = seed, Radius = 16f };
+				string name = CustomIslandSpawner.GeneratedPrefix + TraderRaft.TypeName + "-" + seed;
+				IslandFile f = MapTypes.Create(MapTypes.Get(TraderRaft.TypeName), s, 0f, name);
+				f.Save(IslandSpawner.PathFor(name));
+				Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, 40f, 160f);
+				if (!spot.HasValue) { Fail("trader raft: no open sea near the raft"); yield break; }
+				int before = IslandWorldState.Islands.Count;
+				yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+				IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+				Check(ref ok, e != null && e.Root != null, "a trader raft brought (" + name + ")");
+				if (e != null && e.Root != null)
+				{
+					Log("TRADER " + e.HostName);
+					List<TradeStand> stands = e.Root.GetComponentsInChildren<TradeStand>(true).OrderBy(t => t.Index).ToList();
+					Check(ref ok, stands.Count == offers.Count, "its stalls: " + stands.Count + " (offers " + offers.Count + ")");
+					Check(ref ok, e.Root.GetComponentsInChildren<CustomNote>(true).Any(n => n.Title == "Trader"), "the trader's note is there");
+					Network_Player player = RAPI.GetLocalPlayer();
+					TradeStand stand = stands.FirstOrDefault();
+					if (stand != null && player != null)
+					{
+						Func<string, int> count = n => player.Inventory.GetItemCount(n);
+						string goods = stand.Get[0].Key;
+						// Short of the price: nothing
+						foreach (KeyValuePair<string, int> l in stand.Give) { int have = count(l.Key); if (have > 0) player.Inventory.RemoveItem(l.Key, have); }
+						int goodsBefore = count(goods);
+						Check(ref ok, stand.Lacks().Length > 0 && stand.Trade().Count == 0 && count(goods) == goodsBefore && stand.Left == stand.Stock, "short of the price: no trade (needs " + stand.Lacks() + ")");
+						// Each unit: the price taken, the goods given
+						int traded = 0;
+						for (int u = 0; u < stand.Stock + 1; u++)
+						{
+							foreach (KeyValuePair<string, int> l in stand.Give) player.Inventory.AddItem(l.Key, l.Value);
+							var paidBefore = stand.Give.Select(l => count(l.Key)).ToList();
+							goodsBefore = count(goods);
+							List<string> got = stand.Trade();
+							if (got.Count == 0) break;
+							traded++;
+							bool paid = stand.Give.Select((l, j) => paidBefore[j] - count(l.Key) == l.Value).All(x => x);
+							Check(ref ok, paid && count(goods) - goodsBefore == stand.Get[0].Value, "trade " + traded + ": paid " + TraderRaft.Text(stand.Give) + " (" + paid + "), got " + string.Join(", ", got.ToArray()) + ", " + stand.Left + " left");
+						}
+						Check(ref ok, traded == stand.Stock && stand.Left == 0 && stand.NextUnit < 0, "sold out after " + traded + " trades (stock " + stand.Stock + ")");
+						Check(ref ok, Enumerable.Range(0, stand.Stock).All(u => ContentState.IsUsed(e, stand.KeyOf(u))), "the stock is kept in the island's state (saved with the world, sent to players)");
+						foreach (KeyValuePair<string, int> l in stand.Give) { int have = count(l.Key); if (have > 0) player.Inventory.RemoveItem(l.Key, have); }
+						int g = count(goods); if (g > 0) player.Inventory.RemoveItem(goods, g);
+					}
+					if (!keep) IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
+				}
+			}
+			finally { WorldOptions.Set(optionsBefore); TraderRaft.Reset(); }
+			if (ok) Log("PASS: trader raft"); else Fail("trader raft");
+		}
+
+		[ConsoleCommand(name: "CITrade", docs: "Dev, world (any player): this player gets the price of the trader stall number <n> (0 = the first loaded, by object index) and trades once there; a client waits for the host's yes. Logs what it got and the stock left. CITrade <n>")]
+		public static void TradeCommand(string[] args)
+		{
+			int n = 0;
+			if (args != null && args.Length > 0) int.TryParse(args[0], out n);
+			StartTest(TradeRoutine(n));
+		}
+
+		static IEnumerator TradeRoutine(int n)
+		{
+			TradeStand stand = UnityEngine.Object.FindObjectsOfType<TradeStand>().OrderBy(t => t.Index).Skip(n).FirstOrDefault();
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (stand == null || player == null) { Fail("trade: no stall " + n + " loaded"); yield break; }
+			int left = stand.Left;
+			foreach (KeyValuePair<string, int> l in stand.Give) player.Inventory.AddItem(l.Key, l.Value);
+			stand.LastGiven = new List<string>();
+			stand.Trade();
+			yield return WaitFor(() => stand == null || stand.LastGiven.Count > 0, 10f);
+			if (stand == null) { Fail("trade: the stall went away"); yield break; }
+			if (stand.LastGiven.Count > 0 && stand.Left == left - 1) Log("PASS: traded at stall " + n + ": got " + string.Join(", ", stand.LastGiven.ToArray()) + ", " + stand.Left + " left");
+			else Fail("trade at stall " + n + ": got " + string.Join(", ", stand.LastGiven.ToArray()) + ", " + stand.Left + " left (was " + left + ")");
+		}
+
+		static IEnumerator SailTraders(bool on, Vector3 raft, Action<int> result)
+		{
+			var opts = new HashSet<string>(WorldOptions.Current);
+			opts.Remove(WorldOptions.GhostRafts);
+			if (on) opts.Add(WorldOptions.TraderRaft); else opts.Remove(WorldOptions.TraderRaft);
+			WorldOptions.Set(opts);
+			TraderRaft.Reset();
+			var known = new HashSet<int>(IslandWorldState.Islands.Select(e => e.Id));
+			int n = 0, early = 0;
+			for (int i = 0; i < 320; i++)
+			{
+				TraderRaft.OnSailed(250f, raft);
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(e => !known.Contains(e.Id)).ToList())
+				{
+					known.Add(e.Id);
+					if (!(e.HostName ?? "").Contains(TraderRaft.TypeName)) continue;
+					n++;
+					if (i * 250f < 3000f) early++;
+					IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
+				}
+				if (i % 8 == 0) yield return null;
+			}
+			if (early > 0) Fail("trader rafts: " + early + " within the first 3 km");
 			result(n);
 		}
 
@@ -615,6 +765,15 @@ namespace DynamicIslands
 			Item_Base item = ItemManager.GetItemByName("Placeable_Storage_Small");
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			List<Block> floors = raft != null ? raft.GetComponentsInChildren<Block>().Where(x => (x.name.Contains("Foundation") || (x.buildableItem != null && x.buildableItem.UniqueName.Contains("Foundation")))).OrderBy(x => x.transform.localPosition.sqrMagnitude).ToList() : new List<Block>();
+			// (a test world's raft eaten down by the shark over many runs - 1 block left: a foundation first, where none is)
+			Item_Base foundation = ItemManager.GetItemByName("Block_Foundation");
+			if (floors.Count == 0 && raft != null && foundation != null)
+			{
+				List<Vector3> taken = raft.GetComponentsInChildren<Block>().Select(x => x.transform.localPosition).ToList();
+				Vector3 at = new[] { 0f, 1.5f, -1.5f, 3f, -3f }.Select(x => new Vector3(x, 0f, 0f)).FirstOrDefault(p => taken.All(t => (t - p).magnitude > 0.5f));
+				Block f = who.BlockCreator.CreateBlockCheat(foundation, at, Vector3.zero, DPS.Default, 0);
+				if (f != null) { floors.Add(f); Log("(no foundation on the raft: one placed at " + at + ")"); }
+			}
 			// (the next foundation for each storage, round again on a small raft)
 			Block floor = floors.Count > 0 ? floors[UnityEngine.Object.FindObjectsOfType<Storage_Small>().Length % floors.Count] : null;
 			if (item == null || floor == null) { Fail("place storage: " + (item == null ? "no storage item" : "no foundation on the raft (" + (raft != null ? raft.GetComponentsInChildren<Block>().Length : 0) + " blocks)")); return; }
@@ -947,6 +1106,274 @@ namespace DynamicIslands
 
 		#endregion
 
+		#region Rogue shark
+
+		[ConsoleCommand(name: "CIRogueShark", docs: "Dev, world (host): the option Rogue shark - the day's roll comes from the seed and the day (the same twice, none before day 3, about 12 % of days), the quiet days 5-8, written and read back; the option off: none on a rolling day; on: a second shark comes (Raft's own spawn), rust-red, not the randomizer's, kept in the world file; Bruce killed while it lives: Raft counts him as the last shark (a new one comes); the rogue killed: none for its quiet days, its body brings no new shark; after them the next rolling day brings one; options and the rogue put back after")]
+		public static void RogueSharkTestCommand() { StartTest(RogueSharkRoutine()); }
+
+		static List<AI_NetworkBehavior_Shark> LiveSharks()
+		{
+			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehavior_Shark>().Where(s => s != null && (s.networkEntity == null || !s.networkEntity.IsDead)).ToList();
+		}
+
+		static IEnumerator RogueSharkRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("rogue shark: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			string rogueBefore = RogueShark.WriteLines().FirstOrDefault() ?? "@rogueshark=0;0";
+			var logs = new List<string>();
+			Application.LogCallback watch = (text, trace, type) => { if (text.Contains("[rogue]")) logs.Add(text); };
+			Application.logMessageReceived += watch;
+			try
+			{
+				// The roll
+				int seed = WorldOptions.Seed, rolled = 0;
+				bool same = true;
+				for (int d = 0; d < 2000; d++) { bool r = RogueShark.Rolls(seed, d); same &= r == RogueShark.Rolls(seed, d); if (r) rolled++; if (d < RogueShark.FirstDay && r) same = false; }
+				Check(ref ok, same && rolled > 2000 * 0.08f && rolled < 2000 * 0.16f, "the roll: the same twice, none before day " + RogueShark.FirstDay + ", " + rolled + " of 2000 days");
+				bool quiet = Enumerable.Range(0, 200).All(d => { int q = RogueShark.QuietDays(seed, d); return q >= RogueShark.QuietMin && q <= RogueShark.QuietMax && q == RogueShark.QuietDays(seed, d); });
+				Check(ref ok, quiet, "quiet days " + RogueShark.QuietMin + "-" + RogueShark.QuietMax + " (day 10: " + RogueShark.QuietDays(seed, 10) + ")");
+				RogueShark.ReadLine("rogueshark", "123;45");
+				Check(ref ok, RogueShark.Index == 123 && RogueShark.QuietUntil == 45 && RogueShark.WriteLines().FirstOrDefault() == "@rogueshark=123;45", "written and read back");
+				RogueShark.Reset();
+				int day = Enumerable.Range(RogueShark.FirstDay + 1, 500).First(d => RogueShark.Rolls(seed, d));
+
+				// Off: none
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.RogueShark)));
+				RogueShark.Reset();
+				RogueShark.TestDay = day;
+				int sharksBefore = LiveSharks().Count;
+				yield return new WaitForSeconds(2.5f);
+				Check(ref ok, RogueShark.Index == 0 && LiveSharks().Count == sharksBefore, "the option off: none on rolling day " + day + " (" + sharksBefore + " shark(s))");
+
+				// On: the rogue
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.RogueShark });
+				IslandInfo.ForgetShown();
+				yield return new WaitForSeconds(2.5f);
+				AI_NetworkBehavior_Shark rogue = RogueShark.Find();
+				Check(ref ok, rogue != null && RogueShark.Alive && LiveSharks().Count == sharksBefore + 1 && (IslandInfo.LastShown ?? "").Contains("rogue shark"),
+					"day " + day + ": a rogue #" + RogueShark.Index + " (" + LiveSharks().Count + " shark(s) alive, banner: " + IslandInfo.LastShown + ")");
+				if (rogue == null) yield break;
+				Check(ref ok, RogueShark.LooksRogue(rogue) && WorldRandomizer.VariantOf(AI_NetworkBehaviourType.Shark, rogue.ObjectIndex) == null, "rust-red, not the randomizer's");
+				Check(ref ok, WorldOptions.WriteLines().Contains("@rogueshark=" + RogueShark.Index + ";0"), "kept in the world file");
+
+				// Bruce killed while it lives: Raft takes him for the last shark
+				AI_NetworkBehavior_Shark bruce = LiveSharks().Where(s => !RogueShark.IsRogue(s)).OrderBy(s => (s.transform.position - rogue.transform.position).sqrMagnitude).FirstOrDefault();
+				if (bruce != null)
+				{
+					int bruces = LiveSharks().Count(s => !RogueShark.IsRogue(s)); // (besides Bruce, an earlier test's shark may still swim)
+					logs.Clear();
+					bruce.networkEntity.Damage(100000f, bruce.transform.position, Vector3.up, EntityType.Player, true);
+					float until = Time.time + 150f;
+					while (Time.time < until && !logs.Any(l => l.Contains("decays while the rogue lives"))) yield return new WaitForSeconds(1f);
+					Check(ref ok, logs.Any(l => l.Contains("Raft counts " + bruces + " shark")), "Bruce killed while the rogue lives: Raft counts the others but not the rogue (" + bruces + " expected; " + (logs.LastOrDefault() ?? "no decay seen in 150 s") + ")");
+				}
+				else Log("(no Bruce to kill)");
+
+				// The rogue killed: quiet days, its body brings none
+				logs.Clear();
+				IslandInfo.ForgetShown();
+				uint dead = RogueShark.Index;
+				rogue.networkEntity.Damage(100000f, rogue.transform.position, Vector3.up, EntityType.Player, true);
+				yield return new WaitForSeconds(2.5f);
+				int quietUntil = day + RogueShark.QuietDays(seed, day);
+				Check(ref ok, RogueShark.Index == 0 && RogueShark.QuietUntil == quietUntil && (IslandInfo.LastShown ?? "").Contains("dead"), "killed: none before day " + RogueShark.QuietUntil + " (" + quietUntil + " expected; banner: " + IslandInfo.LastShown + ")");
+				bool none = true;
+				for (int d = day + 1; d < quietUntil; d++) { RogueShark.TestDay = d; yield return new WaitForSeconds(1.2f); none &= RogueShark.Index == 0; }
+				Check(ref ok, none, "none on days " + (day + 1) + "-" + (quietUntil - 1));
+				float decay = Time.time + 300f;
+				while (Time.time < decay && !logs.Any(l => l.Contains("no shark comes for it"))) yield return new WaitForSeconds(1f);
+				Check(ref ok, logs.Any(l => l.Contains("no shark comes for it")), "its body brings no new shark (#" + dead + ")");
+				int next = Enumerable.Range(quietUntil, 500).First(d => RogueShark.Rolls(seed, d));
+				RogueShark.TestDay = next;
+				yield return new WaitForSeconds(2.5f);
+				Check(ref ok, RogueShark.Alive && RogueShark.Index != dead, "day " + next + " (the next rolling one after the quiet days): another rogue #" + RogueShark.Index);
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				AI_NetworkBehavior_Shark left = RogueShark.Find();
+				if (left != null && left.networkEntity != null && !left.networkEntity.IsDead) left.networkEntity.Damage(100000f, left.transform.position, Vector3.up, EntityType.Player, true);
+				RogueShark.TestDay = null;
+				WorldOptions.Set(optionsBefore);
+				RogueShark.ReadLine("rogueshark", rogueBefore.Substring(rogueBefore.IndexOf('=') + 1));
+				IslandWorldState.Save();
+			}
+			if (ok) Log("PASS: rogue shark"); else Fail("rogue shark");
+		}
+
+		#endregion
+
+		#region Silver & golden barrels
+
+		[ConsoleCommand(name: "CIBarrels", docs: "Dev, world (host): the option Silver & golden barrels - a barrel's kind comes from the seed and its index (the same twice, about 1 in 40 silver and 1 in 150 golden), the extra loot in its ranges; on: the next barrel Raft spawns (forced golden) is coloured, and picked up (Raft's own pickup) gives its extra loot once, with a banner; off: the next one stays plain; options put back after")]
+		public static void BarrelsTestCommand() { StartTest(BarrelsRoutine()); }
+
+		static IEnumerator BarrelsRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("barrels: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			var spawned = new List<uint>();
+			Application.LogCallback watch = (text, trace, type) =>
+			{
+				int at = text.IndexOf("[barrels] A golden barrel #");
+				uint n;
+				if (at >= 0 && uint.TryParse(text.Substring(at + 27).Trim(), out n)) spawned.Add(n);
+			};
+			Application.logMessageReceived += watch;
+			try
+			{
+				// The roll and the loot
+				int seed = WorldOptions.Seed, silver = 0, gold = 0;
+				bool same = true, inRange = true;
+				for (uint i = 1; i <= 20000; i++)
+				{
+					int k = GoldenBarrels.KindOf(seed, i);
+					same &= k == GoldenBarrels.KindOf(seed, i);
+					if (k == GoldenBarrels.Silver) silver++; else if (k == GoldenBarrels.Gold) gold++;
+					if (k == GoldenBarrels.None) continue;
+					List<KeyValuePair<string, int>> loot = GoldenBarrels.LootOf(seed, i, k);
+					int nails = loot.Where(l => l.Key == "Nail").Sum(l => l.Value);
+					inRange &= loot.Count >= 3 && loot.All(l => l.Value >= 1 && l.Value <= 10) && (k == GoldenBarrels.Gold ? nails >= 6 : nails <= 6 && loot.Count == 3)
+						&& loot.SequenceEqual(GoldenBarrels.LootOf(seed, i, k));
+				}
+				Check(ref ok, same && silver > 20000 / 40 * 0.75f && silver < 20000 / 40 * 1.25f && gold > 20000 / 150 * 0.6f && gold < 20000 / 150 * 1.4f,
+					"the roll: the same twice, " + silver + " silver and " + gold + " golden of 20000 barrels");
+				Check(ref ok, inRange, "the extra loot in its ranges, the same twice (gold " + string.Join(", ", GoldenBarrels.LootOf(seed, 7, GoldenBarrels.Gold).Select(l => l.Value + " " + l.Key).ToArray()) + ")");
+
+				// On: the next barrel (forced golden)
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.Barrels });
+				GoldenBarrels.TestKind = GoldenBarrels.Gold;
+				float until = Time.time + 180f;
+				while (spawned.Count == 0 && Time.time < until) yield return new WaitForSeconds(1f);
+				GoldenBarrels.TestKind = null;
+				PickupItem_Networked barrel = spawned.Count == 0 ? null : UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().FirstOrDefault(p => p.ObjectIndex == spawned[0]);
+				Check(ref ok, barrel != null && GoldenBarrels.IsBarrel(barrel) && GoldenBarrels.LooksSpecial(barrel) && GoldenBarrels.Kind(barrel) == GoldenBarrels.Gold,
+					"a barrel Raft spawned is golden: " + (barrel != null ? barrel.name + " #" + barrel.ObjectIndex : "none in 180 s"));
+				if (barrel != null)
+				{
+					Network_Player me = RAPI.GetLocalPlayer();
+					PlayerInventory inv = me.Inventory;
+					int nail = inv.GetItemCount("Nail"), rope = inv.GetItemCount("Rope");
+					List<KeyValuePair<string, int>> loot = GoldenBarrels.LootOf(seed, barrel.ObjectIndex, GoldenBarrels.Gold);
+					PickupItem item = barrel.GetComponent<PickupItem>();
+					me.PickupScript.PickupItem(item, true, false);
+					yield return new WaitForSeconds(1f);
+					int nailGot = inv.GetItemCount("Nail") - nail, ropeGot = inv.GetItemCount("Rope") - rope;
+					Check(ref ok, nailGot >= loot.First(l => l.Key == "Nail").Value && ropeGot >= loot.First(l => l.Key == "Rope").Value && (IslandInfo.LastShown ?? "").Contains("golden barrel"),
+						"picked up: +" + nailGot + " nails, +" + ropeGot + " rope (the extra: " + string.Join(", ", loot.Select(l => l.Value + " " + l.Key).ToArray()) + "), banner: " + IslandInfo.LastShown);
+					nail = inv.GetItemCount("Nail");
+					GoldenBarrels.PickedUp(me, item);
+					Check(ref ok, inv.GetItemCount("Nail") == nail, "its extra loot only once");
+				}
+
+				// Off: the next one plain
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.Barrels)));
+				GoldenBarrels.TestKind = GoldenBarrels.Gold;
+				int seen = spawned.Count;
+				PickupItem_Networked plain = null;
+				var before = new HashSet<int>(UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Select(p => p.GetInstanceID()));
+				until = Time.time + 180f;
+				while (plain == null && Time.time < until)
+				{
+					yield return new WaitForSeconds(1f);
+					// (a pooled barrel keeps its instance: "new" = not out last second)
+					PickupItem_Networked[] now = UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>();
+					plain = now.FirstOrDefault(p => GoldenBarrels.IsBarrel(p) && !before.Contains(p.GetInstanceID()));
+					before = new HashSet<int>(now.Select(p => p.GetInstanceID()));
+				}
+				Check(ref ok, plain != null && spawned.Count == seen && !GoldenBarrels.LooksSpecial(plain), "the option off: the next barrel plain (" + (plain != null ? plain.name + " #" + plain.ObjectIndex : "none in 180 s") + ")");
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				GoldenBarrels.TestKind = null;
+				WorldOptions.Set(optionsBefore);
+			}
+			if (ok) Log("PASS: barrels"); else Fail("barrels");
+		}
+
+		#endregion
+
+		#region Storm days
+
+		[ConsoleCommand(name: "CIStormDays", docs: "Dev, world (host): the option Storm days - the day's roll comes from the seed and the day (the same twice, none before day 3, about 10 % of days); off: a storm day is calm; on: the warning at nightfall the evening before, on the day Raft's storm weather held (its timer kept off), a banner, the shark's time between looks x0.6; the day after Raft chooses its weather again; options put back after")]
+		public static void StormDaysTestCommand() { StartTest(StormDaysRoutine()); }
+
+		static IEnumerator StormDaysRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("storm days: host, in a world"); yield break; }
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			var logs = new List<string>();
+			Application.LogCallback watch = (text, trace, type) => { if (text.Contains("[storm]")) logs.Add(text); };
+			Application.logMessageReceived += watch;
+			WeatherManager wm = UnityEngine.Object.FindObjectOfType<WeatherManager>();
+			UniqueWeatherType weatherBefore = wm != null ? wm.GetCurrentWeatherType() : UniqueWeatherType.Default;
+			try
+			{
+				// The roll
+				int seed = WorldOptions.Seed, rolled = 0;
+				bool same = true;
+				for (int d = 0; d < 2000; d++) { bool r = StormDays.Rolls(seed, d); same &= r == StormDays.Rolls(seed, d); if (r) rolled++; if (d < StormDays.FirstDay && r) same = false; }
+				Check(ref ok, same && rolled > 2000 * 0.06f && rolled < 2000 * 0.14f, "the roll: the same twice, none before day " + StormDays.FirstDay + ", " + rolled + " of 2000 days");
+				// (a storm day after a calm one, and a calm day after it)
+				int day = Enumerable.Range(StormDays.FirstDay + 1, 2000).First(d => StormDays.Rolls(seed, d) && !StormDays.Rolls(seed, d - 1) && !StormDays.Rolls(seed, d + 1));
+
+				// Off
+				WorldOptions.Set(new HashSet<string>(optionsBefore.Where(o => o != WorldOptions.StormDays)));
+				StormDays.Reset();
+				StormDays.TestDay = day; StormDays.TestNight = false;
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, !StormDays.IsStorm && StormDays.SharkFactor == 1f && !logs.Any(l => l.Contains("A storm day")), "the option off: day " + day + " is calm");
+
+				// On: the evening before
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.StormDays });
+				StormDays.TestDay = day - 1; StormDays.TestNight = true;
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, logs.Any(l => l.Contains("A storm tomorrow (day " + day + ")")) && (IslandInfo.LastShown ?? "").Contains("storm tomorrow"), "nightfall of day " + (day - 1) + ": the warning (banner: " + IslandInfo.LastShown + ")");
+
+				// The storm day
+				StormDays.TestDay = day; StormDays.TestNight = false;
+				float until = Time.time + 60f;
+				while (Time.time < until && (wm == null || wm.GetCurrentWeatherType() != StormDays.StormWeather(wm))) yield return new WaitForSeconds(1f);
+				Check(ref ok, wm != null && wm.GetCurrentWeatherType() == StormDays.StormWeather(wm) && wm.WeatherTimer > 100f && (IslandInfo.LastShown ?? "").Contains("storm day"),
+					"day " + day + ": the storm's weather " + (wm != null ? wm.GetCurrentWeatherType() + " (" + wm.GetCurrentWeather().name + "), next change in " + Mathf.RoundToInt(wm.WeatherTimer) + " s" : "none") + ", banner: " + IslandInfo.LastShown);
+				float factorOff = NightDanger.SharkFactor;
+				Check(ref ok, StormDays.IsStorm && Mathf.Approximately(StormDays.SharkFactor, StormDays.SharkStorm), "the shark x" + StormDays.SharkFactor + " (Night is dangerous: x" + factorOff + ")");
+				AI_StateMachine_Shark shark = UnityEngine.Object.FindObjectsOfType<AI_StateMachine_Shark>().FirstOrDefault();
+				if (shark != null)
+				{
+					float stormy = HarmonyLib.Traverse.Create(shark).Property("SearchBlockInterval").GetValue<float>();
+					StormDays.TestDay = day + 1;
+					float calm = HarmonyLib.Traverse.Create(shark).Property("SearchBlockInterval").GetValue<float>();
+					StormDays.TestDay = day;
+					Check(ref ok, calm > 0f && Mathf.Abs(stormy - calm * StormDays.SharkStorm) < 0.01f * calm, "the shark looks for the raft every " + stormy.ToString("0.0") + " s (calm: " + calm.ToString("0.0") + " s)");
+				}
+				// (the weather held: Raft's own change refused for the day)
+				wm.WeatherTimer = 1f;
+				yield return new WaitForSeconds(4f);
+				Check(ref ok, wm.GetCurrentWeatherType() == StormDays.StormWeather(wm) && wm.WeatherTimer > 100f, "Raft's timer run out: still " + wm.GetCurrentWeatherType());
+
+				// The day after
+				StormDays.TestDay = day + 1;
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, logs.Any(l => l.Contains("The storm is over")) && wm.WeatherTimer < 10f && StormDays.SharkFactor == 1f, "day " + (day + 1) + ": over, Raft chooses its weather in " + Mathf.RoundToInt(wm.WeatherTimer) + " s");
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				StormDays.Reset();
+				WorldOptions.Set(optionsBefore);
+				if (wm != null && wm.GetCurrentWeatherType() != weatherBefore) wm.SetWeather(weatherBefore, false);
+			}
+			if (ok) Log("PASS: storm days"); else Fail("storm days");
+		}
+
+		#endregion
+
 		#region Scrambled blueprints
 
 		[ConsoleCommand(name: "CIBlueprintsWorld", docs: "Dev, world (host, a test world 'CI Options ...' only - it brings one of Raft's story islands): with the option on, the story island with the most movable blueprints is brought near the raft (Raft's own ChunkManager.AddChunkPointForcibly) and sailed to; each of its blueprint pickups gives its partner (item and name), none of what the story needs changes; the option off: Raft's own again, on: the partners again")]
@@ -1105,7 +1532,7 @@ namespace DynamicIslands
 		#endregion
 		#region Every combination
 
-		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (256) of the world options switched on in turn: each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
+		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (512) of the world options switched on in turn (the retired ones together, as one; the rogue shark, the barrels and storm days together): each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
 		public static void OptionsMatrixCommand() { StartTest(OptionsMatrixRoutine()); }
 
 		static IEnumerator OptionsMatrixRoutine()
@@ -1120,11 +1547,19 @@ namespace DynamicIslands
 			// (a storage noted for another player, one for nobody: the refusal only with the option)
 			string storagesBefore = PrivateStorage.Encode(), dailyBefore = DailyQuest.Current.Encode();
 			PrivateStorage.Decode(storagesBefore + ";999999:12345");
+			int combos = 0;
 			try
 			{
-				for (int mask = 0; mask < (1 << WorldOptions.All.Length); mask++)
+				// (switched together: the retired options, and the three that only add something at sea (the rogue shark, the
+				// barrels, storm days, the trader raft): 512 combinations, not 4096 - ~22 min)
+				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft };
+				string[][] groups = WorldOptions.Offered.Where(o => !sea.Contains(o)).Select(o => new[] { o }).Concat(new[] { sea, WorldOptions.Retired }).ToArray();
+				// (no rogue shark rolled meanwhile: before day 3 there's none)
+				RogueShark.TestDay = 1;
+				combos = 1 << groups.Length;
+				for (int mask = 0; mask < (1 << groups.Length); mask++)
 				{
-					var on = new HashSet<string>(WorldOptions.All.Where((o, i) => (mask & (1 << i)) != 0));
+					var on = new HashSet<string>(groups.Where((g, i) => (mask & (1 << i)) != 0).SelectMany(g => g));
 					WorldOptions.Set(on);
 					yield return new WaitForSeconds(2.5f);
 					// (Raft's autosave prunes builders of storages not in the world - the made-up one too: noted again)
@@ -1150,8 +1585,9 @@ namespace DynamicIslands
 				PrivateStorage.Decode(storagesBefore);
 				WorldOptions.Set(optionsBefore);
 				DailyQuest.ReadLine("daily", dailyBefore);
+				RogueShark.TestDay = null;
 			}
-			Check(ref ok, bad.Count == 0, (1 << WorldOptions.All.Length) + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
+			Check(ref ok, bad.Count == 0, combos + " combinations: each the world's, and what follows from it holds" + (bad.Count > 0 ? " - not: " + string.Join("; ", bad.Take(4).ToArray()) : ""));
 			Check(ref ok, errors.Count == 0, "no errors while they ran" + (errors.Count > 0 ? " - " + errors[0] : ""));
 			if (ok) Log("PASS: options matrix"); else Fail("options matrix");
 		}

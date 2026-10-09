@@ -148,6 +148,10 @@
     <Compile Include="IronRaft.cs" />
     <Compile Include="NightDanger.cs" />
     <Compile Include="DailyQuest.cs" />
+    <Compile Include="RogueShark.cs" />
+    <Compile Include="GoldenBarrels.cs" />
+    <Compile Include="StormDays.cs" />
+    <Compile Include="TraderRaft.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
     <Compile Include="PatchHealth.cs" />

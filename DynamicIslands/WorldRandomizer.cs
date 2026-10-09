@@ -809,6 +809,8 @@ namespace DynamicIslands.Editor
 		{
 			Variant[] palette = PaletteOf(type);
 			if (palette == null || !Current.On) return null;
+			// (the Rogue shark option's has its own colour)
+			if (type == AI_NetworkBehaviourType.Shark && RogueShark.IsRogueIndex(objectIndex)) return null;
 			if (Current.Has(RandomizerSettings.Alphas))
 			{
 				float alpha = type == AI_NetworkBehaviourType.Shark ? Current.Pick(0.06f, 0.12f, 0.22f) : Fighters.Contains(type) ? Current.Pick(0.03f, 0.06f, 0.12f) : 0f;

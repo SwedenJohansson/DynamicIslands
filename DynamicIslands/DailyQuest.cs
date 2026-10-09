@@ -96,7 +96,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The task of a day in a world with this seed (the same on every machine, and again after a load).</summary>
 		public static Task Make(int seed, int day)
 		{
-			var rnd = new System.Random(unchecked(seed * 31 + day * 7919 + 17));
+			var rnd = new System.Random(WorldOptions.Mix(seed, day, 17)); // (mixed: nearby seeds gave the same task day after day)
 			var t = new Task { Day = day };
 			int k = rnd.Next(100);
 			if (k < 45)

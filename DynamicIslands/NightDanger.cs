@@ -49,7 +49,7 @@ namespace DynamicIslands.Editor
 	{
 		static void Postfix(ref float __result)
 		{
-			try { __result *= NightDanger.SharkFactor; }
+			try { __result *= NightDanger.SharkFactor * StormDays.SharkFactor; }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [night] " + e.Message); }
 		}
 	}
