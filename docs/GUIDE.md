@@ -2370,6 +2370,23 @@ the upgrade table keeps what it had: the upgrades whose base was learned stay le
 Every player needs the mod, as for any world with custom islands. The upgrades are saved with the world; a world
 loaded **without** the mod loses them (a machine's slot comes back empty, a built upgrade is gone).
 
+#### Head start raft
+
+The world starts on a bigger raft that is already set up, to skip the first hours. The button goes **off -> LEVEL 1 ->
+LEVEL 2 -> LEVEL 3 -> off**:
+
+| Level | Raft | On it |
+|---|---|---|
+| 1 | 6 x 12 foundations | a simple grill, a simple purifier, the research table, a bed and a small storage with 10 planks, 10 plastic, 10 rope, 10 stones, 5 raw mackerel and 5 potatoes |
+| 2 | 8 x 14 | level 1, plus 2 smelters, a sail, 10 item nets in the water and 2 medium storages: 10 each of sand, clay, stone, scrap, metal ore, copper ore, seaweed, palm leaves, dirt and vine goo, 2 batteries and 2 flippers |
+| 3 | 10 x 20 | level 2, plus the Receiver with its 3 antennas and a battery in it, and 2 more medium storages (40 planks, 40 plastic and more) |
+
+The host builds it once, a moment after the new world first loads, around Raft's start raft. They are Raft's own blocks,
+saved with the world like any you build. A joiner gets them with the world. It is never built twice: the world file
+remembers it is built (`@headstartdone=1`), and a raft that already has more than 12 foundations is never built on.
+`HeadStart` (F10) says what this world has and what the next new world gets. In the main menu `HeadStart 2` chooses
+level 2 for the next new world.
+
 #### For every player
 
 Every player in the world gets the host's options, also when joining later. The host can change them in a world:
@@ -2571,6 +2588,7 @@ Press **F10** for RML's console.
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
 | `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage; at the main menu: the next new world) |
+| `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
 | `WorldIslands` / `WorldIslands -<island>` / `+<island>` / `all` | World or main menu | Which islands turn up by chance while sailing in this world / leave one out, let it take part again, all of them (host; also `type:<map type>`; at the main menu: the next new world) |

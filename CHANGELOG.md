@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Head start raft:** a new World setting (levels 1-3) starts the world on a bigger raft that is already set up: 6 x 12
+  foundations with a grill, a purifier, the research table, a bed and first supplies; level 2 (8 x 14) adds smelters, a sail,
+  10 item nets and island resources; level 3 (10 x 20) the Receiver with its antennas. Built once by the host.
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.

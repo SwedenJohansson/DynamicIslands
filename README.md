@@ -426,6 +426,9 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   comes for the raft more often; a warning at nightfall the evening before.
 - **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
   scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
+- **Head start raft:** the world starts on a bigger raft already set up - level 1: 6 x 12 foundations with a grill, a
+  purifier, the research table, a bed and first supplies; level 2: 8 x 14, also smelters, a sail, 10 item nets and island
+  resources; level 3: 10 x 20, also the Receiver with its antennas. Built once by the host (`HeadStart`).
 - **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once they are
   learned at the **upgrade research table** (a violet research table of their own, four times the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
@@ -589,6 +592,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `StormDays` / `StormDays roll <from> <to>` | Game | Whether today is a storm day, the next one, the weather and the shark's factor (world option Storm days); `roll`: the storm days in a range |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |
 | `StoryChain` | Game | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
+| `HeadStart` / `HeadStart 0-3` | Game; main menu | The head start raft: this world's level and the next new world's; at the main menu `HeadStart 2` chooses level 2 for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | Game (switching: host); main menu | The level up system in this world, or switch it for every player (off keeps the levels); at the main menu: the choice for the next new world |
 | `Resync` | Game, a player who joined | Ask the host for its custom islands again: the list, and any island file that hasn't come (the mod also keeps asking by itself) |
 | `WorldIslandsGap` / `WorldIslandsGap <min>-<max>` | Game (changing: host) or main menu | How often random islands come: one after every min-max of Raft's own islands met (default 3-6; min 2-20, max 4-50) |

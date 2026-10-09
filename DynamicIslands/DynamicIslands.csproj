@@ -77,6 +77,7 @@
     <Compile Include="DevTestsPlay.cs" />
     <Compile Include="DevTestsRelease.cs" />
     <Compile Include="DevTestsOptions.cs" />
+    <Compile Include="DevTestsHeadStart.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
     <Compile Include="DevTestsQuestBook.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="StormDays.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
+    <Compile Include="HeadStart.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
     <Compile Include="PatchHealth.cs" />

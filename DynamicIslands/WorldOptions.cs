@@ -151,6 +151,7 @@ namespace DynamicIslands.Editor
 				// (the level up system, when it was chosen in World settings)
 				global::DynamicIslands.Editor.PlayerLevels.OnNewWorld();
 			}
+			global::DynamicIslands.Editor.HeadStart.Reset(isNew);
 			Pending = null;
 			// (a saved world loaded: every unsaved New Game choice goes back to the remembered one, as the options' and the
 			// islands' did - the level up system, the randomizer and the rules box kept theirs)
@@ -178,11 +179,13 @@ namespace DynamicIslands.Editor
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value);
+			return global::DynamicIslands.Editor.HeadStart.ReadLine(key, value) || global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
+			// (the head start's lines also in a world without options)
+			foreach (string l in global::DynamicIslands.Editor.HeadStart.WriteLines()) yield return l;
 			if (Current.Count == 0 && Seed == 0) yield break;
 			yield return "@options=" + string.Join(",", All.Where(On).ToArray());
 			yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
@@ -195,7 +198,7 @@ namespace DynamicIslands.Editor
 			foreach (string l in global::DynamicIslands.Editor.UpgradeTable.WriteLines()) yield return l;
 		}
 
-		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
+		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState || global::DynamicIslands.Editor.HeadStart.HasState; } }
 
 		#endregion
 

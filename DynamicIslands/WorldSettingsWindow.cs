@@ -33,6 +33,8 @@ namespace DynamicIslands.Editor
 		static Text summary;
 		static Button levelsToggle;
 		public static Button LevelsToggle { get { return levelsToggle; } }
+		static Button headStartToggle;
+		public static Button HeadStartToggle { get { return headStartToggle; } }
 		static bool hooked;
 
 		/// <summary>The options shown (the last choice until one is made).</summary>
@@ -48,7 +50,7 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
-				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) +
+				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (HeadStart.Chosen > 0 ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) +
 					(WorldIslands.Chosen.Count > 0 ? 1 : 0); // (islands left out: the button said "Raft's own" while some were)
 			}
 		}
@@ -141,8 +143,18 @@ namespace DynamicIslands.Editor
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
+			// Head start raft: off, level 1, 2 or 3 - each press the next
+			{
+				const string hint = "The world starts on a bigger raft that is already set up. Level 1: 6 x 12 foundations, a grill, a purifier, the research table, a bed and a storage of first supplies. Level 2: 8 x 14, also smelters, a sail, 10 item nets and island resources. Level 3: 10 x 20, also the Receiver with its antennas.";
+				RectTransform group = UIKit.Group(list, null, "Option_headstart");
+				headStartToggle = UIKit.Button(group, "", () => { HeadStart.Chosen = (HeadStart.Chosen + 1) % 4; Show(); }, hint, -1, 28f, 14);
+				headStartToggle.name = "Toggle_headstart";
+				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				d.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(d.gameObject, -1, 44);
+			}
 
-			summary = UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
+			summary =UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
 			summary.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(summary.gameObject, -1, 30);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
@@ -182,6 +194,7 @@ namespace DynamicIslands.Editor
 		{
 			Chosen.Clear();
 			PlayerLevels.Chosen = false;
+			HeadStart.Chosen = 0;
 			NewWorldOptions.Randomizer.Level = RandomizerSettings.Off;
 			NewWorldOptions.Randomizer.Disabled.Clear();
 			NewWorldRulesBox.MonsterLevel = MonsterDifficulty.Normal;
@@ -205,12 +218,17 @@ namespace DynamicIslands.Editor
 				UIKit.LabelOf(levelsToggle).text = "Level up system:  " + (PlayerLevels.Chosen ? "ON" : "off");
 				UIKit.SetActive(levelsToggle, PlayerLevels.Chosen);
 			}
+			if (headStartToggle != null)
+			{
+				UIKit.LabelOf(headStartToggle).text = "Head start raft:  " + (HeadStart.Chosen > 0 ? "LEVEL " + HeadStart.Chosen : "off");
+				UIKit.SetActive(headStartToggle, HeadStart.Chosen > 0);
+			}
 			IslandPickerWindow.ShowEntry();
 			int changed = Changed;
 			if (openButton != null) UIKit.LabelOf(openButton).text = "WORLD SETTINGS...   " + (changed == 0 ? "Raft's own" : changed + " changed");
 			if (summary != null)
 				summary.text = "Now: monsters " + MonsterDifficulty.Describe(NewWorldRulesBox.MonsterLevel) + ", build cost " + BuildCost.Describe(NewWorldRulesBox.BuildPercent) +
-					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() + ", levels " + (PlayerLevels.Chosen ? "on" : "off") +
+					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() + ", levels " + (PlayerLevels.Chosen ? "on" : "off") + ", head start raft " + HeadStart.Describe(HeadStart.Chosen) +
 					(WorldIslands.Chosen.Count > 0 ? ", islands while sailing: " + WorldIslands.Chosen.Count + " left out" : "") +
 					". The Custom Islands plan ('" + NewWorldOptions.Selected + "') is chosen in the New Game box.";
 		}
@@ -228,6 +246,7 @@ namespace DynamicIslands.Editor
 				WorldOptions.SaveDefaults(on);
 				WorldIslands.SaveDefaults(WorldIslands.Chosen);
 				PlayerLevels.SaveDefault(PlayerLevels.Chosen);
+				HeadStart.SaveDefault(HeadStart.Chosen);
 				Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
 					(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
 			}
