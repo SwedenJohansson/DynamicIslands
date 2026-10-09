@@ -546,7 +546,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: large battery" + (keep ? " (machine kept)" : "")); else Fail("large battery");
 		}
 
-		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. Hand-held and worn ones (magnet hook, titanium rod, swift flippers, large air tank): twice the uses, and the player has a model or equipment of their own with the better stat (hook pull and gather, rod bite wait, swim speed, air loss). CIUpgrades [name] (only the upgrade whose name contains it)")]
+		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. Hand-held and worn ones (magnet hook, titanium rod, swift flippers, large air tank): twice the uses, and the player has a model or equipment of their own with the better stat (hook pull and gather, rod bite wait, swim speed, air loss, zoom, weapon damage, paddle push; the floodlight's lamp brighter and its model tinted only while worn); rapid charger, fast recycler and bright lantern placed with their better stat. CIUpgrades [name] (only the upgrade whose name contains it)")]
 		public static void UpgradesCommand(string[] args) { StartTest(UpgradesRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator UpgradesRoutine(string only)
@@ -675,6 +675,21 @@ namespace DynamicIslands
 					float a = f(made.GetComponentInChildren<WindTurbine>(true), "batteryChargesPerTick"), b = f(prefab.GetComponentInChildren<WindTurbine>(true), "batteryChargesPerTick");
 					stat = nums(a, b, "charges per tick"); return b > 0f && a == b * 2f;
 				}
+				case "DI_RapidCharger":
+				{
+					BatteryCharger a = made.GetComponentInChildren<BatteryCharger>(true), b = prefab.GetComponentInChildren<BatteryCharger>(true);
+					stat = nums(a != null ? a.chargePerFuelTick : -1, b != null ? b.chargePerFuelTick : -1, "charge per fuel tick"); return a != null && b != null && b.chargePerFuelTick > 0 && a.chargePerFuelTick == b.chargePerFuelTick * ExtraUpgrades.ChargerFactor;
+				}
+				case "DI_FastRecycler":
+				{
+					float a = f(made.GetComponentInChildren<Placeable_Extractor>(true), "processCooldown"), b = f(prefab.GetComponentInChildren<Placeable_Extractor>(true), "processCooldown");
+					stat = nums(a, b, "time per cycle"); return b > 0f && Mathf.Abs(a - b * ExtraUpgrades.RecyclerTimeFactor) < 0.001f;
+				}
+				case "DI_BrightLantern":
+				{
+					Light a = made.GetComponentInChildren<Light>(true), b = prefab.GetComponentInChildren<Light>(true);
+					stat = nums(a != null ? a.range : -1f, b != null ? b.range : -1f, "light range"); return a != null && b != null && b.range > 0f && a.range >= b.range * ExtraUpgrades.LightRangeFactor - 0.001f;
+				}
 				case "DI_ComfyBed":
 				{
 					Component a = made.GetComponentInChildren<Bed>(true), b = prefab.GetComponentInChildren<Bed>(true);
@@ -709,7 +724,30 @@ namespace DynamicIslands
 				stat = "bite wait " + wa.minValue + "-" + wa.maxValue + " vs " + wb.minValue + "-" + wb.maxValue;
 				return wb.maxValue > 0f && Mathf.Abs(wa.maxValue - wb.maxValue * ExtraUpgrades.RodBiteFactor) < 0.001f && Mathf.Abs(wa.minValue - wb.minValue * ExtraUpgrades.RodBiteFactor) < 0.001f;
 			}
+			string hf = u.Name == "DI_Telescope" ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_TitaniumGreatsword" || u.Name == "DI_TitaniumSpear" ? "damage" : null;
+			if (hf != null)
+			{
+				Component ca = u.Name == "DI_Telescope" ? (Component)a.obj.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)a.obj.GetComponentInChildren<Paddle>(true) : a.obj.GetComponentInChildren<MeleeWeapon>(true);
+				Component cb = u.Name == "DI_Telescope" ? (Component)b.obj.GetComponentInChildren<Binoculars>(true) : u.Name == "DI_LongPaddle" ? (Component)b.obj.GetComponentInChildren<Paddle>(true) : b.obj.GetComponentInChildren<MeleeWeapon>(true);
+				if (ca == null || cb == null) { stat = "no " + hf + " holder in the hand model"; return false; }
+				float va = Convert.ToSingle(HarmonyLib.Traverse.Create(ca).Field(hf).GetValue()), vb = Convert.ToSingle(HarmonyLib.Traverse.Create(cb).Field(hf).GetValue());
+				float want = u.Name == "DI_Telescope" ? vb * ExtraUpgrades.TelescopeFovFactor : u.Name == "DI_LongPaddle" ? vb * ExtraUpgrades.PaddleFactor : Mathf.RoundToInt(vb * ExtraUpgrades.WeaponDamageFactor);
+				stat = hf + " " + va + " vs " + vb;
+				return vb > 0f && Mathf.Abs(va - want) < 0.001f;
+			}
 			stat = "a hand model of its own (no stat check)"; return true;
+		}
+
+		/// <summary>Whether a renderer's property block colour differs from its material's (a tint is on).</summary>
+		static bool HasTint(Renderer r)
+		{
+			Material m = r.sharedMaterial;
+			if (m == null || !m.HasProperty("_Color")) return false;
+			var block = new MaterialPropertyBlock();
+			r.GetPropertyBlock(block);
+			if (block.isEmpty) return false;
+			Color c = block.GetColor("_Color"), b = m.GetColor("_Color");
+			return Mathf.Abs(c.r - b.r) + Mathf.Abs(c.g - b.g) + Mathf.Abs(c.b - b.b) > 0.01f;
 		}
 
 		/// <summary>Whether the local player's equipment has a worn upgrade's Equipment of its own, with its better stat than the base item's.</summary>
@@ -721,6 +759,20 @@ namespace DynamicIslands
 			Equipment b = eq != null ? eq.FirstOrDefault(e => e != null && e.equipableItem == u.Base) : null;
 			if (a == null || b == null || a == b) { stat = "no equipment of its own"; return false; }
 			string field = u.Name == "DI_SwiftFlippers" ? "swimSpeedMultiplier" : u.Name == "DI_LargeAirTank" ? "oxygenLostMultiplier" : null;
+			if (u.Name == "DI_Floodlight")
+			{
+				Light l = HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>();
+				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>();
+				Renderer r = m != null ? m.GetComponentInChildren<Renderer>(true) : null;
+				if (l == null || r == null) { stat = "no lamp or model on its equipment"; return false; }
+				float r0 = l.range;
+				ExtraUpgrades.WornChanged(a, true);
+				float r1 = l.range; bool tinted = HasTint(r);
+				ExtraUpgrades.WornChanged(a, false);
+				float r2 = l.range; bool plain = !HasTint(r);
+				stat = "lamp range " + r0 + " -> worn " + r1 + " -> off " + r2 + ", model tinted while worn " + tinted + ", plain after " + plain;
+				return r0 > 0f && Mathf.Abs(r1 - r0 * ExtraUpgrades.LightRangeFactor) < 0.001f && Mathf.Abs(r2 - r0) < 0.001f && tinted && plain;
+			}
 			if (field == null) { stat = "equipment of its own (no stat check)"; return true; }
 			float fa = HarmonyLib.Traverse.Create(a).Field(field).GetValue<float>(), fb = HarmonyLib.Traverse.Create(b).Field(field).GetValue<float>();
 			stat = field + " " + fa + " vs " + fb;

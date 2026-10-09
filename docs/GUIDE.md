@@ -2311,8 +2311,17 @@ the thing it improves (the **base**), once the base is learned:
 | **Titanium rod** | A fishing rod on which **fish bite twice as fast**; it lasts twice as long | 2x the metal rod + 2 titanium ingots | Metal fishing rod |
 | **Swift flippers** | Flippers that **add twice the swimming speed** the flippers add (x1.8 instead of x1.4); they last twice as long | 2x the flippers | Flippers |
 | **Large air tank** | An oxygen bottle that makes you **lose air half as fast** under water as the bottle does; it lasts twice as long | 2x the oxygen bottle | Oxygen bottle |
+| **Rapid charger** | A battery charger that charges **twice as much per fuel** | 2x the battery charger | Battery charger |
+| **Fast recycler** | A recycler that works **twice as fast** | 2x the recycler | Recycler |
+| **Bright lantern** | A metal lantern that lights **twice as far** and half again as bright | 2x the metal lantern | Metal lantern |
+| **Telescope** | Binoculars that **zoom in twice as far** | 2x the binoculars | Binoculars |
+| **Titanium greatsword** | A titanium sword that **hits half again as hard**; it lasts twice as long | 2x the titanium sword | Titanium sword |
+| **Titanium spear** | A metal spear that **hits half again as hard**; it lasts twice as long | 2x the metal spear + 2 titanium ingots | Metal spear |
+| **Long paddle** | A paddle that **pushes the raft twice as hard**; it lasts twice as long | 2x the paddle | Paddle |
+| **Floodlight** | An advanced head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the advanced head light | Advanced head light |
 
-None of them needs a new model: they are Raft's own machines and tools, tinted (worn ones look like their base). Raft's purifiers, biofuel refiner and beehive have
+None of them needs a new model: they are Raft's own machines and tools, each in a colour of its own (worn ones are tinted
+while they are worn). Raft's purifiers, biofuel refiner and beehive have
 no upgrade, and neither does the sail (it only steers). A removed reinforced storage, titanium grill or blast furnace
 gives back what it holds, as the base does.
 

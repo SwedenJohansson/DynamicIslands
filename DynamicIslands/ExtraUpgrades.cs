@@ -11,7 +11,9 @@ namespace DynamicIslands.Editor
 	/// The extra option "upgrades" (WorldOptions.Upgrades, the user 2026-10-09): better versions of Raft's own things to
 	/// craft - a large battery, a titanium grill, a blast furnace, a reinforced storage, a wide net, large fuel and water
 	/// tanks, a greenhouse plot, a turbo engine, a large wind turbine, a comfy bed, a magnet hook, a titanium rod, swift
-	/// flippers and a large air tank (the list: Defs).
+	/// flippers, a large air tank, a rapid charger, a fast recycler, a bright lantern, a telescope, a titanium greatsword,
+	/// a titanium spear, a long paddle and a floodlight (the list: Defs). Every one is tinted: blocks and hand models
+	/// themselves, worn ones the model they share with their base while they are worn (UpgradeWornPatch).
 	///
 	/// How: each is a copy of one of Raft's items (Item_Base) with its own fixed index (Upgrade.Index - saves and messages
 	/// name items by index, so it must never change), registered with RAPI.RegisterItem when the mod starts, before a world
@@ -52,6 +54,8 @@ namespace DynamicIslands.Editor
 			public Action<GameObject> Held;
 			/// <summary>Sets a worn upgrade's stats on its copy of the base item's Equipment, or null.</summary>
 			public Action<Equipment> Worn;
+			/// <summary>Runs when a worn upgrade is put on (true) or taken off (false), or null: for stats on the shared model.</summary>
+			public Action<Equipment, bool> Wearing;
 			public Item_Base Base, Item;
 			public override string ToString() { return Display + " (" + Name + ", " + Index + ")"; }
 		}
@@ -79,6 +83,15 @@ namespace DynamicIslands.Editor
 		public const float FlipperBoostFactor = 2f;
 		/// <summary>Large air tank: the oxygen bottle's oxygen loss multiplier times this.</summary>
 		public const float AirLossFactor = 0.5f;
+		/// <summary>Rapid charger: charge per fuel tick times the charger's. Fast recycler: time per cycle times the recycler's.</summary>
+		public const int ChargerFactor = 2;
+		public const float RecyclerTimeFactor = 0.5f;
+		/// <summary>Bright lantern and floodlight: light range and brightness times their base's.</summary>
+		public const float LightRangeFactor = 2f, LightIntensityFactor = 1.5f;
+		/// <summary>Telescope: the binoculars' narrowest view (most zoom) times this.</summary>
+		public const float TelescopeFovFactor = 0.5f;
+		/// <summary>Titanium greatsword and spear: damage times their base's. Long paddle: push times the paddle's.</summary>
+		public const float WeaponDamageFactor = 1.5f, PaddleFactor = 2f;
 
 		static List<Upgrade> all;
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
@@ -142,6 +155,30 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29425, Name = "DI_LargeAirTank", BaseName = "OxygenBottle", Display = "Large air tank", Tint = new Color(0.6f, 0.75f, 1f), UsesFactor = 2,
 					Worn = LargeAirTank,
 					Description = "An oxygen bottle that makes you lose air under water half as fast as the bottle does, and lasts twice as long." },
+				new Upgrade { Index = 29426, Name = "DI_RapidCharger", BaseName = "Placeable_BatteryCharger", Display = "Rapid charger", Tint = new Color(1f, 0.9f, 0.4f),
+					Setup = RapidCharger,
+					Description = "A battery charger that charges twice as much per fuel." },
+				new Upgrade { Index = 29427, Name = "DI_FastRecycler", BaseName = "Placeable_Recycler", Display = "Fast recycler", Tint = new Color(0.55f, 1f, 0.75f),
+					Setup = FastRecycler,
+					Description = "A recycler that works twice as fast." },
+				new Upgrade { Index = 29428, Name = "DI_BrightLantern", BaseName = "Placeable_Lantern_Metal", Display = "Bright lantern", Tint = new Color(1f, 0.85f, 0.5f),
+					Setup = BrightLight,
+					Description = "A metal lantern that lights twice as far and half again as bright." },
+				new Upgrade { Index = 29429, Name = "DI_Telescope", BaseName = "Binoculars", Display = "Telescope", Tint = new Color(0.85f, 0.7f, 0.45f),
+					Held = Telescope,
+					Description = "Binoculars that zoom in twice as far." },
+				new Upgrade { Index = 29430, Name = "DI_TitaniumGreatsword", BaseName = "Sword_Titanium", Display = "Titanium greatsword", Tint = new Color(0.7f, 0.8f, 1f), UsesFactor = 2,
+					Held = StrongWeapon,
+					Description = "A titanium sword that hits half again as hard and lasts twice as long." },
+				new Upgrade { Index = 29431, Name = "DI_TitaniumSpear", BaseName = "Spear_Scrap", Display = "Titanium spear", Tint = new Color(0.75f, 0.82f, 0.95f), UsesFactor = 2,
+					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Held = StrongWeapon,
+					Description = "A metal spear with a titanium tip: hits half again as hard and lasts twice as long." },
+				new Upgrade { Index = 29432, Name = "DI_LongPaddle", BaseName = "Paddle", Display = "Long paddle", Tint = new Color(0.8f, 0.6f, 0.4f), UsesFactor = 2,
+					Held = LongPaddle,
+					Description = "A paddle that pushes the raft twice as hard and lasts twice as long." },
+				new Upgrade { Index = 29433, Name = "DI_Floodlight", BaseName = "HeadLight_Advanced", Display = "Floodlight", Tint = new Color(1f, 0.95f, 0.55f), UsesFactor = 2,
+					Wearing = Floodlight,
+					Description = "An advanced head light that lights twice as far and half again as bright, and lasts twice as long." },
 			};
 		}
 
@@ -485,9 +522,95 @@ namespace DynamicIslands.Editor
 			f.SetValue(f.GetValue<float>() * AirLossFactor);
 		}
 
+		static void RapidCharger(GameObject go)
+		{
+			foreach (BatteryCharger c in go.GetComponentsInChildren<BatteryCharger>(true))
+				c.chargePerFuelTick *= ChargerFactor;
+		}
+
+		static void FastRecycler(GameObject go)
+		{
+			foreach (Placeable_Extractor x in go.GetComponentsInChildren<Placeable_Extractor>(true))
+			{
+				Traverse f = Traverse.Create(x).Field("processCooldown");
+				f.SetValue(f.GetValue<float>() * RecyclerTimeFactor);
+			}
+		}
+
+		static void BrightLight(GameObject go)
+		{
+			foreach (LightSingularity s in go.GetComponentsInChildren<LightSingularity>(true))
+			{
+				s.maxRange *= LightRangeFactor;
+				s.maxIntensity *= LightIntensityFactor;
+			}
+			foreach (Light l in go.GetComponentsInChildren<Light>(true))
+			{
+				l.range *= LightRangeFactor;
+				l.intensity *= LightIntensityFactor;
+			}
+		}
+
+		static void Telescope(GameObject go)
+		{
+			foreach (Binoculars b in go.GetComponentsInChildren<Binoculars>(true))
+			{
+				Traverse f = Traverse.Create(b).Field("minFOV");
+				f.SetValue(f.GetValue<float>() * TelescopeFovFactor);
+			}
+		}
+
+		static void StrongWeapon(GameObject go)
+		{
+			foreach (MeleeWeapon w in go.GetComponentsInChildren<MeleeWeapon>(true))
+			{
+				Traverse f = Traverse.Create(w).Field("damage");
+				f.SetValue(Mathf.RoundToInt(f.GetValue<int>() * WeaponDamageFactor));
+			}
+		}
+
+		static void LongPaddle(GameObject go)
+		{
+			foreach (Paddle p in go.GetComponentsInChildren<Paddle>(true))
+			{
+				Traverse f = Traverse.Create(p).Field("paddleForce");
+				f.SetValue(f.GetValue<float>() * PaddleFactor);
+			}
+		}
+
+		/// <summary>The head light's lamp sits on the model it shares with the advanced head light: brighter only while worn.</summary>
+		static readonly Dictionary<Light, Vector2> lightBase = new Dictionary<Light, Vector2>();
+
+		static void Floodlight(Equipment e, bool on)
+		{
+			Light l = Traverse.Create(e).Field("lightSourceLight").GetValue<Light>();
+			if (l == null) return;
+			Vector2 b;
+			if (!lightBase.TryGetValue(l, out b)) lightBase[l] = b = new Vector2(l.range, l.intensity);
+			l.range = on ? b.x * LightRangeFactor : b.x;
+			l.intensity = on ? b.y * LightIntensityFactor : b.y;
+		}
+
 		#endregion
 
 		#region Hand-held and worn upgrades
+
+		/// <summary>Equipment_Model.Equip / UnEquip: worn upgrades share their base's model, so it gets the upgrade's tint
+		/// while one is worn and its own colours back when it comes off or the base is put on; then Wearing runs.</summary>
+		public static void WornChanged(Equipment e, bool on)
+		{
+			if (all == null || e == null || e.equipableItem == null) return;
+			Upgrade u = Find(e.equipableItem.UniqueIndex);
+			if (u == null && !on) return;
+			Traverse t = Traverse.Create(e);
+			Color c = u != null && on ? u.Tint : Color.white;
+			foreach (string f in new[] { "localModel", "remoteModel" })
+			{
+				Transform m = t.Field(f).GetValue<Transform>();
+				if (m != null) ObjectProps.ApplyTint(m.gameObject, c, 1f);
+			}
+			if (u != null && u.Wearing != null) u.Wearing(e, on);
+		}
 
 		/// <summary>In UseItemController.Awake, before it builds its dictionary: each hand-held upgrade gets a copy of its base
 		/// item's hand model (tinted, its stats set by Held) and a connection of its own.</summary>
@@ -515,7 +638,7 @@ namespace DynamicIslands.Editor
 		{
 			if (all == null || pe == null) return;
 			Equipment[] have = pe.GetComponentsInChildren<Equipment>(true);
-			foreach (Upgrade u in Registered.Where(x => x.Worn != null).ToList())
+			foreach (Upgrade u in Registered.Where(x => x.Worn != null || x.Wearing != null).ToList())
 			{
 				if (have.Any(e => e.equipableItem == u.Item)) continue;
 				Equipment b = have.FirstOrDefault(e => e.equipableItem != null && e.equipableItem.UniqueIndex == u.Base.UniqueIndex);
@@ -528,7 +651,7 @@ namespace DynamicIslands.Editor
 					foreach (FieldInfo f in t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
 						f.SetValue(c, f.GetValue(b));
 				c.equipableItem = u.Item;
-				try { u.Worn(c); }
+				try { if (u.Worn != null) u.Worn(c); }
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				go.SetActive(b.gameObject.activeSelf);
 			}
@@ -628,6 +751,26 @@ namespace DynamicIslands.Editor
 		{
 			try { ExtraUpgrades.AddEquipment(__instance); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Worn upgrades: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(Equipment_Model), "Equip")]
+	static class UpgradeWornPatch
+	{
+		static void Postfix(Equipment_Model __instance)
+		{
+			try { ExtraUpgrades.WornChanged(__instance, true); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Putting on: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(Equipment_Model), "UnEquip")]
+	static class UpgradeUnwornPatch
+	{
+		static void Postfix(Equipment_Model __instance)
+		{
+			try { ExtraUpgrades.WornChanged(__instance, false); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Taking off: " + e.Message); }
 		}
 	}
 

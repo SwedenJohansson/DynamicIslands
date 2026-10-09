@@ -427,8 +427,9 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   learned: large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
   strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls
-  1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming) and large air tank
-  (loses air half as fast).
+  1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming), large air tank
+  (loses air half as fast), rapid charger (2x per fuel), fast recycler (2x as fast), bright lantern (2x as far),
+  telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push) and floodlight (2x as far).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
   option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player

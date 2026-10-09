@@ -20,7 +20,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   turbine** (charges twice as fast), **comfy bed** (heals twice as fast while sleeping, respawn at 75%), **magnet
   hook** (pulls in half again as fast, gathers twice as fast), **titanium rod** (fish bite twice as fast), **swift
   flippers** (twice the flippers' extra swimming speed) and **large air tank** (air lasts twice as long as with the
-  bottle). The hook, rod, flippers and air tank last twice as long as their base.
+  bottle). Also **rapid charger** (twice the charge per fuel), **fast recycler** (twice as fast), **bright lantern** and
+  **floodlight** head light (light twice as far), **telescope** (twice the zoom), **titanium greatsword** and
+  **titanium spear** (hit half again as hard) and **long paddle** (pushes twice as hard). Hand tools, weapons and worn
+  things last twice as long as their base; every upgrade has a colour of its own (worn ones while worn).
 - **World option Long voyage:** random custom islands come half as often (after every 6-12 of Raft's own
   islands) and at least 1.6 km apart, so food, water and the raft matter more between stops.
 - **World option Iron raft:** the raft's blocks take half damage from shark bites; taking pieces down with the
