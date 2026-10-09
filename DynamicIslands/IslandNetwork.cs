@@ -438,9 +438,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Client: asks the host for a thing only one player can have (Claims). The question's number goes as Ids[1]:
 		/// the host sends Ids back with its answer (every version that answers claims does).</summary>
-		public static void SendClaim(int islandId, int key, int ask)
+		public static void SendClaim(int islandId, int key, int ask, int late)
 		{
-			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId, ask }, Index = key });
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId, ask }, Index = key, Count = late });
 		}
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{

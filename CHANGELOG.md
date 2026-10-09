@@ -97,6 +97,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A busy host no longer loses a chest:** when the host's answers to "may I open this?" kept arriving late (busy sending
+  island files), player 2 asked again for ever and nobody got the chest. The host now holds it longer for that player.
 - **Private storages and the hammer:** another player could take someone's private storage down with the
   hammer (and get what was inside). Only its builder can now (or the host, when the builder isn't in the game).
 - **Build cost refunds after raising the cost:** in a world whose blocks were all built at Raft's own cost, raising
