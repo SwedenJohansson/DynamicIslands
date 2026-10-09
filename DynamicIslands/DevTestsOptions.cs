@@ -546,7 +546,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: large battery" + (keep ? " (machine kept)" : "")); else Fail("large battery");
 		}
 
-		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. CIUpgrades [name] (only the upgrade whose name contains it)")]
+		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. Hand-held and worn ones (magnet hook, titanium rod, swift flippers, large air tank): twice the uses, and the player has a model or equipment of their own with the better stat (hook pull and gather, rod bite wait, swim speed, air loss). CIUpgrades [name] (only the upgrade whose name contains it)")]
 		public static void UpgradesCommand(string[] args) { StartTest(UpgradesRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator UpgradesRoutine(string only)
@@ -581,6 +581,12 @@ namespace DynamicIslands
 						baseItem.settings_recipe.Learned = c[1];
 						yield return null; yield return null;
 						Check(ref ok, item.settings_recipe.Learned == (c[0] && c[1]), u.Display + ": option " + (c[0] ? "on" : "off") + ", base " + (c[1] ? "learned" : "not learned") + " -> " + (item.settings_recipe.Learned ? "craftable" : "not craftable"));
+					}
+					if (u.Held != null || u.Worn != null)
+					{
+						string what; bool good = u.Held != null ? HeldStat(u, player, out what) : WornStat(u, player, out what);
+						Check(ref ok, good && item.MaxUses == baseItem.MaxUses * u.UsesFactor, u.Display + ": " + what + ", uses " + item.MaxUses + " vs " + baseItem.MaxUses);
+						continue;
 					}
 					Block prefab = baseItem.settings_buildable.GetBlockPrefabs()[0];
 					made = player.BlockCreator.CreateBlockCheat(item, new Vector3(6f * n++, 30f, 0f), Vector3.zero, DPS.Default, 0);
@@ -677,6 +683,49 @@ namespace DynamicIslands
 				}
 			}
 			stat = "no stat check"; return true;
+		}
+
+		/// <summary>Whether the local player has a hand model of a hand-held upgrade of its own, with its better stat than the base item's.</summary>
+		static bool HeldStat(ExtraUpgrades.Upgrade u, Network_Player player, out string stat)
+		{
+			var c = player.GetComponentInChildren<UseItemController>(true);
+			var dict = c != null ? HarmonyLib.Traverse.Create(c).Field("connectionDictionary").GetValue<Dictionary<string, ItemConnection>>() : null;
+			ItemConnection a = null, b = null;
+			if (dict == null || !dict.TryGetValue(u.Name, out a) || !dict.TryGetValue(u.BaseName, out b) || a == null || b == null || a.obj == null || b.obj == null || a.obj == b.obj)
+			{ stat = "no hand model of its own"; return false; }
+			if (u.Name == "DI_MagnetHook")
+			{
+				Hook ha = a.obj.GetComponentInChildren<Hook>(true), hb = b.obj.GetComponentInChildren<Hook>(true);
+				if (ha == null || hb == null) { stat = "no hook in the hand model"; return false; }
+				stat = "pull " + ha.pullSpeed + " vs " + hb.pullSpeed + ", gather " + ha.gatherTime + " vs " + hb.gatherTime;
+				return hb.pullSpeed > 0f && Mathf.Abs(ha.pullSpeed - hb.pullSpeed * ExtraUpgrades.HookPullFactor) < 0.001f && Mathf.Abs(ha.gatherTime - hb.gatherTime * ExtraUpgrades.HookGatherFactor) < 0.001f;
+			}
+			if (u.Name == "DI_TitaniumRod")
+			{
+				FishingRod ra = a.obj.GetComponentInChildren<FishingRod>(true), rb = b.obj.GetComponentInChildren<FishingRod>(true);
+				Interval_Float wa = ra != null && ra.bobber != null ? HarmonyLib.Traverse.Create(ra.bobber).Field("waitTime").GetValue<Interval_Float>() : null;
+				Interval_Float wb = rb != null && rb.bobber != null ? HarmonyLib.Traverse.Create(rb.bobber).Field("waitTime").GetValue<Interval_Float>() : null;
+				if (wa == null || wb == null || wa == wb) { stat = "no bobber of its own"; return false; }
+				stat = "bite wait " + wa.minValue + "-" + wa.maxValue + " vs " + wb.minValue + "-" + wb.maxValue;
+				return wb.maxValue > 0f && Mathf.Abs(wa.maxValue - wb.maxValue * ExtraUpgrades.RodBiteFactor) < 0.001f && Mathf.Abs(wa.minValue - wb.minValue * ExtraUpgrades.RodBiteFactor) < 0.001f;
+			}
+			stat = "a hand model of its own (no stat check)"; return true;
+		}
+
+		/// <summary>Whether the local player's equipment has a worn upgrade's Equipment of its own, with its better stat than the base item's.</summary>
+		static bool WornStat(ExtraUpgrades.Upgrade u, Network_Player player, out string stat)
+		{
+			var pe = player.GetComponentInChildren<PlayerEquipment>(true);
+			Equipment[] eq = pe != null ? HarmonyLib.Traverse.Create(pe).Field("equipment").GetValue<Equipment[]>() : null;
+			Equipment a = eq != null ? eq.FirstOrDefault(e => e != null && e.equipableItem == u.Item) : null;
+			Equipment b = eq != null ? eq.FirstOrDefault(e => e != null && e.equipableItem == u.Base) : null;
+			if (a == null || b == null || a == b) { stat = "no equipment of its own"; return false; }
+			string field = u.Name == "DI_SwiftFlippers" ? "swimSpeedMultiplier" : u.Name == "DI_LargeAirTank" ? "oxygenLostMultiplier" : null;
+			if (field == null) { stat = "equipment of its own (no stat check)"; return true; }
+			float fa = HarmonyLib.Traverse.Create(a).Field(field).GetValue<float>(), fb = HarmonyLib.Traverse.Create(b).Field(field).GetValue<float>();
+			stat = field + " " + fa + " vs " + fb;
+			return u.Name == "DI_SwiftFlippers" ? fb > 1f && Mathf.Abs(fa - (1f + (fb - 1f) * ExtraUpgrades.FlipperBoostFactor)) < 0.001f
+				: fb > 0f && Mathf.Abs(fa - fb * ExtraUpgrades.AirLossFactor) < 0.001f;
 		}
 
 		[ConsoleCommand(name: "CITrade",docs: "Dev, world (any player): this player gets the price of the trader stall number <n> (0 = the first loaded, by object index) and trades once there; a client waits for the host's yes. Logs what it got and the stock left. CITrade <n>")]

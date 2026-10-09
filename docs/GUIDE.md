@@ -2307,8 +2307,12 @@ the thing it improves (the **base**), once the base is learned:
 | **Turbo engine** | An engine that pushes **twice the weight** and drives the raft **half again as fast**, but burns fuel faster (a fuel lasts 60% as long) | 2x the engine | Engine |
 | **Large wind turbine** | A wind turbine that charges batteries **twice as fast** | 2x the wind turbine | Wind turbine |
 | **Comfy bed** | Sleeping heals **twice as fast** and makes you half as hungry and thirsty; you wake up from death with **75%** health, food and water instead of 50% | 2x the bed | Bed |
+| **Magnet hook** | A titanium hook that **pulls in half again as fast**, **picks things up twice as fast** and lasts twice as long | 2x the titanium hook | Titanium hook |
+| **Titanium rod** | A fishing rod on which **fish bite twice as fast**; it lasts twice as long | 2x the metal rod + 2 titanium ingots | Metal fishing rod |
+| **Swift flippers** | Flippers that **add twice the swimming speed** the flippers add (x1.8 instead of x1.4); they last twice as long | 2x the flippers | Flippers |
+| **Large air tank** | An oxygen bottle that makes you **lose air half as fast** under water as the bottle does; it lasts twice as long | 2x the oxygen bottle | Oxygen bottle |
 
-None of them needs a new model: they are Raft's own machines, tinted. Raft's purifiers, biofuel refiner and beehive have
+None of them needs a new model: they are Raft's own machines and tools, tinted (worn ones look like their base). Raft's purifiers, biofuel refiner and beehive have
 no upgrade, and neither does the sail (it only steers). A removed reinforced storage, titanium grill or blast furnace
 gives back what it holds, as the base does.
 

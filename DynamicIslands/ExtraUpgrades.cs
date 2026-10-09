@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 
@@ -9,7 +10,8 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// The extra option "upgrades" (WorldOptions.Upgrades, the user 2026-10-09): better versions of Raft's own things to
 	/// craft - a large battery, a titanium grill, a blast furnace, a reinforced storage, a wide net, large fuel and water
-	/// tanks, a greenhouse plot, a turbo engine, a large wind turbine and a comfy bed (the list: Defs).
+	/// tanks, a greenhouse plot, a turbo engine, a large wind turbine, a comfy bed, a magnet hook, a titanium rod, swift
+	/// flippers and a large air tank (the list: Defs).
 	///
 	/// How: each is a copy of one of Raft's items (Item_Base) with its own fixed index (Upgrade.Index - saves and messages
 	/// name items by index, so it must never change), registered with RAPI.RegisterItem when the mod starts, before a world
@@ -21,6 +23,9 @@ namespace DynamicIslands.Editor
 	/// carrying an UpgradeBlock: when a block of it is placed or loaded, UpgradeBlock tints it and sets its better stats
 	/// (Upgrade.Setup) before Raft's own Start code reads them. Raft hands back a block's contents (storage, grill) by its
 	/// item index (RemovePlaceables.ReturnItemsFromBlock): UpgradeReturnItemsPatch lets it see the base item there.
+	/// A hand-held one (hook, rod) gets a copy of the base item's
+	/// hand model in every player's UseItemController (Upgrade.Held sets its stats); a worn one (flippers, air tank) gets a
+	/// copy of the base item's Equipment in every player's PlayerEquipment (Upgrade.Worn sets its stats).
 	/// Every player needs the mod (the mod is needed to join anyway); without it the upgrades are missing from a world.
 	/// </summary>
 	public static class ExtraUpgrades
@@ -43,6 +48,10 @@ namespace DynamicIslands.Editor
 			public Action<GameObject> Setup;
 			/// <summary>Runs every 2 s on a placed block (its root object), or null.</summary>
 			public Action<GameObject> Every;
+			/// <summary>Sets a hand-held upgrade's stats on its copy of the base item's hand model, or null.</summary>
+			public Action<GameObject> Held;
+			/// <summary>Sets a worn upgrade's stats on its copy of the base item's Equipment, or null.</summary>
+			public Action<Equipment> Worn;
 			public Item_Base Base, Item;
 			public override string ToString() { return Display + " (" + Name + ", " + Index + ")"; }
 		}
@@ -62,6 +71,14 @@ namespace DynamicIslands.Editor
 		public const float TurboSpeedFactor = 1.5f, TurboFuelTimeFactor = 0.6f;
 		/// <summary>Comfy bed: respawn health/food/water in % (Raft's bed: 50), sleep healing times, hunger/thirst times.</summary>
 		public const float BedRespawnPercent = 75f, BedRegenFactor = 2f, BedDecayFactor = 0.5f;
+		/// <summary>Magnet hook: pulling speed and gathering time times the titanium hook's.</summary>
+		public const float HookPullFactor = 1.5f, HookGatherFactor = 0.5f;
+		/// <summary>Titanium rod: waiting time for a bite times the metal rod's.</summary>
+		public const float RodBiteFactor = 0.5f;
+		/// <summary>Swift flippers: the flippers' extra swimming speed times this (Raft's 1.4 becomes 1.8).</summary>
+		public const float FlipperBoostFactor = 2f;
+		/// <summary>Large air tank: the oxygen bottle's oxygen loss multiplier times this.</summary>
+		public const float AirLossFactor = 0.5f;
 
 		static List<Upgrade> all;
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
@@ -113,6 +130,18 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29421, Name = "DI_LargeWaterTank", BaseName = "Placeable_WaterTank", Display = "Large water tank", Tint = new Color(0.5f, 0.75f, 1f),
 					Setup = BigTanks,
 					Description = "A water tank that holds twice as much water." },
+				new Upgrade { Index = 29422, Name = "DI_MagnetHook", BaseName = "Hook_Titanium", Display = "Magnet hook", Tint = new Color(1f, 0.55f, 0.55f), UsesFactor = 2,
+					Held = MagnetHook,
+					Description = "A titanium hook with a magnet: pulls in half again as fast, picks things up twice as fast and lasts twice as long." },
+				new Upgrade { Index = 29423, Name = "DI_TitaniumRod", BaseName = "FishingRod_Metal", Display = "Titanium rod", Tint = new Color(0.75f, 0.82f, 0.95f), UsesFactor = 2,
+					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Held = TitaniumRod,
+					Description = "A metal fishing rod made of titanium: fish bite twice as fast, and it lasts twice as long." },
+				new Upgrade { Index = 29424, Name = "DI_SwiftFlippers", BaseName = "Flipper", Display = "Swift flippers", Tint = new Color(0.45f, 0.9f, 1f), UsesFactor = 2,
+					Worn = SwiftFlippers,
+					Description = "Flippers that add twice the swimming speed the flippers add, and last twice as long." },
+				new Upgrade { Index = 29425, Name = "DI_LargeAirTank", BaseName = "OxygenBottle", Display = "Large air tank", Tint = new Color(0.6f, 0.75f, 1f), UsesFactor = 2,
+					Worn = LargeAirTank,
+					Description = "An oxygen bottle that makes you lose air under water half as fast as the bottle does, and lasts twice as long." },
 			};
 		}
 
@@ -423,6 +452,88 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		static void MagnetHook(GameObject go)
+		{
+			foreach (Hook h in go.GetComponentsInChildren<Hook>(true))
+			{
+				h.pullSpeed *= HookPullFactor;
+				h.gatherTime *= HookGatherFactor;
+			}
+		}
+
+		static void TitaniumRod(GameObject go)
+		{
+			foreach (FishingRod r in go.GetComponentsInChildren<FishingRod>(true))
+			{
+				if (r.bobber == null || !r.bobber.transform.IsChildOf(go.transform)) { Warn("Titanium rod: its bobber isn't part of its model; fish bite as on the metal rod"); continue; }
+				Interval_Float w = Traverse.Create(r.bobber).Field("waitTime").GetValue<Interval_Float>();
+				if (w == null) continue;
+				w.minValue *= RodBiteFactor;
+				w.maxValue *= RodBiteFactor;
+			}
+		}
+
+		static void SwiftFlippers(Equipment e)
+		{
+			Traverse f = Traverse.Create(e).Field("swimSpeedMultiplier");
+			f.SetValue(1f + (f.GetValue<float>() - 1f) * FlipperBoostFactor);
+		}
+
+		static void LargeAirTank(Equipment e)
+		{
+			Traverse f = Traverse.Create(e).Field("oxygenLostMultiplier");
+			f.SetValue(f.GetValue<float>() * AirLossFactor);
+		}
+
+		#endregion
+
+		#region Hand-held and worn upgrades
+
+		/// <summary>In UseItemController.Awake, before it builds its dictionary: each hand-held upgrade gets a copy of its base
+		/// item's hand model (tinted, its stats set by Held) and a connection of its own.</summary>
+		public static void AddHeldItems(UseItemController c)
+		{
+			if (all == null || c == null) return;
+			var list = Traverse.Create(c).Field("allConnections").GetValue<List<ItemConnection>>();
+			if (list == null) return;
+			foreach (Upgrade u in Registered.Where(x => x.Held != null).ToList())
+			{
+				if (list.Any(k => k != null && k.inventoryItem == u.Item)) continue;
+				ItemConnection b = list.FirstOrDefault(k => k != null && k.inventoryItem != null && k.obj != null && k.inventoryItem.UniqueIndex == u.Base.UniqueIndex);
+				if (b == null) { Warn(u + ": the player has no hand model of " + u.BaseName); continue; }
+				GameObject o = UnityEngine.Object.Instantiate(b.obj, b.obj.transform.parent, false);
+				o.name = b.obj.name + "_" + u.Name;
+				try { ObjectProps.ApplyTint(o, u.Tint, 1f); u.Held(o); }
+				catch (Exception e) { Warn(u + ": " + e.Message); }
+				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
+			}
+		}
+
+		/// <summary>In PlayerEquipment.Awake, before it gathers its Equipment: each worn upgrade gets a copy of its base item's
+		/// Equipment component (all its fields, so it shows the same model) on an object of its own, its stats set by Worn.</summary>
+		public static void AddEquipment(PlayerEquipment pe)
+		{
+			if (all == null || pe == null) return;
+			Equipment[] have = pe.GetComponentsInChildren<Equipment>(true);
+			foreach (Upgrade u in Registered.Where(x => x.Worn != null).ToList())
+			{
+				if (have.Any(e => e.equipableItem == u.Item)) continue;
+				Equipment b = have.FirstOrDefault(e => e.equipableItem != null && e.equipableItem.UniqueIndex == u.Base.UniqueIndex);
+				if (b == null) { Warn(u + ": the player has no equipment for " + u.BaseName); continue; }
+				var go = new GameObject(b.name + "_" + u.Name);
+				go.SetActive(false);
+				go.transform.SetParent(b.transform.parent != null ? b.transform.parent : pe.transform, false);
+				var c = (Equipment)go.AddComponent(b.GetType());
+				for (Type t = b.GetType(); t != null && t != typeof(MonoBehaviour); t = t.BaseType)
+					foreach (FieldInfo f in t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+						f.SetValue(c, f.GetValue(b));
+				c.equipableItem = u.Item;
+				try { u.Worn(c); }
+				catch (Exception e) { Warn(u + ": " + e.Message); }
+				go.SetActive(b.gameObject.activeSelf);
+			}
+		}
+
 		#endregion
 
 		/// <summary>A copy of a (possibly atlased, unreadable) sprite multiplied by tint.</summary>
@@ -497,6 +608,26 @@ namespace DynamicIslands.Editor
 		{
 			try { ExtraUpgrades.AddToSlot(__instance); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] A battery slot: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(UseItemController), "Awake")]
+	static class UpgradeHeldItemsPatch
+	{
+		static void Prefix(UseItemController __instance)
+		{
+			try { ExtraUpgrades.AddHeldItems(__instance); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Hand-held upgrades: " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(PlayerEquipment), "Awake")]
+	static class UpgradeEquipmentPatch
+	{
+		static void Prefix(PlayerEquipment __instance)
+		{
+			try { ExtraUpgrades.AddEquipment(__instance); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Worn upgrades: " + e.Message); }
 		}
 	}
 

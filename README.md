@@ -426,7 +426,9 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once it is
   learned: large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
-  strength, 1.5x speed), large wind turbine (2x charge) and comfy bed (heals 2x as fast, respawn at 75%).
+  strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls
+  1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming) and large air tank
+  (loses air half as fast).
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
   option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
@@ -704,7 +706,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `WorldOptions.cs` | The extra options of a world (kind 17): which are on, their seed, saved with the world |
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |
 | `GhostRafts.cs`, `PrivateStorage.cs` | Extra options: ghost rafts while sailing, storages only their builder opens |
-| `ExtraUpgrades.cs` | Extra option Extra upgrades: the upgrade items (copies of Raft's items and blocks with better stats), their recipes, every machine's battery slot taking the large battery |
+| `ExtraUpgrades.cs` | Extra option Extra upgrades: the upgrade items (copies of Raft's items and blocks with better stats), their recipes, every machine's battery slot taking the large battery, hand models and equipment for the hand-held and worn ones |
 | `Housekeeping.cs` | Tidy up: what nothing uses any more (host copies, generated islands, the files of deleted worlds), looking through every copy of every world's state, Raft's older saves too |
 | `DropList.cs` | A drop-down list (combo box) in Raft's look: the choices open under the button, each with a line saying what it does (the World Plans window's rule cards) |
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | World Plans' Check: the rules and the islands they name (quests step by step, zones, signals, a sample of each map type), rules waiting in a circle or for islands no rule brings; the report window |
