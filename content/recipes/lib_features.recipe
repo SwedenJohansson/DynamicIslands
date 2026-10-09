@@ -124,7 +124,7 @@ end
 # cagecache: a chest locked in one of Raft's cages (cage; Utopia's dog cage) at x z - the cage opens (goes) for a player
 # with Raft's bolt cutters, sending its signal (sig) that lets the chest open - and the bolt cutters in a chest
 # scattered within kr of kx kz
-macro cagecache x=0 z=0 yaw=0 cage=UT_DogCage_Medium02 alias=cage sig=cage chest=cagechest items=Rope*2;Leather*2 title="Chest in the cage" kx=0 kz=0 kr=20 seed=1 keychest=cutterchest keytitle="Keeper's tool chest" keyitems=Rope*2
+macro cagecache x=0 z=0 yaw=0 cage=UT_DogCage_Medium02 alias=cage sig=cage chest=cagechest items=Rope*2;Leather*2 title="Chest in the cage" kx=0 kz=0 kr=20 seed=1 keychest=cutterchest keytitle="Keeper's tool chest" keyitems=Rope*2 free=5
 place "$cage" $alias at $x $z ground sit yaw=$yaw
 prop $alias obj.name=$alias
 prop $alias on.use=message||The bolt cutters bite through the chain and the cage door swings open.\nhide|\nsignal||$sig
@@ -134,7 +134,7 @@ prop $chest note.title=$title
 prop $chest if.open=signal|$sig
 prop $chest else.open=message||The chest is inside the cage, and the cage is chained shut. Bolt cutters would get through the chain.
 loot $chest $items
-scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=5 as=$keychest
+scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=$free as=$keychest
 prop $keychest note.title=$keytitle
 loot $keychest story:raft-Vasagatan_BoltCutter*1;$keyitems
 end
@@ -148,25 +148,25 @@ end
 # powerradio: a generator at x z (gen; it wants Raft's generator part and sends "power") and a radio at rx rz rh (h over
 # the sea, set down on what is there - a table) that works once the power is on: its voice gives away a supply drop
 # hidden within cr of cx cz; the generator part in a mechanic's toolbox scattered within kr of kx kz
-macro powerradio x=0 z=0 yaw=0 gen="VG_DecorationPrefabBase_EmergencyGenerator Variant" alias=generator radio=RT_CommRadio ralias=radio rx=0 rz=0 rh=3 ryaw=0 cache=supplydrop cx=0 cz=0 cr=20 cseed=1 items=Battery*2;CopperIngot*2 kx=0 kz=0 kr=20 seed=2 toolbox=mechanicsbox
+macro powerradio x=0 z=0 yaw=0 gen="VG_DecorationPrefabBase_EmergencyGenerator Variant" alias=generator radio=RT_CommRadio ralias=radio rx=0 rz=0 rh=3 ryaw=0 cache=supplydrop cx=0 cz=0 cr=20 cseed=1 items=Battery*2;CopperIngot*2 kx=0 kz=0 kr=20 seed=2 toolbox=mechanicsbox free=5
 place "$gen" $alias at $x $z ground sit yaw=$yaw
 prop $alias obj.name=$alias
 place "$radio" $ralias at $rx $rz h=$rh drop yaw=$ryaw
 prop $ralias obj.name=$ralias
 prop $ralias on.use=message||Static crackles... then a voice, far away, reading a bearing over and over - a supply drop on this very island.\nsignal||radio\nshow|$cache
-scatter Loot_Chest 1 at $cx $cz r=$cr seed=$cseed free=5 as=$cache
+scatter Loot_Chest 1 at $cx $cz r=$cr seed=$cseed free=$free as=$cache
 prop $cache obj.name=$cache
 prop $cache note.title=Supply drop
 prop $cache beh.hidden=1
 loot $cache $items
-scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=5 as=$toolbox
+scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=$free as=$toolbox
 prop $toolbox note.title=Mechanic's toolbox
 loot $toolbox story:raft-Tangaroa_GeneratorPart*1;Bolt*2
 end
 #
 # enginecache: Vasagatan's engine at x z (it wants Raft's gas tank and sends "engine"); started, it shakes open the
 # locker beside it (hidden till then); the gas tank in a fuel crate scattered within kr of kx kz
-macro enginecache x=0 z=0 yaw=0 engine="VG_DecorationPrefabBase_Engine Variant" alias=engine locker=enginelocker items=MetalIngot*3;Bolt*4 kx=0 kz=0 kr=20 seed=3 crate=fuelcrate
+macro enginecache x=0 z=0 yaw=0 engine="VG_DecorationPrefabBase_Engine Variant" alias=engine locker=enginelocker items=MetalIngot*3;Bolt*4 kx=0 kz=0 kr=20 seed=3 crate=fuelcrate free=5
 place "$engine" $alias at $x $z ground sit yaw=$yaw
 prop $alias obj.name=$alias
 prop $alias on.use=message||The engine sputters, then roars - and the rusted locker beside it shakes its door open.\nsignal||engine\nshow|$locker
@@ -175,7 +175,7 @@ prop $locker obj.name=$locker
 prop $locker note.title=Engine room locker
 prop $locker beh.hidden=1
 loot $locker $items
-scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=5 as=$crate
+scatter Loot_Chest 1 at $kx $kz r=$kr seed=$seed free=$free as=$crate
 prop $crate note.title=Fuel crate
 loot $crate story:raft-Vasagatan_GasTank*1;Plastic*2
 end

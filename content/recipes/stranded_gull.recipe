@@ -67,7 +67,7 @@ scatter "Pickup_Landmark_Rock 2" 4 at -8 -6 r=6 seed=36
 # --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
 # Gull's tender engine hauled up the beach by the crew, its spares locker beside it (opens once it runs); the gas tank
 # in a fuel crate on the sand; the yacht's lazarette hatch washed up east of the camp, a stash under it
-call enginecache x=0.5 z=-6 yaw=300 alias=tenderengine locker=tenderlocker items=MetalIngot*2;Bolt*3;Rope*2 kx=-2 kz=-2 kr=13 seed=361 crate=gullfuel
+call enginecache x=0.5 z=-6 yaw=300 alias=tenderengine locker=tenderlocker items=MetalIngot*2;Bolt*3;Rope*2 kx=0 kz=0 kr=16 seed=361 crate=gullfuel free=3
 prop tenderengine on.use=message||The tender's outboard coughs, catches and roars on the sand - and the spares locker beside it rattles open.\nsignal||engine\nshow|tenderlocker
 prop tenderengine else.use=message||The tank is dry. The crew must have hidden the spare gas somewhere on the sand - a fuel crate.
 call hatchcache x=10 z=0 r=6 seed=362 alias=gullhatch chest=gullstash items=Rope*3;Plastic*2;Bolt*2

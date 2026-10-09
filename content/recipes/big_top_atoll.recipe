@@ -118,7 +118,7 @@ place Zone_Atmosphere heat at 0 -10 y=10
 # --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the
 # last cage past the wagons, chained, a chest in it (bolt cutters in the keeper's tool chest out on the atoll); a claw
 # game at the big top's door that takes a trade token (one in the ticket box by the south rope) and drops its prize chest
-call cagecache x=26.5 z=-49.2 yaw=0 alias=lastcage sig=btcage chest=lastcagechest items=Leather*3;Rope*2 title="Chest in the last cage" kx=0 kz=-30 kr=14 seed=381 keychest=btcutterchest keytitle="Keeper's tool chest" keyitems=Rope*2
+call cagecache x=26.5 z=-49.2 yaw=0 alias=lastcage sig=btcage chest=lastcagechest items=Leather*3;Rope*2 title="Chest in the last cage" kx=0 kz=0 kr=44 seed=381 keychest=btcutterchest keytitle="Keeper's tool chest" keyitems=Rope*2
 prop lastcage on.use=message||The cutters bite through the chain and the cage door swings open. Whatever lived in here, it left its keeper's chest behind.\nhide|\nsignal||btcage
 place Claw_ControlBoard clawgame at 2.5 -40.2 ground sit yaw=180
 prop clawgame obj.name=clawgame
