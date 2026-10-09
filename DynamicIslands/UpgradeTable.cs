@@ -248,6 +248,8 @@ namespace DynamicIslands.Editor
 		/// <summary>The upgrades' entries are being set from the pools: their Learn may run.</summary>
 		internal static bool Applying;
 		static GameObject entryHolder, iconHolder;
+		/// <summary>Research item icons under Raft's list that aren't in its dictionary (no item): parked while the upgrade menu is up.</summary>
+		static readonly List<Transform> strays = new List<Transform>();
 
 		static Inventory_ResearchTable Menu { get { return ComponentManager<Inventory_ResearchTable>.Value; } }
 
@@ -329,6 +331,18 @@ namespace DynamicIslands.Editor
 				bool show = upgrades ? ours.Contains(kv.Key) : raftItems.Contains(kv.Key) || !ours.Contains(kv.Key);
 				Park(kv.Value.transform, show ? icons : iconHolder.transform);
 				if (show) kv.Value.transform.SetSiblingIndex(n++);
+			}
+			// (CIUpgradeTable found one icon with no item under the list, not one of the dictionary's: not the upgrades')
+			var known = new HashSet<AvaialableResearchItem>(Icons(inv).Values.Where(v => v != null));
+			if (upgrades)
+			{
+				foreach (AvaialableResearchItem a in icons.GetComponentsInChildren<AvaialableResearchItem>(true).ToList())
+					if (a.transform.parent == icons && !known.Contains(a)) { Park(a.transform, iconHolder.transform); if (!strays.Contains(a.transform)) strays.Add(a.transform); }
+			}
+			else
+			{
+				foreach (Transform t in strays) if (t != null) Park(t, icons);
+				strays.Clear();
 			}
 			SyncIcons(inv);
 			if (upgrades) Apply(inv);
