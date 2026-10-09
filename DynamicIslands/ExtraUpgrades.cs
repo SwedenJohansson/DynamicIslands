@@ -584,6 +584,12 @@ namespace DynamicIslands.Editor
 				l.range *= LightRangeFactor;
 				l.intensity *= LightIntensityFactor;
 			}
+			// (the wooden lantern has no light of its own: Raft's light manager lights it from these numbers when placed)
+			foreach (LightSingularityExternal x in go.GetComponentsInChildren<LightSingularityExternal>(true))
+			{
+				x.lightRange *= LightRangeFactor;
+				x.intensity *= LightIntensityFactor;
+			}
 		}
 
 		static void Telescope(GameObject go)
@@ -636,6 +642,12 @@ namespace DynamicIslands.Editor
 
 		static void Longbow(GameObject go)
 		{
+			// (the bow shoots with ThrowableComponent_Bow; its force is ThrowableComponent.throwForce)
+			foreach (ThrowableComponent t in go.GetComponentsInChildren<ThrowableComponent>(true))
+			{
+				Traverse f = Traverse.Create(t).Field("throwForce");
+				f.SetValue(f.GetValue<Vector3>() * BowFactor);
+			}
 			foreach (Throwable t in go.GetComponentsInChildren<Throwable>(true))
 				t.throwForceMultiplier *= BowFactor;
 			foreach (ChargeMeter c in go.GetComponentsInChildren<ChargeMeter>(true))

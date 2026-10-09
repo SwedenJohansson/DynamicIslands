@@ -690,7 +690,9 @@ namespace DynamicIslands
 				case "DI_BrightLamp":
 				{
 					Light a = made.GetComponentInChildren<Light>(true), b = prefab.GetComponentInChildren<Light>(true);
-					stat = nums(a != null ? a.range : -1f, b != null ? b.range : -1f, "light range"); return a != null && b != null && b.range > 0f && a.range >= b.range * ExtraUpgrades.LightRangeFactor - 0.001f;
+					LightSingularityExternal xa = made.GetComponentInChildren<LightSingularityExternal>(true), xb = prefab.GetComponentInChildren<LightSingularityExternal>(true);
+					float ra = a != null ? a.range : xa != null ? xa.lightRange : -1f, rb = b != null ? b.range : xb != null ? xb.lightRange : -1f;
+					stat = nums(ra, rb, "light range"); return rb > 0f && ra >= rb * ExtraUpgrades.LightRangeFactor - 0.001f;
 				}
 				case "DI_SteelPot":
 				case "DI_FastJuicer":
@@ -739,10 +741,11 @@ namespace DynamicIslands
 			}
 			if (u.Name == "DI_Longbow")
 			{
-				Throwable ta = a.obj.GetComponentInChildren<Throwable>(true), tb = b.obj.GetComponentInChildren<Throwable>(true);
+				ThrowableComponent ta = a.obj.GetComponentInChildren<ThrowableComponent>(true), tb = b.obj.GetComponentInChildren<ThrowableComponent>(true);
 				if (ta == null || tb == null) { stat = "no throwable in the hand model"; return false; }
-				stat = "throw force " + ta.throwForceMultiplier + " vs " + tb.throwForceMultiplier;
-				return tb.throwForceMultiplier.sqrMagnitude > 0f && (ta.throwForceMultiplier - tb.throwForceMultiplier * ExtraUpgrades.BowFactor).sqrMagnitude < 0.0001f;
+				Vector3 fa = HarmonyLib.Traverse.Create(ta).Field("throwForce").GetValue<Vector3>(), fb = HarmonyLib.Traverse.Create(tb).Field("throwForce").GetValue<Vector3>();
+				stat = "throw force " + fa + " vs " + fb;
+				return fb.sqrMagnitude > 0f && (fa - fb * ExtraUpgrades.BowFactor).sqrMagnitude < 0.0001f;
 			}
 			bool weapon = u.Name == "DI_TitaniumGreatsword" || u.Name == "DI_TitaniumSpear" || u.Name == "DI_TitaniumMachete";
 			string hf = u.Name == "DI_Telescope" ? "minFOV" : u.Name == "DI_LongPaddle" ? "paddleForce" : u.Name == "DI_MasterHammer" ? "blockRepairAmount" : u.Name == "DI_LumberAxe" ? "chopBlockTime" : weapon ? "damage" : null;
@@ -784,6 +787,9 @@ namespace DynamicIslands
 			string field = u.Name == "DI_SwiftFlippers" ? "swimSpeedMultiplier" : u.Name == "DI_LargeAirTank" ? "oxygenLostMultiplier" : null;
 			if (u.Name == "DI_Floodlight" || u.Name == "DI_BrightHeadLight")
 			{
+				// (an equipment never worn yet finds its lamp and models on its first Equip: done here as Equip would)
+				if (!HarmonyLib.Traverse.Create(a).Field("isInitialized").GetValue<bool>())
+					HarmonyLib.AccessTools.Method(a.GetType(), "Initialize").Invoke(a, new object[] { player });
 				Light l = HarmonyLib.Traverse.Create(a).Field("lightSourceLight").GetValue<Light>();
 				Transform m = HarmonyLib.Traverse.Create(a).Field("localModel").GetValue<Transform>();
 				Renderer r = m != null ? m.GetComponentInChildren<Renderer>(true) : null;
