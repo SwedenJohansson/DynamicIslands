@@ -10,7 +10,7 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// The upgrade research table (the user 2026-10-09): the extra upgrades (ExtraUpgrades) are learned at a table of their
-	/// own, not with their base item. It is a tinted copy of Raft's research table at twice its cost, learned from the start
+	/// own, not with their base item. It is a tinted copy of Raft's research table at four times its cost, learned from the start
 	/// while the world has the option "upgrades" on (ExtraUpgrades.Upgrade.Table). It works as Raft's: put an item in, press
 	/// Research; an upgrade can be learned once one item of each of its cost lines is researched.
 	///

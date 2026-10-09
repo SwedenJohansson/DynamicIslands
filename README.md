@@ -427,7 +427,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Trader raft:** very rarely (about once in 7 km) a trader's raft comes by; its stalls swap planks, plastic, rope and
   scrap for fruit, flower and tree seeds, and now and then a blueprint. A little stock, shared by all players.
 - **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once they are
-  learned at the **upgrade research table** (a violet research table of their own, twice the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
+  learned at the **upgrade research table** (a violet research table of their own, four times the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
   strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls
   1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming), large air tank

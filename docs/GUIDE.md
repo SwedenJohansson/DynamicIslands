@@ -2346,7 +2346,7 @@ learned are back.
 
 The upgrades are learned at a research table of their own, not with their base: learning the battery doesn't teach
 the large battery. With the option on, the **upgrade research table** is in the crafting menu from the start, next to
-Raft's research table. It is Raft's research table in **violet** and costs **twice** as much.
+Raft's research table. It is Raft's research table in **violet** and costs **four times** as much.
 
 It works like Raft's table. Put an item in its slot and press **Research**. The menu lists only the upgrades, with the
 items each one needs; an upgrade can be learned once **every item it costs** is researched there (one of each - a
