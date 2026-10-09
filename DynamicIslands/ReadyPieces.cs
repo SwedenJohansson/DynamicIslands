@@ -25,8 +25,10 @@ namespace DynamicIslands.Editor
 
 		public const string Door = "door", Hatch = "hatch", Crank = "crank", Lever = "lever";
 		public const string Lift = "lift", Cage = "cage", Camera = "camera", Generator = "generator", Radio = "radio", Engine = "engine", Mirror = "mirror";
+		public const string Wheel = "wheel", Pipe = "pipe", Wire = "wire", Claw = "claw", Scales = "scales";
 		/// <summary>The signals the new kinds send (a quest, the world plan or other objects can wait for them).</summary>
 		public const string PowerSignal = "power", RadioSignal = "radio", EngineSignal = "engine", MirrorSignal = "mirror", CageSignal = "cage";
+		public const string WheelSignal = "wheel", PipeSignal = "pipe", WireSignal = "wire", ClawSignal = "claw", ScalesSignal = "scales";
 
 		public static readonly Piece[] All =
 		{
@@ -64,10 +66,26 @@ namespace DynamicIslands.Editor
 			new Piece { Name = "VG_DecorationPrefabBase_Engine Variant", Kind = Engine, Item = "Vasagatan_GasTank", Use = "Start the engine", Locked = "The tank is dry. It needs fuel - a gas tank." },
 			new Piece { Name = "TP_MirrorHousing_Rotating", Kind = Mirror, Use = "Turn the mirror" },
 			new Piece { Name = "TP_MirrorHousing_InteractableMirror", Kind = Mirror, Use = "Turn the mirror" },
+			// (Raft's puzzle mini-games as the mod's own pieces, 2026-10-09: Raft's puzzle scripts don't come with copied objects)
+			new Piece { Name = "UT_WaterChallengeWheel1", Kind = Wheel, Use = "Turn the wheel" },
+			new Piece { Name = "UT_WaterChallengeWheel2", Kind = Wheel, Use = "Turn the wheel" },
+			new Piece { Name = "UT_WaterChallengeWheel3", Kind = Wheel, Use = "Turn the wheel" },
+			new Piece { Name = "WaterPipe_Short_1", Kind = Pipe, Use = "Turn the pipe" },
+			new Piece { Name = "WaterPipe_BigCurve_1", Kind = Pipe, Use = "Turn the pipe" },
+			new Piece { Name = "RT_PipeBendL", Kind = Pipe, Use = "Turn the pipe" },
+			new Piece { Name = "UT_ElectricCableHub01", Kind = Wire, Item = "Temperance_ElectricalCable", Use = "Connect the cable", Locked = "No cable runs to this connector. It needs an electrical cable." },
+			new Piece { Name = "UT_ElectricCableHub02", Kind = Wire, Item = "Temperance_ElectricalCable", Use = "Connect the cable", Locked = "No cable runs to this connector. It needs an electrical cable." },
+			new Piece { Name = "UT_ElectricCableHub03", Kind = Wire, Item = "Temperance_ElectricalCable", Use = "Connect the cable", Locked = "No cable runs to this connector. It needs an electrical cable." },
+			new Piece { Name = "Claw_ControlBoard", Kind = Claw, Use = "Work the claw" },
+			new Piece { Name = "TangaroaScaleModel", Kind = Scales, Use = "Tip the scales" },
 		};
 
-		/// <summary>The pieces added for LM12's rest (2026-10-06): lifts, cages, cameras, generators, radios, the engine, mirrors.</summary>
-		public static IEnumerable<Piece> Machinery { get { return All.Where(p => p.Kind == Lift || p.Kind == Cage || p.Kind == Camera || p.Kind == Generator || p.Kind == Radio || p.Kind == Engine || p.Kind == Mirror); } }
+		/// <summary>The pieces added for LM12's rest (2026-10-06): lifts, cages, cameras, generators, radios, the engine, mirrors;
+		/// (2026-10-09) the puzzle pieces: water wheels, pipes, wire connectors, the claw console, the scales.</summary>
+		public static IEnumerable<Piece> Machinery { get { return All.Where(p => p.Kind != Door && p.Kind != Hatch && p.Kind != Crank && p.Kind != Lever); } }
+
+		/// <summary>Kinds that turn a quarter (open = turned) each use and send their signal: a puzzle is a check on their states.</summary>
+		public static bool Turns(string kind) { return kind == Mirror || kind == Wheel || kind == Pipe; }
 
 
 		public static Piece Of(string name) { return All.FirstOrDefault(p => p.Name == name); }
@@ -112,9 +130,23 @@ namespace DynamicIslands.Editor
 					props[BehaviourProps.EventKey("use")] = "message||Static crackles... then a voice, far away, repeating a frequency." + "\n" + "signal||" + RadioSignal;
 					break;
 				case Mirror:
+				case Wheel:
+				case Pipe:
 					props[BehaviourProps.Turn] = "90";
-					props[BehaviourProps.MoveTime] = "0.8";
-					props[BehaviourProps.EventKey("use")] = "switch|" + "\n" + "signal||" + MirrorSignal;
+					props[BehaviourProps.MoveTime] = p.Kind == Wheel ? "1.5" : "0.8";
+					props[BehaviourProps.EventKey("use")] = "switch|" + "\n" + "signal||" + p.Kind;
+					break;
+				case Wire:
+					// (connected once for good: open = connected; a later use finds it open and doesn't want another cable)
+					props[BehaviourProps.CheckKey("use")] = ObjCheck.AnyLine + "\nstate||open\ntake|" + item + "|1";
+					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
+					props[BehaviourProps.EventKey("use")] = "open|" + "\n" + "message||The cable clicks in. Current hums along the wire." + "\n" + "signal||" + WireSignal;
+					break;
+				case Claw:
+					props[BehaviourProps.EventKey("use")] = "message||The claw whirs down, closes... and rises." + "\n" + "signal||" + ClawSignal;
+					break;
+				case Scales:
+					props[BehaviourProps.EventKey("use")] = "message||The scales tip, sway, and settle." + "\n" + "signal||" + ScalesSignal;
 					break;
 				case Door:
 					// (it goes when opened: Raft's doors swing on hinges this piece doesn't have)

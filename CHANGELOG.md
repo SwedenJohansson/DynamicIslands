@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Ready puzzle pieces:** Utopia's water wheels and pipes (and the radio tower's pipe bend) turn a quarter each use
+  like Temperance's mirrors; Utopia's wire connectors take Raft's electrical cable once and stay connected; Tangaroa's
+  claw crane console and the justice scales send a signal. Each sends its own signal (`wheel`, `pipe`, `wire`, `claw`,
+  `scales`) for quests, world plans and other objects.
 - **The world travels with the players:** after each save, and when a player joins, the host sends Raft's newest save
   of the world to every player, into their own Raft World folder. Whoever hosts next loads it from Load Game; copying
   the world folder by hand is only needed for a player who missed the last save. A player's own world of the same name

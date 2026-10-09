@@ -15,7 +15,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `LootCrate.cs` | `ContentState` (used state: shared, saved, refilled) and `LootCrate` (chests) |
 | `CustomNote.cs` | `CustomNote` (readable note) and `NoteReader` (the note on screen) |
 | `IslandInfo.cs` | `IslandProps`, `IslandSettings`, `IslandRules.RegrowDays`, `IslandInfo` (arrival banner, zone messages) |
-| `ReadyPieces.cs` | Default settings for Raft's doors, hatches, levers, lifts, cages, cameras, generators, radios, engine, mirrors |
+| `ReadyPieces.cs` | Default settings for Raft's doors, hatches, levers, lifts, cages, cameras, generators, radios, engine, and the puzzle pieces (mirrors, water wheels, pipes turn: `Turns(kind)`; wire connectors: `state||open` or take the cable, then open; claw, scales); a kind's signal is its name |
 | `CodeLock.cs`, `QuestItemPickups.cs` | Keypad lock (`lock.code`); Raft's quest item pickups give story items `raft-<type>` |
 | `QuestRewards.cs` | Each player's share of a quest's Raft-item reward |
 | `BuriedTreasure.cs`, `ZiplineEnds.cs` | Raft treasure points; zipline far end (`zip.to`) |

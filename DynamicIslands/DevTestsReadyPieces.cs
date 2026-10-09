@@ -24,7 +24,7 @@ namespace DynamicIslands
 			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			bool ok = true;
 			yield return EnsureAlive();
-			var pieces = new[] { new[] { "PlantationDoor", "door" }, new[] { "TangaroaHatchRoom_Hatch", "hatch" }, new[] { "TP_Selene_DoorCrankWheel", "crank" }, new[] { "TP_CoolingStation_Monitor_Lever", "lever" } };
+			var pieces = new[] { new[] { "PlantationDoor", "door" }, new[] { "TangaroaHatchRoom_Hatch", "hatch" }, new[] { "TP_Selene_DoorCrankWheel", "crank" }, new[] { "TP_CoolingStation_Monitor_Lever", "lever" }, new[] { "UT_ElectricCableHub01", "wire" }, new[] { "UT_WaterChallengeWheel1", "wheel" }, new[] { "Claw_ControlBoard", "claw" } };
 			yield return PlaceableCatalog.EnsureLoaded(ReadyPieces.All.Select(p => p.Name).ToList());
 			Check(ref ok, ReadyPieces.All.All(p => PlaceableCatalog.Get(p.Name) != null), "every ready piece loads from Raft's islands" + string.Join("", ReadyPieces.All.Where(p => PlaceableCatalog.Get(p.Name) == null).Select(p => ", " + p.Name + " missing").ToArray()));
 
@@ -38,7 +38,7 @@ namespace DynamicIslands
 			{
 				Dictionary<string, string> p = ObjectProps.Defaults(pieces[i][0]);
 				p[BehaviourProps.Name] = pieces[i][1];
-				float x = c.x - 6f + i * 4f;
+				float x = c.x - 12f + i * 4f;
 				f.Objects.Add(new IslandObject { Name = pieces[i][0], Position = new Vector3(x, ground(x, c.y), c.y), Props = p });
 			}
 			IslandWorldState.Remove(ReadyIsland);
@@ -77,6 +77,29 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.5f);
 				Check(ref ok, e.State.ContainsKey(Behaviours.SignalKey(sig)), "the " + sig + " sends the signal '" + sig + "'");
 			}
+			// The puzzle pieces: a wire connector wants Raft's electrical cable once; a water wheel turns; the claw console
+			string cable = StoryItems.Ref(ReadyPieces.ItemOf("UT_ElectricCableHub01"));
+			StoryBook.Take(cable, 99);
+			ScUse(e, "wire");
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, !e.State.ContainsKey(Behaviours.SignalKey(ReadyPieces.WireSignal)), "without a cable the wire connector stays dead");
+			StoryBook.Give(cable, 2);
+			ScUse(e, "wire");
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, e.State.ContainsKey(Behaviours.SignalKey(ReadyPieces.WireSignal)) && StoryBook.Count(cable) == 1, "with Raft's electrical cable it connects (" + StoryBook.Count(cable) + " of 2 cables left) and sends 'wire'");
+			ScUse(e, "wire");
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, StoryBook.Count(cable) == 1, "used again it doesn't want another cable (" + StoryBook.Count(cable) + ")");
+			IslandObjectRef wheel = ScObjOf(e, "wheel");
+			Quaternion before = wheel != null ? wheel.transform.rotation : Quaternion.identity;
+			ScUse(e, "wheel");
+			yield return new WaitForSeconds(2f);
+			float turned = wheel != null ? Quaternion.Angle(before, wheel.transform.rotation) : 0f;
+			Check(ref ok, wheel != null && e.State.ContainsKey(Behaviours.SignalKey(ReadyPieces.WheelSignal)) && turned > 45f, "the water wheel turns a quarter and sends 'wheel' (" + turned.ToString("0") + " degrees)");
+			ScUse(e, "claw");
+			yield return new WaitForSeconds(0.5f);
+			Check(ref ok, e.State.ContainsKey(Behaviours.SignalKey(ReadyPieces.ClawSignal)), "the claw console sends 'claw'");
+			StoryBook.Take(cable, 99);
 			StoryBook.Take(card, 99);
 			if (ok) Log("PASS: ready pieces"); else Fail("ready pieces");
 		}

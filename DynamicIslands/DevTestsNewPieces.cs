@@ -97,7 +97,12 @@ namespace DynamicIslands
 					case ReadyPieces.Generator: if (!checks.Contains("signal|" + ReadyPieces.PowerSignal) || !checks.Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(p.Name))) || !use.Contains("signal||" + ReadyPieces.PowerSignal)) why = "no power settings"; break;
 					case ReadyPieces.Engine: if (!checks.Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(p.Name))) || !use.Contains("signal||" + ReadyPieces.EngineSignal)) why = "no fuel settings"; break;
 					case ReadyPieces.Radio: if (!checks.Contains("signal|" + ReadyPieces.PowerSignal) || !use.Contains("signal||" + ReadyPieces.RadioSignal)) why = "no radio settings"; break;
-					case ReadyPieces.Mirror: if (ObjectProps.GetFloat(props, BehaviourProps.Turn, 0f) == 0f || !use.Contains("switch|")) why = "doesn't turn"; break;
+					case ReadyPieces.Mirror:
+					case ReadyPieces.Wheel:
+					case ReadyPieces.Pipe: if (ObjectProps.GetFloat(props, BehaviourProps.Turn, 0f) == 0f || !use.Contains("switch|") || !use.Contains("signal||" + p.Kind)) why = "doesn't turn"; break;
+					case ReadyPieces.Wire: if (!checks.Contains("state||open") || !checks.Contains("take|" + StoryItems.Ref(ReadyPieces.ItemOf(p.Name))) || !use.Contains("open|") || !use.Contains("signal||" + ReadyPieces.WireSignal)) why = "no wire settings"; break;
+					case ReadyPieces.Claw:
+					case ReadyPieces.Scales: if (!use.Contains("signal||" + p.Kind)) why = "sends no signal"; break;
 				}
 				// (a copy as an island in a world makes it: the settings give it its parts)
 				GameObject live = PlaceableCatalog.Spawn(p.Name, null);
@@ -109,7 +114,7 @@ namespace DynamicIslands
 					IslandBehaviour mover = live.GetComponent<IslandBehaviour>();
 					bool usable = live.GetComponentInChildren<UseInteract>(true) != null;
 					if (why == null && p.Use != null && !usable) why = "players can't use it";
-					if (why == null && (p.Kind == ReadyPieces.Lift || p.Kind == ReadyPieces.Camera || p.Kind == ReadyPieces.Mirror) && mover == null) why = "doesn't move";
+					if (why == null && (p.Kind == ReadyPieces.Lift || p.Kind == ReadyPieces.Camera || ReadyPieces.Turns(p.Kind)) && mover == null) why = "doesn't move";
 					if (why == null && p.Kind == ReadyPieces.Lift)
 					{
 						// (someone standing on its floor rides along: a ray down from them meets the lift)
