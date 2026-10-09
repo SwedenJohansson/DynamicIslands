@@ -546,7 +546,140 @@ namespace DynamicIslands
 			if (ok) Log("PASS: large battery" + (keep ? " (machine kept)" : "")); else Fail("large battery");
 		}
 
-		[ConsoleCommand(name: "CITrade", docs: "Dev, world (any player): this player gets the price of the trader stall number <n> (0 = the first loaded, by object index) and trades once there; a client waits for the host's yes. Logs what it got and the stock left. CITrade <n>")]
+		[ConsoleCommand(name: "CIUpgrades", docs: "Dev, world (host): every buildable upgrade of the world option Extra upgrades - registered (its own index, its base item's cost times its factor, named, its own icon, out of the research table), craftable only with the option on and its base item learned; placed floating (as a cheat): tinted and with its better stat than its base item's (grill/furnace cook time, storage slots, net width and items, tank size, engine strength and speed, turbine charge, bed respawn and healing); a reinforced storage gives back what it holds when removed. CIUpgrades [name] (only the upgrade whose name contains it)")]
+		public static void UpgradesCommand(string[] args) { StartTest(UpgradesRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+
+		static IEnumerator UpgradesRoutine(string only)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || !CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("upgrades: host, in a world"); yield break; }
+			bool ok = true;
+			List<ExtraUpgrades.Upgrade> ups = ExtraUpgrades.All.Where(u => u.Name != ExtraUpgrades.LargeBatteryName && (only == null || u.Name.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+			Check(ref ok, ups.Count > 0, ups.Count + " upgrades to test");
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			int n = 0;
+			foreach (ExtraUpgrades.Upgrade u in ups)
+			{
+				Item_Base item = u.Item, baseItem = u.Base;
+				Check(ref ok, item != null && baseItem != null && ItemManager.GetItemByIndex(u.Index) == item && item.UniqueName == u.Name, u.Display + ": registered (index " + u.Index + ")");
+				if (item == null || baseItem == null) continue;
+				CostMultiple[] cost = baseItem.settings_recipe.NewCost, cost2 = item.settings_recipe.NewCost;
+				bool costOk = cost != null && cost2 != null && cost.Length > 0 && cost2.Length == cost.Length + (u.ExtraCostItem != null ? 1 : 0)
+					&& cost.Zip(cost2, (a, b) => a.amount * u.CostFactor == b.amount && a.items.SequenceEqual(b.items)).All(x => x);
+				Check(ref ok, costOk, u.Display + ": cost " + ExtraUpgrades.CostText(cost2) + " = " + u.CostFactor + " x " + ExtraUpgrades.CostText(cost) + (u.ExtraCostItem != null ? " + " + u.ExtraCostAmount + " " + u.ExtraCostItem : ""));
+				Check(ref ok, item.settings_Inventory.DisplayName == u.Display && item.settings_Inventory.Sprite != null && item.settings_Inventory.Sprite != baseItem.settings_Inventory.Sprite
+					&& HarmonyLib.Traverse.Create(item.settings_recipe).Field("_hiddenInResearchTable").GetValue<bool>(), u.Display + ": named, own icon, out of the research table");
+				bool learned = baseItem.settings_recipe.Learned;
+				Block made = null;
+				try
+				{
+					foreach (bool[] c in new[] { new[] { false, true }, new[] { true, false }, new[] { true, true } })
+					{
+						var set = new HashSet<string>(optionsBefore);
+						if (c[0]) set.Add(WorldOptions.Upgrades); else set.Remove(WorldOptions.Upgrades);
+						WorldOptions.Set(set);
+						baseItem.settings_recipe.Learned = c[1];
+						yield return null; yield return null;
+						Check(ref ok, item.settings_recipe.Learned == (c[0] && c[1]), u.Display + ": option " + (c[0] ? "on" : "off") + ", base " + (c[1] ? "learned" : "not learned") + " -> " + (item.settings_recipe.Learned ? "craftable" : "not craftable"));
+					}
+					Block prefab = baseItem.settings_buildable.GetBlockPrefabs()[0];
+					made = player.BlockCreator.CreateBlockCheat(item, new Vector3(6f * n++, 30f, 0f), Vector3.zero, DPS.Default, 0);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, made != null && made.buildableItem == item && made.GetComponent<UpgradeBlock>() != null && made.GetComponent<UpgradeBlock>().Upgrade == u,
+						u.Display + ": placed, its block knows it (" + (made != null ? made.name : "nothing") + ")");
+					if (made == null) continue;
+					string stat; bool better = UpgradeStat(u, prefab, made, out stat);
+					Check(ref ok, better, u.Display + ": " + stat);
+					if (u.Name == "DI_ReinforcedStorage")
+					{
+						var storage = made.GetComponentInChildren<Storage_Small>(true);
+						Inventory inv = storage != null ? HarmonyLib.Traverse.Create(storage).Field("inventoryReference").GetValue<Inventory>() : null;
+						int before = player.Inventory.GetItemCount("Plank");
+						if (inv != null) inv.AddItem("Plank", 7);
+						yield return null;
+						BlockCreator.RemoveBlockNetwork(made, player, true);
+						made = null;
+						yield return new WaitForSeconds(0.5f);
+						int got = player.Inventory.GetItemCount("Plank") - before;
+						Check(ref ok, inv != null && got == 7, u.Display + ": removed, its 7 planks come back to the player (" + got + ")");
+						if (got > 0) player.Inventory.RemoveItem("Plank", got);
+						int back = player.Inventory.GetItemCount(item.UniqueName);
+						if (back > 0) player.Inventory.RemoveItem(item.UniqueName, back);
+					}
+				}
+				finally
+				{
+					WorldOptions.Set(optionsBefore);
+					baseItem.settings_recipe.Learned = learned;
+					if (made != null) BlockCreator.RemoveBlockNetwork(made, null, true);
+				}
+				yield return new WaitForSeconds(0.3f);
+			}
+			if (ok) Log("PASS: upgrades (" + ups.Count + ")"); else Fail("upgrades");
+		}
+
+		/// <summary>Whether a placed upgrade's block has its better stat than its base item's prefab, and the numbers.</summary>
+		static bool UpgradeStat(ExtraUpgrades.Upgrade u, Block prefab, Block made, out string stat)
+		{
+			Func<Component, string, float> f = (c, field) => c == null ? -1f : Convert.ToSingle(HarmonyLib.Traverse.Create(c).Field(field).GetValue());
+			Func<float, float, string, string> nums = (a, b, what) => what + " " + a + " vs " + b;
+			switch (u.Name)
+			{
+				case "DI_TitaniumGrill":
+				case "DI_BlastFurnace":
+				{
+					float a = f(made.GetComponentInChildren<CookingSlot>(true), "cookTimeMultiplier"), b = f(prefab.GetComponentInChildren<CookingSlot>(true), "cookTimeMultiplier");
+					stat = nums(a, b, "cook time factor"); return a > 0f && Mathf.Abs(a - b * ExtraUpgrades.FastCookFactor) < 0.001f;
+				}
+				case "DI_ReinforcedStorage":
+				{
+					var s = made.GetComponentInChildren<Storage_Small>(true); var p = prefab.GetComponentInChildren<Storage_Small>(true);
+					Inventory inv = s != null ? HarmonyLib.Traverse.Create(s).Field("inventoryReference").GetValue<Inventory>() : null;
+					int a = inv != null ? inv.GetComponentsInChildren<Slot>(true).Length : -1, b = p != null && p.inventoryPrefab != null ? p.inventoryPrefab.GetComponentsInChildren<Slot>(true).Length : -1;
+					stat = nums(a, b, "slots"); return b > 0 && a >= b * ExtraUpgrades.StorageSlotsFactor;
+				}
+				case "DI_WideNet":
+				{
+					float a = f(made.GetComponentInChildren<ItemCollector>(true), "maxNumberOfItems"), b = f(prefab.GetComponentInChildren<ItemCollector>(true), "maxNumberOfItems");
+					var ca = HarmonyLib.Traverse.Create(made.GetComponentInChildren<ItemCollector>(true)).Field("collectorCollider").GetValue<Collider>() as BoxCollider;
+					var cb = HarmonyLib.Traverse.Create(prefab.GetComponentInChildren<ItemCollector>(true)).Field("collectorCollider").GetValue<Collider>() as BoxCollider;
+					float wa = ca != null ? Mathf.Max(ca.size.x, ca.size.y, ca.size.z) : -1f, wb = cb != null ? Mathf.Max(cb.size.x, cb.size.y, cb.size.z) : -1f;
+					stat = nums(a, b, "max items") + ", " + nums(wa, wb, "width"); return b > 0f && a == b * 2f && wb > 0f && Mathf.Abs(wa - wb * 2f) < 0.01f;
+				}
+				case "DI_LargeFuelTank":
+				case "DI_LargeWaterTank":
+				{
+					Tank a = made.GetComponentInChildren<Tank>(true), b = prefab.GetComponentInChildren<Tank>(true);
+					stat = nums(a != null ? a.maxCapacity : -1f, b != null ? b.maxCapacity : -1f, "capacity"); return a != null && b != null && b.maxCapacity > 0f && Mathf.Abs(a.maxCapacity - b.maxCapacity * 2f) < 0.01f;
+				}
+				case "DI_GreenhousePlot":
+				{
+					Cropplot plot = made.GetComponentInChildren<Cropplot>(true);
+					stat = "a crop plot with " + (plot != null ? plot.plantationSlots.Count : 0) + " slots that waters itself"; return plot != null && u.Every != null;
+				}
+				case "DI_TurboEngine":
+				{
+					Component a = made.GetComponentInChildren<MotorWheel>(true), b = prefab.GetComponentInChildren<MotorWheel>(true);
+					stat = nums(f(a, "_motorStrenght"), f(b, "_motorStrenght"), "strength") + ", " + nums(f(a, "_raftSpeed"), f(b, "_raftSpeed"), "speed") + ", " + nums(f(a, "timePerFuel"), f(b, "timePerFuel"), "time per fuel");
+					return f(b, "_motorStrenght") > 0f && f(a, "_motorStrenght") == f(b, "_motorStrenght") * ExtraUpgrades.TurboStrengthFactor
+						&& Mathf.Abs(f(a, "_raftSpeed") - f(b, "_raftSpeed") * ExtraUpgrades.TurboSpeedFactor) < 0.001f && f(a, "timePerFuel") < f(b, "timePerFuel");
+				}
+				case "DI_LargeWindTurbine":
+				{
+					float a = f(made.GetComponentInChildren<WindTurbine>(true), "batteryChargesPerTick"), b = f(prefab.GetComponentInChildren<WindTurbine>(true), "batteryChargesPerTick");
+					stat = nums(a, b, "charges per tick"); return b > 0f && a == b * 2f;
+				}
+				case "DI_ComfyBed":
+				{
+					Component a = made.GetComponentInChildren<Bed>(true), b = prefab.GetComponentInChildren<Bed>(true);
+					stat = nums(f(a, "healthPercentage"), f(b, "healthPercentage"), "respawn health %") + ", " + nums(f(a, "healthRegen"), f(b, "healthRegen"), "sleep healing");
+					return f(a, "healthPercentage") == Mathf.Max(f(b, "healthPercentage"), ExtraUpgrades.BedRespawnPercent) && f(b, "healthRegen") > 0f && f(a, "healthRegen") == f(b, "healthRegen") * ExtraUpgrades.BedRegenFactor;
+				}
+			}
+			stat = "no stat check"; return true;
+		}
+
+		[ConsoleCommand(name: "CITrade",docs: "Dev, world (any player): this player gets the price of the trader stall number <n> (0 = the first loaded, by object index) and trades once there; a client waits for the host's yes. Logs what it got and the stock left. CITrade <n>")]
 		public static void TradeCommand(string[] args)
 		{
 			int n = 0;

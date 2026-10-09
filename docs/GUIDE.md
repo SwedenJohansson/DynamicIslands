@@ -2291,20 +2291,36 @@ again. Every player sees the same trader with the same offers: the host brings i
 
 #### Extra upgrades
 
-Better versions of Raft's own things to craft. So far there is one:
+Better versions of Raft's own things to craft. Each one has a tint of its own and sits in the crafting menu next to
+the thing it improves (the **base**), once the base is learned:
 
-| Upgrade | What it is | Cost | Crafted |
+| Upgrade | What it is | Cost | Base |
 |---|---|---|---|
-| **Large battery** | A blue battery that holds **twice the charge** of Raft's battery: a machine runs twice as long on it | Twice the battery's cost | In the crafting menu next to the battery, once the battery is learned |
+| **Large battery** | A blue battery that holds **twice the charge** of Raft's battery: a machine runs twice as long on it | 2x the battery | Battery |
+| **Titanium grill** | An advanced grill that **cooks twice as fast** | 2x the advanced grill + 2 titanium ingots | Advanced grill |
+| **Blast furnace** | A smelter that **smelts twice as fast** | 2x the smelter | Smelter |
+| **Reinforced storage** | A large storage with **half as many slots again** | 2x the large storage | Large storage |
+| **Wide net** | An advanced collection net that catches from a **twice as wide** area and holds **twice as many** items | 2x the advanced net | Advanced collection net |
+| **Large fuel tank** | A fuel tank that holds **twice as much** fuel | 2x the fuel tank | Fuel tank |
+| **Large water tank** | A water tank that holds **twice as much** water | 2x the water tank | Water tank |
+| **Greenhouse plot** | A large crop plot that **waters itself**: its plants never go dry | 2x the large crop plot | Large crop plot |
+| **Turbo engine** | An engine that pushes **twice the weight** and drives the raft **half again as fast**, but burns fuel faster (a fuel lasts 60% as long) | 2x the engine | Engine |
+| **Large wind turbine** | A wind turbine that charges batteries **twice as fast** | 2x the wind turbine | Wind turbine |
+| **Comfy bed** | Sleeping heals **twice as fast** and makes you half as hungry and thirsty; you wake up from death with **75%** health, food and water instead of 50% | 2x the bed | Bed |
+
+None of them needs a new model: they are Raft's own machines, tinted. Raft's purifiers, biofuel refiner and beehive have
+no upgrade, and neither does the sail (it only steers). A removed reinforced storage, titanium grill or blast furnace
+gives back what it holds, as the base does.
 
 The large battery fits **every machine that takes a battery** (electric grill, electric smelter, electric purifier,
 juicer, recycler, sprinkler, the Receiver) and charges in the **battery charger** like a battery: twice as long, for
 twice the fuel. In a machine it shows as a blue battery. It has no entry of its own in the research table: when the
 world has the option on and the battery is learned, the large battery is in the crafting menu too; switch the option
-off and it is gone from the menu again (large batteries already made keep working).
+off and it is gone from the menu again (large batteries already made keep working). The same goes for every upgrade
+and its base: none has a research table entry, and switching the option off hides them all; what is built stays.
 
-Every player needs the mod, as for any world with custom islands. A large battery is saved with the world; a world
-loaded **without** the mod loses the large batteries (a machine's slot comes back empty).
+Every player needs the mod, as for any world with custom islands. The upgrades are saved with the world; a world
+loaded **without** the mod loses them (a machine's slot comes back empty, a built upgrade is gone).
 
 #### For every player
 

@@ -12,9 +12,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
-- **World option Extra upgrades:** better versions of Raft's things to craft. The first is the **large battery**:
-  blue, twice the charge of a battery for twice its cost, crafted next to the battery once the battery is learned.
-  It fits every machine that takes a battery and charges in the battery charger.
+- **World option Extra upgrades:** better versions of Raft's things to craft, each tinted and crafted next to the
+  thing it improves once that is learned: **large battery** (twice the charge; fits every battery slot), **titanium
+  grill** and **blast furnace** (cook twice as fast), **reinforced storage** (half as many slots again), **wide net**
+  (twice as wide, twice the items), **large fuel tank** and **large water tank** (twice as much), **greenhouse plot**
+  (waters itself), **turbo engine** (twice the strength, half again as fast, burns fuel faster), **large wind
+  turbine** (charges twice as fast) and **comfy bed** (heals twice as fast while sleeping, respawn at 75%).
 - **World option Long voyage:** random custom islands come half as often (after every 6-12 of Raft's own
   islands) and at least 1.6 km apart, so food, water and the raft matter more between stops.
 - **World option Iron raft:** the raft's blocks take half damage from shark bites; taking pieces down with the

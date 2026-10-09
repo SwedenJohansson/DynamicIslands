@@ -8,55 +8,164 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// The extra option "upgrades" (WorldOptions.Upgrades, the user 2026-10-09): better versions of Raft's own things to
-	/// craft. So far the large battery - a blue copy of Raft's battery with twice its charge, at twice its cost.
+	/// craft - a large battery, a titanium grill, a blast furnace, a reinforced storage, a wide net, large fuel and water
+	/// tanks, a greenhouse plot, a turbo engine, a large wind turbine and a comfy bed (the list: Defs).
 	///
-	/// How: the item is a copy of Raft's Battery (Item_Base) with its own fixed index (LargeBatteryIndex - saves and
-	/// messages name items by index, so it must never change), registered with RAPI.RegisterItem when the mod starts, before
-	/// a world builds its crafting menu (CraftingMenu.InitializeRecipes reads ItemManager.GetAllItems once). Its charge is
-	/// the item's MaxUses (Battery drains one use per 10 s, the charger adds uses until full), so twice Raft's MaxUses holds
-	/// twice as long. Machines take a battery only when their slot lists it (ItemObjectEnabler.itemConnections, by index):
-	/// UpgradeBatterySlotPatch adds the large one to every Battery slot as it wakes, with a blue copy of the battery model.
-	/// The recipe has no entry of its own in the research table; it is learned while the world has the option on and the
-	/// battery is learned (Tick), so it appears in the crafting menu next to the battery. Every player needs the mod (the
-	/// mod is needed to join anyway); without it a placed large battery is gone from its slot.
+	/// How: each is a copy of one of Raft's items (Item_Base) with its own fixed index (Upgrade.Index - saves and messages
+	/// name items by index, so it must never change), registered with RAPI.RegisterItem when the mod starts, before a world
+	/// builds its crafting menu (CraftingMenu.InitializeRecipes reads ItemManager.GetAllItems once). Its recipe costs the
+	/// base item's recipe times CostFactor (plus an optional extra), has no entry of its own in the research table and is
+	/// learned while the world has the option on and the base item is learned (Tick), so it appears next to the base item.
+	/// A buildable one gets copies of the base item's block prefabs (kept inactive under one holder, so they don't wake),
+	/// each pointing back at the new item (Block.buildableItem / itemToReturnOnDestroy, so saves store the new index) and
+	/// carrying an UpgradeBlock: when a block of it is placed or loaded, UpgradeBlock tints it and sets its better stats
+	/// (Upgrade.Setup) before Raft's own Start code reads them. Raft hands back a block's contents (storage, grill) by its
+	/// item index (RemovePlaceables.ReturnItemsFromBlock): UpgradeReturnItemsPatch lets it see the base item there.
+	/// Every player needs the mod (the mod is needed to join anyway); without it the upgrades are missing from a world.
 	/// </summary>
 	public static class ExtraUpgrades
 	{
-		/// <summary>The large battery's item index: fixed for ever (worlds save it). Below RAPI's limit of 32767, far from
-		/// Raft's own indexes.</summary>
+		/// <summary>One better version of a Raft item.</summary>
+		public class Upgrade
+		{
+			/// <summary>The item index: fixed for ever (worlds save it). Below RAPI's limit of 32767, far from Raft's own.</summary>
+			public int Index;
+			public string Name, BaseName, Display, Description;
+			public Color Tint;
+			/// <summary>How many times the base item's recipe it costs.</summary>
+			public int CostFactor = 2;
+			/// <summary>An extra cost item (Raft's unique name) and amount, or null.</summary>
+			public string ExtraCostItem;
+			public int ExtraCostAmount;
+			/// <summary>How many times the base item's uses (a battery's charge) it has.</summary>
+			public int UsesFactor = 1;
+			/// <summary>Sets a placed block's better stats (its root object), before Raft's Start code reads them.</summary>
+			public Action<GameObject> Setup;
+			/// <summary>Runs every 2 s on a placed block (its root object), or null.</summary>
+			public Action<GameObject> Every;
+			public Item_Base Base, Item;
+			public override string ToString() { return Display + " (" + Name + ", " + Index + ")"; }
+		}
+
 		public const int LargeBatteryIndex = 29411;
 		public const string LargeBatteryName = "DI_LargeBattery";
 		/// <summary>How many times Raft's battery the large one holds and costs.</summary>
 		public const int LargeBatteryFactor = 2;
 		public static readonly Color LargeBatteryTint = new Color(0.45f, 0.65f, 1f);
 
-		public static Item_Base LargeBattery { get; private set; }
-		static Item_Base battery;
+		/// <summary>Cooking time of the titanium grill and blast furnace, times Raft's.</summary>
+		public const float FastCookFactor = 0.5f;
+		/// <summary>Reinforced storage: slots times the large storage's (rounded up to full rows).</summary>
+		public const float StorageSlotsFactor = 1.5f;
+		/// <summary>Turbo engine: pushing strength and speed times the engine's, fuel time times the engine's.</summary>
+		public const int TurboStrengthFactor = 2;
+		public const float TurboSpeedFactor = 1.5f, TurboFuelTimeFactor = 0.6f;
+		/// <summary>Comfy bed: respawn health/food/water in % (Raft's bed: 50), sleep healing times, hunger/thirst times.</summary>
+		public const float BedRespawnPercent = 75f, BedRegenFactor = 2f, BedDecayFactor = 0.5f;
+
+		static List<Upgrade> all;
+		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
+		public static List<Upgrade> All { get { return all ?? (all = Defs()); } }
+		public static IEnumerable<Upgrade> Registered { get { return All.Where(u => u.Item != null); } }
+		public static Upgrade Find(int index) { return all == null ? null : all.FirstOrDefault(u => u.Item != null && u.Index == index); }
+		public static Upgrade Find(string name) { return All.FirstOrDefault(u => u.Name == name); }
+
+		public static Item_Base LargeBattery { get { Upgrade u = Find(LargeBatteryName); return u != null ? u.Item : null; } }
+
+		static GameObject holder;
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [upgrades] " + msg); }
+		static void Warn(string msg) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] " + msg); }
 
-		/// <summary>Makes and registers the large battery (the mod's Start). Safe to call again.</summary>
+		static List<Upgrade> Defs()
+		{
+			return new List<Upgrade>
+			{
+				new Upgrade { Index = LargeBatteryIndex, Name = LargeBatteryName, BaseName = "Battery", Display = "Large battery", Tint = LargeBatteryTint, UsesFactor = LargeBatteryFactor,
+					Description = "Holds twice the charge of a battery: machines run twice as long on it. Charged in the battery charger like a battery (twice as long, twice the fuel)." },
+				new Upgrade { Index = 29412, Name = "DI_TitaniumGrill", BaseName = "Placeable_CookingStand_Food_Two", Display = "Titanium grill", Tint = new Color(0.75f, 0.82f, 0.95f),
+					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Setup = FastCooking,
+					Description = "An advanced grill that cooks twice as fast." },
+				new Upgrade { Index = 29413, Name = "DI_BlastFurnace", BaseName = "Placeable_CookingStand_Smelter", Display = "Blast furnace", Tint = new Color(1f, 0.6f, 0.45f),
+					Setup = FastCooking,
+					Description = "A smelter that smelts twice as fast." },
+				new Upgrade { Index = 29414, Name = "DI_ReinforcedStorage", BaseName = "Placeable_Storage_Large", Display = "Reinforced storage", Tint = new Color(0.75f, 0.6f, 0.45f),
+					Setup = BigStorage,
+					Description = "A large storage with half as many slots again." },
+				new Upgrade { Index = 29415, Name = "DI_WideNet", BaseName = "Placeable_CollectionNet_Advanced", Display = "Wide net", Tint = new Color(0.55f, 0.95f, 0.65f),
+					Setup = WideNet,
+					Description = "An advanced collection net that catches from twice as wide an area and holds twice as many items." },
+				new Upgrade { Index = 29416, Name = "DI_LargeFuelTank", BaseName = "Placeable_FuelTank", Display = "Large fuel tank", Tint = new Color(1f, 0.75f, 0.4f),
+					Setup = BigTanks,
+					Description = "A fuel tank that holds twice as much fuel." },
+				new Upgrade { Index = 29417, Name = "DI_GreenhousePlot", BaseName = "Placeable_Cropplot_Large", Display = "Greenhouse plot", Tint = new Color(0.6f, 1f, 0.6f),
+					Every = WaterPlot,
+					Description = "A large crop plot that waters itself: its plants never go dry." },
+				new Upgrade { Index = 29418, Name = "DI_TurboEngine", BaseName = "Placeable_MotorWheel", Display = "Turbo engine", Tint = new Color(1f, 0.5f, 0.45f),
+					Setup = Turbo,
+					Description = "An engine that pushes twice the weight and drives the raft half again as fast, but burns fuel faster." },
+				new Upgrade { Index = 29419, Name = "DI_LargeWindTurbine", BaseName = "Placeable_WindTurbine", Display = "Large wind turbine", Tint = new Color(0.6f, 0.8f, 1f),
+					Setup = StrongTurbine,
+					Description = "A wind turbine that charges batteries twice as fast." },
+				new Upgrade { Index = 29420, Name = "DI_ComfyBed", BaseName = "Placeable_Bed_Wood", Display = "Comfy bed", Tint = new Color(1f, 0.78f, 0.85f),
+					Setup = ComfyBed,
+					Description = "Sleeping in it heals twice as fast and makes you half as hungry and thirsty; you wake up from death with 75% health, food and water instead of 50%." },
+				new Upgrade { Index = 29421, Name = "DI_LargeWaterTank", BaseName = "Placeable_WaterTank", Display = "Large water tank", Tint = new Color(0.5f, 0.75f, 1f),
+					Setup = BigTanks,
+					Description = "A water tank that holds twice as much water." },
+			};
+		}
+
+		/// <summary>Makes and registers the upgrades (the mod's Start). Safe to call again.</summary>
 		public static void Register()
 		{
-			if (LargeBattery != null) return;
-			battery = ItemManager.GetItemByName("Battery");
-			if (battery == null) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Raft has no item 'Battery': no large battery"); return; }
-			Item_Base existing = ItemManager.GetItemByIndex(LargeBatteryIndex);
-			if (existing != null) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Item index " + LargeBatteryIndex + " is taken by '" + existing.UniqueName + "' (another mod): no large battery"); return; }
+			if (holder == null)
+			{
+				holder = new GameObject("DI_UpgradePrefabs");
+				holder.SetActive(false);
+				UnityEngine.Object.DontDestroyOnLoad(holder);
+			}
+			int made = 0;
+			foreach (Upgrade u in All)
+			{
+				if (u.Item != null) continue;
+				try { if (Make(u)) made++; }
+				catch (Exception e) { Warn(u + ": " + e.Message); }
+			}
+			// BlockCreator fills its static list of buildable items once; a world opened before this needs them added.
+			var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
+			if (buildables != null && buildables.Count > 0)
+				foreach (Upgrade u in Registered.Where(u => u.Item.settings_buildable != null && u.Item.settings_buildable.GetBlockPrefabs() != null && !buildables.Contains(u.Item)))
+					buildables.Add(u.Item);
+			Log(made + " upgrades registered");
+		}
 
-			Item_Base item = ScriptableObject.Instantiate(battery);
-			item.name = LargeBatteryName;
-			item.Initialize(LargeBatteryIndex, LargeBatteryName, battery.MaxUses * LargeBatteryFactor);
+		static bool Make(Upgrade u)
+		{
+			Item_Base baseItem = ItemManager.GetItemByName(u.BaseName);
+			if (baseItem == null) { Warn("Raft has no item '" + u.BaseName + "': no " + u.Display); return false; }
+			Item_Base existing = ItemManager.GetItemByIndex(u.Index);
+			if (existing != null) { Warn("Item index " + u.Index + " is taken by '" + existing.UniqueName + "' (another mod): no " + u.Display); return false; }
 
-			ItemInstance_Inventory inv = battery.settings_Inventory.Clone();
+			Item_Base item = ScriptableObject.Instantiate(baseItem);
+			item.name = u.Name;
+			item.Initialize(u.Index, u.Name, baseItem.MaxUses * u.UsesFactor);
+
+			ItemInstance_Inventory inv = baseItem.settings_Inventory.Clone();
 			inv.LocalizationTerm = "";
-			inv.DisplayName = "Large battery";
-			inv.Description = "Holds twice the charge of a battery: machines run twice as long on it. Charged in the battery charger like a battery (twice as long, twice the fuel).";
-			inv.Sprite = TintedSprite(battery.settings_Inventory.Sprite, LargeBatteryTint) ?? battery.settings_Inventory.Sprite;
+			inv.DisplayName = u.Display;
+			inv.Description = u.Description;
+			inv.Sprite = TintedSprite(baseItem.settings_Inventory.Sprite, u.Tint, u.Name) ?? baseItem.settings_Inventory.Sprite;
 			item.settings_Inventory = inv;
 
-			ItemInstance_Recipe recipe = battery.settings_recipe.Clone();
-			recipe.NewCost = battery.settings_recipe.NewCost.Select(c => new CostMultiple(c.items, c.amount * LargeBatteryFactor)).ToArray();
+			ItemInstance_Recipe recipe = baseItem.settings_recipe.Clone();
+			var cost = baseItem.settings_recipe.NewCost.Select(c => new CostMultiple(c.items, c.amount * u.CostFactor)).ToList();
+			if (u.ExtraCostItem != null)
+			{
+				Item_Base extra = ItemManager.GetItemByName(u.ExtraCostItem);
+				if (extra != null) cost.Add(new CostMultiple(new[] { extra }, u.ExtraCostAmount));
+			}
+			recipe.NewCost = cost.ToArray();
 			Traverse t = Traverse.Create(recipe);
 			t.Field("_hiddenInResearchTable").SetValue(true);
 			t.Field("learnedFromBeginning").SetValue(false);
@@ -65,19 +174,45 @@ namespace DynamicIslands.Editor
 			recipe.Learned = false;
 			item.settings_recipe = recipe;
 
+			Block[] prefabs = baseItem.settings_buildable != null ? baseItem.settings_buildable.GetBlockPrefabs() : null;
+			if (prefabs != null && prefabs.Length > 0 && prefabs.All(p => p != null))
+			{
+				ItemInstance_Buildable b = baseItem.settings_buildable.Clone();
+				Traverse.Create(b).Field("blockPrefabs").SetValue(prefabs.Select(p => ClonePrefab(p, baseItem, item)).ToArray());
+				Traverse.Create(b).Field("mirroredVersion").SetValue(null);
+				item.settings_buildable = b;
+			}
+
 			RAPI.RegisterItem(item);
-			LargeBattery = ItemManager.GetItemByIndex(LargeBatteryIndex);
-			if (LargeBattery == null) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] The large battery couldn't be registered"); return; }
-			Log("Large battery registered (index " + LargeBatteryIndex + ", charge " + LargeBattery.MaxUses + " = " + LargeBatteryFactor + " x " + battery.MaxUses
-				+ ", cost " + CostText(recipe.NewCost) + ")");
+			u.Item = ItemManager.GetItemByIndex(u.Index);
+			if (u.Item == null) { Warn(u.Display + " couldn't be registered"); return false; }
+			u.Base = baseItem;
+			Log(u + " registered from " + u.BaseName + ", cost " + CostText(recipe.NewCost) + (u.UsesFactor != 1 ? ", uses " + u.Item.MaxUses : ""));
+			return true;
 		}
 
-		/// <summary>The mod's unload: the item off again.</summary>
+		static Block ClonePrefab(Block prefab, Item_Base baseItem, Item_Base item)
+		{
+			Block c = UnityEngine.Object.Instantiate(prefab, holder.transform);
+			c.name = prefab.name + "_" + item.UniqueName;
+			c.buildableItem = item;
+			if (c.itemToReturnOnDestroy == null || c.itemToReturnOnDestroy == baseItem) c.itemToReturnOnDestroy = item;
+			if (c.GetComponent<UpgradeBlock>() == null) c.gameObject.AddComponent<UpgradeBlock>();
+			return c;
+		}
+
+		/// <summary>The mod's unload: the items off again.</summary>
 		public static void Unregister()
 		{
-			if (LargeBattery == null) return;
-			RAPI.UnregisterItem(LargeBattery);
-			LargeBattery = null;
+			foreach (Upgrade u in Registered.ToList())
+			{
+				try { RAPI.UnregisterItem(u.Item); } catch (Exception e) { Warn(u + ": " + e.Message); }
+				var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
+				if (buildables != null) buildables.Remove(u.Item);
+				u.Item = null;
+			}
+			if (holder != null) UnityEngine.Object.Destroy(holder);
+			holder = null;
 		}
 
 		public static string CostText(CostMultiple[] cost)
@@ -85,26 +220,39 @@ namespace DynamicIslands.Editor
 			return cost == null ? "-" : string.Join(", ", cost.Select(c => c.amount + " " + string.Join("/", (c.items ?? new Item_Base[0]).Where(i => i != null).Select(i => i.UniqueName).ToArray())).ToArray());
 		}
 
-		/// <summary>Whether the large battery can be crafted in this world now: the option on and the battery learned.</summary>
-		public static bool LargeBatteryCraftable
+		/// <summary>Whether an upgrade can be crafted in this world now: the option on and its base item learned.</summary>
+		public static bool Craftable(Upgrade u)
 		{
-			get { return LargeBattery != null && battery != null && WorldOptions.On(WorldOptions.Upgrades) && battery.settings_recipe.Learned; }
+			return u != null && u.Item != null && u.Base != null && WorldOptions.On(WorldOptions.Upgrades) && u.Base.settings_recipe.Learned;
 		}
 
-		/// <summary>Every frame in a world: the large battery's recipe learned exactly while LargeBatteryCraftable (a world
-		/// whose option is switched off hides it again; Raft's research table never shows it).</summary>
+		public static bool LargeBatteryCraftable { get { return Craftable(Find(LargeBatteryName)); } }
+
+		static float baseMaxSpeed = -1f;
+		static Raft speedRaft;
+
+		/// <summary>Every frame in a world: each upgrade's recipe learned exactly while Craftable (a world whose option is
+		/// switched off hides them again; Raft's research table never shows them), and the raft's top speed raised by the
+		/// running turbo engines' extra speed.</summary>
 		public static void Tick()
 		{
-			if (LargeBattery == null || !LoadSceneManager.IsGameSceneLoaded) return;
-			bool on = LargeBatteryCraftable;
-			if (LargeBattery.settings_recipe.Learned != on) { LargeBattery.settings_recipe.Learned = on; Log("Large battery " + (on ? "craftable" : "hidden")); }
+			if (all == null || !LoadSceneManager.IsGameSceneLoaded) return;
+			foreach (Upgrade u in Registered)
+			{
+				bool on = Craftable(u);
+				if (u.Item.settings_recipe.Learned != on) { u.Item.settings_recipe.Learned = on; Log(u.Display + (on ? " craftable" : " hidden")); }
+			}
+			TurboTopSpeed();
 		}
+
+		#region Battery slots
 
 		/// <summary>Lets a machine's battery slot take the large battery: a connection for it, with a blue copy of the
 		/// battery's model beside Raft's one. Returns false when the slot has no battery model to copy.</summary>
 		public static bool AddToSlot(Battery slot)
 		{
-			if (LargeBattery == null || slot == null || slot.itemEnabler == null) return false;
+			Item_Base large = LargeBattery;
+			if (large == null || slot == null || slot.itemEnabler == null) return false;
 			ItemObjectEnabler en = slot.itemEnabler;
 			ItemModelConnection[] cons = en.GetObjectConnections() ?? new ItemModelConnection[0];
 			if (cons.Any(c => c != null && c.item != null && c.item.UniqueIndex == LargeBatteryIndex)) return true;
@@ -114,13 +262,171 @@ namespace DynamicIslands.Editor
 			model.name = basic.model.name + "_Large";
 			model.SetActive(false);
 			ObjectProps.ApplyTint(model, LargeBatteryTint, 1f);
-			var con = new ItemModelConnection { item = LargeBattery, model = model };
+			var con = new ItemModelConnection { item = large, model = model };
 			Traverse.Create(en).Field("itemConnections").SetValue(cons.Concat(new[] { con }).ToArray());
 			return true;
 		}
 
+		#endregion
+
+		#region Better stats (Upgrade.Setup / Every)
+
+		static void FastCooking(GameObject go)
+		{
+			foreach (CookingSlot s in go.GetComponentsInChildren<CookingSlot>(true))
+			{
+				Traverse f = Traverse.Create(s).Field("cookTimeMultiplier");
+				f.SetValue(f.GetValue<float>() * FastCookFactor);
+			}
+		}
+
+		static readonly Dictionary<Inventory, Inventory> bigInventories = new Dictionary<Inventory, Inventory>();
+
+		static void BigStorage(GameObject go)
+		{
+			foreach (Storage_Small s in go.GetComponentsInChildren<Storage_Small>(true))
+				if (s.inventoryPrefab != null) s.inventoryPrefab = BigInventory(s.inventoryPrefab);
+		}
+
+		/// <summary>A copy of a storage's inventory prefab with StorageSlotsFactor times its slots (full rows), made once.</summary>
+		public static Inventory BigInventory(Inventory prefab)
+		{
+			Inventory big;
+			if (bigInventories.TryGetValue(prefab, out big) && big != null) return big;
+			if (bigInventories.ContainsValue(prefab)) return prefab;
+			big = UnityEngine.Object.Instantiate(prefab, holder.transform);
+			big.name = prefab.name + "_Reinforced";
+			Slot[] slots = big.GetComponentsInChildren<Slot>(true);
+			if (slots.Length > 0)
+			{
+				Slot last = slots[slots.Length - 1];
+				GridLayoutGroupInfo grid = GridLayoutGroupInfo.Of(big.gridLayoutGroup, slots.Length);
+				int want = Mathf.CeilToInt(slots.Length * StorageSlotsFactor / grid.columns) * grid.columns;
+				for (int i = slots.Length; i < want; i++)
+				{
+					GameObject extra = UnityEngine.Object.Instantiate(last.gameObject, last.transform.parent);
+					extra.name = last.gameObject.name + "_" + i;
+				}
+				int addedRows = (want - slots.Length) / grid.columns;
+				float grow = addedRows * grid.rowHeight;
+				// Taller panels: the grid's own rect and the inventory's root rect, so the new rows show inside the frame.
+				foreach (RectTransform rt in new[] { big.gridLayoutGroup != null ? big.gridLayoutGroup.transform as RectTransform : null, big.transform as RectTransform }.Distinct())
+					if (rt != null) rt.sizeDelta = new Vector2(rt.sizeDelta.x, rt.sizeDelta.y + grow);
+				Log("Reinforced storage: " + slots.Length + " -> " + want + " slots (" + grid.columns + " columns, " + addedRows + " more rows)");
+			}
+			bigInventories[prefab] = big;
+			return big;
+		}
+
+		/// <summary>Column count and row height of an inventory grid.</summary>
+		struct GridLayoutGroupInfo
+		{
+			public int columns; public float rowHeight;
+			public static GridLayoutGroupInfo Of(UnityEngine.UI.GridLayoutGroup g, int slots)
+			{
+				var info = new GridLayoutGroupInfo { columns = 5, rowHeight = 60f };
+				if (g == null) return info;
+				info.rowHeight = g.cellSize.y + g.spacing.y;
+				if (g.constraint == UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount) info.columns = Mathf.Max(1, g.constraintCount);
+				else if (g.constraint == UnityEngine.UI.GridLayoutGroup.Constraint.FixedRowCount) info.columns = Mathf.Max(1, Mathf.CeilToInt(slots / (float)Mathf.Max(1, g.constraintCount)));
+				else
+				{
+					var rt = g.transform as RectTransform;
+					float w = rt != null ? rt.rect.width - g.padding.horizontal : 0f;
+					if (w > 0f) info.columns = Mathf.Max(1, Mathf.FloorToInt((w + g.spacing.x) / (g.cellSize.x + g.spacing.x)));
+				}
+				return info;
+			}
+		}
+
+		static void WideNet(GameObject go)
+		{
+			foreach (ItemCollector c in go.GetComponentsInChildren<ItemCollector>(true))
+			{
+				Traverse t = Traverse.Create(c);
+				var box = t.Field("collectorCollider").GetValue<Collider>() as BoxCollider;
+				if (box != null)
+				{
+					// Twice as wide along the net's long side (the largest of the box's sides).
+					Vector3 s = box.size;
+					if (s.x >= s.y && s.x >= s.z) s.x *= 2f; else if (s.z >= s.y) s.z *= 2f; else s.y *= 2f;
+					box.size = s;
+				}
+				Traverse max = t.Field("maxNumberOfItems");
+				max.SetValue(max.GetValue<int>() * 2);
+			}
+		}
+
+		static void BigTanks(GameObject go)
+		{
+			foreach (Tank tank in go.GetComponentsInChildren<Tank>(true)) tank.maxCapacity *= 2f;
+		}
+
+		static void WaterPlot(GameObject go)
+		{
+			if (!Raft_Network.IsHost) return;
+			foreach (Cropplot plot in go.GetComponentsInChildren<Cropplot>(true))
+				if (plot.SlotsNeedWater()) plot.AddWater(false);
+		}
+
+		static void Turbo(GameObject go)
+		{
+			foreach (MotorWheel m in go.GetComponentsInChildren<MotorWheel>(true))
+			{
+				Traverse t = Traverse.Create(m);
+				t.Field("_motorStrenght").SetValue(t.Field("_motorStrenght").GetValue<int>() * TurboStrengthFactor);
+				t.Field("_extraMotorStrength").SetValue(t.Field("_extraMotorStrength").GetValue<int>() * TurboStrengthFactor);
+				t.Field("_raftSpeed").SetValue(t.Field("_raftSpeed").GetValue<float>() * TurboSpeedFactor);
+				t.Field("timePerFuel").SetValue(t.Field("timePerFuel").GetValue<float>() * TurboFuelTimeFactor);
+			}
+		}
+
+		/// <summary>Raft caps the raft's speed at Raft.maxSpeed (Raft.FixedUpdate), which a turbo engine would reach at
+		/// once: the cap is raised by what the running turbo engines add over plain engines.</summary>
+		static void TurboTopSpeed()
+		{
+			Raft raft = ComponentManager<Raft>.Value;
+			if (raft == null) return;
+			if (raft != speedRaft) { speedRaft = raft; baseMaxSpeed = raft.maxSpeed; }
+			Upgrade turbo = Find("DI_TurboEngine");
+			float extra = 0f;
+			if (turbo != null && turbo.Item != null && RaftVelocityManager.Motors != null)
+				foreach (MotorWheel m in RaftVelocityManager.Motors)
+				{
+					if (m == null || !m.MotorState) continue;
+					Block b = m.GetComponentInParent<Block>();
+					if (b != null && b.buildableItem == turbo.Item) extra += m.RaftSpeed - m.RaftSpeed / TurboSpeedFactor;
+				}
+			float want = baseMaxSpeed + extra;
+			if (Mathf.Abs(raft.maxSpeed - want) > 0.0001f) raft.maxSpeed = want;
+		}
+
+		static void StrongTurbine(GameObject go)
+		{
+			foreach (WindTurbine w in go.GetComponentsInChildren<WindTurbine>(true))
+			{
+				Traverse f = Traverse.Create(w).Field("batteryChargesPerTick");
+				f.SetValue(f.GetValue<int>() * 2);
+			}
+		}
+
+		static void ComfyBed(GameObject go)
+		{
+			foreach (Bed bed in go.GetComponentsInChildren<Bed>(true))
+			{
+				Traverse t = Traverse.Create(bed);
+				foreach (string f in new[] { "healthPercentage", "hungerPercentage", "thirstPercentage" })
+					t.Field(f).SetValue(Mathf.Max(t.Field(f).GetValue<float>(), BedRespawnPercent));
+				t.Field("healthRegen").SetValue(t.Field("healthRegen").GetValue<float>() * BedRegenFactor);
+				t.Field("hungerDecay").SetValue(t.Field("hungerDecay").GetValue<float>() * BedDecayFactor);
+				t.Field("thirstDecay").SetValue(t.Field("thirstDecay").GetValue<float>() * BedDecayFactor);
+			}
+		}
+
+		#endregion
+
 		/// <summary>A copy of a (possibly atlased, unreadable) sprite multiplied by tint.</summary>
-		static Sprite TintedSprite(Sprite s, Color tint)
+		static Sprite TintedSprite(Sprite s, Color tint, string name)
 		{
 			if (s == null) return null;
 			try
@@ -132,7 +438,7 @@ namespace DynamicIslands.Editor
 				Graphics.Blit(src, rt, mat);
 				RenderTexture previous = RenderTexture.active;
 				RenderTexture.active = rt;
-				var tex = new Texture2D((int)r.width, (int)r.height, TextureFormat.RGBA32, false) { name = "LargeBatteryIcon" };
+				var tex = new Texture2D((int)r.width, (int)r.height, TextureFormat.RGBA32, false) { name = name + "_Icon" };
 				tex.ReadPixels(new Rect(r.x, r.y, r.width, r.height), 0, 0);
 				tex.Apply(false, true);
 				RenderTexture.active = previous;
@@ -140,7 +446,44 @@ namespace DynamicIslands.Editor
 				UnityEngine.Object.Destroy(mat);
 				return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), s.pixelsPerUnit);
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Tinting the battery icon failed: " + e.Message); return null; }
+			catch (Exception e) { Warn("Tinting the icon of " + name + " failed: " + e.Message); return null; }
+		}
+	}
+
+	/// <summary>On every placed or loaded block of an upgrade (its prefab copies carry it): tints it and sets its better
+	/// stats in Awake, before Raft's own Start code reads them, then runs the upgrade's Every every 2 s. The upgrade is found
+	/// by the block's item, so the component needs no saved fields.</summary>
+	public class UpgradeBlock : MonoBehaviour
+	{
+		ExtraUpgrades.Upgrade upgrade;
+		bool done;
+		float next;
+
+		public ExtraUpgrades.Upgrade Upgrade { get { return upgrade; } }
+
+		void Awake() { Apply(); }
+
+		public void Apply()
+		{
+			if (done) return;
+			Block block = GetComponent<Block>();
+			upgrade = block != null && block.buildableItem != null ? ExtraUpgrades.Find(block.buildableItem.UniqueIndex) : null;
+			if (upgrade == null) return;
+			done = true;
+			try
+			{
+				ObjectProps.ApplyTint(gameObject, upgrade.Tint, 1f);
+				if (upgrade.Setup != null) upgrade.Setup(gameObject);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] " + upgrade.Display + ": " + e.Message); }
+		}
+
+		void Update()
+		{
+			if (upgrade == null || upgrade.Every == null || Time.time < next) return;
+			next = Time.time + 2f;
+			try { upgrade.Every(gameObject); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] " + upgrade.Display + ": " + e.Message); next = Time.time + 30f; }
 		}
 	}
 
@@ -154,6 +497,43 @@ namespace DynamicIslands.Editor
 		{
 			try { ExtraUpgrades.AddToSlot(__instance); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] A battery slot: " + e.Message); }
+		}
+	}
+
+	/// <summary>A safety net: an upgrade block whose UpgradeBlock didn't come along with the prefab copy gets one when placed.</summary>
+	[HarmonyPatch(typeof(Block), "OnFinishedPlacement")]
+	static class UpgradeBlockPlacedPatch
+	{
+		static void Postfix(Block __instance)
+		{
+			try
+			{
+				if (__instance == null || __instance.buildableItem == null || ExtraUpgrades.Find(__instance.buildableItem.UniqueIndex) == null) return;
+				UpgradeBlock ub = __instance.GetComponent<UpgradeBlock>() ?? __instance.gameObject.AddComponent<UpgradeBlock>();
+				ub.Apply();
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] A placed block: " + e.Message); }
+		}
+	}
+
+	/// <summary>Raft hands back what a removed block holds (a storage's items, a grill's food) by the block's item index
+	/// (RemovePlaceables.ReturnItemsFromBlock switches on it): for an upgrade's block it sees the base item's index there.</summary>
+	[HarmonyPatch(typeof(RemovePlaceables), "ReturnItemsFromBlock")]
+	static class UpgradeReturnItemsPatch
+	{
+		static void Prefix(Block block, out Item_Base __state)
+		{
+			__state = null;
+			if (block == null || block.buildableItem == null) return;
+			ExtraUpgrades.Upgrade u = ExtraUpgrades.Find(block.buildableItem.UniqueIndex);
+			if (u == null || u.Base == null) return;
+			__state = block.buildableItem;
+			block.buildableItem = u.Base;
+		}
+
+		static void Postfix(Block block, Item_Base __state)
+		{
+			if (__state != null && block != null) block.buildableItem = __state;
 		}
 	}
 }
