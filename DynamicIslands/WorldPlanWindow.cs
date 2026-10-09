@@ -23,7 +23,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Editing the island's own rules instead of a plan.</summary>
 		bool islandMode;
 		Text titleText, problemsText, planNameText;
-		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton, previewButton;
+		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton, previewButton, progressButton;
 		readonly Dictionary<string, Button> storyIslandButtons = new Dictionary<string, Button>();
 		InputField descriptionField;
 		Text randomNote, rulesIntro;
@@ -137,6 +137,7 @@ namespace DynamicIslands.Editor
 			DropList.Close();
 			// (its Check report belongs to it: left open, it stayed on the screen after World Plans closed)
 			PlanCheckWindow.Close();
+			PlanProgressWindow.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -156,6 +157,7 @@ namespace DynamicIslands.Editor
 			descriptionField.transform.parent.gameObject.SetActive(!islandMode);
 			if (exportButton != null) { exportButton.gameObject.SetActive(!islandMode); importButton.gameObject.SetActive(!islandMode); shareHelp.gameObject.SetActive(!islandMode); }
 			if (previewButton != null) previewButton.gameObject.SetActive(!islandMode);
+			if (progressButton != null) progressButton.gameObject.SetActive(!islandMode);
 			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island)" : "";
 			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  \u25BC";
 			descriptionField.text = p.Description;
@@ -268,7 +270,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
+			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
 			if (Input.GetKeyDown(KeyCode.Escape)) Close();
 		}
@@ -352,6 +354,8 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, 34f, 13);
 			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
 			HelpMark(buttons, HelpCheck);
+			progressButton = UIKit.Button(buttons, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in its order: which rule's islands give which of Raft's blueprints and story items, what their locks want, and what is never given", 120, 34f, 13);
+			progressButton.name = "Button_Progression";
 			previewButton = UIKit.Button(buttons, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, 34f, 13);
 			previewButton.name = "Button_PreviewNotebook";
 			testButton = UIKit.Button(buttons, "Test this plan", TestPlan, "Play the plan in a new test world (saved first): its islands come as in any world; Esc > Custom Islands > Back to the editor brings you back here", 130, 34f, 13);

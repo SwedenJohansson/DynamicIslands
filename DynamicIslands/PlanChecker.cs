@@ -276,29 +276,11 @@ namespace DynamicIslands.Editor
 		/// which, in the plan's order, and warns about any never given.</summary>
 		static void CheckBlueprints(Ctx c)
 		{
-			ScrambledBlueprints.Read();
-			if (ScrambledBlueprints.OnIslands.Count == 0) return;
-			Func<string, string> key = n => { ChunkPointType t = StoryOrder.Parse(n); return t != ChunkPointType.None ? StoryOrder.Key(t) : n; };
-			var replaced = new HashSet<string>(c.Plan.Rules.Where(r => r.StoryPlace.StartsWith("instead:")).Select(r => key(r.StoryPlace.Substring(8))), StringComparer.OrdinalIgnoreCase);
-			var kept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			if (c.Plan.RaftStory)
-				foreach (var kv in ScrambledBlueprints.OnIslands)
-					foreach (string isl in kv.Value)
-						if (!c.Plan.LeaveOut.Any(l => key(l).Equals(key(isl), StringComparison.OrdinalIgnoreCase)) && !replaced.Contains(key(isl))) kept.Add(kv.Key);
-			var given = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
-			var order = new List<string>();
-			var bp = new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
-			for (int i = 0; i < c.Plan.Rules.Count; i++)
-			{
-				var mine = new List<string>();
-				foreach (Facts f in Brings(c, c.Plan.Rules[i]))
-					foreach (System.Text.RegularExpressions.Match m in bp.Matches(f.AllText))
-						if (ScrambledBlueprints.OnIslands.ContainsKey(m.Value) && !mine.Contains(m.Value)) mine.Add(m.Value);
-				if (mine.Count == 0) continue;
-				foreach (string b in mine) given.Add(b);
-				order.Add("rule " + (i + 1) + " '" + c.Plan.Rules[i].Id + "': " + string.Join(", ", mine.Select(Pretty).ToArray()));
-			}
-			var missing = ScrambledBlueprints.OnIslands.Keys.Where(b => !given.Contains(b)).OrderBy(b => b).ToList();
+			Progress p = Progression(c);
+			if (p.All == 0) return;
+			var order = p.Steps.Where(s => s.Blueprints.Count > 0).Select(s => "rule " + (s.Rule + 1) + " '" + c.Plan.Rules[s.Rule].Id + "': " + string.Join(", ", s.Blueprints.Select(Pretty).ToArray())).ToList();
+			var missing = p.Missing;
+			var kept = p.Kept;
 			if (missing.Count > 0)
 				c.Add(-1, Level.Warning, "Raft's blueprints never given in this plan: " + string.Join(", ", missing.Select(b => Pretty(b) + " (on " + string.Join("/", ScrambledBlueprints.OnIslands[b].ToArray()) + " in Raft)").ToArray()) +
 					". The story islands that carry them are left out or replaced, and no island of the plan gives them - the player can never build these.",
@@ -308,7 +290,73 @@ namespace DynamicIslands.Editor
 					(kept.Count > 0 ? ". The story islands it keeps give " + kept.Count + " more." : "."));
 		}
 
-		static string Pretty(string blueprint) { return blueprint.Replace("Blueprint_", "").Replace("_", " "); }
+		/// <summary>What a plan gives of Raft's progression, rule by rule in its order: the plan editor's Progression panel
+		/// (TODO 4c step 3) and Check's blueprint findings.</summary>
+		public class Progress
+		{
+			public class Step
+			{
+				public int Rule;
+				/// <summary>Raft's story-island blueprints the rule's islands give (Blueprint_... names).</summary>
+				public List<string> Blueprints = new List<string>();
+				/// <summary>Story items its islands give / their locks want (labels); NeedsLate: wanted before any island gives them.</summary>
+				public List<string> Gives = new List<string>(), Needs = new List<string>(), NeedsLate = new List<string>();
+			}
+			/// <summary>The rules whose islands give or want something, in the plan's order.</summary>
+			public List<Step> Steps = new List<Step>();
+			/// <summary>Blueprints the story islands the plan keeps give, and those never given (Blueprint_... names).</summary>
+			public List<string> Kept = new List<string>(), Missing = new List<string>();
+			/// <summary>Raft's story-island blueprints in all (0: raft_blueprints.txt not read).</summary>
+			public int All;
+		}
+
+		/// <summary>The plan's progression (deep: also sample islands of the map types it brings, as Check does).</summary>
+		public static Progress Progression(WorldPlan plan, bool deep)
+		{
+			return Progression(new Ctx { Plan = plan, Deep = deep, SavedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) });
+		}
+
+		static Progress Progression(Ctx c)
+		{
+			var p = new Progress();
+			ScrambledBlueprints.Read();
+			p.All = ScrambledBlueprints.OnIslands.Count;
+			Func<string, string> key = n => { ChunkPointType t = StoryOrder.Parse(n); return t != ChunkPointType.None ? StoryOrder.Key(t) : n; };
+			var replaced = new HashSet<string>(c.Plan.Rules.Where(r => r.StoryPlace.StartsWith("instead:")).Select(r => key(r.StoryPlace.Substring(8))), StringComparer.OrdinalIgnoreCase);
+			var kept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (c.Plan.RaftStory)
+				foreach (var kv in ScrambledBlueprints.OnIslands)
+					foreach (string isl in kv.Value)
+						if (!c.Plan.LeaveOut.Any(l => key(l).Equals(key(isl), StringComparison.OrdinalIgnoreCase)) && !replaced.Contains(key(isl))) kept.Add(kv.Key);
+			p.Kept = kept.OrderBy(b => b).ToList();
+			var given = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
+			var story = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var bp = new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+			{
+				var s = new Progress.Step { Rule = i };
+				List<Facts> here = Brings(c, c.Plan.Rules[i]).ToList();
+				foreach (Facts f in here)
+				{
+					foreach (System.Text.RegularExpressions.Match m in bp.Matches(f.AllText))
+						if (ScrambledBlueprints.OnIslands.ContainsKey(m.Value) && !s.Blueprints.Contains(m.Value)) s.Blueprints.Add(m.Value);
+					foreach (string g in f.GivesStory) { story.Add(g); if (!s.Gives.Contains(StoryItems.Label(g))) s.Gives.Add(StoryItems.Label(g)); }
+				}
+				foreach (Facts f in here)
+					foreach (string need in f.NeedsStory)
+					{
+						string label = StoryItems.Label(need);
+						if (!s.Needs.Contains(label)) s.Needs.Add(label);
+						if (!story.Contains(need) && !s.NeedsLate.Contains(label)) s.NeedsLate.Add(label);
+					}
+				given.UnionWith(s.Blueprints);
+				if (s.Blueprints.Count > 0 || s.Gives.Count > 0 || s.Needs.Count > 0) p.Steps.Add(s);
+			}
+			p.Missing = ScrambledBlueprints.OnIslands.Keys.Where(b => !given.Contains(b)).OrderBy(b => b).ToList();
+			return p;
+		}
+
+		public static string Pretty(string blueprint) { return blueprint.Replace("Blueprint_", "").Replace("_", " "); }
 
 		/// <summary>The islands a rule's reference means: a rule of the plan (what it brings), this island (self), or a saved island.</summary>
 		static List<Facts> RefFacts(Ctx c, string reference, out string what, out bool known, out int ruleIndex)

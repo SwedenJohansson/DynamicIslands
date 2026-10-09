@@ -14,6 +14,7 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | `WorldPlanWindow.cs` | Plan editor (an island's own rules: `OpenIsland`); `WorldPlanTemplates` |
 | `ChoiceWindow.cs` | Modal pick-one list with search (islands, map types, plans) |
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | Check: `Finding`s (`Level.Problem` / `Warning` / `Tip`) and the report window |
+| `PlanProgressWindow.cs` | Progression panel: `PlanChecker.Progression(plan)` - Raft's story blueprints and story items rule by rule, kept, never given (CIPlanBlueprints) |
 | `WorldIslands.cs`, `IslandPickerWindow.cs` | Spawn-pool entries left out of a world, gap between random islands; the tick-box list in the New Game box |
 
 ## Main flow

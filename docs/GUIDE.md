@@ -1899,6 +1899,12 @@ After the first Check, every card shows its own problems and warnings in red and
 follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
 problem. The report's **Check again** checks after you changed something.
 
+**Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in its
+order: first the blueprints the story islands it keeps give, then each rule whose islands give one of Raft's
+story-island blueprints or a story item (a key, a keycard...) or have a lock that wants one - a lock whose item no
+island before it gives is shown in yellow - and last, in yellow, the blueprints the plan never gives. **Show rule**
+goes to a rule's card. Use it to build a plan where the player unlocks more and more as they sail on.
+
 What Check looks for:
 
 | | Problems (it can't work) | Warnings and tips |
@@ -3316,6 +3322,7 @@ ends Raft's story and never counts as done.
 | Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
 | A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks), The Frontier (the hall's sliding doors) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
+| Loose things to pick up inside houses (plastic, planks, scrap on the floors; they come back after a few days) | Halcyon Cove, The Frontier, Great Fen, The Safe Room, Trade Wind Archipelago and ten more of the library's islands: Raft's land pickups (`Pickup_Landmark_Plastic3_Land`, `..._Plank_Land`, `"..._Scrap 1_Land"`) placed with `drop` on a house's floor |
 | An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve), The Frontier (three valve wheels, the horn's reed, the seal press - each used up only once the quest has counted it) |
 | A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport to** its other end), The Safe Room (a hatch down an escape shaft and back), Rookery Cliffs (Raft's own scissor lift, which carries you) |
 | Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |
