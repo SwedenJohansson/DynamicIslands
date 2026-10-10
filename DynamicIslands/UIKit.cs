@@ -677,7 +677,8 @@ namespace DynamicIslands.Editor
 			// (the box keeps its size, centred in the row; the label fills the rest)
 			HorizontalLayoutGroup h = Horizontal(r.gameObject, 6f, new RectOffset(3, 4, 0, 0));
 			h.childForceExpandWidth = false; h.childForceExpandHeight = false;
-			float side = Mathf.Min(14f, height - 4f);
+			// (18: still 10 px on a 1366 x 768 screen)
+			float side = Mathf.Min(18f, height - 4f);
 			RectTransform box = Rect("Box", r);
 			Background(box.gameObject, FieldBg, 3);
 			Border(box, Tan, 3, 1f);
