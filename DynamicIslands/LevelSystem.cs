@@ -563,18 +563,22 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>The EXP a monster is worth (cached per animal: its health and damage don't change).</summary>
+		/// <summary>
+		/// The EXP a monster is worth, cached per animal together with the max health it was worked out from: a
+		/// randomizer turned on mid-game makes an animal that was already hit an alpha (x3 health, x1.6 damage), and
+		/// the old worth would stick.
+		/// </summary>
 		public static int MonsterXp(AI_NetworkBehaviour ai)
 		{
-			int xp;
-			if (xpCache.TryGetValue(ai, out xp)) return xp;
 			float hp = ai.networkEntity != null && ai.networkEntity.stat_health != null ? ai.networkEntity.stat_health.Max : 0f;
-			xp = LevelRules.XpOf(hp, DamageOf(ai.gameObject, ai.behaviourType));
+			KeyValuePair<float, int> cached;
+			if (xpCache.TryGetValue(ai, out cached) && Mathf.Abs(cached.Key - hp) < 0.01f) return cached.Value;
+			int xp = LevelRules.XpOf(hp, DamageOf(ai.gameObject, ai.behaviourType));
 			if (xpCache.Count > 256) foreach (AI_NetworkBehaviour gone in xpCache.Keys.Where(k => k == null).ToList()) xpCache.Remove(gone);
-			xpCache[ai] = xp;
+			xpCache[ai] = new KeyValuePair<float, int>(hp, xp);
 			return xp;
 		}
-		static readonly Dictionary<AI_NetworkBehaviour, int> xpCache = new Dictionary<AI_NetworkBehaviour, int>();
+		static readonly Dictionary<AI_NetworkBehaviour, KeyValuePair<float, int>> xpCache = new Dictionary<AI_NetworkBehaviour, KeyValuePair<float, int>>();
 
 		static readonly string[] NotDamage = { "taken", "threshold", "treshold", "treshhold", "recieved", "received", "range", "radius", "frequency", "time", "particle", "state", "reached", "sound", "box", "event", "cooldown", "delay", "multiplier", "chance", "speed", "distance" };
 

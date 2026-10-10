@@ -286,6 +286,12 @@ namespace DynamicIslands.Editor
 		public List<string> Kept = new List<string>();
 		/// <summary>The mod version that saved the plan ("" before 2026-10-06).</summary>
 		public string ModVersion = "";
+		/// <summary>Which plan this is, whatever its name (UW2): made with the plan (New, Copy... make their own), kept by edits.
+		/// A world keeps it ("@planid="): a different plan given the old name later - one made after the first was copied
+		/// away and deleted - isn't taken for an edit of it. "" in plans from before 2026-10-10 and in library plans (those
+		/// go by their entry's source).</summary>
+		public string Id = "";
+		public static string NewId() { return Guid.NewGuid().ToString("N").Substring(0, 12); }
 		static readonly HashSet<string> toldNewer = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>The plan changes Raft's story chain (StoryChain takes it over in its worlds).</summary>
@@ -348,6 +354,7 @@ namespace DynamicIslands.Editor
 						break;
 					case "storyending": plan.StoryEnding = IntroRule.UnMulti(value); break;
 					case "modversion": plan.ModVersion = value; break;
+					case "id": plan.Id = value; break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
 						if (r != null) plan.Rules.Add(r);
@@ -408,12 +415,15 @@ namespace DynamicIslands.Editor
 			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
 			lines.AddRange(Kept);
+			if ((Id ?? "").Length > 0) lines.Add("id = " + Id);
 			lines.Add("modversion = " + LibraryPack.ModVersion);
 			return string.Join("\r\n", lines.ToArray()) + "\r\n";
 		}
 
 		public void Save()
 		{
+			// (the player's own plans get an id at their first save; library plans keep their file as the entry has it)
+			if ((Id ?? "").Length == 0 && !BuiltIn && LibrarySource.OfPlan(Name) == null) Id = NewId();
 			Directory.CreateDirectory(Folder);
 			SafeFile.WriteAllText(PathFor(Name), ToText());
 		}
@@ -646,6 +656,8 @@ namespace DynamicIslands.Editor
 		/// player's own plan). Saved with the world ("@planfrom="), so a host missing one of its islands can be told where to get it.
 		/// </summary>
 		public static string PlanFrom = "";
+		/// <summary>The id of the plan the world was made with (WorldPlan.Id; "" for worlds and plans from before it).</summary>
+		public static string PlanId = "";
 		/// <summary>True when the plan was read from the world's own copy (not from the plans folder).</summary>
 		public static bool PlanFromWorld { get; private set; }
 		/// <summary>
@@ -701,6 +713,7 @@ namespace DynamicIslands.Editor
 			PlanName = WorldPlan.RandomName;
 			Plan = null;
 			PlanFrom = "";
+			PlanId = "";
 			PlanFromWorld = false;
 			PlanWasEdited = false;
 			PlanOwner = 0;
@@ -726,6 +739,7 @@ namespace DynamicIslands.Editor
 				case "done": foreach (string id in value.Split(',')) if (id.Trim().Length > 0) Done.Add(id.Trim()); return true;
 				// The world's own copy of its plan (written since worlds keep one)
 				case "planfrom": PlanFrom = value.Trim(); return true;
+				case "planid": PlanId = value.Trim(); return true;
 				case "planowner": ulong o; if (ulong.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out o)) PlanOwner = o; return true;
 				case "planhash":
 					// ("<island>:<hash>" - the island's name may have a ':' itself, the hash never - AU6)
@@ -774,6 +788,7 @@ namespace DynamicIslands.Editor
 				}
 			}
 			if (PlanFrom.Length > 0) yield return "@planfrom=" + PlanFrom;
+			if (PlanId.Length > 0) yield return "@planid=" + PlanId;
 			// (a world without an owner gets the saving PC's id at its next load - "@savedby=", AU25: written now, so the file
 			// reads back the same and saves the same again)
 			ulong owner = PlanOwner != 0 ? PlanOwner : LocalSteamId;
@@ -866,6 +881,7 @@ namespace DynamicIslands.Editor
 					if (edited.Random != stored.Random) CustomIslandSpawner.Enabled = edited.Random;
 					Plan = edited;
 					PlanWasEdited = true;
+					if (PlanId.Length == 0) PlanId = edited.Id;
 					// (its story chain too: what is unlocked and done stays, the islands keep their frequencies)
 					StoryChain.FromPlan(edited);
 					Log("The plan '" + PlanName + "' was changed since the world was saved: the changed plan plays");
@@ -909,6 +925,8 @@ namespace DynamicIslands.Editor
 		{
 			WorldPlan file = WorldPlan.Load(PlanName);
 			if (file == null || stored == null) return null;
+			// (another plan given the same name since - the first copied away and deleted, a new one made: not this world's - UW2)
+			if (PlanId.Length > 0 && file.Id.Length > 0 && !file.Id.Equals(PlanId, StringComparison.OrdinalIgnoreCase)) return null;
 			if (IntroRule.ToLines(file.Rules) == IntroRule.ToLines(stored.Rules) && file.Random == stored.Random && !StoryChain.DiffersFrom(file)) return null;
 			string source = LibrarySource.OfPlan(PlanName) ?? "";
 			// (a library or imported plan: only while this PC has the version the world was made with - an update of the
@@ -992,6 +1010,9 @@ namespace DynamicIslands.Editor
 			PlanFromWorld = false;
 			PlanFrom = LibrarySource.OfPlan(plan.Name) ?? "";
 			PlanOwner = LocalSteamId; // (the host who picks the plan: their plan file is the one an edit happens in)
+			// (a plan of the player's own from before plans had ids: given one now, so a later plan of the same name is told apart)
+			if (plan.Id.Length == 0 && !plan.BuiltIn && PlanFrom.Length == 0) { try { plan.Save(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not give the plan '" + plan.Name + "' its id: " + e.Message); } }
+			PlanId = plan.Id;
 			// (the plan's islands as this PC has them: the ones any later host brings - AU6)
 			PlanHashes.Clear();
 			RecordPlanHashes(true);

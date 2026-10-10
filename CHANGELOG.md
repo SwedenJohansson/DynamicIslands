@@ -103,7 +103,6 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - Generator option **Raft's features**: vine caches, buried treasure, ziplines, code strongboxes, beehives, dirt.
 - **World Plans:** *Test this plan* starts a new test world with it; *View...* a plan from the New Game box; plan
   descriptions up to 400 characters.
-- The world window lists the islands in the world (distance, direction, quest).
 - **Map types as data** (`.maptype` files you can write yourself), ReRollMapType, and a **Defaults** window for the
   `spawnpool.txt` settings.
 - Version notices: plans and worlds remember which mod version wrote them and warn when they come from a newer one;
@@ -115,7 +114,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   lists, a hint line at the bottom, and the whole window scrolls when needed. Each group and option now says what a
   change does in a world already under way; the head start raft is shown (made with the world, can't change). The
   plan is shown but no longer picked there: a world keeps the plan it was made with. Regrow days, the Receiver dots
-  and the unload distance left the window (F10 `RegrowDays`; **Defaults...** in the New Game box).
+  and the unload distance left the window (F10 `RegrowDays`; **Defaults...** in the New Game box). The list of the
+  world's islands left it too (the quest book shows where each island's quest stands); the extra options list is taller.
 - **Two world options retired:** *Scrambled blueprints* and *Story islands in a new order* are no longer in
   World settings for new worlds. A world that has one on keeps it, and the host can still switch it off there.
 - **EXP +50 %:** every monster is worth half as much EXP again (Bruce the shark 180, was 120); the EXP each
@@ -162,6 +162,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A new plan with an old plan's name:** deleting a plan and making another under its name gave the new plan to the
+  worlds made with the old one. Each plan now has its own id, and those worlds keep their own copy.
+- **EXP of a new alpha:** a monster that was already hit before the randomizer made it an alpha (switched on or
+  re-seeded mid-game) kept its old, lower EXP worth. The worth is now worked out again when its max health changes.
 - **Nothing ticked in Choose islands:** a world with every island unticked logged "the spawn pool is empty" every
   10 seconds of sailing. It says so once now, and the World settings button says `none`.
 - **Two players in one once-only zone:** when both stepped in within a second, the one who came second was told

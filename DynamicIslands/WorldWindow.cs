@@ -27,7 +27,7 @@ namespace DynamicIslands.Editor
 		const float MaxHeight = 780f, Width = 960f, RowH = 22f, CheckH = 22f, OptionRowH = 26f, NameWidth = 150f;
 		static Canvas canvas;
 		static WorldWindow instance;
-		static Text hostText, planText, islandsText, hereText, hintText, headStartText;
+		static Text hostText, planText, islandsText, hintText, headStartText;
 		static RectTransform panel, body, bodyView, islandList;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static float nextRefresh;
@@ -243,7 +243,7 @@ namespace DynamicIslands.Editor
 			RectTransform box = Section(right, "Extra options", "ExtraOptions");
 			Note(box, "Each row: what switching it does in this world now. Point at a row for what the option is.", 1, "OptionsNote");
 			RectTransform listBox = UIKit.Rect("OptionList", box);
-			UIKit.Size(listBox.gameObject, -1, 262);
+			UIKit.Size(listBox.gameObject, -1, 370);
 			ScrollRect scroll;
 			RectTransform list = UIKit.ScrollList(listBox, out scroll, 1f);
 			scroll.name = "OptionsScroll";
@@ -284,13 +284,7 @@ namespace DynamicIslands.Editor
 			planText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Size(planText.gameObject, -1, 76);
 			Note(box, PlanMidGame, 2);
-
-			// The islands in this world, nearest first (ROADMAP T1b)
-			RectTransform here = Section(right, "Islands in this world", "IslandsHere");
-			hereText = UIKit.Label(here, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Here");
-			hereText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			hereText.verticalOverflow = VerticalWrapMode.Truncate;
-			UIKit.Size(hereText.gameObject, -1, 84);
+			// (no list of the world's islands here any more: the quest book shows where each island's quest is - the user, 2026-10-10)
 		}
 
 		/// <summary>The panel as tall as its content (the body's rows and the fixed lines around them), never taller than the screen.</summary>
@@ -438,7 +432,6 @@ namespace DynamicIslands.Editor
 			else islandsText.text = WorldIslands.DescribeForPlayer();
 
 			planText.text = host ? PlanSummary() : WorldDirector.DescribeForPlayer(false) + (StoryChain.Active ? "\n" + StorySummary() : "");
-			hereText.text = IslandsHere();
 		}
 
 		/// <summary>The plan and its rules, and the story chain if the plan changed Raft's story (host).</summary>
@@ -453,28 +446,6 @@ namespace DynamicIslands.Editor
 					string.Join(", ", p.Rules.Where(x => !WorldDirector.Done.Contains(x.Id) && !StoryChain.Brought.Contains(x.Id)).Take(3).Select(x => (x.Label.Length > 0 ? x.Label : x.Id)).ToArray()));
 			}
 			if (StoryChain.Active) lines.Add(StorySummary());
-			return string.Join("\n", lines.ToArray());
-		}
-
-		/// <summary>The custom islands of this world, nearest first: their name, how far and which way, their quest's state.</summary>
-		internal static string IslandsHere()
-		{
-			Vector3 from = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
-			Network_Player p = RAPI.GetLocalPlayer();
-			if (p != null) from = p.transform.position;
-			var list = IslandWorldState.Islands.Where(e => !e.Failed && !WorldRandomizer.IsExtras(e)).Select(e => new { E = e, D = new Vector2(e.Position.x - from.x, e.Position.z - from.z) })
-				.OrderBy(x => x.D.magnitude).ToList();
-			if (list.Count == 0) return "None yet.";
-			var lines = new List<string>();
-			foreach (var x in list.Take(8))
-			{
-				IslandQuest q = QuestTracker.QuestOf(x.E);
-				int step = QuestTracker.StepOf(x.E);
-				string state = !q.Exists ? "" : step >= q.Steps.Count ? "  <color=#8fdc8f>quest done</color>" : step > 0 ? "  quest " + step + "/" + q.Steps.Count : "  quest not begun";
-				float angle = Mathf.Atan2(x.D.x, x.D.y) * Mathf.Rad2Deg;
-				lines.Add(Behaviours.IslandTitle(x.E) + "  -  " + (Mathf.Round(x.D.magnitude / 10f) * 10f).ToString("F0") + " m " + IntroRule.DirectionName(angle) + state);
-			}
-			if (list.Count > 8) lines.Add("... and " + (list.Count - 8) + " more further away");
 			return string.Join("\n", lines.ToArray());
 		}
 

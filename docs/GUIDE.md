@@ -1951,6 +1951,9 @@ names are the same every time, its exact places aren't.
 - deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
   different plan of the same name never changes the world: it plays its own copy (to give a running world another
   plan on purpose, use the F10 command `WorldPlan <name>` in it);
+- a **new plan with an old plan's name** is a different plan: each plan you make or copy gets its own id (`id =` in
+  the file), so if you delete a plan and make another under its name, worlds made with the old one keep playing their
+  own copy and the new plan's edits don't reach them;
 - the world's plan goes along when someone else hosts the world later ([section 8](#8-playing-together)), even if they
   never had the plan;
 - worlds saved before this version get their copy the next time they're saved on a PC that has the plan file.
@@ -2077,8 +2080,7 @@ final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
 opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
-while sailing, plus the world's plan and story, and **the islands in this world** - nearest first, how far and which
-way, and how far their quest has come. The **host** changes them there, and every player gets the change at
+while sailing, plus the world's plan and story (where each island's quest stands is in the quest book). The **host** changes them there, and every player gets the change at
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 
@@ -2453,7 +2455,7 @@ opens the list:
   extras (`rnd-...` files) are never in it either. In the journal and other lists an extra is called by what it holds (**A castaway's stash**, **An abandoned camp**, **A treasure hunt**) or **Randomizer finds**, never by its file name.
 
 Only what you untick is kept, so islands you make or download later join older worlds too, unless you untick them when
-you make a new world. The choice belongs to the world (saved with it, so it stays when another player hosts the world
+you make a new world; an island whose file you delete later is simply left out (no error). The choice belongs to the world (saved with it, so it stays when another player hosts the world
 later), and the next new world starts from it. In a world the host can change it with `WorldIslands -<island>` /
 `+<island>` / `all`; `WorldIslands` alone shows the list.
 
