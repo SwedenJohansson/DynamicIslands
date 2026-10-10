@@ -47,6 +47,27 @@ namespace DynamicIslands
 		static void MmPressedPostfix(string __1, ref bool __result) { MmButtonPostfix(__1, ref __result); }
 		static readonly System.Reflection.MethodInfo MmIsPressed = typeof(CustomInputConfig).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static)
 			.FirstOrDefault(m => m.Name == "IsPressed" && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType == typeof(string));
+		// (a postfix on IsPressed alone still left the run at walking speed and the jumps at 0.1 m: the JIT inlines the small
+		// IsPressed into GroundControll, so its calls there are swapped for MmIsPressedShim instead)
+		static readonly System.Reflection.MethodInfo MmGroundControll = AccessTools.Method(typeof(PersonController), "GroundControll");
+		static int mmShimCalls;
+		static bool MmIsPressedShim(object config, object action, string id)
+		{
+			mmShimCalls++;
+			if (mmFake && id == "Sprint") return mmSprint;
+			if (mmFake && id == "Jump") return mmJump;
+			if (mmFake && id == "Crouch") return false;
+			return (bool)MmIsPressed.Invoke(config, new[] { action, id });
+		}
+		static IEnumerable<CodeInstruction> MmGroundTranspiler(IEnumerable<CodeInstruction> code)
+		{
+			System.Reflection.MethodInfo shim = AccessTools.Method(typeof(DevTests), "MmIsPressedShim");
+			foreach (CodeInstruction c in code)
+			{
+				if ((c.opcode == System.Reflection.Emit.OpCodes.Callvirt || c.opcode == System.Reflection.Emit.OpCodes.Call) && Equals(c.operand, MmIsPressed)) { c.opcode = System.Reflection.Emit.OpCodes.Call; c.operand = shim; }
+				yield return c;
+			}
+		}
 
 		[ConsoleCommand(name: "CIMoveMeasure", docs: "Dev, world, host: Raft moves the player (faked keys) on a test deck in open sea and in the water - walk, sprint and swim m/s over 3 s and the jump height, with 0 and with 10 points in those stats (level system on for it); each must be +10% (±3%); points, level system and place put back")]
 		public static void MoveMeasureCommand()
@@ -106,6 +127,9 @@ namespace DynamicIslands
 				harmony.Patch(getButton, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmButtonPostfix")));
 				if (MmIsPressed != null) harmony.Patch(MmIsPressed, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmPressedPostfix")));
 				else Log("(CustomInputConfig.IsPressed(action, string) not found: sprint and jump keys not faked)");
+				if (MmIsPressed != null && MmGroundControll != null) harmony.Patch(MmGroundControll, transpiler: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmGroundTranspiler")));
+				else Log("(PersonController.GroundControll not found: sprint and jump read through IsPressed only)");
+				mmShimCalls = 0;
 				Log("Raft's well-being before: factor " + Stat_WellBeing.Factor + " (limit " + Stat_WellBeing.WellBeingLimit.ToString("F2", Inv) + ", ground speed x" + Stat_WellBeing.groundSpeedMultiplier.ToString("F2", Inv) + "), hunger " + player.Stats.stat_hunger.Normal.NormalValue.ToString("F2", Inv) + ", thirst " + player.Stats.stat_thirst.Normal.NormalValue.ToString("F2", Inv));
 				if (wellBeingUpdate != null) harmony.Patch(wellBeingUpdate, prefix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmWellBeingPrefix")));
 				mmFake = true; mmWalk = 0f; mmSprint = mmJump = false;
@@ -182,6 +206,8 @@ namespace DynamicIslands
 				{
 					try { harmony.Unpatch(getAxis, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetAxis: " + e.Message + ")"); }
 					try { harmony.Unpatch(getButton, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetButton: " + e.Message + ")"); }
+					if (MmGroundControll != null) try { harmony.Unpatch(MmGroundControll, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching PersonController.GroundControll: " + e.Message + ")"); }
+					Log("(GroundControll asked for keys " + mmShimCalls + " times; a menu open: " + (CanvasHelper.ActiveMenu != null) + ")");
 					if (MmIsPressed != null) try { harmony.Unpatch(MmIsPressed, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching CustomInputConfig.IsPressed: " + e.Message + ")"); }
 					if (wellBeingUpdate != null) try { harmony.Unpatch(wellBeingUpdate, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching Stat_WellBeing.Update: " + e.Message + ")"); }
 				}
