@@ -514,7 +514,9 @@ and **dens**: Balboa's bear cave and dead end, whole rock outcrops with a den ab
 cave is scaled x3 in Raft's scene), placed on levelled ground (generated islands) or a spot clear of Raft's things with the
 den's floor on its highest ground and the mouth turned to open ground (Raft's islands). Raft's pickups and animals inside a
 copied piece (Balboa's cave holds the Machete blueprint, Mama Bear's pickup and a bear) are left out: nothing of Raft's
-story comes along. Every prop's size and footprint is measured
+story comes along. In a world every cave piece (dens, the generator's caves, those placed by hand; not the vine cave, a
+whole rock already) sits inside a rock hill built over its back and sides down to the ground, of the island's own rock,
+open only at its mouth (`CaveMountain`). Every prop's size and footprint is measured
 (`raft_props.txt`, `CIMeasureProps`): props stand on the lowest ground under them, and nothing that hangs from its top
 (awnings, banners, dream catchers) is used.
 

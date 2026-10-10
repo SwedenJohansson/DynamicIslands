@@ -403,6 +403,7 @@ namespace DynamicIslands.Editor
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
 				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
+				if (!editable) CaveMountain.Add(parent, go, o.Name); // (a rock mountain over the island's caves - AU83)
 
 				if (editable)
 					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>()).Uid = o.Uid;

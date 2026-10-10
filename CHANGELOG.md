@@ -177,7 +177,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Caves that floated:** the randomizer's caves (on Raft's big islands and on generated islands) could stand with
   their rim over the ground, so you saw into the rock from outside and through the floor from inside. On a generated
   island the ground now rises round the cave and buries its rim, open only at the mouth; on Raft's islands a cave goes
-  only where the ground meets its rim all round and the floor inside is even.
+  only where the ground meets its rim all round and the floor inside is even. And in a world every cave piece - generated,
+  the randomizer's and those placed by hand on library islands - now sits inside a rock hill built over its back and
+  sides down to the ground, of the island's own rock (snowy rock on a snowy island), open only at its mouth: no more
+  thin shells in the air or sky seen through the mountain. Balboa's vine cave, a whole rock of its own, is left as it is.
 - **Animals walking into the sea:** llamas, goats and the other animals of the custom islands could wander into the
   shallows. They now stay on dry land (the beach just at the waterline at most).
 - **The crafting menu:** the Weapons list was twice as wide as its recipes and covered the inventory (the upgrades

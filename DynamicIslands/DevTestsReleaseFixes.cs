@@ -233,7 +233,119 @@ namespace DynamicIslands
 			if (ok) Log("PASS: cave rims meet the ground"); else Fail("cave rims meet the ground");
 		}
 
-		[ConsoleCommand(name: "CIAnimalsDry", docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
+		[ConsoleCommand(name: "CICaveLook", docs: "Dev, in a world: pictures of every cave piece on the loaded custom islands from eight sides at eye height and from above (shot_cavelook_<n>_<side>.png), and what its meshes are (readable, faces, materials, shaders) - AU83")]
+		public static void CaveLookCommand() { StartTest(CaveLookRoutine()); }
+
+		static IEnumerator CaveLookRoutine()
+		{
+			int n = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+				foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>())
+				{
+					m.Rebuild();
+					string file = Path.Combine(DynamicIslands.assetpath, "cavemap_" + e.Name + ".txt");
+					File.WriteAllText(file, m.LastMap ?? "(no mountain)");
+					Log("Cave mountain of '" + e.Name + "': " + (m.transform.Find(CaveMountain.SkinName) != null ? "there" : "MISSING") + ", map in " + Path.GetFileName(file));
+				}
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+				foreach (Transform t in e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList())
+				{
+					n++;
+					Log("Cave " + n + ": '" + e.Name + "' " + t.name + " at " + t.position.ToString("F0") + ", scale " + t.lossyScale.ToString("F2"));
+					foreach (MeshFilter mf in t.GetComponentsInChildren<MeshFilter>(true))
+					{
+						Mesh m = mf.sharedMesh;
+						Renderer rr = mf.GetComponent<Renderer>();
+						Log("  " + mf.name + ": " + (m == null ? "no mesh" : m.name + " readable " + m.isReadable + ", " + m.vertexCount + " points, " + m.subMeshCount + " parts") + (rr == null ? "" : ", shadows " + rr.shadowCastingMode + ", " + string.Join("; ", rr.sharedMaterials.Where(x => x != null).Select(x => x.name + " (" + x.shader.name + (x.HasProperty("_Cull") ? ", _Cull " + x.GetFloat("_Cull") : "") + ")").ToArray())) + (mf.name.StartsWith("CaveSkin") ? " [skin]" : ""));
+					}
+					Bounds b = new Bounds(t.position, Vector3.one);
+					foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
+					float d = new Vector2(b.extents.x, b.extents.z).magnitude * 1.5f + 6f;
+					for (int i = 0; i < 8; i++)
+					{
+						Vector3 dir = Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward, from = b.center + dir * d;
+						RaycastHit hit;
+						float g = Physics.Raycast(from + Vector3.up * 200f, Vector3.down, out hit, 400f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : b.min.y;
+						from.y = Mathf.Max(g, 0.5f) + 2f;
+						yield return CameraShot(from, new Vector3(b.center.x, Mathf.Max(from.y, b.min.y + b.size.y * 0.35f), b.center.z), "cavelook_" + n + "_" + (i * 45));
+					}
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.5f), b.center, "cavelook_" + n + "_above");
+				}
+			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
+		}
+
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		public static void CaveIslandsCommand(string[] args)
+		{
+			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
+			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 99;
+			bool keep = args != null && args.Length > 2 && args[2] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
+			StartTest(CaveIslandsRoutine(only, most, keep));
+		}
+
+		static IEnumerator CaveIslandsRoutine(string only, int most, bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("cave islands: host, in a world"); yield break; }
+			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
+			var names = new List<string>();
+			foreach (string name in IslandSpawner.ListSavedIslands())
+			{
+				if (name.StartsWith("ci", StringComparison.OrdinalIgnoreCase) || kept.IsMatch(name) || name.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase)) continue;
+				if (only.Length > 0 && !only.Split('|').Any(x => name.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) continue;
+				IslandFile f = null;
+				try { f = IslandFile.Load(Path.Combine(DynamicIslands.assetpath, name + IslandFile.Extension)); } catch (Exception) { }
+				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name))) names.Add(name); // (named ones: the Vines cave too, to look at)
+			}
+			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
+			int n = 0, bad = 0;
+			foreach (string name in names.Take(most))
+			{
+				n++;
+				SetHour(12f); // (daylight for every island's pictures)
+				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+				if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); yield return new WaitForSeconds(1f); }
+				Vector3? spot = ScSpot(name, 400f);
+				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); bad++; continue; }
+				var made = new List<IslandWorldState.Entry>();
+				yield return ScBring(name, spot.Value, made);
+				IslandWorldState.Entry e = made.LastOrDefault();
+				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); bad++; continue; }
+				yield return new WaitForSeconds(4f);
+				CaveMountain m = e.Root.GetComponentInChildren<CaveMountain>();
+				Transform skin = m != null ? m.transform.Find(CaveMountain.SkinName) : null;
+				if (m != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), m.LastMap ?? "");
+				var caves = e.Root.GetComponentsInChildren<Transform>().Where(t => CaveMountain.Wants(t.name)).ToList();
+				string map = m != null ? m.LastMap ?? "" : "";
+				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
+				if (skin == null && caves.Count > 0) bad++;
+				var looks = e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				if (looks.Count > 0)
+				{
+					caves = looks; // (the pictures: every cave piece, the Vines cave too)
+					Bounds b = new Bounds(caves[0].position, Vector3.one);
+					foreach (Transform t in caves) foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
+					float d = new Vector2(b.extents.x, b.extents.z).magnitude * 1.3f + 8f;
+					for (int i = 0; i < 4; i++)
+					{
+						Vector3 dir = Quaternion.Euler(0f, i * 90f + 30f, 0f) * Vector3.forward, from = b.center + dir * d;
+						RaycastHit hit;
+						float g = Physics.Raycast(from + Vector3.up * 200f, Vector3.down, out hit, 400f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : b.min.y;
+						from.y = Mathf.Max(g, 0.5f) + 3f;
+						yield return CameraShot(from, new Vector3(b.center.x, Mathf.Max(from.y - 2f, b.min.y + b.size.y * 0.3f), b.center.z), "caveisl_" + n + "_" + (i * 90 + 30));
+					}
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+				}
+				if (keep) continue;
+				IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
+				IslandCache.Forget();
+				yield return new WaitForSeconds(2f);
+			}
+			if (names.Count == 0) Fail("no saved island with cave pieces");
+			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain (above)");
+			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain");
+		}
+
+		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
 		public static void AnimalsDryCommand()
 		{
 			bool ok = true;
@@ -281,6 +393,40 @@ namespace DynamicIslands
 			else if (mode == "build") Check(ref ok, args.Length > 1 && notice.Contains("another build") && notice.Contains(args[1]), "the other build was reported: " + notice);
 			else Check(ref ok, args.Length > 1 && notice.Contains("Custom Islands " + args[1]), "the version difference was reported: " + notice);
 			if (ok) Log("PASS: version check"); else Fail("version check");
+		}
+
+		[ConsoleCommand(name: "CITableSeen", docs: "Dev, in a world (either player): with the world option Extra upgrades on, this machine has the upgrade research table registered and craftable (AU81 - player 2 once didn't see it)")]
+		public static void TableSeenCommand()
+		{
+			bool ok = true;
+			Item_Base table = ExtraUpgrades.TableItem;
+			Check(ref ok, WorldOptions.On(WorldOptions.Upgrades), "the option Extra upgrades on here (" + string.Join(",", WorldOptions.Current.ToArray()) + ")");
+			Check(ref ok, table != null, "the upgrade table registered");
+			Check(ref ok, table != null && table.settings_recipe.Learned, "the upgrade table craftable");
+			if (ok) Log("PASS: table seen (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("table seen");
+		}
+
+		[ConsoleCommand(name: "CICaveSeen", docs: "Dev, in a world (either player): the cave mountains this machine has built on the loaded islands - each with its rock skin (AU83 on player 2)")]
+		public static void CaveSeenCommand()
+		{
+			CaveMountain[] all = UnityEngine.Object.FindObjectsOfType<CaveMountain>();
+			int skinned = all.Count(m => m.transform.Find(CaveMountain.SkinName) != null);
+			Log("CAVESEEN " + all.Length + " mountain(s), " + skinned + " with their rock skin");
+			if (all.Length > 0 && skinned == all.Length) Log("PASS: cave seen"); else Fail("cave seen");
+		}
+
+		[ConsoleCommand(name: "CIJoinSpot", docs: "Dev, in a world (either player): the local player is on or by the raft - within 25 m of it and not under the sea or under its deck (AU80/AU82 - a friend joined below the raft / on the open sea)")]
+		public static void JoinSpotCommand()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			Raft r = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (p == null || r == null) { Fail("join spot: no player or raft"); return; }
+			Vector3 at = p.transform.position, raft = r.transform.position;
+			float flat = Vector2.Distance(new Vector2(at.x, at.z), new Vector2(raft.x, raft.z));
+			bool ok = true;
+			Check(ref ok, flat < 25f, "by the raft: " + flat.ToString("F1") + " m from its centre");
+			Check(ref ok, at.y > raft.y - 0.5f, "not under the deck or the sea: player y " + at.y.ToString("F1") + ", raft y " + raft.y.ToString("F1") + (PlayerHold.Busy ? ", still held" : ""));
+			if (ok) Log("PASS: join spot"); else Fail("join spot");
 		}
 
 		[ConsoleCommand(name: "CIRaftHeight", docs: "Dev, world: logs RAFT <deck top above the sea> <raft object y> <player y> <player grounded> - the raft must float on the sea (about 0.3 m)")]

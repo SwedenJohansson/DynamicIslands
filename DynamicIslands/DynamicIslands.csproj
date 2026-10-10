@@ -56,6 +56,7 @@
     <Compile Include="NoteEditorWindow.cs" />
     <Compile Include="ObjectInspector.cs" />
     <Compile Include="ObjectProps.cs" />
+    <Compile Include="CaveMountain.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsGapsB.cs" />
