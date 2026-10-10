@@ -927,8 +927,9 @@ holds, who made it and its version. **Install** puts it in place:
   your very own plan (the same file) stays yours: removing the pack later leaves it.
 - A plan may bring only new islands of map types: such a pack holds no island files at all, and that's fine.
 - **Story items with the same id:** a world's crew holds one of each story item id for all its islands. If the pack's
-  islands use an id another installed pack uses too (two packs' `key`), Install says so - in a world with both, the
-  key found for one would open the other's door. Fine if the packs are never played in one world.
+  islands use an id another installed pack uses too (two packs' `key`), Install gives the new pack's item an id of its
+  own (`key-<pack id>`), changes its quests, chests and behaviours to match, and says so. In a world with both, each
+  key opens only its own door. An update of the pack keeps the same new id.
 - An **island** from a pack only turns up by chance while sailing if you tick **Also let it turn up while sailing** -
   then also in worlds you've already started with random islands (you can untick it for a new world in World
   settings, [9.5](#95-islands-while-sailing)). A **plan's** islands never turn up at random: they come when the plan

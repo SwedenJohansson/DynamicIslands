@@ -120,6 +120,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   picked, looted, opened or done there kept on the same objects (what belonged to a deleted object goes with it).
   Only removing or reordering rules or quest steps still keeps the old version for them. **Give my worlds this
   version** carries what was used the same way.
+- **Two packs, one story item id (T8).** Installing a pack whose story item id another installed pack already uses
+  gives the new pack's item an id of its own (`key-<pack id>`), with its quests, chests and behaviours changed to
+  match, so each key opens only its own door in a world with both. Updates keep the new id.
 - **Library updates (T10).** An entry shows **Update** also when one of its files changed in the library without a new
   version number (installs now record each file's SHA-256). Updating over files you changed offers **Update, keep a
   copy** (yours stay as "name (yours)", never at random while sailing), **Keep my changes** or **Cancel**, and names the

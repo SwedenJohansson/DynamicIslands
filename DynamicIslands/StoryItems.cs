@@ -97,6 +97,57 @@ namespace DynamicIslands.Editor
 			return id;
 		}
 
+		/// <summary>Gives story items new ids in an island (T8 - a pack whose "key" another installed pack has too): the
+		/// definitions, every "story:&lt;id&gt;" in the island's and its objects' settings (chests, zones, behaviours,
+		/// rewards), and quest steps that collect the bare id. map: old id -> new id. True when anything changed.</summary>
+		public static bool RenameIds(IslandFile f, IDictionary<string, string> map)
+		{
+			if (f == null || map == null || map.Count == 0) return false;
+			var m = new Dictionary<string, string>(map, StringComparer.OrdinalIgnoreCase);
+			bool changed = false;
+			if (f.Props != null)
+			{
+				List<StoryItemDef> defs = Of(f.Props);
+				string to;
+				foreach (StoryItemDef d in defs) if (m.TryGetValue(d.Id, out to)) { d.Id = to; changed = true; }
+				if (changed) f.Props[Key] = Text(defs);
+				for (int n = 0; n < IslandQuest.MaxQuests; n++)
+				{
+					string k = IslandQuest.Key(IslandQuest.KeySteps, n), steps;
+					if (!f.Props.TryGetValue(k, out steps) || steps.Length == 0) continue;
+					string[] lines = steps.Split('\n');
+					bool any = false;
+					for (int i = 0; i < lines.Length; i++)
+					{
+						string[] p = lines[i].Split('|');
+						if (p.Length < 2 || p[0] != "collect" || IsStory(p[1]) || !m.TryGetValue(p[1].Trim(), out to)) continue;
+						p[1] = to;
+						lines[i] = string.Join("|", p);
+						any = true;
+					}
+					if (any) { f.Props[k] = string.Join("\n", lines); changed = true; }
+				}
+				changed |= RenameRefs(f.Props, m);
+			}
+			foreach (IslandObject o in f.Objects) if (o.Props != null) changed |= RenameRefs(o.Props, m);
+			return changed;
+		}
+
+		static bool RenameRefs(Dictionary<string, string> props, Dictionary<string, string> map)
+		{
+			bool changed = false;
+			foreach (string k in props.Keys.ToList())
+			{
+				string v = props[k];
+				if (v == null || v.IndexOf(Prefix, StringComparison.OrdinalIgnoreCase) < 0) continue;
+				// ("story:<id>" as a whole: "story:key" isn't part of "story:key-2")
+				string nv = System.Text.RegularExpressions.Regex.Replace(v, @"(?<![A-Za-z0-9_\-])story:([A-Za-z0-9_\-]+)(?![A-Za-z0-9_\-])",
+					x => { string to; return map.TryGetValue(x.Groups[1].Value, out to) ? Prefix + to : x.Value; }, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+				if (nv != v) { props[k] = nv; changed = true; }
+			}
+			return changed;
+		}
+
 		#region Pictures
 
 		static SO_QuestItem[] questItems;

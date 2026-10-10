@@ -108,7 +108,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario names"); else Fail("scenario names");
 		}
 
-		[ConsoleCommand(name: "CIScTwoPacks", docs: "Dev, anywhere: SC74 - two packs with an island of the same name and a story item of the same id: the second's island is renamed and its plan follows; the import warns about the shared story item id (T8)")]
+		[ConsoleCommand(name: "CIScTwoPacks", docs: "Dev, anywhere: SC74 - two packs with an island of the same name and a story item of the same id: the second's island is renamed and its plan follows; the second's story item gets an id of its own, its quest, reward and chest follow (T8)")]
 		public static void ScTwoPacksCommand()
 		{
 			bool ok = true;
@@ -124,6 +124,9 @@ namespace DynamicIslands
 					MakeLibIsland("cipk-twin", seed);
 					IslandFile f = IslandFile.Load(IslandSpawner.PathFor("cipk-twin"));
 					f.Props[StoryItems.Key] = "cipkkey|" + keyName + "||A key from " + plan;
+					f.Props[IslandQuest.Key(IslandQuest.KeySteps, 0)] = "collect|cipkkey|1|Find the key";
+					f.Props[IslandQuest.KeyReward] = "story:cipkkey";
+					f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(10f, 0f, 10f), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "story:cipkkey*1, story:cipkkey-old*1" } } });
 					f.Save(IslandSpawner.PathFor("cipk-twin"));
 					WorldPlan.Parse(plan, "random = off\nrule = start | island:cipk-twin | start | ahead:300 | | Twin\n").Save();
 					string z = LibraryPack.Export(new LibraryInfo { title = plan, id = packId ?? plan.ToLowerInvariant().Replace(' ', '-'), author = author ?? "CI Tester", summary = "test", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
@@ -143,9 +146,20 @@ namespace DynamicIslands
 					IntroRule rule = pb != null ? pb.Rules.FirstOrDefault() : null;
 					Check(ref ok, rule != null && rule.WhatArg != "cipk-twin" && File.Exists(IslandSpawner.PathFor(rule.WhatArg)), "B's island is installed under its own name and B's plan brings it ('" + (rule != null ? rule.WhatArg : "?") + "')");
 					Check(ref ok, File.Exists(IslandSpawner.PathFor("cipk-twin")), "A's island keeps its name");
+					// (T8: B's "cipkkey" gets an id of its own - definition, quest step, reward and chest - so A's key doesn't
+					// open B's door; A's stays; "story:cipkkey-old" is another item and stays too)
 					string text = rb.ToString();
-					Check(ref ok, text.IndexOf("cipkkey", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("story item", StringComparison.OrdinalIgnoreCase) >= 0,
-						"importing B warns that its story item 'cipkkey' has the same id as A's (one store: A's key would open B's door) - T8");
+					Func<Dictionary<string, string>, string, string> pg = (p, k) => p != null && p.ContainsKey(k) ? p[k] : "";
+					IslandFile ia = IslandFile.Load(IslandSpawner.PathFor("cipk-twin")), ib = rule != null ? IslandFile.Load(IslandSpawner.PathFor(rule.WhatArg)) : null;
+					string idB = ib != null ? string.Join(",", StoryItems.Of(ib.Props).Select(d => d.Id).ToArray()) : "?";
+					Check(ref ok, ia != null && StoryItems.Of(ia.Props).Any(d => d.Id == "cipkkey") && idB == "cipkkey-ci-pack-b" && text.IndexOf("cipkkey-ci-pack-b", StringComparison.Ordinal) >= 0,
+						"B's story item gets its own id (A: cipkkey, B: " + idB + "), and the import says so - T8");
+					IslandObject chestB = ib != null ? ib.Objects.LastOrDefault(o => o.Name == "Loot_Chest") : null; string lootB = chestB != null ? pg(chestB.Props, ObjectProps.LootItems) : "?";
+					Check(ref ok, ib != null && pg(ib.Props, IslandQuest.Key(IslandQuest.KeySteps, 0)).StartsWith("collect|cipkkey-ci-pack-b|") && pg(ib.Props, IslandQuest.KeyReward) == "story:cipkkey-ci-pack-b"
+						&& lootB == "story:cipkkey-ci-pack-b*1, story:cipkkey-old*1", "B's quest step, reward and chest follow the new id ('" + lootB + "')");
+					Check(ref ok, ia != null && pg(ia.Props, IslandQuest.KeyReward) == "story:cipkkey", "A's island is untouched");
+					LibraryInstalled eb = LibraryPack.Installed().FirstOrDefault(e => e.id == "ci-pack-b");
+					Check(ref ok, eb != null && eb.storyIds != null && eb.storyIds.ContainsKey("cipkkey") && eb.storyIds["cipkkey"] == "cipkkey-ci-pack-b", "the entry remembers the new id (an update keeps it)");
 					// (another author's pack with A's id: an entry of its own, A's files untouched - CB4)
 					LibraryPackContents c = make("CI Pack C", 33, "Green key", "ci-pack-a", "CI Other");
 					LibraryPack.Report rc = c != null ? LibraryPack.Install(c, false, false, LibraryPack.SourceImport) : null;

@@ -91,6 +91,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The pack's own files as they came (name, SHA-256) - the library lists the same, so a file changed there
 		/// without a new version number still shows as an update (T10). Empty for installs made before.</summary>
 		public Dictionary<string, string> packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Story item ids this entry installed under another id (T8: another entry had the same): the pack's id -> the
+		/// id here. An update keeps them, so the worlds that hold them keep them.</summary>
+		public Dictionary<string, string> storyIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 		public string Source { get { return source + ":" + id + "@" + version.ToString(CultureInfo.InvariantCulture); } }
 
@@ -101,6 +104,7 @@ namespace DynamicIslands.Editor
 				{ "id", id }, { "source", source }, { "title", title }, { "author", author }, { "kind", kind }, { "version", version }, { "remix", remix }, { "date", date }, { "plan", plan },
 				{ "files", files.Select(f => (object)new Dictionary<string, object> { { "name", f.name }, { "original", f.original }, { "kind", f.kind }, { "sha256", f.sha256 }, { "shared", f.shared } }).ToList() },
 				{ "packed", packed.Select(k => (object)new Dictionary<string, object> { { "name", k.Key }, { "sha256", k.Value } }).ToList() },
+				{ "storyIds", storyIds.Select(k => (object)new Dictionary<string, object> { { "from", k.Key }, { "to", k.Value } }).ToList() },
 			};
 		}
 
@@ -113,6 +117,7 @@ namespace DynamicIslands.Editor
 				files = LibraryJson.Objects(o, "files").Select(f => new LibraryInstalledFile { name = LibraryJson.Str(f, "name"), original = LibraryJson.Str(f, "original"), kind = LibraryJson.Str(f, "kind", LibraryPack.KindIsland), sha256 = LibraryJson.Str(f, "sha256"), shared = LibraryJson.Bool(f, "shared") }).ToList(),
 			};
 			foreach (Dictionary<string, object> f in LibraryJson.Objects(o, "packed")) r.packed[LibraryJson.Str(f, "name")] = LibraryJson.Str(f, "sha256");
+			foreach (Dictionary<string, object> f in LibraryJson.Objects(o, "storyIds")) r.storyIds[LibraryJson.Str(f, "from")] = LibraryJson.Str(f, "to");
 			return r;
 		}
 	}
@@ -791,6 +796,8 @@ namespace DynamicIslands.Editor
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindIsland && f.original.Equals(n, StringComparison.OrdinalIgnoreCase)) : null;
 				target[n] = before != null && !before.shared ? before.name : n;
 			}
+			Dictionary<string, string> storyIds = StoryIdsFor(pack, info, old, all, originals, report);
+			entry.storyIds = storyIds;
 			var content = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
 			var copies = new List<string>();
 			var updated = new List<string>();
@@ -799,7 +806,7 @@ namespace DynamicIslands.Editor
 				bool changed = false;
 				foreach (string n in originals)
 				{
-					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target, ruleIds);
+					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target, ruleIds, storyIds);
 					content[n] = bytes;
 					string t = target[n];
 					string path = IslandSpawner.PathFor(t);
@@ -864,23 +871,6 @@ namespace DynamicIslands.Editor
 				}
 				report.Islands.Add(t);
 			}
-
-			// Story items with the id of another installed entry's: a world's crew holds one of each id for all its islands
-			// (T8 - two packs' "key": the key found for one opens the other's door). Said, so the player knows.
-			try
-			{
-				var ours = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-				foreach (string t in report.Islands) foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(t))) ours[d.Id] = d.ShownName;
-				if (ours.Count > 0)
-					foreach (LibraryInstalled other in all.Where(e => !e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase)))
-						foreach (LibraryInstalledFile f in other.files.Where(f => f.kind == KindIsland && !report.Islands.Contains(f.name, StringComparer.OrdinalIgnoreCase)))
-							foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.name)).Where(d => ours.ContainsKey(d.Id)).ToList())
-							{
-								report.Add("Note: its story item '" + d.Id + "' (" + ours[d.Id] + ") has the same id as one of '" + other.title + "' ('" + d.ShownName + "' on '" + f.name + "'). In a world with both, the crew holds one '" + d.Id + "' for both: found on either island, it counts on the other.");
-								ours.Remove(d.Id);
-							}
-			}
-			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing story items: " + ex.Message); }
 
 			// The plan
 			if (plan != null)
@@ -979,24 +969,66 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An island file's bytes with its "bring" rules pointing at the entry's new names (unchanged if none moved).</summary>
-		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target, HashSet<string> planRuleIds)
+		/// <summary>T8: the pack's story item ids that another installed entry has too, each with an id of its own here
+		/// ("key" -> "key-&lt;entry id&gt;"): a world's crew holds one of each id, so two packs' "key" was one key - found for
+		/// one, it opened the other's door. An update keeps the ids its earlier version got (worlds hold them).</summary>
+		static Dictionary<string, string> StoryIdsFor(LibraryPackContents pack, LibraryInfo info, LibraryInstalled old, List<LibraryInstalled> all, List<string> originals, Report report)
 		{
-			if (!originals.Any(n => !target[n].Equals(n, StringComparison.Ordinal))) return bytes;
+			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				var ours = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				var ourShas = new HashSet<string>();
+				foreach (string n in originals)
+				{
+					byte[] bytes = pack.Files[n + IslandFile.Extension];
+					ourShas.Add(Sha256(bytes));
+					IslandFile f = IslandFile.FromBytes(bytes, n);
+					if (f != null && f.Props != null) foreach (StoryItemDef d in StoryItems.Of(f.Props)) ours[d.Id] = d.ShownName;
+				}
+				if (ours.Count == 0) return map;
+				if (old != null) foreach (var k in old.storyIds) if (ours.ContainsKey(k.Key)) map[k.Key] = k.Value;
+				// (the other entries' ids - not from an island that is this pack's own, shared with an entry that has it too)
+				var theirs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				foreach (LibraryInstalled other in all.Where(e => !e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase)))
+					foreach (LibraryInstalledFile f in other.files.Where(f => f.kind == KindIsland && !ourShas.Contains(f.sha256)))
+						foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.name)))
+							if (!theirs.ContainsKey(d.Id)) theirs[d.Id] = other.title;
+				string suffix = IdFrom(info.id);
+				foreach (string id in ours.Keys.Where(theirs.ContainsKey).ToList())
+				{
+					if (map.ContainsKey(id)) continue;
+					string to = id + "-" + suffix;
+					for (int i = 2; theirs.ContainsKey(to) || ours.ContainsKey(to) || map.Values.Contains(to, StringComparer.OrdinalIgnoreCase); i++) to = id + "-" + suffix + "-" + i;
+					map[id] = to;
+					report.Add("Its story item '" + ours[id] + "' has the id '" + to + "' here ('" + id + "' in the pack): '" + theirs[id] + "' has a story item '" + id + "' too - in a world with both, they stay two things");
+				}
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing story items: " + ex.Message); map.Clear(); }
+			return map;
+		}
+
+		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target, HashSet<string> planRuleIds, Dictionary<string, string> storyIds)
+		{
+			if (!originals.Any(n => !target[n].Equals(n, StringComparison.Ordinal)) && storyIds.Count == 0) return bytes;
 			string tmp = Path.Combine(LibraryFolder, "rewrite.tmp" + IslandFile.Extension);
 			Directory.CreateDirectory(LibraryFolder);
 			try
 			{
 				File.WriteAllBytes(tmp, bytes);
 				IslandFile f = IslandFile.Load(tmp);
+				bool changed = StoryItems.RenameIds(f, storyIds);
 				string text;
-				if (f.Props == null || !f.Props.TryGetValue(WorldDirector.IslandRulesKey, out text)) return bytes;
-				List<IntroRule> rules = IntroRule.ParseLines(text);
-				string before = IntroRule.ToLines(rules);
-				var ids = new HashSet<string>(planRuleIds, StringComparer.OrdinalIgnoreCase);
-				ids.UnionWith(rules.Select(x => x.Id));
-				foreach (IntroRule r in rules) Rename(r, target, ids);
-				if (IntroRule.ToLines(rules) == before) return bytes;
-				WorldDirector.SetRulesInProps(f.Props, rules);
+				if (f.Props != null && f.Props.TryGetValue(WorldDirector.IslandRulesKey, out text))
+				{
+					List<IntroRule> rules = IntroRule.ParseLines(text);
+					string before = IntroRule.ToLines(rules);
+					var ids = new HashSet<string>(planRuleIds, StringComparer.OrdinalIgnoreCase);
+					ids.UnionWith(rules.Select(x => x.Id));
+					foreach (IntroRule r in rules) Rename(r, target, ids);
+					if (IntroRule.ToLines(rules) != before) { WorldDirector.SetRulesInProps(f.Props, rules); changed = true; }
+				}
+				if (!changed) return bytes;
 				f.Save(tmp);
 				return File.ReadAllBytes(tmp);
 			}
