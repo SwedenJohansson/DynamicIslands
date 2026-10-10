@@ -24,13 +24,17 @@ namespace DynamicIslands
 			if (player == null) yield break;
 			Player p = player.GetComponentInChildren<Player>(true);
 			// (incapacitated, "waiting for rescue", is IsDead with some health left)
-			bool down = (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
-			if (down)
+			Func<bool> down = () => (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
+			// (a respawn while the player is held over an island that is still loading - PlayerHold - didn't take: the player
+			// stayed down, and every two-player check after it failed. Tried again until they are up)
+			for (int tries = 0; tries < 3 && down() && p != null; tries++)
 			{
-				if (p != null) { Log("The test player was down: respawning them (inventory kept)"); p.RespawnWithoutBed(false); }
-				yield return new WaitForSeconds(3f);
+				Log("The test player was down: respawning them (inventory kept)" + (tries > 0 ? " - again (" + (tries + 1) + ")" : ""));
+				p.RespawnWithoutBed(false);
+				for (float t = 0f; t < 6f && down(); t += 0.5f) yield return new WaitForSeconds(0.5f);
 			}
 			KeepAlive(player);
+			if (down()) Log("The test player is STILL DOWN (health " + (player.Stats != null ? player.Stats.stat_health.Value.ToString("F0") : "?") + ", " + (p != null && p.IsDead ? "dead" : "not dead") + ")");
 		}
 
 		#region Editor: settings, inspector, file format 4

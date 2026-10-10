@@ -102,7 +102,7 @@ namespace DynamicIslands.Editor
 			if (spentWhenSeen == null) spentWhenSeen = fired;
 			if (fired && !Repeats)
 			{
-				if (spentWhenSeen == false && !firedHere && (Items.Count > 0 || Message.Length > 0) && !toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
+				if ((spentWhenSeen == false || ContentState.UsedByOtherLately(ContentState.EntryOf(transform), StateKey, 30f)) && !firedHere && (Items.Count > 0 || Message.Length > 0) && !toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
 				Reached();
 				return;
 			}

@@ -59,7 +59,19 @@ namespace DynamicIslands.Editor
 			if (day < 0 && key < CreatureSpawner.StateKeyBase) IslandObjectState.OnRegrownFromHost(e, key); // a tree or pickup (the host decides)
 			else if (day < 0) e.State.Remove(key);
 			else e.State[key] = new ObjectState { Active = false, Yield = 0, Day = day };
+			if (day >= 0) { if (usedByOthersAt.Count > 256) usedByOthersAt.Clear(); usedByOthersAt[((long)islandId << 32) | (uint)key] = Time.time; }
 			AfterChange(e, key, day);
+		}
+
+		/// <summary>When another player's "used" of each thing came (Time.time), for "someone else got here first".</summary>
+		static readonly Dictionary<long, float> usedByOthersAt = new Dictionary<long, float>();
+
+		/// <summary>Another player used it within the last seconds: a player arriving now lost the race to it (SC50 - the
+		/// host stepping into a once-zone a moment after player 2 set it off was told nothing).</summary>
+		public static bool UsedByOtherLately(IslandWorldState.Entry e, int key, float seconds)
+		{
+			float at;
+			return e != null && usedByOthersAt.TryGetValue(((long)e.Id << 32) | (uint)key, out at) && Time.time - at <= seconds;
 		}
 
 		/// <summary>
