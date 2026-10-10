@@ -205,6 +205,55 @@ namespace DynamicIslands
 			if (ok) Log("PASS: every screen size in the New Game box"); else Fail("every screen size in the New Game box");
 		}
 
+		[ConsoleCommand(name: "CIScreensLevels", docs: "Dev, world: the level up system's stats page (every stat full, the longest texts), the level bar and a level up's box at 8 screen sizes: every row, text and the Close button on the screen; pictures shot_screen_<w>x<h>_stats. The player's record and the screen size are put back after (IL19)")]
+		public static void ScreensLevelsCommand() { StartTest(ScreensLevelsRoutine()); }
+
+		static IEnumerator ScreensLevelsRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || RAPI.GetLocalPlayer() == null) { Fail("every screen size for the levels: run in a world"); yield break; }
+			bool ok = true;
+			int w0 = Screen.width, h0 = Screen.height;
+			FullScreenMode mode0 = Screen.fullScreenMode;
+			bool wasOn = PlayerLevels.On;
+			if (!wasOn) PlayerLevels.TurnOn(false);
+			LevelRecord mine = PlayerLevels.Mine != null ? PlayerLevels.Mine.Copy() : new LevelRecord();
+			var full = new LevelRecord { Xp = LevelRules.TotalFor(70), Kills = 900 };
+			for (int i = 0; i < LevelRules.StatCount; i++) full.Points[i] = LevelRules.MaxPoints;
+			PlayerLevels.SetMine(full);
+			try
+			{
+				foreach (Vector2Int size in ScreenSizes)
+				{
+					Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
+					yield return new WaitForSecondsRealtime(1.2f);
+					int w = Screen.width, h = Screen.height;
+					LevelHud.ShowBar();
+					LevelHud.Announce("LEVEL UP!", "Level 70. Every level gives " + LevelRules.PointsPerLevel + " stat points: press " + PlayerLevels.Key + " to spend them - a long line to see it wraps and fits.", true);
+					LevelWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					GameObject page = GameObject.Find("CustomIslands_Stats"), hud = GameObject.Find("CustomIslands_Levels");
+					var off = page != null ? OffScreen(page, w, h) : new List<string> { "no stats page" };
+					Check(ref ok, LevelWindow.IsOpen && off.Count == 0, w + "x" + h + " stats page: " + (off.Count == 0 ? "every row and the Close button on the screen" : "off the screen: " + string.Join(", ", off.Take(5).ToArray())));
+					var hudOff = hud != null ? OffScreen(hud, w, h) : new List<string> { "no level bar" };
+					Check(ref ok, LevelHud.BarShown && hudOff.Count == 0, w + "x" + h + " level bar and box: " + (hudOff.Count == 0 ? "on the screen" : "off the screen: " + string.Join(", ", hudOff.Take(5).ToArray())));
+					if (size.x == 1280 || size.x == 3440 || off.Count > 0 || hudOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_stats" }); yield return new WaitForSecondsRealtime(0.6f); }
+					LevelWindow.Close();
+					LevelHud.Clear();
+					yield return null;
+				}
+			}
+			finally
+			{
+				Screen.SetResolution(w0, h0, mode0);
+				LevelWindow.Close();
+				PlayerLevels.SetMine(mine);
+				if (!wasOn) PlayerLevels.TurnOff();
+			}
+			yield return new WaitForSecondsRealtime(1f);
+			if (ok) Log("PASS: every screen size for the levels"); else Fail("every screen size for the levels");
+		}
+
 		#endregion
 
 

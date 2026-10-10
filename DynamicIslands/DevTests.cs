@@ -1260,7 +1260,8 @@ namespace DynamicIslands
 				int size;
 				IslandNetMessage back = RoundTrip(list, out size);
 				bool same = back != null && back.Kind == list.Kind && back.FullList && back.Ids.SequenceEqual(list.Ids) && back.Names.SequenceEqual(list.Names) &&
-					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets) && back.States.SequenceEqual(list.States);
+					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets) && back.States.SequenceEqual(list.States) &&
+					(back.Labels ?? new string[0]).SequenceEqual(list.Labels ?? new string[0]) && (back.Rules ?? new string[0]).SequenceEqual(list.Rules ?? new string[0]);
 				Log((same ? "PASS" : "FAIL") + ": island list with " + list.Ids.Length + " island(s) survives RML's serializer (" + size + " bytes)" +
 					(back == null ? " - came back as null" : ""));
 				ok &= same;
@@ -1349,6 +1350,17 @@ namespace DynamicIslands
 					WorldOptions.Message(),
 					new IslandNetMessage { Kind = IslandNetMessage.WorldCopy, Name = Guid.NewGuid().ToString(), Hash = "0123abcd", Index = 0, Count = 1, Data = "# Custom islands in world 'CI Net'\n@plan=Random islands\n@savedat=1" },
 					StoryChain.Message("A new signal\nTune the Receiver to #1234"),
+					// (and the kinds after those - IX6: 20-29)
+					new IslandNetMessage { Kind = IslandNetMessage.QuestCount, Data = "Story\tThe lighthouse\t1\nSide\tLost crate\t0" },
+					new IslandNetMessage { Kind = IslandNetMessage.CreatureSpots, Data = "1234:7:2;1235:7:3" },
+					new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { 7, 0, -1 }, Index = 41, Count = 12 },
+					new IslandNetMessage { Kind = IslandNetMessage.FileWanted, Name = "cimpfull", Hash = "0123abcd" },
+					new IslandNetMessage { Kind = IslandNetMessage.WorldCopyNewer, Name = Guid.NewGuid().ToString(), Data = "5;638640000000000000" },
+					new IslandNetMessage { Kind = IslandNetMessage.QuestStepMore, Ids = new[] { 7, 2 }, Index = 1, Count = 3 },
+					new IslandNetMessage { Kind = IslandNetMessage.DailyQuest, Name = "add", Index = 12, Count = 4 },
+					new IslandNetMessage { Kind = IslandNetMessage.RogueShark, Name = "spawn", Index = 5678, Count = 20 },
+					new IslandNetMessage { Kind = IslandNetMessage.WorldSave, Name = Guid.NewGuid().ToString(), Hash = "CI Net", Index = 1, Count = 3, Data = Convert.ToBase64String(new byte[] { 0, 1, 2, 250, 251 }) },
+					new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "learned", Index = 3, Data = "76561197992629925" },
 				};
 				var broken = new List<string>();
 				foreach (IslandNetMessage m in kinds)

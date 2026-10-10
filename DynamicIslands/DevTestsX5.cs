@@ -219,6 +219,55 @@ namespace DynamicIslands
 			if (ok) Log("PASS: old world lines"); else Fail("old world lines");
 		}
 
+		[ConsoleCommand(name: "CILevelBadLines", docs: "Dev, world (host, a saved test world 'CI ...' without custom islands): a hand-edited world file's bad @level lines read without errors and clamped - no id, a bad or too long id, words for numbers, more points than the level gives, points over the most a stat takes and below 0, no kills field, negative EXP and kills; the save writes only good records. The world's file is put back after (ROADMAP X5, IL23)")]
+		public static void LevelBadLinesCommand()
+		{
+			string where = X5Where("level bad lines");
+			if (where != null) { Fail(where); return; }
+			bool ok = true;
+			string[] before = X5Backup();
+			int rich = LevelRules.TotalFor(40); // (enough levels for every point a stat takes)
+			try
+			{
+				X5Load(new[]
+				{
+					"@auto=on",
+					"@levels=on",
+					"@level=",
+					"@level=4240",
+					"@level=abc|100|1|1",
+					"@level=99999999999999999999999|100|1|1",
+					"@level=4241|xyz|q,w|e",
+					"@level=4242|300|9,9,9,9,9,9,9,9,9|5",
+					"@level=" + "4243|" + rich + "|99,-5,3|7",
+					"@level=4244|300|1",
+					"@level=4245|-50|0|-3",
+					"@level=4246|" + rich + "|1,1,1,1,1,1,1,1,1,1,1,1|2",
+				});
+				Check(ref ok, PlayerLevels.On, "the system is on");
+				Check(ref ok, PlayerLevels.RecordOf(4240UL) == null, "a line without a record is left out");
+				LevelRecord a = PlayerLevels.RecordOf(4241UL), b = PlayerLevels.RecordOf(4242UL), c = PlayerLevels.RecordOf(4243UL), d = PlayerLevels.RecordOf(4244UL), e = PlayerLevels.RecordOf(4245UL), g = PlayerLevels.RecordOf(4246UL);
+				Check(ref ok, a != null && a.Xp == 0 && a.Spent == 0 && a.Kills == 0, "words for numbers: a fresh record" + (a != null ? " (" + a.Encode() + ")" : ""));
+				Check(ref ok, b != null && b.Spent == LevelRules.PointsAt(b.Level) && b.Points[0] == LevelRules.PointsAt(b.Level) && b.Kills == 5,
+					"more points than level " + (b != null ? b.Level : 0) + " gives: cut to " + (b != null ? b.Encode() : "no record"));
+				Check(ref ok, c != null && c.Points[0] == LevelRules.MaxPoints && c.Points[1] == 0 && c.Points[2] == 3 && c.Kills == 7,
+					"points over " + LevelRules.MaxPoints + " and below 0 clamped: " + (c != null ? c.Encode() : "no record"));
+				Check(ref ok, d != null && d.Xp == 300 && d.Points[0] == 1 && d.Kills == 0, "no kills field: 0 kills (" + (d != null ? d.Encode() : "no record") + ")");
+				Check(ref ok, e != null && e.Xp == 0 && e.Kills == 0 && e.Level == 1, "negative EXP and kills: 0 (" + (e != null ? e.Encode() : "no record") + ")");
+				Check(ref ok, g != null && g.Points.Length == LevelRules.StatCount && g.Spent == LevelRules.StatCount, "more stats than this version has: the extra left out (" + (g != null ? g.Encode() : "no record") + ")");
+
+				IslandWorldState.Save();
+				string[] levels = X5Saved().Where(l => l.StartsWith("@level=") && !l.StartsWith("@level=" + RAPI.GetLocalPlayer().steamID.Id.ToString(CultureInfo.InvariantCulture) + "|")).ToArray(); // (the host's own record may come too)
+				string[] want = new[] { a, b, c, d, e, g }.Zip(new[] { 4241, 4242, 4243, 4244, 4245, 4246 }, (r, id) => r == null ? "" : "@level=" + id + "|" + r.Encode()).ToArray();
+				Check(ref ok, levels.Length == want.Length && want.All(w => levels.Contains(w)), "saved: only the good records, in today's form (" + string.Join("  ", levels) + ")");
+				IslandWorldState.OnWorldLoaded();
+				Check(ref ok, new[] { 4241UL, 4242UL, 4243UL, 4244UL, 4245UL, 4246UL }.All(id => PlayerLevels.RecordOf(id) != null) && PlayerLevels.RecordOf(4243UL).Encode() == c.Encode(), "read back the same");
+			}
+			catch (Exception ex) { Fail("level bad lines: " + ex); ok = false; }
+			finally { X5Restore(before); }
+			if (ok) Log("PASS: level bad lines"); else Fail("level bad lines");
+		}
+
 		#endregion
 
 		#region A world saved by a newer version

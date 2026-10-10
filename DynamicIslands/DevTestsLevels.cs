@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -521,7 +522,475 @@ namespace DynamicIslands
 			else Fail("'" + LevelMPIsland + "' did not turn the level up system on");
 		}
 
-		[ConsoleCommand(name: "CILevelInfo", docs: "Dev, in game (either player): the level up system here - on or off, this player's level, EXP and points; on the host also every player's record. CILevelInfo off = turn it off (host, tests)")]
+		[ConsoleCommand(name: "CILevelDifficulty", docs: "Dev, in game (host): the level island's warthogs hit for 30% of their health through Raft's DamageEntity at each monster difficulty - Nightmare takes twice the hits (7), Timid fewer (3), Normal 4 - and each kill gives exactly the warthog's EXP, no more, no less; with Raft's Creative rule that players' hits do nothing an island creature still takes the hit and gives EXP (AU61), and the stats still apply. The difficulty and the record are put back after (IL12, IL11)")]
+		public static void LevelDifficultyCommand() { StartTest(LevelDifficultyRoutine()); }
+
+		static IEnumerator LevelDifficultyRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			PlayerLevels.TurnOff();
+			int difficulty0 = MonsterDifficulty.Current;
+			List<AI_NetworkBehaviour> boars = new List<AI_NetworkBehaviour>();
+			IslandWorldState.Entry[] entryOut = new IslandWorldState.Entry[1];
+			yield return LevelBoarsRoutine(raftPos.Value, 4, boars, entryOut);
+			IslandWorldState.Entry entry = entryOut[0];
+			if (entry == null) yield break;
+			PutPlayerNear(boars[0].transform, 5f);
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			float pve = 1f;
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			if (mode != null && mode.playerSpecificVariables != null) pve = mode.playerSpecificVariables.negateOutgoingPlayerDamage ? 0f : mode.playerSpecificVariables.outgoingDamageMultiplierPVE;
+			if (pve <= 0f) { Fail("this world's game mode takes away players' damage"); LevelCleanup(entry); yield break; }
+			try
+			{
+				int[] levels = { MonsterDifficulty.Nightmare, MonsterDifficulty.Timid, MonsterDifficulty.Normal };
+				int[] wantHits = { 7, 3, 4 };
+				for (int k = 0; k < levels.Length; k++)
+				{
+					MonsterDifficulty.Current = levels[k];
+					PlayerLevels.SetMine(new LevelRecord());
+					AI_NetworkBehaviour boar = boars[k];
+					int worth = PlayerLevels.MonsterXp(boar);
+					float max = boar.networkEntity.stat_health.Max;
+					int xp0 = PlayerLevels.Mine.Xp, kills0 = PlayerLevels.Mine.Kills, hits = 0;
+					for (int i = 0; i < 12 && !boar.networkEntity.IsDead; i++)
+					{
+						host.DamageEntity(boar.networkEntity, boar.transform, max * 0.3f / pve, boar.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+						hits++;
+						yield return new WaitForSeconds(0.2f);
+					}
+					string name = MonsterDifficulty.Name(levels[k]);
+					Check(ref ok, boar.networkEntity.IsDead && hits == wantHits[k], name + ": hits of 30% kill a warthog in " + hits + " (want " + wantHits[k] + ")");
+					Check(ref ok, PlayerLevels.Mine.Xp - xp0 == worth && PlayerLevels.Mine.Kills == kills0 + 1, name + ": the kill gives its EXP exactly (" + (PlayerLevels.Mine.Xp - xp0) + " of " + worth + "), one kill");
+				}
+				// Raft's Peaceful / Creative: players' hits do nothing (negateOutgoingPlayerDamage) - and give no EXP (IL11)
+				MonsterDifficulty.Current = MonsterDifficulty.Normal;
+				if (mode != null && mode.playerSpecificVariables != null)
+				{
+					AI_NetworkBehaviour last = boars[3];
+					float hp = last.networkEntity.stat_health.Value;
+					int xp = PlayerLevels.Mine.Xp;
+					bool negate0 = mode.playerSpecificVariables.negateOutgoingPlayerDamage;
+					mode.playerSpecificVariables.negateOutgoingPlayerDamage = true;
+					try { host.DamageEntity(last.networkEntity, last.transform, last.networkEntity.stat_health.Max * 0.5f, last.transform.position + Vector3.up, Vector3.up, EntityType.Player, null); }
+					finally { mode.playerSpecificVariables.negateOutgoingPlayerDamage = negate0; }
+					yield return new WaitForSeconds(0.2f);
+					// (an island creature still takes hits there - AU61 kill quests, IslandCreatureHitPatch - so the hit gives its EXP)
+					float hp1 = last.networkEntity.stat_health.Value;
+					Check(ref ok, hp1 < hp - 1f && PlayerLevels.Mine.Xp > xp && !mode.playerSpecificVariables.negateOutgoingPlayerDamage, "a game mode where players' hits do nothing: an island creature still takes the hit and gives EXP, the mode's switch is put back (health " + hp.ToString("F0") + " -> " + hp1.ToString("F0") + ", EXP +" + (PlayerLevels.Mine.Xp - xp) + ")");
+					PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(6), Points = new[] { 0, 0, 0, 0, 10, 0, 0, 0, 0 } });
+					Check(ref ok, Mathf.Abs(PlayerLevels.Factor(LevelRules.Damage) - 1.1f) < 0.001f, "the stats still apply there (Damage x" + PlayerLevels.Factor(LevelRules.Damage).ToString("F2") + ")");
+				}
+				else Log("  (no game mode values: the Peaceful check skipped)");
+			}
+			finally
+			{
+				MonsterDifficulty.Current = difficulty0;
+				PlayerLevels.SetMine(new LevelRecord());
+			}
+			LevelCleanup(entry);
+			if (ok) Log("PASS: level difficulty"); else Fail("level difficulty");
+		}
+
+		/// <summary>Host: spawns the level island (levels on) near the raft with <paramref name="count"/> harmless warthogs
+		/// and stands the player on it. On failure it says so and leaves entryOut[0] null.</summary>
+		static IEnumerator LevelBoarsRoutine(Vector3 raftPos, int count, List<AI_NetworkBehaviour> boars, IslandWorldState.Entry[] entryOut)
+		{
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			f.Name = LevelIsland;
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			float step = f.TerrainSize.x / (f.HeightmapResolution - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
+			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
+			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 6f, c.y + 4f), Props = P(ObjectProps.CreatureCount, count.ToString(), ObjectProps.CreatureDamage, "0") });
+			f.Props[IslandProps.Levels] = "on";
+			f.Save(IslandSpawner.PathFor(LevelIsland));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos, CustomIslandSpawner.LandRadius(LevelIsland), 390f);
+			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(LevelIsland, spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault(e => e.HostName == LevelIsland);
+			if (entry == null || entry.Root == null) { Fail("the level island did not spawn"); yield break; }
+			float t0 = Time.realtimeSinceStartup;
+			while (Time.realtimeSinceStartup - t0 < 40f)
+			{
+				boars.Clear();
+				boars.AddRange(entry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && p.Kind.Type == AI_NetworkBehaviourType.Boar)
+					.SelectMany(p => p.Spawned).Where(a => a != null && a.networkEntity != null && !a.networkEntity.IsDead && a.networkEntity.stat_health.Max > 0f));
+				if (boars.Count >= count) break;
+				yield return new WaitForSeconds(0.5f);
+			}
+			if (boars.Count < count) { Fail("the warthogs did not come (" + boars.Count + ")"); LevelCleanup(entry); yield break; }
+			yield return StandRoutine(entry.Root);
+			entryOut[0] = entry;
+		}
+
+		[ConsoleCommand(name: "CILevelWeapons", docs: "Dev, in game (host): Raft's own hit code on the level island's warthogs - every melee weapon in the player's hands (MeleeWeapon.OnHitEntity with a real raycast hit) does its damage times the Damage stat (10 points: x1.1) and gives EXP; a firework lit from the player's hand (Firework_Hand.LaunchFirework, then Raft's Firework.TryToDamageEntity, which counts as the world's damage) gives that player the EXP too. Arrows and stones call the same DamageEntity as players (IL1)")]
+		public static void LevelWeaponsCommand() { StartTest(LevelWeaponsRoutine()); }
+
+		static IEnumerator LevelWeaponsRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (!raftPos.HasValue || !Raft_Network.IsHost || player == null) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			PlayerLevels.TurnOff();
+			MeleeWeapon[] melee = player.GetComponentsInChildren<MeleeWeapon>(true).Where(w => w != null && Traverse.Create(w).Field("damage").GetValue<int>() > 0f).ToArray();
+			Firework_Hand hand = player.GetComponentsInChildren<Firework_Hand>(true).FirstOrDefault();
+			List<AI_NetworkBehaviour> boars = new List<AI_NetworkBehaviour>();
+			IslandWorldState.Entry[] entryOut = new IslandWorldState.Entry[1];
+			yield return LevelBoarsRoutine(raftPos.Value, 3, boars, entryOut);
+			IslandWorldState.Entry entry = entryOut[0];
+			if (entry == null) yield break;
+			Check(ref ok, melee.Length > 0, melee.Length + " melee weapons in the player's hands (" + string.Join(", ", melee.Select(w => w.name).Distinct().ToArray()) + ")");
+			float pve = 1f;
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			if (mode != null && mode.playerSpecificVariables != null) pve = mode.playerSpecificVariables.negateOutgoingPlayerDamage ? 0f : mode.playerSpecificVariables.outgoingDamageMultiplierPVE;
+			if (pve <= 0f) { Fail("this world's game mode takes away players' damage"); LevelCleanup(entry); yield break; }
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			int b = 0;
+			Func<AI_NetworkBehaviour> next = () =>
+			{
+				while (b < boars.Count && (boars[b] == null || boars[b].networkEntity.IsDead || boars[b].networkEntity.stat_health.Value < boars[b].networkEntity.stat_health.Max * 0.3f)) b++;
+				return b < boars.Count ? boars[b] : null;
+			};
+			try
+			{
+				PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(6), Points = new[] { 0, 0, 0, 0, 10, 0, 0, 0, 0 } });
+				foreach (MeleeWeapon w in melee)
+				{
+					AI_NetworkBehaviour boar = next();
+					if (boar == null) { Check(ref ok, false, "warthogs left for " + w.name); break; }
+					PutPlayerNear(boar.transform, 4f);
+					yield return new WaitForSeconds(0.3f);
+					Traverse tw = Traverse.Create(w);
+					if (tw.Field("hostNetwork").GetValue() == null) tw.Field("hostNetwork").SetValue(host);
+					if (tw.Field("playerNetwork").GetValue() == null) tw.Field("playerNetwork").SetValue(player);
+					RaycastHit hit;
+					Collider col = boar.GetComponentsInChildren<Collider>().FirstOrDefault(x => x.enabled && !x.isTrigger);
+					Vector3 aim = col != null ? col.bounds.center : boar.transform.position + Vector3.up * 0.5f;
+					if (!Physics.Raycast(aim + Vector3.up * 3f, Vector3.down, out hit, 6f, ~0, QueryTriggerInteraction.Ignore) || hit.transform.GetComponentInParent<AI_NetworkBehaviour>() != boar)
+					{ Check(ref ok, false, w.name + ": no raycast hit on the warthog" + (hit.transform != null ? " (hit " + hit.transform.name + ")" : "")); continue; }
+					float hp = boar.networkEntity.stat_health.Value, dmg = tw.Field("damage").GetValue<int>();
+					int xp = PlayerLevels.Mine.Xp;
+					try { AccessTools.Method(typeof(MeleeWeapon), "OnHitEntity").Invoke(w, new object[] { hit, boar.networkEntity }); }
+					catch (Exception e) { Log("  (" + w.name + " after the hit: " + (e.InnerException ?? e).Message + ")"); }
+					yield return new WaitForSeconds(0.2f);
+					float lost = hp - boar.networkEntity.stat_health.Value, want = Mathf.Min(hp, dmg * 1.1f * pve);
+					Check(ref ok, Mathf.Abs(lost - want) < 0.05f + want * 0.01f && PlayerLevels.Mine.Xp > xp,
+						w.name + ": " + lost.ToString("F1") + " damage (want " + want.ToString("F1") + " = " + dmg.ToString("F1") + " x1.1" + (pve != 1f ? " x" + pve.ToString("F2") : "") + "), EXP +" + (PlayerLevels.Mine.Xp - xp));
+				}
+				// a firework: lit from the player's own hand (its owner kept), Raft's own TryToDamageEntity hurts the warthog as the world
+				AI_NetworkBehaviour fb = next();
+				if (hand == null || fb == null) Check(ref ok, false, "a firework hand (" + (hand != null) + ") and a warthog left (" + (fb != null) + ")");
+				else
+				{
+					PutPlayerNear(fb.transform, 6f);
+					yield return new WaitForSeconds(0.3f);
+					uint index = SaveAndLoad.GetUniqueObjectIndex();
+					hand.LaunchFirework(player.transform.position + Vector3.up * 30f, Vector3.up, 5f, false, 0, index);
+					Firework fw = UnityEngine.Object.FindObjectsOfType<Firework>().FirstOrDefault(x => x.ObjectIndex == index);
+					Network_Entity_Redirect target = fb.GetComponentInChildren<Network_Entity_Redirect>(true);
+					if (fw == null || target == null) Check(ref ok, false, "the firework (" + (fw != null) + ") and the warthog's hit box (" + (target != null) + ")");
+					else
+					{
+						float hp = fb.networkEntity.stat_health.Value;
+						int xp = PlayerLevels.Mine.Xp;
+						AccessTools.Method(typeof(Firework), "TryToDamageEntity").Invoke(fw, new object[] { target.transform });
+						UnityEngine.Object.Destroy(fw.gameObject);
+						yield return new WaitForSeconds(0.2f);
+						Check(ref ok, fb.networkEntity.stat_health.Value < hp && PlayerLevels.Mine.Xp > xp,
+							"a firework: health " + hp.ToString("F0") + " -> " + fb.networkEntity.stat_health.Value.ToString("F0") + ", EXP +" + (PlayerLevels.Mine.Xp - xp) + " for the player who lit it");
+						Check(ref ok, LevelFireworkPatch.By == 0UL, "the firework's owner is let go after its hit");
+					}
+				}
+			}
+			finally { PlayerLevels.SetMine(new LevelRecord()); }
+			LevelCleanup(entry);
+			if (ok) Log("PASS: level weapons"); else Fail("level weapons");
+		}
+
+		[ConsoleCommand(name: "CILevelCost", docs: "Dev, in game: what the level up system costs a frame - Raft's hunger/thirst getter (patched), the name tags' and the health stat's ticks - timed 20,000 times with the system on and off; each must stay under 2 microseconds a call more, and 300 frames with it on take about as long as with it off (within 15%: frame times wander) (IL24)")]
+		public static void LevelCostCommand() { StartTest(LevelCostRoutine()); }
+
+		static IEnumerator LevelCostRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (!LoadSceneManager.IsGameSceneLoaded || player == null || player.Stats == null) { Fail("level cost: run in a world"); yield break; }
+			bool ok = true;
+			bool wasOn = PlayerLevels.On;
+			Stat_Consumable bar = player.Stats.stat_hunger.normalConsumable;
+			MethodInfo getter = AccessTools.PropertyGetter(typeof(Stat_Consumable), "LostPerSecond");
+			Func<bool, double[]> time = on =>
+			{
+				if (on) PlayerLevels.TurnOn(false); else PlayerLevels.TurnOff();
+				const int n = 20000;
+				var sw = System.Diagnostics.Stopwatch.StartNew();
+				for (int i = 0; i < n; i++) getter.Invoke(bar, null);
+				double g = sw.Elapsed.TotalMilliseconds * 1000.0 / n;
+				sw = System.Diagnostics.Stopwatch.StartNew();
+				for (int i = 0; i < n / 20; i++) { LevelTags.Tick(); StatApply.Tick(); }
+				double t = sw.Elapsed.TotalMilliseconds * 1000.0 / (n / 20);
+				return new[] { g, t };
+			};
+			double[] off = time(false), on1 = time(true);
+			Check(ref ok, on1[0] - off[0] < 2.0, "the hunger getter: " + off[0].ToString("F2") + " us off, " + on1[0].ToString("F2") + " us on");
+			Check(ref ok, on1[1] - off[1] < 20.0, "the name tags' and health's ticks: " + off[1].ToString("F2") + " us off, " + on1[1].ToString("F2") + " us on");
+			var frames = new float[2];
+			for (int round = 0; round < 2; round++)
+			{
+				if (round == 1) PlayerLevels.TurnOn(false); else PlayerLevels.TurnOff();
+				yield return new WaitForSecondsRealtime(1f);
+				float sum = 0f;
+				for (int i = 0; i < 300; i++) { yield return null; sum += Time.unscaledDeltaTime; }
+				frames[round] = sum / 300f * 1000f;
+			}
+			// (frame times wander by a few percent by themselves: logged; a failure only when far off)
+			Check(ref ok, frames[1] <= frames[0] * 1.15f + 0.5f, "300 frames: " + frames[0].ToString("F2") + " ms off, " + frames[1].ToString("F2") + " ms on");
+			if (wasOn) PlayerLevels.TurnOn(false); else PlayerLevels.TurnOff();
+			if (ok) Log("PASS: level cost"); else Fail("level cost");
+		}
+
+		[ConsoleCommand(name: "CILevelBody", docs: "Dev, in game: the Health, Hunger and Thirst stats on Raft's own player - 10 points in Health raise the maximum by 10%, healing stops there, Raft's bonus health is left alone, and after a respawn without a bed the maximum is still raised; 10 points in Hunger and Thirst make Raft's drain (normal and bonus bars) 10% slower, measured over game time at 4x speed. The record and time speed are put back after (IL5, IL10)")]
+		public static void LevelBodyCommand() { StartTest(LevelBodyRoutine()); }
+
+		static IEnumerator LevelBodyRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (!LoadSceneManager.IsGameSceneLoaded || player == null || player.Stats == null) { Fail("level body: run in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			bool wasOn = PlayerLevels.On;
+			if (!wasOn) PlayerLevels.TurnOn(false);
+			LevelRecord kept = PlayerLevels.Mine != null ? PlayerLevels.Mine.Copy() : new LevelRecord();
+			float scale0 = Time.timeScale;
+			PlayerStats s = player.Stats;
+			Player body = player.GetComponentInChildren<Player>(true);
+			Func<Stat_Consumable, float> lost = c => Traverse.Create(c).Property("LostPerSecond").GetValue<float>();
+			var ten = new LevelRecord { Xp = LevelRules.TotalFor(40) };
+			ten.Points[LevelRules.Health] = 10; ten.Points[LevelRules.Hunger] = 10; ten.Points[LevelRules.Thirst] = 10;
+			try
+			{
+				// Health: 10 points -> Raft's maximum x1.1
+				PlayerLevels.SetMine(new LevelRecord());
+				yield return new WaitForSeconds(0.8f);
+				KeepAlive(player);
+				float baseMax = s.stat_health.Max, bonus0 = s.stat_BonusHealth != null ? s.stat_BonusHealth.Max : -1f;
+				PlayerLevels.SetMine(ten);
+				yield return new WaitForSeconds(0.8f);
+				float max10 = s.stat_health.Max;
+				Check(ref ok, Mathf.Abs(max10 - baseMax * 1.1f) < 0.05f, "10 points in Health: maximum " + baseMax.ToString("F1") + " -> " + max10.ToString("F1"));
+				s.stat_health.Value = max10 - 5f;
+				s.stat_health.Value += 20f;
+				Check(ref ok, s.stat_health.Value <= max10 + 0.01f && s.stat_health.Value >= max10 - 0.01f, "healing stops at the new maximum (" + s.stat_health.Value.ToString("F1") + ")");
+				Check(ref ok, s.stat_BonusHealth == null || Mathf.Abs(s.stat_BonusHealth.Max - bonus0) < 0.01f, "Raft's bonus health is left alone (" + (s.stat_BonusHealth != null ? s.stat_BonusHealth.Max.ToString("F1") : "none") + ")");
+				if (body != null)
+				{
+					body.RespawnWithoutBed(false);
+					yield return new WaitForSeconds(3f);
+					Check(ref ok, Mathf.Abs(s.stat_health.Max - max10) < 0.05f, "after a respawn without a bed the maximum is still raised (" + s.stat_health.Max.ToString("F1") + ")");
+				}
+				else Log("  (no Player component: respawn not checked)");
+				KeepAlive(player);
+
+				// Hunger and thirst: Raft's drain, read and measured
+				Stat_Consumable[] bars = { s.stat_hunger.normalConsumable, s.stat_hunger.bonusConsumable, s.stat_thirst.normalConsumable, s.stat_thirst.bonusConsumable };
+				string[] names = { "hunger", "hunger (bonus)", "thirst", "thirst (bonus)" };
+				float[] with10 = bars.Select(c => c != null ? lost(c) : 0f).ToArray();
+				PlayerLevels.SetMine(new LevelRecord());
+				float[] with0 = bars.Select(c => c != null ? lost(c) : 0f).ToArray();
+				for (int i = 0; i < bars.Length; i++)
+					if (bars[i] != null && with0[i] > 0f)
+						Check(ref ok, Mathf.Abs(with10[i] - with0[i] / 1.1f) < with0[i] * 0.005f, names[i] + ": " + with0[i].ToString("F5") + "/s -> " + with10[i].ToString("F5") + "/s with 10 points");
+				var drop = new float[2][];
+				for (int round = 0; round < 2; round++)
+				{
+					PlayerLevels.SetMine(round == 0 ? new LevelRecord() : ten);
+					yield return new WaitForSeconds(0.5f);
+					KeepAlive(player);
+					s.stat_hunger.Normal.Value = s.stat_hunger.Normal.Max * 0.6f;
+					s.stat_thirst.Normal.Value = s.stat_thirst.Normal.Max * 0.6f;
+					float h0 = s.stat_hunger.Normal.Value, t0 = s.stat_thirst.Normal.Value;
+					Time.timeScale = 4f;
+					yield return new WaitForSecondsRealtime(10f);
+					Time.timeScale = scale0;
+					drop[round] = new[] { h0 - s.stat_hunger.Normal.Value, t0 - s.stat_thirst.Normal.Value };
+				}
+				for (int k = 0; k < 2; k++)
+				{
+					float ratio = drop[0][k] > 0f ? drop[1][k] / drop[0][k] : 0f;
+					Check(ref ok, drop[0][k] > 0f && Mathf.Abs(ratio - 1f / 1.1f) < 0.04f, (k == 0 ? "hunger" : "thirst") + " over game time: " + drop[0][k].ToString("F3") + " with 0 points, " + drop[1][k].ToString("F3") + " with 10 (x" + ratio.ToString("F3") + ", about 0.909)");
+				}
+			}
+			finally
+			{
+				Time.timeScale = scale0;
+				PlayerLevels.SetMine(kept);
+				if (!wasOn) PlayerLevels.TurnOff();
+				KeepAlive(player);
+			}
+			if (ok) Log("PASS: level body"); else Fail("level body");
+		}
+
+		[ConsoleCommand(name: "CILevelAir", docs: "Dev, in game: the Oxygen stat measured - this player held 6 m under the sea, Raft's breath bar drops over game time at 4x speed with 0 and then 10 points in Oxygen: with 10 it drops about 10% slower (x0.909). The record, the time speed and the player are put back after (IL8)")]
+		public static void LevelAirCommand() { StartTest(LevelAirRoutine()); }
+
+		static IEnumerator LevelAirRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!LoadSceneManager.IsGameSceneLoaded || player == null || player.Stats == null || !raft.HasValue) { Fail("level air: run in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true, wasOn = PlayerLevels.On;
+			if (!wasOn) PlayerLevels.TurnOn(false);
+			LevelRecord kept = PlayerLevels.Mine != null ? PlayerLevels.Mine.Copy() : new LevelRecord();
+			float scale0 = Time.timeScale;
+			Stat_Oxygen air = player.Stats.stat_oxygen;
+			var drop = new float[2];
+			try
+			{
+				Vector3 under = raft.Value + new Vector3(0f, 0f, -40f);
+				under.y = -6f;
+				for (int round = 0; round < 2; round++)
+				{
+					var r = new LevelRecord { Xp = LevelRules.TotalFor(40) };
+					r.Points[LevelRules.Oxygen] = round == 0 ? 0 : 10;
+					PlayerLevels.SetMine(r);
+					PlayerMove.To(player, under, ControllerType.Water);
+					KeepAlive(player);
+					yield return new WaitForSeconds(1f);
+					air.Value = air.Max;
+					float a0 = air.Value, until = Time.realtimeSinceStartup + 6f, g0 = Time.time;
+					Time.timeScale = 4f;
+					while (Time.realtimeSinceStartup < until)
+					{
+						// (held under: a still player drifts up and breathes at the surface)
+						if (Mathf.Abs(player.transform.position.y - under.y) > 0.5f) PlayerMove.To(player, under, ControllerType.Water);
+						yield return null;
+					}
+					Time.timeScale = scale0;
+					// (per second of game time: the frame rate decides how much game time 6 real seconds hold)
+					drop[round] = (a0 - air.Value) / Mathf.Max(0.001f, Time.time - g0);
+				}
+				float ratio = drop[0] > 0f ? drop[1] / drop[0] : 0f;
+				Check(ref ok, drop[0] > 0f && air.Value > 0f && Mathf.Abs(ratio - 1f / 1.1f) < 0.04f, "breath under the sea per game second: " + drop[0].ToString("F3") + " with 0 points, " + drop[1].ToString("F3") + " with 10 (x" + ratio.ToString("F3") + ", about 0.909)");
+			}
+			finally
+			{
+				Time.timeScale = scale0;
+				PlayerLevels.SetMine(kept);
+				if (!wasOn) PlayerLevels.TurnOff();
+				air.Value = air.Max;
+				OnRaftCommand();
+				KeepAlive(player);
+			}
+			if (ok) Log("PASS: level air"); else Fail("level air");
+		}
+
+		// CILevelMove: the walk, run, swim and jump stats measured with Raft's controller moving the player on real keys (IL9)
+		static GameObject movePad;
+		static LevelRecord moveKept;
+		static bool moveWasOn, moveWater;
+		static Vector3 moveStart;
+		static float movePeak;
+		static int moveRun;
+
+		[ConsoleCommand(name: "CILevelMove", docs: "Dev, in game: the speed and jump stats with real keys (IL9) - CILevelMove land|water <points> puts this player on a flat pad 40 m over the sea (or in the sea) facing north, with <points> in Walk, Run, Swim and Jump (logs Ready); then hold W, Shift+W or Space for real, and CILevelMove result logs MOVE across <m> up <m> since and puts the player back; CILevelMove end puts the record, the pad and the player back")]
+		public static void LevelMoveCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			int points = 0;
+			if (args != null && args.Length > 1) int.TryParse(args[1], out points);
+			StartTest(LevelMoveRoutine(what, Mathf.Clamp(points, 0, LevelRules.MaxPoints)));
+		}
+
+		static IEnumerator LevelMoveRoutine(string what, int points)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			if (!LoadSceneManager.IsGameSceneLoaded || player == null || !raft.HasValue) { Fail("level move: run in a world"); yield break; }
+			if (what == "end")
+			{
+				moveRun++;
+				if (movePad != null) UnityEngine.Object.Destroy(movePad);
+				movePad = null;
+				if (moveKept != null) { PlayerLevels.SetMine(moveKept); if (!moveWasOn) PlayerLevels.TurnOff(); }
+				moveKept = null;
+				OnRaftCommand();
+				KeepAlive(player);
+				Log("Level move ended: record and player back");
+				yield break;
+			}
+			if (what == "result")
+			{
+				if (moveKept == null) { Fail("level move: CILevelMove land|water first"); yield break; }
+				Vector3 at = player.transform.position;
+				Log("MOVE across " + ScFlat(at, moveStart).ToString("F2", CultureInfo.InvariantCulture) + " up " + (movePeak - moveStart.y).ToString("F2", CultureInfo.InvariantCulture) +
+					" (" + (moveWater ? "water" : "land") + ", " + PlayerLevels.Mine.Points[LevelRules.Walk] + " points)");
+				yield return MoveToStart(player, moveStart, moveWater);
+				yield break;
+			}
+			if (what != "land" && what != "water") { Fail("level move: CILevelMove land|water <points>, result or end"); yield break; }
+			yield return EnsureAlive();
+			if (moveKept == null) { moveWasOn = PlayerLevels.On; moveKept = PlayerLevels.Mine != null ? PlayerLevels.Mine.Copy() : new LevelRecord(); }
+			if (!PlayerLevels.On) PlayerLevels.TurnOn(false);
+			var r = new LevelRecord { Xp = LevelRules.TotalFor(40) };
+			foreach (int st in new[] { LevelRules.Walk, LevelRules.Run, LevelRules.Swim, LevelRules.Jump }) r.Points[st] = points;
+			PlayerLevels.SetMine(r);
+			moveWater = what == "water";
+			Vector3 start;
+			if (moveWater)
+			{
+				// (south of the raft, swimming on south: away from it)
+				start = raft.Value + new Vector3(0f, 0f, -40f);
+				start.y = 0.5f;
+			}
+			else
+			{
+				// (a flat pad well over the sea and anything on it: nothing to bump into for 100 m)
+				if (movePad == null)
+				{
+					movePad = new GameObject("CILevelMovePad");
+					movePad.layer = IslandSpawner.TerrainLayer;
+					movePad.AddComponent<BoxCollider>().size = new Vector3(300f, 1f, 300f);
+				}
+				movePad.transform.position = raft.Value + new Vector3(0f, 40f, 0f);
+				movePad.transform.rotation = Quaternion.identity;
+				start = movePad.transform.position + new Vector3(0f, 1.6f, 0f);
+			}
+			moveStart = start;
+			yield return MoveToStart(player, start, moveWater);
+			int run = ++moveRun;
+			DynamicIslands.instance.StartCoroutine(TrackMove(player, run));
+			Log("Ready: " + what + ", " + points + " points in Walk, Run, Swim and Jump (Walk factor " + PlayerLevels.Factor(LevelRules.Walk).ToString("F2", CultureInfo.InvariantCulture) + ")");
+		}
+
+		/// <summary>The player back at the start, facing the way to go, settled; the measuring starts from there.</summary>
+		static IEnumerator MoveToStart(Network_Player player, Vector3 start, bool water)
+		{
+			PlayerMove.To(player, start, water ? ControllerType.Water : ControllerType.Ground);
+			Look(player, water ? 180f : 0f, 0f);
+			KeepAlive(player);
+			yield return new WaitForSeconds(1.2f);
+			moveStart = player.transform.position;
+			movePeak = moveStart.y;
+		}
+
+		static IEnumerator TrackMove(Network_Player player, int run)
+		{
+			while (run == moveRun && player != null)
+			{
+				movePeak = Mathf.Max(movePeak, player.transform.position.y);
+				yield return null;
+			}
+		}
+
+		[ConsoleCommand(name: "CILevelInfo", docs:"Dev, in game (either player): the level up system here - on or off, this player's level, EXP and points; on the host also every player's record. CILevelInfo off = turn it off (host, tests)")]
 		public static void LevelInfo(string[] args)
 		{
 			if (args != null && args.Length > 0 && args[0] == "off") { PlayerLevels.TurnOff(); Log("Levels turned off"); return; }

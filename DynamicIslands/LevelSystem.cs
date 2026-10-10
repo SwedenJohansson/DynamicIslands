@@ -246,6 +246,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Raised whenever this player's EXP or points change (the stats page and the HUD follow).</summary>
 		public static event Action Changed;
 
+		public static ulong LocalPlayerId { get { return LocalId; } }
+
 		static ulong LocalId
 		{
 			get
@@ -1002,7 +1004,16 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				if (!PlayerLevels.On || entity == null || damageInflictorEntityType != EntityType.Player || entity.entityType != EntityType.Enemy) return;
+				if (!PlayerLevels.On || entity == null || entity.entityType != EntityType.Enemy) return;
+				if (damageInflictorEntityType == EntityType.Environment && LevelFireworkPatch.By != 0UL)
+				{
+					// a firework's hit (Raft counts it as the world's): EXP for the player who lit it, its damage as Raft's
+					if (entity.IsInvurnerable) return;
+					if (LevelFireworkPatch.By == PlayerLevels.LocalPlayerId) PlayerLevels.OnHit(entity, damage);
+					else PlayerLevels.OnRemoteHit(entity, damage, LevelFireworkPatch.By);
+					return;
+				}
+				if (damageInflictorEntityType != EntityType.Player) return;
 				damage *= PlayerLevels.Factor(LevelRules.Damage);
 				// What Raft does to it next (DamageEntity): a mode that takes players' damage away makes it 0 (none of Raft's own
 				// does; never on an island creature - IslandCreatureHitPatch), the mode's PvE multiplier scales it (Hard x0.8)
@@ -1017,5 +1028,47 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels (hit): " + e.Message); }
 		}
+	}
+
+	/// <summary>
+	/// Raft's fireworks hurt as the world (EntityType.Environment) and keep no owner, so a monster hit by one gave no
+	/// EXP. Every machine launches the firework from the player's hand (Firework_Hand.LaunchFirework, with the
+	/// firework's network index): that player is kept per firework, and while the host works out its hit (only the
+	/// host does: Firework.TryToDamageEntity) LevelDamagePatch gives that player the EXP.
+	/// </summary>
+	[HarmonyPatch(typeof(Firework_Hand), "LaunchFirework", new Type[] { typeof(Vector3), typeof(Vector3), typeof(float), typeof(bool), typeof(int), typeof(uint) })]
+	static class LevelFireworkLaunchPatch
+	{
+		static void Postfix(Firework_Hand __instance, uint objectIndex)
+		{
+			try
+			{
+				Network_Player p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>();
+				if (p != null) LevelFireworkPatch.Lit(objectIndex, p.steamID.Id);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels (firework): " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(Firework), "TryToDamageEntity")]
+	static class LevelFireworkPatch
+	{
+		/// <summary>The player whose firework is hitting something now (0: none).</summary>
+		public static ulong By;
+		static readonly Dictionary<uint, ulong> Owner = new Dictionary<uint, ulong>();
+
+		public static void Lit(uint objectIndex, ulong player)
+		{
+			if (Owner.Count > 200) Owner.Clear();   // fireworks live seconds; never let it grow
+			Owner[objectIndex] = player;
+		}
+
+		static void Prefix(Firework __instance)
+		{
+			ulong id;
+			By = __instance != null && Owner.TryGetValue(__instance.ObjectIndex, out id) ? id : 0UL;
+		}
+
+		static void Postfix() { By = 0UL; }
 	}
 }

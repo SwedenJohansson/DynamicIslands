@@ -238,6 +238,45 @@ namespace DynamicIslands
 			if (ok) Log("PASS: generator presets"); else Fail("generator presets");
 		}
 
+		[ConsoleCommand(name: "CILevelPreset", docs: "Dev, any time: the generator's Level up choice - a preset saved with it on brings it back (and an older preset without the line has it off); 'something new like it' and 'a variation of it' of every Raft island keep the choice either way; islands made while sailing (200 seeds) and every map type's islands (as world plans roll them) never have it (IL25)")]
+		public static void LevelPresetCommand()
+		{
+			bool ok = true;
+			try
+			{
+				var on = new IslandGenSettings { Seed = 9, Levels = true };
+				string text = on.ToText();
+				Check(ref ok, text.Contains("Levels=True") && IslandGenSettings.FromText(text).Levels, "a preset saved with Level up on brings it back");
+				string old = string.Join("\n", text.Split('\n').Where(l => !l.StartsWith("Levels=")).ToArray());
+				Check(ref ok, !IslandGenSettings.FromText(old).Levels, "an older preset without the line: off");
+				List<RaftIsland> islands = RaftIslands.Offered;
+				var lost = new List<string>();
+				foreach (RaftIsland i in islands)
+					foreach (bool choice in new[] { true, false })
+					{
+						var s = new IslandGenSettings { Seed = 9, Levels = choice };
+						if (RaftIslands.LikeIt(i, s).Levels != choice) lost.Add("like " + i.Label + " (" + choice + ")");
+						if (RaftIslands.VariationOf(i, s).Levels != choice) lost.Add("variation of " + i.Label + " (" + choice + ")");
+					}
+				Check(ref ok, islands.Count > 0 && lost.Count == 0, "'something new like it' and 'a variation of it' keep the choice (" + islands.Count + " islands)" + (lost.Count > 0 ? ": lost for " + string.Join(", ", lost.Take(5).ToArray()) : ""));
+				int sailing = Enumerable.Range(1, 200).Count(seed => IslandGenerator.RandomSettings(new System.Random(seed), new[] { 0, 1, 2, 3 }).Levels);
+				Check(ref ok, sailing == 0, "islands made while sailing never have it (" + sailing + " of 200)");
+				var typed = new List<string>();
+				int rolled = 0;
+				foreach (MapType t in MapTypes.All)
+					for (int seed = 1; seed <= 5; seed++)
+					{
+						float elevation;
+						IslandGenSettings s = MapTypes.Roll(t, new System.Random(seed), out elevation);
+						rolled++;
+						if (s.Levels && !t.Sets.Any(x => x.TrimStart().StartsWith("Levels", StringComparison.OrdinalIgnoreCase))) typed.Add(t.Name);
+					}
+				Check(ref ok, rolled > 0 && typed.Count == 0, "map types' islands never have it unless the type sets it (" + MapTypes.All.Count + " types, " + rolled + " rolls)" + (typed.Count > 0 ? ": " + string.Join(", ", typed.Distinct().ToArray()) : ""));
+			}
+			catch (Exception e) { Fail("level preset: " + e); ok = false; }
+			if (ok) Log("PASS: level preset"); else Fail("level preset");
+		}
+
 		/// <summary>The first setting that differs (name: a -> b), or null.</summary>
 		static string SettingsDiff(IslandGenSettings a, IslandGenSettings b)
 		{

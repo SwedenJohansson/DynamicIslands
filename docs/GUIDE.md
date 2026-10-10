@@ -2452,6 +2452,8 @@ without it plays as Raft always does.
 
 Hit a monster and the EXP it gave you floats up over it. Each hit gives the share of the monster's EXP that it took off
 its health, so killing it gives all of it. If you fight it together with a friend, each of you gets your own share.
+Every weapon counts: spears, swords, axes, arrows, thrown stones and fireworks (the EXP goes to whoever lit
+the firework). The Damage stat makes your weapons hit harder; a firework hits as hard as Raft makes it.
 Chickens, goats, llamas, turtles, stingrays, dolphins, whales, puffins, Utopia's butler bots and people give nothing.
 
 ![EXP floating over a warthog](images/levels-hit.jpg)

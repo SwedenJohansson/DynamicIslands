@@ -1004,7 +1004,9 @@ namespace DynamicIslands.Editor
 			if (sending.Count >= 64) sending.Clear();
 			sending[key] = Time.realtimeSinceStartup;
 			byte[] bytes = File.ReadAllBytes(path);
-			if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(SendChunks(name, hash, bytes, to, key));
+			System.Collections.IEnumerator send = SendChunks(name, hash, bytes, to, key);
+			if (Loopback != null) { while (send.MoveNext()) { } } // (tests: the loopback takes every chunk at once)
+			else if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(send);
 		}
 
 		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>

@@ -153,13 +153,25 @@ namespace DynamicIslands
 			Log("ITEMS " + name + " " + (p != null && p.Inventory != null ? p.Inventory.GetItemCount(name) : -1));
 		}
 
-		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft and streams this machine's islands as if the raft were far away too (their copies of the islands there unload), or back on the raft: CIScFarAway [back]")]
+		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft and streams this machine's islands as if the raft were far away too (their copies of the islands there unload), or back on the raft (or in the sea by an island): CIScFarAway [back [island]]")]
 		public static void ScFarAwayCommand(string[] args)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (p == null || !raft.HasValue) { Fail("far away: in a world"); return; }
-			if (args != null && args.Length > 0 && args[0] == "back") { CustomIslandSpawner.TestRaftFarAway = false; OnRaftCommand(); Log("Back on the raft"); return; }
+			if (args != null && args.Length > 0 && args[0] == "back")
+			{
+				CustomIslandSpawner.TestRaftFarAway = false;
+				// (back at an island: the raft drifts away from it over a long run - 786 m off, its copy never came back)
+				IslandWorldState.Entry at = args.Length > 1 ? IslandWorldState.Islands.FirstOrDefault(x => x.HostName.IndexOf(args[1], StringComparison.OrdinalIgnoreCase) >= 0) : null;
+				if (at == null) { OnRaftCommand(); Log("Back on the raft"); return; }
+				Vector3 near = at.Position + new Vector3(CustomIslandSpawner.LandRadius(at.Name) + 8f, 0f, 0f);
+				near.y = 0.5f;
+				PlayerMove.To(p, near, ControllerType.Water);
+				KeepAlive(p);
+				Log("Back at " + at.Name + ": " + ScFlat(p.transform.position, at.Position).ToString("F0") + " m from it");
+				return;
+			}
 			Vector3 far = raft.Value + new Vector3(-1500f, 0f, -300f);
 			far.y = 0.5f;
 			PlayerMove.To(p, far, ControllerType.Water);
@@ -190,7 +202,10 @@ namespace DynamicIslands
 		{
 			string name = args != null && args.Length > 0 ? args[0] : ScMpIsland;
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
-			Log("LOADED " + name + " " + (e == null ? "unknown" : e.Root != null ? "yes" : "no"));
+			Network_Player p = RAPI.GetLocalPlayer();
+			string why = e == null || p == null ? "" : " (player " + ScFlat(p.transform.position, e.Position).ToString("F0") + " m from it, unload distance " +
+				WorldRules.UnloadDistance.ToString("F0") + ", far-away test " + CustomIslandSpawner.TestRaftFarAway + ", " + IslandWorldState.Islands.Count(x => x.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0) + " entries)";
+			Log("LOADED " + name + " " + (e == null ? "unknown" : e.Root != null ? "yes" : "no") + why);
 		}
 	}
 }
