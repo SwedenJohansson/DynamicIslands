@@ -175,12 +175,12 @@ place Zone_Sound enginehum at -3 -3 h=23
 # --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): the roof
 # laser - the emitter's beam runs north along the roof, the turning mirror sends it east onto a door panel,
 # and the panel lets go the roof safe (hidden); a security camera on the west facade, watching the jetty
-place TP_LaserEmitter lairemitter at -38.53 -9 h=8.5 drop yaw=0
+place TP_LaserEmitter lairemitter at -39 -9 h=7.5 sit yaw=0
 prop lairemitter obj.name=lairemitter
-place TP_MirrorHousing_Rotating lairmirror at -39 0 h=8.5 drop yaw=0
+place TP_MirrorHousing_Rotating lairmirror at -39 0 h=7.5 sit yaw=0
 prop lairmirror obj.name=lairmirror
 prop lairmirror on.use=switch|\nmessage||The mirror grinds round a quarter turn and the red beam jumps off it at a new angle.
-place TP_LaserDoorPanel lairpanel at -31 -0.55 h=4.9 scale=2 yaw=-90
+place TP_LaserDoorPanel lairpanel at -31 0 h=7.5 sit scale=2 yaw=-90
 prop lairpanel obj.name=lairpanel
 prop lairpanel on.laser=message||The panel drinks the beam and hums. A plate in the roof slides back - the roof safe.\nsignal||lairlaser\nshow|lairvault
 place Loot_Chest lairvault at -33 -6 h=8.5 drop yaw=90

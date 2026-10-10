@@ -70,6 +70,15 @@ expect item Blueprint_ZiplineTool 1
 expect done
 
 # The escape hatch drops a player from the control room to the jetty; the barrel by the jetty
+# The roof laser: the beam runs north past the mirror; a quarter turn sends it east onto the panel, which shows the roof
+# safe (the beam logged before and after)
+expect hidden lairvault
+beam lairemitter
+use lairmirror
+wait 2
+beam lairemitter
+expect message drinks the beam
+expect shown lairvault
 use escapehatch
 expect message surface beside the Chief's getaway boat
 open Barrel by the jetty
