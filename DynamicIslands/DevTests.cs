@@ -962,6 +962,11 @@ namespace DynamicIslands
 				}
 				foreach (RaycastHit h in Physics.RaycastAll(target + Vector3.up * 60f, Vector3.down, 400f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(6))
 					Log("  a ray down from 60 m above finds " + h.collider.name + " (" + h.collider.GetType().Name + ", layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ") at y " + h.point.y.ToString("F1"));
+				// (held still in the air - no fall at all - is Raft's PersonController.Update stopping early: these are its checks)
+				PersonController hp = player.PersonController;
+				Log("  the player's controller: enabled " + hp.enabled + ", type " + hp.controllerType + ", character controller " + (hp.controller != null ? hp.controller.enabled.ToString() : "none") +
+					", local " + player.IsLocalPlayer + ", dead " + (player.PlayerScript != null && player.PlayerScript.IsDead) + ", flight camera " + (player.flightCamera != null && player.flightCamera.enabled) +
+					", parent " + (player.transform.parent != null ? player.transform.parent.name : "none") + ", cursor free " + Cursor.visible + ", time scale " + Time.timeScale);
 				Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
 			}
 		}

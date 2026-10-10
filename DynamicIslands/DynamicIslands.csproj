@@ -58,6 +58,8 @@
     <Compile Include="ObjectProps.cs" />
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
+    <Compile Include="DevTestsGapsB.cs" />
+    <Compile Include="DevTestsGapsC.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />
@@ -234,6 +236,7 @@
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsX5.cs" />
+    <Compile Include="DevTestsGapsA.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />

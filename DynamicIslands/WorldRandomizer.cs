@@ -745,6 +745,9 @@ namespace DynamicIslands.Editor
 			if (file == null) { Log("'" + l.name + "': nothing extra"); yield break; }
 			Log("'" + l.name + "' gets extras: " + what);
 			ExtrasCount++;
+			// (its size known before it is in the world: its file is written a moment later, and a look at it meanwhile
+			// logged the file missing and kept -1, which then read as grown and moved it off Raft's island - UW3)
+			CustomIslandSpawner.CacheSize(name, IslandSpawner.LandRadius(file), file.Elevation);
 			IslandWorldState.Entry entry = IslandWorldState.Add(name, at, null, false);
 			entry.Loading = true;
 			IslandFile f = file;

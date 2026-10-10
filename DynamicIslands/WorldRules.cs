@@ -189,8 +189,9 @@ namespace DynamicIslands.Editor
 
 		static string HostSettingsData()
 		{
-			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
-				";regrow=" + RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("F0", CultureInfo.InvariantCulture);
+			// (the distances to two decimals: whole metres gave player 2 813 m where the host had 812.5 - IM25)
+			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("0.##", CultureInfo.InvariantCulture) +
+				";regrow=" + RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("0.##", CultureInfo.InvariantCulture);
 		}
 
 		static void HostSettingsFrom(string data)

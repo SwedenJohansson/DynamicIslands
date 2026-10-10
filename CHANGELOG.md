@@ -166,6 +166,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   worlds made with the old one. Each plan now has its own id, and those worlds keep their own copy.
 - **EXP of a new alpha:** a monster that was already hit before the randomizer made it an alpha (switched on or
   re-seeded mid-game) kept its old, lower EXP worth. The worth is now worked out again when its max health changes.
+- **Randomizer finds on a fresh island:** for a moment after the randomizer chose extras for one of Raft's islands,
+  their file wasn't written yet; a look at it then logged "Could not read island 'rnd-…'" and could move the extras
+  off the island. Their size is now known before they join the world.
+- **The host's distances for other players:** the unload and Receiver distances went to other players in whole
+  metres, so a host's 812.5 m was 813 m on theirs. They now go as they are.
 - **Nothing ticked in Choose islands:** a world with every island unticked logged "the spawn pool is empty" every
   10 seconds of sailing. It says so once now, and the World settings button says `none`.
 - **Two players in one once-only zone:** when both stepped in within a second, the one who came second was told
