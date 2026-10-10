@@ -122,7 +122,7 @@ plan save
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
 | `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |
-| `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. Fails first when an action or `state` check names an object no object is named (`UnnamedTargets`). |
+| `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. Fails first when an action or `state` check names an object no object is named, or an `obj.name` holds a second key=value from a joined `prop` line (`UnnamedTargets`). |
 | `plan` | see below | World plans window. |
 | `log` | `<text>` | Writes the text to the log. |
 | `where` | `<alias>` | Logs where the alias's objects ended up (x z from the first origin, `h=` above the sea, turn). |

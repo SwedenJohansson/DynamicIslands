@@ -1221,6 +1221,9 @@ namespace DynamicIslands
 		static string UnnamedTargets(EditorGameObject[] objs)
 		{
 			var names = new HashSet<string>(objs.Select(o => ObjectProps.Get(o.Props, BehaviourProps.Name).Trim()).Where(n => n.Length > 0), StringComparer.OrdinalIgnoreCase);
+			// (a prop line takes one key=value: "prop a obj.name=a col.mode=box" names the object "a col.mode=box")
+			string joined = names.FirstOrDefault(n => Regex.IsMatch(n, @"\s[\w.]+="));
+			if (joined != null) return "obj.name '" + joined + "' holds a second setting: one key=value per prop line";
 			var missing = new List<string>();
 			foreach (EditorGameObject o in objs.Where(x => x.Props != null))
 				foreach (KeyValuePair<string, string> kv in o.Props)
