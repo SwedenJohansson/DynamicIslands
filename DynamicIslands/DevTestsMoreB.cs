@@ -894,9 +894,20 @@ namespace DynamicIslands
 					body.SetValue(3f); decay.decayRespawnTime = 5f;
 					Log("SHARKS Bruce's body decays after 3 s, the next shark 5 s later (Raft's " + bodyWas.ToString("0", CultureInfo.InvariantCulture) + " s and " + nextWas.ToString("0", CultureInfo.InvariantCulture) + " s, shortened for the test)");
 				}
+				// (before that the body floats in Raft's dead state, which waits removeBodyTime and then hands over to the decay)
+				AI_State_Dead dead = bruce.GetComponentInChildren<AI_State_Dead>(true);
+				if (dead != null)
+				{
+					Traverse floatFor = Traverse.Create(dead).Field("removeBodyTime");
+					Log("SHARKS Bruce's body floats 2 s before it decays (Raft's " + floatFor.GetValue<float>().ToString("0", CultureInfo.InvariantCulture) + " s, removeBody " + Traverse.Create(dead).Field("removeBody").GetValue<bool>() + ", shortened for the test)");
+					floatFor.SetValue(2f);
+				}
 				host.DamageEntity(bruce.networkEntity, bruce.transform, bruce.networkEntity.stat_health.Max * 10f, bruce.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
 				yield return new WaitForSeconds(1f);
-				Check(ref ok, bruce == null || bruce.networkEntity.IsDead, "Bruce is dead");
+				AI_StateMachine bsm = bruce == null ? null : bruce.GetComponentInChildren<AI_StateMachine>(true);
+				AI_State now = bsm == null ? null : Traverse.Create(bsm).Field("currentState").GetValue<AI_State>();
+				// (Raft's dead shark may get its health back while it floats: the state is what counts)
+				Check(ref ok, bruce == null || bruce.networkEntity.IsDead || now is AI_State_Dead || now is AI_State_Decay, "Bruce is dead (" + (now == null ? "gone" : now.GetType().Name) + ", health " + (bruce == null ? "-" : bruce.networkEntity.stat_health.Value.ToString("0", CultureInfo.InvariantCulture)) + ")");
 				AI_NetworkBehavior_Shark next = null;
 				float t0 = Time.realtimeSinceStartup;
 				while (next == null && Time.realtimeSinceStartup - t0 < 300f)
@@ -929,6 +940,75 @@ namespace DynamicIslands
 			}
 			finally { if (!keep && oldOut[0] != null) WorldRandomizer.Set(oldOut[0]); }
 			if (ok) Log("PASS: shark reroll"); else Fail("shark reroll");
+		}
+
+		#endregion
+		#region Two plans with one name; a plan replaced under its name (UW2)
+
+		const string Uw2Own = "CI Adventure", Uw2Lib = "CI Adventure (CI Author)";
+
+		static void Uw2MoveAway(string name)
+		{
+			string from = WorldPlan.PathFor(name);
+			if (!File.Exists(from)) return;
+			string to = Path.Combine(DynamicIslands.assetpath, "deleted", "plans");
+			Directory.CreateDirectory(to);
+			File.Move(from, Path.Combine(to, name + " " + DateTime.Now.ToString("yyyyMMddHHmmssfff") + WorldPlan.Extension));
+		}
+
+		[ConsoleCommand(name: "CIPlanSameName", docs: "Dev (UW2): CIPlanSameName prep (main menu: the player's 'CI Adventure' and 'CI Adventure (CI Author)' written, each with its own id) | swap (main menu: 'CI Adventure' copied as World Plans' Copy... does, the old file deleted, a new plan made under the old name) | check <plan> on|off [fromworld] (world, host: the world's plan, its random switch, the plan id it keeps) | tidy")]
+		public static void PlanSameName(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			bool ok = true;
+			if (mode == "prep" || mode == "tidy")
+			{
+				foreach (string n in new[] { Uw2Own, Uw2Lib, Uw2Own + " copy" }) Uw2MoveAway(n);
+				if (mode == "tidy") { Log("PASS: plan same name tidy"); return; }
+				new WorldPlan { Name = Uw2Own, Description = "The player's own adventure", Random = true }.Save();
+				new WorldPlan { Name = Uw2Lib, Description = "The library's adventure", Random = false }.Save();
+				WorldPlan a = WorldPlan.Load(Uw2Own), b = WorldPlan.Load(Uw2Lib);
+				Check(ref ok, a != null && b != null && a.Id.Length > 0 && b.Id.Length > 0 && a.Id != b.Id, "two plans, each with its own id (" + (a != null ? a.Id : "-") + ", " + (b != null ? b.Id : "-") + ")");
+				List<string> all = WorldPlan.All();
+				Check(ref ok, all.Count(n => n == Uw2Own) == 1 && all.Count(n => n == Uw2Lib) == 1, "the plan list has each once");
+				if (ok) Log("PASS: plan same name prep"); else Fail("plan same name prep");
+				return;
+			}
+			if (mode == "swap")
+			{
+				WorldPlan old = WorldPlan.Load(Uw2Own);
+				Check(ref ok, old != null && old.Id.Length > 0, "'" + Uw2Own + "' is there");
+				if (old == null) { Fail("plan same name swap"); return; }
+				// (as World Plans' Copy... does it, then Delete, then New with the old name)
+				var c = WorldPlan.Parse(Uw2Own + " copy", old.ToText()); c.Id = WorldPlan.NewId(); c.Save();
+				Uw2MoveAway(Uw2Own);
+				new WorldPlan { Name = Uw2Own, Description = "Another plan, the same name", Random = false }.Save();
+				WorldPlan copy = WorldPlan.Load(Uw2Own + " copy"), now = WorldPlan.Load(Uw2Own);
+				Check(ref ok, copy != null && copy.Id.Length > 0 && copy.Id != old.Id && copy.Random == old.Random, "the copy has its own id (" + (copy != null ? copy.Id : "-") + ") and the plan's settings");
+				Check(ref ok, now != null && now.Id.Length > 0 && now.Id != old.Id && !now.Random, "the new '" + Uw2Own + "' has its own id (" + (now != null ? now.Id : "-") + ", the old one " + old.Id + ") and random off");
+				if (ok) Log("PASS: plan same name swap"); else Fail("plan same name swap");
+				return;
+			}
+			if (mode == "check" && args.Length >= 3)
+			{
+				bool fromWorld = args[args.Length - 1].Equals("fromworld", StringComparison.OrdinalIgnoreCase);
+				int end = args.Length - (fromWorld ? 1 : 0);
+				bool random = args[end - 1].Equals("on", StringComparison.OrdinalIgnoreCase);
+				string plan = string.Join(" ", args.Skip(1).Take(end - 2).ToArray());
+				Check(ref ok, LoadSceneManager.IsGameSceneLoaded && Raft_Network.IsHost, "in a world, as its host");
+				WorldPlan file = WorldPlan.Load(plan), p = WorldDirector.Plan;
+				Check(ref ok, WorldDirector.PlanName == plan && p != null, "the world's plan: '" + WorldDirector.PlanName + "' (want '" + plan + "')");
+				Check(ref ok, p != null && p.Random == random, "its random islands: " + (p != null && p.Random ? "on" : "off") + " (want " + (random ? "on" : "off") + ")");
+				Check(ref ok, CustomIslandSpawner.Enabled == random, "the spawner follows it (" + CustomIslandSpawner.Enabled + ")");
+				if (fromWorld)
+					Check(ref ok, WorldDirector.PlanFromWorld && !WorldDirector.PlanWasEdited && WorldDirector.PlanId.Length > 0 && file != null && file.Id != WorldDirector.PlanId,
+						"the world's own copy plays, not the other plan now called '" + plan + "' (world id " + WorldDirector.PlanId + ", the file's " + (file != null ? file.Id : "none") + ")");
+				else
+					Check(ref ok, file != null && WorldDirector.PlanId.Length > 0 && WorldDirector.PlanId == file.Id, "the world keeps the plan's id (" + WorldDirector.PlanId + ")");
+				if (ok) Log("PASS: plan same name check"); else Fail("plan same name check");
+				return;
+			}
+			Fail("CIPlanSameName prep|swap|check <plan> on|off [fromworld]|tidy");
 		}
 
 		#endregion

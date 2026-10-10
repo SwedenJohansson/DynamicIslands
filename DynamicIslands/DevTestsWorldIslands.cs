@@ -126,6 +126,51 @@ namespace DynamicIslands
 			if (ok) Log("PASS: world islands check"); else Fail("world islands check");
 		}
 
+		[ConsoleCommand(name: "CIWorldIslandsLater", docs: "Dev (UW5), world (host): an island saved after the world was made joins its pool (it isn't in @islandsoff, the spawner picks it), and its file taken away later is left out quietly (also when the world had left it out)")]
+		public static void WorldIslandsLaterCommand()
+		{
+			bool ok = true;
+			Check(ref ok, LoadSceneManager.IsGameSceneLoaded && Raft_Network.IsHost, "in a world, as its host");
+			if (!ok) { Fail("world islands later"); return; }
+			string name = "ciuw5_later";
+			string file = IslandSpawner.PathFor(name), backup = Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName);
+			string from = CustomIslandSpawner.Pool().Select(p => p.Key).FirstOrDefault(k => WorldIslands.IsIsland(k) && File.Exists(IslandSpawner.PathFor(k)));
+			Check(ref ok, from != null, "an island of the pool to copy: " + (from ?? "none"));
+			if (from == null) { Fail("world islands later"); return; }
+			HashSet<string> offWas = new HashSet<string>(WorldIslands.Off, StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				// Saved after the world was made: a file of its own (as the editor's Save writes it), nothing else told
+				File.Copy(IslandSpawner.PathFor(from), file, true);
+				Check(ref ok, WorldIslands.TakesPart(name) && !WorldIslands.Off.Contains(name), "'" + name + "' takes part in this world (not left out: " + WorldIslands.Describe() + ")");
+				Check(ref ok, CustomIslandSpawner.Pool().Any(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)), "the spawner's pool has it (" + CustomIslandSpawner.Pool().Count + " entries)");
+				bool picked = false;
+				for (int i = 0; i < 4000 && !picked; i++) picked = name.Equals(CustomIslandSpawner.PickFromPool(), StringComparison.OrdinalIgnoreCase);
+				Check(ref ok, picked, "the spawner picks it by chance (within 4000 picks)");
+				IslandWorldState.Save();
+				string line = File.ReadAllLines(IslandWorldState.WorldFilePath).FirstOrDefault(l => l.StartsWith("@islandsoff="));
+				Check(ref ok, line == null || !WorldIslands.Parse(line.Substring("@islandsoff=".Length)).Contains(name), "the world file doesn't leave it out (" + (line ?? "no @islandsoff line") + ")");
+
+				// Its file taken away (to the deleted folder): left out quietly, also while the world leaves it out by name
+				WorldIslands.WorldIslandsCommand(new[] { "-" + name });
+				Directory.CreateDirectory(backup);
+				string moved = Path.Combine(backup, name + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension);
+				File.Move(file, moved);
+				List<string> pool = null; string err = null;
+				try { pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList(); for (int i = 0; i < 400; i++) if (name.Equals(CustomIslandSpawner.PickFromPool(), StringComparison.OrdinalIgnoreCase)) err = "picked"; WorldIslands.Describe(); CustomIslandSpawner.Describe(); IslandWorldState.Save(); }
+				catch (Exception e) { err = e.GetType().Name + ": " + e.Message; }
+				Check(ref ok, err == null && pool != null && !pool.Contains(name, StringComparer.OrdinalIgnoreCase), "its file gone: out of the pool, never picked, SpawnPool and the world's save go on (" + (err ?? "no error") + ")");
+				WorldIslands.WorldIslandsCommand(new[] { "+" + name });
+				Check(ref ok, !CustomIslandSpawner.Pool().Any(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)), "taken back in by name with no file: still not in the pool");
+			}
+			finally
+			{
+				if (File.Exists(file)) { Directory.CreateDirectory(backup); File.Move(file, Path.Combine(backup, name + "_" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + IslandFile.Extension)); }
+				if (!WorldIslands.Off.SetEquals(offWas)) { foreach (string o in WorldIslands.Off.Except(offWas).ToList()) WorldIslands.WorldIslandsCommand(new[] { "+" + o }); }
+			}
+			if (ok) Log("PASS: world islands later"); else Fail("world islands later");
+		}
+
 		[ConsoleCommand(name: "CIWorldIslandsTurns", docs: "Dev (UW4), Choose islands at its extremes: CIWorldIslandsTurns choose none|one <island>|generated (main menu: the next world's list set so, the World settings button and text checked); CIWorldIslandsTurns none|one <island>|generated (world, host: the pool, a random island's turns and their log lines)")]
 		public static void WorldIslandsTurnsCommand(string[] args)
 		{

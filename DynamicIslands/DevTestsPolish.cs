@@ -136,10 +136,8 @@ namespace DynamicIslands
 					Check(ref ok, UIKit.IsChecked(b("Option_ghostrafts")) == WorldOptions.On(WorldOptions.GhostRafts), "the window shows it: ticked " + UIKit.IsChecked(b("Option_ghostrafts")));
 					Check(ref ok, island == null || UIKit.IsChecked(b("Island_" + island)) == WorldIslands.TakesPart(island), "the island's row shows it");
 				}
-				// (T1b: the islands in this world, nearest first, with how far and which way)
-				string here = WorldWindow.IslandsHere();
-				int islands = IslandWorldState.Islands.Count(x => !x.Failed && !WorldRandomizer.IsExtras(x));
-				Check(ref ok, islands == 0 ? here == "None yet." : here.Contains(" m "), "the window lists the world's " + islands + " island(s): " + here.Replace("\n", " / "));
+				// (the islands list was taken out 2026-10-10: the quest book shows where each island's quest is)
+				Check(ref ok, GameObject.Find("IslandsHere") == null, "no 'Islands in this world' box (the quest book shows them)");
 				Screenshot(new[] { "world_window" });
 				yield return new WaitForSeconds(1f);
 			}

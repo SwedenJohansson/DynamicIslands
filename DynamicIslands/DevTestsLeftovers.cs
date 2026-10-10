@@ -525,5 +525,315 @@ namespace DynamicIslands
 			foreach (string f in Directory.GetFiles(from)) File.Copy(f, Path.Combine(to, Path.GetFileName(f)), true);
 			foreach (string d in Directory.GetDirectories(from)) CopyFolder(d, Path.Combine(to, Path.GetFileName(d)));
 		}
+
+		static string WorldCloudMarker { get { return Path.Combine(Application.temporaryCachePath, "ci_worldcloud.txt"); } }
+		static string WorldCloudAway { get { return Path.Combine(DynamicIslands.assetpath, "deleted", "ci_uw6"); } }
+
+		[ConsoleCommand(name: "CIWorldCloud", docs: "Dev, UW6 - Steam Cloud brings Raft's world folder to another PC but not the mod's worlds\\<id>.txt: CIWorldCloud mark <island> (in a 'CI ...' world, host, with <island> spawned: levels on with 500 EXP, build cost 40 %; CISave after) / strip (main menu: moves the world's mod file and <island>'s file to deleted\\ci_uw6) / check (the world loaded again: read from Raft's world folder, the levels and build cost kept, <island> named as missing; puts <island>'s file back)")]
+		public static void WorldCloud(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			if (what == "mark")
+			{
+				string name = SaveAndLoad.CurrentGameFileName, island = args.Length > 1 ? args[1] : "";
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || name == null || !name.StartsWith("CI ")) { Fail("run in a 'CI ...' world, as the host"); return; }
+				if (!IslandWorldState.Islands.Any(e => e.HostName == island)) { Fail("world cloud: '" + island + "' isn't in this world (spawn it first)"); return; }
+				PlayerLevels.TurnOn(false);
+				PlayerLevels.SetMine(new LevelRecord { Xp = 500 });
+				BuildCost.Set(40);
+				File.WriteAllText(WorldCloudMarker, SaveAndLoad.WorldGuid + "|" + name + "|" + island);
+				Log("PASS: world cloud marked: '" + name + "' (" + SaveAndLoad.WorldGuid + "), levels on with 500 EXP, build cost " + BuildCost.Describe(40) + ", island " + island);
+			}
+			else if (what == "strip")
+			{
+				if (LoadSceneManager.IsGameSceneLoaded || !File.Exists(WorldCloudMarker)) { Fail("world cloud strip: at the main menu, after mark"); return; }
+				string[] m = File.ReadAllText(WorldCloudMarker).Split('|');
+				string worldFile = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), m[0] + ".txt"), islandFile = IslandSpawner.PathFor(m[2]);
+				if (!File.Exists(worldFile) || !File.Exists(islandFile)) { Fail("world cloud strip: " + (File.Exists(worldFile) ? islandFile : worldFile) + " isn't there"); return; }
+				Directory.CreateDirectory(WorldCloudAway);
+				string stamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+				File.Move(worldFile, Path.Combine(WorldCloudAway, m[0] + " " + stamp + ".txt"));
+				string keep = Path.Combine(WorldCloudAway, Path.GetFileName(islandFile));
+				if (File.Exists(keep)) File.Move(keep, keep + "." + stamp);
+				File.Move(islandFile, keep);
+				IslandCache.Forget();
+				Log("PASS: world cloud stripped: the world's mod file and '" + m[2] + "' moved to " + WorldCloudAway);
+			}
+			else if (what == "check")
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded || !File.Exists(WorldCloudMarker)) { Fail("world cloud check: in the world, after mark and strip"); return; }
+				string[] m = File.ReadAllText(WorldCloudMarker).Split('|');
+				bool ok = true;
+				string keep = Path.Combine(WorldCloudAway, Path.GetFileName(IslandSpawner.PathFor(m[2])));
+				try
+				{
+					Check(ref ok, SaveAndLoad.CurrentGameFileName == m[1] && SaveAndLoad.WorldGuid.ToString() == m[0], "the same world '" + SaveAndLoad.CurrentGameFileName + "'");
+					Check(ref ok, (WorldCopy.LastSource ?? "").StartsWith("Raft's world folder"), "read from Raft's world folder (" + WorldCopy.LastSource + ")");
+					int xp = PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Xp : 0;
+					Check(ref ok, PlayerLevels.On && xp == 500 && BuildCost.Current == 40, "its state came along: levels " + (PlayerLevels.On ? "on" : "off") + " with " + xp + " EXP, build cost " + BuildCost.Describe(BuildCost.Current));
+					IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == m[2]);
+					// (waiting for its file is set together with the host's notice naming the island - IslandWorldState.Load)
+					Check(ref ok, e != null && (e.WaitingForFile || e.Failed) && e.Root == null, "'" + m[2] + "', with no file here, is kept in the world, left out and named to the host" + (e == null ? " (not in the world)" : e.WaitingForFile ? " (waits for its file)" : e.Failed ? " (failed)" : " (spawned?)"));
+				}
+				catch (Exception ex) { Check(ref ok, false, "no errors: " + ex.Message); }
+				finally { try { if (File.Exists(keep) && !File.Exists(IslandSpawner.PathFor(m[2]))) File.Move(keep, IslandSpawner.PathFor(m[2])); IslandCache.Forget(); } catch { } }
+				if (ok) Log("PASS: world cloud check"); else Fail("world cloud check");
+			}
+			else Fail("CIWorldCloud mark <island>|strip|check");
+		}
+
+		static string OldSaveMarker { get { return Path.Combine(Application.temporaryCachePath, "ci_oldsave.txt"); } }
+
+		[ConsoleCommand(name: "CIOldSave", docs: "Dev, IX2 - a world saved by an older build (only island lines in its file, no copies in Raft's folders): CIOldSave mark <island> (in a 'CI ...' world, host, <island> spawned: levels, build cost, the randomizer and an option on; CISave after) / strip (main menu: the world's file cut to the old island lines, Raft's folder copies moved to deleted\\ci_ix2) / check (loaded again: everything off, the islands kept)")]
+		public static void OldSave(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			if (what == "mark")
+			{
+				string name = SaveAndLoad.CurrentGameFileName, island = args.Length > 1 ? args[1] : "", folder = WorldCopy.RaftWorldFolder;
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || name == null || !name.StartsWith("CI ") || folder == null) { Fail("run in a saved 'CI ...' world, as the host"); return; }
+				if (!IslandWorldState.Islands.Any(e => e.HostName == island)) { Fail("old save: '" + island + "' isn't in this world (spawn it first)"); return; }
+				PlayerLevels.TurnOn(false);
+				PlayerLevels.SetMine(new LevelRecord { Xp = 500 });
+				BuildCost.Set(40);
+				WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Wild, Seed = 7 });
+				WorldOptions.Set(new HashSet<string>(WorldOptions.Current) { WorldOptions.StormDays });
+				File.WriteAllText(OldSaveMarker, SaveAndLoad.WorldGuid + "|" + name + "|" + island + "|" + IslandWorldState.Islands.Count + "|" + folder);
+				Log("PASS: old save marked: '" + name + "' with " + IslandWorldState.Islands.Count + " island(s), levels, build cost, the randomizer (Wild) and storm days on");
+			}
+			else if (what == "strip")
+			{
+				if (LoadSceneManager.IsGameSceneLoaded || !File.Exists(OldSaveMarker)) { Fail("old save strip: at the main menu, after mark"); return; }
+				string[] m = File.ReadAllText(OldSaveMarker).Split('|');
+				string worldFile = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), m[0] + ".txt");
+				if (!File.Exists(worldFile)) { Fail("old save strip: " + worldFile + " isn't there"); return; }
+				string away = Path.Combine(DynamicIslands.assetpath, "deleted", "ci_ix2", DateTime.Now.ToString("yyyyMMddHHmmss"));
+				Directory.CreateDirectory(away);
+				File.Copy(worldFile, Path.Combine(away, m[0] + ".txt"));
+				// (the oldest format: a comment and one line per island - name|x|y|z|state - nothing else)
+				string[] lines = File.ReadAllLines(worldFile);
+				var old = lines.Where(l => l.StartsWith("#")).Take(1).Concat(lines.Where(l => l.Length > 0 && !l.StartsWith("#") && !l.StartsWith("@")).Select(l => string.Join("|", l.Split('|').Take(5).ToArray()))).ToArray();
+				File.WriteAllLines(worldFile, old);
+				int moved = 0;
+				foreach (string dir in new[] { m[4] }.Concat(Directory.Exists(m[4]) ? Directory.GetDirectories(m[4]) : new string[0]))
+				{
+					string f = Path.Combine(dir, WorldCopy.FileName);
+					if (!File.Exists(f)) continue;
+					File.Move(f, Path.Combine(away, (dir == m[4] ? "world" : Path.GetFileName(dir)) + "_" + WorldCopy.FileName));
+					moved++;
+				}
+				Log("PASS: old save stripped: the world's file cut to " + (old.Length - 1) + " island line(s) (" + lines.Length + " lines before), " + moved + " copies in Raft's folders moved to " + away);
+			}
+			else if (what == "check")
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded || !File.Exists(OldSaveMarker)) { Fail("old save check: in the world, after mark and strip"); return; }
+				string[] m = File.ReadAllText(OldSaveMarker).Split('|');
+				bool ok = true;
+				try
+				{
+					Check(ref ok, SaveAndLoad.CurrentGameFileName == m[1] && SaveAndLoad.WorldGuid.ToString() == m[0], "the same world '" + SaveAndLoad.CurrentGameFileName + "'");
+					Check(ref ok, WorldCopy.LastSource == "mod folder", "read from the mod's (old) file (" + WorldCopy.LastSource + ")");
+					Check(ref ok, !PlayerLevels.On && BuildCost.Current == 0 && !WorldRandomizer.Current.On && !WorldOptions.On(WorldOptions.StormDays),
+						"everything off: levels " + (PlayerLevels.On ? "on" : "off") + ", build cost " + BuildCost.Describe(BuildCost.Current) + ", randomizer " + (WorldRandomizer.Current.On ? "on" : "off") + ", storm days " + (WorldOptions.On(WorldOptions.StormDays) ? "on" : "off"));
+					IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == m[2]);
+					Check(ref ok, IslandWorldState.Islands.Count.ToString() == m[3] && e != null && !e.Failed && !e.WaitingForFile, "nothing lost: " + IslandWorldState.Islands.Count + " island(s) (" + m[3] + " before), '" + m[2] + "' " + (e == null ? "missing" : e.Failed ? "failed" : e.Root != null ? "there" : "kept"));
+				}
+				catch (Exception ex) { Check(ref ok, false, "no errors: " + ex.Message); }
+				if (ok) Log("PASS: old save check"); else Fail("old save check");
+			}
+			else Fail("CIOldSave mark <island>|strip|check");
+		}
+
+		#region IX3: features on at once
+
+		static string ComboMarker { get { return Path.Combine(Application.temporaryCachePath, "ci_combo.txt"); } }
+		static readonly System.Globalization.CultureInfo ComboCulture = System.Globalization.CultureInfo.InvariantCulture;
+
+		[ConsoleCommand(name: "CIComboWorld", docs: "Dev, IX3 - the randomizer (Wild), Nightmare, the level up system and build cost 50 % on at once: CIComboWorld set (a 'CI ...' world, host, a live warthog near - CIRandomizerLarge keep: two of Raft's own warthogs, a seed that makes one an alpha; it has x3 health once and is worth more EXP, a Nightmare hit gives its share, a recipe costs +50 %; CISave after) / check (loaded again: the same alpha's health and EXP, the same recipe cost - nothing applied twice) / client (a player who joined: the same build cost, recipe cost and alpha health)")]
+		public static void ComboWorldCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			if (what == "set") StartTest(ComboSetRoutine());
+			else if (what == "check") StartTest(ComboCheckRoutine(false));
+			else if (what == "client") StartTest(ComboCheckRoutine(true));
+			else Fail("CIComboWorld set|check|client");
+		}
+
+		static IEnumerator ComboSetRoutine()
+		{
+			string name = SaveAndLoad.CurrentGameFileName;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Network_Host_Entities ents = ComponentManager<Network_Host_Entities>.Value;
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || name == null || !name.StartsWith("CI ") || player == null || ents == null || host == null) { Fail("run in a 'CI ...' world, as the host"); yield break; }
+			yield return EnsureAlive();
+			AI_NetworkBehaviour near = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(x => x != null && x.behaviourType == AI_NetworkBehaviourType.Boar && x.networkEntity != null && !x.networkEntity.IsDead)
+				.OrderBy(x => (x.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
+			if (near == null) { Fail("combo world: no live warthog in the world (run CIRandomizerLarge keep first)"); yield break; }
+
+			// Warthogs of Raft's own (made by Raft's spawning, not a custom island's: those are never alphas) next to it
+			Vector3 land = near.transform.position;
+			var made = new List<AI_NetworkBehaviour>();
+			for (int i = 0; i < 3; i++)
+			{
+				AI_NetworkBehaviour ai = null;
+				try { ai = ents.CreateAINetworkBehaviour(AI_NetworkBehaviourType.Boar, land + new Vector3(2.5f + i * 2.5f, 1.5f, 2f), null); }
+				catch (Exception e) { Log("  warthog not made: " + (e.InnerException ?? e).Message); }
+				if (ai != null) made.Add(ai);
+			}
+			for (int i = 0; i < 4; i++) { KeepAlive(player); yield return new WaitForSeconds(0.5f); }
+			// (two that no earlier seed made an alpha: their health is still Raft's)
+			var free = made.Where(x => x != null && x.ObjectIndex != 0 && x.networkEntity != null && x.networkEntity.stat_health != null && !x.networkEntity.IsDead &&
+				!CreatureSpawner.IsOnCustomIsland(x) && !(WorldRandomizer.VariantOfIndex.ContainsKey(x.ObjectIndex) && WorldRandomizer.VariantOfIndex[x.ObjectIndex] == "alpha")).ToList();
+			if (free.Count < 2) { Fail("combo world: Raft made " + made.Count + " warthog(s), " + free.Count + " usable"); yield break; }
+			AI_NetworkBehaviour a = free[0], b = free[1];
+			float baseMax = b.networkEntity.stat_health.Max;
+			// (its worth before it is an alpha: asked first, it is remembered - an alpha made later must not keep it)
+			int xpBefore = PlayerLevels.MonsterXp(a);
+
+			RandomizerSettings prev = WorldRandomizer.Current;
+			var s = new RandomizerSettings { Level = RandomizerSettings.Wild };
+			int seed = 0;
+			for (int tryseed = 1; tryseed < 200000 && seed == 0; tryseed++)
+			{
+				s.Seed = tryseed;
+				WorldRandomizer.Current = s;
+				WorldRandomizer.Variant va = WorldRandomizer.VariantOf(AI_NetworkBehaviourType.Boar, a.ObjectIndex), vb = WorldRandomizer.VariantOf(AI_NetworkBehaviourType.Boar, b.ObjectIndex);
+				if (va != null && va.Alpha && (vb == null || !vb.Alpha)) seed = tryseed;
+			}
+			WorldRandomizer.Current = prev;
+			if (seed == 0) { Fail("combo world: no seed makes #" + a.ObjectIndex + " an alpha and #" + b.ObjectIndex + " not"); yield break; }
+
+			// Everything on at once
+			MonsterDifficulty.Set(MonsterDifficulty.Nightmare);
+			PlayerLevels.TurnOn(false);
+			PlayerLevels.SetMine(new LevelRecord());
+			BuildCost.Set(50);
+			WorldRandomizer.Set(s);
+			for (float t = 0; t < 10f && !(WorldRandomizer.VariantOfIndex.ContainsKey(a.ObjectIndex) && WorldRandomizer.VariantOfIndex[a.ObjectIndex] == "alpha"); t += 0.5f) { KeepAlive(player); yield return new WaitForSeconds(0.5f); }
+			for (float t0 = Time.realtimeSinceStartup; BuildCost.Applied != 50 && Time.realtimeSinceStartup - t0 < 10f; ) yield return new WaitForSeconds(0.25f);
+			yield return new WaitForSeconds(1f);
+			KeepAlive(player);
+
+			bool ok = true;
+			if (a == null || b == null || a.networkEntity == null || b.networkEntity == null) { Fail("combo world: the warthogs are gone"); yield break; }
+			float aMax = a.networkEntity.stat_health.Max, bMax = b.networkEntity.stat_health.Max;
+			bool isAlpha = WorldRandomizer.VariantOfIndex.ContainsKey(a.ObjectIndex) && WorldRandomizer.VariantOfIndex[a.ObjectIndex] == "alpha";
+			Check(ref ok, isAlpha && Mathf.Abs(aMax - 3f * baseMax) <= baseMax * 0.02f + 1f && Mathf.Abs(bMax - baseMax) <= 0.5f,
+				"seed " + seed + " (Wild): #" + a.ObjectIndex + " is an alpha with " + aMax.ToString("F0") + " health, x3 once (Raft's " + baseMax.ToString("F0") + "); #" + b.ObjectIndex + " " + bMax.ToString("F0"));
+			Check(ref ok, MonsterDifficulty.Current == MonsterDifficulty.Nightmare && PlayerLevels.On && BuildCost.Current == 50 && BuildCost.Applied == 50,
+				"Nightmare, levels on, build cost " + BuildCost.Describe(BuildCost.Current) + " (on Raft's numbers " + BuildCost.Describe(BuildCost.Applied) + ")");
+			float dA = PlayerLevels.DamageOf(a.gameObject, a.behaviourType), dB = PlayerLevels.DamageOf(b.gameObject, b.behaviourType);
+			Check(ref ok, dB > 0f && dA >= dB * 0.99f && dA <= dB * 1.65f, "its damage x" + (dB > 0f ? (dA / dB).ToString("F2") : "?") + " (" + dA.ToString("F1") + " vs " + dB.ToString("F1") + "; x1.6 at most, once)");
+			int aXp = PlayerLevels.MonsterXp(a), bXp = PlayerLevels.MonsterXp(b), fresh = LevelRules.XpOf(aMax, dA);
+			Check(ref ok, aXp == fresh && aXp > xpBefore, "the alpha's worth worked out again from its new health: " + aXp + " EXP (from " + aMax.ToString("F0") + " health, " + dA.ToString("F1") + " damage: " + fresh + "; " + xpBefore + " before)");
+			Check(ref ok, aXp > bXp && bXp == LevelRules.XpOf(bMax, dB), "the alpha is worth more: " + aXp + " EXP vs " + bXp + " (Nightmare doesn't change the worth)");
+
+			// A hit at Nightmare: the monster loses its share (half), the EXP is that share of its worth
+			float pve = 1f;
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			if (mode != null && mode.playerSpecificVariables != null) pve = mode.playerSpecificVariables.negateOutgoingPlayerDamage ? 0f : mode.playerSpecificVariables.outgoingDamageMultiplierPVE;
+			if (pve <= 0f) Log("  note: this game mode takes away players' damage - no hit");
+			else
+			{
+				float factor = MonsterDifficulty.Factor * NightDanger.MonsterFactor, dealt = aMax * 0.2f;
+				float v0 = a.networkEntity.stat_health.Value;
+				int xp0 = PlayerLevels.Mine.Xp;
+				host.DamageEntity(a.networkEntity, a.transform, dealt / pve, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+				float lost = v0 - a.networkEntity.stat_health.Value;
+				int gain = PlayerLevels.Mine.Xp - xp0, want = Mathf.RoundToInt(lost / aMax * aXp);
+				Check(ref ok, Mathf.Abs(lost - dealt / factor) <= 1f && Mathf.Abs(gain - want) <= 1 && gain > 0,
+					"a hit of " + dealt.ToString("F0") + " at Nightmare (x" + factor.ToString("F2") + ") takes " + lost.ToString("F1") + " health and gives " + gain + " EXP (its share: " + want + ")");
+				KeepAlive(player);
+			}
+
+			// A recipe of the build menu: Raft's amount +50 %
+			Item_Base item = null;
+			int entry = -1;
+			foreach (Item_Base i in BuildCost.Items.Where(x => x != null && x.settings_recipe != null && x.settings_recipe.NewCost != null).OrderBy(x => x.UniqueName))
+			{
+				List<CostMultiple> cs = i.settings_recipe.NewCost.ToList();
+				int k = cs.FindIndex(c => c != null && c.items != null && c.items.Length > 0 && c.items[0] != null && BuildCost.OriginalOf(c) >= 3);
+				if (k >= 0) { item = i; entry = k; break; }
+			}
+			CostMultiple cost = item != null ? item.settings_recipe.NewCost.ToList()[entry] : null;
+			int orig = cost != null ? BuildCost.OriginalOf(cost) : 0, amount = cost != null ? cost.amount : 0;
+			Check(ref ok, cost != null && amount == BuildCost.Cost(orig, 50) && amount > orig,
+				cost == null ? "a build menu recipe with 3 or more of a material (none)" : item.UniqueName + " costs " + amount + " " + cost.items[0].UniqueName + " (Raft " + orig + ", +50 %: " + BuildCost.Cost(orig, 50) + ")");
+
+			File.WriteAllText(ComboMarker, string.Join("|", new[] {
+				SaveAndLoad.WorldGuid.ToString(), name, seed.ToString(ComboCulture),
+				a.ObjectIndex.ToString(ComboCulture), aMax.ToString("R", ComboCulture), aXp.ToString(ComboCulture),
+				b.ObjectIndex.ToString(ComboCulture), bMax.ToString("R", ComboCulture), bXp.ToString(ComboCulture),
+				item != null ? item.UniqueName : "", entry.ToString(ComboCulture), orig.ToString(ComboCulture), amount.ToString(ComboCulture), dA.ToString("R", ComboCulture) }));
+			if (ok) Log("PASS: combo world set"); else Fail("combo world set");
+		}
+
+		/// <summary>IX3 after a save and load (host) or a join (client): the same alpha, worth and recipe cost - nothing twice.</summary>
+		static IEnumerator ComboCheckRoutine(bool client)
+		{
+			string label = client ? "combo world client" : "combo world check";
+			if (!LoadSceneManager.IsGameSceneLoaded || !File.Exists(ComboMarker) || client == Raft_Network.IsHost) { Fail(label + ": in the world " + (client ? "as a player who joined" : "as the host") + ", after CIComboWorld set"); yield break; }
+			string[] m = File.ReadAllText(ComboMarker).Split('|');
+			if (m.Length < 14) { Fail(label + ": the marker " + ComboMarker + " is from another build"); yield break; }
+			int seed = int.Parse(m[2], ComboCulture), aXp = int.Parse(m[5], ComboCulture), bXp = int.Parse(m[8], ComboCulture);
+			int entry = int.Parse(m[10], ComboCulture), orig = int.Parse(m[11], ComboCulture), amount = int.Parse(m[12], ComboCulture);
+			uint aIdx = uint.Parse(m[3], ComboCulture), bIdx = uint.Parse(m[6], ComboCulture);
+			float aMax = float.Parse(m[4], ComboCulture), bMax = float.Parse(m[7], ComboCulture), dA = float.Parse(m[13], ComboCulture);
+			Network_Player player = RAPI.GetLocalPlayer();
+			bool ok = true;
+			if (!client) Check(ref ok, SaveAndLoad.WorldGuid.ToString() == m[0] && SaveAndLoad.CurrentGameFileName == m[1], "the same world '" + SaveAndLoad.CurrentGameFileName + "'");
+
+			// (a player gets the settings from the host a moment after joining)
+			for (float t0 = Time.realtimeSinceStartup; (BuildCost.Applied != 50 || !PlayerLevels.On || WorldRandomizer.Current.Seed != seed) && Time.realtimeSinceStartup - t0 < 20f; ) yield return new WaitForSeconds(0.25f);
+			Check(ref ok, WorldRandomizer.Current.Level == RandomizerSettings.Wild && WorldRandomizer.Current.Seed == seed && MonsterDifficulty.Current == MonsterDifficulty.Nightmare && PlayerLevels.On && BuildCost.Current == 50 && BuildCost.Applied == 50,
+				"still on: randomizer " + WorldRandomizer.Current.LevelName + " seed " + WorldRandomizer.Current.Seed + " (" + seed + "), monsters " + MonsterDifficulty.Names[MonsterDifficulty.Clamp(MonsterDifficulty.Current)] +
+				", levels " + (PlayerLevels.On ? "on" : "off") + ", build cost " + BuildCost.Describe(BuildCost.Current) + " (on Raft's numbers " + BuildCost.Describe(BuildCost.Applied) + ")");
+
+			// The alpha: the same animal if Raft brought it back with its index (it looks at the animals every half second)
+			Func<uint, AI_NetworkBehaviour> find = idx => UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.ObjectIndex == idx && x.networkEntity != null && x.networkEntity.stat_health != null && !x.networkEntity.IsDead);
+			Func<uint, bool> alpha = idx => WorldRandomizer.VariantOfIndex.ContainsKey(idx) && WorldRandomizer.VariantOfIndex[idx] == "alpha";
+			for (float t = 0; t < 60f && !(find(aIdx) != null && alpha(aIdx)); t += 0.5f) { KeepAlive(player); yield return new WaitForSeconds(0.5f); }
+			// (time for anything applied a second time to show)
+			for (int i = 0; i < 6; i++) { KeepAlive(player); yield return new WaitForSeconds(0.5f); }
+			AI_NetworkBehaviour a = find(aIdx);
+			string which = "#" + aIdx;
+			if (a == null || !alpha(aIdx))
+			{
+				// (Raft gave it another index: any alpha warthog of Raft's own has the same health)
+				a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.behaviourType == AI_NetworkBehaviourType.Boar && x.networkEntity != null && x.networkEntity.stat_health != null && !x.networkEntity.IsDead && alpha(x.ObjectIndex) && !CreatureSpawner.IsOnCustomIsland(x));
+				if (a != null) which = "#" + a.ObjectIndex + " (another alpha warthog: #" + aIdx + " " + (find(aIdx) == null ? "not here" : "not an alpha") + ")";
+			}
+			if (a == null) Log("  note: alpha #" + aIdx + " isn't here (Raft didn't bring it back) and no other alpha warthog is - its health and EXP are skipped");
+			else
+			{
+				float max = a.networkEntity.stat_health.Max;
+				Check(ref ok, Mathf.Abs(max - aMax) <= 1f, "alpha " + which + ": " + max.ToString("F0") + " health as before (" + aMax.ToString("F0") + "), not x3 again");
+				if (!client)
+				{
+					float d = PlayerLevels.DamageOf(a.gameObject, a.behaviourType);
+					int xp = PlayerLevels.MonsterXp(a);
+					Check(ref ok, Mathf.Abs(d - dA) <= dA * 0.01f + 0.01f && xp == aXp, "its damage " + d.ToString("F1") + " (" + dA.ToString("F1") + " before) and worth " + xp + " EXP (" + aXp + " before)");
+				}
+			}
+			AI_NetworkBehaviour b = find(bIdx);
+			if (b != null && !alpha(bIdx))
+			{
+				float max = b.networkEntity.stat_health.Max;
+				bool same = Mathf.Abs(max - bMax) <= 1f && (client || PlayerLevels.MonsterXp(b) == bXp);
+				Check(ref ok, same, "the other warthog #" + bIdx + ": " + max.ToString("F0") + " health (" + bMax.ToString("F0") + " before)" + (client ? "" : ", worth " + PlayerLevels.MonsterXp(b) + " EXP (" + bXp + ")"));
+			}
+			else Log("  note: warthog #" + bIdx + " isn't here as before - skipped");
+
+			// The recipe: Raft's amount +50 %, once
+			Item_Base item = m[9].Length > 0 ? ItemManager.GetItemByName(m[9]) : null;
+			List<CostMultiple> cs = item != null && item.settings_recipe != null && item.settings_recipe.NewCost != null ? item.settings_recipe.NewCost.ToList() : new List<CostMultiple>();
+			CostMultiple cost = entry >= 0 && entry < cs.Count ? cs[entry] : null;
+			Check(ref ok, cost != null && cost.amount == amount && BuildCost.OriginalOf(cost) == orig && cost.amount == BuildCost.Cost(orig, 50),
+				cost == null ? "the recipe " + m[9] + " (not found)" : m[9] + " costs " + cost.amount + " (" + amount + " before, Raft " + BuildCost.OriginalOf(cost) + ", +50 %: " + BuildCost.Cost(orig, 50) + ")");
+			if (ok) Log("PASS: " + label); else Fail(label);
+		}
+
+		#endregion
 	}
 }
