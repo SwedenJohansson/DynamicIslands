@@ -2082,6 +2082,12 @@ way, and how far their quest has come. The **host** changes them there, and ever
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 
+The window is compact so it fits a 1366 x 768 screen: two columns of small groups, tick boxes for the randomizer's
+parts, the extra options and the islands while sailing (two to a line), the options and islands in short scrolling
+lists, and the whole window scrolls when the screen is too short. Each group, and each extra option on its own row,
+says in small letters what a change does **in a world already under way** (the table below). Point at any setting
+and its full description shows in the line at the bottom of the window.
+
 ![The world's settings in a running world](images/world-window.jpg)
 *Esc → Custom Islands in a world: the same groups as the World settings window, changed for this world.*
 
@@ -2095,6 +2101,33 @@ The host can also change every group with a console command (F10):
 | Extra options | `WorldOptions` | `WorldOptions +ghostrafts -privatestorage` |
 | Islands while sailing | `WorldIslands` | `WorldIslands -<island>`, `WorldIslands +<island>`, `WorldIslands all` |
 | How often they come | `WorldIslandsGap` | `WorldIslandsGap 5-12` |
+
+**Changing settings in a running world.** A change is saved with the world and sent to every player; nothing
+already in the world is taken away. What each one does from the moment it changes:
+
+| Setting | In a world already under way |
+|---|---|
+| Monster difficulty | At once, on the next hit - monsters already out too |
+| Build cost | The build menu at once; a block built before gives back what it cost when it was placed |
+| Regrow days | Counts from the next time an island loads; an island's own rule still wins |
+| Unload distance, Receiver dots and range | At once; kept in the host's spawnpool.txt for every world the host plays |
+| Randomizer: colours, alphas | Animals not changed yet are looked at again at once; one already changed keeps its look |
+| Randomizer: animals, finds, loot | Raft's islands not met yet; an island already looked at keeps what it got. Loot off puts moved crates and clams back at once |
+| Randomizer: oddities, bosses, large | Counted while sailing from now on; switched off, one that is due doesn't come. Islands already here stay |
+| Ghost rafts / Trader raft | The first after 1.5 km / 3 km sailed with it on; off, one afloat stays |
+| Private storage | Only storages built while it is on are private; off, all open at once (their builders are remembered) |
+| Long voyage | Spacing at once; fewer islands after the next random island |
+| Iron raft, Shared EXP, Night danger | At once (the next shark bite, the next monster defeated) |
+| Daily quest | On: a task when it is next light; off: today's task waits, unchanged |
+| Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
+| Golden barrels | Barrels from now on; off: no extra loot at once |
+| Storm days | At once: a storm day starts, or a storm ends within seconds |
+| Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
+| Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
+| Level up system | At once; off keeps everyone's levels and takes the stat bonuses away until it is on again |
+| Head start raft | Built once when the world is made: shown, can't be changed in a running world |
+| Plan | Its islands come from now on, random islands on or off as it says, its story replaces the world's; what is done or unlocked stays |
+| Islands while sailing | The next random island is picked from the new list; islands already here stay |
 
 ### 9.2 World rules: monster difficulty and build cost
 

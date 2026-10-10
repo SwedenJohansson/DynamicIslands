@@ -133,7 +133,8 @@ namespace DynamicIslands
 					Check(ref ok, WorldOptions.On(WorldOptions.GhostRafts) != options.Contains(WorldOptions.GhostRafts), "ghost rafts switched");
 					Check(ref ok, PlayerLevels.On != levels, "the level up system switched");
 					Check(ref ok, island == null || !WorldIslands.TakesPart(island), "the island '" + island + "' left out of this world");
-					Check(ref ok, UIKit.LabelOf(b("Option_ghostrafts")).text.EndsWith(WorldOptions.On(WorldOptions.GhostRafts) ? "ON" : "off"), "the window shows it: " + UIKit.LabelOf(b("Option_ghostrafts")).text);
+					Check(ref ok, UIKit.IsChecked(b("Option_ghostrafts")) == WorldOptions.On(WorldOptions.GhostRafts), "the window shows it: ticked " + UIKit.IsChecked(b("Option_ghostrafts")));
+					Check(ref ok, island == null || UIKit.IsChecked(b("Island_" + island)) == WorldIslands.TakesPart(island), "the island's row shows it");
 				}
 				// (T1b: the islands in this world, nearest first, with how far and which way)
 				string here = WorldWindow.IslandsHere();

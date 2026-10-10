@@ -13,18 +13,23 @@ namespace DynamicIslands.Editor
 	/// same groups as World settings in the New Game box: the world rules (monsters, build cost), the world randomizer,
 	/// the extra options and the level up system, which islands turn up while sailing, and the world's plan and story. The
 	/// host changes them here for every player (the same as the F10 commands Monsters, BuildCost, Randomizer, WorldOptions,
-	/// Levels, WorldIslands); other players see the host's settings, read only. Before, a running world's settings could
-	/// only be changed with F10 commands. The world's regrow days (WorldRules.SetRegrow) and the host's spawnpool.txt
-	/// settings every player shares - the Receiver's dots and range, the unload distance - are fields here too, and
-	/// "Defaults..." opens all of spawnpool.txt (DefaultsWindow; ROADMAP AU46).
+	/// Levels, WorldIslands); other players see the host's settings, read only. The world's regrow days
+	/// (WorldRules.SetRegrow) and the host's spawnpool.txt settings every player shares - the Receiver's dots and range, the
+	/// unload distance - are fields here too, and "Defaults..." opens all of spawnpool.txt (DefaultsWindow; ROADMAP AU46).
+	/// Compact (the user, 2026-10-10: it was taller than the screen): two columns of small groups, tick-box rows
+	/// (UIKit.Check) for the parts, options and islands, the options and islands in scrolling lists, the whole body in a
+	/// scroll area when the screen is too short. Each group says what a change does in a world already under way (MidGame,
+	/// from the code's Set paths); a row's full description shows in the hint line at the bottom while it is hovered.
 	/// </summary>
 	public class WorldWindow : MonoBehaviour
 	{
 		public const string CanvasName = "CustomIslands_WorldWindow", ButtonName = "CustomIslands_PauseButton";
+		/// <summary>The panel's most height (canvas units; the canvas is at least 800 high) and its width.</summary>
+		const float MaxHeight = 780f, Width = 960f, RowH = 22f, OptionRowH = 26f, NameWidth = 150f;
 		static Canvas canvas;
 		static WorldWindow instance;
-		static Text hostText, planText, islandsText, hereText;
-		static RectTransform islandList;
+		static Text hostText, planText, islandsText, hereText, hintText, headStartText;
+		static RectTransform panel, body, bodyView, islandList;
 		static readonly Dictionary<string, Button> buttons = new Dictionary<string, Button>();
 		static readonly Dictionary<string, InputField> fields = new Dictionary<string, InputField>();
 		static float nextRefresh;
@@ -38,9 +43,57 @@ namespace DynamicIslands.Editor
 		static List<DropList.Option> planOptions;
 		static string candidatesSig, plansSig;
 
+		const string DefaultHint = "Point at a setting to read what it does.  The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands, WorldPlan, RegrowDays.";
+
+		#region What a change does in a running world (from the code; GUIDE "Changing settings in a running world")
+
+		/// <summary>Monsters: MonsterDamagePatch scales every hit (MonsterDifficulty.Scale) - nothing is stored on the animals.
+		/// Build cost: BuildCost.Set -> Refresh puts the new amounts on the build menu; BuildCostRefund gives a block back by the
+		/// cost it was placed at.</summary>
+		internal const string RulesMidGame = "Now: monsters at once, on every hit - those already out too. Build cost: the build menu at once; a block built before gives back what it cost then.";
+		/// <summary>WorldRandomizer.Set: animals looked at again (animalsSeen cleared; a changed one is never changed back), loot
+		/// off puts crates back (RestoreLoot), extras once per island of Raft's (seen), sailing islands from OnSailed on.</summary>
+		internal const string RandomizerMidGame = "Now: colours and alphas for animals not changed yet (changed ones keep their look). Animals, loot and finds for Raft's islands not met yet - islands already looked at keep what they got; loot off puts crates back at once. Oddities, bosses, large: from now on while sailing.";
+		/// <summary>Regrow: IslandRules.RegrowDays is read when an island loads (IslandObjectState.Apply, LootCrate.OnIslandReady,
+		/// CreatureSpawner). The pool values: written to spawnpool.txt, sent at once (WorldRules.OnPoolChanged).</summary>
+		internal const string SharedMidGame = "Now: regrow days count from the next time an island loads. Unload distance and the Receiver at once - kept in the host's spawnpool.txt for every world the host plays.";
+		/// <summary>WorldIslands.Set: the spawner's next pick (TakesPart); nothing already here is removed.</summary>
+		internal const string IslandsMidGame = "Now: the next random island is picked from this list; islands already in the world stay.";
+		/// <summary>WorldPlanCommand: WorldDirector.SetPlan (random islands as the plan says) + StoryChain.FromPlan; Done kept.</summary>
+		internal const string PlanMidGame = "Another plan: its islands come from now on, random islands on or off as it says, its story replaces the world's; what is done or unlocked stays.";
+		internal const string LevelsMidGame = "At once. Off keeps everyone's levels and takes the stat points' bonuses away until it is on again.";
+
+		/// <summary>What switching an extra option does in a world under way (the options' own On checks - WorldOptions.Set only
+		/// sets, sends and saves; no option is reset by it).</summary>
+		internal static string MidGame(string option)
+		{
+			switch (option)
+			{
+				case WorldOptions.Blueprints: return "Off: blueprints not yet taken go back to Raft's places; learned ones stay.";
+				case WorldOptions.StoryOrder: return "Off: the Receiver's list goes back to Raft's order at once.";
+				case WorldOptions.GhostRafts: return "From now on: the first after 1.5 km sailed. Off: one afloat stays.";
+				case WorldOptions.PrivateStorage: return "Only storages built while on are private. Off: all open at once.";
+				case WorldOptions.LongVoyage: return "Spacing at once; fewer islands after the next random island.";
+				case WorldOptions.IronRaft: return "At once, from the next shark bite.";
+				case WorldOptions.SharedXp: return "At once, from the next monster defeated.";
+				case WorldOptions.NightDanger: return "At once: monsters' hits and the shark's visits.";
+				case WorldOptions.DailyQuest: return "On: a task by daylight. Off: today's task waits, unchanged.";
+				case WorldOptions.RogueShark: return "On: today's chance at once. Off: one out stays until killed.";
+				case WorldOptions.Barrels: return "Barrels from now on. Off: no extra loot, at once.";
+				case WorldOptions.StormDays: return "At once: a storm day starts or ends within seconds.";
+				case WorldOptions.TraderRaft: return "From now on: the first after 3 km sailed. Off: one afloat stays.";
+				case WorldOptions.Upgrades: return "Off: recipes hidden; built upgrades keep working, learned stay.";
+				default: return "";
+			}
+		}
+
+		#endregion
+
 		public static bool IsOpen { get { return canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>Tests: a button of the window by its name ("Monsters_Savage", "Option_ghostrafts", "Levels"...).</summary>
 		public static Button ButtonNamed(string name) { Button b; return buttons.TryGetValue(name, out b) ? b : null; }
+		/// <summary>Tests: whether a tick-box row of the window ("Option_ghostrafts", "Levels", "Part_colours", "Island_...") is ticked.</summary>
+		public static bool Ticked(string name) { return UIKit.IsChecked(ButtonNamed(name)); }
 		static bool Host { get { return Raft_Network.IsHost; } }
 
 		static void Build()
@@ -52,123 +105,234 @@ namespace DynamicIslands.Editor
 			RectTransform dim = UIKit.Rect("Dim", root);
 			UIKit.Stretch(dim);
 			dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
-			RectTransform panel = UIKit.Panel(root, "Panel", new RectOffset(18, 18, 12, 14), 8f);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 0f));
-			RectTransform head = UIKit.Row(panel, 30f, 6f, "Head");
-			Text title = UIKit.Label(head, "CUSTOM ISLANDS - THIS WORLD", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			// (its height is set each frame: as tall as its content, never taller than the screen - FitHeight)
+			panel = UIKit.Panel(root, "Panel", new RectOffset(16, 16, 10, 12), 5f, false);
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(Width, 700f));
+			RectTransform head = UIKit.Row(panel, 26f, 6f, "Head");
+			Text title = UIKit.Label(head, "CUSTOM ISLANDS - THIS WORLD", 20, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
 			hostText = UIKit.Label(head, "", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic, "Who");
+			Text top = UIKit.Label(panel, "Changes are saved with the world and sent to every player; only the host can change them. Each group says what a change does in a world already under way.", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Note");
+			UIKit.Size(top.gameObject, -1, 14); UIKit.Fit(top, 9);
 
-			RectTransform columns = UIKit.Rect("Columns", panel);
-			UIKit.Horizontal(columns.gameObject, 16f).childForceExpandWidth = false;
-			columns.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.UpperLeft;
+			// The body scrolls when the screen is too short for it
+			ScrollRect bodyScroll;
+			body = UIKit.ScrollList(panel, out bodyScroll, 0f);
+			bodyScroll.name = "BodyScroll";
+			bodyView = (RectTransform)bodyScroll.transform;
+			LayoutElement bodySize = UIKit.Size(bodyView.gameObject, -1, -1);
+			bodySize.flexibleHeight = 1; bodySize.minHeight = 120f;
+
+			RectTransform columns = UIKit.Rect("Columns", body);
+			UIKit.Horizontal(columns.gameObject, 12f).childForceExpandWidth = false;
+			HorizontalLayoutGroup ch = columns.GetComponent<HorizontalLayoutGroup>();
+			ch.childAlignment = TextAnchor.UpperLeft; ch.childForceExpandHeight = false;
 			RectTransform left = UIKit.Rect("Left", columns);
-			UIKit.Vertical(left.gameObject, 6f, new RectOffset(0, 0, 0, 0));
+			UIKit.Vertical(left.gameObject, 5f, new RectOffset(0, 0, 0, 0));
 			UIKit.Size(left.gameObject, 450);
 			RectTransform right = UIKit.Rect("Right", columns);
-			UIKit.Vertical(right.gameObject, 6f, new RectOffset(0, 0, 0, 0));
-			UIKit.Size(right.gameObject, 460);
+			UIKit.Vertical(right.gameObject, 5f, new RectOffset(0, 0, 0, 0));
+			UIKit.Size(right.gameObject, 450);
 
-			// World rules
-			Heading(left, "WORLD RULES");
-			RectTransform monsters = UIKit.Group(left, "Monster difficulty", "Monsters");
-			RectTransform mrow = UIKit.Row(monsters, 28f, 4f, "Levels");
-			for (int i = 0; i < MonsterDifficulty.Names.Length; i++)
-			{
-				int level = i;
-				Add("Monsters_" + MonsterDifficulty.Names[i], UIKit.Button(mrow, MonsterDifficulty.Names[i], () => { MonsterDifficulty.Set(level); Refresh(); }, "Monsters' health and the damage they deal: " + MonsterDifficulty.Describe(level), -1, 28f, 12));
-			}
-			RectTransform cost = UIKit.Group(left, "Build cost", "BuildCost");
-			RectTransform crow = UIKit.Row(cost, 28f, 4f, "Cost");
-			Add("BuildCost_Less", UIKit.Button(crow, "- 5 %", () => { BuildCost.Set(Mathf.Max(0, BuildCost.Current - BuildCost.Step)); Refresh(); }, "The build menu costs 5 % less. Blocks built before keep giving back by the cost they were built at", 70, 28f, 12));
-			Add("BuildCost_Value", UIKit.Button(crow, "", () => { }, "How many more materials the build menu costs than in Raft", -1, 28f, 13));
-			Add("BuildCost_More", UIKit.Button(crow, "+ 5 %", () => { BuildCost.Set(Mathf.Min(BuildCost.Max, BuildCost.Current + BuildCost.Step)); Refresh(); }, "The build menu costs 5 % more. Blocks built before keep giving back by the cost they were built at", 70, 28f, 12));
+			BuildRules(left);
+			BuildRandomizer(left);
+			BuildShared(left);
+			BuildIslands(left);
+			BuildOptions(right);
+			BuildPlan(right);
 
-			// World randomizer
-			RectTransform rnd = UIKit.Group(left, "World randomizer (islands already looked at keep what they got)", "Randomizer");
-			RectTransform rrow = UIKit.Row(rnd, 28f, 4f, "Level");
-			for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++)
-			{
-				int level = i;
-				Add("Randomizer_" + RandomizerSettings.LevelNames[i], UIKit.Button(rrow, RandomizerSettings.LevelNames[i], () => SetRandomizer(s => s.Level = level), RandomizerSettings.LevelHint(level), -1, 28f, 12));
-			}
-			for (int row = 0; row < 2; row++)
-			{
-				RectTransform prow = UIKit.Row(rnd, 26f, 4f, "Parts" + row);
-				for (int i = row * 4; i < Math.Min(RandomizerSettings.Features.Length, row * 4 + 4); i++)
-				{
-					string part = RandomizerSettings.Features[i];
-					Add("Part_" + part, UIKit.Button(prow, RandomizerSettings.FeatureLabels[i], () => SetRandomizer(s => { if (!s.Disabled.Remove(part)) s.Disabled.Add(part); }), RandomizerSettings.FeatureHints[i], -1, 26f, 11));
-				}
-			}
+			// The hovered setting's full description (the editor's status bar isn't there in a world)
+			RectTransform hintBox = UIKit.Rect("HintLine", panel);
+			UIKit.Background(hintBox.gameObject, UIKit.GroupBg, 5);
+			UIKit.Size(hintBox.gameObject, -1, 30);
+			hintText = UIKit.Label(hintBox, DefaultHint, 11, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
+			UIKit.Stretch(hintText.rectTransform, 8, 8, 1, 1);
+			UIKit.Fit(hintText, 9);
+			UIKit.HintChanged += h => { if (hintText != null && IsOpen) hintText.text = string.IsNullOrEmpty(h) ? DefaultHint : h; };
 
-			// This world's regrow days and the host's spawnpool.txt settings every player shares (ROADMAP AU46: no file to edit)
-			RectTransform shared = UIKit.Group(left, "Regrow and the Receiver (the host's, for every player)", "HostSettings");
-			RectTransform srow = UIKit.Row(shared, 28f, 6f, "Regrow");
-			UIKit.Label(srow, "Regrow days", 12, UIKit.TextMuted);
-			AddField("RegrowDays", srow, true, "Days until chopped trees, picked items, animals and looted chests come back in this world (0 = never; an island's own rule wins). Kept with the world, the same as the F10 command RegrowDays", SetRegrow);
-			UIKit.Label(srow, "Unload beyond (m)", 12, UIKit.TextMuted);
-			AddField("UnloadDistance", srow, false, "Custom islands further than this from the raft are unloaded, and come back when it returns (300 or more). Kept as this PC's setting for every world you host", v => SetPool("unloadDistance", v));
-			RectTransform rrow2 = UIKit.Row(shared, 28f, 6f, "Receiver");
-			Add("Receiver", UIKit.Button(rrow2, "", () => SetPool("showOnReceiver", WorldRules.ShowOnReceiver ? "0" : "1"), "Custom islands as green dots on Raft's Receiver. Kept as this PC's setting for every world you host", 150, 28f, 12));
-			UIKit.Label(rrow2, "Range (m, 0 = all)", 12, UIKit.TextMuted);
-			AddField("ReceiverDistance", rrow2, false, "Receiver dots only for islands this close (0 = all); an island the players still need shows however far it is. Kept as this PC's setting for every world you host", v => SetPool("receiverDistance", v));
-			Add("Defaults", UIKit.Button(rrow2, "Defaults...", DefaultsWindow.Open, "Every setting of your spawnpool.txt: random islands, spacing, distances, the Receiver, regrow days for new worlds, generated islands", 100, 28f, 12));
-
-			// Islands while sailing
-			Heading(left, "ISLANDS WHILE SAILING");
-			islandsText = UIKit.Label(left, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "IslandsNote");
-			islandsText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			UIKit.Size(islandsText.gameObject, -1, 30);
-			RectTransform listBox = UIKit.Rect("IslandList", left);
-			UIKit.Size(listBox.gameObject, -1, 150);
-			UIKit.Background(listBox.gameObject, new Color(0.231f, 0.129f, 0.059f, 0.3f), 6);
-			ScrollRect scroll;
-			islandList = UIKit.ScrollList(listBox, out scroll, 2f);
-			UIKit.Stretch((RectTransform)scroll.transform, 6, 4, 4, 4);
-
-			// Extra options and the level up system
-			Heading(right, "EXTRA OPTIONS");
-			for (int i = 0; i < WorldOptions.All.Length; i++)
-			{
-				string option = WorldOptions.All[i];
-				Add("Option_" + option, UIKit.Button(right, "", () => { var on = new HashSet<string>(WorldOptions.Current); if (!on.Remove(option)) on.Add(option); WorldOptions.Set(on); Refresh(); },
-					WorldOptions.Hints[i] + (option == WorldOptions.StoryOrder ? " Switched in a running world the Receiver's list is rebuilt: the island you were sailing to may move - best chosen when the world is made." : ""), -1, 28f, 13));
-			}
-			Add("Levels", UIKit.Button(right, "", () => { PlayerLevels.SetEnabled(!PlayerLevels.On); Refresh(); }, "Players earn EXP from monsters and spend stat points (K). Off keeps everyone's levels for when it is on again", -1, 28f, 13));
-
-			// Plan and story
-			Heading(right, "PLAN AND STORY");
-			// (the host picks another plan here - it was only the F10 command WorldPlan <name>)
-			RectTransform planRow = UIKit.Row(right, 28f, 6f, "PlanRow");
-			UIKit.Size(UIKit.Label(planRow, "Plan", 13, UIKit.TextMuted).gameObject, 40);
-			Add("WorldPlan", DropList.Make(planRow, "Drop_WorldPlan", NewWorldOptions.PlanOptions(), WorldDirector.PlanName, v => { DynamicIslands.WorldPlanCommand(new[] { v }); Refresh(); }, -1,
-				"Give this world another plan (host): its islands come from now on; what is done or unlocked stays", 28f, 13));
-			planText = UIKit.Label(right, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Plan");
-			planText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			planText.verticalOverflow = VerticalWrapMode.Truncate;
-			UIKit.Size(planText.gameObject, -1, 170);
-
-			// The islands in this world, nearest first (ROADMAP T1b)
-			Heading(right, "ISLANDS IN THIS WORLD");
-			hereText = UIKit.Label(right, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Here");
-			hereText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			hereText.verticalOverflow = VerticalWrapMode.Truncate;
-			UIKit.Size(hereText.gameObject, -1, 130);
-
-			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Label(buttonsRow, "Changes are for every player and saved with the world. The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands, WorldPlan.", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
-			Add("BackToEditor", UIKit.Button(buttonsRow, "Back to the editor", IslandTest.Back, "Leave the test world without saving it and open the island in the editor again", 180, 34f, 14));
-			Button close = UIKit.Button(buttonsRow, "Close", Close, "Back to the game menu (Esc)", 140, 34f, 15);
+			RectTransform buttonsRow = UIKit.Row(panel, 30f, 8f, "Buttons");
+			UIKit.Label(buttonsRow, "", 11);
+			Add("BackToEditor", UIKit.Button(buttonsRow, "Back to the editor", IslandTest.Back, "Leave the test world without saving it and open the island in the editor again", 170, 30f, 13));
+			Button close = UIKit.Button(buttonsRow, "Close", Close, "Back to the game menu (Esc)", 130, 30f, 14);
 			UIKit.Primary(close);
 			canvas.gameObject.SetActive(false);
 		}
 
-		static void Heading(Transform parent, string text)
+		/// <summary>A group (UIKit.Group) a little tighter than the editor's.</summary>
+		static RectTransform Section(Transform parent, string title, string name)
 		{
-			Text t = UIKit.Label(parent, text, 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Heading");
-			UIKit.Size(t.gameObject, -1, 18);
+			RectTransform g = UIKit.Group(parent, title, name);
+			VerticalLayoutGroup v = g.GetComponent<VerticalLayoutGroup>();
+			v.spacing = 3f; v.padding = new RectOffset(8, 8, 3, 6);
+			return g;
 		}
+
+		/// <summary>A small italic line (or two, three) under a group's controls: what a change does in a running world.</summary>
+		static Text Note(Transform parent, string text, int lines, string name = "MidGame")
+		{
+			Text t = UIKit.Label(parent, text, 10, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, name);
+			t.horizontalOverflow = HorizontalWrapMode.Wrap;
+			t.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(t.gameObject, -1, lines * 12 + 1);
+			return t;
+		}
+
+		static void BuildRules(Transform left)
+		{
+			RectTransform rules = Section(left, "World rules", "Rules");
+			RectTransform mrow = UIKit.Row(rules, RowH, 3f, "Monsters");
+			UIKit.Size(UIKit.Label(mrow, "Monsters", 11, UIKit.TextMuted).gameObject, 62);
+			for (int i = 0; i < MonsterDifficulty.Names.Length; i++)
+			{
+				int level = i;
+				Add("Monsters_" + MonsterDifficulty.Names[i], UIKit.Button(mrow, MonsterDifficulty.Names[i], () => { MonsterDifficulty.Set(level); Refresh(); }, "Monster difficulty - monsters' health and the damage they deal: " + MonsterDifficulty.Describe(level) + ". In this world now: at once, on the next hit.", -1, RowH, 11));
+			}
+			RectTransform crow = UIKit.Row(rules, RowH, 3f, "BuildCost");
+			UIKit.Size(UIKit.Label(crow, "Build cost", 11, UIKit.TextMuted).gameObject, 62);
+			Add("BuildCost_Less", UIKit.Button(crow, "- 5 %", () => { BuildCost.Set(Mathf.Max(0, BuildCost.Current - BuildCost.Step)); Refresh(); }, "The build menu costs 5 % less, at once. Blocks built before keep giving back by the cost they were built at", 60, RowH, 11));
+			Add("BuildCost_Value", UIKit.Button(crow, "", () => { }, "How many more materials the build menu costs than in Raft", -1, RowH, 11));
+			Add("BuildCost_More", UIKit.Button(crow, "+ 5 %", () => { BuildCost.Set(Mathf.Min(BuildCost.Max, BuildCost.Current + BuildCost.Step)); Refresh(); }, "The build menu costs 5 % more, at once. Blocks built before keep giving back by the cost they were built at", 60, RowH, 11));
+			Note(rules, RulesMidGame, 2);
+		}
+
+		static void BuildRandomizer(Transform left)
+		{
+			RectTransform rnd = Section(left, "World randomizer", "Randomizer");
+			RectTransform rrow = UIKit.Row(rnd, RowH, 3f, "Level");
+			for (int i = 0; i < RandomizerSettings.LevelNames.Length; i++)
+			{
+				int level = i;
+				Add("Randomizer_" + RandomizerSettings.LevelNames[i], UIKit.Button(rrow, RandomizerSettings.LevelNames[i], () => SetRandomizer(s => s.Level = level), RandomizerSettings.LevelHint(level), -1, RowH, 11));
+			}
+			for (int row = 0; row < 2; row++)
+			{
+				RectTransform prow = UIKit.Row(rnd, 18f, 2f, "Parts" + row);
+				for (int i = row * 4; i < Math.Min(RandomizerSettings.Features.Length, row * 4 + 4); i++)
+				{
+					string part = RandomizerSettings.Features[i];
+					Add("Part_" + part, UIKit.Check(prow, RandomizerSettings.FeatureLabels[i], () => SetRandomizer(s => { if (!s.Disabled.Remove(part)) s.Disabled.Add(part); }), RandomizerSettings.FeatureHints[i] + " " + PartMidGame(part), 18f, 11));
+				}
+			}
+			Note(rnd, RandomizerMidGame, 3);
+		}
+
+		/// <summary>One randomizer part switched in a world under way (WorldRandomizer.Set, VariantOf, GiveExtras, OnSailed).</summary>
+		static string PartMidGame(string part)
+		{
+			switch (part)
+			{
+				case RandomizerSettings.Colours:
+				case RandomizerSettings.Alphas: return "IN THIS WORLD NOW: animals are looked at again at once; one already changed keeps its look.";
+				case RandomizerSettings.Loot: return "IN THIS WORLD NOW: Raft's islands not met yet; off puts moved crates and clams back at once.";
+				case RandomizerSettings.Animals:
+				case RandomizerSettings.Finds: return "IN THIS WORLD NOW: Raft's islands not met yet; an island already looked at keeps what it got.";
+				default: return "IN THIS WORLD NOW: counts while sailing from now on; off: one due doesn't come, islands already here stay.";
+			}
+		}
+
+		static void BuildShared(Transform left)
+		{
+			// This world's regrow days and the host's spawnpool.txt settings every player shares (ROADMAP AU46: no file to edit)
+			RectTransform shared = Section(left, "Regrow and the Receiver (the host's)", "HostSettings");
+			RectTransform srow = UIKit.Row(shared, RowH, 5f, "Regrow");
+			UIKit.Label(srow, "Regrow days", 11, UIKit.TextMuted);
+			AddField("RegrowDays", srow, true, "Days until chopped trees, picked items, animals and looted chests come back in this world (0 = never; an island's own rule wins). Kept with the world, the same as the F10 command RegrowDays. Counts from the next time an island loads", SetRegrow);
+			UIKit.Label(srow, "Unload beyond (m)", 11, UIKit.TextMuted);
+			AddField("UnloadDistance", srow, false, "Custom islands further than this from the raft are unloaded, and come back when it returns (300 or more). Kept as this PC's setting for every world you host", v => SetPool("unloadDistance", v));
+			RectTransform rrow2 = UIKit.Row(shared, RowH, 5f, "Receiver");
+			Button receiver = UIKit.Check(rrow2, "Receiver dots", () => SetPool("showOnReceiver", WorldRules.ShowOnReceiver ? "0" : "1"), "Custom islands as green dots on Raft's Receiver, at once. Kept as this PC's setting for every world you host", RowH, 11);
+			UIKit.Size(receiver.gameObject, 112, RowH);
+			Add("Receiver", receiver);
+			UIKit.Label(rrow2, "Range (m, 0 = all)", 11, UIKit.TextMuted);
+			AddField("ReceiverDistance", rrow2, false, "Receiver dots only for islands this close (0 = all); an island the players still need shows however far it is. Kept as this PC's setting for every world you host", v => SetPool("receiverDistance", v));
+			Add("Defaults", UIKit.Button(rrow2, "Defaults...", DefaultsWindow.Open, "Every setting of your spawnpool.txt: random islands, spacing, distances, the Receiver, regrow days for new worlds, generated islands", 86, RowH, 11));
+			Note(shared, SharedMidGame, 2);
+		}
+
+		static void BuildIslands(Transform left)
+		{
+			RectTransform box = Section(left, "Islands while sailing", "IslandsWhileSailing");
+			islandsText = UIKit.Label(box, "", 10, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "IslandsNote");
+			islandsText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			islandsText.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(islandsText.gameObject, -1, 25);
+			RectTransform listBox = UIKit.Rect("IslandList", box);
+			UIKit.Size(listBox.gameObject, -1, 140);
+			ScrollRect scroll;
+			islandList = UIKit.ScrollList(listBox, out scroll, 0f);
+			UIKit.Stretch((RectTransform)scroll.transform, 0, 0, 0, 0);
+			Note(box, IslandsMidGame, 1);
+		}
+
+		static void BuildOptions(Transform right)
+		{
+			RectTransform box = Section(right, "Extra options", "ExtraOptions");
+			Note(box, "Each row: what switching it does in this world now. Point at a row for what the option is.", 1, "OptionsNote");
+			RectTransform listBox = UIKit.Rect("OptionList", box);
+			UIKit.Size(listBox.gameObject, -1, 262);
+			ScrollRect scroll;
+			RectTransform list = UIKit.ScrollList(listBox, out scroll, 1f);
+			scroll.name = "OptionsScroll";
+			UIKit.Stretch((RectTransform)scroll.transform, 0, 0, 0, 0);
+			for (int i = 0; i < WorldOptions.All.Length; i++)
+			{
+				string option = WorldOptions.All[i];
+				Add("Option_" + option, OptionRow(list, WorldOptions.Labels[i], () => { var on = new HashSet<string>(WorldOptions.Current); if (!on.Remove(option)) on.Add(option); WorldOptions.Set(on); Refresh(); },
+					WorldOptions.Hints[i], MidGame(option)));
+			}
+			Add("Levels", OptionRow(list, "Level up system", () => { PlayerLevels.SetEnabled(!PlayerLevels.On); Refresh(); },
+				"Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more.", LevelsMidGame));
+			// (the head start raft is built once, when the world is made - HeadStart.OnWorldRead: shown, not switched)
+			RectTransform hs = UIKit.Row(list, OptionRowH, 6f, "HeadStart");
+			UIKit.Hint(hs.gameObject, "The head start raft is built once, when the world is made (chosen in the New Game box's World settings). It can't be added or taken away in a running world.");
+			headStartText = UIKit.Label(hs, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Text");
+			headStartText.raycastTarget = true; // (its hint)
+		}
+
+		/// <summary>An extra option's row: tick box and name, and on its right what switching it does in a world under way.</summary>
+		static Button OptionRow(Transform list, string name, Action onClick, string hint, string midGame)
+		{
+			Button b = UIKit.Check(list, name, onClick, hint + (midGame.Length > 0 ? "  IN THIS WORLD NOW: " + midGame : ""), OptionRowH, 12);
+			UIKit.Size(UIKit.LabelOf(b).gameObject, NameWidth, OptionRowH);
+			Text effect = UIKit.Label(b.transform, midGame, 10, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "MidGame");
+			effect.horizontalOverflow = HorizontalWrapMode.Wrap;
+			effect.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(effect.gameObject, -1, OptionRowH);
+			return b;
+		}
+
+		static void BuildPlan(Transform right)
+		{
+			RectTransform box = Section(right, "Plan and story", "PlanAndStory");
+			// (the host picks another plan here - it was only the F10 command WorldPlan <name>)
+			RectTransform planRow = UIKit.Row(box, RowH, 6f, "PlanRow");
+			UIKit.Size(UIKit.Label(planRow, "Plan", 11, UIKit.TextMuted).gameObject, 34);
+			Add("WorldPlan", DropList.Make(planRow, "Drop_WorldPlan", NewWorldOptions.PlanOptions(), WorldDirector.PlanName, v => { DynamicIslands.WorldPlanCommand(new[] { v }); Refresh(); }, -1,
+				"Give this world another plan (host). " + PlanMidGame, RowH, 12));
+			planText = UIKit.Label(box, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Plan");
+			planText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			planText.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(planText.gameObject, -1, 76);
+			Note(box, PlanMidGame, 2);
+
+			// The islands in this world, nearest first (ROADMAP T1b)
+			RectTransform here = Section(right, "Islands in this world", "IslandsHere");
+			hereText = UIKit.Label(here, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Here");
+			hereText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			hereText.verticalOverflow = VerticalWrapMode.Truncate;
+			UIKit.Size(hereText.gameObject, -1, 84);
+		}
+
+		/// <summary>The panel as tall as its content (the body's rows and the fixed lines around them), never taller than the screen.</summary>
+		void LateUpdate()
+		{
+			if (panel == null || body == null || bodyView == null) return;
+			RectTransform root = (RectTransform)canvas.transform;
+			float chrome = panel.rect.height - bodyView.rect.height;
+			float want = Mathf.Min(MaxHeight, root.rect.height - 16f, body.rect.height + chrome);
+			if (Mathf.Abs(panel.sizeDelta.y - want) > 0.5f) panel.sizeDelta = new Vector2(Width, Mathf.Max(200f, want));
+		}
+
 
 		static void Add(string name, Button b) { b.name = name; buttons[name] = b; }
 
@@ -301,12 +465,22 @@ namespace DynamicIslands.Editor
 			filledFrom = null;
 			if (!Host) return;
 			filledFrom = Candidates();
-			foreach (string entry in filledFrom)
+			// (two tick-box rows to a line)
+			RectTransform line = null;
+			for (int i = 0; i < filledFrom.Count; i++)
 			{
-				string e = entry;
-				Button b = UIKit.Button(islandList, "", () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); }, WorldIslands.Hint(e), -1, 24f, 12);
+				string e = filledFrom[i];
+				if (i % 2 == 0)
+				{
+					line = UIKit.Row(islandList, 18f, 4f, "Line" + i / 2);
+					line.GetComponent<HorizontalLayoutGroup>().childForceExpandWidth = true;
+				}
+				Button b = UIKit.Check(line, WorldIslands.Label(e), () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); },
+					WorldIslands.Hint(e) + "  IN THIS WORLD NOW: " + IslandsMidGame, 18f, 11);
 				Add("Island_" + e, b);
 			}
+			// (an odd count: an empty half keeps the last one half wide)
+			if (filledFrom.Count % 2 == 1) UIKit.Rect("Empty", line);
 		}
 
 		public static void Refresh()
@@ -320,8 +494,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < MonsterDifficulty.Names.Length; i++) UIKit.SetActive(buttons["Monsters_" + MonsterDifficulty.Names[i]], MonsterDifficulty.Current == i);
 			UIKit.LabelOf(buttons["BuildCost_Value"]).text = BuildCost.Describe(BuildCost.Current);
 			// (the world's regrow days and the host's shared settings - a player sees the host's)
-			UIKit.LabelOf(buttons["Receiver"]).text = "Receiver dots:  " + (WorldRules.ShowOnReceiver ? "ON" : "off");
-			UIKit.SetActive(buttons["Receiver"], WorldRules.ShowOnReceiver);
+			UIKit.SetCheck(buttons["Receiver"], WorldRules.ShowOnReceiver);
 			ShowField("RegrowDays", WorldRules.RegrowDays, host);
 			ShowField("UnloadDistance", WorldRules.UnloadDistance, host);
 			ShowField("ReceiverDistance", WorldRules.ReceiverDistance, host);
@@ -330,24 +503,23 @@ namespace DynamicIslands.Editor
 			foreach (string part in RandomizerSettings.Features)
 			{
 				Button b = buttons["Part_" + part];
-				UIKit.SetActive(b, r.Level > RandomizerSettings.Off && !r.Disabled.Contains(part));
 				// (with the randomizer off its parts do nothing: they toggled with nothing to see)
 				b.interactable = host && r.Level > RandomizerSettings.Off;
+				UIKit.SetCheck(b, r.Level > RandomizerSettings.Off && !r.Disabled.Contains(part));
 			}
 			foreach (string o in WorldOptions.All)
 			{
 				Button b = buttons["Option_" + o];
-				UIKit.LabelOf(b).text = WorldOptions.Label(o) + ":  " + (WorldOptions.On(o) ? "ON" : "off");
-				UIKit.SetActive(b, WorldOptions.On(o));
+				UIKit.SetCheck(b, WorldOptions.On(o));
 				// (an option no longer offered shows only while the world has it on, to switch it off)
 				b.gameObject.SetActive(!WorldOptions.IsRetired(o) || WorldOptions.On(o));
 			}
-			UIKit.LabelOf(buttons["Levels"]).text = "Level up system:  " + (PlayerLevels.On ? "ON" : "off");
+			UIKit.SetCheck(buttons["Levels"], PlayerLevels.On);
+			headStartText.text = "Head start raft: " + (host ? HeadStart.Describe(HeadStart.Level) : "the host's") + " - built when the world was made; can't change now.";
 			Button planPick = buttons["WorldPlan"];
 			DropdownButton pd = planPick.GetComponent<DropdownButton>();
 			if (pd != null) { pd.Options = PlanOptions(); pd.Value = WorldDirector.PlanName; }
 			UIKit.LabelOf(planPick).text = WorldDirector.PlanName;
-			UIKit.SetActive(buttons["Levels"], PlayerLevels.On);
 
 			if (host)
 			{
@@ -361,9 +533,7 @@ namespace DynamicIslands.Editor
 				{
 					Button b;
 					if (!buttons.TryGetValue("Island_" + e, out b)) continue;
-					bool on = WorldIslands.TakesPart(e);
-					UIKit.LabelOf(b).text = (on ? "☑  " : "☐  ") + WorldIslands.Label(e);
-					UIKit.SetActive(b, on);
+					UIKit.SetCheck(b, WorldIslands.TakesPart(e));
 				}
 			}
 			else islandsText.text = WorldIslands.DescribeForPlayer();
@@ -391,7 +561,6 @@ namespace DynamicIslands.Editor
 					string.Join(", ", p.Rules.Where(x => !WorldDirector.Done.Contains(x.Id) && !StoryChain.Brought.Contains(x.Id)).Take(3).Select(x => (x.Label.Length > 0 ? x.Label : x.Id)).ToArray()));
 			}
 			if (StoryChain.Active) lines.Add(StorySummary());
-			lines.Add("<i>Another plan: pick it in the list above - its islands come from now on, what is done or unlocked stays.</i>");
 			return string.Join("\n", lines.ToArray());
 		}
 
