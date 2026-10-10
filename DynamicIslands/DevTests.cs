@@ -920,6 +920,8 @@ namespace DynamicIslands
 				if (tile != null) target = topOf(tile) + Vector3.up * 1.5f;
 			}
 
+			// (a player who is down has no character controller and hangs where put: player 2 in IM15, killed by the boar it hit)
+			yield return EnsureAlive();
 			// (as the mod moves a player: off the raft first - a player still a child of the rocking raft dropped through the island -
 			// and walking: a swimmer stays in Raft's swimming mode after a teleport, held at the sea surface)
 			PlayerMove.To(player, target);
