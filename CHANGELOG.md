@@ -157,6 +157,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   dropped open. The aqueduct's three wheels are named too.
 - **Crater Lair's roof laser works:** the mirror and the panel had lost their names (two settings on one line), and the
   panel stood just off the turned beam. Turning the mirror now lights the panel and opens the roof safe.
+- **A Raft update that removes one of its objects no longer mixes up an island's trees:** the trees and items after the
+  missing object keep what your world saved for them (picked, chopped, regrowing) instead of moving one place along.
 - **A busy host no longer loses a chest:** when the host's answers to "may I open this?" kept arriving late (busy sending
   island files), player 2 asked again for ever and nobody got the chest. The host now holds it longer for that player.
 - **Private storages and the hammer:** another player could take someone's private storage down with the

@@ -27,8 +27,15 @@ namespace DynamicIslands.Editor
 		{
 			uint baseIndex = 0x40000000u | ((uint)(islandId & 0x3FFF) << 16);
 			uint n = 0;
-			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
+			// (an object this Raft no longer has keeps the numbers of its pickups - PickupGap, R2b)
+			Component[] found = root.GetComponentsInChildren<PickupGap>(true).Length == 0
+				? (Component[])root.GetComponentsInChildren<PickupItem_Networked>(true) : root.GetComponentsInChildren<MonoBehaviour>(true);
+			foreach (Component c in found)
 			{
+				var gap = c as PickupGap;
+				if (gap != null) { n += (uint)gap.Count; continue; }
+				var pn = c as PickupItem_Networked;
+				if (pn == null) continue;
 				pn.ObjectIndex = baseIndex + (++n);
 				// Picked up = disabled rather than destroyed, so the island's objects keep their order and state can be recorded
 				pn.spawnType = ObjectSpawnType.GameObject;
@@ -374,8 +381,19 @@ namespace DynamicIslands.Editor
 					// (in the editor a placeholder keeps it, so saving doesn't drop it from the island for good: after a Raft update
 					// renamed or removed an object, a later version may have it again)
 					if (editable) MissingPlaceholder(o, parent);
-					// (in a world a chest still takes its number: the chests after it keep their saved state)
-					else if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
+					else
+					{
+						// (in a world a chest still takes its number: the chests after it keep their saved state)
+						if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
+						// (and so do its pickups, when Raft had them: the trees and items after it keep theirs - R2b)
+						int had = StableIds.ShippedPickups(o.Name);
+						if (had > 0)
+						{
+							var gap = new GameObject(o.Name + " (" + MissingTag + ")");
+							gap.transform.SetParent(parent, false);
+							gap.AddComponent<PickupGap>().Count = had;
+						}
+					}
 					return;
 				}
 				go.transform.position = parent.position + o.Position;
@@ -664,5 +682,15 @@ namespace DynamicIslands.Editor
 
 			return root;
 		}
+	}
+
+	/// <summary>
+	/// In a world, in the place of an object this Raft no longer has (a Raft update removed it): how many pickups it had
+	/// (StableIds.ShippedPickups). RegisterNetworkIds skips that many numbers, so the pickups after it keep the numbers
+	/// the world's saved state uses (ROADMAP R2b).
+	/// </summary>
+	public class PickupGap : MonoBehaviour
+	{
+		public int Count;
 	}
 }

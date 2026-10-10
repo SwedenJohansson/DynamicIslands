@@ -184,10 +184,46 @@ namespace DynamicIslands.Editor
 			int n;
 			if (pickupCounts.TryGetValue(name, out n)) return n;
 			GameObject proto = PlaceableCatalog.Get(name);
-			if (proto == null) return PlaceableCatalog.IsIndexed(name) ? -1 : 0; // (not in this Raft at all: missing, no pickups)
+			// (not in this Raft at all: missing - it keeps the numbers it had, PickupGap)
+			if (proto == null) return PlaceableCatalog.IsIndexed(name) ? -1 : ShippedPickups(name);
 			n = proto.GetComponentsInChildren<PickupItem_Networked>(true).Length;
 			pickupCounts[name] = n;
 			return n;
+		}
+
+		/// <summary>Raft's objects that bring pickups, and how many: measured (CIMeasurePickups) and shipped with the mod.</summary>
+		public const string PickupsFile = "raft_pickups.txt";
+		static Dictionary<string, int> shippedPickups;
+		/// <summary>Tests: objects that "were" in Raft, with their pickups.</summary>
+		internal static readonly Dictionary<string, int> TestPickups = new Dictionary<string, int>();
+
+		/// <summary>
+		/// ROADMAP R2b: how many pickups an object brought in the Raft version raft_pickups.txt was measured in (0 when it
+		/// isn't listed). An object a Raft update removed keeps its numbers in a world, so the trees and items after it keep
+		/// what the world saved for them. The shipped list, not this PC's Raft: every player numbers them the same.
+		/// </summary>
+		public static int ShippedPickups(string name)
+		{
+			int n;
+			if (name == null) return 0;
+			if (TestPickups.TryGetValue(name, out n)) return n;
+			if (shippedPickups == null)
+			{
+				shippedPickups = new Dictionary<string, int>();
+				try
+				{
+					byte[] bytes = RaftIslands.ModFile(PickupsFile);
+					if (bytes == null) Debug.LogWarning("[CUSTOM ISLANDS] " + PickupsFile + " is missing: an object a Raft update removed would shift the numbers of the pickups after it");
+					else
+						foreach (string raw in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
+						{
+							string[] p = raw.TrimEnd('\r').Split('\t');
+							if (p.Length >= 2 && !p[0].StartsWith("#") && int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) && n > 0) shippedPickups[p[0]] = n;
+						}
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + PickupsFile + ": " + e.Message); }
+			}
+			return shippedPickups.TryGetValue(name, out n) ? n : 0;
 		}
 
 		/// <summary>
@@ -231,7 +267,8 @@ namespace DynamicIslands.Editor
 				if (island == null || root == null) return true;
 				Layout l = LayoutOf(island, flying);
 				if (l.Unsure != null) return true;
-				int actual = root.GetComponentsInChildren<PickupItem_Networked>(true).Length, counted = l.Pickups.Count - 1;
+				int actual = root.GetComponentsInChildren<PickupItem_Networked>(true).Length + root.GetComponentsInChildren<PickupGap>(true).Sum(g => g.Count),
+					counted = l.Pickups.Count - 1;
 				if (actual == counted) return true;
 				Debug.LogWarning("[CUSTOM ISLANDS] '" + island.Name + "': " + actual + " pickups in the world, " + counted + " counted from its file - " +
 					"an edit of this island may not carry its saved worlds' trees and items right");

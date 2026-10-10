@@ -297,6 +297,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether the index knows the object (loaded or not).</summary>
 		public static bool IsIndexed(string name) { return name != null && index.ContainsKey(name); }
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
+		/// <summary>The index's things to gather (they keep their gameplay, pickups too - CIMeasurePickups).</summary>
+		internal static List<string> IndexedGatherNames() { return index.Values.Where(e => e.Harvestable).Select(e => e.Name).ToList(); }
 
 		/// <summary>
 		/// Creates an active copy of a catalog object. Returns null if the name is unknown or not loaded yet.

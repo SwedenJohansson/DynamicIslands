@@ -100,7 +100,97 @@ namespace DynamicIslands
 			if (ok) Log("PASS: stable ids (R1b)"); else Fail("stable ids (R1b)");
 		}
 
-		[ConsoleCommand(name: "CIStableIdsSave", docs: "Dev, editor: R1b end to end - an island a saved world used, an object before a looted chest and a picked tree removed in the editor and saved: the world plays the new file with what was used still on the same objects")]
+		[ConsoleCommand(name: "CIMeasurePickups", docs: "Dev, editor: how many of Raft's pickups (trees, rocks, items) each object brings - the core list and the index's things to gather: raft_pickups.txt in Mods\\DynamicIslands; copy it into the mod's DynamicIslands folder (R2b)")]
+		public static void MeasurePickups()
+		{
+			StartTest(MeasurePickupsRoutine());
+		}
+
+		static IEnumerator MeasurePickupsRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("measure pickups: in the editor"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			yield return PlaceableCatalog.EnsureIndex();
+			yield return PlaceableCatalog.EnsureLoaded(PlaceableCatalog.IndexedGatherNames());
+			var lines = new List<string>
+			{
+				"# CustomIslands pickups per object raft=" + Application.version,
+				"# Raft's objects that bring pickups (trees, rocks, items): name, how many. An object a Raft update removes keeps",
+				"# that many numbers in a world, so the pickups after it keep their saved state (ROADMAP R2b). Made by CIMeasurePickups.",
+			};
+			int objects = 0, pickups = 0;
+			foreach (string n in PlaceableCatalog.LoadedNames.OrderBy(x => x, StringComparer.Ordinal).ToList())
+			{
+				int k = StableIds.PickupCount(n);
+				if (k <= 0) continue;
+				lines.Add(n + "\t" + k);
+				objects++;
+				pickups += k;
+			}
+			string path = Path.Combine(DynamicIslands.assetpath, StableIds.PickupsFile);
+			File.WriteAllLines(path, lines.ToArray());
+			if (objects > 0) Log("PASS: measured pickups: " + objects + " objects bring " + pickups + " - " + path);
+			else Fail("measure pickups: no object with pickups");
+		}
+
+		[ConsoleCommand(name: "CIPickupGap", docs: "Dev, world (host): R2b - an object this Raft no longer has keeps its pickups' numbers: the tree after it keeps its own, the count from its file matches the world, and raft_pickups.txt lists the tree")]
+		public static void PickupGapTest()
+		{
+			StartTest(PickupGapRoutine());
+		}
+
+		static IEnumerator PickupGapRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor()) { Fail("pickup gap: in a world"); yield break; }
+			// (a world builds the catalog when its first island loads - a fresh world may have none yet)
+			yield return PlaceableCatalog.EnsureBuilt();
+			PickupGapCheck();
+		}
+
+		static void PickupGapCheck()
+		{
+			bool ok = true;
+			const string gone = "CI_GoneTree";
+			GameObject root = null;
+			try
+			{
+				if (!PlaceableCatalog.IsBuilt) { Fail("pickup gap: the object catalog didn't build"); return; }
+				string tree = PlaceableCatalog.LoadedNames.Where(n => PlaceableCatalog.IsHarvestable(n) && !ContentCatalog.IsCreature(n))
+					.OrderBy(n => n, StringComparer.Ordinal).FirstOrDefault(n => StableIds.PickupCount(n) > 0);
+				if (tree == null) { Fail("pickup gap: no loaded object with pickups"); return; }
+				int k = StableIds.PickupCount(tree), g = 3;
+				Log("tree: " + tree + " (" + k + " pickups), the gone one had " + g);
+				Check(ref ok, StableIds.TestPickups.Count == 0 && StableIds.ShippedPickups(tree) == k, "raft_pickups.txt lists the tree with " + k + " (" + StableIds.ShippedPickups(tree) + ")");
+				StableIds.TestPickups[gone] = g;
+
+				Func<string, float, IslandObject> obj = (n, x) => new IslandObject { Name = n, Position = new Vector3(x, 3, 0), EulerRotation = Vector3.zero, Scale = Vector3.one };
+				var f = new IslandFile { Name = "ci_pickupgap", TerrainSize = new Vector3(64, 40, 64), HeightmapResolution = 33, Heights = new float[33, 33], WaterLevel = 0 };
+				f.Objects.AddRange(new[] { obj(tree, -6), obj(gone, 0), obj(tree, 6) });
+				StableIds.Layout l = StableIds.LayoutOf(f, false);
+				Check(ref ok, l.Unsure == null && l.Pickups.Count - 1 == 2 * k + g, "the file counts the gone object's pickups (" + (l.Pickups.Count - 1) + ", wanted " + (2 * k + g) + (l.Unsure != null ? ", unsure: " + l.Unsure : "") + ")");
+
+				Vector3 at = (RAPI.GetLocalPlayer() != null ? RAPI.GetLocalPlayer().transform.position : Vector3.zero) + new Vector3(3000, 0, 3000);
+				root = IslandSpawner.SpawnInWorld(f, new Vector3(at.x, 0, at.z));
+				IslandSpawner.RegisterNetworkIds(root, 0x3FFE);
+				PickupItem_Networked[] all = root.GetComponentsInChildren<PickupItem_Networked>(true);
+				Transform[] trees = root.GetComponentsInChildren<Transform>(true).Where(t => t.name == tree).ToArray();
+				Func<Transform, string> ords = t => string.Join(",", t.GetComponentsInChildren<PickupItem_Networked>(true).Select(p => (p.ObjectIndex & 0xFFFF).ToString()).ToArray());
+				string want1 = string.Join(",", Enumerable.Range(1, k).Select(i => i.ToString()).ToArray()), want2 = string.Join(",", Enumerable.Range(k + g + 1, k).Select(i => i.ToString()).ToArray());
+				Check(ref ok, all.Length == 2 * k && trees.Length == 2, "the world has both trees' pickups (" + all.Length + ")");
+				Check(ref ok, trees.Length == 2 && ords(trees[0]) == want1 && ords(trees[1]) == want2,
+					"the tree after the gone object keeps its numbers: " + (trees.Length == 2 ? ords(trees[0]) + " | " + ords(trees[1]) : "?") + " (wanted " + want1 + " | " + want2 + ")");
+				Check(ref ok, StableIds.CheckPickups(f, root, false), "the count from the file matches the world");
+			}
+			catch (Exception ex) { Check(ref ok, false, "threw " + ex); }
+			finally
+			{
+				StableIds.TestPickups.Remove(gone);
+				if (root != null) IslandSpawner.Despawn(root);
+			}
+			if (ok) Log("PASS: pickup gap (R2b)"); else Fail("pickup gap (R2b)");
+		}
+
+		[ConsoleCommand(name: "CIStableIdsSave",docs: "Dev, editor: R1b end to end - an island a saved world used, an object before a looted chest and a picked tree removed in the editor and saved: the world plays the new file with what was used still on the same objects")]
 		public static void StableIdsSaveTest()
 		{
 			StartTest(StableIdsSaveRoutine());

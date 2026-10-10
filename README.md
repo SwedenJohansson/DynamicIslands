@@ -690,7 +690,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `CustomIslandSpawner.cs` | Automatic islands while sailing (saved ones and newly generated ones), and loading/unloading islands by distance (from the raft and the player) |
 | `PlayerHold.cs` | A player who comes back to a world standing on a custom island is held there until it has loaded; the host's record of where each player stands on an island (`PlayerPlaces`, saved with the world) corrects a place Raft got wrong |
 | `IslandRadar.cs` | Custom islands as dots on Raft's Receiver (Harmony postfix on `Reciever.HandleUI`) |
-| `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing |
+| `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing (`raft_pickups.txt`: how many pickups each of Raft's objects brings, so one a Raft update removes doesn't shift the others) |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients, quests, used objects, announcements, object state and events |
 | `Claims.cs` | Things only one player can have (a chest's loot, a zone that fires once): a client asks the host, the host grants the first to ask and holds it for them until their "used" arrives (message kind 16) |
 | `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed |

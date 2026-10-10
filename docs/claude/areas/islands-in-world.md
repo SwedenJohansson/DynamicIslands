@@ -37,7 +37,7 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 - World file `worlds\<world guid>.txt` (`IslandWorldState.WorldFilePath`). Island line `name|x|y|z|state|rule|label|hash` (fields after the eighth, a newer version's, are kept in `Entry.Extra` and written back). `@auto=`, `@modversion=`; `WorldCopy.StampLines`: `@savedat=`, `@savecount=`, `@raftsave=` or `@between=`; `@savedby=` (`Housekeeping.SavedByLine`); `@place=` (`PlayerPlaces`); other classes add their own `@key=` lines.
 - `CustomIslands.txt` (`WorldCopy.FileName`) in Raft's `World\<name>` folder and, on a Raft save, in its newest save folder.
 - Object state `ordinal,active,yield,day;...`. Keys: pickups up to 0xFFFF; `CreatureSpawner.StateKeyBase` 0x10000; `ContentState.LootKeyBase` 0x20000; `TriggerZone.KeyBase` 0x30000.
-- Pickup network index `0x40000000 | (islandId & 0x3FFF) << 16 | n` (`RegisterNetworkIds`).
+- Pickup network index `0x40000000 | (islandId & 0x3FFF) << 16 | n` (`RegisterNetworkIds`). An object this Raft no longer has gets a `PickupGap` (its count from the shipped `raft_pickups.txt`, `StableIds.ShippedPickups`; remeasure with `CIMeasurePickups`), so `n` of the pickups after it doesn't shift (R2b, `CIPickupGap`).
 - `spawnpool.txt` (`PoolFileName`): keys in `SetValue` (`chanceperkm`, `quietminutes`, `unloaddistance`, `regrowdays`, `showonreceiver`, `receiverdistance`...); pool lines with weights, `<generated>`, `type:<name>`.
 
 ## Where to change X
