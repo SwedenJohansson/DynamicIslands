@@ -72,6 +72,7 @@ expect message isn't whole
 | `log` | `<text>` | Writes the text to the log. |
 | `where` | `<name>` | Logs where the island's objects whose name starts with it are, in test coordinates. |
 | `picture` | `<file> <x> <h> <z> <lx> <lh> <lz>` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. |
+| `snap` | `<file> <object> [from] [dist] [up]` | A picture like `picture`, framed on the object's middle: seen from compass bearing `from` (0 = from the north, default 180), `dist` m off (default twice its size, at least 4), `up` m higher (default 0.4 x dist). Logs where the object is. |
 
 ## Expectations (`PlayExpect`, plus `chain` and `spinsown` in `PlayRoutine`)
 

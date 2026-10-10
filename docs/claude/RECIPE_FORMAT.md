@@ -112,7 +112,7 @@ plan save
 | `ramp` | `<Object> from x1 z1 h1 to x2 z2 h2 [len=6] [top=1] [rot=]` | Pieces end to end between two heights (above the sea, or the frame's floor), tilted and stretched. `len`: piece length along its x; `top`: walking surface above its pivot. |
 | `roof` | `<w> <d> at x z [y=\|h=] [wood]` | A hipped roof (`RaftRoof.Hip`) over w x d cells of the 1.5 m grid, its -x -z corner at x z. `at` must be the fourth word. |
 | `beside` | `<Object> <alias\|-> <of-alias> [d=2] [yaw=] [turn=]` | On the ground d m in front of the first object of `of-alias` (its facing turned by `yaw`), facing it (+`turn`). |
-| `prop` / `beh` | `<alias> key=value` | An object setting on every object of the alias (`PropsCommand.Change`). Empty value removes it. |
+| `prop` / `beh` | `<alias> key=value` | An object setting on every object of the alias (`PropsCommand.Change`). Empty value removes it. The alias is not the object's name: actions and `state` checks find objects by `obj.name` only. |
 | `zipto` | `<alias> x z` | A zipline's far end on the ground there (the `zip.to` setting, `ZiplineEnds.ZipTo`). |
 | `loot` | `<alias> <items>` | Chest loot (`ObjectProps.LootItems`), e.g. `Wool*4;Rope*4`. |
 | `note` | `<alias> <title> \| <text>` | The note editor's Apply (`NoteEditorWindow.Apply`). |
@@ -122,7 +122,7 @@ plan save
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
 | `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |
-| `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. |
+| `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. Fails first when an action or `state` check names an object no object is named (`UnnamedTargets`). |
 | `plan` | see below | World plans window. |
 | `log` | `<text>` | Writes the text to the log. |
 | `where` | `<alias>` | Logs where the alias's objects ended up (x z from the first origin, `h=` above the sea, turn). |

@@ -430,6 +430,31 @@ namespace DynamicIslands
 						yield return PlayPicture(file, from, look);
 						break;
 					}
+					case "snap":
+					{
+						// (snap <file> <object> [from] [dist] [up]: the object's middle seen from compass bearing "from" (0 = from the north), dist m off, up m higher;
+						// dist defaults to twice its size, at least 4 m)
+						if (t.Length < 3) { Check(ref ok, false, rl.Where + ": snap <file> <object> [from] [dist] [up]"); break; }
+						IslandObjectRef o = ScObjOf(playEntry, t[2]);
+						if (o == null)
+						{
+							// (not under the island's root: anywhere in the world, said so)
+							o = Resources.FindObjectsOfTypeAll<IslandObjectRef>().FirstOrDefault(x => x.gameObject.scene.IsValid() && string.Equals(x.Name, t[2], StringComparison.OrdinalIgnoreCase));
+							if (o != null) Log("  (snap: '" + t[2] + "' is not under the island's root but under '" + (o.transform.root != null ? o.transform.root.name : "-") + "', active " + o.gameObject.activeInHierarchy + ")");
+						}
+						Check(ref ok, o != null, "object '" + t[2] + "' there");
+						if (o == null) break;
+						Renderer[] rs = o.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled).ToArray();
+						Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(o.transform.position, Vector3.one);
+						foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+						float bearing = t.Length > 3 ? F(t[3]) : 180f;
+						float dist = t.Length > 4 ? F(t[4]) : Mathf.Max(4f, 2f * b.size.magnitude);
+						float up = t.Length > 5 ? F(t[5]) : dist * 0.4f;
+						Vector3 dir = new Vector3(Mathf.Sin(bearing * Mathf.Deg2Rad), 0f, Mathf.Cos(bearing * Mathf.Deg2Rad));
+						Log("  snap '" + t[2] + "' at " + (o.transform.position - playEntry.Position).ToString("F1") + ", size " + b.size.ToString("F1"));
+						yield return PlayPicture(t[1], b.center + dir * dist + Vector3.up * up, b.center);
+						break;
+					}
 					default:
 						Check(ref ok, false, rl.Where + ": unknown step '" + verb + "'");
 						break;

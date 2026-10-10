@@ -1217,6 +1217,23 @@ namespace DynamicIslands
 
 		#endregion
 
+		/// <summary>The targets of the objects' actions and state checks that no object is named (obj.name), or null.</summary>
+		static string UnnamedTargets(EditorGameObject[] objs)
+		{
+			var names = new HashSet<string>(objs.Select(o => ObjectProps.Get(o.Props, BehaviourProps.Name).Trim()).Where(n => n.Length > 0), StringComparer.OrdinalIgnoreCase);
+			var missing = new List<string>();
+			foreach (EditorGameObject o in objs.Where(x => x.Props != null))
+				foreach (KeyValuePair<string, string> kv in o.Props)
+				{
+					IEnumerable<string> targets = kv.Key.StartsWith(BehaviourProps.CheckPrefix) ? ObjCheck.ParseLines(kv.Value).Where(c => c.Kind == "state").Select(c => c.Target)
+						: kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix) ? ObjAction.ParseLines(kv.Value).Where(a => ObjAction.HasTarget(a.Verb)).Select(a => a.Target)
+						: Enumerable.Empty<string>();
+					foreach (string t in targets.Where(x => x.Length > 0 && !x.Equals("self", StringComparison.OrdinalIgnoreCase) && !names.Contains(x)))
+						missing.Add("'" + t + "' (" + kv.Key + " of " + o.GameObjectName + ")");
+				}
+			return missing.Count == 0 ? null : "no object is named " + string.Join(", ", missing.Distinct().Take(6).ToArray()) + (missing.Distinct().Count() > 6 ? " and more" : "") + ": give it obj.name";
+		}
+
 		static IEnumerator RecipeRoutine(string name)
 		{
 			string path = Path.Combine(RecipeFolder, name.EndsWith(".recipe") ? name : name + ".recipe");
@@ -1710,6 +1727,10 @@ namespace DynamicIslands
 							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
 							// the sea floor; "posts off" in the recipe leaves them out)
 							if (!recipeNoPosts) StandPosts();
+							// (actions and checks that name an object nothing is called: Rig Seventeen's lever looked at three valves
+							// with no obj.name and could never pass, the review 2026-10-10)
+							string unnamed = UnnamedTargets(GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>(true));
+							if (unnamed != null) { error = unnamed; break; }
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							Log("  saved '" + island + "'");

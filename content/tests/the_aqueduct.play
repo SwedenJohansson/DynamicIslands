@@ -79,3 +79,11 @@ open Quay barrel
 open Market stall box
 open Sluice house box
 open Sunk amphora
+# the cistern wheels: middle, setting sun (west), rising sun (east)
+use aqwheelC
+expect message will not budge
+use aqwheelB
+use aqwheelA
+use aqwheelC
+expect shown aqcistern
+open Cistern chest
