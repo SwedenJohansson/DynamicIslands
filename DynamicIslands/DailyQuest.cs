@@ -161,6 +161,23 @@ namespace DynamicIslands.Editor
 			return head + ". Before dark, for: " + DescribeReward(t) + ".\n\n";
 		}
 
+		/// <summary>
+		/// The journal's daily quest block under its page (T9): what to do and how far along, the reward, done or not, and
+		/// when the next one comes. Null with the option off; along = how far along (0-1).
+		/// </summary>
+		public static string PanelText(out float along)
+		{
+			along = 0f;
+			if (!On) return null;
+			Task t = Current;
+			if (t.Day < 0) return "No quest yet: the first one comes at daybreak.";
+			along = t.Need > 0 ? Mathf.Clamp01((float)t.Have / t.Need) : 0f;
+			string state = t.State == "done" ? "Done!" + (gotDay == t.Day ? " You got the reward." : "") + " The next one comes at daybreak."
+				: t.State == "out" ? "Not done: it ran out at dark. The next one comes at daybreak."
+				: "Not done yet: it ends at dark.";
+			return "Day " + t.Day + ": " + Describe(t) + "  -  " + Math.Min(t.Have, t.Need) + " / " + t.Need + "\nReward: " + DescribeReward(t) + "\n" + state;
+		}
+
 		#endregion
 
 		#region The day (host)

@@ -216,7 +216,7 @@ namespace DynamicIslands.Editor
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
 			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
-			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
+			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = BuildTag + Build });
 		}
 
 		/// <summary>A player: the host answers claims (it sent its version - claims are older than that - or answered one):
@@ -237,6 +237,41 @@ namespace DynamicIslands.Editor
 		public static bool HostAddsCounts { get; internal set; }
 
 		const string VersionTag = "version:";
+		const string BuildTag = "build=";
+
+		static string build;
+		/// <summary>Dev tests (CIFakeBuild): this PC pretends to be another build.</summary>
+		public static string TestBuild;
+		/// <summary>This build of the mod: the first 8 hex digits of a hash over every file in the .rmod (in name order), so
+		/// two players with the same release have the same, and any other build differs ("?" when the files can't be read).</summary>
+		public static string Build
+		{
+			get
+			{
+				if (TestBuild != null) return TestBuild;
+				if (build != null) return build;
+				try
+				{
+					var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+					if (files == null || files.Count == 0) return "?";
+					using (var md5 = System.Security.Cryptography.MD5.Create())
+					{
+						foreach (string name in files.Keys.OrderBy(k => k, StringComparer.Ordinal))
+						{
+							byte[] n = System.Text.Encoding.UTF8.GetBytes(name);
+							md5.TransformBlock(n, 0, n.Length, null, 0);
+							byte[] b = files[name] ?? new byte[0];
+							md5.TransformBlock(b, 0, b.Length, null, 0);
+						}
+						md5.TransformFinalBlock(new byte[0], 0, 0);
+						build = BitConverter.ToString(md5.Hash, 0, 4).Replace("-", "").ToLowerInvariant();
+					}
+					Log("This build: " + build);
+					return build;
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Build stamp: " + e.Message); return build = "?"; }
+			}
+		}
 
 		/// <summary>The last version difference seen (tests), or "".</summary>
 		public static string VersionNotice { get; private set; }
@@ -248,12 +283,24 @@ namespace DynamicIslands.Editor
 		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each,
 		/// with both versions and which one to install. A version that couldn't be read ("?", modinfo.json unreadable) is
 		/// unknown, never taken as the same (AU35).</summary>
-		static void CompareVersions(string tag, string who)
+		static void CompareVersions(string tag, string who, string data)
 		{
 			if (string.IsNullOrEmpty(tag) || !tag.StartsWith(VersionTag)) return;
 			string theirs = tag.Substring(VersionTag.Length), mine = LibraryPack.ModVersion;
-			if (theirs == mine && UpdateCheck.IsKnown(mine)) return;
-			string text = UpdateCheck.MismatchText(Raft_Network.IsHost, who, theirs, mine);
+			string text;
+			if (theirs == mine && UpdateCheck.IsKnown(mine))
+			{
+				// (the same version: every build of an alpha says the same, so the builds are compared too - a friend with a
+				// 3.0 from before the upgrade table joined without a word and never saw it - AU81)
+				string theirBuild = (data ?? "").Split(',').Where(x => x.StartsWith(BuildTag)).Select(x => x.Substring(BuildTag.Length)).FirstOrDefault();
+				if (theirBuild == Build || Build == "?" || theirBuild == "?") return;
+				text = theirBuild == null
+					? (Raft_Network.IsHost ? who + " joined with an older build of Custom Islands " + mine + " (from before build stamps)." : "The host has an older build of Custom Islands " + mine + " (from before build stamps).") +
+					  " Things added since may be missing for them: both should install the same, newest release."
+					: (Raft_Network.IsHost ? who + " joined with another build of Custom Islands " + mine : "The host has another build of Custom Islands " + mine) +
+					  " (theirs " + theirBuild + ", yours " + Build + "). Things one has may be missing for the other: both should install the same, newest release.";
+			}
+			else text = UpdateCheck.MismatchText(Raft_Network.IsHost, who, theirs, mine);
 			if (VersionNotice == text) return;
 			VersionNotice = text;
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] " + text);
@@ -490,15 +537,15 @@ namespace DynamicIslands.Editor
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); HostAnswersEvents = (msg.Data ?? "").Split(',').Contains("events"); CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); HostAnswersEvents = (msg.Data ?? "").Split(',').Contains("events"); CompareVersions(msg.Name, "The host", msg.Data); break; }
 						if (Raft_Network.IsHost)
 						{
 							// (a player older than the version handshake sends no version; a name for who joined, if Raft shows one)
 							string who = PrivateStorage.NameOf(from.Id);
-							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + UpdateCheck.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'");
+							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + UpdateCheck.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'", msg.Data);
 							// (the version first, alone in a message kind and with fields every version has, so an older player
 							// can still read it: everything else follows it)
-							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities }, from);
+							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities + "," + BuildTag + Build }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
 							// (each part on its own: one that fails is logged and the rest still goes - before, one failing part
 							// dropped everything after it, and the player had the islands without the story or their levels - AU41)
@@ -674,7 +721,7 @@ namespace DynamicIslands.Editor
 			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
 			// (the host's version reply comes ahead of its list: none came, so the host is older than it - AU35)
-			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + UpdateCheck.Older, "The host");
+			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + UpdateCheck.Older, "The host", null);
 			// (the raft as this message arrives, once for all its islands - the host took its own once as it made the message;
 			// no raft here yet: nothing is placed around the scene's origin, the whole list is asked for again - AU41)
 			Vector3? raftNow = CustomIslandSpawner.RaftPosition;

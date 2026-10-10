@@ -418,6 +418,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   by day both are calmer.
 - **Daily quest:** each morning a small task for the crew (gather some planks, plastic, palm leaves or scrap, catch a few
   fish, or defeat a few monsters); done before dark, each player gets a small reward of basic resources or food once.
+  The journal shows it under its page: how far along, the reward, done or not, when the next one comes.
 - **Rogue shark:** now and then a second, rust-red shark comes beside the usual one and stays until it is killed;
   after that none comes for 5-8 days.
 - **Silver & golden barrels:** now and then a barrel in the sea is silver (1 in 40) or golden (1 in 150), with a few
@@ -662,7 +663,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `MonsterDifficulty.cs` | The monster difficulty: the five levels, the Harmony prefix on Raft's `Network_Host.DamageEntity` that changes hits on and by monsters, the patch that leaves puffer fish damage alone, the `Monsters` command |
 | `WorldRules.cs` | The world rules: saved with the world, sent to every player who joins (one network message with both, and the host's `spawnpool.txt` settings every player uses: Receiver, unload distance, regrow days), the last choices (`world_rules.txt`); the build cost (Raft's build menu items, their cost amounts set from Raft's own numbers while a world is open and put back outside, the `BuildCost` command); the two sliders in Raft's New Game box (which grows the box to make room) |
 | `BuildCostRefund.cs` | A block taken down gives back half of the cost it was placed at (`@builtat=` in the world file, sent with the world rules) |
-| `UpdateCheck.cs` | Once per start on the main menu: GitHub's latest release compared with this version; the version notice when joining a host with another one |
+| `UpdateCheck.cs` | Once per start on the main menu: GitHub's latest release compared with this version; the version notice when joining a host with another one (or another build of the same one, by a stamp of the mod's files) |
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |

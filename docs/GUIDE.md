@@ -2203,6 +2203,10 @@ guard wakes when you walk in ("Something moves in the dark...").*
 ![A den on one of Raft's islands](images/randomizer-dens.jpg)
 *The Finds part can put a den on one of Raft's own big islands: a rock outcrop with a den inside, a guard and a hoard.*
 
+A den's rock is a shell made to sit in a hillside. On a generated island the ground rises round it and buries its rim,
+open only at the mouth; on Raft's own islands, whose ground can't change, a den goes only where the ground meets its rim
+all round and the floor inside is even - where nothing fits, the island gets no den.
+
 **Changing it later:** `Randomizer` (F10) shows what it does in your world; the host can change it, for example
 `Randomizer wild` or `Randomizer -alphas`. Everything follows from the world's seed, so every player sees the same
 colours, alphas and crates.
@@ -2291,7 +2295,9 @@ or palm leaves, 4-8 scrap: what the players pick up by hand or with the hook), *
 **defeat 2-4 monsters**. Every player's part counts towards it. Done before dark, each player gets a small reward once:
 one or two of planks, rope, nails, scrap, raw fish, a watermelon or clay (and 40 EXP with the level up system on).
 Not done by dark, it runs out; the next morning brings a new one. The task shows as a banner when it comes and as it
-moves on, and at the top of the journal's quest list. `DailyQuest` shows today's task.
+moves on, and at the top of the journal's quest list. Under the page on the right, the journal also keeps a **Daily
+quest** block while the option is on: what to do and how far along (with a bar), the reward, whether it's done (and
+whether you got the reward), and when the next one comes (at daybreak). `DailyQuest` shows today's task.
 
 #### Rogue shark
 
@@ -2700,7 +2706,9 @@ your world may be missing their progress" - but the world you host still goes on
 #### Everyone runs the same version of the mod
 
 **Why:** joining with another version shows a warning naming both versions and which one to install, and then the game
-goes on. An older version doesn't know the newer parts of a world - the story chain, levels, the plan's own copy, private
+goes on. Every release of a version says the same number (3.0), so each build also carries a short stamp made from its
+files: joining a host with **another build of the same version** (or one from before the stamps) shows a notice too,
+naming both stamps - both players should install the same, newest release. An older version doesn't know the newer parts of a world - the story chain, levels, the plan's own copy, private
 storages. Since 2026-10-06 it keeps the lines it doesn't know as they are and warns ("saved by a newer Custom Islands"),
 but versions older than that **drop them**: when a player with such a version hosts and saves, the world loses those
 parts for good, for everyone.
@@ -3056,6 +3064,11 @@ reach line tells a builder beforehand.
 files are sent to players who join; they appear as `<name>_<hash>.island` in their folder. If the host was busy or a
 message got lost, the mod keeps asking (it says "Waiting for the island..."); press F10 and type `Resync` to ask again
 at once.
+
+**I joined and couldn't move.** When you join where you stood last time, the mod holds you there until the island under
+you has come ("Waiting for the island you stood on to load..."): at most 30 seconds, and it lets go at once if you are
+hurt. Builds from before 2026-10-10 could hold a player over the sea for longer, where the shark came: install the newest
+release on every machine.
 
 **"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
 that won't work until the mod is updated; everything else works and your islands and worlds aren't changed. Please

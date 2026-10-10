@@ -18,7 +18,7 @@ namespace DynamicIslands.Editor
 	public static class PlayerHold
 	{
 		/// <summary>How long to wait for the island: the host has the file; a client may still be downloading it.</summary>
-		const float HostWait = 20f, ClientWait = 60f;
+		const float HostWait = 20f, ClientWait = 30f;
 		/// <summary>Nothing this close below the player: they are standing on something that isn't there yet.</summary>
 		const float SupportRay = 3.5f;
 		/// <summary>Islands whose centre is this close may be the one under the player (the largest land is about 500 m across).</summary>
@@ -81,11 +81,15 @@ namespace DynamicIslands.Editor
 			Hold(target, "The host saw the player on '" + island + "', " + (now - target).magnitude.ToString("F0") + " m from where Raft put them: back there");
 		}
 
+		/// <summary>Dev tests (CIHoldAtSea): hold the player here, as a join would.</summary>
+		internal static void TestHold(Vector3 at) { settled = null; Hold(at, "Dev: holding the player at " + at.ToString("F1")); }
+
 		static void Hold(Vector3 at, string why)
 		{
 			spot = at;
 			holding = false;
 			heldSince = Time.unscaledTime;
+			heldHealth = Health();
 			until = Time.unscaledTime + (Raft_Network.IsHost ? HostWait : ClientWait);
 			Debug.Log("[CUSTOM ISLANDS] " + why);
 		}
@@ -110,6 +114,9 @@ namespace DynamicIslands.Editor
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;
+			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
+			float health = Health();
+			if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held: let go"); return; }
 			// The island under them is there (its own ground, loaded): set them down where they were, and watch a moment
 			IslandWorldState.Entry under = IslandUnder(at);
 			if (under != null)
@@ -124,11 +131,16 @@ namespace DynamicIslands.Editor
 			if (IslandNetwork.HasList && LoadSceneManager.IsGameSceneLoaded)
 			{
 				// (every custom island around is there and still nothing under them: they weren't on one - let go)
-				bool waiting = IslandWorldState.Islands.Any(e => !e.Failed && (e.Root == null || e.Loading) && Flat(e.Position - at) < NearIsland);
+				bool waiting = IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, at));
 				if (!waiting) { Release(null, "was not on a custom island"); return; }
 			}
 			// Waiting: keep the player where they were (they would fall through into the sea)
-			if (!holding) { holding = true; Debug.Log("[CUSTOM ISLANDS] Holding the player at " + at.ToString("F1") + " until the island under them has loaded"); }
+			if (!holding)
+			{
+				holding = true;
+				Debug.Log("[CUSTOM ISLANDS] Holding the player at " + at.ToString("F1") + " until the island under them has loaded");
+				IslandInfo.ShowMessage("Waiting for the island you stood on to load...");
+			}
 			Put(player, at);
 		}
 
@@ -182,6 +194,32 @@ namespace DynamicIslands.Editor
 		}
 
 		static float Flat(Vector3 v) { return new Vector2(v.x, v.z).magnitude; }
+
+		static float heldHealth;
+		static float Health()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			return p != null && p.Stats != null && p.Stats.stat_health != null ? p.Stats.stat_health.Value : -1f;
+		}
+
+		/// <summary>An island that isn't there yet but will be: loading, downloading, or not loaded yet. Not the randomizer's
+		/// extras on one of Raft's islands that isn't there: they never load until it is, and a joining player was held over
+		/// the open sea for a minute, frozen, while a shark bit him (AU82).</summary>
+		static bool StillComing(IslandWorldState.Entry e)
+		{
+			if (e.Failed || (e.Root != null && !e.Loading)) return false;
+			return !(WorldRandomizer.IsExtras(e) && e.Root == null && !WorldRandomizer.HasIslandUnder(e));
+		}
+
+		/// <summary>Whether this island's land may reach the spot: its land radius (and a margin) when its file is here,
+		/// NearIsland while it is still downloading (its size isn't known).</summary>
+		static bool CouldBeUnder(IslandWorldState.Entry e, Vector3 at)
+		{
+			float d = Flat(e.Position - at);
+			if (e.WaitingForFile) return d < NearIsland;
+			float r = CustomIslandSpawner.LandRadius(e.Name);
+			return d < (r > 0f ? r + 30f : NearIsland);
+		}
 	}
 
 	/// <summary>

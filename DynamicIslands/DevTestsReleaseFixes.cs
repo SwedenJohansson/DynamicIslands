@@ -216,13 +216,69 @@ namespace DynamicIslands
 			Log("Fake version: " + LibraryPack.ModVersion);
 		}
 
-		[ConsoleCommand(name: "CIVersionCheck", docs: "Dev, in a world with two players: CIVersionCheck same = no version difference was reported; CIVersionCheck differ <version> = the difference with that version was reported here")]
+		[ConsoleCommand(name: "CICaveRims", docs: "Dev, in a world: every cave piece on the loaded custom islands meets the ground all round - no rim floating over it to see into the shell under (AU83). Lists each piece and its largest gap")]
+		public static void CaveRimsCommand()
+		{
+			bool ok = true;
+			int pieces = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading))
+				foreach (Transform t in e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave))
+				{
+					pieces++;
+					string at;
+					float gap = DenRimGap(t, out at);
+					Check(ref ok, gap < 0.6f, "'" + e.Name + "': " + t.name + " - " + at);
+				}
+			Check(ref ok, pieces > 0, pieces + " cave pieces on the loaded islands");
+			if (ok) Log("PASS: cave rims meet the ground"); else Fail("cave rims meet the ground");
+		}
+
+		[ConsoleCommand(name: "CIAnimalsDry", docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
+		public static void AnimalsDryCommand()
+		{
+			bool ok = true;
+			UnityEngine.AI.NavMeshTriangulation tri = UnityEngine.AI.NavMesh.CalculateTriangulation();
+			int islands = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading && !WorldRandomizer.IsExtras(x)))
+			{
+				IslandSettings s = e.Root.GetComponent<IslandSettings>();
+				if (s == null || e.Root.GetComponent<UnityEngine.AI.NavMeshSurface>() == null) continue;
+				islands++;
+				float sea = e.Root.transform.position.y + s.WaterLevel, r = Mathf.Max(60f, CustomIslandSpawner.LandRadius(e.Name) + 40f);
+				int wet = tri.vertices.Count(v => new Vector2(v.x - e.Position.x, v.z - e.Position.z).magnitude < r && v.y < sea - 1f);
+				Check(ref ok, wet == 0, "'" + e.Name + "': " + wet + " NavMesh point(s) more than 1 m under the sea");
+			}
+			int animals = 0;
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+			{
+				if (a == null || a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>() == null) continue;
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && new Vector2(x.Position.x - a.transform.position.x, x.Position.z - a.transform.position.z).magnitude < Mathf.Max(60f, CustomIslandSpawner.LandRadius(x.Name) + 40f));
+				IslandSettings s = e != null ? e.Root.GetComponent<IslandSettings>() : null;
+				if (s == null) continue;
+				animals++;
+				float sea = e.Root.transform.position.y + s.WaterLevel;
+				Check(ref ok, a.transform.position.y > sea - 1f, a.name + " on '" + e.Name + "' at " + (a.transform.position.y - sea).ToString("F1") + " m from the sea's surface");
+			}
+			Check(ref ok, islands > 0, islands + " island(s) with a NavMesh, " + animals + " land animal(s) looked at");
+			if (ok) Log("PASS: animals dry"); else Fail("animals dry");
+		}
+
+		[ConsoleCommand(name: "CIFakeBuild", docs: "Dev, anywhere: this PC pretends to be another build of the same version (CIFakeBuild 0badbeef), or its own again (CIFakeBuild off) - AU81")]
+		public static void FakeBuildCommand(string[] args)
+		{
+			string v = args != null && args.Length > 0 ? args[0] : "off";
+			IslandNetwork.TestBuild = v == "off" ? null : v;
+			Log("Fake build: " + IslandNetwork.Build);
+		}
+
+		[ConsoleCommand(name: "CIVersionCheck", docs: "Dev, in a world with two players: CIVersionCheck same = no version difference was reported; CIVersionCheck differ <version> = the difference with that version was reported here; CIVersionCheck build <build> = another build of the same version was reported (AU81)")]
 		public static void VersionCheckCommand(string[] args)
 		{
 			bool ok = true;
 			string mode = args != null && args.Length > 0 ? args[0] : "same";
 			string notice = IslandNetwork.VersionNotice ?? "";
 			if (mode == "same") Check(ref ok, notice.Length == 0, "no version difference reported (" + notice + ")");
+			else if (mode == "build") Check(ref ok, args.Length > 1 && notice.Contains("another build") && notice.Contains(args[1]), "the other build was reported: " + notice);
 			else Check(ref ok, args.Length > 1 && notice.Contains("Custom Islands " + args[1]), "the version difference was reported: " + notice);
 			if (ok) Log("PASS: version check"); else Fail("version check");
 		}

@@ -169,6 +169,26 @@ namespace DynamicIslands
 			Log("Misplace set: the next place Raft gives is moved " + PlayerHold.TestOffset.ToString("F0"));
 		}
 
+		[ConsoleCommand(name: "CIHoldAtSea", docs: "Dev, in a world (either player): holds the player 150 m off the raft over the open sea, as a join once did (AU82) - they must be let go within 5 s")]
+		public static void HoldAtSeaCommand()
+		{
+			StartTest(HoldAtSea());
+		}
+
+		static IEnumerator HoldAtSea()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p == null) { Fail("hold at sea: no player"); yield break; }
+			Raft r = UnityEngine.Object.FindObjectOfType<Raft>();
+			Vector3 at = (r != null ? r.transform.position : p.transform.position) + new Vector3(150f, 1.5f, 0f);
+			PlayerHold.TestHold(at);
+			float t0 = Time.unscaledTime;
+			while (PlayerHold.Busy && Time.unscaledTime - t0 < 10f) yield return null;
+			float took = Time.unscaledTime - t0;
+			if (!PlayerHold.Busy && took < 5f) Log("PASS: hold at sea (let go after " + took.ToString("F1") + " s)");
+			else Fail("hold at sea: still held after " + took.ToString("F1") + " s");
+		}
+
 		[ConsoleCommand(name: "CIOnRaft", docs: "Dev, in game (either player): puts the local player on the raft, as Raft does after loading far from it")]
 		public static void OnRaftCommand()
 		{

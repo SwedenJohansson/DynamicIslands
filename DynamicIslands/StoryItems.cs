@@ -874,6 +874,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The quests' count in the head: a button (the list on the paper) with a bar behind its words.</summary>
 		Button questButton;
 		RectTransform questFill;
+		/// <summary>The daily quest under the page (T9): the block, its bar's fill and its lines.</summary>
+		RectTransform dailyBlock, dailyFill;
+		Text dailyText;
 		/// <summary>The Progress panel's lines, one per WorldProgress row.</summary>
 		readonly List<Text> progressText = new List<Text>();
 		float questRefreshAt;
@@ -1004,6 +1007,35 @@ namespace DynamicIslands.Editor
 			instance.readText.lineSpacing = 1.15f;
 			instance.readText.supportRichText = false;
 			foreach (Text t in new[] { instance.readTitle, instance.readText }) { Shadow sh = t.GetComponent<Shadow>(); if (sh != null) Destroy(sh); }
+			// The daily quest under the page (T9, the user 2026-10-10: in the empty space below the page's text): only with the
+			// world's Daily quest option on - what to do and how far along, the reward, done or not, when the next one comes
+			RectTransform daily = UIKit.Rect("Daily", sheet);
+			UIKit.Size(daily.gameObject, -1, 92);
+			UIKit.Vertical(daily.gameObject, 3f, new RectOffset(0, 0, 0, 0));
+			RectTransform rule = UIKit.Rect("Rule", daily);
+			UIKit.Size(rule.gameObject, -1, 1);
+			Image ruleImage = rule.gameObject.AddComponent<Image>();
+			ruleImage.color = new Color(Ink.r, Ink.g, Ink.b, 0.35f);
+			ruleImage.raycastTarget = false;
+			Text dailyHead = UIKit.Label(daily, "DAILY QUEST", 13, Ink, TextAnchor.MiddleLeft, FontStyle.Bold, "Head");
+			UIKit.Size(dailyHead.gameObject, -1, 18);
+			RectTransform bar = UIKit.Rect("Bar", daily);
+			UIKit.Size(bar.gameObject, -1, 6);
+			Image barBack = bar.gameObject.AddComponent<Image>();
+			barBack.color = new Color(Ink.r, Ink.g, Ink.b, 0.18f);
+			barBack.raycastTarget = false;
+			RectTransform dailyFill = UIKit.Rect("Fill", bar);
+			dailyFill.anchorMin = Vector2.zero; dailyFill.anchorMax = new Vector2(0f, 1f);
+			dailyFill.offsetMin = Vector2.zero; dailyFill.offsetMax = Vector2.zero;
+			Image dailyFillImage = dailyFill.gameObject.AddComponent<Image>();
+			dailyFillImage.color = new Color(UIKit.Good.r * 0.75f, UIKit.Good.g * 0.75f, UIKit.Good.b * 0.75f, 0.9f);
+			dailyFillImage.raycastTarget = false;
+			instance.dailyText = UIKit.Label(daily, "", 14, Ink, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
+			UIKit.Size(instance.dailyText.gameObject, -1, 58);
+			instance.dailyText.supportRichText = false;
+			foreach (Text t in new[] { dailyHead, instance.dailyText }) { Shadow sh = t.GetComponent<Shadow>(); if (sh != null) Destroy(sh); }
+			instance.dailyBlock = daily;
+			instance.dailyFill = dailyFill;
 
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
 			UIKit.Label(bottom, "J or Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
@@ -1173,8 +1205,23 @@ namespace DynamicIslands.Editor
 			UIKit.LabelOf(questButton).text = total == 0 ? "QUESTS: NONE YET" : "QUESTS  " + done + " / " + total + "  \u00B7  " + QuestCount.Percent(done, total) + "%" + (done == total ? "  \u00B7  ALL DONE" : "");
 			questFill.anchorMax = new Vector2(total == 0 ? 0f : (float)done / total, 1f);
 			NoteRefresh();
+			DailyRefresh();
 			if (shownKey == QuestsKey) readText.text = QuestList(quests);
 		}
+
+		/// <summary>The daily quest under the page (T9): shown with the option on, its lines and bar now.</summary>
+		void DailyRefresh()
+		{
+			float along;
+			string text = DailyQuest.PanelText(out along);
+			dailyBlock.gameObject.SetActive(text != null);
+			if (text == null) return;
+			dailyText.text = text;
+			dailyFill.anchorMax = new Vector2(along, 1f);
+		}
+
+		/// <summary>The daily quest block's lines now, null when it isn't shown (tests).</summary>
+		public static string DailyShown { get { return IsOpen && instance.dailyBlock.gameObject.activeSelf ? instance.dailyText.text : null; } }
 
 		/// <summary>The top right: story items, notes found of the world's notes, pages (the user, 2026-10-03: "5/38 notes found").</summary>
 		void NoteRefresh()

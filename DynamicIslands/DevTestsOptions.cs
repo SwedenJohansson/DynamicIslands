@@ -1512,6 +1512,11 @@ namespace DynamicIslands
 				NightDanger.TestNight = false; DailyQuest.TestDay = 500;
 				yield return new WaitForSeconds(1.5f);
 				Check(ref ok, DailyQuest.Current.Day < 0 && DailyQuest.JournalText() == null, "the option off: no task (day " + DailyQuest.Current.Day + ")");
+				// (T9: the journal's block under the page - none with the option off)
+				JournalWindow.Open();
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, JournalWindow.IsOpen && JournalWindow.DailyShown == null, "the option off: no daily quest in the journal (" + JournalWindow.DailyShown + ")");
+				JournalWindow.Close();
 
 				// On: the day's task once it's light
 				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.DailyQuest });
@@ -1520,6 +1525,14 @@ namespace DynamicIslands
 				Check(ref ok, DailyQuest.Current.Day == 500 && DailyQuest.Current.Open && (IslandInfo.LastShown ?? "").Contains("Today's quest") && (DailyQuest.JournalText() ?? "").Contains(DailyQuest.Describe(DailyQuest.Current)),
 					"a new day: " + DailyQuest.JournalText() + " (banner: " + IslandInfo.LastShown + ")");
 				Check(ref ok, WorldOptions.WriteLines().Contains("@daily=" + DailyQuest.Current.Encode()), "kept in the world file");
+				JournalWindow.Open();
+				yield return new WaitForSeconds(0.5f);
+				string block = JournalWindow.DailyShown ?? "";
+				Check(ref ok, block.Contains(DailyQuest.Describe(DailyQuest.Current)) && block.Contains("0 / " + DailyQuest.Current.Need) && block.Contains("Reward: " + DailyQuest.DescribeReward(DailyQuest.Current)) && block.Contains("ends at dark"),
+					"the journal shows the day's quest under its page (T9): " + block.Replace('\n', '|'));
+				Screenshot(new[] { "journal_daily" });
+				yield return new WaitForSeconds(0.6f);
+				JournalWindow.Close();
 
 				// Progress: only its own kind; picked-up items by the inventory before and after
 				DailyQuest.Task c = DailyQuest.Current;
@@ -1565,6 +1578,11 @@ namespace DynamicIslands
 				ulong myId = me != null ? me.steamID.Id : 0UL;
 				Check(ref ok, c.State == "done" && c.Have == c.Need && ropeGot == 3 && nailGot == 4 && c.Rewarded.Contains(myId) && (DailyQuest.JournalText() ?? "").Contains("done"),
 					"done: the reward once (rope +" + ropeGot + ", nails +" + nailGot + ", " + c.Have + " of " + c.Need + ", " + c.State + ")");
+				JournalWindow.Open();
+				yield return new WaitForSeconds(0.5f);
+				block = JournalWindow.DailyShown ?? "";
+				Check(ref ok, block.Contains(c.Need + " / " + c.Need) && block.Contains("Done!") && block.Contains("You got the reward") && block.Contains("next one comes at daybreak"), "the journal: done, the reward got, when the next comes (" + block.Replace('\n', '|') + ")");
+				JournalWindow.Close();
 				if (inv != null) { inv.RemoveItem("Plank", 2); if (ropeGot > 0) inv.RemoveItem("Rope", ropeGot); if (nailGot > 0) inv.RemoveItem("Nail", nailGot); }
 
 				// The next day runs out at dark
@@ -1574,12 +1592,18 @@ namespace DynamicIslands
 				NightDanger.TestNight = true;
 				yield return new WaitForSeconds(1.5f);
 				Check(ref ok, started && DailyQuest.Current.State == "out" && (DailyQuest.JournalText() ?? "").Contains("ran out"), "at dark an open task runs out (" + DailyQuest.Current.Day + " " + DailyQuest.Current.State + ")");
+				JournalWindow.Open();
+				yield return new WaitForSeconds(0.5f);
+				block = JournalWindow.DailyShown ?? "";
+				Check(ref ok, block.Contains("Not done: it ran out at dark"), "the journal: ran out (" + block.Replace('\n', '|') + ")");
+				JournalWindow.Close();
 				DailyQuest.TestDay = 502;
 				yield return new WaitForSeconds(1.5f);
 				Check(ref ok, DailyQuest.Current.Day == 501, "no new task while it's dark (day " + DailyQuest.Current.Day + ")");
 			}
 			finally
 			{
+				JournalWindow.Close();
 				NightDanger.TestNight = null;
 				DailyQuest.TestDay = null;
 				WorldOptions.Set(optionsBefore);

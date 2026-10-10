@@ -631,6 +631,9 @@ namespace DynamicIslands.Editor
 			return null;
 		}
 
+		/// <summary>How deep below the sea's surface an animal's NavMesh reaches: the wet sand at the water's edge, no more.</summary>
+		const float WadeDepth = 0.4f;
+
 		static IEnumerator BuildNavMesh(GameObject root, IEnumerable<int> agentTypes, Landmark ground = null)
 		{
 			// The island was made this frame: let physics catch up with where its colliders were moved to
@@ -662,6 +665,9 @@ namespace DynamicIslands.Editor
 					if (!any) { Debug.LogWarning("[CUSTOM ISLANDS] No land on '" + ground.name + "' for its animals' NavMesh"); yield break; }
 					local.Expand(new Vector3(16f, 12f, 16f));
 					local.center -= root.transform.position;
+					// (on dry land only, the sea at y 0: llamas walked into the sea - AU84)
+					float shore = Mathf.Max(local.min.y, -WadeDepth - root.transform.position.y);
+					if (shore < local.max.y) local.SetMinMax(new Vector3(local.min.x, shore, local.min.z), local.max);
 					Debug.Log("[CUSTOM ISLANDS] NavMesh sources on Raft's island '" + ground.name + "': " + sources.Count + ", land " + local.size.ToString("F0"));
 				}
 				catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Collecting the ground of Raft's island for a NavMesh failed: " + e); yield break; }
@@ -682,13 +688,14 @@ namespace DynamicIslands.Editor
 					if (!any) { local = b; any = true; } else local.Encapsulate(b);
 				}
 				local.Expand(4f);
-				// Animals walk on the land and in the shallows only: an island on a deep sea floor has a terrain reaching
-				// 160 m down and hundreds of metres out, which would make the NavMesh many times slower to build
+				// Animals walk on the land only, never into the sea (they went 6 m deep and llamas were seen walking in the
+				// water - AU84): and an island on a deep sea floor has a terrain reaching 160 m down and hundreds of metres
+				// out, which would make the NavMesh many times slower to build
 				IslandSettings island = root.GetComponent<IslandSettings>();
 				Terrain terrain = root.GetComponentInChildren<Terrain>();
 				if (island != null && terrain != null && terrain.terrainData != null)
 				{
-					float lowest = island.WaterLevel - 6f; // (root-local height)
+					float lowest = island.WaterLevel - WadeDepth; // (root-local height)
 					TerrainData td = terrain.terrainData;
 					int res = td.heightmapResolution;
 					float[,] h = td.GetHeights(0, 0, res, res);
@@ -705,6 +712,9 @@ namespace DynamicIslands.Editor
 						if (max.x > min.x && max.y > min.y && max.z > min.z) local.SetMinMax(min, max);
 					}
 				}
+				// (an island without a terrain: the same line at the sea)
+				if (island != null && local.min.y < island.WaterLevel - WadeDepth && island.WaterLevel - WadeDepth < local.max.y)
+					local.SetMinMax(new Vector3(local.min.x, island.WaterLevel - WadeDepth, local.min.z), local.max);
 				Debug.Log("[CUSTOM ISLANDS] NavMesh sources: " + sources.Count + " (" + sources.Count(s => s.shape == NavMeshBuildSourceShape.Terrain) + " terrain), area " + local.min.ToString("F0") + " to " + local.max.ToString("F0") + " around the island's corner");
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Collecting the island's ground for its NavMesh failed: " + e); yield break; }

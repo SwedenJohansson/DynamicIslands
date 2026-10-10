@@ -1474,6 +1474,8 @@ namespace DynamicIslands
 					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : first.position, "large_cave");
 					string denAt; float denOff = DenOffset(first, zone.transform.position, out denAt);
 					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					string rimAt; float rimGap = DenRimGap(first, out rimAt);
+					Check(ref ok, rimGap < 0.6f, "the den's rim meets the ground all round, nothing to see into under it (AU83): " + rimAt);
 					var leftIn = DenLeftovers(first);
 					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
 					CreatureSpawnPoint guard = spots.FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
@@ -1517,6 +1519,77 @@ namespace DynamicIslands
 		{
 			return den.GetComponentsInChildren<Transform>(true).Where(t => t != den && (t.name.StartsWith("Pickup_") || t.GetComponent<SkinnedMeshRenderer>() != null || t.GetComponent<PickupItem>() != null || t.GetComponent<LandmarkItem>() != null))
 				.Select(t => t.name).Distinct().ToList();
+		}
+
+		/// <summary>
+		/// AU83: walks in to a den (or any cave piece) over the ground from 24 ways round it (not from its mouths) to where its rock first stands
+		/// there: a wall that meets the ground (a ray along the ground hits it: no gap), or rock overhead (the gap up to
+		/// it - its rim floating over the ground, where you saw into the shell). The largest gap (m).
+		/// </summary>
+		static float DenRimGap(Transform den, out string detail)
+		{
+			PropInfo p = RaftProps.Get(den.name);
+			List<Collider> cols = den.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToList();
+			if (p == null || !p.IsCave || cols.Count == 0) { detail = "not measured or no colliders"; return 99f; }
+			Bounds b = cols[0].bounds;
+			foreach (Collider c in cols) b.Encapsulate(c.bounds);
+			Vector3 o3 = den.rotation * (p.Axis == 0 ? Vector3.right : Vector3.forward);
+			Vector2 outDir = new Vector2(o3.x, o3.z).normalized, mid = new Vector2(b.center.x, b.center.z);
+			Func<Vector2, float> ground = q =>
+			{
+				float best = float.MinValue;
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(q.x, b.max.y + 5f, q.y), Vector3.down, b.size.y + 80f, ~0, QueryTriggerInteraction.Ignore))
+					if (!cols.Contains(h.collider) && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null && h.collider.GetComponentInParent<Network_Player>() == null) best = Mathf.Max(best, h.point.y);
+				return best;
+			};
+			Func<Vector3, Vector3, float, float> rock = (from, dir, len) =>
+			{
+				float best = float.MaxValue;
+				RaycastHit h;
+				foreach (Collider c in cols) if (c.Raycast(new Ray(from, dir), out h, len)) best = Mathf.Min(best, h.distance);
+				return best;
+			};
+			float worst = 0f;
+			int sides = 0;
+			string at = "";
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				float start = new Vector2(b.extents.x, b.extents.z).magnitude + 2f;
+				for (int i = 0; i < 24; i++)
+				{
+					float a = i * Mathf.PI / 12f;
+					Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+					if ((p.OpenPlus && Vector2.Dot(dir, outDir) > 0.6f) || (p.OpenMinus && Vector2.Dot(dir, outDir) < -0.6f)) continue;
+					Vector3 prev = Vector3.zero;
+					bool hasPrev = false;
+					for (float t = start; t > 0f; t -= 0.5f)
+					{
+						Vector2 q = mid + dir * t;
+						float g = ground(q);
+						if (g == float.MinValue) { hasPrev = false; continue; }
+						Vector3 here = new Vector3(q.x, g, q.y);
+						if (hasPrev)
+						{
+							Vector3 d = here + Vector3.up * 0.3f - prev;
+							if (d.sqrMagnitude > 0.0001f && rock(prev, d.normalized, d.magnitude) < float.MaxValue) { sides++; break; }
+						}
+						float up = rock(here + Vector3.up * 0.05f, Vector3.up, 40f);
+						if (up < float.MaxValue)
+						{
+							sides++;
+							if (up > worst) { worst = up; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
+							break;
+						}
+						prev = here + Vector3.up * 0.3f;
+						hasPrev = true;
+					}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			detail = sides + " sides walked, the largest gap under its rim " + worst.ToString("F1") + " m" + at;
+			return sides > 0 ? worst : 99f;
 		}
 
 		/// <summary>
@@ -1691,6 +1764,8 @@ namespace DynamicIslands
 					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : caves[0].position, "grotto");
 					string denAt; float denOff = DenOffset(caves[0], zone.transform.position, out denAt);
 					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					string rimAt; float rimGap = DenRimGap(caves[0], out rimAt);
+					Check(ref ok, rimGap < 0.6f, "the den's rim meets the ground all round, nothing to see into under it (AU83): " + rimAt);
 					var leftIn = DenLeftovers(caves[0]);
 					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
 					if (Mathf.Abs(denOff) >= 1.5f)

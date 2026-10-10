@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under
+  its page: what to do and how far along (3 / 14 planks, with a bar), the reward, whether it's done and when the next
+  one comes.
 - **Head start raft:** a new World setting (levels 1-3) starts the world on a bigger raft that is already set up: 6 x 12
   foundations with a grill, a purifier, the research table, a bed and first supplies; level 2 (8 x 14) adds smelters, a sail,
   10 item nets and island resources; level 3 (10 x 20) the Receiver with its antennas. Built once by the host.
@@ -109,6 +112,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Different builds of the same version are noticed:** every release says 3.0, so two players with different 3.0
+  builds weren't told (a friend didn't see the new research table). Each build now has a stamp from its files; joining a
+  host with another build (or one from before the stamps) shows a notice: both should install the same, newest release.
 - **"The host didn't answer" says what to do:** when it keeps coming (a player who joined again within seconds of a
   crash can lose the link now and then), leave the world, wait half a minute and join again.
 - **Esc → Custom Islands is compact:** the world's settings window fits a 1366 x 768 screen (it was taller than the
@@ -164,6 +170,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Frozen over the sea when joining:** a player who joined could be held in place over the open sea (and bitten by
+  the shark) while the mod waited for the island they had stood on - it also waited for the randomizer's extras on one
+  of Raft's islands, which never load while that island isn't there. It waits only for an island that can be under the
+  player, at most 30 seconds, says so on screen, and lets go at once if the player is hurt.
+- **Caves that floated:** the randomizer's caves (on Raft's big islands and on generated islands) could stand with
+  their rim over the ground, so you saw into the rock from outside and through the floor from inside. On a generated
+  island the ground now rises round the cave and buries its rim, open only at the mouth; on Raft's islands a cave goes
+  only where the ground meets its rim all round and the floor inside is even.
+- **Animals walking into the sea:** llamas, goats and the other animals of the custom islands could wander into the
+  shallows. They now stay on dry land (the beach just at the waterline at most).
 - **The crafting menu:** the Weapons list was twice as wide as its recipes and covered the inventory (the upgrades
   not learned yet counted in its width); lists are now as wide as the recipes they show. Switching category now closes
   the last category's recipe box (the stone axe stayed open over Food/Water).
