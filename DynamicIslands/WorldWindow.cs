@@ -34,16 +34,15 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, InputField> fields = new Dictionary<string, InputField>();
 		static float nextRefresh;
 		/// <summary>
-		/// The spawn pool's entries and the plan list as last read, with what they were read from (AU41): the window refreshes
-		/// every second so a client sees the host's changes, and that read every saved island's name and every plan file each
-		/// time. They are read again only when their signature changed - the islands folder's and spawnpool.txt's times, the
-		/// plan files' names and times. The island list's buttons are made again only when the entries changed.
+		/// The spawn pool's entries as last read, with what they were read from (AU41): the window refreshes
+		/// every second so a client sees the host's changes, and that read every saved island's name each
+		/// time. They are read again only when their signature changed - the islands folder's and spawnpool.txt's times.
+		/// The island list's buttons are made again only when the entries changed.
 		/// </summary>
 		static List<string> candidates, filledFrom;
-		static List<DropList.Option> planOptions;
-		static string candidatesSig, plansSig;
+		static string candidatesSig;
 
-		const string DefaultHint = "Point at a setting to read what it does.  The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands, WorldPlan, RegrowDays.";
+		const string DefaultHint = "Point at a setting to read what it does.  The same with F10: Monsters, BuildCost, Randomizer, WorldOptions, Levels, WorldIslands, RegrowDays.";
 
 		#region What a change does in a running world (from the code; GUIDE "Changing settings in a running world")
 
@@ -59,8 +58,8 @@ namespace DynamicIslands.Editor
 		internal const string SharedMidGame = "Now: regrow days count from the next time an island loads. Unload distance and the Receiver at once - kept in the host's spawnpool.txt for every world the host plays.";
 		/// <summary>WorldIslands.Set: the spawner's next pick (TakesPart); nothing already here is removed.</summary>
 		internal const string IslandsMidGame = "Now: the next random island is picked from this list; islands already in the world stay.";
-		/// <summary>WorldPlanCommand: WorldDirector.SetPlan (random islands as the plan says) + StoryChain.FromPlan; Done kept.</summary>
-		internal const string PlanMidGame = "Another plan: its islands come from now on, random islands on or off as it says, its story replaces the world's; what is done or unlocked stays.";
+		/// <summary>The plan is chosen in the New Game box and stays with the world (the user, 2026-10-10: no plan list here).</summary>
+		internal const string PlanMidGame = "Chosen when the world was made; it stays. Which random islands come while sailing is set under Islands while sailing.";
 		internal const string LevelsMidGame = "At once. Off keeps everyone's levels and takes the stat points' bonuses away until it is on again.";
 
 		/// <summary>What switching an extra option does in a world under way (the options' own On checks - WorldOptions.Set only
@@ -304,11 +303,7 @@ namespace DynamicIslands.Editor
 		static void BuildPlan(Transform right)
 		{
 			RectTransform box = Section(right, "Plan and story", "PlanAndStory");
-			// (the host picks another plan here - it was only the F10 command WorldPlan <name>)
-			RectTransform planRow = UIKit.Row(box, RowH, 6f, "PlanRow");
-			UIKit.Size(UIKit.Label(planRow, "Plan", 11, UIKit.TextMuted).gameObject, 34);
-			Add("WorldPlan", DropList.Make(planRow, "Drop_WorldPlan", NewWorldOptions.PlanOptions(), WorldDirector.PlanName, v => { DynamicIslands.WorldPlanCommand(new[] { v }); Refresh(); }, -1,
-				"Give this world another plan (host). " + PlanMidGame, RowH, 12));
+			// (the plan is shown, not picked: a world keeps the plan it was made with - the user, 2026-10-10)
 			planText = UIKit.Label(box, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Plan");
 			planText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			planText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -392,7 +387,7 @@ namespace DynamicIslands.Editor
 			if (canvas == null) Build();
 			canvas.gameObject.SetActive(true);
 			// (read afresh each time the window opens)
-			candidatesSig = plansSig = null;
+			candidatesSig = null;
 			FillIslands();
 			Refresh();
 		}
@@ -404,17 +399,6 @@ namespace DynamicIslands.Editor
 			{
 				string folder = DynamicIslands.assetpath, pool = System.IO.Path.Combine(folder, CustomIslandSpawner.PoolFileName);
 				return (System.IO.Directory.Exists(folder) ? System.IO.Directory.GetLastWriteTimeUtc(folder).Ticks : 0L) + "/" + (System.IO.File.Exists(pool) ? System.IO.File.GetLastWriteTimeUtc(pool).Ticks : 0L);
-			}
-			catch { return null; }
-		}
-
-		/// <summary>The plan files' names and times (a plan edited changes its description in the list). Null if it can't be told.</summary>
-		static string PlansSignature()
-		{
-			try
-			{
-				if (!System.IO.Directory.Exists(WorldPlan.Folder)) return "";
-				return string.Join("|", new System.IO.DirectoryInfo(WorldPlan.Folder).GetFiles("*" + WorldPlan.Extension).Select(f => f.Name + ":" + f.LastWriteTimeUtc.Ticks).OrderBy(s => s, StringComparer.OrdinalIgnoreCase).ToArray());
 			}
 			catch { return null; }
 		}
@@ -431,17 +415,6 @@ namespace DynamicIslands.Editor
 			return candidates;
 		}
 
-		/// <summary>The plan list (NewWorldOptions.PlanOptions), read again only when a plan file was added, removed or changed.</summary>
-		static List<DropList.Option> PlanOptions()
-		{
-			string sig = PlansSignature();
-			if (planOptions == null || sig == null || sig != plansSig)
-			{
-				planOptions = NewWorldOptions.PlanOptions();
-				plansSig = sig;
-			}
-			return planOptions;
-		}
 
 		public static void Close()
 		{
@@ -516,10 +489,6 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.SetCheck(buttons["Levels"], PlayerLevels.On);
 			headStartText.text = "Head start raft: " + (host ? HeadStart.Describe(HeadStart.Level) : "the host's") + " - built when the world was made; can't change now.";
-			Button planPick = buttons["WorldPlan"];
-			DropdownButton pd = planPick.GetComponent<DropdownButton>();
-			if (pd != null) { pd.Options = PlanOptions(); pd.Value = WorldDirector.PlanName; }
-			UIKit.LabelOf(planPick).text = WorldDirector.PlanName;
 
 			if (host)
 			{

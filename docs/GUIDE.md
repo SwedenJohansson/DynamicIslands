@@ -1932,9 +1932,9 @@ names are the same every time, its exact places aren't.
   back to World plans on the plan (the test world stays under Load; delete old ones there).
 - **Choose it** in the New Game box: **Choose plan...**, pick your plan and **Select** (**View the plan...** under
   it shows what the plan does: its description, Raft's story, each island and when it comes), then **Create**. The
-  next new world starts on **Random islands** again (or the `defaultPlan` of `spawnpool.txt`). In a running world, the host can give it another plan: **Esc → CUSTOM
-  ISLANDS → Plan** (a list of the plans; its islands come from now on, what is done or unlocked stays), or F10 →
-  `WorldPlan <name>`; `WorldPlan` on its own shows the plan and which rules have fired.
+  next new world starts on **Random islands** again (or the `defaultPlan` of `spawnpool.txt`). A world keeps the plan
+  it was made with: **Esc → CUSTOM ISLANDS** shows it, and which random islands come while sailing can still be
+  changed there (**Islands while sailing**). F10 → `WorldPlan` shows the plan and which rules have fired.
 - **Multiplayer:** only the host needs the plan and its islands. Players who join get every island as it appears
   ([section 8](#8-playing-together)).
 - **The plan decides islands only.** Monster difficulty, build cost, the level up system, the randomizer and the extra
@@ -1950,7 +1950,7 @@ names are the same every time, its exact places aren't.
   the changed plan plays - rules that already happened stay done, new ones come - and you're told so;
 - deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
   different plan of the same name never changes the world: it plays its own copy (to give a running world another
-  plan on purpose, pick it under **Esc → CUSTOM ISLANDS → Plan**, or use `WorldPlan <name>` in it);
+  plan on purpose, use the F10 command `WorldPlan <name>` in it);
 - the world's plan goes along when someone else hosts the world later ([section 8](#8-playing-together)), even if they
   never had the plan;
 - worlds saved before this version get their copy the next time they're saved on a PC that has the plan file.
@@ -2126,7 +2126,7 @@ already in the world is taken away. What each one does from the moment it change
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
 | Level up system | At once; off keeps everyone's levels and takes the stat bonuses away until it is on again |
 | Head start raft | Built once when the world is made: shown, can't be changed in a running world |
-| Plan | Its islands come from now on, random islands on or off as it says, its story replaces the world's; what is done or unlocked stays |
+| Plan | Not changed here: the world keeps the plan it was made with (shown in the window) |
 | Islands while sailing | The next random island is picked from the new list; islands already here stay |
 
 ### 9.2 World rules: monster difficulty and build cost
