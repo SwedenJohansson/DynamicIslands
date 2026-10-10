@@ -235,7 +235,7 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=83.3 seed=4300 free=3
 # --- Raft's story machinery (lib_features; the user, 2026-10-06: every Raft feature on at least one island): the
 # quartermaster kept the north barracks as his strongroom behind one of Tangaroa's keycard doors (in its doorway at -16 9,
 # the floor 28.05 m) - his keycard dropped out on the glacis; a hatch on the parade ground over the garrison's hidden stores
-call keydoor x=-16 z=9 h=28.05 yaw=90 alias=qmdoor vault=qmvault vx=-18 vz=7.2 vh=28.05 vyaw=270 items=TradeToken*6;MetalIngot*3;Bolt*4 kx=40 kz=36 kr=14 seed=3101 keychest=qmsatchel keytitle="Quartermaster's satchel" keyitems=Rope*2;Leather*1
+call keydoor x=-16 z=8.72 h=28.05 yaw=90 alias=qmdoor vault=qmvault vx=-18 vz=7.2 vh=28.05 vyaw=270 items=TradeToken*6;MetalIngot*3;Bolt*4 kx=40 kz=36 kr=14 seed=3101 keychest=qmsatchel keytitle="Quartermaster's satchel" keyitems=Rope*2;Leather*1
 call hatchcache x=14 z=8 r=5 seed=3102 alias=storehatch chest=storehatchchest items=Cooked_GenericMeat*3;PlasticBottle_Water*2;Rope*2
 # --- Raft's finds in the shallows round the island (lib_sea; keep this after the terrain and building lines) ------------
 call shallows r=139 deep=5 n=2

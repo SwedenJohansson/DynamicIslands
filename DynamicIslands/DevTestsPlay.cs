@@ -430,6 +430,25 @@ namespace DynamicIslands
 						yield return PlayPicture(file, from, look);
 						break;
 					}
+					case "beam":
+					{
+						// (beam <emitter>: its beam traced now and logged - where it starts, by which mirrors, what it ends on; the
+						// emitter's renderers once each, as they put the beam's start at their middle)
+						if (t.Length < 2) { Check(ref ok, false, rl.Where + ": beam <emitter>"); break; }
+						IslandObjectRef o = ScObjOf(playEntry, t[1]);
+						LaserBeam lb = o != null ? o.GetComponent<LaserBeam>() : null;
+						Check(ref ok, lb != null, "laser emitter '" + t[1] + "' there");
+						if (lb == null) break;
+						Physics.SyncTransforms();
+						lb.Trace();
+						Vector3 e0 = playEntry.Position;
+						Log("  beam '" + t[1] + "': at " + (o.transform.position - e0).ToString("F2") + ", forward " + o.transform.forward.ToString("F2") + ", starts " + (lb.Origin - e0).ToString("F2")
+							+ "; " + lb.Points.Count + " points " + string.Join(" -> ", lb.Points.Select(p => (p - e0).ToString("F1")).ToArray()) + ", mirrors " + lb.Mirrors.Count
+							+ ", ends on " + (lb.Hit != null ? lb.Hit.Name : lb.HitCollider != null ? "'" + lb.HitCollider.name + "' (" + (lb.HitCollider.transform.root != null ? lb.HitCollider.transform.root.name : "-") + ")" : "nothing"));
+						foreach (Renderer r in o.GetComponentsInChildren<Renderer>(true))
+							Log("    " + r.GetType().Name + " '" + r.name + "' " + (r.enabled ? "on" : "off") + (r.gameObject.activeInHierarchy ? "" : " (inactive)") + ", middle " + (r.bounds.center - e0).ToString("F2") + ", size " + r.bounds.size.ToString("F2"));
+						break;
+					}
 					case "snap":
 					{
 						// (snap <file> <object> [from] [dist] [up]: the object's middle seen from compass bearing "from" (0 = from the north), dist m off, up m higher;
