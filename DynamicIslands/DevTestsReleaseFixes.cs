@@ -406,6 +406,74 @@ namespace DynamicIslands
 			if (ok) Log("PASS: table seen (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("table seen");
 		}
 
+		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
+		public static void LookAtCommand(string[] args)
+		{
+			string text = args != null && args.Length > 0 ? args[0] : "";
+			float dist = args != null && args.Length > 1 ? F(args[1]) : 0f;
+			EditorGameObject e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (e == null || text.Length == 0) { Fail("look at: no placed object with '" + text + "'"); return; }
+			StartTest(LookAtRoutine(e, dist));
+		}
+
+		static IEnumerator LookAtRoutine(EditorGameObject e, float dist)
+		{
+			Bounds b = new Bounds(e.transform.position, Vector3.one);
+			foreach (Renderer r in e.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+			if (dist <= 0f) dist = b.extents.magnitude * 1.6f + 4f;
+			for (int i = 0; i < 4; i++)
+			{
+				Vector3 dir = Quaternion.Euler(0f, i * 90f + 20f, 0f) * Vector3.forward;
+				yield return CameraShot(b.center + dir * dist + Vector3.up * dist * 0.25f, b.center, "lookat_" + e.GameObjectName + "_" + (i * 90 + 20));
+			}
+			Log("PASS: look at " + e.GameObjectName + " (" + b.size.ToString("F1") + ")");
+		}
+
+		[ConsoleCommand(name: "CIDrop", docs: "Dev, editor: sets the objects of an island whose name contains <text> down onto what is under them (or lowers them <metres>) and saves it; the old file goes to Mods\\DynamicIslands\\deleted\\ first: CIDrop <island> <text> [metres]")]
+		public static void DropCommand(string[] args)
+		{
+			if (args == null || args.Length < 2) { Fail("CIDrop <island> <text> [metres]"); return; }
+			StartTest(DropRoutine(args[0], args[1], args.Length > 2 ? F(args[2]) : 0f));
+		}
+
+		static IEnumerator DropRoutine(string name, string text, float metres)
+		{
+			yield return WaitForEditor(false);
+			DynamicIslands.currentIslandName = "";
+			if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); yield break; }
+			for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); yield break; }
+			yield return null; yield return null;
+			Physics.SyncTransforms();
+			var moves = new List<string>();
+			foreach (EditorGameObject e in PlacedEditorObjects().Where(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0).ToList())
+			{
+				float d = metres;
+				if (d <= 0f)
+				{
+					Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					// (the nearest thing under its bottom that isn't itself: the ground, a rock, a floor)
+					RaycastHit[] hits = Physics.RaycastAll(new Vector3(b.center.x, b.min.y + 0.05f, b.center.z), Vector3.down, 50f, ~0, QueryTriggerInteraction.Ignore);
+					RaycastHit[] below = hits.Where(h => h.collider.GetComponentInParent<EditorGameObject>() != e).OrderBy(h => h.distance).ToArray();
+					if (below.Length == 0) continue;
+					d = below[0].distance - 0.05f;
+				}
+				if (d <= 0.05f) continue;
+				e.transform.position += Vector3.down * d;
+				moves.Add(e.GameObjectName + " " + Num(d) + " m");
+			}
+			if (moves.Count == 0) { Log("PASS: " + name + ": nothing to drop"); yield break; }
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			string file = IslandSpawner.PathFor(name);
+			File.Copy(file, Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-drop-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), true);
+			bool saved = DynamicIslands.SaveIsland(name);
+			Log((saved ? "PASS: " : "FAIL: ") + name + ": " + moves.Count + " dropped (" + string.Join(", ", moves.ToArray()) + ")");
+		}
+
 		[ConsoleCommand(name: "CICaveSeen", docs: "Dev, in a world (either player): the cave mountains this machine has built on the loaded islands - each with its rock skin (AU83 on player 2)")]
 		public static void CaveSeenCommand()
 		{
