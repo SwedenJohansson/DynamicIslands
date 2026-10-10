@@ -119,7 +119,7 @@ namespace DynamicIslands.Editor
 					Ask(k);
 				}
 				// (no answer at all: the next try asks again)
-				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again"); }
+				if (waiting.ContainsKey(k)) { waiting.Remove(k); Debug.LogWarning("[CUSTOM ISLANDS] [net] No answer to a claim from the host: try again"); IslandInfo.ShowMessage("The host didn't answer - try again. If this keeps happening, leave the world, wait half a minute and join again"); } // (a player who rejoined quickly after a crash may have lost the link - TODO 4b)
 				yield break;
 			}
 			waiting.Remove(k);

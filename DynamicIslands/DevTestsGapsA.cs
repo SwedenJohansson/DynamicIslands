@@ -21,7 +21,8 @@ namespace DynamicIslands
 		static float mmWalk;
 		static bool mmSprint, mmJump;
 		const float MmSeconds = 3f, MmWarmUp = 0.75f, MmTolerance = 0.03f;
-		const float MmHalf = 40f, MmTop = 2.5f, MmClear = 100f;
+		// (the deck's top under 2 m: Raft's AllowJump lets a player jump there whatever ground angle it measured - at 2.5 m every jump was 0.1 m)
+		const float MmHalf = 40f, MmTop = 1.5f, MmClear = 100f;
 		static readonly System.Reflection.FieldInfo MmRunToggled = typeof(PersonController).GetField("runToggled", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 		static readonly System.Reflection.FieldInfo MmAutoRun = typeof(PersonController).GetField("autoRun", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 		static readonly System.Reflection.FieldInfo MmCheatSprint = typeof(PersonController).GetField("cheatSprinting", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -91,6 +92,8 @@ namespace DynamicIslands
 			var harmony = new Harmony("ci.movemeasure");
 			System.Reflection.MethodInfo getAxis = AccessTools.Method(typeof(MyInput), "GetAxis", new[] { typeof(string) });
 			System.Reflection.MethodInfo getButton = AccessTools.Method(typeof(MyInput), "GetButton", new[] { typeof(string) });
+			System.Reflection.MethodInfo wellBeingUpdate = AccessTools.Method(typeof(Stat_WellBeing), "Update");
+			WellBeing wellBeing0 = Stat_WellBeing.Factor;
 			var walk = new float[2]; var sprint = new float[2]; var swim = new float[2]; var jump = new float[2];
 			bool patched = false;
 			try
@@ -103,6 +106,8 @@ namespace DynamicIslands
 				harmony.Patch(getButton, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmButtonPostfix")));
 				if (MmIsPressed != null) harmony.Patch(MmIsPressed, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmPressedPostfix")));
 				else Log("(CustomInputConfig.IsPressed(action, string) not found: sprint and jump keys not faked)");
+				Log("Raft's well-being before: factor " + Stat_WellBeing.Factor + " (limit " + Stat_WellBeing.WellBeingLimit.ToString("F2", Inv) + ", ground speed x" + Stat_WellBeing.groundSpeedMultiplier.ToString("F2", Inv) + "), hunger " + player.Stats.stat_hunger.Normal.NormalValue.ToString("F2", Inv) + ", thirst " + player.Stats.stat_thirst.Normal.NormalValue.ToString("F2", Inv));
+				if (wellBeingUpdate != null) harmony.Patch(wellBeingUpdate, prefix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmWellBeingPrefix")));
 				mmFake = true; mmWalk = 0f; mmSprint = mmJump = false;
 				// (one game step per frame: the same 3 s and jump arcs however fast a minimised Raft draws)
 				Time.captureDeltaTime = 1f / 30f;
@@ -178,7 +183,9 @@ namespace DynamicIslands
 					try { harmony.Unpatch(getAxis, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetAxis: " + e.Message + ")"); }
 					try { harmony.Unpatch(getButton, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetButton: " + e.Message + ")"); }
 					if (MmIsPressed != null) try { harmony.Unpatch(MmIsPressed, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching CustomInputConfig.IsPressed: " + e.Message + ")"); }
+					if (wellBeingUpdate != null) try { harmony.Unpatch(wellBeingUpdate, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching Stat_WellBeing.Update: " + e.Message + ")"); }
 				}
+				Stat_WellBeing.Factor = wellBeing0;
 				try { MmAutoRun.SetValue(pc, false); MmRunToggled.SetValue(pc, false); } catch { }
 				if (wasOn && kept != null) PlayerLevels.SetMine(kept);
 				if (!wasOn && PlayerLevels.On) PlayerLevels.TurnOff();
@@ -252,7 +259,11 @@ namespace DynamicIslands
 			MmRunToggled.SetValue(pc, sprint);
 			if (MmCheatSprint != null) MmCheatSprint.SetValue(pc, false);
 			pc.crouching = false;
+			// (Raft walks at normal speed even when sprinting while its well-being is Bad; fed and watered it is Good)
+			Stat_WellBeing.Factor = WellBeing.Good;
 		}
+
+		static bool MmWellBeingPrefix() { return !mmFake; }
 
 		#endregion
 

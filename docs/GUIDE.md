@@ -2034,6 +2034,7 @@ them host the world later.
 | **A pack was made with a newer mod version** | A warning; "Install anyway" may leave out what this version doesn't know | Update the mod if something's missing |
 | **An island downloaded or imported later**, in a world with random islands | Only turns up if you allowed it (import) - also in worlds already started; a plan's islands never do | Untick it for a new world in World settings (9.5) |
 | **Different players have different islands with the same name** | The host's is used; others get the host's as a copy and keep their own | Nothing |
+| **B's Raft crashes and B joins again** | B gets the world as it is now, as on any join. Joining again within seconds of the crash can, now and then, leave B unable to open chests or set off zones ("The host didn't answer") | Wait about half a minute after a crash before joining again; if the message keeps coming, leave and join again |
 
 **Moving a world to another host:** Raft keeps the world on the host's PC in `%USERPROFILE%\AppData\LocalLow\Redbeet
 Interactive\Raft\User\User_<Steam id>\World\<world name>`. Copy that folder into the new host's own `User_<Steam

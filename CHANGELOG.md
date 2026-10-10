@@ -109,6 +109,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **"The host didn't answer" says what to do:** when it keeps coming (a player who joined again within seconds of a
+  crash can lose the link now and then), leave the world, wait half a minute and join again.
 - **Esc → Custom Islands is compact:** the world's settings window fits a 1366 x 768 screen (it was taller than the
   screen): tick boxes for the randomizer's parts, the extra options and the islands while sailing, short scrolling
   lists, a hint line at the bottom, and the whole window scrolls when needed. Each group and option now says what a
