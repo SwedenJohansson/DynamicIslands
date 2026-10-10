@@ -658,6 +658,65 @@ namespace DynamicIslands.Editor
 			return b;
 		}
 
+		/// <summary>
+		/// A compact tick-box row: a small box (ticked or not, SetCheck) and its label (LabelOf), on no background - the
+		/// row lights up faintly under the mouse. For long lists of on/off settings where a full button each is too big.
+		/// </summary>
+		public static Button Check(Transform parent, string label, Action onClick, string hint = null, float height = 20f, int fontSize = 12)
+		{
+			RectTransform r = Rect("Check_" + label, parent);
+			Image img = Background(r.gameObject, Accent, 4);
+			var b = r.gameObject.AddComponent<Button>();
+			Register(b);
+			b.targetGraphic = img;
+			ColorBlock cb = b.colors;
+			cb.normalColor = new Color(1f, 1f, 1f, 0f); cb.highlightedColor = new Color(1f, 1f, 1f, 0.16f); cb.pressedColor = new Color(1f, 1f, 1f, 0.28f);
+			cb.selectedColor = cb.normalColor; cb.disabledColor = cb.normalColor; cb.colorMultiplier = 1f; cb.fadeDuration = 0.06f;
+			b.colors = cb;
+			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+			// (the box keeps its size, centred in the row; the label fills the rest)
+			HorizontalLayoutGroup h = Horizontal(r.gameObject, 6f, new RectOffset(3, 4, 0, 0));
+			h.childForceExpandWidth = false; h.childForceExpandHeight = false;
+			float side = Mathf.Min(14f, height - 4f);
+			RectTransform box = Rect("Box", r);
+			Background(box.gameObject, FieldBg, 3);
+			Border(box, Tan, 3, 1f);
+			Size(box.gameObject, side, side);
+			// (the tick is a filled square, not a glyph: Raft's fonts may lack one)
+			RectTransform tick = Rect("Tick", box);
+			Stretch(tick, 3, 3, 3, 3);
+			Background(tick.gameObject, Accent, 2).raycastTarget = false;
+			Text t = Label(r, label, fontSize, TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Text");
+			t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
+			t.resizeTextForBestFit = true; t.resizeTextMinSize = Mathf.Min(9, fontSize); t.resizeTextMaxSize = fontSize;
+			Size(t.gameObject, -1, height);
+			Size(r.gameObject, -1, height);
+			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
+			if (onClick != null) b.onClick.AddListener(() => onClick());
+			if (hint != null) Hint(r.gameObject, hint);
+			return b;
+		}
+
+		/// <summary>Shows a Check row ticked or not; one that can't be clicked (interactable false) is dimmed.</summary>
+		public static void SetCheck(Button b, bool on)
+		{
+			if (b == null) return;
+			Transform tick = b.transform.Find("Box/Tick");
+			if (tick != null) tick.gameObject.SetActive(on);
+			Transform box = b.transform.Find("Box");
+			Image fill = box != null ? box.GetComponent<Image>() : null;
+			if (fill != null) fill.color = on ? new Color(0.45f, 0.29f, 0.13f, 1f) : FieldBg;
+			Text t = LabelOf(b);
+			if (t != null) t.color = b.interactable ? (on ? Accent : TextColor) : new Color(TextMuted.r, TextMuted.g, TextMuted.b, 0.6f);
+		}
+
+		/// <summary>Whether a Check row shows ticked (tests).</summary>
+		public static bool IsChecked(Button b)
+		{
+			Transform tick = b != null ? b.transform.Find("Box/Tick") : null;
+			return tick != null && tick.gameObject.activeSelf;
+		}
+
 		/// <summary>A thin horizontal line between sections.</summary>
 		public static void Separator(Transform parent)
 		{
