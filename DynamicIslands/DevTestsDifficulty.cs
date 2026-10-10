@@ -1005,6 +1005,12 @@ namespace DynamicIslands
 			bool ok = true;
 			int before = BuildCost.Current;
 			var menuT = HarmonyLib.Traverse.Create(menu);
+			// (Raft's BuildMenu.Update fills the cost panel only while the hammer is in hand: its BlockCreator active)
+			Item_Base hammerItem = ItemManager.GetItemByName("Hammer");
+			Hotbar hotbar = HarmonyLib.Traverse.Create(player.Inventory).Field("hotbar").GetValue<Hotbar>();
+			if (hammerItem != null && player.Inventory.GetItemCount(hammerItem) == 0) player.Inventory.AddItem(hammerItem.UniqueName, 1);
+			if (hammerItem != null && hotbar != null) hotbar.SelectItem(hammerItem);
+			for (int i = 0; i < 10; i++) yield return null;
 			foreach (int p in new[] { 0, 50 })
 			{
 				BuildCost.Set(p);
@@ -1012,6 +1018,10 @@ namespace DynamicIslands
 				yield return null;
 				try { HarmonyLib.AccessTools.Method(typeof(BuildMenu), "SelectBlock").Invoke(menu, new object[] { foundation }); }
 				catch (System.Exception e) { Debug.Log("[CITEST] SelectBlock threw " + (e.InnerException ?? e).Message); }
+				yield return null;
+				// (the cost panel is filled by DisplayBlockInfo - what Raft runs when the pointer is on a block's button)
+				try { HarmonyLib.AccessTools.Method(typeof(BuildMenu), "DisplayBlockInfo").Invoke(menu, new object[] { foundation }); }
+				catch (System.Exception e) { Debug.Log("[CITEST] DisplayBlockInfo threw " + (e.InnerException ?? e).Message); }
 				for (int i = 0; i < 10; i++) yield return null;
 				CostCollection panel = menuT.Field("costColletionPanel").GetValue<CostCollection>();
 				List<BuildingUI_CostBox> boxes = panel != null ? (HarmonyLib.Traverse.Create(panel).Field("costBoxes").GetValue<List<BuildingUI_CostBox>>() ?? new List<BuildingUI_CostBox>()) : new List<BuildingUI_CostBox>();

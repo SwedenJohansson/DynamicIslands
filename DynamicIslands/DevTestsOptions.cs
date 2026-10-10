@@ -238,7 +238,7 @@ namespace DynamicIslands
 			ScrollRect optionsScroll = WorldSettingsWindow.Window.GetComponentsInChildren<ScrollRect>(true).FirstOrDefault(s => s.name == "OptionsScroll");
 			float viewH = optionsScroll != null ? optionsScroll.viewport.rect.height : 0f, contentH = optionsScroll != null ? optionsScroll.content.rect.height : 0f;
 			int inList = optionsScroll != null ? optionsScroll.content.GetComponentsInChildren<Button>(true).Count(b => b.name.StartsWith("Toggle_")) : 0;
-			Check(ref ok, optionsScroll != null && inList == WorldOptions.Offered.Length + 1 && viewH > 400f && viewH < 560f && contentH > viewH * 1.5f,
+			Check(ref ok, optionsScroll != null && inList == WorldOptions.Offered.Length + 2 /* (+ levels, head start) */ && viewH > 400f && viewH < 560f && contentH > viewH * 1.5f,
 				"the extra options in one scrolled list: " + inList + " in it, about five in view (" + viewH.ToString("F0") + " of " + contentH.ToString("F0") + " high)");
 			WorldSettingsWindow.Close();
 			box.gameObject.SetActive(false);

@@ -130,11 +130,11 @@ namespace DynamicIslands
 		public static void WorldIslandsTurnsCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
-			if (mode == "choose") { ChooseExtreme(args.Skip(1).ToArray()); return; }
+			if (mode == "choose") { StartTest(ChooseExtreme(args.Skip(1).ToArray())); return; }
 			StartTest(WorldIslandsTurns(mode, args != null ? string.Join(" ", args.Skip(1).ToArray()).Trim() : ""));
 		}
 
-		static void ChooseExtreme(string[] rest)
+		static IEnumerator ChooseExtreme(string[] rest)
 		{
 			bool ok = true;
 			string what = rest.Length > 0 ? rest[0].ToLowerInvariant() : "";
@@ -143,16 +143,24 @@ namespace DynamicIslands
 			List<string> all = WorldIslands.Candidates();
 			string keep = what == "generated" ? CustomIslandSpawner.GeneratedEntry : what == "one" ? all.FirstOrDefault(c => c.Equals(island, StringComparison.OrdinalIgnoreCase)) : null;
 			Check(ref ok, what == "none" || keep != null, "'" + (what == "one" ? island : what) + "' is in the spawn pool (" + all.Count + " entries)");
-			if (!ok) { Fail("world islands choose"); return; }
+			if (!ok) { Fail("world islands choose"); yield break; }
+			// (the World settings window is made the first time the New Game box opens: open it as a player does)
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(x => x.gameObject.scene.IsValid());
+			if (box != null) { box.gameObject.SetActive(true); try { box.Close(); } catch { } box.Open(); yield return new WaitForSecondsRealtime(1f); }
+			WorldSettingsWindow.Open();
+			yield return null;
 			WorldIslands.Chosen.Clear();
 			foreach (string c in all) if (!c.Equals(keep, StringComparison.OrdinalIgnoreCase)) WorldIslands.Chosen.Add(c);
 			WorldIslands.SaveDefaults(WorldIslands.Chosen);
 			try { WorldSettingsWindow.Show(); } catch { }
 			IslandPickerWindow.ShowEntry();
+			yield return null;
 			Button b = IslandPickerWindow.EntryButton;
 			string label = b != null ? UIKit.LabelOf(b).text : "(no button)";
 			Check(ref ok, b != null && (what == "none" ? label.EndsWith("none") : label.EndsWith("1 of " + all.Count)), "the World settings button: '" + label + "'");
 			Log("CHOOSE " + what + ": " + (all.Count - WorldIslands.Chosen.Count) + " of " + all.Count + " ticked");
+			WorldSettingsWindow.Close();
+			if (box != null) { try { box.Close(); } catch { } }
 			if (ok) Log("PASS: world islands choose"); else Fail("world islands choose");
 		}
 

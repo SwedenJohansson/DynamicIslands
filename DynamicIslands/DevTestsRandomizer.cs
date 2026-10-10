@@ -934,6 +934,7 @@ namespace DynamicIslands
 			int s3 = 0;
 			for (float t = 0; t < 6f && (s3 = QuestTracker.StepOf(e)) < 3; t += 0.5f) yield return new WaitForSeconds(0.5f);
 			Check(ref ok, s2 == 2 && s3 == 3, "played on: the X reached " + s2 + ", the chest opened " + s3 + " (2, 3 = done)");
+			if (got.Count == 0) got = chest.LastGiven; // (a client opens when the host says yes, a moment later)
 			Check(ref ok, got.Count > 0, "the treasure: " + string.Join(", ", got.ToArray()));
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);

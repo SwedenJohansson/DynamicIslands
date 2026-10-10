@@ -699,6 +699,7 @@ namespace DynamicIslands
 				foreach (AI_NetworkBehaviourType kind in bosses)
 				{
 					int[] hits = new int[2], phases = new int[2];
+					float[] seen = new float[2], lost = new float[2], peak = new float[2], limit = new float[2];
 					bool[] dead = new bool[2];
 					string[] note = new string[2];
 					for (int pass = 0; pass < 2; pass++)
@@ -717,6 +718,7 @@ namespace DynamicIslands
 						if (ne == null || ne.stat_health == null || ne.stat_health.Max <= 0f) { note[pass] = "no entity to hit"; continue; }
 						if (ne.IsInvurnerable) { ne.IsInvurnerable = false; note[pass] = "invulnerable, lifted for the test"; }
 						AI_StateMachine_HyenaBoss hyena = ai.GetComponentInChildren<AI_StateMachine_HyenaBoss>(true);
+						if (hyena != null) limit[pass] = Traverse.Create(hyena).Field("damageThreshold").GetValue<float>();
 						Traverse taken = hyena != null ? Traverse.Create(hyena).Field("damageTaken") : null;
 						float hit = ne.stat_health.Max * 0.1f, last = taken != null ? taken.GetValue<float>() : 0f;
 						while (!ne.IsDead && hits[pass] < 60)
@@ -724,7 +726,13 @@ namespace DynamicIslands
 							if (ne.IsInvurnerable) ne.IsInvurnerable = false;
 							host.DamageEntity(ne, ne.transform, hit, ne.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
 							hits[pass]++;
-							if (taken != null) { float now = taken.GetValue<float>(); if (now < last) phases[pass]++; last = now; }
+							if (taken != null)
+							{
+								float now = taken.GetValue<float>();
+								if (now < last) phases[pass]++;
+								else if (hits[pass] == 1) { seen[pass] = now - last; lost[pass] = ne.stat_health.Max - ne.stat_health.Value; }
+								peak[pass] = Mathf.Max(peak[pass], now); last = now;
+							}
 							KeepAlive(player);
 							yield return new WaitForSeconds(0.05f);
 						}
@@ -737,7 +745,13 @@ namespace DynamicIslands
 					Check(ref ok, dead[0] && dead[1] && hits[1] >= hits[0] * 2 - 1 && hits[1] <= hits[0] * 2 + 1,
 						kind + ": dies after " + hits[0] + " hits at Normal and " + hits[1] + " at Nightmare (want about twice) - " + note[0] + " / " + note[1]);
 					if (kind == AI_NetworkBehaviourType.HyenaBoss)
-						Check(ref ok, phases[1] == phases[0], kind + ": its damage phases (acid pools) fire " + phases[0] + " time(s) at Normal and " + phases[1] + " at Nightmare");
+					{
+						// (its counter adds the damage the hit really did - halved at Nightmare - so a phase comes after the same share of
+						// its health; whether Raft then switches to the acid pools depends on the state it is in, so the count is logged)
+						Check(ref ok, seen[0] > 0f && seen[1] > 0f && Mathf.Abs(seen[0] - lost[0]) < 0.5f && Mathf.Abs(seen[1] - lost[1]) < 0.5f,
+							kind + ": its phase counter takes what a hit really did: " + seen[0].ToString("F1") + " of " + lost[0].ToString("F1") + " health at Normal, " + seen[1].ToString("F1") + " of " + lost[1].ToString("F1") + " at Nightmare (threshold " + limit[0].ToString("F0") + ")");
+						Log("  " + kind + ": acid pool phases " + phases[0] + " at Normal, " + phases[1] + " at Nightmare (the counter's highest " + peak[0].ToString("F0") + " / " + peak[1].ToString("F0") + ")");
+					}
 				}
 			}
 			finally
@@ -797,7 +811,9 @@ namespace DynamicIslands
 				bool hid = !t.gameObject.activeInHierarchy;
 				p.SetNameTagVisibility(true);
 				yield return new WaitForSeconds(0.6f);
-				Check(ref ok, hid && t.gameObject.activeInHierarchy, p.name + ": hides with Raft's name tag (" + hid + ") and comes back with it (" + t.gameObject.activeInHierarchy + "; the name was " + (was ? "shown" : "hidden") + ")");
+				// (Raft hides a far player's name again at once, so "back" = the tag follows the name, whichever way it is now)
+				bool back = t.gameObject.activeInHierarchy == name.gameObject.activeInHierarchy;
+				Check(ref ok, hid && back, p.name + ": hides with Raft's name tag (" + hid + ") and comes back with it (tag " + t.gameObject.activeInHierarchy + ", name " + name.gameObject.activeInHierarchy + "; the name was " + (was ? "shown" : "hidden") + ")");
 			}
 			if (ok) Log("PASS: level tag look"); else Fail("level tag look");
 		}
@@ -869,6 +885,15 @@ namespace DynamicIslands
 				Check(ref ok, fits && was.Contains("big bruce"), "Bruce: " + was);
 				int id = bruce.GetInstanceID();
 				uint idx = bruce.ObjectIndex;
+				// (a killed shark floats until it decays, then Raft sends the next one: both waits shortened for the test)
+				AI_State_Decay_Shark decay = bruce.GetComponentInChildren<AI_State_Decay_Shark>(true);
+				if (decay != null)
+				{
+					Traverse body = Traverse.Create(decay).Field("maxTimeInDecayState");
+					float bodyWas = body.GetValue<float>(), nextWas = decay.decayRespawnTime;
+					body.SetValue(3f); decay.decayRespawnTime = 5f;
+					Log("SHARKS Bruce's body decays after 3 s, the next shark 5 s later (Raft's " + bodyWas.ToString("0", CultureInfo.InvariantCulture) + " s and " + nextWas.ToString("0", CultureInfo.InvariantCulture) + " s, shortened for the test)");
+				}
 				host.DamageEntity(bruce.networkEntity, bruce.transform, bruce.networkEntity.stat_health.Max * 10f, bruce.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, bruce == null || bruce.networkEntity.IsDead, "Bruce is dead");
@@ -878,6 +903,20 @@ namespace DynamicIslands
 				{
 					next = LiveSharks().FirstOrDefault(s => s.ObjectIndex != idx && !RogueShark.IsRogue(s) && s.networkEntity != null && !s.networkEntity.IsDead);
 					KeepAlive(player);
+					if (next == null && (int)(Time.realtimeSinceStartup - t0) % 20 < 2)
+					{
+						// (what Raft's respawn waits on: it sends a shark when the body decays and it counts one shark)
+						string state = "gone";
+						if (bruce != null)
+						{
+							AI_StateMachine sm = bruce.GetComponentInChildren<AI_StateMachine>(true);
+							AI_State cur = sm == null ? null : Traverse.Create(sm).Field("currentState").GetValue<AI_State>();
+							state = (cur == null ? "no state" : cur.GetType().Name) + (decay == null ? "" : ", decay " + Traverse.Create(decay).Field("removeBodyTimeProgress").GetValue<float>().ToString("0.0", CultureInfo.InvariantCulture) + " s");
+						}
+						int count = -1;
+						try { count = ComponentManager<Network_Host_Entities>.Value.SharkCount; } catch { }
+						Log("SHARKS waiting " + (Time.realtimeSinceStartup - t0).ToString("F0") + " s: Bruce " + state + "; Raft counts " + count + " shark(s), " + LiveSharks().Count + " live");
+					}
 					if (next == null) yield return new WaitForSeconds(2f);
 				}
 				if (next == null) { Check(ref ok, false, "a new shark within 5 minutes"); }
@@ -890,6 +929,113 @@ namespace DynamicIslands
 			}
 			finally { if (!keep && oldOut[0] != null) WorldRandomizer.Set(oldOut[0]); }
 			if (ok) Log("PASS: shark reroll"); else Fail("shark reroll");
+		}
+
+		#endregion
+		#region The world window's size (Esc > Custom Islands, the compact layout)
+
+		[ConsoleCommand(name: "CIWorldWindowShots", docs: "Dev, world: the world window (Esc > Custom Islands) at 1920x1080 and 1366x768 - inside the screen, no text cut off, tick boxes big enough; a picture of each (shot_worldwindow_<w>x<h>.png), the screen size put back")]
+		public static void WorldWindowShots()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("run in a world"); return; }
+			StartTest(WorldWindowShotsRoutine());
+		}
+
+		static IEnumerator WorldWindowShotsRoutine()
+		{
+			bool ok = true;
+			int w0 = Screen.width, h0 = Screen.height;
+			FullScreenMode mode0 = Screen.fullScreenMode;
+			bool wasOpen = WorldWindow.IsOpen;
+			try
+			{
+				WorldWindow.Open();
+				RectTransform panel = Traverse.Create(typeof(WorldWindow)).Field("panel").GetValue<RectTransform>();
+				Check(ref ok, WorldWindow.IsOpen && panel != null, "the world window opens");
+				if (panel == null) yield break;
+				foreach (Vector2Int size in new[] { new Vector2Int(1920, 1080), new Vector2Int(1366, 768) })
+				{
+					Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
+					yield return new WaitForSecondsRealtime(1.5f);
+					WorldWindow.Refresh();
+					yield return new WaitForSecondsRealtime(1.2f);
+					Canvas.ForceUpdateCanvases();
+					int w = Screen.width, h = Screen.height;
+					var c = new Vector3[4];
+					panel.GetWorldCorners(c);
+					Canvas root = panel.GetComponentInParent<Canvas>().rootCanvas;
+					Camera cam = root.renderMode == RenderMode.ScreenSpaceOverlay ? null : root.worldCamera;
+					Vector2 lo = RectTransformUtility.WorldToScreenPoint(cam, c[0]), hi = RectTransformUtility.WorldToScreenPoint(cam, c[2]);
+					bool inside = lo.x >= -1f && lo.y >= -1f && hi.x <= w + 1f && hi.y <= h + 1f;
+					Check(ref ok, inside, w + "x" + h + ": the window inside the screen (" + lo.x.ToString("F0") + "," + lo.y.ToString("F0") + " to " + hi.x.ToString("F0") + "," + hi.y.ToString("F0") + ", " + (hi.x - lo.x).ToString("F0") + " x " + (hi.y - lo.y).ToString("F0") + " px)");
+					// Text cut off: more lines than its box holds (truncating), or characters not shown
+					var cut = new List<string>();
+					int texts = 0;
+					foreach (Text t in panel.GetComponentsInChildren<Text>(false))
+					{
+						if (string.IsNullOrEmpty(t.text) || !t.gameObject.activeInHierarchy) continue;
+						texts++;
+						RectTransform rt = t.rectTransform;
+						bool tooTall = t.verticalOverflow == VerticalWrapMode.Truncate && t.preferredHeight > rt.rect.height + 2f;
+						bool tooWide = t.horizontalOverflow == HorizontalWrapMode.Overflow && LayoutUtility.GetPreferredWidth(rt) > rt.rect.width + 2f && t.alignment != TextAnchor.MiddleCenter;
+						if (tooTall || tooWide) cut.Add(t.name + " '" + (t.text.Length > 30 ? t.text.Substring(0, 30) + "..." : t.text) + "' (" + (tooTall ? "needs " + t.preferredHeight.ToString("F0") + " px high, has " + rt.rect.height.ToString("F0") : "too wide") + ")");
+					}
+					Check(ref ok, cut.Count == 0, w + "x" + h + ": " + texts + " texts, none cut off" + (cut.Count > 0 ? ": " + string.Join("; ", cut.Take(6).ToArray()) + (cut.Count > 6 ? " (+" + (cut.Count - 6) + ")" : "") : ""));
+					// The left column (2890217): no HostSettings group (regrow, Receiver, Defaults) and no gap where it was
+					Transform left = panel.GetComponentsInChildren<Transform>(true).FirstOrDefault(x => x.name == "Left");
+					if (left != null)
+					{
+						var shown = Enumerable.Range(0, left.childCount).Select(i => left.GetChild(i) as RectTransform).Where(x => x != null && x.gameObject.activeSelf).ToList();
+						float gap = 0f;
+						for (int i = 1; i < shown.Count; i++) gap = Mathf.Max(gap, (shown[i - 1].localPosition.y + shown[i - 1].rect.yMin) - (shown[i].localPosition.y + shown[i].rect.yMax));
+						bool empty = shown.Any(x => x.GetComponentsInChildren<Text>(false).All(t => string.IsNullOrEmpty(t.text)) && x.rect.height > 2f);
+						Check(ref ok, left.GetComponentsInChildren<Transform>(true).All(x => x.name != "HostSettings") && gap <= 6f && !empty,
+							w + "x" + h + ": the left column " + string.Join(", ", shown.Select(x => x.name).ToArray()) + " - no HostSettings, the widest gap " + gap.ToString("F0") + " px" + (empty ? ", an empty block" : ""));
+					}
+					else Check(ref ok, false, w + "x" + h + ": the left column is found");
+					// Islands while sailing (98f2fae): the two tick boxes of every line start at the same x as the lines above
+					var lines = panel.GetComponentsInChildren<Transform>(false).Where(x => x.name.StartsWith("Line") && x.childCount >= 2 && x.GetChild(1).GetComponent<Button>() != null && x.GetComponentsInParent<Transform>(true).Any(a => a.name == "IslandList")).ToList();
+					if (lines.Count > 1)
+					{
+						var corners = new Vector3[4];
+						Func<Transform, int, float> boxX = (line, col) =>
+						{
+							Image box = line.GetChild(col).GetComponentsInChildren<Image>(false).Where(im => im.transform != line.GetChild(col)).OrderBy(im => ((RectTransform)im.transform).rect.width).FirstOrDefault();
+							((RectTransform)(box != null ? box.transform : line.GetChild(col))).GetWorldCorners(corners);
+							return corners[0].x;
+						};
+						float spread0 = lines.Max(l => boxX(l, 0)) - lines.Min(l => boxX(l, 0)), spread1 = lines.Max(l => boxX(l, 1)) - lines.Min(l => boxX(l, 1));
+						Check(ref ok, spread0 <= 1.5f && spread1 <= 1.5f, w + "x" + h + ": the island tick boxes line up over " + lines.Count + " lines (first column within " + spread0.ToString("F1") + " px, second within " + spread1.ToString("F1") + " px)");
+					}
+					else Check(ref ok, false, w + "x" + h + ": the island lines are found (" + lines.Count + ")");
+					// The tick boxes: the box of each check row, in screen pixels
+					float smallest = float.MaxValue; int boxes = 0;
+					foreach (string name in RandomizerSettings.Features.Select(f => "Part_" + f).Concat(WorldOptions.All.Select(o => "Option_" + o)))
+					{
+						Button b = WorldWindow.ButtonNamed(name);
+						if (b == null) continue;
+						foreach (Image img in b.GetComponentsInChildren<Image>(true).Where(i => i.gameObject != b.gameObject))
+						{
+							Vector3[] bc = new Vector3[4];
+							img.rectTransform.GetWorldCorners(bc);
+							float px = (RectTransformUtility.WorldToScreenPoint(cam, bc[2]) - RectTransformUtility.WorldToScreenPoint(cam, bc[0])).y;
+							if (px > 4f) { smallest = Mathf.Min(smallest, px); boxes++; }
+						}
+					}
+					if (boxes > 0) Check(ref ok, smallest >= 10f, w + "x" + h + ": the smallest tick box is " + smallest.ToString("F0") + " px high (" + boxes + " looked at)");
+					else Log("  (no tick box found by name to measure)");
+					Screenshot(new[] { "worldwindow_" + w + "x" + h });
+					yield return new WaitForSecondsRealtime(0.8f);
+				}
+			}
+			finally
+			{
+				Screen.SetResolution(w0, h0, mode0);
+				if (!wasOpen) WorldWindow.Close();
+			}
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Screen.width == w0 && Screen.height == h0, "the screen size put back: " + Screen.width + "x" + Screen.height);
+			if (ok) Log("PASS: world window shots"); else Fail("world window shots");
 		}
 
 		#endregion
