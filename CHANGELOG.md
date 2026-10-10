@@ -164,6 +164,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The crafting menu:** the Weapons list was twice as wide as its recipes and covered the inventory (the upgrades
+  not learned yet counted in its width); lists are now as wide as the recipes they show. Switching category now closes
+  the last category's recipe box (the stone axe stayed open over Food/Water).
 - **A new plan with an old plan's name:** deleting a plan and making another under its name gave the new plan to the
   worlds made with the old one. Each plan now has its own id, and those worlds keep their own copy.
 - **EXP of a new alpha:** a monster that was already hit before the randomizer made it an alpha (switched on or

@@ -936,4 +936,45 @@ namespace DynamicIslands.Editor
 			if (__state != null && block != null) block.buildableItem = __state;
 		}
 	}
+
+	/// <summary>The crafting menu's recipe list: Raft makes it as wide as a row's whole recipe list, hidden recipes too - an
+	/// upgrade not learned yet shares its base item's row, and the Weapons list grew over the inventory with two recipes
+	/// shown (2026-10-10). Sized by the recipes shown instead. And a new category closes the recipe box of the last one
+	/// (Raft left the stone axe open over Food/Water); opening the menu again on the same category keeps it.</summary>
+	[HarmonyPatch(typeof(CraftingMenu), "SelectCraftingCategory")]
+	static class CraftingListWidthPatch
+	{
+		static void Prefix(CraftingMenu __instance, out object __state)
+		{
+			__state = Traverse.Create(__instance).Field("selectedCategory").GetValue();
+		}
+
+		static void Postfix(CraftingMenu __instance, CraftingCategory category, object __state)
+		{
+			try
+			{
+				var all = Traverse.Create(__instance).Field("allRecipes").GetValue() as System.Collections.IDictionary;
+				var rows = all != null ? all[category] as System.Collections.IEnumerable : null;
+				if (rows != null && __instance.recipeMenuItemParent != null)
+				{
+					int cols = 1;
+					foreach (object row in rows)
+					{
+						var recipes = Traverse.Create(row).Field("recipes").GetValue<List<Item_Base>>();
+						if (recipes != null) cols = Mathf.Max(cols, recipes.Count(i => i != null && i.settings_recipe != null && i.settings_recipe.CanCraft));
+					}
+					float x = 315f + (cols > 3 ? 55f * (cols - 3) : 0f); // (Raft's own sizes)
+					Vector2 size = __instance.recipeMenuItemParent.sizeDelta;
+					if (x < size.x)
+					{
+						__instance.recipeMenuItemParent.sizeDelta = new Vector2(x, size.y);
+						if (__instance.scrollViewRect != null) __instance.scrollViewRect.sizeDelta = new Vector2(x, __instance.scrollViewRect.sizeDelta.y);
+					}
+				}
+				if (__state != null && !Equals(__state, category) && __instance.selectedRecipeBox != null && __instance.selectedRecipeBox.selectedRecipeItem != null)
+					__instance.selectedRecipeBox.DisplayRecipe(null);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Crafting menu sizes: " + e.Message); }
+		}
+	}
 }
