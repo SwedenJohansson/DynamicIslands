@@ -191,6 +191,9 @@ call shallows r=110 deep=5 n=1
 place WaterPipe_Short_1 rigpipeA at 18 -17 ground y=0.1 scale=2.5
 place WaterPipe_BigCurve_1 rigpipeB at 20.5 -17 ground y=0.1 scale=2.5
 place WaterPipe_Short_1 rigpipeC at 23 -17 ground y=0.1 scale=2.5
+prop rigpipeA obj.name=rigpipeA
+prop rigpipeB obj.name=rigpipeB
+prop rigpipeC obj.name=rigpipeC
 prop rigpipeA on.use=switch|\nmessage||The valve squeals a quarter turn.
 prop rigpipeB on.use=switch|\nmessage||The bend's valve squeals a quarter turn.
 prop rigpipeC on.use=switch|\nmessage||The valve squeals a quarter turn.

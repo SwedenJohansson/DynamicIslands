@@ -246,6 +246,9 @@ place RT_Pillar - at 24.5 10.5 ground sy=0.35
 place UT_WaterChallengeWheel1 aqwheelA at 19.5 10.5 ground y=1.05 scale=0.15
 place UT_WaterChallengeWheel2 aqwheelB at 22 10.5 ground y=1.05 scale=0.15
 place UT_WaterChallengeWheel3 aqwheelC at 24.5 10.5 ground y=1.05 scale=0.15
+prop aqwheelA obj.name=aqwheelA
+prop aqwheelB obj.name=aqwheelB
+prop aqwheelC obj.name=aqwheelC
 prop aqwheelB on.use=switch|\nsignal||aqw1\nmessage||The middle wheel turns. Under the square, water starts to talk.
 prop aqwheelA if.use=signal|aqw1
 prop aqwheelA on.use=switch|\nsignal||aqw2\nmessage||The setting-sun wheel turns. The water under your feet runs faster.

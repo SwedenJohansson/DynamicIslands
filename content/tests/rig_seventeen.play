@@ -87,3 +87,12 @@ expect step 12
 use lifeboat
 wait 8
 expect done
+# the valve test card: A open, B shut, C open (all start shut) - then the lever drops the crew stash
+use riglever
+expect message lever springs back
+expect hidden rigstash
+use rigpipeA
+use rigpipeC
+use riglever
+expect shown rigstash
+open Crew stash

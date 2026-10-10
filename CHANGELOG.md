@@ -153,6 +153,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Rig Seventeen's valve test works:** its lever looked for three valves that had no name, so the crew stash never
+  dropped open. The aqueduct's three wheels are named too.
 - **A busy host no longer loses a chest:** when the host's answers to "may I open this?" kept arriving late (busy sending
   island files), player 2 asked again for ever and nobody got the chest. The host now holds it longer for that player.
 - **Private storages and the hammer:** another player could take someone's private storage down with the
