@@ -114,7 +114,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   screen): tick boxes for the randomizer's parts, the extra options and the islands while sailing, short scrolling
   lists, a hint line at the bottom, and the whole window scrolls when needed. Each group and option now says what a
   change does in a world already under way; the head start raft is shown (made with the world, can't change). The
-  plan is shown but no longer picked there: a world keeps the plan it was made with.
+  plan is shown but no longer picked there: a world keeps the plan it was made with. Regrow days, the Receiver dots
+  and the unload distance left the window (F10 `RegrowDays`; **Defaults...** in the New Game box).
 - **Two world options retired:** *Scrambled blueprints* and *Story islands in a new order* are no longer in
   World settings for new worlds. A world that has one on keeps it, and the host can still switch it off there.
 - **EXP +50 %:** every monster is worth half as much EXP again (Bruce the shark 180, was 120); the EXP each

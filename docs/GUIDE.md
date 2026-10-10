@@ -2085,7 +2085,9 @@ The window is compact so it fits a 1366 x 768 screen: two columns of small group
 parts, the extra options and the islands while sailing (two to a line), the options and islands in short scrolling
 lists, and the whole window scrolls when the screen is too short. Each group, and each extra option on its own row,
 says in small letters what a change does **in a world already under way** (the table below). Point at any setting
-and its full description shows in the line at the bottom of the window.
+and its full description shows in the line at the bottom of the window. Regrow days, the Receiver dots and the unload
+distance are not in this window: the world's regrow days are the F10 command `RegrowDays <days>`, and the others are
+the host's **Defaults...** in the New Game box (`spawnpool.txt`).
 
 ![The world's settings in a running world](images/world-window.jpg)
 *Esc → Custom Islands in a world: the same groups as the World settings window, changed for this world.*
@@ -2108,8 +2110,8 @@ already in the world is taken away. What each one does from the moment it change
 |---|---|
 | Monster difficulty | At once, on the next hit - monsters already out too |
 | Build cost | The build menu at once; a block built before gives back what it cost when it was placed |
-| Regrow days | Counts from the next time an island loads; an island's own rule still wins |
-| Unload distance, Receiver dots and range | At once; kept in the host's spawnpool.txt for every world the host plays |
+| Regrow days (F10 `RegrowDays`) | Counts from the next time an island loads; an island's own rule still wins |
+| Unload distance, Receiver dots and range (Defaults... / spawnpool.txt) | At once; kept in the host's spawnpool.txt for every world the host plays |
 | Randomizer: colours, alphas | Animals not changed yet are looked at again at once; one already changed keeps its look |
 | Randomizer: animals, finds, loot | Raft's islands not met yet; an island already looked at keeps what it got. Loot off puts moved crates and clams back at once |
 | Randomizer: oddities, bosses, large | Counted while sailing from now on; switched off, one that is due doesn't come. Islands already here stay |
@@ -2726,10 +2728,10 @@ from the host's `spawnpool.txt` the first time it is played and keeps them when 
 before that day takes them from the first host who plays it with this version.
 
 **What to do:**
-1. To change a world's days: in the world the host opens **Esc > Custom Islands** and sets **Regrow days** (or types
-   `RegrowDays <days>` in the F10 console). `0` means never. `regrowDays` in `spawnpool.txt` is only for new worlds.
-2. The group can also agree on **Unload beyond (m)** and **Receiver dots** (same box, or `unloadDistance` and
-   `showOnReceiver` in `spawnpool.txt`) - the host's values are the ones every player sees.
+1. To change a world's days: in the world the host types `RegrowDays <days>` in the F10 console. `0` means never.
+   `regrowDays` in `spawnpool.txt` is only for new worlds.
+2. The group can also agree on the unload distance and the Receiver dots (the host's **Defaults...** in the New Game
+   box, or `unloadDistance` and `showOnReceiver` in `spawnpool.txt`) - the host's values are the ones every player sees.
 
 #### The next host has no own island named like one in the plan
 
