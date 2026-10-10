@@ -231,11 +231,11 @@ namespace DynamicIslands.Editor
 			List<string> all = WorldIslands.Candidates();
 			HashSet<string> off = WorldIslands.Chosen;
 			int taking = all.Count(e => !off.Contains(e));
-			if (entryButton != null) UIKit.LabelOf(entryButton).text = "CHOOSE ISLANDS...   " + (taking == all.Count ? "all " + all.Count : taking + " of " + all.Count);
+			if (entryButton != null) UIKit.LabelOf(entryButton).text = "CHOOSE ISLANDS...   " + (taking == all.Count ? "all " + all.Count : taking == 0 ? "none" : taking + " of " + all.Count);
 			WorldPlan plan = WorldPlan.Load(NewWorldOptions.Selected);
 			bool random = plan == null || plan.Random;
 			string note = random ? "" : "The plan '" + plan.Name + "' has no random islands, so this list only counts with a plan that has them (like Random islands).";
-			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : (all.Count - taking) + " left out of this world.") + (off.Contains(CustomIslandSpawner.GeneratedEntry) ? " No made-up islands." : "") : note;
+			if (entryText != null) entryText.text = random ? (taking == all.Count ? "Every island can turn up while sailing." : taking == 0 ? "No island turns up by chance while sailing (a world plan's own islands still come)." : (all.Count - taking) + " left out of this world.") + (off.Contains(CustomIslandSpawner.GeneratedEntry) ? " No made-up islands." : "") : note;
 			if (planNote != null) planNote.text = random ? "Plan: '" + (plan != null ? plan.Name : WorldPlan.RandomName) + "' - islands from this list turn up by chance while sailing (a world plan's own islands only come in their plan)." : note;
 			if (countText != null) countText.text = taking + " of " + all.Count + " take part" + (taking < all.Count ? ",  " + (all.Count - taking) + " left out" : "");
 			int[] gap = WorldIslands.ChosenGap;

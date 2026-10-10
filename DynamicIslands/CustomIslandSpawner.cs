@@ -161,18 +161,36 @@ namespace DynamicIslands.Editor
 			// (its turn: tried every 10 s of sailing until there's a free spot - not at one of Raft's islands)
 			if (Time.unscaledTime < nextTry) return;
 			nextTry = Time.unscaledTime + 10f;
+			TakeTurn(pos.Value);
+		}
+
+		/// <summary>A random custom island's turn (host): one from the world's pool ahead of the raft. With nothing in the pool
+		/// (every island left out in Choose islands, or the only ones ticked are here or finished) it says so once and waits
+		/// quietly - it used to log "the spawn pool is empty" every 10 s of sailing (UW4). Returns what happened.</summary>
+		internal static string TakeTurn(Vector3 pos)
+		{
+			if (Pool().Count == 0)
+			{
+				if (!saidEmpty) Debug.Log("[CUSTOM ISLANDS] No random custom island can come now: every island of this world's pool is left out (Choose islands), here already or finished");
+				saidEmpty = true;
+				return "nothing in the pool";
+			}
+			saidEmpty = false;
 			spawned = false;
-			string said = TrySpawn(pos.Value, false);
+			string said = TrySpawn(pos, false);
 			if (spawned)
 			{
 				Debug.Log("[CUSTOM ISLANDS] Random island after " + WorldIslands.RaftIslandsSince + " of Raft's islands (span " + WorldIslands.GapMin + "-" + WorldIslands.GapMax + "): " + said);
 				WorldIslands.NewTarget();
 				IslandWorldState.Save();
 			}
+			return said;
 		}
 
 		static float nextTry, lastGameTime;
 		static bool spawned;
+		/// <summary>The empty pool has been told about (once until something is in it again).</summary>
+		internal static bool saidEmpty;
 		/// <summary>No random custom island in a new world's first so many minutes of play (spawnpool.txt quietMinutes).</summary>
 		public static float QuietMinutes = 10f;
 		/// <summary>Raft's islands already counted (instance and spawn), and the world they were counted in.</summary>

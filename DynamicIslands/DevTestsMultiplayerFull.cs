@@ -223,6 +223,27 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Hits the animals of a kind until they are down, through Raft's Network_Host.DamageEntity (a client's hit goes to the host).</summary>
+		[ConsoleCommand(name: "CIHitOnce", docs: "Dev, in game (either player), IM15: one hit of <damage> on the first live animal of a kind at an island, as this player's weapon (Raft's DamageEntity, the Damage stat on top): CIHitOnce <island> <damage> <kind>; logs HITONCE <id> before <health>, x<Damage stat> x<game mode>")]
+		public static void HitOnceCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			float dmg;
+			if (args.Length < 3 || !float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dmg)) { Fail("CIHitOnce <island> <damage> <kind>"); return; }
+			string kind = string.Join(" ", args.Skip(2).ToArray());
+			AI_NetworkBehaviour a = AnimalsOf(e, kind, 150f).FirstOrDefault(x => x.networkEntity != null && !x.networkEntity.IsDead);
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			if (a == null || host == null) { Fail("no live " + kind + " at '" + e.HostName + "'"); return; }
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			float modeMul = mode != null && mode.playerSpecificVariables != null ? mode.playerSpecificVariables.outgoingDamageMultiplierPVE : 1f;
+			float before = a.networkEntity.stat_health.Value;
+			PutPlayerNear(a.transform);
+			host.DamageEntity(a.networkEntity, a.transform, dmg, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+			Log("HITONCE " + a.ObjectIndex + " before " + before.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + ", x" + PlayerLevels.Factor(LevelRules.Damage).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) +
+				" x" + modeMul.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " (" + (Raft_Network.IsHost ? "host" : "client: sent to the host") + ")");
+			Log("PASS: hit once");
+		}
+
 		[ConsoleCommand(name: "CIHit", docs: "Dev, in game (either player): defeats the animals of a kind at an island, as a player's weapon would (Raft's DamageEntity): CIHit <island> <kind, e.g. Warthog>")]
 		public static void HitCommand(string[] args)
 		{

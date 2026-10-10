@@ -522,6 +522,177 @@ namespace DynamicIslands
 			else Fail("'" + LevelMPIsland + "' did not turn the level up system on");
 		}
 
+		[ConsoleCommand(name: "CIWeaponsDifficulty", docs: "Dev, in game (host): Raft's own spear swings (MeleeWeapon.OnHitEntity with a real raycast hit) kill a level island warthog at Nightmare, Timid and Normal - each swing takes the spear's damage divided by the level's factor, so Nightmare takes about twice Normal's swings and Timid 0.75 of them, and Raft's health bar (health / max) shows that fraction after the first swing. The difficulty and the record are put back after (IW1)")]
+		public static void WeaponsDifficultyCommand() { StartTest(WeaponsDifficultyRoutine()); }
+
+		static IEnumerator WeaponsDifficultyRoutine()
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (!raftPos.HasValue || !Raft_Network.IsHost || player == null) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			PlayerLevels.TurnOff();
+			int difficulty0 = MonsterDifficulty.Current;
+			MeleeWeapon[] melee = player.GetComponentsInChildren<MeleeWeapon>(true).Where(w => w != null && Traverse.Create(w).Field("damage").GetValue<int>() > 0f).ToArray();
+			MeleeWeapon spear = melee.FirstOrDefault(w => w.name.IndexOf("spear", StringComparison.OrdinalIgnoreCase) >= 0) ?? melee.FirstOrDefault();
+			if (spear == null) { Fail("no melee weapon in the player's hands"); yield break; }
+			List<AI_NetworkBehaviour> boars = new List<AI_NetworkBehaviour>();
+			IslandWorldState.Entry[] entryOut = new IslandWorldState.Entry[1];
+			yield return LevelBoarsRoutine(raftPos.Value, 3, boars, entryOut);
+			IslandWorldState.Entry entry = entryOut[0];
+			if (entry == null) yield break;
+			float pve = 1f;
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			if (mode != null && mode.playerSpecificVariables != null) pve = mode.playerSpecificVariables.negateOutgoingPlayerDamage ? 0f : mode.playerSpecificVariables.outgoingDamageMultiplierPVE;
+			if (pve <= 0f) { Fail("this world's game mode takes away players' damage"); LevelCleanup(entry); yield break; }
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			Traverse tw = Traverse.Create(spear);
+			if (tw.Field("hostNetwork").GetValue() == null) tw.Field("hostNetwork").SetValue(host);
+			if (tw.Field("playerNetwork").GetValue() == null) tw.Field("playerNetwork").SetValue(player);
+			float dmg = tw.Field("damage").GetValue<int>();
+			MethodInfo onHit = AccessTools.Method(typeof(MeleeWeapon), "OnHitEntity");
+			int[] levels = { MonsterDifficulty.Normal, MonsterDifficulty.Nightmare, MonsterDifficulty.Timid };
+			int[] swings = new int[levels.Length];
+			try
+			{
+				for (int k = 0; k < levels.Length; k++)
+				{
+					MonsterDifficulty.Current = levels[k];
+					PlayerLevels.SetMine(new LevelRecord());
+					AI_NetworkBehaviour boar = boars[k];
+					string name = MonsterDifficulty.Name(levels[k]);
+					float max = boar.networkEntity.stat_health.Max, per = dmg * pve / MonsterDifficulty.Factor;
+					int want = Mathf.CeilToInt(max / per - 0.001f), n = 0;
+					float firstFraction = -1f;
+					for (int i = 0; i < want + 10 && !boar.networkEntity.IsDead; i++)
+					{
+						PutPlayerNear(boar.transform, 4f);
+						yield return new WaitForSeconds(0.15f);
+						RaycastHit hit;
+						Collider col = boar.GetComponentsInChildren<Collider>().FirstOrDefault(x => x.enabled && !x.isTrigger);
+						Vector3 aim = col != null ? col.bounds.center : boar.transform.position + Vector3.up * 0.5f;
+						hit = default(RaycastHit); if (col == null || !col.Raycast(new Ray(aim + Vector3.up * 3f, Vector3.down), out hit, 6f)) // (its own collider only: another warthog's bones stood in the way)
+						{ Check(ref ok, false, name + ": no raycast hit on the warthog" + (hit.transform != null ? " (hit " + hit.transform.name + ")" : "")); break; }
+						try { onHit.Invoke(spear, new object[] { hit, boar.networkEntity }); }
+						catch (Exception e) { if (n == 0) Log("  (" + spear.name + " after the hit: " + (e.InnerException ?? e).Message + ")"); }
+						n++;
+						yield return new WaitForSeconds(0.1f);
+						if (firstFraction < 0f) firstFraction = boar.networkEntity.stat_health.Value / max;
+					}
+					swings[k] = n;
+					float wantFraction = Mathf.Max(0f, 1f - per / max);
+					Check(ref ok, boar.networkEntity.IsDead && n == want, name + ": " + spear.name + " (" + dmg.ToString("F0") + " damage) kills a warthog of " + max.ToString("F0") + " health in " + n + " swings (want " + want + ")");
+					Check(ref ok, Mathf.Abs(firstFraction - wantFraction) < 0.01f, name + ": the health bar after the first swing shows " + (firstFraction * 100f).ToString("F1") + "% (want " + (wantFraction * 100f).ToString("F1") + "%)");
+				}
+				if (swings[0] > 0)
+				{
+					float night = (float)swings[1] / swings[0], timid = (float)swings[2] / swings[0];
+					Check(ref ok, Mathf.Abs(swings[1] - 2f * swings[0]) <= 1f && Mathf.Abs(swings[2] - 0.75f * swings[0]) <= 1f, "Nightmare takes " + night.ToString("F2") + "x Normal's swings (about 2), Timid " + timid.ToString("F2") + "x (about 0.75)");
+				}
+			}
+			finally
+			{
+				MonsterDifficulty.Current = difficulty0;
+				PlayerLevels.SetMine(new LevelRecord());
+			}
+			LevelCleanup(entry);
+			if (ok) Log("PASS: weapons difficulty"); else Fail("weapons difficulty");
+		}
+
+		[ConsoleCommand(name: "CILevelBruce", docs: "Dev, in game (host): Bruce in the sea - the real shark hit with Raft's own spear swings (MeleeWeapon.OnHitEntity on a raycast hit) until he dies gives exactly his EXP (Bruce's, at Normal) and one kill; his corpse hit again gives nothing, nor does the next shark coming back until it is hit (IL2)")]
+		public static void LevelBruceCommand() { StartTest(LevelBruceRoutine()); }
+
+		static IEnumerator LevelBruceRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || player == null || host == null) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int difficulty0 = MonsterDifficulty.Current;
+			MonsterDifficulty.Current = MonsterDifficulty.Normal;
+			MeleeWeapon spear = player.GetComponentsInChildren<MeleeWeapon>(true).Where(w => w != null && Traverse.Create(w).Field("damage").GetValue<int>() > 0f)
+				.OrderByDescending(w => w.name.IndexOf("spear", StringComparison.OrdinalIgnoreCase) >= 0).FirstOrDefault();
+			AI_NetworkBehavior_Shark bruce = null;
+			for (int i = 0; i < 60 && bruce == null; i++)
+			{
+				bruce = LiveSharks().Where(s => !RogueShark.IsRogue(s)).OrderBy(s => (s.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
+				if (bruce == null) yield return new WaitForSeconds(1f);
+			}
+			if (spear == null || bruce == null) { Fail("a spear (" + (spear != null) + ") and a live shark (" + (bruce != null) + ")"); MonsterDifficulty.Current = difficulty0; yield break; }
+			Traverse tw = Traverse.Create(spear);
+			if (tw.Field("hostNetwork").GetValue() == null) tw.Field("hostNetwork").SetValue(host);
+			if (tw.Field("playerNetwork").GetValue() == null) tw.Field("playerNetwork").SetValue(player);
+			MethodInfo onHit = AccessTools.Method(typeof(MeleeWeapon), "OnHitEntity");
+			PlayerLevels.TurnOn(false);
+			PlayerLevels.SetMine(new LevelRecord());
+			try
+			{
+				Network_Entity e = bruce.networkEntity;
+				int worth = PlayerLevels.MonsterXp(bruce), swings = 0, misses = 0;
+				Check(ref ok, worth == LevelRules.BruceXp, "Bruce is worth " + worth + " EXP (want " + LevelRules.BruceXp + ")");
+				for (int i = 0; i < 200 && !e.IsDead && misses < 20; i++)
+				{
+					KeepAlive(player);
+					RaycastHit hit;
+					if (!AimAt(bruce, out hit)) { misses++; yield return new WaitForSeconds(0.2f); continue; }
+					try { onHit.Invoke(spear, new object[] { hit, e }); }
+					catch (Exception ex) { if (swings == 0) Log("  (" + spear.name + " after the hit: " + (ex.InnerException ?? ex).Message + ")"); }
+					swings++;
+					yield return new WaitForSeconds(0.15f);
+				}
+				Check(ref ok, e.IsDead, "Bruce killed with " + swings + " swings of " + spear.name + (misses > 0 ? " (" + misses + " misses)" : ""));
+				Check(ref ok, PlayerLevels.Mine.Xp == worth && PlayerLevels.Mine.Kills == 1, "his kill gives exactly his EXP (" + PlayerLevels.Mine.Xp + " of " + worth + "), one kill (" + PlayerLevels.Mine.Kills + ")");
+				int xp = PlayerLevels.Mine.Xp;
+				RaycastHit corpse;
+				if (e.IsDead && AimAt(bruce, out corpse))
+				{
+					for (int i = 0; i < 3; i++) { try { onHit.Invoke(spear, new object[] { corpse, e }); } catch { } }
+					host.DamageEntity(e, bruce.transform, 50f, bruce.transform.position, Vector3.up, EntityType.Player, null);
+				}
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, PlayerLevels.Mine.Xp == xp && PlayerLevels.Mine.Kills == 1, "his corpse hit again gives nothing (EXP " + PlayerLevels.Mine.Xp + ", kills " + PlayerLevels.Mine.Kills + ")");
+				AI_NetworkBehavior_Shark back = null;
+				for (int i = 0; i < 120 && back == null; i++)
+				{
+					back = LiveSharks().FirstOrDefault(s => s != bruce && !RogueShark.IsRogue(s));
+					if (back == null) { KeepAlive(player); yield return new WaitForSeconds(1f); }
+				}
+				if (back == null) Log("  (no shark came back within 2 minutes)");
+				else
+				{
+					yield return new WaitForSeconds(2f);
+					Check(ref ok, PlayerLevels.Mine.Xp == xp && PlayerLevels.Mine.Kills == 1, "a shark came back: no EXP for that (EXP " + PlayerLevels.Mine.Xp + ", kills " + PlayerLevels.Mine.Kills + ")");
+				}
+			}
+			finally
+			{
+				MonsterDifficulty.Current = difficulty0;
+				PlayerLevels.SetMine(new LevelRecord());
+				PlayerLevels.TurnOff();
+			}
+			KeepAlive(player);
+			if (ok) Log("PASS: level bruce"); else Fail("level bruce");
+		}
+
+		/// <summary>A raycast hit on a creature's own collider, from above it (as a swing from the raft lands).</summary>
+		static bool AimAt(AI_NetworkBehaviour ai, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			foreach (Collider col in ai.GetComponentsInChildren<Collider>().Where(x => x.enabled && !x.isTrigger))
+			{
+				Vector3 c = col.bounds.center;
+				foreach (Vector3 from in new[] { c + Vector3.up * 3f, c + Vector3.right * 3f, c - Vector3.right * 3f, c + Vector3.forward * 3f })
+				{
+					RaycastHit[] hits = Physics.RaycastAll(from, (c - from).normalized, 6f, ~0, QueryTriggerInteraction.Ignore);
+					foreach (RaycastHit h in hits.OrderBy(h => h.distance))
+						if (h.collider == col) { hit = h; return true; }
+				}
+			}
+			return false;
+		}
+
 		[ConsoleCommand(name: "CILevelDifficulty", docs: "Dev, in game (host): the level island's warthogs hit for 30% of their health through Raft's DamageEntity at each monster difficulty - Nightmare takes twice the hits (7), Timid fewer (3), Normal 4 - and each kill gives exactly the warthog's EXP, no more, no less; with Raft's Creative rule that players' hits do nothing an island creature still takes the hit and gives EXP (AU61), and the stats still apply. The difficulty and the record are put back after (IL12, IL11)")]
 		public static void LevelDifficultyCommand() { StartTest(LevelDifficultyRoutine()); }
 
@@ -674,7 +845,7 @@ namespace DynamicIslands
 					RaycastHit hit;
 					Collider col = boar.GetComponentsInChildren<Collider>().FirstOrDefault(x => x.enabled && !x.isTrigger);
 					Vector3 aim = col != null ? col.bounds.center : boar.transform.position + Vector3.up * 0.5f;
-					if (!Physics.Raycast(aim + Vector3.up * 3f, Vector3.down, out hit, 6f, ~0, QueryTriggerInteraction.Ignore) || hit.transform.GetComponentInParent<AI_NetworkBehaviour>() != boar)
+					hit = default(RaycastHit); if (col == null || !col.Raycast(new Ray(aim + Vector3.up * 3f, Vector3.down), out hit, 6f)) // (its own collider only: another warthog's bones stood in the way)
 					{ Check(ref ok, false, w.name + ": no raycast hit on the warthog" + (hit.transform != null ? " (hit " + hit.transform.name + ")" : "")); continue; }
 					float hp = boar.networkEntity.stat_health.Value, dmg = tw.Field("damage").GetValue<int>();
 					int xp = PlayerLevels.Mine.Xp;
@@ -1016,6 +1187,74 @@ namespace DynamicIslands
 			Network_Player p = RAPI.GetLocalPlayer();
 			PlayerLevels.GiveXp(xp, p != null ? p.transform.position + p.transform.forward * 3f + Vector3.up : (Vector3?)null);
 			Log("PASS: gave " + xp + " EXP: level " + PlayerLevels.Mine.Level + ", xp " + PlayerLevels.Mine.Xp);
+		}
+
+		[ConsoleCommand(name: "CILevelHealth", docs: "Dev, in game (host), for the persist phase: CILevelHealth set = levels on, 10 points in Health and full health (110 / 110), to save; CILevelHealth check = after loading or a restart the player came back with 110 / 110, not cut to 100 before the stat applied; CILevelHealth off = levels off and a fresh record (IL6); CILevelHealth other = in another world loaded after one with levels: off, 100 / 100, no tags or bar (IL27)")]
+		public static void LevelHealthCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
+			Stat_Health h = p.Stats.stat_health;
+			if (what == "set")
+			{
+				PlayerLevels.TurnOn(false);
+				PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(6), Points = new[] { 0, 0, 0, 0, 0, 10, 0, 0, 0 } });
+				h.Value = h.Max;
+				if (h.Max > 109.9f && h.Value > 109.9f) Log("PASS: health set to " + h.Value.ToString("F1") + " / " + h.Max.ToString("F1"));
+				else Fail("health set: " + h.Value.ToString("F1") + " / " + h.Max.ToString("F1") + " (want 110 / 110)");
+			}
+			else if (what == "check")
+			{
+				int points = PlayerLevels.Mine != null ? PlayerLevels.Mine.Points[LevelRules.Health] : -1;
+				if (PlayerLevels.On && points == 10 && h.Max > 109.9f && h.Value > 109.9f) Log("PASS: health kept: " + h.Value.ToString("F1") + " / " + h.Max.ToString("F1") + ", 10 points in Health");
+				else Fail("health kept: " + h.Value.ToString("F1") + " / " + h.Max.ToString("F1") + ", levels " + (PlayerLevels.On ? "on" : "off") + ", " + points + " points in Health (want 110 / 110, 10)");
+			}
+			else if (what == "off")
+			{
+				PlayerLevels.SetMine(new LevelRecord());
+				PlayerLevels.TurnOff();
+				Log("PASS: levels off, a fresh record");
+			}
+			else if (what == "other")
+			{
+				// IL27: after a world with levels on (10 points in Health) the player loads another world without them
+				int tags = LevelTags.Shown.Count(kv => !string.IsNullOrEmpty(kv.Value));
+				bool clean = !PlayerLevels.On && h.Max < 100.1f && h.Value < 100.1f && tags == 0 && !LevelHud.BarShown;
+				string state = "levels " + (PlayerLevels.On ? "ON" : "off") + ", health " + h.Value.ToString("F1") + " / " + h.Max.ToString("F1") + ", " + tags + " name tags, bar " + (LevelHud.BarShown ? "SHOWN" : "hidden");
+				if (clean) Log("PASS: another world, nothing left: " + state); else Fail("another world: " + state + " (want off, 100 / 100, no tags, no bar)");
+			}
+			else Fail("CILevelHealth set|check|off|other");
+		}
+
+		[ConsoleCommand(name: "CILevelDamageOthers", docs: "Dev, in game (host): the Damage stat only makes hits on monsters bigger (IL4, one player): with 10 points a player's hit on a player (as friendly fire) and the world's hit take Raft's amount and give no EXP, while a player's hit on a monster is the stat's x bigger")]
+		public static void LevelDamageOthers()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			Network_Host net = ComponentManager<Network_Host>.Value;
+			if (p == null || net == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
+			bool ok = true;
+			bool wasOn = PlayerLevels.On;
+			LevelRecord keep = PlayerLevels.Mine;
+			int monsters = MonsterDifficulty.Current;
+			MonsterDifficulty.Current = MonsterDifficulty.Normal;
+			PlayerLevels.TurnOn(false);
+			var drops = new Dictionary<int, float[]>();
+			foreach (int points in new[] { 0, 10 })
+			{
+				PlayerLevels.SetMine(new LevelRecord { Xp = LevelRules.TotalFor(6), Points = new[] { 0, 0, 0, 0, points, 0, 0, 0, 0 } });
+				int xp0 = PlayerLevels.Mine.Xp;
+				drops[points] = new[] { HitAndHeal(net, p.Stats, 10f, EntityType.Player), HitAndHeal(net, p.Stats, 10f, EntityType.Environment) };
+				Check(ref ok, PlayerLevels.Mine.Xp == xp0, points + " points in Damage: a hit on a player gives no EXP (" + xp0 + " -> " + PlayerLevels.Mine.Xp + ")");
+			}
+			Check(ref ok, Mathf.Abs(drops[10][0] - drops[0][0]) < 0.01f, "a player's hit on a player: " + drops[0][0].ToString("F2") + " at 0 points, " + drops[10][0].ToString("F2") + " at 10 (Raft's either way" + (drops[0][0] <= 0f ? "; 0: friendly fire is off in this game mode" : "") + ")");
+			Check(ref ok, drops[0][1] > 0f && Mathf.Abs(drops[10][1] - drops[0][1]) < 0.01f, "the world's hit: " + drops[0][1].ToString("F2") + " at 0 points, " + drops[10][1].ToString("F2") + " at 10 (Raft's either way)");
+			float factor = PlayerLevels.Factor(LevelRules.Damage);
+			Check(ref ok, factor > 1.01f, "on a monster the same 10 points make a hit x" + factor.ToString("F2"));
+			PlayerLevels.SetMine(keep ?? new LevelRecord());
+			if (!wasOn) PlayerLevels.TurnOff();
+			MonsterDifficulty.Current = monsters;
+			if (ok) Log("PASS: level damage others"); else Fail("level damage others");
 		}
 
 		[ConsoleCommand(name: "CILevelSpend", docs: "Dev, in game (either player): puts a stat point into a stat by its number (0 walk ... 7 oxygen) through the stats page, as clicking its +: CILevelSpend <stat>")]

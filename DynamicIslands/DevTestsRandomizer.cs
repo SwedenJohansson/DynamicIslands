@@ -811,10 +811,17 @@ namespace DynamicIslands
 			if (ok) Log("PASS: creatures follow the game mode"); else Fail("creatures follow the game mode");
 		}
 
-		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; logs Treasure extras: '<name>'")]
-		public static void TreasureHuntCommand(string[] args) { StartTest(TreasureHuntRoutine(args != null && args.Any(a => a == "keep"))); }
+		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; CITreasureHunt half = only the map read, kept (IR4); CITreasureHunt rest <name> = that hunt played on by this player (after a load, or player 2); CITreasureHunt state <name> = its step here (3 = done); logs Treasure extras: '<name>'")]
+		public static void TreasureHuntCommand(string[] args)
+		{
+			args = args ?? new string[0];
+			// (IR4: "half" = the map read only, all kept, for a save and load; "rest <name>" = the rest played by this player,
+			// host or not; "state <name>" = where that hunt is on this machine)
+			if (args.Length >= 2 && (args[0] == "rest" || args[0] == "state")) { StartTest(TreasureHuntRestRoutine(string.Join(" ", args.Skip(1).ToArray()), args[0] == "rest")); return; }
+			StartTest(TreasureHuntRoutine(args.Any(a => a == "keep" || a == "half"), args.Any(a => a == "half")));
+		}
 
-		static IEnumerator TreasureHuntRoutine(bool keep)
+		static IEnumerator TreasureHuntRoutine(bool keep, bool half = false)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
 			yield return EnsureAlive();
@@ -870,6 +877,15 @@ namespace DynamicIslands
 			NoteReader.Open(map); NoteReader.Close();
 			yield return new WaitForSeconds(1f);
 			int s1 = QuestTracker.StepOf(e);
+			if (half)
+			{
+				Check(ref ok, s1 == 1 && !x.HasFired && !chest.Looted, "half done: the map read (step " + s1 + "), the X and the chest left");
+				Log("TREASURE hunt kept: '" + e.Name + "'");
+				Raft rh = UnityEngine.Object.FindObjectOfType<Raft>();
+				if (rh != null) yield return PutPlayer(player, rh.transform.position + Vector3.up * 2f, false);
+				if (ok) Log("PASS: treasure hunt half"); else Fail("treasure hunt half");
+				yield break;
+			}
 			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
 			yield return new WaitForSeconds(2f);
 			int s2 = QuestTracker.StepOf(e);
@@ -884,6 +900,46 @@ namespace DynamicIslands
 			if (!keep) { IslandWorldState.RemoveIds(new[] { e.Id }, true); WorldRandomizer.Set(before); }
 			if (ok) Log("PASS: treasure hunt"); else Fail("treasure hunt");
 		}
+		/// <summary>IR4: a treasure hunt left half done (the map read) - after a save and load, or by another player - played on.</summary>
+		static IEnumerator TreasureHuntRestRoutine(string name, bool play)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			IslandWorldState.Entry e = null;
+			for (float t = 0; t < 20f && (e = IslandWorldState.Islands.FirstOrDefault(i => i.Name == name)) == null; t += 1f) yield return new WaitForSeconds(1f);
+			if (e == null) { Fail("no island '" + name + "' in this world here"); yield break; }
+			if (!play)
+			{
+				TriggerZone zx = e.Root != null ? e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x") : null;
+				Log("TREASURE '" + name + "': step " + QuestTracker.StepOf(e) + (zx != null ? ", the X " + (zx.HasFired ? "reached" : "not reached") : ", not loaded here"));
+				if (QuestTracker.StepOf(e) == 3) Log("PASS: treasure hunt state"); else Fail("treasure hunt state: step " + QuestTracker.StepOf(e) + " (3 wanted)");
+				yield break;
+			}
+			if (e.Root == null) yield return PutPlayer(player, e.Position + Vector3.up * 60f, false);
+			for (float t = 0; t < 60f && e.Root == null; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("'" + name + "' didn't load here"); yield break; }
+			yield return new WaitForSeconds(2f);
+			TriggerZone x = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x");
+			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Buried treasure"; });
+			if (x == null || chest == null) { Fail("'" + name + "': the X " + (x != null) + ", the chest " + (chest != null)); yield break; }
+			int s1 = QuestTracker.StepOf(e);
+			Check(ref ok, s1 == 1 && !x.HasFired && !chest.Looted, "left half done: step " + s1 + " (the map read), the X " + (x.HasFired ? "reached" : "not reached") + ", the chest " + (chest.Looted ? "opened" : "shut"));
+			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
+			int s2 = 0;
+			for (float t = 0; t < 6f && (s2 = QuestTracker.StepOf(e)) < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+			PutPlayerNear(chest.transform);
+			List<string> got = chest.Open(); NoteReader.Close();
+			int s3 = 0;
+			for (float t = 0; t < 6f && (s3 = QuestTracker.StepOf(e)) < 3; t += 0.5f) yield return new WaitForSeconds(0.5f);
+			Check(ref ok, s2 == 2 && s3 == 3, "played on: the X reached " + s2 + ", the chest opened " + s3 + " (2, 3 = done)");
+			Check(ref ok, got.Count > 0, "the treasure: " + string.Join(", ", got.ToArray()));
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (ok) Log("PASS: treasure hunt rest"); else Fail("treasure hunt rest");
+		}
+
 		[ConsoleCommand(name: "CIRandomizerPending", docs: "Dev, main menu: the randomizer settings the next new world gets (as if chosen in the New Game box): CIRandomizerPending <off|light|normal|wild> [-part ...]")]
 		public static void RandomizerPendingCommand(string[] args)
 		{
@@ -1098,6 +1154,69 @@ namespace DynamicIslands
 			box.gameObject.SetActive(false);
 			WorldRandomizer.Pending = pending;
 			if (ok) Log("PASS: New Game box"); else Fail("New Game box");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerChips", docs: "Dev, main menu: the World settings window's randomizer parts clicked one by one as a player does (each click leaves its part out and greys it, a second puts it back and lights it), at Off every part is greyed and can't be clicked; then leaves Normal without Alphas and Bosses for the next new world - CIRandomizerChipsCheck in that world (IR5)")]
+		public static void RandomizerChipsCommand() { StartTest(RandomizerChipsRoutine()); }
+
+		static IEnumerator RandomizerChipsRoutine()
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null || LoadSceneManager.IsGameSceneLoaded) { Fail("no New Game box (main menu?)"); yield break; }
+			bool ok = true;
+			WorldRandomizer.Pending = new RandomizerSettings { Level = RandomizerSettings.Normal };
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open();
+			yield return new WaitForSeconds(0.5f);
+			WorldSettingsWindow.Open();
+			yield return new WaitForSeconds(0.5f);
+			IList<UnityEngine.UI.Button> parts = NewWorldOptions.PartButtons;
+			Check(ref ok, parts.Count == RandomizerSettings.Features.Length && parts.All(b => b != null && b.gameObject.activeInHierarchy && b.interactable), parts.Count + " part buttons, all shown and clickable at Normal");
+			if (parts.Count != RandomizerSettings.Features.Length) { WorldSettingsWindow.Close(); box.gameObject.SetActive(false); Fail("randomizer chips"); yield break; }
+			Func<UnityEngine.UI.Button, Sprite> look = b => b.targetGraphic is UnityEngine.UI.Image ? ((UnityEngine.UI.Image)b.targetGraphic).sprite : null;
+			Sprite lit = look(parts[0]);
+			for (int i = 0; i < parts.Count; i++)
+			{
+				string f = RandomizerSettings.Features[i], label = RandomizerSettings.FeatureLabels[i];
+				parts[i].onClick.Invoke();
+				yield return null;
+				bool offOk = NewWorldOptions.Randomizer.Disabled.Contains(f) && look(parts[i]) != lit && parts.Where((b, k) => k != i).All(b => look(b) == lit);
+				parts[i].onClick.Invoke();
+				yield return null;
+				bool onOk = !NewWorldOptions.Randomizer.Disabled.Contains(f) && look(parts[i]) == lit;
+				Check(ref ok, offOk && onOk, label + ": a click leaves it out and greys it (" + offOk + "), a second puts it back (" + onOk + ")");
+			}
+			NewWorldOptions.Randomizer.Level = RandomizerSettings.Off;
+			NewWorldOptions.Refresh();
+			yield return null;
+			Check(ref ok, parts.All(b => !b.interactable && look(b) != lit), "at Off every part is greyed and can't be clicked");
+			NewWorldOptions.Randomizer.Level = RandomizerSettings.Normal;
+			NewWorldOptions.Refresh();
+			yield return null;
+			Check(ref ok, parts.All(b => b.interactable && look(b) == lit), "back at Normal: every part lit and clickable again");
+			// (for the next new world: Alphas and Bosses left out)
+			parts[Array.IndexOf(RandomizerSettings.Features, RandomizerSettings.Alphas)].onClick.Invoke();
+			parts[Array.IndexOf(RandomizerSettings.Features, RandomizerSettings.Bosses)].onClick.Invoke();
+			yield return null;
+			Screenshot(new[] { "randomizer_chips" });
+			yield return new WaitForSeconds(1f);
+			Log("The next new world's randomizer: " + NewWorldOptions.Randomizer.Describe());
+			WorldSettingsWindow.Close();
+			box.gameObject.SetActive(false);
+			if (ok) Log("PASS: randomizer chips"); else Fail("randomizer chips");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerChipsCheck", docs: "Dev, world: the world created after CIRandomizerChips has exactly the parts left lit - Normal, everything but Alphas and Bosses - and none of their extras; then the New Game box's remembered choice goes back to Off (IR5)")]
+		public static void RandomizerChipsCheckCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("run in a world"); return; }
+			bool ok = true;
+			RandomizerSettings s = WorldRandomizer.Current;
+			string[] off = RandomizerSettings.Features.Where(f => s.Disabled.Contains(f)).ToArray();
+			Check(ref ok, s.Level == RandomizerSettings.Normal && off.Length == 2 && off.Contains(RandomizerSettings.Alphas) && off.Contains(RandomizerSettings.Bosses), "this world's randomizer: " + s.Describe() + " (want Normal without Alphas and Bosses)");
+			WorldRandomizer.SaveDefaults(new RandomizerSettings());
+			WorldRandomizer.Pending = null;
+			if (ok) Log("PASS: randomizer chips check"); else Fail("randomizer chips check");
 		}
 
 		[ConsoleCommand(name: "CITime", docs: "Dev, world: sets the time of day (hour 0-24), as Raft's own cheat does: CITime <hour>")]

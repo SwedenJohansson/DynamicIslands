@@ -67,7 +67,7 @@ namespace DynamicIslands.Editor
 
 		public static int LevelOf(int xp)
 		{
-			int level = 1, total = 0;
+			int level = 1; long total = 0; // (long: a total past int.MaxValue would wrap)
 			while (level < 9999 && xp >= total + XpFor(level)) { total += XpFor(level); level++; }
 			return level;
 		}
@@ -490,7 +490,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!On || amount <= 0 || Mine == null) return;
 			int levelBefore = Mine.Level;
-			Mine.Xp += amount;
+			Mine.Xp = (int)Math.Min(int.MaxValue, (long)Mine.Xp + amount);
 			LastGain = amount;
 			if (at.HasValue) { LastGainAt = at.Value; LevelHud.Float("+" + amount, at.Value); }
 			LevelHud.ShowBar();

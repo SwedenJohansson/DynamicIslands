@@ -692,6 +692,58 @@ namespace DynamicIslands
 			if (ok) Log("PASS: monster difficulty in a world"); else Fail("monster difficulty in a world");
 		}
 
+		[ConsoleCommand(name: "CIModesDifficulty", docs: "Dev, in game (host): each of Raft's game modes (Normal, Hardcore, Easy, Peaceful, Creative) with each monster level - a monster's bite on the player through Raft's DamageEntity is the mode's damage taken times the level's factor (they stack), and where a mode takes no damage no level makes the bite hurt (Raft's Peaceful keeps damage taken: its monsters just don't attack). The mode and level are put back after (IW5)")]
+		public static void ModesDifficultyCommand() { StartTest(ModesDifficultyRoutine()); }
+
+		static IEnumerator ModesDifficultyRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			Network_Host net = ComponentManager<Network_Host>.Value;
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || player == null || net == null) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			GameMode modeBefore = GameManager.GameMode;
+			int levelBefore = MonsterDifficulty.Current;
+			int[] levels = { MonsterDifficulty.Timid, MonsterDifficulty.Normal, MonsterDifficulty.Nightmare };
+			var normalBite = new Dictionary<int, float>();
+			try
+			{
+				foreach (GameMode m in Enum.GetValues(typeof(GameMode)).Cast<GameMode>())
+				{
+					GameModeValueManager.SelectCurrentGameMode(m);
+					yield return null;
+					SO_GameModeValue gm = GameModeValueManager.GetCurrentGameModeValue();
+					if (gm == null || gm.playerSpecificVariables == null) { Log("  (" + m + ": no game mode values)"); continue; }
+					float taken = gm.playerSpecificVariables.damageTakenMultiplier;
+					var said = new List<string>();
+					foreach (int l in levels)
+					{
+						MonsterDifficulty.Current = l;
+						KeepAlive(player);
+						float bite = HitAndHeal(net, player.Stats, 10f, EntityType.Enemy), want = ExpectedDrop(player.Stats, 10f, EntityType.Enemy, false);
+						said.Add(MonsterDifficulty.Name(l) + " " + bite.ToString("0.##"));
+						if (Mathf.Abs(bite - want) > 0.01f) Check(ref ok, false, m + " at " + MonsterDifficulty.Name(l) + ": a bite of 10 took " + bite.ToString("0.##") + " (want " + want.ToString("0.##") + " = 10 x" + taken.ToString("0.##") + " x" + MonsterDifficulty.Factor.ToString("0.##") + ")");
+						if (taken <= 0f && bite > 0f) Check(ref ok, false, m + " takes no damage, but at " + MonsterDifficulty.Name(l) + " a bite took " + bite.ToString("0.##"));
+						if (l == MonsterDifficulty.Normal) normalBite[(int)m] = bite;
+					}
+					Log("  " + m + " (damage taken x" + taken.ToString("0.##") + "): " + string.Join(", ", said.ToArray()));
+				}
+				var modes = normalBite.Keys.Select(k => (GameMode)k).ToList();
+				Check(ref ok, normalBite.Values.Distinct().Count() > 1, "the modes' bites differ at Normal (" + string.Join(", ", modes.Select(k => k + " " + normalBite[(int)k].ToString("0.##")).ToArray()) + ") - the mode really changed");
+				GameMode peaceful;
+				// (Peaceful: Raft keeps its damage taken - its monsters just don't attack - so a bite there follows the same rule as the others)
+				if (Enum.TryParse("Peaceful", out peaceful) && normalBite.ContainsKey((int)peaceful)) Log("  Peaceful at Normal: a bite of 10 takes " + normalBite[(int)peaceful].ToString("0.##") + " (Raft's Peaceful has no attacks, not less damage)");
+			}
+			finally
+			{
+				GameModeValueManager.SelectCurrentGameMode(modeBefore);
+				MonsterDifficulty.Current = levelBefore;
+			}
+			KeepAlive(player);
+			Check(ref ok, GameManager.GameMode == modeBefore && MonsterDifficulty.Current == levelBefore, "the mode (" + GameManager.GameMode + ") and the level (" + MonsterDifficulty.Name(MonsterDifficulty.Current) + ") are put back");
+			if (ok) Log("PASS: modes difficulty"); else Fail("modes difficulty");
+		}
+
 		#endregion
 
 		#region Build cost in a world
@@ -854,6 +906,133 @@ namespace DynamicIslands
 			Check(ref ok, BuildCost.Applied == BuildCost.Current && wrong.Count == 0, (Raft_Network.IsHost ? "host" : "player 2") + ", build cost " + BuildCost.Describe(BuildCost.Current) + ": a " + item.UniqueName + " took " + CostText(cost) +
 				(wrong.Count > 0 ? " - WRONG " + string.Join(", ", wrong.ToArray()) : ""));
 			if (ok) Log("PASS: build cost paid"); else Fail("build cost paid");
+		}
+
+		[ConsoleCommand(name: "CIBuildCostRepair", docs: "Dev, in game (host): the hammer's repair and reinforce follow the build cost - their cost lists are Raft's at 0 % and Raft's + 50 %, rounded, at 50 %; a damaged foundation repaired the way Raft's hammer does and one reinforced through Raft's Hammer.ReinforceBlock take that from a real inventory")]
+		public static void BuildCostRepair()
+		{
+			StartTest(BuildCostRepairRoutine());
+		}
+
+		static IEnumerator BuildCostRepairRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			Network_Player player = RAPI.GetLocalPlayer();
+			Hammer hammer = player != null ? player.GetComponentsInChildren<Hammer>(true).FirstOrDefault() : null;
+			if (hammer == null) hammer = Resources.FindObjectsOfTypeAll<Hammer>().FirstOrDefault(h => h.gameObject.scene.IsValid());
+			if (player == null || player.BlockCreator == null || hammer == null) { Fail("no player / BlockCreator / hammer"); yield break; }
+			bool ok = true;
+			int before = BuildCost.Current;
+			var hammerT = HarmonyLib.Traverse.Create(hammer);
+			Item_Base repair = hammerT.Field("repairItem").GetValue<Item_Base>(), reinforce = hammerT.Field("reinforceItem").GetValue<Item_Base>();
+			int repairAmount = hammerT.Field("blockRepairAmount").GetValue<int>();
+			Check(ref ok, repair != null && reinforce != null && repair.settings_recipe != null && reinforce.settings_recipe != null,
+				"the hammer's repair item " + (repair != null ? repair.UniqueName : "NONE") + " and reinforce item " + (reinforce != null ? reinforce.UniqueName : "NONE") + ", repairs " + repairAmount + " health a hit");
+			if (!ok) { Fail("build cost repair"); yield break; }
+			BuildCost.Set(50);
+			Check(ref ok, BuildCost.Items.Contains(repair) && BuildCost.Items.Contains(reinforce), "both are among the build menu items the build cost changes");
+
+			Item_Base foundation = ItemManager.GetItemByName("Block_Foundation");
+			Check(ref ok, foundation != null, "a foundation to damage and reinforce");
+			foreach (int p in new[] { 0, 50 })
+			{
+				BuildCost.Set(p);
+				foreach (Item_Base it in new[] { repair, reinforce })
+				{
+					List<string> wrong = it.settings_recipe.NewCost.Where(c => c != null && c.amount != BuildCost.Cost(BuildCost.OriginalOf(c), p)).Select(c => c.items[0].UniqueName + " " + c.amount).ToList();
+					Check(ref ok, wrong.Count == 0, BuildCost.Describe(p) + ": " + it.UniqueName + " costs " + CostText(it.settings_recipe.NewCost) + (wrong.Count > 0 ? " - WRONG " + string.Join(", ", wrong.ToArray()) : ""));
+				}
+				if (foundation == null) continue;
+				Block made = player.BlockCreator.CreateBlockCheat(foundation, new Vector3(0f, 25f, 0f), Vector3.zero, DPS.Default, 0);
+				Check(ref ok, made != null, BuildCost.Describe(p) + ": a foundation placed");
+				if (made == null) continue;
+				yield return null;
+
+				// Repair, the way Hammer.HandleRepairingOfBlock does it: enough materials, take the repair cost, Block.Repair
+				CostMultiple[] rc = repair.settings_recipe.NewCost;
+				foreach (CostMultiple c in rc) player.Inventory.AddItem(c.items[0].UniqueName, c.amount * 3);
+				made.Damage(Mathf.Max(1, made.MaxHealth / 2));
+				bool can = made.CanBeRepaired() && player.BlockCreator.HasEnoughResourcesToBuild(rc);
+				Dictionary<string, int> r0 = Counts(player, rc);
+				player.Inventory.RemoveCostMultiple(rc, false);
+				made.Repair(repairAmount);
+				Dictionary<string, int> r1 = Counts(player, rc);
+				List<string> took = rc.Where(c => r0[c.items[0].UniqueName] - r1[c.items[0].UniqueName] != BuildCost.Cost(BuildCost.OriginalOf(c), p))
+					.Select(c => c.items[0].UniqueName + " took " + (r0[c.items[0].UniqueName] - r1[c.items[0].UniqueName]) + " (want " + BuildCost.Cost(BuildCost.OriginalOf(c), p) + ")").ToList();
+				Check(ref ok, can && took.Count == 0, BuildCost.Describe(p) + ": repairing a damaged foundation (" + made.Health + "/" + made.MaxHealth + " after) took " + CostText(rc) +
+					(can ? "" : " - COULD NOT REPAIR") + (took.Count > 0 ? " - WRONG " + string.Join(", ", took.ToArray()) : ""));
+
+				// Reinforce through Raft's own Hammer.ReinforceBlock (it takes the cost from the hammer's player)
+				CostMultiple[] fc = reinforce.settings_recipe.NewCost;
+				foreach (CostMultiple c in fc) player.Inventory.AddItem(c.items[0].UniqueName, c.amount * 3);
+				bool canR = made.CanBeReinforced();
+				Dictionary<string, int> f0 = Counts(player, fc);
+				bool done = false;
+				// (the hammer as Raft's player holds it: its player and host)
+				var th = HarmonyLib.Traverse.Create(hammer);
+				if (th.Field("playerNetwork").GetValue() == null) th.Field("playerNetwork").SetValue(player);
+				if (th.Field("hostNetwork").GetValue() == null) th.Field("hostNetwork").SetValue(ComponentManager<Network_Host>.Value);
+				try { done = (bool)HarmonyLib.AccessTools.Method(typeof(Hammer), "ReinforceBlock").Invoke(hammer, new object[] { made }); }
+				catch (System.Exception e) { Debug.Log("[CITEST] ReinforceBlock threw " + (e.InnerException ?? e)); }
+				Dictionary<string, int> f1 = Counts(player, fc);
+				List<string> tookR = fc.Where(c => f0[c.items[0].UniqueName] - f1[c.items[0].UniqueName] != BuildCost.Cost(BuildCost.OriginalOf(c), p))
+					.Select(c => c.items[0].UniqueName + " took " + (f0[c.items[0].UniqueName] - f1[c.items[0].UniqueName]) + " (want " + BuildCost.Cost(BuildCost.OriginalOf(c), p) + ")").ToList();
+				Check(ref ok, canR && done && made.Reinforced && tookR.Count == 0, BuildCost.Describe(p) + ": reinforcing it (Raft's Hammer.ReinforceBlock) took " + CostText(fc) +
+					(canR && done && made.Reinforced ? "" : " - NOT REINFORCED (can " + canR + ", done " + done + ")") + (tookR.Count > 0 ? " - WRONG " + string.Join(", ", tookR.ToArray()) : ""));
+				BlockCreator.RemoveBlockNetwork(made, null, true);
+				yield return new WaitForSeconds(0.5f);
+			}
+			BuildCost.Set(before);
+			if (ok) Log("PASS: build cost repair"); else Fail("build cost repair");
+		}
+
+		[ConsoleCommand(name: "CIBuildCostMenu", docs: "Dev, in game (host): Raft's build menu shows the build cost - the menu opened with a foundation chosen, its cost panel reads Raft's amounts at 0 % and Raft's + 50 %, rounded, at 50 % (Raft fills it from the same list); picture build_cost_menu")]
+		public static void BuildCostMenu()
+		{
+			StartTest(BuildCostMenuRoutine());
+		}
+
+		static IEnumerator BuildCostMenuRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			Network_Player player = RAPI.GetLocalPlayer();
+			BuildMenu menu = Resources.FindObjectsOfTypeAll<BuildMenu>().FirstOrDefault(m => m.gameObject.scene.IsValid());
+			CanvasHelper canvasHelper = ComponentManager<CanvasHelper>.Value ?? UnityEngine.Object.FindObjectOfType<CanvasHelper>();
+			Item_Base foundation = ItemManager.GetItemByName("Block_Foundation");
+			if (player == null || menu == null || canvasHelper == null || foundation == null) { Fail("no player / build menu / canvas / foundation"); yield break; }
+			bool ok = true;
+			int before = BuildCost.Current;
+			var menuT = HarmonyLib.Traverse.Create(menu);
+			foreach (int p in new[] { 0, 50 })
+			{
+				BuildCost.Set(p);
+				canvasHelper.OpenMenuCloseOther(MenuType.BuildMenu, true);
+				yield return null;
+				try { HarmonyLib.AccessTools.Method(typeof(BuildMenu), "SelectBlock").Invoke(menu, new object[] { foundation }); }
+				catch (System.Exception e) { Debug.Log("[CITEST] SelectBlock threw " + (e.InnerException ?? e).Message); }
+				for (int i = 0; i < 10; i++) yield return null;
+				CostCollection panel = menuT.Field("costColletionPanel").GetValue<CostCollection>();
+				List<BuildingUI_CostBox> boxes = panel != null ? (HarmonyLib.Traverse.Create(panel).Field("costBoxes").GetValue<List<BuildingUI_CostBox>>() ?? new List<BuildingUI_CostBox>()) : new List<BuildingUI_CostBox>();
+				var shown = new Dictionary<string, int>();
+				foreach (BuildingUI_CostBox b in boxes.Where(b => b != null && b.gameObject.activeInHierarchy))
+				{
+					var bt = HarmonyLib.Traverse.Create(b);
+					List<Item_Base> its = bt.Field("items").GetValue<List<Item_Base>>();
+					if (its != null && its.Count > 0 && its[0] != null) shown[its[0].UniqueName] = bt.Field("requiredAmount").GetValue<int>();
+				}
+				string texts = string.Join(" | ", boxes.Where(b => b != null && b.gameObject.activeInHierarchy).SelectMany(b => b.GetComponentsInChildren<Text>()).Select(t => t.text).Where(t => !string.IsNullOrEmpty(t)).ToArray());
+				List<string> wrong = foundation.settings_recipe.NewCost.Where(c => { int s; return !shown.TryGetValue(c.items[0].UniqueName, out s) || s != BuildCost.Cost(BuildCost.OriginalOf(c), p); })
+					.Select(c => c.items[0].UniqueName + " shows " + (shown.ContainsKey(c.items[0].UniqueName) ? shown[c.items[0].UniqueName].ToString() : "nothing") + " (want " + BuildCost.Cost(BuildCost.OriginalOf(c), p) + ")").ToList();
+				Check(ref ok, CanvasHelper.ActiveMenu == MenuType.BuildMenu && wrong.Count == 0, BuildCost.Describe(p) + ": the build menu (" + CanvasHelper.ActiveMenu + ") shows a foundation costing " +
+					string.Join(" + ", shown.Select(kv => kv.Value + " " + kv.Key).ToArray()) + " (texts: " + texts + "; panel " + (panel == null ? "missing" : panel.gameObject.activeInHierarchy ? "shown" : "hidden") + ", " + boxes.Count + " boxes, " + boxes.Count(b => b != null && b.gameObject.activeSelf) + " on, chosen " + (menuT.Field("currentBuildable").GetValue() ?? "none") + ")" + (wrong.Count > 0 ? " - WRONG " + string.Join(", ", wrong.ToArray()) : ""));
+				if (p == 50) { yield return new WaitForSeconds(0.3f); Screenshot(new[] { "build_cost_menu" }); yield return new WaitForSeconds(0.5f); }
+				canvasHelper.CloseMenu(MenuType.BuildMenu);
+				yield return null;
+			}
+			BuildCost.Set(before);
+			if (ok) Log("PASS: build cost menu"); else Fail("build cost menu");
 		}
 
 		#endregion

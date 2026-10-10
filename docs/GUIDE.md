@@ -2398,7 +2398,7 @@ Every player in the world gets the host's options, also when joining later. The 
 With the plan **Random islands** (or a plan with random islands on), islands turn up by chance while you sail: every
 island you have saved or downloaded, plus brand-new generated ones and the map types listed in `spawnpool.txt`
 ([section 10](#10-settings-files)). The group **Islands while sailing** in the World settings window chooses which of
-them this world may meet. Its button, **CHOOSE ISLANDS...**, says how many take part (`all 42`, or `30 of 42`) and
+them this world may meet. Its button, **CHOOSE ISLANDS...**, says how many take part (`all 42`, `30 of 42`, or `none` when you untick them all: then only a world plan's own islands come) and
 opens the list:
 
 - one row per island or kind of island, each with a **tick box**: your own islands by name (with their size and date),

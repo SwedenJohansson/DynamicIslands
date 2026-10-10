@@ -156,8 +156,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Nothing ticked in Choose islands:** a world with every island unticked logged "the spawn pool is empty" every
+  10 seconds of sailing. It says so once now, and the World settings button says `none`.
 - **Two players in one once-only zone:** when both stepped in within a second, the one who came second was told
   nothing. They now see "Someone else got here first".
+- **Very high EXP:** an EXP total past about two billion wrapped round to a negative number and broke the level count.
+  It stops at the top now.
 - **Fireworks give EXP:** Raft counts a firework's hit as the world's, so a monster hit by one gave no EXP. The
   player who lit it now gets the EXP, also in multiplayer.
 - **Rig Seventeen's valve test works:** its lever looked for three valves that had no name, so the crew stash never

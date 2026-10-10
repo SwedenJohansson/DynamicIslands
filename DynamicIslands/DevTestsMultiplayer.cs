@@ -78,13 +78,14 @@ namespace DynamicIslands
 		/// pickups) with a door and its lever, a chest with a story key, a vault the key opens, and a note.
 		/// Its objects: door, lever (switches the door, gives 2 planks), vault (needs story:mp-key), note "MP note".
 		/// </summary>
-		[ConsoleCommand(name: "CIMPIsland", docs: "Dev, in game (host): spawns and keeps 'cimpworld', an island for the two-player test (door + lever, key chest + vault, a note, trees and pickups)")]
-		public static void MPIslandCommand()
+		[ConsoleCommand(name: "CIMPIsland", docs: "Dev, in game (host): spawns and keeps 'cimpworld', an island for the two-player test (door + lever, key chest + vault, a note, trees and pickups); CIMPIsland regrow <days>: with the island's own regrow rule")]
+		public static void MPIslandCommand(string[] args)
 		{
-			StartTest(MPIslandRoutine());
+			int days;
+			StartTest(MPIslandRoutine(args != null && args.Length > 1 && args[0] == "regrow" && int.TryParse(args[1], out days) ? days : -1));
 		}
 
-		static System.Collections.IEnumerator MPIslandRoutine()
+		static System.Collections.IEnumerator MPIslandRoutine(int regrow = -1)
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
@@ -112,6 +113,7 @@ namespace DynamicIslands
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 10f, c.y + 8f), Props = P(ObjectProps.CreatureDamage, "0") });
 			f.Props[IslandQuest.KeyTitle] = "Crew quest";
 			f.Props[IslandQuest.KeySteps] = "reach|mpzone|1|\nread|MP note|1|";
+			if (regrow >= 0) f.Props[IslandProps.RegrowDays] = regrow.ToString();
 			f.Save(IslandSpawner.PathFor("cimpworld"));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("cimpworld"), 390f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
@@ -119,7 +121,7 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile("cimpworld", spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == "cimpworld");
 			if (e == null || e.Root == null) { Fail("cimpworld did not spawn"); yield break; }
-			Log("PASS: cimpworld spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + ": " + e.Root.GetComponentsInChildren<HarvestableTree>().Length + " trees, " +
+			Log("PASS: cimpworld spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + (regrow >= 0 ? ", its own rule: regrow " + IslandRules.RegrowDays(e) + " days" : "") + ": " + e.Root.GetComponentsInChildren<HarvestableTree>().Length + " trees, " +
 				e.Root.GetComponentsInChildren<PickupItem_Networked>().Count(p => p.GetComponent<HarvestableTree>() == null) + " pickups");
 		}
 

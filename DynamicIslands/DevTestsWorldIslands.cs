@@ -125,5 +125,88 @@ namespace DynamicIslands
 			Log("WORLDISLANDS " + WorldIslands.Describe());
 			if (ok) Log("PASS: world islands check"); else Fail("world islands check");
 		}
+
+		[ConsoleCommand(name: "CIWorldIslandsTurns", docs: "Dev (UW4), Choose islands at its extremes: CIWorldIslandsTurns choose none|one <island>|generated (main menu: the next world's list set so, the World settings button and text checked); CIWorldIslandsTurns none|one <island>|generated (world, host: the pool, a random island's turns and their log lines)")]
+		public static void WorldIslandsTurnsCommand(string[] args)
+		{
+			string mode = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			if (mode == "choose") { ChooseExtreme(args.Skip(1).ToArray()); return; }
+			StartTest(WorldIslandsTurns(mode, args != null ? string.Join(" ", args.Skip(1).ToArray()).Trim() : ""));
+		}
+
+		static void ChooseExtreme(string[] rest)
+		{
+			bool ok = true;
+			string what = rest.Length > 0 ? rest[0].ToLowerInvariant() : "";
+			string island = string.Join(" ", rest.Skip(1).ToArray()).Trim();
+			Check(ref ok, !LoadSceneManager.IsGameSceneLoaded, "at the main menu");
+			List<string> all = WorldIslands.Candidates();
+			string keep = what == "generated" ? CustomIslandSpawner.GeneratedEntry : what == "one" ? all.FirstOrDefault(c => c.Equals(island, StringComparison.OrdinalIgnoreCase)) : null;
+			Check(ref ok, what == "none" || keep != null, "'" + (what == "one" ? island : what) + "' is in the spawn pool (" + all.Count + " entries)");
+			if (!ok) { Fail("world islands choose"); return; }
+			WorldIslands.Chosen.Clear();
+			foreach (string c in all) if (!c.Equals(keep, StringComparison.OrdinalIgnoreCase)) WorldIslands.Chosen.Add(c);
+			WorldIslands.SaveDefaults(WorldIslands.Chosen);
+			try { WorldSettingsWindow.Show(); } catch { }
+			IslandPickerWindow.ShowEntry();
+			Button b = IslandPickerWindow.EntryButton;
+			string label = b != null ? UIKit.LabelOf(b).text : "(no button)";
+			Check(ref ok, b != null && (what == "none" ? label.EndsWith("none") : label.EndsWith("1 of " + all.Count)), "the World settings button: '" + label + "'");
+			Log("CHOOSE " + what + ": " + (all.Count - WorldIslands.Chosen.Count) + " of " + all.Count + " ticked");
+			if (ok) Log("PASS: world islands choose"); else Fail("world islands choose");
+		}
+
+		static IEnumerator WorldIslandsTurns(string mode, string island)
+		{
+			bool ok = true;
+			Check(ref ok, LoadSceneManager.IsGameSceneLoaded && Raft_Network.IsHost, "in a world, as its host");
+			Vector3? raft = CustomIslandSpawner.RaftPosition;
+			Check(ref ok, raft.HasValue, "the raft is found");
+			if (!ok) { Fail("world islands turns"); yield break; }
+			var lines = new List<string>();
+			Application.LogCallback grab = (text, trace, type) => { if (text.Contains("Auto spawn skipped") || text.Contains("No random custom island can come")) lines.Add(text); };
+			List<string> pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
+			if (mode == "none")
+			{
+				Check(ref ok, pool.Count == 0, "nothing ticked: the world's pool is empty (" + pool.Count + ")");
+				Check(ref ok, CustomIslandSpawner.PickFromPool() == null, "no pick");
+			}
+			else if (mode == "generated")
+			{
+				Check(ref ok, pool.Count == 1 && pool[0] == CustomIslandSpawner.GeneratedEntry, "only new each time: the pool is just that (" + string.Join(", ", pool.ToArray()) + ")");
+				int gen = 0;
+				for (int i = 0; i < 50; i++) if (CustomIslandSpawner.PickFromPool() == CustomIslandSpawner.GeneratedEntry) gen++;
+				Check(ref ok, gen == 50, "50 picks, all a brand-new island (" + gen + ")");
+			}
+			else if (mode == "one")
+			{
+				Check(ref ok, pool.Count == 1 && pool[0].Equals(island, StringComparison.OrdinalIgnoreCase), "one ticked: the pool is just '" + island + "' (" + string.Join(", ", pool.ToArray()) + ")");
+				// Its turn: it comes (a few tries for a free spot)
+				string said = null;
+				for (int i = 0; i < 6 && ok; i++)
+				{
+					said = CustomIslandSpawner.TakeTurn(raft.Value);
+					if (CustomIslandSpawner.NotAgain(island)) break;
+					yield return new WaitForSeconds(2f);
+				}
+				Check(ref ok, CustomIslandSpawner.NotAgain(island), "its turn: it comes (" + said + ")");
+				pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
+				Check(ref ok, pool.Count == 0, "while it's here the pool is empty: it doesn't come twice (" + pool.Count + ")");
+			}
+			else { Fail("CIWorldIslandsTurns none|one <island>|generated, or choose ..."); yield break; }
+			if (mode != "generated")
+			{
+				// Turns with nothing to pick: said once, then quiet (it used to log every 10 s of sailing)
+				CustomIslandSpawner.saidEmpty = false;
+				int islandsBefore = IslandWorldState.Islands.Count;
+				Application.logMessageReceived += grab;
+				try { for (int i = 0; i < 8; i++) CustomIslandSpawner.TakeTurn(raft.Value); }
+				finally { Application.logMessageReceived -= grab; }
+				Check(ref ok, lines.Count == 1 && lines[0].Contains("No random custom island can come"), "8 turns with nothing to pick: one log line (" + lines.Count + ": " + string.Join(" / ", lines.ToArray()) + ")");
+				Check(ref ok, IslandWorldState.Islands.Count == islandsBefore, "no island placed by them");
+			}
+			Log("TURNS " + mode + ": pool " + string.Join(", ", pool.ToArray()));
+			if (ok) Log("PASS: world islands turns"); else Fail("world islands turns");
+		}
 	}
 }

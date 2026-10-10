@@ -453,5 +453,77 @@ namespace DynamicIslands
 			yield return null;
 			if (ok) Log("PASS: bulk islands"); else Fail("bulk islands");
 		}
+
+		static string WorldDeleteMarker { get { return Path.Combine(Application.temporaryCachePath, "ci_worlddelete.txt"); } }
+
+		[ConsoleCommand(name: "CIWorldDelete", docs: "Dev, UW8 - a world deleted in Raft's Load Game box: CIWorldDelete mark (in a 'CI ...' world, host: levels on with EXP and build cost 40 %, its id noted; CISave after) / delete <name> (main menu: Raft's own LoadGameBox.DeleteSave on that world, a copy of its folder kept first) / check (in a new world with the same name: a new id, nothing of the deleted one - levels off, build cost Raft's)")]
+		public static void WorldDelete(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0] : "";
+			if (what == "mark")
+			{
+				string name = SaveAndLoad.CurrentGameFileName;
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || name == null || !name.StartsWith("CI ")) { Fail("run in a 'CI ...' world, as the host"); return; }
+				PlayerLevels.TurnOn(false);
+				PlayerLevels.SetMine(new LevelRecord { Xp = 500 });
+				BuildCost.Set(40);
+				File.WriteAllText(WorldDeleteMarker, SaveAndLoad.WorldGuid + "|" + name);
+				Log("PASS: world delete marked: '" + name + "' (" + SaveAndLoad.WorldGuid + "), levels on with 500 EXP, build cost " + BuildCost.Describe(40));
+			}
+			else if (what == "delete") StartTest(WorldDeleteRoutine(string.Join(" ", args.Skip(1).ToArray())));
+			else if (what == "check")
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded || !File.Exists(WorldDeleteMarker)) { Fail("run in the new world, after mark and delete"); return; }
+				string[] m = File.ReadAllText(WorldDeleteMarker).Split('|');
+				bool ok = true;
+				string oldFile = Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), m[0] + ".txt");
+				Check(ref ok, SaveAndLoad.CurrentGameFileName == m[1], "a new world with the same name '" + SaveAndLoad.CurrentGameFileName + "'");
+				Check(ref ok, SaveAndLoad.WorldGuid.ToString() != m[0], "it has its own id (" + SaveAndLoad.WorldGuid + ", the deleted one's " + m[0] + ")");
+				Check(ref ok, IslandWorldState.WorldFilePath != oldFile, "its own world file, not the deleted one's (" + Path.GetFileName(IslandWorldState.WorldFilePath) + ")");
+				// (a new world takes the New Game box's last choice for levels - world_rules.txt - so on is fine; the 500 EXP are not)
+				int xp = PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Xp : 0;
+				Check(ref ok, PlayerLevels.On == PlayerLevels.Default && xp == 0 && BuildCost.Current == 0, "nothing of the deleted world: levels " + (PlayerLevels.On ? "on (the New Game box's default)" : "off") + " with " + xp + " EXP, build cost " + BuildCost.Describe(BuildCost.Current));
+				Log("  (the deleted world's own file " + (File.Exists(oldFile) ? "is left in the worlds folder, unused: no world has that id again" : "is gone") + ")");
+				if (ok) Log("PASS: world delete check"); else Fail("world delete check");
+			}
+			else Fail("CIWorldDelete mark|delete <name>|check");
+		}
+
+		static IEnumerator WorldDeleteRoutine(string name)
+		{
+			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null || LoadSceneManager.IsGameSceneLoaded) { Fail("no Load Game box (go to the main menu first)"); yield break; }
+			if (!name.StartsWith("CI ")) { Fail("only 'CI ...' test worlds"); yield break; }
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open();
+			float timeout = Time.realtimeSinceStartup + 180f;
+			int count = -1;
+			while (Time.realtimeSinceStartup < timeout)
+			{
+				yield return new WaitForSecondsRealtime(1f);
+				int now = box.loadGameSelections != null ? box.loadGameSelections.Count : 0;
+				if (now > 0 && now == count) break;
+				count = now;
+			}
+			LoadGame_Selection pick = box.loadGameSelections == null ? null : box.loadGameSelections.FirstOrDefault(s => s.text_GameName != null && s.text_GameName.text == name);
+			if (pick == null || pick.directoryInfo == null) { Fail("no saved world called '" + name + "'"); yield break; }
+			string folder = pick.directoryInfo.FullName;
+			string copy = Path.Combine(Path.Combine(Application.temporaryCachePath, "ci_deleted_worlds"), name + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+			CopyFolder(folder, copy);
+			HarmonyLib.Traverse.Create(box).Field("selectedGame").SetValue(pick);
+			HarmonyLib.AccessTools.Method(typeof(LoadGameBox), "DeleteSave").Invoke(box, null);
+			yield return null;
+			bool gone = !Directory.Exists(folder) && !box.loadGameSelections.Contains(pick);
+			try { box.Close(); } catch { }
+			if (gone) Log("PASS: world deleted through Raft's Load Game box: '" + name + "' (a copy kept at " + copy + ")");
+			else Fail("world delete: '" + name + "' still there (" + folder + ")");
+		}
+
+		static void CopyFolder(string from, string to)
+		{
+			Directory.CreateDirectory(to);
+			foreach (string f in Directory.GetFiles(from)) File.Copy(f, Path.Combine(to, Path.GetFileName(f)), true);
+			foreach (string d in Directory.GetDirectories(from)) CopyFolder(d, Path.Combine(to, Path.GetFileName(d)));
+		}
 	}
 }
