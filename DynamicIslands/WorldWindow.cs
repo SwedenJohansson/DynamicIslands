@@ -24,7 +24,7 @@ namespace DynamicIslands.Editor
 	{
 		public const string CanvasName = "CustomIslands_WorldWindow", ButtonName = "CustomIslands_PauseButton";
 		/// <summary>The panel's most height (canvas units; the canvas is at least 800 high) and its width.</summary>
-		const float MaxHeight = 780f, Width = 960f, RowH = 22f, OptionRowH = 26f, NameWidth = 150f;
+		const float MaxHeight = 780f, Width = 960f, RowH = 22f, CheckH = 22f, OptionRowH = 26f, NameWidth = 150f;
 		static Canvas canvas;
 		static WorldWindow instance;
 		static Text hostText, planText, islandsText, hereText, hintText, headStartText;
@@ -199,11 +199,11 @@ namespace DynamicIslands.Editor
 			}
 			for (int row = 0; row < 2; row++)
 			{
-				RectTransform prow = UIKit.Row(rnd, 18f, 2f, "Parts" + row);
+				RectTransform prow = UIKit.Row(rnd, CheckH, 2f, "Parts" + row);
 				for (int i = row * 4; i < Math.Min(RandomizerSettings.Features.Length, row * 4 + 4); i++)
 				{
 					string part = RandomizerSettings.Features[i];
-					Add("Part_" + part, UIKit.Check(prow, RandomizerSettings.FeatureLabels[i], () => SetRandomizer(s => { if (!s.Disabled.Remove(part)) s.Disabled.Add(part); }), RandomizerSettings.FeatureHints[i] + " " + PartMidGame(part), 18f, 11));
+					Add("Part_" + part, Cell(UIKit.Check(prow, RandomizerSettings.FeatureLabels[i], () => SetRandomizer(s => { if (!s.Disabled.Remove(part)) s.Disabled.Add(part); }), RandomizerSettings.FeatureHints[i] + " " + PartMidGame(part), CheckH, 11)));
 				}
 			}
 			Note(rnd, RandomizerMidGame, 3);
@@ -306,6 +306,9 @@ namespace DynamicIslands.Editor
 
 		static void Add(string name, Button b) { b.name = name; buttons[name] = b; }
 
+		/// <summary>A tick box sharing its line equally with the others (not as wide as its text), so the columns line up.</summary>
+		static Button Cell(Button b) { UIKit.Size(b.gameObject, 0, CheckH, 1); return b; }
+
 		static void SetRandomizer(Action<RandomizerSettings> change)
 		{
 			RandomizerSettings s = WorldRandomizer.Current.Copy();
@@ -377,15 +380,15 @@ namespace DynamicIslands.Editor
 				string e = filledFrom[i];
 				if (i % 2 == 0)
 				{
-					line = UIKit.Row(islandList, 18f, 4f, "Line" + i / 2);
+					line = UIKit.Row(islandList, CheckH, 4f, "Line" + i / 2);
 					line.GetComponent<HorizontalLayoutGroup>().childForceExpandWidth = true;
 				}
-				Button b = UIKit.Check(line, WorldIslands.Label(e), () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); },
-					WorldIslands.Hint(e) + "  IN THIS WORLD NOW: " + IslandsMidGame, 18f, 11);
+				Button b = Cell(UIKit.Check(line, WorldIslands.Label(e), () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); },
+					WorldIslands.Hint(e) + "  IN THIS WORLD NOW: " + IslandsMidGame, CheckH, 11));
 				Add("Island_" + e, b);
 			}
 			// (an odd count: an empty half keeps the last one half wide)
-			if (filledFrom.Count % 2 == 1) UIKit.Rect("Empty", line);
+			if (filledFrom.Count % 2 == 1) UIKit.Size(UIKit.Rect("Empty", line).gameObject, 0, CheckH, 1);
 		}
 
 		public static void Refresh()
