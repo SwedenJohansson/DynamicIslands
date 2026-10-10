@@ -67,7 +67,7 @@ place RT_Floor - at 0 4.5 y=3.05
 place "Table Office" - at -3 3.4 sit
 place "Chair Office" - at -3 2.5 sit yaw=170
 place "Box Big" - at -5.3 -3.6 sit yaw=10
-place Loot_ChestSmall ferrytools at -0.9 3.4 sit yaw=270
+place Loot_ChestSmall ferrytools at -5.3 1 sit yaw=90
 pop
 place Crate_Big_01 noticecrate at -9.5 15.4 ground yaw=10
 place Note_Paper captainsnotice at -9.5 15.4 h=5 sit drop yaw=80

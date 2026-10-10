@@ -78,7 +78,7 @@ place Zone_Trigger camp at 15 34 h=13
 push at 34 31 h=11.55 yaw=180
 call rt_storey r2=RT_WallDoor1
 place RT_Floor - at 0 4.5 y=3.05
-place PlantationDoor strongdoor at 0 0 sit yaw=90
+place PlantationDoor strongdoor at 0 -0.28 sit yaw=90
 place Loot_Chest strongvault at -2 -1.8 sit yaw=270
 place "Box Big" - at -5.3 3.6 sit yaw=10
 pop
