@@ -174,7 +174,7 @@ namespace DynamicIslands
 			Check(ref ok, p2.StoryEnding == p.StoryEnding && p2.Rules[0].ToLine() == p.Rules[0].ToLine(), "... written and read again the same");
 			WorldPlan plain = WorldPlan.Parse("t", "rule = camp | type:camp | start | ahead:350 | | \n");
 			Check(ref ok, plain.StoryEnding == "" && !plain.ToText().Split('\n').Any(l => l.StartsWith("storyending")), "an older plan has no ending page and writes none");
-			if (ok) Log("PASS: quest book unit");
+			if (ok) Log("PASS: quest book unit"); else Fail("quest book unit");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookWorld", docs: "Dev, world (host, test world 'CI ...'): the main story in Raft's notebook - a plan with two main story islands (a camp first, a sandbar on the Receiver after it) and a side quest on the Receiver: the first tab with its intro, Raft's islands at the back with their tabs hidden, a note read on its pages, the side quest only in the journal, the next tab with its #digits when the first is done, its tab pressed, the ending page when the story is over, the same book after the world file is read back, nothing of ours in Raft's save (TEST_CATALOGUE QB3, QB8-QB14, QB17)")]
@@ -289,7 +289,7 @@ namespace DynamicIslands
 				IslandWorldState.Save();
 				QuestBook.Refresh();
 			}
-			if (ok) Log("PASS: quest book world");
+			if (ok) Log("PASS: quest book world"); else Fail("quest book world");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookPreview", docs: "Dev, editor: World Plans' Preview notebook as a builder uses it - a plan (CIQuestBookPreview <plan>, default 'Raft 2 - The Drowned Frontier') opened, a change made and not saved, Preview notebook: the test world with Raft's book open on the plan's tabs; the step-through from the start (no tabs) one moment at a time, All; pictures; Back to World Plans with the unsaved change still there (TEST_CATALOGUE QB7). Several minutes")]
@@ -359,7 +359,7 @@ namespace DynamicIslands
 			Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Plan.Description == marker, "back in World Plans on the plan, the unsaved change still there");
 			Check(ref ok, !QuestBookPreview.Active, "the preview is over");
 			WorldPlanWindow.Close();
-			if (ok) Log("PASS: quest book preview");
+			if (ok) Log("PASS: quest book preview"); else Fail("quest book preview");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookEditor", docs: "Dev, editor: the quest book in World Plans - New main story... makes the cards (Raft's story off: the first island ahead, the others on the Receiver each after the one before; on: after the Raft island chosen), the NOTEBOOK row on a main story card, Check's notebook warnings (a next-coordinates note that isn't there, colour 3, a long tab title, an island without notes); nothing saved (TEST_CATALOGUE QB4-QB6)")]
@@ -447,7 +447,7 @@ namespace DynamicIslands
 				}
 			}
 			catch (Exception e) { Log("  (the test plan couldn't be moved: " + e.Message + ")"); }
-			if (ok) Log("PASS: quest book editor");
+			if (ok) Log("PASS: quest book editor"); else Fail("quest book editor");
 		}
 
 		[ConsoleCommand(name: "CIQuestBookTabs", docs: "Dev, world (host, test world 'CI ...'): Raft's story on with Balboa left out and a plan island after Vasagatan - its tab between Vasagatan's and Caravan Town's, Balboa's tab hidden; then 14 main story islands open: the tabs scroll, every tab in the strip (TEST_CATALOGUE QB3, QB15, QB16)")]
@@ -515,7 +515,7 @@ namespace DynamicIslands
 				IslandWorldState.Save();
 				QuestBook.Refresh();
 			}
-			if (ok) Log("PASS: quest book tabs");
+			if (ok) Log("PASS: quest book tabs"); else Fail("quest book tabs");
 		}
 
 		const string MpPlan = "story = off\nstoryending = The end test.\\nThank you.\n" +
