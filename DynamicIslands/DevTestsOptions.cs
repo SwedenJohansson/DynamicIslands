@@ -1680,9 +1680,9 @@ namespace DynamicIslands
 					int bruces = LiveSharks().Count(s => !RogueShark.IsRogue(s)); // (besides Bruce, an earlier test's shark may still swim)
 					logs.Clear();
 					bruce.networkEntity.Damage(100000f, bruce.transform.position, Vector3.up, EntityType.Player, true);
-					// (Raft's body decay can take longer than 150 s; the rogue's own below gets 300)
-					float until = Time.time + 300f;
-					while (Time.time < until && !logs.Any(l => l.Contains("decays while the rogue lives"))) yield return new WaitForSeconds(1f);
+					// (Raft keeps a dead shark ~300 s in AI_State_Dead_Shark before its decay starts)
+					float until = Time.time + 450f;
+					while (Time.time < until && bruce != null && !logs.Any(l => l.Contains("decays while the rogue lives"))) yield return new WaitForSeconds(1f);
 					string seen = logs.LastOrDefault();
 					if (seen == null)
 					{
@@ -1690,7 +1690,7 @@ namespace DynamicIslands
 						AI_StateMachine sm = bruce != null ? bruce.GetComponentInChildren<AI_StateMachine>(true) : null;
 						AI_State_Decay dec = bruce != null ? bruce.GetComponentInChildren<AI_State_Decay>(true) : null;
 						object progress = dec != null ? typeof(AI_State_Decay).GetField("removeBodyTimeProgress", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dec) : null;
-						seen = "no decay seen in 300 s; Bruce " + (bruce == null ? "gone (destroyed)" : "dead " + (bruce.networkEntity != null && bruce.networkEntity.IsDead) + ", at " + bruce.transform.position.ToString("F0") +
+						seen = "no decay seen in 450 s; Bruce " + (bruce == null ? "gone (destroyed)" : "dead " + (bruce.networkEntity != null && bruce.networkEntity.IsDead) + ", at " + bruce.transform.position.ToString("F0") +
 							", state " + (sm == null ? "?" : sm.currentState == null ? "none" : sm.currentState.GetType().Name) + (dec == null ? ", no decay state" : ", decay " + progress + " of " + dec.maxTimeInDecayState + " s"));
 					}
 					Check(ref ok, logs.Any(l => l.Contains("Raft counts " + bruces + " shark")), "Bruce killed while the rogue lives: Raft counts the others but not the rogue (" + bruces + " expected; " + seen + ")");
