@@ -32,6 +32,8 @@ namespace DynamicIslands
 				Check(ref ok, pr.Missing.Count == 0 && pr.Kept.Count + pr.Steps.Sum(s => s.Blueprints.Count) >= all,
 					"'" + name + "' progression: " + pr.Kept.Count + " kept, " + pr.Steps.Count(s => s.Blueprints.Count > 0) + " rules give blueprints, " + pr.Missing.Count + " never given, " +
 					pr.Steps.Sum(s => s.NeedsLate.Count) + " locks before their item");
+				foreach (PlanChecker.Progress.Step st in pr.Steps.Where(st => st.NeedsLate.Count > 0))
+					Log("  rule " + st.Rule + " '" + p.Rules[st.Rule].Id + "' (" + p.Rules[st.Rule].WhatArg + "): wanted before any island gives it: " + string.Join(", ", st.NeedsLate.ToArray()) + " (its islands give: " + string.Join(", ", st.Gives.ToArray()) + ")");
 				PlanProgressWindow.Open(p, null);
 				if (PlanProgressWindow.IsOpen)
 				{

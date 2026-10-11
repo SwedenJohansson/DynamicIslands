@@ -216,6 +216,9 @@ that far.
 **On the Receiver:** once you have built Raft's Receiver, custom islands show as **green dots** with their distance,
 if they are within 2 km - an island the players still need shows however far it is (`receiverDistance` in `spawnpool.txt`). An island a rule brought (a quest reward, a plan) carries its name on its dot.
 
+![Custom islands on the Receiver](images/receiver-dots.jpg)
+*Raft's Receiver with two custom islands as green dots, one 494 m away.*
+
 ### Arriving
 
 An island with a name shows it as a **banner** when you come near (once per island per session), with its author and
@@ -2184,7 +2187,7 @@ The parts (all on unless you click one off):
 
 | Part | What you'll find |
 |---|---|
-| **Colours** | Animals and sharks (Bruce too) now and then in another colour: charcoal, ash, rust, moss, frost, night... lighter ones too (snow, cream, a pale shark: their textures brightened), and rarely a gold shark |
+| **Colours** | Animals and sharks (Bruce too) now and then in another colour: charcoal, ash, rust, moss, frost, night... lighter ones too (snow, cream, a pale shark: their textures lightened, dark parts too), and rarely a gold shark |
 | **Animals** | More animals on Raft's islands, now and then puffer fish on the reef |
 | **Alphas** | Rare bigger, darker **alpha** warthogs, bears, hyenas and screechers (3× health), and a huge **Big Bruce**. A banner warns you. Killed, they drop a **trophy head**, meat and leather |
 | **Loot** | Some of the crates and giant clams on Raft's islands lie in other places; now and then extra crates and barrels |
@@ -2192,6 +2195,9 @@ The parts (all on unless you click one off):
 | **Oddities** | Small odd islands while you sail: a van, a caravan, a crashed plane, a stranded boat, a hermit's shack, a statue, rocket debris, a hut of raft blocks |
 | **Bosses** | Now and then a **boss lair**: climb the plateau and a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One) wakes with two guards |
 | **Large** | Now and then a **large island** as big as Raft's big ones, with a made-up name, animals, hidden loot, scenes from the quest islands, a den and up to two of the generator's landmarks (a wreck, a lighthouse, a jetty, a skyscraper...) |
+
+![Randomizer colours](images/randomizer-colours.jpg)
+*Colours on warthogs, from the left: Raft's own, snow, cream and charcoal.*
 
 ![Oddity islands](images/randomizer-oddities.jpg)
 *The oddity islands. Each has loot, a note and a banner with its name when you arrive.*

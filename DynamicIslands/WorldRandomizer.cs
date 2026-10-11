@@ -987,6 +987,12 @@ namespace DynamicIslands.Editor
 			{
 				useMipMap = true, autoGenerateMips = true, wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4, name = "CI_Tinted_" + src.name,
 			};
+			// A light colour (a channel over 1) lifts the dark parts first, then tints: multiplying alone left a dark animal (the
+			// warthog) as dark as it was, snow and cream looking like Raft's own (ROADMAP D6 picture)
+			float top = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+			float lift = top > 1f ? (top - 1f) * 0.6f : 0f;
+			if (top > 1f) c = new Color(c.r / top, c.g / top, c.b / top);
+			blitMaterial.SetVector("_TextureSampleAdd", new Vector4(lift, lift, lift, 0f));
 			blitMaterial.color = new Color(c.r, c.g, c.b, 1f);
 			Graphics.Blit(src, rt, blitMaterial);
 			tintedTextures[key] = rt;
