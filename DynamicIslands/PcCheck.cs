@@ -17,10 +17,13 @@ namespace DynamicIslands.Editor
 		static bool told;
 
 		/// <summary>What is wrong, each with what to do (empty = all well).</summary>
-		public static List<string> Problems()
+		public static List<string> Problems() { return Problems(DynamicIslands.assetpath); }
+
+		/// <summary>The same for another folder as the mod's own (the tests feed fake paths).</summary>
+		internal static List<string> Problems(string modFolder)
 		{
 			var found = new List<string>();
-			string folder = Path.GetFullPath(DynamicIslands.assetpath);
+			string folder = Path.GetFullPath(modFolder);
 			try
 			{
 				Directory.CreateDirectory(folder);

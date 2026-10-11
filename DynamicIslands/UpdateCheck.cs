@@ -50,17 +50,38 @@ namespace DynamicIslands.Editor
 		{
 			if (started) { TellIfNewer(); return; }
 			started = true;
+			StartCheck();
+		}
+
+		/// <summary>Starts the check when it may go online (Enabled); false when it didn't start (the tests call it too).</summary>
+		internal static bool StartCheck()
+		{
 			bool on;
 			try { on = Enabled; }
-			catch (Exception e) { Log("Not checking: " + e.Message); return; }
-			if (!on) { Log("Switched off (" + SettingKey + "=off in " + WorldRules.DefaultFileName + ", or online = off in library.txt)"); return; }
-			if (DynamicIslands.instance == null) return;
-			try { DynamicIslands.instance.StartCoroutine(Fetch()); }
-			catch (Exception e) { Log("Not checking: " + e.Message); }
+			catch (Exception e) { Log("Not checking: " + e.Message); return false; }
+			if (!on) { Log("Switched off (" + SettingKey + "=off in " + WorldRules.DefaultFileName + ", or online = off in library.txt)"); return false; }
+			if (DynamicIslands.instance == null) return false;
+			try { DynamicIslands.instance.StartCoroutine(Fetch()); return true; }
+			catch (Exception e) { Log("Not checking: " + e.Message); return false; }
 		}
+
+		/// <summary>Tests: the release's JSON in place of GitHub's answer (null = ask GitHub).</summary>
+		internal static Func<string> TestAnswer;
+		/// <summary>How many requests went out (with TestAnswer: would have): tests see that a switched-off check asks nothing.</summary>
+		internal static int Asked;
+
+		/// <summary>Tests: the state of a fresh start, with this as the latest release.</summary>
+		internal static void TestReset(string latest) { started = false; told = false; Latest = latest; }
 
 		static IEnumerator Fetch()
 		{
+			Asked++;
+			if (TestAnswer != null)
+			{
+				yield return null;
+				Finish(TestAnswer());
+				yield break;
+			}
 			UnityWebRequest req = null;
 			try
 			{
@@ -77,16 +98,25 @@ namespace DynamicIslands.Editor
 				if (req.result == UnityWebRequest.Result.Success) text = req.downloadHandler.text;
 				else Log("No answer from GitHub (" + req.error + ")");
 			}
-			if (text == null) yield break;
-			try
-			{
-				var root = LibraryJson.Parse(text.TrimStart('\uFEFF')) as Dictionary<string, object>;
-				Latest = root != null ? Clean(LibraryJson.Str(root, "tag_name")) : null;
-			}
+			Finish(text);
+		}
+
+		/// <summary>GitHub's answer (the latest release's JSON) read: the version, and the notice when it is newer.</summary>
+		static void Finish(string text)
+		{
+			if (text == null) return;
+			try { Latest = LatestFrom(text); }
 			catch (Exception e) { Log("GitHub's answer can't be read: " + e.Message); Latest = null; }
 			Log("The latest release is " + (Latest ?? "(no version in its tag)") + ", this is " + LibraryPack.ModVersion);
 			// (still on the main menu: now; else the next time it shows)
 			if (!LoadSceneManager.IsGameSceneLoaded && GameObject.Find("MainMenuCanvas") != null) TellIfNewer();
+		}
+
+		/// <summary>The version in a releases/latest answer (its tag), or null.</summary>
+		internal static string LatestFrom(string json)
+		{
+			var root = LibraryJson.Parse((json ?? "").TrimStart('\uFEFF')) as Dictionary<string, object>;
+			return root != null ? Clean(LibraryJson.Str(root, "tag_name")) : null;
 		}
 
 		/// <summary>A tag as a version: "v3.1" and "3.1" are 3.1 (from its first digit, digits and dots), null if it has none.</summary>
@@ -101,11 +131,19 @@ namespace DynamicIslands.Editor
 
 		static void TellIfNewer()
 		{
-			string mine = LibraryPack.ModVersion;
-			if (told || !IsKnown(Latest) || !IsKnown(mine) || LibraryPack.CompareVersions(Latest, mine) <= 0) return;
+			if (told) return;
+			string notice = NoticeFor(Latest, LibraryPack.ModVersion);
+			if (notice == null) return;
 			told = true;
-			DynamicIslands.Notify("A newer Custom Islands is out (" + Latest + ", you have " + mine + "): get it from raftmodding.com or GitHub (SwedenJohansson/DynamicIslands). " +
-				"(" + SettingKey + "=off in Mods\\DynamicIslands\\" + WorldRules.DefaultFileName + " stops this check)", false, 15);
+			DynamicIslands.Notify(notice, false, 15);
+		}
+
+		/// <summary>The notice that a newer Custom Islands is out, or null when the latest release isn't newer than this version (or either is unknown).</summary>
+		internal static string NoticeFor(string latest, string mine)
+		{
+			if (!IsKnown(latest) || !IsKnown(mine) || LibraryPack.CompareVersions(latest, mine) <= 0) return null;
+			return "A newer Custom Islands is out (" + latest + ", you have " + mine + "): get it from raftmodding.com or GitHub (SwedenJohansson/DynamicIslands). " +
+				"(" + SettingKey + "=off in Mods\\DynamicIslands\\" + WorldRules.DefaultFileName + " stops this check)";
 		}
 
 		/// <summary>

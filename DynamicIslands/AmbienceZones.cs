@@ -421,8 +421,14 @@ namespace DynamicIslands.Editor
 			catch { return false; }
 		}
 
+		/// <summary>Tests: how many times a sound was asked for here (a zone's "enter" sound, the action sound), and the last one's path.</summary>
+		internal static int Played;
+		internal static string LastPlayed;
+
 		public static void PlayOnce(string path, Vector3 at, float volume)
 		{
+			Played++;
+			LastPlayed = path;
 			try
 			{
 				FMOD.Studio.EventInstance i = FMODUnity.RuntimeManager.CreateInstance(path);

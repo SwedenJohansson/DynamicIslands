@@ -10,8 +10,17 @@ namespace DynamicIslands.Editor
 		/// <summary>True while a text field (e.g. the island name) has focus: camera and tool shortcuts are ignored.</summary>
 		public static bool IsTyping;
 
-		public static bool Ctrl { get { return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); } }
-		public static bool Shift { get { return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift); } }
+		/// <summary>Tests: keys the editor takes as pressed (and held) in the frame TestFrame, in place of the keyboard's - to try a
+		/// shortcut without real key presses. null = the keyboard.</summary>
+		internal static HashSet<KeyCode> TestKeys;
+		internal static int TestFrame = -1;
+		static bool Simulated { get { return TestKeys != null && Time.frameCount == TestFrame; } }
+
+		/// <summary>A key went down in this frame (the keyboard's, or the tests').</summary>
+		public static bool KeyDown(KeyCode k) { return Simulated ? TestKeys.Contains(k) : Input.GetKeyDown(k); }
+
+		public static bool Ctrl { get { return Simulated ? TestKeys.Contains(KeyCode.LeftControl) : Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); } }
+		public static bool Shift { get { return Simulated ? TestKeys.Contains(KeyCode.LeftShift) : Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift); } }
 
 		/// <summary>
 		/// One of the editor's windows that dim the editor (modal) is open: the editor's own shortcuts wait. (Ctrl+O over the
@@ -42,10 +51,10 @@ namespace DynamicIslands.Editor
 		{
 			// (not mid-stroke or mid-drag either: an undo then, and the stroke's "before" kept what was just undone)
 			if (IsTyping || !Ctrl || WindowOpen || Input.GetMouseButton(0)) return;
-			if (Input.GetKeyDown(KeyCode.Z) && !Shift) UndoRedoManager.Undo();
-			else if (Input.GetKeyDown(KeyCode.Y) || (Input.GetKeyDown(KeyCode.Z) && Shift)) UndoRedoManager.Redo();
-			else if (Input.GetKeyDown(KeyCode.S)) IslandFilesWindow.QuickSave();
-			else if (Input.GetKeyDown(KeyCode.O)) IslandFilesWindow.Open();
+			if (KeyDown(KeyCode.Z) && !Shift) UndoRedoManager.Undo();
+			else if (KeyDown(KeyCode.Y) || (KeyDown(KeyCode.Z) && Shift)) UndoRedoManager.Redo();
+			else if (KeyDown(KeyCode.S)) IslandFilesWindow.QuickSave();
+			else if (KeyDown(KeyCode.O)) IslandFilesWindow.Open();
 		}
 	}
 

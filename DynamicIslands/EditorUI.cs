@@ -876,10 +876,10 @@ namespace DynamicIslands.Editor
 				if (Input.GetKeyDown(KeyCode.F1)) SetTab(TAB.TerrainEdit);
 				else if (Input.GetKeyDown(KeyCode.F2)) SetTab(TAB.ObjectPlace);
 				else if (Input.GetKeyDown(KeyCode.F3)) SetTab(TAB.Island);
-				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
-				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.C) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) CopySelected();
-				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.V) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) Paste(true);
-				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.A) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) SelectAll();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.C) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) CopySelected();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.V) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) Paste(true);
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.A) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) SelectAll();
 			}
 
 			if (tabs != null && tabs.SelectedTab == TAB.ObjectPlace && !PlacedListWindow.IsOpen) SelectionTools.Tick();

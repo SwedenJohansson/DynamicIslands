@@ -103,6 +103,7 @@
     <Compile Include="DevTestsScenarioAuthor.cs" />
     <Compile Include="DevTestsAdventure.cs" />
     <Compile Include="DevTestsScenarioMP.cs" />
+    <Compile Include="DevTestsCoverage.cs" />
     <Compile Include="DynamicIslands.cs" />
     <Compile Include="EditorGameObject.cs" />
     <Compile Include="EditorTools.cs" />

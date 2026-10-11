@@ -212,7 +212,7 @@ namespace RuntimeGizmos
 				SetLines();
 			}
 
-			if (Input.GetKeyDown(DeleteSelected) && !EditorInput.IsTyping && !EditorInput.WindowOpen)
+			if (EditorInput.KeyDown(DeleteSelected) && !EditorInput.IsTyping && !EditorInput.WindowOpen)
 			{
 				DeleteSelection();
 			}
