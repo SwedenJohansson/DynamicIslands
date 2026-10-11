@@ -1704,21 +1704,24 @@ namespace DynamicIslands
 				RogueShark.TestDay = next;
 				yield return new WaitForSeconds(2.5f);
 				Check(ref ok, RogueShark.Alive && RogueShark.Index != dead, "day " + next + " (the next rolling one after the quiet days): another rogue #" + RogueShark.Index);
-				// a giant: twice a plain shark's size, more health
-				AI_NetworkBehavior_Shark plain = LiveSharks().FirstOrDefault(s => !RogueShark.IsRogue(s));
+				// a giant: twice the size it had (its model grown: the log of Grow), more health
 				AI_NetworkBehavior_Shark was = RogueShark.Find();
 				if (was != null) was.networkEntity.Damage(100000f, was.transform.position, Vector3.up, EntityType.Player, true);
 				float gone = Time.time + 10f;
 				while (Time.time < gone && RogueShark.Index != 0) yield return new WaitForSeconds(0.5f);
 				RogueShark.QuietUntil = 0;
 				RogueShark.TestDay = null;
+				logs.Clear();
 				AI_NetworkBehavior_Shark giant = RogueShark.Spawn(true);
 				yield return new WaitForSeconds(2.5f);
-				float plainSize = plain != null ? WorldRandomizer.BodyOf(plain).Select(r => r.bounds.size.magnitude).DefaultIfEmpty(0f).First() : 0f;
+				// ("Giant: 'model' x2 (body (x, y, z) -> (x, y, z))": the body's size before and after)
+				string grew = logs.LastOrDefault(l => l.Contains("Giant: '")) ?? "";
+				float[] sizes = System.Text.RegularExpressions.Regex.Matches(grew, @"\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)").Cast<System.Text.RegularExpressions.Match>()
+					.Select(m => new Vector3(float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), float.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture)).magnitude).ToArray();
 				float giantSize = giant != null ? WorldRandomizer.BodyOf(giant).Select(r => r.bounds.size.magnitude).DefaultIfEmpty(0f).First() : 0f;
-				float ratio = plainSize > 0f ? giantSize / plainSize : 0f;
+				float ratio = sizes.Length == 2 && sizes[0] > 0f ? giantSize / sizes[0] : 0f;
 				Check(ref ok, giant != null && RogueShark.Giant && ratio > 1.6f && ratio < 2.5f && (IslandInfo.LastShown ?? "").Contains("giant"),
-					"a giant #" + RogueShark.Index + ": " + ratio.ToString("F2") + "x a plain shark's size (" + plainSize.ToString("F1") + " -> " + giantSize.ToString("F1") + "; banner: " + IslandInfo.LastShown + ")");
+					"a giant #" + RogueShark.Index + ": " + ratio.ToString("F2") + "x its size before (" + (sizes.Length > 0 ? sizes[0].ToString("F1") : "?") + " -> " + giantSize.ToString("F1") + "; banner: " + IslandInfo.LastShown + ")");
 				float hpBefore, hp = giant != null && giant.networkEntity != null && giant.networkEntity.stat_health != null ? giant.networkEntity.stat_health.Max : 0f;
 				Check(ref ok, giant != null && CreatureSpawner.HealthBefore.TryGetValue(giant, out hpBefore) && hp > hpBefore * 2.5f,
 					"its health " + hp + " (Raft's " + (giant != null && CreatureSpawner.HealthBefore.ContainsKey(giant) ? CreatureSpawner.HealthBefore[giant].ToString() : "?") + ")");
