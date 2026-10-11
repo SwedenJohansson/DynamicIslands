@@ -1683,7 +1683,17 @@ namespace DynamicIslands
 					// (Raft's body decay can take longer than 150 s; the rogue's own below gets 300)
 					float until = Time.time + 300f;
 					while (Time.time < until && !logs.Any(l => l.Contains("decays while the rogue lives"))) yield return new WaitForSeconds(1f);
-					Check(ref ok, logs.Any(l => l.Contains("Raft counts " + bruces + " shark")), "Bruce killed while the rogue lives: Raft counts the others but not the rogue (" + bruces + " expected; " + (logs.LastOrDefault() ?? "no decay seen in 300 s") + ")");
+					string seen = logs.LastOrDefault();
+					if (seen == null)
+					{
+						// (why no decay: where Bruce's body is and which state it is in)
+						AI_StateMachine sm = bruce != null ? bruce.GetComponentInChildren<AI_StateMachine>(true) : null;
+						AI_State_Decay dec = bruce != null ? bruce.GetComponentInChildren<AI_State_Decay>(true) : null;
+						object progress = dec != null ? typeof(AI_State_Decay).GetField("removeBodyTimeProgress", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dec) : null;
+						seen = "no decay seen in 300 s; Bruce " + (bruce == null ? "gone (destroyed)" : "dead " + (bruce.networkEntity != null && bruce.networkEntity.IsDead) + ", at " + bruce.transform.position.ToString("F0") +
+							", state " + (sm == null ? "?" : sm.currentState == null ? "none" : sm.currentState.GetType().Name) + (dec == null ? ", no decay state" : ", decay " + progress + " of " + dec.maxTimeInDecayState + " s"));
+					}
+					Check(ref ok, logs.Any(l => l.Contains("Raft counts " + bruces + " shark")), "Bruce killed while the rogue lives: Raft counts the others but not the rogue (" + bruces + " expected; " + seen + ")");
 				}
 				else Log("(no Bruce to kill)");
 
@@ -1719,9 +1729,10 @@ namespace DynamicIslands
 				string grew = logs.LastOrDefault(l => l.Contains("Giant: '")) ?? "";
 				float[] sizes = System.Text.RegularExpressions.Regex.Matches(grew, @"\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)").Cast<System.Text.RegularExpressions.Match>()
 					.Select(m => new Vector3(float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), float.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture)).magnitude).ToArray();
-				float giantSize = giant != null ? WorldRandomizer.BodyOf(giant).Select(r => r.bounds.size.magnitude).DefaultIfEmpty(0f).First() : 0f;
+				// (both measured in the same pose, as Grow grew it; a later measure swings with the swimming)
+				float giantSize = sizes.Length == 2 ? sizes[1] : 0f;
 				float ratio = sizes.Length == 2 && sizes[0] > 0f ? giantSize / sizes[0] : 0f;
-				Check(ref ok, giant != null && RogueShark.Giant && ratio > 1.6f && ratio < 2.8f && (IslandInfo.LastShown ?? "").Contains("giant"),
+				Check(ref ok, giant != null && RogueShark.Giant && ratio > 1.8f && ratio < 2.2f && (IslandInfo.LastShown ?? "").Contains("giant"),
 					"a giant #" + RogueShark.Index + ": " + ratio.ToString("F2") + "x its size before (" + (sizes.Length > 0 ? sizes[0].ToString("F1") : "?") + " -> " + giantSize.ToString("F1") + "; banner: " + IslandInfo.LastShown + ")");
 				float hpBefore, hp = giant != null && giant.networkEntity != null && giant.networkEntity.stat_health != null ? giant.networkEntity.stat_health.Max : 0f;
 				Check(ref ok, giant != null && CreatureSpawner.HealthBefore.TryGetValue(giant, out hpBefore) && hp > hpBefore * 2.5f,
