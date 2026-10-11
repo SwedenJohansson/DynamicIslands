@@ -295,6 +295,7 @@ namespace DynamicIslands.Editor
 			Network_Host_Entities host = null;
 			try { host = ComponentManager<Network_Host_Entities>.Value; } catch { }
 			if (host != null && host.SharkCount > 1) { host.SharkCount--; __state = 1; Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + host.SharkCount + " shark(s)"); }
+			else Debug.Log("[CUSTOM ISLANDS] [rogue] A shark's body decays while the rogue lives: Raft counts " + (host == null ? "? (no host)" : host.SharkCount + " shark(s)") + ", left as it is");
 			return true;
 		}
 
