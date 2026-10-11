@@ -172,6 +172,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **No pause at the first random island of a session:** the first pick read every pool island's whole file for its
+  "not before" distance (a fresh host with 130 pool islands: 0.5-0.7 s a pick on average over the first 20); the
+  distances are now kept in `notbeforecache.txt`.
 - **A world folder renamed by hand:** Raft still loads it, and now the mod does too - the plan, levels and island
   state come from the folder Raft picked instead of being lost.
 - **No hitch for a player who joined many worlds:** each random pick checked every kept copy of a host's island

@@ -2630,6 +2630,7 @@ Other files:
 | `editor_light.txt` | The editor's time of day (the Light button) |
 | `editor_skysea.txt` | Whether the editor shows Raft's sky and sea |
 | `rulescache.txt` | The islands' own rules, kept so lists open fast (made again if you delete it) |
+| `notbeforecache.txt` | The islands' "not before" distances, kept so random islands are picked fast (made again if you delete it) |
 | `deleted\` | Islands you deleted in the editor (move one back to get it back) |
 | `catalog_index.txt`, `placeables*.txt` | Where the editor finds Raft's objects (made again after a Raft update) |
 | `Custom-Islands-Guide.pdf` | This guide, written out of the mod when the alpha box's **Guide (PDF)** opens it |

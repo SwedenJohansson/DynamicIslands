@@ -170,6 +170,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `editor_skysea.txt` | The editor's view: Raft's own sky and sea (`on`) or the editor's own sky and blue sea plane |
 | `worlds\<world id>-<player id>.rewards` | Which quest rewards this player has had, or is still owed, in each world |
 | `rulescache.txt` | The island rules of every saved island, kept so the plan editor needn't read every island file again (safe to delete) |
+| `notbeforecache.txt` | Each saved island's "not before" distance, kept so random islands are picked without reading every island file (safe to delete) |
 | `maptypes\<name>.maptype` | Your own map types as text (land, height, content lines; a help header explains them); `ExportMapType` writes a built-in one to start from |
 
 ## The editor

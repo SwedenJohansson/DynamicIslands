@@ -509,7 +509,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
-		public static void Forget() { cache.Clear(); none.Clear(); }
+		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); }
 
 		#region Rules, kept on disk (ROADMAP P6)
 
@@ -545,21 +545,30 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Rules of '" + name + "': " + e.Message); return new List<IntroRule>(); }
 		}
 
-		static void LoadRules()
+		static void LoadRules() { rules = LoadKept(RulesPath); }
+
+		/// <summary>A cache kept on disk: one line per island, "name TAB file time TAB the value in base64".</summary>
+		static Dictionary<string, KeyValuePair<long, string>> LoadKept(string path)
 		{
-			rules = new Dictionary<string, KeyValuePair<long, string>>(StringComparer.OrdinalIgnoreCase);
+			var kept = new Dictionary<string, KeyValuePair<long, string>>(StringComparer.OrdinalIgnoreCase);
 			try
 			{
-				if (!File.Exists(RulesPath)) return;
-				foreach (string line in File.ReadAllLines(RulesPath))
+				if (!File.Exists(path)) return kept;
+				foreach (string line in File.ReadAllLines(path))
 				{
 					string[] p = line.Split('\t');
 					long t;
 					if (p.Length != 3 || !long.TryParse(p[1], out t)) continue;
-					rules[p[0]] = new KeyValuePair<long, string>(t, System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(p[2])));
+					kept[p[0]] = new KeyValuePair<long, string>(t, System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(p[2])));
 				}
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading rulescache.txt: " + e.Message); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Reading " + Path.GetFileName(path) + ": " + e.Message); }
+			return kept;
+		}
+
+		static void SaveKept(string path, Dictionary<string, KeyValuePair<long, string>> kept)
+		{
+			SafeFile.WriteAllLines(path, kept.Select(kv => kv.Key + "\t" + kv.Value.Key + "\t" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(kv.Value.Value ?? ""))).ToArray());
 		}
 
 		/// <summary>Writes what RulesOf read since (after a look through every island).</summary>
@@ -568,7 +577,7 @@ namespace DynamicIslands.Editor
 			if (rules == null || !rulesDirty) return;
 			try
 			{
-				SafeFile.WriteAllLines(RulesPath, rules.Select(kv => kv.Key + "\t" + kv.Value.Key + "\t" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(kv.Value.Value ?? ""))).ToArray());
+				SaveKept(RulesPath, rules);
 				rulesDirty = false;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing rulescache.txt: " + e.Message); }
@@ -576,10 +585,58 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
+		#region "Not before", kept on disk (IM43)
+
+		// name -> (file time, its "not before" km): the spawn pool asks it of every island in the pool at each pick, and the
+		// first pick of a session read each of those whole files (a fresh host with 130 islands in the pool: 0.5-0.7 s a pick
+		// on average over 20, IM43). Kept in Mods\DynamicIslands\notbeforecache.txt between sessions.
+		static Dictionary<string, KeyValuePair<long, string>> notBefore;
+		static readonly Dictionary<string, float> notBeforeAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+		static bool notBeforeDirty;
+		static string NotBeforePath { get { return Path.Combine(DynamicIslands.assetpath, "notbeforecache.txt"); } }
+
+		/// <summary>An island's "not before" setting (IslandProps.NotBeforeKm; "" when it has none or the file is missing),
+		/// read from the file only when it changed since last time.</summary>
+		public static string NotBeforeKm(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return "";
+			if (notBefore == null) notBefore = LoadKept(NotBeforePath);
+			KeyValuePair<long, string> had;
+			bool known = notBefore.TryGetValue(name, out had);
+			float at;
+			// (the file's time looked at again at most every 2 s, as Get does)
+			if (known && notBeforeAt.TryGetValue(name, out at) && Time.unscaledTime - at < 2f && Time.unscaledTime >= at) return had.Value;
+			try
+			{
+				string path = IslandSpawner.PathFor(name);
+				if (!File.Exists(path)) return "";
+				long t = File.GetLastWriteTimeUtc(path).Ticks;
+				notBeforeAt[name] = Time.unscaledTime;
+				if (known && had.Key == t) return had.Value;
+				Info read = Get(name);
+				if (read == null) return "";
+				string v = ObjectProps.Get(read.Props, IslandProps.NotBeforeKm);
+				notBefore[name] = new KeyValuePair<long, string>(t, v);
+				notBeforeDirty = true;
+				return v;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] 'Not before' of '" + name + "': " + e.Message); return ""; }
+		}
+
+		/// <summary>Writes what NotBeforeKm read since (after a pick from the pool).</summary>
+		public static void SaveNotBefore()
+		{
+			if (notBefore == null || !notBeforeDirty) return;
+			try { SaveKept(NotBeforePath, notBefore); notBeforeDirty = false; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing notbeforecache.txt: " + e.Message); }
+		}
+
+		#endregion
+
 		/// <summary>Forgets one island file (it was just saved: read it again next time, not after the 2 s wait).</summary>
 		public static void ForgetFile(string path)
 		{
-			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); } catch { }
+			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); notBeforeAt.Remove(name); } catch { }
 		}
 
 		/// <summary>The island's own settings (empty if the file is missing).</summary>

@@ -693,7 +693,9 @@ namespace DynamicIslands.Editor
 			HashSet<string> planned = forWorld ? PlanIslandNames() : new HashSet<string>();
 			// (the world's islands by name, once: each name looked through all of them - 40 ms with 150 islands, US1)
 			ILookup<string, IslandWorldState.Entry> inWorld = forWorld ? IslandWorldState.Islands.ToLookup(e => e.HostName ?? e.Name ?? "", StringComparer.OrdinalIgnoreCase) : null;
-			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !planned.Contains(p.Key) && !NotAgain(p.Key, inWorld[p.Key]) && !TooEarly(p.Key)))).ToList();
+			var pool = result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !planned.Contains(p.Key) && !NotAgain(p.Key, inWorld[p.Key]) && !TooEarly(p.Key)))).ToList();
+			IslandCache.SaveNotBefore();
+			return pool;
 		}
 
 		/// <summary>An island whose "not before" (IslandProps.NotBeforeKm) this world hasn't sailed yet: not picked by chance until then.</summary>
@@ -701,7 +703,8 @@ namespace DynamicIslands.Editor
 		{
 			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
 			float km;
-			return float.TryParse(ObjectProps.Get(IslandCache.Props(name), IslandProps.NotBeforeKm), NumberStyles.Float, CultureInfo.InvariantCulture, out km) &&
+			// (from a cache kept on disk: reading every pool island's file for it made a fresh host's first picks slow, IM43)
+			return float.TryParse(IslandCache.NotBeforeKm(name), NumberStyles.Float, CultureInfo.InvariantCulture, out km) &&
 				WorldDirector.Sailed < km * 1000f;
 		}
 
