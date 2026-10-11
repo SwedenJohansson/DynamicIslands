@@ -259,7 +259,7 @@ namespace DynamicIslands
 					p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
 			// (the first networked one, as CIPick takes it; many give their item through a yield, not an itemInstance - then
 			// "have" counts everything this player carries, IM28)
-			PickupItem first = left.FirstOrDefault(p => p.GetComponent<PickupItem_Networked>() != null);
+			PickupItem first = left.Where(p => p.GetComponent<PickupItem_Networked>() != null).OrderBy(p => p.GetComponent<PickupItem_Networked>().ObjectIndex).FirstOrDefault();
 			string item = first != null && first.itemInstance != null && first.itemInstance.baseItem != null ? first.itemInstance.UniqueName : "";
 			// (the first one's object name, as CIPick finds it: up to a space or bracket)
 			string obj = first != null ? first.name.Split(' ', '(')[0] : "?";

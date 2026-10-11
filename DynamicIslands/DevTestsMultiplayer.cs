@@ -380,7 +380,8 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
 			string part = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
-			PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>()
+			// (the lowest id: the same pickup on both players - their child lists come in different orders, IM28)
+			PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>().OrderBy(p => p.ObjectIndex)
 				.FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeInHierarchy && p.GetComponent<PickupItem>() != null &&
 					(part.Length == 0 || p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0)));
 			if (pn == null) { Fail("nothing to pick up on '" + e.HostName + "'" + (part.Length > 0 ? " called '" + part + "'" : "")); return; }

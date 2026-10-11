@@ -1888,6 +1888,17 @@ namespace DynamicIslands
 				{
 					string line = raw.Trim();
 					if (line.Length == 0 || line.StartsWith("#")) continue;
+					// "@<unix ms> <command>": run at that moment of the PC's clock - two Rafts on one PC then act in the same
+					// frame or the next, not up to a second apart as the file poll and the script's jobs leave them (IM28)
+					long at;
+					int sp = line.IndexOf(' ');
+					if (line.StartsWith("@") && sp > 1 && long.TryParse(line.Substring(1, sp - 1), out at))
+					{
+						line = line.Substring(sp + 1).Trim();
+						DateTime when = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(at);
+						if ((when - DateTime.UtcNow).TotalSeconds > 30) { Fail("'@" + at + "' is more than 30 s ahead"); continue; }
+						while (DateTime.UtcNow < when) yield return null;
+					}
 					Log("> " + line);
 					try { RunCommand(line); }
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }

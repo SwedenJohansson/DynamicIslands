@@ -118,6 +118,11 @@ namespace DynamicIslands
 			}
 
 			// The pool's pick for the next island, with this many islands already in the world
+			// (the first one apart: the first pick of a session reads what it needs of every island's file - IslandCache;
+			// B, a fresh host after the swap, took 561-736 ms a pick on average, A 18 ms, IM43)
+			sw.Reset(); sw.Start(); CustomIslandSpawner.PickFromPool(); sw.Stop();
+			double firstPick = sw.Elapsed.TotalMilliseconds;
+			Log("the pool's first pick " + firstPick.ToString("F1") + " ms (" + CustomIslandSpawner.Pool(false).Count + " islands in the pool, " + IslandWorldState.Islands.Count + " in the world)");
 			sw.Reset(); sw.Start();
 			for (int i = 0; i < 20; i++) CustomIslandSpawner.PickFromPool();
 			sw.Stop();
