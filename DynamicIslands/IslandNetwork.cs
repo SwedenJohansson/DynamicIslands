@@ -871,9 +871,17 @@ namespace DynamicIslands.Editor
 		{
 			int i = name.LastIndexOf('_');
 			if (i <= 0 || name.Length - i - 1 != 12 || !name.Substring(i + 1).All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+			// (the answer kept 10 s: the pool asks for every saved name on each pick, and each HashOf is two disk checks - with
+			// hundreds of downloaded copies that was 0.1-0.7 s a pick on a player who joined many worlds, IM43)
+			KeyValuePair<float, bool> known;
+			if (downloadNames.TryGetValue(name, out known) && Time.unscaledTime - known.Key < 10f && Time.unscaledTime >= known.Key) return known.Value;
 			string h = HashOf(name);
-			return h == null || h == name.Substring(i + 1);
+			bool yes = h == null || h == name.Substring(i + 1);
+			downloadNames[name] = new KeyValuePair<float, bool>(Time.unscaledTime, yes);
+			return yes;
 		}
+
+		static readonly Dictionary<string, KeyValuePair<float, bool>> downloadNames = new Dictionary<string, KeyValuePair<float, bool>>(StringComparer.OrdinalIgnoreCase);
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{

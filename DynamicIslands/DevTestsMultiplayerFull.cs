@@ -231,7 +231,9 @@ namespace DynamicIslands
 			float dmg;
 			if (args.Length < 3 || !float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dmg)) { Fail("CIHitOnce <island> <damage> <kind>"); return; }
 			string kind = string.Join(" ", args.Skip(2).ToArray());
-			AI_NetworkBehaviour a = AnimalsOf(e, kind, 150f).FirstOrDefault(x => x.networkEntity != null && !x.networkEntity.IsDead);
+			AI_NetworkBehaviour a = AnimalsOf(e, kind, 150f).Where(x => x.networkEntity != null && !x.networkEntity.IsDead)
+				// (the lowest id: the same animal on both players - their lists come in different orders, IM28)
+				.OrderBy(x => x.ObjectIndex).FirstOrDefault();
 			Network_Host host = ComponentManager<Network_Host>.Value;
 			if (a == null || host == null) { Fail("no live " + kind + " at '" + e.HostName + "'"); return; }
 			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
@@ -255,14 +257,17 @@ namespace DynamicIslands
 			List<PickupItem> left = e.Root.GetComponentsInChildren<PickupItem>()
 				.Where(p => p.gameObject.activeInHierarchy && p.GetComponent<HarvestableTree>() == null && (part == "*" ||
 					p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
-			PickupItem first = left.FirstOrDefault(p => p.itemInstance != null && p.itemInstance.baseItem != null && p.GetComponent<PickupItem_Networked>() != null);
-			string item = first != null ? first.itemInstance.UniqueName : "";
+			// (the first networked one, as CIPick takes it; many give their item through a yield, not an itemInstance - then
+			// "have" counts everything this player carries, IM28)
+			PickupItem first = left.FirstOrDefault(p => p.GetComponent<PickupItem_Networked>() != null);
+			string item = first != null && first.itemInstance != null && first.itemInstance.baseItem != null ? first.itemInstance.UniqueName : "";
 			// (the first one's object name, as CIPick finds it: up to a space or bracket)
 			string obj = first != null ? first.name.Split(' ', '(')[0] : "?";
 			if (part != "*") left = left.Where(p => p.itemInstance != null && p.itemInstance.UniqueName == item).ToList();
 			Network_Player me = RAPI.GetLocalPlayer();
-			int have = item.Length > 0 && me != null ? me.Inventory.GetItemCount(item) : -1;
-			Log("RACE kills " + (PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Kills : -1) + " live " + live + " pickups " + left.Count + " item " + (item.Length > 0 ? item : "?") + " have " + have + " obj " + obj);
+			int have = me == null ? -1 : item.Length > 0 ? me.Inventory.GetItemCount(item) :
+				me.Inventory.allSlots.Where(x => x != null && !x.IsEmpty && x.itemInstance != null).Sum(x => x.itemInstance.Amount);
+			Log("RACE kills " + (PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Kills : -1) + " live " + live + " pickups " + left.Count + " item " + (item.Length > 0 ? item : first != null ? "any" : "?") + " have " + have + " obj " + obj);
 			Log("PASS: race count");
 		}
 
