@@ -21,6 +21,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: how many are alive and wild, as last recorded in the island's state; -1 = not spawned, -2 = being spawned.</summary>
 		public int RecordedAlive = -1;
 		public const int Spawning = -2;
+		/// <summary>Host: where each animal still alive was at the last look (by instance id; it may be destroyed since).</summary>
+		public readonly Dictionary<int, Vector3> LastAt = new Dictionary<int, Vector3>();
+		/// <summary>Host: animals Raft took away far from every player - not killed: the island's state keeps them.</summary>
+		public int Strayed;
 
 		public static CreatureSpawnPoint Create(Transform parent, IslandObject o, int ordinal)
 		{
@@ -59,6 +63,8 @@ namespace DynamicIslands.Editor
 		public const int StateKeyBase = 0x10000;
 		/// <summary>Farthest a spawned animal is placed from its spawn point when several share it (m).</summary>
 		const float HerdRadius = 3f;
+		/// <summary>An animal that vanishes alive farther than this from every player was taken away by Raft, not killed (m).</summary>
+		const float StrayDistance = 150f;
 
 		/// <summary>Animals spawned by custom islands that are still tied to their spawn point.</summary>
 		static readonly HashSet<AI_NetworkBehaviour> ours = new HashSet<AI_NetworkBehaviour>();
@@ -253,6 +259,7 @@ namespace DynamicIslands.Editor
 				for (int i = 0; i < w.Value; i++)
 					if (Spawn(host, w.Key, i, w.Value) != null) here++;
 				w.Key.RecordedAlive = here;
+				w.Key.Strayed = 0;
 				spawned += here;
 			}
 			Debug.Log("[CUSTOM ISLANDS] '" + entry.HostName + "': " + spawned + " creature(s) spawned at " + wanted.Count + " spawn point(s)");
@@ -789,6 +796,7 @@ namespace DynamicIslands.Editor
 					{
 						int gone = RemoveAnimals(p);
 						p.RecordedAlive = -1;
+						p.Strayed = 0;
 						if (gone > 0) Debug.Log("[CUSTOM ISLANDS] The spot of " + gone + " " + p.Kind.Label + "(s) on '" + e.HostName + "' was hidden: they are gone until it is shown");
 						continue;
 					}
@@ -803,25 +811,46 @@ namespace DynamicIslands.Editor
 		static void Account(IslandWorldState.Entry e, CreatureSpawnPoint p)
 		{
 			if (p.RecordedAlive < 0) return;
-			int caught = 0;
+			int caught = 0, strayed = 0;
+			var seen = new HashSet<int>();
 			for (int i = p.Spawned.Count - 1; i >= 0; i--)
 			{
 				AI_NetworkBehaviour ai = p.Spawned[i];
 				if (ai == null) { p.Spawned.RemoveAt(i); continue; }
+				int id = ai.GetInstanceID();
 				// Caught (Raft lets go of it when it is carried): it belongs to the players now
 				if (ai.connectedSpawner == null)
 				{
 					p.Spawned.RemoveAt(i);
+					p.LastAt.Remove(id);
 					ours.Remove(ai);
 					caught++;
 					Debug.Log("[CUSTOM ISLANDS] A " + p.Kind.Label + " of '" + e.HostName + "' was caught");
+					continue;
 				}
+				if (ai.networkEntity == null || !ai.networkEntity.IsDead) { p.LastAt[id] = ai.transform.position; seen.Add(id); }
+				else p.LastAt.Remove(id);
+			}
+			// Gone while alive (Raft may drop it from the list before the object goes, so this goes by the ones last seen
+			// alive): far from every player - or one of Raft's harmless sea animals, which it takes away on its own timer
+			// even close by - Raft took it away (Sargasso Town's dolphins and turtles were "defeated" as the raft sailed
+			// off, 2026-10-11). Not killed; it comes back with the island.
+			foreach (int id in p.LastAt.Keys.Where(k => !seen.Contains(k)).ToList())
+			{
+				Vector3 at = p.LastAt[id];
+				if (Harmless(p.Kind.Type) || !Players.All.Any(pl => pl != null && Vector2.Distance(new Vector2(pl.transform.position.x, pl.transform.position.z), new Vector2(at.x, at.z)) < StrayDistance)) strayed++;
+				p.LastAt.Remove(id);
 			}
 			// (just spawned, Raft may not have set up its network entity yet: that one is alive, not killed)
 			int alive = p.Spawned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
 			if (alive == p.RecordedAlive) return;
 			// For quests: the ones that are gone and weren't caught were killed
-			int killed = p.RecordedAlive - alive - caught;
+			int killed = p.RecordedAlive - alive - caught - strayed;
+			if (strayed > 0)
+			{
+				p.Strayed += strayed;
+				Debug.Log("[CUSTOM ISLANDS] " + strayed + " " + p.Kind.Label + "(s) of '" + e.HostName + "' taken away by Raft (not defeated; back with the island)");
+			}
 			if (killed > 0) Debug.Log("[CUSTOM ISLANDS] " + killed + " " + p.Kind.Label + "(s) of '" + e.HostName + "' defeated (" + alive + " left; animals " + string.Join(", ", p.Spawned.Select(a => a == null ? "gone" : a.networkEntity == null ? "no entity" : a.networkEntity.IsDead ? "dead" : "alive").ToArray()) + ")");
 			if (caught > 0) QuestTracker.Event(e, "catch", p.Kind.Label, caught);
 			if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
@@ -831,11 +860,19 @@ namespace DynamicIslands.Editor
 			Record(e, p, alive);
 		}
 
+		/// <summary>Raft's harmless sea animals: players can't kill them, Raft takes them away after a while.</summary>
+		static bool Harmless(AI_NetworkBehaviourType t)
+		{
+			return t == AI_NetworkBehaviourType.Dolphin || t == AI_NetworkBehaviourType.Turtle || t == AI_NetworkBehaviourType.Stingray || t == AI_NetworkBehaviourType.Whale;
+		}
+
 		static void Record(IslandWorldState.Entry e, CreatureSpawnPoint p, int alive)
 		{
 			p.RecordedAlive = alive;
-			if (alive >= ObjectProps.Count(p.Props)) e.State.Remove(p.StateKey);
-			else e.State[p.StateKey] = new ObjectState { Active = alive > 0, Yield = alive, Day = Today };
+			// (the ones Raft took away far off are still the island's)
+			int left = alive + p.Strayed;
+			if (left >= ObjectProps.Count(p.Props)) e.State.Remove(p.StateKey);
+			else e.State[p.StateKey] = new ObjectState { Active = left > 0, Yield = left, Day = Today };
 		}
 
 		/// <summary>Host: an island is being unloaded or removed; its wild animals (and their bodies) go with it.</summary>
@@ -866,6 +903,7 @@ namespace DynamicIslands.Editor
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Removing a " + p.Kind.Label + ": " + ex.Message); UnityEngine.Object.Destroy(ai.gameObject); }
 			}
 			p.Spawned.Clear();
+			p.LastAt.Clear();
 			return removed;
 		}
 

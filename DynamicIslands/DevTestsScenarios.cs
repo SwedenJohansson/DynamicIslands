@@ -1701,6 +1701,52 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario last kill"); else Fail("scenario last kill");
 		}
 
+		[ConsoleCommand(name: "CIScStray", docs: "Dev, world (host, 'CI ...'): a turtle and a warthog Raft takes away alive (destroyed, as Raft does with its sea animals and far ones) aren't defeated: the kill step stays, both come back when the island loads again (AU85)")]
+		public static void ScStrayCommand() { StartTest(ScStrayRoutine()); }
+
+		static IEnumerator ScStrayRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario stray: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscstray";
+			IslandFile f;
+			try { f = ScIsland(isl, "Stray Lagoon"); } catch (Exception ex) { Fail("scenario stray: " + ex.Message); yield break; }
+			Vector3? under = ScUnderSea(f, 4f);
+			if (!under.HasValue) { Fail("scenario stray: the sample island has no sea floor 4 m under its sea"); yield break; }
+			f.Objects.Add(ScObj("Creature_Turtle", under.Value, ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0"));
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
+			new IslandQuest { Title = "Stray", Steps = { new IslandQuest.Step { Type = "kill", Target = "Turtle", Count = 1 }, new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 1 } } }.To(f.Props);
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 320f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario stray: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made[0];
+			yield return ScWaitAnimals(e, "Turtle", 2, 20f);
+			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
+			yield return new WaitForSeconds(1.5f);
+			AI_NetworkBehaviour turtle = ScAnimals(e, "Turtle").FirstOrDefault(), boar = ScAnimals(e, "Warthog").FirstOrDefault();
+			if (turtle == null || boar == null) { ScRemove(made, isl); Fail("scenario stray: the animals didn't come (" + ScAnimals(e, "Turtle").Count + " turtles, " + ScAnimals(e, "Warthog").Count + " warthogs)"); yield break; }
+			// (as Raft takes them away: the object goes, nothing kills it)
+			UnityEngine.Object.Destroy(turtle.gameObject);
+			UnityEngine.Object.Destroy(boar.gameObject);
+			yield return new WaitForSeconds(3f);
+			Check(ref ok, QuestTracker.StepOf(e) == 0, "a turtle and a warthog 300 m off taken away alive: no kill step done (" + QuestTracker.StepOf(e) + ")");
+			IslandObjectState.Capture(e);
+			IslandSpawner.Despawn(e.Root);
+			e.Root = null;
+			yield return null;
+			e.Loading = true;
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			yield return ScWaitAnimals(e, "Turtle", 2, 20f);
+			yield return ScWaitAnimals(e, "Warthog", 1, 10f);
+			Check(ref ok, ScAnimals(e, "Turtle").Count == 2, "... both turtles back when the island loads again (" + ScAnimals(e, "Turtle").Count + ")");
+			Check(ref ok, ScAnimals(e, "Warthog").Count == 1, "... and the warthog (" + ScAnimals(e, "Warthog").Count + ")");
+			ScRemove(made, isl);
+			if (ok) Log("PASS: scenario stray"); else Fail("scenario stray");
+		}
+
 		#endregion
 
 		#region SC6, SC36 - sleeping with the mod's timers; anchored at an island for days
