@@ -69,8 +69,27 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILevelTagShot", docs: "Dev, in game (two players, the level up system on and the other player past level 1): this player stands in front of the other one and takes shot_level_tag.png, the \"Lv n\" under their name, for the guide. CILevelTagShot [metres away]")]
 		public static void LevelTagShot(string[] args)
 		{
+			if (args != null && args.Length > 0 && args[0] == "pose") { StartTest(LevelTagPoseRoutine()); return; }
 			float away = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 3f;
 			StartTest(LevelTagShotRoutine(away));
+		}
+
+		// CILevelTagShot pose (the other player): held standing on the middle of the raft for 25 s, for the picture
+		static IEnumerator LevelTagPoseRoutine()
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (me == null || !raftPos.HasValue) { Fail("level tag pose: in a world"); yield break; }
+			Vector3 at = raftPos.Value + Vector3.up * 1.1f;
+			Log("PASS: level tag pose at " + at);
+			float end = Time.time + 25f;
+			while (Time.time < end)
+			{
+				me.transform.position = at;
+				me.Stats.stat_health.Value = me.Stats.stat_health.Max;
+				me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max;
+				yield return null;
+			}
 		}
 
 		static IEnumerator LevelTagShotRoutine(float away)
@@ -79,18 +98,23 @@ namespace DynamicIslands
 			Network_Player other = Players.All.FirstOrDefault(p => p != null && p != me && p.playerNameTextMesh != null);
 			if (me == null || other == null) { Fail("level tag shot: needs a second player"); yield break; }
 			Vector3 at = other.transform.position;
-			Vector3 dir = Vector3.ProjectOnPlane(other.transform.forward, Vector3.up).normalized;
-			if (dir.sqrMagnitude < 0.01f) dir = Vector3.forward;
-			Log("level tag shot: the other player at " + at + ", this one at " + me.transform.position);
 			Transform cam = Camera.main.transform;
+			// (this player stands where its camera already faces the other one: Raft's mouse look keeps its own turn)
+			Vector3 dir = -Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+			if (dir.sqrMagnitude < 0.01f) dir = Vector3.back;
+			Log("level tag shot: the other player at " + at + ", this one at " + me.transform.position);
 			for (int i = 0; i < 40; i++)
 			{
 				// (held there: off the raft's edge this player would sink)
 				me.transform.position = at + dir * away;
+				me.Stats.stat_health.Value = me.Stats.stat_health.Max;
+				me.Stats.stat_oxygen.Value = me.Stats.stat_oxygen.Max;
 				// (between the name and the chest: the tag, the name and the player all in the picture)
 				cam.rotation = Quaternion.LookRotation(other.playerNameTextMesh.transform.position + Vector3.down * 0.7f - cam.position);
 				yield return null;
 			}
+			Renderer body = other.GetComponentsInChildren<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && r is SkinnedMeshRenderer).FirstOrDefault();
+			Log("level tag shot: camera " + cam.position + " looking " + cam.forward + ", name at " + other.playerNameTextMesh.transform.position + ", body " + (body != null ? body.bounds.center.ToString() : "none shown"));
 			string tag;
 			bool shown = LevelTags.Shown.TryGetValue(other.steamID.Id, out tag);
 			Screenshot(new[] { "level_tag" });

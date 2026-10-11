@@ -2572,6 +2572,9 @@ All 135 points are there at level 69 (a stat could take 10 points before 2026-10
 gets theirs back. The host works out everyone's EXP, so a monster is worth the same to everybody. Other players see a
 small gold **Lv 5** under your name.
 
+![A level under a player's name](images/level-tag.jpg)
+*A friend at level 6, as the other players see them.*
+
 ---
 
 ## 10. Settings files
