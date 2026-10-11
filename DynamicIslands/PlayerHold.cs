@@ -65,6 +65,9 @@ namespace DynamicIslands.Editor
 			}
 			// (a swimmer, or someone on the raft or on Raft's own islands, is left alone)
 			if (p.y < 1f || Supported(p)) return;
+			// (put on the raft before its blocks are in - a joining player: held still in the world, the drifting raft
+			// went on without them and they dropped into the sea by a shark - AU80)
+			if (OnRaftSpot(p)) { Debug.Log("[CUSTOM ISLANDS] The player is on the raft at " + p.ToString("F1") + ", its blocks not in yet: left to Raft"); return; }
 			Hold(p, "The player is back at " + p.ToString("F1") + " with nothing under them yet: looking for the island they stood on");
 		}
 
@@ -194,6 +197,18 @@ namespace DynamicIslands.Editor
 		}
 
 		static float Flat(Vector3 v) { return new Vector2(v.x, v.z).magnitude; }
+
+		/// <summary>The raft is this close (flat): a player put here at deck height was put on the raft.</summary>
+		const float RaftNear = 12f;
+
+		/// <summary>Raft put the player on its raft: close to the raft's centre, at about its deck's height.</summary>
+		static bool OnRaftSpot(Vector3 p)
+		{
+			Raft raft = ComponentManager<Raft>.Value ?? Object.FindObjectOfType<Raft>();
+			if (raft == null) return false;
+			Vector3 r = raft.transform.position;
+			return Flat(p - r) < RaftNear && p.y < r.y + 4f;
+		}
 
 		static float heldHealth;
 		static float Health()

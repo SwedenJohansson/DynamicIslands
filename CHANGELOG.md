@@ -170,17 +170,24 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Daily quest kills in multiplayer:** with the level up system off, monsters another player defeated (and the
+  host's own) did not count for a "Defeat monsters" daily quest. They count now, with levels on or off.
 - **Frozen over the sea when joining:** a player who joined could be held in place over the open sea (and bitten by
   the shark) while the mod waited for the island they had stood on - it also waited for the randomizer's extras on one
   of Raft's islands, which never load while that island isn't there. It waits only for an island that can be under the
   player, at most 30 seconds, says so on screen, and lets go at once if the player is hurt.
+  And a player who joined onto the raft before its blocks came in is no longer held still while the raft drifts
+  on without them (they dropped into the sea by the shark): the raft is left to Raft.
 - **Caves that floated:** the randomizer's caves (on Raft's big islands and on generated islands) could stand with
   their rim over the ground, so you saw into the rock from outside and through the floor from inside. On a generated
   island the ground now rises round the cave and buries its rim, open only at the mouth; on Raft's islands a cave goes
   only where the ground meets its rim all round and the floor inside is even. And in a world every cave piece - generated,
   the randomizer's and those placed by hand on library islands - now sits inside a rock hill built over its back and
   sides down to the ground, of the island's own rock (snowy rock on a snowy island), open only at its mouth: no more
-  thin shells in the air or sky seen through the mountain. Balboa's vine cave, a whole rock of its own, is left as it is.
+  thin shells in the air or sky seen through the mountain (nor a hole in the hill over a den's roofless stretch, nor a slot under a den's low edge where it hung over the ground).
+  Balboa's vine cave, a whole rock of its own, is left as it is.
+- **"Another build" told again after a rejoin:** a player who rejoined with the host's own build after joining
+  with another one still got the old notice. A notice is now only about the host the player is with.
 - **Animals walking into the sea:** llamas, goats and the other animals of the custom islands could wander into the
   shallows. They now stay on dry land (the beach just at the waterline at most).
 - **The crafting menu:** the Weapons list was twice as wide as its recipes and covered the inventory (the upgrades

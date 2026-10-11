@@ -247,9 +247,10 @@ namespace DynamicIslands
 					File.WriteAllText(file, m.LastMap ?? "(no mountain)");
 					Log("Cave mountain of '" + e.Name + "': " + (m.transform.Find(CaveMountain.SkinName) != null ? "there" : "MISSING") + ", map in " + Path.GetFileName(file));
 				}
-			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
-				foreach (Transform t in e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList())
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList()) // (an island taken away while the pictures of another were taken: skipped)
+				foreach (Transform t in (e.Root == null ? new Transform[0] : e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToArray()))
 				{
+					if (t == null) continue;
 					n++;
 					Log("Cave " + n + ": '" + e.Name + "' " + t.name + " at " + t.position.ToString("F0") + ", scale " + t.lossyScale.ToString("F2"));
 					foreach (MeshFilter mf in t.GetComponentsInChildren<MeshFilter>(true))

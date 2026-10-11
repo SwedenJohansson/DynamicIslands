@@ -51,6 +51,9 @@ namespace DynamicIslands
 		// IsPressed into GroundControll, so its calls there are swapped for MmIsPressedShim instead)
 		static readonly System.Reflection.MethodInfo MmGroundControll = AccessTools.Method(typeof(PersonController), "GroundControll");
 		static int mmShimCalls;
+		// (Raft's open-menu mark, cleared during the runs: with one set, GroundControll ignores the Sprint key - IL9 ran at walking speed)
+		static MenuType mmMenu0;
+		static bool mmMenuCleared;
 		static bool MmIsPressedShim(object config, object action, string id)
 		{
 			mmShimCalls++;
@@ -89,6 +92,9 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			Func<float> feet = () => cc.transform.TransformPoint(cc.center - Vector3.up * cc.height / 2f).y;
+			// (the player's position is above its feet: put down at the deck's top + 0.3 by the position, the feet were in the deck
+			// and the player dropped through it into the sea - every run was a swim, the jumps 0.1 m)
+			float lift = Mathf.Max(0f, player.transform.position.y - feet());
 
 			// Where to put things: open sea well away from the raft (nothing fixed within 100 m, floating things ignored)
 			Vector3? sea = null;
@@ -129,7 +135,7 @@ namespace DynamicIslands
 				else Log("(CustomInputConfig.IsPressed(action, string) not found: sprint and jump keys not faked)");
 				if (MmIsPressed != null && MmGroundControll != null) harmony.Patch(MmGroundControll, transpiler: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmGroundTranspiler")));
 				else Log("(PersonController.GroundControll not found: sprint and jump read through IsPressed only)");
-				mmShimCalls = 0;
+				mmShimCalls = 0; mmMenuCleared = false;
 				Log("Raft's well-being before: factor " + Stat_WellBeing.Factor + " (limit " + Stat_WellBeing.WellBeingLimit.ToString("F2", Inv) + ", ground speed x" + Stat_WellBeing.groundSpeedMultiplier.ToString("F2", Inv) + "), hunger " + player.Stats.stat_hunger.Normal.NormalValue.ToString("F2", Inv) + ", thirst " + player.Stats.stat_thirst.Normal.NormalValue.ToString("F2", Inv));
 				if (wellBeingUpdate != null) harmony.Patch(wellBeingUpdate, prefix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "MmWellBeingPrefix")));
 				mmFake = true; mmWalk = 0f; mmSprint = mmJump = false;
@@ -145,7 +151,7 @@ namespace DynamicIslands
 				Physics.SyncTransforms();
 
 				// Which way the player looks (yaw 0, level): every run goes that way
-				PlayerMove.To(player, centre + Vector3.up * (MmTop + 0.3f));
+				PlayerMove.To(player, centre + Vector3.up * (MmTop + 0.3f + lift));
 				Look(player, 0f, 0f);
 				for (int i = 0; i < 10; i++) { MmHold(player, false); yield return null; }
 				Transform cam = Traverse.Create(pc).Field("camTransform").GetValue<Transform>();
@@ -154,7 +160,7 @@ namespace DynamicIslands
 				fwd.Normalize();
 				Log("Test deck at " + centre.ToString("F0") + " (" + (centre - raft.Value).magnitude.ToString("F0") + " m from the raft), runs towards " + fwd.ToString("F2") + "; base walk " + pc.normalSpeed.ToString("F2", Inv) + ", sprint " + pc.sprintSpeed.ToString("F2", Inv) + ", swim " + pc.swimSpeed.ToString("F2", Inv) + ", jump " + pc.jumpSpeed.ToString("F2", Inv) + " m/s");
 
-				Vector3 runStart = centre - fwd * (MmHalf - 6f) + Vector3.up * (MmTop + 0.3f);
+				Vector3 runStart = centre - fwd * (MmHalf - 6f) + Vector3.up * (MmTop + 0.3f + lift);
 				Vector3 swimStart = centre + fwd * (MmHalf * 1.5f) + Vector3.down * 0.6f; // (clear of the deck's corners whichever way it faces)
 				for (int k = 0; k < 2; k++)
 				{
@@ -167,21 +173,23 @@ namespace DynamicIslands
 					yield return MmRun(player, runStart, fwd, ControllerType.Ground, false, r);
 					walk[k] = r[0];
 					Log("  walk " + r[0].ToString("F3", Inv) + " m/s (sprinting " + (r[1] * 100f).ToString("F0") + "% of frames, movement free " + pc.IsMovementFree + ")");
+					if (k == 0) Log("  (after the walk: feet at y " + feet().ToString("F2", Inv) + " (deck top " + MmTop.ToString("F1", Inv) + ", lift " + lift.ToString("F2", Inv) + "), " + pc.controllerType + ", grounded " + cc.isGrounded + ")");
 					yield return MmRun(player, runStart, fwd, ControllerType.Ground, true, r);
 					sprint[k] = r[0];
 					Log("  sprint " + r[0].ToString("F3", Inv) + " m/s (sprinting " + (r[1] * 100f).ToString("F0") + "% of frames)");
-					if (r[1] < 0.9f) Log("  (not sprinting all the time: CanvasHelper.ActiveMenu is " + Traverse.Create(typeof(CanvasHelper)).Field("ActiveMenu").GetValue() + ")");
+					if (r[1] < 0.9f) Log("  (not sprinting all the time: CanvasHelper.ActiveMenu is " + CanvasHelper.ActiveMenu + ")");
 					yield return MmRun(player, swimStart, fwd, ControllerType.Water, false, r);
 					swim[k] = r[0];
 					Log("  swim " + r[0].ToString("F3", Inv) + " m/s (still swimming at the end " + (r[2] > 0.5f) + ")");
 					// Jumps from standing on the deck: the feet's highest point over where they stood, three times
-					PlayerMove.To(player, centre + Vector3.up * (MmTop + 0.3f));
+					PlayerMove.To(player, centre + Vector3.up * (MmTop + 0.3f + lift));
 					Look(player, 0f, 0f);
 					var heights = new List<float>();
 					for (int j = 0; j < 3; j++)
 					{
 						for (float t = 0f; t < 1f || (!pc.IsConsideredGrounded && t < 3f); t += Time.deltaTime) { MmHold(player, false); yield return null; }
 						float from = feet(), peak = from;
+						if (j == 0 && k == 0) try { var tr = Traverse.Create(pc); Log("  (before the first jump: AllowJump " + tr.Method("AllowJump").GetValue() + ", y " + pc.transform.position.y.ToString("F2", Inv) + ", ground angle " + tr.Field("currentGroundAngle").GetValue() + " (min " + tr.Field("minValidGroundAngle").GetValue() + "), grounded " + cc.isGrounded + ", menu " + CanvasHelper.ActiveMenu + ")"); } catch (Exception e) { Log("(jump state: " + e.Message + ")"); }
 						mmJump = true;
 						for (float t = 0f; feet() < from + 0.05f && t < 0.6f; t += Time.deltaTime) { MmHold(player, false); yield return null; }
 						mmJump = false;
@@ -207,11 +215,12 @@ namespace DynamicIslands
 					try { harmony.Unpatch(getAxis, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetAxis: " + e.Message + ")"); }
 					try { harmony.Unpatch(getButton, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching MyInput.GetButton: " + e.Message + ")"); }
 					if (MmGroundControll != null) try { harmony.Unpatch(MmGroundControll, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching PersonController.GroundControll: " + e.Message + ")"); }
-					Log("(GroundControll asked for keys " + mmShimCalls + " times; a menu open: " + (CanvasHelper.ActiveMenu != null) + ")");
+					Log("(GroundControll asked for keys " + mmShimCalls + " times; Raft's open menu " + (mmMenuCleared ? mmMenu0 + ", cleared for the runs" : "none") + ")");
 					if (MmIsPressed != null) try { harmony.Unpatch(MmIsPressed, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching CustomInputConfig.IsPressed: " + e.Message + ")"); }
 					if (wellBeingUpdate != null) try { harmony.Unpatch(wellBeingUpdate, HarmonyPatchType.All, "ci.movemeasure"); } catch (Exception e) { Log("(unpatching Stat_WellBeing.Update: " + e.Message + ")"); }
 				}
 				Stat_WellBeing.Factor = wellBeing0;
+				if (mmMenuCleared && CanvasHelper.ActiveMenu == MenuType.None) CanvasHelper.ActiveMenu = mmMenu0;
 				try { MmAutoRun.SetValue(pc, false); MmRunToggled.SetValue(pc, false); } catch { }
 				if (wasOn && kept != null) PlayerLevels.SetMine(kept);
 				if (!wasOn && PlayerLevels.On) PlayerLevels.TurnOff();
@@ -285,6 +294,7 @@ namespace DynamicIslands
 			MmRunToggled.SetValue(pc, sprint);
 			if (MmCheatSprint != null) MmCheatSprint.SetValue(pc, false);
 			pc.crouching = false;
+			if (CanvasHelper.ActiveMenu != MenuType.None) { if (!mmMenuCleared) { mmMenu0 = CanvasHelper.ActiveMenu; mmMenuCleared = true; } CanvasHelper.ActiveMenu = MenuType.None; }
 			// (Raft walks at normal speed even when sprinting while its well-being is Bad; fed and watered it is Good)
 			Stat_WellBeing.Factor = WellBeing.Good;
 		}

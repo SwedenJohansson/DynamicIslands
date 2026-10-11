@@ -1522,8 +1522,10 @@ namespace DynamicIslands
 				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.DailyQuest });
 				IslandInfo.ForgetShown();
 				yield return new WaitForSeconds(1.5f);
-				Check(ref ok, DailyQuest.Current.Day == 500 && DailyQuest.Current.Open && (IslandInfo.LastShown ?? "").Contains("Today's quest") && (DailyQuest.JournalText() ?? "").Contains(DailyQuest.Describe(DailyQuest.Current)),
-					"a new day: " + DailyQuest.JournalText() + " (banner: " + IslandInfo.LastShown + ")");
+				// (another banner - the randomizer's finds - may come in the same moment: any of the last few)
+				string dayBanner = IslandInfo.Recent.Skip(Math.Max(0, IslandInfo.Recent.Count - 5)).LastOrDefault(b => b.Contains("Today's quest")) ?? IslandInfo.LastShown;
+				Check(ref ok, DailyQuest.Current.Day == 500 && DailyQuest.Current.Open && (dayBanner ?? "").Contains("Today's quest") && (DailyQuest.JournalText() ?? "").Contains(DailyQuest.Describe(DailyQuest.Current)),
+					"a new day: " + DailyQuest.JournalText() + " (banner: " + dayBanner + ")");
 				Check(ref ok, WorldOptions.WriteLines().Contains("@daily=" + DailyQuest.Current.Encode()), "kept in the world file");
 				JournalWindow.Open();
 				yield return new WaitForSeconds(0.5f);

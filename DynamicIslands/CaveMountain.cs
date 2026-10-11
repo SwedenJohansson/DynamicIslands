@@ -104,6 +104,7 @@ namespace DynamicIslands.Editor
 			var ground = new float[nx, nz];    // what is under them otherwise
 			var groundBy = new string[nx, nz]; // (tests: what that is)
 			var corridor = new float[nx, nz];  // a way in: the floor height there (NaN: not one)
+			var rimY = new float[nx, nz];      // a shell's low edge over lower ground, not a roof (NaN: none)
 			int groundMask = (int)LayerMasks.MASK_GroundMask_NonRaft | (1 << IslandSpawner.TerrainLayer);
 			bool backfaces = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true; // (the shells face inwards: from above, a roof is its back)
@@ -113,7 +114,7 @@ namespace DynamicIslands.Editor
 					for (int k = 0; k < nz; k++)
 					{
 						Vector3 at = new Vector3(x0 + i * Cell, rayTop, z0 + k * Cell);
-						float roof = float.NaN, gr = float.NegativeInfinity;
+						float roof = float.NaN, low = float.NaN, gr = float.NegativeInfinity;
 						foreach (RaycastHit h in Physics.RaycastAll(at, Vector3.down, rayLen, ~0, QueryTriggerInteraction.Ignore))
 						{
 							float f;
@@ -121,23 +122,56 @@ namespace DynamicIslands.Editor
 							{
 								// (only a roof counts: a floor open to the sky is the way in)
 								if (h.point.y > f + 1.5f && !(h.point.y <= roof)) roof = h.point.y;
+								else if (!(h.point.y <= low)) low = h.point.y; // (the shell below its floor too: Balboa's den goes on 11 m under it)
 							}
 							else if ((groundMask & (1 << h.collider.gameObject.layer)) != 0 && h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
 						}
 						top[i, k] = roof;
 						ground[i, k] = float.IsInfinity(gr) ? b.min.y - 2f : gr;
-						corridor[i, k] = float.NaN;
-						if (!float.IsNaN(roof)) continue;
-						foreach (Mouth m in mouths)
-						{
-							Vector3 d = at - m.Pos;
-							float a = Vector3.Dot(d, m.Along) - m.InsideAlong, s = Vector3.Dot(d, m.Side) - m.InsideSide;
-							if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > 0f) || (m.Minus && a < 0f))) { corridor[i, k] = m.FloorY; break; }
-						}
+						// (a shell's edge under the roof line hung over the ground beside it: a 1.5 m slot into the den - AU83)
+						rimY[i, k] = float.IsNaN(roof) && low > ground[i, k] + 0.3f ? low : float.NaN;
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backfaces; }
+			// The ways in: from where the roof ends along the passage, out (not from the inside point: a stretch of the den
+			// with no roof over it was left open, and the den showed through the hill from above - AU83)
+			var startPlus = new float[mouths.Count];
+			var startMinus = new float[mouths.Count];
+			for (int j = 0; j < mouths.Count; j++)
+			{
+				startPlus[j] = RoofEnd(mouths[j], 1f, top, x0, z0, nx, nz);
+				startMinus[j] = RoofEnd(mouths[j], -1f, top, x0, z0, nx, nz);
+			}
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					corridor[i, k] = float.NaN;
+					if (!float.IsNaN(top[i, k])) continue;
+					Vector3 at = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
+					for (int j = 0; j < mouths.Count; j++)
+					{
+						Mouth m = mouths[j];
+						Vector3 d = at - m.Pos;
+						float a = Vector3.Dot(d, m.Along) - m.InsideAlong, s = Vector3.Dot(d, m.Side) - m.InsideSide;
+						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j]) || (m.Minus && a < -startMinus[j]))) { corridor[i, k] = m.FloorY; break; }
+					}
+				}
 
+			// What the surface must stay over: the highest roof or low edge in the square and the ones round it (a shell's edge
+			// between two samples stuck out of a surface that fell away from the last roof sampled: a 2.2 m slot under it - AU83)
+			var cover = new float[nx, nz];
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					float c0 = float.NaN;
+					for (int a = Mathf.Max(i - 1, 0); a <= Mathf.Min(i + 1, nx - 1); a++)
+						for (int c = Mathf.Max(k - 1, 0); c <= Mathf.Min(k + 1, nz - 1); c++)
+						{
+							float y = float.IsNaN(top[a, c]) ? rimY[a, c] : top[a, c];
+							if (!float.IsNaN(y) && !(y <= c0)) c0 = y;
+						}
+					cover[i, k] = c0;
+				}
 			// The surface: over a roof, the highest roof around it; elsewhere falling away from the roofs nearby
 			var height = new float[nx, nz];
 			var on = new bool[nx, nz];
@@ -147,15 +181,8 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
-					if (float.IsNaN(top[i, k])) continue;
-					float peak = top[i, k];
-					for (int di = -1; di <= 1; di++)
-						for (int dk = -1; dk <= 1; dk++)
-						{
-							int a = i + di, c = k + dk;
-							if (a >= 0 && c >= 0 && a < nx && c < nz && top[a, c] > peak) peak = top[a, c];
-						}
-					peak += Over;
+					if (float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k])) continue;
+					float peak = cover[i, k] + Over;
 					for (int di = -reach; di <= reach; di++)
 						for (int dk = -reach; dk <= reach; dk++)
 						{
@@ -189,7 +216,7 @@ namespace DynamicIslands.Editor
 					float x = x0 + i * Cell, z = z0 + k * Cell;
 					float rough = Mathf.Clamp01((height[i, k] - ground[i, k]) / 3f); // (none at its foot: no bumps through the ground around)
 					height[i, k] += rough * ((Mathf.PerlinNoise(x * 0.13f, z * 0.13f) - 0.5f) * 2.2f + (Mathf.PerlinNoise(x * 0.4f + 7f, z * 0.4f) - 0.5f) * 0.6f);
-					if (!float.IsNaN(top[i, k]) && height[i, k] < top[i, k] + Over) height[i, k] = top[i, k] + Over;
+					if (!float.IsNaN(cover[i, k]) && float.IsNaN(corridor[i, k]) && height[i, k] < cover[i, k] + Over) height[i, k] = cover[i, k] + Over;
 					// (its foot goes on a little under the ground: no edge to see where it meets it)
 					on[i, k] = float.IsNaN(corridor[i, k]) && height[i, k] > ground[i, k] - 0.6f;
 				}
@@ -301,6 +328,29 @@ namespace DynamicIslands.Editor
 				}
 			}
 			return best;
+		}
+
+		/// <summary>
+		/// How far from a cave's inside point its roof goes along the passage (dir 1: its plus end, -1: its minus end): the last
+		/// roof on the passage's middle or either side of it, past gaps in the roof of up to 5 m.
+		/// </summary>
+		static float RoofEnd(Mouth m, float dir, float[,] top, float x0, float z0, int nx, int nz)
+		{
+			float last = 0f;
+			foreach (float s in new[] { 0f, -m.HalfWidth * 0.5f, m.HalfWidth * 0.5f })
+			{
+				float seen = 0f;
+				for (float a = 0f; a < 80f; a += Cell * 0.5f)
+				{
+					Vector3 p = m.Pos + m.Along * (m.InsideAlong + dir * a) + m.Side * (m.InsideSide + s);
+					int i = Mathf.RoundToInt((p.x - x0) / Cell), k = Mathf.RoundToInt((p.z - z0) / Cell);
+					if (i < 0 || k < 0 || i >= nx || k >= nz) break;
+					if (!float.IsNaN(top[i, k])) seen = a;
+					else if (a - seen > 5f) break;
+				}
+				last = Mathf.Max(last, seen);
+			}
+			return last;
 		}
 
 		/// <summary>The edge (i1,k1)-(i2,k2) of a surface square; (di,dk) points to the square beside it.</summary>

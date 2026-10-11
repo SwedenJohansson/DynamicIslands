@@ -171,6 +171,8 @@ namespace DynamicIslands.Editor
 			syncTries = 0;
 			nextSyncTry = 0;
 			hostToldVersion = false;
+			// (a notice from an earlier world is not about this host - and the same one must be shown again here)
+			VersionNotice = null;
 			Log("The host's world arrived: asking for its islands");
 		}
 

@@ -1550,7 +1550,7 @@ namespace DynamicIslands
 				return best;
 			};
 			float worst = 0f;
-			int sides = 0;
+			int sides = 0, buried = 0;
 			string at = "";
 			bool backs = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -1582,13 +1582,15 @@ namespace DynamicIslands
 							if (up > worst) { worst = up; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
 							break;
 						}
+						// (the shell under the ground here: the hill covers that side - no rim to see, no gap)
+						if (rock(here + Vector3.up * 0.05f, Vector3.down, 40f) < float.MaxValue) { sides++; buried++; break; }
 						prev = here + Vector3.up * 0.3f;
 						hasPrev = true;
 					}
 				}
 			}
 			finally { Physics.queriesHitBackfaces = backs; }
-			detail = sides + " sides walked, the largest gap under its rim " + worst.ToString("F1") + " m" + at;
+			detail = sides + " sides walked (" + buried + " under the hill), the largest gap under its rim " + worst.ToString("F1") + " m" + at;
 			return sides > 0 ? worst : 99f;
 		}
 
@@ -1721,29 +1723,48 @@ namespace DynamicIslands
 			if (big == null) { Fail("a cave on Raft's island: none of Raft's big islands near the raft after 10 km"); yield break; }
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
 			if (!WorldRandomizer.Current.On) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 77 });
-			// Go there first: Raft switches the ground of far islands off
-			yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
-			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
-			SetHour(11f);
-			RandomizerContent.ForceBigFinds = true;
 			int n = IslandWorldState.Islands.Count;
-			// (the den's spot is a roll: on a crowded or bumpy island of Raft's one roll may find none - a few rolls, as a
-			// world's islands would each have)
 			IslandWorldState.Entry e = null;
 			List<Transform> caves = new List<Transform>();
-			foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
+			// (a bumpy or crowded island - Twin peak - may have no spot a den fits on at all: then the next of Raft's big islands)
+			var tried = new List<Landmark>();
+			for (int isle = 0; isle < 3 && big != null; isle++)
 			{
+				tried.Add(big);
+				// Go there first: Raft switches the ground of far islands off
+				yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
+				for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
+				SetHour(11f);
 				RandomizerContent.ForceBigFinds = true;
-				try { StartTest(WorldRandomizer.ForceExtras(big, salt)); }
-				finally { }
-				yield return new WaitForSeconds(3f);
-				RandomizerContent.ForceBigFinds = false;
-				e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
-				for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
-				if (e == null || e.Root == null) continue;
-				caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				// (the den's spot is a roll: on a crowded or bumpy island of Raft's one roll may find none - a few rolls, as a
+				// world's islands would each have)
+				foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
+				{
+					RandomizerContent.ForceBigFinds = true;
+					try { StartTest(WorldRandomizer.ForceExtras(big, salt)); }
+					finally { }
+					yield return new WaitForSeconds(3f);
+					RandomizerContent.ForceBigFinds = false;
+					e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
+					for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+					if (e == null || e.Root == null) continue;
+					caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+					if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
+					Log("  (no den with roll " + salt + ": another)");
+				}
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
-				Log("  (no den with roll " + salt + ": another)");
+				Landmark last = big;
+				big = WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && !tried.Contains(l)).OrderBy(l => (l.transform.position - last.transform.position).sqrMagnitude).FirstOrDefault();
+				// (none other loaded: back on the raft and sail on until another of Raft's big islands is near, as at the start)
+				if (big == null)
+				{
+					Raft onRaft = UnityEngine.Object.FindObjectOfType<Raft>();
+					if (onRaft != null) yield return PutPlayer(player, onRaft.transform.position + Vector3.up * 2f, false);
+					Func<Landmark> nextBig = () => WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && !tried.Contains(l)).OrderBy(l => (l.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
+					for (int i = 0; i < 10 && big == null; i++) { yield return SailRoutine(40f, 25f); big = nextBig(); }
+				}
+				if (big == null) { big = last; break; }
+				Log("  (no den on '" + last.name + "': the next of Raft's big islands, '" + big.name + "')");
 			}
 			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
 			Log("Den extras: '" + e.Name + "'");

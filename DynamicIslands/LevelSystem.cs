@@ -983,7 +983,7 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				if (!PlayerLevels.On || !Raft_Network.IsHost) return;
+				if (!(PlayerLevels.On || DailyQuest.On) || !Raft_Network.IsHost) return; // (also for the Daily quest's kills with levels off)
 				Message_NetworkEntity_Damage d = msg as Message_NetworkEntity_Damage;
 				if (d == null || d.damageInflictorEntityType != EntityType.Player) return;
 				Network_Entity entity = NetworkIDManager.GetNetworkIDFromObjectIndex<Network_Entity>(d.entityObjectIndex);
@@ -1008,7 +1008,7 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				if (!PlayerLevels.On || entity == null || entity.entityType != EntityType.Enemy) return;
+				if (!(PlayerLevels.On || DailyQuest.On) || entity == null || entity.entityType != EntityType.Enemy) return; // (Factor is 1 with levels off)
 				if (damageInflictorEntityType == EntityType.Environment && LevelFireworkPatch.By != 0UL)
 				{
 					// a firework's hit (Raft counts it as the world's): EXP for the player who lit it, its damage as Raft's

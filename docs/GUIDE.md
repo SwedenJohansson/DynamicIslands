@@ -3070,8 +3070,8 @@ at once.
 
 **I joined and couldn't move.** When you join where you stood last time, the mod holds you there until the island under
 you has come ("Waiting for the island you stood on to load..."): at most 30 seconds, and it lets go at once if you are
-hurt. Builds from before 2026-10-10 could hold a player over the sea for longer, where the shark came: install the newest
-release on every machine.
+hurt. A player who comes back onto the raft is never held: the raft drifts, so Raft itself puts them on it. Builds from
+before 2026-10-11 could hold a player over the sea, where the shark came: install the newest release on every machine.
 
 **"Some parts of Custom Islands are off".** A Raft update changed something the mod relies on: the box names the parts
 that won't work until the mod is updated; everything else works and your islands and worlds aren't changed. Please
