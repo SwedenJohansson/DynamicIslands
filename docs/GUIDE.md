@@ -2312,9 +2312,12 @@ whether you got the reward), and when the next one comes (at daybreak). `DailyQu
 
 Now and then (on about one day in eight, never before day 3) a **second shark** comes beside the usual one. It is
 **rust-red**, and it doesn't leave on its own: it stays until it is killed. Once it is, no other comes for **5-8 days**.
+About one rogue in five is a **giant**: twice Bruce's size, with three times his health and bites half again as hard on
+players (its bites on the raft are a normal shark's). Its banner says "A giant rogue shark".
 A banner says when it comes and when it dies. While it lives, the usual shark still comes back when killed; the rogue's
 body brings no new shark. It is saved with the world, keeps its colour after a load, and every player sees the same one.
-Switching the option off leaves a living rogue until it is killed. `RogueShark` shows where it is.
+Switching the option off leaves a living rogue until it is killed. `RogueShark` shows where it is; the host's
+`RogueShark giant` brings a giant one now.
 
 #### Silver & golden barrels
 

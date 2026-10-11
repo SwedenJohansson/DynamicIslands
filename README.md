@@ -420,7 +420,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   fish, or defeat a few monsters); done before dark, each player gets a small reward of basic resources or food once.
   The journal shows it under its page: how far along, the reward, done or not, when the next one comes.
 - **Rogue shark:** now and then a second, rust-red shark comes beside the usual one and stays until it is killed;
-  after that none comes for 5-8 days.
+  after that none comes for 5-8 days. About one in five is a giant: twice the size, three times the health.
 - **Silver & golden barrels:** now and then a barrel in the sea is silver (1 in 40) or golden (1 in 150), with a few
   extra nails, rope and scrap (gold: more, and sometimes a battery or bolts).
 - **Storm days:** on about one day in ten the sea is rough and it rains all day (Raft's own storm weather); the shark
@@ -590,7 +590,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `WorldOptions` / `WorldOptions +option -option` | Game (changing: host); main menu | Shows the world's World settings, or changes them for every player (options: ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades) |
 | `DailyQuest` | Game | Today's daily quest (world option Daily quest): the task, how far, the reward |
 | `UpgradeTable` | Game | The upgrade research table (world option Extra upgrades): what the world has researched and learned there |
-| `RogueShark` | Game | The rogue shark (world option Rogue shark): alive or not, and the day before which none comes |
+| `RogueShark` / `RogueShark spawn` / `RogueShark giant` | Game (spawn, giant: host) | The rogue shark (world option Rogue shark): alive or not, giant or not, and the day before which none comes; spawn / giant bring one now |
 | `Barrels` / `Barrels roll <index> [<to>]` | Game | The barrels in the sea and which are silver or golden (world option Silver & golden barrels); `roll`: what a barrel index is in this world |
 | `StormDays` / `StormDays roll <from> <to>` | Game | Whether today is a storm day, the next one, the weather and the shark's factor (world option Storm days); `roll`: the storm days in a range |
 | `Traders` / `Traders offers <seed>` / `Traders bring` | Game | The trader rafts' stalls loaded now and their stock (world option Trader raft); `offers`: what a trader raft with that seed sells; `bring` (host): a trader raft ahead now |

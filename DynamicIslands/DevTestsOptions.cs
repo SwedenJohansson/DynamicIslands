@@ -1619,7 +1619,7 @@ namespace DynamicIslands
 
 		#region Rogue shark
 
-		[ConsoleCommand(name: "CIRogueShark", docs: "Dev, world (host): the option Rogue shark - the day's roll comes from the seed and the day (the same twice, none before day 3, about 12 % of days), the quiet days 5-8, written and read back; the option off: none on a rolling day; on: a second shark comes (Raft's own spawn), rust-red, not the randomizer's, kept in the world file; Bruce killed while it lives: Raft counts him as the last shark (a new one comes); the rogue killed: none for its quiet days, its body brings no new shark; after them the next rolling day brings one; options and the rogue put back after")]
+		[ConsoleCommand(name: "CIRogueShark", docs: "Dev, world (host): the option Rogue shark - the day's roll comes from the seed and the day (the same twice, none before day 3, about 12 % of days), the quiet days 5-8, written and read back; the option off: none on a rolling day; on: a second shark comes (Raft's own spawn), rust-red, not the randomizer's, kept in the world file; Bruce killed while it lives: Raft counts him as the last shark (a new one comes); the rogue killed: none for its quiet days, its body brings no new shark; after them the next rolling day brings one; a giant (one now): about twice a plain shark's size, more health, saved as one; options and the rogue put back after")]
 		public static void RogueSharkTestCommand() { StartTest(RogueSharkRoutine()); }
 
 		static List<AI_NetworkBehavior_Shark> LiveSharks()
@@ -1646,7 +1646,11 @@ namespace DynamicIslands
 				bool quiet = Enumerable.Range(0, 200).All(d => { int q = RogueShark.QuietDays(seed, d); return q >= RogueShark.QuietMin && q <= RogueShark.QuietMax && q == RogueShark.QuietDays(seed, d); });
 				Check(ref ok, quiet, "quiet days " + RogueShark.QuietMin + "-" + RogueShark.QuietMax + " (day 10: " + RogueShark.QuietDays(seed, 10) + ")");
 				RogueShark.ReadLine("rogueshark", "123;45");
-				Check(ref ok, RogueShark.Index == 123 && RogueShark.QuietUntil == 45 && RogueShark.WriteLines().FirstOrDefault() == "@rogueshark=123;45", "written and read back");
+				Check(ref ok, RogueShark.Index == 123 && RogueShark.QuietUntil == 45 && !RogueShark.Giant && RogueShark.WriteLines().FirstOrDefault() == "@rogueshark=123;45", "written and read back");
+				RogueShark.ReadLine("rogueshark", "123;45;1");
+				Check(ref ok, RogueShark.Giant && RogueShark.WriteLines().FirstOrDefault() == "@rogueshark=123;45;1", "a giant written and read back");
+				int giants = Enumerable.Range(0, 2000).Count(d => RogueShark.RollsGiant(seed, d));
+				Check(ref ok, giants > 2000 * 0.12f && giants < 2000 * 0.28f && RogueShark.RollsGiant(seed, 77) == RogueShark.RollsGiant(seed, 77), "giants: " + giants + " of 2000 rolls");
 				RogueShark.Reset();
 				int day = Enumerable.Range(RogueShark.FirstDay + 1, 500).First(d => RogueShark.Rolls(seed, d));
 
@@ -1700,6 +1704,25 @@ namespace DynamicIslands
 				RogueShark.TestDay = next;
 				yield return new WaitForSeconds(2.5f);
 				Check(ref ok, RogueShark.Alive && RogueShark.Index != dead, "day " + next + " (the next rolling one after the quiet days): another rogue #" + RogueShark.Index);
+				// a giant: twice a plain shark's size, more health
+				AI_NetworkBehavior_Shark plain = LiveSharks().FirstOrDefault(s => !RogueShark.IsRogue(s));
+				AI_NetworkBehavior_Shark was = RogueShark.Find();
+				if (was != null) was.networkEntity.Damage(100000f, was.transform.position, Vector3.up, EntityType.Player, true);
+				float gone = Time.time + 10f;
+				while (Time.time < gone && RogueShark.Index != 0) yield return new WaitForSeconds(0.5f);
+				RogueShark.QuietUntil = 0;
+				RogueShark.TestDay = null;
+				AI_NetworkBehavior_Shark giant = RogueShark.Spawn(true);
+				yield return new WaitForSeconds(2.5f);
+				float plainSize = plain != null ? WorldRandomizer.BodyOf(plain).Select(r => r.bounds.size.magnitude).DefaultIfEmpty(0f).First() : 0f;
+				float giantSize = giant != null ? WorldRandomizer.BodyOf(giant).Select(r => r.bounds.size.magnitude).DefaultIfEmpty(0f).First() : 0f;
+				float ratio = plainSize > 0f ? giantSize / plainSize : 0f;
+				Check(ref ok, giant != null && RogueShark.Giant && ratio > 1.6f && ratio < 2.5f && (IslandInfo.LastShown ?? "").Contains("giant"),
+					"a giant #" + RogueShark.Index + ": " + ratio.ToString("F2") + "x a plain shark's size (" + plainSize.ToString("F1") + " -> " + giantSize.ToString("F1") + "; banner: " + IslandInfo.LastShown + ")");
+				float hpBefore, hp = giant != null && giant.networkEntity != null && giant.networkEntity.stat_health != null ? giant.networkEntity.stat_health.Max : 0f;
+				Check(ref ok, giant != null && CreatureSpawner.HealthBefore.TryGetValue(giant, out hpBefore) && hp > hpBefore * 2.5f,
+					"its health " + hp + " (Raft's " + (giant != null && CreatureSpawner.HealthBefore.ContainsKey(giant) ? CreatureSpawner.HealthBefore[giant].ToString() : "?") + ")");
+				Check(ref ok, WorldOptions.WriteLines().Contains("@rogueshark=" + RogueShark.Index + ";0;1"), "the giant kept in the world file");
 			}
 			finally
 			{

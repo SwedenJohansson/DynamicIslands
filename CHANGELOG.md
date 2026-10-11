@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
+  times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under
   its page: what to do and how far along (3 / 14 planks, with a bar), the reward, whether it's done and when the next
   one comes.
