@@ -244,6 +244,28 @@ namespace DynamicIslands
 			Log("PASS: hit once");
 		}
 
+		[ConsoleCommand(name: "CIRaceCount", docs: "Dev, in game (either player), IM28: what a race of two players changes, counted before and after: CIRaceCount <island> <animal kind> <item part, * = any>; logs RACE kills <this player's kills> live <live animals of the kind> pickups <that item's pickups left on the island> item <its name> have <how many this player has>")]
+		public static void RaceCountCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 3) { Fail("CIRaceCount <island> <animal kind> <item part>"); return; }
+			string kind = args[1], part = string.Join(" ", args.Skip(2).ToArray());
+			int live = AnimalsOf(e, kind, 150f).Count(a => a.networkEntity != null && !a.networkEntity.IsDead);
+			List<PickupItem> left = e.Root.GetComponentsInChildren<PickupItem>()
+				.Where(p => p.gameObject.activeInHierarchy && p.GetComponent<HarvestableTree>() == null && (part == "*" ||
+					p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
+			PickupItem first = left.FirstOrDefault(p => p.itemInstance != null && p.itemInstance.baseItem != null && p.GetComponent<PickupItem_Networked>() != null);
+			string item = first != null ? first.itemInstance.UniqueName : "";
+			// (the first one's object name, as CIPick finds it: up to a space or bracket)
+			string obj = first != null ? first.name.Split(' ', '(')[0] : "?";
+			if (part != "*") left = left.Where(p => p.itemInstance != null && p.itemInstance.UniqueName == item).ToList();
+			Network_Player me = RAPI.GetLocalPlayer();
+			int have = item.Length > 0 && me != null ? me.Inventory.GetItemCount(item) : -1;
+			Log("RACE kills " + (PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Kills : -1) + " live " + live + " pickups " + left.Count + " item " + (item.Length > 0 ? item : "?") + " have " + have + " obj " + obj);
+			Log("PASS: race count");
+		}
+
 		[ConsoleCommand(name: "CIHit", docs: "Dev, in game (either player): defeats the animals of a kind at an island, as a player's weapon would (Raft's DamageEntity): CIHit <island> <kind, e.g. Warthog>")]
 		public static void HitCommand(string[] args)
 		{

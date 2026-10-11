@@ -322,6 +322,34 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
 	static class RestoreRGDGamePatch
 	{
-		static void Prefix(RGD_Game game) { WorldCopy.LoadingStamp = game != null ? game.lastPlayedDateTicks : 0L; }
+		static void Prefix(RGD_Game game)
+		{
+			WorldCopy.LoadingStamp = game != null ? game.lastPlayedDateTicks : 0L;
+			string folder;
+			WorldCopy.LoadedFolder = game != null && SavesFolderPatch.Folders.TryGetValue(game, out folder) ? folder : null;
+		}
+	}
+
+	/// <summary>
+	/// The folder each world's save in the Load Game list was read from. Raft goes by the name kept inside the save
+	/// (CurrentGameFileName), so a world folder renamed by hand is played, but its folder is not found by that name.
+	/// </summary>
+	[HarmonyPatch(typeof(SaveAndLoad), "GetLatestRGDGameFromBackupFolders")]
+	static class SavesFolderPatch
+	{
+		internal static readonly System.Runtime.CompilerServices.ConditionalWeakTable<RGD_Game, string> Folders = new System.Runtime.CompilerServices.ConditionalWeakTable<RGD_Game, string>();
+
+		static void Postfix(System.IO.DirectoryInfo worldDirInfo, RGD_Game __result)
+		{
+			if (__result == null || worldDirInfo == null) return;
+			try { Folders.Remove(__result); Folders.Add(__result, worldDirInfo.FullName); } catch { }
+		}
+	}
+
+	/// <summary>A new world: no folder from the Load Game list.</summary>
+	[HarmonyPatch(typeof(NewGameBox), "Button_CreateNewGame")]
+	static class NewGameFolderPatch
+	{
+		static void Prefix() { WorldCopy.LoadedFolder = null; }
 	}
 }

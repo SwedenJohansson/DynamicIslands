@@ -143,6 +143,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The last load read an older save's copy (tests): "" or the save folder's name.</summary>
 		public static string LastOlderSave { get; private set; }
 
+		/// <summary>The folder Raft loaded the world from (its Load Game list), or null (a new world, a joined one).</summary>
+		public static string LoadedFolder { get; set; }
+
 		/// <summary>Raft's folder of the world being played (World\&lt;name&gt;), or null.</summary>
 		public static string RaftWorldFolder
 		{
@@ -152,7 +155,10 @@ namespace DynamicIslands.Editor
 				{
 					if (string.IsNullOrEmpty(SaveAndLoad.WorldPath) || string.IsNullOrEmpty(SaveAndLoad.CurrentGameFileName)) return null;
 					string dir = Path.Combine(SaveAndLoad.WorldPath, SaveAndLoad.CurrentGameFileName);
-					return Directory.Exists(dir) ? dir : null;
+					if (Directory.Exists(dir)) return dir;
+					// (a folder renamed by hand: Raft plays it under the name kept in its save, and writes its next save to a
+					// folder of that name; until then the copy that came with the world is in the folder it was loaded from - IM41)
+					return LoadedFolder != null && Directory.Exists(LoadedFolder) ? LoadedFolder : null;
 				}
 				catch { return null; }
 			}

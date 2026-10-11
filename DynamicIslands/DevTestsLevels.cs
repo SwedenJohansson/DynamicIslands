@@ -431,6 +431,48 @@ namespace DynamicIslands
 
 		static bool Near(float a, float b) { return Mathf.Abs(a - b) <= 0.002f * Mathf.Max(1f, Mathf.Abs(b)); }
 
+		[ConsoleCommand(name: "CILevelLateState", docs: "Dev, in game (player 2, the level up system on), IL29: the host's \"state\" reply arriving late - one with less EXP than this player has keeps theirs and tells the host; one with more is taken; one with the same EXP keeps the points spent since")]
+		public static void LevelLateState()
+		{
+			StartTest(LevelLateStateRoutine());
+		}
+
+		static IEnumerator LevelLateStateRoutine()
+		{
+			if (Raft_Network.IsHost || !PlayerLevels.On || PlayerLevels.Mine == null) { Fail("late state: needs player 2 in a world with the level up system on"); yield break; }
+			bool ok = true;
+			LevelRecord start = LevelRecord.Decode(PlayerLevels.Mine.Encode());
+			var sent = new List<IslandNetMessage>();
+			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.Levels && m.Name == "mine") sent.Add(m); };
+			try
+			{
+				// EXP earned right after joining (the host's reply to the join is still on its way)
+				PlayerLevels.SetMine(new LevelRecord { Xp = start.Xp + 500, Points = (int[])start.Points.Clone(), Kills = start.Kills + 2 });
+			}
+			catch (Exception e) { IslandNetwork.Loopback = null; Fail("late state: " + e.Message); yield break; }
+			yield return new WaitForSeconds(1.5f);
+			sent.Clear();
+			// The late reply: the record the host had before that EXP
+			PlayerLevels.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Levels, Name = "state", Count = 1, Data = start.Encode() }, new Network_UserId(0UL));
+			Check(ref ok, PlayerLevels.Mine.Xp == start.Xp + 500 && PlayerLevels.Mine.Kills == start.Kills + 2, "a late reply with less EXP keeps this player's (" + PlayerLevels.Mine.Xp + " EXP, was " + start.Xp + " in the reply)");
+			yield return new WaitForSeconds(1.5f);
+			IslandNetMessage told = sent.LastOrDefault();
+			Check(ref ok, told != null && LevelRecord.Decode(told.Data).Xp == start.Xp + 500, "and tells the host its record (" + (told != null ? told.Data : "nothing sent") + ")");
+			// A reply with more EXP (the host knows of EXP this player's record missed): taken
+			int[] morePoints = (int[])start.Points.Clone();
+			PlayerLevels.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Levels, Name = "state", Count = 1, Data = new LevelRecord { Xp = start.Xp + 900, Points = morePoints, Kills = start.Kills + 5 }.Encode() }, new Network_UserId(0UL));
+			Check(ref ok, PlayerLevels.Mine.Xp == start.Xp + 900 && PlayerLevels.Mine.Kills == start.Kills + 5, "a reply with more EXP is taken (" + PlayerLevels.Mine.Xp + ")");
+			// The same EXP again after a point was spent here: the point stays
+			int[] spent = (int[])PlayerLevels.Mine.Points.Clone(); spent[LevelRules.Health]++;
+			PlayerLevels.SetMine(new LevelRecord { Xp = PlayerLevels.Mine.Xp, Points = spent, Kills = PlayerLevels.Mine.Kills });
+			PlayerLevels.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Levels, Name = "state", Count = 1, Data = new LevelRecord { Xp = start.Xp + 900, Points = morePoints, Kills = start.Kills + 5 }.Encode() }, new Network_UserId(0UL));
+			Check(ref ok, PlayerLevels.Mine.Points[LevelRules.Health] == spent[LevelRules.Health], "a reply with the same EXP keeps the point spent since");
+			IslandNetwork.Loopback = null;
+			// (the host gets the newest record: its own copy only grows)
+			yield return new WaitForSeconds(1.5f);
+			if (ok) Log("PASS: late state reply"); else Fail("late state reply");
+		}
+
 		static void LevelCleanup(IslandWorldState.Entry entry)
 		{
 			IslandNetwork.Loopback = null;

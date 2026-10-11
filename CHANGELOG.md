@@ -172,6 +172,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A world folder renamed by hand:** Raft still loads it, and now the mod does too - the plan, levels and island
+  state come from the folder Raft picked instead of being lost.
 - **No hitch when a random island is chosen:** with many saved islands, picking the next one read the islands folder
   again for every line of spawnpool.txt (a quarter of a second with 1,600 islands); now about 20 ms. A 20-hour world
   (150 islands, a 200-page journal) was measured to load, save and show its Receiver dots without trouble.
