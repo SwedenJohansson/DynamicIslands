@@ -180,6 +180,10 @@ namespace DynamicIslands
 			{
 				float g = foot.y - (land.SampleHeight(foot) + land.transform.position.y);
 				if (g > -0.3f && g < best) best = Mathf.Max(0f, g);
+				// (its foot under the land's surface: set into the ground - a rock sunk into a beach. The ray starts under the
+				// land then and finds nothing, which read as "nothing under it")
+				Vector3 lp = land.transform.position, ls = land.terrainData.size;
+				if (g <= -0.3f && foot.x >= lp.x && foot.x <= lp.x + ls.x && foot.z >= lp.z && foot.z <= lp.z + ls.z) best = 0f;
 			}
 			return best == float.MaxValue ? 9999f : best;
 		}
