@@ -172,6 +172,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **No hitch when a random island is chosen:** with many saved islands, picking the next one read the islands folder
+  again for every line of spawnpool.txt (a quarter of a second with 1,600 islands); now about 20 ms. A 20-hour world
+  (150 islands, a 200-page journal) was measured to load, save and show its Receiver dots without trouble.
 - **Snow and cream animals are light now:** the world randomizer's light colours only multiplied the animal's
   texture, so a dark animal such as the warthog stayed almost as dark as Raft's own. They now lift the dark parts
   first, then tint.

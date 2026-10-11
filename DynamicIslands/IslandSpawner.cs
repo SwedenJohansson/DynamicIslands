@@ -227,10 +227,27 @@ namespace DynamicIslands.Editor
 		public static IEnumerable<string> ListSavedIslands()
 		{
 			if (!Directory.Exists(DynamicIslands.assetpath)) return Enumerable.Empty<string>();
-			return Directory.GetFiles(DynamicIslands.assetpath, "*" + IslandFile.Extension)
-				.Select(Path.GetFileNameWithoutExtension)
-				.OrderBy(n => n);
+			// (kept until the folder changes, and 30 s at most: a scan with 1,600 islands took 60 ms - each random island's
+			// pick did several - US1)
+			lock (savedLock)
+			{
+				System.DateTime changed = Directory.GetLastWriteTimeUtc(DynamicIslands.assetpath);
+				if (savedNames == null || changed != savedChanged || System.Environment.TickCount - savedAt > 30000)
+				{
+					savedNames = Directory.GetFiles(DynamicIslands.assetpath, "*" + IslandFile.Extension)
+						.Select(Path.GetFileNameWithoutExtension)
+						.OrderBy(n => n).ToArray();
+					savedChanged = changed;
+					savedAt = System.Environment.TickCount;
+				}
+				return savedNames;
+			}
 		}
+
+		static readonly object savedLock = new object();
+		static string[] savedNames;
+		static System.DateTime savedChanged;
+		static int savedAt;
 
 		public static TerrainData CreateTerrainData(Vector3 size, int heightmapResolution)
 		{

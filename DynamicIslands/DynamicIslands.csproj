@@ -72,6 +72,7 @@
     <Compile Include="DevTestsMultiplayer.cs" />
     <Compile Include="DevTestsMultiplayerFull.cs" />
     <Compile Include="DevTestsAll.cs" />
+    <Compile Include="DevTestsBigWorld.cs" />
     <Compile Include="DevTestsGenerator.cs" />
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />

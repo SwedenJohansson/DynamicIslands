@@ -669,17 +669,20 @@ namespace DynamicIslands.Editor
 			// islands any world plan brings, even when listed by name - they only come in their own plans: a plan's island that
 			// turned up by chance in another world was out of its story - the user, 2026-10-06)
 			HashSet<string> ofPlans = AllPlansIslandNames();
+			// (the islands folder read once: a pool line by name looked at it again each time - 0.2 s a pick, US1)
+			var all = new HashSet<string>(IslandSpawner.ListSavedIslands(), StringComparer.OrdinalIgnoreCase);
 			var saved = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(GeneratedPrefix, StringComparison.OrdinalIgnoreCase) &&
 				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && !ofPlans.Contains(n)).ToList();
 			var listed = new HashSet<string>(poolLines.Where(p => p.Key != "*").Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+			var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (var p in poolLines)
 			{
 				if (p.Key == "*")
 				{
 					foreach (string s in saved)
-						if (!listed.Contains(s) && !result.Any(x => x.Key.Equals(s, StringComparison.OrdinalIgnoreCase))) result.Add(new KeyValuePair<string, float>(s, p.Value));
+						if (!listed.Contains(s) && taken.Add(s)) result.Add(new KeyValuePair<string, float>(s, p.Value));
 				}
-				else if (IslandSpawner.ListSavedIslands().Contains(p.Key, StringComparer.OrdinalIgnoreCase))
+				else if (all.Contains(p.Key))
 				{
 					if (!ofPlans.Contains(p.Key)) result.Add(p);
 				}
@@ -688,7 +691,9 @@ namespace DynamicIslands.Editor
 			}
 			if (GeneratedWeight > 0f) result.Add(new KeyValuePair<string, float>(GeneratedEntry, GeneratedWeight));
 			HashSet<string> planned = forWorld ? PlanIslandNames() : new HashSet<string>();
-			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !NotAgain(p.Key) && !planned.Contains(p.Key) && !TooEarly(p.Key)))).ToList();
+			// (the world's islands by name, once: each name looked through all of them - 40 ms with 150 islands, US1)
+			ILookup<string, IslandWorldState.Entry> inWorld = forWorld ? IslandWorldState.Islands.ToLookup(e => e.HostName ?? e.Name ?? "", StringComparer.OrdinalIgnoreCase) : null;
+			return result.Where(p => p.Value > 0f && (!forWorld || (WorldIslands.TakesPart(p.Key) && !planned.Contains(p.Key) && !NotAgain(p.Key, inWorld[p.Key]) && !TooEarly(p.Key)))).ToList();
 		}
 
 		/// <summary>An island whose "not before" (IslandProps.NotBeforeKm) this world hasn't sailed yet: not picked by chance until then.</summary>
@@ -779,10 +784,12 @@ namespace DynamicIslands.Editor
 		/// it has no quest, and none of its notes left unread - it never comes again), or it is here already (loaded or loading
 		/// near the players). An island the world has that isn't finished and was left behind may be picked: it comes back as
 		/// it was (TrySpawn) - also one whose quest is done but with a note missed (the user, 2026-10-08).</summary>
-		internal static bool NotAgain(string name)
+		internal static bool NotAgain(string name) { return NotAgain(name, IslandWorldState.Islands); }
+
+		static bool NotAgain(string name, IEnumerable<IslandWorldState.Entry> islands)
 		{
 			if (name == GeneratedEntry || name.StartsWith(TypePrefix, StringComparison.OrdinalIgnoreCase)) return false;
-			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			foreach (IslandWorldState.Entry e in islands)
 			{
 				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 				if (e.Failed) continue;
