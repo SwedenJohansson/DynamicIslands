@@ -275,7 +275,13 @@ This is the most common change in history. It does not touch any `.cs` file.
 - Both commands read the files from `Mods\DynamicIslands\recipes\` (`DevTests.RecipeFolder`), not from `content\`.
 - Every object a recipe names must be in the editor, or the recipe stops. `content/objects/objects_<category>.txt` holds sizes measured by `CIMeasureObjects`.
 - A plan recipe uses `plan new` ... `plan save`. If Check finds a problem, the recipe stops.
-**Test**: `CIRecipe <name>`, then `CIPlay <name>`.
+- **Everything stands on the ground** (the user, 2026-10-11). Every structure, cave piece, prop and plant rests on the land,
+  the sea floor or another object: nothing hovering, no house with its legs in the air on a slope, nothing buried whole,
+  cave rims flush with the ground. Roofs rest *on* pillars or walls; foundations are never used as roofs. On a slope,
+  flatten the ground under a building first (`ramp`/brush) or give it legs that reach down. Think about this while
+  placing, not only at the end: set a height only when the object must sit on something else.
+**Test**: `CIRecipe <name>`, `CIFloating` in the editor (0 problems), then `CIPlay <name>`, and in a test world
+`CIGroundIslands <name>` (TEST_CATALOGUE §G). A new plan: `CIGroundIslands plans`.
 
 ## Every feature
 - Update the docs in the same commit (README `## Documentation`):

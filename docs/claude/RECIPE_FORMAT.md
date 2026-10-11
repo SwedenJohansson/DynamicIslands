@@ -158,6 +158,9 @@ plan already open.
   `ramp` pieces. Objects on the ground with no height go down to the lowest ground under their base.
 - `save` hides Raft's sea finds that the recipe's strokes lifted out of the water, and plants, rocks and finds buried
   whole.
+- A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check
+  each island with `CIFloating` (editor) and `CIGroundIslands <name>` (world) - CHANGE_CHECKLISTS "Everything stands on
+  the ground".
 - `save` logs `play tests of '<island>' need 'offset X Z'` when the land centre moved from the origin. Put that
   `offset` line in the island's `.play` tests (see `PLAY_FORMAT.md`) whenever the recipe's land changes.
 

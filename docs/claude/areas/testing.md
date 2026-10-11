@@ -50,6 +50,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 | Scenarios | `CIScRam`, `CIScDeath`, `CIScCatch` | `DevTestsScenario*.cs` and others |
 | Two players | `CIMPFull`, `CIMPState`, `CIJoinHost`, `CIGoto`, `CIUse`, `CIOpenChest`, `CIReadNote` | `DevTestsMultiplayer*.cs`, `DevTestsUI.cs` |
 | Library content | `CIRecipe`, `CIPlay`, `CIView`, `CIViewAt`, `CIFloating`, `CIFloatingSweep`, `CIRemoveBuried`, `CISettle`, `CIFeatureCheck` | `DevTestsRecipe.cs`, `DevTestsPlay.cs`, `DevTestsFeatureCheck.cs` |
+| On the ground, in a world (`tools\groundall.ps1`) | `CIGroundWorld`, `CIGroundIslands` | `DevTestsGround.cs` |
 
 Prefix families (`CIGen*`, `CIRandomizer*`, `CIStory*`, `CIPlan*`, `CIQuestBook*`, `CINoteBook*`, `CIProbe*`, `CIMeasure*`,
 `CIDump*`) are spread over several files. Each command's `docs:` text starts with `Dev`, mostly followed by where it runs
