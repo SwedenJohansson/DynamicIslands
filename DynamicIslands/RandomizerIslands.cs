@@ -479,7 +479,7 @@ namespace DynamicIslands.Editor
 		/// Whether the ground under a den's footprint (behind its mouth) falls more than a metre or so under its floor, where
 		/// its rim would float over it. ground(x, z) gives the ground's height there.
 		/// </summary>
-		public static bool RimFloats(Cave cave, Func<float, float, float> ground)
+		public static bool RimFloats(Cave cave, Func<float, float, float> ground, float drop = 1.5f)
 		{
 			Quaternion turn = Quaternion.Euler(0f, cave.Yaw, 0f);
 			Vector3 mid = cave.Pivot + turn * cave.Info.Centre;
@@ -489,7 +489,7 @@ namespace DynamicIslands.Editor
 					float b = i * Mathf.PI / 8f;
 					Vector3 q = mid + turn * new Vector3(Mathf.Cos(b) * cave.Info.Size.x * 0.5f * e, 0f, Mathf.Sin(b) * cave.Info.Size.z * 0.5f * e);
 					if (Vector2.Dot(new Vector2(q.x - cave.Mouth.x, q.z - cave.Mouth.z), cave.Out) > -1f) continue;
-					if (ground(q.x, q.z) < cave.Floor - (e < 1f ? 1f : 1.5f)) return true;
+					if (ground(q.x, q.z) < cave.Floor - (e < 1f ? drop * 2f / 3f : drop)) return true;
 				}
 			return false;
 		}
@@ -524,8 +524,9 @@ namespace DynamicIslands.Editor
 					Vector2 outward = (Vector2)(Quaternion.Euler(0f, 0f, turn) * away);
 					Cave cave = PlaceDen(name, c, outward, spot.Value.y);
 					// Inside the den: Raft's ground can't be changed, so the floor goes on its highest point there (ground a
-					// little under the floor is hidden by it); too bumpy if it drops more than 1.5 m (the den has no floor of its own: where Raft's
-					// ground fell away under it you saw out under its walls - AU83), nothing of Raft's in it
+					// little under the floor is hidden by it); too bumpy if it drops more than 3 m (the den has no floor of its own: where Raft's
+					// ground fell away under it you saw out under its walls - AU83; CaveMountain's skirt now closes that down to the ground,
+					// but a deeper drop makes a wall of rock - at 1.5 m no den fitted on any of Raft's big islands), nothing of Raft's in it
 					float top = float.MinValue, low = float.MaxValue;
 					bool ok = true;
 					for (float t = 1f; t <= cave.Depth && ok; t += 2f)
@@ -546,7 +547,7 @@ namespace DynamicIslands.Editor
 						Vector3 d = toDen * new Vector3(x.x - cave.Pivot.x, 0f, x.z - cave.Pivot.z) - new Vector3(cave.Info.Centre.x, 0f, cave.Info.Centre.z);
 						return d.x * d.x / (ax * ax) + d.z * d.z / (az * az) < 1f;
 					})) { raftThings++; continue; }
-					if (top - low > 1.5f) { bumpy++; continue; }
+					if (top - low > 3f) { bumpy++; continue; }
 					if (top - 0.3f > cave.Floor + 0.01f || top - 0.3f < cave.Floor - 0.01f) cave = PlaceDen(name, c, outward, top - 0.3f);
 					// Around it: land under the whole outcrop (not hanging over the sea)
 					for (int i = 0; i < 12 && ok; i++)
@@ -559,7 +560,7 @@ namespace DynamicIslands.Editor
 					// and its rim on the ground all round (not floating over ground that falls away - AU83): Raft's ground can't be
 					// raised round it as a generated island's is, so it goes only where the ground is as high as its floor or higher
 					// under its footprint, but in front of its mouth
-					if (RimFloats(cave, (x, z) => { Vector3 hit, n; return g.Hit(x, z, out hit, out n) ? hit.y : float.MinValue; })) { rim++; continue; }
+					if (RimFloats(cave, (x, z) => { Vector3 hit, n; return g.Hit(x, z, out hit, out n) ? hit.y : float.MinValue; }, 3f)) { rim++; continue; }
 					if (!ok) { overSea++; continue; }
 					// Out of the mouth: walkable ground that meets the floor
 					for (float t = 1f; t <= 8f && ok; t += 2f)

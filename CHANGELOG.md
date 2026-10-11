@@ -170,6 +170,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Dens on Raft's big islands:** the world randomizer's den had stopped fitting on any of Raft's big islands, as the
+  ground under its rim had to stay within 1.5 m. The rock outcrop over the den now closes a drop down to the ground, so
+  the den fits where the ground falls up to 3 m under its rim, and its rim still meets the ground all round.
 - **Daily quest kills in multiplayer:** with the level up system off, monsters another player defeated (and the
   host's own) did not count for a "Defeat monsters" daily quest. They count now, with levels on or off.
 - **Frozen over the sea when joining:** a player who joined could be held in place over the open sea (and bitten by

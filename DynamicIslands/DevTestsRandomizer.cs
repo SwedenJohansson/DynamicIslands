@@ -1709,6 +1709,33 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
 		public static void GrottoCommand(string[] args) { StartTest(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
 
+		/// <summary>Raft adds one of its big islands ahead (as its timer does) and the raft sails up to it until it spawns.</summary>
+		static IEnumerator BringBigIsland(Action<Landmark> found)
+		{
+			ChunkManager chunks = ComponentManager<ChunkManager>.Value ?? UnityEngine.Object.FindObjectOfType<ChunkManager>();
+			ChunkPoint point = chunks != null ? chunks.AddChunkPointForcibly(ChunkPointType.Landmark_Big) : null;
+			if (point == null) { Log("  (Raft brought no big island)"); yield break; }
+			Log("  (Raft brings a big island " + Flat(point.worldPosition - CustomIslandSpawner.RaftPosition.Value).magnitude.ToString("F0") + " m away)");
+			// (Raft shifts the world back to its middle as the raft moves: the point follows those shifts, as in CIBlueprintsWorld)
+			Vector3 p0 = point.worldPosition, shifted = Vector3.zero;
+			Action<Vector3> onShift = d => shifted += d;
+			WorldShiftManager.OnWorldShift += onShift;
+			Func<Vector3> target = () => point.worldPosition != p0 ? point.worldPosition : p0 + shifted;
+			// (by its place, not by the object: Raft reuses its island objects - the one tried before may come back as this one)
+			Func<Landmark> at = () => WorldManager.AllLandmarks.FirstOrDefault(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && Flat(l.transform.position - target()).magnitude < 300f);
+			Func<bool> spawned = () => at() != null;
+			try
+			{
+				for (int leg = 0; leg < 6 && !spawned(); leg++)
+				{
+					yield return SailTo(() => target() + (CustomIslandSpawner.RaftPosition.Value - target()).normalized * 200f, 60f);
+					yield return WaitFor(spawned, 20f);
+				}
+			}
+			finally { WorldShiftManager.OnWorldShift -= onShift; }
+			found(at());
+		}
+
 		static IEnumerator GrottoRoutine(bool keep)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
@@ -1718,9 +1745,14 @@ namespace DynamicIslands
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			Func<Landmark> nearestBig = () => WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big").OrderBy(l => (l.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
 			Landmark big = nearestBig();
-			// (none near: sail on until one of Raft's big islands is, about 1 km at a time)
-			for (int i = 0; i < 10 && big == null; i++) { yield return SailRoutine(40f, 25f); big = nearestBig(); }
-			if (big == null) { Fail("a cave on Raft's island: none of Raft's big islands near the raft after 10 km"); yield break; }
+			// (custom islands off meanwhile: placed ahead of the raft, a dense world's islands could leave Raft's big one no
+			// room to fit)
+			bool autoBefore = CustomIslandSpawner.Enabled;
+			CustomIslandSpawner.Enabled = false;
+			// (none near: Raft brings one, as its own timer does - it adds big islands by time, not by distance sailed: in
+			// three worlds none came within 25 km of fast sailing)
+			if (big == null) { yield return BringBigIsland(l => big = l); if (big == null) big = nearestBig(); }
+			if (big == null) { CustomIslandSpawner.Enabled = autoBefore; Fail("a cave on Raft's island: Raft brought none of its big islands"); yield break; }
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
 			if (!WorldRandomizer.Current.On) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 77 });
 			int n = IslandWorldState.Islands.Count;
@@ -1755,18 +1787,18 @@ namespace DynamicIslands
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
 				Landmark last = big;
 				big = WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && !tried.Contains(l)).OrderBy(l => (l.transform.position - last.transform.position).sqrMagnitude).FirstOrDefault();
-				// (none other loaded: back on the raft and sail on until another of Raft's big islands is near, as at the start)
+				// (none other loaded: back on the raft, and Raft brings another, as at the start)
 				if (big == null)
 				{
 					Raft onRaft = UnityEngine.Object.FindObjectOfType<Raft>();
 					if (onRaft != null) yield return PutPlayer(player, onRaft.transform.position + Vector3.up * 2f, false);
-					Func<Landmark> nextBig = () => WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && !tried.Contains(l)).OrderBy(l => (l.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
-					for (int i = 0; i < 10 && big == null; i++) { yield return SailRoutine(40f, 25f); big = nextBig(); }
+					yield return BringBigIsland(l => big = l);
 				}
 				if (big == null) { big = last; break; }
 				Log("  (no den on '" + last.name + "': the next of Raft's big islands, '" + big.name + "')");
 			}
-			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			CustomIslandSpawner.Enabled = autoBefore;
+			if (e == null || e.Root == null) { Fail(caves.Count == 0 && tried.Count > 1 ? "no den fitted on " + tried.Count + " of Raft's big islands (4 rolls each)" : "the extras didn't load"); yield break; }
 			Log("Den extras: '" + e.Name + "'");
 			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
 			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
