@@ -122,8 +122,10 @@ call boardwalk n=4 wide=2 y=3.5
 pop
 place Block_Wall_Fence_Rope - at 3 2.25 y=3.5 yaw=90
 place "Box Small" dockbox at 8.4 0.5 y=3.5 sit yaw=10
-place RT_PlasticBoat - at 4.85 1.9 y=3.5 sit roll=180 yaw=90
-place RT_PlasticBoat - at 7.85 1.9 y=3.5 sit roll=180 yaw=95
+# (the canoes set by their middle, not their pivot, which is well off it: the first hung out over the water, its base up to
+# 2.9 m over the lake floor - the ground check, IG2, 2026-10-12)
+place RT_PlasticBoat - at 4.85 1.9 y=3.5 sit centred roll=180 yaw=90
+place RT_PlasticBoat - at 7.85 1.9 y=3.5 sit centred roll=180 yaw=95
 pop
 place RT_PlasticBoat - at -12.5 34.5 ground yaw=20
 place RT_PlasticBoat - at -13 41 ground yaw=-15

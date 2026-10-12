@@ -56,14 +56,22 @@ clear at -3 -3 r=9
 # tower's floors over the whole hangar, level with the plateau; boulders round its edges ------------------------------
 # (each piece 1.5 cm thicker than the one on it: of the same thickness, the ground check's rays down the upper piece's
 # faces grazed the lower one's edge and read the ground through it - CIGroundIslands)
-for fz -12.372 -2.7 3.2175
+# (the first stack's second piece stretched down to 0.1 m, where the ground is: its base stood up to 0.73 m over the bank at
+# its middle, the footing under it only 7.5 mm thicker per side, which the ground check's rays didn't read - IG2, 2026-10-12)
+place RT_Wall1 - at -42.6 -12.372 h=-2 yaw=90 sx=1.0725 sz=1.2
+place RT_Wall1 - at -42.6 -12.372 h=0.1 yaw=90 sx=1.0725 sy=1.3 sz=1.1
+place RT_Wall1 - at -42.6 -12.372 h=4 yaw=90 sx=1.0725
+place RT_Wall1 - at -42.6 -12.372 h=7 yaw=90 sx=1.0725 sy=0.17
+for fz -9.1545 -2.7 3.2175
 place RT_Wall1 - at -42.6 $fz h=-2 yaw=90 sx=1.0725 sz=1.2
 place RT_Wall1 - at -42.6 $fz h=1 yaw=90 sx=1.0725 sz=1.1
 place RT_Wall1 - at -42.6 $fz h=4 yaw=90 sx=1.0725
 place RT_Wall1 - at -42.6 $fz h=7 yaw=90 sx=1.0725 sy=0.17
 next
-place RT_Wall1 - at -42.6 7.5 h=-2 yaw=90 sx=0.538 sz=1.2
-place RT_Wall1 - at -42.6 7.5 h=1 yaw=90 sx=0.538 sz=1.1
+# (the north end piece over the dock pool's bank: footing and wall as one piece from -2 m to 4 m, 30% thicker than the
+# one on it. The footing's top stood 0.66 m under the ground at its middle, the wall on it over the bank 2.7 m up, and
+# the one above it 3 m up - the ground check, IG2, 2026-10-12)
+place RT_Wall1 - at -42.6 7.5 h=-2 yaw=90 sx=0.538 sy=2 sz=1.3
 place RT_Wall1 - at -42.6 7.5 h=4 yaw=90 sx=0.538
 place RT_Wall1 - at -42.6 7.5 h=7 yaw=90 sx=0.538 sy=0.17
 place RT_Wall1 - at -42.6 0.5 h=6.5 yaw=90 sx=2.3333 sy=0.34
@@ -116,6 +124,11 @@ place RT_Wall1 - at -34.4 -0.65 h=4.06 yaw=90
 place RT_WallWindow1 - at -31.4 -0.9 h=1.06 sz=1.1
 place RT_WallWindow1 - at -28.4 -0.9 h=1.06 sz=1.1
 place RT_Wall1 - at -26.2 -0.9 h=1.06 sx=0.7333
+# (a lintel band of the tower's floor, 24 cm wide, under each wall over a window, its top at the wall's foot: the window
+# pieces' tops didn't carry the faces of the wall on them - the east one stood on the partition's top alone and the rest
+# of its foot hung 2.9 m over the floor, the ground check, IG2, 2026-10-12)
+place RT_Floor - at -31.4 -0.78 h=4.0535 sx=0.4967 sz=0.02667
+place RT_Floor - at -28.4 -0.78 h=4.0535 sx=0.4967 sz=0.02667
 place RT_Wall1 - at -31.4 -0.9 h=4.06
 place RT_Wall1 - at -28.4 -0.9 h=4.06
 place RT_Wall1 - at -26.2 -0.9 h=4.06 sx=0.7333

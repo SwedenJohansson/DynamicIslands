@@ -71,7 +71,9 @@ place "Varuna BreakRoomBuilding" siteoffice at 6 -8 h=10 yaw=0
 place "Table Office" foremansdesk at 13.5 -2.6 ground yaw=180
 place VP_DecorationPrefabBase_OfficeChair - at 13.5 -1.7 ground yaw=170
 place Note_Paper foremanslog at 13.3 -2.6 h=12 sit drop yaw=80
-place VP_Excavator - at 4.5 3 ground yaw=-80
+# (the excavator's tracks 0.5 m lower, their bottom at 10.3 m: set down by the lowest ground under its box at 10.81 m, its base
+# stood up to 0.79 m over the slope under its tracks - the ground check, IG2, 2026-10-12)
+place VP_Excavator - at 4.5 3 h=10.3 sit yaw=-80
 place VP_Forklift - at 10 4 ground yaw=80
 place VP_Dumpster01 - at -1 -3 ground yaw=90
 place VP_ConcretePipe01 - at 18 -12 ground yaw=90

@@ -87,8 +87,18 @@ for wy -0.95 2.05 3
 place RT_Wall1 - at 3 -22.5 y=$wy yaw=90
 place RT_Wall1 - at -3.04 -22.5 y=$wy yaw=90
 next
+# (the lowest course at -16.5 only its north half, as the south end's: the whole piece's middle lay in the pad's slope, its
+# top 0.15 m (sea face) and 0.41 m (basin face) under the ground - the ground check, IG2, 2026-10-12)
+place RT_Wall1 - at 3 -19.5 y=-3.95 yaw=90
+place RT_Wall1 - at -3.04 -19.5 y=-3.95 yaw=90
+place RT_Wall1 - at 3 -15 y=-3.95 yaw=90 sx=0.5
+place RT_Wall1 - at -3.04 -15 y=-3.95 yaw=90 sx=0.5
+for wz -13.5 -7.5 3
+place RT_Wall1 - at 3 $wz y=-3.95 yaw=90
+place RT_Wall1 - at -3.04 $wz y=-3.95 yaw=90
+next
 for wz -19.5 -7.5 3
-for wy -3.95 2.05 3
+for wy -0.95 2.05 3
 place RT_Wall1 - at 3 $wz y=$wy yaw=90
 place RT_Wall1 - at -3.04 $wz y=$wy yaw=90
 next
