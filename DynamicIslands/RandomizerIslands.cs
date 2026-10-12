@@ -129,10 +129,10 @@ namespace DynamicIslands.Editor
 		{
 			float ground = LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
 			PropInfo fi = RaftProps.Get(name);
-			if (fi != null && fi.Size.y < 0.3f)
+			if (fi != null && (fi.Size.y < 0.3f || fi.Size.y < 0.25f * Mathf.Min(fi.Size.x, fi.Size.z)))
 			{
-				// (a sheet, firewood, a tyre: lies along the slope - set on the lowest ground and sunk, it was under the ground
-				// at its middle and uphill side, the ground check 2026-10-12)
+				// (a sheet, firewood, a tyre, a pallet - anything flat: lies along the slope - set on the lowest ground and sunk,
+				// it was under the ground at its middle and uphill side, the ground check 2026-10-12; a 4 m pallet, IG6)
 				Quaternion q = Quaternion.Euler(0f, yaw, 0f);
 				Vector3 ax = q * new Vector3(fi.Size.x * 0.45f, 0f, 0f), az = q * new Vector3(0f, 0f, fi.Size.z * 0.45f);
 				Func<Vector3, float> g = v => k.Ground(new Vector2(p.x + v.x, p.y + v.z));
@@ -141,6 +141,8 @@ namespace DynamicIslands.Editor
 				flat.EulerRotation = new Vector3(tx, yaw, tz);
 				return flat;
 			}
+			// (never more than half its height under the ground at its middle, as a set piece)
+			if (fi != null) ground = Mathf.Max(ground, k.Ground(p) - fi.Size.y * 0.5f);
 			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 		}
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using DynamicIslands.Editor;
 using HMLLibrary;
 using RaftModLoader;
@@ -155,6 +156,10 @@ namespace DynamicIslands
 			else Log("PASS: ground types - " + sum + ", all on something");
 		}
 
+		/// <summary>What stands on a mount narrower than itself: a dish on a mast, an antenna on a roof - one mesh, its box wider
+		/// than its foot (Balboa Remade's and Coral Observatory's dishes on their masts read "partly in the air", 2026-10-12).</summary>
+		static readonly Regex OnAMount = new Regex("Sattelite|Satellite|Dish|Antenna", RegexOptions.IgnoreCase);
+
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
 		{
@@ -204,7 +209,7 @@ namespace DynamicIslands
 				if (!touches && !inSea && gapUnder > 0.5f)
 				{ lines.Add("floating: " + n + " at " + where + ", " + (gapUnder > 999f ? "nothing under it" : Num(gapUnder) + " m over what is under it")); continue; }
 				// Partly in the air: on the ground with part of its base, the rest more than 0.6 m over it (a house on a slope)
-				if (NotABase.IsMatch(n) || land == null || Mathf.Max(b.size.x, b.size.z) < 1.5f || b.size.y < 0.6f || b.min.y < sea - 0.5f) continue;
+				if (NotABase.IsMatch(n) || OnAMount.IsMatch(n) || land == null || Mathf.Max(b.size.x, b.size.z) < 1.5f || b.size.y < 0.6f || b.min.y < sea - 0.5f) continue;
 				float lowest = float.MaxValue, highest = float.MinValue;
 				Vector3 worst = Vector3.zero;
 				int steps = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(b.size.x, b.size.z)), 3, 20);
