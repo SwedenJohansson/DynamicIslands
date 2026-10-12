@@ -77,6 +77,9 @@ namespace DynamicIslands.Editor
 		/// the quest panel - ROADMAP X6); raw keeps them as written, for the quest editor, which writes them back (review
 		/// 2026-10-06: saving in the editor stripped every quest's formatting and cut long texts).
 		/// </summary>
+		/// <summary>Steps a quest can have (the quest editor's limit; a file with more is read up to it).</summary>
+		public const int MaxStepCount = 10;
+
 		public static IslandQuest From(IDictionary<string, string> props, int n, bool raw = false)
 		{
 			Func<string, int, string> text = (s, max) => raw ? s : LibraryInfo.Plain(s, max);
@@ -89,6 +92,7 @@ namespace DynamicIslands.Editor
 			{
 				string[] p = line.Split('|');
 				if (p.Length < 1 || !Types.Contains(p[0])) continue;
+				if (q.Steps.Count >= MaxStepCount) break; // (a hand-edited file with more: the editor's 10 kept)
 				int count;
 				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? text(p[3], 400) : "" });
 			}

@@ -166,14 +166,14 @@ namespace DynamicIslands
 			}
 		}
 
-		[ConsoleCommand(name: "CICheckReport", docs: "Dev, editor: the World Plans window's Check on a plan full of mistakes - two test islands (one with a zone 'gate', a note 'Diary' and a quest whose steps need a note and creatures it hasn't, one without a quest) and rules that wait for a quest that can't be finished, for an island without a quest, for a zone it hasn't, for each other in a circle, near an island nobody has, with no number, and after a broken rule: each found at its level, with why and how to fix it; the report window opens (shot_plan_check.png) and each card shows its findings. Cleans up")]
+		[ConsoleCommand(name: "CICheckReport", docs: "Dev, editor: the World Plans window's Check on a plan full of mistakes - two test islands (one with a zone 'gate', a note 'Diary' and a quest whose steps need a note and creatures it hasn't, one without a quest) and rules that wait for a quest that can't be finished, for an island without a quest, for a zone it hasn't, for each other in a circle, near an island nobody has, with no number, and after a broken rule: each found at its level, with why and how to fix it; the report window opens (shot_plan_check.png) and each card shows its findings; SL4: a rule waiting for step 5 of a 3-step quest, for quest 3 of an island with 2, and a next-when step:4 on a 3-step quest are each a Problem with a fix, none with the quest put back. Cleans up")]
 		public static void PlanCheckCommand() { StartTest(PlanCheckRoutine()); }
 
 		static IEnumerator PlanCheckRoutine()
 		{
 			if (!DynamicIslands.InEditor()) { Fail("plan check: in the editor"); yield break; }
 			bool ok = true;
-			const string questIsland = "cicheck-quest", plainIsland = "cicheck-plain", planName = "CI Check";
+			const string questIsland = "cicheck-quest", plainIsland = "cicheck-plain", twoIsland = "cicheck-two", planName = "CI Check";
 			try
 			{
 				// Two small islands: one with a zone, a note and a quest that can't be finished; one without a quest
@@ -219,6 +219,44 @@ namespace DynamicIslands
 				Check(ref ok, has(9, PlanChecker.Level.Warning, "has a problem"), "rule 10 waits for a broken rule: a warning");
 				Check(ref ok, found.Where(f => f.Level == PlanChecker.Level.Problem).All(f => f.Fix.Length > 0), "every problem says how to fix it");
 
+				// SL4: a step or quest removed from an island a rule waits for - each is a Problem; with the quest put back, none
+				{
+					Func<int, int, IslandFile> twoIslandFile = (mainSteps, quests) =>
+					{
+						var t = new IslandFile { TerrainSize = q.TerrainSize, HeightmapResolution = res, Heights = h, Name = twoIsland };
+						t.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = new Vector3(30, 25, 30), Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "gate" } } });
+						for (int n = 0; n < quests; n++)
+						{
+							var qq = new IslandQuest { Title = "Quest " + (n + 1) };
+							for (int s = 0; s < (n == 0 ? mainSteps : 1); s++) qq.Steps.Add(new IslandQuest.Step { Type = "reach", Target = "gate" });
+							qq.To(t.Props, n);
+						}
+						return t;
+					};
+					Func<List<PlanChecker.Finding>> checkTwo = () =>
+					{
+						var plan2 = new WorldPlan { Name = planName, Random = false };
+						plan2.Rules.Add(rule("start", "island:" + twoIsland + " | start | ahead:300 | A test | Start"));
+						plan2.Rules.Add(rule("step5", "type:camp | step:start:5 | ahead:300 | msg | S5"));            // 2: step 5 of a 3-step quest
+						plan2.Rules.Add(rule("quest3", "type:camp | quest:start:3 | ahead:300 | msg | Q3"));          // 3: quest 3 of an island with 2
+						plan2.Rules.Add(rule("nextwhen", "island:" + twoIsland + " | start | receiver:300 | msg | NW | first | step:4")); // 4: next-when step 4 of a 3-step quest
+						return PlanChecker.Check(plan2, false, true);
+					};
+					twoIslandFile(3, 2).Save(IslandSpawner.PathFor(twoIsland));
+					List<PlanChecker.Finding> broken = checkTwo();
+					foreach (PlanChecker.Finding f in broken) Log("  SL4 " + f.Level + " " + (f.Rule + 1) + ": " + f.Text);
+					Func<List<PlanChecker.Finding>, int, string, bool> problem = (list, i, part) => list.Any(f => f.Rule == i && f.Level == PlanChecker.Level.Problem && f.Text.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 && f.Fix.Length > 0);
+					Check(ref ok, problem(broken, 1, "5 quest steps") && problem(broken, 1, "only 3"), "SL4: a rule waiting for step 5 of a 3-step quest is a Problem with a fix");
+					Check(ref ok, problem(broken, 2, "quest 3"), "SL4: a rule waiting for quest 3 of an island with 2 quests is a Problem with a fix");
+					Check(ref ok, problem(broken, 3, "4 quest steps") && problem(broken, 3, "only 3"), "SL4: a next-when step:4 on a 3-step quest is a Problem with a fix");
+					// (the quest put back: five steps in Quest 1, three quests)
+					twoIslandFile(5, 3).Save(IslandSpawner.PathFor(twoIsland));
+					List<PlanChecker.Finding> fixedUp = checkTwo();
+					foreach (PlanChecker.Finding f in fixedUp) Log("  SL4 (put back) " + f.Level + " " + (f.Rule + 1) + ": " + f.Text);
+					Check(ref ok, !fixedUp.Any(f => f.Level == PlanChecker.Level.Problem && (f.Text.Contains("quest steps of") || f.Text.Contains("waits for quest 3"))),
+						"SL4: with the quest put back (5 steps, 3 quests), none of the three is a Problem");
+				}
+
 				// The window: Check opens the report, the cards show their findings
 				plan.Save();
 				WorldPlanWindow.Open(planName);
@@ -239,7 +277,7 @@ namespace DynamicIslands
 			{
 				PlanCheckWindow.Close();
 				WorldPlanWindow.Close();
-				foreach (string n in new[] { questIsland, plainIsland }) try { if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n)); } catch { }
+				foreach (string n in new[] { questIsland, plainIsland, twoIsland }) try { if (System.IO.File.Exists(IslandSpawner.PathFor(n))) System.IO.File.Delete(IslandSpawner.PathFor(n)); } catch { }
 				try { if (System.IO.File.Exists(WorldPlan.PathFor(planName))) System.IO.File.Delete(WorldPlan.PathFor(planName)); } catch { }
 			}
 			if (ok) Log("PASS: plan check"); else Fail("plan check");

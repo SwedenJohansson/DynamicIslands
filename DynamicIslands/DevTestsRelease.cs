@@ -617,7 +617,7 @@ namespace DynamicIslands
 
 		#region Broken and odd files
 
-		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. Every real file is put back after")]
+		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. SL3: an island file with broken quest lines (an unknown step kind, counts abc / 0 / 500, one field only, 12 step lines, quest10) is read without errors with safe counts and Check runs on it. Every real file is put back after")]
 		public static void BadFilesCommand() { StartTest(BadFilesRoutine()); }
 
 		static IEnumerator BadFilesRoutine()
@@ -712,6 +712,66 @@ namespace DynamicIslands
 				}
 				System.IO.File.Delete(path);
 				Check(ref ok, !result.StartsWith("read"), "an island file " + c.Key + ": " + (result.Length > 120 ? result.Substring(0, 120) : result) + (listed ? " (listed)" : ""));
+			}
+			// SL3: an island file whose quest lines are broken - read without errors, unknown steps skipped, counts kept to 1-99, Check runs
+			{
+				const string badQuestIsland = "cibadquest";
+				string bqPath = IslandSpawner.PathFor(badQuestIsland);
+				try
+				{
+					int res = 17;
+					var heights = new float[res, res]; for (int y = 0; y < res; y++) for (int x = 0; x < res; x++) heights[y, x] = 0.4f;
+					var bq = new IslandFile { TerrainSize = new Vector3(64f, 60f, 64f), HeightmapResolution = res, Heights = heights, Name = badQuestIsland };
+					var lines = new List<string> { "teleport|nowhere|1|an unknown kind", "collect|cikey|abc|count is a word", "collect|cikey|0|count is zero", "kill|Warthog|500|count is far too big", "reach" };
+					for (int i = 0; i < 7; i++) lines.Add("reach|gate|1|step " + (i + 6)); // (12 lines in all)
+					bq.Props["quest.title"] = "Broken quest";
+					bq.Props["quest.steps"] = string.Join("\n", lines.ToArray());
+					bq.Props["quest2.title"] = "Quest two";
+					bq.Props["quest2.steps"] = "reach|gate|1|fine\nnonsense|x|1";
+					bq.Props["quest9.steps"] = "reach|gate|1|the ninth";
+					bq.Props["quest10.title"] = "A tenth quest"; // (an island has at most nine)
+					bq.Props["quest10.steps"] = "reach|gate|1|the tenth";
+					bq.Save(bqPath);
+					errors.Clear();
+					IslandFile back = null;
+					string thrown = null;
+					IslandQuest main = null, second = null;
+					int quests = 0;
+					try
+					{
+						back = IslandFile.Load(bqPath);
+						main = IslandQuest.From(back.Props, 0, true);
+						second = IslandQuest.From(back.Props, 1, true);
+						quests = IslandQuest.CountIn(back.Props);
+					}
+					catch (Exception e) { thrown = e.GetType().Name + " " + e.Message; }
+					Check(ref ok, thrown == null && errors.Count == 0 && main != null, "SL3 broken quest lines: read without errors" + (thrown != null ? " - " + thrown : errors.Count > 0 ? " - " + errors[0] : ""));
+					if (main != null)
+					{
+						Check(ref ok, !main.Steps.Any(st => st.Type == "teleport") && main.Steps.All(st => IslandQuest.Types.Contains(st.Type)), "SL3: the unknown step kind is skipped (" + main.Steps.Count + " of 12 lines kept)");
+						Check(ref ok, main.Steps.All(st => st.Count >= 1 && st.Count <= 99), "SL3: every count is kept to 1-99");
+						var counts = main.Steps.Take(4).Select(st => st.Count).ToList();
+						Check(ref ok, counts.Count == 4 && counts[0] == 1 && counts[1] == 1 && counts[2] == 99 && counts[3] == 1, "SL3: 'abc' and 0 become 1, 500 becomes 99, one field only becomes a step with count 1 (" + string.Join(",", counts.Select(c => c.ToString()).ToArray()) + ")");
+						// (11 good lines: the reader keeps the editor's 10)
+						Check(ref ok, main.Steps.Count == IslandQuest.MaxStepCount, "SL3: a hand-edited quest with more steps is read up to " + IslandQuest.MaxStepCount + " (" + main.Steps.Count + ")");
+					}
+					Check(ref ok, second != null && second.Steps.Count == 1 && quests <= IslandQuest.MaxQuests && quests == 9, "SL3: quest 2 skips its unknown line; the island counts " + quests + " quests (quest10.* ignored, at most " + IslandQuest.MaxQuests + ")");
+					// Check runs on it: the island's own quest findings, and a plan whose rule brings it
+					errors.Clear();
+					string checkThrown = null;
+					int found = 0;
+					try
+					{
+						found += PlanChecker.QuestFindings(back).Count;
+						var badPlan = new WorldPlan { Name = "CI bad quest", Random = false };
+						badPlan.Rules.Add(IntroRule.Parse("start | island:" + badQuestIsland + " | start | ahead:300 | msg | Start"));
+						badPlan.Rules.Add(IntroRule.Parse("after | type:camp | step:start:12 | ahead:300 | msg | After"));
+						found += PlanChecker.Check(badPlan, false, true).Count;
+					}
+					catch (Exception e) { checkThrown = e.GetType().Name + " " + e.Message; }
+					Check(ref ok, checkThrown == null && errors.Count == 0, "SL3: Check runs on the broken quest without throwing (" + found + " finding(s))" + (checkThrown != null ? " - " + checkThrown : ""));
+				}
+				finally { try { if (System.IO.File.Exists(bqPath)) System.IO.File.Delete(bqPath); } catch { } }
 			}
 			Application.logMessageReceived -= watch;
 			if (ok) Log("PASS: broken files"); else Fail("broken files");

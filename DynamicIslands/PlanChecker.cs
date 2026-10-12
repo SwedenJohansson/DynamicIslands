@@ -575,6 +575,18 @@ namespace DynamicIslands.Editor
 		static void FindTraps(IslandFile f, Facts x, bool islandNever)
 		{
 			var objects = f.Objects.Select(o => new KeyValuePair<IslandObject, IDictionary<string, string>>(o, o.Props ?? new Dictionary<string, string>())).ToList();
+			// A story item the island uses that isn't in its Story items list (deleted there, or a typo): another island
+			// of the world may define it (StoryItems.Find), otherwise it shows with its id for a name and no picture
+			var defined = new HashSet<string>(StoryItems.Of(f.Props).Select(d => d.Id), StringComparer.OrdinalIgnoreCase);
+			var used = new HashSet<string>(x.NeedsStory.Concat(x.GivesStory), StringComparer.OrdinalIgnoreCase);
+			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)
+				foreach (IslandQuest.Step st in IslandQuest.From(f.Props, n).Steps)
+					if (StoryItems.IsStory(st.Target)) used.Add(StoryItems.IdOf(st.Target));
+			List<string> unknown = used.Where(id => id.Length > 0 && !defined.Contains(id) && QuestItemPickups.Def(id) == null).OrderBy(id => id).ToList();
+			if (unknown.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "the story item" + (unknown.Count > 1 ? "s " : " ") + string.Join(", ", unknown.Select(id => "'" + id + "'").ToArray()) +
+					(unknown.Count > 1 ? " are" : " is") + " used (a quest step, a check, a chest or an action) but not in the island's Story items list - deleted, or a typo? Unless another island of the world has it, it shows with its id for a name and no picture.",
+					"Island tab > Story items...: add it again (Ctrl+Z if you just deleted it), or change what uses it."));
 			// A later step's chest or creature spot that is there from the start: players get to it before the step (what
 			// they do is kept and counted when the step comes - QuestTracker - but its loot and the story come too early)
 			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)
