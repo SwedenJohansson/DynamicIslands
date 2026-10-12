@@ -102,6 +102,59 @@ namespace DynamicIslands
 			else Log("PASS: ground islands - " + sum + ", all on something");
 		}
 
+		[ConsoleCommand(name: "CIGroundTypes", docs: "Dev, world (host, a test world 'CI ...'): brand-new islands of each map type made next to the raft by the generator as it is now, measured as CIGroundWorld does, then taken away (IG6) - a saved generated island keeps what an older generator made. Results in Mods\\DynamicIslands\\ground_types.txt. CIGroundTypes [types, comma-separated, or *] [islands of each, 2]")]
+		public static void GroundTypesCommand(string[] args)
+		{
+			string which = args != null && args.Length > 0 ? args[0] : "*";
+			int each = args != null && args.Length > 1 ? int.Parse(args[1]) : 2;
+			StartTest(GroundTypesRoutine(which, each));
+		}
+
+		static IEnumerator GroundTypesRoutine(string which, int each)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("ground types: host, in a world"); yield break; }
+			List<string> types = (which == "*" ? MapTypes.All.Select(t => t.Name).Where(t => t != "random") : which.Split(',').Select(t => t.Trim()).Where(t => MapTypes.Get(t) != null)).ToList();
+			if (types.Count == 0) { Fail("ground types: no map type '" + which + "'"); yield break; }
+			Log("Ground check of new islands: " + string.Join(", ", types.ToArray()) + ", " + each + " of each");
+			var report = new StringBuilder();
+			int done = 0, bad = 0, problems = 0, missed = 0;
+			foreach (string type in types)
+				for (int i = 0; i < each; i++)
+				{
+					Network_Player player = RAPI.GetLocalPlayer();
+					Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
+					IslandWorldState.Entry e = SpawnTypeNear(type, raft);
+					for (float t = 0; e != null && t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+					if (e == null || e.Root == null)
+					{
+						Log("  " + type + ": " + (e == null ? "no open sea near the raft" : "didn't come"));
+						missed++;
+						if (e != null) IslandWorldState.RemoveIds(new[] { e.Id }, true);
+						continue;
+					}
+					yield return new WaitForSeconds(2f); // (the cave mountains and Raft's physics settle)
+					int n;
+					List<string> lines = GroundProblems(e, out n);
+					done++;
+					report.AppendLine(type + " (" + e.Name + "): " + n + " objects, " + lines.Count + " problems");
+					foreach (string l in lines) report.AppendLine("  " + l);
+					if (lines.Count > 0)
+					{
+						bad++;
+						problems += lines.Count;
+						Log("  " + e.Name + ": " + lines.Count + " problem(s) of " + n + " objects");
+						foreach (string l in lines.Take(3)) Log("    " + l);
+					}
+					IslandWorldState.RemoveIds(new[] { e.Id }, true);
+					IslandCache.Forget();
+					yield return new WaitForSeconds(1f);
+				}
+			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "ground_types.txt"), report.ToString());
+			string sum = done + " of " + types.Count * each + " new islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
+			if (bad > 0 || missed > 0) Fail("ground types: " + bad + " with " + problems + " problems; " + sum + " (ground_types.txt)");
+			else Log("PASS: ground types - " + sum + ", all on something");
+		}
+
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
 		{
