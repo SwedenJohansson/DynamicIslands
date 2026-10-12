@@ -1005,10 +1005,10 @@ namespace DynamicIslands
 			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, Inv, out km);
 			if (args != null && args.Length > 1) float.TryParse(args[1], System.Globalization.NumberStyles.Float, Inv, out speed);
 			RunInBackground();
-			StartTest(LongSailRoutine(km, speed));
+			StartTest(LongSailRoutine(km, speed, args != null && args.Length > 2 && args[2] == "keep"));
 		}
 
-		static IEnumerator LongSailRoutine(float km, float speed)
+		static IEnumerator LongSailRoutine(float km, float speed, bool keep = false)
 		{
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj == null || raftObj.body == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
@@ -1034,6 +1034,8 @@ namespace DynamicIslands
 			{
 				yield return new WaitForFixedUpdate();
 				KeepAlive(player);
+				// (the raft is dragged through islands' land: one scrapes the host off, and an island a player is at stays loaded)
+				if (player != null && Flat(player.transform.position - body.position).magnitude > 30f) PlayerMove.To(player, body.position + Vector3.up * 3f);
 				body.MovePosition(body.position + dir * speed * Time.fixedDeltaTime);
 				Vector3 d = Flat(body.position - last);
 				last = body.position;
@@ -1065,17 +1067,20 @@ namespace DynamicIslands
 			Application.logMessageReceived -= unloads;
 			int added = IslandWorldState.Islands.Count - n0;
 			int loadedNow = IslandWorldState.Islands.Count(x => x.Root != null);
+			var near = new List<Vector3> { body.position };
+			near.AddRange(Players.All.Where(p => p != null).Select(p => p.transform.position));
+			int loadedFar = IslandWorldState.Islands.Count(x => x.Root != null && near.All(p => Flat(x.Position - p).magnitude - Mathf.Max(0f, CustomIslandSpawner.LandRadius(x.Name)) > WorldRules.UnloadDistance + 100f));
 			// (the first samples against the last: Unity's own memory settles after the first islands)
 			Func<int, float> firstThird = k => samples.Take(Mathf.Max(1, samples.Count / 3)).Skip(1).DefaultIfEmpty(samples[0]).Average(s => s[k]);
 			Func<int, float> lastThird = k => samples.Skip(samples.Count - Mathf.Max(1, samples.Count / 3)).Average(s => s[k]);
 			float f0 = firstThird(1), f1 = lastThird(1), m0 = firstThird(3), m1 = lastThird(3), g0 = firstThird(2), g1 = lastThird(2);
 			Check(ref ok, added >= 10, "sailed " + (sailed / 1000f).ToString("F1") + " km: " + added + " islands appeared (" + spawned + " by the spawner), " + unloaded + " unloaded behind, " + loadedNow + " loaded now");
-			Check(ref ok, loadedNow <= 4 && unloaded >= added - 4, "only the islands near the raft stay loaded (" + loadedNow + ")");
+			Check(ref ok, loadedFar == 0 && unloaded >= added - loadedNow, "only the islands near the raft or a player stay loaded (" + loadedNow + " loaded, " + loadedFar + " far from everyone)");
 			Check(ref ok, f1 < Mathf.Max(f0 * 1.5f, f0 + 8f), "frame time stays flat: " + f0.ToString("F1") + " ms at first, " + f1.ToString("F1") + " ms at the end");
 			Check(ref ok, m1 < m0 + 400f && g1 < g0 + 150f, "memory stays flat: Unity " + m0.ToString("F0") + " -> " + m1.ToString("F0") + " MB, managed " + g0.ToString("F0") + " -> " + g1.ToString("F0") + " MB");
 			Check(ref ok, errors == 0, errors + " errors from the mod while sailing" + (firstError != null ? " (first: " + firstError + ")" : ""));
-			// (the test world stays as it was: no automatic islands left behind)
-			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
+			// (the test world stays as it was: no automatic islands left behind, unless kept for a check after)
+			if (!keep) IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
 			if (ok) Log("PASS: a long sail"); else Fail("a long sail");
 		}
 
