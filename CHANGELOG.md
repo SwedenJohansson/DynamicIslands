@@ -175,6 +175,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Things on generated islands lie on the ground:** metal sheets, firewood, tyres and pallets on a slope now lie
   along it instead of being half buried; a set piece (a stranded boat on a beach edge) is never sunk more than half
   its height; a lookout tower's back railing no longer runs off its deck and its side railings have no gaps.
+- **The library's story islands stand on the ground:** a check of every island of every world plan found 73 things
+  out of place on 28 islands - walls hanging over a slope, a radar screen wider than its desk, crates and chests set
+  into banks, paintings, a camera and tarps off their walls and posts, a wind vane wider than its mast, ice pillars
+  inside a den's walls. Each is moved, re-seated or given something to stand on.
 - **No pause at the first random island of a session:** the first pick read every pool island's whole file for its
   "not before" distance (a fresh host with 130 pool islands: 0.5-0.7 s a pick on average over the first 20); the
   distances are now kept in `notbeforecache.txt`. The world plan's first look through a session's islands and the
