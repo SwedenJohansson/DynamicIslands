@@ -298,7 +298,7 @@ namespace DynamicIslands
 				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name))) names.Add(name); // (named ones: the Vines cave too, to look at)
 			}
 			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
-			int n = 0, bad = 0;
+			int n = 0, bad = 0, blockedIslands = 0;
 			foreach (string name in names.Take(most))
 			{
 				n++;
@@ -319,7 +319,11 @@ namespace DynamicIslands
 				string map = m != null ? m.LastMap ?? "" : "";
 				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
 				if (skin == null && caves.Count > 0) bad++;
-				var looks = e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				// (its ways in clear: a play walking into a den stuck on the hill across its mouth - AU83)
+				List<string> blocked = m != null ? m.BlockedWays() : new List<string>();
+				foreach (string w in blocked.Take(6)) Log("    way in blocked: " + w);
+				if (blocked.Count > 0) { bad++; blockedIslands++; }
+				var looks =e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 				if (looks.Count > 0)
 				{
 					caves = looks; // (the pictures: every cave piece, the Vines cave too)
@@ -342,8 +346,8 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(2f);
 			}
 			if (names.Count == 0) Fail("no saved island with cave pieces");
-			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain (above)");
-			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain");
+			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain or with a way in blocked (" + blockedIslands + ", above)");
+			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain and its ways in clear");
 		}
 
 		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]

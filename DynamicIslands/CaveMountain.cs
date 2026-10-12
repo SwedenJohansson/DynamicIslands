@@ -47,6 +47,34 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: builds it again now.</summary>
 		public void Rebuild() { due = -1f; Build(); }
 
+		/// <summary>
+		/// Tests: every open end's way in, looked along from 5 m out to past where its roof ends at knee, chest and head height over
+		/// its floor - where the mountain is in the way (a play walking in stuck on it - AU83). Empty: all clear.
+		/// </summary>
+		public List<string> BlockedWays()
+		{
+			var bad = new List<string>();
+			Collider mine = skin != null ? skin.GetComponent<Collider>() : null;
+			if (mine == null) return bad;
+			Physics.SyncTransforms();
+			foreach (Mouth m in lastMouths)
+				for (int end = 0; end < 2; end++)
+				{
+					if (end == 0 ? !m.Plus : !m.Minus) continue;
+					float dir = end == 0 ? 1f : -1f, start = end == 0 ? m.StartPlus : m.StartMinus;
+					foreach (float up in new[] { 0.5f, 1.2f, 1.9f })
+						foreach (float s in new[] { 0f, -m.HalfWidth * 0.4f, m.HalfWidth * 0.4f })
+						{
+							Vector3 from = m.Pos + m.Along * (m.InsideAlong + dir * (start + 5f)) + m.Side * (m.InsideSide + s);
+							from.y = m.FloorY + up;
+							RaycastHit hit;
+							if (mine.Raycast(new Ray(from, -dir * m.Along), out hit, 6f))
+								bad.Add(m.Name + (end == 0 ? " +" : " -") + " end, " + up.ToString("0.0") + " m over its floor, " + s.ToString("0.0") + " m aside: the hill " + hit.distance.ToString("0.0") + " m in");
+						}
+				}
+			return bad;
+		}
+
 		void Update()
 		{
 			if (due < 0f || Time.realtimeSinceStartup < due) return;
@@ -56,7 +84,8 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>One cave piece's open ends: where the mountain must leave the way in clear.</summary>
-		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY; public bool Plus, Minus; }
+		struct Mouth { public Vector3 Pos, Along, Side; public float InsideAlong, InsideSide, HalfWidth, FloorY, StartPlus, StartMinus; public bool Plus, Minus; public string Name; }
+		readonly List<Mouth> lastMouths = new List<Mouth>();
 
 		void Build()
 		{
@@ -91,7 +120,7 @@ namespace DynamicIslands.Editor
 				{
 					Pos = t.position, Along = along, Side = side,
 					InsideAlong = Vector3.Dot(inside - t.position, along), InsideSide = Vector3.Dot(inside - t.position, side),
-					HalfWidth = p.Width / 2f + 1f, FloorY = floorY, Plus = p.OpenPlus, Minus = p.OpenMinus
+					HalfWidth = p.Width / 2f + 1f, FloorY = floorY, Plus = p.OpenPlus, Minus = p.OpenMinus, Name = t.name
 				});
 			}
 			caves.RemoveAll(t => t == null);
@@ -105,6 +134,8 @@ namespace DynamicIslands.Editor
 			var groundBy = new string[nx, nz]; // (tests: what that is)
 			var corridor = new float[nx, nz];  // a way in: the floor height there (NaN: not one)
 			var rimY = new float[nx, nz];      // a shell's low edge over lower ground, not a roof (NaN: none)
+			var floorAt = new float[nx, nz];   // the shell's floor (its highest point under the roof line; NaN: none)
+			var mouthAt = new float[nx, nz];   // in front of an open end, as wide as the passage: its floor height (NaN: not)
 			int groundMask = (int)LayerMasks.MASK_GroundMask_NonRaft | (1 << IslandSpawner.TerrainLayer);
 			bool backfaces = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true; // (the shells face inwards: from above, a roof is its back)
@@ -127,6 +158,7 @@ namespace DynamicIslands.Editor
 							else if ((groundMask & (1 << h.collider.gameObject.layer)) != 0 && h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
 						}
 						top[i, k] = roof;
+						floorAt[i, k] = low;
 						ground[i, k] = float.IsInfinity(gr) ? b.min.y - 2f : gr;
 						// (a shell's edge under the roof line hung over the ground beside it: a 1.5 m slot into the den - AU83)
 						rimY[i, k] = float.IsNaN(roof) && low > ground[i, k] + 0.3f ? low : float.NaN;
@@ -146,16 +178,22 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 				{
 					corridor[i, k] = float.NaN;
-					if (!float.IsNaN(top[i, k])) continue;
+					mouthAt[i, k] = float.NaN;
 					Vector3 at = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
 					for (int j = 0; j < mouths.Count; j++)
 					{
 						Mouth m = mouths[j];
 						Vector3 d = at - m.Pos;
 						float a = Vector3.Dot(d, m.Along) - m.InsideAlong, s = Vector3.Dot(d, m.Side) - m.InsideSide;
+						// (between the inside point and the corridor, as wide as the passage itself: where the roof ends unevenly,
+						// a square with no roof there was hill with a wall down to the ground across the way in - Ranger's Rest)
+						if (Mathf.Abs(s) < m.HalfWidth - 1f && ((m.Plus && a > 0f) || (m.Minus && a < 0f)) && float.IsNaN(mouthAt[i, k])) mouthAt[i, k] = m.FloorY;
+						if (!float.IsNaN(top[i, k])) continue;
 						if (Mathf.Abs(s) < m.HalfWidth && ((m.Plus && a > startPlus[j]) || (m.Minus && a < -startMinus[j]))) { corridor[i, k] = m.FloorY; break; }
 					}
 				}
+			lastMouths.Clear();
+			for (int j = 0; j < mouths.Count; j++) { Mouth m = mouths[j]; m.StartPlus = startPlus[j]; m.StartMinus = startMinus[j]; lastMouths.Add(m); }
 
 			// What the surface must stay over: the highest roof or low edge in the square and the ones round it (a shell's edge
 			// between two samples stuck out of a surface that fell away from the last roof sampled: a 2.2 m slot under it - AU83)
@@ -275,10 +313,10 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k + 1 < nz; k++)
 				{
 					if (!on[i, k] || !on[i + 1, k] || !on[i, k + 1] || !on[i + 1, k + 1]) continue;
-					Edge(i, k, i + 1, k, 0, -1, nx, nz, on, top, height, ground, corridor, P, verts, norms, uvs, tris, origin);
-					Edge(i, k + 1, i + 1, k + 1, 0, 1, nx, nz, on, top, height, ground, corridor, P, verts, norms, uvs, tris, origin);
-					Edge(i, k, i, k + 1, -1, 0, nx, nz, on, top, height, ground, corridor, P, verts, norms, uvs, tris, origin);
-					Edge(i + 1, k, i + 1, k + 1, 1, 0, nx, nz, on, top, height, ground, corridor, P, verts, norms, uvs, tris, origin);
+					Edge(i, k, i + 1, k, 0, -1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
+					Edge(i, k + 1, i + 1, k + 1, 0, 1, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
+					Edge(i, k, i, k + 1, -1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
+					Edge(i + 1, k, i + 1, k + 1, 1, 0, nx, nz, on, top, height, ground, corridor, mouthAt, floorAt, P, verts, norms, uvs, tris, origin);
 				}
 			if (tris.Count == 0) return;
 
@@ -355,8 +393,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The edge (i1,k1)-(i2,k2) of a surface square; (di,dk) points to the square beside it.</summary>
 		static void Edge(int i1, int k1, int i2, int k2, int di, int dk, int nx, int nz, bool[,] on, float[,] top, float[,] height,
-			float[,] ground, float[,] corridor, System.Func<int, int, Vector3> P, List<Vector3> verts, List<Vector3> norms,
-			List<Vector2> uvs, List<int> tris, Vector3 origin)
+			float[,] ground, float[,] corridor, float[,] mouthAt, float[,] floorAt, System.Func<int, int, Vector3> P, List<Vector3> verts,
+			List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin)
 		{
 			int a1 = i1 + di, c1 = k1 + dk, a2 = i2 + di, c2 = k2 + dk;
 			bool inside1 = a1 >= 0 && c1 >= 0 && a1 < nx && c1 < nz, inside2 = a2 >= 0 && c2 >= 0 && a2 < nx && c2 < nz;
@@ -367,9 +405,12 @@ namespace DynamicIslands.Editor
 			if (inside1 && !float.IsNaN(corridor[a1, c1])) way = corridor[a1, c1];
 			if (inside2 && !float.IsNaN(corridor[a2, c2])) way = float.IsNaN(way) ? corridor[a2, c2] : Mathf.Min(way, corridor[a2, c2]);
 			Vector3 p1 = P(i1, k1), p2 = P(i2, k2);
-			if (!float.IsNaN(way) && (!float.IsNaN(top[i1, k1]) || !float.IsNaN(top[i2, k2])))
+			if (!float.IsNaN(way) && (!float.IsNaN(top[i1, k1]) || !float.IsNaN(top[i2, k2]) || !float.IsNaN(mouthAt[i1, k1]) || !float.IsNaN(mouthAt[i2, k2])))
 			{
-				// The open end of a cave: its own arch is the face; under its floor, down to the ground
+				// The open end of a cave: its own arch is the face; under its floor, down to the ground (no higher than the
+				// floor there: a lip over it stopped the way in)
+				float f = Mathf.Max(float.IsNaN(floorAt[i1, k1]) ? float.NegativeInfinity : floorAt[i1, k1], float.IsNaN(floorAt[i2, k2]) ? float.NegativeInfinity : floorAt[i2, k2]);
+				if (f > way - 3f && f < way) way = f;
 				if (Mathf.Min(g1, g2) > way - 0.15f) return;
 				p1.y = way; p2.y = way;
 				if (g1 > way) g1 = way;
