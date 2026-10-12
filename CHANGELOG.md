@@ -216,6 +216,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   the randomizer's and those placed by hand on library islands - now sits inside a rock hill built over its back and
   sides down to the ground, of the island's own rock (snowy rock on a snowy island), open only at its mouth: no more
   thin shells in the air or sky seen through the mountain (nor a hole in the hill over a den's roofless stretch, nor a slot under a den's low edge where it hung over the ground).
+  The hill stops where a cave's roof ends, in a face down to the ground: the way in, and the ledges and paths in front
+  of the mouth and beside it, stay clear.
   Balboa's vine cave, a whole rock of its own, is left as it is.
 - **"Another build" told again after a rejoin:** a player who rejoined with the host's own build after joining
   with another one still got the old notice. A notice is now only about the host the player is with.

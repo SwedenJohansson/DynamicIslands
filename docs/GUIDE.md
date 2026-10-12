@@ -684,7 +684,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     warthog or a rat) and a hoard. It needs a hill next to open, level land; if none fits, the message after **Generate** says so.
     In a world (not in the editor) every cave piece on an island - this one, the randomizer's dens and any you place
     yourself - gets a rock hill built over its back and sides, down to the ground and open only at its mouth, made of
-    the island's own biggest rock (snowy rock on a snowy island). Balboa's vine cave is a whole rock already and gets none.
+    the island's own biggest rock (snowy rock on a snowy island). The hill stops where the cave's roof ends, in a face
+    down to the ground, so the ground in front of the mouth and beside it stays free for paths and ledges.
+    Balboa's vine cave is a whole rock already and gets none.
 
   The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
   (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same
