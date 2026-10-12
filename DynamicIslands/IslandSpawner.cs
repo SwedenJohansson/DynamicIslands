@@ -420,7 +420,9 @@ namespace DynamicIslands.Editor
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
 				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
+				CaveBacks.Add(go, o.Name); // (a cave piece's rock seen from outside too - X7)
 				if (!editable) CaveMountain.Add(parent, go, o.Name); // (a rock mountain over the island's caves - AU83)
+				if (!editable) CaveGround.Add(parent, go, o.Name); // (and the ground cut out of their rooms - X7)
 
 				if (editable)
 					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>()).Uid = o.Uid;
@@ -578,6 +580,7 @@ namespace DynamicIslands.Editor
 			var objects = new GameObject("Objects");
 			objects.transform.SetParent(root.transform, false);
 			int missing = SpawnObjects(island, objects.transform, false, flying);
+			CaveGround.Cut(objects.transform); // (X7)
 			Spawned(island, worldPosition, flying, missing);
 			return root;
 		}
@@ -633,6 +636,7 @@ namespace DynamicIslands.Editor
 			clock.Reset(); clock.Start();
 			objects.SetActive(true);
 			LastSpawnTiming = "land " + land + " ms, objects over " + LastSpawnFrames + " frames, switching them on " + clock.ElapsedMilliseconds + " ms";
+			CaveGround.Cut(objects.transform); // (the ground out of the caves' rooms: their rock can be hit now - X7)
 			Spawned(island, worldPosition, flying, missing);
 			result(root);
 		}

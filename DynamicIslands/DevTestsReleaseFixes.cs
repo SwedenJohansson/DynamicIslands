@@ -275,7 +275,7 @@ namespace DynamicIslands
 			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
 		}
 
-		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
@@ -298,7 +298,7 @@ namespace DynamicIslands
 				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name))) names.Add(name); // (named ones: the Vines cave too, to look at)
 			}
 			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
-			int n = 0, bad = 0, blockedIslands = 0;
+			int n = 0, bad = 0, blockedIslands = 0, insideIslands = 0;
 			foreach (string name in names.Take(most))
 			{
 				n++;
@@ -339,6 +339,20 @@ namespace DynamicIslands
 						yield return CameraShot(from, new Vector3(b.center.x, Mathf.Max(from.y - 2f, b.min.y + b.size.y * 0.3f), b.center.z), "caveisl_" + n + "_" + (i * 90 + 30));
 					}
 					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+					// (and from inside: nothing seen through its walls or roof, the mountain over them, or the ground - X7)
+					bool seenThrough = false;
+					foreach (Transform t in caves)
+					{
+						if (t == null) continue;
+						string detail;
+						Vector3 eye, look;
+						int seen = CaveSeeThrough(t, RaftProps.Get(t.name), out detail, out eye, out look);
+						if (seen > 0 || t == caves[0]) Log("    inside " + t.name + " at " + t.position.ToString("F0") + ": " + detail);
+						if (seen == 0) continue;
+						seenThrough = true;
+						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_inside_" + caves.IndexOf(t));
+					}
+					if (seenThrough) { bad++; insideIslands++; }
 				}
 				if (keep) continue;
 				IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
@@ -346,8 +360,8 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(2f);
 			}
 			if (names.Count == 0) Fail("no saved island with cave pieces");
-			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain or with a way in blocked (" + blockedIslands + ", above)");
-			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain and its ways in clear");
+			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain, with a way in blocked (" + blockedIslands + ") or seen through from inside (" + insideIslands + ", above)");
+			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain, its ways in clear, nothing seen through from inside");
 		}
 
 		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]

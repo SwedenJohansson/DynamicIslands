@@ -320,6 +320,14 @@ namespace DynamicIslands
 					if (counts(h.collider) && (best == null || h.distance < best.Value.distance)) best = h;
 				return best;
 			};
+			// (drawn from both sides: a cave piece's shell once it has its outside, and the mountain over the caves - X7)
+			Func<Collider, bool> bothSides = c =>
+			{
+				if (c.name == CaveMountain.SkinName) return true;
+				for (Transform t = c.transform; t != null; t = t.parent)
+					if (RaftProps.Get(t.name.Replace("(Clone)", "").Trim()) != null && RaftProps.Get(t.name.Replace("(Clone)", "").Trim()).IsCave) return CaveBacks.Has(t);
+				return false;
+			};
 			var eyes = new List<Vector3>();
 			var looks = new List<Vector3>();
 			foreach (float pitch in new[] { -20f, 0f, 15f, 35f, 60f })
@@ -348,6 +356,14 @@ namespace DynamicIslands
 							RaycastHit? up = first(e, Vector3.up, 30f, true), upFront = first(e, Vector3.up, 30f, false);
 							if (up == null || !own.Contains(up.Value.collider)) continue;
 							if (!own.Contains(h.collider) && (upFront == null || upFront.Value.distance > up.Value.distance + 0.05f)) continue;
+							// (and walled in by it: most looks round meet its inside - not on top of its rock, under an overhang of its outside)
+							int walls = 0;
+							for (int i = 0; i < 16; i++)
+							{
+								RaycastHit? w = first(e, Quaternion.Euler(0f, i * 22.5f, 0f) * Vector3.forward, 30f, false);
+								if (w != null && own.Contains(w.Value.collider)) walls++;
+							}
+							if (walls < 8) continue;
 							eyes.Add(e);
 						}
 					}
@@ -367,6 +383,7 @@ namespace DynamicIslands
 							if ((p.OpenPlus && o > 0.25f) || (p.OpenMinus && o < -0.25f)) continue; // (out through an open end)
 						}
 						else if (any.Value.distance < 0.3f || (front != null && front.Value.distance <= any.Value.distance + 0.05f)) continue; // (a face from its front)
+						else if (bothSides(any.Value.collider)) continue; // (a face drawn from both sides: a cave piece's shell with its outside, the mountain)
 						string w = sky ? "sky" : (own.Contains(any.Value.collider) ? "the shell's back" : (any.Value.collider is TerrainCollider ? "the ground from below" : any.Value.collider.name + "'s back"));
 						what[w] = what.ContainsKey(w) ? what[w] + 1 : 1;
 						bad++;

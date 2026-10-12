@@ -413,7 +413,8 @@ namespace DynamicIslands.Editor
 			skin.layer = IslandSpawner.TerrainLayer;
 			skin.transform.position = origin;
 			skin.transform.SetParent(transform, true);
-			skin.AddComponent<MeshFilter>().sharedMesh = mesh;
+			// (drawn from both sides: from inside a cave, through a gap in its shell, the mountain's underside is rock too - X7)
+			skin.AddComponent<MeshFilter>().sharedMesh = TwoSided(mesh, verts, norms, uvs, tris);
 			var mr = skin.AddComponent<MeshRenderer>();
 			// (the island's own biggest rock, so a snow island gets snowy rock; else Raft's big rock - the shells' own is mostly dirt)
 			Renderer rockLook = IslandRock();
@@ -427,6 +428,28 @@ namespace DynamicIslands.Editor
 			mr.receiveShadows = look.receiveShadows;
 			skin.AddComponent<MeshCollider>().sharedMesh = mesh;
 			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name);
+		}
+
+		/// <summary>The mountain's look: its faces again, turned the other way (its collider keeps the one side).</summary>
+		static Mesh TwoSided(Mesh one, List<Vector3> verts, List<Vector3> norms, List<Vector2> uvs, List<int> tris)
+		{
+			int n = verts.Count;
+			var v2 = new List<Vector3>(verts);
+			var n2 = new List<Vector3>(norms);
+			var u2 = new List<Vector2>(uvs);
+			var t2 = new List<int>(tris);
+			v2.AddRange(verts);
+			foreach (Vector3 x in norms) n2.Add(-x);
+			u2.AddRange(uvs);
+			for (int i = 0; i + 2 < tris.Count; i += 3) { t2.Add(tris[i] + n); t2.Add(tris[i + 2] + n); t2.Add(tris[i + 1] + n); }
+			var mesh = new Mesh { name = one.name + " (both sides)" };
+			if (v2.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
+			mesh.SetVertices(v2);
+			mesh.SetNormals(n2);
+			mesh.SetUVs(0, u2);
+			mesh.SetTriangles(t2, 0);
+			mesh.bounds = one.bounds;
+			return mesh;
 		}
 
 		/// <summary>The biggest rock or boulder placed on this island (not a cave piece), or null.</summary>
