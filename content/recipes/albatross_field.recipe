@@ -86,7 +86,8 @@ pop
 # (the chart table's mesh lies 12.6 m south of its pivot (x0.45: 5.7 m): the pivot north of the table)
 place MapTable maptable at -27.6 53.2 h=4.3 scale=0.45
 place Note_Paper order at -27.4 47.6 h=6.5 drop yaw=20
-place VP_Whiteboard - at -27.5 52.85 h=6.1 yaw=180
+# (the flight board hung on the north wall's plain half, its back against the wall: 10 cm off it, it read as floating)
+place VP_Whiteboard - at -25.75 52.93 h=6.1 yaw=180
 place Loot_Chest footlocker at -30.0 44.0 h=5 drop yaw=90
 # (the control tower: a base room and the glass cab on it, a railing on its roof; outside stairs up to a deck at the
 # cab's east door; in the cab the radio set, a microphone, a chair, its lamps lit when there's power)
@@ -162,7 +163,8 @@ place VP_RubblePile_Small01 rubble at 40 49 ground yaw=0
 place VP_RubblePile_Small01 rubble at 43 45 ground yaw=90
 place UT_Harpoon_Base guns at 30 -56 h=4.3 yaw=200
 place UT_Harpoon_Barrel guns at 30 -56 h=4.65 yaw=200
-place VP_RubblePile_Small01 rubble at 30 -59 ground yaw=0
+# (north of the gun: south of it the pit's edge falls away and the pile sank under the ground there)
+place VP_RubblePile_Small01 rubble at 31 -52.5 ground yaw=0
 place VP_RubblePile_Small01 rubble at 27 -55 ground yaw=90
 prop guns tint.color=#6a4a3a
 prop guns tint.amount=0.6

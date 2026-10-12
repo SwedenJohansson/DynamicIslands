@@ -219,7 +219,10 @@ pop
 line Relay_Fence_wood from 66 52 to 66 57.5 step=1.825
 line Relay_Fence_wood from 66 64.5 to 66 66 step=1.825
 line Relay_Fence_wood from 66 66 to 80 66 step=1.825
-line Relay_Fence_wood from 80 66 to 80 52 step=1.825
+# (the east side's two rails by the corner 10 cm up: on the slope there, set on the ground at their low end, their
+# middle was under it, CIGroundIslands - the same places as one line)
+line Relay_Fence_wood from 80 66 to 80 62.35 step=1.825 y=0.1
+line Relay_Fence_wood from 80 62.35 to 80 52 step=1.825
 line Relay_Fence_wood from 80 52 to 66 52 step=1.825
 place Firewood_1 - at 70 63.5 sit
 place Pallet - at 76 55 sit yaw=20

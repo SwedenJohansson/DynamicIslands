@@ -165,7 +165,9 @@ pop
 # --- The outer rock off the north beach: his escape kit under a tarp (shown once you are in his drain), a raft ---------
 place "Box Big" escapekit at 4 66 h=2.2 sit yaw=20
 place ReefHuts_Tarpaulin - at 2.4 65.4 h=2.25 yaw=110
-place RT_PlasticBoat - at 5.6 64.8 ground yaw=-30 roll=8
+# (the boat in the shallows at the rock's south foot, on the shelf there: on the rock's east edge it reached over the
+# drop and was set down at the foot of it, buried 1.6 m, CIGroundIslands)
+place RT_PlasticBoat - at 3.55 61.3 h=-0.4 sit yaw=80
 place Zone_Trigger outerrock at 4 66 h=3
 
 # --- Fog round the rock, the sea's sound; animals: turtles in the shallows, dolphins off the south shore -----------------

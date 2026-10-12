@@ -286,14 +286,19 @@ line FL_Plank2 from -42 -73.8 to -30 -76.2 step=1.5 yaw=90 rot=0,0,0
 # --- The derailment at the bend: the engine off the rails, the express car on its side with its safe beside it, the ore
 # wagons tipped over, the tool car upright with its box, the mail sack; the logs the gang laid across the line ------------
 place CaravanBarebones1 - at -44.5 -70 ground yaw=-20 tilt=12
-place Placeable_FuelTank - at -42.6 -69.5 h=6.2 rot=0,70,90
+# (the engine's tank thrown off beside it on the canyon floor: lying across the engine it ran into the canyon's north
+# bank, its middle buried 1 m, CIGroundIslands)
+place Placeable_FuelTank - at -43.94 -73.95 sit rot=0,340,90
 place RT_PipeDownStraight - at -46.3 -68.8 h=7.2 rot=0,0,15
 place Note_Book engineerlog at -45.6 -70.6 h=8 drop yaw=20
 place Caravan_Green_02 - at -50.5 -76.6 h=5.4 rot=0,15,88
-place VG_Safe expresssafe at -48 -79.2 ground yaw=200
+# (the safe on the canyon floor east of the car: at -48 -79.2 it stood on the south wall's foot, a 6 m-in-1.5 m slope,
+# set down at its low side and buried 1.4 m, CIGroundIslands)
+place VG_Safe expresssafe at -47.6 -74.8 ground yaw=200
 place VP_Wagon02 - at -55 -74 h=4.6 rot=0,30,80
 place VP_Wagon02 - at -57.5 -71.4 h=4.6 rot=0,10,-85
-place VP_Wagon02 - at -60 -73.2 ground yaw=40 tilt=20
+# (on the floor: at -60 -73.2 it stood on the south wall's foot, its middle under the slope, CIGroundIslands)
+place VP_Wagon02 - at -59.5 -70.5 ground yaw=40 tilt=20
 place VP_Wagon02 - at -53.2 -67.5 h=4.6 rot=0,60,-80
 place VP_Wagon02 - at -61.8 -68.7 ground yaw=21
 place "Box Small" toolcar at -61.8 -68.7 h=7 drop yaw=21
@@ -338,8 +343,10 @@ place "Box Big" fallenbox at 2.5 -79 h=-5 drop yaw=30
 place Loot_SunkenBarrel riverbarrel at 6.5 -82 h=-5.5 drop yaw=10
 place Creature_AnglerFish riverthing at 4 -86 h=-4
 place Zone_Trigger trestlezone at -8 -75 h=5.5
-line Beam_Long_01 from 17.21 -75.45 to 32.21 -68.45 step=3.59 ends yaw=180 rot=0,0,0
-line Beam_Long_01 from 16.79 -74.55 to 31.79 -67.55 step=3.59 ends yaw=180 rot=0,0,0
+# (the railhead at the switchbacks' foot, three lengths: the last two ran on into the bank the switchbacks raised and
+# were buried in it, CIGroundIslands)
+line Beam_Long_01 from 17.21 -75.45 to 26.97 -70.9 step=3.59 ends yaw=180 rot=0,0,0
+line Beam_Long_01 from 16.79 -74.55 to 26.55 -69.995 step=3.59 ends yaw=180 rot=0,0,0
 
 # ===== Chapter 4 - the Lucky Strike mine ================================================================================
 # (Balboa's bear cave set into the canyon's north wall, its mouth south onto the ledge (its floor level with it, 11.5 m),
@@ -425,9 +432,10 @@ place Zone_Trigger watchtowerzone at -30.4 -32.4 h=49.6
 # --- The ladder trail down the mesa's north face: three ladders, each from a ledge to the band above; the signpost at its
 # foot, the mayor's proclamation and the zone hidden until the signal --------------------------------------------------
 # (each band: a wall of timber cribbing three planks high, a landing of planks behind its top, the ladder up its face)
-macro cribband z hl
+# (lo: how far under the ledge the lowest course starts; t: its thickness - see the middle band)
+macro cribband z hl lo=1 t=1
 for cx -26.25 -21.75 1.5
-place Block_Wall_Wood - at $cx $z h={$hl-1}
+place Block_Wall_Wood - at $cx $z h={$hl-$lo} sz=$t
 place Block_Wall_Wood - at $cx $z h={$hl+1.43}
 place Block_Wall_Wood - at $cx $z h={$hl+3.86}
 place Block_Floor_Wood - at $cx {$z-0.75} h={$hl+6}
@@ -436,7 +444,9 @@ next
 place LandmarkLadder_6m mesaladder at -24 {$z+0.25} h=$hl yaw=180
 end
 call cribband 7.5 24
-call cribband 1.5 30
+# (its face stands half way up the slope, the ground 1.56 m over the ledge: the lowest course 25 cm higher, its top over
+# the ground - a metre under, it was buried whole, CIGroundIslands; 10% thicker where it reaches into the course on it)
+call cribband 1.5 30 lo=0.75 t=1.1
 call cribband -4.5 36
 place Balboa_DirectionSign - at -21 11 ground yaw=200
 place Note_Sign proclamation at -22.6 11.4 ground yaw=180

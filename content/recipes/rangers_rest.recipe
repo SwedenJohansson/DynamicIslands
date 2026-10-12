@@ -95,7 +95,9 @@ place Balboa_DecorationPrefabBase_ToxicBarrel - at 23.4 5.5 sit
 place "Balboa_DecorationPrefabBase_Trash Bag 2" - at 16.5 -6 sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 26.5 7.6 sit yaw=200
 place campfire_1 - at 21 7.6 sit
-place Firewood_1 - at 22.1 8 sit
+# (on the camp's flat: at 22.1 8 it lay on the bank's edge, set down at its low side and its middle under the slope,
+# CIGroundIslands)
+place Firewood_1 - at 22.4 7.2 sit
 place Creature_Goat goats at 18 6
 
 # --- Inside the den: Old Scar, his bait pile, the stolen supply crate at the back, the cave's gloom and drips -------

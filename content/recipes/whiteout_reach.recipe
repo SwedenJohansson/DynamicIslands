@@ -106,8 +106,11 @@ place "Box Big" holdcrate at 29 101.5 ground yaw=25
 # --- The crevasse in the hill's west flank: ice in its walls, the matriarch's den at its end ----------------------------
 place TP_StalagmiteCluster03_Snow - at -26 8.2 ground yaw=30
 place TP_StalagmiteCluster01_Snow - at -21 1.5 ground yaw=200
-place TP_IcePillar01 - at -14 9 ground
-place TP_IcePillar02 - at -13.5 0.5 ground yaw=40
+# (the two pillars at the foot of the den's north and south walls, half in them: at -14 9 and -13.5 0.5 they stood in
+# the walls themselves, set down on the den's floor at their foot and their middles under the wall - the south one
+# 9 m, CIGroundIslands; the walk in to the survey pack passes between them)
+place TP_IcePillar01 - at -14.8 8.5 ground
+place TP_IcePillar02 - at -15.3 2 ground yaw=40
 place Zone_Trigger icecaves at -36 5 h=5
 place Zone_Atmosphere crevasse at -24 5 h=6
 place Creature_PolarBear matriarch at -17 5 h=4.5

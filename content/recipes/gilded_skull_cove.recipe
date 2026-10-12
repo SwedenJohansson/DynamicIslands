@@ -92,10 +92,11 @@ clear at 5.9 29.8 r=2 only=Boulder
 # them; the seventh shows a skull and crossbones in the editor); her longboat drawn up on the sand below, her letter on
 # its thwart ------------------------------------------------------------------------------------------------------------
 push at 1.5 21 h=1.8
-place ReefHuts_Pillar1 - at -2 -1.4 sit
-place ReefHuts_Pillar1 - at -2 1.4 sit
-place ReefHuts_Pillar1 - at 2 -1.4 sit
-place ReefHuts_Pillar1 - at 2 1.4 sit
+# (the posts under the tarp's edges: at z 1.4 they stood 11 cm outside them and the tarp hung on nothing, CIGroundIslands)
+place ReefHuts_Pillar1 - at -2 -1.25 sit
+place ReefHuts_Pillar1 - at -2 1.25 sit
+place ReefHuts_Pillar1 - at 2 -1.25 sit
+place ReefHuts_Pillar1 - at 2 1.25 sit
 place ReefHuts_Tarpaulin - at 0 0 y=2.7 tilt=6 rot=0,0,0
 place MapTable maptable at 0 0 sit centred scale=0.6
 pop

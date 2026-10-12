@@ -43,7 +43,7 @@ push at 0 0 y=3.05
 call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3.05
 place "Table Office" indexdesk at -3 2.6 sit yaw=180
-place RT_RadarScreen indexterminal at -3.3 2.9 y=1.08 sit yaw=180
+place RT_RadarScreen indexterminal at -3 2.35 y=1.08 sit yaw=180 scale=0.5
 place "Chair Office" - at -3 1.6 sit yaw=10
 place Table_Common_01 - at -4.6 -2 sit yaw=90
 place Note_Book archivistsletter at -4.6 -2 y=1.6 sit drop yaw=20

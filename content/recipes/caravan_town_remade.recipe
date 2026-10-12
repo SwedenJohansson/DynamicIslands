@@ -70,7 +70,8 @@ place Caravan_Blue_01 - at -30 10 ground yaw=10
 place Caravan_Yellow_01 - at -30 10 y=2.75 ground yaw=10
 place Caravan_Blue_01 - at -26 17 ground yaw=95
 place Caravan_Yellow_01 - at -34 17 ground yaw=-20
-place Crate_Big_02 - at -22 13 ground yaw=30
+# (1.5 m in from the mesa's edge: at -22 it sat on the lip, its low corner over the cliff and the rest sunk in the ground)
+place Crate_Big_02 - at -23.5 13 ground yaw=30
 place UT_DrawBridgeMechanism_Cogwheel01 winch at -15.8 9.2 h=24 sit drop yaw=90
 
 # --- The mayor's pillar (21.9 m): his bridge pulled in on it, his trailers stacked two high with a ladder to the roof
@@ -81,7 +82,8 @@ place Caravan_Blue_01 mayortrailer at 3 -1 ground yaw=0
 place Caravan_Yellow_01 - at 3 -1 y=2.75 ground yaw=0
 place LandmarkLadder_6m roofladder at 3 -2.55 ground yaw=0
 place "Box Small" nest at 3.3 -0.4 h=27.7 sit
-place MayorsChest mayorschest at 6 4 ground yaw=-90
+# (on the pillar's flat top: at 6 4 it stood at the foot of the rock rising east and sank 0.7 m into it)
+place MayorsChest mayorschest at 4.8 4 ground yaw=-90
 place Zone_Trigger mayortower at 1 3 y=1.5
 place Zone_Trigger roof at 3 -1 y=6.5
 place Creature_Hyena hyenas at 0 2 ground

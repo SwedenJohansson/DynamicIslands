@@ -46,8 +46,9 @@ call rt_storey f2=none l2=RT_WallWindow2 b1=RT_WallWindow1 r2=RT_WallWindow2
 place "VG_DecorationPrefabBase_BigOfficeDesk Variant" desk at -3 3 sit yaw=180
 place "VG_DecorationPrefabBase_OfficeChair Variant" - at -3 4 sit
 place Note_Paper memo at -3.3 2.7 y=0.92 sit
-place "VG_DecorationPrefabBase_Bookshelf Filled 1 Variant" - at -5.6 -1.5 sit yaw=90
-place "VG_DecorationPrefabBase_Bookshelf Filled 2 Variant" - at -5.6 0.2 sit yaw=90
+# (in from the left wall: at x -5.6 their ends went 35 cm through it, off the floor's edge, CIGroundIslands)
+place "VG_DecorationPrefabBase_Bookshelf Filled 1 Variant" - at -5.2 -1.5 sit yaw=90
+place "VG_DecorationPrefabBase_Bookshelf Filled 2 Variant" - at -5.2 0.2 sit yaw=90
 place Placeable_Painting_Tangaroa_1 - at -0.15 2.5 y=1.5 yaw=270
 place "VG_DecorationPrefabBase_Carpet_Rectangle Variant" - at -3 0 y=0.01
 place "VG_DecorationPrefabBase_FloorLamp Variant" - at -0.7 4 sit
@@ -77,7 +78,8 @@ push at 27 12 h=0.5
 call rt_legs d=12
 call rt_storey l2=RT_WallWindow1 l3=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
 place TangaroaKitchen_Bench4 - at -5.4 0 sit yaw=90
-place "VG_DecorationPrefabBase_Refrigerator Variant" - at -1 3.9 sit yaw=180
+# (in the corner, inside the walls: at -1 3.9 its back went 30 cm through the back wall, off the floor, CIGroundIslands)
+place "VG_DecorationPrefabBase_Refrigerator Variant" - at -1.1 3.5 sit yaw=180
 place Table_Common_01 - at -2.5 -1 sit
 place RT_Floor caferoof at 0 4.5 y=3
 call rt_railing y=3 fm=none

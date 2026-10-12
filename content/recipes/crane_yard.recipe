@@ -55,8 +55,14 @@ place RT_Floodlight spotlight at 6 -4.6 y=6 sit scale=2.2 yaw=60
 place RT_Floodlight beam at 6 -4.6 y=7.6
 place LandmarkLadder_6m towerladder at 6 -7.15 rot=0,0,0
 line RT_Fence from 3 -3.05 to 9 -3.05 step=1.5 ends yaw=180 y=6
-line RT_Fence from 3.05 -7 to 3.05 -3 step=1.5 ends yaw=180 y=6
-line RT_Fence from 8.95 -7 to 8.95 -3 step=1.5 ends yaw=180 y=6
+# (the side rails three pieces each, the last one set back to end at the platform's north edge: as a line of 1.5 m
+# pieces from -7 their third reached past it to -2.5, half a metre over the yard 6 m down)
+for fz -7 -5.5 1.5
+place RT_Fence - at 3.05 $fz y=6 yaw=90
+place RT_Fence - at 8.95 $fz y=6 yaw=90
+next
+place RT_Fence - at 3.05 -4.5 y=6 yaw=90
+place RT_Fence - at 8.95 -4.5 y=6 yaw=90
 place RT_Fence - at 4.5 -6.95 y=6
 place RT_Fence - at 9 -6.95 y=6
 

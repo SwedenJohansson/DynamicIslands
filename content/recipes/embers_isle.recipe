@@ -121,8 +121,9 @@ place Placeable_Scarecrow - at 33.6 5.4 ground yaw=80
 place Placeable_Scarecrow - at 23.8 -2.6 ground yaw=0
 place ReefHuts_Pillar3 - at 17.0 4.6 ground sy=0.5
 place Placeable_Utopia_DanglyDecoration_2 - at 17.15 4.6 h=5.9
-# (a sailcloth curtain over half the fire-keeper's doorway)
-place ReefHuts_Cloths - at 27.42 4.55 h=7.34 yaw=90
+# (a sailcloth curtain over half the fire-keeper's doorway, its hem on the deck: at 27.42 it hung 8 cm out past the deck's
+# edge over the terrace 2.6 m down, CIGroundIslands)
+place ReefHuts_Cloths - at 27.58 4.55 h=7.34 yaw=90
 place RT_Spear - at 17.2 4.4 h=3.3 rot=-75,30,0
 place Reef_Barrel1 - at 19.2 3.2 ground yaw=20
 place Reef_Barrel1 - at 26.6 -0.4 ground yaw=80

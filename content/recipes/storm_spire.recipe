@@ -104,11 +104,13 @@ push at 4 9 h=33.5
 call rt_storey l2=RT_WallDoor1 f1=RT_WallWindow1 b2=RT_WallWindow1 r2=RT_WallWindow2
 place RT_Floor - at 0 4.5 y=3.05
 place "Table Office" - at -3 3.4 sit
-place RT_RadarScreen - at -3.3 3.7 y=1.08 sit yaw=180
+place RT_RadarScreen - at -2.9 3.85 y=1.08 sit yaw=180 scale=0.5
 place Locker stationlocker at -0.55 2.4 sit yaw=270
 place Placeable_Lantern_Metal - at -4.2 3.6 y=1.2 sit drop
 place RT_PillarThick mast at -1.2 -3.2 y=3.05
-place Placeable_WindTurbine vane at -1.2 -3.2 y=9.05 scale=0.45
+# (the vane's foot is wider than the mast: it stands on a 2 x 2 m scaffold platform on the mast's top)
+place Scaffolding_2x2m - at -1.2 -3.2 y=9.05
+place Placeable_WindTurbine vane at -1.2 -3.2 y=10.05 scale=0.45
 place Zone_Trigger spiretop at -3 0 y=1.5
 place Creature_StoneBird stormbird at -3 0 y=9
 pop

@@ -77,7 +77,8 @@ place Balboa_Shack - at -36 41 ground
 # (inside: set down from under its roof onto its floor; the logbook onto the table)
 place Placeable_Table_Basic - at -36 41 h=6 drop yaw=90
 place Note_Book logbook at -36 41.2 h=7 drop yaw=12 rot=0,0,0
-place Placeable_Cupboard_Large pantry at -40.5 43.5 h=6 drop
+# (the pantry 1.9 m in from the west wall: at -40.5 its west end stood through the wall, over the ground outside)
+place Placeable_Cupboard_Large pantry at -38.6 43.5 h=6 drop
 place Placeable_Fridge fridge at -31 43.6 h=6.5 drop yaw=180
 place Placeable_Radio - at -36 36.2 h=6 drop yaw=180
 place Zone_Sound radio at -36 36.5 y=4.6
@@ -112,11 +113,17 @@ place Placeable_Flag_02 - at -24 37 ground
 
 # --- The canoe dock from a low landing out into the lake: two canoes upside down on it, two on the sand, a box at its
 # end; planks off it in the shallows; a sunk canoe and its box in the lake -------------------------------------------------
+# (its lake half two blocks wide, a rail across the step: the upturned canoes are wider than one block - on the 1.5 m dock
+# half of each hung over the water, CIGroundIslands)
 push at -9 37.25 h=-2.5
-call boardwalk n=6 wide=1 y=3.5
-place "Box Small" dockbox at 8.4 0.75 y=3.5 sit yaw=10
-place RT_PlasticBoat - at 3 0.75 y=3.5 sit roll=180 yaw=90
-place RT_PlasticBoat - at 6 0.75 y=3.5 sit roll=180 yaw=95
+call boardwalk n=2 wide=1 y=3.5
+push at 3 0
+call boardwalk n=4 wide=2 y=3.5
+pop
+place Block_Wall_Fence_Rope - at 3 2.25 y=3.5 yaw=90
+place "Box Small" dockbox at 8.4 0.5 y=3.5 sit yaw=10
+place RT_PlasticBoat - at 4.85 1.9 y=3.5 sit roll=180 yaw=90
+place RT_PlasticBoat - at 7.85 1.9 y=3.5 sit roll=180 yaw=95
 pop
 place RT_PlasticBoat - at -12.5 34.5 ground yaw=20
 place RT_PlasticBoat - at -13 41 ground yaw=-15

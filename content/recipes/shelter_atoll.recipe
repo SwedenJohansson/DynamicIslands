@@ -77,12 +77,14 @@ place TP_Selene_Int_DoorLargeR cmddoorR at 3 -6
 # a strip of floor across to the landing
 place TP_SeleneEntranceGate gate at 0 -9.5
 place RT_Floor - at 3 -9 y=-0.07 sx=0.993 sz=0.111
+# (each course 1.5 cm thicker than the one on it: of the same thickness, the ground check's rays down the upper course's
+# faces grazed the lower one's edge and read the pit's floor through it - CIGroundIslands)
 for wx -9 -3 3
-place RT_Wall1 - at $wx -10
+place RT_Wall1 - at $wx -10 sz=1.1
 place RT_Wall1 - at $wx -10 y=3
 next
 for wx 6 12 3
-place RT_Wall1 - at $wx -10
+place RT_Wall1 - at $wx -10 sz=1.1
 place RT_Wall1 - at $wx -10 y=3
 next
 place RT_Wall1 - at 0 -10 y=4.5 sy=0.5
@@ -90,10 +92,11 @@ place RT_Wall1 - at 3 -10 y=4.5 sy=0.5
 for wx -9 12 3
 place RT_Wall1 - at $wx -10 y=6 sy=0.1
 next
-# (the facade's end walls stand over the pit's sloping edge: two courses of wall under them, down into the slope)
+# (the facade's end walls stand over the pit's sloping edge: two courses of wall under them, down into the slope; the
+# upper one 15 cm taller, its top just over the bank at the east end, where it was buried, CIGroundIslands)
 for wx -9 12 21
-place RT_Wall1 - at $wx -10 y=-3
-place RT_Wall1 - at $wx -10 y=-6
+place RT_Wall1 - at $wx -10 y=-3 sy=1.05 sz=1.2
+place RT_Wall1 - at $wx -10 y=-6 sz=1.3
 next
 
 # The landing in front of the gate: tower floor on thick pillars in the lagoon, two crates left on it

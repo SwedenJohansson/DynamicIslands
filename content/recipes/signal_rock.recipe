@@ -72,14 +72,15 @@ next
 # at the walkway, the top on the roof
 place RT_Stair stair at 6.0 3.0
 
-# The radio room on deck A: walls of 3 x 3 m (a window, a door to deck B)
-place RT_Wall1 - at -3 4.5
-place RT_Wall1 - at 0 4.5
-place RT_WallWindow1 - at -3 -4.5
-place RT_Wall1 - at 0 -4.5
-place RT_Wall1 - at -6.04 -4.5 yaw=90
-place RT_WallWindow2 - at -6.04 -1.5 yaw=90
-place RT_Wall1 - at -6.04 1.5 yaw=90
+# The radio room on deck A: walls of 3 x 3 m (a window, a door to deck B). The outer walls stand 8 cm in from the
+# deck's edges, on the floor whole (at the edge half their thickness stood over the cove, 6-9 m down - CIGroundIslands)
+place RT_Wall1 - at -3 4.42
+place RT_Wall1 - at 0 4.42
+place RT_WallWindow1 - at -3 -4.42
+place RT_Wall1 - at 0 -4.42
+place RT_Wall1 - at -5.96 -4.5 yaw=90
+place RT_WallWindow2 - at -5.96 -1.5 yaw=90
+place RT_Wall1 - at -5.96 1.5 yaw=90
 place RT_Wall1 - at 0 -4.5 yaw=90
 place RT_WallDoor1 door at 0 -1.5 yaw=90
 place RT_WallWindow1 - at 0 1.5 yaw=90
@@ -98,7 +99,7 @@ place "Counter Left" - at -5 -4.4 sit
 place "Counter Mid" - at -4 -4.4 sit
 place "Counter Right" - at -3 -4.4 sit
 place Phone - at -4 -4.05 y=1.07 sit
-place "Box Big" - at -5.35 3.8 sit
+place "Box Big" - at -5.3 3.25 sit
 place "Box Big" - at -5.4 -3.75 sit yaw=20
 place "Fire Estinguisher" - at -0.45 -3.9 sit
 place RT_RoofLamp - at -3 0 y=2.95
@@ -125,7 +126,7 @@ next
 place RT_SatteliteDisc - at -4.7 -2.6 y=3 sit yaw=200
 place RT_Floodlight - at -5.85 -4.35 y=4.35 yaw=225
 place RT_Floodlight - at -5.85 4.35 y=4.35 yaw=315
-place RT_DuctTop - at -5.0 3.2 y=3 sit
+place RT_DuctTop - at -3.3 3.3 y=3 sit
 
 # The mast: three thick pillars (18 m), a ladder up its front, a small platform on top with the beacon
 place RT_PillarThick - at -3 2 y=3
@@ -140,7 +141,7 @@ place Block_Wall_Fence_Tier3 - at -4 2.9 y=22 yaw=90
 place Block_Wall_Fence_Tier3 - at -2 2.9 y=22 yaw=90
 place RT_Floodlight beacon at -3 3.3 y=22.4
 place Antenna_dish - at -2.3 3.6 y=22 sit
-place RT_PowerBox - at -3 2.35 y=1.4 yaw=180
+place RT_PowerBox - at -3 2.35 y=4.4 yaw=180
 place Zone_Trigger masttop at -3 2.9 y=23
 place Zone_Trigger beaconswitch at -3 2.9 y=23
 
@@ -161,7 +162,7 @@ pop
 # --- The ridge: the windmill, a dish, the screechers' nest -------------------------------------------------------
 place RT_WindMill - at 9.5 0.5 sit yaw=200
 place Antenna_dish - at 7.5 2 sit yaw=120
-place Bird_Nest - at 8 -2.8 sit
+place Bird_Nest - at 9.75 -0.8 y=-0.05 sit
 place Creature_StoneBird screechers at 8 -2.8
 place Note_Sign sign at 1.4 -18.0 yaw=300
 

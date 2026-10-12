@@ -101,7 +101,9 @@ clear from -72 8 to -96 -38 r=10
 place TP_IcePillar04_Snow - at -79.5 -1 ground sit yaw=20
 place TP_IcePillar04_Snow - at -78.2 -10 ground sit
 place TP_IcePillar04_Snow - at -88.8 -17 ground sit yaw=70
-place TP_IcePillar01 - at -100 -33 ground sit yaw=40
+# (at the den floor's west edge, its back in the crevasse wall: at -100 -33 it stood up the wall, set down at its foot and
+# its top 0.45 m under the slope above, CIGroundIslands)
+place TP_IcePillar01 - at -99 -37 ground sit yaw=40
 place TP_IcePillar02 - at -89 -42 ground sit yaw=10
 place TP_BigRock02 - at -104 -44 ground sit scale=0.6 yaw=30
 place TP_SnowDrift01 - at -94 -42 ground sit yaw=10

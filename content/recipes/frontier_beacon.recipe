@@ -52,7 +52,8 @@ place RT_Floodlight beaconspot at -2 6 h=22.05 sit scale=2.2 yaw=0
 place RT_RoofLamp beaconlamp at -2 5.55 h=21.4
 place Placeable_Flag_03 - at 3.5 5.5 ground
 place Crate_Big_02 - at -6.5 11 ground yaw=20
-place "Box Small" - at -5 12.8 ground yaw=-15
+# (on the terrace: at -5 12.8 it stood on its north edge, set down at the bank's foot and buried 2.75 m, CIGroundIslands)
+place "Box Small" - at -4 11.3 ground yaw=-15
 place RT_PowerBox beaconbox at -2 5.62 h=17.4 yaw=0
 place Locker keeperslocker at 1 9.5 ground yaw=-90
 place Zone_Trigger terrace at -2 9 h=17.2

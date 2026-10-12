@@ -29,10 +29,12 @@ place "VG_DecorationPrefabBase_Lockers_Open Variant" - at 7.4 -12.3 h=2.55 sit y
 
 # --- The crew's camp in the middle of the sandbar: a tarp on posts, the yacht's couches, a bar, a sunbed, a fire ---
 clear at -4 3 r=8
-place ReefHuts_Pillar1 - at -6.2 1.6 sit
-place ReefHuts_Pillar1 - at -6.2 4.4 sit
-place ReefHuts_Pillar1 - at -1.8 1.6 sit
-place ReefHuts_Pillar1 - at -1.8 4.4 sit
+# (the posts under the tarp's edges: at z 1.6 / 4.4 they stood 11 cm outside them and the tarp hung on nothing,
+# CIGroundIslands)
+place ReefHuts_Pillar1 - at -6.2 1.75 sit
+place ReefHuts_Pillar1 - at -6.2 4.25 sit
+place ReefHuts_Pillar1 - at -1.8 1.75 sit
+place ReefHuts_Pillar1 - at -1.8 4.25 sit
 place ReefHuts_Tarpaulin tarp at -4 3 y=2.7 tilt=6 rot=0,0,0
 place VG_LoungeCouch - at -5.3 3.9 sit yaw=180
 place VG_LoungeCouch - at -2.9 3.9 sit yaw=180

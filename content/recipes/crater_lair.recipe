@@ -54,15 +54,17 @@ clear at -3 -3 r=9
 # --- The facade at the bluff: a concrete wall from the sea to the roof, the garage door in its frame over the dock pool and
 # the walkway beside it (the door lifts 4.8 m: a mover; its foot in the water); the roof slab of four of the radio
 # tower's floors over the whole hangar, level with the plateau; boulders round its edges ------------------------------
+# (each piece 1.5 cm thicker than the one on it: of the same thickness, the ground check's rays down the upper piece's
+# faces grazed the lower one's edge and read the ground through it - CIGroundIslands)
 for fz -12.372 -2.7 3.2175
-for fh -2 4 3
-place RT_Wall1 - at -42.6 $fz h=$fh yaw=90 sx=1.0725
-next
+place RT_Wall1 - at -42.6 $fz h=-2 yaw=90 sx=1.0725 sz=1.2
+place RT_Wall1 - at -42.6 $fz h=1 yaw=90 sx=1.0725 sz=1.1
+place RT_Wall1 - at -42.6 $fz h=4 yaw=90 sx=1.0725
 place RT_Wall1 - at -42.6 $fz h=7 yaw=90 sx=1.0725 sy=0.17
 next
-for fh -2 4 3
-place RT_Wall1 - at -42.6 7.5 h=$fh yaw=90 sx=0.538
-next
+place RT_Wall1 - at -42.6 7.5 h=-2 yaw=90 sx=0.538 sz=1.2
+place RT_Wall1 - at -42.6 7.5 h=1 yaw=90 sx=0.538 sz=1.1
+place RT_Wall1 - at -42.6 7.5 h=4 yaw=90 sx=0.538
 place RT_Wall1 - at -42.6 7.5 h=7 yaw=90 sx=0.538 sy=0.17
 place RT_Wall1 - at -42.6 0.5 h=6.5 yaw=90 sx=2.3333 sy=0.34
 place VP_GarageDoor_Frame - at -42.6 0.5 h=-0.5 yaw=-90
@@ -77,7 +79,8 @@ place SmallBoulder2 - at -36 12.6 ground yaw=200 scale=0.55
 
 # --- The hidden panel: on the facade beside the door, behind a boulder in the water ---------------------------------
 place SmallBoulder2 - at -44.6 -5.2 ground yaw=80 scale=0.5
-place TP_LaserControlPanel doorpanel at -42.85 -3.3 h=1.2 yaw=-90
+# (its back on the facade's sea face: at -42.85 it hung 9 cm off it, CIGroundIslands)
+place TP_LaserControlPanel doorpanel at -42.77 -3.3 h=1.2 yaw=-90
 
 # --- The hangar: the walkway along the dock pool, the floor (1 m) with the Chief's seaplane on its slip, crates, the
 # engineer's memo on a board, floodlights; the rats in the corner by the crates ---------------------------------------
@@ -109,8 +112,9 @@ place RT_Wall1 - at -30.3 -0.9 h=$wh yaw=90
 place RT_Wall1 - at -30.3 4.6 h=$wh yaw=90 sx=0.9
 next
 place RT_Wall1 - at -34.4 -0.65 h=4.06 yaw=90
-place RT_WallWindow1 - at -31.4 -0.9 h=1.06
-place RT_WallWindow1 - at -28.4 -0.9 h=1.06
+# (a hair thicker than the walls on them, as the facade's pieces)
+place RT_WallWindow1 - at -31.4 -0.9 h=1.06 sz=1.1
+place RT_WallWindow1 - at -28.4 -0.9 h=1.06 sz=1.1
 place RT_Wall1 - at -26.2 -0.9 h=1.06 sx=0.7333
 place RT_Wall1 - at -31.4 -0.9 h=4.06
 place RT_Wall1 - at -28.4 -0.9 h=4.06
@@ -132,7 +136,7 @@ place "VG_DecorationPrefabBase_OfficeChair Variant" - at -27.2 3.4 h=1.06 sit ya
 place Placeable_LuckyCat - at -28.6 3.0 h=1.97 drop sit yaw=-90
 place Placeable_WorldGlobe - at -29.4 6.4 h=1.06 sit
 place "VG_DecorationPrefabBase_Carpet_Circle Variant" - at -28.4 3.4 h=1.15
-place Placeable_Painting_Crafted_2 - at -26.4 5.6 h=2.4 yaw=-90
+place Placeable_Painting_Crafted_2 - at -26.28 5.6 h=2.4 yaw=-90
 place VG_Safe chiefsafe at -27.0 6.5 h=1.06 sit yaw=180
 place Zone_Trigger controlwing at -30.3 3.2 h=2
 
@@ -194,7 +198,8 @@ prop lairvault beh.hidden=1
 loot lairvault Battery*2;CopperIngot*3;TradeToken*4
 place Note_Paper lairmemo at -37.5 -8 h=8.5 drop yaw=20
 note lairmemo Roof crew memo | ROOF - SAFE ACCESS\n\nThe roof safe opens on the beam only. Emitter stays ON.\nMirror turned a quarter for access, turned back after.\nAnyone leaving it pointed at the sky again cleans the dish.
-call camera x=-43.0 z=-4.5 h=6.9 yaw=-120 alias=bluffcam
+# (its mount flat on the facade's sea face: at -43.0, turned -120, it hung 0.3 m off it, CIGroundIslands)
+call camera x=-42.68 z=-4.5 h=6.9 yaw=-90 alias=bluffcam
 prop bluffcam beh.use=Look into the camera
 prop bluffcam on.use=message||The lens follows you, whirring. Somewhere inside the cone, a screen shows your face to nobody.
 

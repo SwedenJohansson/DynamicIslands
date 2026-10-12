@@ -103,7 +103,7 @@ place RT_Wall1 - at 0 -6.97 yaw=90 sx=0.8233
 # (inside: the observation desk under the slits with the radar screen, a monitor and her notebook; the projector hanging
 # from the ceiling, its screen on the west wall; her safe, the supply crate, file boxes)
 place "Table Office" - at -1 0 sit yaw=90
-place RT_RadarScreen - at -0.75 -0.3 y=1.08 sit yaw=90
+place RT_RadarScreen - at -0.75 -0.05 y=1.08 sit yaw=90 scale=0.45
 place Balboa_DecorationPrefabBase_CRTScreen - at -0.8 0.8 y=1.08 sit drop yaw=-90
 place Note_Book notebook at -0.45 -0.9 y=1.3 sit drop yaw=15
 place "Chair Office" - at -1.9 0 sit yaw=-90

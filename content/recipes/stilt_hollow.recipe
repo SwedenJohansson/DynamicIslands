@@ -29,7 +29,9 @@ place Caravan_Blue_01 docktrailer at 6.4 -12.2 h=4.45 yaw=15
 place Crate_Big_01 - at 5.5 -14.5 h=4.45 sit yaw=40
 place Crate_Big_02 - at 5.2 -13.6 h=4.45 sit yaw=10
 place Cableroll_01 - at 9.8 -15 h=4.45 sit
-place "Sign_02" - at 6.3 -15.8 sit yaw=180
+# (on the landing's top: at 6.3 its end reached over the stack's edge and sit set it down the slope, its middle buried,
+# CIGroundIslands)
+place "Sign_02" - at 6.9 -15.8 h=4.45 sit yaw=180
 place Zone_Trigger town at 7.5 -13.5 h=5.5
 place Creature_Hyena hyenas at 7.5 -10.6 h=4.8
 

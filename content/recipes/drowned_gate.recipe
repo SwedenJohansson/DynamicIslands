@@ -79,7 +79,15 @@ clear from 2 -22 to 9 -22 r=5
 
 # --- The sea wall: a deck of the radio tower's floors (5.05 m) on two faces of its walls, three rows each (the sea
 # face at x 3, the basin face at x -3.04), from the south pad to the north pad; railings on its open stretches -------
-for wz -22.5 -7.5 3
+# (the south end's lowest course only its north half: its south half lay in the pad's slope, wholly under the ground,
+# and its middle on the slope's line, under it - CIGroundIslands)
+place RT_Wall1 - at 3 -21 y=-3.95 yaw=90 sx=0.5
+place RT_Wall1 - at -3.04 -21 y=-3.95 yaw=90 sx=0.5
+for wy -0.95 2.05 3
+place RT_Wall1 - at 3 -22.5 y=$wy yaw=90
+place RT_Wall1 - at -3.04 -22.5 y=$wy yaw=90
+next
+for wz -19.5 -7.5 3
 for wy -3.95 2.05 3
 place RT_Wall1 - at 3 $wz y=$wy yaw=90
 place RT_Wall1 - at -3.04 $wz y=$wy yaw=90
@@ -176,7 +184,7 @@ call rt_storey floor=none b1=RT_WallDoor1 f1=RT_WallDoor1 l1=RT_WallWindow1 l2=R
 place RT_Floor - at 0 4.5 y=3.05
 call rt_railing y=3.05
 place "Table Office" - at -1.2 -1.5 sit yaw=-90
-place RT_RadarScreen - at -0.9 -1.5 y=1.08 sit yaw=-90
+place RT_RadarScreen - at -1.5 -1.65 y=1.08 sit yaw=-90 scale=0.5
 place "Chair Office" - at -2.1 -1.5 sit yaw=90
 place Cableroll_01 - at -0.7 2.6 sit
 place Placeable_Lantern_Metal - at -1.2 -0.6 y=1.2 sit drop
