@@ -74,6 +74,9 @@ origin
 clear from -40 70 to 52 70 r=11
 clear from -40 54 to 40 54 r=11
 clear from 76 75 to 36 75 r=6
+# (the lower town's lane from the landing to the yards: a generator rock stood on it at x 61, 2026-10-12)
+clear from 28 86 to 50 86 r=2.5
+clear from 50 86 to 72 84 r=2.5
 clear at 30 88 r=7
 clear at -19 86 r=6
 clear at 0 92 r=4

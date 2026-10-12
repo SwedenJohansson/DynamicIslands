@@ -68,6 +68,9 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Animals spawned by custom islands that are still tied to their spawn point.</summary>
 		static readonly HashSet<AI_NetworkBehaviour> ours = new HashSet<AI_NetworkBehaviour>();
+		/// <summary>Host: our animals a hit left dead (instance ids), until the next look: one Raft removes at once (a
+		/// stingray) was killed, not taken away (The Frontier's stingray counted as taken away, 2026-10-12).</summary>
+		static readonly HashSet<int> felled = new HashSet<int>();
 		/// <summary>Speed multiplier per animal's movement component (read by the movement patches).</summary>
 		static readonly Dictionary<AI_Movement, float> speed = new Dictionary<AI_Movement, float>();
 		static float nextTick;
@@ -829,7 +832,7 @@ namespace DynamicIslands.Editor
 					continue;
 				}
 				if (ai.networkEntity == null || !ai.networkEntity.IsDead) { p.LastAt[id] = ai.transform.position; seen.Add(id); }
-				else p.LastAt.Remove(id);
+				else { p.LastAt.Remove(id); felled.Remove(id); }
 			}
 			// Gone while alive (Raft may drop it from the list before the object goes, so this goes by the ones last seen
 			// alive): far from every player - or one of Raft's harmless sea animals, which it takes away on its own timer
@@ -838,6 +841,7 @@ namespace DynamicIslands.Editor
 			foreach (int id in p.LastAt.Keys.Where(k => !seen.Contains(k)).ToList())
 			{
 				Vector3 at = p.LastAt[id];
+				if (felled.Remove(id)) { p.LastAt.Remove(id); continue; }
 				if (Harmless(p.Kind.Type) || !Players.All.Any(pl => pl != null && Vector2.Distance(new Vector2(pl.transform.position.x, pl.transform.position.z), new Vector2(at.x, at.z)) < StrayDistance)) strayed++;
 				p.LastAt.Remove(id);
 			}
@@ -861,6 +865,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Raft's harmless sea animals: players can't kill them, Raft takes them away after a while.</summary>
+		/// <summary>Host, after a hit: notes one of our animals the hit left dead (see felled).</summary>
+		public static void Hit(Network_Entity entity)
+		{
+			if (entity == null || !(entity.IsDead || (entity.stat_health != null && entity.stat_health.Value <= 0f))) return;
+			AI_NetworkBehaviour ai = entity.GetComponentInParent<AI_NetworkBehaviour>();
+			if (ai == null) ai = entity.GetComponentInChildren<AI_NetworkBehaviour>();
+			if (ai != null && ours.Contains(ai)) felled.Add(ai.GetInstanceID());
+		}
+
 		static bool Harmless(AI_NetworkBehaviourType t)
 		{
 			return t == AI_NetworkBehaviourType.Dolphin || t == AI_NetworkBehaviourType.Turtle || t == AI_NetworkBehaviourType.Stingray || t == AI_NetworkBehaviourType.Whale;
@@ -1109,6 +1122,12 @@ namespace DynamicIslands.Editor
 				__state = v;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] A hit on an island creature: " + e.Message); }
+		}
+
+		static void Postfix(Network_Entity entity)
+		{
+			try { CreatureSpawner.Hit(entity); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] After a hit on an island creature: " + e.Message); }
 		}
 
 		// (a Finalizer: the mode gets its switch back also when Raft's DamageEntity throws)
