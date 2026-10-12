@@ -79,9 +79,17 @@ namespace DynamicIslands.Editor
 							float aside = s + Mathf.Sign(s) * m.HalfWidth;
 							Vector3 at = m.Pos + m.Along * (m.InsideAlong + dir * (start + f)) + m.Side * (m.InsideSide + aside);
 							if (OtherHill(at)) continue;
-							RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, m.FloorY + 40f, at.z), Vector3.down, 120f, ~0, QueryTriggerInteraction.Ignore);
-							System.Array.Sort(hits, (x, y) => y.point.y.CompareTo(x.point.y));
-							if (hits.Length < 2 || hits[0].collider != mine || hits[0].point.y - hits[1].point.y <= 0.6f) continue;
+							RaycastHit[] hits = UnderSkin(at, m.FloorY + 40f, mine);
+							if (hits == null || hits[0].point.y - hits[1].point.y <= 0.6f) continue;
+							// (over the cave's own rock - a shell's flank out past its roof - or at its edge, within a step: the hill
+							// covering it, not the ground; the generator's dead-end caves)
+							bool rock = false;
+							foreach (Vector3 by in new[] { Vector3.zero, Vector3.right * Cell, Vector3.left * Cell, Vector3.forward * Cell, Vector3.back * Cell })
+							{
+								RaycastHit[] near = by == Vector3.zero ? hits : UnderSkin(at + by, m.FloorY + 40f, mine);
+								if (near != null && OwnRock(near[1].collider)) { rock = true; break; }
+							}
+							if (rock) continue;
 							bad.Add(m.Name + (end == 0 ? " +" : " -") + " end: hill in front, " + f.ToString("0.0") + " m out, " + aside.ToString("0.0") + " m aside, " + (hits[0].point.y - hits[1].point.y).ToString("0.0") + " m over the " + hits[1].collider.name);
 						}
 				}
@@ -90,6 +98,21 @@ namespace DynamicIslands.Editor
 
 		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
 		float hillX0, hillZ0;
+
+		/// <summary>What a ray down at a spot hits, highest first, when the hill is the top and something is under it; else null.</summary>
+		static RaycastHit[] UnderSkin(Vector3 at, float fromY, Collider skin)
+		{
+			RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, fromY, at.z), Vector3.down, 120f, ~0, QueryTriggerInteraction.Ignore);
+			System.Array.Sort(hits, (x, y) => y.point.y.CompareTo(x.point.y));
+			return hits.Length >= 2 && hits[0].collider == skin ? hits : null;
+		}
+
+		bool OwnRock(Collider c)
+		{
+			foreach (Transform t in caves)
+				if (t != null && c.transform.IsChildOf(t)) return true;
+			return false;
+		}
 
 		bool OtherHill(Vector3 at)
 		{
