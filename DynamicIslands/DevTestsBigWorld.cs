@@ -143,6 +143,19 @@ namespace DynamicIslands
 			parts.Reset(); parts.Start(); CustomIslandSpawner.AllPlansIslandNames(); double plansCold = parts.Elapsed.TotalMilliseconds;
 			Log("the pool's pick in parts (ms): folder scan " + scan.ToString("F1") + ", all plans' islands (cold) " + plansCold.ToString("F1") + ", pool " + poolAll.ToString("F1") + ", plans' islands " + planned.ToString("F1") + ", not again " + notAgain.ToString("F1") + ", too early " + tooEarly.ToString("F1"));
 			Check(ref ok, sw.ElapsedMilliseconds / 20.0 < 20.0, "the pool's pick " + (sw.ElapsedMilliseconds / 20.0).ToString("F1") + " ms (under 20)");
+			// A new session's first pick: what is kept in memory forgotten, the caches on disk kept (IM43: B's first pick after
+			// the swap took 9.4 s - the director's rules and "finished" read every world island's whole file), and its parts
+			var poolNames = CustomIslandSpawner.Pool(false).Select(p => p.Key).ToList();
+			IslandCache.Forget(); if (at != null) at.SetValue(null, -100f);
+			parts.Reset(); parts.Start(); CustomIslandSpawner.PickFromPool(); double coldPick = parts.Elapsed.TotalMilliseconds;
+			IslandCache.Forget(); parts.Reset(); parts.Start(); CustomIslandSpawner.PlanIslandNames(); double coldPlanned = parts.Elapsed.TotalMilliseconds;
+			IslandCache.Forget(); parts.Reset(); parts.Start(); foreach (string n in poolNames) CustomIslandSpawner.NotAgain(n); double coldNotAgain = parts.Elapsed.TotalMilliseconds;
+			IslandCache.Forget(); parts.Reset(); parts.Start(); foreach (string n in poolNames) CustomIslandSpawner.TooEarly(n); double coldTooEarly = parts.Elapsed.TotalMilliseconds;
+			// (the director runs on the host only: as one more of its ticks)
+			double coldEvaluate = 0;
+			if (Raft_Network.IsHost) { IslandCache.Forget(); parts.Reset(); parts.Start(); WorldDirector.Evaluate(); coldEvaluate = parts.Elapsed.TotalMilliseconds; }
+			Log("a new session's parts (ms): plans' islands " + coldPlanned.ToString("F1") + ", not again " + coldNotAgain.ToString("F1") + ", too early " + coldTooEarly.ToString("F1") + ", the director's look at every rule " + coldEvaluate.ToString("F1"));
+			Check(ref ok, coldPick < 1000.0 && coldEvaluate < 1000.0, "a new session's first pick " + coldPick.ToString("F0") + " ms and the director's first look " + coldEvaluate.ToString("F0") + " ms (each under 1000; the caches on disk kept)");
 			Log((ok ? "PASS" : "FAIL") + ": big world " + (fill ? "fill" : "check"));
 		}
 	}

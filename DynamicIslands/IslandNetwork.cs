@@ -810,12 +810,17 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(hash)) return; // host couldn't hash it; try the local file
 			if (HashOf(entry.HostName) == hash) { entry.Name = entry.HostName; return; }
 			string downloaded = DownloadName(entry.HostName, hash);
-			if (File.Exists(IslandSpawner.PathFor(downloaded))) { entry.Name = downloaded; return; }
+			if (HashOf(downloaded) == hash) { entry.Name = downloaded; return; }
+			// (a kept copy whose content isn't the host's - cut short by a crash while it was written: it failed to read and the
+			// island never loaded; asked for again below, the download writes over it - COV14)
+			if (File.Exists(IslandSpawner.PathFor(downloaded))) Log("The kept copy " + downloaded + " isn't the host's (damaged): asking for it again");
 			// (the same content downloaded for another island name - the request already answered: a copy of it, not a wait
 			// of 30 s for a second download - review 2026-10-06)
 			try
 			{
-				string same = Directory.GetFiles(DynamicIslands.assetpath, "*_" + hash + IslandFile.Extension).FirstOrDefault();
+				// (by its content too: the name alone found the damaged copy itself - COV14)
+				string same = Directory.GetFiles(DynamicIslands.assetpath, "*_" + hash + IslandFile.Extension)
+					.FirstOrDefault(f => HashOf(Path.GetFileNameWithoutExtension(f)) == hash);
 				if (same != null)
 				{
 					File.Copy(same, IslandSpawner.PathFor(downloaded), true);
@@ -910,6 +915,7 @@ namespace DynamicIslands.Editor
 			Directory.CreateDirectory(DynamicIslands.assetpath);
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
 			IslandCache.ForgetFile(IslandSpawner.PathFor(name)); // (not "missing" for 2 s more - AU41)
+			CustomIslandSpawner.ForgetSize(name); // (a damaged copy read before it was fetched again kept its size as unreadable - COV14)
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash))
 			{

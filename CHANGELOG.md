@@ -177,7 +177,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   its height; a lookout tower's back railing no longer runs off its deck and its side railings have no gaps.
 - **No pause at the first random island of a session:** the first pick read every pool island's whole file for its
   "not before" distance (a fresh host with 130 pool islands: 0.5-0.7 s a pick on average over the first 20); the
-  distances are now kept in `notbeforecache.txt`.
+  distances are now kept in `notbeforecache.txt`. The world plan's first look through a session's islands and the
+  first pick no longer read every island's whole file either (a world of 152 islands: 9.4 s): an island's own rules
+  come from `rulescache.txt`, and an island never reached isn't read to see whether it is finished.
+- **A damaged downloaded island is fetched again:** a player's kept copy of the host's island that was cut short (a
+  crash while it was written) was used as it was, failed to read and the island never appeared; its content is now
+  checked when joining and a damaged copy is downloaded again.
 - **A world folder renamed by hand:** Raft still loads it, and now the mod does too - the plan, levels and island
   state come from the folder Raft picked instead of being lost.
 - **No hitch for a player who joined many worlds:** each random pick checked every kept copy of a host's island

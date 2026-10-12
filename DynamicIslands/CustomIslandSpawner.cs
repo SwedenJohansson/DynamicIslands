@@ -637,6 +637,9 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, float> elevationCache = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>An island file written again: its size read from it anew.</summary>
+		internal static void ForgetSize(string name) { radiusCache.Remove(name); elevationCache.Remove(name); }
+
 		/// <summary>Placing an island whose file doesn't exist yet (being generated): its size until then.</summary>
 		internal static void CacheSize(string name, float radius, float elevation)
 		{

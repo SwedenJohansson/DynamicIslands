@@ -509,13 +509,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
-		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); }
+		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); rulesAt.Clear(); }
 
 		#region Rules, kept on disk (ROADMAP P6)
 
 		// name -> (file time, its rules' text): reading every island's rules for Tidy up, Delete and Rename loaded each whole
 		// file (heights, objects) - 8 s for 1286 islands. Kept in Mods\DynamicIslands\rulescache.txt between sessions.
 		static Dictionary<string, KeyValuePair<long, string>> rules;
+		static readonly Dictionary<string, float> rulesAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		static bool rulesDirty;
 		static string RulesPath { get { return Path.Combine(DynamicIslands.assetpath, "rulescache.txt"); } }
 
@@ -526,11 +527,17 @@ namespace DynamicIslands.Editor
 			string path = IslandSpawner.PathFor(name);
 			try
 			{
+				KeyValuePair<long, string> had;
+				bool known = rules.TryGetValue(name, out had);
+				float at;
+				// (the file's time looked at again at most every 2 s, as Get does: the director asks it of every island each tick)
+				if (known && rulesAt.TryGetValue(name, out at) && Time.unscaledTime - at < 2f && Time.unscaledTime >= at)
+					return WorldDirector.RulesFromProps(new Dictionary<string, string> { { WorldDirector.IslandRulesKey, had.Value } });
 				if (!File.Exists(path)) return new List<IntroRule>();
 				long t = File.GetLastWriteTimeUtc(path).Ticks;
-				KeyValuePair<long, string> had;
+				rulesAt[name] = Time.unscaledTime;
 				string text;
-				if (rules.TryGetValue(name, out had) && had.Key == t) text = had.Value;
+				if (known && had.Key == t) text = had.Value;
 				else
 				{
 					// (a file that couldn't be read - locked, broken - isn't kept as "no rules" until it changes - review 2026-10-06)
@@ -636,7 +643,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Forgets one island file (it was just saved: read it again next time, not after the 2 s wait).</summary>
 		public static void ForgetFile(string path)
 		{
-			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); notBeforeAt.Remove(name); } catch { }
+			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); notBeforeAt.Remove(name); rulesAt.Remove(name); } catch { }
 		}
 
 		/// <summary>The island's own settings (empty if the file is missing).</summary>
@@ -1101,6 +1108,7 @@ namespace DynamicIslands.Editor
 			if (!CustomIslandSpawner.RaftPosition.HasValue) return;
 			UpdateVisits();
 			Evaluate();
+			IslandCache.SaveRules();
 			StoryChain.Tick();
 			ReturningIslands.Tick();
 			QuestMilestones.Tick();
@@ -1132,7 +1140,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The island's own rules (from its settings).</summary>
-		public static List<IntroRule> RulesOf(IslandWorldState.Entry e) { return RulesFromProps(IslandCache.PropsOf(e)); }
+		public static List<IntroRule> RulesOf(IslandWorldState.Entry e)
+		{
+			// (an island not loaded: its rules from the cache kept on disk, not its whole file - a fresh host's first look
+			// through a world of 152 islands read every file: 9.4 s, IM43)
+			if (e != null && (e.Root == null || e.Root.GetComponent<IslandSettings>() == null)) return IslandCache.RulesOf(e.Name);
+			return RulesFromProps(IslandCache.PropsOf(e));
+		}
 
 		public static List<IntroRule> RulesFromProps(IDictionary<string, string> props)
 		{
@@ -1698,6 +1712,9 @@ namespace DynamicIslands.Editor
 		public static bool Finished(IslandWorldState.Entry e)
 		{
 			if (e == null) return false;
+			// (never reached and no step done: not finished whatever its quest - without reading its file, which the spawn
+			// pool's first pick did for every island the world has, IM43)
+			if (!e.State.ContainsKey(WorldDirector.VisitKey) && QuestTracker.StepOf(e) <= 0) return false;
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count;
 			if (steps > 0) return QuestTracker.StepOf(e) >= steps;
 			return e.State.ContainsKey(WorldDirector.VisitKey);
