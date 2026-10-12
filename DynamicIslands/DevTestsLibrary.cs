@@ -129,7 +129,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: library unit"); else Fail("library unit");
 		}
 
-		[ConsoleCommand(name: "CILibraryRoundTrip", docs: "Dev, main menu or editor: a plan whose islands bring islands (a -> b -> c) exported as a pack (everything it needs, a missing island stops it, the next export is version 2 of the same entry), installed where its files aren't (the same bytes back, the plan, never while sailing), where a different 'cilib-b' is the player's (installed as 'cilib-b (CI Lib Pack)', a's rule follows, the player's untouched), updated while a saved world uses an island (that world keeps its version), a no-remix island refused, removed (keeping what a world uses); cleans up")]
+		[ConsoleCommand(name: "CILibraryRoundTrip", docs: "Dev, main menu or editor: a plan whose islands bring islands (a -> b -> c) exported as a pack (everything it needs, a missing island stops it, the next export is version 2 of the same entry), installed where its files aren't (the same bytes back, the plan, never while sailing), where a different 'cilib-b' is the player's (installed as 'cilib-b (CI Lib Pack)', a's rule follows, the player's untouched), updated while a saved world uses an island (that world keeps its version), a no-remix island refused, removed (keeping what a world uses); SL11: a storyline plan (tab titles, colours, intros, next-when, ending) is equal after export, remove and import; cleans up")]
 		public static void LibraryRoundTripCommand()
 		{
 			bool ok = true;
@@ -256,6 +256,44 @@ namespace DynamicIslands
 				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibA)) && File.Exists(WorldPlan.PathFor(planName)) && !File.Exists(IslandSpawner.PathFor(LibC)) && r.ToString().Contains("CI Lib World"),
 					"Remove keeps cilib-a and the plan (the world 'CI Lib World' uses them - it has no copy of the plan), removes the rest");
 				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == mine, "the player's own cilib-b is still there, untouched");
+
+				// SL11: a storyline shared - tab titles, colours, intros, a next-when note/step and an ending survive export -> remove -> import
+				{
+					const string nbIsland = "cilib-nb", nbPlan = "CI Lib Plan NB";
+					MakeLibIsland(nbIsland, 5);
+					var nbSource = new WorldPlan { Name = nbPlan, Description = "a storyline", Random = false, StoryEnding = "The end.\nThanks, åäö" };
+					nbSource.Rules.Add(new IntroRule { Id = "one", What = "island", WhatArg = nbIsland, When = "start", Where = "receiver", Distance = 300, StoryPlace = "first", StoryDone = "step:2",
+						TabTitle = "The Beginning", TabColour = 4, TabIntro = "Welcome, åäö\nSecond line" });
+					nbSource.Rules.Add(new IntroRule { Id = "two", What = "island", WhatArg = nbIsland, When = "rule", WhenRef = "one", Where = "receiver", Distance = 300, StoryPlace = "after:one", StoryDone = "note:1",
+						TabTitle = "Part two", TabColour = 6, TabIntro = "Next up" });
+					nbSource.Save();
+					WorldPlan nbSaved = WorldPlan.Load(nbPlan);
+					string nbError;
+					string nbZip = LibraryPack.Export(new LibraryInfo { title = "CI Lib NB", id = "ci-lib-nb", author = "CI Tester", summary = "test", remix = true }, null, nbSaved, null, null, out nbError);
+					Check(ref ok, nbZip != null && File.Exists(nbZip), "SL11: a plan with tabs, colours, intros, next-when and an ending exported: " + (nbZip ?? nbError));
+					LibraryPackContents nbPack = nbZip != null ? LibraryPack.Read(nbZip, out nbError) : null;
+					if (nbPack != null)
+					{
+						DeleteLib(nbIsland);
+						File.Delete(WorldPlan.PathFor(nbPlan));
+						LibraryPack.Report nbReport = LibraryPack.Install(nbPack, true, false, LibraryPack.SourceImport);
+						WorldPlan nbBack = WorldPlan.Load(nbReport.PlanName ?? nbPlan);
+						Check(ref ok, nbBack != null && nbBack.Rules.Count == 2, "SL11: imported again (" + (nbBack != null ? nbBack.Rules.Count + " rules" : "no plan") + ")");
+						if (nbBack != null && nbBack.Rules.Count == 2)
+						{
+							for (int i = 0; i < 2; i++)
+							{
+								IntroRule a = nbSaved.Rules[i], b = nbBack.Rules[i];
+								Check(ref ok, a.TabTitle == b.TabTitle && a.TabColour == b.TabColour && a.TabIntro == b.TabIntro && a.StoryPlace == b.StoryPlace && a.StoryDone == b.StoryDone && a.ToLine() == b.ToLine(),
+									"SL11: rule '" + a.Id + "' equal after the round trip: tab '" + b.TabTitle + "', colour " + b.TabColour + ", intro, place '" + b.StoryPlace + "', next-when '" + b.StoryDone + "'");
+							}
+							Check(ref ok, nbBack.StoryEnding == nbSaved.StoryEnding && nbBack.Description == nbSaved.Description, "SL11: the storyending and description are equal after the round trip ('" + nbBack.StoryEnding.Replace("\n", "\\n") + "')");
+							Check(ref ok, string.Join("\n", nbBack.Rules.Select(x => x.ToLine()).ToArray()) == string.Join("\n", nbSaved.Rules.Select(x => x.ToLine()).ToArray()), "SL11: the plan's rules and the notebook's lines are the same as the source's");
+						}
+						LibraryPack.Remove("ci-lib-nb");
+					}
+					if (nbZip != null && File.Exists(nbZip)) File.Delete(nbZip);
+				}
 			}
 			catch (Exception e) { Check(ref ok, false, "no exception: " + e); }
 			finally

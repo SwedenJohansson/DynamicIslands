@@ -13,7 +13,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class QuestEditorWindow : MonoBehaviour
 	{
-		const int MaxSteps = 10;
+		const int MaxSteps = IslandQuest.MaxStepCount;
 		static QuestEditorWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 

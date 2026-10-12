@@ -15,7 +15,7 @@ namespace DynamicIslands
 	{
 		#region Editor
 
-		[ConsoleCommand(name: "CIStoryTest", docs: "Dev, editor: checks and waits read and written, the story items window, story sets (locked door, trail of notes) and their undo, the item picker's story items, the checks in the Behaviour window, save and load")]
+		[ConsoleCommand(name: "CIStoryTest", docs: "Dev, editor: checks and waits read and written, the story items window, story sets (locked door, trail of notes) and their undo, the item picker's story items, the checks in the Behaviour window, save and load; SL5: a story item deleted while a collect step, a has check and a locked chest use it (Check warns), Ctrl+Z brings it back")]
 		public static void StoryTest()
 		{
 			StartTest(StoryTestRoutine());
@@ -120,6 +120,49 @@ namespace DynamicIslands
 			Check(ref ok, fd != null && ObjectProps.Get(fd.Props, BehaviourProps.EventKey("use")) == "switch||\nwait||3\nswitch||" && ObjectProps.Get(fd.Props, BehaviourProps.ElseKey("use")).Length > 0 &&
 				StoryItems.Of(f.Props).Count == 5, "saved and read back: checks, otherwise, waits and story items");
 			File.Delete(IslandSpawner.PathFor("cistory"));
+
+			// SL5: a story item deleted while a collect step, a "has" check and a locked chest use it
+			{
+				const string slId = "cikey";
+				StoryItemsWindow.Open();
+				yield return new WaitForSecondsRealtime(0.2f);
+				StoryItemsWindow.Editing.Add(new StoryItemDef { Id = slId, Name = "CI key" });
+				StoryItemsWindow.SaveNow();
+				yield return null;
+				Check(ref ok, StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: the story item 'cikey' is on the island");
+				Func<IslandFile> slIsland = () =>
+				{
+					int res = 17;
+					var hh = new float[res, res]; for (int y = 0; y < res; y++) for (int x = 0; x < res; x++) hh[y, x] = 0.4f;
+					var sl = new IslandFile { TerrainSize = new Vector3(64f, 60f, 64f), HeightmapResolution = res, Heights = hh, Name = "cistory-sl5" };
+					foreach (var kv in DynamicIslands.currentIslandProps) sl.Props[kv.Key] = kv.Value;
+					sl.Props[IslandQuest.KeySteps] = "collect|" + StoryItems.Ref(slId) + "|1|"; // (the collect step)
+					// (a chest that gives it, a door whose "has" check wants it, a locked chest that takes it)
+					sl.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(20, 25, 20), Props = new Dictionary<string, string> { { ObjectProps.LootItems, StoryItems.Ref(slId) + "*1" } } });
+					sl.Objects.Add(new IslandObject { Name = "Log", Position = new Vector3(24, 25, 20), Props = new Dictionary<string, string> { { BehaviourProps.Use, "Look" }, { BehaviourProps.CheckKey("use"), "has|" + StoryItems.Ref(slId) + "|1" }, { BehaviourProps.EventKey("use"), "message||Yes" } } });
+					sl.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(28, 25, 20), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "Scrap*5" }, { BehaviourProps.CheckKey("open"), "take|" + StoryItems.Ref(slId) + "|1" }, { BehaviourProps.ElseKey("open"), "message||Locked." } } });
+					return sl;
+				};
+				Func<IslandFile, List<string>> slAbout = f2 => PlanChecker.QuestFindings(f2).Select(x => x.Text).Where(t => t.IndexOf(slId, StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("CI key", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+				List<string> slBefore = slAbout(slIsland());
+				// (the Story items window's ×: the item leaves the list, Save keeps that)
+				StoryItemsWindow.Open();
+				yield return new WaitForSecondsRealtime(0.2f);
+				StoryItemsWindow.Editing.RemoveAll(d => d.Id == slId);
+				StoryItemsWindow.SaveNow();
+				yield return null;
+				Check(ref ok, !StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: 'cikey' is deleted in the Story items window");
+				List<string> slAfter = slAbout(slIsland()).Where(t => !slBefore.Contains(t)).ToList();
+				foreach (string t in slAfter) Log("  SL5 Check says: " + t);
+				Check(ref ok, slAfter.Any(t => t.IndexOf("Story items list", StringComparison.OrdinalIgnoreCase) >= 0), "SL5: Check warns that 'cikey' is used but no longer in the Story items list");
+				Check(ref ok, !slBefore.Any(t => t.IndexOf("Story items list", StringComparison.OrdinalIgnoreCase) >= 0), "SL5: no such warning while 'cikey' was in the list");
+				CommandUndoRedo.UndoRedoManager.Undo(); // (Ctrl+Z)
+				yield return null;
+				Check(ref ok, StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: Ctrl+Z brings 'cikey' back");
+				CommandUndoRedo.UndoRedoManager.Undo(); // (and once more: the item added above goes, as it was)
+				yield return null;
+				Check(ref ok, !StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: put back - 'cikey' is gone again");
+			}
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			DynamicIslands.NewIsland();
@@ -165,7 +208,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest milestones"); else Fail("quest milestones");
 		}
 
-		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps")]
+		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps; SL6: an item and a page with |, %, =, a line break, a-ring and o-diaeresis and an emoji are the same after the world file write/read and after the Story message round trip (caught locally)")]
 		public static void StoryWorld()
 		{
 			StartTest(StoryWorldRoutine());
@@ -401,6 +444,54 @@ namespace DynamicIslands
 			StoryBook.Reset();
 			foreach (string l in lines) { int eq = l.IndexOf('='); StoryBook.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
 			Check(ref ok, StoryBook.Count("brass-key") == 2 && StoryBook.Pages.Count == pages && StoryBook.Pages.Any(p => p.Text.Contains("\n") || p.Title == "The vault"), "the story state is written and read back (" + lines.Count + " lines)");
+
+			// SL6 (host part): an item and a page whose texts hold | % = a line break, a/o with rings and an emoji are the same after the world file and after the Story message
+			{
+				const string slOdd = "Pipe | percent % equals = line\nbreak åö 😀";
+				Func<string, string> slEsc = x => Uri.EscapeDataString(x);
+				Func<bool> slSame = () =>
+				{
+					StoryBook.Held it = StoryBook.Items.FirstOrDefault(h => h.Def.Id == "sl6-item");
+					StoryBook.Page pg = StoryBook.Pages.FirstOrDefault(p => p.Key == "sl6:page");
+					return it != null && it.Count == 3 && it.Def.Name == slOdd && it.Def.Description == slOdd && pg != null && pg.Title == slOdd && pg.Text == slOdd && pg.Island == "Isle | one" && pg.Day == 4;
+				};
+				Action<IEnumerable<string>> slRead = ls => { foreach (string l2 in ls) { string t = l2.StartsWith("@") ? l2.Substring(1) : l2; int q = t.IndexOf('='); if (q > 0) StoryBook.ReadLine(t.Substring(0, q), t.Substring(q + 1)); } };
+				string slPath = Path.Combine(Path.GetTempPath(), "cistory-sl6.txt");
+				Action<IslandNetMessage> slLoopBefore = IslandNetwork.Loopback;
+				try
+				{
+					StoryBook.Reset();
+					StoryBook.ReadLine("story.item", string.Join("|", new[] { "sl6-item", "3", slOdd, "", slOdd, "3" }.Select(slEsc).ToArray()));
+					StoryBook.ReadLine("story.page", string.Join("|", new[] { "sl6:page", "4", slOdd, "Isle | one", slOdd }.Select(slEsc).ToArray()));
+					Check(ref ok, slSame(), "SL6: an item and a page with | % = a line break, åö and an emoji are kept as given");
+					// the world file: written to a file, read back
+					List<string> slWritten = StoryBook.WriteLines().ToList();
+					File.WriteAllLines(slPath, slWritten.ToArray());
+					List<string> slFromFile = File.ReadAllLines(slPath).ToList();
+					StoryBook.Reset();
+					slRead(slFromFile);
+					Check(ref ok, slFromFile.Count == slWritten.Count && slSame(), "SL6: the same after the world file's write and read (" + slWritten.Count + " lines, one line each)");
+					// the Story message: the host's state, caught locally, decoded as a client does (OnMessage \"all\")
+					IslandNetMessage slMsg = null;
+					IslandNetwork.Loopback = m => slMsg = m;
+					IslandNetwork.SendStory(StoryBook.StateMessage());
+					IslandNetwork.Loopback = slLoopBefore;
+					Check(ref ok, slMsg != null && slMsg.Kind == IslandNetMessage.Story && slMsg.Name == "all" && !string.IsNullOrEmpty(slMsg.Data), "SL6: the Story message is made (" + (slMsg != null && slMsg.Data != null ? slMsg.Data.Split('\n').Length + " lines" : "none") + ")");
+					if (slMsg != null)
+					{
+						StoryBook.Reset();
+						slRead((slMsg.Data ?? "").Split('\n'));
+						Check(ref ok, slSame(), "SL6: the same after the Story message's encode and decode (a line break inside a text doesn't split a line)");
+					}
+				}
+				finally
+				{
+					IslandNetwork.Loopback = slLoopBefore;
+					try { if (File.Exists(slPath)) File.Delete(slPath); } catch { }
+					StoryBook.Reset(); // (the world's own story put back, as it was)
+					slRead(lines);
+				}
+			}
 
 			// Movers in step: a second copy of the island moves exactly like the first
 			Check(ref ok, SharedClock.Synced, "the shared clock follows the host's water time (" + SharedClock.Now.ToString("F1") + ")");

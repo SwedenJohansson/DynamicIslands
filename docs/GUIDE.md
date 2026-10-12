@@ -1175,7 +1175,7 @@ while you are in the zone - for a cave, a mine or a buried room (Old Mine Islet 
 ### 6.1 Quests
 
 **Island tab → Edit quest...**: a title, an introduction (shown when players arrive), up to 10 steps in order, a
-reward and a closing message.
+reward and a closing message. (A quest file edited by hand with more steps is read up to the tenth.)
 
 **Several quests on one island:** the buttons at the top of the quest editor are the island's quests - the **Main
 quest** and **+ Another quest** (up to nine quests in all). Each has its own steps, reward and messages and is done on its own;
@@ -1926,7 +1926,7 @@ What Check looks for:
 | **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 | **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
-| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
+| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
 | **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island of a later rule: players reach the lock without the key |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`

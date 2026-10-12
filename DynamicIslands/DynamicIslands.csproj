@@ -232,6 +232,7 @@
     <Compile Include="BuriedTreasure.cs" />
     <Compile Include="DevTestsTreasureProbe.cs" />
     <Compile Include="DevTestsStoryPieces.cs" />
+    <Compile Include="DevTestsStoryline.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />
     <Compile Include="DevTestsGenGather.cs" />

@@ -1533,7 +1533,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario wait save check"); else Fail("scenario wait save check");
 		}
 
-		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1)")]
+		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1); SL7 save: steps 3 and 2 done before step 1, the world state written and read back - they still count when step 1 is done, on Quest 1 and Quest 2")]
 		public static void ScEarlyCommand() { StartTest(ScEarlyRoutine()); }
 
 		static IEnumerator ScEarlyRoutine()
@@ -1552,6 +1552,11 @@ namespace DynamicIslands
 				new IslandQuest.Step { Type = "read", Target = "Diary", Count = 1 },
 				new IslandQuest.Step { Type = "open", Target = "Supplies", Count = 1 },
 				new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 2 } } }.To(f.Props);
+			// (Quest 2, for the save part: three note steps no real note matches - the part drives them with events)
+			new IslandQuest { Title = "The second camp", Steps = {
+				new IslandQuest.Step { Type = "read", Target = "SaveAlpha", Count = 1 },
+				new IslandQuest.Step { Type = "read", Target = "SaveBeta", Count = 1 },
+				new IslandQuest.Step { Type = "read", Target = "SaveGamma", Count = 1 } } }.To(f.Props, 1);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario early: no open sea near the raft"); yield break; }
@@ -1573,6 +1578,33 @@ namespace DynamicIslands
 				NoteReader.Close();
 				int steps = QuestTracker.QuestOf(e).Steps.Count;
 				Check(ref ok, QuestTracker.StepOf(e) >= steps, "the diary read: the supplies and the warthogs done before count now - the quest is done (" + QuestTracker.StepOf(e) + " of " + steps + ") - AU1");
+
+				// SL7 save part (host): steps 3 and 2 done before step 1, the world state written and read back - they still count when step 1 is done; the same on Quest 2
+				// (the quest's state put to the start first; Quest 2's keys are those of QuestTracker.StepKeyOf/ProgressKeyOf/EarlyKeyOf, which are private)
+				foreach (int key in new[] { QuestTracker.StepKey, QuestTracker.ProgressKey, QuestTracker.EarlyKeyBase, QuestTracker.EarlyKeyBase + 1, QuestTracker.EarlyKeyBase + 2,
+					0x40200 + 2, 0x40201 + 2, 0x40300 + 1 * 0x40, 0x40300 + 1 * 0x40 + 1, 0x40300 + 1 * 0x40 + 2 }) e.State.Remove(key);
+				Check(ref ok, QuestTracker.StepOf(e, 0) == 0 && QuestTracker.StepOf(e, 1) == 0 && QuestTracker.QuestsOf(e) == 2, "save: both quests at their first step to begin with");
+				Func<ObjectState, int> yieldOf = s => s != null ? s.Yield : 0;
+				ObjectState es;
+				// Quest 1: the supplies opened (step 2) and the warthogs defeated (step 3) before the diary
+				QuestTracker.Event(e, "open", "Supplies");
+				QuestTracker.Event(e, "kill", "Warthog", 2);
+				Check(ref ok, QuestTracker.StepOf(e, 0) == 0 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 1, out es) && yieldOf(es) == 1 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 2, out es) && yieldOf(es) == 2,
+					"save: Quest 1 - steps 3 and 2 done early are remembered, the quest still waits for step 1");
+				// Quest 2: step 3 and step 2 before step 1
+				QuestTracker.Event(e, "read", "SaveGamma");
+				QuestTracker.Event(e, "read", "SaveBeta");
+				Check(ref ok, QuestTracker.StepOf(e, 1) == 0 && e.State.ContainsKey(0x40300 + 1 * 0x40 + 1) && e.State.ContainsKey(0x40300 + 1 * 0x40 + 2), "save: Quest 2 - steps 3 and 2 done early are remembered");
+				// the world file's write and read (IslandWorldState.Save writes IslandObjectState.Encode of the state; a joining player's island list uses the same)
+				string encoded = IslandObjectState.Encode(e.State);
+				e.State = IslandObjectState.Decode(encoded);
+				Check(ref ok, e.State.TryGetValue(QuestTracker.EarlyKeyBase + 1, out es) && yieldOf(es) == 1 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 2, out es) && yieldOf(es) == 2 && e.State.ContainsKey(0x40300 + 1 * 0x40 + 1) && e.State.ContainsKey(0x40300 + 1 * 0x40 + 2) &&
+					QuestTracker.StepOf(e, 0) == 0 && QuestTracker.StepOf(e, 1) == 0, "save: the early steps (both quests) are there after the state is written and read back (" + encoded.Length + " chars)");
+				QuestTracker.Event(e, "read", "Diary");
+				Check(ref ok, QuestTracker.StepOf(e, 0) >= steps, "save: Quest 1 - step 1 done after the reload: steps 2 and 3 count, the quest is done (" + QuestTracker.StepOf(e, 0) + " of " + steps + ")");
+				QuestTracker.Event(e, "read", "SaveAlpha");
+				Check(ref ok, QuestTracker.StepOf(e, 1) >= 3, "save: Quest 2 - step 1 done after the reload: steps 2 and 3 count, the quest is done (" + QuestTracker.StepOf(e, 1) + " of 3)");
+				Check(ref ok, !e.State.ContainsKey(QuestTracker.EarlyKeyBase + 1) && !e.State.ContainsKey(QuestTracker.EarlyKeyBase + 2) && !e.State.ContainsKey(0x40300 + 1 * 0x40 + 1), "save: the early marks are used up once credited");
 			}
 			finally { ScRemove(made, isl); }
 			OnRaftCommand();
