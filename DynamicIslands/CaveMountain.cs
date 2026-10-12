@@ -41,7 +41,7 @@ namespace DynamicIslands.Editor
 			return p != null && p.IsCave && name != "BalboaCave_Vines";
 		}
 
-		/// <summary>Tests: a map of the last build (R roof, s side, c a way in, g lower than the ground, . nothing), one line per row.</summary>
+		/// <summary>Tests: a map of the last build (R roof, s side, c a way in, - cut off out past an open end, g lower than the ground, . nothing), one line per row.</summary>
 		public string LastMap;
 
 		/// <summary>Tests: builds it again now.</summary>
@@ -71,8 +71,31 @@ namespace DynamicIslands.Editor
 							if (mine.Raycast(new Ray(from, -dir * m.Along), out hit, 6f))
 								bad.Add(m.Name + (end == 0 ? " +" : " -") + " end, " + up.ToString("0.0") + " m over its floor, " + s.ToString("0.0") + " m aside: the hill " + hit.distance.ToString("0.0") + " m in");
 						}
+					// Out in front beside the way in: no hill over the ground there (it spread on over the ledge and the paths - Sundown
+					// Canyons, the Iron Gate); over the cave's own rock, or another cave's hill reaching there, is all right
+					foreach (float f in new[] { 1.5f, 3f, 5f, 8f })
+						foreach (float s in new[] { 1f, 4f, 8f, -1f, -4f, -8f })
+						{
+							float aside = s + Mathf.Sign(s) * m.HalfWidth;
+							Vector3 at = m.Pos + m.Along * (m.InsideAlong + dir * (start + f)) + m.Side * (m.InsideSide + aside);
+							if (OtherHill(at)) continue;
+							RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, m.FloorY + 40f, at.z), Vector3.down, 120f, ~0, QueryTriggerInteraction.Ignore);
+							System.Array.Sort(hits, (x, y) => y.point.y.CompareTo(x.point.y));
+							if (hits.Length < 2 || hits[0].collider != mine || hits[0].point.y - hits[1].point.y <= 0.6f) continue;
+							bad.Add(m.Name + (end == 0 ? " +" : " -") + " end: hill in front, " + f.ToString("0.0") + " m out, " + aside.ToString("0.0") + " m aside, " + (hits[0].point.y - hits[1].point.y).ToString("0.0") + " m over the " + hits[1].collider.name);
+						}
 				}
 			return bad;
+		}
+
+		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
+		float hillX0, hillZ0;
+
+		bool OtherHill(Vector3 at)
+		{
+			if (otherHill == null) return false;
+			int i = Mathf.RoundToInt((at.x - hillX0) / Cell), k = Mathf.RoundToInt((at.z - hillZ0) / Cell);
+			return i >= 0 && k >= 0 && i < otherHill.GetLength(0) && k < otherHill.GetLength(1) && otherHill[i, k];
 		}
 
 		void Update()
@@ -92,6 +115,7 @@ namespace DynamicIslands.Editor
 			if (skin != null) { DestroyImmediate(skin); skin = null; } // (its collider must not count as ground)
 			var cols = new HashSet<Collider>();
 			var floorOf = new Dictionary<Collider, float>();
+			var ownerOf = new Dictionary<Collider, int>(); // (which cave piece: its mouth's index)
 			var mouths = new List<Mouth>();
 			Bounds b = new Bounds();
 			bool any = false;
@@ -104,7 +128,7 @@ namespace DynamicIslands.Editor
 				PropInfo p = infos[i];
 				float floorY = t.position.y + p.Floor;
 				foreach (Collider c in t.GetComponentsInChildren<Collider>())
-					if (c.enabled && !c.isTrigger) { cols.Add(c); floorOf[c] = floorY; }
+					if (c.enabled && !c.isTrigger) { cols.Add(c); floorOf[c] = floorY; ownerOf[c] = mouths.Count; }
 				foreach (Renderer r in t.GetComponentsInChildren<Renderer>())
 				{
 					if (!r.enabled || !(r is MeshRenderer)) continue;
@@ -136,6 +160,7 @@ namespace DynamicIslands.Editor
 			var rimY = new float[nx, nz];      // a shell's low edge over lower ground, not a roof (NaN: none)
 			var floorAt = new float[nx, nz];   // the shell's floor (its highest point under the roof line; NaN: none)
 			var mouthAt = new float[nx, nz];   // in front of an open end, as wide as the passage: its floor height (NaN: not)
+			var own = new int[nx, nz];         // whose roof or low edge it is (-1: none)
 			int groundMask = (int)LayerMasks.MASK_GroundMask_NonRaft | (1 << IslandSpawner.TerrainLayer);
 			bool backfaces = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true; // (the shells face inwards: from above, a roof is its back)
@@ -146,14 +171,15 @@ namespace DynamicIslands.Editor
 					{
 						Vector3 at = new Vector3(x0 + i * Cell, rayTop, z0 + k * Cell);
 						float roof = float.NaN, low = float.NaN, gr = float.NegativeInfinity;
+						int roofBy = -1, lowBy = -1;
 						foreach (RaycastHit h in Physics.RaycastAll(at, Vector3.down, rayLen, ~0, QueryTriggerInteraction.Ignore))
 						{
 							float f;
 							if (floorOf.TryGetValue(h.collider, out f))
 							{
 								// (only a roof counts: a floor open to the sky is the way in)
-								if (h.point.y > f + 1.5f && !(h.point.y <= roof)) roof = h.point.y;
-								else if (!(h.point.y <= low)) low = h.point.y; // (the shell below its floor too: Balboa's den goes on 11 m under it)
+								if (h.point.y > f + 1.5f && !(h.point.y <= roof)) { roof = h.point.y; roofBy = ownerOf[h.collider]; }
+								else if (!(h.point.y <= low)) { low = h.point.y; lowBy = ownerOf[h.collider]; } // (the shell below its floor too: Balboa's den goes on 11 m under it)
 							}
 							else if ((groundMask & (1 << h.collider.gameObject.layer)) != 0 && h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
 						}
@@ -162,6 +188,7 @@ namespace DynamicIslands.Editor
 						ground[i, k] = float.IsInfinity(gr) ? b.min.y - 2f : gr;
 						// (a shell's edge under the roof line hung over the ground beside it: a 1.5 m slot into the den - AU83)
 						rimY[i, k] = float.IsNaN(roof) && low > ground[i, k] + 0.3f ? low : float.NaN;
+						own[i, k] = !float.IsNaN(roof) ? roofBy : lowBy;
 					}
 			}
 			finally { Physics.queriesHitBackfaces = backfaces; }
@@ -174,12 +201,22 @@ namespace DynamicIslands.Editor
 				startPlus[j] = RoofEnd(mouths[j], 1f, top, x0, z0, nx, nz);
 				startMinus[j] = RoofEnd(mouths[j], -1f, top, x0, z0, nx, nz);
 			}
+			// How far out past each cave's open ends (m past where its roof ends; under 0.5: not out past them). The hill of a
+			// cave's roof stops there, a face of rock across its front: it spread on over the ledge and the paths before the
+			// mouth, beside the way in (Sundown Canyons' switchbacks, the Iron Gate's shoulder - AU83)
+			var ahead = new float[mouths.Count][,];
+			for (int j = 0; j < mouths.Count; j++) ahead[j] = new float[nx, nz];
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
 					corridor[i, k] = float.NaN;
 					mouthAt[i, k] = float.NaN;
 					Vector3 at = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
+					for (int j = 0; j < mouths.Count; j++)
+					{
+						float a = Vector3.Dot(at - mouths[j].Pos, mouths[j].Along) - mouths[j].InsideAlong;
+						ahead[j][i, k] = Mathf.Max(mouths[j].Plus ? a - startPlus[j] : float.NegativeInfinity, mouths[j].Minus ? -a - startMinus[j] : float.NegativeInfinity);
+					}
 					for (int j = 0; j < mouths.Count; j++)
 					{
 						Mouth m = mouths[j];
@@ -197,18 +234,24 @@ namespace DynamicIslands.Editor
 
 			// What the surface must stay over: the highest roof or low edge in the square and the ones round it (a shell's edge
 			// between two samples stuck out of a surface that fell away from the last roof sampled: a 2.2 m slot under it - AU83)
+			// (not out past a cave's open end from the roof beside it: a square of hill before the mouth)
 			var cover = new float[nx, nz];
+			var coverBy = new int[nx, nz];
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
 					float c0 = float.NaN;
+					int by = -1;
 					for (int a = Mathf.Max(i - 1, 0); a <= Mathf.Min(i + 1, nx - 1); a++)
 						for (int c = Mathf.Max(k - 1, 0); c <= Mathf.Min(k + 1, nz - 1); c++)
 						{
 							float y = float.IsNaN(top[a, c]) ? rimY[a, c] : top[a, c];
-							if (!float.IsNaN(y) && !(y <= c0)) c0 = y;
+							if (float.IsNaN(y) || (y <= c0)) continue;
+							if ((a != i || c != k) && own[a, c] >= 0 && ahead[own[a, c]][i, k] > 0.5f) continue;
+							c0 = y; by = own[a, c];
 						}
 					cover[i, k] = c0;
+					coverBy[i, k] = by;
 				}
 			// The surface: over a roof, the highest roof around it; elsewhere falling away from the roofs nearby
 			var height = new float[nx, nz];
@@ -221,16 +264,19 @@ namespace DynamicIslands.Editor
 				{
 					if (float.IsNaN(cover[i, k]) || !float.IsNaN(corridor[i, k])) continue;
 					float peak = cover[i, k] + Over;
+					float[,] past = coverBy[i, k] >= 0 ? ahead[coverBy[i, k]] : null;
 					for (int di = -reach; di <= reach; di++)
 						for (int dk = -reach; dk <= reach; dk++)
 						{
 							int a = i + di, c = k + dk;
 							if (a < 0 || c < 0 || a >= nx || c >= nz) continue;
+							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0)) continue;
 							float h = peak - Slope * Cell * Mathf.Sqrt(di * di + dk * dk);
 							if (h > height[a, c]) height[a, c] = h;
 						}
 				}
 			// (rounded off, and a little uneven: a hill, not cones; never below a roof)
+			var raw = (float[,])height.Clone();
 			for (int pass = 0; pass < 2; pass++)
 			{
 				var soft = new float[nx, nz];
@@ -248,9 +294,22 @@ namespace DynamicIslands.Editor
 					}
 				height = soft;
 			}
+			// (out past an open end with no rock of its own and no other hill there: none - the rounding had spread the hill
+			// on over it again; a face down to the ground stands at the cut)
+			var cut = new bool[nx, nz];
+			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
+					bool past = false;
+					for (int j = 0; j < mouths.Count && !past; j++) past = ahead[j][i, k] > 0.5f;
+					cut[i, k] = past && float.IsNaN(cover[i, k]) && !(raw[i, k] > ground[i, k] - 0.6f);
+					otherHill[i, k] = past && float.IsNaN(cover[i, k]) && !cut[i, k];
+				}
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (cut[i, k]) { height[i, k] = ground[i, k] - 3.5f; on[i, k] = false; continue; }
 					float x = x0 + i * Cell, z = z0 + k * Cell;
 					float rough = Mathf.Clamp01((height[i, k] - ground[i, k]) / 3f); // (none at its foot: no bumps through the ground around)
 					height[i, k] += rough * ((Mathf.PerlinNoise(x * 0.13f, z * 0.13f) - 0.5f) * 2.2f + (Mathf.PerlinNoise(x * 0.4f + 7f, z * 0.4f) - 0.5f) * 0.6f);
@@ -263,7 +322,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{
-					if (on[i, k] || !float.IsNaN(corridor[i, k])) continue;
+					if (on[i, k] || !float.IsNaN(corridor[i, k]) || cut[i, k]) continue;
 					bool next = false;
 					for (int di = -1; di <= 1 && !next; di++)
 						for (int dk = -1; dk <= 1 && !next; dk++)
@@ -284,7 +343,7 @@ namespace DynamicIslands.Editor
 			for (int k = nz - 1; k >= 0; k--)
 			{
 				for (int i = 0; i < nx; i++)
-					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
+					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : cut[i, k] ? '-' : on[i, k] ? (!float.IsNaN(top[i, k]) ? 'R' : 's') : float.IsNegativeInfinity(height[i, k]) || height[i, k] < ground[i, k] - 3f ? '.' : 'g');
 				map.Append('\n');
 			}
 			var tall = new Dictionary<string, int>();

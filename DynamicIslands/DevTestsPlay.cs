@@ -59,8 +59,19 @@ namespace DynamicIslands
 		static Vector2 playOffset;
 
 		/// <summary>The top of what is at a point (land, a deck, a roof), below a height.</summary>
-		static float PlaySurface(Vector3 p, float below = 400f)
+		static float PlaySurface(Vector3 p, float below = 400f, bool inCave = false)
 		{
+			if (inCave)
+			{
+				// (a cave's mountain over the spot with room under it: the walk starts in the cave, not on the hill over it - AU83,
+				// Ironreef's Bear Hall)
+				RaycastHit[] hits = Physics.RaycastAll(new Vector3(p.x, below, p.z), Vector3.down, below + 300f, ~0, QueryTriggerInteraction.Ignore).OrderByDescending(h => h.point.y).ToArray();
+				if (hits.Length > 0 && hits[0].collider.name == CaveMountain.SkinName)
+				{
+					RaycastHit under = hits.Skip(1).FirstOrDefault(h => h.point.y < hits[0].point.y - 2.5f && h.collider.name != CaveMountain.SkinName);
+					if (under.collider != null) return under.point.y;
+				}
+			}
 			RaycastHit hit;
 			return Physics.Raycast(new Vector3(p.x, below, p.z), Vector3.down, out hit, below + 300f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : playEntry.Position.y;
 		}
@@ -161,7 +172,7 @@ namespace DynamicIslands
 						Vector3 start = points[0];
 						// (a little above what is there: the player lands on it, not half inside a thick plank)
 						// (below=: what is there under that height - a deck under a crane's jib)
-						start.y = PlaySurface(start, wopt.ContainsKey("below") ? playEntry.Position.y + F(wopt["below"]) : 400f) + 1.1f;
+						start.y = PlaySurface(start, wopt.ContainsKey("below") ? playEntry.Position.y + F(wopt["below"]) : 400f, true) + 1.1f;
 						PlayerMove.To(me, start);
 						yield return new WaitForSeconds(1f);
 						bool got = true;
