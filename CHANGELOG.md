@@ -197,7 +197,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Snow and cream animals are light now:** the world randomizer's light colours only multiplied the animal's
   texture, so a dark animal such as the warthog stayed almost as dark as Raft's own. They now lift the dark parts
   first, then tint.
-- **Sea animals left behind no longer count as defeated:** Raft takes its harmless sea animals (dolphins, turtles, stingrays, whales) away after a while, and animals far from every player; the mod counted each one as killed, so an island's animals could be "defeated" - and the animals gone for good - just by sailing past. Those animals now count as taken away, not killed: they come back with the island.
+- **Sea animals left behind no longer count as defeated:** Raft takes its harmless sea animals (dolphins, turtles, stingrays, whales) away after a while, and animals far from every player; the mod counted each one as killed, so an island's animals could be "defeated" - and the animals gone for good - just by sailing past. Those animals now count as taken away, not killed: they come back with the island. One the players kill still counts as defeated, also when Raft removes it at once (a stingray).
 - **Dens on Raft's big islands:** the world randomizer's den had stopped fitting on any of Raft's big islands, as the
   ground under its rim had to stay within 1.5 m. The rock outcrop over the den now closes a drop down to the ground, so
   the den fits where the ground falls up to 3 m under its rim, and its rim still meets the ground all round.
