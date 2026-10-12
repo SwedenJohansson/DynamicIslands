@@ -659,6 +659,7 @@ namespace DynamicIslands
 			if (EditorGizmoHandler != null) EditorGizmoHandler.ClearTargets(false);
 			ResetBuildArea();
 			data.SetHeights(0, 0, new float[data.heightmapResolution, data.heightmapResolution]);
+			CaveGround.EditorForget(); // (the old island's ground let down in its caves: gone with it)
 			foreach (Transform child in GameObject.Find("PlacedObjects").transform) Destroy(child.gameObject);
 			currentIslandName = UnnamedIsland;
 			currentElevation = 0f;
@@ -972,6 +973,7 @@ namespace DynamicIslands
 					terrain.terrainData.size = island.TerrainSize;
 				}
 				terrain.terrainData.SetHeights(0, 0, island.Heights);
+				CaveGround.EditorForget(); // (the old island's ground let down in its caves: gone with it)
 				SetEditorWaterLevel(island.WaterLevel);
 				SetEditorStyle(TerrainPainter.StyleIndex(island.Style)); // before painting, so the right textures go on
 				SetEditorMixStyle(island.HasMix ? TerrainPainter.StyleIndex(island.MixStyle) : -1);

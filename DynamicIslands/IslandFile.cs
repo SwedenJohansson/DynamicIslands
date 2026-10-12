@@ -395,6 +395,7 @@ namespace DynamicIslands.Editor
 			island.TerrainSize = data.size;
 			island.HeightmapResolution = data.heightmapResolution;
 			island.Heights = data.GetHeights(0, 0, data.heightmapResolution, data.heightmapResolution);
+			CaveGround.EditorOwnHeights(terrain, island.Heights); // (not as let down in its caves' rooms: that's made again when it's loaded or spawned - X7)
 
 			if (data.alphamapLayers > 0)
 			{

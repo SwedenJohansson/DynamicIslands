@@ -93,6 +93,7 @@ namespace DynamicIslands
 				EditorInput.HandleShortcuts();
 				EditorUI.Tick();
 				ModifyTerrain();
+				CaveGround.EditorTick(terrain, stroking); // (the ground out of the caves' rooms, as in a world - X7)
 			}
 			catch (Exception e)
 			{

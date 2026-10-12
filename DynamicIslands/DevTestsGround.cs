@@ -268,6 +268,8 @@ namespace DynamicIslands
 			var caves = new List<KeyValuePair<string, Transform>>(); // (island: piece)
 			if (DynamicIslands.InEditor())
 			{
+				int dug, cut = CaveGround.EditorNow(terraineditor.terrain, out dug); // (the ground out of the rooms now, not in a second)
+				Log("  the ground taken out of the caves' rooms: " + dug + " points let down, " + cut + " cells cut");
 				foreach (EditorGameObject e in PlacedEditorObjects())
 					if (e != null && RaftProps.Get(e.GameObjectName ?? "") != null && RaftProps.Get(e.GameObjectName).IsCave) caves.Add(new KeyValuePair<string, Transform>("editor", e.transform));
 			}
