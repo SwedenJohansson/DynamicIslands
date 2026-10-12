@@ -185,6 +185,9 @@ namespace DynamicIslands
 					string at;
 					float gap = DenRimGap(o, out at);
 					if (gap >= 0.6f) lines.Add("cave rim off the ground: " + n + " - " + at);
+					// (and from inside: nothing seen through its walls or roof - X7)
+					Vector3 eye, look;
+					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0) lines.Add("cave seen through from inside: " + n + " - " + at);
 					continue;
 				}
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -252,6 +255,141 @@ namespace DynamicIslands
 
 		/// <summary>How far the first thing under <paramref name="foot"/> that isn't <paramref name="self"/> is (the land, another object,
 		/// the sea floor); 9999 = nothing.</summary>
+		[ConsoleCommand(name: "CICaveInside", docs: "Dev, editor or world: every cave piece (the editor's island, or the loaded custom islands) looked round from inside at eye height - nothing seen through: no face seen from its back (Raft draws the shells, the ground and the hill over them from one side only), no sky but out through an open end (X7). CICaveInside [part of the name] [shots: a picture of each piece's worst look, shot_caveinside_<n>.png]")]
+		public static void CaveInsideCommand(string[] args)
+		{
+			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
+			bool shots = args != null && args.Length > 1 && args[1] == "shots";
+			StartTest(CaveInsideRoutine(only, shots));
+		}
+
+		static IEnumerator CaveInsideRoutine(string only, bool shots)
+		{
+			var caves = new List<KeyValuePair<string, Transform>>(); // (island: piece)
+			if (DynamicIslands.InEditor())
+			{
+				foreach (EditorGameObject e in PlacedEditorObjects())
+					if (e != null && RaftProps.Get(e.GameObjectName ?? "") != null && RaftProps.Get(e.GameObjectName).IsCave) caves.Add(new KeyValuePair<string, Transform>("editor", e.transform));
+			}
+			else
+				foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+					foreach (Transform t in e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name.Replace("(Clone)", "").Trim()) != null && RaftProps.Get(t.name.Replace("(Clone)", "").Trim()).IsCave))
+						caves.Add(new KeyValuePair<string, Transform>(e.Name, t));
+			caves = caves.Where(c => only.Length == 0 || c.Key.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0 || c.Value.name.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			int n = 0, bad = 0;
+			foreach (var c in caves)
+			{
+				if (c.Value == null) continue;
+				n++;
+				string name = c.Value.name.Replace("(Clone)", "").Trim(), detail;
+				Vector3 eye, look;
+				int seen = CaveSeeThrough(c.Value, RaftProps.Get(name), out detail, out eye, out look);
+				Log("  " + n + " '" + c.Key + "' " + name + " at " + c.Value.position.ToString("F0") + ": " + detail);
+				if (seen > 0) bad++;
+				if (shots && eye != Vector3.zero) yield return CameraShot(eye, eye + look * 5f, "caveinside_" + n);
+				yield return null;
+			}
+			if (n == 0) Fail("cave inside: no cave pieces" + (only.Length > 0 ? " named *" + only + "*" : ""));
+			else if (bad > 0) Fail("cave inside: " + bad + " of " + n + " cave pieces seen through from inside (above)");
+			else Log("PASS: cave inside - " + n + " cave pieces, nothing seen through from inside");
+		}
+
+		/// <summary>
+		/// A cave piece seen from where a player stands in it (X7): from eye height over every floor under its roof, every look
+		/// round meets the shell's inside, the ground from above or something else from its front - not the back of a face (Raft
+		/// draws its shells, the ground and the hill over them from one side only: the back of a face is a hole to the outside) -
+		/// and no sky but out through an open end. The looks that see through (0: none); detail: how many, and the worst place.
+		/// </summary>
+		static int CaveSeeThrough(Transform cave, PropInfo p, out string detail, out Vector3 eye, out Vector3 look)
+		{
+			eye = look = Vector3.zero;
+			List<Collider> own = cave.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToList();
+			if (p == null || !p.IsCave || own.Count == 0) { detail = "not measured: no colliders"; return 0; }
+			Bounds b = own[0].bounds;
+			foreach (Collider c in own) b.Encapsulate(c.bounds);
+			Vector3 along = cave.rotation * (p.Axis == 0 ? Vector3.right : Vector3.forward);
+			along.y = 0f; along.Normalize();
+			// (what can be seen: not animals, players, or the editor's handles of zones)
+			Func<Collider, bool> counts = c => c != null && !c.isTrigger && c.GetComponentInParent<AI_NetworkBehaviour>() == null && c.GetComponentInParent<Network_Player>() == null &&
+				(c.GetComponentInParent<EditorGameObject>() == null || !(c.GetComponentInParent<EditorGameObject>().GameObjectName ?? "").StartsWith("Zone_"));
+			Func<Vector3, Vector3, float, bool, RaycastHit?> first = (from, dir, len, backs) =>
+			{
+				Physics.queriesHitBackfaces = backs;
+				RaycastHit? best = null;
+				foreach (RaycastHit h in Physics.RaycastAll(from, dir, len, ~0, QueryTriggerInteraction.Ignore))
+					if (counts(h.collider) && (best == null || h.distance < best.Value.distance)) best = h;
+				return best;
+			};
+			var eyes = new List<Vector3>();
+			var looks = new List<Vector3>();
+			foreach (float pitch in new[] { -20f, 0f, 15f, 35f, 60f })
+				for (int i = 0; i < 16; i++) looks.Add(Quaternion.Euler(-pitch, i * 22.5f, 0f) * Vector3.forward);
+			looks.Add(Vector3.up);
+			int bad = 0, worstBad = 0;
+			string worst = "";
+			var what = new Dictionary<string, int>();
+			bool backs0 = Physics.queriesHitBackfaces;
+			Physics.SyncTransforms();
+			try
+			{
+				for (float x = b.min.x + 0.5f; x < b.max.x; x += 1.5f)
+					for (float z = b.min.z + 0.5f; z < b.max.z; z += 1.5f)
+					{
+						Physics.queriesHitBackfaces = false;
+						RaycastHit[] downs = Physics.RaycastAll(new Vector3(x, b.max.y + 2f, z), Vector3.down, b.size.y + 4f, ~0, QueryTriggerInteraction.Ignore);
+						foreach (RaycastHit h in downs)
+						{
+							if (!counts(h.collider) || h.normal.y < 0.6f) continue; // (somewhere to stand)
+							// (room to stand: nothing within 1.7 m over the floor)
+							if (first(h.point + Vector3.up * 0.1f, Vector3.up, 1.6f, true) != null) continue;
+							Vector3 e = h.point + Vector3.up * 1.6f;
+							// (in the cave: its roof over it, seen from below - on the shell's own floor, or on the ground with the
+							// shell's inside over it; not in a gap under the shell, where its floor's back is over it)
+							RaycastHit? up = first(e, Vector3.up, 30f, true), upFront = first(e, Vector3.up, 30f, false);
+							if (up == null || !own.Contains(up.Value.collider)) continue;
+							if (!own.Contains(h.collider) && (upFront == null || upFront.Value.distance > up.Value.distance + 0.05f)) continue;
+							eyes.Add(e);
+						}
+					}
+				if (eyes.Count > 150) eyes = eyes.Where((e, i) => i % (eyes.Count / 150 + 1) == 0).ToList();
+				foreach (Vector3 e in eyes)
+				{
+					int here = 0;
+					Vector3 hereLook = Vector3.zero;
+					string hereWhat = "";
+					foreach (Vector3 d in looks)
+					{
+						RaycastHit? any = first(e, d, 80f, true), front = first(e, d, 80f, false);
+						bool sky = any == null;
+						if (sky)
+						{
+							float o = Vector3.Dot(new Vector3(d.x, 0f, d.z), along);
+							if ((p.OpenPlus && o > 0.25f) || (p.OpenMinus && o < -0.25f)) continue; // (out through an open end)
+						}
+						else if (any.Value.distance < 0.3f || (front != null && front.Value.distance <= any.Value.distance + 0.05f)) continue; // (a face from its front)
+						string w = sky ? "sky" : (own.Contains(any.Value.collider) ? "the shell's back" : (any.Value.collider is TerrainCollider ? "the ground from below" : any.Value.collider.name + "'s back"));
+						what[w] = what.ContainsKey(w) ? what[w] + 1 : 1;
+						bad++;
+						if (here++ == 0) { hereLook = d; hereWhat = w + (sky ? "" : " " + any.Value.distance.ToString("F1") + " m off"); }
+					}
+					if (here > worstBad)
+					{
+						worstBad = here;
+						eye = e;
+						look = hereLook;
+						Vector3 l = cave.InverseTransformPoint(e);
+						worst = here + " of " + looks.Count + " looks at " + e.ToString("F1") + " (in the piece " + l.ToString("F1") + "), e.g. " + hereWhat + " looking " +
+							(Mathf.Atan2(hereLook.x, hereLook.z) * Mathf.Rad2Deg).ToString("F0") + "° round, " + (Mathf.Asin(hereLook.y) * Mathf.Rad2Deg).ToString("F0") + "° up";
+					}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs0; }
+			if (eyes.Count == 0) { detail = "no place to stand under its roof found"; return 0; }
+			detail = eyes.Count + " places to stand, " + (eyes.Count * looks.Count) + " looks: " + bad + " see through" +
+				(bad > 0 ? " (" + string.Join(", ", what.OrderByDescending(x => x.Value).Select(x => x.Key + " " + x.Value).ToArray()) + "); worst " + worst : "");
+			return bad;
+		}
+
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)
 		{
 			float best = float.MaxValue;
