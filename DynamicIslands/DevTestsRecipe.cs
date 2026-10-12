@@ -67,7 +67,7 @@ namespace DynamicIslands
 		/// <summary>What CIFloating doesn't measure the base of: the generator's plants and rocks (a crown or a boulder is wider
 		/// than what touches the ground), caves and tunnels (set into the land on purpose) - not the players' buildables (a
 		/// grass crop plot on Tide Farm's deck was a plant 8 m over the sea floor, the review 2026-10-03).</summary>
-		static readonly Regex NotABase = new Regex("^(?!Placeable_).*(Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift)", RegexOptions.IgnoreCase);
+		static readonly Regex NotABase = new Regex("^(?!Placeable_).*(Tree|Bush|Fern|Palm|Plant|Grass|Flower|Kelp|Coral|Rock|Boulder|Stone|Log|Shell|Cave|Tunnel|Vine|Seaweed|Cactus|Reed|Bamboo|Monstera|Drift|Stalagmite|Icicle)", RegexOptions.IgnoreCase);
 		/// <summary>What hangs or lies on purpose: a buoy's chain, pipes, cables, lamps, flags; decks, floors and ramps on their
 		/// posts; a crane's jib reaching out over the water.</summary>
 		static readonly Regex FloorLike = new Regex("Floor|Deck|Foundation|Platform", RegexOptions.IgnoreCase);

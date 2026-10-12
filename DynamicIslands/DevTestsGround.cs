@@ -155,11 +155,34 @@ namespace DynamicIslands
 				float lowest = float.MaxValue, highest = float.MinValue;
 				Vector3 worst = Vector3.zero;
 				int steps = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(b.size.x, b.size.z)), 3, 20);
+				// (its base in its own frame: a turned machine's world box reaches past its tracks - VP_Excavator read the ground
+				// beside them, 2026-10-12)
+				Vector3 lmin = Vector3.one * float.MaxValue, lmax = Vector3.one * float.MinValue;
+				foreach (Renderer r in baseParts)
+				{
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					if (mf == null || mf.sharedMesh == null || mf.sharedMesh.name.StartsWith("Combined Mesh")) { lmin = Vector3.one; lmax = Vector3.zero; break; }
+					Bounds mb = mf.sharedMesh.bounds;
+					for (int c = 0; c < 8; c++)
+					{
+						Vector3 l = o.InverseTransformPoint(r.transform.TransformPoint(mb.center + Vector3.Scale(mb.extents, new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f))));
+						lmin = Vector3.Min(lmin, l); lmax = Vector3.Max(lmax, l);
+					}
+				}
+				bool own = lmin.x <= lmax.x && lmin.z <= lmax.z;
 				for (int i = 0; i <= steps; i++)
 					for (int j = 0; j <= steps; j++)
 					{
 						var p = new Vector3(Mathf.Lerp(b.min.x + b.size.x * 0.2f, b.max.x - b.size.x * 0.2f, i / (float)steps), b.min.y, Mathf.Lerp(b.min.z + b.size.z * 0.2f, b.max.z - b.size.z * 0.2f, j / (float)steps));
+						if (own)
+						{
+							Vector3 sx = lmax - lmin, w = o.TransformPoint(new Vector3(Mathf.Lerp(lmin.x + sx.x * 0.2f, lmax.x - sx.x * 0.2f, i / (float)steps), lmin.y, Mathf.Lerp(lmin.z + sx.z * 0.2f, lmax.z - sx.z * 0.2f, j / (float)steps)));
+							p = new Vector3(w.x, b.min.y, w.z);
+						}
 						float g = GapUnder(o, p, land);
+						// (a railing straddling a deck's edge, as Raft's own towers: held by the face over the deck)
+						if (b.size.x < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(b.min.x, p.y, p.z), land), GapUnder(o, new Vector3(b.max.x, p.y, p.z), land));
+						if (b.size.z < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(p.x, p.y, b.min.z), land), GapUnder(o, new Vector3(p.x, p.y, b.max.z), land));
 						if (g < lowest) lowest = g;
 						if (g > highest) { highest = g; worst = p; }
 					}

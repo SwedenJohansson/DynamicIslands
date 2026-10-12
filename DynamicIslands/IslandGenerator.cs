@@ -1026,8 +1026,9 @@ namespace DynamicIslands.Editor
 			foreach (float d in new[] { 6.3f, 13.3f })
 			{
 				Rt(k, "RT_Floor", c, y0, 0f, 4.5f, d);
-				for (float x = 0f; x >= -6f; x -= 1.5f) Rt(k, "RT_Fence", c, y0, x, 4.5f, d);
-				foreach (float z in new[] { -3f, 0f, 3f }) { Rt(k, "RT_Fence", c, y0, -6f, z, d, 90f); Rt(k, "RT_Fence", c, y0, 0f, z, d, 90f); }
+				// (as Railing: four pieces along the back - a fifth at -6 ran off the floor - and the sides without 1.5 m holes)
+				for (float x = 0f; x > -6f; x -= 1.5f) Rt(k, "RT_Fence", c, y0, x, 4.5f, d);
+				foreach (float z in new[] { -4.5f, -3f, -1.5f, 0f, 1.5f, 3f }) { Rt(k, "RT_Fence", c, y0, -6f, z, d, 90f); Rt(k, "RT_Fence", c, y0, 0f, z, d, 90f); }
 			}
 			Rt(k, "LandmarkLadder_6m", c, y0, -1.5f, -4.62f, 0f);
 			Rt(k, "LandmarkLadder_6m", c, y0, -4.5f, -4.62f, 7.3f); // (its top at the top deck, as Ladders puts them: from 6.3 it ended 1 m under it)

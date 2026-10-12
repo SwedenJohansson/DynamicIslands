@@ -351,6 +351,8 @@ namespace DynamicIslands.Editor
 			PropInfo info = RaftProps.Get(name);
 			if (info != null) bottom = info.Bottom; else Bottom.TryGetValue(name, out bottom);
 			float ground = RandomizerIslands.LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
+			// (never more than half its height under the ground at its middle: a 1 m boat on a beach edge was buried)
+			if (info != null) ground = Mathf.Max(ground, k.Ground(p) - info.Size.y * 0.5f);
 			// (a setting of its own, so content placed next to it doesn't clear it away like scattered nature)
 			IslandObject o = k.Add(name, new Vector3(p.x, ground - bottom - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 			o.EulerRotation = new Vector3(tiltX, yaw, tiltZ);

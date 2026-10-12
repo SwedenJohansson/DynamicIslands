@@ -172,6 +172,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Things on generated islands lie on the ground:** metal sheets, firewood, tyres and pallets on a slope now lie
+  along it instead of being half buried; a set piece (a stranded boat on a beach edge) is never sunk more than half
+  its height; a lookout tower's back railing no longer runs off its deck and its side railings have no gaps.
 - **No pause at the first random island of a session:** the first pick read every pool island's whole file for its
   "not before" distance (a fresh host with 130 pool islands: 0.5-0.7 s a pick on average over the first 20); the
   distances are now kept in `notbeforecache.txt`.
