@@ -143,7 +143,8 @@ namespace DynamicIslands
 					sl.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(28, 25, 20), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "Scrap*5" }, { BehaviourProps.CheckKey("open"), "take|" + StoryItems.Ref(slId) + "|1" }, { BehaviourProps.ElseKey("open"), "message||Locked." } } });
 					return sl;
 				};
-				Func<IslandFile, List<string>> slAbout = f2 => PlanChecker.QuestFindings(f2).Select(x => x.Text).Where(t => t.IndexOf(slId, StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("CI key", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+				// (what the editor's Check says about the island: its quest, and its traps - PlanChecker.Check with the island's facts)
+				Func<IslandFile, List<string>> slAbout = f2 => PlanChecker.QuestFindings(f2).Concat(PlanChecker.Check(new WorldPlan(), true, false, PlanChecker.FromFile(f2, f2.Name, false))).Select(x => x.Text).Where(t => t.IndexOf(slId, StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("CI key", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 				List<string> slBefore = slAbout(slIsland());
 				// (the Story items window's ×: the item leaves the list, Save keeps that)
 				StoryItemsWindow.Open();

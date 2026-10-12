@@ -167,13 +167,13 @@ namespace DynamicIslands
 				SlPress("+ Another quest");
 				yield return null;
 				SlFillShown("Three", "t3", "Rope*3");
-				SlPress("Main quest");
+				SlPress("Main quest", true);
 				yield return null;
 				Check(ref ok, SlField<InputField>("titleField").text == "Main" && SlTargets().SequenceEqual(new[] { "m1" }), "back on the main quest its title and step are kept");
 				SlPress("Quest 3", true);
 				yield return null;
 				Check(ref ok, SlField<InputField>("titleField").text == "Three" && SlTargets().SequenceEqual(new[] { "t3" }), "Quest 3 keeps its own title and step");
-				SlPress("Main quest");
+				SlPress("Main quest", true);
 				yield return null;
 				QuestEditorWindow.SetQuestBringRule(DynamicIslands.currentIslandProps, null);
 				// (the bring rule is set on the window as the builder does: kind "A new island")
@@ -193,7 +193,7 @@ namespace DynamicIslands
 				QuestEditorWindow.Open();
 				yield return null;
 				for (int i = 0; i < 6; i++) { Check(ref ok, SlPress("+ Another quest"), "+ Another quest (quest " + (4 + i) + ")"); yield return null; }
-				int tabs = SlButtons("Main quest", false).Count + SlButtons("Quest ", true).Count;
+				int tabs = SlButtons("Main quest", true).Count + SlButtons("Quest ", true).Count;
 				Check(ref ok, tabs == IslandQuest.MaxQuests && SlButtons("+ Another quest", false).Count == 0, "nine quests, and then no + Another quest (" + tabs + " tabs)");
 				QuestEditorWindow.Close();
 				yield return null;
