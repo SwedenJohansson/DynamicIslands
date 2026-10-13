@@ -31,8 +31,10 @@ generate
 for px -42.0 -26.3 1.953125
 brush flatten from $px -10.419 to $px 7.159 r=1.9 s=20 frames=120 h=1.0
 next
-brush flatten from -42.0 -12.372 to -24.422 -12.372 r=1.9 s=20 frames=120 h=7.5
-brush flatten from -42.0 9.113 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5
+# (the north and south rims run on one column past the facade: stopped at x -42.0, the ground fell away between it and
+# the facade at -42.6, and the sky showed in the hangar's two front corners under the slab - X7, 2026-10-13)
+brush flatten from -43.953 -12.372 to -24.422 -12.372 r=1.9 s=20 frames=120 h=7.5
+brush flatten from -43.953 9.113 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5
 brush flatten from -24.422 -12.372 to -24.422 9.113 r=1.9 s=20 frames=120 h=7.5
 brush flatten from -43.953 1.3 to -43.953 3.253 r=1.9 s=20 frames=40 h=1.0
 for px -43.953 -36.1 1.953125
@@ -58,8 +60,9 @@ clear at -3 -3 r=9
 # faces grazed the lower one's edge and read the ground through it - CIGroundIslands)
 # (the first stack's second piece stretched down to 0.1 m, where the ground is: its base stood up to 0.73 m over the bank at
 # its middle, the footing under it only 7.5 mm thicker per side, which the ground check's rays didn't read - IG2, 2026-10-12)
-place RT_Wall1 - at -42.6 -12.372 h=-2 yaw=90 sx=1.0725 sz=1.2
-place RT_Wall1 - at -42.6 -12.372 h=0.1 yaw=90 sx=1.0725 sy=1.3 sz=1.1
+# (now footing and wall as one piece from -2 m to 4 m, as at the north end: with the south rim run past the facade, the
+# footing's top lay 1.1 m under the rock - X7, 2026-10-13)
+place RT_Wall1 - at -42.6 -12.372 h=-2 yaw=90 sx=1.0725 sy=2 sz=1.3
 place RT_Wall1 - at -42.6 -12.372 h=4 yaw=90 sx=1.0725
 place RT_Wall1 - at -42.6 -12.372 h=7 yaw=90 sx=1.0725 sy=0.17
 for fz -9.1545 -2.7 3.2175
