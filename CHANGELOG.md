@@ -176,6 +176,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Boss arena re-arms:** after a lost fight (the stakes sank after two minutes) stepping back into the arena
+  shuts the crew in again while the beast lives. Boss islands generated before keep the old one-shot arena.
 - **Rogue shark switched off:** a rogue that was lost (not found after a load) no longer brings a new one
   when the Rogue shark option has been switched off meanwhile; it is let go.
 - **Editor commands:** `SetElevation`, `ChangeWidth` and `ChangeStrength` with `NaN` show their usage instead of
