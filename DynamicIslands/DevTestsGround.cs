@@ -393,17 +393,24 @@ namespace DynamicIslands
 							// (room to stand: nothing within 1.7 m over the floor)
 							if (first(h.point + Vector3.up * 0.1f, Vector3.up, 1.6f, true) != null) continue;
 							Vector3 e = h.point + Vector3.up * 1.6f;
-							// (in the cave: its roof over it, seen from below - on the shell's own floor, or on the ground with the
-							// shell's inside over it; not in a gap under the shell, where its floor's back is over it)
+							// (in the cave: its roof over it, seen from below - on the shell's own floor or on the ground; not in a gap
+							// under the shell, where its floor's back is over it, nor on a rock of the piece's own that stands out of the
+							// shell, under its outside - Balboa's dead end has one, under the ground and in the sea)
 							RaycastHit? up = first(e, Vector3.up, 30f, true), upFront = first(e, Vector3.up, 30f, false);
 							if (up == null || !own.Contains(up.Value.collider)) continue;
-							if (!own.Contains(h.collider) && (upFront == null || upFront.Value.distance > up.Value.distance + 0.05f)) continue;
-							// (and walled in by it: most looks round meet its inside - not on top of its rock, under an overhang of its outside)
+							if (upFront == null || upFront.Value.distance > up.Value.distance + 0.05f) continue;
+							// (and walled in by it: most looks round meet its inside first, not its back - not on top of its rock,
+							// under an overhang of its outside)
 							int walls = 0;
 							for (int i = 0; i < 16; i++)
 							{
-								RaycastHit? w = first(e, Quaternion.Euler(0f, i * 22.5f, 0f) * Vector3.forward, 30f, false);
-								if (w != null && own.Contains(w.Value.collider)) walls++;
+								Vector3 wd = Quaternion.Euler(0f, i * 22.5f, 0f) * Vector3.forward;
+								RaycastHit? w = null;
+								Physics.queriesHitBackfaces = true;
+								foreach (RaycastHit x2 in Physics.RaycastAll(e, wd, 30f, ~0, QueryTriggerInteraction.Ignore))
+									if (own.Contains(x2.collider) && (w == null || x2.distance < w.Value.distance)) w = x2;
+								RaycastHit? wf = first(e, wd, 30f, false);
+								if (w != null && wf != null && wf.Value.collider == w.Value.collider && Mathf.Abs(wf.Value.distance - w.Value.distance) < 0.02f) walls++;
 							}
 							if (walls < 8) continue;
 							eyes.Add(e);
