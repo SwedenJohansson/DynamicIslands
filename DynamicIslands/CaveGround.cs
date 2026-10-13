@@ -16,6 +16,9 @@ namespace DynamicIslands.Editor
 	{
 		/// <summary>How far under a room's floor the ground in it is let down (m).</summary>
 		const float Under = 0.6f;
+		/// <summary>A cell steep enough that its ground can run through a room with none of its corners in it (m from its lowest corner to its highest), and how finely one is looked over.</summary>
+		const float Steep = 2f;
+		const int Looks = 8;
 
 		readonly List<Transform> caves = new List<Transform>();
 
@@ -237,8 +240,8 @@ namespace DynamicIslands.Editor
 						{
 							if (inside[z, x]) continue;
 							Vector3 p = new Vector3(o.x + x * sx, o.y + h[z - z0, x - x0] * sy, o.z + z * sz);
-							float under;
-							if (p.y <= b.min.y || p.y >= b.max.y || !Inside(p, own, b, out under)) continue;
+							float under, over;
+							if (p.y <= b.min.y || p.y >= b.max.y || !Inside(p, own, b, out under, out over)) continue;
 							inside[z, x] = true;
 							floor[z * res + x] = p.y - under;
 							lo = Mathf.Min(lo, z); hi = Mathf.Max(hi, z); left = Mathf.Min(left, x); right = Mathf.Max(right, x);
@@ -246,33 +249,40 @@ namespace DynamicIslands.Editor
 				}
 			}
 			finally { Physics.queriesHitBackfaces = backs0; }
-			if (hi < 0) return 0;
-			// (each point in a room let down under its floor: the ground between it and one outside the room then runs down
-			// into the rock, under the floor, seen from above - not across the room, seen from below - however few of a cell's
-			// corners are in it)
-			int w = right - left + 1, d = hi - lo + 1;
-			float[,] heights = data.GetHeights(left, lo, w, d), own0 = dugTo != null ? (float[,])heights.Clone() : null;
-			foreach (KeyValuePair<int, float> f in floor)
+			if (hi >= 0)
 			{
-				int z = f.Key / res, x = f.Key % res;
-				float to = Mathf.Clamp01((f.Value - Under - o.y) / sy);
-				if (to >= heights[z - lo, x - left]) continue;
-				heights[z - lo, x - left] = to;
-				dug++;
-			}
-			if (dug > 0)
-			{
-				data.SetHeights(left, lo, heights);
-				if (dugTo != null)
+				// (each point in a room let down under its floor: the ground between it and one outside the room then runs down
+				// into the rock, under the floor, seen from above - not across the room, seen from below - however few of a cell's
+				// corners are in it)
+				int w = right - left + 1, d = hi - lo + 1;
+				float[,] heights = data.GetHeights(left, lo, w, d), own0 = dugTo != null ? (float[,])heights.Clone() : null;
+				foreach (KeyValuePair<int, float> f in floor)
 				{
-					float[,] now = data.GetHeights(left, lo, w, d); // (as kept: the heights are stored rounded)
-					foreach (KeyValuePair<int, float> f in floor)
+					int z = f.Key / res, x = f.Key % res;
+					float to = Mathf.Clamp01((f.Value - Under - o.y) / sy);
+					if (to >= heights[z - lo, x - left]) continue;
+					heights[z - lo, x - left] = to;
+					dug++;
+				}
+				if (dug > 0)
+				{
+					data.SetHeights(left, lo, heights);
+					if (dugTo != null)
 					{
-						int z = f.Key / res, x = f.Key % res;
-						if (now[z - lo, x - left] < own0[z - lo, x - left]) dugTo[f.Key] = new Vector2(own0[z - lo, x - left], now[z - lo, x - left]);
+						float[,] now = data.GetHeights(left, lo, w, d); // (as kept: the heights are stored rounded)
+						foreach (KeyValuePair<int, float> f in floor)
+						{
+							int z = f.Key / res, x = f.Key % res;
+							if (now[z - lo, x - left] < own0[z - lo, x - left]) dugTo[f.Key] = new Vector2(own0[z - lo, x - left], now[z - lo, x - left]);
+						}
 					}
 				}
 			}
+			// (and the cells whose ground still runs steeply through a room between their corners)
+			var across = new List<Vector2Int>();
+			try { Across(land, caves, inside, across); }
+			finally { Physics.queriesHitBackfaces = backs0; }
+			if (hi < 0 && across.Count == 0) return 0;
 			// (a cell goes when all four of its corners are in a room: none is cut out past a wall, where it would open a gap
 			// beside the rock)
 			bool[,] solid = data.GetHoles(0, 0, cells, cells);
@@ -285,18 +295,78 @@ namespace DynamicIslands.Editor
 						n++;
 						if (cut != null) cut.Add(new Vector2Int(x, z));
 					}
+			foreach (Vector2Int c in across)
+				if (solid[c.y, c.x])
+				{
+					solid[c.y, c.x] = false;
+					n++;
+					if (cut != null) cut.Add(c);
+				}
 			if (n > 0) data.SetHoles(0, 0, solid);
 			return n;
 		}
 
-		/// <summary>A point of the ground in the piece's room: its nearest faces straight up and straight down both seen from their fronts (the shells face inwards). under: how far down the floor is.</summary>
-		static bool Inside(Vector3 p, HashSet<Collider> own, Bounds b, out float under)
+		/// <summary>
+		/// The cells whose ground runs steeply through a room between their corners, none of them in it - a slope from over a
+		/// passage's roof down under its floor, where it ends in a hole in the ground (X7): from inside, seen from behind, a
+		/// window out. Only where the room is under the cell's middle, so none opens a gap beside the rock.
+		/// </summary>
+		static void Across(Terrain land, List<Transform> caves, bool[,] inside, List<Vector2Int> found)
+		{
+			TerrainData data = land.terrainData;
+			int cells = data.heightmapResolution - 1;
+			float sx = data.size.x / cells, sz = data.size.z / cells, sy = data.size.y;
+			Vector3 o = land.transform.position;
+			var seen = new HashSet<int>();
+			foreach (Transform cave in caves)
+			{
+				HashSet<Collider> own;
+				Bounds b;
+				int x0, x1, z0, z1;
+				if (cave == null || !Reach(land, cave, out own, out b, out x0, out x1, out z0, out z1)) continue;
+				float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+				for (int z = z0; z < z1; z++)
+					for (int x = x0; x < x1; x++)
+					{
+						if (seen.Contains(z * cells + x) || (inside[z, x] && inside[z, x + 1] && inside[z + 1, x] && inside[z + 1, x + 1])) continue;
+						float c00 = h[z - z0, x - x0], c10 = h[z - z0, x + 1 - x0], c01 = h[z + 1 - z0, x - x0], c11 = h[z + 1 - z0, x + 1 - x0];
+						float top = o.y + Mathf.Max(Mathf.Max(c00, c10), Mathf.Max(c01, c11)) * sy, bottom = o.y + Mathf.Min(Mathf.Min(c00, c10), Mathf.Min(c01, c11)) * sy;
+						if (top - bottom < Steep || top <= b.min.y || bottom >= b.max.y) continue;
+						// (the room under the cell's middle, if any, between the heights its ground runs through - a room is
+						// more than a metre high)
+						Vector3 mid = new Vector3(o.x + (x + 0.5f) * sx, 0f, o.z + (z + 0.5f) * sz);
+						float floorY = 0f, roofY = 0f, under, over;
+						bool room = false;
+						for (float y = Mathf.Max(bottom, b.min.y) + 0.05f; y < Mathf.Min(top, b.max.y) && !room; y += 1f)
+						{
+							mid.y = y;
+							if (Inside(mid, own, b, out under, out over)) { room = true; floorY = y - under; roofY = y + over; }
+						}
+						if (!room) continue;
+						// (and its ground in between its corners somewhere in that room)
+						bool through = false;
+						for (int i = 1; i < Looks && !through; i++)
+							for (int j = 1; j < Looks && !through; j++)
+							{
+								Vector3 p = new Vector3(o.x + (x + (float)i / Looks) * sx, 0f, o.z + (z + (float)j / Looks) * sz);
+								p.y = o.y + land.SampleHeight(p);
+								through = p.y > floorY + 0.05f && p.y < roofY - 0.05f && Inside(p, own, b, out under, out over);
+							}
+						if (!through) continue;
+						seen.Add(z * cells + x);
+						found.Add(new Vector2Int(x, z));
+					}
+			}
+		}
+
+		/// <summary>A point of the ground in the piece's room: its nearest faces straight up and straight down both seen from their fronts (the shells face inwards). under, over: how far down the floor is and how far up the roof.</summary>
+		static bool Inside(Vector3 p, HashSet<Collider> own, Bounds b, out float under, out float over)
 		{
 			Vector3 from = p + Vector3.up * 0.02f;
-			under = 0f;
-			float roof;
-			if (!FrontFirst(from, Vector3.down, from.y - b.min.y + 1f, own, out under) || !FrontFirst(from, Vector3.up, b.max.y - from.y + 1f, own, out roof)) return false;
+			under = over = 0f;
+			if (!FrontFirst(from, Vector3.down, from.y - b.min.y + 1f, own, out under) || !FrontFirst(from, Vector3.up, b.max.y - from.y + 1f, own, out over)) return false;
 			under -= 0.02f;
+			over += 0.02f;
 			return true;
 		}
 
