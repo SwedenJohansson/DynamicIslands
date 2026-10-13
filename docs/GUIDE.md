@@ -2431,7 +2431,8 @@ needs it. An item that only upgrades need (none of Raft's recipes) can only be r
 
 What is researched and learned there is the world's, for every player, and is saved with it. A world made **before**
 the upgrade table keeps what it had: the upgrades whose base was learned stay learned. The console command
-`UpgradeTable` lists what a world has researched and learned there.
+`UpgradeTable` lists what a world has researched and learned there. If the table is picked up or broken while a player
+has its menu open, what lies in its slot goes back to that player's inventory.
 
 Every player needs the mod, as for any world with custom islands. The upgrades are saved with the world; a world
 loaded **without** the mod loses them (a machine's slot comes back empty, a built upgrade is gone).

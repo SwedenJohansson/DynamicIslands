@@ -476,6 +476,10 @@ namespace DynamicIslands
 					var t = HarmonyLib.Traverse.Create(box);
 					if (t.Field("selectedRecipeItem").GetValue<Item_Base>() != item) t.Field("selectedRecipeItem").SetValue(item);
 				}
+				// (CraftItem itself takes what it can and makes the item: Raft's only guard is the button, greyed out by
+				// SelectedRecipeBox.Update when the inventory doesn't hold the cost - so a press of a greyed button does nothing)
+				if (!item.settings_recipe.NewCost.All(c => c.HasEnoughInInventory(RAPI.GetLocalPlayer().Inventory)))
+				{ Log("  (the Craft button is greyed out: short of the cost)"); return true; }
 				HarmonyLib.AccessTools.Method(typeof(CraftingMenu), "CraftItem").Invoke(cm, null);
 				return true;
 			}
@@ -527,7 +531,7 @@ namespace DynamicIslands
 			Check(ref r.Ok, paid, GupRole + ": the cost was taken (" + string.Join(", ", cost.Select((c, i) => (heldBefore[i] - heldAfter[i]) + "/" + c.amount).ToArray()) + ")");
 		}
 
-		[ConsoleCommand(name: "CIUpgradesCraft", docs: "Dev, world (either player): extra upgrades built for real. CIUpgradesCraft setup (host: option on, the fast recycler and the large battery learned, told to the players; run before the first build) / CIUpgradesCraft [build] (this player: crafts the large battery and the fast recycler through Raft's crafting menu - CraftingMenu.SelectRecipe + CraftItem: short of the cost nothing is made, with the cost one is made and the cost taken -; places the recycler on the first foundation of the raft with the build path (BlockCreator.CreateBlockCheat on the raft, then takes the crafted item out as placing does), puts the large battery in its slot, and says what the block is) / CIUpgradesCraft check (the recycler is on the raft once, an upgrade block, its slot holds the large battery with its charge: run after CISave + a reload, and on the other player) / CIUpgradesCraft end (host: the blocks taken down, the learned upgrades and the option as they were). Built with exactly the cost in hand; Raft's cheat placement does not need the hotbar item, so the test takes the crafted item out itself")]
+		[ConsoleCommand(name: "CIUpgradesCraft", docs: "Dev, world (either player): extra upgrades built for real. CIUpgradesCraft setup (host: option on, the fast recycler and the large battery learned, told to the players; run before the first build) / CIUpgradesCraft [build] (this player: crafts the large battery and the fast recycler through Raft's crafting menu - CraftingMenu.SelectRecipe + CraftItem: short of the cost nothing is made, with the cost one is made and the cost taken -; places the recycler on the first foundation of the raft with the build path (BlockCreator.CreateBlockCheat on the raft, then takes the crafted item out as placing does), puts the large battery in its slot, and says what the block is) / CIUpgradesCraft place (host: places a fast recycler with a large battery for player 2, whose build only crafts and hands both over - Raft's cheat placement is host-only) / CIUpgradesCraft check (the recycler is on the raft once, an upgrade block, its slot holds the large battery with its charge: run after CISave + a reload, and on the other player) / CIUpgradesCraft end (host: the blocks taken down, the learned upgrades and the option as they were). Built with exactly the cost in hand; Raft's cheat placement does not need the hotbar item, so the test takes the crafted item out itself")]
 		public static void UpgradesCraftCommand(string[] args) { StartTest(UpgradesCraftRoutine(args != null && args.Length > 0 ? args[0] : "build")); }
 
 		const int GupBatteryLeft = 5;
@@ -594,12 +598,27 @@ namespace DynamicIslands
 			Block floor = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName == "Block_Foundation");
 			if (floor == null) { Fail("upgrades craft: no foundation on the raft"); yield break; }
 			int recyclers0 = GupBlocks(machine).Count;
-			yield return GupCraft(player, large, r);
-			yield return GupCraft(player, machine.Item, r);
+			if (part != "place")
+			{
+				yield return GupCraft(player, large, r);
+				yield return GupCraft(player, machine.Item, r);
+			}
+			else if (!Raft_Network.IsHost) { Fail("upgrades craft place: run as the host"); yield break; }
+			if (part == "build" && !Raft_Network.IsHost)
+			{
+				// (Raft's cheat placement works on the host only: the client hands both over as placing does, and the
+				// host places them for it with CIUpgradesCraft place)
+				int heldM = player.Inventory.GetItemCount(machine.Item.UniqueName), heldL = player.Inventory.GetItemCount(large.UniqueName);
+				Check(ref r.Ok, heldM == 1 && heldL == 1, GupRole + ": holds the crafted recycler and large battery (" + heldM + ", " + heldL + ")");
+				if (heldM > 0) player.Inventory.RemoveItem(machine.Item.UniqueName, heldM);
+				if (heldL > 0) player.Inventory.RemoveItem(large.UniqueName, heldL);
+				if (r.Ok) Log("PASS: upgrades craft " + GupRole + " (the host places them for this player: CIUpgradesCraft place)"); else Fail("upgrades craft " + GupRole);
+				yield break;
+			}
 			// place it on the raft
 			Collider[] cs = floor.GetComponentsInChildren<Collider>();
 			float top = cs.Length > 0 ? cs.Max(c => c.bounds.max.y) - floor.transform.position.y : 0.5f;
-			float side = Raft_Network.IsHost ? 0.7f : -0.7f;
+			float side = part == "place" ? -0.7f : 0.7f;
 			Vector3 local = floor.transform.localPosition + new Vector3(side, top, -side);
 			Block placed = null;
 			try { placed = player.BlockCreator.CreateBlockCheat(machine.Item, local, Vector3.zero, DPS.Default, 0); }
@@ -625,7 +644,8 @@ namespace DynamicIslands
 				ItemInstance inside = slot2.GetBatteryInstance();
 				Check(ref r.Ok, put && inside != null && inside.UniqueIndex == large.UniqueIndex, GupRole + ": the large battery is in the machine (" + (inside != null ? inside.UniqueName : "empty") + ", charge " + slot2.BatteryUses + ")");
 			}
-			if (r.Ok) Log("PASS: upgrades craft " + GupRole + " (now CISave and reload, then CIUpgradesCraft check; CIUpgradesCraft end cleans up)"); else Fail("upgrades craft " + GupRole);
+			string what = part == "place" ? "place (for player 2)" : GupRole;
+			if (r.Ok) Log("PASS: upgrades craft " + what + " (now CISave and reload, then CIUpgradesCraft check; CIUpgradesCraft end cleans up)"); else Fail("upgrades craft " + what);
 		}
 
 		#endregion

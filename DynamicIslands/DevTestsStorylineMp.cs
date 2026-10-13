@@ -86,12 +86,13 @@ namespace DynamicIslands
 			if (Raft_Network.IsHost)
 			{
 				yield return EnsureAlive();
+				var spots = new List<Vector3>();
 				yield return ScMpSpawn(SmMq, "SL Isle", f =>
 				{
-					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(14, 0), 1), ObjectProps.ZoneId, "slz1", ObjectProps.ZoneRadius, "4"));
-					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-14, 0), 2), ObjectProps.ZoneId, "slzone", ObjectProps.ZoneRadius, "4"));
-					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(0, 16), 3), ObjectProps.ZoneId, "slz3", ObjectProps.ZoneRadius, "4"));
-					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(0, -16), 4), ObjectProps.ZoneId, "slz4", ObjectProps.ZoneRadius, "4"));
+					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, SmDryApart(f, new Vector2(14, 0), 1, spots), ObjectProps.ZoneId, "slz1", ObjectProps.ZoneRadius, "4"));
+					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, SmDryApart(f, new Vector2(-14, 0), 2, spots), ObjectProps.ZoneId, "slzone", ObjectProps.ZoneRadius, "4"));
+					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, SmDryApart(f, new Vector2(0, 16), 3, spots), ObjectProps.ZoneId, "slz3", ObjectProps.ZoneRadius, "4"));
+					f.Objects.Add(ScObj(ContentCatalog.TriggerZone, SmDryApart(f, new Vector2(0, -16), 4, spots), ObjectProps.ZoneId, "slz4", ObjectProps.ZoneRadius, "4"));
 					f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(12, 12), 5), ObjectProps.NoteTitle, "SL Diary", ObjectProps.NoteText, "The keys are three. Bring them to the camp."));
 					f.Props[StoryItems.Key] = item + "|SL Key||A key to the second camp.";
 					new IslandQuest { Title = "SL Main", Steps = { new IslandQuest.Step { Type = "reach", Target = "slz1", Count = 1 } } }.To(f.Props, 0);
@@ -117,6 +118,29 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CISLEarly", docs: "Dev, world, two players (mpstoryline.ps1): host: brings 'cislearly' (Quest 1: read notes 'SL Alpha', 'SL Beta', 'SL Gamma' in this order; Quest 2: reach zones e2a, e2b, e2c in this order); player 2: waits for its copy")]
 		public static void SmEarlySetupCommand() { StartTest(SmEarlySetupRoutine()); }
 
+		/// <summary>
+		/// A dry spot (ScDry) at least SmApart metres across from the spots already taken: the 4 m zones and the notes
+		/// of one test must not overlap, or entering one fires another as well (the dry-spot search reaches 30 m out).
+		/// </summary>
+		static Vector3 SmDryApart(IslandFile f, Vector2 offset, int seed, List<Vector3> taken)
+		{
+			Vector3 best = ScDry(f, offset, seed);
+			float bestGap = -1f;
+			for (int tries = 0; tries < 24; tries++)
+			{
+				float a = tries * 2.4f, r = tries == 0 ? 0f : 4f + tries * 1.5f;
+				Vector3 p = ScDry(f, offset + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r, seed + tries * 37);
+				float gap = taken.Count == 0 ? float.MaxValue : taken.Min(q => new Vector2(p.x - q.x, p.z - q.z).magnitude);
+				if (gap > bestGap) { best = p; bestGap = gap; }
+				if (gap >= SmApart) break;
+			}
+			if (bestGap < SmApart && taken.Count > 0) Log("  (setup: only " + bestGap.ToString("0.0") + " m from the nearest spot on this island)");
+			taken.Add(best);
+			return best;
+		}
+
+		const float SmApart = 10f;
+
 		static IEnumerator SmEarlySetupRoutine()
 		{
 			if (!SmInTestWorld()) { Fail("sl early: in a world ('CI ...' as the host)"); yield break; }
@@ -124,13 +148,14 @@ namespace DynamicIslands
 			if (Raft_Network.IsHost)
 			{
 				yield return EnsureAlive();
+				var taken = new List<Vector3>();
 				yield return ScMpSpawn(SmEarly, "SL Early Isle", f =>
 				{
 					string[] names = { "SL Alpha", "SL Beta", "SL Gamma" };
 					for (int i = 0; i < 3; i++)
 					{
-						f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-14 + i * 14, 12), 10 + i), ObjectProps.NoteTitle, names[i], ObjectProps.NoteText, "Page " + names[i] + ": go on."));
-						f.Objects.Add(ScObj(ContentCatalog.TriggerZone, ScDry(f, new Vector2(-14 + i * 14, -14), 20 + i), ObjectProps.ZoneId, "e2" + "abc"[i], ObjectProps.ZoneRadius, "4"));
+						f.Objects.Add(ScObj("Note_Paper", SmDryApart(f, new Vector2(-14 + i * 14, 12), 10 + i, taken), ObjectProps.NoteTitle, names[i], ObjectProps.NoteText, "Page " + names[i] + ": go on."));
+						f.Objects.Add(ScObj(ContentCatalog.TriggerZone, SmDryApart(f, new Vector2(-14 + i * 14, -14), 20 + i, taken), ObjectProps.ZoneId, "e2" + "abc"[i], ObjectProps.ZoneRadius, "4"));
 					}
 					new IslandQuest { Title = "SL Early One", Steps = {
 						new IslandQuest.Step { Type = "read", Target = "SL Alpha", Count = 1 },
