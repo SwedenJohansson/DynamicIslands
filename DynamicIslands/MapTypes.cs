@@ -441,9 +441,11 @@ namespace DynamicIslands.Editor
 			Vector2 c = k.Mid;
 			k.Clear(c, 24f);
 			// A boss arena (LM12, 2026-10-09): stepping in, stakes burst up round the arena and shut the players in with the
-			// beast (for two minutes at most: a player who dies can come back); the beast defeated, they sink and the spoils show
+			// beast (for two minutes at most: a player who dies can come back); the beast defeated, they sink and the spoils show.
+			// The zone fires every time while the beast lives and the stakes are down, so a fight lost re-arms the arena
 			IslandObject zone = k.Zone(c, "arena", 18f);
-			zone.Props[BehaviourProps.CheckKey("enter")] = "!signal|" + BossSignal;
+			zone.Props[ObjectProps.ZoneRepeat] = "1";
+			zone.Props[BehaviourProps.CheckKey("enter")] = "!signal|" + BossSignal + "\n" + "state|" + ArenaGate + "|hidden";
 			zone.Props[BehaviourProps.EventKey("enter")] = "show|" + ArenaGate + "\n" + "message||The ground shakes... stakes burst up all round - there is no way out!" + "\n" + "wait||120" + "\n" + "hide|" + ArenaGate;
 			for (int i = 0; i < 14; i++)
 			{

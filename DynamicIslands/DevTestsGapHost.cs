@@ -268,7 +268,6 @@ namespace DynamicIslands
 						GoldenBarrels.TestKind = null;
 						LiveOpt(WorldOptions.Barrels, false);
 						Check(ref ok, GoldenBarrels.Kind(barrel) == GoldenBarrels.None, "switched off: no extra loot from it (kind " + GoldenBarrels.Kind(barrel) + ")");
-						// (intended: its colour goes with the option; GoldenBarrels paints back only when Raft spawns the barrel again)
 						Check(ref ok, !GoldenBarrels.LooksSpecial(barrel), "switched off: the barrel is plain-coloured again");
 						GoldenBarrels.OnSpawned(barrel);
 						LiveOpt(WorldOptions.Barrels, true);

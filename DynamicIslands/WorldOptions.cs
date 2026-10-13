@@ -271,6 +271,7 @@ namespace DynamicIslands.Editor
 			// (also while a world is still loading: Raft restores the notebook before the mod reads the world file's options)
 			global::DynamicIslands.Editor.StoryOrder.Rebuild();
 			ScrambledBlueprints.Rebuild();
+			try { GoldenBarrels.Repaint(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] Barrels: " + e.Message); }
 			if (Changed == null) return;
 			try { Changed(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] " + e); }
 		}

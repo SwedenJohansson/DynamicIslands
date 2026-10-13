@@ -180,6 +180,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
   and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's
   generator was never affected.
+- **Barrels switched off:** the silver and golden barrels already in the sea turn plain-coloured at once
+  (they lost their extra loot already but kept the colour until Raft spawned them again).
+- **Boss arena re-arms:** after a lost fight (the stakes sank after two minutes) stepping back into the arena
+  shuts the crew in again while the beast lives. Boss islands generated before keep the old one-shot arena.
 - **Rogue shark switched off:** a rogue that was lost (not found after a load) no longer brings a new one
   when the Rogue shark option has been switched off meanwhile; it is let go.
 - **Editor commands:** `SetElevation`, `ChangeWidth` and `ChangeStrength` with `NaN` show their usage instead of

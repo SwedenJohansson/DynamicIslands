@@ -831,7 +831,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Atoll | A ring of land around a shallow lagoon |
 | Archipelago | Several islets; a castaway's note and three caches |
 | Sea stacks | Steep rock pillars; a chest on top of the tallest (build your way up) |
-| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back); the beast defeated, they sink and the spoils chest shows |
+| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
 | Volcano, swamp, frozen spire | A tall volcano with embers; low land with pools and mist; a snowy peak with a cache on top |
 | Treasure island | A map in a bottle on the beach leads to the X and a treasure chest |
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
@@ -2140,7 +2140,7 @@ already in the world is taken away. What each one does from the moment it change
 | Iron raft, Shared EXP, Night danger | At once (the next shark bite, the next monster defeated) |
 | Daily quest | On: a task when it is next light; off: today's task waits, unchanged |
 | Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
-| Golden barrels | Barrels from now on; off: no extra loot at once |
+| Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |
@@ -3563,7 +3563,7 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | Zipline lines (7) | Raft's **zipline lines**, ridden with the zipline tool, their far end set in the object panel |
 | The machete's vines (Balboa) | Raft's **choppable vines**, cut with the machete (kept for the next vines) |
 | Treasure for the metal detector and the shovel (Caravan Town, 175 dig piles) | **Buried treasure** (Raft's own treasure points) |
-| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music; Utopia's boss room doors as scenery a defeat event can hide. A **boss arena** as the boss map type builds it: a zone whose "walk in" shows a ring of hidden stakes (only if the signal `boss` wasn't sent; a **wait** of 120 s then hides them again), the boss spot's "defeated" hides them, shows the hidden spoils chest and sends `boss`. Raft's own arenas (Olof's phases, the hyena boss) run on its story characters and are not on custom islands |
+| Bosses and their arenas | Creature spots with a bigger, tougher, tinted boss; a sound zone for its music; Utopia's boss room doors as scenery a defeat event can hide. A **boss arena** as the boss map type builds it: a zone whose "walk in" shows a ring of hidden stakes (only if the signal `boss` wasn't sent; a **wait** of 120 s then hides them again; the zone fires every time and also checks the stakes are hidden, so a lost fight re-arms it), the boss spot's "defeated" hides them, shows the hidden spoils chest and sends `boss`. Raft's own arenas (Olof's phases, the hyena boss) run on its story characters and are not on custom islands |
 | The Receiver's frequencies and the story chain | World plans and Raft's story chain ([7](#7-world-plans-which-islands-a-world-gets), [6.5](#65-your-islands-in-rafts-story-the-receiver)) |
 | Character unlocks | The action **unlock character** (a name such as Rouhi, or a number): the player gets that character as Raft's own story does - kept in their Raft profile, for every world |
 | Cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
