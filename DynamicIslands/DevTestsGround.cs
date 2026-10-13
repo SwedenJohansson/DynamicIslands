@@ -296,6 +296,40 @@ namespace DynamicIslands
 			else Log("PASS: cave inside - " + n + " cave pieces, nothing seen through from inside");
 		}
 
+		[ConsoleCommand(name: "CIShotFrom", docs: "Dev, editor or world: a picture through Raft's camera from a point, and what the looks round from it meet - for checking a see-through CICaveInside found (X7). CIShotFrom <x> <y> <z> <yaw> <pitch> [name]: shot_from_<name>.png; logs the first things hit (front or back, metres) every 45 degrees round at that pitch, and straight up and down")]
+		public static void ShotFromCommand(string[] args)
+		{
+			var v = new float[5];
+			for (int i = 0; i < 5; i++)
+				if (args == null || args.Length <= i || !float.TryParse(args[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[i])) { Fail("shot from: CIShotFrom <x> <y> <z> <yaw> <pitch> [name]"); return; }
+			StartTest(ShotFromRoutine(new Vector3(v[0], v[1], v[2]), v[3], v[4], args.Length > 5 ? args[5] : "1"));
+		}
+
+		static IEnumerator ShotFromRoutine(Vector3 at, float yaw, float pitch, string name)
+		{
+			bool backs0 = Physics.queriesHitBackfaces;
+			Physics.SyncTransforms();
+			try
+			{
+				var dirs = new List<KeyValuePair<string, Vector3>>();
+				for (int i = 0; i < 8; i++) dirs.Add(new KeyValuePair<string, Vector3>((yaw + i * 45f).ToString("F0") + "°", Quaternion.Euler(-pitch, yaw + i * 45f, 0f) * Vector3.forward));
+				dirs.Add(new KeyValuePair<string, Vector3>("up", Vector3.up));
+				dirs.Add(new KeyValuePair<string, Vector3>("down", Vector3.down));
+				foreach (var d in dirs)
+				{
+					Physics.queriesHitBackfaces = true;
+					List<RaycastHit> all = Physics.RaycastAll(at, d.Value, 80f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(4).ToList();
+					Physics.queriesHitBackfaces = false;
+					RaycastHit[] fronts = Physics.RaycastAll(at, d.Value, 80f, ~0, QueryTriggerInteraction.Ignore);
+					Log("  " + d.Key + ": " + (all.Count == 0 ? "nothing" : string.Join(", ", all.Select(h => h.collider.name + (h.collider.isTrigger ? " (trigger)" : "") +
+						(fronts.Any(f => f.collider == h.collider && Mathf.Abs(f.distance - h.distance) < 0.02f) ? "" : " (back)") + " " + h.distance.ToString("F1")).ToArray())));
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs0; }
+			yield return CameraShot(at, at + Quaternion.Euler(-pitch, yaw, 0f) * Vector3.forward * 5f, "from_" + name);
+			Log("PASS: shot from " + at.ToString("F1"));
+		}
+
 		/// <summary>
 		/// A cave piece seen from where a player stands in it (X7): from eye height over every floor under its roof, every look
 		/// round meets the shell's inside, the ground from above or something else from its front - Raft draws the ground and
