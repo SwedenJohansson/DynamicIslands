@@ -330,6 +330,17 @@ namespace DynamicIslands
 			Log("PASS: shot from " + at.ToString("F1"));
 		}
 
+		/// <summary>A collider of a cave piece's rock (any piece's).</summary>
+		static bool CaveRock(Collider c)
+		{
+			for (Transform t = c != null ? c.transform : null; t != null; t = t.parent)
+			{
+				PropInfo q = RaftProps.Get(t.name.Replace("(Clone)", "").Trim());
+				if (q != null && q.IsCave) return true;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// A cave piece seen from where a player stands in it (X7): from eye height over every floor under its roof, every look
 		/// round meets the shell's inside, the ground from above or something else from its front - Raft draws the ground and
@@ -449,6 +460,9 @@ namespace DynamicIslands
 							// front of it, in the room: the ground's underside hides nothing that should be seen. Only when the look
 							// then goes out of the room, not through an open end, does the room have a window there)
 							if (!sky && all.Any(h => own.Contains(h.collider) && h.distance >= seen.Value.distance - 0.05f)) continue;
+							// (an air bell's skin or another thing's one-sided face, a joined passage's rock behind it: nothing of
+							// the outside either)
+							if (!sky && !(through.Value.collider is TerrainCollider) && CaveRock(seen.Value.collider)) continue;
 							if (openEnd) continue;
 						}
 						Collider wc = through != null ? through.Value.collider : null;
