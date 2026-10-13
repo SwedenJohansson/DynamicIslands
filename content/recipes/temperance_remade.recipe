@@ -55,8 +55,8 @@ call selene_cell 6 0 w=none e=TP_Selene_Int_Room_Entrance
 call selene_cell 12 0 w=none e=none
 call selene_cell 18 0 w=none
 # (the inner doors: both leaves pivot on the doorway's middle, the left one reaching north, the right one south)
-place TP_Selene_Int_DoorLargeL innerdoorL at 12 -3 yaw=0
-place TP_Selene_Int_DoorLargeR innerdoorR at 12 -3 yaw=0
+place TP_Selene_Int_DoorLargeL innerdoorL at 12 -3 yaw=0 sy=1.051
+place TP_Selene_Int_DoorLargeR innerdoorR at 12 -3 yaw=0 sy=1.051
 place RT_PowerBox reactor at 9 -5.75 y=1.4 yaw=0
 place TP_LaboratoryMachine_Large01 - at 7.6 -4.9 sit
 place TP_LaboratoryMachine_Large02 - at 10.9 -4.9 sit

@@ -232,8 +232,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   inside only too: a room's outer wall, or its ceiling seen from above, showed the room through it. They are drawn
   from both sides now. Hollow Mountain's rocks no longer stand inside its entry hall and granary, its high hall has a
   wall over its windows up to the ceiling, its lake roof reaches the islet and the snow no longer shows through the
-  entry hall's floor; Ashfall's crypt slab covers the crypt and the ash is banked up to its edges, so the sky no
-  longer shows under them. `CIRoomLooks` looks round a room from inside and
+  entry hall's floor; Ashfall's crypt slab covers the crypt and the ash is banked up to its edges (cut again after the
+  crypt's pit, which had left thin slits under them), so the sky no longer shows under them. The Last Kingdom's crown
+  vault has a wall with a doorway on its stair side and its sliding doors across that doorway (the pit and the stairs
+  showed beside them), and the hill no longer comes in at its back corners. Rooms built from Selene's pieces in the
+  recipes (`selene_cell` in `lib_selene`) had a slit of sky along the top of every wall: the walls stop 0.23 m under
+  the ceiling, where Selene's own rooms put ceiling edge pieces; the walls (and the doors in their doorways) are drawn
+  5 % taller now to meet the ceiling. Where a room opened straight onto Selene's ladder shaft (The Island of Stations,
+  Shelter Atoll), the ground showed in slits beside the shaft's mouth and over it; the room has a doorway into the
+  shaft there now. `CIRoomLooks` looks round a room from inside and
   `CISeleneBacks` checks the pieces' backs.
 - **"Another build" told again after a rejoin:** a player who rejoined with the host's own build after joining
   with another one still got the old notice. A notice is now only about the host the player is with.

@@ -159,8 +159,8 @@ clear at -7 -21 r=8
 push at -4 -24 h=7
 call selene_cell -6 3 n=none e=TP_Selene_Int_Room_Entrance
 call selene_cell -6 9 s=none
-place TP_Selene_Int_DoorLargeL hiddendoorL at 0 0
-place TP_Selene_Int_DoorLargeR hiddendoorR at 0 0
+place TP_Selene_Int_DoorLargeL hiddendoorL at 0 0 sy=1.051
+place TP_Selene_Int_DoorLargeR hiddendoorR at 0 0 sy=1.051
 place VG_ControlBoard console at -3 7.2 y=0 sit scale=0.48 yaw=180
 place TP_Selene_ComputerRoom_Server01 - at -5.1 -1.6 y=0 sit yaw=90
 place TP_Selene_ComputerRoom_Server02 - at -5.1 0 y=0 sit yaw=90

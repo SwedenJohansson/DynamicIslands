@@ -53,8 +53,8 @@ push at -22 -4 h=4.62
 call selene_cell 0 0 n=TP_Selene_Int_Room_Entrance e=none
 call selene_cell 6 0 w=none
 # (both leaves pivot on the doorway's middle: the left one reaches east, the right one west)
-place TP_Selene_Int_DoorLargeL doorL at 3 0 yaw=90
-place TP_Selene_Int_DoorLargeR doorR at 3 0 yaw=90
+place TP_Selene_Int_DoorLargeL doorL at 3 0 yaw=90 sy=1.051
+place TP_Selene_Int_DoorLargeR doorR at 3 0 yaw=90 sy=1.051
 place RT_PowerBox powerbox at 6.3 0.25 y=1.4 yaw=180
 place TP_Selene_ComputerRoom_Server01 - at 10.6 -2 sit yaw=270
 place TP_Selene_ComputerRoom_Server02 - at 10.6 -4 sit yaw=270

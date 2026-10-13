@@ -8,5 +8,5 @@ brush flatten at 0 0 r=60 s=20 frames=80
 push at 0 0 y=0.3
 place TP_Selene_Int_Tunnel_Ladder_Bot shaftbot at 0 0
 place TP_Selene_Int_Tunnel_Ladder_Top shafttop at 0 0 y=8.82
-call selene_cell 0 -6 n=none
+call selene_cell 0 -6 n=TP_Selene_Int_Room_Entrance
 pop

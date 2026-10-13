@@ -55,6 +55,9 @@ brush flatten from -40 -50 to -16 -50 r=12 s=20 frames=400 h=40
 brush flatten at -43 -40 r=6 s=20 frames=300 h=40
 brush flatten at -43 -60 r=6 s=20 frames=300 h=40
 brush flatten from -33 -42 to -33 -45 r=4 s=20 frames=300 h=35
+# (the vault's north corners: the pit above misses them and the hill came through its walls)
+brush flatten at -35 -39 r=2 s=20 frames=300 h=35
+brush flatten at -31 -39 r=2 s=20 frames=300 h=35
 for i 0 8 1
 brush flatten at {-63-2.1*$i} {-14-1.75*$i} r=3 s=20 frames=150 h={2+1.25*$i}
 brush flatten at {-80+3.1*$i} {-28-0.25*$i} r=3 s=20 frames=150 h={12+1.25*$i}
@@ -349,13 +352,13 @@ call rt_storey l1=none l2=none l3=none
 place RT_Floor - at 0 4.5 y=3
 pop
 push at -36 -38 h=35
-call selene_cell 0 0 s=none
+call selene_cell 0 0 s=TP_Selene_Int_Room_Entrance
 place Loot_ChestLarge crownchest at 3 -2 sit yaw=180
 place Zone_Atmosphere vaultdark at 3 -3 y=2
 pop
-place TP_Selene_Int_DoorFrame - at -33 -44 h=35
-place TP_Selene_Int_DoorLargeL vaultdoorL at -33 -44 h=35
-place TP_Selene_Int_DoorLargeR vaultdoorR at -33 -44 h=35
+# (the leaves close the south wall's doorway: both pivot on its middle, the left one reaching east, the right one west)
+place TP_Selene_Int_DoorLargeL vaultdoorL at -33 -44 h=35 yaw=90 sy=1.051
+place TP_Selene_Int_DoorLargeR vaultdoorR at -33 -44 h=35 yaw=90 sy=1.051
 place RT_Floor - at -30 -38 h=39.75 sx=0.993 sz=0.667
 place TP_SeleneEntranceKeyPanel_Base seallocks at -29.6 -45.2 ground sit yaw=180
 place TP_Moontown_Steps05 - at -33 -50.5 h=35 drop yaw=180
@@ -579,11 +582,11 @@ prop seallocks if.use=quest|31\ntake|story:seal|3
 prop seallocks on.use=message||Stag, stag, stag - three seals in three locks. The vault's doors slide apart.\nopen|vaultdoor\nsound||event:/exploring/temperence/selene/gate_open
 prop seallocks else.use=message||Three locks shaped like the royal seal.
 prop vaultdoorL obj.name=vaultdoor
-prop vaultdoorL beh.move=0,0,1.3
+prop vaultdoorL beh.move=2.3,0,0
 prop vaultdoorL beh.moveTime=2
 prop vaultdoorL beh.moveMode=switch
 prop vaultdoorR obj.name=vaultdoor
-prop vaultdoorR beh.move=0,0,-1.3
+prop vaultdoorR beh.move=-2.3,0,0
 prop vaultdoorR beh.moveTime=2
 prop vaultdoorR beh.moveMode=switch
 prop beast obj.name=beast

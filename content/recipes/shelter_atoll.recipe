@@ -63,15 +63,15 @@ brush lower from -8 -21 to 8 -21 r=6 s=20 frames=20
 # main hall; the dormitory west of it, the radio room east; south of the main hall the gate hall, with the generator
 # room west and the commander's room east (its doorway shut by sliding leaves)
 place TP_Selene_Int_Tunnel_Ladder_Bot - at -3 9
-call selene_cell -3 3 n=none s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
+call selene_cell -3 3 n=TP_Selene_Int_Room_Entrance s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
 call selene_cell -9 3 e=TP_Selene_Int_Room_Entrance
 call selene_cell 3 3 w=TP_Selene_Int_Room_Entrance
 call selene_cell -3 -3 n=none s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
 call selene_cell -9 -3 e=TP_Selene_Int_Room_Entrance
 call selene_cell 3 -3 w=TP_Selene_Int_Room_Entrance
 # (both leaves pivot on the doorway's middle: the left one reaches +z, the right one -z)
-place TP_Selene_Int_DoorLargeL cmddoorL at 3 -6
-place TP_Selene_Int_DoorLargeR cmddoorR at 3 -6
+place TP_Selene_Int_DoorLargeL cmddoorL at 3 -6 sy=1.051
+place TP_Selene_Int_DoorLargeR cmddoorR at 3 -6 sy=1.051
 
 # The blast gate (Selene's entrance gate) at the gate hall's open end, behind a facade of the tower's concrete walls;
 # a strip of floor across to the landing
