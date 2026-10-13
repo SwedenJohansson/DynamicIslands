@@ -3067,7 +3067,7 @@ namespace DynamicIslands.Editor
 						y = Mathf.Max(y, LowestShowing(kind, scale, Mathf.Max(ground.Surface(x, z0), ground.Surface(x + mid.x, z0 + mid.z)), 0f));
 					}
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
-					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
+					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale, Unscaled = proto == null });
 					cats.Add(cat);
 					placed++;
 				}
@@ -3648,7 +3648,7 @@ namespace DynamicIslands.Editor
 				}
 				GameObject proto = PlaceableCatalog.Get("Creature_" + kind);
 				// (not under the terrain's own surface where it lies above the blended height)
-				result.Add(new IslandObject { Name = "Creature_" + kind, Position = new Vector3(p.x, Mathf.Max(ground.At(p.x, p.y), ground.Surface(p.x, p.y)) + lift, p.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
+				result.Add(new IslandObject { Name = "Creature_" + kind, Position = new Vector3(p.x, Mathf.Max(ground.At(p.x, p.y), ground.Surface(p.x, p.y)) + lift, p.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props, Unscaled = proto == null });
 				spots.Add(p.x, p.y, 1.5f);
 				owners.Add(null);
 				cats.Add(null);
@@ -3738,7 +3738,7 @@ namespace DynamicIslands.Editor
 				if (tier == 1 && !sunken && rnd.NextDouble() < 0.5) box = "Loot_Box";
 				var props = new Dictionary<string, string> { { ObjectProps.LootItems, TierLoot(tier, rnd) }, { ObjectProps.NoteTitle, (sunken ? "Sunken barrel" : TierTitles[tier - 1]) + " (tier " + tier + ")" } };
 				GameObject proto = PlaceableCatalog.Get(box);
-				result.Add(new IslandObject { Name = box, Position = new Vector3(at.x, ground.At(at.x, at.y) - BaseDrop(ground, at.x, at.y, box, "", 1f), at.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props });
+				result.Add(new IslandObject { Name = box, Position = new Vector3(at.x, ground.At(at.x, at.y) - BaseDrop(ground, at.x, at.y, box, "", 1f), at.y), EulerRotation = new Vector3(0, (float)rnd.NextDouble() * 360f, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props, Unscaled = proto == null });
 				spots.Add(at.x, at.y, 0.8f);
 				owners.Add(null);
 				cats.Add(null);

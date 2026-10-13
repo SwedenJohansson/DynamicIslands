@@ -192,7 +192,7 @@ namespace DynamicIslands.Editor
 			}
 			if (clear > 0f) Clear(p2, clear);
 			GameObject proto = PlaceableCatalog.Get(name);
-			var o = new IslandObject { Name = name, Position = position, EulerRotation = new Vector3(0, yaw, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props };
+			var o = new IslandObject { Name = name, Position = position, EulerRotation = new Vector3(0, yaw, 0), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props, Unscaled = proto == null };
 			File.Objects.Add(o);
 			placed.Add(p2);
 			return o;

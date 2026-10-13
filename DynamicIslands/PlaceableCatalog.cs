@@ -1096,6 +1096,24 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// Gives the pieces the generator placed before Raft's piece was loaded (IslandObject.Unscaled) the piece's own scale:
+		/// made in a world, where only the core pieces are loaded, the radio tower's floors were saved 3 x 3 m instead of 6 x 9 m
+		/// and its walls and furniture stood partly in the air (CIGroundTypes). Loads those pieces' scenes first.
+		/// </summary>
+		public static IEnumerator ScaleUnloaded(IslandFile file)
+		{
+			List<IslandObject> late = file != null ? file.Objects.Where(o => o.Unscaled).ToList() : new List<IslandObject>();
+			if (late.Count == 0) yield break;
+			yield return EnsureLoaded(late.Select(o => o.Name).Distinct().ToList());
+			foreach (IslandObject o in late)
+			{
+				GameObject proto = Get(o.Name);
+				if (proto != null) o.Scale = Vector3.Scale(o.Scale, proto.transform.localScale);
+				o.Unscaled = false;
+			}
+		}
+
+		/// <summary>
 		/// Loads the on-demand objects among these names (whole scenes at a time) so they can be spawned.
 		/// Names that are core, already loaded or unknown are ignored.
 		/// </summary>

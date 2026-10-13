@@ -220,7 +220,7 @@ namespace DynamicIslands.Editor
 					if (!free(x, z, kind.Value ? 4f : 2f)) continue;
 					// (snowy islands' pines to cut wear snow - LM11; Raft's own pine if the snowy one couldn't be made)
 					string name = kind.Key == PlaceableCatalog.SnowyPine && PlaceableCatalog.Get(kind.Key) == null ? "Pickup_Landmark_Tree_Pine" : kind.Key;
-					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
+					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), Unscaled = PlaceableCatalog.Get(name) == null, EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					land++;
 				}
@@ -231,7 +231,7 @@ namespace DynamicIslands.Editor
 				{
 					float x = (float)rnd.NextDouble() * f.TerrainSize.x, z = (float)rnd.NextDouble() * f.TerrainSize.z, h = ground(x, z);
 					if (h < sea + 1f || Mathf.Abs(ground(x + 1f, z) - h) > 0.5f || Mathf.Abs(ground(x, z + 1f) - h) > 0.5f || !free(x, z, 3f)) continue;
-					f.Objects.Add(new IslandObject { Name = ContentCatalog.WildHive, Position = new Vector3(x, h, z), Scale = ScaleOf(ContentCatalog.WildHive), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f),
+					f.Objects.Add(new IslandObject { Name = ContentCatalog.WildHive, Position = new Vector3(x, h, z), Scale = ScaleOf(ContentCatalog.WildHive), Unscaled = PlaceableCatalog.Get(ContentCatalog.WildHive) == null, EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f),
 						Props = new Dictionary<string, string> { { ObjectProps.LootItems, ContentCatalog.WildHiveLoot }, { ObjectProps.NoteTitle, "Wild beehive" } } });
 					taken.Add(cell(x, z));
 					made++; land++;
@@ -250,7 +250,7 @@ namespace DynamicIslands.Editor
 					int pick = rnd.Next(total);
 					string name = finds[0].Key;
 					foreach (var w in finds) { if (pick < w.Value) { name = w.Key; break; } pick -= w.Value; }
-					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
+					f.Objects.Add(new IslandObject { Name = name, Position = new Vector3(x, h, z), Scale = ScaleOf(name), Unscaled = PlaceableCatalog.Get(name) == null, EulerRotation = new Vector3(0f, (float)(rnd.NextDouble() * 360.0), 0f) });
 					taken.Add(cell(x, z));
 					wet++;
 				}

@@ -387,9 +387,18 @@ namespace DynamicIslands.Editor
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			if (TestGenerateDelay > 0f) yield return new WaitForSecondsRealtime(TestGenerateDelay);
+			IslandFile file;
+			try { file = create(); }
+			catch (Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Generating island '" + name + "' failed: " + e);
+				IslandWorldState.RemoveIds(new[] { entry.Id }, false);
+				yield break;
+			}
+			// (pieces whose scenes weren't loaded yet get their own scale - the radio tower's floors were 3 x 3 m, IG6)
+			yield return PlaceableCatalog.ScaleUnloaded(file);
 			try
 			{
-				IslandFile file = create();
 				file.Save(IslandSpawner.PathFor(name));
 				float estimated;
 				bool hadEstimate = radiusCache.TryGetValue(name, out estimated);
@@ -455,9 +464,14 @@ namespace DynamicIslands.Editor
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			string name = entry.HostName;
+			IslandFile file = null;
+			Exception failed = null;
+			try { file = create(); }
+			catch (Exception e) { failed = e; }
+			if (failed == null) yield return PlaceableCatalog.ScaleUnloaded(file); // (IG6)
 			try
 			{
-				IslandFile file = create();
+				if (failed != null) throw failed;
 				file.Save(IslandSpawner.PathFor(name));
 				radiusCache.Remove(name); elevationCache.Remove(name);
 			}

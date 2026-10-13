@@ -227,7 +227,8 @@ namespace DynamicIslands
 			NewWorldRulesBox.MonsterLevel = levelBefore; NewWorldRulesBox.BuildPercent = percentBefore;
 			NewWorldOptions.Randomizer.Level = randBefore.Level; NewWorldOptions.Randomizer.Disabled.Clear(); foreach (string d in randBefore.Disabled) NewWorldOptions.Randomizer.Disabled.Add(d);
 			NewWorldOptions.Refresh();
-			foreach (string o in want) { WorldSettingsWindow.Toggle(o).onClick.Invoke(); yield return null; }
+			// (an option not in the window - a retired one, as blueprints and storyorder from 2026-10-09 - is a FAIL, not an exception)
+			foreach (string o in want) { Button t = WorldSettingsWindow.Toggle(o); if (t == null) { Check(ref ok, false, o + ": not in the window (retired?)"); continue; } t.onClick.Invoke(); yield return null; }
 			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "Done"), "Done clicked");
 			yield return null;
 			Check(ref ok, !WorldSettingsWindow.IsOpen && WorldSettingsWindow.Chosen.SetEquals(want) && WorldOptions.Pending != null && WorldOptions.Pending.SetEquals(want), "Done closes it; chosen for the next world: " + WorldOptions.Describe(WorldSettingsWindow.Chosen));
@@ -1061,6 +1062,52 @@ namespace DynamicIslands
 				Log("SLICE h=" + h.ToString("F2") + ": " + (got ? hit.collider.name + (hit.collider.GetComponent<Terrain>() != null ? " (terrain)" : "") + " at " + hit.distance.ToString("F2") + " m" : "clear for " + reach.ToString("F1") + " m"));
 			}
 			Log("PASS: ray slice");
+		}
+
+		[ConsoleCommand(name: "CIPieceColliders", docs: "Dev, in game: the colliders of a custom island's pieces whose name contains <part> (kind, on or off, hidden, trigger, layer, mesh readable, scale) and how many rays down and up meet the first one, with and without back faces - why a floor isn't stood on. CIPieceColliders <island> <part>")]
+		public static void PieceCollidersCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 2) { Fail("CIPieceColliders <island> <part>"); return; }
+			string part = args[1];
+			Physics.SyncTransforms();
+			List<Transform> pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0
+				&& (t.parent == null || t.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) < 0)).ToList();
+			Log("pieces with '" + part + "': " + pieces.Count + ", back faces hit: " + Physics.queriesHitBackfaces);
+			foreach (Transform p in pieces.Take(2))
+			{
+				Log("  " + p.name + ": active " + p.gameObject.activeInHierarchy + ", scale " + p.lossyScale.ToString("F3") + ", h " + (p.position.y).ToString("F2"));
+				foreach (Collider c in p.GetComponentsInChildren<Collider>(true))
+				{
+					MeshCollider mc = c as MeshCollider;
+					string kind = c is BoxCollider ? "box " + ((BoxCollider)c).size.ToString("F2") : mc != null ? "mesh" + (mc.convex ? " convex" : "") + " (" + (mc.sharedMesh != null ? mc.sharedMesh.name + ", " + mc.sharedMesh.vertexCount + " points, readable " + mc.sharedMesh.isReadable : "no mesh") + ")" : c.GetType().Name;
+					Log("    " + c.name + ": " + kind + (c.enabled ? "" : ", OFF") + (c.gameObject.activeInHierarchy ? "" : ", HIDDEN") + (c.isTrigger ? ", trigger" : "") + ", layer " + LayerMask.LayerToName(c.gameObject.layer) + ", scale " + c.transform.lossyScale.ToString("F3") + ", bounds " + c.bounds.center.ToString("F2") + " size " + c.bounds.size.ToString("F2") + ", rigidbody " + (c.attachedRigidbody != null));
+				}
+				Renderer[] rs = p.GetComponentsInChildren<Renderer>(true);
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				bool was = Physics.queriesHitBackfaces;
+				foreach (bool back in new[] { false, true })
+				{
+					Physics.queriesHitBackfaces = back;
+					int rays = 0, down = 0, up = 0, own = 0;
+					for (int i = 0; i < 5; i++)
+						for (int j = 0; j < 5; j++)
+						{
+							float x = Mathf.Lerp(b.min.x, b.max.x, 0.1f + 0.2f * i), z = Mathf.Lerp(b.min.z, b.max.z, 0.1f + 0.2f * j);
+							rays++;
+							if (Physics.RaycastAll(new Vector3(x, b.max.y + 2f, z), Vector3.down, b.size.y + 4f, ~0, QueryTriggerInteraction.Ignore).Any(h => h.collider.transform.IsChildOf(p))) down++;
+							if (Physics.RaycastAll(new Vector3(x, b.min.y - 2f, z), Vector3.up, b.size.y + 4f, ~0, QueryTriggerInteraction.Ignore).Any(h => h.collider.transform.IsChildOf(p))) up++;
+							RaycastHit hit;
+							if (p.GetComponentsInChildren<Collider>(true).Any(c => c.Raycast(new Ray(new Vector3(x, b.max.y + 2f, z), Vector3.down), out hit, b.size.y + 4f))) own++;
+						}
+					Log("    rays (back faces " + back + "): down " + down + ", up " + up + ", the collider's own ray " + own + " of " + rays + "; renderer box " + b.center.ToString("F2") + " size " + b.size.ToString("F2"));
+				}
+				Physics.queriesHitBackfaces = was;
+			}
+			Log("PASS: piece colliders");
 		}
 
 		[ConsoleCommand(name: "CIRaftDeckProbe", docs: "Dev, in game: Raft's own raft - for a few foundations: the block's height, the top of what a player stands on above it (Raft's raft collider), and the block's own colliders (their bounds) - to give the mod's rafts of blocks the same floor")]

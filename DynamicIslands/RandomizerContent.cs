@@ -29,7 +29,7 @@ namespace DynamicIslands.Editor
 		public IslandObject Add(string name, Vector3 world, float yaw, Dictionary<string, string> props = null)
 		{
 			GameObject proto = PlaceableCatalog.Get(name);
-			var o = new IslandObject { Name = name, Position = world - anchor + mid, EulerRotation = new Vector3(0f, yaw, 0f), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props };
+			var o = new IslandObject { Name = name, Position = world - anchor + mid, EulerRotation = new Vector3(0f, yaw, 0f), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props, Unscaled = proto == null };
 			File.Objects.Add(o);
 			Taken.Add(world);
 			return o;

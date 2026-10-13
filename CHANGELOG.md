@@ -176,6 +176,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Generated radio towers in a world are whole again:** an island the world generated (a large island with
+  a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
+  and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's
+  generator was never affected.
 - **No errors when the editor takes objects from Temperance or Utopia:** two of Raft's story scripts there threw an
   error each time the editor loaded those islands (switched off) to take their objects; they are kept quiet then.
 - **Placed objects stay as placed:** a few of Raft's objects (Varuna Point's debris planks) kept Raft's physics and

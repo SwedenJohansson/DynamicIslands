@@ -26,6 +26,11 @@ namespace DynamicIslands.Editor
 		/// on it after objects before it were removed or added. 0 = not given yet (a new object: the save gives one). See StableIds.
 		/// </summary>
 		public int Uid;
+		/// <summary>
+		/// Not saved. True when the generator placed this piece before Raft's piece was loaded, so Scale still lacks the
+		/// piece's own scale (the radio tower's floor is 2 x 1 x 3). PlaceableCatalog.ScaleUnloaded fixes it before saving.
+		/// </summary>
+		public bool Unscaled;
 	}
 
 	/// <summary>
