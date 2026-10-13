@@ -227,7 +227,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   through a room (Raft draws the ground from above only), and from outside - in the editor, or over a gap - a cave's
   rock wasn't drawn at all. Every cave piece's rock is now drawn from outside too, and the ground in a cave's rooms is
   let down under the room's floor and cut away where it lies wholly inside or runs steeply through (a hole dug down to
-  a tunnel's end, as at The Drowned Labyrinth); in the editor the ground keeps the heights you sculpted. `CICaveInside` looks round every cave piece from inside and fails on any look out.
+  a tunnel's end, as at The Drowned Labyrinth); in the editor the ground keeps the heights you sculpted. The rock hill over a cave no longer rises out of pits and dug stairs well away from the cave (it blocked Ashfall's crypt stair, 25 m from its bear den). `CICaveInside` looks round every cave piece from inside and fails on any look out.
 - **See-through rooms (X7):** Selene's room pieces (walls, ceilings, floors, door frames, tunnels) were drawn from
   inside only too: a room's outer wall, or its ceiling seen from above, showed the room through it. They are drawn
   from both sides now. Hollow Mountain's rocks no longer stand inside its entry hall and granary, its high hall has a

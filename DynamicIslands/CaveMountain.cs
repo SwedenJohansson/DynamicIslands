@@ -337,8 +337,9 @@ namespace DynamicIslands.Editor
 					float rough = Mathf.Clamp01((height[i, k] - ground[i, k]) / 3f); // (none at its foot: no bumps through the ground around)
 					height[i, k] += rough * ((Mathf.PerlinNoise(x * 0.13f, z * 0.13f) - 0.5f) * 2.2f + (Mathf.PerlinNoise(x * 0.4f + 7f, z * 0.4f) - 0.5f) * 0.6f);
 					if (!float.IsNaN(cover[i, k]) && float.IsNaN(corridor[i, k]) && height[i, k] < cover[i, k] + Over) height[i, k] = cover[i, k] + Over;
-					// (its foot goes on a little under the ground: no edge to see where it meets it)
-					on[i, k] = float.IsNaN(corridor[i, k]) && height[i, k] > ground[i, k] - 0.6f;
+					// (its foot goes on a little under the ground: no edge to see where it meets it; and only where the hill itself
+					// comes near the ground - the rounding alone lifted rock out of a pit or a dug stair far from the cave, Ashfall's crypt)
+					on[i, k] = float.IsNaN(corridor[i, k]) && height[i, k] > ground[i, k] - 0.6f && raw[i, k] > ground[i, k] - 0.6f - 2f * Slope * Cell;
 				}
 			// (one more ring round it, sunk under the ground: its edge slopes into the ground, not a stepped wall over it)
 			var rim = new List<int>();
