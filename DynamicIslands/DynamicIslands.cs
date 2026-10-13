@@ -1424,7 +1424,7 @@ namespace DynamicIslands
 		public static void SetElevationCommand(string[] args)
 		{
 			float v;
-			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v) || float.IsNaN(v))
 			{ Notify("Elevation is " + currentElevation + " m. Usage: SetElevation <metres>  (60 = flying, -25 = under water, 0 = normal)"); return; }
 			IslandSettingsUndo.Change(() => currentElevation = Mathf.Clamp(v, IslandSpawner.MinElevation, IslandSpawner.MaxElevation)); // (an undo step, like the Island tab's)
 			EditorUI.RefreshIsland();
@@ -1474,7 +1474,7 @@ namespace DynamicIslands
 		public static void TerrainWidth(string[] args)
 		{
 			float value;
-			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value)) { Debug.LogWarning("Usage: ChangeWidth <metres>"); return; }
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value) || float.IsNaN(value)) { Debug.LogWarning("Usage: ChangeWidth <metres>"); return; }
 			terraineditor.brushRadius = Mathf.Clamp(value / 2f, terraineditor.MinRadius, terraineditor.MaxRadius);
 			EditorUI.RefreshSliders();
 			Debug.Log("[CUSTOM ISLANDS] Brush diameter: " + (terraineditor.brushRadius * 2f) + " m");
@@ -1483,7 +1483,7 @@ namespace DynamicIslands
 		public static void TerrainStrength(string[] args)
 		{
 			float value;
-			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value)) { Debug.LogWarning("Usage: ChangeStrength <metres per second>"); return; }
+			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value) || float.IsNaN(value)) { Debug.LogWarning("Usage: ChangeStrength <metres per second>"); return; }
 			terraineditor.strength = Mathf.Clamp(value, terraineditor.MinStrength, terraineditor.MaxStrength);
 			EditorUI.RefreshSliders();
 			Debug.Log("[CUSTOM ISLANDS] Brush strength: " + terraineditor.strength + " m/s");

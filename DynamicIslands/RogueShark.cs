@@ -106,6 +106,8 @@ namespace DynamicIslands.Editor
 				if (missingSince <= 0f) { missingSince = Time.unscaledTime; return; }
 				if (Time.unscaledTime - missingSince < 15f) return;
 				missingSince = 0f;
+				// (switched off meanwhile: let it go, no new one)
+				if (!On) { Index = 0; tintedId = 0; Log("The rogue wasn't found and Rogue shark is off: dropped"); Changed("state"); return; }
 				List<AI_NetworkBehavior_Shark> sharks = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehavior_Shark>().Where(s => s != null && !Dead(s)).OrderBy(s => s.ObjectIndex).ToList();
 				if (sharks.Count >= 2) { Index = sharks.Last().ObjectIndex; tintedId = 0; Log("Shark #" + Index + " taken for the rogue (its own wasn't found)"); Changed("state"); }
 				else { Log("The rogue wasn't found: a new one"); Index = 0; Spawn(Giant); }

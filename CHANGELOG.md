@@ -176,6 +176,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Rogue shark switched off:** a rogue that was lost (not found after a load) no longer brings a new one
+  when the Rogue shark option has been switched off meanwhile; it is let go.
+- **Editor commands:** `SetElevation`, `ChangeWidth` and `ChangeStrength` with `NaN` show their usage instead of
+  setting a value that is not a number.
 - **Upgrade research table, two players:** when two players researched the same item at the same moment, the
   second one lost the item; it now goes back to that player. A world file's research lines with unknown items or
   upgrades (edited by hand, or from an upgrade a later version dropped) leave those out.

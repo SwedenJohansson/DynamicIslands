@@ -76,7 +76,7 @@ namespace DynamicIslands
 			Log("PASS: server signature (" + (Raft_Network.IsHost ? "host" : "player who joined") + ")");
 		}
 
-		[ConsoleCommand(name: "CIHostOnlyCheck", docs: "Dev, in game (a player who joined): tries every command that changes the host's settings or islands (Monsters, BuildCost, Randomizer, WorldPlan, CustomIslandsAuto, SpawnIsland, RemoveIsland); each must be refused and change nothing here")]
+		[ConsoleCommand(name: "CIHostOnlyCheck", docs: "Dev, in game (a player who joined): tries every command that changes the host's settings or islands (Monsters, BuildCost, Randomizer, WorldPlan, CustomIslandsAuto, SpawnIsland, RemoveIsland, WorldOptions, Levels, RegrowDays, WorldIslands, WorldIslandsGap, HeadStart, RogueShark spawn/giant, Traders bring, Barrels/StormDays roll, Resync); each must be refused (or, where it only reads, do nothing) and change nothing here")]
 		public static void HostOnlyCheck()
 		{
 			StartTest(HostOnlyRoutine());
@@ -89,6 +89,7 @@ namespace DynamicIslands
 			List<string> before = ServerSig();
 			bool autoBefore = CustomIslandSpawner.Enabled;
 			int refused = 0;
+			string extraBefore = HostOnlyExtraState();
 			// (every host-only command says "Only the host ...": "can", "changes", "switches", "chooses")
 			Application.LogCallback counter = (msg, trace, type) => { if (msg.Contains("Only the host")) refused++; };
 			Application.logMessageReceived += counter;
@@ -106,6 +107,20 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action>("WorldOptions +ghostrafts -privatestorage", () => WorldOptions.WorldOptionsCommand(new[] { "+ghostrafts", "-privatestorage" })),
 				new KeyValuePair<string, Action>("Levels " + (PlayerLevels.On ? "off" : "on"), () => DynamicIslands.LevelsCommand(new[] { PlayerLevels.On ? "off" : "on" })),
 				new KeyValuePair<string, Action>("WorldIslands all", () => WorldIslands.WorldIslandsCommand(new[] { "all" })),
+				new KeyValuePair<string, Action>("RegrowDays " + (WorldRules.RegrowDays == 9 ? "4" : "9"), () => DynamicIslands.RegrowDaysCommand(new[] { WorldRules.RegrowDays == 9 ? "4" : "9" })),
+				new KeyValuePair<string, Action>("WorldIslandsGap 20-50", () => WorldIslands.GapCommand(new[] { "20-50" })),
+			};
+			// (these say something else, or nothing, when a client tries: only that nothing changes is checked)
+			var quiet = new List<KeyValuePair<string, Action>>
+			{
+				new KeyValuePair<string, Action>("HeadStart 3", () => HeadStart.HeadStartCommand(new[] { "3" })),
+				new KeyValuePair<string, Action>("RogueShark spawn", () => RogueShark.RogueSharkCommand(new[] { "spawn" })),
+				new KeyValuePair<string, Action>("RogueShark giant", () => RogueShark.RogueSharkCommand(new[] { "giant" })),
+				new KeyValuePair<string, Action>("RogueShark kill", () => RogueShark.RogueSharkCommand(new[] { "kill" })),
+				new KeyValuePair<string, Action>("Traders bring", () => TraderRaft.TradersCommand(new[] { "bring" })),
+				new KeyValuePair<string, Action>("Barrels roll 1 200", () => GoldenBarrels.BarrelsCommand(new[] { "roll", "1", "200" })),
+				new KeyValuePair<string, Action>("StormDays roll 1 100", () => StormDays.StormDaysCommand(new[] { "roll", "1", "100" })),
+				new KeyValuePair<string, Action>("Resync", () => DynamicIslands.ResyncCommand()), // (a client's own command: allowed, must change no setting)
 			};
 			foreach (var t in tries)
 			{
@@ -114,13 +129,27 @@ namespace DynamicIslands
 				yield return null;
 				Check(ref ok, refused > r0, t.Key + ": refused (\"Only the host ...\")");
 			}
+			foreach (var t in quiet)
+			{
+				try { t.Value(); } catch (Exception e) { Check(ref ok, false, t.Key + " threw " + e.GetType().Name + ": " + e.Message); continue; }
+				yield return null;
+			}
+			Log("Also tried without a refusal text (nothing may change): " + string.Join(", ", quiet.Select(q => q.Key).ToArray()));
 			yield return new WaitForSeconds(3f); // (anything a slip let through would have come back from the host by now)
 			Application.logMessageReceived -= counter;
 			List<string> after = ServerSig();
 			List<string> diff = before.Where((l, i) => i >= after.Count || after[i] != l).Select(l => l + " -> " + (after.FirstOrDefault(a => a.Split(' ')[0] == l.Split(' ')[0]) ?? "(gone)")).ToList();
 			Check(ref ok, diff.Count == 0, "nothing changed here (the server signature is the same" + (diff.Count > 0 ? ": " + string.Join("; ", diff.ToArray()) : "") + ")");
+			string extraAfter = HostOnlyExtraState();
+			Check(ref ok, extraAfter == extraBefore, "regrow days, island gap, head start, rogue shark and trader stalls unchanged here (" + extraBefore + (extraAfter != extraBefore ? " -> " + extraAfter : "") + ")");
 			Check(ref ok, CustomIslandSpawner.Enabled == autoBefore, "automatic islands unchanged here (" + (autoBefore ? "on" : "off") + ")");
 			if (ok) Log("PASS: host-only commands refused"); else Fail("host-only commands refused");
+		}
+
+		static string HostOnlyExtraState()
+		{
+			return "regrow " + WorldRules.RegrowDays + ", gap " + WorldIslands.GapMin + "-" + WorldIslands.GapMax + ", headstart " + HeadStart.Level + "/" + HeadStart.Chosen +
+				", rogue #" + RogueShark.Index + (RogueShark.Giant ? " giant" : "") + (RogueShark.Alive ? " alive" : "") + ", stalls " + UnityEngine.Object.FindObjectsOfType<TradeStand>().Length;
 		}
 
 		[ConsoleCommand(name: "CIRandomizerHints", docs: "Dev, anywhere: each randomizer part and level has its hover hint, with how often per level and what stays as Raft has it (the user, 2026-10-04)")]

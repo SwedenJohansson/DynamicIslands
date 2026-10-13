@@ -779,6 +779,12 @@ namespace DynamicIslands
 				}
 				finally { try { if (System.IO.File.Exists(bqPath)) System.IO.File.Delete(bqPath); } catch { } }
 			}
+			// World file lines with nonsense (needs a test world 'CI ...': skipped, and logged, in the menu or the editor)
+			GwBadWorldLines(ref ok);
+			// Broken terrain stamp and object group files
+			var gwStamps = new[] { true };
+			yield return GwBadStampsPart(gwStamps);
+			ok &= gwStamps[0];
 			Application.logMessageReceived -= watch;
 			if (ok) Log("PASS: broken files"); else Fail("broken files");
 		}
