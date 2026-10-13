@@ -308,7 +308,8 @@ namespace DynamicIslands
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			List<Item_Base> items = UtItems(UtUpgrade());
-			if (player == null || utHeldSlot == null || utHeldIdx < 0 || utHeldIdx >= items.Count) { Fail("ut release: nothing held"); yield break; }
+			// (ReferenceEquals: once the table is picked up Unity calls the slot null, and that is the case tested)
+			if (player == null || ReferenceEquals(utHeldSlot, null) || utHeldIdx < 0 || utHeldIdx >= items.Count) { Fail("ut release: nothing held"); yield break; }
 			Item_Base it = items[utHeldIdx];
 			bool ok = true, did = false, threw = false;
 			string slotInfo = "slot gone";
