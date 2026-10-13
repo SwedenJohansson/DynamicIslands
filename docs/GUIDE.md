@@ -687,6 +687,10 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     the island's own biggest rock (snowy rock on a snowy island). The hill stops where the cave's roof ends, in a face
     down to the ground, so the ground in front of the mouth and beside it stays free for paths and ledges.
     Balboa's vine cave is a whole rock already and gets none.
+    Every cave piece's rock is drawn from outside as well as from inside (Raft draws it from inside only), and the
+    island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
+    wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
+    editor does the same as you work, and keeps the heights you sculpted (they are saved as you made them).
 
   The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
   (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same

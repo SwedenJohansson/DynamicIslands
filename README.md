@@ -517,7 +517,9 @@ den's floor on its highest ground and the mouth turned to open ground (Raft's is
 copied piece (Balboa's cave holds the Machete blueprint, Mama Bear's pickup and a bear) are left out: nothing of Raft's
 story comes along. In a world every cave piece (dens, the generator's caves, those placed by hand; not the vine cave, a
 whole rock already) sits inside a rock hill built over its back and sides down to the ground, of the island's own rock,
-open only at its mouth and stopping where the roof ends, so the ground in front stays clear (`CaveMountain`). Every prop's size and footprint is measured
+open only at its mouth and stopping where the roof ends, so the ground in front stays clear (`CaveMountain`). Cave rock
+is drawn from both sides (`CaveBacks`), and the ground in a cave's rooms is let down under its floor or cut away
+(`CaveGround`; in the editor the sculpted heights are kept). Every prop's size and footprint is measured
 (`raft_props.txt`, `CIMeasureProps`): props stand on the lowest ground under them, and nothing that hangs from its top
 (awnings, banners, dream catchers) is used.
 

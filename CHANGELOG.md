@@ -222,6 +222,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   The hill stops where a cave's roof ends, in a face down to the ground: the way in, and the ledges and paths in front
   of the mouth and beside it, stay clear.
   Balboa's vine cave, a whole rock of its own, is left as it is.
+- **See-through caves (X7):** from inside a cave you could see the sea or the sky where the island's ground ran
+  through a room (Raft draws the ground from above only), and from outside - in the editor, or over a gap - a cave's
+  rock wasn't drawn at all. Every cave piece's rock is now drawn from outside too, and the ground in a cave's rooms is
+  let down under the room's floor and cut away where it lies wholly inside or runs steeply through (a hole dug down to
+  a tunnel's end, as at The Drowned Labyrinth); in the editor the ground keeps the heights you sculpted. `CICaveInside` looks round every cave piece from inside and fails on any look out.
 - **"Another build" told again after a rejoin:** a player who rejoined with the host's own build after joining
   with another one still got the old notice. A notice is now only about the host the player is with.
 - **Animals walking into the sea:** llamas, goats and the other animals of the custom islands could wander into the
