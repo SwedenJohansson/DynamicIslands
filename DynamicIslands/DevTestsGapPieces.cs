@@ -454,13 +454,18 @@ namespace DynamicIslands
 			if (e == null) yield break;
 			if (r == null || player == null) { Fail("gp onlift: no such lift"); yield break; }
 			Renderer[] rs = r.GetComponentsInChildren<Renderer>().Where(x => !(x is LineRenderer)).ToArray();
-			Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(r.transform.position, Vector3.one);
-			foreach (Renderer x in rs) b.Encapsulate(x.bounds);
-			PlayerMove.To(player, new Vector3(b.center.x, b.max.y + 0.3f, b.center.z));
-			KeepAlive(player);
-			yield return new WaitForSeconds(1f);
 			IslandBehaviour mb = r.GetComponent<IslandBehaviour>();
-			bool carried = mb != null && mb.Carry && mb.Carries(player.transform);
+			bool carried = false;
+			// a moving lift can slide out from under the drop point in the second it takes to land, so try up to 3 times
+			for (int tries = 0; tries < 3 && !carried; tries++)
+			{
+				Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(r.transform.position, Vector3.one);
+				foreach (Renderer x in rs) b.Encapsulate(x.bounds);
+				PlayerMove.To(player, new Vector3(b.center.x, b.max.y + 0.3f, b.center.z));
+				KeepAlive(player);
+				yield return new WaitForSeconds(1f);
+				carried = mb != null && mb.Carry && mb.Carries(player.transform);
+			}
 			Log("GP onlift carried=" + carried + " (" + GpRole + ")");
 			bool ok = true;
 			Check(ref ok, carried, GpRole + ": the lift carries the player standing on it");

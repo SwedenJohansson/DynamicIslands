@@ -378,7 +378,7 @@ namespace DynamicIslands
 			else if (mode == "loot")
 			{
 				Vector3 at = lastRoguePos;
-				var near = UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Where(p => p != null && p.gameObject.activeInHierarchy && FlatDistance(p.transform.position, at) < 30f).ToList();
+				var near = UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Where(p => p != null && p.gameObject.activeInHierarchy && !p.name.StartsWith("Pickup_Floating_") && FlatDistance(p.transform.position, at) < 30f).ToList();
 				var names = near.GroupBy(p => p.name.Replace("(Clone)", "").Trim()).OrderBy(g => g.Key).Select(g => g.Key + "x" + g.Count()).ToArray();
 				Log("GIANT loot: " + near.Count + " pickup(s) within 30 m of where it was last seen (" + at.ToString("F0") + "): " + string.Join(" ", names) + " (" + who + ")");
 				Log("PASS: giant loot");
