@@ -205,6 +205,7 @@
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="DevTestsLevelsMore.cs" />
+    <Compile Include="DevTestsUpgradeShots.cs" />
     <Compile Include="DevTestsMoreB.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="WorldPlanWindow.cs" />
