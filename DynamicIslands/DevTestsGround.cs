@@ -298,9 +298,10 @@ namespace DynamicIslands
 
 		/// <summary>
 		/// A cave piece seen from where a player stands in it (X7): from eye height over every floor under its roof, every look
-		/// round meets the shell's inside, the ground from above or something else from its front - not the back of a face (Raft
-		/// draws its shells, the ground and the hill over them from one side only: the back of a face is a hole to the outside) -
-		/// and no sky but out through an open end. The looks that see through (0: none); detail: how many, and the worst place.
+		/// round meets the shell's inside, the ground from above or something else from its front - Raft draws the ground and
+		/// most things from one side only: a look goes on through the back of a face, and that is a window only when it then
+		/// leaves the room (not through an open end) or meets the shell's own back where it isn't drawn - and no sky but out
+		/// through an open end. The looks that see through (0: none); detail: how many, and the worst place.
 		/// </summary>
 		static int CaveSeeThrough(Transform cave, PropInfo p, out string detail, out Vector3 eye, out Vector3 look)
 		{
@@ -321,6 +322,11 @@ namespace DynamicIslands
 				foreach (RaycastHit h in Physics.RaycastAll(from, dir, len, ~0, QueryTriggerInteraction.Ignore))
 					if (counts(h.collider) && (best == null || h.distance < best.Value.distance)) best = h;
 				return best;
+			};
+			Func<Vector3, Vector3, bool, List<RaycastHit>> hits = (from, dir, backs) =>
+			{
+				Physics.queriesHitBackfaces = backs;
+				return Physics.RaycastAll(from, dir, 80f, ~0, QueryTriggerInteraction.Ignore).Where(h => counts(h.collider)).OrderBy(h => h.distance).ToList();
 			};
 			// (drawn from both sides: a cave piece's shell once it has its outside, and the mountain over the caves - X7)
 			Func<Collider, bool> bothSides = c =>
@@ -377,19 +383,35 @@ namespace DynamicIslands
 					string hereWhat = "";
 					foreach (Vector3 d in looks)
 					{
-						RaycastHit? any = first(e, d, 80f, true), front = first(e, d, 80f, false);
-						bool sky = any == null;
-						if (sky)
+						// (what is seen that way: the nearest face from its front, or drawn from both sides - a face from its back
+						// isn't drawn at all: the look goes on through it)
+						List<RaycastHit> all = hits(e, d, true), fronts = hits(e, d, false);
+						RaycastHit? seen = null, through = null;
+						foreach (RaycastHit h in all)
 						{
-							float o = Vector3.Dot(new Vector3(d.x, 0f, d.z), along);
-							if ((p.OpenPlus && o > 0.25f) || (p.OpenMinus && o < -0.25f)) continue; // (out through an open end)
+							if (fronts.Any(f => f.collider == h.collider && Mathf.Abs(f.distance - h.distance) < 0.02f) || bothSides(h.collider)) { seen = h; break; }
+							if (through == null) through = h;
 						}
-						else if (any.Value.distance < 0.3f || (front != null && front.Value.distance <= any.Value.distance + 0.05f)) continue; // (a face from its front)
-						else if (bothSides(any.Value.collider)) continue; // (a face drawn from both sides: a cave piece's shell with its outside, the mountain)
-						string w = sky ? "sky" : (own.Contains(any.Value.collider) ? "the shell's back" : (any.Value.collider is TerrainCollider ? "the ground from below" : any.Value.collider.name + "'s back"));
+						float o = Vector3.Dot(new Vector3(d.x, 0f, d.z), along);
+						bool openEnd = (p.OpenPlus && o > 0.25f) || (p.OpenMinus && o < -0.25f);
+						bool sky = seen == null;
+						if (through == null || through.Value.distance < 0.3f)
+						{
+							if (!sky || openEnd) continue; // (a face from its front; out through an open end)
+						}
+						else if (!own.Contains(through.Value.collider))
+						{
+							// (through the ground from below, or another one-sided face, to the piece's own rock - or something in
+							// front of it, in the room: the ground's underside hides nothing that should be seen. Only when the look
+							// then goes out of the room, not through an open end, does the room have a window there)
+							if (!sky && all.Any(h => own.Contains(h.collider) && h.distance >= seen.Value.distance - 0.05f)) continue;
+							if (openEnd) continue;
+						}
+						Collider wc = through != null ? through.Value.collider : null;
+						string w = wc == null ? "sky" : (own.Contains(wc) ? "the shell's back" : (wc is TerrainCollider ? "the ground from below" : wc.name + "'s back") + (sky ? " to the sky" : " to " + seen.Value.collider.name));
 						what[w] = what.ContainsKey(w) ? what[w] + 1 : 1;
 						bad++;
-						if (here++ == 0) { hereLook = d; hereWhat = w + (sky ? "" : " " + any.Value.distance.ToString("F1") + " m off"); }
+						if (here++ == 0) { hereLook = d; hereWhat = w + (wc == null ? "" : " " + through.Value.distance.ToString("F1") + " m off"); }
 					}
 					if (here > worstBad)
 					{
