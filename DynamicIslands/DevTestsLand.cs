@@ -151,7 +151,18 @@ namespace DynamicIslands
 				var sunk = objs.Where(o => land.Of(IslandGenerator.CatRocks).Any(t => t.Name == o.Name && t.Above < -1f)).ToList();
 				if (sunk.Count > 0)
 				{
-					float below = sunk.Count(o => o.Position.y < IslandGenerator.SampleHeights(m, res, step, o.Position.x, o.Position.z) - 0.3f) / (float)sunk.Count;
+					// (or as deep as "never out of sight" lets it - D62, 6494a3d: its top a third of its height and 10 cm over the
+					// terrain; a desert rock with its pivot in its middle goes no deeper than 0.2-0.4 m by its pivot)
+					Func<IslandObject, bool> isSunk = o =>
+					{
+						float g = IslandGenerator.TerrainSurface(m, step, o.Position.x, o.Position.z);
+						if (o.Position.y < g - 0.3f) return true;
+						Bounds lb;
+						if (!PlaceableCatalog.LocalBounds(o.Name, out lb)) return false;
+						float ly = Mathf.Abs(o.Scale.y), height = lb.size.y * ly;
+						return o.Position.y + lb.max.y * ly - g < 0.35f * height + 0.2f;
+					};
+					float below = sunk.Count(isSunk) / (float)sunk.Count;
 					Check(ref ok, below > 0.9f, TerrainPainter.StyleName(style) + ": " + below.ToString("P0") + " of " + sunk.Count + " big rocks sunk into the ground as Raft's are");
 				}
 				// A picture of it

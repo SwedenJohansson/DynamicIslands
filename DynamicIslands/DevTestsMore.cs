@@ -83,7 +83,9 @@ namespace DynamicIslands
 							{
 								if (o.Position.x < 0f || o.Position.z < 0f || o.Position.x > size.x || o.Position.z > size.z) { outside++; continue; }
 								if (float.IsNaN(o.Position.y)) { floating++; continue; }
-								float g = IslandGenerator.SampleHeights(m, res, step, o.Position.x, o.Position.z);
+								// (the ground as the terrain has it, its triangles - what the generator sets things on since 11aa73a; the
+								// blended height lies metres off it on a steep twisted cell: rocks read 1.2 m up, a chest 3.4 m down)
+								float g = IslandGenerator.TerrainSurface(m, step, o.Position.x, o.Position.z);
 								Bounds? lb = localBounds(o.Name);
 								float tall = lb.HasValue ? lb.Value.size.y * Mathf.Abs(o.Scale.y) : 2f;
 								float big = lb.HasValue ? Vector3.Scale(lb.Value.size, o.Scale).magnitude : 2f;
@@ -429,8 +431,9 @@ namespace DynamicIslands
 			FieldInfo estField = typeof(GeneratorWindow).GetField("estimate", BindingFlags.NonPublic | BindingFlags.Instance);
 			Func<string> estimate = () => { var t = estField != null ? estField.GetValue(w) as Text : null; return t != null ? t.text : ""; };
 			Transform tab = w.transform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Tab0");
-			// (settings that only matter when generating: they change the setting, not the picture or the count)
-			var onlySetting = new HashSet<string> { "Groups", "Lowest tier", "Highest tier" };
+			// (settings that only matter when generating: they change the setting, not the picture or the count - also the things
+			// to gather, buildings, quest and Raft's features, LM9-LM12: the estimate counts only land and sea nature)
+			var onlySetting = new HashSet<string> { "Groups", "Lowest tier", "Highest tier", "Things to gather", "Finds in the shallows", "How far out", "How many", "Quest steps", "Raft's features" };
 			int sliders = 0, changed = 0;
 			var dead = new List<string>();
 			foreach (Transform row in tab.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Slider_")).ToList())

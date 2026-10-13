@@ -502,8 +502,9 @@ namespace DynamicIslands
 			PlacementOptions.AlignToSlope = false;
 			int n = PlacementOptions.DropSelectionToGround();
 			// (without Slope an object keeps its own rotation; some of Raft's rocks come tilted; it goes down to the lowest
-			// ground under its base, so on a slope its low side doesn't stand in the air)
-			float off = objs.Max(t => Mathf.Abs(t.position.y - PlacementOptions.LowestGroundUnder(t.gameObject)));
+			// ground under its base, so on a slope its low side doesn't stand in the air; one whose pivot is well above its
+			// bottom - the boulder's, 3.4 m - rests on its bottom there, RestingPivotY)
+			float off = objs.Max(t => Mathf.Abs(t.position.y - PlacementOptions.RestingPivotY(t.gameObject)));
 			CommandUndoRedo.UndoRedoManager.Undo();
 			bool undone = objs.All(t => t.position.y > 150f);
 			Check(ref ok, n == 3 && off < 0.2f && undone, "Ground put " + n + " objects on the terrain (largest height difference " + off.ToString("F2") + " m); Ctrl+Z lifted them back: " + undone);

@@ -424,6 +424,9 @@ namespace DynamicIslands.Editor
 			Quaternion back = Quaternion.Euler(0f, -f.Yaw, 0f);
 			float reach = Mathf.Max(x1 - x0, z1 - z0) + blend + 2f;
 			Vector2 mid = f.At((x0 + x1) / 2f, (z0 + z1) / 2f);
+			// (what stands in the blend keeps its height over the ground as it changes, as at the cave - a tree past the
+			// clearing floated 3.8 m over the lowered ground, CIGroundTypes)
+			var around = file.Objects.Where(o => Mathf.Abs(o.Position.x - mid.x) < reach + step && Mathf.Abs(o.Position.z - mid.y) < reach + step).Select(o => new KeyValuePair<IslandObject, float>(o, k.Ground(new Vector2(o.Position.x, o.Position.z)))).ToList();
 			for (int zi = Mathf.Max(0, Mathf.FloorToInt((mid.y - reach) / step)); zi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.y + reach) / step)); zi++)
 				for (int xi = Mathf.Max(0, Mathf.FloorToInt((mid.x - reach) / step)); xi <= Mathf.Min(res - 1, Mathf.CeilToInt((mid.x + reach) / step)); xi++)
 				{
@@ -434,6 +437,7 @@ namespace DynamicIslands.Editor
 					float h = file.Heights[zi, xi] * file.TerrainSize.y;
 					file.Heights[zi, xi] = Mathf.Lerp(h, height, weight * weight * (3f - 2f * weight)) / file.TerrainSize.y;
 				}
+			foreach (var kv in around) kv.Key.Position.y += k.Ground(new Vector2(kv.Key.Position.x, kv.Key.Position.z)) - kv.Value;
 		}
 
 		static string Wall(System.Random r, int windows) { int v = r.Next(10); return v < windows ? (r.NextDouble() < 0.5 ? "RT_WallWindow1" : "RT_WallWindow2") : "RT_Wall1"; }
@@ -3044,7 +3048,9 @@ namespace DynamicIslands.Editor
 					// the sea - set at the ground under its middle, its low side stood in the air over a sloping beach)
 					if (kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0) y = Mathf.Min(h, Mathf.Max(y, Sea));
 					if (measured != null && measured.Above < -0.2f && measured.Size > 0.5f) y += Mathf.Max(measured.Above / measured.Size, -0.6f) * objectSize * scale;
-					if (!flat) y = Mathf.Max(y, LowestShowing(kind, scale, ground.Surface(x, z0), 0.35f)); // (never out of sight)
+					// (never out of sight - but not ice, which keeps to the waterline: its mesh hangs 7 m under its pivot, and kept a
+					// third of its height up it stood 2.5 m over the shore, CIGenMatrix)
+					if (!flat && kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) < 0) y = Mathf.Max(y, LowestShowing(kind, scale, ground.Surface(x, z0), 0.35f));
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
 					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
 					cats.Add(cat);
