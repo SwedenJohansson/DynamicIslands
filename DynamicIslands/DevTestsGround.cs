@@ -435,10 +435,13 @@ namespace DynamicIslands
 						}
 						float o = Vector3.Dot(new Vector3(d.x, 0f, d.z), along);
 						bool openEnd = (p.OpenPlus && o > 0.25f) || (p.OpenMinus && o < -0.25f);
+						// (nothing at all that way: out of a doorway - one beside the place too, where a passage bends to its open
+						// end; not one behind it, towards a closed end)
+						bool doorway = (p.OpenPlus && o > -0.25f) || (p.OpenMinus && o < 0.25f);
 						bool sky = seen == null;
 						if (through == null || through.Value.distance < 0.3f)
 						{
-							if (!sky || openEnd) continue; // (a face from its front; out through an open end)
+							if (!sky || openEnd || doorway) continue; // (a face from its front; out through an open end)
 						}
 						else if (!own.Contains(through.Value.collider))
 						{
