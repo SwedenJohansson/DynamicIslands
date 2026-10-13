@@ -136,7 +136,8 @@ namespace DynamicIslands
 			catch (Exception ex) { Fail("gp island " + name + ": " + ex); yield break; }
 			// (open sea further out rather than a raft jump: islands go to player 2 relative to the host's raft - as ScMpSpawn)
 			Vector3? spot = null;
-			for (float d = 400f; !spot.HasValue && d <= 1600f; d += 300f)
+			// (within 750 m: player 2 unloads islands past 800 m; mppieces.ps1 sails on and asks again when the sea there is full)
+			for (float d = 400f; !spot.HasValue && d <= 750f; d += 175f)
 			{
 				Vector3? s = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, CustomIslandSpawner.LandRadius(name), d);
 				if (s.HasValue) spot = new Vector3(s.Value.x, 0f, s.Value.z);
