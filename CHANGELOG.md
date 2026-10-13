@@ -176,9 +176,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **No errors when the editor takes objects from Temperance or Utopia:** two of Raft's story scripts there threw an
+  error each time the editor loaded those islands (switched off) to take their objects; they are kept quiet then.
+- **Placed objects stay as placed:** a few of Raft's objects (Varuna Point's debris planks) kept Raft's physics and
+  tipped a little each time their island was saved and opened again; every placed object now stands still.
 - **Things on generated islands lie on the ground:** metal sheets, firewood, tyres and pallets on a slope now lie
   along it instead of being half buried; a set piece (a stranded boat on a beach edge) is never sunk more than half
-  its height; a lookout tower's back railing no longer runs off its deck and its side railings have no gaps.
+  its height; a lookout tower's back railing no longer runs off its deck and its side railings have no gaps. Shore
+  ice on snowy islands lies at the waterline without the beach's sand rising over it, and only on gentle beaches.
 - **The library's story islands stand on the ground:** a check of every island of every world plan found 73 things
   out of place on 28 islands - walls hanging over a slope, a radar screen wider than its desk, crates and chests set
   into banks, paintings, a camera and tarps off their walls and posts, a wind vane wider than its mast, ice pillars

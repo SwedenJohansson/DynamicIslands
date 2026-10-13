@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -678,6 +680,9 @@ namespace DynamicIslands.Editor
 					left = left.Where(m => m != null).ToList();
 				}
 			}
+			// Decoration stands still: a body Raft lets fall (Varuna Point's debris planks) tipped a little more on its rails
+			// each time the island was saved and loaded (round trip)
+			foreach (Rigidbody body in go.GetComponentsInChildren<Rigidbody>(true)) { body.isKinematic = true; body.useGravity = false; }
 		}
 
 		static readonly Dictionary<Type, Type[]> requirements = new Dictionary<Type, Type[]>();
@@ -791,13 +796,13 @@ namespace DynamicIslands.Editor
 				if (s.name != sceneName || existing.Contains(s.handle)) return;
 				foreach (GameObject g in s.GetRootGameObjects()) g.SetActive(false);
 			};
-			if (hide) SceneManager.sceneLoaded += switchOff;
+			if (hide) { SceneManager.sceneLoaded += switchOff; hiddenLoads.Add(sceneName); }
 			AsyncOperation op;
 			try { op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive); }
-			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
-			if (op == null) { SceneManager.sceneLoaded -= switchOff; Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
+			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
+			if (op == null) { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
 			try { while (!op.isDone) yield return null; }
-			finally { SceneManager.sceneLoaded -= switchOff; }
+			finally { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); }
 			for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
 			{
 				Scene s = SceneManager.GetSceneAt(i);
@@ -806,6 +811,35 @@ namespace DynamicIslands.Editor
 			if (!result.Scene.IsValid()) { Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + sceneName + " but could not find it"); yield break; }
 			// Scenes only read for their objects are switched off at once, so they don't show up in the editor or the world
 			if (hide) foreach (GameObject g in result.Scene.GetRootGameObjects()) g.SetActive(false);
+		}
+
+		/// <summary>The Raft scenes loading switched off right now: Unity runs their scripts' Awake and OnEnable as it loads them,
+		/// before sceneLoaded can switch them off.</summary>
+		static readonly HashSet<string> hiddenLoads = new HashSet<string>();
+
+		/// <summary>
+		/// Two of Raft's story-island scripts throw in Awake/OnEnable away from their own island (CoolingChallenge on Temperance,
+		/// OlofFinalRoom on Utopia): loaded switched off to take objects from, their scenes logged a NullReferenceException
+		/// each time (CIButtons 2026-10-13). Swallowed only then; on the islands themselves they run as Raft has them.
+		/// </summary>
+		internal static void Patch(Harmony harmony)
+		{
+			// (both: with Awake kept quiet, CoolingChallenge threw in OnEnable next)
+			foreach (string[] m in new[] { "CoolingChallenge", "OlofFinalRoom" }.SelectMany(t => new[] { new[] { t, "Awake" }, new[] { t, "OnEnable" } }))
+				try
+				{
+					Type type = AccessTools.TypeByName(m[0]);
+					MethodInfo original = type != null ? type.GetMethod(m[1], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) : null;
+					if (original == null) continue;
+					harmony.Patch(original, finalizer: new HarmonyMethod(typeof(PlaceableCatalog).GetMethod("HiddenLoadFinalizer", BindingFlags.Static | BindingFlags.NonPublic)));
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not patch " + m[0] + "." + m[1] + ": " + e.Message); }
+		}
+
+		static Exception HiddenLoadFinalizer(Exception __exception, object __instance)
+		{
+			Component c = __instance as Component;
+			return __exception != null && c != null && hiddenLoads.Contains(c.gameObject.scene.name) ? null : __exception;
 		}
 
 		static IEnumerator CloseScene(OpenedScene opened)

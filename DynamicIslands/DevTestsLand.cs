@@ -102,9 +102,18 @@ namespace DynamicIslands
 			// (the beach strip and the cliffs: where Raft has almost nothing but bamboo and boulders)
 			Func<int, bool> beachStrip = b => { int i, sl, hb; RaftLand.Unbin(b, out i, out sl, out hb); return i == 0 || hb == 0; };
 			Func<int, bool> cliff = b => { int i, sl, hb; RaftLand.Unbin(b, out i, out sl, out hb); return sl == RaftLand.Bins1 - 1; };
+			Func<int, int, IslandGenSettings> settingsFor = (st, seed) =>
+			{
+				var gs = new IslandGenSettings { Seed = seed, Radius = 80f, Height = 45f, Style = st, Cliffs = 0.3f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+				// (at Like Raft: thicker than that - a jungle - thickens the higher ground only (the review 2026-10-03), so at
+				// 0.45 Tropical trees went inland, 52 % overlap with 19 % of Raft's on the low flat shore against 3 %)
+				IslandGenerator.NatureLikeRaft(gs);
+				gs.BeachThings = 0f;
+				return gs;
+			};
 			foreach (int style in new[] { TerrainPainter.Tropical, TerrainPainter.Forest, TerrainPainter.Desert, TerrainPainter.Snowy })
 			{
-				var s = new IslandGenSettings { Seed = 3100 + style, Radius = 80f, Height = 45f, Style = style, Cliffs = 0.3f, Trees = 0.45f, Bushes = 0.45f, Rocks = 0.45f, Harvest = 0.45f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+				IslandGenSettings s = settingsFor(style, 3100 + style);
 				float[,] m = IslandGenerator.HeightsMetres(s, size, res);
 				int[] bins = IslandGenerator.HabitatBins(s, m, step);
 				var genArea = new float[RaftLand.BinCount];
@@ -127,8 +136,25 @@ namespace DynamicIslands
 					// about 35° - on Balboa, Raft has trees on grass-painted 40-55° slopes; that part is checked on its own below)
 					bool rockBound = cat == IslandGenerator.CatRocks;
 					for (int b = 0; b < RaftLand.BinCount; b++) raft[b] = rockBound || !cliff(b) ? kinds.Sum(t => t.Density[b]) * genArea[b] : 0f;
-					float rt = raft.Sum();
 					foreach (IslandObject o in placed) { int b = binOf(o); if (b >= 0 && (rockBound || !cliff(b))) gen[b]++; }
+					// (a few can't show a spread over many habitats, nor can one island's land: under 60 placed, two more islands of
+					// the style pooled in - 21 Snowy rocks on one overlapped 52 %, under even the bar of drawing as many from Raft's)
+					int islands = 1;
+					for (int extra = 1; extra <= 2 && gen.Sum() < 60f; extra++, islands++)
+					{
+						IslandGenSettings s2 = settingsFor(style, 3100 + style + 1000 * extra);
+						float[,] m2 = IslandGenerator.HeightsMetres(s2, size, res);
+						int[] bins2 = IslandGenerator.HabitatBins(s2, m2, step);
+						var area2 = new float[RaftLand.BinCount];
+						foreach (int b in bins2) if (b >= 0) area2[b] += step * step;
+						for (int b = 0; b < RaftLand.BinCount; b++) if (rockBound || !cliff(b)) raft[b] += kinds.Sum(t => t.Density[b]) * area2[b];
+						foreach (IslandObject o in IslandGenerator.PlanAll(s2, m2, size).Where(p => names.Contains(p.Name)))
+						{
+							int b = bins2[Mathf.Clamp(Mathf.RoundToInt(o.Position.z / step), 0, res - 1) * res + Mathf.Clamp(Mathf.RoundToInt(o.Position.x / step), 0, res - 1)];
+							if (b >= 0 && (rockBound || !cliff(b))) gen[b]++;
+						}
+					}
+					float rt = raft.Sum();
 					float gt = Mathf.Max(1f, gen.Sum());
 					float overlap = rt > 0f ? Enumerable.Range(0, RaftLand.BinCount).Sum(b => Mathf.Min(raft[b] / rt, gen[b] / gt)) : 0f;
 					// (big ones - trees but bamboo, big rocks - on the beach strip and on cliffs, against Raft's share)
@@ -144,8 +170,17 @@ namespace DynamicIslands
 					// away - the spread can't be compared on an island this size: only where they may not be is checked)
 					float inland50 = kinds.Sum(t => t.Inland[1] * t.Count) / Mathf.Max(1, kinds.Sum(t => t.Count));
 					if (inland50 > 60f) Log("  " + label + ": measured " + inland50.ToString("F0") + " m inland on Raft (a bigger terrain): " + placed.Count + " placed, " + (overlap * 100f).ToString("F0") + " % overlap (not compared)");
-					// (55 %: plants kept off the 35-40° slopes the painting turns to rock take a little of Raft's spread away)
-					else Check(ref ok, overlap > 0.55f, label + ": " + placed.Count + " placed, " + (overlap * 100f).ToString("F0") + " % of their spread over the habitats overlaps Raft's");
+					// (55 %: plants kept off the 35-40° slopes the painting turns to rock take a little of Raft's spread away; a few
+					// can't cover a spread over many habitats - at Like Raft, 21 Snowy rocks drawn from Raft's own spread overlap it
+					// by less than that one time in several: the bar is what 19 in 20 such draws of as many reach, when it is lower)
+					float bar = Mathf.Min(0.55f, DrawnOverlap(raft, rt, Mathf.RoundToInt(gen.Sum())));
+					if (inland50 <= 60f) Check(ref ok, overlap > bar, label + ": " + placed.Count + " placed" + (islands > 1 ? " (" + gen.Sum().ToString("F0") + " on " + islands + " islands)" : "") + ", " + (overlap * 100f).ToString("F0") + " % of their spread over the habitats overlaps Raft's" +
+						(bar < 0.55f ? " (bar " + (bar * 100f).ToString("F0") + " %: as many drawn from Raft's spread reach that 19 times in 20)" : ""));
+					// (where it differs most: inland band, slope band, height band - Raft's share against the generator's)
+					if (overlap <= bar && rt > 0f)
+						Log("    land " + genArea.Sum().ToString("F0") + " m² (" + (genArea.Sum() < RaftLand.SmallLand ? "small" : "big") + "); most apart: " + string.Join(", ",
+							Enumerable.Range(0, RaftLand.BinCount).OrderByDescending(b => Mathf.Abs(raft[b] / rt - gen[b] / gt)).Take(6).Select(b => { int bi, bs, bh; RaftLand.Unbin(b, out bi, out bs, out bh);
+								return "in" + bi + "/sl" + bs + "/h" + bh + " Raft " + (raft[b] / rt).ToString("P0") + " gen " + (gen[b] / gt).ToString("P0"); }).ToArray()));
 					if (cat == IslandGenerator.CatTrees || cat == IslandGenerator.CatBushes)
 						Check(ref ok, genBeach <= raftBeach + 0.05f && genCliff <= raftCliff + 0.05f, label + ": on the beach strip " + genBeach.ToString("P0") + " (Raft " + raftBeach.ToString("P0") + "), on cliffs over 40° " + genCliff.ToString("P0") + " (Raft " + raftCliff.ToString("P0") + ")");
 				}
@@ -175,6 +210,32 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.6f);
 			}
 			if (ok) Log("PASS: land objects placed like Raft's"); else Fail("land objects placed like Raft's");
+		}
+
+		/// <summary>How much n things drawn at random from Raft's spread (per habitat bin, rt its sum) overlap it: what 19 draws in 20 reach.</summary>
+		static float DrawnOverlap(float[] raft, float rt, int n)
+		{
+			if (n <= 0 || rt <= 0f) return 0f;
+			var rnd = new System.Random(n);
+			var cum = new float[raft.Length];
+			float c = 0f;
+			for (int b = 0; b < raft.Length; b++) { c += raft[b] / rt; cum[b] = c; }
+			var count = new int[raft.Length];
+			var got = new List<float>();
+			for (int trial = 0; trial < 200; trial++)
+			{
+				Array.Clear(count, 0, count.Length);
+				for (int i = 0; i < n; i++)
+				{
+					int b = Array.BinarySearch(cum, (float)rnd.NextDouble() * c);
+					count[Mathf.Clamp(b < 0 ? ~b : b, 0, raft.Length - 1)]++;
+				}
+				float o = 0f;
+				for (int b = 0; b < raft.Length; b++) o += Mathf.Min(raft[b] / rt, count[b] / (float)n);
+				got.Add(o);
+			}
+			got.Sort();
+			return got[got.Count / 20];
 		}
 
 		/// <summary>Which ground texture a Raft terrain layer is: 0 sand, 1 grass (snow, ground), 2 rock, 3 other.</summary>

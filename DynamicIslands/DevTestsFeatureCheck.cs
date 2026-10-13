@@ -155,10 +155,14 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIFeatureCoverage", docs: "Dev, anywhere: every Raft feature (zipline, machete vines, buried treasure, dirt, wild beehive, and the story machinery: a keycard door, a hatch, a crank wheel, a lever, a lift, a cage for the bolt cutters, a sweeping camera, a generator, a radio, the engine, a turning mirror - each with its working settings) is on at least one of the library's islands (installed island files): the table")]
-		public static void FeatureCoverageCommand(string[] args)
+		public static void FeatureCoverageCommand(string[] args) { StartTest(FeatureCoverageRoutine()); }
+
+		static IEnumerator FeatureCoverageRoutine()
 		{
 			bool ok = true;
-			// (one file at a time: all of them at once ran out of memory)
+			// (one file at a time: all of them at once ran out of memory; a frame between files - in one go 2000 files held
+			// Raft still for over 5 minutes, and the next tests' commands waited behind it)
+			int read = 0;
 			var on = RaftFeatures.ToDictionary(ft => ft.Key, ft => new List<string>());
 			foreach (string path in System.IO.Directory.GetFiles(System.IO.Path.GetDirectoryName(IslandSpawner.PathFor("x")), "*" + IslandFile.Extension))
 			{
@@ -178,7 +182,8 @@ namespace DynamicIslands
 				};
 				foreach (var ft in RaftFeatures) if (f.Objects.Any(o => ft.Value(o) && supplied(o))) on[ft.Key].Add(f.Name);
 				f = null;
-				GC.Collect();
+				if (++read % 25 == 0) { GC.Collect(); yield return null; }
+				if (read % 500 == 0) Log("  " + read + " island files read");
 			}
 			foreach (var ft in RaftFeatures)
 			{

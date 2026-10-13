@@ -3037,6 +3037,13 @@ namespace DynamicIslands.Editor
 					Vector3 lean = Vector3.up;
 					bool flat = kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) < 0 && LiesFlat(kind, scale, ground, x, z0, out lean);
 					if (flat && Vector3.Angle(Vector3.up, lean) > 20f) continue; // (lean down: the ground under its rim isn't level enough)
+					// (ice: not where the beach under its mesh's middle rises well over its pivot's - kept out of that sand it stood
+					// 1.6 m over the shore at its pivot, CIGenMatrix; Raft lays shore ice on gentle beaches)
+					if (!flat && kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						Vector3 mid0 = MeshMiddle(kind, scale, yaw);
+						if (ground.Surface(x + mid0.x, z0 + mid0.z) - ground.Surface(x, z0) > 0.6f) continue;
+					}
 					if (!spots.Free(x, z0, foot)) continue;
 					spots.Add(x, z0, foot);
 					GameObject proto = PlaceableCatalog.Get(kind);
@@ -3051,6 +3058,14 @@ namespace DynamicIslands.Editor
 					// (never out of sight - but not ice, which keeps to the waterline: its mesh hangs 7 m under its pivot, and kept a
 					// third of its height up it stood 2.5 m over the shore, CIGenMatrix)
 					if (!flat && kind.IndexOf("Ice", StringComparison.OrdinalIgnoreCase) < 0) y = Mathf.Max(y, LowestShowing(kind, scale, ground.Surface(x, z0), 0.35f));
+					// (ice: only its top kept out of the ground - at the waterline on a beach whose middle is higher the sand rose over
+					// it, up to 1.9 m, CIGroundTypes; by the ground at its mesh's middle too, which lies off its pivot: by the pivot's
+					// alone the sand there still rose up to 0.8 m over it)
+					else if (!flat)
+					{
+						Vector3 mid = MeshMiddle(kind, scale, yaw);
+						y = Mathf.Max(y, LowestShowing(kind, scale, Mathf.Max(ground.Surface(x, z0), ground.Surface(x + mid.x, z0 + mid.z)), 0f));
+					}
 					Vector3 euler = lean == Vector3.up ? new Vector3(0, yaw, 0) : (Quaternion.FromToRotation(Vector3.up, lean) * Quaternion.Euler(0f, yaw, 0f)).eulerAngles;
 					owners.Add(new IslandObject { Name = kind, Position = new Vector3(x, y, z0), EulerRotation = euler, Scale = baseScale * scale });
 					cats.Add(cat);
@@ -3326,6 +3341,15 @@ namespace DynamicIslands.Editor
 			float ly = Mathf.Abs(proto.transform.localScale.y) * scale, height = b.size.y * ly;
 			float keep = Mathf.Min(Mathf.Max(share * height, 0.15f) + 0.1f, 0.8f * height);
 			return surface + keep - b.max.y * ly;
+		}
+
+		/// <summary>Where the middle of a thing's mesh lies from its pivot, turned by its yaw (zero without its bounds).</summary>
+		static Vector3 MeshMiddle(string name, float scale, float yaw)
+		{
+			GameObject proto = PlaceableCatalog.Get(name);
+			Bounds b;
+			if (proto == null || !PlaceableCatalog.LocalBounds(name, out b)) return Vector3.zero;
+			return Quaternion.Euler(0f, yaw, 0f) * (Vector3.Scale(b.center, proto.transform.localScale) * scale);
 		}
 
 		/// <summary>

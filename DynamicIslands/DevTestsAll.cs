@@ -160,6 +160,15 @@ namespace DynamicIslands
 		static IEnumerator ButtonScreen(ButtonRun run, string screen, Action setup)
 		{
 			CloseAllWindows();
+			// (from a small island again: the Island tab's Generate made an 11300-object one, and each screen after it took
+			// 5-10 minutes - 10-13; the setup places the screen's own object again)
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (placed != null && placed.transform.childCount > 1000)
+			{
+				DynamicIslands.NewIsland();
+				DynamicIslands.currentIslandName = "cibuttons";
+				yield return null;
+			}
 			try { setup(); } catch (Exception e) { run.Errors.Add(screen + " (setting up): " + e.Message); }
 			yield return null; yield return null;
 			int before = run.Pressed;
@@ -291,7 +300,9 @@ namespace DynamicIslands
 			var result = new Dictionary<Transform, int>();
 			var tiles = owner.Cast<Transform>().Where(c => c.GetComponent<Button>() != null).ToList();
 			if (tiles.Count > ListThreshold) for (int i = 0; i < tiles.Count; i++) result[tiles[i]] = i;
-			foreach (var group in owner.Cast<Transform>().Where(c => c.GetComponent<Button>() == null).GroupBy(c => c.name))
+			// (rows alike: one name, or one name before a "_<what>" tail - the kinds window's Kind_<object> rows were each pressed
+			// on every screen: ~300 buttons a screen on an 11634-object generated island, the run over 2 h - 10-13)
+			foreach (var group in owner.Cast<Transform>().Where(c => c.GetComponent<Button>() == null).GroupBy(c => c.name.Split('_')[0]))
 			{
 				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).Select(LabelOfButton)))).Where(r => r.Value.Count > 0).ToList();
 				if (rows.Count <= ListThreshold) continue;
@@ -574,12 +585,25 @@ namespace DynamicIslands
 			StartTest(RoundTripRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
+		[ConsoleCommand(name: "CIComponents", docs: "Dev: the components on a catalog object's prototype and on up to 3 of its copies in the scene (name) - a Rigidbody left on one lets it settle after loading")]
+		public static void ComponentsCommand(string[] args)
+		{
+			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "";
+			Func<GameObject, string> list = g => string.Join(", ", g.GetComponentsInChildren<Component>(true).Where(c => c != null && !(c is Transform)).GroupBy(c => c is Rigidbody ? "Rigidbody(" + (((Rigidbody)c).isKinematic ? "kinematic" : "dynamic") + (((Rigidbody)c).useGravity ? ", gravity" : "") + ")" : c.GetType().Name).Select(gr => gr.Key + (gr.Count() > 1 ? " x" + gr.Count() : "")).ToArray());
+			GameObject proto = PlaceableCatalog.Get(name);
+			Log("Components of " + name + ": prototype " + (proto != null ? list(proto) : "none (not loaded)") + "; timeScale " + Time.timeScale + ", physics " + (Physics.autoSimulation ? "on" : "off"));
+			foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>().Where(t => t.name == name && (proto == null || t.gameObject != proto)).Take(3))
+				Log("  copy at " + t.position + " rot " + t.eulerAngles + ": " + list(t.gameObject));
+		}
+
 		const string RoundTripName = "ci_roundtrip";
 
 		static IEnumerator RoundTripRoutine(string only)
 		{
 			yield return WaitForEditor(false);
-			List<string> names = IslandSpawner.ListSavedIslands().Where(n => n != RoundTripName && (only == null || n == only)).ToList();
+			// ("@<file>": the islands named in that file, one a line - a rerun of the ones that changed)
+			HashSet<string> listed = only != null && only.StartsWith("@") && File.Exists(only.Substring(1)) ? new HashSet<string>(File.ReadAllLines(only.Substring(1)).Select(l => l.Trim()).Where(l => l.Length > 0)) : null;
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => n != RoundTripName && (only == null || (listed != null ? listed.Contains(n) : n == only))).ToList();
 			int passed = 0;
 			var failed = new List<string>();
 			foreach (string name in names)
@@ -645,7 +669,13 @@ namespace DynamicIslands
 			if ((a.Style ?? "") != (b.Style ?? "")) return "style '" + a.Style + "' -> '" + b.Style + "'";
 			string pd = CompareProps(a.Props, b.Props);
 			if (pd != null) return "island settings: " + pd;
-			if (a.Objects.Count != b.Objects.Count) return "objects " + a.Objects.Count + " -> " + b.Objects.Count;
+			if (a.Objects.Count != b.Objects.Count)
+			{
+				// (which kinds: the names whose count changed)
+				Dictionary<string, int> ca = a.Objects.GroupBy(o => o.Name ?? "").ToDictionary(g => g.Key, g => g.Count()), cb = b.Objects.GroupBy(o => o.Name ?? "").ToDictionary(g => g.Key, g => g.Count());
+				Func<Dictionary<string, int>, string, int> n = (c, k) => c.ContainsKey(k) ? c[k] : 0;
+				return "objects " + a.Objects.Count + " -> " + b.Objects.Count + " (" + string.Join(", ", ca.Keys.Union(cb.Keys).Where(k => n(ca, k) != n(cb, k)).Take(5).Select(k => k + " " + n(ca, k) + "->" + n(cb, k)).ToArray()) + ")";
+			}
 			// (the editor may save objects in another order: match each to the nearest of the same name)
 			var left = new List<IslandObject>(b.Objects);
 			foreach (IslandObject o in a.Objects)
@@ -653,7 +683,7 @@ namespace DynamicIslands
 				IslandObject m = left.Where(x => x.Name == o.Name).OrderBy(x => (x.Position - o.Position).sqrMagnitude).FirstOrDefault();
 				if (m == null) return "object " + o.Name + " missing";
 				if ((m.Position - o.Position).magnitude > 0.02f) return "object " + o.Name + " moved by " + (m.Position - o.Position).magnitude.ToString("F3") + " m";
-				if (Quaternion.Angle(Quaternion.Euler(m.EulerRotation), Quaternion.Euler(o.EulerRotation)) > 0.5f) return "object " + o.Name + " turned";
+				if (Quaternion.Angle(Quaternion.Euler(m.EulerRotation), Quaternion.Euler(o.EulerRotation)) > 0.5f) return "object " + o.Name + " turned " + Quaternion.Angle(Quaternion.Euler(m.EulerRotation), Quaternion.Euler(o.EulerRotation)).ToString("F1") + " deg (" + o.EulerRotation + " -> " + m.EulerRotation + ")";
 				// (a scene piece saved at scale one is placed at its prototype's own size - Balboa's cave x3 - and the editor then saves that size: the same)
 				bool protoSize = o.Scale == Vector3.one && o.Props != null && o.Props.ContainsKey("set.piece");
 				if (!protoSize && (m.Scale - o.Scale).magnitude > 0.01f) return "object " + o.Name + " resized " + o.Scale + " -> " + m.Scale;

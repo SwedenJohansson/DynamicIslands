@@ -210,6 +210,7 @@ namespace DynamicIslands
 				// (each patch on its own: after a Raft update one that no longer fits is named, the others still work)
 				Editor.PatchHealth.PatchAll(harmony);
 				try { CreatureSpawner.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("CreatureSpawner", e); }
+				try { PlaceableCatalog.Patch(harmony); } catch (Exception e) { Editor.PatchHealth.Failed("PlaceableCatalog", e); }
 			});
 			StartStep("the Mods\\DynamicIslands folder", () =>
 			{
