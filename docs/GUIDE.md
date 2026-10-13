@@ -2140,7 +2140,7 @@ already in the world is taken away. What each one does from the moment it change
 | Iron raft, Shared EXP, Night danger | At once (the next shark bite, the next monster defeated) |
 | Daily quest | On: a task when it is next light; off: today's task waits, unchanged |
 | Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
-| Golden barrels | Barrels from now on; off: no extra loot at once |
+| Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
 | Extra upgrades | Off: the recipes are hidden; upgrades built or worn keep working, learned ones are kept |
 | Scrambled blueprints / Story order (retired, off only) | Untaken blueprints go back to Raft's places / the Receiver goes back to Raft's order |

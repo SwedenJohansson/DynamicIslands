@@ -106,6 +106,14 @@ namespace DynamicIslands.Editor
 			Log((kind == Gold ? "A golden" : "A silver") + " barrel #" + p.ObjectIndex);
 		}
 
+		/// <summary>The options changed: barrels in the sea take the colour that goes with them (plain when Barrels is off).</summary>
+		internal static void Repaint()
+		{
+			if (!On && coloured.Count == 0) return;
+			foreach (PickupItem_Networked p in UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>())
+				if (IsBarrel(p) || coloured.ContainsKey(p.GetInstanceID())) OnSpawned(p);
+		}
+
 		static void Paint(PickupItem_Networked p, Color c, bool on)
 		{
 			foreach (Renderer r in p.GetComponentsInChildren<Renderer>(true))
