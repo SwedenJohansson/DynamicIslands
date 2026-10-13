@@ -307,6 +307,80 @@ namespace DynamicIslands
 			StartTest(ShotFromRoutine(new Vector3(v[0], v[1], v[2]), v[3], v[4], args.Length > 5 ? args[5] : "1"));
 		}
 
+		[ConsoleCommand(name: "CIRoomLooks", docs: "Dev, in game: a room of a custom island seen from inside (X7) - from eye height over the floor at <x> <z> (m from its middle, the island's own axes) and four places 1.5 m round it, 81 looks each: those that meet nothing (the sky) or the back of a face first (seen through). Pictures to four corners and toward the highest of those looks (shot_room_<name>_<n>.png). CIRoomLooks <island> <x> <z> <floor h> [name]")]
+		public static void RoomLooksCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			var v = new float[3];
+			for (int i = 0; i < 3; i++)
+				if (args.Length <= i + 1 || !float.TryParse(args[i + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[i])) { Fail("room looks: CIRoomLooks <island> <x> <z> <floor h> [name]"); return; }
+			StartTest(RoomLooksRoutine(e, v[0], v[1], v[2], args.Length > 4 ? args[4] : args[0]));
+		}
+
+		static IEnumerator RoomLooksRoutine(IslandWorldState.Entry e, float x, float z, float h, string name)
+		{
+			float turnY = e.Root.transform.eulerAngles.y;
+			Quaternion turn = Quaternion.Euler(0f, turnY, 0f);
+			Vector3 mid = e.Position + turn * new Vector3(x, 0f, z);
+			mid.y = h;
+			// (what can be seen: not animals or players)
+			Func<Collider, bool> counts = c => c != null && !c.isTrigger && c.GetComponentInParent<AI_NetworkBehaviour>() == null && c.GetComponentInParent<Network_Player>() == null;
+			var looks = new List<Vector3>();
+			foreach (float pitch in new[] { -20f, 0f, 15f, 35f, 60f })
+				for (int i = 0; i < 16; i++) looks.Add(Quaternion.Euler(-pitch, turnY + i * 22.5f, 0f) * Vector3.forward);
+			looks.Add(Vector3.up);
+			var eyes = new List<Vector3>();
+			var what = new Dictionary<string, int>();
+			int sky = 0, back = 0;
+			Vector3 worstEye = Vector3.zero, worstLook = Vector3.zero;
+			float worstUp = -2f;
+			bool backs0 = Physics.queriesHitBackfaces;
+			Physics.SyncTransforms();
+			try
+			{
+				foreach (Vector3 off in new[] { Vector3.zero, Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+				{
+					Vector3 p = mid + turn * off * 1.5f;
+					// (the floor: the nearest face up under the given height + 1 m)
+					Physics.queriesHitBackfaces = false;
+					RaycastHit? floor = null;
+					foreach (RaycastHit fh in Physics.RaycastAll(p + Vector3.up, Vector3.down, 5f, ~0, QueryTriggerInteraction.Ignore))
+						if (counts(fh.collider) && fh.normal.y > 0.6f && (floor == null || fh.distance < floor.Value.distance)) floor = fh;
+					if (floor == null) { Log("  no floor at " + p.ToString("F1")); continue; }
+					Vector3 eye = floor.Value.point + Vector3.up * 1.6f;
+					eyes.Add(eye);
+					foreach (Vector3 d in looks)
+					{
+						Physics.queriesHitBackfaces = true;
+						List<RaycastHit> all = Physics.RaycastAll(eye, d, 150f, ~0, QueryTriggerInteraction.Ignore).Where(hh => counts(hh.collider)).OrderBy(hh => hh.distance).ToList();
+						Physics.queriesHitBackfaces = false;
+						RaycastHit[] fronts = Physics.RaycastAll(eye, d, 150f, ~0, QueryTriggerInteraction.Ignore);
+						string w = null;
+						if (all.Count == 0) { w = "sky"; sky++; }
+						else if (all[0].distance > 0.3f && !fronts.Any(f => f.collider == all[0].collider && Mathf.Abs(f.distance - all[0].distance) < 0.02f))
+						{
+							w = (all[0].collider is TerrainCollider ? "the ground from below" : all[0].collider.name + "'s back");
+							back++;
+						}
+						if (w == null) continue;
+						float yaw = Mathf.Repeat(Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg - turnY, 360f);
+						string k = w + " at " + yaw.ToString("F0") + "° round, " + (Mathf.Asin(d.y) * Mathf.Rad2Deg).ToString("F0") + "° up";
+						what[k] = what.ContainsKey(k) ? what[k] + 1 : 1;
+						if (d.y > worstUp) { worstUp = d.y; worstEye = eye; worstLook = d; }
+					}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs0; }
+			if (eyes.Count == 0) { Fail("room looks: " + name + " - no floor near " + mid.ToString("F1")); yield break; }
+			Log("ROOM " + name + ": " + eyes.Count + " places, " + (eyes.Count * looks.Count) + " looks: " + sky + " to the sky, " + back + " through a back (island turned " + turnY.ToString("F0") + "°, eye " + eyes[0].ToString("F1") + ")");
+			foreach (var kv in what.OrderByDescending(q => q.Key.StartsWith("sky") ? 0 : 1).ThenBy(q => q.Key).Take(40)) Log("  " + kv.Key + " (" + kv.Value + "x)");
+			for (int i = 0; i < 4; i++)
+				yield return CameraShot(eyes[0], eyes[0] + Quaternion.Euler(-25f, turnY + 45f + i * 90f, 0f) * Vector3.forward * 5f, "room_" + name + "_" + (i + 1));
+			if (worstUp > -2f) yield return CameraShot(worstEye, worstEye + worstLook * 5f, "room_" + name + "_worst");
+			Log("PASS: room looks " + name);
+		}
+
 		static IEnumerator ShotFromRoutine(Vector3 at, float yaw, float pitch, string name)
 		{
 			bool backs0 = Physics.queriesHitBackfaces;
