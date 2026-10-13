@@ -65,8 +65,17 @@ namespace DynamicIslands
 			{
 				// (a cave's mountain over the spot with room under it: the walk starts in the cave, not on the hill over it - AU83,
 				// Ironreef's Bear Hall)
-				RaycastHit[] hits = Physics.RaycastAll(new Vector3(p.x, below, p.z), Vector3.down, below + 300f, ~0, QueryTriggerInteraction.Ignore).OrderByDescending(h => h.point.y).ToArray();
-				if (hits.Length > 0 && hits[0].collider.name == CaveMountain.SkinName)
+				// (each surface down, one after another: RaycastAll gives each collider once - a cave piece's roof, not its floor
+				// under it - and the walk started on the ground let down under that floor, X7: Ironreef's Bear Hall again)
+				var hits = new List<RaycastHit>();
+				Vector3 from = new Vector3(p.x, below, p.z);
+				RaycastHit down;
+				while (hits.Count < 40 && Physics.Raycast(from, Vector3.down, out down, from.y + 300f, ~0, QueryTriggerInteraction.Ignore))
+				{
+					hits.Add(down);
+					from = down.point + Vector3.down * 0.02f;
+				}
+				if (hits.Count > 0 && hits[0].collider.name == CaveMountain.SkinName)
 				{
 					RaycastHit under = hits.Skip(1).FirstOrDefault(h => h.point.y < hits[0].point.y - 2.5f && h.collider.name != CaveMountain.SkinName);
 					if (under.collider != null) return under.point.y;
