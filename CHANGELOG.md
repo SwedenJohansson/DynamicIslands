@@ -176,6 +176,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Upgrade research table, two players:** when two players researched the same item at the same moment, the
+  second one lost the item; it now goes back to that player. A world file's research lines with unknown items or
+  upgrades (edited by hand, or from an upgrade a later version dropped) leave those out.
 - **No errors when the editor takes objects from Temperance or Utopia:** two of Raft's story scripts there threw an
   error each time the editor loaded those islands (switched off) to take their objects; they are kept quiet then.
 - **Placed objects stay as placed:** a few of Raft's objects (Varuna Point's debris planks) kept Raft's physics and

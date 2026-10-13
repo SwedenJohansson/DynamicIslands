@@ -83,7 +83,11 @@ namespace DynamicIslands.Editor
 			hasLines = true;
 			migrate = false;
 			into.Clear();
-			foreach (int i in Ints(value)) into.Add(i);
+			// (an index that is no upgrade / no researchable item - a hand edit, or an upgrade a later version dropped - is left
+			// out; while nothing is registered yet everything is kept, so a world read early loses nothing)
+			bool known = Teaches.Any();
+			HashSet<int> ok = !known ? null : into == learned ? new HashSet<int>(Teaches.Select(u => u.Index)) : new HashSet<int>(Researchable().Select(it => it.UniqueIndex));
+			foreach (int i in Ints(value)) if (ok == null || ok.Contains(i)) into.Add(i);
 			UpgradeTableMenu.Refresh();
 			return true;
 		}
@@ -132,7 +136,7 @@ namespace DynamicIslands.Editor
 			if (!CanResearch(item)) return false;
 			slot.RemoveItem(1);
 			UpgradeTableMenu.ResearchSound();
-			if (Raft_Network.IsHost) ResearchOnHost(item.UniqueIndex);
+			if (Raft_Network.IsHost) ResearchOnHost(item.UniqueIndex, "host");
 			else Send(new IslandNetMessage { Name = "research", Index = item.UniqueIndex }, null);
 			return true;
 		}
@@ -146,13 +150,20 @@ namespace DynamicIslands.Editor
 			else Send(new IslandNetMessage { Name = "learn", Index = u.Index }, null);
 		}
 
-		internal static void ResearchOnHost(int itemIndex)
+		/// <summary>False when the item can't be researched (already is: another player was first).</summary>
+		internal static bool ResearchOnHost(int itemIndex, string by)
 		{
 			Item_Base item = ItemManager.GetItemByIndex(itemIndex);
-			if (!CanResearch(item)) return;
+			if (!CanResearch(item)) return false;
 			researched.Add(itemIndex);
-			Log("researched " + item.UniqueName);
+			Log("researched " + item.UniqueName + " (by " + by + ")");
 			Changed();
+			return true;
+		}
+
+		static string NameOf(Network_UserId id)
+		{
+			return "player " + id.Id.ToString(CultureInfo.InvariantCulture);
 		}
 
 		internal static void LearnOnHost(int upgradeIndex, ulong by)
@@ -184,7 +195,8 @@ namespace DynamicIslands.Editor
 		{
 			if (Raft_Network.IsHost)
 			{
-				if (msg.Name == "research") ResearchOnHost(msg.Index);
+				// (two players researching the same item at once: the second one's item, already taken from its slot, goes back)
+				if (msg.Name == "research" && !ResearchOnHost(msg.Index, NameOf(from))) { Log("research of item " + msg.Index + " by " + NameOf(from) + " refused, item given back"); Send(new IslandNetMessage { Name = "refund", Index = msg.Index }, from); }
 				else if (msg.Name == "learn") LearnOnHost(msg.Index, from.Id);
 				return;
 			}
@@ -193,6 +205,13 @@ namespace DynamicIslands.Editor
 				ulong by;
 				ulong.TryParse(msg.Data ?? "", NumberStyles.Integer, CultureInfo.InvariantCulture, out by);
 				UpgradeTableMenu.Learned(ExtraUpgrades.Find(msg.Index), by);
+				return;
+			}
+			if (msg.Name == "refund")
+			{
+				Item_Base item = ItemManager.GetItemByIndex(msg.Index);
+				Network_Player me = ComponentManager<Network_Player>.Value;
+				if (item != null && me != null) { me.Inventory.AddItem(item.UniqueName, 1); Log("research refused (already researched): " + item.UniqueName + " given back"); }
 				return;
 			}
 			if (msg.Name != "state") return;

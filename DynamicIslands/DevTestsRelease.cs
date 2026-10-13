@@ -671,6 +671,8 @@ namespace DynamicIslands
 				CustomIslandSpawner.LoadPool(true);
 				WorldDirector.DefaultPlan = defaultPlanBefore;
 			}
+			// The upgrade table's world file lines with nonsense
+			UtBadLines(ref ok, errors);
 			// A generator preset with nonsense and huge numbers
 			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
 			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= 2f && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
