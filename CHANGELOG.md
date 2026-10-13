@@ -116,7 +116,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### Changed
 - **Check warns about a deleted story item:** a story item that a quest step, a check, a chest or an action
   still uses but that is no longer in the island's Story items list (or was mistyped) is now a quest trap in Check.
-  A quest file edited by hand with more than 10 steps is read up to the tenth, like the editor allows.
+  A quest file edited by hand is read up to 99 steps; more are cut. (The editor adds up to 10; a recipe's quest runs
+  longer - the library's finales have up to 40.)
 - **Different builds of the same version are noticed:** every release says 3.0, so two players with different 3.0
   builds weren't told (a friend didn't see the new research table). Each build now has a stamp from its files; joining a
   host with another build (or one from before the stamps) shows a notice: both should install the same, newest release.

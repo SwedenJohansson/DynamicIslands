@@ -728,6 +728,8 @@ namespace DynamicIslands
 					bq.Props["quest.steps"] = string.Join("\n", lines.ToArray());
 					bq.Props["quest2.title"] = "Quest two";
 					bq.Props["quest2.steps"] = "reach|gate|1|fine\nnonsense|x|1";
+					bq.Props["quest3.title"] = "Far too long";
+					bq.Props["quest3.steps"] = string.Join("\n", Enumerable.Range(1, IslandQuest.MaxFileSteps + 20).Select(i => "reach|gate|1|step " + i).ToArray());
 					bq.Props["quest9.steps"] = "reach|gate|1|the ninth";
 					bq.Props["quest10.title"] = "A tenth quest"; // (an island has at most nine)
 					bq.Props["quest10.steps"] = "reach|gate|1|the tenth";
@@ -735,13 +737,14 @@ namespace DynamicIslands
 					errors.Clear();
 					IslandFile back = null;
 					string thrown = null;
-					IslandQuest main = null, second = null;
+					IslandQuest main = null, second = null, third = null;
 					int quests = 0;
 					try
 					{
 						back = IslandFile.Load(bqPath);
 						main = IslandQuest.From(back.Props, 0, true);
 						second = IslandQuest.From(back.Props, 1, true);
+						third = IslandQuest.From(back.Props, 2, true);
 						quests = IslandQuest.CountIn(back.Props);
 					}
 					catch (Exception e) { thrown = e.GetType().Name + " " + e.Message; }
@@ -752,9 +755,10 @@ namespace DynamicIslands
 						Check(ref ok, main.Steps.All(st => st.Count >= 1 && st.Count <= 99), "SL3: every count is kept to 1-99");
 						var counts = main.Steps.Take(4).Select(st => st.Count).ToList();
 						Check(ref ok, counts.Count == 4 && counts[0] == 1 && counts[1] == 1 && counts[2] == 99 && counts[3] == 1, "SL3: 'abc' and 0 become 1, 500 becomes 99, one field only becomes a step with count 1 (" + string.Join(",", counts.Select(c => c.ToString()).ToArray()) + ")");
-						// (11 good lines: the reader keeps the editor's 10)
-						Check(ref ok, main.Steps.Count == IslandQuest.MaxStepCount, "SL3: a hand-edited quest with more steps is read up to " + IslandQuest.MaxStepCount + " (" + main.Steps.Count + ")");
+						// (11 good lines: more than the editor's 10 - a recipe's quest runs to 40 - all read)
+						Check(ref ok, main.Steps.Count == 11, "SL3: a quest with more steps than the editor adds is read whole (" + main.Steps.Count + " of 11)");
 					}
+					Check(ref ok, third != null && third.Steps.Count == IslandQuest.MaxFileSteps, "SL3: a quest file with " + (IslandQuest.MaxFileSteps + 20) + " steps is read up to " + IslandQuest.MaxFileSteps + " (" + (third != null ? third.Steps.Count : 0) + ")");
 					Check(ref ok, second != null && second.Steps.Count == 1 && quests <= IslandQuest.MaxQuests && quests == 9, "SL3: quest 2 skips its unknown line; the island counts " + quests + " quests (quest10.* ignored, at most " + IslandQuest.MaxQuests + ")");
 					// Check runs on it: the island's own quest findings, and a plan whose rule brings it
 					errors.Clear();
