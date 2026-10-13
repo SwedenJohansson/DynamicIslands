@@ -307,6 +307,39 @@ namespace DynamicIslands
 			StartTest(ShotFromRoutine(new Vector3(v[0], v[1], v[2]), v[3], v[4], args.Length > 5 ? args[5] : "1"));
 		}
 
+		[ConsoleCommand(name: "CISeleneBacks", docs: "Dev, editor: Selene's room pieces (wall, entrance, ceiling, floor, door frame, large door, tunnel) placed get their backs - an outer wall or a ceiling seen from outside no longer shows the room through it - and a radio tower wall (drawn from both sides already) gets none (X7)")]
+		public static void SeleneBacksCommand()
+		{
+			StartTest(SeleneBacksRoutine());
+		}
+
+		static IEnumerator SeleneBacksRoutine()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 2f, 500f);
+			string[] selene = { "TP_Selene_Int_Room_Wall", "TP_Selene_Int_Room_Entrance", "TP_Selene_Int_Room_Ceiling", "TP_Selene_Int_Room_Floor_Plain", "TP_Selene_Int_DoorFrame", "TP_Selene_Int_DoorLargeL", "TP_Selene_Int_Tunnel_Straight" };
+			var made = new List<EditorGameObject>();
+			for (int i = 0; i < selene.Length; i++)
+			{
+				EditorGameObject ego = PlaceForTest(selene[i], c0 + new Vector3(i * 8f, 0f, 0f), placed);
+				if (ego == null) { Check(ref ok, false, selene[i] + ": could not be placed"); continue; }
+				made.Add(ego);
+				yield return null;
+				int backs = ego.GetComponentsInChildren<MeshRenderer>(true).Count(r => r.name == CaveBacks.Name && r.enabled);
+				Check(ref ok, CaveBacks.Has(ego.transform) && backs > 0, selene[i] + ": drawn from both sides (" + backs + " backs)");
+			}
+			EditorGameObject rt = PlaceForTest("RT_Wall1", c0 + new Vector3(0f, 0f, 10f), placed);
+			if (rt != null)
+			{
+				made.Add(rt);
+				Check(ref ok, !rt.GetComponentsInChildren<Transform>(true).Any(t => t.name == CaveBacks.Name), "RT_Wall1: no backs added (Raft draws it from both sides)");
+			}
+			foreach (EditorGameObject ego in made) UnityEngine.Object.Destroy(ego.gameObject);
+			if (ok) Log("PASS: Selene pieces drawn from both sides"); else Fail("Selene pieces drawn from both sides");
+		}
+
 		[ConsoleCommand(name: "CIRoomLooks", docs: "Dev, in game: a room of a custom island seen from inside (X7) - from eye height over the floor at <x> <z> (m from its middle, the island's own axes) and four places 1.5 m round it, 81 looks each: those that meet nothing (the sky) or the back of a face first (seen through). Pictures to four corners and toward the highest of those looks (shot_room_<name>_<n>.png). CIRoomLooks <island> <x> <z> <floor h> [name]")]
 		public static void RoomLooksCommand(string[] args)
 		{
@@ -358,7 +391,7 @@ namespace DynamicIslands
 						RaycastHit[] fronts = Physics.RaycastAll(eye, d, 150f, ~0, QueryTriggerInteraction.Ignore);
 						string w = null;
 						if (all.Count == 0) { w = "sky"; sky++; }
-						else if (all[0].distance > 0.3f && !fronts.Any(f => f.collider == all[0].collider && Mathf.Abs(f.distance - all[0].distance) < 0.02f))
+						else if (all[0].distance > 0.3f && !fronts.Any(f => f.collider == all[0].collider && Mathf.Abs(f.distance - all[0].distance) < 0.02f) && !CaveBacks.DrawnBothSides(all[0].collider))
 						{
 							w = (all[0].collider is TerrainCollider ? "the ground from below" : all[0].collider.name + "'s back");
 							back++;
@@ -452,10 +485,7 @@ namespace DynamicIslands
 			// (drawn from both sides: a cave piece's shell once it has its outside, and the mountain over the caves - X7)
 			Func<Collider, bool> bothSides = c =>
 			{
-				if (c.name == CaveMountain.SkinName) return true;
-				for (Transform t = c.transform; t != null; t = t.parent)
-					if (RaftProps.Get(t.name.Replace("(Clone)", "").Trim()) != null && RaftProps.Get(t.name.Replace("(Clone)", "").Trim()).IsCave) return CaveBacks.Has(t);
-				return false;
+				return c.name == CaveMountain.SkinName || CaveBacks.DrawnBothSides(c);
 			};
 			var eyes = new List<Vector3>();
 			var looks = new List<Vector3>();

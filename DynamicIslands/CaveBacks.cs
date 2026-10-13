@@ -18,11 +18,30 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<Mesh, Mesh> made = new Dictionary<Mesh, Mesh>();
 		static bool warned;
 
-		/// <summary>A cave piece just placed or spawned (editor or world): its shell gets its outside.</summary>
+		/// <summary>Selene's rooms, tunnels and doors (Raft's own walls, ceilings, floors and door frames inside the station):
+		/// drawn from inside only too, so a room's outer wall - or its ceiling seen from above - showed the room through it (X7).</summary>
+		public const string SelenePrefix = "TP_Selene_Int_";
+
+		/// <summary>A piece that gets its backs: a cave piece's shell, or one of Selene's inside pieces.</summary>
+		public static bool Wants(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return false;
+			PropInfo p = RaftProps.Get(name);
+			return (p != null && p.IsCave) || name.StartsWith(SelenePrefix, System.StringComparison.Ordinal);
+		}
+
+		/// <summary>The collider belongs to a piece drawn from both sides (its backs added): a look meeting its back sees it.</summary>
+		public static bool DrawnBothSides(Collider c)
+		{
+			for (Transform t = c != null ? c.transform : null; t != null; t = t.parent)
+				if (Wants(t.name.Replace("(Clone)", "").Trim())) return Has(t);
+			return false;
+		}
+
+		/// <summary>A cave piece or a Selene piece just placed or spawned (editor or world): its faces get their other side.</summary>
 		public static void Add(GameObject piece, string name)
 		{
-			PropInfo p = RaftProps.Get(name ?? "");
-			if (piece == null || p == null || !p.IsCave) return;
+			if (piece == null || !Wants(name)) return;
 			foreach (MeshFilter mf in piece.GetComponentsInChildren<MeshFilter>(true))
 			{
 				if (mf.name == Name || mf.sharedMesh == null || mf.transform.Find(Name) != null) continue;

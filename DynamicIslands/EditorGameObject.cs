@@ -30,7 +30,7 @@ namespace DynamicIslands.Editor
 			ego.GameObjectName = name;
 			ego.Props = props != null ? new Dictionary<string, string>(props) : ObjectProps.Defaults(name);
 			ObjectProps.ApplyInEditor(go, ego.Props);
-			CaveBacks.Add(go, name); // (a cave piece's rock seen from outside too - X7)
+			CaveBacks.Add(go, name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
 			return ego;
 		}
 

@@ -179,7 +179,8 @@ next
 place Block_Roof_Wood_Pyramid - at -14 16 h=28.9 sx=1.2 sz=1.2 sy=3
 place FL_Plank1 - at -14 16 h=31 rot=0,0,90 scale=0.5
 place FL_Plank1 - at -14 16 h=31.2 rot=0,90,0 scale=0.3
-place RT_Floor cryptslab at -18.5 15.5 h=21.85 sx=1.6 sz=1.6
+# (the slab reaches past the pit's rim on every side but the stair's: smaller, the sky showed round its edges - X7)
+place RT_Floor cryptslab at -18.5 16.5 h=21.85 sx=1.954 sz=1.8
 place VP_Rubble_Cement03 - at -27 5 h=17.8 sit yaw=90
 place VP_Rubble_Cement05 - at -27 11 h=17.8 sit yaw=80
 place VP_Rubble_Cement03 - at -23 13.5 h=17.8 sit yaw=10

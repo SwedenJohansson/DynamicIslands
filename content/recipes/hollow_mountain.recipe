@@ -62,8 +62,9 @@ place RT_PillarThick - at -42.5 -76.5 h=4
 place RT_PillarThick - at -44.5 -76.5 h=4
 place RT_PillarThick - at -31.5 -76.5 h=4
 place RT_PillarThick - at -29.5 -76.5 h=4
-place TP_BigRock02 - at -48 -74 ground sit scale=0.6 yaw=30
-place TP_BigRock04 - at -26 -74 ground sit scale=0.6 yaw=200
+# (the rocks flank the gate clear of the entry hall behind it: larger or nearer, they stood in the hall - X7)
+place TP_BigRock02 - at -55 -76 ground sit scale=0.5 yaw=30
+place TP_BigRock04 - at -18 -76 ground sit scale=0.4 yaw=200
 place Note_Sign rune at -34.5 -78 h=4 drop yaw=180
 place Pillar_04 socket1 at -41 -80.5 h=4 drop
 place Pillar_04 socket2 at -37 -81 h=4 drop
@@ -102,9 +103,10 @@ place Creature_Goat goats at 66 30 ground
 
 # --- The entry hall behind the gate (four of Selene's cells: the hall's two, the lift's corner, the lower workshop), dark
 # inside, lamps, the steward's desk and ledger, benches; the workshop's chest; the first lift's cage ------------------------
-push at -46 -63 h=4
+# (the floor 0.1 m over the forecourt's ground, or the snow showed through it - X7)
+push at -46 -63 h=4.1
 call selene_cell 0 0 s=TP_Selene_Int_Room_Entrance
-call selene_cell 6 0 w=none s=none
+call selene_cell 6 0 s=none
 call selene_cell 0 -6 n=none e=none
 call selene_cell 6 -6 w=none n=none s=none
 place UT_EndRoom_Table - at 3 -9 sit
@@ -150,8 +152,9 @@ place UT_HookRoom_Lift lift2 at -3 1.5 sit
 pop
 place RT_Fence - at 17 -3 h=25 yaw=90
 place RT_Fence - at 17 0 h=25 yaw=90
-place TP_BigRock02 - at 4 -6 ground sit scale=0.7 yaw=80
-place TP_BigRock04 - at 4 8 ground sit scale=0.7 yaw=10
+# (behind the rooms, clear of their back walls at x 8: larger or nearer, they stood in the granary and the hall - X7)
+place TP_BigRock02 - at -1 -6 ground sit scale=0.6 yaw=80
+place TP_BigRock04 - at -5 8 ground sit scale=0.4 yaw=10
 
 # --- The high hall near the summit: two of Selene's cells, the long window south (radio tower window walls), the decree,
 # a box, the long lift, the wind --------------------------------------------------------------------------------------------
@@ -162,6 +165,10 @@ place RT_WallWindow2 - at 3 -6
 place RT_WallWindow2 - at 6 -6
 place RT_WallWindow2 - at 9 -6
 place RT_WallWindow2 - at 12 -6
+# (a wall over the windows up to the ceiling: they are 3 m high, the cells 4.7 m - the sky showed over them, X7)
+for w 1 4 1
+place RT_Wall1 - at {3*$w} -6 y=3 sy=0.6
+next
 place Note_Board decree at 6 -0.6 sit yaw=180
 place "Box Small" highbox at 1 -1 sit yaw=30
 place UT_HookRoom_Lift lift3 at 10 -2 sit
@@ -172,7 +179,8 @@ pop
 # ===== CHAPTER 3 - THE LAKE ===============================================================================================
 # --- The lake hall: a roof of slabs on columns standing in the water, rocks along its edges; the shore ledge (the long
 # lift's landing), the slate, a moored boat, the dark; the sunken gate, the two air bells on the way, the drowned treasury
-place RT_Floor - at -56 13 h=14 sx=7.95 sz=2.89
+# (out to x -106 in the west: to -104, the sky showed past its edge from the islet - X7)
+place RT_Floor - at -56 13 h=14 sx=8.3 sz=2.89
 for c 0 3 1
 place RT_PillarThick - at -74 -6 h={-10+6*$c}
 place RT_PillarThick - at -74 6 h={-10+6*$c}

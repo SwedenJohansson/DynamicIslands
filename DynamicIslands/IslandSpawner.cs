@@ -420,7 +420,7 @@ namespace DynamicIslands.Editor
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
 				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
-				CaveBacks.Add(go, o.Name); // (a cave piece's rock seen from outside too - X7)
+				CaveBacks.Add(go, o.Name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
 				if (!editable) CaveMountain.Add(parent, go, o.Name); // (a rock mountain over the island's caves - AU83)
 				if (!editable) CaveGround.Add(parent, go, o.Name); // (and the ground cut out of their rooms - X7)
 
