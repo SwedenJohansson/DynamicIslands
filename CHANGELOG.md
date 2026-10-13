@@ -176,6 +176,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Upgrade table taken away while in use:** the items in its slot go back to the player who had its menu open
+  (Raft destroyed them with the table).
 - **Barrels switched off:** the silver and golden barrels already in the sea turn plain-coloured at once
   (they lost their extra loot already but kept the colour until Raft spawned them again).
 - **Boss arena re-arms:** after a lost fight (the stakes sank after two minutes) stepping back into the arena

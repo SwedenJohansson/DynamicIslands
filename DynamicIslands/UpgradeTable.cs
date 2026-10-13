@@ -444,6 +444,33 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	/// <summary>
+	/// An upgrade table taken away (picked up, broken) while this player has its menu open: what lies in its slot goes
+	/// back to this player (Raft destroys the slot with the table, and the items in it were gone).
+	/// </summary>
+	[HarmonyPatch(typeof(ResearchTable), "OnDestroy")]
+	static class UpgradeTableGoneGiveBackPatch
+	{
+		static void Prefix(ResearchTable __instance)
+		{
+			try
+			{
+				if (__instance == null || !UpgradeTableMenu.IsUpgradeTable(__instance)) return;
+				Slot slot = __instance.slot;
+				if (slot == null || slot.IsEmpty || slot.itemInstance == null || slot.itemInstance.baseItem == null) return;
+				var t = HarmonyLib.Traverse.Create(__instance);
+				Network_Player local = t.Field("localPlayer").GetValue<Network_Player>() ?? RAPI.GetLocalPlayer();
+				if (local == null || local.Inventory == null || t.Field("occupyingPlayerID").GetValue<Network_UserId>() != local.steamID) return;
+				string name = slot.itemInstance.UniqueName;
+				int amount = slot.itemInstance.Amount;
+				slot.RemoveItem(amount);
+				local.Inventory.AddItem(name, amount);
+				Debug.Log("[CUSTOM ISLANDS] [upgrade table] the table went with " + amount + " " + name + " in its slot: given back");
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] give back: " + e.Message); }
+		}
+	}
+
 	/// <summary>The upgrade table's Research button and its "researched" / "can't be researched" texts, from its own pool
 	/// (Raft's Update sets them from Raft's first).</summary>
 	[HarmonyPatch(typeof(Inventory_ResearchTable), "Update")]
