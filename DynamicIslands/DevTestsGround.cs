@@ -47,16 +47,17 @@ namespace DynamicIslands
 			else Log("PASS: ground - " + islands + " islands, " + objects + " objects, all on something");
 		}
 
-		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name, 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n]")]
+		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name, 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
 		public static void GroundIslandsCommand(string[] args)
 		{
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999;
 			int skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
-			StartTest(GroundIslandsRoutine(which, most, skip));
+			bool keep = args != null && args.Length > 3 && args[3] == "keep";
+			StartTest(GroundIslandsRoutine(which, most, skip, keep));
 		}
 
-		static IEnumerator GroundIslandsRoutine(string which, int most, int skip)
+		static IEnumerator GroundIslandsRoutine(string which, int most, int skip, bool keep = false)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("ground islands: host, in a world"); yield break; }
 			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
@@ -92,6 +93,7 @@ namespace DynamicIslands
 					Log("  " + name + ": " + lines.Count + " problem(s) of " + n + " objects");
 					foreach (string l in lines.Take(3)) Log("    " + l);
 				}
+				if (keep) { Log("  kept '" + name + "' at " + e.Root.transform.position.ToString("F1") + ", turned " + e.Root.transform.eulerAngles.y.ToString("F0") + "°"); continue; }
 				IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
 				IslandCache.Forget();
 				yield return new WaitForSeconds(1f);

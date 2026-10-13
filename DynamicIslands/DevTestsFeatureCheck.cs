@@ -98,7 +98,8 @@ namespace DynamicIslands
 				{
 					ReadyPieces.Piece p = ReadyPieces.Of(r.ObjectName);
 					string label = "'" + name + "': " + p.Kind + " " + r.ObjectName + (!string.IsNullOrEmpty(r.Name) ? " '" + r.Name + "'" : "");
-					if (p.Use != null) Check(ref ok, r.GetComponentInChildren<UseInteract>(true) != null, label + " - players can use it");
+					// (a piece whose island took its use off - a door that only opens from something else - is not for players to use)
+					if (p.Use != null && ObjectProps.Get(r.Props, BehaviourProps.Use).Length > 0) Check(ref ok, r.GetComponentInChildren<UseInteract>(true) != null, label + " - players can use it");
 					if (BehaviourProps.Moves(r.Props)) Check(ref ok, r.GetComponentInChildren<IslandBehaviour>(true) != null, label + " - it moves");
 					string checks = ObjectProps.Get(r.Props, BehaviourProps.CheckKey("use"));
 					// (a piece left with its ready settings by an island that wires nothing to it - one placed as decoration before the
