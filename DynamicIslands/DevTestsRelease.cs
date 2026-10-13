@@ -671,6 +671,8 @@ namespace DynamicIslands
 				CustomIslandSpawner.LoadPool(true);
 				WorldDirector.DefaultPlan = defaultPlanBefore;
 			}
+			// The upgrade table's world file lines with nonsense
+			UtBadLines(ref ok, errors);
 			// A generator preset with nonsense and huge numbers
 			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
 			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= 2f && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
@@ -777,6 +779,12 @@ namespace DynamicIslands
 				}
 				finally { try { if (System.IO.File.Exists(bqPath)) System.IO.File.Delete(bqPath); } catch { } }
 			}
+			// World file lines with nonsense (needs a test world 'CI ...': skipped, and logged, in the menu or the editor)
+			GwBadWorldLines(ref ok);
+			// Broken terrain stamp and object group files
+			var gwStamps = new[] { true };
+			yield return GwBadStampsPart(gwStamps);
+			ok &= gwStamps[0];
 			Application.logMessageReceived -= watch;
 			if (ok) Log("PASS: broken files"); else Fail("broken files");
 		}

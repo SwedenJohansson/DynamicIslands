@@ -235,6 +235,12 @@
     <Compile Include="DevTestsTreasureProbe.cs" />
     <Compile Include="DevTestsStoryPieces.cs" />
     <Compile Include="DevTestsStoryline.cs" />
+    <Compile Include="DevTestsUpgradeTable.cs" />
+    <Compile Include="DevTestsUpgradeTableMp.cs" />
+    <Compile Include="DevTestsGapPieces.cs" />
+    <Compile Include="DevTestsGapWorld.cs" />
+    <Compile Include="DevTestsGapHost.cs" />
+    <Compile Include="DevTestsGapStory.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />
     <Compile Include="DevTestsGenGather.cs" />

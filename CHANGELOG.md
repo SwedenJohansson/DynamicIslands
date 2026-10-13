@@ -180,6 +180,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
   and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's
   generator was never affected.
+- **Rogue shark switched off:** a rogue that was lost (not found after a load) no longer brings a new one
+  when the Rogue shark option has been switched off meanwhile; it is let go.
+- **Editor commands:** `SetElevation`, `ChangeWidth` and `ChangeStrength` with `NaN` show their usage instead of
+  setting a value that is not a number.
+- **Upgrade research table, two players:** when two players researched the same item at the same moment, the
+  second one lost the item; it now goes back to that player. A world file's research lines with unknown items or
+  upgrades (edited by hand, or from an upgrade a later version dropped) leave those out.
 - **No errors when the editor takes objects from Temperance or Utopia:** two of Raft's story scripts there threw an
   error each time the editor loaded those islands (switched off) to take their objects; they are kept quiet then.
 - **Placed objects stay as placed:** a few of Raft's objects (Varuna Point's debris planks) kept Raft's physics and

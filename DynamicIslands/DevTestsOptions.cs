@@ -636,7 +636,7 @@ namespace DynamicIslands
 				// Learning: every item of one upgrade's cost researched
 				ExtraUpgrades.Upgrade lu = UpgradeTable.Teaches.FirstOrDefault(u => UpgradeTable.ResearchItems(u).Contains(both)) ?? UpgradeTable.Teaches.First();
 				Check(ref ok, !UpgradeTable.CanLearn(lu) || UpgradeTable.ResearchItems(lu).All(UpgradeTable.IsResearched), lu.Display + ": not learnable before its items are researched");
-				foreach (Item_Base i in UpgradeTable.ResearchItems(lu)) UpgradeTable.ResearchOnHost(i.UniqueIndex);
+				foreach (Item_Base i in UpgradeTable.ResearchItems(lu)) UpgradeTable.ResearchOnHost(i.UniqueIndex, "test");
 				UpgradeTableMenu.Show(true);
 				ResearchMenuItem entry = inv.GetMenuItems().FirstOrDefault(m => UpgradeTableMenu.UpgradeOf(m) == lu);
 				var learnButton = entry != null ? HarmonyLib.Traverse.Create(entry).Field("learnButton").GetValue<UnityEngine.UI.Button>() : null;
@@ -658,6 +658,35 @@ namespace DynamicIslands
 				UpgradeTable.MigrateForTest();
 				yield return new WaitForSeconds(6.5f);
 				Check(ref ok, UpgradeTable.IsLearned(ua) && (ua.Base == ub.Base || !UpgradeTable.IsLearned(ub)), "a world from before the table: " + ua.Display + " kept (base learned), " + ub.Display + " not (base not learned)");
+				// RT10: the migration runs once only - a base item learned later teaches nothing, and a second load of the saved lines learns nothing more
+				string migrated = UpgradeTable.State();
+				foreach (ExtraUpgrades.Upgrade u in UpgradeTable.Teaches) u.Base.settings_recipe.Learned = true;
+				yield return new WaitForSeconds(6.5f);
+				Check(ref ok, UpgradeTable.State() == migrated, "migration once: with every base item learned later, nothing more is learned (" + UpgradeTable.State() + " vs " + migrated + ")");
+				List<string> savedLines = UpgradeTable.WriteLines().ToList();
+				UpgradeTable.Reset();
+				UpgradeTable.OptionsRead(true);
+				foreach (string l in savedLines) { int eq = l.IndexOf('='); UpgradeTable.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				yield return new WaitForSeconds(6.5f);
+				Check(ref ok, savedLines.Count == 2 && UpgradeTable.State() == migrated, "migration once: a second load of the saved lines learns nothing more and loses nothing (" + UpgradeTable.State() + ")");
+				// RT13: the UpgradeTable command lists what is researched and learned by name; after a reset both are empty
+				Item_Base listR = UpgradeTable.ResearchItems(ua).First();
+				UpgradeTable.SetState(listR.UniqueIndex + "|" + ua.Index);
+				var told = new List<string>();
+				Application.LogCallback grab = (text, trace, type) => { if (text.Contains("Upgrade table:")) told.Add(text); };
+				Application.logMessageReceived += grab;
+				try
+				{
+					UpgradeTable.UpgradeTableCommand(null);
+					string full = told.Count > 0 ? told[told.Count - 1] : "";
+					Check(ref ok, full.Contains("researched " + listR.UniqueName) && full.Contains("learned " + ua.Display), "the UpgradeTable command lists by name: " + full);
+					UpgradeTable.Reset();
+					told.Clear();
+					UpgradeTable.UpgradeTableCommand(null);
+					string empty = told.Count > 0 ? told[told.Count - 1] : "";
+					Check(ref ok, UpgradeTable.State() == "|" && empty.Contains("researched ;") && empty.EndsWith("learned "), "after Reset: both empty (" + empty + ")");
+				}
+				finally { Application.logMessageReceived -= grab; }
 			}
 			finally
 			{
