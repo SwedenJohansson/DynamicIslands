@@ -228,6 +228,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   rock wasn't drawn at all. Every cave piece's rock is now drawn from outside too, and the ground in a cave's rooms is
   let down under the room's floor and cut away where it lies wholly inside or runs steeply through (a hole dug down to
   a tunnel's end, as at The Drowned Labyrinth); in the editor the ground keeps the heights you sculpted. `CICaveInside` looks round every cave piece from inside and fails on any look out.
+- **See-through rooms (X7):** Selene's room pieces (walls, ceilings, floors, door frames, tunnels) were drawn from
+  inside only too: a room's outer wall, or its ceiling seen from above, showed the room through it. They are drawn
+  from both sides now. Hollow Mountain's rocks no longer stand inside its entry hall and granary, its high hall has a
+  wall over its windows up to the ceiling, its lake roof reaches the islet and the snow no longer shows through the
+  entry hall's floor; Ashfall's crypt slab covers the crypt and the ash is banked up to its edges, so the sky no
+  longer shows under them. `CIRoomLooks` looks round a room from inside and
+  `CISeleneBacks` checks the pieces' backs.
 - **"Another build" told again after a rejoin:** a player who rejoined with the host's own build after joining
   with another one still got the old notice. A notice is now only about the host the player is with.
 - **Animals walking into the sea:** llamas, goats and the other animals of the custom islands could wander into the

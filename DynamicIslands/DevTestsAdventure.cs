@@ -127,6 +127,9 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			yield return PlaceableCatalog.EnsureBuilt();
 			bool ok = true;
+			// (the voyage's pack installed here by an earlier fetch goes first: removed later, it took the islands and the
+			// plan just built under the same names to the deleted folder)
+			try { LibraryPack.Remove(VoyagePackId); } catch { }
 			try { BuildVoyageIslands(); }
 			catch (Exception ex) { Fail("adventure build: " + ex); yield break; }
 			foreach (string n in VoyageIslands)
@@ -173,7 +176,6 @@ namespace DynamicIslands
 				}
 			// Exported as a pack
 			string error;
-			try { LibraryPack.Remove(VoyagePackId); } catch { }
 			string zip = LibraryPack.Export(new LibraryInfo { title = VoyagePlan, id = VoyagePackId, author = "CI Tester", summary = "The test voyage", remix = true }, null, WorldPlan.Load(VoyagePlan), null, null, out error);
 			LibraryPackContents pack = zip != null ? LibraryPack.Read(zip, out error) : null;
 			Check(ref ok, pack != null && VoyageIslands.All(n => pack.Files.ContainsKey(n + ".island")) && pack.Files.ContainsKey(VoyagePlan + ".plan"),

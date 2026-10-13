@@ -176,7 +176,13 @@ namespace DynamicIslands
 						Vector3 q = e.transform.position + new Vector3(Mathf.Cos(i * Mathf.PI / 4f) * w, 0f, Mathf.Sin(i * Mathf.PI / 4f) * w);
 						low = Mathf.Min(low, ground.SampleHeight(q) + ground.transform.position.y);
 					}
-					if (e.transform.position.y <= low + 0.05f) standing++;
+					// (or as deep as "never out of sight" lets it - D62, 6494a3d: its top a third of its height and 10 cm over the
+					// terrain at its middle; on a steep slope that holds a flat rock or a stone up, its low side off the ground,
+					// rather than sink its top under it)
+					float g = ground.SampleHeight(e.transform.position) + ground.transform.position.y;
+					float ly = Mathf.Abs(e.transform.lossyScale.y), height = b.size.y * ly;
+					bool showing = e.transform.position.y + b.max.y * ly - g <= Mathf.Min(Mathf.Max(0.35f * height, 0.15f) + 0.1f, 0.8f * height) + 0.05f;
+					if (e.transform.position.y <= low + 0.05f || showing) standing++;
 				}
 				if (n.StartsWith("TP_SnowDrift"))
 				{
@@ -184,7 +190,7 @@ namespace DynamicIslands
 					if (Vector3.Angle(e.transform.up, Vector3.up) <= 20.5f) flatDrifts++;
 				}
 			}
-			Check(ref ok, count > 0 && rocks > 10 && standing >= rocks * 0.97f, "the generator: " + standing + " of " + rocks + " rocks on land stand with all of their base on the ground (" + count + " objects)");
+			Check(ref ok, count > 0 && rocks > 10 && standing >= rocks * 0.97f, "the generator: " + standing + " of " + rocks + " rocks on land stand with all of their base on the ground or as deep as never out of sight lets them (" + count + " objects)");
 			Check(ref ok, drifts > 0 && flatDrifts == drifts, "snow drifts lie along gentle slopes only: " + flatDrifts + " of " + drifts + " lean 20 degrees or less");
 
 			// 2. Ground puts a wide object down by its base: on the slope of a hill, its low side doesn't stand in the air
@@ -212,10 +218,13 @@ namespace DynamicIslands
 			gizmo.ClearTargets(false);
 			Physics.SyncTransforms();
 			float under = PlacementOptions.LowestGroundUnder(van);
+			// (its bottom, not its pivot: the van's pivot is in its middle, 1.5 m up, and Ground rests such an object on its
+			// bottom - RestingPivotY, 6494a3d; set down by its pivot it sank 1.5 m into the slope)
+			float bottom = van.transform.position.y - PlacementOptions.PivotAboveBottom(van);
 			Vector3 at;
 			Vector3 up;
 			PlacementOptions.GroundAt(van.transform.position, out at, out up);
-			Check(ref ok, Mathf.Abs(van.transform.position.y - under) < 0.05f && van.transform.position.y < at.y - 0.1f, "Ground on a " + steepest.ToString("F0") + " degree slope puts the van down by its base: " + (at.y - van.transform.position.y).ToString("F2") + " m below the ground under its middle, at the lowest ground under it");
+			Check(ref ok, Mathf.Abs(bottom - under) < 0.05f && bottom < at.y - 0.1f, "Ground on a " + steepest.ToString("F0") + " degree slope puts the van down by its base: its bottom " + (at.y - bottom).ToString("F2") + " m below the ground under its middle, at the lowest ground under it (" + (bottom - under).ToString("F2") + ")");
 
 			// 3. A brush stroke lowers the ground under it: the van goes down with it; one undo puts both back
 			float before = van.transform.position.y;

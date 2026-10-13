@@ -812,11 +812,14 @@ namespace DynamicIslands
 				Check(ref ok, keyStep && locked && (!caveMade || q.Steps.Last().Target == "Cave hoard"), "with huts and a cave: \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + " (the hoard " + (locked ? "locked by the hut's key" : "not locked") + (caveMade ? ", a cave made" : ", no cave fitted") + ")");
 				CheckGeneratedQuest(ref ok, "with huts and a cave");
 			}
-			// Quest steps 0: the island's quest as it was; and Ctrl+Z gives the quest before back
+			// Quest steps 0: the island's old quest goes with the objects it was about (CA22); Ctrl+Z gives both back
 			string before = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps);
 			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 31, Radius = 90f, Height = 20f, QuestSteps = 0 });
 			yield return new WaitForSecondsRealtime(0.3f);
-			Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "no quest steps: the island's quest stays as it was");
+			Check(ref ok, !string.IsNullOrEmpty(before) && string.IsNullOrEmpty(ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps)), "no quest steps: the island's old quest goes with its objects (CA22)");
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "Ctrl+Z after generating without quest steps brings the old quest back");
 			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 32, Radius = 120f, Height = 28f, Peaks = 2, QuestSteps = 4 });
 			yield return new WaitForSecondsRealtime(0.3f);
 			bool changed = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) != before;

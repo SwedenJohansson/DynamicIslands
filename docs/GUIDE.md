@@ -691,6 +691,9 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
     wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
     editor does the same as you work, and keeps the heights you sculpted (they are saved as you made them).
+    Selene's room pieces (the station's walls, ceilings, floors, door frames and tunnels) are drawn from both sides too,
+    in the editor and in a world: Raft draws them from inside only, so a room's outer wall - or its ceiling seen from
+    above - would show the room through it.
 
   The scenes and the cave use objects of Raft's own islands: the first **Generate** with them loads those islands
   (a few seconds; the line says "Loading Raft's islands for the buildings and caves...") and then generates. The same

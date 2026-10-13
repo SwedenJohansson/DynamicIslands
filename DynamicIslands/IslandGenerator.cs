@@ -3274,6 +3274,18 @@ namespace DynamicIslands.Editor
 			return SeaCategories.Where(c => SeaFactor(AmountOf(s, c)) > 0f).SelectMany(c => SeaThingsOf(s.Style, c, true)).Where(t => t.Extra).Select(t => t.Name).Distinct().ToList();
 		}
 
+		/// <summary>How far the terrain's surface falls within r of a point, below the point's own.</summary>
+		static float SurfaceFall(Ground ground, float x, float z, float r)
+		{
+			float mid = ground.Surface(x, z), low = mid;
+			for (int i = 0; i < 8; i++)
+			{
+				float a = i * Mathf.PI / 4f;
+				low = Mathf.Min(low, ground.Surface(x + Mathf.Cos(a) * r, z + Mathf.Sin(a) * r));
+			}
+			return mid - low;
+		}
+
 		/// <summary>
 		/// How far below the ground at its middle an object goes so that all of its base stands on the ground: the lowest
 		/// ground under its base - a tree's trunk, else most of its width (set down by its middle on a slope, the low side
@@ -3689,6 +3701,8 @@ namespace DynamicIslands.Editor
 					}
 					float above = ground.At(p.x, p.y) - Sea;
 					if (!sunken && (above < 0.6f || ground.Slope(p.x, p.y) > 25f)) continue;
+					// (nor on a cliff's edge the blended slope misses - a sea stack's rim: the box sank to the foot of the drop, 2-3 m)
+					if (!sunken && SurfaceFall(ground, p.x, p.y, 0.6f) > 0.6f) continue;
 					if (!s.LootHidden && !sunken && !spots.Free(p.x, p.y, 0.8f)) continue;
 					if (rocks.Any(r => (r.x - p.x) * (r.x - p.x) + (r.y - p.y) * (r.y - p.y) < (r.z + 0.5f) * (r.z + 0.5f))) continue;
 					spot = p;

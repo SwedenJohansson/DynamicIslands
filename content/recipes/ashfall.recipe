@@ -41,6 +41,11 @@ brush smooth from 32 42 to 16 53 r=2 s=10 frames=8
 brush flatten at 2 54 r=5 s=20 frames=120 h=2
 brush flatten from 2 54 to 16 53 r=2.5 s=20 frames=60 h=2
 brush flatten from 1 52 to 1 38 r=4.5 s=20 frames=150 h=2
+# (ash banked round the crypt's slab - west, south and north, where the ash lay up to 2 m under its edges and the sky
+# showed under them: its edges tucked into the ash; the pit and the stair are cut out of the banks after - X7)
+brush flatten from -31.3 -0.7 to -31.3 17.5 r=2.5 s=20 frames=80 h=22.1
+brush flatten from -31.3 -0.7 to -17.5 -0.7 r=2.5 s=20 frames=80 h=22.1
+brush flatten from -31.3 17.5 to -18 17.5 r=2.5 s=20 frames=80 h=22.1
 for pz 3 13 2.5
 brush flatten from -27 $pz to -21 $pz r=2.5 s=20 frames=150 h=17.8
 next

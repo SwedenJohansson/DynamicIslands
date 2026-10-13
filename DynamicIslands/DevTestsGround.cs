@@ -320,6 +320,7 @@ namespace DynamicIslands
 			Transform placed = GameObject.Find("PlacedObjects").transform;
 			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 2f, 500f);
 			string[] selene = { "TP_Selene_Int_Room_Wall", "TP_Selene_Int_Room_Entrance", "TP_Selene_Int_Room_Ceiling", "TP_Selene_Int_Room_Floor_Plain", "TP_Selene_Int_DoorFrame", "TP_Selene_Int_DoorLargeL", "TP_Selene_Int_Tunnel_Straight" };
+			yield return PlaceableCatalog.EnsureLoaded(selene.Concat(new[] { "RT_Wall1" })); // (Selene's pieces come from its scene, loaded when first wanted)
 			var made = new List<EditorGameObject>();
 			for (int i = 0; i < selene.Length; i++)
 			{

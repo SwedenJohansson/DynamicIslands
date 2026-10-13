@@ -104,12 +104,14 @@ namespace DynamicIslands
 			Func<int, bool> cliff = b => { int i, sl, hb; RaftLand.Unbin(b, out i, out sl, out hb); return sl == RaftLand.Bins1 - 1; };
 			foreach (int style in new[] { TerrainPainter.Tropical, TerrainPainter.Forest, TerrainPainter.Desert, TerrainPainter.Snowy })
 			{
-				LandStyle land = RaftLand.For(style);
 				var s = new IslandGenSettings { Seed = 3100 + style, Radius = 80f, Height = 45f, Style = style, Cliffs = 0.3f, Trees = 0.45f, Bushes = 0.45f, Rocks = 0.45f, Harvest = 0.45f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
 				float[,] m = IslandGenerator.HeightsMetres(s, size, res);
 				int[] bins = IslandGenerator.HabitatBins(s, m, step);
 				var genArea = new float[RaftLand.BinCount];
 				foreach (int b in bins) if (b >= 0) genArea[b] += step * step;
+				// (against Raft's islands of the size the generator goes by - its big ones here (11aa73a): all of them pooled,
+				// the small islands' thicker, more coastal spread took Tropical trees' overlap down to 52 %)
+				LandStyle land = RaftLand.For(style, genArea.Sum() < RaftLand.SmallLand);
 				List<IslandObject> objs = IslandGenerator.PlanAll(s, m, size);
 				Func<IslandObject, int> binOf = o => { int x = Mathf.Clamp(Mathf.RoundToInt(o.Position.x / step), 0, res - 1), z = Mathf.Clamp(Mathf.RoundToInt(o.Position.z / step), 0, res - 1); return bins[z * res + x]; };
 				foreach (string cat in new[] { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest })

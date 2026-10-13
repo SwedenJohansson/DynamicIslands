@@ -47,6 +47,7 @@ namespace DynamicIslands
 			var f = new IslandFile { Name = right ? "CI traps right" : "CI traps" };
 			f.Props[IslandQuest.KeySteps] = "read|Diary|1|\nopen|Vault|1|\nkill|Warthog|2|";
 			if (!right) f.Props[BehaviourProps.CheckKey("quest")] = "has|Plank|5";
+			else f.Props[StoryItems.Key] = "ci-key|Gate key||The zone's key."; // (right: its story item in the Story items list - SL5 warns otherwise)
 			Func<string, Dictionary<string, string>, IslandObject> obj = (name, props) => new IslandObject { Name = name, Position = Vector3.zero, Props = props };
 			// The note of step 1: Raft items for its first reader (right: a story item, the crew's)
 			f.Objects.Add(obj("CI_Note", new Dictionary<string, string> { { ObjectProps.NoteTitle, "Diary" }, { ObjectProps.NoteText, "Day one." },
