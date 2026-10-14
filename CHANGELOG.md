@@ -176,6 +176,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Comfy bed missing from the crafting menu:** it copied the wooden bed, a bed *skin* with no crafting tab of its own,
+  so no tab listed it. It now sits in the bed's own tab.
 - **Trader raft and a bad world file line:** an `@tradersailed` of NaN or Infinity is now read as 0 (it stuck, and the
   trader raft never came again).
 - **A quest step done early counted twice:** a zone step reached early and entered again (a player set down inside it
