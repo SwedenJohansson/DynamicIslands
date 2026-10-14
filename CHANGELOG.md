@@ -180,6 +180,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
   and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's
   generator was never affected.
+- **A quest step done early counted twice:** a zone step reached early and entered again (a player set down inside it
+  after a load) was kept as done twice; early work now never counts more than the step needs.
 - **Upgrade table taken away while in use:** the items in its slot go back to the player who had its menu open
   (Raft destroyed them with the table).
 - **Barrels switched off:** the silver and golden barrels already in the sea turn plain-coloured at once
