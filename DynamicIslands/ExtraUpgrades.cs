@@ -856,7 +856,7 @@ namespace DynamicIslands.Editor
 				main.startSize = new ParticleSystem.MinMaxCurve(star * 0.6f, star);
 				main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI / 4f);
 				main.maxParticles = 20;
-				main.startColor = Color.Lerp(tint, Color.white, 0.35f);
+				main.startColor = Color.Lerp(tint, Color.white, 0.5f);
 				var shape = ps.shape;
 				shape.shapeType = ParticleSystemShapeType.Box;
 				shape.scale = new Vector3(b.size.x / Mathf.Max(1e-4f, Mathf.Abs(ls.x)), b.size.y / Mathf.Max(1e-4f, Mathf.Abs(ls.y)), b.size.z / Mathf.Max(1e-4f, Mathf.Abs(ls.z)));
@@ -866,11 +866,11 @@ namespace DynamicIslands.Editor
 				col.enabled = true;
 				var fade = new Gradient();
 				fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-					new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) });
+					new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
 				col.color = fade;
 				var grow = ps.sizeOverLifetime;
 				grow.enabled = true;
-				grow.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.2f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0.2f)));
+				grow.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.4f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0.4f)));
 				var pr = go.GetComponent<ParticleSystemRenderer>();
 				pr.sharedMaterial = GlintMaterial();
 				pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -904,7 +904,10 @@ namespace DynamicIslands.Editor
 				}
 			tex.SetPixels32(px);
 			tex.Apply();
-			return glintMaterial = new Material(shader) { name = "DI_Glint", mainTexture = tex };
+			glintMaterial = new Material(shader) { name = "DI_Glint", mainTexture = tex };
+			// (Raft's particle shaders tint by a mid grey by default: half as bright)
+			if (glintMaterial.HasProperty("_TintColor")) glintMaterial.SetColor("_TintColor", Color.white);
+			return glintMaterial;
 		}
 
 		#endregion
