@@ -885,7 +885,9 @@ namespace DynamicIslands.Editor
 		{
 			if (glintMaterial != null) return glintMaterial;
 			Shader shader = Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Mobile/Particles/Additive");
-			if (shader == null) return glintMaterial = AtmosphereZone.ParticleMaterial();
+			// (Raft's build may not have them: then the alpha-blended one the atmosphere zones use, with this star)
+			if (shader == null) shader = AtmosphereZone.ParticleMaterial().shader;
+			Log("Upgrade glints use shader " + shader.name);
 			const int S = 64;
 			var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { name = "DI_Glint", wrapMode = TextureWrapMode.Clamp };
 			var px = new Color32[S * S];

@@ -154,8 +154,14 @@ namespace DynamicIslands
 			Func<GameObject, int> glints = go => go == null ? 0 : go.GetComponentsInChildren<ParticleSystem>(true).Count(p => p.name == ExtraUpgrades.ShineName);
 			int ga = glints(baseObj), gb = glints(upObj);
 			ParticleSystem ps = upObj == null ? null : upObj.GetComponentsInChildren<ParticleSystem>(true).FirstOrDefault(p => p.name == ExtraUpgrades.ShineName);
-			Log("  (" + n + ": glints base " + ga + ", upgrade " + gb + (ps != null ? ", playing " + ps.isPlaying + ", rate " + ps.emission.rateOverTime.constant.ToString("F1") : "") + ")");
+			Log("  (" + n + ": glints base " + ga + ", upgrade " + gb + (ps != null ? ", playing " + ps.isPlaying + ", rate " + ps.emission.rateOverTime.constant.ToString("F1") + ", " + ps.particleCount + " alive, shader " + UsShader(ps) + ", layer " + ps.gameObject.layer + ", at " + ps.transform.position.ToString("F2") + ", box " + ps.shape.scale.ToString("F2") + ", lossy " + ps.transform.lossyScale.ToString("F2") : "") + ")");
 			if (gb != 1 || ga != 0 || ps == null || !ps.isPlaying) { run.Fails++; Fail("upgrade shots: " + n + ": glints wrong (base " + ga + ", upgrade " + gb + (ps != null && !ps.isPlaying ? ", not playing" : "") + ")"); }
+		}
+
+		static string UsShader(ParticleSystem ps)
+		{
+			var r = ps.GetComponent<ParticleSystemRenderer>();
+			return r == null ? "no renderer" : (r.enabled ? "" : "off ") + (r.sharedMaterial == null ? "none" : r.sharedMaterial.shader.name);
 		}
 
 		/// <summary>With "close": the upgrade alone from near, after its glints have had time to show.</summary>
@@ -165,6 +171,8 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1.5f);
 			Bounds bb;
 			if (!UsBounds(upObj, out bb)) yield break;
+			ParticleSystem ps = upObj.GetComponentsInChildren<ParticleSystem>(true).FirstOrDefault(p => p.name == ExtraUpgrades.ShineName);
+			if (ps != null) Log("  (" + n + " close: " + ps.particleCount + " glints alive, model " + bb.center.ToString("F2") + " size " + bb.size.ToString("F2") + ")");
 			yield return UsShoot(run, n + " close", bb, run.Yaw, "up_" + n + "_close", 0.9f);
 		}
 
