@@ -844,7 +844,9 @@ namespace DynamicIslands.Editor
 			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
 			{
 				if (!(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
-				if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
+				Bounds rb;
+				if (!MeshBounds(r, out rb)) continue;
+				if (!any) { b = rb; any = true; } else b.Encapsulate(rb);
 			}
 			if (!any || b.size.sqrMagnitude < 1e-6f) return;
 			try
@@ -895,6 +897,25 @@ namespace DynamicIslands.Editor
 		static Material glintMaterial;
 
 		/// <summary>A four-pointed star that adds light (a soft dot hardly showed by day, 2026-10-14 close pictures).</summary>
+		/// <summary>A renderer's world bounds; from its mesh when Raft has it hidden (a worn model of the local player has empty
+		/// bounds then: the head lights got no glints).</summary>
+		static bool MeshBounds(Renderer r, out Bounds b)
+		{
+			b = r.bounds;
+			if (b.size.sqrMagnitude > 1e-8f) return true;
+			SkinnedMeshRenderer sk = r as SkinnedMeshRenderer;
+			MeshFilter mf = sk == null ? r.GetComponent<MeshFilter>() : null;
+			Bounds local;
+			if (sk != null && sk.sharedMesh != null) local = sk.localBounds.size.sqrMagnitude > 1e-8f ? sk.localBounds : sk.sharedMesh.bounds;
+			else if (mf != null && mf.sharedMesh != null) local = mf.sharedMesh.bounds;
+			else return false;
+			Transform t = sk != null && sk.rootBone != null && sk.localBounds.size.sqrMagnitude > 1e-8f ? sk.rootBone : r.transform;
+			b = new Bounds(t.TransformPoint(local.center), Vector3.zero);
+			for (int i = 0; i < 8; i++)
+				b.Encapsulate(t.TransformPoint(local.center + Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))));
+			return b.size.sqrMagnitude > 1e-8f;
+		}
+
 		static Material GlintMaterial()
 		{
 			if (glintMaterial != null) return glintMaterial;

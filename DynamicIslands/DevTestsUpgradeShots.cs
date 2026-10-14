@@ -254,6 +254,19 @@ namespace DynamicIslands
 			finally { UnityEngine.Object.Destroy(hold); }
 		}
 
+		static string UsWornModels(Equipment e)
+		{
+			var parts = new List<string>();
+			foreach (string f in new[] { "localModel", "remoteModel" })
+			{
+				Transform m = Traverse.Create(e).Field(f).GetValue<Transform>();
+				if (m == null) { parts.Add(f + " none"); continue; }
+				Renderer[] rs = m.GetComponentsInChildren<Renderer>(true);
+				parts.Add(f + (m.gameObject.activeInHierarchy ? " shown" : " hidden") + ", " + rs.Count(r => r.enabled) + "/" + rs.Length + " renderers on");
+			}
+			return string.Join("; ", parts.ToArray());
+		}
+
 		/// <summary>Glint systems on an Equipment's worn models (only playing ones, or any).</summary>
 		static int UsWornGlints(Equipment e, bool playing)
 		{
@@ -409,7 +422,7 @@ namespace DynamicIslands
 			if (u.Held != null) yield return UsCloseShot(run, n, b);
 			UsRemove(run);
 			// A worn item tinted only while worn: also really equipped
-			if (u.Wearing != null)
+			if (u.Wearing != null || u.Worn != null)
 			{
 				yield return UsEquippedShot(run, u, "base", u.Base);
 				yield return UsEquippedShot(run, u, "up", u.Item);
@@ -428,8 +441,9 @@ namespace DynamicIslands
 			if (!onOk) yield break;
 			yield return new WaitForSeconds(0.4f);
 			yield return null; yield return null; yield return null;
-			int glints = UsWornGlints(e, true);
-			Log("  (" + n + " " + tag + " worn: " + glints + " playing glint system(s))");
+			// (Raft may hide one of the two worn models: glints on a hidden one start when it shows)
+			int glints = UsWornGlints(e, false);
+			Log("  (" + n + " " + tag + " worn: " + glints + " glint system(s), " + UsWornGlints(e, true) + " playing; " + UsWornModels(e) + ")");
 			if (tag == "up" && glints == 0) { run.Fails++; Fail("upgrade shots: " + n + ": no glints while the upgrade is worn"); }
 			if (tag == "base" && UsWornGlints(e, false) > 0) { run.Fails++; Fail("upgrade shots: " + n + ": the base item has glints while worn"); }
 			Bounds b = new Bounds();
