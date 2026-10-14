@@ -311,9 +311,18 @@ namespace DynamicIslands
 		static IEnumerator UsModelShots(UsRun run, ExtraUpgrades.Upgrade u)
 		{
 			string n = UsName(u);
+			// (a worn model is skinned to the player: copied while worn, so its bones hold a pose)
+			Equipment wear = u.Held == null ? UsEquipment(run.Player, u.Base) : null;
+			if (wear != null)
+			{
+				UsInitEquipment(run.Player, wear);
+				try { if (!wear.Equipped) wear.Equip(null); } catch (Exception ex) { Log("  (putting on " + u.BaseName + ": " + (ex.InnerException ?? ex).Message + ")"); }
+				yield return new WaitForSeconds(0.4f);
+			}
 			GameObject sa = UsModelOf(run, u, false), sb = UsModelOf(run, u, true);
+			GameObject a = sa != null ? UsClone(sa, "US_base_" + n, null) : null, b = sb != null ? UsClone(sb, "US_up_" + n, u.Tint) : null;
+			if (wear != null) { try { if (wear.Equipped) wear.UnEquip(); } catch { } }
 			if (sa == null || sb == null) { run.Fails++; Fail("upgrade shots: " + n + ": no model to copy (" + (sa == null ? u.BaseName : u.Name) + ")"); yield break; }
-			GameObject a = UsClone(sa, "US_base_" + n, null), b = UsClone(sb, "US_up_" + n, u.Tint);
 			if (a != null) run.Objs.Add(a);
 			if (b != null) run.Objs.Add(b);
 			if (a == null || b == null) { run.Fails++; Fail("upgrade shots: " + n + ": could not copy the model"); yield break; }
@@ -321,6 +330,7 @@ namespace DynamicIslands
 			yield return null; yield return null; yield return null;
 			Bounds ba, bb;
 			if (!UsBounds(a, out ba) || !UsBounds(b, out bb)) { run.Fails++; Fail("upgrade shots: " + n + ": the model has no visible mesh"); yield break; }
+			Log("  (" + n + ": models " + ba.size.ToString("F2") + " and " + bb.size.ToString("F2") + ")");
 			Bounds all = UsArrange(a, ba, b, bb, run.Spot, run.Yaw);
 			yield return UsShoot(run, n, all, run.Yaw, "up_" + n, 1.2f);
 			UsRemove(run);
