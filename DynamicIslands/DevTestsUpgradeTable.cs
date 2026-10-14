@@ -428,7 +428,9 @@ namespace DynamicIslands
 		{
 			ExtraUpgrades.Upgrade up = ExtraUpgrades.Registered.FirstOrDefault(u => !u.Table);
 			Item_Base cost = up != null ? UpgradeTable.ResearchItems(up).FirstOrDefault() : null;
-			Item_Base plank = ItemManager.GetItemByName("Plank");
+			// (an item the table never researches and no upgrade: Plank once was one, then the table took all raw items)
+			HashSet<Item_Base> researchable = UpgradeTable.Researchable();
+			Item_Base plank = ItemManager.GetAllItems().FirstOrDefault(i => i != null && !researchable.Contains(i) && !ExtraUpgrades.Registered.Any(u => u.Index == i.UniqueIndex));
 			if (up == null || cost == null || plank == null) { Log("upgrade table lines: no registered upgrade here, skipped"); return; }
 			string saved = UpgradeTable.State();
 			int ci = cost.UniqueIndex, ui = up.Index, pi = plank.UniqueIndex == cost.UniqueIndex ? 1 : plank.UniqueIndex;
