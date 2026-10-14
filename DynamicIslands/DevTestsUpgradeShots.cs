@@ -199,6 +199,19 @@ namespace DynamicIslands
 				cl.name = name;
 				// (a skinned mesh keeps the player's bones and would be drawn on the player: baked into a plain mesh)
 				Renderer[] from = src.GetComponentsInChildren<Renderer>(true), to = cl.GetComponentsInChildren<Renderer>(true);
+				// (a copy loses the property blocks the mod tints with: carried over, so the picture shows the real look)
+				for (int i = 0; i < from.Length && i < to.Length; i++)
+				{
+					var pb = new MaterialPropertyBlock();
+					from[i].GetPropertyBlock(pb);
+					if (!pb.isEmpty) to[i].SetPropertyBlock(pb);
+					for (int j = 0; j < from[i].sharedMaterials.Length && from[i].sharedMaterials.Length > 1; j++)
+					{
+						pb = new MaterialPropertyBlock();
+						from[i].GetPropertyBlock(pb, j);
+						if (!pb.isEmpty) to[i].SetPropertyBlock(pb, j);
+					}
+				}
 				var bakedAt = new List<Transform>();
 				for (int i = 0; i < from.Length && i < to.Length; i++)
 				{
@@ -239,6 +252,20 @@ namespace DynamicIslands
 			}
 			catch (Exception e) { Log("  (copy of " + name + ": " + e.Message + ")"); return null; }
 			finally { UnityEngine.Object.Destroy(hold); }
+		}
+
+		/// <summary>Glint systems on an Equipment's worn models (only playing ones, or any).</summary>
+		static int UsWornGlints(Equipment e, bool playing)
+		{
+			int n = 0;
+			foreach (string f in new[] { "localModel", "remoteModel" })
+			{
+				Transform m = Traverse.Create(e).Field(f).GetValue<Transform>();
+				Transform g = m != null ? m.Find(ExtraUpgrades.ShineName) : null;
+				ParticleSystem ps = g != null ? g.GetComponent<ParticleSystem>() : null;
+				if (ps != null && (!playing || ps.isPlaying)) n++;
+			}
+			return n;
 		}
 
 		static Equipment UsEquipment(Network_Player p, Item_Base item)
@@ -361,7 +388,9 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.4f);
 			}
 			GameObject sa = UsModelOf(run, u, false), sb = UsModelOf(run, u, true);
-			GameObject a = sa != null ? UsClone(sa, "US_base_" + n, null) : null, b = sb != null ? UsClone(sb, "US_up_" + n, u.Tint) : null;
+			GameObject a = sa != null ? UsClone(sa, "US_base_" + n, null) : null, b = sb != null ? UsClone(sb, "US_up_" + n, null) : null;
+			// (a held upgrade's copy keeps its own look; a worn one shares the base's model: given the look it has while worn)
+			if (b != null && u.Held == null) { ExtraUpgrades.Untint(b); ExtraUpgrades.TintAll(b, u.Tint, u.Whiten); ExtraUpgrades.Shine(b, u.Tint); }
 			if (wear != null) { try { if (wear.Equipped) wear.UnEquip(); } catch { } }
 			if (sa == null || sb == null) { run.Fails++; Fail("upgrade shots: " + n + ": no model to copy (" + (sa == null ? u.BaseName : u.Name) + ")"); yield break; }
 			if (a != null) run.Objs.Add(a);
@@ -399,6 +428,10 @@ namespace DynamicIslands
 			if (!onOk) yield break;
 			yield return new WaitForSeconds(0.4f);
 			yield return null; yield return null; yield return null;
+			int glints = UsWornGlints(e, true);
+			Log("  (" + n + " " + tag + " worn: " + glints + " playing glint system(s))");
+			if (tag == "up" && glints == 0) { run.Fails++; Fail("upgrade shots: " + n + ": no glints while the upgrade is worn"); }
+			if (tag == "base" && UsWornGlints(e, false) > 0) { run.Fails++; Fail("upgrade shots: " + n + ": the base item has glints while worn"); }
 			Bounds b = new Bounds();
 			bool found = false;
 			foreach (string f in new[] { "localModel", "remoteModel" })
@@ -427,6 +460,7 @@ namespace DynamicIslands
 			UsRemove(run);
 			try { if (e.Equipped) e.UnEquip(); } catch { }
 			yield return null; yield return null;
+			if (tag == "up" && UsWornGlints(e, false) > 0) { run.Fails++; Fail("upgrade shots: " + n + ": glints stay on the shared model after taking it off"); }
 		}
 
 		/// <summary>The large battery: two identical machines, Raft's battery in one slot and the large one in the other.</summary>

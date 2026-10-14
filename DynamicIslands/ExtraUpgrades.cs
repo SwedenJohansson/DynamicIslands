@@ -40,6 +40,8 @@ namespace DynamicIslands.Editor
 			public int Index;
 			public string Name, BaseName, Display, Description;
 			public Color Tint;
+			/// <summary>A pale metal look: the model's textures lightened (dark parts lifted) in its pale tint, not made Vivid.</summary>
+			public bool Whiten;
 			/// <summary>How many times the base item's recipe it costs.</summary>
 			public int CostFactor = 2;
 			/// <summary>An extra cost item (Raft's unique name) and amount, or null.</summary>
@@ -110,7 +112,7 @@ namespace DynamicIslands.Editor
 
 		static List<Upgrade> all;
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
-		public static List<Upgrade> All { get { if (all == null) { all = Defs(); foreach (Upgrade u in all) u.Tint = Vivid(u.Tint); } return all; } }
+		public static List<Upgrade> All { get { if (all == null) { all = Defs(); foreach (Upgrade u in all) if (!u.Whiten) u.Tint = Vivid(u.Tint); } return all; } }
 		public static IEnumerable<Upgrade> Registered { get { return All.Where(u => u.Item != null); } }
 		public static Upgrade Find(int index) { return all == null ? null : all.FirstOrDefault(u => u.Item != null && u.Index == index); }
 		public static Upgrade Find(string name) { return All.FirstOrDefault(u => u.Name == name); }
@@ -187,7 +189,7 @@ namespace DynamicIslands.Editor
 				new Upgrade { Index = 29430, Name = "DI_TitaniumGreatsword", BaseName = "Sword_Titanium", Display = "Titanium greatsword", Tint = new Color(0.7f, 0.8f, 1f), UsesFactor = 2,
 					Held = StrongWeapon,
 					Description = "A titanium sword that hits half again as hard and lasts twice as long." },
-				new Upgrade { Index = 29431, Name = "DI_TitaniumSpear", BaseName = "Spear_Scrap", Display = "Titanium spear", Tint = new Color(0.75f, 0.82f, 0.95f), UsesFactor = 2,
+				new Upgrade { Index = 29431, Name = "DI_TitaniumSpear", BaseName = "Spear_Scrap", Display = "Titanium spear", Tint = new Color(0.75f, 0.82f, 0.95f), Whiten = true, UsesFactor = 2,
 					ExtraCostItem = "TitaniumIngot", ExtraCostAmount = 2, Held = StrongWeapon,
 					Description = "A metal spear with a titanium tip: hits half again as hard and lasts twice as long." },
 				new Upgrade { Index = 29432, Name = "DI_LongPaddle", BaseName = "Paddle", Display = "Long paddle", Tint = new Color(0.8f, 0.6f, 0.4f), UsesFactor = 2,
@@ -728,7 +730,9 @@ namespace DynamicIslands.Editor
 			foreach (string f in new[] { "localModel", "remoteModel" })
 			{
 				Transform m = t.Field(f).GetValue<Transform>();
-				if (m != null) { if (u != null && on) TintAll(m.gameObject, c); else Untint(m.gameObject); }
+				if (m == null) continue;
+					if (u != null && on) { Untint(m.gameObject); TintAll(m.gameObject, c, u.Whiten); Shine(m.gameObject, c); }
+					else Untint(m.gameObject);
 			}
 			if (u != null && u.Wearing != null) u.Wearing(e, on);
 		}
@@ -747,7 +751,7 @@ namespace DynamicIslands.Editor
 				if (b == null) { Warn(u + ": the player has no hand model of " + u.BaseName); continue; }
 				GameObject o = UnityEngine.Object.Instantiate(b.obj, b.obj.transform.parent, false);
 				o.name = b.obj.name + "_" + u.Name;
-				try { TintAll(o, u.Tint); o.transform.localScale *= HeldGrow; Shine(o, u.Tint); u.Held(o); }
+				try { TintAll(o, u.Tint, u.Whiten); o.transform.localScale *= HeldGrow; Shine(o, u.Tint); u.Held(o); }
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
 			}
@@ -798,23 +802,31 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tints every material under root; a material with no colour of its own (Raft's texture-only shaders) through its
 		/// textures, as the randomizer's animals. Returns how many materials.</summary>
-		public static int TintAll(GameObject root, Color tint)
+		public static int TintAll(GameObject root, Color tint, bool whiten = false)
 		{
 			int n = 0;
 			if (root == null) return 0;
 			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
 			{
 				if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer || r.GetComponent<TextMesh>() != null) continue;
-				int k = ObjectProps.TintRenderer(r, tint);
+				// Whiten: a colour over 1 makes TintTextures lift the dark parts (the titanium spear looked like the scrap one)
+				int w = whiten ? WorldRandomizer.TintTextures(r, tint * WhitenLift) : 0;
+				if (w > 0) { n += w; continue; }
+				int k = ObjectProps.TintRenderer(r, whiten ? tint * WhitenLift : tint);
 				n += k > 0 ? k : WorldRandomizer.TintTextures(r, tint);
 			}
 			return n;
 		}
 
-		/// <summary>Takes TintAll off again (a worn upgrade taken off: the model is shared with its base item).</summary>
+		/// <summary>How much lighter than its tint a Whiten upgrade is drawn (over 1: TintTextures lifts by 0.6 of the excess).</summary>
+		public const float WhitenLift = 1.9f;
+
+		/// <summary>Takes TintAll and Shine off again (a worn upgrade taken off: the model is shared with its base item).</summary>
 		public static void Untint(GameObject root)
 		{
 			if (root == null) return;
+			Transform glints = root.transform.Find(ShineName);
+			if (glints != null) { glints.SetParent(null, false); UnityEngine.Object.Destroy(glints.gameObject); }
 			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
 			{
 				if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer || r.GetComponent<TextMesh>() != null) continue;
