@@ -23,6 +23,7 @@ namespace DynamicIslands
 		static readonly List<Slot> utFillSlots = new List<Slot>();
 		static Item_Base utFiller;
 		static Slot utHeldSlot;
+		static ResearchTable utHeldTable;
 		static int utHeldIdx, utHeldStart;
 
 		static ExtraUpgrades.Upgrade UtUpgrade()
@@ -297,6 +298,9 @@ namespace DynamicIslands
 			player.Inventory.RemoveItem(it.UniqueName, take);
 			rt.slot.SetItem(new ItemInstance(it, take, it.MaxUses));
 			utHeldSlot = rt.slot;
+			// (as with the menu open: the table is this player's while it holds the slot - the give back on a taken table needs it)
+			HarmonyLib.Traverse.Create(rt).Field("occupyingPlayerID").SetValue(player.steamID);
+			utHeldTable = rt;
 			yield return null;
 			Log("PASS: ut hold " + UtRole + ": " + take + " " + it.UniqueName + " in the table slot (" + n0 + " owned before)");
 		}
@@ -326,6 +330,8 @@ namespace DynamicIslands
 			Check(ref ok, total <= utHeldStart, UtRole + ": nothing doubled (inventory + researched " + total + " <= " + utHeldStart + ")");
 			Check(ref ok, total >= utHeldStart, UtRole + ": nothing lost (inventory + researched " + total + " >= " + utHeldStart + ")");
 			utHeldSlot = null;
+			if (utHeldTable != null) HarmonyLib.Traverse.Create(utHeldTable).Field("occupyingPlayerID").SetValue(default(Network_UserId));
+			utHeldTable = null;
 			if (ok) Log("PASS: ut release " + UtRole); else Fail("ut release " + UtRole);
 		}
 
