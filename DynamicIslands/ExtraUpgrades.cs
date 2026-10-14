@@ -851,15 +851,17 @@ namespace DynamicIslands.Editor
 				main.scalingMode = ParticleSystemScalingMode.Shape;
 				main.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 1.8f);
 				main.startSpeed = 0f;
-				main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.22f);
+				// (sized and counted by the model: 2-4 small stars on a lantern hardly showed, 2026-10-14 diagnosis)
+				float big = Mathf.Max(b.size.x, b.size.y, b.size.z), star = Mathf.Clamp(big * 0.08f, 0.14f, 0.4f);
+				main.startSize = new ParticleSystem.MinMaxCurve(star * 0.6f, star);
 				main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI / 4f);
-				main.maxParticles = 12;
+				main.maxParticles = 20;
 				main.startColor = Color.Lerp(tint, Color.white, 0.35f);
 				var shape = ps.shape;
 				shape.shapeType = ParticleSystemShapeType.Box;
 				shape.scale = new Vector3(b.size.x / Mathf.Max(1e-4f, Mathf.Abs(ls.x)), b.size.y / Mathf.Max(1e-4f, Mathf.Abs(ls.y)), b.size.z / Mathf.Max(1e-4f, Mathf.Abs(ls.z)));
 				var emission = ps.emission;
-				emission.rateOverTime = Mathf.Clamp(b.size.x * b.size.y * b.size.z * 2f, 1.5f, 5f);
+				emission.rateOverTime = Mathf.Clamp(big * 3f, 3f, 8f);
 				var col = ps.colorOverLifetime;
 				col.enabled = true;
 				var fade = new Gradient();
@@ -896,7 +898,7 @@ namespace DynamicIslands.Editor
 				{
 					float dx = Mathf.Abs(x + 0.5f - S / 2f) / (S / 2f), dy = Mathf.Abs(y + 0.5f - S / 2f) / (S / 2f);
 					float d = Mathf.Sqrt(dx * dx + dy * dy);
-					float core = Mathf.Pow(Mathf.Clamp01(1f - d * 2.5f), 2f);
+					float core = Mathf.Pow(Mathf.Clamp01(1f - d * 1.6f), 2f);
 					float arms = Mathf.Clamp01(1f - dy * 14f) * Mathf.Clamp01(1f - dx) + Mathf.Clamp01(1f - dx * 14f) * Mathf.Clamp01(1f - dy);
 					px[y * S + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(core + arms * 0.9f) * 255));
 				}
