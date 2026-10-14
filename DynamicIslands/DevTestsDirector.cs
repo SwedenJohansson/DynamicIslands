@@ -230,9 +230,26 @@ namespace DynamicIslands
 			// Clean up
 			yield return new WaitForSeconds(1f);
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(created);
 			IslandWorldState.Save();
 			if (ok) Log("PASS: a quest brings an island"); else Fail("a quest brings an island");
+		}
+
+		// Deletes the test's generated island files. An island still spawning reads its file off-thread and holds it
+		// open for a few seconds (mp run 10-14: IOException), so a locked file is tried again for up to 30 s.
+		static IEnumerator DeleteIslandFiles(List<string> names)
+		{
+			foreach (string n in names)
+			{
+				string path = IslandSpawner.PathFor(n);
+				float t0 = Time.realtimeSinceStartup;
+				while (File.Exists(path))
+				{
+					try { File.Delete(path); }
+					catch (IOException e) { if (Time.realtimeSinceStartup - t0 > 30f) { Log("  (couldn't delete '" + n + "': " + e.Message + ")"); break; } }
+					if (File.Exists(path)) yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
 		}
 
 		#endregion
@@ -396,7 +413,7 @@ namespace DynamicIslands
 			// Clean up: the world's own plan and state come back
 			yield return new WaitForSeconds(1f);
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(created);
 			File.Delete(WorldPlan.PathFor(TestPlan));
 			WorldDirector.SetPlan(planBefore, false);
 			CustomIslandSpawner.Enabled = autoBefore;
@@ -558,7 +575,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			var files = IslandWorldState.Islands.Skip(before).Select(e => e.HostName).ToList();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in files) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(files);
 			File.Delete(WorldPlan.PathFor(TestPlan));
 			CustomIslandSpawner.UnloadDistance = unloadBefore;
 			WorldDirector.SetPlan(planBefore, false);
