@@ -2365,7 +2365,9 @@ again. Every player sees the same trader with the same offers: the host brings i
 
 #### Extra upgrades
 
-Better versions of Raft's own things to craft. Each one has a tint of its own and sits in the crafting menu next to
+Better versions of Raft's own things to craft. Each one has a strong tint of its own and a few slow **glints** in that
+colour round it, so an upgrade is told from its base at a glance; one held in the hand is also a little bigger (built
+ones keep their size, so they still fit on the grid next to other pieces). It sits in the crafting menu next to
 the thing it improves (the **base**), once it is learned at the **upgrade research table** (below):
 
 | Upgrade | What it is | Cost | Base |

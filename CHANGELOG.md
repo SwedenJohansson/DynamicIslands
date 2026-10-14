@@ -114,6 +114,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
+  colour round a built or hand-held upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
 - **Check warns about a deleted story item:** a story item that a quest step, a check, a chest or an action
   still uses but that is no longer in the island's Story items list (or was mistyped) is now a quest trap in Check.
   A quest file edited by hand is read up to 99 steps; more are cut. (The editor adds up to 10; a recipe's quest runs

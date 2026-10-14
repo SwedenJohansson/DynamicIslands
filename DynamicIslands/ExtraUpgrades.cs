@@ -110,7 +110,7 @@ namespace DynamicIslands.Editor
 
 		static List<Upgrade> all;
 		/// <summary>The upgrades (made once; Item set for the registered ones).</summary>
-		public static List<Upgrade> All { get { return all ?? (all = Defs()); } }
+		public static List<Upgrade> All { get { if (all == null) { all = Defs(); foreach (Upgrade u in all) u.Tint = Vivid(u.Tint); } return all; } }
 		public static IEnumerable<Upgrade> Registered { get { return All.Where(u => u.Item != null); } }
 		public static Upgrade Find(int index) { return all == null ? null : all.FirstOrDefault(u => u.Item != null && u.Index == index); }
 		public static Upgrade Find(string name) { return All.FirstOrDefault(u => u.Name == name); }
@@ -392,7 +392,7 @@ namespace DynamicIslands.Editor
 			GameObject model = UnityEngine.Object.Instantiate(basic.model, basic.model.transform.parent);
 			model.name = basic.model.name + "_Large";
 			model.SetActive(false);
-			ObjectProps.ApplyTint(model, LargeBatteryTint, 1f);
+			TintAll(model, Vivid(LargeBatteryTint));
 			var con = new ItemModelConnection { item = large, model = model };
 			Traverse.Create(en).Field("itemConnections").SetValue(cons.Concat(new[] { con }).ToArray());
 			return true;
@@ -728,7 +728,7 @@ namespace DynamicIslands.Editor
 			foreach (string f in new[] { "localModel", "remoteModel" })
 			{
 				Transform m = t.Field(f).GetValue<Transform>();
-				if (m != null) ObjectProps.ApplyTint(m.gameObject, c, 1f);
+				if (m != null) { if (u != null && on) TintAll(m.gameObject, c); else Untint(m.gameObject); }
 			}
 			if (u != null && u.Wearing != null) u.Wearing(e, on);
 		}
@@ -747,7 +747,7 @@ namespace DynamicIslands.Editor
 				if (b == null) { Warn(u + ": the player has no hand model of " + u.BaseName); continue; }
 				GameObject o = UnityEngine.Object.Instantiate(b.obj, b.obj.transform.parent, false);
 				o.name = b.obj.name + "_" + u.Name;
-				try { ObjectProps.ApplyTint(o, u.Tint, 1f); u.Held(o); }
+				try { TintAll(o, u.Tint); o.transform.localScale *= HeldGrow; Shine(o, u.Tint); u.Held(o); }
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
 			}
@@ -776,6 +776,102 @@ namespace DynamicIslands.Editor
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				go.SetActive(b.gameObject.activeSelf);
 			}
+		}
+
+		#endregion
+
+		#region Look
+
+		/// <summary>How much bigger a hand-held upgrade's model is than its base item's. (Placed ones keep their size: a bigger
+		/// collider would stop pieces fitting on the grid next to them.)</summary>
+		public const float HeldGrow = 1.1f;
+		/// <summary>The glints round a placed or hand-held upgrade (a child of its model).</summary>
+		public const string ShineName = "DI_UpgradeShine";
+
+		/// <summary>A tint made strong enough to see on Raft's textures (its hue kept): a pale one hardly showed (2026-10-14 pictures).</summary>
+		public static Color Vivid(Color c)
+		{
+			float h, sat, v;
+			Color.RGBToHSV(c, out h, out sat, out v);
+			return Color.HSVToRGB(h, Mathf.Clamp(Mathf.Max(sat * 1.7f, 0.5f), 0f, 0.85f), 1f);
+		}
+
+		/// <summary>Tints every material under root; a material with no colour of its own (Raft's texture-only shaders) through its
+		/// textures, as the randomizer's animals. Returns how many materials.</summary>
+		public static int TintAll(GameObject root, Color tint)
+		{
+			int n = 0;
+			if (root == null) return 0;
+			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+			{
+				if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer || r.GetComponent<TextMesh>() != null) continue;
+				int k = ObjectProps.TintRenderer(r, tint);
+				n += k > 0 ? k : WorldRandomizer.TintTextures(r, tint);
+			}
+			return n;
+		}
+
+		/// <summary>Takes TintAll off again (a worn upgrade taken off: the model is shared with its base item).</summary>
+		public static void Untint(GameObject root)
+		{
+			if (root == null) return;
+			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+			{
+				if (r is ParticleSystemRenderer || r is LineRenderer || r is TrailRenderer || r.GetComponent<TextMesh>() != null) continue;
+				if (ObjectProps.TintRenderer(r, Color.white) == 0) r.SetPropertyBlock(new MaterialPropertyBlock());
+			}
+		}
+
+		/// <summary>A few slow glints in the upgrade's colour round its model: something no Raft item has, so an upgrade is
+		/// told apart at a glance even where its tint is close to the base item's colours. Once per model.</summary>
+		public static void Shine(GameObject root, Color tint)
+		{
+			if (root == null || root.transform.Find(ShineName) != null) return;
+			Bounds b = new Bounds();
+			bool any = false;
+			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+			{
+				if (!(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
+				if (!any) { b = r.bounds; any = true; } else b.Encapsulate(r.bounds);
+			}
+			if (!any || b.size.sqrMagnitude < 1e-6f) return;
+			try
+			{
+				var go = new GameObject(ShineName) { layer = root.layer };
+				go.transform.SetParent(root.transform, false);
+				go.transform.position = b.center;
+				go.transform.rotation = Quaternion.identity;
+				Vector3 ls = go.transform.lossyScale;
+				var ps = go.AddComponent<ParticleSystem>();
+				ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+				var main = ps.main;
+				main.loop = true;
+				main.playOnAwake = true;
+				main.simulationSpace = ParticleSystemSimulationSpace.Local;
+				main.scalingMode = ParticleSystemScalingMode.Shape;
+				main.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 1.8f);
+				main.startSpeed = 0f;
+				main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.08f);
+				main.maxParticles = 10;
+				main.startColor = Color.Lerp(tint, Color.white, 0.35f);
+				var shape = ps.shape;
+				shape.shapeType = ParticleSystemShapeType.Box;
+				shape.scale = new Vector3(b.size.x / Mathf.Max(1e-4f, Mathf.Abs(ls.x)), b.size.y / Mathf.Max(1e-4f, Mathf.Abs(ls.y)), b.size.z / Mathf.Max(1e-4f, Mathf.Abs(ls.z)));
+				var emission = ps.emission;
+				emission.rateOverTime = Mathf.Clamp(b.size.x * b.size.y * b.size.z * 2f, 1.5f, 5f);
+				var col = ps.colorOverLifetime;
+				col.enabled = true;
+				var fade = new Gradient();
+				fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+					new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) });
+				col.color = fade;
+				var pr = go.GetComponent<ParticleSystemRenderer>();
+				pr.sharedMaterial = AtmosphereZone.ParticleMaterial();
+				pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+				pr.receiveShadows = false;
+				ps.Play();
+			}
+			catch (Exception e) { Warn("Glints of " + root.name + ": " + e.Message); }
 		}
 
 		#endregion
@@ -848,7 +944,8 @@ namespace DynamicIslands.Editor
 			done = true;
 			try
 			{
-				ObjectProps.ApplyTint(gameObject, upgrade.Tint, 1f);
+				ExtraUpgrades.TintAll(gameObject, upgrade.Tint);
+				ExtraUpgrades.Shine(gameObject, upgrade.Tint);
 				if (upgrade.Setup != null) upgrade.Setup(gameObject);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] " + upgrade.Display + ": " + e.Message); }
