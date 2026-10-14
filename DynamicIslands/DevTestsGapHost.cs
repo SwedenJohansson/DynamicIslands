@@ -306,7 +306,7 @@ namespace DynamicIslands
 
 		static Network_Player GiantOtherPlayer() { return UnityEngine.Object.FindObjectsOfType<Network_Player>().FirstOrDefault(p => p != null && !p.IsLocalPlayer); }
 
-		[ConsoleCommand(name: "CIGiantMP", docs: "Dev, in game (either player; the two-player part is mplatejoin.ps1 -parts giant): the giant rogue shark. CIGiantMP info = 'GIANT info ...' (giant, rust-red, size against a plain shark, health, bite) | hit <damage> = a hit on it as a weapon does (a client's goes to the host) | bite plain|giant = (host) a bite on the other player of the shark's number, a plain shark's or the giant's | health = 'GIANT health ...' of this player | heal = this player full health | loot = 'GIANT loot ...' pickups lying where the rogue was last seen")]
+		[ConsoleCommand(name: "CIGiantMP", docs: "Dev, in game (either player; the two-player part is mplatejoin.ps1 -parts giant): the giant rogue shark. CIGiantMP info = 'GIANT info ...' (giant, rust-red, size against a plain shark, health, bite) | hit <damage> = a hit on it as a weapon does (a client's goes to the host) | bite plain|giant = (host) a bite on the other player of the shark's number, a plain shark's or the giant's | health = 'GIANT health ...' of this player | heal = this player full health | loot [x z] = 'GIANT loot ...' pickups lying where the rogue was last seen (or around x z, the other machine's spot)")]
 		public static void GiantMPCommand(string[] args)
 		{
 			string mode = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "info";
@@ -378,6 +378,8 @@ namespace DynamicIslands
 			else if (mode == "loot")
 			{
 				Vector3 at = lastRoguePos;
+				float lx, lz;
+				if (args.Length > 2 && float.TryParse(args[1], NumberStyles.Float, inv, out lx) && float.TryParse(args[2], NumberStyles.Float, inv, out lz)) at = new Vector3(lx, at.y, lz);
 				var near = UnityEngine.Object.FindObjectsOfType<PickupItem_Networked>().Where(p => p != null && p.gameObject.activeInHierarchy && !p.name.StartsWith("Pickup_Floating_") && FlatDistance(p.transform.position, at) < 30f).ToList();
 				var names = near.GroupBy(p => p.name.Replace("(Clone)", "").Trim()).OrderBy(g => g.Key).Select(g => g.Key + "x" + g.Count()).ToArray();
 				Log("GIANT loot: " + near.Count + " pickup(s) within 30 m of where it was last seen (" + at.ToString("F0") + "): " + string.Join(" ", names) + " (" + who + ")");
@@ -403,6 +405,7 @@ namespace DynamicIslands
 			}
 			if ((mode == "stand" || mode == "check" || mode == "where") && args.Length > 1)
 			{
+				if (mode == "stand") { StartTest(GhostDeckGoStand(args[1])); return; }
 				IslandWorldState.Entry e = LoadedIsland(new[] { args[1] });
 				if (e == null) return;
 				float seconds;
@@ -436,7 +439,8 @@ namespace DynamicIslands
 				string name = CustomIslandSpawner.GeneratedPrefix + GhostRafts.TypeName + "-" + seed;
 				IslandFile f = MapTypes.Create(MapTypes.Get(GhostRafts.TypeName), s, 0f, name);
 				f.Save(IslandSpawner.PathFor(name));
-				Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, 40f, 160f);
+				// (out to 400 m: the CI world keeps islands of earlier runs, and the two rings within 160 m can all be taken)
+				Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, 40f, 400f);
 				if (!spot.HasValue) { Fail("deck island: no open sea near the raft"); yield break; }
 				yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
 				e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
@@ -476,6 +480,21 @@ namespace DynamicIslands
 				(raft.HasValue ? ", Raft's raft " + FlatDistance(raft.Value, e.Position).ToString("F0") + " m from the island" : "");
 			Log("DECK where: " + seen + " (" + (Raft_Network.IsHost ? "host" : "player who joined") + ")");
 			return grounded && under != null && under.name == "CustomIslands_Deck" && fromMiddle < 30f;
+		}
+
+		/// <summary>The island may not be loaded yet on the player who joined (a trader raft comes ahead of the raft, out of their reach): go above it first.</summary>
+		static IEnumerator GhostDeckGoStand(string name)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			IslandWorldState.Entry far = IslandWorldState.Islands.FirstOrDefault(i => (i.HostName ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (far != null && far.Root == null && player != null)
+			{
+				PlayerMove.To(player, far.Position + Vector3.up * 30f);
+				KeepAlive(player);
+				yield return WaitFor(() => far.Root != null, 30f);
+			}
+			IslandWorldState.Entry e = LoadedIsland(new[] { name });
+			if (e != null) yield return GhostDeckStand(e);
 		}
 
 		static IEnumerator GhostDeckStand(IslandWorldState.Entry e)

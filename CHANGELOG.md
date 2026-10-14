@@ -176,6 +176,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Joining again on a ghost raft:** a player who left while standing on a ghost raft (a deck just above the sea)
+  could come back on the host's raft: the deck wasn't loaded yet on their PC, so Raft took them for a swimmer and
+  moved them. They are now held where they stood until it loads, as on any other island.
 - **Generated radio towers in a world are whole again:** an island the world generated (a large island with
   a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
   and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's

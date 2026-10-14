@@ -64,7 +64,12 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			// (a swimmer, or someone on the raft or on Raft's own islands, is left alone)
-			if (p.y < 1f || Supported(p)) return;
+			Collider under = SupportUnder(p);
+			if (p.y < 1f || under != null)
+			{
+				Debug.Log("[CUSTOM ISLANDS] The player is back at " + p.ToString("F1") + (under != null ? " on '" + under.name + "'" : " in the sea") + ": left to Raft");
+				return;
+			}
 			// (put on the raft before its blocks are in - a joining player: held still in the world, the drifting raft
 			// went on without them and they dropped into the sea by a shark - AU80)
 			if (OnRaftSpot(p)) { Debug.Log("[CUSTOM ISLANDS] The player is on the raft at " + p.ToString("F1") + ", its blocks not in yet: left to Raft"); return; }
@@ -79,9 +84,12 @@ namespace DynamicIslands.Editor
 			if (player == null || wentTo) return;
 			wentTo = true;
 			Vector3 now = spot ?? player.transform.position;
-			if ((now - target).magnitude < Misplaced) return;
+			float off = (now - target).magnitude;
+			// (Raft put them right: fine while held or on the island already. Not held and the island not in yet - a ghost
+			// raft's deck just above the sea read as the sea - they would drop in, and Raft moves a swimmer onto its raft)
+			if (off < Misplaced && (spot.HasValue || IslandUnder(player.transform.position) != null)) return;
 			settled = null;
-			Hold(target, "The host saw the player on '" + island + "', " + (now - target).magnitude.ToString("F0") + " m from where Raft put them: back there");
+			Hold(target, "The host saw the player on '" + island + "', " + (off < Misplaced ? "not loaded here yet: held there" : off.ToString("F0") + " m from where Raft put them: back there"));
 		}
 
 		/// <summary>Dev tests (CIHoldAtSea): hold the player here, as a join would.</summary>
@@ -178,10 +186,12 @@ namespace DynamicIslands.Editor
 
 		static void Put(Network_Player player, Vector3 at) { PlayerMove.To(player, at); }
 
-		static bool Supported(Vector3 p)
+		/// <summary>What the player stands on (something solid right under them), or null.</summary>
+		static Collider SupportUnder(Vector3 p)
 		{
 			int mask = ~(1 << LayerMask.NameToLayer("LocalPlayer"));
-			return Physics.Raycast(p + Vector3.up * 0.5f, Vector3.down, SupportRay + 0.5f, mask, QueryTriggerInteraction.Ignore);
+			RaycastHit hit;
+			return Physics.Raycast(p + Vector3.up * 0.5f, Vector3.down, out hit, SupportRay + 0.5f, mask, QueryTriggerInteraction.Ignore) ? hit.collider : null;
 		}
 
 		/// <summary>The loaded custom island whose own colliders are right under this spot, or null.</summary>

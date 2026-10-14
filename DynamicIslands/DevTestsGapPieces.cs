@@ -461,7 +461,16 @@ namespace DynamicIslands
 			{
 				Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(r.transform.position, Vector3.one);
 				foreach (Renderer x in rs) b.Encapsulate(x.bounds);
-				PlayerMove.To(player, new Vector3(b.center.x, b.max.y + 0.3f, b.center.z));
+				Vector3 at = new Vector3(b.center.x, b.max.y + 0.3f, b.center.z);
+				// the other player may still stand on the lift (they rode it last): landing on their head, the ray misses the lift, so land beside them
+				foreach (Network_Player o in UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(x => x != null && x != player))
+				{
+					if (FlatDistance(o.transform.position, at) > 1f || o.transform.position.y < b.min.y - 1f || o.transform.position.y > b.max.y + 3f) continue;
+					Vector3 dir = b.extents.x >= b.extents.z ? Vector3.right : Vector3.forward;
+					if (Vector3.Dot(o.transform.position - b.center, dir) > 0f) dir = -dir;
+					at += dir * Mathf.Min(1.2f, Mathf.Max(b.extents.x, b.extents.z) * 0.6f);
+				}
+				PlayerMove.To(player, at);
 				KeepAlive(player);
 				yield return new WaitForSeconds(1f);
 				carried = mb != null && mb.Carry && mb.Carries(player.transform);
