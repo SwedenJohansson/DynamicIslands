@@ -2157,7 +2157,7 @@ namespace DynamicIslands
 		#endregion
 		#region Every combination
 
-		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (512) of the world options switched on in turn (the retired ones together, as one; the rogue shark, the barrels and storm days together): each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
+		[ConsoleCommand(name: "CIOptionsMatrix", docs: "Dev, world (host): every combination (512) of the world options switched on in turn (the retired ones together, as one; the rogue shark, the barrels, storm days, the trader raft and night is dangerous together): each is the world's (the world file's lines, the host's message, CIServerSig's lines), what follows from it holds (the story order only with its option, the blueprints' pairs only with theirs, the storages' refusal only with theirs, ghost rafts only with theirs), no exceptions while the mod's ticks run a few seconds with it; the world's own options back after")]
 		public static void OptionsMatrixCommand() { StartTest(OptionsMatrixRoutine()); }
 
 		static IEnumerator OptionsMatrixRoutine()
@@ -2175,9 +2175,10 @@ namespace DynamicIslands
 			int combos = 0;
 			try
 			{
-				// (switched together: the retired options, and the three that only add something at sea (the rogue shark, the
-				// barrels, storm days, the trader raft): 512 combinations, not 4096 - ~22 min)
-				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft };
+				// (switched together: the retired options, and the ones that only add something at sea or make it harsher (the
+				// rogue shark, the barrels, storm days, the trader raft, night is dangerous): 512 combinations, not 16384 - ~22 min;
+				// with the upgrades option alone it was 1024 and ran past alltests' 25 min)
+				string[] sea = { WorldOptions.RogueShark, WorldOptions.Barrels, WorldOptions.StormDays, WorldOptions.TraderRaft, WorldOptions.NightDanger };
 				string[][] groups = WorldOptions.Offered.Where(o => !sea.Contains(o)).Select(o => new[] { o }).Concat(new[] { sea, WorldOptions.Retired }).ToArray();
 				// (no rogue shark rolled meanwhile: before day 3 there's none)
 				RogueShark.TestDay = 1;

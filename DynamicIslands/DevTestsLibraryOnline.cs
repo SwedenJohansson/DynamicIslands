@@ -240,7 +240,7 @@ namespace DynamicIslands
 			catch (Exception e) { Fail("making the island: " + e.Message); }
 		}
 
-		[ConsoleCommand(name: "CILibraryDownload", docs: "Dev, main menu: downloads entries from the real island library as the window's Download does (each file checked, installed like Import) and checks their files are there: CILibraryDownload <id,id,...>")]
+		[ConsoleCommand(name: "CILibraryDownload", docs: "Dev, main menu: downloads entries from the real island library as the window's Download does (each file checked, installed like Import) and checks their files are there; each install logs GOT plan|<plan>|<island;island> or GOT island|<name>|<elevation>: CILibraryDownload <id,id,...>, or CILibraryDownload pick:<plans>,<islands> for that many of each spread over the list by title (installed ones first)")]
 		public static void LibraryDownloadCommand(string[] args) { StartTest(LibraryDownloadRoutine(string.Join(" ", args ?? new string[0]).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList())); }
 
 		static IEnumerator LibraryDownloadRoutine(List<string> ids)
@@ -250,16 +250,45 @@ namespace DynamicIslands
 			yield return LoadList(true);
 			Check(ref ok, LibraryClient.Entries != null, "the library's list: " + (LibraryClient.Entries != null ? LibraryClient.Entries.Count + " entries" : LibraryClient.LastError));
 			if (LibraryClient.Entries == null) { Fail("library download"); yield break; }
-			foreach (string id in ids)
+			// (pick:P,I - the library's entries change (Franz's Drive folder since 10-14), so no fixed ids: P plans and I islands spread
+			// over its list by title, from those already installed when there are enough - the test's downloads land in the game's mods)
+			List<LibraryEntry> chosen = new List<LibraryEntry>();
+			if (ids.Count > 0 && ids[0].StartsWith("pick:", StringComparison.OrdinalIgnoreCase))
 			{
-				LibraryEntry e = LibraryClient.Entries.FirstOrDefault(x => x.Info.id == id);
-				if (e == null) { Check(ref ok, false, "'" + id + "' is in the library"); continue; }
+				int np, ni; int.TryParse(ids[0].Substring(5), out np); int.TryParse(ids.Count > 1 ? ids[1] : "0", out ni);
+				Func<string, int, IEnumerable<LibraryEntry>> spread = (kind, count) =>
+				{
+					List<LibraryEntry> all = LibraryClient.Entries.Where(x => x.Info.kind == kind).OrderBy(x => x.Info.title, StringComparer.OrdinalIgnoreCase).ToList();
+					List<LibraryEntry> have = all.Where(x => LibraryClient.StateOf(x) != LibraryClient.State.NotInstalled).ToList();
+					if (have.Count >= count) all = have;
+					count = Math.Min(count, all.Count);
+					return Enumerable.Range(0, count).Select(k => all[(int)((k + 0.5f) * all.Count / count)]).ToList();
+				};
+				chosen.AddRange(spread(LibraryPack.KindPlan, np));
+				chosen.AddRange(spread(LibraryPack.KindIsland, ni));
+				Check(ref ok, chosen.Count == np + ni && chosen.Count > 0, "picked " + chosen.Count + " of " + (np + ni) + ": " + string.Join(", ", chosen.Select(x => x.Info.title).ToArray()));
+			}
+			else foreach (string id in ids)
+			{
+				LibraryEntry f = LibraryClient.Entries.FirstOrDefault(x => x.Info.id == id);
+				if (f == null) Check(ref ok, false, "'" + id + "' is in the library"); else chosen.Add(f);
+			}
+			foreach (LibraryEntry e in chosen)
+			{
 				LibraryPack.Report report = null; string error = null; bool finished = false;
 				yield return LibraryClient.Download(e, false, false, _ => { }, (r, err) => { report = r; error = err; finished = true; });
 				for (float t = 0; !finished && t < 60f; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 				bool files = report != null && report.Islands.All(n => File.Exists(IslandSpawner.PathFor(n))) && (report.PlanName == null || File.Exists(WorldPlan.PathFor(report.PlanName)));
 				Check(ref ok, error == null && files && LibraryClient.StateOf(e) == LibraryClient.State.Installed,
-					"'" + e.Info.title + "' downloaded and installed: " + (error ?? (report.Islands.Count + " island(s)" + (report.PlanName != null ? " + the plan '" + report.PlanName + "'" : ""))));
+					"'" + e.Info.title + "' downloaded and installed: " + (error ?? (report == null ? "no answer in 60 s" : report.Islands.Count + " island(s)" + (report.PlanName != null ? " + the plan '" + report.PlanName + "'" : ""))));
+				if (error != null || !files) continue;
+				// (for libraryall.ps1: what to try in a world - a plan by its name, an island by its name, under the sea when it stands low)
+				if (report.PlanName != null) Log("GOT plan|" + report.PlanName + "|" + string.Join(";", report.Islands.ToArray()));
+				else foreach (string n in report.Islands)
+				{
+					float elevation = 0; try { elevation = IslandFile.Load(IslandSpawner.PathFor(n)).Elevation; } catch { }
+					Log("GOT island|" + n + "|" + elevation.ToString("F0", System.Globalization.CultureInfo.InvariantCulture));
+				}
 			}
 			if (ok) Log("PASS: library download"); else Fail("library download");
 		}
@@ -358,7 +387,7 @@ namespace DynamicIslands
 			catch (Exception e) { Fail("export: " + e.Message); }
 		}
 
-		[ConsoleCommand(name: "CILibraryOnline", docs: "Dev, main menu: the real island library on GitHub: its list reads (at least the sample plan and island), icons and pictures download, and the sample island downloads and installs (the same file is already here, so it's shared) and is removed again (the file stays)")]
+		[ConsoleCommand(name: "CILibraryOnline", docs: "Dev, main menu: the real island library (its default address, Franz's Google Drive folder): its list reads, an island's icon and picture download, and that island downloads and installs and is removed again (a file of that name that was here before stays)")]
 		public static void LibraryOnlineCommand() { StartTest(LibraryOnlineRoutine()); }
 
 		static IEnumerator LibraryOnlineRoutine()
@@ -369,28 +398,36 @@ namespace DynamicIslands
 			LibraryWindow.Open(1);
 			yield return LoadList(true);
 			yield return new WaitForSecondsRealtime(3f);
-			Check(ref ok, LibraryClient.Entries != null && LibraryClient.Entries.Count >= 2 && LibraryClient.Entries.Any(e => e.Info.id == "palm-cove") && LibraryClient.Entries.Any(e => e.Info.id == "first-voyage"),
-				"the library's list reads from " + LibraryClient.Address + ": " + (LibraryClient.Entries != null ? string.Join(", ", LibraryClient.Entries.Select(e => e.Info.id).ToArray()) : LibraryClient.LastError));
-			if (LibraryClient.Entries == null) { Fail("library online"); yield break; }
-			LibraryWindow.Select("palm-cove");
+			// (any island it lists with an icon and a picture, one not installed here if there is one: the library moved to the
+			// Drive folder on 10-01, which has neither the old sample plan nor Palm Cove)
+			List<LibraryEntry> islands = LibraryClient.Entries == null ? new List<LibraryEntry>() : LibraryClient.Entries.Where(e => e.Info != null && e.Info.kind == LibraryPack.KindIsland && e.Info.icon != "" && e.Info.pictures.Length > 0).ToList();
+			Check(ref ok, LibraryClient.Entries != null && LibraryClient.Entries.Count >= 2 && islands.Count > 0,
+				"the library's list reads from " + LibraryClient.Address + ": " + (LibraryClient.Entries != null ? LibraryClient.Entries.Count + " entries, " + islands.Count + " islands with an icon and a picture" : LibraryClient.LastError));
+			if (islands.Count == 0) { Fail("library online"); yield break; }
+			LibraryEntry pick = islands.FirstOrDefault(e => !LibraryPack.Installed().Any(i => i.id == e.Info.id)) ?? islands[0];
+			string id = pick.Info.id, title = pick.Info.title;
+			bool wasInstalled = LibraryPack.Installed().Any(i => i.id == id);
+			LibraryWindow.Select(id);
 			yield return new WaitForSecondsRealtime(4f);
-			Button row = LibraryWindow.Row("palm-cove");
+			Button row = LibraryWindow.Row(id);
 			RawImage icon = row != null ? row.GetComponentsInChildren<RawImage>(true).FirstOrDefault(i => i.name == "Icon") : null;
-			Check(ref ok, icon != null && icon.texture != null && LibraryWindow.Picture != null && LibraryWindow.Picture.width == 1280, "its icon and picture download (" + (LibraryWindow.Picture != null ? LibraryWindow.Picture.width + "x" + LibraryWindow.Picture.height : "none") + ")");
+			Check(ref ok, icon != null && icon.texture != null && LibraryWindow.Picture != null && LibraryWindow.Picture.width >= 320, title + ": its icon and picture download (" + (LibraryWindow.Picture != null ? LibraryWindow.Picture.width + "x" + LibraryWindow.Picture.height : "none") + ")");
 			Screenshot(new[] { "library_online" });
 			yield return new WaitForSecondsRealtime(0.6f);
-			bool had = File.Exists(IslandSpawner.PathFor("Palm Cove"));
-			string before = had ? LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor("Palm Cove"))) : null;
-			if (LibraryClient.StateOf(LibraryWindow.Selected) == LibraryClient.State.NotInstalled)
+			if (wasInstalled) { Log(title + " was installed here already: left as it is (every island of the library is)"); LibraryWindow.Close(); if (ok) Log("PASS: library online"); else Fail("library online"); yield break; }
+			bool had = File.Exists(IslandSpawner.PathFor(title));
+			string before = had ? LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(title))) : null;
+			if (LibraryWindow.Selected == pick && LibraryClient.StateOf(pick) == LibraryClient.State.NotInstalled)
 			{
 				LibraryWindow.MainButton.onClick.Invoke();
 				yield return WaitNotBusy(60f);
 			}
-			Check(ref ok, File.Exists(IslandSpawner.PathFor("Palm Cove")) && LibraryPack.Installed().Any(e => e.id == "palm-cove"), "Palm Cove downloads and installs: " + LibraryWindow.Progress);
+			LibraryInstalled inst = LibraryPack.Installed().FirstOrDefault(i => i.id == id);
+			Check(ref ok, inst != null && inst.files.Count > 0 && inst.files.All(f => File.Exists(LibraryPack.PathOf(f))), title + " downloads and installs: " + LibraryWindow.Progress);
 			LibraryWindow.RemoveButton.onClick.Invoke(); yield return null;
 			LibraryWindow.RemoveButton.onClick.Invoke(); yield return null;
-			bool stays = !had || (File.Exists(IslandSpawner.PathFor("Palm Cove")) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor("Palm Cove"))) == before);
-			Check(ref ok, !LibraryPack.Installed().Any(e => e.id == "palm-cove") && stays, "removed again" + (had ? " (the Palm Cove that was here before stays)" : ""));
+			bool stays = !had || (File.Exists(IslandSpawner.PathFor(title)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(title))) == before);
+			Check(ref ok, !LibraryPack.Installed().Any(e => e.id == id) && stays, "removed again" + (had ? " (the " + title + " that was here before stays)" : ""));
 			LibraryWindow.Close();
 			if (ok) Log("PASS: library online"); else Fail("library online");
 		}

@@ -133,7 +133,16 @@ namespace DynamicIslands
 			Check(ref ok, editorSize > 0 && size <= editorSize && size >= editorSize / 2, "its words fit the button, no larger than EDITOR's (" + size + " / " + editorSize + ")");
 			var corners = new Vector3[4];
 			text.rectTransform.GetWorldCorners(corners);
+			// (the right end of the letters as drawn: preferredWidth is at the font's own size, not the smaller best-fit one,
+			// and on a half-width window - 1280 px - it put the words past the middle though they ended at 310 px)
 			float right = corners[0].x + text.preferredWidth * text.canvas.scaleFactor;
+			var verts = text.cachedTextGenerator.verts;
+			if (verts.Count > 0)
+			{
+				float maxX = float.MinValue;
+				for (int i = 0; i < verts.Count; i++) maxX = Mathf.Max(maxX, verts[i].position.x);
+				right = text.rectTransform.TransformPoint(new Vector3(maxX / text.pixelsPerUnit, 0f, 0f)).x;
+			}
 			Check(ref ok, corners[0].x >= 0f && right <= Screen.width * 0.5f, "its words are on the screen, on the left (" + corners[0].x.ToString("F0") + " to " + right.ToString("F0") + " px)");
 			Screenshot(new[] { "menu_library" });
 			yield return new WaitForSecondsRealtime(0.6f);

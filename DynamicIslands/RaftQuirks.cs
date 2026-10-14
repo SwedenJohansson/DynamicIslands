@@ -25,4 +25,25 @@ namespace DynamicIslands.Editor
 	{
 		static bool Prefix(UltimateWater.Water water) { return water != null; }
 	}
+
+	/// <summary>
+	/// A pickup that adds several items at once (a crate's loot) to an empty selected hotbar slot selects an item that
+	/// charges up (a fishing rod, say) and deselects it again in the same frame. Its charge meter has not run Start yet,
+	/// has no settings, and ChargeMeter.Reset threw a NullReferenceException in the middle of the pickup. The meter is
+	/// given what its Start would have given it first.
+	/// </summary>
+	[HarmonyPatch(typeof(ChargeMeter), "Reset")]
+	static class ChargeMeterResetBeforeStart
+	{
+		/// <summary>How often a meter was reset before its Start (for the test CIChargeMeterEarly).</summary>
+		internal static int Caught;
+
+		static bool Prefix(ChargeMeter __instance)
+		{
+			Traverse t = Traverse.Create(__instance);
+			if (t.Field("settings").GetValue() == null) { Caught++; t.Field("settings").SetValue(ComponentManager<Settings>.Value); }
+			if (t.Field("canvas").GetValue() == null) t.Field("canvas").SetValue(ComponentManager<CanvasHelper>.Value);
+			return t.Field("settings").GetValue() != null;
+		}
+	}
 }

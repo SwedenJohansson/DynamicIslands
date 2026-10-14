@@ -206,8 +206,10 @@ namespace DynamicIslands
 				Check(ref ok, BuildCost.ReadLine("buildcost", "40") && BuildCost.Current == 40, "and read back: " + BuildCost.Current + "%");
 				Check(ref ok, BuildCost.ReadLine("BuildCost", "150") && BuildCost.Current == 100, "150 in a hand-edited file is 100");
 				Check(ref ok, !BuildCost.ReadLine("monsters", "savage") && BuildCost.Current == 100, "other lines aren't read as the build cost");
+				// (after them: the cost blocks were placed at, from 25 (AU33), and the last world's regrow days, kept until the next world loads)
 				Check(ref ok, WorldRules.ReadLine("buildcost", "25") && WorldRules.ReadLine("monsters", "fierce") && BuildCost.Current == 25 && MonsterDifficulty.Current == MonsterDifficulty.Fierce &&
-					WorldRules.WriteLines().SequenceEqual(new[] { "@monsters=fierce", "@buildcost=25" }), "the world rules read and write both: " + string.Join(", ", WorldRules.WriteLines().ToArray()));
+					WorldRules.WriteLines().Take(2).SequenceEqual(new[] { "@monsters=fierce", "@buildcost=25" }) && WorldRules.WriteLines().Skip(2).All(l => l.StartsWith("@builtat=25|") || l.StartsWith("@regrow=")),
+					"the world rules read and write both: " + string.Join(", ", WorldRules.WriteLines().ToArray()));
 
 				// The last choice in the New Game box (next to the monster difficulty's)
 				string path = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName);

@@ -1131,7 +1131,7 @@ namespace DynamicIslands
 				yield return null;
 				Check(ref ok, InfoWindow.IsOpen && string.Equals(InfoWindow.Title, "Some parts of Custom Islands are off", StringComparison.OrdinalIgnoreCase), "the box opens: '" + InfoWindow.Title + "'");
 				string body = InfoWindow.Body;
-				Check(ref ok, body.Contains("\\u2022  scrambled blueprints") && body.Contains("\\u2022  ghost rafts"), "it names the features in players' words (scrambled blueprints, ghost rafts)");
+				Check(ref ok, body.Contains("\u2022  scrambled blueprints") && body.Contains("\u2022  ghost rafts"), "it names the features in players' words (scrambled blueprints, ghost rafts)");
 				Check(ref ok, body.Split(new[] { "scrambled blueprints" }, StringSplitOptions.None).Length == 2, "... two patches of one feature give one bullet");
 				Check(ref ok, body.Contains("a part of the mod (CIOddOne)") && !body.Contains("CI_Fake"), "... a patch no feature fits is named by its class, the others by their feature");
 				Check(ref ok, InfoWindow.ButtonNamed("Report a problem") != null && InfoWindow.ButtonNamed("Close") != null, "it has Report a problem and Close (" + string.Join(", ", InfoWindow.ButtonLabels.ToArray()) + ")");

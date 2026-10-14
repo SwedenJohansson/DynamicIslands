@@ -490,7 +490,9 @@ namespace DynamicIslands
 				{
 					Vector3 d = treasure.Position - bay.Position;
 					float bearing = (Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f) % 360f;
-					Check(ref ok, bearing > 60f && bearing < 120f, "the bay's quest brought the treasure island east of it: " + bearing.ToString("F0") + "° ('" + treasure.Name + "')");
+					// (the east half: when Raft's islands are in the way the spot search turns up to 80° from the direction -
+					// WorldDirector.Candidates; once it came at 125°, 35° off)
+					Check(ref ok, bearing > 5f && bearing < 175f, "the bay's quest brought the treasure island east of it: " + bearing.ToString("F0") + "° ('" + treasure.Name + "')");
 				}
 				else Check(ref ok, false, "the bay's quest brought no treasure island");
 			}

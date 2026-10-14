@@ -428,6 +428,37 @@ namespace DynamicIslands
 			if (ok) Log("PASS: raft crate world"); else Fail("raft crate world");
 		}
 
+		[ConsoleCommand(name: "CIChargeMeterEarly", docs: "Dev, world (a test world 'CI ...'): Raft's quirk a crate pickup ran into - with the inventory emptied, a fishing rod, hook or bow and planks given in one go into the empty selected hotbar slot (as a crate's loot is): both arrive and no error (Raft reset the item's charge meter before its Start: RaftQuirks fills it in first). The inventory is emptied after")]
+		public static void ChargeMeterEarlyCommand() { StartTest(ChargeMeterEarlyRoutine()); }
+
+		static IEnumerator ChargeMeterEarlyRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("charge meter early: in a test world 'CI ...'"); yield break; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			bool ok = true;
+			int errors = 0; string first = null;
+			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception || type == LogType.Error) { errors++; if (first == null) first = msg; } };
+			int caught = ChargeMeterResetBeforeStart.Caught, tried = 0;
+			foreach (string name in new[] { "FishingRod", "Hook_Plastic", "Bow" })
+			{
+				if (ItemManager.GetItemByName(name) == null) { Log("charge meter early: no item '" + name + "' in this Raft"); continue; }
+				ClearInventory();
+				yield return new WaitForSeconds(0.5f);
+				int e0 = errors;
+				Application.logMessageReceived += counter;
+				try { player.Inventory.AddItem(name, 1); player.Inventory.AddItem("Plank", 3); }
+				catch (Exception ex) { errors++; first = first ?? ex.Message; }
+				yield return new WaitForSeconds(1f);
+				Application.logMessageReceived -= counter;
+				tried++;
+				Check(ref ok, errors == e0 && player.Inventory.GetItemCount(name) == 1 && player.Inventory.GetItemCount("Plank") == 3, name + " and planks given at once: both arrive, no error" + (errors > e0 ? " (" + first + ")" : ""));
+			}
+			Check(ref ok, tried > 0, "items tried: " + tried);
+			Log("charge meter early: a meter reset before its Start " + (ChargeMeterResetBeforeStart.Caught - caught) + " time(s), filled in first");
+			ClearInventory();
+			if (ok) Log("PASS: charge meter early"); else Fail("charge meter early");
+		}
+
 		const string BulkPrefix = "bulk-";
 
 		[ConsoleCommand(name: "CIBulkIslands", docs: "Dev, anywhere (editor for the Islands window) (TEST_CATALOGUE UP10): CIBulkIslands [n] - n small islands (bulk-0001 ..., default 1000) in the folder: listing them, the spawn pool, CHOOSE ISLANDS' list, the library's Tidy up look and (in the editor) the Islands window each take under 2 s, and the search finds one. The islands are removed after (CIBulkIslands keep leaves them; CIBulkIslands clean removes them)")]

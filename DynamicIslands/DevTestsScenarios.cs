@@ -604,7 +604,8 @@ namespace DynamicIslands
 			// (a) with a world entry (a plan rule's island): the shift during the spawn
 			Vector3? spot = ScSpot(isl, 400f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario shift: no open sea near the raft"); yield break; }
-			Vector3 offset = spot.Value - raft.body.position; offset.y = 0f;
+			// (where it should land: the spot moved by the shifts made meanwhile - not by the raft, which drifts while it loads)
+			Vector3 shifted0 = IslandWorldState.ShiftedBy;
 			IslandWorldState.Entry entry = IslandWorldState.Add(isl, spot.Value, null, false);
 			entry.Loading = true;
 			made.Add(entry);
@@ -612,7 +613,7 @@ namespace DynamicIslands
 			wsm.ResetToCenter(shift);
 			yield return c;
 			yield return WaitFor(() => entry.Root != null || entry.Failed, 20f);
-			Vector3 want = raft.body.position + offset;
+			Vector3 want = spot.Value - (IslandWorldState.ShiftedBy - shifted0);
 			float off = entry.Root != null ? ScFlat(ScLandCentre(entry), want) : 999f;
 			Check(ref ok, entry.Root != null && off < 3f, "a world shift while a plan rule's island is coming: it lands where it should (" + off.ToString("F1") + " m off)");
 			ScRemove(made);
@@ -621,13 +622,13 @@ namespace DynamicIslands
 			spot = ScSpot(isl, 400f);
 			if (spot.HasValue)
 			{
-				offset = spot.Value - raft.body.position; offset.y = 0f;
+				shifted0 = IslandWorldState.ShiftedBy;
 				int before = IslandWorldState.Islands.Count;
 				c = StartTest(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true));
 				wsm.ResetToCenter(shift);
 				yield return c;
 				IslandWorldState.Entry e2 = IslandWorldState.Islands.Skip(before).FirstOrDefault(x => x.HostName == isl);
-				want = raft.body.position + offset;
+				want = spot.Value - (IslandWorldState.ShiftedBy - shifted0);
 				off = e2 != null && e2.Root != null ? ScFlat(ScLandCentre(e2), want) : 999f;
 				Check(ref ok, e2 != null && off < 3f, "a world shift while SpawnIsland's island is coming: it lands where it should (" + off.ToString("F1") + " m off) - AU58");
 				if (e2 != null) made.Add(e2);
@@ -650,7 +651,8 @@ namespace DynamicIslands
 					Vector3 rel2 = p.transform.position - ScLandCentre(e);
 					Check(ref ok, (rel2 - rel).magnitude < 3f && p.PersonController.IsGrounded, "a world shift with the player standing on an island: they stay where they stood (moved " + (rel2 - rel).magnitude.ToString("F1") + " m relative to it, grounded " + p.PersonController.IsGrounded + ")");
 					// (c) the island unloaded, the world shifts, it loads again
-					offset = e.Position - raft.body.position; offset.y = 0f;
+					Vector3 was = e.Position;
+					shifted0 = IslandWorldState.ShiftedBy;
 					OnRaftCommand();
 					IslandObjectState.Capture(e);
 					IslandSpawner.Despawn(e.Root);
@@ -660,7 +662,7 @@ namespace DynamicIslands
 					yield return null;
 					e.Loading = true;
 					yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
-					want = raft.body.position + offset;
+					want = was - (IslandWorldState.ShiftedBy - shifted0);
 					off = e.Root != null ? ScFlat(ScLandCentre(e), want) : 999f;
 					Check(ref ok, e.Root != null && off < 3f, "an island unloaded during a world shift comes back where it was (" + off.ToString("F1") + " m off)");
 				}
@@ -1444,6 +1446,9 @@ namespace DynamicIslands
 					ObjectState s;
 					if (e.State.TryGetValue(k, out s)) e.State[k] = new ObjectState { Active = s.Active, Yield = s.Yield, Day = s.Day - 10 };
 				}
+				// (back on the raft first: still standing in the plain zone, the player set it off again as soon as it loaded - 10-14)
+				OnRaftCommand();
+				yield return new WaitForSeconds(0.5f);
 				IslandObjectState.Capture(e);
 				IslandSpawner.Despawn(e.Root);
 				e.Root = null;

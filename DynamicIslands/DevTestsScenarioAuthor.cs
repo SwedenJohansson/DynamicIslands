@@ -498,7 +498,7 @@ namespace DynamicIslands
 		const string EditIsland = "ciscedit";
 		static string editHashBefore = "";
 
-		[ConsoleCommand(name: "CIScEditUsed", docs: "Dev: SC70 - an island edited while a world plays it. CIScEditUsed prep (world) = the island in the world, its first box opened, saved; safe (editor) = a rock moved, saved; checksafe (world) = the edit reached the world, the box still opened; unsafe (editor) = the second box deleted, saved; checkunsafe (world) = the world keeps the old version")]
+		[ConsoleCommand(name: "CIScEditUsed", docs: "Dev: SC70 - an island edited while a world plays it. CIScEditUsed prep (world) = the island in the world, its first box opened, saved; safe (editor) = a rock moved, saved; checksafe (world) = the edit reached the world, the box still opened; unsafe (editor) = the second box deleted, saved; checkunsafe (world) = the world plays the new version, the opened box still opened (carried by the objects' ids, R1b)")]
 		public static void ScEditUsedCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "prep";
@@ -575,8 +575,10 @@ namespace DynamicIslands
 				}
 				else
 				{
-					Check(ref ok, box2 != null, "the world keeps the island's old version with both boxes (the second was deleted in the editor)");
-					Check(ref ok, box1 != null && box1.Looted, "... and its opened box stays opened");
+					// (since R1b, 10-09: the saved world's state is carried to the new version by the objects' ids - before, the
+					// world kept the old version with both boxes)
+					Check(ref ok, box2 == null && e.Name.Equals(EditIsland, StringComparison.OrdinalIgnoreCase), "the world plays the edited island (" + e.Name + "): the second box, deleted in the editor, is gone");
+					Check(ref ok, box1 != null && box1.Looted, "... and its opened box stays opened (carried by its id)");
 					IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
 					ScDeleteIslands(n => n.StartsWith(EditIsland, StringComparison.OrdinalIgnoreCase));
 				}

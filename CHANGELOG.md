@@ -178,6 +178,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **An error picking up a crate:** picking up a crate (or anything that gives several items at once) with an empty
+  hotbar slot selected could put a fishing rod or another item that charges up in hand and away again at once, and
+  Raft then threw an error (a NullReferenceException) in the middle of the pickup. It no longer does.
 - **Joining again on a ghost raft:** a player who left while standing on a ghost raft (a deck just above the sea)
   could come back on the host's raft: the deck wasn't loaded yet on their PC, so Raft took them for a swimmer and
   moved them. They are now held where they stood until it loads, as on any other island.
