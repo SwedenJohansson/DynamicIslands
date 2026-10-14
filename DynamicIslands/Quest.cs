@@ -247,7 +247,9 @@ namespace DynamicIslands.Editor
 				if (q.Exists && step < q.Steps.Count)
 					for (int k = step + 1; k < q.Steps.Count && next < 0; k++)
 						if (q.Steps[k].Type == q.Steps[step].Type && string.Equals(q.Steps[k].Target.Trim(), q.Steps[step].Target.Trim(), StringComparison.OrdinalIgnoreCase)) next = k;
-				int take = next < 0 || !q.Exists ? amount : Mathf.Min(amount, Mathf.Max(0, q.Steps[step].Count - before));
+				// (never more than the step needs: a zone entered again - a player set down inside it after a load - counted
+				// twice, SL7)
+				int take = !q.Exists || step >= q.Steps.Count ? amount : Mathf.Min(amount, Mathf.Max(0, q.Steps[step].Count - before));
 				if (take > 0)
 				{
 					e.State[EarlyKeyOf(quest, step)] = new ObjectState { Active = true, Yield = before + take, Day = Today };
