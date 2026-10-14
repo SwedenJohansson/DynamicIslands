@@ -28,6 +28,8 @@ namespace DynamicIslands
 			public Vector3 Spot;
 			public float Yaw;
 			public int Shots, Fails;
+			/// <summary>"close": also a close picture of each upgrade alone (its glints).</summary>
+			public bool Close;
 			public List<Block> Blocks = new List<Block>();
 			public List<GameObject> Objs = new List<GameObject>();
 		}
@@ -144,6 +146,26 @@ namespace DynamicIslands
 			yield return UsWaitFile(path, res);
 			if (res.Ok) { run.Shots++; Log("SHOT up " + label + " " + Path.GetFileName(path)); }
 			else { run.Fails++; Fail("upgrade shots: " + label + ": no picture " + Path.GetFileName(path)); }
+		}
+
+		/// <summary>The upgrade has its glints (ExtraUpgrades.Shine: one playing particle system), the base item none.</summary>
+		static void UsGlintCheck(UsRun run, string n, GameObject baseObj, GameObject upObj)
+		{
+			Func<GameObject, int> glints = go => go == null ? 0 : go.GetComponentsInChildren<ParticleSystem>(true).Count(p => p.name == ExtraUpgrades.ShineName);
+			int ga = glints(baseObj), gb = glints(upObj);
+			ParticleSystem ps = upObj == null ? null : upObj.GetComponentsInChildren<ParticleSystem>(true).FirstOrDefault(p => p.name == ExtraUpgrades.ShineName);
+			Log("  (" + n + ": glints base " + ga + ", upgrade " + gb + (ps != null ? ", playing " + ps.isPlaying + ", rate " + ps.emission.rateOverTime.constant.ToString("F1") : "") + ")");
+			if (gb != 1 || ga != 0 || ps == null || !ps.isPlaying) { run.Fails++; Fail("upgrade shots: " + n + ": glints wrong (base " + ga + ", upgrade " + gb + (ps != null && !ps.isPlaying ? ", not playing" : "") + ")"); }
+		}
+
+		/// <summary>With "close": the upgrade alone from near, after its glints have had time to show.</summary>
+		static IEnumerator UsCloseShot(UsRun run, string n, GameObject upObj)
+		{
+			if (!run.Close) yield break;
+			yield return new WaitForSeconds(1.5f);
+			Bounds bb;
+			if (!UsBounds(upObj, out bb)) yield break;
+			yield return UsShoot(run, n + " close", bb, run.Yaw, "up_" + n + "_close", 0.4f);
 		}
 
 		static IEnumerator UsWaitFile(string path, UsRes res)
@@ -266,19 +288,20 @@ namespace DynamicIslands
 
 		#region CIUpgradeShots
 
-		[ConsoleCommand(name: "CIUpgradeShots", docs: "Dev, world (host): for every craftable of the world option Extra upgrades (the upgrades, the upgrade research table, the large battery) one picture shot_up_<Name>.png (<Name> without DI_) of the Raft base item on the left and the upgrade on the right, 1.5 widths apart, floating over the raft, in midday light, no HUD: placeables as blocks; hand-held and worn ones as copies of their world/hand models (the mod's tint on the upgrade); the large battery in the slots of two identical machines (shot_up_LargeBattery.png and the slots close up, _slot); worn head lights also equipped (shot_up_<Name>_held_base.png / _held_up.png). Logs '[CITEST] SHOT up <Name> <file>' per picture. CIUpgradeShots [name filter] [yaw=<degrees to turn the camera round the pieces, default 0: looking along +Z>]")]
+		[ConsoleCommand(name: "CIUpgradeShots", docs: "Dev, world (host): for every craftable of the world option Extra upgrades (the upgrades, the upgrade research table, the large battery) one picture shot_up_<Name>.png (<Name> without DI_) of the Raft base item on the left and the upgrade on the right, 1.5 widths apart, floating over the raft, in midday light, no HUD: placeables as blocks; hand-held and worn ones as copies of their world/hand models (the mod's tint on the upgrade); the large battery in the slots of two identical machines (shot_up_LargeBattery.png and the slots close up, _slot); worn head lights also equipped (shot_up_<Name>_held_base.png / _held_up.png). Logs '[CITEST] SHOT up <Name> <file>' per picture. CIUpgradeShots [name filter] [yaw=<degrees to turn the camera round the pieces, default 0: looking along +Z>]. Built and hand-held upgrades must have their glints (one playing DI_UpgradeShine, none on the base). 'close': also shot_up_<Name>_close.png, the upgrade alone from near")]
 		public static void UpgradeShotsCommand(string[] args)
 		{
 			string filter; float yaw; bool flag;
-			UsArgs(args, out filter, out yaw, out flag);
-			StartTest(UpgradeShotsRoutine(filter, yaw));
+			bool close = (args ?? new string[0]).Any(a => a.Equals("close", StringComparison.OrdinalIgnoreCase));
+			UsArgs((args ?? new string[0]).Where(a => !a.Equals("close", StringComparison.OrdinalIgnoreCase)).ToArray(), out filter, out yaw, out flag);
+			StartTest(UpgradeShotsRoutine(filter, yaw, close));
 		}
 
-		static IEnumerator UpgradeShotsRoutine(string filter, float yaw)
+		static IEnumerator UpgradeShotsRoutine(string filter, float yaw, bool close)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null || !CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("upgrade shots: host, in a world"); yield break; }
-			var run = new UsRun { Player = player, Spot = CustomIslandSpawner.RaftPosition.Value + new Vector3(0f, 22f, 0f), Yaw = yaw };
+			var run = new UsRun { Player = player, Spot = CustomIslandSpawner.RaftPosition.Value + new Vector3(0f, 22f, 0f), Yaw = yaw, Close = close };
 			List<ExtraUpgrades.Upgrade> list = ExtraUpgrades.All.Where(u => UsMatch(u, filter)).ToList();
 			if (list.Count == 0) { Fail("upgrade shots: no upgrade matches '" + filter + "'"); yield break; }
 			float hour0 = UsGetHour();
@@ -311,8 +334,10 @@ namespace DynamicIslands
 			yield return null; yield return null; yield return null;
 			Bounds ba, bb;
 			if (!UsBounds(a.gameObject, out ba) || !UsBounds(b.gameObject, out bb)) { run.Fails++; Fail("upgrade shots: " + n + ": a placed block has no visible mesh"); yield break; }
+			if (b.GetComponent<UpgradeBlock>() != null) UsGlintCheck(run, n, a.gameObject, b.gameObject);
 			Bounds all = UsArrange(a.gameObject, ba, b.gameObject, bb, run.Spot, run.Yaw);
 			yield return UsShoot(run, n, all, run.Yaw, "up_" + n, 2f);
+			yield return UsCloseShot(run, n, b.gameObject);
 		}
 
 		/// <summary>A hand-held or worn item: copies of the base item's model and the upgrade's side by side; head lights also equipped.</summary>
@@ -341,8 +366,10 @@ namespace DynamicIslands
 			Log("  (" + n + ": copied from " + sa.name + ": " + string.Join(", ", sa.GetComponentsInChildren<Renderer>(true).Select(r => r.GetType().Name + " " + r.name + " scale " + r.transform.lossyScale.ToString("F3") + (r.enabled ? "" : " off") + (r.gameObject.activeInHierarchy ? "" : " hidden")).ToArray()) + ")");
 			Log("  (" + n + ": models " + ba.size.ToString("F2") + " and " + bb.size.ToString("F2") + ")");
 			if (Mathf.Max(ba.size.x, ba.size.y, ba.size.z) < 0.05f || Mathf.Max(bb.size.x, bb.size.y, bb.size.z) < 0.05f) { run.Fails++; Fail("upgrade shots: " + n + ": the model copy is too small to see (under 5 cm)"); yield break; }
+			if (u.Held != null) UsGlintCheck(run, n, a, b);
 			Bounds all = UsArrange(a, ba, b, bb, run.Spot, run.Yaw);
 			yield return UsShoot(run, n, all, run.Yaw, "up_" + n, 1.2f);
+			if (u.Held != null) yield return UsCloseShot(run, n, b);
 			UsRemove(run);
 			// A worn item tinted only while worn: also really equipped
 			if (u.Wearing != null)
