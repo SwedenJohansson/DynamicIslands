@@ -115,7 +115,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ### Changed
 - **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
-  colour round a built or hand-held upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
+  colour round a built, hand-held or worn upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
+  The titanium spear is a light, almost white metal (its tint was only a little darker than the scrap spear).
 - **Check warns about a deleted story item:** a story item that a quest step, a check, a chest or an action
   still uses but that is no longer in the island's Story items list (or was mistyped) is now a quest trap in Check.
   A quest file edited by hand is read up to 99 steps; more are cut. (The editor adds up to 10; a recipe's quest runs

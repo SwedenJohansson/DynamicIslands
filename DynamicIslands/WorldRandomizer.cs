@@ -974,7 +974,8 @@ namespace DynamicIslands.Editor
 
 		static RenderTexture Tinted(Texture src, Color c)
 		{
-			string key = src.GetInstanceID() + "/" + ColorUtility.ToHtmlStringRGB(c);
+			// Not ToHtmlStringRGB: it clamps, so a light colour (over 1) would share plain white's copy
+			string key = src.GetInstanceID() + "/" + c.r.ToString("F3") + "/" + c.g.ToString("F3") + "/" + c.b.ToString("F3");
 			RenderTexture rt;
 			if (tintedTextures.TryGetValue(key, out rt) && rt != null) return rt;
 			if (blitMaterial == null)
