@@ -851,8 +851,9 @@ namespace DynamicIslands.Editor
 				main.scalingMode = ParticleSystemScalingMode.Shape;
 				main.startLifetime = new ParticleSystem.MinMaxCurve(1.2f, 1.8f);
 				main.startSpeed = 0f;
-				main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.08f);
-				main.maxParticles = 10;
+				main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.22f);
+				main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI / 4f);
+				main.maxParticles = 12;
 				main.startColor = Color.Lerp(tint, Color.white, 0.35f);
 				var shape = ps.shape;
 				shape.shapeType = ParticleSystemShapeType.Box;
@@ -865,13 +866,41 @@ namespace DynamicIslands.Editor
 				fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
 					new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) });
 				col.color = fade;
+				var grow = ps.sizeOverLifetime;
+				grow.enabled = true;
+				grow.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.2f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0.2f)));
 				var pr = go.GetComponent<ParticleSystemRenderer>();
-				pr.sharedMaterial = AtmosphereZone.ParticleMaterial();
+				pr.sharedMaterial = GlintMaterial();
 				pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 				pr.receiveShadows = false;
 				ps.Play();
 			}
 			catch (Exception e) { Warn("Glints of " + root.name + ": " + e.Message); }
+		}
+
+		static Material glintMaterial;
+
+		/// <summary>A four-pointed star that adds light (a soft dot hardly showed by day, 2026-10-14 close pictures).</summary>
+		static Material GlintMaterial()
+		{
+			if (glintMaterial != null) return glintMaterial;
+			Shader shader = Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Mobile/Particles/Additive");
+			if (shader == null) return glintMaterial = AtmosphereZone.ParticleMaterial();
+			const int S = 64;
+			var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { name = "DI_Glint", wrapMode = TextureWrapMode.Clamp };
+			var px = new Color32[S * S];
+			for (int y = 0; y < S; y++)
+				for (int x = 0; x < S; x++)
+				{
+					float dx = Mathf.Abs(x + 0.5f - S / 2f) / (S / 2f), dy = Mathf.Abs(y + 0.5f - S / 2f) / (S / 2f);
+					float d = Mathf.Sqrt(dx * dx + dy * dy);
+					float core = Mathf.Pow(Mathf.Clamp01(1f - d * 2.5f), 2f);
+					float arms = Mathf.Clamp01(1f - dy * 14f) * Mathf.Clamp01(1f - dx) + Mathf.Clamp01(1f - dx * 14f) * Mathf.Clamp01(1f - dy);
+					px[y * S + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(core + arms * 0.9f) * 255));
+				}
+			tex.SetPixels32(px);
+			tex.Apply();
+			return glintMaterial = new Material(shader) { name = "DI_Glint", mainTexture = tex };
 		}
 
 		#endregion

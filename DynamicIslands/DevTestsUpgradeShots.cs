@@ -165,7 +165,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1.5f);
 			Bounds bb;
 			if (!UsBounds(upObj, out bb)) yield break;
-			yield return UsShoot(run, n + " close", bb, run.Yaw, "up_" + n + "_close", 0.4f);
+			yield return UsShoot(run, n + " close", bb, run.Yaw, "up_" + n + "_close", 0.9f);
 		}
 
 		static IEnumerator UsWaitFile(string path, UsRes res)
