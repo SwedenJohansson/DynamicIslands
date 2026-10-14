@@ -732,11 +732,13 @@ namespace DynamicIslands
 
 				// HeadStart in a world: the choice is for a new world, in the main menu
 				int level0 = HeadStart.Level;
-				int? chosen0 = HeadStart.Pending;
+				// (Chosen, not Pending: Pending is filled from the saved default the first time Chosen is read - the command's
+				// own message reads it - so it went from null to the default with nothing chosen)
+				int chosen0 = HeadStart.Chosen;
 				foreach (string[] a in new[] { new string[0], new[] { "abc" }, new[] { "-1" }, new[] { "99" }, new[] { "2147483647" }, new[] { "99999999999" }, new[] { "1.5" } })
 				{
 					msgs = GcaRun(() => HeadStart.HeadStartCommand(a), out ex);
-					Check(ref ok, ex == null && HeadStart.Level == level0 && HeadStart.Pending == chosen0 && msgs.Count > 0,
+					Check(ref ok, ex == null && HeadStart.Level == level0 && HeadStart.Chosen == chosen0 && msgs.Count > 0,
 						"HeadStart '" + string.Join(" ", a) + "' in a world: a message, no exception, the level (" + HeadStart.Level + ") and the next world's choice unchanged (" + GcaText(msgs) + (ex != null ? "; EXCEPTION " + ex.Message : "") + ")");
 				}
 

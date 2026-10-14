@@ -389,7 +389,8 @@ namespace DynamicIslands.Editor
 			ulong id;
 			float[] f = new float[6];
 			if (p.Length != 8 || !ulong.TryParse(p[0], out id)) return true;
-			for (int i = 0; i < 6; i++) if (!float.TryParse(p[i + 2], NumberStyles.Float, CultureInfo.InvariantCulture, out f[i])) return true;
+			// (NaN and Infinity read as numbers: a player held there would be lost - left out like any broken line)
+			for (int i = 0; i < 6; i++) if (!float.TryParse(p[i + 2], NumberStyles.Float, CultureInfo.InvariantCulture, out f[i]) || float.IsNaN(f[i]) || float.IsInfinity(f[i])) return true;
 			places[id] = new Place { Island = p[1], IslandAt = new Vector3(f[0], f[1], f[2]), Offset = new Vector3(f[3], f[4], f[5]) };
 			return true;
 		}

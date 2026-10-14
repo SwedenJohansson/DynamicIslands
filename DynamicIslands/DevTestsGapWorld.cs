@@ -220,7 +220,7 @@ namespace DynamicIslands
 
 		const string ArenaReloadIsland = "cibossarenareload";
 
-		[ConsoleCommand(name: "CIBossArenaReload", docs: "Dev, in game (host): the boss arena across a reload (gap: CIBossArena has no reload step) - half fought (stepped in, stakes up, the beast alive): reloaded the stakes are still up and the spoils hidden; the beast defeated: reloaded the stakes stay down, the spoils show, signal 'boss' is kept, stepping in again leaves the stakes down")]
+		[ConsoleCommand(name: "CIBossArenaReload", docs: "Dev, in game (host): the boss arena across a reload (gap: CIBossArena has no reload step) - half fought (stepped in, stakes up, the beast alive): reloaded the stakes are down (the two minutes' wait doesn't outlast a load: what came after it runs at once), the spoils hidden, the beast there, and stepping in again shuts the stakes again; the beast defeated: reloaded the stakes stay down, the spoils show, signal 'boss' is kept, stepping in again leaves the stakes down")]
 		public static void BossArenaReloadCommand(string[] args) { StartTest(BossArenaReloadRoutine()); }
 
 		static IEnumerator BossArenaReloadRoutine()
@@ -248,10 +248,16 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, gates().All(x => x.gameObject.activeInHierarchy), "stepping in, the stakes come up (" + gates().Count(x => x.gameObject.activeInHierarchy) + ")");
 
+				// (the stakes sink after a wait of two minutes; a load runs what came after a wait at once - Behaviours.ResumePending -
+				// so a player who quit mid-fight isn't shut in when they come back, and the arena re-arms when they step in)
 				yield return GwReload(e);
-				Check(ref ok, gates().Count >= 10 && gates().All(x => x.gameObject.activeInHierarchy) && !spoilsShown(), "half fought, reloaded: the stakes are still up (" + gates().Count(x => x.gameObject.activeInHierarchy) + " of " + gates().Count + "), the spoils hidden");
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, gates().Count >= 10 && gates().All(x => !x.gameObject.activeInHierarchy) && !spoilsShown(), "half fought, reloaded: the stakes are down (" + gates().Count(x => x.gameObject.activeInHierarchy) + " of " + gates().Count + " up), the spoils hidden");
 				boss = beast();
 				Check(ref ok, boss != null, "half fought, reloaded: the beast is there");
+				ScEnterZone(e, "arena");
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, gates().All(x => x.gameObject.activeInHierarchy), "half fought, reloaded, stepping in again: the stakes come up (" + gates().Count(x => x.gameObject.activeInHierarchy) + ")");
 				if (boss != null) Behaviours.FireFromHost(e, boss.Index, "defeat");
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, gates().All(x => !x.gameObject.activeInHierarchy) && spoilsShown() && e.State.ContainsKey(Behaviours.SignalKey(MapTypes.BossSignal)), "the beast defeated: the stakes go down, the spoils show, signal 'boss'");
@@ -499,7 +505,9 @@ namespace DynamicIslands
 					want = Mathf.Clamp(want, 0, 3);
 					return HeadStart.Level == want ? null : "level " + HeadStart.Level + ", wanted " + want;
 				});
-				run("headstartdone", new[] { "1", "abc", "", "true", "0" }, new[] { "@headstart=0" }, v => HeadStart.Done == (v.Trim() == "1") ? null : "done = " + HeadStart.Done);
+				// (nonsense never reads as done; "1" does, but with no head start - level 0 here, so nothing is built - the line
+				// isn't saved: done then reads false after a save and a read, by design. CIHeadStartReload covers "1" with a level)
+				run("headstartdone", new[] { "1", "abc", "", "true", "0" }, new[] { "@headstart=0" }, v => !HeadStart.Done || v.Trim() == "1" ? null : "done = True from nonsense");
 				run("storychain", new[] { "garbage", "", "off;x,,y", ";;;", "on" }, noExtra, v => StoryChain.Steps.All(x => x.Trim().Length > 0) && !StoryChain.Active ? null : "empty steps or active from nonsense");
 				run("storyrule", new[] { "garbage", "", "|||||", "a|b|c" }, noExtra, v => StoryChain.Rules.All(r => r != null) ? null : "a null rule");
 				run("storybeside", new[] { "garbage", "", "|||||", "a|b|c" }, noExtra, null);
@@ -522,9 +530,9 @@ namespace DynamicIslands
 					if (places.Any(l => l.Contains("NaN") || l.Contains("Infinity"))) return "a place with NaN or Infinity is kept: " + places[0];
 					return places.Length == 0 ? null : "a bad place is kept: " + places[0];
 				});
-				run("tradersailed", new[] { "abc", "", "-5", "NaN", "99999999999999999999999", "1e40" }, new[] { "@options=traderraft" }, v =>
+				run("tradersailed", new[] { "abc", "", "-5", "NaN", "Infinity", "-Infinity", "99999999999999999999999", "1e40" }, new[] { "@options=traderraft" }, v =>
 					TraderRaft.WriteLines().All(l => GwFinite(l.Substring(l.IndexOf('=') + 1))) ? null : "a trader line that is no number: " + string.Join(" ", TraderRaft.WriteLines().ToArray()));
-				run("ghostsailed", new[] { "abc", "", "-5", "NaN", "99999999999999999999999", "1e40" }, new[] { "@options=ghostrafts" }, v =>
+				run("ghostsailed", new[] { "abc", "", "-5", "NaN", "Infinity", "-Infinity", "99999999999999999999999", "1e40" }, new[] { "@options=ghostrafts" }, v =>
 					GhostRafts.WriteLines().All(l => GwFinite(l.Substring(l.IndexOf('=') + 1))) ? null : "a ghost line that is no number: " + string.Join(" ", GhostRafts.WriteLines().ToArray()));
 				foreach (string k in new[] { "upgraderesearch", "upgradeslearned" })
 					run(k, new[] { "abc", "", "1,2,,x,-1,99999999999", "0", ",,," }, noExtra, null);

@@ -1453,16 +1453,23 @@ namespace DynamicIslands
 			if (args != null)
 			{
 				if (args.Length > 0 && int.TryParse(args[0], System.Globalization.NumberStyles.Integer, ci, out i)) s.Seed = i;
-				if (args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, ci, out f)) s.Radius = f / 2f;
-				if (args.Length > 2 && float.TryParse(args[2], System.Globalization.NumberStyles.Float, ci, out f)) s.Height = f;
-				if (args.Length > 3 && float.TryParse(args[3], System.Globalization.NumberStyles.Float, ci, out f)) s.Roughness = f;
+				if (args.Length > 1 && FiniteArg(args[1], out f)) s.Radius = f / 2f;
+				if (args.Length > 2 && FiniteArg(args[2], out f)) s.Height = f;
+				if (args.Length > 3 && FiniteArg(args[3], out f)) s.Roughness = f;
 				if (args.Length > 4 && int.TryParse(args[4], System.Globalization.NumberStyles.Integer, ci, out i)) s.Peaks = i;
-				if (args.Length > 5 && float.TryParse(args[5], System.Globalization.NumberStyles.Float, ci, out f)) s.ObjectDensity = f;
+				if (args.Length > 5 && FiniteArg(args[5], out f)) s.ObjectDensity = f;
 			}
 			s.Style = args != null && args.Length > 6 ? TerrainPainter.StyleIndex(args[6]) : currentStyle;
 			int n = IslandGenerator.GenerateInEditor(s);
 			IslandGenerator.FrameCamera(s);
 			Notify("Generated island " + s.Seed + " (" + n + " objects). Ctrl+Z undoes it.");
+		}
+
+		/// <summary>A number typed in the console: NaN and Infinity read as numbers too, and NaN gets through every clamp
+		/// (GenerateIsland 1 NaN NaN threw an overflow) - those are left out, as if not given.</summary>
+		static bool FiniteArg(string text, out float f)
+		{
+			return float.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f) && !float.IsNaN(f) && !float.IsInfinity(f);
 		}
 
 		[ConsoleCommand(name: "SetToAutoPaint", docs: "Terrain brush returns painted areas to automatic texturing")]

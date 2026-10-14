@@ -179,6 +179,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Joining again on a ghost raft:** a player who left while standing on a ghost raft (a deck just above the sea)
   could come back on the host's raft: the deck wasn't loaded yet on their PC, so Raft took them for a swimmer and
   moved them. They are now held where they stood until it loads, as on any other island.
+- **A broken player spot in a world file:** a spot saved as "NaN" or "Infinity" (a damaged or hand-edited file) was
+  read as a number, and the player joining again was moved there. Such a line is now left out, like any other broken line.
+  The same goes for the distance the raft sailed towards the next ghost raft: "NaN" there kept them away all session.
+- **GenerateIsland with "NaN":** typed as a size, height, roughness or object amount it stopped the command with an
+  error. Such a value is now left out, as if it wasn't given.
 - **Generated radio towers in a world are whole again:** an island the world generated (a large island with
   a radio tower) laid the tower's floors at a third of their size when Raft hadn't loaded those pieces yet, so its walls
   and furniture stood partly in the air. Islands generated from now on get each piece's own size; the editor's

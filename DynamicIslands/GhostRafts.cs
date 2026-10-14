@@ -33,7 +33,9 @@ namespace DynamicIslands.Editor
 		internal static bool ReadLine(string key, string value)
 		{
 			if (key != "ghostsailed") return false;
-			float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out sailed);
+			// (NaN and Infinity read as numbers: NaN would stop them coming all session, Infinity would be saved again - left out)
+			float v;
+			sailed = float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && !float.IsNaN(v) && !float.IsInfinity(v) ? Mathf.Max(0f, v) : 0f;
 			return true;
 		}
 
