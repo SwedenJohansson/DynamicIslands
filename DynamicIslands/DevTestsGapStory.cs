@@ -598,6 +598,8 @@ namespace DynamicIslands
 			Block floor = BlockCreator.GetPlacedBlocks().FirstOrDefault(b => b != null && b.buildableItem != null && b.buildableItem.UniqueName == "Block_Foundation");
 			if (floor == null) { Fail("upgrades craft: no foundation on the raft"); yield break; }
 			int recyclers0 = GupBlocks(machine).Count;
+			// (a reused world: player 2 may still hold some from an earlier run - counted from here)
+			int heldM0 = player.Inventory.GetItemCount(machine.Item.UniqueName), heldL0 = player.Inventory.GetItemCount(large.UniqueName);
 			if (part != "place")
 			{
 				yield return GupCraft(player, large, r);
@@ -609,7 +611,7 @@ namespace DynamicIslands
 				// (Raft's cheat placement works on the host only: the client hands both over as placing does, and the
 				// host places them for it with CIUpgradesCraft place)
 				int heldM = player.Inventory.GetItemCount(machine.Item.UniqueName), heldL = player.Inventory.GetItemCount(large.UniqueName);
-				Check(ref r.Ok, heldM == 1 && heldL == 1, GupRole + ": holds the crafted recycler and large battery (" + heldM + ", " + heldL + ")");
+				Check(ref r.Ok, heldM == heldM0 + 1 && heldL == heldL0 + 1, GupRole + ": holds one more recycler and large battery (" + heldM0 + " -> " + heldM + ", " + heldL0 + " -> " + heldL + ")");
 				if (heldM > 0) player.Inventory.RemoveItem(machine.Item.UniqueName, heldM);
 				if (heldL > 0) player.Inventory.RemoveItem(large.UniqueName, heldL);
 				if (r.Ok) Log("PASS: upgrades craft " + GupRole + " (the host places them for this player: CIUpgradesCraft place)"); else Fail("upgrades craft " + GupRole);
@@ -638,6 +640,11 @@ namespace DynamicIslands
 			if (slot2 != null)
 			{
 				bool put = slot2.Insert(null, GupBatteryLeft, large.UniqueIndex);
+				// (as Raft's own insert by hand: the others get Battery_Insert, else player 2's machine stays empty)
+				MonoBehaviour_ID_Network net = HarmonyLib.Traverse.Create(slot2).Field("networkBehaviourID").GetValue<MonoBehaviour_ID_Network>();
+				if (put && net != null)
+					player.Network.RPC(new Message_Battery(Messages.Battery_Insert, player.Network.NetworkIDManager, player.steamID, net.ObjectIndex, GupBatteryLeft, slot2.BatteryIndex, large.UniqueIndex),
+						Target.Other, Steamworks.EP2PSend.k_EP2PSendReliable, NetworkChannel.Channel_Game);
 				int heldBattery = player.Inventory.GetItemCount(large.UniqueName);
 				if (heldBattery > 0) player.Inventory.RemoveItem(large.UniqueName, heldBattery);
 				yield return new WaitForSeconds(0.8f);
