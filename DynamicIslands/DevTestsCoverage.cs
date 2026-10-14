@@ -435,6 +435,9 @@ namespace DynamicIslands
 				Vector3 axis, axis0;
 				(Quaternion.Inverse(a1) * b1).ToAngleAxis(out angle, out axis);
 				(Quaternion.Inverse(a0) * b0).ToAngleAxis(out angle0, out axis0);
+				// (a quaternion and its negative are the same turn: 92 degrees about up can come out as 268 about down)
+				if (angle > 180f) angle = 360f - angle;
+				if (angle0 > 180f) angle0 = 360f - angle0;
 				Check(ref ok, Mathf.Abs(angle - expected) < 6f && Mathf.Abs(angle0 - expected) < 6f, "after " + dt.ToString("F2") + " s both turned about " + expected.ToString("F0") + " degrees (own: " + angle.ToString("F0") + ", world: " + angle0.ToString("F0") + ")");
 				float ownOffAxis = Mathf.Min(Vector3.Angle(axis, Vector3.up), Vector3.Angle(axis, Vector3.down));
 				Check(ref ok, ownOffAxis < 2f, "spinOwn 1: the turn is about the block's own up axis (" + ownOffAxis.ToString("F1") + " degrees off)");
