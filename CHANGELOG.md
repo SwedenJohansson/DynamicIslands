@@ -176,6 +176,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Trader raft and a bad world file line:** an `@tradersailed` of NaN or Infinity is now read as 0 (it stuck, and the
+  trader raft never came again).
 - **A quest step done early counted twice:** a zone step reached early and entered again (a player set down inside it
   after a load) was kept as done twice; early work now never counts more than the step needs.
 - **Upgrade table taken away while in use:** the items in its slot go back to the player who had its menu open

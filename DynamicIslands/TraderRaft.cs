@@ -35,7 +35,9 @@ namespace DynamicIslands.Editor
 		internal static bool ReadLine(string key, string value)
 		{
 			if (key != "tradersailed") return false;
-			float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out sailed);
+			float v;
+			// (a NaN or Infinity in a hand-edited world file would stick: NaN plus the distance sailed stays NaN)
+			sailed = float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && !float.IsNaN(v) && !float.IsInfinity(v) && v > 0f ? v : 0f;
 			return true;
 		}
 
