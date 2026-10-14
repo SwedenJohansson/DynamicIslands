@@ -169,6 +169,7 @@ namespace DynamicIslands
 				cl.name = name;
 				// (a skinned mesh keeps the player's bones and would be drawn on the player: baked into a plain mesh)
 				Renderer[] from = src.GetComponentsInChildren<Renderer>(true), to = cl.GetComponentsInChildren<Renderer>(true);
+				var bakedAt = new List<Transform>();
 				for (int i = 0; i < from.Length && i < to.Length; i++)
 				{
 					SkinnedMeshRenderer fs = from[i] as SkinnedMeshRenderer, ts = to[i] as SkinnedMeshRenderer;
@@ -180,6 +181,7 @@ namespace DynamicIslands
 					UnityEngine.Object.DestroyImmediate(ts);
 					g.AddComponent<MeshFilter>().sharedMesh = baked;
 					g.AddComponent<MeshRenderer>().sharedMaterials = mats;
+					bakedAt.Add(g.transform);
 				}
 				foreach (MonoBehaviour m in cl.GetComponentsInChildren<MonoBehaviour>(true)) { try { UnityEngine.Object.DestroyImmediate(m); } catch { } }
 				foreach (Animator m in cl.GetComponentsInChildren<Animator>(true)) { try { UnityEngine.Object.DestroyImmediate(m); } catch { } }
@@ -196,6 +198,12 @@ namespace DynamicIslands
 				}
 				cl.SetActive(true);
 				cl.transform.SetParent(null, true);
+				// (BakeMesh already applies the renderer's scale: the baked part must not be scaled again)
+				foreach (Transform t in bakedAt)
+				{
+					Vector3 ls = t.lossyScale, l = t.localScale;
+					if (Mathf.Abs(ls.x) > 1e-6f && Mathf.Abs(ls.y) > 1e-6f && Mathf.Abs(ls.z) > 1e-6f) t.localScale = new Vector3(l.x / ls.x, l.y / ls.y, l.z / ls.z);
+				}
 				if (tint.HasValue) ObjectProps.ApplyTint(cl, tint.Value, 1f);
 				return cl;
 			}
@@ -330,7 +338,9 @@ namespace DynamicIslands
 			yield return null; yield return null; yield return null;
 			Bounds ba, bb;
 			if (!UsBounds(a, out ba) || !UsBounds(b, out bb)) { run.Fails++; Fail("upgrade shots: " + n + ": the model has no visible mesh"); yield break; }
+			Log("  (" + n + ": copied from " + sa.name + ": " + string.Join(", ", sa.GetComponentsInChildren<Renderer>(true).Select(r => r.GetType().Name + " " + r.name + " scale " + r.transform.lossyScale.ToString("F3") + (r.enabled ? "" : " off") + (r.gameObject.activeInHierarchy ? "" : " hidden")).ToArray()) + ")");
 			Log("  (" + n + ": models " + ba.size.ToString("F2") + " and " + bb.size.ToString("F2") + ")");
+			if (Mathf.Max(ba.size.x, ba.size.y, ba.size.z) < 0.05f || Mathf.Max(bb.size.x, bb.size.y, bb.size.z) < 0.05f) { run.Fails++; Fail("upgrade shots: " + n + ": the model copy is too small to see (under 5 cm)"); yield break; }
 			Bounds all = UsArrange(a, ba, b, bb, run.Spot, run.Yaw);
 			yield return UsShoot(run, n, all, run.Yaw, "up_" + n, 1.2f);
 			UsRemove(run);
