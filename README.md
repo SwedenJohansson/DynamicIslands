@@ -431,7 +431,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Head start raft:** the world starts on a bigger raft already set up - level 1: 6 x 12 foundations with a grill, a
   purifier, the research table, a bed and first supplies; level 2: 8 x 14, also smelters, a sail, 10 item nets and island
   resources; level 3: 10 x 20, also the Receiver with its antennas. Built once by the host (`HeadStart`).
-- **Extra upgrades:** better versions of Raft's things to craft, tinted, next to the thing they improve once they are
+- **Extra upgrades:** better versions of Raft's things to craft, strongly tinted with glints round them, next to the thing they improve once they are
   learned at the **upgrade research table** (a violet research table of their own, four times the cost, separate research): large battery (2x charge), titanium grill and blast furnace (cook 2x as fast), reinforced storage (1.5x
   slots), wide net (2x as wide), large fuel and water tanks (2x), greenhouse plot (waters itself), turbo engine (2x
   strength, 1.5x speed), large wind turbine (2x charge), comfy bed (heals 2x as fast, respawn at 75%), magnet hook (pulls

@@ -119,7 +119,7 @@ namespace DynamicIslands.Editor
 		static Material particleMaterial;
 
 		/// <summary>A soft round dot, drawn with a shader every Unity build has.</summary>
-		static Material ParticleMaterial()
+		internal static Material ParticleMaterial()
 		{
 			if (particleMaterial != null) return particleMaterial;
 			const int S = 32;
