@@ -326,7 +326,7 @@ namespace DynamicIslands
 			if (left > 0) player.Inventory.AddItem(it.UniqueName, left);
 			int total = player.Inventory.GetItemCount(it) + (did ? 1 : 0);
 			Log("UT release " + UtRole + ": " + it.UniqueName + " did=" + did + ", " + slotInfo + ", inventory " + player.Inventory.GetItemCount(it) + ", started with " + utHeldStart);
-			Check(ref ok, !threw, UtRole + ": no exception pressing Research on a slot whose table was picked up");
+			Check(ref ok, !threw, UtRole + ": nothing thrown pressing Research on a slot whose table was picked up");
 			Check(ref ok, total <= utHeldStart, UtRole + ": nothing doubled (inventory + researched " + total + " <= " + utHeldStart + ")");
 			Check(ref ok, total >= utHeldStart, UtRole + ": nothing lost (inventory + researched " + total + " >= " + utHeldStart + ")");
 			utHeldSlot = null;
