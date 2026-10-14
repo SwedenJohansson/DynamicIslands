@@ -167,6 +167,20 @@ namespace DynamicIslands
 			{
 				GameObject cl = UnityEngine.Object.Instantiate(src, hold.transform, false);
 				cl.name = name;
+				// (a skinned mesh keeps the player's bones and would be drawn on the player: baked into a plain mesh)
+				Renderer[] from = src.GetComponentsInChildren<Renderer>(true), to = cl.GetComponentsInChildren<Renderer>(true);
+				for (int i = 0; i < from.Length && i < to.Length; i++)
+				{
+					SkinnedMeshRenderer fs = from[i] as SkinnedMeshRenderer, ts = to[i] as SkinnedMeshRenderer;
+					if (fs == null || ts == null || fs.sharedMesh == null) continue;
+					var baked = new Mesh();
+					fs.BakeMesh(baked);
+					Material[] mats = ts.sharedMaterials;
+					GameObject g = ts.gameObject;
+					UnityEngine.Object.DestroyImmediate(ts);
+					g.AddComponent<MeshFilter>().sharedMesh = baked;
+					g.AddComponent<MeshRenderer>().sharedMaterials = mats;
+				}
 				foreach (MonoBehaviour m in cl.GetComponentsInChildren<MonoBehaviour>(true)) { try { UnityEngine.Object.DestroyImmediate(m); } catch { } }
 				foreach (Animator m in cl.GetComponentsInChildren<Animator>(true)) { try { UnityEngine.Object.DestroyImmediate(m); } catch { } }
 				foreach (Rigidbody m in cl.GetComponentsInChildren<Rigidbody>(true)) { try { UnityEngine.Object.DestroyImmediate(m); } catch { } }
@@ -176,7 +190,7 @@ namespace DynamicIslands
 				foreach (Transform t in cl.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 0;
 				foreach (Renderer r in cl.GetComponentsInChildren<Renderer>(true))
 				{
-					if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = true;
+					if (r is MeshRenderer || r is SkinnedMeshRenderer) { r.enabled = true; r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On; }
 					SkinnedMeshRenderer sk = r as SkinnedMeshRenderer;
 					if (sk != null) sk.updateWhenOffscreen = true;
 				}
@@ -337,13 +351,25 @@ namespace DynamicIslands
 				Transform m = Traverse.Create(e).Field(f).GetValue<Transform>();
 				if (m != null && UsBounds(m.gameObject, out b)) { found = true; break; }
 			}
+			GameObject worn = null;
+			if (found)
+			{
+				// (a copy of the worn model as tinted by the mod, at the spot: the first-person model moves with the camera)
+				foreach (string f in new[] { "remoteModel", "localModel" })
+				{
+					Transform m = Traverse.Create(e).Field(f).GetValue<Transform>();
+					if (m != null && m.GetComponentInChildren<Renderer>(true) != null) { worn = UsClone(m.gameObject, "US_worn_" + n, null); break; }
+				}
+				if (worn != null) { run.Objs.Add(worn); worn.transform.position = run.Spot; yield return null; yield return null; found = UsBounds(worn, out b); }
+				else found = false;
+			}
 			if (!found) { run.Fails++; Fail("upgrade shots: " + n + " " + tag + ": worn, but no model is drawn (first- or third-person)"); }
 			else
 			{
 				b.Expand(0.3f);
-				// (in front of the player, looking back at the model)
-				yield return UsShoot(run, n + "_held_" + tag, b, run.Player.transform.eulerAngles.y + 180f, "up_" + n + "_held_" + tag, 0.8f);
+				yield return UsShoot(run, n + "_held_" + tag, b, run.Yaw, "up_" + n + "_held_" + tag, 0.8f);
 			}
+			UsRemove(run);
 			try { if (e.Equipped) e.UnEquip(); } catch { }
 			yield return null; yield return null;
 		}
@@ -583,11 +609,13 @@ namespace DynamicIslands
 					Block tb = UsPlace(run, table);
 					yield return new WaitForSeconds(0.5f);
 					ResearchTable ut = UtTableOf(tb);
-					if (ut == null || !UtOpen(inv, ut)) { run.Fails++; Fail("upgrade menu shots: the upgrade table could not be opened"); }
+					bool tableOpen = false;
+					// (Raft's own opening: the table's panel in the inventory menu; MenuType has no research table)
+					try { tableOpen = ut != null && ut.Open(true, run.Player.steamID); }
+					catch (Exception e) { Log("  (opening the upgrade table: " + (e.InnerException ?? e).Message + ")"); }
+					if (!tableOpen) { run.Fails++; Fail("upgrade menu shots: the upgrade table could not be opened"); }
 					else
 					{
-						try { ch.OpenMenuCloseOther((MenuType)Enum.Parse(typeof(MenuType), "ResearchTable"), true); }
-						catch (Exception e) { Log("  (opening the research table menu: " + e.Message + ")"); }
 						yield return new WaitForSeconds(0.8f);
 						yield return UsMenuPicture(run, "tablemenu", "up_tablemenu");
 						UtEsc();

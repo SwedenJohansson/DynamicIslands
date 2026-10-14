@@ -284,6 +284,22 @@ namespace DynamicIslands.Editor
 			t.Field("learnedFromBeginning").SetValue(false);
 			t.Field("blueprintItem").SetValue(null);
 			t.Field("extraBlueprintItems").SetValue(null);
+			// a skin (Raft's wooden bed) has no crafting tab of its own: take its base item's tab, so the menu lists it
+			if (recipe.CraftingCategory == CraftingCategory.Skin)
+			{
+				Item_Base skinOf = t.Field("baseSkinItem").GetValue<Item_Base>();
+				ItemInstance_Recipe from = skinOf != null && skinOf.settings_recipe != null && skinOf.settings_recipe.CraftingCategory != CraftingCategory.Skin ? skinOf.settings_recipe : null;
+				t.Field("craftingCategory").SetValue(from != null ? from.CraftingCategory : CraftingCategory.Other);
+				if (from != null)
+				{
+					t.Field("categoryOrder").SetValue(Traverse.Create(from).Field("categoryOrder").GetValue<int>());
+					t.Field("subCategory").SetValue(from.SubCategory);
+					t.Field("subCatergoryOrder").SetValue(from.SubCategoryOrder);
+				}
+			}
+			t.Field("baseSkinItem").SetValue(null);
+			t.Field("skins").SetValue(new Item_Base[0]);
+			t.Field("selectedSkin").SetValue(null);
 			recipe.Learned = false;
 			item.settings_recipe = recipe;
 
