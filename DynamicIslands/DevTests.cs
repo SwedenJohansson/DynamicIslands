@@ -936,8 +936,8 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.5f);
 				PersonController pc = player.PersonController;
 				Collider ground = pc.groundRaycastHit.collider;
-				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4})", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
-					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-"));
+				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4}){5}", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
+					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-", pc.HasRaftAsParent ? ", a child of the raft" : ""));
 			}
 			Application.logMessageReceived -= counter;
 			float drop = target.y - player.transform.position.y;
@@ -949,7 +949,10 @@ namespace DynamicIslands
 			float surface = float.NegativeInfinity;
 			foreach (Terrain t in island.GetComponentsInChildren<Terrain>(true)) surface = Mathf.Max(surface, t.SampleHeight(player.transform.position) + t.transform.position.y);
 			bool aboveGround = float.IsNegativeInfinity(surface) || player.transform.position.y > surface - 1f;
-			bool ok = player.PersonController.IsGrounded && exceptions == 0 && (drop < 3f || (onIsland && aboveGround));
+			// (on the island and still a child of the raft: the raft's drift and rocking carry the player off - IslandGroundParentPatch)
+			bool raftChild = player.PersonController.HasRaftAsParent && onIsland;
+			if (raftChild) Log("  (standing on the island but a child of the raft: a moving raft would carry them)");
+			bool ok = player.PersonController.IsGrounded && exceptions == 0 && !raftChild && (drop < 3f || (onIsland && aboveGround));
 			if (ok && drop >= 3f) Log("  (moved off the spot - pushed or slid - but still standing on the island's ground)");
 			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
 			else

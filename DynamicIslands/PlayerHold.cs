@@ -29,11 +29,20 @@ namespace DynamicIslands.Editor
 
 		static Vector3? spot;
 		static float until, heldSince;
+		/// <summary>When an island that could be under the held player was last still coming. The frame it spawns, the ray
+		/// down can miss it (its colliders not in the physics scene until the next physics step): the host was let go "gave
+		/// up waiting" right after "Spawned island 'cimpfull'" (the two-player test). So a moment's grace after it came.</summary>
+		static float lastComing;
+		static bool JustCame { get { return Time.unscaledTime - lastComing < 2f; } }
 		// (the host's place for this player is used once per join: a second join reply - a Resync - doesn't take them back
 		// to last session's place - AU64)
 		static bool wentTo;
 		/// <summary>A client still downloading the island under them waits longer than ClientWait, up to this (AU64).</summary>
 		const float DownloadWait = 300f;
+		/// <summary>Anyone whose island near them is still coming (not spawned or still loading) waits past HostWait/ClientWait,
+		/// up to this: a slow start - the object catalog built on a busy computer - spawned it after the host's 20 s and the
+		/// host fell into the sea (the two-player test, both Rafts restarted).</summary>
+		const float ComingWait = 120f;
 		static bool holding;
 		// Set down, still watched: where, until when, how often put back
 		static Vector3? settled;
@@ -99,7 +108,7 @@ namespace DynamicIslands.Editor
 		{
 			spot = at;
 			holding = false;
-			heldSince = Time.unscaledTime;
+			heldSince = lastComing = Time.unscaledTime;
 			heldHealth = Health();
 			until = Time.unscaledTime + (Raft_Network.IsHost ? HostWait : ClientWait);
 			Debug.Log("[CUSTOM ISLANDS] " + why);
@@ -119,7 +128,10 @@ namespace DynamicIslands.Editor
 				// after 60 s, they fell into the sea and Raft put them on the raft - AU64)
 				Vector3 near = spot.Value;
 				bool downloading = !Raft_Network.IsHost && IslandWorldState.Islands.Any(e => e.WaitingForFile && !e.Failed && Flat(e.Position - near) < NearIsland);
-				if (downloading && Time.unscaledTime - heldSince < DownloadWait) until = Time.unscaledTime + 5f;
+				bool coming = IslandNetwork.HasList && IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, near));
+				float held = Time.unscaledTime - heldSince;
+				if (coming) lastComing = Time.unscaledTime;
+				if ((downloading && held < DownloadWait) || ((coming || JustCame) && held < ComingWait)) until = Time.unscaledTime + 5f;
 				else { Release(null, "gave up waiting for the island"); return; }
 			}
 			Network_Player player = RAPI.GetLocalPlayer();
@@ -143,7 +155,8 @@ namespace DynamicIslands.Editor
 			{
 				// (every custom island around is there and still nothing under them: they weren't on one - let go)
 				bool waiting = IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, at));
-				if (!waiting) { Release(null, "was not on a custom island"); return; }
+				if (waiting) lastComing = Time.unscaledTime;
+				else if (!JustCame) { Release(null, "was not on a custom island"); return; }
 			}
 			// Waiting: keep the player where they were (they would fall through into the sea)
 			if (!holding)

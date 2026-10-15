@@ -179,6 +179,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Carried off an island by the raft:** standing on a custom island's ground or on its Raft blocks (a wreck,
+  a house of planks), Raft could take the player for someone on the raft, so the raft's drift and rocking moved them
+  along with it - tens of metres in a second when the raft was far off. Island ground now counts as an island, as
+  Raft's own islands do.
+- **Into the sea after a slow start:** on a busy computer the island a player had saved on could spawn later than
+  the 20 seconds the mod held them for, and they fell into the sea. The hold now lasts while that island is still
+  coming, up to two minutes.
+- **Held by a dead warthog:** a warthog killed while carrying a player on its charge (another player's spear, say)
+  never let go: the player hung on the dead animal, unable to move, until they left the world. A dead warthog now
+  drops them, as Raft does when the carried player dies.
 - **An error picking up a crate:** picking up a crate (or anything that gives several items at once) with an empty
   hotbar slot selected could put a fishing rod or another item that charges up in hand and away again at once, and
   Raft then threw an error (a NullReferenceException) in the middle of the pickup. It no longer does.

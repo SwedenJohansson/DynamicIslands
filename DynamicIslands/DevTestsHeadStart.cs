@@ -84,8 +84,11 @@ namespace DynamicIslands
 			int wantTotal = level >= 3 ? 50 + 52 + 52 + 150 + 110 : level == 2 ? 50 + 52 + 52 : 50;
 			Check(ref ok, planks == (level >= 3 ? 50 : 10) && total == wantTotal && batteries == (level >= 2 ? 2 : 0) && flippers == (level >= 2 ? 2 : 0), "the storages hold " + total + " items (want " + wantTotal + "): " + planks + " planks, " + batteries + " batteries, " + flippers + " flippers");
 			// (on the floor: each placeable's solid bottom at the foundations' top, the nets in the water)
+			Physics.SyncTransforms();
 			Block floor = HeadStart.Foundations(raft).FirstOrDefault();
-			float top = floor != null ? floor.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger && c.enabled).Select(c => c.bounds.max.y).DefaultIfEmpty(0f).Max() : 0f;
+			// (a joiner's foundation blocks have no solid collider of their own - Raft's FoundationCollider stands in - so
+			// their top fell back to 0 and every placeable read 0.5-0.8 m "above the floor": the block's own y, the top on the host)
+			float top = floor != null ? floor.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger && c.enabled).Select(c => c.bounds.max.y).DefaultIfEmpty(floor.transform.position.y).Max() : 0f;
 			var gaps = new List<string>();
 			float worst = 0f;
 			foreach (Block b in blocks.Where(x => x.buildableItem.UniqueName.StartsWith("Placeable_") && !x.buildableItem.UniqueName.Contains("CollectionNet")))
@@ -97,6 +100,16 @@ namespace DynamicIslands
 				if (Mathf.Abs(gap) > Mathf.Abs(worst)) worst = gap;
 			}
 			Log("bottoms above the floor: " + string.Join(", ", gaps.ToArray()));
+			// (too far: in the raft's own space, each placeable's height over the floor block - the same on host and joiner if
+			// they are placed alike, so a wrong floor reading shows here)
+			if (floor != null && Mathf.Abs(worst) >= 0.35f)
+			{
+				Func<Transform, float> localY = t => raft.transform.InverseTransformPoint(t.position).y;
+				Vector3 tilt = raft.transform.eulerAngles;
+				Log("raft tilt x " + tilt.x.ToString("F1") + " z " + tilt.z.ToString("F1") + ", floor block " + floor.name + " top " + top.ToString("F2") + " (its own y " + floor.transform.position.y.ToString("F2") + "); heights in the raft's space: "
+					+ string.Join(", ", blocks.Where(x => x.buildableItem.UniqueName.StartsWith("Placeable_") && !x.buildableItem.UniqueName.Contains("CollectionNet"))
+						.Select(x => x.buildableItem.UniqueName.Replace("Placeable_", "") + " " + (localY(x.transform) - localY(floor.transform)).ToString("F2")).ToArray()));
+			}
 			Check(ref ok, Mathf.Abs(worst) < 0.35f, "the placeables stand on the floor (the farthest " + worst.ToString("F2") + " m)");
 			if (level >= 3)
 			{

@@ -52,6 +52,8 @@ namespace DynamicIslands.Editor
 				new[] { "NewWorld", "the New Game box" }, new[] { "NewGame", "the New Game box" }, new[] { "Save", "saving custom islands with the world" },
 				new[] { "ChunkPoint", "keeping Raft's islands clear of custom ones" }, new[] { "Creature", "creatures" }, new[] { "Note", "notes" },
 				new[] { "Receiver", "the Receiver" }, new[] { "Notice", "the main menu box" }, new[] { "Library", "the island library" },
+				new[] { "IslandGround", "standing on custom islands (a moving raft could carry players off them)" },
+				new[] { "DeadCarrier", "warthogs letting go of a player when killed while carrying them" },
 			};
 			foreach (string[] w in words) if (patch.IndexOf(w[0], StringComparison.OrdinalIgnoreCase) >= 0) return w[1];
 			return "a part of the mod (" + patch + ")";
