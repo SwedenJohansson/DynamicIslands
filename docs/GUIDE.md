@@ -848,6 +848,49 @@ Your types show in the Ready-made tab and can be named in `spawnpool.txt` (`type
 ones, and an island pack can carry them. **`ReRollMapType <type> [seed]`** (F10, in the editor) puts a type's content
 onto the island you are editing, without touching the land: one Ctrl+Z takes it off again.
 
+**A map type file, line by line.** An example - a small desert island with a cache at the top, a bottle that points
+to it, two rats and a two-step quest (every island this type makes is different, but always has these):
+
+```
+label = Lookout rock
+description = A small desert rock with a cache at its top
+title = Lookout Rock
+settings = ranges
+styles = desert
+shape = round
+radius = 60 - 70
+height = 20 - 25
+roughness = 0.4
+density = 0.3
+peaks = 2
+set = Hostiles 0
+chest = Loot_Chest | top:0.5 | Lookout cache | Treasure | Found it.\nWell done.
+note = Note_Bottle | dry | Old map | Climb to the top.
+creature = Rat | near:30 | 2 | Hard
+zone = top:0.5 | lookout-top | 6 | The top!
+atmosphere = mid | 40 | #334455 | 0.4 | #FFEEDD | 0.3 | mist
+quest = The lookout | Look around. | Done! |
+step = read | Old map | 1 | Read the map
+step = open | Lookout cache | 1 |
+```
+
+| Line | What it says |
+|---|---|
+| `label`, `description`, `title` | The name in lists, one line about it, and the banner players see on arrival (empty: none) |
+| `flying = <chance> \| <min> - <max>`, `sunken = <m>` | How often it floats and how high; or under water, its top that many metres down |
+| `settings = ranges` | The land is rolled from the lines below (`random`: as a random island; a built-in type's name: that type's land) |
+| `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent or twinpeaks; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
+| `set = <setting> <value>` | Any generator setting by name after the roll, as in a generator preset (`Hostiles`, `Cliffs`, `SeaFloor`, `Trees`...) |
+| `content = <built-in type>` | That type's content first (a no-land type's raft too: `content = wreck`), then your own lines |
+| `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
+| `quest`, then `step` lines | A quest (title, intro, done text, reward) and its steps as in the quest editor (`read`, `open`, `kill`, `reach`...) |
+
+**Where things go** (`<where>`): `mid` (the middle), `top` (the highest ground; `top:0.5` within half the radius),
+`dry` (dry flat ground), `beach`, `water` (a lagoon), `seabed`, `near:30` (dry ground within 30 m of the line before's
+spot), `islet:1` / `stack:1` (the biggest islet or sea stack), `at:20,-10` (metres from the middle), and `@2` after any
+of them puts the thing that many metres up (`top:0.6@2`). A spot that can't be found on a rolled island leaves that line
+out. The file's own help at its top (from `ExportMapType`) lists every value.
+
 ### 4.7 Saving and sharing
 
 **Save** (Ctrl+S) saves straight away once the island has its own name (a new island asks for one first: until then it
@@ -2015,12 +2058,17 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).
-- **Someone else hosts next time:** Raft keeps the world on the host's PC. Copy its folder (`%USERPROFILE%\AppData\LocalLow\Redbeet
+- **Someone else hosts next time:** the host sends Raft's newest save of the world to every player after each save, so
+  the next host just picks the world in **Load Game** ([12.1](#121-playing-together-over-several-days)). A player who
+  wasn't there for the last save copies the folder by hand: (`%USERPROFILE%\AppData\LocalLow\Redbeet
   Interactive\Raft\User\User_<Steam id>\World\<world name>`) to the new host's PC, into their own `User_<Steam id>\World`. The custom
   islands, what was used, quests, the journal, everyone's levels, the world's rules and its plan come along: the folder carries
   the mod's copy (`CustomIslands.txt`), and every player who joined keeps one too. Islands you only have from joining are used
   from their downloaded copies. Islands the plan hasn't brought yet are the one thing the new host may not have - see the
   table below.
+- **A crew that splits up:** the host keeps an island loaded while any player is at it, so its animals, ambushes, doors
+  and puzzles keep working for the players there while the host and the raft sail on, far away. It unloads once
+  everyone has left it (beyond the unload distance).
 - **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
   host works out everyone's EXP, and each player sees the others' levels under their names.
 
@@ -2051,7 +2099,8 @@ them host the world later.
 | **Different players have different islands with the same name** | The host's is used; others get the host's as a copy and keep their own | Nothing |
 | **B's Raft crashes and B joins again** | B gets the world as it is now, as on any join. Joining again within seconds of the crash can, now and then, leave B unable to open chests or set off zones ("The host didn't answer") | Wait about half a minute after a crash before joining again; if the message keeps coming, leave and join again |
 
-**Moving a world to another host:** Raft keeps the world on the host's PC in `%USERPROFILE%\AppData\LocalLow\Redbeet
+**Moving a world to another host:** every player who was there for the last save already has it (12.1). Otherwise:
+Raft keeps the world on the host's PC in `%USERPROFILE%\AppData\LocalLow\Redbeet
 Interactive\Raft\User\User_<Steam id>\World\<world name>`. Copy that folder into the new host's own `User_<Steam
 id>\World`. It carries the mod's copy of the world (`CustomIslands.txt`), so the custom islands, the plan, what was used,
 quests, the journal, levels and settings all come along.
@@ -2631,12 +2680,13 @@ Other files:
 | `exports\` | Packs you exported (`<name>.zip`), and `exports.json` (what you filled in, so the next export is the next version) |
 | `import\` | Put packs you got here to install them (Import...) |
 | `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
-| `library.txt` | The island library: `online = on/off`, and its `address` (where its list is) |
+| `library.txt` | The island library: `online = on/off`, its `address` (where its list is: a Google Drive folder link or a web address), and an optional `key =` (a Google API key: the Drive folder is then read through the Drive API instead of its public listing) |
 | `library\cache\` | The library's pictures, kept so they needn't be downloaded again |
-| `plans\*.plan` | World plans |
+| `plans\*.plan` | World plans; `plans\samples.txt` lists the sample plans the mod has written once (a sample you deleted doesn't come back) |
 | `maptypes\*.maptype` | Your own map types ([4.6](#46-ready-made-islands-map-types)) |
-| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer), the start for the next new world; also your J and K keys |
+| `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer, the head start raft's level), the start for the next new world; also your J and K keys; `newworld_plan.txt`: the plan the last new world was made with |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |
+| `worlds\<world id>-<player id>.rewards` | Which quest rewards this player has had, or is still owed, in each world (each player gets their own share of a reward of Raft's items) |
 | `groups\`, `stamps\` | Your saved object groups and terrain stamps |
 | `generator_presets\` | Your generator presets (**Save these settings...**) |
 | `notice.txt` | That you folded the alpha box, for this version of the mod |
@@ -2663,7 +2713,7 @@ Press **F10** for RML's console.
 | `WorldPlan` / `WorldPlan <name>` | World | The world's plan and its rules / give it another plan (host) |
 | `StoryChain` | World | The world's story chain: Raft's story islands and the plan's own in order, what is unlocked and done, and the plan islands' Receiver frequencies |
 | `Randomizer` / `Randomizer <off/light/normal/wild> [-part] [+part]` | World | What the randomizer does here / change it (host) |
-| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; blueprints, storyorder, ghostrafts, privatestorage; at the main menu: the next new world) |
+| `WorldOptions` / `WorldOptions +option -option` | World or main menu | The world's World settings / change them (host; at the main menu: the next new world). Options: `ghostrafts`, `privatestorage`, `longvoyage`, `ironraft`, `sharedxp`, `nightdanger`, `dailyquest`, `rogueshark`, `barrels`, `stormdays`, `traderraft`, `upgrades` ([9.4](#94-extra-options)) |
 | `HeadStart` / `HeadStart 0-3` | World or main menu | The head start raft: this world's level and the next new world's / at the main menu choose the level for the next new world (0 = off) |
 | `Levels` / `Levels on` / `Levels off` | World or main menu | The level up system in this world / switch it (host; off keeps everyone's levels; at the main menu: for the next new world) |
 | `Resync` | World, joined player | Ask the host for its custom islands again (the list, and any island file that hasn't come) |
@@ -2672,11 +2722,28 @@ Press **F10** for RML's console.
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world) |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world) |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
+| `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
+| `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |
+| `RogueShark` / `RogueShark spawn` / `RogueShark giant` | World | The rogue shark (option Rogue shark): alive or not, giant or not, and the day before which none comes / one now, or a giant one now (host) |
+| `Barrels` / `Barrels roll <index> [<to>]` | World | The barrels in the sea now and which are silver or golden (option Silver & golden barrels) / what the barrel with that index is in this world (with `<to>`: the silver and golden ones in the range) |
+| `StormDays` / `StormDays roll <from> <to>` | World | Whether today is a storm day, the next one, the weather and the shark's factor (option Storm days) / the storm days between two days |
+| `Traders` / `Traders offers <seed>` / `Traders bring` | World | The trader rafts loaded now and their stalls' stock (option Trader raft) / what a trader raft with that seed sells / a trader raft ahead now (host) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a map type as a file in `maptypes\` to start your own from (default name `my-<type>`) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again and says which were left out and why |
 | `LoadEditor` | Main menu | Opens the editor |
 
-The editor's own commands (`SaveIsland`, `GenerateIsland`, `SetStyle`...) are in the [README](../README.md#console-commands-f10).
+**In the editor** (each does what a button does; handy for a repeat or an exact value):
+
+| Command | What it does |
+|---|---|
+| `SaveIsland [name]` / `LoadIsland <name>` | Saves the island (no name: under its own name) / opens a saved island - the Save and Open buttons ([4.7](#47-saving-and-sharing)) |
+| `DeleteGroup <name>` | Deletes a saved object group (no name: lists them) - or use Manage... beside Save as group |
+| `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1] [style]` | A random island in place of the one being edited (no seed: a random one; Ctrl+Z undoes it) - the Generate window in short ([4.5](#45-the-island-generator)). Example: `GenerateIsland 1234 120 30 0.5 2 0.6 Snowy` |
+| `ReRollMapType <type> [seed]` | Puts a map type's content (chests, notes, creatures, zones, quest - not its land) on the island being edited; one Ctrl+Z takes it off |
+| `SetStyle <Tropical/Snowy/Desert/Forest/Volcanic>` | The island's style (its ground textures) |
+| `SetElevation <m>` | How high above the sea the island floats in a world, -100 to 250 m (60 = a flying island, -25 = under water, 0 = normal) - the Island tab's Height presets in short ([4.4](#44-the-island-tab)) |
+| `SetToRaise`, `SetToLower`, `SetToFlatten`, `SetToSmooth`, `PaintTexture <sand/grass/rock/seabed>`, `SetToAutoPaint` | The terrain brush's tool, as the Terrain tab's buttons ([4.2](#42-shaping-the-land-terrain-tab)) |
+| `ChangeWidth <m>` / `ChangeStrength <m/s>` | The brush's width (4-160 m) / strength (0.5-20 m a second) |
 
 ## 12. Known issues: what to avoid until they are fixed
 
@@ -3095,7 +3162,8 @@ message got lost, the mod keeps asking (it says "Waiting for the island..."); pr
 at once.
 
 **I joined and couldn't move.** When you join where you stood last time, the mod holds you there until the island under
-you has come ("Waiting for the island you stood on to load..."): at most 30 seconds, and it lets go at once if you are
+you has come ("Waiting for the island you stood on to load..."): about half a minute, longer while that island is
+still loading on a slow start (up to two minutes) or downloading (up to five), and it lets go at once if you are
 hurt. A player who comes back onto the raft is never held: the raft drifts, so Raft itself puts them on it. Builds from
 before 2026-10-11 could hold a player over the sea, where the shark came: install the newest release on every machine.
 
