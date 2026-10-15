@@ -961,7 +961,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Keeps the shown popup next to its mark.</summary>
 		class HelpPlacer : MonoBehaviour
 		{
-			void LateUpdate() { if (helpShownBy != null && helpPopup != null && helpPopup.gameObject.activeSelf) PlaceHelp(helpShownBy); }
+			void LateUpdate() { if (helpShownBy != null && helpPopup != null && helpPopup.gameObject.activeSelf) PlaceHelp(helpShownBy); PlaceTip(); }
 		}
 
 		static void HideHelp(HelpMark mark)
@@ -985,6 +985,14 @@ namespace DynamicIslands.Editor
 			helpText.lineSpacing = 1.05f;
 			foreach (Graphic g in helpPopup.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
 			helpPopup.gameObject.SetActive(false);
+			// (the hover tip, for controls where no status bar shows their hint: smaller, as wide as its text up to 300)
+			tipPopup = Panel(canvas.transform, "HintTip", new RectOffset(9, 9, 6, 7), 2f);
+			tipPopup.anchorMin = tipPopup.anchorMax = new Vector2(0, 1);
+			tipPopup.pivot = new Vector2(0, 1);
+			tipPopup.sizeDelta = new Vector2(300, 0);
+			tipText = Label(tipPopup, "", 12, TextColor);
+			foreach (Graphic g in tipPopup.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+			tipPopup.gameObject.SetActive(false);
 		}
 
 		#endregion
@@ -993,6 +1001,19 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Raised when the mouse enters (text) or leaves (null) a control with a hint.</summary>
 		public static event Action<string> HintChanged;
+
+		/// <summary>
+		/// Windows that show hints in a bar of their own (the editor's status bar, the in-world window's hint line) say here
+		/// when that bar is on the screen. Anywhere else - the main menu's windows, the stats page, the alpha box - a
+		/// control's hint shows in a small tip by the mouse after a moment (until 2026-10-15 those hints were never drawn).
+		/// </summary>
+		public static readonly List<Func<bool>> HintBars = new List<Func<bool>>();
+
+		static bool HintBarShown()
+		{
+			foreach (Func<bool> shown in HintBars) { try { if (shown()) return true; } catch { } }
+			return false;
+		}
 
 		public static void Hint(GameObject go, string hint)
 		{
@@ -1003,9 +1024,62 @@ namespace DynamicIslands.Editor
 		public class HintTarget : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 		{
 			public string Text;
-			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Text); }
-			public void OnPointerExit(PointerEventData e) { if (HintChanged != null) HintChanged(null); }
-			void OnDisable() { if (HintChanged != null) HintChanged(null); }
+			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Text); if (!HintBarShown()) ShowTip(this); }
+			public void OnPointerExit(PointerEventData e) { if (HintChanged != null) HintChanged(null); HideTip(this); }
+			void OnDisable() { if (HintChanged != null) HintChanged(null); HideTip(this); }
+		}
+
+		static RectTransform tipPopup;
+		static Text tipText;
+		static HintTarget tipShownBy;
+		static float tipAt;
+
+		/// <summary>The hover tip's text while it shows (null when none): the tests read it.</summary>
+		public static string ShownTip { get { return tipPopup != null && tipPopup.gameObject.activeSelf ? tipText.text : null; } }
+		/// <summary>Tests: the tip itself (where it is on the screen).</summary>
+		public static RectTransform HintTip { get { return tipPopup; } }
+
+		/// <summary>The tip comes once the mouse has rested on the control a moment (HelpPlacer shows and places it).</summary>
+		static void ShowTip(HintTarget t)
+		{
+			if (string.IsNullOrEmpty(t.Text)) return;
+			if (helpPopup == null) BuildHelpPopup();
+			tipShownBy = t;
+			tipAt = Time.unscaledTime + 0.6f;
+			tipText.text = t.Text;
+			tipPopup.gameObject.SetActive(false);
+		}
+
+		static void HideTip(HintTarget t)
+		{
+			if (tipShownBy != t) return;
+			tipShownBy = null;
+			if (tipPopup != null) tipPopup.gameObject.SetActive(false);
+		}
+
+		/// <summary>The tip below and right of the mouse, kept on the screen; as wide as its text, up to 300.</summary>
+		static void PlaceTip()
+		{
+			if (tipShownBy == null || tipPopup == null) return;
+			if (!tipShownBy.isActiveAndEnabled) { HideTip(tipShownBy); return; }
+			if (Time.unscaledTime < tipAt) return;
+			if (!tipPopup.gameObject.activeSelf)
+			{
+				tipPopup.sizeDelta = new Vector2(Mathf.Min(300f, tipText.preferredWidth + 20f), 0);
+				tipPopup.gameObject.SetActive(true);
+				tipPopup.SetAsLastSibling();
+			}
+			LayoutRebuilder.ForceRebuildLayoutImmediate(tipPopup);
+			var canvas = (RectTransform)tipPopup.parent;
+			Vector2 local;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, Input.mousePosition, null, out local);
+			Vector2 size = new Vector2(tipPopup.rect.width, Mathf.Max(tipPopup.rect.height, LayoutUtility.GetPreferredHeight(tipPopup)));
+			Rect area = canvas.rect;
+			float x = Mathf.Clamp(local.x + 14f, area.xMin + 4f, area.xMax - size.x - 4f);
+			float y = local.y - 22f;
+			if (y - size.y < area.yMin + 4f) y = local.y + size.y + 8f; // above the mouse, when there's no room below
+			y = Mathf.Clamp(y, area.yMin + size.y + 4f, area.yMax - 4f);
+			tipPopup.anchoredPosition = new Vector2(x - area.xMin, y - area.yMax);
 		}
 
 		#endregion

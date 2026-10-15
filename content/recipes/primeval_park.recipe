@@ -211,8 +211,13 @@ line Balboa_DecorationPrefabBase_Fence_Mid from 43 -44 to 49 -44 step=2.98
 line Balboa_DecorationPrefabBase_Fence_Mid from 31 -60 to 31 -44 step=2.98
 line Balboa_DecorationPrefabBase_Fence_Mid from 49 -60 to 49 -44 step=2.98
 place UT_Generator01 - at 40 -54 ground sit
-place UT_ElectricCableHub01 - at 34 -48 ground sit
-place UT_ElectricCableHub02 - at 46 -48 ground sit
+place UT_ElectricCableHub01 parkcable at 34 -48 ground sit
+# (scenery: the generator yard's cable hubs; the gate panel is the lock - the ready piece's lock taken off)
+prop parkcable beh.use=
+prop parkcable if.use=
+prop parkcable else.use=
+prop parkcable on.use=
+place UT_ElectricCableHub02 parkcable at 46 -48 ground sit
 place TP_Moontown_SealedCrate02_Clean - at 40 -47 ground sit
 place RT_PowerBox masterswitch at 40 -47 y=0.95 sit yaw=180
 place Loot_Crate powercrate at 34 -57 ground sit yaw=15
@@ -384,6 +389,11 @@ prop queengate obj.name=queengate
 prop queengate beh.move=0,-12.8,0
 prop queengate beh.moveTime=8
 prop queengate beh.moveMode=switch
+# (scenery: Utopia's entrance door wants Raft's entrance key and goes when used: this gate only sinks from its panel - the ready piece's lock taken off)
+prop queengate beh.use=
+prop queengate if.use=
+prop queengate else.use=
+prop queengate on.use=
 # (Utopia's entrance door as a ready piece wants Raft's entrance key and goes when used: this gate only sinks when the gate panel is used - the ready piece's settings taken off)
 prop queengate beh.use=
 prop queengate if.use=

@@ -88,7 +88,7 @@ push at 5 -2 h=21.05
 call rt_storey b2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3.05
 place "Table Office" radiodesk at -3 -3.4 sit
-place RT_CommRadio - at -3 -3.4 y=0.95 sit drop
+place RT_CommRadio hutradio at -3 -3.4 y=0.95 sit drop
 place Note_Paper radiolog at -2.4 -3.3 y=1.2 sit drop yaw=20
 place Zone_Trigger radiohut at -3 0 y=1.5
 pop
@@ -179,6 +179,12 @@ prop boiler beh.use=Fit the three parts and light the boiler
 prop boiler if.use=take|story:heatpart|3
 prop boiler on.use=message||The parts fit, the burner catches - pipes tick and steam as the heat runs out to the domes. The warm drawer slides open: the radio's crystal.\nsignal||heat\ngive||story:radiocrystal*1\nsound||event:/raft/engine/controller_on
 prop boiler else.use=message||The boiler is missing three parts. The commander's order said where they went.
+# (the summit radio: Raft's radio wants power or a battery - this one the crystal from the boiler's drawer)
+prop hutradio obj.name=hutradio
+prop hutradio beh.use=Fit the crystal and use the radio
+prop hutradio if.use=has|story:radiocrystal|1
+prop hutradio else.use=message||The set is dead: its tuning crystal is gone. The commander's order said where it was kept.
+prop hutradio on.use=message||The crystal clicks home. Static... then the Corps' frequency, a voice on a loop: the Drowned Gate holds, the sea wall still stands.\nsignal||radio
 
 prop camp zone.id=camp
 prop camp zone.radius=14

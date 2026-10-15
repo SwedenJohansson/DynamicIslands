@@ -182,7 +182,8 @@ place Zone_Trigger dorm at -6 0 y=1.5
 
 # The radio room: the operator's table with the radios and the log, the radar screen, a computer
 place "Table Office" - at 7.6 0 sit yaw=90
-place RT_CommRadio - at 7.8 0.6 y=0.8 sit yaw=90
+place RT_CommRadio opradio at 7.8 0.6 y=0.8 sit yaw=90
+prop opradio obj.name=opradio
 place Model_Radio - at 7.8 -0.6 y=0.8 sit yaw=90
 place Note_Book radiolog at 7.3 0 y=0.81 yaw=90
 place "Chair Office" - at 6.5 0 sit yaw=270
@@ -281,7 +282,7 @@ prop rats tint.amount=0.4
 prop generator obj.name=generator
 prop generator beh.use=Start the generator
 prop generator if.use=take|story:fuel|1
-prop generator on.use=message||You pour in the fuel. The generator coughs, sputters - and runs. Lights flicker on through the shelter, and somewhere heavy doors slide open.\nhide|dark\nshow|lamps\nshow|hum\nopen|cmddoor\nopen|gate\nsound||event:/exploring/obstacles/tangaroa/generator_placepart\nsound||event:/exploring/obstacles/varuna/garagedoor_open
+prop generator on.use=message||You pour in the fuel. The generator coughs, sputters - and runs. Lights flicker on through the shelter, and somewhere heavy doors slide open.\nhide|dark\nshow|lamps\nshow|hum\nopen|cmddoor\nopen|gate\nsound||event:/exploring/obstacles/tangaroa/generator_placepart\nsound||event:/exploring/obstacles/varuna/garagedoor_open\nsignal||power
 prop generator else.use=message||The generator is bone dry. It needs fuel.
 prop gate obj.name=gate
 prop gate beh.move=-7.2,0,0

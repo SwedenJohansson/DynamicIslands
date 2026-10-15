@@ -85,7 +85,12 @@ place Locker sterncabin at -0.5 -3.3 sit yaw=270
 place "VG_DecorationPrefabBase_Carpet_Rectangle Variant" - at -3 -1.6 y=0.02
 place Zone_Trigger stern at -3 -1.5 y=1.5
 place Creature_PufferFish puffers at -3 -6.5 y=2.5
-place "VG_DecorationPrefabBase_Engine Variant" - at -4 3 sit yaw=90
+place "VG_DecorationPrefabBase_Engine Variant" wreckengine at -4 3 sit yaw=90
+# (scenery: the wreck's engine went down with her; without this it wanted a gas tank no island of the plan gives first - the ready piece's lock taken off)
+prop wreckengine beh.use=
+prop wreckengine if.use=
+prop wreckengine else.use=
+prop wreckengine on.use=
 line RT_Fence from 0 4.5 to -6 4.5 step=1.5 ends y=0
 place RT_Fence - at -6 1.5 y=0 yaw=90
 place RT_Fence - at -6 3 y=0 yaw=90

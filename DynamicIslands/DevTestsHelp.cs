@@ -74,7 +74,7 @@ namespace DynamicIslands
 				{
 					help.onClick.Invoke();
 					yield return new WaitForSecondsRealtime(0.4f);
-					Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "HOW TO MAKE A WORLD PLAN" && InfoWindow.Body.Contains("+ Add a rule") && InfoWindow.Body.Contains("NEW WORLD"),
+					Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "HOW TO MAKE A WORLD PLAN" && InfoWindow.Body.Contains("+ Add a rule") && InfoWindow.Body.Contains("Choose plan...") && InfoWindow.Body.Contains("Test this plan"),
 						"Help shows the steps: " + InfoWindow.Title);
 					Screenshot(new[] { "planhelp_steps" });
 					yield return new WaitForSecondsRealtime(0.6f);
@@ -482,6 +482,44 @@ namespace DynamicIslands
 				check(panel.anchoredPosition == start || (panel.anchoredPosition - start).magnitude < 1f, "back where it starts");
 			}
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
+		}
+
+		[ConsoleCommand(name: "CIHoverTips", docs: "Dev, main menu or editor (X9): where no status bar shows a control's hover text - the main menu's windows (here the plan picker), the stats page - it comes in a small tip by the mouse after a moment, on the screen, and goes when the mouse leaves; in the editor its status bar has it and no tip comes")]
+		public static void HoverTipsCommand() { StartTest(HoverTipsRoutine()); }
+
+		static IEnumerator HoverTipsRoutine()
+		{
+			bool ok = true;
+			bool editor = EditorUI.Canvas != null && EditorUI.Canvas.gameObject.activeInHierarchy;
+			bool opened = false;
+			if (!editor && !PlanPickerWindow.IsOpen) { PlanPickerWindow.Open(); opened = true; yield return new WaitForSecondsRealtime(0.5f); }
+			UIKit.HintTarget target = UnityEngine.Object.FindObjectsOfType<UIKit.HintTarget>().FirstOrDefault(h => h.isActiveAndEnabled && !string.IsNullOrEmpty(h.Text));
+			if (target == null) { if (opened) PlanPickerWindow.Close(); Fail("hover tips: no control with a hover text on the screen"); yield break; }
+			string said = null;
+			Action<string> heard = h => said = h;
+			UIKit.HintChanged += heard;
+			try
+			{
+				target.OnPointerEnter(null);
+				yield return new WaitForSecondsRealtime(0.2f);
+				Check(ref ok, UIKit.ShownTip == null, "no tip at once (" + (UIKit.ShownTip ?? "none") + ")");
+				yield return new WaitForSecondsRealtime(0.9f);
+				if (editor) Check(ref ok, UIKit.ShownTip == null && said == target.Text, "the editor: its status bar has the text, no tip (" + target.name + ": " + said + ")");
+				else
+				{
+					Check(ref ok, UIKit.ShownTip == target.Text, "a tip shows the hover text after a moment (" + target.name + ": " + (UIKit.ShownTip ?? "none") + ")");
+					var c = new Vector3[4];
+					if (UIKit.HintTip != null) UIKit.HintTip.GetWorldCorners(c);
+					Check(ref ok, UIKit.HintTip != null && c[0].x >= 0 && c[0].y >= 0 && c[2].x <= Screen.width && c[2].y <= Screen.height && c[2].x - c[0].x <= 301f * UIKit.HintTip.lossyScale.x,
+						"the tip is on the screen, at most 300 wide (" + c[0] + " - " + c[2] + ")");
+					Screenshot(new[] { "hovertip" });
+				}
+				target.OnPointerExit(null);
+				yield return null;
+				Check(ref ok, UIKit.ShownTip == null && said == null, "it goes when the mouse leaves");
+			}
+			finally { UIKit.HintChanged -= heard; if (opened) PlanPickerWindow.Close(); }
+			if (ok) Log("PASS: hover tips"); else Fail("hover tips");
 		}
 	}
 }

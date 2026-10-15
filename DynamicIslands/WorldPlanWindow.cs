@@ -903,7 +903,9 @@ namespace DynamicIslands.Editor
 
 		const string HelpPlans = "A world plan is a list of rules: which custom islands a world gets, when they come and where. Each rule brings one island.\n\n" +
 			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name (a good way to start from a sample plan). " +
-			"Delete: moves the plan file to Mods\\DynamicIslands\\deleted\\plans, where you can get it back - worlds that use it keep their own copy.";
+			"Delete: moves the plan file to Mods\\DynamicIslands\\deleted\\plans, where you can get it back - worlds that use it keep their own copy.\n\n" +
+			"New main story...: a main story made step by step - Raft's story on or off, then your islands in the order players find them on the Receiver; " +
+			"each gets a tab in Raft's notebook. It adds rule cards you can change afterwards.";
 		const string HelpTemplates = "Adds a ready-made set of rules to this plan: an island-hopping trail, a story chain of your islands, flying islands, a quest reward, " +
 			"your island in Raft's story... They are added to the rules you have; change them afterwards like any rule.";
 		const string HelpRandom = "On: islands from your spawn pool (spawnpool.txt) also turn up by chance while sailing, between the plan's islands.\n\n" +
@@ -911,14 +913,17 @@ namespace DynamicIslands.Editor
 		const string HelpStory = "Raft's own story: Radio Tower, Vasagatan ... Utopia, each found by tuning the Receiver to the frequency on the island before.\n\n" +
 			"On: it stays in worlds with this plan, next to your islands. Off: only your plan's islands - a new adventure.\n\n" +
 			"Click a story island's name to leave it out: the note before it then leads to the one after. A rule's STORY part can put one of your islands into this chain.";
-		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Custom Islands plan).";
+		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Choose plan...).";
 		const string HelpMap = "A rough sketch from above of where the rules put their islands: the raft starts in the middle and sails up (north). " +
 			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (blue).";
 		const string HelpCheck = "Check goes through the plan the way a world will play it, and looks inside the islands: can each island's quest be finished " +
 			"(is there a zone, note, chest or creatures for every step)? Do the zones and signals the rules wait for exist? Do rules wait for each other in a circle, " +
 			"or for an island no rule brings? A report opens: problems (the rule can't work), warnings (it may not work as you mean) and tips, each with how to fix it. " +
 			"Afterwards each card shows its own problems as you edit. Save checks too.\n\n" +
-			"Check can't play the quests: create a world with the plan and try it (F10 → WorldPlan shows which rules have fired).";
+			"Check can't play the quests: Test this plan plays it in a new test world (F10 → WorldPlan shows which rules have fired).\n\n" +
+			"Progression: what the plan gives of Raft's progression, in order - which rule's islands give which blueprints and story items, what their locks want, and what is never given.\n" +
+			"Preview notebook: the main story in Raft's own notebook, in the test world, page by page (the plan needn't be saved).\n" +
+			"Test this plan: the plan saved, then played in a new test world; Esc > Custom Islands > Back to the editor comes back here.";
 		const string HelpShare = "Export...: a pack (.zip) of this plan with every island it needs, to send to friends or to share in the island library (it saves the plan first).\n\n" +
 			"Import...: installs a pack someone made (plans and islands), or removes what you installed.";
 		const string HelpId = "The rule's name, e.g. camp. Other rules use it to mean the island this rule brought: \"quest done at camp\", \"near camp\". " +
@@ -977,8 +982,10 @@ namespace DynamicIslands.Editor
 				"5.  <b>+ Add a rule</b> again for the next island. A new rule already says \"When a quest is done\" at the rule before, \"Near an island\" - that one: that makes a story from island to island. " +
 				"Pick the island and the direction.\n" +
 				"6.  Read the sentence at the top of each card: it says in plain words what the rule will do.\n" +
-				"7.  <b>Check</b> (√ Every rule can work, or what to fix), then <b>Save</b>.\n" +
-				"8.  Main menu → <b>NEW WORLD</b> → click <b>Custom Islands plan</b> until it shows your plan → Create. Play it: F10 → <i>WorldPlan</i> shows which rules have fired.\n\n" +
+				"7.  <b>Check</b> (√ Every rule can work, or what to fix), then <b>Save</b>. <b>Progression</b> shows which rule gives which of Raft's blueprints and story items, and what their locks want.\n" +
+				"8.  <b>Test this plan</b> plays it at once in a new test world. For a real world: Main menu → <b>New Game</b> → <b>Choose plan...</b> → pick your plan → Create. " +
+				"F10 → <i>WorldPlan</i> shows which rules have fired.\n\n" +
+				"A story in Raft's notebook: <b>New main story...</b> makes one step by step, and <b>Preview notebook</b> shows its tabs and pages as players will find them.\n\n" +
 				"Hover any <b>?</b> in this window for help with that part. The guide walks through a whole plan with pictures (section 7.2), and lists every choice a rule has.",
 				new InfoWindow.Choice("Guide: world plans step by step", () => HelpLinks.OpenGuideSection("72-your-first-world-plan-step-by-step"), "Section 7.2 of the guide, online"),
 				new InfoWindow.Choice("Open the guide (PDF)", HelpLinks.OpenGuide, "The whole illustrated guide"),

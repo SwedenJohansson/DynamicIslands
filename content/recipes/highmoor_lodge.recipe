@@ -221,7 +221,12 @@ place Block_Wall_Tier3 - at 3.75 0 y=0.1
 place Block_Wall_Tier3 boilerdoor at 0.75 -0.15 y=0.1
 call corners w=3 d=3
 roof 3 3 at 0 0 y=0.1 wood
-place "VG_DecorationPrefabBase_Engine Variant" - at 2.25 3.2 y=0.1 sit
+place "VG_DecorationPrefabBase_Engine Variant" lodgeengine at 2.25 3.2 y=0.1 sit
+# (scenery: the old engine by the valve wheels - the ready piece's lock taken off)
+prop lodgeengine beh.use=
+prop lodgeengine if.use=
+prop lodgeengine else.use=
+prop lodgeengine on.use=
 place TP_Selene_DoorCrankWheel valvered at 1.2 1.62 y=1.3 rot=0,0,0
 place TP_Selene_DoorCrankWheel valvebrass at 2.25 1.62 y=1.3 rot=0,0,0
 place TP_Selene_DoorCrankWheel valveblack at 3.3 1.62 y=1.3 rot=0,0,0

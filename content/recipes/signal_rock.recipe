@@ -184,7 +184,12 @@ place Loot_Crate coilcrate at -15 -14.5 sit tilt=12 yaw=40
 place "Box Big" - at -16 -12 sit tilt=20
 place "Box Big" - at -12.5 -16 sit tilt=-15 yaw=70
 place Reef_Barrel1 - at -17 -10 sit tilt=80
-place RT_SharkCage - at -8.5 -17 sit yaw=30
+place RT_SharkCage sharkcage at -8.5 -17 sit yaw=30
+# (scenery: a shark cage wrecked on the reef; it wanted bolt cutters - the ready piece's lock taken off)
+prop sharkcage beh.use=
+prop sharkcage if.use=
+prop sharkcage else.use=
+prop sharkcage on.use=
 place Creature_PufferFish puffers at -13.5 -13.5 h=-1.5
 place Note_Bottle bottle at -14 -23 h=0
 

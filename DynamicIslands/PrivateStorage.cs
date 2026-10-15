@@ -107,6 +107,8 @@ namespace DynamicIslands.Editor
 				if (gone.Count == 0) return;
 				foreach (uint k in gone) builders.Remove(k);
 				Log("Forgot the builders of " + gone.Count + " storage(s) no longer in the world (" + builders.Count + " left)");
+				// (the players' lists came with the options at their join: they forget the same ones now)
+				WorldOptions.Broadcast();
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] Looking for storages that are gone: " + e.Message); }
 		}

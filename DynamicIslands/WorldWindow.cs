@@ -142,6 +142,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch(hintText.rectTransform, 8, 8, 1, 1);
 			UIKit.Fit(hintText, 9);
 			UIKit.HintChanged += h => { if (hintText != null && IsOpen) hintText.text = string.IsNullOrEmpty(h) ? DefaultHint : h; };
+			UIKit.HintBars.Add(() => IsOpen);
 
 			RectTransform buttonsRow = UIKit.Row(panel, 30f, 8f, "Buttons");
 			UIKit.Label(buttonsRow, "", 11);

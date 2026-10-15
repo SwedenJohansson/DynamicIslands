@@ -185,7 +185,12 @@ place RT_SatteliteDisc - at -3 -3 ground scale=2.5 yaw=300
 place VP_SteelBeam03 - at -5.2 -1.4 ground yaw=30
 place VP_SteelBeam03 - at -0.8 -1.6 ground yaw=150
 place VP_SteelBeam03 - at -3 -5.6 ground yaw=270
-place UT_Generator01 - at 2.8 -3.5 ground scale=0.35 yaw=200
+place UT_Generator01 lairgenerator at 2.8 -3.5 ground scale=0.35 yaw=200
+# (scenery: a small dead generator by the beams - the ready piece's lock taken off)
+prop lairgenerator beh.use=
+prop lairgenerator if.use=
+prop lairgenerator else.use=
+prop lairgenerator on.use=
 # (the radio tower's floodlights, not Varuna Point's spotlights: those shoot a player they see - a player on the hangar's
 # roof died, and Raft saved the world with them down)
 place RT_Floodlight dishlights at -7.4 -5 sit yaw=60

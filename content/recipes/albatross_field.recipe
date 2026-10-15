@@ -122,7 +122,12 @@ push at -40 54 h=7.35 yaw=90
 call rt_storey b1=none b2=none f1=none f2=none l1=none l2=none l3=none r1=none r2=none r3=none
 pop
 place Generator generator at -39 57.6 h=4.35 yaw=90
-place UT_ElectricCableHub01 - at -36.2 58.8 h=5.3 yaw=-90
+place UT_ElectricCableHub01 cablehub at -36.2 58.8 h=5.3 yaw=-90
+# (scenery: the bunker generator's cable hub; the generator is the lock - the ready piece's lock taken off)
+prop cablehub beh.use=
+prop cablehub if.use=
+prop cablehub else.use=
+prop cablehub on.use=
 place VP_Cable_Floor01 - at -37.2 56.2 h=4.4 yaw=0
 place Stairwell_CeilingLamp bunkerlamps at -40 55.6 h=7.3
 place Stairwell_CeilingLamp bunkerlamps at -40 58.6 h=7.3

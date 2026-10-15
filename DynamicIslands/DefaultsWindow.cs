@@ -10,7 +10,7 @@ namespace DynamicIslands.Editor
 	/// "Defaults..." (ROADMAP AU46): the settings of this PC's Mods\DynamicIslands\spawnpool.txt in a window, so nobody has to
 	/// edit the file by hand - how often random islands come, how far apart and ahead, when they unload and come back, the
 	/// Receiver's dots, the regrow days new worlds get, and the generated islands (with their things to gather - ROADMAP LM9). Opened from World settings in the New
-	/// Game box and from Esc > Custom Islands (host). Each value is saved as soon as its field is left (or its button
+	/// Game box (only there: in a world, regrow days are the RegrowDays command). Each value is saved as soon as its field is left (or its button
 	/// pressed), kept within its range, through CustomIslandSpawner.SetPoolValues: the file is written whole, its comments
 	/// and island lines as they were. In a world the host's players get the settings they share at once (OnPoolChanged).
 	/// </summary>

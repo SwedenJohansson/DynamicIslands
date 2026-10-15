@@ -24,6 +24,8 @@ expect message red light turns
 walk 0 4 to 2 2 to 2 0 to 4 0 to 6.5 -0.8 h=1.69 below=5
 read Radio log
 expect step 3
+use opradio
+expect message radio is dead
 
 # The generator room: the generator is dry; the commander's door and the blast gate stay shut
 walk 6.5 -0.8 to 2 -0.5 to 1.8 -2 to 0 -5 to -3 -6 to -5.5 -6.5 h=1.69 below=5
@@ -70,3 +72,7 @@ walk 6.6 -8.2 to 4.2 -8.3 to 4 -6 to 0 -6 to 0 -9.5 to 0 -12.5 h=1.68 below=5
 expect stand 0 -12.5 h=1.68
 zone outside
 expect message Daylight
+
+# The radio room's set runs on the generator now (Raft's radio: power or a battery)
+use opradio
+expect message Static crackles

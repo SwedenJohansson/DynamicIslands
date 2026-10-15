@@ -23,6 +23,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **More islands with Raft's special features:** every feature that was on one library island is on a second one
   now, and the mod's puzzle pieces (laser, water wheels, pipes, wires, claw, scales) are on six islands. In Raft 2,
   three locks want an item another island of the plan gives earlier (a keycard, bolt cutters, a radio part).
+- **No more locks before their key in the library plans:** Raft's ready pieces that stood on islands only as scenery
+  (wrecked engines and generators, cable hubs, shark and dog cages, dead radios) no longer want a story item the plan
+  gives later. Whiteout Reach's summit radio now wants the crystal from the boiler's drawer, and Shelter Atoll's
+  generator also runs its radio room. The plan Check no longer warns about a ready radio on an island with a generator:
+  the generator runs it without the battery part.
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
@@ -179,6 +184,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Hover texts outside the editor:** only the editor's status bar and the in-world window drew a control's hover
+  text, so the main menu's windows (the plan picker, the island library...), the stats page and the alpha box never
+  showed theirs. Where there is no such bar, the text now comes in a small tip by the mouse after a moment.
+- **Private storages after a join:** when storages that were taken down or sank were forgotten at the host's
+  save, a player already in the game kept the old list until they joined again. The host now sends the new list
+  to everyone at once.
+- **World plan help caught up:** the plan editor's Help box still said to click "Custom Islands plan" in the New
+  Game box; it now says Choose plan..., and its Help box and ? popups explain Test this plan, Progression, Preview
+  notebook and New main story....
 - **Carried off an island by the raft:** standing on a custom island's ground or on its Raft blocks (a wreck,
   a house of planks), Raft could take the player for someone on the raft, so the raft's drift and rocking moved them
   along with it - tens of metres in a second when the raft was far off. Island ground now counts as an island, as

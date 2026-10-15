@@ -105,15 +105,23 @@ namespace DynamicIslands.Editor
 				}
 			x.AllText = text.ToString();
 			// Story items: wanted by checks, given by everything else (loot, zone items, give actions) and by Raft's pickups
-			var sources = new List<KeyValuePair<string, string>>(f.Props.Where(kv => kv.Key != StoryItems.Key));
+			var owners = new List<List<KeyValuePair<string, string>>> { f.Props.Where(kv => kv.Key != StoryItems.Key).ToList() };
 			foreach (IslandObject o in f.Objects)
 			{
-				if (o.Props != null) sources.AddRange(o.Props);
+				if (o.Props != null) owners.Add(o.Props.ToList());
 				if (QuestItemPickups.IsModel(o.Name)) { string id = QuestItemPickups.StoryId(o.Name); if (id != null) x.GivesStory.Add(id); }
 			}
-			foreach (var kv in sources)
+			// (an "any" check is open by any one of its lines: none of its story items is wanted when one of its lines waits for
+			// a signal something else on the island sends - Raft's radio runs on the island's generator as well as a battery; a
+			// generator's own "power" is only its running state, so it still wants its part)
+			List<HashSet<string>> sends = owners.Select(SignalsSent).ToList();
+			var senders = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			foreach (HashSet<string> s in sends) foreach (string sig in s) { int had; senders.TryGetValue(sig, out had); senders[sig] = had + 1; }
+			for (int i = 0; i < owners.Count; i++)
+			foreach (var kv in owners[i])
 			{
 				bool check = kv.Key.StartsWith(BehaviourProps.CheckPrefix);
+				if (check && OpenBySignal(kv.Value, sends[i], senders)) continue;
 				foreach (string line in (kv.Value ?? "").Split('\n'))
 				{
 					if (check)
@@ -126,6 +134,31 @@ namespace DynamicIslands.Editor
 			}
 			if (!sample) FindTraps(f, x, islandNever);
 			return x;
+		}
+
+		static HashSet<string> SignalsSent(List<KeyValuePair<string, string>> props)
+		{
+			var s = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (var kv in props)
+				if (kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
+					foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
+						if (a.Verb == "signal" && a.Arg.Trim().Length > 0) s.Add(a.Arg.Trim());
+			return s;
+		}
+
+		/// <summary>An "any" check (ObjCheck.AnyLine first) with a line waiting for a signal another of the island's objects sends.</summary>
+		static bool OpenBySignal(string check, HashSet<string> own, Dictionary<string, int> senders)
+		{
+			string[] lines = (check ?? "").Split('\n');
+			if (lines[0].Trim() != ObjCheck.AnyLine) return false;
+			foreach (string l in lines.Skip(1))
+			{
+				string[] w = l.Trim().Split('|');
+				if (w.Length < 2 || w[0] != "signal" || w[1].Trim().Length == 0) continue;
+				int n; senders.TryGetValue(w[1].Trim(), out n);
+				if (n - (own.Contains(w[1].Trim()) ? 1 : 0) > 0) return true;
+			}
+			return false;
 		}
 
 		static readonly System.Text.RegularExpressions.Regex NeedRx = new System.Text.RegularExpressions.Regex(@"^(?:has|take)\|" + StoryItems.Prefix + @"([^|;*\s]+)");

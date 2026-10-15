@@ -134,9 +134,19 @@ place Antenna_pole - at 66.5 6 ground
 place Antenna_dish - at 66.5 6 y=6.1 yaw=200
 place RT_SatteliteDisc - at 72 0.5 ground yaw=150
 place Note_Sign gullsign at 78.6 2.4 ground yaw=180
-place RT_CommRadio - at 70.2 12 h=5.1 yaw=90
+place RT_CommRadio stationradio at 70.2 12 h=5.1 yaw=90
+# (scenery: the gull station's radios, long dead - the ready piece's lock taken off)
+prop stationradio beh.use=
+prop stationradio if.use=
+prop stationradio else.use=
+prop stationradio on.use=
 place "Table Office" - at 71.8 8.5 h=6 drop yaw=90
-place Balboa_DecorationPrefabBase_RadioDevice - at 71.8 9.2 h=7.5 drop yaw=90
+place Balboa_DecorationPrefabBase_RadioDevice stationradio at 71.8 9.2 h=7.5 drop yaw=90
+# (scenery: the gull station's radios, long dead - the ready piece's lock taken off)
+prop stationradio beh.use=
+prop stationradio if.use=
+prop stationradio else.use=
+prop stationradio on.use=
 place Note_Papers orientation at 71.8 7.9 h=7.5 drop yaw=20
 place "VG_DecorationPrefabBase_Projector Variant" - at 74.2 7 h=6.5 drop yaw=0
 place "VG_DecorationPrefabBase_ProjectorScreen Variant" - at 74 13.6 h=7.9 yaw=180
@@ -181,11 +191,16 @@ call rt_storey b1=none b2=none f1=none f2=none l1=none l2=none l3=none r1=none r
 pop
 place Balboa_DecorationPrefabBase_SmallLocker pikecard at 49.4 -29 h=3.45 yaw=270
 place "Box Small" feedstore at 45 -28.5 h=4.5 drop yaw=10
-place UT_DogCage_Medium02 - at 27 -33 ground yaw=0 scale=2.2
-place UT_DogCage_Medium02 - at 36 -50 h=3.4 rot=0,30,85 scale=2.2
-place UT_DogCage_Medium02 - at 21 -41 ground yaw=90
-place UT_DogCage_Medium02 - at 21 -45 ground yaw=90
-place UT_DogCage_Medium02 - at 23 -50 ground yaw=60
+place UT_DogCage_Medium02 kennel at 27 -33 ground yaw=0 scale=2.2
+place UT_DogCage_Medium02 kennel at 36 -50 h=3.4 rot=0,30,85 scale=2.2
+place UT_DogCage_Medium02 kennel at 21 -41 ground yaw=90
+place UT_DogCage_Medium02 kennel at 21 -45 ground yaw=90
+place UT_DogCage_Medium02 kennel at 23 -50 ground yaw=60
+# (scenery: the kennels' empty cages; they wanted bolt cutters - the ready piece's lock taken off)
+prop kennel beh.use=
+prop kennel if.use=
+prop kennel else.use=
+prop kennel on.use=
 place TangaroaBucket - at 31 -40 ground
 place TangaroaBucket - at 26 -39 ground
 place Note_Sign pikesign at 41 -46 ground yaw=200

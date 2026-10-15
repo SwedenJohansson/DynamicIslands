@@ -118,6 +118,11 @@ prop olofscrate loot.refill=0
 note cage Empty cage | The cage on the quay, its door hanging open: hyena hair on the bars, a gnawed bone - the warden's pack was kept here once.
 loot cage Scrap*2;Rope*1
 prop cage loot.refill=0
+# (scenery: its door hangs open; it wanted bolt cutters - the ready piece's lock taken off)
+prop cage beh.use=
+prop cage if.use=
+prop cage else.use=
+prop cage on.use=
 note fishcrate Fisherman's crate | A fisherman's covered crate: line, hooks, a net half mended - he left in a hurry.
 loot fishcrate Rope*2;Scrap*1
 prop fishcrate loot.refill=0

@@ -134,6 +134,18 @@ namespace DynamicIslands
 				Check(ref ok, early.Contains("later rule"), "the lock before the key: warned (" + early + ")");
 				Check(ref ok, late.Length == 0, "the key before the lock: fine (" + late + ")");
 				Check(ref ok, none.Contains("no island of the plan gives"), "no key anywhere: warned (" + none + ")");
+				// (an "any" check: Raft's radio runs on a generator on its island as well as on a battery - the battery is not
+				// wanted then; the generator's own "power" is only its running state, so it still wants its part)
+				IslandFile rf = IslandFile.Load(IslandSpawner.PathFor(source));
+				rf.Objects.Clear(); rf.Props = new Dictionary<string, string>();
+				rf.Objects.Add(new IslandObject { Name = "RT_CommRadio", Position = Vector3.zero, Props = ObjectProps.Defaults("RT_CommRadio") });
+				PlanChecker.Facts alone = PlanChecker.FromFile(rf, "citest-so-radio", false);
+				rf.Objects.Add(new IslandObject { Name = "Generator", Position = Vector3.one * 3f, Props = ObjectProps.Defaults("Generator") });
+				PlanChecker.Facts powered = PlanChecker.FromFile(rf, "citest-so-radio", false);
+				string battery = ReadyPieces.ItemOf("RT_CommRadio"), part = ReadyPieces.ItemOf("Generator");
+				Check(ref ok, alone.NeedsStory.Contains(battery) && !powered.NeedsStory.Contains(battery) && powered.NeedsStory.Contains(part),
+					"a radio wants a battery, not with a generator on its island; the generator wants its part (alone: " + string.Join(", ", alone.NeedsStory.ToArray()) +
+					"; with the generator: " + string.Join(", ", powered.NeedsStory.ToArray()) + ")");
 			}
 			catch (Exception ex) { Check(ref ok, false, "no errors: " + ex); }
 			finally

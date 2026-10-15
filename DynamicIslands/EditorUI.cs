@@ -94,7 +94,7 @@ namespace DynamicIslands.Editor
 			Canvas = UIKit.CreateCanvas("CustomIslandsEditorUI", 20);
 			if (tabs == null) tabs = Canvas.gameObject.AddComponent<TabSelector>();
 			Transform root = Canvas.transform;
-			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; hintHooked = true; }
+			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; UIKit.HintBars.Add(() => Canvas != null && Canvas.gameObject.activeInHierarchy); hintHooked = true; }
 			hoverHint = null;
 			lastSelectionCount = -1; shownPaintLayer = -1; elevationTyping = false;
 			shownFalloff = (TerrainBrushes.Falloff)(-1); shownSeaLevel = float.NaN; // (the new buttons get lit)

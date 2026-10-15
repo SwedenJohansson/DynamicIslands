@@ -77,6 +77,8 @@ zone radiohut
 expect step 18
 read Last transmission
 expect step 19
+use hutradio
+expect message crystal clicks home
 
 # The commander's chest in his dome, warm now
 at 24 36.4 h=12.6
