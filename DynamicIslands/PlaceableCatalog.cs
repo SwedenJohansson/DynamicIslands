@@ -147,6 +147,10 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
 		static readonly HashSet<string> core = new HashSet<string>();
+		/// <summary>The generator's names (CA19): the objects of Raft's own island scenes and its things to gather that a
+		/// catalog without placeables.txt makes core - whatever placeables.txt says and whatever other mods add, so a seed
+		/// gives the same island on every PC.</summary>
+		static readonly HashSet<string> gen = new HashSet<string>();
 
 		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
 
@@ -222,7 +226,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Every object of Raft's island scenes the index knows (loaded or not) - the tests load them all.</summary>
 		internal static IEnumerable<string> IndexedNames { get { return index.Keys; } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
-		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n); } }
+		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n, StringComparer.Ordinal); } }
+		/// <summary>What the generator picks from (CA19): Raft's own island objects in ordinal order - the same list on every PC
+		/// (not the PC's culture order, not placeables.txt, not other mods' buildables). A name placeables.txt left out is
+		/// still planned (the file is the same as elsewhere); this PC just doesn't show it.</summary>
+		public static IEnumerable<string> GenNames { get { return gen.OrderBy(n => n, StringComparer.Ordinal); } }
 
 		public static string CategoryOf(string name)
 		{
@@ -387,10 +395,11 @@ namespace DynamicIslands.Editor
 					foreach (KeyValuePair<string, Transform> pick in Pick(root))
 					{
 						string name = pick.Key;
-						if (prototypes.ContainsKey(name)) continue;
 						bool second = source.Include2 != null && source.Include2.IsMatch(name);
-						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						bool byDefault = second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						if (byDefault) gen.Add(name);
+						if (prototypes.ContainsKey(name)) continue;
+						bool wanted = whitelist != null ? whitelist.Contains(name) : byDefault;
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, second ? source.Category2 : source.Category, false);
 						core.Add(name);
@@ -404,6 +413,7 @@ namespace DynamicIslands.Editor
 					{
 						string hn = CleanName(t.name);
 						if (!IsGatherName(hn) || harvestables.ContainsKey(hn)) continue;
+						if (HarvestableObjects.IsMatch(hn)) gen.Add(hn);
 						if (whitelist != null && !whitelist.Contains(hn)) continue;
 						AddHarvestable(hn, t);
 						// (the more recent ones aren't core: the generator's islands stay as they were - LM11)

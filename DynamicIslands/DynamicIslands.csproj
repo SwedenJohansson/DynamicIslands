@@ -222,6 +222,9 @@
     <Compile Include="MenuWindows.cs" />
     <Compile Include="HelpLinks.cs" />
     <Compile Include="InfoWindow.cs" />
+    <Compile Include="MissingIslandsCheck.cs" />
+    <Compile Include="RmlCache.cs" />
+    <Compile Include="DevTestsLoad.cs" />
     <Compile Include="NewWorldOptions.cs" />
     <Compile Include="MonsterDifficulty.cs" />
     <Compile Include="WorldRules.cs" />

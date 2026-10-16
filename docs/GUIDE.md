@@ -143,7 +143,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 1. Install the **Raft Mod Loader** (RML) from [raftmodding.com](https://www.raftmodding.com/) and start Raft through it.
 2. Put `DynamicIslands.rmod` into Raft's `mods` folder (for example
    `...\steamapps\common\Raft\mods\`), or install the mod from its raftmodding.com page.
-3. Start Raft with RML's **Play** button. The first start takes a little longer: RML compiles the mod. When a newer version is out, the main menu tells you once per start ([14](#14-questions-and-problems)).
+3. Start Raft with RML's **Play** button. The first start after installing or updating the mod takes about a minute longer: RML compiles the mod, and the main menu says so once when it is ready. Later starts use RML's kept copy and are quicker ([14](#14-questions-and-problems)). When a newer version is out, the main menu tells you once per start ([14](#14-questions-and-problems)).
 
 The mod keeps its files in `<Raft>\Mods\DynamicIslands\`: your islands (`*.island`), the settings files
 (`spawnpool.txt` and others, see [section 10](#10-settings-files)) and the world plans (`plans\`).
@@ -659,7 +659,8 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 
 **Generate** (top bar) makes a whole island for you to start from. The **preview** map on the right follows every
 change; the line under it says how big the island is and how many objects it will get. The **seed** picks one island
-of all possible ones: the same seed and settings always give the same island. Every setting has a **?** to hover.
+of all possible ones: the same seed and settings always give the same island, on every PC (whatever its language, its
+`placeables.txt` or other mods). Every setting has a **?** to hover.
 Generating replaces the island you have; **Ctrl+Z** brings it back. After **Generate** the window steps aside so you
 see the new island at once (a message says what it made); **Generate** in the top bar opens it again, with your settings.
 
@@ -3331,6 +3332,20 @@ story items are in Raft's notebook (**T**: its tab, and Found items); a **side q
 
 **A note I read isn't in the journal.** Notes with no text add no page, and each note adds one page once per world
 (someone else may have read it first: look for its title).
+
+**Raft takes a minute to start with the mod.** RML compiles the mod's code when Raft starts. Only the first start after
+installing or updating Custom Islands does that (the main menu then says "Custom Islands is ready..."); later starts load
+RML's kept copy (`%APPDATA%\RaftModLoader\cache\mods`, which the mod marks read-only so RML doesn't throw it away) and are
+quicker. Nothing of the mod runs while RML compiles, so there is no sign before that; RML's own mod list (its menu)
+shows "Compiling..." meanwhile.
+
+**"Islands missing" when I load a world.** The world uses island files this PC doesn't have (deleted, renamed, or
+from the island library and removed since). The box names them, and the library entry an island came with. **Play
+without them**: the rest of the world plays; those islands are left out (no Receiver dot) but stay in the world, so they
+come back once their file is here again - in multiplayer a player who joins with the file brings it. **Main menu**:
+leaves without saving, so you can download them again in the island library (or put the files back in
+`Mods\DynamicIslands`) and load the world again. Only the host (or a single player) sees the box; players who join get
+missing files from the host as before.
 
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 

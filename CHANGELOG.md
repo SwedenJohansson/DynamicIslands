@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Islands missing when a world loads:** when a world uses island files this PC doesn't have, the host (or single
+  player) gets a box naming them, and the library entry each came with. **Play without them** leaves them out (no
+  Receiver dot) but keeps them in the world, so they come back once the file is here; **Main menu** leaves without
+  saving, to download or restore them first. Joining players get missing files from the host as before.
 - **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
   for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
   world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
@@ -141,6 +145,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Quicker starts:** RML compiled the mod on every start (about a minute), because its own start-up throws away the
+  compiled copy it keeps. The mod now keeps that copy (read-only), so only the first start after installing or updating
+  compiles; the main menu says so once. Older copies of the mod in RML's cache are removed.
+- **The generator gives the same island on every PC:** its list of objects was sorted in the PC's language and could
+  include other mods' buildables and follow `placeables.txt`. It now uses Raft's own island objects in a fixed order.
+  **A seed now makes a different island than before** (worlds keep the islands already saved; only islands generated
+  from now on - new `gen-` islands, a lost `gen-` file made again, map types - follow the new order).
 - **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
   the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
   seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator

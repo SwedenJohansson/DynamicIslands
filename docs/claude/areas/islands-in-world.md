@@ -19,6 +19,8 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 | `MyIslandsWindow.cs` | My islands: `SourceOf`, worlds using each island, pool weight, Open/Rename/Delete/Give/Tidy up |
 | `Housekeeping.cs` | Tidy up (`Look`, `TidyUp`), `AllWorldCopies`, `WorldsByIsland`, `NamesIn`, `SavedByLine` |
 | `FileNames.cs` | `FileNames` name checks (`Problem`, `IslandProblem`, `ReceivedProblem`); `SafeFile` (write aside, `Commit`, `Recover`, `RecoverAll`, `WriteAllLines`) |
+| `MissingIslandsCheck.cs` | Host, end of `IslandWorldState.OnWorldLoaded`: `Find` (island lines without a file, not `gen-`/extras; plan rules not `Done` whose islands `WorldDirector.FileFor` can't find), sets `Entry.Excluded` (spawner and radar skip it; `IslandNetwork` clears it when the file comes), `Tick` opens the `InfoWindow` box; `ToMenu` = `LeaveGame` without saving. Test `CIMissingIslands` |
+| `RmlCache.cs` | CW2: RML_Main deletes `cache\mods` files not ending in Raft's version + `.cachedmod` (its own names end in version + cache version), so every start recompiled; `Keep` marks this mod's newest `.cachedmod` read-only (survives that try/catch delete), removes older ones, notes a compile start once. Test `CIRmlCache` |
 | `PatchHealth.cs` | `PatchAll` applies each `[HarmonyPatch]` class alone; `Feature` names a failed one; `ShowIfFailed` on the main menu |
 
 ## Main flow

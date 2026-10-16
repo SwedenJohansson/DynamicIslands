@@ -189,6 +189,8 @@ namespace DynamicIslands
 			StartStep("the loading notice", () => loading = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading Custom Islands..."));
 			// The mod's own error note (RML's "AN ERROR OCCURED!" can't be clicked): from the start, so a step that fails shows it
 			StartStep("the error notes", Editor.ErrorNotes.Install);
+			// (RML compiles the mod on every start unless its cached copy is kept - ROADMAP CW2)
+			StartStep("the RML cache", () => Editor.RmlCache.Begin(this));
 			// The world hooks first: whatever else fails, worlds still load and save their custom islands
 			StartStep("the world hooks", () =>
 			{
@@ -417,6 +419,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Island test", e); }
 			try { StoryChain.WatchWorld(); }
 			catch (Exception e) { TickError("Story chain", e); }
+			try { MissingIslandsCheck.Tick(); }
+			catch (Exception e) { TickError("Missing islands", e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { TickError("World director", e); }
 			try { JournalWindow.Tick(); }

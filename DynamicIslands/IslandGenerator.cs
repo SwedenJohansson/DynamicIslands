@@ -1389,9 +1389,15 @@ namespace DynamicIslands.Editor
 		static readonly Regex Nothing = new Regex(@"^$^");
 
 		/// <summary>Corals and reef things of the object list (map types dress sunken islands with them).</summary>
-		internal static string[] CoralNames() { return PlaceableCatalog.CoreNames.Where(n => (Corals.IsMatch(n) || Regex.IsMatch(n, @"^Reef_(Barrel\d+|Container)$")) && !n.StartsWith("Pickup_")).ToArray(); }
+		internal static string[] CoralNames() { return PlaceableCatalog.GenNames.Where(n => (Corals.IsMatch(n) || Regex.IsMatch(n, @"^Reef_(Barrel\d+|Container)$")) && !n.StartsWith("Pickup_")).ToArray(); }
 
 		// Indexed like TerrainPainter.Styles. (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
+		/// <summary>Some style's pools pick this name (tests: CIGenNames).</summary>
+		internal static bool InAnyPool(string name)
+		{
+			return Pools.Any(p => new[] { p.ShoreTrees, p.Trees, p.Bushes, p.Rocks, p.Beach, p.LandHarvest, p.SeaHarvest, p.Water }.Any(r => r != null && r.IsMatch(name)));
+		}
+
 		static readonly StylePools[] Pools =
 		{
 			new StylePools // Tropical
@@ -2776,7 +2782,7 @@ namespace DynamicIslands.Editor
 			Habitat h;
 			if (habitats.TryGetValue(key, out h)) return h;
 			LandStyle land = RaftLand.For(style, small);
-			var core = new HashSet<string>(PlaceableCatalog.CoreNames);
+			var core = new HashSet<string>(PlaceableCatalog.GenNames);
 			LandThing[] kinds = land.Of(cat).Where(t => core.Contains(t.Name)).ToArray();
 			h = null;
 			if (kinds.Sum(t => t.Count) >= HabitatMinCount)
@@ -3166,7 +3172,7 @@ namespace DynamicIslands.Editor
 
 		static void PlanNature(IslandGenSettings s, Ground ground, SpotGrid spots, List<IslandObject> owners, List<string> cats, GenReport report, Dictionary<string, int> targets)
 		{
-			string[] names = PlaceableCatalog.CoreNames.ToArray(); // the same set every time, so a seed always gives the same island
+			string[] names = PlaceableCatalog.GenNames.ToArray(); // the same list on every PC, so a seed always gives the same island (CA19)
 			StylePools pools = Pools[Mathf.Clamp(s.Style, 0, Pools.Length - 1)];
 			Func<Regex, string[]> pick = r => names.Where(n => r.IsMatch(n)).ToArray();
 			string[] trees = pick(pools.Trees), shoreTrees = pick(pools.ShoreTrees), bushes = pick(pools.Bushes), rocks = pick(pools.Rocks), beach = pick(pools.Beach);
@@ -3524,7 +3530,7 @@ namespace DynamicIslands.Editor
 		static List<SeaThing> SeaThingsOf(int style, string cat, bool extra)
 		{
 			if (!PlaceableCatalog.IsBuilt) return new List<SeaThing>();
-			List<string> core = PlaceableCatalog.CoreNames.ToList();
+			List<string> core = PlaceableCatalog.GenNames.ToList();
 			if (coreNames == null || core.Count != coreNamesCount) { coreNames = new HashSet<string>(core); coreNamesCount = core.Count; }
 			Func<SeaThing, bool> has = t => coreNames.Contains(t.Name) || (t.Extra && PlaceableCatalog.SceneOf(t.Name) != null);
 			List<SeaThing> list = RaftUnderwater.For(style).Of(cat, extra).Where(has).ToList();
