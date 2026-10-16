@@ -83,7 +83,9 @@ namespace DynamicIslands
 			if (!InfoWindow.Body.Contains(MissingTestIsland)) { ok = false; Fail("the box doesn't name it"); }
 			List<string> labels = InfoWindow.ButtonLabels;
 			if (!labels.Contains(MissingIslandsCheck.ContinueLabel) || !labels.Contains(MissingIslandsCheck.MenuLabel)) { ok = false; Fail("buttons: " + string.Join(", ", labels.ToArray())); }
-			if (!Cursor.visible) { ok = false; Fail("no cursor for the box"); }
+			// (a minimised test Raft has no focus, so Unity's Cursor.visible can read false there: the box's own record is checked)
+			if (!MissingIslandsCheck.CursorFree) { ok = false; Fail("no cursor for the box"); }
+			Log("cursor: freed by the box " + MissingIslandsCheck.CursorFree + ", visible " + Cursor.visible + ", lock " + Cursor.lockState + ", focused " + Application.isFocused);
 			// (a library island's line says where it came from)
 			string text = MissingIslandsCheck.Text(new List<MissingIslandsCheck.Missing> { new MissingIslandsCheck.Missing { Name = "Some camp", Source = "library:no-such-entry@2" } });
 			if (!text.Contains("from the island library: 'no-such-entry'")) { ok = false; Fail("a library island's line: " + text.Split('\n')[2]); }
@@ -112,6 +114,21 @@ namespace DynamicIslands
 			IslandWorldState.Remove("gen-tropical-919191");
 			IslandWorldState.Save();
 			Log((ok ? "PASS" : "FAIL") + ": the missing islands box - named, left out, kept in the world file");
+		}
+
+		[ConsoleCommand(name: "CIRmlNote", docs: "Dev, main menu: shows the once-only note of a start that compiled (CW2) and takes CIShot rml_note")]
+		public static void RmlNoteCommand()
+		{
+			StartTest(RmlNoteRoutine());
+		}
+
+		static IEnumerator RmlNoteRoutine()
+		{
+			DynamicIslands.Notify(RmlCache.Note, false, 15);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Screenshot(new[] { "rml_note" });
+			yield return new WaitForSecondsRealtime(1f);
+			Log("PASS: the compile note shown (shot_rml_note.png)");
 		}
 
 		[ConsoleCommand(name: "CIRmlCache", docs: "Dev, anywhere (30 s after the start): ROADMAP CW2 - this mod's RML cache file is kept read-only (RML's start deletes it otherwise), there is one, and whether this start compiled")]

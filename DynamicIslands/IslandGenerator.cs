@@ -1349,7 +1349,10 @@ namespace DynamicIslands.Editor
 	public static class IslandGenerator
 	{
 		/// <summary>The settings the generator window opens with: the last ones generated, at first an island like Raft's small ones.</summary>
-		public static IslandGenSettings Last = IslandGenSettings.RaftLike();
+		public static IslandGenSettings Last;
+		// (set here, after every static field: RaftLike reaches HabitatOf, whose cache is declared further down and was still
+		// null when the catalog was already built - remaking a generated island in a world then failed with a NullReference)
+		static IslandGenerator() { Last = IslandGenSettings.RaftLike(); }
 		/// <summary>What the last generation made.</summary>
 		public static GenReport LastReport = new GenReport();
 

@@ -104,6 +104,7 @@ namespace DynamicIslands.Editor
 			DynamicIslands.Notify(Note, false, 15);
 		}
 
-		public const string Note = "Custom Islands is ready. This start took about a minute because the mod loader compiled it - that happens only on the first start after installing or updating Custom Islands. Later starts are quicker.";
+		/// <summary>Raft's notification shows two lines (about 80 letters): the guide says the rest.</summary>
+		public const string Note = "Custom Islands is ready. Only the first start after an update is this slow.";
 	}
 }

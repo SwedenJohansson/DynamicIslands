@@ -235,6 +235,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A generated island whose file was gone** is made again when the world loads: in a session where the editor
+  had already been opened, remaking it failed with an error (the generator's defaults were set up too early), so the
+  island was missing from the world.
 - **The island library's picture** no longer stays on the next entry you click: while that entry's picture is
   on its way the space is empty and its number says **(loading)**, or **(can't be loaded)** when it fails. A slow
   download had left one island's picture showing on every entry clicked after it.

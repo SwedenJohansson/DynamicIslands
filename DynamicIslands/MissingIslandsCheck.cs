@@ -32,6 +32,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: the box isn't shown by itself (the list is still made).</summary>
 		public static bool Quiet;
 		static bool waiting, cursorFreed;
+		/// <summary>Tests: the box had the cursor free (it was free already, or the box freed it).</summary>
+		public static bool CursorFree;
 		static float showAt;
 
 		/// <summary>From IslandWorldState.OnWorldLoaded on the host, after the world's file and plan are read.</summary>
@@ -132,7 +134,8 @@ namespace DynamicIslands.Editor
 				new InfoWindow.Choice(MenuLabel, ToMenu, "Leave without saving, to download or restore them"));
 			InfoWindow.Closed = OnClosed;
 			cursorFreed = !Cursor.visible;
-			if (cursorFreed) try { RAPI.ToggleCursor(true); } catch { }
+			CursorFree = !cursorFreed;
+			if (cursorFreed) try { RAPI.ToggleCursor(true); CursorFree = true; } catch { }
 		}
 
 		static void OnClosed()
