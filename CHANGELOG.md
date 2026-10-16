@@ -228,6 +228,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The island library's picture** no longer stays on the next entry you click: while that entry's picture is
+  on its way the space is empty and its number says **(loading)**, or **(can't be loaded)** when it fails. A slow
+  download had left one island's picture showing on every entry clicked after it.
 - **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
   makes: on Randomize existing it left out the caves and buildings that are not made there.
 - **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
