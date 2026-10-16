@@ -429,14 +429,22 @@ less after that. The editor opens on the sea with an empty build area.
 
 | Do this | To |
 |---|---|
-| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
+| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene; the settings can turn that round); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
 | **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |
 | **Alt + left-drag** | orbit around the selection, or the middle of the view |
 | **Wheel** | zoom towards what is under the cursor |
+| **Alt + right-drag** | zoom in (drag right or up) and out (left or down), towards the middle of the view |
 | **F** | frame the selection, or the whole island |
 | **Shift** | three times faster |
+
+**The camera's settings.** **Camera...** at the right of the status bar opens **EDITOR CAMERA**: the controls above,
+and this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
+**Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look down / up**
+(click to switch: up looks up, as in most games) and **Wheel up: zoom in / out** (the wheel turned round). **Mod's own**
+puts them all back; **Close** or Esc closes the window. They are saved a moment after a change, in `world_rules.txt`
+([section 10](#10-settings-files)), and are also in **Defaults... > Editor camera (this PC)**.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z); save with **Ctrl+S**, open with **Ctrl+O**.
 
@@ -2752,7 +2760,8 @@ get the settings they share at once.
 | **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
-| **Mod's own** | Click it twice: every setting in the window, the keys J and K too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
+| **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look down / up** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
+| **Mod's own** | Click it twice: every setting in the window, the keys J and K and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
 | **Close** | Closes the window (Esc does too) |
 
 **`spawnpool.txt`** (islands that appear on their own; the host's counts):

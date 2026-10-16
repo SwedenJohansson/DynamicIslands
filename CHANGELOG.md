@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Editor camera settings:** **Camera...** in the editor's status bar (and **Defaults... > Editor camera**) sets
+  this PC's look sensitivity, move, zoom and pan speed, which way dragging up looks and the wheel's direction; saved in
+  `world_rules.txt`, and the right mouse + wheel flying speed is now kept too. **Alt + right-drag** zooms, as in Unity.
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details

@@ -68,6 +68,7 @@
     <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DevTestsCamera.cs" />
+    <Compile Include="DevTestsCameraSettings.cs" />
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsUiFit.cs" />
     <Compile Include="DevTestsStory.cs" />
@@ -264,6 +265,7 @@
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
+    <Compile Include="CameraSettings.cs" />
     <Compile Include="EditorCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />

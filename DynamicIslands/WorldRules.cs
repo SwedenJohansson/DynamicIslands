@@ -43,6 +43,12 @@ namespace DynamicIslands.Editor
 
 		public static void SaveDefault(string key, string value)
 		{
+			SaveDefaults(new Dictionary<string, string> { { key, value } });
+		}
+
+		/// <summary>Several last choices at once (one write of world_rules.txt): the other lines stay as they are.</summary>
+		public static void SaveDefaults(IDictionary<string, string> changes)
+		{
 			try
 			{
 				var values = new List<KeyValuePair<string, string>>();
@@ -52,12 +58,13 @@ namespace DynamicIslands.Editor
 						int eq = line.IndexOf('=');
 						if (line.StartsWith("#") || eq < 1) continue;
 						string k = line.Substring(0, eq).Trim();
-						if (!k.Equals(key, StringComparison.OrdinalIgnoreCase)) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
+						if (!changes.Keys.Any(c => c.Equals(k, StringComparison.OrdinalIgnoreCase))) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
 					}
-				values.Add(new KeyValuePair<string, string>(key, value));
+				values.AddRange(changes);
 				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)",
 					"# updatecheck=off: the main menu doesn't ask GitHub whether a newer Custom Islands is out",
-					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)" }
+					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)",
+					"# cameralook, cameraspeed, camerazoom, camerapan=1 (x0.1-10), cameradragup=down|up, camerawheel=normal|reversed: the editor camera (Defaults > Editor camera, or the editor's Camera button)" }
 					.Concat(values.Select(kv => kv.Key + "=" + kv.Value)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultPath + ": " + e.Message); }

@@ -16,7 +16,7 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 | `EditorGameObject.cs` | `EditorGameObject` (`GameObjectName`, `Props`, `Attach`) on every placed object; `ObjectLimit` |
 | `ObjectProps.cs` / `ObjectInspector.cs` | Prop keys (`creature.*`, `note.*`, `tint.*`, `loot.*`, `zone.*`, `atmo.*`, `sound.*`), `Defaults`, `With`, `ApplyInEditor`, `PropsCommand` / the inspector for one selected object |
 | `IslandSettingsUndo.cs` / `EditorAutosave.cs` | `Change` / `Record`: island props, style, elevation as undo steps / `autosave\<name>.island`: `Unsaved`, `Tick`, `WriteNow`, `Saved`, `OnEditorReady` |
-| `IslandTest.cs` / `EditorCamera.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland` (each under `Guarded`); `Back`, `Cancel`, `Abort` (back to the editor with the reason); `TestCover` over the main menu while it starts / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Frame`, `Sync`; `Looking`, `UsingMouse`) |
+| `IslandTest.cs` / `EditorCamera.cs` / `CameraSettings.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland` (each under `Guarded`); `Back`, `Cancel`, `Abort` (back to the editor with the reason); `TestCover` over the main menu while it starts / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Dolly`, `Frame`, `Sync`; `Looking`, `UsingMouse`); `CameraSettings` (look/speed/zoom/pan, drag up, wheel; `world_rules.txt` camera* keys, debounced `Tick`/`Save`; `Build` = the controls, also in `DefaultsWindow`) and `CameraSettingsWindow` (status bar `Button_CameraSettings`) |
 
 ## Main flow
 1. Main menu EDITOR (`HookUI`) -> `LaunchEditor` -> `LoadEditor` (refused while a world is loaded) -> `EditorLoadingBox.Show` -> `OpenEditor`.
