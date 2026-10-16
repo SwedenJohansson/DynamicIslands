@@ -229,8 +229,6 @@ namespace DynamicIslands
 			});
 			// Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
 			StartStep("the main menu buttons", HookUI);
-			// Sample world plans, the first time (Mods\DynamicIslands\plans)
-			StartStep("the sample world plans", WorldPlanWindow.EnsureSamples);
 			// Map types of one's own (Mods\DynamicIslands\maptypes\*.maptype), after the built-in ones
 			StartStep("the map type files", () => Editor.MapTypeFiles.LoadAll());
 			// Raft's world shifts and "world received" (for clients): hooked every frame by HookRaftEvents, since

@@ -162,10 +162,10 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
+| **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan with a storyline (from the island library: a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
-**Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, sample, library plan,
+**Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, library plan,
 your plan; *big plan* when it brings ten islands or more) and how many islands it brings - and the selected one on the
 right: a picture (the library's picture, or a map of its first island), whether random islands come while sailing,
 whether Raft's story is on, its whole description and the islands it brings. Click a plan to look at it; **Select**,
@@ -1473,9 +1473,7 @@ gives tips. They are only recommendations; you can do what you want:
 - a left-out island may hold blueprints the story needs. Without Balboa there is no machete, fuel tank, fuel pipes or
   biofuel extractor, so put them in a chest or a quest reward of your own.
 
-**Templates...** has three for Raft's story:
-- **Receiver adventure**: Raft's story off, four islands each found with the Receiver, each quest giving the next
-  frequency;
+**Templates...** has two for Raft's story:
 - **Detour in Raft's story**: one of your islands after Vasagatan;
 - **Balboa replaced**: an island in Balboa's place.
 
@@ -1634,7 +1632,7 @@ When you install a plan from the island library, its islands also get a `<island
 = left out). Islands the plan shares with another library pack keep their line.
 
 **To make an island a single island**, use it in no plan - or save a copy under another name and use the copy in the
-plan. **Plans that come with the mod:** the samples Adventure, Growing sea, Island hopping and Receiver adventure
+plan. **Plans that come with the mod:** Random islands and No custom islands
 ([7.1](#71-the-plans-that-come-with-the-mod)); from the library First Voyage, Far Horizons and The Castaway's Trail;
 and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
 Seas ([16.4](#164-the-world-plans)).
@@ -1829,13 +1827,10 @@ Choose one in the New Game box (**Custom Islands plan**), or open it in the Worl
 |---|---|
 | **Random islands** (the default) | Islands turn up by chance while you sail ([section 3](#3-sailing-custom-islands-in-your-world)). No story |
 | **No custom islands** | Plain Raft: no custom islands at all (the World settings still apply) |
-| **Island hopping** | An old camp near the start; each island you reach shows the way to the next, further out |
-| **Adventure** | A story: each quest leads to the next island (a camp, islets, a beast's plateau, a treasure), with a wreck and a sunken island on the way |
-| **Growing sea** | Random islands, plus a special island every few km and days |
-| **Receiver adventure** | A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency |
 
-**Island hopping**, **Adventure**, **Growing sea** and **Receiver adventure** are ordinary plan files: open one in the World
-plan window and use **Copy...** to start your own plan from it.
+Full storylines come from the island library: **Get more plans...** in the New Game box downloads them
+([16.4](#164-the-world-plans) lists them). A downloaded plan is an ordinary plan file: open it in the World plan window
+and use **Copy...** to start your own plan from it.
 
 ### 7.2 Your first world plan, step by step
 
@@ -1976,7 +1971,7 @@ rule = treasure | type:treasure | visit:cove | near:cove:900:any | From the clif
 rule = wreck | type:wreck | km:3 | ahead:300 | Something floats ahead: a wrecked raft.
 ```
 
-**Short cut: Templates...** (top row) adds a ready-made set of rules to the open plan: the four sample plans, and
+**Short cut: Templates...** (top row) adds a ready-made set of rules to the open plan:
 **Detour in Raft's story**, **Balboa replaced**, **Sky chain** (flying islands, each appearing when players reach the one
 before), **Story chain** (three of your islands, each quest bringing the next: pick your islands with **▾**) and **Quest
 reward island**. Then change what you like. An id that's already in your plan gets a `b` added.
@@ -1984,7 +1979,7 @@ reward island**. Then change what you like. An id that's already in your plan ge
 ### 7.3 A rule card, part by part
 
 ![A rule card](images/plan-rule-card.jpg)
-*A rule card of the Adventure plan: its name and what it does in a sentence, then one section per question. Each section
+*A rule card: its name and what it does in a sentence, then one section per question. Each section
 has a ▼ list of its choices and a line in italics saying what the chosen one does.*
 
 ![A ▼ list open](images/plan-dropdown.jpg)
@@ -2884,7 +2879,7 @@ Other files:
 | `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
 | `library.txt` | The island library: `online = on/off`, its `address` (where its list is: a Google Drive folder link or a web address), and an optional `key =` (a Google API key: the Drive folder is then read through the Drive API instead of its public listing) |
 | `library\cache\` | The library's pictures, kept so they needn't be downloaded again |
-| `plans\*.plan` | World plans; `plans\samples.txt` lists the sample plans the mod has written once (a sample you deleted doesn't come back) |
+| `plans\*.plan` | World plans |
 | `maptypes\*.maptype` | Your own map types ([4.6](#46-ready-made-islands-map-types)) |
 | `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer, the head start raft's level), the start for the next new world; also your J and K keys and `updatecheck` (the keys are above); `newworld_plan.txt`: the plan the last new world was made with |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |

@@ -141,6 +141,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **No sample plans:** the mod no longer writes the sample world plans Adventure, Island hopping, Growing sea
+  and Receiver adventure, and they are gone from **Templates...**. The plans that come with the mod are Random islands
+  and No custom islands; full storylines come from the island library (**Get more plans...**). Sample plans written
+  by an earlier version stay in your plans folder until you delete them.
 - **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
   the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
   seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
