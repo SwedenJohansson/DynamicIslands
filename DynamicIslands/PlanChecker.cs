@@ -48,6 +48,13 @@ namespace DynamicIslands.Editor
 			/// <summary>Story items the island's checks want (has/take story:...) and those it gives (loot, zones, give actions,
 			/// Raft's quest item pickups) - the plan's order of them (Check).</summary>
 			public readonly HashSet<string> NeedsStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase), GivesStory = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>Raft's tools its features want (RaftFeatures): tool item -> the features wanting it ("vines", "buried
+			/// treasure"...). MainNeeds: "tool|feature" pairs its main quest can't do without (vines in front of the chest a step
+			/// opens); the others are optional finds - players can come back with the tool.</summary>
+			public readonly Dictionary<string, List<string>> NeedsTools = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+			public readonly HashSet<string> MainNeeds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			/// <summary>Raft's tools the island gives: the item or its blueprint in a chest's loot, an action or the quest's reward.</summary>
+			public readonly HashSet<string> GivesTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>The quest traps of guide 12.4 found on the island (AU47): texts in lower case, Check puts the island before them.</summary>
 			public readonly List<Finding> Traps = new List<Finding>();
 			public string Describe { get { return Sample ? "a new " + Name + " island (checked on a sample of that map type)" : "'" + Name + "'"; } }
@@ -104,6 +111,8 @@ namespace DynamicIslands.Editor
 					if (a.Verb == "journal") x.PageCount++;
 				}
 			x.AllText = text.ToString();
+			x.GivesTools.UnionWith(RaftFeatures.GivenIn(x.AllText));
+			FindTools(f, x);
 			// Story items: wanted by checks, given by everything else (loot, zone items, give actions) and by Raft's pickups
 			var owners = new List<List<KeyValuePair<string, string>>> { f.Props.Where(kv => kv.Key != StoryItems.Key).ToList() };
 			foreach (IslandObject o in f.Objects)
@@ -158,6 +167,76 @@ namespace DynamicIslands.Editor
 				int n; senders.TryGetValue(w[1].Trim(), out n);
 				if (n - (own.Contains(w[1].Trim()) ? 1 : 0) > 0) return true;
 			}
+			return false;
+		}
+
+		/// <summary>
+		/// The island's features that want Raft's tools (RaftFeatures: the vines, buried treasure, dirt, ziplines, and any
+		/// object whose "Only if..." wants one of the tools), and which of them its main quest can't do without: the feature
+		/// is what a step wants, or it shows or opens what a step wants, or it gives the story item a step collects. Buried
+		/// treasure and dirt are always optional finds (Raft's treasure loot, dirt: no step points at them).
+		/// </summary>
+		static void FindTools(IslandFile f, Facts x)
+		{
+			var named = new Dictionary<string, IslandObject>(StringComparer.OrdinalIgnoreCase);
+			foreach (IslandObject o in f.Objects)
+			{
+				string n = o.Props != null ? ObjectProps.Get(o.Props, BehaviourProps.Name).Trim() : "";
+				if (n.Length > 0 && !named.ContainsKey(n)) named[n] = o;
+			}
+			List<IslandQuest.Step> steps = x.Quest.Steps;
+			Func<IslandObject, bool> stepWants = o =>
+			{
+				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
+				string title = ObjectProps.Get(p, ObjectProps.NoteTitle).Trim();
+				foreach (IslandQuest.Step st in steps)
+				{
+					string t = st.Target.Trim();
+					if (t.Length == 0) continue;
+					if (st.Type == "open" && ObjectProps.IsLoot(o.Name, p) && t.Equals(title, StringComparison.OrdinalIgnoreCase)) return true;
+					if (st.Type == "read" && ObjectProps.IsNote(o.Name, p) && t.Equals(title, StringComparison.OrdinalIgnoreCase)) return true;
+					if (st.Type == "reach" && o.Name == ContentCatalog.TriggerZone && t.Equals(ObjectProps.Get(p, ObjectProps.ZoneId).Trim(), StringComparison.OrdinalIgnoreCase)) return true;
+					// (a chest holding the story item a step collects)
+					if (st.Type == "collect" && ObjectProps.IsLoot(o.Name, p) && ObjectProps.Get(p, ObjectProps.LootItems).IndexOf(StoryItems.Ref(StoryItems.IdOf(t)) + "*", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+				}
+				return false;
+			};
+			foreach (IslandObject o in f.Objects)
+			{
+				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
+				RaftFeatures.Feature feature = RaftFeatures.Of(o.Name);
+				var tools = new List<string>(feature != null ? feature.Tools : new string[0]);
+				foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.CheckPrefix)))
+					foreach (ObjCheck ch in ObjCheck.ParseLines(kv.Value))
+					{
+						RaftFeatures.Tool t = ch.IsItem && !ch.Not ? RaftFeatures.ToolOf(ch.Target) : null;
+						if (t != null && !tools.Contains(t.Item)) tools.Add(t.Item);
+					}
+				if (tools.Count == 0) continue;
+				string what = feature != null ? feature.Label : Thing(o, p);
+				bool main = (feature == null || !feature.Optional) && QuestWants(o, p, named, stepWants, steps);
+				foreach (string t in tools)
+				{
+					List<string> list;
+					if (!x.NeedsTools.TryGetValue(t, out list)) x.NeedsTools[t] = list = new List<string>();
+					if (!list.Contains(what)) list.Add(what);
+					if (main) x.MainNeeds.Add(t + "|" + what);
+				}
+			}
+		}
+
+		/// <summary>Does the main quest want this object, or what its actions show, open or give?</summary>
+		static bool QuestWants(IslandObject o, IDictionary<string, string> p, Dictionary<string, IslandObject> named, Func<IslandObject, bool> stepWants, List<IslandQuest.Step> steps)
+		{
+			if (steps.Count == 0) return false;
+			if (stepWants(o)) return true;
+			foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix)))
+				foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
+				{
+					IslandObject y;
+					if ((a.Verb == "show" || a.Verb == "open") && a.Target.Length > 0 && named.TryGetValue(a.Target, out y) && y != o && stepWants(y)) return true;
+					if (a.Verb == "give" && steps.Any(st => st.Type == "collect" && st.Target.Trim().Length > 0 && a.Arg.IndexOf(StoryItems.Ref(StoryItems.IdOf(st.Target.Trim())) + "*", StringComparison.OrdinalIgnoreCase) >= 0)) return true;
+				}
 			return false;
 		}
 
@@ -277,41 +356,97 @@ namespace DynamicIslands.Editor
 					"Let the first rule be \"When the world starts\" (or after a distance / on a day).");
 			if (islandMode && rules.Any(x => x.Special)) c.Add(-1, Level.Problem, "An island's own rules can't use Raft's story or the Receiver (a world plan can).", "Use \"Ahead of the raft\" or \"Near an island\", or make these rules in a world plan.");
 			foreach (string tip in StoryTips(plan, islandMode)) c.Add(-1, tip.StartsWith("Story:") ? Level.Tip : Level.Tip, tip);
-			if (!islandMode) CheckBlueprints(c);
-			if (!islandMode) CheckStoryOrder(c);
+			if (!islandMode)
+			{
+				Progress p = Progression(c);
+				CheckBlueprints(c, p);
+				CheckTools(c, p);
+				CheckStoryOrder(c);
+				CheckStoryClash(c);
+			}
 			return c.Out.OrderBy(f => f.Level).ThenBy(f => f.Rule).ToList();
 		}
 
 		/// <summary>
-		/// Story items in the plan's order (TODO "Raft's quest items used in the plans"): an island whose doors or chests want
-		/// a story item (a keycard, a key...) that neither it nor any island of an earlier rule gives - the player reaches the
-		/// lock without the key. Raft's own quest items (raft-...) are given only by their pickups on custom islands.
+		/// Story items in play order (TODO "Raft's quest items used in the plans"; PlayOrder): an island whose doors or chests
+		/// want a story item (a keycard, a key...) that neither it nor any island met before it gives - the player reaches the
+		/// lock without the key. Raft's own quest items (raft-...) are given only by their pickups on custom islands: the ones
+		/// found on Raft's story islands open only the island they were found on (the user, 2026-10-16), never the plan's locks.
 		/// </summary>
 		static void CheckStoryOrder(Ctx c)
 		{
 			var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var all = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			for (int i = 0; i < c.Plan.Rules.Count; i++) foreach (Facts f in Brings(c, c.Plan.Rules[i])) all.UnionWith(f.GivesStory);
-			for (int i = 0; i < c.Plan.Rules.Count; i++)
+			foreach (Stop st in PlayOrder(c.Plan))
 			{
+				// (Raft's story islands give nothing here: their quest items are Raft's, for their own doors)
+				if (st.Rule < 0) continue;
+				int i = st.Rule;
 				List<Facts> here = Brings(c, c.Plan.Rules[i]).ToList();
 				foreach (Facts f in here) given.UnionWith(f.GivesStory);
 				foreach (Facts f in here)
 					foreach (string need in f.NeedsStory.Where(n => !given.Contains(n)))
-						c.Add(i, Level.Warning, f.Describe + " has a lock that wants the story item " + StoryItems.Label(need) + (all.Contains(need) ? ", which only an island of a later rule gives: players get there without it." : ", which no island of the plan gives: it stays locked."),
-							"Give it on an earlier island of the plan (a chest's loot, a zone's items, an action, or one of Raft's quest item pickups), or on this island before the lock.");
+						c.Add(i, Level.Warning, f.Describe + " has a lock that wants the story item " + StoryItems.Label(need) + RaftsOwn(need) +
+							(all.Contains(need) ? ", which only an island of a later rule gives (in play order): players get there without it." : ", which no island of the plan gives: it stays locked."),
+							"Give it on an island met earlier in the plan (a chest's loot, a zone's items, an action, or one of Raft's quest item pickups), or on this island before the lock.");
 			}
+		}
+
+		/// <summary>For one of Raft's quest items (raft-Vasagatan_KeyCardOffice): Raft's own, on its story island, opens only that island.</summary>
+		static string RaftsOwn(string id)
+		{
+			if (!id.StartsWith(QuestItemPickups.IdPrefix, StringComparison.OrdinalIgnoreCase)) return "";
+			ChunkPointType t = StoryOrder.Parse(id.Substring(QuestItemPickups.IdPrefix.Length).Split('_')[0]);
+			return t == ChunkPointType.None ? "" : " (Raft's own on " + StoryOrder.Name(t) + " opens only " + StoryOrder.Name(t) + "'s doors, never the plan's)";
+		}
+
+		/// <summary>
+		/// One story item id on two islands of the plan (the user, 2026-10-16: The Long Voyage's Drowned Metropolis and Mayor's
+		/// Wharf both give a 'keycard'): story items belong to the crew by their id, so the one found on either island opens
+		/// the locks of both - and counts and "uses up" checks mix them up. An island that only wants an item another gives
+		/// (the key for its door found elsewhere) is meant that way; two islands that each give it are not. Map-type islands
+		/// are left out (a new one each world).
+		/// </summary>
+		static void CheckStoryClash(Ctx c)
+		{
+			var owners = new Dictionary<string, List<KeyValuePair<int, Facts>>>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+				foreach (Facts f in Brings(c, c.Plan.Rules[i]).Where(f => !f.Sample))
+					foreach (string id in f.GivesStory)
+					{
+						List<KeyValuePair<int, Facts>> list;
+						if (!owners.TryGetValue(id, out list)) owners[id] = list = new List<KeyValuePair<int, Facts>>();
+						if (!list.Any(o => o.Value.Name.Equals(f.Name, StringComparison.OrdinalIgnoreCase))) list.Add(new KeyValuePair<int, Facts>(i, f));
+					}
+			foreach (var kv in owners.Where(kv => kv.Value.Count > 1).OrderBy(kv => kv.Value[0].Key))
+			{
+				string islands = string.Join(" and ", kv.Value.Select(o => "'" + o.Value.Name + "' (rule " + (o.Key + 1) + " '" + c.Plan.Rules[o.Key].Id + "')").ToArray());
+				bool raft = kv.Key.StartsWith(QuestItemPickups.IdPrefix, StringComparison.OrdinalIgnoreCase);
+				string first = Short(kv.Value[0].Value.Name), second = Short(kv.Value[1].Value.Name);
+				c.Add(kv.Value[0].Key, Level.Warning, "The story item '" + kv.Key + "' (" + StoryItems.Label(kv.Key) + ") is given on " + kv.Value.Count + " islands of the plan: " + islands +
+					". The crew's story items go by their id, so the one found on either island opens the other's locks too, and counts and \"uses up\" checks mix them up.",
+					raft ? "On all but one of these islands, use a story item of the island's own (Island tab > Story items...) instead of the pickup of Raft's " + StoryItems.Label(kv.Key) + ", and point that island's locks, chests and quest steps at it."
+						: "Give each island its own id for it (Island tab > Story items...: e.g. '" + first + "-" + kv.Key + "' and '" + (second != first ? second : second + "2") + "-" + kv.Key +
+							"'), and change that island's locks, chests and quest steps to match.");
+			}
+		}
+
+		/// <summary>A short id word from an island's name ("The Drowned Metropolis" -> "metropolis").</summary>
+		static string Short(string name)
+		{
+			string[] w = (name ?? "").ToLowerInvariant().Split(new[] { ' ', '\'', '-' }, StringSplitOptions.RemoveEmptyEntries).Where(x => x != "the" && x.All(char.IsLetterOrDigit)).ToArray();
+			return w.Length > 0 ? w.OrderByDescending(x => x.Length).First() : "island";
 		}
 
 		/// <summary>Raft's progression (the user, 2026-10-05): every blueprint that lies on Raft's story islands
 		/// (raft_blueprints.txt) must be found somewhere in a plan - on the story islands it keeps, or given by its own
 		/// islands (quest rewards, chest loot, notes) - or the player can never build it. Says which island of the plan gives
-		/// which, in the plan's order, and warns about any never given.</summary>
-		static void CheckBlueprints(Ctx c)
+		/// which, in play order, and warns about any never given.</summary>
+		static void CheckBlueprints(Ctx c, Progress p)
 		{
-			Progress p = Progression(c);
 			if (p.All == 0) return;
-			var order = p.Steps.Where(s => s.Blueprints.Count > 0).Select(s => "rule " + (s.Rule + 1) + " '" + c.Plan.Rules[s.Rule].Id + "': " + string.Join(", ", s.Blueprints.Select(Pretty).ToArray())).ToList();
+			var order = p.Steps.Where(s => s.Rule >= 0 && s.Blueprints.Count > 0).Select(s => "rule " + (s.Rule + 1) + " '" + c.Plan.Rules[s.Rule].Id + "': " + string.Join(", ", s.Blueprints.Select(Pretty).ToArray())).ToList();
 			var missing = p.Missing;
 			var kept = p.Kept;
 			if (missing.Count > 0)
@@ -319,23 +454,57 @@ namespace DynamicIslands.Editor
 					". The story islands that carry them are left out or replaced, and no island of the plan gives them - the player can never build these.",
 					"Give each as a quest reward, in a chest's loot or from a note on one of the plan's islands, in a sensible order (early tools early, the engine before the long legs) - or keep those story islands.");
 			if (order.Count > 0)
-				c.Add(-1, Level.Tip, "Raft's blueprints given by the plan's islands, in its order: " + string.Join("; ", order.ToArray()) +
-					(kept.Count > 0 ? ". The story islands it keeps give " + kept.Count + " more." : "."));
+				c.Add(-1, Level.Tip, "Raft's blueprints given by the plan's islands, in play order: " + string.Join("; ", order.ToArray()) +
+					(kept.Count > 0 ? ". The story islands it keeps give " + kept.Count + " more, each at its place in the story." : "."));
 		}
 
-		/// <summary>What a plan gives of Raft's progression, rule by rule in its order: the plan editor's Progression panel
-		/// (TODO 4c step 3) and Check's blueprint findings.</summary>
+		/// <summary>
+		/// Raft's tools in play order (the user, 2026-10-16: do it like Raft): a step of an island's main quest that can't be
+		/// done because the tool its feature wants (vines the machete...) is given by no island met before it is a warning -
+		/// in Raft's chain the story stops there. Optional finds (buried treasure, a cache behind vines no step wants) that want
+		/// a tool given later get no finding: players come back, as in Raft; the Progression panel shows them quietly.
+		/// </summary>
+		static void CheckTools(Ctx c, Progress p)
+		{
+			foreach (Progress.Step s in p.Steps.Where(s => s.Rule >= 0))
+				foreach (Progress.ToolNeed n in s.ToolNeeds.Where(n => n.Main))
+				{
+					RaftFeatures.Tool t = RaftFeatures.ToolOf(n.Tool);
+					string label = t != null ? t.Label : n.Tool;
+					List<string> raftHas;
+					string onRaft = t != null && t.Blueprint != null && ScrambledBlueprints.OnIslands.TryGetValue(t.Blueprint, out raftHas) ? " (Raft has its blueprint on " + string.Join("/", raftHas.ToArray()) + ")" : "";
+					c.Add(s.Rule, Level.Warning, R(c, s.Rule) + " brings " + n.Island + ": a step of its quest can't be done without the " + label + " (for " + n.Feature + "), and " +
+						(n.Later != null ? "only " + n.Later + " gives it, later in play" + (c.Plan.Rules[s.Rule].InStory ? ": the story stops here." : ".") : "no island of the plan gives it" + onRaft + "."),
+						"Give the " + label + " (or its blueprint) on this island - a chest by the landing, as the generator's explorer's chest - or on an island met before it" + (onRaft.Length > 0 && n.Later == null ? ", or keep that story island before it" : "") + ".");
+				}
+		}
+
+		/// <summary>What a plan gives of Raft's progression, in play order (PlayOrder): the plan editor's Progression panel
+		/// (TODO 4c step 3) and Check's blueprint and tool findings.</summary>
 		public class Progress
 		{
 			public class Step
 			{
-				public int Rule;
-				/// <summary>Raft's story-island blueprints the rule's islands give (Blueprint_... names).</summary>
+				/// <summary>The rule (-1: one of Raft's story islands the plan keeps - Raft - at its place in the chain).</summary>
+				public int Rule = -1;
+				public ChunkPointType Raft = ChunkPointType.None;
+				/// <summary>Raft's story-island blueprints the rule's islands (or Raft's story island) give (Blueprint_... names).</summary>
 				public List<string> Blueprints = new List<string>();
 				/// <summary>Story items its islands give / their locks want (labels); NeedsLate: wanted before any island gives them.</summary>
 				public List<string> Gives = new List<string>(), Needs = new List<string>(), NeedsLate = new List<string>();
+				/// <summary>Raft's tools given here (labels: the item or its blueprint).</summary>
+				public List<string> Tools = new List<string>();
+				/// <summary>Features of its islands wanting a tool no island before gives.</summary>
+				public List<ToolNeed> ToolNeeds = new List<ToolNeed>();
 			}
-			/// <summary>The rules whose islands give or want something, in the plan's order.</summary>
+			/// <summary>A feature wanting a tool not given yet: Main = a step of the island's main quest can't be done without
+			/// it (Check warns); else an optional find, shown quietly. Later: the first island after it that gives it, or null.</summary>
+			public class ToolNeed
+			{
+				public string Island = "", Feature = "", Tool = "", Later;
+				public bool Main;
+			}
+			/// <summary>The rules whose islands give or want something, and Raft's story islands the plan keeps, in play order.</summary>
 			public List<Step> Steps = new List<Step>();
 			/// <summary>Blueprints the story islands the plan keeps give, and those never given (Blueprint_... names).</summary>
 			public List<string> Kept = new List<string>(), Missing = new List<string>();
@@ -354,39 +523,139 @@ namespace DynamicIslands.Editor
 			var p = new Progress();
 			ScrambledBlueprints.Read();
 			p.All = ScrambledBlueprints.OnIslands.Count;
-			Func<string, string> key = n => { ChunkPointType t = StoryOrder.Parse(n); return t != ChunkPointType.None ? StoryOrder.Key(t) : n; };
-			var replaced = new HashSet<string>(c.Plan.Rules.Where(r => r.StoryPlace.StartsWith("instead:")).Select(r => key(r.StoryPlace.Substring(8))), StringComparer.OrdinalIgnoreCase);
+			List<Stop> stops = PlayOrder(c.Plan);
+			// What each stop gives: its islands, or the blueprints of Raft's story island (and with them its tools) - there, not at the start
+			List<List<Facts>> here = stops.Select(st => st.Rule >= 0 ? Brings(c, c.Plan.Rules[st.Rule]).ToList() : new List<Facts>()).ToList();
+			List<List<string>> raftBlueprints = stops.Select(st => st.Rule < 0 ? BlueprintsOn(st.Raft) : new List<string>()).ToList();
+			List<HashSet<string>> toolsAt = stops.Select((st, n) => new HashSet<string>(st.Rule >= 0 ? here[n].SelectMany(f => f.GivesTools) : RaftFeatures.FromBlueprints(raftBlueprints[n]), StringComparer.OrdinalIgnoreCase)).ToList();
+			var tools = new HashSet<string>(RaftFeatures.Tools.Where(t => t.Researched).Select(t => t.Item), StringComparer.OrdinalIgnoreCase);
+			// (Raft's list unread: where its tools lie isn't known - no tool findings rather than wrong ones)
+			if (p.All == 0) tools.UnionWith(RaftFeatures.Tools.Select(t => t.Item));
 			var kept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			if (c.Plan.RaftStory)
-				foreach (var kv in ScrambledBlueprints.OnIslands)
-					foreach (string isl in kv.Value)
-						if (!c.Plan.LeaveOut.Any(l => key(l).Equals(key(isl), StringComparison.OrdinalIgnoreCase)) && !replaced.Contains(key(isl))) kept.Add(kv.Key);
-			p.Kept = kept.OrderBy(b => b).ToList();
-			var given = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
+			var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var story = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var bp = new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
-			for (int i = 0; i < c.Plan.Rules.Count; i++)
+			for (int n = 0; n < stops.Count; n++)
 			{
-				var s = new Progress.Step { Rule = i };
-				List<Facts> here = Brings(c, c.Plan.Rules[i]).ToList();
-				foreach (Facts f in here)
+				var s = new Progress.Step { Rule = stops[n].Rule, Raft = stops[n].Raft };
+				tools.UnionWith(toolsAt[n]);
+				s.Tools.AddRange(toolsAt[n].Select(RaftFeatures.LabelOf));
+				if (s.Rule < 0)
+				{
+					s.Blueprints.AddRange(raftBlueprints[n]);
+					kept.UnionWith(s.Blueprints);
+					given.UnionWith(s.Blueprints);
+					p.Steps.Add(s);
+					continue;
+				}
+				foreach (Facts f in here[n])
 				{
 					foreach (System.Text.RegularExpressions.Match m in bp.Matches(f.AllText))
 						if (ScrambledBlueprints.OnIslands.ContainsKey(m.Value) && !s.Blueprints.Contains(m.Value)) s.Blueprints.Add(m.Value);
 					foreach (string g in f.GivesStory) { story.Add(g); if (!s.Gives.Contains(StoryItems.Label(g))) s.Gives.Add(StoryItems.Label(g)); }
 				}
-				foreach (Facts f in here)
+				foreach (Facts f in here[n])
+				{
 					foreach (string need in f.NeedsStory)
 					{
 						string label = StoryItems.Label(need);
 						if (!s.Needs.Contains(label)) s.Needs.Add(label);
 						if (!story.Contains(need) && !s.NeedsLate.Contains(label)) s.NeedsLate.Add(label);
 					}
+					foreach (var kv in f.NeedsTools.Where(kv => !tools.Contains(kv.Key)))
+					{
+						int later = Enumerable.Range(n + 1, stops.Count - n - 1).FirstOrDefault(m => toolsAt[m].Contains(kv.Key));
+						foreach (string feature in kv.Value)
+							s.ToolNeeds.Add(new Progress.ToolNeed { Island = f.Describe, Feature = feature, Tool = kv.Key, Main = f.MainNeeds.Contains(kv.Key + "|" + feature), Later = later > n ? StopName(c, stops[later]) : null });
+					}
+				}
 				given.UnionWith(s.Blueprints);
-				if (s.Blueprints.Count > 0 || s.Gives.Count > 0 || s.Needs.Count > 0) p.Steps.Add(s);
+				if (s.Blueprints.Count > 0 || s.Gives.Count > 0 || s.Needs.Count > 0 || s.Tools.Count > 0 || s.ToolNeeds.Count > 0) p.Steps.Add(s);
 			}
+			p.Kept = kept.OrderBy(b => b).ToList();
 			p.Missing = ScrambledBlueprints.OnIslands.Keys.Where(b => !given.Contains(b)).OrderBy(b => b).ToList();
 			return p;
+		}
+
+		/// <summary>The blueprints lying on one of Raft's story islands (raft_blueprints.txt).</summary>
+		static List<string> BlueprintsOn(ChunkPointType t)
+		{
+			return ScrambledBlueprints.OnIslands.Where(kv => kv.Value.Any(i => StoryOrder.Parse(i) == t)).Select(kv => kv.Key).OrderBy(b => b).ToList();
+		}
+
+		/// <summary>A stop as players know it: Raft's story island by its name, a rule by its number, name and island.</summary>
+		public static string StopName(WorldPlan plan, Stop st)
+		{
+			if (st.Rule < 0) return StoryOrder.Name(st.Raft);
+			IntroRule r = plan.Rules[st.Rule];
+			return "rule " + (st.Rule + 1) + " '" + r.Id + "'" + (r.What == "island" && r.WhatArg.Trim().Length > 0 ? " (" + r.WhatArg.Trim() + ")" : "");
+		}
+
+		static string StopName(Ctx c, Stop st) { return StopName(c.Plan, st); }
+
+		/// <summary>One stop of a plan in play order: one of Raft's story islands it keeps (Rule -1, Raft), or a rule's islands.</summary>
+		public class Stop
+		{
+			public int Rule = -1;
+			public ChunkPointType Raft = ChunkPointType.None;
+		}
+
+		/// <summary>
+		/// The plan in the order a player meets it (the user, 2026-10-16: not the file's order). Raft's Receiver chain as a
+		/// world builds it (StoryChain.BuildSteps: first, after:X, instead:X, and Raft's story islands it keeps), and every
+		/// other rule by its WHEN: the world's start before the chain's first island; a distance or a day after as many of
+		/// Raft's story islands as players pass on the way, about one every KmPerStoryIsland km (a day as DayKm km; with
+		/// Raft's story off, the chain's own islands); a rule waiting for another (its quest, a step, a zone, a visit, a
+		/// signal, the rule) right after it. A chain rule that also waits for another comes after both. A rule waiting for an
+		/// island no rule brings, or in a circle (CheckOrder), comes last.
+		/// </summary>
+		/// <summary>About how far players sail between two of Raft's story islands, and in a day (PlayOrder: a rough guide only).</summary>
+		public const float KmPerStoryIsland = 4f, DayKm = 2f;
+
+		public static List<Stop> PlayOrder(WorldPlan plan)
+		{
+			List<IntroRule> rules = plan.Rules;
+			List<string> chain = StoryChain.BuildSteps(plan.RaftStory, plan.LeaveOut, rules);
+			double last = chain.Count + 1;
+			const double After = 0.001;
+			// (where a distance comes in the chain: after the n-th of Raft's story islands, or of the chain's islands without them)
+			List<int> anchors = Enumerable.Range(0, chain.Count).Where(k => StoryChain.IsRaft(chain[k])).ToList();
+			if (anchors.Count == 0) anchors = Enumerable.Range(0, chain.Count).ToList();
+			var rank = new double[rules.Count];
+			var state = new int[rules.Count]; // (0 not yet, 1 working it out, 2 known)
+			Func<int, double> rankOf = null;
+			rankOf = i =>
+			{
+				if (state[i] == 2) return rank[i];
+				if (state[i] == 1) return last; // (a circle: CheckOrder says so)
+				state[i] = 1;
+				IntroRule r = rules[i];
+				double at;
+				float num;
+				if (r.When == "km" || r.When == "day")
+				{
+					float km = Mathf.Clamp(float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) ? num : 0f, 0f, 1000f) * (r.When == "day" ? DayKm : 1f);
+					int passed = Mathf.Min((int)(km / KmPerStoryIsland), anchors.Count);
+					// (the start: before the chain; else just after that island, before the next - nearer ones first)
+					at = (passed == 0 ? 0.1 : anchors[passed - 1] + 1.5) + km / 100000.0;
+				}
+				else if (r.When == "rule" || NeedsIsland(r.When))
+				{
+					int d = rules.FindIndex(x => x.Id.Length > 0 && x.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase));
+					at = d >= 0 && d != i ? rankOf(d) + After : last;
+				}
+				else at = 0;
+				int inChain = r.InStory ? chain.FindIndex(s => s.Equals(StoryChain.RuleKey(r.Id), StringComparison.OrdinalIgnoreCase)) : -1;
+				if (inChain >= 0) at = Math.Max(at, inChain + 1);
+				rank[i] = at;
+				state[i] = 2;
+				return at;
+			};
+			var order = new List<KeyValuePair<double, Stop>>();
+			for (int k = 0; k < chain.Count; k++)
+				if (StoryChain.IsRaft(chain[k])) order.Add(new KeyValuePair<double, Stop>(k + 1, new Stop { Raft = StoryChain.TypeOfStep(chain[k]) }));
+			for (int i = 0; i < rules.Count; i++) order.Add(new KeyValuePair<double, Stop>(rankOf(i), new Stop { Rule = i }));
+			return order.OrderBy(kv => kv.Key).ThenBy(kv => kv.Value.Rule < 0 ? 0 : 1).ThenBy(kv => kv.Value.Rule).Select(kv => kv.Value).ToList();
 		}
 
 		public static string Pretty(string blueprint) { return blueprint.Replace("Blueprint_", "").Replace("_", " "); }
