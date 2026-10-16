@@ -303,7 +303,20 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>The designs for one of Raft's islands (its scene name).</summary>
-		public static List<Design> For(string scene) { return All.Where(d => (scene ?? "").IndexOf(d.Scene, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); }
+		public static List<Design> For(string scene) { return All.Where(d => SceneIs(scene, d.Scene)).ToList(); }
+
+		/// <summary>True when the island's scene name holds the design's scene as a whole name: "55#Landmark_Temperance#"
+		/// is Temperance, "57#Landmark_TemperanceSmall#1" (one of its islets) is not.</summary>
+		static bool SceneIs(string scene, string design)
+		{
+			scene = scene ?? "";
+			for (int i = scene.IndexOf(design, StringComparison.OrdinalIgnoreCase); i >= 0; i = scene.IndexOf(design, i + 1, StringComparison.OrdinalIgnoreCase))
+			{
+				int end = i + design.Length;
+				if (end >= scene.Length || !char.IsLetterOrDigit(scene[end])) return true;
+			}
+			return false;
+		}
 
 		/// <summary>The objects of Raft's islands a remake uses (loaded on demand before generating).</summary>
 		public static List<string> NeededNames(IslandGenSettings s)

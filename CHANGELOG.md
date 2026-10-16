@@ -200,6 +200,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
+  of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
   while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
 - **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
