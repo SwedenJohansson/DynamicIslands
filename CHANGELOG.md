@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
+  buttons. The height's ? says what 0, above 0 (flying) and below 0 (sunk) mean, and how players reach the island.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
   times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under
@@ -127,6 +129,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
   choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
   with the choice still load (it is ignored).
+- **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
+  notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
+  the window's edge.
+- **Island lists open at once:** **+ Add a saved island** and the other island lists in World plans open at
+  once with a "Loading islands... (n of N)" line, then list your islands. Their titles are kept in `summarycache.txt`,
+  so the next time takes no time (before, the list came only after every island's whole file was read).
 - **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
   colour round a built, hand-held or worn upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
   The titanium spear is a light, almost white metal (its tint was only a little darker than the scrap spear).

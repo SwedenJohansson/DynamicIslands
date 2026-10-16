@@ -403,7 +403,7 @@ namespace DynamicIslands.Editor
 			if (bring == null) return;
 			KeepBring();
 			if (bring.What == "type") ChoiceWindow.Open("Map type", ChoiceWindow.Types(), v => { if (bring != null) { bring.WhatArg = v; ShowBring(); } });
-			else ChoiceWindow.Open("Bring which island", ChoiceWindow.Islands().Where(c => !c.Value.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase)),
+			else ChoiceWindow.OpenIslands("Bring which island", () => ChoiceWindow.Islands().Where(c => !c.Value.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase)),
 				v => { if (bring != null) { bring.WhatArg = v; ShowBring(); } });
 		}
 
