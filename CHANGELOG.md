@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Story items as Raft's own items:** the Story items window's **Raft item...** links a story item to one of Raft's
+  items; in the journal, **Take out** turns one into that item in your inventory (the host decides who gets the last).
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
@@ -123,6 +125,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a
+  player near that island; levels are switched on by the host only, and a level record with more EXP than the host
+  credited is put back.
 - **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
   notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
   the window's edge.
@@ -194,6 +199,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Machinery placed as decoration stays decoration:** an island script's (recipe's) generator, radio, cage, hatch or
+  lift placed without a name no longer gets the Ready pieces' working settings; one given a name does.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
   while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
 - **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on

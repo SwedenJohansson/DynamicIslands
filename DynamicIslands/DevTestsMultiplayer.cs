@@ -15,6 +15,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAlive", docs: "Dev: fills up the local player's hunger, thirst, health and oxygen, and respawns them if they are down")]
 		public static void AliveCommand()
 		{
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			StartTest(AliveRoutine());
 		}
 

@@ -16,22 +16,32 @@ namespace DynamicIslands.Editor
 	public class StoryItemDef
 	{
 		public string Id = "", Name = "", Icon = "", Description = "";
+		/// <summary>
+		/// T8: one of Raft's own items (its unique name) the story item can be taken out of the journal as - "Take out" turns
+		/// one into that Raft item in the player's inventory. Empty: it stays a journal item. Story items are never new Raft
+		/// items (a save with them would break without the mod); this links one to an item Raft already has.
+		/// </summary>
+		public string RaftItem = "";
+		const string RaftField = "raft=";
 
-		/// <summary>"id|name|icon|description"</summary>
+		/// <summary>"id|name|icon|description", and "|raft=&lt;Raft item&gt;" at the end for one that can be taken out (T8).</summary>
 		public static StoryItemDef Parse(string line)
 		{
 			string[] p = (line ?? "").Split('|');
 			if (p.Length < 1 || p[0].Trim().Length == 0) return null;
-			return new StoryItemDef { Id = p[0].Trim(), Name = p.Length > 1 ? p[1].Trim() : "", Icon = p.Length > 2 ? p[2].Trim() : "", Description = p.Length > 3 ? string.Join("|", p.Skip(3).ToArray()).Trim() : "" };
+			string raft = "";
+			int last = p.Length;
+			if (p.Length > 4 && p[p.Length - 1].Trim().StartsWith(RaftField, StringComparison.OrdinalIgnoreCase)) { raft = p[p.Length - 1].Trim().Substring(RaftField.Length).Trim(); last--; }
+			return new StoryItemDef { Id = p[0].Trim(), Name = p.Length > 1 ? p[1].Trim() : "", Icon = p.Length > 2 ? p[2].Trim() : "", Description = last > 3 ? string.Join("|", p.Skip(3).Take(last - 3).ToArray()).Trim() : "", RaftItem = raft };
 		}
 
-		public string ToLine() { return Clean(Id) + "|" + Clean(Name) + "|" + Clean(Icon) + "|" + (Description ?? "").Replace("\n", " ").Trim(); }
+		public string ToLine() { return Clean(Id) + "|" + Clean(Name) + "|" + Clean(Icon) + "|" + (Description ?? "").Replace("\n", " ").Trim() + ((RaftItem ?? "").Trim().Length > 0 ? "|" + RaftField + Clean(RaftItem) : ""); }
 
 		static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
 
 		public string ShownName { get { return Name.Length > 0 ? Name : Id; } }
 
-		public StoryItemDef Copy() { return new StoryItemDef { Id = Id, Name = Name, Icon = Icon, Description = Description }; }
+		public StoryItemDef Copy() { return new StoryItemDef { Id = Id, Name = Name, Icon = Icon, Description = Description, RaftItem = RaftItem }; }
 	}
 
 	/// <summary>
@@ -290,7 +300,7 @@ namespace DynamicIslands.Editor
 			id = StoryItems.IdOf(id);
 			if (id.Length == 0 || count <= 0) return;
 			StoryItemDef d = StoryItems.Find(id) ?? new StoryItemDef { Id = id };
-			Change("give", Fields(d.Id, count.ToString(CultureInfo.InvariantCulture), d.Name, d.Icon, d.Description));
+			Change("give", Fields(d.Id, count.ToString(CultureInfo.InvariantCulture), d.Name, d.Icon, d.Description, d.RaftItem));
 			// (the main story's items are in Raft's notebook's Found items, the side quests' in the journal)
 			IslandInfo.ShowMessage("Story item: " + d.ShownName + (count > 1 ? " \u00D7" + count : "") + (QuestBook.MainItemIds().Contains(d.Id) ? "   (T: notebook)" : "   (J: journal)"));
 		}
@@ -308,6 +318,46 @@ namespace DynamicIslands.Editor
 		{
 			if (pages.Any(p => p.Key == key)) return;
 			Change("page", Fields(key, Today.ToString(CultureInfo.InvariantCulture), title ?? "", island ?? "", text ?? ""));
+		}
+
+		/// <summary>Whether a held story item can be taken out as a Raft item (T8): it names one Raft has, and the crew holds one.</summary>
+		public static bool CanTakeOut(string id)
+		{
+			StoryItemDef d = DefOf(id);
+			return d != null && Count(id) > 0 && RaftItemOf(d) != null;
+		}
+
+		static Item_Base RaftItemOf(StoryItemDef d)
+		{
+			string name = d != null ? (d.RaftItem ?? "").Trim() : "";
+			if (name.Length == 0) return null;
+			try { return ItemManager.GetItemByName(name); } catch { return null; }
+		}
+
+		/// <summary>
+		/// T8: one of the crew's story items taken out of the journal as the Raft item it names, into this player's
+		/// inventory. The host decides (two players taking out the last one at once get one item between them): a client
+		/// asks ("out") and gets the item when the host says yes ("outok"); on the host it happens at once.
+		/// </summary>
+		public static bool TakeOut(string id)
+		{
+			id = StoryItems.IdOf(id);
+			if (!CanTakeOut(id)) return false;
+			if (Raft_Network.IsHost)
+			{
+				string raft = DefOf(id).RaftItem.Trim();
+				Change("take", Fields(id, "1"));
+				GiveRaftItem(id, raft);
+			}
+			else IslandNetwork.SendStory(new IslandNetMessage { Name = "out", Data = Fields(id) });
+			return true;
+		}
+
+		static void GiveRaftItem(string id, string raft)
+		{
+			List<string> given = TriggerZone.Give(new[] { new KeyValuePair<string, int>(raft, 1) });
+			Debug.Log("[CUSTOM ISLANDS] Story item '" + id + "' taken out as " + raft + (given.Count > 0 ? "" : " (not given)"));
+			if (given.Count > 0) IslandInfo.ShowMessage("Taken out of the journal: " + given[0]);
 		}
 
 		static void Change(string op, string data)
@@ -342,6 +392,7 @@ namespace DynamicIslands.Editor
 						if (f[2].Length > 0) h.Def.Name = f[2];
 						if (f[3].Length > 0) h.Def.Icon = f[3];
 						if (f[4].Length > 0) h.Def.Description = f[4];
+						if (f.Length >= 6 && f[5].Length > 0) h.Def.RaftItem = f[5];
 					}
 					h.Count += n;
 					h.Found = Mathf.Max(h.Found, h.Count - n) + n;
@@ -390,8 +441,20 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>From the network (from: the player who sent it, for a client's take the host refuses).</summary>
-		public static void OnMessage(IslandNetMessage msg, ulong from)
+		public static void OnMessage(IslandNetMessage msg, ulong from) { OnMessage(msg, from, null); }
+
+		/// <summary>From the network (fromUser: the sender, for the host's answer to a take-out).</summary>
+		public static void OnMessage(IslandNetMessage msg, ulong from, Network_UserId? fromUser)
 		{
+			// (T8: the host's answer to this player's take-out: the Raft item, or no - the crew had none left)
+			if (msg.Name == "outok" || msg.Name == "outno")
+			{
+				if (Raft_Network.IsHost) return;
+				string[] o = Split(msg.Data);
+				if (msg.Name == "outok" && o.Length >= 2) GiveRaftItem(o[0], o[1]);
+				else IslandInfo.ShowMessage("The crew has none of it left to take out");
+				return;
+			}
 			if (msg.Name == "all")
 			{
 				if (Raft_Network.IsHost) return;
@@ -406,6 +469,18 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			if (!Raft_Network.IsHost) return;
+			if (msg.Name == "out")
+			{
+				// (T8: a player takes a story item out as a Raft item: one is taken here, and only they get the item)
+				string[] o = Split(msg.Data);
+				string oid = o.Length > 0 ? StoryItems.IdOf(o[0]) : "";
+				bool ok = CanTakeOut(oid);
+				string raft = ok ? DefOf(oid).RaftItem.Trim() : "";
+				if (ok && Apply("take", Fields(oid, "1"))) { IslandNetwork.SendStory(StateMessage()); Raise(); }
+				Debug.Log("[CUSTOM ISLANDS] A player's take-out of story item '" + oid + "': " + (ok ? "given as " + raft : "refused (none left)"));
+				if (fromUser.HasValue) IslandNetwork.SendStoryTo(new IslandNetMessage { Name = ok ? "outok" : "outno", Data = Fields(oid, raft) }, fromUser.Value);
+				return;
+			}
 			// (a take the crew no longer has enough for - another player used the item up at the same moment: refused, not
 			// partly taken, and remembered for that player's event; everyone gets the state again, so their count is right)
 			if (msg.Name == "take")
@@ -436,7 +511,7 @@ namespace DynamicIslands.Editor
 		static IEnumerable<string> Lines()
 		{
 			foreach (Held h in held.Values)
-				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description, Mathf.Max(h.Found, h.Count).ToString(CultureInfo.InvariantCulture));
+				yield return "story.item=" + Fields(h.Def.Id, h.Count.ToString(CultureInfo.InvariantCulture), h.Def.Name, h.Def.Icon, h.Def.Description, Mathf.Max(h.Found, h.Count).ToString(CultureInfo.InvariantCulture), h.Def.RaftItem);
 			foreach (Page p in pages)
 				yield return "story.page=" + Fields(p.Key, p.Day.ToString(CultureInfo.InvariantCulture), p.Title, p.Island, p.Text);
 		}
@@ -455,7 +530,7 @@ namespace DynamicIslands.Editor
 				int found;
 				// (found in all: the 6th field since 2026-10-06; a world from before counts what it holds)
 				if (f.Length < 6 || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out found)) found = n;
-				held[f[0]] = new Held { Count = n, Found = Mathf.Max(found, n), Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "" } };
+				held[f[0]] = new Held { Count = n, Found = Mathf.Max(found, n), Def = new StoryItemDef { Id = f[0], Name = f.Length > 2 ? f[2] : "", Icon = f.Length > 3 ? f[3] : "", Description = f.Length > 4 ? f[4] : "", RaftItem = f.Length > 6 ? f[6] : "" } };
 				return true;
 			}
 			if (key == "story.page")
@@ -870,6 +945,8 @@ namespace DynamicIslands.Editor
 		Text countText, readTitle, readText, emptyItems, emptyPages;
 		Image readIcon;
 		string shownKey;
+		/// <summary>T8: "Take out" on a story item that names a Raft item (StoryBook.TakeOut).</summary>
+		Button takeOut;
 		bool cursorWasFree, dirty;
 		/// <summary>The quests' count in the head: a button (the list on the paper) with a bar behind its words.</summary>
 		Button questButton;
@@ -1000,6 +1077,8 @@ namespace DynamicIslands.Editor
 			instance.readIcon.preserveAspect = true;
 			instance.readIcon.raycastTarget = false;
 			instance.readTitle = UIKit.Label(titleRow, "", 24, Ink, TextAnchor.MiddleLeft, FontStyle.Normal, "Title");
+			instance.takeOut = UIKit.Button(titleRow, "Take out", () => instance.TakeOutShown(), "Take one out of the journal as Raft's own item, into your inventory (the crew has one less)", 230, 34, 14);
+			instance.takeOut.gameObject.SetActive(false);
 			ScrollRect s3;
 			RectTransform textContent = UIKit.ScrollList(sheet, out s3, 0f);
 			UIKit.Size(s3.gameObject, -1, -1).flexibleHeight = 1f;
@@ -1096,7 +1175,29 @@ namespace DynamicIslands.Editor
 				else if (items.Count > 0) ShowItem(items[0]);
 				else { shownKey = null; readIcon.enabled = false; readTitle.text = "Journal"; readText.text = "Nothing here yet. Read notes on the islands and look for story items: they are kept here for the whole crew."; }
 			}
+			else if (shownKey.StartsWith("item:")) ShowItem(items.First(h => "item:" + h.Def.Id == shownKey)); // (its count may have changed)
+			RefreshTakeOut();
 		}
+
+		/// <summary>T8: the Take out button, on a shown story item that names a Raft item the crew holds.</summary>
+		void RefreshTakeOut()
+		{
+			string id = shownKey != null && shownKey.StartsWith("item:") ? shownKey.Substring(5) : null;
+			bool can = id != null && StoryBook.CanTakeOut(id);
+			takeOut.gameObject.SetActive(can);
+			if (can) UIKit.LabelOf(takeOut).text = "Take out: " + ContentCatalog.ItemLabel(StoryBook.DefOf(id).RaftItem.Trim());
+		}
+
+		void TakeOutShown()
+		{
+			if (shownKey != null && shownKey.StartsWith("item:")) StoryBook.TakeOut(shownKey.Substring(5));
+		}
+
+		/// <summary>For tests: the Take out button's label, or null when it is not shown.</summary>
+		internal static string TakeOutLabel { get { return IsOpen && instance.takeOut.gameObject.activeSelf ? UIKit.LabelOf(instance.takeOut).text : null; } }
+
+		/// <summary>For tests: clicks the Take out button.</summary>
+		internal static void ClickTakeOut() { if (IsOpen && instance.takeOut.gameObject.activeSelf) instance.takeOut.onClick.Invoke(); }
 
 		void ItemTile(StoryBook.Held h)
 		{
@@ -1192,6 +1293,7 @@ namespace DynamicIslands.Editor
 				if (pageKeys.TryGetValue(b, out key) && key == shownKey) UIKit.SetActive(b, true); else UIKit.Flat(b);
 				UIKit.LabelOf(b).alignment = TextAnchor.MiddleLeft;
 			}
+			RefreshTakeOut();
 		}
 
 		/// <summary>The count in the head, and its bar (when the journal opens, and every 2 s while it is open: quests done
@@ -1272,6 +1374,7 @@ namespace DynamicIslands.Editor
 		{
 			shownKey = QuestsKey;
 			readIcon.enabled = false;
+			RefreshTakeOut();
 			List<QuestCount.Quest> quests = QuestCount.All();
 			readTitle.text = "Quests: " + QuestCount.Summary(quests).Replace(" quests done", " done");
 			readText.text = QuestList(quests);
@@ -1327,6 +1430,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Shows the page with this key on the paper (tests: as a click on it).</summary>
+		/// <summary>For tests (T8): shows a held story item, as a click on its tile does.</summary>
+		internal static bool ShowItemOf(string id)
+		{
+			StoryBook.Held h = StoryBook.Items.FirstOrDefault(x => x.Def.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+			if (!IsOpen || h == null) return false;
+			instance.ShowItem(h);
+			return true;
+		}
+
 		public static bool ShowKey(string key)
 		{
 			StoryBook.Page p = StoryBook.Pages.FirstOrDefault(x => x.Key == key);

@@ -106,7 +106,7 @@ plan save
 | `info` | `key=value` | Same, with `info.` before the key: `info title=`, `info author=`, `info description=`. |
 | `brush` | `<tool> at x z` or `<tool> from x1 z1 to x2 z2`, `[r=15] [s=4] [frames=30] [rot=] [h=]` | A terrain stroke (`Brush`). Tools: `raise lower flatten smooth sample sand grass rock seabed auto stamp:<i>`. r 2-80, s 0.5-20, frames 1-600. `h=`: flatten to that height above the sea. `rot=`: the stamp's turn (plus the frame's yaw). |
 | `clear` | `at x z [r=5]` or `from x1 z1 to x2 z2 [r=5]`, `[all] [only=<regex>] [below=] [above=] [on=sand\|grass\|rock\|seabed]` | Hides the editor objects in the circle or along the line, as one undo step. Without `all` the recipe's own objects stay. `below`/`above`: height above the sea. |
-| `place` | `<Object> <alias\|-> at x z [options]` | One object (`Place`). Object `none` places nothing (an empty macro slot). |
+| `place` | `<Object> <alias\|-> at x z [options]` | One object (`Place`). Object `none` places nothing (an empty macro slot). A Ready piece gets its working settings (`ReadyPieces.Defaults`, CB1) only with an alias (or `as=`); with `-` it stays decoration. |
 | `scatter` | `<Object> <count> at x z r= [options]` | Random spots in the circle: dry land by default, `wet` under the sea, `any` both. `deep=` max depth, `free=` metres clear of editor objects, `seed=`, `scale=a-b`, `yaw=` fixed (else random), `as=<alias>`. |
 | `line` | `<Object> from x1 z1 to x2 z2 [step=1.5] [ends] [yaw=] [y=\|h=] [sit] [follow]` | A row, each object's x axis along the line. `ends`: pieces at both ends. `follow`: end to end over the ground (`LineFollow`). |
 | `ramp` | `<Object> from x1 z1 h1 to x2 z2 h2 [len=6] [top=1] [rot=]` | Pieces end to end between two heights (above the sea, or the frame's floor), tilted and stretched. `len`: piece length along its x; `top`: walking surface above its pivot. |
@@ -116,7 +116,7 @@ plan save
 | `zipto` | `<alias> x z` | A zipline's far end on the ground there (the `zip.to` setting, `ZiplineEnds.ZipTo`). |
 | `loot` | `<alias> <items>` | Chest loot (`ObjectProps.LootItems`), e.g. `Wool*4;Rope*4`. |
 | `note` | `<alias> <title> \| <text>` | The note editor's Apply (`NoteEditorWindow.Apply`). |
-| `story` | `id\|name\|icon\|description` | A story item added, or replaced by id (`StoryItemDef.Parse`). |
+| `story` | `id\|name\|icon\|description[\|raft=<Raft item>]` | A story item added, or replaced by id (`StoryItemDef.Parse`). |
 | `quest` | `title=`, `intro=`, `done=` or `reward=` (one a line) | The island's quest. `quest2`..`quest9`: further quests. |
 | `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages`. `step2`..`step9` for further quests. |
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |

@@ -1431,6 +1431,7 @@ namespace DynamicIslands
 								if (alias != "-")
 								{
 									RecipeObjects[alias] = e;
+									ReadyDefaults(e);
 									List<EditorGameObject> group;
 									if (!recipeGroups.TryGetValue(alias, out group)) recipeGroups[alias] = group = new List<EditorGameObject>();
 									group.Add(e);
@@ -1505,6 +1506,7 @@ namespace DynamicIslands
 								if (e != null && opt.ContainsKey("as"))
 								{
 									RecipeObjects[opt["as"]] = e;
+									ReadyDefaults(e);
 									List<EditorGameObject> sg;
 									if (!recipeGroups.TryGetValue(opt["as"], out sg)) recipeGroups[opt["as"]] = sg = new List<EditorGameObject>();
 									sg.Add(e);
@@ -1607,6 +1609,7 @@ namespace DynamicIslands
 							if (t[2] != "-")
 							{
 								RecipeObjects[t[2]] = e;
+								ReadyDefaults(e);
 								List<EditorGameObject> g2;
 								if (!recipeGroups.TryGetValue(t[2], out g2)) recipeGroups[t[2]] = g2 = new List<EditorGameObject>();
 								g2.Add(e);
@@ -2126,6 +2129,19 @@ namespace DynamicIslands
 			return null;
 		}
 
+		/// <summary>CB1: a recipe object given an alias is a working piece - it gets the Ready pieces' settings (a cage chained
+		/// shut, a usable generator, ...) for keys it does not have yet. One placed without an alias stays decoration.</summary>
+		internal static void ReadyDefaults(EditorGameObject e)
+		{
+			if (e == null) return;
+			if (e.Props == null) e.Props = new Dictionary<string, string>();
+			var ready = new Dictionary<string, string>();
+			ReadyPieces.Defaults(e.GameObjectName, ready);
+			if (ready.Count == 0) return;
+			foreach (var kv in ready) if (!e.Props.ContainsKey(kv.Key)) e.Props[kv.Key] = kv.Value;
+			ObjectProps.ApplyInEditor(e.gameObject, e.Props);
+		}
+
 		/// <summary>Places an object as the editor's placer does: the object from the catalog, turned (standing straight,
 		/// as with the grid on) and scaled, its collider on, made an editor object with its default settings, shown as one
 		/// undo step. "sit": its bottom rests at the height (else its pivot is there). "drop": then set down on whatever is
@@ -2222,7 +2238,8 @@ namespace DynamicIslands
 			}
 			Collider ownCollider = go.GetComponent<Collider>();
 			if (ownCollider != null) ownCollider.enabled = true;
-			result = EditorGameObject.Attach(go, name);
+			// CB1: a recipe object starts as decoration; one given an alias gets the Ready pieces' settings (ReadyDefaults)
+			result = EditorGameObject.Attach(go, name, ObjectProps.Defaults(name, false));
 			recipePlaced.Add(go);
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
 			return null;

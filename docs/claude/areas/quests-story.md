@@ -37,9 +37,9 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 
 ## Data and keys
 - Object settings: `obj.name`, `beh.*`, `col.mode`, `on.<event>` (actions `verb|target|argument`), `if.<event>` (checks `kind|target|argument`, `!kind` = NOT, a line `any`), `else.<event>`. Events `use`, `enter`, `read`, `open`, `defeat`; island events `arrive`, `quest`. Lists in `BehaviourProps` (`ObjectEvents`, `IslandEvents`, `Verbs`, `SharedVerbs`, `CheckKinds`).
-- Other settings: `story.items` (`id|name|icon|description`), `note.title` / `note.text`, `loot.items` / `loot.refill`, `zone.id` / `zone.radius` / `zone.message` / `zone.repeat` (`never` = once ever) / `zone.air`, `creature.zone`, `lock.code`, `zip.to`, `info.title` / `info.author` / `info.description`, `rules.regrow`, `rules.levels`, `atmo.*`, `sound.event` / `sound.volume` / `sound.mode`.
+- Other settings: `story.items` (`id|name|icon|description`, and `|raft=<Raft item>` last for T8 take-out), `note.title` / `note.text`, `loot.items` / `loot.refill`, `zone.id` / `zone.radius` / `zone.message` / `zone.repeat` (`never` = once ever) / `zone.air`, `creature.zone`, `lock.code`, `zip.to`, `info.title` / `info.author` / `info.description`, `rules.regrow`, `rules.levels`, `atmo.*`, `sound.event` / `sound.volume` / `sound.mode`.
 - Island state (field 5 of the world file's island line, sent to joining players): `ContentState.LootKeyBase` 0x20000 + chest ordinal; `TriggerZone.KeyBase` 0x30000 + zone ordinal; `QuestTracker.StepKey` 0x40000, `ProgressKey` 0x40001, `EarlyKeyBase` 0x40100 + step (quest n > 0: step 0x40200 + 2n, progress 0x40201 + 2n, early 0x40300 + 0x40 n + step); `Behaviours.StateBase` 0x60000 + object (shown / open), `DoneBase` 0x70000 + object (`IslandIndex` 0xFFFF = the island), `SharedOnceBase` 0x80000, `PendingBase` 0x900000, `SignalBase` 0x1000000; `CodeLock.LockKeyBase` 0xA0000; `QuestItemPickups.KeyBase` 0xB0000. Below `CreatureSpawner.StateKeyBase` 0x10000: trees and pickups.
-- World file: `@story.item=` (id|count|name|icon|description|found) and `@story.page=` (key|day|title|island|text), fields URI-escaped. Page keys: `note:<island>:<object>`, `act:<island>:<object>:<title>`, `storyfreq:<step>`; `<island>` = `StoryBook.PageIsland(e)`.
+- World file: `@story.item=` (id|count|name|icon|description|found|raft) and `@story.page=` (key|day|title|island|text), fields URI-escaped. Page keys: `note:<island>:<object>`, `act:<island>:<object>:<title>`, `storyfreq:<step>`; `<island>` = `StoryBook.PageIsland(e)`.
 - `Mods\DynamicIslands\worlds\<WorldGuid>-<steam id>.rewards`: this machine's `rewarded` / `owed` lines (`QuestRewards`), never sent.
 - Network: `ObjectUsed` 6, `QuestStep` 7, `ObjectSet` 9, `EventFired` 10, `Story` 11, `Claim` 16, `QuestCount` 20, `QuestStepMore` 25.
 
@@ -51,6 +51,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | New check kind | `BehaviourProps.CheckKinds`; `Behaviours.Holds`; `ObjCheck.Describe`; `BehaviourWindow.CheckLabels`, `CheckHints` |
 | Chest, zone, note use | `LootCrate.Open`, `TriggerZone.Enter`, `NoteReader.Show`; refill and re-arm in `ContentState.OnIslandReady` |
 | Story items, journal | `StoryBook.Give`, `Take`, `AddPage`, `Apply`; `JournalWindow` |
+| Take out as a Raft item (T8) | `StoryItemDef.RaftItem`, `StoryBook.CanTakeOut` / `TakeOut` (client: Story `out` -> host `outok`/`outno` via `IslandNetwork.SendStoryTo`); `JournalWindow.RefreshTakeOut` |
 
 ## Traps
 - Host/client: the acting machine does the personal part (message, Raft items, sound, teleport); the host does shared actions, gives story items once, keeps quest totals, notices kills and catches, and runs `FireFromHost` (`quest`, `defeat`). A chest, a once-zone, or a `read` / `arrive` with a `take` check or `give` / `teleport` asks `Claims.May` first. `StoryBook` changes go to the host, which sends the whole state (`Name` = `all`).

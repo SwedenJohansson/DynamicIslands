@@ -417,6 +417,8 @@ namespace DynamicIslands.Editor
 				// the second before leaving was never saved; a "mine" sent before this gain reached them is older and left out,
 				// the next one has it)
 				LevelRecord rec;
+				// (CB2: a record made for a player the host has none of yet - the host's credit is what a player's record is checked against)
+				if ((gain > 0 || kill) && !records.TryGetValue(player, out rec)) records[player] = rec = new LevelRecord();
 				if ((gain > 0 || kill) && records.TryGetValue(player, out rec))
 				{
 					int levelBefore = rec.Level;
@@ -459,7 +461,8 @@ namespace DynamicIslands.Editor
 				Debug.Log("[CUSTOM ISLANDS] Shared EXP: +" + give + " to " + id + " (" + d.magnitude.ToString("F0") + " m from the kill)");
 				if (id == LocalId) { Gained(ai, give, false); continue; }
 				LevelRecord rec;
-				if (records.TryGetValue(id, out rec)) { int levelBefore = rec.Level; rec.Xp += give; if (rec.Level != levelBefore) levelsDirty = true; }
+				if (!records.TryGetValue(id, out rec)) records[id] = rec = new LevelRecord(); // (CB2: as for a hit)
+				{ int levelBefore = rec.Level; rec.Xp += give; if (rec.Level != levelBefore) levelsDirty = true; }
 				IslandNetwork.SendLevels(new IslandNetMessage { Name = "gain", Count = give, Index = unchecked((int)entity.ObjectIndex), FullList = false }, new Network_UserId(id));
 			}
 		}
@@ -739,6 +742,8 @@ namespace DynamicIslands.Editor
 					break;
 				case "state": // host -> a joining player: their record
 					if (Raft_Network.IsHost) break;
+					// (CB2: Count 2 = the host put this player's record right - more EXP than it credited: taken as it is)
+					if (msg.Count == 2 && On) { mine = LevelRecord.Decode(msg.Data); stateSeen = true; dirty = false; Debug.Log("[CUSTOM ISLANDS] Levels: the host put this player's record right (" + mine.Xp + " EXP)"); Raise(); StatApply.Tick(); break; }
 					if (msg.Count != 1) break;
 					{
 						bool was = On;
@@ -757,13 +762,27 @@ namespace DynamicIslands.Editor
 					break;
 				case "mine": // a player -> host: their record now
 					if (!Raft_Network.IsHost) break;
-					if (!On && OffByHost) break; // (a record sent just before the host switched it off)
-					if (!On) TurnOn(false);
+					// (CB2: only the host switches the system on - a player's record no longer does; a record sent just before the
+					// host switched it off is left out too)
+					if (!On) { Debug.Log("[CUSTOM ISLANDS] Levels: a record from " + from.Id + " left out (the system is off here)"); break; }
 					LevelRecord old;
 					int levelBefore = records.TryGetValue(from.Id, out old) ? old.Level : 0;
 					LevelRecord sent = LevelRecord.Decode(msg.Data);
 					// (a message older than what the host has - EXP only grows - is left out)
 					if (old != null && sent.Xp < old.Xp) { Debug.Log("[CUSTOM ISLANDS] Levels: an older record from " + from.Id + " left out (" + sent.Xp + " < " + old.Xp + " EXP)"); break; }
+					// (CB2: the host credits every player's EXP - their hits, shared kills, the daily quest - so a record with more
+					// EXP or kills than that is put right: the host's EXP and kills, the player's points as far as that level
+					// gives, and the player is told)
+					int creditedXp = old != null ? old.Xp : 0, creditedKills = old != null ? old.Kills : 0;
+					if (!PlayerTrust.ForTests && (sent.Xp > creditedXp || sent.Kills > creditedKills))
+					{
+						Debug.Log("[CUSTOM ISLANDS] Levels: a record from " + from.Id + " with more than the host credited (" + sent.Xp + " EXP, " + sent.Kills + " kills; credited " + creditedXp + ", " + creditedKills + "): put right");
+						sent.Xp = Mathf.Min(sent.Xp, creditedXp);
+						sent.Kills = Mathf.Min(sent.Kills, creditedKills);
+						sent = LevelRecord.Decode(sent.Encode()); // (the points as far as the level gives)
+						Corrected++;
+						IslandNetwork.SendLevels(new IslandNetMessage { Name = "state", Count = 2, Data = sent.Encode() }, from);
+					}
 					records[from.Id] = sent;
 					if (records[from.Id].Level != levelBefore || old == null || records[from.Id].Points[LevelRules.Health] != old.Points[LevelRules.Health]) levelsDirty = true;
 					break;
@@ -777,6 +796,23 @@ namespace DynamicIslands.Editor
 					Gained(AiOf(hit), Mathf.Max(0, msg.Count), msg.FullList);
 					break;
 			}
+		}
+
+		/// <summary>Host: how many players' records it put right (CB2, tests).</summary>
+		public static int Corrected { get; private set; }
+
+		/// <summary>
+		/// Host, CB2: EXP for another player that the host credits itself (the daily quest's reward, which their machine adds
+		/// on its side): their record grows with it, so their next record isn't put right.
+		/// </summary>
+		public static void CreditXp(ulong player, int amount)
+		{
+			if (!Raft_Network.IsHost || !On || amount <= 0 || player == 0UL || player == LocalId) return;
+			LevelRecord rec;
+			if (!records.TryGetValue(player, out rec)) records[player] = rec = new LevelRecord();
+			int levelBefore = rec.Level;
+			rec.Xp = (int)Math.Min(int.MaxValue, (long)rec.Xp + amount);
+			if (rec.Level != levelBefore) levelsDirty = true;
 		}
 
 		/// <summary>Host: the record of a player (tests).</summary>

@@ -319,6 +319,9 @@ not a button): they show and hide with Raft's own key tabs, and say the new key 
   name, with **×2**, **×3**... when the crew has more than one. Past eight, the list scrolls (the mouse wheel or its bar). Click one to see its picture and description on the
   paper. They come from chests, trigger zones, quest rewards and island events; a message tells you ("Story item: Old
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
+  An item its builder linked to one of Raft's own items has a **Take out: <item>** button over its description: it
+  takes one out of the journal into your inventory as that Raft item (the crew has one less; the host decides, so two
+  players can't take out the last one twice). It can't be put back.
 - **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the
   quest is done, the whole line in light green) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
@@ -1346,7 +1349,11 @@ key somewhere..."*
 
 **Island tab → Story items...**: keys, map pieces, logs... with a name, a description and a picture (Raft's quest
 item pictures or any Raft item). Chests, zones, quest rewards and "give" actions hand them out; "only if" checks ask
-for them; players find them in the journal (J), or in Raft's notebook (T) for a main story island. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`).
+for them; players find them in the journal (J), or in Raft's notebook (T) for a main story island. **Raft item...**
+beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
+as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
+becomes planks. Story items stay journal items (a saved world never holds an item Raft doesn't know); the link is
+only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`).
 
 **What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
 
@@ -2135,7 +2142,11 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   and puzzles keep working for the players there while the host and the raft sail on, far away. It unloads once
   everyone has left it (beyond the unload distance).
 - **Levels** (with the level up system on): each player's own, kept by the host and back when they join again; the
-  host works out everyone's EXP, and each player sees the others' levels under their names.
+  host works out everyone's EXP, and each player sees the others' levels under their names. Only the host switches
+  levels on, and a player's record with more EXP than the host credited them is put back to the host's.
+- **What the host takes from players:** a code lock opened, a signal or rule fired, quest progress, a tree or pickup
+  harvested is taken only from a player near that island (within the unload distance, where it is loaded on their
+  side). A report about an island far from them is left out (the log says so) - a game out of step, or a cheat.
 
 **Before you swap hosts:** read [12.1 Playing together over several days](#121-playing-together-over-several-days) -
 which copy of the world to host from, the same mod version for everyone, the PC clock, and what not to do.

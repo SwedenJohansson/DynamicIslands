@@ -1981,6 +1981,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
 		public static void LoadWorld(string[] args)
 		{
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			int backup = 0;
 			var words = (args ?? new string[0]).ToList();
 			string last = words.LastOrDefault();
@@ -2068,6 +2069,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CINewWorld", docs: "Dev, main menu: creates and starts a new world through Raft's own New Game box (default game mode). CINewWorld <name>")]
 		public static void NewWorld(string[] args)
 		{
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "CI Test";
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }

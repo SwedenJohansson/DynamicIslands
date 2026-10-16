@@ -7,6 +7,7 @@ The host owns the world: its island list, world file and settings. Clients copy 
 | `IslandNetwork.cs` | `IslandNetMessage` (one `[Serializable]` class for every kind) and `IslandNetwork`: send helpers, `OnMessage`, join reply, island list, file transfer, `Resync`, `HashOf` |
 | `DynamicIslands.cs` | `OnNetworkMessage` (RML) -> `IslandNetwork.OnMessage`; `HookRaftEvents` re-hooks `Raft_Network.OnWorldReceivedLate`; `Update` -> `IslandNetwork.Tick`; console command `Resync` (`ResyncCommand`) |
 | `Claims.cs` | Things only one player can have (a chest's loot, a once-zone) |
+| `PlayerTrust.cs` | CB2: host takes a player's used/harvest/quest/event report only within `Allowed(e)` (unload distance + land radius + 150 m) of the island (`MayMark`); `ForTests` (set by CI world commands) skips it |
 | `WorldCopy.cs` | The world file sent to every player, so any of them can host later |
 | `WorldSaveShare.cs` | Raft's newest save folder (`<date>-Latest`) packed+deflated, sent after each Raft save (`WorldCopy.AfterSave` -> `AfterRaftSave`, a frame later) and at a join; the player files it under `SaveAndLoad.WorldPath` (marker `CustomIslands-world.txt` = world guid; another world of that name -> `<name> (<guid8>)`; `.part` then move; old `-Latest` renamed; received folders pruned to 3) |
 | `WorldRules.cs` | Kind 15, and the host's spawnpool.txt settings every player shares |
@@ -53,7 +54,7 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 - One-player-only things: `Claims.May`, `Claims.HostGrant`. Shared settings: `WorldRules.HostSettingsData`, `HostSettingsFrom`.
 
 ## Traps
-- The host decides. Copy the pattern `if (Raft_Network.IsHost) SendToClients(msg); else if (InMultiplayerGame || Loopback != null) SendToHost(msg);`; the host checks, applies, then passes on. A client's day or "available again" is not trusted (`ObjectUsed`, `ObjectHarvest`).
+- The host decides. Copy the pattern `if (Raft_Network.IsHost) SendToClients(msg); else if (InMultiplayerGame || Loopback != null) SendToHost(msg);`; the host checks, applies, then passes on. A client's day or "available again" is not trusted (`ObjectUsed`, `ObjectHarvest`). A new player report about an island goes through `PlayerTrust.MayMark` on the host. Levels: only the host turns them on; a client's "mine" record over what the host credited (hits, shared kills, `CreditXp`) is clamped and sent back as "state" Count 2.
 - Older versions ignore an unknown `Kind`. Don't change what an existing kind means: add a kind (as `QuestStepMore` did). A host behaviour clients rely on goes in `HostCapabilities`; clients reset those flags at the first `SyncRequest`.
 - The version reply uses only fields every version has, so an older player can read it; it goes before every other join part.
 - Island lists and banners carry x,z from the sender's raft (`CustomIslandSpawner.RaftPosition`) plus absolute y, never world coordinates. Clients drop `Islands` before `worldReceived`.

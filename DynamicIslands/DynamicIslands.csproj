@@ -96,6 +96,7 @@
     <Compile Include="DevTestsSkySea.cs" />
     <Compile Include="DevTestsRename.cs" />
     <Compile Include="DevTestsReadyPieces.cs" />
+    <Compile Include="DevTestsT8cb.cs" />
     <Compile Include="DevTestsLibrary.cs" />
     <Compile Include="DevTestsLibraryOnline.cs" />
     <Compile Include="DevTestsMapTypes.cs" />
@@ -190,6 +191,7 @@
     <Compile Include="RandomizerIslands.cs" />
     <Compile Include="Behaviours.cs" />
     <Compile Include="Claims.cs" />
+    <Compile Include="PlayerTrust.cs" />
     <Compile Include="BehaviourWindow.cs" />
     <Compile Include="MapTypeFiles.cs" />
     <Compile Include="MapTypes.cs" />

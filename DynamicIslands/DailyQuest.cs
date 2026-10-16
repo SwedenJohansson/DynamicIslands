@@ -294,7 +294,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost)
 			{
 				if (msg.Name == "add") AddOnHost(msg.Index, msg.Count);
-				else if (msg.Name == "got" && msg.Index == Current.Day && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { Send(Message(), null); IslandWorldState.Save(); }
+				else if (msg.Name == "got" && msg.Index == Current.Day && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP)
 				return;
 			}
 			if (msg.Name != "state") return;

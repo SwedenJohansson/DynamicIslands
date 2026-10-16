@@ -348,6 +348,13 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host: a story message for one player (T8: the answer to their take-out).</summary>
+		public static void SendStoryTo(IslandNetMessage msg, Network_UserId player)
+		{
+			msg.Kind = IslandNetMessage.Story;
+			if (Raft_Network.IsHost) SendToPlayer(msg, player);
+		}
+
 		/// <summary>Host: the world's rules, to everyone.</summary>
 		public static void SendWorldRules(IslandNetMessage msg)
 		{
@@ -614,6 +621,8 @@ namespace DynamicIslands.Editor
 						{
 							// (a player's amount: the host adds it up and tells everyone the total)
 							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
+							// (CB2: a player's progress only on an island near them - loaded on their side)
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step")) break;
 							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
 							// (one it ignored - stale, or older than what it has - isn't passed on: it lowered the others' count)
 							if (QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count) && Raft_Network.IsHost) SendToClients(msg);
@@ -623,10 +632,16 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
 						break;
 					case IslandNetMessage.EventFired:
+						// (CB2: a player's fired rule only on an island near them; the one who asked for an answer gets its "otherwise")
+						if (msg.Ids != null && msg.Ids.Length > 0 && Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "'" + msg.Name + "'"))
+						{
+							if (msg.Count == 1 && !(msg.Name ?? "").EndsWith("!")) SendEventTo(from, msg.Ids[0], msg.Index, (msg.Name ?? "") + "!");
+							break;
+						}
 						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
 						break;
 					case IslandNetMessage.Story:
-						StoryBook.OnMessage(msg, from.Id);
+						StoryBook.OnMessage(msg, from.Id, from);
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
@@ -672,6 +687,7 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.ObjectHarvest:
 						if (msg.Ids != null && msg.Ids.Length >= 3)
 						{
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "harvest")) break; // (CB2)
 							if (Raft_Network.IsHost) msg.Count = ContentState.Today; // (the host's day, as for ObjectUsed - AU60)
 							if (IslandObjectState.OnHarvest(msg.Ids[0], msg.Index, msg.Ids[1] != 0, msg.Ids[2], msg.Count) && Raft_Network.IsHost) SendToClients(msg);
 						}
@@ -683,6 +699,7 @@ namespace DynamicIslands.Editor
 							// used gets the host's day, the one its regrow counts from - on every machine, as it is passed on so)
 							if (Raft_Network.IsHost)
 							{
+								if (!PlayerTrust.MayMark(from.Id, msg.Ids[0], "use of " + msg.Index.ToString("X"))) break; // (CB2: code locks, signals, used things)
 								if (msg.Count < 0) { Log("A player said " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " is available again: only the host decides that"); break; }
 								msg.Count = ContentState.Today;
 							}
