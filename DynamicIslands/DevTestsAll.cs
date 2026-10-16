@@ -22,8 +22,10 @@ namespace DynamicIslands
 		#region Every button
 
 		/// <summary>Buttons the walk leaves alone: leaving the editor is tested on its own at the end.</summary>
-		// (both leave the editor for another scene - the walk would lose its screens; Test in a world has its own suite, CIIslandTest)
-		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test" };
+		// (all leave the editor for another scene - the walk would lose its screens; Test in a world has its own suite, CIIslandTest;
+		// the plan window's Test this plan and Preview notebook have CIPlanTest and CIQuestBookPreview - 10-16 a plan with a main
+		// story let them through, the plan's test world opened mid-walk and every screen after it had no editor)
+		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test", "Test this plan", "Preview notebook" };
 		/// <summary>A list with more buttons than this (object tiles, items, sounds, plan cards) is sampled: its first three.</summary>
 		const int ListSample = 3, ListThreshold = 8;
 
@@ -159,6 +161,8 @@ namespace DynamicIslands
 
 		static IEnumerator ButtonScreen(ButtonRun run, string screen, Action setup)
 		{
+			// (a press that left the editor would leave every later screen empty: said once, with the press that did it)
+			if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": not in the editor (left it after " + run.Current + ")"); yield break; }
 			CloseAllWindows();
 			// (from a small island again: the Island tab's Generate made an 11300-object one, and each screen after it took
 			// 5-10 minutes - 10-13; the setup places the screen's own object again)
