@@ -914,8 +914,10 @@ namespace DynamicIslands
 			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("again until done: run as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { Fail("again until done: no generated_sample or citest island to build on"); yield break; }
+			// (generated_sample / citest, else the smallest saved island: test islands were cleared out of Mods on 10-16)
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland)
+				?? IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ciagain-") && File.Exists(IslandSpawner.PathFor(n))).OrderBy(n => new FileInfo(IslandSpawner.PathFor(n)).Length).FirstOrDefault();
+			if (source == null) { Fail("again until done: no saved island to build on"); yield break; }
 			string[] names = { "ciagain-quest", "ciagain-plain", "ciagain-once" };
 			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
 			f.Props[IslandQuest.KeyTitle] = "Come again";
@@ -959,7 +961,7 @@ namespace DynamicIslands
 				// (N = the rule's day number; the island first comes on day d = N here, so it is back on days 2N, 3N...)
 				WorldPlan plan = WorldPlan.Parse("CI again", "random = off\n" + text);
 				IntroRule qa = plan.Rules.FirstOrDefault(r => r.Id == "qa");
-				Check(ref ok, plan.Rules.Count == 3 && qa != null && qa.Again && qa.Repeats && !plan.Rules[2].Again && qa.ToLine().Contains("day:" + d + ":again") && !plan.Rules[2].ToLine().Contains("again"),
+				Check(ref ok, plan.Rules.Count == 3 && qa != null && qa.Again && qa.Repeats && !plan.Rules[2].Again && qa.ToLine().Contains("day:" + d + ":again") && !plan.Rules[2].ToLine().Contains(":again"),
 					"the plan reads 'day:" + d + ":again' and writes it back: " + (qa != null ? qa.ToLine() : "no rule"));
 				Check(ref ok, qa != null && qa.DescribeWhen().Contains("again every"), "the card says so: " + (qa != null ? qa.DescribeWhen() : ""));
 				int n = d; // every n days
