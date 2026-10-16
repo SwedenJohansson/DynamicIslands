@@ -41,6 +41,9 @@ place Relay_Fence_pole - at -10.3 -5.6 ground
 place Note_Paper tollnotice at -10.3 -5.6 y=1.1 drop
 place PulauKafilahFlag - at -17.6 -4.6 ground
 place Zone_Trigger market at -11 -1 y=1.2
+# the market's jammed crate (TODO 4c): its lid nailed down - the crowbar from Vasagatan (rule 2; kept) prises it open;
+# nothing in the quest needs it
+place Loot_ChestSmall jammedcrate at -13.2 -3.4 ground yaw=20
 
 # --- The town lift: the radio tower's pillars and decks, ladders up its south face, its top deck at the upper town's
 # edge (21.9 m) ------------------------------------------------------------------------------------------------------------
@@ -124,6 +127,12 @@ loot mayorschest Blueprint_Firework*1;Blueprint_EngineControls*1;Blueprint_Metal
 prop mayorschest loot.refill=0
 prop mayorschest if.open=take|story:mayorkey|1
 prop mayorschest else.open=message||The mayor's chest is locked. Perhaps the white bird on his roof has the key.
+prop jammedcrate obj.name=jammedcrate
+note jammedcrate Jammed market crate | A trader's crate, its lid nailed down and the nails rusted in. Stencilled on the side: "VASAGATAN - SHIP'S STORES". Inside, packed in straw: rations and spares from the wreck.
+loot jammedcrate Cooked_Mackerel*2;Nail*10;Scrap*4;Battery*1
+prop jammedcrate loot.refill=0
+prop jammedcrate if.open=has|story:crowbar|1
+prop jammedcrate else.open=message||The crate's lid is nailed down tight - the nails rusted in. A crowbar would prise it open; the Vasagatan's crew had one at their camp.
 
 prop winch obj.name=winch
 prop winch beh.use=Turn the winch

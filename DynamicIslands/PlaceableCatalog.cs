@@ -285,6 +285,11 @@ namespace DynamicIslands.Editor
 			HashSet<string> whitelist = cachedWhitelist;
 			foreach (IndexEntry e in index.Values)
 				if (!prototypes.ContainsKey(e.Name) && !e.Hidden && (whitelist == null || whitelist.Contains(e.Name))) add(e.Name, e.Category, e.Scene);
+			foreach (var d in derived)
+			{
+				IndexEntry src;
+				if (!prototypes.ContainsKey(d.Key) && index.TryGetValue(d.Value.Source, out src)) add(d.Key, d.Value.Category, src.Scene);
+			}
 			var result = new List<KeyValuePair<string, List<Entry>>>();
 			foreach (string cat in CategoryOrder.Concat(ExtraCategoryOrder()).Concat(byCat.Keys.OrderBy(k => k)).Distinct())
 			{
@@ -305,7 +310,34 @@ namespace DynamicIslands.Editor
 		/// <summary>The objects loaded now (tests).</summary>
 		internal static IEnumerable<string> LoadedNames { get { return prototypes.Keys; } }
 		/// <summary>Whether the index knows the object (loaded or not).</summary>
-		public static bool IsIndexed(string name) { return name != null && index.ContainsKey(name); }
+		public static bool IsIndexed(string name) { return name != null && (index.ContainsKey(name) || derived.ContainsKey(name)); }
+
+		class Derived { public string Source, Category, Label; }
+		/// <summary>Custom objects made from an on-demand object (RF3's survivor cage from Raft's shark cage): built when
+		/// the source's scene is loaded.</summary>
+		static readonly Dictionary<string, Derived> derived = new Dictionary<string, Derived>();
+
+		/// <summary>A custom object that is a copy of Raft's object source: added now when the source is loaded, else when
+		/// its scene is (an island or the editor asks for the custom object: the source's scene loads).</summary>
+		internal static void AddCustomFrom(string name, string source, string category, string label)
+		{
+			labels[name] = label;
+			categories[name] = category;
+			GameObject proto;
+			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddCustom(name, proto, category, label); return; }
+			derived[name] = new Derived { Source = source, Category = category, Label = label };
+		}
+
+		static string SourceOf(string name) { Derived d; return derived.TryGetValue(name, out d) && !prototypes.ContainsKey(name) ? d.Source : name; }
+
+		static void BuildDerived()
+		{
+			foreach (var d in derived.ToList())
+			{
+				GameObject proto;
+				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddCustom(d.Key, proto, d.Value.Category, d.Value.Label); derived.Remove(d.Key); }
+			}
+		}
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
 		/// <summary>The index's things to gather (they keep their gameplay, pickups too - CIMeasurePickups).</summary>
 		internal static List<string> IndexedGatherNames() { return index.Values.Where(e => e.Harvestable).Select(e => e.Name).ToList(); }
@@ -1196,20 +1228,21 @@ namespace DynamicIslands.Editor
 		{
 			yield return EnsureBuilt();
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (prototypes.ContainsKey(n) || !index.TryGetValue(n, out e) || scenes.Contains(e.Scene)) continue;
 				scenes.Add(e.Scene);
 			}
 			foreach (string s in scenes) yield return LoadScene(s);
+			BuildDerived();
 		}
 
 		/// <summary>Scenes that must be loaded before these names can be spawned (empty = all ready).</summary>
 		public static List<string> ScenesNeededFor(IEnumerable<string> names)
 		{
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (!prototypes.ContainsKey(n) && index.TryGetValue(n, out e) && !scenes.Contains(e.Scene)) scenes.Add(e.Scene);
@@ -1278,6 +1311,7 @@ namespace DynamicIslands.Editor
 			{
 				loadingScenes.Remove(sceneName);
 				loadedScenes.Add(sceneName);
+				BuildDerived();
 				RaiseChanged();
 			}
 		}

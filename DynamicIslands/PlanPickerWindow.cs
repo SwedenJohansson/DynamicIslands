@@ -167,12 +167,11 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>sample / library / your plan, and "big plan" for ten islands or more.</summary>
+		/// <summary>built in / library / your plan, and "big plan" for ten islands or more.</summary>
 		internal static string KindOf(WorldPlan p, int islandCount)
 		{
 			string kind = p.BuiltIn ? "built in" :
-				Installed(p.Name) != null ? "library plan" :
-				WorldPlanTemplates.All.Any(t => t.Value.Sample && t.Key.Equals(p.Name, StringComparison.OrdinalIgnoreCase)) ? "sample" : "your plan";
+				Installed(p.Name) != null ? "library plan" : "your plan";
 			return islandCount >= 10 ? kind + ", big plan" : kind;
 		}
 

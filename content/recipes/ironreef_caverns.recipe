@@ -198,12 +198,14 @@ info author=Custom Islands
 info description=A jungle mountain where the Ironreef Mining Company struck iron - and fled. Four caves in its flanks: the Iron Gate mine, the Vine Crawl, the flooded Drowned Shaft and the Bear Hall behind a rockfall, where Ironhide waits. Bring a light and a full breath.
 island on.arrive=message||A jungle mountain with a ruined mining camp on its beach. Somewhere a bear roars - a very big bear.
 
+# the pump store key (TODO 4c): kept - it opens the company's pump store on the Drowned Metropolis' ferry islet
+story ironreef-key|Pump store key|quest:Caravan_KeyMayor|The Ironreef Mining Company's key to its pump store in the drowned city of Meridian.
 story charges|Blasting charge|quest:Vasagatan_Bomb|A bundle of the Ironreef Mining Company's blasting charges, still dry in its oilcloth.
 note notice Company notice | IRONREEF MINING COMPANY\n\nNOTICE TO ALL HANDS: the mine is CLOSED.\n\nThe north gallery broke into a cave the size of a church - and the thing living in it. Two men hurt, one missing. The foreman has blown the Bear Hall shut.\n\nThe last of the blasting charges are where we left them: one crate in the Vine Crawl, one box in the sea adit. Leave them there.\n\nThe Iron Gate mine is up the plank road. - The Company
 note foremanlog Foreman's log | FOREMAN'S LOG\n\nWeek 9: The north gallery hit a great hollow. Bones on the floor, big ones. Claw marks on the props.\nWeek 10: Something came through the north gallery at night. Iron-grey, bigger than any bear I've seen. The men call it Ironhide.\nWeek 11: Blew the Bear Hall shut with half our charges. The other half I hid - one crate in the Vine Crawl, one box down the sea adit (the Drowned Shaft) before it flooded.\n\nThe richest ore is in the Bear Hall. So is the company strongbox. Two charges will clear the rockfall. I won't be the one to do it.
 note rocksign Rockfall | DANGER - BLASTED SHUT\n\nDo not open. Do not feed.\n- Foreman
-note minelocker Foreman's locker | The foreman's locker: his spare lamp, a flask (empty) and a map of the caves.
-loot minelocker HeadLight*1;Battery*1;Rope*2
+note minelocker Foreman's locker | The foreman's locker: his spare lamp, a flask (empty), a map of the caves - and a brass key on a company tag: "PUMP STORE - MERIDIAN CONTRACT". The company pumped out the drowned city's cellars, until the sea won.
+loot minelocker story:ironreef-key*1;HeadLight*1;Battery*1;Rope*2
 prop minelocker loot.refill=0
 note powdercrate Powder crate | The company's powder crate, wedged behind the vines: one bundle of blasting charges, still dry.
 loot powdercrate story:charges*1;Nail*6

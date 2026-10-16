@@ -48,7 +48,7 @@ namespace DynamicIslands
 			if (!DynamicIslands.InEditor()) { Fail("buttons inside: open the editor first"); yield break; }
 			bool ok = true;
 			HelpLinks.TestMode = true;
-			WorldPlanWindow.EnsureSamples();
+			WriteCIPlan(CIAdventure);
 			var choices = new List<ChoiceWindow.Choice> { new ChoiceWindow.Choice("a", "A choice", "with a line that says what it does"), new ChoiceWindow.Choice("b", "Another choice") };
 			var windows = new List<FitWindow>
 			{
@@ -57,12 +57,12 @@ namespace DynamicIslands
 				new FitWindow("generator", () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(GeneratorWindow.TabNormal); }, GeneratorWindow.Close, () => EditorPanel("GeneratorWindow")),
 				new FitWindow("generator randomize", () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(GeneratorWindow.TabRandomize); }, GeneratorWindow.Close, () => EditorPanel("GeneratorWindow")),
 				new FitWindow("generator ready", () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(GeneratorWindow.TabReady); }, GeneratorWindow.Close, () => EditorPanel("GeneratorWindow")),
-				new FitWindow("worldplans", () => WorldPlanWindow.Open("Adventure"), WorldPlanWindow.Close, () => EditorPanel("WorldPlanWindow")),
+				new FitWindow("worldplans", () => WorldPlanWindow.Open(CIAdventure), WorldPlanWindow.Close, () => EditorPanel("WorldPlanWindow")),
 				new FitWindow("islandrules", WorldPlanWindow.OpenIsland, WorldPlanWindow.Close, () => EditorPanel("WorldPlanWindow")),
-				new FitWindow("plancheck", () => { WorldPlanWindow.Open("Adventure"); PlanCheckWindow.Open("Adventure", new List<PlanChecker.Finding> { new PlanChecker.Finding(-1, PlanChecker.Level.Problem, "A finding for the test", "What to do about it") }, null, null); },
+				new FitWindow("plancheck", () => { WorldPlanWindow.Open(CIAdventure); PlanCheckWindow.Open(CIAdventure, new List<PlanChecker.Finding> { new PlanChecker.Finding(-1, PlanChecker.Level.Problem, "A finding for the test", "What to do about it") }, null, null); },
 					() => { PlanCheckWindow.Close(); WorldPlanWindow.Close(); }, () => EditorPanel("PlanCheckWindow")),
-				new FitWindow("progression", () => { WorldPlanWindow.Open("Adventure"); PlanProgressWindow.Open(WorldPlanWindow.Plan, null); }, () => { PlanProgressWindow.Close(); WorldPlanWindow.Close(); }, () => EditorPanel("PlanProgressWindow")),
-				new FitWindow("mainstory", () => { WorldPlanWindow.Open("Adventure"); MainStoryHelper.Open(); }, () => { MainStoryHelper.Close(); WorldPlanWindow.Close(); }, () => EditorPanel("MainStoryHelper")),
+				new FitWindow("progression", () => { WorldPlanWindow.Open(CIAdventure); PlanProgressWindow.Open(WorldPlanWindow.Plan, null); }, () => { PlanProgressWindow.Close(); WorldPlanWindow.Close(); }, () => EditorPanel("PlanProgressWindow")),
+				new FitWindow("mainstory", () => { WorldPlanWindow.Open(CIAdventure); MainStoryHelper.Open(); }, () => { MainStoryHelper.Close(); WorldPlanWindow.Close(); }, () => EditorPanel("MainStoryHelper")),
 				new FitWindow("quest", QuestEditorWindow.Open, QuestEditorWindow.Close, () => EditorPanel("QuestEditorWindow")),
 				new FitWindow("behaviours", BehaviourWindow.OpenIsland, BehaviourWindow.Close, () => EditorPanel("BehaviourWindow")),
 				new FitWindow("storyitems", StoryItemsWindow.Open, StoryItemsWindow.Close, () => EditorPanel("StoryItemsWindow")),
@@ -73,7 +73,7 @@ namespace DynamicIslands
 				new FitWindow("soundpicker", () => SoundPickerWindow.OpenFor(v => { }), SoundPickerWindow.Close, () => EditorPanel("SoundPickerWindow")),
 				new FitWindow("choice", () => ChoiceWindow.Open("A CHOICE", choices, v => { }), ChoiceWindow.Close, () => EditorPanel("ChoiceWindow")),
 				new FitWindow("prompt", () => TextPromptWindow.Open("A NAME", "Type a name for the test", "citest", v => { }), TextPromptWindow.Close, () => EditorPanel("TextPromptWindow")),
-				new FitWindow("share", () => LibraryExportWindow.OpenPlan("Adventure"), LibraryExportWindow.Close, () => LibraryExportWindow.Window != null ? LibraryExportWindow.Window.Find("Panel") as RectTransform : null),
+				new FitWindow("share", () => LibraryExportWindow.OpenPlan(CIAdventure), LibraryExportWindow.Close, () => LibraryExportWindow.Window != null ? LibraryExportWindow.Window.Find("Panel") as RectTransform : null),
 				new FitWindow("import", LibraryImportWindow.Open, LibraryImportWindow.Close, () => LibraryImportWindow.Window != null ? LibraryImportWindow.Window.Find("Panel") as RectTransform : null),
 				new FitWindow("library", () => LibraryWindow.Open(1), LibraryWindow.Close, () => CanvasPanel(LibraryWindow.CanvasName)),
 				new FitWindow("info", () => InfoWindow.Open("A BOX", "A few lines of text for the test.", new InfoWindow.Choice("One button", () => { }), new InfoWindow.Choice("Another", () => { }, null, true)), InfoWindow.Close, () => CanvasPanel(InfoWindow.CanvasName)),
@@ -107,7 +107,7 @@ namespace DynamicIslands
 					yield return null;
 				}
 			}
-			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
+			finally { HelpLinks.TestMode = false; InfoWindow.Close(); RemoveCIPlan(CIAdventure); }
 			if (ok) Log("PASS: buttons inside their windows"); else Fail("buttons inside their windows");
 		}
 
