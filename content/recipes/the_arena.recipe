@@ -129,6 +129,9 @@ place ReefHuts_Pillar1 - at -47.9 -28.9 ground sy=0.8
 place ReefHuts_Tarpaulin - at -50 -30 y=2.65 tilt=-8 rot=0,0,0
 place Note_Book diary at -50.5 -30.3 ground yaw=20
 place "Box Small" leantobox at -48.8 -30.6 ground sit yaw=-10
+# Pia's sea chest from the liner (TODO 4c): a crew chest of the line - the chief steward's key ring from the Sunken Liner
+# (rule 2; kept) opens it; nothing in the quest needs it
+place Loot_ChestSmall seachest at -51.2 -30.6 ground sit yaw=15
 place campfire_1 - at -50 -33.5 ground
 scatter Pickup_Landmark_BerryBush 3 at -50 -30 r=7 seed=41
 
@@ -235,6 +238,12 @@ prop prizevault else.open=message||The prize vault answers to the master console
 note leantobox Lean-to box | Pia's box under the tarp: a bow she made herself, arrows, string.
 loot leantobox Bow*1;Arrow_Stone*12;Rope*2
 prop leantobox loot.refill=0
+prop seachest obj.name=seachest
+note seachest Pia's sea chest | A crew chest of the shipping line, stencilled P. ANDERSSON - STEWARDESS. Before the games, Pia served on the liner. Inside: her uniform, her savings and the line's emergency kit.
+loot seachest HealingSalve_Good*1;PlasticBottle_Water*2;TradeToken*3;Rope*2
+prop seachest loot.refill=0
+prop seachest if.open=has|story:stewardkey|1
+prop seachest else.open=message||A crew chest of the shipping line, locked with the crew's lock. The chief steward's key ring opened every one of them - on the liner, before she sank.
 note cache1 Sponsor's gift on the upland | A sponsor's gift among the rocks: bandages and good food.
 loot cache1 HealingSalve_Good*1;Cooked_Salmon*2;Berries_Red*3
 prop cache1 loot.refill=0

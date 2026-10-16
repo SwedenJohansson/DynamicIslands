@@ -77,6 +77,7 @@
     <Compile Include="DevTestsMultiplayerFull.cs" />
     <Compile Include="DevTestsAll.cs" />
     <Compile Include="DevTestsBigWorld.cs" />
+    <Compile Include="DevTestsFloorPickups.cs" />
     <Compile Include="DevTestsGenerator.cs" />
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />
@@ -244,6 +245,8 @@
     <Compile Include="ZiplineEnds.cs" />
     <Compile Include="DevTestsBuriedTreasure.cs" />
     <Compile Include="BuriedTreasure.cs" />
+    <Compile Include="KeycardDoor.cs" />
+    <Compile Include="DevTestsRfKeycard.cs" />
     <Compile Include="DevTestsTreasureProbe.cs" />
     <Compile Include="DevTestsStoryPieces.cs" />
     <Compile Include="DevTestsStoryline.cs" />
@@ -261,6 +264,7 @@
     <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="DevTestsPlanOrder.cs" />
+    <Compile Include="DevTestsPlanProgress.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="DevTestsGapsA.cs" />
