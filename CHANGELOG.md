@@ -192,6 +192,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
+  later clicks (Raft's Load box had a broken link after the editor). A test now starts behind a cover with Cancel. If it
+  can't start, you are back in the editor and the status bar says why. Back to the editor no longer disappears after 4
+  minutes in the test world.
 - **Hover texts outside the editor:** only the editor's status bar and the in-world window drew a control's hover
   text, so the main menu's windows (the plan picker, the island library...), the stats page and the alpha box never
   showed theirs. Where there is no such bar, the text now comes in a small tip by the mouse after a moment.

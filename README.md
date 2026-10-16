@@ -780,7 +780,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `PlanChecker.cs`, `PlanCheckWindow.cs` | World Plans' Check: the rules and the islands they name (quests step by step, zones, signals, a sample of each map type), rules waiting in a circle or for islands no rule brings; the report window |
 | `HotkeyHints.cs` | The hotbar's key tabs for the journal (J) and the stats page (K), copied from Raft's notebook tab |
 | `WorldWindow.cs` | Esc → Custom Islands in a running world: the button in Raft's pause menu (a postfix on `PauseMenu.Start`) and the world's settings window (host changes, others read only; Back to the editor while testing) |
-| `IslandTest.cs` | The editor's Test: save, the test world "Custom Islands test" (loaded, or made the first time), the island beside the raft, Back to the editor without saving |
+| `IslandTest.cs` | The editor's Test: save, the test world "Custom Islands test" (loaded, or made the first time), the island beside the raft, Back to the editor without saving; the cover while it starts (`TestCover`, Cancel); a start that fails goes back to the editor with the reason |
 | `EditorLighting.cs` | The editor's Light button: five times of day (sun, ambient, haze), kept in `editor_light.txt` |
 | `RaftSkySea.cs` | The editor's "Raft's sky and sea": the main menu's AzureSky, ocean and camera kept into the editor, the Light list setting the sky's hour, removed when leaving |
 | `MapTypeFiles.cs` | Map types as `.maptype` text files: parse, write, export, re-roll onto the open island |

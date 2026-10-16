@@ -1132,6 +1132,10 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
 
+While the test starts, a **STARTING THE TEST** box covers the screen (Raft's main menu loads the test world behind
+it). **Cancel** takes you back to the editor. If the test can't start, you are back in the editor with the reason in the
+status bar - click **Test** again.
+
 The test world is made with your last World settings choices (monsters, randomizer, extra options...); change them
 there with **Esc → Custom Islands** if you want to try the island another way. It never counts as a saved world that
 uses your islands (no kept copies or warnings for it).
