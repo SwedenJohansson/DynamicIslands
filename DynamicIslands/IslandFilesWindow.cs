@@ -96,10 +96,15 @@ namespace DynamicIslands.Editor
 
 			// Name and height, side by side
 			RectTransform island = UIKit.Group(panel, "Island");
-			RectTransform labels = UIKit.Row(island, 16f, 8f, "Labels");
-			UIKit.Label(labels, "Name", 13, UIKit.TextMuted);
+			// (a ? after each label; the height's label and its ? are as wide as its field below: 124 + 8 + 18)
+			RectTransform labels = UIKit.Row(island, 18f, 8f, "Labels");
+			UIKit.Size(UIKit.Label(labels, "Name", 13, UIKit.TextMuted).gameObject, 40);
+			UIKit.Help(labels, HelpName).name = "Help_Name";
+			UIKit.Size(UIKit.Label(labels, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Gap").gameObject, -1, -1, 1);
 			Text hl = UIKit.Label(labels, "Height in the world (m)", 13, UIKit.TextMuted);
-			UIKit.Size(hl.gameObject, 150);
+			UIKit.Size(hl.gameObject, 124);
+			UIKit.Fit(hl, 10);
+			UIKit.Help(labels, HelpHeight).name = "Help_Height";
 			RectTransform fields = UIKit.Row(island, 32f, 8f, "Fields");
 			nameField = UIKit.Field(fields, "e.g. myisland", "", 32f);
 			nameField.characterLimit = 64;
@@ -122,6 +127,9 @@ namespace DynamicIslands.Editor
 
 			// Saved islands
 			RectTransform saved = UIKit.Group(panel, "Saved islands");
+			RectTransform listHead = UIKit.Row(saved, 18f, 6f, "ListHead");
+			UIKit.Label(listHead, "Click an island to pick it, double-click to open it", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Help(listHead, HelpList).name = "Help_List";
 			RectTransform listBox = UIKit.Rect("ListBox", saved);
 			UIKit.Size(listBox.gameObject, -1, 230);
 			UIKit.Background(listBox.gameObject, UIKit.FieldBg, 6);
@@ -135,6 +143,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(share, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install islands and plans from a pack (.zip) someone made, or remove what you installed", -1, 30, 13);
 			UIKit.Button(share, "Library...", () => { Close(); LibraryWindow.Open(1); }, "The island library: islands and plans others made, to download", -1, 30, 13);
 			UIKit.Button(share, "My islands...", () => { Close(); MyIslandsWindow.Open(); }, "Every island file: where it came from, which worlds use it, its weight in the random pool; open, rename, delete, tidy up", -1, 30, 13).name = "Button_MyIslands";
+			UIKit.Help(share, HelpShare).name = "Help_Share";
 
 			status = UIKit.Label(panel, "", 14, UIKit.TextColor, TextAnchor.MiddleCenter, FontStyle.Italic, "Status");
 			UIKit.Size(status.gameObject, -1, 34);
@@ -150,6 +159,27 @@ namespace DynamicIslands.Editor
 			UIKit.DangerButton(del);
 			UIKit.Button(buttons, "Close", Close, "Close (Esc)", -1, 34, 15);
 		}
+
+		// The ? marks' texts (the tests check each is there)
+		public const string HelpName = "NAME: the island's file name - Mods\\DynamicIslands\\<name>.island. Type one and press Save (or Enter) to save the " +
+			"island under it; picking an island in the list puts its name here. Saving under a name that is taken asks first.\n\n" +
+			"Letters, numbers, spaces and - _ are fine; not \\ / : * ? \" < > | = , ; or a # or @ at the start, at most 60 characters. " +
+			"The name players see in the world is the Island tab's Name, not this one.";
+		public const string HelpHeight = "HEIGHT IN THE WORLD: how high the whole island sits in a world, in metres - the same value as the Island tab's Height " +
+			"(change one and the other follows).\n\n" +
+			"0 = a normal island at sea level: players step onto its beach from the raft.\n" +
+			"Above 0 = a flying island (e.g. 60): it floats over the sea with a rocky underside; players build stairs or pillars up from the raft " +
+			"to reach it, and a raft fits underneath.\n" +
+			"Below 0 = sunk under water (e.g. -30): its land lies that many metres deeper than a normal island's; players dive to it.\n\n" +
+			"From -100 to 250 m. It is saved with the island (press Save to keep it) and Ctrl+Z undoes a change.";
+		public const string HelpList = "SAVED ISLANDS: every island in Mods\\DynamicIslands, with when it was saved and its size. Click one to pick it " +
+			"(its name goes into Name, for Open, Rename, Delete or Export), double-click to open it in the editor - unsaved changes " +
+			"of the island open now are kept as an autosave.\n\nCopies kept for saved worlds or downloaded from a host aren't listed: " +
+			"My islands... shows every file.";
+		public const string HelpShare = "SHARING: Export... makes a pack (.zip) of the picked island, with the islands its rules bring, to send to a friend or " +
+			"put in the island library. Import... installs a pack someone made (or removes what you installed). Library... opens the island " +
+			"library to download islands and plans others made. My islands... lists every island file: where it came from, which worlds use it, " +
+			"its weight in the random pool.";
 
 		void Refresh()
 		{

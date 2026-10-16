@@ -69,6 +69,7 @@
     <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DevTestsCamera.cs" />
     <Compile Include="DevTestsUI.cs" />
+    <Compile Include="DevTestsUiFit.cs" />
     <Compile Include="DevTestsStory.cs" />
     <Compile Include="DevTestsTerrainBrushes.cs" />
     <Compile Include="DevTestsMultiplayer.cs" />

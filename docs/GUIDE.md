@@ -948,6 +948,10 @@ changes keeps them as its autosave first (the editor says so, and offers them ba
 ![The Islands window](images/editor-islands-window.jpg)
 *The Islands window: the name and height, the saved islands with their date and size, and Save, Open, Rename, Delete.*
 
+Each part of the Islands window has a **?**: hover it for what **Name**, **Height in the world**, the list and the
+sharing buttons do. Height in the world is the same value as the Island tab's Height: 0 is at sea level, above 0 a
+flying island (players build up to it), below 0 a sunken one (players dive to it).
+
 Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). In multiplayer the host's island files are sent
 to players who don't have them, so nobody needs to share files just to play together ([section 8](#8-playing-together)).
 
@@ -1804,6 +1808,9 @@ section online).
 
 ![A ? explains a part](images/plan-help-popup.jpg)
 *Hovering the ? after **When**: every choice it has, in a few words.*
+
+The buttons at the bottom are in two rows: **+ Add a rule**, **Check**, **Progression**, **Preview notebook** and
+**Test this plan** above; **Export...**, **Import...**, **Save** and **Close** below.
 
 ![The Help box](images/plan-help.jpg)
 *Help: how to make a plan, in eight steps, and the guide's buttons.*

@@ -44,7 +44,7 @@ Automated tests and content tools, run as `CI*` console commands. Players never 
 | Family | Examples | Where |
 |---|---|---|
 | Drivers | `CIEditor`, `CITab`, `CIClick`, `CINewWorld`, `CILoadWorld`, `CISave`, `CIShot`, `CIBackground`, `CIMute`, `CIQuit`, `CIAlive`, `CIScene` | `DevTests.cs`, `DevTestsMultiplayer.cs`, `DevTestsRecipe.cs` |
-| Editor tests | `CITest`, `CIUndo`, `CIGenTest`, `CIButtons`, `CIQuestTest`, `CITerrainBrushes` | `DevTests.cs`, `DevTestsAll.cs`, `DevTestsContent.cs`, `DevTestsTerrainBrushes.cs` |
+| Editor tests | `CITest`, `CIUndo`, `CIGenTest`, `CIButtons`, `CIButtonsInside`, `CIIslandFilesHelp`, `CIQuestTest`, `CITerrainBrushes` | `DevTests.cs`, `DevTestsAll.cs`, `DevTestsUiFit.cs`, `DevTestsContent.cs`, `DevTestsTerrainBrushes.cs` |
 | World tests (host) | `CITestWorld`, `CIQuestWorld`, `CILootWorld`, `CIZoneWorld`, `CIBehaviourWorld` | `DevTests.cs`, `DevTestsContent.cs`, `DevTestsBehaviour.cs` |
 | `...Unit` (rules, mostly anywhere), `...Check` (state, mostly in game) | `CIMonsterUnit`, `CILibraryUnit`, `CISafetyUnit`, `CIRulesCheck`, `CIPlanCheck`, `CIStoryChainCheck` | per area file |
 | Scenarios | `CIScRam`, `CIScDeath`, `CIScCatch` | `DevTestsScenario*.cs` and others |

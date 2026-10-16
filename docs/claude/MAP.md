@@ -33,7 +33,7 @@ line per source file.
 | `content/recipes/` | `.recipe` scripts that build an island or world plan |
 | `content/tests/` | `.play` play-tests |
 | `content/objects/` | Object catalogue lists by category |
-| `docs/` | `GUIDE.md` (players' guide), the guide PDF, `images/`, `release/` (mod page and merge-request text), `claude/` (these docs) |
+| `docs/` | `GUIDE.md` (players' guide), the guide PDF, `images/`, `release/` (mod page and merge-request text), `claude/` (these docs; `claude/cloud-reports/` holds the reports of merged cloud branches) |
 | root | `compile.ps1`, `ci.ps1` (run dev tests), `pack.ps1`, `build.bat`, README, CHANGELOG, `.sln` |
 
 ## Build and pack
