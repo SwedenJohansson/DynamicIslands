@@ -597,6 +597,39 @@ namespace DynamicIslands.Editor
 						foreach (Finding t in f.Traps) c.Add(i, t.Level, R(c, i) + " brings " + f.Describe + ": " + t.Text, t.Fix);
 		}
 
+		/// <summary>The when/then sounds and camera moments (RF1/RF2): a sound Raft doesn't have, a marker or look-at name no object has.</summary>
+		static void FindMomentTraps(IslandFile f, Facts x, List<IDictionary<string, string>> objects)
+		{
+			List<string> known = SoundLibrary.Events;
+			var names = new HashSet<string>(objects.Select(p => ObjectProps.Get(p, BehaviourProps.Name)).Where(n => n.Length > 0), StringComparer.OrdinalIgnoreCase);
+			var badSounds = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+			var badNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (IDictionary<string, string> p in objects.Concat(new[] { (IDictionary<string, string>)(f.Props ?? new Dictionary<string, string>()) }))
+				foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
+					foreach (ObjAction a in ObjAction.ParseLines(kv.Value))
+					{
+						if (a.Verb == "sound" || a.Verb == "playsound")
+						{
+							string path = a.Verb == "sound" ? a.Arg.Trim() : TriggerSounds.Parse(a.Arg).Path;
+							// (the list is empty where FMOD isn't loaded: nothing to say then)
+							if (known.Count > 0 && !known.Contains(path, StringComparer.OrdinalIgnoreCase)) badSounds.Add(path.Length > 0 ? path : "(none)");
+						}
+						if (a.Verb == "camera")
+						{
+							string look; float s, r;
+							CameraMoment.Parse(a.Arg, out look, out s, out r);
+							foreach (string n in new[] { a.Target.Trim(), look })
+								if (n.Length > 0 && !n.Equals("self", StringComparison.OrdinalIgnoreCase) && !names.Contains(n)) badNames.Add(n);
+						}
+					}
+			if (badSounds.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "an action plays a sound Raft doesn't have: " + string.Join(", ", badSounds.Select(n => "'" + n + "'").ToArray()) + " - a typo? Nothing is heard.",
+					"Choose the sound with the ... button by the action (the list has every sound and music cue of Raft's)."));
+			if (badNames.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "a camera moment names an object no object on the island is called: " + string.Join(", ", badNames.Select(n => "'" + n + "'").ToArray()) + " - the moment doesn't happen (or looks the wrong way).",
+					"Give the marker or the object to look at that name (its Name field), or choose the name with the ... button by the action."));
+		}
+
 		/// <summary>
 		/// The traps of guide 12.4 that can be seen in an island's file (AU47), each with the object or step and the fix:
 		/// a later quest step's chest or creatures there from the start, story items given again by something that happens
@@ -608,6 +641,7 @@ namespace DynamicIslands.Editor
 		static void FindTraps(IslandFile f, Facts x, bool islandNever)
 		{
 			var objects = f.Objects.Select(o => new KeyValuePair<IslandObject, IDictionary<string, string>>(o, o.Props ?? new Dictionary<string, string>())).ToList();
+			FindMomentTraps(f, x, objects.Select(o => o.Value).ToList());
 			// A story item the island uses that isn't in its Story items list (deleted there, or a typo): another island
 			// of the world may define it (StoryItems.Find), otherwise it shows with its id for a name and no picture
 			var defined = new HashSet<string>(StoryItems.Of(f.Props).Select(d => d.Id), StringComparer.OrdinalIgnoreCase);

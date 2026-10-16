@@ -189,6 +189,9 @@
     <Compile Include="RaftProps.cs" />
     <Compile Include="RandomizerIslands.cs" />
     <Compile Include="Behaviours.cs" />
+    <Compile Include="TriggerSounds.cs" />
+    <Compile Include="CameraMoment.cs" />
+    <Compile Include="StoryCredits.cs" />
     <Compile Include="Claims.cs" />
     <Compile Include="BehaviourWindow.cs" />
     <Compile Include="MapTypeFiles.cs" />
@@ -204,6 +207,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsRf.cs" />
     <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsChoiceTiming.cs" />

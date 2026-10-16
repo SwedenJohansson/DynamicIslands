@@ -44,10 +44,11 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 16 `Claim` | both | `Ids` island and question number, `Index` key, `Count` 1/0 |
 | 18 `WorldCopy`, 24 `WorldCopyNewer` | host -> clients; client -> host | `Name` world guid, `Hash` stamp, parts `Index`/`Count`/`Data`; newer: `Data` `savecount;savedat` |
 | 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
+| 33 `Moment` | host -> clients | when/then moments: `Name` "sound"/"stop" (`TriggerSounds`), "camera" (`CameraMoment`), "ending" (`StoryCredits`); `Ids[0]` island, `Index` object, `Data` |
 | 21 `CreatureSpots`, 22 `ObjectHarvest` | host -> clients; via host | `Data` `objectIndex:islandId:spot;...`; `Ids` island, active, yield, `Index` ordinal, `Count` day (host sets its own) |
 
 ## Where to change X
-- New kind: a const in `IslandNetMessage` (next free: 29), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
+- New kind: a const in `IslandNetMessage` (taken up to 29 `UpgradeTable` and 33 `Moment`; check `IslandNetMessage` for the next free one), a send helper in `IslandNetwork`, a `case` in `IslandNetwork.OnMessage`.
 - State a joining player needs: the `JoinPart` list in `OnMessage` case `SyncRequest`, plus a broadcast on change.
 - Island list fields: `IslandsMessage` and `ReceiveIslands`. Files: `ResolveFile`, `SendFile`, `ReceiveChunk`.
 - One-player-only things: `Claims.May`, `Claims.HostGrant`. Shared settings: `WorldRules.HostSettingsData`, `HostSettingsFrom`.

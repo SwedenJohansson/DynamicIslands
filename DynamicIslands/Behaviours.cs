@@ -49,8 +49,8 @@ namespace DynamicIslands.Editor
 		public const string EventPrefix = "on.";
 		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser" };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
-		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character" };
-		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal" };
+		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character", "playsound", "stopsound", "camera" };
+		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal", "playsound", "stopsound", "camera" };
 		public const string CheckPrefix = "if.", ElsePrefix = "else.";
 		public static readonly string[] CheckKinds = { "has", "take", "state", "signal", "quest" };
 		public static readonly string[] States = { "open", "closed", "shown", "hidden" };
@@ -129,8 +129,8 @@ namespace DynamicIslands.Editor
 		public bool Shared { get { return BehaviourProps.SharedVerbs.Contains(Verb); } }
 
 		/// <summary>Needs a target object (by name).</summary>
-		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport"; }
-		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character"; }
+		public static bool HasTarget(string verb) { return verb == "show" || verb == "hide" || verb == "toggle" || verb == "open" || verb == "close" || verb == "switch" || verb == "teleport" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
+		public static bool HasArg(string verb) { return verb == "message" || verb == "give" || verb == "sound" || verb == "signal" || verb == "journal" || verb == "wait" || verb == "character" || verb == "playsound" || verb == "stopsound" || verb == "camera"; }
 
 		/// <summary>A wait's seconds (0..3600).</summary>
 		public float Seconds
@@ -157,6 +157,9 @@ namespace DynamicIslands.Editor
 				case "give": return "give " + string.Join(", ", ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, Arg } }).Select(l => ContentCatalog.ItemLabel(l.Key) + " \u00D7" + l.Value).ToArray());
 				case "sound": return "play " + (Arg.Length > 0 ? Arg.Substring(Arg.LastIndexOf('/') + 1) : "a sound");
 				case "teleport": return "move the player to " + t;
+				case "playsound": return TriggerSounds.Describe(Arg, t);
+				case "stopsound": return Arg.Trim().Equals("all", StringComparison.OrdinalIgnoreCase) ? "stop every sound played on the island" : "stop the sound of " + t;
+				case "camera": return CameraMoment.Describe(Target, Arg);
 				case "signal": return "send the signal '" + Arg + "' (world plans can wait for it)";
 				case "journal": return "write \"" + (Target.Length > 0 ? Target : "a page") + "\" in the journal";
 				case "wait": return "wait " + Seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s, then...";
@@ -446,7 +449,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The last message an action showed here (tests).</summary>
 		public static string LastMessage { get; private set; }
 
-		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
+		internal static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
 
 		/// <summary>The key a signal is kept under in the island's state.</summary>
 		public static int SignalKey(string name) { return SignalBase + (SignalHash(name) & 0xFFFFF); }
@@ -564,7 +567,7 @@ namespace DynamicIslands.Editor
 			if (e != null) Apply(e, index, (bits & 1) != 0, (bits & 2) != 0);
 		}
 
-		static IEnumerable<IslandObjectRef> RefsOf(IslandWorldState.Entry e)
+		internal static IEnumerable<IslandObjectRef> RefsOf(IslandWorldState.Entry e)
 		{
 			return e != null && e.Root != null ? e.Root.GetComponentsInChildren<IslandObjectRef>(true) : Enumerable.Empty<IslandObjectRef>();
 		}
@@ -1056,6 +1059,15 @@ namespace DynamicIslands.Editor
 					Debug.Log("[CUSTOM ISLANDS] Signal '" + a.Arg + "' on '" + e.HostName + "'");
 					continue;
 				}
+				if (a.Verb == "playsound" || a.Verb == "stopsound")
+				{
+					// (no target name: the object itself - or the island, for its own events)
+					List<int> at = a.Target.Trim().Length == 0 || a.Target.Trim().Equals("self", StringComparison.OrdinalIgnoreCase) ? new List<int> { index }
+						: Targets(e, index, a.Target).Select(r => r.Index).ToList();
+					TriggerSounds.HostRun(e, a.Verb == "playsound", a.Arg, at);
+					continue;
+				}
+				if (a.Verb == "camera") { CameraMoment.HostRun(e, index, a.Target, a.Arg); continue; }
 				if (a.Verb == "journal")
 				{
 					StoryBook.AddPage("act:" + StoryBook.PageIsland(e) + ":" + index + ":" + a.Target, a.Target, a.Arg.Replace("\\n", "\n"), IslandTitle(e));
@@ -1140,7 +1152,7 @@ namespace DynamicIslands.Editor
 			PlayerMove.To(RAPI.GetLocalPlayer(), to);
 		}
 
-		static bool Near(IslandWorldState.Entry e)
+		internal static bool Near(IslandWorldState.Entry e)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null) return false;

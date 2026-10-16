@@ -409,6 +409,8 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Island banner", e); }
 			try { Behaviours.Tick(); }
 			catch (Exception e) { TickError("Behaviours", e); }
+			try { TriggerSounds.Tick(); StoryCredits.Tick(); }
+			catch (Exception e) { TickError("Trigger sounds and credits", e); }
 			try { IslandTest.Tick(); }
 			catch (Exception e) { TickError("Island test", e); }
 			try { StoryChain.WatchWorld(); }

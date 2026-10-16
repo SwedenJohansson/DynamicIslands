@@ -282,6 +282,8 @@ namespace DynamicIslands.Editor
 		public HashSet<string> LeaveOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>The last page of the main story in Raft's notebook, shown (with a banner) when the last main story island is done ("" = none).</summary>
 		public string StoryEnding = "";
+		/// <summary>The credits after the last main story step (RF2): their title ("" = the plan's name) and the makers' names (one per line).</summary>
+		public string EndingTitle = "", Credits = "";
 		/// <summary>Lines this version can't read (a newer one's settings or rules): written back as they are (AU5).</summary>
 		public List<string> Kept = new List<string>();
 		/// <summary>The mod version that saved the plan ("" before 2026-10-06).</summary>
@@ -353,6 +355,8 @@ namespace DynamicIslands.Editor
 						}
 						break;
 					case "storyending": plan.StoryEnding = IntroRule.UnMulti(value); break;
+					case "endingtitle": plan.EndingTitle = IntroRule.UnMulti(value); break;
+					case "credits": plan.Credits = IntroRule.UnMulti(value); break;
 					case "modversion": plan.ModVersion = value; break;
 					case "id": plan.Id = value; break;
 					case "rule":
@@ -401,7 +405,9 @@ namespace DynamicIslands.Editor
 #   An island in the story is MAIN STORY: it gets a tab in Raft's notebook (its quest steps, intro and notes there);
 #   every other island is a side quest (the journal). Three more parts style the tab:
 #   rule = ... | place | done when | tab title | tab colour 1-10 (not 3) | tab intro (\n = a new line)
-# storyending = the last page of the main story in Raft's notebook (\n = a new line)
+# storyending = the last page of the main story in Raft's notebook (\n = a new line); also the credits' closing note
+# endingtitle = the credits' title, shown once to every player after the last main story step (empty = the plan's name)
+# credits = the makers' names on the credits (\n = a new line)
 # story = on|off        (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
 #                         Varuna Point, Temperance, Utopia. off = only the plan's own islands: a new adventure)
 # storyleaveout = Balboa, Tangaroa   (story islands left out: the note before them leads to the one after)
@@ -412,6 +418,8 @@ namespace DynamicIslands.Editor
 			var lines = new List<string> { Help, "description = " + (Description ?? "").Replace("\n", " "), "random = " + (Random ? "on" : "off"), "story = " + (RaftStory ? "on" : "off") };
 			if (LeaveOut.Count > 0) lines.Add("storyleaveout = " + string.Join(", ", StoryOrder.Chain.Select(StoryOrder.Key).Where(k => LeaveOut.Contains(k)).ToArray()));
 			if ((StoryEnding ?? "").Trim().Length > 0) lines.Add("storyending = " + IntroRule.Multi(StoryEnding));
+			if ((EndingTitle ?? "").Trim().Length > 0) lines.Add("endingtitle = " + IntroRule.Multi(EndingTitle));
+			if ((Credits ?? "").Trim().Length > 0) lines.Add("credits = " + IntroRule.Multi(Credits));
 			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
 			lines.AddRange(Kept);

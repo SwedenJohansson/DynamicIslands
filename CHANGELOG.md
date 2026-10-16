@@ -12,6 +12,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Sounds and music from a trigger:** the when/then actions **play sound/music** (one of Raft's sound events or
+  music cues, picked from a list, with a volume, once or on a loop, near the object or for everyone on the island) and
+  **stop sound**. Every player near the island hears it; it stops when they leave or the island unloads, and a loop
+  comes back after a reload. Check warns about a sound name Raft doesn't have.
+- **Camera moments:** the when/then action **camera moment** shows the view from a marker toward an object for some
+  seconds, then glides back; the player is held meanwhile and Esc skips it. Only players within its range see it.
+- **Credits for a plan's ending:** a plan's ending card has a CREDITS section (a title and the makers' names). When
+  the main story ends, every player sees the credits and the closing note once; the world plays on and Raft's own
+  ending is untouched.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing

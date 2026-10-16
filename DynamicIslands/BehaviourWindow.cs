@@ -40,8 +40,9 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> VerbLabels = new Dictionary<string, string>
 		{
 			{ "show", "show" }, { "hide", "hide" }, { "toggle", "show/hide" }, { "open", "open" }, { "close", "close" }, { "switch", "open/close" },
-			{ "message", "say" }, { "give", "give items" }, { "sound", "play sound" }, { "teleport", "teleport to" }, { "signal", "send signal" },
+			{ "message", "say" }, { "give", "give items" }, { "sound", "sound (this player)" }, { "teleport", "teleport to" }, { "signal", "send signal" },
 			{ "journal", "journal page" }, { "wait", "wait" }, { "character", "unlock character" },
+			{ "playsound", "play sound/music" }, { "stopsound", "stop sound" }, { "camera", "camera moment" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -49,10 +50,13 @@ namespace DynamicIslands.Editor
 		{
 			{ "show", "Objects with a name appear (they were hidden)" }, { "hide", "Objects with a name disappear" }, { "toggle", "Hidden ones appear, shown ones disappear" },
 			{ "open", "A door, gate, bridge or lift opens" }, { "close", "It closes" }, { "switch", "Open if closed, closed if open (a lever)" },
-			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays" },
+			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays once, for the player who set it off" },
 			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
 			{ "journal", "A page is written into the crew's journal (J) - or, on a main story island, onto its tab in Raft's notebook (T)" }, { "wait", "Waits some seconds before the actions below" },
 			{ "character", "Unlocks one of Raft's characters for the player (its name or number, e.g. Rouhi or 3) - kept in the player's Raft profile" },
+			{ "playsound", "One of Raft's sounds or music cues, for every player: once or on a loop, near the object or for the whole island (a loop comes back after a reload; it stops when a player leaves)" },
+			{ "stopsound", "Stops the sound an object plays (all = every sound on the island)" },
+			{ "camera", "The camera of players near a marker object moves there and looks at an object for some seconds (Esc skips), then comes back" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -406,10 +410,11 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal, journal page, wait", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment", 28f, 12);
 			if (ObjAction.HasTarget(a.Verb))
 			{
-				Field(row, "name (empty = itself)", a.Target, 170, "The name of the objects it acts on", v => a.Target = v.Trim());
+				Field(row, a.Verb == "camera" ? "marker (empty = itself)" : "name (empty = itself)", a.Target, a.Verb == "camera" || a.Verb.EndsWith("sound") ? 120 : 170,
+					a.Verb == "camera" ? "The object the camera moves to (players within range of it see the moment)" : a.Verb.EndsWith("sound") ? "The object the sound plays at" : "The name of the objects it acts on", v => a.Target = v.Trim());
 				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices(), v => { a.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
 			}
 			if (a.Verb == "journal") Field(row, "page title", a.Target, 170, "The page's title in the crew's journal", v => a.Target = v.Trim());
@@ -419,6 +424,13 @@ namespace DynamicIslands.Editor
 				s.contentType = InputField.ContentType.DecimalNumber;
 				UIKit.Label(row, "seconds, then the actions below", 12, UIKit.TextMuted);
 			}
+			else if (a.Verb == "playsound") SoundFields(row, a);
+			else if (a.Verb == "stopsound")
+			{
+				DropList.Make(row, "Drop_StopWhat", new List<DropList.Option> { new DropList.Option("", "its sound", "The sound the named object (or this one) plays"),
+					new DropList.Option("all", "every sound", "Every sound played on this island") }, a.Arg.Trim().ToLowerInvariant() == "all" ? "all" : "", v => { Keep(); a.Arg = v; Rebuild(); }, 110, "Which sounds stop", 28f, 12);
+			}
+			else if (a.Verb == "camera") CameraFields(row, a);
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : "signal name (world plans wait for it)";
@@ -433,6 +445,48 @@ namespace DynamicIslands.Editor
 			UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); list.Reverse(index - 1, 2); Rebuild(); } }, "Earlier", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this action", 26, 28f, 12);
 			UIKit.DangerButton(del);
+		}
+
+		/// <summary>playsound: the sound (\u2026 picks it), its volume, once or a loop, near the object or for the whole island.</summary>
+		void SoundFields(Transform row, ObjAction a)
+		{
+			TriggerSounds.Spec s = TriggerSounds.Parse(a.Arg);
+			Action save = () => a.Arg = TriggerSounds.Join(s);
+			Field(row, "event:/... (\u2026 to choose)", s.Path, -1, "One of Raft's sound events or music cues", v => { s.Path = v.Trim(); save(); });
+			UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { s.Path = v; save(); Rebuild(); }); }, "Choose one of Raft's sounds or music (you can listen first)", 28, 28f, 12);
+			InputField vol = Field(row, "90", Mathf.RoundToInt(s.Volume * 100f).ToString(CultureInfo.InvariantCulture), 40, "Volume, 0-100 %", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { s.Volume = Mathf.Clamp01(f / 100f); save(); }
+			});
+			vol.contentType = InputField.ContentType.DecimalNumber;
+			DropList.Make(row, "Drop_Loop", new List<DropList.Option> { new DropList.Option("once", "once", "Plays once"), new DropList.Option("loop", "loop", "Plays on until a stop sound action (kept after a reload)") },
+				s.Loop ? "loop" : "once", v => { Keep(); s.Loop = v == "loop"; save(); Rebuild(); }, 62, "Once or on a loop", 28f, 12);
+			DropList.Make(row, "Drop_Where", new List<DropList.Option> { new DropList.Option("near", "near it", "Heard near the object"), new DropList.Option("island", "island", "Heard the same everywhere on the island (music)") },
+				s.Island ? "island" : "near", v => { Keep(); s.Island = v == "island"; save(); Rebuild(); }, 72, "Near the object, or for everyone on the island", 28f, 12);
+		}
+
+		/// <summary>camera: the object to look at, the seconds and the range around the marker.</summary>
+		void CameraFields(Transform row, ObjAction a)
+		{
+			string look; float sec, range;
+			CameraMoment.Parse(a.Arg, out look, out sec, out range);
+			Action save = () => a.Arg = look + "|" + sec.ToString("0.#", CultureInfo.InvariantCulture) + "|" + range.ToString("0", CultureInfo.InvariantCulture);
+			Field(row, "look at (name)", look, 110, "The object the camera looks at (empty = the way the marker faces)", v => { look = v.Trim(); save(); });
+			UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Look at", NameChoices(), v => { look = v; save(); Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
+			InputField s = Field(row, "4", sec.ToString("0.#", CultureInfo.InvariantCulture), 36, "Seconds the camera stays (1-30)", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { sec = Mathf.Clamp(f, 1f, 30f); save(); }
+			});
+			s.contentType = InputField.ContentType.DecimalNumber;
+			InputField r = Field(row, "50", range.ToString("0", CultureInfo.InvariantCulture), 40, "Players within this many metres of the marker see it", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { range = Mathf.Clamp(f, 5f, 1000f); save(); }
+			});
+			r.contentType = InputField.ContentType.DecimalNumber;
+			UIKit.Label(row, "s, m", 11, UIKit.TextMuted);
 		}
 
 		IEnumerator RebuildWhenClosed()

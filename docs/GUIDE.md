@@ -1329,6 +1329,17 @@ Select any object → **Behaviour & events...**. No code needed:
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message. (An island file written by hand or by a script can give
   **Otherwise** any action, not only a message; the editor shows only the message and keeps the other actions as they are.)
+- **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
+  Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
+  **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
+  hears it; it stops when they leave the island or it unloads, and a loop starts again when they come back, after a
+  reload and for a player who joins later (a once sound is not played again). **stop sound** stops the sound of the
+  objects named, or **all** of the island's. (The older **sound** action plays a sound for the one player only.)
+  **camera moment** shows the view from a **marker** object (its name; empty = the object itself) toward an object to
+  **look at** (empty = the way the marker faces) for some **seconds** (1-30), then glides back to the player; the
+  player can't walk or look around meanwhile, and **Esc** skips it. Only players within its **range** of the marker
+  (default 50 m) get it. Mark the spot with any small piece (a sign, a stone) and name it. **Check** warns about a sound
+  Raft doesn't have and a marker or look-at name no object has.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
 *A log named "lever" that players can use ("Pull the lever"): it opens or closes the door and says "The door moves".*
@@ -1459,7 +1470,10 @@ The tab shows the island's name (or the **tab title** you give it) and, for an i
 
 Its **story items** show under Raft's **Found items**, with their pictures (Raft's quest item pictures). When the last
 main story island is done, the plan's **ending page** (the card **THE END** under the rules) comes last in the book,
-with a banner to every player. The world goes on.
+with a banner to every player. Every player also sees the **credits** once: the title (the card's **CREDITS** section: **Title on the
+credits**, or the plan's name), the makers' names (**Made by**, one per line) and the closing note; **Back to the sea** (or Esc)
+closes them. A world that is loaded again doesn't show them again; the note stays in Raft's notebook. The world goes
+on, and Raft's own Utopia ending is not touched.
 
 When there are more tabs than fit on the book's edge, the tabs **scroll** (mouse wheel over them); the open island's
 tab is scrolled into view when you turn the pages.
@@ -2087,7 +2101,7 @@ rule = id | what | when | where | message | Receiver name
 | where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
-and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line),
+and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
 `random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.0` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plans window and the New Game box read it the
 next time they open.
 
@@ -2103,8 +2117,9 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   have, what was chopped, picked, looted and fired, doors and levers, quests, the crew's journal, where they stood on
   an island, and the tough animals' health.
 - **Shared:** harvesting and pickups, chests (when several players open one at the same moment, the first gets it),
-  zones, doors, quests and their rewards, story items, the journal. Things that move follow a clock all players share,
-  so everyone sees them in the same place.
+  zones, doors, quests and their rewards, story items, the journal, the sounds and music the islands' actions play
+  (each player hears them while near the island) and camera moments (each player within range sees them). Things
+  that move follow a clock all players share, so everyone sees them in the same place.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).

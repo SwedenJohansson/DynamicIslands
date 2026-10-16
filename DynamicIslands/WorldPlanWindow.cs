@@ -708,7 +708,15 @@ namespace DynamicIslands.Editor
 			f.characterLimit = 600;
 			f.name = "Field_StoryEnding";
 			HelpMark(c, HelpNotebook);
-			Explain(card, "When the last main story island is done, this page appears at the end of the notebook and every player gets a banner. The world goes on.", ref height);
+			RectTransform t = Section(card, "CREDITS", ref height);
+			InputField title = SmallField(t, "Title on the credits (empty = the plan's name)", plan.EndingTitle, 260, "The big title on the credits screen", v => plan.EndingTitle = v.Trim());
+			title.characterLimit = 80;
+			title.name = "Field_EndingTitle";
+			InputField made = SmallField(t, "Made by (names; Enter = a new line)", plan.Credits, -1, "The makers' names on the credits screen", v => plan.Credits = v.Trim());
+			made.lineType = InputField.LineType.MultiLineNewline;
+			made.characterLimit = 400;
+			made.name = "Field_Credits";
+			Explain(card, "When the last main story island is done, this page appears at the end of the notebook and every player gets a banner. With a closing page or names, every player also sees the credits once: the title, the names and the page. The world goes on.", ref height);
 			UIKit.Size(card.gameObject, -1, height);
 		}
 

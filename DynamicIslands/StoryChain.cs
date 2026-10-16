@@ -49,6 +49,10 @@ namespace DynamicIslands.Editor
 			Fired = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Brought = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>The plan's last page of the main story (Raft's notebook), kept with the world and sent to every player.</summary>
 		public static string StoryEnding = "";
+		/// <summary>The plan's ending (RF2): the credits' title (the plan's name if it gives none) and its makers' names; the
+		/// credits were shown in this world (the host's, kept with the world: once).</summary>
+		public static string EndingTitle = "", Credits = "";
+		public static bool CreditsShown;
 		/// <summary>Raised on every machine when the chain, its rules or what is done changed (QuestBook listens).</summary>
 		public static event Action ChainChanged;
 		/// <summary>Rules by chance: the km sailed (metres) at which it comes up.</summary>
@@ -143,6 +147,8 @@ namespace DynamicIslands.Editor
 			Steps.Clear();
 			Steps.AddRange(BuildSteps(plan.RaftStory, plan.LeaveOut, Rules));
 			StoryEnding = plan.StoryEnding ?? "";
+			EndingTitle = (plan.EndingTitle ?? "").Trim().Length > 0 ? plan.EndingTitle.Trim() : plan.Name ?? "";
+			Credits = plan.Credits ?? "";
 			HasSnapshot = true;
 			AssignFrequencies();
 			if (active || Rules.Count > 0) Log("From plan '" + plan.Name + "': " + Describe().Replace("\n", " | "));
@@ -588,6 +594,7 @@ namespace DynamicIslands.Editor
 			Unlocked.Clear(); Done.Clear(); Fired.Clear(); Brought.Clear();
 			due.Clear(); retryAt.Clear(); warned.Clear();
 			StoryEnding = "";
+			EndingTitle = ""; Credits = ""; CreditsShown = false;
 			clientBook.Clear();
 			beside.Clear();
 			LastBanner = null;
@@ -624,6 +631,9 @@ namespace DynamicIslands.Editor
 				case "storychain": HasSnapshot = true; active = value.StartsWith("on;"); Steps.Clear(); Steps.AddRange(value.Substring(value.IndexOf(';') + 1).Split(',').Select(s => s.Trim()).Where(s => s.Length > 0)); return true;
 				case "storyrule": IntroRule r = IntroRule.Parse(value); if (r != null) { HasSnapshot = true; Rules.Add(r); } return true;
 				case "storyending": StoryEnding = IntroRule.UnMulti(value); return true;
+				case "storyendtitle": EndingTitle = IntroRule.UnMulti(value); return true;
+				case "storycredits": Credits = IntroRule.UnMulti(value); return true;
+				case "storycreditsshown": CreditsShown = value.Trim() == "1"; return true;
 				case "storybeside": IntroRule b = IntroRule.Parse(value); if (b != null) { HasSnapshot = true; beside.Add(b); } return true;
 				case "storyfreq": ReadFreqs(value); return true;
 				case "storyunlocked": ReadSet(Unlocked, value); return true;
@@ -650,6 +660,9 @@ namespace DynamicIslands.Editor
 			yield return "@storychain=" + (active ? "on" : "off") + ";" + string.Join(",", Steps.ToArray());
 			foreach (IntroRule r in Rules) yield return "@storyrule=" + r.ToLine();
 			if (StoryEnding.Length > 0) yield return "@storyending=" + IntroRule.Multi(StoryEnding);
+			if (EndingTitle.Length > 0) yield return "@storyendtitle=" + IntroRule.Multi(EndingTitle);
+			if (Credits.Length > 0) yield return "@storycredits=" + IntroRule.Multi(Credits);
+			if (CreditsShown) yield return "@storycreditsshown=1";
 			foreach (IntroRule r in beside) yield return "@storybeside=" + r.ToLine();
 			if (Frequencies.Count > 0) yield return "@storyfreq=" + Freqs();
 			if (Unlocked.Count > 0) yield return "@storyunlocked=" + string.Join(",", Unlocked.ToArray());
@@ -684,6 +697,9 @@ namespace DynamicIslands.Editor
 				BookSep + IntroRule.Multi(StoryEnding) + BookSep + string.Join(RuleSep.ToString(), BookRules.Select(r => r.ToLine()).ToArray());
 			return new IslandNetMessage { Kind = IslandNetMessage.StoryChain, Data = HasState ? data : "", Name = banner };
 		}
+
+		/// <summary>Host: the credits were shown (StoryCredits): kept with the world.</summary>
+		internal static void MarkCreditsShown() { CreditsShown = true; dirty = true; }
 
 		static void Broadcast(string banner)
 		{
