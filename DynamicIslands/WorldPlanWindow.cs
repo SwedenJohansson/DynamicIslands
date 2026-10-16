@@ -279,6 +279,8 @@ namespace DynamicIslands.Editor
 
 		#region Building
 
+		const float BodyHeight = 408f, ButtonHeight = 30f, ButtonGap = 6f;
+
 		void Build()
 		{
 			RectTransform panel = UIKit.Panel(transform, "Panel", new RectOffset(16, 16, 14, 16), 8f);
@@ -331,14 +333,15 @@ namespace DynamicIslands.Editor
 			rulesIntro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(rulesIntro.gameObject, -1, 32);
 
-			RectTransform body = UIKit.Row(panel, 440f, 10f, "Body");
+			// (408, not 440: the buttons below are two rows now, and the window must still fit 800 high - Raft's UI at 16:9)
+			RectTransform body = UIKit.Row(panel, BodyHeight, 10f, "Body");
 			RectTransform rulesBox = UIKit.Rect("Rules", body);
-			UIKit.Size(rulesBox.gameObject, -1, 440, 1);
+			UIKit.Size(rulesBox.gameObject, -1, BodyHeight, 1);
 			ScrollRect scroll;
 			rulesList = UIKit.ScrollList(rulesBox, out scroll, 6f);
 			UIKit.Stretch((RectTransform)scroll.transform);
 			RectTransform side = UIKit.Rect("Side", body);
-			UIKit.Size(side.gameObject, 250, 440);
+			UIKit.Size(side.gameObject, 250, BodyHeight);
 			UIKit.Vertical(side.gameObject, 6f, new RectOffset(0, 0, 0, 0));
 			RectTransform mapHead = UIKit.Row(side, 18f, 4f, "MapHead");
 			UIKit.Label(mapHead, "WHERE ISLANDS GO (ROUGHLY)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold);
@@ -347,26 +350,32 @@ namespace DynamicIslands.Editor
 			UIKit.Size(map.gameObject, 250, 250);
 			UIKit.Background(map.gameObject, new Color(0.08f, 0.2f, 0.3f, 1f), 6);
 			problemsText = UIKit.Label(side, "", 12, UIKit.TextColor, TextAnchor.UpperLeft);
-			UIKit.Size(problemsText.gameObject, 250, 160);
+			UIKit.Size(problemsText.gameObject, 250, BodyHeight - 18 - 250 - 12);
 			problemsText.verticalOverflow = VerticalWrapMode.Truncate;
 
-			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, 34f, 13);
-			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
-			HelpMark(buttons, HelpCheck);
-			progressButton = UIKit.Button(buttons, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in its order: which rule's islands give which of Raft's blueprints and story items, what their locks want, and what is never given", 120, 34f, 13);
+			// Two rows (the user, 2026-10-16: everything visible, no menu): in one row the eleven didn't fit - Close stuck out
+			// past the window's right edge. The first works on the plan, the second is its files.
+			RectTransform buttons = UIKit.Rect("Buttons", panel);
+			UIKit.Vertical(buttons.gameObject, ButtonGap, new RectOffset(0, 0, 0, 0));
+			UIKit.Size(buttons.gameObject, -1, ButtonHeight * 2 + ButtonGap);
+			RectTransform work = UIKit.Row(buttons, ButtonHeight, 8f, "PlanButtons");
+			RectTransform files = UIKit.Row(buttons, ButtonHeight, 8f, "FileButtons");
+			UIKit.Button(work, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, ButtonHeight, 13);
+			UIKit.Button(work, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, ButtonHeight, 13);
+			HelpMark(work, HelpCheck);
+			progressButton = UIKit.Button(work, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in its order: which rule's islands give which of Raft's blueprints and story items, what their locks want, and what is never given", 120, ButtonHeight, 13);
 			progressButton.name = "Button_Progression";
-			previewButton = UIKit.Button(buttons, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, 34f, 13);
+			previewButton = UIKit.Button(work, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, ButtonHeight, 13);
 			previewButton.name = "Button_PreviewNotebook";
-			testButton = UIKit.Button(buttons, "Test this plan", TestPlan, "Play the plan in a new test world (saved first): its islands come as in any world; Esc > Custom Islands > Back to the editor brings you back here", 130, 34f, 13);
+			testButton = UIKit.Button(work, "Test this plan", TestPlan, "Play the plan in a new test world (saved first): its islands come as in any world; Esc > Custom Islands > Back to the editor brings you back here", 130, ButtonHeight, 13);
 			testButton.name = "Button_TestPlan";
-			exportButton = UIKit.Button(buttons, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, 34f, 13);
-			importButton = UIKit.Button(buttons, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, 34f, 13);
-			shareHelp = HelpMark(buttons, HelpShare);
-			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
-			Button save = UIKit.Button(buttons, "Save", Save, "Keep the changes", 110, 34);
+			exportButton = UIKit.Button(files, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, ButtonHeight, 13);
+			importButton = UIKit.Button(files, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, ButtonHeight, 13);
+			shareHelp = HelpMark(files, HelpShare);
+			UIKit.Size(UIKit.Label(files, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
+			Button save = UIKit.Button(files, "Save", Save, "Keep the changes", 110, ButtonHeight);
 			UIKit.Primary(save);
-			UIKit.Button(buttons, "Close", Close, "Close without saving", 110, 34);
+			UIKit.Button(files, "Close", Close, "Close without saving", 110, ButtonHeight);
 		}
 
 		// The choices of a rule's parts: the words in the drop-down and the line that explains the chosen one

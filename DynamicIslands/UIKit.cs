@@ -336,6 +336,79 @@ namespace DynamicIslands.Editor
 			return r;
 		}
 
+		/// <summary>
+		/// Dev and tests: what doesn't fit in a window at a screen of this size (pixels) and UI scale (1 = the mod's own; 1.25 =
+		/// everything a quarter larger): the window itself past the edge of the screen, and every button (and ? mark) that lies
+		/// outside the window or is squeezed to nothing - a row of fixed widths wider than the window pushed its last buttons
+		/// out (World plans' Close). One line each; empty when everything fits. The window is taken to be centred, as the
+		/// editor's windows are. A button in a scrolled list (under a mask) is only checked across: scrolled out of view is fine.
+		/// </summary>
+		public static List<string> RowOverflow(RectTransform window, Vector2 screen, float uiScale = 1f)
+		{
+			var problems = new List<string>();
+			if (window == null) { problems.Add("no window"); return problems; }
+			Canvas.ForceUpdateCanvases();
+			Canvas canvas = window.GetComponentInParent<Canvas>();
+			if (canvas != null) canvas = canvas.rootCanvas;
+			RectTransform root = canvas != null ? (RectTransform)canvas.transform : null;
+			Rect own = LocalRect(window, root);
+			// (the canvas size Raft's screen gives, in the units the window is laid out in)
+			float scale = ScaleFor(canvas != null ? canvas.GetComponent<CanvasScaler>() : null, screen) * Mathf.Max(0.1f, uiScale);
+			Vector2 logical = screen / scale;
+			Rect area = new Rect(-logical.x / 2f, -logical.y / 2f, logical.x, logical.y);
+			Rect placed = new Rect(own.x - (root != null ? root.rect.center.x : 0f), own.y - (root != null ? root.rect.center.y : 0f), own.width, own.height);
+			if (!Inside(placed, area, 1f))
+				problems.Add(window.name + " (" + Mathf.RoundToInt(own.width) + " x " + Mathf.RoundToInt(own.height) + ") doesn't fit the screen " +
+					Mathf.RoundToInt(screen.x) + " x " + Mathf.RoundToInt(screen.y) + " at UI scale " + uiScale.ToString("0.##") + " (" + Mathf.RoundToInt(logical.x) + " x " + Mathf.RoundToInt(logical.y) + ")");
+			foreach (Button b in window.GetComponentsInChildren<Button>(false))
+			{
+				RectTransform r = (RectTransform)b.transform;
+				Rect rect = LocalRect(r, root);
+				string name = b.name + " in " + (r.parent != null ? r.parent.name : "?");
+				if (rect.width < 4f || rect.height < 4f) { problems.Add(name + " is squeezed to " + Mathf.RoundToInt(rect.width) + " x " + Mathf.RoundToInt(rect.height)); continue; }
+				RectMask2D clip = r.parent != null ? r.parent.GetComponentInParent<RectMask2D>() : null;
+				Mask mask = r.parent != null ? r.parent.GetComponentInParent<Mask>() : null;
+				RectTransform view = clip != null && clip.transform.IsChildOf(window) ? (RectTransform)clip.transform : mask != null && mask.transform.IsChildOf(window) ? (RectTransform)mask.transform : null;
+				if (view != null)
+				{
+					Rect v = LocalRect(view, root);
+					if (rect.xMin < v.xMin - 1f || rect.xMax > v.xMax + 1f) problems.Add(name + " sticks out of its list by " + Mathf.RoundToInt(Mathf.Max(v.xMin - rect.xMin, rect.xMax - v.xMax)) + " px");
+				}
+				else if (!Inside(rect, own, 1f))
+					problems.Add(name + " lies outside " + window.name + " by " + Mathf.RoundToInt(Mathf.Max(Mathf.Max(own.xMin - rect.xMin, rect.xMax - own.xMax), Mathf.Max(own.yMin - rect.yMin, rect.yMax - own.yMax))) + " px");
+			}
+			return problems;
+		}
+
+		/// <summary>A rect's corners in another's local space (the whole screen's, for a canvas root).</summary>
+		static Rect LocalRect(RectTransform r, RectTransform space)
+		{
+			var c = new Vector3[4];
+			r.GetWorldCorners(c);
+			if (space != null) for (int i = 0; i < 4; i++) c[i] = space.InverseTransformPoint(c[i]);
+			return Rect.MinMaxRect(Mathf.Min(c[0].x, c[2].x), Mathf.Min(c[0].y, c[2].y), Mathf.Max(c[0].x, c[2].x), Mathf.Max(c[0].y, c[2].y));
+		}
+
+		static bool Inside(Rect inner, Rect outer, float slack)
+		{
+			return inner.xMin >= outer.xMin - slack && inner.yMin >= outer.yMin - slack && inner.xMax <= outer.xMax + slack && inner.yMax <= outer.yMax + slack;
+		}
+
+		/// <summary>The scale a canvas scaler gives a screen of this size (as CanvasScaler works it out).</summary>
+		static float ScaleFor(CanvasScaler scaler, Vector2 screen)
+		{
+			if (scaler == null || scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) return scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize ? scaler.scaleFactor : 1f;
+			Vector2 reference = scaler.referenceResolution;
+			if (reference.x <= 0f || reference.y <= 0f) return 1f;
+			float w = screen.x / reference.x, h = screen.y / reference.y;
+			switch (scaler.screenMatchMode)
+			{
+				case CanvasScaler.ScreenMatchMode.Expand: return Mathf.Min(w, h);
+				case CanvasScaler.ScreenMatchMode.Shrink: return Mathf.Max(w, h);
+				default: return Mathf.Pow(2f, Mathf.Lerp(Mathf.Log(w, 2f), Mathf.Log(h, 2f), scaler.matchWidthOrHeight));
+			}
+		}
+
 		#endregion
 
 		#region Controls
