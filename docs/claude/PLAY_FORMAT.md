@@ -9,6 +9,9 @@ fights and checks the quest. A plan's test plays a world plan's story the same w
 - `CIPlay <name>` reads `Mods\DynamicIslands\recipes\<name>.play`: the same folder as recipes
   (`DevTests.RecipeFolder`), not a tests folder. Sources are in the repo at `content\tests\`; nothing copies them.
 - Host only, in a world (`LoadSceneManager.IsGameSceneLoaded`, `Raft_Network.IsHost`).
+- A flying island (`island` line, elevation over 3 m) is checked from below on arrival (`DevTests.FlyingOpenFromBelow`:
+  the underside meets the ground at every coast point; rays from below into the rock pass the underside). `CIFlyTest`
+  and `CIDeepWorld` (the flying generated `cideep`) run the same check.
 - Use a test world whose name starts with `CI ` (make one with `CINewWorld <name>` from the main menu). `plan` refuses any
   other world. In a `CI ` world, `island` also empties the player's inventory.
 - The file is expanded like a recipe (`ExpandRecipe`): `#` comments, `set`, `$name`, `{expr}`, `for`/`next`,
@@ -45,7 +48,7 @@ expect message isn't whole
 
 | Step | Arguments | What it does |
 |---|---|---|
-| `island` | `<island name> [keep]` | The island (by file name) is brought into open sea within 400 m of the raft (`ScSpot`, `ScBring`); with no room the raft is moved 600 m on, up to 4 times. Copies of it already in the world are removed first; the crew's story items of the island are taken back. In a plan test: the copy the plan brought; the player is moved near it if it is over 300 m off or not loaded. |
+| `island` | `<island name> [keep]` | The island (by file name) is brought into open sea within 400 m of the raft (`ScSpot`, `ScBring`); with no room the raft is moved 600 m on, up to 4 times. A flying island comes at its Height, and every height in the play (`at`, `walk h=`, `expect height`, `picture`) then counts from its own water line. Copies of it already in the world are removed first; the crew's story items of the island are taken back. In a plan test: the copy the plan brought; the player is moved near it if it is over 300 m off or not loaded. |
 | `offset` | `<x> <z>` | See Coordinates. |
 | `stand` | | The player on the highest gentle spot near the island terrain's top (`StandRoutine`). |
 | `at` | `<x> <z> [y=\|h=]` | The player put at the point, on what is there. |
@@ -58,6 +61,7 @@ expect message isn't whole
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). |
+| `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`). |
 | `catch` | `<label> [n]` | Catches n (default 1) of the island's own spawner animals (`ScCarryHome`). |
 | `plan` | `<plan name>` or `end` | Clean story slate (`PlanCleanSlate`), then the world gets the plan (`ScSetPlan`); `end` puts the world's story back to Raft's. |
@@ -79,7 +83,7 @@ expect message isn't whole
 
 | Expect | Passes when |
 |---|---|
-| `expect step <n>` | The island's quest is at step n (0 = the first). |
+| `expect step <n>` | The island's quest is at step n (0 = the first). `expect step`, `title` and `done` take a last word `quest=<k>` (2..9) for the island's further quest k (the recipe's `quest2`..`quest9`). |
 | `expect title <text>` | The quest's title is exactly the text (case counts). |
 | `expect done` | The quest is done. |
 | `expect story <id> <n>` | The crew holds exactly n of that story item. |

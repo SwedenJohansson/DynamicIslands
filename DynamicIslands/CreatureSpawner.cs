@@ -25,6 +25,8 @@ namespace DynamicIslands.Editor
 		public readonly Dictionary<int, Vector3> LastAt = new Dictionary<int, Vector3>();
 		/// <summary>Host: animals Raft took away far from every player - not killed: the island's state keeps them.</summary>
 		public int Strayed;
+		/// <summary>Host: the creatures a boss phase called (BossPhases): not counted for the spot's "defeat" or its state.</summary>
+		public readonly List<AI_NetworkBehaviour> Summoned = new List<AI_NetworkBehaviour>();
 
 		public static CreatureSpawnPoint Create(Transform parent, IslandObject o, int ordinal)
 		{
@@ -260,7 +262,13 @@ namespace DynamicIslands.Editor
 			{
 				int here = 0;
 				for (int i = 0; i < w.Value; i++)
-					if (Spawn(host, w.Key, i, w.Value) != null) here++;
+				{
+					AI_NetworkBehaviour ai = Spawn(host, w.Key, i, w.Value);
+					if (ai == null) continue;
+					here++;
+					// (a boss whose fight was in its second phase when the world was saved: back in it - RF5)
+					BossPhases.Resume(entry, w.Key, ai);
+				}
 				w.Key.RecordedAlive = here;
 				w.Key.Strayed = 0;
 				spawned += here;
@@ -343,33 +351,40 @@ namespace DynamicIslands.Editor
 		/// <summary>Spawns one live animal at a spawn point (index i of n: a herd stands in a ring around the point).</summary>
 		public static AI_NetworkBehaviour Spawn(Network_Host_Entities host, CreatureSpawnPoint p, int i, int n)
 		{
+			return Spawn(host, p, p.Kind, p.transform.position, i, n, p.Props, false);
+		}
+
+		/// <summary>Spawn, of a kind around a centre with these settings; summon: one a boss phase called (p.Summoned).</summary>
+		static AI_NetworkBehaviour Spawn(Network_Host_Entities host, CreatureSpawnPoint p, ContentCatalog.CreatureKind kind, Vector3 centre, int i, int n, IDictionary<string, string> props, bool summon)
+		{
 			try
 			{
-				AI_NetworkBehaviour prefab = Prefab(host, p.Kind.Type);
-				if (prefab == null) { Debug.LogWarning("[CUSTOM ISLANDS] Raft has no " + p.Kind.Type + " to spawn"); return null; }
+				AI_NetworkBehaviour prefab = Prefab(host, kind.Type);
+				if (prefab == null) { Debug.LogWarning("[CUSTOM ISLANDS] Raft has no " + kind.Type + " to spawn"); return null; }
 
-				Vector3 pos = p.transform.position;
-				if (n > 1)
+				Vector3 pos = centre;
+				if (n > 1 || summon)
 				{
-					float a = i * Mathf.PI * 2f / n, r = HerdRadius * Mathf.Max(1f, ObjectProps.Size(p.Props));
+					float a = i * Mathf.PI * 2f / Mathf.Max(1, n), r = HerdRadius * Mathf.Max(1f, ObjectProps.Size(p.Props)) * (summon ? 1.5f : 1f);
 					pos += new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * r;
 				}
 				if (prefab.GetComponentInChildren<NavMeshAgent>(true) != null)
 				{
 					NavMeshHit hit;
 					if (NavMesh.SamplePosition(pos, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
+					else if (NavMesh.SamplePosition(centre, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
 					else if (NavMesh.SamplePosition(p.transform.position, out hit, 8f, NavMesh.AllAreas)) pos = hit.position;
-					else Debug.LogWarning("[CUSTOM ISLANDS] No walkable ground near the " + p.Kind.Label + " spawn point at " + p.transform.position);
+					else Debug.LogWarning("[CUSTOM ISLANDS] No walkable ground near the " + kind.Label + " spawn point at " + p.transform.position);
 				}
 
 				// The animal's home: a switched-off spawner at its spawn point (see the class comment)
-				var home = new GameObject("Home_" + i);
+				var home = new GameObject((summon ? "Summoned_" : "Home_") + i);
 				home.SetActive(false);
 				home.transform.SetParent(p.transform, false);
 				home.transform.position = pos;
 				home.transform.rotation = p.transform.rotation;
 				LandmarkEntitySpawner spawner = home.AddComponent<LandmarkEntitySpawner>();
-				spawner.entityType = p.Kind.Type;
+				spawner.entityType = kind.Type;
 				spawner.setStartRotation = true;
 				// (a sea animal that swims rounds gets rounds of its own around its spot: see Rounds)
 				WaypointHandler rounds = prefab.GetComponentInChildren<AI_State_Waypoint_Circulation>(true) != null ? Rounds(home.transform, p, pos) : null;
@@ -378,16 +393,16 @@ namespace DynamicIslands.Editor
 				float scale = -1f;
 				try { scale = prefab.localScaleInterval.GetRandomValue(); } catch { }
 				if (scale <= 0f) scale = 1f;
-				scale *= ObjectProps.Size(p.Props);
+				scale *= ObjectProps.Size(props);
 
-				AI_NetworkBehaviour ai = host.CreateAINetworkBehaviour(p.Kind.Type, pos, scale, SaveAndLoad.GetUniqueObjectIndex(), SaveAndLoad.GetUniqueObjectIndex(), spawner);
+				AI_NetworkBehaviour ai = host.CreateAINetworkBehaviour(kind.Type, pos, scale, SaveAndLoad.GetUniqueObjectIndex(), SaveAndLoad.GetUniqueObjectIndex(), spawner);
 				if (ai == null) return null;
 				spawner.spawnedEntityBehaviour = ai;
 				ours.Add(ai);
-				p.Spawned.Add(ai);
+				if (summon) p.Summoned.Add(ai); else p.Spawned.Add(ai);
 				if (rounds != null) KeepRounds(ai, rounds);
-				ApplyStats(ai, p.Props);
-				ObjectProps.ApplyTint(ai.gameObject, p.Props);
+				ApplyStats(ai, props);
+				ObjectProps.ApplyTint(ai.gameObject, props);
 
 				// Tell the other players, as Raft's own CreateAINetworkBehaviour does (without the spawner: it isn't a landmark's)
 				Raft_Network network = ComponentManager<Raft_Network>.Value;
@@ -404,9 +419,41 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("[CUSTOM ISLANDS] Spawning a " + (p.Kind != null ? p.Kind.Label : "creature") + " failed: " + e);
+				Debug.LogError("[CUSTOM ISLANDS] Spawning a " + (kind != null ? kind.Label : "creature") + " failed: " + e);
 				return null;
 			}
+		}
+
+		/// <summary>Host: a boss phase calls n creatures of a kind around the boss (Raft's own stats, no tint); returns how many came.</summary>
+		internal static int Summon(IslandWorldState.Entry e, CreatureSpawnPoint p, ContentCatalog.CreatureKind kind, int n, Vector3 around)
+		{
+			Network_Host_Entities host = HostEntities;
+			if (host == null || kind == null || n <= 0) return 0;
+			if (!SpawnsInThisMode(kind.Type)) { Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': no " + kind.Label + " in this game mode - the boss calls none"); return 0; }
+			int came = 0;
+			for (int i = 0; i < n; i++)
+				if (Spawn(host, p, kind, around, i, n, new Dictionary<string, string>(), true) != null) came++;
+			return came;
+		}
+
+		/// <summary>Host: the creatures a spot's boss phase called that are still about (the tests).</summary>
+		public static int SummonedAlive(CreatureSpawnPoint p)
+		{
+			return p == null ? 0 : p.Summoned.Count(ai => ai != null && (ai.networkEntity == null || !ai.networkEntity.IsDead));
+		}
+
+		/// <summary>Host: multiplies an animal's speed (on top of the builder's: a boss phase).</summary>
+		internal static void MultiplySpeed(AI_NetworkBehaviour ai, float multiplier)
+		{
+			if (ai == null) return;
+			foreach (AI_Movement m in ai.GetComponentsInChildren<AI_Movement>(true)) speed[m] = Mathf.Clamp(SpeedOf(m) * multiplier, ObjectProps.MinMultiplier, 4f);
+		}
+
+		/// <summary>An animal's speed multiplier now (its first movement's; 1 = Raft's own) - the tests.</summary>
+		public static float SpeedOf(AI_NetworkBehaviour ai)
+		{
+			AI_Movement m = ai != null ? ai.GetComponentInChildren<AI_Movement>(true) : null;
+			return SpeedOf(m);
 		}
 
 		/// <summary>Waypoints in a ring around a sea animal's spot: as many, and how far out at most (m).</summary>
@@ -803,6 +850,7 @@ namespace DynamicIslands.Editor
 						if (gone > 0) Debug.Log("[CUSTOM ISLANDS] The spot of " + gone + " " + p.Kind.Label + "(s) on '" + e.HostName + "' was hidden: they are gone until it is shown");
 						continue;
 					}
+					BossPhases.Check(e, p);
 					Account(e, p);
 				}
 			}
@@ -860,7 +908,7 @@ namespace DynamicIslands.Editor
 			if (killed > 0) QuestTracker.Event(e, "kill", p.Kind.Label, killed);
 			// None left - killed or caught (the last chicken netted clears the spot as much as the last one killed): the
 			// spot's "defeat" actions
-			if (alive == 0 && (killed > 0 || caught > 0)) { IslandObjectRef r = p.GetComponent<IslandObjectRef>(); if (r != null) Behaviours.FireFromHost(e, r.Index, "defeat"); }
+			if (alive == 0 && (killed > 0 || caught > 0)) { BossPhases.OnDefeat(e, p); IslandObjectRef r = p.GetComponent<IslandObjectRef>(); if (r != null) Behaviours.FireFromHost(e, r.Index, "defeat"); }
 			Record(e, p, alive);
 		}
 
@@ -872,6 +920,22 @@ namespace DynamicIslands.Editor
 			AI_NetworkBehaviour ai = entity.GetComponentInParent<AI_NetworkBehaviour>();
 			if (ai == null) ai = entity.GetComponentInChildren<AI_NetworkBehaviour>();
 			if (ai != null && ours.Contains(ai)) felled.Add(ai.GetInstanceID());
+		}
+
+		/// <summary>Host, after any hit on one of our animals (a guest's too: Raft's DamageEntity runs here for it): a boss
+		/// phase starts at once, not up to a second later.</summary>
+		public static void HitPhase(Network_Entity entity)
+		{
+			if (entity == null || !Raft_Network.IsHost || entity.IsDead) return;
+			AI_NetworkBehaviour ai = entity.GetComponentInParent<AI_NetworkBehaviour>();
+			if (ai == null) ai = entity.GetComponentInChildren<AI_NetworkBehaviour>();
+			if (ai == null || !ours.Contains(ai)) return;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null) continue;
+				foreach (CreatureSpawnPoint p in SpotsOf(e.Root))
+					if (p != null && p.Spawned.Contains(ai)) { BossPhases.Check(e, p); return; }
+			}
 		}
 
 		static bool Harmless(AI_NetworkBehaviourType t)
@@ -907,7 +971,7 @@ namespace DynamicIslands.Editor
 		static int RemoveAnimals(CreatureSpawnPoint p)
 		{
 			int removed = 0;
-			foreach (AI_NetworkBehaviour ai in p.Spawned)
+			foreach (AI_NetworkBehaviour ai in p.Spawned.Concat(p.Summoned).ToList())
 			{
 				if (ai == null || ai.connectedSpawner == null) continue;
 				ours.Remove(ai);
@@ -916,6 +980,7 @@ namespace DynamicIslands.Editor
 				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Removing a " + p.Kind.Label + ": " + ex.Message); UnityEngine.Object.Destroy(ai.gameObject); }
 			}
 			p.Spawned.Clear();
+			p.Summoned.Clear();
 			p.LastAt.Clear();
 			return removed;
 		}
@@ -960,7 +1025,7 @@ namespace DynamicIslands.Editor
 				float bestDist = 150f;
 				foreach (CreatureSpawnPoint p in spots)
 				{
-					float s = ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f);
+					float s = ObjectProps.Size(p.Props); // (clamped as the host spawned it: a file's x5 came as x3)
 					if (p.Kind.Type != ai.behaviourType || size < s * lo - 0.05f || size > s * hi + 0.05f) continue;
 					float d = Vector3.Distance(p.transform.position, ai.transform.position);
 					if (d < bestDist) { bestDist = d; best = p; }
@@ -1126,7 +1191,7 @@ namespace DynamicIslands.Editor
 
 		static void Postfix(Network_Entity entity)
 		{
-			try { CreatureSpawner.Hit(entity); }
+			try { CreatureSpawner.Hit(entity); CreatureSpawner.HitPhase(entity); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] After a hit on an island creature: " + e.Message); }
 		}
 

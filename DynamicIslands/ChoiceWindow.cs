@@ -254,6 +254,21 @@ namespace DynamicIslands.Editor
 			return SavedNames().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new Choice(n, n, IslandSummaries.TitleOf(n)));
 		}
 
+		/// <summary>The editor start window's Open...: the saved islands, then the generated ones (gen-..., made while sailing
+		/// or with Make) - to look at one, or keep it under a name of your own with Save as (CB16).</summary>
+		public static IEnumerable<Choice> IslandsToOpen()
+		{
+			var generated = IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && n.StartsWith(CustomIslandSpawner.GeneratedPrefix, StringComparison.OrdinalIgnoreCase))
+				.OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new Choice(n, n, GeneratedDetail));
+			return Islands().Concat(generated);
+		}
+
+		/// <summary>A generated island's line in the Open... list.</summary>
+		public const string GeneratedDetail = "made by the generator (while sailing, or with Make) - Save as a name of your own to keep it";
+
+		/// <summary>How many saved islands the player has (the editor's start window).</summary>
+		public static int SavedIslandCount() { return SavedNames().Count(); }
+
 		static IEnumerable<string> SavedNames()
 		{
 			return IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(CustomIslandSpawner.GeneratedPrefix, StringComparison.OrdinalIgnoreCase));

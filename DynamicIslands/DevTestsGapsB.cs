@@ -45,7 +45,7 @@ namespace DynamicIslands
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = new Vector3(c.x + 7f, h(c.x + 7f, c.y + 4f), c.y + 4f), Props = P(ObjectProps.CreatureCount, "1") });
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = new Vector3(c.x - 7f, h(c.x - 7f, c.y - 4f), c.y - 4f),
 				Props = P(ObjectProps.CreatureCount, "1", ObjectProps.CreatureHealth, "4", ObjectProps.CreatureDamage, "2.5", ObjectProps.CreatureSpeed, "1.3", ObjectProps.CreatureSize, "1.4") });
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			f.Save(IslandSpawner.PathFor(GapsXpIsland));
 			IslandWorldState.Entry old = IslandWorldState.Islands.FirstOrDefault(e => e.HostName == GapsXpIsland);
 			if (old != null) IslandWorldState.RemoveIds(new[] { old.Id }, true);

@@ -16,7 +16,7 @@ using UnityEngine.UI;
 namespace DynamicIslands
 {
 	/// <summary>More tests for the level up system and the randomizer's Big Bruce: the level bar at several screen sizes (IL18), the editor's
-	/// Island tab switch for the level up rule (IL26), the world keeping levels when the island's rule changes (IL28), and Big Bruce's look (IR2).</summary>
+	/// Island tab without a level up switch (IL26), the world keeping levels when the island's rule changes (IL28), and Big Bruce's look (IR2).</summary>
 	public static partial class DevTests
 	{
 		#region IL18 - the level bar at several screen sizes
@@ -202,129 +202,42 @@ namespace DynamicIslands
 
 		#endregion
 
-		#region IL26 - the editor's Island tab switch for the level up system
+		#region IL26 - the Island tab has no Level up switch (a world option only since 10-16)
 
-		static bool LevelSwitchChosen(Button b) { return b != null && Mathf.Approximately(b.colors.normalColor.g, 0.96f); }
-
-		/// <summary>The Island tab's Level up system buttons and the island's rule agree with <paramref name="expectOn"/>.</summary>
-		static void LevelTabCheck(ref bool ok, bool expectOn, string what)
-		{
-			Button on = Traverse.Create(typeof(EditorUI)).Field("infoLevelsOn").GetValue<Button>();
-			Button off = Traverse.Create(typeof(EditorUI)).Field("infoLevelsOff").GetValue<Button>();
-			bool rule = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
-			bool onChosen = LevelSwitchChosen(on), offChosen = LevelSwitchChosen(off);
-			Check(ref ok, on != null && off != null && rule == expectOn && onChosen == expectOn && offChosen == !expectOn,
-				what + ": rule " + (rule ? "on" : "off") + ", the switch shows " + (onChosen && !offChosen ? "On" : offChosen && !onChosen ? "Off" : "?") + " (want " + (expectOn ? "On" : "Off") + ")");
-		}
-
-		static IEnumerator LevelTabLoaded(string name)
-		{
-			for (float t = 0f; t < 8f && !(DynamicIslands.currentIslandName == name && GameObject.Find("LoadedObjects") != null || DynamicIslands.currentIslandName == name && t > 1.5f); t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
-			yield return new WaitForSecondsRealtime(0.4f);
-		}
-
-		[ConsoleCommand(name: "CILevelIslandTab", docs: "Dev, editor: the Island tab's Level up system switch (the island's rule, IslandProps.Levels; IL26) - New: off; clicking On (the real button): on; then a title typed, a regrow time typed and an object placed, and Undo x3 / Redo x3 of those leave it on (the switch and the rule); Undo of the switch's own step turns it off and Redo on again; Save (the file has the rule), Save as another name (still on, the new file has it), Open (New first, then the saved island: On; one saved with Off: Off); and New with it on turns it off. The files cileveltab_* are deleted after; picture shot_level_island_tab. Left out: the switch is read from its look (the chosen button), not from pixels")]
+		[ConsoleCommand(name: "CILevelIslandTab", docs: "Dev, editor: the level up system is a world option only - the Island tab has no Level up system switch; an older island saved with rules.levels=on opens, keeps its other values, and the system stays off in the editor")]
 		public static void LevelIslandTabCommand() { StartTest(LevelIslandTabRoutine()); }
 
 		static IEnumerator LevelIslandTabRoutine()
 		{
 			yield return WaitForEditor(false);
 			bool ok = true;
-			const string nameA = "cileveltab_a", nameB = "cileveltab_b", nameOff = "cileveltab_off";
+			const string nameA = "cileveltab_a";
 			TAB tab0 = EditorUI.CurrentTab;
 			EditorUI.SetTab(TAB.Island);
 			yield return null; yield return null;
-			Button on = Traverse.Create(typeof(EditorUI)).Field("infoLevelsOn").GetValue<Button>();
-			Button off = Traverse.Create(typeof(EditorUI)).Field("infoLevelsOff").GetValue<Button>();
-			InputField title = Traverse.Create(typeof(EditorUI)).Field("infoTitleField").GetValue<InputField>();
-			InputField regrow = Traverse.Create(typeof(EditorUI)).Field("infoRegrowField").GetValue<InputField>();
-			if (on == null || off == null || title == null || regrow == null) { Fail("level island tab: the Island tab's controls were not found"); yield break; }
-			Transform placed = GameObject.Find("PlacedObjects").transform;
 			try
 			{
-				// New: off
-				DynamicIslands.NewIsland();
-				yield return null; yield return null;
-				LevelTabCheck(ref ok, false, "a new island");
-				// The switch, as clicked
-				on.onClick.Invoke();
-				yield return null;
-				LevelTabCheck(ref ok, true, "On clicked");
-				// Other changes: a title and a regrow time (typed), an object (placed)
-				title.onEndEdit.Invoke("Level tab test");
-				regrow.onEndEdit.Invoke("3");
-				yield return null;
-				string objectName = PlaceableCatalog.Names.First();
-				GameObject obj = PlaceableCatalog.Spawn(objectName, placed);
-				obj.transform.position = DynamicIslands.EditorGizmoHandler != null && Camera.main != null ? Camera.main.transform.position + Camera.main.transform.forward * 10f : Vector3.zero;
-				obj.AddComponent<EditorGameObject>().GameObjectName = objectName;
-				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { obj }, true));
-				yield return null;
-				LevelTabCheck(ref ok, true, "after a title, a regrow time and an object");
-				string[] steps = { "the object", "the regrow time", "the title" };
-				for (int i = 0; i < 3; i++)
-				{
-					CommandUndoRedo.UndoRedoManager.Undo();
-					yield return null;
-					LevelTabCheck(ref ok, true, "Undo of " + steps[i]);
-				}
-				Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title).Length == 0 && ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays).Length == 0 && !obj.activeSelf, "the three other changes are undone (title '" + ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title) + "', regrow '" + ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays) + "', object " + (obj.activeSelf ? "there" : "gone") + ")");
-				for (int i = 2; i >= 0; i--)
-				{
-					CommandUndoRedo.UndoRedoManager.Redo();
-					yield return null;
-					LevelTabCheck(ref ok, true, "Redo of " + steps[i]);
-				}
-				Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title) == "Level tab test" && ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.RegrowDays) == "3" && obj.activeSelf, "the three other changes are back");
-				// The switch's own step
-				for (int i = 0; i < 4; i++) { CommandUndoRedo.UndoRedoManager.Undo(); yield return null; }
-				LevelTabCheck(ref ok, false, "Undo of the switch's own step (and the three after it)");
-				for (int i = 0; i < 4; i++) { CommandUndoRedo.UndoRedoManager.Redo(); yield return null; }
-				LevelTabCheck(ref ok, true, "Redo of all four");
+				Check(ref ok, Traverse.Create(typeof(EditorUI)).Field("infoLevelsOn").GetValue() == null && !EditorUI.Canvas.GetComponentsInChildren<Transform>(true).Any(x => x.name == "LevelUp"), "the Island tab has no Level up switch");
 				Screenshot(new[] { "level_island_tab" });
 				yield return new WaitForSecondsRealtime(0.5f);
-
-				// Save, Save as
-				bool saved = DynamicIslands.SaveIsland(nameA);
-				IslandFile fileA = saved ? IslandFile.Load(IslandSpawner.PathFor(nameA)) : null;
-				Check(ref ok, saved && fileA != null && PlayerLevels.IsOn(fileA.Props), "Save: the file has the rule (" + (fileA != null ? ObjectProps.Get(fileA.Props, IslandProps.Levels) : "no file") + ")");
-				yield return null;
-				LevelTabCheck(ref ok, true, "after Save");
-				bool savedAs = DynamicIslands.SaveIsland(nameB);
-				IslandFile fileB = savedAs ? IslandFile.Load(IslandSpawner.PathFor(nameB)) : null;
-				Check(ref ok, savedAs && DynamicIslands.currentIslandName == nameB && fileB != null && PlayerLevels.IsOn(fileB.Props), "Save as: the island is '" + DynamicIslands.currentIslandName + "' and its file has the rule");
-				yield return null;
-				LevelTabCheck(ref ok, true, "after Save as");
-
-				// Open
 				DynamicIslands.NewIsland();
 				yield return null; yield return null;
-				LevelTabCheck(ref ok, false, "New after Save as");
-				Check(ref ok, DynamicIslands.LoadIsland(nameA), "Open '" + nameA + "'");
-				yield return LevelTabLoaded(nameA);
-				LevelTabCheck(ref ok, true, "Open of an island saved with the rule on");
-				// One saved with Off
-				off.onClick.Invoke();
-				yield return null;
-				LevelTabCheck(ref ok, false, "Off clicked");
-				Check(ref ok, DynamicIslands.SaveIsland(nameOff), "saved '" + nameOff + "' with Off");
+				DynamicIslands.currentIslandProps[IslandProps.Title] = "Older level island";
+				Check(ref ok, DynamicIslands.SaveIsland(nameA), "saved '" + nameA + "'");
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(nameA));
+				f.Props[IslandProps.Levels] = "on"; // (what an older editor wrote)
+				f.Save(IslandSpawner.PathFor(nameA));
 				DynamicIslands.NewIsland();
 				yield return null; yield return null;
-				Check(ref ok, DynamicIslands.LoadIsland(nameOff), "Open '" + nameOff + "'");
-				yield return LevelTabLoaded(nameOff);
-				LevelTabCheck(ref ok, false, "Open of an island saved with the rule off");
-				Check(ref ok, DynamicIslands.LoadIsland(nameA), "Open '" + nameA + "' again");
-				yield return LevelTabLoaded(nameA);
-				LevelTabCheck(ref ok, true, "Open of the island with the rule on again (the switch follows each Open)");
-
-				// New turns it off
-				DynamicIslands.NewIsland();
-				yield return null; yield return null;
-				LevelTabCheck(ref ok, false, "New with the rule on");
+				Check(ref ok, DynamicIslands.LoadIsland(nameA), "Open '" + nameA + "' (an older island with rules.levels=on)");
+				for (float w = 0f; w < 8f && DynamicIslands.currentIslandName != nameA; w += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				yield return new WaitForSecondsRealtime(0.4f);
+				Check(ref ok, DynamicIslands.currentIslandName == nameA && ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Title) == "Older level island", "it opens with its title");
+				Check(ref ok, !PlayerLevels.On, "the level up system stays off");
 			}
 			finally
 			{
-				foreach (string n in new[] { nameA, nameB, nameOff }) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+				if (File.Exists(IslandSpawner.PathFor(nameA))) File.Delete(IslandSpawner.PathFor(nameA));
 				if (DynamicIslands.InEditor())
 				{
 					DynamicIslands.NewIsland();
@@ -338,7 +251,7 @@ namespace DynamicIslands
 
 		#region IL28 - the world's levels don't depend on the level island's rule
 
-		[ConsoleCommand(name: "CILevelIslandRuleWorld", docs: "Dev, world (host): levels are the world's, not the island's (IL28) - a level island (rule on) comes into the world and switches the system on; the host then changes the island's rule on its file (to off): PlayerLevels.On stays on and the player's record (level 3) is kept, the world's lines still hold @levels=on; the island leaves the world: still on, record kept; the island (its file now says off) comes again: still on; the rule back to on in the file and the island once more: still on, same record. The record and the system are put back after. Left out: the change is made on the island file (what the editor's switch writes - the editor side is CILevelIslandTab), not clicked in the editor; this test is in the world only")]
+		[ConsoleCommand(name: "CILevelIslandRuleWorld", docs: "Dev, world (host): levels are the world's, not the island's (IL28) - a level island comes into the world with the system switched on by the host (an older island's rule on, ignored); the host then changes the island's rule on its file (to off): PlayerLevels.On stays on and the player's record (level 3) is kept, the world's lines still hold @levels=on; the island leaves the world: still on, record kept; the island (its file now says off) comes again: still on; the rule back to on in the file and the island once more: still on, same record. The record and the system are put back after. Left out: the change is made on the island file (what the editor's switch writes - the editor side is CILevelIslandTab), not clicked in the editor; this test is in the world only")]
 		public static void LevelIslandRuleWorldCommand() { StartTest(LevelIslandRuleWorldRoutine()); }
 
 		static IEnumerator LevelIslandRuleWorldRoutine()
@@ -362,12 +275,13 @@ namespace DynamicIslands
 				int xp0 = PlayerLevels.Mine != null ? PlayerLevels.Mine.Xp : -1;
 				string path = IslandSpawner.PathFor(LevelIsland);
 				IslandFile f = IslandFile.Load(path);
-				Check(ref ok, PlayerLevels.IsOn(f.Props), "the island's file has the rule on");
+				f.Props[IslandProps.Levels] = "on"; // (an older island's rule: ignored since 10-16, the level up system is a world option)
+				f.Save(path);
 
 				// The host changes the rule on the island (what the editor's Off writes)
 				f.Props.Remove(IslandProps.Levels);
 				f.Save(path);
-				Check(ref ok, !PlayerLevels.IsOn(IslandFile.Load(path).Props), "the island's file now says off");
+				Check(ref ok, !IslandFile.Load(path).Props.ContainsKey(IslandProps.Levels), "the island's file now says off");
 				yield return new WaitForSeconds(1.5f);
 				Check(ref ok, PlayerLevels.On && PlayerLevels.Mine != null && PlayerLevels.Mine.Xp == xp0, "rule changed to off on the file: the world stays on, level " + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Level : 0) + " kept (" + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Xp : -1) + " of " + xp0 + " EXP)");
 				Check(ref ok, PlayerLevels.WriteLines().Contains("@levels=on"), "the world's lines still hold @levels=on");

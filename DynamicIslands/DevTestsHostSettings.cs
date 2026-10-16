@@ -100,7 +100,7 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action>("Monsters " + otherLevel, () => MonsterDifficulty.MonstersCommand(new[] { otherLevel })),
 				new KeyValuePair<string, Action>("BuildCost " + otherPercent, () => BuildCost.BuildCostCommand(new[] { otherPercent })),
 				new KeyValuePair<string, Action>("Randomizer wild", () => DynamicIslands.RandomizerCommand(new[] { "wild" })),
-				new KeyValuePair<string, Action>("WorldPlan Adventure", () => DynamicIslands.WorldPlanCommand(new[] { "Adventure" })),
+				new KeyValuePair<string, Action>("WorldPlan " + CIAdventure, () => DynamicIslands.WorldPlanCommand(new[] { CIAdventure })),
 				new KeyValuePair<string, Action>("CustomIslandsAuto " + (autoBefore ? "off" : "on"), () => DynamicIslands.CustomIslandsAutoCommand(new[] { autoBefore ? "off" : "on" })),
 				new KeyValuePair<string, Action>("SpawnIsland cicreature 200", () => DynamicIslands.SpawnIslandCommand(new[] { "cicreature", "200" })),
 				new KeyValuePair<string, Action>("RemoveIsland all", () => DynamicIslands.RemoveIslandCommand(new[] { "all" })),

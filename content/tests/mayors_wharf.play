@@ -24,11 +24,11 @@ walk 24 2 to 24 10 h=4.5
 
 # The flooded floor below: the security locker and its keycard; the vault's reader and shutter; the safe
 openat 21.5 -3.5
-expect story keycard 1
+expect story wharf-keycard 1
 expect step 4
 use reader
 expect message beeps green
-expect story keycard 0
+expect story wharf-keycard 0
 open Mayor's safe
 expect item Placeable_Painting_Tangaroa_2 1
 expect done

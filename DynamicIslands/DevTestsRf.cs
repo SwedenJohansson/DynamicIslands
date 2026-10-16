@@ -12,7 +12,7 @@ namespace DynamicIslands
 	/// <summary>ROADMAP RF1/RF2: the when/then actions "playsound", "stopsound" and "camera", and a plan's ending (credits).</summary>
 	public static partial class DevTests
 	{
-		const string RfIsland = "cirfsound", RfMpIsland = "cirfmp";
+		const string RfSoundIsland = "cirfsound", RfSoundMpIsland = "cirfmp";
 
 		/// <summary>A looped sound and a short one Raft has (the first music cue, a short sound).</summary>
 		static void RfSounds(out string loop, out string once)
@@ -124,7 +124,7 @@ namespace DynamicIslands
 			Check(ref ok, !PlanChecker.FromFile(bad, "cirfbad", false).Traps.Any(t => t.Text.Contains("sound Raft doesn't have")), "... and not on one of Raft's");
 
 			IslandWorldState.Entry e = null;
-			yield return RfSpawn(RfIsland, 390f, x => e = x);
+			yield return RfSpawn(RfSoundIsland, 390f, x => e = x);
 			if (e == null) yield break;
 			IslandObjectRef jukebox = ScObjOf(e, "jukebox");
 			int key = TriggerSounds.KeyBase + jukebox.Index;
@@ -173,7 +173,7 @@ namespace DynamicIslands
 			}
 			finally { IslandNetwork.Loopback = null; }
 			RfAway(e);
-			RfRemove(RfIsland);
+			RfRemove(RfSoundIsland);
 			if (ok) Log("PASS: rf sound"); else Fail("rf sound");
 		}
 
@@ -185,7 +185,7 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("rf sound reload: host, in a test world 'CI ...'"); yield break; }
 			bool ok = true;
 			IslandWorldState.Entry e = null;
-			yield return RfSpawn(RfIsland, 390f, x => e = x);
+			yield return RfSpawn(RfSoundIsland, 390f, x => e = x);
 			if (e == null) yield break;
 			ScUse(e, "jukebox");
 			ScUse(e, "bell");
@@ -200,7 +200,7 @@ namespace DynamicIslands
 			Check(ref ok, TriggerSounds.CountPlaying(e.Id, true) == 1 && TriggerSounds.AnyAudible(e.Id) && TriggerSounds.LastPath == loopPath, "after the reload the loop plays again ('" + TriggerSounds.LastPath + "')");
 			Check(ref ok, TriggerSounds.Started == started + 1 && TriggerSounds.CountPlaying(e.Id, false) == 0, "... and only the loop: the once sound is not played again (" + (TriggerSounds.Started - started) + " started)");
 			RfAway(e);
-			RfRemove(RfIsland);
+			RfRemove(RfSoundIsland);
 			if (ok) Log("PASS: rf sound reload"); else Fail("rf sound reload");
 		}
 
@@ -227,7 +227,7 @@ namespace DynamicIslands
 			Check(ref ok, PlanChecker.FromFile(bad, "cirfbad", false).Traps.Any(t => t.Text.Contains("camera moment") && t.Text.Contains("'nowhere'") && !t.Text.Contains("'lever'")), "Check warns on a marker no object is called");
 
 			IslandWorldState.Entry e = null;
-			yield return RfSpawn(RfIsland, 390f, x => e = x);
+			yield return RfSpawn(RfSoundIsland, 390f, x => e = x);
 			if (e == null) yield break;
 			Network_Player player = RAPI.GetLocalPlayer();
 			Transform marker = ScObjOf(e, "marker").transform, lookAt = ScObjOf(e, "look").transform;
@@ -265,7 +265,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(0.3f);
 			Check(ref ok, CameraMoment.Shown == shown && !CameraMoment.Active, "out of the moment's range (" + Vector3.Distance(player.transform.position, marker.position).ToString("F0") + " m, range 8): no moment here");
 			RfAway(e);
-			RfRemove(RfIsland);
+			RfRemove(RfSoundIsland);
 			if (ok) Log("PASS: rf camera"); else Fail("rf camera");
 		}
 
@@ -279,9 +279,9 @@ namespace DynamicIslands
 		static IEnumerator RfMpRoutine(string part)
 		{
 			if (!Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue || RAPI.GetLocalPlayer() == null) { Fail("rf mp: run as the host, in a world"); yield break; }
-			if (part == "end") { RfRemove(RfMpIsland); Log("PASS: rf mp end"); yield break; }
+			if (part == "end") { RfRemove(RfSoundMpIsland); Log("PASS: rf mp end"); yield break; }
 			IslandWorldState.Entry e = null;
-			yield return RfSpawn(RfMpIsland, 390f, x => e = x);
+			yield return RfSpawn(RfSoundMpIsland, 390f, x => e = x);
 			if (e == null) yield break;
 			Log("PASS: rf mp setup (island " + e.Id + ")");
 		}
@@ -292,8 +292,8 @@ namespace DynamicIslands
 		static IEnumerator RfStatusRoutine()
 		{
 			yield return null;
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName == RfMpIsland);
-			if (e == null) { Fail("rf status: '" + RfMpIsland + "' is not loaded here"); yield break; }
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName == RfSoundMpIsland);
+			if (e == null) { Fail("rf status: '" + RfSoundMpIsland + "' is not loaded here"); yield break; }
 			Log("RF status " + GupRole + ": loops=" + TriggerSounds.CountPlaying(e.Id, true) + " audible=" + (TriggerSounds.AnyAudible(e.Id) ? "yes" : "no") + " started=" + TriggerSounds.Started +
 				" kept=" + e.State.Keys.Count(k => k >= TriggerSounds.KeyBase && k < TriggerSounds.KeyBase + 0x10000) + " shown=" + CameraMoment.Shown + " near=" + (Behaviours.Near(e) ? "yes" : "no"));
 			Log("PASS: rf status " + GupRole);
@@ -302,10 +302,10 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRfAway", docs: "Dev, two-player test (either player): the local player out of reach of 'cirfmp' (on the raft, or at sea beyond it)")]
 		public static void RfAwayCommand()
 		{
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.HostName == RfMpIsland);
-			if (e == null) { Fail("rf away: no '" + RfMpIsland + "'"); return; }
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.HostName == RfSoundMpIsland);
+			if (e == null) { Fail("rf away: no '" + RfSoundMpIsland + "'"); return; }
 			RfAway(e);
-			StartTest(AfterAction("Away from '" + RfMpIsland + "' (" + GupRole + ")", 1.5f));
+			StartTest(AfterAction("Away from '" + RfSoundMpIsland + "' (" + GupRole + ")", 1.5f));
 		}
 
 		#endregion
