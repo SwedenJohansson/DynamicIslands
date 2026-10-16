@@ -250,6 +250,87 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan test"); else Fail("plan test");
 		}
 
+		[ConsoleCommand(name: "CITestButton", docs: "Dev, editor: the editor's Test button never stuck (the user, 2026-10-16: Raft's Load box threw, the main menu stayed and Test did nothing after) - Test clicked twice in a row starts once; a start made to fail in the main menu goes back to the editor with the reason and Test works again; Cancel goes back to the editor; Test clicked twice again: the test world with the island; while a test starts no main menu shows (the cover is over it). Several minutes; the test island is deleted after")]
+		public static void TestButtonCommand() { StartTest(TestButtonRoutine()); }
+
+		/// <summary>Frames the main menu showed while a test started without the cover (or the editor's loading box) over it.</summary>
+		static int testButtonUncovered;
+
+		/// <summary>Waits until done (or the time is up), counting frames the main menu was there uncovered.</summary>
+		static IEnumerator TestButtonWatch(Func<bool> done, float seconds)
+		{
+			for (float until = Time.realtimeSinceStartup + seconds; Time.realtimeSinceStartup < until && !done(); )
+			{
+				bool menu = !LoadSceneManager.IsGameSceneLoaded && GameObject.Find("MainMenuCanvas") != null;
+				if (menu && IslandTest.Busy && !TestCover.Showing && !EditorLoadingBox.Showing) testButtonUncovered++;
+				yield return null;
+			}
+		}
+
+		/// <summary>Presses the editor's Test button twice in the same frame, as a double click.</summary>
+		static bool TestButtonClickTwice()
+		{
+			UnityEngine.UI.Button test = EditorUI.Canvas != null ? EditorUI.Canvas.GetComponentsInChildren<UnityEngine.UI.Button>(false).FirstOrDefault(b => b.name == "Button_Test") : null;
+			if (test == null) return false;
+			test.onClick.Invoke();
+			test.onClick.Invoke();
+			return true;
+		}
+
+		static IEnumerator TestButtonRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("test button: in the editor"); yield break; }
+			bool ok = true;
+			const string name = "citest-testbutton";
+			Func<bool> backInEditor = () => DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && !IslandTest.Busy;
+			DynamicIslands.NewIsland();
+			yield return null;
+			GeneratorWindow.Open();
+			yield return null;
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4243, Radius = 50f, Height = 20f, Style = TerrainPainter.Tropical });
+			GeneratorWindow.Close();
+			yield return null;
+			Check(ref ok, DynamicIslands.SaveIsland(name), "a test island saved as '" + name + "'");
+			testButtonUncovered = 0;
+
+			// 1. A start that fails in the main menu (Raft's Load box threw for the user): back in the editor, not busy
+			IslandTest.FailNextStartForTests = true;
+			int starts = IslandTest.Starts;
+			Check(ref ok, TestButtonClickTwice(), "the editor has its Test button");
+			Check(ref ok, IslandTest.Busy && IslandTest.Starts == starts + 1 && TestCover.Showing, "Test clicked twice: one start, under the cover (" + (IslandTest.Starts - starts) + " start(s))");
+			yield return TestButtonWatch(backInEditor, 150f);
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, backInEditor() && DynamicIslands.currentIslandName == name && !TestCover.Showing, "the failed start went back to the editor with '" + DynamicIslands.currentIslandName + "' open (" + IslandTest.LastStep + ")");
+			Check(ref ok, (IslandTest.LastFailure ?? "").Contains("NullReferenceException"), "and says why: " + IslandTest.LastFailure);
+
+			// 2. Cancel while it starts: back in the editor
+			starts = IslandTest.Starts;
+			TestButtonClickTwice();
+			yield return TestButtonWatch(() => IslandTest.LastStep == "In the main menu" || !IslandTest.Busy, 60f);
+			Check(ref ok, IslandTest.Busy && TestCover.CancelShown, "starting again (" + IslandTest.LastStep + "), Cancel offered");
+			IslandTest.Cancel();
+			yield return TestButtonWatch(backInEditor, 150f);
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, backInEditor() && IslandTest.Starts == starts + 1 && IslandTest.LastFailure == "Test cancelled" && DynamicIslands.currentIslandName == name, "Cancel went back to the editor with '" + DynamicIslands.currentIslandName + "' (" + IslandTest.LastFailure + ")");
+
+			// 3. Test clicked twice again: the test world with the island
+			starts = IslandTest.Starts;
+			TestButtonClickTwice();
+			Check(ref ok, IslandTest.Busy && IslandTest.Starts == starts + 1, "Test works again after the failure: one start");
+			yield return TestButtonWatch(() => IslandTest.Testing || !IslandTest.Busy, 300f);
+			yield return new WaitForSeconds(6f);
+			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(x => x.Name == name);
+			Check(ref ok, IslandTest.Testing && (SaveAndLoad.CurrentGameFileName ?? "") == IslandTest.WorldName && e != null && e.Root != null, "in the test world with the island (" + IslandTest.LastStep + ")");
+			Check(ref ok, !TestCover.Showing, "the cover is gone once the world is in");
+			Check(ref ok, testButtonUncovered == 0, "no main menu showed while the tests started (" + testButtonUncovered + " frame(s) uncovered)");
+			IslandTest.Back();
+			yield return TestButtonWatch(backInEditor, 240f);
+			yield return new WaitForSeconds(2f);
+			Check(ref ok, backInEditor() && DynamicIslands.currentIslandName == name, "back in the editor with '" + DynamicIslands.currentIslandName + "' open");
+			try { DynamicIslands.NewIsland(); IslandFilesWindow.MoveToDeleted(name); System.IO.File.Delete(System.IO.Path.Combine(System.IO.Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), name + IslandFile.Extension)); } catch { }
+			if (ok) Log("PASS: test button"); else Fail("test button");
+		}
+
 		[ConsoleCommand(name: "CIIslandTest", docs: "Dev, editor: Test in a world as a builder uses it - a test island is saved and tried: the main menu, the test world 'Custom Islands test' (made the first time; islands tried before are taken away), the island beside the raft and the player on it, Back to the editor in the world window, the editor again with the island open. Several minutes; the test island is deleted after. CIIslandTest big: a big generated island (about 6500 objects: the editor takes longer to leave - the main menu it found then was the old one, and Raft's Create threw)")]
 		public static void IslandTestCommand(string[] args) { StartTest(IslandTestRoutine(args != null && args.Length > 0 && args[0] == "big")); }
 
