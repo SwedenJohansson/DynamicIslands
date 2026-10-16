@@ -12,6 +12,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Keycard doors and buried treasure (RF4):** select Raft's card reader door or another key door for its
+  **Keycard door** settings: the story item that opens it (the island's own or one of Raft's quest items) and whether
+  the card is used up. Without it the door stays shut; with it the reader beeps it through, for the whole crew and
+  after loading. Check warns about a key door that no story item opens. Buried treasure is found only with the metal
+  detector (it beeps faster nearer), dug with the shovel, and its chest can give **Extra loot** - story items too,
+  once for the whole crew.
 - **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
   for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
   world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
