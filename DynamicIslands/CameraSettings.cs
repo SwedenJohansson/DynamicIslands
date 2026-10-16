@@ -224,7 +224,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(title.gameObject, -1, 26);
 			Text help = UIKit.Label(panel, EditorCamera.HelpLines, 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Controls");
 			help.horizontalOverflow = HorizontalWrapMode.Wrap;
-			UIKit.Size(help.gameObject, -1, 132);
+			UIKit.Size(help.gameObject, -1, 82);
 			RectTransform group = UIKit.Group(panel, "Settings (this PC; also in Defaults)", "Settings");
 			refresh = CameraSettings.Build(group);
 			RectTransform buttons = UIKit.Row(panel, 32f, 8f, "Buttons");
