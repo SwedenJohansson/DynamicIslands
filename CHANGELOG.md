@@ -22,6 +22,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
   the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
   **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
+  ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
+  to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
+  Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
+  **Lantern Spire** (a flying island).
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details

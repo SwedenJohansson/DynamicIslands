@@ -122,6 +122,9 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
      [16.4 The world plans](#164-the-world-plans) · [16.5 Where to look for...](#165-where-to-look-for) ·
      [16.6 The themed islands](#166-the-themed-islands) · [16.7 The new islands](#167-the-new-islands) ·
      [16.8 Raft's story islands, piece by piece](#168-rafts-story-islands-piece-by-piece)
+17. [Learn from the islands](#17-learn-from-the-islands)
+   - [17.1 Opening any island in the editor](#171-opening-any-island-in-the-editor) · [17.2 Looking around](#172-looking-around) ·
+     [17.3 Two islands made to learn from](#173-two-islands-made-to-learn-from) · [17.4 Every feature, and an island to look at](#174-every-feature-and-an-island-to-look-at)
 
 ---
 
@@ -3518,6 +3521,7 @@ Raft's sea finds: sand, clay, stones, metal and copper ore, scrap, giant clams a
    its first island and the islands it brings.
 
 Change anything and **Save as** a new name: the original stays as downloaded.
+[Chapter 17](#17-learn-from-the-islands) says how to look at any island in the editor and which island shows each feature.
 
 > The examples were built step by step by a script that clicks the editor's own buttons (the "recipe player"), so
 > they test the editors too. The scripts are in the mod's source (`content\recipes`), one line per editor action -
@@ -3815,6 +3819,8 @@ They come in five sizes: normal, twice, four times, seven times and twenty times
 | ![](images/library/last_kingdom.jpg) **The Last Kingdom** (twenty times the size) | A whole small kingdom: a harbour town, a river with a watermill and farms, a dark forest, a lake with a drowned chapel and a castle on the hill - empty until its crown is found | A **river** dug from a lake to the sea with a ford and a toll bridge, a mill that turns when its sluice lifts, three seals gathered across the land, a coronation that **shows** banners on every tower |
 | ![](images/library/clockwork_city.jpg) **The Clockwork City** (seven times the size) | A city of clockmakers on stacks above the sea: a harbour stack, the Hall of Hours on the plaza stack, gearworks on a pier, an observatory and a clock tower - joined by shuttles | **Shuttles** between levels (a lever, `wait`, a `teleport` to a zone), rooms in an undercroft, a clock tower whose hands are set in order |
 | ![](images/library/starfall_crater.jpg) **Starfall Crater** (four times the size) | A crater lake round a grey-blue fallen star on its islet, closed like a clam; an observer's cradle on the rim and a sunk probe in the lake | A lake dug as a **ring** of strokes round an islet (cut down, never raised past 8 m), a **dive** for the probe's parts, a star that **shows** its glow when the cradle is fed |
+| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** | A low green island with a keeper's hut, a strongbox shed and a goat pen - and a sign at each place saying what it shows | An island to learn from ([17](#17-learn-from-the-islands)): a **keypad code lock**, **three quests** on one island, the three **island rules** and an island its quest **brings** (Lantern Spire) |
+| ![](images/library/lantern_spire.jpg) **Lantern Spire** | A rock floating 60 m over the sea with a lantern hut on top | An island to learn from ([17](#17-learn-from-the-islands)): a **flying island** (Island tab → Height), reached by building up from the raft |
 
 ---
 
@@ -3850,3 +3856,122 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | Cooking recipe pickups, mystery packages | Not on custom islands: they only work inside Raft's own islands (their scripts belong to its story save) |
 | Keypads with a code (Tangaroa, Vasagatan) | A **keypad code** on any usable object ([6.2](#62-behaviour-and-events)) |
 | Puzzle mini-games: Temperance's laser mirrors and igloo wires, Utopia's pipes, water wheels and justice scales, Tangaroa's claw crane | Ready puzzle pieces, rebuilt as the mod's own (Raft's puzzle scripts belong to its story scenes): **turning mirrors** (Temperance's), Utopia's **water wheels** and **pipes** (a straight, a big curve, the radio tower's bend) turn a quarter each use and send `mirror`, `wheel` or `pipe` - checks on their state (open = turned) make the puzzle (a chest that opens once the right ones are turned); Utopia's **wire connectors** take Raft's electrical cable (used up, once - after that they stay connected) and send `wire`; Tangaroa's **claw crane console** sends `claw`; the **justice scales** send `scales`. Or build a puzzle as a **sequence**: levers or wheels that send signals in the right order (The Clockwork Orchard, Old Vine Hill). **Laser beams**, the mod's own: Temperance's **laser emitter** shoots a red beam along its front; the turning mirrors and the **fixed mirror** send it on along their own front (turn a mirror, the beam turns); the first other object it reaches gets the event "a laser beam reaches it" - the **laser door panel** says so and sends `laser`. Any object can answer the beam (Behaviours, "When"): a door that opens when the beam is lined up |
+
+---
+
+## 17. Learn from the islands
+
+Every island you can open in the editor shows how it was made: the library's islands, the ready-made islands of the
+generator and your own. This chapter says how to open one, how to look at the parts that don't show in the game (a
+chest's loot, a door's checks, the quest, the rules that bring other islands) and which island to open to see each of
+the editor's features. Two small islands of the library were made only to be learnt from: **The Lockkeeper's Isle**
+and **Lantern Spire** ([17.3](#173-two-islands-made-to-learn-from)).
+
+### 17.1 Opening any island in the editor
+
+- **An island from the island library:** **ISLAND LIBRARY** → **Islands** → **Download**, then **EDITOR** → **Open**
+  (top bar, Ctrl+O) and pick it. A plan's islands are there too once the plan is downloaded.
+- **A ready-made island:** **EDITOR** → **Generate** → **Ready-made (with content)**, click a card and **Make**: the
+  island is made from its seed and opened at once ([4.6](#46-ready-made-islands-map-types)). Each map type puts its
+  chests, notes, creatures, zones and quest together in its own way.
+- **Your own island:** **Open** and pick it; islands you saved, exported or imported are all in the list.
+- Want to keep the original? **Save as** a new name before you change anything.
+
+### 17.2 Looking around
+
+1. **Fly round the island:** right-drag to look, **WASD** to fly, **F** frames the selection or the whole island
+   ([4.1](#41-the-screen)). The island shows as it will in a world; on a flying or sunken island the blue plane is
+   where the sea will be.
+2. **Select a thing to see its settings:** click it (Objects tab). The object panel shows what it is: a chest's
+   loot and whether it fills up again, a note's title and text, a creature spot's kind, count and toughness, a zone's
+   id, message and radius, a sound or atmosphere zone's settings. **List...** shows every kind of object on the
+   island with how many; **Select** one kind there to find it.
+3. **Behaviour & events...** (in the object panel) shows what an object does: the "press E" text, the **Keypad
+   code**, and for each event (use, walk in, read, open, defeat) its checks, what happens, and what happens when a
+   check fails ([6.2](#62-behaviour-and-events)). Objects with behaviours are the doors, levers, bells and machines.
+4. **The Island tab** has the rest: the height in the world, the name and welcome, the island's **rules** (regrow
+   days, the earliest km, level up) and the buttons for its parts:
+   - **Edit quest...**: the quest's steps, reward and messages; the buttons at the top switch between the **Main
+     quest** and the island's other quests ([6.1](#61-quests)).
+   - **Islands it brings...**: the island's own rules - which island comes, when and where ([6.4](#64-islands-that-bring-islands)).
+   - **Island events**: what happens when players arrive or the quest is done; **Story items...**: the keys, logs and
+     other things the quest gives and takes ([6.3](#63-story-items-and-story-sets)).
+5. **A world plan:** **World plans** → **Plan ▼** → pick it. Each rule card is one island: when it comes, where, and
+   the message. **Check** says in words what the whole plan does ([7.5](#75-check-finding-and-fixing-problems)).
+6. **See it work:** **Test** puts the island in a world in front of your raft ([4.9](#49-trying-the-island-in-a-world-test)).
+   Play it, then go back and look at the setting behind what you just saw.
+
+### 17.3 Two islands made to learn from
+
+| Island | What it shows |
+|---|---|
+| ![](images/library/lockkeepers_isle.jpg) **The Lockkeeper's Isle** (small) | A keeper's hut, a strongbox shed and a goat pen on a low green island, with a **sign at each place** that names the feature and where to see it in the editor. A **keypad code lock** (the shed's power box, code on the keeper's note; its use shows the hidden strongbox), **three quests on one island** (the main quest, a catch quest, a read quest), all three **island rules** (regrow 3 days, comes after 8 km, level up on) and an **island the quest brings**: Lantern Spire, 400 m north, when the main quest is done |
+| ![](images/library/lantern_spire.jpg) **Lantern Spire** (small) | A **flying island**: a rock 60 m over the sea with a lantern hut on top (Island tab → Height → Flying). Nothing leads up: players build stairs or pillars from the raft. Its quest needs the top, the sign and the chest |
+
+![The Lockkeeper's Isle: the strongbox shed, its power box locked with a keypad code](images/learn-lockkeeper-shed.jpg)
+*The Lockkeeper's Isle: the strongbox shed. Select the power box inside and open Behaviour & events: the Keypad code
+field and the use event that shows the strongbox.*
+
+### 17.4 Every feature, and an island to look at
+
+One island each is enough to learn from; [16.5](#165-where-to-look-for) lists more examples for many of them.
+
+| Feature | Open | Look at |
+|---|---|---|
+| Shaping the land with the brushes | Thornwood, The Frontier | Thornwood's gorge; The Frontier's terraces and ramps up a mesa |
+| An island from the generator, as thick with things as Raft's own | Any library island | Its plants, rocks and pickups; [4.5](#45-the-island-generator) |
+| **Height:** a flying island | Lantern Spire | Island tab → Height: Flying (60 m). Sunken works the same way (the blue plane shows the sea over the island); no library island is sunken |
+| Things to gather (trees, bushes, flowers) and Raft's finds in the shallows | The Bell Stack, Crowfield Farm | The pines, berries and flowers on the stacks; sand, clay and scrap on the sea floor round the island |
+| Buildings of Raft's pieces | The Bell Stack, Hightide Harbor | The huts' floors, walls and roofs; select one piece and **Same kind** |
+| Notes and signs | The Lockkeeper's Isle | Any sign: the object panel's note title and text |
+| Chests and loot (fills up again or not) | The Lockkeeper's Isle | The tack chest and the strongbox: their loot, **Fills up again** |
+| Creatures | Crowfield Farm, The Lockkeeper's Isle | The goats' and hens' spots: kind and count |
+| A boss (bigger, tougher, tinted) | Thornwood | The Boar King's spot: size, toughness, tint |
+| Trigger zones (a message, a quest step) | The Bell Stack | The landing and the two stack zones: id, radius, message |
+| An ambush | Signal Rock | A zone that brings creatures when walked into |
+| Atmosphere and sound zones | The Bell Stack | The snowfall (fog, snow) and the wind |
+| Air pockets for a long dive | The Abyss | The zones with **Air** in its trench |
+| Things under water to dive for | Coral Observatory | Chests and finds on the sea floor |
+| Quest steps: reach, read, open, collect, pages | The Bell Stack | **Edit quest...**: four steps, each with its target |
+| Quest steps: kill | Thornwood | The step and the creature spot it counts |
+| Quest steps: catch | Crowfield Farm, The Lockkeeper's Isle (quest 2) | The catch step; the net launcher in a chest |
+| **Several quests on one island** | The Lockkeeper's Isle | **Edit quest...**: the buttons at the top switch between its three quests |
+| Story items | The Bell Stack, Gullsong Bazaar | **Story items...**; the bell gives one; the bazaar's stalls take and give them (a barter chain) |
+| Behaviour: something shown or hidden on use, with a check | The Bell Stack | The bell: it shows the bridge once the quest is far enough, and says something else before |
+| Signals (one thing opens another) | Glacier Station | The reactor and its vault |
+| Moving the player (teleport to) | The Frontier | The Corps' lift |
+| **Keypad code lock** | The Lockkeeper's Isle | The shed's power box: **Behaviour & events...** → Keypad code |
+| Island events (a message when players arrive) | The Lockkeeper's Isle | **Island events** |
+| **Island rules:** regrow days, comes after km, level up | The Lockkeeper's Isle | Island tab → Rules |
+| **An island the quest brings** | The Lockkeeper's Isle | **Edit quest...** → *When the quest is done, bring a new island*: the saved island Lantern Spire, 400 m north |
+| A chain of islands that bring each other | The Abyss Expedition (a plan) | Each island's **Islands it brings...** |
+| Raft's zipline | Cablecar Stacks | The line from the summit and its far end |
+| Machete vines over a cache | Thornwood | The vines and the chest they hide |
+| Buried treasure (metal detector, shovel) | Gilded Skull Cove | The treasure spots and the detector in the hoard |
+| Dirt spots (the shovel) | Crowfield Farm | The dirt by the fields |
+| Wild beehives | Bramblehive Knoll | The hives on the terraces |
+| Raft's keycard door and a hatch | Star Fort | The strongroom door and its keycard; the hatch on the parade ground |
+| Raft's crank wheel and lever | The Clockwork Orchard | Each sends a signal |
+| Raft's lift | Rookery Cliffs | The egg hoist |
+| A cage (bolt cutters) and a security camera | Primeval Park | The caged feed chest; the camera on the keeper's hut |
+| A generator, a radio and an engine | The Iron Graveyard | The generator part in the toolbox, the radio, the trawler's engine |
+| Turning mirrors | Glasshouse Gardens | The two sun mirrors and the seed chest |
+| A laser to aim | Crater Lair | The roof laser and the hidden safe |
+| Water wheels, pipes | The Aqueduct | Three wheels and a hint tablet; the pipes |
+| Wire hubs | Albatross Field | The hubs to cable in order |
+| A claw machine | Big Top Atoll | The claw and its prize |
+| Scales to weigh | Gullsong Bazaar | The scales at a stall |
+| Raft's quest item pickups | Tiki Lagoon | The pickup and the story item it gives |
+| A raft or deck of Raft's foundations | Tide Farm | The deck |
+| Blueprints in loot | Crowfield Farm | The basket in the farmhouse |
+| An island in Raft's story (the Receiver) | The Long Voyage, Raft Remade (plans) | Their rule cards ([16.4](#164-the-world-plans)) |
+| A whole world plan | Far Horizons and the other plans | [16.4](#164-the-world-plans) |
+
+**Not on any island, on purpose:**
+
+- **Unlock character** (an action of Behaviour & events): it gives a player one of Raft's characters in their Raft
+  profile, for every world, so no example island uses it ([6.2](#62-behaviour-and-events)).
+- Some of Raft's machines are **scenery only** in the editor: a water-logged hatch, the elevator's wheel, the bicycle,
+  the relay station's buttons. Place them as decoration; give them **Behaviour & events** if they should do something.
+- Raft's cooking recipe pickups and mystery packages work only on Raft's own islands
+  ([16.8](#168-rafts-story-islands-piece-by-piece)).
