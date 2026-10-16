@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
+  (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
   buttons. The height's ? says what 0, above 0 (flying) and below 0 (sunk) mean, and how players reach the island.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
@@ -192,6 +194,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
+  while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
 - **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
   later clicks (Raft's Load box had a broken link after the editor). A test now starts behind a cover with Cancel. If it
   can't start, you are back in the editor and the status bar says why. Back to the editor no longer disappears after 4

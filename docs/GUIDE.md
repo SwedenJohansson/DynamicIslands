@@ -3362,6 +3362,11 @@ happened, and make it happen again on their own PC. Please include:
    problem is in one world, add that world's `CustomIslands.txt` (in its folder, below), and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
 
+**When the mod notices an error itself:** a note **Custom Islands: an error happened - click for details** appears at
+the bottom left. Click it to see what happened and whose code it was; **Copy** puts it on the clipboard for a GitHub
+issue or a Discord post, and **Open the log folder** finds Player.log. Every such error is also kept in
+`Mods\DynamicIslands\errors.txt`.
+
 **The quick way: Report a problem.** The alpha box on the main menu ([section 1](#1-installing)) has a **Report a
 problem** button. It opens a box with the list above in short, and buttons that do the work for you:
 - **Copy report form** puts a form like the one below, with the mod's and Raft's versions filled in, on the clipboard (paste it with Ctrl+V);

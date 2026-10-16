@@ -155,6 +155,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `library\installed.json` | What each installed pack wrote, so it can be updated and removed |
 | `library.txt` | The island library window: `online = on/off` and the library's `address` (default: the shared Google Drive folder; a GitHub or other web address, or a local folder, also work) |
 | `library\cache\` | Pictures from the island library, kept so they needn't be downloaded again (safe to delete) |
+| `errors.txt` | The errors the mod noticed (time, versions, whose code, message, stack), cut to its newer half past 256 KB; attach it to a report |
 | `summarycache.txt` | The island lists' titles and quest steps, read again only when an island file changes (safe to delete: it is made again) |
 | `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
 | `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
@@ -746,7 +747,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `IslandObjectState.cs` | Harvested trees and picked-up items per island, and regrowing (`raft_pickups.txt`: how many pickups each of Raft's objects brings, so one a Raft update removes doesn't shift the others) |
 | `IslandNetwork.cs` | Multiplayer: island list, removals and island file transfer between host and clients, quests, used objects, announcements, object state and events |
 | `Claims.cs` | Things only one player can have (a chest's loot, a zone that fires once): a client asks the host, the host grants the first to ask and holds it for them until their "used" arrives (message kind 16) |
-| `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed |
+| `PlaceableCatalog.cs` | The object catalog: the core objects (always loaded), Raft's buildable items, and the index of every other object of Raft's island scenes, loaded scene by scene when needed; Raft's story scripts are kept quiet in the scenes it loads for objects (`QuietMethods`) |
+| `ErrorNotes.cs` | The mod's own error note: an exception from the mod's code (or from Raft's while it loads Raft's scenes) shows a clickable note; its box says whose code it was, with Copy, the log folder and where to report; `errors.txt` keeps them |
 | `IslandGenerator.cs`, `GeneratorWindow.cs` | Procedural islands: heights from seeded noise in eight layouts or from a Raft island's measured ground, then peak shape, valleys, exact height, terraces, erosion, lakes and seabed; object scatter by zone and kind on a spatial grid; creature spots and tiered loot boxes; the preview map; the Generate window with its three tabs and saved presets |
 | `RaftIslands.cs`, `RaftUnderwater.cs`, `RaftLand.cs` | Raft's islands as measured (`raft_islands.txt`, `island_thumbs`, `island_heights`; `raft_underwater.txt`; `raft_land.txt`): the size and height presets, Randomize existing, the life under water, and where things grow on the land |
 | `IslandReach.cs` | Whether a player on a raft can get onto a generated island (the line above the seed) |
