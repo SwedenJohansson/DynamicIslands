@@ -18,7 +18,7 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 | `EditorGameObject.cs` | `EditorGameObject` (`GameObjectName`, `Props`, `Attach`) on every placed object; `ObjectLimit` |
 | `ObjectProps.cs` / `ObjectInspector.cs` | Prop keys (`creature.*`, `note.*`, `tint.*`, `loot.*`, `zone.*`, `atmo.*`, `sound.*`), `Defaults`, `With`, `ApplyInEditor`, `PropsCommand` / the inspector for one selected object |
 | `IslandSettingsUndo.cs` / `EditorAutosave.cs` | `Change` / `Record`: island props, style, elevation as undo steps / `autosave\<name>.island`: `Unsaved`, `Tick`, `WriteNow`, `Saved`, `OnEditorReady` |
-| `IslandTest.cs` / `EditorCamera.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland`; `Back` / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Frame`, `Sync`; `Looking`, `UsingMouse`) |
+| `IslandTest.cs` / `EditorCamera.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland` (each under `Guarded`); `Back`, `Cancel`, `Abort` (back to the editor with the reason); `TestCover` over the main menu while it starts / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Frame`, `Sync`; `Looking`, `UsingMouse`) |
 
 ## Main flow
 1. Main menu EDITOR (`HookUI`) -> `CreateWindow` -> `EditorEntry.StartIsland` (or `EditFromPlan` / `NewIslandFromPlan`) -> `LoadEditor` (refused while a world is loaded) -> `EditorLoadingBox.Show` -> `OpenEditor`.
@@ -59,6 +59,7 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 - `PlaceableCatalog.Spawn` returns null until the object is loaded; harvestables lose their scripts unless `withGameplay` is set.
 - Moving `Camera.main` from code is fine: `EditorCamera.Update` calls `Sync`.
 - `terraineditor.terrainSize` / `heightmapResolution` and `IslandGenerator.BuildArea` / `BuildResolution` hold the same numbers.
+- Test (`IslandTest`): a start must never stay `Busy` - a failure calls `Abort`, every step runs under `Guarded`. Raft's menu boxes are found again at each step (`LiveBox`, which mends links to destroyed boxes): after the editor, `LoadGameBox.versionControlBox` was a destroyed object.
 - C# 7.3 (`LangVersion` in `DynamicIslands.csproj`, which lists each `.cs` file for `compile.ps1`: add new ones there). `pack.ps1 -Release` leaves out `DevTests*.cs`.
 - The top bar shows `Use in a plan...` normally and `Back to the plan` while the island opened by `EditFromPlan` is the one open (`EditorUI.backToPlanButton`); opening another island ends it. A world plan needs no editor scene: it opens on the main menu (see world-plans.md).
 - Docs: README `The editor` and the source overview; `docs/GUIDE.md` chapter 4 (4.1 The screen to 4.9 Test); then the PDF is made again from `GUIDE.md`.
