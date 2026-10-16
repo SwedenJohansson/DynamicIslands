@@ -62,6 +62,7 @@
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsGapsB.cs" />
+    <Compile Include="DevTestsSize.cs" />
     <Compile Include="DevTestsGapsC.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />

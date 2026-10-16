@@ -192,7 +192,7 @@ namespace DynamicIslands.Editor
 			Multiplier(g, target, "Health", ObjectProps.CreatureHealth, ObjectProps.MinMultiplier, ObjectProps.MaxHealth, ObjectProps.Health(p), "How much damage it takes to kill (Raft's own health times this)");
 			Multiplier(g, target, "Damage", ObjectProps.CreatureDamage, 0f, ObjectProps.MaxMultiplier, ObjectProps.Damage(p), "How hard it hits players (0 = harmless)");
 			Multiplier(g, target, "Speed", ObjectProps.CreatureSpeed, ObjectProps.MinMultiplier, 2.5f, ObjectProps.Speed(p), "How fast it walks, runs and swims");
-			Multiplier(g, target, "Size", ObjectProps.CreatureSize, ObjectProps.MinSize, ObjectProps.MaxSize, ObjectProps.Size(p), "How big it is (also shown on the marker)");
+			Multiplier(g, target, "Size", ObjectProps.CreatureSize, ObjectProps.MinSize, ObjectProps.MaxSize, ObjectProps.Size(p), "How big it is: x0.5 to x3 of Raft's size (also shown on the marker). Its body and hit box grow with it; its health doesn't - set Health for a tougher one");
 
 			RectTransform rrow = UIKit.Row(g, 26f, 4f, "Respawn");
 			UIKit.Label(rrow, "Comes back after", 13, UIKit.TextMuted);

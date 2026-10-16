@@ -960,7 +960,7 @@ namespace DynamicIslands.Editor
 				float bestDist = 150f;
 				foreach (CreatureSpawnPoint p in spots)
 				{
-					float s = ObjectProps.GetFloat(p.Props, ObjectProps.CreatureSize, 1f);
+					float s = ObjectProps.Size(p.Props); // (clamped as the host spawned it: a file's x5 came as x3)
 					if (p.Kind.Type != ai.behaviourType || size < s * lo - 0.05f || size > s * hi + 0.05f) continue;
 					float d = Vector3.Distance(p.transform.position, ai.transform.position);
 					if (d < bestDist) { bestDist = d; best = p; }

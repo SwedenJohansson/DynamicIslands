@@ -130,8 +130,15 @@ namespace DynamicIslands.Editor
 			return entry;
 		}
 
-		/// <summary>What the "Brand-new generated islands" row does (its tooltip), or the Detail of any other entry.</summary>
-		public const string GeneratedHint = "The mod makes up a new random island now and then while you sail (random size and style, sometimes flying). Each one is saved as a gen-... file and stays in this world. Unticked: only islands you made or downloaded, and the map-type kinds, come.";
+		/// <summary>What the "Brand-new generated islands" row does in full: its ? in the list, the in-world list's hover (CB16).</summary>
+		public const string GeneratedHelp = "BRAND-NEW GENERATED ISLANDS: ticked, the mod's island generator makes up a new island while you sail - random size and style (tropical, snowy, desert, forest or volcanic), sometimes flying - instead of bringing one of the islands in this list. "
+			+ "How often: whenever an island from this list is due (after every so many of Raft's islands: the span under the button, 3-6 by default), this row is drawn as often as any one island in the list (spawnpool.txt: generated=1).\n"
+			+ "Each one is saved as a file gen-<style>-<seed>.island in Mods\\DynamicIslands and stays in this world: sail back and it is still there, as you left it.\n"
+			+ "To keep one: EDITOR > An island > Open... lists the gen-... islands after your own (or the editor's Open, or My islands... > Generated). Open it and Save as a name of your own - then it is your island, for any world.\n"
+			+ "Unticked: only islands you made or downloaded, and the map-type rows, come.";
+
+		/// <summary>The row's hover tip (its ? shows GeneratedHelp), or the Detail of any other entry.</summary>
+		public const string GeneratedHint = "The mod makes up new random islands as you sail, each saved as gen-<style>-<seed>.island and kept in this world. Unticked: none. The ? says how often and how to keep one.";
 
 		public static string Hint(string entry)
 		{
@@ -141,7 +148,7 @@ namespace DynamicIslands.Editor
 		/// <summary>A few words on an entry (right of it in the list).</summary>
 		public static string Detail(string entry)
 		{
-			if (entry == CustomIslandSpawner.GeneratedEntry) return "made up as you sail, kept in this world";
+			if (entry == CustomIslandSpawner.GeneratedEntry) return "new random ones, saved as gen-...";
 			if (!IsIsland(entry)) return "map type - a new one each time";
 			try
 			{

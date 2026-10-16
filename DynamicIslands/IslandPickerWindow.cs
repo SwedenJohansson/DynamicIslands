@@ -179,6 +179,17 @@ namespace DynamicIslands.Editor
 			UIKit.Background(tick.gameObject, UIKit.Accent, 2);
 			Text meta = UIKit.Label(b.transform, WorldIslands.Detail(entry), 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Meta");
 			UIKit.Stretch(meta.rectTransform, 10, 10, 0, 0);
+			if (entry == CustomIslandSpawner.GeneratedEntry)
+			{
+				// (CB16: the user didn't see what this row does - a ? at its right end says it all; its click doesn't flip the row)
+				Button help = UIKit.Help(b.transform, WorldIslands.GeneratedHelp);
+				help.name = "Help_Generated";
+				var hr = (RectTransform)help.transform;
+				hr.anchorMin = hr.anchorMax = hr.pivot = new Vector2(1f, 0.5f);
+				hr.anchoredPosition = new Vector2(-8f, 0f);
+				hr.sizeDelta = new Vector2(18f, 18f);
+				meta.rectTransform.offsetMax = new Vector2(-34f, 0f);
+			}
 			rows[entry] = b;
 			Look(entry);
 		}

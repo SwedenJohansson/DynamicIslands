@@ -174,7 +174,7 @@ search box at the top shows only the plans whose name, description or islands ho
 lists every rule of the plan in words.
 
 ![The plan picker](images/plan-picker.jpg)
-*The plan picker: Far Horizons selected, with a map of its first island and the four islands it brings.*
+*The plan picker: a plan selected, with a map of its first island and the islands it brings.*
 
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
 (in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
@@ -1052,7 +1052,7 @@ folder**), click **Import...** in the Islands window or the World plan window, a
 holds, who made it and its version. **Install** puts it in place:
 - **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
   as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
-  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)` - and
+  file) is shared, not copied. A plan whose name you already use gets the author added: `My Voyage (Author)` - and
   your very own plan (the same file) stays yours: removing the pack later leaves it.
 - A plan may bring only new islands of map types: such a pack holds no island files at all, and that's fine.
 - **Story items with the same id:** a world's crew holds one of each story item id for all its islands. If the pack's
@@ -1205,6 +1205,8 @@ turtle, stingray, dolphin, whale.
 
 - **Animals here:** 1 to 8 (a herd).
 - **Easy / Normal / Hard / Boss**, or set **health** (up to ×12, for bosses), **damage** (up to ×4), **speed** and **size** yourself.
+  **Size** goes from ×0.5 to ×3 of Raft's own animal (the marker in the editor shows it): its body and hit box grow
+  with it, its health doesn't - give a big boss more **health** too. Players in multiplayer see the same size.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Colour** (every object): **None** keeps its own colours; the nine swatches tint it (a creature spot: every animal of
@@ -1635,8 +1637,7 @@ When you install a plan from the island library, its islands also get a `<island
 
 **To make an island a single island**, use it in no plan - or save a copy under another name and use the copy in the
 plan. **Plans that come with the mod:** the samples Adventure, Growing sea, Island hopping and Receiver adventure
-([7.1](#71-the-plans-that-come-with-the-mod)); from the library First Voyage, Far Horizons and The Castaway's Trail;
-and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
+([7.1](#71-the-plans-that-come-with-the-mod)); and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
 Seas ([16.4](#164-the-world-plans)).
 
 #### Random islands, in detail
@@ -2683,7 +2684,11 @@ opens the list:
   and style (tropical, snowy, desert, forest or volcanic), sometimes flying. Each one is saved as a `gen-<style>-<seed>.island`
   file and stays in that world (Tidy up moves unused ones away). Ticked, they join the pool next to your single islands and the
   map-type rows; unticked, only islands you made or downloaded and the map-type kinds come. How often they are picked is
-  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)). Hover the row for this text in the game;
+  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)): by default one comes as often as any one island of
+  the list, whenever a list island is due (after every 3-6 of Raft's islands, the span under the button). The files are in
+  `Mods\DynamicIslands`. **To keep one you liked:** EDITOR > An island > **Open an island...** lists them (marked "made by
+  the generator"), as do the editor's **Open** and **My islands...** (Generated); open it and **Save as** a name of your
+  own - then it is your island, in this list by its name. The **?** at the right end of the row says all this in the game;
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
   shown, for example all your test islands at once.
@@ -3390,7 +3395,7 @@ or library entry the message names, or ask the player who made the world to expo
 worlds kept their own plan, the plan file itself must be on the host's PC (see the table in
 [section 8](#who-needs-what-every-case)).
 
-**An installed island has an odd name like "Harbor (First Voyage)".** You had a different island called "Harbor", so
+**An installed island has an odd name like "Harbor (My Voyage)".** You had a different island called "Harbor", so
 the pack's was installed under that name instead of replacing yours.
 
 **A pack won't install.** The Import window says why: it may be made for a newer version of the mod, broken, or not an
@@ -3967,7 +3972,7 @@ One island each is enough to learn from; [16.5](#165-where-to-look-for) lists mo
 | A raft or deck of Raft's foundations | Tide Farm | The deck |
 | Blueprints in loot | Crowfield Farm | The basket in the farmhouse |
 | An island in Raft's story (the Receiver) | The Long Voyage, Raft Remade (plans) | Their rule cards ([16.4](#164-the-world-plans)) |
-| A whole world plan | Far Horizons and the other plans | [16.4](#164-the-world-plans) |
+| A whole world plan | The Long Voyage and the other plans | [16.4](#164-the-world-plans) |
 
 **Not on any island, on purpose:**
 

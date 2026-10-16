@@ -12,6 +12,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Monster size up to x3:** a creature spot's **Size** now goes from x0.5 to x3 of Raft's own animal (was x2.5); its
+  body and hit box grow with it, its health stays (set **Health** for a tougher one), and every player sees the same
+  size. Balboa Remade's Mama bear is Raft's bear at x2 - as tall as Balboa's own.
+- **Brand-new generated islands explained:** the row in World settings > Islands while sailing has a **?** saying what
+  it does, how often one comes, where each is saved (`gen-<style>-<seed>.island`, kept in that world) and how to keep
+  one; EDITOR > An island > **Open an island...** now lists generated islands too, to open and **Save as** your own.
 - **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
   for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
   world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
