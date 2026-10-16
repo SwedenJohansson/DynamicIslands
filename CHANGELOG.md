@@ -20,7 +20,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Keys kept for later islands in every library plan:** Raft Remade (Vasagatan's crowbar opens a crate at Caravan
   Town), The Long Voyage and The Abyss Expedition (Ironreef's pump store key, a box on the Drowned Metropolis), Silver
   Screen Seas (the liner's steward's keys, a sea chest at The Arena). Mayor's Wharf's keycard no longer shares its id
-  with the Drowned Metropolis' council keycards in The Long Voyage.
+  with the Drowned Metropolis' council keycards in The Long Voyage. Embers Isle's chained dog cage is scenery now (in Silver
+  Screen Seas it was a lock wanting bolt cutters only a later island gives). Blueprint names in Check read as words.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing

@@ -723,7 +723,8 @@ namespace DynamicIslands.Editor
 			return order.OrderBy(kv => kv.Key).ThenBy(kv => kv.Value.Rule < 0 ? 0 : 1).ThenBy(kv => kv.Value.Rule).Select(kv => kv.Value).ToList();
 		}
 
-		public static string Pretty(string blueprint) { return blueprint.Replace("Blueprint_", "").Replace("_", " "); }
+		/// <summary>A blueprint as players read it: "Blueprint_EngineControls" -> "Engine Controls", "Blueprint_Pipe_Fuel" -> "Pipe Fuel".</summary>
+		public static string Pretty(string blueprint) { return System.Text.RegularExpressions.Regex.Replace(blueprint.Replace("Blueprint_", "").Replace("_", " "), "(?<=[a-z])(?=[A-Z0-9])", " "); }
 
 		/// <summary>The islands a rule's reference means: a rule of the plan (what it brings), this island (self), or a saved island.</summary>
 		static List<Facts> RefFacts(Ctx c, string reference, out string what, out bool known, out int ruleIndex)
