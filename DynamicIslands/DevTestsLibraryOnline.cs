@@ -115,6 +115,14 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.6f);
 				var off = OffScreen(LibraryWindow.Root.gameObject, Screen.width, Screen.height);
 				Check(ref ok, off.Count == 0, "the window fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+				// (another entry clicked: the plan's picture goes at once - a slow download left it up on every entry after it)
+				Texture planPicture = LibraryWindow.Picture;
+				LibraryWindow.Select("ci-lib-solo");
+				Check(ref ok, planPicture != null && LibraryWindow.Picture != planPicture, "another entry selected: the plan's picture is not kept while its own loads");
+				yield return new WaitForSecondsRealtime(1f);
+				Check(ref ok, LibraryWindow.Picture != null && LibraryWindow.Picture != planPicture, "then that entry's own picture shows");
+				LibraryWindow.Select("ci-lib-pack");
+				yield return new WaitForSecondsRealtime(0.5f);
 
 				// Download
 				LibraryWindow.MainButton.onClick.Invoke();

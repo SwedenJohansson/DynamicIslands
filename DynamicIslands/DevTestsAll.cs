@@ -26,7 +26,7 @@ namespace DynamicIslands
 		// the plan window's Test this plan and Preview notebook have CIPlanTest and CIQuestBookPreview - 10-16 a plan with a main
 		// story let them through, the plan's test world opened mid-walk and every screen after it had no editor;
 		// Use in a plan... saves the island and adds it to a real plan - CIUseInPlan has it: 10-16 the walk put an island into
-		// the sample plan Adventure and then sat in that 90-rule plan's Check)
+		// the (then) sample plan Adventure and then sat in that 90-rule plan's Check)
 		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test", "Test this plan", "Preview notebook", "Use in a plan..." };
 		/// <summary>A list with more buttons than this (object tiles, items, sounds, plan cards) is sampled: its first three.</summary>
 		const int ListSample = 3, ListThreshold = 8;

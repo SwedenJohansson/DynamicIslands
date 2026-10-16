@@ -1227,7 +1227,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Each pickup's lowest point under its pivot as an island spawns it (measured by CIFloorPickups): used when the
 		/// piece's scene isn't loaded to measure it (islands made while sailing, the world randomizer).</summary>
-		static readonly float[] FloorPickupBottoms = { 0f, 0f, 0f, 0f, 0f };
+		static readonly float[] FloorPickupBottoms = { -0.210f, -0.028f, -0.060f, -0.114f, -0.152f };
 
 		public static bool IsFloorPickup(string name) { return Array.IndexOf(FloorPickupNames, name) >= 0; }
 
@@ -2765,7 +2765,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The fewest measured objects of a category for its habitat to decide.</summary>
 		const int HabitatMinCount = 25;
 
-		static readonly Dictionary<string, Habitat> habitats = new Dictionary<string, Habitat>();
+		// (made on first use, not by an initializer: Last = RaftLike() above runs first and reaches HabitatOf - with an
+		// initializer here the dictionary was still null then, and the class failed to load)
+		static Dictionary<string, Habitat> habitats;
 
 		/// <summary>Where Raft's islands of the style grow a category: its small islands' way (small) or its big ones'.</summary>
 		static Habitat HabitatOf(int style, string cat, bool small)
@@ -2774,6 +2776,7 @@ namespace DynamicIslands.Editor
 			if (!PlaceableCatalog.IsBuilt) return null; // (not cached: the catalog's names aren't known yet)
 			string key = style + "/" + cat + (small ? "/small" : "/big");
 			Habitat h;
+			if (habitats == null) habitats = new Dictionary<string, Habitat>();
 			if (habitats.TryGetValue(key, out h)) return h;
 			LandStyle land = RaftLand.For(style, small);
 			var core = new HashSet<string>(PlaceableCatalog.CoreNames);

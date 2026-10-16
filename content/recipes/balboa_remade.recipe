@@ -51,7 +51,8 @@ place Firewood_1 woodpile at 73.5 11 ground yaw=80
 place Zone_Trigger station at 91 3 h=6
 
 # --- The Mama bear's den: Balboa's bear cave as a rock outcrop on the west plateau, its mouth to the east; the rangers'
-# plank barricade across the mouth, grown over with vines; inside, the bear and Hendricks' pack -------------------------
+# plank barricade across the mouth, grown over with vines; inside, the Mama bear (Raft's bear at size x2, as tall as
+# Balboa's own Mama bear - CB8b) and Hendricks' pack -------------------------
 push at -66 -9 yaw=90
 clear from 0 6 to 0 -36 r=17
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
@@ -161,7 +162,7 @@ prop summit zone.id=summit
 prop summit zone.radius=7
 prop summit zone.message=The summit: the rangers' radio mast, their desk and their radio.
 prop mamabear creature.count=1
-prop mamabear creature.size=1.15
+prop mamabear creature.size=2
 prop mamabear creature.health=6
 prop mamabear creature.damage=1.5
 prop mamabear creature.respawn=0

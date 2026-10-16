@@ -120,8 +120,10 @@ namespace DynamicIslands
 		static Collider UnderRoof(EditorGameObject p)
 		{
 			Bounds b = PickupBounds(p);
-			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(b.center.x, b.max.y + 0.05f, b.center.z), Vector3.up, 6f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
-				if (h.collider.GetComponentInParent<EditorGameObject>() != p && h.collider.GetComponent<Terrain>() == null) return h.collider;
+			// (five rays: one straight up can slip through a seam where a hip roof's pieces meet)
+			foreach (Vector2 off in new[] { Vector2.zero, new Vector2(0.3f, 0f), new Vector2(-0.3f, 0f), new Vector2(0f, 0.3f), new Vector2(0f, -0.3f) })
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(b.center.x + off.x, b.max.y + 0.05f, b.center.z + off.y), Vector3.up, 6f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+					if (h.collider.GetComponentInParent<EditorGameObject>() != p && h.collider.GetComponent<Terrain>() == null) return h.collider;
 			return null;
 		}
 

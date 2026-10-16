@@ -64,7 +64,7 @@ namespace DynamicIslands.Editor
 			instance.islandMode = false;
 			string pick = name ?? lastPlan ?? WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n));
 			WorldPlan p = pick != null ? WorldPlan.Load(pick) : null;
-			if (p == null || p.BuiltIn) { EnsureSamples(); p = WorldPlan.Load(WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n)) ?? "") ?? NewPlan("My plan"); }
+			if (p == null || p.BuiltIn) { p = WorldPlan.Load(WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n)) ?? "") ?? NewPlan("My plan"); }
 			instance.Show(p);
 		}
 
@@ -1146,11 +1146,11 @@ namespace DynamicIslands.Editor
 		static Button HelpMark(Transform row, string text) { return UIKit.Help(row, text, 18f); }
 
 		const string HelpPlans = "A world plan is a list of rules: which custom islands a world gets, when they come and where. Each rule brings one island.\n\n" +
-			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name (a good way to start from a sample plan). " +
+			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name. " +
 			"Delete: moves the plan file to Mods\\DynamicIslands\\deleted\\plans, where you can get it back - worlds that use it keep their own copy.\n\n" +
 			"New main story...: a main story made step by step - Raft's story on or off, then your islands in the order players find them on the Receiver; " +
 			"each gets a tab in Raft's notebook. It adds rule cards you can change afterwards.";
-		const string HelpTemplates = "Adds a ready-made set of rules to this plan: an island-hopping trail, a story chain of your islands, flying islands, a quest reward, " +
+		const string HelpTemplates = "Adds a ready-made set of rules to this plan: a story chain of your islands, flying islands, a quest reward, " +
 			"your island in Raft's story... They are added to the rules you have; change them afterwards like any rule.";
 		const string HelpRandom = "On: islands from your spawn pool (spawnpool.txt) also turn up by chance while sailing, between the plan's islands.\n\n" +
 			"Off: the world gets only the islands its rules bring. Best for a story.";
@@ -1221,7 +1221,7 @@ namespace DynamicIslands.Editor
 			InfoWindow.Open("How to make a world plan",
 				"A world plan decides which custom islands a world gets, <b>when</b> they come and <b>where</b>. Each card on the left is one rule, and each rule brings one island:\n" +
 				"<i>When something happens → bring this island → put it there → tell the players.</i>\n\n" +
-				"1.  <b>New...</b> and give the plan a name - or pick a sample plan (Adventure, Island hopping...) and <b>Copy...</b> it to start from it.\n" +
+				"1.  <b>New...</b> and give the plan a name - or pick one of your plans and <b>Copy...</b> it to start from it.\n" +
 				"2.  Write a <b>description</b>: players see it when they choose the plan.\n" +
 				"3.  <b>Random islands while sailing</b>: off for a story (only your islands), on to have islands by chance as well.\n" +
 				"4.  <b>+ Add a rule</b> for the first island. Give it an <b>id</b> (e.g. camp), leave <b>WHEN</b> on \"When the world starts\", <b>BRING</b> \"A new island of a map type\" and pick one with ▾ (e.g. Old camp), " +
@@ -1597,82 +1597,18 @@ namespace DynamicIslands.Editor
 		}
 
 		#endregion
-
-		/// <summary>
-		/// Writes each sample plan once (listed in plans\samples.txt): they can be changed or deleted, and deleted ones
-		/// don't come back; samples added by a later version of the mod are written then.
-		/// </summary>
-		public static void EnsureSamples()
-		{
-			try
-			{
-				Directory.CreateDirectory(WorldPlan.Folder);
-				string list = Path.Combine(WorldPlan.Folder, "samples.txt");
-				var written = new HashSet<string>(File.Exists(list) ? File.ReadAllLines(list).Select(l => l.Trim()) : new string[0], StringComparer.OrdinalIgnoreCase);
-				bool changed = false;
-				foreach (var t in WorldPlanTemplates.All.Where(t => t.Value.Sample && !written.Contains(t.Key)))
-				{
-					if (!File.Exists(WorldPlan.PathFor(t.Key)))
-					{
-						WorldPlan p = WorldPlanTemplates.Get(t.Key);
-						p.Name = t.Key;
-						p.Save();
-					}
-					written.Add(t.Key);
-					changed = true;
-				}
-				if (changed) SafeFile.WriteAllLines(list, new[] { "# Sample world plans the mod has written once (delete a line to get that sample back)" }.Concat(written.OrderBy(n => n)).ToArray());
-			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the sample plans: " + e.Message); }
-		}
 	}
 
-	/// <summary>Ready-made sets of rules ("Templates..." in the plan editor; the samples are also written as plans).</summary>
+	/// <summary>Ready-made sets of rules ("Templates..." in the plan editor, and New... from a template).</summary>
 	public static class WorldPlanTemplates
 	{
 		public class Template
 		{
 			public string Description, Text;
-			/// <summary>Also written as a plan file the first time.</summary>
-			public bool Sample;
 		}
 
 		public static readonly List<KeyValuePair<string, Template>> All = new List<KeyValuePair<string, Template>>
 		{
-			new KeyValuePair<string, Template>("Island hopping", new Template { Sample = true,
-				Description = "An old camp near the start; each island you reach shows the way to the next, further out",
-				Text = "random = on\n" +
-					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
-					"rule = treasure | type:treasure | visit:camp | near:camp:900:any | Birds fly off towards another island... | Treasure\n" +
-					"rule = islets | type:archipelago | visit:treasure | near:treasure:1100:any | From the top you can see a group of islets. | Islets\n" +
-					"rule = volcano | type:volcano | visit:islets | near:islets:1400:any | Smoke rises far away. | Volcano\n" }),
-			new KeyValuePair<string, Template>("Adventure", new Template { Sample = true,
-				Description = "A story: each quest leads to the next island (camp, islets, a beast, a treasure), with wrecks and a sunken island on the way",
-				Text = "random = off\n" +
-					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
-					"rule = islets | type:archipelago | quest:camp | near:camp:900:north-east | The notice mentioned islets to the north-east. | Islets\n" +
-					"rule = beast | type:boss | quest:islets | near:islets:1000:any | The castaway's note warns of a beast on a plateau... | Plateau\n" +
-					"rule = treasure | type:treasure | quest:beast | near:beast:900:any | Among the spoils: a map to a treasure island! | Treasure\n" +
-					"rule = wreck | type:wreck | km:2 | ahead:300 | Something floats ahead: a wrecked raft. | Wreck\n" +
-					"rule = sunken | type:sunken | km:5 | ahead:350 | The water below looks strangely shallow. Dive! | Sunken\n" }),
-			new KeyValuePair<string, Template>("Growing sea", new Template { Sample = true,
-				Description = "Random islands while sailing, plus a special island every few km and days",
-				Text = "random = on\n" +
-					"rule = sandbar | type:sandbar | km:1 | ahead:300 | A tiny island with a chest. | Sandbar\n" +
-					"rule = atoll | type:atoll | km:4 | ahead:450 | A ring of land around a lagoon. | Atoll\n" +
-					"rule = stacks | type:stacks | day:3 | ahead:400 | Tall rocks rise from the sea. | Sea stacks\n" +
-					"rule = swamp | type:swamp | day:6 | ahead:400 | A green mist hangs over the water. | Swamp\n" +
-					"rule = spire | type:spire | km:8 | ahead:450 | It's getting colder. | Frozen spire\n" +
-					"rule = volcano | type:volcano | day:10 | ahead:450 | The sea smells of sulphur. | Volcano\n" }),
-			new KeyValuePair<string, Template>("Receiver adventure", new Template { Sample = true,
-				Description = "A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency",
-				Text = "random = off\n" +
-					"story = off\n" +
-					"storyending = The treasure is yours, and the last frequency falls silent. Every island of the adventure is in this book.\\n\\nThe end.\n" +
-					"rule = camp | type:camp | start | receiver:600 | A faint signal crackles on the Receiver... | Old camp | first | quest\n" +
-					"rule = islets | type:archipelago | start | receiver:800 | The camp's radio log names another frequency. | Islets | after:camp | quest\n" +
-					"rule = beast | type:boss | start | receiver:900 | A distress call from a plateau... | Plateau | after:islets | quest\n" +
-					"rule = treasure | type:treasure | start | receiver:800 | Among the spoils: the frequency of a treasure island! | Treasure | after:beast | quest\n" }),
 			new KeyValuePair<string, Template>("Detour in Raft's story", new Template {
 				Description = "Raft's story as usual, with one of your islands after Vasagatan: its frequency comes with Vasagatan's note, and its quest gives Balboa's",
 				Text = "rule = detour | type:camp | start | receiver:700 | A second signal hides under Vasagatan's... | Old camp | after:Vasagatan | quest\n" }),

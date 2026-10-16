@@ -880,6 +880,8 @@ namespace DynamicIslands
 				bool footUnder = Enumerable.Range(0, 8).Any(k => Physics.Raycast(new Vector3(c.x, 1f, c.z) + Quaternion.Euler(0f, k * 45f, 0f) * Vector3.forward * deepS.Radius * 1.6f, Vector3.up, out hit, 58f, 1 << IslandSpawner.TerrainLayer));
 				Check(ref ok, holeCount > 0 && under != null && underLowest >= 7.5f && low == 0 && !footUnder && shown <= wanted + 5,
 					"flying 60 m up: " + holeCount + " holes, underside down to " + underLowest.ToString("F1") + " m above the sea, " + low + " objects under the land, nothing hangs below the coast: " + !footUnder + ", " + shown + " objects (the file has " + wanted + " above its sea)");
+				string open = FlyingOpenFromBelow(e.Root);
+				Check(ref ok, open == null, "seen from below the flying cideep's underside meets its ground all round the coast" + (open != null ? ": " + open : ""));
 				Screenshot(new[] { "deep_flying" });
 				yield return new WaitForSeconds(0.6f);
 				IslandWorldState.Remove("cideep");
