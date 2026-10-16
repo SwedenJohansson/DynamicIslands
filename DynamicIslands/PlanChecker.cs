@@ -955,6 +955,13 @@ namespace DynamicIslands.Editor
 				x.Traps.Add(new Finding(-1, Level.Warning, "the story item" + (unknown.Count > 1 ? "s " : " ") + string.Join(", ", unknown.Select(id => "'" + id + "'").ToArray()) +
 					(unknown.Count > 1 ? " are" : " is") + " used (a quest step, a check, a chest or an action) but not in the island's Story items list - deleted, or a typo? Unless another island of the world has it, it shows with its id for a name and no picture.",
 					"Island tab > Story items...: add it again (Ctrl+Z if you just deleted it), or change what uses it."));
+			// A key door (RF4) whose use wants no story item: it opens for anyone, which a key door seldom means
+			List<string> open = objects.Where(o => KeycardDoor.Is(o.Key.Name) && ObjectProps.Get(o.Value, BehaviourProps.Use).Length > 0 && KeycardDoor.CardOf(o.Value) == null)
+				.Select(o => ObjectProps.Get(o.Value, BehaviourProps.Name).Trim().Length > 0 ? "'" + ObjectProps.Get(o.Value, BehaviourProps.Name).Trim() + "'" : PlaceableCatalog.DisplayName(o.Key.Name)).ToList();
+			if (open.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, (open.Count > 1 ? open.Count + " keycard/key doors (" : "a keycard/key door (") + string.Join(", ", open.Distinct().Take(4).ToArray()) + ") that no story item opens: "
+					+ (open.Count > 1 ? "they open" : "it opens") + " for anyone.",
+					"Select the door: Keycard door > Card, and choose the story item (a keycard) that opens it."));
 			// A later step's chest or creature spot that is there from the start: players get to it before the step (what
 			// they do is kept and counted when the step comes - QuestTracker - but its loot and the story come too early)
 			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)

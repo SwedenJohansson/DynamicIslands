@@ -177,7 +177,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(row, "All ▶|", () => Show(Moments.Count), "Every page, as at the end of the story", 90, 26f, 12).name = "Preview_All";
 			UIKit.Button(row, "Open the notebook", OpenBook, "Open Raft's notebook again (Esc closes it)", 150, 26f, 12);
 			UIKit.Size(UIKit.Label(row, "", 12).gameObject, -1, -1, 1);
-			Button back = UIKit.Button(row, "Back to World Plans", IslandTest.Back, "Leave the test world (not saved) and go back to World Plans with this plan", 180, 26f, 12);
+			Button back = UIKit.Button(row, "Back to the plan", IslandTest.Back, "Leave the test world (not saved) and go back to this world plan", 180, 26f, 12);
 			UIKit.Primary(back);
 			UpdateBar();
 		}

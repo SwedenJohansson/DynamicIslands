@@ -393,6 +393,8 @@ namespace DynamicIslands.Editor
 			hostText.text = host ? "you are the host: changes are for every player" : "the host's settings - only the host changes them";
 			foreach (var kv in buttons) kv.Value.interactable = host && kv.Key != "BuildCost_Value";
 			buttons["BackToEditor"].gameObject.SetActive(IslandTest.Testing);
+			// (a plan tried from the main menu goes back to its plan there, not to the editor)
+			if (IslandTest.Testing) UIKit.LabelOf(buttons["BackToEditor"]).text = IslandTest.FromMenu ? "Back to the world plan" : "Back to the editor";
 			buttons["BackToEditor"].interactable = true;
 			for (int i = 0; i < MonsterDifficulty.Names.Length; i++) UIKit.SetActive(buttons["Monsters_" + MonsterDifficulty.Names[i]], MonsterDifficulty.Current == i);
 			UIKit.LabelOf(buttons["BuildCost_Value"]).text = BuildCost.Describe(BuildCost.Current);
