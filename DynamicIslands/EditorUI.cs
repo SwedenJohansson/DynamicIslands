@@ -186,8 +186,8 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch(lightText.rectTransform, 5, 22, 1, 1);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
 			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
-			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
-				"Back to Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
+			UIKit.Button(app, "Main menu", EditorEntry.ToMainMenu,
+				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
 		}
 
 		static Button lightButton;

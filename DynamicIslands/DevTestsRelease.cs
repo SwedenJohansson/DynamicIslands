@@ -322,6 +322,9 @@ namespace DynamicIslands
 			if (win == null) { Fail("story plan made"); yield break; }
 			Check(ref ok, Click(win, "New..."), "New... clicked");
 			yield return null; yield return null;
+			// (New... asks how to start first: an empty plan - TODO 5b)
+			Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(WorldPlanWindow.NewEmpty), "New...: an empty plan");
+			yield return null; yield return null;
 			GameObject prompt = WindowObject(typeof(TextPromptWindow));
 			Check(ref ok, prompt != null && TypeInto(prompt, "Name", StoryPlan) && Click(prompt, "OK"), "the name prompt: '" + StoryPlan + "', OK");
 			yield return null; yield return null;

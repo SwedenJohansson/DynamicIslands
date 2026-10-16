@@ -71,6 +71,13 @@ namespace DynamicIslands
 					eb.onClick.Invoke();
 					run.Pressed++;
 					Log("Pressed the main menu's EDITOR button");
+					// (it opens the start window: its New island opens the editor - TODO 5b)
+					yield return new WaitForSecondsRealtime(0.5f);
+					Button ni = CreateWindow.IsOpen ? CreateWindow.Root.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Button_New island") : null;
+					if (ni == null) { Fail("the EDITOR button did not open the start window with New island"); yield break; }
+					run.Current = "Start window > New island";
+					ni.onClick.Invoke();
+					run.Pressed++;
 					// (its own load: WaitForEditor would start a second one)
 					float t0 = Time.realtimeSinceStartup;
 					while (!(DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && EditorUI.Canvas != null) && Time.realtimeSinceStartup - t0 < 120f) yield return new WaitForSecondsRealtime(0.5f);

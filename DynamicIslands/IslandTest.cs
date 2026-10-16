@@ -47,6 +47,22 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The island the editor had open when the preview started (opened again after it).</summary>
 		static string previewIsland;
+		/// <summary>The plan test or preview started from the plan window on the main menu (TODO 5b): back to the menu, not the editor.</summary>
+		static bool fromMenu;
+		/// <summary>The plan test or preview started on the main menu and goes back there.</summary>
+		public static bool FromMenu { get { return fromMenu; } }
+
+		static bool OnMainMenu() { return !LoadSceneManager.IsGameSceneLoaded && GameObject.Find("MainMenuCanvas") != null; }
+
+		/// <summary>A plan test or preview can start: from the editor (its island saved first) or from the main menu.</summary>
+		static bool PlanStart()
+		{
+			bool editor = DynamicIslands.InEditor();
+			if (!editor && !OnMainMenu()) return false;
+			fromMenu = !editor;
+			previewIsland = editor && !DynamicIslands.IsUnnamed ? DynamicIslands.currentIslandName : null;
+			return previewIsland == null || !EditorAutosave.Unsaved || DynamicIslands.SaveIsland(previewIsland);
+		}
 
 		/// <summary>The editor's Test in a world: saves the island (when it has a name) and goes to try it.</summary>
 		public static void Start()
@@ -64,15 +80,14 @@ namespace DynamicIslands.Editor
 			Island = name;
 			PreviewPlan = null;
 			PlanToTest = null;
+			fromMenu = false;
 			Go("Trying '" + name + "' in the world '" + WorldName + "'", "Trying '" + name + "' in a world...");
 		}
 
 		/// <summary>World Plans' Test this plan: a new test world made with the plan (its islands come as in any world).</summary>
 		public static void StartPlan(string plan)
 		{
-			if (!DynamicIslands.InEditor() || Busy || string.IsNullOrEmpty(plan)) return;
-			previewIsland = DynamicIslands.IsUnnamed ? null : DynamicIslands.currentIslandName;
-			if (previewIsland != null && EditorAutosave.Unsaved && !DynamicIslands.SaveIsland(previewIsland)) return;
+			if (Busy || string.IsNullOrEmpty(plan) || !PlanStart()) return;
 			PlanToTest = plan;
 			PreviewPlan = null;
 			Island = null;
@@ -82,9 +97,7 @@ namespace DynamicIslands.Editor
 		/// <summary>World Plans' Preview notebook: to the test world with the plan (the island being edited saved first, as Test does).</summary>
 		public static void StartPreview(WorldPlan plan)
 		{
-			if (!DynamicIslands.InEditor() || Busy || plan == null) return;
-			previewIsland = DynamicIslands.IsUnnamed ? null : DynamicIslands.currentIslandName;
-			if (previewIsland != null && EditorAutosave.Unsaved && !DynamicIslands.SaveIsland(previewIsland)) return;
+			if (Busy || plan == null || !PlanStart()) return;
 			PreviewPlan = WorldPlan.Parse(plan.Name, plan.ToText());
 			PlanToTest = null;
 			Island = null;
@@ -142,12 +155,29 @@ namespace DynamicIslands.Editor
 					{ state = State.Testing; DynamicIslands.instance.StartCoroutine(BringIsland()); }
 					break;
 				case State.Testing:
-					if (!LoadSceneManager.IsGameSceneLoaded && menu) { QuestBookPreview.End(); PreviewPlan = null; PlanToTest = null; Stop("Left the test world", false); } // (by Raft's own menu)
+					if (!LoadSceneManager.IsGameSceneLoaded && menu) { QuestBookPreview.End(); PreviewPlan = null; PlanToTest = null; fromMenu = false; Stop("Left the test world", false); } // (by Raft's own menu)
 					break;
 				case State.Returning:
-					if (menu) { state = State.OpeningEditor; DynamicIslands.LoadEditor(new string[0]); }
+					if (menu && fromMenu) { state = State.OpeningEditor; waitUntil = Time.unscaledTime + 1f; }
+					else if (menu) { state = State.OpeningEditor; DynamicIslands.LoadEditor(new string[0]); }
 					break;
 				case State.OpeningEditor:
+					if (fromMenu)
+					{
+						// (the plan was tested from the main menu: its start window and the plan open there again)
+						if (!menu || Time.unscaledTime < waitUntil) break;
+						state = State.None;
+						fromMenu = false;
+						MenuWindows.Ensure();
+						CreateWindow.Open();
+						WorldPlan back = PreviewPlan ?? (PlanToTest != null ? WorldPlan.Load(PlanToTest) : null);
+						string what = PreviewPlan != null ? PreviewPlan.Name : PlanToTest;
+						PreviewPlan = null;
+						PlanToTest = null;
+						if (back != null) WorldPlanWindow.OpenWith(back);
+						Step("Back in World Plans with '" + what + "' (main menu)");
+						break;
+					}
 					if (DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt)
 					{
 						string n = Island;

@@ -212,6 +212,10 @@
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="IslandSummaries.cs" />
     <Compile Include="WorldPlanWindow.cs" />
+    <Compile Include="CreateWindow.cs" />
+    <Compile Include="EditorEntry.cs" />
+    <Compile Include="DevTestsEditorStart.cs" />
+    <Compile Include="MenuWindows.cs" />
     <Compile Include="HelpLinks.cs" />
     <Compile Include="InfoWindow.cs" />
     <Compile Include="NewWorldOptions.cs" />

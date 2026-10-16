@@ -147,7 +147,7 @@ namespace DynamicIslands.Editor
 		void Show(WorldPlan p)
 		{
 			plan = p;
-			if (!islandMode) lastPlan = p.Name;
+			if (!islandMode) { lastPlan = p.Name; EditorEntry.RememberPlan(p.Name); }
 			gameObject.SetActive(true);
 			transform.SetAsLastSibling();
 			titleText.text = islandMode ? "ISLAND RULES" : "WORLD PLANS";
@@ -295,7 +295,7 @@ namespace DynamicIslands.Editor
 
 			planRow = UIKit.Row(panel, 30f, 6f, "PlanRow");
 			planButton = UIKit.Button(planRow, "Plan", PickPlan, "Choose the plan to edit", 320, 30f, 13);
-			newButton = UIKit.Button(planRow, "New...", () => AskName("New plan", "A new, empty plan", "", n => Show(NewPlan(n))), "Start a new plan", 90, 30f, 12);
+			newButton = UIKit.Button(planRow, "New...", AskNewPlan, "Start a new world plan: empty, its Main story line step by step, from a template or as a copy", 90, 30f, 12);
 			copyButton = UIKit.Button(planRow, "Copy...", () => AskName("Copy plan", "A copy of '" + plan.Name + "'", plan.Name + " copy", n => { Keep(); var c = WorldPlan.Parse(n, plan.ToText()); c.Id = WorldPlan.NewId(); c.Save(); Show(c); }), "Save a copy under another name", 90, 30f, 12);
 			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Move this plan to the deleted\\plans folder (worlds that use it keep their own copy)", 90, 30f, 12);
 			UIKit.DangerButton(deleteButton);
@@ -1083,6 +1083,46 @@ namespace DynamicIslands.Editor
 			return p;
 		}
 
+		public const string NewEmpty = "*empty*", NewStory = "*story*", NewTemplatePrefix = "template:", NewCopyPrefix = "copy:";
+
+		/// <summary>
+		/// New world plan (the start window and the plan's New...): how to start it - empty, its Main story line step by step,
+		/// from a template or as a copy of one of the player's plans - then its name. The new plan is saved and shown.
+		/// </summary>
+		public static void AskNewPlan()
+		{
+			if (instance == null) return;
+			if (IsOpen) instance.Keep();
+			var choices = new List<ChoiceWindow.Choice>
+			{
+				new ChoiceWindow.Choice(NewEmpty, "An empty plan", "No islands yet: add them to its Main story line, or as other islands"),
+				new ChoiceWindow.Choice(NewStory, "A Main story line, step by step", "Pick your islands in the order the Receiver leads players to them; each gets a tab in Raft's notebook"),
+			};
+			choices.AddRange(WorldPlanTemplates.All.Select(t => new ChoiceWindow.Choice(NewTemplatePrefix + t.Key, "From the template '" + t.Key + "'", t.Value.Description)));
+			choices.AddRange(WorldPlan.All().Where(n => !WorldPlan.IsBuiltIn(n)).Select(n => new ChoiceWindow.Choice(NewCopyPrefix + n, "A copy of '" + n + "'", "All its islands and settings, under a new name")));
+			ChoiceWindow.Open("New world plan", choices, how =>
+			{
+				string from = how.StartsWith(NewCopyPrefix) ? how.Substring(NewCopyPrefix.Length) : null;
+				AskName("New world plan", from != null ? "A copy of '" + from + "': its name" : "Its name (players see it when they choose a plan for a New Game)", from != null ? from + " copy" : "", n =>
+				{
+					WorldPlan p;
+					if (from != null)
+					{
+						WorldPlan source = WorldPlan.Load(from);
+						if (source == null) { DynamicIslands.Notify("The plan '" + from + "' could not be read", true); return; }
+						p = WorldPlan.Parse(n, source.ToText());
+						p.Id = WorldPlan.NewId();
+						p.Save();
+					}
+					else p = NewPlan(n);
+					instance.islandMode = false;
+					instance.Show(p);
+					if (how.StartsWith(NewTemplatePrefix)) { instance.AddTemplate(how.Substring(NewTemplatePrefix.Length)); instance.Keep(); instance.plan.Save(); }
+					if (how == NewStory) MainStoryHelper.Open();
+				});
+			});
+		}
+
 		static void AskName(string title, string message, string text, Action<string> ok)
 		{
 			TextPromptWindow.Open(title, message, text, n =>
@@ -1095,7 +1135,12 @@ namespace DynamicIslands.Editor
 		void PickTemplate()
 		{
 			Keep();
-			ChoiceWindow.Open("Add rules from a template", WorldPlanTemplates.All.Where(x => !islandMode || !WorldPlanTemplates.Get(x.Key).HasStory).Select(t => new ChoiceWindow.Choice(t.Key, t.Key, t.Value.Description)), key =>
+			ChoiceWindow.Open("Add rules from a template", WorldPlanTemplates.All.Where(x => !islandMode || !WorldPlanTemplates.Get(x.Key).HasStory).Select(t => new ChoiceWindow.Choice(t.Key, t.Key, t.Value.Description)), AddTemplate);
+		}
+
+		/// <summary>A template's rules (and story settings) added to the plan shown.</summary>
+		void AddTemplate(string key)
+		{
 			{
 				WorldPlan t = WorldPlanTemplates.Get(key);
 				if (t == null) return;
@@ -1131,7 +1176,7 @@ namespace DynamicIslands.Editor
 					ShowRandom();
 				}
 				ShowRules();
-			});
+			}
 		}
 
 		#endregion
