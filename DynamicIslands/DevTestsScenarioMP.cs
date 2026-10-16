@@ -48,7 +48,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIScLair", docs: "Dev, world (host): spawns and keeps 'cisclair' for the two-player lair scenario (SC25): an arena zone that wakes a Boss warthog (x4 health, never coming back), a hoard chest; the level up system on")]
 		public static void ScLairCommand() { StartTest(ScMpSpawn("cisclair", "Boar's Lair", f =>
 		{
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			Vector3 arena = ScDry(f, new Vector2(0, 0), 1);
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, arena, ObjectProps.ZoneId, "arena", ObjectProps.ZoneRadius, "6", ObjectProps.ZoneMessage, "The ground shakes... the boar wakes!"));
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(8, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0", ObjectProps.CreatureZone, "arena",

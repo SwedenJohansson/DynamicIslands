@@ -21,6 +21,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
   the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
   **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
+  with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
@@ -132,6 +134,18 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
+- **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
+  other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
+- **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
+  it gives. Optional finds (buried treasure, caches) needing a later tool are only listed in Progression.
 - **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
   notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
   the window's edge.
@@ -203,6 +217,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
+  of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
   while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
 - **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
