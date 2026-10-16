@@ -165,6 +165,8 @@
     <Compile Include="StormDays.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
+    <Compile Include="BossPhases.cs" />
+    <Compile Include="Survivors.cs" />
     <Compile Include="HeadStart.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
@@ -204,6 +206,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsChoiceTiming.cs" />

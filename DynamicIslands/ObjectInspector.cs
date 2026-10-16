@@ -118,6 +118,7 @@ namespace DynamicIslands.Editor
 					if (!note || !loot) AddFeatureGroup(target, note, loot);
 				}
 				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
+				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
 			}
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
@@ -216,6 +217,93 @@ namespace DynamicIslands.Editor
 				Refresh();
 			}, choices.Count > 1 ? "Click to choose: at once, or when a player walks into one of the island's trigger zones (an ambush)" : "Place a trigger zone (Zones & triggers) to make this an ambush", -1, 26f, 12);
 			UIKit.SetActive(wake, waits.Length > 0);
+			BossPhaseRows(g, target);
+		}
+
+		/// <summary>A boss phase (RF5): at a share of its health the creature calls more, gets faster and sends a signal.</summary>
+		static void BossPhaseRows(RectTransform g, EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			bool has = BossPhases.Has(p);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "BossPhase");
+			UIKit.Size(UIKit.Label(row, "Boss phase", 13, UIKit.TextMuted).gameObject, 80);
+			Button b = UIKit.Button(row, has ? BossPhases.Describe(p) : "none", () =>
+			{
+				Dictionary<string, string> np = ObjectProps.With(target.Props, BossPhases.Share, has ? null : "0.5");
+				if (!has) { np = ObjectProps.With(np, BossPhases.Summon, "2"); np = ObjectProps.With(np, BossPhases.Speed, "1.3"); }
+				else { np = ObjectProps.With(np, BossPhases.Summon, null); np = ObjectProps.With(np, BossPhases.Speed, null); np = ObjectProps.With(np, BossPhases.SummonKind, null); np = ObjectProps.With(np, BossPhases.Signal, null); }
+				PropsCommand.Change(target, np);
+				Refresh();
+			}, "Click to turn on or off: once per fight, when one of its animals falls to a share of its health, it calls more creatures, gets faster, sends a signal (for world plans) and runs its 'phase' event", -1, 26f, 12);
+			UIKit.SetActive(b, has);
+			if (!has) return;
+			UIKit.Slider(g, "Starts at health", 10, 90, Mathf.Round(BossPhases.ShareOf(p) * 100f), v => v.ToString("F0") + " %",
+				v => Set(target, BossPhases.Share, ObjectProps.Format(Mathf.Round(v) / 100f), null, false), "The share of its health it falls to before the phase starts", true);
+			UIKit.Slider(g, "Calls", 0, BossPhases.MaxSummon, BossPhases.SummonCount(p), v => v < 1 ? "none" : v.ToString("F0") + " more",
+				v => Set(target, BossPhases.Summon, ((int)v).ToString(), "0", false), "How many creatures it calls (they come around it, with Raft's own stats)", true);
+			// The kind it calls: steps through its own kind and the hostile ones
+			string kindName = ObjectProps.Get(p, BossPhases.SummonKind);
+			List<string> kinds = new[] { "" }.Concat(ContentCatalog.Creatures.Where(k => k.Category == ContentCatalog.HostileCategory).Select(k => k.Name)).Distinct().ToList();
+			if (kindName.Length > 0 && !kinds.Contains(kindName)) kinds.Add(kindName);
+			RectTransform krow = UIKit.Row(g, 26f, 4f, "BossKind");
+			UIKit.Size(UIKit.Label(krow, "Of kind", 13, UIKit.TextMuted).gameObject, 80);
+			ContentCatalog.CreatureKind called = kindName.Length > 0 ? ContentCatalog.CreatureOf(kindName) : null;
+			UIKit.Button(krow, called != null ? called.Label : "its own", () =>
+			{
+				string next = kinds[(kinds.IndexOf(kindName) + 1) % kinds.Count];
+				Set(target, BossPhases.SummonKind, next.Length > 0 ? next : null);
+				Refresh();
+			}, "Click to step through: its own kind, or one of the hostile creatures", -1, 26f, 12);
+			UIKit.SliderRow s = UIKit.Slider(g, "Speed then", BossPhases.MinSpeed, BossPhases.MaxSpeed, BossPhases.SpeedOf(p), v => "×" + v.ToString("0.00"), null, "How much faster it gets (on top of its speed above)");
+			s.Slider.onValueChanged.AddListener(v => Set(target, BossPhases.Speed, ObjectProps.Format(Mathf.Round(v * 20f) / 20f), "1", false));
+			InputField sig = UIKit.Field(g, "Signal (phase)", ObjectProps.Get(p, BossPhases.Signal), 26f, "The signal it sends when the phase starts (world plans and 'signal' checks can wait for it). Empty: 'phase'");
+			sig.onEndEdit.AddListener(v => Set(target, BossPhases.Signal, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(sig);
+		}
+
+		/// <summary>A survivor's cage (RF3): who is in it, what they say, the story item that opens it, the signal.</summary>
+		static void SurvivorGroup(EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			RectTransform g = UIKit.Group(root, "Survivor");
+			InputField name = SurvivorField(g, "Name", ObjectProps.Get(p, Survivors.NameProp, Survivors.DefaultName), 26f, "The survivor's name (in the bubble and on the raft)");
+			name.characterLimit = 32;
+			name.onEndEdit.AddListener(v => Set(target, Survivors.NameProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(name);
+			// Who it is: steps through Raft's characters (none: one picked by the survivor's id)
+			string ch = ObjectProps.Get(p, Survivors.CharacterProp);
+			List<string> chars = new[] { "" }.Concat(Behaviours.Characters().Where(c => c != null).Select(c => c.displayName)).Distinct().ToList();
+			if (ch.Length > 0 && !chars.Contains(ch)) chars.Add(ch);
+			RectTransform crow = UIKit.Row(g, 26f, 4f, "SurvivorCharacter");
+			UIKit.Size(UIKit.Label(crow, "Looks like", 13, UIKit.TextMuted).gameObject, 80);
+			UIKit.Button(crow, ch.Length > 0 ? ch : "any (by its id)", () =>
+			{
+				string next = chars[(chars.IndexOf(ch) + 1) % chars.Count];
+				Set(target, Survivors.CharacterProp, next.Length > 0 ? next : null);
+				Refresh();
+			}, "Click to step through Raft's characters", -1, 26f, 12);
+			UIKit.Size(UIKit.Label(g, "What the survivor says when freed", 12, UIKit.TextMuted).gameObject, -1, 16);
+			InputField line = UIKit.TextArea(g, "A line in a speech bubble", 46f, "Shown over the survivor for a few seconds, then the survivor is on the raft");
+			line.text = ObjectProps.Get(p, Survivors.LineProp, Survivors.DefaultLine);
+			line.characterLimit = 160;
+			line.onEndEdit.AddListener(v => Set(target, Survivors.LineProp, v.Trim().Length > 0 ? v.Trim() : null));
+			amountFields.Add(line);
+			InputField key = SurvivorField(g, "Key item", StoryItems.IdOf(ObjectProps.Get(p, Survivors.KeyProp)), 26f, "The story item that opens the cage (used up). Empty: the cage isn't locked");
+			key.onEndEdit.AddListener(v => Set(target, Survivors.KeyProp, v.Trim().Length > 0 ? StoryItems.Ref(StoryItems.IdOf(v.Trim())) : null, null));
+			amountFields.Add(key);
+			InputField id = SurvivorField(g, "Survivor id", ObjectProps.Get(p, Survivors.IdProp), 26f, "One survivor per id in a world (empty: the island's name and the cage). Two cages with one id free one survivor");
+			id.onEndEdit.AddListener(v => Set(target, Survivors.IdProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(id);
+			InputField sig = SurvivorField(g, "Signal", ObjectProps.Get(p, Survivors.SignalProp), 26f, "The signal sent when the survivor is freed (world plans and 'signal' checks can wait for it). Empty: 'survivor'");
+			sig.onEndEdit.AddListener(v => Set(target, Survivors.SignalProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(sig);
+		}
+
+		static InputField SurvivorField(RectTransform g, string label, string text, float height, string hint)
+		{
+			RectTransform row = UIKit.Row(g, height, 4f, label);
+			UIKit.Size(UIKit.Label(row, label, 13, UIKit.TextMuted).gameObject, 80);
+			return UIKit.Field(row, label, text, height, hint);
 		}
 
 		static void Multiplier(Transform g, EditorGameObject target, string label, string key, float min, float max, float value, string hint)

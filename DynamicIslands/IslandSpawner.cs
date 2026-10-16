@@ -440,6 +440,8 @@ namespace DynamicIslands.Editor
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
 					// A trader's stall (its stock under the object's index)
 					else if (TradeStand.IsTrade(o.Props)) TradeStand.Attach(go, o.Props, index);
+					// A survivor's cage (RF3: its state under the object's index)
+					else if (Survivors.IsCage(o.Name)) SurvivorCage.Attach(go, o.Props ?? new Dictionary<string, string>(), index);
 					// Names, movement, "players can use it", collision, events (Behaviours)
 					Behaviours.Attach(go, o.Name, o.Props, index);
 				}

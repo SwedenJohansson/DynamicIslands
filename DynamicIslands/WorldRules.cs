@@ -72,6 +72,7 @@ namespace DynamicIslands.Editor
 		{
 			worldRegrow = -1;
 			if (!Raft_Network.IsHost) return;
+			Survivors.Reset();
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			bool newWorld = isNew;
@@ -90,12 +91,12 @@ namespace DynamicIslands.Editor
 				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
 				return true;
 			}
-			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value);
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value) || Survivors.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
-			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines());
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines()).Concat(Survivors.WriteLines());
 			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
 		}
 
@@ -124,14 +125,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
+		internal static bool HasState { get { return Survivors.HasState || MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
-		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data).</summary>
+		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data);
+		/// the rescued survivors (Names, RF3).</summary>
 		internal static IslandNetMessage Message()
 		{
-			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode() };
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode(), Names = Survivors.Encode() };
 		}
 
 		internal static void Broadcast()
@@ -147,6 +149,7 @@ namespace DynamicIslands.Editor
 			// (the cost each block was placed at, AU33; a host with an older version: its blocks at its cost)
 			if (msg.Name != null) BuildCostRefund.Decode(msg.Name); else BuildCostRefund.OnCostRead(msg.Count);
 			HostSettingsFrom(msg.Data);
+			Survivors.FromHost(msg.Names);
 		}
 
 		/// <summary>Client: a host's world arrived; Raft's own rules until that host's come.</summary>
@@ -155,6 +158,7 @@ namespace DynamicIslands.Editor
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
 			BuildCostRefund.Reset(0);
+			Survivors.Reset();
 			hostKnown = false;
 			worldRegrow = -1;
 		}

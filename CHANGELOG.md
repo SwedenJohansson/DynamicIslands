@@ -12,6 +12,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Survivors to rescue:** a new object, **Survivor in a cage**, holds one of Raft's characters locked in with a story
+  item. Bring the key and press E: the survivor says a line in a speech bubble and then stands on your raft. One per
+  survivor id in a world, saved with it and seen by every player; the rescue sends a signal for quests and plans.
+- **Boss phases:** a hostile creature spot can get a second phase: at a share of its health (half by default) it calls
+  more creatures, gets faster and sends a signal, once per fight. A reload mid-fight keeps the phase. The Boss map
+  type's beast has one.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing

@@ -268,7 +268,10 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   again, as in Raft's air pockets under Caravan Town.
 - **Creatures:** Raft's own animals at the island's creature spots, with the builder's toughness, size and colour.
   Warthogs and bears fight you; chickens, goats and llamas can be caught with Raft's net launcher and kept on the raft.
-  Killed and caught animals come back after the regrow days unless the builder said never.
+  Killed and caught animals come back after the regrow days unless the builder said never. A **boss** may have a
+  second phase: at part of its health it roars, calls more animals and gets faster.
+- **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
+  survivor thanks you in a speech bubble, and from then on stands on your raft.
 
 ![Reading a note](images/world-note.jpg)
 *A note found on an island ("Warthogs live here. Bring a spear."), its title in Raft's lettering and its text on Raft's light tan, as the journal shows its pages. Press E, Tab or Esc to close it.*
@@ -854,7 +857,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Atoll | A ring of land around a shallow lagoon |
 | Archipelago | Several islets; a castaway's note and three caches |
 | Sea stacks | Steep rock pillars; a chest on top of the tallest (build your way up) |
-| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
+| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one; at half health it roars, calls 2 more and gets faster: a [boss phase](#51-creatures)). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
 | Volcano, swamp, frozen spire | A tall volcano with embers; low land with pools and mist; a snowy peak with a cache on top |
 | Treasure island | A map in a bottle on the beach leads to the X and a treasure chest |
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
@@ -1167,6 +1170,15 @@ turtle, stingray, dolphin, whale.
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
   the tint.
+- **Boss phase** (hostile animals): click **none** to give the spot a second phase. Once per fight, when one of its
+  animals falls to **Starts at health** (10 to 90 %, 50 % at first), it **calls** up to 6 more creatures (of **its own**
+  kind or another hostile one) around itself, gets faster (**Speed then**, ×1.3 at first), sends a **signal**
+  ("phase" unless you name one, for world plans and **signal** checks, see [6.2](#62-behaviour-and-events)) and runs
+  its **phase** event (a message, a sound...). A world saved mid-fight comes back in the second phase, without calling
+  again; once all its animals are beaten the next fight (after the regrow days) has its phase again. Under a harder
+  monster difficulty the phase comes at the same share of health, after more hits. The **Boss** map type gives its
+  beast a phase that calls 2 more and says "The beast roars in fury". Everyone sees it: the host runs it, and hits from
+  any player count.
 
 **Angler fish swim rounds** around their spot, through the open water near it (in Raft they follow a route of their
 island's; here the mod lays one out in a ring around the spot, clear of the ground and of objects). Give them room:
@@ -1364,6 +1376,14 @@ only for someone who has it), or **a locked chest** whose key is hidden in drift
 
 ![Story items and story sets](images/editor-story-items.jpg)
 *The Story items window: the island's story items ("Old key") and the four story sets.*
+
+**Survivors to rescue.** **Loot & chests** has **Survivor in a cage** (Raft's shark cage with one of Raft's
+characters inside). In its **Survivor** group set the **Name**, who it **Looks like** (a Raft character, or any by its
+id), **What the survivor says when freed**, the **Key item** (a story item, used up; empty: not locked), a **Survivor
+id** and a **Signal** ("survivor" unless you name one). A player whose crew holds the key presses **E** at the cage:
+the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
+stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
+islands and after a reload, so two cages with one id free one survivor.
 
 ### 6.4 Islands that bring islands
 

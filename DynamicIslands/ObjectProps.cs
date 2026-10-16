@@ -81,6 +81,7 @@ namespace DynamicIslands.Editor
 				props[BehaviourProps.ElseKey("use")] = "message||The vines are too thick to tear. A machete would cut through them.";
 			}
 			ReadyPieces.Defaults(name, props);
+			Survivors.Defaults(name, props);
 			return props;
 		}
 
