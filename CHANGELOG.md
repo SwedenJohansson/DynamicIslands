@@ -13,9 +13,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ### New
 - **Story islands keep their look when randomized:** Something new like it and A variation of it for Caravan Town,
-  Tangaroa, Utopia, Varuna Point, Balboa and Temperance lay the new island out like the original from its own big
-  pieces - red rock mesas with ladders, huts and rope bridges; the dome; the white towers; the motherlode; giant firs;
-  snow rocks and the antenna.
+  Tangaroa, Utopia, Varuna Point, Balboa, Temperance and the Radio Tower lay the new island out like the original from
+  its own big pieces, placed the way the original has them - red rock mesas with ladders, huts, caravans and rope
+  bridges; the whole glass dome with its hexagon roads; Utopia's white towers; the motherlode floors on their pillars
+  inside its walls with the crane on top; giant firs; snow rocks and the antenna; low rocks with concrete footings.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
   times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under

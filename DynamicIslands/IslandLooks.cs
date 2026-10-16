@@ -96,8 +96,9 @@ namespace DynamicIslands.Editor
 				Hint = "Temperance's big unclimbable rocks, the telephone antenna on the top and a large igloo on the flat" };
 			yield return new Look { Id = "vasagatan", Label = "The Vasagatan's beach", Scenes = new[] { "Landmark_Vasagatan" }, Kit = new string[0],
 				Hint = "The Vasagatan's long low island (its designs put the liner's rooms on the land)" };
-			yield return new Look { Id = "radio", Label = "The Radio Tower's rock", Scenes = new[] { "Landmark_Radar" }, Kit = new string[0],
-				Hint = "The Radio Tower's small steep rock (its designs build the tower)" };
+			yield return new Look { Id = "radio", Label = "The Radio Tower's rocks", Scenes = new[] { "Landmark_Radar" }, Kit = RadioLookKit,
+				Shape = RadioShape, Build = RadioRocks,
+				Hint = "The Radio Tower's low rocks just over the sea, the concrete footings of its platforms on them, a satellite dish and a plastic boat (its designs build the tower)" };
 		}
 
 		#region Helpers
@@ -351,6 +352,19 @@ namespace DynamicIslands.Editor
 					Stand(k, tree, at, Rf(r, 0f, 360f), 0.3f);
 					things++;
 				}
+				if (minRim > 8f && r.NextDouble() < 0.8)
+				{
+					// (a caravan or van parked on the top, off the middle - Raft's own tops are full of them)
+					float a = Rf(r, 0f, Mathf.PI * 2f);
+					var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+					Vector2 at = m.C + dir * minRim * 0.55f;
+					if (k.IsFree(at, 4f) && k.Slope(at) < 10f && Mathf.Abs(k.Ground(at) - m.Top) < 1.5f)
+					{
+						k.Clear(at, 4f);
+						Stand(k, Pick(r, "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Yellow_01", "Van_1", "Van_2", "Van_4", "Van_5"), at, YawOf(dir) + Rf(r, -30f, 30f));
+						things++;
+					}
+				}
 				if (m.Twin != null && mesas.IndexOf(m.Twin) > mesas.IndexOf(m) && Mathf.Abs(m.Top - m.Twin.Top) < 2.5f)
 				{
 					Vector2 u = (m.Twin.C - m.C).normalized;
@@ -395,15 +409,15 @@ namespace DynamicIslands.Editor
 
 		#region Tangaroa: the dome
 
-		static readonly string[] TangaroaLookKit = { "Dome_Base_2", "Dome_Base_1", "Dome_Frame_1", "Dome_Glass_01", "Dome_Glass_02", "Dome_Glass_03", "TangaroaRoads_Combined",
-			"Balcony01", "Balcony02", "Cockpit", "CockpitExt", "Arrows", "TowerGravelPath" };
+		static readonly string[] TangaroaLookKit = { "Dome_Base_2", "TangaroaRoads_Combined", "Dome_Base_1", "Balcony01", "Balcony02", "Cockpit", "CockpitExt",
+			"Outside", "Dome_Frame_1", "Dome_Glass_01", "Dome_Glass_02", "Dome_Glass_03", "Dome_DoorFrame01" };
 
 		static void TangaroaShape(RaftIsland i, IslandGenSettings s, bool variation)
 		{
 			s.Source = "";
 			s.Shape = IslandShapes.Round;
-			s.Radius = Mathf.Clamp(i.Radius * 1.05f, 60f, 110f);
-			s.Height = 6f;
+			s.Radius = Mathf.Clamp(i.Radius * 1.05f, 96f, 115f);
+			s.Height = 10f;
 			s.Peaks = 1;
 			s.PeakShape = 0.15f;
 			s.Roughness = 0.2f;
@@ -413,13 +427,62 @@ namespace DynamicIslands.Editor
 			s.Stretch = 1f;
 		}
 
-		static string TangaroaDome(MapKit k, IslandGenSettings s, System.Random r) { return null; }
+		/// <summary>
+		/// The dome's pieces share Raft's own pivot (the scene's middle, 0.8 m under its sea - CILookDump Tangaroa): the
+		/// base, roads and middle tower once, the frame, glass and door frames five times round (every 72 degrees).
+		/// </summary>
+		static readonly string[] TangaroaOnce = { "Dome_Base_2", "TangaroaRoads_Combined", "Dome_Base_1", "Balcony01", "Balcony02", "Cockpit", "CockpitExt", "Outside" };
+		static readonly string[] TangaroaFive = { "Dome_Frame_1", "Dome_Glass_01", "Dome_Glass_02", "Dome_Glass_03", "Dome_DoorFrame01" };
+		const float TangaroaPivot = -0.8f;
+
+		static string TangaroaDome(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			Bounds disc;
+			if (!GenBuildings.Measured("Dome_Base_2", out disc)) return null;
+			float sea = k.Sea, rim = Mathf.Max(disc.extents.x, disc.extents.z), deck = TangaroaPivot + disc.min.y - 0.15f;
+			Vector2 c = k.Mid;
+			// (the ground under the disc levelled just below it, sloping down to the old ground past the rim)
+			Reshape(k, c, rim + 14f, (p, h) =>
+			{
+				float d = (p - c).magnitude, flat = sea + deck;
+				if (d <= rim - 2f) return flat;
+				float t = Mathf.Clamp01((d - rim + 2f) / 16f);
+				return Mathf.Lerp(flat, Mathf.Min(h, flat), t * t);
+			});
+			k.Clear(c, rim + 2f);
+			float yaw = Rf(r, 0f, 72f);
+			Vector3 at = new Vector3(c.x, sea + TangaroaPivot, c.y);
+			int n = 0;
+			foreach (string name in TangaroaOnce)
+				if (k.Add(name, at, yaw, null, 0f) != null) n++;
+			foreach (string name in TangaroaFive)
+				for (int i = 0; i < 5; i++)
+					if (k.Add(name, at, yaw + i * 72f, null, 0f) != null) n++;
+			return n + " pieces of Tangaroa's dome on a " + (rim * 2f).ToString("F0") + " m levelled disc";
+		}
 
 		#endregion
 
 		#region Utopia: white towers
 
-		static readonly string[] UtopiaLookKit = { "Tower01", "Tower02", "Tower03", "UT_Set_Market", "UT_Set_Docks", "UT_Set_Plantation01", "UT_Bridge02" };
+		/// <summary>
+		/// Utopia's towers where Raft puts them, from the scene's pivot 0.7 m under its sea (CILookDump Utopia): the three
+		/// big ones and the room on top share it, the other four stand round them (offset x, y, z, turn).
+		/// </summary>
+		static readonly KeyValuePair<string, Vector4>[] UtopiaParts =
+		{
+			new KeyValuePair<string, Vector4>("UT_Set_Tower01", new Vector4(0f, 0f, 0f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_Tower02", new Vector4(0f, 0f, 0f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_Tower03", new Vector4(0f, 0f, 0f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_Tower_EndRoom", new Vector4(0f, 0f, 0f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_Tower_EndRoom_Glass", new Vector4(0f, 0f, 0f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_TowerDeco01", new Vector4(-85.6f, -101.2f, -153.2f, 0f)),
+			new KeyValuePair<string, Vector4>("UT_Set_TowerDeco02", new Vector4(25.4f, -60f, -158f, 180f)),
+			new KeyValuePair<string, Vector4>("UT_Set_TowerDeco03", new Vector4(159.1f, -13.2f, -19.9f, 270f)),
+			new KeyValuePair<string, Vector4>("UT_Set_TowerHarpoon", new Vector4(-128.84f, -43.86f, -49.45f, 339.7f)),
+		};
+		const float UtopiaPivot = -0.7f;
+		static readonly string[] UtopiaLookKit = UtopiaParts.Select(kv => kv.Key).ToArray();
 
 		static void UtopiaShape(RaftIsland i, IslandGenSettings s, bool variation)
 		{
@@ -434,27 +497,117 @@ namespace DynamicIslands.Editor
 			s.Stretch = 1f;
 		}
 
-		static string UtopiaTowers(MapKit k, IslandGenSettings s, System.Random r) { return null; }
+		static string UtopiaTowers(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			// (the towers' middle - of their boxes - put on the island's middle, the whole set turned by the seed)
+			var mids = new List<Vector2>();
+			foreach (var kv in UtopiaParts)
+			{
+				Bounds b;
+				if (kv.Key.Contains("EndRoom") || !GenBuildings.Measured(kv.Key, out b)) continue;
+				Vector3 m = new Vector3(kv.Value.x, 0f, kv.Value.z) + Quaternion.Euler(0f, kv.Value.w, 0f) * new Vector3(b.center.x, 0f, b.center.z);
+				mids.Add(new Vector2(m.x, m.z));
+			}
+			if (mids.Count == 0) return null;
+			Vector2 mid = new Vector2(mids.Average(v => v.x), mids.Average(v => v.y));
+			float yaw = Rf(r, 0f, 360f);
+			Quaternion q = Quaternion.Euler(0f, yaw, 0f);
+			Vector3 off = q * new Vector3(mid.x, 0f, mid.y);
+			Vector2 c = k.Mid;
+			Vector3 origin = new Vector3(c.x - off.x, k.Sea + UtopiaPivot, c.y - off.z);
+			int n = 0;
+			foreach (var kv in UtopiaParts)
+			{
+				Bounds b;
+				if (!GenBuildings.Measured(kv.Key, out b)) continue;
+				Vector3 at = origin + q * new Vector3(kv.Value.x, kv.Value.y, kv.Value.z);
+				Vector3 tc = at + q * (Quaternion.Euler(0f, kv.Value.w, 0f) * new Vector3(b.center.x, 0f, b.center.z));
+				if (at.y + b.min.y < k.Sea) k.Clear(new Vector2(tc.x, tc.z), Mathf.Max(b.extents.x, b.extents.z) + 2f);
+				if (k.Add(kv.Key, at, yaw + kv.Value.w, null, 0f) != null) n++;
+			}
+			return n + " of Utopia's white towers and their pieces";
+		}
 
 		#endregion
 
 		#region Varuna Point: the motherlode
 
-		static readonly string[] VarunaLookKit = { "VP_ApexCrane", "VP_MotherlodeFloor1", "VP_MotherlodeFloor2", "VP_ElevatorShaft", "VP_MotherlodeBuildingPieces_Wall" };
+		static readonly string[] VarunaLookKit = { "VP_ApexCrane", "VP_MotherlodeFloor1", "VP_MotherlodeFloor2", "VP_ElevatorShaft", "VP_MotherlodeBuildingPieces_Wall",
+			"VP_MotherlodePillar1_Stage1", "VP_MotherlodePillar2_Stage1", "VP_MotherlodePillar3_Stage1", "VP_RubblePile_Large01", "VP_RubblePile_Medium01",
+			"VP_RubblePile_Medium02", "VP_BrickStack01", "VP_BrickStack02", "VP_Excavator" };
 
 		static void VarunaShape(RaftIsland i, IslandGenSettings s, bool variation)
 		{
 			s.Source = "";
 			s.Shape = IslandShapes.Round;
-			s.Radius = Mathf.Clamp(i.Radius, 25f, 60f);
-			s.Height = Mathf.Clamp(i.Top * 0.2f, 10f, 30f);
+			s.Radius = Mathf.Clamp(i.Radius, 70f, 95f);
+			s.Height = Mathf.Clamp(i.Top * 0.2f, 10f, 24f);
 			s.Peaks = 1;
 			s.Roughness = 0.6f;
 			s.Cliffs = 0.6f;
 			s.Stretch = 1f;
 		}
 
-		static string VarunaMotherlode(MapKit k, IslandGenSettings s, System.Random r) { return null; }
+		/// <summary>
+		/// Varuna Point's motherlode as Raft builds it (CILookDump VarunaPoint): an 84 m floor, the next one 21 m up on
+		/// four pillars (a pillar's pivot is the floor it hangs from), the 63 m walls between them round the sides, the
+		/// apex crane on the top floor, the lift shaft and the excavator outside and rubble and bricks on both floors.
+		/// </summary>
+		static readonly Vector3[] VarunaWalls = { new Vector3(-27.8f, 32.39f, 180f), new Vector3(-32.4f, -27.81f, 90f), new Vector3(32.43f, 27.75f, 270f), new Vector3(27.74f, -32.44f, 0f) };
+		const float VarunaStorey = 21f;
+
+		static string VarunaMotherlode(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			Bounds floor;
+			if (!GenBuildings.Measured("VP_MotherlodeFloor1", out floor)) return null;
+			float half = Mathf.Max(floor.extents.x, floor.extents.z), g = k.Sea + Rf(r, 2.5f, 5f);
+			float low = g - floor.min.y, high = low + VarunaStorey, top = low + floor.max.y, roof = high + floor.max.y;
+			Vector2 c = k.Mid;
+			float reach = half * 1.45f;
+			Reshape(k, c, reach + 16f, (p, h) =>
+			{
+				float d = (p - c).magnitude;
+				if (d <= reach) return g;
+				return Mathf.Lerp(g, h, Mathf.Clamp01((d - reach) / 16f));
+			});
+			k.Clear(c, reach + 2f);
+			float yaw = Rf(r, 0f, 360f);
+			Quaternion q = Quaternion.Euler(0f, yaw, 0f);
+			Func<float, float, Vector2> at = (x, z) => { Vector3 v = q * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); };
+			int n = 0;
+			if (k.Add("VP_MotherlodeFloor1", new Vector3(c.x, low, c.y), yaw, null, 0f) != null) n++;
+			if (k.Add("VP_MotherlodeFloor2", new Vector3(c.x, high, c.y), yaw, null, 0f) != null) n++;
+			string[] pillars = { "VP_MotherlodePillar1_Stage1", "VP_MotherlodePillar2_Stage1", "VP_MotherlodePillar3_Stage1" };
+			string pillar = pillars[r.Next(pillars.Length)];
+			foreach (var corner in new[] { new Vector2(14f, 14f), new Vector2(-14f, 14f), new Vector2(14f, -14f), new Vector2(-14f, -14f) })
+			{
+				Vector2 p = at(corner.x, corner.y);
+				if (k.Add(pillar, new Vector3(p.x, high, p.y), yaw, null, 0f) != null) n++;
+			}
+			// (now and then one wall is left out: a way in)
+			int open = r.Next(VarunaWalls.Length + 2);
+			for (int i = 0; i < VarunaWalls.Length; i++)
+			{
+				if (i == open) continue;
+				Vector2 p = at(VarunaWalls[i].x, VarunaWalls[i].y);
+				if (k.Add("VP_MotherlodeBuildingPieces_Wall", new Vector3(p.x, low, p.y), yaw + VarunaWalls[i].z, null, 0f) != null) n++;
+			}
+			if (Stand(k, "VP_ElevatorShaft", at(half + 5f, Rf(r, -20f, 20f)), yaw + 90f) != null) n++;
+			// (the crane's pivot is its foot: on the top floor, its arm out over the side)
+			Vector2 cr = at(Rf(r, -12f, 12f), Rf(r, -12f, 12f));
+			if (k.Add("VP_ApexCrane", new Vector3(cr.x, roof - BottomOf("VP_ApexCrane") + 0.05f, cr.y), Rf(r, 0f, 360f), null, 0f) != null) n++;
+			string[] heaps = { "VP_RubblePile_Large01", "VP_RubblePile_Medium01", "VP_RubblePile_Medium02", "VP_BrickStack01", "VP_BrickStack02" };
+			for (int i = 0; i < 8; i++)
+			{
+				bool up = i % 2 == 1;
+				Vector2 p = at(Rf(r, -half + 12f, half - 12f), Rf(r, -half + 12f, half - 12f));
+				if ((p - cr).magnitude < 12f) continue;
+				string h = heaps[r.Next(heaps.Length)];
+				if (Centred(k, h, p, Rf(r, 0f, 360f), (up ? roof : top) - BottomOf(h) - 0.05f) != null) n++;
+			}
+			if (Stand(k, "VP_Excavator", at(-half - 6f, Rf(r, -25f, 25f)), yaw + Rf(r, -30f, 30f)) != null) n++;
+			return n + " of Varuna Point's motherlode pieces: two floors on four pillars inside its walls, " + (half * 2f).ToString("F0") + " m wide";
+		}
 
 		#endregion
 
@@ -484,6 +637,54 @@ namespace DynamicIslands.Editor
 				putRocks++;
 			}
 			return putFirs + putRocks > 0 ? "Balboa's " + putFirs + " giant fir(s) and " + putRocks + " boulder(s)" : null;
+		}
+
+		#endregion
+
+		#region Radio Tower: low rocks, concrete footings
+
+		static readonly string[] RadioLookKit = { "RT_GroundPillar", "RT_GroundPillarCap", "RT_SatteliteDisc", "RT_PlasticBoat" };
+
+		static void RadioShape(RaftIsland i, IslandGenSettings s, bool variation)
+		{
+			// (Raft's own: a few low rocks just out of the sea under the tower's platforms - not a peak)
+			s.Source = "";
+			s.Shape = IslandShapes.Round;
+			s.Radius = Mathf.Clamp(i.Radius, 25f, 50f);
+			s.Height = 3f;
+			s.Peaks = 3;
+			s.PeakShape = 0.5f;
+			s.Roughness = 0.6f;
+			s.Cliffs = 0.3f;
+			s.Stretch = 1f;
+			// (a wide shallow shelf round them for the tower's legs; the rocks bare, as Raft's are)
+			s.Shelf = Mathf.Max(s.Shelf, 0.6f);
+			s.Trees = 0f;
+			s.Bushes = 0f;
+			s.Harvest = 0f;
+			s.Rocks = Mathf.Min(s.Rocks, 0.08f);
+			s.BeachThings = Mathf.Min(s.BeachThings, 0.1f);
+		}
+
+		static string RadioRocks(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			// (the footings away from the top: a design built later on the top clears what stands there)
+			Vector2 top = k.Highest(k.Mid, s.Radius * 0.6f);
+			int want = Mathf.Clamp(Mathf.RoundToInt(s.Radius / 7f), 4, 7), feet = 0;
+			for (int i = 0; i < want * 8 && feet < want; i++)
+			{
+				Vector2? p = FindR(k, r, k.Mid, s.Radius, (above, slope) => above > 0.3f && slope < 25f, 9f);
+				if (!p.HasValue) break;
+				if (Vector2.Distance(p.Value, top) < 15f) continue;
+				k.Clear(p.Value, 3f);
+				Stand(k, Pick(r, "RT_GroundPillar", "RT_GroundPillarCap"), p.Value, 90f * r.Next(4) + Rf(r, -5f, 5f), 1.2f);
+				feet++;
+			}
+			bool dish = k.Ground(top) > k.Sea + 1f && k.IsFree(top, 4f);
+			if (dish) { k.Clear(top, 3f); Stand(k, "RT_SatteliteDisc", top, Rf(r, 0f, 360f), 0.2f); }
+			Vector2? beach = FindR(k, r, k.Mid, s.Radius * 1.1f, (above, slope) => above > 0.1f && above < 0.9f && slope < 12f, 6f);
+			if (beach.HasValue) { k.Clear(beach.Value, 3f); Stand(k, "RT_PlasticBoat", beach.Value, Rf(r, 0f, 360f), 0.15f); }
+			return feet + (dish ? 1 : 0) + (beach.HasValue ? 1 : 0) > 0 ? "the Radio Tower's " + feet + " concrete footing(s)" + (dish ? ", a satellite dish" : "") + (beach.HasValue ? ", a plastic boat on the beach" : "") : null;
 		}
 
 		#endregion

@@ -46,15 +46,15 @@ namespace DynamicIslands
 			yield break;
 		}
 
-		/// <summary>The islands CILook tries, one or two per look: look id, scene part, signature pieces it must put at least.</summary>
+		/// <summary>The islands CILookAlike tries, one or two per look: look id, scene part, signature pieces it must put at least.</summary>
 		static readonly string[][] LookIslands =
 		{
 			new[] { "caravan", "Landmark_CaravanSmall#3", "4" }, new[] { "caravan", "Landmark_CaravanIsland", "4" }, new[] { "tangaroa", "Landmark_Tangaroa", "6" },
 			new[] { "utopia", "Landmark_Utopia", "3" }, new[] { "varuna", "Landmark_VarunaPoint", "3" }, new[] { "balboa", "Landmark_BalboaSmall#1", "2" },
-			new[] { "temperance", "Landmark_Temperance", "2" }, new[] { "vasagatan", "Landmark_Vasagatan", "0" }, new[] { "radio", "Landmark_Radar", "0" },
+			new[] { "temperance", "Landmark_Temperance", "2" }, new[] { "vasagatan", "Landmark_Vasagatan", "0" }, new[] { "radio", "Landmark_Radar", "3" },
 		};
 
-		[ConsoleCommand(name: "CILook", docs: "Dev, editor: TODO §3 - look-alike randomized story islands: for each look (or those whose id or island has <part>) its island's something-new-like-it (var: a variation) generated as the Randomize existing tab does, with seed [seed] (7): built without errors, at least N of its signature pieces, every piece loaded, at least half the land objects the original island's own pieces, the standing ones on the ground; a picture shot_look_<island>_<seed>.png. CILook [part] [seed] [var]")]
+		[ConsoleCommand(name: "CILookAlike", docs: "Dev, editor: TODO §3 - look-alike randomized story islands: for each look (or those whose id or island has <part>) its island's something-new-like-it (var: a variation) generated as the Randomize existing tab does, with seed [seed] (7): built without errors, at least N of its signature pieces, every piece loaded, at least half the land objects the original island's own pieces, the standing ones on the ground; a picture shot_look_<island>_<seed>.png. CILookAlike [part] [seed] [var]")]
 		public static void LookCommand(string[] args)
 		{
 			string part = ""; int seed = 7, n; bool variation = false;
@@ -65,7 +65,7 @@ namespace DynamicIslands
 		static IEnumerator LookRoutine(string part, int seed, bool variation)
 		{
 			yield return WaitForEditor(false);
-			if (!DynamicIslands.InEditor()) { Fail("CILook (in the editor)"); yield break; }
+			if (!DynamicIslands.InEditor()) { Fail("CILookAlike (in the editor)"); yield break; }
 			yield return PlaceableCatalog.EnsureBuilt();
 			bool ok = true;
 			int count = 0;
@@ -101,32 +101,37 @@ namespace DynamicIslands
 				float sea = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
 				var kit = new HashSet<string>(look.Kit);
 				List<EditorGameObject> mine = objs.Where(e => kit.Contains(e.GameObjectName)).ToList();
-				List<EditorGameObject> land = objs.Where(e => terrain.SampleHeight(e.transform.position) + terrain.transform.position.y > sea + 0.3f).ToList();
+				// (the land's scenery: loot, creatures and pickups are the game's, not the island's look)
+				List<EditorGameObject> land = objs.Where(e => !Regex.IsMatch(e.GameObjectName, "^Loot_|^Creature_|^Pickup_") && terrain.SampleHeight(e.transform.position) + terrain.transform.position.y > sea + 0.3f).ToList();
 				int owned = land.Count(e => own.Contains(e.GameObjectName));
 				float share = land.Count > 0 ? owned / (float)land.Count : 0f;
 				int missing = objs.Count(e => e.gameObject.name.Contains(IslandSpawner.MissingTag));
 				// (standing: rocks, trees, caravans, the huts' pillars on the ground - bridges, ladders, roofs and the built places' sets are meant to be up)
 				var floating = new List<string>();
-				foreach (EditorGameObject e in mine.Where(x => !Regex.IsMatch(x.GameObjectName, "Bridge|Ladder|^Roof$|^Tower|^UT_|^Dome|^Balcony|^Cockpit|^Arrows|^Tangaroa|^VP_")))
+				foreach (EditorGameObject e in mine.Where(x => !Regex.IsMatch(x.GameObjectName, "Bridge|Ladder|^Roof$|^Tower|^UT_|^Dome|^Balcony|^Cockpit|^Arrows|^Tangaroa|^Outside$|^VP_|^RT_SatteliteDisc$|^RT_PlasticBoat$")))
 				{
 					Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
 					if (rs.Length == 0) continue;
 					Bounds b = rs[0].bounds;
 					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 					float ground = terrain.SampleHeight(b.center) + terrain.transform.position.y;
-					if (b.min.y - ground > 0.6f) floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
+					// (or on another piece: a caravan on a design's scaffold deck stands)
+					if (b.min.y - ground > 0.6f && !objs.Any(o => o != e && OnTopOf(b, o))) floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
 				}
 				int need = int.Parse(row[2]);
 				var top = mine.GroupBy(e => e.GameObjectName).OrderByDescending(g => g.Count()).Take(8).Select(g => g.Key + " x" + g.Count());
 				Check(ref ok, errors.Count == 0 && made > 0 && mine.Count >= need && missing == 0 && floating.Count == 0 && share >= 0.5f,
 					island.Label + " (" + look.Id + (variation ? ", variation" : "") + "), seed " + seed + ": " + made + " objects; " + string.Join("; ", built.ToArray()) + " - " + mine.Count + " look pieces (" + string.Join(", ", top.ToArray()) + ")" +
 					", own pieces " + (share * 100f).ToString("F0") + " % of " + land.Count + " on land" + (missing > 0 ? ", " + missing + " not loaded" : "") +
+					(share < 0.5f ? ", not own: " + string.Join(", ", land.Where(e => !own.Contains(e.GameObjectName)).GroupBy(e => e.GameObjectName).OrderByDescending(g => g.Count()).Take(6).Select(g => g.Key + " x" + g.Count()).ToArray()) : "") +
 					(floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : "") + (errors.Count > 0 ? ", ERRORS: " + string.Join(" | ", errors.Take(3).ToArray()) : ""));
 				if (Camera.main != null)
 				{
 					// (from the south-west, high, as CIRaftView's pictures of the originals: CIRaftView <island> 0 0 10 45 32 <dist> <name>)
 					Vector2 mid = EditorLandCentre();
-					float dist = Mathf.Clamp(gs.Radius * 2.6f, 90f, 520f);
+					float spread = 0f;
+					foreach (EditorGameObject e in mine) spread = Mathf.Max(spread, (new Vector2(e.transform.position.x, e.transform.position.z) - mid).magnitude);
+					float dist = Mathf.Clamp(Mathf.Max(gs.Radius * 2.6f, spread * 1.8f), 90f, 700f);
 					Quaternion q = Quaternion.Euler(32f, 45f, 0f);
 					Vector3 at = new Vector3(mid.x, sea + 10f, mid.y);
 					Camera.main.transform.SetPositionAndRotation(at - q * Vector3.forward * dist, q);
@@ -141,5 +146,16 @@ namespace DynamicIslands
 		}
 
 		static IEnumerator NoSteps() { yield break; }
+
+		/// <summary>Whether a box's bottom rests on another placed piece (its top within 0.6 m, their footprints overlapping).</summary>
+		static bool OnTopOf(Bounds b, EditorGameObject o)
+		{
+			foreach (Renderer r in PlacementOptions.ShapeRenderers(o.gameObject))
+			{
+				Bounds ob = r.bounds;
+				if (Mathf.Abs(ob.max.y - b.min.y) < 0.6f && ob.min.x < b.center.x && ob.max.x > b.center.x && ob.min.z < b.center.z && ob.max.z > b.center.z) return true;
+			}
+			return false;
+		}
 	}
 }

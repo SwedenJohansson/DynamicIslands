@@ -825,13 +825,14 @@ the original's own big pieces, laid out the way the original has them (the line 
 
 | Island | Its look |
 |---|---|
-| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) on top, round boulders and a caravan or van at the feet. A variation turns the island's own high ground into mesas. |
-| Tangaroa | **The dome**: a round island levelled about 9.5 m up, the dome's base, frame and glass, the roads and the arrows on the sea round it. |
-| Utopia | **Tall white towers**: the three towers standing in the sea round a low island, with the market, docks and plantation sets between them. |
-| Varuna Point | **The motherlode**: a rough rocky island with the motherlode floors, the lift shaft and the crane. |
+| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) and often a caravan or van on top, round boulders and a caravan or van at the feet. A variation turns the island's own high ground into mesas. |
+| Tangaroa | **The dome**: a round island levelled about 9.5 m up, the dome's base, frame and glass, the hexagon roads and the tall tower in the middle. |
+| Utopia | **Tall white towers**: Utopia's three towers with the room on top, and its four other towers further out, all rising out of the sea round a low island the way the original has them. |
+| Varuna Point | **The motherlode**: two 84 m motherlode floors on four pillars over levelled rocky ground, walls round the sides (one side sometimes left open), the lift shaft and the excavator beside them, the apex crane on top and rubble and bricks on both floors. |
 | Balboa (and its small islands) | **Giant firs** on the higher ground and the big rocks on its slopes. |
 | Temperance | **Snow rocks**: the big unclimbable rocks, the telephone antenna on the highest point and the large igloo on the flat. |
-| Vasagatan, Radio Tower | Only the ground and nature (their designs build the rest). |
+| Radio Tower | **Low rocks**: a few rocks just out of the sea, the concrete footings of the tower's platforms on them, a satellite dish on the highest and a plastic boat on the beach (the designs build the tower). |
+| Vasagatan | Only the ground and nature (its designs build the rest). |
 
 The look uses its own random numbers, so the same seed gives the same ground and nature with or without it.
 

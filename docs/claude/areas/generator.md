@@ -45,7 +45,7 @@ Without the editor, `IslandGenerator.CreateFile(settings, name)` runs steps 5-7 
 | How dense / Like Raft | `LandTargets`, `LikeRaftAmount`, `TypicalDensity`, `NatureLikeRaft`; under water `SeaTargets`, `SeaCap`, `PlanReefs` |
 | Where things stand | `PlanNature`, `HabitatOf`, `WithinHabit`; under water `PlanSea`, `BaseDrop`, `LowestShowing` |
 | Creatures, loot boxes | `PlanContent`, `HostileKindsOf`, `TierLoot` |
-| A story island's look (Randomize existing) | a `Look` in `IslandLooks.cs` `MakeLooks` (`Scenes`, `Kit`, `Shape`, `Build`); test `CILook` (DevTestsLooks.cs) |
+| A story island's look (Randomize existing) | a `Look` in `IslandLooks.cs` `MakeLooks` (`Scenes`, `Kit`, `Shape`, `Build`); test `CILookAlike` (DevTestsLooks.cs) |
 | Buildings, caves, wrecks | `GenBuildings.Apply`, `Hut`, `Landmark`, `LandmarkNames` |
 | A built-in map type | an entry in `MapTypes.All` (`Ranges` or `Settings`, `Content(MapKit, s)` or `Build`) |
 | Reach rules | `IslandReach.WalkSlope`, `StepUp`, `JumpUp`, `SwimLedge`, `ClimbLedge`, `Assess` |
