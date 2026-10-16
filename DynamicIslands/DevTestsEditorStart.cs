@@ -199,6 +199,13 @@ namespace DynamicIslands
 
 		static GameObject TopBar() { RectTransform t = UnityEngine.Object.FindObjectsOfType<RectTransform>().FirstOrDefault(x => x.name == "TopBar"); return t != null ? t.gameObject : null; }
 
+		/// <summary>The card of a rule in the open plan, found by its id (the window holds the plan read from its file again).</summary>
+		static GameObject StoryCard(WorldPlan p, IntroRule r)
+		{
+			RectTransform card = WorldPlanWindow.CardFor(p.Rules.FindIndex(x => x.Id == r.Id));
+			return card != null ? card.gameObject : null;
+		}
+
 		static string SomeSavedIsland() { return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => !n.StartsWith("gen-") && !n.StartsWith("ci")); }
 
 		static Button TopBarButton(GameObject bar, string label) { return bar == null ? null : bar.GetComponentsInChildren<Button>(true).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == label); }
@@ -218,6 +225,8 @@ namespace DynamicIslands
 			try
 			{
 				Check(ref ok, island != null && DynamicIslands.LoadIsland(island), "the island '" + island + "' opened");
+				// (objects from other islands load over a few seconds: the island has its name once they are in)
+				for (float t = 0; t < 60f && (DynamicIslands.IsUnnamed || DynamicIslands.currentIslandName != island); t += 0.5f) yield return new WaitForSeconds(0.5f);
 				yield return null; yield return null;
 				GameObject bar = TopBar();
 				Check(ref ok, bar != null && Click(bar, "Use in a plan..."), "the top bar's Use in a plan...");
@@ -362,18 +371,18 @@ namespace DynamicIslands
 
 				// ▲ ▼ along the story
 				int s2At = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).IndexOf("rule:" + s2.Id);
-				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s2)).gameObject, "▲"), "▲ on the second story island");
+				Check(ref ok, Click(StoryCard(p, s2), "▲"), "▲ on the second story island");
 				yield return null;
 				Check(ref ok, OwnSteps(p).SequenceEqual(new[] { s2.Id, s1.Id }), "it comes first of the two now: " + string.Join(",", OwnSteps(p).ToArray()));
 				string before = StepsText(p);
-				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s2)).gameObject, "▲"), "▲ again");
+				Check(ref ok, Click(StoryCard(p, s2), "▲"), "▲ again");
 				yield return null;
 				List<string> steps = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules);
 				Check(ref ok, steps.IndexOf("rule:" + s2.Id) == s2At - 2 && StoryChain.IsRaft(steps[s2At - 1]), "past one of Raft's islands: step " + (steps.IndexOf("rule:" + s2.Id) + 1) + " (" + StepsText(p) + ")");
 				var raftOrder = steps.Where(StoryChain.IsRaft).ToList();
 				Check(ref ok, raftOrder.SequenceEqual(StoryChain.BuildSteps(true, p.LeaveOut, new List<IntroRule>())), "Raft's own islands keep their order");
 				before = StepsText(p);
-				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s1)).gameObject, "▼"), "▼ on the last before Utopia");
+				Check(ref ok, Click(StoryCard(p, s1), "▼"), "▼ on the last before Utopia");
 				yield return null;
 				Check(ref ok, StepsText(p) == before && win.GetComponentsInChildren<Text>(false).Any(t => t.text.Contains("Utopia")), "refused: Raft's ending stays last");
 

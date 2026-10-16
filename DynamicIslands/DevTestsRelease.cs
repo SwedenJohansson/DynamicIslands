@@ -265,6 +265,7 @@ namespace DynamicIslands
 		/// <summary>A button of a window by its label (UIKit names them Button_&lt;label&gt;), clicked as a player would.</summary>
 		static bool Click(GameObject root, string label)
 		{
+			if (root == null) return false;
 			Button b = root.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == "Button_" + label || (UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == label));
 			if (b == null || !b.interactable) return false;
 			b.onClick.Invoke();
