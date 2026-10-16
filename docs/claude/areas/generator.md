@@ -57,5 +57,6 @@ Without the editor, `IslandGenerator.CreateFile(settings, name)` runs steps 5-7 
 - Kept in step with `TerrainPainter.Styles`: `IslandGenerator.Pools` (same index), `GenGather.Kinds`, `GeneratorWindow.StyleHints`, the switch in `Preview`. `RaftLand.For` and `RaftUnderwater.For` give volcanic the desert's data.
 - `RaftSeaKinds` is a property, so it is not in presets or `set` lines.
 - Islands made while sailing are generated on the host only (`CustomIslandSpawner.Tick` returns on clients); clients get them through `IslandNetwork`.
+- The generator sweep (`CIGenSweep`, `DevTestsGenSweep.cs`) reads the style, layout, building-kind, Raft-island and map-type lists, so new ones are swept (and renumber the cases after them); a new setting needs its extremes added to group 7 of `GenSweepCases`.
 - `pack.ps1 -Release` leaves out `DevTests*.cs`: game code must not call into them.
 - C# 7.3. Docs: README `The island generator`, `Map types`, `Console commands (F10)` and the source overview; `docs/GUIDE.md` 4.5 (The island generator) and 4.6 (Ready-made islands); then the PDF is made again from `GUIDE.md`.

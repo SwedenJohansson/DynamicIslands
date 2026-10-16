@@ -19,7 +19,7 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `ReadyPieces.cs` | Default settings for Raft's doors, hatches, levers, lifts, cages, cameras, generators, radios, engine, and the puzzle pieces (mirrors, water wheels, pipes turn: `Turns(kind)`; wire connectors: `state||open` or take the cable, then open; claw, scales); a kind's signal is its name |
 | `CodeLock.cs`, `QuestItemPickups.cs` | Keypad lock (`lock.code`); Raft's quest item pickups give story items `raft-<type>` |
 | `QuestRewards.cs` | Each player's share of a quest's Raft-item reward |
-| `BuriedTreasure.cs`, `ZiplineEnds.cs` | Raft treasure points; zipline far end (`zip.to`) |
+| `BuriedTreasure.cs`, `ZiplineEnds.cs` | Raft treasure points; zipline far end (`zip.to`); the tools each needs: `RaftFeatures.cs` (also the vines, dirt) |
 | `AmbienceZones.cs` | `AtmosphereZone`, `SoundZone`, `SoundLibrary` |
 
 ## Quests: how steps are defined
