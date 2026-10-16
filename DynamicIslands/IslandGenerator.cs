@@ -87,8 +87,8 @@ namespace DynamicIslands.Editor
 		public int LootMin = 1, LootMax = 3;
 		/// <summary>Loot boxes tucked in next to trees, bushes and rocks instead of out in the open.</summary>
 		public bool LootHidden;
-		/// <summary>The island turns the level up system on in a world (IslandProps.Levels, PlayerLevels).</summary>
-		public bool Levels;
+		// (no "Levels" any more: the level up system is a world option only - New Game > World settings. An older preset's
+		// "Levels=True" line is passed by, as FromText passes every name it doesn't know)
 		/// <summary>Buildings on the land (GenBuildings): on or off, of which kind (mixed, huts, cabins or a themed scene), how many.</summary>
 		public bool Buildings;
 		public string BuildingKind = GenBuildings.Mixed;
@@ -154,6 +154,27 @@ namespace DynamicIslands.Editor
 
 		public IslandGenSettings Copy() { return (IslandGenSettings)MemberwiseClone(); }
 
+		/// <summary>
+		/// The generator's first settings (and its Defaults button): an island like Raft's own small ones - the "Raft small
+		/// island" layout, about 32-60 m across and 8-15 m high, an uneven coast with a bay or two, a beach all round (no
+		/// cliffs: players get on from the raft by wading or a jump), and objects as dense as on Raft's small islands.
+		/// Plain new IslandGenSettings() stays as it was (presets, map types and older files start from it).
+		/// </summary>
+		public static IslandGenSettings RaftLike(int seed = 1)
+		{
+			var s = new IslandGenSettings { Seed = seed, Shape = IslandShapes.RaftSmall };
+			s.Radius = Mathf.Clamp(RaftIslands.SmallRadius * 1.15f, 14f, 24f);
+			s.Height = Mathf.Clamp(RaftIslands.SmallTop, 8f, 15f);
+			s.Peaks = 1;
+			s.Roughness = 0.35f;
+			s.Coast = 0.5f;
+			s.Bays = 0.3f;
+			s.BeachWidth = 0.5f;
+			s.Cliffs = 0f;
+			RandomizerIslands.LikeRaftSmall(s);
+			return s;
+		}
+
 		/// <summary>An object slider's value: its own, or (at -1) one that follows ObjectDensity.</summary>
 		public float Amount(float own) { return own >= 0f ? Mathf.Clamp01(own) : ObjectDensity * 0.45f; }
 
@@ -210,14 +231,22 @@ namespace DynamicIslands.Editor
 		/// <summary>Round: one island with peaks. Atoll: a ring of low land around a shallow lagoon. Archipelago: several
 		/// islets on a shallow shelf. Stacks: steep rock pillars rising from shallow water. Plateau: a flat-topped mesa
 		/// with cliffs and one ramp up. Marsh: low, bumpy land with pools of water. Crescent: a curved island around a
-		/// sheltered bay (like Raft's "Cresent"). Twin peaks: two tall peaks with a saddle between (like Raft's).</summary>
-		public const int Round = 0, Atoll = 1, Archipelago = 2, Stacks = 3, Plateau = 4, Marsh = 5, Crescent = 6, TwinPeaks = 7;
-		public static readonly string[] Names = { "Round", "Atoll", "Archipelago", "Sea stacks", "Plateau", "Marsh", "Crescent", "Twin peaks" };
+		/// sheltered bay (like Raft's "Cresent"). Twin peaks: two tall peaks with a saddle between (like Raft's). Raft small
+		/// island / Raft large island: the outline and ground of one of Raft's own small (or big) islands, picked by the seed,
+		/// turned, mirrored and wobbled, with a beach all round where cliffs aren't asked for (the first Generate's layout).</summary>
+		public const int Round = 0, Atoll = 1, Archipelago = 2, Stacks = 3, Plateau = 4, Marsh = 5, Crescent = 6, TwinPeaks = 7, RaftSmall = 8, RaftLarge = 9;
+		public static readonly string[] Names = { "Round", "Atoll", "Archipelago", "Sea stacks", "Plateau", "Marsh", "Crescent", "Twin peaks", "Raft small island", "Raft large island" };
+		/// <summary>The order the generator's Layout list shows them in: Raft's own island shapes first.</summary>
+		public static readonly int[] Order = { RaftSmall, RaftLarge, Round, Atoll, Archipelago, Stacks, Plateau, Marsh, Crescent, TwinPeaks };
+		/// <summary>True for the layouts made from Raft's own islands' ground.</summary>
+		public static bool FromRaft(int shape) { return shape == RaftSmall || shape == RaftLarge; }
 		public static readonly string[] Hints =
 		{
 			"One island with hills and peaks", "A ring of low land around a shallow lagoon", "Several islets on a shallow shelf",
 			"Steep rock pillars rising from shallow water", "A flat-topped mesa with cliffs and one ramp up", "Low, bumpy land with pools of water",
 			"A curved island around a sheltered bay", "Two tall peaks with a saddle between them",
+			"Shaped like one of Raft's own small islands (the seed picks which): an uneven outline, a beach all round, a hill in the middle",
+			"Shaped like one of Raft's own big islands (the seed picks which), with a beach where there are no cliffs",
 		};
 	}
 
@@ -1222,7 +1251,8 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class IslandGenerator
 	{
-		public static IslandGenSettings Last = new IslandGenSettings();
+		/// <summary>The settings the generator window opens with: the last ones generated, at first an island like Raft's small ones.</summary>
+		public static IslandGenSettings Last = IslandGenSettings.RaftLike();
 		/// <summary>What the last generation made.</summary>
 		public static GenReport LastReport = new GenReport();
 
@@ -1577,13 +1607,6 @@ namespace DynamicIslands.Editor
 				});
 				if (quest != null) group.Add(quest);
 			}
-			// (the island's rule; left as it is when off, so an island set to On on the Island tab keeps it. Part of the
-			// generation's undo step: undoing it left the rule on)
-			if (s.Levels)
-			{
-				ICommand levels = IslandSettingsUndo.Record(() => DynamicIslands.currentIslandProps[IslandProps.Levels] = "on");
-				if (levels != null) group.Add(levels);
-			}
 			// (not after a resize: the before-heights were taken from the resized terrain, so undo put the old island back
 			// stretched over the new size, without its objects - the history starts after this island, as the notice says)
 			if (!resized) UndoRedoManager.Insert(group);
@@ -1694,6 +1717,7 @@ namespace DynamicIslands.Editor
 			Terrace(g, s);
 			if (s.Erosion > 0f) Erode(g, s);
 			if (s.Terraces > 0f || s.Erosion > 0f) Normalise(g, s); // (steps and rain lower the top a little)
+			if (IslandShapes.FromRaft(s.Shape) && s.Source.Length == 0) { RaftBeach(g, s); Normalise(g, s); }
 			CarveLakes(g, s);
 			ShapeSeabed(g, s);
 			FlattenEdges(g, s, size);
@@ -1729,6 +1753,17 @@ namespace DynamicIslands.Editor
 				HeightField field = island != null ? RaftIslands.Heights(island) : null;
 				if (field != null) return FromRaftIsland(s, island, field);
 				Debug.LogWarning("[CUSTOM ISLANDS] No ground heights for Raft island '" + s.Source + "': using the round layout");
+			}
+			if (IslandShapes.FromRaft(s.Shape))
+			{
+				RaftIsland island = RaftLayoutIsland(s);
+				HeightField field = island != null ? RaftIslands.Heights(island) : null;
+				if (field != null) return FromRaftLayout(s, island, field);
+				// (no measured islands: a round island with an uneven, stretched coast and bays instead)
+				IslandGenSettings round = s.Copy();
+				round.Coast = Mathf.Max(round.CoastAmount, 0.6f);
+				round.Bays = Mathf.Max(round.Bays, 0.3f);
+				return Round(round);
 			}
 			switch (s.Shape)
 			{
@@ -1868,6 +1903,11 @@ namespace DynamicIslands.Editor
 			{
 				RaftIsland i = RaftIslands.Get(s.Source);
 				r = i != null ? s.Radius * Mathf.Max(1.2f, i.Shelf / Mathf.Max(1f, i.Radius)) + 25f : s.Radius * 1.6f;
+			}
+			else if (IslandShapes.FromRaft(s.Shape))
+			{
+				RaftIsland i = RaftLayoutIsland(s);
+				r = i != null ? s.Radius * Mathf.Max(1.2f, i.Shelf / Mathf.Max(1f, i.Radius)) + 25f : s.Radius * 1.6f + 25f;
 			}
 			else
 				switch (s.Shape)
@@ -2175,6 +2215,120 @@ namespace DynamicIslands.Editor
 				if (bumps > 0f && h > 0f) e += bumps * Fbm(p / 16f + roughOff, 4) * SS(0f, 4f, h);
 				return e;
 			};
+		}
+
+		/// <summary>The Raft small / large island layouts: which of Raft's measured islands the seed picks (null without them).</summary>
+		static RaftIsland RaftLayoutIsland(IslandGenSettings s)
+		{
+			bool small = s.Shape == IslandShapes.RaftSmall;
+			List<RaftIsland> pool = RaftIslands.All
+				.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big")
+				.Where(i => RaftIslands.Heights(i) != null).OrderBy(i => i.Scene, StringComparer.Ordinal).ToList();
+			if (pool.Count == 0) return null;
+			return pool[new System.Random(s.Seed * 13 + 5).Next(pool.Count)];
+		}
+
+		/// <summary>
+		/// A Raft small / large island layout: the picked island's own ground at the size asked for, turned and mirrored by
+		/// the seed, its coast wobbled (Coast), bitten into (Bays) and its land roughened (Roughness), so no two seeds match.
+		/// </summary>
+		static Func<Vector2, float> FromRaftLayout(IslandGenSettings s, RaftIsland island, HeightField field)
+		{
+			var rnd = new System.Random(s.Seed * 7 + 2);
+			float turn = (float)rnd.NextDouble() * Mathf.PI * 2f, ct = Mathf.Cos(turn), st = Mathf.Sin(turn);
+			IslandGenSettings t = s.Copy();
+			t.Mirror = s.Mirror ^ (rnd.Next(2) == 1);
+			t.SourceWobble = Mathf.Max(s.SourceWobble, 0.25f + 0.5f * s.CoastAmount);
+			t.SourceRoughen = Mathf.Max(s.SourceRoughen, 0.5f * s.Roughness);
+			Func<Vector2, float> ground = FromRaftIsland(t, island, field);
+			Around bays = s.Bays > 0f ? new Around(new System.Random(s.Seed * 17 + 3), 1 + Mathf.RoundToInt(s.Bays * 3f), 0.14f, 0.3f) : null;
+			return p =>
+			{
+				var q = new Vector2(p.x * ct - p.y * st, p.x * st + p.y * ct);
+				// (a bay: the ground there is looked up further out, so the coast comes in)
+				if (bays != null) q *= 1f + 0.55f * s.Bays * bays.At(Mathf.Atan2(q.y, q.x));
+				return ground(q);
+			};
+		}
+
+		/// <summary>
+		/// The Raft small / large island layouts: a beach all round (except where cliffs are asked for). The land rises from
+		/// the waterline over a beach, then no steeper than a player walks up (so a measured island's cliff becomes a slope),
+		/// and the sea bed just off the coast is a shallow shelf a player wades out of: players get on from the raft.
+		/// </summary>
+		static void RaftBeach(Grid g, IslandGenSettings s)
+		{
+			int n = g.Res;
+			const float Far = 1e6f;
+			float[,] inland = new float[n, n], offshore = new float[n, n];
+			for (int z = 0; z < n; z++)
+				for (int x = 0; x < n; x++)
+				{
+					bool land = g.M[z, x] > Sea;
+					inland[z, x] = land ? Far : 0f;
+					offshore[z, x] = land ? 0f : Far;
+				}
+			Chamfer(inland, n, g.Step);
+			Chamfer(offshore, n, g.Step);
+			float beach = Mathf.Lerp(3f, 9f, s.BeachWidth), beachTop = Mathf.Min(ShelfHeight, s.Height * 0.5f);
+			// (rise per metre inland: just under the 45 degrees a player walks up - steeper only where the height asked for
+			// can't be reached that way on so little land; Normalise then brings the top back to the height asked for)
+			float deepest = 0f;
+			foreach (float u in inland) if (u < Far) deepest = Mathf.Max(deepest, u);
+			float Climb = Mathf.Max(0.95f, (s.Height - beachTop) / Mathf.Max(1f, deepest - beach));
+			var cliffs = new CliffMask(new System.Random(s.Seed * 29 + 11), s.Cliffs);
+			for (int z = 0; z < n; z++)
+				for (int x = 0; x < n; x++)
+				{
+					Vector2 p = g.Pos(x, z);
+					float keep = s.Cliffs > 0f ? cliffs.At(Mathf.Atan2(p.y, p.x)) : 0f;
+					if (keep >= 0.999f) continue;
+					float e = g.M[z, x];
+					if (e > Sea)
+					{
+						float u = inland[z, x];
+						float cap = Sea + beachTop * SS(0f, beach, u) + Mathf.Max(0f, u - beach) * Climb;
+						if (e > cap) g.M[z, x] = Mathf.Lerp(cap, e, keep);
+					}
+					else
+					{
+						float d = offshore[z, x];
+						float want = Mathf.Lerp(Sea - 0.2f - 0.3f * d, e, SS(4f, 10f, d));
+						if (want > e) g.M[z, x] = Mathf.Lerp(want, e, keep);
+					}
+				}
+		}
+
+		/// <summary>Distances (m) on a grid, in place: cells at 0 are the starts, the rest (very large) get the distance to the nearest start.</summary>
+		static void Chamfer(float[,] d, int n, float step)
+		{
+			float a = step, b = step * 1.41421356f;
+			for (int z = 0; z < n; z++)
+				for (int x = 0; x < n; x++)
+				{
+					float v = d[z, x];
+					if (x > 0) v = Mathf.Min(v, d[z, x - 1] + a);
+					if (z > 0)
+					{
+						v = Mathf.Min(v, d[z - 1, x] + a);
+						if (x > 0) v = Mathf.Min(v, d[z - 1, x - 1] + b);
+						if (x < n - 1) v = Mathf.Min(v, d[z - 1, x + 1] + b);
+					}
+					d[z, x] = v;
+				}
+			for (int z = n - 1; z >= 0; z--)
+				for (int x = n - 1; x >= 0; x--)
+				{
+					float v = d[z, x];
+					if (x < n - 1) v = Mathf.Min(v, d[z, x + 1] + a);
+					if (z < n - 1)
+					{
+						v = Mathf.Min(v, d[z + 1, x] + a);
+						if (x < n - 1) v = Mathf.Min(v, d[z + 1, x + 1] + b);
+						if (x > 0) v = Mathf.Min(v, d[z + 1, x - 1] + b);
+					}
+					d[z, x] = v;
+				}
 		}
 
 		/// <summary>Peak shape over the whole land: below 0.3 fuller, rounder hills; above it sharper tops over flatter lowland.</summary>
@@ -3822,7 +3976,6 @@ namespace DynamicIslands.Editor
 			KeyValuePair<int, int> gathered = GenGather.Apply(file, s, s.Seed, planned);
 			if (gathered.Key + gathered.Value > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + gathered.Key + " things to gather on the land, " + gathered.Value + " in the shallows");
 			if (built.Count > 0) Debug.Log("[CUSTOM ISLANDS] Generated island '" + name + "': " + string.Join(", ", built.ToArray()));
-			if (s.Levels) file.Props[IslandProps.Levels] = "on";
 			return file;
 		}
 

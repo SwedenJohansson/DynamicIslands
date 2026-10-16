@@ -612,7 +612,7 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
   **Comes by chance after ... km sailed:** the earliest the spawn pool may bring this island while sailing, in km the
   world has sailed, with the sailing time it means under it ("40 km: about 5 h of sailing", at 8 km/h). Empty = any
   time, at most 192 km (about 24 h). A world plan still brings its islands when its rules say.
-  **Level up system** Off / On: see [section 9.6](#96-the-level-up-system).
+  (The level up system is a world option, not an island's: see [section 9.6](#96-the-level-up-system).)
 - **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 6](#6-stories-quests-behaviours-story-items).
 - **About this island** (the last group of the tab): how many objects the island has, what the height means **in a
   world** ("normal (at sea level)", "flying 60 m above the sea" or "under water, top of the land 30 m deeper than
@@ -630,8 +630,13 @@ see the new island at once (a message says what it made); **Generate** in the to
 *The Normal tab: your presets, the style and layout, the size and height (with buttons for the size and height of
 Raft's own small island, large island and Balboa), peaks, hills and the coast.*
 
-- **Island:** the **style** and the **layout**: round, atoll, archipelago, sea stacks, plateau, marsh, crescent, twin
-  peaks.
+- **Island:** the **style** and the **layout**: **Raft small island** (the first one), Raft large island, round, atoll,
+  archipelago, sea stacks, plateau, marsh, crescent, twin peaks. The two Raft layouts take the outline and ground of
+  one of Raft's own small (or big) islands - the seed picks which, and turns, mirrors and wobbles it - with a beach all
+  round you wade onto from the raft (cliffs only where you ask for them). Until you generate something else, the
+  generator opens on an island like Raft's small ones: Raft small island, about 40 m across and 12 m high, an uneven
+  coast with a bay, no cliffs, objects as dense as on Raft's small islands; **Defaults** gives the same. After a
+  **Randomize existing** or **Ready-made** island, the Normal tab still opens on its own last settings.
 - **Size and height, coast and outline, land features:** peaks and their shape, hills, coast, bays, beach, cliffs,
   stretch and its direction, valleys, lakes, terraces, erosion.
 - **Under water:** a **deep sea floor like Raft's** (a shelf about 10 m deep, then a drop-off) or a **shallow** one
@@ -674,7 +679,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   2-10 m down, with sand between the reef patches); **Teeming**, the top of the sliders, is twice that. More than
   that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) makes the reefs tighter (or
   looser).
-- **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss), **Level up** Off / On (the Island tab's rule),
+- **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss),
   friendly animals to catch, sea creatures.
 - **Loot:** how many loot boxes, their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive
   goo, batteries), in the open or hidden.
@@ -837,7 +842,7 @@ The editor's view under water shows what a deep sea floor looks like:
 
 The generator's **Ready-made (with content)** tab makes whole islands with a story: chests, notes, creatures, zones
 and a quest, from a seed. Click a card, then **Make** (click twice): the island is saved as `gen-<type>-<seed>` and
-opened for you to change. If that name is taken it gets -2, -3... (rename it with **Save as**: `gen-...` islands are left out of plans and random islands). **Level up** Off / On on the tab turns the level up system on for the island. A chest or note that would stand where players can't get without building (on a sea stack's
+opened for you to change. If that name is taken it gets -2, -3... (rename it with **Save as**: `gen-...` islands are left out of plans and random islands). A chest or note that would stand where players can't get without building (on a sea stack's
 top, a cliff ledge) is moved to the nearest place they can reach.
 
 ![The Ready-made tab](images/generator-readymade.jpg)
@@ -902,7 +907,7 @@ step = open | Lookout cache | 1 |
 | `label`, `description`, `title` | The name in lists, one line about it, and the banner players see on arrival (empty: none) |
 | `flying = <chance> \| <min> - <max>`, `sunken = <m>` | How often it floats and how high; or under water, its top that many metres down |
 | `settings = ranges` | The land is rolled from the lines below (`random`: as a random island; a built-in type's name: that type's land) |
-| `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent or twinpeaks; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
+| `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent, twinpeaks, raftsmallisland or raftlargeisland; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
 | `set = <setting> <value>` | Any generator setting by name after the roll, as in a generator preset (`Hostiles`, `Cliffs`, `SeaFloor`, `Trees`...) |
 | `content = <built-in type>` | That type's content first (a no-land type's raft too: `content = wreck`), then your own lines |
 | `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
@@ -2173,7 +2178,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
   quest, rogue shark, silver & golden barrels, storm days, trader raft, extra upgrades and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
-- **The level up system** (9.6): EXP and stat points - a switch in the window, or an island made with it.
+- **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
 
 All of them belong to the world: chosen when it is created, saved with it, the same for every player (the host's), and
 they come along when the world moves to another host ([section 8](#8-playing-together)).
@@ -2610,14 +2615,13 @@ Islands that a quest, an island's rule or a world plan brings ([section 6.4](#64
 
 ### 9.6 The level up system
 
-Levels come to a world in two ways:
-- **World settings** (New Game box): the **Level up system** switch among the extra options - on for the world from the
-  start (the choice is remembered for the next new world);
-- **an island made with Level up system: On** (the editor's **Island** tab, Rules, or the generator's **Level up**
-  choice): once such an island appears in a world, levels come on there, for every player.
+Levels are a world option: the **Level up system** switch among the extra options of **World settings** (New Game
+box) turns them on for the world from the start (the choice is remembered for the next new world). Islands don't turn
+them on: the editor and the generator have no level up choice, and an older island or preset that had one still loads
+(the old choice is ignored).
 
 The host can switch it in a world with `Levels on` / `Levels off` (F10). **Off keeps everyone's levels** (they come back
-when it is on again), and an island made with levels doesn't switch it back on after the host switched it off. A world
+when it is on again). A world
 without it plays as Raft always does.
 
 ![The Level up system switch in the editor](images/levels-island-tab.jpg)
@@ -3207,8 +3211,8 @@ instead, and on the project's roadmap.
 the sea is clear. `SpawnIsland <name>` places one right away.
 
 **K does nothing, and there is no level bar.** The level up system is off in this world: switch it on in World settings
-for a new world, or with `Levels on` (host, F10) in this one; an island made with **Level up system: On** switches it on
-too (see [section 9.6](#96-the-level-up-system)).
+for a new world, or with `Levels on` (host, F10) in this one (see [section 9.6](#96-the-level-up-system)); islands
+don't switch it on.
 
 **A friend's storage won't open.** The world has **Private storages** on ([9.4](#94-extra-options)): a storage opens
 only for the player who built it. When its builder isn't in the game, the host can open it; or the host switches the

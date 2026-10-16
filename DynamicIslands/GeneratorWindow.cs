@@ -29,6 +29,21 @@ namespace DynamicIslands.Editor
 		IslandGenSettings s = new IslandGenSettings();
 		public const int TabNormal = 0, TabRandomize = 1, TabReady = 2;
 		int tab;
+		/// <summary>The last settings generated on the Generate island tab, and the last ones a Randomize / Ready-made generate left in IslandGenerator.Last.</summary>
+		static IslandGenSettings lastNormal, randomizeMade;
+		/// <summary>True while the settings are the ones a Randomize / Ready-made generate left (the window opened on them).</summary>
+		bool fromOtherTab;
+
+		/// <summary>The Generate island tab's own settings in place of a Randomize / Ready-made generate's (seed and style kept).</summary>
+		void OwnSettings()
+		{
+			if (!fromOtherTab) return;
+			fromOtherTab = false;
+			int seed = s.Seed, style = s.Style;
+			s = lastNormal != null ? lastNormal.Copy() : IslandGenSettings.RaftLike(seed);
+			s.Seed = seed;
+			s.Style = style;
+		}
 		int mapType = 6;
 		RaftIsland chosen;
 		bool variation;
@@ -68,7 +83,11 @@ namespace DynamicIslands.Editor
 			IslandFilesWindow.Close();
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
+			// (after a Randomize existing or Ready-made generate - e.g. LikeIt(Tangaroa), a 139 m round island - the
+			// Generate island tab doesn't open on it: it opens on its own last settings, at first the Raft-like default)
 			instance.s = IslandGenerator.Last.Copy();
+			instance.fromOtherTab = randomizeMade != null && ReferenceEquals(IslandGenerator.Last, randomizeMade);
+			if (instance.tab == TabNormal) instance.OwnSettings();
 			instance.s.Style = DynamicIslands.currentStyle; // start from the island's current style
 			// (a Raft island's ground belongs to Randomize existing, with that island picked)
 			if (instance.tab != TabRandomize || instance.chosen == null || !instance.variation) instance.s.Source = "";
@@ -186,7 +205,7 @@ namespace DynamicIslands.Editor
 			UIKit.Vertical(presetsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
 			RectTransform pr = UIKit.Row(mine, 26f, 4f, "PresetButtons");
 			UIKit.Button(pr, "Save these settings...", SavePreset, "Keep all of these settings (not the seed) as a preset of your own, to use again for other islands", -1, 26f, 12);
-			UIKit.Button(pr, "Defaults", () => { int seed = s.Seed; s = new IslandGenSettings { Seed = seed, Style = s.Style }; ShowAll(); SetStatus("All settings back to their defaults (the seed and style stay)."); }, "Every setting back to its default (the seed and style stay)", 90, 26f, 12);
+			UIKit.Button(pr, "Defaults", () => { int seed = s.Seed; int style = s.Style; s = IslandGenSettings.RaftLike(seed); s.Style = style; ShowAll(); SetStatus("All settings back to their defaults (the seed and style stay)."); }, "Every setting back to its default (the seed and style stay)", 90, 26f, 12);
 			UIKit.Help(pr, "Presets are your own recipes: Save these settings keeps everything on this tab (style, layout, size, coast, nature, animals, loot) under a name. Click a preset to use it again with any seed. The × next to one deletes it (click it twice). Presets live in Mods\\DynamicIslands\\generator_presets.");
 			RefreshPresets();
 
@@ -195,10 +214,10 @@ namespace DynamicIslands.Editor
 				"Style sets the ground textures (sand, grass, snow, desert, forest floor, ash) and which objects grow: tropical palms and bushes, snowy pines and drifts, desert cacti and grass, forest birches and pines, or volcanic rock with a crater on the highest peak. Animals and loot follow the style too, unless you choose them.",
 				() => TerrainPainter.StyleName(s.Style) + (TerrainPainter.HasStyle(s.Style) ? "" : " (textures not loaded)"), step => { int n = TerrainPainter.Styles.Length; s.Style = ((s.Style + step) % n + n) % n; },
 				Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i), StyleHints[Mathf.Min(i, StyleHints.Length - 1)])).ToList(), () => s.Style, i => s.Style = i);
-			Stepper(island, "Layout", "One island, an atoll, an archipelago, sea stacks, a plateau, a marsh, a crescent or twin peaks",
-				"Layout is the basic shape of the land. Round: one island with peaks. Atoll: a ring of low land around a lagoon. Archipelago: several islets on a shallow shelf. Sea stacks: steep rock pillars. Plateau: a flat-topped mesa with a ramp up. Marsh: low land with pools. Crescent: a curved island around a sheltered bay (like Raft's Cresent). Twin peaks: two tall peaks (like Raft's Twin peak). Every other setting shapes it further.",
-				() => IslandShapes.Names[s.Shape], step => { int n = IslandShapes.Names.Length; s.Shape = ((s.Shape + step) % n + n) % n; SetStatus(IslandShapes.Hints[s.Shape] + "."); },
-				Enumerable.Range(0, IslandShapes.Names.Length).Select(i => new DropList.Option(i.ToString(), IslandShapes.Names[i], IslandShapes.Hints[i])).ToList(), () => s.Shape, i => { s.Shape = i; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
+			Stepper(island, "Layout", "Like one of Raft's small or big islands, or one island, an atoll, an archipelago, sea stacks, a plateau, a marsh, a crescent or twin peaks",
+				"Layout is the basic shape of the land. Raft small island (the first one): shaped like one of Raft's own small islands, the seed picking which - an uneven coast, a beach all round to wade onto from the raft, a hill in the middle. Raft large island: the same from Raft's big islands. Round: one island with peaks. Atoll: a ring of low land around a lagoon. Archipelago: several islets on a shallow shelf. Sea stacks: steep rock pillars. Plateau: a flat-topped mesa with a ramp up. Marsh: low land with pools. Crescent: a curved island around a sheltered bay (like Raft's Cresent). Twin peaks: two tall peaks (like Raft's Twin peak). Every other setting shapes it further.",
+				() => IslandShapes.Names[s.Shape], step => { int[] o = IslandShapes.Order; int n = o.Length, at = Mathf.Max(0, Array.IndexOf(o, s.Shape)); s.Shape = o[((at + step) % n + n) % n]; SetStatus(IslandShapes.Hints[s.Shape] + "."); },
+				IslandShapes.Order.Select(i => new DropList.Option(i.ToString(), IslandShapes.Names[i], IslandShapes.Hints[i])).ToList(), () => s.Shape, i => { s.Shape = i; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
 
 			RectTransform size = UIKit.Group(root, "Size and height");
 			Slider(size, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
@@ -347,7 +366,6 @@ namespace DynamicIslands.Editor
 			}
 			Choice(animals, "Toughness", ObjectProps.Presets.Select(p => p.Key).ToArray(), () => Array.FindIndex(ObjectProps.Presets, p => p.Key == s.Difficulty), v => s.Difficulty = ObjectProps.Presets[v].Key,
 				"How tough the hostile animals are: Easy (half health and damage), Normal (Raft's own), Hard (twice the health, 1.5 x damage) or Boss (four times the health). Each spot can still be changed by hand afterwards.");
-			LevelsChoice(animals);
 			Slider(animals, "Friendly animals", 0, IslandGenSettings.MaxCreatureSpots, () => s.Friendly, v => s.Friendly = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
 				"Chickens, goats, llamas to catch", "Animals players can catch with Raft's net launcher and keep on the raft: chickens, goats and llamas, by style. They live on flat ground.", true);
 			Slider(animals, "Sea creatures", 0, IslandGenSettings.MaxCreatureSpots, () => s.SeaLife, v => s.SeaLife = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
@@ -428,15 +446,6 @@ namespace DynamicIslands.Editor
 				"A quest made with the island", "A quest of this many steps, made with the island and its things: first a castaway's note to read where players come ashore, then (by the seed) a lookout to climb to, monsters to defeat, map pieces to collect from small chests, a torn page to find, a supply crate, animals to catch - and last the castaway's hoard at the top of the island. One step: just the hidden hoard. It replaces the island's quest; the Island tab's Quest shows it and you can change it there. A step whose place doesn't fit on a small island is left out (the report says so).", true);
 			Slider(quest, "Raft's features", 0, GenFeatures.Max, () => s.Features, v => s.Features = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0"),
 				"Things Raft's story islands have the player do", "Things Raft's story islands have the player do, put on the island (different ones first): a cache behind vines for the machete, treasure buried for the metal detector and the shovel, a zipline from the top down to the beach, a strongbox behind a code panel (its code on a note elsewhere), a grove of wild beehives, dirt for the shovel. Past six, Raft's story machinery: a generator to start with a part from a toolbox and a radio that then works, an engine to start with fuel from a crate, a chest in a cage for Raft's bolt cutters, a lift up a cliff. An explorer's chest near the shore holds the tools they need.", true);
-		}
-
-		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>
-		void LevelsChoice(Transform parent)
-		{
-			Choice(parent, "Level up", new[] { "Off", "On (EXP from monsters)" }, () => s.Levels ? 1 : 0, v => s.Levels = v == 1,
-				"The level up system: once the island is in a world, players there earn EXP by hitting monsters (the number floats over the monster) and level up. " +
-				"Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level; every level gives " + LevelRules.PointsPerLevel + " stat points for walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen " +
-				"(+1% a point, at most " + LevelRules.MaxPoints + " each; the stats page is " + PlayerLevels.Key + " in a world). Also on the Island tab (Rules).");
 		}
 
 		/// <summary>Deep sea floor like Raft's, or the older flat seabed 20 m down.</summary>
@@ -605,7 +614,6 @@ namespace DynamicIslands.Editor
 			RectTransform about = UIKit.Group(root, "Ready-made islands");
 			UIKit.Label(about, "A ready-made island is a whole island with a story: its layout and style, and content placed by the generator - chests with loot, notes, creatures, trigger zones, atmosphere and a quest. " +
 				"Make saves it as a new island file (gen-<type>-<seed>) and opens it here to change as you like. World plans and the islands that appear while sailing can bring these types too.", 12, UIKit.TextMuted);
-			LevelsChoice(about);
 			RectTransform row = null;
 			for (int i = 0; i < MapTypes.All.Count; i++)
 			{
@@ -744,6 +752,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < tabButtons.Length; i++) UIKit.SetActive(tabButtons[i], i == t);
 			if (generateLabel != null) generateLabel.text = t == TabReady ? "Make" : "Generate";
 			// (Normal makes islands from a layout; the variation of a Raft island lives on the other tab)
+			if (t == TabNormal) OwnSettings();
 			if (t == TabNormal && s.Source.Length > 0) { s.Source = ""; SetStatus("The Normal tab makes islands from a layout (the Raft island's ground stays on Randomize existing)."); }
 			// (back on Randomize existing, a variation starts from its island's ground again; the other settings stay as they were)
 			if (t == TabRandomize && chosen != null && variation) s.Source = chosen.Scene;
@@ -1037,6 +1046,8 @@ namespace DynamicIslands.Editor
 			{
 				IslandGenSettings run = Effective();
 				int n = IslandGenerator.GenerateInEditor(run);
+				if (tab == TabNormal) { lastNormal = run.Copy(); randomizeMade = null; }
+				else randomizeMade = IslandGenerator.Last;
 				IslandGenerator.FrameCamera(run);
 				EditorUI.RefreshIsland();
 				GenReport r = IslandGenerator.LastReport;
@@ -1065,13 +1076,13 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			confirmUntil = 0f;
-			string name = MakeType(type, s.Seed, s.Levels);
+			string name = MakeType(type, s.Seed);
 			if (name == null) { SetStatus("Making the island failed - see the console (F10)."); return; }
 			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + type.Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and Save as with your own name - gen-... islands are left out of plans and random islands.");  }
 		}
 
 		/// <summary>Makes an island of a map type from a seed and saves it; returns its name (null if it failed).</summary>
-		public static string MakeType(MapType type, int seed, bool levels = false)
+		public static string MakeType(MapType type, int seed)
 		{
 			try
 			{
@@ -1079,7 +1090,6 @@ namespace DynamicIslands.Editor
 				IslandGenSettings ms = MapTypes.Roll(type, new System.Random(seed), out elevation);
 				string name = MapTypes.FreeFileName(type, ms);
 				IslandFile file = MapTypes.Create(type, ms, elevation, name);
-				if (levels) file.Props[IslandProps.Levels] = "on";
 				file.Save(IslandSpawner.PathFor(name));
 				return name;
 			}
@@ -1096,7 +1106,7 @@ namespace DynamicIslands.Editor
 		public static void ShowTab(int t) { if (instance != null) instance.SetTab(Mathf.Clamp(t, 0, 2)); }
 
 		/// <summary>Sets the window's settings as if the controls were used (tests).</summary>
-		public static void Use(IslandGenSettings settings) { if (instance != null) { instance.s = settings.Copy(); instance.ShowAll(); } }
+		public static void Use(IslandGenSettings settings) { if (instance != null) { instance.s = settings.Copy(); instance.fromOtherTab = false; instance.ShowAll(); } }
 
 		/// <summary>The window's settings now (tests).</summary>
 		public static IslandGenSettings Current { get { return instance != null ? instance.s.Copy() : null; } }

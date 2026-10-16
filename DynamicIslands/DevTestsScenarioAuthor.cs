@@ -651,7 +651,7 @@ namespace DynamicIslands
 			bool levelsBefore = PlayerLevels.On;
 			IslandFile f;
 			try { f = ScIsland(isl, "Crowded Isle"); } catch (Exception ex) { Fail("scenario many players: " + ex.Message); yield break; }
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			for (int i = 0; i < 5; i++) f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(i * 8 - 16, -10), 10 + i), ObjectProps.NoteTitle, "Crate " + i, ObjectProps.LootItems, "Plank*1"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0, 10), 20), BehaviourProps.Name, "lever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "switch|gate|"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(10, 10), 21), BehaviourProps.Name, "gate", BehaviourProps.Move, "0,3,0", BehaviourProps.MoveMode, "switch"));
