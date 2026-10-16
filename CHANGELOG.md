@@ -15,6 +15,21 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Editor camera settings:** **Camera...** in the editor's status bar (and **Defaults... > Editor camera**) sets
   this PC's look sensitivity, move, zoom and pan speed, which way dragging up looks and the wheel's direction; saved in
   `world_rules.txt`, and the right mouse + wheel flying speed is now kept too. **Alt + right-drag** zooms, as in Unity.
+- **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
+  for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
+  world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
+  (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**. A **?** after it
+  explains it, and how it differs from **Save as**.
+- **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
+  with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
+  the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
+  **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
+  ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
+  to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
+  Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
+  **Lantern Spire** (a flying island).
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details

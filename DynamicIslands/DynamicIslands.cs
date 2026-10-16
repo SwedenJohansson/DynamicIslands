@@ -299,7 +299,8 @@ namespace DynamicIslands
 				ModpacksButton.GetComponent<Button>().onClick.AddListener(() =>
 				{
 					Debug.Log("Editor");
-					LaunchEditor();
+					// (a start window over the menu: an island, a world plan, or the guide - TODO 5b)
+					CreateWindow.Open();
 				});
 
 				// The island library: plans and islands others made, to download (LibraryWindow)
@@ -326,6 +327,9 @@ namespace DynamicIslands
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
 			UpdateCheck.OnMainMenu(); // (a newer Custom Islands is out: once per start - AU44)
+			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)
+			MenuWindows.Ensure();
+			EditorEntry.OnMainMenu();
 
 
 
@@ -630,6 +634,8 @@ namespace DynamicIslands
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 			// (work Raft closed on before it was saved: offered back)
 			EditorAutosave.OnEditorReady();
+			// (the island chosen in the start window: Open an island / Continue)
+			EditorEntry.OnEditorReady();
 
 			// Once per Raft version: find every object of Raft's other islands (runs in the background)
 			if (!PlaceableCatalog.IndexIsCurrent) instance.StartCoroutine(PlaceableCatalog.EnsureIndex());
