@@ -99,6 +99,9 @@ namespace DynamicIslands.Editor
 			{
 				var lines = new List<string>();
 				if (s.Blueprints.Count > 0) lines.Add("<b>Blueprints:</b> " + Blueprints(s.Blueprints));
+				// (Raft's order: a blueprint before the ones it builds on - Check warns)
+				foreach (PlanChecker.Progress.Early e in s.Early)
+					lines.Add("<color=" + warn + "><b>Too early:</b> " + PlanChecker.Pretty(e.Blueprint) + " builds on " + string.Join(" and ", e.Bases.Select(PlanChecker.Pretty).ToArray()) + " - only " + e.Later + " gives " + (e.Bases.Count > 1 ? "them" : "it") + ", later</color>");
 				if (s.Tools.Count > 0) lines.Add("<b>Tools:</b> " + string.Join(", ", s.Tools.ToArray()));
 				// (Raft's own story island, at its place in the chain: its quest items open only its own doors)
 				if (s.Rule < 0)
@@ -108,7 +111,7 @@ namespace DynamicIslands.Editor
 				}
 				IntroRule r = plan.Rules[s.Rule];
 				if (s.Gives.Count > 0) lines.Add("<b>Gives story items:</b> " + string.Join(", ", s.Gives.ToArray()));
-				if (s.Needs.Count > 0) lines.Add("<b>Its locks want:</b> " + string.Join(", ", s.Needs.Select(n => s.NeedsLate.Contains(n) ? "<color=" + warn + ">" + n + " (no island before gives it)</color>" : n).ToArray()));
+				if (s.Needs.Count > 0) lines.Add("<b>Its locks want:</b> " + string.Join(", ", s.Needs.Select(n => s.NeedsLate.Contains(n) ? "<color=" + warn + ">" + n + " (no island before gives it)</color>" : s.NeedsFrom.ContainsKey(n) ? n + " (kept from " + s.NeedsFrom[n] + ")" : n).ToArray()));
 				// (a main quest step held up by a tool is warned about; an optional find only noted - players come back, as in Raft)
 				foreach (PlanChecker.Progress.ToolNeed need in s.ToolNeeds)
 					lines.Add(need.Main

@@ -299,7 +299,8 @@ namespace DynamicIslands
 				ModpacksButton.GetComponent<Button>().onClick.AddListener(() =>
 				{
 					Debug.Log("Editor");
-					LaunchEditor();
+					// (a start window over the menu: an island, a world plan, or the guide - TODO 5b)
+					CreateWindow.Open();
 				});
 
 				// The island library: plans and islands others made, to download (LibraryWindow)
@@ -326,6 +327,9 @@ namespace DynamicIslands
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
 			UpdateCheck.OnMainMenu(); // (a newer Custom Islands is out: once per start - AU44)
+			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)
+			MenuWindows.Ensure();
+			EditorEntry.OnMainMenu();
 
 
 
@@ -605,7 +609,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); MainStoryHelper.Create(EditorUI.Canvas.transform); PlanCheckWindow.Create(EditorUI.Canvas.transform); PlanProgressWindow.Create(EditorUI.Canvas.transform); LibraryExportWindow.Create(EditorUI.Canvas.transform); LibraryImportWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); PiecesWindow.Create(EditorUI.Canvas.transform); PlacedListWindow.Create(EditorUI.Canvas.transform); MyIslandsWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); MainStoryHelper.Create(EditorUI.Canvas.transform); PlanCheckWindow.Create(EditorUI.Canvas.transform); PlanProgressWindow.Create(EditorUI.Canvas.transform); LibraryExportWindow.Create(EditorUI.Canvas.transform); LibraryImportWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); PiecesWindow.Create(EditorUI.Canvas.transform); PlacedListWindow.Create(EditorUI.Canvas.transform); MyIslandsWindow.Create(EditorUI.Canvas.transform); CameraSettingsWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			// (the loading box shows how far Raft's islands have been read for their objects)
@@ -630,6 +634,8 @@ namespace DynamicIslands
 			Debug.Log("[CUSTOM ISLANDS] Editor ready. Console: SaveIsland <name>, LoadIsland <name>, ListIslands");
 			// (work Raft closed on before it was saved: offered back)
 			EditorAutosave.OnEditorReady();
+			// (the island chosen in the start window: Open an island / Continue)
+			EditorEntry.OnEditorReady();
 
 			// Once per Raft version: find every object of Raft's other islands (runs in the background)
 			if (!PlaceableCatalog.IndexIsCurrent) instance.StartCoroutine(PlaceableCatalog.EnsureIndex());

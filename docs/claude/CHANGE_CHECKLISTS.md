@@ -42,8 +42,8 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 **Usually also**
 - The file format does not change: `IslandFile.Props` (format 4) holds any key. Binary data goes in a tag of `IslandFile.Tail` (`DynamicIslands.currentIslandTail` in the editor). `CIFormatTail` tests the tail.
 - `EditorUI.SetInfo` goes through `IslandSettingsUndo.Change`, which makes the undo step and the unsaved mark the autosave sees. That snapshot holds only `currentIslandProps`, `currentStyle` and `currentElevation`.
-- If the generator sets it, do it as `IslandProps.Levels` is done: in `IslandGenerator.GenerateInEditor` (inside the generation's undo step, with `IslandSettingsUndo.Record`), in `IslandGenerator.CreateFile`, and in `GeneratorWindow.MakeType` (map types).
-- Players who join get the island file itself. A world-wide effect starts from `IslandInfo.Tag` (as `PlayerLevels.OnIslandSpawned`).
+- If the generator sets it: in `IslandGenerator.GenerateInEditor` (inside the generation's undo step, with `IslandSettingsUndo.Record`), in `IslandGenerator.CreateFile`, and in `GeneratorWindow.MakeType` (map types).
+- Players who join get the island file itself. A world-wide effect starts from `IslandInfo.Tag` (the level up system used to; it is a world option only since 2026-10-16).
 - Recipes already set any key with `island key=value`. If Check should warn about it, change `PlanChecker`.
 **Test**: `CIPropsTest` (`DevTestsContent.cs`) saves and loads island settings. Add a `.play` step if players see the setting.
 **Docs**: GUIDE `### 4.4 The Island tab`; README `## The editor`.
@@ -270,6 +270,7 @@ This is the most common change in history. It does not touch any `.cs` file.
 - `content/tests/<name>_pics.play`: the guide pictures.
 - `docs/images/library/<name>.jpg`.
 - GUIDE `## 16. Learn from the library: example islands and plans`: add its row to the matching table (`### 16.2` to `### 16.8`).
+- GUIDE `## 17. Learn from the islands`, `### 17.4`: if the island is the best one to learn a feature from, name it in that feature's row (every editor feature has one island there).
 - README `## Features`, bullet **The island library.**: update the island count and its list.
 - `docs/Custom-Islands-Guide.pdf`, made again from GUIDE.md.
 **Usually also**

@@ -25,6 +25,9 @@ namespace DynamicIslands.Editor
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
 		public const string TreasureKind = "treasure.kind";
+		/// <summary>Buried treasure: extra loot in its chest, "UniqueItemName*amount;..." like loot.items (story:... items too; RF4).
+		/// Not loot.items, so the treasure is not counted as a chest (IsLoot).</summary>
+		public const string TreasureLoot = "treasure.loot";
 		public const int MaxLootStacks = 12, MaxLootAmount = 999;
 		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
 		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>
@@ -158,10 +161,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The loot as (item name, amount) pairs, in order; bad entries are skipped.</summary>
-		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props)
+		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props) { return Loot(props, LootItems); }
+
+		/// <summary>The items under another key in the same form (treasure.loot).</summary>
+		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props, string key)
 		{
 			var list = new List<KeyValuePair<string, int>>();
-			foreach (string part in Get(props, LootItems).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string part in Get(props, key).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				int star = part.LastIndexOf('*');
 				string item = (star > 0 ? part.Substring(0, star) : part).Trim();

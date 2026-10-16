@@ -97,10 +97,9 @@ namespace DynamicIslands.Editor
 			float spacing = data.size.x / cells, height = data.size.y;
 			float water = waterLevel / height;
 
-			// Land samples, and each land sample's distance (in samples) to the nearest non-land sample
+			// Land samples
 			var land = new bool[res, res];
 			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) land[z, x] = h[z, x] > water;
-			int[,] dist = DistanceToEdge(land, res);
 
 			// Holes: keep only cells whose four corners are land
 			var solid = new bool[cells, cells];
@@ -114,11 +113,22 @@ namespace DynamicIslands.Editor
 			if (kept == 0) return;
 			data.SetHoles(0, 0, solid);
 
+			// The rim: every sample on the edge of the kept cells (a corner of a cut-away cell, or on the terrain's border).
+			// It stays on the ground so the underside meets it all round; each other sample's distance (in samples) to the
+			// rim sets how far it hangs. (Measured from the land's edge instead, a sample only diagonally next to the sea
+			// counted as inside and hung down while still on a cut edge: zigzag gaps to the sky along a diagonal coast,
+			// seen from below - Lantern Spire 10-16.)
+			var inside = new bool[res, res];
+			for (int z = 1; z < cells; z++)
+				for (int x = 1; x < cells; x++)
+					inside[z, x] = solid[z - 1, x - 1] && solid[z - 1, x] && solid[z, x - 1] && solid[z, x];
+			int[,] dist = DistanceToEdge(inside, res);
+
 			// Underside: same grid as the kept cells; the rim follows the surface, the inside hangs down like a cone
 			// that is deepest under the middle of the land (never reaching down to the sea)
 			float maxDepth = Mathf.Max(2f, elevation - UndersideClearance);
 			int dMax = 1;
-			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (dist[z, x] > dMax) dMax = dist[z, x];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (land[z, x] && dist[z, x] > dMax) dMax = dist[z, x];
 			float coneDepth = Mathf.Min(maxDepth, dMax * spacing * 0.9f);
 			var index = new int[res, res];
 			var verts = new List<Vector3>();
@@ -129,7 +139,7 @@ namespace DynamicIslands.Editor
 					index[z, x] = -1;
 					if (!land[z, x]) continue;
 					float surface = h[z, x] * height;
-					int d = dist[z, x] - 1; // 0 on the coastline
+					int d = dist[z, x]; // 0 on the rim
 					float noise = Mathf.PerlinNoise(x * 0.07f, z * 0.07f);
 					// Relative to sea level (terrain y = waterLevel); rounded near the rim, ragged with noise
 					float depth = Mathf.Min(coneDepth * Mathf.Pow(d / (float)dMax, 0.75f) * (0.8f + 0.4f * noise), maxDepth);
@@ -374,6 +384,7 @@ namespace DynamicIslands.Editor
 					bt.Number = treasure++;
 					int kind;
 					bt.Kind = int.TryParse(ObjectProps.Get(o.Props, ObjectProps.TreasureKind), out kind) ? kind : 0;
+					bt.Loot = ObjectProps.Loot(o.Props, ObjectProps.TreasureLoot);
 					return;
 				}
 				// Invisible walls and ramps: only their collision in a world

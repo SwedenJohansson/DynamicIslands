@@ -41,7 +41,7 @@ namespace DynamicIslands
 			Func<int, int, float, bool, IslandGenSettings> make = (seed, style, radius, levels) => new IslandGenSettings
 			{
 				Seed = seed, Style = style, Radius = radius, Height = 14f + radius * 0.12f, Roughness = 0.35f, Peaks = 2, ObjectDensity = 0.3f,
-				Buildings = true, BuildingKind = GenBuildings.Mixed, BuildingCount = 8, Caves = true, Levels = levels, QuestSteps = 2,
+				Buildings = true, BuildingKind = GenBuildings.Mixed, BuildingCount = 8, Caves = true, QuestSteps = 2,
 			};
 			var cases = new List<IslandGenSettings>
 			{
@@ -76,7 +76,7 @@ namespace DynamicIslands
 					IslandFile f = null;
 					try { f = IslandGenerator.CreateFile(s, "ci-quiet-" + i); }
 					catch (Exception e) { problems++; if (firstProblems.Count < 5) firstProblems.Add("generating case " + i + ": " + e.Message); }
-					if (f != null) Log("  case " + i + " (style " + s.Style + ", radius " + s.Radius + ", levels " + s.Levels + (s.Remake.Length > 0 ? ", " + s.Remake : "") + "): " + f.Objects.Count + " objects");
+					if (f != null) Log("  case " + i + " (style " + s.Style + ", radius " + s.Radius + (s.Remake.Length > 0 ? ", " + s.Remake : "") + "): " + f.Objects.Count + " objects");
 					i++;
 					yield return null;
 				}

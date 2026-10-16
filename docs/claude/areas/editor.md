@@ -1,11 +1,13 @@
 # Editor
 
-The in-game island editor: shape and paint the land, place and set up objects, island settings, save and open, test in a world. It opens from Raft's main menu only.
+The in-game island editor: shape and paint the land, place and set up objects, island settings, save and open, test in a world. It opens from Raft's main menu only: EDITOR shows the start window (`CreateWindow`) and `An island` opens it.
 
 ## Files
 | File | Role |
 |---|---|
 | `DynamicIslands.cs` | `HookUI` (EDITOR button), `LoadEditor` -> `OpenEditor`; state `currentIslandName`, `currentIslandProps`, `currentStyle`, `currentMixStyle`, `currentElevation`, `EditorWaterLevel`, `EditorGizmoHandler`; `NewIsland`, `SaveIsland`, `LoadIsland`, `CaptureIsland`, `KeepUnsaved`, `PlaceObject`, `Notify`, `InEditor` |
+| `CreateWindow.cs` | The start window over the main menu ("What do you want to make?": cards An island / A world plan / The guide; the card of what was made last is lit; `Open`, `Close`) |
+| `EditorEntry.cs` | Ways in and out of the editor: `StartIsland`, `EditFromPlan` (plan card's Edit island), `NewIslandFromPlan`, `UseInPlan` / `AddToPlan` / `RuleFor` (top bar Use in a plan...), `StoryEnd`, `ToPlan` (Back to the plan), `ToMainMenu`. `editor_start.txt` remembers the last island and plan |
 | `EditorUI.cs` / `UIKit.cs` / `EditorLoadingBox.cs` | The screen (`Setup`, `Tick`, `RefreshIsland`, `RefreshStyle`, `Flash`, `CopySelected`, `Paste`) / the kit every window is built with / the cover while the editor opens |
 | `EditorTools.cs` | `EditorInput` (`IsTyping`, `WindowOpen`, `SubWindowClosedFrame`, `HandleShortcuts`: Ctrl+Z/Y/S), `TerrainStrokeCommand`, `ObjectVisibilityCommand` |
 | `terraineditor.cs` | Makes the terrain (`terrainSize` 1000 x 600 x 1000, `heightmapResolution` 513); brush state (`modificationAction`, `brushRadius`, `strength`, `paintLayer`, `paintMask`); strokes |
@@ -16,10 +18,10 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 | `EditorGameObject.cs` | `EditorGameObject` (`GameObjectName`, `Props`, `Attach`) on every placed object; `ObjectLimit` |
 | `ObjectProps.cs` / `ObjectInspector.cs` | Prop keys (`creature.*`, `note.*`, `tint.*`, `loot.*`, `zone.*`, `atmo.*`, `sound.*`), `Defaults`, `With`, `ApplyInEditor`, `PropsCommand` / the inspector for one selected object |
 | `IslandSettingsUndo.cs` / `EditorAutosave.cs` | `Change` / `Record`: island props, style, elevation as undo steps / `autosave\<name>.island`: `Unsaved`, `Tick`, `WriteNow`, `Saved`, `OnEditorReady` |
-| `IslandTest.cs` / `EditorCamera.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland` (each under `Guarded`); `Back`, `Cancel`, `Abort` (back to the editor with the reason); `TestCover` over the main menu while it starts / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Frame`, `Sync`; `Looking`, `UsingMouse`) |
+| `IslandTest.cs` / `EditorCamera.cs` / `CameraSettings.cs` | Test: `Start` -> `Tick` state machine -> `OpenWorld` -> `BringIsland` (each under `Guarded`); `Back`, `Cancel`, `Abort` (back to the editor with the reason); `TestCover` over the main menu while it starts / camera (`Look`, `Pan`, `Orbit`, `ZoomAt`, `Dolly`, `Frame`, `Sync`; `Looking`, `UsingMouse`); `CameraSettings` (look/speed/zoom/pan, drag up, wheel; `world_rules.txt` camera* keys, debounced `Tick`/`Save`; `Build` = the controls, also in `DefaultsWindow`) and `CameraSettingsWindow` (status bar `Button_CameraSettings`) |
 
 ## Main flow
-1. Main menu EDITOR (`HookUI`) -> `LaunchEditor` -> `LoadEditor` (refused while a world is loaded) -> `EditorLoadingBox.Show` -> `OpenEditor`.
+1. Main menu EDITOR (`HookUI`) -> `CreateWindow` -> `EditorEntry.StartIsland` (or `EditFromPlan` / `NewIslandFromPlan`) -> `LoadEditor` (refused while a world is loaded) -> `EditorLoadingBox.Show` -> `OpenEditor`.
 2. `OpenEditor`: loads the bundle's `Editor` scene, `HideOldCanvases`, `RaftSkySea.Adopt`; adds `terraineditor` and `EditorCamera` to `Camera.main`; `EditorUI.Setup(null, tabSelector)`; shaders; resets name, sea level and undo; `TransformGizmo` as `EditorGizmoHandler`; `CreateWaterLevelPlane`; each window's `Create(EditorUI.Canvas.transform, ...)`; `await PlaceableCatalog.EnsureBuilt()`; Tropical style; `EditorAutosave.OnEditorReady`; `EnsureIndex` when `IndexIsCurrent` is false.
 3. Each frame `terraineditor.Update`: `EditorInput.HandleShortcuts` -> `EditorUI.Tick` (F1-F3 tabs; Ctrl+D/C/V/A on the Objects tab; `ObjectInspector.Tick`, `SelectionTools.Tick`) -> `ModifyTerrain`. `DynamicIslands.Update` runs `EditorAutosave.Tick` and `IslandTest.Tick`.
 4. Brush: `BeginStroke` (full snapshot) -> `ApplyAt` -> `EndStroke` (`TerrainPainter.PaintWorldArea` unless painting by hand) -> `RecordUndo` (a `TerrainStrokeCommand` of the touched area, plus `FollowGround` moving objects that stood on it).
@@ -59,4 +61,6 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 - `terraineditor.terrainSize` / `heightmapResolution` and `IslandGenerator.BuildArea` / `BuildResolution` hold the same numbers.
 - Test (`IslandTest`): a start must never stay `Busy` - a failure calls `Abort`, every step runs under `Guarded`. Raft's menu boxes are found again at each step (`LiveBox`, which mends links to destroyed boxes): after the editor, `LoadGameBox.versionControlBox` was a destroyed object.
 - C# 7.3 (`LangVersion` in `DynamicIslands.csproj`, which lists each `.cs` file for `compile.ps1`: add new ones there). `pack.ps1 -Release` leaves out `DevTests*.cs`.
+- A `UIKit.Help` "?" follows the two (explains Use in a plan vs Save as); `Use in a plan...` is 96 wide, text best-fit (1024 x 768 room).
+- The top bar shows `Use in a plan...` normally and `Back to the plan` while the island opened by `EditFromPlan` is the one open (`EditorUI.backToPlanButton`); opening another island ends it. A world plan needs no editor scene: it opens on the main menu (see world-plans.md).
 - Docs: README `The editor` and the source overview; `docs/GUIDE.md` chapter 4 (4.1 The screen to 4.9 Test); then the PDF is made again from `GUIDE.md`.

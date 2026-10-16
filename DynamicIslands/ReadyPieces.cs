@@ -176,7 +176,8 @@ namespace DynamicIslands.Editor
 					// (it goes when opened: Raft's doors swing on hinges this piece doesn't have)
 					props[BehaviourProps.CheckKey("use")] = "has|" + StoryItems.Prefix + QuestItemPickups.IdPrefix + p.Item + "|1";
 					props[BehaviourProps.ElseKey("use")] = "message||" + p.Locked;
-					props[BehaviourProps.EventKey("use")] = "hide|";
+					// (a card reader beeps its card through: Raft's own sound, RF4)
+					props[BehaviourProps.EventKey("use")] = (KeycardDoor.IsCardReader(name) ? "sound||" + KeycardDoor.CardSound + "\n" : "") + "hide|";
 					break;
 				case Hatch:
 					props[BehaviourProps.EventKey("use")] = "hide|";

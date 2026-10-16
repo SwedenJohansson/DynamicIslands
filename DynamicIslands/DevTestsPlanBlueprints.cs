@@ -45,7 +45,7 @@ namespace DynamicIslands
 			}
 			var bare = new WorldPlan { Name = "CI no story", Random = true, RaftStory = false };
 			PlanChecker.Finding none = PlanChecker.Check(bare, false, false).FirstOrDefault(x => x.Text.StartsWith("Raft's blueprints never given"));
-			Check(ref ok, none != null && ScrambledBlueprints.OnIslands.Keys.All(b => none.Text.Contains(b.Replace("Blueprint_", "").Replace("_", " "))),
+			Check(ref ok, none != null && ScrambledBlueprints.OnIslands.Keys.All(b => none.Text.Contains(PlanChecker.Pretty(b))),
 				"a plan with Raft's story off and no islands is told about all " + all + " blueprints");
 			PlanChecker.Progress bp = PlanChecker.Progression(bare, false);
 			Check(ref ok, bp.Missing.Count == all && bp.Kept.Count == 0 && bp.Steps.Count == 0, "its progression: " + bp.Missing.Count + " never given, " + bp.Kept.Count + " kept");

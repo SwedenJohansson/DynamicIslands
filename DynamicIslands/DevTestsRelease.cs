@@ -265,6 +265,7 @@ namespace DynamicIslands
 		/// <summary>A button of a window by its label (UIKit names them Button_&lt;label&gt;), clicked as a player would.</summary>
 		static bool Click(GameObject root, string label)
 		{
+			if (root == null) return false;
 			Button b = root.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == "Button_" + label || (UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == label));
 			if (b == null || !b.interactable) return false;
 			b.onClick.Invoke();
@@ -322,6 +323,9 @@ namespace DynamicIslands
 			if (win == null) { Fail("story plan made"); yield break; }
 			Check(ref ok, Click(win, "New..."), "New... clicked");
 			yield return null; yield return null;
+			// (New... asks how to start first: an empty plan - TODO 5b)
+			Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(WorldPlanWindow.NewEmpty), "New...: an empty plan");
+			yield return null; yield return null;
 			GameObject prompt = WindowObject(typeof(TextPromptWindow));
 			Check(ref ok, prompt != null && TypeInto(prompt, "Name", StoryPlan) && Click(prompt, "OK"), "the name prompt: '" + StoryPlan + "', OK");
 			yield return null; yield return null;
@@ -335,6 +339,9 @@ namespace DynamicIslands
 				new[] { "treasure", "quest", "bay", "", "type", "treasure", "near", "600", "east", "bay", "", "Treasure" },
 				new[] { "far", "km", "", "2", "type", "oddity", "ahead", "400", "", "", "", "" },
 			};
+			// (islands that come on their own are on the Other islands tab - TODO 5b)
+			Check(ref ok, ClickTab(win, "Tab_Other"), "the Other islands tab");
+			yield return null;
 			for (int i = 0; i < rules.Length; i++)
 			{
 				string[] r = rules[i];
@@ -360,6 +367,8 @@ namespace DynamicIslands
 				if (r[11].Length > 0) typed &= TypeInto(cd, "Receiver name", r[11]);
 				Check(ref ok, typed, "rule " + (i + 1) + " '" + r[0] + "': filled in through its card");
 			}
+			Check(ref ok, ClickTab(win, "Tab_Settings"), "the Settings tab");
+			yield return null;
 			Check(ref ok, TypeInto(win, "Description, shown when choosing the plan (e.g. A story across five islands)", "A test story across four islands"), "the description typed");
 			Check(ref ok, Click(win, "Check"), "Check clicked");
 			yield return null;
@@ -398,11 +407,15 @@ namespace DynamicIslands
 			yield return null; yield return null;
 			Check(ref ok, System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")), "the copy saved as '" + StoryPlan + " copy'");
 			int before = cards().Count;
+			ClickTab(win, "Tab_Settings");
+			yield return null;
 			Button random = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("Random islands while sailing"));
 			string r0 = random != null ? UIKit.LabelOf(random).text : "";
 			if (random != null) random.onClick.Invoke();
 			yield return null;
 			Check(ref ok, random != null && UIKit.LabelOf(random).text != r0, "the random islands switch: '" + r0 + "' -> '" + (random != null ? UIKit.LabelOf(random).text : "") + "'");
+			ClickTab(win, "Tab_Other");
+			yield return null;
 			Check(ref ok, Click(win, "Templates..."), "Templates... clicked");
 			yield return null; yield return null;
 			GameObject choice = WindowObject(typeof(ChoiceWindow));

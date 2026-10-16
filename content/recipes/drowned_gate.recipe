@@ -199,6 +199,7 @@ place "Chair Office" - at -2.1 -1.5 sit yaw=90
 place Cableroll_01 - at -0.7 2.6 sit
 place Placeable_Lantern_Metal - at -1.2 -0.6 y=1.2 sit drop
 place Loot_ChestSmall relayspares at -0.9 0.8 sit yaw=-90
+place "Pickup_Landmark_Scrap 3_Land" - at 0.9 -0.5 y=0.4 drop yaw=64
 pop
 
 # --- The gate office on the walk's south half: its door to the lock's deck bolted to the inner lock's gear; the vault ---
@@ -246,6 +247,8 @@ place Placeable_Bed_Wood - at 1.6 3.65 y=0.2 sit
 place Table_Common_01 - at 3.2 1.1 y=0.2 sit
 place Placeable_Chair_Wood - at 2.3 1.1 y=0.2 sit yaw=90
 place Placeable_Lantern_Metal - at 3.2 1.1 y=1.2 sit drop
+place Pickup_Landmark_Plastic3_Land - at 0.9 1.5 y=0.6 drop yaw=200
+place "Pickup_Landmark_Scrap 2_Land" - at 3.0 2.6 y=0.6 drop yaw=35
 pop
 place Note_Board keeperscount at 2.2 21.4 y=5.05 yaw=-90
 place Crate_Big_01 - at 12.5 21 ground yaw=20

@@ -105,6 +105,8 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			if (ContentCatalog.IsHelper(target.GameObjectName)) { BehaviourGroup(target); return; }
+			if (ContentCatalog.IsTreasure(target.GameObjectName)) { TreasureGroup(target); return; }
+			if (KeycardDoor.Is(target.GameObjectName)) KeycardGroup(target);
 			if (kind != null) CreatureGroup(target, kind);
 			else
 			{
@@ -140,6 +142,46 @@ namespace DynamicIslands.Editor
 				code.onEndEdit.AddListener(v => Set(target, CodeLock.Code, v.Trim().Length > 0 ? v.Trim() : null, null));
 				amountFields.Add(code); // (typing the code: Delete hid the object, 1-4 changed the gizmo, WASD flew)
 			}
+		}
+
+		/// <summary>A key door (RF4): the story item that opens it, and whether it is used up.</summary>
+		static void KeycardGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, KeycardDoor.IsCardReader(target.GameObjectName) ? "Keycard door" : "Key door");
+			string card = KeycardDoor.CardOf(target.Props);
+			bool usedUp = KeycardDoor.UsedUp(target.Props);
+			UIKit.Label(g, card != null ? "Opens for a player who has " + StoryItems.Label(card) + (usedUp ? " (the card is used up)." : " (they keep it).") + " Open, it stays open for everyone."
+				: "<i>No card opens it: it opens for anyone.</i>", 12, card != null ? UIKit.TextMuted : UIKit.Danger);
+			var options = new List<DropList.Option> { new DropList.Option("", "None (opens for anyone)") };
+			options.AddRange(KeycardDoor.Choices(DynamicIslands.currentIslandProps, card).Select(c => new DropList.Option(c.Key, c.Value)));
+			RectTransform row = UIKit.Row(g, 26f, 4f, "CardRow");
+			UIKit.Label(row, "Card", 12, UIKit.TextMuted);
+			DropList.Make(row, "Drop_Card", options, card ?? "", v => { PropsCommand.Change(target, KeycardDoor.WithCard(target.Props, v, KeycardDoor.UsedUp(target.Props))); Refresh(); }, 200,
+				"The story item that opens it: one of the island's own (Story items in the island's settings) or one of Raft's quest items");
+			Button used = UIKit.Check(g, "Card used up", () =>
+			{
+				string c = KeycardDoor.CardOf(target.Props);
+				if (c == null) return;
+				PropsCommand.Change(target, KeycardDoor.WithCard(target.Props, c, !KeycardDoor.UsedUp(target.Props)));
+				Refresh();
+			}, "Ticked: the card goes when the door opens. Not ticked: the player keeps it (for other doors too)");
+			UIKit.SetCheck(used, usedUp);
+		}
+
+		/// <summary>Buried treasure (RF4): what it is, and extra loot of its own in its chest.</summary>
+		static void TreasureGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Buried treasure");
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(target.Props, ObjectProps.TreasureLoot);
+			UIKit.Label(g, "Only Raft's metal detector finds it: it beeps faster nearer. Three digs with the shovel bring up a chest with Raft's treasure loot"
+				+ (loot.Count > 0 ? ", and also: " + string.Join(", ", loot.Select(l => (StoryItems.IsStory(l.Key) ? StoryItems.Label(l.Key) : ContentCatalog.ItemLabel(l.Key)) + " \u00D7" + l.Value).ToArray()) + "." : ".")
+				+ (loot.Any(l => StoryItems.IsStory(l.Key)) ? " It holds a story item, so it never comes back once dug up." : " Dug up, it comes back after the regrow days."), 12, UIKit.TextMuted);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "TreasureLoot");
+			Button add = UIKit.Button(row, "Extra loot...", () => ItemPickerWindow.OpenFor(() => ObjectProps.Get(target.Props, ObjectProps.TreasureLoot),
+				v => PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.TreasureLoot, string.IsNullOrEmpty(v) ? null : v))),
+				"Items (or story items) the chest gives besides Raft's treasure loot, once, to whoever picks it up", -1, 26f, 12);
+			UIKit.SetActive(add, loot.Count == 0);
+			if (loot.Count > 0) UIKit.Button(row, "None", () => { PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.TreasureLoot, null)); Refresh(); }, "Only Raft's treasure loot", 60, 26f, 12);
 		}
 
 		/// <summary>Raft's zipline line: where its far end stands (ZiplineEnds; in a world Raft makes the line there).</summary>
