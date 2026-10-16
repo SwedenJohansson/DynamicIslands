@@ -7,9 +7,10 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// Progression (the World Plans window, TODO 4c step 3): what a plan gives of Raft's progression, in its order - which
-	/// rule's islands give which of Raft's story-island blueprints and story items, what their locks want and whether an
-	/// earlier island gave it, the blueprints the story islands it keeps give, and those never given.
+	/// Progression (the World Plans window, TODO 4c step 3): what a plan gives of Raft's progression, in play order
+	/// (PlanChecker.PlayOrder: the story chain, and each rule by what it waits for) - which rule's islands give which of
+	/// Raft's story-island blueprints, story items and tools, what their locks and features want and whether an island met
+	/// before gave it, the story islands it keeps at their places with their blueprints, and the blueprints never given.
 	/// </summary>
 	public class PlanProgressWindow : MonoBehaviour
 	{
@@ -74,7 +75,7 @@ namespace DynamicIslands.Editor
 			list = UIKit.ScrollList(box, out scroll, 6f);
 			UIKit.Stretch((RectTransform)scroll.transform, 6, 6, 6, 6);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Label(buttons, "In the plan's order. Blueprints: Raft's from its story islands. Story items: keys, keycards... that open locks.", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Label(buttons, "In play order. Blueprints: Raft's from its story islands. Story items: keys, keycards... that open locks. Tools: what Raft's features want.", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			Button close = UIKit.Button(buttons, "Close", Close, "Back to the plan (Esc)", 110, 34f, 13);
 			UIKit.Primary(close);
 		}
@@ -89,25 +90,36 @@ namespace DynamicIslands.Editor
 			foreach (Transform child in list) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			titleText.text = "PROGRESSION: " + plan.Name.ToUpperInvariant();
 			string warn = Hex(PlanCheckWindow.ColorOf(PlanChecker.Level.Warning));
-			int byIslands = p.Steps.Sum(s => s.Blueprints.Count(b => !p.Kept.Contains(b)));
+			int byIslands = p.Steps.Where(s => s.Rule >= 0).Sum(s => s.Blueprints.Count(b => !p.Kept.Contains(b)));
 			summaryText.text = p.All == 0 ? "Raft's list of story-island blueprints couldn't be read."
 				: "Of Raft's " + p.All + " story-island blueprints: " + p.Kept.Count + " on the story islands the plan keeps, " + byIslands + " more from its islands" +
 					(p.Missing.Count > 0 ? ", <color=" + warn + ">" + p.Missing.Count + " never given</color>." : " - <color=#8fdc8f>every one is given.</color>");
-			if (p.Kept.Count > 0)
-				Item(-1, "RAFT'S STORY", "The story islands the plan keeps give: " + Blueprints(p.Kept) + ".", "");
+			string muted = Hex(UIKit.TextMuted);
 			foreach (PlanChecker.Progress.Step s in p.Steps)
 			{
-				IntroRule r = plan.Rules[s.Rule];
 				var lines = new List<string>();
 				if (s.Blueprints.Count > 0) lines.Add("<b>Blueprints:</b> " + Blueprints(s.Blueprints));
+				if (s.Tools.Count > 0) lines.Add("<b>Tools:</b> " + string.Join(", ", s.Tools.ToArray()));
+				// (Raft's own story island, at its place in the chain: its quest items open only its own doors)
+				if (s.Rule < 0)
+				{
+					Item(-1, StoryOrder.Name(s.Raft).ToUpperInvariant(), "Raft's story island" + (lines.Count > 0 ? "\n" + string.Join("\n", lines.ToArray()) : ""), "");
+					continue;
+				}
+				IntroRule r = plan.Rules[s.Rule];
 				if (s.Gives.Count > 0) lines.Add("<b>Gives story items:</b> " + string.Join(", ", s.Gives.ToArray()));
 				if (s.Needs.Count > 0) lines.Add("<b>Its locks want:</b> " + string.Join(", ", s.Needs.Select(n => s.NeedsLate.Contains(n) ? "<color=" + warn + ">" + n + " (no island before gives it)</color>" : n).ToArray()));
+				// (a main quest step held up by a tool is warned about; an optional find only noted - players come back, as in Raft)
+				foreach (PlanChecker.Progress.ToolNeed need in s.ToolNeeds)
+					lines.Add(need.Main
+						? "<color=" + warn + "><b>Its quest wants:</b> the " + RaftFeatures.LabelOf(need.Tool) + " for " + need.Feature + " - " + (need.Later != null ? "only " + need.Later + " gives it, later" : "no island gives it") + "</color>"
+						: "<color=" + muted + "><i>Optional:</i> " + need.Feature + " " + (need.Feature.EndsWith("s") ? "want" : "wants") + " the " + RaftFeatures.LabelOf(need.Tool) + " - " + (need.Later != null ? need.Later + " gives it later; players can come back" : "no island gives it") + "</color>");
 				Item(s.Rule, "RULE " + (s.Rule + 1), (r.Id.Length > 0 ? "'" + r.Id + "' - " : "") + (r.WhatArg.Length > 0 ? r.WhatArg : r.What) + "\n" + string.Join("\n", lines.ToArray()), "");
 			}
 			if (p.Missing.Count > 0)
 				Item(-1, "NEVER GIVEN", "<color=" + warn + ">" + Blueprints(p.Missing) + "</color>",
 					"Give each as a quest reward, in a chest's loot or from a note on one of the plan's islands - or keep the story islands that carry them.");
-			if (p.Steps.Count == 0 && p.Kept.Count == 0 && p.Missing.Count == 0) UIKit.Label(list, "<i>Nothing to show.</i>", 13, UIKit.TextMuted);
+			if (p.Steps.Count == 0 && p.Missing.Count == 0) UIKit.Label(list, "<i>Nothing to show.</i>", 13, UIKit.TextMuted);
 			scroll.verticalNormalizedPosition = 1f;
 		}
 

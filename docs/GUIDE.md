@@ -2015,11 +2015,30 @@ After the first Check, every card shows its own problems and warnings in red and
 follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
 problem. The report's **Check again** checks after you changed something.
 
-**Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in its
-order: first the blueprints the story islands it keeps give, then each rule whose islands give one of Raft's
-story-island blueprints or a story item (a key, a keycard...) or have a lock that wants one - a lock whose item no
-island before it gives is shown in yellow - and last, in yellow, the blueprints the plan never gives. **Show rule**
-goes to a rule's card. Use it to build a plan where the player unlocks more and more as they sail on.
+Check walks the plan in **play order**, the order a player meets its islands, not the order of the cards. Raft's story
+chain comes first, with your islands in their places (first, after, instead of). Every other rule comes where its WHEN
+puts it: at the start, right after the island it waits for, or - for a distance or a day - after the story islands a
+player passes on the way (about one every 4 km). Raft's story islands give their blueprints (the machete on Balboa, the
+metal detector on Caravan Town...) when the story reaches them, not at the start.
+
+**Tools.** Vines need the machete, buried treasure the metal detector and a shovel, dirt the shovel, ziplines the
+zipline tool. If a step of an island's main quest can't be done because no island before it gives the tool (or its
+blueprint), Check warns - in the story chain, the story would stop there. Optional finds that need a tool given later
+get no warning, as in Raft: a cache behind vines no step needs, or buried treasure. Players come back with the tool;
+the Progression panel lists them quietly.
+
+**Story items on two islands.** If two islands of the plan each give a story item with the same id (two 'keycard's),
+the one found on either island opens the other's locks too. Check warns: give each island its own id. Raft's own quest
+items (the Vasagatan keycard, the bolt cutters...) found on Raft's story islands open only that island and are never
+keys for your locks.
+
+**Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in play
+order: Raft's story islands it keeps, each in its place with the blueprints and tools it gives, and each rule whose
+islands give one of Raft's story-island blueprints, a tool or a story item (a key, a keycard...), or have a lock or a
+feature that wants one. A lock whose item no island before it gives, and a main-quest need of a tool not given yet,
+are shown in yellow; an optional find needing a later tool is a muted line. Last, in yellow, come the blueprints the
+plan never gives. **Show rule** goes to a rule's card. Use it to build a plan where the player unlocks more and more
+as they sail on.
 
 What Check looks for:
 
@@ -2034,7 +2053,9 @@ What Check looks for:
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 | **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
 | **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
-| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island of a later rule: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
+| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
+| **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
+| **Story items on two islands** | | one story item id given on two islands of the plan (two 'keycard's): the one found on either opens the other's locks too; give each island its own id |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
 shows which rules have fired). A map type's island is made new in each world, so Check looks at a sample of it: its
