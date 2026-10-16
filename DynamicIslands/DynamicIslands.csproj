@@ -182,6 +182,7 @@
     <Compile Include="RaftSkySea.cs" />
     <Compile Include="ScrambledBlueprints.cs" />
     <Compile Include="WorldSettingsWindow.cs" />
+    <Compile Include="ErrorNotes.cs" />
     <Compile Include="ExperimentalNotice.cs" />
     <Compile Include="RandomizerContent.cs" />
     <Compile Include="RaftProps.cs" />
@@ -202,6 +203,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="DevTestsLevelsMore.cs" />
