@@ -1137,6 +1137,10 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
 
+While the test starts, a **STARTING THE TEST** box covers the screen (Raft's main menu loads the test world behind
+it). **Cancel** takes you back to the editor. If the test can't start, you are back in the editor with the reason in the
+status bar - click **Test** again.
+
 The test world is made with your last World settings choices (monsters, randomizer, extra options...); change them
 there with **Esc → Custom Islands** if you want to try the island another way. It never counts as a saved world that
 uses your islands (no kept copies or warnings for it).
@@ -3361,6 +3365,11 @@ happened, and make it happen again on their own PC. Please include:
    `<Raft>\Mods\DynamicIslands\<name>.island`, world plans `<Raft>\Mods\DynamicIslands\plans\<name>.plan`. If the
    problem is in one world, add that world's `CustomIslands.txt` (in its folder, below), and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
+
+**When the mod notices an error itself:** a note **Custom Islands: an error happened - click for details** appears at
+the bottom left. Click it to see what happened and whose code it was; **Copy** puts it on the clipboard for a GitHub
+issue or a Discord post, and **Open the log folder** finds Player.log. Every such error is also kept in
+`Mods\DynamicIslands\errors.txt`.
 
 **The quick way: Report a problem.** The alpha box on the main menu ([section 1](#1-installing)) has a **Report a
 problem** button. It opens a box with the list above in short, and buttons that do the work for you:
