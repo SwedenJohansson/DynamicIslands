@@ -831,7 +831,7 @@ namespace DynamicIslands.Editor
 					ps = MapTypes.Roll(type, new System.Random(s.Seed), out elevation);
 				}
 				else if (tab == TabRandomize && chosen == null) { lastReach = null; reachText.text = "<color=#8c8c8c>Pick one of Raft's islands to see whether players can get onto it.</color>"; return; }
-				else ps = s;
+				else ps = Effective(); // (what Generate makes: on Randomize existing no caves or buildings, so the line matches the ground)
 				float t0 = Time.realtimeSinceStartup;
 				lastReach = IslandReach.Assess(ps, elevation);
 				reachText.text = "<color=" + IslandReach.ColourOf(lastReach.Level) + ">" + lastReach.Text + "</color>";

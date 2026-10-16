@@ -117,6 +117,8 @@ namespace DynamicIslands.Editor
 
 		// The land can reach well past Radius with a ragged coast and stretch; the edge of the 1000 m build area is always flat seabed
 		public const float MinRadius = 8f, MaxRadius = 280f, MinHeight = 3f, MaxHeight = 160f, MaxStretch = 3f;
+		/// <summary>The lowest Height a map type or a ghost raft's islet may ask for (a sandbar, 2 m): below the sliders' MinHeight on purpose.</summary>
+		public const float MinTypeHeight = 2f;
 		/// <summary>LM7: a variation of one of Raft's islands may be as big as the biggest (Temperance, 457 m): its terrain
 		/// grows past the 1000 m build area to hold it (IslandGenerator.AreaFor) instead of the island being scaled down.</summary>
 		public const float MaxSourceRadius = 480f;
@@ -129,7 +131,7 @@ namespace DynamicIslands.Editor
 			if (Source == null) Source = "";
 			// (map types may go smaller than the editor's sliders: a sandbar, a low atoll; a Raft island's variation as big as it is, LM7)
 			Radius = Mathf.Clamp(Radius, MinRadius, Source.Length > 0 ? MaxSourceRadius : MaxRadius);
-			Height = Mathf.Clamp(Height, 2f, MaxHeight);
+			Height = Mathf.Clamp(Height, MinTypeHeight, MaxHeight);
 			Shape = Mathf.Clamp(Shape, 0, IslandShapes.Names.Length - 1);
 			Roughness = Mathf.Clamp01(Roughness);
 			Peaks = Mathf.Clamp(Peaks, 1, MaxPeaks);
@@ -145,6 +147,8 @@ namespace DynamicIslands.Editor
 			GatherOff = GenGather.Clean(GatherOff); ShallowsDepth = Mathf.Clamp(ShallowsDepth, GenGather.MinDepth, GenGather.MaxDepth);
 			Hostiles = Mathf.Clamp(Hostiles, 0, MaxCreatureSpots); Friendly = Mathf.Clamp(Friendly, 0, MaxCreatureSpots); SeaLife = Mathf.Clamp(SeaLife, 0, MaxCreatureSpots);
 			Loot = Mathf.Clamp(Loot, 0, MaxLoot);
+			// (a preset or a map type's set line may ask for more than the sliders give: kept in range here, not only where used)
+			BuildingCount = Mathf.Clamp(BuildingCount, 0, GenBuildings.MaxCount); QuestSteps = Mathf.Clamp(QuestSteps, 0, GenQuest.MaxSteps); Features = Mathf.Clamp(Features, 0, GenFeatures.Max);
 			LootMin = Mathf.Clamp(LootMin, 1, 5); LootMax = Mathf.Clamp(LootMax, LootMin, 5);
 			SourceRoughen = Mathf.Clamp01(SourceRoughen); SourceWobble = Mathf.Clamp01(SourceWobble);
 			if (HostileKinds == null) HostileKinds = "";

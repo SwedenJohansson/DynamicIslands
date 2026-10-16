@@ -218,6 +218,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
+  makes: on Randomize existing it left out the caves and buildings that are not made there.
+- **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
+  kept in range when generating, so the report no longer lists quest steps that "found no place".
 - **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
   of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
