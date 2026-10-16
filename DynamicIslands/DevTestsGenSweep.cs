@@ -183,7 +183,6 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action<IslandGenSettings>>("gather, shallowest", x => { x.Gather = 1f; x.Shallows = 1f; x.ShallowsDepth = GenGather.MinDepth; }),
 				new KeyValuePair<string, Action<IslandGenSettings>>("most loot", x => { x.Loot = IslandGenSettings.MaxLoot; x.LootMin = 5; x.LootMax = 5; x.LootHidden = true; }),
 				new KeyValuePair<string, Action<IslandGenSettings>>("most quest steps", x => x.QuestSteps = GenQuest.MaxSteps),
-				new KeyValuePair<string, Action<IslandGenSettings>>("level up system", x => x.Levels = true),
 				new KeyValuePair<string, Action<IslandGenSettings>>("boss creatures", x => { x.Hostiles = 6; x.Difficulty = "Boss"; }),
 				new KeyValuePair<string, Action<IslandGenSettings>>("smallest", x => { x.Radius = IslandGenSettings.MinRadius; x.Height = IslandGenSettings.MinHeight; }),
 				new KeyValuePair<string, Action<IslandGenSettings>>("biggest", x => { x.Radius = IslandGenSettings.MaxRadius; x.Height = IslandGenSettings.MaxHeight; }),

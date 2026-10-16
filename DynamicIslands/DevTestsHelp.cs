@@ -31,12 +31,28 @@ namespace DynamicIslands
 				RectTransform panel = window != null ? window.Find("Panel") as RectTransform : null;
 				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on Adventure");
 				if (panel == null) yield break;
+				// (TODO 5b: a plan with a Main story line opens on that tab; the rule cards counted here are on Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
 				Canvas.ForceUpdateCanvases();
 				List<UIKit.HelpMark> marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				int cards = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule");
 				int onCards = marks.Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "Rule"));
 				Check(ref ok, cards > 0 && onCards == cards * 6, onCards + " ? on " + cards + " rule cards (6 each)");
-				Check(ref ok, marks.Count - onCards == 8, (marks.Count - onCards) + " ? for the window's parts (plan row, templates, random islands, Raft's story, description, map, Check, Export/Import)");
+				Check(ref ok, marks.Count - onCards == 5, (marks.Count - onCards) + " ? for the window's parts on the Other islands tab (plan row, templates, map, Check, Export/Import)");
+				// (TODO 5b: the plan's settings and its Main story line are tabs of their own)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);
+				yield return null;
+				int settingsMarks = window.GetComponentsInChildren<UIKit.HelpMark>(false).Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "SettingsTab"));
+				Check(ref ok, settingsMarks == 3, settingsMarks + " ? on the Settings tab (random islands, Raft's story, description)");
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabStory);
+				yield return null;
+				int storyMarks = window.GetComponentsInChildren<UIKit.HelpMark>(false).Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "StoryTools"));
+				Check(ref ok, storyMarks == 1, storyMarks + " ? on the Main story line tab's buttons");
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
+				Canvas.ForceUpdateCanvases();
+				marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				Check(ref ok, marks.All(m => m.Text != null && m.Text.Length > 60), "every ? has a real explanation");
 				Rect area = ScreenRect(panel);
 				// (a ? on a card further down the list is scrolled out of view: only the visible ones must be inside the window)
@@ -55,9 +71,15 @@ namespace DynamicIslands
 				if (when != null)
 				{
 					when.OnPointerEnter(null);
-					yield return new WaitForSecondsRealtime(0.2f); // (a hover lasts; the popup is placed again each frame)
-					Canvas.ForceUpdateCanvases();
-					Rect pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+					// (a hover lasts; the popup is placed again each frame - a minimised Raft draws few frames, so wait for it to be placed)
+					Rect pop = new Rect();
+					for (float t = 0; t < 3f; t += 0.2f)
+					{
+						yield return new WaitForSecondsRealtime(0.2f);
+						Canvas.ForceUpdateCanvases();
+						pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+						if (pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f) break;
+					}
 					Check(ref ok, UIKit.ShownHelp == when.Text && pop.width > 50f && pop.height > 50f && pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f,
 						"hovering the When ? shows its help, on the screen (" + pop + ")");
 					Screenshot(new[] { "planhelp_when" });
@@ -277,11 +299,13 @@ namespace DynamicIslands
 			// As a player clicks: the ▼ opens the list, a pick fills the field
 			Func<int, string, Button> pickButton = (rule, name) =>
 			{
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(rule);
+				// (the card of rule n: a Main story line card is on that tab - TODO 5b)
+				Transform card = WorldPlanWindow.CardFor(rule);
 				return card != null ? card.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == name) : null;
 			};
+			bool storyPick = pickButton(7, "Pick_DoneArg") != null;
 			Button zoneButton = pickButton(2, "Pick_WhenArg");
-			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && pickButton(7, "Pick_DoneArg") != null && pickButton(0, "Pick_WhenArg") == null,
+			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && storyPick && pickButton(0, "Pick_WhenArg") == null,
 				"a ▾ after the fields that name something (none after 'the world starts')");
 			if (zoneButton != null)
 			{
@@ -289,7 +313,7 @@ namespace DynamicIslands
 				ScrollRect rulesScroll = window.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault(s => zoneButton.transform.IsChildOf(s.content));
 				if (rulesScroll != null)
 				{
-					RectTransform zoneCard = (RectTransform)window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAt(2);
+					RectTransform zoneCard = WorldPlanWindow.CardFor(2);
 					Canvas.ForceUpdateCanvases();
 					float gap = ScreenRect(rulesScroll.viewport).yMax - ScreenRect(zoneCard).yMax;
 					rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
@@ -302,7 +326,7 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.6f);
 				ChoiceWindow.PickValue("cave");
 				yield return null;
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(2);
+				Transform card = WorldPlanWindow.CardFor(2);
 				bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "cave");
 				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && shown, "picking 'cave' fills the field and the rule");
 			}

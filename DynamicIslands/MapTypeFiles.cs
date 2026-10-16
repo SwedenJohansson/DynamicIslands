@@ -120,7 +120,7 @@ namespace DynamicIslands.Editor
 # The land: settings = ranges (rolled from the lines below) / random (the random island's roll over the styles)
 #                      / <built-in type> (that type's own settings code, e.g. large)
 #   styles = tropical, forest      (one is picked; a style twice is picked twice as often)
-#   shape = round / atoll / archipelago / seastacks / plateau / marsh / crescent / twinpeaks
+#   shape = round / atoll / archipelago / seastacks / plateau / marsh / crescent / twinpeaks / raftsmallisland / raftlargeisland
 #   radius = 78 - 113    height = 15 - 30    (metres; one number = always that)
 #   roughness = 0.45     (0-1, rolled ±0.15)     density = 0.5   (objects 0-1)     peaks = 3   (1 to this many)
 #   likeraft = off / large / small   (trees, plants and pickups as dense as on Raft's own big or small islands)

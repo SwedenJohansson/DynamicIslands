@@ -37,8 +37,6 @@ namespace DynamicIslands
 				List<string> lines = PlayerLevels.WriteLines().ToList();
 				Check(ref ok, !PlayerLevels.On && PlayerLevels.OffByHost && PlayerLevels.Mine == null, "switched off: no level for anyone now");
 				Check(ref ok, lines.Contains("@levels=off") && lines.Any(l => l.StartsWith("@level=")), "the world file keeps it off, with everyone's levels (" + string.Join(" ", lines.ToArray()) + ")");
-				PlayerLevels.OnIslandSpawned(new Dictionary<string, string> { { IslandProps.Levels, "on" } });
-				Check(ref ok, !PlayerLevels.On, "an island made with levels doesn't switch it back on over the host");
 				PlayerLevels.SetEnabled(true);
 				yield return null;
 				Check(ref ok, PlayerLevels.On && PlayerLevels.Mine != null && PlayerLevels.Mine.Xp == xp, "on again: the level is back (" + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Xp : -1) + " EXP)");

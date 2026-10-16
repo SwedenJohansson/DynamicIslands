@@ -12,6 +12,21 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
+  for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
+  world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
+  (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**. A **?** after it
+  explains it, and how it differs from **Save as**.
+- **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
+  with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
+  the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
+  **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
+  ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
+  to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
+  Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
+  **Lantern Spire** (a flying island).
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
@@ -126,6 +141,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
 - **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
   other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
 - **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
@@ -201,6 +224,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
+  makes: on Randomize existing it left out the caves and buildings that are not made there.
+- **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
+  kept in range when generating, so the report no longer lists quest steps that "found no place".
 - **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
   of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
