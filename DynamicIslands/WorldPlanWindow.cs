@@ -471,6 +471,9 @@ namespace DynamicIslands.Editor
 			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Replace(",", "").Replace(";", "").Trim());
 			HelpMark(head, islandMode ? HelpIdIsland : HelpId);
 			UIKit.Size(UIKit.Label(head, "", 12).gameObject, -1, -1, 1);
+			// (TODO 5b: the island this rule brings, in the 3D editor - the editor's top bar then offers Back to the plan)
+			if (!islandMode && r.What == "island" && r.WhatArg.Length > 0 && File.Exists(IslandSpawner.PathFor(r.WhatArg)))
+				UIKit.Button(head, "Edit island", () => EditIsland(r.WhatArg), "Open '" + r.WhatArg + "' in the island editor (the plan is saved first; the editor's top bar has Back to the plan)", 90, 26f, 11).name = "Button_EditIsland";
 			UIKit.Button(head, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Move this rule up (the order only matters for reading: each rule waits for its own WHEN)", 28, 26f, 11);
 			UIKit.Button(head, "▼", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Move this rule down", 28, 26f, 11);
 			Button del = UIKit.Button(head, "Remove", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 80, 26f, 11);
@@ -1024,6 +1027,18 @@ namespace DynamicIslands.Editor
 			while (plan.Rules.Any(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) r.Id += "b";
 			plan.Rules.Add(r);
 			ShowRules();
+		}
+
+		/// <summary>A rule card's Edit island: the plan saved, then the island in the 3D editor (TODO 5b).</summary>
+		void EditIsland(string island)
+		{
+			Keep();
+			try { plan.Save(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+			string name = plan.Name;
+			Close();
+			CreateWindow.Close();
+			EditorEntry.EditFromPlan(island, name);
 		}
 
 		void Save()

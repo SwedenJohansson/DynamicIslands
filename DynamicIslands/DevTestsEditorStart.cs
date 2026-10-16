@@ -187,5 +187,127 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: plan from the menu"); else Fail("plan from the menu");
 		}
+
+		static GameObject TopBar() { RectTransform t = UnityEngine.Object.FindObjectsOfType<RectTransform>().FirstOrDefault(x => x.name == "TopBar"); return t != null ? t.gameObject : null; }
+
+		static string SomeSavedIsland() { return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => !n.StartsWith("gen-") && !n.StartsWith("ci")); }
+
+		static Button TopBarButton(GameObject bar, string label) { return bar == null ? null : bar.GetComponentsInChildren<Button>(true).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == label); }
+
+		[ConsoleCommand(name: "CIUseInPlan", docs: "Dev, editor: TODO 5b - the island editor's Use in a plan...: a saved island opened; Use in a plan... lists A new world plan... and the plans; a new plan 'CI Use <time>' with the island next in its Main story line (the plan opens on it; the file has it in the story, the last island before Raft's ending); again into the same plan as another island (not in the story); the rule card's Edit island opens the island, the top bar shows Back to the plan in place of Use in a plan... and still fits 1024 x 768; Back to the plan opens the plan again in the editor. The test plan goes to the deleted folder after")]
+		public static void UseInPlanCommand(string[] args) { StartTest(UseInPlanRoutine()); }
+
+		static IEnumerator UseInPlanRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("use in a plan: in the editor"); yield break; }
+			bool ok = true;
+			var errors = new List<string>();
+			Application.LogCallback watch = WatchErrors(errors);
+			string startFile = ReadStartFile();
+			string island = SomeSavedIsland();
+			string name = "CI Use " + DateTime.Now.ToString("HHmmss");
+			try
+			{
+				Check(ref ok, island != null && DynamicIslands.LoadIsland(island), "the island '" + island + "' opened");
+				yield return null; yield return null;
+				GameObject bar = TopBar();
+				Check(ref ok, bar != null && Click(bar, "Use in a plan..."), "the top bar's Use in a plan...");
+				yield return null;
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.Contains(EditorEntry.UseNewPlan), "it lists A new world plan... and " + (ChoiceWindow.Values.Count - 1) + " plan(s)");
+				Check(ref ok, ChoiceWindow.PickValue(EditorEntry.UseNewPlan), "A new world plan...");
+				yield return null; yield return null;
+				GameObject prompt = WindowObject(typeof(TextPromptWindow));
+				Check(ref ok, prompt != null && TypeInto(prompt, "Name", name) && Click(prompt, "OK"), "named '" + name + "'");
+				yield return null; yield return null;
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(EditorEntry.UseInStory), "as next in the Main story line");
+				yield return null; yield return null;
+				WorldPlan p = File.Exists(WorldPlan.PathFor(name)) ? WorldPlan.Load(name) : null;
+				IntroRule story = p != null ? p.Rules.FirstOrDefault(r => r.WhatArg == island) : null;
+				Check(ref ok, story != null && story.InStory && story.Where == "receiver", "the plan file has it in the Main story line (" + (story != null ? story.StoryPlace : "none") + ")");
+				List<string> steps = p != null ? StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules) : new List<string>();
+				int at = story != null ? steps.FindIndex(x => !StoryChain.IsRaft(x) && StoryChain.RuleIdOf(x) == story.Id) : -1;
+				Check(ref ok, at >= 0 && (at == steps.Count - 1 || (at == steps.Count - 2 && StoryChain.TypeOfStep(steps[steps.Count - 1]) == ChunkPointType.Landmark_Utopia)), "it is the story's last island before Raft's ending (step " + (at + 1) + " of " + steps.Count + ")");
+				Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name, "the plan opens in the editor");
+				WorldPlanWindow.Close();
+				yield return null;
+
+				Check(ref ok, Click(bar, "Use in a plan..."), "Use in a plan... again");
+				yield return null;
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(name), "the same plan from the list");
+				yield return null; yield return null;
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(EditorEntry.UseOther), "as another island");
+				yield return null; yield return null;
+				p = WorldPlan.Load(name);
+				Check(ref ok, p != null && p.Rules.Count == 2 && p.Rules.Count(r => r.WhatArg == island && !r.MainStory && r.When == "start") == 1, "the plan has a second rule, not in the story (" + (p != null ? p.Rules.Count : 0) + " rules)");
+
+				GameObject plan = WindowObject(typeof(WorldPlanWindow));
+				Button edit = plan != null ? plan.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Button_EditIsland") : null;
+				Check(ref ok, edit != null, "the rule card has Edit island");
+				if (edit != null) edit.onClick.Invoke();
+				for (float t = 0; t < 20f && WorldPlanWindow.IsOpen; t += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+				yield return null;
+				Check(ref ok, !WorldPlanWindow.IsOpen && DynamicIslands.InEditor() && DynamicIslands.currentIslandName == island, "Edit island: the island in the editor");
+				Button back = TopBarButton(bar, "Back to the plan"), use = TopBarButton(bar, "Use in a plan...");
+				Check(ref ok, back != null && back.gameObject.activeInHierarchy && use != null && !use.gameObject.activeInHierarchy, "the top bar shows Back to the plan in place of Use in a plan...");
+				List<string> over = UIKit.RowOverflow((RectTransform)bar.transform, new Vector2(1024, 768));
+				Check(ref ok, over.Count == 0, "the top bar fits 1024 x 768" + (over.Count > 0 ? ": " + string.Join("; ", over.ToArray()) : ""));
+				if (back != null) back.onClick.Invoke();
+				yield return null; yield return null;
+				Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name, "Back to the plan: the plan open again");
+				Check(ref ok, use != null && use.gameObject.activeInHierarchy && back != null && !back.gameObject.activeInHierarchy, "the top bar shows Use in a plan... again");
+				WorldPlanWindow.Close();
+				Check(ref ok, errors.Count == 0, "no errors (" + string.Join("; ", errors.Take(3).ToArray()) + ")");
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				PlanAway(name);
+				PutStartFileBack(startFile);
+			}
+			if (ok) Log("PASS: use in a plan"); else Fail("use in a plan");
+		}
+
+		[ConsoleCommand(name: "CIEditIslandFromMenu", docs: "Dev, main menu: TODO 5b - a plan on the main menu, its rule card's Edit island: the editor opens on that island with Back to the plan in its top bar; Back to the plan goes to the main menu with the start window and the plan open again. The test plan goes to the deleted folder after")]
+		public static void EditIslandFromMenuCommand(string[] args) { StartTest(EditIslandFromMenuRoutine(args != null && args.Contains("shot"))); }
+
+		static IEnumerator EditIslandFromMenuRoutine(bool shots)
+		{
+			if (!OnRaftMenu()) { Fail("edit island from the menu: run it on the main menu"); yield break; }
+			bool ok = true;
+			string startFile = ReadStartFile();
+			string island = SomeSavedIsland();
+			var wp = new WorldPlan { Name = "CI Edit Jump", Random = false, Description = "Edit island from the main menu (CIEditIslandFromMenu)" };
+			wp.Rules.Add(IntroRule.Parse("first | island:" + island + " | start | ahead:300 | A first island | First"));
+			wp.Save();
+			try
+			{
+				CreateWindow.Open();
+				WorldPlanWindow.Open(wp.Name);
+				yield return null; yield return null;
+				GameObject pw = WindowObject(typeof(WorldPlanWindow));
+				Button edit = pw != null ? pw.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Button_EditIsland") : null;
+				Check(ref ok, edit != null, "the rule card has Edit island");
+				if (edit == null) { Fail("edit island from the menu"); yield break; }
+				edit.onClick.Invoke();
+				for (float t = 0; t < 180f && !(DynamicIslands.InEditor() && DynamicIslands.currentIslandName == island); t += 1f) yield return new WaitForSeconds(1f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, DynamicIslands.InEditor() && DynamicIslands.currentIslandName == island, "the editor opens on '" + island + "' (" + DynamicIslands.currentIslandName + ")");
+				Button back = TopBarButton(TopBar(), "Back to the plan");
+				Check(ref ok, back != null && back.gameObject.activeInHierarchy, "the top bar has Back to the plan");
+				if (shots) { StartShot("editor_back_to_plan"); yield return new WaitForSecondsRealtime(1f); }
+				if (back != null) back.onClick.Invoke();
+				for (float t = 0; t < 180f && !(OnRaftMenu() && WorldPlanWindow.IsOpen); t += 1f) yield return new WaitForSeconds(1f);
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, OnRaftMenu() && WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == wp.Name && CreateWindow.IsOpen, "back on the main menu with the start window and the plan open");
+				WorldPlanWindow.Close();
+				CreateWindow.Close();
+			}
+			finally
+			{
+				PlanAway(wp.Name);
+				PutStartFileBack(startFile);
+			}
+			if (ok) Log("PASS: edit island from the menu"); else Fail("edit island from the menu");
+		}
 	}
 }
