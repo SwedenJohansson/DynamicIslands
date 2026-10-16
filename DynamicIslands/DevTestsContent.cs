@@ -897,6 +897,148 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
+		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; its quest done, nothing comes back")]
+		public static void AgainUntilDoneTest() { StartTest(AgainUntilDoneRoutine()); }
+
+		static void SetDay(int day)
+		{
+			System.Reflection.PropertyInfo p = typeof(WorldManager).GetProperty("DayCounter", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+			System.Reflection.MethodInfo set = p != null ? p.GetSetMethod(true) : null;
+			if (set != null) set.Invoke(null, new object[] { day });
+		}
+
+		static IEnumerator AgainUntilDoneRoutine()
+		{
+			if (!CvInTestWorld("again until done")) yield break;
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("again until done: run as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
+			if (source == null) { Fail("again until done: no generated_sample or citest island to build on"); yield break; }
+			string[] names = { "ciagain-quest", "ciagain-plain", "ciagain-once" };
+			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			f.Props[IslandQuest.KeyTitle] = "Come again";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			f.Name = names[0]; f.Save(IslandSpawner.PathFor(names[0]));
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			for (int i = 1; i < names.Length; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			int dayBefore = WorldManager.DayCounter;
+			const int every = 3;
+			int d = Mathf.Max(every, dayBefore);
+			WorldPlan planBefore = WorldDirector.Plan;
+			string planNameBefore = WorldDirector.PlanName;
+			int returned = 0;
+			Action<IslandWorldState.Entry> onReturn = e => returned++;
+			ReturningIslands.Returned += onReturn;
+			Func<string, IslandWorldState.Entry> entry = rule => IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
+			Func<string, int> copies = n => IslandWorldState.Islands.Count(x => x.Name == n);
+			Func<string, string> why = rule => entry(rule) != null ? ReturningIslands.Why(entry(rule)) ?? "no" : "gone";
+			Vector3 back = -CustomIslandSpawner.SailDirection();
+			Func<IslandWorldState.Entry, float> from = e => { if (e == null) return -1f; Vector3 r = CustomIslandSpawner.RaftPosition ?? raftAt.Value; return new Vector2(e.Position.x - r.x, e.Position.z - r.z).magnitude; };
+			float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+			// (left behind: unloaded, past the unload distance behind the raft, each its own way)
+			Action<string[]> leave = rules =>
+			{
+				Vector3 r = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				for (int i = 0; i < rules.Length; i++)
+				{
+					IslandWorldState.Entry e = entry(rules[i]);
+					if (e == null) continue;
+					if (e.Root != null) { IslandObjectState.Capture(e); IslandSpawner.Despawn(e.Root); e.Root = null; }
+					Vector3 at = r + Quaternion.Euler(0f, -40f + i * 40f, 0f) * back * behindBy;
+					at.y = e.Position.y;
+					e.Position = at;
+				}
+			};
+			try
+			{
+				string text = "rule = qa | island:" + names[0] + " | day:" + d + ":again | ahead:400 | | Again quest\n" +
+					"rule = pl | island:" + names[1] + " | day:" + d + ":again | ahead:700 | | Again plain\n" +
+					"rule = once | island:" + names[2] + " | day:" + d + " | ahead:1000 | | Once\n";
+				// (N = the rule's day number; the island first comes on day d = N here, so it is back on days 2N, 3N...)
+				WorldPlan plan = WorldPlan.Parse("CI again", "random = off\n" + text);
+				IntroRule qa = plan.Rules.FirstOrDefault(r => r.Id == "qa");
+				Check(ref ok, plan.Rules.Count == 3 && qa != null && qa.Again && qa.Repeats && !plan.Rules[2].Again && qa.ToLine().Contains("day:" + d + ":again") && !plan.Rules[2].ToLine().Contains("again"),
+					"the plan reads 'day:" + d + ":again' and writes it back: " + (qa != null ? qa.ToLine() : "no rule"));
+				Check(ref ok, qa != null && qa.DescribeWhen().Contains("again every"), "the card says so: " + (qa != null ? qa.DescribeWhen() : ""));
+				int n = d; // every n days
+				WorldDirector.Plan = plan; WorldDirector.PlanName = plan.Name;
+				foreach (IntroRule r in plan.Rules) WorldDirector.Done.Remove(r.Id);
+				SetDay(d);
+				Check(ref ok, WorldManager.DayCounter == d, "day " + WorldManager.DayCounter + " (set from " + dayBefore + ")");
+				for (int i = 0; i < 30 && (entry("qa") == null || entry("pl") == null || entry("once") == null); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, entry("qa") != null && entry("pl") != null && entry("once") != null, "day " + d + ": the three day rules brought their islands");
+				if (entry("qa") == null || entry("pl") == null || entry("once") == null) { Fail("again until done"); yield break; }
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, why("qa") == "again" && why("pl") == "again" && why("once") == "no", "needed: quest island " + why("qa") + ", plain island " + why("pl") + ", the one without again " + why("once"));
+				// Left behind, never reached: not back the day before d + n
+				leave(new[] { "qa", "pl", "once" });
+				SetDay(d + n - 1);
+				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, returned == 0 && from(entry("qa")) > behindBy - 300f, "day " + (d + n - 1) + ": not back yet (" + returned + " came back)");
+				foreach (string l in ReturningIslands.Describe().Where(l => l.Contains("ciagain"))) Log("  " + l);
+				// The world saved and read back
+				foreach (IslandWorldState.Entry x in IslandWorldState.Islands.ToList())
+					if (x.Root != null) { IslandObjectState.Capture(x); IslandSpawner.Despawn(x.Root); x.Root = null; }
+				yield return null;
+				IslandWorldState.Save();
+				yield return null;
+				IslandWorldState.OnWorldLoaded();
+				yield return new WaitForSeconds(1f);
+				IntroRule qaRead = WorldDirector.Plan != null ? WorldDirector.Plan.Rules.FirstOrDefault(r => r.Id == "qa") : null;
+				ObjectState mark = null;
+				bool hasMark = entry("qa") != null && entry("qa").State.TryGetValue(ReturningIslands.AgainKey, out mark);
+				Check(ref ok, qaRead != null && qaRead.Again && hasMark && mark.Day == d,
+					"after the world was saved and read: the plan's rule still has again (" + (qaRead != null ? qaRead.ToLine() : "none") + "), the island's clock counts from day " + (hasMark ? mark.Day.ToString() : "none"));
+				Check(ref ok, copies(names[0]) == 1 && copies(names[1]) == 1 && copies(names[2]) == 1 && WorldDirector.Done.Contains("qa"), "one copy of each island, the rule done (no second copy)");
+				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, returned == 0 && copies(names[0]) == 1, "... and still not back on day " + (d + n - 1));
+				// Day d + n: both again islands come back, the other one stays
+				SetDay(d + n);
+				for (float t = 0f; t < 20f && returned < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(2.5f);
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				Func<IslandWorldState.Entry, bool> ahead = e => e != null && Vector3.Dot(new Vector3(e.Position.x - raftNow.x, 0f, e.Position.z - raftNow.z), CustomIslandSpawner.SailDirection()) > 0f;
+				Check(ref ok, returned == 2 && ahead(entry("qa")) && ahead(entry("pl")) && from(entry("qa")) < behindBy - 300f && from(entry("pl")) < behindBy - 300f,
+					"day " + (d + n) + ": both again islands came back ahead of the raft (" + returned + " came back; " + from(entry("qa")).ToString("F0") + " m, " + from(entry("pl")).ToString("F0") + " m)");
+				Check(ref ok, from(entry("once")) > behindBy - 300f, "the rule without again: its island stayed behind (" + from(entry("once")).ToString("F0") + " m)");
+				Check(ref ok, (WorldDirector.LastAnnouncement ?? "").Contains("still waits for you"), "a banner says so: " + WorldDirector.LastAnnouncement);
+				Check(ref ok, copies(names[0]) == 1 && copies(names[1]) == 1, "the same islands, no copies");
+				// Reached: the plain one is done; the quest one begun (step 1 of 2) is not
+				var visit = new ObjectState { Active = true, Yield = 0, Day = d + n };
+				entry("pl").State[WorldDirector.VisitKey] = visit;
+				entry("qa").State[WorldDirector.VisitKey] = visit; QuestTracker.Set(entry("qa"), 1, 0, false);
+				Check(ref ok, why("pl") == "no" && why("qa") == "again", "the plain island reached: done (" + why("pl") + "); the quest island at step 1 of 2: " + why("qa"));
+				yield return new WaitForSeconds(2.5f);
+				leave(new[] { "qa", "pl" });
+				returned = 0;
+				SetDay(d + 2 * n);
+				for (float t = 0f; t < 20f && returned < 1; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(4f);
+				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f && from(entry("pl")) > behindBy - 300f,
+					"day " + (d + 2 * n) + ": only the unfinished quest island came back (" + returned + "; quest " + from(entry("qa")).ToString("F0") + " m, plain " + from(entry("pl")).ToString("F0") + " m)");
+				Check(ref ok, QuestTracker.StepOf(entry("qa")) == 1, "its quest where it was (step " + QuestTracker.StepOf(entry("qa")) + ")");
+				// Its quest done: nothing comes back any more
+				QuestTracker.Set(entry("qa"), 2, 0, false);
+				Check(ref ok, why("qa") == "no", "its quest done: not needed (" + why("qa") + ")");
+				leave(new[] { "qa" });
+				returned = 0;
+				SetDay(d + 4 * n);
+				for (int i = 0; i < 6; i++) yield return new WaitForSeconds(1f);
+				Check(ref ok, returned == 0 && from(entry("qa")) > behindBy - 300f, "day " + (d + 4 * n) + ": nothing came back (" + returned + ")");
+			}
+			finally
+			{
+				ReturningIslands.Returned -= onReturn;
+				SetDay(dayBefore);
+				WorldDirector.Plan = planBefore; WorldDirector.PlanName = planNameBefore;
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => names.Contains(x.Name)).Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+			}
+			if (ok) Log("PASS: again until done"); else Fail("again until done");
+		}
+
 		[ConsoleCommand(name: "CISpawnSpread", docs: "Dev, in game (host, a test world 'CI ...'): the spread of random picks from the spawn pool - 8000 picks: every island in the pool comes, each about as often as its weight says, and one this world has already (left behind, not finished) a quarter as often; an island 'not before 5 km' only once the world has sailed 5 km")]
 		public static void SpawnSpreadTest(string[] args)
 		{

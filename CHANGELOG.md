@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Again until done** for world plan rules **On a day** and **After sailing a distance**: a tick box on the rule card
+  (`day:5:again` in the plan file). The island comes back ahead of the raft every N days (or km) after the players were
+  last near it - even if they never reached it - until they reached it and finished its quest; the same island each
+  time, with no limit. Check gives a tip when the island is on the Receiver (it doesn't come back by itself there).
 - **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
   for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
   world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**

@@ -510,6 +510,10 @@ namespace DynamicIslands.Editor
 			cardOf[index] = (RectTransform)rulesList.GetChild(rulesList.childCount - 1);
 		}
 
+		const string HelpAgain = "Again until done: if the players haven't reached this island, or haven't finished its quest, it comes back ahead of the raft " +
+			"every N days (or N km sailed) after they were last near it - N is this rule's number - until they are done with it. " +
+			"Its quest, chests and harvest are kept; it is the same island, never a second copy. An island without a quest is done once a player reaches it.";
+
 		void RuleCard(int index, int storyStep)
 		{
 			IntroRule r = plan.Rules[index];
@@ -579,6 +583,15 @@ namespace DynamicIslands.Editor
 					Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
 						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
 				if (r.When == "km") Tag(when, "km sailed", false);
+				if (r.When == "km" || r.When == "day")
+				{
+					// (SR1: the island comes back every N km / days until the players are done with it)
+					Button again = UIKit.Check(when, "again until done", () => { Keep(); r.Again = !r.Again; ShowRules(); }, HelpAgain, 26f, 12);
+					again.name = "Check_Again";
+					UIKit.Size(again.gameObject, 140, 26);
+					UIKit.SetCheck(again, r.Again);
+					HelpMark(when, HelpAgain);
+				}
 			}
 			if (r.When == "quest")
 			{

@@ -225,7 +225,10 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
 - an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
   stops coming back);
 - an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
-  island: it comes back every time, until you've done there what the plan waits for.
+  island: it comes back every time, until you've done there what the plan waits for;
+- an island a plan brought on a set day or distance with **again until done** ([7.4](#74-everything-a-rule-can-do)): it
+  comes back every time that many days (or km) after you were last near it - even if you never reached it - until you
+  reached it and finished its quest.
 
 An island found with a Receiver frequency stays where it is (the Receiver shows the way), and so do islands nobody
 needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
@@ -1706,6 +1709,8 @@ Good to know:
   `spawnpool.txt` changes the minutes (0 = never).
 - Another rule can wait for a side trip ("when Signal Rock's quest is done, bring...") - then it is no longer a mere
   extra: the plan waits for it, and it comes back every time until that is done.
+- A side trip on a day or a distance with **again until done** ticked comes back every N days (or km) after you were
+  last near it, even if you never reached it, until you reached it and finished its quest ([7.4](#74-everything-a-rule-can-do)).
 
 #### Main quest islands, in detail
 
@@ -1996,7 +2001,7 @@ or a click outside closes the list).*
 | **RULE 1** and **Name** | The rule's number and name (`camp`, `beast`). Other rules point at the island it brought with this name. Each name once per plan; no `\|`, `:`, `,` or `;` (they are taken out) |
 | **▲ ▼ Remove** | Move the rule up or down in the list (the order only matters for reading: each rule waits for its own WHEN), or remove it |
 | **The sentence** | Under the name: the rule in plain words. If it doesn't say what you meant, change the card |
-| **WHEN** | What the rule waits for - a ▼ list of nine choices ([7.4](#74-everything-a-rule-can-do)). A choice that needs more shows named fields after it: **island**, **zone**, **signal**, **steps**, **day**, **km sailed**, **rule** |
+| **WHEN** | What the rule waits for - a ▼ list of nine choices ([7.4](#74-everything-a-rule-can-do)). A choice that needs more shows named fields after it: **island**, **zone**, **signal**, **steps**, **day**, **km sailed**, **rule**; a day or a distance also has the **again until done** tick box |
 | **BRING** | What kind of island: a new island of a map type, one of your saved islands, one island from a list, or a random one from the spawn pool. The field after it says which (**map type**, **island**, **islands**) |
 | **WHERE** | Ahead of the raft, near an island, on the Receiver, or by chance while sailing; then the **metres** (50 to 5000). For "near an island", also the **direction** (a ▼ list: Any way, North, North-east...) and **of** which island (empty = the island where the WHEN happened) |
 | **TELL** | The message every player sees when the island appears (up to 160 letters) (with how far and which way it is), and the island's name **on the Receiver** (up to 18 letters). Both optional |
@@ -2025,6 +2030,13 @@ signals can't be listed: its list is empty and says so - type the name.
 | **When the world starts** | - | as soon as the world starts |
 | **After sailing a distance** | km | when the raft has sailed that far in this world |
 | **On a day** | a day | on that in-game day |
+
+**Again until done.** **After sailing a distance** and **On a day** have a tick box after the number. Ticked, the island
+comes back ahead of the raft every N days (or N km sailed) after the players were last near it, N being the rule's
+number, for as long as they haven't reached it or haven't finished its quest (an island without a quest is done once
+a player reaches it). It is the same island each time - its quest, chests and harvest as they were, never a second
+copy - and a banner says "Back in sight". There is no limit to how often; the host decides with several players. An
+island on the Receiver doesn't come back by itself (its frequency shows the way). In the plan file: `day:5:again`.
 | **When a quest is done** | an island, and **quest no.** (empty = its main quest) | when that island's quest is done (or its Quest 2, 3 ... when a number is set). The island must have that quest ([6.1](#61-quests)) |
 | **When quest steps are done** | an island, steps | when that many steps of its quest are done |
 | **When a trigger zone fires** | an island, a zone name | when a player walks into that trigger zone on it ([5.4](#54-trigger-zones-and-ambushes)) |
@@ -2173,7 +2185,7 @@ rule = id | what | when | where | message | Receiver name
 | Part | Written as |
 |---|---|
 | what | `island:<saved island>`, `type:<map type>`, `pool`, `oneof:<island>, <island>, ...` |
-| when | `start`, `km:<km>`, `day:<day>`, `quest:<island>` (`quest:<island>:2` for its quest 2), `step:<island>:<steps>`, `zone:<island>:<zone>`, `visit:<island>`, `rule:<rule id>`, `signal:<island>:<signal>` |
+| when | `start`, `km:<km>`, `day:<day>` (`km:<km>:again`, `day:<day>:again` = again until done, [7.4](#74-everything-a-rule-can-do)), `quest:<island>` (`quest:<island>:2` for its quest 2), `step:<island>:<steps>`, `zone:<island>:<zone>`, `visit:<island>`, `rule:<rule id>`, `signal:<island>:<signal>` |
 | where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
