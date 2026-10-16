@@ -2011,7 +2011,10 @@ problem. The report's **Check again** checks after you changed something.
 **Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in its
 order: first the blueprints the story islands it keeps give, then each rule whose islands give one of Raft's
 story-island blueprints or a story item (a key, a keycard...) or have a lock that wants one - a lock whose item no
-island before it gives is shown in yellow - and last, in yellow, the blueprints the plan never gives. **Show rule**
+island before it gives is shown in yellow, one whose item an island met before gives says where it was **kept from** (the
+crew keeps a story item that isn't used up, for later islands) - and last, in yellow, the blueprints the plan never
+gives. A blueprint given **too early** - before the ones it builds on, like the engine controls before the motor wheel
+and steering wheel - is shown in yellow at its rule, with the rule that gives its bases. **Show rule**
 goes to a rule's card. Use it to build a plan where the player unlocks more and more as they sail on.
 
 What Check looks for:
@@ -2025,7 +2028,7 @@ What Check looks for:
 | **TELL** | | no message; found by Receiver but no Receiver name |
 | **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
-| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
+| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more; a blueprint given **before the ones it builds on** (the engine controls before the motor wheel and steering wheel, the fuel pipes before a fuel tank, the advanced biofuel extractor before the plain one, the water pipes before a water tank): players find it before they can use it - the fix gives Raft's own order |
 | **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
 | **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island of a later rule: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
 
@@ -3607,6 +3610,14 @@ story islands: on** (all eight).
 What it shows: a story island's place taken by **two** islands in a row - Sundown Canyons comes **after** Primeval
 Park, a rule of the plan itself ([7.4](#74-everything-a-rule-can-do)) - because nothing can come after Utopia, which
 ends Raft's story and never counts as done.
+
+**Keys kept for later islands.** In every plan, a lock on one island wants a story item found on an island met
+before, kept by the crew (none of them is needed by the main quest, and each lock says where its key is): in Raft 2,
+the Corps keycard, the bolt cutters and a radio part; in Raft Remade, Vasagatan's crowbar prises open a crate at
+Caravan Town's market; in The Long Voyage and The Abyss Expedition, the pump store key in Ironreef Caverns' foreman's
+locker opens the mining company's pump store on the Drowned Metropolis' ferry islet; in Silver Screen Seas, the chief
+steward's key ring from the Sunken Liner opens Pia's sea chest at The Arena. Every plan gives Raft's blueprints in
+Raft's order (Check and Progression, [7.5](#75-check-finding-and-fixing-problems)).
 
 ### 16.5 Where to look for...
 

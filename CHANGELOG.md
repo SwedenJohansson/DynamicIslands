@@ -12,6 +12,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Raft's progression in order in world plans:** the plan Check warns about a blueprint given before the ones it
+  builds on (the engine controls before the motor wheel and steering wheel, fuel pipes before a fuel tank...), and
+  Progression shows it in yellow. A lock whose story item an island met before gives says where the item was kept from.
+- **Keys kept for later islands in every library plan:** Raft Remade (Vasagatan's crowbar opens a crate at Caravan
+  Town), The Long Voyage and The Abyss Expedition (Ironreef's pump store key, a box on the Drowned Metropolis), Silver
+  Screen Seas (the liner's steward's keys, a sea chest at The Arena). Mayor's Wharf's keycard no longer shares its id
+  with the Drowned Metropolis' council keycards in The Long Voyage.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing

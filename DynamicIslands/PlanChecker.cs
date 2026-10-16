@@ -360,6 +360,7 @@ namespace DynamicIslands.Editor
 			{
 				Progress p = Progression(c);
 				CheckBlueprints(c, p);
+				CheckBlueprintOrder(c, p);
 				CheckTools(c, p);
 				CheckStoryOrder(c);
 				CheckStoryClash(c);
@@ -496,6 +497,18 @@ namespace DynamicIslands.Editor
 				public List<string> Tools = new List<string>();
 				/// <summary>Features of its islands wanting a tool no island before gives.</summary>
 				public List<ToolNeed> ToolNeeds = new List<ToolNeed>();
+				/// <summary>Story items its locks want that an island met before gives (label -> that stop's name): Raft's
+				/// quest items and the plan's own, kept by the crew for later islands (TODO 4c "kept for later islands").</summary>
+				public Dictionary<string, string> NeedsFrom = new Dictionary<string, string>();
+				/// <summary>Blueprints given here before the ones they build on (RaftFeatures.BuildsOn).</summary>
+				public List<Early> Early = new List<Early>();
+			}
+			/// <summary>A blueprint given before its bases (Bases: Blueprint_ names not given yet); Later: the first stop after
+			/// it that has given them all.</summary>
+			public class Early
+			{
+				public string Blueprint = "", Later = "";
+				public List<string> Bases = new List<string>();
 			}
 			/// <summary>A feature wanting a tool not given yet: Main = a step of the island's main quest can't be done without
 			/// it (Check warns); else an optional find, shown quietly. Later: the first island after it that gives it, or null.</summary>
@@ -534,7 +547,8 @@ namespace DynamicIslands.Editor
 			var kept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var story = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			var bp = new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
+			var storyFrom = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			var bp =new System.Text.RegularExpressions.Regex(@"Blueprint_[A-Za-z0-9_]+");
 			for (int n = 0; n < stops.Count; n++)
 			{
 				var s = new Progress.Step { Rule = stops[n].Rule, Raft = stops[n].Raft };
@@ -561,6 +575,8 @@ namespace DynamicIslands.Editor
 						string label = StoryItems.Label(need);
 						if (!s.Needs.Contains(label)) s.Needs.Add(label);
 						if (!story.Contains(need) && !s.NeedsLate.Contains(label)) s.NeedsLate.Add(label);
+						string from;
+						if (storyFrom.TryGetValue(need, out from) && !s.NeedsFrom.ContainsKey(label)) s.NeedsFrom[label] = from;
 					}
 					foreach (var kv in f.NeedsTools.Where(kv => !tools.Contains(kv.Key)))
 					{
@@ -570,11 +586,60 @@ namespace DynamicIslands.Editor
 					}
 				}
 				given.UnionWith(s.Blueprints);
+				// (a lock of a later island wanting one of these is opened by the one found here: kept by the crew)
+				foreach (Facts f in here[n]) foreach (string g in f.GivesStory) if (!storyFrom.ContainsKey(g)) storyFrom[g] = StopName(c, stops[n]);
 				if (s.Blueprints.Count > 0 || s.Gives.Count > 0 || s.Needs.Count > 0 || s.Tools.Count > 0 || s.ToolNeeds.Count > 0) p.Steps.Add(s);
 			}
 			p.Kept = kept.OrderBy(b => b).ToList();
 			p.Missing = ScrambledBlueprints.OnIslands.Keys.Where(b => !given.Contains(b)).OrderBy(b => b).ToList();
+			FindEarly(c, p);
 			return p;
+		}
+
+		/// <summary>Blueprints given before the ones they build on (RaftFeatures.BuildsOn), with the first stop after that has
+		/// given the bases. A base never given is left to the "never given" warning.</summary>
+		static void FindEarly(Ctx c, Progress p)
+		{
+			var sofar = new List<HashSet<string>>();
+			var acc = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (Progress.Step s in p.Steps) { acc.UnionWith(s.Blueprints); sofar.Add(new HashSet<string>(acc, StringComparer.OrdinalIgnoreCase)); }
+			for (int n = 0; n < p.Steps.Count; n++)
+				foreach (string b in p.Steps[n].Blueprints)
+				{
+					string[] bases;
+					if (!RaftFeatures.BuildsOn.TryGetValue(b, out bases)) continue;
+					List<string> late = bases.Where(x => !sofar[n].Contains(x)).ToList();
+					if (late.Count == 0 || late.Any(x => p.Missing.Contains(x))) continue;
+					int m = Enumerable.Range(n + 1, p.Steps.Count - n - 1).First(k => late.All(x => sofar[k].Contains(x)));
+					Progress.Step at = p.Steps[m];
+					p.Steps[n].Early.Add(new Progress.Early { Blueprint = b, Bases = late, Later = StopName(c, new Stop { Rule = at.Rule, Raft = at.Raft }) });
+				}
+		}
+
+		/// <summary>
+		/// Raft's blueprints in Raft's order (TODO 4c "every blueprint and key item, in order"): a blueprint given before the
+		/// ones it builds on (the engine controls before the motor wheel and steering wheel) is a warning - players find a
+		/// blueprint they can't use until a later island.
+		/// </summary>
+		static void CheckBlueprintOrder(Ctx c, Progress p)
+		{
+			foreach (Progress.Step s in p.Steps)
+				foreach (Progress.Early e in s.Early)
+				{
+					string bases = string.Join(" and ", e.Bases.Select(Pretty).ToArray());
+					string who = s.Rule >= 0 ? R(c, s.Rule) : StoryOrder.Name(s.Raft) + " (Raft's story island)";
+					c.Add(s.Rule, Level.Warning, who + " gives the " + Pretty(e.Blueprint) + " blueprint before the " + bases + " it builds on: only " + e.Later +
+						" gives " + (e.Bases.Count > 1 ? "them" : "it") + ", later in play - players can't use it until then.",
+						"Give the " + bases + " on this island or one met before it (Raft's own order: " + RaftOrder(e) + "), or give the " + Pretty(e.Blueprint) + " later.");
+				}
+		}
+
+		/// <summary>Where Raft gives a blueprint's bases, then the blueprint ("Vasagatan, then Caravan").</summary>
+		static string RaftOrder(Progress.Early e)
+		{
+			List<string> on;
+			Func<string, string> where = b => ScrambledBlueprints.OnIslands.TryGetValue(b, out on) ? string.Join("/", on.ToArray()) : "the research table";
+			return string.Join(", ", e.Bases.Select(where).Distinct().ToArray()) + ", then " + where(e.Blueprint);
 		}
 
 		/// <summary>The blueprints lying on one of Raft's story islands (raft_blueprints.txt).</summary>
