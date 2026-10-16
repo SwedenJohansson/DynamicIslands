@@ -137,14 +137,22 @@ namespace DynamicIslands
 				Check(ref ok, Survivors.All.Count(r => r.Id == RfSurvId) == 1 && Survivors.FigureCount == 1 && RfOnRaft(Survivors.FigureOf(RfSurvId)), "reloaded: one survivor on the raft (" + Survivors.FigureCount + ")");
 				Check(ref ok, Behaviours.HasSignal(e, Survivors.DefaultSignal), "reloaded: signal 'survivor' is kept");
 
-				// The world file: written, the list emptied (a world being read), the line read back
+				// The world file: written, the list emptied (a world being read), the line read back - in one frame, before the
+				// open cage's own check (0.4 s) puts the survivor back
 				List<string> lines = Survivors.WriteLines().ToList();
 				Survivors.Reset();
-				yield return new WaitForSeconds(1.5f);
-				Check(ref ok, !Survivors.Has(RfSurvId) && Survivors.FigureCount == 0, "the list emptied: nobody on the raft");
+				Check(ref ok, !Survivors.Has(RfSurvId) && Survivors.All.Count == 0, "the list emptied");
 				foreach (string l in lines) { int eq = l.IndexOf('='); Survivors.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				Check(ref ok, Survivors.All.Count(r => r.Id == RfSurvId && r.Name == RfSurvName) == 1, "the world file's line read back");
 				yield return new WaitForSeconds(1.5f);
-				Check(ref ok, Survivors.All.Count(r => r.Id == RfSurvId && r.Name == RfSurvName) == 1 && Survivors.FigureCount == 1, "the world file's line read back: the survivor is on the raft again, once");
+				Check(ref ok, Survivors.FigureCount == 1 && RfOnRaft(Survivors.FigureOf(RfSurvId)), "after the read the survivor is on the raft, once (" + Survivors.FigureCount + ")");
+
+				// A world saved between the open and the list (the list lacks an open cage's survivor): the cage puts it back,
+				// with no second signal or rescue
+				int rescuedBefore = Survivors.RescuedCount;
+				Survivors.Reset();
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, Survivors.Has(RfSurvId) && Survivors.RescuedCount == rescuedBefore && Survivors.FigureCount == 1, "the open cage puts its missing survivor back on the list, as a heal (no new rescue)");
 				c = RfCage(e);
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, Survivors.All.Count == 1 && Survivors.Bubbles == bubbles, "the open cage doesn't free the survivor a second time");
@@ -212,6 +220,43 @@ namespace DynamicIslands
 			Check(ref ok, StoryBook.Count(RfSurvKey) == 0, GupRole + ": the key is used up");
 			Check(ref ok, Behaviours.HasSignal(e, Survivors.DefaultSignal), GupRole + ": signal 'survivor'");
 			if (ok) Log("PASS: rf survivor mp check (" + GupRole + ")"); else Fail("rf survivor mp check (" + GupRole + ")");
+		}
+
+		[ConsoleCommand(name: "CIRfSurvivorAnim", docs: "Dev, in game: logs how a survivor figure's animator is set up beside the local player's own (where the Animator sits, avatar, controller, parameters, bound bones) - for its pose")]
+		public static void RfSurvivorAnimCommand(string[] args) { StartTest(RfSurvivorAnimRoutine()); }
+
+		static string RfAnimInfo(Animator an, Transform top)
+		{
+			if (an == null) return "no Animator";
+			Transform hips = an.isHuman ? an.GetBoneTransform(HumanBodyBones.Hips) : null;
+			AnimatorClipInfo[] clips = an.isActiveAndEnabled && an.runtimeAnimatorController != null ? an.GetCurrentAnimatorClipInfo(0) : new AnimatorClipInfo[0];
+			string pars = an.isActiveAndEnabled && an.runtimeAnimatorController != null ? string.Join(" ", an.parameters.Select(p => p.name + "(" + p.type + ")=" + (p.type == AnimatorControllerParameterType.Float ? an.GetFloat(p.name).ToString("0.##") : p.type == AnimatorControllerParameterType.Int ? an.GetInteger(p.name).ToString() : p.type == AnimatorControllerParameterType.Bool ? an.GetBool(p.name).ToString() : "trig")).ToArray()) : "-";
+			return "at '" + PathOf(an.transform, top) + "' enabled=" + an.isActiveAndEnabled + " human=" + an.isHuman + " avatar=" + (an.avatar != null ? an.avatar.name + (an.avatar.isValid ? "" : " INVALID") : "none")
+				+ " controller=" + (an.runtimeAnimatorController != null ? an.runtimeAnimatorController.name : "none") + " cull=" + an.cullingMode + " hips=" + (hips != null ? PathOf(hips, top) : "none")
+				+ " layers=" + an.layerCount + " clips=" + string.Join(",", clips.Select(c => c.clip != null ? c.clip.name : "?").ToArray()) + " params: " + pars;
+		}
+
+		static IEnumerator RfSurvivorAnimRoutine()
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) { Fail("rf survivor anim: run in a world"); yield break; }
+			yield return new WaitForSeconds(0.5f);
+			PlayerAnimator pa = player.GetComponentInChildren<PlayerAnimator>(true);
+			Log("player animator: " + RfAnimInfo(pa != null ? pa.anim : player.GetComponentInChildren<Animator>(true), player.transform));
+			foreach (CharacterModelModifications cm in player.GetComponentsInChildren<CharacterModelModifications>(true))
+				Log("player model: '" + PathOf(cm.transform, player.transform) + "' active=" + cm.gameObject.activeInHierarchy + " own Animator=" + (cm.GetComponent<Animator>() != null));
+			GameObject m = Survivors.Model(Survivors.CharacterFor("", "cirf-anim"), "CI_SurvivorAnim");
+			if (m == null) { Fail("rf survivor anim: no model"); yield break; }
+			try
+			{
+				m.transform.position = player.transform.position + player.transform.forward * 3f;
+				m.SetActive(true);
+				Log("figure before: " + RfAnimInfo(m.GetComponentInChildren<Animator>(true), m.transform));
+				yield return new WaitForSeconds(1.5f);
+				Log("figure after 1.5 s: " + RfAnimInfo(m.GetComponentInChildren<Animator>(true), m.transform));
+			}
+			finally { UnityEngine.Object.Destroy(m); }
+			Log("PASS: rf survivor anim (info only)");
 		}
 
 		[ConsoleCommand(name: "CIRfSurvivorShot", docs: "Dev, in game (host): RF3 pictures - the survivor in its cage (shot_rf_survivor_cage.png), its bubble when freed (shot_rf_survivor_bubble.png) and on the raft (shot_rf_survivor_raft.png)")]
@@ -286,6 +331,10 @@ namespace DynamicIslands
 
 		static IEnumerator RfWaitBoss(IslandWorldState.Entry e, float seconds)
 		{
+			// (the boss map type's beast waits for its arena zone: a player steps in)
+			CreatureSpawnPoint p = RfBossSpot(e);
+			string zone = p != null ? ObjectProps.Get(p.Props, ObjectProps.CreatureZone) : "";
+			if (zone.Length > 0 && RfBoss(p) == null) ScEnterZone(e, zone);
 			float t0 = Time.realtimeSinceStartup;
 			while (RfBoss(RfBossSpot(e)) == null && Time.realtimeSinceStartup - t0 < seconds) yield return new WaitForSeconds(0.5f);
 		}

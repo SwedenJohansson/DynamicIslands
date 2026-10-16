@@ -125,17 +125,18 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Host: a cage was opened (here, or a client's "used" came): the survivor joins the world's list once,
-		/// and the signal goes out.</summary>
-		internal static void Rescue(IslandWorldState.Entry e, SurvivorCage cage)
+		/// and the signal goes out. heal: an already open cage whose survivor is missing from the list (a world saved
+		/// between the two) - back on the list only, no second signal.</summary>
+		internal static void Rescue(IslandWorldState.Entry e, SurvivorCage cage, bool heal = false)
 		{
 			if (!Raft_Network.IsHost || cage == null) return;
 			string id = cage.IdOf(e);
 			if (Has(id)) return;
 			list.Add(new Rescued { Id = id, Name = cage.Name, Character = cage.Character });
-			RescuedCount++;
+			if (!heal) RescuedCount++;
 			WorldRules.Broadcast();
-			Behaviours.SendSignal(e, cage.Signal);
-			Debug.Log("[CUSTOM ISLANDS] Survivor '" + cage.Name + "' (" + id + ") rescued on '" + (e != null ? e.HostName : "?") + "': " + list.Count + " on the raft now");
+			if (!heal) Behaviours.SendSignal(e, cage.Signal);
+			Debug.Log("[CUSTOM ISLANDS] Survivor '" + cage.Name + "' (" + id + ") " + (heal ? "back on the list (its cage is open)" : "rescued") + " on '" + (e != null ? e.HostName : "?") + "': " + list.Count + " on the raft now");
 			EnsureKeeper();
 		}
 
@@ -260,7 +261,8 @@ namespace DynamicIslands.Editor
 			holder.SetActive(false);
 			CharacterModelModifications src = c.modelPrefab;
 			GameObject m = UnityEngine.Object.Instantiate(src.gameObject, holder.transform);
-			m.name = "Model";
+			// (named as under the player's own Animator: Raft's rig is generic, its bone paths start with this name)
+			m.name = src.gameObject.name + "(Clone)";
 			m.transform.localPosition = Vector3.zero;
 			m.transform.localRotation = Quaternion.identity;
 			CharacterModelModifications mod = m.GetComponent<CharacterModelModifications>();
@@ -270,8 +272,8 @@ namespace DynamicIslands.Editor
 			foreach (Joint j in m.GetComponentsInChildren<Joint>(true)) UnityEngine.Object.DestroyImmediate(j);
 			foreach (Component x in m.GetComponentsInChildren<Component>(true).Where(x => x is Collider || x is Rigidbody || x is CharacterController || x is AudioSource || x is Camera || x is AudioListener || x is Light).ToList())
 				UnityEngine.Object.DestroyImmediate(x);
-			Animator an = m.GetComponentInChildren<Animator>(true);
-			if (an == null) an = m.AddComponent<Animator>();
+			// (the Animator one level above the model, as on the player - not one of the model's own: a hat has one)
+			Animator an = holder.AddComponent<Animator>();
 			if (src.avatar != null) an.avatar = src.avatar;
 			if (src.thirdPersonController != null) an.runtimeAnimatorController = src.thirdPersonController;
 			an.applyRootMotion = false;
@@ -389,7 +391,7 @@ namespace DynamicIslands.Editor
 			if (used && !open) Open(e, seenClosed);
 			else if (!used && !open) { seenClosed = true; if (figure == null) PutInside(); }
 			// (host: a client opened it - its "used" came; or the world was saved between the two)
-			if (used && Raft_Network.IsHost && !Survivors.Has(IdOf(e))) Survivors.Rescue(e, this);
+			if (used && Raft_Network.IsHost && !Survivors.Has(IdOf(e))) Survivors.Rescue(e, this, Behaviours.HasSignal(e, Signal));
 		}
 
 		void PutInside()
