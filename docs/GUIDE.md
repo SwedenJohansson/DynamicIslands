@@ -26,10 +26,33 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Play an adventure someone made** | **ISLAND LIBRARY** in the main menu → **World plans** → **Download**; then **NEW WORLD** → choose it as the Custom Islands plan | [4.7](#47-saving-and-sharing), [7.6](#76-playing-changing-and-sharing-a-plan) |
 | **Build my own island** | **EDITOR** → **Generate** an island → shape it, add objects → **Save** | [4.8](#48-your-first-island-step-by-step) |
 | **Give my island a quest or a secret** | Island tab → **Edit quest...**; an object → **Behaviour & events...** | [5](#5-making-islands-come-alive), [6](#6-stories-quests-behaviours-story-items) |
-| **Make my own adventure across several islands** | **EDITOR** → **World plans** → **New...** → one rule per island → **Save**; choose it in NEW WORLD | [7.2](#72-your-first-world-plan-step-by-step) |
+| **Make my own adventure across several islands** | **EDITOR** → **A world plan** → **New world plan** → add your islands → **Save**; choose it in NEW WORLD | [Three things you can make](#three-things-you-can-make), [7.2](#72-your-first-world-plan-step-by-step) |
 | **Play with friends** | Everyone installs the mod; the host creates the world; friends join through Steam | [8](#8-playing-together), [12.1](#121-playing-together-over-several-days) |
 | **Change how a world plays** (tougher monsters, levels, a randomized world) | **NEW WORLD** → **WORLD SETTINGS...** | [9](#9-world-settings-rules-and-extra-systems) |
 | **Report a bug or ask a question** | Main menu alpha box → **Report a problem** (or **Discord**) | [15](#15-reporting-a-problem) |
+
+### Three things you can make
+
+Click **EDITOR** in Raft's main menu. A window asks **What do you want to make?** and has three cards. The card of what
+you made last is lit, and its **Continue** button takes you straight back to it.
+
+| Card | What it is | What you click |
+|---|---|---|
+| **An island** | One island: its land, objects, creatures, quests. Saved as `<name>.island` | **New island**, **Open an island...**, or **Continue '<last island>'** (shown with its picture). The 3D editor opens ([chapter 4](#4-building-your-own-island-the-editor)) |
+| **A world plan** | The list of islands a world gets, and when and where each comes. Saved as `<name>.plan`. You make it right on the main menu - no island is loaded and no 3D editor opens ([chapter 7](#7-world-plans-which-islands-a-world-gets)) | **New world plan**, **Open a world plan...**, or **Continue '<last plan>'** (with its Main story line in a few words) |
+| **The guide** | This guide | **Open the guide**; **Islands, plans, story** opens this section online |
+
+The **Island Library** stays on Raft's main menu, as before.
+
+**The Main story line** is the part of a plan that tells a story. It is the islands the Receiver leads players to, one
+after the other, in the order they are played. After the last of your islands the Receiver leads to Raft's ending,
+Utopia. Islands that are not in the Main story line come on their own - at the start, after some km or days, when a
+quest is done, near another island - and are called **Other islands**.
+
+How the three fit together: you build islands, then put them in a plan. In the island editor, **Use in a plan...**
+adds the island you are working on to a plan; on a plan's island card, **Edit island** opens that island in the 3D
+editor, and **Back to the plan** brings you back ([7.2](#72-your-first-world-plan-step-by-step)). Closing a plan comes
+back to this window.
 
 ### Words used in this guide
 
@@ -44,6 +67,7 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Story item** | A key, a map, a log... that the crew carries and the journal (J) shows ([6.3](#63-story-items-and-story-sets)) |
 | **Journal** | The crew's book of the custom islands (J): their story items and every note read, shared by everyone in the world. Not Raft's notebook (T) ([3](#the-journal-j)) |
 | **World plan** | A list of rules for a world: which islands it gets, when and where ([7](#7-world-plans-which-islands-a-world-gets)) |
+| **Main story line** | The islands of a plan that the Receiver leads players to, one after the other, in play order; the other islands of the plan come on their own ([Three things you can make](#three-things-you-can-make)) |
 | **Rule** | One line of a plan: *when* something happens, bring *this island*, *there*, and tell the players *this* |
 | **Raft's story / the Receiver chain** | Raft's own story islands (Radio Tower ... Utopia), found by tuning the Receiver. A plan can change it ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
 | **World settings** | Optional switches for one world: monster difficulty, build cost, randomizer, extra options, levels ([9](#9-world-settings-rules-and-extra-systems)) |
@@ -52,6 +76,8 @@ Pick what you want to do; each line leads to the part of the guide you need.
 | **Host** | The player whose PC runs the world in multiplayer. The host's islands, plan and settings count ([8](#8-playing-together)) |
 
 ## Contents
+
+First: [Three things you can make](#three-things-you-can-make) (island, world plan, Main story line).
 
 1. [Installing](#1-installing)
 2. [Starting a new world](#2-starting-a-new-world)
@@ -406,7 +432,8 @@ story), like Raft holds its quest items outside the inventory.
 
 ## 4. Building your own island: the editor
 
-Click **EDITOR** in the main menu. A loading box shows what it is doing ("Opening the editor", then "Loading Raft's
+Click **EDITOR** in the main menu and, in the start window, **An island**: **New island**, **Open an island...** or
+**Continue** with the island you made last ([Three things you can make](#three-things-you-can-make)). A loading box shows what it is doing ("Opening the editor", then "Loading Raft's
 objects from its islands" with a bar) until the editor is ready: a few seconds the first time after starting Raft,
 less after that. The editor opens on the sea with an empty build area.
 
@@ -420,7 +447,13 @@ less after that. The editor opens on the sea with an empty build area.
 
 - **Top bar:** New, Open, Save, Save as · Undo, Redo · the three tabs **Terrain**, **Objects**, **Island** (F1, F2, F3)
   · **Generate** (the island generator), **Light** (the time of day, below), **Test** (try the island in a world,
-  [4.9](#49-trying-the-island-in-a-world-test)), **World plans**, **Main menu**. The island's name is at the top left.
+  [4.9](#49-trying-the-island-in-a-world-test)), **Use in a plan...**, **Main menu**. The island's name is at the top left.
+  **Use in a plan...** puts this island in a world plan: pick a plan (or **A new world plan...** and name it), then
+  **Next in the Main story line** (the Receiver leads players to it after the story's last island, before Raft's ending
+  Utopia) or **Another island (comes on its own)** (at the start, ahead of the raft; change WHEN and WHERE on its card).
+  The plan opens on it. An island without a name must be saved first. If you came from a plan's **Edit island**, this
+  button reads **Back to the plan**: it saves the island and returns to the plan. **Main menu** returns to the start
+  window.
 - **Tool panel** (left): the tab's tools in bordered groups. The lit button is the one in use.
 - **Status bar** (bottom): explains the tool, or the button under the mouse. On the right: where the camera is.
 - **The blue plane is the sea.** Everything below it is under water in the game.
@@ -463,8 +496,8 @@ sky. It takes effect the next time you open the editor from the main menu; off a
   choice with a short line about it. Click a row to pick it - the window closes - or press **Cancel** or Esc to close it
   without choosing. A few lists have an **X** at the end of a row that deletes that one (the row goes, the list stays
   open), and an empty list says why it is empty. You meet it behind the **…** beside a name in **Behaviour &
-  events...**, in the quest editor's **When the quest is done, bring a new island**, in the World plans window (the
-  island, the map type, **Add rules from a template**, the plans) and the New main story helper, and when the editor
+  events...**, in the quest editor's **When the quest is done, bring a new island**, in the World plan window (the
+  island, the map type, **Add rules from a template**, the plans) and the New main story line helper, and when the editor
   offers the unsaved work it kept.
 - **A name to type**, for **Save as group...**, **Save stamp...**, **Save generator preset...** and the name of a
   world plan. A line says what will be kept, the field holds the name (up to 48 letters), **OK** or Enter keeps it,
@@ -1378,7 +1411,7 @@ message "Well done" and the name "Reward" on the Receiver. The map on the right 
 Raft's own story is a chain. A note on each story island gives the **frequency** of the next one, and players find it
 by tuning the **Receiver** to it: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa, Varuna Point, Temperance
 and, last, Utopia, the ending. A world plan ([section 7](#7-world-plans-which-islands-a-world-gets)) can change that
-chain, in the editor's **World plans** window:
+chain, in the **World plan** window (its **Settings** and **Main story line** tabs):
 
 - **Raft's story islands: on/off.** On (the default) keeps Raft's story. **Off** leaves all of Raft's story islands
   out: the plan's own islands are the whole adventure. Raft's ordinary islands still turn up as in any world.
@@ -1408,7 +1441,7 @@ chain, in the editor's **World plans** window:
     **Any player** can dial it on the Receiver; the island then comes up ahead of the raft, like Raft's story islands;
   - **by chance while sailing**: it comes up ahead some time after it is unlocked;
   - **ahead of the raft** or **near an island**, as soon as it is unlocked.
-![Raft's story in the World plans window](images/editor-story-chain.jpg)
+![Raft's story in the World plan window](images/editor-story-chain.jpg)
 *Check on the template "Balboa replaced" (a new forest island in Balboa's place): every rule can work, and two tips - the
 story in order (Radio Tower > Vasagatan > 'forest' > Caravan Town > ... > Utopia) and the blueprints Balboa held.*
 
@@ -1480,16 +1513,16 @@ story each time it loads. A world opened without the mod has Raft's own notebook
 
 ### Making a main story: the helper, and Preview notebook
 
-**New main story...** (World plans, next to Templates...) makes a main story step by step: Raft's story on or off,
+**New main story line** (World plan window, Main story line tab) makes a main story step by step: Raft's story on or off,
 then your saved islands in the order players meet them - for each, where it sits in Raft's story, its tab colour and
 what gives the next coordinates. **Done: make the cards** makes the rule cards (every island on the Receiver, each after the one
 before; the first one's coordinates given at the start when Raft's story is off or it comes first) and runs Check. Change the cards as you like after. The list of your islands opens at once; with many islands it says "Loading islands..." for a moment the first time.
 
-**Preview notebook** (World plans, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
+**Preview notebook** (World plan window, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
 own notebook: the mod goes to the test world (as Test in a world does), opens the book with every tab and page, and a
 bar at the bottom steps through the story the way players will meet it: **|◀ Start** (nothing found yet), **◀ Back**,
 **Next ▶** ("Saltmarsh Ferry: its coordinates are found", "quest step 3 of 6 done", "'The ferryman's log' is read",
-"the next coordinates"...), **All ▶|**. **Back to World Plans** returns to the plan with your changes still there. **Open the notebook** opens the book again after Esc.
+"the next coordinates"...), **All ▶|**. **Back to the plan** returns to the plan with your changes still there. **Open the notebook** opens the book again after Esc.
 
 ![Preview notebook: Raft 2's ten tabs](images/notebook-preview-all.jpg)
 *Preview notebook on "Raft 2 - The Drowned Frontier" (Raft's story off): First page, then the plan's ten islands in
@@ -1521,7 +1554,7 @@ A plan is a list of **rules**, and each rule brings **one island**. Every rule a
 | **Where** does it go? | ahead of the raft, near another island (how far and which way), on its own Receiver frequency, by chance while sailing |
 | **What are players told?** | a message on screen ("Smoke rises from a small island ahead.") and a name on the Receiver |
 
-You make and change plans in the island editor's **World plans** window, and pick one for a world in Raft's **New
+You make and change plans in the **World plan** window - on the main menu, **EDITOR** → **A world plan** - and pick one for a world in Raft's **New
 Game** box. You don't need to have built any islands yourself: the mod's map types ([4.6](#46-ready-made-islands-map-types))
 are enough for a whole plan.
 
@@ -1564,7 +1597,7 @@ island a *main* quest island is that a plan's story waits for its quest.
 | **The same in every world?** | No: different islands at different places every time | Yes: the same island at the same distance in every world of the plan (only the exact spot ahead depends on where you sail) | Yes: the same island at the same place in the story. Only the 4-digit frequency is made new for each world |
 | **Needed to finish the plan?** | No | No: optional extras. Skip them and nothing is missing from the story | **Yes** (in a plan with a story): its quest done unlocks the next step of the story - in The Long Voyage, the next story island's frequency |
 | **If you sail past it** | It stays where it appeared. Beyond 800 m it is unloaded and comes back when you return. If you **reached it and its quest isn't done**, it comes back ahead of the raft by itself about 12 minutes later (up to 3 times) | The same as a random island: stays where it appeared; if you reached it and left its quest unfinished, it comes back ahead of the raft about 12 minutes later (up to 3 times). One you never reached doesn't come back | It stays where it came up: its dot on the Receiver shows the way back. It doesn't come back by itself |
-| **Where you set it** | The plan's switch **Random islands while sailing** (World plans window); *which* islands: **World settings > Islands while sailing** ([9.5](#95-islands-while-sailing)) and `spawnpool.txt` ([10](#10-settings-files)) | A **rule** in the World plans window: WHEN **After sailing a distance**, BRING **One of my saved islands**, WHERE **Ahead of the raft**, TELL a message and a Receiver name, STORY **Side quest (not in the story)** | A **rule** in the World plans window: WHEN **When the world starts**, BRING **One of my saved islands**, WHERE **On the Receiver**, STORY **After** a story island, **next coordinates when** its quest is done |
+| **Where you set it** | The plan's switch **Random islands while sailing** (World plan window, Settings tab); *which* islands: **World settings > Islands while sailing** ([9.5](#95-islands-while-sailing)) and `spawnpool.txt` ([10](#10-settings-files)) | A **rule** in the World plan window (Other islands tab): WHEN **After sailing a distance**, BRING **One of my saved islands**, WHERE **Ahead of the raft**, TELL a message and a Receiver name, STORY **Side quest (not in the story)** | A **rule** in the World plan window (Main story line tab): WHEN **When the world starts**, BRING **One of my saved islands**, WHERE **On the Receiver**, STORY **After** a story island, **next coordinates when** its quest is done |
 | **In the plan file** ([7.7](#77-the-plan-file)) | `random = on` | `rule = signal \| island:Signal Rock \| km:4 \| ahead:450 \| A mast on a rock ahead - its light is dead. \| Signal Rock` | `rule = cove \| island:Wreckers' Cove \| start \| receiver:700 \| Under the Radio Tower's signal hides another... \| Wreckers' Cove \| after:RadioTower \| quest` |
 
 #### Single islands and plan islands
@@ -1601,7 +1634,7 @@ Seas ([16.4](#164-the-world-plans)).
   on, so you meet random islands *between* its side trips and quest islands; The Abyss Expedition has it off. A plan made for
   a tight story usually has it off: then the world has only the plan's islands.
 
-You switch it for a plan in the editor's **World plans** window: the switch **Random islands while sailing** at the top
+You switch it for a plan in the **World plan** window: the switch **Random islands while sailing** on the **Settings** tab
 of the plan (step 4 of [7.2](#72-your-first-world-plan-step-by-step)); in the plan file it is the line `random = on` or
 `random = off`. In a running world the host can switch them with `CustomIslandsAuto on` / `off` (F10).
 
@@ -1624,7 +1657,7 @@ islands on top of a custom one later.
 #### Side trips, in detail
 
 A side trip is one **rule** of a plan: "bring this island at this point of the voyage, here, and tell the players".
-To make one in the **World plans** window ([7.2](#72-your-first-world-plan-step-by-step) shows every click):
+To make one in the **World plan** window, **Other islands** tab ([7.2](#72-your-first-world-plan-step-by-step) shows every click):
 
 1. Open your plan and click **+ Add a rule**. Give it a name, for example `signal`.
 2. **WHEN**: choose **After sailing a distance** and type the km, for example `4`. The distance is what the raft has
@@ -1663,8 +1696,8 @@ Good to know:
 
 A main quest island is a rule with a **place in a story chain**. The Long Voyage puts one after each of Raft's story
 islands; your own plan can also make a story without Raft's ([6.5](#65-your-islands-in-rafts-story-the-receiver):
-**Raft's story islands: off** and your islands **First**, **After** each other). To make one in the **World plans**
-window:
+**Raft's story islands: off** and your islands **First**, **After** each other). To make one in the **World plan**
+window (**Main story line** tab):
 
 1. Make sure the plan has **Raft's story islands: on** (the switch at the top), unless your story replaces Raft's.
 2. **+ Add a rule**, name it (`cove`).
@@ -1765,17 +1798,17 @@ by then. [16.4](#164-the-world-plans) lists every island of the plan.
   their dot on the Receiver, which shows the way and the distance. Islands a plan waits for in other ways come back by themselves until you've done
   what the plan waits for ([3](#islands-appear-while-you-sail)).
 - **"Can I have only the plan's islands, no random ones?"** Yes: in your own plan, set **Random islands while sailing**
-  to off. For a plan someone else made, make a copy (**Copy...** in World plans) and switch it off there, or untick
+  to off. For a plan someone else made, make a copy (**Copy...** in the World plan window) and switch it off there, or untick
   every island in **World settings > Islands while sailing** for that world.
 - **"Can a random island be one of the plan's islands?"** No: an island any saved plan names never comes by chance
   ([plan islands](#single-islands-and-plan-islands)). To use it by chance too, save a copy under another name.
-- **"Where do I change the km, the message, or which island?"** In the editor: **World plans**, open the plan, change
-  the rule's card, **Save**. A world already playing that plan gets the change the next time it loads; rules that have
+- **"Where do I change the km, the message, or which island?"** On the main menu: **EDITOR** → **A world plan**, open the plan, change
+  the rule's card (**Other islands** or **Main story line** tab), **Save**. A world already playing that plan gets the change the next time it loads; rules that have
   already fired stay done.
 
 ### 7.1 The plans that come with the mod
 
-Choose one in the New Game box (**Custom Islands plan**), or open it in World plans to see how it's made:
+Choose one in the New Game box (**Custom Islands plan**), or open it in the World plan window to see how it's made:
 
 | Plan | What happens |
 |---|---|
@@ -1786,20 +1819,44 @@ Choose one in the New Game box (**Custom Islands plan**), or open it in World pl
 | **Growing sea** | Random islands, plus a special island every few km and days |
 | **Receiver adventure** | A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency |
 
-**Island hopping**, **Adventure**, **Growing sea** and **Receiver adventure** are ordinary plan files: open one in World
-plans and use **Copy...** to start your own plan from it.
+**Island hopping**, **Adventure**, **Growing sea** and **Receiver adventure** are ordinary plan files: open one in the World
+plan window and use **Copy...** to start your own plan from it.
 
 ### 7.2 Your first world plan, step by step
 
 This walkthrough makes a plan called **Castaway trail** with four islands. It uses map types, so it works even if you
 haven't built an island yet. Step 6 shows where to use one of your own islands instead.
 
-![The World plans window](images/editor-world-plans.jpg)
-*The World plans window with the Adventure plan open: the plan's buttons and switches at the top, one card per rule
+![The World plan window](images/editor-world-plans.jpg)
+*The World plan window with the Adventure plan open: the plan's top row and tabs, one card per rule
 (WHEN, BRING, WHERE, TELL, STORY), the map on the right, and + Add a rule, Check and Save at the bottom.*
 
-**1. Open the World plans window.** In Raft's main menu click **EDITOR** and wait for the loading box to finish. In the
-editor's top bar, click **World plans** (top right).
+**1. Open the World plan window.** In Raft's main menu click **EDITOR**, then **New world plan** on the **A world plan**
+card (or **Open a world plan...**, or **Continue** with the plan you made last). The plan opens right on the main menu:
+no island is loaded and the 3D editor does not open. Coming from an island instead? In the island editor click **Use in a
+plan...** ([4.1](#41-the-screen)).
+
+**The window.** The title is **WORLD PLAN**. The top row has **Plan: <name> ▼** (pick another plan), **New...**,
+**Open...**, **Copy...**, **Delete**, **Templates...** and **?**. **New...** asks what to start from: an empty plan, a
+**Main story line step by step**, a template, or a copy of another plan. Below it are three tabs:
+- **Main story line (n):** the islands the Receiver leads players to, one after the other, in play order. When Raft's
+  story is on, Raft's own story islands show as grey lines between yours. Buttons: **New main story line** (the
+  step-by-step helper, [6.5](#65-your-islands-in-rafts-story-the-receiver)), **+ Add a saved island** (adds one of
+  your islands at the end of the story, before Utopia) and **+ New island** (name it: it is put at the end of the
+  story, the plan is saved and the island editor opens on the new empty island, with **Back to the plan**). **▲** and
+  **▼** on an island's card move it one step along the story, also past Raft's own islands; Utopia stays last. An
+  island set "in place of" one of Raft's islands is moved with its STORY row instead. Islands "beside the story" are
+  listed under their own header, and the last card is the ending (last page).
+- **Other islands (n):** islands that come on their own - at the start, after some km or days, when a quest is done,
+  near another island... Each is a rule card with WHEN, BRING, WHERE and TELL, and **+ Add a rule** adds one. The
+  STORY row of a card moves it into the Main story line tab (the window follows the card).
+- **Settings:** random islands while sailing, Raft's own story on or off (and which story islands to leave out), and
+  the plan's description.
+
+**Check**, **Progression**, **Preview notebook**, **Test this plan**, **Export...**, **Import...**, **Save** and **Close**
+stay at the bottom, whatever the tab. On an island's card, **Edit island** opens that island in the 3D editor (the plan is
+saved first); the editor then shows **Back to the plan**, which saves the island and returns to the plan - or to the main
+menu with the plan open, if you came from there. Closing the plan comes back to the start window.
 
 **Help while you work:** every part of the window has a small **?** next to it. Hover it (or click it) and a note
 explains that part: what each choice of **WHEN**, **BRING** and **WHERE** means, what Check looks for, and so on. The green
@@ -1809,27 +1866,27 @@ section online).
 ![A ? explains a part](images/plan-help-popup.jpg)
 *Hovering the ? after **When**: every choice it has, in a few words.*
 
-The buttons at the bottom are in two rows: **+ Add a rule**, **Check**, **Progression**, **Preview notebook** and
+The buttons at the bottom are in two rows: **Check**, **Progression**, **Preview notebook** and
 **Test this plan** above; **Export...**, **Import...**, **Save** and **Close** below.
 
 ![The Help box](images/plan-help.jpg)
 *Help: how to make a plan, in eight steps, and the guide's buttons.*
 
-**2. Start a new plan.** Click **New...**, type a name (`Castaway trail`) and press **Enter** (or **OK**). The window
-now shows your empty plan: "No rules yet". The name is also the plan's file name, so it can't be the name of a plan you
+**2. Start a new plan.** Click **New...**, choose **empty**, type a name (`Castaway trail`) and press **Enter** (or **OK**).
+The window now shows your empty plan: "No rules yet". The name is also the plan's file name, so it can't be the name of a plan you
 already have.
 
-**3. Describe it.** Click the long field under the switches and write one line about the plan, for example
+**3. Describe it.** On the **Settings** tab, click the description field and write one line about the plan, for example
 `Follow a castaway's trail across four islands`. Players see it when they choose the plan in the New Game box.
 
-**4. Set the two switches.**
+**4. Set the two switches** (also on the **Settings** tab).
 - **Random islands while sailing: on / off.** On: islands from your spawn pool *also* turn up by chance, between your
   plan's islands. Off: the world has only the plan's islands. For a story, **off** is usually best - click it.
 - **Raft's story islands: on / off.** On (the default): Raft's own story (Radio Tower, Vasagatan, ... Utopia) is still in
   the world, next to your islands. Off: your plan is the whole adventure. Leave it **on** for now; [6.5](#65-your-islands-in-rafts-story-the-receiver)
   explains the story row.
 
-**5. The first island: an old camp when the world starts.** Click **+ Add a rule** (bottom left). A card appears with
+**5. The first island: an old camp when the world starts.** Go to the **Other islands** tab and click **+ Add a rule**. A card appears with
 one section per question ([7.3](#73-a-rule-card-part-by-part)). Each section has a **▼ list**: click it and pick a choice -
 each choice says in a line what it does. Fill the card in:
 - **Name** (top of the card, for example `rule1kqx`): type `camp`. The name is how other rules say "the camp".
@@ -1886,7 +1943,8 @@ you click **Close**: Close throws away changes since the last save.
 
 Press **F10** and type `WorldPlan` to see the world's plan and which rules have fired.
 
-**12. Change it later.** Open **World plans**, click the **Plan** button at the top left and pick your plan. Change
+**12. Change it later.** On the main menu click **EDITOR** → **A world plan** → **Continue 'Castaway trail'** (or
+**Open a world plan...**, or **Plan ▼** in the window). Change
 what you want, **Save**. New worlds get the new version. A world that already uses the plan gets it the next time you load
 it on your PC; rules that already happened stay done ([7.6](#76-playing-changing-and-sharing-a-plan)).
 
@@ -1903,7 +1961,7 @@ rule = treasure | type:treasure | visit:cove | near:cove:900:any | From the clif
 rule = wreck | type:wreck | km:3 | ahead:300 | Something floats ahead: a wrecked raft.
 ```
 
-**Short cut: Templates...** (top right) adds a ready-made set of rules to the open plan: the four sample plans, and
+**Short cut: Templates...** (top row) adds a ready-made set of rules to the open plan: the four sample plans, and
 **Detour in Raft's story**, **Balboa replaced**, **Sky chain** (flying islands, each appearing when players reach the one
 before), **Story chain** (three of your islands, each quest bringing the next: pick your islands with **▾**) and **Quest
 reward island**. Then change what you like. An id that's already in your plan gets a `b` added.
@@ -2031,9 +2089,9 @@ names are the same every time, its exact places aren't.
 
 ### 7.6 Playing, changing and sharing a plan
 
-- **Test this plan** (World plans, next to Preview notebook) saves the plan and makes a new world with it, a test world
+- **Test this plan** (World plan window, next to Preview notebook) saves the plan and makes a new world with it, a test world
   "Plan test <time>": its islands come as in any world. **Esc → Custom Islands → Back to the editor** brings you
-  back to World plans on the plan (the test world stays under Load; delete old ones there).
+  back to the plan (the test world stays under Load; delete old ones there).
 - **Choose it** in the New Game box: **Choose plan...**, pick your plan and **Select** (**View the plan...** under
   it shows what the plan does: its description, Raft's story, each island and when it comes), then **Create**. The
   next new world starts on **Random islands** again (or the `defaultPlan` of `spawnpool.txt`). A world keeps the plan
@@ -2050,7 +2108,7 @@ names are the same every time, its exact places aren't.
   Map type islands need no file, so a plan made only of map types always works for everyone.
 
 **A world keeps its own copy of its plan.** When a world starts, the plan's rules are saved with the world:
-- **you edit your plan** (in World plans, on the PC of the player who made the world): the next time the world loads,
+- **you edit your plan** (in the World plan window, on the PC of the player who made the world): the next time the world loads,
   the changed plan plays - rules that already happened stay done, new ones come - and you're told so;
 - deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
   different plan of the same name never changes the world: it plays its own copy (to give a running world another
@@ -2068,7 +2126,7 @@ there. If there is no room for a rule's island, it keeps trying, looks further o
 
 ### 7.7 The plan file
 
-Plans are text files in `Mods\DynamicIslands\plans\<name>.plan`. The World plans window writes them for you, but you
+Plans are text files in `Mods\DynamicIslands\plans\<name>.plan`. The World plan window writes them for you, but you
 can also open one in a text editor (the file starts with a short help). One `rule =` line per rule, its parts
 separated by `|`:
 
@@ -2084,7 +2142,7 @@ rule = id | what | when | where | message | Receiver name
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
 and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line),
-`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.0` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plans window and the New Game box read it the
+`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.0` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
 ## 8. Playing together
@@ -3032,7 +3090,7 @@ randomizer no longer makes alphas tougher again or heals them.)
 ### 12.4 Making quests and plans that work
 
 These are the traps island builders run into. Always play your adventure once with **Test**
-([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose. **Check** in World Plans finds most of these traps and says how to fix each.
+([4.9](#49-trying-the-island-in-a-world-test)), doing things in the wrong order on purpose. **Check** in the World plan window finds most of these traps and says how to fix each.
 
 #### No toggles in events that happen again
 
@@ -3068,7 +3126,7 @@ and work in every event.
 bring rules. Some edits reach saved worlds and change what those numbers point at: a rule that already brought its
 island brings it again (or a new rule counts as done and never comes), the quest jumps to another step or waits for a
 note that was renamed. In a plan, worlds remember rules by their **id**: a rule renamed after it fired brings its island
-again. (World Plans gives each new rule an id no rule of the plan had, like `rule4kmx`, so a new rule never takes a fired
+again. (The World plan window gives each new rule an id no rule of the plan had, like `rule4kmx`, so a new rule never takes a fired
 rule's id.)
 
 **What to do:**
@@ -3420,7 +3478,7 @@ Raft's sea finds: sand, clay, stones, metal and copper ore, scrap, giant clams a
 3. Click any object to see its **inspector**: a chest's loot, a note's text, a creature's toughness, a zone's message,
    and **Behaviour & events...** for doors, winches, valves and levers (what happens on use, the checks, the signals).
 4. **Edit quest...** shows the quest's steps and reward; **Story items...** the keys and logs it uses.
-5. A plan: **World plans** → **Plan ▼** → pick it: one rule card per island, and **Check** explains the whole story.
+5. A plan: **EDITOR** → **A world plan** → **Open a world plan...** (or **Plan ▼** in the window) → pick it: one rule card per island, and **Check** explains the whole story.
 6. To play a plan: **NEW WORLD** → **Choose plan...**: a downloaded plan says *library plan* in the list, with a map of
    its first island and the islands it brings.
 

@@ -12,6 +12,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
+  for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
+  world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
+  (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**.
+- **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
+  with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
+  the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
+  **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
   buttons. The height's ? says what 0, above 0 (flying) and below 0 (sunk) mean, and how players reach the island.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three

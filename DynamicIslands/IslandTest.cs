@@ -130,7 +130,7 @@ namespace DynamicIslands.Editor
 			if (state != State.Testing) return;
 			state = State.Returning;
 			giveUpAt = Time.unscaledTime + 120f;
-			Step(PreviewPlan != null ? "Back to World Plans with '" + PreviewPlan.Name + "'" : PlanToTest != null ? "Back to World Plans with '" + PlanToTest + "'" : "Back to the editor with '" + Island + "'");
+			Step(PreviewPlan != null ? "Back to the plan '" + PreviewPlan.Name + "'" : PlanToTest != null ? "Back to the plan '" + PlanToTest + "'" : "Back to the editor with '" + Island + "'");
 			QuestBookPreview.End();
 			WorldWindow.Close();
 			// (Raft's leave without saving; the pause menu's own button leaves for no scene unless its exit box chose one)
