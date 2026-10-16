@@ -685,6 +685,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     - **Mixed** - a bit of everything that suits the island's style;
     - **Castaway huts** - Raft's thatch walls and roof on Raft's foundations, a hammock and a chest inside;
     - **Wooden cabins** - the same in Raft's wooden walls and roof, with a bed, a chest and a cabin log;
+    - in both, now and then a thing or two to pick up lies on the floor beside the furniture (Raft's plastic or scrap,
+      coming back after a few days like Raft's own);
     - **Wrecks and landmarks** - Raft's own set pieces, on the land and in the water: a boat run aground on the beach
       or sunk 5-14 m down off the coast, a plane crashed on the land or lying on the sea floor, a small boat pulled up
       the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris, and structures of Raft's radio
@@ -3615,7 +3617,7 @@ ends Raft's story and never counts as done.
 | Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
 | A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks), The Frontier (the hall's sliding doors) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
-| Loose things to pick up inside houses (plastic, planks, scrap on the floors; they come back after a few days) | Halcyon Cove, The Frontier, Great Fen, The Safe Room, Trade Wind Archipelago and ten more of the library's islands: Raft's land pickups (`Pickup_Landmark_Plastic3_Land`, `..._Plank_Land`, `"..._Scrap 1_Land"`) placed with `drop` on a house's floor |
+| Loose things to pick up inside houses (plastic, planks, scrap on the floors; they come back after a few days) | Halcyon Cove, The Frontier, Great Fen, The Safe Room, Trade Wind Archipelago, Drowned Gate, Keeper's Light and eleven more of the library's islands, and the generator's huts and cabins: Raft's land pickups (`Pickup_Landmark_Plastic3_Land`, `..._Plank_Land`, `"..._Scrap 1_Land"`) placed with `drop` on a house's floor |
 | An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve), The Frontier (three valve wheels, the horn's reed, the seal press - each used up only once the quest has counted it) |
 | A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport to** its other end), The Safe Room (a hatch down an escape shaft and back), Rookery Cliffs (Raft's own scissor lift, which carries you) |
 | Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |

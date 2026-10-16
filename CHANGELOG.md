@@ -35,8 +35,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
-- **Things to pick up indoors:** sixteen of the library's islands have a little plastic, planks or scrap lying on the
-  floors of some of their houses; they come back after a few days like Raft's.
+- **Things to pick up indoors:** eighteen of the library's islands have a little plastic, planks or scrap lying on the
+  floors of some of their houses; they come back after a few days like Raft's. The generator's huts and cabins (and
+  the world randomizer's huts) get them too: none, one or two per house, on free floor beside the furniture.
 - **Upgrade research table:** the extra upgrades are learned at a research table of their own (violet, four times the cost
   of Raft's, there from the start with the option on) instead of with their base item. Its research is separate from
   Raft's table; a world from before keeps the upgrades it had.

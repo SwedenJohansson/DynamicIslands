@@ -480,9 +480,12 @@ namespace DynamicIslands.Editor
 			for (int z = 0; z < d; z++) k.Add("Block_Wall_Thatch", new Vector3(o.x - g / 2f, deck, o.z + z * g), 90f, null, 0f);
 			foreach (Vector2 corner in new[] { new Vector2(-g / 2f, -g / 2f), new Vector2((w - 0.5f) * g, -g / 2f), new Vector2(-g / 2f, (d - 0.5f) * g), new Vector2((w - 0.5f) * g, (d - 0.5f) * g) })
 				k.Add("Block_Pillar_Wood", new Vector3(o.x + corner.x, deck, o.z + corner.y), 0f, null, 0f);
+			int furniture = k.File.Objects.Count;
 			k.Add("Placeable_Bed_Hammock", new Vector3(o.x + g, deck, o.z + g * 0.5f), 90f, null, 0f);
 			k.Add("Loot_Chest", new Vector3(o.x, deck, o.z + g), 90f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Basics") + ";" + MapKit.Loot("Food").Split(';').First() }, { ObjectProps.NoteTitle, "Castaway's chest" } }, 0f);
 			k.Add("Note_Book", new Vector3(o.x + g * 2f, deck, o.z), 0f, new Dictionary<string, string> { { ObjectProps.NoteTitle, "Castaway's diary" }, { ObjectProps.NoteText, "Built this from what the sea gave me. The sea wants it back, bit by bit. Take the chest before it does." } }, 0f);
+			// (ROADMAP LM13: maybe a bit of plastic or scrap on the floor)
+			GenBuildings.FloorPickups(k, new Vector2(o.x - g / 2f + 0.15f, o.z - g / 2f + 0.15f), new Vector2(o.x + (w - 0.5f) * g - 0.15f, o.z + (d - 0.5f) * g - 0.15f), deck, furniture);
 		}
 
 		#endregion

@@ -130,6 +130,8 @@ place "Balboa_DecorationPrefabBase_Old Stove" - at 3.9 0.6 y=0.05 sit yaw=180
 place Placeable_Cupboard_Medium cupboard at 3.7 4.1 y=0.05 sit yaw=180
 place Placeable_Clock_Basic - at 4.15 3.5 y=0.05 sit yaw=-90
 place Zone_Trigger cottage at 2.25 2.25 y=1
+place Pickup_Landmark_Plastic3_Land - at 3.3 2.4 y=0.4 drop yaw=140
+place "Pickup_Landmark_Scrap 1_Land" - at 1.6 2.0 y=0.4 drop yaw=75
 pop
 
 # --- The stair from the cottage stack down to the cistern's slab: two flights on posts --------------------------------
@@ -220,6 +222,7 @@ place TP_Moontown_Barrel01 - at 2.5 1.4 y=0.05 sit
 place Note_Book luskdiary at 2.5 1.4 y=1.2 sit drop yaw=-20 rot=0,0,0
 place "Box Small" storecrate at 0.7 1.4 y=0.05 sit yaw=80
 place Zone_Trigger oilstore at 1.5 1.5 y=1
+place Pickup_Landmark_Plank_Land - at 1.6 0.8 y=0.4 drop yaw=15
 pop
 
 # --- Under water off the light stack, 6 m down: the supply boat that never got home, on her side, her barrel ----------

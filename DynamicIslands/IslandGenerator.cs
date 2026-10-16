@@ -846,6 +846,7 @@ namespace DynamicIslands.Editor
 				foreach (Theme t in themes)
 					names.AddRange(t.Anchors.Concat(t.Medium).Concat(t.Small).Concat(new[] { t.Container, t.NoteKind }).Where(n => !string.IsNullOrEmpty(n)));
 			}
+			if (s.Buildings && (s.BuildingKind == Mixed || s.BuildingKind == Huts || s.BuildingKind == Cabins)) names.AddRange(FloorPickupNames);
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
 			names.AddRange(Remakes.NeededNames(s));
 			if (s.Features > 0) names.AddRange(GenFeatures.NamesFor(s));
@@ -873,6 +874,7 @@ namespace DynamicIslands.Editor
 			List<Theme> suits = RandomizerIslands.ThemesFor(s.Style);
 			int count = Mathf.Clamp(s.BuildingCount, 0, MaxCount), built = 0;
 			var spots = new List<Vector2>();
+			int picksBefore = file.Objects.Count(o => IsFloorPickup(o.Name));
 			for (int i = 0, tries = 0; built < count && tries < count * 4; tries++)
 			{
 				string kind = s.BuildingKind;
@@ -906,6 +908,8 @@ namespace DynamicIslands.Editor
 				done.Add(Label(kind).ToLowerInvariant().TrimEnd('s').Replace("castaway hut", "a castaway hut").Replace("wooden cabin", "a wooden cabin"));
 			}
 			if (built < count) done.Add((count - built) + " building(s) found no level spot");
+			int picks = file.Objects.Count(o => IsFloorPickup(o.Name)) - picksBefore;
+			if (picks > 0) done.Add(picks + (picks == 1 ? " thing" : " things") + " to pick up on the houses' floors");
 			GenFeatures.Make(k, s, done);
 			Quest(k, s, done);
 			return done;
@@ -1159,11 +1163,87 @@ namespace DynamicIslands.Editor
 			Vector2 inMin = new Vector2(o.x - g / 2f + 0.15f, o.z - g / 2f + 0.15f), inMax = new Vector2(o.x + (w - 0.5f) * g - 0.15f, o.z + (d - 0.5f) * g - 0.15f);
 			// (Raft's own beds, always loaded - the abandoned rafts' bed loads with their scenes, and was a missing-object block;
 			// the hammock is 3.6 m long: only in a hut three cells long)
+			int furniture = k.File.Objects.Count;
 			Inside(k, wood ? "Placeable_Bed_Wood" : w >= 3 ? "Placeable_Bed_Hammock" : "Placeable_Bed_Basic", inMin, inMax, 0.5f, 1f, deck, null);
 			Inside(k, "Loot_Chest", inMin, inMax, 0f, 0f, deck, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot(wood ? "Metal" : "Basics") + ";" + MapKit.Loot("Food").Split(';').First() }, { ObjectProps.NoteTitle, wood ? "Cabin chest" : "Castaway's chest" } });
 			if (wood)
 				Inside(k, "Note_Book", inMin, inMax, 1f, 0f, deck, new Dictionary<string, string> { { ObjectProps.NoteTitle, "Cabin log" }, { ObjectProps.NoteText, "Built it plank by plank. The roof keeps the rain out, the walls keep the wind out. The sharks I keep out myself." } });
+			FloorPickups(k, inMin, inMax, deck, furniture);
 			return true;
+		}
+
+		/// <summary>
+		/// ROADMAP LM13: Raft's land pickups that may lie on a house's floor - plastic, scrap and (rarely) a plastic pile, the
+		/// pieces Raft's own Radio Tower leaves about (one scene to load). Raft's planks lie on Tangaroa only, a big scene, so
+		/// the generator leaves them to the library islands' recipes.
+		/// </summary>
+		public static readonly string[] FloorPickupNames = { "Pickup_Landmark_Plastic3_Land", "Pickup_Landmark_Scrap 1_Land", "Pickup_Landmark_Scrap 2_Land", "Pickup_Landmark_Scrap 3_Land", "Pickup_Landmark_Plastic6_Land" };
+
+		/// <summary>Each pickup's lowest point under its pivot as an island spawns it (measured by CIFloorPickups): used when the
+		/// piece's scene isn't loaded to measure it (islands made while sailing, the world randomizer).</summary>
+		static readonly float[] FloorPickupBottoms = { 0f, 0f, 0f, 0f, 0f };
+
+		public static bool IsFloorPickup(string name) { return Array.IndexOf(FloorPickupNames, name) >= 0; }
+
+		/// <summary>Tests: no floor pickups (CIFloorPickups compares an island made with and without them).</summary>
+		internal static bool NoFloorPickups;
+
+		/// <summary>Tests: FloorPickupBottoms' value for a pickup (NaN = not one).</summary>
+		internal static float FloorPickupBottom(string name) { int i = Array.IndexOf(FloorPickupNames, name); return i < 0 ? float.NaN : FloorPickupBottoms[i]; }
+
+		/// <summary>
+		/// ROADMAP LM13 (the user, 2026-10-09: "inside houses and other structures there are sometimes things lying on the
+		/// floor to pick up"): 0-2 of Raft's land pickups (FloorPickupNames) on a house's floor - none in about a third of
+		/// the houses, two in one of five, as light as Raft's own buildings. Kept 0.3 m clear of the furniture put from index
+		/// furnitureFrom on (blocks - walls, pillars, roof - don't count), 0.45 m in from the walls and 0.7 m apart, lying flat
+		/// on the floor at a random turn. Its own random stream from the floor's place: the island's other draws are as before.
+		/// Added straight to the file (not through MapKit.Add, so later spots are found as before). Returns how many.
+		/// </summary>
+		public static int FloorPickups(MapKit k, Vector2 inMin, Vector2 inMax, float floor, int furnitureFrom)
+		{
+			var r = new System.Random((Mathf.RoundToInt(inMin.x * 10f) * 73856093) ^ (Mathf.RoundToInt(inMin.y * 10f) * 19349663) ^ 0x1A13);
+			double roll = r.NextDouble();
+			int n = roll < 0.35 ? 0 : roll < 0.8 ? 1 : 2;
+			if (n == 0 || NoFloorPickups) return 0;
+			List<IslandObject> objs = k.File.Objects;
+			var taken = new List<Rect>();
+			for (int i = Mathf.Max(0, furnitureFrom); i < objs.Count; i++)
+			{
+				IslandObject o = objs[i];
+				if (o.Name.StartsWith("Block_")) continue;
+				Bounds b;
+				if (!Measured(o.Name, out b)) { taken.Add(new Rect(o.Position.x - 0.7f, o.Position.z - 0.7f, 1.4f, 1.4f)); continue; }
+				Quaternion q = Quaternion.Euler(o.EulerRotation);
+				float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
+				foreach (Vector3 corner in new[] { new Vector3(b.min.x, 0f, b.min.z), new Vector3(b.min.x, 0f, b.max.z), new Vector3(b.max.x, 0f, b.min.z), new Vector3(b.max.x, 0f, b.max.z) })
+				{
+					Vector3 p = o.Position + q * corner; // (Measured's box is at the piece's own scale, as placed)
+					x0 = Mathf.Min(x0, p.x); x1 = Mathf.Max(x1, p.x); z0 = Mathf.Min(z0, p.z); z1 = Mathf.Max(z1, p.z);
+				}
+				taken.Add(Rect.MinMaxRect(x0 - 0.3f, z0 - 0.3f, x1 + 0.3f, z1 + 0.3f));
+			}
+			Vector2 lo = inMin + new Vector2(0.45f, 0.45f), hi = inMax - new Vector2(0.45f, 0.45f);
+			if (hi.x <= lo.x || hi.y <= lo.y) return 0;
+			var put = new List<Vector2>();
+			for (int i = 0; i < n; i++)
+			{
+				// (plastic most, scrap of three sizes, a plastic pile now and then as the only one)
+				int pick = n == 1 && r.NextDouble() < 0.12 ? 4 : new[] { 0, 0, 0, 0, 1, 1, 2, 2, 3 }[r.Next(9)];
+				float yaw = (float)r.NextDouble() * 360f;
+				for (int tries = 0; tries < 30; tries++)
+				{
+					var p = new Vector2(Mathf.Lerp(lo.x, hi.x, (float)r.NextDouble()), Mathf.Lerp(lo.y, hi.y, (float)r.NextDouble()));
+					if (taken.Any(t => t.Contains(p)) || put.Any(o => (o - p).sqrMagnitude < 0.49f)) continue;
+					string name = FloorPickupNames[pick];
+					Bounds b;
+					float bottom = Measured(name, out b) ? b.min.y : FloorPickupBottoms[pick];
+					GameObject proto = PlaceableCatalog.Get(name);
+					objs.Add(new IslandObject { Name = name, Position = new Vector3(p.x, floor - bottom, p.y), EulerRotation = new Vector3(0f, yaw, 0f), Scale = proto != null ? proto.transform.localScale : Vector3.one, Unscaled = proto == null });
+					put.Add(p);
+					break;
+				}
+			}
+			return put.Count;
 		}
 
 		/// <summary>
