@@ -1208,7 +1208,7 @@ namespace DynamicIslands
 				{
 					string isl = "ciscmode" + mode.ToString().ToLowerInvariant();
 					IslandFile f = ScIsland(isl, "Mode " + mode);
-					f.Props[IslandProps.Levels] = "on";
+					PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 					f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0"));
 					f.Objects.Add(ScObj("Creature_StoneBird", ScDry(f, new Vector2(15, 0), 2), ObjectProps.CreatureCount, "1"));
 					Vector3? sea = ScUnderSea(f, 3f);

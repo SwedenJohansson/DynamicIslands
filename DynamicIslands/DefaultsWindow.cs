@@ -110,6 +110,10 @@ namespace DynamicIslands.Editor
 			UIKit.Label(keyRow, "Stats", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "StatsLabel");
 			Add("Key_Stats", UIKit.Button(keyRow, "", () => ListenFor(false), "The key that opens the stats page (level up system) in a world: click, then press the new key (Esc: keep it)", 80, 28f, 13));
 
+			// The island editor's camera (world_rules.txt, this PC's own; also the editor's Camera... button)
+			RectTransform cameraGroup = UIKit.Group(left, "Editor camera (this PC)", "EditorCamera");
+			refreshCamera = CameraSettings.Build(cameraGroup);
+
 			// What every player of a hosted world shares (WorldRules.HostSettingsData)
 			RectTransform shared = UIKit.Group(right, "Shared with every player", "Shared");
 			Add("showOnReceiver", UIKit.Button(shared, "", () => Apply("showOnReceiver", CustomIslandSpawner.ShowOnReceiver ? "0" : "1"), "Show custom islands as green dots on Raft's Receiver", -1, 28f, 13));
@@ -140,12 +144,14 @@ namespace DynamicIslands.Editor
 			UIKit.Size(status.gameObject, -1, 30);
 			UIKit.Fit(status);
 			RectTransform buttonsRow = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K too (the island list stays as it is) - click twice", 150, 34f, 14);
+			UIKit.Button(buttonsRow, "Mod's own", ModsOwn, "Every setting here back to what a new install of Custom Islands has, the keys J and K and the editor camera too (the island list stays as it is) - click twice", 150, 34f, 14);
 			UIKit.Label(buttonsRow, "", 12);
 			Button close = UIKit.Button(buttonsRow, "Close", Close, "Close (Esc)", 140, 34f, 15);
 			UIKit.Primary(close);
 			canvas.gameObject.SetActive(false);
 		}
+
+		static Action refreshCamera;
 
 		static void NumberRow(Transform group, Setting s)
 		{
@@ -165,6 +171,7 @@ namespace DynamicIslands.Editor
 
 		public static void Open()
 		{
+			CameraSettings.Reload(); // (the file as it is now)
 			if (canvas == null) Build();
 			canvas.gameObject.SetActive(true);
 			modsOwnUntil = 0f;
@@ -180,6 +187,7 @@ namespace DynamicIslands.Editor
 		{
 			if (canvas != null && canvas.gameObject.activeSelf) ClosedFrame = Time.frameCount;
 			if (canvas != null) canvas.gameObject.SetActive(false);
+			CameraSettings.Save();
 			EditorInput.IsTyping = false;
 			WorldWindow.Refresh();
 		}
@@ -187,6 +195,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = listenFor != null || fields.Values.Any(f => f != null && f.isFocused);
+			CameraSettings.Tick();
 			if (listenFor != null)
 			{
 				KeyCode k = ModKeys.Pressed();
@@ -200,6 +209,7 @@ namespace DynamicIslands.Editor
 		{
 			EditorInput.IsTyping = false;
 			if (listenFor != null) { listenFor = null; ModKeys.Listen(false); }
+			CameraSettings.Save();
 		}
 
 		/// <summary>A Keys button: the next key pressed becomes that key.</summary>
@@ -250,7 +260,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime > modsOwnUntil)
 			{
 				modsOwnUntil = Time.unscaledTime + 6f;
-				SetStatus("Every setting here (the keys J and K too) goes back to the mod's own. Click Mod's own again to go ahead.", true);
+				SetStatus("Every setting here (the keys J and K and the editor camera too) goes back to the mod's own. Click Mod's own again to go ahead.", true);
 				return;
 			}
 			modsOwnUntil = 0f;
@@ -263,6 +273,7 @@ namespace DynamicIslands.Editor
 			values["generatedStyles"] = string.Join(", ", TerrainPainter.Styles.Select(st => st.Name).ToArray());
 			values["generatedGatherOff"] = "";
 			ModKeys.Reset();
+			CameraSettings.Reset();
 			Write(values, null);
 		}
 
@@ -292,6 +303,7 @@ namespace DynamicIslands.Editor
 			UIKit.LabelOf(buttons["Key_Stats"]).text = listenFor == false ? "press..." : ModKeys.Name(ModKeys.Stats);
 			UIKit.SetActive(buttons["Key_Journal"], listenFor == true);
 			UIKit.SetActive(buttons["Key_Stats"], listenFor == false);
+			if (refreshCamera != null) refreshCamera();
 			Button receiver = buttons["showOnReceiver"];
 			UIKit.LabelOf(receiver).text = "Receiver dots:  " + (CustomIslandSpawner.ShowOnReceiver ? "ON" : "off");
 			UIKit.SetActive(receiver, CustomIslandSpawner.ShowOnReceiver);

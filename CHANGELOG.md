@@ -17,6 +17,64 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   its own big pieces, placed the way the original has them - red rock mesas with ladders, huts, caravans and rope
   bridges; the whole glass dome with its hexagon roads; Utopia's white towers; the motherlode floors on their pillars
   inside its walls with the crane on top; giant firs; snow rocks and the antenna; low rocks with concrete footings.
+- **Islands missing when a world loads:** when a world uses island files this PC doesn't have, the host (or single
+  player) gets a box naming them, and the library entry each came with. **Play without them** leaves them out (no
+  Receiver dot) but keeps them in the world, so they come back once the file is here; **Main menu** leaves without
+  saving, to download or restore them first. Joining players get missing files from the host as before.
+- **Again until done** for world plan rules **On a day** and **After sailing a distance**: a tick box on the rule card
+  (`day:5:again` in the plan file). The island comes back ahead of the raft every N days (or km) after the players were
+  last near it - even if they never reached it - until they reached it and finished its quest; the same island each
+  time, with no limit. Check gives a tip when the island is on the Receiver (it doesn't come back by itself there).
+- **Monster size up to x3:** a creature spot's **Size** now goes from x0.5 to x3 of Raft's own animal (was x2.5); its
+  body and hit box grow with it, its health stays (set **Health** for a tougher one), and every player sees the same
+  size. Balboa Remade's Mama bear is Raft's bear at x2 - as tall as Balboa's own.
+- **Brand-new generated islands explained:** the row in World settings > Islands while sailing has a **?** saying what
+  it does, how often one comes, where each is saved (`gen-<style>-<seed>.island`, kept in that world) and how to keep
+  one; EDITOR > An island > **Open an island...** now lists generated islands too, to open and **Save as** your own.
+- **Survivors to rescue:** a new object, **Survivor in a cage**, holds one of Raft's characters locked in with a story
+  item. Bring the key and press E: the survivor says a line in a speech bubble and then stands on your raft. One per
+  survivor id in a world, saved with it and seen by every player; the rescue sends a signal for quests and plans.
+- **Boss phases:** a hostile creature spot can get a second phase: at a share of its health (half by default) it calls
+  more creatures, gets faster and sends a signal, once per fight. A reload mid-fight keeps the phase. The Boss map
+  type's beast has one.
+- **Editor camera settings:** **Camera...** in the editor's status bar (and **Defaults... > Editor camera**) sets
+  this PC's look sensitivity, move, zoom and pan speed, which way dragging up looks and the wheel's direction; saved in
+  `world_rules.txt`, and the right mouse + wheel flying speed is now kept too. **Alt + right-drag** zooms, as in Unity.
+- **Keycard doors and buried treasure (RF4):** select Raft's card reader door or another key door for its
+  **Keycard door** settings: the story item that opens it (the island's own or one of Raft's quest items) and whether
+  the card is used up. Without it the door stays shut; with it the reader beeps it through, for the whole crew and
+  after loading. Check warns about a key door that no story item opens. Buried treasure is found only with the metal
+  detector (it beeps faster nearer), dug with the shovel, and its chest can give **Extra loot** - story items too,
+  once for the whole crew.
+- **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
+  for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
+  world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
+  (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**. A **?** after it
+  explains it, and how it differs from **Save as**.
+- **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
+  with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
+  the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
+  **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
+  ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
+  to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
+  Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
+  **Lantern Spire** (a flying island).
+- **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
+  with the same id (two 'keycard's) - the one found on either would open the other's locks.
+- **Raft's progression in order in world plans:** the plan Check warns about a blueprint given before the ones it
+  builds on (the engine controls before the motor wheel and steering wheel, fuel pipes before a fuel tank...), and
+  Progression shows it in yellow. A lock whose story item an island met before gives says where the item was kept from.
+- **Keys kept for later islands in every library plan:** Raft Remade (Vasagatan's crowbar opens a crate at Caravan
+  Town), The Long Voyage and The Abyss Expedition (Ironreef's pump store key, a box on the Drowned Metropolis), Silver
+  Screen Seas (the liner's steward's keys, a sea chest at The Arena). Mayor's Wharf's keycard no longer shares its id
+  with the Drowned Metropolis' council keycards in The Long Voyage. Embers Isle's chained dog cage is scenery now (in Silver
+  Screen Seas it was a lock wanting bolt cutters only a later island gives). Blueprint names in Check read as words.
+- **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
+  (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
+- **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
+  buttons. The height's ? says what 0, above 0 (flying) and below 0 (sunk) mean, and how players reach the island.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
   times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under
@@ -36,8 +94,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
-- **Things to pick up indoors:** sixteen of the library's islands have a little plastic, planks or scrap lying on the
-  floors of some of their houses; they come back after a few days like Raft's.
+- **Things to pick up indoors:** eighteen of the library's islands have a little plastic, planks or scrap lying on the
+  floors of some of their houses; they come back after a few days like Raft's. The generator's huts and cabins (and
+  the world randomizer's huts) get them too: none, one or two per house, on free floor beside the furniture.
 - **Upgrade research table:** the extra upgrades are learned at a research table of their own (violet, four times the cost
   of Raft's, there from the start with the option on) instead of with their base item. Its research is separate from
   Raft's table; a world from before keeps the upgrades it had.
@@ -124,6 +183,35 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Quicker starts:** RML compiled the mod on every start (about a minute), because its own start-up throws away the
+  compiled copy it keeps. The mod now keeps that copy (read-only), so only the first start after installing or updating
+  compiles; the main menu says so once. Older copies of the mod in RML's cache are removed.
+- **The generator gives the same island on every PC:** its list of objects was sorted in the PC's language and could
+  include other mods' buildables and follow `placeables.txt`. It now uses Raft's own island objects in a fixed order.
+  **A seed now makes a different island than before** (worlds keep the islands already saved; only islands generated
+  from now on - new `gen-` islands, a lost `gen-` file made again, map types - follow the new order).
+- **No sample plans:** the mod no longer writes the sample world plans Adventure, Island hopping, Growing sea
+  and Receiver adventure, and they are gone from **Templates...**. The plans that come with the mod are Random islands
+  and No custom islands; full storylines come from the island library (**Get more plans...**). Sample plans written
+  by an earlier version stay in your plans folder until you delete them.
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
+- **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
+  other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
+- **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
+  it gives. Optional finds (buried treasure, caches) needing a later tool are only listed in Progression.
+- **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
+  notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
+  the window's edge.
+- **Island lists open at once:** **+ Add a saved island** and the other island lists in World plans open at
+  once with a "Loading islands... (n of N)" line, then list your islands. Their titles are kept in `summarycache.txt`,
+  so the next time takes no time (before, the list came only after every island's whole file was read).
 - **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
   colour round a built, hand-held or worn upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
   The titanium spear is a light, almost white metal (its tint was only a little darker than the scrap spear).
@@ -189,6 +277,27 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A generated island whose file was gone** is made again when the world loads: in a session where the editor
+  had already been opened, remaking it failed with an error (the generator's defaults were set up too early), so the
+  island was missing from the world.
+- **Flying islands seen from below:** the rocky underside now meets the ground all round the coast. Where the
+  coast ran diagonally it hung down too early, and from below the sky showed through zigzag gaps between the rock and
+  the ground (Lantern Spire showed it). Every flying island, made by hand or generated, at any height.
+- **The island library's picture** no longer stays on the next entry you click: while that entry's picture is
+  on its way the space is empty and its number says **(loading)**, or **(can't be loaded)** when it fails. A slow
+  download had left one island's picture showing on every entry clicked after it.
+- **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
+  makes: on Randomize existing it left out the caves and buildings that are not made there.
+- **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
+  kept in range when generating, so the report no longer lists quest steps that "found no place".
+- **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
+  of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
+- **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
+  while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
+- **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
+  later clicks (Raft's Load box had a broken link after the editor). A test now starts behind a cover with Cancel. If it
+  can't start, you are back in the editor and the status bar says why. Back to the editor no longer disappears after 4
+  minutes in the test world.
 - **Hover texts outside the editor:** only the editor's status bar and the in-world window drew a control's hover
   text, so the main menu's windows (the plan picker, the island library...), the stats page and the alpha box never
   showed theirs. Where there is no such bar, the text now comes in a small tip by the mouse after a moment.

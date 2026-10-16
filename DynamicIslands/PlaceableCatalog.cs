@@ -147,6 +147,10 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
 		static readonly HashSet<string> core = new HashSet<string>();
+		/// <summary>The generator's names (CA19): the objects of Raft's own island scenes and its things to gather that a
+		/// catalog without placeables.txt makes core - whatever placeables.txt says and whatever other mods add, so a seed
+		/// gives the same island on every PC.</summary>
+		static readonly HashSet<string> gen = new HashSet<string>();
 
 		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
 
@@ -222,7 +226,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Every object of Raft's island scenes the index knows (loaded or not) - the tests load them all.</summary>
 		internal static IEnumerable<string> IndexedNames { get { return index.Keys; } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
-		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n); } }
+		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n, StringComparer.Ordinal); } }
+		/// <summary>What the generator picks from (CA19): Raft's own island objects in ordinal order - the same list on every PC
+		/// (not the PC's culture order, not placeables.txt, not other mods' buildables). A name placeables.txt left out is
+		/// still planned (the file is the same as elsewhere); this PC just doesn't show it.</summary>
+		public static IEnumerable<string> GenNames { get { return gen.OrderBy(n => n, StringComparer.Ordinal); } }
 
 		public static string CategoryOf(string name)
 		{
@@ -277,6 +285,11 @@ namespace DynamicIslands.Editor
 			HashSet<string> whitelist = cachedWhitelist;
 			foreach (IndexEntry e in index.Values)
 				if (!prototypes.ContainsKey(e.Name) && !e.Hidden && (whitelist == null || whitelist.Contains(e.Name))) add(e.Name, e.Category, e.Scene);
+			foreach (var d in derived)
+			{
+				IndexEntry src;
+				if (!prototypes.ContainsKey(d.Key) && index.TryGetValue(d.Value.Source, out src)) add(d.Key, d.Value.Category, src.Scene);
+			}
 			var result = new List<KeyValuePair<string, List<Entry>>>();
 			foreach (string cat in CategoryOrder.Concat(ExtraCategoryOrder()).Concat(byCat.Keys.OrderBy(k => k)).Distinct())
 			{
@@ -297,7 +310,34 @@ namespace DynamicIslands.Editor
 		/// <summary>The objects loaded now (tests).</summary>
 		internal static IEnumerable<string> LoadedNames { get { return prototypes.Keys; } }
 		/// <summary>Whether the index knows the object (loaded or not).</summary>
-		public static bool IsIndexed(string name) { return name != null && index.ContainsKey(name); }
+		public static bool IsIndexed(string name) { return name != null && (index.ContainsKey(name) || derived.ContainsKey(name)); }
+
+		class Derived { public string Source, Category, Label; }
+		/// <summary>Custom objects made from an on-demand object (RF3's survivor cage from Raft's shark cage): built when
+		/// the source's scene is loaded.</summary>
+		static readonly Dictionary<string, Derived> derived = new Dictionary<string, Derived>();
+
+		/// <summary>A custom object that is a copy of Raft's object source: added now when the source is loaded, else when
+		/// its scene is (an island or the editor asks for the custom object: the source's scene loads).</summary>
+		internal static void AddCustomFrom(string name, string source, string category, string label)
+		{
+			labels[name] = label;
+			categories[name] = category;
+			GameObject proto;
+			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddCustom(name, proto, category, label); return; }
+			derived[name] = new Derived { Source = source, Category = category, Label = label };
+		}
+
+		static string SourceOf(string name) { Derived d; return derived.TryGetValue(name, out d) && !prototypes.ContainsKey(name) ? d.Source : name; }
+
+		static void BuildDerived()
+		{
+			foreach (var d in derived.ToList())
+			{
+				GameObject proto;
+				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddCustom(d.Key, proto, d.Value.Category, d.Value.Label); derived.Remove(d.Key); }
+			}
+		}
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
 		/// <summary>The index's things to gather (they keep their gameplay, pickups too - CIMeasurePickups).</summary>
 		internal static List<string> IndexedGatherNames() { return index.Values.Where(e => e.Harvestable).Select(e => e.Name).ToList(); }
@@ -387,10 +427,11 @@ namespace DynamicIslands.Editor
 					foreach (KeyValuePair<string, Transform> pick in Pick(root))
 					{
 						string name = pick.Key;
-						if (prototypes.ContainsKey(name)) continue;
 						bool second = source.Include2 != null && source.Include2.IsMatch(name);
-						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						bool byDefault = second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						if (byDefault) gen.Add(name);
+						if (prototypes.ContainsKey(name)) continue;
+						bool wanted = whitelist != null ? whitelist.Contains(name) : byDefault;
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, second ? source.Category2 : source.Category, false);
 						core.Add(name);
@@ -404,6 +445,7 @@ namespace DynamicIslands.Editor
 					{
 						string hn = CleanName(t.name);
 						if (!IsGatherName(hn) || harvestables.ContainsKey(hn)) continue;
+						if (HarvestableObjects.IsMatch(hn)) gen.Add(hn);
 						if (whitelist != null && !whitelist.Contains(hn)) continue;
 						AddHarvestable(hn, t);
 						// (the more recent ones aren't core: the generator's islands stay as they were - LM11)
@@ -796,60 +838,100 @@ namespace DynamicIslands.Editor
 				if (s.name != sceneName || existing.Contains(s.handle)) return;
 				foreach (GameObject g in s.GetRootGameObjects()) g.SetActive(false);
 			};
-			if (hide) { SceneManager.sceneLoaded += switchOff; hiddenLoads.Add(sceneName); }
+			if (hide) SceneManager.sceneLoaded += switchOff;
+			// (every copy the mod loads itself is quiet from now until it is unloaded: the core catalogue's scenes are loaded
+			// switched on, and their scripts' Start comes a frame after they arrive)
+			quietScenes[sceneName] = existing;
 			AsyncOperation op;
 			try { op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive); }
-			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
-			if (op == null) { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
+			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
+			if (op == null) { SceneManager.sceneLoaded -= switchOff; quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
 			try { while (!op.isDone) yield return null; }
-			finally { SceneManager.sceneLoaded -= switchOff; hiddenLoads.Remove(sceneName); }
+			finally { SceneManager.sceneLoaded -= switchOff; }
 			for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
 			{
 				Scene s = SceneManager.GetSceneAt(i);
 				if (s.name == sceneName && !existing.Contains(s.handle)) { result.Scene = s; result.Ours = true; break; }
 			}
-			if (!result.Scene.IsValid()) { Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + sceneName + " but could not find it"); yield break; }
+			if (!result.Scene.IsValid()) { quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + sceneName + " but could not find it"); yield break; }
 			// Scenes only read for their objects are switched off at once, so they don't show up in the editor or the world
 			if (hide) foreach (GameObject g in result.Scene.GetRootGameObjects()) g.SetActive(false);
 		}
 
-		/// <summary>The Raft scenes loading switched off right now: Unity runs their scripts' Awake and OnEnable as it loads them,
-		/// before sceneLoaded can switch them off.</summary>
-		static readonly HashSet<string> hiddenLoads = new HashSet<string>();
+		/// <summary>
+		/// The Raft scenes the mod has loaded itself right now, only to take objects from (switched off or not - the core
+		/// catalogue's are switched on): each name with the handles of Raft's own copies, which are never kept quiet. Unity
+		/// runs their scripts' Awake and OnEnable as it loads them, before sceneLoaded can switch them off.
+		/// </summary>
+		static readonly Dictionary<string, HashSet<int>> quietScenes = new Dictionary<string, HashSet<int>>();
+
+		/// <summary>The scenes the mod has loaded for their objects right now, by name (an error then may be Raft's script in one).</summary>
+		internal static string QuietSceneNames { get { return string.Join(", ", quietScenes.Keys.ToArray()); } }
+
+		/// <summary>Whether a scene is one the mod loaded itself to take objects from (not Raft's own copy).</summary>
+		internal static bool IsQuietScene(Scene scene)
+		{
+			HashSet<int> raftCopies;
+			return scene.IsValid() && quietScenes.TryGetValue(scene.name, out raftCopies) && !raftCopies.Contains(scene.handle);
+		}
+
+		/// <summary>The story scripts kept quiet (type, method) and how many of them were found in this Raft and patched.</summary>
+		internal static readonly string[][] QuietMethods = new[] { "CoolingChallenge", "OlofFinalRoom" }.SelectMany(t => new[] { new[] { t, "Awake" }, new[] { t, "OnEnable" }, new[] { t, "Start" } }).ToArray();
+		internal static readonly List<string> QuietPatched = new List<string>();
+		/// <summary>How many exceptions were kept quiet (tests; the first of each method is logged).</summary>
+		internal static int Quieted;
+		static readonly HashSet<string> quietTold = new HashSet<string>();
 
 		/// <summary>
 		/// Two of Raft's story-island scripts throw in Awake/OnEnable away from their own island (CoolingChallenge on Temperance,
-		/// OlofFinalRoom on Utopia): loaded switched off to take objects from, their scenes logged a NullReferenceException
-		/// each time (CIButtons 2026-10-13). Swallowed only then; on the islands themselves they run as Raft has them.
+		/// OlofFinalRoom on Utopia): loaded to take objects from, their scenes logged a NullReferenceException each time
+		/// (CIButtons 2026-10-13) and RML said "AN ERROR OCCURED!". Swallowed only in the scenes the mod loaded itself (also the
+		/// core catalogue's, loaded switched on, and Start); on the islands themselves they run as Raft has them.
 		/// </summary>
 		internal static void Patch(Harmony harmony)
 		{
+			QuietPatched.Clear();
+			var missing = new List<string>();
 			// (both: with Awake kept quiet, CoolingChallenge threw in OnEnable next)
-			foreach (string[] m in new[] { "CoolingChallenge", "OlofFinalRoom" }.SelectMany(t => new[] { new[] { t, "Awake" }, new[] { t, "OnEnable" } }))
+			foreach (string[] m in QuietMethods)
 				try
 				{
 					Type type = AccessTools.TypeByName(m[0]);
 					MethodInfo original = type != null ? type.GetMethod(m[1], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) : null;
-					if (original == null) continue;
-					harmony.Patch(original, finalizer: new HarmonyMethod(typeof(PlaceableCatalog).GetMethod("HiddenLoadFinalizer", BindingFlags.Static | BindingFlags.NonPublic)));
+					if (original == null) { if (type == null || m[1] != "Start") missing.Add(m[0] + "." + m[1] + (type == null ? " (no such script)" : "")); continue; } // (Start: only where the script has one)
+					harmony.Patch(original, finalizer: new HarmonyMethod(typeof(PlaceableCatalog).GetMethod("QuietLoadFinalizer", BindingFlags.Static | BindingFlags.NonPublic)));
+					QuietPatched.Add(m[0] + "." + m[1]);
 				}
-				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not patch " + m[0] + "." + m[1] + ": " + e.Message); }
+				catch (Exception e) { missing.Add(m[0] + "." + m[1] + " (" + e.Message + ")"); }
+			// (once, at start: whether the patch applied - a Raft update that renamed the scripts shows here)
+			if (missing.Count == 0) Debug.Log("[CUSTOM ISLANDS] Raft's story scripts kept quiet in the scenes the mod loads for objects: " + string.Join(", ", QuietPatched.ToArray()));
+			else Debug.LogWarning("[CUSTOM ISLANDS] Raft's story scripts kept quiet in the scenes the mod loads for objects: " + (QuietPatched.Count > 0 ? string.Join(", ", QuietPatched.ToArray()) : "none") + "; not patched: " + string.Join(", ", missing.ToArray()));
 		}
 
-		static Exception HiddenLoadFinalizer(Exception __exception, object __instance)
+		static Exception QuietLoadFinalizer(Exception __exception, object __instance, MethodBase __originalMethod)
 		{
+			if (__exception == null) return null;
 			Component c = __instance as Component;
-			return __exception != null && c != null && hiddenLoads.Contains(c.gameObject.scene.name) ? null : __exception;
+			if (c == null || !IsQuietScene(c.gameObject.scene)) return __exception;
+			Quieted++;
+			string what = (__originalMethod != null ? __originalMethod.DeclaringType.Name + "." + __originalMethod.Name : c.GetType().Name);
+			if (quietTold.Add(what)) Debug.Log("[CUSTOM ISLANDS] Raft's " + what + " threw in " + c.gameObject.scene.name + ", loaded only for its objects: kept quiet (" + __exception.GetType().Name + ")");
+			return null;
 		}
 
 		static IEnumerator CloseScene(OpenedScene opened)
 		{
 			if (!opened.Ours || !opened.Scene.IsValid()) yield break;
+			string name = opened.Scene.name;
 			AsyncOperation unload = null;
 			try { unload = SceneManager.UnloadSceneAsync(opened.Scene); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not unload " + opened.Scene.name + ": " + e.Message); }
-			if (unload != null)
-				while (!unload.isDone) yield return null;
+			try
+			{
+				if (unload != null)
+					while (!unload.isDone) yield return null;
+			}
+			finally { quietScenes.Remove(name); }
 		}
 
 		static IEnumerable<Transform> AllTransforms(Scene scene)
@@ -868,6 +950,31 @@ namespace DynamicIslands.Editor
 			if (!opened.Scene.IsValid()) yield break;
 			yield return Guarded(use(opened.Scene), "Reading " + sceneName);
 			yield return CloseScene(opened);
+		}
+
+		/// <summary>
+		/// Tests (CIGenBuildingsQuiet): loads the core catalogue's scenes as the catalogue does (switched on, but the floating
+		/// raft) and the scenes these objects come from (switched off, as when they are wanted), one after another, and unloads
+		/// each again - takes nothing. Raft's scripts in them run as they do when the mod loads them for real.
+		/// </summary>
+		internal static IEnumerator ReopenForTest(IEnumerable<string> names, Action<string> visited)
+		{
+			var scenes = Sources.Select(src => new KeyValuePair<string, bool>(src.Scene, src.Hide)).ToList();
+			foreach (string n in names)
+			{
+				IndexEntry e;
+				if (n == null || !index.TryGetValue(n, out e)) continue;
+				string scene = ResolveScene(e.Scene);
+				if (!scenes.Any(kv => kv.Key == scene)) scenes.Add(new KeyValuePair<string, bool>(scene, true));
+			}
+			foreach (KeyValuePair<string, bool> kv in scenes)
+			{
+				var opened = new OpenedScene();
+				yield return OpenScene(kv.Key, opened, kv.Value);
+				if (visited != null) visited(kv.Key + (opened.Scene.IsValid() ? (opened.Ours ? "" : " (Raft's own copy)") : " (didn't load)"));
+				yield return null; // (a frame: the switched-on scenes' Start runs)
+				yield return CloseScene(opened);
+			}
 		}
 
 		/// <summary>All of Raft's island scenes, in build order.</summary>
@@ -1121,20 +1228,21 @@ namespace DynamicIslands.Editor
 		{
 			yield return EnsureBuilt();
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (prototypes.ContainsKey(n) || !index.TryGetValue(n, out e) || scenes.Contains(e.Scene)) continue;
 				scenes.Add(e.Scene);
 			}
 			foreach (string s in scenes) yield return LoadScene(s);
+			BuildDerived();
 		}
 
 		/// <summary>Scenes that must be loaded before these names can be spawned (empty = all ready).</summary>
 		public static List<string> ScenesNeededFor(IEnumerable<string> names)
 		{
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (!prototypes.ContainsKey(n) && index.TryGetValue(n, out e) && !scenes.Contains(e.Scene)) scenes.Add(e.Scene);
@@ -1203,6 +1311,7 @@ namespace DynamicIslands.Editor
 			{
 				loadingScenes.Remove(sceneName);
 				loadedScenes.Add(sceneName);
+				BuildDerived();
 				RaiseChanged();
 			}
 		}

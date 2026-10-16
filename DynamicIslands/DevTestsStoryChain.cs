@@ -70,13 +70,13 @@ namespace DynamicIslands
 			// Templates
 			var tpl = new Dictionary<string, string>
 			{
-				{ "Receiver adventure", "rule:camp,rule:islets,rule:beast,rule:treasure" },
+				{ CIReceiver, "rule:camp,rule:islets,rule:beast,rule:treasure" },
 				{ "Detour in Raft's story", RaftSteps("RadioTower", "Vasagatan", "rule:detour", "Balboa", "CaravanTown", "Tangaroa", "VarunaPoint", "Temperance", "Utopia") },
 				{ "Balboa replaced", RaftSteps("RadioTower", "Vasagatan", "rule:forest", "CaravanTown", "Tangaroa", "VarunaPoint", "Temperance", "Utopia") },
 			};
 			foreach (var kv in tpl)
 			{
-				WorldPlan t = WorldPlanTemplates.Get(kv.Key);
+				WorldPlan t = kv.Key == CIReceiver ? CIPlanOf(kv.Key) : WorldPlanTemplates.Get(kv.Key);
 				string s = t != null ? Steps(StoryChain.BuildSteps(t.RaftStory, t.LeaveOut, t.Rules)) : "missing";
 				Check(ref ok, s == kv.Value && t.Rules.All(x => x.Where == "receiver"), "template '" + kv.Key + "': " + s);
 			}

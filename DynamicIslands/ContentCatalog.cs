@@ -328,6 +328,7 @@ namespace DynamicIslands.Editor
 			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
 			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
+			Survivors.Register(); // (a survivor in a cage, RF3)
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");

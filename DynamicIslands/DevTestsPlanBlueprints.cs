@@ -29,22 +29,23 @@ namespace DynamicIslands
 				if (tip != null) Log("  " + tip.Text);
 				// (the plan editor's Progression panel shows the same, rule by rule)
 				PlanChecker.Progress pr = PlanChecker.Progression(p, false);
-				Check(ref ok, pr.Missing.Count == 0 && pr.Kept.Count + pr.Steps.Sum(s => s.Blueprints.Count) >= all,
-					"'" + name + "' progression: " + pr.Kept.Count + " kept, " + pr.Steps.Count(s => s.Blueprints.Count > 0) + " rules give blueprints, " + pr.Missing.Count + " never given, " +
+				// (Raft's story islands it keeps are steps of their own now, at their places in play order: Rule -1)
+				Check(ref ok, pr.Missing.Count == 0 && pr.Kept.Count + pr.Steps.Where(s => s.Rule >= 0).Sum(s => s.Blueprints.Count) >= all,
+					"'" + name + "' progression: " + pr.Kept.Count + " kept, " + pr.Steps.Count(s => s.Rule >= 0 && s.Blueprints.Count > 0) + " rules give blueprints, " + pr.Missing.Count + " never given, " +
 					pr.Steps.Sum(s => s.NeedsLate.Count) + " locks before their item");
-				foreach (PlanChecker.Progress.Step st in pr.Steps.Where(st => st.NeedsLate.Count > 0))
+				foreach (PlanChecker.Progress.Step st in pr.Steps.Where(st => st.Rule >= 0 && st.NeedsLate.Count > 0))
 					Log("  rule " + st.Rule + " '" + p.Rules[st.Rule].Id + "' (" + p.Rules[st.Rule].WhatArg + "): wanted before any island gives it: " + string.Join(", ", st.NeedsLate.ToArray()) + " (its islands give: " + string.Join(", ", st.Gives.ToArray()) + ")");
 				PlanProgressWindow.Open(p, null);
 				if (PlanProgressWindow.IsOpen)
 				{
-					Check(ref ok, PlanProgressWindow.Rows.Count == pr.Steps.Count + (pr.Kept.Count > 0 ? 1 : 0) && !PlanProgressWindow.Rows.Any(r => r.StartsWith("NEVER GIVEN")),
+					Check(ref ok, PlanProgressWindow.Rows.Count == pr.Steps.Count && !PlanProgressWindow.Rows.Any(r => r.StartsWith("NEVER GIVEN")),
 						"the Progression panel shows " + PlanProgressWindow.Rows.Count + " rows: " + string.Join(" / ", PlanProgressWindow.Rows.Take(3).Select(r => r.Length > 90 ? r.Substring(0, 90) + "..." : r).ToArray()));
 					PlanProgressWindow.Close();
 				}
 			}
 			var bare = new WorldPlan { Name = "CI no story", Random = true, RaftStory = false };
 			PlanChecker.Finding none = PlanChecker.Check(bare, false, false).FirstOrDefault(x => x.Text.StartsWith("Raft's blueprints never given"));
-			Check(ref ok, none != null && ScrambledBlueprints.OnIslands.Keys.All(b => none.Text.Contains(b.Replace("Blueprint_", "").Replace("_", " "))),
+			Check(ref ok, none != null && ScrambledBlueprints.OnIslands.Keys.All(b => none.Text.Contains(PlanChecker.Pretty(b))),
 				"a plan with Raft's story off and no islands is told about all " + all + " blueprints");
 			PlanChecker.Progress bp = PlanChecker.Progression(bare, false);
 			Check(ref ok, bp.Missing.Count == all && bp.Kept.Count == 0 && bp.Steps.Count == 0, "its progression: " + bp.Missing.Count + " never given, " + bp.Kept.Count + " kept");

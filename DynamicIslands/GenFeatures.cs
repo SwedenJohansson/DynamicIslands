@@ -9,7 +9,7 @@ namespace DynamicIslands.Editor
 	/// island - a cache behind vines for the machete, treasure buried for the metal detector and the shovel, a zipline from
 	/// the island's top down to its beach, a strongbox behind a code panel (the code on a note elsewhere), a grove of wild
 	/// beehives and patches of dirt for the shovel. How many (0-6), different ones first; an explorer's chest by the beach
-	/// holds the tools they need (machete, detector, shovel, zipline tool), as players may not have them yet.
+	/// holds the tools they need (machete, detector, shovel, zipline tool: RaftFeatures), as players may not have them yet.
 	/// Past six, Raft's story machinery (LM12, 2026-10-06; ReadyPieces): a generator to start with a part from a toolbox,
 	/// then a radio that works with its power and shows a hidden cache; an engine to start with fuel from a crate, showing
 	/// another; a cage cut open with Raft's bolt cutters (in the explorer's chest) with a chest inside; a lift up a cliff.
@@ -75,7 +75,7 @@ namespace DynamicIslands.Editor
 					Dictionary<string, string> vp = ObjectProps.Defaults(ContentCatalog.MacheteVines);
 					vp[BehaviourProps.EventKey("use")] = "hide|\nshow|" + chest + "\nmessage||The machete bites through the vines. Something was hidden behind them.";
 					k.Add(ContentCatalog.MacheteVines, k.At(dry.Value + new Vector2(1.6f, 0f)), (float)r.NextDouble() * 360f, vp, 0f);
-					tools.Add(ContentCatalog.MacheteItem);
+					tools.AddRange(RaftFeatures.ToolsOf(ContentCatalog.MacheteVines));
 					return "a cache behind vines";
 				}
 				case "treasure":
@@ -89,7 +89,7 @@ namespace DynamicIslands.Editor
 						put++;
 					}
 					if (put == 0) return null;
-					tools.Add("MetalDetector"); tools.Add("Shovel");
+					tools.AddRange(RaftFeatures.ToolsOf(ContentCatalog.BuriedTreasure));
 					return put + " buried treasure" + (put == 1 ? "" : "s");
 				}
 				case "zipline":
@@ -107,7 +107,7 @@ namespace DynamicIslands.Editor
 					Vector3 far = k.At(beach.Value, 0.2f);
 					var zp = new Dictionary<string, string> { { ZiplineEnds.ZipTo, ZiplineEnds.Text(far) }, { BehaviourProps.Name, "zipline" + n } };
 					k.Add("ZiplinePath_Landmark", k.At(top, 3f), 0f, zp, 4f);
-					tools.Add(ContentCatalog.ZiplineItem);
+					tools.AddRange(RaftFeatures.ToolsOf("ZiplinePath_Landmark"));
 					return "a zipline down to the beach";
 				}
 				case "code":
@@ -241,7 +241,7 @@ namespace DynamicIslands.Editor
 						put++;
 					}
 					if (put == 0) return null;
-					tools.Add("Shovel");
+					tools.AddRange(RaftFeatures.ToolsOf("Pickup_Landmark_DirtPickup"));
 					return put + " dirt spots for the shovel";
 				}
 			}

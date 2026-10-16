@@ -140,7 +140,7 @@ namespace DynamicIslands
 							// (a copy left by an earlier run that stopped half way: removed first)
 							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 							if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
-							Vector3? spot = ScSpot(island, 400f);
+							Vector3? spot = ScSpot(island, 400f, IslandSpawner.ElevationOf(island));  // (a flying island flies here too)
 							if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
 							yield return ScBring(island, spot.Value, made);
 							playEntry = made.LastOrDefault();
@@ -153,6 +153,12 @@ namespace DynamicIslands
 						// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
 						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
 						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
+						// (a flying island: seen from below, no sky between its underside and its ground - 10-16)
+						if (playEntry.Position.y > IslandSpawner.FlyingThreshold)
+						{
+							string open = FlyingOpenFromBelow(playEntry.Root);
+							Check(ref ok, open == null, "flying '" + island + "' seen from below: the underside meets the ground all round the coast" + (open != null ? " - " + open : ""));
+						}
 						break;
 					}
 					case "stand":
@@ -280,6 +286,28 @@ namespace DynamicIslands
 						if (stay) { if (used != null) Behaviours.Fire(playEntry, used.Index, "use", true); }
 						else ScUse(playEntry, what);
 						yield return new WaitForSeconds(1.2f);
+						break;
+					}
+					case "code":
+					{
+						// (code <name> <digits> [wrong]: the object's keypad code lock opened as a player does it - CodeLock;
+						// "wrong": the digits must not open it)
+						bool wrong = t.Length > 3 && t[t.Length - 1] == "wrong";
+						int dn = wrong ? t.Length - 2 : t.Length - 1;
+						string digits = t[dn];
+						string what = string.Join(" ", t.Skip(1).Take(dn - 1).ToArray());
+						IslandObjectRef pad = ScObjOf(playEntry, what);
+						Check(ref ok, pad != null && CodeLock.HasCode(pad.Props), "object '" + what + "' with a keypad code");
+						if (pad == null || !CodeLock.HasCode(pad.Props)) break;
+						PutPlayerNear(pad.transform);
+						CodeLock.Use(playEntry, pad.Index, ObjectProps.Get(pad.Props, CodeLock.Code), pad.transform);
+						yield return new WaitForSeconds(0.6f);
+						foreach (char c in digits) CodeLock.Press(c.ToString());
+						CodeLock.Press("OK");
+						yield return new WaitForSeconds(1.2f);
+						if (wrong) Check(ref ok, !CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " doesn't open '" + what + "'");
+						else Check(ref ok, !CodeLock.IsOpen && CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " opens '" + what + "'");
+						CodeLock.Close();
 						break;
 					}
 					case "kill":
@@ -521,9 +549,17 @@ namespace DynamicIslands
 
 		static void PlayExpect(string[] t, string line, ref bool ok)
 		{
+			// (a last word quest=<k>: the island's further quest k, 2..9, as the recipe's quest2..quest9; else the main quest)
+			int qn = 0;
+			if (t.Length > 2 && t[t.Length - 1].StartsWith("quest=", StringComparison.OrdinalIgnoreCase))
+			{
+				qn = Mathf.Clamp((int)F(t[t.Length - 1].Substring(6)) - 1, 0, 8);
+				line = line.Substring(0, line.LastIndexOf(t[t.Length - 1])).TrimEnd();
+				t = t.Take(t.Length - 1).ToArray();
+			}
 			string what = t.Length > 1 ? t[1].ToLowerInvariant() : "";
-			IslandQuest q = QuestTracker.QuestOf(playEntry);
-			int step = QuestTracker.StepOf(playEntry);
+			IslandQuest q = QuestTracker.QuestOf(playEntry, qn);
+			int step = QuestTracker.StepOf(playEntry, qn);
 			switch (what)
 			{
 				case "step":

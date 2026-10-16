@@ -171,7 +171,7 @@ namespace DynamicIslands.Editor
 		static Vector2Int CellOf(Vector3 local, Vector3 o) { return new Vector2Int(Mathf.RoundToInt((local.x - o.x) / Cell), Mathf.RoundToInt((local.z - o.z) / Cell)); }
 
 		/// <summary>The foundation's walking surface, in the raft's space (its solid colliders' top; 0.6 above it without).</summary>
-		static float FoundationTop(Block f, Raft raft)
+		internal static float FoundationTop(Block f, Raft raft)
 		{
 			float best = float.MinValue;
 			foreach (Collider c in f.GetComponentsInChildren<Collider>())

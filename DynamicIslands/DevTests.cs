@@ -28,6 +28,10 @@ namespace DynamicIslands
 		// Every test coroutine runs through this, so ci.ps1 can end a run at "[CITEST] IDLE"
 		// (logged when the last running test ends) instead of guessing from PASS/FAIL lines.
 		static int runningTests;
+		// Lines of the command file still to run, and an IDLE held back for them: "CIA;CIB" logs IDLE once, after CIB
+		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
+		static int pendingCommands;
+		static bool idleOwed;
 		static Coroutine StartTest(IEnumerator e) { runningTests++; return DynamicIslands.instance.StartCoroutine(Track(e)); }
 
 		static IEnumerator Track(IEnumerator e)
@@ -40,7 +44,7 @@ namespace DynamicIslands
 				if (!more) break;
 				yield return e.Current;
 			}
-			if (--runningTests <= 0) { runningTests = 0; Log("IDLE (all tests done)"); }
+			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
 		}
 
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
@@ -680,6 +684,97 @@ namespace DynamicIslands
 			ok &= condition;
 		}
 
+		/// <summary>
+		/// A flying island seen from below: its rocky underside must meet the ground all along the coast, or the sky shows
+		/// through between them (Lantern Spire 10-16: zigzag gaps where the coast ran diagonally). Two looks: the underside's
+		/// rim points on every coast edge sit on the ground, and a ray from below and outside aimed into the rock just inside
+		/// each coast edge passes the underside on its way in. Null when closed, else what is open.
+		/// </summary>
+		static string CellsRound(bool[,] solid, HashSet<int> meshCells, int cells, int px, int pz)
+		{
+			string s = "";
+			for (int z = pz - 1; z <= pz; z++)
+				for (int x = px - 1; x <= px; x++)
+					s += x < 0 || z < 0 || x >= cells || z >= cells ? "-/- " : (solid[z, x] ? "1" : "0") + "/" + (meshCells.Contains(z * cells + x) ? "1" : "0") + " ";
+			return s.Trim();
+		}
+
+		internal static string FlyingOpenFromBelow(GameObject root)
+		{
+			Terrain terrain = root != null ? root.GetComponentInChildren<Terrain>() : null;
+			Transform under = terrain != null ? terrain.transform.Find("Underside") : null;
+			MeshCollider uc = under != null ? under.GetComponent<MeshCollider>() : null;
+			if (uc == null) return "no underside";
+			Physics.SyncTransforms();
+			TerrainData data = terrain.terrainData;
+			int cells = data.holesResolution, res = data.heightmapResolution;
+			if (res - 1 != cells) return null; // (not the grid MakeFlying works on)
+			bool[,] solid = data.GetHoles(0, 0, cells, cells);
+			float spacing = data.size.x / cells;
+			// the underside's points by grid sample (in the terrain's own space)
+			var rimY = new Dictionary<int, float>();
+			foreach (Vector3 v in under.GetComponent<MeshFilter>().sharedMesh.vertices)
+				rimY[Mathf.RoundToInt(v.z / spacing) * res + Mathf.RoundToInt(v.x / spacing)] = v.y;
+			// the cells the underside covers (from its triangles)
+			Mesh um = under.GetComponent<MeshFilter>().sharedMesh;
+			Vector3[] uv = um.vertices;
+			int[] ut = um.triangles;
+			var meshCells = new HashSet<int>();
+			for (int i = 0; i + 2 < ut.Length; i += 3)
+			{
+				float mx = Mathf.Min(uv[ut[i]].x, Mathf.Min(uv[ut[i + 1]].x, uv[ut[i + 2]].x)), mz = Mathf.Min(uv[ut[i]].z, Mathf.Min(uv[ut[i + 1]].z, uv[ut[i + 2]].z));
+				meshCells.Add(Mathf.RoundToInt(mz / spacing) * cells + Mathf.RoundToInt(mx / spacing));
+			}
+			int[] dx = { 1, -1, 0, 0 }, dz = { 0, 0, 1, -1 };
+			int edges = 0, seams = 0, rays = 0, through = 0;
+			string first = null;
+			Vector3 origin = terrain.transform.position;
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					if (!solid[z, x]) continue;
+					for (int k = 0; k < 4; k++)
+					{
+						int nx = x + dx[k], nz = z + dz[k];
+						if (nx >= 0 && nz >= 0 && nx < cells && nz < cells && solid[nz, nx]) continue;
+						edges++;
+						// the edge's two ends (grid samples)
+						int ax = dx[k] == 1 ? x + 1 : x, az = dz[k] == 1 ? z + 1 : z;
+						int bx = dx[k] != 0 ? ax : x + 1, bz = dx[k] != 0 ? z + 1 : az;
+						foreach (var s in new[] { new[] { ax, az }, new[] { bx, bz } })
+						{
+							float y;
+							float ground = data.GetHeight(s[0], s[1]);
+							if (!rimY.TryGetValue(s[1] * res + s[0], out y) || Mathf.Abs(y - ground) > 0.05f)
+							{
+								seams++;
+								if (first == null) first = "the underside is " + (rimY.ContainsKey(s[1] * res + s[0]) ? (ground - y).ToString("F1") + " m under the ground" : "missing") + " at the coast point " + s[0] + "," + s[1] + " (cells round it, holes map / underside: " + CellsRound(solid, meshCells, cells, s[0], s[1]) + ")";
+							}
+						}
+						// the ray: into the rock half a cell in from the edge, half way between the ground and the underside
+						Vector3 outward = new Vector3(dx[k], 0f, dz[k]);
+						Vector3 inner = origin + new Vector3((x + 0.5f) * spacing, 0f, (z + 0.5f) * spacing);
+						float top = terrain.SampleHeight(inner) + origin.y;
+						RaycastHit hit;
+						if (!uc.Raycast(new Ray(new Vector3(inner.x, top - 500f, inner.z), Vector3.up), out hit, 500f)) continue;
+						if (top - hit.point.y < 0.1f) continue; // (too thin to aim into)
+						Vector3 target = new Vector3(inner.x, (top + hit.point.y) / 2f, inner.z);
+						Vector3 from = target + (outward + Vector3.down) * 4f; // (at 45 degrees from below: through the coast face, under the ground)
+						rays++;
+						if (!uc.Raycast(new Ray(from, target - from), out hit, (target - from).magnitude))
+						{
+							through++;
+							if (first == null) first = "a ray from below reaches the rock at " + (target - origin).ToString("F1") + " without passing the underside";
+						}
+					}
+				}
+			if (seams == 0 && through == 0) return null;
+			int differ = 0;
+			for (int z = 0; z < cells; z++) for (int x = 0; x < cells; x++) if (solid[z, x] != meshCells.Contains(z * cells + x)) differ++;
+			first += "; " + differ + " cells differ between the holes map and the underside, " + meshCells.Count + " under it";
+			return seams + " of " + (edges * 2) + " coast points open, " + through + " of " + rays + " rays from below get in; first: " + first;
+		}
+
 		[ConsoleCommand(name: "CIDemo", docs: "Dev: scatters sample nature objects over the editor terrain (as undoable placements) and frames the camera")]
 		public static void Demo()
 		{
@@ -841,6 +936,8 @@ namespace DynamicIslands
 			bool cornerOpen = !Physics.Raycast(new Vector3(corner.x, 400f, corner.z), Vector3.down, out hit, 500f, obstruction) || hit.collider.transform.root != fly.Root.transform;
 			Check(ref ok, fromAbove && fromBelow && cornerOpen && topY > Flying,
 				string.Format("from above you land on the top ({0:F0} m), from below you hit the underside ({1:F0} m), the old seabed corner is open: {2}", topY, bottomY, cornerOpen));
+			string open = FlyingOpenFromBelow(fly.Root);
+			Check(ref ok, open == null, "seen from below the underside meets the ground all round the coast" + (open != null ? ": " + open : ""));
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
@@ -1888,10 +1985,14 @@ namespace DynamicIslands
 				catch (Exception e) { Debug.LogWarning("[CITEST] command file: " + e.Message); }
 				if (lines == null) continue;
 				Application.runInBackground = true; // commands arrive while Raft is in the background
-				foreach (string raw in lines)
+				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
+				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
+				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				for (int li = 0; li < todo.Count; li++)
 				{
-					string line = raw.Trim();
-					if (line.Length == 0 || line.StartsWith("#")) continue;
+					string line = todo[li];
+					pendingCommands = todo.Count - li; // (this line too, until it runs)
+					if (li > 0) while (runningTests > 0) yield return null;
 					// "@<unix ms> <command>": run at that moment of the PC's clock - two Rafts on one PC then act in the same
 					// frame or the next, not up to a second apart as the file poll and the script's jobs leave them (IM28)
 					long at;
@@ -1904,9 +2005,13 @@ namespace DynamicIslands
 						while (DateTime.UtcNow < when) yield return null;
 					}
 					Log("> " + line);
+					pendingCommands = todo.Count - li - 1;
 					try { RunCommand(line); }
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
 				}
+				pendingCommands = 0;
+				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				idleOwed = false;
 			}
 		}
 

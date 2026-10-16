@@ -226,6 +226,9 @@ namespace DynamicIslands.Editor
 				File.Move(temp, to);
 			}
 			else File.Move(from, to);
+			// (the island lists' summaries: neither name's is right now)
+			IslandSummaries.Forget(Path.GetFileNameWithoutExtension(from));
+			IslandSummaries.Forget(Path.GetFileNameWithoutExtension(to));
 		}
 
 		/// <summary>

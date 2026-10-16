@@ -456,6 +456,11 @@ namespace DynamicIslands.Editor
 			string beast = s.Style == TerrainPainter.Snowy ? "PolarBear" : "Bear";
 			IslandObject boss = k.Creature(beast, c + new Vector2(8f, 0f), 1, "Boss", 1.6f, "arena", false);
 			boss.Props[BehaviourProps.EventKey("defeat")] = "hide|" + ArenaGate + "\n" + "show|Spoils" + "\n" + "signal||" + BossSignal + "\n" + "message||The beast falls. The stakes sink back into the ground.";
+			// Its second phase (RF5): at half its health it roars for two more of its kind and gets faster
+			boss.Props[BossPhases.Share] = "0.5";
+			boss.Props[BossPhases.Summon] = "2";
+			boss.Props[BossPhases.Speed] = "1.3";
+			boss.Props[BehaviourProps.EventKey(BossPhases.Event)] = "message||The beast roars in fury - two more answer its call!";
 			IslandObject spoils = k.Chest("Loot_ChestLarge", c - new Vector2(4f, 0f), "Spoils", MapKit.Loot("Treasure"));
 			spoils.Props[BehaviourProps.Name] = "Spoils";
 			spoils.Props[BehaviourProps.Hidden] = "1";
