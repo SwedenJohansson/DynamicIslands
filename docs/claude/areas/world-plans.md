@@ -13,8 +13,9 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | `MainStoryHelper.cs` | New main story helper; `Finish` turns its islands into rule cards |
 | `WorldPlanWindow.cs` | Plan editor (an island's own rules: `OpenIsland`); `WorldPlanTemplates` |
 | `ChoiceWindow.cs` | Modal pick-one list with search (islands, map types, plans) |
-| `PlanChecker.cs`, `PlanCheckWindow.cs` | Check: `Finding`s (`Level.Problem` / `Warning` / `Tip`) and the report window |
-| `PlanProgressWindow.cs` | Progression panel: `PlanChecker.Progression(plan)` - Raft's story blueprints and story items rule by rule, kept, never given (CIPlanBlueprints) |
+| `PlanChecker.cs`, `PlanCheckWindow.cs` | Check: `Finding`s (`Level.Problem` / `Warning` / `Tip`) and the report window. `PlayOrder` / `Stop` / `StopName`: the plan in play order (`StoryChain.BuildSteps`, then WHEN; km/day placed by `KmPerStoryIsland` / `DayKm`); `CheckTools`, `CheckStoryOrder`, `CheckStoryClash` walk it (CIPlanProgressOrder, CIStoryIdClash) |
+| `PlanProgressWindow.cs` | Progression panel: `PlanChecker.Progression(plan)` in play order - Raft's story islands kept (`Step.Rule` -1, `Step.Raft`) at their places, each rule's blueprints, story items, tools (`Step.Tools`, `Step.ToolNeeds`), never given (CIPlanBlueprints, CIPlanProgressOrder) |
+| `RaftFeatures.cs` | Feature -> tools table (vines, buried treasure, dirt, ziplines), tool blueprints, `Researched`; `GivenIn` |
 | `WorldIslands.cs`, `IslandPickerWindow.cs` | Spawn-pool entries left out of a world, gap between random islands; the tick-box list in the New Game box |
 
 ## Main flow
@@ -43,12 +44,16 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | New WHERE | `IntroRule.WhereKinds`, `Parse`, `ToLine`; `WorldDirector.Place`; `PlanChecker.CheckWhere` |
 | Chain done when | `IntroRule.DoneKinds`, `NormalDone`; `StoryChain.IsDone` |
 | Chain order | `StoryChain.BuildSteps` |
+| Play order (Check, Progression) | `PlanChecker.PlayOrder` (`KmPerStoryIsland`, `DayKm`) |
+| Which tool a feature wants | `RaftFeatures.Features` / `RaftFeatures.Tools` |
 | Notebook tabs and pages | `QuestBook.Describe`, `BuildIsland`, `MakeTab`, `Apply`, and `Signature` |
 | Check findings | `PlanChecker.Check` and its `Check*` methods |
 | New plan file key | `WorldPlan.Parse`, `ToText`, `Help`; the world's copy in `WorldDirector.ReadLine` / `WriteLines` |
 | Random-island pool | `WorldIslands.TakesPart`; `CustomIslandSpawner.PlanIslandNames` |
 
 ## Traps
+- `Progress.Steps` holds Raft's story islands too (`Rule` -1): filter `Rule >= 0` before indexing `plan.Rules`.
+- Story items found on Raft's own story islands never count for the plan's locks (`CheckStoryOrder` skips Raft stops).
 - Host only: `WorldDirector.Tick` returns on clients after `CheckNewWorld`; `StoryChain.FromPlan`, `Tick`, `OnTuned` act only on the host. Clients get the chain in `StoryChain.OnMessage` (main story rules in `clientBook`, read through `BookRules`).
 - `WorldDirector.SetPlan` does not touch the chain: call `StoryChain.FromPlan` too (as `WorldPlanCommand` and `OnWorldLoaded` do).
 - `PlanFileToPlay` returns the .plan file only when it differs from the stored copy and is the same plan: same library/import source (`PlanFrom`), or this PC is `PlanOwner`, and the file's `Id` matches `PlanId` when both have one (`Save()` gives own plans an id; `Copy...` makes a new one). Plan islands are found by content hash (`PlanHashes`, `FileFor`), not only by name.
