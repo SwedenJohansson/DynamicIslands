@@ -615,7 +615,7 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
   **Comes by chance after ... km sailed:** the earliest the spawn pool may bring this island while sailing, in km the
   world has sailed, with the sailing time it means under it ("40 km: about 5 h of sailing", at 8 km/h). Empty = any
   time, at most 192 km (about 24 h). A world plan still brings its islands when its rules say.
-  **Level up system** Off / On: see [section 9.6](#96-the-level-up-system).
+  (The level up system is a world option, not an island's: see [section 9.6](#96-the-level-up-system).)
 - **Quest**, **Islands it brings**, **Island events**, **Story items**: see [section 6](#6-stories-quests-behaviours-story-items).
 - **About this island** (the last group of the tab): how many objects the island has, what the height means **in a
   world** ("normal (at sea level)", "flying 60 m above the sea" or "under water, top of the land 30 m deeper than
@@ -633,8 +633,13 @@ see the new island at once (a message says what it made); **Generate** in the to
 *The Normal tab: your presets, the style and layout, the size and height (with buttons for the size and height of
 Raft's own small island, large island and Balboa), peaks, hills and the coast.*
 
-- **Island:** the **style** and the **layout**: round, atoll, archipelago, sea stacks, plateau, marsh, crescent, twin
-  peaks.
+- **Island:** the **style** and the **layout**: **Raft small island** (the first one), Raft large island, round, atoll,
+  archipelago, sea stacks, plateau, marsh, crescent, twin peaks. The two Raft layouts take the outline and ground of
+  one of Raft's own small (or big) islands - the seed picks which, and turns, mirrors and wobbles it - with a beach all
+  round you wade onto from the raft (cliffs only where you ask for them). Until you generate something else, the
+  generator opens on an island like Raft's small ones: Raft small island, about 40 m across and 12 m high, an uneven
+  coast with a bay, no cliffs, objects as dense as on Raft's small islands; **Defaults** gives the same. After a
+  **Randomize existing** or **Ready-made** island, the Normal tab still opens on its own last settings.
 - **Size and height, coast and outline, land features:** peaks and their shape, hills, coast, bays, beach, cliffs,
   stretch and its direction, valleys, lakes, terraces, erosion.
 - **Under water:** a **deep sea floor like Raft's** (a shelf about 10 m deep, then a drop-off) or a **shallow** one
@@ -677,7 +682,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
   2-10 m down, with sand between the reef patches); **Teeming**, the top of the sliders, is twice that. More than
   that carpets a shallow lagoon's floor - nothing like Raft. **Groups** (under Nature) makes the reefs tighter (or
   looser).
-- **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss), **Level up** Off / On (the Island tab's rule),
+- **Animals:** hostile creatures (the style's own, or the kinds you click), how tough (Easy, Normal, Hard, Boss),
   friendly animals to catch, sea creatures.
 - **Loot:** how many loot boxes, their lowest and highest **tier** (1: planks and plastic ... 5: titanium, explosive
   goo, batteries), in the open or hidden.
@@ -840,7 +845,7 @@ The editor's view under water shows what a deep sea floor looks like:
 
 The generator's **Ready-made (with content)** tab makes whole islands with a story: chests, notes, creatures, zones
 and a quest, from a seed. Click a card, then **Make** (click twice): the island is saved as `gen-<type>-<seed>` and
-opened for you to change. If that name is taken it gets -2, -3... (rename it with **Save as**: `gen-...` islands are left out of plans and random islands). **Level up** Off / On on the tab turns the level up system on for the island. A chest or note that would stand where players can't get without building (on a sea stack's
+opened for you to change. If that name is taken it gets -2, -3... (rename it with **Save as**: `gen-...` islands are left out of plans and random islands). A chest or note that would stand where players can't get without building (on a sea stack's
 top, a cliff ledge) is moved to the nearest place they can reach.
 
 ![The Ready-made tab](images/generator-readymade.jpg)
@@ -905,7 +910,7 @@ step = open | Lookout cache | 1 |
 | `label`, `description`, `title` | The name in lists, one line about it, and the banner players see on arrival (empty: none) |
 | `flying = <chance> \| <min> - <max>`, `sunken = <m>` | How often it floats and how high; or under water, its top that many metres down |
 | `settings = ranges` | The land is rolled from the lines below (`random`: as a random island; a built-in type's name: that type's land) |
-| `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent or twinpeaks; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
+| `styles`, `shape`, `radius`, `height`, `roughness`, `density`, `peaks`, `likeraft` | The land: one style is picked (name one twice to make it twice as likely); `shape` is round, atoll, archipelago, seastacks, plateau, marsh, crescent, twinpeaks, raftsmallisland or raftlargeisland; `60 - 70` is rolled, one number is fixed; `likeraft = large/small` makes trees and pickups as dense as on Raft's own islands |
 | `set = <setting> <value>` | Any generator setting by name after the roll, as in a generator preset (`Hostiles`, `Cliffs`, `SeaFloor`, `Trees`...) |
 | `content = <built-in type>` | That type's content first (a no-land type's raft too: `content = wreck`), then your own lines |
 | `chest`, `note`, `creature`, `zone`, `atmosphere`, `object`, `clear` | The content, placed in order. Loot is `Basics`, `Metal`, `Food`, `Treasure` or items as in the loot editor (`Plank*12;Rope*4`); `\n` is a new line in a text |
@@ -950,6 +955,10 @@ changes keeps them as its autosave first (the editor says so, and offers them ba
 
 ![The Islands window](images/editor-islands-window.jpg)
 *The Islands window: the name and height, the saved islands with their date and size, and Save, Open, Rename, Delete.*
+
+Each part of the Islands window has a **?**: hover it for what **Name**, **Height in the world**, the list and the
+sharing buttons do. Height in the world is the same value as the Island tab's Height: 0 is at sea level, above 0 a
+flying island (players build up to it), below 0 a sunken one (players dive to it).
 
 Islands are files in `<Raft>\Mods\DynamicIslands\` (`<name>.island`). In multiplayer the host's island files are sent
 to players who don't have them, so nobody needs to share files just to play together ([section 8](#8-playing-together)).
@@ -1130,6 +1139,10 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
 4. Walk around, open the chests, read the notes, meet the creatures, try the quest.
 5. **Esc → Custom Islands → Back to the editor**: the test world is left **without saving** and the editor opens
    again with your island, where you left it.
+
+While the test starts, a **STARTING THE TEST** box covers the screen (Raft's main menu loads the test world behind
+it). **Cancel** takes you back to the editor. If the test can't start, you are back in the editor with the reason in the
+status bar - click **Test** again.
 
 The test world is made with your last World settings choices (monsters, randomizer, extra options...); change them
 there with **Esc → Custom Islands** if you want to try the island another way. It never counts as a saved world that
@@ -1482,7 +1495,7 @@ story each time it loads. A world opened without the mod has Raft's own notebook
 **New main story...** (World plans, next to Templates...) makes a main story step by step: Raft's story on or off,
 then your saved islands in the order players meet them - for each, where it sits in Raft's story, its tab colour and
 what gives the next coordinates. **Done: make the cards** makes the rule cards (every island on the Receiver, each after the one
-before; the first one's coordinates given at the start when Raft's story is off or it comes first) and runs Check. Change the cards as you like after.
+before; the first one's coordinates given at the start when Raft's story is off or it comes first) and runs Check. Change the cards as you like after. The list of your islands opens at once; with many islands it says "Loading islands..." for a moment the first time.
 
 **Preview notebook** (World plans, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
 own notebook: the mod goes to the test world (as Test in a world does), opens the book with every tab and page, and a
@@ -1808,6 +1821,9 @@ section online).
 ![A ? explains a part](images/plan-help-popup.jpg)
 *Hovering the ? after **When**: every choice it has, in a few words.*
 
+The buttons at the bottom are in two rows: **+ Add a rule**, **Check**, **Progression**, **Preview notebook** and
+**Test this plan** above; **Export...**, **Import...**, **Save** and **Close** below.
+
 ![The Help box](images/plan-help.jpg)
 *Help: how to make a plan, in eight steps, and the guide's buttons.*
 
@@ -2000,11 +2016,30 @@ After the first Check, every card shows its own problems and warnings in red and
 follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
 problem. The report's **Check again** checks after you changed something.
 
-**Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in its
-order: first the blueprints the story islands it keeps give, then each rule whose islands give one of Raft's
-story-island blueprints or a story item (a key, a keycard...) or have a lock that wants one - a lock whose item no
-island before it gives is shown in yellow - and last, in yellow, the blueprints the plan never gives. **Show rule**
-goes to a rule's card. Use it to build a plan where the player unlocks more and more as they sail on.
+Check walks the plan in **play order**, the order a player meets its islands, not the order of the cards. Raft's story
+chain comes first, with your islands in their places (first, after, instead of). Every other rule comes where its WHEN
+puts it: at the start, right after the island it waits for, or - for a distance or a day - after the story islands a
+player passes on the way (about one every 4 km). Raft's story islands give their blueprints (the machete on Balboa, the
+metal detector on Caravan Town...) when the story reaches them, not at the start.
+
+**Tools.** Vines need the machete, buried treasure the metal detector and a shovel, dirt the shovel, ziplines the
+zipline tool. If a step of an island's main quest can't be done because no island before it gives the tool (or its
+blueprint), Check warns - in the story chain, the story would stop there. Optional finds that need a tool given later
+get no warning, as in Raft: a cache behind vines no step needs, or buried treasure. Players come back with the tool;
+the Progression panel lists them quietly.
+
+**Story items on two islands.** If two islands of the plan each give a story item with the same id (two 'keycard's),
+the one found on either island opens the other's locks too. Check warns: give each island its own id. Raft's own quest
+items (the Vasagatan keycard, the bolt cutters...) found on Raft's story islands open only that island and are never
+keys for your locks.
+
+**Progression** (beside Check, world plans only) opens a panel with what the plan gives of Raft's progression, in play
+order: Raft's story islands it keeps, each in its place with the blueprints and tools it gives, and each rule whose
+islands give one of Raft's story-island blueprints, a tool or a story item (a key, a keycard...), or have a lock or a
+feature that wants one. A lock whose item no island before it gives, and a main-quest need of a tool not given yet,
+are shown in yellow; an optional find needing a later tool is a muted line. Last, in yellow, come the blueprints the
+plan never gives. **Show rule** goes to a rule's card. Use it to build a plan where the player unlocks more and more
+as they sail on.
 
 What Check looks for:
 
@@ -2019,7 +2054,9 @@ What Check looks for:
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
 | **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
 | **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
-| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island of a later rule: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
+| **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
+| **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
+| **Story items on two islands** | | one story item id given on two islands of the plan (two 'keycard's): the one found on either opens the other's locks too; give each island its own id |
 
 Check can't play the quests for you. Test your plan: create a world with it and play it through (F10 → `WorldPlan`
 shows which rules have fired). A map type's island is made new in each world, so Check looks at a sample of it: its
@@ -2176,7 +2213,7 @@ a world where they are all left alone plays as plain Raft plus your islands.
   quest, rogue shark, silver & golden barrels, storm days, trader raft, extra upgrades and a head start raft (older
   worlds may still have scrambled blueprints or the story islands in a new order on).
 - **Islands while sailing** (9.5): which of your islands a world may meet.
-- **The level up system** (9.6): EXP and stat points - a switch in the window, or an island made with it.
+- **The level up system** (9.6): EXP and stat points - a switch in the window (a world option: islands don't turn it on).
 
 All of them belong to the world: chosen when it is created, saved with it, the same for every player (the host's), and
 they come along when the world moves to another host ([section 8](#8-playing-together)).
@@ -2613,14 +2650,13 @@ Islands that a quest, an island's rule or a world plan brings ([section 6.4](#64
 
 ### 9.6 The level up system
 
-Levels come to a world in two ways:
-- **World settings** (New Game box): the **Level up system** switch among the extra options - on for the world from the
-  start (the choice is remembered for the next new world);
-- **an island made with Level up system: On** (the editor's **Island** tab, Rules, or the generator's **Level up**
-  choice): once such an island appears in a world, levels come on there, for every player.
+Levels are a world option: the **Level up system** switch among the extra options of **World settings** (New Game
+box) turns them on for the world from the start (the choice is remembered for the next new world). Islands don't turn
+them on: the editor and the generator have no level up choice, and an older island or preset that had one still loads
+(the old choice is ignored).
 
 The host can switch it in a world with `Levels on` / `Levels off` (F10). **Off keeps everyone's levels** (they come back
-when it is on again), and an island made with levels doesn't switch it back on after the host switched it off. A world
+when it is on again). A world
 without it plays as Raft always does.
 
 ![The Level up system switch in the editor](images/levels-island-tab.jpg)
@@ -3210,8 +3246,8 @@ instead, and on the project's roadmap.
 the sea is clear. `SpawnIsland <name>` places one right away.
 
 **K does nothing, and there is no level bar.** The level up system is off in this world: switch it on in World settings
-for a new world, or with `Levels on` (host, F10) in this one; an island made with **Level up system: On** switches it on
-too (see [section 9.6](#96-the-level-up-system)).
+for a new world, or with `Levels on` (host, F10) in this one (see [section 9.6](#96-the-level-up-system)); islands
+don't switch it on.
 
 **A friend's storage won't open.** The world has **Private storages** on ([9.4](#94-extra-options)): a storage opens
 only for the player who built it. When its builder isn't in the game, the host can open it; or the host switches the
@@ -3353,6 +3389,11 @@ happened, and make it happen again on their own PC. Please include:
    `<Raft>\Mods\DynamicIslands\<name>.island`, world plans `<Raft>\Mods\DynamicIslands\plans\<name>.plan`. If the
    problem is in one world, add that world's `CustomIslands.txt` (in its folder, below), and if you
    can, the world itself: zip its folder from `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\User\`.
+
+**When the mod notices an error itself:** a note **Custom Islands: an error happened - click for details** appears at
+the bottom left. Click it to see what happened and whose code it was; **Copy** puts it on the clipboard for a GitHub
+issue or a Discord post, and **Open the log folder** finds Player.log. Every such error is also kept in
+`Mods\DynamicIslands\errors.txt`.
 
 **The quick way: Report a problem.** The alpha box on the main menu ([section 1](#1-installing)) has a **Report a
 problem** button. It opens a box with the list above in short, and buttons that do the work for you:

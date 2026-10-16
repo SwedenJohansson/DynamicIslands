@@ -17,6 +17,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
   Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
   **Lantern Spire** (a flying island).
+- **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
+  with the same id (two 'keycard's) - the one found on either would open the other's locks.
+- **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
+  (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
+- **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
+  buttons. The height's ? says what 0, above 0 (flying) and below 0 (sunk) mean, and how players reach the island.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
   times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under
@@ -124,6 +130,24 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
+- **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
+  other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
+- **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
+  it gives. Optional finds (buried treasure, caches) needing a later tool are only listed in Progression.
+- **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
+  notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
+  the window's edge.
+- **Island lists open at once:** **+ Add a saved island** and the other island lists in World plans open at
+  once with a "Loading islands... (n of N)" line, then list your islands. Their titles are kept in `summarycache.txt`,
+  so the next time takes no time (before, the list came only after every island's whole file was read).
 - **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
   colour round a built, hand-held or worn upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
   The titanium spear is a light, almost white metal (its tint was only a little darker than the scrap spear).
@@ -189,6 +213,18 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
+  makes: on Randomize existing it left out the caves and buildings that are not made there.
+- **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
+  kept in range when generating, so the report no longer lists quest steps that "found no place".
+- **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
+  of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
+- **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
+  while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
+- **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on
+  later clicks (Raft's Load box had a broken link after the editor). A test now starts behind a cover with Cancel. If it
+  can't start, you are back in the editor and the status bar says why. Back to the editor no longer disappears after 4
+  minutes in the test world.
 - **Hover texts outside the editor:** only the editor's status bar and the in-world window drew a control's hover
   text, so the main menu's windows (the plan picker, the island library...), the stats page and the alpha box never
   showed theirs. Where there is no such bar, the text now comes in a small tip by the mouse after a moment.

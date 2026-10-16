@@ -21,7 +21,7 @@ namespace DynamicIslands
 
 		#region Editor
 
-		[ConsoleCommand(name: "CILevelTest", docs: "Dev, editor: the level up system's numbers (EXP per level, a monster's EXP, 2 points a level, +1% a point, 10 at most), records written and read, the Island tab's Level up system switch, the generator's Level up choice and the island files it makes")]
+		[ConsoleCommand(name: "CILevelTest", docs: "Dev, editor: the level up system's numbers (EXP per level, a monster's EXP, 2 points a level, +1% a point, 10 at most), records written and read; no Level up switch on the Island tab or in the generator (a world option only), an older preset or island with it passed by")]
 		public static void LevelTest()
 		{
 			StartTest(LevelTestRoutine());
@@ -68,57 +68,31 @@ namespace DynamicIslands
 			LevelRecord cheat = LevelRecord.Decode("150|10,10,10,0,0,0,0,0");
 			Check(ref ok, cheat.Level == 2 && cheat.Spent == 2, "no more points than the level gives (level 2 of a hand-edited file keeps " + cheat.Spent + ")");
 			Check(ref ok, LevelRecord.Decode("").Xp == 0 && LevelRecord.Decode("x|y").Xp == 0 && LevelRecord.Decode("-5").Xp == 0, "broken records read as nothing");
-			Check(ref ok, PlayerLevels.IsOn(P(IslandProps.Levels, "on")) && !PlayerLevels.IsOn(P(IslandProps.Title, "x")) && !PlayerLevels.IsOn(null), "an island's Level up system rule");
-
-			// The Island tab's switch
+			// A world option only (New Game > World settings, the Levels command): no "Level up" switch on the Island tab or in
+			// the generator any more; an older island's or preset's value is passed by
 			var saved = new Dictionary<string, string>(DynamicIslands.currentIslandProps);
 			EditorUI.SetTab(TAB.Island);
 			yield return null;
-			Transform row = EditorUI.Canvas.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "LevelUp");
-			Button on = row != null ? row.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Button_On") : null;
-			Button off = row != null ? row.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name == "Button_Off") : null;
-			Check(ref ok, on != null && off != null && on.gameObject.activeInHierarchy, "the Island tab has Level up system Off / On (Rules)");
-			if (on != null && off != null)
-			{
-				DynamicIslands.currentIslandProps.Remove(IslandProps.Levels);
-				on.onClick.Invoke();
-				Check(ref ok, PlayerLevels.IsOn(DynamicIslands.currentIslandProps), "On sets the island's rule (" + ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.Levels) + ")");
-				off.onClick.Invoke();
-				Check(ref ok, !DynamicIslands.currentIslandProps.ContainsKey(IslandProps.Levels), "Off takes it away");
-			}
+			Check(ref ok, !EditorUI.Canvas.GetComponentsInChildren<Transform>(true).Any(t => t.name == "LevelUp"), "the Island tab has no Level up switch (a world option only)");
 			Screenshot(new[] { "levels_island_tab" });
 			yield return new WaitForSecondsRealtime(0.5f);
-
-			// The generator: the choice on its tabs, and the files it makes
 			GeneratorWindow.Open();
 			yield return new WaitForSecondsRealtime(0.3f);
 			GameObject gw = GameObject.Find("GeneratorWindow");
-			Transform[] rows = gw != null ? gw.GetComponentsInChildren<Transform>(true).Where(t => t.name == "Level up").ToArray() : new Transform[0];
-			Check(ref ok, rows.Length == 2, "the generator has a Level up choice on the Normal and Ready-made tabs - Randomize existing uses the Normal tab's (" + rows.Length + ")");
-			Transform shown = rows.FirstOrDefault(t => t.gameObject.activeInHierarchy);
-			Button genOn = shown != null ? shown.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.name.StartsWith("Button_On")) : null;
-			if (genOn != null) genOn.onClick.Invoke();
+			int rows = gw != null ? gw.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Level up") : -1;
+			Check(ref ok, gw != null && rows == 0, "the generator has no Level up choice on any tab (" + rows + ")");
 			IslandGenSettings gs = GeneratorWindow.Current;
-			Check(ref ok, gs != null && gs.Levels, "choosing On sets the generator's setting");
 			GeneratorWindow.Close();
+			IslandGenSettings older = IslandGenSettings.FromText("Radius=40" + (char)10 + "Levels=True" + (char)10 + "Height=12");
+			Check(ref ok, older != null && Mathf.Approximately(older.Radius, 40f) && Mathf.Approximately(older.Height, 12f) && !older.ToText().Contains("Levels"), "an older preset with Levels=True still loads (the line passed by)");
 			if (gs != null)
 			{
 				gs.Radius = 40f; gs.Height = 12f; gs.ObjectDensity = 0.1f; gs.Hostiles = 1; gs.Seed = 777;
-				IslandFile made = IslandGenerator.CreateFile(gs, "cilevels_gen");
-				made.Save(IslandSpawner.PathFor("cilevels_gen"));
-				IslandFile loaded = IslandFile.Load(IslandSpawner.PathFor("cilevels_gen"));
-				Check(ref ok, PlayerLevels.IsOn(made.Props) && loaded != null && PlayerLevels.IsOn(loaded.Props), "an island file made with it keeps the rule after saving and loading");
-				File.Delete(IslandSpawner.PathFor("cilevels_gen"));
-				gs.Levels = false;
-				Check(ref ok, !IslandGenerator.CreateFile(gs, "cilevels_gen").Props.ContainsKey(IslandProps.Levels), "Off: no rule in the file");
-				// Generating in the editor gives the island the rule
-				DynamicIslands.currentIslandProps.Remove(IslandProps.Levels);
-				gs.Levels = true;
-				IslandGenerator.GenerateInEditor(gs);
-				EditorUI.RefreshIsland();
-				Check(ref ok, PlayerLevels.IsOn(DynamicIslands.currentIslandProps), "generating in the editor with On gives the island its rule");
-				CommandUndoRedo.UndoRedoManager.Undo();
+				Check(ref ok, !IslandGenerator.CreateFile(gs, "cilevels_gen").Props.ContainsKey(IslandProps.Levels), "a generated island has no Level up rule");
 			}
+			DynamicIslands.currentIslandProps[IslandProps.Levels] = "on";
+			EditorUI.RefreshIsland();
+			Check(ref ok, !PlayerLevels.On, "an older island's Level up rule in the editor doesn't turn the system on");
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			EditorUI.RefreshIsland();
@@ -130,7 +104,7 @@ namespace DynamicIslands
 
 		#region World
 
-		[ConsoleCommand(name: "CILevelWorld", docs: "Dev, in game (host): an island with the level up system and warthogs - it turns the system on, hits give their share of the monster's EXP (floating over it), a kill all of it, level up, the stats page (K), every stat on Raft's player, saving with the world, the host keeping other players' records")]
+		[ConsoleCommand(name: "CILevelWorld", docs: "Dev, in game (host): an island with warthogs (an older island's level rule doesn't turn the system on; the Levels command does), hits give their share of the monster's EXP (floating over it), a kill all of it, level up, the stats page (K), every stat on Raft's player, saving with the world, the host keeping other players' records")]
 		public static void LevelWorld()
 		{
 			StartTest(LevelWorldRoutine());
@@ -166,7 +140,7 @@ namespace DynamicIslands
 			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 6f, c.y + 4f), Props = P(ObjectProps.CreatureCount, "3", ObjectProps.CreatureDamage, "0") });
 			f.Objects.Add(new IslandObject { Name = "Creature_Chicken", Position = ground(c.x - 6f, c.y - 4f), Props = P(ObjectProps.CreatureCount, "1") });
-			f.Props[IslandProps.Levels] = "on";
+			f.Props[IslandProps.Levels] = "on"; // (an older island's rule: ignored now, the level up system is a world option)
 			f.Props[IslandProps.Title] = "Level Isle";
 			f.Save(IslandSpawner.PathFor(LevelIsland));
 
@@ -179,7 +153,11 @@ namespace DynamicIslands
 			IslandNetwork.Loopback = null;
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault(e => e.HostName == LevelIsland);
 			if (entry == null || entry.Root == null) { Fail("the level island did not spawn"); yield break; }
-			Check(ref ok, PlayerLevels.On && PlayerLevels.Mine != null && PlayerLevels.Mine.Level == 1, "the island turns the level up system on (level " + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Level : 0) + ")");
+			Check(ref ok, !PlayerLevels.On, "an older island with the Level up rule doesn't turn the system on");
+			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.Levels) sent.Add(m); };
+			PlayerLevels.SetEnabled(true);
+			IslandNetwork.Loopback = null;
+			Check(ref ok, PlayerLevels.On && PlayerLevels.Mine != null && PlayerLevels.Mine.Level == 1, "the world option (Levels command) turns the level up system on (level " + (PlayerLevels.Mine != null ? PlayerLevels.Mine.Level : 0) + ")");
 			Check(ref ok, sent.Any(m => m.Name == "on"), "the other players are told");
 			Check(ref ok, LevelHud.LastAnnounce != null && LevelHud.LastAnnounce.StartsWith("LEVEL UP SYSTEM"), "a banner says so: " + LevelHud.LastAnnounce);
 
@@ -537,7 +515,7 @@ namespace DynamicIslands
 			float step = f.TerrainSize.x / (res - 1);
 			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = new Vector3(c.x + 6f, f.Heights[Mathf.RoundToInt((c.y + 4f) / step), Mathf.RoundToInt((c.x + 6f) / step)] * f.TerrainSize.y, c.y + 4f), Props = P(ObjectProps.CreatureCount, "4", ObjectProps.CreatureDamage, "0") });
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			f.Save(IslandSpawner.PathFor(LevelMPIsland));
 			IslandWorldState.Entry old = IslandWorldState.Islands.FirstOrDefault(e => e.HostName == LevelMPIsland);
 			if (old != null) IslandWorldState.RemoveIds(new[] { old.Id }, true);
@@ -820,7 +798,7 @@ namespace DynamicIslands
 			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.RoundToInt(z / step), Mathf.RoundToInt(x / step)] * f.TerrainSize.y, z);
 			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 15f);
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 6f, c.y + 4f), Props = P(ObjectProps.CreatureCount, count.ToString(), ObjectProps.CreatureDamage, "0") });
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			f.Save(IslandSpawner.PathFor(LevelIsland));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos, CustomIslandSpawner.LandRadius(LevelIsland), 390f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
