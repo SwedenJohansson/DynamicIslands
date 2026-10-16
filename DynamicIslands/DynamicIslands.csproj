@@ -69,6 +69,7 @@
     <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DevTestsCamera.cs" />
+    <Compile Include="DevTestsCameraSettings.cs" />
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsUiFit.cs" />
     <Compile Include="DevTestsStory.cs" />
@@ -167,6 +168,8 @@
     <Compile Include="StormDays.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
+    <Compile Include="BossPhases.cs" />
+    <Compile Include="Survivors.cs" />
     <Compile Include="HeadStart.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
@@ -207,6 +210,7 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsChoiceTiming.cs" />
@@ -245,6 +249,8 @@
     <Compile Include="ZiplineEnds.cs" />
     <Compile Include="DevTestsBuriedTreasure.cs" />
     <Compile Include="BuriedTreasure.cs" />
+    <Compile Include="KeycardDoor.cs" />
+    <Compile Include="DevTestsRfKeycard.cs" />
     <Compile Include="DevTestsTreasureProbe.cs" />
     <Compile Include="DevTestsStoryPieces.cs" />
     <Compile Include="DevTestsStoryline.cs" />
@@ -262,6 +268,7 @@
     <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
     <Compile Include="DevTestsPlanOrder.cs" />
+    <Compile Include="DevTestsPlanProgress.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="DevTestsGapsA.cs" />
@@ -270,6 +277,7 @@
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
+    <Compile Include="CameraSettings.cs" />
     <Compile Include="EditorCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />

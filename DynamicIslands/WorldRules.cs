@@ -43,6 +43,12 @@ namespace DynamicIslands.Editor
 
 		public static void SaveDefault(string key, string value)
 		{
+			SaveDefaults(new Dictionary<string, string> { { key, value } });
+		}
+
+		/// <summary>Several last choices at once (one write of world_rules.txt): the other lines stay as they are.</summary>
+		public static void SaveDefaults(IDictionary<string, string> changes)
+		{
 			try
 			{
 				var values = new List<KeyValuePair<string, string>>();
@@ -52,12 +58,13 @@ namespace DynamicIslands.Editor
 						int eq = line.IndexOf('=');
 						if (line.StartsWith("#") || eq < 1) continue;
 						string k = line.Substring(0, eq).Trim();
-						if (!k.Equals(key, StringComparison.OrdinalIgnoreCase)) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
+						if (!changes.Keys.Any(c => c.Equals(k, StringComparison.OrdinalIgnoreCase))) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
 					}
-				values.Add(new KeyValuePair<string, string>(key, value));
+				values.AddRange(changes);
 				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)",
 					"# updatecheck=off: the main menu doesn't ask GitHub whether a newer Custom Islands is out",
-					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)" }
+					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)",
+					"# cameralook, cameraspeed, camerazoom, camerapan=1 (x0.1-10), cameradragup=down|up, camerawheel=normal|reversed: the editor camera (Defaults > Editor camera, or the editor's Camera button)" }
 					.Concat(values.Select(kv => kv.Key + "=" + kv.Value)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultPath + ": " + e.Message); }
@@ -72,6 +79,7 @@ namespace DynamicIslands.Editor
 		{
 			worldRegrow = -1;
 			if (!Raft_Network.IsHost) return;
+			Survivors.Reset();
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			bool newWorld = isNew;
@@ -90,12 +98,12 @@ namespace DynamicIslands.Editor
 				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
 				return true;
 			}
-			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value);
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value) || Survivors.ReadLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
-			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines());
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines()).Concat(Survivors.WriteLines());
 			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
 		}
 
@@ -124,14 +132,15 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
+		internal static bool HasState { get { return Survivors.HasState || MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
-		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data).</summary>
+		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data);
+		/// the rescued survivors (Names, RF3).</summary>
 		internal static IslandNetMessage Message()
 		{
-			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode() };
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData(), Name = BuildCostRefund.Encode(), Names = Survivors.Encode() };
 		}
 
 		internal static void Broadcast()
@@ -147,6 +156,7 @@ namespace DynamicIslands.Editor
 			// (the cost each block was placed at, AU33; a host with an older version: its blocks at its cost)
 			if (msg.Name != null) BuildCostRefund.Decode(msg.Name); else BuildCostRefund.OnCostRead(msg.Count);
 			HostSettingsFrom(msg.Data);
+			Survivors.FromHost(msg.Names);
 		}
 
 		/// <summary>Client: a host's world arrived; Raft's own rules until that host's come.</summary>
@@ -155,6 +165,7 @@ namespace DynamicIslands.Editor
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
 			BuildCostRefund.Reset(0);
+			Survivors.Reset();
 			hostKnown = false;
 			worldRegrow = -1;
 		}

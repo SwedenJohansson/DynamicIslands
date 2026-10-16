@@ -47,7 +47,7 @@ namespace DynamicIslands.Editor
 		public const string Name = "obj.name", Spin = "beh.spin", Bob = "beh.bob", BobTime = "beh.bobTime", Move = "beh.move", Turn = "beh.turn",
 			MoveTime = "beh.moveTime", MoveMode = "beh.moveMode", Hidden = "beh.hidden", Use = "beh.use", Collision = "col.mode";
 		public const string EventPrefix = "on.";
-		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser" };
+		public static readonly string[] ObjectEvents = { "use", "enter", "read", "open", "defeat", "laser", BossPhases.Event };
 		public static readonly string[] IslandEvents = { "arrive", "quest" };
 		public static readonly string[] Verbs = { "show", "hide", "toggle", "open", "close", "switch", "message", "give", "sound", "teleport", "signal", "journal", "wait", "character" };
 		public static readonly string[] SharedVerbs = { "show", "hide", "toggle", "open", "close", "switch", "signal", "journal" };
@@ -91,7 +91,12 @@ namespace DynamicIslands.Editor
 			var list = new List<KeyValuePair<string, string>>();
 			if (ContentCatalog.IsHelper(objectName)) return list;
 			if (objectName == ContentCatalog.TriggerZone) list.Add(new KeyValuePair<string, string>("enter", "a player walks into the zone"));
-			else if (ContentCatalog.IsCreature(objectName)) list.Add(new KeyValuePair<string, string>("defeat", "all its animals are defeated"));
+			else if (ContentCatalog.IsCreature(objectName))
+			{
+				list.Add(new KeyValuePair<string, string>("defeat", "all its animals are defeated"));
+				// (a boss phase, RF5: only for a creature that has one)
+				if (BossPhases.Has(p)) list.Add(new KeyValuePair<string, string>(BossPhases.Event, "its boss phase starts (" + BossPhases.Describe(p) + ")"));
+			}
 			else if (!ContentCatalog.IsZone(objectName))
 			{
 				if (ObjectProps.IsNote(objectName, p)) list.Add(new KeyValuePair<string, string>("read", "it is read (the first time)"));
@@ -456,6 +461,17 @@ namespace DynamicIslands.Editor
 			int h = 17;
 			foreach (char c in (name ?? "").Trim().ToLowerInvariant()) h = h * 31 + c;
 			return h;
+		}
+
+		/// <summary>Host: sends a signal from code (a boss phase, a rescued survivor), as the "signal" action does.</summary>
+		public static void SendSignal(IslandWorldState.Entry e, string name)
+		{
+			if (e == null || string.IsNullOrEmpty(name) || !Raft_Network.IsHost) return;
+			int key = SignalKey(name);
+			// (Active false, as clients get it through the "used" message: only its presence counts)
+			e.State[key] = new ObjectState { Active = false, Day = Today };
+			IslandNetwork.SendUsed(e.Id, key, Today);
+			Debug.Log("[CUSTOM ISLANDS] Signal '" + name + "' on '" + e.HostName + "'");
 		}
 
 		/// <summary>Whether the island has had this signal: under its key, or under the key it had before (not the one that was "arrive").</summary>

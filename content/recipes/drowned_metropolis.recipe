@@ -52,6 +52,9 @@ place Note_Board notice at -41 -33 ground yaw=290
 place RT_PlasticBoat - at -36 -25 ground yaw=120 tilt=12
 place TangaroaBench - at -47 -36 ground yaw=200
 place Zone_Trigger ferryzone at -48 -30 h=4
+# the Ironreef Mining Company's pump store (TODO 4c): its key is in the foreman's locker at Ironreef Caverns (met before
+# in both plans with this island; kept); nothing in the quest needs it
+place Loot_ChestSmall pumpstore at -44 -35.5 ground yaw=200
 scatter "Pickup_Landmark_Tree_Palm 2" 3 at -55 -32 r=9 seed=401
 scatter Bush2 4 at -50 -30 r=10 seed=402
 
@@ -158,6 +161,12 @@ loot vault Blueprint_BatteryAdvanced*1;Battery_Advanced*2;TitaniumIngot*3;Glass*
 prop vault loot.refill=0
 prop vault if.open=take|story:keycard|3
 prop vault else.open=message||The vault door has three card slots. All three must be filled.
+prop pumpstore obj.name=pumpstore
+note pumpstore Company pump store | The Ironreef Mining Company's pump store, padlocked: hoses, a pump's spare parts and the crew's last rations. A tag: "Meridian contract - key with the foreman at Ironreef."
+loot pumpstore MetalIngot*3;Bolt*4;Rope*3;Cooked_Mackerel*2
+prop pumpstore loot.refill=0
+prop pumpstore if.open=has|story:ironreef-key|1
+prop pumpstore else.open=message||A padlocked company box: IRONREEF MINING CO. - PUMP STORE. The key stayed with the foreman, at the Ironreef Caverns.
 prop vault tint.color=#b08a2a
 prop vault tint.amount=0.5
 
