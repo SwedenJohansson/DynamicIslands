@@ -1429,7 +1429,6 @@ namespace DynamicIslands.Editor
 			return lines;
 		}
 
-		/// <summary>Shows the page with this key on the paper (tests: as a click on it).</summary>
 		/// <summary>For tests (T8): shows a held story item, as a click on its tile does.</summary>
 		internal static bool ShowItemOf(string id)
 		{
@@ -1439,6 +1438,7 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Shows the page with this key on the paper (tests: as a click on it).</summary>
 		public static bool ShowKey(string key)
 		{
 			StoryBook.Page p = StoryBook.Pages.FirstOrDefault(x => x.Key == key);

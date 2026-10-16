@@ -24,9 +24,13 @@ namespace DynamicIslands
 		static IEnumerator T8ItemsRoutine()
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
-			if (player == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			bool ok = true;
 			yield return EnsureAlive();
+			// (a new world can be up a little before Raft counts the game scene as loaded - the journal closes itself until then - and
+			// before the mod notices the new world, which starts the story book afresh: wait for both first)
+			for (float t = 0f; t < 60f && !(LoadSceneManager.IsGameSceneLoaded && WorldDirector.WorldHandled); t += Time.unscaledDeltaTime) yield return null;
+			player = RAPI.GetLocalPlayer();
+			if (player == null || !Raft_Network.IsHost) { Fail("run in a world, as the host (player " + (player != null) + ", host " + Raft_Network.IsHost + ")"); yield break; }
+			bool ok = true;
 
 			// The definition line: the Raft item at the end; a line from before (a '|' in its description) reads as before
 			StoryItemDef d = StoryItemDef.Parse(T8Id + "|Old plank|" + T8Raft + "|A plank from the wreck|raft=" + T8Raft);
@@ -51,7 +55,7 @@ namespace DynamicIslands
 			// The journal: Take out on that item, not on the plain one
 			JournalWindow.Open();
 			yield return null; yield return null;
-			Check(ref ok, JournalWindow.ShowItemOf(T8Id), "the journal shows the item");
+			Check(ref ok, JournalWindow.ShowItemOf(T8Id), "the journal shows the item (open " + JournalWindow.IsOpen + ", held " + StoryBook.Items.Count(x => x.Def != null && x.Def.Id == T8Id) + " of " + StoryBook.Items.Count() + ")");
 			string label = JournalWindow.TakeOutLabel;
 			Check(ref ok, label != null && label.StartsWith("Take out"), "its Take out button shows (" + label + ")");
 			JournalWindow.ShowItemOf(T8Plain);

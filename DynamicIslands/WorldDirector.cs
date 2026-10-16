@@ -867,6 +867,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world in the game scene has been set up (a saved world's list read, or a new world started).</summary>
 		static bool worldHandled;
+		/// <summary>For tests: the world in the game scene has been set up (a new world's start resets the story book and the rest).</summary>
+		internal static bool WorldHandled { get { return worldHandled; } }
 		/// <summary>The game scene was there at the last tick.</summary>
 		static bool inWorld;
 
