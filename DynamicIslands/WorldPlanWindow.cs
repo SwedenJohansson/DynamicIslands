@@ -166,7 +166,7 @@ namespace DynamicIslands.Editor
 			if (!islandMode) { lastPlan = p.Name; EditorEntry.RememberPlan(p.Name); }
 			gameObject.SetActive(true);
 			transform.SetAsLastSibling();
-			titleText.text = islandMode ? "ISLAND RULES" : "WORLD PLANS";
+			titleText.text = islandMode ? "ISLAND RULES" : "WORLD PLAN";
 			planRow.gameObject.SetActive(!islandMode);
 			// (a plan opens on its Main story line - or on its other islands when it has only those)
 			tab = islandMode ? TabOther : p.Rules.Count > 0 && !p.Rules.Any(r => r.MainStory) ? TabOther : TabStory;
@@ -302,8 +302,8 @@ namespace DynamicIslands.Editor
 			RectTransform panel = UIKit.Panel(transform, "Panel", new RectOffset(16, 16, 14, 16), 8f);
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1200, 0));
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
-			titleText = UIKit.Label(head, "WORLD PLANS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
-			UIKit.Label(head, "Which islands a world gets, when and where. Choose a plan when creating a world (New Game) or with WorldPlan <name>", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			titleText = UIKit.Label(head, "WORLD PLAN", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Label(head, "Which of your islands come into a new world, when and where. Players choose a plan when they start a New Game.", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			helpButton = UIKit.Button(head, "Help", ShowHelp, "How this window works: the steps to make a plan, and the guide", 80, 26f, 13);
 			helpButton.name = "HelpButton";
 			UIKit.Primary(helpButton);
@@ -362,7 +362,7 @@ namespace DynamicIslands.Editor
 			fields.Add(descriptionField);
 			HelpMark(descriptionRow, HelpDescription);
 			// (how to read a card, once, above them)
-			rulesIntro = UIKit.Label(panel, "Each card is one rule and brings one island: <b>WHEN</b> something happens → <b>BRING</b> an island → <b>WHERE</b> it goes → what to <b>TELL</b> the players. " +
+			rulesIntro = UIKit.Label(panel, "Each card brings one island: <b>WHEN</b> something happens → <b>BRING</b> an island → <b>WHERE</b> it goes → what to <b>TELL</b> the players. " +
 				"Choose from the ▼ lists; the line in italics under each part says what the choice does.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "RulesIntro");
 			rulesIntro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(rulesIntro.gameObject, -1, 32);
