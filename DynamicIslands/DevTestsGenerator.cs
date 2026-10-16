@@ -710,9 +710,11 @@ namespace DynamicIslands
 		{
 			Button gen = FindButton("Generate");
 			if (gen == null) { Log("  (no Generate button)"); yield break; }
+			// (the last run's result stays until this run's Generate starts - after the buildings load, maybe much later)
+			string before = GeneratorWindow.LastResult;
 			gen.onClick.Invoke();
 			float until = Time.realtimeSinceStartup + seconds;
-			while (GeneratorWindow.LastResult == null && Time.realtimeSinceStartup < until) yield return null;
+			while ((GeneratorWindow.LastResult == null || ReferenceEquals(GeneratorWindow.LastResult, before)) && Time.realtimeSinceStartup < until) yield return null;
 		}
 
 		/// <summary>Which of Raft's islands a Raft small / large layout uses (for the log).</summary>
