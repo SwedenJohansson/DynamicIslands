@@ -27,7 +27,7 @@ read Keeper's note
 expect step 2
 # The code lock: a wrong code keeps it shut, the right one shows the strongbox
 read Sign: keypad code lock
-code keypad 1234
+code keypad 1234 wrong
 expect hidden strongbox
 code keypad 2741
 expect shown strongbox

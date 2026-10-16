@@ -140,7 +140,7 @@ namespace DynamicIslands
 							// (a copy left by an earlier run that stopped half way: removed first)
 							var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 							if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); Log("  (removed " + left.Count + " copy/copies of '" + island + "' left by an earlier run)"); yield return new WaitForSeconds(1f); }
-							Vector3? spot = ScSpot(island, 400f);
+							Vector3? spot = ScSpot(island, 400f, IslandSpawner.ElevationOf(island));  // (a flying island flies here too)
 							if (!spot.HasValue) { Fail("play " + name + ": no open sea for '" + island + "'"); yield break; }
 							yield return ScBring(island, spot.Value, made);
 							playEntry = made.LastOrDefault();
@@ -284,9 +284,12 @@ namespace DynamicIslands
 					}
 					case "code":
 					{
-						// (code <name> <digits>: the object's keypad code lock opened as a player does it - CodeLock)
-						string digits = t[t.Length - 1];
-						string what = string.Join(" ", t.Skip(1).Take(t.Length - 2).ToArray());
+						// (code <name> <digits> [wrong]: the object's keypad code lock opened as a player does it - CodeLock;
+						// "wrong": the digits must not open it)
+						bool wrong = t.Length > 3 && t[t.Length - 1] == "wrong";
+						int dn = wrong ? t.Length - 2 : t.Length - 1;
+						string digits = t[dn];
+						string what = string.Join(" ", t.Skip(1).Take(dn - 1).ToArray());
 						IslandObjectRef pad = ScObjOf(playEntry, what);
 						Check(ref ok, pad != null && CodeLock.HasCode(pad.Props), "object '" + what + "' with a keypad code");
 						if (pad == null || !CodeLock.HasCode(pad.Props)) break;
@@ -296,7 +299,8 @@ namespace DynamicIslands
 						foreach (char c in digits) CodeLock.Press(c.ToString());
 						CodeLock.Press("OK");
 						yield return new WaitForSeconds(1.2f);
-						Check(ref ok, !CodeLock.IsOpen && CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " opens '" + what + "'");
+						if (wrong) Check(ref ok, !CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " doesn't open '" + what + "'");
+						else Check(ref ok, !CodeLock.IsOpen && CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " opens '" + what + "'");
 						CodeLock.Close();
 						break;
 					}

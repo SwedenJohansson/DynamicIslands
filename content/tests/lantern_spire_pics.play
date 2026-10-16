@@ -1,10 +1,10 @@
-# Guide pictures of Lantern Spire (CIPlay lantern_spire_pics): Raft's camera, afternoon, calm; the island 60 m over the sea
+# Guide pictures of Lantern Spire (CIPlay lantern_spire_pics): Raft's camera, afternoon, calm; the island 60 m over the sea (heights count from its own water line, 60 m up)
 island Lantern Spire
 offset 0 0
 hour 14
 weather Calm
 at 0 -3
 wait 3
-picture lantern_spire_island 40 50 -48 0 58 0
-picture lantern_spire_below 30 2 -40 0 55 0
-picture lantern_spire_top 5 68 -9 -1 66 2
+picture lantern_spire_island 40 -10 -48 0 -2 0
+picture lantern_spire_below 30 -58 -40 0 -5 0
+picture lantern_spire_top 5 8 -9 -1 6 2
