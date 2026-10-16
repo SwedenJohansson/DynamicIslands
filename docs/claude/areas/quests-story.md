@@ -19,7 +19,8 @@ What players do on an island: quests, behaviours and events, trigger zones, note
 | `ReadyPieces.cs` | Default settings for Raft's doors, hatches, levers, lifts, cages, cameras, generators, radios, engine, and the puzzle pieces (mirrors, water wheels, pipes turn: `Turns(kind)`; wire connectors: `state||open` or take the cable, then open; claw, scales); a kind's signal is its name |
 | `CodeLock.cs`, `QuestItemPickups.cs` | Keypad lock (`lock.code`); Raft's quest item pickups give story items `raft-<type>` |
 | `QuestRewards.cs` | Each player's share of a quest's Raft-item reward |
-| `BuriedTreasure.cs`, `ZiplineEnds.cs` | Raft treasure points; zipline far end (`zip.to`); the tools each needs: `RaftFeatures.cs` (also the vines, dirt) |
+| `BuriedTreasure.cs`, `ZiplineEnds.cs` | Raft treasure points (extra loot `treasure.loot` given on pickup by a Pickup patch, once; story loot kept dug via ContentState key `KeepBase` 0xD0000+n); zipline far end (`zip.to`); the tools each needs: `RaftFeatures.cs` (also the vines, dirt) |
+| `KeycardDoor.cs` | Key/keycard door settings: the story check in `if.use`, used up = a `take` check instead of `has`; inspector card list; Check warns when no story item opens one |
 | `AmbienceZones.cs` | `AtmosphereZone`, `SoundZone`, `SoundLibrary` |
 
 ## Quests: how steps are defined

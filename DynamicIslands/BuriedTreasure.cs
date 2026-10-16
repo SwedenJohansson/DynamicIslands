@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using UnityEngine;
 
 namespace DynamicIslands.Editor
@@ -13,6 +14,8 @@ namespace DynamicIslands.Editor
 	/// shovel bring up the chest, and the chest gives Raft's treasure loot. Every machine makes the same points with the
 	/// same network indexes (from the island's id, above its pickups'), so digging and picking reach the other players.
 	/// Dug up = remembered like a picked pickup (its ordinal in the island's state) and back after the regrow days.
+	/// RF4: a treasure can carry extra loot of its own (treasure.loot), given to whoever picks up its chest, once. One that
+	/// holds a story item never comes back (KeepBase in the island's state, shared like a used loot crate).
 	/// </summary>
 	public class BuriedTreasure : MonoBehaviour
 	{
@@ -24,6 +27,15 @@ namespace DynamicIslands.Editor
 		public TreasurePoint Point;
 		/// <summary>Whether a point was made for it on this load (not: dug up before and not grown back).</summary>
 		public bool Made;
+		/// <summary>Extra loot of its own (treasure.loot), given with Raft's treasure loot when its chest is picked up.</summary>
+		public List<KeyValuePair<string, int>> Loot = new List<KeyValuePair<string, int>>();
+
+		/// <summary>Island state keys of treasures dug up for good (they held a story item): KeepBase + Number.
+		/// (after TraderRaft.KeyBase 0xC0000 + 0xFFFF)</summary>
+		public const int KeepBase = 0xD0000;
+
+		/// <summary>Holds a story item: dug up once for the whole crew, never grows back.</summary>
+		public bool HoldsStory { get { return Loot.Any(l => StoryItems.IsStory(l.Key)); } }
 
 		/// <summary>The network indexes of the island's n-th treasure: the point's and its chest's (the chest's low 16 bits are the state ordinal).</summary>
 		public static void Indexes(int islandId, int n, out uint point, out uint chest)
@@ -50,6 +62,7 @@ namespace DynamicIslands.Editor
 			{
 				ObjectState s;
 				if (e.State.TryGetValue(Ordinal(e.Id, b.Number), out s) && !s.Active) continue;
+				if (ContentState.IsUsed(e, KeepBase + b.Number)) continue;
 				uint point, chest;
 				Indexes(e.Id, b.Number, out point, out chest);
 				try
@@ -91,6 +104,46 @@ namespace DynamicIslands.Editor
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Removing buried treasure: " + ex.Message); }
 		}
 
+		/// <summary>Chests whose own loot this machine gave already (their network index).</summary>
+		static readonly HashSet<uint> given = new HashSet<uint>();
+
+		/// <summary>The local player picked something up: a treasure chest of ours gives its own loot (once), and one holding
+		/// a story item is marked as gone for good.</summary>
+		internal static void PickedUp(Network_Player player, PickupItem item)
+		{
+			if (player == null || !player.IsLocalPlayer || item == null) return;
+			PickupItem_Networked p = item.GetComponent<PickupItem_Networked>();
+			if (p == null) return;
+			BuriedTreasure b = OfChest(p.ObjectIndex);
+			if (b == null) return;
+			if (!given.Add(p.ObjectIndex)) return;
+			if (given.Count > 256) given.Clear();
+			if (b.HoldsStory) ContentState.MarkUsed(b.transform, KeepBase + b.Number);
+			if (b.Loot.Count == 0) return;
+			List<string> got = TriggerZone.Give(b.Loot);
+			Debug.Log("[CUSTOM ISLANDS] Buried treasure #" + p.ObjectIndex + " dug up: +" + string.Join(", ", got.ToArray()));
+			if (got.Count > 0) IslandInfo.Show("Buried treasure!", "", "Inside, besides Raft's treasure: " + string.Join(", ", got.ToArray()) + ".");
+		}
+
+		/// <summary>The loaded treasure whose chest has this network index (null: none of ours).</summary>
+		public static BuriedTreasure OfChest(uint chestIndex)
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e == null || e.Root == null) continue;
+				foreach (BuriedTreasure b in e.Root.GetComponentsInChildren<BuriedTreasure>(true))
+				{
+					uint point, chest;
+					Indexes(e.Id, b.Number, out point, out chest);
+					if (chest == chestIndex) return b;
+				}
+			}
+			return null;
+		}
+
+		/// <summary>Forgets which chests gave their loot (tests).</summary>
+		public static void ForgetGiven() { given.Clear(); }
+
 		static readonly FieldInfo pointsField = typeof(TreasurePointManager).GetField("treasurePoints", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
 		/// <summary>Every treasure point Raft's manager keeps.</summary>
@@ -107,6 +160,16 @@ namespace DynamicIslands.Editor
 			List<TreasurePoint> l;
 			if (parent == null) return new List<TreasurePoint>();
 			return d != null && d.TryGetValue(parent, out l) ? l.Where(p => p != null).ToList() : new List<TreasurePoint>();
+		}
+	}
+
+	[HarmonyPatch(typeof(Pickup), "AddItemToInventory")]
+	static class BuriedTreasurePickup
+	{
+		static void Postfix(Pickup __instance, PickupItem item)
+		{
+			try { BuriedTreasure.PickedUp(Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>(), item); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [treasure] " + e.Message); }
 		}
 	}
 }

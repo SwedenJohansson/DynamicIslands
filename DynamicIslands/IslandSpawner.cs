@@ -384,6 +384,7 @@ namespace DynamicIslands.Editor
 					bt.Number = treasure++;
 					int kind;
 					bt.Kind = int.TryParse(ObjectProps.Get(o.Props, ObjectProps.TreasureKind), out kind) ? kind : 0;
+					bt.Loot = ObjectProps.Loot(o.Props, ObjectProps.TreasureLoot);
 					return;
 				}
 				// Invisible walls and ramps: only their collision in a world

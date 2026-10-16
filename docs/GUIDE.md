@@ -576,6 +576,20 @@ chest, and the chest gives Raft's treasure loot. Once dug up it stays gone (also
 saving and loading) and is buried again after the island's regrow days. Nothing shows above the ground - players
 need the detector, so a note or a quest step can hint where to search.
 
+Select a buried treasure for its own settings: **Extra loot...** chooses items its chest gives **besides** Raft's
+treasure loot - Raft's items or the island's story items - once, to whoever picks the chest up (**None** takes them
+out again). Raft's shovel only digs where the detector has found the treasure, so without a detector players find
+nothing. A treasure that holds a **story item** never comes back once dug up: dug for one player, it is dug for the whole
+crew, and the story item goes to the crew.
+
+**Keycard doors.** Raft's card reader door (**PlantationDoor**, the Tangaroa card reader) and its other key doors
+(Utopia's entrance and hut doors, Varuna's garage, Temperance's reactor door, the padlocked door) are ready pieces:
+select one for its **Keycard door** (or **Key door**) settings. **Card** chooses the story item that opens it - one of
+the island's own story items or one of Raft's quest items (the keycards first); **None** lets anyone open it.
+**Card used up** takes the card when the door opens; not ticked, the crew keeps it for other doors. Without the card the
+door stays shut and says so; with it the reader beeps the card through (Raft's own sound) and the door goes, for every
+player and after saving and loading. **Check** warns about a key door that no story item opens.
+
 **Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
 looking at: **how many** (1-200, 8 at first), within a **radius** in metres (1-300, 15), and **keep** (0-30, 3) - not within that many metres of anything
 already on the island (its buildings, its quest's objects, its plants). **On land / Under water** says where they
@@ -727,6 +741,8 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     - **Mixed** - a bit of everything that suits the island's style;
     - **Castaway huts** - Raft's thatch walls and roof on Raft's foundations, a hammock and a chest inside;
     - **Wooden cabins** - the same in Raft's wooden walls and roof, with a bed, a chest and a cabin log;
+    - in both, now and then a thing or two to pick up lies on the floor beside the furniture (Raft's plastic or scrap,
+      coming back after a few days like Raft's own);
     - **Wrecks and landmarks** - Raft's own set pieces, on the land and in the water: a boat run aground on the beach
       or sunk 5-14 m down off the coast, a plane crashed on the land or lying on the sea floor, a small boat pulled up
       the beach, a van, a caravan, a shack, a statue on high ground, a rocket's debris, and structures of Raft's radio
@@ -1118,6 +1134,8 @@ entry is looked at before it goes in.
 ![The island library](images/library-window.jpg)
 *The island library: the islands tab with three installed and Palm Cove picked; its picture, description and Download.*
 
+- A picture on its way says **(loading)** beside its number, and one that can't be fetched says **(can't be loaded)**;
+  the space stays empty meanwhile, never showing the entry before's picture.
 - Every downloaded file is checked against the library's list (its size and a fingerprint); if one doesn't match,
   nothing is installed. A plan downloaded from the New Game box's **Get more plans...** is chosen there right away.
 - The library goes online only while this window is open, and sends nothing but the downloads - no account, no Steam id.
@@ -2096,7 +2114,10 @@ keys for your locks.
 order: Raft's story islands it keeps, each in its place with the blueprints and tools it gives, and each rule whose
 islands give one of Raft's story-island blueprints, a tool or a story item (a key, a keycard...), or have a lock or a
 feature that wants one. A lock whose item no island before it gives, and a main-quest need of a tool not given yet,
-are shown in yellow; an optional find needing a later tool is a muted line. Last, in yellow, come the blueprints the
+are shown in yellow; an optional find needing a later tool is a muted line. A lock whose item an island met before
+gives says where it was **kept from** (the crew keeps a story item that isn't used up, for later islands). A blueprint
+given **too early** - before the ones it builds on, like the engine controls before the motor wheel and steering
+wheel - is shown in yellow at its rule, with the stop that gives its bases. Last, in yellow, come the blueprints the
 plan never gives. **Show rule** goes to a rule's card. Use it to build a plan where the player unlocks more and more
 as they sail on.
 
@@ -2111,8 +2132,8 @@ What Check looks for:
 | **TELL** | | no message; found by Receiver but no Receiver name |
 | **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
-| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
-| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
+| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more; a blueprint given **before the ones it builds on** (the engine controls before the motor wheel and steering wheel, the fuel pipes before a fuel tank, the advanced biofuel extractor before the plain one, the water pipes before a water tank): players find it before they can use it - the fix gives Raft's own order |
+| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo); a keycard/key door that no story item opens (it opens for anyone) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
 | **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
 | **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
 | **Story items on two islands** | | one story item id given on two islands of the plan (two 'keycard's): the one found on either opens the other's locks too; give each island its own id |
@@ -3696,6 +3717,14 @@ What it shows: a story island's place taken by **two** islands in a row - Sundow
 Park, a rule of the plan itself ([7.4](#74-everything-a-rule-can-do)) - because nothing can come after Utopia, which
 ends Raft's story and never counts as done.
 
+**Keys kept for later islands.** In every plan, a lock on one island wants a story item found on an island met
+before, kept by the crew (none of them is needed by the main quest, and each lock says where its key is): in Raft 2,
+the Corps keycard, the bolt cutters and a radio part; in Raft Remade, Vasagatan's crowbar prises open a crate at
+Caravan Town's market; in The Long Voyage and The Abyss Expedition, the pump store key in Ironreef Caverns' foreman's
+locker opens the mining company's pump store on the Drowned Metropolis' ferry islet; in Silver Screen Seas, the chief
+steward's key ring from the Sunken Liner opens Pia's sea chest at The Arena. Every plan gives Raft's blueprints in
+Raft's order (Check and Progression, [7.5](#75-check-finding-and-fixing-problems)).
+
 ### 16.5 Where to look for...
 
 | To learn how to make... | Open |
@@ -3703,7 +3732,7 @@ ends Raft's story and never counts as done.
 | Ladders up a building or a rock | Signal Rock, Scrapyard Haven (its fortress), Wreckers' Cove (the lantern) |
 | A door, gate or bridge that opens (moves) | Shelter Atoll (the commander's door), Scrapyard Haven (the gate on a winch), Frost Hollow (the lab door), Caravan Town Remade (a bridge slid across by a winch), Tangaroa Remade (a shutter the generator slides aside), Temperance Remade (the reactor's inner doors), Utopia Remade (a gate with two locks), The Frontier (the hall's sliding doors) |
 | Something that opens only after something else (a **signal**) | Glacier Station (the reactor and its vault), Wreckers' Cove (the doused lantern and the hoard), Coral Observatory (the analyzer and the safe) |
-| Loose things to pick up inside houses (plastic, planks, scrap on the floors; they come back after a few days) | Halcyon Cove, The Frontier, Great Fen, The Safe Room, Trade Wind Archipelago and ten more of the library's islands: Raft's land pickups (`Pickup_Landmark_Plastic3_Land`, `..._Plank_Land`, `"..._Scrap 1_Land"`) placed with `drop` on a house's floor |
+| Loose things to pick up inside houses (plastic, planks, scrap on the floors; they come back after a few days) | Halcyon Cove, The Frontier, Great Fen, The Safe Room, Trade Wind Archipelago, Drowned Gate, Keeper's Light and eleven more of the library's islands, and the generator's huts and cabins: Raft's land pickups (`Pickup_Landmark_Plastic3_Land`, `..._Plank_Land`, `"..._Scrap 1_Land"`) placed with `drop` on a house's floor |
 | An object used with a story item (a key, a fuse, samples, a wrench) | Signal Rock (the coil), Stilt Hollow (the valve), Coral Observatory (three samples at once), The Abyss (the air valve), The Frontier (three valve wheels, the horn's reed, the seal press - each used up only once the quest has counted it) |
 | A lift or anything that moves the player | The Frontier (the Corps' lift: **teleport to** its other end), The Safe Room (a hatch down an escape shaft and back), Rookery Cliffs (Raft's own scissor lift, which carries you) |
 | Roads and terraces up a steep slope (the terrain brushes) | The Frontier (two farm terraces and three wide ramps up a 35 m mesa), The Iron Graveyard (a ramp cut up the mesa's cliff), The Safe Room (a driveway cut along a cliff face) |
@@ -3840,7 +3869,7 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town), its **dirt spots**, Tangaroa's banana trees, trees and strawberries, Caravan Town's acacias, Balboa's mushrooms and the finds on the story islands' land; a snowy pine to cut |
 | Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (23 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
 | Notes and notebook pages (68) | Notes ([5.2](#52-notes-and-signs)), the journal and Raft's notebook ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
-| Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door; **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
+| Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door (or use it up: **Card used up** in the inspector's Keycard door settings); **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
 | Animations, lights, sounds, particles, screen shake when something is used | Behaviours (move, turn, show/hide lamps), sound and atmosphere zones |
 | Trigger boxes | Trigger zones |
 | Enemy spawners that keep coming until a quest step (30) | Creature spots that come back, or a show action (an ambush) |
