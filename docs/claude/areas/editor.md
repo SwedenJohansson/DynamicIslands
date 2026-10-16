@@ -61,5 +61,6 @@ The in-game island editor: shape and paint the land, place and set up objects, i
 - `terraineditor.terrainSize` / `heightmapResolution` and `IslandGenerator.BuildArea` / `BuildResolution` hold the same numbers.
 - Test (`IslandTest`): a start must never stay `Busy` - a failure calls `Abort`, every step runs under `Guarded`. Raft's menu boxes are found again at each step (`LiveBox`, which mends links to destroyed boxes): after the editor, `LoadGameBox.versionControlBox` was a destroyed object.
 - C# 7.3 (`LangVersion` in `DynamicIslands.csproj`, which lists each `.cs` file for `compile.ps1`: add new ones there). `pack.ps1 -Release` leaves out `DevTests*.cs`.
+- A `UIKit.Help` "?" follows the two (explains Use in a plan vs Save as); `Use in a plan...` is 96 wide, text best-fit (1024 x 768 room).
 - The top bar shows `Use in a plan...` normally and `Back to the plan` while the island opened by `EditFromPlan` is the one open (`EditorUI.backToPlanButton`); opening another island ends it. A world plan needs no editor scene: it opens on the main menu (see world-plans.md).
 - Docs: README `The editor` and the source overview; `docs/GUIDE.md` chapter 4 (4.1 The screen to 4.9 Test); then the PDF is made again from `GUIDE.md`.

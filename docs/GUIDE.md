@@ -452,8 +452,9 @@ less after that. The editor opens on the sea with an empty build area.
   **Next in the Main story line** (the Receiver leads players to it after the story's last island, before Raft's ending
   Utopia) or **Another island (comes on its own)** (at the start, ahead of the raft; change WHEN and WHERE on its card).
   The plan opens on it. An island without a name must be saved first. If you came from a plan's **Edit island**, this
-  button reads **Back to the plan**: it saves the island and returns to the plan. **Main menu** returns to the start
-  window.
+  button reads **Back to the plan**: it saves the island and returns to the plan. Unlike **Save as**, which only saves
+  the island under a new name, it puts the island into a plan; the **?** after it explains this when you hover it.
+  **Main menu** returns to the start window.
 - **Tool panel** (left): the tab's tools in bordered groups. The lit button is the one in use.
 - **Status bar** (bottom): explains the tool, or the button under the mouse. On the right: where the camera is.
 - **The blue plane is the sea.** Everything below it is under water in the game.

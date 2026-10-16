@@ -16,7 +16,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
   world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
   (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
-  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**.
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**. A **?** after it
+  explains it, and how it differs from **Save as**.
 - **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
   with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
   the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with

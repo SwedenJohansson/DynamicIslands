@@ -186,13 +186,22 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch(lightText.rectTransform, 5, 22, 1, 1);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
 			// (TODO 5b: world plans are made from the start window on the main menu; here the island goes into one)
-			useInPlanButton = UIKit.Button(app, "Use in a plan...", EditorEntry.UseInPlan, "Add this island to a world plan: next in its Main story line, or as another island that comes on its own (the island is saved first). World plans themselves: Main menu > EDITOR > A world plan", 112);
+			useInPlanButton = UIKit.Button(app, "Use in a plan...", EditorEntry.UseInPlan, "Add this island to a world plan: next in its Main story line, or as another island that comes on its own (the island is saved first). World plans themselves: Main menu > EDITOR > A world plan", 96);
+			// (96 wide, the words shrink to fit: room for the "?" after it on a 1024 x 768 screen)
+			Text useText = UIKit.LabelOf(useInPlanButton);
+			useText.resizeTextForBestFit = true; useText.resizeTextMinSize = 9; useText.resizeTextMaxSize = 13;
 			backToPlanButton = UIKit.Button(app, "Back to the plan", EditorEntry.ToPlan, "Back to the world plan this island was opened from (the island is saved first)", 88);
 			// (88 wide, the words shrink to fit: at 112 the top bar was 1422 wide and pushed Main menu off a 1024 x 768 screen)
 			Text backText = UIKit.LabelOf(backToPlanButton);
 			backText.resizeTextForBestFit = true; backText.resizeTextMinSize = 9; backText.resizeTextMaxSize = 13;
 			UIKit.Primary(backToPlanButton);
 			RefreshBackToPlan();
+			UIKit.Help(app, "Save as only keeps the island under a new name. Use in a plan... puts it into a world plan - the list of islands a "
+				+ "world is made from - so players meet it while they play. It saves the island first (a new island needs a name from Save as), then "
+				+ "lists your plans or starts a new one, and asks how the island comes: next in the Main story line (the Receiver leads players "
+				+ "to it after the story's last island) or as another island that comes on its own (at the start, ahead of the raft; change WHEN "
+				+ "and WHERE on its card). The plan opens on it. Opened from a plan card's Edit island, this button is Back to the plan. "
+				+ "Plans themselves: Main menu > EDITOR > A world plan.");
 			UIKit.Button(app, "Main menu", EditorEntry.ToMainMenu,
 				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 86);
 		}
