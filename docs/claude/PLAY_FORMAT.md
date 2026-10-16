@@ -9,6 +9,9 @@ fights and checks the quest. A plan's test plays a world plan's story the same w
 - `CIPlay <name>` reads `Mods\DynamicIslands\recipes\<name>.play`: the same folder as recipes
   (`DevTests.RecipeFolder`), not a tests folder. Sources are in the repo at `content\tests\`; nothing copies them.
 - Host only, in a world (`LoadSceneManager.IsGameSceneLoaded`, `Raft_Network.IsHost`).
+- A flying island (`island` line, elevation over 3 m) is checked from below on arrival (`DevTests.FlyingOpenFromBelow`:
+  the underside meets the ground at every coast point; rays from below into the rock pass the underside). `CIFlyTest`
+  and `CIDeepWorld` (the flying generated `cideep`) run the same check.
 - Use a test world whose name starts with `CI ` (make one with `CINewWorld <name>` from the main menu). `plan` refuses any
   other world. In a `CI ` world, `island` also empties the player's inventory.
 - The file is expanded like a recipe (`ExpandRecipe`): `#` comments, `set`, `$name`, `{expr}`, `for`/`next`,

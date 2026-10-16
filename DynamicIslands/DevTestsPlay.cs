@@ -153,6 +153,12 @@ namespace DynamicIslands
 						// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
 						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
 						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
+						// (a flying island: seen from below, no sky between its underside and its ground - 10-16)
+						if (playEntry.Position.y > IslandSpawner.FlyingThreshold)
+						{
+							string open = FlyingOpenFromBelow(playEntry.Root);
+							Check(ref ok, open == null, "flying '" + island + "' seen from below: the underside meets the ground all round the coast" + (open != null ? " - " + open : ""));
+						}
 						break;
 					}
 					case "stand":

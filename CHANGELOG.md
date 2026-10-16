@@ -223,6 +223,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Flying islands seen from below:** the rocky underside now meets the ground all round the coast. Where the
+  coast ran diagonally it hung down too early, and from below the sky showed through zigzag gaps between the rock and
+  the ground (Lantern Spire showed it). Every flying island, made by hand or generated, at any height.
 - **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
   makes: on Randomize existing it left out the caves and buildings that are not made there.
 - **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
