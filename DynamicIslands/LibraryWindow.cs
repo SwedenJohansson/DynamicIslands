@@ -287,10 +287,19 @@ namespace DynamicIslands.Editor
 			string[] pics = selected.Info.pictures.Length > 0 ? selected.Info.pictures : (selected.Info.icon.Length > 0 ? new[] { selected.Info.icon } : new string[0]);
 			if (pics.Length == 0) { picture.texture = null; pictureCount.text = "no picture"; return; }
 			pictureIndex = (index % pics.Length + pics.Length) % pics.Length;
-			pictureCount.text = (pictureIndex + 1) + " / " + pics.Length;
+			string count = (pictureIndex + 1) + " / " + pics.Length;
 			LibraryEntry e = selected;
 			int want = pictureIndex;
-			DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(e, pics[pictureIndex], tex => { if (selected == e && pictureIndex == want) picture.texture = tex; }));
+			// (cleared first: while a slow download ran, the entry before's picture stayed up, so one island's picture
+			// showed on every entry clicked after it. A picture in memory comes back at once, before the first yield.)
+			picture.texture = null;
+			pictureCount.text = count + "  (loading)";
+			DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(e, pics[pictureIndex], tex =>
+			{
+				if (selected != e || pictureIndex != want) return;
+				picture.texture = tex;
+				pictureCount.text = tex != null ? count : count + "  (can't be loaded)";
+			}));
 		}
 
 		/// <summary>Download / Update (public for tests: clicking the button does this).</summary>

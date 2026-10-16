@@ -1121,6 +1121,8 @@ entry is looked at before it goes in.
 ![The island library](images/library-window.jpg)
 *The island library: the islands tab with three installed and Palm Cove picked; its picture, description and Download.*
 
+- A picture on its way says **(loading)** beside its number, and one that can't be fetched says **(can't be loaded)**;
+  the space stays empty meanwhile, never showing the entry before's picture.
 - Every downloaded file is checked against the library's list (its size and a fingerprint); if one doesn't match,
   nothing is installed. A plan downloaded from the New Game box's **Get more plans...** is chosen there right away.
 - The library goes online only while this window is open, and sends nothing but the downloads - no account, no Steam id.
