@@ -124,6 +124,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
   notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
   the window's edge.
+- **Island lists open at once:** **+ Add a saved island** and the other island lists in World plans open at
+  once with a "Loading islands... (n of N)" line, then list your islands. Their titles are kept in `summarycache.txt`,
+  so the next time takes no time (before, the list came only after every island's whole file was read).
 - **Upgrades stand out:** stronger tints (also on parts that have only a texture), a few slow glints in the upgrade's
   colour round a built, hand-held or worn upgrade, and hand-held ones a little bigger. Pale tints hardly showed before.
   The titanium spear is a light, almost white metal (its tint was only a little darker than the scrap spear).

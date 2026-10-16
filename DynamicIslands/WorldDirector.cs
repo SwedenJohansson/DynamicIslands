@@ -509,7 +509,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
-		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); rulesAt.Clear(); }
+		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); rulesAt.Clear(); IslandSummaries.Recheck(); }
 
 		#region Rules, kept on disk (ROADMAP P6)
 
@@ -643,7 +643,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Forgets one island file (it was just saved: read it again next time, not after the 2 s wait).</summary>
 		public static void ForgetFile(string path)
 		{
-			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); notBeforeAt.Remove(name); rulesAt.Remove(name); } catch { }
+			try { string name = System.IO.Path.GetFileNameWithoutExtension(path); cache.Remove(name); none.Remove(name); notBeforeAt.Remove(name); rulesAt.Remove(name); IslandSummaries.Forget(name); } catch { }
 		}
 
 		/// <summary>The island's own settings (empty if the file is missing).</summary>

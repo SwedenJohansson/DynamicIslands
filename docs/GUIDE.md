@@ -1483,7 +1483,7 @@ story each time it loads. A world opened without the mod has Raft's own notebook
 **New main story...** (World plans, next to Templates...) makes a main story step by step: Raft's story on or off,
 then your saved islands in the order players meet them - for each, where it sits in Raft's story, its tab colour and
 what gives the next coordinates. **Done: make the cards** makes the rule cards (every island on the Receiver, each after the one
-before; the first one's coordinates given at the start when Raft's story is off or it comes first) and runs Check. Change the cards as you like after.
+before; the first one's coordinates given at the start when Raft's story is off or it comes first) and runs Check. Change the cards as you like after. The list of your islands opens at once; with many islands it says "Loading islands..." for a moment the first time.
 
 **Preview notebook** (World plans, next to Check) shows the plan *as it is in the window* - saved or not - in Raft's
 own notebook: the mod goes to the test world (as Test in a world does), opens the book with every tab and page, and a

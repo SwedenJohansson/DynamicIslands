@@ -45,7 +45,7 @@ line per source file.
   `mods` folder (`-RaftDir`, default
   `D:\Games\SteamLibrary\steamapps\common\Raft`).
 - Player files live in `Mods\DynamicIslands\`: `<name>.island`, `plans\`,
-  `worlds\`, `maptypes\`, `recipes\`, `spawnpool.txt`, `library.txt`.
+  `worlds\`, `maptypes\`, `recipes\`, `spawnpool.txt`, `library.txt`, `summarycache.txt`.
 - Raft's log: `%USERPROFILE%\AppData\LocalLow\Redbeet Interactive\Raft\Player.log`.
 
 ## The library repo (SwedenJohansson/CustomIslands-Library)

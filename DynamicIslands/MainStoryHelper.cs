@@ -86,7 +86,10 @@ namespace DynamicIslands.Editor
 			summary = UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft);
 			UIKit.Size(summary.gameObject, -1, 18);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "+ Add a saved island", () => ChoiceWindow.Open("Next island of the main story", ChoiceWindow.Islands(), v => { Entries.Add(new Entry { Island = v }); Show(); }), "The next island players meet in the story", 190, 34f, 13).name = "Helper_Add";
+			// (opens at once and loads the islands in it, the button greyed meanwhile - it read every island's whole file first)
+			Button add = null;
+			add = UIKit.Button(buttons, "+ Add a saved island", () => ChoiceWindow.OpenIslands("Next island of the main story", ChoiceWindow.Islands, v => { Entries.Add(new Entry { Island = v }); Show(); }, null, add), "The next island players meet in the story", 190, 34f, 13);
+			add.name = "Helper_Add";
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			Button done = UIKit.Button(buttons, "Done: make the cards", () => Finish(), "Make the rule cards for these islands in World Plans", 200, 34f, 13);
 			done.name = "Helper_Done";

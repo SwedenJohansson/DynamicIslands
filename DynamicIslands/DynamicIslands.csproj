@@ -204,11 +204,13 @@
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
     <Compile Include="DevTestsHelp.cs" />
+    <Compile Include="DevTestsChoiceTiming.cs" />
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="DevTestsLevelsMore.cs" />
     <Compile Include="DevTestsUpgradeShots.cs" />
     <Compile Include="DevTestsMoreB.cs" />
     <Compile Include="ChoiceWindow.cs" />
+    <Compile Include="IslandSummaries.cs" />
     <Compile Include="WorldPlanWindow.cs" />
     <Compile Include="HelpLinks.cs" />
     <Compile Include="InfoWindow.cs" />

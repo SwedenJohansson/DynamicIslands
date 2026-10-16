@@ -155,6 +155,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `library\installed.json` | What each installed pack wrote, so it can be updated and removed |
 | `library.txt` | The island library window: `online = on/off` and the library's `address` (default: the shared Google Drive folder; a GitHub or other web address, or a local folder, also work) |
 | `library\cache\` | Pictures from the island library, kept so they needn't be downloaded again (safe to delete) |
+| `summarycache.txt` | The island lists' titles and quest steps, read again only when an island file changes (safe to delete: it is made again) |
 | `spawnpool.txt` | Which islands appear on their own while sailing, how often, and when harvested objects grow back. It's created on first use and explains itself. |
 | `worlds\<world id>.txt` | The custom islands in each world, with their harvested and picked-up objects, the world's plan and which of its rules have fired. |
 | `plans\*.plan` | World plans (text). `plans\samples.txt` lists the samples the mod has written once. The mod writes two lines itself: `id =` (which plan this is, whatever its name; none in library plans and plans from before 2026-10-10) and `modversion =` (the mod version that saved it: a plan from a newer version keeps the lines this version can't read) |
@@ -757,7 +758,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `Behaviours.cs`, `BehaviourWindow.cs` | Behaviours and events: names, movement, "players can use it", collision, "when … then" actions, "only if" checks, waits, the shared clock for movers, their shared state and network messages; the Behaviour & events window |
 | `StoryItems.cs`, `StoryItemsWindow.cs` | Story items (definitions, pictures), the crew's story book (items and journal pages: saved with the world, sent over the network), the journal window (J), the Story items window and the story sets |
 | `WorldDirector.cs` | Rules (`IntroRule`), world plans (`WorldPlan`), the host's world director (conditions, placement, announcements, saved state), and the patch that keeps Raft's own islands off custom ones |
-| `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker, and the plan and randomizer choices in Raft's New Game box |
+| `WorldPlanWindow.cs`, `ChoiceWindow.cs`, `NewWorldOptions.cs` | The world plan editor (also the island's rules) with templates, a list picker (a list with islands opens at once and loads them: `OpenIslands`), and the plan and randomizer choices in Raft's New Game box |
+| `IslandSummaries.cs` | What the island lists show of each saved island (title, author, quest steps), kept in `summarycache.txt` and read again only when a file changes |
 | `HelpLinks.cs`, `InfoWindow.cs` | Where help is: the guide (the PDF in the .rmod, or online), the Discord, GitHub issues, Raft's log folder; a message box (Report a problem, the Help of the World plans window) |
 | `WorldIslands.cs`, `IslandPickerWindow.cs` | The islands a world gets while sailing (the world file's `@islandsoff=`, the `WorldIslands` command) and the list with tick boxes in World settings |
 | `QuestBook.cs`, `QuestBookPreview.cs`, `MainStoryHelper.cs` | The main story in Raft's notebook (tabs, pages, ending), World Plans' Preview notebook, and New main story... |
