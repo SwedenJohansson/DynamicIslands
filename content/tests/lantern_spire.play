@@ -1,0 +1,18 @@
+# Play test of Lantern Spire (CIPlay lantern_spire, in a test world 'CI ...'): a flying island (Height 60 m). Points as
+# in its recipe: the flat top (5 m over the island's own water line, r 9 round 0 0); the lantern hut x -2.25..0.75,
+# z 1..4, open to the south; the height sign at 3 -3.
+island Lantern Spire
+offset 0 0
+expect step 0
+expect title The Light in the North
+wait 5
+# On the top (the player put there: in a world it is built up to from the raft)
+at 0 -3
+expect height 65
+zone summit
+expect step 1
+read Sign: a flying island
+expect step 2
+walk 0 -2 to -0.75 0 to -0.75 2.5 h=65.1 below=67
+open Sky keeper's chest
+expect done

@@ -282,6 +282,24 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(1.2f);
 						break;
 					}
+					case "code":
+					{
+						// (code <name> <digits>: the object's keypad code lock opened as a player does it - CodeLock)
+						string digits = t[t.Length - 1];
+						string what = string.Join(" ", t.Skip(1).Take(t.Length - 2).ToArray());
+						IslandObjectRef pad = ScObjOf(playEntry, what);
+						Check(ref ok, pad != null && CodeLock.HasCode(pad.Props), "object '" + what + "' with a keypad code");
+						if (pad == null || !CodeLock.HasCode(pad.Props)) break;
+						PutPlayerNear(pad.transform);
+						CodeLock.Use(playEntry, pad.Index, ObjectProps.Get(pad.Props, CodeLock.Code), pad.transform);
+						yield return new WaitForSeconds(0.6f);
+						foreach (char c in digits) CodeLock.Press(c.ToString());
+						CodeLock.Press("OK");
+						yield return new WaitForSeconds(1.2f);
+						Check(ref ok, !CodeLock.IsOpen && CodeLock.Unlocked(playEntry, pad.Index), "code " + digits + " opens '" + what + "'");
+						CodeLock.Close();
+						break;
+					}
 					case "kill":
 					{
 						string label = Rest(line, 1).Trim();
@@ -521,9 +539,17 @@ namespace DynamicIslands
 
 		static void PlayExpect(string[] t, string line, ref bool ok)
 		{
+			// (a last word quest=<k>: the island's further quest k, 2..9, as the recipe's quest2..quest9; else the main quest)
+			int qn = 0;
+			if (t.Length > 2 && t[t.Length - 1].StartsWith("quest=", StringComparison.OrdinalIgnoreCase))
+			{
+				qn = Mathf.Clamp((int)F(t[t.Length - 1].Substring(6)) - 1, 0, 8);
+				line = line.Substring(0, line.LastIndexOf(t[t.Length - 1])).TrimEnd();
+				t = t.Take(t.Length - 1).ToArray();
+			}
 			string what = t.Length > 1 ? t[1].ToLowerInvariant() : "";
-			IslandQuest q = QuestTracker.QuestOf(playEntry);
-			int step = QuestTracker.StepOf(playEntry);
+			IslandQuest q = QuestTracker.QuestOf(playEntry, qn);
+			int step = QuestTracker.StepOf(playEntry, qn);
 			switch (what)
 			{
 				case "step":

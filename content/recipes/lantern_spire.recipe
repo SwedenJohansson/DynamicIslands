@@ -1,0 +1,70 @@
+# Lantern Spire - a new island of the library, small: an island to learn from (GUIDE chapter 17)
+# A small rocky island that floats 60 m over the sea (the Island tab's Height: Flying), a lantern hut on its flat top
+# with the sky keeper's chest. The island the Lockkeeper's Isle brings when its main quest is done (its "Islands it
+# brings" rule) - and on its own an example of a flying island: players build stairs or pillars up from the raft.
+# Quest "The Light in the North" (3 steps): reach the top, read the sign by the hut, open the sky keeper's chest.
+#
+# Built by the recipe player (CIRecipe lantern_spire) through the editor's own operations. Points (metres over the
+# island's own water line; in the world it all floats 60 m higher): the flat top (5 m, r 9 round 0 0); the lantern hut
+# x -2.25..0.75, z 1..4, open to the south; the height sign at 3 -3.
+include lib_huts
+new
+gen Trees=0.05 Bushes=0.2 Rocks=0.4 Harvest=0.05 BeachThings=0
+gen Seed=9172 Radius=22 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=3 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.5
+gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
+generate
+elevation 60
+
+# ===== Terrain: the flat top at 5 m =====================================================================================
+brush flatten at 0 0 r=9 s=20 frames=80 h=5
+brush flatten at -4 4 r=5 s=20 frames=40 h=5
+brush grass at 0 0 r=8 s=20 frames=20
+clear at 0 0 r=10
+
+# ===== The lantern hut: three walls, the lantern on its table, the sky keeper's chest ==================================
+push at -2.25 1 h=5
+call floors w=2 d=2 y=0.1
+place Block_Wall_Wood - at 0.75 3 y=0.1
+place Block_Wall_Wood - at 2.25 3 y=0.1
+place Block_Wall_Wood - at 0 0.75 y=0.1 yaw=90
+place Block_Wall_Wood - at 0 2.25 y=0.1 yaw=90
+place Block_Wall_Wood - at 3 0.75 y=0.1 yaw=90
+place Block_Wall_Wood - at 3 2.25 y=0.1 yaw=90
+call corners w=2 d=2
+roof 2 2 at 0 0 y=0.1 wood
+place Placeable_Table_Basic - at 0.9 2.3 y=0.1 sit
+place Placeable_Lantern_Metal - at 0.9 2.3 y=1.1 drop
+place Loot_Chest skychest at 2.2 2.4 y=0.1 sit yaw=180
+pop
+place Placeable_Lantern_FireBasket - at 4 3 h=5 sit
+place Note_Sign sign_height at 3 -3 h=5 sit yaw=180
+place Zone_Trigger summit at 0 0 h=6
+
+# --- Things to gather on the top: a few flowers and a berry bush -----------------------------------------------------
+scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=8 seed=7201 free=2
+scatter "Pickup_Landmark_BerryBush" 1 at 0 0 r=8 seed=7202 free=2
+
+# ===== Settings, notes, quest (3 steps) =================================================================================
+info title=Lantern Spire
+info author=Custom Islands
+info description=An island to learn from: a small rock that floats 60 m over the sea, a lantern hut on top. Build your way up from the raft. The Lockkeeper's Isle brings it when its main quest is done.
+island on.arrive=message||High over the water, a rock hangs in the air - and on its top, a lantern burns in a little hut.
+
+note sign_height Sign: a flying island | This island floats 60 m over the sea. Nothing leads up: build stairs or pillars from your raft.\n\nIn the editor: Island tab - Height: Flying (60 m). Sunken puts an island under water; At sea is the normal height. The editor shows the sea where the island will have it.\n\nThis island also comes by itself: the Lockkeeper's Isle brings it when its main quest is done (its Islands it brings rule).
+note skychest Sky keeper's chest | The sky keeper's chest: lamp oil, a spyglass's broken lens - and a map with a ring drawn round a low green island in the south.
+loot skychest Plank*8;Scrap*4;TradeToken*6;Placeable_Lantern_Metal*1
+prop skychest loot.refill=0
+
+prop summit zone.id=summit
+prop summit zone.radius=8
+prop summit zone.message=The top of Lantern Spire. Far below, the sea - and your raft, very small.
+
+quest title=The Light in the North
+quest intro=An island in the air, a lantern burning on its top. Get up there.
+step reach|summit|1|Climb up to the top of Lantern Spire
+step read|Sign: a flying island|1|Read the sign by the lantern hut
+step open|Sky keeper's chest|1|Open the sky keeper's chest in the hut
+quest done=You stood where the lockkeeper's light burns. The sea is a long way down.
+quest reward=Plank*6;Rope*2
+
+save Lantern Spire

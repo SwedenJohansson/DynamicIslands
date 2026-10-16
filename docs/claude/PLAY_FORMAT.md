@@ -58,6 +58,7 @@ expect message isn't whole
 | `reach` | `<title>` | That chest is within 2.5 m of the player's eye with nothing solid between (`ScReach`). The player is not moved. |
 | `openat` | `<x> <z>` | Opens the nearest chest; it must be within 4 m of the point. |
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). |
+| `code` | `<name> <digits>` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`). |
 | `catch` | `<label> [n]` | Catches n (default 1) of the island's own spawner animals (`ScCarryHome`). |
 | `plan` | `<plan name>` or `end` | Clean story slate (`PlanCleanSlate`), then the world gets the plan (`ScSetPlan`); `end` puts the world's story back to Raft's. |
@@ -79,7 +80,7 @@ expect message isn't whole
 
 | Expect | Passes when |
 |---|---|
-| `expect step <n>` | The island's quest is at step n (0 = the first). |
+| `expect step <n>` | The island's quest is at step n (0 = the first). `expect step`, `title` and `done` take a last word `quest=<k>` (2..9) for the island's further quest k (the recipe's `quest2`..`quest9`). |
 | `expect title <text>` | The quest's title is exactly the text (case counts). |
 | `expect done` | The quest is done. |
 | `expect story <id> <n>` | The crew holds exactly n of that story item. |
