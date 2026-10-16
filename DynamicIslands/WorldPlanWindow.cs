@@ -354,7 +354,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(buttons, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, 34f, 13);
 			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
 			HelpMark(buttons, HelpCheck);
-			progressButton = UIKit.Button(buttons, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in its order: which rule's islands give which of Raft's blueprints and story items, what their locks want, and what is never given", 120, 34f, 13);
+			progressButton = UIKit.Button(buttons, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in play order: Raft's story islands it keeps and which rule's islands give which of Raft's blueprints, story items and tools, what their locks and features want, and what is never given", 120, 34f, 13);
 			progressButton.name = "Button_Progression";
 			previewButton = UIKit.Button(buttons, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, 34f, 13);
 			previewButton.name = "Button_PreviewNotebook";

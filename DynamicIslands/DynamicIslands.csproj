@@ -177,6 +177,7 @@
     <Compile Include="PlanChecker.cs" />
     <Compile Include="PlanCheckWindow.cs" />
     <Compile Include="PlanProgressWindow.cs" />
+    <Compile Include="RaftFeatures.cs" />
     <Compile Include="DevTestsLeftovers.cs" />
     <Compile Include="EditorLighting.cs" />
     <Compile Include="RaftSkySea.cs" />
@@ -249,6 +250,7 @@
     <Compile Include="DevTestsScatter.cs" />
     <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
+    <Compile Include="DevTestsPlanOrder.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="DevTestsGapsA.cs" />
