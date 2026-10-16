@@ -106,7 +106,13 @@ place Placeable_Lantern_FireBasket - at 20.4 -1.6 ground
 place Placeable_Lantern_FireBasket - at 33.2 7 ground
 place Zone_Atmosphere embers at 23.5 3 h=5
 # (two cages by the fire; in the open one the botanist's journal)
-place UT_DogCage_Medium02 - at 24.6 6.8 ground yaw=180
+place UT_DogCage_Medium02 shutcage at 24.6 6.8 ground yaw=180
+# (the chained one is scenery: nothing inside, and Raft's bolt cutters come only on islands met later in a plan - as a
+# ready piece it would be a lock players meet before its key, TODO 4c)
+prop shutcage beh.use=
+prop shutcage if.use=
+prop shutcage else.use=
+prop shutcage on.use=
 place UT_DogCage_Medium02 opencage at 21.4 6.8 ground yaw=150
 # (the dog cage as a ready piece is chained shut and wants Raft's bolt cutters: this is the open one, the journal inside - the ready piece's settings taken off)
 prop opencage beh.use=

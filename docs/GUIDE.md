@@ -174,7 +174,7 @@ search box at the top shows only the plans whose name, description or islands ho
 lists every rule of the plan in words.
 
 ![The plan picker](images/plan-picker.jpg)
-*The plan picker: Far Horizons selected, with a map of its first island and the four islands it brings.*
+*The plan picker: a plan selected, with a map of its first island and the islands it brings.*
 
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
 (in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
@@ -297,7 +297,10 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   again, as in Raft's air pockets under Caravan Town.
 - **Creatures:** Raft's own animals at the island's creature spots, with the builder's toughness, size and colour.
   Warthogs and bears fight you; chickens, goats and llamas can be caught with Raft's net launcher and kept on the raft.
-  Killed and caught animals come back after the regrow days unless the builder said never.
+  Killed and caught animals come back after the regrow days unless the builder said never. A **boss** may have a
+  second phase: at part of its health it roars, calls more animals and gets faster.
+- **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
+  survivor thanks you in a speech bubble, and from then on stands on your raft.
 
 ![Reading a note](images/world-note.jpg)
 *A note found on an island ("Warthogs live here. Bring a spear."), its title in Raft's lettering and its text on Raft's light tan, as the journal shows its pages. Press E, Tab or Esc to close it.*
@@ -466,14 +469,22 @@ less after that. The editor opens on the sea with an empty build area.
 
 | Do this | To |
 |---|---|
-| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
+| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene; the settings can turn that round); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
 | **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |
 | **Alt + left-drag** | orbit around the selection, or the middle of the view |
 | **Wheel** | zoom towards what is under the cursor |
+| **Alt + right-drag** | zoom in (drag right or up) and out (left or down), towards the middle of the view |
 | **F** | frame the selection, or the whole island |
 | **Shift** | three times faster |
+
+**The camera's settings.** **Camera...** at the right of the status bar opens **EDITOR CAMERA**: the controls above,
+and this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
+**Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look down / up**
+(click to switch: up looks up, as in most games) and **Wheel up: zoom in / out** (the wheel turned round). **Mod's own**
+puts them all back; **Close** or Esc closes the window. They are saved a moment after a change, in `world_rules.txt`
+([section 10](#10-settings-files)), and are also in **Defaults... > Editor camera (this PC)**.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z); save with **Ctrl+S**, open with **Ctrl+O**.
 
@@ -575,6 +586,20 @@ makes the line from the object to there (the editor still shows Raft's own line)
 chest, and the chest gives Raft's treasure loot. Once dug up it stays gone (also for the other players, and after
 saving and loading) and is buried again after the island's regrow days. Nothing shows above the ground - players
 need the detector, so a note or a quest step can hint where to search.
+
+Select a buried treasure for its own settings: **Extra loot...** chooses items its chest gives **besides** Raft's
+treasure loot - Raft's items or the island's story items - once, to whoever picks the chest up (**None** takes them
+out again). Raft's shovel only digs where the detector has found the treasure, so without a detector players find
+nothing. A treasure that holds a **story item** never comes back once dug up: dug for one player, it is dug for the whole
+crew, and the story item goes to the crew.
+
+**Keycard doors.** Raft's card reader door (**PlantationDoor**, the Tangaroa card reader) and its other key doors
+(Utopia's entrance and hut doors, Varuna's garage, Temperance's reactor door, the padlocked door) are ready pieces:
+select one for its **Keycard door** (or **Key door**) settings. **Card** chooses the story item that opens it - one of
+the island's own story items or one of Raft's quest items (the keycards first); **None** lets anyone open it.
+**Card used up** takes the card when the door opens; not ticked, the crew keeps it for other doors. Without the card the
+door stays shut and says so; with it the reader beeps the card through (Raft's own sound) and the door goes, for every
+player and after saving and loading. **Check** warns about a key door that no story item opens.
 
 **Scatter** (the row under the browser) spreads many of the **last object you picked** round the point you are
 looking at: **how many** (1-200, 8 at first), within a **radius** in metres (1-300, 15), and **keep** (0-30, 3) - not within that many metres of anything
@@ -898,7 +923,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Atoll | A ring of land around a shallow lagoon |
 | Archipelago | Several islets; a castaway's note and three caches |
 | Sea stacks | Steep rock pillars; a chest on top of the tallest (build your way up) |
-| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
+| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one; at half health it roars, calls 2 more and gets faster: a [boss phase](#51-creatures)). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
 | Volcano, swamp, frozen spire | A tall volcano with embers; low land with pools and mist; a snowy peak with a cache on top |
 | Treasure island | A map in a bottle on the beach leads to the X and a treasure chest |
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
@@ -1052,7 +1077,7 @@ folder**), click **Import...** in the Islands window or the World plan window, a
 holds, who made it and its version. **Install** puts it in place:
 - **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
   as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
-  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)` - and
+  file) is shared, not copied. A plan whose name you already use gets the author added: `My Voyage (Author)` - and
   your very own plan (the same file) stays yours: removing the pack later leaves it.
 - A plan may bring only new islands of map types: such a pack holds no island files at all, and that's fine.
 - **Story items with the same id:** a world's crew holds one of each story item id for all its islands. If the pack's
@@ -1207,12 +1232,23 @@ turtle, stingray, dolphin, whale.
 
 - **Animals here:** 1 to 8 (a herd).
 - **Easy / Normal / Hard / Boss**, or set **health** (up to ×12, for bosses), **damage** (up to ×4), **speed** and **size** yourself.
+  **Size** goes from ×0.5 to ×3 of Raft's own animal (the marker in the editor shows it): its body and hit box grow
+  with it, its health doesn't - give a big boss more **health** too. Players in multiplayer see the same size.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Colour** (every object): **None** keeps its own colours; the nine swatches tint it (a creature spot: every animal of
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
   the tint.
+- **Boss phase** (hostile animals): click **none** to give the spot a second phase. Once per fight, when one of its
+  animals falls to **Starts at health** (10 to 90 %, 50 % at first), it **calls** up to 6 more creatures (of **its own**
+  kind or another hostile one) around itself, gets faster (**Speed then**, ×1.3 at first), sends a **signal**
+  ("phase" unless you name one, for world plans and **signal** checks, see [6.2](#62-behaviour-and-events)) and runs
+  its **phase** event (a message, a sound...). A world saved mid-fight comes back in the second phase, without calling
+  again; once all its animals are beaten the next fight (after the regrow days) has its phase again. Under a harder
+  monster difficulty the phase comes at the same share of health, after more hits. The **Boss** map type gives its
+  beast a phase that calls 2 more and says "The beast roars in fury". Everyone sees it: the host runs it, and hits from
+  any player count.
 
 **Angler fish swim rounds** around their spot, through the open water near it (in Raft they follow a route of their
 island's; here the mod lays one out in a ring around the spot, clear of the ground and of objects). Give them room:
@@ -1410,6 +1446,14 @@ only for someone who has it), or **a locked chest** whose key is hidden in drift
 
 ![Story items and story sets](images/editor-story-items.jpg)
 *The Story items window: the island's story items ("Old key") and the four story sets.*
+
+**Survivors to rescue.** **Loot & chests** has **Survivor in a cage** (Raft's shark cage with one of Raft's
+characters inside). In its **Survivor** group set the **Name**, who it **Looks like** (a Raft character, or any by its
+id), **What the survivor says when freed**, the **Key item** (a story item, used up; empty: not locked), a **Survivor
+id** and a **Signal** ("survivor" unless you name one). A player whose crew holds the key presses **E** at the cage:
+the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
+stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
+islands and after a reload, so two cages with one id free one survivor.
 
 ### 6.4 Islands that bring islands
 
@@ -1635,8 +1679,7 @@ When you install a plan from the island library, its islands also get a `<island
 
 **To make an island a single island**, use it in no plan - or save a copy under another name and use the copy in the
 plan. **Plans that come with the mod:** Random islands and No custom islands
-([7.1](#71-the-plans-that-come-with-the-mod)); from the library First Voyage, Far Horizons and The Castaway's Trail;
-and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
+([7.1](#71-the-plans-that-come-with-the-mod)); and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
 Seas ([16.4](#164-the-world-plans)).
 
 #### Random islands, in detail
@@ -2095,7 +2138,10 @@ keys for your locks.
 order: Raft's story islands it keeps, each in its place with the blueprints and tools it gives, and each rule whose
 islands give one of Raft's story-island blueprints, a tool or a story item (a key, a keycard...), or have a lock or a
 feature that wants one. A lock whose item no island before it gives, and a main-quest need of a tool not given yet,
-are shown in yellow; an optional find needing a later tool is a muted line. Last, in yellow, come the blueprints the
+are shown in yellow; an optional find needing a later tool is a muted line. A lock whose item an island met before
+gives says where it was **kept from** (the crew keeps a story item that isn't used up, for later islands). A blueprint
+given **too early** - before the ones it builds on, like the engine controls before the motor wheel and steering
+wheel - is shown in yellow at its rule, with the stop that gives its bases. Last, in yellow, come the blueprints the
 plan never gives. **Show rule** goes to a rule's card. Use it to build a plan where the player unlocks more and more
 as they sail on.
 
@@ -2110,8 +2156,8 @@ What Check looks for:
 | **TELL** | | no message; found by Receiver but no Receiver name |
 | **STORY** | its "next coordinates when" can't happen (as WHEN above, also a note number the island hasn't); after Utopia while Utopia ends the story (it never counts as done); a **main story island not on the Receiver** (it has no coordinates) | after an island that isn't in the story; Raft's story order and missing blueprints; **notebook:** a main story island without notes, a note over 1100 letters, a story item without a picture, a long tab title |
 | **The plan** | no rules, random islands off and Raft's story off (a world gets nothing); an island's own rules using the story or the Receiver | nothing comes by itself (every rule waits for another island) |
-| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more |
-| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
+| **Raft's blueprints** | | a blueprint that lies on one of Raft's story islands (the steering wheel, the engine's parts, the machete, the electric purifier, the titanium tools... 23 in all) that the plan **never gives** - its story island left out or replaced, and none of the plan's islands giving it as a reward, in a chest or from a note: the player could never build it. A tip lists which of the plan's islands give which blueprints, in the plan's order - a world plan is an adventure where the player unlocks more and more; a blueprint given **before the ones it builds on** (the engine controls before the motor wheel and steering wheel, the fuel pipes before a fuel tank, the advanced biofuel extractor before the plain one, the water pipes before a water tank): players find it before they can use it - the fix gives Raft's own order |
+| **Quest traps** | | a later step's chest or animals there from the start (not "Hidden until shown"); story items given again (a zone that fires again, a chest that fills up, animals that come back); show/hide or open/close in an event that happens again (it flips back); has / uses up Raft items on the quest-done or a defeat event (they fire on the host: left out); "give items" on a note (only the first reader); a story item used (a quest step, a check, a chest, an action) that isn't in the island's Story items list (deleted, or a typo); a keycard/key door that no story item opens (it opens for anyone) - each with its fix ([12.4](#124-making-quests-and-plans-that-work)) |
 | **Story items in order** | | an island with a lock (a keycard door, a locked chest...) that wants a story item - one of Raft's quest items like the Tangaroa keycard, or the island's own - which no island of the plan gives, or only an island met later in play order: players reach the lock without the key. A lock that opens in more than one way and can open by a signal another piece on its island sends (a ready radio on an island with a generator, which runs it without the battery part) doesn't count |
 | **Tools** | | a step of an island's main quest that needs one of Raft's tools (vines: the machete; buried treasure: the metal detector and a shovel; a zipline: the zipline tool) which no island met before it gives, in play order - in the story chain the story stops there. Optional finds needing a later tool are only listed in Progression |
 | **Story items on two islands** | | one story item id given on two islands of the plan (two 'keycard's): the one found on either opens the other's locks too; give each island its own id |
@@ -2680,7 +2726,11 @@ opens the list:
   and style (tropical, snowy, desert, forest or volcanic), sometimes flying. Each one is saved as a `gen-<style>-<seed>.island`
   file and stays in that world (Tidy up moves unused ones away). Ticked, they join the pool next to your single islands and the
   map-type rows; unticked, only islands you made or downloaded and the map-type kinds come. How often they are picked is
-  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)). Hover the row for this text in the game;
+  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)): by default one comes as often as any one island of
+  the list, whenever a list island is due (after every 3-6 of Raft's islands, the span under the button). The files are in
+  `Mods\DynamicIslands`. **To keep one you liked:** EDITOR > An island > **Open an island...** lists them (marked "made by
+  the generator"), as do the editor's **Open** and **My islands...** (Generated); open it and **Save as** a name of your
+  own - then it is your island, in this list by its name. The **?** at the right end of the row says all this in the game;
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
   shown, for example all your test islands at once.
@@ -2813,7 +2863,8 @@ get the settings they share at once.
 | **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
-| **Mod's own** | Click it twice: every setting in the window, the keys J and K too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
+| **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look down / up** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
+| **Mod's own** | Click it twice: every setting in the window, the keys J and K and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
 | **Close** | Closes the window (Esc does too) |
 
 **`spawnpool.txt`** (islands that appear on their own; the host's counts):
@@ -3387,7 +3438,7 @@ or library entry the message names, or ask the player who made the world to expo
 worlds kept their own plan, the plan file itself must be on the host's PC (see the table in
 [section 8](#who-needs-what-every-case)).
 
-**An installed island has an odd name like "Harbor (First Voyage)".** You had a different island called "Harbor", so
+**An installed island has an odd name like "Harbor (My Voyage)".** You had a different island called "Harbor", so
 the pack's was installed under that name instead of replacing yours.
 
 **A pack won't install.** The Import window says why: it may be made for a newer version of the mod, broken, or not an
@@ -3695,6 +3746,14 @@ What it shows: a story island's place taken by **two** islands in a row - Sundow
 Park, a rule of the plan itself ([7.4](#74-everything-a-rule-can-do)) - because nothing can come after Utopia, which
 ends Raft's story and never counts as done.
 
+**Keys kept for later islands.** In every plan, a lock on one island wants a story item found on an island met
+before, kept by the crew (none of them is needed by the main quest, and each lock says where its key is): in Raft 2,
+the Corps keycard, the bolt cutters and a radio part; in Raft Remade, Vasagatan's crowbar prises open a crate at
+Caravan Town's market; in The Long Voyage and The Abyss Expedition, the pump store key in Ironreef Caverns' foreman's
+locker opens the mining company's pump store on the Drowned Metropolis' ferry islet; in Silver Screen Seas, the chief
+steward's key ring from the Sunken Liner opens Pia's sea chest at The Arena. Every plan gives Raft's blueprints in
+Raft's order (Check and Progression, [7.5](#75-check-finding-and-fixing-problems)).
+
 ### 16.5 Where to look for...
 
 | To learn how to make... | Open |
@@ -3839,7 +3898,7 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 | Things to pick up, harvest, cut and dig (460 pickups) | **Things to gather** (chapter 4), Raft's own, working as there - with Raft's **wild beehive** (Balboa, Caravan Town), its **dirt spots**, Tangaroa's banana trees, trees and strawberries, Caravan Town's acacias, Balboa's mushrooms and the finds on the story islands' land; a snowy pine to cut |
 | Quest items (keys, keycards, tokens, tapes, parts: 319 pickups) | Raft's **quest item pickups** in the object list (23 of them: search "QuestItemPickup"); picked up with the interact key, the crew gets Raft's quest item as a story item (`story:raft-<type>`, Raft's name and picture), for checks and chests on any island of the world |
 | Notes and notebook pages (68) | Notes ([5.2](#52-notes-and-signs)), the journal and Raft's notebook ([6.5](#65-your-islands-in-rafts-story-the-receiver)) |
-| Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door; **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
+| Buttons, levers, crank wheels, hatches, doors that open with a key or keycard (about 150 interactables) | Any object with **Behaviour & events**: players can use it, *only if* the player has an item (kept, or used up like a key), then open, move, show, hide, signal... Ready to place: Raft's **keycard and key doors** (Tangaroa's plantation door wants Raft's Tangaroa keycard, Utopia's entrance and hut doors their keys, Varuna's garage door the Motherlode key, Temperance's reactor door the reactor key, a padlocked door the bolt cutters, Detto's door the code) open (go) for a crew that holds that quest item and keep it for the next door (or use it up: **Card used up** in the inspector's Keycard door settings); **hatches** open when used; **crank wheels** and **levers** send the signals `crank` and `lever` that other objects, the quest and the world plan can wait for |
 | Animations, lights, sounds, particles, screen shake when something is used | Behaviours (move, turn, show/hide lamps), sound and atmosphere zones |
 | Trigger boxes | Trigger zones |
 | Enemy spawners that keep coming until a quest step (30) | Creature spots that come back, or a show action (an ambush) |
@@ -3964,7 +4023,7 @@ One island each is enough to learn from; [16.5](#165-where-to-look-for) lists mo
 | A raft or deck of Raft's foundations | Tide Farm | The deck |
 | Blueprints in loot | Crowfield Farm | The basket in the farmhouse |
 | An island in Raft's story (the Receiver) | The Long Voyage, Raft Remade (plans) | Their rule cards ([16.4](#164-the-world-plans)) |
-| A whole world plan | Far Horizons and the other plans | [16.4](#164-the-world-plans) |
+| A whole world plan | The Long Voyage and the other plans | [16.4](#164-the-world-plans) |
 
 **Not on any island, on purpose:**
 

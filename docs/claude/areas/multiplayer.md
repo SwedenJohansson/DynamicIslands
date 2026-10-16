@@ -40,7 +40,7 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 11 `Story`, 14 `Levels` | both | `Name` = sub-kind (`StoryBook.OnMessage`, `PlayerLevels.OnMessage`), `Data` |
 | 12 `PlayerPlace` | host -> joiner | `Ids[0]`, `Offsets` from the island |
 | 13 `Randomizer`, 17 `WorldOptions`, 19 `StoryChain`, 20 `QuestCount` | host -> clients | `Data` (and `Name`) from that class's `Message` |
-| 15 `WorldRules` | host -> clients | `Index` monsters, `Count` build cost %, `Data` `receiver=;unload=;regrow=;rdist=`, `Name` refunds |
+| 15 `WorldRules` | host -> clients | `Index` monsters, `Count` build cost %, `Data` `receiver=;unload=;regrow=;rdist=`, `Name` refunds, `Names` the rescued survivors (`Survivors.FromHost`) |
 | 16 `Claim` | both | `Ids` island and question number, `Index` key, `Count` 1/0 |
 | 18 `WorldCopy`, 24 `WorldCopyNewer` | host -> clients; client -> host | `Name` world guid, `Hash` stamp, parts `Index`/`Count`/`Data`; newer: `Data` `savecount;savedat` |
 | 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
