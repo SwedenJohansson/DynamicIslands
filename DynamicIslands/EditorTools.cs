@@ -34,7 +34,7 @@ namespace DynamicIslands.Editor
 				return IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen || TextPromptWindow.IsOpen || NoteEditorWindow.IsOpen || ItemPickerWindow.IsOpen ||
 					SoundPickerWindow.IsOpen || QuestEditorWindow.IsOpen || ChoiceWindow.IsOpen || WorldPlanWindow.IsOpen || BehaviourWindow.IsOpen ||
 					MyIslandsWindow.IsOpen || MainStoryHelper.IsOpen || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || StoryItemsWindow.IsOpen || PiecesWindow.IsOpen ||
-					LibraryExportWindow.IsOpen || LibraryImportWindow.IsOpen || LibraryWindow.IsOpen;
+					LibraryExportWindow.IsOpen || LibraryImportWindow.IsOpen || LibraryWindow.IsOpen || CameraSettingsWindow.IsOpen;
 			}
 		}
 

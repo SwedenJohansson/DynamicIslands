@@ -59,5 +59,6 @@ Export: `LibraryExportWindow.OpenIsland`/`OpenPlan` -> `LibraryPack.LastInfo` (f
 - Installs never overwrite the player's own files (clash -> new name or kept). `OnMain` always passes `replaceChanged` = true; its warning click is the only guard. Import has its own toggle. Remove never deletes for good.
 - Paths from index data go through `LibraryPack.IdFrom` or `IsSafeFileName`.
 - The library goes online only while its window is open and sends only download requests.
+- `LibraryWindow.ShowPicture` clears the picture before loading (a slow download left the entry before's picture on every entry clicked after it; CILibraryBrowse checks it).
 - C# 7.3 only.
 - Docs: README Features bullets on packs and the island library, the files table, "Source overview"; `docs/GUIDE.md` section 4.7 and chapter 10; the library repo README when layout or fields change.

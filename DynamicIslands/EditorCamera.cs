@@ -9,37 +9,44 @@ namespace DynamicIslands.Editor
 	///   WASD / arrows      move over the island at the same height (without the right mouse)
 	///   Middle mouse       pan: the ground under the cursor sticks to it
 	///   Alt + left mouse   orbit around the selected objects, or the ground in the middle of the view
+	///   Alt + right mouse  drag to zoom in and out (towards the middle of the view)
 	///   Wheel              zoom towards whatever is under the cursor
 	///   F                  frame the selected objects, or the whole island when nothing is selected
 	///   Shift              three times faster
 	/// Moves are smoothed and get faster the further the camera is from the ground. The camera keeps above the ground,
 	/// may dive under the sea (islands on a deep sea floor are 160 m deep), and stays near the build area. Other code
 	/// (framing a generated island, tests) may move the camera: it carries on from wherever it was put. Each control is
-	/// a method (Look, BeginOrbit/Orbit, BeginPan/Pan, ZoomAt, Move, Frame) that the mouse and keys - and the tests - use.
+	/// a method (Look, BeginOrbit/Orbit, BeginPan/Pan, ZoomAt, Dolly, Move, Frame) that the mouse and keys - and the tests - use.
+	/// The settings (CameraSettings: look sensitivity, drag up looks up or down, move, zoom and pan speed, the wheel's
+	/// direction) are this PC's own: the status bar's Camera button, or Defaults > Editor camera.
 	/// </summary>
 	public class EditorCamera : MonoBehaviour
 	{
 		public static EditorCamera Instance { get; private set; }
 
-		/// <summary>Multiplier of the flying speed (right mouse + wheel), 0.1 .. 10.</summary>
-		public static float SpeedFactor = 1f;
-		/// <summary>Degrees the view turns per pixel the mouse moves.</summary>
-		public const float LookSensitivity = 0.18f;
+		/// <summary>Multiplier of the flying speed (right mouse + wheel, or the Move speed setting), 0.1 .. 10; saved.</summary>
+		public static float SpeedFactor { get { return CameraSettings.Speed; } set { CameraSettings.Set(CameraSettings.SpeedNumber, value); } }
+		/// <summary>Degrees the view turns per pixel the mouse moves at the Look sensitivity setting x1.</summary>
+		public const float BaseLookSensitivity = 0.18f;
+		/// <summary>Degrees the view turns per pixel the mouse moves (with the Look sensitivity setting).</summary>
+		public static float LookSensitivity { get { return BaseLookSensitivity * CameraSettings.Look; } }
 
 		/// <summary>True while the camera uses the mouse (looking, panning, orbiting), or Alt is held: the tools leave the mouse alone then.</summary>
 		/// <summary>Flying with the right mouse held: Q/E move the camera down/up then, not turn the stamp or the object.</summary>
 		public static bool Looking { get { return Instance != null && Instance.isActiveAndEnabled && Instance.looking; } }
-		public static bool UsingMouse { get { return Instance != null && Instance.isActiveAndEnabled && (Instance.looking || Instance.panning || Instance.orbiting || Alt); } }
+		public static bool UsingMouse { get { return Instance != null && Instance.isActiveAndEnabled && (Instance.looking || Instance.panning || Instance.orbiting || Instance.dollying || Alt); } }
 		static bool Alt { get { return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt); } }
 
 		/// <summary>The camera's controls, for the help.</summary>
-		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Wheel: zoom to the cursor · F: frame · Shift: faster";
+		public const string Help = "Right-drag: look (WASD fly, Q/E down/up, wheel: speed) · WASD: move · Space / C: straight up / down · Middle-drag: pan · Alt+drag: orbit · Alt+right-drag: zoom · Wheel: zoom to the cursor · F: frame · Shift: faster";
+		/// <summary>The controls one per line (the Camera window).</summary>
+		public const string HelpLines = "Right mouse held: look around; WASD fly, Q/E down / up, wheel: flying speed\nWASD / arrows: move over the island \u00B7 Space / C: straight up / down\nMiddle mouse drag: pan \u00B7 Alt + left drag: orbit the selection\nWheel: zoom to the cursor \u00B7 Alt + right drag: zoom in / out\nF: frame the selection (or the island) \u00B7 Shift: three times faster";
 
 		float yaw, pitch;
 		Vector3 position, velocity;
 		Vector3 lastPosition;
 		Quaternion lastRotation;
-		bool looking, panning, orbiting;
+		bool looking, panning, orbiting, dollying;
 		float panDistance;
 		Vector3 orbitPivot;
 		// Zooming with the wheel: how much of the move is still to come (smoothed over a few frames)
@@ -64,8 +71,9 @@ namespace DynamicIslands.Editor
 
 		void OnDisable()
 		{
-			if (looking) Cursor.lockState = CursorLockMode.None;
-			looking = panning = orbiting = false;
+			if (looking || dollying) Cursor.lockState = CursorLockMode.None;
+			looking = panning = orbiting = dollying = false;
+			CameraSettings.Save();
 		}
 
 		/// <summary>Takes over the camera's current place and direction (after something else moved it).</summary>
@@ -100,10 +108,18 @@ namespace DynamicIslands.Editor
 			bool overUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 			Vector2 mouse = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")) * 10f; // (about pixels)
 
-			// Right mouse: look around (the cursor is held still meanwhile)
-			if (Input.GetMouseButtonDown(1) && !overUI && !orbiting) { looking = true; flying = false; Cursor.lockState = CursorLockMode.Locked; }
-			if (looking && !Input.GetMouseButton(1)) { looking = false; Cursor.lockState = CursorLockMode.None; }
+			CameraSettings.Tick();
+
+			// Right mouse: look around (the cursor is held still meanwhile); with Alt: drag to zoom (as in Unity and Maya)
+			if (Input.GetMouseButtonDown(1) && !overUI && !orbiting)
+			{
+				if (Alt) dollying = true; else looking = true;
+				flying = false;
+				Cursor.lockState = CursorLockMode.Locked;
+			}
+			if ((looking || dollying) && !Input.GetMouseButton(1)) { looking = dollying = false; Cursor.lockState = CursorLockMode.None; }
 			if (looking) Look(mouse);
+			if (dollying) Dolly(mouse);
 
 			// Alt + left mouse: orbit
 			if (Alt && Input.GetMouseButtonDown(0) && !overUI && !looking) BeginOrbit();
@@ -127,7 +143,7 @@ namespace DynamicIslands.Editor
 			Move(keys, looking, EditorInput.Shift, dt);
 
 			// Wheel: zoom towards what is under the cursor; with the right mouse held: the flying speed
-			float wheel = overUI || typing ? 0f : Input.GetAxis("Mouse ScrollWheel");
+			float wheel = overUI || typing ? 0f : Input.GetAxis("Mouse ScrollWheel") * (CameraSettings.WheelReversed ? -1f : 1f);
 			if (Mathf.Abs(wheel) > 0.0001f)
 			{
 				if (looking) ChangeSpeed(wheel > 0f ? 1 : -1);
@@ -165,13 +181,29 @@ namespace DynamicIslands.Editor
 		#region The controls
 
 		/// <summary>Turns the view by mouse pixels (right mouse held). Dragging up tilts the view down, as if the scene were
-		/// dragged (the user, 2026-10-02: the other way felt inverted).</summary>
+		/// dragged (the user, 2026-10-02: the other way felt inverted) - or up with the setting Drag up: look up.</summary>
 		public void Look(Vector2 pixels)
 		{
 			flying = false;
-			yaw += pixels.x * LookSensitivity;
-			pitch = Mathf.Clamp(pitch + pixels.y * LookSensitivity, -89f, 89f);
+			float sensitivity = LookSensitivity;
+			yaw += pixels.x * sensitivity;
+			pitch = Mathf.Clamp(pitch + pixels.y * sensitivity * (CameraSettings.DragUpLooksUp ? -1f : 1f), -89f, 89f);
 		}
+
+		/// <summary>Zooms by dragging (Alt + right mouse): right or up goes in, left or down out, towards the middle of the
+		/// view - never through what is there.</summary>
+		public void Dolly(Vector2 pixels)
+		{
+			flying = false;
+			Camera cam = Cam;
+			Ray ray = cam != null ? cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)) : new Ray(position, transform.forward);
+			float d = DistanceAlong(ray);
+			float step = (pixels.x + pixels.y) * Mathf.Max(0.05f, d * 0.004f) * CameraSettings.Zoom;
+			if (step > 0f) step = Mathf.Min(step, Mathf.Max(0f, d - 1.5f));
+			position += ray.direction * step;
+		}
+
+		public void EndDolly() { dollying = false; }
 
 		/// <summary>Starts orbiting around the selected objects, or the ground in the middle of the view (Alt + left mouse).</summary>
 		public void BeginOrbit()
@@ -206,7 +238,7 @@ namespace DynamicIslands.Editor
 		public void Pan(Vector2 pixels)
 		{
 			Camera cam = Cam;
-			float perPixel = 2f * panDistance * Mathf.Tan((cam != null ? cam.fieldOfView : 60f) * 0.5f * Mathf.Deg2Rad) / Mathf.Max(1, Screen.height);
+			float perPixel = 2f * panDistance * Mathf.Tan((cam != null ? cam.fieldOfView : 60f) * 0.5f * Mathf.Deg2Rad) / Mathf.Max(1, Screen.height) * CameraSettings.Pan;
 			Quaternion r = Quaternion.Euler(pitch, yaw, 0f);
 			position -= (r * Vector3.right * pixels.x + r * Vector3.up * pixels.y) * perPixel;
 		}
@@ -236,7 +268,7 @@ namespace DynamicIslands.Editor
 			Camera cam = Cam;
 			Ray ray = cam != null ? cam.ScreenPointToRay(screen) : new Ray(position, transform.forward);
 			float d = DistanceAlong(ray);
-			float step = Mathf.Sign(notches) * Mathf.Min(Mathf.Abs(notches), 3f) * Mathf.Max(1.5f, d * 0.2f);
+			float step = Mathf.Sign(notches) * Mathf.Min(Mathf.Abs(notches), 3f) * Mathf.Max(1.5f, d * 0.2f) * CameraSettings.Zoom;
 			if (step > 0f) step = Mathf.Min(step, Mathf.Max(0f, d - 1.5f - Vector3.Dot(pendingZoom, ray.direction)));
 			pendingZoom += ray.direction * step;
 		}
@@ -245,7 +277,7 @@ namespace DynamicIslands.Editor
 		public void ChangeSpeed(int direction)
 		{
 			SpeedFactor = Mathf.Clamp(SpeedFactor * (direction > 0 ? 1.25f : 0.8f), 0.1f, 10f);
-			EditorUI.Flash("Camera speed x" + SpeedFactor.ToString("0.##"));
+			EditorUI.Flash("Camera speed x" + SpeedFactor.ToString("0.##") + " (kept: the Camera button at the bottom right has the camera's settings)");
 		}
 
 		/// <summary>Flies to where the selection (or, without one, the whole island) fills the view, from the current direction.</summary>
