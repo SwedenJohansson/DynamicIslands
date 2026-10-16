@@ -125,6 +125,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
 - **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
   other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
 - **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before

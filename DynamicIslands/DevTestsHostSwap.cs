@@ -79,7 +79,7 @@ namespace DynamicIslands
 				{
 					var s = new IslandGenSettings { Seed = 4200 + n, Radius = 45f, Height = 18f, ObjectDensity = 0.5f };
 					if (what.StartsWith("layout ")) { s.Shape = Array.IndexOf(IslandShapes.Names, what.Substring(7)); s.Style = n % TerrainPainter.Styles.Length; s.SeaFloor = n % 2; }
-					s.Hostiles = n % 2 == 0 ? 2 : 0; s.Friendly = 1; s.SeaLife = 1; s.Loot = 3; s.Levels = n % 2 == 1;
+					s.Hostiles = n % 2 == 0 ? 2 : 0; s.Friendly = 1; s.SeaLife = 1; s.Loot = 3;
 					f = IslandGenerator.CreateFile(s, name);
 					if (what == "flying") f.Elevation = 60f;
 					if (what == "sunken") f.Elevation = -30f;
