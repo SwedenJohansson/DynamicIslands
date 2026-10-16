@@ -12,6 +12,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Story islands keep their look when randomized:** Something new like it and A variation of it for Caravan Town,
+  Tangaroa, Utopia, Varuna Point, Balboa and Temperance lay the new island out like the original from its own big
+  pieces - red rock mesas with ladders, huts and rope bridges; the dome; the white towers; the motherlode; giant firs;
+  snow rocks and the antenna.
 - **Giant rogue sharks:** with the Rogue shark option on, about one rogue in five is a giant - twice Bruce's size, three
   times his health, bites half again as hard on players (not on the raft).
 - **The daily quest in the journal:** with the world's Daily quest option on, the journal shows today's quest under

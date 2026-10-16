@@ -570,7 +570,7 @@ namespace DynamicIslands.Editor
 			chosenText.text = "<color=#eddeba>" + island.Label + "</color>  (" + island.Style.ToLowerInvariant() + ")\nLand about " + island.Length.ToString("F0") + " x " + island.Width.ToString("F0") + " m, highest point " + island.Top.ToString("F0") +
 				" m, " + island.Peaks + " peak(s), shallow water to " + island.Shelf.ToString("F0") + " m from its middle.\n" +
 				string.Join(", ", new[] { RaftIslands.Trees, RaftIslands.Bushes, RaftIslands.Rocks, RaftIslands.Harvest }.Where(k => island.Count(k) > 0).Select(k => island.Count(k) + " " + k).ToArray()) +
-				(island.Kind == "mesh" ? "\n<i>(a built place: its buildings count as ground)</i>" : "");
+				(Remakes.LookFor(island.Scene) != null ? "\n<i>Its look: " + Remakes.LookFor(island.Scene).Hint.ToLowerInvariant() + "</i>" : island.Kind == "mesh" ? "\n<i>(a built place: its buildings count as ground)</i>" : "");
 			SetStatus((variation ? "A variation of " : "Something new like ") + island.Label + ". Generate makes it.");
 		}
 
@@ -998,9 +998,10 @@ namespace DynamicIslands.Editor
 		{
 			if (tab != TabRandomize)
 			{
-				if (string.IsNullOrEmpty(s.Remake)) return s;
+				if (string.IsNullOrEmpty(s.Remake) && string.IsNullOrEmpty(s.Look)) return s;
 				IslandGenSettings normal = s.Copy();
 				normal.Remake = "";
+				normal.Look = "";
 				return normal;
 			}
 			IslandGenSettings run = s.Copy();

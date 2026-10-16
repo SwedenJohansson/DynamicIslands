@@ -104,6 +104,11 @@ namespace DynamicIslands.Editor
 		/// <summary>One of Raft's story islands rebuilt from its own pieces: a design id, "&lt;scene&gt;:any" for one of its
 		/// designs at random, or "" (Remakes; the Randomize existing tab).</summary>
 		public string Remake = "";
+		/// <summary>One of Raft's story islands' looks the ground and pieces follow (Remakes.Looks, IslandLooks.cs: "caravan",
+		/// "tangaroa"...; "" = none) - set by the Randomize existing tab's like-it and variation.</summary>
+		public string Look = "";
+		/// <summary>The look's original island's highest point over the sea (Caravan's mesas reach it).</summary>
+		public float LookTop;
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -303,7 +308,7 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>The designs for one of Raft's islands (its scene name).</summary>
-		public static List<Design> For(string scene) { return All.Where(d => (scene ?? "").IndexOf(d.Scene, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); }
+		public static List<Design> For(string scene) { scene = FamilyScene(scene); return All.Where(d => scene.IndexOf(d.Scene, StringComparison.OrdinalIgnoreCase) >= 0).ToList(); }
 
 		/// <summary>The objects of Raft's islands a remake uses (loaded on demand before generating).</summary>
 		public static List<string> NeededNames(IslandGenSettings s)
@@ -848,6 +853,7 @@ namespace DynamicIslands.Editor
 			}
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
 			names.AddRange(Remakes.NeededNames(s));
+			names.AddRange(Remakes.LookNames(s));
 			if (s.Features > 0) names.AddRange(GenFeatures.NamesFor(s));
 			return names.Distinct().ToList();
 		}
@@ -856,9 +862,12 @@ namespace DynamicIslands.Editor
 		public static List<string> Apply(IslandFile file, IslandGenSettings s)
 		{
 			var done = new List<string>();
-			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && s.Features <= 0 && string.IsNullOrEmpty(s.Remake)) || file == null || file.Heights == null) return done;
+			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && s.Features <= 0 && string.IsNullOrEmpty(s.Remake) && string.IsNullOrEmpty(s.Look)) || file == null || file.Heights == null) return done;
 			var k = new MapKit(file, s.Seed * 7919 + 13);
 			System.Random r = k.Rnd;
+			// The story island's look first: its ground and its signature pieces (its own random stream: k.Rnd draws as before)
+			string look = Remakes.BuildLook(k, s);
+			if (look != null) done.Add(look);
 			// A story island rebuilt first: it takes the island's best place (its top, a headland, the sea off the coast)
 			string remade = Remakes.Build(k, s);
 			if (remade != null) done.Add(remade);

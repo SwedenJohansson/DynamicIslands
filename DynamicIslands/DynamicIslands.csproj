@@ -76,6 +76,7 @@
     <Compile Include="DevTestsAll.cs" />
     <Compile Include="DevTestsBigWorld.cs" />
     <Compile Include="DevTestsGenerator.cs" />
+    <Compile Include="DevTestsLooks.cs" />
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />
     <Compile Include="DevTestsRandomizer.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="SelectionTools.cs" />
     <Compile Include="MyIslandsWindow.cs" />
     <Compile Include="StoryRemakes.cs" />
+    <Compile Include="IslandLooks.cs" />
     <Compile Include="ReadyPieces.cs" />
     <Compile Include="LaserBeam.cs" />
     <Compile Include="UpgradeTable.cs" />

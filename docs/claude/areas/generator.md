@@ -12,6 +12,7 @@ Makes a whole island from settings and a seed: land, ground paint, nature on lan
 | `IslandReach.cs` | `Assess`: can a player get from the sea onto the land; `MoveContentWithinReach` for chests and notes |
 | `GenFeatures.cs` / `GenGather.cs` | `GenFeatures.Make` (`Kinds`: vines, treasure, zipline, code, hives, dirt; `MoreKinds` past six: power, engine, cage, lift) / `GenGather.Apply` (things to gather: settings `Gather`, `Shallows`, `ShallowsDepth`, kind keys in `GatherOff`) |
 | `StoryRemakes.cs` | `Remakes.StoryDesigns`: the story islands' designs, each with its `Kit` |
+| `IslandLooks.cs` | `Remakes.Looks`: the story islands' looks (Caravan mesas, Tangaroa dome, Utopia towers, ...) for Randomize existing; `LookLike` sets `s.Look`, `BuildLook` runs in `GenBuildings.Apply` before the designs |
 | `MapTypes.cs` | `MapType`, `MapKit` (placing content on a file), `RaftRoof.Hip`, `MapTypes.All`, `Roll`, `Create` |
 | `MapTypeFiles.cs` | `.maptype` files: `MapTypeRanges`, `LoadAll`, `Parse`, `ToText`, `Export`, `ReRoll`, the console commands |
 | `ScatterTool.cs` | `ScatterTool.Scatter`: many copies of one object round a point (the object browser's Scatter row), one undo step |
@@ -44,6 +45,7 @@ Without the editor, `IslandGenerator.CreateFile(settings, name)` runs steps 5-7 
 | How dense / Like Raft | `LandTargets`, `LikeRaftAmount`, `TypicalDensity`, `NatureLikeRaft`; under water `SeaTargets`, `SeaCap`, `PlanReefs` |
 | Where things stand | `PlanNature`, `HabitatOf`, `WithinHabit`; under water `PlanSea`, `BaseDrop`, `LowestShowing` |
 | Creatures, loot boxes | `PlanContent`, `HostileKindsOf`, `TierLoot` |
+| A story island's look (Randomize existing) | a `Look` in `IslandLooks.cs` `MakeLooks` (`Scenes`, `Kit`, `Shape`, `Build`); test `CILook` (DevTestsLooks.cs) |
 | Buildings, caves, wrecks | `GenBuildings.Apply`, `Hut`, `Landmark`, `LandmarkNames` |
 | A built-in map type | an entry in `MapTypes.All` (`Ranges` or `Settings`, `Content(MapKit, s)` or `Build`) |
 | Reach rules | `IslandReach.WalkSlope`, `StepUp`, `JumpUp`, `SwimLedge`, `ClimbLedge`, `Assess` |
