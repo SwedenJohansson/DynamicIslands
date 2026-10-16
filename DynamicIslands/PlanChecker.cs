@@ -665,6 +665,9 @@ namespace DynamicIslands.Editor
 			public ChunkPointType Raft = ChunkPointType.None;
 		}
 
+		/// <summary>About how far players sail between two of Raft's story islands, and in a day (PlayOrder: a rough guide only).</summary>
+		public const float KmPerStoryIsland = 4f, DayKm = 2f;
+
 		/// <summary>
 		/// The plan in the order a player meets it (the user, 2026-10-16: not the file's order). Raft's Receiver chain as a
 		/// world builds it (StoryChain.BuildSteps: first, after:X, instead:X, and Raft's story islands it keeps), and every
@@ -674,9 +677,6 @@ namespace DynamicIslands.Editor
 		/// signal, the rule) right after it. A chain rule that also waits for another comes after both. A rule waiting for an
 		/// island no rule brings, or in a circle (CheckOrder), comes last.
 		/// </summary>
-		/// <summary>About how far players sail between two of Raft's story islands, and in a day (PlayOrder: a rough guide only).</summary>
-		public const float KmPerStoryIsland = 4f, DayKm = 2f;
-
 		public static List<Stop> PlayOrder(WorldPlan plan)
 		{
 			List<IntroRule> rules = plan.Rules;

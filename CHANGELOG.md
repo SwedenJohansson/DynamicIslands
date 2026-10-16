@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
+  with the same id (two 'keycard's) - the one found on either would open the other's locks.
 - **Raft's progression in order in world plans:** the plan Check warns about a blueprint given before the ones it
   builds on (the engine controls before the motor wheel and steering wheel, fuel pipes before a fuel tank...), and
   Progression shows it in yellow. A lock whose story item an island met before gives says where the item was kept from.
@@ -130,6 +132,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
+  other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
+- **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
+  it gives. Optional finds (buried treasure, caches) needing a later tool are only listed in Progression.
 - **World plans: the bottom buttons are two rows:** working on the plan (+ Add a rule, Check, Progression, Preview
   notebook, Test this plan) above, its files (Export..., Import..., Save, Close) below. In one row Close stuck out past
   the window's edge.
@@ -201,6 +207,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
+  of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw
   while the generator loads Raft's islands for buildings and caves (also the core catalogue's scenes).
 - **Test in the editor got stuck:** it sometimes went to the main menu with Load game open and then did nothing on

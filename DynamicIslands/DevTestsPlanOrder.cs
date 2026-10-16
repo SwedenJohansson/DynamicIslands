@@ -62,7 +62,7 @@ namespace DynamicIslands
 			tf.Save(IslandSpawner.PathFor(OrderTools));
 			cf.Save(IslandSpawner.PathFor(OrderCache));
 			PlanChecker.Facts vx = PlanChecker.FromFile(vf, OrderVines, false), tx = PlanChecker.FromFile(tf, OrderTools, false);
-			Check(ref ok, vx.MainNeeds.Contains(ContentCatalog.MacheteItem + "|vines") && vx.NeedsTools.ContainsKey(Editor.RaftFeatures.MetalDetectorItem) && !vx.MainNeeds.Any(m => m.StartsWith(Editor.RaftFeatures.MetalDetectorItem + "|")),
+			Check(ref ok, vx.MainNeeds.Contains(ContentCatalog.MacheteItem + "|vines") && vx.NeedsTools.ContainsKey(global::DynamicIslands.Editor.RaftFeatures.MetalDetectorItem) && !vx.MainNeeds.Any(m => m.StartsWith(global::DynamicIslands.Editor.RaftFeatures.MetalDetectorItem + "|")),
 				"the vines are in the quest's way (machete), the treasure is optional (detector): " + string.Join(", ", vx.MainNeeds.ToArray()));
 			Check(ref ok, tx.GivesTools.Contains(ContentCatalog.MacheteItem), "a chest with a machete gives the tool");
 
@@ -89,7 +89,7 @@ namespace DynamicIslands
 			Check(ref ok, !warned.Contains("metal detector"), "the buried treasure before the detector: no warning");
 			PlanChecker.Progress pr = PlanChecker.Progression(early, false);
 			PlanChecker.Progress.Step cache = pr.Steps.FirstOrDefault(s => s.Rule == 2);
-			PlanChecker.Progress.ToolNeed detector = cache != null ? cache.ToolNeeds.FirstOrDefault(n => n.Tool == Editor.RaftFeatures.MetalDetectorItem) : null;
+			PlanChecker.Progress.ToolNeed detector = cache != null ? cache.ToolNeeds.FirstOrDefault(n => n.Tool == global::DynamicIslands.Editor.RaftFeatures.MetalDetectorItem) : null;
 			Check(ref ok, pr.Steps.Count > 0 && pr.Steps[0].Rule == 2 && detector != null && !detector.Main && detector.Later == "Caravan Town",
 				"Progression: the treasure first, quietly noted - Caravan Town gives the detector later (" + (detector != null ? detector.Later : "none") + ")");
 			PlanChecker.Progress.Step balboa = pr.Steps.FirstOrDefault(s => s.Raft == ChunkPointType.Landmark_Balboa);
