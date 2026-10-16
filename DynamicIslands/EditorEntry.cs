@@ -128,6 +128,7 @@ namespace DynamicIslands.Editor
 		/// <summary>OpenEditor, once Raft's objects are loaded: the island asked for is opened.</summary>
 		public static void OnEditorReady()
 		{
+			if (newFromPlan != null) { string n = newFromPlan; newFromPlan = null; MakeNew(n); return; }
 			string name = OpenIsland;
 			OpenIsland = null;
 			if (string.IsNullOrEmpty(name)) return;
@@ -211,6 +212,23 @@ namespace DynamicIslands.Editor
 		{
 			WorldPlan p = File.Exists(WorldPlan.PathFor(planName)) ? WorldPlan.Load(planName) : null;
 			if (p == null) p = new WorldPlan { Name = planName, Random = false, Description = "" };
+			IntroRule r = RuleFor(p, island, story);
+			string id = r.Id;
+			p.Rules.Add(r);
+			try { p.Save(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return null; }
+			RememberPlan(p.Name);
+			DynamicIslands.Notify("'" + island + "' is in '" + p.Name + "' now" + (story ? ": the Main story line's island " + StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).Count : ""));
+			if (open) WorldPlanWindow.Open(p.Name);
+			return id;
+		}
+
+		/// <summary>
+		/// A rule that brings the island into the plan (not added yet): next in its Main story line (on the Receiver, after
+		/// the story's last island) or another island (at the start, ahead of the raft). Its name comes from the island's.
+		/// </summary>
+		public static IntroRule RuleFor(WorldPlan p, string island, bool story)
+		{
 			string id = IntroRule.CleanId(new string(island.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray()));
 			if (id.Length == 0) id = WorldPlanWindow.NewRuleId(p);
 			while (p.Rules.Any(x => x.Id.Equals(id, StringComparison.OrdinalIgnoreCase))) id += "b";
@@ -222,13 +240,45 @@ namespace DynamicIslands.Editor
 				r.Distance = 800f;
 			}
 			else { r.Where = "ahead"; r.Distance = 300f; }
-			p.Rules.Add(r);
-			try { p.Save(); }
-			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return null; }
-			RememberPlan(p.Name);
-			DynamicIslands.Notify("'" + island + "' is in '" + p.Name + "' now" + (story ? ": the Main story line's island " + StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).Count : ""));
-			if (open) WorldPlanWindow.Open(p.Name);
-			return id;
+			return r;
+		}
+
+		/// <summary>A new island to make from the plan (+ New island): saved empty under its name once the editor is ready.</summary>
+		static string newFromPlan;
+
+		/// <summary>
+		/// The plan's + New island: the 3D editor on a new, empty island saved under the name (so the plan's rule finds it),
+		/// with Back to the plan in its top bar.
+		/// </summary>
+		public static void NewIslandFromPlan(string island, string plan)
+		{
+			bool inEditor = DynamicIslands.InEditor();
+			if (inEditor && EditorAutosave.Unsaved)
+			{
+				if (!DynamicIslands.IsUnnamed) { if (!DynamicIslands.SaveIsland(DynamicIslands.currentIslandName)) return; }
+				else EditorAutosave.WriteNow();
+			}
+			BackToPlan = plan;
+			BackIsland = island;
+			backToMenu = !inEditor;
+			if (inEditor) { MakeNew(island); return; }
+			newFromPlan = island;
+			OpenIsland = null;
+			DynamicIslands.LoadEditor(new string[0]);
+		}
+
+		static void MakeNew(string island)
+		{
+			string plan = BackToPlan;
+			BackToPlan = null; // (the empty island opened on the way is not the plan's)
+			DynamicIslands.NewIsland();
+			bool saved = DynamicIslands.SaveIsland(island);
+			BackToPlan = plan;
+			BackIsland = island;
+			if (saved) RememberIsland(island);
+			EditorUI.RefreshIsland();
+			EditorUI.RefreshBackToPlan();
+			DynamicIslands.Notify("New island '" + island + "' for the plan '" + plan + "': shape the land on the Terrain tab, then Back to the plan");
 		}
 
 		/// <summary>The story place after the Main story line's last island (Raft's ending, Utopia, stays the last).</summary>

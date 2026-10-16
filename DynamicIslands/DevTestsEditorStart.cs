@@ -188,6 +188,15 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan from the menu"); else Fail("plan from the menu");
 		}
 
+		/// <summary>A plan window tab clicked as a player clicks it ("Tab_Story", "Tab_Other", "Tab_Settings").</summary>
+		static bool ClickTab(GameObject win, string name)
+		{
+			Button b = win != null ? win.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == name) : null;
+			if (b == null) return false;
+			b.onClick.Invoke();
+			return true;
+		}
+
 		static GameObject TopBar() { RectTransform t = UnityEngine.Object.FindObjectsOfType<RectTransform>().FirstOrDefault(x => x.name == "TopBar"); return t != null ? t.gameObject : null; }
 
 		static string SomeSavedIsland() { return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "Crowfield Farm") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => !n.StartsWith("gen-") && !n.StartsWith("ci")); }
@@ -308,6 +317,152 @@ namespace DynamicIslands
 				PutStartFileBack(startFile);
 			}
 			if (ok) Log("PASS: edit island from the menu"); else Fail("edit island from the menu");
+		}
+
+		static List<string> OwnSteps(WorldPlan p) { return StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).Where(x => !StoryChain.IsRaft(x)).Select(x => StoryChain.RuleIdOf(x)).ToList(); }
+
+		static string StepsText(WorldPlan p) { return string.Join(",", StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).ToArray()); }
+
+		static int Shown(GameObject win, string name) { return win.GetComponentsInChildren<Transform>(false).Count(t => t.name == name); }
+
+		[ConsoleCommand(name: "CIPlanTabs", docs: "Dev, editor: TODO 5b P3 - a world plan's three tabs. A plan with Raft's story on, two islands in its Main story line and one other island opens on Main story line: 2 cards between Raft's own story islands (grey lines), the tabs say (2) and (1), + Add a rule hidden. ▲ on the second story island puts it first of the two, ▲ again moves it past one of Raft's islands, ▼ on the last before Utopia is refused (Utopia stays last); the chain read back is the order shown. + Add a saved island puts one more at the end. Other islands: its 1 card and + Add a rule. Settings: random islands, Raft's story and the description, no cards. Save: the file's chain is the window's. Pictures with 'shot': split_plan_story_tab, split_plan_other_tab, split_plan_settings_tab. The test plan goes to the deleted folder after")]
+		public static void PlanTabsCommand(string[] args) { StartTest(PlanTabsRoutine(args != null && args.Contains("shot"))); }
+
+		static IEnumerator PlanTabsRoutine(bool shots)
+		{
+			if (!DynamicIslands.InEditor()) { Fail("plan tabs: in the editor"); yield break; }
+			bool ok = true;
+			var errors = new List<string>();
+			Application.LogCallback watch = WatchErrors(errors);
+			string startFile = ReadStartFile();
+			List<string> islands = ChoiceWindow.Islands().Select(c => c.Value).Where(n => !n.StartsWith("ci", StringComparison.OrdinalIgnoreCase) && !n.StartsWith("gen-")).Take(3).ToList();
+			if (islands.Count < 3) { Fail("plan tabs: needs three saved islands"); yield break; }
+			string name = "CI Tabs " + DateTime.Now.ToString("HHmmss");
+			var wp = new WorldPlan { Name = name, Random = false, RaftStory = true, Description = "Tabs test (CIPlanTabs)" };
+			wp.Rules.Add(IntroRule.Parse("camp | type:camp | start | ahead:300 | | Camp"));
+			IntroRule s1 = EditorEntry.RuleFor(wp, islands[0], true); wp.Rules.Add(s1);
+			IntroRule s2 = EditorEntry.RuleFor(wp, islands[1], true); wp.Rules.Add(s2);
+			wp.Save();
+			try
+			{
+				WorldPlanWindow.Open(name);
+				yield return null; yield return null;
+				GameObject win = WindowObject(typeof(WorldPlanWindow));
+				if (win == null) { Fail("plan tabs: the window didn't open"); yield break; }
+				WorldPlan p = WorldPlanWindow.Plan;
+				Check(ref ok, WorldPlanWindow.Tab == WorldPlanWindow.TabStory, "it opens on the Main story line tab");
+				Button storyTab = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Tab_Story"), otherTab = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Tab_Other");
+				Check(ref ok, storyTab != null && UIKit.LabelOf(storyTab).text == "Main story line (2)" && otherTab != null && UIKit.LabelOf(otherTab).text == "Other islands (1)", "the tabs say how many: " + (storyTab != null ? UIKit.LabelOf(storyTab).text : "?") + " / " + (otherTab != null ? UIKit.LabelOf(otherTab).text : "?"));
+				int raftSteps = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).Count(StoryChain.IsRaft);
+				Check(ref ok, Shown(win, "Rule") == 2 && Shown(win, "RaftStep") == raftSteps && raftSteps > 0, Shown(win, "Rule") + " story cards and " + Shown(win, "RaftStep") + " of Raft's islands as lines (" + raftSteps + ")");
+				Check(ref ok, !win.GetComponentsInChildren<Button>(false).Any(b => b.name == "Button_+ Add a rule") && win.GetComponentsInChildren<Button>(false).Any(b => b.name == "Button_AddStoryIsland") && win.GetComponentsInChildren<Button>(false).Any(b => b.name == "Button_NewStoryIsland") && win.GetComponentsInChildren<Button>(false).Any(b => b.name == "Button_NewMainStory"),
+					"the story tab's buttons (+ Add a rule only on Other islands)");
+				Check(ref ok, OwnSteps(p).SequenceEqual(new[] { s1.Id, s2.Id }), "the story: " + string.Join(",", OwnSteps(p).ToArray()));
+				if (shots) { StartShot("plan_story_tab"); yield return new WaitForSecondsRealtime(1f); }
+
+				// ▲ ▼ along the story
+				int s2At = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules).IndexOf("rule:" + s2.Id);
+				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s2)).gameObject, "▲"), "▲ on the second story island");
+				yield return null;
+				Check(ref ok, OwnSteps(p).SequenceEqual(new[] { s2.Id, s1.Id }), "it comes first of the two now: " + string.Join(",", OwnSteps(p).ToArray()));
+				string before = StepsText(p);
+				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s2)).gameObject, "▲"), "▲ again");
+				yield return null;
+				List<string> steps = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules);
+				Check(ref ok, steps.IndexOf("rule:" + s2.Id) == s2At - 2 && StoryChain.IsRaft(steps[s2At - 1]), "past one of Raft's islands: step " + (steps.IndexOf("rule:" + s2.Id) + 1) + " (" + StepsText(p) + ")");
+				var raftOrder = steps.Where(StoryChain.IsRaft).ToList();
+				Check(ref ok, raftOrder.SequenceEqual(StoryChain.BuildSteps(true, p.LeaveOut, new List<IntroRule>())), "Raft's own islands keep their order");
+				before = StepsText(p);
+				Check(ref ok, Click(WorldPlanWindow.CardFor(p.Rules.IndexOf(s1)).gameObject, "▼"), "▼ on the last before Utopia");
+				yield return null;
+				Check(ref ok, StepsText(p) == before && win.GetComponentsInChildren<Text>(false).Any(t => t.text.Contains("Utopia")), "refused: Raft's ending stays last");
+
+				// + Add a saved island
+				Check(ref ok, Click(win, "+ Add a saved island"), "+ Add a saved island");
+				yield return null; yield return null;
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(islands[2]), "'" + islands[2] + "' picked");
+				yield return null; yield return null;
+				IntroRule s3 = p.Rules.FirstOrDefault(r => r.WhatArg == islands[2] && r.MainStory);
+				steps = StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules);
+				Check(ref ok, s3 != null && steps.IndexOf("rule:" + s3.Id) == steps.Count - 2 && Shown(win, "Rule") == 3, "it is the story's last island before Utopia, 3 cards (" + StepsText(p) + ")");
+
+				// Other islands
+				Check(ref ok, ClickTab(win, "Tab_Other"), "the Other islands tab");
+				yield return null;
+				Check(ref ok, Shown(win, "Rule") == 1 && Shown(win, "RaftStep") == 0 && win.GetComponentsInChildren<Button>(false).Any(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "+ Add a rule"), "Other islands: 1 card and + Add a rule");
+				if (shots) { StartShot("plan_other_tab"); yield return new WaitForSecondsRealtime(1f); }
+
+				// Settings
+				Check(ref ok, ClickTab(win, "Tab_Settings"), "the Settings tab");
+				yield return null;
+				Transform box = win.GetComponentsInChildren<Transform>(false).FirstOrDefault(t => t.name == "SettingsTab");
+				Check(ref ok, box != null && box.Find("Settings") != null && box.Find("Story") != null && box.Find("Description") != null && Shown(win, "Rule") == 0 && Shown(win, "Body") == 0, "Settings: random islands, Raft's story and the description, no cards");
+				if (shots) { StartShot("plan_settings_tab"); yield return new WaitForSecondsRealtime(1f); }
+
+				// Save: the file's chain is the window's
+				Check(ref ok, Click(win, "Save"), "Save");
+				yield return null;
+				WorldPlan saved = WorldPlan.Load(name);
+				Check(ref ok, saved != null && StepsText(saved) == StepsText(p), "the saved file's story is the window's: " + (saved != null ? StepsText(saved) : "none"));
+				WorldPlanWindow.Close();
+				Check(ref ok, errors.Count == 0, "no errors (" + string.Join("; ", errors.Take(3).ToArray()) + ")");
+			}
+			finally
+			{
+				Application.logMessageReceived -= watch;
+				WorldPlanWindow.Close();
+				ChoiceWindow.Close();
+				PlanAway(name);
+				PutStartFileBack(startFile);
+			}
+			if (ok) Log("PASS: plan tabs"); else Fail("plan tabs");
+		}
+
+		[ConsoleCommand(name: "CIStoryNewIsland", docs: "Dev, editor: TODO 5b P3 - the Main story line tab's + New island: named 'CI New <time>', it is saved empty, put last in the story (before Utopia) and the plan saved; the editor shows it with Back to the plan; Back to the plan opens the plan on its Main story line with the new island's card. The test plan and island go to the deleted folder after")]
+		public static void StoryNewIslandCommand(string[] args) { StartTest(StoryNewIslandRoutine()); }
+
+		static IEnumerator StoryNewIslandRoutine()
+		{
+			if (!DynamicIslands.InEditor()) { Fail("story new island: in the editor"); yield break; }
+			bool ok = true;
+			string startFile = ReadStartFile();
+			string stamp = DateTime.Now.ToString("HHmmss"), name = "CI NewTab " + stamp, island = "CI New " + stamp;
+			var wp = new WorldPlan { Name = name, Random = false, RaftStory = true, Description = "New island from the plan (CIStoryNewIsland)" };
+			wp.Save();
+			try
+			{
+				WorldPlanWindow.Open(name);
+				yield return null; yield return null;
+				GameObject win = WindowObject(typeof(WorldPlanWindow));
+				Check(ref ok, win != null && WorldPlanWindow.Tab == WorldPlanWindow.TabStory && win.GetComponentsInChildren<Transform>(false).Any(t => t.name == "NoStory"), "an empty plan opens on its Main story line, saying how to start one");
+				Check(ref ok, win != null && Click(win, "+ New island"), "+ New island");
+				yield return null; yield return null;
+				GameObject prompt = WindowObject(typeof(TextPromptWindow));
+				Check(ref ok, prompt != null && TypeInto(prompt, "Name", island) && Click(prompt, "OK"), "named '" + island + "'");
+				for (float t = 0; t < 10f && DynamicIslands.currentIslandName != island; t += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+				yield return null;
+				Check(ref ok, !WorldPlanWindow.IsOpen && DynamicIslands.currentIslandName == island && File.Exists(IslandSpawner.PathFor(island)), "the editor on the new island, saved");
+				WorldPlan p = WorldPlan.Load(name);
+				IntroRule r = p != null ? p.Rules.FirstOrDefault(x => x.WhatArg == island) : null;
+				List<string> steps = p != null ? StoryChain.BuildSteps(p.RaftStory, p.LeaveOut, p.Rules) : new List<string>();
+				Check(ref ok, r != null && r.MainStory && steps.IndexOf("rule:" + r.Id) == steps.Count - 2, "the plan file has it last in the story, before Utopia (" + string.Join(",", steps.ToArray()) + ")");
+				Button back = TopBarButton(TopBar(), "Back to the plan");
+				Check(ref ok, back != null && back.gameObject.activeInHierarchy, "the top bar has Back to the plan");
+				if (back != null) back.onClick.Invoke();
+				yield return null; yield return null;
+				win = WindowObject(typeof(WorldPlanWindow));
+				Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan.Name == name && WorldPlanWindow.Tab == WorldPlanWindow.TabStory && win != null && win.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule") == 1, "Back to the plan: the plan on its Main story line, with the island's card");
+				WorldPlanWindow.Close();
+			}
+			finally
+			{
+				WorldPlanWindow.Close();
+				PlanAway(name);
+				if (DynamicIslands.currentIslandName == island) DynamicIslands.NewIsland();
+				try { if (File.Exists(IslandSpawner.PathFor(island))) IslandFilesWindow.MoveToDeleted(island); } catch { }
+				PutStartFileBack(startFile);
+			}
+			if (ok) Log("PASS: story new island"); else Fail("story new island");
 		}
 	}
 }
