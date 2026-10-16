@@ -1227,7 +1227,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Each pickup's lowest point under its pivot as an island spawns it (measured by CIFloorPickups): used when the
 		/// piece's scene isn't loaded to measure it (islands made while sailing, the world randomizer).</summary>
-		static readonly float[] FloorPickupBottoms = { 0f, 0f, 0f, 0f, 0f };
+		static readonly float[] FloorPickupBottoms = { -0.210f, -0.028f, -0.060f, -0.114f, -0.152f };
 
 		public static bool IsFloorPickup(string name) { return Array.IndexOf(FloorPickupNames, name) >= 0; }
 
