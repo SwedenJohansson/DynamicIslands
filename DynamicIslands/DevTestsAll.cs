@@ -234,6 +234,8 @@ namespace DynamicIslands
 			run.Done.Add(b);
 			run.Keys.Add(key);
 			yield return null; yield return null;
+			// (here too, not only between screens: inside the Open... window the next press after loading an island was a Save)
+			KeepWalkIsland();
 			if (depth >= 3) yield break;
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
 			{
