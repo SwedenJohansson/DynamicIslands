@@ -302,6 +302,7 @@ namespace DynamicIslands.Editor
 			string to = Path.Combine(folder, Path.GetFileName(path));
 			if (File.Exists(to)) File.Move(to, Path.Combine(folder, name + " " + File.GetLastWriteTime(to).ToString("yyyy-MM-dd HHmmss") + IslandFile.Extension));
 			File.Move(path, to);
+			IslandSummaries.Forget(name);
 		}
 
 		/// <summary>Saved plans with a rule that brings this island by name (island: or oneof:).</summary>

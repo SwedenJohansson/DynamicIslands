@@ -537,7 +537,7 @@ namespace DynamicIslands.Editor
 					Keep();
 					Action<string> set = v => { r.WhatArg = r.What == "oneof" && r.WhatArg.Trim().Length > 0 ? r.WhatArg.Trim() + ", " + v : v; ShowRules(); };
 					if (r.What == "type") ChoiceWindow.Open("Map type", ChoiceWindow.Types(), set);
-					else ChoiceWindow.Open(r.What == "oneof" ? "Add an island to the list" : "Island", ChoiceWindow.Islands(), set);
+					else ChoiceWindow.OpenIslands(r.What == "oneof" ? "Add an island to the list" : "Island", ChoiceWindow.Islands, set);
 				}, r.What == "oneof" ? "Add one of your saved islands to the list" : "Choose from a list", 24, 26f, 12);
 				choose.name = "Pick_What";
 			}
@@ -782,10 +782,12 @@ namespace DynamicIslands.Editor
 		/// signals or quest steps); picking one fills the field. Typing still works.</summary>
 		void Pick(Transform row, string name, string hint, Func<List<ChoiceWindow.Choice>> choices, string title, Action<string> set, Func<string> empty)
 		{
-			Button b = UIKit.Button(row, "▾", () =>
+			Button b = null;
+			b = UIKit.Button(row, "▾", () =>
 			{
 				Keep();
-				ChoiceWindow.Open(title, choices(), v => { set(v); ShowRules(); }, empty());
+				// (the list may hold saved islands: it opens at once and loads them)
+				ChoiceWindow.OpenIslands(title, () => choices(), v => { set(v); ShowRules(); }, empty(), b);
 			}, hint, 24, 26f, 12);
 			b.name = name;
 		}
@@ -812,8 +814,9 @@ namespace DynamicIslands.Editor
 		static string QuestNote(string island)
 		{
 			if (string.IsNullOrEmpty(island)) return "";
-			IslandQuest q = IslandCache.QuestOf(island);
-			return q.Exists ? " - quest, " + q.Steps.Count + " step" + (q.Steps.Count == 1 ? "" : "s") : " - no quest";
+			// (from the summary cache: each island's whole file was read for it)
+			int steps = IslandSummaries.QuestStepsOf(island);
+			return steps > 0 ? " - quest, " + steps + " step" + (steps == 1 ? "" : "s") : " - no quest";
 		}
 
 		List<ChoiceWindow.Choice> WhenRefChoices(IntroRule r)
