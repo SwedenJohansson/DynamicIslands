@@ -187,11 +187,14 @@ namespace DynamicIslands.Editor
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
 			// (TODO 5b: world plans are made from the start window on the main menu; here the island goes into one)
 			useInPlanButton = UIKit.Button(app, "Use in a plan...", EditorEntry.UseInPlan, "Add this island to a world plan: next in its Main story line, or as another island that comes on its own (the island is saved first). World plans themselves: Main menu > EDITOR > A world plan", 112);
-			backToPlanButton = UIKit.Button(app, "Back to the plan", EditorEntry.ToPlan, "Back to the world plan this island was opened from (the island is saved first)", 112);
+			backToPlanButton = UIKit.Button(app, "Back to the plan", EditorEntry.ToPlan, "Back to the world plan this island was opened from (the island is saved first)", 88);
+			// (88 wide, the words shrink to fit: at 112 the top bar was 1422 wide and pushed Main menu off a 1024 x 768 screen)
+			Text backText = UIKit.LabelOf(backToPlanButton);
+			backText.resizeTextForBestFit = true; backText.resizeTextMinSize = 9; backText.resizeTextMaxSize = 13;
 			UIKit.Primary(backToPlanButton);
 			RefreshBackToPlan();
 			UIKit.Button(app, "Main menu", EditorEntry.ToMainMenu,
-				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
+				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 86);
 		}
 
 		static Button lightButton;

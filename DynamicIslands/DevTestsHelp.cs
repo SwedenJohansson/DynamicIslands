@@ -31,6 +31,9 @@ namespace DynamicIslands
 				RectTransform panel = window != null ? window.Find("Panel") as RectTransform : null;
 				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on Adventure");
 				if (panel == null) yield break;
+				// (TODO 5b: a plan with a Main story line opens on that tab; the rule cards counted here are on Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
 				Canvas.ForceUpdateCanvases();
 				List<UIKit.HelpMark> marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				int cards = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule");
@@ -68,9 +71,15 @@ namespace DynamicIslands
 				if (when != null)
 				{
 					when.OnPointerEnter(null);
-					yield return new WaitForSecondsRealtime(0.2f); // (a hover lasts; the popup is placed again each frame)
-					Canvas.ForceUpdateCanvases();
-					Rect pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+					// (a hover lasts; the popup is placed again each frame - a minimised Raft draws few frames, so wait for it to be placed)
+					Rect pop = new Rect();
+					for (float t = 0; t < 3f; t += 0.2f)
+					{
+						yield return new WaitForSecondsRealtime(0.2f);
+						Canvas.ForceUpdateCanvases();
+						pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+						if (pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f) break;
+					}
 					Check(ref ok, UIKit.ShownHelp == when.Text && pop.width > 50f && pop.height > 50f && pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f,
 						"hovering the When ? shows its help, on the screen (" + pop + ")");
 					Screenshot(new[] { "planhelp_when" });

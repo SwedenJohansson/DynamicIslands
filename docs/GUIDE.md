@@ -1832,8 +1832,8 @@ This walkthrough makes a plan called **Castaway trail** with four islands. It us
 haven't built an island yet. Step 6 shows where to use one of your own islands instead.
 
 ![The World plan window](images/editor-world-plans.jpg)
-*The World plan window with the Adventure plan open: the plan's top row and tabs, one card per rule
-(WHEN, BRING, WHERE, TELL, STORY), the map on the right, and + Add a rule, Check and Save at the bottom.*
+*The World plan window on its Main story line tab: Raft's own story islands as grey lines, a card for each of
+your islands (WHEN, BRING, WHERE, TELL), the map on the right, and Check, Test this plan and Save at the bottom.*
 
 **1. Open the World plan window.** In Raft's main menu click **EDITOR**, then **New world plan** on the **A world plan**
 card (or **Open a world plan...**, or **Continue** with the plan you made last). The plan opens right on the main menu:

@@ -267,8 +267,12 @@ namespace DynamicIslands
 				Check(ref ok, !WorldPlanWindow.IsOpen && DynamicIslands.InEditor() && DynamicIslands.currentIslandName == island, "Edit island: the island in the editor");
 				Button back = TopBarButton(bar, "Back to the plan"), use = TopBarButton(bar, "Use in a plan...");
 				Check(ref ok, back != null && back.gameObject.activeInHierarchy && use != null && !use.gameObject.activeInHierarchy, "the top bar shows Back to the plan in place of Use in a plan...");
-				List<string> over = UIKit.RowOverflow((RectTransform)bar.transform, new Vector2(1024, 768));
-				Check(ref ok, over.Count == 0, "the top bar fits 1024 x 768" + (over.Count > 0 ? ": " + string.Join("; ", over.ToArray()) : ""));
+				// (the bar stretches across the screen, so its own width is the test screen's; what must fit is its buttons' width)
+				RectTransform barRect = (RectTransform)bar.transform;
+				Canvas barCanvas = barRect.GetComponentInParent<Canvas>();
+				float room = 1024f / UIKit.ScaleFor(barCanvas != null ? barCanvas.rootCanvas.GetComponent<CanvasScaler>() : null, new Vector2(1024, 768));
+				float need = LayoutUtility.GetPreferredWidth(barRect);
+				Check(ref ok, need > 0 && need <= room, "the top bar's buttons fit 1024 x 768: " + Mathf.RoundToInt(need) + " of " + Mathf.RoundToInt(room) + " px");
 				if (back != null) back.onClick.Invoke();
 				yield return null; yield return null;
 				Check(ref ok, WorldPlanWindow.IsOpen && WorldPlanWindow.Plan != null && WorldPlanWindow.Plan.Name == name, "Back to the plan: the plan open again");
