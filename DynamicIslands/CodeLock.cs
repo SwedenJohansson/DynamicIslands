@@ -51,6 +51,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Presses a key of the keypad (a digit, "C" to clear, "OK").</summary>
 		public static void Press(string key) { if (IsOpen) instance.Key(key); }
 
+		/// <summary>Closes the keypad if it is open (the play tests, after a wrong code).</summary>
+		public static void Close() { if (IsOpen) instance.Hide(); }
+
 		static void Build()
 		{
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_CodeLock", 510);

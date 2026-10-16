@@ -254,6 +254,9 @@ namespace DynamicIslands.Editor
 			return SavedNames().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new Choice(n, n, IslandSummaries.TitleOf(n)));
 		}
 
+		/// <summary>How many saved islands the player has (the editor's start window).</summary>
+		public static int SavedIslandCount() { return SavedNames().Count(); }
+
 		static IEnumerable<string> SavedNames()
 		{
 			return IslandSpawner.ListSavedIslands().Where(n => !IslandNetwork.IsDownloadName(n) && !n.StartsWith(CustomIslandSpawner.GeneratedPrefix, StringComparison.OrdinalIgnoreCase));

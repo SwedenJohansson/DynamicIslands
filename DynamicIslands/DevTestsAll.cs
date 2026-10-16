@@ -24,8 +24,10 @@ namespace DynamicIslands
 		/// <summary>Buttons the walk leaves alone: leaving the editor is tested on its own at the end.</summary>
 		// (all leave the editor for another scene - the walk would lose its screens; Test in a world has its own suite, CIIslandTest;
 		// the plan window's Test this plan and Preview notebook have CIPlanTest and CIQuestBookPreview - 10-16 a plan with a main
-		// story let them through, the plan's test world opened mid-walk and every screen after it had no editor)
-		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test", "Test this plan", "Preview notebook" };
+		// story let them through, the plan's test world opened mid-walk and every screen after it had no editor;
+		// Use in a plan... saves the island and adds it to a real plan - CIUseInPlan has it: 10-16 the walk put an island into
+		// the sample plan Adventure and then sat in that 90-rule plan's Check)
+		static readonly HashSet<string> ButtonSkip = new HashSet<string> { "Main menu", "Test", "Test this plan", "Preview notebook", "Use in a plan..." };
 		/// <summary>A list with more buttons than this (object tiles, items, sounds, plan cards) is sampled: its first three.</summary>
 		const int ListSample = 3, ListThreshold = 8;
 
@@ -73,6 +75,13 @@ namespace DynamicIslands
 					eb.onClick.Invoke();
 					run.Pressed++;
 					Log("Pressed the main menu's EDITOR button");
+					// (it opens the start window: its New island opens the editor - TODO 5b)
+					yield return new WaitForSecondsRealtime(0.5f);
+					Button ni = CreateWindow.IsOpen ? CreateWindow.Root.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Button_New island") : null;
+					if (ni == null) { Fail("the EDITOR button did not open the start window with New island"); yield break; }
+					run.Current = "Start window > New island";
+					ni.onClick.Invoke();
+					run.Pressed++;
 					// (its own load: WaitForEditor would start a second one)
 					float t0 = Time.realtimeSinceStartup;
 					while (!(DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && EditorUI.Canvas != null) && Time.realtimeSinceStartup - t0 < 120f) yield return new WaitForSecondsRealtime(0.5f);
@@ -184,6 +193,7 @@ namespace DynamicIslands
 				if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
 				yield return Press(run, b, screen, 0);
 				CloseAllWindows();
+				KeepWalkIsland();
 				// Buttons this press showed (a tool's own options, e.g. the stamps): pressed now, before the setup hides them again
 				List<Button> revealed = SampleList(run, MainButtons().Where(x => !list.Contains(x) && !run.Done.Contains(x)).ToList());
 				foreach (Button r in revealed)
@@ -192,12 +202,22 @@ namespace DynamicIslands
 					if (!DynamicIslands.InEditor()) { run.Errors.Add(screen + ": left the editor"); yield break; }
 					yield return Press(run, r, screen + " > " + LabelOfButton(b), 0);
 					CloseAllWindows();
+					KeepWalkIsland();
 				}
 				// (the screen may have changed: selection lost, tab switched - set it up again)
 				try { setup(); } catch { }
 				yield return null;
 			}
 			run.PerScreen[screen] = run.Pressed - before;
+		}
+
+		/// <summary>After an Open... that loaded someone's island, the walk is back on its own one, so a later Save never writes over it.</summary>
+		// (10-16 Open... loaded "Wreckers' Cove_d969a15eef52", the Island tab's Generate replaced its land and Save wrote it)
+		static void KeepWalkIsland()
+		{
+			if (!DynamicIslands.InEditor() || DynamicIslands.currentIslandName == "cibuttons") return;
+			DynamicIslands.NewIsland();
+			DynamicIslands.currentIslandName = "cibuttons";
 		}
 
 		static IEnumerator Press(ButtonRun run, Button b, string context, int depth)
@@ -214,6 +234,8 @@ namespace DynamicIslands
 			run.Done.Add(b);
 			run.Keys.Add(key);
 			yield return null; yield return null;
+			// (here too, not only between screens: inside the Open... window the next press after loading an island was a Save)
+			KeepWalkIsland();
 			if (depth >= 3) yield break;
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
 			{

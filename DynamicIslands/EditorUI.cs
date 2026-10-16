@@ -185,12 +185,39 @@ namespace DynamicIslands.Editor
 			lightText.resizeTextForBestFit = true; lightText.resizeTextMinSize = 9; lightText.resizeTextMaxSize = 13;
 			UIKit.Stretch(lightText.rectTransform, 5, 22, 1, 1);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
-			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
-			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
-				"Back to Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
+			// (TODO 5b: world plans are made from the start window on the main menu; here the island goes into one)
+			useInPlanButton = UIKit.Button(app, "Use in a plan...", EditorEntry.UseInPlan, "Add this island to a world plan: next in its Main story line, or as another island that comes on its own (the island is saved first). World plans themselves: Main menu > EDITOR > A world plan", 96);
+			// (96 wide, the words shrink to fit: room for the "?" after it on a 1024 x 768 screen)
+			Text useText = UIKit.LabelOf(useInPlanButton);
+			useText.resizeTextForBestFit = true; useText.resizeTextMinSize = 9; useText.resizeTextMaxSize = 13;
+			backToPlanButton = UIKit.Button(app, "Back to the plan", EditorEntry.ToPlan, "Back to the world plan this island was opened from (the island is saved first)", 88);
+			// (88 wide, the words shrink to fit: at 112 the top bar was 1422 wide and pushed Main menu off a 1024 x 768 screen)
+			Text backText = UIKit.LabelOf(backToPlanButton);
+			backText.resizeTextForBestFit = true; backText.resizeTextMinSize = 9; backText.resizeTextMaxSize = 13;
+			UIKit.Primary(backToPlanButton);
+			RefreshBackToPlan();
+			UIKit.Help(app, "Save as only keeps the island under a new name. Use in a plan... puts it into a world plan - the list of islands a "
+				+ "world is made from - so players meet it while they play. It saves the island first (a new island needs a name from Save as), then "
+				+ "lists your plans or starts a new one, and asks how the island comes: next in the Main story line (the Receiver leads players "
+				+ "to it after the story's last island) or as another island that comes on its own (at the start, ahead of the raft; change WHEN "
+				+ "and WHERE on its card). The plan opens on it. Opened from a plan card's Edit island, this button is Back to the plan. "
+				+ "Plans themselves: Main menu > EDITOR > A world plan.");
+			UIKit.Button(app, "Main menu", EditorEntry.ToMainMenu,
+				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 86);
 		}
 
 		static Button lightButton;
+		static Button useInPlanButton, backToPlanButton;
+
+		/// <summary>The top bar offers Back to the plan (an island opened with a plan card's Edit island) in place of Use in a plan...</summary>
+		public static void RefreshBackToPlan()
+		{
+			if (useInPlanButton == null || backToPlanButton == null) return;
+			bool back = EditorEntry.BackToPlan != null;
+			backToPlanButton.gameObject.SetActive(back);
+			useInPlanButton.gameObject.SetActive(!back);
+			if (back) UIKit.Hint(backToPlanButton.gameObject, "Back to the world plan '" + EditorEntry.BackToPlan + "' (the island is saved first)");
+		}
 
 		/// <summary>The "Raft's sky and sea" button shows whether the option is on.</summary>
 		public static void RefreshSkySea()
@@ -545,7 +572,6 @@ namespace DynamicIslands.Editor
 		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField, infoNotBeforeField;
 		static Text infoNotBeforeText;
 		static Text questText;
-		static Button infoLevelsOff, infoLevelsOn;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
 		static void BuildInfoTools(Transform s)
@@ -579,13 +605,6 @@ namespace DynamicIslands.Editor
 			infoNotBeforeField.onEndEdit.AddListener(v => { int k; SetInfo(IslandProps.NotBeforeKm, int.TryParse(v, out k) && k > 0 ? Mathf.Min(k, IslandProps.MaxNotBeforeKm).ToString() : ""); RefreshInfo(); });
 			infoNotBeforeText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "NotBeforeMeaning");
 			infoNotBeforeText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			RectTransform levels = UIKit.Row(rules, 26f, 4f, "LevelUp");
-			UIKit.Label(levels, "Level up system", 13, UIKit.TextMuted);
-			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
-			infoLevelsOn = UIKit.Button(levels, "On", () => { SetInfo(IslandProps.Levels, "on"); RefreshInfo(); }, "Players level up: hitting monsters gives EXP, every level gives stat points (K in a world)", 50, 26f, 12);
-			UIKit.Help(levels, "The level up system: once this island is in a world, players there earn EXP by hitting monsters (anywhere in that world: the island's animals, Bruce, Raft's own), shown over the monster (+5). " +
-				"Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level. Every level gives " + LevelRules.PointsPerLevel + " stat points to spend on the stats page (" + PlayerLevels.Key + "): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen, +1% a point, at most " + LevelRules.MaxPoints + " points each. " +
-				"The levels are kept with the world, for every player.");
 			RectTransform quest = UIKit.Group(s, "Quest");
 			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);
 			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
@@ -631,8 +650,6 @@ namespace DynamicIslands.Editor
 					"Not before the world has sailed " + k + " km: " + IslandProps.SailTime(km) + " (at " + IslandProps.SailKmPerHour.ToString("0") + " km/h)." :
 					"Empty: it may come by chance any time.";
 			}
-			bool levelsOn = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
-			if (infoLevelsOn != null) { UIKit.SetActive(infoLevelsOn, levelsOn); UIKit.SetActive(infoLevelsOff, !levelsOn); }
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
 			int brings = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps).Count;
 			if (questText != null) questText.text = (q.Exists ? "<color=#eddeba>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +

@@ -14,8 +14,37 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### New
 - **Story items as Raft's own items:** the Story items window's **Raft item...** links a story item to one of Raft's
   items; in the journal, **Take out** turns one into that item in your inventory (the host decides who gets the last).
+- **Keycard doors and buried treasure (RF4):** select Raft's card reader door or another key door for its
+  **Keycard door** settings: the story item that opens it (the island's own or one of Raft's quest items) and whether
+  the card is used up. Without it the door stays shut; with it the reader beeps it through, for the whole crew and
+  after loading. Check warns about a key door that no story item opens. Buried treasure is found only with the metal
+  detector (it beeps faster nearer), dug with the shovel, and its chest can give **Extra loot** - story items too,
+  once for the whole crew.
+- **Islands and world plans apart:** **EDITOR** now opens a start window, "What do you want to make?", with cards
+  for **An island**, **A world plan** and **The guide**; the one you made last is lit, with a **Continue** button. A
+  world plan is made right on the main menu, without the 3D editor. In the island editor, **Use in a plan...**
+  (replacing the **World plans** button) puts the island in a plan, next in the Main story line or as an island that
+  comes on its own; a plan's **Edit island** opens it in the editor, with **Back to the plan**. A **?** after it
+  explains it, and how it differs from **Save as**.
+- **The plan window has three tabs:** **Main story line** (the islands the Receiver leads players to, in play order,
+  with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
+  the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
+  **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
+  ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
+  to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
+  Isle** (a keypad code lock, three quests on one island, the island rules, an island its quest brings) and
+  **Lantern Spire** (a flying island).
 - **World plan Check: one story item on two islands:** Check warns when two islands of a plan each give a story item
   with the same id (two 'keycard's) - the one found on either would open the other's locks.
+- **Raft's progression in order in world plans:** the plan Check warns about a blueprint given before the ones it
+  builds on (the engine controls before the motor wheel and steering wheel, fuel pipes before a fuel tank...), and
+  Progression shows it in yellow. A lock whose story item an island met before gives says where the item was kept from.
+- **Keys kept for later islands in every library plan:** Raft Remade (Vasagatan's crowbar opens a crate at Caravan
+  Town), The Long Voyage and The Abyss Expedition (Ironreef's pump store key, a box on the Drowned Metropolis), Silver
+  Screen Seas (the liner's steward's keys, a sea chest at The Arena). Mayor's Wharf's keycard no longer shares its id
+  with the Drowned Metropolis' council keycards in The Long Voyage. Embers Isle's chained dog cage is scenery now (in Silver
+  Screen Seas it was a lock wanting bolt cutters only a later island gives). Blueprint names in Check read as words.
 - **A clickable error note:** when something goes wrong in the mod, a note at the bottom left opens the details
   (whose code it was, the message), with Copy, the log folder and where to report. `errors.txt` keeps them.
 - **The Islands window explains itself:** a **?** for Name, Height in the world, the island list and the sharing
@@ -39,8 +68,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Progression panel:** the world plan editor's new **Progression** button shows, in the plan's order, which rule's
   islands give which of Raft's story-island blueprints and story items, the locks that come before their item, and the
   blueprints the plan never gives.
-- **Things to pick up indoors:** sixteen of the library's islands have a little plastic, planks or scrap lying on the
-  floors of some of their houses; they come back after a few days like Raft's.
+- **Things to pick up indoors:** eighteen of the library's islands have a little plastic, planks or scrap lying on the
+  floors of some of their houses; they come back after a few days like Raft's. The generator's huts and cabins (and
+  the world randomizer's huts) get them too: none, one or two per house, on free floor beside the furniture.
 - **Upgrade research table:** the extra upgrades are learned at a research table of their own (violet, four times the cost
   of Raft's, there from the start with the option on) instead of with their base item. Its research is separate from
   Raft's table; a world from before keeps the upgrades it had.
@@ -130,6 +160,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a
   player near that island; levels are switched on by the host only, and a level record with more EXP than the host
   credited is put back.
+- **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
+  the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
+  seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
+  opens on one about 40 m across and 12 m high, and **Defaults** gives it; after a Randomize existing or Ready-made
+  island the Normal tab no longer opens on that island's big, round settings.
+- **Level up is a world option only:** the editor's Island tab and the generator (all three tabs) have no Level up
+  choice any more; the level up system is switched in World settings or with `Levels on`. Older islands and presets
+  with the choice still load (it is ignored).
 - **World plan Check and Progression follow the play order:** Raft's story chain with your islands in their places,
   other islands by what they wait for. Raft's story islands give their blueprints when the story reaches them.
 - **Check warns when a main quest needs a tool** (the machete for vines, the metal detector...) that no island before
@@ -207,6 +245,13 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### Fixed
 - **Machinery placed as decoration stays decoration:** an island script's (recipe's) generator, radio, cage, hatch or
   lift placed without a name no longer gets the Ready pieces' working settings; one given a name does.
+- **The island library's picture** no longer stays on the next entry you click: while that entry's picture is
+  on its way the space is empty and its number says **(loading)**, or **(can't be loaded)** when it fails. A slow
+  download had left one island's picture showing on every entry clicked after it.
+- **The generator's reach line** (how far the island reaches from the raft) now measures the island Generate
+  makes: on Randomize existing it left out the caves and buildings that are not made there.
+- **Presets and map types that ask for too much** (buildings over 25, quest steps over 8, features over 10) are
+  kept in range when generating, so the report no longer lists quest steps that "found no place".
 - **Randomize existing on Temperance's small islets** no longer offers (and picks) the Rebuild it designs
   of Temperance itself: a design now matches only its own Raft island, not every island whose name starts the same.
 - **No more "AN ERROR OCCURED!" while generating with buildings or caves:** Raft's story scripts no longer throw

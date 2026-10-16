@@ -28,6 +28,10 @@ namespace DynamicIslands
 		// Every test coroutine runs through this, so ci.ps1 can end a run at "[CITEST] IDLE"
 		// (logged when the last running test ends) instead of guessing from PASS/FAIL lines.
 		static int runningTests;
+		// Lines of the command file still to run, and an IDLE held back for them: "CIA;CIB" logs IDLE once, after CIB
+		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
+		static int pendingCommands;
+		static bool idleOwed;
 		static Coroutine StartTest(IEnumerator e) { runningTests++; return DynamicIslands.instance.StartCoroutine(Track(e)); }
 
 		static IEnumerator Track(IEnumerator e)
@@ -40,7 +44,7 @@ namespace DynamicIslands
 				if (!more) break;
 				yield return e.Current;
 			}
-			if (--runningTests <= 0) { runningTests = 0; Log("IDLE (all tests done)"); }
+			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
 		}
 
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
@@ -1888,10 +1892,14 @@ namespace DynamicIslands
 				catch (Exception e) { Debug.LogWarning("[CITEST] command file: " + e.Message); }
 				if (lines == null) continue;
 				Application.runInBackground = true; // commands arrive while Raft is in the background
-				foreach (string raw in lines)
+				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
+				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
+				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				for (int li = 0; li < todo.Count; li++)
 				{
-					string line = raw.Trim();
-					if (line.Length == 0 || line.StartsWith("#")) continue;
+					string line = todo[li];
+					pendingCommands = todo.Count - li; // (this line too, until it runs)
+					if (li > 0) while (runningTests > 0) yield return null;
 					// "@<unix ms> <command>": run at that moment of the PC's clock - two Rafts on one PC then act in the same
 					// frame or the next, not up to a second apart as the file poll and the script's jobs leave them (IM28)
 					long at;
@@ -1904,9 +1912,13 @@ namespace DynamicIslands
 						while (DateTime.UtcNow < when) yield return null;
 					}
 					Log("> " + line);
+					pendingCommands = todo.Count - li - 1;
 					try { RunCommand(line); }
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
 				}
+				pendingCommands = 0;
+				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				idleOwed = false;
 			}
 		}
 

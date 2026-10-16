@@ -143,8 +143,8 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
-	/// The level up system in a world. It is off until an island made with "Level up system" on appears in the world
-	/// (IslandProps.Levels); from then on it stays on in that world, and every player earns EXP by hitting monsters
+	/// The level up system in a world: a world option, chosen in the New Game box's World settings (or switched with the
+	/// Levels command); islands and plans don't turn it on. While it is on, every player earns EXP by hitting monsters
 	/// anywhere (Bruce, the island animals, Raft's own). The EXP of a hit is the monster's EXP times the share of its
 	/// health the hit took, so killing it alone gives exactly its EXP; the number floats up over the monster (+5).
 	/// Each level gives 2 stat points to spend on the stats page (K).
@@ -184,8 +184,8 @@ namespace DynamicIslands.Editor
 		public static bool HasState { get { return On || OffByHost; } }
 
 		/// <summary>
-		/// The host switched the system off in this world (World settings when creating it, or the Levels command): an island
-		/// made with it doesn't switch it on again, and everyone's levels are kept for when it is switched on.
+		/// The host switched the system off in this world (the Levels command): everyone's levels are kept for when it is
+		/// switched on again.
 		/// </summary>
 		public static bool OffByHost { get; private set; }
 
@@ -305,22 +305,6 @@ namespace DynamicIslands.Editor
 				LevelRecord own = Mine; // (makes the host's own record, so it is in the list)
 				IslandNetwork.SendLevels(new IslandNetMessage { Name = "levels", Data = LevelList() }, null);
 			}
-		}
-
-		/// <summary>An island was spawned in this world: one made with the level up system on turns it on.</summary>
-		public static void OnIslandSpawned(IDictionary<string, string> props)
-		{
-			// (not over the host's choice: switched off in World settings or with the Levels command. Only the host decides -
-			// its "on" reaches every player: a player who joined doesn't know the host switched it off, and turned it on for
-			// themselves when such an island spawned on their side)
-			if (!Raft_Network.IsHost || On || OffByHost || !IsOn(props)) return;
-			TurnOn(true);
-		}
-
-		public static bool IsOn(IDictionary<string, string> props)
-		{
-			string v = props != null ? ObjectProps.Get(props, IslandProps.Levels) : "";
-			return v == "on" || v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase);
 		}
 
 		/// <summary>Turns the system on in this world (host: tells everyone; a client does it when the host says so).</summary>

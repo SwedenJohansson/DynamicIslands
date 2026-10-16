@@ -395,7 +395,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The scale a canvas scaler gives a screen of this size (as CanvasScaler works it out).</summary>
-		static float ScaleFor(CanvasScaler scaler, Vector2 screen)
+		public static float ScaleFor(CanvasScaler scaler, Vector2 screen)
 		{
 			if (scaler == null || scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) return scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize ? scaler.scaleFactor : 1f;
 			Vector2 reference = scaler.referenceResolution;

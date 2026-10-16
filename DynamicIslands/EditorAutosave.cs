@@ -52,6 +52,8 @@ namespace DynamicIslands.Editor
 			restored = fromAutosave;
 			lastWrite = Time.unscaledTime;
 			if (fromAutosave && !string.IsNullOrEmpty(name)) ours.Add(name);
+			else EditorEntry.RememberIsland(name); // (the start window's Continue)
+			EditorEntry.OnIslandOpened(name);
 		}
 
 		/// <summary>Before this session writes over or removes the autosave of name: one from an earlier session goes to

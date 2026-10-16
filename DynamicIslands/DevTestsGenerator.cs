@@ -588,6 +588,144 @@ namespace DynamicIslands
 
 		static IslandGenSettings Tweak(IslandGenSettings s, Action<IslandGenSettings> change) { IslandGenSettings c = s.Copy(); change(c); return c; }
 
+		[ConsoleCommand(name: "CIGenDefault", docs: "Dev, editor (Raft just started): the first Generate is an island like Raft's small ones - layout Raft small island, 25-75 m long, 6-18 m high, not round (its coast 1.25x further out one way than another), reachable from the raft; several seeds; Defaults gives it; after a Randomize existing generate (an island like Tangaroa) the Generate island tab still opens on its own settings; pictures shot_gendefault_<seed>.png and gendefault_<seed>.png (top down)")]
+		public static void GenDefaultCommand()
+		{
+			StartTest(GenDefaultRoutine());
+		}
+
+		static IEnumerator GenDefaultRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("open the editor first"); yield break; }
+			bool ok = true;
+			IslandGenSettings first = IslandGenerator.Last;
+			Check(ref ok, first.Shape == IslandShapes.RaftSmall && IslandShapes.Order[0] == IslandShapes.RaftSmall,
+				"nothing generated yet: the window's first settings are layout " + IslandShapes.Names[first.Shape] + ", " + (first.Radius * 2f).ToString("F0") + " m, " + first.Height.ToString("F0") + " m high (Raft small island first in the Layout list)");
+
+			// The default island, several seeds: its size, height, outline and reach, from its heights
+			Vector3 size = IslandGenerator.BuildArea;
+			int res = IslandGenerator.BuildResolution;
+			float step = size.x / (res - 1);
+			int[] seeds = { 1, 7, 42, 1234, 5150, 90210 };
+			foreach (int seed in seeds)
+			{
+				IslandGenSettings s = IslandGenSettings.RaftLike(seed);
+				float sea = s.WaterLevel;
+				float[,] m = IslandGenerator.HeightsMetres(s, size, res);
+				double cx = 0, cz = 0; int cells = 0; float top = 0f;
+				for (int z = 0; z < res; z++)
+					for (int x = 0; x < res; x++)
+						if (m[z, x] > sea) { cx += x; cz += z; cells++; top = Mathf.Max(top, m[z, x] - sea); }
+				if (cells == 0) { Check(ref ok, false, "seed " + seed + ": no land"); continue; }
+				var mid = new Vector2((float)(cx / cells) * step, (float)(cz / cells) * step);
+				Func<float, float, float> ground = (x, z) => IslandGenerator.SampleHeights(m, res, step, x, z);
+				var rays = new float[64];
+				for (int k = 0; k < 64; k++)
+				{
+					Vector2 dir = new Vector2(Mathf.Cos(k * Mathf.PI / 32f), Mathf.Sin(k * Mathf.PI / 32f));
+					float last = 0f;
+					for (float d = 0f; d < 150f; d += 0.5f) if (ground(mid.x + dir.x * d, mid.y + dir.y * d) > sea) last = d;
+					rays[k] = last;
+				}
+				float length = Enumerable.Range(0, 32).Max(k => rays[k] + rays[k + 32]);
+				float far = rays.Max(), near = Mathf.Max(0.5f, rays.Min());
+				ReachResult r = IslandReach.Assess(s), fromHeights = IslandReach.Assess(m, step, sea);
+				Check(ref ok, length >= 25f && length <= 75f && top >= 6f && top <= 18f && far / near > 1.25f && r.Level <= IslandReach.Mostly && fromHeights.Level <= IslandReach.Mostly,
+					string.Format(System.Globalization.CultureInfo.InvariantCulture, "seed {0} ({1}): {2:F0} m long, {3:F1} m high, coast {4:F0}-{5:F0} m from the middle (x{6:F2}), reach {7} / from its heights {8}: {9}",
+						seed, RaftIslandName(s), length, top, near, far, far / near, r.Level, fromHeights.Level, fromHeights.Text));
+				if (seed == seeds[0] || seed == seeds[2] || seed == seeds[4])
+				{
+					Texture2D tex = IslandGenerator.Preview(m, step, s.Style, null, sea);
+					File.WriteAllBytes(Path.Combine(DynamicIslands.assetpath, "gendefault_" + seed + ".png"), tex.EncodeToPNG());
+					UnityEngine.Object.Destroy(tex);
+				}
+				yield return null;
+			}
+
+			// The window: Generate island opens on it; Defaults gives it (the seed and style stay)
+			GeneratorWindow.Open();
+			yield return null;
+			GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+			Check(ref ok, GeneratorWindow.Current.Shape == IslandShapes.RaftSmall, "the window opens on layout " + IslandShapes.Names[GeneratorWindow.Current.Shape]);
+			GeneratorWindow.Use(new IslandGenSettings { Seed = 1234, Shape = IslandShapes.Atoll, Radius = 90f, Style = 1 });
+			Button defaults = FindButton("Defaults");
+			if (defaults != null) defaults.onClick.Invoke();
+			IslandGenSettings def = GeneratorWindow.Current;
+			Check(ref ok, defaults != null && def.Shape == IslandShapes.RaftSmall && def.Seed == 1234 && def.Style == 1 && Mathf.Abs(def.Radius - IslandGenSettings.RaftLike().Radius) < 0.01f, "Defaults: layout " + IslandShapes.Names[def.Shape] + ", seed " + def.Seed + ", style " + def.Style);
+
+			// Three default islands generated in the editor, pictured as the window leaves them
+			foreach (int seed in new[] { 1, 42, 5150 })
+			{
+				GeneratorWindow.Open();
+				yield return null;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+				IslandGenSettings g = IslandGenSettings.RaftLike(seed);
+				g.Style = DynamicIslands.currentStyle;
+				GeneratorWindow.Use(g);
+				yield return PressGenerate(60f);
+				Check(ref ok, GeneratorWindow.LastResult != null, "seed " + seed + " generated in the editor: " + (GeneratorWindow.LastResult ?? "nothing"));
+				yield return new WaitForSecondsRealtime(1.5f);
+				Screenshot(new[] { "gendefault_" + seed });
+				yield return new WaitForSecondsRealtime(0.6f);
+			}
+
+			// After a Randomize existing generate (an island like Tangaroa: big and round), Generate island still opens on its own settings
+			RaftIsland big = RaftIslands.All.FirstOrDefault(i => i.Label.IndexOf("Tangaroa", StringComparison.OrdinalIgnoreCase) >= 0) ?? RaftIslands.All.OrderByDescending(i => i.Radius).FirstOrDefault();
+			if (big == null) Check(ref ok, false, "no measured Raft islands");
+			else
+			{
+				GeneratorWindow.Open();
+				yield return null;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabRandomize);
+				GeneratorWindow.Pick(big, false);
+				yield return null;
+				IslandGenSettings like = GeneratorWindow.Current;
+				yield return PressGenerate(120f);
+				bool made = GeneratorWindow.LastResult != null && IslandGenerator.Last.Radius > 40f;
+				GeneratorWindow.Open();
+				yield return null;
+				IslandGenSettings onRandomize = GeneratorWindow.Current;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+				IslandGenSettings onNormal = GeneratorWindow.Current;
+				Check(ref ok, made && onRandomize.Radius > 40f && onNormal.Shape == IslandShapes.RaftSmall && onNormal.Radius < 30f,
+					"after a generate like " + big.Label + " (" + (like.Radius * 2f).ToString("F0") + " m, " + IslandShapes.Names[like.Shape] + "): Randomize existing keeps it (" + (onRandomize.Radius * 2f).ToString("F0") + " m), Generate island opens on " + IslandShapes.Names[onNormal.Shape] + " " + (onNormal.Radius * 2f).ToString("F0") + " m");
+				GeneratorWindow.Close();
+				GeneratorWindow.Open();
+				yield return null;
+				Check(ref ok, GeneratorWindow.Current.Shape == IslandShapes.RaftSmall, "reopened on Generate island: " + IslandShapes.Names[GeneratorWindow.Current.Shape]);
+				GeneratorWindow.Close();
+			}
+			if (ok) Log("PASS: the first Generate is like Raft's small islands"); else Fail("the first Generate is like Raft's small islands");
+		}
+
+		/// <summary>The generator window's button with this label (tests).</summary>
+		static Button FindButton(string label)
+		{
+			return GeneratorWindow.Instance.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.GetComponentsInChildren<Text>(true).Any(t => t.text == label));
+		}
+
+		/// <summary>Clicks the generator window's Generate button and waits (up to the seconds given) for the island.</summary>
+		static IEnumerator PressGenerate(float seconds)
+		{
+			Button gen = FindButton("Generate");
+			if (gen == null) { Log("  (no Generate button)"); yield break; }
+			// (the last run's result stays until this run's Generate starts - after the buildings load, maybe much later)
+			string before = GeneratorWindow.LastResult;
+			gen.onClick.Invoke();
+			float until = Time.realtimeSinceStartup + seconds;
+			while ((GeneratorWindow.LastResult == null || ReferenceEquals(GeneratorWindow.LastResult, before)) && Time.realtimeSinceStartup < until) yield return null;
+		}
+
+		/// <summary>Which of Raft's islands a Raft small / large layout uses (for the log).</summary>
+		static string RaftIslandName(IslandGenSettings s)
+		{
+			bool small = s.Shape == IslandShapes.RaftSmall;
+			List<RaftIsland> pool = RaftIslands.All.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big")
+				.Where(i => RaftIslands.Heights(i) != null).OrderBy(i => i.Scene, StringComparer.Ordinal).ToList();
+			return pool.Count == 0 ? "no measured islands" : pool[new System.Random(s.Seed * 13 + 5).Next(pool.Count)].Label;
+		}
+
 		[ConsoleCommand(name: "CIGenBuildings", docs: "Dev, editor: the generator's Buildings and caves - huts with a cave, cabins, a themed scene, a mix, and neither: what each puts on the island (foundations, walls, pillars, a roof on them, a bed and a chest; the scene's props; Raft's cave piece with its guard), the ground levelled under a hut, the settings kept by a preset; pictures shot_genbuild_*.png")]
 		public static void GenBuildingsCommand() { StartTest(GenBuildingsRoutine()); }
 

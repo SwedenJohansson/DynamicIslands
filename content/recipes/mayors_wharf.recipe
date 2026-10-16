@@ -117,11 +117,11 @@ info author=Custom Islands
 info description=A sandy islet beside a drowned city block: City Hall's lower floors are flooded, the mayor's office stands just above the waterline at its wooden wharf, and the burger bar next door keeps a cafe on its roof. Rats, a keycard and the mayor's vault. Inspired by Raft's Tangaroa.
 island on.arrive=message||A city block, drowned to its third floor. A wooden wharf leads to City Hall's door.
 
-story keycard|Vault keycard|quest:Tangaroa_KeyCard|City Hall's spare vault keycard. Level 0 - authorised staff only.
+story wharf-keycard|Vault keycard|quest:Tangaroa_KeyCard|City Hall's spare vault keycard. Level 0 - authorised staff only.
 
 note memo Mayor's memo | MEMO - from the desk of Mayor A. Osei\n\nTo Security: the vault stays locked during the evacuation. The spare keycard is in the security locker on level 1 - NOT in your pocket, Darnell.\n\nIf the water keeps rising, swim it out through the windows. The founders' charter is in the safe and goes with the last boat.\n\n- O.
 note locker Security locker | Locker 7 - D. Kim, Security. A spare vault keycard on a lanyard, two ration bars and a photo of a very fat dog.
-loot locker story:keycard*1;Cooked_GenericMeat*2
+loot locker story:wharf-keycard*1;Cooked_GenericMeat*2
 prop locker loot.refill=0
 note safe Mayor's safe | The founders' charter, sealed in plastic: "Tangaroa will float when the old world sinks." Under it, a hand-drawn chart of the sea routes between the floating towns, a painting of the sea-god, two bars of titanium and two circuit boards.
 loot safe Placeable_Painting_Tangaroa_2*1;TitaniumIngot*2;CircuitBoard*2
@@ -130,7 +130,7 @@ loot barrel Plastic*6;Glass*2;Scrap*3
 
 prop reader obj.name=reader
 prop reader beh.use=Swipe the vault keycard
-prop reader if.use=take|story:keycard|1
+prop reader if.use=take|story:wharf-keycard|1
 prop reader on.use=message||The reader beeps green. The vault shutter rattles up.\nopen|shutter\nsound||event:/raft/door/door_unlock_keycard
 prop reader else.use=message||The card reader blinks red: KEYCARD REQUIRED.
 prop shutter1 obj.name=shutter
@@ -162,7 +162,7 @@ quest intro=City Hall stands in the sea up to its third floor. Somewhere below t
 step reach|wharf|1|Tie up at the mayor's wharf
 step kill|Tangaroa rat|3|Clear the rats out of the mayor's office
 step read|Mayor's memo|1|Read the memo on the mayor's desk
-step collect|story:keycard|1|Swim down to level 1 and take the spare keycard from Darnell's locker
+step collect|story:wharf-keycard|1|Swim down to level 1 and take the spare keycard from Darnell's locker
 step open|Mayor's safe|1|Open the mayor's safe in the vault
 quest done=The founders' charter is safe with you. The floating towns are out there somewhere.
 quest reward=Rope*4;Hinge*2

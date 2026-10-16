@@ -56,6 +56,21 @@ namespace DynamicIslands.Editor
 			new Feature { Object = "ZiplinePath", Label = "a zipline", Tools = new[] { ContentCatalog.ZiplineItem } },
 		};
 
+		/// <summary>
+		/// Raft's story-island blueprints that build on others (TODO 4c "every blueprint and key item, in order"): the engine
+		/// controls steer the motor wheels and the steering wheel, the fuel pipes feed from a fuel tank, the advanced biofuel
+		/// extractor replaces the plain one, the water pipes run from a water tank. Raft's own order gives the bases first
+		/// (Vasagatan before Caravan Town, Balboa before Temperance); a plan that gives one before its bases gets a Check
+		/// warning (PlanChecker.CheckBlueprintOrder): players find a blueprint they can't use yet.
+		/// </summary>
+		public static readonly Dictionary<string, string[]> BuildsOn = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+		{
+			{ "Blueprint_EngineControls", new[] { "Blueprint_MotorWheel", "Blueprint_SteeringWheel" } },
+			{ "Blueprint_Pipe_Fuel", new[] { "Blueprint_Fueltank" } },
+			{ "Blueprint_BiofuelExtractorAdvanced", new[] { "Blueprint_BiofuelExtractor" } },
+			{ "Blueprint_Pipe_Water", new[] { "Blueprint_WaterTank" } },
+		};
+
 		/// <summary>The feature an object is, or null.</summary>
 		public static Feature Of(string objectName) { return Features.FirstOrDefault(f => f.Object == objectName); }
 
