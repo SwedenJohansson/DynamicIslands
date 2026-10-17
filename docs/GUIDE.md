@@ -1620,8 +1620,23 @@ everyone, as in Raft).
 
 **The journal (J): side quests.** Islands outside the story - by chance, ordinary rules, side trips - keep everything
 in the journal as before: their notes, story items, pages from events and their Receiver frequencies. The journal's
-quest list says only how far the main story is ("Main story: 3 of 10 islands done - its quests, notes and items are
-in Raft's notebook"); the per cent at the top still counts every quest.
+quest list says only how far the main story is ("Main story: 3 of 10 done - its quests, notes and items are in
+Raft's notebook" - a main story island's further quests and a generated main story island's quest count there too);
+the per cent at the top still counts every quest.
+
+**The rule for a new story line.** Every island that is part of the story gets a place in it (**STORY**: first,
+after, in place of, or **beside** Raft's story), so all its steps are in Raft's notebook; only islands the story never
+depends on stay side quests. So, in a plan:
+- an island **brought by** a main story island (WHEN *quest*, *step*, *visit*, *zone*, *signal* or *rule* of it) is
+  main story too - use **beside** for an expedition that runs alongside Raft's (as The Abyss Expedition does);
+- a main story island never **waits on** a side quest island's WHEN;
+- a **story item** a main story island needs (a lock, a quest's *collect*, a *has* / *take* check) is found on a main
+  story island, not only on a side trip;
+- islands chained one after another by WHEN are a story line: give them places in the story.
+
+The mod's own story lines (Raft Remade, Raft 2 - The Drowned Frontier, The Long Voyage, Silver Screen Seas, The Abyss
+Expedition) all keep this rule; the source has a check for it (`content/questbook_check.py`, over every plan recipe
+and the plans in `Mods\DynamicIslands\plans`).
 
 **Saves.** Nothing of the mod goes into Raft's own notebook save: the tabs and pages are made again from the world's
 story each time it loads. A world opened without the mod has Raft's own notebook.
