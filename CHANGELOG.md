@@ -294,6 +294,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A joined player sometimes got no islands:** when Raft's world-arrived event never reached the mod, the
+  joining player never asked the host for its islands. Now it asks anyway 10 s into the game.
 - **The credits at a story's end:** no island banner shows faintly behind the top of the credits card any more (the
   story's last banner waits until the credits are closed).
 - **Main story quests stay out of the journal's side quests:** a main story island's further quests, and the quest of
