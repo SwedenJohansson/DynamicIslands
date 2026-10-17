@@ -867,6 +867,10 @@ These come from Raft, its mod loader, Unity, or a choice made on purpose - the g
 - The sessions-over-days audit's tests (TEST_PROTOCOL.md §5i, AT1-AT43): ten are automatic now and pass with their fixes (AT1, AT4, AT20, AT21, AT22, AT24, AT25, AT28, AT35, AT36 - 2026-10-01); the others are still to run.
 - Scenario tests (TEST_PROTOCOL.md §5j): Raft's gameplay meets the mod (ramming, flying and sunken islands, the world shift, a full inventory, death, game modes, catching, sleeping, diving, a raft drifting onto a beach), the story chain, the builder's side (packs, Check, plan and island edits), many players simulated, and a voyage built from nothing and played to its end - alone and by two players over three sessions with two host swaps. Automatic, run 2026-10-01; the tests of the items still open on the roadmap show them, and a few need real people (TEST_CATALOGUE.md §Y).
 
+## Contributing
+
+Contributions are welcome: open an issue or a pull request on this repository.
+
 ## License
 
-GNU AGPLv3
+All rights reserved. The source is published for reference and contributions; please don't redistribute or reuse it without permission.
