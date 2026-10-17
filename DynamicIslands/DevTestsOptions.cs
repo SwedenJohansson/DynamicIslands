@@ -564,7 +564,7 @@ namespace DynamicIslands
 			if (table == null || raftTable == null) { Fail("upgrade table: not registered (" + (raftTable == null ? "no Placeable_ResearchTable" : "no upgrade table") + ")"); yield break; }
 			CostMultiple[] cost = raftTable.settings_recipe.NewCost, cost2 = table.settings_recipe.NewCost;
 			bool costOk = cost != null && cost2 != null && cost.Length > 0 && cost.Length == cost2.Length && cost.Zip(cost2, (a, b) => a.amount * 4 == b.amount && a.items.SequenceEqual(b.items)).All(x => x);
-			Check(ref ok, table.UniqueIndex == ExtraUpgrades.TableIndex && table.UniqueName == ExtraUpgrades.TableName && tu.Table && tu.Tint == ExtraUpgrades.TableTint, "registered: index " + table.UniqueIndex + ", tinted");
+			Check(ref ok, table.UniqueIndex == ExtraUpgrades.TableIndex && table.UniqueName == ExtraUpgrades.TableName && tu.Table && tu.Tint == ExtraUpgrades.Vivid(ExtraUpgrades.TableTint), "registered: index " + table.UniqueIndex + ", tinted (vivid, since 129615a)");
 			Check(ref ok, costOk, "cost " + ExtraUpgrades.CostText(cost2) + " = 4 x Raft's table's " + ExtraUpgrades.CostText(cost));
 			var optionsBefore = new HashSet<string>(WorldOptions.Current);
 			string stateBefore = UpgradeTable.State();

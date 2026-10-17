@@ -500,7 +500,8 @@ namespace DynamicIslands
 			Log("  entry at " + e.Position + ", root at " + e.Root.transform.position + ", player at " + player.transform.position + ", land radius " + CustomIslandSpawner.LandRadius(e.Name) + ", found " + QuestTracker.Found(e, QuestTracker.QuestOf(e).Steps[1]));
 			Check(ref ok, QuestTracker.IsDone(e, 0), "the 'find 2 gems' step is done when it comes (step " + QuestTracker.StepOf(e) + " of 2)");
 			string line = StoryBook.WriteLines().FirstOrDefault(l => l.StartsWith("@story.item=cigem"));
-			Check(ref ok, line != null && line.EndsWith("|2"), "saved with the world: " + line);
+			// (id|count|name|icon|description|found|Raft item: the found count is the 6th field - a Raft item one came after it in X8)
+			Check(ref ok, line != null && line.Split('|').Length >= 6 && line.Split('|')[5] == "2", "saved with the world: " + line);
 			OnRaftCommand();
 			IslandWorldState.Remove(name);
 			if (ok) Log("PASS: lock first"); else Fail("lock first");
