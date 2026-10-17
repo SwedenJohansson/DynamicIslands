@@ -6,6 +6,9 @@ builders who want to make islands and whole adventures of their own. You don't n
 everything is done with buttons in the game. The [README](../README.md) has the full reference (every setting, file
 and command); this guide shows you around.
 
+Custom Islands version 3 is made by **SwedenJohansson**, based on DynamicIslands by FranzFischer78 (code) and
+MegaMatrixs (design).
+
 The guide follows the heart of the mod first: **meeting custom islands** while you sail (sections 2-3), **building your
 own** in the editor (4-5), giving them **stories** - quests, doors and keys, story items, islands in Raft's story (6) -
 and **world plans** that decide which islands a world gets, when and where (7). Section 8 is about playing together. The

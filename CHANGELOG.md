@@ -4,7 +4,7 @@ What changed in Custom Islands, newest first, for players and island makers. Int
 behind each change are left out; the [guide](docs/GUIDE.md) explains every feature named here.
 
 The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022). Everything below is the work on
-**version 3.0**, the rebuild for Raft 1.1 (Unity 2021.3) that started in September 2026. Version 3.0 is an
+**version 3.0**, the rebuild for Raft 1.1 (Unity 2021.3) by SwedenJohansson that started in September 2026. Version 3.0 is an
 **experimental alpha**: things will still change, so back up the worlds you care about.
 
 ---
