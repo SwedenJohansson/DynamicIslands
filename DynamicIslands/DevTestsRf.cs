@@ -350,10 +350,14 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(1.5f); // (the host sees the story going on)
 				Check(ref ok, !QuestBook.StoryOver && !StoryCredits.IsOpen && StoryCredits.TimesShown == times, "while the story goes on: no credits");
 				IslandNetwork.Loopback = m => sent.Add(m);
+				// (a banner up as the story ends - a milestone or a new island - waits hidden behind the credits: it showed faintly
+				// behind the card's top, RF2)
+				IslandInfo.Show("CI banner", "", "A banner up as the story ends");
 				StoryChain.MarkDone("rule:rfa");
 				StoryChain.MarkDone("rule:rfb");
 				QuestBook.Refresh();
 				yield return new WaitForSecondsRealtime(2.5f);
+				Check(ref ok, IslandInfo.BannerAlpha < 0.01f, "no banner shows behind the credits (alpha " + IslandInfo.BannerAlpha.ToString("F2") + ")");
 				IslandNetwork.Loopback = null;
 				Check(ref ok, QuestBook.StoryOver && StoryCredits.IsOpen && StoryCredits.TimesShown == times + 1, "the last step done: the credits shown (" + (StoryCredits.TimesShown - times) + " time)");
 				Check(ref ok, StoryCredits.ShownTitle == "The Last Lighthouse" && StoryCredits.ShownCredits == "Ann Builder\nBo Maker" && StoryCredits.ShownNote == "The sea is quiet now.\nThank you for sailing.",

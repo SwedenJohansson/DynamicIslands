@@ -30,6 +30,25 @@ namespace DynamicIslands
 			return IslandFile.FromBytes(bytes, SampleFixture);
 		}
 
+		/// <summary>The sample island saved in Mods as "cisample", for tests that spawn or send an island by its file name -
+		/// instead of whichever island the player happens to have saved. RemoveSampleIsland moves it out again.</summary>
+		internal const string SampleSaved = "cisample";
+
+		static string SaveSampleIsland()
+		{
+			IslandFile f = SampleIsland();
+			f.Name = SampleSaved;
+			f.Save(IslandSpawner.PathFor(SampleSaved));
+			IslandCache.Forget();
+			return SampleSaved;
+		}
+
+		static void RemoveSampleIsland()
+		{
+			try { if (System.IO.File.Exists(IslandSpawner.PathFor(SampleSaved))) System.IO.File.Delete(IslandSpawner.PathFor(SampleSaved)); } catch { }
+			IslandCache.Forget();
+		}
+
 		/// <summary>The sample island under another name, at this elevation, with a title - a copy a test fills.</summary>
 		static IslandFile ScIsland(string name, string title, float elevation = 0f)
 		{
