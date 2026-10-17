@@ -37,7 +37,9 @@ namespace DynamicIslands
 				List<UIKit.HelpMark> marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				int cards = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule");
 				int onCards = marks.Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "Rule"));
-				Check(ref ok, cards > 0 && onCards == cards * 6, onCards + " ? on " + cards + " rule cards (6 each)");
+				// (a km/day card has a 7th: "again until done", SR1)
+				int again = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Check_Again");
+				Check(ref ok, cards > 0 && onCards == cards * 6 + again, onCards + " ? on " + cards + " rule cards (6 each, +1 on the " + again + " with again until done)");
 				Check(ref ok, marks.Count - onCards == 5, (marks.Count - onCards) + " ? for the window's parts on the Other islands tab (plan row, templates, map, Check, Export/Import)");
 				// (TODO 5b: the plan's settings and its Main story line are tabs of their own)
 				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);

@@ -406,7 +406,8 @@ namespace DynamicIslands
 			if (prompt != null) Click(prompt, "OK"); // (the name it suggests: "CI Story copy")
 			yield return null; yield return null;
 			Check(ref ok, System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")), "the copy saved as '" + StoryPlan + " copy'");
-			int before = cards().Count;
+			// (the plan's rules, not the cards shown: since 5b a tab shows only its own - the main story line's or the other islands')
+			int before = WorldPlanWindow.Plan.Rules.Count;
 			ClickTab(win, "Tab_Settings");
 			yield return null;
 			Button random = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("Random islands while sailing"));
@@ -422,7 +423,9 @@ namespace DynamicIslands
 			Button firstTemplate = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name.StartsWith("Button_") && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.Length > 0 && b.name != "Button_Close" && b.name != "Button_Cancel") : null;
 			if (firstTemplate != null) firstTemplate.onClick.Invoke();
 			yield return null; yield return null;
-			int withTemplate = cards().Count;
+			int withTemplate = WorldPlanWindow.Plan.Rules.Count;
+			// (the arrows on a tab with two cards at least)
+			if (cards().Count < 2) { WorldPlanWindow.ShowTab(WorldPlanWindow.Tab == WorldPlanWindow.TabStory ? WorldPlanWindow.TabOther : WorldPlanWindow.TabStory); yield return null; }
 			Check(ref ok, withTemplate > before, "a template adds its rules: " + before + " -> " + withTemplate);
 			GameObject last = cards().LastOrDefault();
 			string lastId = last != null ? last.GetComponentsInChildren<InputField>(false).Select(f => f.text).FirstOrDefault() : "";
@@ -434,7 +437,7 @@ namespace DynamicIslands
 			GameObject first = cards().FirstOrDefault();
 			if (first != null) Click(first, "Remove");
 			yield return null; yield return null;
-			Check(ref ok, cards().Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + cards().Count);
+			Check(ref ok, WorldPlanWindow.Plan.Rules.Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + WorldPlanWindow.Plan.Rules.Count);
 			Check(ref ok, Click(win, "Delete"), "Delete clicked");
 			yield return null; yield return null;
 			Check(ref ok, !System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")) && System.IO.File.Exists(WorldPlan.PathFor(StoryPlan)), "the copy deleted, the story plan kept");

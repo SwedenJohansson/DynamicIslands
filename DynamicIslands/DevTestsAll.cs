@@ -646,7 +646,11 @@ namespace DynamicIslands
 				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
 				if (DynamicIslands.currentIslandName != name) { failed.Add(name + ": still not loaded after 2 minutes"); continue; }
 				yield return null; yield return null;
-				DynamicIslands.SaveIsland(RoundTripName);
+				// (the copy written a moment ago can still be held by a virus scan: "in use by another program" - try again, or the
+				// last island's copy would be compared)
+				bool saved = DynamicIslands.SaveIsland(RoundTripName);
+				for (int tries = 0; !saved && tries < 8; tries++) { yield return new WaitForSecondsRealtime(0.5f); saved = DynamicIslands.SaveIsland(RoundTripName); }
+				if (!saved) { failed.Add(name + ": the copy couldn't be saved"); continue; }
 				yield return null;
 				IslandFile b = IslandFile.Load(IslandSpawner.PathFor(RoundTripName));
 				string diff = CompareIslands(a, b);

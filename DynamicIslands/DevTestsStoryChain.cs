@@ -361,6 +361,9 @@ namespace DynamicIslands
 				new WorldPlan { Name = name, Rules = new List<IntroRule> { new IntroRule { Id = "mine", What = "type", WhatArg = "forest" } } }.Save();
 				WorldPlanWindow.Open(name);
 				yield return null;
+				// (Raft's story row is on the Settings tab since 5b; the rule card on Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);
+				yield return null;
 				WorldPlan plan = WorldPlanWindow.Plan;
 				Button story = WorldPlanWindow.StoryButton, balboa = WorldPlanWindow.StoryIslandButton("Balboa");
 				Check(ref ok, plan != null && plan.Name == name && story != null && balboa != null && story.gameObject.activeInHierarchy, "the window shows the plan with Raft's story row");
@@ -383,6 +386,8 @@ namespace DynamicIslands
 				yield return null;
 				string shown = WorldPlanWindow.LastCheck ?? "";
 				Check(ref ok, shown.Contains("Vasagatan > 'mine' > Caravan Town") && shown.Contains("Machete"), "Check shows the chain with the island in Balboa's place and what Balboa had: " + shown.Replace("\n", " | "));
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
 				Button place = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && b.name == "StoryPlace");
 				Check(ref ok, place != null && UIKit.LabelOf(place).text.StartsWith("in place of Balboa", StringComparison.OrdinalIgnoreCase) && UIKit.LabelOf(balboa).text == "Balboa (yours)", "the rule card's story button and the story row say so: " + (place != null ? UIKit.LabelOf(place).text : "none") + " / " + UIKit.LabelOf(balboa).text);
 				Button save = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Save");

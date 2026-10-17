@@ -175,7 +175,8 @@ namespace DynamicIslands.Editor
 			UIKit.Size(spacer.gameObject, 0, -1, 1);
 
 			RectTransform app = ToolbarGroup(bar, "App");
-			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 84);
+			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 76);
+			// (76, not 84: with the ? after Use in a plan... the bar ended 6 px past a 1024 x 768 screen)
 			// (a list of the times of day - it cycled one click at a time)
 			string[] lightHints = { "Low sun from the east", "Sun high up, short shadows", "Low warm sun from the west", "Moonlight: how it looks after dark", "Grey sky, soft light" };
 			lightButton = DropList.Make(app, "Button_Light", Enumerable.Range(0, EditorLighting.Names.Length).Select(i => new DropList.Option(i.ToString(), EditorLighting.Names[i], lightHints[Mathf.Min(i, lightHints.Length - 1)])).ToList(), EditorLighting.Current.ToString(),

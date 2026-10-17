@@ -1792,6 +1792,10 @@ namespace DynamicIslands
 				// (a variation at its own size: about as much land as the real one, and exactly its height - Temperance too, LM7)
 				float expect = isl.Area * Mathf.Pow(vari.Radius / Mathf.Max(1f, isl.Radius), 2f);
 				bool variOk = Mathf.Abs(peak - vari.Height) < Mathf.Max(1f, vari.Height * 0.05f) && area > expect * 0.5f && area < expect * 1.6f;
+				// (a story island with a look that shapes its ground - Caravan's mesas, Tangaroa, Utopia, Varuna, the radio
+				// tower - gets the look's own size and height, not the measured ones: its look carried on both is the check)
+				Remakes.Look look = Remakes.LookFor(isl.Scene);
+				if (look != null && look.Shape != null) { likeOk = like.Look == look.Id; variOk = vari.Look == look.Id; }
 				if (likeOk && variOk) fits++;
 				else misfits.Add(isl.Label + " (like " + likeOk + ", variation land " + area.ToString("F0") + " of " + isl.Area.ToString("F0") + " m², top " + peak.ToString("F0") + " of " + vari.Height.ToString("F0") + ")");
 				yield return null;
