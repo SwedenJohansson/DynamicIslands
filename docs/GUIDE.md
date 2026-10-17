@@ -143,7 +143,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 1. Install the **Raft Mod Loader** (RML) from [raftmodding.com](https://www.raftmodding.com/) and start Raft through it.
 2. Put `DynamicIslands.rmod` into Raft's `mods` folder (for example
    `...\steamapps\common\Raft\mods\`), or install the mod from its raftmodding.com page.
-3. Start Raft with RML's **Play** button. The first start takes a little longer: RML compiles the mod. When a newer version is out, the main menu tells you once per start ([14](#14-questions-and-problems)).
+3. Start Raft with RML's **Play** button. The first start after installing or updating the mod takes about a minute longer: RML compiles the mod, and the main menu says so once when it is ready. Later starts use RML's kept copy and are quicker ([14](#14-questions-and-problems)). When a newer version is out, the main menu tells you once per start ([14](#14-questions-and-problems)).
 
 The mod keeps its files in `<Raft>\Mods\DynamicIslands\`: your islands (`*.island`), the settings files
 (`spawnpool.txt` and others, see [section 10](#10-settings-files)) and the world plans (`plans\`).
@@ -162,10 +162,10 @@ plain Raft.
 
 | Part | What it does |
 |---|---|
-| **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan such as **Adventure** (a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
+| **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan with a storyline (from the island library: a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
 | **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
 
-**Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, sample, library plan,
+**Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, library plan,
 your plan; *big plan* when it brings ten islands or more) and how many islands it brings - and the selected one on the
 right: a picture (the library's picture, or a map of its first island), whether random islands come while sailing,
 whether Raft's story is on, its whole description and the islands it brings. Click a plan to look at it; **Select**,
@@ -174,7 +174,7 @@ search box at the top shows only the plans whose name, description or islands ho
 lists every rule of the plan in words.
 
 ![The plan picker](images/plan-picker.jpg)
-*The plan picker: Far Horizons selected, with a map of its first island and the four islands it brings.*
+*The plan picker: a plan selected, with a map of its first island and the islands it brings.*
 
 Then click Raft's **Create** as usual. Your World settings are remembered for the next new world, and so is the plan
 (in `newworld_plan.txt`; the first time it is **Random islands**, or the `defaultPlan` of `spawnpool.txt`). Both belong to the world:
@@ -225,7 +225,10 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
 - an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
   stops coming back);
 - an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
-  island: it comes back every time, until you've done there what the plan waits for.
+  island: it comes back every time, until you've done there what the plan waits for;
+- an island a plan brought on a set day or distance with **again until done** ([7.4](#74-everything-a-rule-can-do)): it
+  comes back every time that many days (or km) after you were last near it - even if you never reached it - until you
+  reached it and finished its quest.
 
 An island found with a Receiver frequency stays where it is (the Receiver shows the way), and so do islands nobody
 needs. With several players the host decides, and the island moves for everyone. (`returnMinutes` in
@@ -297,7 +300,10 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
   again, as in Raft's air pockets under Caravan Town.
 - **Creatures:** Raft's own animals at the island's creature spots, with the builder's toughness, size and colour.
   Warthogs and bears fight you; chickens, goats and llamas can be caught with Raft's net launcher and kept on the raft.
-  Killed and caught animals come back after the regrow days unless the builder said never.
+  Killed and caught animals come back after the regrow days unless the builder said never. A **boss** may have a
+  second phase: at part of its health it roars, calls more animals and gets faster.
+- **Survivors:** someone locked in a cage. Bring the cage's key (a story item) and press **E**: the cage opens, the
+  survivor thanks you in a speech bubble, and from then on stands on your raft.
 
 ![Reading a note](images/world-note.jpg)
 *A note found on an island ("Warthogs live here. Bring a spear."), its title in Raft's lettering and its text on Raft's light tan, as the journal shows its pages. Press E, Tab or Esc to close it.*
@@ -469,14 +475,22 @@ less after that. The editor opens on the sea with an empty build area.
 
 | Do this | To |
 |---|---|
-| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
+| **Right-drag** | look around (dragging up tilts the view down, as if you dragged the scene; the settings can turn that round); while held, **WASD** flies where you look, **Q/E** go down and up, the **wheel** sets the speed |
 | **WASD** or arrows | move over the island at the same height |
 | **Space** / **C** | go straight up / straight down, whichever way the camera looks (the Terrain and Objects tabs' tips say so too) |
 | **Middle-drag** | pan (the ground follows the cursor) |
 | **Alt + left-drag** | orbit around the selection, or the middle of the view |
 | **Wheel** | zoom towards what is under the cursor |
+| **Alt + right-drag** | zoom in (drag right or up) and out (left or down), towards the middle of the view |
 | **F** | frame the selection, or the whole island |
 | **Shift** | three times faster |
+
+**The camera's settings.** **Camera...** at the right of the status bar opens **EDITOR CAMERA**: the controls above,
+and this PC's settings: **Look sensitivity**, **Move speed** (the right mouse + wheel speed, kept between sessions),
+**Zoom speed** and **Pan speed** (each x1 = the mod's own, a slider from slower to faster), **Drag up: look down / up**
+(click to switch: up looks up, as in most games) and **Wheel up: zoom in / out** (the wheel turned round). **Mod's own**
+puts them all back; **Close** or Esc closes the window. They are saved a moment after a change, in `world_rules.txt`
+([section 10](#10-settings-files)), and are also in **Defaults... > Editor camera (this PC)**.
 
 Undo and redo everything with **Ctrl+Z** / **Ctrl+Y** (or Ctrl+Shift+Z); save with **Ctrl+S**, open with **Ctrl+O**.
 
@@ -676,7 +690,8 @@ behaviours (see [section 5](#5-making-islands-come-alive)).
 
 **Generate** (top bar) makes a whole island for you to start from. The **preview** map on the right follows every
 change; the line under it says how big the island is and how many objects it will get. The **seed** picks one island
-of all possible ones: the same seed and settings always give the same island. Every setting has a **?** to hover.
+of all possible ones: the same seed and settings always give the same island, on every PC (whatever its language, its
+`placeables.txt` or other mods). Every setting has a **?** to hover.
 Generating replaces the island you have; **Ctrl+Z** brings it back. After **Generate** the window steps aside so you
 see the new island at once (a message says what it made); **Generate** in the top bar opens it again, with your settings.
 
@@ -842,7 +857,8 @@ ladder or foundations). It is worked out with Raft's own player: how steep it ca
 island with its size, height and look; **A variation of it** starts from the island's own ground and reshapes it
 (stretch, mirror, roughen, coast, valleys...). This tab shows only what remakes the chosen island - and a **Quest**
 group - not the Normal tab's other groups (its buildings and caves aren't used here). It remakes the island's
-**ground and nature**, and for a story island with designs also **what is built on it**:
+**ground and nature**, for a story island **its look** (below), and for one with designs also **what is built on
+it**:
 
 ![Rebuild it: an oil rig](images/generator-rebuild-rig.jpg)
 *Rebuild it: the Radio Tower rebuilt as an oil rig off the island - the tower's floors on legs, the dish, the windmill.*
@@ -880,6 +896,22 @@ group - not the Normal tab's other groups (its buildings and caves aren't used h
   ![Rebuild it: the story islands' designs](images/generator-rebuild-story.jpg)
   *Rebuild it for the other story islands: two designs each, from their own pieces.*
 
+For Raft's story islands, **Something new like it** and **A variation of it** also give the new island **its look** -
+the original's own big pieces, laid out the way the original has them (the line under the picture names it):
+
+| Island | Its look |
+|---|---|
+| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) and often a caravan or van on top, round boulders and a caravan or van at the feet. A variation turns the island's own high ground into mesas. |
+| Tangaroa | **The dome**: a round island levelled about 9.5 m up, the dome's base, frame and glass, the hexagon roads and the tall tower in the middle. |
+| Utopia | **Tall white towers**: Utopia's three towers with the room on top, and its four other towers further out, all rising out of the sea round a low island the way the original has them. |
+| Varuna Point | **The motherlode**: two 84 m motherlode floors on four pillars over levelled rocky ground, walls round the sides (one side sometimes left open), the lift shaft and the excavator beside them, the apex crane on top and rubble and bricks on both floors. |
+| Balboa (and its small islands) | **Giant firs** on the higher ground and the big rocks on its slopes. |
+| Temperance | **Snow rocks**: the big unclimbable rocks, the telephone antenna on the highest point and the large igloo on the flat. |
+| Radio Tower | **Low rocks**: a few rocks just out of the sea, the concrete footings of the tower's platforms on them, a satellite dish on the highest and a plastic boat on the beach (the designs build the tower). |
+| Vasagatan | Only the ground and nature (its designs build the rest). |
+
+The look uses its own random numbers, so the same seed gives the same ground and nature with or without it.
+
 ![Randomize existing](images/generator-randomize.jpg)
 *Randomize existing: Raft's islands, measured, with a picture each. Here a variation of "Big Island OG".*
 
@@ -915,7 +947,7 @@ an old camp, and a treasure island in a world, its quest panel saying "Find the 
 | Atoll | A ring of land around a shallow lagoon |
 | Archipelago | Several islets; a castaway's note and three caches |
 | Sea stacks | Steep rock pillars; a chest on top of the tallest (build your way up) |
-| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
+| Boss island | A plateau with cliffs and a ramp; the arena wakes a boss bear (a polar bear on a snowy one; at half health it roars, calls 2 more and gets faster: a [boss phase](#51-creatures)). Stepping in, wooden stakes burst up round the arena and shut the crew in (two minutes at most, so a player who dies can come back; stepping in again while the beast lives shuts them once more); the beast defeated, they sink and the spoils chest shows |
 | Volcano, swamp, frozen spire | A tall volcano with embers; low land with pools and mist; a snowy peak with a cache on top |
 | Treasure island | A map in a bottle on the beach leads to the X and a treasure chest |
 | Old camp | An abandoned camp with a notice board and supplies: a good first island of a story |
@@ -1069,7 +1101,7 @@ folder**), click **Import...** in the Islands window or the World plan window, a
 holds, who made it and its version. **Install** puts it in place:
 - **Your own files are never overwritten.** If you have a different island with the same name, the pack's is installed
   as `Name (Pack title)` and the pack's plan and islands are changed to use that name. The same island (the very same
-  file) is shared, not copied. A plan whose name you already use gets the author added: `First Voyage (Author)` - and
+  file) is shared, not copied. A plan whose name you already use gets the author added: `My Voyage (Author)` - and
   your very own plan (the same file) stays yours: removing the pack later leaves it.
 - A plan may bring only new islands of map types: such a pack holds no island files at all, and that's fine.
 - **Story items with the same id:** a world's crew holds one of each story item id for all its islands. If the pack's
@@ -1224,12 +1256,23 @@ turtle, stingray, dolphin, whale.
 
 - **Animals here:** 1 to 8 (a herd).
 - **Easy / Normal / Hard / Boss**, or set **health** (up to ×12, for bosses), **damage** (up to ×4), **speed** and **size** yourself.
+  **Size** goes from ×0.5 to ×3 of Raft's own animal (the marker in the editor shows it): its body and hit box grow
+  with it, its health doesn't - give a big boss more **health** too. Players in multiplayer see the same size.
 - **Comes back after** the regrow days, or **Never**.
 - **Appears** at once, or **when a zone fires** (an ambush, see [5.4](#54-trigger-zones-and-ambushes)).
 - **Colour** (every object): **None** keeps its own colours; the nine swatches tint it (a creature spot: every animal of
   it), and once it is tinted the **Strength** slider (0 to 100 %) says how strongly the colour shows. **Custom colour...**
   adds **Red**, **Green** and **Blue** sliders (0 to 255) for your own mix: the object's own colours are multiplied by
   the tint.
+- **Boss phase** (hostile animals): click **none** to give the spot a second phase. Once per fight, when one of its
+  animals falls to **Starts at health** (10 to 90 %, 50 % at first), it **calls** up to 6 more creatures (of **its own**
+  kind or another hostile one) around itself, gets faster (**Speed then**, ×1.3 at first), sends a **signal**
+  ("phase" unless you name one, for world plans and **signal** checks, see [6.2](#62-behaviour-and-events)) and runs
+  its **phase** event (a message, a sound...). A world saved mid-fight comes back in the second phase, without calling
+  again; once all its animals are beaten the next fight (after the regrow days) has its phase again. Under a harder
+  monster difficulty the phase comes at the same share of health, after more hits. The **Boss** map type gives its
+  beast a phase that calls 2 more and says "The beast roars in fury". Everyone sees it: the host runs it, and hits from
+  any player count.
 
 **Angler fish swim rounds** around their spot, through the open water near it (in Raft they follow a route of their
 island's; here the mod lays one out in a ring around the spot, clear of the ground and of objects). Give them room:
@@ -1392,6 +1435,17 @@ Select any object → **Behaviour & events...**. No code needed:
   closed, shown or hidden, a signal was sent, the quest reached a step (a ▼ list too). Turn a check round with **not**; ask for
   **all** or **any** of them. **Otherwise** say a message. (An island file written by hand or by a script can give
   **Otherwise** any action, not only a message; the editor shows only the message and keeps the other actions as they are.)
+- **Sounds and camera moments** (actions in the same ▼ list, shared by every player): **play sound/music** plays one of
+  Raft's sound events or music cues (pick it with **…**, a list of every one Raft has), with a volume, **once** or on a
+  **loop**, **near** the object (or the objects named) or for **everyone on the island**. Every player near the island
+  hears it; it stops when they leave the island or it unloads, and a loop starts again when they come back, after a
+  reload and for a player who joins later (a once sound is not played again). **stop sound** stops the sound of the
+  objects named, or **all** of the island's. (The older **sound** action plays a sound for the one player only.)
+  **camera moment** shows the view from a **marker** object (its name; empty = the object itself) toward an object to
+  **look at** (empty = the way the marker faces) for some **seconds** (1-30), then glides back to the player; the
+  player can't walk or look around meanwhile, and **Esc** skips it. Only players within its **range** of the marker
+  (default 50 m) get it. Mark the spot with any small piece (a sign, a stone) and name it. **Check** warns about a sound
+  Raft doesn't have and a marker or look-at name no object has.
 
 ![A lever opens a door](images/editor-behaviour.jpg)
 *A log named "lever" that players can use ("Pull the lever"): it opens or closes the door and says "The door moves".*
@@ -1431,6 +1485,14 @@ only for someone who has it), or **a locked chest** whose key is hidden in drift
 
 ![Story items and story sets](images/editor-story-items.jpg)
 *The Story items window: the island's story items ("Old key") and the four story sets.*
+
+**Survivors to rescue.** **Loot & chests** has **Survivor in a cage** (Raft's shark cage with one of Raft's
+characters inside). In its **Survivor** group set the **Name**, who it **Looks like** (a Raft character, or any by its
+id), **What the survivor says when freed**, the **Key item** (a story item, used up; empty: not locked), a **Survivor
+id** and a **Signal** ("survivor" unless you name one). A player whose crew holds the key presses **E** at the cage:
+the cage opens for everyone, the survivor says the line in a speech bubble over the cage, and a few seconds later
+stands on the raft (as decoration: no needs, no work). The world remembers its survivors: one per id, also across
+islands and after a reload, so two cages with one id free one survivor.
 
 ### 6.4 Islands that bring islands
 
@@ -1496,9 +1558,7 @@ gives tips. They are only recommendations; you can do what you want:
 - a left-out island may hold blueprints the story needs. Without Balboa there is no machete, fuel tank, fuel pipes or
   biofuel extractor, so put them in a chest or a quest reward of your own.
 
-**Templates...** has three for Raft's story:
-- **Receiver adventure**: Raft's story off, four islands each found with the Receiver, each quest giving the next
-  frequency;
+**Templates...** has two for Raft's story:
 - **Detour in Raft's story**: one of your islands after Vasagatan;
 - **Balboa replaced**: an island in Balboa's place.
 
@@ -1526,7 +1586,10 @@ The tab shows the island's name (or the **tab title** you give it) and, for an i
 
 Its **story items** show under Raft's **Found items**, with their pictures (Raft's quest item pictures). When the last
 main story island is done, the plan's **ending page** (the card **THE END** under the rules) comes last in the book,
-with a banner to every player. The world goes on.
+with a banner to every player. Every player also sees the **credits** once: the title (the card's **CREDITS** section: **Title on the
+credits**, or the plan's name), the makers' names (**Made by**, one per line) and the closing note; **Back to the sea** (or Esc)
+closes them. A world that is loaded again doesn't show them again; the note stays in Raft's notebook. The world goes
+on, and Raft's own Utopia ending is not touched.
 
 When there are more tabs than fit on the book's edge, the tabs **scroll** (mouse wheel over them); the open island's
 tab is scrolled into view when you turn the pages.
@@ -1657,9 +1720,8 @@ When you install a plan from the island library, its islands also get a `<island
 = left out). Islands the plan shares with another library pack keep their line.
 
 **To make an island a single island**, use it in no plan - or save a copy under another name and use the copy in the
-plan. **Plans that come with the mod:** the samples Adventure, Growing sea, Island hopping and Receiver adventure
-([7.1](#71-the-plans-that-come-with-the-mod)); from the library First Voyage, Far Horizons and The Castaway's Trail;
-and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
+plan. **Plans that come with the mod:** Random islands and No custom islands
+([7.1](#71-the-plans-that-come-with-the-mod)); and the big plans The Long Voyage, Raft Remade, Raft 2 - The Drowned Frontier, The Abyss Expedition and Silver Screen
 Seas ([16.4](#164-the-world-plans)).
 
 #### Random islands, in detail
@@ -1729,6 +1791,8 @@ Good to know:
   `spawnpool.txt` changes the minutes (0 = never).
 - Another rule can wait for a side trip ("when Signal Rock's quest is done, bring...") - then it is no longer a mere
   extra: the plan waits for it, and it comes back every time until that is done.
+- A side trip on a day or a distance with **again until done** ticked comes back every N days (or km) after you were
+  last near it, even if you never reached it, until you reached it and finished its quest ([7.4](#74-everything-a-rule-can-do)).
 
 #### Main quest islands, in detail
 
@@ -1852,13 +1916,10 @@ Choose one in the New Game box (**Custom Islands plan**), or open it in the Worl
 |---|---|
 | **Random islands** (the default) | Islands turn up by chance while you sail ([section 3](#3-sailing-custom-islands-in-your-world)). No story |
 | **No custom islands** | Plain Raft: no custom islands at all (the World settings still apply) |
-| **Island hopping** | An old camp near the start; each island you reach shows the way to the next, further out |
-| **Adventure** | A story: each quest leads to the next island (a camp, islets, a beast's plateau, a treasure), with a wreck and a sunken island on the way |
-| **Growing sea** | Random islands, plus a special island every few km and days |
-| **Receiver adventure** | A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency |
 
-**Island hopping**, **Adventure**, **Growing sea** and **Receiver adventure** are ordinary plan files: open one in the World
-plan window and use **Copy...** to start your own plan from it.
+Full storylines come from the island library: **Get more plans...** in the New Game box downloads them
+([16.4](#164-the-world-plans) lists them). A downloaded plan is an ordinary plan file: open it in the World plan window
+and use **Copy...** to start your own plan from it.
 
 ### 7.2 Your first world plan, step by step
 
@@ -1999,7 +2060,7 @@ rule = treasure | type:treasure | visit:cove | near:cove:900:any | From the clif
 rule = wreck | type:wreck | km:3 | ahead:300 | Something floats ahead: a wrecked raft.
 ```
 
-**Short cut: Templates...** (top row) adds a ready-made set of rules to the open plan: the four sample plans, and
+**Short cut: Templates...** (top row) adds a ready-made set of rules to the open plan:
 **Detour in Raft's story**, **Balboa replaced**, **Sky chain** (flying islands, each appearing when players reach the one
 before), **Story chain** (three of your islands, each quest bringing the next: pick your islands with **▾**) and **Quest
 reward island**. Then change what you like. An id that's already in your plan gets a `b` added.
@@ -2007,7 +2068,7 @@ reward island**. Then change what you like. An id that's already in your plan ge
 ### 7.3 A rule card, part by part
 
 ![A rule card](images/plan-rule-card.jpg)
-*A rule card of the Adventure plan: its name and what it does in a sentence, then one section per question. Each section
+*A rule card: its name and what it does in a sentence, then one section per question. Each section
 has a ▼ list of its choices and a line in italics saying what the chosen one does.*
 
 ![A ▼ list open](images/plan-dropdown.jpg)
@@ -2019,7 +2080,7 @@ or a click outside closes the list).*
 | **RULE 1** and **Name** | The rule's number and name (`camp`, `beast`). Other rules point at the island it brought with this name. Each name once per plan; no `\|`, `:`, `,` or `;` (they are taken out) |
 | **▲ ▼ Remove** | Move the rule up or down in the list (the order only matters for reading: each rule waits for its own WHEN), or remove it |
 | **The sentence** | Under the name: the rule in plain words. If it doesn't say what you meant, change the card |
-| **WHEN** | What the rule waits for - a ▼ list of nine choices ([7.4](#74-everything-a-rule-can-do)). A choice that needs more shows named fields after it: **island**, **zone**, **signal**, **steps**, **day**, **km sailed**, **rule** |
+| **WHEN** | What the rule waits for - a ▼ list of nine choices ([7.4](#74-everything-a-rule-can-do)). A choice that needs more shows named fields after it: **island**, **zone**, **signal**, **steps**, **day**, **km sailed**, **rule**; a day or a distance also has the **again until done** tick box |
 | **BRING** | What kind of island: a new island of a map type, one of your saved islands, one island from a list, or a random one from the spawn pool. The field after it says which (**map type**, **island**, **islands**) |
 | **WHERE** | Ahead of the raft, near an island, on the Receiver, or by chance while sailing; then the **metres** (50 to 5000). For "near an island", also the **direction** (a ▼ list: Any way, North, North-east...) and **of** which island (empty = the island where the WHEN happened) |
 | **TELL** | The message every player sees when the island appears (up to 160 letters) (with how far and which way it is), and the island's name **on the Receiver** (up to 18 letters). Both optional |
@@ -2048,6 +2109,13 @@ signals can't be listed: its list is empty and says so - type the name.
 | **When the world starts** | - | as soon as the world starts |
 | **After sailing a distance** | km | when the raft has sailed that far in this world |
 | **On a day** | a day | on that in-game day |
+
+**Again until done.** **After sailing a distance** and **On a day** have a tick box after the number. Ticked, the island
+comes back ahead of the raft every N days (or N km sailed) after the players were last near it, N being the rule's
+number, for as long as they haven't reached it or haven't finished its quest (an island without a quest is done once
+a player reaches it). It is the same island each time - its quest, chests and harvest as they were, never a second
+copy - and a banner says "Back in sight". There is no limit to how often; the host decides with several players. An
+island on the Receiver doesn't come back by itself (its frequency shows the way). In the plan file: `day:5:again`.
 | **When a quest is done** | an island, and **quest no.** (empty = its main quest) | when that island's quest is done (or its Quest 2, 3 ... when a number is set). The island must have that quest ([6.1](#61-quests)) |
 | **When quest steps are done** | an island, steps | when that many steps of its quest are done |
 | **When a trigger zone fires** | an island, a zone name | when a player walks into that trigger zone on it ([5.4](#54-trigger-zones-and-ambushes)) |
@@ -2199,11 +2267,11 @@ rule = id | what | when | where | message | Receiver name
 | Part | Written as |
 |---|---|
 | what | `island:<saved island>`, `type:<map type>`, `pool`, `oneof:<island>, <island>, ...` |
-| when | `start`, `km:<km>`, `day:<day>`, `quest:<island>` (`quest:<island>:2` for its quest 2), `step:<island>:<steps>`, `zone:<island>:<zone>`, `visit:<island>`, `rule:<rule id>`, `signal:<island>:<signal>` |
+| when | `start`, `km:<km>`, `day:<day>` (`km:<km>:again`, `day:<day>:again` = again until done, [7.4](#74-everything-a-rule-can-do)), `quest:<island>` (`quest:<island>:2` for its quest 2), `step:<island>:<steps>`, `zone:<island>:<zone>`, `visit:<island>`, `rule:<rule id>`, `signal:<island>:<signal>` |
 | where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
-and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line),
+and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
 `random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.0` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
@@ -2219,8 +2287,9 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   have, what was chopped, picked, looted and fired, doors and levers, quests, the crew's journal, where they stood on
   an island, and the tough animals' health.
 - **Shared:** harvesting and pickups, chests (when several players open one at the same moment, the first gets it),
-  zones, doors, quests and their rewards, story items, the journal. Things that move follow a clock all players share,
-  so everyone sees them in the same place.
+  zones, doors, quests and their rewards, story items, the journal, the sounds and music the islands' actions play
+  (each player hears them while near the island) and camera moments (each player within range sees them). Things
+  that move follow a clock all players share, so everyone sees them in the same place.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version).
@@ -2713,7 +2782,11 @@ opens the list:
   and style (tropical, snowy, desert, forest or volcanic), sometimes flying. Each one is saved as a `gen-<style>-<seed>.island`
   file and stays in that world (Tidy up moves unused ones away). Ticked, they join the pool next to your single islands and the
   map-type rows; unticked, only islands you made or downloaded and the map-type kinds come. How often they are picked is
-  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)). Hover the row for this text in the game;
+  `generated` in `spawnpool.txt` ([section 10](#10-settings-files)): by default one comes as often as any one island of
+  the list, whenever a list island is due (after every 3-6 of Raft's islands, the span under the button). The files are in
+  `Mods\DynamicIslands`. **To keep one you liked:** EDITOR > An island > **Open an island...** lists them (marked "made by
+  the generator"), as do the editor's **Open** and **My islands...** (Generated); open it and **Save as** a name of your
+  own - then it is your island, in this list by its name. The **?** at the right end of the row says all this in the game;
 - untick the ones this world shouldn't have;
 - the **search** field narrows the list (type part of a name), and **Tick shown** / **Untick shown** do every row
   shown, for example all your test islands at once.
@@ -2846,7 +2919,8 @@ get the settings they share at once.
 | **Keys (this PC)** | The **Journal** key (J) and the **Stats** key (K): click one, then press the new key (Esc keeps the old one). A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
-| **Mod's own** | Click it twice: every setting in the window, the keys J and K too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
+| **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look down / up** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
+| **Mod's own** | Click it twice: every setting in the window, the keys J and K and the editor camera too, goes back to what a new install has. The island list in `spawnpool.txt` stays |
 | **Close** | Closes the window (Esc does too) |
 
 **`spawnpool.txt`** (islands that appear on their own; the host's counts):
@@ -2914,7 +2988,7 @@ Other files:
 | `library\installed.json` | What each installed pack wrote (so it can be updated and removed) |
 | `library.txt` | The island library: `online = on/off`, its `address` (where its list is: a Google Drive folder link or a web address), and an optional `key =` (a Google API key: the Drive folder is then read through the Drive API instead of its public listing) |
 | `library\cache\` | The library's pictures, kept so they needn't be downloaded again |
-| `plans\*.plan` | World plans; `plans\samples.txt` lists the sample plans the mod has written once (a sample you deleted doesn't come back) |
+| `plans\*.plan` | World plans |
 | `maptypes\*.maptype` | Your own map types ([4.6](#46-ready-made-islands-map-types)) |
 | `world_rules.txt`, `randomizer.txt` | Your last World settings choices (monsters, build cost, extra options, level up system, islands left out and how often they come; the randomizer, the head start raft's level), the start for the next new world; also your J and K keys and `updatecheck` (the keys are above); `newworld_plan.txt`: the plan the last new world was made with |
 | `worlds\<world>.txt` | Each world's custom islands and their state (what was used, quests, journal, levels, settings); the world's own folder carries a copy, `CustomIslands.txt` |
@@ -3362,6 +3436,20 @@ story items are in Raft's notebook (**T**: its tab, and Found items); a **side q
 **A note I read isn't in the journal.** Notes with no text add no page, and each note adds one page once per world
 (someone else may have read it first: look for its title).
 
+**Raft takes a minute to start with the mod.** RML compiles the mod's code when Raft starts. Only the first start after
+installing or updating Custom Islands does that (the main menu then says "Custom Islands is ready..."); later starts load
+RML's kept copy (`%APPDATA%\RaftModLoader\cache\mods`, which the mod marks read-only so RML doesn't throw it away) and are
+quicker. Nothing of the mod runs while RML compiles, so there is no sign before that; RML's own mod list (its menu)
+shows "Compiling..." meanwhile.
+
+**"Islands missing" when I load a world.** The world uses island files this PC doesn't have (deleted, renamed, or
+from the island library and removed since). The box names them, and the library entry an island came with. **Play
+without them**: the rest of the world plays; those islands are left out (no Receiver dot) but stay in the world, so they
+come back once their file is here again - in multiplayer a player who joins with the file brings it. **Main menu**:
+leaves without saving, so you can download them again in the island library (or put the files back in
+`Mods\DynamicIslands`) and load the world again. Only the host (or a single player) sees the box; players who join get
+missing files from the host as before.
+
 **Load World is greyed out.** Raft is offline from Steam. Check that Steam is online and restart Raft.
 
 **"The host has Custom Islands 3.x - you have 3.y".** You and the host have different versions of the mod: islands,
@@ -3420,7 +3508,7 @@ or library entry the message names, or ask the player who made the world to expo
 worlds kept their own plan, the plan file itself must be on the host's PC (see the table in
 [section 8](#who-needs-what-every-case)).
 
-**An installed island has an odd name like "Harbor (First Voyage)".** You had a different island called "Harbor", so
+**An installed island has an odd name like "Harbor (My Voyage)".** You had a different island called "Harbor", so
 the pack's was installed under that name instead of replacing yours.
 
 **A pack won't install.** The Import window says why: it may be made for a newer version of the mod, broken, or not an
@@ -4005,7 +4093,7 @@ One island each is enough to learn from; [16.5](#165-where-to-look-for) lists mo
 | A raft or deck of Raft's foundations | Tide Farm | The deck |
 | Blueprints in loot | Crowfield Farm | The basket in the farmhouse |
 | An island in Raft's story (the Receiver) | The Long Voyage, Raft Remade (plans) | Their rule cards ([16.4](#164-the-world-plans)) |
-| A whole world plan | Far Horizons and the other plans | [16.4](#164-the-world-plans) |
+| A whole world plan | The Long Voyage and the other plans | [16.4](#164-the-world-plans) |
 
 **Not on any island, on purpose:**
 

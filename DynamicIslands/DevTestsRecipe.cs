@@ -2137,6 +2137,7 @@ namespace DynamicIslands
 			if (e.Props == null) e.Props = new Dictionary<string, string>();
 			var ready = new Dictionary<string, string>();
 			ReadyPieces.Defaults(e.GameObjectName, ready);
+			Survivors.Defaults(e.GameObjectName, ready);
 			if (ready.Count == 0) return;
 			foreach (var kv in ready) if (!e.Props.ContainsKey(kv.Key)) e.Props[kv.Key] = kv.Value;
 			ObjectProps.ApplyInEditor(e.gameObject, e.Props);

@@ -379,7 +379,7 @@ namespace DynamicIslands.Editor
 					line.GetComponent<HorizontalLayoutGroup>().childForceExpandWidth = true;
 				}
 				Button b = Cell(UIKit.Check(line, WorldIslands.Label(e), () => { WorldIslands.Set(e, !WorldIslands.TakesPart(e)); Refresh(); },
-					WorldIslands.Hint(e) + "  IN THIS WORLD NOW: " + IslandsMidGame, CheckH, 11));
+					(e == CustomIslandSpawner.GeneratedEntry ? WorldIslands.GeneratedHelp : WorldIslands.Hint(e)) + "  IN THIS WORLD NOW: " + IslandsMidGame, CheckH, 11));
 				Add("Island_" + e, b);
 			}
 			// (an odd count: an empty half keeps the last one half wide)

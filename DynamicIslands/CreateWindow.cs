@@ -162,7 +162,7 @@ namespace DynamicIslands.Editor
 
 		void PickIsland()
 		{
-			ChoiceWindow.OpenIslands("Open an island", ChoiceWindow.Islands, n => { Close(); EditorEntry.StartIsland(n); }, "No saved islands yet: start with New island", openIsland);
+			ChoiceWindow.OpenIslands("Open an island", ChoiceWindow.IslandsToOpen, n => { Close(); EditorEntry.StartIsland(n); }, "No saved islands yet: start with New island", openIsland);
 		}
 
 		void PickPlan()

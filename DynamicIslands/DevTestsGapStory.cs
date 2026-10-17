@@ -35,7 +35,7 @@ namespace DynamicIslands
 		/// </summary>
 		static IslandFile GstBuild(string name, bool sets, bool wait, int charIndex)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = name;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);

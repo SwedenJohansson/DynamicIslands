@@ -19,6 +19,8 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 | `MyIslandsWindow.cs` | My islands: `SourceOf`, worlds using each island, pool weight, Open/Rename/Delete/Give/Tidy up |
 | `Housekeeping.cs` | Tidy up (`Look`, `TidyUp`), `AllWorldCopies`, `WorldsByIsland`, `NamesIn`, `SavedByLine` |
 | `FileNames.cs` | `FileNames` name checks (`Problem`, `IslandProblem`, `ReceivedProblem`); `SafeFile` (write aside, `Commit`, `Recover`, `RecoverAll`, `WriteAllLines`) |
+| `MissingIslandsCheck.cs` | Host, end of `IslandWorldState.OnWorldLoaded`: `Find` (island lines without a file, not `gen-`/extras; plan rules not `Done` whose islands `WorldDirector.FileFor` can't find), sets `Entry.Excluded` (spawner and radar skip it; `IslandNetwork` clears it when the file comes), `Tick` opens the `InfoWindow` box; `ToMenu` = `LeaveGame` without saving. Test `CIMissingIslands` |
+| `RmlCache.cs` | CW2: RML_Main deletes `cache\mods` files not ending in Raft's version + `.cachedmod` (its own names end in version + cache version), so every start recompiled; `Keep` marks this mod's newest `.cachedmod` read-only (survives that try/catch delete), removes older ones, notes a compile start once. Test `CIRmlCache` |
 | `PatchHealth.cs` | `PatchAll` applies each `[HarmonyPatch]` class alone; `Feature` names a failed one; `ShowIfFailed` on the main menu |
 
 ## Main flow
@@ -36,7 +38,9 @@ How a saved `.island` file becomes an island in a Raft world, streams in and out
 - `<name>_<12 hex>.island`: a copy from a host or kept for a saved world (`IslandNetwork.DownloadName`, `IsDownloadName`). `gen-<style>-<seed>`: generated (`GeneratedPrefix`, `FreeName`).
 - World file `worlds\<world guid>.txt` (`IslandWorldState.WorldFilePath`). Island line `name|x|y|z|state|rule|label|hash` (fields after the eighth, a newer version's, are kept in `Entry.Extra` and written back). `@auto=`, `@modversion=`; `WorldCopy.StampLines`: `@savedat=`, `@savecount=`, `@raftsave=` or `@between=`; `@savedby=` (`Housekeeping.SavedByLine`); `@place=` (`PlayerPlaces`); other classes add their own `@key=` lines.
 - `CustomIslands.txt` (`WorldCopy.FileName`) in Raft's `World\<name>` folder and, on a Raft save, in its newest save folder.
-- Object state `ordinal,active,yield,day;...`. Keys: pickups up to 0xFFFF; `CreatureSpawner.StateKeyBase` 0x10000; `ContentState.LootKeyBase` 0x20000; `TriggerZone.KeyBase` 0x30000.
+- Object state `ordinal,active,yield,day;...`. Keys: pickups up to 0xFFFF; `CreatureSpawner.StateKeyBase` 0x10000; `ContentState.LootKeyBase` 0x20000; `TriggerZone.KeyBase` 0x30000 (the full list: `quests-story.md`).
+- Survivors (RF3, `Survivors.cs`): `SurvivorCage` on a `Survivor_Cage` object (`IslandSpawner` attaches it) -> E with the key -> `Claims.May` -> host marks `KeyBase`+index, adds `@survivor=id|name|character` (a WorldRules line, list sent in kind 15's `Names`), signal; `SurvivorFigure`s stand on raft foundations (`HeadStart.Foundations`/`FoundationTop`), rebuilt each second from the list.
+- Boss phases (RF5, `BossPhases.cs`): `CreatureSpawner` calls `Check` once a second and after each hit, `Resume` on a respawn while the key is set, `OnDefeat` when the spot is beaten; summons (`CreatureSpawner.Summon`) are not counted for the spot's state.
 - Pickup network index `0x40000000 | (islandId & 0x3FFF) << 16 | n` (`RegisterNetworkIds`). An object this Raft no longer has gets a `PickupGap` (its count from the shipped `raft_pickups.txt`, `StableIds.ShippedPickups`; remeasure with `CIMeasurePickups`), so `n` of the pickups after it doesn't shift (R2b, `CIPickupGap`).
 - `spawnpool.txt` (`PoolFileName`): keys in `SetValue` (`chanceperkm`, `quietminutes`, `unloaddistance`, `regrowdays`, `showonreceiver`, `receiverdistance`...); pool lines with weights, `<generated>`, `type:<name>`.
 

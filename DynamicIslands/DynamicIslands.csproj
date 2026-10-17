@@ -62,12 +62,14 @@
     <Compile Include="CustomIslandSpawner.cs" />
     <Compile Include="DevTests.cs" />
     <Compile Include="DevTestsGapsB.cs" />
+    <Compile Include="DevTestsSize.cs" />
     <Compile Include="DevTestsGapsC.cs" />
     <Compile Include="DevTestsContent.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsDirector.cs" />
     <Compile Include="DevTestsBehaviour.cs" />
     <Compile Include="DevTestsCamera.cs" />
+    <Compile Include="DevTestsCameraSettings.cs" />
     <Compile Include="DevTestsUI.cs" />
     <Compile Include="DevTestsUiFit.cs" />
     <Compile Include="DevTestsStory.cs" />
@@ -78,6 +80,7 @@
     <Compile Include="DevTestsBigWorld.cs" />
     <Compile Include="DevTestsFloorPickups.cs" />
     <Compile Include="DevTestsGenerator.cs" />
+    <Compile Include="DevTestsLooks.cs" />
     <Compile Include="DevTestsMore.cs" />
     <Compile Include="DevTestsLand.cs" />
     <Compile Include="DevTestsRandomizer.cs" />
@@ -125,6 +128,7 @@
     <Compile Include="SelectionTools.cs" />
     <Compile Include="MyIslandsWindow.cs" />
     <Compile Include="StoryRemakes.cs" />
+    <Compile Include="IslandLooks.cs" />
     <Compile Include="ReadyPieces.cs" />
     <Compile Include="LaserBeam.cs" />
     <Compile Include="UpgradeTable.cs" />
@@ -167,6 +171,8 @@
     <Compile Include="StormDays.cs" />
     <Compile Include="ExtraUpgrades.cs" />
     <Compile Include="TraderRaft.cs" />
+    <Compile Include="BossPhases.cs" />
+    <Compile Include="Survivors.cs" />
     <Compile Include="HeadStart.cs" />
     <Compile Include="StoryOrder.cs" />
     <Compile Include="StoryChain.cs" />
@@ -192,6 +198,9 @@
     <Compile Include="RaftProps.cs" />
     <Compile Include="RandomizerIslands.cs" />
     <Compile Include="Behaviours.cs" />
+    <Compile Include="TriggerSounds.cs" />
+    <Compile Include="CameraMoment.cs" />
+    <Compile Include="StoryCredits.cs" />
     <Compile Include="Claims.cs" />
     <Compile Include="PlayerTrust.cs" />
     <Compile Include="BehaviourWindow.cs" />
@@ -208,6 +217,8 @@
     <Compile Include="DevTestsHostSwap.cs" />
     <Compile Include="DevTestsWorldSave.cs" />
     <Compile Include="DevTestsLaser.cs" />
+    <Compile Include="DevTestsRf.cs" />
+    <Compile Include="DevTestsRf35.cs" />
     <Compile Include="DevTestsErrors.cs" />
     <Compile Include="DevTestsHelp.cs" />
     <Compile Include="DevTestsChoiceTiming.cs" />
@@ -224,6 +235,9 @@
     <Compile Include="MenuWindows.cs" />
     <Compile Include="HelpLinks.cs" />
     <Compile Include="InfoWindow.cs" />
+    <Compile Include="MissingIslandsCheck.cs" />
+    <Compile Include="RmlCache.cs" />
+    <Compile Include="DevTestsLoad.cs" />
     <Compile Include="NewWorldOptions.cs" />
     <Compile Include="MonsterDifficulty.cs" />
     <Compile Include="WorldRules.cs" />
@@ -274,6 +288,7 @@
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
     <Compile Include="UIKit.cs" />
+    <Compile Include="CameraSettings.cs" />
     <Compile Include="EditorCamera.cs" />
     <Compile Include="RuntimeGizmo\Custom\TransformGizmoCustomGizmo.cs" />
     <Compile Include="RuntimeGizmo\Helpers\ExtMathf.cs" />

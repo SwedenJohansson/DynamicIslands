@@ -85,6 +85,10 @@ namespace DynamicIslands.Editor
 		/// and "learned" (Index = upgrade, Data = by whom); a player -> host "research" (Index = item, Count = table's object
 		/// index) and "learn" (Index = upgrade).</summary>
 		public const int UpgradeTable = 29;
+		/// <summary>Host -> everyone: a when/then moment (RF1/RF2). Ids[0] = island, Index = object (-1 = the island, -2 = all of
+		/// it), Name = "sound" / "stop" (TriggerSounds, Data = the action's sound text), "camera" (CameraMoment, Data =
+		/// marker, a line break, "look at|seconds|range") or "ending" (StoryCredits, Data = title, credits and note split by U+001F). An older version ignores it.</summary>
+		public const int Moment = 33;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -664,6 +668,11 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.WorldSave:
 						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
 						break;
+					case IslandNetMessage.Moment:
+						if (msg.Name == "camera") global::DynamicIslands.Editor.CameraMoment.OnMessage(msg);
+						else if (msg.Name == "ending") global::DynamicIslands.Editor.StoryCredits.OnMessage(msg);
+						else global::DynamicIslands.Editor.TriggerSounds.OnMessage(msg);
+						break;
 					case IslandNetMessage.UpgradeTable:
 						global::DynamicIslands.Editor.UpgradeTable.OnMessage(msg, from);
 						break;
@@ -949,10 +958,12 @@ namespace DynamicIslands.Editor
 					e.Name = want;
 					e.Failed = false;
 					e.WaitingForFile = false;
+					e.Excluded = false; // (MissingIslandsCheck: the file is here now)
 					if (waited) SendToClients(IslandsMessage(new[] { e }, false));
 					continue;
 				}
 				e.WaitingForFile = false;
+				e.Excluded = false;
 			}
 			hashMissAt.Remove(msg.Hash);
 			// (the host asked everyone: one answer is enough, a second player's parts are no longer taken)

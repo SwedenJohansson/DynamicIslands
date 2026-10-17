@@ -16,7 +16,7 @@ namespace DynamicIslands.Editor
 	/// quest is done, bring island X 600 m north of me"). One line each:
 	///   id | what | when | where | message | receiver label
 	///   what:  island:&lt;name&gt;   type:&lt;map type&gt;   pool   oneof:&lt;name&gt;, &lt;name&gt;...
-	///   when:  start   km:&lt;n&gt;   day:&lt;n&gt;   quest:&lt;ref&gt;   step:&lt;ref&gt;:&lt;n&gt;   zone:&lt;ref&gt;:&lt;zone&gt;   visit:&lt;ref&gt;   rule:&lt;id&gt;
+	///   when:  start   km:&lt;n&gt;[:again]   day:&lt;n&gt;[:again]   quest:&lt;ref&gt;   step:&lt;ref&gt;:&lt;n&gt;   zone:&lt;ref&gt;:&lt;zone&gt;   visit:&lt;ref&gt;   rule:&lt;id&gt;
 	///   where: ahead:&lt;m&gt;   near:&lt;ref&gt;:&lt;m&gt;:&lt;direction&gt;   receiver:&lt;m&gt;   sailing:&lt;m&gt;
 	/// A ref names an island in the world: "self" (the island the rule belongs to), the id of the rule that brought
 	/// it, or its island name.
@@ -53,6 +53,11 @@ namespace DynamicIslands.Editor
 		/// label, else the island's name), its colour (1-10, 0 = by its place) and the intro on its first page ("" = an automatic line).</summary>
 		public string TabTitle = "", TabIntro = "";
 		public int TabColour;
+		/// <summary>A km / day rule: its island comes back every WhenArg km / days while the players aren't done with it -
+		/// never reached, or its quest not finished (ROADMAP SR1; written "day:5:again"; older versions read "day:5").</summary>
+		public bool Again;
+		/// <summary>Again, on a WHEN that has it (km or day).</summary>
+		public bool Repeats { get { return Again && (When == "km" || When == "day"); } }
 
 		/// <summary>Handled by StoryChain rather than brought straight away: in the story chain, on the Receiver, or by chance while sailing.</summary>
 		public bool Special { get { return InStory || Where == "receiver" || Where == "sailing"; } }
@@ -103,7 +108,7 @@ namespace DynamicIslands.Editor
 			switch (When)
 			{
 				case "start": when = "start"; break;
-				case "km": case "day": when = When + ":" + Part(WhenArg); break;
+				case "km": case "day": when = When + ":" + Part(WhenArg) + (Again ? ":again" : ""); break;
 				case "step": case "zone": case "signal": when = When + ":" + Part(WhenRef.Length > 0 ? WhenRef : Self) + ":" + Text(WhenArg); break;
 				// ("quest:<island>:2" - the island's second quest, ROADMAP LM4; the main quest without a number, as before)
 				case "quest": when = "quest:" + Part(WhenRef.Length > 0 ? WhenRef : Self) + (WhenArg.Trim().Length > 0 ? ":" + Text(WhenArg) : ""); break; // (a zone may be called "cave:1": the reading joins what comes after the island again)
@@ -136,7 +141,11 @@ namespace DynamicIslands.Editor
 			string[] when = p[2].Split(':').Select(x => x.Trim()).ToArray();
 			r.When = when[0].ToLowerInvariant();
 			if (!WhenKinds.Contains(r.When)) return null;
-			if (r.When == "km" || r.When == "day") r.WhenArg = when.Length > 1 ? when[1] : "0";
+			if (r.When == "km" || r.When == "day")
+			{
+				r.WhenArg = when.Length > 1 ? when[1] : "0";
+				r.Again = when.Length > 2 && when[2].Equals("again", StringComparison.OrdinalIgnoreCase);
+			}
 			else if (r.When != "start")
 			{
 				r.WhenRef = when.Length > 1 ? when[1] : "";
@@ -211,8 +220,8 @@ namespace DynamicIslands.Editor
 			switch (When)
 			{
 				case "start": return "When the world starts";
-				case "km": return "After sailing " + WhenArg + " km";
-				case "day": return "On day " + WhenArg;
+				case "km": return "After sailing " + WhenArg + " km" + (Again ? " (and again every " + WhenArg + " km until players are done with it)" : "");
+				case "day": return "On day " + WhenArg + (Again ? " (and again every " + WhenArg + " days until players are done with it)" : "");
 				case "quest": return "When " + (WhenArg.Trim().Length > 0 && WhenArg.Trim() != "1" ? "quest " + WhenArg.Trim() : "the quest") + " of " + RefName(WhenRef) + " is done";
 				case "step": return "When " + WhenArg + " step(s) of the quest of " + RefName(WhenRef) + " are done";
 				case "zone": return "When zone '" + WhenArg + "' of " + RefName(WhenRef) + " fires";
@@ -282,6 +291,8 @@ namespace DynamicIslands.Editor
 		public HashSet<string> LeaveOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		/// <summary>The last page of the main story in Raft's notebook, shown (with a banner) when the last main story island is done ("" = none).</summary>
 		public string StoryEnding = "";
+		/// <summary>The credits after the last main story step (RF2): their title ("" = the plan's name) and the makers' names (one per line).</summary>
+		public string EndingTitle = "", Credits = "";
 		/// <summary>Lines this version can't read (a newer one's settings or rules): written back as they are (AU5).</summary>
 		public List<string> Kept = new List<string>();
 		/// <summary>The mod version that saved the plan ("" before 2026-10-06).</summary>
@@ -353,6 +364,8 @@ namespace DynamicIslands.Editor
 						}
 						break;
 					case "storyending": plan.StoryEnding = IntroRule.UnMulti(value); break;
+					case "endingtitle": plan.EndingTitle = IntroRule.UnMulti(value); break;
+					case "credits": plan.Credits = IntroRule.UnMulti(value); break;
 					case "modversion": plan.ModVersion = value; break;
 					case "id": plan.Id = value; break;
 					case "rule":
@@ -388,6 +401,7 @@ namespace DynamicIslands.Editor
 #   what:  island:<saved island>   type:<map type>   pool   oneof:<island>, <island>, ...
 #   when:  start   km:<km sailed>   day:<day>   quest:<ref>   step:<ref>:<steps done>
 #          zone:<ref>:<zone name>   signal:<ref>:<signal name>   visit:<ref>   rule:<rule id>
+#          km:<n>:again   day:<n>:again   (again until done: back every <n> km / days until reached and its quest done)
 #   where: ahead:<metres>   near:<ref>:<metres>:<direction>   (any, north, north-east, east, ... or degrees)
 #          receiver:<metres>   (its own frequency on Raft's Receiver: it comes when a player tunes to it)
 #          sailing:<metres>    (it comes up ahead by chance while sailing)
@@ -401,7 +415,9 @@ namespace DynamicIslands.Editor
 #   An island in the story is MAIN STORY: it gets a tab in Raft's notebook (its quest steps, intro and notes there);
 #   every other island is a side quest (the journal). Three more parts style the tab:
 #   rule = ... | place | done when | tab title | tab colour 1-10 (not 3) | tab intro (\n = a new line)
-# storyending = the last page of the main story in Raft's notebook (\n = a new line)
+# storyending = the last page of the main story in Raft's notebook (\n = a new line); also the credits' closing note
+# endingtitle = the credits' title, shown once to every player after the last main story step (empty = the plan's name)
+# credits = the makers' names on the credits (\n = a new line)
 # story = on|off        (Raft's story islands: Radio Tower, Vasagatan, Balboa, Caravan Town, Tangaroa,
 #                         Varuna Point, Temperance, Utopia. off = only the plan's own islands: a new adventure)
 # storyleaveout = Balboa, Tangaroa   (story islands left out: the note before them leads to the one after)
@@ -412,6 +428,8 @@ namespace DynamicIslands.Editor
 			var lines = new List<string> { Help, "description = " + (Description ?? "").Replace("\n", " "), "random = " + (Random ? "on" : "off"), "story = " + (RaftStory ? "on" : "off") };
 			if (LeaveOut.Count > 0) lines.Add("storyleaveout = " + string.Join(", ", StoryOrder.Chain.Select(StoryOrder.Key).Where(k => LeaveOut.Contains(k)).ToArray()));
 			if ((StoryEnding ?? "").Trim().Length > 0) lines.Add("storyending = " + IntroRule.Multi(StoryEnding));
+			if ((EndingTitle ?? "").Trim().Length > 0) lines.Add("endingtitle = " + IntroRule.Multi(EndingTitle));
+			if ((Credits ?? "").Trim().Length > 0) lines.Add("credits = " + IntroRule.Multi(Credits));
 			lines.Add("");
 			lines.AddRange(Rules.Select(r => "rule = " + r.ToLine()));
 			lines.AddRange(Kept);
@@ -1636,7 +1654,9 @@ namespace DynamicIslands.Editor
 	///     players reaching it), or the Receiver chain (an island it comes after): the island leads on, so it comes back
 	///     every time until that happened;
 	///   - or players reached it and its quest isn't done: it comes back MaxReturns times (an island left on purpose
-	///     stops coming back).
+	///     stops coming back);
+	///   - or a km / day rule with "again" brought it (IntroRule.Again, ROADMAP SR1) and the players aren't done with it
+	///     (Finished): it comes back every N km / days after the players last were near it, with no cap, even unvisited.
 	/// Not an island a Receiver frequency brought (the Receiver shows the way to it), the randomizer's extras on Raft's
 	/// islands, or an island nobody needs. Raft's current carries a raft one way: before this, an unfinished island that
 	/// drifted out of reach was lost (the user, 2026-10-02: The Long Voyage's first side trip, with no Receiver yet).
@@ -1649,6 +1669,9 @@ namespace DynamicIslands.Editor
 		public const int MaxReturns = 3;
 		/// <summary>State key: how often the island came back (kept with the island's state, saved with the world).</summary>
 		public const int ReturnsKey = 0x50F00;
+		/// <summary>State key of an "again" island: Day = the day it was last near the players (or brought), Yield = the metres
+		/// sailed then - its next return counts from there.</summary>
+		public const int AgainKey = 0x50F01;
 		const float TickSeconds = 2f, RetrySeconds = 30f;
 
 		static readonly Dictionary<int, float> awaySince = new Dictionary<int, float>();
@@ -1666,7 +1689,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + TickSeconds;
-			if (!Raft_Network.IsHost || ReturnMinutes <= 0f) return;
+			if (!Raft_Network.IsHost) return;
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (!raft.HasValue) return;
 			// (another world loaded: the clocks start again - only then: reset while the director waited for a NEW world, the
@@ -1679,7 +1702,8 @@ namespace DynamicIslands.Editor
 				string why = Why(e);
 				float edge = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name));
 				bool away = e.Root == null && !e.Loading && Flat(e.Position - raft.Value) - edge > WorldRules.UnloadDistance;
-				if (why == null || !away) { awaySince.Remove(e.Id); continue; }
+				if (why == "again") { TickAgain(e, raft.Value, away); continue; }
+				if (why == null || !away || ReturnMinutes <= 0f) { awaySince.Remove(e.Id); continue; }
 				float since;
 				if (!awaySince.TryGetValue(e.Id, out since))
 				{
@@ -1694,14 +1718,43 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>Why the players still need this island - "awaited" (something waits for it) or "quest" (begun and not
-		/// done) - or null when it doesn't come back.</summary>
+		/// <summary>An "again" island (Why = "again"): while it is near the players (loaded) or not yet seen by the clock its
+		/// mark is today and the km sailed now; once it is left behind it comes back when the rule's number of days / km
+		/// has passed since then (no ReturnMinutes, no cap).</summary>
+		static void TickAgain(IslandWorldState.Entry e, Vector3 raft, bool away)
+		{
+			awaySince.Remove(e.Id);
+			IntroRule r = RuleThatBrought(e);
+			ObjectState mark;
+			if (!e.State.TryGetValue(AgainKey, out mark) || !away)
+			{
+				if (mark == null) { mark = new ObjectState { Active = true }; e.State[AgainKey] = mark; }
+				mark.Day = WorldDirector.Today;
+				mark.Yield = (int)WorldDirector.Sailed;
+				return;
+			}
+			if (r == null || Due(r, mark) > 0f) return;
+			if (Bring(e, raft, "again")) { mark.Day = WorldDirector.Today; mark.Yield = (int)WorldDirector.Sailed; }
+		}
+
+		/// <summary>How many days (day rule) or km (km rule) are left until an "again" island comes back; 0 or less = now.</summary>
+		static float Due(IntroRule r, ObjectState mark)
+		{
+			float every, n;
+			every = float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out n) ? Mathf.Max(1f, n) : 1f;
+			if (r.When == "day") return mark.Day + every - WorldDirector.Today;
+			return (mark.Yield + every * 1000f - WorldDirector.Sailed) / 1000f;
+		}
+
+		/// <summary>Why the players still need this island - "awaited" (something waits for it), "again" (a km / day rule with
+		/// again brought it and it isn't finished) or "quest" (begun and not done) - or null when it doesn't come back.</summary>
 		public static string Why(IslandWorldState.Entry e)
 		{
 			if (e == null || e.Failed || e.WaitingForFile || WorldRandomizer.IsExtras(e)) return null;
 			IntroRule brought = RuleThatBrought(e);
 			if (brought != null && brought.Where == "receiver") return null;
 			if (Awaited(e)) return "awaited";
+			if (brought != null && brought.Repeats) return Finished(e) ? null : "again";
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count, step = QuestTracker.StepOf(e);
 			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || step > 0;
 			if (steps == 0 || step >= steps || !begun) return null;
@@ -1791,11 +1844,12 @@ namespace DynamicIslands.Editor
 			// (the other players' copies move too: a known island at another place)
 			IslandNetwork.BroadcastAdded(e);
 			string title = TitleOf(e);
-			string message = why == "awaited" ? "Back in sight: the way on starts there." : why == "quest" ? "Back in sight: you left its quest unfinished." : "Back in sight.";
+			string message = why == "awaited" ? "Back in sight: the way on starts there." : why == "quest" ? "Back in sight: you left its quest unfinished." :
+				why == "again" ? "Back in sight: it still waits for you." : "Back in sight.";
 			IslandNetwork.SendAnnounce(e, title, message);
 			WorldDirector.Show(title, message, e.Position);
 			Debug.Log("[CUSTOM ISLANDS] [returning] '" + e.HostName + "' comes back " + Flat(e.Position - raft).ToString("F0") + " m ahead of the raft (left " +
-				behind.ToString("F0") + " m behind; " + (why == "awaited" ? "something waits for it" : why == "quest" ? "its quest is unfinished" : "picked again by the spawn pool") + "; return " + returned + ")");
+				behind.ToString("F0") + " m behind; " + (why == "awaited" ? "something waits for it" : why == "quest" ? "its quest is unfinished" : why == "again" ? "its rule brings it again until it is done" : "picked again by the spawn pool") + "; return " + returned + ")");
 			if (Returned != null) Returned(e);
 			return true;
 		}
@@ -1811,6 +1865,7 @@ namespace DynamicIslands.Editor
 				float since;
 				yield return "'" + e.HostName + "': " + (Why(e) ?? "not needed") + ", " + far.ToString("F0") + " m from the raft, land radius " + edge.ToString("F0") +
 					(e.Root != null ? ", loaded" : e.Loading ? ", loading" : "") + (awaySince.TryGetValue(e.Id, out since) ? ", away for " + (Time.time - since).ToString("F0") + " s" : "") +
+					(e.State.ContainsKey(AgainKey) && RuleThatBrought(e) != null ? ", again in " + Due(RuleThatBrought(e), e.State[AgainKey]).ToString("0.#", CultureInfo.InvariantCulture) + (RuleThatBrought(e).When == "day" ? " day(s)" : " km") : "") +
 					", came back " + Returns(e) + "x";
 			}
 			yield return "host " + Raft_Network.IsHost + ", return after " + ReturnMinutes.ToString("0.##") + " min, unload distance " + WorldRules.UnloadDistance.ToString("F0") + " m, next look in " + (nextTick - Time.unscaledTime).ToString("F1") + " s";

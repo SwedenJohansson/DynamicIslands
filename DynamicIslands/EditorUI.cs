@@ -258,6 +258,8 @@ namespace DynamicIslands.Editor
 			UIKit.Size(hintText.gameObject, -1, -1, 1);
 			cameraText = UIKit.Label(bar, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Camera");
 			UIKit.Size(cameraText.gameObject, 260);
+			// (the camera's controls and settings: look sensitivity, drag up, speeds, the wheel - TODO "Editor camera")
+			UIKit.Button(bar, "Camera...", CameraSettingsWindow.Open, "The camera's controls and settings: look sensitivity, which way dragging up looks, move, zoom and pan speed, the wheel's direction (this PC's own)", 86, StatusBarHeight - 4f, 12).name = "Button_CameraSettings";
 		}
 
 		#endregion
@@ -344,7 +346,7 @@ namespace DynamicIslands.Editor
 			TerrainStamps.Load();
 			RefreshStamps();
 
-			Tips(s, "Left mouse: use the brush \u00B7 blue plane: the sea\nRight-drag: look (+WASD fly, Q/E, wheel: speed)\nMiddle-drag: pan \u00B7 Alt+drag: orbit \u00B7 WASD: move\nSpace / C: straight up / down \u00B7 F: frame \u00B7 Shift: faster\nWheel: zoom to the cursor");
+			Tips(s, "Left mouse: use the brush \u00B7 blue plane: the sea\nRight-drag: look (+WASD fly, Q/E, wheel: speed)\nMiddle-drag: pan \u00B7 Alt+drag: orbit \u00B7 WASD: move\nSpace / C: straight up / down \u00B7 F: frame \u00B7 Shift: faster\nWheel: zoom to the cursor \u00B7 Camera... (bottom right): settings");
 			return s;
 		}
 

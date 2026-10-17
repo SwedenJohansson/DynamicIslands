@@ -60,7 +60,7 @@ namespace DynamicIslands.Editor
 		public static bool Repeats(IDictionary<string, string> p) { return GetBool(p, ZoneRepeat, false); }
 
 		public const int MaxCount = 8;
-		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MaxHealth = 12f, MinSize = 0.5f, MaxSize = 2.5f;
+		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MaxHealth = 12f, MinSize = 0.5f, MaxSize = 3f;
 
 		/// <summary>What an object starts with when it is placed from the list (a note gets a title to edit). ready=false leaves
 		/// out the Ready pieces' working settings (CB1: a recipe's decorative copy without an alias stays decoration).</summary>
@@ -84,7 +84,11 @@ namespace DynamicIslands.Editor
 				props[BehaviourProps.EventKey("use")] = "hide|";
 				props[BehaviourProps.ElseKey("use")] = "message||The vines are too thick to tear. A machete would cut through them.";
 			}
-			if (ready) ReadyPieces.Defaults(name, props);
+			if (ready)
+			{
+				ReadyPieces.Defaults(name, props);
+				Survivors.Defaults(name, props);
+			}
 			return props;
 		}
 

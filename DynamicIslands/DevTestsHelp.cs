@@ -24,12 +24,11 @@ namespace DynamicIslands
 			HelpLinks.TestMode = true;
 			try
 			{
-				WorldPlanWindow.EnsureSamples();
-				WorldPlanWindow.Open("Adventure");
+				WorldPlanWindow.Open(WriteCIPlan(CIAdventure));
 				yield return new WaitForSecondsRealtime(0.5f);
 				Transform window = EditorUI.Canvas.transform.Find("WorldPlanWindow");
 				RectTransform panel = window != null ? window.Find("Panel") as RectTransform : null;
-				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on Adventure");
+				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on " + CIAdventure);
 				if (panel == null) yield break;
 				// (TODO 5b: a plan with a Main story line opens on that tab; the rule cards counted here are on Other islands)
 				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
@@ -134,7 +133,7 @@ namespace DynamicIslands
 				DynamicIslands.currentIslandProps.Clear();
 				foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			}
-			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
+			finally { HelpLinks.TestMode = false; InfoWindow.Close(); WorldPlanWindow.Close(); RemoveCIPlan(CIAdventure); }
 			if (ok) Log("PASS: plan help"); else Fail("plan help");
 		}
 
@@ -366,7 +365,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan picks"); else Fail("plan picks");
 		}
 
-		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the Adventure plan), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
+		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the test plan CI Adventure), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
 		public static void WindowShotCommand(string[] args) { StartTest(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
 
 		static IEnumerator WindowShotRoutine(string name)
@@ -376,7 +375,7 @@ namespace DynamicIslands
 			switch (name)
 			{
 				case "report": open = InfoWindow.OpenReport; close = InfoWindow.Close; break; // (the main menu's Report a problem box)
-				case "worldplans": open = () => { WorldPlanWindow.EnsureSamples(); WorldPlanWindow.Open("Adventure"); }; close = WorldPlanWindow.Close; break;
+				case "worldplans": open = () => WorldPlanWindow.Open(WriteCIPlan(CIAdventure)); close = () => { WorldPlanWindow.Close(); RemoveCIPlan(CIAdventure); }; break;
 				case "behaviours": open = BehaviourWindow.OpenIsland; close = BehaviourWindow.Close; break;
 				case "islandfiles": open = IslandFilesWindow.Open; close = IslandFilesWindow.Close; break;
 				case "quest": open = QuestEditorWindow.Open; close = QuestEditorWindow.Close; break;

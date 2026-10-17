@@ -87,6 +87,7 @@ namespace DynamicIslands.Editor
 		public static void Open(string title, string text, params Choice[] choices)
 		{
 			if (canvas == null) Build();
+			Closed = null;
 			titleText.text = title.ToUpperInvariant();
 			bodyText.text = text;
 			statusText.text = "";
@@ -117,8 +118,14 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Info box: " + title);
 		}
 
+		/// <summary>Called once when the box closes (any way: a button, Esc); Open clears it.</summary>
+		public static Action Closed;
+
 		public static void Close()
 		{
+			Action closed = Closed;
+			Closed = null;
+			if (closed != null && IsOpen) try { closed(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Info box closed: " + e.Message); }
 			if (canvas != null && canvas.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			if (canvas != null) canvas.gameObject.SetActive(false);
 		}

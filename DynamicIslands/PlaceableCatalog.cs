@@ -147,6 +147,10 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
 		static readonly HashSet<string> core = new HashSet<string>();
+		/// <summary>The generator's names (CA19): the objects of Raft's own island scenes and its things to gather that a
+		/// catalog without placeables.txt makes core - whatever placeables.txt says and whatever other mods add, so a seed
+		/// gives the same island on every PC.</summary>
+		static readonly HashSet<string> gen = new HashSet<string>();
 
 		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
 
@@ -222,7 +226,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Every object of Raft's island scenes the index knows (loaded or not) - the tests load them all.</summary>
 		internal static IEnumerable<string> IndexedNames { get { return index.Keys; } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
-		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n); } }
+		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n, StringComparer.Ordinal); } }
+		/// <summary>What the generator picks from (CA19): Raft's own island objects in ordinal order - the same list on every PC
+		/// (not the PC's culture order, not placeables.txt, not other mods' buildables). A name placeables.txt left out is
+		/// still planned (the file is the same as elsewhere); this PC just doesn't show it.</summary>
+		public static IEnumerable<string> GenNames { get { return gen.OrderBy(n => n, StringComparer.Ordinal); } }
 
 		public static string CategoryOf(string name)
 		{
@@ -277,6 +285,11 @@ namespace DynamicIslands.Editor
 			HashSet<string> whitelist = cachedWhitelist;
 			foreach (IndexEntry e in index.Values)
 				if (!prototypes.ContainsKey(e.Name) && !e.Hidden && (whitelist == null || whitelist.Contains(e.Name))) add(e.Name, e.Category, e.Scene);
+			foreach (var d in derived)
+			{
+				IndexEntry src;
+				if (!prototypes.ContainsKey(d.Key) && index.TryGetValue(d.Value.Source, out src)) add(d.Key, d.Value.Category, src.Scene);
+			}
 			var result = new List<KeyValuePair<string, List<Entry>>>();
 			foreach (string cat in CategoryOrder.Concat(ExtraCategoryOrder()).Concat(byCat.Keys.OrderBy(k => k)).Distinct())
 			{
@@ -297,7 +310,49 @@ namespace DynamicIslands.Editor
 		/// <summary>The objects loaded now (tests).</summary>
 		internal static IEnumerable<string> LoadedNames { get { return prototypes.Keys; } }
 		/// <summary>Whether the index knows the object (loaded or not).</summary>
-		public static bool IsIndexed(string name) { return name != null && index.ContainsKey(name); }
+		public static bool IsIndexed(string name) { return name != null && (index.ContainsKey(name) || derived.ContainsKey(name)); }
+
+		class Derived { public string Source, Category, Label; public Action<GameObject> Tidy; }
+		/// <summary>Custom objects made from an on-demand object (RF3's survivor cage from Raft's shark cage): built when
+		/// the source's scene is loaded.</summary>
+		static readonly Dictionary<string, Derived> derived = new Dictionary<string, Derived>();
+
+		/// <summary>A custom object that is a copy of Raft's object source: added now when the source is loaded, else when
+		/// its scene is (an island or the editor asks for the custom object: the source's scene loads).</summary>
+		/// tidy: the custom object is its own copy of the source, which tidy changes (the survivor cage leaves out the
+		/// shark cage's loose rope); without it the two share one prototype.
+		internal static void AddCustomFrom(string name, string source, string category, string label, Action<GameObject> tidy = null)
+		{
+			labels[name] = label;
+			categories[name] = category;
+			GameObject proto;
+			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddDerived(name, proto, category, label, tidy); return; }
+			derived[name] = new Derived { Source = source, Category = category, Label = label, Tidy = tidy };
+		}
+
+		static void AddDerived(string name, GameObject source, string category, string label, Action<GameObject> tidy)
+		{
+			if (tidy == null) { AddCustom(name, source, category, label); return; }
+			// (a copy under the inactive container: no script of it wakes up; Spawn copies it as any other object)
+			GameObject own = UnityEngine.Object.Instantiate(source, container.transform);
+			own.name = name;
+			own.transform.localPosition = source.transform.localPosition;
+			own.transform.localRotation = source.transform.localRotation;
+			own.transform.localScale = source.transform.localScale;
+			try { tidy(own); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Tidying '" + name + "': " + e.Message); }
+			AddCustom(name, own, category, label);
+		}
+
+		static string SourceOf(string name) { Derived d; return derived.TryGetValue(name, out d) && !prototypes.ContainsKey(name) ? d.Source : name; }
+
+		static void BuildDerived()
+		{
+			foreach (var d in derived.ToList())
+			{
+				GameObject proto;
+				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddDerived(d.Key, proto, d.Value.Category, d.Value.Label, d.Value.Tidy); derived.Remove(d.Key); }
+			}
+		}
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
 		/// <summary>The index's things to gather (they keep their gameplay, pickups too - CIMeasurePickups).</summary>
 		internal static List<string> IndexedGatherNames() { return index.Values.Where(e => e.Harvestable).Select(e => e.Name).ToList(); }
@@ -387,10 +442,11 @@ namespace DynamicIslands.Editor
 					foreach (KeyValuePair<string, Transform> pick in Pick(root))
 					{
 						string name = pick.Key;
-						if (prototypes.ContainsKey(name)) continue;
 						bool second = source.Include2 != null && source.Include2.IsMatch(name);
-						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						bool byDefault = second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						if (byDefault) gen.Add(name);
+						if (prototypes.ContainsKey(name)) continue;
+						bool wanted = whitelist != null ? whitelist.Contains(name) : byDefault;
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, second ? source.Category2 : source.Category, false);
 						core.Add(name);
@@ -404,6 +460,7 @@ namespace DynamicIslands.Editor
 					{
 						string hn = CleanName(t.name);
 						if (!IsGatherName(hn) || harvestables.ContainsKey(hn)) continue;
+						if (HarvestableObjects.IsMatch(hn)) gen.Add(hn);
 						if (whitelist != null && !whitelist.Contains(hn)) continue;
 						AddHarvestable(hn, t);
 						// (the more recent ones aren't core: the generator's islands stay as they were - LM11)
@@ -1186,20 +1243,21 @@ namespace DynamicIslands.Editor
 		{
 			yield return EnsureBuilt();
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (prototypes.ContainsKey(n) || !index.TryGetValue(n, out e) || scenes.Contains(e.Scene)) continue;
 				scenes.Add(e.Scene);
 			}
 			foreach (string s in scenes) yield return LoadScene(s);
+			BuildDerived();
 		}
 
 		/// <summary>Scenes that must be loaded before these names can be spawned (empty = all ready).</summary>
 		public static List<string> ScenesNeededFor(IEnumerable<string> names)
 		{
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (!prototypes.ContainsKey(n) && index.TryGetValue(n, out e) && !scenes.Contains(e.Scene)) scenes.Add(e.Scene);
@@ -1268,6 +1326,7 @@ namespace DynamicIslands.Editor
 			{
 				loadingScenes.Remove(sceneName);
 				loadedScenes.Add(sceneName);
+				BuildDerived();
 				RaiseChanged();
 			}
 		}

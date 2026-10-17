@@ -104,6 +104,11 @@ namespace DynamicIslands.Editor
 		/// <summary>One of Raft's story islands rebuilt from its own pieces: a design id, "&lt;scene&gt;:any" for one of its
 		/// designs at random, or "" (Remakes; the Randomize existing tab).</summary>
 		public string Remake = "";
+		/// <summary>One of Raft's story islands' looks the ground and pieces follow (Remakes.Looks, IslandLooks.cs: "caravan",
+		/// "tangaroa"...; "" = none) - set by the Randomize existing tab's like-it and variation.</summary>
+		public string Look = "";
+		/// <summary>The look's original island's highest point over the sea (Caravan's mesas reach it).</summary>
+		public float LookTop;
 
 		// "Randomize existing": start from one of Raft's islands' own ground (RaftIslands) instead of a layout
 		/// <summary>Scene of the Raft island whose ground is the start ("" = a layout).</summary>
@@ -336,7 +341,7 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>The designs for one of Raft's islands (its scene name).</summary>
-		public static List<Design> For(string scene) { return All.Where(d => SceneIs(scene, d.Scene)).ToList(); }
+		public static List<Design> For(string scene) { scene = FamilyScene(scene); return All.Where(d => SceneIs(scene, d.Scene)).ToList(); }
 
 		/// <summary>True when the island's scene name holds the design's scene as a whole name: "55#Landmark_Temperance#"
 		/// is Temperance, "57#Landmark_TemperanceSmall#1" (one of its islets) is not.</summary>
@@ -895,6 +900,7 @@ namespace DynamicIslands.Editor
 			if (s.Buildings && (s.BuildingKind == Mixed || s.BuildingKind == Huts || s.BuildingKind == Cabins)) names.AddRange(FloorPickupNames);
 			if (s.Caves) names.AddRange(RandomizerIslands.Dens);
 			names.AddRange(Remakes.NeededNames(s));
+			names.AddRange(Remakes.LookNames(s));
 			if (s.Features > 0) names.AddRange(GenFeatures.NamesFor(s));
 			return names.Distinct().ToList();
 		}
@@ -903,9 +909,12 @@ namespace DynamicIslands.Editor
 		public static List<string> Apply(IslandFile file, IslandGenSettings s)
 		{
 			var done = new List<string>();
-			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && s.Features <= 0 && string.IsNullOrEmpty(s.Remake)) || file == null || file.Heights == null) return done;
+			if ((!s.Buildings && !s.Caves && s.QuestSteps <= 0 && s.Features <= 0 && string.IsNullOrEmpty(s.Remake) && string.IsNullOrEmpty(s.Look)) || file == null || file.Heights == null) return done;
 			var k = new MapKit(file, s.Seed * 7919 + 13);
 			System.Random r = k.Rnd;
+			// The story island's look first: its ground and its signature pieces (its own random stream: k.Rnd draws as before)
+			string look = Remakes.BuildLook(k, s);
+			if (look != null) done.Add(look);
 			// A story island rebuilt first: it takes the island's best place (its top, a headland, the sea off the coast)
 			string remade = Remakes.Build(k, s);
 			if (remade != null) done.Add(remade);
@@ -1227,7 +1236,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Each pickup's lowest point under its pivot as an island spawns it (measured by CIFloorPickups): used when the
 		/// piece's scene isn't loaded to measure it (islands made while sailing, the world randomizer).</summary>
-		static readonly float[] FloorPickupBottoms = { 0f, 0f, 0f, 0f, 0f };
+		static readonly float[] FloorPickupBottoms = { -0.210f, -0.028f, -0.060f, -0.114f, -0.152f };
 
 		public static bool IsFloorPickup(string name) { return Array.IndexOf(FloorPickupNames, name) >= 0; }
 
@@ -1349,7 +1358,10 @@ namespace DynamicIslands.Editor
 	public static class IslandGenerator
 	{
 		/// <summary>The settings the generator window opens with: the last ones generated, at first an island like Raft's small ones.</summary>
-		public static IslandGenSettings Last = IslandGenSettings.RaftLike();
+		public static IslandGenSettings Last;
+		// (set here, after every static field: RaftLike reaches HabitatOf, whose cache is declared further down and was still
+		// null when the catalog was already built - remaking a generated island in a world then failed with a NullReference)
+		static IslandGenerator() { Last = IslandGenSettings.RaftLike(); }
 		/// <summary>What the last generation made.</summary>
 		public static GenReport LastReport = new GenReport();
 
@@ -1389,9 +1401,15 @@ namespace DynamicIslands.Editor
 		static readonly Regex Nothing = new Regex(@"^$^");
 
 		/// <summary>Corals and reef things of the object list (map types dress sunken islands with them).</summary>
-		internal static string[] CoralNames() { return PlaceableCatalog.CoreNames.Where(n => (Corals.IsMatch(n) || Regex.IsMatch(n, @"^Reef_(Barrel\d+|Container)$")) && !n.StartsWith("Pickup_")).ToArray(); }
+		internal static string[] CoralNames() { return PlaceableCatalog.GenNames.Where(n => (Corals.IsMatch(n) || Regex.IsMatch(n, @"^Reef_(Barrel\d+|Container)$")) && !n.StartsWith("Pickup_")).ToArray(); }
 
 		// Indexed like TerrainPainter.Styles. (BigRock_Low*_Sand is left out: those are cliff-sized formations that swamp a generated island)
+		/// <summary>Some style's pools pick this name (tests: CIGenNames).</summary>
+		internal static bool InAnyPool(string name)
+		{
+			return Pools.Any(p => new[] { p.ShoreTrees, p.Trees, p.Bushes, p.Rocks, p.Beach, p.LandHarvest, p.SeaHarvest, p.Water }.Any(r => r != null && r.IsMatch(name)));
+		}
+
 		static readonly StylePools[] Pools =
 		{
 			new StylePools // Tropical
@@ -2779,7 +2797,7 @@ namespace DynamicIslands.Editor
 			if (habitats == null) habitats = new Dictionary<string, Habitat>();
 			if (habitats.TryGetValue(key, out h)) return h;
 			LandStyle land = RaftLand.For(style, small);
-			var core = new HashSet<string>(PlaceableCatalog.CoreNames);
+			var core = new HashSet<string>(PlaceableCatalog.GenNames);
 			LandThing[] kinds = land.Of(cat).Where(t => core.Contains(t.Name)).ToArray();
 			h = null;
 			if (kinds.Sum(t => t.Count) >= HabitatMinCount)
@@ -3169,7 +3187,7 @@ namespace DynamicIslands.Editor
 
 		static void PlanNature(IslandGenSettings s, Ground ground, SpotGrid spots, List<IslandObject> owners, List<string> cats, GenReport report, Dictionary<string, int> targets)
 		{
-			string[] names = PlaceableCatalog.CoreNames.ToArray(); // the same set every time, so a seed always gives the same island
+			string[] names = PlaceableCatalog.GenNames.ToArray(); // the same list on every PC, so a seed always gives the same island (CA19)
 			StylePools pools = Pools[Mathf.Clamp(s.Style, 0, Pools.Length - 1)];
 			Func<Regex, string[]> pick = r => names.Where(n => r.IsMatch(n)).ToArray();
 			string[] trees = pick(pools.Trees), shoreTrees = pick(pools.ShoreTrees), bushes = pick(pools.Bushes), rocks = pick(pools.Rocks), beach = pick(pools.Beach);
@@ -3527,7 +3545,7 @@ namespace DynamicIslands.Editor
 		static List<SeaThing> SeaThingsOf(int style, string cat, bool extra)
 		{
 			if (!PlaceableCatalog.IsBuilt) return new List<SeaThing>();
-			List<string> core = PlaceableCatalog.CoreNames.ToList();
+			List<string> core = PlaceableCatalog.GenNames.ToList();
 			if (coreNames == null || core.Count != coreNamesCount) { coreNames = new HashSet<string>(core); coreNamesCount = core.Count; }
 			Func<SeaThing, bool> has = t => coreNames.Contains(t.Name) || (t.Extra && PlaceableCatalog.SceneOf(t.Name) != null);
 			List<SeaThing> list = RaftUnderwater.For(style).Of(cat, extra).Where(has).ToList();

@@ -189,6 +189,8 @@ namespace DynamicIslands
 			StartStep("the loading notice", () => loading = FindObjectOfType<HNotify>().AddNotification(HNotify.NotificationType.spinning, "Loading Custom Islands..."));
 			// The mod's own error note (RML's "AN ERROR OCCURED!" can't be clicked): from the start, so a step that fails shows it
 			StartStep("the error notes", Editor.ErrorNotes.Install);
+			// (RML compiles the mod on every start unless its cached copy is kept - ROADMAP CW2)
+			StartStep("the RML cache", () => Editor.RmlCache.Begin(this));
 			// The world hooks first: whatever else fails, worlds still load and save their custom islands
 			StartStep("the world hooks", () =>
 			{
@@ -229,8 +231,6 @@ namespace DynamicIslands
 			});
 			// Adding the Editor button to the main menu (again every time the main menu scene is reloaded)
 			StartStep("the main menu buttons", HookUI);
-			// Sample world plans, the first time (Mods\DynamicIslands\plans)
-			StartStep("the sample world plans", WorldPlanWindow.EnsureSamples);
 			// Map types of one's own (Mods\DynamicIslands\maptypes\*.maptype), after the built-in ones
 			StartStep("the map type files", () => Editor.MapTypeFiles.LoadAll());
 			// Raft's world shifts and "world received" (for clients): hooked every frame by HookRaftEvents, since
@@ -413,10 +413,14 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Island banner", e); }
 			try { Behaviours.Tick(); }
 			catch (Exception e) { TickError("Behaviours", e); }
+			try { TriggerSounds.Tick(); StoryCredits.Tick(); }
+			catch (Exception e) { TickError("Trigger sounds and credits", e); }
 			try { IslandTest.Tick(); }
 			catch (Exception e) { TickError("Island test", e); }
 			try { StoryChain.WatchWorld(); }
 			catch (Exception e) { TickError("Story chain", e); }
+			try { MissingIslandsCheck.Tick(); }
+			catch (Exception e) { TickError("Missing islands", e); }
 			try { WorldDirector.Tick(); }
 			catch (Exception e) { TickError("World director", e); }
 			try { JournalWindow.Tick(); }
@@ -609,7 +613,7 @@ namespace DynamicIslands
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the islands window: " + e); }
 			try { GeneratorWindow.Create(EditorUI.Canvas.transform, null); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the generator window: " + e); }
-			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); MainStoryHelper.Create(EditorUI.Canvas.transform); PlanCheckWindow.Create(EditorUI.Canvas.transform); PlanProgressWindow.Create(EditorUI.Canvas.transform); LibraryExportWindow.Create(EditorUI.Canvas.transform); LibraryImportWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); PiecesWindow.Create(EditorUI.Canvas.transform); PlacedListWindow.Create(EditorUI.Canvas.transform); MyIslandsWindow.Create(EditorUI.Canvas.transform); }
+			try { NoteEditorWindow.Create(EditorUI.Canvas.transform); ItemPickerWindow.Create(EditorUI.Canvas.transform); TextPromptWindow.Create(EditorUI.Canvas.transform); SoundPickerWindow.Create(EditorUI.Canvas.transform); QuestEditorWindow.Create(EditorUI.Canvas.transform); ChoiceWindow.Create(EditorUI.Canvas.transform); WorldPlanWindow.Create(EditorUI.Canvas.transform); MainStoryHelper.Create(EditorUI.Canvas.transform); PlanCheckWindow.Create(EditorUI.Canvas.transform); PlanProgressWindow.Create(EditorUI.Canvas.transform); LibraryExportWindow.Create(EditorUI.Canvas.transform); LibraryImportWindow.Create(EditorUI.Canvas.transform); BehaviourWindow.Create(EditorUI.Canvas.transform); StoryItemsWindow.Create(EditorUI.Canvas.transform); PiecesWindow.Create(EditorUI.Canvas.transform); PlacedListWindow.Create(EditorUI.Canvas.transform); MyIslandsWindow.Create(EditorUI.Canvas.transform); CameraSettingsWindow.Create(EditorUI.Canvas.transform); }
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] Could not create the note editor: " + e); }
 
 			// (the loading box shows how far Raft's islands have been read for their objects)

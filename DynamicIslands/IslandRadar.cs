@@ -80,7 +80,7 @@ namespace DynamicIslands.Editor
 			for (int k = 0; k < all.Count; k++)
 			{
 				IslandWorldState.Entry e = all[k];
-				if (!WorldRandomizer.IsExtras(e) && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))) islands.Add(e);
+				if (!WorldRandomizer.IsExtras(e) && !e.Excluded && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e))) islands.Add(e);
 			}
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)

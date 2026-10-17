@@ -223,7 +223,7 @@ namespace DynamicIslands
 			bool ok = true;
 			ResetStoryEverywhere();
 
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cistoryworld";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
