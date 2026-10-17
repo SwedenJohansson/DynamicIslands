@@ -539,7 +539,10 @@ namespace DynamicIslands.Editor
 		static string RulesPath { get { return Path.Combine(DynamicIslands.assetpath, "rulescache.txt"); } }
 
 		/// <summary>An island's own rules (as in its settings), read from the file only when it changed since last time.</summary>
-		public static List<IntroRule> RulesOf(string name)
+		public static List<IntroRule> RulesOf(string name) { return RulesOf(name, 0); }
+
+		/// <summary>The same, the file's time (UTC ticks) already known from a folder listing (Tidy up: 0 = look it up).</summary>
+		public static List<IntroRule> RulesOf(string name, long fileTicks)
 		{
 			if (rules == null) LoadRules();
 			string path = IslandSpawner.PathFor(name);
@@ -551,17 +554,19 @@ namespace DynamicIslands.Editor
 				// (the file's time looked at again at most every 2 s, as Get does: the director asks it of every island each tick)
 				if (known && rulesAt.TryGetValue(name, out at) && Time.unscaledTime - at < 2f && Time.unscaledTime >= at)
 					return WorldDirector.RulesFromProps(new Dictionary<string, string> { { WorldDirector.IslandRulesKey, had.Value } });
-				if (!File.Exists(path)) return new List<IntroRule>();
-				long t = File.GetLastWriteTimeUtc(path).Ticks;
+				if (fileTicks <= 0 && !File.Exists(path)) return new List<IntroRule>();
+				long t = fileTicks > 0 ? fileTicks : File.GetLastWriteTimeUtc(path).Ticks;
 				rulesAt[name] = Time.unscaledTime;
 				string text;
 				if (known && had.Key == t) text = had.Value;
 				else
 				{
 					// (a file that couldn't be read - locked, broken - isn't kept as "no rules" until it changes - review 2026-10-06)
-					Info read = Get(name);
-					if (read == null) return new List<IntroRule>();
-					text = ObjectProps.Get(read.Props, WorldDirector.IslandRulesKey);
+					// (only the settings read, not the whole island: 1,000 new islands took Tidy up 5-10 s)
+					Dictionary<string, string> props;
+					try { props = IslandFile.LoadProps(path); }
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + e.Message); return new List<IntroRule>(); }
+					text = ObjectProps.Get(props, WorldDirector.IslandRulesKey);
 					rules[name] = new KeyValuePair<long, string>(t, text);
 					rulesDirty = true;
 				}

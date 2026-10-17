@@ -575,6 +575,16 @@ namespace DynamicIslands
 				// (the Installed tab no longer looks through everything when it opens: Tidy up does, on its first click)
 				long tidyMs = time("Tidy up's look (its first click)", () => scan = Housekeeping.Look());
 				Check(ref ok, tidyMs < 10000 && scan != null, "Tidy up looks through them and every world's saves in " + tidyMs + " ms (on its click)");
+				// (Tidy up reads only each island's settings now: the same settings as a whole read, on the islands that have some)
+				int same = 0, compared = 0;
+				foreach (string n in listed.Where(x => !x.StartsWith(BulkPrefix) && !IslandNetwork.IsDownloadName(x)).Take(40))
+				{
+					string p = IslandSpawner.PathFor(n);
+					Dictionary<string, string> whole = IslandFile.Load(p).Props, part = IslandFile.LoadProps(p);
+					compared++;
+					if (whole.Count == part.Count && whole.All(kv => part.ContainsKey(kv.Key) && part[kv.Key] == kv.Value)) same++;
+				}
+				Check(ref ok, same == compared, "reading only an island's settings gives the same as reading it whole (" + same + " of " + compared + ")");
 				if (DynamicIslands.InEditor())
 				{
 					long winMs = time("the Islands window", () => { IslandFilesWindow.Open(); IslandFilesWindow.Close(); });

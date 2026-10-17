@@ -483,6 +483,54 @@ namespace DynamicIslands.Editor
 			foreach (var kv in props.OrderBy(k => k.Key, StringComparer.Ordinal)) { w.Write(kv.Key ?? ""); w.Write(kv.Value ?? ""); }
 		}
 
+		/// <summary>
+		/// Only the island's own settings (Props), the rest of the file passed over unread into memory: Tidy up, Delete and
+		/// Rename read every island's rules, and a whole Load (heights, objects, paint) cost 4-10 ms an island. Files older
+		/// than format 4 have no settings and end at the header.
+		/// </summary>
+		public static Dictionary<string, string> LoadProps(string path)
+		{
+			SafeFile.Recover(path);
+			using (var file = File.OpenRead(path))
+			{
+				var header = new BinaryReader(file);
+				if (header.ReadUInt32() != Magic) throw new InvalidDataException(path + " is not a Custom Islands .island file");
+				int version = header.ReadInt32();
+				if (version > FormatVersion) throw new InvalidDataException(path + " was saved by a newer version of Custom Islands (format " + version + ")");
+				if (version < 4) return new Dictionary<string, string>();
+				using (var inflate = new InflaterInputStream(file) { IsStreamOwner = false })
+				using (var r = new BinaryReader(inflate))
+				{
+					byte[] buffer = new byte[65536];
+					Action<long> skip = n =>
+					{
+						while (n > 0)
+						{
+							int got = r.Read(buffer, 0, (int)Math.Min(n, buffer.Length));
+							if (got <= 0) throw new EndOfStreamException();
+							n -= got;
+						}
+					};
+					r.ReadString(); r.ReadSingle(); skip(12);
+					int res = r.ReadInt32();
+					if (res <= 0 || res > 4097) throw new InvalidDataException("Invalid heightmap resolution " + res);
+					skip((long)res * res * 2);
+					int count = r.ReadInt32();
+					if (count < 0 || count > MaxObjects) throw new InvalidDataException("Invalid object count " + count + " (at most " + MaxObjects + ")");
+					for (int i = 0; i < count; i++) { r.ReadString(); skip(36); }
+					if (r.ReadBoolean())
+					{
+						int ares = r.ReadInt32(), layers = r.ReadInt32();
+						if (ares < 16 || ares > 4096 || layers < 1 || layers > 16) throw new InvalidDataException("Invalid texture paint data (" + ares + " px, " + layers + " layers)");
+						skip((long)layers * ares * ares);
+						if (r.ReadBoolean()) skip((long)ares * ares);
+					}
+					r.ReadSingle(); r.ReadString();
+					return ReadProps(r);
+				}
+			}
+		}
+
 		static Dictionary<string, string> ReadProps(BinaryReader r)
 		{
 			int n = r.ReadInt32();

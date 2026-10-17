@@ -69,6 +69,12 @@ namespace DynamicIslands.Editor
 		/// <summary>Every copy of every world's state on this PC: (world name, lines).</summary>
 		public static IEnumerable<KeyValuePair<string, string[]>> AllWorldCopies()
 		{
+			foreach (var f in WorldCopyFiles()) yield return new KeyValuePair<string, string[]>(WorldName(f.Value, f.Key), f.Value);
+		}
+
+		/// <summary>Every world copy's file and its lines (file -> lines).</summary>
+		static IEnumerable<KeyValuePair<string, string[]>> WorldCopyFiles()
+		{
 			unreadable = 0;
 			var files = new List<string>();
 			try { if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt")); } catch { unreadable++; }
@@ -87,7 +93,7 @@ namespace DynamicIslands.Editor
 			{
 				string[] lines;
 				try { lines = File.ReadAllLines(f); } catch (Exception e) { unreadable++; Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + f + ": " + e.Message); continue; }
-				yield return new KeyValuePair<string, string[]>(WorldName(lines, f), lines);
+				yield return new KeyValuePair<string, string[]>(f, lines);
 			}
 		}
 
@@ -165,21 +171,27 @@ namespace DynamicIslands.Editor
 			var scan = new Scan();
 			var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var usedBy = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-			foreach (var w in AllWorldCopies())
-				foreach (string n in NamesIn(w.Value))
+			// (the files read here are kept for DeletedWorldFiles: it read the worlds folder a second time - 2-3 s in a slow box)
+			var read = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+			foreach (var f in WorldCopyFiles())
+			{
+				read[Path.GetFullPath(f.Key)] = f.Value;
+				string world = WorldName(f.Value, f.Key);
+				foreach (string n in NamesIn(f.Value))
 				{
 					used.Add(n);
 					HashSet<string> set;
 					if (!usedBy.TryGetValue(n, out set)) usedBy[n] = set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-					if (!w.Key.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) set.Add(w.Key);
+					if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) set.Add(world);
 				}
+			}
 			tWorlds = clock.ElapsedMilliseconds;
 			// (a world's copy that couldn't be read - an antivirus, a sync: the islands it uses looked unused and were taken
 			// away from it)
 			if (unreadable > 0)
 			{
 				Debug.LogWarning("[CUSTOM ISLANDS] Tidy up: " + unreadable + " world file(s) couldn't be read - no island is tidied away this time");
-				scan.DeletedWorlds = DeletedWorldFiles();
+				scan.DeletedWorlds = DeletedWorldFiles(read);
 				return scan;
 			}
 			// (plans, islands' own rules, library entries, the pool and the editor count too - for generated islands; only
@@ -189,8 +201,14 @@ namespace DynamicIslands.Editor
 			bool genToCheck = islands.Any(n => n.StartsWith("gen-", StringComparison.OrdinalIgnoreCase) && !IslandNetwork.IsDownloadName(n) && !used.Contains(n));
 			if (genToCheck) {
 			try { foreach (string p in WorldPlan.All()) { WorldPlan plan = WorldPlan.Load(p); if (plan != null) foreach (IntroRule r in plan.Rules) foreach (string n in RuleIslands(r)) named.Add(n); } } catch { }
+			// (the files' times from one listing of the folder, not two disk calls an island)
+			var times = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+			try { foreach (FileInfo fi in new DirectoryInfo(DynamicIslands.assetpath).GetFiles("*" + IslandFile.Extension)) times[Path.GetFileNameWithoutExtension(fi.Name)] = fi.LastWriteTimeUtc.Ticks; } catch { }
 			foreach (string i in islands.Where(n => !IslandNetwork.IsDownloadName(n)))
-				try { foreach (IntroRule r in IslandCache.RulesOf(i)) foreach (string n in RuleIslands(r)) named.Add(n); } catch { }
+			{
+				long ticks;
+				try { foreach (IntroRule r in IslandCache.RulesOf(i, times.TryGetValue(i, out ticks) ? ticks : 0)) foreach (string n in RuleIslands(r)) named.Add(n); } catch { }
+			}
 			try { foreach (LibraryInstalled e in LibraryPack.Installed()) foreach (LibraryInstalledFile f in e.files) named.Add(f.name); } catch { }
 			try
 			{
@@ -212,13 +230,16 @@ namespace DynamicIslands.Editor
 				}
 				else if (n.StartsWith("gen-", StringComparison.OrdinalIgnoreCase) && !named.Contains(n)) scan.UnusedGenerated.Add(n);
 			}
-			scan.DeletedWorlds = DeletedWorldFiles();
+			scan.DeletedWorlds = DeletedWorldFiles(read);
 			Debug.Log("[CUSTOM ISLANDS] Tidy up looked through " + islands.Count + " islands and every world's saves in " + clock.ElapsedMilliseconds + " ms (worlds " + tWorlds + ", plans and rules " + (tNamed - tWorlds) + ")");
 			return scan;
 		}
 
 		/// <summary>The mod's files of worlds this PC hosted ("@savedby=" its id) whose Raft world folder is gone.</summary>
-		public static List<KeyValuePair<string, string>> DeletedWorldFiles()
+		public static List<KeyValuePair<string, string>> DeletedWorldFiles() { return DeletedWorldFiles(null); }
+
+		/// <summary>The same, with world files already read (full path -> lines) not read again.</summary>
+		static List<KeyValuePair<string, string>> DeletedWorldFiles(Dictionary<string, string[]> read)
 		{
 			var result = new List<KeyValuePair<string, string>>();
 			ulong me = LocalSteamId;
@@ -229,7 +250,7 @@ namespace DynamicIslands.Editor
 			foreach (string f in Directory.GetFiles(WorldsFolder, "*.txt"))
 			{
 				string[] lines;
-				try { lines = File.ReadAllLines(f); } catch { continue; }
+				try { if (read == null || !read.TryGetValue(Path.GetFullPath(f), out lines)) lines = File.ReadAllLines(f); } catch { continue; }
 				if (!lines.Any(l => l.Trim() == mine)) continue; // (a world joined, or saved before the line was written: kept)
 				string name = WorldName(lines, f);
 				if (name.Length == 0 || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) continue;

@@ -199,6 +199,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### Changed
 - **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest
   fill in over the next frames (1,000 saved islands held it for over 2 s).
+- **Tidy up, Delete and Rename read islands faster:** they read only each island's own settings, not the whole
+  file, when looking for the rules that name other islands.
 - **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a
   player near that island; levels are switched on by the host only, and a level record with more EXP than the host
   credited is put back.
