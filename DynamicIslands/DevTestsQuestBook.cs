@@ -292,6 +292,88 @@ namespace DynamicIslands
 			if (ok) Log("PASS: quest book world"); else Fail("quest book world");
 		}
 
+		[ConsoleCommand(name: "CIQuestBookPlans", docs: "Dev, world (host, test world 'CI ...'): ROADMAP X8 - the story lines' quests in Raft's notebook, not the journal. For each plan (CIQuestBookPlans <plan>[;<plan>...], default The Abyss Expedition;The Long Voyage): its main story rules are the notebook's rules, the journal's quest list has none of its main story islands outside the main story line and keeps the side islands there, and the first main story island on the Receiver, brought, gets a tab and counts with the main story (TEST_CATALOGUE QB21)")]
+		public static void QuestBookPlansCommand(string[] args)
+		{
+			string all = args != null && args.Length > 0 ? string.Join(" ", args) : "The Abyss Expedition;The Long Voyage";
+			StartTest(QuestBookPlansRoutine(all.Split(';').Select(s => s.Trim()).Where(s => s.Length > 0).ToList()));
+		}
+
+		static IEnumerator QuestBookPlansRoutine(List<string> names)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest book plans: host, in a test world 'CI ...'"); yield break; }
+			bool ok = true;
+			List<string> linesBefore = StoryChain.WriteLines().ToList();
+			WorldPlan planBefore = WorldDirector.Plan;
+			var made = new List<int>();
+			try
+			{
+				foreach (string name in names)
+				{
+					WorldPlan plan = WorldPlan.Load(name);
+					Check(ref ok, plan != null, name + ": the plan file is there");
+					if (plan == null) continue;
+					StoryChain.Reset();
+					WorldDirector.Plan = plan;
+					StoryChain.FromPlan(plan);
+					StoryChain.Tick();
+					QuestBook.Refresh();
+					var main = plan.Rules.Where(r => r.MainStory).ToList();
+					var side = plan.Rules.Where(r => !r.MainStory).ToList();
+					List<string> book = StoryChain.BookRules.Select(r => r.Id.ToLowerInvariant()).OrderBy(s => s).ToList();
+					Check(ref ok, main.Count > 0 && book.SequenceEqual(main.Select(r => r.Id.ToLowerInvariant()).OrderBy(s => s)),
+						name + ": its " + main.Count + " main story rules are the notebook's (" + string.Join(", ", book.ToArray()) + "); " + side.Count + " side");
+					Func<IntroRule, string> title = r =>
+					{
+						string t = ObjectProps.Get(IslandCache.Props(r.WhatArg), IslandProps.Title);
+						return t.Length > 0 ? t : r.WhatArg;
+					};
+					List<QuestCount.Quest> quests = QuestCount.CountHere();
+					List<string> leaked = quests.Where(q => q.Group != QuestCount.PlanStory)
+						.Where(q => main.Any(r => r.What == "island" && q.Name.StartsWith(title(r), StringComparison.OrdinalIgnoreCase))).Select(q => q.Group + ": " + q.Name).ToList();
+					Check(ref ok, leaked.Count == 0, name + ": no main story island's quest outside the main story line" + (leaked.Count > 0 ? " - leaked: " + string.Join("; ", leaked.ToArray()) : ""));
+					List<string> sideInStory = quests.Where(q => q.Group == QuestCount.PlanStory)
+						.Where(q => side.Any(r => r.What == "island" && q.Name.StartsWith(title(r), StringComparison.OrdinalIgnoreCase))).Select(q => q.Name).ToList();
+					Check(ref ok, sideInStory.Count == 0, name + ": no side island counted as main story" + (sideInStory.Count > 0 ? " - " + string.Join("; ", sideInStory.ToArray()) : ""));
+					string text = JournalWindow.QuestList(quests);
+					List<string> named = main.Where(r => r.What == "island" && text.IndexOf(title(r), StringComparison.OrdinalIgnoreCase) >= 0).Select(r => title(r)).ToList();
+					Check(ref ok, text.Contains("Main story: ") && named.Count == 0, name + ": the journal's quest list has the main story as one line and names none of its islands" + (named.Count > 0 ? " - named: " + string.Join(", ", named.ToArray()) : ""));
+					int sideQuests = quests.Count(q => q.Group == QuestCount.PlanIslands);
+					Log(name + ": journal quest list - " + quests.Count(q => q.Group == QuestCount.PlanStory) + " main story, " + sideQuests + " side (" + string.Join(" | ", text.Split('\n').Where(l => l.Trim().Length > 0).Take(3).ToArray()) + ")");
+
+					// The first main story island that is on the Receiver now: brought, a tab, counted with the main story
+					IntroRule first = main.FirstOrDefault(r => r.Where == "receiver" && StoryChain.Fired.Contains(r.Id));
+					if (first == null) { Log(name + ": no main story island on the Receiver at the start (its first comes after Raft's) - bring step left out"); continue; }
+					StoryChain.OnTuned(StoryChain.TypeOfRule(first.Id));
+					yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == first.Id), 120f);
+					IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Rule == first.Id);
+					Check(ref ok, at != null, name + ": its first main story island '" + first.Id + "' came");
+					if (at == null) continue;
+					made.Add(at.Id);
+					yield return new WaitForSeconds(1f);
+					QuestBook.Refresh();
+					Check(ref ok, QuestBook.IsMainIsland(at) && QuestBook.Tabs.Count >= 1, name + ": it is a main story island with a tab (" + string.Join(" ; ", QuestBook.Tabs.ToArray()) + ")");
+					quests = QuestCount.CountHere();
+					string island = Behaviours.IslandTitle(at);
+					List<string> out1 = quests.Where(q => q.Group != QuestCount.PlanStory && q.Name.StartsWith(island, StringComparison.OrdinalIgnoreCase)).Select(q => q.Group + ": " + q.Name).ToList();
+					Check(ref ok, out1.Count == 0, name + ": come, its quests are still only with the main story" + (out1.Count > 0 ? " - " + string.Join("; ", out1.ToArray()) : ""));
+					IslandWorldState.RemoveIds(made.Distinct().ToList(), true);
+					made.Clear();
+				}
+			}
+			finally
+			{
+				if (made.Count > 0) IslandWorldState.RemoveIds(made.Distinct().ToList(), true);
+				WorldDirector.Plan = planBefore;
+				StoryChain.Reset();
+				foreach (string l in linesBefore) { int eq = l.IndexOf('='); StoryChain.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
+				StoryChain.OnWorldRead();
+				IslandWorldState.Save();
+				QuestBook.Refresh();
+			}
+			if (ok) Log("PASS: quest book plans"); else Fail("quest book plans");
+		}
+
 		[ConsoleCommand(name: "CIQuestBookPreview", docs: "Dev, editor: World Plans' Preview notebook as a builder uses it - a plan (CIQuestBookPreview <plan>, default 'Raft 2 - The Drowned Frontier') opened, a change made and not saved, Preview notebook: the test world with Raft's book open on the plan's tabs; the step-through from the start (no tabs) one moment at a time, All; pictures; Back to World Plans with the unsaved change still there (TEST_CATALOGUE QB7). Several minutes")]
 		public static void QuestBookPreviewCommand(string[] args)
 		{

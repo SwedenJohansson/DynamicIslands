@@ -249,6 +249,13 @@ namespace DynamicIslands.Editor
 		/// <summary>The main story is in Raft's notebook in this world (the journal says so instead of listing it).</summary>
 		public static bool InNotebook { get { return Applies && StoryChain.BookRules.Count > 0; } }
 
+		/// <summary>An island of the main story: all its quests are in Raft's notebook, so the journal's quest list keeps them
+		/// with the main story's line, not under the side quests (ROADMAP X8).</summary>
+		public static bool IsMainIsland(IslandWorldState.Entry e)
+		{
+			return Applies && e != null && !string.IsNullOrEmpty(e.Rule) && StoryChain.BookRules.Any(r => r.Id.Equals(e.Rule, StringComparison.OrdinalIgnoreCase));
+		}
+
 		/// <summary>The crew's story items of the main story (held now).</summary>
 		public static List<StoryBook.Held> MainItems()
 		{
