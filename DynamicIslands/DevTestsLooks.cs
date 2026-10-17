@@ -46,12 +46,13 @@ namespace DynamicIslands
 			yield break;
 		}
 
-		/// <summary>The islands CILookAlike tries, one or two per look: look id, scene part, signature pieces it must put at least.</summary>
+		/// <summary>The islands CILookAlike tries, one or two per look: look id, scene part, signature pieces it must put at least
+		/// [, the pieces that must all be there (X7: Tangaroa's balconies and cockpit, Utopia's towers, the Radio Tower's dish)].</summary>
 		static readonly string[][] LookIslands =
 		{
-			new[] { "caravan", "Landmark_CaravanSmall#3", "4" }, new[] { "caravan", "Landmark_CaravanIsland", "4" }, new[] { "tangaroa", "Landmark_Tangaroa", "6" },
-			new[] { "utopia", "Landmark_Utopia", "3" }, new[] { "varuna", "Landmark_VarunaPoint", "3" }, new[] { "balboa", "Landmark_BalboaSmall#1", "2" },
-			new[] { "temperance", "Landmark_Temperance", "2" }, new[] { "vasagatan", "Landmark_Vasagatan", "0" }, new[] { "radio", "Landmark_Radar", "3" },
+			new[] { "caravan", "Landmark_CaravanSmall#3", "4" }, new[] { "caravan", "Landmark_CaravanIsland", "4" }, new[] { "tangaroa", "Landmark_Tangaroa", "6", "Dome_Base_2,TangaroaRoads_Combined,Dome_Base_1,Balcony01,Balcony02,Cockpit,CockpitExt,Outside" },
+			new[] { "utopia", "Landmark_Utopia", "3", "UT_Set_Tower01,UT_Set_Tower02,UT_Set_Tower03,UT_Set_Tower_EndRoom,UT_Set_Tower_EndRoom_Glass" }, new[] { "varuna", "Landmark_VarunaPoint", "3" }, new[] { "balboa", "Landmark_BalboaSmall#1", "2" },
+			new[] { "temperance", "Landmark_Temperance", "2" }, new[] { "vasagatan", "Landmark_Vasagatan", "3" }, new[] { "radio", "Landmark_Radar", "3", "RT_SatteliteDisc" },
 		};
 
 		[ConsoleCommand(name: "CILookAlike", docs: "Dev, editor: TODO §3 - look-alike randomized story islands: for each look (or those whose id or island has <part>) its island's something-new-like-it (var: a variation) generated as the Randomize existing tab does, with seed [seed] (7): built without errors, at least N of its signature pieces, every piece loaded, at least half the land objects the original island's own pieces, the standing ones on the ground; a picture shot_look_<island>_<seed>.png. CILookAlike [part] [seed] [var]")]
@@ -119,10 +120,11 @@ namespace DynamicIslands
 					if (b.min.y - ground > 0.6f && !objs.Any(o => o != e && OnTopOf(b, o))) floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
 				}
 				int need = int.Parse(row[2]);
+				List<string> absent = row.Length > 3 ? row[3].Split(',').Where(n => !mine.Any(e => e.GameObjectName == n)).ToList() : new List<string>();
 				var top = mine.GroupBy(e => e.GameObjectName).OrderByDescending(g => g.Count()).Take(8).Select(g => g.Key + " x" + g.Count());
-				Check(ref ok, errors.Count == 0 && made > 0 && mine.Count >= need && missing == 0 && floating.Count == 0 && share >= 0.5f,
+				Check(ref ok, errors.Count == 0 && made > 0 && mine.Count >= need && absent.Count == 0 && missing == 0 && floating.Count == 0 && share >= 0.5f,
 					island.Label + " (" + look.Id + (variation ? ", variation" : "") + "), seed " + seed + ": " + made + " objects; " + string.Join("; ", built.ToArray()) + " - " + mine.Count + " look pieces (" + string.Join(", ", top.ToArray()) + ")" +
-					", own pieces " + (share * 100f).ToString("F0") + " % of " + land.Count + " on land" + (missing > 0 ? ", " + missing + " not loaded" : "") +
+					", own pieces " + (share * 100f).ToString("F0") + " % of " + land.Count + " on land" + (missing > 0 ? ", " + missing + " not loaded" : "") + (absent.Count > 0 ? ", not put: " + string.Join(", ", absent.ToArray()) : "") +
 					(share < 0.5f ? ", not own: " + string.Join(", ", land.Where(e => !own.Contains(e.GameObjectName)).GroupBy(e => e.GameObjectName).OrderByDescending(g => g.Count()).Take(6).Select(g => g.Key + " x" + g.Count()).ToArray()) : "") +
 					(floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : "") + (errors.Count > 0 ? ", ERRORS: " + string.Join(" | ", errors.Take(3).ToArray()) : ""));
 				if (Camera.main != null)

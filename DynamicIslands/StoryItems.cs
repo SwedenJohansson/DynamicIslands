@@ -670,7 +670,7 @@ namespace DynamicIslands.Editor
 				if (q.Steps.Count == 0) continue;
 				counted.Add(e.HostName);
 				List<IslandWorldState.Entry> same = IslandWorldState.Islands.Where(x => x.HostName.Equals(e.HostName, StringComparison.OrdinalIgnoreCase)).ToList();
-				list.Add(new Quest { Name = Behaviours.IslandTitle(e) + (q.Title.Length > 0 ? " \u2013 " + q.Title : ""), Group = Met, Done = same.Any(x => QuestTracker.StepOf(x) >= q.Steps.Count) });
+				list.Add(new Quest { Name = Behaviours.IslandTitle(e) + (q.Title.Length > 0 ? " \u2013 " + q.Title : ""), Group = same.Any(QuestBook.IsMainIsland) ? PlanStory : Met, Done = same.Any(x => QuestTracker.StepOf(x) >= q.Steps.Count) });
 			}
 			// The islands this world takes part with while sailing that have a quest and haven't come yet (ROADMAP CT9 - the user,
 			// 2026-10-06: 47 islands ticked, the journal said 1/12: only the plan's and the islands that had come were counted)
@@ -697,7 +697,7 @@ namespace DynamicIslands.Editor
 					IslandQuest q = QuestTracker.QuestOf(e, n);
 					if (!q.Exists) continue;
 					int qn = n;
-					list.Add(new Quest { Name = Behaviours.IslandTitle(e) + " \u2013 " + (q.Title.Length > 0 ? q.Title : "quest " + (n + 1)), Group = Met, Done = same.Any(x => QuestTracker.IsDone(x, qn)) });
+					list.Add(new Quest { Name = Behaviours.IslandTitle(e) + " \u2013 " + (q.Title.Length > 0 ? q.Title : "quest " + (n + 1)), Group = same.Any(QuestBook.IsMainIsland) ? PlanStory : Met, Done = same.Any(x => QuestTracker.IsDone(x, qn)) });
 				}
 			}
 			return list;
@@ -1381,7 +1381,7 @@ namespace DynamicIslands.Editor
 			RefreshSelection();
 		}
 
-		static string QuestList(List<QuestCount.Quest> quests)
+		internal static string QuestList(List<QuestCount.Quest> quests)
 		{
 			string daily = DailyQuest.JournalText() ?? "";
 			if (quests.Count == 0) return daily + "No custom quests in this world yet. Islands with a quest count here when they come; a world plan's are counted from the start.";
@@ -1391,7 +1391,7 @@ namespace DynamicIslands.Editor
 				// (the main story's steps are in Raft's notebook: only how far it is, here)
 				if (g.Key == QuestCount.PlanStory && QuestBook.InNotebook)
 				{
-					sb.Append("Main story: ").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(" islands done - its quests, notes and items are in Raft's notebook\n\n");
+					sb.Append("Main story: ").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(" done - its quests, notes and items are in Raft's notebook\n\n");
 					continue;
 				}
 				sb.Append(g.Key).Append(" (").Append(g.Count(q => q.Done)).Append(" of ").Append(g.Count()).Append(")\n");
