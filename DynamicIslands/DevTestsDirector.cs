@@ -629,6 +629,7 @@ namespace DynamicIslands
 		static IEnumerator PlanBoxRoutine(string choose)
 		{
 			bool ok = true;
+			if (choose != null && CIPlans.Any(x => x.Key.Equals(choose, StringComparison.OrdinalIgnoreCase))) WriteCIPlan(choose); // (a test plan such as 'CI Adventure': the picker lists only plans on disk)
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(x => x.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);

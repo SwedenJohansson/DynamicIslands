@@ -1436,7 +1436,7 @@ namespace DynamicIslands
 					}
 				bool ids = total > 0 && found == total;
 				Log((ids ? "PASS" : total == 0 ? "SKIP" : "FAIL") + ": " + found + "/" + total + " harvestables and pickups on loaded custom islands are in Raft's network registry" +
-					(total == 0 ? " (no loaded island with any; SpawnIsland demo2 first)" : ""));
+					(total == 0 ? " (no loaded island with any; CIMPIsland first)" : ""));
 				ok &= ids || total == 0;
 
 				// 4. Every other kind of message, with the fields it uses (catalogue IX6): the world's rules, story and
@@ -1500,7 +1500,7 @@ namespace DynamicIslands
 			Vector3 raftPos = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			IslandWorldState.Entry e = IslandWorldState.Islands.Where(i => i.Root != null && i.Root.GetComponentsInChildren<HarvestableTree>().Any())
 				.OrderBy(i => Vector3.Distance(i.Position, raftPos)).FirstOrDefault();
-			if (e == null) { Fail("no loaded custom island with trees (SpawnIsland demo2 first)"); yield break; }
+			if (e == null) { Fail("no loaded custom island with trees (CIMPIsland first)"); yield break; }
 
 			HarvestableTree tree = e.Root.GetComponentsInChildren<HarvestableTree>().First(t => !t.Depleted);
 			int treeOrd = (int)(tree.GetComponent<PickupItem_Networked>().ObjectIndex & 0xFFFF);

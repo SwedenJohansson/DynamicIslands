@@ -1114,7 +1114,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			IslandWorldState.Entry island = IslandWorldState.Islands.Where(e => e.Root != null && e.Root.GetComponentInChildren<Terrain>() != null).OrderBy(e => (e.Position - (CustomIslandSpawner.RaftPosition ?? Vector3.zero)).sqrMagnitude).FirstOrDefault();
-			if (island == null) { Fail("Raft's settings: no custom island with land loaded (SpawnIsland citest first)"); yield break; }
+			if (island == null) { Fail("Raft's settings: no custom island with land loaded (CIMPIsland first)"); yield break; }
 			int objects = island.Root.GetComponentsInChildren<IslandObjectRef>(true).Length;
 			var errors = new List<string>();
 			Application.LogCallback watch = (text, trace, type) =>
