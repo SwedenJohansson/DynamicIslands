@@ -19,10 +19,21 @@ namespace DynamicIslands
 	{
 		#region Scenario helpers
 
+		/// <summary>The tests' own sample island: DevTests_sample.island, packed into the dev .rmod (pack.ps1 -Release leaves
+		/// it out) - not a file in the player's Mods folder (the 10-16 cleanup moved generated_sample.island out of it).</summary>
+		internal const string SampleFixture = "DevTests_sample.island";
+
+		static IslandFile SampleIsland()
+		{
+			byte[] bytes = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(SampleFixture) : null;
+			if (bytes == null || bytes.Length == 0) throw new System.IO.FileNotFoundException("the test sample island " + SampleFixture + " is not in the .rmod (pack.ps1 without -Release)");
+			return IslandFile.FromBytes(bytes, SampleFixture);
+		}
+
 		/// <summary>The sample island under another name, at this elevation, with a title - a copy a test fills.</summary>
 		static IslandFile ScIsland(string name, string title, float elevation = 0f)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = name;
 			f.Elevation = elevation;
 			f.Props[IslandProps.Title] = title;
@@ -527,7 +538,7 @@ namespace DynamicIslands
 			var r = new List<float>();
 			// (sunken: the sample island's highest point 12 m under the sea - its peak stands well above its own sea level)
 			float peak = 30f;
-			try { IslandFile sample = IslandFile.Load(IslandSpawner.PathFor("generated_sample")); float top = 0f; foreach (float h in sample.Heights) top = Mathf.Max(top, h); peak = top * sample.TerrainSize.y - sample.WaterLevel; } catch { }
+			try { IslandFile sample = SampleIsland(); float top = 0f; foreach (float h in sample.Heights) top = Mathf.Max(top, h); peak = top * sample.TerrainSize.y - sample.WaterLevel; } catch { }
 			foreach (float elevation in new[] { 60f, -(peak + 12f), 4f })
 			{
 				string isl = "ciscfly" + (elevation < 0 ? "sunk" : elevation.ToString("F0"));

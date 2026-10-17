@@ -239,9 +239,7 @@ namespace DynamicIslands
 		static bool MakeCreatureIsland(out string error)
 		{
 			error = null;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { error = "no generated_sample or citest island to build on"; return false; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Name = CreatureIsland;
 			f.Elevation = 0f;
 			int res = f.HeightmapResolution;
@@ -527,9 +525,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample");
-			if (source == null) { Fail("no generated_sample island"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Name = "ciloot";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -824,10 +820,8 @@ namespace DynamicIslands
 			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...' (it changes the world's plan for a moment)"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { Fail("no generated_sample or citest island to build on"); yield break; }
 			// Six copies of an island with a two-step quest
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Props[IslandQuest.KeyTitle] = "Come back";
 			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
 			string[] names = { "cireturn-begun", "cireturn-awaited", "cireturn-done", "cireturn-unseen", "cireturn-often", "cireturn-receiver" };
@@ -904,10 +898,8 @@ namespace DynamicIslands
 			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
 			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); return; }
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { Fail("no generated_sample or citest island to build on"); return; }
 			string[] names = { "cispread-a", "cispread-b", "cispread-c", "cispread-here" };
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
 			foreach (string n in names) { f.Name = n; f.Save(IslandSpawner.PathFor(n)); }
 			const string late = "cispread-late";
@@ -967,11 +959,9 @@ namespace DynamicIslands
 			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { Fail("no generated_sample or citest island to build on"); yield break; }
 			// Two islands with a two-step quest, two without a quest
 			string[] names = { "ciagain-done", "ciagain-begun", "ciagain-seen", "ciagain-unseen" };
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			foreach (var o in f.Objects) if (o.Props != null) o.Props.Remove(ObjectProps.NoteText); // (no notes: they'd keep a finished island in the pool)
 			f.Props[IslandQuest.KeyTitle] = "Again";
 			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
@@ -1241,7 +1231,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cizone";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -1547,7 +1537,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string loop = SoundLibrary.Events.FirstOrDefault(e => e.ToLowerInvariant().Contains("ambien") && SoundLibrary.IsLooping(e)) ?? SoundLibrary.Events.FirstOrDefault(SoundLibrary.IsLooping);
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "ciambience";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -1672,7 +1662,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "ciquest";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -1787,17 +1777,43 @@ namespace DynamicIslands
 		public static void Hierarchy(string[] args)
 		{
 			string name = args != null ? string.Join(" ", args) : "";
+			DynamicIslands.instance.StartCoroutine(HierarchyRoutine(name));
+		}
+
+		static IEnumerator HierarchyRoutine(string name)
+		{
+			// (an on-demand object - Raft's shark cage, RF3's survivor cage made from it - is loaded first)
+			yield return PlaceableCatalog.EnsureBuilt();
+			if (PlaceableCatalog.Get(name) == null && PlaceableCatalog.IsIndexed(name)) yield return PlaceableCatalog.EnsureLoaded(new List<string> { name });
 			GameObject proto = PlaceableCatalog.Get(name);
-			if (proto == null) { Fail("no catalog object '" + name + "'"); return; }
+			if (proto == null) { Fail("no catalog object '" + name + "'"); yield break; }
 			foreach (Transform t in proto.GetComponentsInChildren<Transform>(true))
 			{
 				int depth = 0;
 				for (Transform p = t; p != proto.transform; p = p.parent) depth++;
 				MeshFilter mf = t.GetComponent<MeshFilter>();
-				Log(new string(' ', depth * 2) + t.name + " pos " + t.localPosition.ToString("F2") + " rot " + t.localEulerAngles.ToString("F0") + " scale " + t.localScale.ToString("F2") +
+				Rigidbody rb = t.GetComponent<Rigidbody>();
+				Log(new string(' ', depth * 2) + t.name + (t.gameObject.activeSelf ? "" : " (off)") + " pos " + t.localPosition.ToString("F2") + " rot " + t.localEulerAngles.ToString("F0") + " scale " + t.localScale.ToString("F2") +
 					" [" + string.Join(", ", t.GetComponents<Component>().Where(c => c != null && !(c is Transform)).Select(c => c.GetType().Name).ToArray()) + "]" +
+					(rb != null ? " rigidbody " + (rb.isKinematic ? "kinematic" : "FREE") : "") +
 					(mf != null && mf.sharedMesh != null ? " mesh " + mf.sharedMesh.name + " " + mf.sharedMesh.bounds.size.ToString("F2") : ""));
 			}
+			// (each mesh: readable or not, its parts (submeshes) with their materials and bounds)
+			foreach (MeshRenderer r in proto.GetComponentsInChildren<MeshRenderer>(true))
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : null;
+				if (m == null) continue;
+				Log(r.name + ": mesh " + m.name + " readable " + m.isReadable + ", " + m.subMeshCount + " parts, " + m.vertexCount + " vertices");
+				for (int i = 0; i < m.subMeshCount; i++)
+				{
+					Material mat = i < r.sharedMaterials.Length ? r.sharedMaterials[i] : null;
+					var d = m.GetSubMesh(i);
+					Log("  part " + i + ": " + d.indexCount / 3 + " triangles, bounds " + d.bounds.center.ToString("F2") + " size " + d.bounds.size.ToString("F2") + ", material " +
+						(mat != null ? mat.name + " (" + (mat.shader != null ? mat.shader.name : "?") + (mat.HasProperty("_Color") ? ", colour " + mat.color : "") + ")" : "none"));
+				}
+			}
+			Log("hierarchy of '" + name + "' done");
 		}
 
 		[ConsoleCommand(name: "CINoteLook", docs: "Dev, in game: stands the player in front of the nearest readable note and checks Raft's own interaction ray finds it")]

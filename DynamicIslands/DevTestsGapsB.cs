@@ -34,7 +34,7 @@ namespace DynamicIslands
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = GapsXpIsland;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);

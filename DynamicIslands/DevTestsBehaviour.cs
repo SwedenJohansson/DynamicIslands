@@ -125,7 +125,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cibehworld";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);

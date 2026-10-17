@@ -247,6 +247,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **Survivor in a cage:** the cage no longer has a loose red rope lying on the ground beside it (the rope Raft's
+  shark cage hangs from at Radio tower). In the editor and in a world, for every player.
 - **Flying islands seen from below:** the rocky underside now meets the ground all round the coast. Where the
   coast ran diagonally it hung down too early, and from below the sky showed through zigzag gaps between the rock and
   the ground (Lantern Spire showed it). Every flying island, made by hand or generated, at any height.

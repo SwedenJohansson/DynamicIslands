@@ -130,7 +130,7 @@ namespace DynamicIslands
 			}
 
 			// An island with the system on and three warthogs that don't bite
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = LevelIsland;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -507,7 +507,7 @@ namespace DynamicIslands
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = LevelMPIsland;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -790,7 +790,7 @@ namespace DynamicIslands
 		/// and stands the player on it. On failure it says so and leaves entryOut[0] null.</summary>
 		static IEnumerator LevelBoarsRoutine(Vector3 raftPos, int count, List<AI_NetworkBehaviour> boars, IslandWorldState.Entry[] entryOut)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = LevelIsland;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
