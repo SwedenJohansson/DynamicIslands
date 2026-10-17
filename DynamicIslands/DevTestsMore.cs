@@ -814,6 +814,8 @@ namespace DynamicIslands
 			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			bool ok = true;
 			yield return EnsureAlive();
+			// (the generator places nothing until the object catalog is built: just after a world loads it may still be building)
+			yield return PlaceableCatalog.EnsureBuilt();
 			var deepS = new IslandGenSettings { Seed = 9191, Radius = 55f, Height = 30f, Trees = 0.3f, Bushes = 0.2f, Rocks = 0.2f, Harvest = 0.2f, BeachThings = 0.2f, Water = 0.5f, SeaRocks = 0.5f, SeaFinds = 0.5f, Sunken = 0.3f, Hostiles = 4, HostileKinds = "Boar" };
 			IslandGenSettings shallowS = deepS.Copy(); shallowS.SeaFloor = IslandGenSettings.SeaFloorShallow;
 			IslandFile deepF = IslandGenerator.CreateFile(deepS, "cideep"), shallowF = IslandGenerator.CreateFile(shallowS, "cideepshallow");

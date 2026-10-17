@@ -84,6 +84,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The text on the banner now - its message, else its title (null: no banner up). The tests look at it.</summary>
 		public static string OnScreen { get { return banner != null && banner.gameObject.activeSelf ? (descText.text.Length > 0 && !titleText.gameObject.activeSelf ? descText.text : titleText.text) : null; } }
 
+		/// <summary>How much of the banner shows now (0 when it is hidden or waits behind the credits).</summary>
+		internal static float BannerAlpha { get { return banner != null && banner.gameObject.activeSelf ? banner.alpha : 0f; } }
+
 		/// <summary>Forgets which islands were announced, so their banners show again (tests).</summary>
 		public static void ForgetShown() { shown.Clear(); waiting.Clear(); LastShown = null; LastMessage = null; }
 
@@ -124,6 +127,13 @@ namespace DynamicIslands.Editor
 
 		public static void Tick()
 		{
+			// (the story's credits are up: the banner waits, hidden, and goes on once they close - it showed faintly behind
+			// the top of the credits card, RF2)
+			if (StoryCredits.IsOpen)
+			{
+				if (banner != null && banner.gameObject.activeSelf) { banner.alpha = 0f; shownAt += Time.unscaledDeltaTime; }
+				return;
+			}
 			if (banner != null && banner.gameObject.activeSelf)
 			{
 				float t = Time.unscaledTime - shownAt;

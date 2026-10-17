@@ -291,6 +291,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **The credits at a story's end:** no island banner shows faintly behind the top of the credits card any more (the
+  story's last banner waits until the credits are closed).
 - **Machinery placed as decoration stays decoration:** an island script's (recipe's) generator, radio, cage, hatch or
   lift placed without a name no longer gets the Ready pieces' working settings; one given a name does.
 - **Survivor in a cage:** the cage no longer has a loose red rope lying on the ground beside it (the rope Raft's

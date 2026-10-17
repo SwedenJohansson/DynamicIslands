@@ -908,12 +908,9 @@ namespace DynamicIslands
 			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("again until done: run as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			// (generated_sample / citest, else the smallest saved island: test islands were cleared out of Mods on 10-16)
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland)
-				?? IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ciagain-") && File.Exists(IslandSpawner.PathFor(n))).OrderBy(n => new FileInfo(IslandSpawner.PathFor(n)).Length).FirstOrDefault();
-			if (source == null) { Fail("again until done: no saved island to build on"); yield break; }
+			// (the tests' own sample island, not whichever island the player has saved)
 			string[] names = { "ciagain-quest", "ciagain-plain", "ciagain-once" };
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Props[IslandQuest.KeyTitle] = "Come again";
 			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
 			f.Name = names[0]; f.Save(IslandSpawner.PathFor(names[0]));
