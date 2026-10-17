@@ -258,7 +258,7 @@ namespace DynamicIslands.Editor
 					e.Root = null;
 					Debug.Log("[CUSTOM ISLANDS] Unloaded island '" + e.Name + "' (" + d.ToString("F0") + " m away)");
 				}
-				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && d < reload)
+				else if (e.Root == null && !e.Loading && !e.Failed && !e.WaitingForFile && !e.Excluded && d < reload)
 				{
 					e.Loading = true;
 					DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));

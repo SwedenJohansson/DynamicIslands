@@ -12,6 +12,7 @@ Makes a whole island from settings and a seed: land, ground paint, nature on lan
 | `IslandReach.cs` | `Assess`: can a player get from the sea onto the land; `MoveContentWithinReach` for chests and notes |
 | `GenFeatures.cs` / `GenGather.cs` | `GenFeatures.Make` (`Kinds`: vines, treasure, zipline, code, hives, dirt; `MoreKinds` past six: power, engine, cage, lift) / `GenGather.Apply` (things to gather: settings `Gather`, `Shallows`, `ShallowsDepth`, kind keys in `GatherOff`) |
 | `StoryRemakes.cs` | `Remakes.StoryDesigns`: the story islands' designs, each with its `Kit` |
+| `IslandLooks.cs` | `Remakes.Looks`: the story islands' looks (Caravan mesas, Tangaroa dome, Utopia towers, ...) for Randomize existing; `LookLike` sets `s.Look`, `BuildLook` runs in `GenBuildings.Apply` before the designs |
 | `MapTypes.cs` | `MapType`, `MapKit` (placing content on a file), `RaftRoof.Hip`, `MapTypes.All`, `Roll`, `Create` |
 | `MapTypeFiles.cs` | `.maptype` files: `MapTypeRanges`, `LoadAll`, `Parse`, `ToText`, `Export`, `ReRoll`, the console commands |
 | `ScatterTool.cs` | `ScatterTool.Scatter`: many copies of one object round a point (the object browser's Scatter row), one undo step |
@@ -44,6 +45,7 @@ Without the editor, `IslandGenerator.CreateFile(settings, name)` runs steps 5-7 
 | How dense / Like Raft | `LandTargets`, `LikeRaftAmount`, `TypicalDensity`, `NatureLikeRaft`; under water `SeaTargets`, `SeaCap`, `PlanReefs` |
 | Where things stand | `PlanNature`, `HabitatOf`, `WithinHabit`; under water `PlanSea`, `BaseDrop`, `LowestShowing` |
 | Creatures, loot boxes | `PlanContent`, `HostileKindsOf`, `TierLoot` |
+| A story island's look (Randomize existing) | a `Look` in `IslandLooks.cs` `MakeLooks` (`Scenes`, `Kit`, `Shape`, `Build`); test `CILookAlike` (DevTestsLooks.cs) |
 | Buildings, caves, wrecks | `GenBuildings.Apply`, `Hut`, `Landmark`, `LandmarkNames` |
 | A built-in map type | an entry in `MapTypes.All` (`Ranges` or `Settings`, `Content(MapKit, s)` or `Build`) |
 | Reach rules | `IslandReach.WalkSlope`, `StepUp`, `JumpUp`, `SwimLedge`, `ClimbLedge`, `Assess` |
@@ -52,7 +54,7 @@ Without the editor, `IslandGenerator.CreateFile(settings, name)` runs steps 5-7 
 - The same settings and seed must give the same island (presets, map types rolled from a seed, `CIGenParity`). Each step seeds its own `System.Random` from `s.Seed`; give a new step its own stream, and add new draws only after the old ones (as `GenFeatures.Make` does past six). Hash names with `StableHash`, not `string.GetHashCode`. A new setting must default to the old behaviour.
 - `GenerateInEditor` and `CreateFile` must stay in step (`CIGenParity` in `DevTestsMore.cs` compares them).
 - `IslandFile` / `MapKit` positions are terrain-local; heights are metres above the terrain's base. The sea is at `WaterLevel`: `IslandFile.DefaultWaterLevel` (20, shallow) or `IslandFile.DeepWaterLevel` (160, deep). Use `s.WaterLevel` or `MapKit.Sea`, never a fixed number.
-- Nature is planned from `PlaceableCatalog.CoreNames` only. Objects from Raft's other scenes must be listed in `GenBuildings.NeededNames`, `Remakes.NeededNames` (a design's `Kit`), `GenFeatures.NamesFor` or `SeaNamesNeeded`, so they load before generating. `PlanAll` returns nothing until `PlaceableCatalog.IsBuilt`.
+- Nature is planned from `PlaceableCatalog.GenNames` only (CA19): Raft's own scene objects and things to gather that a catalog without `placeables.txt` makes core, no buildables (other mods add those), ordinal order - the same list on every PC (`CIGenNames`). Never sort a list a seed picks from with the culture's order. Objects from Raft's other scenes must be listed in `GenBuildings.NeededNames`, `Remakes.NeededNames` (a design's `Kit`), `GenFeatures.NamesFor` or `SeaNamesNeeded`, so they load before generating. `PlanAll` returns nothing until `PlaceableCatalog.IsBuilt`.
 - `MapKit.Add` and `MapKit.Clear` remove objects without `Props` near new content. Content that must stay needs `Props`.
 - Kept in step with `TerrainPainter.Styles`: `IslandGenerator.Pools` (same index), `GenGather.Kinds`, `GeneratorWindow.StyleHints`, the switch in `Preview`. `RaftLand.For` and `RaftUnderwater.For` give volcanic the desert's data.
 - `RaftSeaKinds` is a property, so it is not in presets or `set` lines.

@@ -283,23 +283,89 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan check"); else Fail("plan check");
 		}
 
-		[ConsoleCommand(name: "CICheckPlans", docs: "Dev, editor: runs the World Plans window's Check on saved plans and logs what it finds (CICheckPlans = the sample plans; CICheckPlans <plan> = one). The samples must have no problems: PASS: sample plans check clean")]
+		#region Test plans
+
+		/// <summary>Test plans (the sample plans the mod wrote until 2026-10-16, when the user dropped them: tests now write
+		/// these "CI ..." plans themselves and move them to deleted\plans after). Together they use most map types, WHEN and
+		/// WHERE kinds, and a Receiver story with Raft's story off.</summary>
+		internal const string CIAdventure = "CI Adventure", CIHopping = "CI Island hopping", CIGrowing = "CI Growing sea", CIReceiver = "CI Receiver adventure";
+
+		internal static readonly List<KeyValuePair<string, WorldPlanTemplates.Template>> CIPlans = new List<KeyValuePair<string, WorldPlanTemplates.Template>>
+		{
+			new KeyValuePair<string, WorldPlanTemplates.Template>("CI Island hopping", new WorldPlanTemplates.Template {
+				Description = "An old camp near the start; each island you reach shows the way to the next, further out",
+				Text = "random = on\n" +
+					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
+					"rule = treasure | type:treasure | visit:camp | near:camp:900:any | Birds fly off towards another island... | Treasure\n" +
+					"rule = islets | type:archipelago | visit:treasure | near:treasure:1100:any | From the top you can see a group of islets. | Islets\n" +
+					"rule = volcano | type:volcano | visit:islets | near:islets:1400:any | Smoke rises far away. | Volcano\n" }),
+			new KeyValuePair<string, WorldPlanTemplates.Template>("CI Adventure", new WorldPlanTemplates.Template {
+				Description = "A story: each quest leads to the next island (camp, islets, a beast, a treasure), with wrecks and a sunken island on the way",
+				Text = "random = off\n" +
+					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
+					"rule = islets | type:archipelago | quest:camp | near:camp:900:north-east | The notice mentioned islets to the north-east. | Islets\n" +
+					"rule = beast | type:boss | quest:islets | near:islets:1000:any | The castaway's note warns of a beast on a plateau... | Plateau\n" +
+					"rule = treasure | type:treasure | quest:beast | near:beast:900:any | Among the spoils: a map to a treasure island! | Treasure\n" +
+					"rule = wreck | type:wreck | km:2 | ahead:300 | Something floats ahead: a wrecked raft. | Wreck\n" +
+					"rule = sunken | type:sunken | km:5 | ahead:350 | The water below looks strangely shallow. Dive! | Sunken\n" }),
+			new KeyValuePair<string, WorldPlanTemplates.Template>("CI Growing sea", new WorldPlanTemplates.Template {
+				Description = "Random islands while sailing, plus a special island every few km and days",
+				Text = "random = on\n" +
+					"rule = sandbar | type:sandbar | km:1 | ahead:300 | A tiny island with a chest. | Sandbar\n" +
+					"rule = atoll | type:atoll | km:4 | ahead:450 | A ring of land around a lagoon. | Atoll\n" +
+					"rule = stacks | type:stacks | day:3 | ahead:400 | Tall rocks rise from the sea. | Sea stacks\n" +
+					"rule = swamp | type:swamp | day:6 | ahead:400 | A green mist hangs over the water. | Swamp\n" +
+					"rule = spire | type:spire | km:8 | ahead:450 | It's getting colder. | Frozen spire\n" +
+					"rule = volcano | type:volcano | day:10 | ahead:450 | The sea smells of sulphur. | Volcano\n" }),
+			new KeyValuePair<string, WorldPlanTemplates.Template>("CI Receiver adventure", new WorldPlanTemplates.Template {
+				Description = "A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency",
+				Text = "random = off\n" +
+					"story = off\n" +
+					"storyending = The treasure is yours, and the last frequency falls silent. Every island of the adventure is in this book.\\n\\nThe end.\n" +
+					"rule = camp | type:camp | start | receiver:600 | A faint signal crackles on the Receiver... | Old camp | first | quest\n" +
+					"rule = islets | type:archipelago | start | receiver:800 | The camp's radio log names another frequency. | Islets | after:camp | quest\n" +
+					"rule = beast | type:boss | start | receiver:900 | A distress call from a plateau... | Plateau | after:islets | quest\n" +
+					"rule = treasure | type:treasure | start | receiver:800 | Among the spoils: the frequency of a treasure island! | Treasure | after:beast | quest\n" }),
+		};
+
+		/// <summary>A test plan as written (not the file on disk).</summary>
+		internal static WorldPlan CIPlanOf(string name)
+		{
+			WorldPlanTemplates.Template t = CIPlans.First(x => x.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value;
+			WorldPlan p = WorldPlan.Parse(name, t.Text);
+			p.Description = t.Description;
+			return p;
+		}
+
+		/// <summary>Writes a test plan to the plans folder (fresh each time) and returns its name; RemoveCIPlan moves it out after.</summary>
+		internal static string WriteCIPlan(string name) { CIPlanOf(name).Save(); return name; }
+
+		/// <summary>Moves a test plan's file to deleted\plans, so no test plans stay in the player's list.</summary>
+		internal static void RemoveCIPlan(string name)
+		{
+			try { string f = WorldPlan.PathFor(name); if (File.Exists(f)) PiecesFiles.MoveToDeleted(f, "plans"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the test plan '" + name + "' aside: " + e.Message); }
+		}
+
+		#endregion
+
+		[ConsoleCommand(name: "CICheckPlans", docs: "Dev, editor: runs the World Plans window's Check on plans and logs what it finds (CICheckPlans = the four test plans CI Adventure, CI Island hopping, CI Growing sea, CI Receiver adventure; CICheckPlans <plan> = one saved plan). The test plans must have no problems: PASS: test plans check clean")]
 		public static void CheckPlansCommand(string[] args)
 		{
-			WorldPlanWindow.EnsureSamples();
-			List<string> names = args != null && args.Length > 0 ? new List<string> { string.Join(" ", args) } : WorldPlanTemplates.All.Where(t => t.Value.Sample).Select(t => t.Key).ToList();
+			bool one = args != null && args.Length > 0;
+			List<string> names = one ? new List<string> { string.Join(" ", args) } : CIPlans.Select(t => t.Key).ToList();
 			bool ok = true;
 			foreach (string n in names)
 			{
-				// (the samples as the mod writes them - the copies on this PC may be changed by tests or by hand)
-				WorldPlan p = args != null && args.Length > 0 ? WorldPlan.Load(n) : WorldPlanTemplates.Get(n);
+				// (the test plans as written here, not files on disk)
+				WorldPlan p = one ? WorldPlan.Load(n) : CIPlanOf(n);
 				if (p == null) { Log("  no plan '" + n + "'"); continue; }
 				List<PlanChecker.Finding> found = PlanChecker.Check(p, false, true);
 				Log("Plan '" + n + "': " + found.Count(f => f.Level == PlanChecker.Level.Problem) + " problems, " + found.Count(f => f.Level == PlanChecker.Level.Warning) + " warnings, " + found.Count(f => f.Level == PlanChecker.Level.Tip) + " tips");
 				foreach (PlanChecker.Finding f in found) Log("  " + f.Level + " " + (f.Rule + 1) + ": " + f.Text);
 				if (found.Any(f => f.Level == PlanChecker.Level.Problem)) ok = false;
 			}
-			if (args == null || args.Length == 0) { if (ok) Log("PASS: sample plans check clean"); else Fail("sample plans check clean"); }
+			if (!one) { if (ok) Log("PASS: test plans check clean"); else Fail("test plans check clean"); }
 		}
 
 		const string CrateIsland = "cicrate";

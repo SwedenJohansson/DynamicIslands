@@ -279,12 +279,16 @@ namespace DynamicIslands.Editor
 			s.SeaFloor = IslandGenSettings.SeaFloorDeep;
 			s.DropOff = RaftUnderwater.DropOffOf(i);
 			ObjectsLike(i, s);
+			Remakes.LookLike(i, s, false);
 			return s;
 		}
 
 		/// <summary>Settings for "a variation of it": its own ground (scaled, stretched, roughened... from there), style and object mix.</summary>
 		public static IslandGenSettings VariationOf(RaftIsland i, IslandGenSettings from)
 		{
+			// (a built place - Tangaroa, Utopia, Varuna Point - was measured with its buildings as ground: towers of earth.
+			// Its variation is new ground like it with its look's pieces, TODO §3)
+			if (i.Kind == "mesh" && Remakes.LookFor(i.Scene) != null) return LikeIt(i, from);
 			IslandGenSettings s = from.Copy();
 			s.Source = i.Scene;
 			s.Style = i.StyleIndex;
@@ -295,6 +299,7 @@ namespace DynamicIslands.Editor
 			s.PeakShape = 0.3f; s.Terraces = 0f; s.Lakes = 0f; s.Valleys = 0f; s.Erosion = 0f; s.Seabed = IslandGenSettings.SeabedSand;
 			s.SeaFloor = IslandGenSettings.SeaFloorDeep; // (its own ground goes down to Raft's sea floor)
 			ObjectsLike(i, s);
+			Remakes.LookLike(i, s, true);
 			return s;
 		}
 

@@ -28,6 +28,9 @@ namespace DynamicIslands.Editor
 			public string Hash;
 			/// <summary>Client: the island file is still coming from the host.</summary>
 			public bool WaitingForFile;
+			/// <summary>Host: its file isn't on this PC and the world plays without it (MissingIslandsCheck) - not loaded, no
+			/// Receiver dot, kept in the world file; cleared when the file comes.</summary>
+			public bool Excluded;
 			/// <summary>Host: the fields after the eighth of its world file line (a newer version's), written back as they were (AU5).</summary>
 			public string Extra;
 			public Vector3 Position;
@@ -280,10 +283,8 @@ namespace DynamicIslands.Editor
 				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
 				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash))
 				{
+					// (the host is asked what to do in MissingIslandsCheck's box: the rest plays, and this one comes with a player who has it)
 					read.WaitingForFile = true;
-					// (the host is told, as when it failed: the rest plays, and this one comes with a player who has it)
-					DynamicIslands.Notify("This world's island '" + read.HostName + "' isn't on this PC, so it is left out for now - the rest of the world plays. " +
-						"It comes when a player who has it joins (or import it).", true);
 				}
 				islands.Add(read);
 			}
@@ -296,6 +297,7 @@ namespace DynamicIslands.Editor
 			WorldRules.OnWorldRead();
 			WorldDirector.OnWorldLoaded();
 			HeadStart.OnWorldRead();
+			MissingIslandsCheck.OnWorldRead(islands);
 		}
 	}
 

@@ -932,10 +932,12 @@ namespace DynamicIslands.Editor
 					e.Name = want;
 					e.Failed = false;
 					e.WaitingForFile = false;
+					e.Excluded = false; // (MissingIslandsCheck: the file is here now)
 					if (waited) SendToClients(IslandsMessage(new[] { e }, false));
 					continue;
 				}
 				e.WaitingForFile = false;
+				e.Excluded = false;
 			}
 			hashMissAt.Remove(msg.Hash);
 			// (the host asked everyone: one answer is enough, a second player's parts are no longer taken)

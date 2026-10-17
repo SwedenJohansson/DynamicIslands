@@ -63,7 +63,6 @@ namespace DynamicIslands.Editor
 
 		static void Ensure(NewGameBox box)
 		{
-			WorldPlanWindow.EnsureSamples();
 			if (row == null)
 			{
 				// In the empty space right of the name and password fields, above the bottom edge

@@ -258,7 +258,7 @@ namespace DynamicIslands
 
 		const string TestPlan = "ci plan", PlanSample = "ciplansample";
 
-		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - samples, a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
+		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - the plan list (no sample plans), a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
 		public static void PlanTest()
 		{
 			StartTest(PlanTestRoutine());
@@ -268,11 +268,17 @@ namespace DynamicIslands
 		{
 			yield return WaitForEditor(false);
 			bool ok = true;
-			WorldPlanWindow.EnsureSamples();
+			// (the user 2026-10-16: no sample plans - the mod writes none and has no templates of their names; a plan written
+			// here is listed and reads back)
+			string[] gone = { "Island hopping", "Adventure", "Growing sea", "Receiver adventure" };
+			Check(ref ok, !WorldPlanTemplates.All.Any(t => gone.Contains(t.Key)) && WorldPlanTemplates.All.Count > 0, "no sample templates; templates: " + string.Join(", ", WorldPlanTemplates.All.Select(t => t.Key).ToArray()));
+			WriteCIPlan(CIHopping);
 			List<string> plans = WorldPlan.All();
-			Check(ref ok, plans.Contains("Island hopping") && plans.Contains("Growing sea") && plans[0] == WorldPlan.RandomName, "plans: " + string.Join(", ", plans.ToArray()));
-			WorldPlan hopping = WorldPlan.Load("Island hopping");
-			Check(ref ok, hopping != null && hopping.Rules.Count == 4 && hopping.Random, "the sample 'Island hopping' has 4 rules");
+			Check(ref ok, plans.Contains(CIHopping) && plans[0] == WorldPlan.RandomName, "plans: " + string.Join(", ", plans.ToArray()));
+			WorldPlan hopping = WorldPlan.Load(CIHopping);
+			Check(ref ok, hopping != null && hopping.Rules.Count == 4 && hopping.Random, "the test plan '" + CIHopping + "' has 4 rules");
+			RemoveCIPlan(CIHopping);
+			Check(ref ok, !File.Exists(WorldPlan.PathFor(CIHopping)), "the test plan moved out again");
 
 			// (the start rule's island: the tests' sample saved under a test name - no player's island is needed)
 			IslandFile sample = SampleIsland();

@@ -781,6 +781,11 @@ namespace DynamicIslands.Editor
 					c.Add(i, Level.Tip, R(c, i) + " waits for " + (r.When == "km" ? "0 km" : "day 0") + ": that is there when the world starts, so it comes at once - like \"When the world starts\".", "Fine if that is what you want; else type " + (r.When == "km" ? "the km to sail, e.g. 2" : "a later day, e.g. 3") + ".");
 				else if (r.When == "km" && num > 30f || r.When == "day" && num > 20f)
 					c.Add(i, Level.Tip, R(c, i) + " comes only after " + (r.When == "km" ? num + " km of sailing" : "day " + num) + ": that takes a long time in play - and to test.", "Try the plan with a small number first.");
+				// (SR1: "again until done" brings the island back every N km / days - not one found on the Receiver)
+				if (r.Again && r.Where == "receiver")
+					c.Add(i, Level.Tip, R(c, i) + " has \"again until done\", but its island comes on the Receiver: players find it by its frequency, so it doesn't come back by itself.", "Fine as it is; for an island that comes back, bring it ahead of the raft.");
+				else if (r.Again && float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) && num < 1f)
+					c.Add(i, Level.Tip, R(c, i) + " comes again until done every " + (r.When == "km" ? "km" : "day") + " (its number is below 1).", "Type a larger number for longer waits between returns.");
 			}
 			if (r.When == "step" && (!int.TryParse(r.WhenArg, out int n) || n < 1))
 				c.Add(i, Level.Problem, R(c, i) + " waits for quest steps but the number of steps (\"" + r.WhenArg + "\") isn't a number from 1 up.", "Type how many steps, e.g. 2.");

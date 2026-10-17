@@ -12,6 +12,25 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## 3.0 alpha - 6 October 2026: editor tools, safety audit, versions on the network
 
 ### New
+- **Story islands keep their look when randomized:** Something new like it and A variation of it for Caravan Town,
+  Tangaroa, Utopia, Varuna Point, Balboa, Temperance and the Radio Tower lay the new island out like the original from
+  its own big pieces, placed the way the original has them - red rock mesas with ladders, huts, caravans and rope
+  bridges; the whole glass dome with its hexagon roads; Utopia's white towers; the motherlode floors on their pillars
+  inside its walls with the crane on top; giant firs; snow rocks and the antenna; low rocks with concrete footings.
+- **Islands missing when a world loads:** when a world uses island files this PC doesn't have, the host (or single
+  player) gets a box naming them, and the library entry each came with. **Play without them** leaves them out (no
+  Receiver dot) but keeps them in the world, so they come back once the file is here; **Main menu** leaves without
+  saving, to download or restore them first. Joining players get missing files from the host as before.
+- **Again until done** for world plan rules **On a day** and **After sailing a distance**: a tick box on the rule card
+  (`day:5:again` in the plan file). The island comes back ahead of the raft every N days (or km) after the players were
+  last near it - even if they never reached it - until they reached it and finished its quest; the same island each
+  time, with no limit. Check gives a tip when the island is on the Receiver (it doesn't come back by itself there).
+- **Monster size up to x3:** a creature spot's **Size** now goes from x0.5 to x3 of Raft's own animal (was x2.5); its
+  body and hit box grow with it, its health stays (set **Health** for a tougher one), and every player sees the same
+  size. Balboa Remade's Mama bear is Raft's bear at x2 - as tall as Balboa's own.
+- **Brand-new generated islands explained:** the row in World settings > Islands while sailing has a **?** saying what
+  it does, how often one comes, where each is saved (`gen-<style>-<seed>.island`, kept in that world) and how to keep
+  one; EDITOR > An island > **Open an island...** now lists generated islands too, to open and **Save as** your own.
 - **Survivors to rescue:** a new object, **Survivor in a cage**, holds one of Raft's characters locked in with a story
   item. Bring the key and press E: the survivor says a line in a speech bubble and then stands on your raft. One per
   survivor id in a world, saved with it and seen by every player; the rescue sends a signal for quests and plans.
@@ -164,6 +183,17 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **Quicker starts:** RML compiled the mod on every start (about a minute), because its own start-up throws away the
+  compiled copy it keeps. The mod now keeps that copy (read-only), so only the first start after installing or updating
+  compiles; the main menu says so once. Older copies of the mod in RML's cache are removed.
+- **The generator gives the same island on every PC:** its list of objects was sorted in the PC's language and could
+  include other mods' buildables and follow `placeables.txt`. It now uses Raft's own island objects in a fixed order.
+  **A seed now makes a different island than before** (worlds keep the islands already saved; only islands generated
+  from now on - new `gen-` islands, a lost `gen-` file made again, map types - follow the new order).
+- **No sample plans:** the mod no longer writes the sample world plans Adventure, Island hopping, Growing sea
+  and Receiver adventure, and they are gone from **Templates...**. The plans that come with the mod are Random islands
+  and No custom islands; full storylines come from the island library (**Get more plans...**). Sample plans written
+  by an earlier version stay in your plans folder until you delete them.
 - **The first Generate looks like Raft's small islands:** the generator's new layouts **Raft small island** (first in
   the list, and the default) and **Raft large island** take the outline and ground of one of Raft's own islands - the
   seed picks which, and turns, mirrors and wobbles it - with a beach all round to wade onto from the raft. The generator
@@ -249,6 +279,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### Fixed
 - **Survivor in a cage:** the cage no longer has a loose red rope lying on the ground beside it (the rope Raft's
   shark cage hangs from at Radio tower). In the editor and in a world, for every player.
+- **A generated island whose file was gone** is made again when the world loads: in a session where the editor
+  had already been opened, remaking it failed with an error (the generator's defaults were set up too early), so the
+  island was missing from the world.
 - **Flying islands seen from below:** the rocky underside now meets the ground all round the coast. Where the
   coast ran diagonally it hung down too early, and from below the sky showed through zigzag gaps between the rock and
   the ground (Lantern Spire showed it). Every flying island, made by hand or generated, at any height.
