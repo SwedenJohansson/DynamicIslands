@@ -907,8 +907,8 @@ the original's own big pieces, laid out the way the original has them (the line 
 | Varuna Point | **The motherlode**: two 84 m motherlode floors on four pillars over levelled rocky ground, walls round the sides (one side sometimes left open), the lift shaft and the excavator beside them, the apex crane on top and rubble and bricks on both floors. |
 | Balboa (and its small islands) | **Giant firs** on the higher ground and the big rocks on its slopes. |
 | Temperance | **Snow rocks**: the big unclimbable rocks, the telephone antenna on the highest point and the large igloo on the flat. |
-| Radio Tower | **Low rocks**: a few rocks just out of the sea, the concrete footings of the tower's platforms on them, a satellite dish on the highest and a plastic boat on the beach (the designs build the tower). |
-| Vasagatan | Only the ground and nature (its designs build the rest). |
+| Radio Tower | **Low rocks**: a few rocks just out of the sea, the concrete footings of the tower's platforms on them and a plastic boat on the beach; the designs build the tower, and the satellite dish goes on the highest rock the design left free. |
+| Vasagatan | **The liner's furniture washed up**: 2 to 5 heaps of its lounge couches, tables, chairs and bar stools on the beach and its safe further up (the designs build the liner's rooms on the land). |
 
 The look uses its own random numbers, so the same seed gives the same ground and nature with or without it.
 
@@ -1211,6 +1211,20 @@ its entry) and send that the same way.
    ([4.9](#49-trying-the-island-in-a-world-test)).
 9. Main menu → **NEW WORLD** → create a world. Your island takes part in the Random islands plan, or press F10 and type
    `SpawnIsland <name> 250` to have it appear 250 m ahead right away.
+
+**Making it look right.** Raft's pieces were made for Raft's own places, so a few rules keep an island looking like
+one of Raft's:
+- **Everything on the ground.** Nothing floats and nothing sinks out of sight: a rock, a tree or a hut stands with all of
+  its base on the ground (on a slope the low side touches, the high side goes a little into it). Wrecks and boats lie
+  on the sea floor or float at the water line, never in between.
+- **Roofs on their pillars or walls,** never on nothing; a floor or foundation is not a roof. A building's walls reach
+  the ground or a floor.
+- **Caves and overhangs closed:** a cave's walls and roof meet with no gap the sky shows through, and a room built of
+  Raft's room pieces has its back walls - look at it from inside and from behind.
+- **No missing pieces:** a piece that shows as nothing or pink did not load; take it out or use another.
+- **As thick as Raft's:** not more trees and bushes than Raft's own islands of the style (Nature **Like Raft**).
+Look at the island from the sea, from the top and from inside its caves before you share it; **Test** shows it as a
+world will.
 
 **Next:** give the island a quest ([6.1](#61-quests)), then make a world plan that brings it into a world at the right
 moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-step)).

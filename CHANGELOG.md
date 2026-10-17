@@ -28,6 +28,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   its own big pieces, placed the way the original has them - red rock mesas with ladders, huts, caravans and rope
   bridges; the whole glass dome with its hexagon roads; Utopia's white towers; the motherlode floors on their pillars
   inside its walls with the crane on top; giant firs; snow rocks and the antenna; low rocks with concrete footings.
+  Since 17 October the Vasagatan gets its lounge furniture and safe washed up on the beach, the Radio Tower's dish is
+  put after the design (a tower on the top no longer clears it), and Caravan Town's sand between the mesas has
+  caravans, vans, acacias, dead trees and boulders as thick as the original's.
 - **Islands missing when a world loads:** when a world uses island files this PC doesn't have, the host (or single
   player) gets a box naming them, and the library entry each came with. **Play without them** leaves them out (no
   Receiver dot) but keeps them in the world, so they come back once the file is here; **Main menu** leaves without

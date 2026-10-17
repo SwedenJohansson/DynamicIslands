@@ -918,6 +918,9 @@ namespace DynamicIslands.Editor
 			// A story island rebuilt first: it takes the island's best place (its top, a headland, the sea off the coast)
 			string remade = Remakes.Build(k, s);
 			if (remade != null) done.Add(remade);
+			// The look's last pieces, where the design left room (the Radio Tower's dish)
+			string finish = Remakes.FinishLook(k, s);
+			if (finish != null) done.Add(finish);
 			// A cave first: it needs the most room (an outcrop over land, open ground at its mouth)
 			if (s.Caves)
 			{

@@ -35,6 +35,11 @@ clear from 8 12 to -5 -4 r=4
 clear at -5 -6 r=7
 clear at -6 -9 r=8 only=Rock|Boulder
 clear at -32 51 r=5 only=Rock|Boulder|Barrel
+# (an ice shore stone the look left buried under the west shelf, X7 2026-10-17)
+clear at -49.1 -3.7 r=1.2 only=IceShore
+# (the look's antenna stood on the old peak, 5.4 m over the ground the telescope's terrace left: set down on it, X7 2026-10-17)
+clear at -7.56 -14.96 r=1.5 only=TelephoneAntenna
+place TP_TelephoneAntenna_NoQuestItem - at -7.56 -14.96 ground sit
 
 # --- The igloo village on the north flats: two Moontown igloos, the store, snow vehicles, the chief's note --------------
 place TP_Igloo_Small_1 igloo1 at -9 38 yaw=180
