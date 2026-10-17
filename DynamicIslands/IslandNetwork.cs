@@ -156,6 +156,10 @@ namespace DynamicIslands.Editor
 		// is. Island offsets are relative to the raft: before this they would land around the scene's origin. Seen in
 		// a two-player test: an island spawned while the client was still joining ended up 1 km away.
 		static bool worldReceived, wasInGame;
+		/// <summary>Client: when this player was first seen in a game without Raft's world-arrived event (-1: not so).</summary>
+		static float inGameNoWorldSince = -1f;
+		/// <summary>Client: how long a player may be in a game without the world-arrived event before asking anyway.</summary>
+		internal const float MissedWorldSeconds = 10f;
 
 		/// <summary>Whether this machine knows the world's islands: the host always, a client once the host's list came.</summary>
 		public static bool HasList { get { return Raft_Network.IsHost || synced; } }
@@ -206,6 +210,20 @@ namespace DynamicIslands.Editor
 			// before it counts the game scene as loaded.)
 			if (LoadSceneManager.IsGameSceneLoaded) wasInGame = true;
 			else if (wasInGame) { wasInGame = false; worldReceived = false; }
+			// (a joined player whose mod never heard Raft's world-arrived event - the hook is put back each frame, and Raft may
+			// raise it before then - never asked for the islands: player 2 sometimes had no list in the two-player tests. In
+			// the game for a while without it, the world is here: ask anyway)
+			if (!Raft_Network.IsHost && !worldReceived && !synced && InMultiplayerGame)
+			{
+				if (inGameNoWorldSince < 0f) inGameNoWorldSince = Time.unscaledTime;
+				else if (Time.unscaledTime - inGameNoWorldSince > MissedWorldSeconds)
+				{
+					inGameNoWorldSince = -1f;
+					Debug.LogWarning("[CUSTOM ISLANDS] [net] No world-arrived event from Raft " + MissedWorldSeconds + " s into the game: asking for the host's islands anyway");
+					OnWorldReceived();
+				}
+			}
+			else inGameNoWorldSince = -1f;
 			if (!Raft_Network.IsHost && worldReceived && InMultiplayerGame && Time.unscaledTime >= nextFileCheck) { nextFileCheck = Time.unscaledTime + 5f; RetryLateFiles(); }
 			// (the host: the island files it asked the players for, asked again now and then - AU6)
 			if (Raft_Network.IsHost && wanted.Count > 0 && InMultiplayerGame && Time.unscaledTime >= nextWantedAsk) { nextWantedAsk = Time.unscaledTime + FileRetrySeconds; AskPlayers(null); }

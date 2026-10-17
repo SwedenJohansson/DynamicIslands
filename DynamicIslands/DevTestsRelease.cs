@@ -705,8 +705,8 @@ namespace DynamicIslands
 			Check(ref ok, errors.Count == 0 && bad != null && WorldPlan.All().Contains("cibadplan"), "a plan with broken lines: read (" + (bad != null ? bad.Rules.Count + " rule(s) kept" : "null") + "), listed");
 			System.IO.File.Delete(planPath);
 			// Island files: empty, random bytes, cut in half, from a newer version - each refused with a message, never a crash
-			string good = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
-			byte[] whole = good != null ? System.IO.File.ReadAllBytes(IslandSpawner.PathFor(good)) : new byte[0];
+			// (the tests' own sample island's bytes, not whichever island the player has saved)
+			byte[] whole = DynamicIslands.instance.GetEmbeddedFileBytes(SampleFixture) ?? new byte[0];
 			var rng = new System.Random(5);
 			byte[] noise = new byte[4096]; rng.NextBytes(noise);
 			byte[] newer = (byte[])whole.Clone();

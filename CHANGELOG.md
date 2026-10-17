@@ -28,6 +28,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   its own big pieces, placed the way the original has them - red rock mesas with ladders, huts, caravans and rope
   bridges; the whole glass dome with its hexagon roads; Utopia's white towers; the motherlode floors on their pillars
   inside its walls with the crane on top; giant firs; snow rocks and the antenna; low rocks with concrete footings.
+  Since 17 October the Vasagatan gets its lounge furniture and safe washed up on the beach, the Radio Tower's dish is
+  put after the design (a tower on the top no longer clears it), and Caravan Town's sand between the mesas has
+  caravans, vans, acacias, dead trees and boulders as thick as the original's.
 - **Islands missing when a world loads:** when a world uses island files this PC doesn't have, the host (or single
   player) gets a box naming them, and the library entry each came with. **Play without them** leaves them out (no
   Receiver dot) but keeps them in the world, so they come back once the file is here; **Main menu** leaves without
@@ -291,6 +294,15 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A joined player sometimes got no islands:** when Raft's world-arrived event never reached the mod, the
+  joining player never asked the host for its islands. Now it asks anyway 10 s into the game.
+- **The credits at a story's end:** no island banner shows faintly behind the top of the credits card any more (the
+  story's last banner waits until the credits are closed).
+- **Main story quests stay out of the journal's side quests:** a main story island's further quests, and the quest of
+  a generated island in the main story (a *type* rule), were listed in the journal under "Other islands with a quest";
+  they count with the main story now, whose steps are in Raft's notebook. A copy of a story island in the
+  random pool (a library import such as "Thornwood (The Long Voyage)") no longer shows as a side quest still to come. The guide has the rule for new story lines
+  (every island the story depends on gets a place in it); all five story plans keep it.
 - **Machinery placed as decoration stays decoration:** an island script's (recipe's) generator, radio, cage, hatch or
   lift placed without a name no longer gets the Ready pieces' working settings; one given a name does.
 - **Survivor in a cage:** the cage no longer has a loose red rope lying on the ground beside it (the rope Raft's

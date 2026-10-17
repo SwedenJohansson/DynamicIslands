@@ -303,8 +303,8 @@ namespace DynamicIslands
 			if (!raftPos.HasValue) { Fail("not in a world"); yield break; }
 			if (IslandWorldState.Islands.Count == 0)
 			{
-				string name = IslandSpawner.ListSavedIslands().FirstOrDefault();
-				if (name == null) { Fail("no saved island to spawn"); yield break; }
+				// (the tests' own sample island, not whichever island the player has saved)
+				string name = SaveSampleIsland();
 				Vector3 at = raftPos.Value + new Vector3(0, 0, 300f);
 				yield return DynamicIslands.instance.SpawnIslandFile(name, at, true);
 			}
@@ -895,9 +895,9 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFlyTest", docs: "Dev, in game (host): spawns an island flying at 60 m and one under water and checks them. CIFlyTest [island] [keep] (keep = leave them spawned)")]
 		public static void FlyTest(string[] args)
 		{
-			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : (IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault());
+			// (no island named: the tests' own sample island, saved as cisample - not whichever island the player has saved)
+			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : SaveSampleIsland();
 			bool keep = args != null && args.Contains("keep");
-			if (name == null) { Fail("no saved island to test with"); return; }
 			StartTest(FlyTestRoutine(name, keep));
 		}
 
@@ -962,7 +962,7 @@ namespace DynamicIslands
 			Func<IslandWorldState.Entry, float, bool> keeps = (e, y) => saved.Any(l => { string[] p = l.Split('|'); float v; return p.Length > 3 && p[0] == e.HostName && float.TryParse(p[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v) && Mathf.Abs(v - y) < 0.01f; });
 			Check(ref ok, keeps(fly, Flying) && keeps(sunk, Sunken), "the world's saved island list keeps both heights");
 
-			if (!keep) IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true);
+			if (!keep) { IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true); if (name == SampleSaved) RemoveSampleIsland(); }
 			if (ok) Log("PASS: flying and underwater islands test" + (keep ? " (islands kept)" : "")); else Fail("flying and underwater islands test");
 		}
 
@@ -1375,8 +1375,8 @@ namespace DynamicIslands
 				ok &= same;
 
 				// 2. File transfer: host sends chunks, the client puts them back together under a hash-suffixed name
-				string name = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
-				if (name == null) { Fail("no saved island to transfer"); return; }
+				// (citest if the editor test made it, else the tests' own sample island - not whichever island the player has saved)
+				string name = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? SaveSampleIsland();
 				string hash = IslandNetwork.HashOf(name);
 				var sent = new System.Collections.Generic.List<IslandNetMessage>();
 				IslandNetwork.Loopback = sent.Add;
@@ -1423,6 +1423,7 @@ namespace DynamicIslands
 				{
 					foreach (string n in new[] { copyTest, copyName, IslandNetwork.DownloadName(copyName, hash) })
 						if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+					if (name == SampleSaved) RemoveSampleIsland();
 				}
 
 				// 3. Trees and pickups on loaded islands can be found the way Raft finds what a remote player harvested / picked up

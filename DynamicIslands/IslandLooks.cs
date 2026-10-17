@@ -28,6 +28,8 @@ namespace DynamicIslands.Editor
 			public Action<RaftIsland, IslandGenSettings, bool> Shape;
 			/// <summary>Reshapes the ground and puts the pieces; what it made, or null.</summary>
 			public Func<MapKit, IslandGenSettings, System.Random, string> Build;
+			/// <summary>Puts what a design built later may have cleared (after the designs); what it made, or null.</summary>
+			public Func<MapKit, IslandGenSettings, System.Random, string> After;
 		}
 
 		static Look[] looks;
@@ -74,6 +76,14 @@ namespace DynamicIslands.Editor
 			return l.Build(k, s, new System.Random(s.Seed * 4099 + 11 + index));
 		}
 
+		/// <summary>The look's last pieces, after the designs (a design on the top clears what stood there); what it made, or null.</summary>
+		public static string FinishLook(MapKit k, IslandGenSettings s)
+		{
+			Look l = LookById(s.Look);
+			if (l == null || l.After == null) return null;
+			return l.After(k, s, new System.Random(s.Seed * 4253 + 17 + Array.IndexOf(Looks, l)));
+		}
+
 		static IEnumerable<Look> MakeLooks()
 		{
 			yield return new Look { Id = "caravan", Label = "Caravan Town's mesas", Scenes = new[] { "Landmark_CaravanIsland", "Landmark_CaravanSmall" }, Kit = CaravanLookKit,
@@ -94,10 +104,11 @@ namespace DynamicIslands.Editor
 			yield return new Look { Id = "temperance", Label = "Temperance's snowfield", Scenes = new[] { "Landmark_Temperance" }, Kit = TemperanceLookKit,
 				Build = TemperanceRocks,
 				Hint = "Temperance's big unclimbable rocks, the telephone antenna on the top and a large igloo on the flat" };
-			yield return new Look { Id = "vasagatan", Label = "The Vasagatan's beach", Scenes = new[] { "Landmark_Vasagatan" }, Kit = new string[0],
-				Hint = "The Vasagatan's long low island (its designs put the liner's rooms on the land)" };
+			yield return new Look { Id = "vasagatan", Label = "The Vasagatan's beach", Scenes = new[] { "Landmark_Vasagatan" }, Kit = VasagatanLookKit,
+				Build = VasagatanBeach,
+				Hint = "The Vasagatan's long low island, the liner's lounge furniture and its safe washed up on the beach (its designs put the liner's rooms on the land)" };
 			yield return new Look { Id = "radio", Label = "The Radio Tower's rocks", Scenes = new[] { "Landmark_Radar" }, Kit = RadioLookKit,
-				Shape = RadioShape, Build = RadioRocks,
+				Shape = RadioShape, Build = RadioRocks, After = RadioDish,
 				Hint = "The Radio Tower's low rocks just over the sea, the concrete footings of its platforms on them, a satellite dish and a plastic boat (its designs build the tower)" };
 		}
 
@@ -402,6 +413,22 @@ namespace DynamicIslands.Editor
 					}
 				}
 			}
+			// The low sand between the mesas: Raft's Caravan islands have caravans, vans, acacias, dead trees and round rocks
+			// all over it, not only at the mesas' feet (the look was sparser than the original, X7 2026-10-17)
+			int scatter = Mathf.Clamp(Mathf.RoundToInt(Mathf.PI * s.Radius * s.Radius / 260f), 6, 36);
+			for (int q = 0; q < scatter; q++)
+			{
+				double roll = r.NextDouble();
+				bool car = roll < 0.35, rock = !car && roll < 0.6;
+				Vector2? p = FindR(k, r, k.Mid, s.Radius * 0.95f, (above, slope) => above > 0.5f && above < full * 0.3f && slope < (car ? 10f : 16f), car ? 7f : 5f);
+				if (!p.HasValue) continue;
+				if (mesas.Any(m => (p.Value - m.C).magnitude < m.Rim(Mathf.Atan2(p.Value.y - m.C.y, p.Value.x - m.C.x)) * Mathf.Max(1f, m.Apron) + Mesa.Wall(m.Top - m.Base) + 1.5f)) continue;
+				k.Clear(p.Value, car ? 4f : 2.5f);
+				if (car) Stand(k, Pick(r, "Caravan_Blue_01", "Caravan_Green_01", "Caravan_Yellow_01", "Van_1", "Van_2", "Van_4", "Van_5"), p.Value, Rf(r, 0f, 360f));
+				else if (rock) Stand(k, "CaravanIsland_BigRoundRock_1", p.Value, Rf(r, 0f, 360f), Rf(r, 0.5f, 1.5f));
+				else Stand(k, Pick(r, "AcaciaTree_Big1", "AcaciaTree_Big3", "DeadTree1", "DeadTree2", "DeadTree3"), p.Value, Rf(r, 0f, 360f), 0.3f);
+				things++;
+			}
 			return mesas.Count + " red rock mesas (" + huts + " hut(s) on pillars, " + bridges + " bridge(s), " + ladders + " ladder(s), " + things + " rocks, trees and caravans)";
 		}
 
@@ -680,11 +707,66 @@ namespace DynamicIslands.Editor
 				Stand(k, Pick(r, "RT_GroundPillar", "RT_GroundPillarCap"), p.Value, 90f * r.Next(4) + Rf(r, -5f, 5f), 1.2f);
 				feet++;
 			}
-			bool dish = k.Ground(top) > k.Sea + 1f && k.IsFree(top, 4f);
-			if (dish) { k.Clear(top, 3f); Stand(k, "RT_SatteliteDisc", top, Rf(r, 0f, 360f), 0.2f); }
+			// (the dish: RadioDish, after the designs - a design's tower on the top cleared it, X7 2026-10-17)
 			Vector2? beach = FindR(k, r, k.Mid, s.Radius * 1.1f, (above, slope) => above > 0.1f && above < 0.9f && slope < 12f, 6f);
 			if (beach.HasValue) { k.Clear(beach.Value, 3f); Stand(k, "RT_PlasticBoat", beach.Value, Rf(r, 0f, 360f), 0.15f); }
-			return feet + (dish ? 1 : 0) + (beach.HasValue ? 1 : 0) > 0 ? "the Radio Tower's " + feet + " concrete footing(s)" + (dish ? ", a satellite dish" : "") + (beach.HasValue ? ", a plastic boat on the beach" : "") : null;
+			return feet + (beach.HasValue ? 1 : 0) > 0 ? "the Radio Tower's " + feet + " concrete footing(s)" + (beach.HasValue ? ", a plastic boat on the beach" : "") : null;
+		}
+
+		/// <summary>The satellite dish on the top, or (a design stands there) on the highest free rock left.</summary>
+		static string RadioDish(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			Vector2 top = k.Highest(k.Mid, s.Radius * 0.6f);
+			Vector2? at = k.Ground(top) > k.Sea + 1f && k.IsFree(top, 6f) ? top : (Vector2?)null;
+			if (!at.HasValue)
+			{
+				float best = float.MinValue;
+				for (int i = 0; i < 6; i++)
+				{
+					Vector2? p = FindR(k, r, k.Mid, s.Radius, (above, slope) => above > 1f && slope < 22f, 6f);
+					if (p.HasValue && k.Ground(p.Value) > best) { best = k.Ground(p.Value); at = p; }
+				}
+			}
+			if (!at.HasValue) return null;
+			k.Clear(at.Value, 3f);
+			Stand(k, "RT_SatteliteDisc", at.Value, Rf(r, 0f, 360f), 0.2f);
+			return "the Radio Tower's satellite dish";
+		}
+
+		#endregion
+
+		#region The Vasagatan: the liner's furniture washed up
+
+		static readonly string[] VasagatanLookKit = { "VG_LoungeCouch", "VG_LoungeCouchCornerL", "VG_LoungeTable", "VG_LoungeChair", "VG_LoungeBarStool", "VG_Safe" };
+
+		/// <summary>
+		/// None of the liner's hull is a piece the editor can place: its lounge furniture washed up on the beach in a few
+		/// heaps (a couch or corner couch, a table, chairs and stools round it), the safe on its own further up.
+		/// </summary>
+		static string VasagatanBeach(MapKit k, IslandGenSettings s, System.Random r)
+		{
+			int heaps = Mathf.Clamp(Mathf.RoundToInt(s.Radius / 18f), 2, 5), put = 0, made = 0;
+			for (int h = 0; h < heaps; h++)
+			{
+				Vector2? p = FindR(k, r, k.Mid, s.Radius * 1.05f, (above, slope) => above > 0.3f && above < 2.5f && slope < 10f, 14f);
+				if (!p.HasValue) break;
+				Vector2 c = p.Value;
+				k.Clear(c, 4f);
+				Stand(k, r.NextDouble() < 0.5 ? "VG_LoungeCouch" : "VG_LoungeCouchCornerL", c + new Vector2(Rf(r, -1.5f, 1.5f), Rf(r, -1.5f, 1.5f)), Rf(r, 0f, 360f), 0.15f);
+				Stand(k, "VG_LoungeTable", c + new Vector2(Rf(r, -2.5f, 2.5f), Rf(r, -2.5f, 2.5f)), Rf(r, 0f, 360f), 0.1f);
+				put += 2;
+				int seats = 1 + r.Next(3);
+				for (int q = 0; q < seats; q++)
+				{
+					float a = Rf(r, 0f, Mathf.PI * 2f), d = Rf(r, 2.5f, 4f);
+					Stand(k, r.NextDouble() < 0.6 ? "VG_LoungeChair" : "VG_LoungeBarStool", c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d, Rf(r, 0f, 360f), 0.08f);
+					put++;
+				}
+				made++;
+			}
+			Vector2? safe = FindR(k, r, k.Mid, s.Radius * 0.9f, (above, slope) => above > 1f && slope < 12f, 10f);
+			if (safe.HasValue) { k.Clear(safe.Value, 2f); Stand(k, "VG_Safe", safe.Value, Rf(r, 0f, 360f), 0.1f); put++; }
+			return put > 0 ? "the Vasagatan's furniture washed up: " + made + " heap(s) on the beach" + (safe.HasValue ? ", its safe" : "") : null;
 		}
 
 		#endregion
