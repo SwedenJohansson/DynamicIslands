@@ -164,6 +164,8 @@ namespace DynamicIslands
 				case "setup":
 				{
 					if (!Raft_Network.IsHost) { Fail("setup: as the host"); yield break; }
+					// (a new world: wait until the mod has set it up - that start resets the islands, levels and story book)
+					for (float t = 0f; t < 60f && !(LoadSceneManager.IsGameSceneLoaded && WorldDirector.WorldHandled); t += Time.unscaledDeltaTime) yield return null;
 					PlayerTrust.ForTests = false;
 					PlayerTrust.ResetCount();
 					if (!PlayerLevels.On) PlayerLevels.TurnOn(false);
