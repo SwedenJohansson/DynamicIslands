@@ -675,6 +675,16 @@ namespace DynamicIslands.Editor
 			// The islands this world takes part with while sailing that have a quest and haven't come yet (ROADMAP CT9 - the user,
 			// 2026-10-06: 47 islands ticked, the journal said 1/12: only the plan's and the islands that had come were counted)
 			if (CustomIslandSpawner.Enabled && (plan == null || plan.Random))
+			{
+				// (a copy of a main story island in the pool - a library import's "Thornwood (The Long Voyage)" - is the story's,
+				// told in Raft's notebook, not a side quest still to come: ROADMAP X8)
+				var mainTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				foreach (IntroRule r in StoryChain.BookRules.Where(x => x.What == "island" && x.WhatArg.Length > 0))
+				{
+					string t;
+					mainTitles.Add(r.WhatArg);
+					if (IslandCache.Props(r.WhatArg).TryGetValue(IslandProps.Title, out t) && !string.IsNullOrEmpty(t)) mainTitles.Add(t);
+				}
 				foreach (string name in StillToCome())
 				{
 					if (counted.Contains(name) || IslandWorldState.Islands.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
@@ -683,8 +693,10 @@ namespace DynamicIslands.Editor
 					counted.Add(name);
 					string title;
 					IslandCache.Props(name).TryGetValue(IslandProps.Title, out title);
+					if (mainTitles.Contains(string.IsNullOrEmpty(title) ? name : title)) continue;
 					list.Add(new Quest { Name = (string.IsNullOrEmpty(title) ? name : title) + (q.Title.Length > 0 ? " – " + q.Title : ""), Group = ToCome });
 				}
+			}
 			// The islands' further quests (ROADMAP LM4), each on its own line
 			var further = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
