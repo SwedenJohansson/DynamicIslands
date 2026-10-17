@@ -74,7 +74,7 @@ namespace DynamicIslands.Editor
 			{
 				if (!File.Exists(SettingsPath))
 					SafeFile.WriteAllText(SettingsPath, "# The island library (the ISLAND LIBRARY window). The library goes online only while that window is open,\r\n" +
-						"# and sends nothing but the downloads.\r\n# online = on|off (off also stops the main menu's check for a newer Custom Islands)\r\nonline = on\r\n# address = where index.json is: a Google Drive folder link, or a web folder address ending in /\r\naddress = " + DefaultAddress + "\r\n" +
+						"# and sends nothing but the downloads.\r\n# online = on|off\r\nonline = on\r\n# address = where index.json is: a Google Drive folder link, or a web folder address ending in /\r\naddress = " + DefaultAddress + "\r\n" +
 						"# key = a Google API key for the Drive API (optional: without one the folder's public listing is read)\r\n");
 				foreach (string line in File.ReadAllLines(SettingsPath))
 				{

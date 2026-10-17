@@ -1151,7 +1151,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) { Hide(); return; }
+			if (EscKey.Down(this)) { Hide(); return; }
 			if (dirty) Fill();
 			else if (Time.unscaledTime >= questRefreshAt) RefreshQuests();
 		}

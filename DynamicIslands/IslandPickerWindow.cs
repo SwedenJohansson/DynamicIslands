@@ -118,6 +118,7 @@ namespace DynamicIslands.Editor
 			UIKit.Label(buttons, "", 12);
 			Button done = UIKit.Button(buttons, "Done", Close, "Keep this choice for the world you create", 150, 34f, 15);
 			UIKit.Primary(done);
+			EscKey.Add(window.gameObject, Close); // (Esc = Done)
 			window.gameObject.SetActive(false);
 		}
 

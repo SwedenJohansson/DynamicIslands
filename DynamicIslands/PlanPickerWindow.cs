@@ -98,7 +98,7 @@ namespace DynamicIslands.Editor
 			Button select = UIKit.Button(actions, "Select", Choose, "Use this plan for the new world (Enter, or double-click it in the list)", 150, 34f, 15);
 			select.name = "Button_Select";
 			UIKit.Primary(select);
-			UIKit.Button(actions, "View rules...", () => { if (selected != null) InfoWindow.Open("Plan: " + selected, NewWorldOptions.PlanText(WorldPlan.Load(selected)), new InfoWindow.Choice("Close", null)); },
+			UIKit.Button(actions, "View rules...", () => { if (selected != null) InfoWindow.Open("Plan: " + selected, NewWorldOptions.PlanText(WorldPlan.Load(selected)), new InfoWindow.Choice("Close", InfoWindow.Close)); },
 				"Every rule of the plan in words: when and where each island comes", 140, 34f, 13).name = "Button_Rules";
 			UIKit.Size(UIKit.Label(actions, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(actions, "Cancel", Close, "Keep the plan chosen before (Esc)", 120, 34f, 13).name = "Button_Cancel";

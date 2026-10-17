@@ -202,7 +202,7 @@ namespace DynamicIslands.Editor
 				if (k != KeyCode.None) TakeKey(k);
 				return;
 			}
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDisable()
@@ -226,7 +226,7 @@ namespace DynamicIslands.Editor
 			bool forJournal = listenFor == true;
 			listenFor = null;
 			ModKeys.Listen(false);
-			if (k == KeyCode.Escape) { ClosedFrame = Time.frameCount; SetStatus("The keys stay as they were.", false); Refresh(); return; }
+			if (k == KeyCode.Escape) { EscKey.Swallow(); ClosedFrame = Time.frameCount; SetStatus("The keys stay as they were.", false); Refresh(); return; }
 			string problem = ModKeys.Set(forJournal, k);
 			if (problem != null) SetStatus(problem, true);
 			else SetStatus("The " + (forJournal ? "journal" : "stats page") + " opens with " + ModKeys.Name(k) + " now (saved in " + WorldRules.DefaultFileName + ").", false);

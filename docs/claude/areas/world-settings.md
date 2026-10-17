@@ -34,7 +34,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 
 ## Data and keys
 - World file `worlds\<WorldGuid>.txt` (`IslandWorldState.WorldFilePath`): `@monsters=`, `@buildcost=`, `@builtat=`, `@regrow=`, `@options=`, `@optionseed=`, `@optionsused=`, `@storages=`, `@ghostsailed=`, `@randomizer=`, `@rndsailed=`, `@rndcount=`, `@rndseen=`, `@levels=`, `@level=<steamid>|...`; `WorldIslands`: `@islandsoff=`, `@raftgap=`, `@raftgapcount=`, `@playtime=`.
-- Last choices: `world_rules.txt` (`WorldRules.DefaultFileName`, read with `WorldRules.ReadDefault`): `monsters`, `buildcost`, `options`, `levels`, `islandsoff`, `raftgap`; also `updatecheck`, `journalkey`, `statskey`. Randomizer: `randomizer.txt` (`WorldRandomizer.DefaultsFileName`), seed written as 0.
+- Last choices: `world_rules.txt` (`WorldRules.DefaultFileName`, read with `WorldRules.ReadDefault`): `monsters`, `buildcost`, `options`, `levels`, `islandsoff`, `raftgap`; also `journalkey`, `statskey`. Randomizer: `randomizer.txt` (`WorldRandomizer.DefaultsFileName`), seed written as 0.
 - Network kinds (`IslandNetMessage`):
   - `WorldRules` (15): Index = monster level, Count = build %, Data = `receiver=;unload=;regrow=;rdist=`, Name = `BuildCostRefund.Encode()`.
   - `WorldOptions` (17): Data = `on=a,b;seed=n`, Name = `PrivateStorage.Encode()`.

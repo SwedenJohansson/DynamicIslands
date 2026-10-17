@@ -302,6 +302,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(buttons, "Close", Close, "Close", 110, 34f, 13);
+			EscKey.Add(window.gameObject, Close);
 			window.gameObject.SetActive(false);
 		}
 
@@ -477,7 +478,7 @@ namespace DynamicIslands.Editor
 			if (now) EditorInput.IsTyping = true;
 			else if (typing) EditorInput.IsTyping = false;
 			typing = now;
-			if (Close != null && !DropList.Busy && !InfoWindow.IsOpen && !EditorInput.SubWindowJustClosed && Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (Close != null && !DropList.Busy && !InfoWindow.IsOpen && !EditorInput.SubWindowJustClosed && EscKey.Down(this)) Close();
 		}
 
 		void OnDisable() { if (typing) EditorInput.IsTyping = false; typing = false; }

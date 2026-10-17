@@ -11,7 +11,7 @@ The host owns the world: its island list, world file and settings. Clients copy 
 | `WorldCopy.cs` | The world file sent to every player, so any of them can host later |
 | `WorldSaveShare.cs` | Raft's newest save folder (`<date>-Latest`) packed+deflated, sent after each Raft save (`WorldCopy.AfterSave` -> `AfterRaftSave`, a frame later) and at a join; the player files it under `SaveAndLoad.WorldPath` (marker `CustomIslands-world.txt` = world guid; another world of that name -> `<name> (<guid8>)`; `.part` then move; old `-Latest` renamed; received folders pruned to 3) |
 | `WorldRules.cs` | Kind 15, and the host's spawnpool.txt settings every player shares |
-| `UpdateCheck.cs` | GitHub release check on the main menu; `MismatchText` for a version difference |
+| `VersionMismatch.cs` | `MismatchText` for a version difference (no online update check: removed 2026-10-17, raftmodding.com is the only source) |
 
 ## Main flow
 1. Client: `Raft_Network.OnWorldReceivedLate` -> `IslandNetwork.OnWorldReceived`: resets `WorldRules`, `WorldOptions`, `StoryChain`, `WorldCopy`; empties the island list.
@@ -24,7 +24,7 @@ The host owns the world: its island list, world file and settings. Clients copy 
 8. Claims: `LootCrate`, `TriggerZone`, `Behaviours` call `Claims.May(entry, key, then)`. Host: `HostGrant` (not `ContentState.IsUsed`, not held by another) holds it `HoldSeconds` (6 s). Client: `SendClaim`, host answers `Count` 1/0. No answer in 3 s: with `HostAnswersClaims` it asks again every 5 s up to 30 s, else (an older host) it goes ahead. A grant older than `FreshAnswerSeconds` is asked again.
 9. Retries: `RetryLateFiles` asks again for a file with no new chunk in `FileRetrySeconds` (30 s), keeping parts that came. `Resync` clears `synced`, `requested`, `incoming`; the next `Tick` asks for the whole join reply.
 10. Host lacks a file (a world from another host): `WorldCopy.LocalFileFor` -> `WantFromPlayers`; `FileWanted` now, to each joiner and every 30 s; a player who has that content answers with `FileChunk`s (`SendFile(..., quiet)`).
-11. Versions: `CompareVersions` on both sides, text from `UpdateCheck.MismatchText`; a `FullList` with no version reply first means an older host (`UpdateCheck.Older`). `UpdateCheck.OnMainMenu` asks GitHub (`ReleasesUrl`) once per start; off with `updatecheck=off` in world_rules.txt or `online = off` in library.txt.
+11. Versions: `CompareVersions` on both sides, text from `VersionMismatch.MismatchText`; a `FullList` with no version reply first means an older host (`VersionMismatch.Older`). The mod never asks the internet for a newer version (CIUpdateCheck guards that).
 
 ## Data and keys
 Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullList`, `Name`, `Hash`, `Index`, `Count`, `Data`. "Via host": a client sends to the host, the host applies it and sends it to everyone.

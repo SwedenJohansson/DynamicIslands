@@ -182,7 +182,7 @@ namespace DynamicIslands.Editor
 				else if (loadingText != null) loadingText.text = "Loading islands... (" + loading.Done + " of " + loading.Total + ")";
 			}
 			EditorInput.IsTyping = search.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

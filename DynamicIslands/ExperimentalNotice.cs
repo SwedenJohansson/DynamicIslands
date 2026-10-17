@@ -14,8 +14,9 @@ namespace DynamicIslands.Editor
 	/// likely to change, some systems might be unstable and progress isn't guaranteed to be saved. It starts on the right
 	/// half of Raft's main menu, clear of the menu buttons and the New Game box, and can be dragged anywhere (the place is
 	/// remembered). Its buttons lead to help: the Discord server, the guide (PDF) and Report a problem. "Got it" folds it
-	/// into a slim bar with those buttons (Show opens it again); that is remembered for this version of the mod only
-	/// (Mods\DynamicIslands\notice.txt), so a new version shows the whole box again.
+	/// into a slim bar with those buttons (Show opens it again); the X closes it altogether (Franz, 2026-10-17), and then
+	/// only a small "Custom Islands: help" link in the menu's bottom right corner is left, which opens it again. Both are
+	/// remembered for this version of the mod only (Mods\DynamicIslands\notice.txt), so a new version shows the whole box again.
 	/// </summary>
 	public static class ExperimentalNotice
 	{
@@ -36,7 +37,9 @@ namespace DynamicIslands.Editor
 		const float Width = 540f;
 
 		static RectTransform panel, body;
-		static Button toggle, discordButton, guideButton, reportButton;
+		static Button toggle, discordButton, guideButton, reportButton, closeButton, helpLink;
+		/// <summary>The X was pressed (for this version): the box is gone, the help link shows instead.</summary>
+		static bool closed;
 
 		public static RectTransform Panel { get { return panel; } }
 		public static bool Folded { get { return body != null && !body.gameObject.activeSelf; } }
@@ -46,6 +49,14 @@ namespace DynamicIslands.Editor
 		public static Button DiscordButton { get { return discordButton; } }
 		public static Button GuideButton { get { return guideButton; } }
 		public static Button ReportButton { get { return reportButton; } }
+		public static Button CloseButton { get { return closeButton; } }
+		/// <summary>The small link left on the menu while the box is closed: opens the box again.</summary>
+		public static Button HelpLink { get { return helpLink; } }
+		public const string HelpLinkName = "CustomIslands_HelpLink";
+		/// <summary>The X closed the box (this version): only the help link is on the menu.</summary>
+		public static bool Closed { get { return closed; } }
+		/// <summary>Whether the X was pressed for this version.</summary>
+		public static bool ClosedThisVersion { get { return Read("closed") == Version; } }
 
 		/// <summary>The mod's version (modinfo.json), for the box's line and for remembering "Got it".</summary>
 		static string version;
@@ -153,13 +164,55 @@ namespace DynamicIslands.Editor
 			toggle = UIKit.Button(buttons, "", Flip, null, 92, 32f, 14);
 			toggle.name = "Toggle";
 			UIKit.Primary(toggle);
+			closeButton = UIKit.Button(buttons, "X", Close, "Close this box (until the next version of Custom Islands). The help link in the bottom right corner opens it again", 32, 32f, 14);
+			closeButton.name = "Close";
+			BuildHelpLink(canvas);
 			SetFolded(SeenThisVersion);
+			SetClosed(ClosedThisVersion);
 			dragged = false;
 			PlaceStart();
 			PlaceSaved();
 			// (on the menu's canvas, not the box: it keeps looking while the box is hidden)
 			if (canvas.GetComponent<Watcher>() == null) canvas.gameObject.AddComponent<Watcher>();
-			Debug.Log("[CUSTOM ISLANDS] Alpha notice shown" + (Folded ? " (folded: seen for " + Version + ")" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Alpha notice shown" + (closed ? " (closed for " + Version + ": the help link only)" : Folded ? " (folded: seen for " + Version + ")" : ""));
+		}
+
+		/// <summary>The small "Custom Islands: help" link in the menu's bottom right corner, shown while the box is closed.</summary>
+		static void BuildHelpLink(Transform canvas)
+		{
+			Transform old = canvas.Find(HelpLinkName);
+			if (old != null) UnityEngine.Object.Destroy(old.gameObject);
+			helpLink = UIKit.Button(canvas, "Custom Islands: help", Reopen, "The alpha notice again: the Discord, the guide (PDF) and Report a problem", 170, 26f, 12);
+			helpLink.name = HelpLinkName;
+			var r = (RectTransform)helpLink.transform;
+			r.anchorMin = r.anchorMax = r.pivot = new Vector2(1f, 0f);
+			r.anchoredPosition = new Vector2(-12f, 12f);
+			r.sizeDelta = new Vector2(170f, 26f);
+			helpLink.gameObject.SetActive(false);
+		}
+
+		/// <summary>The X: the box closes and stays closed for this version; the help link opens it again.</summary>
+		public static void Close()
+		{
+			SetClosed(true);
+			Write("closed", Version);
+		}
+
+		/// <summary>The help link: the box again (folded as it was), and it stays open on the next start.</summary>
+		public static void Reopen()
+		{
+			SetClosed(false);
+			Write("closed", null);
+		}
+
+		static void SetClosed(bool c)
+		{
+			closed = c;
+			if (panel == null) return;
+			bool free = OtherWindow() == null;
+			panel.gameObject.SetActive(!c && free);
+			if (helpLink != null) helpLink.gameObject.SetActive(c && free);
+			if (!c) KeepOnScreen();
 		}
 
 		/// <summary>"Got it" folds the box and remembers it for this version; the folded bar's "Show" opens it again.</summary>
@@ -217,8 +270,9 @@ namespace DynamicIslands.Editor
 					boxes = Resources.FindObjectsOfTypeAll<MenuBox>().Where(b => b != null && b.gameObject.scene.IsValid()).ToArray();
 					nextLook = Time.unscaledTime + (boxes.Length > 0 ? 15f : 1f);
 				}
-				bool show = OtherWindow() == null;
+				bool free = OtherWindow() == null, show = free && !closed;
 				if (panel.gameObject.activeSelf != show) panel.gameObject.SetActive(show);
+				if (helpLink != null && helpLink.gameObject.activeSelf != (free && closed)) helpLink.gameObject.SetActive(free && closed);
 			}
 		}
 

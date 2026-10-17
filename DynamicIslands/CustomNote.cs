@@ -231,7 +231,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime - openedAt < 0.2f) return;
 			bool interact;
 			try { interact = MyInput.GetButtonDown("Interact"); } catch { interact = false; }
-			if (interact || Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape)) { Hide(); return; }
+			if (interact || Input.GetKeyDown(KeyCode.Tab) || EscKey.Down(this)) { Hide(); return; }
 			Network_Player player = null;
 			try { player = ComponentManager<Network_Player>.Value; } catch { }
 			if (note == null || !LoadSceneManager.IsGameSceneLoaded || (player != null && Vector3.Distance(player.transform.position, note.transform.position) > 8f)) Hide();

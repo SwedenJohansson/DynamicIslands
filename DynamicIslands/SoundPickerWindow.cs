@@ -83,7 +83,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = search.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 			if (rebuildAt > 0f && Time.unscaledTime >= rebuildAt) { rebuildAt = -1f; Rebuild(); }
 		}
 

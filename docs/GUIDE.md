@@ -140,8 +140,9 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
 > server), **Guide (PDF)** (this guide, which comes with the mod) and **Report a problem** ([section 15](#15-reporting-a-problem)).
 > Drag the box anywhere you like; it stays where you put it. It steps aside while another window of the main menu is
 > open (New Game, Load World, Settings, the island library...) and comes back when you close it. **Got it** folds it into a slim bar with the same buttons (its
-> **Show** opens it again); the mod remembers that for this version only (in `notice.txt`), so a new version shows the
-> whole box again.
+> **Show** opens it again); its **X** closes it altogether, and then only a small **Custom Islands: help** button is left in
+> the menu's bottom right corner, which opens it again. The mod remembers either for this version only (in `notice.txt`),
+> so a new version shows the whole box again.
 
 1. Install the **Raft Mod Loader** (RML) from [raftmodding.com](https://www.raftmodding.com/) and start Raft through it.
 2. Put `DynamicIslands.rmod` into Raft's `mods` folder (for example
@@ -341,7 +342,7 @@ finished step.*
 ### The journal (J)
 
 The **journal** is the crew's book of the custom islands' story: what you found on them and what you carry for them.
-Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (Esc closes only the window: Raft's pause menu doesn't open on the same press. The same goes for a note, the code lock, the stats page, a choice and the info windows.) (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
+Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (Esc closes only the window: Raft's pause menu doesn't open on the same press. The same goes for a note, the code lock, the stats page, a choice and the info windows. Every window of the mod - in a world, on the main menu and in the editor - closes with Esc, the topmost one first, one per press. A window with changes you haven't saved - World plans, a quest, a note, story items, behaviour and events - asks first: **Save and close**, **Close without saving** or **Keep editing**.) (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
 or console, while a note is open, or in the editor.) Its key is also shown at the hotbar: after Raft's notebook tab
 (**T**) come the journal's tab (**J**, an open book) and, while the level up system is on in the world, the stats
 page's (**K**, a star). They are copies of Raft's own key tabs and only remind you of the key (press the key; the tab is
@@ -1178,7 +1179,7 @@ entry is looked at before it goes in.
   nothing is installed. A plan downloaded from the New Game box's **Get more plans...** is chosen there right away.
 - The library goes online only while this window is open, and sends nothing but the downloads - no account, no Steam id.
   Without internet it says it can't read or reach the island library; packs someone sent you still install with **Import...**.
-  `Mods\DynamicIslands\library.txt` can switch it off (`online = off` - this also stops the main menu's check for a newer Custom Islands).
+  `Mods\DynamicIslands\library.txt` can switch it off (`online = off`).
 
 **The guide:** **Guide** at the top of the island library opens this guide (its PDF) - chapter 16 is about the
 library's example islands and plans.
@@ -3019,7 +3020,6 @@ there means plain Raft.
 | `islandsoff` | Island names separated by a vertical bar; also `type:<map type>` and `<generated>` | The islands left out of the next new world's islands while sailing | **CHOOSE ISLANDS...** in World settings (Create); `WorldIslands -<island>`, `+<island>`, `all` in the main menu |
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
-| `updatecheck` | `off` | The main menu doesn't ask GitHub whether a newer Custom Islands is out (`online = off` in `library.txt` stops it too) | Nothing in the game: write the line yourself |
 
 **`randomizer.txt`** is the world randomizer's last choice, written when you press **Create**: a `#` note and one line,
 for example `level=normal;seed=0;off=colours,loot`. `level` is `off`, `light`, `normal` or `wild`; `off=` lists the parts
@@ -3176,8 +3176,8 @@ parts for good, for everyone.
    The versions must be the same.
 2. To update: close Raft, replace `DynamicIslands.rmod` in Raft's `mods` folder with the new one (don't unzip it -
    see [12.5](#125-names-files-and-your-pc)), start Raft again and check the box.
-3. On the main menu the mod says once per start when a newer version is out on GitHub. To turn that off, add the line
-   `updatecheck=off` to `world_rules.txt` (or set `online = off` in `library.txt`).
+3. The mod doesn't look online for a newer version: new versions come from raftmodding.com. When players with
+   different versions meet, the joining player is told which versions differ.
 4. Update everyone **before** the next session, not in the middle of an adventure.
 
 #### Everyone's PC clock and date are right

@@ -2099,7 +2099,8 @@ namespace DynamicIslands
 			RectTransform panel = ExperimentalNotice.Panel;
 			if (canvas == null || panel == null) { Fail("experimental notice: no main menu or no box"); yield break; }
 			bool ok = true;
-			bool foldedBefore = ExperimentalNotice.Folded;
+			bool foldedBefore = ExperimentalNotice.Folded, closedBefore = ExperimentalNotice.Closed;
+			if (closedBefore) { ExperimentalNotice.Reopen(); yield return null; }
 			string placeBefore = ExperimentalNotice.SavedPlace; // (the checks are made where the box starts)
 			ExperimentalNotice.ResetPlace();
 			if (foldedBefore) { ExperimentalNotice.Flip(); yield return null; }
@@ -2145,13 +2146,146 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.6f);
 			ExperimentalNotice.Toggle.onClick.Invoke(); yield return null;
 			Check(ref ok, !ExperimentalNotice.Folded && !ExperimentalNotice.SeenThisVersion && UIKit.LabelOf(ExperimentalNotice.Toggle).text == "Got it", "Show opens it again (and a new start shows it whole)");
+			// The X: closed for this version, only the small help link is left, and it opens the box again
+			ExperimentalNotice.CloseButton.onClick.Invoke(); yield return null; yield return null;
+			Check(ref ok, ExperimentalNotice.Closed && ExperimentalNotice.ClosedThisVersion && !panel.gameObject.activeSelf && ExperimentalNotice.HelpLink != null && ExperimentalNotice.HelpLink.gameObject.activeInHierarchy,
+				"the X closes the box for " + ExperimentalNotice.Version + " (remembered), the help link shows instead");
+			Screenshot(new[] { "notice_closed" });
+			yield return new WaitForSecondsRealtime(0.6f);
+			ExperimentalNotice.HelpLink.onClick.Invoke(); yield return null; yield return null;
+			Check(ref ok, !ExperimentalNotice.Closed && !ExperimentalNotice.ClosedThisVersion && panel.gameObject.activeSelf && !ExperimentalNotice.HelpLink.gameObject.activeSelf, "the help link opens the box again (and a new start shows it)");
 			// Its help: Discord, the guide, Report a problem, and moving it
 			yield return NoticeHelpRoutine((c, w) => Check(ref ok, c, w));
 			yield return NoticeCoverRoutine((c, w) => Check(ref ok, c, w));
 			ExperimentalNotice.SavedPlace = placeBefore; // (where the player had dragged it)
 			ExperimentalNotice.ApplySavedPlace();
 			if (foldedBefore) ExperimentalNotice.Flip();
+			if (closedBefore) ExperimentalNotice.Close();
 			if (ok) Log("PASS: experimental notice"); else Fail("experimental notice");
+		}
+
+		#endregion
+
+		#region Esc closes windows
+
+		[ConsoleCommand(name: "CIEscWindows", docs: "Dev, main menu: Esc closes every Custom Islands window, the topmost first (Franz, 2026-10-17): each main-menu window opened alone closes on one Esc; a box over a window closes first and the window stays; the plan picker's View rules... closes with its Close button and with Esc, the picker staying; World plans with a change not saved asks first (Keep editing, Close without saving: the plan file unchanged)")]
+		public static void EscWindowsCommand() { StartTest(EscWindowsRoutine()); }
+
+		/// <summary>Esc as if pressed, and the frames it takes (the topmost is picked after every window asked).</summary>
+		static IEnumerator EscPress()
+		{
+			EscKey.Press();
+			for (int i = 0; i < 5; i++) yield return null;
+		}
+
+		static void CloseMenuWindows()
+		{
+			InfoWindow.Close(); TextPromptWindow.Close(); ChoiceWindow.Close(); DefaultsWindow.Close(); WorldPlanWindow.Close(); CreateWindow.Close();
+			IslandPickerWindow.Close(); WorldSettingsWindow.Close(); LibraryImportWindow.Close(); LibraryWindow.Close(); PlanPickerWindow.Close();
+		}
+
+		static IEnumerator EscWindowsRoutine()
+		{
+			if (GameObject.Find("MainMenuCanvas") == null) { Fail("Esc closes windows: not on the main menu"); yield break; }
+			bool ok = true;
+			MenuWindows.Ensure();
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			bool boxWas = box != null && box.gameObject.activeSelf;
+			if (box != null) { box.gameObject.SetActive(true); yield return new WaitForSecondsRealtime(0.5f); }
+			CloseMenuWindows();
+			yield return null;
+
+			// Each window alone: open, one Esc, closed
+			var windows = new List<KeyValuePair<string, KeyValuePair<Action, Func<bool>>>>();
+			Action<string, Action, Func<bool>> add = (n, opener, isOpen) => windows.Add(new KeyValuePair<string, KeyValuePair<Action, Func<bool>>>(n, new KeyValuePair<Action, Func<bool>>(opener, isOpen)));
+			add("plan picker", PlanPickerWindow.Open, () => PlanPickerWindow.IsOpen);
+			add("island library", () => LibraryWindow.Open(), () => LibraryWindow.IsOpen);
+			add("library import", LibraryImportWindow.Open, () => LibraryImportWindow.IsOpen);
+			add("World settings", WorldSettingsWindow.Open, () => WorldSettingsWindow.IsOpen);
+			add("island list (Choose islands)", IslandPickerWindow.Open, () => IslandPickerWindow.IsOpen);
+			add("editor start (Create)", CreateWindow.Open, () => CreateWindow.IsOpen);
+			add("World plans", () => WorldPlanWindow.Open(), () => WorldPlanWindow.IsOpen);
+			add("keys and defaults", DefaultsWindow.Open, () => DefaultsWindow.IsOpen);
+			add("text prompt", () => TextPromptWindow.Open("Esc test", "A name:", "", n => { }), () => TextPromptWindow.IsOpen);
+			add("info box", () => InfoWindow.Open("Esc test", "A box"), () => InfoWindow.IsOpen);
+			foreach (var w in windows)
+			{
+				string error = null;
+				try { w.Value.Key(); } catch (Exception e) { error = e.Message; }
+				yield return new WaitForSecondsRealtime(0.3f);
+				if (error != null || !w.Value.Value()) { Check(ref ok, false, "Esc: the " + w.Key + " opens (" + (error ?? "not open") + ")"); CloseMenuWindows(); continue; }
+				yield return EscPress();
+				Check(ref ok, !w.Value.Value(), "Esc closes the " + w.Key + (w.Value.Value() ? " (still open)" : ""));
+				CloseMenuWindows();
+				yield return null;
+			}
+
+			// Topmost first: a box over the island library closes, the library stays; the next Esc closes the library
+			LibraryWindow.Open();
+			yield return new WaitForSecondsRealtime(0.3f);
+			InfoWindow.Open("Esc test", "Over the library");
+			yield return null;
+			yield return EscPress();
+			Check(ref ok, !InfoWindow.IsOpen && LibraryWindow.IsOpen, "Esc over the island library: the box closes first, the library stays (box " + (InfoWindow.IsOpen ? "open" : "closed") + ", library " + (LibraryWindow.IsOpen ? "open" : "closed") + ")");
+			yield return EscPress();
+			Check(ref ok, !LibraryWindow.IsOpen, "the next Esc closes the island library");
+			CloseMenuWindows();
+
+			// The plan picker's View rules... (it threw on Close: Franz, 2026-10-17)
+			string plan = WorldPlan.All().FirstOrDefault();
+			PlanPickerWindow.Open();
+			yield return new WaitForSecondsRealtime(0.3f);
+			var selectedField = typeof(PlanPickerWindow).GetField("selected", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+			if (plan != null && selectedField != null) selectedField.SetValue(null, plan);
+			Button view = PlanPickerWindow.Root != null ? PlanPickerWindow.Root.GetComponentsInChildren<Button>(true).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "View rules...") : null;
+			Check(ref ok, plan != null && view != null, "the plan picker has View rules... (plan " + (plan ?? "none") + ")");
+			if (view != null)
+			{
+				view.onClick.Invoke();
+				yield return null;
+				Button close = InfoWindow.IsOpen ? InfoWindow.ButtonNamed("Close") : null;
+				Check(ref ok, close != null, "View rules... shows the plan's rules with a Close button");
+				string error = null;
+				if (close != null) try { close.onClick.Invoke(); } catch (Exception e) { error = e.GetType().Name + ": " + e.Message; }
+				yield return null;
+				Check(ref ok, error == null && !InfoWindow.IsOpen && PlanPickerWindow.IsOpen, "View rules' Close closes the rules without an error, the picker stays" + (error != null ? " (" + error + ")" : ""));
+				view.onClick.Invoke();
+				yield return null;
+				yield return EscPress();
+				Check(ref ok, !InfoWindow.IsOpen && PlanPickerWindow.IsOpen, "Esc closes the rules first, the picker stays");
+				yield return EscPress();
+				Check(ref ok, !PlanPickerWindow.IsOpen, "the next Esc closes the plan picker");
+			}
+			CloseMenuWindows();
+
+			// Unsaved work: World plans asks before Esc closes it
+			WorldPlanWindow.Open();
+			yield return new WaitForSecondsRealtime(0.3f);
+			WorldPlan open = WorldPlanWindow.Plan;
+			if (open == null) Check(ref ok, false, "World plans opens on a plan");
+			else
+			{
+				string name = open.Name;
+				Check(ref ok, !WorldPlanWindow.Unsaved, "World plans just opened: nothing unsaved");
+				open.Rules.Add(new IntroRule { Id = "esctest", What = "type", WhatArg = "random" });
+				Check(ref ok, WorldPlanWindow.Unsaved, "a rule added: World plans has unsaved changes");
+				yield return EscPress();
+				Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "UNSAVED CHANGES" && WorldPlanWindow.IsOpen, "Esc with unsaved changes asks first, World plans stays (" + InfoWindow.Title + ": " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()) + ")");
+				Screenshot(new[] { "esc_unsaved" });
+				yield return new WaitForSecondsRealtime(0.6f);
+				yield return EscPress();
+				Check(ref ok, !InfoWindow.IsOpen && WorldPlanWindow.IsOpen && WorldPlanWindow.Unsaved, "Esc on the question keeps editing: World plans open, the change still there");
+				yield return EscPress();
+				Button discard = InfoWindow.IsOpen ? InfoWindow.ButtonNamed("Close without saving") : null;
+				Check(ref ok, discard != null, "Esc again asks again");
+				if (discard != null) discard.onClick.Invoke();
+				yield return null;
+				WorldPlan saved = WorldPlan.Load(name);
+				Check(ref ok, !WorldPlanWindow.IsOpen && !InfoWindow.IsOpen && (saved == null || !saved.Rules.Any(r => r.Id == "esctest")), "Close without saving: World plans closed, the plan file without the change");
+			}
+			CloseMenuWindows();
+			if (box != null) box.gameObject.SetActive(boxWas);
+			if (ok) Log("PASS: Esc closes windows"); else Fail("Esc closes windows");
 		}
 
 		#endregion

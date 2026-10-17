@@ -66,7 +66,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = field.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 			else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Ok();
 		}
 

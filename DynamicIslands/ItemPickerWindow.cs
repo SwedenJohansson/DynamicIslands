@@ -141,7 +141,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = search.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape) || ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !search.isFocused)) Close();
+			if (EscKey.Down(this) || ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !search.isFocused)) Close();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

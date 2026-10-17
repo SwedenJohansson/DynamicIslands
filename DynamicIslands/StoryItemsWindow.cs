@@ -42,6 +42,21 @@ namespace DynamicIslands.Editor
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
 			instance.Rebuild();
+			instance.savedPrint = StoryItems.Text(instance.defs);
+		}
+
+		/// <summary>What Esc compares: the items as they would be saved.</summary>
+		string savedPrint;
+
+		/// <summary>The items differ from the island's (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				if (!IsOpen) return false;
+				instance.Keep();
+				return StoryItems.Text(instance.defs) != instance.savedPrint;
+			}
 		}
 
 		public static void Close()
@@ -55,7 +70,7 @@ namespace DynamicIslands.Editor
 		{
 			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) { if (pickingIconFor >= 0) { pickingIconFor = -1; Rebuild(); } else Close(); }
+			if (EscKey.Down(this)) { if (pickingIconFor >= 0) { pickingIconFor = -1; Rebuild(); } else if (Unsaved) EscKey.AskUnsaved("The story items", Save, Close); else Close(); }
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

@@ -134,7 +134,7 @@
     <Compile Include="UpgradeTable.cs" />
     <Compile Include="GenFeatures.cs" />
     <Compile Include="PcCheck.cs" />
-    <Compile Include="UpdateCheck.cs" />
+    <Compile Include="VersionMismatch.cs" />
     <Compile Include="BuildCostRefund.cs" />
     <Compile Include="RaftColliderGuard.cs" />
     <Compile Include="IslandGenerator.cs" />
@@ -194,6 +194,7 @@
     <Compile Include="WorldSettingsWindow.cs" />
     <Compile Include="ErrorNotes.cs" />
     <Compile Include="ExperimentalNotice.cs" />
+    <Compile Include="EscKey.cs" />
     <Compile Include="RandomizerContent.cs" />
     <Compile Include="RaftProps.cs" />
     <Compile Include="RandomizerIslands.cs" />

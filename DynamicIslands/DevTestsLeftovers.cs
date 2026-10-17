@@ -129,6 +129,17 @@ namespace DynamicIslands
 			Check(ref ok, j != null && note != null && j.transform.parent == note.transform.parent, "the journal's tab is beside Raft's notebook tab");
 			Check(ref ok, text(j) == JournalWindow.Key.ToString(), "it says the journal's key: " + text(j));
 			Check(ref ok, j != null && note != null && j.transform.position.x > note.transform.position.x, "... after the notebook's tab (right of it)");
+			Check(ref ok, HotkeyHints.KeyOverIcon(HotkeyHints.JournalName), "its key letter is drawn over the book icon (it was hidden under it)");
+			// (Franz, 2026-10-17: the journal's tab showed no key, where the inventory's shows TAB)
+			Check(ref ok, HotkeyHints.KeyShown(HotkeyHints.JournalName) == ModKeys.Name(JournalWindow.Key), "the journal's tab shows its key as the inventory's shows TAB (switched on, drawn, opaque): " + HotkeyHints.KeyShown(HotkeyHints.JournalName));
+			KeyCode was = ModKeys.Journal;
+			KeyCode other = new[] { KeyCode.H, KeyCode.U, KeyCode.Y, KeyCode.O, KeyCode.P }.FirstOrDefault(c => c != was && c != ModKeys.Stats && ModKeys.Problem(c) == null);
+			string setProblem = ModKeys.Set(true, other);
+			yield return new WaitForSeconds(0.7f);
+			Check(ref ok, setProblem == null && HotkeyHints.KeyShown(HotkeyHints.JournalName) == ModKeys.Name(other), "the journal's key changed to " + other + ": its tab says so (" + (setProblem ?? HotkeyHints.KeyShown(HotkeyHints.JournalName)) + ")");
+			ModKeys.Set(true, was);
+			yield return new WaitForSeconds(0.7f);
+			Check(ref ok, HotkeyHints.KeyShown(HotkeyHints.JournalName) == ModKeys.Name(was), "and back: " + HotkeyHints.KeyShown(HotkeyHints.JournalName));
 			PlayerLevels.SetEnabled(true);
 			yield return new WaitForSeconds(1.5f);
 			GameObject k = GameObject.Find(HotkeyHints.StatsName);

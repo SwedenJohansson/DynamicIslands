@@ -98,7 +98,8 @@ namespace DynamicIslands.Editor
 			foreach (Choice c in choices)
 			{
 				Choice choice = c;
-				Button b = UIKit.Button(buttonRow, c.Label, () => choice.Click(), c.Hint, -1, 34f, 13);
+				// (no action = it closes the box: a plan's "Close" passed null and threw instead - Franz, 2026-10-17)
+				Button b = UIKit.Button(buttonRow, c.Label, () => { if (choice.Click != null) choice.Click(); else Close(); }, c.Hint, -1, 34f, 13);
 				// (as wide as its label in Raft's font - a guess per letter was too narrow for some words)
 				Text label = UIKit.LabelOf(b);
 				float w = Mathf.Max(96f, Mathf.Max(26f + 9f * c.Label.Length, (label != null ? label.preferredWidth : 0f) + 34f));
@@ -138,7 +139,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		#region The boxes

@@ -357,7 +357,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
+			if (EscKey.Down(this)) { Close(); return; }
 			if (!LoadSceneManager.IsGameSceneLoaded) { Close(); return; }
 			// (a client sees the host's changes as they come)
 			if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 1f; Refresh(); }

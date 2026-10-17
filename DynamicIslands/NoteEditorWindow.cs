@@ -67,10 +67,22 @@ namespace DynamicIslands.Editor
 			Close();
 		}
 
+		/// <summary>The title or text differs from the note's (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				EditorGameObject t = instance != null ? instance.target : null;
+				if (t == null || !IsOpen) return false;
+				return instance.titleField.text.Trim() != ObjectProps.Get(t.Props, ObjectProps.NoteTitle, "").Trim()
+					|| instance.textField.text.TrimEnd() != ObjectProps.Get(t.Props, ObjectProps.NoteText, "").TrimEnd();
+			}
+		}
+
 		void Update()
 		{
 			EditorInput.IsTyping = titleField.isFocused || textField.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved("The note", Save, Close); else Close(); }
 			else if (EditorInput.Ctrl && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.S))) Save();
 		}
 

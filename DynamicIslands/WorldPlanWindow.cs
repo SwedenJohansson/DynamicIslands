@@ -101,7 +101,7 @@ namespace DynamicIslands.Editor
 		{
 			if (islandMode) return;
 			Keep();
-			try { plan.Save(); }
+			try { plan.Save(); MarkSaved(); }
 			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 			string name = plan.Name;
 			Close();
@@ -182,6 +182,32 @@ namespace DynamicIslands.Editor
 			problemsText.text = "";
 			findings = null;
 			ownFacts = null;
+			MarkSaved();
+		}
+
+		/// <summary>What Esc compares: the plan as it was opened or last saved.</summary>
+		string savedPrint;
+
+		string Print() { return plan == null ? "" : plan.Name + "\n" + plan.Description + "\n" + plan.ToText(); }
+
+		void MarkSaved() { if (plan != null) { Keep(); savedPrint = Print(); } }
+
+		/// <summary>The plan (or the island's rules) changed since it was opened or saved (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				if (!IsOpen || instance.plan == null) return false;
+				instance.Keep();
+				return instance.Print() != instance.savedPrint;
+			}
+		}
+
+		/// <summary>Save and close (Esc's question): closes only when the save worked.</summary>
+		void SaveAndClose()
+		{
+			Save();
+			if (!Unsaved) Close();
 		}
 
 		void ShowRandom()
@@ -288,7 +314,7 @@ namespace DynamicIslands.Editor
 		{
 			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's rules" : "The plan '" + plan.Name + "'", SaveAndClose, Close); else Close(); }
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }
@@ -881,7 +907,7 @@ namespace DynamicIslands.Editor
 				if (n.Length == 0) return;
 				if (File.Exists(IslandSpawner.PathFor(n))) { DynamicIslands.Notify("There is an island named '" + n + "' already: + Add a saved island puts it in", true); return; }
 				plan.Rules.Add(EditorEntry.RuleFor(plan, n, true));
-				try { plan.Save(); }
+				try { plan.Save(); MarkSaved(); }
 				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 				string name = plan.Name;
 				Close();
@@ -1274,7 +1300,7 @@ namespace DynamicIslands.Editor
 		void EditIsland(string island)
 		{
 			Keep();
-			try { plan.Save(); }
+			try { plan.Save(); MarkSaved(); }
 			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 			string name = plan.Name;
 			Close();
@@ -1290,12 +1316,13 @@ namespace DynamicIslands.Editor
 			if (islandMode)
 			{
 				IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules));
+				MarkSaved();
 				EditorUI.RefreshIsland();
 				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
 			else
 			{
-				try { plan.Save(); }
+				try { plan.Save(); MarkSaved(); }
 				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
@@ -1307,7 +1334,7 @@ namespace DynamicIslands.Editor
 		{
 			if (islandMode) return;
 			Keep();
-			try { plan.Save(); }
+			try { plan.Save(); MarkSaved(); }
 			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 			string name = plan.Name;
 			Close();
@@ -1373,7 +1400,7 @@ namespace DynamicIslands.Editor
 					else p = NewPlan(n);
 					instance.islandMode = false;
 					instance.Show(p);
-					if (how.StartsWith(NewTemplatePrefix)) { instance.AddTemplate(how.Substring(NewTemplatePrefix.Length)); instance.Keep(); instance.plan.Save(); }
+					if (how.StartsWith(NewTemplatePrefix)) { instance.AddTemplate(how.Substring(NewTemplatePrefix.Length)); instance.Keep(); instance.plan.Save(); instance.MarkSaved(); }
 					if (how == NewStory) MainStoryHelper.Open();
 				});
 			});

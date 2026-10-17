@@ -57,7 +57,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void Build()

@@ -211,7 +211,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			CameraSettings.Tick();
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDisable() { CameraSettings.Save(); }

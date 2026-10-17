@@ -184,7 +184,7 @@ namespace DynamicIslands.Editor
 			if (planWasOpen && !WorldPlanWindow.IsOpen) Show();
 			planWasOpen = WorldPlanWindow.IsOpen;
 			if (!IsOpen || WorldPlanWindow.IsOpen || ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDestroy()

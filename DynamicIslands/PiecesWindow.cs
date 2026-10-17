@@ -94,7 +94,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = nameField != null && nameField.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 			else if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && picked != null && nameField.text.Trim() != picked) OnRename();
 		}
 

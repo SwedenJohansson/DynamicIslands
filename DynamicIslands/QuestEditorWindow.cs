@@ -60,6 +60,31 @@ namespace DynamicIslands.Editor
 			instance.bring = QuestBringRule(DynamicIslands.currentIslandProps);
 			instance.bring = instance.bring != null ? instance.bring.Clone() : null;
 			instance.ShowBring();
+			instance.Keep();
+			instance.KeepBring();
+			instance.savedPrint = instance.Print();
+		}
+
+		/// <summary>What Esc compares: the quests and the bring rule as they would be saved.</summary>
+		string savedPrint;
+
+		string Print()
+		{
+			var d = new Dictionary<string, string>();
+			foreach (var kv in working.OrderBy(e => e.Key)) kv.Value.To(d, kv.Key);
+			return string.Join("\n", d.OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => e.Key + "=" + e.Value).ToArray()) + "\nbring=" + (bring != null ? bring.ToLine() : "");
+		}
+
+		/// <summary>The quests differ from the island's (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				if (!IsOpen) return false;
+				instance.Keep();
+				instance.KeepBring();
+				return instance.Print() != instance.savedPrint;
+			}
 		}
 
 		/// <summary>Shows quest n of the island (its edits kept while another is shown).</summary>
@@ -194,7 +219,7 @@ namespace DynamicIslands.Editor
 			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
 			if (pickingReward) { pickingReward = false; ShowReward(); }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved("The quest", Save, Close); else Close(); }
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

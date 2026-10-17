@@ -14,16 +14,33 @@ $src = Join-Path $PSScriptRoot "DynamicIslands"
 $out = Join-Path $PSScriptRoot "DynamicIslands.rmod"
 
 $excludeDirs  = @("bin", "obj", ".vs", "Properties")
-$excludeFiles = @("*.csproj", "*.csproj.user", "*.rmod", "*.meta", "*.old", "*.veryold", "*,veryold", "*.pdb")
+# (stray files never ship: crash dumps of Git Bash and other tools, logs, editor backups - a bash.exe.stackdump was in 3.0)
+$excludeFiles = @("*.csproj", "*.csproj.user", "*.rmod", "*.meta", "*.old", "*.veryold", "*,veryold", "*.pdb",
+    "*.stackdump", "*.log", "*.tmp", "*.bak", "*.orig", "*.rej", "*~", "*.swp", "Thumbs.db", "desktop.ini", ".DS_Store")
 if ($Release) { $excludeFiles += "DevTests*.cs", "DevTests*.island" }
 
-$files = Get-ChildItem $src -Recurse -File | Where-Object {
+# Only files git tracks go in (a file someone or something left in the folder doesn't); without git, every file the
+# patterns allow. Skipped untracked files are named.
+$tracked = $null
+try {
+    $list = & git -C $PSScriptRoot -c core.quotepath=off ls-files -- DynamicIslands 2>$null
+    if ($LASTEXITCODE -eq 0 -and $list) {
+        $tracked = @{}
+        foreach ($p in $list) { if ($p) { $tracked[$p.Trim('"').Substring("DynamicIslands/".Length).Replace('/', '\').ToLowerInvariant()] = $true } }
+    }
+} catch { $tracked = $null }
+if ($null -eq $tracked) { Write-Warning "git isn't available: packing every file the patterns allow (check the list for stray files)" }
+
+$skipped = New-Object System.Collections.Generic.List[string]
+$files = @(Get-ChildItem $src -Recurse -File -Force | Where-Object {
     $rel = $_.FullName.Substring($src.Length + 1)
     $top = $rel.Split('\')[0]
     if ($excludeDirs -contains $top) { return $false }
     foreach ($pattern in $excludeFiles) { if ($_.Name -like $pattern) { return $false } }
+    if ($null -ne $tracked -and -not $tracked.ContainsKey($rel.ToLowerInvariant())) { $skipped.Add($rel); return $false }
     return $true
-}
+})
+if ($skipped.Count -gt 0) { Write-Warning ("Not packed (not in git): " + ($skipped -join ", ")) }
 
 if (Test-Path $out) { Remove-Item $out }
 $zip = [System.IO.Compression.ZipFile]::Open($out, [System.IO.Compression.ZipArchiveMode]::Create)

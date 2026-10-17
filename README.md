@@ -6,7 +6,7 @@ Custom Islands version 3 by **SwedenJohansson**: rebuilt for Raft 1.1 (Unity 202
 
 > **EXPERIMENTAL ALPHA RELEASE** - this is the first release of Custom Islands (version 3.0), an early alpha. Things are likely to change, some
 > systems might be unstable, and we do not guarantee that progress is always saved: back up the worlds you care about.
-> The main menu shows this in a box (**Got it** folds it until the next version). Found a problem? See
+> The main menu shows this in a box (**Got it** folds it, **X** closes it, both until the next version). Found a problem? See
 > [Reporting a problem](#reporting-a-problem).
 
 **What changed:** see the [changelog](CHANGELOG.md) for every version 3.0 update since v1.1.1.
@@ -26,6 +26,7 @@ This README is the full reference, in the same order: island creation first, the
   - Paint it with Raft's own ground textures (Sand, Grass, Rock, Seabed), or let it texture automatically by height and slope.
   - **Island styles:** Tropical, Snowy (Temperance), Desert (Caravan Island), Forest (Balboa) and Volcanic. Each style has its own ground textures, and the paint buttons are named after them.
   - **An editor screen in Raft's own look** (its menu sprites, brown panels, tan buttons and fonts, taken from the game at start): a top bar (file, undo/redo, the Terrain / Objects / Island tabs), a tool panel with related buttons grouped in bordered boxes, an object browser with pictures, and a status bar that explains the tool or the button under the mouse.
+  - **Esc closes every window of the mod**, the topmost one first, one per press; a window with unsaved changes (World plans, a quest, a note, story items, behaviour and events) asks first: Save and close, Close without saving or Keep editing.
   - Place **every object of Raft**, about 1,900 in all, from a browser with a picture of each one:
     - palms, snowy pines, birches, cacti, bushes, boulders, snowdrifts, icicles, corals
     - sunken barrels, containers and buoys, and scrap on the ocean floor to dive for; generated islands scatter some around their underwater slopes
@@ -142,7 +143,7 @@ This README is the full reference, in the same order: island creation first, the
   - **The level up system** (its switch in the window; a world option, islands don't turn it on): hitting a monster floats the EXP it gave over it (**+5 EXP**). An EXP bar styled like Raft's own sits above its thirst, hunger and health bars. Every level gives 2 stat points to spend on the **stats page** (**K**, the **Stats** button by the bar in the inventory, or a click on the level up box): walk, run and swim speed, jump height, damage, health, hunger, thirst and oxygen. Each point is +1%, and a stat takes at most 15. Other players see your level as a small **Lv 5** under your name (see [The level up system](#the-level-up-system)).
 - **PC check:** at start, one box on the main menu names what can break saving on this PC (Raft under `Program Files` or a synced folder like OneDrive, `Mods\DynamicIslands` that can't be written, an unzipped `.rmod`) and any part of the mod that failed to start, each with its fix.
 - **Hover tips:** resting the mouse on a button of the mod's main-menu windows (plan picker, World settings, library, Defaults...) shows what it does in a small tip by the mouse; the editor's status bar and the in-world window's hint line say it there.
-- **EXPERIMENTAL ALPHA RELEASE box** on Raft's main menu (right of the middle, can be dragged anywhere; the place is remembered; hidden while any other window of the main menu is open - Raft's boxes or the mod's): the mod's version and what an alpha means (things change, some systems may be unstable, progress isn't guaranteed to be saved), with **Discord** (the Custom Islands server), **Guide (PDF)** (the guide, which comes in the `.rmod` and is written to `Mods\DynamicIslands\Custom-Islands-Guide.pdf` to open it; online if it is missing) and **Report a problem** (a box with what a report needs and buttons: copy a report form with the versions, open Raft's log folder, a new GitHub issue with the form, the Discord). **Got it** folds it into a bar with the same buttons (its **Show** opens it again) until the next version of the mod (`notice.txt`).
+- **EXPERIMENTAL ALPHA RELEASE box** on Raft's main menu (right of the middle, can be dragged anywhere; the place is remembered; hidden while any other window of the main menu is open - Raft's boxes or the mod's): the mod's version and what an alpha means (things change, some systems may be unstable, progress isn't guaranteed to be saved), with **Discord** (the Custom Islands server), **Guide (PDF)** (the guide, which comes in the `.rmod` and is written to `Mods\DynamicIslands\Custom-Islands-Guide.pdf` to open it; online if it is missing) and **Report a problem** (a box with what a report needs and buttons: copy a report form with the versions, open Raft's log folder, a new GitHub issue with the form, the Discord). **Got it** folds it into a bar with the same buttons (its **Show** opens it again) until the next version of the mod (`notice.txt`); its **X** closes it altogether until the next version, and a small **Custom Islands: help** button in the menu's bottom right corner opens it again (with Discord, Guide and Report a problem).
 
 ## Installing
 
@@ -168,9 +169,9 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 | `<name>_<hash>.island` | Islands downloaded from a multiplayer host (also what a player hosts the world from later). |
 | `worlds\<world id>.txt` of a world you joined | The host's copy of that world, kept so you can host it later (Raft's save of it comes too, into your Raft `World` folder). Raft's world folder has one too: `CustomIslands.txt`. |
 | `worlds\<world id>.kept-<n>.txt` | Your own, newer copy of a world, set aside when you joined a host whose copy was older (n = its save count): the host's is played, yours stays here |
-| `world_rules.txt`, `randomizer.txt`, `newworld_plan.txt` | Your last World settings choices (monster difficulty, build cost, extra options, islands left out; the randomizer), the start for the next new world; `updatecheck=off` in `world_rules.txt` stops the main menu's "a newer Custom Islands is out" check; `journalkey=` and `statskey=` are the journal's and stats page's keys (all the keys: see below) |
+| `world_rules.txt`, `randomizer.txt`, `newworld_plan.txt` | Your last World settings choices (monster difficulty, build cost, extra options, islands left out; the randomizer), the start for the next new world; `journalkey=` and `statskey=` are the journal's and stats page's keys (all the keys: see below) |
 | `groups\`, `stamps\`, `generator_presets\` | Your saved object groups, terrain stamps and generator presets |
-| `notice.txt` | The version of the mod whose alpha box you folded with **Got it** (`seen=`), and where you dragged the box (`place=`) |
+| `notice.txt` | The version of the mod whose alpha box you folded with **Got it** (`seen=`) or closed with its **X** (`closed=`), and where you dragged the box (`place=`) |
 | `Custom-Islands-Guide.pdf` | The guide, written out of the `.rmod` when a Guide button opens it |
 | `autosave\` | Unsaved editor work (every 3 minutes, when leaving the editor, and before New, Open or Make replace the island); offered when the editor opens |
 | `deleted\` | Islands deleted in the editor, and generated islands Tidy up cleared (moved here, not erased) |
@@ -220,7 +221,6 @@ picked up while the game runs). **Defaults...** in World settings sets the first
 | `journalkey`, `statskey` | a Unity key name (`J`, `K`, `F6`) | The journal's and the stats page's keys in a world | **Defaults...** > Keys (this PC), at once; a key that can't be used falls back to J / K |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | a multiplier: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 (1 = the mod's own) | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed | The editor's **Camera...** window or **Defaults... > Editor camera**, a moment after a change; the right mouse + wheel changes `cameraspeed` |
 | `cameradragup`, `camerawheel` | `down` / `up`; `normal` / `reversed` | Dragging up while looking tilts the view down or up; the wheel's direction in the editor | The same, at once |
-| `updatecheck` | `off` | The main menu doesn't ask GitHub whether a newer Custom Islands is out (`online = off` in `library.txt` stops it too) | Nothing in the game: write the line yourself |
 
 **`randomizer.txt`** keeps the world randomizer's last choice, written on **Create**: a `#` note and one line such as `level=normal;seed=0;off=colours,loot`. `level` is `off`, `light`, `normal` or `wild`; `off=` lists the parts switched off (`colours`, `animals`, `alphas`, `loot`, `finds`, `oddities`, `bosses`, `large`); the seed is always 0 there (every new world gets its own).
 
@@ -722,7 +722,7 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `MonsterDifficulty.cs` | The monster difficulty: the five levels, the Harmony prefix on Raft's `Network_Host.DamageEntity` that changes hits on and by monsters, the patch that leaves puffer fish damage alone, the `Monsters` command |
 | `WorldRules.cs` | The world rules: saved with the world, sent to every player who joins (one network message with both, and the host's `spawnpool.txt` settings every player uses: Receiver, unload distance, regrow days), the last choices (`world_rules.txt`); the build cost (Raft's build menu items, their cost amounts set from Raft's own numbers while a world is open and put back outside, the `BuildCost` command); the two sliders in Raft's New Game box (which grows the box to make room) |
 | `BuildCostRefund.cs` | A block taken down gives back half of the cost it was placed at (`@builtat=` in the world file, sent with the world rules) |
-| `UpdateCheck.cs` | Once per start on the main menu: GitHub's latest release compared with this version; the version notice when joining a host with another one (or another build of the same one, by a stamp of the mod's files) |
+| `VersionMismatch.cs` | The version notice when joining a host with another version (or another build of the same one, by a stamp of the mod's files). The mod never looks online for a newer version: updates come from raftmodding.com |
 | `CustomNote.cs` | Readable notes in a world (Raft's interaction, `IRaycastable`) and the note reader |
 | `IslandInfo.cs` | Island name, author and description, the banner shown when players arrive (also zone messages), and the island rules |
 | `LootCrate.cs`, `ItemPickerWindow.cs` | Chests in a world (giving items, looted state shared with all players and saved) and the item picker |
@@ -787,7 +787,8 @@ The editor scene and the gizmo shaders come from a separate Unity 2021.3.45 proj
 | `StoryChain.cs` | A plan's own islands in Raft's Receiver chain: the chain (Raft's story on/off, islands left out or replaced, plan islands in their places), Raft's note unlocks led through it (a prefix on `NoteBook.UnlockFrequency`), the mod's own frequencies in `RecieverFrequency.AllFrequencies` (island types 100+, brought when the host's Receiver asks for them: `ChunkManager.AddChunkPointForcibly`), islands by chance while sailing, "done when", the world file's `@story...` lines and network kind 19 |
 | `EditorGameObject.cs` | What every placed object in the editor carries (its name and settings) and the editor's object limit (`ObjectLimit`: a warning from 12 000, at most 100 000) |
 | `EditorLoadingBox.cs` | The box that covers the screen while the editor opens and loads Raft's objects |
-| `ExperimentalNotice.cs` | The EXPERIMENTAL ALPHA RELEASE box on the main menu (and Report a problem), hidden while another menu window is open |
+| `ExperimentalNotice.cs` | The EXPERIMENTAL ALPHA RELEASE box on the main menu (and Report a problem), hidden while another menu window is open; its X leaves only a "Custom Islands: help" button |
+| `EscKey.cs` | Esc for every window of the mod: the topmost one closes first, one per press; a window with unsaved changes asks first |
 | `WorldSettingsWindow.cs` | The New Game box's WORLD SETTINGS... window (world rules, randomizer, extra options, level up system, islands while sailing) and the choice remembered |
 | `WorldOptions.cs` | The extra options of a world (kind 17): which are on, their seed, saved with the world |
 | `ScrambledBlueprints.cs`, `StoryOrder.cs` | Extra options: blueprints scrambled between Raft's islands (the story's needed ones kept), the story islands in a new order |

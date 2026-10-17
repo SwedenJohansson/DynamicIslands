@@ -141,7 +141,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (Time.unscaledTime - openedAt < 0.5f) return;
-			if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+			if (EscKey.Down(this)) Hide();
 			if (!LoadSceneManager.IsGameSceneLoaded) Hide();
 		}
 	}

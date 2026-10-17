@@ -605,110 +605,39 @@ namespace DynamicIslands
 
 		#endregion
 
-		#region COV7 - The update check and the version notice
+		#region COV7 - No update check; the version notice
 
-		[ConsoleCommand(name: "CIUpdateCheck", docs: "Dev, main menu (anywhere works, the notice itself only on the main menu): COV7 - the release JSON fed in through UpdateCheck.TestAnswer instead of GitHub: a newer tag gives the notice, the same or an older one none, 3.10 is newer than 3.9, a broken answer is silent; updatecheck=off in world_rules.txt and online = off in library.txt send no request; the check runs once per start; MismatchText's wording for the host and for a client; world_rules.txt, library.txt and the check's flags are put back")]
+		[ConsoleCommand(name: "CIUpdateCheck", docs: "Dev, anywhere: COV7 - the mod has no update check any more (Franz, 2026-10-17: the only source is raftmodding.com): no UpdateCheck type, no GitHub releases address in the mod's code, the main menu's hook asks nothing; MismatchText's wording for the host and for a client (both versions, which one to install, raftmodding.com when a version can't be told)")]
 		public static void UpdateCheckTestCommand() { StartTest(UpdateCheckRoutine()); }
 
 		static IEnumerator UpdateCheckRoutine()
 		{
 			bool ok = true;
-			string rules = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName), lib = Path.Combine(DynamicIslands.assetpath, "library.txt");
-			byte[] rulesBefore = CvBytes(rules), libBefore = CvBytes(lib);
-			string addressBefore = LibraryClient.TestAddress, versionBefore = LibraryPack.TestVersion, latestBefore = UpdateCheck.Latest;
-			bool startedBefore = Traverse.Create(typeof(UpdateCheck)).Field("started").GetValue<bool>(), toldBefore = Traverse.Create(typeof(UpdateCheck)).Field("told").GetValue<bool>();
-			var notices = new List<string>();
-			Application.LogCallback watch = (text, trace, type) => { if (text.Contains("A newer Custom Islands is out")) notices.Add(text); };
-			Application.logMessageReceived += watch;
-			bool onMenu = !LoadSceneManager.IsGameSceneLoaded && GameObject.Find("MainMenuCanvas") != null;
-			try
-			{
-				LibraryClient.TestAddress = null;
-				LibraryPack.TestVersion = "3.0";
-				// The rules
-				Check(ref ok, UpdateCheck.NoticeFor("3.1", "3.0") != null && UpdateCheck.NoticeFor("3.1", "3.0").Contains("(3.1, you have 3.0)"), "3.1 against 3.0: the notice names both");
-				Check(ref ok, UpdateCheck.NoticeFor("3.0", "3.0") == null && UpdateCheck.NoticeFor("2.9", "3.0") == null, "the same or an older release: no notice");
-				Check(ref ok, UpdateCheck.NoticeFor("3.10", "3.9") != null && UpdateCheck.NoticeFor("3.9", "3.10") == null, "3.10 is newer than 3.9, as a number");
-				Check(ref ok, UpdateCheck.NoticeFor(null, "3.0") == null && UpdateCheck.NoticeFor("3.1", UpdateCheck.Unknown) == null && UpdateCheck.NoticeFor("3.1", null) == null, "an unknown version on either side: no notice");
-				Check(ref ok, UpdateCheck.Clean("v3.1.2-beta") == "3.1.2" && UpdateCheck.Clean("Release 4.0") == "4.0" && UpdateCheck.Clean("nightly") == null, "tags read as versions: v3.1.2-beta -> 3.1.2");
-				Check(ref ok, UpdateCheck.LatestFrom("{\"tag_name\":\"v4.2\",\"name\":\"Four\"}") == "4.2" && UpdateCheck.LatestFrom("{\"name\":\"no tag\"}") == null, "the version is read from GitHub's JSON");
-
-				// Through the real path, with the JSON fed in
-				File.WriteAllLines(rules, new[] { "# CI" });
-				File.WriteAllLines(lib, new[] { "online = on" });
-				Check(ref ok, UpdateCheck.Enabled, "the check is on with a plain world_rules.txt and online = on");
-				foreach (string tag in new[] { "v99.0", "v3.0", "v2.5" })
+			Check(ref ok, typeof(VersionMismatch).Assembly.GetType("DynamicIslands.Editor.UpdateCheck") == null, "no UpdateCheck type in the mod");
+			// (every .cs the .rmod ships, but the tests: none asks GitHub's releases)
+			var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+			int read = 0;
+			var asking = new List<string>();
+			if (files != null)
+				foreach (var f in files)
 				{
-					bool newer = tag == "v99.0";
-					UpdateCheck.TestAnswer = () => "{\"tag_name\":\"" + tag + "\"}";
-					UpdateCheck.TestReset(null);
-					notices.Clear();
-					int asked = UpdateCheck.Asked;
-					UpdateCheck.OnMainMenu();
-					UpdateCheck.OnMainMenu(); // (the second call, the same start: no second request)
-					yield return null; yield return null;
-					Check(ref ok, UpdateCheck.Asked == asked + 1 && UpdateCheck.Latest == UpdateCheck.Clean(tag), "tag " + tag + ": one request, the latest release is " + UpdateCheck.Latest);
-					if (onMenu) Check(ref ok, notices.Count == (newer ? 1 : 0), "... " + (newer ? "one notice on the main menu" : "no notice") + " (" + notices.Count + ")");
+					if (!f.Key.EndsWith(".cs") || f.Key.StartsWith("DevTests")) continue;
+					read++;
+					string text = System.Text.Encoding.UTF8.GetString(f.Value);
+					if (text.Contains("releases/latest") || text.Contains("UpdateCheck.")) asking.Add(f.Key);
 				}
-				if (!onMenu) Log("  (not on the main menu: the notice itself isn't checked, only the version it would name)");
-
-				// A broken answer
-				UpdateCheck.TestAnswer = () => "this is not json {";
-				UpdateCheck.TestReset("1.0");
-				int askedBroken = UpdateCheck.Asked;
-				UpdateCheck.StartCheck();
-				yield return null; yield return null;
-				Check(ref ok, UpdateCheck.Asked == askedBroken + 1 && UpdateCheck.Latest == null, "a broken answer: no version, no error");
-
-				// Switched off
-				UpdateCheck.TestAnswer = () => "{\"tag_name\":\"v99.0\"}";
-				WorldRules.SaveDefault(UpdateCheck.SettingKey, "off");
-				UpdateCheck.TestReset(null);
-				int askedOff = UpdateCheck.Asked;
-				notices.Clear();
-				bool startedOff = UpdateCheck.StartCheck();
-				UpdateCheck.OnMainMenu();
-				yield return null; yield return null;
-				Check(ref ok, !UpdateCheck.Enabled && !startedOff && UpdateCheck.Asked == askedOff && UpdateCheck.Latest == null && notices.Count == 0, "updatecheck=off: no request, no version, no notice");
-				WorldRules.SaveDefault(UpdateCheck.SettingKey, "OFF");
-				Check(ref ok, !UpdateCheck.Enabled, "... also written OFF");
-				WorldRules.SaveDefault(UpdateCheck.SettingKey, "on");
-				Check(ref ok, UpdateCheck.Enabled, "updatecheck=on: the check is on again");
-				File.WriteAllLines(lib, new[] { "online = off" });
-				UpdateCheck.TestReset(null);
-				bool startedOffline = UpdateCheck.StartCheck();
-				UpdateCheck.OnMainMenu();
-				yield return null; yield return null;
-				Check(ref ok, !LibraryClient.Online && !UpdateCheck.Enabled && !startedOffline && UpdateCheck.Asked == askedOff, "online = off in library.txt: no request");
-
-				// The wording of a version difference
-				UpdateCheck.TestReset(null);
-				string host1 = UpdateCheck.MismatchText(true, "Anna", "3.0", "3.1"), host2 = UpdateCheck.MismatchText(true, "Anna", "3.2", "3.1");
-				Check(ref ok, host1.StartsWith("Anna joined with Custom Islands 3.0 - you have 3.1.") && host1.Contains("Anna should install Custom Islands 3.1.") && host1.EndsWith("or not arrive at all."), "host, the player has an older one: '" + host1 + "'");
-				Check(ref ok, host2.Contains("Anna joined with Custom Islands 3.2 - you have 3.1.") && host2.Contains("Update to Custom Islands 3.2 (or they install 3.1)."), "host, the player has a newer one: '" + host2 + "'");
-				string client1 = UpdateCheck.MismatchText(false, "", "3.2", "3.1"), client2 = UpdateCheck.MismatchText(false, "", "3.0", "3.1");
-				Check(ref ok, client1.StartsWith("The host has Custom Islands 3.2 - you have 3.1.") && client1.Contains("Install Custom Islands 3.2 to match the host."), "client, the host is newer: '" + client1 + "'");
-				Check(ref ok, client2.Contains("The host has Custom Islands 3.0 - you have 3.1.") && client2.Contains("The host should update to Custom Islands 3.1 (or you install 3.0)."), "client, the host is older: '" + client2 + "'");
-				string old = UpdateCheck.MismatchText(false, "", UpdateCheck.Older, "3.1"), unknown = UpdateCheck.MismatchText(true, "Bo", UpdateCheck.Unknown, "3.1");
-				Check(ref ok, old.Contains("The host has Custom Islands an older version - you have 3.1.") && old.Contains("The host should update to Custom Islands 3.1"), "a host from before versions were sent: '" + old + "'");
-				Check(ref ok, unknown.Contains("One version can't be told: both should install the newest Custom Islands.") && !unknown.Contains("The newest is"), "a version that can't be told: '" + unknown + "'");
-				UpdateCheck.TestReset("3.5");
-				string newest = UpdateCheck.MismatchText(false, "", "3.2", "3.1"), newestUnknown = UpdateCheck.MismatchText(true, "Bo", UpdateCheck.Unknown, "3.1");
-				Check(ref ok, newest.Contains("The newest is 3.5: best both update to it."), "the newest release is named when it is newer than both: '" + newest + "'");
-				Check(ref ok, newestUnknown.Contains("newest Custom Islands (3.5)."), "... and when a version can't be told: '" + newestUnknown + "'");
-			}
-			finally
-			{
-				Application.logMessageReceived -= watch;
-				UpdateCheck.TestAnswer = null;
-				LibraryClient.TestAddress = addressBefore;
-				LibraryPack.TestVersion = versionBefore;
-				CvRestore(rules, rulesBefore);
-				CvRestore(lib, libBefore);
-				UpdateCheck.TestReset(latestBefore);
-				Traverse.Create(typeof(UpdateCheck)).Field("started").SetValue(startedBefore);
-				Traverse.Create(typeof(UpdateCheck)).Field("told").SetValue(toldBefore);
-			}
+			if (read > 0) Check(ref ok, asking.Count == 0, read + " source files read, none asks for a newer version" + (asking.Count > 0 ? ": " + string.Join(", ", asking.ToArray()) : ""));
+			else Log("  (the .rmod's files can't be read here: only the type is checked)");
+			string host1 = VersionMismatch.MismatchText(true, "Anna", "3.0", "3.1"), host2 = VersionMismatch.MismatchText(true, "Anna", "3.2", "3.1");
+			Check(ref ok, host1.StartsWith("Anna joined with Custom Islands 3.0 - you have 3.1.") && host1.Contains("Anna should install Custom Islands 3.1.") && host1.EndsWith("or not arrive at all."), "host, the player has an older one: '" + host1 + "'");
+			Check(ref ok, host2.Contains("Anna joined with Custom Islands 3.2 - you have 3.1.") && host2.Contains("Update to Custom Islands 3.2 (or they install 3.1)."), "host, the player has a newer one: '" + host2 + "'");
+			string client1 = VersionMismatch.MismatchText(false, "", "3.2", "3.1"), client2 = VersionMismatch.MismatchText(false, "", "3.0", "3.1");
+			Check(ref ok, client1.StartsWith("The host has Custom Islands 3.2 - you have 3.1.") && client1.Contains("Install Custom Islands 3.2 to match the host."), "client, the host is newer: '" + client1 + "'");
+			Check(ref ok, client2.Contains("The host has Custom Islands 3.0 - you have 3.1.") && client2.Contains("The host should update to Custom Islands 3.1 (or you install 3.0)."), "client, the host is older: '" + client2 + "'");
+			string old = VersionMismatch.MismatchText(false, "", VersionMismatch.Older, "3.1"), unknown = VersionMismatch.MismatchText(true, "Bo", VersionMismatch.Unknown, "3.1");
+			Check(ref ok, old.Contains("The host has Custom Islands an older version - you have 3.1.") && old.Contains("The host should update to Custom Islands 3.1"), "a host from before versions were sent: '" + old + "'");
+			Check(ref ok, unknown.Contains("both should install the newest Custom Islands from raftmodding.com.") && !unknown.Contains("GitHub"), "a version that can't be told: '" + unknown + "'");
+			yield return null;
 			if (ok) Log("PASS: update check"); else Fail("update check");
 		}
 

@@ -239,7 +239,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = search != null && search.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

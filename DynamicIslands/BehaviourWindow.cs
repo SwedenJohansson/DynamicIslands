@@ -87,6 +87,7 @@ namespace DynamicIslands.Editor
 			instance.Load(target.Props ?? new Dictionary<string, string>());
 			instance.titleText.text = "BEHAVIOUR & EVENTS \u00B7 " + PlaceableCatalog.DisplayName(target.GameObjectName).ToUpperInvariant();
 			instance.Show();
+			instance.savedPrint = instance.Print();
 		}
 
 		/// <summary>The island's own events: players arriving, its quest done.</summary>
@@ -98,7 +99,20 @@ namespace DynamicIslands.Editor
 			instance.Load(DynamicIslands.currentIslandProps);
 			instance.titleText.text = "ISLAND EVENTS \u00B7 " + DynamicIslands.currentIslandName.ToUpperInvariant();
 			instance.Show();
+			instance.savedPrint = instance.Print();
 		}
+
+		/// <summary>What Esc compares: the settings as they would be saved.</summary>
+		string savedPrint;
+
+		string Print()
+		{
+			Keep();
+			return string.Join("\n", Result().OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => e.Key + "=" + e.Value).ToArray());
+		}
+
+		/// <summary>The settings differ from the object's or island's (Esc asks before it closes).</summary>
+		public static bool Unsaved { get { return IsOpen && instance.Print() != instance.savedPrint; } }
 
 		public static void Close()
 		{
@@ -149,7 +163,7 @@ namespace DynamicIslands.Editor
 		{
 			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's events" : "The behaviour", Save, Close); else Close(); }
 		}
 
 		void OnDisable()

@@ -128,6 +128,7 @@ namespace DynamicIslands.Editor
 			{
 				if (journal == null || stats == null) Build();
 				if (stats != null && stats.gameObject.activeSelf != PlayerLevels.On) stats.gameObject.SetActive(PlayerLevels.On);
+				KeepKeys();
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The hotbar's key tabs: " + e.Message); nextLook = Time.unscaledTime + 30f; }
 		}
@@ -158,16 +159,98 @@ namespace DynamicIslands.Editor
 			foreach (MonoBehaviour b in copy.GetComponentsInChildren<MonoBehaviour>(true))
 				if (!(b is Graphic) && !(b is LayoutElement) && !(b is Shadow) && !b.GetType().Name.StartsWith("TextMeshPro")) UnityEngine.Object.Destroy(b);
 			Image img = copy.GetComponentsInChildren<Image>(true).FirstOrDefault(i => i.transform != copy);
-			if (img != null && icon != null) { img.sprite = icon; img.preserveAspect = true; }
+			if (img != null && icon != null)
+			{
+				img.sprite = icon;
+				img.preserveAspect = true;
+				// (the open book is wider than Raft's notebook icon and covered the key's letter - Franz, 2026-10-17: a bit
+				// smaller, and the letter drawn after the icon, so it is always on top)
+				img.rectTransform.localScale = Vector3.one * IconScale;
+				Graphic letter = KeyText(copy);
+				if (letter != null && !letter.transform.IsChildOf(img.transform))
+				{
+					Transform t = letter.transform;
+					while (t.parent != null && t.parent != img.transform.parent && t.parent != copy) t = t.parent;
+					if (t.parent == img.transform.parent) t.SetAsLastSibling();
+				}
+			}
 			SetKey(copy, key);
 			return copy;
 		}
 
+		/// <summary>The size of the mod's icons on their tabs (a part of Raft's icon's place).</summary>
+		public const float IconScale = 0.8f;
+
+		/// <summary>The key's letter on a tab (Raft's TextMeshPro, or a Text), or null.</summary>
+		static Graphic KeyText(RectTransform tab)
+		{
+			Graphic tmp = tab.GetComponentsInChildren<Graphic>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
+			return tmp ?? tab.GetComponentInChildren<Text>(true);
+		}
+
+		/// <summary>Tests: the tab's key letter is drawn after (over) its icon.</summary>
+		public static bool KeyOverIcon(string tabName)
+		{
+			GameObject tab = GameObject.Find(tabName);
+			if (tab == null) return false;
+			Graphic letter = KeyText((RectTransform)tab.transform);
+			Image img = tab.GetComponentsInChildren<Image>(true).FirstOrDefault(i => i.transform != tab.transform);
+			if (letter == null || img == null) return false;
+			var order = tab.GetComponentsInChildren<Graphic>(true).ToList(); // (depth first: the order they are drawn in)
+			return order.IndexOf(letter) > order.IndexOf(img);
+		}
+
+		/// <summary>
+		/// The key's letter on a tab, shown as Raft shows TAB under the inventory's tab (Franz, 2026-10-17: the journal's tab had
+		/// none): switched on, drawn, as opaque as Raft's own, saying the key bound now.
+		/// </summary>
 		static void SetKey(RectTransform tab, string key)
 		{
-			Component tmp = tab.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
-			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(key);
-			else { Text t = tab.GetComponentInChildren<Text>(true); if (t != null) t.text = key; }
+			Graphic letter = KeyText(tab);
+			if (letter == null) return;
+			for (Transform t = letter.transform; t != null && t != tab; t = t.parent) if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+			letter.enabled = true;
+			Graphic raftLetter = RaftKeyText();
+			Color c = raftLetter != null ? raftLetter.color : letter.color;
+			if (c.a < 0.9f) c.a = 1f;
+			letter.color = c;
+			if (letter is Text) ((Text)letter).text = key;
+			else Traverse.Create(letter).Property("text").SetValue(key);
+		}
+
+		/// <summary>The letter under Raft's inventory tab (TAB), whose look the mod's tabs copy.</summary>
+		static Graphic RaftKeyText()
+		{
+			GameObject inv = GameObject.Find(LayoutPath + "/UI_Hotkey_Element_Inventory");
+			return inv != null ? KeyText((RectTransform)inv.transform) : null;
+		}
+
+		static string LetterText(Graphic letter)
+		{
+			if (letter == null) return null;
+			if (letter is Text) return ((Text)letter).text;
+			return Traverse.Create(letter).Property("text").GetValue<string>();
+		}
+
+		/// <summary>Tests: the key a tab shows, or why none is seen (switched off, see-through, empty).</summary>
+		public static string KeyShown(string tabName)
+		{
+			GameObject tab = GameObject.Find(tabName);
+			if (tab == null) return "(no tab)";
+			Graphic letter = KeyText((RectTransform)tab.transform);
+			if (letter == null) return "(no letter)";
+			if (!letter.gameObject.activeInHierarchy) return "(letter switched off)";
+			if (!letter.enabled) return "(letter not drawn)";
+			if (letter.color.a < 0.5f) return "(letter see-through)";
+			string s = LetterText(letter);
+			return string.IsNullOrEmpty(s) ? "(letter empty)" : s;
+		}
+
+		/// <summary>The key each tab should show now (Tick puts it back if something else changed it).</summary>
+		static void KeepKeys()
+		{
+			if (journal != null && KeyShown(JournalName) != ModKeys.Name(JournalWindow.Key)) SetKey(journal, ModKeys.Name(JournalWindow.Key));
+			if (stats != null && stats.gameObject.activeInHierarchy && KeyShown(StatsName) != ModKeys.Name(PlayerLevels.Key)) SetKey(stats, ModKeys.Name(PlayerLevels.Key));
 		}
 
 		/// <summary>The journal's or stats page's key was changed (ModKeys): the tabs say the new ones.</summary>

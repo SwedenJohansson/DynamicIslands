@@ -74,7 +74,9 @@ namespace DynamicIslands.Editor
 			foreach (Button b in tabs) UIKit.Size(b.gameObject, 150);
 			search = UIKit.Field(tools, "Search titles, authors, tags...", "", 32f, "Show only the entries whose title, author, summary or tags hold this");
 			search.onValueChanged.AddListener(_ => ShowList());
-			canvas.gameObject.AddComponent<WindowKeys>().Typing = () => search != null && search.isFocused;
+			WindowKeys keys = canvas.gameObject.AddComponent<WindowKeys>();
+			keys.Typing = () => search != null && search.isFocused;
+			keys.Close = Close;
 
 			RectTransform body = UIKit.Rect("Body", panel);
 			UIKit.Size(body.gameObject, -1, 610);

@@ -121,7 +121,7 @@ namespace DynamicIslands.Editor
 				if (typing) EditorInput.IsTyping = true;
 				else if (wasTyping) EditorInput.IsTyping = false;
 				wasTyping = typing;
-				if (typing && Input.GetKeyDown(KeyCode.Escape)) { search.text = ""; search.DeactivateInputField(); }
+				if (typing && Input.GetKeyDown(KeyCode.Escape)) { EscKey.Swallow(); search.text = ""; search.DeactivateInputField(); }
 			}
 			if (dirty && Time.unscaledTime >= rebuildAt) { dirty = false; Rebuild(); }
 

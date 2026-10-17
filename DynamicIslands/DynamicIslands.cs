@@ -326,7 +326,6 @@ namespace DynamicIslands
 			ExperimentalNotice.Show(MainMenuParent.transform);
 			PatchHealth.ShowIfFailed(); // (a patch that no longer fits this Raft: which parts are off)
 			PcCheck.ShowIfProblems(); // (the PC: a folder the mod can't write, an unzipped .rmod... - AU45)
-			UpdateCheck.OnMainMenu(); // (a newer Custom Islands is out: once per start - AU44)
 			// The editor's start window and the world plan editor live on the menu too (back from the editor: open again)
 			MenuWindows.Ensure();
 			EditorEntry.OnMainMenu();

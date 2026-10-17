@@ -83,7 +83,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = (search != null && search.isFocused) || (nameField != null && nameField.isFocused) || listContent.GetComponentsInChildren<InputField>().Any(f => f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

@@ -71,7 +71,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			// (Esc cancels: the gizmo selects objects on click again - it didn't until the tab changed)
-			if (Input.GetKeyDown(KeyCode.Escape)) { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false; Destroy(this.gameObject); return; }
+			if (Input.GetKeyDown(KeyCode.Escape)) { EscKey.Swallow(); if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false; Destroy(this.gameObject); return; }
 
 			if (!EditorInput.IsTyping)
 			{

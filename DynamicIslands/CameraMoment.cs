@@ -180,7 +180,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			if (current != this) return;
-			if (Input.GetKeyDown(KeyCode.Escape) && Time.unscaledTime - started > 0.1f) { Skip(); return; }
+			if (Input.GetKeyDown(KeyCode.Escape) && Time.unscaledTime - started > 0.1f) { EscKey.Swallow(); Skip(); return; }
 			if (!LoadSceneManager.IsGameSceneLoaded || RAPI.GetLocalPlayer() == null) { End(false); return; }
 			Pose();
 		}

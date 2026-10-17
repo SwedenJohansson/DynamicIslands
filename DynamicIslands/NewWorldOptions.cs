@@ -182,7 +182,7 @@ namespace DynamicIslands.Editor
 		static void ShowPlan(string name)
 		{
 			WorldPlan p = WorldPlan.Load(name);
-			InfoWindow.Open("Plan: " + name, PlanText(p), new InfoWindow.Choice("Close", null));
+			InfoWindow.Open("Plan: " + name, PlanText(p), new InfoWindow.Choice("Close", InfoWindow.Close));
 		}
 
 		internal static List<DropList.Option> PlanOptions()

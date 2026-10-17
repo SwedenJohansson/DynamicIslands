@@ -312,7 +312,7 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(tag) || !tag.StartsWith(VersionTag)) return;
 			string theirs = tag.Substring(VersionTag.Length), mine = LibraryPack.ModVersion;
 			string text;
-			if (theirs == mine && UpdateCheck.IsKnown(mine))
+			if (theirs == mine && VersionMismatch.IsKnown(mine))
 			{
 				// (the same version: every build of an alpha says the same, so the builds are compared too - a friend with a
 				// 3.0 from before the upgrade table joined without a word and never saw it - AU81)
@@ -324,7 +324,7 @@ namespace DynamicIslands.Editor
 					: (Raft_Network.IsHost ? who + " joined with another build of Custom Islands " + mine : "The host has another build of Custom Islands " + mine) +
 					  " (theirs " + theirBuild + ", yours " + Build + "). Things one has may be missing for the other: both should install the same, newest release.";
 			}
-			else text = UpdateCheck.MismatchText(Raft_Network.IsHost, who, theirs, mine);
+			else text = VersionMismatch.MismatchText(Raft_Network.IsHost, who, theirs, mine);
 			if (VersionNotice == text) return;
 			VersionNotice = text;
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] " + text);
@@ -573,7 +573,7 @@ namespace DynamicIslands.Editor
 						{
 							// (a player older than the version handshake sends no version; a name for who joined, if Raft shows one)
 							string who = PrivateStorage.NameOf(from.Id);
-							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + UpdateCheck.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'", msg.Data);
+							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + VersionMismatch.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'", msg.Data);
 							// (the version first, alone in a message kind and with fields every version has, so an older player
 							// can still read it: everything else follows it)
 							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities + "," + BuildTag + Build }, from);
@@ -767,7 +767,7 @@ namespace DynamicIslands.Editor
 			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
 			// (the host's version reply comes ahead of its list: none came, so the host is older than it - AU35)
-			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + UpdateCheck.Older, "The host", null);
+			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + VersionMismatch.Older, "The host", null);
 			// (the raft as this message arrives, once for all its islands - the host took its own once as it made the message;
 			// no raft here yet: nothing is placed around the scene's origin, the whole list is asked for again - AU41)
 			Vector3? raftNow = CustomIslandSpawner.RaftPosition;

@@ -194,12 +194,23 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Map types as data** (`.maptype` files you can write yourself), ReRollMapType, and a **Defaults** window for the
   `spawnpool.txt` settings.
 - Version notices: plans and worlds remember which mod version wrote them and warn when they come from a newer one;
-  players with different mod versions are told, and an update check offers the new version.
+  players with different mod versions are told.
 - **Starter kit for Test in a world:** you arrive with weapons, tools, a head light, flippers, an oxygen bottle, food
   and water, hunger and thirst full; in the test world **Esc → Custom Islands** has **Kit: On/Off** (for the next
   Test, kept in `testkit.txt`) and **Give the kit**.
 
 ### Changed
+- **No update check:** the mod no longer asks GitHub for a newer version on the main menu (and never downloads one);
+  new versions come from raftmodding.com. Players with different versions are still told when they meet.
+- **Esc closes every window of the mod**, the topmost one first and one per press: the plan picker, the island
+  library and its import window, World settings and its island list now close with Esc too. A window with unsaved
+  changes (World plans, a quest, a note, story items, behaviour and events) asks first: Save and close, Close without
+  saving or Keep editing. Esc in a text field no longer throws away what was typed into it.
+- **The alpha box can be closed:** its **X** closes it until the next version; a small **Custom Islands: help** button
+  in the main menu's bottom right corner opens it again (Discord, Guide, Report a problem).
+- **The journal's key on the hotbar:** its tab at the hotbar's right end now shows its key (J, or the key it was
+  changed to) the way the inventory's tab shows TAB; it showed none.
+- **The .rmod holds only the mod's own files:** a stray `bash.exe.stackdump` was packed into the 10-17 build.
 - **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest
   fill in over the next frames (1,000 saved islands held it for over 2 s).
 - **Tidy up, Delete and Rename read islands faster:** they read only each island's own settings, not the whole
@@ -301,6 +312,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **View rules... in the plan picker:** its Close button threw an error instead of closing the rules.
 - **A joined player sometimes got no islands:** when Raft's world-arrived event never reached the mod, the
   joining player never asked the host for its islands. Now it asks anyway 10 s into the game.
 - **The credits at a story's end:** no island banner shows faintly behind the top of the credits card any more (the

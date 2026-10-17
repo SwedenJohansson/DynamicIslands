@@ -112,7 +112,7 @@ namespace DynamicIslands.Editor
 			for (int d = 0; d <= 9; d++) if (Input.GetKeyDown(KeyCode.Alpha0 + d) || Input.GetKeyDown(KeyCode.Keypad0 + d)) Key(d.ToString());
 			if (Input.GetKeyDown(KeyCode.Backspace)) Key("C");
 			if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) Key("OK");
-			if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab)) { Hide(); return; }
+			if (EscKey.Down(this) || Input.GetKeyDown(KeyCode.Tab)) { Hide(); return; }
 			Network_Player player = null;
 			try { player = ComponentManager<Network_Player>.Value; } catch { }
 			if (at == null || !LoadSceneManager.IsGameSceneLoaded || (player != null && Vector3.Distance(player.transform.position, at.position) > 8f)) Hide();

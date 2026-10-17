@@ -712,7 +712,7 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape) || !LoadSceneManager.IsGameSceneLoaded) Hide();
+			if (EscKey.Down(this) || !LoadSceneManager.IsGameSceneLoaded) Hide();
 		}
 
 		void Fill()

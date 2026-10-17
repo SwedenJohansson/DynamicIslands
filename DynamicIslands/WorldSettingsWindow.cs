@@ -164,6 +164,7 @@ namespace DynamicIslands.Editor
 			UIKit.Label(buttons, "", 12);
 			Button done = UIKit.Button(buttons, "Done", Close, "Keep these settings for the world you create", 150, 34f, 15);
 			UIKit.Primary(done);
+			EscKey.Add(window.gameObject, Close); // (Esc = Done)
 			window.gameObject.SetActive(false);
 			Debug.Log("[CUSTOM ISLANDS] New Game box: World settings (world rules, randomizer, extra options) in their own window");
 		}
