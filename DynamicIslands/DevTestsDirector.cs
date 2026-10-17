@@ -109,7 +109,7 @@ namespace DynamicIslands
 		/// <summary>A copy of the sample island with a zone "camp" in the middle, a one-step quest ("go to camp") and these rules.</summary>
 		static IslandFile RuleIsland(string name, string title, params IntroRule[] rules)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = name;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -256,7 +256,7 @@ namespace DynamicIslands
 
 		#region World plans
 
-		const string TestPlan = "ci plan";
+		const string TestPlan = "ci plan", PlanSample = "ciplansample";
 
 		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - the plan list (no sample plans), a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
 		public static void PlanTest()
@@ -280,8 +280,12 @@ namespace DynamicIslands
 			RemoveCIPlan(CIHopping);
 			Check(ref ok, !File.Exists(WorldPlan.PathFor(CIHopping)), "the test plan moved out again");
 
+			// (the start rule's island: the tests' sample saved under a test name - no player's island is needed)
+			IslandFile sample = SampleIsland();
+			sample.Name = PlanSample;
+			sample.Save(IslandSpawner.PathFor(PlanSample));
 			WorldPlan p = WorldPlan.Parse(TestPlan, "description = Test plan\nrandom = off\n" +
-				"rule = start | island:generated_sample | start | ahead:300 | Hello | Start\n" +
+				"rule = start | island:" + PlanSample + " | start | ahead:300 | Hello | Start\n" +
 				"rule = next | type:snowy | quest:start | near:start:700:east | East | Snow\n" +
 				"rule = broken | island:no such island | zone:start:nowhere | near:nobody:500:any | |\n");
 			p.Save();
@@ -317,6 +321,7 @@ namespace DynamicIslands
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			File.Delete(WorldPlan.PathFor(TestPlan));
+			File.Delete(IslandSpawner.PathFor(PlanSample));
 			if (ok) Log("PASS: world plan window"); else Fail("world plan window");
 		}
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DynamicIslands.Editor
 {
@@ -65,8 +66,216 @@ namespace DynamicIslands.Editor
 		{
 			// (Raft's shark cage is an on-demand object of the radio tower: the cage is made when that scene is loaded)
 			if (PlaceableCatalog.Get(CageSource) == null && !PlaceableCatalog.IsIndexed(CageSource)) { Debug.LogWarning("[CUSTOM ISLANDS] '" + CageSource + "' not found in Raft's objects; the survivor cage is left out"); return false; }
-			PlaceableCatalog.AddCustomFrom(CageObject, CageSource, ContentCatalog.LootCategory, "Survivor in a cage");
+			PlaceableCatalog.AddCustomFrom(CageObject, CageSource, ContentCatalog.LootCategory, "Survivor in a cage", TidyCage);
 			return true;
+		}
+
+		/// <summary>What the survivor cage leaves out of Raft's shark cage (found by TidyCage; tests read it).</summary>
+		public static readonly List<string> LeftOut = new List<string>();
+
+		/// <summary>The survivor cage's own copy of Raft's shark cage, without the rope it hangs from at Radio tower: away
+		/// from the tower's crane the rope lay on the ground beside the cage (found by the user, 2026-10-16). The rope is part
+		/// of the cage's one mesh, and Raft's meshes can't be read in the game, so the mesh is read from Raft's own files
+		/// (checked against the loaded one), and the copy leaves out the stretch of triangles that holds most of what lies
+		/// outside the cage's frame (the footprint of its upper half): the rope - in the editor and in a world. Raft's shark
+		/// cage keeps its mesh; anything unexpected shows the cage whole.</summary>
+		internal static void TidyCage(GameObject cage)
+		{
+			LeftOut.Clear();
+			MeshFilter mf0 = cage.GetComponent<MeshFilter>();
+			Mesh m = mf0 != null ? mf0.sharedMesh : null;
+			if (m == null) { Debug.LogWarning("[CUSTOM ISLANDS] Survivor cage: Raft's shark cage has no mesh, shown whole"); return; }
+			string note;
+			Mesh own;
+			try { own = WithoutRope(m, out note); }
+			catch (Exception e) { own = null; note = "couldn't be read (" + e.Message + "), shown whole"; }
+			Debug.Log("[CUSTOM ISLANDS] Survivor cage (" + m.name + "): " + note);
+			if (own == null) return;
+			foreach (MeshFilter mf in cage.GetComponentsInChildren<MeshFilter>(true))
+				if (mf.sharedMesh == m) mf.sharedMesh = own;
+			foreach (MeshCollider mc in cage.GetComponentsInChildren<MeshCollider>(true))
+				if (mc.sharedMesh == m) mc.sharedMesh = own;
+			LeftOut.Add(note);
+		}
+
+		/// <summary>A mesh as read from Raft's files.</summary>
+		sealed class FileMesh
+		{
+			public Vector3[] Pos, Normal;
+			public Vector4[] Tangent;
+			public Color32[] Colour;
+			public Vector2[] Uv;
+			public int[] Tris;
+			public string From;
+		}
+
+		/// <summary>A readable copy of the mesh without the rope. Null: it couldn't be read, or no rope was found (note says which).</summary>
+		static Mesh WithoutRope(Mesh m, out string note)
+		{
+			if (m.subMeshCount != 1 || m.GetTopology(0) != MeshTopology.Triangles) { note = "not one part of triangles, shown whole"; return null; }
+			FileMesh f = ReadFromFiles(m);
+			if (f == null) { note = "not found in Raft's files as it is loaded, shown whole"; return null; }
+			Vector3[] pos = f.Pos;
+			int[] t = f.Tris;
+			int count = t.Length / 3;
+			// (the cage's frame: the footprint of its upper half - the rope lies low, on the ground beside it)
+			float low = pos.Min(v => v.y), high = pos.Max(v => v.y), half = (low + high) * 0.5f;
+			List<Vector3> upper = pos.Where(v => v.y > half).ToList();
+			Bounds frame = new Bounds(upper[0], Vector3.zero);
+			foreach (Vector3 v in upper) frame.Encapsulate(v);
+			frame.Expand(new Vector3(0.2f, 0f, 0.2f));
+			Func<int, bool> outsideV = v => pos[v].x < frame.min.x || pos[v].x > frame.max.x || pos[v].z < frame.min.z || pos[v].z > frame.max.z;
+			Func<int, bool> outside = i => outsideV(t[i * 3]) && outsideV(t[i * 3 + 1]) && outsideV(t[i * 3 + 2]);
+			// (the pieces: triangles sharing a corner, or a point at the same spot, are one piece)
+			int[] root = new int[pos.Length];
+			for (int v = 0; v < root.Length; v++) root[v] = v;
+			Func<int, int> find = v => { while (root[v] != v) { root[v] = root[root[v]]; v = root[v]; } return v; };
+			Action<int, int> join = (a, b) => { a = find(a); b = find(b); if (a != b) root[a] = b; };
+			var spot = new Dictionary<Vector3Int, int>();
+			for (int v = 0; v < pos.Length; v++)
+			{
+				Vector3Int k = Vector3Int.RoundToInt(pos[v] * 200f);
+				int other;
+				if (spot.TryGetValue(k, out other)) join(v, other); else spot[k] = v;
+			}
+			for (int i = 0; i < count; i++) { join(t[i * 3], t[i * 3 + 1]); join(t[i * 3 + 1], t[i * 3 + 2]); }
+			// (the stretches: triangles next to each other in the mesh's order, of one piece; the rope is the stretch that
+			// holds most of the triangles outside the frame - a tube from the top of the cage, over its floor, out onto the ground)
+			int all = 0, best = -1, bestEnd = -1, bestOut = 0;
+			for (int i = 0; i < count; )
+			{
+				int r = find(t[i * 3]), j = i, n = 0;
+				for (; j < count && find(t[j * 3]) == r; j++) if (outside(j)) n++;
+				all += n;
+				if (n > bestOut) { best = i; bestEnd = j; bestOut = n; }
+				i = j;
+			}
+			note = "read from " + f.From + ", " + count + " triangles, frame " + frame.min.ToString("F2") + " to " + frame.max.ToString("F2") + ", " + all + " outside";
+			if (best < 0 || bestOut * 5 < all * 4 || bestEnd - best > count / 2) { note += "; no one stretch holds them (not the rope), shown whole"; return null; }
+			var keep = new List<int>(t.Length);
+			for (int i = 0; i < count; i++)
+				if (i < best || i >= bestEnd) { keep.Add(t[i * 3]); keep.Add(t[i * 3 + 1]); keep.Add(t[i * 3 + 2]); }
+			Mesh own = new Mesh { name = m.name + " (survivor cage)" };
+			own.SetVertices(pos);
+			own.SetNormals(f.Normal);
+			own.SetTangents(f.Tangent);
+			own.SetColors(f.Colour);
+			own.SetUVs(0, f.Uv);
+			own.SetTriangles(keep, 0, true);
+			note += "; the rope, triangles " + best + "-" + (bestEnd - 1) + " (" + bestOut + " of them outside), left out: kept " + keep.Count / 3;
+			return own;
+		}
+
+		/// <summary>The mesh from Raft's own files (Raft_Data's sharedassets*.assets and the .resS file next to it), when
+		/// its layout is the one known (the shark cage's: 16-bit indices, one stream of position, normal, tangent, colour
+		/// and one uv) and its counts match the loaded mesh. Null otherwise.</summary>
+		static FileMesh ReadFromFiles(Mesh m)
+		{
+			string dir = Application.dataPath;
+			byte[] key = System.Text.Encoding.ASCII.GetBytes(m.name);
+			foreach (string file in System.IO.Directory.GetFiles(dir, "sharedassets*.assets")
+				.OrderBy(x => System.IO.Path.GetFileName(x) == "sharedassets6.assets" ? 0 : 1).ThenBy(x => new System.IO.FileInfo(x).Length))
+			{
+				byte[] d = ReadAll(file);
+				for (int at = Find(d, key, 4, d.Length); at >= 0; at = Find(d, key, at + 1, d.Length))
+				{
+					FileMesh f = Parse(d, at, key.Length, m, file);
+					if (f != null) return f;
+				}
+			}
+			return null;
+		}
+
+		static byte[] ReadAll(string file)
+		{
+			using (var fs = new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			{
+				byte[] d = new byte[fs.Length];
+				int n = 0;
+				while (n < d.Length) { int r = fs.Read(d, n, d.Length - n); if (r <= 0) break; n += r; }
+				return d;
+			}
+		}
+
+		static int Find(byte[] d, byte[] key, int from, int to)
+		{
+			for (int i = Math.Max(0, from); i + key.Length <= to; i++)
+			{
+				int k = 0;
+				while (k < key.Length && d[i + k] == key[k]) k++;
+				if (k == key.Length) return i;
+			}
+			return -1;
+		}
+
+		/// <summary>The mesh whose name starts at <paramref name="at"/>, or null when it isn't laid out as expected.</summary>
+		static FileMesh Parse(byte[] d, int at, int nameLength, Mesh m, string file)
+		{
+			Func<int, int> i32 = o => BitConverter.ToInt32(d, o);
+			if (at < 4 || i32(at - 4) != nameLength) return null;
+			int p = (at + nameLength + 3) & ~3;
+			int vertexCount = m.vertexCount, indexCount = (int)m.GetIndexCount(0);
+			if (p + 4 + 48 + 44 + 4 > d.Length) return null;
+			// (one part: first byte 0, index count, triangles, base vertex 0, first vertex 0, vertex count, then its box)
+			if (i32(p) != 1 || i32(p + 4) != 0 || i32(p + 8) != indexCount || i32(p + 12) != 0 || i32(p + 16) != 0 || i32(p + 20) != 0 || i32(p + 24) != vertexCount) return null;
+			p += 4 + 48;
+			// (no blend shapes, bones or compression, not readable, 16-bit indices)
+			for (int k = 0; k < 11; k++) if (i32(p + k * 4) != 0) return null;
+			p += 44;
+			if (i32(p) != indexCount * 2 || p + 4 + indexCount * 2 > d.Length) return null;
+			var tris = new int[indexCount];
+			for (int k = 0; k < indexCount; k++) { tris[k] = BitConverter.ToUInt16(d, p + 4 + k * 2); if (tris[k] >= vertexCount) return null; }
+			p = (p + 4 + indexCount * 2 + 3) & ~3;
+			// (the vertex layout: count, 14 channels of stream/offset/format/size - position, normal, tangent, colour, uv)
+			byte[] layout = { 0, 0, 0, 3, 0, 12, 1, 0x34, 0, 20, 1, 4, 0, 28, 2, 4, 0, 32, 1, 2 };
+			if (p + 8 + 56 + 4 > d.Length || i32(p) != vertexCount || i32(p + 4) != 14) return null;
+			for (int k = 0; k < 56; k++) if (d[p + 8 + k] != (k < layout.Length ? layout[k] : 0)) return null;
+			if (i32(p + 64) != 0) return null; // (the data is in the .resS file)
+			p += 68;
+			const int stride = 36;
+			string resName = System.IO.Path.GetFileName(file) + ".resS";
+			byte[] res = System.Text.Encoding.ASCII.GetBytes(resName);
+			int s = Find(d, res, p, Math.Min(d.Length, p + 4 * 1024 * 1024));
+			if (s < 16 || i32(s - 4) != res.Length || BitConverter.ToUInt32(d, s - 8) != vertexCount * stride) return null;
+			long offset = BitConverter.ToInt64(d, s - 16);
+			string resPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(file), resName);
+			byte[] v = new byte[vertexCount * stride];
+			using (var fs = new System.IO.FileStream(resPath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite))
+			{
+				if (offset < 0 || offset + v.Length > fs.Length) return null;
+				fs.Seek(offset, System.IO.SeekOrigin.Begin);
+				int n = 0;
+				while (n < v.Length) { int r = fs.Read(v, n, v.Length - n); if (r <= 0) return null; n += r; }
+			}
+			Func<int, float> h = o => HalfToFloat(BitConverter.ToUInt16(v, o));
+			var f = new FileMesh
+			{
+				Pos = new Vector3[vertexCount], Normal = new Vector3[vertexCount], Tangent = new Vector4[vertexCount],
+				Colour = new Color32[vertexCount], Uv = new Vector2[vertexCount], Tris = tris, From = System.IO.Path.GetFileName(file)
+			};
+			for (int k = 0; k < vertexCount; k++)
+			{
+				int o = k * stride;
+				f.Pos[k] = new Vector3(BitConverter.ToSingle(v, o), BitConverter.ToSingle(v, o + 4), BitConverter.ToSingle(v, o + 8));
+				f.Normal[k] = new Vector3(h(o + 12), h(o + 14), h(o + 16));
+				f.Tangent[k] = new Vector4(h(o + 20), h(o + 22), h(o + 24), h(o + 26));
+				f.Colour[k] = new Color32(v[o + 28], v[o + 29], v[o + 30], v[o + 31]);
+				f.Uv[k] = new Vector2(h(o + 32), h(o + 34));
+			}
+			// (the points must fill the loaded mesh's box)
+			Bounds b = new Bounds(f.Pos[0], Vector3.zero);
+			foreach (Vector3 q in f.Pos) b.Encapsulate(q);
+			if ((b.center - m.bounds.center).magnitude > 0.05f || (b.size - m.bounds.size).magnitude > 0.05f) return null;
+			return f;
+		}
+
+		/// <summary>A 16-bit float.</summary>
+		static float HalfToFloat(ushort x)
+		{
+			int sign = (x >> 15) != 0 ? -1 : 1, exp = (x >> 10) & 0x1F, man = x & 0x3FF;
+			if (exp == 0) return sign * man * (1f / 16777216f);
+			if (exp == 31) return man == 0 ? sign * float.PositiveInfinity : float.NaN;
+			return sign * (1f + man / 1024f) * Mathf.Pow(2f, exp - 15);
 		}
 
 		/// <summary>What the inspector and the behaviour window say about a cage.</summary>

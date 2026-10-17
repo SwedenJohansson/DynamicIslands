@@ -72,6 +72,14 @@ namespace DynamicIslands
 				if (c == null) { Fail("rf survivor"); yield break; }
 				yield return new WaitForSeconds(1f);
 				Check(ref ok, c.Figure != null && c.Figure.activeInHierarchy && !c.IsOpen, "the survivor stands in the closed cage");
+				// (the shark cage's rope - loose on the ground away from Radio tower's crane - is left out of the survivor cage,
+				// and only out of it: Raft's shark cage keeps it)
+				GameObject shark = PlaceableCatalog.Get(Survivors.CageSource);
+				MeshFilter[] own = c.Cage.GetComponentsInChildren<MeshFilter>(true), raft = shark != null ? shark.GetComponentsInChildren<MeshFilter>(true) : new MeshFilter[0];
+				Func<Mesh, long> tris = mesh => { long n = 0; for (int i = 0; mesh != null && i < mesh.subMeshCount; i++) n += mesh.GetIndexCount(i) / 3; return n; };
+				Check(ref ok, Survivors.LeftOut.Count > 0 && own.Length > 0 && own.Length == raft.Length && c.Cage.GetComponentsInChildren<Renderer>(false).Any(r => r.enabled) &&
+					own.Zip(raft, (a, b) => a.sharedMesh != b.sharedMesh && tris(a.sharedMesh) > 0 && tris(a.sharedMesh) < tris(b.sharedMesh) && !b.sharedMesh.name.Contains("survivor")).All(x => x),
+					"the cage shows without the shark cage's loose rope (" + string.Join(" | ", Survivors.LeftOut.Select(l => l.Length > 60 ? l.Substring(0, 60) : l).ToArray()) + "); Raft's shark cage keeps it");
 				int bubbles = Survivors.Bubbles, rescued = Survivors.RescuedCount;
 				PutPlayerNear(c.transform);
 				bool used = c.Use();

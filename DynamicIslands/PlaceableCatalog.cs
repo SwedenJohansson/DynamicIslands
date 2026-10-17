@@ -312,20 +312,35 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether the index knows the object (loaded or not).</summary>
 		public static bool IsIndexed(string name) { return name != null && (index.ContainsKey(name) || derived.ContainsKey(name)); }
 
-		class Derived { public string Source, Category, Label; }
+		class Derived { public string Source, Category, Label; public Action<GameObject> Tidy; }
 		/// <summary>Custom objects made from an on-demand object (RF3's survivor cage from Raft's shark cage): built when
 		/// the source's scene is loaded.</summary>
 		static readonly Dictionary<string, Derived> derived = new Dictionary<string, Derived>();
 
 		/// <summary>A custom object that is a copy of Raft's object source: added now when the source is loaded, else when
 		/// its scene is (an island or the editor asks for the custom object: the source's scene loads).</summary>
-		internal static void AddCustomFrom(string name, string source, string category, string label)
+		/// tidy: the custom object is its own copy of the source, which tidy changes (the survivor cage leaves out the
+		/// shark cage's loose rope); without it the two share one prototype.
+		internal static void AddCustomFrom(string name, string source, string category, string label, Action<GameObject> tidy = null)
 		{
 			labels[name] = label;
 			categories[name] = category;
 			GameObject proto;
-			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddCustom(name, proto, category, label); return; }
-			derived[name] = new Derived { Source = source, Category = category, Label = label };
+			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddDerived(name, proto, category, label, tidy); return; }
+			derived[name] = new Derived { Source = source, Category = category, Label = label, Tidy = tidy };
+		}
+
+		static void AddDerived(string name, GameObject source, string category, string label, Action<GameObject> tidy)
+		{
+			if (tidy == null) { AddCustom(name, source, category, label); return; }
+			// (a copy under the inactive container: no script of it wakes up; Spawn copies it as any other object)
+			GameObject own = UnityEngine.Object.Instantiate(source, container.transform);
+			own.name = name;
+			own.transform.localPosition = source.transform.localPosition;
+			own.transform.localRotation = source.transform.localRotation;
+			own.transform.localScale = source.transform.localScale;
+			try { tidy(own); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Tidying '" + name + "': " + e.Message); }
+			AddCustom(name, own, category, label);
 		}
 
 		static string SourceOf(string name) { Derived d; return derived.TryGetValue(name, out d) && !prototypes.ContainsKey(name) ? d.Source : name; }
@@ -335,7 +350,7 @@ namespace DynamicIslands.Editor
 			foreach (var d in derived.ToList())
 			{
 				GameObject proto;
-				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddCustom(d.Key, proto, d.Value.Category, d.Value.Label); derived.Remove(d.Key); }
+				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddDerived(d.Key, proto, d.Value.Category, d.Value.Label, d.Value.Tidy); derived.Remove(d.Key); }
 			}
 		}
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }

@@ -854,7 +854,8 @@ ladder or foundations). It is worked out with Raft's own player: how steep it ca
 island with its size, height and look; **A variation of it** starts from the island's own ground and reshapes it
 (stretch, mirror, roughen, coast, valleys...). This tab shows only what remakes the chosen island - and a **Quest**
 group - not the Normal tab's other groups (its buildings and caves aren't used here). It remakes the island's
-**ground and nature**, and for a story island with designs also **what is built on it**:
+**ground and nature**, for a story island **its look** (below), and for one with designs also **what is built on
+it**:
 
 ![Rebuild it: an oil rig](images/generator-rebuild-rig.jpg)
 *Rebuild it: the Radio Tower rebuilt as an oil rig off the island - the tower's floors on legs, the dish, the windmill.*
@@ -891,6 +892,22 @@ group - not the Normal tab's other groups (its buildings and caves aren't used h
 
   ![Rebuild it: the story islands' designs](images/generator-rebuild-story.jpg)
   *Rebuild it for the other story islands: two designs each, from their own pieces.*
+
+For Raft's story islands, **Something new like it** and **A variation of it** also give the new island **its look** -
+the original's own big pieces, laid out the way the original has them (the line under the picture names it):
+
+| Island | Its look |
+|---|---|
+| Caravan Town (and its three small islands) | **Red rock mesas**: 2 to 8 flat-topped rocks with steep walls, some in twins joined by the rope bridge; ladders up a notch in the wall, a hut on its pillars (or an acacia or a dead tree) and often a caravan or van on top, round boulders and a caravan or van at the feet. A variation turns the island's own high ground into mesas. |
+| Tangaroa | **The dome**: a round island levelled about 9.5 m up, the dome's base, frame and glass, the hexagon roads and the tall tower in the middle. |
+| Utopia | **Tall white towers**: Utopia's three towers with the room on top, and its four other towers further out, all rising out of the sea round a low island the way the original has them. |
+| Varuna Point | **The motherlode**: two 84 m motherlode floors on four pillars over levelled rocky ground, walls round the sides (one side sometimes left open), the lift shaft and the excavator beside them, the apex crane on top and rubble and bricks on both floors. |
+| Balboa (and its small islands) | **Giant firs** on the higher ground and the big rocks on its slopes. |
+| Temperance | **Snow rocks**: the big unclimbable rocks, the telephone antenna on the highest point and the large igloo on the flat. |
+| Radio Tower | **Low rocks**: a few rocks just out of the sea, the concrete footings of the tower's platforms on them, a satellite dish on the highest and a plastic boat on the beach (the designs build the tower). |
+| Vasagatan | Only the ground and nature (its designs build the rest). |
+
+The look uses its own random numbers, so the same seed gives the same ground and nature with or without it.
 
 ![Randomize existing](images/generator-randomize.jpg)
 *Randomize existing: Raft's islands, measured, with a picture each. Here a variation of "Big Island OG".*
