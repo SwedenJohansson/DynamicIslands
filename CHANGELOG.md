@@ -293,7 +293,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ### Fixed
 - **Main story quests stay out of the journal's side quests:** a main story island's further quests, and the quest of
   a generated island in the main story (a *type* rule), were listed in the journal under "Other islands with a quest";
-  they count with the main story now, whose steps are in Raft's notebook. The guide has the rule for new story lines
+  they count with the main story now, whose steps are in Raft's notebook. A copy of a story island in the
+  random pool (a library import such as "Thornwood (The Long Voyage)") no longer shows as a side quest still to come. The guide has the rule for new story lines
   (every island the story depends on gets a place in it); all five story plans keep it.
 - **Machinery placed as decoration stays decoration:** an island script's (recipe's) generator, radio, cage, hatch or
   lift placed without a name no longer gets the Ready pieces' working settings; one given a name does.
