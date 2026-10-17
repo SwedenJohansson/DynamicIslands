@@ -859,7 +859,7 @@ namespace DynamicIslands
 		#endregion
 		#region Two plans with one name; a plan replaced under its name (UW2)
 
-		const string Uw2Own = "CI Adventure", Uw2Lib = "CI Adventure (CI Author)";
+		const string Uw2Own = "CI UW2 Plan", Uw2Lib = "CI UW2 Plan (CI Author)";
 
 		static void Uw2MoveAway(string name)
 		{
