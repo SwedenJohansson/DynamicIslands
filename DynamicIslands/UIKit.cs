@@ -509,6 +509,29 @@ namespace DynamicIslands.Editor
 			return b;
 		}
 
+		/// <summary>A copy of a button made by Button() (its look, label and parts) under the parent, with its own click: much
+		/// cheaper than building one from scratch when a list has a thousand rows (the Islands window took 3-6 s with 1,000
+		/// islands). The label's text is set and its font and size (fontSize as given to Button()) picked again as Button() does.</summary>
+		public static Button CopyButton(Button template, Transform parent, string label, Action onClick, int fontSize = FontSize)
+		{
+			GameObject go = UnityEngine.Object.Instantiate(template.gameObject, parent, false);
+			go.name = "Button_" + label;
+			var b = go.GetComponent<Button>();
+			b.onClick = new Button.ButtonClickedEvent();
+			Register(b);
+			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
+			if (onClick != null) b.onClick.AddListener(() => onClick());
+			Text t = LabelOf(b);
+			if (t != null)
+			{
+				t.text = label;
+				UseTitleFont(t);
+				int max = t.font == TitleFont && TitleFont != Font ? Mathf.RoundToInt(fontSize * 1.3f) : fontSize;
+				t.fontSize = max; t.resizeTextMaxSize = max; t.resizeTextMinSize = Mathf.Min(t.resizeTextMinSize, max);
+			}
+			return b;
+		}
+
 		/// <summary>Every button the mod made (destroyed ones become null): the button test checks each one was pressed.</summary>
 		public static readonly List<Button> AllButtons = new List<Button>();
 		static int pruneAt = 256;

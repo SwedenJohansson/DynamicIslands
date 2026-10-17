@@ -181,8 +181,14 @@ namespace DynamicIslands.Editor
 			"library to download islands and plans others made. My islands... lists every island file: where it came from, which worlds use it, " +
 			"its weight in the random pool.";
 
+		// Rows built at once when the window opens; the rest follow, RowsPerFrame a frame (each row costs ~1 ms in a slow
+		// box: 1,000 islands held the window's opening for over 2 s)
+		const int RowsAtOnce = 120, RowsPerFrame = 200;
+		Coroutine moreRows;
+
 		void Refresh()
 		{
+			if (moreRows != null) { StopCoroutine(moreRows); moreRows = null; }
 			foreach (Transform child in listContent) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			// (not the copies kept for saved worlds or downloaded from hosts - name_hash: deleting one broke the world that plays
 			// it, and opening one to edit makes a second island; the library window's Remove unused cleans them up)
@@ -192,21 +198,49 @@ namespace DynamicIslands.Editor
 				UIKit.Size(UIKit.Label(listContent, "No saved islands yet.", 14, UIKit.TextMuted, TextAnchor.MiddleCenter, FontStyle.Italic, "Empty").gameObject, -1, 30);
 				return;
 			}
-			foreach (string n in names)
+			Button first = null;
+			int now = Math.Min(names.Length, RowsAtOnce);
+			for (int i = 0; i < now; i++) first = AddRow(names[i], first);
+			Highlight();
+			if (now < names.Length) moreRows = StartCoroutine(MoreRows(names, now, first));
+		}
+
+		System.Collections.IEnumerator MoreRows(string[] names, int from, Button first)
+		{
+			for (int i = from; i < names.Length; i++)
 			{
-				string islandName = n;
-				var info = new FileInfo(IslandSpawner.PathFor(n));
-				Button entry = UIKit.Button(listContent, n, () => OnEntryClicked(islandName), null, -1, 30, 14);
-				entry.name = "Island_" + n;
+				if ((i - from) % RowsPerFrame == 0) yield return null;
+				AddRow(names[i], first);
+			}
+			moreRows = null;
+			Highlight();
+		}
+
+		/// <summary>One island's row; returns the first row (the others are copies of it: building each took 2-5 ms).</summary>
+		Button AddRow(string n, Button first)
+		{
+			string islandName = n;
+			var info = new FileInfo(IslandSpawner.PathFor(n));
+			string metaText = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm") + "   " + Math.Max(1, info.Length / 1024) + " KB";
+			Button entry;
+			if (first == null)
+			{
+				entry = first = UIKit.Button(listContent, n, () => OnEntryClicked(islandName), null, -1, 30, 14);
 				Text label = UIKit.LabelOf(entry);
 				label.alignment = TextAnchor.MiddleLeft;
 				label.rectTransform.offsetMin = new Vector2(10, 0);
 				label.rectTransform.offsetMax = new Vector2(-150, 0); // clear of the date and size on the right
 				UIKit.Fit(label, 9);
-				Text meta = UIKit.Label(entry.transform, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm") + "   " + Math.Max(1, info.Length / 1024) + " KB", 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Meta");
+				Text meta = UIKit.Label(entry.transform, metaText, 11, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Meta");
 				UIKit.Stretch(meta.rectTransform, 10, 10, 0, 0);
 			}
-			Highlight();
+			else
+			{
+				entry = UIKit.CopyButton(first, listContent, n, () => OnEntryClicked(islandName), 14);
+				entry.transform.Find("Meta").GetComponent<Text>().text = metaText;
+			}
+			entry.name = "Island_" + n;
+			return first;
 		}
 
 		void Highlight()

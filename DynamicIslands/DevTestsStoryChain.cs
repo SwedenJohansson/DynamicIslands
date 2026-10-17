@@ -386,7 +386,8 @@ namespace DynamicIslands
 				yield return null;
 				string shown = WorldPlanWindow.LastCheck ?? "";
 				Check(ref ok, shown.Contains("Vasagatan > 'mine' > Caravan Town") && shown.Contains("Machete"), "Check shows the chain with the island in Balboa's place and what Balboa had: " + shown.Replace("\n", " | "));
-				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				// (in Balboa's place the rule is on the Main story line tab, not Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabStory);
 				yield return null;
 				Button place = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && b.name == "StoryPlace");
 				Check(ref ok, place != null && UIKit.LabelOf(place).text.StartsWith("in place of Balboa", StringComparison.OrdinalIgnoreCase) && UIKit.LabelOf(balboa).text == "Balboa (yours)", "the rule card's story button and the story row say so: " + (place != null ? UIKit.LabelOf(place).text : "none") + " / " + UIKit.LabelOf(balboa).text);

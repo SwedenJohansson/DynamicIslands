@@ -197,6 +197,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   players with different mod versions are told, and an update check offers the new version.
 
 ### Changed
+- **The editor's Islands window opens at once with many islands:** the first rows show straight away and the rest
+  fill in over the next frames (1,000 saved islands held it for over 2 s).
 - **The host checks what players report:** used things, harvests, quest progress and fired rules count only from a
   player near that island; levels are switched on by the host only, and a level record with more EXP than the host
   credited is put back.

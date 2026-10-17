@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DynamicIslands.Editor;
@@ -12,13 +13,30 @@ namespace DynamicIslands
 		/// <summary>The editor's scatter (ROADMAP LM11): things to gather spread round a point - on land, kept off what was
 		/// already there - and Raft's sea finds on the sea floor; one undo takes each scatter back.</summary>
 		[ConsoleCommand(name: "CIScatterTool", docs: "Dev, editor with an island open: the scatter - pineapples on land kept 3 m off the island's objects, seaweed on the sea floor, each taken back by one undo")]
-		public static void ScatterToolCommand(string[] args)
+		public static void ScatterToolCommand(string[] args) { StartTest(ScatterToolRoutine()); }
+
+		static IEnumerator ScatterToolRoutine()
 		{
-			if (!DynamicIslands.InEditor() || terraineditor.terrain == null) { Fail("CIScatterTool (in the editor, an island open)"); return; }
+			if (!DynamicIslands.InEditor() || terraineditor.terrain == null) { Fail("CIScatterTool (in the editor, an island open)"); yield break; }
 			bool ok = true;
 			float sea = DynamicIslands.EditorWaterLevel;
 			Terrain t = terraineditor.terrain;
 			Vector3 mid = t.transform.position + new Vector3(t.terrainData.size.x / 2f, 0f, t.terrainData.size.z / 2f);
+			// (the editor's new island is open sea since the 10-16 cleanup - no saved island opens with it: then the tests'
+			// sample island is opened for the land)
+			Vector3 g0, n0g;
+			if (!PlacementOptions.GroundAt(new Vector3(mid.x, sea + 200f, mid.z), out g0, out n0g) || g0.y < sea + 0.3f)
+			{
+				bool opened = DynamicIslands.LoadIsland(SaveSampleIsland());
+				yield return null;
+				yield return null;
+				RemoveSampleIsland();
+				if (!opened || terraineditor.terrain == null) { Fail("scatter tool: the sample island didn't open"); yield break; }
+				t = terraineditor.terrain;
+				Vector2 c = IslandSpawner.LandCentre(SampleIsland());
+				mid = t.transform.position + new Vector3(c.x, 0f, c.y);
+				Log("The sample island opened (the island open had no land in the middle)");
+			}
 			GameObject root = GameObject.Find("PlacedObjects");
 			Func<List<Vector3>> before = () => root.GetComponentsInChildren<EditorGameObject>(false).Select(e => e.transform.position).ToList();
 			Func<int> count = () => root.GetComponentsInChildren<EditorGameObject>(false).Length;
