@@ -739,6 +739,10 @@ namespace DynamicIslands
 		static string SharkLookOf(AI_NetworkBehavior_Shark s, out bool fits)
 		{
 			WorldRandomizer.Variant want = WorldRandomizer.VariantOf(AI_NetworkBehaviourType.Shark, s.ObjectIndex);
+			// (a shark that got its look before the randomizer changed live keeps it - IM34 "coloured animals stay": the look
+			// it was given counts, not what today's settings would roll)
+			string given;
+			bool kept = WorldRandomizer.VariantOfIndex.TryGetValue(s.ObjectIndex, out given) && given != null && (want == null || want.Name != given);
 			bool tinted = false;
 			foreach (Renderer r in WorldRandomizer.BodyOf(s))
 			{
@@ -752,8 +756,9 @@ namespace DynamicIslands
 			float max = s.networkEntity != null && s.networkEntity.stat_health != null ? s.networkEntity.stat_health.Max : 0f;
 			bool rogue = RogueShark.IsRogue(s);
 			// (an alpha: x2.5 health; the Rogue shark has its own colour)
-			fits = rogue || (tinted == (want != null) && (want != null && want.Alpha) == (max > 160f * 1.5f));
-			return "#" + s.ObjectIndex + " " + (rogue ? "rogue" : want != null ? want.Name : "Raft's own") + ", " + (tinted ? "tinted" : "not tinted") + ", health " + max.ToString("F0");
+			bool wantLook = kept || want != null, wantAlpha = kept ? given == "big bruce" : want != null && want.Alpha;
+			fits = rogue || (tinted == wantLook && wantAlpha == (max > 160f * 1.5f));
+			return "#" + s.ObjectIndex + " " + (rogue ? "rogue" : kept ? given + " (kept)" : want != null ? want.Name : "Raft's own") + ", " + (tinted ? "tinted" : "not tinted") + ", health " + max.ToString("F0");
 		}
 
 		[ConsoleCommand(name: "CISharkLook", docs: "Dev, in game (either player): every live shark here - its roll in this world's randomizer (the colour or Big Bruce from the seed and its index), whether its body really has that look (our tinted texture copy) and an alpha's health; logs 'SHARKS ...' and 'PASS: shark look' when every shark's look fits its roll (IR14: compare the line on both players)")]
