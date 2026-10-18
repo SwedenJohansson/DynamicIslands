@@ -189,7 +189,8 @@ namespace DynamicIslands
 			float reach = CustomIslandSpawner.LandRadius(e.Name) + margin;
 			// (on the host: only what the island's own spots spawned - a generated island or Raft's own island with the
 			// randomizer's extra hens 230 m off Camp Blackwater were counted with it in Silver Screen Seas, 2026-10-05)
-			HashSet<AI_NetworkBehaviour> own = new HashSet<AI_NetworkBehaviour>(spots.SelectMany(p => p.Spawned).Where(a => a != null));
+			// (a boss phase's summons too - CIRfBossPhaseMp's host saw the beast but not its 2 summons, 2026-10-18)
+			HashSet<AI_NetworkBehaviour> own = new HashSet<AI_NetworkBehaviour>(spots.SelectMany(p => p.Spawned.Concat(p.Summoned)).Where(a => a != null));
 			bool byOwn = Raft_Network.IsHost && own.Count > 0;
 			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && (!byOwn || own.Contains(a)) && spots.Any(p => p.Kind.Type == a.behaviourType) &&
 					FlatDistance(a.transform.position, e.Position) < reach && (!bySize || Mathf.Abs(a.transform.localScale.x - size) < 0.05f))
