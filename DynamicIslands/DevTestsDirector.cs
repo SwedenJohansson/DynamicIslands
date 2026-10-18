@@ -394,7 +394,8 @@ namespace DynamicIslands
 				WorldDirector.Evaluate();
 				IslandWorldState.Entry fourth = WorldDirector.Refs("fourth", null).FirstOrDefault();
 				Check(ref ok, fourth != null && fourth.HostName == "ciplan1" && second != null && FlatDistance(fourth.Position, second.Position) >= 590f, "visiting the snowy island brings one of the list (the one that exists) south of it");
-				Check(ref ok, WorldDirector.Done.SetEquals(new[] { "start", "second", "third", "fourth" }), "all 4 rules done: " + string.Join(", ", WorldDirector.Done.ToArray()));
+				// (rules a world's earlier plan did stay done - mpfull plan's camp, islets in the same world, 2026-10-18: not counted)
+				Check(ref ok, WorldDirector.Done.Except(doneBefore).ToList().Count == 4 && ownRules.All(WorldDirector.Done.Contains), "all 4 rules done: " + string.Join(", ", WorldDirector.Done.Except(doneBefore).ToArray()));
 
 				// Generated islands reach clients once their files exist
 				t0 = Time.realtimeSinceStartup;
@@ -418,7 +419,7 @@ namespace DynamicIslands
 				int eq = l.IndexOf('=');
 				WorldDirector.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1));
 			}
-			Check(ref ok, WorldDirector.PlanName == TestPlan && WorldDirector.Done.Count == 4 && WorldDirector.Sailed >= 5000f, "read back: plan, 4 done rules, km sailed");
+			Check(ref ok, WorldDirector.PlanName == TestPlan && ownRules.All(WorldDirector.Done.Contains) && WorldDirector.Done.Count == 4 + doneBefore.Count && WorldDirector.Sailed >= 5000f, "read back: plan, 4 done rules, km sailed");
 			Log(WorldDirector.Describe());
 
 			// Clean up: the world's own plan and state come back
