@@ -312,6 +312,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A player could not join a world with buried treasure on a loaded island:** the host's world message for the
+  joiner broke on the island's treasure points, and the joiner waited at "Requesting world". Each machine makes
+  those points itself now; the host no longer sends them.
 - **View rules... in the plan picker:** its Close button threw an error instead of closing the rules.
 - **A joined player sometimes got no islands:** when Raft's world-arrived event never reached the mod, the
   joining player never asked the host for its islands. Now it asks anyway 10 s into the game.

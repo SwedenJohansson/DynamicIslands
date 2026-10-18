@@ -45,6 +45,9 @@ namespace DynamicIslands.Editor
 			chest = point + 1;
 		}
 
+		/// <summary>A network index from Indexes (a point or chest of ours).</summary>
+		public static bool IsOurs(uint index) { return (index & 0xC0000000u) == 0x40000000u && (index & 0xC000u) == 0xC000u; }
+
 		public static int Ordinal(int islandId, int n) { uint p, c; Indexes(islandId, n, out p, out c); return (int)(c & 0xFFFF); }
 
 		static TreasurePointManager Manager { get { return UnityEngine.Object.FindObjectOfType<TreasurePointManager>(); } }
@@ -160,6 +163,25 @@ namespace DynamicIslands.Editor
 			List<TreasurePoint> l;
 			if (parent == null) return new List<TreasurePoint>();
 			return d != null && d.TryGetValue(parent, out l) ? l.Where(p => p != null).ToList() : new List<TreasurePoint>();
+		}
+	}
+
+	/// <summary>Leaves our own treasure points out of the world Raft sends a joining player: every machine makes them from the
+	/// island itself. A landmark kind of point on our island has no landmark, so Raft's GetSave gives null and the whole world
+	/// message threw (NullReferenceException in Message_TreasurePoint_Create.SerializeFast): the joiner waited for a world
+	/// that never came (mpscenarios' hung CIJoinHost, 2026-10-18). A plain one came back on the joiner as a second point
+	/// with the same network indexes.</summary>
+	[HarmonyPatch(typeof(Message_TreasurePoint_Create), "SerializeFast")]
+	static class BuriedTreasureNotSent
+	{
+		static void Prefix(Message_TreasurePoint_Create __instance)
+		{
+			try
+			{
+				if (__instance.rgd_treasurePoints == null) return;
+				__instance.rgd_treasurePoints = __instance.rgd_treasurePoints.Where(r => r != null && !BuriedTreasure.IsOurs(r.tpObjectIndex)).ToArray();
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [treasure] " + e.Message); }
 		}
 	}
 
