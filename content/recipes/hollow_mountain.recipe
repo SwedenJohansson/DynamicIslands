@@ -80,8 +80,8 @@ place "Box Small" niche at -45.5 -78 h=4 drop yaw=20
 # frozen falls on the north foothill (a little cave in a gully of ice), the herder's hut on the east plain with his goats --
 push at -102 48 h=20
 call stilt_hut y=0.3 ladder=none
-place UT_EndRoom_Table - at 2.25 3 y=0.3 drop
-place SmallBoulder1 keystone1 at 2.25 3 y=1.3 drop scale=0.25
+place UT_EndRoom_Table - at 2.25 3 y=0.6 scale=0.75 drop
+place SmallBoulder1 keystone1 at 2.25 3 y=1.5 drop scale=0.25
 pop
 place RT_GroundPillar - at -100 44.65 h=15
 place RT_GroundPillar - at -100 44.65 h=18

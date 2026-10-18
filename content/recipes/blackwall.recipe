@@ -78,7 +78,7 @@ place Stairwell_WallLamp_NoLight - at 6.5 30.2 h=8.9 yaw=180
 # cupboard, the pupils' chairs)
 push at -1.5 37.5 h=6.3 yaw=270
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow2 b1=RT_WallWindowBroken r2=RT_WallWindow2 l2=RT_WallWindow2
-place VP_Whiteboard - at -0.05 3 y=1.5 yaw=270
+place VP_Whiteboard - at -0.05 2.85 y=1.5 yaw=270
 place Placeable_Cupboard_Small schoolbox at -5.6 -3.5 y=0 yaw=90
 place Dinnerchair_01 - at -2.5 1.5 y=0 yaw=90
 place Dinnerchair_01 - at -2.5 0 y=0 yaw=90
@@ -183,7 +183,7 @@ pop
 push at 13.2 -3 h=9
 place "Counter Mid" - at -3 -1 y=0 yaw=270
 place "Counter Mid" - at -3 0 y=0 yaw=270
-place Shelf_Empty_02 - at -0.5 -3 y=0 yaw=270
+place Shelf_Empty_02 - at -0.5 -3.15 y=0 yaw=270
 place Shelf_Empty_02 - at -0.5 -5 y=0 yaw=270
 place "Box Small" storebox at -1.5 3.5 y=0.1 sit yaw=10
 pop

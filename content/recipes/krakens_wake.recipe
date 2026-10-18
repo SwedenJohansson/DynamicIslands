@@ -142,9 +142,9 @@ place Zone_Sound creaks at -10 -52 h=-8
 place UT_HarpoonTower_Platform - at 68 -12 h=5.89
 place Block_Ladder - at 66.3 -11.2 h=5 yaw=180
 place Block_Ladder - at 66.3 -11.2 h=6.2 yaw=180
-place UT_Harpoon_Base - at 66.3 -13 h=8.03
+place UT_Harpoon_Base - at 66.3 -13 h=8.59
 place Block_Pillar_Wood - at 66.3 -13 h=8.03 sy=0.27
-place UT_Harpoon_Barrel harpoon at 66.3 -13 h=9.03 yaw=135
+place UT_Harpoon_Barrel harpoon at 66.3 -13 h=9.59 yaw=135
 place Note_Board gunnerlog at 61.5 -10 h=5 yaw=200
 place Zone_Trigger battery at 65 -10 h=6.5
 

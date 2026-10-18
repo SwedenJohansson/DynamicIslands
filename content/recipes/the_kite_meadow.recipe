@@ -73,7 +73,7 @@ place Block_Pillar_Wood - at 0 3 y=0.2
 place Block_Pillar_Wood - at 3 3 y=0.2
 roof 2 2 at 0 0 y=0.2 wood
 place Loot_Chest crewchest at 2.3 2.3 y=0.25 yaw=180
-place "Table Office" crewtable at 0.9 1.9 y=0.25 yaw=90
+place "Table Office" crewtable at 0.9 1.9 y=0.54 yaw=90
 place Note_Paper roster at 0.9 1.9 y=2 sit drop yaw=10
 pop
 

@@ -86,7 +86,7 @@ push at 92 -42 h=2
 call rt_storey f1=RT_WallDoor1 r2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3
 place Loot_Chest guardchest at -4.5 3 sit yaw=180
-place "VG_DecorationPrefabBase_WorkshopStorage_1 Variant" - at -1.5 3.9 sit yaw=180
+place "VG_DecorationPrefabBase_WorkshopStorage_1 Variant" - at -1.5 3.65 sit yaw=180
 pop
 place Zone_Trigger ramp at 82 -47 y=1.5
 line Relay_Fence_wood from 92 -28 to 102 -28 step=3
@@ -161,7 +161,7 @@ place Creature_StoneBird wave3 at -48 0 ground
 # ladder), the roof with a railing and the great gun on its turntable --------------------------------------------------------
 push at 8 0 h=28.05
 call rt_storey f1=RT_WallDoor1 l2=RT_WallWindow1
-place "VG_DecorationPrefabBase_WorkshopStorage_1 Variant" - at -5 3.9 sit yaw=180
+place "VG_DecorationPrefabBase_WorkshopStorage_1 Variant" - at -5 3.65 sit yaw=180
 pop
 push at 8 0 h=31.05
 call rt_storey r2=RT_WallDoor1 l2=RT_WallWindow2 b1=RT_WallWindow1

@@ -62,10 +62,10 @@ brush flatten from -32 10 to -28 10 r=1 s=20 frames=40 h=0.8
 place TreeLog_01 - at -30 11.8 ground yaw=0
 place "VG_DecorationPrefabBase_Tools_Saw2 Variant" - at -28.2 11.2 ground sit yaw=90
 place Pallet - at -33 6 ground sit yaw=10
-place FL_Plank3 - at -33 6 ground y=0.25 yaw=100
-place FL_Plank3 - at -33.2 6.2 ground y=0.3 yaw=95
+place FL_Plank3 - at -33 6 ground y=0.37 yaw=100
+place FL_Plank3 - at -33.2 6.2 ground y=0.42 yaw=95
 place Pallet - at -10 2 ground sit yaw=80
-place FL_Plank3 - at -10 2 ground y=0.25 yaw=170
+place FL_Plank3 - at -10 2 ground y=0.5 yaw=170
 push at -14.5 7.5 h=2
 place Block_Pillar_Wood - at 0 0 y=0
 place Block_Pillar_Wood - at 3 0 y=0

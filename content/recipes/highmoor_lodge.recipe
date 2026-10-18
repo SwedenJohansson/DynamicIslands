@@ -139,8 +139,8 @@ place Note_Papers page2 at 8.3 3.6 y=1.17 drop yaw=-30 rot=0,0,0
 # (upstairs: room 9 on the right behind the partition - the bed with page three, the wardrobe; a guest room on the left)
 place Placeable_Bed_Wood - at 7.5 4.6 y=2.52 sit yaw=90
 place Note_Papers page3 at 7.4 4.5 y=3.1 drop yaw=40 rot=0,0,0
-place Placeable_Wardrobe - at 8.5 1.0 y=2.52 sit yaw=270
-place Placeable_Bed_Wood - at 3.6 4.9 y=2.52 sit yaw=90
+place Placeable_Wardrobe - at 8.3 1.0 y=2.52 sit yaw=270
+place Placeable_Bed_Wood - at 3.6 4.65 y=2.52 sit yaw=90
 place Zone_Trigger lodge at 5.25 -3 y=1
 place Pickup_Landmark_Plastic3_Land - at 4.3 2.6 y=0.4 drop yaw=83
 place Pickup_Landmark_Plank_Land - at 4.8 2.3 y=2.82 drop yaw=157
@@ -190,14 +190,14 @@ place Block_Wall_Tier3 - at 7.5 5.25 y=0.1 yaw=90
 call corners w=5 d=4
 roof 5 4 at 0 0 y=0.1 wood
 place VG_LoungeStage - at 3.75 4.6 y=0.1 sit
-place Placeable_Piano - at 6.4 3.9 y=0.61 sit yaw=200
+place Placeable_Piano - at 6.1 3.6 y=0.61 sit yaw=200
 place Note_Papers page5 at 3.2 4.8 y=0.61 drop yaw=-10 rot=0,0,0
 place VG_LoungeChair - at 1 0.6 y=0.1 sit yaw=10
 place VG_LoungeChair - at 2 0.6 y=0.1 sit yaw=-5
 place VG_LoungeChair - at 5.5 0.6 y=0.1 sit
 place VG_LoungeChair - at 6.6 0.6 y=0.1 sit yaw=15
 place VG_LoungeChair - at 0.5 2.6 y=0.1 sit yaw=80
-place VG_LoungeChair - at 0.5 3.5 y=0.1 sit yaw=95
+place VG_LoungeChair - at 0.7 3.5 y=0.1 sit yaw=95
 place Zone_Sound ballroommusic at 3.75 3 y=1.5
 place Pickup_Landmark_Plastic3_Land - at 3.0 2.2 y=0.4 drop yaw=319
 pop

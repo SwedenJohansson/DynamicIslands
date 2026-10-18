@@ -121,8 +121,8 @@ push at 40.5 12 h=12.05 yaw=90
 call rt_storey f1=RT_WallDoor1 f2=RT_Wall1 r2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3
 place UT_WaterChallengeWheel2 - at -3 3.7 y=1.8 scale=0.35 rot=90,0,0
-place cogwheel stillcogs at -5.8 0 y=1.6 scale=4 yaw=90
-place cogwheel turningcogs at -5.8 0 y=1.6 scale=4 yaw=90
+place cogwheel stillcogs at -5.65 0 y=1.6 scale=4 yaw=90
+place cogwheel turningcogs at -5.65 0 y=1.6 scale=4 yaw=90
 place Zone_Trigger gearworks at -3 0 y=1.5
 place Creature_Rat rats at -3 1 y=0.3
 place "Pickup_Landmark_Scrap 2_Land" - at -1.8 -2.2 y=0.3 drop yaw=17
@@ -136,7 +136,7 @@ pop
 place RT_PillarThick - at 38.5 9.3 h=12.05 sy=0.6
 place RT_Beam - at 38.5 9.3 h=15.5 yaw=180 sx=0.4
 place UT_HookRoom_Weight02 counterweight at 39.8 9.3 h=13.85 scale=3
-place "Box Small" stepbox at 35.5 31 h=12.05 sit yaw=30
+place "Box Small" stepbox at 35.3 31 h=12.05 sit yaw=30
 place RT_Pillar - at 44 10 h=12.05 sy=0.4
 place TP_LaserControlPanel_lever shuttle3 at 44 9.75 h=13.1
 place Scaffolding_6x4m - at 44 6.5 h=11.4
@@ -184,8 +184,8 @@ pop
 push at 83 44.5 h=27.05
 call rt_storey floor=RT_Floor f1=RT_WallDoor1 f2=RT_WallWindow1 b1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
 place "VG_DecorationPrefabBase_Engine Variant" clockheart at -3 2.6 y=0 sit yaw=180
-place cogwheel stillcogs at -5.8 2.6 y=1.4 scale=4 yaw=90
-place cogwheel turningcogs at -5.8 2.6 y=1.4 scale=4 yaw=90
+place cogwheel stillcogs at -5.68 2.6 y=1.4 scale=4 yaw=90
+place cogwheel turningcogs at -5.68 2.6 y=1.4 scale=4 yaw=90
 place Note_Sign plaque at -0.3 2 y=0 sit yaw=270
 place TP_LaserControlPanel - at -5.9 -2 y=0 yaw=90
 place TP_LaserControlPanel_lever handI at -5.6 -3.2 y=0 sit yaw=90
@@ -198,10 +198,10 @@ pop
 push at 83 44.5 h=30.05
 call rt_storey floor=RT_Floor
 place RT_Floor - at 0 4.5 y=3
-place "VG_DecorationPrefabBase_Clock Variant" - at -3 -4.6 y=1.4 scale=6 yaw=180
-place "VG_DecorationPrefabBase_Clock Variant" - at -3 4.6 y=1.4 scale=6
-place "VG_DecorationPrefabBase_Clock Variant" - at -6.15 0 y=1.4 scale=6 yaw=270
-place "VG_DecorationPrefabBase_Clock Variant" - at 0.15 0 y=1.4 scale=6 yaw=90
+place "VG_DecorationPrefabBase_Clock Variant" - at -3 -4.75 y=1.4 scale=6 yaw=180
+place "VG_DecorationPrefabBase_Clock Variant" - at -3 4.75 y=1.4 scale=6
+place "VG_DecorationPrefabBase_Clock Variant" - at -6.3 0 y=1.4 scale=6 yaw=270
+place "VG_DecorationPrefabBase_Clock Variant" - at 0.3 0 y=1.4 scale=6 yaw=90
 pop
 place RT_Floor balcony at 83 35.5 h=27.05 sx=1 sz=0.28
 place Zone_Trigger towerbalcony at 80 34 h=28.5
@@ -215,8 +215,8 @@ place Placeable_ToyRobot frozen at -2 34 h=20 sit scale=5 yaw=20
 place Placeable_ToyRobot awake at -2 34 h=20 sit scale=5 yaw=20
 place Placeable_ToyRobot frozen at -38 -50 h=15.05 sit scale=5 yaw=200
 place Placeable_ToyRobot awake at -38 -50 h=15.05 sit scale=5 yaw=200
-place Placeable_ToyRobot frozen at 77 33 h=24.05 sit scale=5 yaw=150
-place Placeable_ToyRobot awake at 77 33 h=24.05 sit scale=5 yaw=150
+place Placeable_ToyRobot frozen at 77 33 h=24.05 sit scale=3.8 yaw=150
+place Placeable_ToyRobot awake at 77 33 h=24.05 sit scale=3.8 yaw=150
 
 # --- Round the city: palms on the stacks, a pineapple, turtles at the stacks' feet, dolphins, a sunk crate of springs off
 # the quay -----------------------------------------------------------------------------------------------------------------

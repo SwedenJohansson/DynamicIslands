@@ -156,8 +156,8 @@ place Pillar_01 - at 45.1 -9.9 h=8.5 sit
 place Pillar_01 - at 43.3 -8.1 h=8.5 sit
 place Pillar_01 - at 45.1 -8.1 h=8.5 sit
 place Block_Roof_Thatch_Pyramid - at 44.2 -9 h=11.52 sx=1.4 sz=1.4
-place Placeable_Figurine_Chicken heron at 44.6 -9.3 h=8.5 sit scale=3 yaw=270
-place Placeable_BirdsNest heronnest at 43.7 -8.6 h=8.5 sit
+place Placeable_Figurine_Chicken heron at 44.6 -9.3 h=8.9 sit scale=3 yaw=270
+place Placeable_BirdsNest heronnest at 43.7 -8.6 h=8.65 sit
 place TangaroaBucket shrinebell at 44.2 -9 h=11.44 rot=180,0,0 scale=1.5
 place UT_EndRoom_Pot01 - at 42.6 -10.4 h=8.5 sit scale=0.25
 place UT_EndRoom_Pot01 - at 45.8 -7.6 h=8.5 sit scale=0.25

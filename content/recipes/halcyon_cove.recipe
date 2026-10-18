@@ -86,8 +86,8 @@ pop
 push at 26 59.7 h=3.35
 call rt_storey f1=RT_WallDoor1 f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b2=RT_WallWindow1 a=minthouse
 place RT_Floor minthouse at 0 4.5 y=3
-place Placeable_Table_Basic - at -1.5 -6.5 y=0 sit
-place Note_Paper script at -1.5 -6.5 y=2 drop yaw=15
+place Placeable_Table_Basic - at -1.5 -6.35 y=0 sit
+place Note_Paper script at -1.5 -6.35 y=2 drop yaw=15
 place Pickup_Landmark_Plastic3_Land - at -4.2 1.8 y=0.3 drop yaw=130
 pop
 push at -14 40.3 h=3.35 yaw=180
@@ -171,14 +171,14 @@ place LandmarkLadder_6m - at 0 28.2 h=10
 place LandmarkLadder_6m - at 0 28.2 h=16.4
 place Placeable_Sprinkler - at -1 31 h=22.05 sit yaw=0
 place Placeable_Sprinkler - at 0.2 31.2 h=22.05 sit yaw=20
-place Placeable_Sprinkler - at 1.1 30.6 h=22.05 sit yaw=-20
-place TP_Moontown_SealedCrate02_Clean - at -1 29.4 h=22.05 sit
+place Placeable_Sprinkler - at 0.9 30.6 h=22.05 sit yaw=-20
+place TP_Moontown_SealedCrate02_Clean - at -0.85 29.4 h=22.05 sit
 place RT_PowerBox rainswitch at -1 29.4 h=22.97 sit yaw=180
 place Zone_Trigger weathertower at 0 30 h=23
 push at 3 23.5 h=9.6
 call stilt_hut y=0.5 ladder=none
-place Placeable_Table_Basic - at 2.25 3.6 y=0.5 sit
-place Note_Book weatherlog at 2.25 3.6 y=1.6 drop yaw=10
+place Placeable_Table_Basic - at 2.25 3.4 y=0.5 sit
+place Note_Book weatherlog at 2.25 3.4 y=1.6 drop yaw=10
 place "Pickup_Landmark_Scrap 3_Land" - at 1.1 1.6 y=0.8 drop yaw=95
 pop
 

@@ -51,7 +51,7 @@ end
 call pen 32 8 northpen
 call pen 32 -6 southpen
 place Note_Board eggcount at 27.5 1 ground yaw=270
-place "Box Small" hatcherybox at 27.5 -2 ground sit yaw=15
+place "Box Small" hatcherybox at 27.5 -1.7 ground sit yaw=15
 
 # ===== The lookout over the west reef: a telescope on a stand of planks, the reef notes =================================
 push at -32 4 h=3.4

@@ -94,13 +94,13 @@ place Note_Papers printout at -4.1 3.9 y=1.08 sit
 place "Chair Office" - at -3 2.7 sit yaw=170
 place Placeable_Lantern_Metal - at -1.8 4.05 y=1.08 sit
 place RT_RadarScreen - at -5.45 -0.5 sit yaw=90
-place Cupboard - at -5.75 -0.5 y=2.75 yaw=90
+place Cupboard - at -5.75 -0.5 y=2.5 yaw=90
 place "Counter Left" - at -5 -4.4 sit
 place "Counter Mid" - at -4 -4.4 sit
 place "Counter Right" - at -3 -4.4 sit
 place Phone - at -4 -4.05 y=1.07 sit
 place "Box Big" - at -5.3 3.25 sit
-place "Box Big" - at -5.4 -3.75 sit yaw=20
+place "Box Big" - at -5.2 -3.65 sit yaw=20
 place "Fire Estinguisher" - at -0.45 -3.9 sit
 place RT_RoofLamp - at -3 0 y=2.95
 place RT_PowerBox - at -0.2 2.3 y=1.4 yaw=90
@@ -126,7 +126,7 @@ next
 place RT_SatteliteDisc - at -4.7 -2.6 y=3 sit yaw=200
 place RT_Floodlight - at -5.85 -4.35 y=4.35 yaw=225
 place RT_Floodlight - at -5.85 4.35 y=4.35 yaw=315
-place RT_DuctTop - at -3.3 3.3 y=3 sit
+place RT_DuctTop - at -2.7 3.3 y=3 sit
 
 # The mast: three thick pillars (18 m), a ladder up its front, a small platform on top with the beacon
 place RT_PillarThick - at -3 2 y=3

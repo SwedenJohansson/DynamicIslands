@@ -37,9 +37,17 @@ clear at 92 22 r=7
 # --- The skeleton: ribs of bleached dead trees leaning in pairs over the village (their tops meeting), the highest rib on
 # the south side, vertebrae of boulders down the tail to the west, teeth along the jaw by the stage -----------------------
 for x 2 37 5
-place DeadTree1 bone at $x -5.5 ground sit scale=1.6 rot=24,0,0
 place DeadTree1 bone at $x 9.5 ground sit scale=1.6 rot=-24,180,0
 next
+# (the south ribs at x 7 and 27 would stand in the stilt huts: moved clear, the rest in two loops)
+for x 2 37 10
+place DeadTree1 bone at $x -5.5 ground sit scale=1.6 rot=24,0,0
+next
+for x 17 37 20
+place DeadTree1 bone at $x -5.5 ground sit scale=1.6 rot=24,0,0
+next
+place DeadTree1 bone at 9.4 -5.5 ground sit scale=1.6 rot=24,0,0
+place DeadTree1 bone at 25 -5.5 ground sit scale=1.6 rot=24,0,0
 place DeadTree2 bone at 22 -7 ground sit scale=2.2 rot=10,0,0
 for v 0 3 1
 place BigBoulder4_Low bone at {-4-6*$v} {2+5*$v} ground sit scale=0.22 yaw={40*$v}

@@ -29,8 +29,8 @@ clear at -20 8 r=7
 # --- The survey hut on the north-east islet: a hut on posts, the orders pinned inside, the hut's box, the survey chest
 push at 13 27.5 h=4.6
 call stilt_hut y=0.6 ladder=none
-place Placeable_Table_Basic - at 2.25 3.6 y=0.6 sit
-place Note_Paper orders at 2.25 3.6 y=1.7 drop yaw=15
+place Placeable_Table_Basic - at 2.25 3.4 y=0.6 sit
+place Note_Paper orders at 2.25 3.4 y=1.7 drop yaw=15
 place "Box Small" hutbox at 0.9 3.6 y=0.6 sit yaw=10
 place Loot_ChestLarge surveychest at 3.6 2.2 y=0.6 sit yaw=270
 pop

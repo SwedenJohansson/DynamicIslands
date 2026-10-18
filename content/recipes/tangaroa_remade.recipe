@@ -159,7 +159,7 @@ place Zone_Trigger council at -17 8 h=13.7
 # the apartment block on the square's north side: the caretaker's flat below, two flats over it
 push at -2 22 h=12.5
 call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
-place BedSmall - at -5 3 sit yaw=90
+place BedSmall - at -4.5 3 sit yaw=90
 place Table_Common_01 - at -2 2.6 sit
 place Armchair_01 - at -1 1.5 sit yaw=-120
 place Locker flatlocker at -5.4 -1.5 sit yaw=90

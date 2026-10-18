@@ -137,7 +137,7 @@ place Zone_Trigger visitorcentre at -3 0 y=1.5
 # (the gift shop: shelves of souvenirs, the stockroom crate)
 place Shelf_Empty_02 - at 3 4.2 y=0 sit yaw=180
 place Shelf_Empty_02 - at 5.7 1 y=0 sit yaw=270
-place Placeable_Figurine_Llama - at 2.6 4.1 y=1.15 sit yaw=180
+place Placeable_Figurine_Llama - at 2.35 3.95 y=1.15 sit yaw=180
 place Placeable_Figurine_Goat - at 3.4 4.1 y=1.15 sit yaw=180
 place Placeable_Figurine_Chicken - at 5.6 1 y=1.15 sit yaw=270
 place Loot_Crate giftshop at 1.2 -3.6 y=0 sit
@@ -152,7 +152,7 @@ place TangaroaKitchen_Fridge kitchenfridge at -5.4 12.6 y=0 sit yaw=90
 # (the control room: the console, a server, the park's map - dark till the power comes back - the engineer's report,
 # the ceiling lamps)
 place VG_ControlBoard - at 3 12.1 y=0 sit scale=0.5 yaw=180
-place TP_Selene_ComputerRoom_Server01 - at 5.3 6.5 y=0 sit yaw=270
+place TP_Selene_ComputerRoom_Server01 - at 5.1 6.5 y=0 sit yaw=270
 place Placeable_Table_Basic - at 1.5 7 y=0 sit
 place Note_Papers engreport at 1.5 7 y=2 drop yaw=15
 place RadiationMap_Off mapoff at 0.1 9 y=1.6
@@ -255,8 +255,8 @@ place Zone_Trigger aviary at 0 -45 h=19
 
 # --- The show lagoon at the bay's head: the grandstand's three steps of benches on its shore, the feeding platform out
 # over the deep water with Utopia's crane beside it; the leviathan; on the floor the keeper's satchel and a feed barrel --
-line Bench_01 from -2 14 to -2 30 step=1.6
-line Bench_01 from 1.5 14 to 1.5 30 step=1.6
+line Bench_01 from -2 14 to -2 26.8 step=1.6
+line Bench_01 from 1.5 14 to 1.5 26.8 step=1.6
 line Bench_01 from 5 14 to 5 19 step=1.6
 line Bench_01 from 5 25 to 5 30 step=1.6
 push at 6.5 21 h=-11

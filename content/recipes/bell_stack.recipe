@@ -118,7 +118,7 @@ place Block_Wall_Wood - at 4.5 0.75 y=0.1 yaw=90
 place Block_Wall_Wood - at 4.5 2.25 y=0.1 yaw=90
 call corners w=3 d=2
 roof 3 2 at 0 0 y=0.1 wood
-place Placeable_Bed_Basic - at 1 1.5 y=0.1 sit yaw=90
+place Placeable_Bed_Basic - at 1.15 1.5 y=0.1 sit yaw=90
 place Loot_Chest hermitschest at 3.6 2.2 y=0.1 sit yaw=180
 place Placeable_Candelabra - at 2.25 2.5 y=0.1 sit
 place "Pickup_Landmark_Scrap 2_Land" - at 2.8 0.9 y=0.4 drop yaw=150

@@ -172,18 +172,18 @@ place Block_Wall_Door_Tier3 - at 3.75 0 y=0.2
 place Block_Wall_Tier3 hallwall at 5.25 0 y=0.2
 place Block_Wall_Tier3 hallwall at 6.75 0 y=0.2
 place Block_Wall_Tier3 hallwall at 8.25 0 y=0.2
-place TP_Moontown_Barrel01_Clean drumspin at 2 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
-place TP_Moontown_Barrel01_Clean drumspin at 4.5 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
-place TP_Moontown_Barrel01_Clean drumspin at 7 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
-place TP_Moontown_Barrel01_Clean drumstop at 2 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
-place TP_Moontown_Barrel01_Clean drumstop at 4.5 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
-place TP_Moontown_Barrel01_Clean drumstop at 7 4.5 y=-0.15 sit sx=2.2 sz=2.2 sy=1.8
+place TP_Moontown_Barrel01_Clean drumspin at 2 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
+place TP_Moontown_Barrel01_Clean drumspin at 4.5 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
+place TP_Moontown_Barrel01_Clean drumspin at 7 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
+place TP_Moontown_Barrel01_Clean drumstop at 2 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
+place TP_Moontown_Barrel01_Clean drumstop at 4.5 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
+place TP_Moontown_Barrel01_Clean drumstop at 7 4.5 y=0.03 sit sx=2.2 sz=2.2 sy=1.64
 place "Box Small" - at 1 1.3 y=0.25 sit yaw=0
 place TP_LaserControlPanel_lever cutoff at 1 1.3 y=1.5 sit drop yaw=0
 place "Box Big" drumcam at 0.8 3 y=0.25 sit yaw=0
 place "Box Big" - at 8.3 4.8 y=0.25 sit yaw=10
 place Note_Paper chemnote at 8.3 4.8 y=1.6 sit drop yaw=20
-place TP_Selene_Int_Room_Bars cagebars at 4.3 2.2 y=0.25 sit
+place TP_Selene_Int_Room_Bars cagebars at 4.1 2.2 y=0.25 sit
 place Loot_ChestLarge drumcage at 7.6 1.0 y=0.25 sit yaw=270
 place Placeable_Lantern_Metal - at 5.5 1 y=0.25 sit
 pop

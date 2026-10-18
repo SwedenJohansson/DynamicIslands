@@ -146,7 +146,7 @@ place Block_Wall_Wood - at 3 2.25 y=0.1 yaw=90
 call corners w=2 d=2
 roof 2 2 at 0 0 y=0.1 wood
 place "Balboa_DecorationPrefabBase_Old Stove" - at 0.6 2.4 y=0.1 sit yaw=90
-place Placeable_Bed_Basic - at 1.0 0.9 y=0.1 sit yaw=90
+place Placeable_Bed_Basic - at 1.15 0.9 y=0.1 sit yaw=90
 place Placeable_Table_Square_Small - at 2.3 2.3 y=0.1 sit
 place Note_Paper abbieletter at 2.3 2.3 y=1.2 drop yaw=20
 pop

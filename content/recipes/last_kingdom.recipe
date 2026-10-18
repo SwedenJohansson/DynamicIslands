@@ -113,7 +113,7 @@ next
 place UT_MarketBasket01 - at 0 150 y=0.8 drop
 place UT_MarketBasket03_Banana - at 6 150 y=0.8 drop
 place UT_MarketCrateSmall01 - at 12 150 y=0.8 drop
-place UT_MarketStackBox01 - at 14 151.5 ground sit
+place UT_MarketStackBox01 - at 13.85 151.5 ground sit
 place Loot_Crate poulterer at 1.6 148.8 ground sit yaw=10
 place Creature_Chicken markethens at 6 160 ground
 place Placeable_Flag_01 - at 18 151 ground sit
@@ -157,10 +157,10 @@ push at 2 168 h=2.05
 call rt_storey f1=RT_WallDoor1 l1=none l2=none l3=none
 place RT_Floor - at 0 4.5 y=3
 place Crate_Small_02 - at -2 3.5 sit
-place Pallet - at -4 3.5 sit
+place Pallet - at -4 3.3 sit
 pop
 place Well - at 18 146 ground sit
-place VP_Wagon02 - at 14 165 ground sit yaw=30
+place VP_Wagon02 - at 13.85 165 ground sit yaw=30
 
 # --- The toll bridge over the river west of the town: planks on posts with rails, the toll gate at its town end (a hinged
 # wall), the tollkeeper's booth and the toll post; the zone at its far end ------------------------------------------------
@@ -274,7 +274,7 @@ place Pillar_04 - at -30.6 45.6 ground sit sy=2
 place Pillar_04 - at -29.4 45.6 ground sit sy=2
 place Block_Roof_Wood_Pyramid - at -30 45 y=4 drop
 place Placeable_Lantern_Basic - at -30 45 ground sit
-place "Box Small" shrinebox at -31 44 ground sit yaw=30
+place "Box Small" shrinebox at -31.25 44 ground sit yaw=30
 place Zone_Trigger forestshrine at -30 45 y=1.5
 
 # ===== CHAPTER 4 - THE LAKE ===============================================================================================
@@ -284,7 +284,7 @@ place Zone_Trigger forestshrine at -30 45 y=1.5
 for j 0 3 1
 place Block_Floor_Wood - at {-56.75-1.5*$j} 12 h=0.85
 next
-place RT_PlasticBoat - at -60 14 h=0 yaw=-10
+place RT_PlasticBoat - at -60 14.2 h=0 yaw=-10
 place Note_Sign ferrychart at -53.5 13.8 ground sit yaw=270
 place Zone_Trigger lakeshore at -54 12 y=1.5
 push at -81 8 h=-9
@@ -393,7 +393,7 @@ place Placeable_Table_Basic - at -4.5 -2.5 sit
 place Note_Book charter at -4.5 -2.5 y=0.8 drop
 place Loot_ChestLarge treasury at -0.8 -3.5 sit yaw=270
 pop
-place UT_EndRoom_Chair throne at -16.2 -50 h=43.05 drop scale=2.2 yaw=270
+place UT_EndRoom_Chair throne at -16.2 -50 h=43.55 drop scale=2.2 yaw=270
 place Note_Sign will at -16.4 -48.4 h=43.05 drop yaw=270
 place RT_Fence - at -21 -59 h=46.05 yaw=90
 place RT_Fence - at -21 -44 h=46.05 yaw=90

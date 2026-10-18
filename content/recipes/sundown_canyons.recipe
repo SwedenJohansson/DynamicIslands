@@ -177,7 +177,7 @@ place Block_Wall_Wood - at 6 3.75 y=0.1 yaw=90
 call corners w=4 d=3
 roof 4 3 at 0 0 y=0.1 wood
 place Sign_02 - at 6.1 1.35 y=3.1 yaw=90
-place "Box Small" storebox at 1 2.25 y=0.1 sit yaw=10
+place "Box Small" storebox at 1 2.25 y=0.18 sit yaw=10
 pop
 
 # --- The bank: two concrete rooms one behind the other, the front onto the street. The front room: the teller's counter,

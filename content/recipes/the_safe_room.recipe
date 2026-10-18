@@ -126,7 +126,7 @@ place Balboa_DecorationPrefabBase_Flatscreen - at 4.2 13.1 y=1.08 sit yaw=180
 place Balboa_DecorationPrefabBase_Flatscreen - at 4.9 13.1 y=1.08 sit yaw=180
 place Note_Book panicnote at 3.9 12.7 y=1.1 drop yaw=10 rot=0,0,0
 place "Chair Office" - at 4.2 11.8 y=0 sit yaw=180
-place RT_RadarScreen - at 5.5 9 y=0 sit yaw=90
+place RT_RadarScreen - at 5.3 9 y=0 sit yaw=90
 place "VG_DecorationPrefabBase_BunkBed Variant" - at 1.9 12.3 y=0 sit
 place TP_Moontown_SealedCrate02_Clean - at 5 5.4 y=0 sit
 place TP_Moontown_SealedCrate02_Clean - at 5 5.4 y=0.92 sit yaw=10
@@ -198,7 +198,7 @@ push at 2.25 41.5 h=1.2 yaw=180
 call stilt_hut y=1.4 ladder=none w1=none
 place VG_Safe boatsafe at 3.4 3.7 y=1.4 sit
 place Reef_Barrel1 - at 3.9 1 y=1.4 sit
-place Reef_Barrel1 - at 0.6 3.9 y=1.4 sit yaw=40
+place Reef_Barrel1 - at 0.8 3.9 y=1.4 sit yaw=40
 place Pickup_Landmark_Plank_Land - at 1.4 1.8 y=1.7 drop yaw=333
 place "Pickup_Landmark_Scrap 2_Land" - at 2.4 2.6 y=1.7 drop yaw=58
 pop

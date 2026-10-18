@@ -46,7 +46,7 @@ place RT_Floor - at 0 4.5 y=3
 place "VG_DecorationPrefabBase_Desk Variant" - at -4.5 3.6 y=0 sit yaw=180
 place Note_Book journal at -4.5 3.6 y=0.82 drop yaw=10
 place Loot_ChestLarge legacy at -1.2 3.4 y=0 sit yaw=180
-place "VG_DecorationPrefabBase_Bookshelf Filled 2 Variant" - at -0.5 -0.5 y=0 sit yaw=270
+place "VG_DecorationPrefabBase_Bookshelf Filled 2 Variant" - at -0.8 -0.5 y=0 sit yaw=270
 place TP_Drawer - at -5.2 0 y=0 sit yaw=90
 pop
 place Creature_Chicken hens at 20 -40 ground
@@ -98,7 +98,7 @@ call rt_storey floor=none f1=RT_WallWindow1 f2=RT_WallWindow1 b1=RT_WallWindow1 
 place RT_Floor - at 0 4.5 y=3
 place RT_Floor gantryfloor at 0 4.5 y=1.5 sz=0.2
 pop
-place BigPalm2 - at -26 1 h=23.65 centred sit scale=0.3
+place BigPalm2 - at -25.5 1 h=23.65 centred sit scale=0.3
 place Banana_Bush_1 - at -24.5 3.5 h=23.65 sit
 place Block_Ladder - at -29.55 0.5 h=23.65 yaw=270
 place Block_Ladder - at -29.55 0.5 h=26.07 yaw=270

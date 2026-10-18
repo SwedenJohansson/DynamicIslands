@@ -193,9 +193,9 @@ push at 3 9 y=5.05
 call rt_storey floor=none b1=RT_WallDoor1 f1=RT_WallDoor1 l1=RT_WallWindow1 l2=RT_Wall1 l3=RT_WallWindow1 r1=RT_WallWindow1 r2=RT_WallWindow2 r3=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3.05
 call rt_railing y=3.05
-place "Table Office" - at -1.2 -1.5 sit yaw=-90
-place RT_RadarScreen - at -1.5 -1.65 y=1.08 sit yaw=-90 scale=0.5
-place "Chair Office" - at -2.1 -1.5 sit yaw=90
+place "Table Office" - at -1.0 -1.5 sit yaw=-90
+place RT_RadarScreen - at -1.3 -1.65 y=1.08 sit yaw=-90 scale=0.5
+place "Chair Office" - at -2.2 -1.5 sit yaw=90
 place Cableroll_01 - at -0.7 2.6 sit
 place Placeable_Lantern_Metal - at -1.2 -0.6 y=1.2 sit drop
 place Loot_ChestSmall relayspares at -0.9 0.8 sit yaw=-90

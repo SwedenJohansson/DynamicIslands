@@ -32,8 +32,8 @@ place Block_Wall_Wood - at 3 0.75 y=0.1 yaw=90
 place Block_Wall_Wood - at 3 2.25 y=0.1 yaw=90
 call corners w=2 d=2
 roof 2 2 at 0 0 y=0.1 wood
-place Placeable_Table_Basic - at 0.9 2.3 y=0.1 sit
-place Placeable_Lantern_Metal - at 0.9 2.3 y=1.1 drop
+place Placeable_Table_Basic - at 0.9 1.9 y=0.1 sit
+place Placeable_Lantern_Metal - at 0.9 1.9 y=1.1 drop
 place Loot_Chest skychest at 2.2 2.4 y=0.1 sit yaw=180
 pop
 place Placeable_Lantern_FireBasket - at 4 3 h=5 sit

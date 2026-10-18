@@ -36,7 +36,7 @@ place ReefHuts_Pillar1 - at -6.2 4.25 sit
 place ReefHuts_Pillar1 - at -1.8 1.75 sit
 place ReefHuts_Pillar1 - at -1.8 4.25 sit
 place ReefHuts_Tarpaulin tarp at -4 3 y=2.7 tilt=6 rot=0,0,0
-place VG_LoungeCouch - at -5.3 3.9 sit yaw=180
+place VG_LoungeCouch - at -4.8 3.9 sit yaw=180
 place VG_LoungeCouch - at -2.9 3.9 sit yaw=180
 place VG_LoungeTable table at -4 2.6 sit
 place Note_Paper dnote at -3.8 2.5 y=0.78 sit

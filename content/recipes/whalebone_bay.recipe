@@ -168,9 +168,9 @@ ramp Block_Floor_Wood from 29 7.6 2.4 to 29 15 -1.5 len=1.5 top=0
 ramp Block_Floor_Wood from 30.5 7.6 2.4 to 30.5 15 -1.5 len=1.5 top=0
 ramp Block_Floor_Wood from 32 7.6 2.4 to 32 15 -1.5 len=1.5 top=0
 # (the gun's barrel set on its base; a stub of post inside it carries it - the base has nothing solid)
-place UT_Harpoon_Base - at 22 6.5 h=2.45
+place UT_Harpoon_Base - at 22 6.5 h=3.01
 place Block_Pillar_Wood - at 22 6.5 h=2.45 sy=0.27
-place UT_Harpoon_Barrel cannon at 22 6.5 h=3.45
+place UT_Harpoon_Barrel cannon at 22 6.5 h=4.01
 place Zone_Trigger flensing at 24 4 h=3.6
 place UT_WaterTank tanks at 41 -3.5 h=2.3
 place UT_WaterTank tanks at 41 2 h=2.3
@@ -238,7 +238,7 @@ place Block_Wall_Window_Wood churchwall at 3 2.25 y=0.1 yaw=90
 call corners w=2 d=2
 roof 2 2 at 0 0 y=0.1 wood
 place "Balboa_DecorationPrefabBase_Old Stove" - at 2.5 0.7 y=0.1 sit yaw=270
-place "Box Small" churchcoal at 2.4 2.5 y=0.1 sit yaw=10
+place "Box Small" churchcoal at 2.4 2.35 y=0.1 sit yaw=10
 pop
 push at -21.75 40 h=6
 call floors w=1 d=1 y=0.1

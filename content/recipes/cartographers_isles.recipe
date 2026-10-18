@@ -108,7 +108,7 @@ place Block_Wall_Fence_Plank - at 0 0.75 y=0 yaw=90
 place Block_Wall_Fence_Plank - at 0 2.25 y=0 yaw=90
 place Block_Wall_Fence_Plank - at 3 0.75 y=0 yaw=90
 place Block_Wall_Fence_Plank - at 3 2.25 y=0 yaw=90
-place TP_Telescope - at 2.2 2.2 y=0.1 sit yaw=300 scale=0.35
+place TP_Telescope - at 2.0 1.85 y=0.1 sit yaw=300 scale=0.35
 place Note_Paper piece3 at 0.6 2.4 y=0.1 sit yaw=80
 pop
 place Zone_Trigger trig2 at 50 20 h=15.5

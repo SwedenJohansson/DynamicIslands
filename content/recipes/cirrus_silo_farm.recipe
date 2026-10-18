@@ -68,7 +68,7 @@ place Block_Pillar_Wood - at 4.5 0 y=0.2
 place Block_Pillar_Wood - at 0 3 y=0.2
 place Block_Pillar_Wood - at 4.5 3 y=0.2
 roof 3 2 at 0 0 y=0.2 wood
-place "Table Office" teotable at 3.4 2.2 y=0.25 yaw=0
+place "Table Office" teotable at 3.4 2.2 y=0.54 yaw=0
 place Note_Paper teoletter at 3.4 2.2 y=2 sit drop yaw=15
 place Loot_ChestSmall drawer at 0.8 2.3 y=0.25 yaw=90
 place "Chair Office" - at 3.4 1.2 y=0.25 yaw=180

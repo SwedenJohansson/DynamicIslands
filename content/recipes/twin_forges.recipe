@@ -72,7 +72,7 @@ pop
 push at 15.7 -4.1 h=30.05 yaw=59
 call rt_storey f1=none f2=none
 place RT_Floor - at 0 4.5 y=3
-place Placeable_CookingStand_Smelter anvilforge at -3 3.2 y=0 sit scale=2
+place Placeable_CookingStand_Smelter anvilforge at -3 3.05 y=0 sit scale=2
 place campfire_1 anvilfire at -1.4 3.2 y=0 sit scale=1.5
 place Tree_Stump - at -4.6 0 y=0 sit
 place "VG_DecorationPrefabBase_Vice Variant" - at -4.6 0 y=1.3 drop
@@ -98,7 +98,7 @@ place Zone_Atmosphere aditdark at 29 32 h=6
 push at -10.7 -13 h=30.05 yaw=239
 call rt_storey f1=none f2=none
 place RT_Floor - at 0 4.5 y=3
-place Placeable_CookingStand_Smelter bellowsforge at -3 3.2 y=0 sit scale=2
+place Placeable_CookingStand_Smelter bellowsforge at -3 3.05 y=0 sit scale=2
 place campfire_1 bellowsfire at -1.4 3.2 y=0 sit scale=1.5
 place Block_Wall_Slope_Wood - at -5 2.6 y=0 sit scale=1.4 yaw=90
 place Block_Wall_Slope_Wood - at -5 1 y=0 sit scale=1.4 yaw=90

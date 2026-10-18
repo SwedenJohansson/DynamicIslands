@@ -146,7 +146,7 @@ place Block_Wall_Tier3 - at 3.75 0 y=0.2
 call corners w=3 d=3 y=0.2
 roof 3 3 at 0 0 y=0.2
 place UT_ElectricCableHub01 fogwire at 0.8 3.6 y=0.25 sit yaw=90
-place "Table Office" chieftable at 2.25 3.6 y=0.25 yaw=0
+place "Table Office" chieftable at 2.25 3.6 y=0.54 yaw=0
 place Note_Paper chiefnotes at 1.8 3.6 y=2 sit drop yaw=20
 place RT_CommRadio fogradio at 2.8 3.6 y=2 sit drop yaw=180
 place RT_PowerBox safekeypad at 4.36 1.2 y=1.3 yaw=270
