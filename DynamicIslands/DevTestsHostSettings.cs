@@ -183,13 +183,14 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan islands pool"); else Fail("plan islands pool");
 		}
 
-		[ConsoleCommand(name: "CIUniqueCopy", docs: "Dev: CIUniqueCopy <island> <new name> - a copy of a saved island with a setting of its own, so no other file has its content (host-swap tests: B must have no file of it, AU6 finds islands by content)")]
+		[ConsoleCommand(name: "CIUniqueCopy", docs: "Dev: CIUniqueCopy <island|sample> <new name> - a copy of a saved island (or the sample fixture) with a setting of its own, so no other file has its content (host-swap tests: B must have no file of it, AU6 finds islands by content)")]
 		public static void UniqueCopyCommand(string[] args)
 		{
 			if (args == null || args.Length != 2) { Fail("usage: CIUniqueCopy <island> <new name>"); return; }
 			try
 			{
-				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(args[0]));
+				// ("sample": the tests' own sample island packed in the dev .rmod - generated_sample.island left Mods 10-16)
+				IslandFile f = args[0].Equals("sample", StringComparison.OrdinalIgnoreCase) ? SampleIsland() : IslandFile.Load(IslandSpawner.PathFor(args[0]));
 				f.Name = args[1];
 				f.Props["test.unique"] = Guid.NewGuid().ToString("N");
 				f.Save(IslandSpawner.PathFor(args[1]));
