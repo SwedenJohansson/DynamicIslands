@@ -204,7 +204,8 @@ place Zone_Sound enginehum at -3 -3 h=23
 # mirror's and the panel's own colliders are low or none, the beam went over them - a box round each, 2026-10-10)
 place TP_LaserEmitter lairemitter at -39.8 -9 h=7.5 sit yaw=0
 prop lairemitter obj.name=lairemitter
-place TP_MirrorHousing_Rotating lairmirror at -39 0 h=7.5 sit yaw=0
+# (the beam turns at the mirror's centre since 2026-10-18: the mirror in line with the panel's centre)
+place TP_MirrorHousing_Rotating lairmirror at -39 -1.2 h=7.5 sit yaw=0
 prop lairmirror obj.name=lairmirror
 prop lairmirror col.mode=box
 prop lairmirror on.use=switch|\nmessage||The mirror grinds round a quarter turn and the red beam jumps off it at a new angle.
