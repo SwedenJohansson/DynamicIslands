@@ -72,6 +72,10 @@ namespace DynamicIslands.Editor
 		static int KeyOf(int index) { return KeyBase + (index & 0xFFFF); }
 		static int IndexOfKey(int key) { int i = key - KeyBase; return i == 0xFFFF ? -1 : i; }
 		static bool IsKey(int key) { return key >= KeyBase && key < KeyBase + 0x10000; }
+		/// <summary>A looped sound's own entry: the range is shared with Survivors' cages and was with buried treasure, whose
+		/// used entries are not Active - the tick below dropped them as "sound gone" (mprf4's treasure came back, 2026-10-18).</summary>
+		static bool IsSound(KeyValuePair<int, ObjectState> kv) { return IsKey(kv.Key) && kv.Value.Active; }
+		static bool HasSound(IslandWorldState.Entry e, int key) { ObjectState s; return e.State.TryGetValue(key, out s) && s.Active; }
 
 		class Playing
 		{
@@ -139,8 +143,8 @@ namespace DynamicIslands.Editor
 				Debug.Log("[CUSTOM ISLANDS] Sound '" + s.Path + "' " + (s.Loop ? "looped" : "once") + " on '" + e.HostName + "' object " + index);
 				return;
 			}
-			if (index == -2) foreach (int k in e.State.Keys.Where(IsKey).ToList()) e.State.Remove(k);
-			else e.State.Remove(KeyOf(index));
+			if (index == -2) foreach (int k in e.State.Where(IsSound).Select(kv => kv.Key).ToList()) e.State.Remove(k);
+			else if (HasSound(e, KeyOf(index))) e.State.Remove(KeyOf(index));
 			Stop(e.Id, index);
 			Debug.Log("[CUSTOM ISLANDS] Sound stopped on '" + e.HostName + "'" + (index == -2 ? " (all)" : " object " + index));
 		}
@@ -240,13 +244,13 @@ namespace DynamicIslands.Editor
 			foreach (Playing p in playing.ToList())
 			{
 				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == p.Island);
-				bool keep = e != null && e.Root != null && Behaviours.Near(e) && IsAlive(p) && (!p.Spec.Loop || e.State.ContainsKey(KeyOf(p.Index)));
+				bool keep = e != null && e.Root != null && Behaviours.Near(e) && IsAlive(p) && (!p.Spec.Loop || HasSound(e, KeyOf(p.Index)));
 				if (!keep) { Kill(p); playing.Remove(p); }
 			}
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
 			{
-				if (e.Root == null || !e.State.Keys.Any(IsKey) || !Behaviours.Near(e)) continue;
-				foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => IsKey(k.Key)).ToList())
+				if (e.Root == null || !e.State.Any(IsSound) || !Behaviours.Near(e)) continue;
+				foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(IsSound).ToList())
 				{
 					int index = IndexOfKey(kv.Key);
 					if (playing.Any(p => p.Island == e.Id && p.Index == index)) continue;

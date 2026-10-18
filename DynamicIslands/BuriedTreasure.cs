@@ -31,8 +31,9 @@ namespace DynamicIslands.Editor
 		public List<KeyValuePair<string, int>> Loot = new List<KeyValuePair<string, int>>();
 
 		/// <summary>Island state keys of treasures dug up for good (they held a story item): KeepBase + Number.
-		/// (after TraderRaft.KeyBase 0xC0000 + 0xFFFF)</summary>
-		public const int KeepBase = 0xD0000;
+		/// (after BossPhases.KeyBase 0xE0000 + 0xFFFF. It was 0xD0000, Survivors' and TriggerSounds' range: the sounds' tick
+		/// dropped it and a story treasure came back - mprf4, 2026-10-18)</summary>
+		public const int KeepBase = 0xF0000;
 
 		/// <summary>Holds a story item: dug up once for the whole crew, never grows back.</summary>
 		public bool HoldsStory { get { return Loot.Any(l => StoryItems.IsStory(l.Key)); } }

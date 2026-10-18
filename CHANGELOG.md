@@ -312,6 +312,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - The electric zipline blueprint is never scrambled away.
 
 ### Fixed
+- **A rescued survivor or a dug-up treasure could come back on an island with a looping sound:** the sound
+  kept its state under the same numbers and cleared theirs when it stopped or the island loaded again. Each keeps
+  its own numbers now, and a sound only clears its own.
 - **A player could not join a world with buried treasure on a loaded island:** the host's world message for the
   joiner broke on the island's treasure points, and the joiner waited at "Requesting world". Each machine makes
   those points itself now; the host no longer sends them.
