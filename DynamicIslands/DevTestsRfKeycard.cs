@@ -273,6 +273,13 @@ namespace DynamicIslands
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
 			Check(ref ok, e.Root != null && BuriedTreasure.PointsOf(tm, e.Root.transform).Count == 0, "after a reload, " + Math.Max(days, 30) + " days later: still dug up (" + (e.Root != null ? BuriedTreasure.PointsOf(tm, e.Root.transform).Count : -1) + " points)");
+
+			// An older save kept it under the old key (0xD0000 + n, before 1d72043): still dug up
+			e.State.Remove(BuriedTreasure.KeepBase + b.Number);
+			e.State[BuriedTreasure.OldKeepBase + b.Number] = new ObjectState { Active = false, Yield = 0, Day = Behaviours.Today };
+			yield return ReloadIslandRoutine(e);
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, e.Root != null && BuriedTreasure.PointsOf(tm, e.Root.transform).Count == 0 && BuriedTreasure.DugForGood(e, b.Number), "an older save's key (0xD0000 + n): still dug up");
 			RfDropDetector(player);
 			IslandWorldState.Remove(RfDetectIsland);
 			if (ok) Log("PASS: rf detector"); else Fail("rf detector");

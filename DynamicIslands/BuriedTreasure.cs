@@ -35,6 +35,18 @@ namespace DynamicIslands.Editor
 		/// dropped it and a story treasure came back - mprf4, 2026-10-18)</summary>
 		public const int KeepBase = 0xF0000;
 
+		/// <summary>KeepBase before 2026-10-18 (1d72043): still read, so a treasure dug in an older save stays dug.</summary>
+		public const int OldKeepBase = 0xD0000;
+
+		/// <summary>Dug up for good: its key, or the old key in an older save (not when a survivor cage on the island uses that key).</summary>
+		public static bool DugForGood(IslandWorldState.Entry e, int number)
+		{
+			if (ContentState.IsUsed(e, KeepBase + number)) return true;
+			int old = OldKeepBase + number;
+			if (!ContentState.IsUsed(e, old)) return false;
+			return e.Root == null || !e.Root.GetComponentsInChildren<SurvivorCage>(true).Any(c => c.KeyOf() == old);
+		}
+
 		/// <summary>Holds a story item: dug up once for the whole crew, never grows back.</summary>
 		public bool HoldsStory { get { return Loot.Any(l => StoryItems.IsStory(l.Key)); } }
 
@@ -66,7 +78,7 @@ namespace DynamicIslands.Editor
 			{
 				ObjectState s;
 				if (e.State.TryGetValue(Ordinal(e.Id, b.Number), out s) && !s.Active) continue;
-				if (ContentState.IsUsed(e, KeepBase + b.Number)) continue;
+				if (DugForGood(e, b.Number)) continue;
 				uint point, chest;
 				Indexes(e.Id, b.Number, out point, out chest);
 				try

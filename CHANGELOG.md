@@ -315,6 +315,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **A rescued survivor or a dug-up treasure could come back on an island with a looping sound:** the sound
   kept its state under the same numbers and cleared theirs when it stopped or the island loaded again. Each keeps
   its own numbers now, and a sound only clears its own.
+- **Treasure dug up in an older save came back:** after the numbers above changed, a story treasure dug in a
+  world saved before it was no longer remembered. The old number is read too.
 - **An island coming back "ahead of the raft" could come back behind it:** when the first spots in front were
   taken, later tries went up to 145 degrees off the raft's course. A returning island now stays within 80 degrees of it.
 - **A player could not join a world with buried treasure on a loaded island:** the host's world message for the
