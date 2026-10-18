@@ -1414,6 +1414,16 @@ namespace DynamicIslands
 							if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
 							break;
 						}
+						case "store":
+						{
+							// store [alias|-] at <x> <z> [place's options] - Raft's trading post, its store working in a world (SL7: RaftStore)
+							var st = t.ToList();
+							st[0] = "place";
+							st.Insert(1, RaftStore.ObjectName);
+							if (st.Count > 2 && st[2] == "at") st.Insert(2, "-");
+							t = st.ToArray();
+							goto case "place";
+						}
 						case "place":
 						{
 							// place <Object> <alias|-> at <x> <z> [y=|h=] [ground] [yaw=] [tilt=] [roll=] [scale=] [sit]

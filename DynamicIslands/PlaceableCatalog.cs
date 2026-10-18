@@ -367,7 +367,7 @@ namespace DynamicIslands.Editor
 			GameObject proto = Get(name);
 			if (proto == null) return null;
 			GameObject go;
-			if (harvestables.ContainsKey(name) && !withGameplay)
+			if ((harvestables.ContainsKey(name) || RaftStore.Is(name)) && !withGameplay)
 			{
 				// Instantiate under the inactive container so no script wakes up, strip the scripts, then move it out
 				go = UnityEngine.Object.Instantiate(proto, container.transform);
@@ -522,7 +522,9 @@ namespace DynamicIslands.Editor
 			// (a quest item pickup: which of Raft's quest items it is, read before its scripts go)
 			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Remember(name, source.gameObject);
 			// Island decoration from story places carries quest, AI and trigger scripts that expect their own island
-			if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
+			// (Raft's trading post keeps its store's scripts, only its landmark bookkeeping goes: RaftStore)
+			if (RaftStore.Is(name)) RaftStore.Prepare(clone);
+			else if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
 			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
@@ -1378,6 +1380,9 @@ namespace DynamicIslands.Editor
 				}
 				foreach (KeyValuePair<string, Transform> pick in Pick(root.transform))
 					if (IsPlaceable(pick.Value, pick.Key)) yield return pick;
+				// Raft's trading post is one object too (its hut, register and radio): RaftStore puts it to work
+				foreach (TradingPost tp in root.GetComponentsInChildren<TradingPost>(true))
+					yield return new KeyValuePair<string, Transform>(RaftStore.ObjectName, tp.transform);
 			}
 		}
 

@@ -37,6 +37,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AwaitExtensions\Engine\ContextHelper.cs" />
+    <Compile Include="BlueprintSteps.cs" />
+    <Compile Include="RaftStore.cs" />
     <Compile Include="AwaitExtensions\Engine\ExtensionsHelper.cs" />
     <Compile Include="AwaitExtensions\Engine\ManualAwaiter.cs" />
     <Compile Include="AwaitExtensions\Engine\RoutineHelper.cs" />
@@ -279,6 +281,7 @@
     <Compile Include="DevTestsScatter.cs" />
     <Compile Include="DevTestsNewPieces.cs" />
     <Compile Include="DevTestsPlanBlueprints.cs" />
+    <Compile Include="DevTestsStore.cs" />
     <Compile Include="DevTestsPlanOrder.cs" />
     <Compile Include="DevTestsPlanProgress.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />

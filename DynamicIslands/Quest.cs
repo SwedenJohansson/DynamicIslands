@@ -21,7 +21,7 @@ namespace DynamicIslands.Editor
 	public class IslandQuest
 	{
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages" };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint" };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
 		public static bool Counted(string type) { return type == "collect" || type == "pages"; }
@@ -44,6 +44,7 @@ namespace DynamicIslands.Editor
 					case "catch": return "Catch " + (Count > 1 ? Count + " " : "a ") + (Target.Length > 0 ? Target.ToLowerInvariant() + (Count > 1 ? "s" : "") : "animal" + (Count > 1 ? "s" : ""));
 					case "collect": return "Find " + (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? StoryItems.Label(Target) : "a story item");
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
+					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
 				return Type;
 			}
@@ -421,13 +422,18 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Every frame from the mod: the panel for the quest of the island the player is at (and its introduction once).</summary>
+		/// <summary>How many times the quests were checked (for the tests).</summary>
+		public static int TickCount;
+
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
+			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
+			CheckBlueprints();
 			// (shows within ShowDistance, stays up out to NearDistance)
 			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e, e.Id == panelIsland ? NearDistance : ShowDistance) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
 			panelIsland = at != null ? at.Id : -1;
@@ -558,6 +564,29 @@ namespace DynamicIslands.Editor
 					// (only while someone is there: a quest whose items the crew already held finished the moment its island
 					// appeared far away, and nobody got its reward)
 					if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, n, step + 1, 0, true);
+				}
+			}
+		}
+
+		/// <summary>Every machine (SL8): a "blueprint" step waiting at an island this player is at is done when this player
+		/// carries that blueprint or has learned it - picked up there, earlier, or bought at a store. It goes through Event like
+		/// a note read, so a player's machine tells the host (and an early pick-up still counts when the step comes).</summary>
+		internal static void CheckBlueprints()
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null || !Near(e)) continue;
+				for (int n = 0, count = QuestsOf(e); n < count; n++)
+				{
+					IslandQuest q = TickQuest(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count || q.Steps[step].Type != BlueprintSteps.Type) continue;
+					IslandQuest.Step s = q.Steps[step];
+					string found = BlueprintSteps.Found(s.Target);
+					if (found == null) continue;
+					Debug.Log("[CUSTOM ISLANDS] [quest] " + e.Name + ": blueprint step " + (step + 1) + " done (" + found + ")");
+					Event(e, n, BlueprintSteps.Type, s.Target, Mathf.Max(1, s.Count - ProgressOf(e, n)));
+					return; // (one a tick: the quest moved on, the next tick looks again)
 				}
 			}
 		}

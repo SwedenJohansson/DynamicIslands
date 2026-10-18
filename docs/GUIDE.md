@@ -317,7 +317,7 @@ The builder of an island can give it much more than land (see [section 5](#5-mak
 
 An island with a quest shows a **quest panel** on the right when you come within about 70 m of its shore (it stays up
 until you are 150 m away, so islands still need looking for), with its steps: go somewhere, read a
-note, open a chest, defeat or catch animals, collect story items, find journal pages. Each step done shows what's
+note, open a chest, defeat or catch animals, collect story items, find journal pages, find one of Raft's blueprints. Each step done shows what's
 next; the last one gives the reward to every player near the island - and a crew member who was elsewhere (or joins
 later) gets their share when they come to the island, once. The panel shows **five steps at a time**: the one
 just done, the one you're on and what comes after. A longer quest scrolls - to your step by itself whenever it changes,
@@ -1354,6 +1354,16 @@ the editor says so too, in the object list's hint and on the crate's own panel w
 you when a quest needs a chest and the island only has raft crates. Once taken it
 stays gone, and comes back after the island's regrow days like harvested things ([4.4](#44-the-island-tab); 0 = never).
 
+**A Raft store (Raft's trading post).** The **Islands** list has **TradingPost**: the trading post of Raft's big
+islands - hut, register, lantern and radio - and in a world it **is a store**. Look at it and press **E**: Raft's own
+store window opens with Raft's goods at Raft's prices, paid in **trash cubes** and **trade coins**, and players can
+sell their trophy fish there as at Raft's posts. Raft's reputation (its three tiers) is Raft's own, one total for all
+its posts and the mod's. Each store also sells the **story blueprints** of Raft's islands that the player hasn't found
+yet (6 trash cubes each, one each), so a missed blueprint can always be had later - the window doesn't list the ones
+the player already has. Each store keeps its own stock: what is sold is saved with the world and is the same for every
+player (buying together works: a joined player's purchase goes through the host). Put it on the ground (**Ground**), on
+a flat open spot with room in front of the counter. In an island recipe: `store [alias] at x z ground`.
+
 ### 5.4 Trigger zones and ambushes
 
 A **trigger zone** ("Zones & triggers") is an invisible sphere. When a player walks in it shows your **message**,
@@ -1425,7 +1435,7 @@ planks and rope, and when the quest is done it brings a saved island "Old camp" 
 name on the Receiver.*
 
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
-**collect** a number of a story item, **find** journal pages. Each step's kind is a **▼ list** (each kind says what it
+**collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's. Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1435,6 +1445,14 @@ list too (nothing, a saved island, a new island of a map type), and so does its 
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. To keep the story in order anyway, hide a later step's chest or animals until
 the step before shows them (**Behaviour & events...** > **At first: Hidden until shown**, for animals **Hidden (ambush)**, and a **show** action).
+
+**Blueprint steps** ask for one of Raft's blueprints (`Blueprint_Fueltank`, ...; the **▾** lists them, Raft's story
+blueprints first; empty = any of Raft's story blueprints). A player has it when it is in their inventory or they have
+learned it at the research table, and the step counts while that player is at the island. So put the blueprint on the
+island (a chest's loot, or lying about) and the step asks the player to find it. A player who missed it - or learned it
+somewhere else - is not stuck: learned counts too, and every **Raft store** (5.3) sells the story blueprints a player
+hasn't got, one of each, for 6 trash cubes. Check and the plan checker say when a blueprint step names a blueprint
+Raft doesn't have, or one no island of the plan gives.
 
 **Collect and find-pages steps** count what the whole crew holds, and finish while a player is at the island - so the
 reward reaches someone. **Traps to avoid** when you make a quest (toggles in events that happen again, keys, rewards):

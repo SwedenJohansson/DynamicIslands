@@ -106,6 +106,7 @@ plan save
 | `info` | `key=value` | Same, with `info.` before the key: `info title=`, `info author=`, `info description=`. |
 | `brush` | `<tool> at x z` or `<tool> from x1 z1 to x2 z2`, `[r=15] [s=4] [frames=30] [rot=] [h=]` | A terrain stroke (`Brush`). Tools: `raise lower flatten smooth sample sand grass rock seabed auto stamp:<i>`. r 2-80, s 0.5-20, frames 1-600. `h=`: flatten to that height above the sea. `rot=`: the stamp's turn (plus the frame's yaw). |
 | `clear` | `at x z [r=5]` or `from x1 z1 to x2 z2 [r=5]`, `[all] [only=<regex>] [below=] [above=] [on=sand\|grass\|rock\|seabed]` | Hides the editor objects in the circle or along the line, as one undo step. Without `all` the recipe's own objects stay. `below`/`above`: height above the sea. |
+| `store` | `[alias\|-] at x z [options]` | Raft's trading post as a working store (`place TradingPost ...`, SL7 `RaftStore.cs`): Raft's goods and prices, plus the story blueprints the player lacks (Trashcube*6, one each). Use `ground`. |
 | `place` | `<Object> <alias\|-> at x z [options]` | One object (`Place`). Object `none` places nothing (an empty macro slot). A Ready piece gets its working settings (`ReadyPieces.Defaults`, CB1) only with an alias (or `as=`); with `-` it stays decoration. |
 | `scatter` | `<Object> <count> at x z r= [options]` | Random spots in the circle: dry land by default, `wet` under the sea, `any` both. `deep=` max depth, `free=` metres clear of editor objects, `seed=`, `scale=a-b`, `yaw=` fixed (else random), `as=<alias>`. |
 | `line` | `<Object> from x1 z1 to x2 z2 [step=1.5] [ends] [yaw=] [y=\|h=] [sit] [follow]` | A row, each object's x axis along the line. `ends`: pieces at both ends. `follow`: end to end over the ground (`LineFollow`). |
@@ -118,7 +119,7 @@ plan save
 | `note` | `<alias> <title> \| <text>` | The note editor's Apply (`NoteEditorWindow.Apply`). |
 | `story` | `id\|name\|icon\|description[\|raft=<Raft item>]` | A story item added, or replaced by id (`StoryItemDef.Parse`). |
 | `quest` | `title=`, `intro=`, `done=` or `reward=` (one a line) | The island's quest. `quest2`..`quest9`: further quests. |
-| `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages`. `step2`..`step9` for further quests. |
+| `step` | `type\|target\|count\|text` | A quest step. Types are `IslandQuest.Types`: `reach read open kill catch collect pages blueprint` (`blueprint\|Blueprint_X\|1\|text`: one of Raft's blueprints carried or learned while at the island; empty target = any story blueprint). `step2`..`step9` for further quests. |
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
 | `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |

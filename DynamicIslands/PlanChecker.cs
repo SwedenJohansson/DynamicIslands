@@ -912,6 +912,15 @@ namespace DynamicIslands.Editor
 						if (t.Length > 0 && !f.AllText.Contains(StoryItems.Ref(StoryItems.IdOf(t))))
 							c.Add(i, Level.Warning, head + " needs the story item " + StoryItems.Label(t) + ", but nothing on the island gives it (no chest, zone or action). It works only if players got it on another island.", "Put it in a chest or a zone's items on this island, or make sure another island gives it first.");
 						break;
+					case "blueprint":
+						ScrambledBlueprints.Read();
+						if (t.Length > 0 && ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && !BlueprintSteps.Exists(t))
+							c.Add(i, Level.Problem, head + " needs the blueprint '" + t + "', and Raft has no item of that name" + tail, "Pick the blueprint from the list beside the step (Raft's names start with Blueprint_).");
+						else if (t.Length > 0 && f.AllText.IndexOf(t + "*", StringComparison.OrdinalIgnoreCase) < 0 && !ScrambledBlueprints.OnIslands.ContainsKey(t))
+							c.Add(i, Level.Warning, head + " needs the blueprint " + Pretty(t) + ", but nothing on the island gives it (no chest, zone or action) and it isn't on Raft's story islands. It works only if players got it elsewhere (another island, a Raft store).", "Put " + t + "*1 in a chest or a zone's items on this island, or make sure another island gives it first.");
+						else if (t.Length > 0 && f.AllText.IndexOf(t + "*", StringComparison.OrdinalIgnoreCase) < 0)
+							c.Add(i, Level.Tip, head + " needs the blueprint " + Pretty(t) + ", which this island doesn't give: it lies on Raft's story island " + string.Join("/", ScrambledBlueprints.OnIslands[t].ToArray()) + " (or a Raft store sells it to players who missed it).", "Fine if the plan keeps that island before this one; else put " + t + "*1 in a chest here.");
+						break;
 					case "pages":
 						// (a page comes from a note with text, or a "journal" action: an empty note gives none)
 						if (st.Target != "all" && f.PageCount < st.Count)

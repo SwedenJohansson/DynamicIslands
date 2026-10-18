@@ -78,6 +78,12 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Every storyline hands out all of Raft's story blueprints** (the 23 from Vasagatan to Utopia), so nothing is
   missing from the crafting menu: checked for all six library storylines. For plan makers: `CIPlanBlueprints [plan]`
   lists any Raft story blueprint a saved plan never gives; a play test step `expect blueprints` checks it at the end.
+- **Raft stores on custom islands:** the **TradingPost** object (Islands list) is Raft's trading post, working - Raft's
+  store window, goods and prices, trash cubes and trade coins, trophy fish. Stock is kept per store with the world and
+  shared by the crew. Recipes: `store [alias] at x z ground`.
+- **Quest step "Blueprint":** find one of Raft's blueprints (carried, or already learned) while at the island. A
+  missed story blueprint can be bought later at any Raft store (6 trash cubes, one each; only the ones a player lacks
+  are listed).
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the
   mirror's centre.
 - **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a

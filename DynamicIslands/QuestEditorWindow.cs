@@ -329,7 +329,7 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -339,6 +339,7 @@ namespace DynamicIslands.Editor
 			{ "open", "Open a chest (by its note title; empty = any chest)" }, { "kill", "Defeat a number of animals of a kind (e.g. Warthog)" },
 			{ "catch", "Catch a number of animals with Raft's net launcher (e.g. Llama)" }, { "collect", "Have a number of a story item (the journal counts them)" },
 			{ "pages", "Find a number of journal pages: notes read on this island (or \"all\": anywhere)" },
+			{ "blueprint", "Find one of Raft's blueprints: picked up (and carried) or already learned (e.g. Blueprint_Fueltank)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -346,6 +347,7 @@ namespace DynamicIslands.Editor
 			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest; not the abandoned raft crate)" },
 			{ "kill", "creature (e.g. Warthog; empty = any)" }, { "catch", "animal (e.g. Llama; empty = any)" },
 			{ "collect", "story item (\u2026 to choose)" }, { "pages", "empty = this island, all = any island" },
+			{ "blueprint", "Blueprint_ name (\u25BE lists Raft's; empty = any story blueprint)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
@@ -452,6 +454,7 @@ namespace DynamicIslands.Editor
 				case "kill": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null).Select(k => k.Label); break;
 				case "catch": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null && k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label); break;
 				case "pages": return new List<DropList.Option> { new DropList.Option("", "This island", "Pages from this island's notes"), new DropList.Option("all", "all", "Pages from any island") };
+				case "blueprint": return BlueprintSteps.All().Select(b => new DropList.Option(b, PlanChecker.Pretty(b), b)).ToList();
 				default: return new List<DropList.Option>();
 			}
 			return names.Where(n => n != null && n.Trim().Length > 0).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new DropList.Option(n, n)).ToList();

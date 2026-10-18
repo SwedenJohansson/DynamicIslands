@@ -1243,6 +1243,7 @@ namespace DynamicIslands
 					StableIds.CheckPickups(island, root, position.y > IslandSpawner.FlyingThreshold);
 					IslandObjectState.Apply(entry, IslandRules.RegrowDays(entry));
 					BuriedTreasure.OnIslandReady(entry);
+					RaftStore.OnIslandReady(root, entry); // Raft's trading posts: network number, goods, what was sold
 					Behaviours.OnIslandReady(entry); // objects shown or hidden, doors open or closed, as saved
 					ContentState.OnIslandReady(entry); // first: chests refill and zones re-arm before the creatures look at them
 					CreatureSpawner.OnIslandReady(entry);

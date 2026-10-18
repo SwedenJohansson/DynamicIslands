@@ -65,22 +65,9 @@ namespace DynamicIslands
 		/// play test's "expect blueprints" at a plan's end (the user, 2026-10-18: nothing missing from the crafting menu).</summary>
 		public static List<string> StoryBlueprintsNotLearned()
 		{
-			ScrambledBlueprints.Read();
 			var missing = new List<string>();
-			List<Item_Base> items = ItemManager.GetAllItems();
-			foreach (string bp in ScrambledBlueprints.OnIslands.Keys.OrderBy(b => b))
-			{
-				List<Item_Base> teaches = items.Where(i => i != null && i.settings_recipe != null &&
-					((i.settings_recipe.BlueprintItem != null && i.settings_recipe.BlueprintItem.UniqueName == bp) ||
-					 (i.settings_recipe.ExtraBlueprintItems != null && i.settings_recipe.ExtraBlueprintItems.Any(x => x != null && x.UniqueName == bp)))).ToList();
-				// (a blueprint is researched at the table to learn it: found = in the player's inventory or learned; Raft links
-				// the blueprint and its item either way round - the item's recipe names its blueprint, or the blueprint its item)
-				Item_Base bpItem = items.FirstOrDefault(i => i != null && i.UniqueName == bp);
-				if (bpItem != null && bpItem.settings_recipe != null && bpItem.settings_recipe.BlueprintItem != null && bpItem.settings_recipe.BlueprintItem != bpItem) teaches.Add(bpItem.settings_recipe.BlueprintItem);
-				Network_Player me = RAPI.GetLocalPlayer();
-				bool have = me != null && me.Inventory != null && me.Inventory.GetItemCount(bp) > 0;
-				if (!have && !teaches.Any(i => i.settings_recipe.Learned)) missing.Add(bp + (bpItem == null ? " (no such item)" : ""));
-			}
+			foreach (string bp in BlueprintSteps.StoryBlueprints())
+				if (!BlueprintSteps.Has(bp)) missing.Add(bp + (BlueprintSteps.Exists(bp) ? "" : " (no such item)"));
 			return missing;
 		}
 	}
