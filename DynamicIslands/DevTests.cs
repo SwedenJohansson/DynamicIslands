@@ -1036,6 +1036,9 @@ namespace DynamicIslands
 				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4}){5}", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
 					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-", pc.HasRaftAsParent ? ", a child of the raft" : ""));
 			}
+			// (in the air at the last look: an animal knocked the player up a moment before - Thornwood, 2026-10-17: pushed 4 m, 2 m up,
+			// 'grounded=False' at 6 s. Up to 2 s more to land)
+			for (float t = 0f; t < 2f && !player.PersonController.IsGrounded; t += 0.25f) yield return new WaitForSeconds(0.25f);
 			Application.logMessageReceived -= counter;
 			float drop = target.y - player.transform.position.y;
 			Log("Exceptions while standing: " + exceptions + (firstException != null ? " (first: " + firstException + ")" : ""));
