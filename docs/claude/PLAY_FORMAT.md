@@ -88,6 +88,7 @@ expect message isn't whole
 | `expect title <text>` | The quest's title is exactly the text (case counts). |
 | `expect done` | The quest is done. |
 | `expect story <id> <n>` | The crew holds exactly n of that story item. |
+| `expect blueprints` | Every one of Raft's story-island blueprints (`raft_blueprints.txt`) is learned, picked up during the play (hands are emptied at each island) or lies on a Raft story island the plan keeps - at a plan test's end (the user, 2026-10-18: a plan hands them all out). Fails with the ones not learned. Static check of a saved plan: `CIPlanBlueprints <plan name>`. |
 | `expect survivor <id>` | That survivor (`survivor.id`) is on the world's rescued list (`Survivors.Has`). |
 | `expect shown <name>` / `expect hidden <name>` | The object is shown / hidden. |
 | `expect message <text>` | One of the last messages contains the text (any case). |

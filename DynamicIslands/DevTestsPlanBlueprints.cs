@@ -11,17 +11,18 @@ namespace DynamicIslands
 		/// <summary>Raft's progression in the plans (the user, 2026-10-05): the plan Check names every blueprint of Raft's
 		/// story islands a plan never gives. The library's plans give them all (their own islands or the story islands they
 		/// keep); a plan with Raft's story off and no islands is told about every one.</summary>
-		[ConsoleCommand(name: "CIPlanBlueprints", docs: "Dev, anywhere: the plan Check's blueprint findings for the library's plans (installed), and for a plan with Raft's story off and no islands")]
+		[ConsoleCommand(name: "CIPlanBlueprints", docs: "Dev, anywhere: the plan Check's blueprint findings for the library's plans (installed), and for a plan with Raft's story off and no islands; CIPlanBlueprints <plan name>: that plan only - every story blueprint it never hands out (the user, 2026-10-18: every plan gives them all)")]
 		public static void PlanBlueprints(string[] args)
 		{
 			bool ok = true;
 			ScrambledBlueprints.Read();
 			int all = ScrambledBlueprints.OnIslands.Count;
 			Check(ref ok, all >= 20, "Raft's story islands' blueprints known: " + all);
-			foreach (string name in new[] { "Raft 2 - The Drowned Frontier", "Raft Remade", "The Long Voyage", "Silver Screen Seas", "The Abyss Expedition" })
+			string one = args != null ? string.Join(" ", args).Trim() : "";
+			foreach (string name in one.Length > 0 ? new[] { one } : new[] { "Raft 2 - The Drowned Frontier", "Raft Remade", "The Long Voyage", "Silver Screen Seas", "The Abyss Expedition", "The Rainmakers" })
 			{
 				WorldPlan p = WorldPlan.Load(name);
-				if (p == null) { Log("  (plan '" + name + "' isn't installed - skipped)"); continue; }
+				if (p == null) { if (one.Length > 0) Check(ref ok, false, "no saved plan '" + one + "'"); else Log("  (plan '" + name + "' isn't installed - skipped)"); continue; }
 				List<PlanChecker.Finding> f = PlanChecker.Check(p, false, false);
 				PlanChecker.Finding miss = f.FirstOrDefault(x => x.Text.StartsWith("Raft's blueprints never given"));
 				PlanChecker.Finding tip = f.FirstOrDefault(x => x.Text.StartsWith("Raft's blueprints given by the plan's islands"));
@@ -43,6 +44,7 @@ namespace DynamicIslands
 					PlanProgressWindow.Close();
 				}
 			}
+			if (one.Length > 0) { if (ok) Log("PASS: plan blueprints '" + one + "'"); else Fail("plan blueprints '" + one + "'"); return; }
 			var bare = new WorldPlan { Name = "CI no story", Random = true, RaftStory = false };
 			PlanChecker.Finding none = PlanChecker.Check(bare, false, false).FirstOrDefault(x => x.Text.StartsWith("Raft's blueprints never given"));
 			Check(ref ok, none != null && ScrambledBlueprints.OnIslands.Keys.All(b => none.Text.Contains(PlanChecker.Pretty(b))),
@@ -57,6 +59,29 @@ namespace DynamicIslands
 			}
 			else Log("  (the Progression panel isn't built here: run in the editor to check it too)");
 			if (ok) Log("PASS: plan blueprints"); else Fail("plan blueprints");
+		}
+
+		/// <summary>Raft's story-island blueprints (raft_blueprints.txt) neither learned nor in the local player's inventory - the
+		/// play test's "expect blueprints" at a plan's end (the user, 2026-10-18: nothing missing from the crafting menu).</summary>
+		public static List<string> StoryBlueprintsNotLearned()
+		{
+			ScrambledBlueprints.Read();
+			var missing = new List<string>();
+			List<Item_Base> items = ItemManager.GetAllItems();
+			foreach (string bp in ScrambledBlueprints.OnIslands.Keys.OrderBy(b => b))
+			{
+				List<Item_Base> teaches = items.Where(i => i != null && i.settings_recipe != null &&
+					((i.settings_recipe.BlueprintItem != null && i.settings_recipe.BlueprintItem.UniqueName == bp) ||
+					 (i.settings_recipe.ExtraBlueprintItems != null && i.settings_recipe.ExtraBlueprintItems.Any(x => x != null && x.UniqueName == bp)))).ToList();
+				// (a blueprint is researched at the table to learn it: found = in the player's inventory or learned; Raft links
+				// the blueprint and its item either way round - the item's recipe names its blueprint, or the blueprint its item)
+				Item_Base bpItem = items.FirstOrDefault(i => i != null && i.UniqueName == bp);
+				if (bpItem != null && bpItem.settings_recipe != null && bpItem.settings_recipe.BlueprintItem != null && bpItem.settings_recipe.BlueprintItem != bpItem) teaches.Add(bpItem.settings_recipe.BlueprintItem);
+				Network_Player me = RAPI.GetLocalPlayer();
+				bool have = me != null && me.Inventory != null && me.Inventory.GetItemCount(bp) > 0;
+				if (!have && !teaches.Any(i => i.settings_recipe.Learned)) missing.Add(bp + (bpItem == null ? " (no such item)" : ""));
+			}
+			return missing;
 		}
 	}
 }

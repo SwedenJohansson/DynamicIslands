@@ -47,6 +47,14 @@ namespace DynamicIslands
 		}
 
 		static IslandWorldState.Entry playEntry;
+		// Raft story blueprints the player held during this play (hands are emptied at each island: 'expect blueprints' counts these)
+		static readonly HashSet<string> playBlueprints = new HashSet<string>();
+		static void NotePlayBlueprints(Network_Player me)
+		{
+			if (me == null || me.Inventory == null) return;
+			ScrambledBlueprints.Read();
+			foreach (string bp in ScrambledBlueprints.OnIslands.Keys) if (me.Inventory.GetItemCount(bp) > 0) playBlueprints.Add(bp);
+		}
 
 		/// <summary>A world plan's test is playing ("plan" step): "island" plays the island the plan brought.</summary>
 		static bool planMode;
@@ -98,6 +106,7 @@ namespace DynamicIslands
 			bool ok = true, keep = false;
 			var made = new List<IslandWorldState.Entry>();
 			playEntry = null;
+			playBlueprints.Clear();
 			int checks = 0;
 			foreach (RLine rl in lines)
 			{
@@ -151,7 +160,7 @@ namespace DynamicIslands
 						foreach (StoryItemDef d in StoryItems.Of(IslandCache.PropsOf(playEntry)))
 							if (StoryBook.Count(d.Id) > 0) StoryBook.Take(d.Id, StoryBook.Count(d.Id));
 						// (and empty hands in a test world: after many runs a full inventory took no more loot - 'expect item' failed)
-						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) me.Inventory.Clear();
+						if ((SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") && me.Inventory != null) { NotePlayBlueprints(me); me.Inventory.Clear(); }
 						Log("  '" + island + "' is in the world at " + playEntry.Position.ToString("F0"));
 						// (a flying island: seen from below, no sky between its underside and its ground - 10-16)
 						if (playEntry.Position.y > IslandSpawner.FlyingThreshold)
@@ -513,6 +522,10 @@ namespace DynamicIslands
 						Log("  beam '" + t[1] + "': at " + (o.transform.position - e0).ToString("F2") + ", forward " + o.transform.forward.ToString("F2") + ", starts " + (lb.Origin - e0).ToString("F2")
 							+ "; " + lb.Points.Count + " points " + string.Join(" -> ", lb.Points.Select(p => (p - e0).ToString("F1")).ToArray()) + ", mirrors " + lb.Mirrors.Count
 							+ ", ends on " + (lb.Hit != null ? lb.Hit.Name : lb.HitCollider != null ? "'" + lb.HitCollider.name + "' (" + (lb.HitCollider.transform.root != null ? lb.HitCollider.transform.root.name : "-") + ")" : "nothing"));
+						// (the island's mirrors: where they stand and face, active, their colliders - a beam that passes one)
+						foreach (IslandObjectRef m in playEntry.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(LaserBeam.IsMirror))
+							Log("    mirror '" + m.Name + "' at " + (m.transform.position - e0).ToString("F2") + ", forward " + m.transform.forward.ToString("F2") + (m.gameObject.activeInHierarchy ? "" : " (inactive)") + ", colliders: " +
+								string.Join(", ", m.GetComponentsInChildren<Collider>(true).Select(c => c.name + (c.enabled ? "" : " off") + (c.isTrigger ? " trigger" : "") + " " + (c.bounds.center - e0).ToString("F1") + " size " + c.bounds.size.ToString("F1")).ToArray()));
 						foreach (Renderer r in o.GetComponentsInChildren<Renderer>(true))
 							Log("    " + r.GetType().Name + " '" + r.name + "' " + (r.enabled ? "on" : "off") + (r.gameObject.activeInHierarchy ? "" : " (inactive)") + ", middle " + (r.bounds.center - e0).ToString("F2") + ", size " + r.bounds.size.ToString("F2"));
 						break;
@@ -594,6 +607,18 @@ namespace DynamicIslands
 				case "story":
 					Check(ref ok, StoryBook.Count(t[2]) == (int)F(t[3]), "story item " + t[2] + ": " + StoryBook.Count(t[2]) + " (expected " + t[3] + ")");
 					break;
+				case "blueprints":
+				{
+					// expect blueprints: every one of Raft's story-island blueprints (raft_blueprints.txt) learned or picked up in this play - or
+					// lying on one of Raft's story islands the world's plan keeps (the test doesn't sail to those)
+					NotePlayBlueprints(RAPI.GetLocalPlayer());
+					List<string> notYet = StoryBlueprintsNotLearned().Where(b => !playBlueprints.Contains(b.Split(' ')[0])).ToList();
+					List<string> kept = WorldDirector.Plan != null ? PlanChecker.Progression(WorldDirector.Plan, false).Kept : new List<string>();
+					List<string> onKept = notYet.Where(b => kept.Contains(b)).ToList();
+					notYet = notYet.Where(b => !kept.Contains(b)).ToList();
+					Check(ref ok, notYet.Count == 0, "all of Raft's story blueprints learned" + (onKept.Count > 0 ? " or on Raft's story islands the plan keeps (" + onKept.Count + ")" : "") + (notYet.Count > 0 ? " - never: " + string.Join(", ", notYet.ToArray()) : ""));
+					break;
+				}
 				case "survivor":
 					Check(ref ok, Survivors.Has(t[2]), "survivor '" + t[2] + "' rescued (" + Survivors.All.Count + " on the list)");
 					break;

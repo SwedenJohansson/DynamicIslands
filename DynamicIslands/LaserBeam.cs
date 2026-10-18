@@ -98,7 +98,11 @@ namespace DynamicIslands
 					f.y = 0f;
 					if (f.sqrMagnitude < 0.01f) f = r.transform.right;
 					dir = f.normalized;
-					pos = first.Value.point;
+					// turn at the mirror's own upright axis, not where the beam first touched its box: a beam that bounced off
+					// a box face ran along that face line and only grazed the next mirror (2026-10-18, The Rain Engine in its plan)
+					Vector3 c = r.transform.position;
+					pos = new Vector3(c.x, first.Value.point.y, c.z);
+					Points[Points.Count - 1] = pos;
 					skip = r.transform;
 					continue;
 				}

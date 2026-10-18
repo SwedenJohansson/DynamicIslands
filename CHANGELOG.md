@@ -70,6 +70,16 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
   with Raft's own islands as grey lines; **+ Add a saved island**, **+ New island**, and ▲/▼ to move an island along
   the story), **Other islands** (the WHEN / BRING / WHERE / TELL cards) and **Settings**. The window has a top row with
   **Plan**, **New...** (empty, step by step, a template or a copy), **Open...**, **Copy...**, **Delete**, **Templates...**.
+- **A whole storyline in the library, The Rainmakers:** nine story islands told like Raft's own (Raft's story off,
+  the plan's own chain on the Receiver): Hailstone Weir, Cirrus Silo Farm, The Kite Meadow, The Fogworks, Vaporhold
+  Reservoir, Thunderhead Array, The Sleet Kilns, The Isobar Club and the finale, The Rain Engine (30 quest steps over
+  four areas: a lift up the mountain, four arm machines, ziplines, a laser to turn with mirrors, a boss and the storm
+  switched off). Raft's blueprints come in Raft's order; the ending has credits. Guide 16.9 shows what to look at.
+- **Every storyline hands out all of Raft's story blueprints** (the 23 from Vasagatan to Utopia), so nothing is
+  missing from the crafting menu: checked for all six library storylines. For plan makers: `CIPlanBlueprints [plan]`
+  lists any Raft story blueprint a saved plan never gives; a play test step `expect blueprints` checks it at the end.
+- **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the
+  mirror's centre.
 - **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a
   ready-made one or your own - and looking at what it is made of, with a table of every editor feature and an island
   to look at for it. Two small library islands made to learn from, with a sign at each place: **The Lockkeeper's
