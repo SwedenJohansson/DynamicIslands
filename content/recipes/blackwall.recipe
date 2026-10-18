@@ -184,7 +184,7 @@ push at 13.2 -3 h=9
 place "Counter Mid" - at -3 -1 y=0 yaw=270
 place "Counter Mid" - at -3 0 y=0 yaw=270
 place Shelf_Empty_02 - at -0.5 -3.15 y=0 yaw=270
-place Shelf_Empty_02 - at -0.5 -5 y=0 yaw=270
+place Shelf_Empty_02 - at -0.5 -5.12 y=0 yaw=270
 place "Box Small" storebox at -1.5 3.5 y=0.1 sit yaw=10
 pop
 # --- Flat 3 (block B, 12 m): the letter in the cabinet ----------------------------------------------------------------

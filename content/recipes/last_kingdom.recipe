@@ -393,7 +393,7 @@ place Placeable_Table_Basic - at -4.5 -2.5 sit
 place Note_Book charter at -4.5 -2.5 y=0.8 drop
 place Loot_ChestLarge treasury at -0.8 -3.5 sit yaw=270
 pop
-place UT_EndRoom_Chair throne at -16.2 -50 h=43.55 drop scale=2.2 yaw=270
+place UT_EndRoom_Chair throne at -16.2 -50 h=43.4 drop scale=1.9 yaw=270
 place Note_Sign will at -16.4 -48.4 h=43.05 drop yaw=270
 place RT_Fence - at -21 -59 h=46.05 yaw=90
 place RT_Fence - at -21 -44 h=46.05 yaw=90

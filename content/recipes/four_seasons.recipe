@@ -183,7 +183,7 @@ place Pickup_Landmark_WatermelonLandmark - at -76 -25 ground
 place Placeable_Scarecrow - at -78 -20 ground yaw=90
 macro harvestbell name x z
 place RT_Pillar - at $x $z ground sit sy=0.55
-place TangaroaBucket $name at $x $z y=1.65 scale=1.2 rot=180,0,0
+place TangaroaBucket $name at $x $z y=1.93 scale=1.2 rot=180,0,0
 end
 call harvestbell bellplough -88 -16
 call harvestbell bellsow -84 -16

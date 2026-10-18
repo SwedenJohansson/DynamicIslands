@@ -137,7 +137,7 @@ place Zone_Trigger visitorcentre at -3 0 y=1.5
 # (the gift shop: shelves of souvenirs, the stockroom crate)
 place Shelf_Empty_02 - at 3 4.2 y=0 sit yaw=180
 place Shelf_Empty_02 - at 5.7 1 y=0 sit yaw=270
-place Placeable_Figurine_Llama - at 2.35 3.95 y=1.15 sit yaw=180
+place Placeable_Figurine_Llama - at 2.35 3.95 y=1.15 sit scale=0.8 yaw=180
 place Placeable_Figurine_Goat - at 3.4 4.1 y=1.15 sit yaw=180
 place Placeable_Figurine_Chicken - at 5.6 1 y=1.15 sit yaw=270
 place Loot_Crate giftshop at 1.2 -3.6 y=0 sit

@@ -156,7 +156,7 @@ place Pillar_01 - at 45.1 -9.9 h=8.5 sit
 place Pillar_01 - at 43.3 -8.1 h=8.5 sit
 place Pillar_01 - at 45.1 -8.1 h=8.5 sit
 place Block_Roof_Thatch_Pyramid - at 44.2 -9 h=11.52 sx=1.4 sz=1.4
-place Placeable_Figurine_Chicken heron at 44.6 -9.3 h=8.9 sit scale=3 yaw=270
+place Placeable_Figurine_Chicken heron at 44.2 -8.9 h=8.5 sit scale=3 yaw=270
 place Placeable_BirdsNest heronnest at 43.7 -8.6 h=8.65 sit
 place TangaroaBucket shrinebell at 44.2 -9 h=11.44 rot=180,0,0 scale=1.5
 place UT_EndRoom_Pot01 - at 42.6 -10.4 h=8.5 sit scale=0.25
@@ -176,7 +176,7 @@ push at 4.5 -44.5 h=-2
 call boardwalk n=8 wide=1 y=3.6
 pop
 place RT_Pillar - at 16.2 -43.2 h=1.6 sy=0.4
-place TP_LaserControlPanel_lever tidelever at 16.2 -43.35 h=2.5
+place TP_LaserControlPanel_lever tidelever at 16.2 -43.35 h=2.6
 place "Box Small" hutbox at 0.8 -45.2 h=1.6 sit yaw=20
 place Zone_Trigger mazemouth at 15.5 -43.75 h=2.6
 place RT_Pillar - at 6 -47 h=-2.5 sy=1.6

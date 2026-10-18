@@ -111,8 +111,8 @@ call rt_storey f1=none f2=RT_Wall1
 place RT_Floor - at 0 4.5 y=3
 place RT_Wall1 vaultdoor at -3 -4.5
 place Loot_ChestLarge reservevault at -3 3.5 y=0 sit yaw=180
-place TangaroaKitchen_Island_WineShelf - at -4.9 0 y=0 sit yaw=90
-place TangaroaKitchen_Island_WineShelf - at -1.1 0 y=0 sit yaw=270
+place TangaroaKitchen_Island_WineShelf - at -4.4 0 y=0 sit scale=0.8 yaw=90
+place TangaroaKitchen_Island_WineShelf - at -1.6 0 y=0 sit scale=0.8 yaw=270
 place Zone_Trigger vault at -3 1 y=2.2
 place Zone_Atmosphere vaultbubbles at -3 1 y=2.2
 pop

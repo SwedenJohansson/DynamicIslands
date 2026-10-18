@@ -47,7 +47,7 @@ for x 17 37 20
 place DeadTree1 bone at $x -5.5 ground sit scale=1.6 rot=24,0,0
 next
 place DeadTree1 bone at 9.4 -5.5 ground sit scale=1.6 rot=24,0,0
-place DeadTree1 bone at 25 -5.5 ground sit scale=1.6 rot=24,0,0
+place DeadTree1 bone at 24.5 -5.5 ground sit scale=1.6 rot=24,0,0
 place DeadTree2 bone at 22 -7 ground sit scale=2.2 rot=10,0,0
 for v 0 3 1
 place BigBoulder4_Low bone at {-4-6*$v} {2+5*$v} ground sit scale=0.22 yaw={40*$v}

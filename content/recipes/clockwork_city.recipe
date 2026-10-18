@@ -121,8 +121,8 @@ push at 40.5 12 h=12.05 yaw=90
 call rt_storey f1=RT_WallDoor1 f2=RT_Wall1 r2=RT_WallWindow1
 place RT_Floor - at 0 4.5 y=3
 place UT_WaterChallengeWheel2 - at -3 3.7 y=1.8 scale=0.35 rot=90,0,0
-place cogwheel stillcogs at -5.65 0 y=1.6 scale=4 yaw=90
-place cogwheel turningcogs at -5.65 0 y=1.6 scale=4 yaw=90
+place cogwheel stillcogs at -5.4 0 y=1.6 scale=4 yaw=90
+place cogwheel turningcogs at -5.4 0 y=1.6 scale=4 yaw=90
 place Zone_Trigger gearworks at -3 0 y=1.5
 place Creature_Rat rats at -3 1 y=0.3
 place "Pickup_Landmark_Scrap 2_Land" - at -1.8 -2.2 y=0.3 drop yaw=17

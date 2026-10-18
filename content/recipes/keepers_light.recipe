@@ -243,7 +243,7 @@ place "Balboa_Bush_03 Variant" - at 7.4 -6.6 ground yaw=200
 place "Balboa_Bush_01 Variant" - at 13.0 4.6 ground yaw=120
 scatter SmallRock_01 8 at 6 10 r=14 seed=47 wet
 scatter SmallRock_03 7 at -12 -4 r=12 seed=48 wet
-scatter Reef_Barrel1 6 at 22 2 r=18 seed=49 wet
+scatter Reef_Barrel1 6 at 22 2 r=18 seed=50 wet
 scatter Reef_Barrel3 6 at -12 4 r=18 seed=50 wet
 
 # --- Raft's finds in the shallow sea round the stacks (sand, clay, stones, ores, scrap, a giant clam) -------------------

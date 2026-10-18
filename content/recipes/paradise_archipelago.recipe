@@ -258,7 +258,7 @@ push at 2 63 h=2.6 yaw=0
 call relay_house
 pop
 place "VG_DecorationPrefabBase_WideStationarySunbed Variant" - at -21 61 ground yaw=0
-place "VG_DecorationPrefabBase_WideStationarySunbed Variant" - at -8 71.5 ground yaw=90
+place "VG_DecorationPrefabBase_WideStationarySunbed Variant" - at -8 72.4 ground yaw=90
 place "VG_DecorationPrefabBase_WideStationarySunbed Variant" - at -14 51 ground yaw=0
 # (the corner villa: the dealer's letter on its table, the fridge; the card's box on the floor of its pool)
 place Table_Common_01 - at -3.5 59 h=2.6 yaw=0

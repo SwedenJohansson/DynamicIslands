@@ -86,7 +86,7 @@ place Loot_Crate partC at 33 -1.5 sit tilt=10 yaw=140
 place VP_SteelBeam02 - at 28 -3 sit tilt=20 yaw=70
 place VP_SteelBeam01 - at 31 1 sit tilt=-30 yaw=10
 place VP_RubblePile_Medium01 - at 29 -1 sit
-place VP_MetalCrate04 - at 24.7 3.6 sit tilt=25
+place VP_MetalCrate04 - at 24.7 3.6 y=0.2 sit tilt=25
 place Reef_Container - at 34 8 sit tilt=10 yaw=60
 place Creature_AnglerFish anglers at 29 0 h=-3
 
