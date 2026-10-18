@@ -84,6 +84,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 - **Quest step "Blueprint":** find one of Raft's blueprints (carried, or already learned) while at the island. A
   missed story blueprint can be bought later at any Raft store (6 trash cubes, one each; only the ones a player lacks
   are listed).
+- **Storylines ask for their blueprints:** The Rainmakers' quests now have a Blueprint step for each of Raft's
+  blueprints its islands hold, and The Sleet Kilns and The Isobar Club each have a Raft store (Raft's goods, and any
+  story blueprint a player missed).
+- **Fixed:** The Rain Engine's third laser mirror stood beside its panel's line since beams turn at a mirror's centre;
+  the beam now reaches the panel.
 - **Fixed:** a laser beam turned at a mirror's box edge and could just graze the next mirror; it now turns at the
   mirror's centre.
 - **Learn from the islands:** a new guide chapter (17) on opening any island in the editor - from the library, a

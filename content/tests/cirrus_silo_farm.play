@@ -28,9 +28,10 @@ expect step 4
 open Teo's seed box
 expect message NOT THE COMPANY'S
 open Silo 3 store
+wait 3
 expect item Blueprint_MotorWheel 1
 expect item Blueprint_SteeringWheel 1
-expect step 5
+expect step 7
 use teocage
 expect survivor rainmakers_teo
 expect story silokey 0

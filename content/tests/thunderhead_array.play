@@ -47,18 +47,19 @@ expect hidden bunkerdoor
 zone bunker
 expect step 7
 open Bunker lockers
+wait 3
 expect item Blueprint_WindTurbine 1
 expect item Blueprint_ElectricGrill 1
 expect story cagekey 1
-expect step 8
+expect step 12
 read Array engineer's diary
-expect step 9
+expect step 13
 open Ingrid's tool bag
 expect message won't let go
 use ingridcage
 expect survivor rainmakers_ingrid
 open Ingrid's tool bag
 expect item ZiplineTool 1
-expect step 10
+expect step 14
 zone beach
 expect done

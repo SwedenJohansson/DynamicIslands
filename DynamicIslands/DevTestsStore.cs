@@ -274,6 +274,49 @@ namespace DynamicIslands
 			return new Vector3(c.x, f.Heights[Mathf.RoundToInt(c.y / step), Mathf.RoundToInt(c.x / step)] * f.TerrainSize.y, c.y);
 		}
 
+		/// <summary>Play step "storespot [x z] [n] [size]": flat, clear ground for a store (SL7) on the play's island - the
+		/// size x size m square under open sky, all of it the island's own terrain (no object's collider above), at most 0.6 m
+		/// from level, 1 m or more above the sea, and no island object's renderer in the box 5 m over it. Logs the n spots
+		/// nearest to (x z) (default the middle), at least size apart, in the recipe's coordinates.</summary>
+		internal static void StoreSpots(IslandWorldState.Entry e, Vector2 offset, Vector2 near, int n, float size)
+		{
+			if (e == null || e.Root == null) { Log("  storespot: no island"); return; }
+			Transform root = e.Root.transform;
+			float half = size / 2f;
+			var boxes = root.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.bounds.size.x < 80f && r.bounds.size.z < 80f)
+				.Select(r => r.bounds).ToList();
+			var spots = new List<Vector4>();
+			for (float dx = -150f; dx <= 150f; dx += 2f)
+				for (float dz = -150f; dz <= 150f; dz += 2f)
+				{
+					Vector3 c = e.Position + new Vector3(dx - offset.x, 0f, dz - offset.y);
+					float lo = float.MaxValue, hi = float.MinValue;
+					bool ok = true;
+					for (int i = -2; i <= 2 && ok; i++)
+						for (int j = -2; j <= 2 && ok; j++)
+						{
+							RaycastHit h;
+							if (!Physics.Raycast(c + new Vector3(i * half / 2f, 400f, j * half / 2f), Vector3.down, out h, 600f, ~0, QueryTriggerInteraction.Ignore) ||
+								!(h.collider is TerrainCollider) || !h.collider.transform.IsChildOf(root)) { ok = false; break; }
+							lo = Mathf.Min(lo, h.point.y); hi = Mathf.Max(hi, h.point.y);
+						}
+					if (!ok || hi - lo > 0.6f || lo < 1f) continue;
+					Bounds box = new Bounds(new Vector3(c.x, hi + 2.7f, c.z), new Vector3(size, 5f, size));
+					if (boxes.Any(b => b.Intersects(box))) continue;
+					spots.Add(new Vector4(dx, dz, lo - e.Position.y, hi - lo));
+				}
+			var picked = new List<Vector4>();
+			foreach (Vector4 s in spots.OrderBy(s => (new Vector2(s.x, s.y) - near).sqrMagnitude))
+			{
+				if (picked.Any(p => (new Vector2(p.x, p.y) - new Vector2(s.x, s.y)).magnitude < size)) continue;
+				picked.Add(s);
+				if (picked.Count >= n) break;
+			}
+			Log("  storespot " + e.Name + ": " + spots.Count + " clear " + size + " m squares; nearest to " + near.x + " " + near.y + ":");
+			foreach (Vector4 s in picked)
+				Log("    store - at " + s.x + " " + s.y + " ground   (h=" + s.z.ToString("F1") + ", uneven " + s.w.ToString("F2") + " m, " + (new Vector2(s.x, s.y) - near).magnitude.ToString("F0") + " m off)");
+		}
+
 		static string CostText(Cost c) { return c == null || c.item == null ? "-" : c.item.UniqueName + "*" + c.amount; }
 
 		static IEnumerator DumpPosts(Scene scene, string name, Action<int> count)

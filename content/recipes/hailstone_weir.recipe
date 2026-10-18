@@ -141,6 +141,8 @@ step reach|weir_walk|1|Walk out onto the weir
 step read|Weir keeper's log|1|Read the weir keeper's log by the east end
 step collect|story:sluiceopen|1|Turn the crank on the west pier to open sluice one
 step open|Pump house locker|1|Open the locker in the drained pump house
+step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the pump house locker
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the pump house locker
 step read|Nimbus maintenance card|1|Read the Nimbus maintenance card on the pump house table
 quest done=The maintenance card names the next station: Cirrus Silo Farm. Tune the Receiver to the maintenance band.
 quest reward=Plank*6;Rope*3;Scrap*4

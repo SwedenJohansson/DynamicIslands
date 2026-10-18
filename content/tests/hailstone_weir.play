@@ -18,9 +18,10 @@ expect hidden sluice1
 expect shown maintcard
 expect step 3
 open Pump house locker
+wait 3
 expect item Blueprint_Reciever 1
 expect item Blueprint_Antenna 1
-expect step 4
+expect step 6
 read Nimbus maintenance card
 expect done
 expect spinsown spillwheel

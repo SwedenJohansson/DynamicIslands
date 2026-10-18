@@ -297,10 +297,14 @@ step collect|story:foglines|1|Set the fog-line valves as the bulletin says and c
 step read|Shift chief's notes|1|Read the shift chief's notes in the control room
 step kill|Rat|4|Clear the rats out of the cold condenser
 step open|Control room safe|1|Open the control room safe
+step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the control room safe
 step reach|tower_top|1|Climb to the top of the west cooling tower
 step open|Tower cabin chest|1|Open the chest on the tower top
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the tower cabin chest
 step collect|story:confession|1|Play the tape on the control room's radio
 step open|Founders' Day crate|1|Open the Founders' Day crate in the boiler house
+step blueprint|Blueprint_Firework|1|Take the firework plans from the founders' Day crate
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the founders' Day crate
 step open|Boilerman's locker|1|Free Mattis from the cage behind the boiler, then open his locker
 quest done=Mattis is coming with you, and Dagny Holm's voice is in your ears. Vaporhold Reservoir answers on 1000.
 quest reward=MetalIngot*4;Plank*8;Rope*3

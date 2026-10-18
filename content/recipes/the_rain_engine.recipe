@@ -199,7 +199,8 @@ prop seedstack tint.color=#9a6a3a
 place TP_LaserEmitter emitter at -8.8 8 h=28 sit yaw=0
 place TP_MirrorHousing_Rotating mirror1 at -8 12 h=28 sit yaw=0
 place TP_MirrorHousing_Rotating mirror2 at -2 12 h=28 sit yaw=270
-place TP_MirrorHousing_Rotating mirror3 at -2 18 h=28 sit yaw=0
+# (the beam turns at the mirror's centre since 2026-10-18: mirror3 in line with the panel's centre)
+place TP_MirrorHousing_Rotating mirror3 at -2 16.8 h=28 sit yaw=0
 place TP_LaserDoorPanel drumpanel at 6 16.8 h=28 sit scale=2 yaw=-90
 
 # --- The Heart (east of the crown, 9 x 7.5 m, its door west - the engine room door): Dagny's first design, the

@@ -4062,8 +4062,9 @@ script that makes them do something (the dev command `CIStoryAudit`, left out of
 the plan's own chain takes its place on the Receiver. Nimbus Works sold rain, and then the rain didn't stop. Each
 station's logbook gives the frequency of the next, and the trail ends at the Rain Engine, the machine that still seeds
 the whole sky. Each island has notes from the staff, a survivor or a family story, a blueprint cache (Raft's
-blueprints in Raft's order) and a frequency for the next island. At the end every player sees the credits and a
-closing note.
+blueprints in Raft's order; the quest has a **Blueprint** step for each, so taking them is part of it) and a frequency
+for the next island. The Sleet Kilns and The Isobar Club each have a **Raft store**: Raft's goods, and any story
+blueprint a player missed. At the end every player sees the credits and a closing note.
 
 | Island | What it is | What to look at |
 |---|---|---|
@@ -4073,8 +4074,8 @@ closing note.
 | ![](images/library/the_fogworks.jpg) **The Fogworks** (1000) | A fog factory town: boardwalks across a shallow bay, cottages on stilts, two hourglass cooling towers, the pump hall and the control room | Towers of Varuna's pillars (one upside down on the other), fog off the towers, valves and a cable hub, a safe behind a keypad |
 | ![](images/library/vaporhold_reservoir.jpg) **Vaporhold Reservoir** (1000) | An embankment round a deep reservoir lake, the valve tower in the lake, the pump hall drowned on its floor | Utopia's glass bridge, a case dug up with the metal detector and shovel, a valve wheel that opens a flood gate under water, an air pocket in the rocks |
 | ![](images/library/thunderhead_array.jpg) **Thunderhead Array** (1100) | A basalt plateau with a grid of forty lightning rods, the generator hall and the control bunker | Mist and a rain sound for a storm that comes in, wires from rod to rod, three generators and a grid board, a keycard door, the engineer in a cage, a zipline down to the shore |
-| ![](images/library/the_sleet_kilns.jpg) **The Sleet Kilns** (1100) | Five bottle kilns of seeding salt on a black-sand volcano shore, a tramway up from the landing | Tangaroa's vases as kilns, salt sacks weighed on scales, a kiln door that is a chest, hyenas on the way out |
-| ![](images/library/the_isobar_club.jpg) **The Isobar Club** (1200) | The company's members' club on a granite shelf: a pavilion on the upper shelf, tidal pools and a wine cellar below | Tangaroa's facade panels as one low pavilion, Varuna's scissor lift as a funicular, a safe whose code is in the board minutes, Dagny Holm found in the cellar |
+| ![](images/library/the_sleet_kilns.jpg) **The Sleet Kilns** (1100) | Five bottle kilns of seeding salt on a black-sand volcano shore, a tramway up from the landing | Tangaroa's vases as kilns, salt sacks weighed on scales, a kiln door that is a chest, hyenas on the way out, a Raft store by the tramway |
+| ![](images/library/the_isobar_club.jpg) **The Isobar Club** (1200) | The company's members' club on a granite shelf: a pavilion on the upper shelf, tidal pools and a wine cellar below | Tangaroa's facade panels as one low pavilion, Varuna's scissor lift as a funicular, a safe whose code is in the board minutes, Dagny Holm found in the cellar, a Raft store on the upper shelf |
 | ![](images/library/the_rain_engine.jpg) **The Rain Engine** (1400, the finale) | The seeding machine on a mountain island: four arms round a storm crown, the drum hall and the Heart | A 30-step quest over four areas: a gatehouse key in the salt caves, a lift up the mountain, four arm devices that each **signal** a master board, ziplines between the arms, a **laser** to turn with three mirrors, spinning drums stopped by a lever, a polar-bear boss that summons bears, and a master switch that hides the storm and shows a clear sky |
 
 To learn from it: open the plan with **EDITOR** > **A world plan** and look at its rules (`first`, then `after:` the

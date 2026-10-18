@@ -30,8 +30,9 @@ expect step 4
 zone pump_hall
 expect step 5
 open Pump hall store
+wait 3
 expect item Blueprint_WaterTank 1
 expect item Blueprint_Storage_Large 1
-expect step 6
+expect step 10
 read Dagny's letter to the town
 expect done

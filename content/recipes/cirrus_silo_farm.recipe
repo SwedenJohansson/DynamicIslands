@@ -162,6 +162,8 @@ step catch|Goat|3|Net the three runaway goats (the net launcher is in the tool c
 step read|Farmer Teo's letter to his daughter|1|Read the letter on the farmhouse table
 step collect|story:silohatch|1|Open the hatch at the foot of silo three with the silo key
 step open|Silo 3 store|1|Open the store under silo three
+step blueprint|Blueprint_MotorWheel|1|Take the engine plans from the silo 3 store
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the silo 3 store
 step open|Teo's seed box|1|Free Teo from the seed cage beside silo three (the silo key opens it), then open his seed box
 quest done=Teo is free and on his way to your raft. The next station is the kite meadow: tune the Receiver to 900.
 quest reward=Plank*6;Rope*3;Scrap*4

@@ -195,13 +195,17 @@ quest intro=A row of winch masts on a high meadow, kites slack between them. Cli
 step reach|cliff_path|1|Climb the cliff path from the beach
 step read|Kite crew roster|1|Read the crew roster in the hut on the ledge
 step open|Crew hut chest|1|Open the crew hut chest
+step blueprint|Blueprint_Machete|1|Take the machete plans from the crew hut chest
 step reach|upper_meadow|1|Cut through the vines to the upper meadow
 step kill|Warthog|5|Drive off the five warthogs dug in under the masts
 step pages||4|Read the logs at the feet of winches 2, 7 and 11 (the roster is the first page)
 step collect|story:shedopen|1|Open the launch shed with the winch code
 step collect|story:kitesup|1|Start the winch engine (its fuel is under a tarp by the shed)
 step open|Fuel store|1|Open the fuel store in the shed
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the fuel store
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel store
 step open|Biofuel press|1|Open the biofuel press in the shed
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the biofuel press
 step collect|story:bellrung|1|Ring the shed bell
 quest done=The kites are up and Rouhi is coming with you. The Fogworks answers on 1000.
 quest reward=MetalIngot*4;Rope*3;Plank*6

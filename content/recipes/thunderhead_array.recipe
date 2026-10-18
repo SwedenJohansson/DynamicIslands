@@ -268,6 +268,10 @@ step read|Grid restored|1|Wire the three rows of rods at their connectors and sw
 step kill|Screecher|3|Drive off the screechers the rods drew in
 step reach|bunker|1|Open the control bunker (its keycard is in the generator hall chest)
 step open|Bunker lockers|1|Open the bunker lockers
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the bunker lockers
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the bunker lockers
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the bunker lockers
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the bunker lockers
 step read|Array engineer's diary|1|Read the array engineer's diary
 step open|Ingrid's tool bag|1|Free Ingrid from the cage and take her tool bag
 step reach|beach|1|Ride the zipline down to the beach

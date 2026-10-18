@@ -154,6 +154,10 @@ step reach|valve_tower|1|Cross the glass bridge to the valve tower
 step collect|story:valveopen|1|Fit the valve wheel on its spindle and turn it
 step reach|pump_hall|1|Dive to the drowned pump hall on the lake floor (an air pocket by its door)
 step open|Pump hall store|1|Open the pump hall's store
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the pump hall store
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the pump hall store
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the pump hall store
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the pump hall store
 step read|Dagny's letter to the town|1|Read the letter on the crate in the pump hall
 quest done=The water plans are yours, and Dagny's letter says where this ends: the Rain Engine. The next station answers on 1100.
 quest reward=Plank*6;Rope*2;Scrap*4

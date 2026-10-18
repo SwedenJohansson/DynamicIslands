@@ -120,6 +120,9 @@ place Zone_Trigger smelter at 0 16 h=4
 place Zone_Trigger ambushzone at 0 -44 h=2
 place Creature_Hyena hyenas at -10 -38 ground
 
+# --- A Raft store by the tramway: Nimbus Works' company shop, still trading (Raft's goods, and plans the crew missed) --
+store kilnshop at 12 -30 ground
+
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 20 -30 r=15 seed=9911 free=3
 scatter "Pickup_Landmark_Flower_Blue" 2 at -30 30 r=15 seed=9912 free=3
@@ -193,6 +196,9 @@ step read|Kiln master's log|1|Read the kiln master's log in the smelter house
 step collect|story:weighed|1|Fill three salt sacks at the heaps and weigh them on the scales
 step open|Kiln 4 door|1|Open Kiln 4's iron door
 step open|Kiln store|1|Open the kiln store with the key from Kiln 4
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the kiln store
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the kiln store
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the kiln store
 step kill|Hyena|3|Deal with the hyenas at the tram stop on the way out
 quest done=The smelter plans are yours. In the store's ledger: the salt went on to the members' club - the next station answers on 1200.
 quest reward=MetalIngot*6;Bolt*4;Hinge*2

@@ -127,6 +127,9 @@ pop
 prop clubroof tint.color=#e6e1d6
 prop colonnade tint.color=#e6e1d6
 
+# --- A Raft store on the upper shelf, east of the clubhouse: the members' shop (Raft's goods, and plans the crew missed) --
+store clubshop at 12 -4 ground
+
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 15 10 r=12 seed=9961 free=3
 scatter "Pickup_Landmark_Tree_Mango" 1 at -15 10 r=10 seed=9962 free=5
@@ -190,6 +193,9 @@ step reach|club|1|Ride the funicular up to the club
 step read|Board minutes|1|Read the board minutes on the billiard table
 step open|Secretary's safe|1|Open the secretary's safe (its keypad code is in the minutes)
 step open|Secretary's cabinet|1|Open the secretary's cabinet with the key from the safe
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the secretary's cabinet
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the secretary's cabinet
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the secretary's cabinet
 step open|Dagny's case|1|Free the prisoner in the wine cellar and take her case
 quest done=Dagny Holm is coming with you, and she knows the way to the Rain Engine. Its station answers on 1400.
 quest reward=Glass*4;Bolt*4;MetalIngot*3

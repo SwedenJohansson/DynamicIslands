@@ -28,10 +28,11 @@ open Kiln 4 door
 expect story storekey 1
 expect step 4
 open Kiln store
+wait 3
 expect item Blueprint_SmelterElectric 1
 expect item Blueprint_BiofuelExtractorAdvanced 1
 expect item Blueprint_AnchorStationaryAdvanced 1
-expect step 5
+expect step 8
 expect shown ambushzone
 zone ambush
 wait 2

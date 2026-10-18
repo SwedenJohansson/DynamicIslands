@@ -35,23 +35,26 @@ code safekeypad 1111 wrong
 code safekeypad 3157
 expect shown controlsafe
 open Control room safe
+wait 3
 expect item Blueprint_EngineControls 1
-expect step 7
-zone tower_top
 expect step 8
-open Tower cabin chest
-expect item Blueprint_MetalDetector 1
+zone tower_top
 expect step 9
+open Tower cabin chest
+wait 3
+expect item Blueprint_MetalDetector 1
+expect step 11
 open Founders' Day crate
 expect message NOT TO BE OPENED
 use fogradio
 expect story confession 1
-expect step 10
+expect step 12
 open Founders' Day crate
+wait 3
 expect item Blueprint_Firework 1
 expect item Blueprint_ZiplineBase 1
 expect story boilerkey 1
-expect step 11
+expect step 15
 open Boilerman's locker
 expect message padlocked
 use mattiscage

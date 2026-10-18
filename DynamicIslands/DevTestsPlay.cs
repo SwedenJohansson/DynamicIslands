@@ -477,6 +477,10 @@ namespace DynamicIslands
 						// offset <x> <z>: the island's land centre from its recipe's origin (the recipe says so when it saves)
 						playOffset = new Vector2(F(t[1]), F(t[2]));
 						break;
+					case "storespot":
+						// storespot [x z] [n] [size]: flat clear ground for a store, nearest to x z (SL7)
+						StoreSpots(playEntry, playOffset, t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : Vector2.zero, t.Length > 3 ? (int)F(t[3]) : 6, t.Length > 4 ? F(t[4]) : 8f);
+						break;
 					case "where":
 					{
 						// where <name>: logs where the island's objects of that name are, in the test's island coordinates
