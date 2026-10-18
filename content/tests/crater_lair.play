@@ -5,7 +5,7 @@
 # the office east of it; the pet pool behind the bars (x -34.45, z -11.8..-2.5; the gap at its north end), the crater's
 # dish on the cone's top at -3 -3.
 island Crater Lair
-offset 0.5661 0.0454
+offset 0.5101 0.0433
 expect step 0
 expect title Storm Engine
 wait 5
