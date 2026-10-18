@@ -293,6 +293,9 @@ namespace DynamicIslands
 				yield return EnsureAlive();
 				int had = StoryBook.Count(RfMpCoin);
 				if (had > 0) StoryBook.Take(RfMpCoin, had);
+				// (an earlier run's cirfmp kept in the world: the players then looked at different ones - mprf4, 2026-10-18)
+				int old = IslandWorldState.Remove(RfMpIsland);
+				if (old > 0) { Log("Removed " + old + " earlier '" + RfMpIsland + "'"); yield return new WaitForSeconds(2f); }
 				var props = new Dictionary<string, string> { { ObjectProps.TreasureLoot, "Plank*5;" + StoryItems.Ref(RfMpCoin) + "*1" } };
 				IslandFile f = RfIsland(RfMpIsland, 6161, RfAt(3f, 0f, new IslandObject { Name = ContentCatalog.BuriedTreasure, Props = props, Scale = Vector3.one }));
 				f.Props[StoryItems.Key] = RfMpCoin + "|Crew coin||A coin dug up by one player, for the whole crew.";
@@ -327,7 +330,8 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(2.5f);
 						Dictionary<string, int> after = Items(player);
 						int planks = (after.ContainsKey("Plank") ? after["Plank"] : 0) - (before.ContainsKey("Plank") ? before["Plank"] : 0);
-						Check(ref ok, chest != null && planks >= 5, "dug up and picked: " + Gained(before, after));
+						// (the chest can be in the bag before this looks for it - on player 2 Raft's last dig took it, 2026-10-18: what was gained counts)
+						Check(ref ok, planks >= 5 && StoryBook.Count(RfMpCoin) == 1, "dug up and picked: " + Gained(before, after) + (chest == null ? " (taken by the dig)" : ""));
 						RfDropDetector(player);
 						break;
 					}
